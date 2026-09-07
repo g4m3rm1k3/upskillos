@@ -4,12 +4,12 @@
 // Called automatically before dev/build via npm scripts.
 //
 // Reads each lesson file's RAW TEXT and regex-extracts its `id:` field,
-// rather than importing/evaluating the module (the existing
-// build-search-index.js script does that, and silently produces zero
-// results for every lesson today because plain Node can't resolve the
-// JSX/import graph those modules pull in — confirmed by its own
-// lessonTitles.json output being empty). Reading raw text sidesteps that
-// entirely and is the same technique already used for the equivalent
+// rather than importing/evaluating the module (a deleted predecessor,
+// build-search-index.js, tried that and silently produced zero results
+// for every lesson, because plain Node can't resolve the JSX/import graph
+// those modules pull in — see src/scripts/build-lesson-titles.js, its
+// still-needed successor, for the same lesson learned). Reading raw text
+// sidesteps that entirely and is the same technique already used for the equivalent
 // in-app lookup in courseLoader.js.
 
 import { writeFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'fs'
