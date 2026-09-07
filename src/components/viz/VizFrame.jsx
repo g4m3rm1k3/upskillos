@@ -44,6 +44,7 @@ Object.assign(VIZ_REGISTRY, {
   // single canonical copy, registered explicitly so resolution doesn't
   // depend on course-folder alphabetical order.
   PythonNotebook:       lazy(() => import("../notebooks/PythonNotebook.jsx")),
+  CppNotebook:          lazy(() => import("../notebooks/CppNotebook.jsx")),
   FigureRenderer:       lazy(() => import("../notebooks/FigureRenderer.jsx")),
   JSNotebook:           lazy(() => import("../notebooks/JSNotebook.jsx")),
   OpenMatNotebook:      lazy(() => import("../notebooks/OpenMatNotebook.jsx")),
@@ -80,6 +81,7 @@ Object.assign(VIZ_REGISTRY, {
 // Vizzes that work fine on a phone-sized screen
 const PHONE_OK = new Set([
   "PythonNotebook",
+  "CppNotebook",
   "OpenMatNotebook",
   "JSNotebook",
   "SQLNotebook",

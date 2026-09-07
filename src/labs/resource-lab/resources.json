@@ -1,4 +1,13 @@
 [
+    {
+    "title": "Invent With Python",
+    "url": "https://inventwithpython.com/",
+    "description": "https://inventwithpython.com/",
+    "tags": [
+      "Python",
+      "Learning"
+    ]
+  },
   {
     "title": "FreeCodeCamp",
     "url": "https://www.freecodecamp.org/",

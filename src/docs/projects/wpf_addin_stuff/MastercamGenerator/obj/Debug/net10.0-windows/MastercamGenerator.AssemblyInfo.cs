@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MastercamGenerator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4bf02a2aa8a6c0bcf555e7595d7f546ebc094250")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+588e6b5aa1ecabfab504b807bd39332392237222")]
 [assembly: System.Reflection.AssemblyProductAttribute("MastercamGenerator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MastercamGenerator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

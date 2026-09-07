@@ -3,11 +3,14 @@
 // Detects opencalc Figure output and renders it via FigureRenderer.
 // Drop-in replacement for the provided PythonNotebook component.
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Editor from "@monaco-editor/react";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-python";
 import FigureRenderer from "./FigureRenderer";
 import { parseProse } from "../math/parseProse.jsx";
-import { setupOpenCalcMonaco } from "../../utils/monacoThemes.js";
+import { setupOpenCalcMonaco, applyPythonIndentRules } from "../../utils/monacoThemes.js";
 import { OPENCALC_LIB_SOURCE } from "./opencalcLibSource.js";
 import { useReportBug } from "../../hooks/useReportBug.js";
 
@@ -281,6 +284,62 @@ function difficultyStyle(difficulty, C) {
   if (difficulty === "hard")
     return { bg: C.redBg, border: C.redBd, text: C.red };
   return { bg: C.amberBg, border: C.amberBd, text: C.amber }; // medium default
+}
+
+// ── Reference code block ──────────────────────────────────────────────────
+// Read-only, syntax-highlighted display of a cell's `solution` — used by
+// `typeIt` cells (see below) to show the target code between the prose and
+// the editor without ever writing it into the editor for the learner.
+function ReferenceCodeBlock({ code, C }) {
+  const html = useMemo(() => {
+    try {
+      return Prism.highlight(code, Prism.languages.python, "python");
+    } catch {
+      return null;
+    }
+  }, [code]);
+
+  return (
+    <div
+      style={{
+        margin: "0 16px 12px",
+        borderRadius: 8,
+        overflow: "hidden",
+        border: `1px solid ${C.purpleBd}`,
+      }}
+    >
+      <div
+        style={{
+          padding: "6px 12px",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: C.purple,
+          background: C.purpleBg,
+          borderBottom: `1px solid ${C.purpleBd}`,
+        }}
+      >
+        Type this into the editor below
+      </div>
+      <pre
+        style={{
+          margin: 0,
+          padding: "12px 14px",
+          fontSize: 13,
+          lineHeight: 1.6,
+          overflowX: "auto",
+          background: "#1e1e1e",
+        }}
+      >
+        {html ? (
+          <code className="language-python" style={{ fontFamily: "monospace" }} dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <code style={{ fontFamily: "monospace", color: "#d4d4d4" }}>{code}</code>
+        )}
+      </pre>
+    </div>
+  );
 }
 
 // ── Memoized Cell Component ──────────────────────────────────────────────
@@ -616,6 +675,11 @@ const CellComponent = React.memo(
           </div>
         )}
 
+        {/* ── typeIt: read-only reference code, editor starts empty ──────── */}
+        {cell.typeIt && cell.solution && (
+          <ReferenceCodeBlock code={cell.solution} C={C} />
+        )}
+
         {/* ── Fill-in: copyable starter block ─────────────────────────────── */}
         {isFillIn && cell.starterBlock && (
           <div
@@ -765,16 +829,26 @@ const CellComponent = React.memo(
             lineNumbers: "on",
             padding: { top: 10, bottom: 10 },
             automaticLayout: true,
+            // Enter must always insert a newline, never silently accept a
+            // suggestion — confirmed live: typing a fresh multi-line
+            // function (typeIt cells) hit the word-based suggestion widget
+            // mid-line, and it ate an Enter meant as a newline, dropping a
+            // line without any visible error. Tab still accepts suggestions.
+            acceptSuggestionOnEnter: "off",
             scrollbar: {
               vertical: "hidden",
               alwaysConsumeMouseWheel: false,
             },
           }}
-          onMount={(editor) => {
+          onMount={(editor, monacoInstance) => {
             // monaco.KeyMod.Shift | monaco.KeyCode.Enter = 1024 | 3
             // We use the numerical constants to avoid referencing a global 'monaco' object
             // which might not be in scope. Shift=1024, Enter=3
             editor.addCommand(1024 | 3, () => onRun(cell.id));
+            // Re-apply after mount — see applyPythonIndentRules's comment for
+            // why the beforeMount attempt alone loses a race with Monaco's
+            // own lazily-loaded Python config.
+            applyPythonIndentRules(monacoInstance);
           }}
         />
 

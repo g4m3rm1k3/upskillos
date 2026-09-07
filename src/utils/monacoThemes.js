@@ -20,6 +20,51 @@ const OPENMAT_BUILTINS = [
 
 const OPENMAT_CONSTANTS = ["pi", "inf", "NaN", "true", "false", "i", "j"];
 
+// Monaco's built-in Python mode indents after def/if/for/etc. but never
+// dedents after return/break/continue/pass/raise — confirmed live: typing a
+// fresh multi-line function from scratch (the notebook's `typeIt` cells)
+// auto-indented a following top-level statement right back inside the
+// function body after a blank line, silently turning it into unreachable
+// code with no syntax error and no visible symptom besides "nothing ran."
+// Real Python tooling (e.g. VS Code's Python extension) fixes this with
+// exactly this outdent rule.
+//
+// Monaco's own built-in Python config is registered lazily, the first time
+// a Python model is actually created (basic-languages' `onLanguageEncountered`
+// hook, which dynamic-imports python.js and calls setLanguageConfiguration
+// asynchronously) — and since languageConfigurationRegistry.js resolves ties
+// by "last registered wins", calling this once — even from onMount, after the
+// editor already exists — can still lose the race: the built-in config's
+// dynamic import can resolve after onMount fires and silently replace our
+// onEnterRules with its own (confirmed live: a single immediate call, from
+// both beforeMount and onMount, was still overwritten). Real fix: apply
+// immediately for the common case, then re-apply once more after a delay
+// long enough that the built-in's dynamic import has certainly resolved by
+// then (confirmed live: 300ms is comfortably past it; there's no reliable
+// synchronous signal for "the built-in config finished loading" to hook
+// instead). Only `onEnterRules` is set — every other field (brackets,
+// comments, autoClosingPairs...) is left undefined, so the registry's
+// per-field merge falls through to Monaco's built-in Python config
+// unchanged for everything but this.
+export function applyPythonIndentRules(monaco) {
+  const register = () => {
+    monaco.languages.setLanguageConfiguration("python", {
+      onEnterRules: [
+        {
+          beforeText: /^\s*(?:def|class|for|if|elif|else|while|try|with|finally|except|async|match|case).*?:\s*$/,
+          action: { indentAction: monaco.languages.IndentAction.Indent },
+        },
+        {
+          beforeText: /^\s*(?:return|break|continue|pass|raise)\b.*$/,
+          action: { indentAction: monaco.languages.IndentAction.Outdent },
+        },
+      ],
+    });
+  };
+  register();
+  setTimeout(register, 300);
+}
+
 export function setupOpenCalcMonaco(monaco) {
   if (!monaco || monaco.__openCalcConfigured) return;
   monaco.__openCalcConfigured = true;
@@ -571,6 +616,10 @@ export function setupOpenCalcMonaco(monaco) {
       ],
     },
   });
+
+  // Attempt this early (see applyPythonIndentRules below for why it's also
+  // re-applied from each editor's onMount).
+  applyPythonIndentRules(monaco);
 
   // Monaco's own TypeScript defaults never set `jsx` at all (confirmed
   // live: getCompilerOptions() returns only { allowNonTsExtensions, target }
