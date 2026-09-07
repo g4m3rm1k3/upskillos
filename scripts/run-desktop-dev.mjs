@@ -14,9 +14,16 @@ const VITE_PORT = process.env.VITE_PORT ?? 5173
 
 // ── 1. Start Vite ────────────────────────────────────────────────────────────
 
+// Invoke Vite's own JS entry point directly via `node`, not `npx`/`npx.cmd` —
+// spawning a bare '.cmd' file on Windows without `shell: true` throws
+// `spawn EINVAL` on current Node versions (a real, confirmed-live failure;
+// unrelated to `shell: true`'s own quoting concerns, this just sidesteps
+// the whole npx-resolution step). Same direct-vite-entry-point pattern
+// already used by desktop-release.yml's CI build, so this is one fewer
+// invocation style to keep in sync, not a new one.
 const vite = spawn(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', '--port', String(VITE_PORT)],
+  process.execPath,
+  [path.join(root, 'node_modules', 'vite', 'bin', 'vite.js'), '--port', String(VITE_PORT)],
   { cwd: root, stdio: 'inherit', env: { ...process.env } }
 )
 
