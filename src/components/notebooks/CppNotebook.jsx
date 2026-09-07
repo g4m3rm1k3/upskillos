@@ -7,7 +7,7 @@
 // shared kernel, so (unlike PythonNotebook) variables do NOT persist between
 // cells — every cell is its own complete, independent program.
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
@@ -17,6 +17,20 @@ import { parseProse } from "../math/parseProse.jsx";
 import { setupOpenCalcMonaco } from "../../utils/monacoThemes.js";
 import { useThemeColors, withAlpha } from "../../hooks/useThemeColors";
 import { useGlobalTheme } from "../../context/ThemeContext.jsx";
+import EnvironmentBanner from "./shared/EnvironmentBanner.jsx";
+
+// Electron only — on the web build this is always false, so every branch
+// below that checks it falls through to the existing Wandbox path,
+// completely unchanged. See desktop/app/runtimes/cpp.cjs for why the
+// Electron build doesn't need Wandbox at all: it compiles for real,
+// locally, via a private llvm-mingw install.
+const isDesktop = () => typeof window !== "undefined" && !!window.openCalcDesktop;
+
+const CPP_PHASE_LABELS = {
+  "downloading-cpp": "Downloading C++ toolchain…",
+  "extracting-cpp": "Unpacking C++ toolchain…",
+  done: "Ready!",
+};
 
 // ── Wandbox API — run C++ code for real ──────────────────────────────────
 // Returns { status, compiler_output, compiler_error, program_output, program_error, signal? }
@@ -195,6 +209,39 @@ function ProseBlock({ prose, C }) {
 
 // ── Output panel — compile error vs. program stdout/stderr ────────────────
 function CellOutput({ cell, C }) {
+  // Electron local-execution path: a plain stream of {stream, text} events
+  // (no compile/run distinction in the payload — compiler stderr and
+  // program stderr are both just "stderr" lines, in the order they
+  // occurred), unlike Wandbox's single structured result object below.
+  if (cell.liveOutput) {
+    if (cell.liveOutput.length === 0) return null;
+    return (
+      <div style={{ borderTop: `0.5px solid ${C.border}` }}>
+        <div style={{ fontSize: 10, color: C.hint, padding: "6px 14px 2px", fontFamily: "monospace", fontWeight: 500 }}>
+          Output
+        </div>
+        <pre
+          style={{
+            margin: 0,
+            padding: "4px 14px 12px",
+            fontFamily: "monospace",
+            fontSize: 13,
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {cell.liveOutput.map((l, i) => (
+            <span key={i} style={{ color: l.stream === "stderr" ? C.red : C.text }}>
+              {l.text}
+              {"\n"}
+            </span>
+          ))}
+        </pre>
+      </div>
+    );
+  }
+
   if (!cell.result && cell.status !== "error") return null;
 
   if (cell.status === "error") {
@@ -319,7 +366,7 @@ function CellOutput({ cell, C }) {
 }
 
 // ── Single cell ────────────────────────────────────────────────────────────
-const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRunning }) => {
+const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRunning, envReady = true }) => {
   const lineCount = (cell.code || "").split("\n").length;
   const refLineCount = cell.typeIt && cell.solution ? cell.solution.split("\n").length : 0;
   const editorHeight = `${Math.min(360, Math.max(80, Math.max(lineCount, refLineCount) * 21 + 24))}px`;
@@ -374,16 +421,17 @@ const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRun
         </span>
         <button
           onClick={() => onRun(cell.id)}
-          disabled={isRunning}
+          disabled={isRunning || !envReady}
+          title={!envReady ? "Install the C++ toolchain above first" : undefined}
           style={{
             fontSize: 11,
             padding: "3px 10px",
             borderRadius: 6,
-            cursor: isRunning ? "default" : "pointer",
+            cursor: isRunning || !envReady ? "default" : "pointer",
             border: "none",
             background: C.teal,
             color: "#fff",
-            opacity: isRunning ? 0.5 : 1,
+            opacity: isRunning || !envReady ? 0.4 : 1,
           }}
         >
           {isRunning ? "..." : "▶ Compile & Run"}
@@ -424,20 +472,95 @@ export default function CppNotebook({ params }) {
   const C = useThemeColors();
   const { themeStyles } = useGlobalTheme();
   const monacoTheme = themeStyles?.monaco || (C.dark ? "open-calc-dark" : "open-calc-light");
+  const desktop = isDesktop();
 
   const initial = (params?.initialCells || []).map((c) => ({
     ...c,
     code: c.code ?? "",
     status: c.status ?? "idle",
     result: c.result ?? null,
+    liveOutput: null,
   }));
   const [cells, setCells] = useState(initial);
   const [runningId, setRunningId] = useState(null);
+  const [runIds, setRunIds] = useState({}); // cellId -> active local runId (desktop only)
+
+  // ── Desktop-only: private local toolchain status (see runtimes/cpp.cjs) ──
+  const [envStatus, setEnvStatus] = useState(desktop ? "checking" : "unavailable");
+  const [installing, setInstalling] = useState(false);
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    if (!desktop) return;
+    let cancelled = false;
+    window.openCalcDesktop.getRuntimeStatus("cpp").then((res) => {
+      if (cancelled) return;
+      setEnvStatus(res?.ok && res.status?.installed ? "ready" : "needs-install");
+    });
+    return () => { cancelled = true; };
+  }, [desktop]);
+
+  useEffect(() => {
+    if (!desktop) return;
+    const unsub = window.openCalcDesktop.onRuntimeProgress((data) => {
+      if (data.runtime !== "cpp") return;
+      setProgress(data);
+      if (data.phase === "done") {
+        setEnvStatus("ready");
+        setInstalling(false);
+      } else if (data.phase === "error") {
+        setInstalling(false);
+      }
+    });
+    return unsub;
+  }, [desktop]);
+
+  useEffect(() => {
+    if (!desktop) return;
+    const unsub = window.openCalcDesktop.onScriptOutput((evt) => {
+      const cellId = Object.entries(runIds).find(([, id]) => id === evt.runId)?.[0];
+      if (cellId == null) return;
+      if (evt.stream === "exit") {
+        setRunningId((cur) => (String(cur) === cellId ? null : cur));
+        return;
+      }
+      setCells((prev) =>
+        prev.map((c) => (String(c.id) === cellId ? { ...c, liveOutput: [...(c.liveOutput || []), evt] } : c)),
+      );
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktop, runIds]);
+
+  const installEnv = useCallback(() => {
+    setInstalling(true);
+    setProgress({ phase: "downloading-cpp", percent: 0 });
+    window.openCalcDesktop.installRuntime("cpp").then((res) => {
+      if (!res?.ok) setInstalling(false);
+    });
+  }, []);
 
   const updateCode = (id, code) =>
     setCells((prev) => prev.map((c) => (c.id === id ? { ...c, code } : c)));
 
-  const runCell = async (id) => {
+  const runCellLocal = useCallback(async (id) => {
+    if (runningId) return;
+    const cell = cells.find((c) => c.id === id);
+    if (!cell) return;
+    setRunningId(id);
+    setCells((prev) => prev.map((c) => (c.id === id ? { ...c, liveOutput: [] } : c)));
+    const res = await window.openCalcDesktop.runCode("cpp", cell.code);
+    if (!res?.ok) {
+      setCells((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, liveOutput: [{ stream: "stderr", text: res?.reason || "Failed to launch." }] } : c)),
+      );
+      setRunningId(null);
+      return;
+    }
+    setRunIds((prev) => ({ ...prev, [id]: res.runId }));
+  }, [cells, runningId]);
+
+  const runCellWandbox = async (id) => {
     const cell = cells.find((c) => c.id === id);
     if (!cell || runningId) return;
     setRunningId(id);
@@ -476,6 +599,10 @@ export default function CppNotebook({ params }) {
     }
   };
 
+  // On the web build this is always runCellWandbox — desktop is always
+  // false there, so this ternary never changes behavior for that path.
+  const runCell = desktop ? runCellLocal : runCellWandbox;
+
   return (
     <div className="px-0 sm:px-3 py-3" style={{ width: "100%", fontFamily: "sans-serif", boxSizing: "border-box" }}>
       <div
@@ -492,10 +619,27 @@ export default function CppNotebook({ params }) {
         <div>
           <div style={{ fontSize: 15, fontWeight: 500, color: C.text }}>C++ Notebook</div>
           <div style={{ fontSize: 11, color: C.hint, marginTop: 2 }}>
-            Compiled and run for real via Wandbox (g++ 12.3.0, -std=c++17) — each cell is its own independent program.
+            {desktop
+              ? "Compiled and run for real via a private, local toolchain (llvm-mingw, -std=c++17) — each cell is its own independent program."
+              : "Compiled and run for real via Wandbox (g++ 12.3.0, -std=c++17) — each cell is its own independent program."}
           </div>
         </div>
       </div>
+
+      {desktop && (
+        <div style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, marginBottom: 12 }}>
+          <EnvironmentBanner
+            status={envStatus}
+            installing={installing}
+            progress={progress}
+            onInstall={installEnv}
+            C={C}
+            title="C++ toolchain"
+            description="This lesson needs a real C/C++ compiler to run. OpenCalc can download and install a private copy automatically — it won't touch any compiler you already have installed."
+            phaseLabels={CPP_PHASE_LABELS}
+          />
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column" }}>
         {cells.map((cell) => (
@@ -507,6 +651,7 @@ export default function CppNotebook({ params }) {
             onRun={runCell}
             onUpdate={updateCode}
             isRunning={runningId === cell.id}
+            envReady={!desktop || envStatus === "ready"}
           />
         ))}
       </div>

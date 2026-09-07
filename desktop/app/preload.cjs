@@ -17,4 +17,21 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     ipcRenderer.on('desktop:clone-progress', handler)
     return () => ipcRenderer.off('desktop:clone-progress', handler)
   },
+
+  // Desktop-only language runtimes (Python + PySide6) — see
+  // desktop/app/runtimes/python.cjs for why this can't run in a browser tab.
+  getRuntimeStatus:        (runtime) => ipcRenderer.invoke('desktop:runtime-status', runtime),
+  installRuntime:          (runtime) => ipcRenderer.invoke('desktop:install-runtime', runtime),
+  runPythonScript:         (code) => ipcRenderer.invoke('desktop:run-python-script', code),
+  runCode:                 (runtime, code) => ipcRenderer.invoke('desktop:run-code', runtime, code),
+  onRuntimeProgress:       (cb) => {
+    const handler = (_event, data) => cb(data)
+    ipcRenderer.on('desktop:runtime-progress', handler)
+    return () => ipcRenderer.off('desktop:runtime-progress', handler)
+  },
+  onScriptOutput:          (cb) => {
+    const handler = (_event, data) => cb(data)
+    ipcRenderer.on('desktop:script-output', handler)
+    return () => ipcRenderer.off('desktop:script-output', handler)
+  },
 })

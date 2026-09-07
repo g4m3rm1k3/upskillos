@@ -45,6 +45,8 @@ Object.assign(VIZ_REGISTRY, {
   // depend on course-folder alphabetical order.
   PythonNotebook:       lazy(() => import("../notebooks/PythonNotebook.jsx")),
   CppNotebook:          lazy(() => import("../notebooks/CppNotebook.jsx")),
+  PySideNotebook:       lazy(() => import("../notebooks/PySideNotebook.jsx")),
+  NativeRunNotebook:    lazy(() => import("../notebooks/NativeRunNotebook.jsx")),
   FigureRenderer:       lazy(() => import("../notebooks/FigureRenderer.jsx")),
   JSNotebook:           lazy(() => import("../notebooks/JSNotebook.jsx")),
   OpenMatNotebook:      lazy(() => import("../notebooks/OpenMatNotebook.jsx")),

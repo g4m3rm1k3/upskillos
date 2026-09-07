@@ -13,6 +13,20 @@ const { promisify } = require('node:util')
 // path Electron reliably intercepts with the real API — this is why this
 // file and preload.cjs are .cjs, not .mjs.
 const { app, BrowserWindow, dialog, ipcMain, shell, protocol, net } = require('electron')
+const pythonRuntime = require('./runtimes/python.cjs')
+const cppRuntime = require('./runtimes/cpp.cjs')
+const lispRuntime = require('./runtimes/lisp.cjs')
+const javaRuntime = require('./runtimes/java.cjs')
+const dotnetRuntime = require('./runtimes/dotnet.cjs')
+
+// Keyed dispatch table for the generic runtime IPC handlers below — adding
+// a new language means adding one more entry here, not more branches.
+// 'python' keeps its own dedicated runPythonScript/desktop:run-python-script
+// path (unchanged, already shipped) since PySide6 needs a long-lived
+// detached GUI process rather than a run-to-completion one; it's included
+// here too so desktop:runtime-status/desktop:install-runtime work uniformly
+// across all five.
+const RUNTIMES = { python: pythonRuntime, cpp: cppRuntime, lisp: lispRuntime, java: javaRuntime, dotnet: dotnetRuntime }
 
 const execAsync = promisify(exec)
 
@@ -62,6 +76,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   backendProc?.kill()
+  for (const mod of Object.values(RUNTIMES)) mod.killAllScripts?.()
 })
 
 app.on('activate', () => {
@@ -212,6 +227,43 @@ ipcMain.handle('desktop:get-github-token', async () => {
 })
 
 // ── End contributor mode ────────────────────────────────────────────────────
+
+// ── Desktop-only language runtimes (Python + PySide6) ───────────────────────
+// See runtimes/python.cjs for the full rationale — this is a private,
+// sandboxed interpreter under userData, autonomously downloaded and
+// installed on request, needed because PySide6 draws a real native OS
+// window that neither a browser tab nor Pyodide's WASM sandbox can do.
+
+ipcMain.handle('desktop:runtime-status', async (_event, runtime) => {
+  const mod = RUNTIMES[runtime]
+  if (!mod) return { ok: false, reason: `Unknown runtime: ${runtime}` }
+  return { ok: true, status: await mod.getStatus(app) }
+})
+
+ipcMain.handle('desktop:install-runtime', async (_event, runtime) => {
+  const mod = RUNTIMES[runtime]
+  if (!mod) return { ok: false, reason: `Unknown runtime: ${runtime}` }
+  const emit = (payload) => mainWindow?.webContents.send('desktop:runtime-progress', { runtime, ...payload })
+  return mod.install(app, emit)
+})
+
+ipcMain.handle('desktop:run-python-script', async (_event, code) => {
+  const emit = (payload) => mainWindow?.webContents.send('desktop:script-output', payload)
+  return pythonRuntime.runScript(app, code, emit)
+})
+
+// Generic run path for the compile-and-run-to-completion languages
+// (C/C++, Common Lisp, Java, .NET) — python keeps its own dedicated
+// runPythonScript handler above since PySide6 needs a detached, long-lived
+// GUI process rather than a run-to-completion one.
+ipcMain.handle('desktop:run-code', async (_event, runtime, code) => {
+  const mod = RUNTIMES[runtime]
+  if (!mod || !mod.runCode) return { ok: false, reason: `No runnable runtime: ${runtime}` }
+  const emit = (payload) => mainWindow?.webContents.send('desktop:script-output', payload)
+  return mod.runCode(app, code, emit)
+})
+
+// ── End desktop-only language runtimes ──────────────────────────────────────
 
 async function spawnBackend() {
   const backendScript = app.isPackaged

@@ -18,6 +18,11 @@ await fs.mkdir(staging, { recursive: true })
 await fs.copyFile(path.join(appDir, 'main.cjs'),    path.join(staging, 'main.cjs'))
 await fs.copyFile(path.join(appDir, 'preload.cjs'), path.join(staging, 'preload.cjs'))
 
+// Copy the desktop-only language runtime installers (e.g. runtimes/python.cjs,
+// required by main.cjs) — these are small source files, not the actual
+// downloaded Python/PySide6 payload, which lands in userData at runtime.
+await fs.cp(path.join(appDir, 'runtimes'), path.join(staging, 'runtimes'), { recursive: true })
+
 // Read version from desktop/app/package.json (already synced by sync-desktop-package)
 const appPkg = JSON.parse(await fs.readFile(path.join(appDir, 'package.json'), 'utf8'))
 
@@ -39,7 +44,7 @@ const stagingPkg = {
     },
 
     // Only the Electron process files go into app.asar
-    files: ['main.cjs', 'preload.cjs'],
+    files: ['main.cjs', 'preload.cjs', 'runtimes/**/*'],
 
     // Frontend build + backend live outside asar so Node can read them at runtime
     extraResources: [
@@ -76,4 +81,4 @@ await fs.writeFile(
 )
 
 console.log(`desktop/staging/ ready  (v${appPkg.version})`)
-console.log('  main.cjs  preload.cjs  package.json')
+console.log('  main.cjs  preload.cjs  runtimes/  package.json')

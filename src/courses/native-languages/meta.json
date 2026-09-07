@@ -1,0 +1,5 @@
+{
+  "icon": "🔩",
+  "description": "Real compilers and interpreters, run locally in the OpenCalc desktop app — no third-party remote compile service involved",
+  "domain": "cs"
+}

@@ -1,0 +1,5 @@
+{
+  "icon": "🖼️",
+  "description": "Real, native desktop GUIs with PySide6 — runs for real only in the OpenCalc desktop app, since a browser tab can't open an OS window",
+  "domain": "cs"
+}
