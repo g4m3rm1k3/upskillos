@@ -32,7 +32,7 @@ const PHASE_LABELS = {
   "extracting-python": "Unpacking Python…",
   "configuring-python": "Configuring interpreter…",
   "bootstrapping-pip": "Setting up pip…",
-  "installing-pyside6": "Installing PySide6 (this can take a few minutes)…",
+  "installing-pyside6": "Installing PySide6 + pygame (this can take a few minutes)…",
   done: "Ready!",
 };
 
@@ -239,7 +239,7 @@ export default function PySideNotebook({ params }) {
     let cancelled = false;
     window.openCalcDesktop.getRuntimeStatus("python").then((res) => {
       if (cancelled) return;
-      const ready = !!(res?.ok && res.status?.pythonInstalled && res.status?.pysideInstalled);
+      const ready = !!(res?.ok && res.status?.pythonInstalled && res.status?.pysideInstalled && res.status?.pygameInstalled);
       setEnvStatus(ready ? "ready" : "needs-install");
     });
     return () => { cancelled = true; };
@@ -362,8 +362,8 @@ export default function PySideNotebook({ params }) {
           progress={progress}
           onInstall={installEnv}
           C={C}
-          title="Python + PySide6"
-          description="This lesson needs a real Python interpreter with PySide6 to run. OpenCalc can download and install a private copy automatically — it won't touch any Python you already have installed."
+          title="Python + PySide6 + pygame"
+          description="This lesson needs a real Python interpreter with PySide6 and pygame to run. OpenCalc can download and install a private copy automatically — it won't touch any Python you already have installed."
           phaseLabels={PHASE_LABELS}
         />
       </div>

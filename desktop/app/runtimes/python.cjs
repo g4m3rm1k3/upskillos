@@ -1,15 +1,20 @@
 // runtimes/python.cjs
-// Provisions a private, sandboxed Python + PySide6 environment for the
-// desktop app — no admin rights, no touching any Python the user already
-// has installed. Lives entirely under Electron's userData directory,
-// exactly like the existing contributor-mode repo clone in main.cjs.
+// Provisions a private, sandboxed Python + PySide6 + pygame environment
+// for the desktop app — no admin rights, no touching any Python the user
+// already has installed. Lives entirely under Electron's userData
+// directory, exactly like the existing contributor-mode repo clone in
+// main.cjs.
 //
 // Why "private": PySide6 needs a REAL Python interpreter that can open a
 // REAL native OS window — that's impossible in a browser tab or in Pyodide
 // (WASM has no OS windowing access at all). The desktop app is the only
 // place this can work, and it has to be a python.exe we fully control so
 // "click Install" can be genuinely autonomous rather than "please go
-// install Python yourself first."
+// install Python yourself first." pygame rides along in the same
+// environment — the pyside6 course's Chapter 2 (an embedded-viewport,
+// Godot-style editor) renders pygame into a PySide6 widget, so both
+// packages are always installed together as one environment, not tracked
+// as separate per-lesson dependencies.
 //
 // Windows-only for now (the official embeddable zip is a Windows-specific
 // artifact with no admin-install step). macOS/Linux would need a different
@@ -44,13 +49,16 @@ function pythonExePath(app) {
 async function getStatus(app) {
   const pythonExe = pythonExePath(app)
   const pythonInstalled = await pathExists(pythonExe)
-  if (!pythonInstalled) return { pythonInstalled: false, pysideInstalled: false }
+  if (!pythonInstalled) return { pythonInstalled: false, pysideInstalled: false, pygameInstalled: false }
 
   try {
-    await execFileAsync(pythonExe, ['-c', 'import PySide6'], { timeout: 10000, windowsHide: true })
-    return { pythonInstalled: true, pysideInstalled: true }
+    await execFileAsync(pythonExe, ['-c', 'import PySide6, pygame'], { timeout: 10000, windowsHide: true })
+    return { pythonInstalled: true, pysideInstalled: true, pygameInstalled: true }
   } catch {
-    return { pythonInstalled: true, pysideInstalled: false }
+    // Don't distinguish which of the two is missing here — install() always
+    // installs both together, so "not both present" just means "needs
+    // (re)install," same single Install button either way.
+    return { pythonInstalled: true, pysideInstalled: false, pygameInstalled: false }
   }
 }
 
@@ -97,8 +105,13 @@ async function install(app, onProgress) {
     })
     await fs.rm(getPipPath, { force: true })
 
+    // Installed together, one pip call: every lesson in the pyside6 course
+    // shares this one private environment, and the Godot-like-editor
+    // project (Chapter 2) needs pygame for the embedded viewport alongside
+    // PySide6 for the surrounding window/panels — simpler to guarantee
+    // both are always present than to track per-lesson dependency flags.
     emit({ phase: 'installing-pyside6', percent: 55 })
-    await execFileAsync(pythonExePath(app), ['-m', 'pip', 'install', 'PySide6', '--no-warn-script-location'], {
+    await execFileAsync(pythonExePath(app), ['-m', 'pip', 'install', 'PySide6', 'pygame', '--no-warn-script-location'], {
       cwd: dir, windowsHide: true, timeout: 900000, maxBuffer: 20 * 1024 * 1024,
     })
 
