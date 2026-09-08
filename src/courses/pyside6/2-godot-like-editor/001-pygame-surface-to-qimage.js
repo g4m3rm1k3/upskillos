@@ -46,28 +46,36 @@ export default {
       {
         id: 'PySideNotebook',
         title: 'Hands-On: Pygame Inside a Qt Widget',
-        caption: 'Runs for real — a native window opens showing a pygame-drawn circle animating inside a PySide6 widget.',
+        caption: 'One editor, three small steps — type each step yourself; a clean run auto-advances to the next step without losing what you typed.',
         props: {
-          initialCells: [
+          filename: 'lesson.py',
+          steps: [
             {
               id: 1,
-              cellTitle: 'Cell 1 — The Smallest Bridge (One Static Frame)',
+              cellTitle: 'Step 1 — Get Pygame Pixels Onto the Qt Window (No Shape Yet)',
               prose: [
-                'Predict before running: this code draws exactly one circle, once, when the window first appears, with no animation and no QTimer yet. What do you expect to see — one circle, no window at all, or an error?',
-                'This is the minimum code that gets a single pygame-drawn shape from memory onto a real Qt window. Read it fully before running it.',
+                'Predict before typing: this step fills the pygame Surface with one solid color and paints it — no shape, no animation, nothing else. What do you expect the window to show: a solid colored rectangle, a blank white window, or an error?',
+                'Type this fully before running it. Every construct here — pygame.Surface, surface.fill, pygame.image.tostring, QImage, QPainter, drawImage, painter.end() — is explained in the "Objects and Methods Used" callout above. This one step is the entire pygame-to-Qt bridge; Steps 2 and 3 only add to it, they never replace any of it. Run it once you\'ve typed it — a clean run automatically reveals Step 2 below, and what you typed stays right where it is.',
               ],
-              filename: 'lesson.py',
-              code: 'import sys\nimport pygame\nfrom PySide6.QtWidgets import QApplication, QWidget\nfrom PySide6.QtGui import QImage, QPainter\n\npygame.init()\nsurface = pygame.Surface((400, 300))\n\nclass Viewport(QWidget):\n    def __init__(self):\n        super().__init__()\n        self.setWindowTitle("One Static Frame")\n        self.resize(400, 300)\n\n    def paintEvent(self, event):\n        surface.fill((20, 20, 30))\n        pygame.draw.circle(surface, (255, 100, 50), (200, 150), 40)\n\n        w, h = surface.get_size()\n        data = pygame.image.tostring(surface, "RGB")\n        qimg = QImage(data, w, h, QImage.Format.Format_RGB888)\n\n        painter = QPainter(self)\n        painter.drawImage(0, 0, qimg)\n        painter.end()\n\napp = QApplication(sys.argv)\nwindow = Viewport()\nwindow.show()\nsys.exit(app.exec())\n',
+              solution: 'import sys\nimport pygame\nfrom PySide6.QtWidgets import QApplication, QWidget\nfrom PySide6.QtGui import QImage, QPainter\n\npygame.init()\nsurface = pygame.Surface((400, 300))\n\nclass Viewport(QWidget):\n    def __init__(self):\n        super().__init__()\n        self.setWindowTitle("Step 1: Just a Color")\n        self.resize(400, 300)\n\n    def paintEvent(self, event):\n        surface.fill((20, 20, 30))\n\n        w, h = surface.get_size()\n        data = pygame.image.tostring(surface, "RGB")\n        qimg = QImage(data, w, h, QImage.Format.Format_RGB888)\n\n        painter = QPainter(self)\n        painter.drawImage(0, 0, qimg)\n        painter.end()\n\napp = QApplication(sys.argv)\nwindow = Viewport()\nwindow.show()\nsys.exit(app.exec())\n',
             },
             {
               id: 2,
-              cellTitle: 'Cell 2 — Put It in the Project (Animated)',
+              cellTitle: 'Step 2 — Add One Shape',
               prose: [
-                'What changed from Cell 1: a `QTimer` now calls a `tick()` function on a repeating schedule; `tick()` advances an `angle` value and calls `self.update()`, which asks Qt to run `paintEvent` again. `paintEvent` itself is completely unchanged — it never knew it was being called once versus sixty times a second; it just draws whatever the current state says to draw, exactly like before. What did NOT change: `pygame.Surface`, `.fill`, `pygame.draw.circle`, `pygame.image.tostring`, `QImage`, and `QPainter` are all doing exactly the same job they did in Cell 1 — the only new machinery is what decides *when* to call `paintEvent` again.',
-                'This is the actual seed of the project: a QWidget that redraws a pygame scene on a schedule is the viewport panel every later lesson\'s editor layout will dock other panels around.',
+                'What changed from Step 1: exactly one new line, `pygame.draw.circle(surface, (255, 100, 50), (200, 150), 40)`, inserted between `surface.fill(...)` and the conversion to `QImage`. What did not change: the QWidget subclass, the QImage/QPainter conversion, QApplication, `.show()`, and `app.exec()` are byte-for-byte identical to Step 1 — your code from Step 1 is still sitting in the editor below; just add this one line in the right place, you don\'t need to retype anything.',
+                'Predict before running: at what pixel position will the circle\'s center land, and why does it have to be drawn before `pygame.image.tostring`, not after?',
               ],
-              filename: 'lesson.py',
-              code: 'import sys, math\nimport pygame\nfrom PySide6.QtWidgets import QApplication, QWidget\nfrom PySide6.QtGui import QImage, QPainter\nfrom PySide6.QtCore import QTimer\n\npygame.init()\nsurface = pygame.Surface((400, 300))\n\nclass Viewport(QWidget):\n    def __init__(self):\n        super().__init__()\n        self.setWindowTitle("Animated Viewport")\n        self.resize(400, 300)\n        self.angle = 0.0\n\n    def paintEvent(self, event):\n        surface.fill((20, 20, 30))\n        x = 200 + int(100 * math.cos(self.angle))\n        pygame.draw.circle(surface, (255, 100, 50), (x, 150), 30)\n\n        w, h = surface.get_size()\n        data = pygame.image.tostring(surface, "RGB")\n        qimg = QImage(data, w, h, QImage.Format.Format_RGB888)\n\n        painter = QPainter(self)\n        painter.drawImage(0, 0, qimg)\n        painter.end()\n\napp = QApplication(sys.argv)\nwindow = Viewport()\nwindow.show()\n\ndef tick():\n    window.angle += 0.05\n    window.update()\n\ntimer = QTimer()\ntimer.timeout.connect(tick)\ntimer.start(16)\n\nsys.exit(app.exec())\n',
+              solution: 'import sys\nimport pygame\nfrom PySide6.QtWidgets import QApplication, QWidget\nfrom PySide6.QtGui import QImage, QPainter\n\npygame.init()\nsurface = pygame.Surface((400, 300))\n\nclass Viewport(QWidget):\n    def __init__(self):\n        super().__init__()\n        self.setWindowTitle("Step 2: One Shape")\n        self.resize(400, 300)\n\n    def paintEvent(self, event):\n        surface.fill((20, 20, 30))\n        pygame.draw.circle(surface, (255, 100, 50), (200, 150), 40)\n\n        w, h = surface.get_size()\n        data = pygame.image.tostring(surface, "RGB")\n        qimg = QImage(data, w, h, QImage.Format.Format_RGB888)\n\n        painter = QPainter(self)\n        painter.drawImage(0, 0, qimg)\n        painter.end()\n\napp = QApplication(sys.argv)\nwindow = Viewport()\nwindow.show()\nsys.exit(app.exec())\n',
+            },
+            {
+              id: 3,
+              cellTitle: 'Step 3 — Make It Move',
+              prose: [
+                'What changed from Step 2: the circle\'s x position now reads `200 + int(100 * math.cos(self.angle))` instead of the fixed `200`, and three new pieces appear after `window.show()` — a `tick()` function that advances `self.angle` and calls `self.update()`, a `QTimer`, and `timer.start(16)` to run `tick()` on a schedule. What did not change: `paintEvent`\'s own structure (fill, draw, convert, paint) is identical to Step 2 except that one number becoming an expression — it still has no idea whether it is being called once or sixty times a second.',
+                'This is the project artifact for this lesson: a QWidget that redraws a pygame scene on a schedule is the viewport panel every later lesson\'s editor layout will dock other panels around.',
+              ],
+              solution: 'import sys, math\nimport pygame\nfrom PySide6.QtWidgets import QApplication, QWidget\nfrom PySide6.QtGui import QImage, QPainter\nfrom PySide6.QtCore import QTimer\n\npygame.init()\nsurface = pygame.Surface((400, 300))\n\nclass Viewport(QWidget):\n    def __init__(self):\n        super().__init__()\n        self.setWindowTitle("Step 3: Animated")\n        self.resize(400, 300)\n        self.angle = 0.0\n\n    def paintEvent(self, event):\n        surface.fill((20, 20, 30))\n        x = 200 + int(100 * math.cos(self.angle))\n        pygame.draw.circle(surface, (255, 100, 50), (x, 150), 30)\n\n        w, h = surface.get_size()\n        data = pygame.image.tostring(surface, "RGB")\n        qimg = QImage(data, w, h, QImage.Format.Format_RGB888)\n\n        painter = QPainter(self)\n        painter.drawImage(0, 0, qimg)\n        painter.end()\n\napp = QApplication(sys.argv)\nwindow = Viewport()\nwindow.show()\n\ndef tick():\n    window.angle += 0.05\n    window.update()\n\ntimer = QTimer()\ntimer.timeout.connect(tick)\ntimer.start(16)\n\nsys.exit(app.exec())\n',
             },
           ],
         },

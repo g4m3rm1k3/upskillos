@@ -6,11 +6,21 @@
 // autonomously-installed Python + PySide6 environment (see
 // desktop/app/runtimes/python.cjs for the installer).
 //
-// Verification model matches JSNotebook, not PythonNotebook/CppNotebook:
-// pre-filled, editable boilerplate — you look at the real window that pops
-// up to know it worked, there's no captured-stdout diff to check against
-// (the same reasoning that already put CSS lessons on a live-preview
-// component instead of a typing drill).
+// Two ways to wire a lesson's props:
+//   - `initialCells: [...]` — independent cells, each its own script. Each
+//     cell can be pre-filled/editable (JSNotebook-style) or typeIt
+//     (PythonNotebook/CppNotebook-style: read-only reference above an
+//     empty editor).
+//   - `steps: [...]` — a PROGRESSIVE sequence sharing ONE persistent
+//     editor across every step (see ProgressiveRunner below). Running the
+//     current step's code successfully reveals the next step's reference
+//     without resetting what the learner already typed — they only ever
+//     type or edit the delta each step's prose describes, never retype
+//     unchanged code from a previous step. Chapter 2 (the Godot-like-
+//     editor project) uses this: an earlier `initialCells`-with-typeIt
+//     version required retyping the WHOLE growing script at every cell,
+//     which the person this course is for correctly flagged as pointless
+//     busywork, not learning.
 //
 // On the web build (no window.openCalcDesktop), code renders read-only with
 // an explanation instead of a Run button — content still teaches, it just
@@ -78,6 +88,46 @@ function CodeBlock({ code, C, label }) {
   );
 }
 
+// ── Reference code block — shown above an EMPTY editor for typeIt cells, so
+// the learner types the code themselves instead of pressing Run on
+// something they never wrote (same pattern as PythonNotebook/CppNotebook's
+// typeIt mode) ─────────────────────────────────────────────────────────────
+function ReferenceCodeBlock({ code, C }) {
+  const html = useMemo(() => {
+    try {
+      return Prism.highlight(code, Prism.languages.python, "python");
+    } catch {
+      return null;
+    }
+  }, [code]);
+
+  return (
+    <div style={{ margin: "0 16px 12px", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.purpleBd ?? C.blueBd}` }}>
+      <div
+        style={{
+          padding: "6px 12px",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: C.purple ?? C.blue,
+          background: C.purpleBg ?? C.blueBg,
+          borderBottom: `1px solid ${C.purpleBd ?? C.blueBd}`,
+        }}
+      >
+        Type this into the editor below
+      </div>
+      <pre style={{ margin: 0, padding: "12px 14px", fontSize: 13, lineHeight: 1.6, overflowX: "auto", background: "#1e1e1e" }}>
+        {html ? (
+          <code className="language-python" style={{ fontFamily: "monospace" }} dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <code style={{ fontFamily: "monospace", color: "#d4d4d4" }}>{code}</code>
+        )}
+      </pre>
+    </div>
+  );
+}
+
 // ── Prose block — same conventions as CppNotebook's ProseBlock ────────────
 function ProseBlock({ prose, C }) {
   if (!prose) return null;
@@ -126,7 +176,8 @@ function CellOutput({ lines, C }) {
 // ── Single cell ────────────────────────────────────────────────────────────
 const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRunning, envReady, output }) => {
   const lineCount = (cell.code || "").split("\n").length;
-  const editorHeight = `${Math.min(420, Math.max(120, lineCount * 21 + 24))}px`;
+  const refLineCount = cell.typeIt && cell.solution ? cell.solution.split("\n").length : 0;
+  const editorHeight = `${Math.min(420, Math.max(120, Math.max(lineCount, refLineCount) * 21 + 24))}px`;
 
   return (
     <div
@@ -160,6 +211,8 @@ const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRun
           <ProseBlock prose={cell.prose} C={C} />
         </div>
       )}
+
+      {cell.typeIt && cell.solution && <ReferenceCodeBlock code={cell.solution} C={C} />}
 
       <div
         style={{
@@ -216,6 +269,177 @@ const CellComponent = React.memo(({ cell, C, monacoTheme, onRun, onUpdate, isRun
     </div>
   );
 });
+
+// ── Progressive stepper — ONE persistent editor shared across every step,
+// instead of N independent cells that each have to repeat the whole
+// growing script. The learner's typed code is never reset between steps:
+// running the current step's code successfully reveals the next step's
+// reference (still the full target script, so there's something concrete
+// to compare against) while leaving what they already typed exactly as it
+// is — they only ever type or edit the delta the step's prose describes,
+// never retype unchanged code. "Successfully" for a PySide6 GUI (which has
+// no clean exit to wait for — app.exec() blocks until the user closes the
+// window) means no stderr arrived within a short grace window after
+// launch, not a clean process exit — the closest honest proxy available.
+const RUN_SUCCESS_GRACE_MS = 2500;
+
+function ProgressiveRunner({ steps, filename, C, monacoTheme, envReady }) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [code, setCode] = useState("");
+  const [running, setRunning] = useState(false);
+  const [output, setOutput] = useState([]);
+  const [runId, setRunId] = useState(null);
+  const [stepStatus, setStepStatus] = useState("idle"); // idle | success | error
+  const [justAdvanced, setJustAdvanced] = useState(false);
+
+  const step = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length - 1;
+  const lineCount = code.split("\n").length;
+  const refLineCount = (step.solution || "").split("\n").length;
+  const editorHeight = `${Math.min(420, Math.max(120, Math.max(lineCount, refLineCount) * 21 + 24))}px`;
+
+  useEffect(() => {
+    if (!runId) return;
+    const unsub = window.openCalcDesktop.onScriptOutput((evt) => {
+      if (evt.runId !== runId) return;
+      if (evt.stream === "exit") {
+        setRunning(false);
+        return;
+      }
+      setOutput((prev) => [...prev, evt]);
+      if (evt.stream === "stderr") setStepStatus("error");
+    });
+    return unsub;
+  }, [runId]);
+
+  const run = useCallback(async () => {
+    if (running) return;
+    setRunning(true);
+    setOutput([]);
+    setStepStatus("idle");
+    setJustAdvanced(false);
+    const res = await window.openCalcDesktop.runPythonScript(code);
+    if (!res?.ok) {
+      setOutput([{ stream: "stderr", text: res?.reason || "Failed to launch." }]);
+      setRunning(false);
+      setStepStatus("error");
+      return;
+    }
+    setRunId(res.runId);
+    // Grace period: no stderr by now means no traceback on startup — the
+    // best available "it worked" signal for a long-lived GUI process that
+    // has no other clean success signal to wait for.
+    setTimeout(() => {
+      setStepStatus((cur) => {
+        if (cur === "error") return cur;
+        if (!isLastStep) {
+          setStepIndex((i) => i + 1);
+          setJustAdvanced(true);
+        }
+        return "success";
+      });
+    }, RUN_SUCCESS_GRACE_MS);
+  }, [code, running, isLastStep]);
+
+  return (
+    <div
+      style={{
+        background: withAlpha(C.surface, "dd"),
+        border: `1.5px solid ${stepStatus === "error" ? C.redBd : running ? C.tealBd : withAlpha(C.blueBd, "55")}`,
+        borderRadius: 12,
+        overflow: "hidden",
+        marginBottom: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "7px 16px",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: C.blue,
+          background: `linear-gradient(90deg, ${C.blueBg} 0%, ${C.surface2} 60%, ${C.surface} 100%)`,
+          borderBottom: `1px solid ${withAlpha(C.blueBd, "44")}`,
+          borderLeft: `3px solid ${C.blue}`,
+        }}
+      >
+        <span>Step {stepIndex + 1} of {steps.length}{step.cellTitle ? ` — ${step.cellTitle}` : ""}</span>
+        {justAdvanced && (
+          <span style={{ color: C.teal, textTransform: "none", letterSpacing: "normal", fontWeight: 600 }}>
+            ✓ Previous step ran clean — new step unlocked below
+          </span>
+        )}
+      </div>
+
+      <ProseBlock prose={step.prose} C={C} />
+
+      {step.solution && <ReferenceCodeBlock code={step.solution} C={C} />}
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "5px 10px",
+          background: C.surface2,
+          borderBottom: `0.5px solid ${C.border}`,
+        }}
+      >
+        <span style={{ fontFamily: "monospace", fontSize: 11, color: C.hint }}>
+          {running ? <span>Running<span style={{ color: C.teal }}>…</span></span> : <span>{filename || "lesson.py"}</span>}
+        </span>
+        <button
+          onClick={run}
+          disabled={running || !envReady}
+          title={!envReady ? "Install Python + PySide6 above first" : undefined}
+          style={{
+            fontSize: 11,
+            padding: "3px 10px",
+            borderRadius: 6,
+            cursor: running || !envReady ? "default" : "pointer",
+            border: "none",
+            background: C.teal,
+            color: "#fff",
+            opacity: running || !envReady ? 0.4 : 1,
+          }}
+        >
+          {running ? "..." : "▶ Run"}
+        </button>
+      </div>
+
+      <Editor
+        height={editorHeight}
+        beforeMount={setupOpenCalcMonaco}
+        defaultLanguage="python"
+        theme={monacoTheme || (C.dark ? "open-calc-dark" : "open-calc-light")}
+        value={code}
+        onChange={(val) => setCode(val || "")}
+        options={{
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          fontSize: 13,
+          lineNumbers: "on",
+          padding: { top: 10, bottom: 10 },
+          automaticLayout: true,
+          acceptSuggestionOnEnter: "off",
+          scrollbar: { vertical: "hidden", alwaysConsumeMouseWheel: false },
+        }}
+      />
+
+      <CellOutput lines={output} C={C} />
+
+      {isLastStep && stepStatus === "success" && (
+        <div style={{ padding: "8px 16px", fontSize: 12, color: C.teal, borderTop: `0.5px solid ${C.border}` }}>
+          ✓ Final step ran clean — that's the complete project artifact for this lesson.
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Main notebook ──────────────────────────────────────────────────────────
 export default function PySideNotebook({ params }) {
@@ -301,7 +525,10 @@ export default function PySideNotebook({ params }) {
     setRunIds((prev) => ({ ...prev, [id]: res.runId }));
   }, [cells, runningId]);
 
+  const steps = Array.isArray(params?.steps) ? params.steps : null;
+
   if (!desktop) {
+    const readOnlyItems = steps || cells;
     return (
       <div className="px-0 sm:px-3 py-3" style={{ width: "100%", fontFamily: "sans-serif", boxSizing: "border-box" }}>
         <div
@@ -319,15 +546,15 @@ export default function PySideNotebook({ params }) {
             read the code below now, and run it for real once you're in the desktop app.
           </p>
         </div>
-        {cells.map((cell) => (
-          <div key={cell.id} style={{ marginBottom: 12 }}>
-            {cell.cellTitle && (
+        {readOnlyItems.map((item, i) => (
+          <div key={item.id ?? i} style={{ marginBottom: 12 }}>
+            {(item.cellTitle || steps) && (
               <p style={{ margin: "0 0 6px 16px", fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: C.blue }}>
-                {cell.cellTitle}
+                {steps ? `Step ${i + 1} of ${steps.length}${item.cellTitle ? ` — ${item.cellTitle}` : ""}` : item.cellTitle}
               </p>
             )}
-            <ProseBlock prose={cell.prose} C={C} />
-            <CodeBlock code={cell.code} C={C} label={cell.filename || "lesson.py"} />
+            <ProseBlock prose={item.prose} C={C} />
+            <CodeBlock code={item.typeIt || steps ? item.solution : item.code} C={C} label={item.filename || params?.filename || "lesson.py"} />
           </div>
         ))}
       </div>
@@ -369,19 +596,29 @@ export default function PySideNotebook({ params }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {cells.map((cell) => (
-          <CellComponent
-            key={cell.id}
-            cell={cell}
+        {steps ? (
+          <ProgressiveRunner
+            steps={steps}
+            filename={params?.filename}
             C={C}
             monacoTheme={monacoTheme}
-            onRun={runCell}
-            onUpdate={updateCode}
-            isRunning={runningId === cell.id}
             envReady={envStatus === "ready"}
-            output={outputs[cell.id]}
           />
-        ))}
+        ) : (
+          cells.map((cell) => (
+            <CellComponent
+              key={cell.id}
+              cell={cell}
+              C={C}
+              monacoTheme={monacoTheme}
+              onRun={runCell}
+              onUpdate={updateCode}
+              isRunning={runningId === cell.id}
+              envReady={envStatus === "ready"}
+              output={outputs[cell.id]}
+            />
+          ))
+        )}
       </div>
     </div>
   );
