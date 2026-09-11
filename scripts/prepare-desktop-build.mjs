@@ -15,8 +15,9 @@ await fs.rm(staging, { recursive: true, force: true })
 await fs.mkdir(staging, { recursive: true })
 
 // Copy Electron entry files
-await fs.copyFile(path.join(appDir, 'main.cjs'),    path.join(staging, 'main.cjs'))
-await fs.copyFile(path.join(appDir, 'preload.cjs'), path.join(staging, 'preload.cjs'))
+await fs.copyFile(path.join(appDir, 'main.cjs'),       path.join(staging, 'main.cjs'))
+await fs.copyFile(path.join(appDir, 'preload.cjs'),    path.join(staging, 'preload.cjs'))
+await fs.copyFile(path.join(appDir, 'project-fs.cjs'), path.join(staging, 'project-fs.cjs'))
 
 // Copy the desktop-only language runtime installers (e.g. runtimes/python.cjs,
 // required by main.cjs) — these are small source files, not the actual
@@ -44,7 +45,7 @@ const stagingPkg = {
     },
 
     // Only the Electron process files go into app.asar
-    files: ['main.cjs', 'preload.cjs', 'runtimes/**/*'],
+    files: ['main.cjs', 'preload.cjs', 'project-fs.cjs', 'runtimes/**/*'],
 
     // Frontend build + backend live outside asar so Node can read them at runtime
     extraResources: [
@@ -81,4 +82,4 @@ await fs.writeFile(
 )
 
 console.log(`desktop/staging/ ready  (v${appPkg.version})`)
-console.log('  main.cjs  preload.cjs  runtimes/  package.json')
+console.log('  main.cjs  preload.cjs  project-fs.cjs  runtimes/  package.json')

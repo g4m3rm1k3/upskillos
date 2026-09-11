@@ -114,4 +114,14 @@ function killAllScripts() {
   runningProcs.clear()
 }
 
-module.exports = { getStatus, install, runCode, killAllScripts }
+// See python.cjs's projectCommand for why this exists. Single-file source
+// execution (JEP 330) means a .java file in a project runs directly, with
+// no javac step — but only for a single file; a real multi-file Java
+// project would need a build, which is why this stays this simple for now.
+async function projectCommand(app, absFile) {
+  const java = await javaPath(app)
+  if (!java) return null
+  return { command: java, args: [absFile] }
+}
+
+module.exports = { getStatus, install, runCode, killAllScripts, projectCommand }

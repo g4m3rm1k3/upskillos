@@ -33,6 +33,14 @@ export const REFERENCE_ITEMS = [
     Component: lazy(() => import('../pages/LAConceptExplorerPage.jsx')),
   },
   {
+    key: 'latex-notes',
+    label: 'LaTeX Field Notes',
+    emoji: '✎',
+    color: 'indigo',
+    selfChrome: true,
+    Component: lazy(() => import('../pages/LatexFieldNotesPage.jsx')),
+  },
+  {
     key: 'regex-reference',
     label: 'Regex Reference',
     emoji: '🔤',

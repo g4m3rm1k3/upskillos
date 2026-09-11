@@ -97,7 +97,8 @@
     "remark-math": "^6.0.0",
     "three": "^0.168.0",
     "tone": "^15.1.22",
-    "trystero": "^0.23.1"
+    "trystero": "^0.23.1",
+    "ts-fsrs": "^5.4.2"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

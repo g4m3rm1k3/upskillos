@@ -18,6 +18,7 @@ const cppRuntime = require('./runtimes/cpp.cjs')
 const lispRuntime = require('./runtimes/lisp.cjs')
 const javaRuntime = require('./runtimes/java.cjs')
 const dotnetRuntime = require('./runtimes/dotnet.cjs')
+const projectFs = require('./project-fs.cjs')
 
 // Keyed dispatch table for the generic runtime IPC handlers below — adding
 // a new language means adding one more entry here, not more branches.
@@ -77,6 +78,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   backendProc?.kill()
   for (const mod of Object.values(RUNTIMES)) mod.killAllScripts?.()
+  projectFs.killAllProjectRuns()
 })
 
 app.on('activate', () => {
@@ -264,6 +266,26 @@ ipcMain.handle('desktop:run-code', async (_event, runtime, code) => {
 })
 
 // ── End desktop-only language runtimes ──────────────────────────────────────
+
+// ── Project filesystem (the Project Studio lab) ─────────────────────────────
+// Real files in a folder the user explicitly picked. See project-fs.cjs for
+// why this doesn't go through the backend's /api/dev-fs.
+
+ipcMain.handle('project:pick', async () => projectFs.pickFolder(app, mainWindow))
+ipcMain.handle('project:get', async () => projectFs.getProject(app))
+ipcMain.handle('project:tree', async () => projectFs.tree(app))
+ipcMain.handle('project:read', async (_event, relPath) => projectFs.readFile(app, relPath))
+ipcMain.handle('project:write', async (_event, relPath, content) => projectFs.writeFile(app, relPath, content))
+ipcMain.handle('project:mkdir', async (_event, relPath) => projectFs.mkdir(app, relPath))
+ipcMain.handle('project:delete', async (_event, relPath) => projectFs.remove(app, relPath))
+ipcMain.handle('project:rename', async (_event, fromRel, toRel) => projectFs.rename(app, fromRel, toRel))
+
+ipcMain.handle('project:run', async (_event, runtime, relPath) => {
+  const emit = (payload) => mainWindow?.webContents.send('desktop:script-output', payload)
+  return projectFs.runProjectFile(app, RUNTIMES, runtime, relPath, emit)
+})
+
+// ── End project filesystem ──────────────────────────────────────────────────
 
 async function spawnBackend() {
   const backendScript = app.isPackaged

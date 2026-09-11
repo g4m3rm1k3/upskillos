@@ -56,6 +56,7 @@ const NAV_LINKS = [
   { id: 'reference',      label: 'Reference Library',          emoji: '📐', refKey: 'reference', color: 'slate' },
   { id: 'linear-algebra', label: 'Linear Algebra',             emoji: '∑',  refKey: 'linear-algebra', color: 'cyan' },
   { id: 'la-explorer',    label: 'LA Concept Explorer',        emoji: '🔍', refKey: 'la-explorer', color: 'violet' },
+  { id: 'latex-notes', label: 'LaTeX Field Notes', emoji: '✎', refKey: 'latex-notes', color: 'indigo' },
   { id: 'studio',         label: 'Studio / Docs',              emoji: '✏️', path: '/studio', color: 'fuchsia' },
   { id: 'code-typing',    label: 'Code Typing Studio',         emoji: '⌨️', path: '/lab/code-typing', color: 'indigo' },
   { id: 'health',         label: 'Health Tracker',             emoji: '❤️', path: '/health', color: 'rose' },

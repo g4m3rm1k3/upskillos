@@ -44,6 +44,9 @@ const RegexReferencePage = lazy(
 const RegexConceptExplorerPage = lazy(
   () => import("./pages/RegexConceptExplorerPage.jsx"),
 );
+const LatexFieldNotesPage = lazy(
+  () => import("./pages/LatexFieldNotesPage.jsx"),
+);
 const PlaygroundPage = lazy(() => import("./pages/PlaygroundPage.jsx"));
 const CalendarPage = lazy(() => import("./features/calendar/CalendarPage.tsx"));
 const CompassPage = lazy(() => import("./features/compass/CompassPage.tsx"));

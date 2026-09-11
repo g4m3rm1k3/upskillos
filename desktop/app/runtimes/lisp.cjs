@@ -109,4 +109,11 @@ function killAllScripts() {
   runningProcs.clear()
 }
 
-module.exports = { getStatus, install, runCode, killAllScripts }
+// See python.cjs's projectCommand for why this exists.
+async function projectCommand(app, absFile) {
+  const sbcl = await sbclPath(app)
+  if (!sbcl) return null
+  return { command: sbcl, args: ['--script', absFile] }
+}
+
+module.exports = { getStatus, install, runCode, killAllScripts, projectCommand }

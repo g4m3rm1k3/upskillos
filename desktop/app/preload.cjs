@@ -34,4 +34,18 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     ipcRenderer.on('desktop:script-output', handler)
     return () => ipcRenderer.off('desktop:script-output', handler)
   },
+
+  // Project filesystem — real files in a folder the user picked, used by
+  // the Project Studio lab. See desktop/app/project-fs.cjs.
+  project: {
+    pick:   ()                  => ipcRenderer.invoke('project:pick'),
+    get:    ()                  => ipcRenderer.invoke('project:get'),
+    tree:   ()                  => ipcRenderer.invoke('project:tree'),
+    read:   (relPath)           => ipcRenderer.invoke('project:read', relPath),
+    write:  (relPath, content)  => ipcRenderer.invoke('project:write', relPath, content),
+    mkdir:  (relPath)           => ipcRenderer.invoke('project:mkdir', relPath),
+    remove: (relPath)           => ipcRenderer.invoke('project:delete', relPath),
+    rename: (fromRel, toRel)    => ipcRenderer.invoke('project:rename', fromRel, toRel),
+    run:    (runtime, relPath)  => ipcRenderer.invoke('project:run', runtime, relPath),
+  },
 })

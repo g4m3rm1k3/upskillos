@@ -30,6 +30,14 @@ const execFileAsync = promisify(execFile)
 // Pinned, known-good embeddable Python build. Bump deliberately, not
 // automatically — an embeddable zip's internal layout (the exact `._pth`
 // filename) is version-specific, so this isn't a "just grab latest" URL.
+// Python block-buffers stdout when it isn't attached to a terminal, so a
+// long-running GUI script's print() output never reaches us until the
+// process exits — which for a window that stays open is "never." Confirmed
+// live: without this, a script's entire stdout is silently swallowed; with
+// it, output streams as it happens. (This is why an earlier test of the
+// PySide6 notebook only worked with an explicit flush=True.)
+const UNBUFFERED = { PYTHONUNBUFFERED: '1' }
+
 const PYTHON_VERSION = '3.12.7'
 const PYTHON_ZIP_URL = `https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-embed-amd64.zip`
 const GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
@@ -139,6 +147,7 @@ async function runScript(app, code, onOutput) {
       cwd: scratchDir(app),
       windowsHide: false, // the whole point is a real, visible native window
       stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...UNBUFFERED },
     })
     runningScripts.set(runId, child)
 
@@ -167,4 +176,15 @@ function killAllScripts() {
   runningScripts.clear()
 }
 
-module.exports = { getStatus, install, runScript, killAllScripts }
+// How project-fs.cjs runs a real, persistent file that lives inside the
+// learner's own project folder (as opposed to runScript's ephemeral
+// scratch copy). Returns null when the runtime isn't installed. A runtime
+// that needs a separate build step before it can run simply doesn't
+// export this, and project runs report that honestly.
+async function projectCommand(app, absFile) {
+  const exe = pythonExePath(app)
+  if (!(await pathExists(exe))) return null
+  return { command: exe, args: [absFile], env: UNBUFFERED }
+}
+
+module.exports = { getStatus, install, runScript, killAllScripts, projectCommand }
