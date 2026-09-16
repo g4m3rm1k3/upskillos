@@ -103,7 +103,7 @@ export default function TopicFilterHeader({
                     : `border-slate-300/50 dark:border-slate-700/50 bg-slate-100/50 dark:bg-[#080A11]/50 ${subMeta.text} opacity-60 hover:opacity-100`
                 }`}
                 style={{
-                  transformStyle: "preserve-3d",
+                  transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d",
                   perspective: "1000px",
                   ...(isActive ? { boxShadow: subMeta.glow.replace('0.50', '0.4') } : {})
                 }}

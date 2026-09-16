@@ -408,7 +408,7 @@ function Cubie({ cubie, state, faceLabel, hidden, showNumbers }) {
         position: 'absolute',
         width: CELL,
         height: CELL,
-        transformStyle: 'preserve-3d',
+        transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d',
         transform: `translate3d(${tx}px, ${ty}px, ${tz}px)`,
         left: HALF,
         top: HALF,
@@ -429,9 +429,9 @@ function Cubie({ cubie, state, faceLabel, hidden, showNumbers }) {
               position: 'absolute',
               width: CELL,
               height: CELL,
-              transformStyle: 'preserve-3d',
+              transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d',
               transform,
-              backfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
               background: hasSticker ? color : '#0d1117',
               border: hasSticker ? '2px solid rgba(0,0,0,0.3)' : '1px solid #111',
               borderRadius: 4,
@@ -1102,7 +1102,7 @@ export default function RubiksCube({ onBack }) {
                 position: 'relative',
                 width: cubeSize,
                 height: cubeSize,
-                transformStyle: 'preserve-3d',
+                transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d',
                 transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
                 transition: scrambling ? 'transform 0.08s ease' : 'none',
               }}
@@ -1130,7 +1130,7 @@ export default function RubiksCube({ onBack }) {
                       <div ref={animLayerRef} style={{
                         position: 'absolute',
                         left: 0, top: 0, right: 0, bottom: 0,
-                        transformStyle: 'preserve-3d',
+                        transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d',
                         pointerEvents: 'none',
                         transformOrigin: `${HALF}px ${HALF}px 0px`,
                       }}>

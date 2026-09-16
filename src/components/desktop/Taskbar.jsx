@@ -38,7 +38,7 @@ const ConceptExplorerModal = lazy(() => import('../../concepts/ConceptExplorerMo
 const PracticeExplorerModal = lazy(() => import('../../practice/PracticeExplorerModal.tsx'))
 
 const BadgeCube = ({ content, colorClass }) => (
-  <div className="absolute -bottom-1 -right-1 w-5 h-5 pointer-events-none drop-shadow-md" style={{ transformStyle: 'preserve-3d', transform: 'translateZ(10px)' }}>
+  <div className="absolute -bottom-1 -right-1 w-5 h-5 pointer-events-none drop-shadow-md" style={{ transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d', transform: 'translateZ(10px)' }}>
     <div className={`absolute inset-0 flex items-center justify-center rounded-md overflow-hidden ${colorClass} text-[10px] font-black text-white`} style={{ transform: 'translateZ(10px)' }}>
       {content}
       <div className="absolute inset-0 shadow-[inset_0_0_6px_rgba(0,0,0,0.2)] pointer-events-none" />
@@ -83,7 +83,7 @@ const MacCube = ({ children, sideContent, isMac, frontClass, badgeContent, badge
   ) : (
     <motion.div
       className="w-full h-full relative origin-center"
-      style={{ transformStyle: 'preserve-3d' }}
+      style={{ transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}
       variants={{
         idle: { rotateY: -15, rotateX: -15, rotateZ: 0 },
         hover: hoverVariant
@@ -130,7 +130,7 @@ const MacCube = ({ children, sideContent, isMac, frontClass, badgeContent, badge
   return (
     <div className="absolute inset-0 pointer-events-none" style={{ perspective: '800px' }}>
       {/* Real object */}
-      <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
+      <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}>
         {mainElement}
       </div>
       
@@ -155,7 +155,7 @@ const MacCube = ({ children, sideContent, isMac, frontClass, badgeContent, badge
           hover: { y: 12, scaleY: -1 } // Counteracts parent y:-10 to pin reflection to the floor
         }}
       >
-        <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
+        <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}>
           {mainElement}
         </div>
       </motion.div>

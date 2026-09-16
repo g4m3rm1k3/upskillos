@@ -39,7 +39,7 @@ export default function LogoCube({ activeMeta, className = "" }) {
     <div className={`relative w-8 h-8 group perspective-[800px] ${className}`}>
       <motion.div
         className="w-full h-full relative origin-center"
-        style={{ transformStyle: 'preserve-3d' }}
+        style={{ WebkitTransformStyle: 'preserve-3d', transformStyle: 'preserve-3d' }}
         animate={{ 
           rotateX: [0, 360],
           rotateY: [0, 360]

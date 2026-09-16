@@ -19,7 +19,7 @@ export default function CubeIconButton({
     <div className="relative w-8 h-8 cursor-pointer group" title={title} onClick={onClick} style={{ perspective: '800px' }}>
       <motion.div
         className="w-full h-full relative origin-center"
-        style={{ transformStyle: 'preserve-3d' }}
+        style={{ WebkitTransformStyle: 'preserve-3d', transformStyle: 'preserve-3d' }}
         initial="idle"
         whileHover="hover"
         whileTap="tap"
