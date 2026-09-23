@@ -456,6 +456,8 @@ export const TOPICS = {
         label: 'AI & Machine Learning',
         color: 'violet',
         items: [
+          { kind: 'lab', key: 'ml-lab',
+            differentiator: 'Start from Python basics and algebra — derive gradients, inspect real training, write NumPy, and evaluate a model against a baseline.' },
           { kind: 'course', key: 'ai-engineering',
             differentiator: 'Structured curriculum — machine learning, LLMs, and AI systems from foundations to deployment.' },
           { kind: 'lab', key: 'notebook-lab',
