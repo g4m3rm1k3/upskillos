@@ -4,6 +4,14 @@ Open `/#/lab/ml-lab` through the Labs catalog (the app uses hash routing). The e
 
 This release teaches arrays/shapes, dot products, derivatives and chain rule, followed by one-feature ordinary least squares with an intercept. Eight lessons include numeric checkpoints and saved self-explanations. Later ML engineering modules are explicitly marked planned in the learning path.
 
+The learning path lists 33 ordered core labs and five optional specializations, each with topics, a build objective and evidence of understanding. Only Lab 01 is available. Its current lesson ID persists alongside the existing saved work; the roadmap shows numeric checkpoint progress separately from mastery and links directly to lessons and the Python challenge. Unrecognized saved lesson IDs fall back to the first lesson.
+
+## Presentation and editing
+
+The lab consumes `useGlobalTheme`: heading, emphasis, inline-code and callout colors come from the selected studio theme's Markdown palette. Lesson text honors the shared reading font, size, alignment and line-height preferences. Surface and chart variables remain scoped to the lab, so loading it does not change other windows.
+
+Lesson paragraphs use explicit Markdown code spans and emphasis through `LessonText`, with authored section headings. Reference solutions and checks use the shared `StaticCodeBlock`. The editable Python workspace uses Monaco, `setupOpenCalcMonaco`, the selected studio editor theme, and the shared code typography settings. Theme changes preserve the controlled code buffer and its existing local storage key.
+
 ## Mathematical contract
 
 - Prediction: `w*x+b`; loss: mean squared error, with no extra 1/2 factor.

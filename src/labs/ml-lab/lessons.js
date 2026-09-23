@@ -5,24 +5,29 @@ export const sources = [
 ]
 export const lessons = [
   {
-    id: 'arrays', title: '00a · From Python lists to vectors', skill: 'Read array shapes and connect a weighted sum to a prediction.',
+    id: 'arrays',
+    sections: ["One operation, two meanings","Read the shape","What is a weight?","Pair each input with its weight","Build a weighted sum","Connect it to the dot product","From one row to many","Avoid a silent shape mistake","Put it into practice"], title: '00a · From Python lists to vectors', skill: 'Read array shapes and connect a weighted sum to a prediction.',
     prerequisite: 'Python lists, functions, and arithmetic. No prior NumPy or linear algebra required.',
     paragraphs: [
-      'A Python list [2, 3, 4] can hold three input sizes. A NumPy array holds these values in a structure designed for numerical operations. For an array x, 2*x multiplies each value by 2. For a Python list, 2*x repeats the list. The same-looking expression has different behavior.',
-      'A scalar is one number. A vector is an ordered collection of numbers. A matrix is a rectangular arrangement of numbers. np.array([2, 3, 4]) has shape (3,), one axis with three entries. np.array([[2], [3], [4]]) has shape (3, 1), three rows and one column.',
-      'A dot product multiplies corresponding vector entries and adds them. For [2, 3] and [4, 5], it is 2×4 + 3×5 = 23. If the inputs represent file size and number of files, the two weights express a separate cost for each input. The units of the weights must match their respective inputs.',
-      'For multiple observations and features, let X be a matrix with n observation rows and p feature columns. Let w hold p weights. X @ w produces n predictions before adding the bias. The @ operator is matrix multiplication, while * multiplies entries element by element.',
-      'This first module uses one input feature, represented by a one-dimensional array x of shape (n,). Prediction is w*x + b, where w and b are scalars. NumPy broadcasts these scalars across the array. Do not mix a prediction of shape (n,1) with targets of shape (n,): subtraction can broadcast to (n,n) and silently calculate the wrong errors.',
+      'A Python list `[2, 3, 4]` can hold three input sizes. A NumPy array holds these values in a structure designed for numerical operations. For an array x, `2*x` multiplies each value by 2. For a Python list, `2*x` repeats the list. The same-looking expression has different behavior.',
+      'A **scalar** is one number. A **vector** is an ordered collection of numbers. A **matrix** is a rectangular arrangement of numbers. `np.array([2, 3, 4])` has shape `(3,)`, one axis with three entries. `np.array([[2], [3], [4]])` has shape `(3, 1)`, three rows and one column.',
+      'Suppose we estimate that processing each megabyte (MB) of data takes 4 seconds. For 2 MB, we calculate **2 MB × 4 seconds/MB = 8 seconds**. The input is 2 MB. The multiplier, 4 seconds per MB, is a **weight**: a number we multiply an input by to calculate its contribution to the prediction. In Python: `contribution = input_value * weight`. We chose 4 for this example; training would estimate a suitable weight from measured examples.',
+      'Now suppose processing also takes 5 seconds for each file, in addition to the time spent processing its data. For a batch containing 2 MB across 3 files, the **input vector** is `inputs = [2, 3]`: total size first, file count second. The **weight vector** is `weights = [4, 5]`: 4 seconds per MB first, 5 seconds per file second. These are two inputs and two weights. Their positions tell us which input and weight belong together.',
+      'Multiply each input by its matching weight, then add the contributions. The size contributes **2 MB × 4 seconds/MB = 8 seconds**. The file count contributes **3 files × 5 seconds/file = 15 seconds**. Their **weighted sum** is **8 + 15 = 23 seconds**, our predicted processing time. Both contributions are in seconds, so we can add them. In Python: `prediction = inputs[0] * weights[0] + inputs[1] * weights[1]`. Index `0` selects the first entry; index `1` selects the second.',
+      'The operation we just performed is a **dot product**: multiply corresponding entries of two equal-length vectors, then add the products. For `[2, 3]` and `[4, 5]`, it gives 2×4 + 3×5 = 23. The weights are 4 and 5; **23 is the resulting prediction, not a weight**. A dot product can combine vectors with other meanings too; “inputs” and “weights” are the roles in this example. We have not added a fixed time independent of the inputs. Later we will introduce that extra term, called the **bias**.',
+      'For multiple observations and features, let X be a matrix with n observation rows and p feature columns. Let w hold p weights. `X @ w` produces n predictions before adding the bias. The @ operator is matrix multiplication, while * multiplies entries element by element.',
+      'This first module uses one input feature, represented by a one-dimensional array x of shape `(n,)`. Prediction is `w*x + b`, where w and b are scalars. NumPy broadcasts these scalars across the array. Do not mix a prediction of shape `(n,1)` with targets of shape `(n,)`: subtraction can broadcast to `(n,n)` and silently calculate the wrong errors.',
       'Procedure: identify what each row represents; identify each feature; print the array shapes; compute one prediction by hand; compare it with the array calculation. A quick shape check can prevent a long debugging session.',
     ],
     formula: 'np.array([2, 3]) @ np.array([4, 5]) = 23     shape (2,) · shape (2,) → scalar',
     experiment: 'Before training, set w = 2 and b = 1. In the observation table, check three predictions with ordinary arithmetic. The vector operation performs that same rule for every row.',
     question: 'What is the dot product of [2, 3] and [4, 5]?', answer: 23,
-    explanation: '2×4 + 3×5 = 8 + 15 = 23. Elementwise multiplication alone would give [8, 15], not the dot product.',
-    reflection: 'Explain why x.shape == y.shape matters when computing prediction errors. What do rows mean in your own data?',
+    explanation: '2×4 + 3×5 = 8 + 15 = 23. Elementwise multiplication alone would give `[8, 15]`; the dot product also adds those entries. In our file-processing example, `[2, 3]` contains the inputs and `[4, 5]` contains the weights. The result is a prediction of 23 seconds, not a weight.',
+    reflection: 'Explain why `x.shape == y.shape` matters when computing prediction errors. What do rows mean in your own data?',
   },
   {
-    id: 'slopes', title: '00b · Change, slopes, and derivatives', skill: 'Derive the slope of a square and use the chain rule in a simple composition.',
+    id: 'slopes',
+    sections: ["Start with an average slope","Derive the slope of a square","Check the approximation","Follow the chain rule","Change one parameter at a time","Put it into practice"], title: '00b · Change, slopes, and derivatives', skill: 'Derive the slope of a square and use the chain rule in a simple composition.',
     prerequisite: 'Basic algebra: expand a square, subtract, and divide. No calculus course required.',
     paragraphs: [
       'If a function changes from 4 to 9 while its input changes from 2 to 3, its average slope is (9−4)/(3−2) = 5. A derivative asks for the slope over smaller and smaller changes near one particular input.',
@@ -39,7 +44,8 @@ export const lessons = [
     reflection: 'In your own words, distinguish a function’s value from its derivative. Why is a derivative-based prediction only approximate for a finite step?',
   },
   {
-    id: 'model', title: '01 · A model is a claim', skill: 'Translate a prediction problem into inputs, targets, and a baseline.',
+    id: 'model',
+    sections: ["Start with a concrete prediction","Name the model parameters","Know what the points represent","Design a fair experiment","Decide whether ML is useful"], title: '01 · A model is a claim', skill: 'Translate a prediction problem into inputs, targets, and a baseline.',
     prerequisite: 'Functions and basic arithmetic. Python is only needed in the coding workspace.',
     paragraphs: [
       'Suppose a file with 2 units of size takes 5 seconds to process. A rule that adds 1 second of overhead to 2 seconds per size unit predicts 5 seconds. At size 3 it predicts 7 seconds. This is a claim about how your software behaves, and measurements can contradict it.',
@@ -55,11 +61,12 @@ export const lessons = [
     reflection: 'Name one measurable target in your project. What information is available at prediction time, and what simple rule would ML have to beat?',
   },
   {
-    id: 'loss', title: '02 · Make wrongness measurable', skill: 'Compute mean squared error and explain its sensitivity to unusual observations.',
+    id: 'loss',
+    sections: ["Calculate error by hand","Define the objective","Connect the calculation to the plot","Understand the cost of outliers","Interpret the units"], title: '02 · Make wrongness measurable', skill: 'Compute mean squared error and explain its sensitivity to unusual observations.',
     prerequisite: 'Lesson 01; averages and squares.',
     paragraphs: [
       'Two predictions are 2 and 4; the observed values are 1 and 6. Prediction minus observation gives errors 1 and −2. Squaring produces 1 and 4. Their average is 2.5. Opposite errors cannot cancel after squaring.',
-      'For observation i, let eᵢ = ŷᵢ − yᵢ. With n training observations, define J = (1/n) Σ eᵢ², the mean squared error (MSE). The symbol Σ means add the quantity over all observations. This lab consistently uses 1/n, not 1/(2n). That choice explains the factor 2 in the gradient later.',
+      'For observation i, let eᵢ = ŷᵢ − yᵢ. With n training observations, define J = (`1/n`) Σ eᵢ², the mean squared error (MSE). The symbol Σ means add the quantity over all observations. This lab consistently uses `1/n`, not `1/(2n)`. That choice explains the factor 2 in the gradient later.',
       'Procedure: predict each target; subtract its observed value; square each error; sum the squares; divide by the number of observations. The inspection table exposes each contribution. The vertical residual segments represent prediction error, not perpendicular distance to the line.',
       'An error of 10 contributes 100 to the sum while an error of 1 contributes 1. Squared loss therefore emphasizes large errors. That may reflect expensive failures, or it may make a bad measurement dominate learning.',
       'MSE has squared target units. If targets are seconds, MSE is in seconds squared; root mean squared error, √MSE, is in seconds. Smaller training MSE means a closer fit to the training observations, not automatically better future predictions.',
@@ -71,11 +78,12 @@ export const lessons = [
     reflection: 'In your project, is a rare large error much worse than several small errors? Does squared error match that cost?',
   },
   {
-    id: 'gradient', title: '03 · Derive the direction', skill: 'Derive both partial derivatives and verify them numerically.',
+    id: 'gradient',
+    sections: ["Predict the sign first","Derive one observation’s contribution","Average across the dataset","Turn the derivative into an algorithm","Check the result independently"], title: '03 · Derive the direction', skill: 'Derive both partial derivatives and verify them numerically.',
     prerequisite: 'Lessons 01–02; derivative of a square and the chain rule. A derivative measures sensitivity to a tiny input change.',
     paragraphs: [
       'Take one observation x = 2, y = 5, with w = 1 and b = 0. The prediction is 2, the error is −3, and squared loss is 9. Increasing w a little raises the prediction toward 5, so the derivative with respect to w should be negative.',
-      'A partial derivative changes one parameter while holding the other fixed. Start with e = wx + b − y. The derivative of e² with respect to e is 2e. The derivative of e with respect to w is x. The chain rule multiplies these: ∂(e²)/∂w = 2ex. For the bias, ∂e/∂b = 1, so ∂(e²)/∂b = 2e.',
+      'A **partial derivative** changes one parameter while holding the other fixed. Start with e = wx + b − y. The derivative of e² with respect to e is 2e. The derivative of e with respect to w is x. The chain rule multiplies these: ∂(e²)/∂w = 2ex. For the bias, ∂e/∂b = 1, so ∂(e²)/∂b = 2e.',
       'A derivative of an average is the average of the derivatives. Thus ∂J/∂w = (2/n) Σ eᵢxᵢ and ∂J/∂b = (2/n) Σ eᵢ. Here ∂ denotes a partial derivative. Together these two numbers form the gradient, the local direction of steepest increase under ordinary Euclidean distance in parameter coordinates.',
       'Procedure: compute all predictions at the current parameters; compute errors; average 2ex to obtain the weight derivative; average 2e to obtain the bias derivative. Compute both before changing either parameter.',
       'Check the algebra independently: perturb w by a small ε while keeping b fixed. The centered slope [J(w+ε,b) − J(w−ε,b)]/(2ε) should approximately match the derivative. Repeat for b. The lab uses ε = 0.00001 and a relative-error tolerance. Extremely small perturbations can lose precision through subtraction.',
@@ -87,11 +95,12 @@ export const lessons = [
     reflection: 'Why does the weight derivative include x, while the bias derivative does not? Explain without quoting the formula.',
   },
   {
-    id: 'training', title: '04 · Learning is repeated correction', skill: 'Perform a simultaneous gradient update and diagnose divergence.',
+    id: 'training',
+    sections: ["Work through one update","Define the learning rule","Repeat the same calculation","Know what convexity guarantees","Go deeper: curvature and step size"], title: '04 · Learning is repeated correction', skill: 'Perform a simultaneous gradient update and diagnose divergence.',
     prerequisite: 'Lesson 03; multiplication and interpreting a curve.',
     paragraphs: [
       'Using the previous example, the weight derivative is −12 and the bias derivative is −6. A learning rate of 0.1 changes w from 1 to 2.2 and b from 0 to 0.6. The new prediction is 5 and this one-point loss becomes zero. This convenient result is specific to these numbers, not a generally safe learning rate.',
-      'Let α (alpha) be the positive learning rate. Update w_new = w_old − α∂J/∂w and b_new = b_old − α∂J/∂b. We subtract because the gradient points uphill. Both derivatives must come from the same old parameters. An iteration is one update; here every iteration uses the entire training set (batch gradient descent).',
+      'Let α (alpha) be the positive learning rate. Update `w_new = w_old − α∂J/∂w` and `b_new = b_old − α∂J/∂b`. We subtract because the gradient points uphill. Both derivatives must come from the same old parameters. An iteration is one update; here every iteration uses the entire training set (batch gradient descent).',
       'Procedure: start with parameters; compute predictions, loss, and both derivatives; subtract the scaled derivatives; record the new loss; repeat. “Step once” reveals precisely one update. “Train” repeats this same operation, with no hidden fitting routine.',
       'Squared loss for a linear model is convex: any local minimum is global. A unique weight and intercept require variation in x. Convergence with a fixed learning rate still depends on that rate being small enough for the data scale. Convexity does not make arbitrary steps safe.',
       'Advanced connection: the Hessian (matrix of second derivatives) is H = 2[[mean(x²), mean(x)], [mean(x), 1]]. For a positive-definite H, fixed-step gradient descent converges when 0 < α < 2/λmax(H), where λmax is its largest eigenvalue. Scaling x changes H and therefore the useful range of learning rates.',
@@ -103,7 +112,8 @@ export const lessons = [
     reflection: 'If loss explodes after importing measurements in bytes, what could changing the unit to megabytes accomplish? What would you fit on training data only?',
   },
   {
-    id: 'evaluate', title: '05 · A fit is not evidence yet', skill: 'Compare a model to a baseline without contaminating evaluation.',
+    id: 'evaluate',
+    sections: ["Ask whether the model beats a baseline","Keep validation separate","Design the evaluation","Match the split to real use","Prevent data leakage","Recognize the limits of a line"], title: '05 · A fit is not evidence yet', skill: 'Compare a model to a baseline without contaminating evaluation.',
     prerequisite: 'Lessons 01–04; training versus validation.',
     paragraphs: [
       'Suppose your fitted model has validation MSE 4, while always predicting the training mean has validation MSE 3. Your model loses to the baseline on this split. A beautiful training curve does not change that result.',
@@ -111,7 +121,7 @@ export const lessons = [
       'Procedure: decide a metric and baseline; make the split; learn parameters using training data; compare on validation data; diagnose residual patterns; choose your method; evaluate once on an additional held-out test set in your real project. Use cross-validation when a single split gives an unstable estimate.',
       'A random split assumes observations are reasonably exchangeable. For prediction over time, train on the past and validate on later observations. For repeated measurements from the same person, machine, or project, keep related groups together. This first playground only implements the random split.',
       'Preprocessing can leak information too. Learn scaling, imputation, and feature selection from the training portion, then apply those learned transformations to validation. Never include information that would only exist after the outcome you want to predict.',
-      'The curved dataset demonstrates underfitting: even the best straight line leaves a systematic curved pattern. More iterations cannot change the model family. This module has a fixed model complexity; a dedicated complexity/overfitting investigation belongs in a later module.',
+      'The curved dataset demonstrates underfitting: even the best straight line leaves a systematic curved pattern. More iterations cannot change the model family. This module has a **fixed model complexity**; a dedicated complexity/overfitting investigation belongs in a later module.',
     ],
     formula: 'Baseline prediction = mean(y_train)     Compare both models on the same validation rows.',
     experiment: 'Choose “Curved relationship” and use the least-squares reference. Can gradient descent beat its training loss substantially? Inspect the residuals and explain what another 1,000 steps cannot fix.',
@@ -120,7 +130,8 @@ export const lessons = [
     reflection: 'Which split reflects how your project will actually be used: random, future time, or unseen groups? Name one plausible leakage source.',
   },
   {
-    id: 'transfer', title: '06 · Make it useful', skill: 'Design a small prediction project and interpret the limits of its evidence.',
+    id: 'transfer',
+    sections: ["Choose a measurable project","Interpret the fitted parameters","Plan your experiment","Use your own observations","Try another application","Compare with a direct solution","Demonstrate understanding"], title: '06 · Make it useful', skill: 'Design a small prediction project and interpret the limits of its evidence.',
     prerequisite: 'Lessons 01–05 and the NumPy challenges.',
     paragraphs: [
       'A useful first project is estimating how long a build, conversion, or batch-processing job will take. Log input size before each run and elapsed time afterward. Start with one stable machine and record configuration changes; these can alter the relationship.',

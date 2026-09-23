@@ -1,10 +1,25 @@
 // @vitest-environment happy-dom
 import React from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import MLLab from './index.jsx'
+import { ThemeProvider, useGlobalTheme } from '../../context/ThemeContext.jsx'
+import { STUDIO_THEMES } from '../../utils/studioThemes.js'
 
-afterEach(()=>{cleanup();localStorage.clear()})
+// Exercise the controlled-editor contract without downloading Monaco in unit
+// tests. The real editor is checked in the browser as part of visual QA.
+vi.mock('@monaco-editor/react', () => ({
+  default: ({ value, onChange, options, theme }) => <textarea
+    aria-label={options.ariaLabel} data-editor-theme={theme}
+    value={value} onChange={event => onChange(event.target.value)} />,
+}))
+
+function ThemeControls() {
+  const { setStudioTheme } = useGlobalTheme()
+  return <><button onClick={() => setStudioTheme('dracula')}>Test dark theme</button><button onClick={() => setStudioTheme('paperTextbook')}>Test light theme</button></>
+}
+
+afterEach(()=>{cleanup();localStorage.clear();document.documentElement.classList.remove('dark')})
 describe('learning workspace interactions',()=>{
   it('does not count a wrong answer, and persists a correct numeric checkpoint',()=>{
     render(<MLLab />)
@@ -45,7 +60,30 @@ describe('learning workspace interactions',()=>{
   it('keeps later modules explicitly planned',()=>{
     render(<MLLab />)
     fireEvent.click(screen.getByText('Your learning path',{selector:'button'}))
-    expect(within(screen.getByRole('main')).getAllByText('Planned')).toHaveLength(5)
+    expect(within(screen.getByRole('main')).getAllByText('Planned')).toHaveLength(37)
     expect(screen.getByText('Available now')).toBeTruthy()
+  })
+  it('remembers the current lesson and resumes it from the ordered path',()=>{
+    render(<MLLab />)
+    fireEvent.click(screen.getByRole('button',{name:'03 · Derive the direction'}))
+    cleanup(); render(<MLLab />)
+    fireEvent.click(screen.getByText('Your learning path',{selector:'button'}))
+    expect(within(screen.getByRole('region',{name:'Your current position'})).getByText(/03 · Derive the direction/)).toBeTruthy()
+    fireEvent.click(screen.getByText('Continue current lesson',{selector:'button'}))
+    expect(screen.getByRole('heading',{name:'Derive the direction'})).toBeTruthy()
+  })
+  it('updates lesson and editor themes without discarding code',()=>{
+    const { container } = render(<ThemeProvider><ThemeControls /><MLLab /></ThemeProvider>)
+    fireEvent.click(screen.getByText('Test dark theme'))
+    const lab = container.querySelector('.ml-lab')
+    expect(lab.style.getPropertyValue('--ml-heading-2')).toBe(STUDIO_THEMES.dracula.mdDark.h2)
+    fireEvent.click(screen.getByText('Implement in Python',{selector:'button'}))
+    const editor = screen.getByLabelText('Editable Python / NumPy')
+    expect(editor.dataset.editorTheme).toBe('dracula')
+    fireEvent.change(editor,{target:{value:'print("keep my work")'}})
+    fireEvent.click(screen.getByText('Test light theme'))
+    expect(lab.style.getPropertyValue('--ml-heading-2')).toBe(STUDIO_THEMES.paperTextbook.mdDark.h2)
+    expect(screen.getByLabelText('Editable Python / NumPy').dataset.editorTheme).toBe(STUDIO_THEMES.paperTextbook.monacoLight)
+    expect(screen.getByLabelText('Editable Python / NumPy').value).toBe('print("keep my work")')
   })
 })
