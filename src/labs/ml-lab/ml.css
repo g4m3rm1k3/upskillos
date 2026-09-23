@@ -788,3 +788,31 @@
     font-size: 14px;
   }
 }
+
+/* Multi-lab shell additions */
+.ml-lab-title { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.ml-lab-switch { display: flex; align-items: end; gap: 6px; }
+.ml-lab-switch label { display: grid; gap: 2px; }
+.ml-lab-switch select { max-width: 280px; }
+.ml-lab .ml-toggle { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 12px; color: var(--text); cursor: pointer; }
+.ml-lab .ml-toggle input { width: 16px; height: 16px; flex: none; padding: 0; margin: 0; accent-color: var(--accent); }
+.ml-toggles { display: grid; gap: 6px; align-content: center; }
+.ml-legend-custom span { color: inherit; }
+.ml-notebook { margin-top: 22px; }
+.ml-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ml-grid-2 > * { min-width: 0; }
+.ml-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-wrap; background: var(--page-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; overflow-x: auto; }
+.ml-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.ml-chip { border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 12px; background: var(--page-bg); }
+.ml-chip.on { border-color: var(--accent); color: var(--accent); }
+.ml-good { color: #16a34a; }
+.ml-bad { color: #dc2626; }
+@container (max-width: 740px) { .ml-grid-2 { grid-template-columns: 1fr; } .ml-lab-switch select { max-width: 180px; } }
+.ml-log { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 12.5px; }
+.ml-update p code, .ml-update li code, .ml-caption code { display: inline; margin: 0; padding: 1px 4px; }
+.ml-lab .ml-log { list-style: decimal; }
+.ml-update ul { margin: 6px 0; padding-left: 18px; font-size: 12.5px; }
+.ml-lab .ml-update ul { list-style: disc; }
+.ml-lab .ml-update ol { list-style: decimal; padding-left: 20px; }
+.ml-legend-custom { flex-wrap: wrap; gap: 4px 14px; }
+.ml-lab input[type="checkbox"] { appearance: auto; background: transparent; border: 0; padding: 0; width: 16px; height: 16px; accent-color: var(--accent); }

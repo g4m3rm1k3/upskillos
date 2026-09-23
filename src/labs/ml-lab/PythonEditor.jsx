@@ -4,12 +4,12 @@ import { setupOpenCalcMonaco } from '../../utils/monacoThemes.js'
 import { useGlobalTheme } from '../../context/ThemeContext.jsx'
 import CodeSettingsModal, { getCodeFontFamily, getCodeFontSize } from '../../components/ui/CodeSettingsModal.jsx'
 
-export default function PythonEditor({ code, onChange }) {
+export default function PythonEditor({ code, onChange, filename = 'my-regression.py', packages = ['numpy'] }) {
   const { themeStyles, isDarkGlobal, codeTypography } = useGlobalTheme()
   const [settingsOpen, setSettingsOpen] = useState(false)
   return <div className="ml-python-workspace">
     <div className="ml-editor-toolbar">
-      <div><strong>my-regression.py</strong><span>Python · NumPy</span></div>
+      <div><strong>{filename}</strong><span>Python · {packages.map(p => ({ numpy: 'NumPy', pandas: 'pandas', 'scikit-learn': 'scikit-learn', scipy: 'SciPy' })[p] || p).join(' · ')}</span></div>
       <div className="ml-editor-settings">
         <button onClick={() => setSettingsOpen(open => !open)} aria-label="Code settings">Code settings</button>
         <CodeSettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

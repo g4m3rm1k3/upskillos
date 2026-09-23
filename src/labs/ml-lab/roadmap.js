@@ -1,4 +1,4 @@
-// Ordered curriculum, not a claim that planned lessons have been implemented.
+// Ordered curriculum. Availability comes from the lab registry (labs/index.js).
 // Each lab ends with observable evidence rather than a “read = mastered” badge.
 export const phases = [
   { title: 'Start from first principles', goal: 'Connect measurements, mathematics, code, and honest evaluation.', labs: [
@@ -59,6 +59,6 @@ let sequence = 0
 export const roadmap = phases.map(phase => ({
   ...phase,
   labs: phase.labs.map(([title, topics, build, evidence]) => ({
-    number: ++sequence, title, topics, build, evidence, available: sequence === 1,
+    number: ++sequence, title, topics, build, evidence,
   })),
 }))

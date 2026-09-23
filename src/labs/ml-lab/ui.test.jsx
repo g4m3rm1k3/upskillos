@@ -3,6 +3,7 @@ import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import MLLab from './index.jsx'
+import { labs } from './labs/index.js'
 import { ThemeProvider, useGlobalTheme } from '../../context/ThemeContext.jsx'
 import { STUDIO_THEMES } from '../../utils/studioThemes.js'
 
@@ -57,11 +58,15 @@ describe('learning workspace interactions',()=>{
     fireEvent.click(screen.getByText('Implement in Python',{selector:'button'}))
     expect(screen.getByLabelText('Editable Python / NumPy').value).toBe('print(23)')
   })
-  it('keeps later modules explicitly planned',()=>{
+  it('marks exactly the unbuilt labs as planned and opens built labs from the path',()=>{
     render(<MLLab />)
     fireEvent.click(screen.getByText('Your learning path',{selector:'button'}))
-    expect(within(screen.getByRole('main')).getAllByText('Planned')).toHaveLength(37)
-    expect(screen.getByText('Available now')).toBeTruthy()
+    const planned = 38 - labs.length
+    expect(within(screen.getByRole('main')).queryAllByText('Planned')).toHaveLength(planned)
+    expect(screen.getByText('Current lab')).toBeTruthy()
+    const last = labs.at(-1)
+    fireEvent.click(screen.getByText(`Open Lab ${String(last.number).padStart(2,'0')}`,{selector:'button'}))
+    expect(screen.getByRole('heading',{name:last.lessons[0].title.slice(last.lessons[0].title.indexOf('·')+2)})).toBeTruthy()
   })
   it('remembers the current lesson and resumes it from the ordered path',()=>{
     render(<MLLab />)
