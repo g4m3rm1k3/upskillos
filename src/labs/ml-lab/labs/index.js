@@ -25,8 +25,15 @@ import lab22 from './l22-optimization/index.js'
 import lab23 from './l23-pytorch/index.js'
 import lab24 from './l24-convolution/index.js'
 import lab25 from './l25-sequences/index.js'
+import lab26 from './l26-attention/index.js'
+import lab27 from './l27-dl-capstone/index.js'
+import lab28 from './l28-contracts/index.js'
+import lab29 from './l29-serving/index.js'
+import lab30 from './l30-monitoring/index.js'
+import lab31 from './l31-responsible/index.js'
+import lab32 from './l32-delivery/index.js'
 
-export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25]
+export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25, lab26, lab27, lab28, lab29, lab30, lab31, lab32]
 const byNumber = new Map(labs.map(lab => [lab.number, lab]))
 export const labByNumber = number => byNumber.get(number) ?? labs[0]
 export const isAvailable = number => byNumber.has(number)
