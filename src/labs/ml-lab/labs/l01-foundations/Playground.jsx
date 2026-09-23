@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { generateData, splitData, initialModel, stepModel, gradients, gradientCheck, closedForm, mse, mean, parseCSV, predict } from '../../engine.js'
 import { experimentPython } from '../../python.js'
 import { DataPlot, LossPlot } from '../../Charts.jsx'
+import LessonText from '../../LessonText.jsx'
+import DotProduct from './DotProduct.jsx'
+import Slopes from './Slopes.jsx'
 
 const fmt = n => Number.isFinite(n) ? (Math.abs(n) >= 10000 ? n.toExponential(3) : n.toFixed(4)) : '—'
 function download(name, body, type='text/plain') {
@@ -9,8 +12,31 @@ function download(name, body, type='text/plain') {
   a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000)
 }
 
-// Lab 01's regression playground: one-feature least squares, trained step by step.
-export default function Lab01Playground({ journal, setJournal, progress }) {
+// How the trainer's screen maps onto each lesson from 01 on.
+const BRIDGE = {
+  model: ['Each **dot** is one measurement: an input x (across) and the observed target y (up). Blue circles train the model; orange diamonds are held back to check it.', 'The **solid line** is the model ŷ = w·x + b — the weighted sum from lesson 00a with one input x, one weight w, plus a bias b — worked out for every x.', 'Type into **Weight w** and **Bias b** under the chart: w tilts the line, b shifts it up and down. Ignore the training buttons for now.'],
+  loss: ['The faint **vertical segments** from each circle to the line are the errors e = ŷ − y.', '**Train MSE** is the average of those errors squared. Open “Inspect predictions and error contributions” to see each one.', 'Move w or b and watch Train MSE change: that number is what training will try to make small.'],
+  gradient: ['**Inside one update** shows dw and db: the two partial derivatives from lesson 00b, now for the loss over all training points.', '**Check gradients** performs 00b’s nudge test: it changes w (then b) by a tiny amount and compares the measured change with the formula.'],
+  training: ['**Step once** applies one update, w ← w − α·dw and b ← b − α·db, and shows the arithmetic.', '**Train** repeats it; the **loss chart** records the MSE after every step. Try learning rates 0.01, 0.1 and 1 from Reset.'],
+  evaluate: ['Compare **Validation MSE** (the orange diamonds the model never trained on) with the **mean baseline**, which always predicts the average training y.', 'Choose **Curved relationship**: no amount of training makes a straight line fit a curve.'],
+  transfer: ['Paste your own measurements under **Try your own paired measurements**.', '**Use least-squares reference** jumps straight to the direct solution (the dashed line) so you can compare it with gradient descent.'],
+}
+function Bridge({ lesson }) {
+  const items = BRIDGE[lesson?.id]
+  if (!items) return null
+  return <div className="ml-update"><h3>How this connects to “{lesson.title.slice(lesson.title.indexOf('·') + 2)}”</h3><ul>{items.map((t, i) => <li key={i}><LessonText>{t}</LessonText></li>)}</ul></div>
+}
+
+// Lab 01's playground follows the lesson: two short workbenches for the
+// preliminaries, then one regression trainer shared by lessons 01–06.
+export default function Lab01Playground(props) {
+  if (props.lesson?.id === 'arrays') return <DotProduct />
+  if (props.lesson?.id === 'slopes') return <Slopes />
+  return <Trainer {...props} />
+}
+
+// One-feature least squares, trained step by step.
+function Trainer({ journal, setJournal, progress, lesson }) {
   const [config,setConfig]=useState({seed:42,count:60,noise:0.7,shape:'linear'}), [imported,setImported]=useState(null)
   const points=useMemo(()=>imported || generateData(config),[config,imported])
   const {train,validation}=useMemo(()=>splitData(points,config.seed),[points,config.seed])
@@ -30,7 +56,8 @@ export default function Lab01Playground({ journal, setJournal, progress }) {
   const changeConfig=(name,value)=>{setRunning(false);if(name!=='seed')setImported(null);setConfig(c=>({...c,[name]:value}));setCsvError('')}
   const snapshot=()=>({version:1,createdAt:new Date().toISOString(),dataSource:imported?'Imported CSV':'Synthetic',config,rate,parameters:{w:model.w,b:model.b},iteration:model.iteration,train,validation,history:model.history,baselineValidationMSE:baseline,journal})
   return <>
-    <div className="ml-panel-heading"><div><span className="ml-eyebrow">Live experiment</span><h2>Fit. Inspect. Understand.</h2></div><span className="ml-pill">{imported?'Your CSV':'Synthetic data'}</span></div>
+    <div className="ml-panel-heading"><div><span className="ml-eyebrow">Live experiment</span><h2>Fit a line to measurements: ŷ = w·x + b</h2></div><span className="ml-pill">{imported?'Your CSV':'Synthetic data'}</span></div>
+    <Bridge lesson={lesson} />
     <div className="ml-controls"><label>Relationship<select value={imported?'imported':config.shape} onChange={e=>changeConfig('shape',e.target.value)}>{imported && <option value="imported">Imported CSV</option>}<option value="linear">Linear + noise</option><option value="curved">Curved relationship</option><option value="outlier">One outlier</option></select></label>
       <label>Noise: {config.noise}<input type="range" min="0" max="3" step="0.1" value={config.noise} onChange={e=>changeConfig('noise',+e.target.value)} /></label>
       <label>Samples<select value={config.count} onChange={e=>changeConfig('count',+e.target.value)}>{[20,60,120].map(n=><option key={n}>{n}</option>)}</select></label>

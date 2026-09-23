@@ -36,6 +36,7 @@ describe('learning workspace interactions',()=>{
   })
   it('resets training on a dataset change and retains imported data on reseeding',()=>{
     render(<MLLab />)
+    fireEvent.click(screen.getByRole('button',{name:'01 · A model is a claim'}))
     fireEvent.click(screen.getByText('100 steps',{selector:'button'}))
     expect(screen.getByText(/Step 100 ·/)).toBeTruthy()
     fireEvent.change(screen.getByRole('combobox',{name:'Relationship'}),{target:{value:'curved'}})
@@ -67,6 +68,16 @@ describe('learning workspace interactions',()=>{
     const last = labs.at(-1)
     fireEvent.click(screen.getByText(`Open Lab ${String(last.number).padStart(2,'0')}`,{selector:'button'}))
     expect(screen.getByRole('heading',{name:last.lessons[0].title.slice(last.lessons[0].title.indexOf('·')+2)})).toBeTruthy()
+  })
+  it('shows the experiment that matches the current lesson',()=>{
+    render(<MLLab />)
+    expect(screen.getByText('Build a prediction from a weighted sum.')).toBeTruthy()
+    expect(screen.getByText(/weighted sum = 8 \+ 15 = 23 s/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button',{name:'00b · Change, slopes, and derivatives'}))
+    expect(screen.getByText('Watch an average slope become a derivative.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button',{name:'01 · A model is a claim'}))
+    expect(screen.getByText(/How this connects to/)).toBeTruthy()
+    expect(screen.getByText('Fit a line to measurements: ŷ = w·x + b')).toBeTruthy()
   })
   it('remembers the current lesson and resumes it from the ordered path',()=>{
     render(<MLLab />)

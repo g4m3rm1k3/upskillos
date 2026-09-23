@@ -32,8 +32,14 @@ import lab29 from './l29-serving/index.js'
 import lab30 from './l30-monitoring/index.js'
 import lab31 from './l31-responsible/index.js'
 import lab32 from './l32-delivery/index.js'
+import lab33 from './l33-final/index.js'
+import lab34 from './l34-retrieval/index.js'
+import lab35 from './l35-recsys/index.js'
+import lab36 from './l36-causal/index.js'
+import lab37 from './l37-rl/index.js'
+import lab38 from './l38-replication/index.js'
 
-export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25, lab26, lab27, lab28, lab29, lab30, lab31, lab32]
+export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25, lab26, lab27, lab28, lab29, lab30, lab31, lab32, lab33, lab34, lab35, lab36, lab37, lab38]
 const byNumber = new Map(labs.map(lab => [lab.number, lab]))
 export const labByNumber = number => byNumber.get(number) ?? labs[0]
 export const isAvailable = number => byNumber.has(number)

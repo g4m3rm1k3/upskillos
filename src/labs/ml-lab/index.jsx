@@ -108,7 +108,10 @@ export default function MLLab({ onBack }) {
         <details className="ml-sources"><summary>References & content scope</summary><p>Original lessons for this lab. Further reading and checks against established treatments:</p>{lab.sources.map(s=><p key={s.url}><a href={s.url} target="_blank" rel="noreferrer">{s.title} ↗</a></p>)}<p>Scope: {lab.scope}</p></details>
       </article>
       <section ref={playgroundRef} className="ml-playground" aria-label={`Lab ${n2} playground`}>
-        <Suspense fallback={<p className="ml-caption" role="status">Loading the experiment…</p>}><Playground key={lab.number} journal={journal} setJournal={setJournal} progress={progress} /></Suspense>
+        <div className="ml-scope" role="note">{lab.lessonAware
+          ? <p><strong>This experiment changes with the lesson you are reading.</strong> It now shows the part for {lesson.title}.</p>
+          : <><p><strong>One experiment for the whole lab.</strong> All {lessons.length} lessons of Lab {n2} use this same panel; each lesson asks you to try something different in it.</p><p><span className="ml-eyebrow">For {lesson.title.slice(0, lesson.title.indexOf('·')).trim()}</span> <LessonText>{lesson.experiment}</LessonText></p></>}</div>
+        <Suspense fallback={<p className="ml-caption" role="status">Loading the experiment…</p>}><Playground key={lab.number} journal={journal} setJournal={setJournal} progress={progress} lesson={lesson} /></Suspense>
         {!lab.ownNotebook && <Notebook lab={lab} journal={journal} setJournal={setJournal} progress={progress} />}
       </section>
     </div>}

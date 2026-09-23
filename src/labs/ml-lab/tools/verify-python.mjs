@@ -26,7 +26,7 @@ for (const folder of readdirSync(labsDir).filter(f => /^l\d\d-/.test(f)).sort())
   const ok = good.status === 0, starterFails = bad.status !== 0
   if (!ok || !starterFails) failures++
   console.log(`${ok && starterFails ? 'OK  ' : 'FAIL'} lab ${number}: solution ${ok ? 'passes' : 'FAILS'}; starter ${starterFails ? 'fails as expected' : 'PASSES (checks too weak)'}`)
-  if (!ok) console.log((good.stdout + good.stderr).split('\n').slice(-15).join('\n'))
+  if (!ok) console.log(good.error ? `     could not run ${python}: ${good.error.message}` : `${good.stdout ?? ''}${good.stderr ?? ''}`.split('\n').slice(-15).join('\n'))
   else console.log('     ' + good.stdout.trim().split('\n').join('\n     '))
   if (py.local) {
     const file = join(dir, `${folder}-${py.local.filename}`)
