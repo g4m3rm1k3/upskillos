@@ -10,6 +10,9 @@ import Derivation from './Derivation.jsx'
 import { MathCode, NotebookCells, MathLinks } from './LessonMath.jsx'
 import PythonEditor from './PythonEditor.jsx'
 import LearningPath from './LearningPath.jsx'
+import Checkpoint from './Checkpoint.jsx'
+import JumpIn from './JumpIn.jsx'
+import { jumpIns } from './jumpIn.js'
 
 const STORE = 'upskillos.ml-lab.v1'
 const allLabs = roadmap.flatMap(phase => phase.labs.map(lab => ({ ...lab, phase })))
@@ -17,20 +20,6 @@ function readSaved() { try { return JSON.parse(localStorage.getItem(STORE)) || {
 function download(name, body, type='text/plain') {
   const url=URL.createObjectURL(new Blob([body],{type})), a=document.createElement('a')
   a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000)
-}
-function Checkpoint({ lesson, saved, onSave }) {
-  const [answer,setAnswer]=useState(''), [feedback,setFeedback]=useState('')
-  const tolerance = lesson.tolerance ?? 1e-6
-  return <section className="ml-checkpoint">
-    <span className="ml-eyebrow">Check your understanding</span><h3><LessonText>{lesson.question}</LessonText></h3>
-    <form onSubmit={e=>{e.preventDefault(); const good=answer.trim()!=='' && Number.isFinite(Number(answer)) && Math.abs(Number(answer)-lesson.answer)<=tolerance; setFeedback(good ? `Correct. ${lesson.explanation}` : 'Not quite. Work through the numbers, then try again.'); if(good) onSave({...saved,passed:true})}}>
-      <input aria-label="Checkpoint answer" value={answer} onChange={e=>setAnswer(e.target.value)} placeholder="Your numeric answer" /><button>Check answer</button>
-    </form>
-    <p role="status"><LessonText>{feedback || (saved.passed ? 'Numeric checkpoint passed previously. Try it again from memory.' : 'Try before opening the explanation.')}</LessonText></p>
-    <details><summary>Worked explanation</summary><p><LessonText>{lesson.explanation}</LessonText></p></details>
-    <label className="ml-reflection"><LessonText>{lesson.reflection}</LessonText><textarea value={saved.note || ''} onChange={e=>onSave({...saved,note:e.target.value})} placeholder="Explain it in your own words. Saved on this device." /></label>
-    <small>Numeric checks are automatic. Written explanations are for your own review; they are not AI-graded.</small>
-  </section>
 }
 function Notebook({ lab, journal, setJournal, progress }) {
   return <details open className="ml-notebook"><summary>Experiment notebook</summary>
@@ -61,15 +50,15 @@ export default function MLLab({ onBack }) {
   const [labNumber,setLabNumber]=useState(()=>labForLesson(saved.lessonId)?.number ?? 1)
   const lab=labByNumber(labNumber), lessons=lab.lessons, plan=allLabs.find(l=>l.number===lab.number)
   const [lessonIndex,setLessonIndex]=useState(()=>Math.max(0,lessons.findIndex(l=>l.id===saved.lessonId)))
-  const [storageError,setStorageError]=useState(''), [tab,setTab]=useState('learn')
+  const [storageError,setStorageError]=useState(''), [tab,setTab]=useState('learn'), [returnTo,setReturnTo]=useState(null)
   const [output,setOutput]=useState('Implement the functions, then run the checks.'), [busy,setBusy]=useState(false), [pythonStatus,setPythonStatus]=useState(''), [showSolution,setShowSolution]=useState(false)
-  const worker=useRef(null), timer=useRef(null), playgroundRef=useRef(null)
+  const worker=useRef(null), timer=useRef(null), playgroundRef=useRef(null), rootRef=useRef(null)
   const lesson=lessons[Math.min(lessonIndex,lessons.length-1)], code=codes[lab.number] ?? lab.python.starter, journal=journals[lab.number] ?? ''
   const setCode=value=>setCodes(c=>({...c,[lab.number]:value})), setJournal=value=>setJournals(j=>({...j,[lab.number]:value}))
   useEffect(()=>{try {localStorage.setItem(STORE,JSON.stringify({progress,journal:journals[1]??'',code:codes[1]??labByNumber(1).python.starter,journals,codes,lessonId:lesson.id}));setStorageError('')} catch {setStorageError('Device storage is unavailable. Export your notes before leaving.')}},[progress,journals,codes,lesson.id])
   useEffect(()=>()=>{worker.current?.terminate();clearTimeout(timer.current)},[])
   const stopWorker=()=>{worker.current?.terminate();worker.current=null;clearTimeout(timer.current);setBusy(false)}
-  const openLab=(number,index=0,nextTab='learn')=>{stopWorker();setLabNumber(number);setLessonIndex(index);setTab(nextTab);setShowSolution(false);setPythonStatus('');setOutput('Implement the functions, then run the checks.')}
+  const openLab=(number,index=0,nextTab='learn',back=null)=>{stopWorker();setReturnTo(back);setLabNumber(number);setLessonIndex(index);setTab(nextTab);setShowSolution(false);setPythonStatus('');setOutput('Implement the functions, then run the checks.')}
   const stopPython=()=>{stopWorker();setPythonStatus('Stopped');setOutput(o=>o+'\nExecution stopped. You can edit and retry.')}
   const runPython=()=>{
     setBusy(true);setOutput('');setPythonStatus('Starting Python…')
@@ -91,17 +80,19 @@ export default function MLLab({ onBack }) {
   }
   const py=lab.python, Playground=lab.Playground, n2=String(lab.number).padStart(2,'0')
   const prevLab=labs[labs.indexOf(lab)-1], nextLab=labs[labs.indexOf(lab)+1]
-  return <div className="ml-lab" style={themeVariables}>
+  return <div ref={rootRef} className="ml-lab" style={themeVariables}>
     <header className="ml-header"><div className="ml-brand"><button className="ml-back" onClick={()=>onBack ? onBack() : window.history.back()} aria-label="Back to labs">←</button><div><span className="ml-eyebrow">UpSkillOS / {plan.phase.optional?'Optional specialization':plan.phase.title}</span><h1>Machine Learning Lab <span>{n2}</span></h1><p className="ml-lab-title">{plan.title}</p></div></div>
       <div className="ml-lab-switch"><button disabled={!prevLab} onClick={()=>openLab(prevLab.number)} aria-label="Previous lab">←</button><label><span className="ml-eyebrow">Lab</span><select aria-label="Choose lab" value={lab.number} onChange={e=>openLab(Number(e.target.value))}>{labs.map(l=><option key={l.number} value={l.number}>{String(l.number).padStart(2,'0')} · {allLabs.find(p=>p.number===l.number).title}</option>)}</select></label><button disabled={!nextLab} onClick={()=>openLab(nextLab.number)} aria-label="Next lab">→</button></div></header>
-    <nav className="ml-tabs" aria-label="ML workspace">{[['learn','Learn & experiment'],['code','Implement in Python'],['path','Your learning path']].map(([id,label])=><button key={id} aria-current={tab===id?'page':undefined} className={tab===id?'active':''} onClick={()=>setTab(id)}>{label}</button>)}<span>{lessons.filter(l=>progress[l.id]?.passed).length}/{lessons.length} numeric checkpoints</span></nav>
+    <nav className="ml-tabs" aria-label="ML workspace">{[['learn','Learn & experiment'],['code','Implement in Python'],['path','Your learning path']].map(([id,label])=><button key={id} aria-current={tab===id?'page':undefined} className={tab===id?'active':''} onClick={()=>setTab(id)}>{label}</button>)}<span>{lessons.filter(l=>progress[l.id]?.passed).length}/{lessons.length} checkpoints</span></nav>
     {storageError && <p className="ml-warning" role="alert">{storageError}</p>}
+    {returnTo && returnTo.number!==lab.number && <p className="ml-return" role="note">Reviewing a prerequisite. <button onClick={()=>{openLab(returnTo.number,returnTo.index);rootRef.current?.scrollTo?.({top:0})}}>← Back to Lab {String(returnTo.number).padStart(2,'0')}</button></p>}
     {tab==='learn' && <div className="ml-layout">
       <aside className="ml-syllabus"><span className="ml-eyebrow">Module {n2} / {lab.short}</span><h2>{lab.question}</h2><p>{lab.intro}</p>
-        <nav aria-label="Lessons">{lessons.map((l,i)=><button key={l.id} className={i===lessonIndex?'selected':''} aria-current={i===lessonIndex?'step':undefined} onClick={()=>setLessonIndex(i)}><span>{l.title}</span>{progress[l.id]?.passed && <span aria-label="Numeric checkpoint passed">✓</span>}</button>)}</nav>
+        <nav aria-label="Lessons">{lessons.map((l,i)=><button key={l.id} className={i===lessonIndex?'selected':''} aria-current={i===lessonIndex?'step':undefined} onClick={()=>setLessonIndex(i)}><span>{l.title}</span>{progress[l.id]?.passed && <span aria-label="Checkpoint passed">✓</span>}</button>)}</nav>
         <div className="ml-side-note">The goal is not to finish the page.<br/>It is to explain what changed—and why.</div>
       </aside>
       <article className="ml-lesson"><span className="ml-eyebrow">Understand → derive → test → explain</span><h2>{lesson.title.slice(lesson.title.indexOf('·')+2)}</h2><p className="ml-objective">You will be able to: <LessonText>{lesson.skill}</LessonText></p><p className="ml-prereq"><strong>Before you start:</strong> <LessonText>{lesson.prerequisite}</LessonText></p><MathLinks key={`m-${lesson.id}`} lessonKeys={lesson.math} labKeys={lab.math} /><button className="ml-jump" onClick={()=>playgroundRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>Jump to live experiment ↓</button>
+        <JumpIn key={`j-${lab.number}`} lab={lab} jumpIn={jumpIns[lab.number]} onReview={(number,index)=>{openLab(number,index,'learn',{number:lab.number,index:lessonIndex});rootRef.current?.scrollTo?.({top:0})}} />
         <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
         <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
         {lesson.derivation && <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />}
@@ -114,7 +105,7 @@ export default function MLLab({ onBack }) {
       <section ref={playgroundRef} className="ml-playground" aria-label={`Lab ${n2} playground`}>
         <div className="ml-scope" role="note">{lab.lessonAware
           ? <p><strong>This experiment changes with the lesson you are reading.</strong> It now shows the part for {lesson.title}{/[.?!]$/.test(lesson.title) ? '' : '.'}</p>
-          : <><p><strong>One experiment for the whole lab.</strong> All {lessons.length} lessons of Lab {n2} use this same panel; each lesson asks you to try something different in it.</p><p><span className="ml-eyebrow">For {lesson.title.slice(0, lesson.title.indexOf('·')).trim()}</span> <LessonText>{lesson.experiment}</LessonText></p></>}</div>
+          : <><p><strong>One experiment for the whole lab.</strong> All {lessons.length} lessons of Lab {n2} use this same panel; each lesson asks you to try something different in it.{lab.viewPerLesson && ' It has opened the view this lesson uses — you can still switch.'}</p><p><span className="ml-eyebrow">For {lesson.title.slice(0, lesson.title.indexOf('·')).trim()}</span> <LessonText>{lesson.experiment}</LessonText></p></>}</div>
         <Suspense fallback={<p className="ml-caption" role="status">Loading the experiment…</p>}><Playground key={lab.number} journal={journal} setJournal={setJournal} progress={progress} lesson={lesson} /></Suspense>
         {!lab.ownNotebook && <Notebook lab={lab} journal={journal} setJournal={setJournal} progress={progress} />}
       </section>

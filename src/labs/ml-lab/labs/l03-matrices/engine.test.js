@@ -27,3 +27,22 @@ describe('lab 03 multi-feature least squares', () => {
     expect(descend(X, y, 0.9, 200).diverged).toBe(true)
   })
 })
+
+describe('the four-build table of lessons 03.1–03.3', () => {
+  it('reproduces the worked numbers in the lesson text', async () => {
+    const { tableLoss, stableLimit, buildMatrix, matVec, transpose } = await import('./engine.js')
+    const t = tableLoss([1, 2, 2])
+    expect(t.pred).toEqual([5, 13, 11, 15])
+    t.e.forEach((v, i) => expect(v).toBeCloseTo([-1.2, 0.9, -1.8, -2.1][i], 10))
+    expect(t.mse).toBeCloseTo(2.475, 10)
+    t.grad.forEach((v, i) => expect(v).toBeCloseTo([-2.1, -6.6, -3.75][i], 10))
+    expect(tableLoss([1, 2.01, 2]).mse).toBeCloseTo(2.40975, 10)
+    expect(tableLoss([1.042, 2.132, 2.075]).mse).toBeCloseTo(1.5861, 3)
+    expect(matVec(transpose(buildMatrix()), [1, 1, 1, 1])).toEqual([4, 10, 10])
+    expect(matVec(transpose(buildMatrix()), [1, 0, 0, 1])).toEqual([2, 5, 4])
+    const limit = stableLimit(buildMatrix())
+    expect(limit).toBeCloseTo(0.06607, 4)
+    expect(limit).toBeGreaterThan(0.05)
+    expect(limit).toBeLessThan(0.07)
+  })
+})

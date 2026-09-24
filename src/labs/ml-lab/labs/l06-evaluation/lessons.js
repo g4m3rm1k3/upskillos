@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l06-roles',
@@ -16,6 +18,7 @@ export const lessons = [
     experiment: 'Open leak 4. With 1 model, compare the test score and the fresh score. With 50 and 200 models, compare again. Explain why "choosing on the test set" makes the report optimistic even though no model was trained on it.',
     question: 'A dataset of 1,000 rows is split 60/20/20 into train, validation and test. How many rows are in the validation set?',
     answer: 200,
+    misconceptions: [{ answer: 600, feedback: 'That is the training set (60%). Validation is 20%.' }],
     explanation: '20% of 1,000 = 200 validation rows (600 train, 200 test).',
     reflection: 'For your project, what exactly is the future data your model will face? Which rows would you set aside as the test set, and why those?',
   },
@@ -36,6 +39,7 @@ export const lessons = [
     experiment: 'In leak 1, look at the honest fold bars. How much do individual folds disagree? Change the seed several times: how much does the honest mean move?',
     question: 'You run 5-fold cross-validation on 100 rows. How many rows train the model in each fold?',
     answer: 80,
+    misconceptions: [{ answer: 20, feedback: 'That is the size of the validation fold. The other four folds train the model.' }],
     explanation: 'Each fold holds out 100/5 = 20 rows for validation, so 80 train. Every row is validated exactly once across the 5 folds.',
     reflection: 'Which model choice in your work was made from a single split? Would cross-validation have changed your confidence in it?',
   },
@@ -76,6 +80,7 @@ export const lessons = [
     experiment: 'In leak 1, raise p from 20 to 1,000 with k = 10. Record the leaky and honest scores at several points. Then set k = 1. Explain every trend you see.',
     question: 'Labels are assigned by a fair coin and are independent of every feature. What accuracy should an honest evaluation expect for any classifier? (Decimal.)',
     answer: 0.5,
+    misconceptions: [{ answer: 0.9, tolerance: 0.05, feedback: 'A score that high on coin-flip labels is what the leaky evaluation reports. An honest evaluation cannot beat chance.' }],
     explanation: 'With labels independent of the inputs, no rule does better than chance on new rows: expected accuracy 0.5. A higher cross-validated score on such data is evidence of leakage or luck.',
     reflection: 'Which preprocessing steps in your own code are fit on data? Where exactly would each go inside a cross-validation loop?',
   },
@@ -116,6 +121,7 @@ export const lessons = [
     experiment: 'Set 1, 20 and 200 models in leak 4 and record the optimism each time, across three seeds. How does the winner’s inflation grow with the number of models?',
     question: 'Each of 20 useless models independently has a 5% chance of looking significant. What is the probability that at least one does? (Three decimals.)',
     answer: 0.6415, tolerance: 0.0006,
+    misconceptions: [{ answer: 0.05, tolerance: 0.001, feedback: 'That is the chance for one model. With 20 independent tries, compute 1 − 0.95²⁰.' }, { answer: 1, tolerance: 0.001, feedback: 'Twenty tries at 5% do not add up to certainty: 1 − 0.95²⁰.' }],
     explanation: '1 − 0.95²⁰ = 1 − 0.3585 ≈ 0.642. With 20 tries, a spurious success is more likely than not.',
     reflection: 'How many configurations did you try before your last reported result? Rewrite the report to disclose that and its effect.',
   },
@@ -127,3 +133,6 @@ export const sources = [
   { title: 'ISL with Python · Chapter 5.1 and the wrong way to do cross-validation (7.10.2 in ESL)', url: 'https://www.statlearning.com/' },
   { title: 'Kapoor & Narayanan · Leakage and the reproducibility crisis in ML-based science', url: 'https://reproducible.cs.princeton.edu/' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

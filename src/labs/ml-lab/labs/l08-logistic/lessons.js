@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l08-why',
@@ -36,6 +38,7 @@ export const lessons = [
     experiment: 'Open "Inside the model". For a point with score z ≈ 2, check that p ≈ 0.88. Find a point with a negative score and confirm p < 0.5.',
     question: 'A model predicts p = 0.8. What are the odds p / (1 − p)?',
     answer: 4,
+    misconceptions: [{ answer: 0.8, feedback: 'That is the probability itself. Odds divide it by the probability of “no”: 0.8 / 0.2.' }, { answer: 0.25, feedback: 'That is (1 − p)/p, the odds against. Odds for are p/(1 − p).' }],
     explanation: '0.8 / 0.2 = 4: four positive outcomes for each negative one. The log-odds are ln 4 ≈ 1.386.',
     reflection: 'Explain why a weight changes the probability a lot for some cases and barely at all for others.',
   },
@@ -49,13 +52,14 @@ export const lessons = [
       'If the model predicts pᵢ for example i, the probability it assigns to the observed label is pᵢ when yᵢ = 1 and 1 − pᵢ when yᵢ = 0 — compactly, `pᵢ^yᵢ (1 − pᵢ)^(1−yᵢ)`. For independent examples, the likelihood of all labels is the product. Maximum likelihood (Lab 05) chooses w and b to make the observed labels as probable as possible.',
       'Products of many probabilities underflow and are awkward to differentiate. Take the logarithm (sums instead of products), negate it (so we minimize), and average: `J = −(1/n) Σ [yᵢ log pᵢ + (1 − yᵢ) log(1 − pᵢ)]`. This is **binary cross-entropy**, also called **log loss**.',
       'Each term is `−log(probability given to the truth)`. Confident and right (p = 0.99 for a positive) costs 0.01. Unsure (0.5) costs log 2 ≈ 0.693. Confident and wrong (p = 0.01 for a positive) costs 4.6. Being confidently wrong is punished severely, which is what makes the probabilities meaningful.',
-      'Squared error on probabilities, `(p − y)²`, combined with the sigmoid, gives a non-convex loss with flat regions where the gradient vanishes even though the prediction is badly wrong. Cross-entropy with a sigmoid is **convex** in w and b: there is one minimum and gradient descent finds it, exactly as with least squares.',
+      'Squared error on probabilities, `(p − y)²`, combined with the sigmoid, gives a non-convex loss with flat regions where the gradient vanishes even though the prediction is badly wrong. Cross-entropy with a sigmoid is **convex** in w and b, and convexity buys one precise guarantee: **there are no bad local minima** — any point where the gradient is zero is a global minimum. It does **not** promise three other things. (1) *A minimum exists:* on perfectly separable data the loss keeps falling as the weights grow, so there is no finite minimizer (Lesson 08.5). (2) *It is unique:* with duplicated or collinear features, many weight vectors tie (Lesson 03.5). (3) *Gradient descent reaches it:* a learning rate that is too large still diverges. Regularization (Lab 07) fixes the first two; a suitable learning rate fixes the third.',
       'Compute the loss from the score z, not from p: `log(1 + e^z) − y·z`, evaluated as `max(z, 0) + log1p(e^(−|z|)) − y·z`. This never takes log of 0 and never overflows. If you must use probabilities, clip them to [ε, 1 − ε].',
     ],
     formula: 'J(w, b) = −mean[y log p + (1 − y) log(1 − p)] = mean[log(1 + e^z) − y z]',
     experiment: 'Watch the per-point loss column while training. Which points still have loss above 1 after 200 steps? Where are they in the plot?',
     question: 'A positive example (y = 1) gets p = 0.5. What is its cross-entropy loss −log(p)? (Natural log, three decimals.)',
     answer: 0.6931, tolerance: 0.0006,
+    misconceptions: [{ answer: 0.5, tolerance: 0.01, feedback: 'That is 1 − p. The loss is −log(p): natural logarithm of 0.5, negated.' }],
     explanation: '−ln(0.5) = ln 2 ≈ 0.693. This is also the average loss of the all-zero model on any data.',
     reflection: 'Why should a model that says "99% sure" and is wrong be penalized far more than one that says "60% sure" and is wrong? Where would that matter in your work?',
   },
@@ -76,6 +80,7 @@ export const lessons = [
     experiment: 'Press "Check gradients" at step 0, after 200 steps, and with quadratic features and λ = 0.01. Does the match survive every setting?',
     question: 'One example with x = 2, y = 1 and current prediction p = 0.7. What is ∂ℓ/∂w = (p − y)·x?',
     answer: -0.6,
+    misconceptions: [{ answer: -0.3, feedback: 'That is p − y alone. Multiply by the input x = 2.' }, { answer: 0.6, feedback: 'Right size, wrong sign: p − y = 0.7 − 1 is negative.' }],
     explanation: '(0.7 − 1) × 2 = −0.6. Negative: increasing w raises p toward the correct label 1, lowering the loss.',
     reflection: 'Explain, without formulas, why a misclassified point far from the boundary contributes a large gradient while a confidently correct one contributes almost none.',
   },
@@ -96,6 +101,7 @@ export const lessons = [
     experiment: 'On "Circle inside ring", train with linear features and record validation accuracy. Switch to quadratic features and train again. Then try "Two blobs" at λ = 0 versus λ = 0.01, watching ‖w‖.',
     question: 'For w = (1, 2) and b = −4, where does the decision boundary cross the x₂ axis (x₁ = 0)?',
     answer: 2,
+    misconceptions: [{ answer: 4, feedback: 'That is where it crosses the x₁ axis. On the x₂ axis, x₁ = 0: 2x₂ − 4 = 0.' }],
     explanation: 'With x₁ = 0: 2x₂ − 4 = 0, so x₂ = 2.',
     reflection: 'Would a straight boundary be adequate for a classifier in your domain? What feature could make a curved boundary unnecessary?',
   },
@@ -116,6 +122,7 @@ export const lessons = [
     experiment: 'Train on "Overlapping blobs", then move the threshold from 0.5 to 0.2 and to 0.8. Record how the validation confusion table changes. Which threshold would you choose if missing a class-1 case cost four times a false alarm?',
     question: 'A false positive costs 1 and a false negative costs 4. What probability threshold minimizes expected cost?',
     answer: 0.2,
+    misconceptions: [{ answer: 0.8, feedback: 'You swapped the costs. The threshold is C_FP / (C_FP + C_FN) = 1 / 5.' }, { answer: 0.5, feedback: 'That threshold treats both mistakes as equally costly. Here a false negative costs four times more.' }],
     explanation: 't = C_FP/(C_FP + C_FN) = 1/5 = 0.2. Act on anything with at least a 20% chance of being positive.',
     reflection: 'Estimate the costs of false positives and false negatives for a classifier you might build. What threshold do they imply?',
   },
@@ -127,3 +134,6 @@ export const sources = [
   { title: 'scikit-learn · LogisticRegression', url: 'https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression' },
   { title: 'SciPy · scipy.special.expit (stable sigmoid)', url: 'https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.expit.html' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

@@ -21,12 +21,12 @@ export default function LearningPath({ progress, currentLab, lessonIndex, onOpen
       <span className="ml-pill">You are here · Lab {n2(currentLab.number)}</span>
       <h3>{currentPlan.title}</h3>
       <p><strong>Current lesson:</strong> {currentLab.lessons[lessonIndex]?.title}</p>
-      <p>{passed(currentLab)}/{currentLab.lessons.length} numeric checkpoints passed in this lab · {totalPassed}/{totalChecks} across all labs. These are practice checks, not a certification of mastery.</p>
-      <progress value={passed(currentLab)} max={currentLab.lessons.length} aria-label={`Lab ${n2(currentLab.number)} numeric checkpoint progress`} />
+      <p>{passed(currentLab)}/{currentLab.lessons.length} checkpoints passed in this lab · {totalPassed}/{totalChecks} across all labs. These are practice checks, not a certification of mastery.</p>
+      <progress value={passed(currentLab)} max={currentLab.lessons.length} aria-label={`Lab ${n2(currentLab.number)} checkpoint progress`} />
       <div className="ml-actions"><button className="ml-primary" onClick={() => onOpen(currentLab.number, lessonIndex)}>Continue current lesson</button><button onClick={() => next < 0 ? onOpen(currentLab.number, 0, 'code') : onOpen(currentLab.number, next)}>{next < 0 ? 'Next: implement and explain' : 'Next unchecked lesson'}</button></div>
     </section>
     <p><strong>How to follow the order:</strong> finish the preceding core lab before advancing; revisit earlier material whenever a prerequisite feels unclear. The plan is deliberately sequential. Optional branches can be chosen after the core based on your projects.</p>
-    <p><strong>Availability:</strong> {planned === 0 ? 'Every lab below is built: lessons with numeric checkpoints, a live experiment, and a Python implementation challenge with independent checks.' : `${labs.length} labs are built; ${planned} are still planned. There are no automatic completion claims for labs that do not exist yet.`}</p>
+    <p><strong>Availability:</strong> {planned === 0 ? 'Every lab below is built: lessons with checkpoints (numeric answers and decisions), a live experiment, and a Python implementation challenge with independent checks.' : `${labs.length} labs are built; ${planned} are still planned. There are no automatic completion claims for labs that do not exist yet.`}</p>
     {roadmap.map((phase, phaseIndex) => <section className="ml-path-phase" key={phase.title}>
       <span className="ml-eyebrow">{phase.optional ? 'Choose your specialization' : phase.advanced ? 'Advanced track · after the core' : `Stage ${phaseIndex + 1}`}</span>
       <h3>{phase.title}</h3><p>{phase.goal}</p>

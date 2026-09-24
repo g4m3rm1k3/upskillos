@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l07-poly',
@@ -16,6 +18,7 @@ export const lessons = [
     experiment: 'In "Fit one model" with λ = 0, set degree 1, 3, 9 and 15 at n = 20. Describe the fitted curve at each degree before reading the metrics.',
     question: 'A polynomial model of degree 3 in one input variable, with an intercept, has how many weights (including the intercept)?',
     answer: 4,
+    misconceptions: [{ answer: 3, feedback: 'Count the intercept too: b, w₁, w₂, w₃.' }],
     explanation: 'The intercept plus x, x² and x³: four weights. A model of degree d has d + 1.',
     reflection: 'Where might a relationship in your data bend? What would a curved residual pattern look like there?',
   },
@@ -56,6 +59,7 @@ export const lessons = [
     experiment: 'In "Validation curve & bias–variance", compare degree 1, 5 and 15 at n = 20. Record bias² and variance for each. Then set degree 15 and increase n to 200. Which term changed?',
     question: 'At some input, bias² = 4, variance = 1 and noise variance = 0.25. What is the expected squared error there?',
     answer: 5.25,
+    misconceptions: [{ answer: 5, feedback: 'Add the noise variance as well: bias² + variance + σ².' }],
     explanation: '4 + 1 + 0.25 = 5.25. Here bias dominates: a more flexible model would likely help.',
     reflection: 'In your own words, why does more data reduce variance but not bias?',
   },
@@ -76,6 +80,7 @@ export const lessons = [
     experiment: 'At degree 15, n = 20, λ = 0, note the validation MSE and the weight bars. Step λ up through the grid. At which λ is validation MSE lowest? What happens to the weights?',
     question: 'One feature, no intercept: Σxy = 10, Σx² = 4, n = 2, λ = 0.5. What is the ridge weight Σxy / (Σx² + nλ)?',
     answer: 2,
+    misconceptions: [{ answer: 2.5, feedback: 'That is least squares (λ = 0). Ridge adds nλ = 2 × 0.5 = 1 to the denominator.' }],
     explanation: '10 / (4 + 2 × 0.5) = 10 / 5 = 2. Least squares (λ = 0) would give 2.5: ridge shrinks it toward zero.',
     reflection: 'Why must features be standardized before ridge? Give an example from your data where units would distort the penalty.',
   },
@@ -96,6 +101,7 @@ export const lessons = [
     experiment: 'Switch to lasso at degree 12. Raise λ step by step and count nonzero weights. Compare with ridge at the same λ values.',
     question: 'Soft thresholding: what is S(3, 1) = sign(3)·max(|3| − 1, 0)?',
     answer: 2,
+    misconceptions: [{ answer: 3, feedback: 'Soft thresholding shrinks by the threshold: |3| − 1.' }],
     explanation: '|3| − 1 = 2 > 0, so the result is +2. Any |z| ≤ 1 would give exactly 0.',
     reflection: 'Would you rather have a model that uses all 40 of your features a little, or 5 of them strongly? What would each choice cost?',
   },
@@ -114,8 +120,13 @@ export const lessons = [
     ],
     formula: 'gap = validation error − training error     large gap → variance     both high, small gap → bias',
     experiment: 'Learning curve view: compare degree 1, degree 5 and degree 12 at λ = 0, then degree 12 with λ = 0.01. For each, say whether more data would help.',
-    question: 'At n = 200 a model has training MSE 0.30 and validation MSE 0.31, while the noise variance is 0.06. Is the model limited mainly by bias (answer 1) or variance (answer 2)?',
-    answer: 1,
+    question: 'At n = 200 a model has training MSE 0.30 and validation MSE 0.31, while the noise variance is 0.06. What mainly limits it?',
+    choices: [
+      { text: 'Bias: it is too simple for the pattern', why: 'Both errors sit far above the 0.06 noise floor and close to each other.' },
+      { text: 'Variance: it is fitting noise', why: 'Variance shows as a large train–validation gap; here the gap is only 0.01.' },
+      { text: 'Noise: nothing can do better', why: 'The noise floor is 0.06, far below 0.30, so a better model exists.' },
+    ],
+    answer: 0,
     explanation: 'The gap is tiny (0.01), so variance is small; both errors sit far above the 0.06 noise floor. That is bias: a more flexible model or better features are needed, not more data.',
     reflection: 'Sketch the learning curve you expect for your current model. What would you do next if it showed a large gap? A small gap?',
   },
@@ -127,3 +138,6 @@ export const sources = [
   { title: 'scikit-learn · Validation curves and learning curves', url: 'https://scikit-learn.org/stable/modules/learning_curve.html' },
   { title: 'The Elements of Statistical Learning · Chapter 3.4 (shrinkage methods)', url: 'https://hastie.su.domains/ElemStatLearn/' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

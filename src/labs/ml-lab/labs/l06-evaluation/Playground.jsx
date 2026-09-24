@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { selectionExperiment, groupExperiment, timeExperiment, winnersCurse, mean, std } from './engine.js'
 import { Plot, Path, Bars, extent } from '../../kit/Plot.jsx'
 import { PanelHeading, Slider, Choice, Controls, Metrics, Caption, Insight, Legend } from '../../kit/ui.jsx'
@@ -6,8 +6,12 @@ import { fmt, pct } from '../../kit/math.js'
 
 const COLORS = ['#3b82f6', '#f97316', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6', '#f43f5e']
 
-export default function Playground() {
+// Opens the view each lesson's experiment uses; the learner can still switch.
+const VIEW_FOR_LESSON = { 'l06-roles': 'curse', 'l06-cv': 'selection', 'l06-baselines': 'selection', 'l06-leakage': 'selection', 'l06-splits': 'groups', 'l06-discipline': 'curse' }
+
+export default function Playground({ lesson }) {
   const [mode, setMode] = useState('selection'), [seed, setSeed] = useState(1)
+  useEffect(() => { const view = VIEW_FOR_LESSON[lesson?.id]; if (view) setMode(view) }, [lesson?.id])
   const [p, setP] = useState(500), [k, setK] = useState(10), [models, setModels] = useState(20)
   const sel = useMemo(() => mode === 'selection' ? selectionExperiment({ p, k, seed }) : null, [mode, p, k, seed])
   const grp = useMemo(() => mode === 'groups' ? groupExperiment({ seed }) : null, [mode, seed])

@@ -75,3 +75,31 @@ export function levelCurve(center, eigen, level, points = 72) {
     return [center[0] + a * v1[0] + c * v2[0], center[1] + a * v1[1] + c * v2[1]]
   })
 }
+
+// Lessons 03.1–03.3 work on one four-row table: size (GB), files (hundreds), time (minutes).
+export const BUILDS = [
+  { name: 'A', size: 1, files: 1, time: 6.2 },
+  { name: 'B', size: 2, files: 4, time: 12.1 },
+  { name: 'C', size: 3, files: 2, time: 12.8 },
+  { name: 'D', size: 4, files: 3, time: 17.1 },
+]
+export const buildMatrix = (rows = BUILDS) => rows.map(r => [1, r.size, r.files])
+export const matVec = (X, w) => X.map(row => row.reduce((t, x, j) => t + x * w[j], 0))
+export const transpose = X => X[0].map((_, j) => X.map(row => row[j]))
+export function tableLoss(w, rows = BUILDS) {
+  const X = buildMatrix(rows), y = rows.map(r => r.time), pred = matVec(X, w), e = pred.map((p, i) => p - y[i])
+  const Xte = matVec(transpose(X), e), n = rows.length
+  return { X, y, pred, e, mse: e.reduce((t, v) => t + v * v, 0) / n, Xte, grad: Xte.map(v => 2 * v / n) }
+}
+// Largest stable rate for full-batch gradient descent on MSE: 1 / λmax(XᵀX/n), by power iteration.
+export function stableLimit(X) {
+  const n = X.length, A = transpose(X).map(col => transpose(X).map(other => col.reduce((t, v, i) => t + v * other[i], 0) / n))
+  let v = A.map(() => 1), lambda = 0
+  for (let k = 0; k < 200; k++) {
+    const Av = matVec(A, v), norm = Math.hypot(...Av)
+    if (!norm) return Infinity
+    lambda = Av.reduce((t, x, i) => t + x * v[i], 0) / v.reduce((t, x) => t + x * x, 0)
+    v = Av.map(x => x / norm)
+  }
+  return 1 / lambda
+}

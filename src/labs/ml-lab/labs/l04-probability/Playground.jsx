@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { posterior, simulateAlarms, naturalFrequencies, standardError, diceExact, rollDice } from './engine.js'
 import { Plot, Path } from '../../kit/Plot.jsx'
 import { PanelHeading, Slider, Choice, Controls, Metrics, Caption, Insight, Legend } from '../../kit/ui.jsx'
@@ -20,8 +20,12 @@ function Population({ f }) {
   return <svg viewBox="0 0 560 228" role="img" aria-label="1000 machines coloured by true state and alarm">{cells}</svg>
 }
 
-export default function Playground() {
+// Opens the view each lesson's experiment uses; the learner can still switch.
+const VIEW_FOR_LESSON = { 'l04-frequency': 'dice', 'l04-distributions': 'dice', 'l04-expectation': 'dice', 'l04-conditional': 'bayes', 'l04-bayes': 'bayes', 'l04-verify': 'bayes' }
+
+export default function Playground({ lesson }) {
   const [mode, setMode] = useState('bayes')
+  useEffect(() => { const view = VIEW_FOR_LESSON[lesson?.id]; if (view) setMode(view) }, [lesson?.id])
   const [pi, setPi] = useState(4), [sens, setSens] = useState(0.9), [fa, setFa] = useState(0.05)
   const [n, setN] = useState(10000), [seed, setSeed] = useState(1)
   const [rolls, setRolls] = useState(1000)

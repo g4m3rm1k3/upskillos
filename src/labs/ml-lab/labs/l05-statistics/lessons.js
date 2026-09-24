@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l05-sample',
@@ -16,6 +18,7 @@ export const lessons = [
     experiment: 'In "Sampling & bootstrap", change only the seed several times at n = 20. Watch your one sample and its mean jump. Then switch to median: is the sampling distribution centered on the true mean line?',
     question: 'A population has mean 30 and standard deviation 12. What is the standard error of the mean of a sample of 36?',
     answer: 2,
+    misconceptions: [{ answer: 12, feedback: 'That is the population standard deviation. The standard error of the mean divides it by √n = 6.' }, { answer: 0.333, tolerance: 0.001, feedback: 'That divides by n = 36. The standard error divides by √n = 6.' }],
     explanation: 'σ/√n = 12/√36 = 12/6 = 2 seconds. Most sample means of size 36 land within about ±4 s of 30.',
     reflection: 'For a number you recently reported from data, what was the population, and how was your sample collected? Could it be unrepresentative?',
   },
@@ -36,6 +39,7 @@ export const lessons = [
     experiment: 'Compare the sampling distribution at n = 5, 20 and 200. At n = 5, is it still skewed? By roughly what factor does its spread shrink from 20 to 200?',
     question: 'A sample of 25 builds has standard deviation s = 10 s. What is the estimated standard error of the mean?',
     answer: 2,
+    misconceptions: [{ answer: 10, feedback: 'That is s, the spread of individual builds. The standard error of the mean is s/√n.' }, { answer: 0.4, feedback: 'That divides by n. The standard error divides by √n = 5.' }],
     explanation: 's/√n = 10/5 = 2 s. An approximate 95% interval is the sample mean ± 3.92 s.',
     reflection: 'How precise does one of your estimates need to be for its decision? Use σ/√n to estimate how many observations that requires.',
   },
@@ -56,6 +60,7 @@ export const lessons = [
     experiment: 'Compare "True spread of estimate" with "Bootstrap estimate of it" at n = 5, 20 and 200, across three seeds. When is the bootstrap trustworthy?',
     question: 'A sample has n = 2 distinct values. What is the probability that one specific value is absent from a bootstrap resample of size 2?',
     answer: 0.25,
+    misconceptions: [{ answer: 0.5, feedback: 'The chance that one specific value is missed on a single draw is 1/2; it must be missed on both independent draws: (1/2)².' }],
     explanation: 'Each draw misses it with probability 1/2; two independent draws: (1/2)² = 0.25. For large n, (1 − 1/n)ⁿ approaches e⁻¹ ≈ 0.368: about 37% of rows are left out of each resample.',
     reflection: 'In your data, what is the unit that was sampled independently? What would go wrong if you bootstrapped rows inside those units?',
   },
@@ -76,6 +81,7 @@ export const lessons = [
     experiment: 'Run coverage at 95% for n = 5, 20 and 200. Record the observed coverage for each. Then set 80% and check that about 20 intervals miss.',
     question: 'You compute 100 independent 95% intervals with a well-calibrated procedure. About how many do you expect to miss the true value?',
     answer: 5,
+    misconceptions: [{ answer: 95, feedback: 'That is how many intervals should contain the true value. The question asks how many miss it.' }],
     explanation: 'Coverage 95% means about 5% miss: 5 of 100. The number varies from run to run — roughly 1 to 9 is ordinary.',
     reflection: 'Rewrite a claim you have seen ("the new version is faster") as an estimate with an interval. What sample and method would you need?',
   },
@@ -96,6 +102,7 @@ export const lessons = [
     experiment: 'Set 7 of 10 and read log L at 0.5 relative to the peak. Now set 70 of 100. How far below the peak is p = 0.5 now? Explain the difference.',
     question: 'In 10 independent trials there were 7 successes. What is the maximum-likelihood estimate of p?',
     answer: 0.7,
+    misconceptions: [{ answer: 7, feedback: 'The estimate of a probability must lie between 0 and 1: k/n.' }],
     explanation: 'Setting the derivative of 7 log p + 3 log(1 − p) to zero gives 7/p = 3/(1 − p), so p = 0.7.',
     reflection: 'Explain in your own words why assuming normal noise leads to squared-error loss. What noise assumption would lead to absolute error instead?',
   },
@@ -127,3 +134,6 @@ export const sources = [
   { title: 'Seeing Theory · frequentist inference and confidence intervals', url: 'https://seeing-theory.brown.edu/frequentist-inference/index.html' },
   { title: 'NumPy · numpy.percentile', url: 'https://numpy.org/doc/stable/reference/generated/numpy.percentile.html' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

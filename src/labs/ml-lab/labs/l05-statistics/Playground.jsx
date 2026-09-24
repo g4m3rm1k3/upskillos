@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { trueMean, sample, samplingDistribution, bootstrap, percentileInterval, coverage, bernoulliLogLik, pearson, confounded, mean, std } from './engine.js'
 import { Plot, Path, extent } from '../../kit/Plot.jsx'
 import { PanelHeading, Slider, Choice, Controls, Metrics, Caption, Insight, Legend } from '../../kit/ui.jsx'
@@ -18,8 +18,12 @@ function Histogram({ values, lo, hi, color, label, marks = [], xLabel }) {
   </>}</Plot>
 }
 
-export default function Playground() {
+// Opens the view each lesson's experiment uses; the learner can still switch.
+const VIEW_FOR_LESSON = { 'l05-sample': 'sampling', 'l05-clt': 'sampling', 'l05-bootstrap': 'sampling', 'l05-interval': 'coverage', 'l05-likelihood': 'likelihood', 'l05-causation': 'confounding' }
+
+export default function Playground({ lesson }) {
   const [mode, setMode] = useState('sampling')
+  useEffect(() => { const view = VIEW_FOR_LESSON[lesson?.id]; if (view) setMode(view) }, [lesson?.id])
   const [n, setN] = useState(20), [seed, setSeed] = useState(1), [stat, setStat] = useState('mean'), [level, setLevel] = useState(0.95)
   const [k, setK] = useState(7), [trials, setTrials] = useState(10), [effect, setEffect] = useState(0)
   const one = useMemo(() => sample(n, random(seed * 7 + 1)), [n, seed])

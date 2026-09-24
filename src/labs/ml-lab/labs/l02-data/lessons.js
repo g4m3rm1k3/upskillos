@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l02-functions',
@@ -8,7 +10,7 @@ export const lessons = [
     paragraphs: [
       'You fit a model in a notebook on Monday and get validation MSE 14.2. On Tuesday you run the cells again and get 15.8. Nothing was edited. The cause: cell 7 was run twice on Monday, dropping a row the second time, and a random split used a different shuffle. **The number was real, but you cannot say what produced it.** A result you cannot regenerate is an anecdote, not evidence.',
       'Every supervised experiment has the same stages: **load** raw data → **clean** it → **split** it → **fit** on the training part → **evaluate** on held-out data. Write each stage as its own function: `load(path)`, `clean(rows)`, `split(rows, seed)`, `fit(train)`, `evaluate(model, validation)`. A run is then one line that calls them in order, and every decision lives in exactly one visible place.',
-      'A **pure function** returns a value computed only from its arguments and changes nothing outside itself. `def double(xs): return [2 * x for x in xs]` is pure. `def drop_first(xs): xs.pop(0)` is not: it mutates the caller\'s list, so calling it twice silently removes two rows. Pure stages can be rerun, tested in isolation and reordered safely. Make a copy (`rows = list(rows)` or `df = df.copy()`) before changing anything you were given.',
+      'A **pure function** returns a value computed only from its arguments and changes nothing outside itself. `def double(xs): return [2 * x for x in xs]` is pure. `def drop_first(xs): xs.pop(0)` is not: it mutates the caller\'s list, so calling it twice silently removes two rows. Pure stages can be rerun and tested in isolation, and give the same answer every time. Purity does **not** make stages interchangeable: `split(clean(rows))` and `clean(split(rows))` are different experiments when cleaning drops rows, and imputing before splitting leaks validation data. The order of stages is a decision to write down, not a detail purity settles. Make a copy (`rows = list(rows)` or `df = df.copy()`) before changing anything you were given.',
       'Hidden state is any value a function uses without receiving it as an argument: a global `SEED`, a variable left over from an earlier cell, the current time. Pass it in instead: `split(rows, seed=42, test_fraction=0.25)`. The function signature now documents every choice that can change the result, and an experiment configuration is simply the dictionary of those arguments.',
       'Procedure: write the stages as functions; give every choice a named parameter with a default; never mutate inputs; restart the Python process and run the whole pipeline top to bottom before trusting a number. The playground records its decisions and computes a **fingerprint** (a short hash) of the result, so you can see when two runs are truly identical.',
     ],
@@ -16,6 +18,7 @@ export const lessons = [
     experiment: 'Note the fingerprint. Press “Reproduce from a clean run” — the log is regenerated from the seed and the decisions are replayed. Predict whether the fingerprint matches. Then change only the seed and reproduce again.',
     question: '`def add_row(rows): rows.append(0); return len(rows)` is called twice on the same list that starts with 3 items. What does the second call return?',
     answer: 5,
+    misconceptions: [{ answer: 4, feedback: 'That is what a pure version would return. The first call already appended to the caller’s list, so the second call starts from 4 items.' }],
     explanation: 'The first call mutates the caller\'s list to 4 items and returns 4; the second finds 4, appends again and returns 5. A pure version would build `rows + [0]` and return 4 both times.',
     reflection: 'List every value your last experiment depended on that was not an explicit function argument. How would you make each one a parameter?',
   },
@@ -36,6 +39,7 @@ export const lessons = [
     experiment: 'In the broadcasting explorer, enter `100, 3` and `3`, then `5, 1` and `5`, then `4, 3` and `4`. Predict each result shape (or error) before reading it.',
     question: 'An array of shape `(4, 1)` is added to an array of shape `(3,)`. How many numbers does the result contain?',
     answer: 12,
+    misconceptions: [{ answer: 7, feedback: 'Broadcasting does not add the sizes. (4, 1) and (3,) stretch into a (4, 3) grid.' }],
     explanation: 'Aligned from the right: `(4, 1)` and `(1, 3)`. Each 1 stretches, giving shape `(4, 3)` — 12 entries.',
     reflection: 'Where in your own code could a column vector meet a flat array? Write the assertion that would catch it.',
   },
@@ -47,15 +51,16 @@ export const lessons = [
     prerequisite: 'Lesson 02.2; boolean masks.',
     paragraphs: [
       'NumPy arrays hold one type of number in a grid. Real data mixes types: a build ID, a branch name, a size in MB, a timestamp. A pandas **DataFrame** is a table of named columns, each a typed array, sharing one row index. `df = pd.read_csv("builds.csv")` loads one; `df.head()`, `df.shape` and `df.dtypes` are the first three things to run.',
-      '`df.dtypes` often reveals a problem before any modeling. If one row of `duration_s` says `"n/a"`, the whole column is read as text (dtype `object`) and `df["duration_s"].mean()` fails. Tell the reader what missing looks like — `pd.read_csv(path, na_values=["n/a", "-1"])` — or convert explicitly with `pd.to_numeric(col, errors="coerce")`, which turns unparseable entries into `NaN` (Not a Number, pandas\' missing marker).',
+      '`df.dtypes` often reveals a problem before any modeling. If one row of `duration_s` says `"unknown"`, the whole column is read as text (dtype `object`, shown as `str` in pandas 3) and `df["duration_s"].mean()` fails. (pandas already treats common markers such as empty cells, `"NA"` and `"n/a"` as missing — but not your logger’s own words.) Tell the reader what missing looks like — `pd.read_csv(path, na_values=["unknown", "-1"])` — or convert explicitly with `pd.to_numeric(col, errors="coerce")`, which turns unparseable entries into `NaN` (Not a Number, pandas\' missing marker).',
       '`df["size_mb"]` selects one column (a Series). `df[["size_mb", "files"]]` selects several (a DataFrame). `df.loc[mask, "size_mb"]` selects rows by a boolean mask or labels and a column by name; `df.iloc[0:5, 1]` selects by integer position. Prefer `.loc` for anything that assigns values; chained indexing such as `df[mask]["x"] = 0` may modify a temporary copy and leave `df` unchanged.',
-      '`df.groupby("branch")["duration_s"].mean()` splits rows by branch, averages each group, and returns one value per branch. Suppose branch `main` has durations 40 and 60 and branch `dev` has 30, 50 and 70. The grouped means are 50 and 50, although the overall mean is 250 / 5 = 50 as well — and would differ if the groups had different sizes and means. Grouped summaries answer "does this depend on that?" before you model anything.',
+      '`df.groupby("branch")["duration_s"].mean()` splits rows by branch, averages each group, and returns one value per branch. Suppose branch `main` has durations 40 and 60 and branch `dev` has 10, 20 and 30. The grouped means are 50 and 20: dev builds are much faster. The overall mean, 160 / 5 = 32, is not the average of the two group means (35), because the groups have different sizes. Grouped summaries answer "does this depend on that?" before you model anything.',
       'Procedure for any new table: `shape` (did every row load?), `dtypes` (are numbers numeric?), `isna().sum()` (where are gaps?), `describe()` (do min and max make physical sense?), `duplicated().sum()` (was anything ingested twice?). Write what you found into your notes before changing anything.',
     ],
     formula: 'df.groupby("branch")["duration_s"].mean()     df.loc[df["size_mb"] > 50, "files"]',
     experiment: 'Open the raw log preview. Which problems would `df.dtypes`, `df.isna().sum()`, `df.describe()` and `df.duplicated().sum()` each reveal? Match each problem label to the check that finds it.',
     question: 'Branch `main` has durations 40 and 60; branch `dev` has 20, 20 and 50. What is the grouped mean for `dev`?',
     answer: 30,
+    misconceptions: [{ answer: 38, feedback: 'That is the overall mean of all five builds. Group first: only dev’s three durations.' }],
     explanation: '(20 + 20 + 50) / 3 = 30. The main mean is 50. The overall mean, 190 / 5 = 38, is not the average of the two group means (40) because the groups have different sizes.',
     reflection: 'Which grouping column in your own data might change the target the most? How would you check before modeling?',
   },
@@ -76,6 +81,7 @@ export const lessons = [
     experiment: 'Switch "Learn fill value from" between training rows and all rows. Watch the fill value in the log and the validation MSE. Then compare median, mean and drop. Explain each change in the notebook.',
     question: 'Training sizes are `[2, NaN, 9, 4, 100]`. What value does median imputation fill in?',
     answer: 6.5,
+    misconceptions: [{ answer: 28.75, feedback: 'That is the mean, pulled up by the 100. Median imputation uses the middle value of the sorted, non-missing sizes.' }, { answer: 9, feedback: 'With four values, the median is the average of the middle two: (4 + 9) / 2.' }],
     explanation: 'Ignoring NaN leaves `[2, 4, 9, 100]`. The middle two sorted values are 4 and 9, so the median is 6.5. The mean would be 28.75, pulled up by 100.',
     reflection: 'For one column in your data, list the plausible reasons it could be missing. Which reason would make dropping those rows misleading?',
   },
@@ -96,6 +102,7 @@ export const lessons = [
     experiment: 'Turn off "Repair KB → MB" and look at the plot and the slope. Then turn off "Drop -1 sentinel targets". Predict what each does to the fitted line before toggling.',
     question: 'Durations are `[30, -1, 50, -1, 40]`, with -1 meaning "timed out". After treating the sentinel as missing, what is the mean duration of the valid rows?',
     answer: 40,
+    misconceptions: [{ answer: 23.6, feedback: 'That average includes the two −1 sentinels as if they were durations. Treat them as missing first.' }],
     explanation: 'The valid values are 30, 50 and 40, whose mean is 40. Averaging the raw column gives 23.6, an impossible-looking result caused by two fake negative times.',
     reflection: 'Which column in your data could contain a sentinel, and what value would it use? Write the rule you would apply.',
   },
@@ -116,6 +123,7 @@ export const lessons = [
     experiment: 'Record the fingerprint, change the seed, reproduce, then set the seed back and reproduce again. Does the original fingerprint return? What would break this if the pipeline used the current time?',
     question: 'A split puts 25% of 80 rows in validation using `k = int(n * 0.75)` training rows. How many validation rows are there?',
     answer: 20,
+    misconceptions: [{ answer: 60, feedback: 'That is the number of training rows. Validation gets the rest: 80 − 60.' }],
     explanation: '`int(80 * 0.75)` = 60 training rows, so 80 − 60 = 20 validation rows. A test should assert 60 + 20 = 80 and that no row appears in both parts.',
     reflection: 'Write three invariants your own pipeline should satisfy. Which one would have caught a bug you have already met?',
   },
@@ -128,3 +136,6 @@ export const sources = [
   { title: 'scikit-learn · Imputation of missing values', url: 'https://scikit-learn.org/stable/modules/impute.html' },
   { title: 'The Turing Way · Guide for reproducible research', url: 'https://book.the-turing-way.org/reproducible-research/reproducible-research' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

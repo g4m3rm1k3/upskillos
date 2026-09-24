@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l04-frequency',
@@ -16,6 +18,7 @@ export const lessons = [
     experiment: 'Choose the dice experiment. Set 10 rolls, then 100, 1,000 and 100,000. Record the sample mean each time and try two seeds at 10 rolls. How big is the seed-to-seed difference at each size?',
     question: 'What is the exact probability that two fair dice sum to 7? Give a decimal to three places.',
     answer: 0.1667, tolerance: 0.0006,
+    misconceptions: [{ answer: 0.1389, tolerance: 0.001, feedback: 'That is P(sum = 6) or P(sum = 8): five of 36 pairs. Count the pairs that sum to 7.' }],
     explanation: 'Six of the 36 equally likely pairs sum to 7, so 6/36 = 1/6 ≈ 0.167.',
     reflection: 'Describe one quantity in your work that you could estimate by simulating many repetitions. What would one trial be?',
   },
@@ -76,6 +79,7 @@ export const lessons = [
     experiment: 'In the alarm experiment, raise the base rate from 0.1% to 30% while keeping sensitivity and false alarms fixed. Which conditional probability changes, and which does not? Why?',
     question: 'Of 200 builds, 50 used a cache; 10 of those failed. What is P(failed | used cache)?',
     answer: 0.2,
+    misconceptions: [{ answer: 0.05, feedback: 'That is 10 / 200, the share of all builds that used a cache and failed. Condition on the cached builds only: 10 / 50.' }],
     explanation: 'Restrict to the 50 cached builds: 10 / 50 = 0.2. The overall failure rate is irrelevant to this conditional probability.',
     reflection: 'Find a pair of conditional probabilities in your field that people often swap. Write both in words and say which one a decision actually needs.',
   },
@@ -90,12 +94,13 @@ export const lessons = [
       'Write the joint probability two ways: `P(F and A) = P(A | F)·P(F) = P(F | A)·P(A)`. Divide by P(A): `P(F | A) = P(A | F)·P(F) / P(A)`. The denominator counts all alarms, real and false: `P(A) = P(A | F)P(F) + P(A | not F)P(not F)`.',
       'The **prior** P(F) is the fault rate before seeing the alarm. The **likelihood** P(A | F) says how expected the evidence is if the hypothesis is true. The **posterior** P(F | A) is the updated belief after the evidence. With a 1% prior, 90% sensitivity and 5% false alarms: 0.009 / (0.009 + 0.0495) ≈ 0.154. Ninety percent sensitivity, and still most alarms are false.',
       'When the prior is tiny, even a small false-alarm rate applied to the huge healthy population outnumbers the true alarms. Improving the posterior requires either a lower false-alarm rate or a higher prior — for example, only alerting on machines already flagged by a second signal. The playground\'s population grid makes the counts visible.',
-      'A posterior is not a decision. If a missed fault costs \\$10,000 and an inspection \\$200, inspecting at 15% posterior is worth it: expected loss from ignoring, 0.154 × 10,000 ≈ $1,540, exceeds the inspection cost. Lab 09 formalizes choosing thresholds from costs.',
+      'A posterior is not a decision. If a missed fault costs \\$10,000 and an inspection \\$200, inspecting at 15% posterior is worth it: expected loss from ignoring, 0.154 × 10,000 ≈ \\$1,540, exceeds the inspection cost. Lab 09 formalizes choosing thresholds from costs.',
     ],
     formula: 'P(F | A) = P(A | F) P(F) / [P(A | F) P(F) + P(A | ¬F) P(¬F)]',
     experiment: 'Set base rate 1%, sensitivity 90%, false alarms 5%. Predict the posterior before reading it. Then find the false-alarm rate needed to make P(fault | alarm) exceed 50%.',
     question: 'Prior 1%, sensitivity 0.9, false-alarm rate 0.05. What is P(fault | alarm)? Three decimal places.',
     answer: 0.1538, tolerance: 0.0006,
+    misconceptions: [{ answer: 0.9, tolerance: 0.001, feedback: 'That is P(alarm | fault), the reverse conditional. Bayes’ rule divides by all alarms, true and false.' }, { answer: 0.009, tolerance: 0.001, feedback: 'That is only the numerator, P(alarm | fault)·P(fault). Divide by P(alarm) = 0.009 + 0.0495.' }],
     explanation: 'Numerator 0.9 × 0.01 = 0.009. Denominator 0.009 + 0.05 × 0.99 = 0.0585. 0.009 / 0.0585 ≈ 0.154.',
     reflection: 'For an alert or test you rely on, estimate its prior, sensitivity and false-alarm rate. Roughly what fraction of its alarms are real?',
   },
@@ -116,6 +121,7 @@ export const lessons = [
     experiment: 'Run the alarm simulation with 100 machines at a 1% base rate, then 100,000. At the small size, how many alarms were there, and how wide is the error bar? Is the disagreement with the exact value surprising?',
     question: 'A simulated proportion is 0.5 from 100 relevant trials. What is its standard error?',
     answer: 0.05,
+    misconceptions: [{ answer: 0.0025, tolerance: 0.0001, feedback: 'That is the variance p(1 − p)/n. The standard error is its square root.' }],
     explanation: '√(0.5 × 0.5 / 100) = √0.0025 = 0.05. A difference of 0.03 from the exact value would be unremarkable; 0.2 would signal a bug.',
     reflection: 'Which calculation in your work could you check with a quick simulation? Write the one-trial function in plain words.',
   },
@@ -127,3 +133,6 @@ export const sources = [
   { title: 'NumPy · Random Generator', url: 'https://numpy.org/doc/stable/reference/random/generator.html' },
   { title: 'Gigerenzer & Hoffrage (1995) · natural frequencies improve Bayesian reasoning', url: 'https://doi.org/10.1037/0033-295X.102.4.684' },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

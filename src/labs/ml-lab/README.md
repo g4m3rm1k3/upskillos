@@ -4,11 +4,12 @@ Open `/#/lab/ml-lab` through the Labs catalog (the app uses hash routing). The e
 
 The curriculum has **33 core labs**, **five optional specializations** (Labs 34–38) and an **advanced track** of 23 labs (Labs 39–61) covering the theory and methods of a university machine-learning sequence and beyond. All 61 are implemented. Each lab has:
 
-- **Lessons** (usually four or five), each with sections, a skill statement, prerequisites, a formula, a guided experiment, a numeric checkpoint (optional `tolerance`), an explanation and a reflection prompt.
+- **Lessons** (usually four to six), each with sections, a skill statement, prerequisites, a formula, a guided experiment, a checkpoint, an explanation and a reflection prompt. A checkpoint is either **numeric** (`answer`, optional `tolerance`, optional `misconceptions: [{ answer, tolerance?, feedback }]` naming the likely error behind a specific wrong answer) or a **decision** (`choices: [{ text, why }]`, `answer` = index of the right choice, every `why` explaining that option). Numeric answers that match no listed misconception are still checked for common slips — a flipped sign, a factor of 2, a fraction given as a percentage — before the generic hint (`Checkpoint.jsx`).
+- **“Jumping in here from a course?”** (`jumpIn.js`, `JumpIn.jsx`): three prerequisite checks for every lab after Lab 01. A wrong answer explains the misconception and links to the exact earlier lesson that teaches it; the summary orders every miss into a recovery route, and a sticky **Back to Lab NN** banner returns the learner. `jumpIn.test.js` checks that every review link resolves to a lesson in an earlier lab.
 - **Step-by-step derivations** (most advanced lessons and some core ones): a chain of small steps, each answered with a symbolic expression or a number. Expressions are checked by numerical equivalence, so any algebraically equal form is accepted. Steps unlock in order, offer a hint and a worked reveal, and save progress per lesson.
 - **Math taught in the lesson, tied to code**: lesson text supports LaTeX (`$…$` inline, `$$…$$` display; write a literal dollar as `\\$`). A lesson may add `formulaTex` (typeset in the Math ↔ code block instead of the plain `formula`), `mathCode` (`{ rows: [[math, code, meaning]], code: { language, source, caption } }`: every symbol next to the variable or line that holds it) and `notebook` (`{ title, intro, cells: [{ title, prose, code }] }`: runnable Python cells, opened in the lesson with the app's `PythonNotebook` or copied into Notebook Lab).
 - **Links to the app's own math courses and tools**: `math` keys on a lab (shown on every lesson) or a lesson, resolved by `kit/mathLinks.js` to Linear Algebra, Calculus, Applied Statistics, Discrete Math, Dynamic Programming, AI Engineering and Data Science lessons, OpenMAT, Notebook Lab, Matrix Lab and the reference pages. `kit/mathLinks.test.js` checks that every link points to an existing lesson file or lab route and that every key used exists. Links supplement the lesson; they never replace teaching the math in it.
-- **A lesson-aware or lab-wide playground**, labelled as such: some labs change the experiment with the lesson (`lessonAware: true`), others run one experiment for the whole lab and say which part of it each lesson uses.
+- **A lesson-aware or lab-wide playground**, labelled as such: some labs change the experiment with the lesson (`lessonAware: true`); others run one experiment for the whole lab and say which part of it each lesson uses, and with `viewPerLesson: true` (Labs 04–07) open the view the current lesson’s experiment refers to.
 - **An interactive playground**: a deterministic, seeded JavaScript simulation of the lab's idea, lazy-loaded. Advanced labs train real models in the browser (networks, ensembles, GANs, diffusion, GNNs, policy gradients) with the shared `kit/nn.js`.
 - **A Python implementation challenge**: the learner implements the core algorithm from a starter; independent checks run in real Python (Pyodide) in a terminable worker. The reference solution is shown separately, never pasted over the learner's work.
 - **Sources**: primary papers, textbooks and official documentation.
@@ -73,6 +74,12 @@ Playgrounds run in the browser from seeded generators, so every figure is reprod
 
 Code, checkpoint results, derivation progress, explanations and notebooks are stored per lab under `upskillos.ml-lab.v1` (Lab 01 keeps its original keys). The Lab 33 project workbench and the Lab 38 replication report save separately on the device. Nothing is uploaded; pasted CSV data stays in the browser.
 
+## Beginner support in Labs 01–08
+
+Only basic Python is assumed. Every lesson in Labs 01–08 has runnable notebook cells (predict → run → change one value → explain) and, except the picture-only Lesson 03.4, a math ↔ code table; `jumpIn.test.js` enforces this. Labs keep these in `labs/lNN-*/notebooks.js` (Lab 01: `labs/l01-foundations/notebooks.js`) and merge them into the lessons by id.
+
+Lab 03 builds each idea from one four-row table of builds (the same numbers in the text, the notebooks and the first three playground views: a clickable design matrix, a step-through matrix product and a column-by-column `Xᵀe` with a nudge check). The loss bowl appears only in Lesson 03.4. Eigenvalues and the condition number form an optional second pass (03.8); Lesson 03.7 derives the one-feature step-size limit `α < 1/mean(x²)` first, and the weight-space playground offers a “largest stable rate” computed from the current data.
+
 ## Lab 01 mathematical contract
 
 - Prediction: `w*x+b`; loss: mean squared error, with no extra 1/2 factor.
@@ -90,6 +97,9 @@ node node_modules/vitest/vitest.mjs run src/labs/ml-lab
 # Every Python challenge with a local Python (needs numpy, pandas, scikit-learn):
 # the solution must pass its checks and the untouched starter must fail them
 node src/labs/ml-lab/tools/verify-python.mjs /path/to/python [lab numbers...]
+
+# Every lesson notebook, run top to bottom with a local Python (numpy, pandas, scikit-learn, scipy)
+node src/labs/ml-lab/tools/verify-notebooks.mjs /path/to/python [lab numbers...]
 
 # The same in the exact Pyodide release the browser uses (install pyodide@0.26.4 outside the app)
 node src/labs/ml-lab/tools/verify-pyodide.mjs /path/to/node_modules/pyodide/pyodide.mjs [lab numbers...]

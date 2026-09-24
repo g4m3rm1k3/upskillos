@@ -1,3 +1,5 @@
+import { extras } from './labs/l01-foundations/notebooks.js'
+
 export const sources = [
   { title: 'ISL with Python · Chapters 2–3: statistical learning and linear regression', url: 'https://www.statlearning.com/' },
   { title: 'scikit-learn · Ordinary least squares and numerical considerations', url: 'https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares' },
@@ -22,6 +24,7 @@ export const lessons = [
     formula: 'np.array([2, 3]) @ np.array([4, 5]) = 23     shape (2,) · shape (2,) → scalar',
     experiment: 'Before touching anything, predict the time for 2 MB and 3 files with weights 4 and 5. Then change one weight: predict which rows of the batch table change, and by how much. Finally, store the predictions as shape (4, 1) and count how many “errors” appear.',
     question: 'What is the dot product of [2, 3] and [4, 5]?', answer: 23,
+    misconceptions: [{ answer: 14, feedback: 'That adds all four numbers. Multiply each input by its matching weight first: 2×4 and 3×5, then add.' }, { answer: 8, feedback: 'That is only the first product, 2×4. The dot product adds every product: 8 + 15.' }],
     explanation: '2×4 + 3×5 = 8 + 15 = 23. Elementwise multiplication alone would give `[8, 15]`; the dot product also adds those entries. In our file-processing example, `[2, 3]` contains the inputs and `[4, 5]` contains the weights. The result is a prediction of 23 seconds, not a weight.',
     reflection: 'Explain why `x.shape == y.shape` matters when computing prediction errors. What do rows mean in your own data?',
   },
@@ -57,6 +60,7 @@ export const lessons = [
     formula: 'ŷ = wx + b     ↔     y_hat = w * x + b',
     experiment: 'Before moving w: will increasing it raise predictions at negative x? Set w = 1 and b = 0, then increase w. Inspect both sides of the plot.',
     question: 'With w = 2, b = 1, and x = 3, what is the prediction?', answer: 7,
+    misconceptions: [{ answer: 6, feedback: 'That is w·x without the bias. Add b = 1.' }, { answer: 8, feedback: 'You multiplied the bias by w as well. Only x is multiplied: ŷ = w·x + b = 2×3 + 1.' }],
     explanation: '2 × 3 + 1 = 7. Increasing w raises predictions for positive x and lowers them for negative x; b shifts every prediction equally.',
     reflection: 'Name one measurable target in your project. What information is available at prediction time, and what simple rule would ML have to beat?',
   },
@@ -74,6 +78,7 @@ export const lessons = [
     formula: 'eᵢ = wxᵢ + b − yᵢ     J = mean(e²)     ↔     np.mean((w*x + b - y)**2)',
     experiment: 'Predict how one outlier changes the fitted line. Select “One outlier,” fit the least-squares reference, and compare with the linear dataset at the same seed.',
     question: 'Errors are 1 and −2. What is their MSE?', answer: 2.5,
+    misconceptions: [{ answer: -0.5, feedback: 'That is the mean error. Square each error before averaging, so opposite errors cannot cancel.' }, { answer: 5, feedback: 'That is the sum of squared errors. MSE divides by the number of errors, n = 2.' }],
     explanation: '(1² + (−2)²) / 2 = 2.5. Mean error would be −0.5 and would hide the size of the mistakes.',
     reflection: 'In your project, is a rare large error much worse than several small errors? Does squared error match that cost?',
   },
@@ -104,23 +109,25 @@ export const lessons = [
       result: 'Averaging over n observations gives ∂J/∂w = (2/n) Σ eᵢxᵢ and ∂J/∂b = (2/n) Σ eᵢ — exactly what the trainer computes in “Inside one update”.',
     },
     question: 'For x = 2, y = 5, w = 1, b = 0 (one observation), what is ∂J/∂w?', answer: -12,
+    misconceptions: [{ answer: -6, feedback: 'That is ∂J/∂b = 2e. For w the chain rule also multiplies by x = 2.' }, { answer: -3, feedback: 'That is the error e itself. The derivative of e² is 2e, times ∂e/∂w = x.' }],
     explanation: 'The error is −3. Multiplying 2 × (−3) × 2 gives −12. The bias derivative is −6.',
     reflection: 'Why does the weight derivative include x, while the bias derivative does not? Explain without quoting the formula.',
   },
   {
     id: 'training',
-    sections: ["Work through one update","Define the learning rule","Repeat the same calculation","Know what convexity guarantees","Go deeper: curvature and step size"], title: '04 · Learning is repeated correction', skill: 'Perform a simultaneous gradient update and diagnose divergence.',
+    sections: ["Work through one update","Define the learning rule","Repeat the same calculation","Know what convexity guarantees","Why a step can be too large"], title: '04 · Learning is repeated correction', skill: 'Perform a simultaneous gradient update and diagnose divergence.',
     prerequisite: 'Lesson 03; multiplication and interpreting a curve.',
     paragraphs: [
       'Using the previous example, the weight derivative is −12 and the bias derivative is −6. A learning rate of 0.1 changes w from 1 to 2.2 and b from 0 to 0.6. The new prediction is 5 and this one-point loss becomes zero. This convenient result is specific to these numbers, not a generally safe learning rate.',
       'Let α (alpha) be the positive learning rate. Update `w_new = w_old − α∂J/∂w` and `b_new = b_old − α∂J/∂b`. We subtract because the gradient points uphill. Both derivatives must come from the same old parameters. An iteration is one update; here every iteration uses the entire training set (batch gradient descent).',
       'Procedure: start with parameters; compute predictions, loss, and both derivatives; subtract the scaled derivatives; record the new loss; repeat. “Step once” reveals precisely one update. “Train” repeats this same operation, with no hidden fitting routine.',
       'Squared loss for a linear model is convex: any local minimum is global. A unique weight and intercept require variation in x. Convergence with a fixed learning rate still depends on that rate being small enough for the data scale. Convexity does not make arbitrary steps safe.',
-      'Advanced connection: the Hessian (matrix of second derivatives) is H = 2[[mean(x²), mean(x)], [mean(x), 1]]. For a positive-definite H, fixed-step gradient descent converges when 0 < α < 2/λmax(H), where λmax is its largest eigenvalue. Scaling x changes H and therefore the useful range of learning rates.',
+      'Why can a step be too large? Picture the loss as a valley. Each step moves downhill by α times the slope; if the valley is steep, that distance overshoots the bottom and lands higher up the other side, and the next slope is steeper still — the loss explodes. How steep the valley is depends on the size of x: roughly on mean(x²). Doubling every x makes the valley about four times steeper, so a safe α becomes about four times smaller. That is why changing units (bytes versus megabytes) can turn a working learning rate into a diverging one. Lab 03, lessons 03.7–03.8, derives the exact limit.',
     ],
     formula: 'w ← w − α · 2 mean(e*x)     b ← b − α · 2 mean(e)',
     experiment: 'Record a prediction. Reset and train 100 steps with rate 0.01, then 0.1, then 1. Keep the data and starting parameters identical. Save each run and explain the difference.',
     question: 'If w = 1, ∂J/∂w = −12, and α = 0.1, what is the new w?', answer: 2.2,
+    misconceptions: [{ answer: -0.2, feedback: 'You added α × gradient. Subtract it: 1 − 0.1 × (−12) = 1 + 1.2.' }, { answer: 13, feedback: 'You forgot the learning rate: the step is α × 12 = 1.2, not 12.' }],
     explanation: '1 − 0.1 × (−12) = 2.2. Subtracting a negative derivative increases the weight.',
     reflection: 'If loss explodes after importing measurements in bytes, what could changing the unit to megabytes accomplish? What would you fit on training data only?',
   },
@@ -139,6 +146,7 @@ export const lessons = [
     formula: 'Baseline prediction = mean(y_train)     Compare both models on the same validation rows.',
     experiment: 'Choose “Curved relationship” and use the least-squares reference. Can gradient descent beat its training loss substantially? Inspect the residuals and explain what another 1,000 steps cannot fix.',
     question: 'Model validation MSE is 4; baseline validation MSE is 3. By how much is the model worse?', answer: 1,
+    misconceptions: [{ answer: -1, feedback: 'The model has the larger error, so it is worse by 4 − 3, a positive amount.' }],
     explanation: '4 − 3 = 1 MSE unit worse on this validation split. This does not prove the baseline wins on every future dataset.',
     reflection: 'Which split reflects how your project will actually be used: random, future time, or unseen groups? Name one plausible leakage source.',
   },
@@ -158,7 +166,11 @@ export const lessons = [
     formula: 'w* = Σ(x−x̄)(y−ȳ) / Σ(x−x̄)²     b* = ȳ − w*x̄',
     experiment: 'Fit the reference, record its training MSE, reset, and approach it with gradient descent. Compare predictions and loss; finite training may not reproduce parameters to machine precision.',
     question: 'With w = 0.4 seconds/item and b = 2 seconds, how many seconds do 10 items predict?', answer: 6,
+    misconceptions: [{ answer: 4, feedback: 'That is w × 10 without the fixed 2 seconds of b.' }, { answer: 24, feedback: 'You multiplied b by 10 as well. Only the per-item cost scales with the number of items.' }],
     explanation: '0.4 × 10 + 2 = 6 seconds. Predictions outside the measured input range are extrapolations and need separate evidence.',
     reflection: 'Write a mini project proposal: decision, input, target, baseline, split, acceptable error, and one failure that would make you reject the model.',
   },
 ]
+
+// Runnable cells and math ↔ code tables for each lesson live in labs/l01-foundations/notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

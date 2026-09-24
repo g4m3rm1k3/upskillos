@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { truth, makeData, fit, predict, mse, validationCurve, biasVariance, learningCurve } from './engine.js'
 import { Plot, Path, Bars } from '../../kit/Plot.jsx'
 import { PanelHeading, Slider, Choice, Controls, Metrics, Caption, Insight, Legend } from '../../kit/ui.jsx'
@@ -7,8 +7,12 @@ import { fmt, linspace, argmin } from '../../kit/math.js'
 const LAMBDAS = [0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0.03, 0.1, 0.3, 1]
 const lamLabel = l => l === 0 ? '0 (none)' : l >= 0.01 ? String(l) : l.toExponential(0)
 
-export default function Playground() {
+// Opens the view each lesson's experiment uses; the learner can still switch.
+const VIEW_FOR_LESSON = { 'l07-poly': 'fit', 'l07-fit': 'curves', 'l07-bias-variance': 'curves', 'l07-ridge': 'fit', 'l07-lasso': 'fit', 'l07-learning': 'learning' }
+
+export default function Playground({ lesson }) {
   const [mode, setMode] = useState('fit')
+  useEffect(() => { const view = VIEW_FOR_LESSON[lesson?.id]; if (view) setMode(view) }, [lesson?.id])
   const [degree, setDegree] = useState(9), [li, setLi] = useState(0), [penalty, setPenalty] = useState('l2')
   const [n, setN] = useState(20), [noise, setNoise] = useState(0.25), [seed, setSeed] = useState(1)
   const lambda = LAMBDAS[li]

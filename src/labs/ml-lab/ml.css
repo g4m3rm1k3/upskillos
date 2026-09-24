@@ -869,3 +869,35 @@
 .ml-mathlinks ul { margin: 0; padding-left: 1.1em; }
 .ml-mathlinks li { margin: 3px 0; }
 .ml-link-course { font-weight: 600; }
+
+/* Decision checkpoints and prerequisite checks */
+.ml-lab { --ml-good: #15803d; --ml-bad: #b91c1c; }
+.dark .ml-lab { --ml-good: #4ade80; --ml-bad: #f87171; }
+.ml-choices { border: 0; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.ml-choices label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.ml-choices label:hover { border-color: var(--accent); }
+.ml-choices label.right { border-color: var(--ml-good); box-shadow: inset 3px 0 0 var(--ml-good); }
+.ml-choices label.wrong { border-color: var(--ml-bad); box-shadow: inset 3px 0 0 var(--ml-bad); }
+.ml-lab .ml-choices input { margin-top: 4px; flex: none; width: auto; }
+.ml-jumpin { margin: 12px 0 4px; padding: 10px 14px; border: 1px dashed var(--accent); border-radius: 10px; font-size: 13px; }
+.ml-jumpin summary { cursor: pointer; font-weight: 600; }
+.ml-jumpin-checks { padding-left: 1.2em; }
+.ml-jumpin-checks > li { margin: 12px 0; }
+.ml-jump-good { color: var(--ml-good); }
+.ml-jump-miss { color: var(--text); border-left: 3px solid var(--ml-bad); padding-left: 10px; }
+.ml-review-link { text-align: left; }
+.ml-return { position: sticky; top: 0; z-index: 5; margin: 8px 16px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); }
+.ml-return button { margin-left: 8px; }
+
+/* Lab 03 small-table views */
+.ml-pick-table tbody tr { cursor: pointer; }
+.ml-pick-table tbody tr:hover { background: var(--surface); }
+.ml-pick-table tbody tr.selected { background: var(--accent-muted); outline: 2px solid var(--accent); outline-offset: -2px; }
+.ml-matrices { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; margin: 12px 0; font: 13px "JetBrains Mono", monospace; }
+.ml-matrices > span { color: var(--muted); }
+.ml-lab table.ml-mat { width: auto; margin: 0; font-size: 14px; flex: none; }
+.ml-mat { border-collapse: separate; border-spacing: 0; border-left: 2px solid var(--text); border-right: 2px solid var(--text); border-radius: 4px; }
+.ml-lab .ml-mat td { padding: 4px 9px; text-align: right; min-width: 2.4em; border: 0; transition: background 0.2s; }
+.ml-mat tr.active td { background: var(--accent-muted); }
+.ml-mat tr.done td { opacity: 0.85; }
+.ml-mat td.hit { background: var(--accent); color: var(--accent-text) !important; font-weight: 700; border-radius: 3px; }
