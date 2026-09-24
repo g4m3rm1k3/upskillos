@@ -2,10 +2,14 @@
 
 Open `/#/lab/ml-lab` through the Labs catalog (the app uses hash routing). The existing metadata and entry loaders discover this folder automatically. The focused development preview at `/scratch/ml-preview.html` renders the same component without loading the rest of the application.
 
-The curriculum has **33 core labs** and **five optional specializations** (Labs 34–38), all implemented. Each lab has:
+The curriculum has **33 core labs**, **five optional specializations** (Labs 34–38) and an **advanced track** of 23 labs (Labs 39–61) covering the theory and methods of a university machine-learning sequence and beyond. All 61 are implemented. Each lab has:
 
 - **Lessons** (usually four or five), each with sections, a skill statement, prerequisites, a formula, a guided experiment, a numeric checkpoint (optional `tolerance`), an explanation and a reflection prompt.
-- **An interactive playground**: a deterministic, seeded JavaScript simulation of the lab's idea, lazy-loaded.
+- **Step-by-step derivations** (most advanced lessons and some core ones): a chain of small steps, each answered with a symbolic expression or a number. Expressions are checked by numerical equivalence, so any algebraically equal form is accepted. Steps unlock in order, offer a hint and a worked reveal, and save progress per lesson.
+- **Math taught in the lesson, tied to code**: lesson text supports LaTeX (`$…$` inline, `$$…$$` display; write a literal dollar as `\\$`). A lesson may add `formulaTex` (typeset in the Math ↔ code block instead of the plain `formula`), `mathCode` (`{ rows: [[math, code, meaning]], code: { language, source, caption } }`: every symbol next to the variable or line that holds it) and `notebook` (`{ title, intro, cells: [{ title, prose, code }] }`: runnable Python cells, opened in the lesson with the app's `PythonNotebook` or copied into Notebook Lab).
+- **Links to the app's own math courses and tools**: `math` keys on a lab (shown on every lesson) or a lesson, resolved by `kit/mathLinks.js` to Linear Algebra, Calculus, Applied Statistics, Discrete Math, Dynamic Programming, AI Engineering and Data Science lessons, OpenMAT, Notebook Lab, Matrix Lab and the reference pages. `kit/mathLinks.test.js` checks that every link points to an existing lesson file or lab route and that every key used exists. Links supplement the lesson; they never replace teaching the math in it.
+- **A lesson-aware or lab-wide playground**, labelled as such: some labs change the experiment with the lesson (`lessonAware: true`), others run one experiment for the whole lab and say which part of it each lesson uses.
+- **An interactive playground**: a deterministic, seeded JavaScript simulation of the lab's idea, lazy-loaded. Advanced labs train real models in the browser (networks, ensembles, GANs, diffusion, GNNs, policy gradients) with the shared `kit/nn.js`.
 - **A Python implementation challenge**: the learner implements the core algorithm from a starter; independent checks run in real Python (Pyodide) in a terminable worker. The reference solution is shown separately, never pasted over the learner's work.
 - **Sources**: primary papers, textbooks and official documentation.
 
@@ -31,11 +35,32 @@ The curriculum has **33 core labs** and **five optional specializations** (Labs 
 | 18 | Eigenvectors, SVD & PCA | 37 | *Reinforcement learning* |
 | 19 | Time-dependent data | 38 | *Research replication* |
 
+**Advanced track** (after the core; the roadmap groups it into four phases):
+
+| # | Lab | # | Lab |
+|---|-----|---|-----|
+| 39 | GLMs & Newton’s method | 51 | Nonlinear DR & ICA |
+| 40 | Generative classifiers | 52 | DL regularization & normalization |
+| 41 | Bayesian inference | 53 | Autoencoders & VAEs |
+| 42 | Gaussian processes | 54 | GANs & diffusion |
+| 43 | Mixtures & EM | 55 | Language models |
+| 44 | Sampling & approximate inference | 56 | Learning from few labels |
+| 45 | Graphical models & HMMs | 57 | Graph neural networks |
+| 46 | Information theory | 58 | Policy gradients & actor–critic |
+| 47 | Learning theory | 59 | Interpretability |
+| 48 | Convex optimization & duality | 60 | Uncertainty & conformal prediction |
+| 49 | Kernel methods | 61 | Robustness & distribution shift |
+| 50 | Online learning & bandits | | |
+
 ## Structure
 
 - `index.jsx`: the generic lab shell (lab switcher, lessons, checkpoints, notebook, playground, Python tab). `LearningPath.jsx` renders the registry-driven roadmap with per-lab progress; `roadmap.js` holds the plan text.
 - `labs/index.js`: the ordered registry. Each `labs/lNN-name/` folder has `index.js` (metadata and lazy playground), `lessons.js` (`lessons`, `sources`), `python.js` (the challenge: filename, packages, steps, hints, starter, solution, checks, optional `timeout` and `local` script), `engine.js` (pure, testable logic), `Playground.jsx` and `engine.test.js`. Engines reuse each other where the curriculum builds on earlier labs (for example Lab 13's forests use Lab 12's trees; Labs 30 and 32 serve Lab 29's artifact).
-- `kit/`: shared pieces — seeded math helpers and a Jacobi eigen-solver (`math.js`), SVG charts (`Plot.jsx`: plot, paths, class dots, probability fields, contours, heatmaps, bars), controls and callouts (`ui.jsx`), and 2D datasets.
+- `kit/`: shared pieces — seeded math helpers and a Jacobi eigen-solver (`math.js`), SVG charts (`Plot.jsx`: plot, paths, class dots, probability fields, contours, heatmaps, bars), controls and callouts (`ui.jsx`), and 2D datasets. Also:
+  - `nn.js`: a small neural-network library with explicit forward and backward passes: Dense, ReLU/LeakyReLU/Tanh/Sigmoid, Dropout, BatchNorm, LayerNorm, Sequential and Residual; MSE, softmax cross-entropy and BCE-with-logits losses; AdamW with gradient clipping. `nn.test.js` gradient-checks every layer.
+  - `linalg.js`: Cholesky factorization with jitter, triangular solves, log-determinants and Gaussian sampling (Labs 41–42).
+  - `expr.js`: a safe expression parser for derivation answers (implicit multiplication, Unicode operators and superscripts, Greek letters typed as words, common functions) and `equivalent()`, which compares two expressions at deterministic random points.
+- `Derivation.jsx`: renders a lesson's `derivation` (`{ title, steps, result }`); each step is either `{ prompt, answer, vars, show, why?, hint? }` for an expression or `{ prompt, number, tolerance, show }` for a number.
 - Lab 01 keeps its original engine, lessons and storage keys at the folder root.
 
 ## Presentation and editing
@@ -46,7 +71,7 @@ The lab consumes `useGlobalTheme`: heading, emphasis, inline-code and callout co
 
 Playgrounds run in the browser from seeded generators, so every figure is reproducible. Python challenges execute in a dedicated worker with Pyodide 0.26.4 from the jsDelivr CDN (first use needs network access); each lab declares the packages it loads (numpy, pandas, scikit-learn) and may raise the default 90-second limit. Lab 23 also provides an optional real-PyTorch script to run locally.
 
-Code, checkpoint results, explanations and notebooks are stored per lab under `upskillos.ml-lab.v1` (Lab 01 keeps its original keys). The Lab 33 project workbench and the Lab 38 replication report save separately on the device. Nothing is uploaded; pasted CSV data stays in the browser.
+Code, checkpoint results, derivation progress, explanations and notebooks are stored per lab under `upskillos.ml-lab.v1` (Lab 01 keeps its original keys). The Lab 33 project workbench and the Lab 38 replication report save separately on the device. Nothing is uploaded; pasted CSV data stays in the browser.
 
 ## Lab 01 mathematical contract
 

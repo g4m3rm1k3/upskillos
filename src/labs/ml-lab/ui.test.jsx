@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import MLLab from './index.jsx'
 import { labs } from './labs/index.js'
+import { roadmap } from './roadmap.js'
 import { ThemeProvider, useGlobalTheme } from '../../context/ThemeContext.jsx'
 import { STUDIO_THEMES } from '../../utils/studioThemes.js'
 
@@ -62,7 +63,7 @@ describe('learning workspace interactions',()=>{
   it('marks exactly the unbuilt labs as planned and opens built labs from the path',()=>{
     render(<MLLab />)
     fireEvent.click(screen.getByText('Your learning path',{selector:'button'}))
-    const planned = 38 - labs.length
+    const planned = roadmap.flatMap(p => p.labs).length - labs.length
     expect(within(screen.getByRole('main')).queryAllByText('Planned')).toHaveLength(planned)
     expect(screen.getByText('Current lab')).toBeTruthy()
     const last = labs.at(-1)
@@ -78,6 +79,20 @@ describe('learning workspace interactions',()=>{
     fireEvent.click(screen.getByRole('button',{name:'01 · A model is a claim'}))
     expect(screen.getByText(/How this connects to/)).toBeTruthy()
     expect(screen.getByText('Fit a line to measurements: ŷ = w·x + b')).toBeTruthy()
+  })
+  it('checks a derivation step by step and saves progress',()=>{
+    render(<MLLab />)
+    fireEvent.click(screen.getByRole('button',{name:'03 · Derive the direction'}))
+    fireEvent.change(screen.getByLabelText('Derivation step 1'),{target:{value:'wx + b'}})
+    fireEvent.click(screen.getByText('Check step',{selector:'button'}))
+    expect(screen.getByText(/Not equal to the correct expression/)).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Derivation step 1'),{target:{value:'b + x·w − y'}})
+    fireEvent.click(screen.getByText('Check step',{selector:'button'}))
+    expect(screen.getByLabelText('Derivation step 2')).toBeTruthy()
+    fireEvent.click(screen.getByText('Show this step',{selector:'button'}))
+    expect(screen.getByLabelText('Derivation step 3')).toBeTruthy()
+    const saved = JSON.parse(localStorage.getItem('upskillos.ml-lab.v1')).progress.gradient.derivation
+    expect(saved).toEqual({ solved: [0], revealed: [1] })
   })
   it('remembers the current lesson and resumes it from the ordered path',()=>{
     render(<MLLab />)

@@ -8,6 +8,7 @@ export default {
   question: 'Why does training succeed, stall or explode?',
   intro: 'Compare SGD, momentum, RMSProp and Adam on visible loss surfaces, see mini-batch noise and schedules, and learn to diagnose a failing training run.',
   lessons, sources, python,
+  math: ['ai.optim', 'calc.secondderiv', 'la.quadratic', 'la.eigen', 'la.conditioning', 'calc.taylor'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Mini-batch and stochastic gradients, momentum, RMSProp, Adam with bias correction, learning-rate schedules and warm-up, gradient clipping, and distinguishing bugs, optimization failures and generalization failures.',
 }

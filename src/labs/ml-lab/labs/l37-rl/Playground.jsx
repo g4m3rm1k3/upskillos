@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { W, H, START, GOAL, CHECKPOINT, isDitch, ARROWS, qLearning, valueIteration, evaluatePolicy, fromQ, fromTable, edgeWalker, rollout, movingAverage, cell } from './engine.js'
+import { W, H, START, GOAL, CHECKPOINT, isDitch, ARROWS, qLearning, valueIteration, evaluatePolicy, fromQ, fromTable, edgeWalker, rollout, movingAverage, cell, epsilonGreedyProbs, policyEvaluation, sampler, startState } from './engine.js'
 import { Plot, Path } from '../../kit/Plot.jsx'
 import { PanelHeading, Slider, Choice, Controls, Metrics, Insight, Table, Caption, Legend, Actions } from '../../kit/ui.jsx'
 import { random, pct, fmt } from '../../kit/math.js'
@@ -32,18 +32,22 @@ export default function Playground() {
   const opts = { slip, design }
   const q = useMemo(() => qLearning({ episodes, alpha, epsilon, gamma, slip, design, seed }), [episodes, alpha, epsilon, gamma, slip, design, seed])
   const vi = useMemo(() => valueIteration({ gamma, slip, design }), [gamma, slip, design])
-  const policies = { q: fromQ(q.Q), vi: fromTable(vi.policy), edge: edgeWalker }
+  const piEval = s => epsilonGreedyProbs(edgeWalker(s), epsilon)
+  const pe = useMemo(() => policyEvaluation(piEval, { gamma, slip, design }), [epsilon, gamma, slip, design]) // eslint-disable-line react-hooks/exhaustive-deps
+  const policies = { q: fromQ(q.Q), vi: fromTable(vi.policy), edge: edgeWalker, eval: edgeWalker }
   const evals = useMemo(() => ({ q: evaluatePolicy(policies.q, opts), vi: evaluatePolicy(policies.vi, opts), edge: evaluatePolicy(policies.edge, opts) }), [q, vi, slip, design]) // eslint-disable-line react-hooks/exhaustive-deps
-  const values = show === 'q' ? q.Q.map(r => Math.max(...r)) : show === 'vi' ? vi.V : Array(W * H).fill(0)
-  const path = rollout(policies[show], random(runSeed), opts).path
+  const values = show === 'q' ? q.Q.map(r => Math.max(...r)) : show === 'vi' ? vi.V : show === 'eval' ? pe.V : Array(W * H).fill(0)
+  const path = rollout(show === 'eval' ? sampler(piEval, random(runSeed + 1000)) : policies[show], random(runSeed), opts).path
+  const s0 = startState(), pStart = epsilonGreedyProbs(edgeWalker(s0), epsilon)
   const task = movingAverage(q.log.map(l => l.task)), designed = movingAverage(q.log.map(l => l.ret))
   const names = { q: 'Q-learning (learned from trial and error)', vi: 'Value iteration (knows the rules)', edge: 'Hand-written: walk along the ditch' }
+  const showNames = { ...names, eval: 'Evaluate the hand-written policy with ε-randomness: V^π by the Bellman equation' }
   return <>
     <PanelHeading title="Teach a robot to cross the yard — by reward alone." pill={`${episodes} training episodes`} />
     <Caption>The robot starts bottom-left and must reach the star. The bottom row between them is a ditch. Each move costs 0.1; the star gives +10; the ditch gives −10 and ends the episode. With **slip**, a move sometimes goes in a random direction. Nobody tells the robot the right move: it only receives rewards.</Caption>
     <Controls>
       <Choice label="Reward design" value={design} onChange={setDesign} options={[['task', 'Task reward only'], ['checkpoint', 'Task reward + 2 for entering the checkpoint (a “helpful” bonus)']]} />
-      <Choice label="Show policy" value={show} onChange={setShow} options={Object.entries(names)} />
+      <Choice label="Show policy" value={show} onChange={setShow} options={Object.entries(showNames)} />
       <Slider label="Slip probability" value={slip} min={0} max={0.3} step={0.05} onChange={setSlip} format={pct} />
       <Slider label="Training episodes" value={episodes} min={0} max={1000} step={25} onChange={setEpisodes} />
       <Slider label="Exploration ε" value={epsilon} min={0} max={0.5} step={0.05} onChange={setEpsilon} />
@@ -52,6 +56,7 @@ export default function Playground() {
     </Controls>
     <Grid values={values} policy={policies[show]} path={path} design={design} />
     <Legend items={[['■', 'darker = higher estimated value of the best action', 'var(--accent)'], ['┄', 'one episode following the policy', 'var(--text)'], ...(design === 'checkpoint' ? [['○', 'checkpoint: +2 every time it is entered', '#f59e0b']] : [])]} />
+    {show === 'eval' && <Caption>{`Policy π: the hand-written route, but with probability ε = ${epsilon.toFixed(2)} it picks one of the 4 actions uniformly at random. At the start cell π(· | s) = [${pStart.map(p => p.toFixed(3)).join(', ')}] for (up, right, down, left). Numbers in the cells are V^π(s), computed by applying the Bellman expectation equation ${pe.sweeps} times until nothing changed. V^π(start) = ${fmt(pe.V[s0], 3)}; the best possible, V*(start), is ${fmt(vi.V[s0], 3)}.`}</Caption>}
     <Actions><button onClick={() => setRunSeed(v => v + 1)}>Run another episode</button><button onClick={() => setSeed(v => v + 1)}>Retrain with a new seed</button></Actions>
     <Table head={['policy', 'reaches the star', 'falls in the ditch', 'times out (60 moves)', 'reward it was trained on', 'task reward']} rows={Object.entries(evals).map(([k, e]) => [names[k], pct(e.goal), pct(e.ditch), pct(e.timeout), fmt(e.ret, 2), fmt(e.task, 2)])} caption="Each policy run for 400 episodes with the current slip. The task reward is what we actually care about: −0.1 per move, +10 star, −10 ditch." />
     {q.log.length > 1 && <>

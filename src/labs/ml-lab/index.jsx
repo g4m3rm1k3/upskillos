@@ -6,6 +6,8 @@ import { useGlobalTheme, getFontFamily, getFontSize, getLineHeight } from '../..
 import { STUDIO_THEMES } from '../../utils/studioThemes.js'
 import StaticCodeBlock from '../../components/markdown/StaticCodeBlock.jsx'
 import LessonText from './LessonText.jsx'
+import Derivation from './Derivation.jsx'
+import { MathCode, NotebookCells, MathLinks } from './LessonMath.jsx'
 import PythonEditor from './PythonEditor.jsx'
 import LearningPath from './LearningPath.jsx'
 
@@ -99,9 +101,11 @@ export default function MLLab({ onBack }) {
         <nav aria-label="Lessons">{lessons.map((l,i)=><button key={l.id} className={i===lessonIndex?'selected':''} aria-current={i===lessonIndex?'step':undefined} onClick={()=>setLessonIndex(i)}><span>{l.title}</span>{progress[l.id]?.passed && <span aria-label="Numeric checkpoint passed">✓</span>}</button>)}</nav>
         <div className="ml-side-note">The goal is not to finish the page.<br/>It is to explain what changed—and why.</div>
       </aside>
-      <article className="ml-lesson"><span className="ml-eyebrow">Understand → derive → test → explain</span><h2>{lesson.title.slice(lesson.title.indexOf('·')+2)}</h2><p className="ml-objective">You will be able to: {lesson.skill}</p><p className="ml-prereq"><strong>Before you start:</strong> {lesson.prerequisite}</p><button className="ml-jump" onClick={()=>playgroundRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>Jump to live experiment ↓</button>
-        <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3>{lesson.sections?.[i] || `Step ${i+1}`}</h3><p><LessonText>{p}</LessonText></p></section>)}</div>
-        <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span><div>{lesson.formula}</div></div>
+      <article className="ml-lesson"><span className="ml-eyebrow">Understand → derive → test → explain</span><h2>{lesson.title.slice(lesson.title.indexOf('·')+2)}</h2><p className="ml-objective">You will be able to: <LessonText>{lesson.skill}</LessonText></p><p className="ml-prereq"><strong>Before you start:</strong> <LessonText>{lesson.prerequisite}</LessonText></p><MathLinks key={`m-${lesson.id}`} lessonKeys={lesson.math} labKeys={lab.math} /><button className="ml-jump" onClick={()=>playgroundRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>Jump to live experiment ↓</button>
+        <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
+        <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
+        {lesson.derivation && <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />}
+        <NotebookCells key={`n-${lesson.id}`} notebook={lesson.notebook} lessonTitle={lesson.title} />
         <div className="ml-experiment"><span className="ml-eyebrow">Predict before you run</span><p><LessonText>{lesson.experiment}</LessonText></p></div>
         <Checkpoint key={lesson.id} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />
         <div className="ml-next"><button disabled={lessonIndex===0} onClick={()=>setLessonIndex(i=>i-1)}>← Previous</button><button onClick={()=>lessonIndex<lessons.length-1 ? setLessonIndex(i=>i+1) : setTab('code')}>{lessonIndex<lessons.length-1?'Next lesson →':'Implement it →'}</button></div>
@@ -109,7 +113,7 @@ export default function MLLab({ onBack }) {
       </article>
       <section ref={playgroundRef} className="ml-playground" aria-label={`Lab ${n2} playground`}>
         <div className="ml-scope" role="note">{lab.lessonAware
-          ? <p><strong>This experiment changes with the lesson you are reading.</strong> It now shows the part for {lesson.title}.</p>
+          ? <p><strong>This experiment changes with the lesson you are reading.</strong> It now shows the part for {lesson.title}{/[.?!]$/.test(lesson.title) ? '' : '.'}</p>
           : <><p><strong>One experiment for the whole lab.</strong> All {lessons.length} lessons of Lab {n2} use this same panel; each lesson asks you to try something different in it.</p><p><span className="ml-eyebrow">For {lesson.title.slice(0, lesson.title.indexOf('·')).trim()}</span> <LessonText>{lesson.experiment}</LessonText></p></>}</div>
         <Suspense fallback={<p className="ml-caption" role="status">Loading the experiment…</p>}><Playground key={lab.number} journal={journal} setJournal={setJournal} progress={progress} lesson={lesson} /></Suspense>
         {!lab.ownNotebook && <Notebook lab={lab} journal={journal} setJournal={setJournal} progress={progress} />}

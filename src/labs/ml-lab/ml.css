@@ -828,3 +828,44 @@
 .ml-scope p { margin: 0; }
 .ml-scope p + p { margin-top: 6px; }
 .ml-scope .ml-eyebrow { margin-right: 6px; }
+
+/* Step-by-step derivations inside a lesson. */
+.ml-derivation {
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--ml-heading-2, var(--accent));
+  border-radius: 12px;
+}
+.ml-derivation h3 { margin: 4px 0 8px; }
+.ml-derivation ol { padding-left: 1.3em; margin: 10px 0 0; }
+.ml-derivation li { margin-bottom: 14px; }
+.ml-derivation li.done > p:first-child { opacity: 0.8; }
+.ml-derivation form { display: flex; gap: 8px; flex-wrap: wrap; }
+.ml-derivation input { flex: 1 1 220px; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ml-derivation-answer { margin: 4px 0 0; }
+.ml-derivation-answer > span:first-child { font-weight: 700; }
+.ml-derivation-result { margin-top: 8px; font-weight: 600; }
+
+/* Math ↔ code table, runnable notebook cells and links to the app's math courses */
+.ml-formula-tex { font-family: var(--ml-prose-font, inherit); font-size: 15px; }
+.ml-formula-tex .katex-display { margin: 0.35em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.ml-mathcode { margin-top: 14px; }
+.ml-mathcode table, .ml-mathcode > .ml-caption { font-family: var(--ml-prose-font, system-ui, sans-serif); font-size: 13.5px; line-height: 1.5; }
+.ml-mathcode table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ml-mathcode th, .ml-mathcode td { text-align: left; vertical-align: top; padding: 7px 8px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.ml-mathcode th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.75; }
+.ml-mathcode th:nth-child(1) { width: 30%; }
+.ml-mathcode th:nth-child(2) { width: 38%; }
+.ml-mathcode th:nth-child(3) { width: 32%; }
+.ml-mathcode td:nth-child(1) { overflow-x: auto; overflow-y: hidden; }
+.ml-mathcode td:nth-child(2) code { display: block; white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; font-size: 12.5px; }
+.ml-mathcode td:nth-child(1) .katex { font-size: 1.05em; white-space: normal; }
+@media (max-width: 720px) { .ml-mathcode table, .ml-mathcode tbody, .ml-mathcode tr, .ml-mathcode td { display: block; width: auto; } .ml-mathcode thead { display: none; } .ml-mathcode tr { padding: 8px 0; border-bottom: 1px solid var(--border); } .ml-mathcode td { border: 0; padding: 2px 0; } }
+.ml-runcells { margin: 20px 0; padding: 16px 18px; border: 1px dashed var(--border); border-radius: 12px; }
+.ml-mathlinks { margin: 12px 0 4px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+.ml-mathlinks summary { cursor: pointer; font-weight: 600; }
+.ml-mathlinks h4 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.75; }
+.ml-mathlinks ul { margin: 0; padding-left: 1.1em; }
+.ml-mathlinks li { margin: 3px 0; }
+.ml-link-course { font-weight: 600; }

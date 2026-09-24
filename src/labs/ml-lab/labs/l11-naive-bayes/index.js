@@ -8,6 +8,7 @@ export default {
   question: 'How can counting words classify a message?',
   intro: 'Represent text as counts, apply Bayes’ rule with a bold independence assumption, and trace every prediction word by word.',
   lessons, sources, python,
+  math: ['stat.bayes', 'stat.conditional', 'pre.log', 'stat.counting'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Tokenization, training-only vocabularies, bag of words, multinomial Naive Bayes, Laplace smoothing, log-space computation and log-sum-exp, independence failures, and honest evaluation of text classifiers.',
 }

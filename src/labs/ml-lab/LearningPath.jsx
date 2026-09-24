@@ -4,8 +4,9 @@ import { labs, isAvailable, labByNumber } from './labs/index.js'
 
 export default function LearningPath({ progress, currentLab, lessonIndex, onOpen }) {
   const passed = lab => lab.lessons.filter(l => progress[l.id]?.passed).length
-  const coreCount = roadmap.filter(p => !p.optional).flatMap(p => p.labs).length
+  const coreCount = roadmap.filter(p => !p.optional && !p.advanced).flatMap(p => p.labs).length
   const optionalCount = roadmap.filter(p => p.optional).flatMap(p => p.labs).length
+  const advancedCount = roadmap.filter(p => p.advanced).flatMap(p => p.labs).length
   const totalChecks = labs.reduce((t, lab) => t + lab.lessons.length, 0)
   const totalPassed = labs.reduce((t, lab) => t + passed(lab), 0)
   const next = currentLab.lessons.findIndex(l => !progress[l.id]?.passed)
@@ -15,7 +16,7 @@ export default function LearningPath({ progress, currentLab, lessonIndex, onOpen
   return <main className="ml-path">
     <span className="ml-eyebrow">The full learning plan / Python basics → ML engineering</span>
     <h2>Your machine learning mastery path</h2>
-    <p>{coreCount} core labs in learning order, followed by {optionalCount} optional specializations. Begin with Python basics and algebra. Each lab introduces its prerequisites before using them, and ends with something you can build and explain.</p>
+    <p>{coreCount} core labs in learning order, {optionalCount} optional specializations, then {advancedCount} advanced labs covering the probability, theory and modern models taught in university courses. Begin with Python basics and algebra. Each lab introduces its prerequisites before using them, and ends with something you can build and explain.</p>
     <section className="ml-location" aria-label="Your current position">
       <span className="ml-pill">You are here · Lab {n2(currentLab.number)}</span>
       <h3>{currentPlan.title}</h3>
@@ -27,7 +28,7 @@ export default function LearningPath({ progress, currentLab, lessonIndex, onOpen
     <p><strong>How to follow the order:</strong> finish the preceding core lab before advancing; revisit earlier material whenever a prerequisite feels unclear. The plan is deliberately sequential. Optional branches can be chosen after the core based on your projects.</p>
     <p><strong>Availability:</strong> {planned === 0 ? 'Every lab below is built: lessons with numeric checkpoints, a live experiment, and a Python implementation challenge with independent checks.' : `${labs.length} labs are built; ${planned} are still planned. There are no automatic completion claims for labs that do not exist yet.`}</p>
     {roadmap.map((phase, phaseIndex) => <section className="ml-path-phase" key={phase.title}>
-      <span className="ml-eyebrow">{phase.optional ? 'Choose your specialization' : `Stage ${phaseIndex + 1}`}</span>
+      <span className="ml-eyebrow">{phase.optional ? 'Choose your specialization' : phase.advanced ? 'Advanced track · after the core' : `Stage ${phaseIndex + 1}`}</span>
       <h3>{phase.title}</h3><p>{phase.goal}</p>
       <ol className="ml-ordered-labs" start={phase.labs[0].number}>
         {phase.labs.map(plan => {

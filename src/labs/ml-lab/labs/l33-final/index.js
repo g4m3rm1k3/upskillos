@@ -8,6 +8,7 @@ export default {
   question: 'Can you take your own problem from idea to a maintained product?',
   intro: 'Choose a real decision, build honest evidence on your own data, ship it responsibly, and plan who keeps it working.',
   lessons, sources, python,
+  math: ['ds.eda', 'ds.evaluation', 'stat.ci', 'tool.notebook'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'The complete ML engineering loop applied to the learner’s own project: problem selection, evidence, deployment, documentation, monitoring and maintenance, with a project workbench and a feasibility check on pasted data.',
 }

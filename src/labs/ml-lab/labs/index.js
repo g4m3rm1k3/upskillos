@@ -38,8 +38,31 @@ import lab35 from './l35-recsys/index.js'
 import lab36 from './l36-causal/index.js'
 import lab37 from './l37-rl/index.js'
 import lab38 from './l38-replication/index.js'
+import lab39 from './l39-glm/index.js'
+import lab40 from './l40-gda/index.js'
+import lab41 from './l41-bayes/index.js'
+import lab42 from './l42-gp/index.js'
+import lab43 from './l43-em/index.js'
+import lab44 from './l44-sampling/index.js'
+import lab45 from './l45-graphical/index.js'
+import lab46 from './l46-info/index.js'
+import lab47 from './l47-theory/index.js'
+import lab48 from './l48-convex/index.js'
+import lab49 from './l49-kernels/index.js'
+import lab50 from './l50-online/index.js'
+import lab51 from './l51-manifold/index.js'
+import lab52 from './l52-dlreg/index.js'
+import lab53 from './l53-vae/index.js'
+import lab54 from './l54-generative/index.js'
+import lab55 from './l55-lm/index.js'
+import lab56 from './l56-fewlabels/index.js'
+import lab57 from './l57-gnn/index.js'
+import lab58 from './l58-pg/index.js'
+import lab59 from './l59-interpret/index.js'
+import lab60 from './l60-uncertainty/index.js'
+import lab61 from './l61-robustness/index.js'
 
-export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25, lab26, lab27, lab28, lab29, lab30, lab31, lab32, lab33, lab34, lab35, lab36, lab37, lab38]
+export const labs = [lab01, lab02, lab03, lab04, lab05, lab06, lab07, lab08, lab09, lab10, lab11, lab12, lab13, lab14, lab15, lab16, lab17, lab18, lab19, lab20, lab21, lab22, lab23, lab24, lab25, lab26, lab27, lab28, lab29, lab30, lab31, lab32, lab33, lab34, lab35, lab36, lab37, lab38, lab39, lab40, lab41, lab42, lab43, lab44, lab45, lab46, lab47, lab48, lab49, lab50, lab51, lab52, lab53, lab54, lab55, lab56, lab57, lab58, lab59, lab60, lab61]
 const byNumber = new Map(labs.map(lab => [lab.number, lab]))
 export const labByNumber = number => byNumber.get(number) ?? labs[0]
 export const isAvailable = number => byNumber.has(number)

@@ -8,6 +8,7 @@ export default {
   question: 'Which of many separating boundaries should you trust?',
   intro: 'Choose the boundary with the widest margin, allow violations with the hinge loss, and bend it with kernels.',
   lessons, sources, python,
+  math: ['la.dot', 'la.projection', 'ai.convex', 'pre.lp', 'la.hilbert'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Hyperplanes and geometric margins, hard- and soft-margin SVMs, hinge loss and subgradient (Pegasos) training, support vectors, feature maps and kernels (polynomial, RBF via random features), and comparison with logistic regression.',
 }

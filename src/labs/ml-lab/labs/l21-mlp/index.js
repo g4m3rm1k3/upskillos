@@ -8,6 +8,7 @@ export default {
   question: 'How do layers of simple units learn complex boundaries?',
   intro: 'Stack dense layers with nonlinear activations, finish with softmax and cross-entropy, backpropagate in matrix form, and train a network you fully understand.',
   lessons, sources, python,
+  math: ['la.matmul', 'la.matcalc', 'ai.tensors', 'ds.vectorize', 'calc.explog'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Dense layers and shapes, activation functions, softmax and cross-entropy, the matrix-form backward pass, initialization (symmetry, He/Xavier), capacity and training diagnostics. Optimizers are Lab 22; frameworks are Lab 23.',
 }

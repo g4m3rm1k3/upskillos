@@ -50,18 +50,42 @@ function greedy(q, rng) {
   return ties[Math.floor(rng() * ties.length)]
 }
 
+// The model p(s′, r | s, a) as an explicit list of outcomes: with probability
+// 1 − slip + slip/4 the intended move happens, and each other move has slip/4.
+export function outcomes(s, a, { slip = 0, design = 'task' } = {}) {
+  const probs = range(4).map(b => (b === a ? 1 - slip : 0) + slip / 4)
+  return range(4).filter(b => probs[b] > 0).map(b => { const r = stepEnv(s, b, () => 1, { slip: 0, design }); return { p: probs[b], ...r } })
+}
+export const isTerminal = s => (s % W === GOAL[0] && Math.floor(s / W) === GOAL[1]) || isDitch(s % W, Math.floor(s / W))
+// q(s, a) = Σ p(s′, r | s, a) [r + γ V(s′)], with V(terminal) = 0.
+export const backup = (s, a, V, { gamma = 0.95, ...opts } = {}) => outcomes(s, a, opts).reduce((t, o) => t + o.p * (o.reward + (o.done ? 0 : gamma * V[o.next])), 0)
+
 // Value iteration on the known model (for reference: the optimal policy).
 export function valueIteration({ gamma = 0.95, slip = 0, design = 'task', sweeps = 200 } = {}) {
   let V = Array(N_STATES).fill(0)
-  const outcomes = (s, a) => {
-    const probs = range(4).map(b => (b === a ? 1 - slip : 0) + slip / 4)
-    return range(4).filter(b => probs[b] > 0).map(b => { const r = stepEnv(s, b, () => 1, { slip: 0, design }); return { p: probs[b], ...r } })
-  }
-  const terminal = s => (s % W === GOAL[0] && Math.floor(s / W) === GOAL[1]) || isDitch(s % W, Math.floor(s / W))
-  const qOf = (s, a, V) => outcomes(s, a).reduce((t, o) => t + o.p * (o.reward + (o.done ? 0 : gamma * V[o.next])), 0)
-  for (let i = 0; i < sweeps; i++) V = V.map((_, s) => terminal(s) ? 0 : Math.max(...range(4).map(a => qOf(s, a, V))))
-  return { V, policy: V.map((_, s) => terminal(s) ? -1 : argmax(range(4).map(a => qOf(s, a, V)))) }
+  const o = { gamma, slip, design }
+  for (let i = 0; i < sweeps; i++) V = V.map((_, s) => isTerminal(s) ? 0 : Math.max(...range(4).map(a => backup(s, a, V, o))))
+  return { V, policy: V.map((_, s) => isTerminal(s) ? -1 : argmax(range(4).map(a => backup(s, a, V, o)))) }
 }
+
+// ε-greedy around a preferred action: π(a | s) = 1 − ε + ε/4 for it and ε/4 for each other action
+// (the random draw may pick the preferred action too — this is how qLearning explores).
+export const epsilonGreedyProbs = (best, epsilon) => range(4).map(a => (a === best ? 1 - epsilon : 0) + epsilon / 4)
+// Iterative policy evaluation: apply the Bellman expectation equation
+// V(s) ← Σₐ π(a|s) Σ p(s′, r | s, a) [r + γ V(s′)] until V stops changing.
+export function policyEvaluation(pi, { gamma = 0.95, slip = 0, design = 'task', sweeps = 1000, tol = 1e-10 } = {}) {
+  let V = Array(N_STATES).fill(0), used = 0
+  const o = { gamma, slip, design }
+  for (; used < sweeps; used++) {
+    const next = V.map((_, s) => isTerminal(s) ? 0 : pi(s).reduce((t, p, a) => t + (p ? p * backup(s, a, V, o) : 0), 0))
+    const change = Math.max(...next.map((v, s) => Math.abs(v - V[s])))
+    V = next
+    if (change < tol) break
+  }
+  return { V, sweeps: used + 1 }
+}
+// A stochastic policy as a sampler, for rollouts.
+export const sampler = (pi, rng) => s => { const p = pi(s); let u = rng(), a = 0; while (a < 3 && u > p[a]) { u -= p[a]; a++ } return a }
 
 // Policies as functions state → action.
 export const fromQ = Q => s => argmax(Q[s])
