@@ -96,7 +96,7 @@ export default function MLLab({ onBack }) {
         <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
         <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
         {lesson.derivation && <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />}
-        <NotebookCells key={`n-${lesson.id}`} notebook={lesson.notebook} lessonTitle={lesson.title} />
+        <NotebookCells key={`n-${lesson.id}`} id={lesson.id} notebook={lesson.notebook} />
         <div className="ml-experiment"><span className="ml-eyebrow">Predict before you run</span><p><LessonText>{lesson.experiment}</LessonText></p></div>
         <Checkpoint key={lesson.id} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />
         <div className="ml-next"><button disabled={lessonIndex===0} onClick={()=>setLessonIndex(i=>i-1)}>← Previous</button><button onClick={()=>lessonIndex<lessons.length-1 ? setLessonIndex(i=>i+1) : setTab('code')}>{lessonIndex<lessons.length-1?'Next lesson →':'Implement it →'}</button></div>

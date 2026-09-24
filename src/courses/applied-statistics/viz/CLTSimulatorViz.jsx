@@ -1,45 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import SliderControl from '../../calculus/viz/SliderControl.jsx'
+import { POPULATIONS, makeRng, drawSampleMeans } from './cltPopulations.js'
 
-// Population distribution samplers
-const POPULATIONS = {
-  uniform: {
-    label: 'Uniform(0,1)',
-    sample: () => Math.random(),
-    mu: 0.5,
-    sigma: Math.sqrt(1 / 12),
-    color: '#6366f1',
-  },
-  exponential: {
-    label: 'Exponential(λ=1)',
-    sample: () => -Math.log(1 - Math.random()),
-    mu: 1,
-    sigma: 1,
-    color: '#f59e0b',
-  },
-  bimodal: {
-    label: 'Bimodal',
-    sample: () => Math.random() < 0.5 ? gaussSample(0.25, 0.08) : gaussSample(0.75, 0.08),
-    mu: 0.5,
-    sigma: 0.25,
-    color: '#10b981',
-  },
-  skewed: {
-    label: 'Right-skewed',
-    sample: () => {
-      const u = Math.random(), v = Math.random()
-      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v) * 0.3 + 0.5
-    },
-    mu: 0.5,
-    sigma: 0.3,
-    color: '#ec4899',
-  },
-}
-
-function gaussSample(mu = 0, sigma = 1) {
-  const u = 1 - Math.random(), v = Math.random()
-  return mu + sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
-}
 
 function erf(x) {
   const t = 1 / (1 + 0.3275911 * Math.abs(x))
@@ -66,24 +28,20 @@ export default function CLTSimulatorViz() {
   const [popKey, setPopKey] = useState('exponential')
   const [sampleSize, setSampleSize] = useState(30)
   const [sampleMeans, setSampleMeans] = useState([])
-  const [isRunning, setIsRunning] = useState(false)
+  const [seed, setSeed] = useState(1)
+  // One generator stream per run: the same seed and the same clicks reproduce the same histogram.
+  const rng = useRef(makeRng(1))
+  const restart = (s = seed) => { rng.current = makeRng(s); setSampleMeans([]) }
 
   const pop = POPULATIONS[popKey]
   const theoreticalSE = pop.sigma / Math.sqrt(sampleSize)
 
   const addSamples = useCallback((batchSize = 200) => {
-    setSampleMeans(prev => {
-      const next = [...prev]
-      for (let i = 0; i < batchSize; i++) {
-        let sum = 0
-        for (let j = 0; j < sampleSize; j++) sum += pop.sample()
-        next.push(sum / sampleSize)
-      }
-      return next
-    })
+    const batch = drawSampleMeans(pop, sampleSize, batchSize, rng.current)
+    setSampleMeans(prev => [...prev, ...batch])
   }, [pop, sampleSize])
 
-  const reset = () => setSampleMeans([])
+  const reset = () => restart()
 
   const { hist, xMin, xMax, yMax, normalPath } = useMemo(() => {
     if (!sampleMeans.length) return { hist: [], xMin: 0, xMax: 1, yMax: 1, normalPath: '' }
@@ -123,7 +81,7 @@ export default function CLTSimulatorViz() {
       {/* Population selector */}
       <div className="flex gap-2 mb-3 flex-wrap">
         {Object.entries(POPULATIONS).map(([key, { label, color }]) => (
-          <button key={key} onClick={() => { setPopKey(key); setSampleMeans([]) }}
+          <button key={key} onClick={() => { setPopKey(key); restart() }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               popKey === key ? 'text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             }`}
@@ -134,8 +92,15 @@ export default function CLTSimulatorViz() {
       </div>
 
       <div className="mb-3">
-        <SliderControl label={`n = ${sampleSize}`} min={1} max={100} step={1} value={sampleSize} onChange={v => { setSampleSize(v); setSampleMeans([]) }} />
+        <SliderControl label={`n = ${sampleSize}`} min={1} max={100} step={1} value={sampleSize} onChange={v => { setSampleSize(v); restart() }} />
       </div>
+      <label className="flex items-center gap-2 mb-3 text-xs text-slate-600 dark:text-slate-300">
+        Seed
+        <input type="number" min="0" max="999999" value={seed} aria-label="Random seed"
+          onChange={e => { if (e.target.value === '') return; const s = Math.max(0, Math.min(999999, Math.trunc(+e.target.value))); setSeed(s); restart(s) }}
+          className="w-24 px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" />
+        <span className="text-slate-500 dark:text-slate-400">Same seed, same clicks → the same histogram. Change it to see another run.</span>
+      </label>
 
       {/* Histogram of sample means */}
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible mb-3">
@@ -204,7 +169,7 @@ export default function CLTSimulatorViz() {
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-        The indigo curve shows N(μ, σ²/n) — what CLT predicts regardless of the population shape.
+        The indigo curve shows N(μ, σ²/n) — what the CLT predicts for large n, whatever the population’s shape. This population has μ = {pop.mu.toFixed(3)} and σ = {pop.sigma.toFixed(3)}.
       </p>
     </div>
   )

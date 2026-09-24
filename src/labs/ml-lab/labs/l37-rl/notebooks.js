@@ -110,7 +110,8 @@ pi_start = epsilon_greedy_probs(edge_walker(s0), 0.1)
 print("pi(. | start) =", pi_start)           # [0.925 0.025 0.025 0.025]
 rng = np.random.default_rng(1)
 draws = rng.choice(4, size=200_000, p=pi_start)
-print("sampled      =", np.bincount(draws, minlength=4) / draws.size)`,
+# astype(np.intp): in the browser (32-bit WebAssembly) bincount refuses int64 input.
+print("sampled      =", np.bincount(draws.astype(np.intp), minlength=4) / draws.size)`,
     }, {
       title: 'Policy evaluation: the Bellman expectation equation as loops',
       prose: 'V(s) ← Σ_a π(a|s) Σ_{s′,r} p(s′,r|s,a) [r + γ V(s′)]. The outer sum is the loop over actions, the inner sum the loop over outcomes.',

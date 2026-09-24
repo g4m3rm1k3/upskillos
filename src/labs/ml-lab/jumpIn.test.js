@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { jumpIns } from './jumpIn.js'
 import { labs, labForLesson } from './labs/index.js'
-import { diagnose } from './Checkpoint.jsx'
+import { diagnose, parseAnswer, statusText } from './Checkpoint.jsx'
 
 describe('prerequisite checks for learners jumping in', () => {
   it('every lab after Lab 01 has three checks', () => {
@@ -43,12 +43,15 @@ describe('wrong-answer diagnosis', () => {
     }
   })
   const lesson = { answer: -6 }
-  it('names common slips', () => {
-    expect(diagnose(6, lesson)).toMatch(/sign/)
+  it('names common slips, worded as possibilities', () => {
+    expect(diagnose(6, lesson)).toMatch(/opposite sign/)
     expect(diagnose(-12, lesson)).toMatch(/factor of 2/)
-    expect(diagnose(0.8, { answer: 80 })).toMatch(/fraction/)
-    expect(diagnose(80, { answer: 0.8 })).toMatch(/percentage/)
+    expect(diagnose(80, { answer: 0.8 })).toMatch(/looks like a percentage/)
+    expect(diagnose(0.8, { answer: 80 })).toMatch(/100 times too small/)
+    expect(diagnose(0.8, { answer: 80, percent: true })).toMatch(/fraction rather than the percentage/)
     expect(diagnose(5, lesson)).toBeNull()
+    expect(diagnose(6, lesson)).toMatch(/If that is the slip/)
+    expect(diagnose(-12, lesson)).toMatch(/can be a coincidence/)
   })
   it('prefers a lesson’s own misconceptions', () => {
     expect(diagnose(4, { answer: 7, misconceptions: [{ answer: 4, feedback: 'mine' }] })).toBe('mine')
@@ -62,5 +65,28 @@ describe('beginner labs teach with runnable examples', () => {
       for (const c of l.notebook.cells) expect(c.code?.length, `${l.id}: ${c.title}`).toBeGreaterThan(10)
       if (l.id !== 'l03-bowl') expect(l.mathCode?.rows?.length, l.id).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('answer parsing', () => {
+  it('accepts decimals, fractions and scientific notation, and never evaluates expressions', () => {
+    expect(parseAnswer('0.25').value).toBe(0.25)
+    expect(parseAnswer(' 1/4 ').value).toBe(0.25)
+    expect(parseAnswer('\u22123').value).toBe(-3)
+    expect(parseAnswer('-6/-4').value).toBe(1.5)
+    expect(parseAnswer('.5').value).toBe(0.5)
+    expect(parseAnswer('2e-5').value).toBe(2e-5)
+    for (const bad of ['', '1/0', '2*3', 'Math.PI', '1+1', '(1)/2', '1/2/3', 'abc', '0x10']) expect(parseAnswer(bad).error, bad).toBeTruthy()
+  })
+  it('explains commas and percentages instead of guessing', () => {
+    expect(parseAnswer('1,5').error).toMatch(/dot for decimals/)
+    expect(parseAnswer('80%').error).toMatch(/enter 0.8/)
+    expect(parseAnswer('80%', { percent: true }).value).toBe(80)
+    expect(parseAnswer('80', { percent: true }).value).toBe(80)
+  })
+  it('never claims independent mastery', () => {
+    for (const help of ['none', 'feedback', 'explanation', undefined]) expect(statusText({ passed: true, help })).toMatch(/fresh version/)
+    expect(statusText({ passed: true, help: 'none' })).toMatch(/without help/)
+    expect(statusText({ passed: true })).toMatch(/before help was tracked/)
   })
 })

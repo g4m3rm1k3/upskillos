@@ -901,3 +901,21 @@
 .ml-mat tr.active td { background: var(--accent-muted); }
 .ml-mat tr.done td { opacity: 0.85; }
 .ml-mat td.hit { background: var(--accent); color: var(--accent-text) !important; font-weight: 700; border-radius: 3px; }
+
+/* Lesson notebooks (notebook/LessonNotebook.jsx) */
+.ml-nb { margin-top: 10px; }
+.ml-nb-toolbar { flex-wrap: wrap; }
+.ml-nb-cell { border-top: 1px solid var(--border); padding: 12px 0; }
+.ml-nb-cell h4 { margin: 0 0 4px; font-size: 14px; }
+.ml-nb-cellbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+.ml-nb-count { font: 12px "JetBrains Mono", monospace; color: var(--muted); min-width: 3.2em; }
+.ml-nb-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+.ml-nb-editor { border: 1px solid var(--ml-code-border, var(--border)); border-radius: 8px; overflow: hidden; }
+.ml-nb-fallback { margin: 0; padding: 8px 12px; font: 13px "JetBrains Mono", monospace; white-space: pre-wrap; }
+.ml-nb-output { margin-top: 6px; }
+.ml-nb-output pre { margin: 0; padding: 8px 12px; background: var(--surface); border-radius: 6px; font: 12.5px/1.5 "JetBrains Mono", monospace; white-space: pre-wrap; overflow-x: auto; }
+.ml-nb-output .ml-nb-value { color: var(--accent); }
+.ml-nb-output .ml-nb-error { color: var(--ml-bad, #b91c1c); border-left: 3px solid var(--ml-bad, #b91c1c); }
+.ml-nb-hint { margin: 6px 0 0; font-size: 13px; }
+.ml-nb-output img { max-width: 100%; margin-top: 6px; background: #fff; border-radius: 6px; }
+.ml-attempts { margin-top: 4px; }

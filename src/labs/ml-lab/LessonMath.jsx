@@ -3,7 +3,6 @@ import LessonText from './LessonText.jsx'
 import StaticCodeBlock from '../../components/markdown/StaticCodeBlock.jsx'
 import { resolveLinks, COURSE_NAMES } from './kit/mathLinks.js'
 
-const PythonNotebook = lazy(() => import('../../components/notebooks/PythonNotebook.jsx'))
 
 // Each symbol in the lesson's math next to the code that holds it.
 // mathCode: { rows: [[math (LaTeX allowed), code, meaning]], code?: { language, source, caption } }
@@ -16,27 +15,17 @@ export function MathCode({ mathCode }) {
   </div>
 }
 
-// Runnable Python cells: here in the lesson, or copied into Notebook Lab to keep.
-const NOTEBOOK_KEY = 'oc-notebook-lab'
-function saveToNotebookLab(title, cells) {
-  const id = `nb-ml-${Date.now()}`
-  const nb = { id, name: title, createdAt: Date.now(), updatedAt: Date.now(), cells: cells.map((c, i) => ({ id: `cell-${i + 1}`, cellTitle: c.title ?? '', prose: c.prose ?? '', instructions: '', code: c.code, output: '', status: 'idle', figureJson: null })) }
-  try { const db = JSON.parse(localStorage.getItem(NOTEBOOK_KEY) ?? '{}'); db[id] = nb; localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(db)); return true } catch { return false }
-}
-export function NotebookCells({ notebook, lessonTitle }) {
-  const [open, setOpen] = useState(false), [saved, setSaved] = useState(null)
+// Runnable Python cells, in a worker, with the learner's edits saved as drafts (notebook/).
+const LessonNotebook = lazy(() => import('./notebook/LessonNotebook.jsx'))
+export function NotebookCells({ id, notebook }) {
+  const [open, setOpen] = useState(false)
   if (!notebook) return null
-  const cells = notebook.cells.map((c, i) => ({ id: `cell-${i + 1}`, cellTitle: c.title, prose: c.prose, code: c.code, output: '', status: 'idle', figureJson: null }))
   return <div className="ml-runcells">
     <span className="ml-eyebrow">Run the math</span>
     <p><LessonText>{notebook.intro}</LessonText></p>
-    <div className="ml-actions">
-      <button onClick={() => setOpen(o => !o)}>{open ? 'Hide the notebook cells' : `Open ${notebook.cells.length} notebook cells here`}</button>
-      <button onClick={() => { const ok = saveToNotebookLab(notebook.title ?? lessonTitle, notebook.cells); setSaved(ok); if (ok) window.open('#/notebook-lab', '_blank', 'noopener') }}>Copy to Notebook Lab ↗</button>
-    </div>
-    {saved === false && <p className="ml-warning" role="status">Could not save to this browser’s storage.</p>}
-    {saved && <p className="ml-caption" role="status">Saved as “{notebook.title ?? lessonTitle}” in Notebook Lab, where you can edit it, keep it and export it as .ipynb.</p>}
-    {open && <Suspense fallback={<p className="ml-caption" role="status">Loading Python…</p>}><PythonNotebook params={{ initialCells: cells }} /></Suspense>}
+    <div className="ml-actions"><button aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the notebook cells' : `Open ${notebook.cells.length} notebook cells here`}</button></div>
+    {open && <Suspense fallback={<p className="ml-caption" role="status">Loading the notebook…</p>}><LessonNotebook id={id} notebook={notebook} /></Suspense>}
+    {!open && <p className="ml-caption">Your edits are saved on this device and kept when you hide the cells or change lessons.</p>}
   </div>
 }
 

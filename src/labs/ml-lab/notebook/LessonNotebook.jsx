@@ -1,0 +1,185 @@
+import React, { useEffect, useRef, useState } from 'react'
+import Editor from '@monaco-editor/react'
+import LessonText from '../LessonText.jsx'
+import { setupOpenCalcMonaco } from '../../../utils/monacoThemes.js'
+import { useGlobalTheme } from '../../../context/ThemeContext.jsx'
+import { getCodeFontFamily, getCodeFontSize } from '../../../components/ui/CodeSettingsModal.jsx'
+import * as runtime from './runtime.js'
+import { loadDraft, saveDraft, rebaseDraft, clearDraft, getSession, setSession } from './drafts.js'
+
+// A lesson's runnable cells. The learner's code is the source of truth: it is saved as a draft
+// on every edit and is what "Download" and "Copy to Notebook Lab" export. Python runs in a
+// worker (runtime.js), so Stop always works; cells of one notebook share variables.
+
+const NOTEBOOK_LAB_KEY = 'oc-notebook-lab'
+const emptySession = n => ({ outputs: Array(n).fill(null), counts: Array(n).fill(null), ranCode: Array(n).fill(null), counter: 0, generation: null, reset: false })
+
+// Plain-language guidance next to an ordinary Python traceback. Never replaces it.
+export function errorHint(result) {
+  if (result.stopped) return 'Stopped. Python restarted, so variables from earlier cells are gone. Your code is kept.'
+  if (result.runtimeError) return 'Python itself could not run (often a network problem while downloading Python or a package). Check your connection and run the cell again.'
+  const { ename, evalue = '' } = result
+  if (ename === 'NameError') return `Python does not know ${evalue.match(/'([^']+)'/)?.[1] ?? 'that name'} yet. Check the spelling, or run the cells above first — after Stop or Restart, earlier variables are gone. “Run all” runs every cell in order.`
+  if (ename === 'SyntaxError' || ename === 'IndentationError') return 'Python could not read this cell. Look at the line the traceback points to: a missing bracket, colon or quote, or inconsistent indentation.'
+  if (ename === 'ModuleNotFoundError') return 'That package is not available in the browser’s Python. The lessons use numpy, pandas, scikit-learn, scipy and matplotlib.'
+  if (ename === 'ValueError' && /broadcast/.test(evalue)) return 'Two arrays have shapes NumPy cannot line up. Print both shapes just before this line.'
+  if (ename === 'TypeError') return 'An operation received a kind of value it cannot handle — for example a list where an array was expected, or text where a number was expected.'
+  if (ename === 'AssertionError') return 'An assert failed: the condition it checks is false for these values. That is a signal, not a crash — read what it was checking.'
+  return null
+}
+
+export function toIpynb(notebook, codes, outputs) {
+  const md = text => ({ cell_type: 'markdown', metadata: {}, source: text })
+  const cells = [md(`# ${notebook.title}\n\n${notebook.intro ?? ''}`)]
+  notebook.cells.forEach((c, i) => {
+    if (c.title || c.prose) cells.push(md(`### ${c.title ?? ''}\n\n${c.prose ?? ''}`))
+    const out = outputs?.[i]
+    cells.push({
+      cell_type: 'code', metadata: {}, execution_count: null, source: codes[i],
+      outputs: out?.text ? [{ output_type: 'stream', name: 'stdout', text: out.text }] : [],
+    })
+  })
+  return JSON.stringify({ nbformat: 4, nbformat_minor: 5, metadata: { kernelspec: { name: 'python3', display_name: 'Python 3', language: 'python' }, language_info: { name: 'python' } }, cells }, null, 1)
+}
+
+function download(name, body) {
+  const url = URL.createObjectURL(new Blob([body], { type: 'application/x-ipynb+json' })), a = document.createElement('a')
+  a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function copyToNotebookLab(notebook, codes) {
+  const id = `nb-ml-${Date.now()}`
+  const nb = { id, name: notebook.title, createdAt: Date.now(), updatedAt: Date.now(), cells: notebook.cells.map((c, i) => ({ id: `cell-${i + 1}`, cellTitle: c.title ?? '', prose: c.prose ?? '', instructions: '', code: codes[i], output: '', status: 'idle', figureJson: null })) }
+  try { const db = JSON.parse(localStorage.getItem(NOTEBOOK_LAB_KEY) ?? '{}'); db[id] = nb; localStorage.setItem(NOTEBOOK_LAB_KEY, JSON.stringify(db)); return true } catch { return false }
+}
+
+function CellEditor({ code, onChange, onRun, label }) {
+  const { themeStyles, isDarkGlobal, codeTypography } = useGlobalTheme()
+  const runRef = useRef(onRun)
+  runRef.current = onRun
+  const lines = Math.max(3, code.split('\n').length)
+  return <div className="ml-nb-editor">
+    <Editor
+      height={`${Math.min(480, lines * 19 + 24)}px`}
+      language="python"
+      value={code}
+      onChange={value => onChange(value ?? '')}
+      beforeMount={setupOpenCalcMonaco}
+      onMount={(editor, monaco) => editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => runRef.current())}
+      theme={themeStyles?.monaco ?? (isDarkGlobal ? 'open-calc-dark' : 'open-calc-light')}
+      loading={<pre className="ml-nb-fallback">{code}</pre>}
+      options={{
+        ariaLabel: label,
+        fontFamily: getCodeFontFamily(codeTypography?.font),
+        fontSize: parseInt(getCodeFontSize(codeTypography?.fontSize), 10),
+        minimap: { enabled: false }, lineNumbers: 'on', tabSize: 4, insertSpaces: true,
+        automaticLayout: true, scrollBeyondLastLine: false, wordWrap: 'on',
+        padding: { top: 8, bottom: 8 }, scrollbar: { alwaysConsumeMouseWheel: false },
+      }}
+    />
+  </div>
+}
+
+function Output({ out, index }) {
+  if (!out) return null
+  const hint = out.error ? errorHint(out.error) : null
+  return <div className="ml-nb-output" aria-live="polite">
+    {out.text && <pre>{out.text}</pre>}
+    {out.value != null && <pre className="ml-nb-value">{out.value}</pre>}
+    {out.error && !out.error.stopped && <pre className="ml-nb-error">{out.error.traceback || `${out.error.ename}: ${out.error.evalue}`}</pre>}
+    {hint && <p className="ml-nb-hint">{hint}</p>}
+    {out.figures?.map((png, k) => <img key={k} src={`data:image/png;base64,${png}`} alt={`Figure ${k + 1} produced by cell ${index + 1}`} />)}
+  </div>
+}
+
+export default function LessonNotebook({ id, notebook }) {
+  const originals = notebook.cells.map(c => c.code)
+  const [draft, setDraft] = useState(() => loadDraft(id, originals))
+  const [session, setSessionState] = useState(() => getSession(id) ?? emptySession(originals.length))
+  const [rt, setRt] = useState(null), [pending, setPending] = useState([]), [notice, setNotice] = useState('')
+  const codes = draft.codes, codesRef = useRef(codes), mounted = useRef(true)
+  codesRef.current = codes
+  useEffect(() => { mounted.current = true; const off = runtime.subscribe(setRt); return () => { mounted.current = false; off() } }, [])
+  // The session store, not component state, is the source of truth: a run that finishes after
+  // the learner hides the notebook or moves to another lesson still records its output.
+  const updateSession = fn => {
+    const next = fn(getSession(id) ?? emptySession(originals.length))
+    setSession(id, next)
+    if (mounted.current) setSessionState(next)
+  }
+  const setPendingSafe = fn => { if (mounted.current) setPending(fn) }
+
+  const setCode = (i, code) => {
+    const next = codesRef.current.map((c, k) => k === i ? code : c)
+    codesRef.current = next
+    const saved = saveDraft(id, originals, next)
+    setDraft(d => ({ ...d, codes: next, edited: next.some((c, k) => c !== originals[k]) || d.outdated }))
+    setNotice(saved ? '' : 'Could not save your edits on this device (storage is full or blocked). Download the notebook to keep them.')
+  }
+
+  // Runs cells in order; stops at the first error or when Python is stopped.
+  const runCells = async indices => {
+    setPendingSafe(indices)
+    for (const i of indices) {
+      let text = ''
+      updateSession(s => ({ ...s, outputs: s.outputs.map((o, k) => k === i ? { text: '', running: true } : o) }))
+      const code = codesRef.current[i]              // the latest edit, even during "Run all"
+      const result = await runtime.run(id, code, { onStream: (_, chunk) => { text += chunk + '\n'; updateSession(s => ({ ...s, outputs: s.outputs.map((o, k) => k === i ? { ...o, text } : o) })) } })
+      updateSession(s => {
+        const counter = result.ok || !result.stopped ? s.counter + 1 : s.counter
+        return {
+          // Only a run that completed proves which Python session holds this notebook's variables.
+          ...s, counter, generation: result.stopped ? s.generation : result.generation, reset: result.stopped ? s.reset : false,
+          outputs: s.outputs.map((o, k) => k === i ? { text, value: result.value, error: result.ok ? null : result, figures: result.figures ?? [] } : o),
+          counts: s.counts.map((c, k) => k === i ? (result.stopped ? null : counter) : c),
+          ranCode: s.ranCode.map((c, k) => k === i ? code : c),
+        }
+      })
+      setPendingSafe(p => p.filter(k => k !== i))
+      if (!result.ok) { setPendingSafe(() => []); break }
+    }
+  }
+
+  const restart = () => { runtime.resetNamespace(id); updateSession(s => ({ ...s, counts: s.counts.map(() => null), reset: true })) }
+  const resetAll = () => {
+    if (!(window.confirm?.('Replace every cell in this notebook with the original lesson code? Your edits to this notebook will be lost; other notebooks are not affected.') ?? true)) return
+    clearDraft(id); setDraft({ codes: [...originals], edited: false, outdated: false }); setNotice('Restored the original cells.')
+  }
+
+  const everRan = session.counts.some(c => c != null) || session.generation != null
+  const variablesLost = session.reset || (session.generation != null && rt && rt.generation !== session.generation)
+  const busyHere = pending.length > 0
+  return <div className="ml-nb" data-notebook={id}>
+    <div className="ml-actions ml-nb-toolbar">
+      <button className="ml-primary" disabled={busyHere} onClick={() => runCells(codes.map((_, i) => i))}>Run all</button>
+      <button disabled={!rt?.busy} onClick={runtime.stop}>Stop</button>
+      <button disabled={busyHere} onClick={restart} title="Forget this notebook’s variables; keep the code">Restart Python for this notebook</button>
+      <button onClick={() => download(`${id}.ipynb`, toIpynb(notebook, codes, session.outputs))}>Download my notebook (.ipynb)</button>
+      <button onClick={() => { const ok = copyToNotebookLab(notebook, codes); setNotice(ok ? `Copied your version — edits included — to Notebook Lab as “${notebook.title}”.` : 'Could not save to this browser’s storage.'); if (ok) window.open('#/notebook-lab', '_blank', 'noopener') }}>Copy my version to Notebook Lab ↗</button>
+      {draft.edited && <button onClick={resetAll}>Reset to the original cells</button>}
+    </div>
+    <p className="ml-caption" role="status">
+      {rt?.state === 'loading' || rt?.state === 'running' ? rt.text : variablesLost ? 'Python was restarted since this notebook last ran, so its variables are gone (your code is kept). Use “Run all”, or run the cells from the top.' : everRan ? 'Cells in this notebook share variables, like a Jupyter notebook. Other lessons’ notebooks cannot see them.' : rt?.text}
+      {' '}Shift + Enter runs the cell you are editing. In an editor, press Ctrl + M to let Tab move focus out.
+    </p>
+    {draft.outdated && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={() => { rebaseDraft(id, originals, codes); setDraft(d => ({ ...d, outdated: false })) }}>Keep my version</button> <button onClick={resetAll}>Use the updated version</button></p>}
+    {notice && <p className="ml-caption" role="status">{notice}</p>}
+    {notebook.cells.map((cell, i) => {
+      const edited = codes[i] !== originals[i], stale = session.ranCode[i] != null && session.ranCode[i] !== codes[i]
+      const state = pending[0] === i && rt?.busy ? 'running' : pending.includes(i) ? 'queued' : null
+      return <section key={i} className="ml-nb-cell" aria-label={`Cell ${i + 1}${cell.title ? `: ${cell.title}` : ''}`}>
+        {cell.title && <h4>{cell.title}</h4>}
+        {cell.prose && <p><LessonText>{cell.prose}</LessonText></p>}
+        <div className="ml-nb-cellbar">
+          <span className="ml-nb-count" aria-label={session.counts[i] ? `Run number ${session.counts[i]}` : 'Not run'}>[{state === 'running' ? '*' : session.counts[i] ?? ' '}]</span>
+          <button disabled={busyHere} onClick={() => runCells([i])}>Run cell</button>
+          {state && <span className="ml-caption">{state === 'running' ? 'Running…' : 'Waiting to run'}</span>}
+          {stale && <span className="ml-nb-badge">edited since it ran</span>}
+          {edited && <button onClick={() => setCode(i, originals[i])}>Undo my edits to this cell</button>}
+        </div>
+        <CellEditor code={codes[i]} onChange={v => setCode(i, v)} onRun={() => !busyHere && runCells([i])} label={`Notebook cell ${i + 1} code`} />
+        <Output out={session.outputs[i]} index={i} />
+      </section>
+    })}
+  </div>
+}
