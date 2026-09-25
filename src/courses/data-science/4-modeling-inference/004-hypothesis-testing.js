@@ -49,7 +49,7 @@ fig.show()`},
        prose:'Here 12 people are each measured before and after a course. People differ a lot from each other, but each person improves a little. Under the null (the course does nothing), what could be swapped is the before/after label *within each person* — not scores between different people. So the valid permutation flips the sign of each person\'s difference at random. Shuffling all 24 scores as if they were two independent groups breaks the pairing, mixes in the large person-to-person spread, and gives a p-value for the wrong question.',
        instructions:'Predict which p-value will be smaller before running. Run and compare. Then explain in one sentence why shuffling scores between different people is not a valid "no effect" world for this design.',
        code:`import numpy as np
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(3)
 before = rng.normal(60, 12, 12)            # large differences between people
 after  = before + rng.normal(3, 3, 12)     # each person improves a little
 diffs = after - before

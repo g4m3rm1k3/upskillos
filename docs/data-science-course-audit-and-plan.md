@@ -29,6 +29,17 @@ Verification: the seven demonstration cells ran independently in local Python us
 
 Remaining for this page: verify desktop/mobile display, math links, the Figure renderer, challenge feedback and notebook persistence in the course's actual shared runtime. Its current schema still groups prose before the notebook; the rewrite improves teaching content but does not implement true interleaving.
 
+## Correctness pass completed (2026-09-25)
+
+Every row in the table below has been addressed in the lesson source (rollout step 1). Lesson IDs, slugs and existing cell IDs are unchanged; new demonstration cells use previously unused IDs.
+
+- **Shared renderer bug found and fixed:** `FigureRenderer.jsx` drew `transformed_grid([[a,b],[c,d]])` as the transpose (î → `[a,b]`), and `quick_transform` in `opencalcLibSource.js` drew basis vectors and `Tv` from rows. Both now match NumPy `A @ v` (î → column `[a,c]`). This also corrects the linear-algebra and python courses, whose prose already described the column convention.
+- **Demonstrations that did not show their claim were replaced:** D02's CLT cell plotted fitted normal curves, so it looked normal at every N; it now measures skewness of draws versus means, with a Cauchy counterexample. D04 Stage 1 promised a histogram and red line it never drew. D06 compared candidates on the test set, and its unscaled high-degree polynomials made training error rise with degree. It now uses train/validation/test with a baseline, scaled features, and a sample size where the validation U-shape really appears.
+- **New cells:** A05 2b (misspelling/scope NameErrors), A08 2b (rebinding vs mutation), A14 4b (hashability), B01 6 (right-aligned broadcasting and the `(n,)`/`(n,1)` bug), C04 4b (train-only fit, zero spread, unseen category), C06 1b (what the checklist catches and misses), D02 4b (Cauchy), D03 4b (funnel vs curve), D04 1b (paired sign-flip vs invalid unpaired shuffle).
+- **Verification:** all 35 modules import under Node with no duplicate cell IDs. Every changed or new non-challenge cell ran from a clean namespace in local CPython 3.13 (numpy 2.4, pandas 3.0, scipy 1.18, sklearn 1.9) against the app's `opencalc` source, and its printed output matched the prose. Intended errors (A01 5–6, A05 2/2b) raise as described. The D03 challenge reference solution passes its test. **Not done:** browser/Pyodide rendering (including the renderer fix and histogram overlays) and a check that Pyodide's package versions produce the same outputs.
+
+The page-by-page teaching rewrite, bridges, projects, ML-contract certification and runtime work below remain open.
+
 ## Correctness fixes to prioritize before broader rewriting
 
 | Location | Current issue | Required correction |
