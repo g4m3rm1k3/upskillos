@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l14-sequential',
@@ -106,3 +108,6 @@ export const sources = [
   { title: 'Friedman (2001) · Greedy function approximation: a gradient boosting machine', url: 'https://doi.org/10.1214/aos/1013203451' },
   { title: 'scikit-learn · Gradient boosting (HistGradientBoosting)', url: 'https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosting' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

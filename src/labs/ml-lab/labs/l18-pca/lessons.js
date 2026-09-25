@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l18-projection',
@@ -46,8 +48,8 @@ export const lessons = [
     skill: 'Explain why PCA requires centering, when to standardize, and how to avoid leakage.',
     prerequisite: 'Lessons 18.1–18.2; standardization (Labs 02–03).',
     paragraphs: [
-      'Variance and covariance are defined around the mean. If you skip centering, the "spread" you maximize is measured around the origin instead, and PC1 is pulled toward the direction of the mean itself. The playground\'s uncentered PC1 points from the origin to the cloud, not along its shape.',
-      'For a cloud centered at (3, 2), almost all "variance around the origin" is just the offset. The components describe where the data are, not how they vary, and the reconstruction error rises. Subtracting the mean first removes this.',
+      'Variance and covariance are defined around the mean. If you skip centering, the "spread" you maximize is measured around the origin instead, and PC1 is pulled toward the direction of the mean itself. In the playground, set the cloud’s angle to 120° and switch centering off: PC1 swings to about 34°, the direction of the mean, instead of following the long axis near 128°, and the reconstruction error more than doubles.',
+      'For a cloud centered at (4, −3), almost all "variance around the origin" is just the offset. The components describe where the data are, not how they vary, and the reconstruction error rises. Subtracting the mean first removes this.',
       'PCA maximizes variance, so features with large numeric ranges dominate. Size in bytes would swamp duration in seconds. When features have different units, **standardize** them (divide by their standard deviation) — equivalent to PCA on the correlation matrix. When all features share a unit and scale (pixel intensities), plain centering is usually right.',
       'The mean, the scale and the components are all learned from data. Fit them on training data only and apply the same transform to validation and test data (Labs 02 and 06). A PCA fitted on all data before splitting leaks the test set\'s structure into the features.',
       'A quick check: after centering, every column of the transformed training data has mean zero, and the variances of the components equal the eigenvalues in decreasing order.',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Shlens · A tutorial on principal component analysis', url: 'https://arxiv.org/abs/1404.1100' },
   { title: 'scikit-learn · PCA', url: 'https://scikit-learn.org/stable/modules/decomposition.html#pca' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

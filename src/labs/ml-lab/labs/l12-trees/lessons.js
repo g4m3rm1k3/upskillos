@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l12-questions',
@@ -127,3 +129,6 @@ export const sources = [
   { title: 'scikit-learn · Permutation feature importance', url: 'https://scikit-learn.org/stable/modules/permutation_importance.html' },
   { title: 'Breiman, Friedman, Olshen & Stone · Classification and Regression Trees (1984)', url: 'https://doi.org/10.1201/9781315139470' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

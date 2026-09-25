@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l16-frame',
@@ -126,3 +128,6 @@ export const sources = [
   { title: 'Rules of Machine Learning (Google) · best practices for ML engineering', url: 'https://developers.google.com/machine-learning/guides/rules-of-ml' },
   { title: 'Kaufman et al. (2012) · Leakage in data mining', url: 'https://doi.org/10.1145/2382577.2382579' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

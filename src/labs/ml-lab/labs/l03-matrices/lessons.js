@@ -34,7 +34,7 @@ export const lessons = [
       { p: 5 },
       { math: true },
     ],
-    formulaTex: '$$\\hat y_i = 1\\cdot b + x_{i1}\\,w_1 + x_{i2}\\,w_2 = x_i \\cdot w \\qquad X:(n,\\,p+1),\\;\\; w:(p+1,),\\;\\; \\hat y:(n,)$$',
+    formulaTex: '$$\\hat y_i = 1\\cdot b + x_{i1}\\,w_1 + x_{i2}\\,w_2 = x_i \\cdot w$$ $$X:(n,\\,p+1),\\;\\; w:(p+1,),\\;\\; \\hat y:(n,)$$',
     formula: 'ŷᵢ = 1·b + xᵢ₁·w₁ + xᵢ₂·w₂ = row i · w     X (n, p+1), first column = 1     w (p+1,)',
     mathCode: {
       rows: [
@@ -89,8 +89,9 @@ export const lessons = [
       { cell: 4 },
       { p: 5 },
       { math: true },
+      { ladder: 'prediction' },
     ],
-    formulaTex: '$$(Xw)_i = \\sum_j X_{ij}\\,w_j \\qquad (AB)_{ik} = \\sum_j A_{ij}B_{jk} \\qquad (a\\times b)\\,(b\\times c) \\to (a\\times c) \\qquad (X^\\top v)_j = \\sum_i X_{ij}\\,v_i$$',
+    formulaTex: '$$(Xw)_i = \\sum_j X_{ij}\\,w_j$$ $$(AB)_{ik} = \\sum_j A_{ij}B_{jk}$$ $$(a\\times b)\\,(b\\times c) \\to (a\\times c)$$ $$(X^\\top v)_j = \\sum_i X_{ij}\\,v_i$$',
     formula: '(X @ w)[i] = Σⱼ X[i, j]·w[j]     (a, b) @ (b, c) → (a, c)     (Xᵀ v)[j] = Σᵢ X[i, j]·v[i]',
     mathCode: {
       rows: [
@@ -143,7 +144,7 @@ export const lessons = [
       { p: 5 },
       { math: true },
     ],
-    formulaTex: '$$\\frac{\\partial J}{\\partial w_j} = \\frac{2}{n}\\sum_i e_i\\,x_{ij} \\qquad \\nabla J(w) = \\frac{2}{n}\\,X^\\top (Xw - y) \\qquad w \\leftarrow w - \\alpha\\,\\nabla J(w)$$',
+    formulaTex: '$$\\frac{\\partial J}{\\partial w_j} = \\frac{2}{n}\\sum_i e_i\\,x_{ij}$$ $$\\nabla J(w) = \\frac{2}{n}\\,X^\\top (Xw - y)$$ $$w \\leftarrow w - \\alpha\\,\\nabla J(w)$$',
     formula: '∂J/∂w_j = (2/n) Σᵢ eᵢ·xᵢⱼ     ∇J(w) = (2/n) Xᵀ (Xw − y)     w ← w − α ∇J(w)',
     mathCode: {
       rows: [
@@ -225,7 +226,7 @@ export const lessons = [
       { p: 3 }, { p: 4 },
       { math: true },
     ],
-    formulaTex: '$$X^\\top X\\,w^* = X^\\top y \\iff X^\\top (y - Xw^*) = 0 \\qquad \\hat y = Xw^* \\text{ is the projection of } y \\text{ onto the column space of } X$$',
+    formulaTex: '$$X^\\top X\\,w^* = X^\\top y \\iff X^\\top (y - Xw^*) = 0$$ $$\\hat y = Xw^* = \\operatorname{proj}_{\\operatorname{col}(X)}\\, y$$',
     formula: 'XᵀX w* = Xᵀy     ⇔     Xᵀ(y − Xw*) = 0     ŷ = Xw* is the projection of y onto col(X)',
     mathCode: {
       rows: [
@@ -311,7 +312,7 @@ export const lessons = [
       { p: 4 },
       { math: true },
     ],
-    formulaTex: '$$w_{k+1} - w^* = \\big(1 - 2\\alpha\\,\\overline{x^2}\\big)(w_k - w^*) \\;\\Rightarrow\\; \\text{stable iff } 0 < \\alpha < \\frac{1}{\\overline{x^2}} \\qquad z = \\frac{x - m_{\\text{train}}}{s_{\\text{train}}}$$',
+    formulaTex: '$$w_{k+1} - w^* = \\big(1 - 2\\alpha\\,\\overline{x^2}\\big)(w_k - w^*)$$ $$\\text{stable iff } 0 < \\alpha < \\frac{1}{\\overline{x^2}}$$ $$z = \\frac{x - m_{\\text{train}}}{s_{\\text{train}}}$$',
     formula: 'one feature: distance × (1 − 2α·mean(x²)) per step  ⇒  stable iff α < 1/mean(x²)     z = (x − m_train)/s_train',
     mathCode: {
       rows: [
@@ -360,7 +361,7 @@ export const lessons = [
       { math: true },
       { derivation: true },
     ],
-    formulaTex: '$$A = \\tfrac{1}{n}X^\\top X \\qquad Av = \\lambda v \\qquad \\text{stable iff } 0 < \\alpha < \\frac{1}{\\lambda_{\\max}} \\qquad \\kappa = \\frac{\\lambda_{\\max}}{\\lambda_{\\min}}$$',
+    formulaTex: '$$A = \\tfrac{1}{n}X^\\top X$$ $$Av = \\lambda v$$ $$\\text{stable iff } 0 < \\alpha < \\frac{1}{\\lambda_{\\max}}$$ $$\\kappa = \\frac{\\lambda_{\\max}}{\\lambda_{\\min}}$$',
     formula: 'A = XᵀX/n     Av = λv     stable: 0 < α < 1/λmax     κ = λmax/λmin',
     mathCode: {
       rows: [

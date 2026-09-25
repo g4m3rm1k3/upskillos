@@ -13,6 +13,7 @@ import LearningPath from './LearningPath.jsx'
 import Checkpoint from './Checkpoint.jsx'
 import JumpIn from './JumpIn.jsx'
 import { jumpIns } from './jumpIn.js'
+import { dueReviews } from './kit/ladder.js'
 const LessonFlow = lazy(() => import('./LessonFlow.jsx'))
 
 const STORE = 'upskillos.ml-lab.v1'
@@ -28,6 +29,15 @@ function Notebook({ lab, journal, setJournal, progress }) {
     <div className="ml-actions"><button onClick={()=>download(`ml-lab-${String(lab.number).padStart(2,'0')}-notes.json`,JSON.stringify({lab:lab.number,exportedAt:new Date().toISOString(),journal,checkpoints:Object.fromEntries(lab.lessons.map(l=>[l.id,progress[l.id]||{}]))},null,2),'application/json')}>Export notes & checkpoints</button></div>
     <p className="ml-caption">Your notebook saves on this device. Experiment settings last for this session; record the seed and settings you used so a run can be reproduced.</p>
   </details>
+}
+// Practice ladders the learner has started, with their next suggested return. Nothing is forced:
+// a return is a suggestion, and overdue ones simply stay on the list.
+function Returns({ progress, onOpen }) {
+  const items = dueReviews(labs, progress)
+  if (!items.length) return null
+  return <section className="ml-returns" aria-label="Practice returns"><span className="ml-eyebrow">Come back to</span>
+    <ul>{items.slice(0,5).map(r=><li key={`${r.lessonId}-${r.name}`}><button className="ml-link-button" onClick={()=>onOpen(r)}>Lab {String(r.lab).padStart(2,'0')}: {r.title}</button> <span className="ml-caption">{r.isDue?'due now':`from ${new Date(r.due).toLocaleDateString()}`}</span></li>)}</ul>
+  </section>
 }
 export default function MLLab({ onBack }) {
   const { themeStyles, isDarkGlobal, typography } = useGlobalTheme()
@@ -90,6 +100,7 @@ export default function MLLab({ onBack }) {
     {tab==='learn' && <div className="ml-layout">
       <aside className="ml-syllabus"><span className="ml-eyebrow">Module {n2} / {lab.short}</span><h2>{lab.question}</h2><p>{lab.intro}</p>
         <nav aria-label="Lessons">{lessons.map((l,i)=><button key={l.id} className={i===lessonIndex?'selected':''} aria-current={i===lessonIndex?'step':undefined} onClick={()=>setLessonIndex(i)}><span>{l.title}</span>{progress[l.id]?.passed && <span aria-label="Checkpoint passed">✓</span>}</button>)}</nav>
+        <Returns progress={progress} onOpen={r=>{openLab(r.lab,r.lessonIndex);rootRef.current?.scrollTo?.({top:0})}} />
         <div className="ml-side-note">The goal is not to finish the page.<br/>It is to explain what changed—and why.</div>
       </aside>
       <article className="ml-lesson"><span className="ml-eyebrow">Understand → derive → test → explain</span><h2>{lesson.title.slice(lesson.title.indexOf('·')+2)}</h2><p className="ml-objective">You will be able to: <LessonText>{lesson.skill}</LessonText></p><p className="ml-prereq"><strong>Before you start:</strong> <LessonText>{lesson.prerequisite}</LessonText></p><MathLinks key={`m-${lesson.id}`} lessonKeys={lesson.math} labKeys={lab.math} /><button className="ml-jump" onClick={()=>playgroundRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>Jump to live experiment ↓</button>
@@ -98,7 +109,7 @@ export default function MLLab({ onBack }) {
           const prose = <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
           const renderMath = () => <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
           const renderDerivation = () => lesson.derivation ? <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} /> : null
-          if (lesson.blocks) return <Suspense fallback={prose}><LessonFlow key={`f-${lesson.id}`} lab={lab} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} renderMath={renderMath} renderDerivation={renderDerivation} /></Suspense>
+          if (lesson.blocks) return <Suspense fallback={prose}><LessonFlow key={`f-${lesson.id}`} lab={lab} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} onUpdate={fn=>setProgress(p=>({...p,[lesson.id]:fn(p[lesson.id]||{})}))} renderMath={renderMath} renderDerivation={renderDerivation} /></Suspense>
           return <>{prose}{renderMath()}{renderDerivation()}<NotebookCells key={`n-${lesson.id}`} id={lesson.id} notebook={lesson.notebook} /></>
         })()}
         <div className="ml-experiment"><span className="ml-eyebrow">Predict before you run</span><p><LessonText>{lesson.experiment}</LessonText></p></div>

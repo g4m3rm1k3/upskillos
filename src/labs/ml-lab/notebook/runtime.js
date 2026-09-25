@@ -16,14 +16,20 @@ export const getGeneration = () => generation
 
 function finish(result) {
   const job = current
+  clearTimeout(deadline); deadline = null
   current = null
   job?.resolve({ ...result, generation })
   startNext()
   emit()
 }
 
+let deadline = null
 function onMessage({ data }) {
-  if (data.type === 'status') { status = { state: data.state, text: data.text }; emit(); return }
+  if (data.type === 'status') {
+    // A time limit counts from when the job starts running, not while Python downloads.
+    if (data.state === 'running' && current?.timeoutMs && data.job === current.job && !deadline) deadline = setTimeout(() => stop('timeout'), current.timeoutMs)
+    status = { state: data.state, text: data.text }; emit(); return
+  }
   if (!current || data.job !== current.job) return
   if (data.type === 'stream') current.onStream?.(data.name, data.text)
   if (data.type === 'done') { status = { state: 'ready', text: 'Python ready.' }; finish(data) }
@@ -35,7 +41,8 @@ function ensureWorker() {
   worker.onmessage = onMessage
   worker.onerror = event => {
     // The worker script itself failed (for example, no network for the first download).
-    worker?.terminate(); worker = null
+    // Every namespace died with it, so notebooks must learn their variables are gone.
+    worker?.terminate(); worker = null; generation++
     status = { state: 'error', text: 'Python could not start. Check your connection, then run the cell again.' }
     finish({ ok: false, runtimeError: true, ename: 'RuntimeError', evalue: event?.message || 'Python could not start.', traceback: event?.message || '' })
   }
@@ -48,10 +55,12 @@ function startNext() {
   worker.postMessage({ type: 'run', job: current.job, ns: current.ns, code: current.code })
 }
 
-// Resolves with { ok, value?, ename?, evalue?, traceback?, figures?, stopped?, generation }.
-export function run(ns, code, { onStream } = {}) {
+// Resolves with { ok, value?, ename?, evalue?, traceback?, figures?, stopped?, timedOut?, generation }.
+// With `timeoutMs`, a run still going after that long is stopped like the Stop button (which
+// restarts Python for every notebook), so use it for checks, not for learners' own cells.
+export function run(ns, code, { onStream, timeoutMs } = {}) {
   return new Promise(resolve => {
-    queue.push({ job: ++jobCounter, ns, code, onStream, resolve })
+    queue.push({ job: ++jobCounter, ns, code, onStream, timeoutMs, resolve })
     startNext()
     emit()
   })
@@ -59,13 +68,14 @@ export function run(ns, code, { onStream } = {}) {
 
 // Terminates Python: the running cell and everything queued are cancelled, and every
 // notebook's variables are gone. Code and drafts live on the page and are not affected.
-export function stop() {
+export function stop(reason) {
   worker?.terminate(); worker = null
+  clearTimeout(deadline); deadline = null
   generation++
-  const cancelled = [current, ...queue].filter(Boolean)
+  const cancelled = [current, ...queue].filter(Boolean), timedOut = reason === 'timeout'
   current = null; queue.length = 0
-  status = { state: 'stopped', text: 'Python was stopped and will restart on the next run. Variables from earlier runs are gone in every notebook; your code is kept.' }
-  cancelled.forEach(job => job.resolve({ ok: false, stopped: true, generation }))
+  status = { state: 'stopped', text: `${timedOut ? 'A check ran past its time limit, so Python was stopped' : 'Python was stopped'} and will restart on the next run. Variables from earlier runs are gone in every notebook; your code is kept.` }
+  cancelled.forEach(job => job.resolve({ ok: false, stopped: true, timedOut, generation }))
   emit()
 }
 

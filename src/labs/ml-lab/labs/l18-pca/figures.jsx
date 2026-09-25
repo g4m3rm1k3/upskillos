@@ -47,16 +47,18 @@ export function VarianceByDirection() {
 }
 
 // ---------- 18.3 ----------
+// Centred away from its own long axis, so the uncentred PC1 visibly points at the mean instead.
+const OFFSET_CLOUD = cloud({ offset: [4, -3] })
 export function CenteringEffect() {
-  const [center, setCenter] = useState(true), model = pca(CLOUD, { center }), c = model.components[0], m = model.mean
+  const [center, setCenter] = useState(true), model = pca(OFFSET_CLOUD, { center }), c = model.components[0], m = model.mean
   return <div>
     <Controls><Check label="subtract the mean first" checked={center} onChange={setCenter} /></Controls>
-    <MiniPlot {...SQ} x={[-3, 9]} y={[-3.5, 7.8]} xLabel="x₁" yLabel="x₂" label="First component with and without centering">{({ X, Y }) => <>
-      <Dots X={X} Y={Y} points={CLOUD.map(p => [p[0], p[1], 2.2])} opacity={0.5} />
+    <MiniPlot {...SQ} x={[-3, 9]} y={[-9, 3]} xLabel="x₁" yLabel="x₂" label="First component with and without centering">{({ X, Y }) => <>
+      <Dots X={X} Y={Y} points={OFFSET_CLOUD.map(p => [p[0], p[1], 2.2])} opacity={0.5} />
       <Path X={X} Y={Y} points={[[m[0] - 8 * c[0], m[1] - 8 * c[1]], [m[0] + 8 * c[0], m[1] + 8 * c[1]]]} stroke="var(--chart-val)" width={2.5} />
       <Dots X={X} Y={Y} points={[[0, 0, 5, 'var(--text)']]} />
     </>}</MiniPlot>
-    <Readout>{center ? 'Centred: PC1 runs along the long axis of the cloud.' : 'Not centred: “variance” is measured around the origin (black dot), so PC1 points from the origin toward the cloud.'} Reconstruction error with one component: <strong>{r(reconstructionError(CLOUD, model, 1), 3)}</strong>.</Readout>
+    <Readout>{center ? 'Centred: PC1 runs along the long axis of the cloud.' : 'Not centred: “variance” is measured around the origin (black dot), so PC1 points from the origin toward the cloud.'} Reconstruction error with one component: <strong>{r(reconstructionError(OFFSET_CLOUD, model, 1), 3)}</strong>.</Readout>
   </div>
 }
 

@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l17-unsupervised',
@@ -112,3 +114,6 @@ export const sources = [
   { title: 'Ester et al. (1996) · DBSCAN: a density-based algorithm for discovering clusters', url: 'https://cdn.aaai.org/KDD/1996/KDD96-037.pdf' },
   { title: 'scikit-learn · Clustering (overview and comparison)', url: 'https://scikit-learn.org/stable/modules/clustering.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

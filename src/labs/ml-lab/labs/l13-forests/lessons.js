@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l13-variance',
@@ -106,3 +108,6 @@ export const sources = [
   { title: 'Breiman (2001) · Random Forests', url: 'https://doi.org/10.1023/A:1010933404324' },
   { title: 'scikit-learn · Forests of randomized trees', url: 'https://scikit-learn.org/stable/modules/ensemble.html#forests-of-randomized-trees' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

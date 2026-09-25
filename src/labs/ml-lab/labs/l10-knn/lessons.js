@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l10-idea',
@@ -106,3 +108,6 @@ export const sources = [
   { title: 'scikit-learn · Nearest neighbors', url: 'https://scikit-learn.org/stable/modules/neighbors.html' },
   { title: 'Beyer et al. (1999) · When is “nearest neighbor” meaningful?', url: 'https://doi.org/10.1007/3-540-49257-7_15' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

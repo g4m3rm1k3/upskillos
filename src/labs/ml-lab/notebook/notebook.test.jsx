@@ -53,7 +53,9 @@ describe('notebook runtime', () => {
   })
   it('a worker that fails to start reports a runtime error and can be retried', async () => {
     runtime.setWorkerFactory(() => { const w = new FakeWorker(); w.postMessage = () => queueMicrotask(() => w.onerror({ message: 'network' })); return w })
+    const gen = runtime.getGeneration()
     expect(await runtime.run('nb1', 'print(1)')).toMatchObject({ ok: false, runtimeError: true })
+    expect(runtime.getGeneration()).toBe(gen + 1)   // every namespace died with the worker
     runtime.setWorkerFactory(() => new FakeWorker())
     expect(await runtime.run('nb1', 'print(1)')).toMatchObject({ ok: true })
   })
@@ -80,12 +82,32 @@ describe('notebook drafts', () => {
 })
 
 describe('export and hints', () => {
-  it('exports the edited code in order, as valid nbformat 4', () => {
-    const nb = JSON.parse(toIpynb({ title: 'T', intro: 'I', cells: [{ title: 'one', code: 'x' }, { code: 'y' }] }, ['x = 5', 'print(x)'], [null, { text: '5\n' }]))
+  const exportCase = () => toIpynb(
+    { title: 'T', intro: 'I', cells: [{ title: 'one', code: 'x' }, { code: 'y' }, { code: 'z' }, { code: 'w' }] },
+    ['x = 5', 'print(x)\nx', 'plt.plot([1])', 'edited since it ran'],
+    {
+      outputs: [null, { text: '5\n', value: '5' }, { text: '', figures: ['iVBORw0KGgo='], error: { ename: 'NameError', evalue: "name 'plt' is not defined", traceback: 'Traceback\nNameError: name \'plt\' is not defined' } }, { text: 'old output\n' }],
+      counts: [null, 3, 4, 5],
+      ranCode: [null, 'print(x)\nx', 'plt.plot([1])', 'the code that produced it'],
+    })
+  it('exports the edited code in order, as nbformat 4, with every kind of output the app showed', () => {
+    const nb = JSON.parse(exportCase())
     const code = nb.cells.filter(c => c.cell_type === 'code')
     expect(nb.nbformat).toBe(4)
-    expect(code.map(c => c.source)).toEqual(['x = 5', 'print(x)'])
-    expect(code[1].outputs[0]).toMatchObject({ output_type: 'stream', text: '5\n' })
+    expect(code.map(c => c.source.join(''))).toEqual(['x = 5', 'print(x)\nx', 'plt.plot([1])', 'edited since it ran'])
+    expect(code[1].outputs).toEqual([
+      { output_type: 'stream', name: 'stdout', text: ['5\n'] },
+      { output_type: 'execute_result', execution_count: 3, data: { 'text/plain': ['5'] }, metadata: {} },
+    ])
+    expect(code[1].execution_count).toBe(3)
+    expect(code[2].outputs.map(o => o.output_type)).toEqual(['display_data', 'error'])
+    expect(code[2].outputs[0].data['image/png']).toBe('iVBORw0KGgo=')
+    expect(code[2].outputs[1]).toMatchObject({ ename: 'NameError', traceback: ['Traceback', "NameError: name 'plt' is not defined"] })
+  })
+  it('leaves out outputs of a cell edited since it ran, rather than attributing them to the new code', () => {
+    const code = JSON.parse(exportCase()).cells.filter(c => c.cell_type === 'code')
+    expect(code[3]).toMatchObject({ outputs: [], execution_count: null })
+    expect(code[0]).toMatchObject({ outputs: [], execution_count: null })
   })
   it('explains reset variables for a NameError', () => {
     expect(errorHint({ ename: 'NameError', evalue: "name 'X' is not defined" })).toMatch(/X.*Run all/)
@@ -125,7 +147,7 @@ describe('edits survive every transition on the lesson page', () => {
     let blob
     URL.createObjectURL = vi.fn(b => { blob = b; return 'blob:x' }); URL.revokeObjectURL = vi.fn()
     fireEvent.click(screen.getByText(/Download my notebook/))
-    expect(JSON.parse(await blob.text()).cells.filter(c => c.cell_type === 'code')[1].source).toBe('weights = np.array([9, 9])')
+    expect(JSON.parse(await blob.text()).cells.filter(c => c.cell_type === 'code')[1].source.join('')).toBe('weights = np.array([9, 9])')
     fireEvent.click(screen.getByText('Reset to the original cells'))
     expect(cell().value).toMatch(/weights = np.array\(\[4, 5\]\)/)
   })
@@ -155,3 +177,14 @@ describe('edits survive every transition on the lesson page', () => {
     expect(screen.queryByText(/has been updated since you edited it/)).toBeNull()
   })
 })
+
+// Writes one export to disk for `nbformat.validate` (see tools/verify-ipynb.py) when asked to.
+if (process.env.ML_WRITE_IPYNB) {
+  it('writes a sample export', async () => {
+    const { writeFileSync } = await import('node:fs')
+    writeFileSync(process.env.ML_WRITE_IPYNB, toIpynb(
+      { title: 'T', intro: 'I', cells: [{ title: 'one', prose: 'p', code: 'x' }, { code: 'y' }, { code: 'z' }] },
+      ['x = 5', 'print(x)\nx', 'plt.plot([1])'],
+      { outputs: [null, { text: '5\n', value: '5' }, { text: '', figures: ['iVBORw0KGgo='], error: { ename: 'NameError', evalue: 'n', traceback: 'Traceback\nNameError: n' } }], counts: [null, 3, 4], ranCode: [null, 'print(x)\nx', 'plt.plot([1])'] }))
+  })
+}

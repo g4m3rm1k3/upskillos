@@ -28,18 +28,28 @@ export function errorHint(result) {
   return null
 }
 
-export function toIpynb(notebook, codes, outputs) {
-  const md = text => ({ cell_type: 'markdown', metadata: {}, source: text })
-  const cells = [md(`# ${notebook.title}\n\n${notebook.intro ?? ''}`)]
+// Outputs are exported as the app showed them (printed text, the final expression's value,
+// figures, errors) with their run numbers, but only for cells whose code has not been edited since
+// that run, so an output is never attributed to code that did not produce it. Python variables are
+// not saved: the reader re-runs the notebook to recreate them.
+const lines = text => text.split(/(?<=\n)/)
+export function toIpynb(notebook, codes, session) {
+  const md = text => ({ cell_type: 'markdown', metadata: {}, source: lines(text) })
+  const cells = [md(`# ${notebook.title}\n\n${notebook.intro ?? ''}\n\n*Exported from the ML Lab. Outputs are from your last run in the app; Python variables are not saved, so run the cells in order to recreate them.*`)]
   notebook.cells.forEach((c, i) => {
     if (c.title || c.prose) cells.push(md(`### ${c.title ?? ''}\n\n${c.prose ?? ''}`))
-    const out = outputs?.[i]
-    cells.push({
-      cell_type: 'code', metadata: {}, execution_count: null, source: codes[i],
-      outputs: out?.text ? [{ output_type: 'stream', name: 'stdout', text: out.text }] : [],
-    })
+    const out = session?.outputs?.[i], count = session?.counts?.[i] ?? null
+    const current = out && !out.running && session.ranCode?.[i] === codes[i]
+    const outputs = []
+    if (current) {
+      if (out.text) outputs.push({ output_type: 'stream', name: 'stdout', text: lines(out.text) })
+      if (out.value != null) outputs.push({ output_type: 'execute_result', execution_count: count, data: { 'text/plain': lines(out.value) }, metadata: {} })
+      out.figures?.forEach((png, k) => outputs.push({ output_type: 'display_data', data: { 'image/png': png, 'text/plain': [`<Figure ${k + 1}>`] }, metadata: {} }))
+      if (out.error && !out.error.stopped) outputs.push({ output_type: 'error', ename: out.error.ename ?? 'Error', evalue: out.error.evalue ?? '', traceback: (out.error.traceback || `${out.error.ename}: ${out.error.evalue}`).split('\n') })
+    }
+    cells.push({ cell_type: 'code', metadata: {}, execution_count: current ? count : null, source: lines(codes[i]), outputs })
   })
-  return JSON.stringify({ nbformat: 4, nbformat_minor: 5, metadata: { kernelspec: { name: 'python3', display_name: 'Python 3', language: 'python' }, language_info: { name: 'python' } }, cells }, null, 1)
+  return JSON.stringify({ nbformat: 4, nbformat_minor: 4, metadata: { kernelspec: { name: 'python3', display_name: 'Python 3', language: 'python' }, language_info: { name: 'python' } }, cells }, null, 1)
 }
 
 function download(name, body) {
@@ -53,7 +63,7 @@ function copyToNotebookLab(notebook, codes) {
   try { const db = JSON.parse(localStorage.getItem(NOTEBOOK_LAB_KEY) ?? '{}'); db[id] = nb; localStorage.setItem(NOTEBOOK_LAB_KEY, JSON.stringify(db)); return true } catch { return false }
 }
 
-function CellEditor({ code, onChange, onRun, label }) {
+export function CellEditor({ code, onChange, onRun, label }) {
   const { themeStyles, isDarkGlobal, codeTypography } = useGlobalTheme()
   const runRef = useRef(onRun)
   runRef.current = onRun
@@ -162,9 +172,9 @@ export function NotebookToolbar({ nb }) {
   return <>
     <div className="ml-actions ml-nb-toolbar">
       <button className="ml-primary" disabled={busy} onClick={() => nb.runCells(codes.map((_, i) => i))}>Run all</button>
-      <button disabled={!rt?.busy} onClick={runtime.stop}>Stop</button>
+      <button disabled={!rt?.busy} onClick={() => runtime.stop()}>Stop</button>
       <button disabled={busy} onClick={nb.restart} title="Forget this notebook’s variables; keep the code">Restart Python for this notebook</button>
-      <button onClick={() => download(`${id}.ipynb`, toIpynb(notebook, codes, session.outputs))}>Download my notebook (.ipynb)</button>
+      <button onClick={() => download(`${id}.ipynb`, toIpynb(notebook, codes, session))}>Download my notebook (.ipynb)</button>
       <button onClick={() => { const ok = copyToNotebookLab(notebook, codes); nb.setNotice(ok ? `Copied your version — edits included — to Notebook Lab as “${notebook.title}”.` : 'Could not save to this browser’s storage.'); if (ok) window.open('#/notebook-lab', '_blank', 'noopener') }}>Copy my version to Notebook Lab ↗</button>
       {draft.edited && <button onClick={nb.resetAll}>Reset to the original cells</button>}
     </div>

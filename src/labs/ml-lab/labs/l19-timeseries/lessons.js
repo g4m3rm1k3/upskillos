@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l19-order',
@@ -111,3 +113,6 @@ export const sources = [
   { title: 'scikit-learn · TimeSeriesSplit', url: 'https://scikit-learn.org/stable/modules/cross_validation.html#time-series-split' },
   { title: 'Hyndman & Koehler (2006) · Another look at measures of forecast accuracy (MASE)', url: 'https://doi.org/10.1016/j.ijforecast.2006.03.001' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

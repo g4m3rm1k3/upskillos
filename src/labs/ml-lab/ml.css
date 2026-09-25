@@ -850,6 +850,10 @@
 /* Math ↔ code table, runnable notebook cells and links to the app's math courses */
 .ml-formula-tex { font-family: var(--ml-prose-font, inherit); font-size: 15px; }
 .ml-formula-tex .katex-display { margin: 0.35em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+/* Display math in lesson text and the Math ↔ code block: scroll sideways inside its own box rather
+   than widening the page, and shrink a little on phones so most equations fit. */
+.ml-lesson .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+@media (max-width: 560px) { .ml-lesson .katex-display { font-size: 0.86em; } }
 .ml-mathcode { margin-top: 14px; }
 .ml-mathcode table, .ml-mathcode > .ml-caption { font-family: var(--ml-prose-font, system-ui, sans-serif); font-size: 13.5px; line-height: 1.5; }
 .ml-mathcode table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -927,6 +931,8 @@
 .ml-inline-figure svg { max-width: 100%; height: auto; }
 .ml-fig-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0; font-size: 13px; }
 .ml-fig-controls label { display: flex; gap: 8px; align-items: center; }
+.ml-fig-controls label { min-width: 0; flex-wrap: wrap; }
+.ml-fig-controls select { max-width: 100%; }
 .ml-fig-controls input[type=range] { width: 140px; }
 .ml-fig-table { border-collapse: collapse; font-size: 13px; margin: 6px 0; }
 .ml-fig-table th, .ml-fig-table td { padding: 4px 10px; border-bottom: 1px solid var(--border); text-align: right; }
@@ -942,3 +948,35 @@
 .ml-nb-try { margin: 8px 0 0; font-size: 13.5px; }
 .ml-link-button { background: none; border: 0; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; text-decoration: underline dotted; }
 .ml-link-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Practice ladders (Ladder.jsx) */
+.ml-flow > .ml-ladder { margin: 28px 0 30px; }
+.ml-ladder { padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ml-ladder h3 { margin: 2px 0 6px; }
+.ml-ladder-evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 16px; margin: 10px 0; font-size: 13px; }
+.ml-ladder-evidence dt { color: var(--muted); font-size: 12px; }
+.ml-ladder-evidence dd { margin: 2px 0 0; }
+.ml-ladder-steps { list-style: none; padding: 0; margin: 12px 0 0; }
+.ml-ladder-steps > li { border-top: 1px solid var(--border); }
+.ml-ladder-head { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 10px 2px; background: none; border: 0; font: inherit; font-weight: 600; color: inherit; text-align: left; cursor: pointer; }
+.ml-ladder-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ml-ladder-status { font-weight: 400; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.ml-ladder-done, .ml-ladder-pass, .ml-ladder-pass strong { color: var(--ml-good, #15803d); }
+.ml-ladder-body { padding: 0 2px 14px; }
+.ml-ladder-trace label { display: grid; grid-template-columns: minmax(0, 1fr) 110px 3.5em; gap: 8px; align-items: center; margin: 6px 0; }
+.ml-ladder-trace input { width: 100%; }
+.ml-lab .ml-ladder-plain { width: 100%; box-sizing: border-box; font: 13px/1.5 "JetBrains Mono", monospace; white-space: pre; overflow-x: auto; overflow-wrap: normal; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--ml-code-bg, transparent); color: inherit; tab-size: 4; }
+.ml-ladder-cases { list-style: none; padding: 0; margin: 6px 0 0; font-size: 13px; }
+.ml-ladder-cases li { padding: 4px 0 4px 10px; border-left: 3px solid var(--border); margin: 4px 0; }
+.ml-ladder-cases li.bad { border-left-color: var(--ml-bad, #b91c1c); }
+.ml-ladder-cases li.ok { border-left-color: var(--ml-good, #15803d); }
+.ml-ladder-solution pre { margin: 4px 0; padding: 8px 12px; background: var(--ml-code-bg, var(--surface)); border-radius: 6px; font: 12.5px "JetBrains Mono", monospace; white-space: pre-wrap; }
+.ml-ladder-choice, .ml-ladder-problem fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
+.ml-ladder-choice label, .ml-ladder-problem fieldset label { display: block; margin: 4px 0; }
+.ml-ladder-problem fieldset label.ml-ladder-inline, .ml-ladder-inline { display: inline-flex; gap: 6px; align-items: center; margin-right: 14px; }
+.ml-ladder-problem form > label { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.ml-ladder-problem input[inputmode] { width: 120px; }
+@media (max-width: 560px) { .ml-ladder-trace label { grid-template-columns: 1fr 90px 3em; } }
+.ml-returns { margin: 14px 0; font-size: 13px; }
+.ml-returns ul { list-style: none; padding: 0; margin: 4px 0 0; }
+.ml-returns li { margin: 4px 0; }

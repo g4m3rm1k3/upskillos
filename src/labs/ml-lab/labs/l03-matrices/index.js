@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import { lessons, sources } from './lessons.js'
 import python from './python.js'
+import { prediction } from './ladder.js'
 
 export default {
   number: 3,
@@ -11,5 +12,6 @@ export default {
   math: ['la.vectors', 'la.dot', 'la.matmul', 'la.transform', 'la.systems', 'la.leastsq', 'la.numpy', 'tool.matrix', 'ref.la'],
   Playground: lazy(() => import('./Playground.jsx')),
   figures: () => import('./figures.jsx'),
+  ladders: { prediction },
   scope: 'Design matrices, matrix products and the transpose, the matrix-form gradient, the loss bowl in weight space, normal equations as projection, rank and collinearity, step-size limits and training-only standardization, and (as an optional second pass) eigenvalues as curvature and the condition number. Regularization for collinearity is Lab 07.',
 }

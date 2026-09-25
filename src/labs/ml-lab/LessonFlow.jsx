@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useState } from 'react'
 import LessonText from './LessonText.jsx'
 import { useNotebook, NotebookCell, NotebookToolbar } from './notebook/LessonNotebook.jsx'
+const Ladder = lazy(() => import('./Ladder.jsx'))
 
 // A lesson told in order: each paragraph followed by what makes it concrete — a small
 // interactive figure, the runnable cell that computes it, or a prediction to commit to.
@@ -11,6 +12,7 @@ import { useNotebook, NotebookCell, NotebookToolbar } from './notebook/LessonNot
 //   { cell: 1 }                                  notebook cell 1, runnable in place
 //   { predict: { prompt, answer, tolerance, explain } }   commit to a number, then see why
 //   { math: true } / { derivation: true }        place the Math ↔ code block or the derivation
+//   { ladder: 'prediction' }                     the lab's coding ladder of that name (lab.ladders)
 // ]
 // Paragraphs, cells, the math block and the derivation that a lesson does not place still
 // appear, after the placed blocks, so nothing is lost. The full notebook stays available
@@ -64,7 +66,7 @@ function Prose({ lesson, i }) {
   return <section className="ml-reading-section"><h3><LessonText>{lesson.sections?.[i] || `Step ${i + 1}`}</LessonText></h3><p><LessonText>{lesson.paragraphs[i]}</LessonText></p></section>
 }
 
-function Flow({ lab, lesson, nb, saved, onSave, renderMath, renderDerivation }) {
+function Flow({ lab, lesson, nb, saved, onSave, onUpdate, renderMath, renderDerivation }) {
   const figures = useFigures(lab)
   const blocks = lesson.blocks
   const placed = { p: new Set(), cell: new Set(), math: false, derivation: false }
@@ -78,6 +80,7 @@ function Flow({ lab, lesson, nb, saved, onSave, renderMath, renderDerivation }) 
     if (b.predict) return <Predict key={k} spec={b.predict} done={solved.includes(k)} onDone={() => markSolved(k)} />
     if (b.math) return <React.Fragment key={k}>{renderMath()}</React.Fragment>
     if (b.derivation) return <React.Fragment key={k}>{renderDerivation()}</React.Fragment>
+    if (b.ladder) return lab.ladders?.[b.ladder] ? <Suspense key={k} fallback={<p className="ml-caption">Loading the practice ladder…</p>}><Ladder name={b.ladder} spec={lab.ladders[b.ladder]} saved={saved} onUpdate={onUpdate} /></Suspense> : null
     return null
   }
   const leftover = lesson.paragraphs.map((_, i) => i).filter(i => !placed.p.has(i))

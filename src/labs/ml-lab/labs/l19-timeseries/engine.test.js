@@ -13,3 +13,11 @@ describe('lab 19 time series', () => {
     expect(leaky.mae.regression).toBeLessThan(0.5 * honest.mae.regression)
   })
 })
+
+describe('figures', () => {
+  it('the component view adds up to the engine series', async () => {
+    const { parts } = await import('./figures.jsx')
+    const y = usage(), p = parts()
+    p.forEach((c, t) => expect(Math.max(0, c.trend + c.daily + c.weekly + c.noise + c.spike)).toBeCloseTo(y[t], 9))
+  })
+})

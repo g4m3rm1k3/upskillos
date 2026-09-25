@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l11-bow',
@@ -126,3 +128,6 @@ export const sources = [
   { title: 'scikit-learn · Naive Bayes (MultinomialNB)', url: 'https://scikit-learn.org/stable/modules/naive_bayes.html' },
   { title: 'scikit-learn · Text feature extraction (bag of words)', url: 'https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

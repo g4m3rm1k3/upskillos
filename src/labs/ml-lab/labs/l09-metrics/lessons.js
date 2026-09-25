@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l09-confusion',
@@ -127,3 +129,6 @@ export const sources = [
   { title: 'Saito & Rehmsmeier (2015) · The precision–recall plot is more informative than ROC on imbalanced data', url: 'https://doi.org/10.1371/journal.pone.0118432' },
   { title: 'Fawcett (2006) · An introduction to ROC analysis', url: 'https://doi.org/10.1016/j.patrec.2005.10.010' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

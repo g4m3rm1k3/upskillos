@@ -20,6 +20,7 @@ describe('ordered lesson blocks', () => {
           if (b.figure) expect(typeof figures[b.figure], `${lesson.id}: figure ${b.figure}`).toBe('function')
           if (b.predict) { expect(Number.isFinite(b.predict.answer), lesson.id).toBe(true); expect(b.predict.explain.length).toBeGreaterThan(10) }
           if (b.derivation) expect(lesson.derivation, lesson.id).toBeTruthy()
+          if (b.ladder) expect(lab.ladders?.[b.ladder], `${lesson.id}: ladder ${b.ladder}`).toBeTruthy()
         }
         expect(paras.size, `${lesson.id}: every paragraph placed`).toBe(lesson.paragraphs.length)
       }

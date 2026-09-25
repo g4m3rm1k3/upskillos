@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l15-margin',
@@ -68,7 +70,7 @@ export const lessons = [
     paragraphs: [
       'A ring of one class around another cannot be separated by a line in (x₁, x₂). Add the feature x₁² + x₂²: now "inside" and "outside" differ in one coordinate, and a flat boundary in the bigger space corresponds to a circle in the original space.',
       'A **feature map** φ(x) sends each point to a higher-dimensional space; the SVM finds a linear boundary w·φ(x) + b = 0 there. The degree-2 map `(x₁, x₂, x₁², x₂², √2·x₁x₂)` gives ellipses and hyperbolas. The playground\'s "Quadratic" option uses it on the circles dataset.',
-      'The SVM\'s optimization can be rewritten so that data appear only through dot products φ(x)·φ(x′). A **kernel** K(x, x′) computes that dot product directly, without building φ: the degree-2 polynomial kernel is `(x·x′)²`. For x = (1, 2) and x′ = (3, 1): x·x′ = 5, K = 25 — the dot product of their six-dimensional feature vectors, computed in two dimensions.',
+      'The SVM\'s optimization can be rewritten so that data appear only through dot products φ(x)·φ(x′). A **kernel** K(x, x′) computes that dot product directly, without building φ: the degree-2 polynomial kernel is `(x·x′)²`. For x = (1, 2) and x′ = (3, 1): x·x′ = 5, K = 25 — exactly the dot product of their three-dimensional feature vectors φ(x) = (x₁², x₂², √2·x₁x₂), computed without ever building them. (Adding a constant, `(x·x′ + 1)²`, gives a six-dimensional map that also contains 1, √2·x₁ and √2·x₂.)',
       'The **RBF (Gaussian) kernel** `K(x, x′) = exp(−γ‖x − x′‖²)` corresponds to an infinite-dimensional feature map. It measures similarity: 1 for identical points, near 0 for distant ones. γ sets the reach: large γ gives very local, wiggly boundaries (overfitting risk); small γ gives smooth ones. The playground approximates it with 120 random Fourier features, a practical technique for large datasets.',
       'Exact kernel SVMs need an n × n kernel matrix — fine for thousands of rows, impractical for millions. Tune λ (or C) and γ together by cross-validation, and standardize features first: the RBF kernel is distance-based, with k-NN\'s sensitivity to scale (Lab 10).',
     ],
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Rahimi & Recht (2007) · Random features for large-scale kernel machines', url: 'https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html' },
   { title: 'scikit-learn · Support vector machines', url: 'https://scikit-learn.org/stable/modules/svm.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])
