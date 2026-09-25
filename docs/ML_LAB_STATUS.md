@@ -76,6 +76,12 @@ colors on a light page. That was a preview-only problem, not an app bug.
 
 ## Open work, in order
 
+0. **Clipped figure text (in progress 2026-09-25).** Lesson 01.x's ShapeBoxes label ran off the drawing
+   ("shape (3, 1)" cut off); fixed. `tools/check-figure-text.mjs` scans every figure: 166 text elements sit
+   slightly outside their drawing area. Most are 2–3 units (y-axis titles in the shared Plot, tick labels at
+   the right edge); a few are clearly clipped (e.g. Lab 19 hour ticks "d26 23h", 9 units). Fix at the source
+   (kit/Plot.jsx margins, or per figure) until the tool reports none, then check at 390 px too.
+
 1. *(Done: Labs 09–19 now have formulas, symbol ↔ code tables and runnable cells.)* Remaining from the assessment's
    rows for these labs: practice sequences (ladders) and the second and third capstone projects.
 2. *(Done: Lab 03 gradient practice sequence.)* Next: practice sequences for Labs 01–19, one skill per lab, as the assessment's rows describe.

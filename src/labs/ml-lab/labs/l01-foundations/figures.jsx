@@ -23,11 +23,13 @@ export function ListVsArray() {
 export function ShapeBoxes() {
   const cell = (x, y, v) => <g key={`${x}${y}`}><rect x={x} y={y} width={34} height={28} rx="4" fill="var(--chart-train)" opacity="0.25" stroke="var(--chart-train)" /><text x={x + 17} y={y + 19} textAnchor="middle" style={{ fontSize: 13, fill: 'var(--text)' }}>{v}</text></g>
   return <div>
-    <svg viewBox="0 0 420 130" role="img" aria-label="A vector of shape (3,) drawn as one row of three boxes, and a column of shape (3, 1) as three stacked boxes">
-      <text x={10} y={16} style={{ fontSize: 12, fill: 'var(--text)' }}>np.array([2, 3, 4]) — shape (3,)</text>
-      {[2, 3, 4].map((v, i) => cell(10 + i * 38, 26, v))}
-      <text x={240} y={16} style={{ fontSize: 12, fill: 'var(--text)' }}>np.array([[2], [3], [4]]) — shape (3, 1)</text>
-      {[2, 3, 4].map((v, i) => cell(240, 26 + i * 32, v))}
+    <svg viewBox="0 0 420 150" role="img" aria-label="A vector of shape (3,) drawn as one row of three boxes, and a column of shape (3, 1) as three stacked boxes">
+      <text x={10} y={16} style={{ fontSize: 12, fill: 'var(--text)', fontFamily: 'var(--font-mono, monospace)' }}>np.array([2, 3, 4])</text>
+      <text x={10} y={33} style={{ fontSize: 12.5, fontWeight: 700, fill: 'var(--text)' }}>shape (3,)</text>
+      {[2, 3, 4].map((v, i) => cell(10 + i * 38, 44, v))}
+      <text x={230} y={16} style={{ fontSize: 12, fill: 'var(--text)', fontFamily: 'var(--font-mono, monospace)' }}>np.array([[2], [3], [4]])</text>
+      <text x={230} y={33} style={{ fontSize: 12.5, fontWeight: 700, fill: 'var(--text)' }}>shape (3, 1)</text>
+      {[2, 3, 4].map((v, i) => cell(230, 44 + i * 32, v))}
     </svg>
     <Readout>Left: one axis with 3 entries. Right: 3 rows and 1 column — two axes. They hold the same numbers but behave differently in arithmetic.</Readout>
   </div>
