@@ -26,8 +26,10 @@ export const MARKER = '@@LADDER@@'
 // calls `fn` on each case and prints one JSON line after MARKER. The cases never appear in anything
 // the learner sees, and expected values are not sent to Python at all: grading happens in JS.
 // `args` names the case fields passed, in order, as float arrays.
-export function buildCheck(source, { fn, args, cases }) {
+// `ints` names arguments passed as Python ints (a count such as k), or integer arrays (a list of lags), not float arrays.
+export function buildCheck(source, { fn, args, cases, ints = [] }) {
   const payload = JSON.stringify(cases.map(c => args.map(a => c[a])))
+  const intMask = JSON.stringify(args.map(a => ints.includes(a)))
   return `import json as _json, traceback as _tb
 import numpy as _np
 _src = ${JSON.stringify(source)}
@@ -45,11 +47,11 @@ if _out['ok']:
     else:
         _cases = []
         for _raw in _json.loads(${JSON.stringify(payload)}):
-            _in = [_np.array(a, dtype=float) for a in _raw]
-            _copies = [a.copy() for a in _in]
+            _in = [((_np.array(a, dtype=int) if isinstance(a, list) else int(a)) if _is_int else _np.array(a, dtype=float)) for a, _is_int in zip(_raw, _json.loads(${JSON.stringify(intMask)}))]
+            _copies = [a.copy() if hasattr(a, 'copy') else a for a in _in]
             try:
                 _v = _f(*_in)
-                _r = {'mutated': not all(_np.array_equal(a, b) for a, b in zip(_in, _copies))}
+                _r = {'mutated': not all(_np.array_equal(a, b, equal_nan=True) for a, b in zip(_in, _copies))}   # NaN inputs stay equal to themselves
                 if _v is None:
                     _r['none'] = True
                 else:
@@ -98,6 +100,7 @@ export function parseCheck(stdout) {
   try { return { printed: stdout.slice(0, at).trim(), report: JSON.parse(json) } } catch { return { printed: stdout.slice(0, at).trim(), report: null } }
 }
 
+const shapeOf = v => Array.isArray(v) ? [v.length, ...(v.length && Array.isArray(v[0]) ? shapeOf(v[0]) : [])] : []
 const fmt = v => Array.isArray(v) ? `[${v.map(fmt).join(', ')}]` : v == null ? 'NaN' : String(Math.round(v * 1e6) / 1e6)
 const shapeText = s => `(${s.join(', ')}${s.length === 1 ? ',' : ''})`
 const close = (a, b, tol) => Array.isArray(a) ? Array.isArray(b) && a.length === b.length && a.every((x, i) => close(x, b[i], tol)) : a != null && b != null && Math.abs(a - b) <= tol
@@ -113,7 +116,7 @@ export function grade(report, cases, { describe, diagnose, tolerance = 1e-6 } = 
     const r = report.cases?.[i] ?? {}, label = `Case ${i + 1}${describe ? ` (${describe(c)})` : ''}`
     if (r.error) return { ok: false, text: `${label}: raised an error.`, error: r.error }
     if (r.none) return { ok: false, text: `${label}: returned None. Did the function end without a \`return\`?` }
-    const want = c.expected, wantShape = Array.isArray(want) ? [want.length] : []
+    const want = c.expected, wantShape = shapeOf(want)
     if ((r.shape ?? []).join() !== wantShape.join()) return { ok: false, text: `${label}: expected shape ${shapeText(wantShape)}, got ${shapeText(r.shape ?? [])}.`, hint: diagnose?.(c, r) }
     if (r.mutated) return { ok: false, text: `${label}: the values are right, but the function changed one of its input arrays. The contract says it must not.` }
     if (!close(r.value, want, c.tolerance ?? tolerance)) return { ok: false, text: `${label}: expected ${fmt(want)}, got ${fmt(r.value)}.`, hint: diagnose?.(c, r) }
@@ -148,4 +151,20 @@ export function dueReviews(labs, progress, now = Date.now()) {
     }
   }
   return out.sort((a, b) => a.due - b.due)
+}
+
+// ---- Helpers shared by the labs' ladder specs ----------------------------------------------------
+export const nearArr = (a, b, tol = 1e-6) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => Math.abs(x - b[i]) <= tol)
+export const r3 = v => String(Math.round(v * 1000) / 1000)
+// When a result has the expected shape but is a fixed multiple of the answer (wrong sign, a lost factor
+// of 2, a sum instead of a mean…), name that mistake. factors: [[k, message], …]; checked in order.
+export function scaledMistake(want, got, factors, tol = 1e-6) {
+  if (!Array.isArray(got) || got.length !== want.length || want.every(v => Math.abs(v) < 1e-12)) return null
+  for (const [k, message] of factors) if (nearArr(got, want.map(v => v * k), tol)) return message
+  return null
+}
+// For probe steps: the variables the check needs, or a message naming the missing ones.
+export function needVars(vars, names) {
+  const missing = names.filter(n => !vars[n])
+  return missing.length ? `Keep the names ${missing.map(n => `\`${n}\``).join(', ')}: the check reads them after your code runs.` : null
 }

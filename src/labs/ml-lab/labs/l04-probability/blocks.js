@@ -64,6 +64,7 @@ export const blocks = {
     { cell: 1 }, { cell: 2 },
     { p: 4 },
     { figure: 'InspectDecision', caption: 'Compare the expected loss of ignoring an alarm with the cost of checking it.' },
+    { ladder: 'bayes' },
   ],
   'l04-verify': [
     { p: 0 }, { p: 1 },

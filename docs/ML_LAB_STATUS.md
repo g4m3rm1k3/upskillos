@@ -53,6 +53,13 @@ must agree after the prescribed `eps` edit; fill in the gradient; repair a plant
 gradient); and a delayed return. The fresh-problem screen is now generic (`spec.view(problem)` supplies intro, table
 and questions), so later labs' sequences need no new UI. 42/42 harness checks (19 new) pass in CPython and Pyodide.
 
+**Ladder infrastructure fixes found while building Labs 01–06.** The harness's input-mutation check treated any
+array containing NaN as changed (NaN ≠ NaN): now `array_equal(..., equal_nan=True)`. The browser worker only loaded
+packages imported by the code it runs, and ladder checks run the learner's code from inside a string, so a
+learner's `import sklearn` was never loaded: `runtime.run(..., { importsFrom })` now loads them (verified on a fresh
+page in Chromium). Trace fields accept a per-field tolerance; the grader handles 2-D answers; checks can pass integer arguments (`ints: ['k']`); explanation
+feedback is per ladder. Shared helpers in `kit/ladder.js`: `scaledMistake`, `needVars`, `nearArr`, `r3`.
+
 ## Verification evidence (2026-09-25)
 
 - `vitest run src/labs/ml-lab`: 72 files, 383 tests passing.
@@ -76,16 +83,23 @@ colors on a light page. That was a preview-only problem, not an app bug.
 
 ## Open work, in order
 
-0. **Clipped figure text (in progress 2026-09-25).** Lesson 01.x's ShapeBoxes label ran off the drawing
-   ("shape (3, 1)" cut off); fixed. `tools/check-figure-text.mjs` scans every figure: 166 text elements sit
-   slightly outside their drawing area. Most are 2–3 units (y-axis titles in the shared Plot, tick labels at
-   the right edge); a few are clearly clipped (e.g. Lab 19 hour ticks "d26 23h", 9 units). Fix at the source
-   (kit/Plot.jsx margins, or per figure) until the tool reports none, then check at 390 px too.
-
+0. *(Done 2026-09-25: clipped figure text.)* `kit/Plot.jsx` sizes its margins to its tick labels and marks axis
+   text `ml-axis`; figure text now has a fixed size and a themed colour (it had inherited the prose size, and
+   axis ticks had no dark-mode colour); `Bars` leaves room for value labels; Lesson 01.1's shape labels are on
+   their own lines; Lab 12's importance chart shows true values on two scales and data that actually shows the
+   bias. `tools/check-figure-text.mjs` reports no clipped text in any lab.
 1. *(Done: Labs 09–19 now have formulas, symbol ↔ code tables and runnable cells.)* Remaining from the assessment's
-   rows for these labs: practice sequences (ladders) and the second and third capstone projects.
-2. *(Done: Lab 03 gradient practice sequence.)* Next: practice sequences for Labs 01–19, one skill per lab, as the assessment's rows describe.
-   Also link Lab 01's weighted-sum lesson into the prediction sequence.
+   rows for these labs: the second and third capstone projects.
+2. *(Done 2026-09-25: one practice sequence per lab for Labs 01–19.)* Each lab has `ladder.js` (the steps,
+   fresh-problem generator and diagnoses) and `ladder.verify.js` (correct and wrong answers the harness must
+   accept or reject), placed in the lesson that teaches the skill. Labs 12–19 cover: best split by Gini gain
+   (12), bagging and out-of-bag predictions (13), boosting with shrinkage and early stopping (14), hinge loss,
+   subgradient and RBF kernel (15), out-of-fold errors and a leaky feature in the capstone (16), k-means steps
+   and the silhouette (17), PCA reconstruction and explained variance (18), and forecast indices, a peeking
+   window and the lag table (19). The harness's `ints` option now also passes integer lists (Lab 19's lags).
+   Verified: `tools/verify-ladders.mjs` 250/250 in CPython and in Pyodide 0.26.4; every expected value and
+   every number quoted in a prompt cross-checked with NumPy or scikit-learn; `Ladder.test.jsx` checks them.
+   Still open here: link Lab 01's weighted-sum lesson into Lab 03's prediction sequence.
 3. **Python runtime:**
    - Shut Python down when idle, and when the learner leaves the lab.
    - Cap output and figure size.
@@ -93,11 +107,10 @@ colors on a light page. That was a preview-only problem, not an app bug.
    - Explain the intermittent browser-check failure the previous agent reported.
 4. **Figure descriptions:** matplotlib images still say only “Figure k produced by cell n”. Each lesson needs a
    real description or table.
-5. **Labs 01–08:** practice sequences and short refreshers on Python, NumPy and math. Also check the three
+5. **Labs 01–08:** short refreshers on Python, NumPy and math. Also check the three
    links to the app's math courses and tools (Matrix Lab, OpenMAT least squares, statistics sampling) task
    by task.
-6. **Labs 09–19:** runnable Python and practice sequences, following each lab's row in the assessment's
-   table. Then a tabular project in three stages: worked example, scaffolded version, independent version.
+6. **Labs 09–19:** a tabular project in three stages: worked example, scaffolded version, independent version.
 7. **Labs 20–36 and 38–61:** nothing done: no ordered lessons, runnable cells or practice sequences.
 
 (The assessment calls items 1–2 “Slice A”, 5 “Slice B”, 6 “Slice C” and 7 “Slices D–F”.)

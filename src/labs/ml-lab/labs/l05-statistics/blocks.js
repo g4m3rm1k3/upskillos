@@ -39,6 +39,7 @@ export const blocks = {
     { predict: { prompt: 'You compute 200 independent 90% intervals with a well-calibrated method. About how many miss the true value?', answer: 20, explain: '10% of 200 = 20. Which ones miss is unknown; how many is predictable.' } },
     { cell: 0 },
     { p: 2 }, { p: 3 }, { p: 4 },
+    { ladder: 'interval' },
   ],
   'l05-likelihood': [
     { p: 0 }, { p: 1 }, { p: 2 },

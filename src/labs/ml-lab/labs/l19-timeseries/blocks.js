@@ -64,5 +64,6 @@ export const blocks = {
     { predict: { prompt: 'A centred 7-hour moving average at origin t. How many of its values come from after t?', answer: 3, explain: 'Centred on t, it covers t − 3 … t + 3: three values from the future.' } },
     { p: 3 }, { p: 4 },
     { math: true },
+    { ladder: 'forecast' },
   ],
 }

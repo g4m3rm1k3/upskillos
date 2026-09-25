@@ -51,6 +51,7 @@ export const blocks = {
     { figure: 'RidgeShrink', props: { penalty: 'l1' }, caption: 'Degree 10 with the lasso penalty. Raise λ and count the grey (exactly zero) weights.' },
     { cell: 1 },
     { p: 3 }, { p: 4 },
+    { ladder: 'shrink' },
   ],
   'l07-learning': [
     { p: 0 }, { p: 1 }, { p: 2 },

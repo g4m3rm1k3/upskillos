@@ -27,6 +27,7 @@ export const blocks = {
     { figure: 'XorGreedy', caption: 'XOR data: no first question helps on its own.' },
     { cell: 3 },
     { math: true },
+    { ladder: 'split' },
   ],
   'l12-overfit': [
     { p: 0 }, { p: 1 },

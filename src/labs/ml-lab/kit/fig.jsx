@@ -23,8 +23,9 @@ export function Note({ children }) { return <p className="ml-caption">{children}
 // Vertical bars with value labels: items [{ label, value, color?, highlight? }].
 export function Bars({ items, max, min = 0, height = 130, label, digits = 3, width = 460 }) {
   const hi = max ?? Math.max(...items.map(i => i.value), 1e-9), lo = Math.min(min, ...items.map(i => i.value))
-  const n = items.length, slot = (width - 20) / n, bw = Math.min(56, slot * 0.7), zero = 10 + (height - 34) * (hi / (hi - lo || 1))
-  const scale = (height - 34) / (hi - lo || 1)
+  // 18 px above the tallest bar for its value label, 24 px below the axis for the category labels.
+  const n = items.length, slot = (width - 20) / n, bw = Math.min(56, slot * 0.7), zero = 18 + (height - 42) * (hi / (hi - lo || 1))
+  const scale = (height - 42) / (hi - lo || 1)
   return <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label ?? items.map(i => `${i.label} ${r(i.value, digits)}`).join(', ')}>
     <line x1={10} x2={width - 10} y1={zero} y2={zero} stroke="var(--border)" />
     {items.map((it, k) => { const x = 10 + k * slot + (slot - bw) / 2, h = Math.abs(it.value) * scale, y = it.value >= 0 ? zero - h : zero

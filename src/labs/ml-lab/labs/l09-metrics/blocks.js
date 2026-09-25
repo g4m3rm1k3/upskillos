@@ -68,6 +68,7 @@ export const blocks = {
     { p: 3 }, { p: 4 },
     { figure: 'PrecisionAtK', caption: 'A fixed investigation budget: alert on the top k scores.' },
     { math: true },
+    { ladder: 'threshold' },
   ],
   'l09-calibration': [
     { p: 0 }, { p: 1 },

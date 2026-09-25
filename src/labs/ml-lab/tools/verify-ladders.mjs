@@ -19,11 +19,12 @@ if (python.endsWith('.mjs')) {
   await py.loadPackage(['numpy'], { messageCallback: () => {} })
   console.log(`Pyodide ${py.version}`)
 }
-async function execute(harness) {
+async function execute(harness, learner) {
   if (!py) {
     const r = spawnSync(python, ['-c', harness], { encoding: 'utf8', timeout: 60000 })
     return r.status === 0 ? { stdout: r.stdout } : { failed: `python exited ${r.status}: ${r.stderr}` }
   }
+  await py.loadPackagesFromImports(learner).catch(() => {})     // as the app's worker does (importsFrom)
   let stdout = ''
   py.setStdout({ batched: t => { stdout += `${t}\n` } })
   const scope = py.toPy({})
@@ -32,7 +33,7 @@ async function execute(harness) {
 
 async function runStep(step, code) {
   const harness = step.kind === 'probe' ? buildProbe(code, step.probe) : buildCheck(code, step.check)
-  const r = await execute(harness)
+  const r = await execute(harness, code)
   if (r.failed) return { passed: false, summary: r.failed }
   const { report } = parseCheck(r.stdout)
   if (step.kind === 'probe') {

@@ -70,11 +70,16 @@ self.onmessage = async ({ data }) => {
     return
   }
   if (data.type !== 'run') return
-  const { job, ns, code } = data
+  const { job, ns, code, importsFrom } = data
   try {
     ready ??= boot().catch(error => { ready = null; throw error })   // a failed download can be retried
     await ready
     post({ type: 'status', state: 'running', text: 'Running…', job })
+    if (importsFrom) {
+      // The learner's code, run from inside a string by the ladder checks: load what it imports.
+      // A syntax error here is the learner's to see when the check runs, so it is ignored at this point.
+      await py.loadPackagesFromImports(importsFrom).catch(() => {})
+    }
     await py.loadPackagesFromImports(code, {
       messageCallback: text => /Loading|Loaded/.test(text) && post({ type: 'status', state: 'running', text: text.replace(/\s+/g, ' ').slice(0, 160), job }),
       errorCallback: text => post({ type: 'stream', job, name: 'stderr', text }),

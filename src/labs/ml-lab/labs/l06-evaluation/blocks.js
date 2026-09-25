@@ -46,6 +46,7 @@ export const blocks = {
     { predict: { prompt: '200 time-ordered rows. Forward chaining starts with 100 training rows and validates on consecutive blocks of 25. How many folds fit?', answer: 4, explain: '(200 − 100)/25 = 4 folds.' } },
     { cell: 1 },
     { p: 4 },
+    { ladder: 'split' },
   ],
   'l06-discipline': [
     { p: 0 },

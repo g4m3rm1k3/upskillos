@@ -34,6 +34,7 @@ export const blocks = {
     { figure: 'ScreePlot', caption: 'Explained variance of each component of the digit images, with the running total.' },
     { p: 2 }, { cell: 1 }, { p: 3 }, { cell: 2 }, { p: 4 },
     { math: true },
+    { ladder: 'pca' },
   ],
   'l18-use': [
     { p: 0 },

@@ -2,22 +2,29 @@ import React from 'react'
 
 // A tiny SVG coordinate system. Children receive the scale functions so every
 // lab draws in data units: <Plot x={[0,1]} y={[0,1]}>{({X,Y}) => ...}</Plot>
+const CHAR = 6.3
+
 export function Plot({ x, y, width = 560, height = 320, xLabel, yLabel, label, xTicks: xt = 5, yTicks: yt = 5, grid = true, children, tickFormat, xFormat, yFormat }) {
   const xTicks = Math.max(2, xt), yTicks = Math.max(2, yt)
-  const left = 54, right = width - 22, top = 18, bottom = height - 42
   const [x0, x1] = x[0] === x[1] ? [x[0] - 1, x[1] + 1] : x
   const [y0, y1] = y[0] === y[1] ? [y[0] - 1, y[1] + 1] : y
+  const fx = xFormat || tickFormat || defaultTick, fy = yFormat || tickFormat || defaultTick
+  const yLabels = Array.from({ length: yTicks }, (_, i) => fy(y0 + (y1 - y0) * i / (yTicks - 1)))
+  const xLast = String(fx(x1))
+  // Margins sized to the tick labels (axis text is 11px, about CHAR px per character), so long
+  // numbers such as 0.00919 or "d26 23h" are never cut off at the edge of the drawing.
+  const left = Math.max(54, (yLabel ? 24 : 6) + 7 + CHAR * Math.max(...yLabels.map(t => String(t).length)))
+  const right = width - Math.max(22, CHAR * xLast.length / 2 + 4), top = 18, bottom = height - 42
   const X = v => left + (v - x0) / (x1 - x0) * (right - left)
   const Y = v => bottom - (v - y0) / (y1 - y0) * (bottom - top)
-  const fx = xFormat || tickFormat || defaultTick, fy = yFormat || tickFormat || defaultTick
   const clip = React.useId().replace(/:/g, '')
   return <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
     <defs><clipPath id={clip}><rect x={left} y={top} width={right - left} height={bottom - top} /></clipPath></defs>
-    {grid && Array.from({ length: yTicks }, (_, i) => { const v = y0 + (y1 - y0) * i / (yTicks - 1); return <g key={`y${i}`}><line x1={left} x2={right} y1={Y(v)} y2={Y(v)} stroke="var(--border)" /><text x={left - 7} y={Y(v) + 4} textAnchor="end">{fy(v)}</text></g> })}
-    {grid && Array.from({ length: xTicks }, (_, i) => { const v = x0 + (x1 - x0) * i / (xTicks - 1); return <text key={`x${i}`} x={X(v)} y={bottom + 16} textAnchor="middle">{fx(v)}</text> })}
+    {grid && Array.from({ length: yTicks }, (_, i) => { const v = y0 + (y1 - y0) * i / (yTicks - 1); return <g key={`y${i}`}><line x1={left} x2={right} y1={Y(v)} y2={Y(v)} stroke="var(--border)" /><text className="ml-axis" x={left - 7} y={Y(v) + 4} textAnchor="end">{yLabels[i]}</text></g> })}
+    {grid && Array.from({ length: xTicks }, (_, i) => { const v = x0 + (x1 - x0) * i / (xTicks - 1); return <text className="ml-axis" key={`x${i}`} x={X(v)} y={bottom + 16} textAnchor="middle">{fx(v)}</text> })}
     <g clipPath={`url(#${clip})`}>{children({ X, Y, x0, x1, y0, y1, left, right, top, bottom })}</g>
-    {xLabel && <text x={(left + right) / 2} y={height - 6} textAnchor="middle">{xLabel}</text>}
-    {yLabel && <text x={14} y={(top + bottom) / 2} transform={`rotate(-90 14 ${(top + bottom) / 2})`} textAnchor="middle">{yLabel}</text>}
+    {xLabel && <text className="ml-axis" x={(left + right) / 2} y={height - 6} textAnchor="middle">{xLabel}</text>}
+    {yLabel && <text className="ml-axis" x={16} y={(top + bottom) / 2} transform={`rotate(-90 16 ${(top + bottom) / 2})`} textAnchor="middle">{yLabel}</text>}
   </svg>
 }
 

@@ -52,15 +52,17 @@ function startNext() {
   if (current || !queue.length) return
   current = queue.shift()
   ensureWorker()
-  worker.postMessage({ type: 'run', job: current.job, ns: current.ns, code: current.code })
+  worker.postMessage({ type: 'run', job: current.job, ns: current.ns, code: current.code, importsFrom: current.importsFrom })
 }
 
 // Resolves with { ok, value?, ename?, evalue?, traceback?, figures?, stopped?, timedOut?, generation }.
 // With `timeoutMs`, a run still going after that long is stopped like the Stop button (which
 // restarts Python for every notebook), so use it for checks, not for learners' own cells.
-export function run(ns, code, { onStream, timeoutMs } = {}) {
+// `importsFrom`: more source whose imports should be loaded first — for code that runs another piece of
+// code held in a string (the ladder checks), which the automatic import scan cannot see into.
+export function run(ns, code, { onStream, timeoutMs, importsFrom } = {}) {
   return new Promise(resolve => {
-    queue.push({ job: ++jobCounter, ns, code, onStream, timeoutMs, resolve })
+    queue.push({ job: ++jobCounter, ns, code, onStream, timeoutMs, importsFrom, resolve })
     startNext()
     emit()
   })

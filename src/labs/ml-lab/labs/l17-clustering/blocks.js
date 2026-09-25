@@ -32,6 +32,7 @@ export const blocks = {
     { cell: 2 },
     { p: 4 },
     { math: true },
+    { ladder: 'kmeans' },
   ],
   'l17-shapes': [
     { p: 0 }, { p: 1 }, { p: 2 },

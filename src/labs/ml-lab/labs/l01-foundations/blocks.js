@@ -88,6 +88,7 @@ export const blocks = {
     { p: 4 },
     { figure: 'ValleySteps', caption: 'Steps on the loss valley. Raise α, or raise the scale of x, until the steps overshoot.' },
     { cell: 1 },
+    { ladder: 'update' },
   ],
   evaluate: [
     { p: 0 },

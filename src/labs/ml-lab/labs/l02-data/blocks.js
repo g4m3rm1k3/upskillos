@@ -50,6 +50,7 @@ export const blocks = {
     { cell: 1 },
     { p: 4 },
     { cell: 2 },
+    { ladder: 'fill' },
   ],
   'l02-look': [
     { p: 0 },

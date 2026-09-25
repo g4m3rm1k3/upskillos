@@ -45,6 +45,7 @@ export const blocks = {
     { cell: 1 },
     { p: 3 }, { cell: 2 }, { p: 4 },
     { math: true },
+    { ladder: 'bag' },
   ],
   'l13-limits': [
     { p: 0 }, { p: 1 }, { cell: 0 }, { p: 2 }, { cell: 2 }, { p: 3 },

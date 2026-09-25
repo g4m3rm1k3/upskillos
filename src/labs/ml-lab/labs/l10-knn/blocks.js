@@ -19,6 +19,7 @@ export const blocks = {
     { cell: 1 },
     { p: 2 }, { cell: 2 }, { p: 3 }, { p: 4 },
     { math: true },
+    { ladder: 'knn' },
   ],
   'l10-k': [
     { p: 0 }, { cell: 0 }, { p: 1 }, { p: 2 },

@@ -3,13 +3,14 @@ import python from './python.js'
 import { blocks } from './blocks.js'
 import { withBlocks } from '../../kit/blocks.js'
 import Playground from './Playground.jsx'
+import { update } from './ladder.js'
 
 export default {
   number: 1,
   short: 'Foundations',
   question: 'How does a model learn?',
   intro: 'Start with Python basics and algebra. Build the missing intuition one step at a time.',
-  lessons: withBlocks(lessons, blocks), sources, python, Playground, figures: () => import('./figures.jsx'), ownNotebook: true, lessonAware: true,
+  lessons: withBlocks(lessons, blocks), sources, python, Playground, figures: () => import('./figures.jsx'), ladders: { update }, ownNotebook: true, lessonAware: true,
   math: ['la.vectors', 'la.dot', 'calc.derivative', 'calc.rate', 'ds.gd', 'ds.linreg', 'tool.openmat', 'tool.notebook'],
   scope: 'One-feature, unregularized linear regression with an intercept. These lessons and exercises do not cover the full ML engineering curriculum.',
 }

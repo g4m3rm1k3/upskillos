@@ -51,6 +51,10 @@ describe('notebook runtime', () => {
     expect(await runtime.run('nb1', 'print(4)')).toMatchObject({ ok: true })
     expect(FakeWorker.all).toHaveLength(2)
   })
+  it('passes importsFrom to the worker, so code run from a string still gets its packages', async () => {
+    await runtime.run('nb1', 'print(1)', { importsFrom: 'from sklearn.linear_model import Ridge' })
+    expect(FakeWorker.all[0].sent.find(m => m.type === 'run').importsFrom).toBe('from sklearn.linear_model import Ridge')
+  })
   it('a worker that fails to start reports a runtime error and can be retried', async () => {
     runtime.setWorkerFactory(() => { const w = new FakeWorker(); w.postMessage = () => queueMicrotask(() => w.onerror({ message: 'network' })); return w })
     const gen = runtime.getGeneration()

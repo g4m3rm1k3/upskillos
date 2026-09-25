@@ -41,7 +41,7 @@ function TraceStep({ step, record, onRecord }) {
   const [values, setValues] = useState(() => step.fields.map(() => '')), [checked, setChecked] = useState(null), [shown, setShown] = useState(Boolean(record?.revealed))
   const check = e => {
     e.preventDefault()
-    const marks = step.fields.map((f, i) => values[i].trim() !== '' && Math.abs(Number(values[i]) - f.answer) <= 1e-6)
+    const marks = step.fields.map((f, i) => values[i].trim() !== '' && Math.abs(Number(values[i]) - f.answer) <= (f.tolerance ?? 1e-6))
     setChecked(marks)
     onRecord({ attempts: 1, ...(marks.every(Boolean) ? { done: true } : {}) })
   }
@@ -67,7 +67,7 @@ function CodeStep({ step, name, code, setCode, record, onRecord, plain }) {
     const ns = `ladder:${name}:${step.id}`
     let stdout = '', stderr = ''
     const harness = step.kind === 'probe' ? buildProbe(code, step.probe) : buildCheck(code, step.check)
-    const res = await runtime.run(ns, harness, { timeoutMs: CHECK_LIMIT_MS, onStream: (stream, text) => { if (stream === 'stdout') stdout += text + '\n'; else stderr += text + '\n' } })
+    const res = await runtime.run(ns, harness, { timeoutMs: CHECK_LIMIT_MS, importsFrom: code, onStream: (stream, text) => { if (stream === 'stdout') stdout += text + '\n'; else stderr += text + '\n' } })
     runtime.resetNamespace(ns)
     setRunning(false)
     if (res.stopped) { setResult({ summary: res.timedOut ? `Stopped after ${CHECK_LIMIT_MS / 1000} seconds. Look for a loop that never ends — for example a \`while\` whose condition never changes.` : 'Stopped. Your code is kept; press Check again when ready.' }); onRecord({ attempts: 1 }); return }

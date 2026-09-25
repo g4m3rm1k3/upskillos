@@ -929,6 +929,11 @@
 .ml-inline-figure { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .ml-inline-figure figcaption { margin-top: 10px; }
 .ml-inline-figure svg { max-width: 100%; height: auto; }
+/* Text in figures: themed colour and a fixed size (it would otherwise inherit the prose size and run off
+   the drawing). Axis ticks and titles from kit/Plot.jsx are a little smaller and muted. Figures that
+   set their own size or colour with an inline style keep it. */
+.ml-inline-figure svg text { fill: var(--text); font-family: system-ui, sans-serif; font-size: 12px; }
+.ml-inline-figure svg text.ml-axis { fill: var(--muted); font-size: 11px; }
 .ml-fig-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0; font-size: 13px; }
 .ml-fig-controls label { display: flex; gap: 8px; align-items: center; }
 .ml-fig-controls label { min-width: 0; flex-wrap: wrap; }

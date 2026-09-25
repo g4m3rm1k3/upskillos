@@ -37,6 +37,7 @@ export const blocks = {
     { cell: 0 },
     { p: 3 }, { cell: 1 }, { p: 4 },
     { math: true },
+    { ladder: 'boost' },
   ],
   'l14-practice': [
     { p: 0 }, { p: 1 },

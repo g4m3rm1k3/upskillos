@@ -122,15 +122,22 @@ export function RegressionSteps() {
 }
 
 export function ImportanceCompare() {
-  const data = useMemo(() => { const rng = random(14), make = n => range(n).map(() => { const a = normal(rng), b = normal(rng), id = rng(); return { x: [a, b, id], y: a + 0.5 * b + 0.3 * normal(rng) > 0 ? 1 : 0 } }); return { train: make(300), val: make(300) } }, [])
+  // A continuous feature and a yes/no feature both matter; the labels are noisy; the ID is pure noise with a
+  // different value on every row — the kind of feature impurity importance over-credits.
+  const data = useMemo(() => { const rng = random(15), make = n => range(n).map(() => { const a = normal(rng), b = rng() < 0.5 ? 1 : 0, id = rng(); return { x: [a, b, id], y: a + (b - 0.5) + normal(rng) > 0 ? 1 : 0 } }); return { train: make(300), val: make(300) } }, [])
   const tree = useMemo(() => buildTree(data.train, { maxDepth: 10 }), [data])
   const impurity = [0, 0, 0]; const walk = n => { if (!n.split) return; impurity[n.split.feature] += n.n * n.split.gain; walk(n.left); walk(n.right) }; walk(tree)
   const totalI = impurity.reduce((a, b) => a + b, 0), base = accuracy(tree, data.val)
   const perm = [0, 1, 2].map(f => { const col = shuffle(data.val.map(r2 => r2.x[f]), random(20 + f)); return base - accuracy(tree, data.val.map((r2, i) => ({ ...r2, x: r2.x.map((v, j) => (j === f ? col[i] : v)) }))) })
-  const names = ['x₁ (strong)', 'x₂ (weaker)', 'random ID']
+  const names = ['x₁ (strong)', 'x₂ (yes/no)', 'random ID']
   return <div>
-    <Bars items={names.map((n, i) => ({ label: `${n}: impurity`, value: impurity[i] / totalI, color: 'var(--chart-train)' })).concat(names.map((n, i) => ({ label: `${n}: permutation`, value: Math.max(0, perm[i]) * 3, color: 'var(--chart-val)' })))} digits={3} height={150} label="Impurity versus permutation importance" />
-    <Readout>A depth-10 tree on two real features and one random ID number. Impurity importance (training data) gives the random ID <strong>{r(100 * impurity[2] / totalI, 1)}%</strong> of the credit — the deep tree used it to carve up noise. Permutation importance on validation data: shuffling the ID drops accuracy by {r(perm[2] * 100, 1)} points, shuffling x₁ by {r(perm[0] * 100, 1)}. (Permutation bars are drawn ×3.)</Readout>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ flex: '1 1 220px' }}><p className="ml-caption">Impurity importance: share of the total (training data)</p>
+        <Bars items={names.map((n, i) => ({ label: n, value: impurity[i] / totalI, color: 'var(--chart-train)' }))} digits={3} height={150} width={300} label={`Impurity importance: ${names.map((n, i) => `${n} ${r(impurity[i] / totalI, 3)}`).join(', ')}`} /></div>
+      <div style={{ flex: '1 1 220px' }}><p className="ml-caption">Permutation importance: accuracy drop in points (validation data)</p>
+        <Bars items={names.map((n, i) => ({ label: n, value: 100 * perm[i], color: 'var(--chart-val)' }))} digits={1} height={150} width={300} label={`Permutation importance: ${names.map((n, i) => `${n} ${r(100 * perm[i], 1)} points`).join(', ')}`} /></div>
+    </div>
+    <Readout>A depth-10 tree on noisy labels. Impurity importance (training data) gives the random ID <strong>{r(100 * impurity[2] / totalI, 1)}%</strong> of the credit — more than the yes/no feature that really matters ({r(100 * impurity[1] / totalI, 1)}%), because a deep tree can split an ID anywhere to carve up noise. Permutation importance on validation data ranks them correctly: shuffling x₂ costs {r(perm[1] * 100, 1)} accuracy points, shuffling the ID {r(perm[2] * 100, 1)}.</Readout>
   </div>
 }
 

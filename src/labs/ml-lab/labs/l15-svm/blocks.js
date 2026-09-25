@@ -43,6 +43,7 @@ export const blocks = {
     { cell: 2 },
     { p: 4 },
     { math: true },
+    { ladder: 'hinge' },
   ],
   'l15-compare': [
     { p: 0 },

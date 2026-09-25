@@ -42,6 +42,7 @@ export const blocks = {
     { p: 4 },
     { figure: 'TrainingLoop', caption: 'Batch gradient descent from zeros on overlapping blobs.' },
     { cell: 1 },
+    { ladder: 'logistic' },
   ],
   'l08-boundary': [
     { p: 0 }, { p: 1 },

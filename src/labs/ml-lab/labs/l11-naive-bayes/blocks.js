@@ -36,6 +36,7 @@ export const blocks = {
     { predict: { prompt: 'Prior log-odds −0.5; three words contribute +1.0, −0.4 and +2.0. What is P(incident) = σ(total)? (Three decimals.)', answer: 0.891, tolerance: 0.001, explain: 'Total = 2.1, and σ(2.1) = 1/(1 + e^(−2.1)) ≈ 0.891.' } },
     { p: 4 }, { cell: 2 },
     { math: true },
+    { ladder: 'nb' },
   ],
   'l11-limits': [
     { p: 0 },

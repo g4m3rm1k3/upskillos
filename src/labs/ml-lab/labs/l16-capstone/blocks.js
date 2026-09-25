@@ -37,6 +37,7 @@ export const blocks = {
     { predict: { prompt: 'A segment of 5 jobs has out-of-fold absolute errors 2, 4, 6, 8 and 30 s. What is its MAE?', answer: 10, explain: '(2 + 4 + 6 + 8 + 30)/5 = 10 — one bad case doubles the segment’s error.' } },
     { p: 3 }, { p: 4 },
     { math: true },
+    { ladder: 'oof' },
   ],
   'l16-test': [
     { p: 0 }, { p: 1 },

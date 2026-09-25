@@ -73,6 +73,20 @@ log('gradient ladder: a generated diagnosis problem renders', await gl.locator('
 await page.locator('nav[aria-label="Lessons"] button').nth(1).click()
 await ladder.waitFor()
 
+// Lab 06: the loop-check step imports scikit-learn from inside the learner's code, on a page where no
+// notebook has loaded it yet. The worker must load it from importsFrom.
+const fresh = await browser.newPage({ viewport: { width: 1400, height: 1000 } })
+await fresh.goto(URL, { waitUntil: 'domcontentloaded' })
+await fresh.selectOption('select[aria-label="Choose lab"]', '6')
+await fresh.locator('nav[aria-label="Lessons"] button').nth(4).click()
+const l6 = fresh.locator('section.ml-ladder')
+await l6.waitFor()
+await l6.getByRole('button', { name: /2\. Move the selection inside the folds/ }).click()
+await l6.getByRole('button', { name: 'Run it' }).click()
+await l6.getByText(/pure coin flips|about chance|Error|No module/).first().waitFor()
+log('Lab 06: scikit-learn loads for code checked from a string', /pure coin flips/.test(await l6.innerText()))
+await fresh.close()
+
 // Phone width: no sideways scrolling.
 await page.setViewportSize({ width: 390, height: 900 })
 await ladder.scrollIntoViewIfNeeded()
