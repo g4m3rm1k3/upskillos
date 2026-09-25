@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
-import { CreateMLCEngine } from '@mlc-ai/web-llm'
+import { getSharedEngine, WEBLLM_MODEL_ID } from '../../hooks/webLLMSingleton.js'
 import { buildAgentContext, type AppContext } from './buildAgentContext'
 
-const MODEL_ID = 'Llama-3.2-1B-Instruct-q4f16_1-MLC'
 
 const SYSTEM_PROMPT = `I am Compass — a personal achievement operating system built into UpSkillOS.
 
@@ -74,10 +73,8 @@ export function useCompassAI() {
     if (engineRef.current) return engineRef.current
     setIsDownloading(true)
     try {
-      const engine = await CreateMLCEngine(MODEL_ID, {
-        initProgressCallback: ({ text }: { text: string }) =>
-          setDownloadProgress(text || 'Loading Compass…'),
-      })
+      // The app-wide engine: a second CreateMLCEngine here would hold another copy of the model in memory.
+      const engine = await getSharedEngine((text: string) => setDownloadProgress(text || 'Loading Compass…'), WEBLLM_MODEL_ID)
       engineRef.current = engine
       return engine
     } finally {

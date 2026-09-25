@@ -153,6 +153,10 @@ export default defineConfig({
     },
   },
   base: process.env.VITE_BASE_URL ?? (process.env.ELECTRON_BUILD ? "./" : "/"),
+  // One fixed port: the browser stores caches (including the ~1 GB in-browser AI model) per origin,
+  // and every localhost port is a separate origin. Silently moving to 5174, 5175… when 5173 is busy
+  // downloaded and stored the model again for each port. Pass --port explicitly for a second server.
+  server: { port: 5173, strictPort: true },
   build: {
     outDir: "dist",
     reportCompressedSize: false,

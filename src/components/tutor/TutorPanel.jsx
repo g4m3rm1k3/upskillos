@@ -10,28 +10,15 @@ import {
 } from "./tutorProviders.js";
 import { useTour } from "../../context/TourContext.jsx";
 
-// ─── WebLLM singleton ────────────────────────────────────────────────────────
-let _engine = null;
-let _engineModelId = null;
+// ─── WebLLM ──────────────────────────────────────────────────────────────────
+// The app-wide engine (hooks/webLLMSingleton.js): one model in memory at a time, and choosing a
+// different model unloads the old one and deletes its cached files.
+let _readyModel = null;   // the model this panel last saw finish loading (for its status only)
 
-const WEBLLM_CACHE_PREFIX = "webllm/";
-
-async function loadWebLLMEngine(modelId, onProgress) {
-  if (_engine && _engineModelId === modelId) return _engine;
-
-  // Delete the previously loaded model's cache before fetching the new one
-  if (_engineModelId && _engineModelId !== modelId) {
-    caches.delete(WEBLLM_CACHE_PREFIX + _engineModelId).catch(() => {});
-  }
-
-  _engine = null;
-  _engineModelId = null;
-  const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
-  const engine = await CreateMLCEngine(modelId, {
-    initProgressCallback: (r) => onProgress(Math.round(r.progress * 100)),
-  });
-  _engine = engine;
-  _engineModelId = modelId;
+async function loadWebLLMEngine(modelId, onProgress = () => {}) {
+  const { getSharedEngine } = await import("../../hooks/webLLMSingleton.js");
+  const engine = await getSharedEngine((_, fraction) => onProgress(Math.round(fraction * 100)), modelId);
+  _readyModel = modelId;
   return engine;
 }
 
@@ -175,8 +162,9 @@ export async function* callProvider(settings, msgs, sysPrompt = "") {
     ? [{ role: "system", content: sysPrompt }, ...msgs]
     : msgs;
   if (settings.provider === "webllm") {
-    if (!_engine) throw new Error("Model not loaded yet.");
-    const stream = await _engine.chat.completions.create({
+    // Returns at once if the model is loaded; reloads it if another feature swapped models meanwhile.
+    const engine = await loadWebLLMEngine(settings.model);
+    const stream = await engine.chat.completions.create({
       messages: allMsgs,
       stream: true,
       temperature: 0.7,
@@ -990,19 +978,12 @@ export default function TutorPanel({
     }
   }, [open, view]);
 
-  // Unified effect: handle provider/model/key changes and trigger WebLLM loading.
-  // Reads _engine/_engineModelId directly (module singletons) to avoid stale-state
-  // race conditions between two separate effects.
-  //
-  // The model (900MB-2GB) used to only start downloading once the student
-  // opened the panel, forcing them to stare at a progress bar. TutorPanel is
-  // always mounted (see AppShell), so when the panel is closed we instead
-  // prefetch quietly in the background after a short delay — by the time
-  // they actually open it, it's often already warm. Skipped on metered/
-  // data-saver connections out of courtesy.
+  // Unified effect: handle provider/model/key changes and load the WebLLM model.
+  // The model (0.9–2 GB) is loaded into memory only once the panel is opened. It used to be
+  // prefetched in the background a few seconds after every page load, which kept a large model in
+  // RAM (on a Mac, GPU memory is system memory) even for people who never opened the tutor.
   useEffect(() => {
     if (settings.provider !== "webllm") {
-      // Clear any stale engine reference when switching away from WebLLM
       setStatus(hasKey ? "ready" : "needs-key");
       return;
     }
@@ -1010,46 +991,35 @@ export default function TutorPanel({
       setStatus("unsupported");
       return;
     }
-
-    // Already loaded with the right model — just mark ready
-    if (_engine && _engineModelId === settings.model) {
+    if (_readyModel === settings.model) {
       setStatus("ready");
       return;
     }
-
-    // Different model or no engine yet — discard old engine and load new one
-    _engine = null;
-    _engineModelId = null;
-
-    const startLoad = () => {
-      if (_engine && _engineModelId === settings.model) {
-        setStatus("ready");
-        return;
-      }
-      setStatus("loading-model");
-      setLoadProgress(0);
-      loadWebLLMEngine(settings.model, setLoadProgress)
-        .then(() => setStatus("ready"))
-        .catch((e) => {
-          setStatus("error");
-          setErrorMsg(e?.message ?? "Failed to load model");
-        });
-    };
-
-    if (open) {
-      startLoad();
+    if (!open) {
+      setStatus("idle");
       return;
     }
-
-    setStatus("idle");
-    if (typeof navigator !== "undefined" && navigator.connection?.saveData)
-      return;
-    const t = setTimeout(startLoad, 4000);
-    return () => clearTimeout(t);
+    setStatus("loading-model");
+    setLoadProgress(0);
+    loadWebLLMEngine(settings.model, setLoadProgress)
+      .then(() => setStatus("ready"))
+      .catch((e) => {
+        setStatus("error");
+        setErrorMsg(e?.message ?? "Failed to load model");
+      });
   }, [open, settings.provider, settings.model, hasKey]);
 
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const updateSettings = useCallback((updates) => {
-    setSettings((prev) => ({ ...prev, ...updates }));
+    const prev = settingsRef.current;
+    // Switching away from an in-browser model: delete its cached files (0.9–2 GB) unless it is the
+    // app's shared default, which the other AI features still need.
+    if (prev.provider === "webllm" && updates.model && updates.model !== prev.model) {
+      import("../../hooks/webLLMSingleton.js").then(({ forgetModel }) => forgetModel(prev.model));
+      _readyModel = null;
+    }
+    setSettings((p) => ({ ...p, ...updates }));
   }, []);
 
   function adjustHeight() {

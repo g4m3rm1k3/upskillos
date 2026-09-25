@@ -1,59 +1,87 @@
 // src/hooks/webLLMSingleton.js
-// Single source of truth for the WebLLM engine shared across ALL in-app AI hooks.
-// (Lovelace, Hippocrates, Studio, Compass, RPG Coach all use the same 1B model.)
+// Single source of truth for the in-browser WebLLM engine, shared by EVERY in-app AI feature
+// (Lovelace, Hippocrates, Studio, Compass, RPG Coach and the tutor panel).
 //
-// Why module-level? The browser only caches one copy of the model weights, but
-// CreateMLCEngine() allocates WebGPU resources. Calling it more than once wastes
-// VRAM and can cause GPU memory errors. One instance, shared forever.
+// Why one engine: each CreateMLCEngine() allocates GPU memory for a whole model. On a Mac the GPU
+// shares RAM with everything else, so two engines at once can push the machine into swap and make
+// generation fail. There is exactly one engine, holding exactly one model.
 //
-// Cache policy: WebLLM stores model weights in the browser Cache API (~900MB per
-// model). We automatically prune any cached model that isn't the currently active
-// one — so switching models or updating the MODEL_ID never leaves stale GBs behind.
+// Asking for a different model (the tutor can use another one) unloads the current engine from
+// memory first. Cached files are deleted only when a model is abandoned (forgetModel), using WebLLM's
+// own deleteModelAllInfoInCache: WebLLM keeps every model in shared caches named "webllm/model",
+// "webllm/config" and "webllm/wasm", so deleting a cache named "webllm/<model id>" deletes nothing.
+//
+// Note: the browser stores caches per origin, and every localhost port is its own origin. A dev
+// server that starts on a different port downloads the model again (see vite.config.js strictPort).
 
-import { CreateMLCEngine } from '@mlc-ai/web-llm'
+import { CreateMLCEngine, deleteModelAllInfoInCache } from '@mlc-ai/web-llm'
 
 export const WEBLLM_MODEL_ID = 'Llama-3.2-1B-Instruct-q4f16_1-MLC'
 
-const WEBLLM_CACHE_PREFIX = 'webllm/'
-
 let _engine = null
-let _enginePromise = null
+let _engineModelId = null
+let _loading = null          // { modelId, promise } while a model is loading
 
-export async function getSharedEngine(onProgress) {
-  if (_engine) return _engine
-  if (_enginePromise) return _enginePromise
+/**
+ * The shared engine, loaded with `modelId` (the app's default 1B model unless a feature asks for
+ * another). onProgress receives (text, fraction 0–1) while the model downloads and compiles.
+ */
+export async function getSharedEngine(onProgress, modelId = WEBLLM_MODEL_ID) {
+  if (_engine && _engineModelId === modelId) return _engine
+  if (_loading?.modelId === modelId) return _loading.promise
+  if (_loading) await _loading.promise.catch(() => {})             // finish (or fail) the other load first
 
-  _enginePromise = CreateMLCEngine(WEBLLM_MODEL_ID, {
-    initProgressCallback: ({ text }) => onProgress?.(text || 'Loading…'),
-  }).then(engine => {
+  const promise = (async () => {
+    if (_engine) {
+      await _engine.unload().catch(() => {})                       // release its GPU memory before loading another
+      _engine = null
+      _engineModelId = null
+    }
+    const engine = await CreateMLCEngine(modelId, {
+      initProgressCallback: ({ text, progress }) => onProgress?.(text || 'Loading…', progress ?? 0),
+    })
     _engine = engine
-    _enginePromise = null
+    _engineModelId = modelId
     return engine
-  })
-
-  return _enginePromise
+  })()
+  _loading = { modelId, promise }
+  try {
+    return await promise
+  } finally {
+    if (_loading?.promise === promise) _loading = null
+  }
 }
 
 /**
- * Deletes a specific cached model by name (without the "webllm/" prefix).
- * Pass '*' to delete all WebLLM caches.
- * Resets the in-memory singleton if the active model is deleted.
- * @param {string} modelName
+ * Delete a model's cached files because nothing will use it any more (for example the tutor switched
+ * to another model). The app's default model is kept: every other AI feature needs it.
  */
-export async function deleteCachedModel(modelName) {
-  if (!('caches' in window)) return
-  if (modelName === '*') {
-    const cacheNames = await caches.keys()
-    await Promise.all(
-      cacheNames.filter(n => n.startsWith(WEBLLM_CACHE_PREFIX)).map(n => caches.delete(n))
-    )
-    _engine = null
-    _enginePromise = null
+export async function forgetModel(modelId) {
+  if (!modelId || modelId === WEBLLM_MODEL_ID) return
+  if (modelId === _engineModelId) await unloadSharedEngine()
+  await deleteModelAllInfoInCache(modelId).catch(() => {})
+}
+
+/** Unload the engine from memory (the cached files stay, so the next use loads quickly). */
+export async function unloadSharedEngine() {
+  const engine = _engine
+  _engine = null
+  _engineModelId = null
+  await engine?.unload().catch(() => {})
+}
+
+/**
+ * Deletes a cached model's files. Pass '*' to delete every WebLLM cache in this origin.
+ * Unloads the engine first if it holds the model being deleted.
+ * @param {string} modelId
+ */
+export async function deleteCachedModel(modelId) {
+  if (modelId === '*' || modelId === _engineModelId) await unloadSharedEngine()
+  if (modelId === '*') {
+    if (!('caches' in window)) return
+    const names = await caches.keys()
+    await Promise.all(names.filter(n => n.startsWith('webllm/')).map(n => caches.delete(n)))
     return
   }
-  await caches.delete(WEBLLM_CACHE_PREFIX + modelName)
-  if (modelName === WEBLLM_MODEL_ID) {
-    _engine = null
-    _enginePromise = null
-  }
+  await deleteModelAllInfoInCache(modelId).catch(() => {})
 }

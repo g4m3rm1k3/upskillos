@@ -11,6 +11,11 @@ export const PROVIDERS = [
     requiresKey: false,
     models: [
       {
+        id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+        label: 'Llama 3.2 1B',
+        note: '~900 MB · Lightest; shared with the app’s other AI features',
+      },
+      {
         id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
         label: 'Llama 3.2 3B',
         note: '~1.5 GB · General purpose',
@@ -114,6 +119,6 @@ export const STORAGE_KEY = 'opencalc_tutor'
 
 export const DEFAULT_SETTINGS = {
   provider: 'webllm',
-  model: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
+  model: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',   // the model every other in-app AI feature already uses
   keys: {}, // { [providerId]: apiKey }
 }
