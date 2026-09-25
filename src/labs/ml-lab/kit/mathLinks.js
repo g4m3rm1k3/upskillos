@@ -3,7 +3,8 @@
 // practising, or reviewing a prerequisite. `href` is a hash route.
 //   course lessons: /chapter/<course>-<chapter>/<lesson-slug>  (checked by mathLinks.test.js)
 //   tools:          the lab's own route from its meta.js
-const lesson = (course, chapter, slug, title, note) => ({ kind: 'lesson', href: `/chapter/${course}-${chapter}/${slug}`, course, chapter, slug, title, note })
+//   section:        optional anchor inside the lesson (?section=<anchor>, see LessonPage)
+const lesson = (course, chapter, slug, title, note, section) => ({ kind: 'lesson', href: `/chapter/${course}-${chapter}/${slug}${section ? `?section=${section}` : ''}`, course, chapter, slug, title, note, section })
 const tool = (href, title, note, lab) => ({ kind: 'tool', href, title, note, lab })
 const reference = (href, title, note) => ({ kind: 'reference', href, title, note })
 
@@ -152,14 +153,14 @@ export const MATH_LINKS = {
   'ai.lora': lesson('ai-engineering', 4, 'fine-tuning-and-lora', 'Fine-tuning and LoRA'),
   'ai.evals': lesson('ai-engineering', 4, 'llm-evals', 'LLM evals'),
   'ai.jupyter': lesson('ai-engineering', 1, 'jupyter-notebooks', 'Jupyter notebooks'),
-  'ds.vectorize': lesson('data-science', 2, 'arrays-and-vectorization', 'Arrays and vectorization'),
-  'ds.explog': lesson('data-science', 2, 'exponentials-and-logarithms', 'Exponentials and logarithms'),
-  'ds.linreg': lesson('data-science', 4, 'linear-regression-from-scratch', 'Linear regression from scratch'),
-  'ds.gd': lesson('data-science', 4, 'gradient-descent', 'Gradient descent and optimization'),
-  'ds.evaluation': lesson('data-science', 4, 'model-evaluation-and-overfitting', 'Model evaluation and overfitting'),
-  'ds.eda': lesson('data-science', 3, 'exploratory-data-analysis', 'Exploratory data analysis'),
-  'ds.cleaning': lesson('data-science', 3, 'data-cleaning', 'Data cleaning'),
-  'ds.features': lesson('data-science', 3, 'data-transformation', 'Data transformation and feature engineering'),
+  'ds.vectorize': lesson('data-science', 2, 'arrays-and-vectorization', 'Arrays and vectorization', undefined, 'shapes-and-broadcasting'),
+  'ds.explog': lesson('data-science', 2, 'exponentials-and-logarithms', 'Exponentials and logarithms', undefined, 'products-to-sums'),
+  'ds.linreg': lesson('data-science', 4, 'linear-regression-from-scratch', 'Linear regression from scratch', undefined, 'least-squares'),
+  'ds.gd': lesson('data-science', 4, 'gradient-descent', 'Gradient descent and optimization', undefined, 'gradient'),
+  'ds.evaluation': lesson('data-science', 4, 'model-evaluation-and-overfitting', 'Model evaluation and overfitting', undefined, 'leakage'),
+  'ds.eda': lesson('data-science', 3, 'exploratory-data-analysis', 'Exploratory data analysis', undefined, 'report'),
+  'ds.cleaning': lesson('data-science', 3, 'data-cleaning', 'Data cleaning', undefined, 'missing-values'),
+  'ds.features': lesson('data-science', 3, 'data-transformation', 'Data transformation and feature engineering', undefined, 'fit-and-apply'),
   'ml.learning': lesson('machine-learning', 1, 'what-is-learning', 'What learning actually is'),
 
   // ---------- Tools ----------

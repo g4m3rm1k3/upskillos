@@ -52,7 +52,7 @@ export default {
           'The factor for 1, 12, 365 and a million compounding steps a year, then the change of base formula.',
         ], 'Run. Then check that np.log(1000) / np.log(2) equals np.log2(1000).', 'import numpy as np\nfor n in [1, 12, 365, 1_000_000]:\n    print(n, (1 + 1 / n) ** n)\nprint("e =", np.e, " ln(e) =", np.log(np.e))\nprint(np.log(1000) / np.log(2))', { expectOutput: ['1 2.0', '1000000 2.7182804690957534', 'e = 2.718281828459045  ln(e) = 1.0', '9.965784284662087'] }),
       ]),
-      prose(
+      prose({ anchor: 'products-to-sums' },
         '**Products become sums.** Because powers add when you multiply (bᵐ × bⁿ = bᵐ⁺ⁿ), logarithms turn multiplication into addition: **log(a × b) = log a + log b**, and log(aⁿ) = n × log a.',
         'This matters for probability. The probability that several independent events *all* happen is the product of their probabilities. With many events that product becomes so small that a computer rounds it to exactly 0 — **underflow** — and then every model looks equally impossible. Adding log-probabilities instead gives the same comparison without underflow: the larger **log-likelihood** is the more likely model.',
         '| Quantity | 1100 coin flips, each probability 0.5 |\n|---|---|\n| product 0.5¹¹⁰⁰ | about 10⁻³³¹ — stored as **0.0** |\n| sum of logs 1100 × ln 0.5 | **−762.46** — no problem |',

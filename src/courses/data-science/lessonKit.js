@@ -11,11 +11,18 @@
 //                (PythonNotebook labels it "Expected error")
 //   solution / misconceptions: [{ code, feedback }]  on challenge cells
 
-/** Markdown paragraphs (tables, lists and code fences work; bare $ is LaTeX). */
-export const prose = (...paragraphs) => ({ type: 'prose', paragraphs })
+/**
+ * Markdown paragraphs (tables, lists and code fences work; bare $ is LaTeX).
+ * An optional first argument { anchor: 'name' } gives the block a stable id,
+ * so links can target it with #/chapter/<id>/<slug>?section=name.
+ */
+export const prose = (...args) => {
+  const options = typeof args[0] === 'object' ? args.shift() : {}
+  return { type: 'prose', paragraphs: args, ...options }
+}
 
 /** kind: tip | warning | insight | procedure | misconception | definition | example … */
-export const callout = (kind, title, body) => ({ type: 'callout', kind, title, body })
+export const callout = (kind, title, body, options = {}) => ({ type: 'callout', kind, title, body, ...options })
 
 /** An ungraded prediction or comprehension check. `answer` is an option index. */
 export const check = (question, options, answer, explanation) => ({

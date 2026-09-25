@@ -38,7 +38,94 @@ Every row in the table below has been addressed in the lesson source (rollout st
 - **New cells:** A05 2b (misspelling/scope NameErrors), A08 2b (rebinding vs mutation), A14 4b (hashability), B01 6 (right-aligned broadcasting and the `(n,)`/`(n,1)` bug), C04 4b (train-only fit, zero spread, unseen category), C06 1b (what the checklist catches and misses), D02 4b (Cauchy), D03 4b (funnel vs curve), D04 1b (paired sign-flip vs invalid unpaired shuffle).
 - **Verification:** all 35 modules import under Node with no duplicate cell IDs. Every changed or new non-challenge cell ran from a clean namespace in local CPython 3.13 (numpy 2.4, pandas 3.0, scipy 1.18, sklearn 1.9) against the app's `opencalc` source, and its printed output matched the prose. Intended errors (A01 5–6, A05 2/2b) raise as described. The D03 challenge reference solution passes its test. **Not done:** browser/Pyodide rendering (including the renderer fix and histogram overlays) and a check that Pyodide's package versions produce the same outputs.
 
-The page-by-page teaching rewrite, bridges, projects, ML-contract certification and runtime work below remain open.
+## Backlog pass completed (2026-09-25)
+
+The course now has 42 pages. Every original page was rewritten, and seven were added. Existing lesson IDs and slugs are unchanged. File-number prefixes changed only where a new page was inserted; routes use the slug, so no URL or progress key changed.
+
+**Page format.** Every page uses the `intuition.blocks` format, built with the helpers in `src/courses/data-science/lessonKit.js`. Explanation, prediction checks and runnable notebooks are interleaved in reading order. Each page follows the required format:
+
+- the goal;
+- the smallest example, with worked numbers;
+- a prediction check;
+- stages that each make one meaningful change;
+- guided practice, then a fresh problem.
+
+Every practice challenge carries a reference `solution` and `misconceptions`: wrong answers that fail with targeted feedback.
+
+**Bridges added.** Existing IDs are kept, and the new IDs continue each chapter's sequence:
+
+| Page | ID | Covers |
+|---|---|---|
+| A00 Using the notebook | `a-00` | Execution order, shared state, restart, errors, package loading |
+| C "Reading and joining data" | `c-07`, ordered before EDA | CSV parsing, data dictionary, join cardinality, duplicate keys, unmatched rows |
+| D "Sampling and populations" | `d-07`, ordered before regression | Population, unit, sampling bias, dependence, first held-out split |
+
+Reproducibility is split across pages. A00 teaches restart and run-all. The chapter projects use explicit seeded generators and record library versions.
+
+**Chapter projects.** Each has worked, scaffolded and independent parts:
+
+- A16 data-summary program (`a-16`);
+- B09 growth investigation (`b-09`);
+- C08 cleaning and EDA (`c-08`);
+- D08 baseline and model comparison with held-out evaluation (`d-08`).
+
+**ML prerequisite contracts.** Each target now teaches its contract, and each `ds.*` link lands on a named section rather than the top of the page:
+
+| Link | Anchor | Link | Anchor |
+|---|---|---|---|
+| `ds.vectorize` | `shapes-and-broadcasting` | `ds.evaluation` | `leakage` |
+| `ds.explog` | `products-to-sums` | `ds.eda` | `report` |
+| `ds.linreg` | `least-squares` | `ds.cleaning` | `missing-values` |
+| `ds.gd` | `gradient` | `ds.features` | `fit-and-apply` |
+
+- **Anchors in lessons:** any block can take an `anchor`. Both lesson renderers wrap an anchored block in `id="section-<anchor>"`.
+- **Scrolling:** `LessonPage` scrolls to `?section=<anchor>` after the lesson loads.
+- **Return path:** ML-lab links open in a new tab, so the lab tab stays where it was.
+- **Test:** `mathLinks.test.js` asserts that each anchor exists in its target file.
+
+**Runtime and rendering changes.** These are in the shared components, so they apply to every course:
+
+- **Expected errors:** cells marked `expectError` show an "Expected error" note, and "Report this" is hidden for them.
+- **Failed challenges:** feedback shows only the assertion message.
+- **Run all:** skips challenge cells.
+- **Reset variables:** a new button clears names defined after startup, along with outputs and counters.
+- **Inline code:** `parseProse` renders backtick code.
+- **Callouts:** block callouts accept `kind`.
+- **Lists:** a paragraph holding a multi-line markdown list renders as a list, instead of one run-on bullet.
+- **Figures:** `Figure.show()` serialises NumPy scalars and arrays.
+
+**Verification.**
+
+- **Course verifier:** `scripts/check-data-science-course.mjs` runs every cell in Pyodide 0.26.4, the version the app loads (Python 3.12, numpy 1.26, pandas 2.2, 32-bit ints). It checks that:
+  - demonstrations run from a fresh namespace, and their expected output and expected errors match;
+  - every challenge starter fails, every reference solution passes, and every misconception fails with its feedback;
+  - check answers, quiz indexes, prerequisite and unlock IDs, and math-link targets are valid;
+  - prose contains no bare `$` and no stray `*`.
+
+  Result: 42 pages, 361 cells, 122 challenges, 0 failures.
+- **Vitest:** `src/labs/ml-lab/kit` and `src/data` pass (5 files, 16 tests).
+- **Browser:** a bounded Playwright run against the Vite dev server passed 22/22 checks on desktop. The server was shut down afterwards. It confirmed:
+  - blocks, tables and inline checks render;
+  - a cell runs in Pyodide from the CDN;
+  - the expected-error note appears, and Reset clears its notebook;
+  - `?section=leakage` scrolls to the section;
+  - multi-line lists and inline code render;
+  - all six new routes load, with no page errors.
+
+  A phone-width (390 px) run confirmed the anchor, scrolling, lists and no horizontal overflow.
+- **Pyodide findings:** differences between local CPython and Pyodide changed some content:
+  - int32 overflow is now taught explicitly in B01;
+  - `np.linalg.solve` returns nan for singular systems instead of raising, so B08 and D04 check rank and condition number instead.
+
+**Still open.**
+
+- **No learner testing:** the rewrite has not been tried with a basic-Python learner.
+- **Figures in the browser:** the `transformed_grid` and `quick_transform` renderer fix was verified by running the affected cells, not by visual inspection in a browser.
+- **Worker notebook migration:** not done. The course still uses the main-thread `PythonNotebook`. It has no Stop button or draft persistence, and all notebooks on a page share one kernel. That is why Reset clears every notebook's variables.
+- **Deployed site:** parity with the deployed site was not checked.
+- **Pre-existing tooling issue:** `scripts/check_python_cells.mjs` still cannot import lessons that import `.svg` files (linear algebra).
+
+The sections below are the original plan, kept for reference.
 
 ## Correctness fixes to prioritize before broader rewriting
 

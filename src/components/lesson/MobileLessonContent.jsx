@@ -33,6 +33,9 @@ import { parseProse } from "../math/parseProse.jsx";
 
 const HEADING_PREFIX = /^\*\*([^*\n]+)\*\*\s*/;
 const BULLET_RE = /^[•\-*]\s+/;
+// A paragraph holding a whole multi-line markdown list is rendered as markdown,
+// not collapsed into a single list item.
+const isListItem = (re, p) => re.test(p) && !p.includes("\n");
 const ORDERED_RE = /^\d+\.\s+/;
 
 function ProseParagraph({ text }) {
@@ -118,17 +121,17 @@ function renderMixedProse(prose) {
   let i = 0;
   while (i < prose.length) {
     const p = prose[i];
-    if (BULLET_RE.test(p)) {
+    if (isListItem(BULLET_RE, p)) {
       const items = [];
-      while (i < prose.length && BULLET_RE.test(prose[i])) items.push(prose[i++].replace(BULLET_RE, ""));
+      while (i < prose.length && isListItem(BULLET_RE, prose[i])) items.push(prose[i++].replace(BULLET_RE, ""));
       out.push(
         <ul key={`ul-${i}`} className="list-disc pl-5 space-y-1.5 mb-4 text-slate-700 dark:text-slate-300">
           {items.map((item, j) => <li key={j} className="leading-relaxed">{parseProse(item)}</li>)}
         </ul>,
       );
-    } else if (ORDERED_RE.test(p)) {
+    } else if (isListItem(ORDERED_RE, p)) {
       const items = [];
-      while (i < prose.length && ORDERED_RE.test(prose[i])) items.push(prose[i++].replace(ORDERED_RE, ""));
+      while (i < prose.length && isListItem(ORDERED_RE, prose[i])) items.push(prose[i++].replace(ORDERED_RE, ""));
       out.push(
         <ol key={`ol-${i}`} className="list-decimal pl-5 space-y-1.5 mb-4 text-slate-700 dark:text-slate-300">
           {items.map((item, j) => <li key={j} className="leading-relaxed">{parseProse(item)}</li>)}
@@ -149,6 +152,8 @@ function SectionContent({ data }) {
     return (
       <div className="space-y-4">
         {rawBlocks.map((block, i) => {
+          // An anchored block gets a stable id so links can target it with ?section=<anchor>.
+          if (block.anchor) return <div key={i} id={`section-${block.anchor}`} className="scroll-mt-24"><SectionContent data={{ blocks: [{ ...block, anchor: undefined }] }} /></div>;
           if (block.type === "prose") return <div key={i} className="text-slate-700 dark:text-slate-300">{renderMixedProse(normalizeProse(block.paragraphs ?? []))}</div>;
           // Block callouts carry their style as callout.type (nested), kind or variant — block.type is always "callout".
           if (block.type === "callout") return <Callout key={i} {...(block.callout ?? { ...block, type: block.kind ?? block.variant })} />;

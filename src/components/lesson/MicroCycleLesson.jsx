@@ -101,6 +101,9 @@ function ReadBtn({ isPlaying, onClick }) {
 }
 
 const BULLET_RE = /^[•\-*]\s+/;
+// A paragraph holding a whole multi-line markdown list is rendered as markdown,
+// not collapsed into a single list item.
+const isListItem = (re, p) => re.test(p) && !p.includes("\n");
 const ORDERED_RE = /^\d+\.\s+/;
 
 function renderMixedProse(prose, checksByIndex) {
@@ -124,10 +127,10 @@ function renderMixedProse(prose, checksByIndex) {
   };
   while (i < prose.length) {
     const p = prose[i];
-    if (BULLET_RE.test(p)) {
+    if (isListItem(BULLET_RE, p)) {
       const start = i;
       const items = [];
-      while (i < prose.length && BULLET_RE.test(prose[i])) {
+      while (i < prose.length && isListItem(BULLET_RE, prose[i])) {
         items.push(prose[i].replace(BULLET_RE, ""));
         i++;
       }
@@ -144,10 +147,10 @@ function renderMixedProse(prose, checksByIndex) {
         </ul>,
       );
       pushChecksFor(start, i - 1);
-    } else if (ORDERED_RE.test(p)) {
+    } else if (isListItem(ORDERED_RE, p)) {
       const start = i;
       const items = [];
-      while (i < prose.length && ORDERED_RE.test(prose[i])) {
+      while (i < prose.length && isListItem(ORDERED_RE, prose[i])) {
         items.push(prose[i].replace(ORDERED_RE, ""));
         i++;
       }
@@ -217,6 +220,14 @@ function SectionContent({ data }) {
     return (
       <div className="space-y-4">
         {contentBlocks.map((block, i) => {
+          // An anchored block gets a stable id so links can target it with ?section=<anchor>.
+          if (block.anchor) {
+            return (
+              <div key={i} id={`section-${block.anchor}`} className="scroll-mt-24">
+                <SectionContent data={{ blocks: [{ ...block, anchor: undefined }] }} />
+              </div>
+            );
+          }
           if (block.type === "prose") {
             return (
               <div

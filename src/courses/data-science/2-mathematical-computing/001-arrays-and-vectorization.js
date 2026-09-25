@@ -44,7 +44,7 @@ export default {
           'The same sum of squares with a Python loop and with NumPy. Exact times depend on your computer, but the vectorized version is usually many times faster, because the loop runs in compiled code instead of the Python interpreter. Floats are used so the huge total cannot overflow.',
         ], 'Run twice; times vary. The totals must match.', 'import numpy as np, time\ndata = [float(i) for i in range(200_000)]\narr = np.array(data)\n\nstart = time.perf_counter()\ntotal_loop = 0.0\nfor x in data:\n    total_loop += x * x\nloop_s = time.perf_counter() - start\n\nstart = time.perf_counter()\ntotal_vec = (arr * arr).sum()\nvec_s = time.perf_counter() - start\n\nprint("same total:", np.isclose(total_loop, total_vec))\nprint(f"loop {loop_s*1000:.1f} ms, vectorized {vec_s*1000:.2f} ms")', { expectOutput: ['same total: True'] }),
       ]),
-      prose(
+      prose({ anchor: 'shapes-and-broadcasting' },
         '**Shape and axes.** Arrays can have several dimensions. A table of 3 rows and 4 columns has **shape** `(3, 4)`: the number of rows first. Each dimension is an **axis**. Summaries take an `axis` argument that says which dimension to collapse:',
         '```text\nM = [[ 0,  1,  2,  3],     M.sum(axis=0) → [12, 15, 18, 21]   one value per column\n     [ 4,  5,  6,  7],     M.sum(axis=1) → [ 6, 22, 38]       one value per row\n     [ 8,  9, 10, 11]]     M.sum()       → 66                 one value overall\n```',
         '`axis=0` collapses the rows, leaving one result per column — for a data table with one row per observation and one column per feature, that gives per-feature summaries. `axis=1` collapses the columns, leaving one result per row.',

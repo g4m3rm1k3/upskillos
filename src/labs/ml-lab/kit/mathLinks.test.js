@@ -15,6 +15,10 @@ describe('math links', () => {
       expect(chapter, `${key}: chapter ${l.chapter} of ${l.course}`).toBeTruthy()
       const file = readdirSync(join(courseDir, chapter)).find(f => f.replace(/^\d+-/, '') === `${l.slug}.js`)
       expect(file, `${key}: ${l.course}/${chapter}/${l.slug}`).toBeTruthy()
+      if (l.section) {
+        const text = readFileSync(join(courseDir, chapter, file), 'utf8')
+        expect(text.includes(`anchor: '${l.section}'`), `${key}: section ${l.section} in ${file}`).toBe(true)
+      }
     }
   })
   it('every tool link matches its lab’s route', () => {

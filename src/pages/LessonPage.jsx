@@ -5,7 +5,7 @@ export const meta = {
   conceptDetail: 'courseLoader.loadLesson() asynchronously imports the lesson module at runtime. The page is generic — one component drives every lesson in every course.',
 }
 
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { LESSON_MAP, ALL_LESSONS, CURRICULUM } from "../courses/index.js";
 import { loadLesson, getAllChapters } from "../courses/courseLoader.js";
@@ -95,6 +95,18 @@ export default function LessonPage() {
     window.scrollTo({ top: 0, behavior: "instant" });
     if (key) setLessonId(key);
   }, [key, setLessonId]);
+
+  // Deep links such as #/chapter/<id>/<slug>?section=<anchor> scroll to a block
+  // that lessons mark with `anchor` (rendered as id="section-<anchor>").
+  const { search } = useLocation();
+  useEffect(() => {
+    const section = new URLSearchParams(search).get("section");
+    if (!section || !lesson) return;
+    const timer = setTimeout(() => {
+      document.getElementById(`section-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, lesson]);
 
   useEffect(() => {
     if (lesson) {
