@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion';
 
+// A face turned away from the viewer is not drawn, so it can never show through another face.
+const FACE = { backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' };
+
 export default function CubeIconButton({ 
   icon: Icon, 
   glyph, 
@@ -40,43 +43,45 @@ export default function CubeIconButton({
           }
         }}
       >
-        {/* Front Face */}
-        <div 
-          className={`absolute inset-0 flex items-center justify-center ${frontBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_10px_rgba(0,0,0,0.05)] ${colorClass} ${className}`}
-          style={{ transform: 'translateZ(16px)' }}
-        >
-          {Icon ? <Icon className="w-[18px] h-[18px]" /> : <span className="text-[13px] leading-none font-semibold">{glyph}</span>}
-        </div>
-        
         {/* Back Face */}
         <div 
           className={`absolute inset-0 ${backBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]`}
-          style={{ transform: 'rotateY(180deg) translateZ(16px)' }}
+          style={{ transform: 'rotateY(180deg) translateZ(16px)', ...FACE }}
         />
         
         {/* Right Face */}
         <div 
           className={`absolute inset-0 ${rightBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]`}
-          style={{ transform: 'rotateY(90deg) translateZ(16px)' }}
+          style={{ transform: 'rotateY(90deg) translateZ(16px)', ...FACE }}
         />
         
         {/* Left Face */}
         <div 
           className={`absolute inset-0 ${leftBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]`}
-          style={{ transform: 'rotateY(-90deg) translateZ(16px)' }}
+          style={{ transform: 'rotateY(-90deg) translateZ(16px)', ...FACE }}
         />
         
         {/* Top Face */}
         <div 
           className={`absolute inset-0 ${topBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]`}
-          style={{ transform: 'rotateX(90deg) translateZ(16px)' }}
+          style={{ transform: 'rotateX(90deg) translateZ(16px)', ...FACE }}
         />
         
         {/* Bottom Face */}
         <div 
           className={`absolute inset-0 ${bottomBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]`}
-          style={{ transform: 'rotateX(-90deg) translateZ(16px)' }}
+          style={{ transform: 'rotateX(-90deg) translateZ(16px)', ...FACE }}
         />
+        {/* Front Face — last in the markup on purpose: where the browser cannot render 3D (hardware
+            acceleration off, some remote or virtual machines) it flattens the cube and paints the faces in
+            markup order, so the icon must come last or the blank faces cover it. */}
+        <div 
+          className={`absolute inset-0 flex items-center justify-center ${frontBg} border border-slate-200 dark:border-slate-700 rounded shadow-[inset_0_0_10px_rgba(0,0,0,0.05)] ${colorClass} ${className}`}
+          style={{ transform: 'translateZ(16px)', ...FACE }}
+        >
+          {Icon ? <Icon className="w-[18px] h-[18px]" /> : <span className="text-[13px] leading-none font-semibold">{glyph}</span>}
+        </div>
+        
       </motion.div>
     </div>
   );
