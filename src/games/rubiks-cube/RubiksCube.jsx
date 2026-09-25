@@ -1,3 +1,6 @@
+import { solvedState, applyMove, getMoveCycles, isSolved, getStickerIndex } from './cubeMath.js'
+import './rubiks.css'
+import FirstExperiments from './FirstExperiments.jsx'
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 // ─── Color definitions ───────────────────────────────────────────────────────
@@ -11,172 +14,8 @@ const FACE_COLORS = {
   X: '#1a1a2e', // hidden/inner
 }
 
-// ─── Solved state: 54 stickers ───────────────────────────────────────────────
-// Faces: U=0..8, R=9..17, F=18..26, D=27..35, L=36..44, B=45..53
-function solvedState() {
-  const s = new Array(54)
-  const faces = ['U','R','F','D','L','B']
-  faces.forEach((f, fi) => {
-    for (let i = 0; i < 9; i++) s[fi * 9 + i] = f
-  })
-  return s
-}
-
-// ─── Rotation-matrix move algorithm ──────────────────────────────────────────
-// Each function gives the new [x,y,z] after a CW rotation of that face (viewed from outside).
-const FACE_ROT = {
-  U: (x, y, z) => [ z, y, -x],  // CW from above: +Z→+X→-Z→-X
-  D: (x, y, z) => [-z, y,  x],  // CW from below: +Z→-X→-Z→+X
-  R: (x, y, z) => [ x,-z,  y],  // CW from right: top→front
-  L: (x, y, z) => [ x, z, -y],  // CW from left:  top→back
-  F: (x, y, z) => [ y,-x,  z],  // CW from front: right→down
-  B: (x, y, z) => [-y, x,  z],  // CW from behind: top→world-right
-}
-
-const FACE_LAYER_FN = {
-  U: (_x, y, _z) => y ===  1,
-  D: (_x, y, _z) => y === -1,
-  R: (x, _y, _z) => x ===  1,
-  L: (x, _y, _z) => x === -1,
-  F: (_x, _y, z) => z ===  1,
-  B: (_x, _y, z) => z === -1,
-}
-
-function normalToFaceName(x, y, z) {
-  if (y ===  1) return 'U'
-  if (y === -1) return 'D'
-  if (x ===  1) return 'R'
-  if (x === -1) return 'L'
-  if (z ===  1) return 'F'
-  return 'B'
-}
-
-function applyFaceMove(state, face) {
-  const rot = FACE_ROT[face]
-  const inLayer = FACE_LAYER_FN[face]
-  const next = [...state]
-  for (let x = -1; x <= 1; x++) {
-    for (let y = -1; y <= 1; y++) {
-      for (let z = -1; z <= 1; z++) {
-        if (x === 0 && y === 0 && z === 0) continue
-        if (!inLayer(x, y, z)) continue
-        const [nx, ny, nz] = rot(x, y, z)
-        const normals = []
-        if (y ===  1) normals.push([ 0,  1,  0, 'U'])
-        if (y === -1) normals.push([ 0, -1,  0, 'D'])
-        if (x ===  1) normals.push([ 1,  0,  0, 'R'])
-        if (x === -1) normals.push([-1,  0,  0, 'L'])
-        if (z ===  1) normals.push([ 0,  0,  1, 'F'])
-        if (z === -1) normals.push([ 0,  0, -1, 'B'])
-        for (const [fn_x, fn_y, fn_z, fdir] of normals) {
-          const [rn_x, rn_y, rn_z] = rot(fn_x, fn_y, fn_z)
-          const newFdir = normalToFaceName(rn_x, rn_y, rn_z)
-          const srcIdx = getStickerIndex(x, y, z, fdir)
-          const dstIdx = getStickerIndex(nx, ny, nz, newFdir)
-          if (srcIdx >= 0 && dstIdx >= 0) next[dstIdx] = state[srcIdx]
-        }
-      }
-    }
-  }
-  return next
-}
-
-// ─── Move application ────────────────────────────────────────────────────────
-
-function applyMove(state, moveName) {
-  const face = moveName[0]
-  const isDouble = moveName.endsWith('2')
-  const isInverse = moveName.endsWith("'")
-  if (isDouble)   return applyFaceMove(applyFaceMove(state, face), face)
-  if (isInverse)  return applyFaceMove(applyFaceMove(applyFaceMove(state, face), face), face)
-  return applyFaceMove(state, face)
-}
-
-// Derive permutation cycles from a move (for the math panel display)
-function getMoveCycles(moveName) {
-  const identity = Array.from({ length: 54 }, (_, i) => i)
-  const after = applyMove(identity, moveName)
-  // after[dst] = src  →  forward map: src → dst
-  const fwd = new Array(54)
-  for (let dst = 0; dst < 54; dst++) fwd[after[dst]] = dst
-  const visited = new Array(54).fill(false)
-  const cycles = []
-  for (let i = 0; i < 54; i++) {
-    if (visited[i] || fwd[i] === i) { visited[i] = true; continue }
-    const cycle = [i]
-    let j = fwd[i]
-    while (j !== i) {
-      visited[j] = true
-      cycle.push(j)
-      j = fwd[j]
-    }
-    visited[i] = true
-    cycles.push(cycle)
-  }
-  return cycles
-}
-
-// Check if state is solved
-function isSolved(state) {
-  for (let f = 0; f < 6; f++) {
-    const color = state[f * 9]
-    for (let i = 1; i < 9; i++) {
-      if (state[f * 9 + i] !== color) return false
-    }
-  }
-  return true
-}
-
-// ─── Cubie building ──────────────────────────────────────────────────────────
 const CELL = 64
 const GAP = 4
-
-// Get sticker index for a given cubie face
-function getStickerIndex(x, y, z, face) {
-  // face is one of 'U','D','R','L','F','B'
-  // Returns index into 54-element state array
-  const col = (v) => v + 1 // -1→0, 0→1, 1→2
-  switch (face) {
-    case 'U': {
-      // U[row][col]: row 0=back(z=-1), row 2=front(z=+1); col 0=left(x=-1)
-      const row = col(z) // z=-1→row 0, z=+1→row 2
-      const c = col(x)
-      return row * 3 + c
-    }
-    case 'D': {
-      // D[row][col]: row 0=front(z=+1), row 2=back(z=-1); col 0=left(x=-1)
-      const row = 2 - col(z) // z=+1→row 0, z=-1→row 2
-      const c = col(x)
-      return 27 + row * 3 + c
-    }
-    case 'R': {
-      // R[row][col]: row 0=top(y=+1); col 0=front(z=+1), col 2=back(z=-1)
-      const row = 2 - col(y) // y=+1→row 0
-      const c = 2 - col(z) // z=+1→col 0, z=-1→col 2
-      return 9 + row * 3 + c
-    }
-    case 'L': {
-      // L[row][col]: row 0=top(y=+1); col 0=back(z=-1), col 2=front(z=+1)
-      const row = 2 - col(y) // y=+1→row 0
-      const c = col(z) // z=-1→col 0, z=+1→col 2... wait: col 0=back(z=-1), so z=-1→c=0
-      // col(z) returns z+1: z=-1→0, z=+1→2 ✓
-      return 36 + row * 3 + c
-    }
-    case 'F': {
-      // F[row][col]: row 0=top(y=+1); col 0=left(x=-1)
-      const row = 2 - col(y)
-      const c = col(x)
-      return 18 + row * 3 + c
-    }
-    case 'B': {
-      // B[row][col]: row 0=top(y=+1); col 0=right(x=+1), col 2=left(x=-1)
-      const row = 2 - col(y)
-      const c = 2 - col(x) // x=+1→col 0, x=-1→col 2
-      return 45 + row * 3 + c
-    }
-    default: return -1
-  }
-}
 
 // Build list of cubies with their 3D positions and which faces are visible
 function buildCubies() {
@@ -230,27 +69,11 @@ const FACE_LAYER = {
   B: c => c.z === -1,
 }
 
-// CSS rotation axis + CW degrees for each face
-// U CW from above (front→right = +Z→+X): rotateY(+90)
-// D CW from below (front→left): rotateY(-90)
-// R CW from right (top→front, my+Y→+Z, CSS -Y→+Z): rotateX(-90)
-// L CW from left (opposite of R): rotateX(+90)
-// F CW from front (right→down, +X→CSS+Y): rotateZ(+90)
-// B CW from back: rotateZ(-90)
-// Rotation direction derivation (CSS Y is visual-down, my Y is visual-up via ty=-y*TOTAL):
-// U CW from above: front(+Z)→right(+X) = rotateY(+90) ✓
-// D CW from below: front(+Z)→left(-X) = rotateY(-90) ✓
-// R CW from right: visual-top(CSS -Y)→front(+Z) = rotateX(-90) ✓
-// L CW from left:  visual-top(CSS -Y)→back(-Z)  = rotateX(+90) ✓
-// F CW from front: right(+X)→visual-down(CSS +Y) = rotateZ(+90) ✓
-// B CW from back:  right(+X)→visual-up(CSS -Y)   = rotateZ(-90) ✓
+// CSS Y points down; these rotations match cubeMath's clockwise turns.
 const FACE_ANIM = {
-  U: { axis: 'Y', cw: 90 },
-  D: { axis: 'Y', cw: -90 },
-  R: { axis: 'X', cw: -90 },
-  L: { axis: 'X', cw: 90 },
-  F: { axis: 'Z', cw: 90 },
-  B: { axis: 'Z', cw: -90 },
+  U: { axis: 'Y', cw: -90 }, D: { axis: 'Y', cw: 90 },
+  R: { axis: 'X', cw: 90 }, L: { axis: 'X', cw: -90 },
+  F: { axis: 'Z', cw: 90 }, B: { axis: 'Z', cw: -90 },
 }
 
 const ANIM_MS = 300 // slow enough to see the rotation clearly
@@ -356,7 +179,7 @@ function CubeNetLive({ state }) {
         {' · '}
         <strong style={{ color: '#8899bb' }}>Color</strong> = origin face (where the sticker <em>came from</em>)
         {' · '}
-        White outline = displaced sticker
+        White outline = sticker on a different-colored face
       </div>
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <div style={{
@@ -482,7 +305,7 @@ function Cubie({ cubie, state, faceLabel, hidden, showNumbers }) {
 }
 
 // ─── Move Panel ──────────────────────────────────────────────────────────────
-const MOVE_BUTTONS = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'", 'U2', 'R2', 'F2']
+const MOVE_BUTTONS = ['U', 'R', 'F', 'D', 'L', 'B'].flatMap(f => [f, f + "'", f + '2'])
 
 function MoveButtons({ onMove, disabled }) {
   const faceColor = {
@@ -510,7 +333,7 @@ function MoveButtons({ onMove, disabled }) {
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.5 : 1,
               transition: 'all 0.15s',
-              minWidth: 34,
+              minWidth: 44, minHeight: 44,
             }}
           >
             {m}
@@ -594,112 +417,95 @@ export default function RubiksCube({ onBack }) {
   const handleMouseUp = useCallback(() => { dragging.current = false }, [])
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('pointermove', handleMouseMove)
+    window.addEventListener('pointerup', handleMouseUp)
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('pointermove', handleMouseMove)
+      window.removeEventListener('pointerup', handleMouseUp)
     }
   }, [handleMouseMove, handleMouseUp])
 
-  const doMoveInstant = useCallback((moveName) => {
-    setState(prev => applyMove(prev, moveName))
-    setHistory(prev => [...prev.slice(-19), moveName])
-    setLastMove(moveName)
-    setSessionMoves(n => n + 1)
-    setOrderResult(null)
+  // One owned timer prevents overlapping turns and survives reset/unmount safely.
+  const sequenceRef = useRef([])
+  const stateRef = useRef(state)
+  stateRef.current = state
+  const cancelMoves = useCallback(() => {
+    clearTimeout(animTimerRef.current)
+    sequenceRef.current = []
+    animating.current = false
+    setAnimMove(null)
+    setScrambling(false)
   }, [])
 
-  const doMove = useCallback((moveName, frozenState) => {
-    if (animating.current) return // buttons are disabled; ignore any race-condition click
-
-    const fa = FACE_ANIM[moveName[0]]
-    if (!fa) { doMoveInstant(moveName); return }
-
-    const isInverse = moveName.endsWith("'")
-    const isDouble = moveName.endsWith('2')
-    const base = isDouble ? 180 : fa.cw
-    const deg = isInverse ? -base : base
-
-    // Capture state snapshot NOW so the ghost layer's colors never change mid-flight
-    const snapshot = frozenState || null // passed from setState callback below
+  const runMoves = useCallback((moves) => {
+    if (animating.current) return
     animating.current = true
-
-    // We need the current state to snapshot it — use a functional setState to grab it
-    setState(prev => {
-      setAnimMove({ face: moveName[0], transform: `rotate${fa.axis}(${deg}deg)`, snapshot: prev })
-      return prev // don't change state yet
-    })
-
-    if (animTimerRef.current) clearTimeout(animTimerRef.current)
-    animTimerRef.current = setTimeout(() => {
-      setState(prev => applyMove(prev, moveName))
-      setHistory(prev => [...prev.slice(-19), moveName])
-      setLastMove(moveName)
-      setSessionMoves(n => n + 1)
-      setOrderResult(null)
-      setAnimMove(null)
-      animating.current = false
-    }, ANIM_MS + 40)
-  }, [doMoveInstant])
-
-  const doScramble = useCallback(async () => {
-    const moves = ['U',"U'","D","D'","R","R'","L","L'","F","F'","B","B'"]
     setScrambling(true)
+    sequenceRef.current = [...moves]
+    const next = () => {
+      const moveName = sequenceRef.current.shift()
+      if (!moveName) {
+        animating.current = false
+        setScrambling(false)
+        return
+      }
+      const fa = FACE_ANIM[moveName[0]]
+      const deg = fa.cw * (moveName.endsWith('2') ? 2 : moveName.endsWith("'") ? -1 : 1)
+      setAnimMove({ face: moveName[0], transform: `rotate${fa.axis}(${deg}deg)`, snapshot: stateRef.current })
+      animTimerRef.current = setTimeout(() => {
+        const updated = applyMove(stateRef.current, moveName)
+        stateRef.current = updated
+        setState(updated)
+        setHistory(prev => [...prev, moveName])
+        setLastMove(moveName)
+        setSessionMoves(n => n + 1)
+        setOrderResult(null)
+        setAnimMove(null)
+        animTimerRef.current = setTimeout(next, 40)
+      }, ANIM_MS + 40)
+    }
+    next()
+  }, [])
+  const doMove = useCallback(move => runMoves([move]), [runMoves])
+
+  const doScramble = useCallback(() => {
+    const faces = ['U', 'D', 'R', 'L', 'F', 'B']
     const seq = []
     for (let i = 0; i < 20; i++) {
-      seq.push(moves[Math.floor(Math.random() * moves.length)])
+      const choices = faces.filter(f => f !== seq.at(-1)?.[0])
+      seq.push(choices[Math.floor(Math.random() * choices.length)] + ['', "'", '2'][Math.floor(Math.random() * 3)])
     }
-    for (const m of seq) {
-      await new Promise(r => setTimeout(r, 80))
-      setState(prev => applyMove(prev, m))
-      setHistory(prev => [...prev.slice(-19), m])
-      setLastMove(m)
-      setSessionMoves(n => n + 1)
-    }
-    setScrambling(false)
-    setOrderResult(null)
-  }, [])
+    runMoves(seq)
+  }, [runMoves])
 
   const doReset = useCallback(() => {
-    setState(solvedState())
+    cancelMoves()
+    stateRef.current = solvedState()
+    setState(stateRef.current)
     setHistory([])
     setLastMove(null)
     setOrderResult(null)
     setRxuResult(null)
-  }, [])
+  }, [cancelMoves])
 
   const doUndo = useCallback(() => {
-    if (history.length === 0) return
+    if (animating.current || history.length === 0) return
     const last = history[history.length - 1]
-    let inv
-    if (last.endsWith("'")) inv = last[0]
-    else if (last.endsWith('2')) inv = last
-    else inv = last + "'"
-    setState(prev => applyMove(prev, inv))
+    const inv = last.endsWith("'") ? last[0] : last.endsWith('2') ? last : last + "'"
+    stateRef.current = applyMove(stateRef.current, inv)
+    setState(stateRef.current)
     setHistory(prev => prev.slice(0, -1))
     setLastMove(inv)
+    setOrderResult(null)
     setSessionMoves(n => n + 1)
   }, [history])
 
   const doShowOrder = useCallback(() => {
     if (!lastMove) return
-    const moveName = lastMove.endsWith("'") || lastMove.endsWith('2') ? lastMove : lastMove
-    // Apply the original last single move repeatedly
-    let s = [...state]
-    const solved = solvedState()
-    let count = 0
-    do {
-      s = applyMove(s, moveName)
-      count++
-    } while (!s.every((v, i) => v === solved[i]) && count < 1260)
-    setOrderResult({ move: moveName, order: count })
-  }, [lastMove, state])
+    setOrderResult({ move: lastMove, order: lastMove.endsWith('2') ? 2 : 4 })
+  }, [lastMove])
 
-  const doCommutator = useCallback(() => {
-    const step = ANIM_MS + 80
-    ;['R', 'U', "R'", "U'"].forEach((m, i) => setTimeout(() => doMove(m), i * step))
-  }, [doMove])
+  const doCommutator = useCallback(() => runMoves(['R', 'U', "R'", "U'"]), [runMoves])
 
   const doRthenU = useCallback(() => {
     const s0 = solvedState()
@@ -781,12 +587,12 @@ export default function RubiksCube({ onBack }) {
               {
                 icon: '20',
                 title: "God's Number = 20",
-                body: 'Any scrambled state can be solved in at most 20 moves. This was proved in 2010 using 35 CPU-years of computation distributed across Google\'s servers.'
+                body: 'Any legal scrambled state can be solved in at most 20 face turns, counting a half-turn as one move. This was proved in 2010 using 35 CPU-years of computation distributed across Google\'s servers.'
               },
               {
                 icon: '⊕',
                 title: 'A Mathematical Group',
-                body: 'Every sequence of moves forms a group — a set with an associative operation, an identity, and inverses. The cube is one of the most tangible models of abstract algebra.'
+                body: 'All reachable cube transformations together form a group. Combining transformations means doing one and then the other. The cube is one of the most tangible models of abstract algebra.'
               },
             ].map(card => (
               <div key={card.title} style={{
@@ -963,12 +769,12 @@ export default function RubiksCube({ onBack }) {
               <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#c084fc', lineHeight: 2 }}>
                 <div>R × 4 = identity (order 4)</div>
                 <div>U × 4 = identity (order 4)</div>
-                <div>(RU)² × 3 = identity</div>
+                <div>(R U) repeated 105 times = identity</div>
                 <div>[R,U] × 6 = identity</div>
               </div>
               <br />
               <p style={{ color: '#c0d8e8', fontSize: 13, lineHeight: 1.7, margin: 0 }}>
-                The commutator <strong style={{ color: '#c084fc' }}>[R,U] = RUR′U′</strong> — the "sexy move" — returns to solved in exactly 6 applications, making it useful for solving without disturbing other pieces.
+                The commutator <strong style={{ color: '#c084fc' }}>[R,U] = RUR′U′</strong> — the "sexy move" — returns to solved in exactly 6 applications, but one repetition still changes several pieces; it is not a complete solving method.
               </p>
             </div>
           </div>
@@ -1000,7 +806,7 @@ export default function RubiksCube({ onBack }) {
   const lastMoveCycles = lastMove ? getMoveCycles(lastMove) : []
 
   return (
-    <div style={{
+    <div className="rubiks-play" style={{
       display: 'flex',
       flexDirection: 'row',
       height: '100vh',
@@ -1010,7 +816,7 @@ export default function RubiksCube({ onBack }) {
       gap: 0,
     }}>
       {/* ── LEFT COLUMN (65%) ── */}
-      <div style={{ flex: '0 0 65%', display: 'flex', flexDirection: 'column', padding: '20px 20px 20px 24px', gap: 20, overflowY: 'auto', height: '100vh' }}>
+      <div className="rubiks-main" style={{ flex: '0 0 65%', display: 'flex', flexDirection: 'column', padding: '20px 20px 20px 24px', gap: 20, overflowY: 'auto', height: '100vh' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           {onBack && (
@@ -1019,7 +825,7 @@ export default function RubiksCube({ onBack }) {
             </button>
           )}
           <button
-            onClick={() => setPhase('intro')}
+            onClick={() => { cancelMoves(); setPhase('intro') }}
             style={{ background: 'none', border: '1px solid rgba(77,208,255,0.3)', color: '#4dd0ff', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}
           >
             ← Back
@@ -1052,6 +858,8 @@ export default function RubiksCube({ onBack }) {
           ))}
         </div>
 
+        <FirstExperiments history={history} onReset={doReset} solved={isSolved(state)} />
+        <button onClick={() => { setRotX(-25); setRotY(30) }}>Restore starting view</button>
         {/* First-timer hint */}
         {history.length === 0 && (
           <div style={{ background: 'rgba(77,208,255,0.06)', border: '1px solid rgba(77,208,255,0.2)', borderRadius: 8, padding: '10px 16px' }}>
@@ -1060,7 +868,7 @@ export default function RubiksCube({ onBack }) {
               <div><span style={{ color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>R</span> — rotate the Right face 90° clockwise</div>
               <div><span style={{ color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>R'</span> — rotate it back (counter-clockwise)</div>
               <div><span style={{ color: '#ffd700', fontFamily: 'monospace', fontWeight: 700 }}>R U R' U'</span> — the "sexy move" (try it 6×)</div>
-              <div>Hit <strong style={{ color: '#fff' }}>Scramble</strong> to mix it up, then try to solve it!</div>
+              <div>Try the three guided experiments before using <strong style={{ color: '#fff' }}>Scramble</strong>.</div>
             </div>
           </div>
         )}
@@ -1086,7 +894,9 @@ export default function RubiksCube({ onBack }) {
           </div>
           <div
             ref={cubeRef}
-            onMouseDown={handleMouseDown}
+            onPointerDown={handleMouseDown}
+            onPointerCancel={handleMouseUp}
+            role="img" aria-label="Interactive cube. Drag to change the view; use move buttons to turn faces."
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1094,7 +904,7 @@ export default function RubiksCube({ onBack }) {
               perspective: '900px',
               cursor: dragging.current ? 'grabbing' : 'grab',
               height: 420,
-              userSelect: 'none',
+              userSelect: 'none', touchAction: 'none',
             }}
           >
             <div
@@ -1178,11 +988,10 @@ export default function RubiksCube({ onBack }) {
               opacity: scrambling ? 0.6 : 1,
             }}
           >
-            {scrambling ? 'Scrambling...' : 'Scramble (20 moves)'}
+            {scrambling ? 'Turning…' : 'Scramble (20 moves)'}
           </button>
           <button
             onClick={doReset}
-            disabled={scrambling}
             style={{
               padding: '8px 18px',
               borderRadius: 6,
@@ -1245,7 +1054,7 @@ export default function RubiksCube({ onBack }) {
       </div>
 
       {/* ── RIGHT COLUMN — Math Panel (35%) ── */}
-      <div style={{
+      <div className="rubiks-panel" style={{
         flex: '0 0 35%',
         background: '#060c18',
         borderLeft: '1px solid rgba(77,208,255,0.2)',
@@ -1332,14 +1141,14 @@ export default function RubiksCube({ onBack }) {
                 </div>
               </div>
               <div style={{ color: '#6688aa', fontSize: 11, marginBottom: 4 }}>
-                Permutation cycles — moves {lastMoveCycles.length * 4} stickers in {lastMoveCycles.length} independent 4-cycles:
+                A cycle visits positions in order, then returns to its start. This move shifts {lastMoveCycles.reduce((n, c) => n + c.length, 0)} stickers in {lastMoveCycles.length} cycles:
               </div>
-              {lastMoveCycles.slice(0, 5).map((c, i) => (
+              {lastMoveCycles.map((c, i) => (
                 <div key={i} style={{ fontFamily: 'monospace', fontSize: 11, color: '#4dd0ff', lineHeight: 1.7 }}>
-                  ({c.join(' → ')})
+                  ({[...c, c[0]].map(i => NET_FACE_NAMES[Math.floor(i / 9)] + (i % 9 + 1)).join(' → ')})
                 </div>
               ))}
-              <div style={{ color: '#445566', fontSize: 10, marginTop: 4 }}>Numbers are sticker indices (0–53) in the internal state array</div>
+              <div style={{ color: '#445566', fontSize: 10, marginTop: 4 }}>Addresses match the live net: U1 is the top-left position on the Up face.</div>
             </div>
           ) : (
             <div style={{ color: '#445566', fontSize: 12 }}>Apply a move to see its permutation cycles in the group</div>
@@ -1352,7 +1161,7 @@ export default function RubiksCube({ onBack }) {
             Move Order
           </div>
           <div style={{ color: '#8899aa', fontSize: 12, lineHeight: 1.5, marginBottom: 8 }}>
-            The <em>order</em> of a move is the number of repetitions needed to return to solved.
+            The <em>order</em> of a move is the number of repetitions needed to return to your starting state, even if it was scrambled.
           </div>
           <button
             onClick={doShowOrder}
@@ -1494,10 +1303,10 @@ export default function RubiksCube({ onBack }) {
             Commutator
           </div>
           <div style={{ color: '#8899aa', fontSize: 12, lineHeight: 1.6, marginBottom: 10 }}>
-            The commutator <span style={{ fontFamily: 'monospace', color: '#c084fc' }}>[R,U] = R U R′ U′</span> is the "sexy move" — a key building block for solving. Applied 6 times it returns to solved.
+            The commutator <span style={{ fontFamily: 'monospace', color: '#c084fc' }}>[R,U] = R U R′ U′</span> is the "sexy move" — a key building block for solving. Repeated 6 times it returns to the starting state.
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#6644aa', marginBottom: 10, lineHeight: 1.8 }}>
-            <div>[R,U]¹ → moves 8 pieces</div>
+            <div>[R,U]¹ → affects corners and edges</div>
             <div>[R,U]⁶ → identity (solved)</div>
           </div>
           <button
@@ -1524,7 +1333,7 @@ export default function RubiksCube({ onBack }) {
         <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(77,208,255,0.1)' }}>
           <div style={{ color: '#334455', fontSize: 10, lineHeight: 1.6, fontFamily: 'monospace' }}>
             <div style={{ color: '#4dd0ff', marginBottom: 4 }}>God's Number = 20</div>
-            <div>Any position solvable in ≤ 20 moves.</div>
+            <div>Any legal position: ≤ 20 face turns (a half-turn counts as one).</div>
             <div>Proved 2010 (Rokicki et al.), 35 CPU-years.</div>
           </div>
         </div>

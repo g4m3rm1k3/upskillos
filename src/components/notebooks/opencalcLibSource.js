@@ -123,7 +123,13 @@ class Figure:
     def pie(self,labels,values,colors=None):
         self._elements.append({'type':'pie','labels':[str(l) for l in labels],'values':[float(v) for v in values],'colors':colors});return self
     def show(self):
-        return json.dumps({'type':'opencalc_figure','width':self._width,'height':self._height,'square':self._square,'xmin':self._xmin,'xmax':self._xmax,'ymin':self._ymin,'ymax':self._ymax,'title':self._title,'xlabel':self._xlabel,'ylabel':self._ylabel,'elements':self._elements})
+        return json.dumps({'type':'opencalc_figure','width':self._width,'height':self._height,'square':self._square,'xmin':self._xmin,'xmax':self._xmax,'ymin':self._ymin,'ymax':self._ymax,'title':self._title,'xlabel':self._xlabel,'ylabel':self._ylabel,'elements':self._elements},default=_json_default)
+
+def _json_default(o):
+    # numpy scalars/arrays (e.g. int32 on 32-bit Pyodide) are not JSON-serializable
+    if hasattr(o,'tolist'):return o.tolist()
+    if hasattr(o,'item'):return o.item()
+    raise TypeError(f'Object of type {type(o).__name__} is not JSON serializable')
 
 def quick_plot(fn,xmin=-5,xmax=5,color='blue',label=None,title=None):
     fig=Figure(xmin=xmin,xmax=xmax,ymin=-10,ymax=10,title=title)

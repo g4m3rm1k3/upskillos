@@ -1,0 +1,10 @@
+.rubiks-play { background: #080e1b; }
+.rubiks-play > * { box-sizing: border-box; min-width: 0; }
+.rubiks-play button:focus-visible { outline: 3px solid #ffd700; outline-offset: 3px; }
+.rubiks-guide { background: #10263a; border: 1px solid #4dd0ff; border-radius: 10px; padding: 16px; font-size: 14px; line-height: 1.6; color: #e0f0ff; }
+.rubiks-guide h3 { margin: 0 0 8px; color: #4dd0ff; }
+.rubiks-guide button { background: #193c54; border: 1px solid #7ac9ed; color: white; border-radius: 6px; padding: 10px; margin: 4px; min-height: 44px; }
+@media (max-width: 850px) {
+  .rubiks-play { flex-direction: column !important; height: auto !important; overflow: visible !important; }
+  .rubiks-play > .rubiks-main, .rubiks-play > .rubiks-panel { flex: auto !important; height: auto !important; overflow: visible !important; padding: 16px !important; }
+}

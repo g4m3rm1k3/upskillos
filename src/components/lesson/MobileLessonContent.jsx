@@ -150,7 +150,8 @@ function SectionContent({ data }) {
       <div className="space-y-4">
         {rawBlocks.map((block, i) => {
           if (block.type === "prose") return <div key={i} className="text-slate-700 dark:text-slate-300">{renderMixedProse(normalizeProse(block.paragraphs ?? []))}</div>;
-          if (block.type === "callout") return <Callout key={i} {...block} />;
+          // Block callouts carry their style as callout.type (nested), kind or variant — block.type is always "callout".
+          if (block.type === "callout") return <Callout key={i} {...(block.callout ?? { ...block, type: block.kind ?? block.variant })} />;
           if (block.type === "stepthrough") return <StepThrough key={i} {...block} />;
           if (block.type === "viz") { const n = normalizeViz(block); return n ? <MobileVizCard key={i} viz={n} /> : null; }
           if (block.type === "math") {

@@ -227,7 +227,8 @@ function SectionContent({ data }) {
               </div>
             );
           }
-          if (block.type === "callout") return <Callout key={i} {...block} />;
+          // Block callouts carry their style as callout.type (nested), kind or variant — block.type is always "callout".
+          if (block.type === "callout") return <Callout key={i} {...(block.callout ?? { ...block, type: block.kind ?? block.variant })} />;
           if (block.type === "stepthrough")
             return <StepThrough key={i} {...block} />;
           if (block.type === "viz") {

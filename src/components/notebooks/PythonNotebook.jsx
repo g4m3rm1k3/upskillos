@@ -56,6 +56,11 @@ function CellOutput({ cell, C }) {
   const { submit: submitReport, submitting: reportSubmitting, canSubmit: canReport } = useReportBug();
   const [reportStatus, setReportStatus] = useState('idle'); // idle | done | error
   if (!cell.output && !cell.figureJson && !hasMatplotlib) return null;
+  // Lessons mark deliberate error demonstrations with expectError: "NameError" etc.
+  const isExpectedError =
+    cell.status === "error" &&
+    !!cell.expectError &&
+    tracebackHeadline(cell.output).includes(cell.expectError);
 
   const report = async () => {
     try {
@@ -127,6 +132,11 @@ function CellOutput({ cell, C }) {
       {/* Error output — headline first, full traceback collapsed, with a report action */}
       {cell.output && cell.status === "error" && (
         <div style={{ padding: "4px 14px 12px" }}>
+          {isExpectedError && (
+            <p style={{ margin: "0 0 6px", fontSize: 12, lineHeight: 1.5, color: C.amber, fontWeight: 600 }}>
+              Expected error — this cell is meant to fail so you can read the message. Follow the instructions above to fix it.
+            </p>
+          )}
           <p style={{ margin: "0 0 6px", fontFamily: "monospace", fontSize: 13, lineHeight: 1.6, color: C.red, fontWeight: 600, wordBreak: "break-word" }}>
             {tracebackHeadline(cell.output)}
           </p>
@@ -136,7 +146,7 @@ function CellOutput({ cell, C }) {
               {cell.output}
             </pre>
           </details>
-          {reportStatus === "done" ? (
+          {isExpectedError ? null : reportStatus === "done" ? (
             <p style={{ fontSize: 11, color: C.teal, marginTop: 6 }}>✓ Reported — thanks for flagging it.</p>
           ) : canReport ? (
             <button
@@ -271,6 +281,9 @@ def _capture_matplotlib_figs():
     await py.runPythonAsync(
       'from opencalc import Figure; print("Python stack ready")',
     );
+    // Names present at startup survive "Reset variables"; everything a learner
+    // defines afterwards is cleared by it.
+    await py.runPythonAsync("_oc_base_names = set(globals()) | {'_oc_base_names'}");
     return py;
   })();
 
@@ -1058,9 +1071,11 @@ export default function PythonNotebook({ params, onParamChange }) {
                     : "The test failed. Try again!",
             };
           } catch (testErr) {
+            // Show the assertion's own message (the traceback's last line),
+            // not the whole Pyodide traceback.
             testFeedback = {
               success: false,
-              message: `Test Error: ${testErr.message}`,
+              message: tracebackHeadline(String(testErr.message)).replace(/^AssertionError:?\s*/, "") || "The test failed. Try again!",
             };
           }
         }
@@ -1128,8 +1143,10 @@ export default function PythonNotebook({ params, onParamChange }) {
   );
 
   // ── Run all cells in order ─────────────────────────────────────────────────
+  // Challenge cells hold unfinished starter code, so Run All skips them;
+  // learners run each challenge themselves once they have written it.
   const runAll = useCallback(async () => {
-    for (const cell of cells) {
+    for (const cell of cells.filter((c) => !c.challengeType)) {
       await new Promise((resolve) => {
         // Small delay between cells so state updates render
         setTimeout(resolve, 50);
@@ -1137,6 +1154,21 @@ export default function PythonNotebook({ params, onParamChange }) {
       await runCell(cell.id);
     }
   }, [cells, runCell]);
+
+  // ── Reset variables (a notebook "restart") ────────────────────────────────
+  // All notebooks on a page share one Pyodide kernel, so this clears every
+  // name learners defined anywhere in it, then resets this notebook's outputs
+  // and execution counts so the next run starts from a known-empty state.
+  const resetVariables = useCallback(async () => {
+    if (!pyodide || isExecuting) return;
+    await pyodide.runPythonAsync(
+      "(lambda g: [g.pop(n) for n in [n for n in list(g) if n not in g.get('_oc_base_names', g)]])(globals())",
+    );
+    execCounterRef.current = 0;
+    setCells((prev) =>
+      prev.map((c) => ({ ...c, output: "", status: "idle", figureJson: null, matplotlibImages: [], executionCount: undefined, testResult: null })),
+    );
+  }, [pyodide, isExecuting]);
 
   const addCell = () => {
     const newId =
@@ -1355,6 +1387,7 @@ export default function PythonNotebook({ params, onParamChange }) {
             <button
               onClick={runAll}
               disabled={isExecuting}
+              title="Runs every cell in order, except challenge cells"
               style={{
                 fontSize: 12,
                 padding: "6px 10px",
@@ -1369,6 +1402,23 @@ export default function PythonNotebook({ params, onParamChange }) {
               ▶ Run all
             </button>
           )}
+          <button
+            onClick={resetVariables}
+            disabled={isExecuting}
+            title="Clears every variable defined in this page's Python session, like restarting a Jupyter kernel"
+            style={{
+              fontSize: 12,
+              padding: "6px 10px",
+              borderRadius: 8,
+              cursor: "pointer",
+              border: `0.5px solid ${C.border}`,
+              background: "transparent",
+              color: C.muted,
+              opacity: isExecuting ? 0.5 : 1,
+            }}
+          >
+            ↺ Reset variables
+          </button>
           <button
             onClick={addCell}
             style={{
