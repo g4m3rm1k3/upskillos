@@ -140,7 +140,7 @@ async function main() {
   const ids = new Map()
   const lessons = []
   for (const file of files) {
-    const label = relative(root, file)
+    const label = relative(root, file).split('\\').join('/')
     try {
       const lesson = (await import(pathToFileURL(file).href)).default
       lessons.push({ file, label, lesson })
@@ -169,6 +169,19 @@ async function main() {
     }
     for (const s of renderedStrings(lesson)) {
       if (bareDollar(s)) warn(label, `bare $ in rendered prose (renders as LaTeX): "${s.slice(0, 80)}"`)
+    }
+    // Notebook cell text goes through parseProse (inline code, **bold**,
+    // *italic*, $math$); challenge prompts are shown as plain text.
+    for (const nb of notebooks(lesson)) {
+      for (const cell of nb.cells) {
+        const texts = [...(Array.isArray(cell.prose) ? cell.prose : [cell.prose]), cell.instructions].filter((t) => typeof t === 'string' && !t.trimStart().startsWith('```'))
+        for (const t of texts) {
+          const plain = t.replace(/`[^`\n]*`/g, '').replace(/\*\*/g, '')
+          if (/\s\*\s|\*\s*\d|\d\s*\*/.test(plain)) warn(label, `cell ${cell.id}: arithmetic * outside backticks may render as italics: "${t.slice(0, 70)}"`)
+          if (plain.includes('$')) warn(label, `cell ${cell.id}: bare $ outside backticks may render as math: "${t.slice(0, 70)}"`)
+        }
+        if (typeof cell.prompt === 'string' && cell.prompt.includes('`')) warn(label, `cell ${cell.id}: challenge prompt is plain text; backticks show literally: "${cell.prompt.slice(0, 70)}"`)
+      }
     }
 
     for (const nb of notebooks(lesson)) {

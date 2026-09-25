@@ -2,6 +2,7 @@
  * Shared prose parser — converts mixed text+math strings into React elements.
  *
  * Handles (in priority order):
+ *  - `inline code` via <code> (contents left literal)
  *  - \[...\]  display LaTeX via KatexBlock (block-level)
  *  - \(...\)  inline LaTeX via KatexInline
  *  - $...$    inline LaTeX via KatexInline
@@ -120,6 +121,21 @@ export function parseProse(text) {
         i++
       }
       continue
+    }
+
+    // `inline code` — checked before bold/italic/math so * and $ inside code stay literal
+    if (text[i] === '`' && !text.startsWith('``', i)) {
+      const end = text.indexOf('`', i + 1)
+      const newline = text.indexOf('\n', i + 1)
+      if (end > i + 1 && (newline === -1 || end < newline)) {
+        parts.push(
+          <code key={`c${keyIdx++}`} className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-[0.9em]">
+            {text.slice(i + 1, end)}
+          </code>
+        )
+        i = end + 1
+        continue
+      }
     }
 
     // <span class="tooltip" data-tooltip="...">label</span>

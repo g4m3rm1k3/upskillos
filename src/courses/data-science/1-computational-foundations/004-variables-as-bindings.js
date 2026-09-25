@@ -1,139 +1,164 @@
+import { prose, callout, check, notebook, demo, exercise } from '../lessonKit.js'
+
 export default {
   id: 'a-04', slug: 'variables-as-bindings', track: 'A', order: 4,
   title: 'Variables as Bindings', subtitle: 'Names, Values, and Memory',
   tags: ['variables', 'assignment', 'binding', 'naming', 'memory'],
-  prereqs: ['a-02','a-03'], unlocks: ['a-05','a-06'],
+  prereqs: ['a-02', 'a-03'], unlocks: ['a-05', 'a-06'],
   hook: {
     question: 'What does x = 5 actually do?',
-    realWorldContext: 'Assignment is not mathematical equality. x = x + 1 is not a contradiction — it is an instruction. This distinction trips up almost every beginner and causes bugs that take hours to find because the code looks correct.',
+    realWorldContext: 'Assignment is not mathematical equality. x = x + 1 is not a contradiction — it is an instruction. Reading it as an equation is one of the most common sources of beginner bugs, because the code looks correct.',
   },
   intuition: {
-    prose: [
-      'A **variable** is a name bound to a value in memory. `x = 5` means: evaluate the right side (5), then bind the name x to that value. The name x now refers to 5 whenever you use it.',
-      '**Assignment is not equality.** In math, x = x + 1 has no solution. In Python, it is an instruction: look up x (say, 5), compute x + 1 (6), bind x to 6. The old binding (5) is gone.',
-      'Variable names are case-sensitive (`x` and `X` are different). By convention, use lowercase with underscores for variables (`student_count`), not camelCase or single letters (except for throwaway loop variables).',
+    blocks: [
+      prose(
+        '**What you will be able to do.** Draw what an assignment does as a name pointing to a value. Trace a sequence of assignments, including `x = x + 1`, and say exactly what changed. Recognise when two names refer to the *same* value, and why that only matters for values that can be changed in place.',
+        '**The smallest example.** `x = 5` is an instruction with two steps: evaluate the right-hand side (5), then **bind** the name `x` to that value. Afterwards, using `x` anywhere means "the value `x` is bound to". A **variable** is a name bound to a value.',
+        'Picture the names in one column and the values in another, with an arrow from each name to its value:',
+        '| Name | → | Value |\n|---|---|---|\n| `x` | → | `5` |',
+      ),
+      prose(
+        '**Assignment is not equality.** In algebra, x = x + 1 has no solution. In Python it is an instruction, carried out right side first:',
+        '1. Look up the value `x` points to: 5.\n2. Compute `5 + 1`, which is a *new* value, 6.\n3. Point the name `x` at 6. Nothing points at 5 any more; Python will reclaim it.',
+        '| Name | → | Value |\n|---|---|---|\n| `x` | → | `6` |',
+        'The value 5 was not "changed into" 6. The name was moved to a different value. That is called **rebinding**.',
+      ),
+      check(
+        '`count = 0`, then `count = count + 1`, then `count = count * 2`. Where does `count` point at the end?',
+        ['0', '1', '2', '4'],
+        2,
+        'Each line reads the current value, computes a new one and rebinds: 0 → 1 → 2.',
+      ),
+      notebook('Binding and rebinding', [
+        demo(1, 'Stage 1 — Basic binding', [
+          'Each assignment creates a binding. The last line is just a name, so its value — the value it is bound to — is shown.',
+        ], 'Predict the output, then run. Then add the line z = 100 above the print: which printed values change?', 'x = 5\ny = 10\nz = x + y\nprint(x, y, z)\nz', { expectOutput: ['5 10 15'] }),
+        demo(2, 'Stage 2 — Right side first', [
+          'Python evaluates the whole right-hand side before it rebinds the name. That is why `x = x + 1` works: the old value is read before the name moves.',
+        ], 'Write down the value of count after every line, then run to check.', 'count = 0\ncount = count + 1\nprint(count)\ncount = count + 1\ncount = count * 2\nprint(count)', { expectOutput: ['1', '4'] }),
+        demo(3, 'Stage 3 — Augmented assignment', [
+          '`x += 10` is shorthand for `x = x + 10`; `-=`, `*=` and `//=` work the same way. They are abbreviations, not new operations.',
+        ], 'Predict all four printed values before running.', 'score = 100\nscore += 10\nprint(score)\nscore -= 5\nprint(score)\nscore *= 2\nprint(score)\nscore //= 3\nprint(score)', { expectOutput: ['110', '105', '210', '70'] }),
+      ]),
+      prose(
+        '**Two names, one value.** `b = a` does not link `b` to the *name* `a`. It evaluates `a` — getting the value `a` points to — and points `b` at that same value. After that the names are independent: rebinding `a` moves only `a`\'s arrow.',
+        '| Step | a → | b → |\n|---|---|---|\n| `a = 3` | 3 | — |\n| `b = a` | 3 | 3 (the same value) |\n| `a = 10` | 10 | 3 |',
+        '**Multiple assignment.** `a, b = 3, 7` binds two names at once. Because the whole right side is evaluated first, `a, b = b, a` swaps two values without a temporary name.',
+      ),
+      check(
+        '`a = 3`, then `b = a`, then `a = 10`. What is `b`?',
+        ['10, because b is linked to a', '3, because b = a pointed b at the value 3, and rebinding a later does not move b'],
+        1,
+        'Assignment binds a name to a value, never to another name. Moving `a`\'s arrow leaves `b`\'s arrow where it was.',
+      ),
+      notebook('Names that share a value', [
+        demo(4, 'Stage 4 — Rebinding one name', [
+          'After `b = a`, both names point at the same value. Rebinding `a` does not affect `b`.',
+        ], 'Predict both prints, then run.', 'a = 3\nb = a\nprint(a, b)\na = 10\nprint(a, b)', { expectOutput: ['3 3', '10 3'] }),
+        demo(5, 'Stage 5 — Multiple assignment and swapping', [
+          'The right side `b, a` is evaluated completely (to 7, 3) before either name is rebound.',
+        ], 'Run. Then try the swap with two separate lines, a = b followed by b = a, and explain why it fails.', 'a, b = 3, 7\nprint(a, b)\na, b = b, a\nprint(a, b)', { expectOutput: ['3 7', '7 3'] }),
+      ]),
+      callout('warning', 'A preview: values that can change in place', 'Numbers and text can never be changed in place — every "change" makes a new value and rebinds a name. Lists (Lesson A.13) are different: `b.append(4)` changes the list itself. If `a` and `b` point at the same list, both see the change, because there is only one list. This is called **aliasing**. The cell below previews it; you do not need lists yet to follow it.'),
+      notebook('Preview: aliasing', [
+        demo(6, 'Stage 6 — Rebinding versus changing in place', [
+          'First part: `b = b + [4]` builds a new list and rebinds `b`, so `a` is unaffected. Second part: `d.append(4)` changes the one list that both `c` and `d` point to, so `c` sees it too. `is` asks "do these two names point at the very same value?"',
+        ], 'Predict each print, then run. Then replace d.append(4) with d = d + [4] and predict again.', 'a = [1, 2, 3]\nb = a\nb = b + [4]          # new list; rebinds b only\nprint(a, b, a is b)\n\nc = [1, 2, 3]\nd = c\nd.append(4)          # changes the shared list\nprint(c, d, c is d)', { expectOutput: ['[1, 2, 3] [1, 2, 3, 4] False', '[1, 2, 3, 4] [1, 2, 3, 4] True'] }),
+      ]),
+      prose(
+        '**Choosing names.** Names are case-sensitive (`total` and `Total` are different names). Python convention is lowercase words joined by underscores: `hours_worked`, `hourly_rate`. A name should say what the value *is*, so a reader never has to work backwards from the calculation. `weekly_pay = hours_worked * hourly_rate` explains itself; `z = x * y` does not.',
+        '**Practice.** Challenge 1 is a trace. Challenge 2 builds a result by repeated rebinding. Challenge 3 is a fresh repair problem about the order of assignments.',
+      ),
+      notebook('Practice', [
+        exercise(11, 1, 'Challenge 1 — Trace the bindings', 'easy', {
+          prompt: 'Without running the lines shown, write the value result points to after each of the four lines, in order, as a list called trace.',
+          prose: ['```python\nresult = 10\nresult = result * 3\nresult = result - 5\nresult += 10\nresult //= 2\n```', 'The first value, 10, is given. List the values after lines 2, 3, 4 and 5.'],
+          instructions: 'Trace on paper: read the current value, compute, rebind. Then run the challenge to check.',
+          code: 'trace = None  # four values, for example [1, 2, 3, 4]',
+          testCode: `assert isinstance(trace, list) and len(trace) == 4, "trace should be a list of four values"
+assert trace[0] == 30, "Line 2 multiplies the current value 10 by 3"
+assert trace[1] == 25, "Line 3 subtracts 5 from the value after line 2"
+assert trace[2] == 35, "result += 10 means result = result + 10"
+assert trace[3] != 17.5, "//= is floor division: 35 // 2 is 17, not 17.5"
+assert trace[3] == 17, "Line 5 rebinds result to 35 // 2"
+"SUCCESS: 10 → 30 → 25 → 35 → 17."`,
+          hint: 'Each line uses the value from the line before it.',
+          solution: 'trace = [30, 25, 35, 17]',
+          misconceptions: [{ code: 'trace = [30, 25, 35, 17.5]', feedback: 'floor division' }],
+        }),
+        exercise(12, 2, 'Challenge 2 — Compound interest by rebinding', 'medium', {
+          prompt: 'Start with principal = 1000. Apply 5% interest for three years by multiplying by 1.05 once per year, rebinding principal each time. Store the result rounded to 2 decimal places in final_amount.',
+          instructions: '1. Use `principal *= 1.05` once per year (three lines).\n2. Round with `round(principal, 2)`.\n3. Do not use `**` or a loop.',
+          code: 'principal = 1000\n# Apply interest once per year\n\nfinal_amount = round(principal, 2)',
+          testCode: `assert final_amount != 1000, "principal was never rebound: multiply it by 1.05 once per year"
+assert abs(final_amount - 1150.0) > 0.001, "Adding 5% of the ORIGINAL amount each year (simple interest) gives 1150. Compound interest multiplies the CURRENT amount"
+assert abs(final_amount - 1157.625) < 0.006, f"Expected about 1157.62, got {final_amount}"
+"SUCCESS: 1000 → 1050 → 1102.5 → 1157.62. (The exact value is 1157.625, but floats store it as 1157.6249999…, so round() gives .62.)"`,
+          hint: 'principal *= 1.05 (three times), then final_amount = round(principal, 2)',
+          solution: 'principal = 1000\nprincipal *= 1.05\nprincipal *= 1.05\nprincipal *= 1.05\nfinal_amount = round(principal, 2)',
+          misconceptions: [{ code: 'principal = 1000\nfinal_amount = round(principal + 3 * 0.05 * 1000, 2)', feedback: 'simple interest' }],
+        }),
+        exercise(13, 3, 'Challenge 3 — Keep the old value', 'medium', {
+          prompt: 'A thermostat reading goes up by 4 degrees. Record the reading before the update in previous, update temperature, and store the size of the change in change. The starter code gets the order wrong.',
+          instructions: 'Run the starter and look at change. Trace the bindings to find where the old value was lost, then reorder the lines.',
+          code: 'temperature = 18\ntemperature = temperature + 4\nprevious = temperature\nchange = temperature - previous\nprint(previous, temperature, change)',
+          testCode: `assert temperature == 22, "temperature should be 18 + 4 = 22"
+assert previous != 22, "previous was bound AFTER temperature was updated, so it points at the new value. Bind previous first"
+assert previous == 18, f"previous should be 18, got {previous}"
+assert change == 4, f"change should be 4, got {change}"
+"SUCCESS: saving the old value before rebinding keeps it available."`,
+          hint: 'Move previous = temperature above the update.',
+          solution: 'temperature = 18\nprevious = temperature\ntemperature = temperature + 4\nchange = temperature - previous\nprint(previous, temperature, change)',
+          misconceptions: [{ code: 'temperature = 18\ntemperature = temperature + 4\nprevious = temperature\nchange = 4', feedback: 'Bind previous first' }],
+        }),
+      ]),
     ],
-    callouts: [
-      { type: 'important', title: 'The Assignment Model', body: '1. Evaluate the RIGHT side completely\n2. Bind the name on the LEFT to that result\n3. The name now refers to the new value\n4. Any previous binding to that name is gone' },
-      { type: 'warning', title: 'Names Are Not Values', body: 'The name x is not 5. x points to 5. Two names can point to the same value. Changing one name does not change what the other name points to (for simple types).' },
-    ],
-    visualizations: [{
-      id: 'PythonNotebook',
-      title: 'Variables and Binding',
-      props: { initialCells: [
-        { id:1, cellTitle:'Stage 1 — Basic Binding',
-          prose:'When you assign x = 5, Python creates a binding: the name "x" now refers to the value 5. Using x anywhere evaluates to 5.',
-          instructions:'Run the cell. Notice that x on its own on the last line evaluates to 5 — it looks up what x is bound to.',
-          code:'x = 5\ny = 10\nz = x + y\nprint(x, y, z)\nz',
-          output:'', status:'idle' },
-        { id:2, cellTitle:'Stage 2 — Reassignment',
-          prose:'A name can be rebound to a new value at any time. The old value is not "updated" — the name is repointed. Python\'s garbage collector reclaims unreferenced values.',
-          instructions:'Run the cell. Watch x change: 5 → 10 → 100 → 99. Each assignment completely replaces the previous binding.',
-          code:'x = 5\nprint(x)    # 5\nx = 10\nprint(x)    # 10\nx = x * 10\nprint(x)    # 100\nx = x - 1\nprint(x)    # 99',
-          output:'', status:'idle' },
-        { id:3, cellTitle:'Stage 3 — Assignment is Evaluated Right First',
-          prose:'Python always evaluates the ENTIRE right side before binding. This is why x = x + 1 works — Python reads the old x, computes x+1, then writes the new x.',
-          instructions:'Trace this by hand: what is count at each step? Run to verify.',
-          code:'count = 0\ncount = count + 1\ncount = count + 1\ncount = count * 2\nprint(count)  # what is this?',
-          output:'', status:'idle' },
-        { id:4, cellTitle:'Stage 4 — Multiple Assignment',
-          prose:'Python supports assigning multiple names at once, and swapping values elegantly using tuple unpacking.',
-          instructions:'Run the cell. The swap on lines 5-6 is idiomatic Python — notice it uses no temporary variable.',
-          code:'a, b = 3, 7       # assign both at once\nprint(a, b)\na, b = b, a       # swap — Pythonic idiom\nprint(a, b)       # now reversed\nx = y = z = 0     # all three bound to 0\nprint(x, y, z)',
-          output:'', status:'idle' },
-        { id:5, cellTitle:'Stage 5 — Augmented Assignment',
-          prose:'Python provides shorthand for common patterns: x += 1 means x = x + 1. These are called augmented assignment operators.',
-          instructions:'Run the cell. These are not new operators — they are abbreviations for the pattern variable = variable op value.',
-          code:'score = 100\nscore += 10    # score = score + 10\nprint(score)   # 110\nscore -= 5     # score = score - 5\nprint(score)   # 105\nscore *= 2     # score = score * 2\nprint(score)   # 210\nscore //= 3    # score = score // 3\nprint(score)   # 70',
-          output:'', status:'idle' },
-        { id:6, cellTitle:'Stage 6 — Naming Conventions',
-          prose:'Bad names make code unmaintainable. Python convention: lowercase_with_underscores for variables. Names should say WHAT, not HOW. `student_count` beats `x`. `price_per_unit` beats `ppu`.',
-          instructions:'This cell shows the same computation with bad and good naming. Run both — they produce identical results. Which one would you rather debug at 2am?',
-          code:'# Bad naming\nx = 50\ny = 8.5\nz = x * y\nprint(z)\n\n# Good naming\nhours_worked = 50\nhourly_rate = 8.5\nweekly_pay = hours_worked * hourly_rate\nprint(weekly_pay)',
-          output:'', status:'idle' },
-        { id:11, challengeType:'write', challengeNumber:1, challengeTitle:'Challenge 1 — State Tracer',
-          difficulty:'easy',
-          prompt:'Before running this code, trace it by hand and predict the final value of result. Then run it and check. Finally, write a single additional line that sets result to half of whatever it currently is (use augmented assignment).',
-          instructions:'1. Trace by hand: what is result after each line?\n2. Add one line using /= to halve result.\n3. The test checks your final result value.',
-          code:'result = 10\nresult = result * 3\nresult = result - 5\nresult += 10\nresult //= 2\n# Add your line here\n',
-          output:'', status:'idle',
-          testCode:`
-# After the given lines: 10*3=30, 30-5=25, 25+10=35, 35//2=17
-# After halving: 17/2 = 8.5 (true division) or 17//2 = 8 (floor division)
-if 'result' not in locals(): raise ValueError("Missing: result")
-if result not in (8, 8.5):
-    raise ValueError(f"Expected 8 or 8.5 (half of 17), got {result}. Trace each line again.")
-res = f"SUCCESS: result = {result}. Traced correctly. The intermediate values were 10→30→25→35→17→{result}."
-res
-`,
-          hint:'result /= 2  (or result //= 2 for integer division)' },
-        { id:12, challengeType:'write', challengeNumber:2, challengeTitle:'Challenge 2 — Compound Interest',
-          difficulty:'medium',
-          prompt:'Compute compound interest. Start with `principal = 1000`. Apply 5% interest (multiply by 1.05) for exactly 3 years using reassignment — do not use ** or any loop. Store the final amount in `final_amount`.',
-          instructions:'1. Apply the 1.05 multiplier once per year.\n2. Use augmented assignment each time.\n3. Round the final result to 2 decimal places with round().',
-          code:'principal = 1000\n# Apply interest 3 times\n\n\n\nfinal_amount = round(principal, 2)\n',
-          output:'', status:'idle',
-          testCode:`
-if 'final_amount' not in locals(): raise ValueError("Missing: final_amount")
-expected = round(1000 * 1.05 * 1.05 * 1.05, 2)
-if abs(final_amount - expected) > 0.01:
-    raise ValueError(f"Expected {expected}, got {final_amount}. Did you multiply by 1.05 exactly 3 times?")
-res = f"SUCCESS: 1000 at 5% for 3 years = {final_amount}. Each *= 1.05 was one year of growth."
-res
-`,
-          hint:'principal *= 1.05  (repeat 3 times)\nfinal_amount = round(principal, 2)' },
-      ]}
-    }],
   },
   mentalModel: [
-    'Assignment evaluates the right side completely, then binds the name on the left.',
-    'x = x + 1 is not a contradiction — it reads old x, computes, writes new x.',
-    'Multiple assignment and swap work because the right side is fully evaluated first.',
-    'Augmented assignment (+=, -=, *=) is shorthand, not a new operation.',
-    'Name variables by what they represent, not how they are computed.',
+    'Assignment evaluates the right side completely, then points the name on the left at the result.',
+    'x = x + 1 reads the old value, makes a new value and rebinds x — the old value is not changed.',
+    'b = a points b at a\'s current value; rebinding a later never moves b.',
+    'Values that can change in place (lists) can be shared by two names — changes through one are seen through the other.',
+    'Name variables by what they represent: hours_worked, not x.',
   ],
   quiz: [
     {
-      id: 'q1',
-      type: 'choice',
+      id: 'q1', type: 'choice',
       text: 'x = 5 then x = x + 1. What is x after these two statements?',
       options: [
-        'Still 5 — you can\'t add 1 to x using x itself',
-        '6 — the right side x + 1 evaluates first using the current value 5, producing 6, then that value is bound to the name x',
-        'An error — x appears on both sides of the assignment',
+        'Still 5 — you cannot add 1 to x using x itself',
+        '6 — the right side is evaluated with the current value 5, giving 6, and x is rebound to it',
+        'An error — x appears on both sides',
       ],
       correct: 1,
     },
     {
-      id: 'q2',
-      type: 'choice',
+      id: 'q2', type: 'choice',
       text: 'a = 3; b = a; a = 10. What is b?',
       options: [
-        '10 — b is linked to a, so when a changes, b changes too',
-        '3 — b = a bound b to the VALUE 3 at that moment; integers are immutable and assignments bind names to values, not to other names',
-        'None — b was defined using a, so it becomes undefined when a is reassigned',
+        '10 — b is linked to a',
+        '3 — b = a pointed b at the value 3; rebinding a does not move b',
+        'None — b becomes undefined when a changes',
       ],
       correct: 1,
     },
     {
-      id: 'q3',
-      type: 'choice',
+      id: 'q3', type: 'choice',
+      text: 'c = [1, 2]; d = c; d.append(3). What is c?',
+      options: [
+        '[1, 2] — c and d are separate variables',
+        '[1, 2, 3] — c and d point at the same list, and append changes that list in place',
+        'An error — two names cannot share a list',
+      ],
+      correct: 1,
+    },
+    {
+      id: 'q4', type: 'choice',
       text: 'Why is total_revenue a better variable name than tr?',
       options: [
-        'Python runs faster with longer names because the interpreter can optimize named variables',
-        'total_revenue says what the value represents, making the code readable without needing comments; tr is ambiguous — it could mean "translation", "trial", or anything else',
-        'Short names like tr cause NameErrors in Python when used inside functions',
-      ],
-      correct: 1,
-    },
-    {
-      id: 'q4',
-      type: 'choice',
-      text: 'x = 5; y = x; x += 3. What are x and y?',
-      options: [
-        'x = 8, y = 8 — y is linked to x so both update',
-        'x = 8, y = 5 — y = x bound y to 5; x += 3 rebinds x to 8 but does not affect y',
-        'x = 5, y = 8 — the += applies to the next unmodified binding',
+        'Python runs faster with longer names',
+        'total_revenue says what the value represents, so readers do not have to guess',
+        'Short names cause NameErrors inside functions',
       ],
       correct: 1,
     },

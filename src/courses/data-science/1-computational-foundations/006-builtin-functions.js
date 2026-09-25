@@ -1,151 +1,145 @@
+import { prose, callout, check, notebook, demo, exercise } from '../lessonKit.js'
+
 export default {
-  id:'a-06', slug:'builtin-functions', track:'A', order:6,
-  title:'Built-in Functions', subtitle:'The First Tools',
-  tags:['functions','abs','len','round','print','pure','side-effects'],
-  prereqs:['a-04','a-05'], unlocks:['a-07','a-08'],
-  hook:{
-    question:'What is a function, and why does print() return None?',
-    realWorldContext:'Functions are the atomic unit of computation. Every program is functions calling functions. Understanding the difference between a function that RETURNS a value (pure) and one that DOES something (side effect) prevents a whole class of subtle bugs.',
+  id: 'a-06', slug: 'builtin-functions', track: 'A', order: 6,
+  title: 'Built-in Functions', subtitle: 'The First Tools',
+  tags: ['functions', 'abs', 'len', 'round', 'print', 'pure', 'side-effects'],
+  prereqs: ['a-04', 'a-05'], unlocks: ['a-07', 'a-08'],
+  hook: {
+    question: 'What is a function, and why does print() return None?',
+    realWorldContext: 'Functions are the unit of work in every program. The most useful distinction to learn first is between a function that gives you back a value you can compute with, and one that does something (like displaying text) and gives back nothing useful. Mixing them up causes a whole family of confusing bugs.',
   },
-  intuition:{
-    prose:[
-      'A **function** takes inputs (arguments) and produces an output (return value). `abs(-5)` takes -5 and returns 5. The name is the machine. The parentheses are the on-switch.',
-      '**Pure functions** return a value and change nothing. `abs()`, `len()`, `round()`, `min()`, `max()` are pure — you can use their return value in any expression.',
-      '`print()` is a **side effect** function — it writes to the screen and returns `None`. If you write `x = print("hi")`, x will be None, not "hi". This surprises nearly every beginner.',
+  intuition: {
+    blocks: [
+      prose(
+        '**What you will be able to do.** Read a function call as "arguments in, return value out". Tell apart what a function *shows* from what it *returns*. Choose a built-in function for a job and use its result in a further calculation.',
+        '**The smallest example.** `abs(-5)` is a **function call**. `abs` is the function\'s name. The parentheses run it. The value inside, `-5`, is the **argument** — the input. The call is replaced by the function\'s **return value**, 5, just as an expression is replaced by its value.',
+        'Trace `size = len("hello")`:',
+        '1. Evaluate the argument: `"hello"`.\n2. Call `len` with it. `len` counts the characters and **returns** 5.\n3. The call `len("hello")` is replaced by 5, so the line becomes `size = 5`.\n4. Bind `size` to 5.',
+        '| Call | Arguments | Returns |\n|---|---|---|\n| `abs(-5)` | -5 | 5 |\n| `len("hello")` | "hello" | 5 |\n| `round(3.7)` | 3.7 | 4 |\n| `round(3.14159, 2)` | 3.14159 and 2 | 3.14 |\n| `max(3, 9, 4)` | 3, 9, 4 | 9 |',
+      ),
+      check(
+        'What does `min(8, -2, 5)` return?',
+        ['8', '-2', '2', '5'],
+        1,
+        '`min` returns the smallest of its arguments, and −2 is smaller than 5 and 8. It does not take absolute values.',
+      ),
+      notebook('Calls and return values', [
+        demo(1, 'Stage 1 — Functions that return values', [
+          'Each call below is replaced by its return value, which `print` then displays.',
+        ], 'Predict every line using the table, then run. Then store len("data science") in a name and add 1 to it.', 'print(abs(-42))\nprint(round(3.7), round(3.14159, 2))\nprint(len("hello"))\nprint(min(3, 1, 4, 1), max(3, 1, 4, 1))', { expectOutput: ['42', '4 3.14', '5', '1 4'] }),
+      ]),
+      prose(
+        '**Showing is not returning.** `print()` is a function too, but its job is a **side effect**: it writes text to the screen. What it *returns* is `None`, Python\'s value for "nothing". So `x = print("hi")` shows hi and binds `x` to None.',
+        '| Call | Shows on screen | Returns |\n|---|---|---|\n| `abs(-5)` | nothing | 5 |\n| `print(-5)` | -5 | None |\n| `print(abs(-5))` | 5 | None |',
+        'Functions like `abs`, `len` and `round` are **pure**: they return a value and change nothing else, so you can use their results in any expression. Use `print` only to *look* at a value, never where the value itself is needed.',
+      ),
+      check(
+        'After `x = print("hi")`, what is `x`?',
+        ['"hi"', 'None', 'True'],
+        1,
+        '`print` shows "hi" as a side effect and returns None. The name x is bound to the return value.',
+      ),
+      notebook('print() returns None', [
+        demo(2, 'Stage 2 — The return value of print', [
+          'The first line shows "hi" on screen. The name `x` gets print\'s return value.',
+        ], 'Predict the last two lines before running.', 'x = print("hi")\nprint(x)\nprint(type(x))', { expectOutput: ['hi', 'None', "<class 'NoneType'>"] }),
+        demo(3, 'Stage 3 — The None trap', [
+          'This line tries to double what `print` returns. `print` shows 42 and returns None, and None cannot be multiplied.',
+        ], 'Run the cell and read the TypeError. Explain why 42 appears on screen before the error. Then fix it so doubled is 84.', 'value = 42\ndoubled = print(value) * 2', { expectError: 'TypeError', expectOutput: ['42'] }),
+      ]),
+      prose(
+        '**The everyday toolkit.** These built-ins work on a whole collection of values at once. Here the values are in a list, written with square brackets; Lesson A.13 covers lists properly.',
+        '| Call on `nums = [3, 1, 4, 1, 5]` | Returns |\n|---|---|\n| `sum(nums)` | 14 |\n| `len(nums)` | 5 |\n| `min(nums)`, `max(nums)` | 1, 5 |\n| `sorted(nums)` | a **new** list `[1, 1, 3, 4, 5]`; `nums` is unchanged |\n| `sum(nums) / len(nums)` | 2.8, the mean |',
+        '**Two surprises worth knowing.** First, `round()` rounds exact halves to the nearest *even* number: `round(2.5)` is 2 and `round(3.5)` is 4. This "round half to even" rule avoids a bias toward rounding up. Second, `nums.sort()` sorts the list in place and returns None, whereas `sorted(nums)` returns a new sorted list. Writing `nums = nums.sort()` throws the list away.',
+      ),
+      notebook('Built-ins for collections', [
+        demo(4, 'Stage 4 — Summaries of a list', [
+          'Each call returns one value computed from the whole list.',
+        ], 'Predict each line with the table, then run. Then change one number in nums and predict again.', 'nums = [3, 1, 4, 1, 5]\nprint(sum(nums), len(nums), min(nums), max(nums))\nprint(sorted(nums), nums)\nprint(sum(nums) / len(nums))', { expectOutput: ['14 5 1 5', '[1, 1, 3, 4, 5] [3, 1, 4, 1, 5]', '2.8'] }),
+        demo(5, 'Stage 5 — round and sort surprises', [
+          'The first line shows round-half-to-even. The last lines show that `.sort()` changes the list but returns None.',
+        ], 'Predict each line, then run. Why is round(2.675, 2) not 2.68? (Hint: Lesson A.02 — floats are stored approximately.)', 'print(round(2.5), round(3.5), round(-2.5))\nprint(round(2.675, 2))\nnums = [3, 1, 2]\nresult = nums.sort()\nprint(result, nums)', { expectOutput: ['2 4 -2', '2.67', 'None [1, 2, 3]'] }),
+        demo(6, 'Stage 6 — Reading the documentation', [
+          '`help(name)` shows a built-in function\'s documentation: what arguments it takes and what it returns.',
+        ], 'Run and read the first lines of help for round. Then try help(max) and find how to give it a default value.', 'help(round)'),
+      ]),
+      prose('**Practice.** Challenges 1 and 2 use the ideas above. Challenge 3 is a fresh problem: choose built-ins and use their results in a new calculation.'),
+      notebook('Practice', [
+        exercise(11, 1, 'Challenge 1 — Chained built-ins', 'easy', {
+          prompt: 'Using only built-in functions, store in result the absolute value of the smallest number in scores.',
+          instructions: '1. `min()` finds the smallest number.\n2. `abs()` of that gives its size without the sign.\n3. One line of code.',
+          code: 'scores = [-5, 3, -8, 2, -1]\nresult = None',
+          testCode: `assert result is not None, "Replace None"
+assert result != -8, "min(scores) is -8. Now take its absolute value with abs()"
+assert result != 5, "Take the minimum first, then the absolute value: abs(min(scores)). min(abs values) answers a different question"
+assert result == 8, f"Expected 8, got {result}"
+"SUCCESS: min returns -8, then abs returns 8."`,
+          hint: 'result = abs(min(scores))',
+          solution: 'scores = [-5, 3, -8, 2, -1]\nresult = abs(min(scores))',
+          misconceptions: [{ code: 'result = min([-5, 3, -8, 2, -1])', feedback: 'Now take its absolute value' }],
+        }),
+        exercise(12, 2, 'Challenge 2 — The None trap', 'medium', {
+          prompt: 'This code tries to double a value using what print() returns. Fix it so doubled is 84, and so the value is still displayed.',
+          instructions: 'Keep a print so the result is shown, but compute doubled from value, not from print.',
+          code: 'value = 42\ndoubled = print(value) * 2',
+          testCode: `assert doubled is not None, "doubled is None: print() returns None. Compute doubled from value, then print it separately"
+assert doubled == 84, f"doubled should be 84, got {doubled}"
+"SUCCESS: compute the value first; print only to look at it."`,
+          hint: 'doubled = value * 2\nprint(doubled)',
+          solution: 'value = 42\ndoubled = value * 2\nprint(doubled)',
+          misconceptions: [{ code: 'value = 42\ndoubled = print(value * 2)', feedback: 'print() returns None' }],
+        }),
+        exercise(13, 3, 'Challenge 3 — Summarise temperatures', 'medium', {
+          prompt: 'From the week of readings in temps, compute temp_range (largest minus smallest) and mean_temp (the mean rounded to 1 decimal place), using built-in functions.',
+          instructions: '1. Use `max()` and `min()` for the range.\n2. Use `sum()` and `len()` for the mean.\n3. Round the mean with `round(value, 1)`.',
+          code: 'temps = [12.4, 15.1, 9.8, 17.3, 14.0]\ntemp_range = None\nmean_temp = None',
+          testCode: `assert temp_range is not None and mean_temp is not None, "Fill in both values"
+assert abs(temp_range - 7.5) < 1e-9, f"temp_range should be 17.3 - 9.8 = 7.5, got {temp_range}"
+assert mean_temp != 14, "round(x) with no second argument rounds to a whole number. Use round(x, 1) for one decimal place"
+assert mean_temp == 13.7, f"mean_temp should be 68.6 / 5 = 13.72, rounded to 13.7. Got {mean_temp}"
+"SUCCESS: range 7.5 and mean 13.7, computed from built-in results."`,
+          hint: 'temp_range = max(temps) - min(temps); mean_temp = round(sum(temps) / len(temps), 1)',
+          solution: 'temps = [12.4, 15.1, 9.8, 17.3, 14.0]\ntemp_range = max(temps) - min(temps)\nmean_temp = round(sum(temps) / len(temps), 1)',
+          misconceptions: [{ code: 'temps = [12.4, 15.1, 9.8, 17.3, 14.0]\ntemp_range = max(temps) - min(temps)\nmean_temp = round(sum(temps) / len(temps))', feedback: 'Use round(x, 1)' }],
+        }),
+      ]),
     ],
-    callouts:[
-      {type:'important',title:'Pure vs Side Effect',body:`Pure function: returns a useful value, changes nothing
-  abs(-5) → 5
-  len("abc") → 3
-
-Side effect: changes something (screen, file, network), returns None
-  print("hi") → None (but shows "hi" on screen)
-
-Never nest print() inside another function expecting a value.`},
-    ],
-    visualizations:[{
-      id:'PythonNotebook', title:'Built-in Functions',
-      props:{initialCells:[
-        {id:1,cellTitle:'Stage 1 — Pure Functions',
-          prose:'These functions return useful values. Their results can be used in expressions, assigned to variables, passed to other functions.',
-          instructions:'Run the cell. Each function call produces a value you can see and use.',
-          code:`print(abs(-42))         # 42
-print(round(3.7))        # 4
-print(round(3.1415, 2))  # 3.14 (2 decimal places)
-print(len("hello"))      # 5
-print(min(3, 1, 4, 1))   # 1
-print(max(3, 1, 4, 1))   # 4`},
-        {id:2,cellTitle:'Stage 2 — print() Returns None',
-          prose:'print() is a side-effect function. Its purpose is showing text on screen. Its return value is None. If you try to use print() as if it returns the printed value, you will get None.',
-          instructions:'Run the cell. x is None — not "hi". This surprises almost everyone the first time.',
-          code:`x = print("hi")  # prints "hi", x gets None
-print(x)         # None
-print(type(x))   # <class 'NoneType'>`},
-        {id:3,cellTitle:'Stage 3 — Useful Built-ins',
-          prose:'Python ships with many built-in functions. These are the most important ones for early data work.',
-          instructions:'Run the cell. Note: sum() expects an iterable (like a list), not individual arguments.',
-          code:`nums = [3, 1, 4, 1, 5, 9, 2, 6]
-print(sum(nums))       # 31
-print(min(nums))       # 1
-print(max(nums))       # 9
-print(len(nums))       # 8
-print(sorted(nums))    # [1,1,2,3,4,5,6,9]
-print(sum(nums)/len(nums))  # average: 3.875`},
-        {id:4,cellTitle:'Stage 4 — The int/float/str/bool Are Also Functions',
-          prose:'The type names you learned in A.02 are also callable functions. They convert values between types.',
-          instructions:'Run the cell. These are the same conversions from A.02, just seen now as function calls.',
-          code:`print(int(3.9))    # 3
-print(float(7))    # 7.0
-print(str(42))     # "42"
-print(bool(0))     # False
-print(bool(-5))    # True (any nonzero is truthy)`},
-        {id:5,cellTitle:'Stage 5 — Help System',
-          prose:'Every built-in function has documentation you can access instantly from the notebook.',
-          instructions:'Run the cell. Read the help output for round(). Then run help(abs) and help(len).',
-          code:`help(round)`},
-        {id:11,challengeType:'write',challengeNumber:1,challengeTitle:'Challenge 1 — Chained Built-ins',
-          difficulty:'easy',
-          prompt:'Using only built-in functions (no arithmetic operators), compute: the absolute value of the minimum of the list `scores`. Store the result in `result`. The list is: [-5, 3, -8, 2, -1].',
-          instructions:`1. Use min() to find the minimum.
-2. Wrap it in abs() to get the absolute value.
-3. One line of code.`,
-          code:`scores = [-5, 3, -8, 2, -1]
-result = `,
-          testCode:`
-if 'result' not in locals(): raise ValueError("Missing: result")
-if result != 8: raise ValueError(f"Expected 8 (abs(min([-5,3,-8,2,-1])) = abs(-8) = 8), got {result}")
-res = "SUCCESS: abs(min(scores)) = 8. Inner evaluates first: min gives -8, abs gives 8."
-res
-`,
-          hint:'result = abs(min(scores))'},
-        {id:12,challengeType:'write',challengeNumber:2,challengeTitle:'Challenge 2 — The None Trap',
-          difficulty:'medium',
-          prompt:'The code below has a bug: it tries to compute a total using print(), which returns None. Rewrite it so `doubled` contains the actual doubled value, not None.',
-          instructions:'1. Run the broken code to see the TypeError. 2. Replace print() with the correct expression. 3. doubled should be 84.',
-          code:`value = 42
-# Bug: print returns None, not 42
-doubled = print(value) * 2
-print(doubled)`,
-          testCode:`
-if 'doubled' not in locals(): raise ValueError("Missing: doubled")
-if doubled != 84: raise ValueError(f"doubled should be 84 (42 * 2). Got {doubled}. Remove the print() wrapper — you want the value itself.")
-res = "SUCCESS: doubled = 84. Remove print() when you need the VALUE, not the display."
-res
-`,
-          hint:'doubled = value * 2'},
-      ]}
-    }],
   },
-  mentalModel:[
-    'Functions take arguments and return a value.',
-    'Pure functions: return useful values, change nothing.',
-    'print() is a side effect: shows text, returns None.',
-    'Never use print() where you need the value.',
-    'Built-in functions are the standard toolkit: abs, len, round, min, max, sum, sorted.',
+  mentalModel: [
+    'A call takes arguments and is replaced by its return value.',
+    'Pure functions (abs, len, round, min, max, sorted) return a value and change nothing else.',
+    'print() shows text as a side effect and returns None — never use it where you need the value.',
+    'round() rounds exact halves to even; sorted() returns a new list while .sort() returns None.',
+    'help(name) shows what a built-in takes and returns.',
   ],
   quiz: [
     {
-      id: 'q1',
-      type: 'choice',
+      id: 'q1', type: 'choice',
       text: 'x = print("hello"). What is the value of x?',
+      options: ['"hello"', 'None — print shows text as a side effect and returns None', 'True'],
+      correct: 1,
+    },
+    {
+      id: 'q2', type: 'choice',
+      text: 'sorted([3, 1, 4]) returns [1, 3, 4]. Does it change the original list?',
       options: [
-        '"hello" — print returns what it displays',
-        'None — print() is a function that produces side effects (displaying text) but returns None; assigning its return value gives you None',
-        'True — print returns True on success',
+        'Yes — sorted sorts in place',
+        'No — sorted returns a new list; list.sort() is the in-place version (and returns None)',
+        'Only if the list is assigned to a variable',
       ],
       correct: 1,
     },
     {
-      id: 'q2',
-      type: 'choice',
-      text: 'sorted([3, 1, 4, 1, 5]) returns [1, 1, 3, 4, 5]. Does this modify the original list?',
-      options: [
-        'Yes — sorted sorts the list in place and returns it',
-        'No — sorted returns a NEW sorted list; the original [3, 1, 4, 1, 5] is unchanged. Use list.sort() for in-place sorting',
-        'It depends on whether the list is assigned to a variable',
-      ],
+      id: 'q3', type: 'choice',
+      text: 'What does round(4.5) return?',
+      options: ['5', '4 — exact halves round to the nearest even number', '4.5'],
       correct: 1,
     },
     {
-      id: 'q3',
-      type: 'choice',
-      text: 'len("hello") = 5. What does len([1, [2, 3], 4]) return?',
-      options: [
-        '4 — counting all elements including nested ones: 1, 2, 3, 4',
-        '3 — len counts top-level elements only: 1, [2, 3], and 4 are 3 elements regardless of nesting',
-        '5 — len adds the length of the nested list to the outer count',
-      ],
-      correct: 1,
-    },
-    {
-      id: 'q4',
-      type: 'choice',
-      text: 'round(2.675, 2) in Python may return 2.67 instead of 2.68. Why?',
-      options: [
-        'Python\'s round() function has a bug that truncates instead of rounding',
-        'Floating-point numbers cannot represent 2.675 exactly — the stored value is slightly less than 2.675, so Python rounds down to 2.67. This is a fundamental limitation of binary floating-point, not a Python bug',
-        'round() with 2 decimal places always rounds down to avoid accumulated rounding errors',
-      ],
+      id: 'q4', type: 'choice',
+      text: 'len([1, [2, 3], 4]) returns what?',
+      options: ['4', '3 — len counts the top-level items: 1, [2, 3] and 4', '5'],
       correct: 1,
     },
   ],

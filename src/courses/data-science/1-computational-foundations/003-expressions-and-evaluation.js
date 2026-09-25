@@ -1,144 +1,182 @@
+import { prose, callout, check, notebook, demo, exercise } from '../lessonKit.js'
+
 export default {
   id: 'a-03', slug: 'expressions-and-evaluation', track: 'A', order: 3,
   title: 'Expressions and Evaluation Order', subtitle: 'The Grammar of Computation',
   tags: ['expressions', 'operators', 'precedence', 'division'],
-  prereqs: ['a-01','a-02'], unlocks: ['a-04','a-08'],
+  prereqs: ['a-01', 'a-02'], unlocks: ['a-04', 'a-08'],
   hook: {
     question: 'What does 2 + 3 * 4 equal — and why?',
-    realWorldContext: 'Operator precedence is not a convention someone made up — it is the grammar rule that makes expressions unambiguous. A formula in a data pipeline that computes the wrong thing because of a missing parenthesis is one of the hardest bugs to spot.',
+    realWorldContext: 'Operator precedence is the grammar rule that makes an expression mean one thing. A formula in a data pipeline that computes the wrong thing because of a missing parenthesis produces no error message — just a wrong number.',
   },
   intuition: {
-    prose: [
-      'An **expression** is any combination of values, operators, and function calls that evaluates to a single value. `2 + 3`, `"hello" + "world"`, `abs(-5)` are all expressions.',
-      'Three separate rules decide what an expression means. **Precedence** decides which operator groups first: `**` before `*`, `/`, `//`, `%`, which come before `+` and `-` (roughly PEMDAS/BODMAS). **Associativity** decides how operators at the *same* level group: most arithmetic operators group left to right (`20 - 4 - 3` is `(20 - 4) - 3`), but `**` groups right to left (`2 ** 3 ** 2` is `2 ** (3 ** 2)` = 512, not 64). **Evaluation order** is when each operand is computed: Python computes operands left to right, even when precedence groups the right-hand part first — in `f() + g() * h()`, `f()` is called first, although the multiplication is applied before the addition.',
-      'Python has three division operators: `/` (true division, always float), `//` (floor division, rounds toward negative infinity), and `%` (modulo, the remainder). All three will appear constantly in data science.',
+    blocks: [
+      prose(
+        '**What you will be able to do.** Evaluate an expression by hand one operation at a time, in exactly the order Python does. Predict expressions that trip people up: repeated powers, a minus sign in front of a power, and division with negative numbers.',
+        '**The smallest example.** An **expression** is a combination of values and operators that Python reduces to a single value. Python does not read `2 + 3 * 4` left to right. It first finds the operator that binds most tightly (`*`), replaces that part with its value, and repeats:',
+        '1. `2 + 3 * 4` — multiplication binds more tightly than addition\n2. `2 + 12` — one operator left\n3. `14`',
+        'How tightly an operator binds is its **precedence**. Parentheses override it: `(2 + 3) * 4` reduces to `5 * 4`, then `20`.',
+        '| Precedence (tightest first) | Operators |\n|---|---|\n| 1 | `( )` parentheses |\n| 2 | `**` power |\n| 3 | `-x` a minus sign in front of one value |\n| 4 | `*` `/` `//` `%` |\n| 5 | `+` `-` between two values |\n| 6 | comparisons such as `<` and `==` |',
+      ),
+      check(
+        'Reduce `10 - 2 * 3` one step at a time. What is the value?',
+        ['24', '4', '-2'],
+        1,
+        '`*` binds tighter: `10 - 2 * 3` → `10 - 6` → `4`. Reading left to right would give (10 − 2) × 3 = 24.',
+      ),
+      notebook('Precedence', [
+        demo(1, 'Stage 1 — Precedence in action', [
+          'Each pair shows the same numbers with and without parentheses.',
+        ], 'Predict each line using the precedence table, then run. Then add parentheses to the first line so it prints 20.', 'print(2 + 3 * 4)       # 14\nprint((2 + 3) * 4)     # 20\nprint(10 - 2 * 3)      # 4\nprint((10 - 2) * 3)    # 24', { expectOutput: ['14', '20', '4', '24'] }),
+        demo(2, 'Stage 2 — Reduce step by step', [
+          'A longer expression reduced one operation at a time. Each named step is one reduction; the final comparison checks the steps match the one-line version.',
+        ], 'Before running, write the four intermediate values on paper. Then run and compare.', 'result = (3 + 4) ** 2 - 10 // 3\nprint(result)\n\nstep1 = 3 + 4          # parentheses first\nstep2 = step1 ** 2     # then the power\nstep3 = 10 // 3        # then floor division\nstep4 = step2 - step3  # subtraction last\nprint(step1, step2, step3, step4)\nprint(step4 == result)', { expectOutput: ['46', '7 49 3 46', 'True'] }),
+      ]),
+      prose(
+        '**When operators tie.** Precedence does not say what to do with two operators at the same level, as in `20 - 4 - 3`. That is decided by **associativity**: how equal operators group. Most arithmetic operators group from the left, so `20 - 4 - 3` means `(20 - 4) - 3`, which is 13. Power is the exception: `**` groups from the right, so `2 ** 3 ** 2` means `2 ** (3 ** 2)`, which is `2 ** 9` = 512, not `8 ** 2` = 64.',
+        '**A minus sign and a power.** In `-2 ** 2` the power binds more tightly than the minus sign on its left, so it means `-(2 ** 2)`, which is -4. To square negative two, write `(-2) ** 2`. A minus sign on the *right* of `**` belongs to the exponent: `2 ** -1` is 0.5.',
+        '**Evaluation order is a third rule.** Precedence and associativity decide how an expression is *grouped*. Python still *computes the operands* from left to right. In `f() + g() * h()`, `f()` is called first even though the multiplication is applied before the addition. This only matters when computing an operand has a visible effect, such as printing.',
+      ),
+      check(
+        'What is `2 ** 3 ** 2`?',
+        ['64', '512', '36'],
+        1,
+        '`**` groups from the right: `3 ** 2` = 9 first, then `2 ** 9` = 512.',
+      ),
+      notebook('Associativity and evaluation order', [
+        demo(3, 'Stage 3 — Grouping equal operators', [
+          '`/` and `-` group from the left. `**` groups from the right. The explicitly parenthesized lines show the grouping Python chose.',
+        ], 'Predict each line before running. Then work out -2 ** 2 and (-2) ** 2 on paper and add both to the cell to check.', 'print(20 / 4 / 5, (20 / 4) / 5)       # 1.0 1.0\nprint(20 - 4 - 3, (20 - 4) - 3)       # 13 13\nprint(2 ** 3 ** 2, 2 ** (3 ** 2))     # 512 512\nprint((2 ** 3) ** 2)                  # 64: parentheses force the other grouping', { expectOutput: ['1.0 1.0', '13 13', '512 512', '64'] }),
+        demo(4, 'Stage 4 — Operands are computed left to right', [
+          'The `show` helper prints each number as Python computes it, then returns it unchanged. Precedence applies `*` before `+`, but the operands are still computed in the order 1, 2, 3.',
+        ], 'Predict the order of the "computing" lines, then run.', 'def show(v):\n    print("computing", v)\n    return v\n\nprint(show(1) + show(2) * show(3))   # 7', { expectOutput: ['computing 1\ncomputing 2\ncomputing 3', '7'] }),
+      ]),
+      prose(
+        '**Three kinds of division.** `/` is true division and always gives a float. `//` is **floor division**: it divides and then rounds *down*, toward negative infinity. `%` (**modulo**) gives the remainder that goes with `//`. The two always fit together: `a == (a // b) * b + a % b`.',
+        '| Expression | Value | How |\n|---|---|---|\n| `7 / 2` | `3.5` | true division |\n| `7 // 2` | `3` | 3.5 rounded down |\n| `7 % 2` | `1` | 7 = 3 × 2 + **1** |\n| `-7 // 2` | `-4` | −3.5 rounded *down* is −4, not −3 |\n| `-7 % 2` | `1` | −7 = −4 × 2 + **1** |\n| `int(-7 / 2)` | `-3` | `int()` drops decimals toward zero — a different rule |',
+        'Modulo is used constantly: `n % 2 == 0` tests for an even number, `n % 10` gives the last digit, and `minutes % 60` gives the minutes past the hour.',
+      ),
+      check(
+        'What is `-7 // 2`?',
+        ['-3', '-4', '-3.5'],
+        1,
+        '`//` rounds down. −3.5 rounded down is −4. Truncating toward zero (which gives −3) is what `int()` does, not `//`.',
+      ),
+      notebook('Division', [
+        demo(5, 'Stage 5 — The division family', [
+          'The last line checks the rule that ties `//` and `%` together, for a positive and a negative number.',
+        ], 'Predict each line using the table. Then try a = -23, b = 5: predict a // b and a % b before running.', 'print(7 / 2, 7 // 2, 7 % 2)\nprint(-7 / 2, -7 // 2, -7 % 2)\nprint(int(-7 / 2))\nfor a, b in [(7, 2), (-7, 2)]:\n    print(a == (a // b) * b + a % b)', { expectOutput: ['3.5 3 1', '-3.5 -4 1', '-3', 'True\nTrue'] }),
+        demo(6, 'Stage 6 — Modulo in practice', [
+          'Common modulo patterns: odd or even, the last digit, and wrapping around a clock.',
+        ], 'Run. Then use % to find what time it is 30 hours after 9 o\'clock on a 24-hour clock.', 'print(7 % 2, 8 % 2)      # 1 means odd, 0 means even\nprint(847 % 10)          # last digit\nprint((22 + 5) % 24)     # 5 hours after 22:00 is 3:00', { expectOutput: ['1 0', '7', '3'] }),
+      ]),
+      callout('tip', 'Parentheses are for readers too', 'When an expression mixes more than two kinds of operator, add parentheses even where Python does not need them. `(weight / height) ** 2` and `weight / (height ** 2)` are different formulas; a reader should not have to recall the precedence table to know which one you meant.'),
+      prose(
+        '**Practice.** Challenges 1 and 2 turn formulas into correct expressions. Challenge 3 is a fresh prediction problem — reduce each expression by hand before you check.',
+      ),
+      notebook('Practice', [
+        exercise(11, 1, 'Challenge 1 — Evaluate the formula', 'medium', {
+          prompt: 'Body-mass index is weight in kilograms divided by the square of height in metres. Compute bmi for weight = 70 and height = 1.75, and store in is_healthy whether 18.5 <= bmi < 25.0.',
+          instructions: '1. Build the formula from the variables weight and height; do not type the answer.\n2. Use `**` for the square.\n3. Store the comparison result (True or False) in is_healthy.',
+          code: 'weight = 70\nheight = 1.75\nbmi = None\nis_healthy = None',
+          testCode: `assert bmi is not None, "Replace None with the formula"
+if abs(bmi - 70 / 1.75 * 2) < 1e-9 or abs(bmi - 70 / (1.75 * 2)) < 1e-9:
+    raise AssertionError("height * 2 doubles the height; squaring needs height ** 2")
+assert abs(bmi - 70 / 1.75 ** 2) < 1e-9, f"bmi should be about 22.86, got {bmi}"
+assert is_healthy is True, "is_healthy should be the result of the comparison 18.5 <= bmi < 25.0"
+"SUCCESS: bmi is about 22.86, so is_healthy is True."`,
+          hint: 'bmi = weight / height ** 2 works because ** binds before /. Writing weight / (height ** 2) makes that explicit.',
+          solution: 'weight = 70\nheight = 1.75\nbmi = weight / height ** 2\nis_healthy = 18.5 <= bmi < 25.0',
+          misconceptions: [{ code: 'weight = 70\nheight = 1.75\nbmi = weight / height * 2\nis_healthy = False', feedback: 'squaring needs height ** 2' }],
+        }),
+        exercise(12, 2, 'Challenge 2 — Digits with // and %', 'medium', {
+          prompt: 'Using only % and // (no text conversion), extract the hundreds, tens and units digits of n = 847.',
+          instructions: '1. units: the remainder after dividing by 10.\n2. tens: first remove the units with // 10, then take the last digit.\n3. hundreds: remove two digits, then take the last digit.',
+          code: 'n = 847\nhundreds = None\ntens = None\nunits = None',
+          testCode: `assert units == 7, f"units should be 7 (847 % 10), got {units}"
+assert tens != 84, "847 // 10 is 84 — that removes the units but keeps the hundreds. Take its last digit with % 10"
+assert tens == 4, f"tens should be 4, got {tens}"
+assert hundreds == 8, f"hundreds should be 8, got {hundreds}"
+"SUCCESS: floor division removes digits from the right; modulo keeps the last one."`,
+          hint: 'units = n % 10; tens = (n // 10) % 10; hundreds = (n // 100) % 10',
+          solution: 'n = 847\nhundreds = (n // 100) % 10\ntens = (n // 10) % 10\nunits = n % 10',
+          misconceptions: [{ code: 'n = 847\nunits = n % 10\ntens = n // 10\nhundreds = n // 100', feedback: 'Take its last digit with % 10' }],
+        }),
+        exercise(13, 3, 'Challenge 3 — Predict without guessing', 'hard', {
+          prompt: 'Reduce each expression by hand, one operation at a time, and store your predicted values in p1, p2 and p3. Do not paste the expressions into Python until after you have checked.',
+          prose: [
+            'The expressions:',
+            '```python\n-3 ** 2\n100 - 2 ** 3 ** 2 // 10\n-7 // 2 + 7 % 3\n```',
+          ],
+          instructions: 'Write each reduction on paper first, like `2 + 3 * 4` → `2 + 12` → `14`. The feedback tells you which rule to revisit if a prediction is wrong.',
+          code: 'p1 = None\np2 = None\np3 = None',
+          testCode: `assert p1 is not None and p2 is not None and p3 is not None, "Fill in all three predictions"
+assert p1 != 9, "p1: ** binds more tightly than the minus sign in front, so -3 ** 2 means -(3 ** 2)"
+assert p1 == -9, f"p1 should be -9, got {p1}"
+assert p2 != 94, "p2: ** groups from the right, so 2 ** 3 ** 2 is 2 ** 9 = 512, not 64"
+assert p2 == 49, f"p2 should be 49: 2 ** 9 = 512, 512 // 10 = 51, 100 - 51 = 49. Got {p2}"
+assert p3 != -2, "p3: // rounds toward negative infinity, so -7 // 2 is -4, not -3"
+assert p3 == -3, f"p3 should be -3: -7 // 2 = -4 and 7 % 3 = 1. Got {p3}"
+"SUCCESS: all three predictions follow precedence, right-to-left **, and floor division."`,
+          hint: 'Order of work: parentheses, then **, then the minus sign in front of a value, then * / // %, then + and -.',
+          solution: 'p1 = -9\np2 = 49\np3 = -3',
+          misconceptions: [
+            { code: 'p1, p2, p3 = 9, 49, -3', feedback: 'binds more tightly than the minus sign' },
+            { code: 'p1, p2, p3 = -9, 94, -3', feedback: 'groups from the right' },
+            { code: 'p1, p2, p3 = -9, 49, -2', feedback: 'rounds toward negative infinity' },
+          ],
+        }),
+      ]),
     ],
-    callouts: [
-      { type: 'important', title: 'Precedence Order', body: '1. Parentheses ()\n2. Exponents **\n3. Unary minus -x\n4. Multiplication *, Division /, //, %\n5. Addition +, Subtraction -\nSame level: left to right, EXCEPT ** which groups right to left (2 ** 3 ** 2 == 2 ** 9)' },
-      { type: 'warning', title: '/ vs // vs %', body: '10 / 3 = 3.333... (always float)\n10 // 3 = 3 (floor — rounds down)\n10 % 3 = 1 (remainder)\n-10 // 3 = -4 (floors toward negative infinity, not zero!)' },
-    ],
-    visualizations: [{
-      id: 'PythonNotebook',
-      title: 'Expressions and Evaluation',
-      props: { initialCells: [
-        { id:1, cellTitle:'Stage 1 — Precedence in Action',
-          prose:'The expression 2 + 3 * 4 evaluates to 14, not 20. Multiplication happens before addition.',
-          instructions:'Run the cell. Then modify line 1 to use parentheses to make it evaluate to 20.',
-          code:'print(2 + 3 * 4)       # 14, not 20\nprint((2 + 3) * 4)     # 20\nprint(2 + 3 * 4 == 14) # True',
-          output:'', status:'idle' },
-        { id:2, cellTitle:'Stage 2 — The Three Division Operators',
-          prose:'True division always produces a float. Floor division truncates toward negative infinity. Modulo gives the remainder.',
-          instructions:'Run the cell. Pay attention to -10 // 3. Most beginners expect -3 but get -4.',
-          code:'print(10 / 3)    # 3.3333...\nprint(10 // 3)   # 3\nprint(10 % 3)    # 1\nprint(-10 // 3)  # -4 (not -3!) floors toward -infinity',
-          output:'', status:'idle' },
-        { id:3, cellTitle:'Stage 3 — Exponentiation',
-          prose:'** is the exponentiation operator. 2**10 is 1024. It has higher precedence than multiplication.',
-          instructions:'Run the cell. Predict each result before running.',
-          code:'print(2 ** 10)       # 1024\nprint(2 ** 0.5)      # square root\nprint(-2 ** 2)       # -4 (not 4!) ** binds tighter than negation\nprint((-2) ** 2)     # 4',
-          output:'', status:'idle' },
-        { id:4, cellTitle:'Stage 4 — Associativity and Evaluation Order',
-          prose:'Associativity decides how operators of equal precedence group. `/` and `-` group left to right, so `20 / 4 / 5` means `(20 / 4) / 5`. `**` is the exception: it groups right to left, so `2 ** 3 ** 2` means `2 ** (3 ** 2)`. Separately, evaluation order says operands are *computed* left to right: the `show` helper prints each operand as Python computes it, so you can see that `show(1)` is computed before `show(2) * show(3)` is multiplied.',
-          instructions:'Trace each expression by hand before running, including which parenthesized grouping Python uses. Then verify. In the last line, predict the order of the "computing" messages.',
-          code:'print(20 / 4 / 5)    # (20/4)/5 = 5/5 = 1.0\nprint(20 - 4 - 3)    # (20-4)-3 = 16-3 = 13\nprint(2 ** 3 ** 2)   # 2**(3**2) = 2**9 = 512 (** groups RIGHT to left)\nprint((2 ** 3) ** 2) # 8**2 = 64 — parentheses force the other grouping\nprint(2 ** 3 ** 2 == 2 ** (3 ** 2))  # True\n\ndef show(v):\n    print("computing", v)\n    return v\n\n# Precedence groups 2*3 first, but operands are still computed left to right: 1, 2, 3\nprint(show(1) + show(2) * show(3))   # 7',
-          output:'', status:'idle' },
-        { id:5, cellTitle:'Stage 5 — Modulo in Practice',
-          prose:'Modulo (%) is used constantly: testing if a number is even/odd, wrapping around (clock arithmetic), extracting digits. Learn it well.',
-          instructions:'Run the cell. The even/odd test is one of the most common patterns in Python.',
-          code:'print(7 % 2)    # 1 → 7 is odd\nprint(8 % 2)    # 0 → 8 is even\nprint(23 % 10)  # 3 → last digit of 23\nprint(7 % 3)    # 1 → remainder when dividing 7 by 3',
-          output:'', status:'idle' },
-        { id:6, cellTitle:'Stage 6 — Compound Expressions',
-          prose:'Real formulas combine many operators. Parentheses make intent explicit and override precedence.',
-          instructions:'Trace (3 + 4) ** 2 - 10 // 3 by hand: step through each operation.',
-          code:'# Trace this by hand before running\nresult = (3 + 4) ** 2 - 10 // 3\nprint(result)\n\n# Break it down\nstep1 = 3 + 4       # 7\nstep2 = step1 ** 2  # 49\nstep3 = 10 // 3     # 3\nstep4 = step2 - step3  # 46\nprint(step4 == result)',
-          output:'', status:'idle' },
-        { id:11, challengeType:'write', challengeNumber:1, challengeTitle:'Challenge 1 — Evaluate the Formula',
-          difficulty:'medium',
-          prompt:'The BMI formula is: weight_kg / (height_m ** 2). Given weight = 70 kg and height = 1.75 m, compute the BMI and store it in a variable named `bmi`. Then compute whether this BMI indicates "healthy" (18.5 ≤ bmi < 25.0) and store the boolean result in `is_healthy`.',
-          instructions:'1. Use the formula with proper parentheses.\n2. Use a comparison to create is_healthy.\n3. Do not hardcode the number — compute it from weight and height.',
-          code:'weight = 70\nheight = 1.75\n# Your code here\nbmi = \nis_healthy = \n',
-          output:'', status:'idle',
-          testCode:`
-if 'bmi' not in locals(): raise ValueError("Missing: bmi")
-if 'is_healthy' not in locals(): raise ValueError("Missing: is_healthy")
-expected_bmi = 70 / (1.75 ** 2)
-if abs(bmi - expected_bmi) > 0.001:
-    raise ValueError(f"bmi should be {expected_bmi:.4f}, got {bmi}. Check your formula — use ** for exponentiation.")
-if is_healthy != True:
-    raise ValueError(f"is_healthy should be True (bmi={bmi:.2f} is in 18.5-25.0 range)")
-res = f"SUCCESS: BMI = {bmi:.2f}. is_healthy = {is_healthy}. Formula and comparison both correct."
-res
-`,
-          hint:'bmi = weight / (height ** 2)\nis_healthy = 18.5 <= bmi < 25.0' },
-        { id:12, challengeType:'write', challengeNumber:2, challengeTitle:'Challenge 2 — Modulo Patterns',
-          difficulty:'medium',
-          prompt:'Using ONLY the modulo operator (%) and integer division (//) — no string conversion — extract the hundreds digit, tens digit, and units digit of the number 847. Store them as `hundreds`, `tens`, `units`.',
-          instructions:'1. units = 847 % 10 gives the last digit.\n2. tens requires removing the units first.\n3. hundreds requires removing units and tens.',
-          code:'n = 847\n# Your code here — use only % and //\nhundreds = \ntens = \nunits = \n',
-          output:'', status:'idle',
-          testCode:`
-if 'hundreds' not in locals(): raise ValueError("Missing: hundreds")
-if 'tens' not in locals(): raise ValueError("Missing: tens")
-if 'units' not in locals(): raise ValueError("Missing: units")
-if units != 7: raise ValueError(f"units should be 7 (847 % 10), got {units}")
-if tens != 4: raise ValueError(f"tens should be 4 ((847 // 10) % 10), got {tens}")
-if hundreds != 8: raise ValueError(f"hundreds should be 8 ((847 // 100) % 10), got {hundreds}")
-res = "SUCCESS: Digit extraction with modulo and floor division — a fundamental pattern."
-res
-`,
-          hint:'units = n % 10\ntens = (n // 10) % 10\nhundreds = (n // 100) % 10' },
-      ]}
-    }],
   },
   mentalModel: [
-    'Precedence decides which operator groups first; associativity decides grouping at the same level; operands are computed left to right.',
-    '/ always gives float. // floors toward negative infinity. % gives remainder.',
-    '** is right-to-left associative: 2 ** 3 ** 2 == 2 ** (3 ** 2) == 512. The other arithmetic operators group left to right.',
-    'Use parentheses to make intent explicit — never rely on memorizing precedence.',
-    'Modulo is a core pattern: even/odd testing, digit extraction, cyclic counting.',
+    'Reduce an expression one operation at a time: the tightest-binding operator goes first.',
+    'Precedence: ( ), **, unary minus, * / // %, + -, comparisons.',
+    'Equal operators group from the left, except ** which groups from the right: 2 ** 3 ** 2 == 512.',
+    'Operands are still computed left to right, whatever the grouping.',
+    '/ gives a float; // rounds toward negative infinity; % is the matching remainder.',
   ],
   quiz: [
     {
-      id: 'q1',
-      type: 'choice',
+      id: 'q1', type: 'choice',
       text: 'What does 2 + 3 * 4 evaluate to in Python?',
       options: [
         '20 — Python evaluates left to right: 2 + 3 = 5, then 5 * 4 = 20',
-        '14 — multiplication has higher precedence than addition, so 3 * 4 = 12 is evaluated first, then 2 + 12 = 14',
+        '14 — multiplication has higher precedence, so 3 * 4 = 12 first, then 2 + 12 = 14',
         '24 — the expression is fully combined before applying operators',
       ],
       correct: 1,
     },
     {
-      id: 'q2',
-      type: 'choice',
+      id: 'q2', type: 'choice',
       text: 'What does 17 % 5 evaluate to?',
       options: [
-        '3 — 17 divided by 5 is 3 with some left over, so 17 % 5 is 3',
-        '2 — 17 = 5 × 3 + 2, so 17 % 5 = 2 (the remainder after dividing by 5)',
-        '3 — the result is the quotient, not the remainder',
+        '3 — the number of times 5 fits into 17',
+        '2 — 17 = 5 × 3 + 2, so the remainder is 2',
+        '3.4 — 17 divided by 5',
       ],
       correct: 1,
     },
     {
-      id: 'q3',
-      type: 'choice',
-      text: 'How do you check if a number n is even using the modulo operator?',
+      id: 'q3', type: 'choice',
+      text: 'How do you check whether a number n is even?',
       options: [
-        'n / 2 == 0 — even numbers divide evenly',
-        'n % 2 == 0 — an even number has remainder 0 when divided by 2; n % 2 gives either 0 (even) or 1 (odd)',
-        'n // 2 * 2 == n — reconstruct n from its half and check equality',
+        'n / 2 == 0',
+        'n % 2 == 0 — an even number leaves remainder 0 when divided by 2',
+        'n // 2 == 0',
       ],
       correct: 1,
     },
     {
-      id: 'q4',
-      type: 'choice',
-      text: 'What is the value of (1 + 2) * (3 + 4) and why do parentheses matter here?',
-      options: [
-        '10 — 1 + 2 * 3 + 4 by default; the parentheses just clarify and do not change the result',
-        '21 — parentheses override precedence: (1+2) = 3 and (3+4) = 7, then 3 * 7 = 21, whereas without parentheses 1 + 2*3 + 4 = 11',
-        '24 — the two sums are 3 and 4, and 3 × 4 × 2 = 24',
-      ],
+      id: 'q4', type: 'choice',
+      text: 'What is -2 ** 2 in Python?',
+      options: ['4', '-4, because ** binds more tightly than the minus sign in front', 'An error'],
+      correct: 1,
+    },
+    {
+      id: 'q5', type: 'choice',
+      text: 'What is -9 // 4?',
+      options: ['-2', '-3, because // rounds −2.25 down toward negative infinity', '-2.25'],
       correct: 1,
     },
   ],
