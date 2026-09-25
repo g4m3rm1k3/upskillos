@@ -108,50 +108,54 @@ function CodeStep({ step, name, code, setCode, record, onRecord, plain }) {
     {step.explainChoice && passedCode && <fieldset className="ml-ladder-choice">
       <legend><LessonText>{step.explainChoice.prompt}</LessonText></legend>
       {step.explainChoice.options.map((o, i) => <label key={i}><input type="radio" name={`${name}-${step.id}-why`} checked={choice === i} onChange={() => { setChoice(i); if (o.correct) onRecord({ done: true }); else onRecord({ wrongWhy: 1 }) }} /> <LessonText>{o.text}</LessonText></label>)}
-      {choice != null && <p role="status">{step.explainChoice.options[choice].correct ? <strong>Right. </strong> : null}<LessonText>{step.explainChoice.options[choice].correct ? 'That is why every prediction was short by the same amount.' : step.explainChoice.options[choice].feedback}</LessonText></p>}
+      {choice != null && <p role="status">{step.explainChoice.options[choice].correct ? <strong>Right. </strong> : null}<LessonText>{step.explainChoice.options[choice].correct ? (step.explainChoice.rightFeedback ?? '') : step.explainChoice.options[choice].feedback}</LessonText></p>}
     </fieldset>}
   </div>
 }
 
-// One generated problem. Reports { correct, assisted } once, when the learner is right or opens the
-// worked answer; wrong attempts before that are feedback, not a recorded failure.
+// One generated problem, described by spec.view(problem):
+//   { intro, table: { caption, head, rows }, questions: [
+//       { id, type: 'number', label, answer, tolerance?, misconceptions?: [{ answer, feedback }], wrong? },
+//       { id, type: 'choice', legend, options: [{ value, label }], answer, inline?, wrong } ] }
+// Reports { correct, assisted } once: when every answer is right, or when the worked answer is opened.
+// Wrong attempts before that are feedback, not a recorded failure.
 export function Problem({ spec, problem, onResult }) {
-  const [value, setValue] = useState(''), [row, setRow] = useState(null), [cause, setCause] = useState(null)
-  const [state, setState] = useState(null), [shown, setShown] = useState(false)
-  const { ctx, model: m, rows, target } = problem
+  const view = spec.view(problem)
+  const [answers, setAnswers] = useState({}), [state, setState] = useState(null), [shown, setShown] = useState(false)
+  const set = (id, v) => setAnswers(a => ({ ...a, [id]: v }))
   const finish = (correct, assisted) => { if (!state?.final) onResult({ correct, assisted }); setState(s => ({ ...s, final: true, correct })) }
   const submit = e => {
     e.preventDefault()
-    if (problem.template === 'debug') {
-      if (row == null || cause == null) { setState({ message: 'Choose both the row and the cause.' }); return }
-      const rowOk = row === problem.answer, causeOk = cause === problem.bug
-      if (rowOk && causeOk) finish(true, false)
-      else setState({ message: !rowOk ? 'Not that row. Recompute each prediction from the weights and compare with the table.' : 'Right row, different cause. Recompute the row with each suspected mistake and see which one gives the number in the table.' })
-      return
+    for (const q of view.questions) {
+      const a = answers[q.id]
+      if (q.type === 'number') {
+        const n = Number(a)
+        if (a == null || String(a).trim() === '' || !Number.isFinite(n)) { setState({ message: 'Enter a number for every question.' }); return }
+        if (Math.abs(n - q.answer) > (q.tolerance ?? 1e-6)) {
+          const miss = q.misconceptions?.find(x => Math.abs(n - x.answer) <= (q.tolerance ?? 1e-6))
+          setState({ message: miss?.feedback ?? q.wrong ?? 'Not yet. Write out each term before adding.' }); return
+        }
+      } else {
+        if (a == null) { setState({ message: 'Choose an answer for every question.' }); return }
+        if (a !== q.answer) { setState({ message: q.wrong }); return }
+      }
     }
-    const n = Number(value)
-    if (value.trim() === '' || !Number.isFinite(n)) return
-    if (Math.abs(n - problem.answer) <= 1e-6) { finish(true, false); return }
-    const miss = problem.misconceptions?.find(x => Math.abs(n - x.answer) <= 1e-6)
-    setState({ message: miss?.feedback ?? 'Not yet. Write out each term before adding.' })
+    finish(true, false)
   }
+  const disabled = Boolean(state?.final)
   return <div className="ml-ladder-problem">
-    <p>A model predicts <strong>{ctx.target}</strong> for each {ctx.noun}: <strong>ŷ = b + w₁·x₁ + w₂·x₂</strong>, where x₁ is {ctx.f1} and x₂ is {ctx.f2}.
-      {problem.template === 'missing' ? <> Its intercept is b = {m.b} and w₁ = {m.w1}; w₂ is unknown.</> : <> Its weights are b = {m.b}, w₁ = {m.w1}, w₂ = {m.w2}.</>}</p>
-    <table className="ml-fig-table"><caption className="ml-caption">{problem.template === 'debug' ? `Predictions a program printed for four ${ctx.noun === 'flat' ? 'flats' : ctx.noun + 's'}` : 'The table'}</caption>
-      <thead><tr><th scope="col">{ctx.noun}</th><th scope="col">x₁: {ctx.f1}</th><th scope="col">x₂: {ctx.f2}</th>{problem.template === 'debug' && <th scope="col">printed ŷ</th>}</tr></thead>
-      <tbody>{rows.map((r, i) => <tr key={i}><th scope="row">{ctx.labels[i]}</th><td>{r[0]}</td><td>{r[1]}</td>{problem.template === 'debug' && <td>{Math.round(problem.shown[i] * 1000) / 1000}</td>}</tr>)}</tbody></table>
+    <p><LessonText>{view.intro}</LessonText></p>
+    {view.table && <table className="ml-fig-table"><caption className="ml-caption">{view.table.caption}</caption>
+      <thead><tr>{view.table.head.map((h, k) => <th key={k} scope="col">{h}</th>)}</tr></thead>
+      <tbody>{view.table.rows.map((r, i) => <tr key={i}>{r.map((c, k) => k === 0 ? <th key={k} scope="row">{c}</th> : <td key={k}>{c}</td>)}</tr>)}</tbody></table>}
     <form onSubmit={submit}>
-      {problem.template === 'forward' && <label>Predict ŷ for <strong>{ctx.labels[target]}</strong> ({ctx.target}) <input inputMode="decimal" value={value} onChange={e => setValue(e.target.value)} disabled={state?.final} /></label>}
-      {problem.template === 'missing' && <label>The model predicted <strong>{problem.yhat}</strong> {ctx.target} for {ctx.labels[target]}. What is w₂? <input inputMode="decimal" value={value} onChange={e => setValue(e.target.value)} disabled={state?.final} /></label>}
-      {problem.template === 'debug' && <>
-        <fieldset><legend>One printed prediction is wrong. Which {ctx.noun}?</legend>{ctx.labels.map(l => <label key={l} className="ml-ladder-inline"><input type="radio" name={`row-${problem.seed}`} checked={row === l} onChange={() => setRow(l)} disabled={state?.final} /> {l}</label>)}</fieldset>
-        <fieldset><legend>What went wrong in that row?</legend>{problem.causes.map(k => <label key={k}><input type="radio" name={`cause-${problem.seed}`} checked={cause === k} onChange={() => setCause(k)} disabled={state?.final} /> {spec.bugLabel(k)}</label>)}</fieldset>
-      </>}
-      {!state?.final && <div className="ml-actions"><button className="ml-primary">Check</button><button type="button" onClick={() => { setShown(true); finish(false, true) }}>Show the worked answer</button></div>}
+      {view.questions.map(q => q.type === 'number'
+        ? <label key={q.id}><LessonText>{q.label}</LessonText> <input inputMode="decimal" value={answers[q.id] ?? ''} onChange={e => set(q.id, e.target.value)} disabled={disabled} /></label>
+        : <fieldset key={q.id}><legend><LessonText>{q.legend}</LessonText></legend>{q.options.map(o => <label key={o.value} className={q.inline ? 'ml-ladder-inline' : undefined}><input type="radio" name={`${q.id}-${problem.template}-${problem.seed}`} checked={answers[q.id] === o.value} onChange={() => set(q.id, o.value)} disabled={disabled} /> {o.label}</label>)}</fieldset>)}
+      {!disabled && <div className="ml-actions"><button className="ml-primary">Check</button><button type="button" onClick={() => { setShown(true); finish(false, true) }}>Show the worked answer</button></div>}
     </form>
-    {state?.message && !state.final && <p className="ml-caption" role="status"><LessonText>{state.message}</LessonText></p>}
-    {state?.final && state.correct && <p className="ml-ladder-pass" role="status"><strong>✓ Right.</strong></p>}
+    {state?.message && !disabled && <p className="ml-caption" role="status"><LessonText>{state.message}</LessonText></p>}
+    {disabled && state.correct && <p className="ml-ladder-pass" role="status"><strong>✓ Right.</strong></p>}
     {shown && <p role="status"><LessonText>{spec.workedSolution(problem)}</LessonText></p>}
   </div>
 }

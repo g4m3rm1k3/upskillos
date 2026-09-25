@@ -47,6 +47,12 @@ prose; examples that did not isolate the point being taught were replaced.
 - Formulas hold symbols only; the words go in the math ↔ code table. Check with `tools/check-formula-widths.mjs`.
 - Give a cell its own seeded generator when its result must not depend on earlier cells.
 
+**Lab 03 gradient practice sequence** (end of Lesson 03.3). Trace ∇J by hand; loop, `Xᵀe` and a one-sided nudge
+must agree after the prescribed `eps` edit; fill in the gradient; repair a planted sign bug and explain it; write
+`gradient_step` from its contract; fresh problems of three kinds (a gradient entry, one step, diagnose a printed
+gradient); and a delayed return. The fresh-problem screen is now generic (`spec.view(problem)` supplies intro, table
+and questions), so later labs' sequences need no new UI. 42/42 harness checks (19 new) pass in CPython and Pyodide.
+
 ## Verification evidence (2026-09-25)
 
 - `vitest run src/labs/ml-lab`: 72 files, 383 tests passing.
@@ -72,8 +78,7 @@ colors on a light page. That was a preview-only problem, not an app bug.
 
 1. *(Done: Labs 09–19 now have formulas, symbol ↔ code tables and runnable cells.)* Remaining from the assessment's
    rows for these labs: practice sequences (ladders) and the second and third capstone projects.
-2. **Lab 03 gradient practice sequence** (how the weights get corrected), after the prediction sequence.
-   Then practice sequences for Labs 01–19, one skill per lab, as the assessment's rows describe.
+2. *(Done: Lab 03 gradient practice sequence.)* Next: practice sequences for Labs 01–19, one skill per lab, as the assessment's rows describe.
    Also link Lab 01's weighted-sum lesson into the prediction sequence.
 3. **Python runtime:**
    - Shut Python down when idle, and when the learner leaves the lab.

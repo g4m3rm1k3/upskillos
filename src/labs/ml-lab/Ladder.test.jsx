@@ -246,3 +246,54 @@ describe('Ladder component', () => {
     expect(savedState().review.history[0]).toMatchObject({ assisted: true, correct: false, early: true })
   })
 })
+
+// ---- The gradient ladder ------------------------------------------------------------------------
+import { gradient, gradientOf, generateGradient, GRADIENT_TEMPLATES, diagnoseGradient, diagnoseStep, evaluateGradientAgree } from './labs/l03-matrices/ladder.js'
+
+describe('gradient ladder: values, generator and diagnosis', () => {
+  const cases = gradient.steps.find(s => s.id === 'fill').check.cases
+  it('every hand-computed gradient and step matches an explicit loop', () => {
+    for (const c of cases) {
+      const g = gradientOf(c.X, c.y, c.w)
+      g.forEach((v, j) => expect(v).toBeCloseTo(c.grad[j], 9))
+      c.step.forEach((v, j) => expect(v).toBeCloseTo(c.w[j] - c.alpha * g[j], 9))
+    }
+  })
+  it('the trace step’s answers follow from the lesson’s table', () => {
+    const X = [[1, 1, 1], [1, 2, 4], [1, 3, 2], [1, 4, 3]], y = [6.2, 12.1, 12.8, 17.1], w = [0.5, -1, 3]
+    const g = gradientOf(X, y, w), fields = gradient.steps[0].fields.map(f => f.answer)
+    expect(fields[0]).toBeCloseTo(3.5 - 12.8, 9)
+    g.forEach((v, j) => expect(fields[j + 1]).toBeCloseTo(v, 9))
+  })
+  it('600 generated problems per kind are well posed and check out independently', () => {
+    for (let seed = 1; seed <= 600; seed++) for (const t of GRADIENT_TEMPLATES) {
+      const p = generateGradient(t, seed)
+      const g = gradientOf(p.xs.map(x => [1, x]), p.ys, [p.b, p.w1])
+      g.forEach((v, j) => expect(p.grad[j]).toBeCloseTo(v, 9))
+      expect(g.every(v => v !== 0)).toBe(true)
+      if (t === 'entry') { expect(p.answer).toBeCloseTo(g[1], 9); p.misconceptions.forEach(m => expect(Math.abs(m.answer - p.answer)).toBeGreaterThan(1e-9)) }
+      if (t === 'step') expect(p.answer).toBeCloseTo(p.w1 - p.alpha * g[1], 9)
+      if (t === 'debug') {
+        const factor = { correct: 1, sign: -1, half: 0.5, sum: p.xs.length / 2 }[p.bug]
+        p.shown.forEach((v, j) => expect(v).toBeCloseTo(factor * g[j], 9))
+        expect(new Set(p.causes).size).toBe(4)
+      }
+    }
+  })
+  it('names plausible gradient mistakes without the fix', () => {
+    const c = cases[0]
+    expect(diagnoseGradient(c, { shape: [3], value: c.grad.map(v => -v) })).toMatch(/wrong sign/)
+    expect(diagnoseGradient(c, { shape: [3], value: c.grad.map(v => v / 2) })).toMatch(/half/)
+    expect(diagnoseGradient(c, { shape: [3], value: c.grad.map(v => v * 2) })).toMatch(/not multiplied by 2\/n/)
+    expect(diagnoseGradient(c, { shape: [4], value: [0, 0, 0, 0] })).toMatch(/per \*\*row\*\*/)
+    expect(diagnoseStep(c, { shape: [3], value: c.w.map((w, j) => w + c.alpha * c.grad[j]) })).toMatch(/uphill/)
+    expect(diagnoseStep(c, { shape: [3], value: c.w.map((w, j) => w - c.grad[j]) })).toMatch(/learning rate/)
+  })
+  it('step 2 fails until the nudge is small enough', () => {
+    const v = (value, shape) => ({ value, shape: shape ?? [value.length] })
+    const X = v([[1, 1, 1], [1, 2, 4], [1, 3, 2], [1, 4, 3]], [4, 3]), y = v([6.2, 12.1, 12.8, 17.1]), w = v([1, 2, 2]), g = [-2.1, -6.6, -3.75]
+    const base = { X, y, w, grad_loop: v(g), grad_matrix: v(g) }
+    expect(evaluateGradientAgree({ ...base, eps: v(0.1, []), grad_numeric: v(g.map(x => x + 0.75)) })).toMatchObject({ passed: false, message: expect.stringMatching(/eps = 1e-4/) })
+    expect(evaluateGradientAgree({ ...base, eps: v(1e-4, []), grad_numeric: v(g.map(x => x + 0.00075)) }).passed).toBe(true)
+  })
+})

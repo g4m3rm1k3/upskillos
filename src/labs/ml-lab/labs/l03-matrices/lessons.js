@@ -143,6 +143,7 @@ export const lessons = [
       { cell: 4 },
       { p: 5 },
       { math: true },
+      { ladder: 'gradient' },
     ],
     formulaTex: '$$\\frac{\\partial J}{\\partial w_j} = \\frac{2}{n}\\sum_i e_i\\,x_{ij}$$ $$\\nabla J(w) = \\frac{2}{n}\\,X^\\top (Xw - y)$$ $$w \\leftarrow w - \\alpha\\,\\nabla J(w)$$',
     formula: '∂J/∂w_j = (2/n) Σᵢ eᵢ·xᵢⱼ     ∇J(w) = (2/n) Xᵀ (Xw − y)     w ← w − α ∇J(w)',
