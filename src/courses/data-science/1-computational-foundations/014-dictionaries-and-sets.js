@@ -3,10 +3,10 @@ export default {
   title:'Dictionaries and Sets',subtitle:'Key-Value Mapping and Uniqueness',
   tags:['dict','set','hashmap','lookup','comprehension','O1'],
   prereqs:['a-13'],unlocks:['a-15','b-01'],
-  hook:{question:'How do you store data by name rather than by position?',realWorldContext:'Dictionaries are the data structure of data science. JSON is a dict. A DataFrame row is a dict. A word frequency counter is a dict. Any time you need O(1) lookup by key, you need a dict.'},
+  hook:{question:'How do you store data by name rather than by position?',realWorldContext:'Dictionaries are the data structure of data science. JSON is a dict. A DataFrame row is a dict. A word frequency counter is a dict. Any time you need fast lookup by key, you need a dict.'},
   intuition:{
-    prose:['A **dictionary** maps keys to values. Lookup is O(1) — instant regardless of size — because Python uses a hash table. Keys must be immutable (strings, numbers, tuples). Values can be anything.',
-      'A **set** is like a dictionary with only keys, no values. It stores unique elements. Set operations — union, intersection, difference — correspond directly to mathematical set theory and are O(1) per element.',
+    prose:['A **dictionary** maps keys to values. Python stores it as a **hash table**: it computes a number (the *hash*) from the key and uses it to jump near the right slot, instead of scanning every entry like a list search. So lookup takes **constant time on average**, written O(1): a dict with a million keys is not a million times slower to search than one with ten. It is not literally instant, and unlucky keys that collide can make individual lookups slower, but for everyday data it is an excellent approximation. Keys must be **hashable**: strings, numbers, and tuples of hashable things work; lists, dicts and sets do not, and neither does a tuple that contains a list. Values can be anything.',
+      'A **set** is like a dictionary with only keys, no values. It stores unique elements, so its elements must be hashable too. Set operations — union, intersection, difference — correspond directly to mathematical set theory, and membership tests (`x in s`) are average-case constant time.',
       '**Dict comprehension** builds a dict from an expression: `{k: v for k, v in iterable}`. It is to dicts what list comprehension is to lists.'],
     callouts:[{type:'important',title:'.get() vs Direct Access',body:`d = {"a": 1}
 d["b"]       # KeyError — key does not exist
@@ -33,12 +33,27 @@ freq = {}
 for word in text.split():
     freq[word] = freq.get(word,0) + 1
 print(freq)`,output:'',status:'idle'},
-      {id:4,cellTitle:'Stage 4 — Sets',prose:'Sets store unique elements. Membership testing is O(1) like dicts.',instructions:'Run. Notice {1,2,2,3} becomes {1,2,3} — duplicates removed automatically.',code:`a = {1,2,3,4}
+      {id:4,cellTitle:'Stage 4 — Sets',prose:'Sets store unique elements. Membership testing is average-case constant time, like dict lookup.',instructions:'Run. Notice {1,2,2,3} becomes {1,2,3} — duplicates removed automatically.',code:`print({1,2,2,3})  # {1, 2, 3}
+a = {1,2,3,4}
 b = {3,4,5,6}
 print(a | b)   # union
 print(a & b)   # intersection
 print(a - b)   # difference (in a but not b)
-print(2 in a)  # O(1) membership test`,output:'',status:'idle'},
+print(2 in a)  # average-case O(1) membership test`,output:'',status:'idle'},
+      {id:6,cellTitle:'Stage 4b — Which Keys Are Allowed?',prose:'A key must be **hashable**: Python must be able to compute a hash for it that never changes while it is stored. Strings, numbers and tuples of hashable values qualify. A list does not, because it can change. The rule is about hashability, not just "is the outer object immutable": a tuple is immutable, but a tuple containing a list is still unhashable.',instructions:'Predict which lines succeed before running. Then change the list key to a tuple, (2024, 1), and run again.',code:`sales = {}
+sales["north"] = 120             # str key: fine
+sales[(2024, 1)] = 95            # tuple of ints: fine
+print(sales)
+
+try:
+    sales[(2024, [1, 2])] = 50   # tuple CONTAINING a list: unhashable
+except TypeError as e:
+    print("TypeError:", e)
+
+try:
+    sales[[2024, 1]] = 80        # list key: unhashable
+except TypeError as e:
+    print("TypeError:", e)`,output:'',status:'idle'},
       {id:5,cellTitle:'Stage 5 — Dict Comprehension',prose:'Build a dict in one expression.',instructions:'Run. The same pattern that produces list comprehensions produces dict comprehensions.',code:`names = ["Alice","Bob","Carol"]
 lengths = {name: len(name) for name in names}
 print(lengths)
@@ -89,7 +104,7 @@ res
     return {v:k for k,v in d.items()}`},
     ]}}],
   },
-  mentalModel:['Dict maps keys→values. Lookup is O(1). Keys must be immutable.','Always use .get(key, default) when the key might not exist.','Set stores unique elements. Union |, intersection &, difference -.','Word frequency counter: freq[word] = freq.get(word,0) + 1','Dict comprehension: {k:v for k,v in iterable}'],
+  mentalModel:['Dict maps keys→values. Lookup is average-case constant time (O(1)), not literally instant. Keys must be hashable — a tuple containing a list is not.','Always use .get(key, default) when the key might not exist.','Set stores unique elements. Union |, intersection &, difference -.','Word frequency counter: freq[word] = freq.get(word,0) + 1','Dict comprehension: {k:v for k,v in iterable}'],
   quiz: [
     {
       id: 'q1',
@@ -97,7 +112,7 @@ res
       text: 'Why is dictionary lookup O(1) rather than O(n) like a list search?',
       options: [
         'Dictionaries are sorted, so binary search (O(log n)) applies, which is approximately O(1) for small dicts',
-        'Dictionaries use a hash table — the key is hashed to a memory location directly, so lookup does not need to scan all entries; it computes where to look in one step regardless of dict size',
+        'Dictionaries use a hash table — the key\'s hash tells Python where to look, so lookup does not scan all entries; on average it takes about the same time whatever the dict size (collisions can occasionally make it slower)',
         'Python caches the last N lookups, so repeated lookups are O(1) due to caching',
       ],
       correct: 1,
@@ -127,10 +142,10 @@ res
     {
       id: 'q4',
       type: 'choice',
-      text: 'Why must dictionary keys be immutable (e.g., strings, numbers, tuples — not lists)?',
+      text: 'Why must dictionary keys be hashable (e.g., strings, numbers, tuples of these — not lists)?',
       options: [
         'Python syntax requires immutable keys to prevent accidental modification during iteration',
-        'Dict lookup uses a hash of the key to find its slot; mutable objects (lists) can change, which would change their hash and make the key unfindable after it is stored — immutability guarantees the hash stays constant',
+        'Dict lookup uses a hash of the key to find its slot; if a key could change (like a list), its hash would change and the key would become unfindable after it is stored — so Python only accepts keys whose hash cannot change, which rules out lists and also tuples that contain lists',
         'Immutable keys are faster to compare because Python can use pointer equality instead of value equality',
       ],
       correct: 1,

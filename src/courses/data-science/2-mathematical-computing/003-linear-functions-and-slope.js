@@ -6,8 +6,8 @@ export default {
   hook:{question:'What does a rate of change look like — and how do you find it from data?',realWorldContext:'Linear relationships are the foundation of everything in data science. Linear regression, neural network layers, PCA — all are built from linear operations. Before you can understand any of them, you need an intuitive grasp of slope and intercept as physical concepts.'},
   intuition:{
     prose:['y = mx + b. **m** is slope: how much y changes per unit increase in x. **b** is intercept: the value of y when x is 0. These are not just formula elements — they have physical meaning in every application.',
-      '**Residuals** are the vertical distances from data points to the line. A good fit has small residuals with no pattern. If residuals show a curve or trend, the linear model is wrong for that data.',
-      'The **least squares** solution minimizes the sum of squared residuals. This is the unique line that minimizes prediction error. The formula is not magic — it comes from setting the derivative of total squared error to zero and solving.'],
+      'A **residual** is actual minus predicted: positive when the point is above the line, negative when below. A fitted line describes the **mean relationship** — the average y you expect at each x. The residuals describe what the line leaves out: how far and in what pattern individual points scatter around that average. These are separate questions. If residuals show a curve or trend, a straight line is the wrong shape for the mean. If residuals only grow wider as x grows, the line may still describe the mean well while the scatter (the error distribution) changes with x.',
+      'The **least squares** line minimizes the sum of squared residuals. When the x values are not all the same, there is exactly one such line. If every x is identical (say all x = 3), the slope is undefined: every line through the mean point (3, mean of y) has the same squared error, so there is no unique answer. Least squares minimizes squared error *on the data you fitted*; it does not promise the smallest error on new data. The formula comes from setting the derivative of total squared error to zero, which Lesson D03 derives step by step.'],
     callouts:[{type:'important',title:'Slope as Rate',body:`If x is time (hours) and y is distance (km):
   slope = km per hour = speed
 
@@ -53,7 +53,7 @@ for xi, yi in zip(xs, ys):
     predicted = m*xi + b
     fig.line([xi,yi],[xi,predicted],color="red",dashed=True)
 fig.show()`},
-      {id:4,cellTitle:'Stage 4 — Least Squares with NumPy',prose:'np.polyfit() finds the best-fit line by minimizing squared residuals.',instructions:'Run. The fitted line is the unique line minimizing total squared error.',code:`import numpy as np
+      {id:4,cellTitle:'Stage 4 — Least Squares with NumPy',prose:'np.polyfit() finds the best-fit line by minimizing squared residuals.',instructions:'Run. Because the x values vary, there is exactly one line minimizing total squared error on these points, and polyfit finds it. Interpret the slope in words: y units per one-unit increase in x.',code:`import numpy as np
 from opencalc import Figure
 
 xs = np.array([1.0,2,3,4,5,6,7,8])
@@ -97,7 +97,7 @@ m=(n*sum_xy-sum_x*sum_y)/(n*sum_x2-sum_x**2)
 b=(sum_y-m*sum_x)/n`},
     ]}}],
   },
-  mentalModel:['y=mx+b: m=slope (rate of change), b=intercept (y when x=0).','Slope = (y2-y1)/(x2-x1). Units: y-units per x-unit.','Residual = actual - predicted. Good fit: small, random residuals.','Least squares: find m,b minimizing sum of squared residuals.','np.polyfit(xs,ys,1) gives [m,b] of best-fit line.'],
+  mentalModel:['y=mx+b: m=slope (rate of change), b=intercept (y when x=0).','Slope = (y2-y1)/(x2-x1). Units: y-units per x-unit.','Residual = actual - predicted (sign tells you above or below). A curved residual pattern means the line is the wrong shape; a changing spread is about the errors, not necessarily the mean.','Least squares: find m,b minimizing sum of squared residuals — unique only when the x values vary.','np.polyfit(xs,ys,1) gives [m,b] of best-fit line.'],
   quiz: [
     {
       id: 'q1',
@@ -127,7 +127,7 @@ b=(sum_y-m*sum_x)/n`},
       text: 'Why does least squares minimize the SUM OF SQUARED residuals rather than the sum of absolute residuals?',
       options: [
         'Squaring avoids negative signs which would make the minimization algorithm fail',
-        'Squaring penalizes large errors disproportionately (a 2x error contributes 4x to the sum) and produces a smooth, differentiable objective with a unique algebraic solution — the derivative equals zero at a closed-form formula for m and b',
+        'Squaring penalizes large errors disproportionately (a 2x error contributes 4x to the sum) and produces a smooth, differentiable objective — setting the derivative to zero gives a closed-form formula for m and b, which has a single answer whenever the x values are not all equal',
         'Absolute value minimization is NP-hard and cannot be solved efficiently',
       ],
       correct: 1,

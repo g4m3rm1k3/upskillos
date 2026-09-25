@@ -10,7 +10,7 @@ export default {
   intuition:{
     prose:[
       '`def` registers a recipe under a name. Calling the function executes the recipe with specific arguments. `return` sends a value back to the caller. Without return, the function returns None.',
-      '**Parameters are local variables.** They exist only while the function runs. Variables defined inside a function do not exist outside it. This is not a restriction — it is the feature. It means functions cannot accidentally break things outside themselves.',
+      '**Parameters are local variables.** They exist only while the function runs, and names assigned inside a function do not exist outside it. Rebinding a local name (`x = x + 1` inside the function) never changes the caller\'s variable. But a local name and the caller\'s name can refer to the **same object**. If you pass a list and the function *mutates* it (`items.append(4)`, `items[0] = 99`), the caller sees the change, because there was only ever one list. Local scope protects *names*, not *objects*.',
       'A function with no side effects that always returns the same output for the same input is a **pure function**. Pure functions are predictable, testable, and composable. Prefer them.',
     ],
     callouts:[
@@ -52,6 +52,29 @@ y = square(4)
 print(y)       # 16
 # print(x)     # NameError — x is local to square()
 # print(result) # NameError — result is local too`,
+          output:'',status:'idle'},
+        {id:7,cellTitle:'Stage 2b — Local Names vs Shared Objects',
+          prose:'When you call `f(scores)`, the parameter inside `f` becomes a second name for the same list object — no copy is made. Rebinding the parameter (`items = [...]`) points only the local name at a new list, so the caller is unaffected. Mutating it (`items.append(...)`) changes the one shared list, so the caller sees it. A pure function avoids the surprise by building and returning a new list instead of changing its input.',
+          instructions:'Predict what each print shows before running. Then change add_bonus_pure so it uses items.append(bonus) and returns items — run again and notice that scores changes. Undo that change before moving on.',
+          code:`def rebind(items):
+    items = [0, 0, 0]          # new local binding — caller unaffected
+    return items
+
+def add_bonus_mutating(items, bonus):
+    items.append(bonus)        # mutates the SAME list the caller holds
+
+def add_bonus_pure(items, bonus):
+    return items + [bonus]     # builds a NEW list; input untouched
+
+scores = [70, 85]
+rebind(scores)
+print(scores)                  # [70, 85]
+
+new_scores = add_bonus_pure(scores, 5)
+print(scores, new_scores)      # [70, 85] [70, 85, 5]
+
+add_bonus_mutating(scores, 5)
+print(scores)                  # [70, 85, 5] — the caller's list changed`,
           output:'',status:'idle'},
         {id:3,cellTitle:'Stage 3 — Multiple Parameters',
           prose:'Functions can take multiple parameters. Each becomes a local variable inside the function.',
@@ -147,6 +170,7 @@ res
     'def registers a recipe under a name. Calling executes it with specific arguments.',
     'return sends the result back to the caller. Without return, the function gives None.',
     'Parameters are local variables — they only exist while the function runs.',
+    'Rebinding a parameter never affects the caller; mutating a passed-in list or dict does, because both names refer to the same object.',
     'Functions should do one thing and have a name that says what that thing is.',
     'Pure functions (same input → same output, no side effects) are preferred.',
   ],

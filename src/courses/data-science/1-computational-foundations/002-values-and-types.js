@@ -4,7 +4,7 @@ export default {
   track: 'A',
   order: 2,
   title: 'Values and Types',
-  subtitle: 'The Four Primitive Types',
+  subtitle: 'Four Core Built-in Types',
   tags: ['types', 'int', 'float', 'str', 'bool', 'type-conversion'],
   prereqs: ['a-01'],
   unlocks: ['a-03', 'a-04'],
@@ -19,15 +19,15 @@ export default {
 
   intuition: {
     prose: [
-      'Python has four **primitive types**: `int` (whole numbers), `float` (decimals), `str` (text), and `bool` (True/False). Every value belongs to exactly one type.',
+      'Python has many built-in types. We start with the four you will use first: `int` (whole numbers), `float` (decimals), `str` (text), and `bool` (True/False). Later lessons add lists, dictionaries, `None` and more. Every value has exactly one **exact type**, which `type()` reports: `type(3)` is `int`, `type("3")` is `str`.',
       'The type determines what operations are valid and what they mean. `+` on two ints means arithmetic addition. `+` on two strings means concatenation. `+` on a string and an int means a **TypeError** — Python refuses to guess what you meant.',
       'You can **convert** between types explicitly using `int()`, `float()`, `str()`, and `bool()`. Python will sometimes convert automatically — `3 + 4.0` gives `7.0` because int was promoted to float. But it will never convert silently between numbers and strings.',
     ],
     callouts: [
       {
         type: 'important',
-        title: 'The Four Primitive Types',
-        body: 'int: whole numbers (3, -10, 1000000)\nfloat: decimals (3.14, -0.001, 1.0)\nstr: text ("hello", "42", "")\nbool: True or False (exactly these two values)',
+        title: 'Four Core Built-in Types',
+        body: 'int: whole numbers (3, -10, 1000000)\nfloat: decimals (3.14, -0.001, 1.0)\nstr: text ("hello", "42", "")\nbool: True or False (exactly these two values)\n\nThese are the first four types to learn, not the only ones. Python also has None, list, dict, tuple, set, complex and more.',
       },
       {
         type: 'warning',
@@ -43,7 +43,7 @@ export default {
           initialCells: [
             {
               id: 1,
-              cellTitle: 'Stage 1 — Revealing the Four Types',
+              cellTitle: 'Stage 1 — Revealing the Four Core Types',
               prose: '`type()` is a built-in function that tells you the type of any value. Run each line and see the type labels Python uses.',
               instructions: 'Run the cell. Notice Python says <class \'int\'> not just "int". The word class means type here — they are the same thing.',
               code: 'print(type(42))\nprint(type(3.14))\nprint(type("hello"))\nprint(type(True))',
@@ -80,9 +80,9 @@ export default {
             {
               id: 5,
               cellTitle: 'Stage 5 — Boolean Values',
-              prose: 'bool has exactly two values: True and False (capital T, capital F). They behave as 1 and 0 in arithmetic. This is rarely useful but important to know — it is why `True + True` equals 2.',
-              instructions: 'Run the cell. The bool type will reappear heavily in Lesson A.09 (comparisons) and A.10 (conditionals).',
-              code: 'print(True)\nprint(False)\nprint(type(True))\nprint(True + True)   # 2 — True behaves as 1\nprint(True * 5)      # 5',
+              prose: 'bool has exactly two values: True and False (capital T, capital F). They behave as 1 and 0 in arithmetic because bool is a special kind of int (a *subclass*). So there are two different questions you can ask about a value: "what is its exact type?" (`type(x)`), and "can it be used as this type?" (`isinstance(x, int)`). For True, the exact type is bool, but isinstance(True, int) is also True.',
+              instructions: 'Predict each line before running. The bool type will reappear heavily in Lesson A.09 (comparisons) and A.10 (conditionals). The isinstance result matters later: a check like isinstance(x, int) will also accept True and False.',
+              code: 'print(True)\nprint(False)\nprint(type(True))              # exact type: bool\nprint(isinstance(True, int))   # True — a bool can be used as an int\nprint(type(True) == int)       # False — but its exact type is not int\nprint(True + True)   # 2 — True behaves as 1\nprint(True * 5)      # 5',
               output: '',
               status: 'idle',
             },
@@ -153,7 +153,8 @@ res
   },
 
   mentalModel: [
-    'Every value has exactly one type: int, float, str, or bool.',
+    'Every value has one exact type (type(x)). The four core types to start with are int, float, str and bool; Python has many more.',
+    'isinstance(x, T) asks whether x can be used as a T — isinstance(True, int) is True because bool is a subclass of int.',
     'The type determines which operations are valid and what they mean.',
     'int + float → float (automatic promotion). str + int → TypeError (no automatic conversion).',
     'Convert explicitly: int(), float(), str(), bool().',

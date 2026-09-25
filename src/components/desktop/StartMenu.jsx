@@ -11,6 +11,7 @@ import { usePins } from '../../context/PinsContext.jsx'
 import { usePinLauncher } from '../../hooks/usePinLauncher.js'
 import { GLASS_META } from '../../styles/courseColors.js'
 import { useGlobalTheme } from '../../context/ThemeContext.jsx'
+import { labSubjects } from '../../data/catalogNavigation.js'
 
 const SECTIONS = [
   { id: 'all',         label: 'All' },
@@ -25,7 +26,7 @@ const SECTIONS = [
 ]
 
 // Fixed, predictable order for subject subheadings within the Labs tab.
-const LAB_SUBJECTS = ['Math', 'Science', 'Engineering', 'CS Theory', 'Data Science', 'Web Dev', 'Creative']
+const LAB_SUBJECTS = labSubjects(LABS)
 
 const GRID_OVL = {
   backgroundImage: [
@@ -204,7 +205,7 @@ export default function StartMenu({ onClose }) {
   // decorations and a sibling `children` control still anchor and
   // group-hover correctly.
   const ItemBtn = ({ pin, onClick, children }) => {
-    const meta = pin.color && GLASS_META[pin.color]
+    const meta = GLASS_META[pin.color] ?? GLASS_META.indigo
 
     return (
       <div className="relative group">

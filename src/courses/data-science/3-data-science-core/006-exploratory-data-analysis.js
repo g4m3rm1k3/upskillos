@@ -6,9 +6,9 @@ export default {
   hook:{question:'How do you understand a dataset you have never seen before?',realWorldContext:'EDA is not a step you do once. It is the mindset you bring to every dataset. The goal is not to answer a specific question — it is to discover what questions to ask. Every insight is a hypothesis. Every visualization is a test.'},
   intuition:{
     prose:[
-      'EDA follows a checklist: shape and dtypes, missing values, distributions, correlations. Do this every time. Do not skip steps. It catches 80% of problems before you fit a single model.',
+      'EDA starts from a question and a checklist: shape and dtypes, missing values, distributions, correlations. Each step catches specific problems: dtypes reveals numbers stored as text, `describe()` reveals impossible values such as an age of -999 used as a "missing" code, `isnull()` shows gaps, and a key check reveals repeated IDs. The checklist cannot tell you everything. It will not reveal who was left out of the sample, a unit mistake that is applied consistently, labels that are wrong but plausible, or a column that secretly contains the answer you are trying to predict. So report what you checked, what you found, and what you could not check.',
       '**Correlation** measures linear association. r=1: perfect positive, r=-1: perfect negative, r=0: no linear relationship. Correlation does not imply causation. Always look at the scatter plot after computing correlations.',
-      `**Anscombe's quartet**: four datasets with identical mean, variance, and correlation — but completely different shapes. This is why you always plot before computing. Statistics summarize; plots reveal.`,
+      `**Anscombe's quartet**: four datasets with nearly identical means, variances, correlations and fitted lines (equal to two or three decimal places) — but completely different shapes. This is why you plot as well as compute. Statistics summarize; plots reveal.`,
     ],
     callouts:[{type:'important',title:'The EDA Checklist',body:`1. df.shape — rows and columns
 2. df.dtypes — what type is each column
@@ -32,6 +32,20 @@ print("\\nNulls:")
 print(df.isnull().sum())
 print("\\nDescribe:")
 print(df.describe().round(2))`},
+      {id:6,cellTitle:'Stage 1b — What the Checklist Catches (and Misses)',
+       prose:'This small table has four planted problems. The checklist catches three of them: a price column stored as text (dtypes), an age of -999 used as a missing-value code (describe shows an impossible minimum), and a repeated customer_id (key check). The fourth — every customer came from one city, so nothing can be said about other cities — is invisible to all of these commands. You only find it by asking how the data were collected.',
+       instructions:'Before running, predict which output line reveals each problem. Run and match each problem to the line that exposed it. Then write one sentence naming a limitation this dataset has that no command can detect.',
+       code:`import pandas as pd
+df = pd.DataFrame({
+    "customer_id": [1, 2, 3, 3, 4, 5],
+    "age":         [34, 28, -999, -999, 45, 51],
+    "price":       ["12.50", "8.00", "15.25", "15.25", "9.75", "11.00"],
+    "city":        ["Leeds"] * 6,
+})
+print(df.dtypes)                          # price is text, not a number
+print(df.describe())                      # age min = -999: impossible value
+print("repeated ids:", df["customer_id"].duplicated().sum())   # 1
+print("cities:", df["city"].unique())     # one city — a sampling limit, not an error`},
       {id:2,cellTitle:'Stage 2 — Correlation Matrix',
        prose:'df.corr() shows pairwise linear correlations for all numeric columns.',
        instructions:'Run. Strong positive: close to 1. Strong negative: close to -1. No relationship: close to 0.',
@@ -41,7 +55,7 @@ x = np.random.normal(0,1,100)
 df = pd.DataFrame({"x":x,"y_positive":x*2+np.random.normal(0,0.5,100),"y_none":np.random.normal(0,1,100),"y_negative":-x+np.random.normal(0,0.5,100)})
 print(df.corr().round(3))`},
       {id:3,cellTitle:"Stage 3 — Anscombe's Quartet Warning",
-       prose:'Identical statistics, completely different data. Always plot.',
+       prose:'Nearly identical summary statistics, completely different data. Plot as well as compute.',
        instructions:'Run. Same mean, std, correlation for both. But they look completely different.',
        code:`import numpy as np
 I_x=[10,8,13,9,11,14,6,4,12,7,5]

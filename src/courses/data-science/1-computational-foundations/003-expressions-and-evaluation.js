@@ -10,11 +10,11 @@ export default {
   intuition: {
     prose: [
       'An **expression** is any combination of values, operators, and function calls that evaluates to a single value. `2 + 3`, `"hello" + "world"`, `abs(-5)` are all expressions.',
-      'Python evaluates expressions following **PEMDAS/BODMAS**: Parentheses, Exponents, Multiplication/Division (left to right), Addition/Subtraction (left to right). When operators have the same precedence, they evaluate left to right.',
+      'Three separate rules decide what an expression means. **Precedence** decides which operator groups first: `**` before `*`, `/`, `//`, `%`, which come before `+` and `-` (roughly PEMDAS/BODMAS). **Associativity** decides how operators at the *same* level group: most arithmetic operators group left to right (`20 - 4 - 3` is `(20 - 4) - 3`), but `**` groups right to left (`2 ** 3 ** 2` is `2 ** (3 ** 2)` = 512, not 64). **Evaluation order** is when each operand is computed: Python computes operands left to right, even when precedence groups the right-hand part first — in `f() + g() * h()`, `f()` is called first, although the multiplication is applied before the addition.',
       'Python has three division operators: `/` (true division, always float), `//` (floor division, rounds toward negative infinity), and `%` (modulo, the remainder). All three will appear constantly in data science.',
     ],
     callouts: [
-      { type: 'important', title: 'Precedence Order', body: '1. Parentheses ()\n2. Exponents **\n3. Multiplication *, Division /, //, %\n4. Addition +, Subtraction -\nSame level: left to right' },
+      { type: 'important', title: 'Precedence Order', body: '1. Parentheses ()\n2. Exponents **\n3. Unary minus -x\n4. Multiplication *, Division /, //, %\n5. Addition +, Subtraction -\nSame level: left to right, EXCEPT ** which groups right to left (2 ** 3 ** 2 == 2 ** 9)' },
       { type: 'warning', title: '/ vs // vs %', body: '10 / 3 = 3.333... (always float)\n10 // 3 = 3 (floor — rounds down)\n10 % 3 = 1 (remainder)\n-10 // 3 = -4 (floors toward negative infinity, not zero!)' },
     ],
     visualizations: [{
@@ -36,10 +36,10 @@ export default {
           instructions:'Run the cell. Predict each result before running.',
           code:'print(2 ** 10)       # 1024\nprint(2 ** 0.5)      # square root\nprint(-2 ** 2)       # -4 (not 4!) ** binds tighter than negation\nprint((-2) ** 2)     # 4',
           output:'', status:'idle' },
-        { id:4, cellTitle:'Stage 4 — Left-to-Right Evaluation',
-          prose:'When operators have equal precedence, Python evaluates left to right. This matters for division.',
-          instructions:'Trace each expression by hand before running. Then verify.',
-          code:'print(20 / 4 / 5)    # (20/4)/5 = 5/5 = 1.0\nprint(20 - 4 - 3)    # (20-4)-3 = 16-3 = 13\nprint(2 ** 3 ** 2)   # 2**(3**2) = 2**9 = 512 (** is RIGHT-to-left!)',
+        { id:4, cellTitle:'Stage 4 — Associativity and Evaluation Order',
+          prose:'Associativity decides how operators of equal precedence group. `/` and `-` group left to right, so `20 / 4 / 5` means `(20 / 4) / 5`. `**` is the exception: it groups right to left, so `2 ** 3 ** 2` means `2 ** (3 ** 2)`. Separately, evaluation order says operands are *computed* left to right: the `show` helper prints each operand as Python computes it, so you can see that `show(1)` is computed before `show(2) * show(3)` is multiplied.',
+          instructions:'Trace each expression by hand before running, including which parenthesized grouping Python uses. Then verify. In the last line, predict the order of the "computing" messages.',
+          code:'print(20 / 4 / 5)    # (20/4)/5 = 5/5 = 1.0\nprint(20 - 4 - 3)    # (20-4)-3 = 16-3 = 13\nprint(2 ** 3 ** 2)   # 2**(3**2) = 2**9 = 512 (** groups RIGHT to left)\nprint((2 ** 3) ** 2) # 8**2 = 64 — parentheses force the other grouping\nprint(2 ** 3 ** 2 == 2 ** (3 ** 2))  # True\n\ndef show(v):\n    print("computing", v)\n    return v\n\n# Precedence groups 2*3 first, but operands are still computed left to right: 1, 2, 3\nprint(show(1) + show(2) * show(3))   # 7',
           output:'', status:'idle' },
         { id:5, cellTitle:'Stage 5 — Modulo in Practice',
           prose:'Modulo (%) is used constantly: testing if a number is even/odd, wrapping around (clock arithmetic), extracting digits. Learn it well.',
@@ -90,9 +90,9 @@ res
     }],
   },
   mentalModel: [
-    'Expressions evaluate to a single value following PEMDAS precedence.',
+    'Precedence decides which operator groups first; associativity decides grouping at the same level; operands are computed left to right.',
     '/ always gives float. // floors toward negative infinity. % gives remainder.',
-    '** is right-to-left associative — unlike all other binary operators.',
+    '** is right-to-left associative: 2 ** 3 ** 2 == 2 ** (3 ** 2) == 512. The other arithmetic operators group left to right.',
     'Use parentheses to make intent explicit — never rely on memorizing precedence.',
     'Modulo is a core pattern: even/odd testing, digit extraction, cyclic counting.',
   ],
@@ -113,7 +113,7 @@ res
       type: 'choice',
       text: 'What does 17 % 5 evaluate to?',
       options: [
-        '3 — 17 % 5 is the remainder when 17 is divided by 5: 17 = 5×3 + 2, so the remainder is 2... wait, that\'s 2',
+        '3 — 17 divided by 5 is 3 with some left over, so 17 % 5 is 3',
         '2 — 17 = 5 × 3 + 2, so 17 % 5 = 2 (the remainder after dividing by 5)',
         '3 — the result is the quotient, not the remainder',
       ],

@@ -90,8 +90,8 @@ const COURSE_ENTRIES = ALL_COURSES
 export default function HomePage() {
   const { getLessonStatus } = useProgress()
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTopicId, setActiveTopicId] = useState('mathematics')
-  const [activeSubtopicId, setActiveSubtopicId] = useState('linear-algebra')
+  const [activeTopicId, setActiveTopicId] = useState('all')
+  const [activeSubtopicId, setActiveSubtopicId] = useState(firstSubtopicId('all'))
 
   function selectTopic(topicId) {
     setActiveTopicId(topicId)

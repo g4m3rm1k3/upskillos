@@ -142,9 +142,9 @@ def quick_transform(matrix,vector=None):
     fig=Figure(square=True,xmin=-5,xmax=5,ymin=-5,ymax=5)
     fig.grid();fig.transformed_grid(matrix)
     a,b=matrix[0];c,d=matrix[1]
-    fig.vector([a,b],color='red',label='î→');fig.vector([c,d],color='green',label='ĵ→')
+    fig.vector([a,c],color='red',label='î→');fig.vector([b,d],color='green',label='ĵ→')
     if vector:
         vx,vy=vector;fig.vector([vx,vy],color='purple',label='v')
-        fig.vector([a*vx+c*vy,b*vx+d*vy],color='purple',label='Tv')
+        fig.vector([a*vx+b*vy,c*vx+d*vy],color='purple',label='Tv')
     return fig.show()
 `;

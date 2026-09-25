@@ -5,9 +5,9 @@ export default {
   prereqs:['a-13','a-11'],unlocks:['b-02','b-03'],
   hook:{question:'Why is a NumPy array 100x faster than a Python list for math?',realWorldContext:'A Python list of 1 million numbers takes ~50ms to sum. NumPy takes ~1ms. At data scale, this difference is the difference between a pipeline that runs in seconds and one that runs in hours.'},
   intuition:{
-    prose:['A Python list stores pointers to objects scattered in memory. To do math, Python must follow each pointer, check the type, and dispatch the operation — for every element. A NumPy array stores values contiguously in memory, one type, no pointers. Math runs in C at memory bandwidth speed.',
+    prose:['A Python list stores references (pointers) to separate Python objects. To do math, Python must follow each reference, check the object\'s type, and dispatch the operation — for every element. A **numeric** NumPy array (the kind this course uses: ints, floats, bools) stores raw numbers of one type (its **dtype**) in a single block of memory, so the loop can run in compiled C with no per-element type checks. Two refinements you will meet later: slicing can produce a **view** that steps through another array\'s memory rather than a fresh contiguous block, and an array with `dtype=object` stores pointers to Python objects and loses most of the speed benefit.',
       '**Vectorization** means applying an operation to every element without a Python loop. `arr * 2` multiplies every element by 2 in one C call. The loop happens in C, not Python. This is not just faster — it is how you should think about array operations.',
-      '**Broadcasting** allows operations between arrays of different shapes by automatically expanding the smaller array. A scalar broadcast over an array. A row broadcast over a matrix. Understanding broadcasting prevents most NumPy shape errors.'],
+      '**Broadcasting** lets NumPy combine arrays of different shapes without copying data. The rule: line the shapes up from the **right**; each pair of dimensions must be equal, or one of them must be 1 (a missing dimension counts as 1). A size-1 dimension is then treated as if repeated to match. So `(3, 4)` with `(4,)` works (a row applied to every row), `(3, 4)` with `(3, 1)` works (a column applied to every column), but `(3, 4)` with `(3,)` fails, because 4 and 3 are compared. It also explains a classic silent bug: `(3,)` combined with `(3, 1)` gives a `(3, 3)` result, not 3 values. Predicting shapes before you run is the habit that prevents these errors.'],
     callouts:[{type:'important',title:'The Vectorization Mindset',body:`DO NOT write:
   result = []
   for x in arr:
@@ -64,6 +64,24 @@ print("std:", np.std(arr))
 print("min:", np.min(arr))
 print("max:", np.max(arr))
 print("median:", np.median(arr))`,output:'',status:'idle'},
+      {id:6,cellTitle:'Stage 6 — Broadcasting: the Right-Aligned Shape Rule',prose:'Write the two shapes one above the other, aligned on the right. Compare each column of dimensions: they must be equal, or one must be 1. Example: (3, 4) and (4,) → compare 4 with 4 (ok); the missing dimension counts as 1 (ok) → result (3, 4). (3, 4) and (3,) → compare 4 with 3 → error. (3,) and (3, 1) → compare 3 with 1 (ok), then 1 (missing) with 3 (ok) → result (3, 3), which is usually NOT what you wanted.',instructions:'Before running, write the result shape (or "error") for each line. Then run. Finally fix the last example so it gives 3 differences instead of a 3×3 table, using col.ravel() or row.reshape(3, 1).',code:`import numpy as np
+M = np.arange(12).reshape(3, 4)   # shape (3, 4)
+row = np.array([10, 20, 30, 40])  # shape (4,)
+col = np.array([[1], [2], [3]])   # shape (3, 1)
+
+print((M + row).shape)   # (3, 4): row added to every row
+print((M * col).shape)   # (3, 4): each row scaled by its col value
+
+try:
+    M + np.array([1, 2, 3])       # (3, 4) with (3,): 4 vs 3 → error
+except ValueError as e:
+    print("ValueError:", e)
+
+# Silent shape bug: (3,) with (3, 1) broadcasts to (3, 3)
+y_true = np.array([1.0, 2.0, 3.0])        # shape (3,)
+y_pred = np.array([[1.5], [2.0], [2.5]])  # shape (3, 1)
+diff = y_true - y_pred
+print(diff.shape)        # (3, 3) — not 3 residuals!`,output:'',status:'idle'},
       {id:11,challengeType:'write',challengeNumber:1,challengeTitle:'Challenge 1 — Vectorized Math',difficulty:'easy',
         prompt:'Using only NumPy (no Python loops), create the array [1,2,3,...,1000], compute the sum of squares, and verify it equals n(n+1)(2n+1)/6 for n=1000. Store sum in sum_of_squares.',
         instructions:`1. Create array with np.arange().
@@ -104,7 +122,7 @@ res
     return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))`},
     ]}}],
   },
-  mentalModel:['NumPy arrays store one type contiguously — math runs in C, not Python.','Vectorization: operate on the whole array at once. No loops.','Boolean indexing: create a boolean mask, use it to filter elements.','np.arange() like range(). np.linspace() for evenly spaced floats.','Aggregates: np.sum, np.mean, np.std, np.min, np.max, np.median.'],
+  mentalModel:['A numeric NumPy array stores raw values of one dtype — math runs in compiled C, not a Python loop (views and object arrays are the exceptions to learn later).','Broadcasting: align shapes on the right; each dimension pair must be equal or contain a 1. Predict the shape before you run.','Vectorization: operate on the whole array at once. No loops.','Boolean indexing: create a boolean mask, use it to filter elements.','np.arange() like range(). np.linspace() for evenly spaced floats.','Aggregates: np.sum, np.mean, np.std, np.min, np.max, np.median.'],
   quiz: [
     {
       id: 'q1',
@@ -145,7 +163,7 @@ res
       text: 'Python loops over 1 million numbers take ~1 second. NumPy vectorized operations take ~1 millisecond. Why?',
       options: [
         'NumPy skips validation checks that Python requires for safety',
-        'NumPy stores all elements as the same type in contiguous memory and executes operations in compiled C — no Python object creation, type checking, or interpreter overhead per element; the C loop over uniform memory is 100x–1000x faster',
+        'A numeric NumPy array stores all elements as the same raw type and executes operations in compiled C — no Python object creation, type checking, or interpreter overhead per element; the C loop over uniform memory is often 10x–1000x faster',
         'NumPy uses multiple CPU cores automatically while Python loops are single-threaded',
       ],
       correct: 1,

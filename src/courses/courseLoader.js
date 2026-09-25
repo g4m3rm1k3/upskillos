@@ -90,9 +90,10 @@ export function getLessonIdLookup() {
   return LESSON_IDS
 }
 
-const courseIds = Object.keys(META_MODULES)
-  .map(p => p.replace(/^\.\//, '').replace('/meta.json', ''))
-  .sort()
+const courseIds = [...new Set([
+  ...Object.keys(tree),
+  ...Object.keys(META_MODULES).map(p => p.replace(/^\.\//, '').replace('/meta.json', '')),
+])].sort()
 
 export function getAllCourses() {
   return courseIds.map((courseId, i) => {
@@ -103,7 +104,7 @@ export function getAllCourses() {
       label: data.label ?? slugToTitle(courseId),
       description: data.description ?? '',
       icon: data.icon ?? '📚',
-      color: COLORS[i % COLORS.length],
+      color: GLASS_META[data.color] ? data.color : COLORS[i % COLORS.length],
       domain: data.domain ?? 'other',
       path: `/course/${courseId}`,
     }
@@ -112,15 +113,15 @@ export function getAllCourses() {
 
 export function getCourseMeta(courseId) {
   const mod = META_MODULES[`./${courseId}/meta.json`]
-  if (!mod) return null
+  if (!mod && !tree[courseId]) return null
   const data = mod?.default ?? mod ?? {}
   const i = courseIds.indexOf(courseId)
   return {
     id: courseId,
-    label: slugToTitle(courseId),
+    label: data.label ?? slugToTitle(courseId),
     description: data.description ?? '',
     icon: data.icon ?? '📚',
-    color: COLORS[i >= 0 ? i % COLORS.length : 0],
+    color: GLASS_META[data.color] ? data.color : COLORS[i >= 0 ? i % COLORS.length : 0],
   }
 }
 

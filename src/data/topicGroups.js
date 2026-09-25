@@ -1,6 +1,7 @@
 import { getAllCourses } from '../courses/courseLoader.js'
 import { LABS } from '../labs/labRegistryLoader.js'
 import { GAMES } from '../games/registry.js'
+import { completeTopics } from './catalogNavigation.js'
 
 // Curated topic → subtopic tree for the home page's "Explore" section.
 // Two-level nav: pick a topic (Mathematics, Science, ...), then a subtopic
@@ -18,13 +19,10 @@ import { GAMES } from '../games/registry.js'
 // registries. Standalone tools (calculator, grapher-2d, terminal-hub, ...)
 // are deliberately excluded — see ux-audit-plan.md Phase 4.
 //
-// Every course/lab/game in the app has a home here (verified against
-// src/courses/*, src/labs/labRegistryLoader.js, src/games/registry.js 2026-07-11)
-// except two orphans with no real subject to anchor them: `arkanoid`
-// (generic math Q&A) and `stem-quest` (multi-subject adventure map) — both
-// live under the `general` topic instead of being forced into a subject
-// they don't actually teach.
-export const TOPICS = {
+// completeTopics adds any discovered entries missing from this curated list.
+// Unknown subjects go under General; All content always includes every entry.
+// Adding content therefore does not require editing this navigation file.
+const CURATED_TOPICS = {
   mathematics: {
     label: 'Mathematics',
     icon: '∑',
@@ -552,8 +550,43 @@ export const TOPICS = {
   },
 }
 
+// Explicit placements for additions; registry completion below also protects
+// future entries until their author chooses a more specific subject.
+const additions = [
+  ['programming', 'cpp', 'course', 'cpp-from-scratch'],
+  ['programming', 'cpp', 'course', 'cpp-patterns'],
+  ['computer-science', 'dsa', 'course', 'cpp-dsa'],
+  ['programming', 'python', 'course', 'guttag-python'],
+  ['programming', 'python', 'course', 'pyside6'],
+  ['programming', 'web-development', 'course', 'css-masterclass'],
+  ['programming', 'web-development', 'course', 'css-masterclass-advanced'],
+  ['programming', 'web-development', 'lab', 'resource-lab'],
+  ['programming', 'web-development', 'lab', 'code-typing'],
+  ['data-ai', 'ai', 'course', 'machine-learning'],
+  ['computer-science', 'runtime', 'course', 'native-languages'],
+  ['computer-science', 'runtime', 'lab', 'little-schemer'],
+  ['creative', 'creative-tools', 'lab', 'canvas-notes'],
+  ['creative', 'creative-tools', 'lab', 'project-studio'],
+  ['creative', 'game-dev', 'lab', 'sprite-forge'],
+  ['creative', 'game-dev', 'lab', 'tile-mapper'],
+]
+for (const [topic, subtopic, kind, key] of additions) {
+  const items = CURATED_TOPICS[topic].subtopics[subtopic].items
+  if (!items.some(i => i.kind === kind && i.key === key)) items.push({ kind, key })
+}
+
+const registries = { course: getAllCourses(), lab: LABS, game: GAMES }
+export const TOPICS = completeTopics(CURATED_TOPICS, registries)
+TOPICS.all = {
+  label: 'All content', icon: '▦', color: 'indigo',
+  subtopics: Object.fromEntries([
+    ['everything', 'Everything', Object.entries(registries).flatMap(([kind, items]) => items.map(i => ({ kind, key: i.key })))],
+    ...Object.entries(registries).map(([kind, items]) => [kind, kind === 'course' ? 'Courses' : kind === 'lab' ? 'Labs & tools' : 'Games', items.map(i => ({ kind, key: i.key }))]),
+  ].map(([id, label, items]) => [id, { label, color: 'indigo', items }])),
+}
+
 export const TOPIC_ORDER = [
-  'mathematics', 'science', 'programming', 'computer-science',
+  'all', 'mathematics', 'science', 'programming', 'computer-science',
   'engineering', 'data-ai', 'creative', 'general',
 ]
 

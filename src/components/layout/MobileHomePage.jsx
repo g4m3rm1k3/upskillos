@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { COURSES, ALL_LESSONS } from "../../courses/index.js";
 import { useProgress } from "../../hooks/useProgress.js";
+import TopicTable from '../ui/TopicTable.jsx';
+import { LABS } from '../../labs/labRegistryLoader.js';
 
 const FEATURED = [
   {
@@ -151,6 +153,10 @@ export default function MobileHomePage() {
             </Link>
           ))}
         </div>
+      </section>
+      <section aria-label="All labs and tools" className="mt-8">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Labs & tools · {LABS.length}</h2>
+        <TopicTable group={{ label: 'All labs & tools', items: LABS.map(l => ({ kind: 'lab', key: l.key })) }} query="" matchItem={() => true} />
       </section>
     </div>
   );

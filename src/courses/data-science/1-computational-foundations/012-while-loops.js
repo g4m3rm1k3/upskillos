@@ -6,17 +6,21 @@ export default {
   hook:{question:'How do you repeat until a condition changes — not a fixed number of times?',realWorldContext:`Numerical algorithms — Newton's method, gradient descent, iterative solvers — all run until convergence, not for a fixed number of steps. Understanding while loops is prerequisite to understanding optimization algorithms.`},
   intuition:{
     prose:[`\`while condition:\` runs as long as condition is True. Unlike for, the number of iterations is not known in advance. You must ensure the condition eventually becomes False — otherwise the loop runs forever.`,
-      `Always identify the **termination variable**: the variable whose value is tested in the condition and which is modified inside the loop. If no such variable exists, the loop is infinite.`,
+      `Ask **how will this loop end?** A loop can end in several ways: (1) the condition becomes False because a variable it tests changes inside the body (the most common beginner pattern — a **termination variable** like a counter); (2) a \`break\` jumps out, as in \`while True:\` loops that break when a result is found; (3) a \`return\` inside a function leaves the loop and the function; (4) an exception is raised; (5) the condition depends on something outside the loop body, such as user input, a file, or the clock. So "no variable in the condition is modified in the body" is a warning sign, not proof of an infinite loop. As a beginner, prefer one clear termination variable plus a maximum-iteration guard.`,
       `**Convergence loops** run until a value stops changing significantly. This is the pattern behind Newton's method, gradient descent, and most numerical algorithms. Add a max_iterations guard to prevent infinite loops on non-convergent cases.`],
     callouts:[{type:'warning',title:'The Infinite Loop',body:`while True:
-    do_work()  # runs forever — no exit condition
+    do_work()  # runs forever — nothing ever exits the loop
 
-Fix: ensure the condition variable changes inside the loop.
-Always add a max_iterations guard for safety:
+A loop needs a way out: a condition that eventually becomes False,
+a break, a return, or an exception.
+
+Bounded beginner pattern — a max_iterations guard:
 i = 0
 while condition and i < 1000:
     update()
-    i += 1`}],
+    i += 1
+if i == 1000:
+    print("stopped by the guard, not by the condition")`}],
     visualizations:[{id:'PythonNotebook',title:'While Loops',props:{initialCells:[
       {id:1,cellTitle:'Stage 1 — Basic While',prose:'Countdown — runs until count reaches 0.',instructions:'Trace the value of count at each iteration.',code:`count = 5
 while count > 0:
@@ -85,7 +89,7 @@ while n!=1:
     steps+=1`},
     ]}}],
   },
-  mentalModel:[`while runs as long as condition is True — number of iterations not known in advance.`,`Identify the termination variable — the one that will eventually make condition False.`,`Add a max_iterations guard to prevent infinite loops.`,`Convergence loops run until abs(new - old) < tolerance.`,`Binary search and Newton's method are classic while loop patterns.`],
+  mentalModel:[`while runs as long as condition is True — number of iterations not known in advance.`,`Ask how the loop ends: the condition turns False, break, return, an exception, or an outside change.`,`Add a max_iterations guard to prevent infinite loops.`,`Convergence loops run until abs(new - old) < tolerance.`,`Binary search and Newton's method are classic while loop patterns.`],
   quiz: [
     {
       id: 'q1',
@@ -115,7 +119,7 @@ while n!=1:
       text: 'What causes an infinite loop, and how do you guard against it?',
       options: [
         'Infinite loops are caused by syntax errors; fixing the syntax stops them',
-        'An infinite loop occurs when the condition never becomes False — typically because the variable the condition tests is never modified inside the loop. Guard with a max_iterations counter that breaks when exceeded',
+        'An infinite loop occurs when nothing ever ends the loop: the condition never becomes False and no break, return or exception exits it — often because the variable the condition tests is never modified. Guard with a max_iterations counter',
         'Infinite loops happen when the initial condition is True — starting with a False condition prevents them',
       ],
       correct: 1,

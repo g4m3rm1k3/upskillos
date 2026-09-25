@@ -347,7 +347,8 @@ export default function FigureRenderer({ figureJson, C }) {
           case 'transformed_grid': {
             const { a, b, c, d, range: r = 5, color_h, color_v, alpha: ga = 0.7 } = el
             ctx.globalAlpha = ga
-            const T = (x, y) => [toX(a * x + c * y), toY(b * x + d * y)]
+            // matrix = [[a,b],[c,d]] applied as A @ [x,y]: columns [a,c] and [b,d] are the images of î and ĵ
+            const T = (x, y) => [toX(a * x + b * y), toY(c * x + d * y)]
             for (let i = -r; i <= r; i++) {
               // vertical lines of original grid
               const [x0,y0] = T(i, -r), [x1,y1] = T(i, r)
