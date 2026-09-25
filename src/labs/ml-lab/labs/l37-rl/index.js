@@ -10,5 +10,6 @@ export default {
   lessons, sources, python,
   math: ['calc.series', 'stat.rv', 'stat.conditional', 'la.markov', 'la.systems', 'dp.intro', 'tool.dp', 'tool.notebook', 'tool.openmat'],
   Playground: lazy(() => import('./Playground.jsx')),
+  figures: () => import('./figures.jsx'),
   scope: 'Time-indexed notation (S_t, A_t, R_{t+1}, S_{t+1}), MDP dynamics p(s′, r | s, a) and the Markov property, returns and their recursion, discounting and the geometric bound, deterministic and stochastic policies, ε-greedy probabilities, V^π and Q^π, the Bellman expectation equation, policy evaluation by iteration and as a linear system, V* and Q*, the Bellman optimality equation, value iteration and the contraction argument, tabular Q-learning and the TD error, off-policy versus SARSA, step-size conditions, maximization bias and double Q-learning, simple baselines, reward hacking and potential-based shaping. Deep RL is described, not implemented.',
 }

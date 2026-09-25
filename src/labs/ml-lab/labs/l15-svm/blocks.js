@@ -1,0 +1,41 @@
+// Lesson order for Lab 15: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l15-margin': [
+    { p: 0 },
+    { figure: 'PickABoundary', caption: 'Steer a line between the two blobs. How wide a gap can you leave?' },
+    { p: 1 },
+    { figure: 'PointDistance', caption: 'Distance from a point to the line w·x + b = 0.' },
+    { predict: { prompt: 'w = (6, 8), b = 0. How far is the point (3, 4) from the boundary?', answer: 5, explain: '|18 + 32|/√(36 + 64) = 50/10 = 5.' } },
+    { p: 2 }, { p: 3 }, { p: 4 },
+  ],
+  'l15-hardmargin': [
+    { p: 0 }, { p: 1 },
+    { predict: { prompt: 'An SVM has ‖w‖ = 0.5. How wide is its street, 2/‖w‖?', answer: 4, explain: '2/0.5 = 4. Smaller weights mean a wider margin.' } },
+    { p: 2 }, { p: 3 },
+    { figure: 'SvmStreet', caption: 'The SVM boundary (solid), its street edges (dashed) and the support vectors (circled).' },
+    { p: 4 },
+  ],
+  'l15-hinge': [
+    { p: 0 }, { p: 1 },
+    { figure: 'HingeVersusLog', caption: 'Hinge loss and log loss as functions of the margin.' },
+    { predict: { prompt: 'A point is misclassified with margin m = −0.5. What is its hinge loss?', answer: 1.5, tolerance: 0.001, explain: 'max(0, 1 − (−0.5)) = 1.5.' } },
+    { p: 2 },
+    { figure: 'LambdaStreet', caption: 'Overlapping classes: raise λ and watch the street widen and the violations grow.' },
+    { p: 3 }, { p: 4 },
+  ],
+  'l15-kernel': [
+    { p: 0 },
+    { figure: 'LiftTheRing', caption: 'The ring data along one new feature, x₁² + x₂².' },
+    { p: 1 }, { p: 2 },
+    { figure: 'KernelTrick', caption: 'The degree-2 kernel, computed two ways.' },
+    { predict: { prompt: 'x = (2, 0) and x′ = (1, 3). What is the degree-2 polynomial kernel (x·x′)²?', answer: 4, explain: 'x·x′ = 2 + 0 = 2, and 2² = 4.' } },
+    { p: 3 },
+    { figure: 'RbfGamma', caption: 'An RBF-kernel SVM on two moons. Move γ.' },
+    { p: 4 },
+  ],
+  'l15-compare': [
+    { p: 0 },
+    { figure: 'SvmVersusLogistic', caption: 'SVM and logistic regression boundaries on the same data.' },
+    { p: 1 }, { p: 2 }, { p: 3 }, { p: 4 },
+  ],
+}

@@ -919,3 +919,26 @@
 .ml-nb-hint { margin: 6px 0 0; font-size: 13px; }
 .ml-nb-output img { max-width: 100%; margin-top: 6px; background: #fff; border-radius: 6px; }
 .ml-attempts { margin-top: 4px; }
+
+/* Lessons told in order: paragraph → figure / runnable cell / prediction */
+.ml-flow > .ml-inline-figure, .ml-flow > .ml-predict, .ml-flow > .ml-nb-inline { margin: 18px 0 30px; }
+.ml-inline-figure { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ml-inline-figure figcaption { margin-top: 10px; }
+.ml-inline-figure svg { max-width: 100%; height: auto; }
+.ml-fig-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0; font-size: 13px; }
+.ml-fig-controls label { display: flex; gap: 8px; align-items: center; }
+.ml-fig-controls input[type=range] { width: 140px; }
+.ml-fig-table { border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+.ml-fig-table th, .ml-fig-table td { padding: 4px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+.ml-fig-table th:first-child, .ml-fig-table td:first-child { text-align: left; }
+.ml-fig-table tr.active td, .ml-fig-table td.active { background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 650; }
+.ml-fig-table td.dim { opacity: 0.45; }
+.ml-fig-sum { font-size: 14px; line-height: 1.7; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ml-inline-figure .ml-fig-table { display: block; max-width: 100%; overflow-x: auto; }
+.ml-predict { padding: 14px 16px; border-left: 4px solid var(--accent); border-radius: 10px; background: var(--surface); }
+.ml-predict form { display: flex; gap: 8px; flex-wrap: wrap; }
+.ml-predict input { width: 140px; }
+.ml-nb-inline { padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; }
+.ml-nb-try { margin: 8px 0 0; font-size: 13.5px; }
+.ml-link-button { background: none; border: 0; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; text-decoration: underline dotted; }
+.ml-link-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

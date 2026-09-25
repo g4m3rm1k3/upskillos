@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { labs, labByNumber, labForLesson } from './labs/index.js'
 import { roadmap } from './roadmap.js'
 import './ml.css'
@@ -13,6 +13,7 @@ import LearningPath from './LearningPath.jsx'
 import Checkpoint from './Checkpoint.jsx'
 import JumpIn from './JumpIn.jsx'
 import { jumpIns } from './jumpIn.js'
+const LessonFlow = lazy(() => import('./LessonFlow.jsx'))
 
 const STORE = 'upskillos.ml-lab.v1'
 const allLabs = roadmap.flatMap(phase => phase.labs.map(lab => ({ ...lab, phase })))
@@ -93,10 +94,13 @@ export default function MLLab({ onBack }) {
       </aside>
       <article className="ml-lesson"><span className="ml-eyebrow">Understand → derive → test → explain</span><h2>{lesson.title.slice(lesson.title.indexOf('·')+2)}</h2><p className="ml-objective">You will be able to: <LessonText>{lesson.skill}</LessonText></p><p className="ml-prereq"><strong>Before you start:</strong> <LessonText>{lesson.prerequisite}</LessonText></p><MathLinks key={`m-${lesson.id}`} lessonKeys={lesson.math} labKeys={lab.math} /><button className="ml-jump" onClick={()=>playgroundRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>Jump to live experiment ↓</button>
         <JumpIn key={`j-${lab.number}`} lab={lab} jumpIn={jumpIns[lab.number]} onReview={(number,index)=>{openLab(number,index,'learn',{number:lab.number,index:lessonIndex});rootRef.current?.scrollTo?.({top:0})}} />
-        <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
-        <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
-        {lesson.derivation && <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />}
-        <NotebookCells key={`n-${lesson.id}`} id={lesson.id} notebook={lesson.notebook} />
+        {(() => {
+          const prose = <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
+          const renderMath = () => <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
+          const renderDerivation = () => lesson.derivation ? <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} /> : null
+          if (lesson.blocks) return <Suspense fallback={prose}><LessonFlow key={`f-${lesson.id}`} lab={lab} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} renderMath={renderMath} renderDerivation={renderDerivation} /></Suspense>
+          return <>{prose}{renderMath()}{renderDerivation()}<NotebookCells key={`n-${lesson.id}`} id={lesson.id} notebook={lesson.notebook} /></>
+        })()}
         <div className="ml-experiment"><span className="ml-eyebrow">Predict before you run</span><p><LessonText>{lesson.experiment}</LessonText></p></div>
         <Checkpoint key={lesson.id} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} />
         <div className="ml-next"><button disabled={lessonIndex===0} onClick={()=>setLessonIndex(i=>i-1)}>← Previous</button><button onClick={()=>lessonIndex<lessons.length-1 ? setLessonIndex(i=>i+1) : setTab('code')}>{lessonIndex<lessons.length-1?'Next lesson →':'Implement it →'}</button></div>

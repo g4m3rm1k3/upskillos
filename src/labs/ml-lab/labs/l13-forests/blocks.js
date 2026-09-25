@@ -1,0 +1,41 @@
+// Lesson order for Lab 13: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l13-variance': [
+    { p: 0 },
+    { figure: 'TreesVersusAverage', caption: 'Two deep trees trained on bootstrap samples, and the average of many.' },
+    { p: 1 }, { p: 2 }, { p: 3 },
+    { figure: 'AverageVarianceFig', caption: 'Variance of an average of T correlated predictors.' },
+    { predict: { prompt: 'σ² = 2, ρ = 0.5, T = 4. What is ρσ² + (1 − ρ)σ²/T?', answer: 1.25, tolerance: 0.001, explain: '0.5 × 2 + 0.5 × 2/4 = 1 + 0.25 = 1.25.' } },
+    { p: 4 },
+  ],
+  'l13-bagging': [
+    { p: 0 },
+    { figure: 'BootstrapDraw', caption: 'One bootstrap sample of 12 rows: how often each row was drawn.' },
+    { predict: { prompt: 'n = 2 rows, bootstrap sample of size 2. What is the probability a particular row is never drawn?', answer: 0.25, tolerance: 0.001, explain: '(1 − 1/2)² = 0.25.' } },
+    { p: 1 }, { p: 2 },
+    { figure: 'BaggedGrowth', caption: 'A bagged forest as trees are added.' },
+    { p: 3 },
+    { figure: 'BaggedLinesVersusTrees', caption: 'Six bootstrap fits of a stable model and of an unstable one.' },
+    { p: 4 },
+  ],
+  'l13-random': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { predict: { prompt: 'A regression dataset has p = 30 features. What is the common default max_features = p/3?', answer: 10, explain: '30/3 = 10 features considered at each split.' } },
+    { p: 3 },
+    { figure: 'DecorrelateTrees', caption: 'Six features, one strong. Fewer features per split: how do correlation and accuracy change?' },
+    { p: 4 },
+  ],
+  'l13-oob': [
+    { p: 0 },
+    { figure: 'OobShare', caption: 'The chance a row is left out of a bootstrap sample of size n.' },
+    { p: 1 }, { p: 2 },
+    { figure: 'OobVersusValidation', caption: 'Out-of-bag accuracy (from training data) against true validation accuracy.' },
+    { predict: { prompt: 'A forest has 300 trees. About how many give an out-of-bag prediction for a given row? (Nearest whole number, e⁻¹ ≈ 0.368.)', answer: 110, tolerance: 0.6, explain: '300 × 0.368 ≈ 110.' } },
+    { p: 3 }, { p: 4 },
+  ],
+  'l13-limits': [
+    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { figure: 'ForestExtrapolation', caption: 'A regression forest inside and outside its training range.' },
+    { p: 4 },
+  ],
+}

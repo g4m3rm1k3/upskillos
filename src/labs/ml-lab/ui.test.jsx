@@ -143,10 +143,10 @@ describe('learning workspace interactions',()=>{
     expect(screen.getByText(/How this connects to/)).toBeTruthy()
     expect(screen.getByText('Fit a line to measurements: ŷ = w·x + b')).toBeTruthy()
   })
-  it('checks a derivation step by step and saves progress',()=>{
+  it('checks a derivation step by step and saves progress',async()=>{
     render(<MLLab />)
     fireEvent.click(screen.getByRole('button',{name:'03 · Derive the direction'}))
-    fireEvent.change(screen.getByLabelText('Derivation step 1'),{target:{value:'wx + b'}})
+    fireEvent.change(await screen.findByLabelText('Derivation step 1'),{target:{value:'wx + b'}})
     fireEvent.click(screen.getByText('Check step',{selector:'button'}))
     expect(screen.getByText(/Not equal to the correct expression/)).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Derivation step 1'),{target:{value:'b + x·w − y'}})

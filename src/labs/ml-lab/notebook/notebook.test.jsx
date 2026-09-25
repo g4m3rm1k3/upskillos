@@ -94,10 +94,8 @@ describe('export and hints', () => {
 })
 
 describe('edits survive every transition on the lesson page', () => {
-  const openNotebook = async () => {
-    fireEvent.click(screen.getByText(/Open 5 notebook cells here/))
-    return await screen.findByLabelText('Notebook cell 2 code')
-  }
+  // Lesson 00a shows its cells inline, beside the paragraphs they illustrate.
+  const openNotebook = async () => await screen.findByLabelText('Notebook cell 2 code')
   const cell = () => screen.getByLabelText('Notebook cell 2 code')
   it('reflection, checkpoint, hide/show, lesson change and reload', async () => {
     render(<MLLab />)
@@ -107,7 +105,9 @@ describe('edits survive every transition on the lesson page', () => {
     fireEvent.change(screen.getByLabelText('Checkpoint answer'), { target: { value: '23' } })
     fireEvent.click(screen.getByText('Check answer', { selector: 'button' }))
     expect(cell().value).toMatch(/my edit/)
-    fireEvent.click(screen.getByText('Hide the notebook cells'))
+    fireEvent.click(screen.getByText('Show all 5 cells in order'))
+    expect(screen.getAllByLabelText('Notebook cell 2 code').every(c => /my edit/.test(c.value))).toBe(true)
+    fireEvent.click(screen.getByText('Hide the full list of cells'))
     expect(await openNotebook()).toHaveProperty('value', expect.stringMatching(/my edit/))
     fireEvent.click(screen.getByText('Next lesson →', { selector: 'button' }))
     fireEvent.click(screen.getByText('← Previous', { selector: 'button' }))

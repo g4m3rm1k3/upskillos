@@ -92,7 +92,10 @@ function Output({ out, index }) {
   </div>
 }
 
-export default function LessonNotebook({ id, notebook }) {
+// The notebook's state — drafts, outputs, run queue — as one hook, so a lesson can show its
+// cells one at a time beside the paragraphs they illustrate and still behave as a single
+// notebook: same drafts, same variables, same run counter.
+export function useNotebook(id, notebook) {
   const originals = notebook.cells.map(c => c.code)
   const [draft, setDraft] = useState(() => loadDraft(id, originals))
   const [session, setSessionState] = useState(() => getSession(id) ?? emptySession(originals.length))
@@ -145,41 +148,64 @@ export default function LessonNotebook({ id, notebook }) {
     if (!(window.confirm?.('Replace every cell in this notebook with the original lesson code? Your edits to this notebook will be lost; other notebooks are not affected.') ?? true)) return
     clearDraft(id); setDraft({ codes: [...originals], edited: false, outdated: false }); setNotice('Restored the original cells.')
   }
+  const keepMine = () => { rebaseDraft(id, originals, codes); setDraft(d => ({ ...d, outdated: false })) }
 
   const everRan = session.counts.some(c => c != null) || session.generation != null
   const variablesLost = session.reset || (session.generation != null && rt && rt.generation !== session.generation)
-  const busyHere = pending.length > 0
-  return <div className="ml-nb" data-notebook={id}>
+  // Cells above i that have not run in the current Python session (their variables may be missing).
+  const missingBefore = i => codes.slice(0, i).map((_, k) => k).filter(k => session.counts[k] == null || variablesLost)
+  return { id, notebook, originals, codes, draft, session, rt, pending, notice, setNotice, setCode, runCells, restart, resetAll, keepMine, everRan, variablesLost, missingBefore, busy: pending.length > 0 }
+}
+
+export function NotebookToolbar({ nb }) {
+  const { id, notebook, codes, session, rt, draft, notice, busy, everRan, variablesLost } = nb
+  return <>
     <div className="ml-actions ml-nb-toolbar">
-      <button className="ml-primary" disabled={busyHere} onClick={() => runCells(codes.map((_, i) => i))}>Run all</button>
+      <button className="ml-primary" disabled={busy} onClick={() => nb.runCells(codes.map((_, i) => i))}>Run all</button>
       <button disabled={!rt?.busy} onClick={runtime.stop}>Stop</button>
-      <button disabled={busyHere} onClick={restart} title="Forget this notebook’s variables; keep the code">Restart Python for this notebook</button>
+      <button disabled={busy} onClick={nb.restart} title="Forget this notebook’s variables; keep the code">Restart Python for this notebook</button>
       <button onClick={() => download(`${id}.ipynb`, toIpynb(notebook, codes, session.outputs))}>Download my notebook (.ipynb)</button>
-      <button onClick={() => { const ok = copyToNotebookLab(notebook, codes); setNotice(ok ? `Copied your version — edits included — to Notebook Lab as “${notebook.title}”.` : 'Could not save to this browser’s storage.'); if (ok) window.open('#/notebook-lab', '_blank', 'noopener') }}>Copy my version to Notebook Lab ↗</button>
-      {draft.edited && <button onClick={resetAll}>Reset to the original cells</button>}
+      <button onClick={() => { const ok = copyToNotebookLab(notebook, codes); nb.setNotice(ok ? `Copied your version — edits included — to Notebook Lab as “${notebook.title}”.` : 'Could not save to this browser’s storage.'); if (ok) window.open('#/notebook-lab', '_blank', 'noopener') }}>Copy my version to Notebook Lab ↗</button>
+      {draft.edited && <button onClick={nb.resetAll}>Reset to the original cells</button>}
     </div>
     <p className="ml-caption" role="status">
       {rt?.state === 'loading' || rt?.state === 'running' ? rt.text : variablesLost ? 'Python was restarted since this notebook last ran, so its variables are gone (your code is kept). Use “Run all”, or run the cells from the top.' : everRan ? 'Cells in this notebook share variables, like a Jupyter notebook. Other lessons’ notebooks cannot see them.' : rt?.text}
       {' '}Shift + Enter runs the cell you are editing. In an editor, press Ctrl + M to let Tab move focus out.
     </p>
-    {draft.outdated && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={() => { rebaseDraft(id, originals, codes); setDraft(d => ({ ...d, outdated: false })) }}>Keep my version</button> <button onClick={resetAll}>Use the updated version</button></p>}
+    {draft.outdated && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={nb.keepMine}>Keep my version</button> <button onClick={nb.resetAll}>Use the updated version</button></p>}
     {notice && <p className="ml-caption" role="status">{notice}</p>}
-    {notebook.cells.map((cell, i) => {
-      const edited = codes[i] !== originals[i], stale = session.ranCode[i] != null && session.ranCode[i] !== codes[i]
-      const state = pending[0] === i && rt?.busy ? 'running' : pending.includes(i) ? 'queued' : null
-      return <section key={i} className="ml-nb-cell" aria-label={`Cell ${i + 1}${cell.title ? `: ${cell.title}` : ''}`}>
-        {cell.title && <h4>{cell.title}</h4>}
-        {cell.prose && <p><LessonText>{cell.prose}</LessonText></p>}
-        <div className="ml-nb-cellbar">
-          <span className="ml-nb-count" aria-label={session.counts[i] ? `Run number ${session.counts[i]}` : 'Not run'}>[{state === 'running' ? '*' : session.counts[i] ?? ' '}]</span>
-          <button disabled={busyHere} onClick={() => runCells([i])}>Run cell</button>
-          {state && <span className="ml-caption">{state === 'running' ? 'Running…' : 'Waiting to run'}</span>}
-          {stale && <span className="ml-nb-badge">edited since it ran</span>}
-          {edited && <button onClick={() => setCode(i, originals[i])}>Undo my edits to this cell</button>}
-        </div>
-        <CellEditor code={codes[i]} onChange={v => setCode(i, v)} onRun={() => !busyHere && runCells([i])} label={`Notebook cell ${i + 1} code`} />
-        <Output out={session.outputs[i]} index={i} />
-      </section>
-    })}
+  </>
+}
+
+// One cell. `inline` cells sit inside the lesson text, so they offer to run the cells above first
+// (they share variables) instead of failing with a NameError.
+export function NotebookCell({ nb, i, inline = false }) {
+  const { notebook, codes, originals, session, rt, pending, busy } = nb, cell = notebook.cells[i]
+  const edited = codes[i] !== originals[i], stale = session.ranCode[i] != null && session.ranCode[i] !== codes[i]
+  const state = pending[0] === i && rt?.busy ? 'running' : pending.includes(i) ? 'queued' : null
+  const before = inline ? nb.missingBefore(i) : []
+  return <section className={`ml-nb-cell${inline ? ' ml-nb-inline' : ''}`} aria-label={`Cell ${i + 1}${cell.title ? `: ${cell.title}` : ''}`}>
+    {inline && <span className="ml-eyebrow">Run it · cell {i + 1} of {notebook.cells.length}</span>}
+    {cell.title && <h4>{cell.title}</h4>}
+    {cell.prose && <p><LessonText>{cell.prose}</LessonText></p>}
+    <div className="ml-nb-cellbar">
+      <span className="ml-nb-count" aria-label={session.counts[i] ? `Run number ${session.counts[i]}` : 'Not run'}>[{state === 'running' ? '*' : session.counts[i] ?? ' '}]</span>
+      <button disabled={busy} className={inline ? 'ml-primary' : undefined} onClick={() => nb.runCells(before.length ? [...before, i] : [i])}>{before.length ? `Run cells ${before.map(k => k + 1).join(', ')} and this one` : 'Run cell'}</button>
+      {state && <span className="ml-caption">{state === 'running' ? 'Running…' : 'Waiting to run'}</span>}
+      {stale && <span className="ml-nb-badge">edited since it ran</span>}
+      {edited && <button onClick={() => nb.setCode(i, originals[i])}>Undo my edits to this cell</button>}
+    </div>
+    <CellEditor code={codes[i]} onChange={v => nb.setCode(i, v)} onRun={() => !busy && nb.runCells(before.length ? [...before, i] : [i])} label={`Notebook cell ${i + 1} code`} />
+    <Output out={session.outputs[i]} index={i} />
+    {inline && cell.tryThis && <p className="ml-nb-try"><strong>Try this:</strong> <LessonText>{cell.tryThis}</LessonText></p>}
+  </section>
+}
+
+export default function LessonNotebook({ id, notebook, nb: shared }) {
+  const own = useNotebook(id, notebook)
+  const nb = shared ?? own
+  return <div className="ml-nb" data-notebook={id}>
+    <NotebookToolbar nb={nb} />
+    {notebook.cells.map((_, i) => <NotebookCell key={i} nb={nb} i={i} />)}
   </div>
 }

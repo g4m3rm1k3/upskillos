@@ -1,0 +1,38 @@
+// Lesson order for Lab 18: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l18-projection': [
+    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { figure: 'ProjectPoint', caption: 'Project x onto the line through the origin in direction u. Blue: x; purple: its projection; red: the residual.' },
+    { predict: { prompt: 'Project x = (4, 3) onto u = (0.8, 0.6). What is the coordinate u·x?', answer: 5, explain: '0.8 × 4 + 0.6 × 3 = 3.2 + 1.8 = 5.' } },
+    { p: 4 },
+  ],
+  'l18-maxvar': [
+    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { figure: 'VarianceByDirection', caption: 'Turn the direction and watch the variance of the projections. The black dot marks PC1.' },
+    { predict: { prompt: 'A covariance matrix is diag(2, 7). What is the variance along the first principal component?', answer: 7, explain: 'For a diagonal matrix the eigenvalues are the diagonal entries; the largest is 7, along the x₂ axis.' } },
+    { p: 4 },
+  ],
+  'l18-centering': [
+    { p: 0 }, { p: 1 },
+    { figure: 'CenteringEffect', caption: 'The first component of a cloud centred at (3, 2), with and without subtracting the mean.' },
+    { p: 2 },
+    { figure: 'ScalingEffect', caption: 'Two correlated features in very different units.' },
+    { p: 3 }, { p: 4 },
+  ],
+  'l18-svd': [
+    { p: 0 },
+    { predict: { prompt: 'Eigenvalues are 5, 3, 1 and 1. What fraction of the variance does the first component explain?', answer: 0.5, tolerance: 0.001, explain: '5/(5 + 3 + 1 + 1) = 0.5.' } },
+    { p: 1 },
+    { figure: 'ScreePlot', caption: 'Explained variance of each component of the digit images, with the running total.' },
+    { p: 2 }, { p: 3 }, { p: 4 },
+  ],
+  'l18-use': [
+    { p: 0 },
+    { figure: 'ReconstructDigits', caption: 'Noisy digit images (top) and their reconstructions from k components (bottom).' },
+    { p: 1 },
+    { figure: 'VarianceIsNotSignal', caption: 'Two classes whose difference lies along the low-variance direction.' },
+    { p: 2 },
+    { figure: 'EigenDigits', caption: 'The first eight principal components of the digit images, drawn as images.' },
+    { p: 3 }, { p: 4 },
+  ],
+}
