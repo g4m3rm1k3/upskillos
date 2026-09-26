@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import rawGlobAssets from "./scripts/vite-plugin-raw-glob-assets.mjs";
 import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
@@ -146,7 +147,7 @@ function devFsPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), emitVersionJson(), devFsPlugin()],
+  plugins: [rawGlobAssets(), react(), emitVersionJson(), devFsPlugin()],
   resolve: {
     alias: {
       '@opencalc/openmat': path.resolve(process.cwd(), 'packages/openmat/src/index.ts'),
