@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l32-triggers',
@@ -49,7 +51,7 @@ export const lessons = [
       'Offline evaluation cannot capture everything: real traffic, integration bugs, user behaviour. Expose a new model gradually so that problems affect few users and are caught quickly.',
       '**Shadow deployment** runs the candidate on live traffic without using its predictions: compare its outputs and latency with production at zero risk. It cannot measure effects that depend on acting on the predictions.',
       'A **canary** release sends a small share of real traffic (1%, then 5%, 25%, 50%, 100%) to the candidate and compares it with the rest (control). Exposure grows only while the canary stays healthy.',
-      'An automatic **rollback rule** returns all traffic to production when the canary is worse than control by more than a tolerance for N consecutive periods. Small canaries measure noisily — the playground\'s honest retrain has one bad-looking day at 5% traffic — so persistence prevents needless rollbacks, and the tolerance is set from normal day-to-day variation.',
+      'An automatic **rollback rule** returns all traffic to production when the canary is worse than control by more than a tolerance for N consecutive periods. Small canaries measure noisily: the playground\'s honest retrain is about 25% better than control on most days, yet on day 3, with only 15 canary jobs at 5% traffic, it looks 9% worse. A single-day rule with a 5% tolerance would roll back a good model; persistence prevents such needless rollbacks, and the tolerance is set from normal day-to-day variation.',
       'Rollback must be instant and boring: keep the previous model loaded or deployable, with its exact preprocessing and version (Lab 28). A rollback path that has never been exercised is a hope, not a plan.',
     ],
     formula: 'rollback if canary_MAE > control_MAE × (1 + tol) for N consecutive days',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Semantic Versioning 2.0.0', url: 'https://semver.org/' },
   { title: 'Sculley et al. (2015) · Hidden technical debt in machine learning systems (feedback loops)', url: 'https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

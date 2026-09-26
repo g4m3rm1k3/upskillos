@@ -10,7 +10,7 @@ export default function Playground() {
   const [query, setQuery] = useState('why are my builds slow after changing the lockfile'), [method, setMethod] = useState('bm25'), [size, setSize] = useState(2), [k, setK] = useState(3), [role, setRole] = useState(false)
   const index = useMemo(() => buildIndex(chunk(DOCS, size)), [size])
   const results = retrieve(index, query, { method, k, canSeeRestricted: role })
-  const ans = answer(results, query)
+  const ans = answer(results, query, { semantic: method === 'semantic' })
   const table = useMemo(() => METHODS.map(([m, label]) => { const e = evaluate(index, { method: m, k: 1 }), e3 = evaluate(index, { method: m, k: 3 }); return [label, pct(e.recall), pct(e3.recall), fmt(e3.mrr, 3)] }), [index])
   const hidden = retrieve(index, query, { method, k, canSeeRestricted: true }).filter(d => d.restricted && !role)
   return <>

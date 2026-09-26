@@ -223,7 +223,126 @@ colors on a light page. That was a preview-only problem, not an app bug.
    `OrderMean`, `GradThroughTime`, `PadDilution`; five predictions; the `rnn` sequence (probe: padding to 16 moves an
    unmasked state). Corrected: 25.2 and 25.5 said the base rate was about 57% and the shortcut model beat it by 3
    points; the playground’s own numbers are 59.7% and 0 points. Ladder 325/325 in both runtimes.
-   Next: Lab 26.
+   *(Done: Lab 26.)* 9 cells (the lesson’s lookup by hand, sharpness from average to lookup, self-attention shapes,
+   entropy with and without √d scaling, a causal mask checked by changing a future token, permutation equivariance
+   with and without positions, heads by reshaping, a block’s exact parameter count and LayerNorm, a token with weight
+   0.7 whose removal changes nothing); figures `SoftLookup`, `ScaleEntropy`, `MaskAndPositions`, `BlockTable`;
+   five predictions; the `attn` sequence (probe: entropy 0.12 unscaled against 2.32 scaled at d = 256). Checked
+   the lesson’s 13.2, 33 million scores and 12d² ≈ 85 M figures. Ladder 339/339 in both runtimes.
+   *(Done: Lab 27 — the second project milestone, a small image investigation.)* The playground investigates synthetic
+   digits (its claims — 38%, 75%, +42 points for 4× the compute — checked); the 6 cells repeat the investigation on real
+   data, the 1,797 handwritten digits bundled with scikit-learn: data checks, a pixel baseline that scores 0.970 as-is
+   and 0.057 when digits move 2 pixels, fixed convolution features (worse unmoved, much better moved), a paired
+   three-seed ablation (on real digits the best pipeline is pixels + shift augmentation + a hidden layer, 0.95, not
+   the convolution pipeline — stated as a finding), parameter and multiply-add counts, and a confusion analysis.
+   Browser: the ablation takes about 16 s; 27.1’s numbers identical in Pyodide. Figures `PipelineBoard`,
+   `ConfusionView` (train only on request); five predictions; the `invest` sequence. Ladder 349/349 in both runtimes.
+   *(Done: Lab 28.)* 9 cells (the playground’s injected problems in a pandas batch, a contract as data, a validator
+   that reports each broken rule once — a wrong type is not range-checked, three batch policies, a mean test and a
+   quantile test for the minutes problem, category shares, content hashes that ignore row and key order but notice a
+   0.1 s edit, a run registry with a rebuild check). The rebuild fingerprint and every hash were checked to be
+   identical in local Python and in Pyodide — a real reproduction in a fresh environment. Figures `ContractBoard`,
+   `UnitDrift`; five predictions; the `contract` sequence. Checked 28.3’s 83 → 46 s and z = −3.16 against the engine.
+   Found: with these data the mean test misses a small unit change the quantile test catches — shown in a cell and in
+   the probe. Ladder 360/360 in both runtimes.
+   *(Done: Lab 29.)* 7 cells (batch against one-at-a-time scoring, a JSON artifact with preprocessing statistics and a
+   parity test, the playground’s three rewritten servers failing parity, a request handler returning 400/422/200 with
+   the model version, capacity and a queue simulation, a seven-test suite). The real service is `serve.py` (Implement
+   tab, `local`): Python’s standard HTTP server serving `/v1/predict`; `python serve.py --check` was run here —
+   parity over HTTP 0.00 s on 20 requests, 422 and 400 as expected. Found while writing: a body that is valid JSON but
+   not an object crashed the handler — now a 400, tested in both. Corrected: 29.4 said batches of 8 handle 400
+   requests per second; with its own numbers it is 333 (its checkpoint already said so). Figures `ParityServers`,
+   `QueueLatency`; five predictions; a fold-out with the service check’s output; the `serve` sequence.
+   Ladder 371/371 in both runtimes.
+   *(Done: Lab 30.)* 7 cells (five tests of three kinds on the Lab 29 model, PSI by hand, the no-change noise of PSI
+   at 80 and 400 values per day, covariate shift against concept drift on the same model, the day an error alert can
+   fire for label delays 0/7/20, a quiet-year threshold with false alarms by persistence plus a guard, evidence turned
+   into a response). Corrected: 30.2 said 80 values give a no-change PSI near 0.17; it is about 0.12 (above 0.1 on
+   about 63% of quiet days), and about 0.023 at the playground’s 400. The engine’s four scenarios were checked
+   against 30.3 and 30.5 (covariate: runner PSI 0.39, error flat; concept: PSI flat, error up; bug: size PSI 8.3).
+   Figures `PsiNoise`, `DriftMonitor`; seven predictions; the `monitor` sequence (a probe that replaces the 0.1 rule
+   of thumb with a quiet-period threshold: 46 false alarms → 0). Ladder 384/384 in both runtimes; 479 tests.
+   *(Done: Lab 31.)* 9 cells (a 14-column inventory reduced to a 6-column extract and two averages that reveal one
+   person’s value; the audit table by region with Wilson intervals; calibration by region; the recall gap over 30
+   fresh samples — 11.5 to 23.2 points, so one audit’s gap is itself uncertain; a perfect model failing demographic
+   parity and a B threshold that equalizes recall at the cost of B’s false-positive rate and precision; a review band
+   sized to a reviewer’s capacity; a model card that refuses to render without limitations). The NumPy tickets are
+   the playground’s simulation with their own random draws (seed chosen so the sample resembles the playground’s:
+   base rates 0.196/0.338, gap 15.9). Every lesson figure was checked against the engine: recall 0.906/0.746,
+   precision B 0.781, n = 1,265, 263 reviewed at ±0.2 with automated accuracy 91.9% → 94.4%. Figures
+   `GroupCalibration`, `FairnessTradeoff`; five predictions; the `audit` sequence. Ladder 397/397 in both runtimes;
+   482 tests.
+   *(Done: Lab 32.)* 9 cells (production against retrained after a new build cache — 18% lower error, two slices
+   worse; a model aging week by week; four candidates through five gates, each blocked by a different one; a canary
+   with a two-day rollback rule for the retrained, log10-bug and minutes candidates; version bumps and a release
+   manifest; a routing policy that leaves no long builds on shared runners in tomorrow’s data, against 275 with a 5%
+   random holdout). Every playground figure in the lessons was checked against the engine (14.31/9.62 s, two slices
+   worse, leaky 2.53 s, the bigger model passing at a 35 ms budget). Corrected: 32.3 said the honest retrain has one
+   bad-looking canary day that persistence absorbs; with the playground’s 10% tolerance that day (9% worse on 15
+   jobs) is not even bad — the sentence now says it would trip a 5% single-day rule, which persistence prevents
+   (checked: no rollback at 5% or 0% tolerance with persistence 2). Figures `GateBoard`, `CanaryTimeline`; five
+   predictions; the `release` sequence. Ladder 411/411 in both runtimes; 485 tests.
+   *(Done: Lab 33 — the third project milestone, an end-to-end application.)* The worked exemplar ships as a real
+   application, `buildtime_app.py` (Implement tab, `local`; standard library + NumPy): `data` writes the bundled
+   60-day build log, `train` sets the last 20% of days aside, compares a mean baseline and two declared candidates on
+   the same forward-chaining folds, evaluates once with a paired bootstrap interval against a 2 s threshold set in
+   advance, and writes `artifact.json` and `model_card.md` (limitations from the measured worst segment); `serve`
+   answers `/v1/predict`; `monitor` checks a batch with a PSI threshold from quiet days and the guard; `check` runs
+   it all. Run here: decision ship (29.86 s, interval 26.32 to 33.59), parity over HTTP 2.8e-14 s, 422/400 as
+   expected, a normal day quiet, a day of sizes in KB alerting (PSI 8.28) with 7 guard violations. 10 cells use the
+   same generator, so their numbers match the application: rule or model (a lookup table 0.0 s against a linear
+   model 97.6 s on a documented timeout rule), three candidate projects checked against the framing formula, the
+   evidence from split to decision, a scaffolded alternate on real bundled data (diabetes, with a “keep 40 rows”
+   exercise), artifact + batch/online parity + contract and golden tests, monitoring and a model card, and the
+   final-project rubric checked against the exemplar’s artifacts (8/8). Fold-outs: bundled data and a
+   data-collection guide (and when a rule beats ML), the application’s check output, four milestones and the
+   rubric. Figures `PairedFolds` (the lesson’s five folds against a steady set and a one-fold set), `FoldDesign`
+   (random folds promise 9.9 s, forward chaining 13 s, on data that drift). The `capstone` sequence. Also fixed:
+   Lab 29’s “run on your own machine” note had lost its two command names. Ladder 421/421 in both runtimes;
+   489 tests.
+   *(Done: Lab 34.)* 7 cells on the playground’s 12 runbooks and 17 labelled questions (same tokenizer): chunking and
+   the whole pipeline with an extractive answer; idf by hand (ln 12 = 2.485 for “lockfile”, ln 2 for “check”),
+   TF-IDF cosine and BM25, and a paraphrase that shares no word with its runbook; recall@k and MRR (BM25 recall@1
+   0.676, recall@3 0.794); an evaluation leak — a synonym list written from the six paraphrased test questions lifts
+   them from 0.17 to 1.00 and does nothing for four fresh paraphrases (0.25 → 0.25); permissions before ranking, a
+   prompt-injection flag with instructions kept apart from retrieved text, prompt size, and a stale index. Lesson
+   claims checked against the engine (overall lexical recall@1 0.735). Found and fixed a playground bug: the toy
+   semantic method retrieved the right runbook for “workers crash from insufficient RAM” but the grounded answer
+   said “I could not find this”, because the answer extractor only matched literal words; it now matches in the
+   same concept space as the retriever (engine test added). Figures `RetrievalRace`, `RecallTable`; four
+   predictions; the `retrieval` sequence. Ladder 433/433 in both runtimes; 493 tests.
+   *(Done: Lab 35.)* 7 cells on a NumPy re-run of the playground’s learning platform (6 topics × 4 levels, 120
+   users): the interaction matrix and popularity (which offers a Statistics fan nothing they would probably like,
+   and recommends only 13 of 24 tutorials to anyone); item-item cosine, a factorization by weighted alternating
+   least squares, and a brand-new user whose item-item scores are all 0; hit@5, NDCG@5 and coverage for three
+   models under a time-aware and a random hold-out (random inflates every method, e.g. item-item 0.625 → 0.792);
+   and the 12-round feedback loop with exploration (item-item: 0.850 discovered with none, 0.866 with 30%, 0.727
+   with pure random). Lesson claims checked against the engine (first-round popularity coverage 0.208; 30%
+   exploration beats none, pure random worse than both). Figures `HoldoutLeak` (its readout now states the change
+   per method, since at k = 8 item-item’s random hold-out is not higher), `LoopExplore`; four predictions; the
+   `recsys` sequence. Ladder 446/446 in both runtimes; 496 tests.
+   *(Done: Lab 36.)* 4 cells on the playground’s learner model with both potential outcomes kept: the naive
+   difference split into the effect and the selection bias (3.08 = 1.00 + 2.08), and a prediction model whose
+   coefficient is the naive 3.08; stratification, regression and IPW as the proxy gets noisier (all drift from about
+   1 toward the naive 3), and poor overlap (34% of propensities outside [0.05, 0.95] at strong confounding); a
+   randomized experiment with its interval, the sample size (1,091 per arm, 80% detection in 1,000 simulated
+   experiments) and a sample-ratio check (5,200/4,800: z = 4.0); peeking (5.1% → 19.4% false wins), the winner’s
+   curse (significant estimates average 0.62 for a true 0.3) and 20 null metrics (0.97 false positives, at least one
+   in 64%). Lesson claims checked against the engine (peeking 19.7%, winner’s curse 0.63, 1,091 per arm). Figures
+   `ConfoundingDial`, `PowerCurve`, `PeekingSim`; four predictions; the `causal` sequence. Ladder 459/459 in both
+   runtimes; 499 tests.
+   *(Done: Lab 38.)* 7 cells: the paper’s claims as data with experiment costs and a budget plan (reproduce, seeds,
+   noise and the tuned baseline fit in 74 runs; the ablation does not); a replication harness on scikit-learn’s
+   two-moons with the paper’s method, baseline and training settings (its data generator differs, so its numbers are
+   its own and the findings are compared): the best of 20 seeds (3.1 points) against their mean (1.9); paired,
+   unpaired and bootstrap intervals on ten fresh seeds; an ablation (JitterMix −0.1 [−0.3, +0.2], cubic features
+   +2.1, weight decay −0.5) and a tuned cubic baseline that matches the method; label noise (gain −3.4); verdicts and
+   a report with deviations. Every playground claim was checked against the engine (seed 9 the most favourable of
+   20 at 8.6; fresh seeds 3.4 [2.4, 4.5]; cubic features 3.6; no weight decay better; noisy-label sd 10.2).
+   Corrected: 38.2 said fresh seeds put the gain at “about a third” of the claim; 3.4 of 8.6 is about 40%. Figures
+   `SeedSpread`, `AblationBars`; four predictions; the `replicate` sequence. Ladder 470/470 in both runtimes; 502
+   tests.
+   Next: Lab 39.
 
 (The assessment calls items 1–2 “Slice A”, 5 “Slice B”, 6 “Slice C” and 7 “Slices D–F”.)
 

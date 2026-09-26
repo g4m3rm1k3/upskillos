@@ -674,3 +674,139 @@ describe('Lab 26 ladder values', () => {
       [[3, 4], [2.712068, 3.712068], [2.593327, 3.593327]], [[18.222059]], [[0.892958, 0.214084, 0.892958], [0.669762, 0.660477, 0.669762]], [[6]]])
   })
 })
+
+// ---- Lab 27: Deep-learning investigation ---------------------------------------------------------------
+import { invest as lab27, ablationOf, convMacsOf, recallOf } from './labs/l27-dl-capstone/ladder.js'
+describe('Lab 27 ladder values', () => {
+  it('the trace and repair prompt follow from the helpers', () => {
+    const [mean, lo] = ablationOf([0.84, 0.85, 0.83], [0.80, 0.83, 0.82])
+    const f = lab27.steps[0].fields.map(x => x.answer)
+    expect(Math.abs(f[0] - mean)).toBeLessThan(1e-12); expect(Math.abs(f[1] - lo)).toBeLessThan(1e-12)
+    expect(f.slice(2)).toEqual([convMacsOf(3, 1, 8, 8, 8), 256 * 10 + 10, 18 / 20])
+    expect(recallOf([[45, 5], [10, 40]])).toEqual([0.9, 0.8])
+  })
+})
+
+// ---- Lab 28: Data contracts ----------------------------------------------------------------------------
+import { contract as lab28, badShareOf, zOf, Q_CASES } from './labs/l28-contracts/ladder.js'
+describe('Lab 28 ladder values', () => {
+  it('the trace and repair prompt follow from the helpers; quantile cases match NumPy', () => {
+    const share = badShareOf([4, 9, 9, 17, 30], 50)
+    expect(lab28.steps[0].fields.map(f => f.answer)).toEqual([4, share, 50 - 4, zOf(Array(36).fill(45), 60, 30), 64])
+    expect(zOf([35, 35, 35, 35], 50, 40)).toBe(-0.75)
+    expect(Q_CASES.map(c => c.expected)).toEqual([0.4, 1 / 3, 1, 0.5])
+  })
+})
+
+// ---- Lab 29: Serving -----------------------------------------------------------------------------------
+import { serve as lab29, capacityOf, BATCH_CASES } from './labs/l29-serving/ladder.js'
+import { SERVE } from './labs/l29-serving/serve.js'
+describe('Lab 29 ladder values and the local service', () => {
+  it('the trace follows from the capacity formula; batch choices are as checked', () => {
+    expect(lab29.steps[0].fields.map(f => f.answer)).toEqual([capacityOf(1, 8, 2), capacityOf(4, 8, 2), 60 / capacityOf(1, 8, 2), 0.5])
+    expect(BATCH_CASES.map(c => c.expected)).toEqual([1, 3, 0, 1])
+  })
+  it('serve.py serves /v1/predict with the standard library and has a self-check', () => {
+    expect(SERVE).toMatch(/ThreadingHTTPServer/)
+    expect(SERVE).toMatch(/"--check"/)
+    expect(SERVE).toMatch(/Request body must be a JSON object/)
+  })
+})
+
+// ---- Lab 30: Monitoring --------------------------------------------------------------------------------
+import { monitor as lab30, psiOf, errorAlertDayOf, DELAY_CASES } from './labs/l30-monitoring/ladder.js'
+describe('Lab 30 ladder values', () => {
+  it('the trace follows from the helpers; delayed alert days are as checked', () => {
+    const f = lab30.steps[0].fields
+    expect(Math.abs(f[0].answer - psiOf([0.5, 0.5], [0.6, 0.4]))).toBeLessThan(1e-4)
+    const bad = Array.from({ length: 60 }, (_, i) => (i >= 30 ? 1 : 0))
+    expect([f[1].answer, f[2].answer]).toEqual([errorAlertDayOf(bad, 0.5, 3, 0), errorAlertDayOf(bad, 0.5, 3, 5)])
+    expect(f[3].answer).toBeCloseTo(365 * 0.01, 9)
+    expect(DELAY_CASES.map(c => c.expected)).toEqual([33, 26, 47, -1, 6])
+    expect(Math.round(psiOf([0.5, 0.5], [0.7, 0.3]) * 1e4) / 1e4).toBe(0.1695)
+  })
+})
+
+// ---- Lab 31: Responsible decisions ---------------------------------------------------------------------
+import { audit as lab31, wilsonOf, WILSON_CASES } from './labs/l31-responsible/ladder.js'
+describe('Lab 31 ladder values', () => {
+  it('the trace follows from the counts; Wilson cases match the formula checked in Python', () => {
+    expect(lab31.steps[0].fields.map(f => f.answer)).toEqual([45 / 60, 10 / 140, 45 / 55, 55 / 200])
+    expect(wilsonOf(21, 30).map(v => Math.round(v * 1000) / 1000)).toEqual([0.521, 0.833])
+    expect(WILSON_CASES).toHaveLength(4)
+  })
+})
+
+// ---- Lab 32: Retraining & delivery ---------------------------------------------------------------------
+import { release as lab32, ROLLBACK_CASES, rollbackDayOf } from './labs/l32-delivery/ladder.js'
+describe('Lab 32 ladder values', () => {
+  it('the trace follows from its numbers; rollback cases are as checked', () => {
+    expect(lab32.steps[0].fields.map(f => f.answer)).toEqual([0.1, 0.125, 0, 5])
+    expect(Math.abs(1 - 10.8 / 12 - 0.1)).toBeLessThan(1e-12)
+    expect(ROLLBACK_CASES.map(c => c.expected)).toEqual([1, -1, 4, 0, -1])
+    expect(rollbackDayOf([12.1, 11.5, 12.9, 14.6], [3.2, 8.8, 14.1, 7.1], 0.05, 1)).toBe(2)
+  })
+})
+
+// ---- Lab 33: Final project -----------------------------------------------------------------------------
+import { capstone as lab33, SPLIT_CASES as SPLITS33, decideOf } from './labs/l33-final/ladder.js'
+import { APP } from './labs/l33-final/app.js'
+describe('Lab 33 ladder values and the end-to-end application', () => {
+  it('the trace follows from its numbers; splits match np.array_split', () => {
+    const d = [4.1, 3.8, 5.0, -0.4, -0.6]
+    expect(lab33.steps[0].fields.map(f => f.answer)).toEqual([2.38, 3, 2400, decideOf(0.9, 2.38, 2)])
+    expect(Math.abs(d.reduce((a, b) => a + b, 0) / 5 - 2.38)).toBeLessThan(1e-12)
+    expect(SPLITS33[2].expected).toEqual([[10, 20], [20, 30], [30, 39], [39, 48]])
+    expect(decideOf(26.32, 29.86, 30)).toBe(3)
+  })
+  it('buildtime_app.py covers data, evidence, serving and monitoring, with a self-check', () => {
+    for (const s of ['def train(', 'def serve(', 'def monitor(', 'def check(', 'MIN_IMPROVEMENT_S = 2.0', 'ThreadingHTTPServer', 'model_card.md']) expect(APP).toContain(s)
+  })
+})
+
+// ---- Lab 34: Retrieval & LLM apps ----------------------------------------------------------------------
+import { retrieval as lab34, RR_CASES, recallAtKOf } from './labs/l34-retrieval/ladder.js'
+describe('Lab 34 ladder values', () => {
+  it('the trace follows from the formulas; reciprocal ranks are as checked', () => {
+    const f = lab34.steps[0].fields.map(x => x.answer)
+    expect(f[0]).toBeCloseTo(Math.log(12 / 3), 12)
+    expect(f[1]).toBeCloseTo(0.6 * 0.8, 12)
+    expect(f[2]).toBe(recallAtKOf(['a', 'x', 'y'], ['a', 'b'], 3))
+    expect(f[3]).toBeCloseTo((1 + 1 / 2 + 1 / 4) / 3, 12)
+    expect(RR_CASES.map(c => c.expected)).toEqual([1 / 3, 1, 0, 0.5])
+  })
+})
+
+// ---- Lab 35: Recommender systems -----------------------------------------------------------------------
+import { recsys as lab35, NDCG_CASES, cosineOf } from './labs/l35-recsys/ladder.js'
+describe('Lab 35 ladder values', () => {
+  it('the trace follows from the formulas; NDCG cases are as checked', () => {
+    expect(lab35.steps[0].fields.map(f => f.answer)).toEqual([3 / Math.sqrt(9 * 16), 0.5 + 0.3, 1 / Math.log2(4), 0.9])
+    expect(cosineOf([1, 1, 0], [1, 0, 1])).toBeCloseTo(0.5, 12)
+    expect(NDCG_CASES.map(c => c.expected)).toEqual([1, 0.5, 0, 0])
+  })
+})
+
+// ---- Lab 36: Causal inference --------------------------------------------------------------------------
+import { causal as lab36, sampleSizeOf, DIFF_CASES } from './labs/l36-causal/ladder.js'
+import { sampleSize as engineSampleSize } from './labs/l36-causal/engine.js'
+describe('Lab 36 ladder values', () => {
+  it('the trace follows from the formulas; the sample size matches the engine; intervals are as checked', () => {
+    expect(lab36.steps[0].fields.map(f => f.answer)).toEqual([2.1, 5, Math.ceil(2 * 2.8 ** 2 * 4 / 0.25), 1])
+    expect(sampleSizeOf(2.5, 0.3)).toBe(engineSampleSize(2.5, 0.3))
+    expect(DIFF_CASES[0].expected.map(v => Math.round(v * 1000) / 1000)).toEqual([3, 1.4, 4.6])
+  })
+})
+
+// ---- Lab 38: Research replication ----------------------------------------------------------------------
+import { replicate as lab38, PLAN_CASES, verdictOf } from './labs/l38-replication/ladder.js'
+describe('Lab 38 ladder values', () => {
+  it('the trace follows from its numbers; budget plans are as checked in Python', () => {
+    const f = lab38.steps[0].fields.map(x => x.answer)
+    expect(f[0]).toBe(2 + 20 + 40 + 32 + 20 - 100)
+    expect(f[1]).toBeCloseTo(0.0447, 4)
+    expect(f[2]).toBe(3.5)
+    expect(f[3]).toBe(verdictOf(5, 2.1, 4.0))
+    expect(PLAN_CASES.map(c => c.expected)).toEqual([[0, 1, 3, 4], [1, 2], [], [0, 1, 2]])
+  })
+})

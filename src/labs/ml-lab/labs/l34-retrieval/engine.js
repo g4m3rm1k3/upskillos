@@ -84,9 +84,12 @@ export function evaluate(index, { method, k, canSeeRestricted = true }) {
   })
   return { rows, recall: mean(rows.map(r => r.recall)), mrr: mean(rows.map(r => r.rr)) }
 }
-// Extractive answer: the retrieved sentence with the most query-term overlap, cited.
-export function answer(results, query) {
-  const q = new Set(tokenize(query)), cands = results.flatMap(d => d.text.split(/(?<=\.)\s+/).map(s => ({ s, id: d.id, title: d.title, overlap: tokenize(s).filter(w => q.has(w)).length })))
+// Extractive answer: the retrieved sentence with the most query-term overlap, cited. With the semantic method the
+// overlap is counted in the same concept space the retriever used; otherwise a paraphrase can be retrieved and then
+// "not found" because no literal word matches.
+export function answer(results, query, { semantic = false } = {}) {
+  const toks = t => (semantic ? conceptTokens(tokenize(t)) : tokenize(t))
+  const q = new Set(toks(query)), cands = results.flatMap(d => d.text.split(/(?<=\.)\s+/).map(s => ({ s, id: d.id, title: d.title, overlap: toks(s).filter(w => q.has(w)).length })))
   const best = cands.sort((a, b) => b.overlap - a.overlap)[0]
   return best && best.overlap > 0 ? best : null
 }

@@ -1,0 +1,45 @@
+// Lesson order for Lab 28: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l28-assumptions': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 },
+    { cell: 1 },
+    { predict: { prompt: 'The value "37" (text) arrives in the files column, whose rules are type number, required and at least 1. How many violations does the validator record for it?', answer: 1, explain: 'One: the type error. A value of the wrong type is reported once, and its range is not checked — comparing text with a number would be meaningless (or crash).', misconceptions: [{ answer: 2, feedback: 'After a type error the range rule is skipped: one clear violation, not a type error plus a confusing range error.' }] } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l28-validation': [
+    { p: 0 }, { p: 1 },
+    { figure: 'ContractBoard', caption: 'The incoming batch against the contract. Turn rules off, change the policy and the limit.' },
+    { p: 2 },
+    { cell: 0 }, { cell: 1 },
+    { predict: { prompt: 'A batch of 80 rows has 12 bad rows. The quarantine policy allows at most 10% bad rows. How many rows are accepted?', answer: 0, explain: '12/80 = 15%, above the 10% limit, so the whole batch is rejected: 0 rows. So many failures suggest a systemic upstream problem.', misconceptions: [{ answer: 68, feedback: 'That would be right if 15% were within the limit. Above the limit the whole batch is rejected.' }] } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l28-distribution': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 }, { cell: 1 },
+    { figure: 'UnitDrift', caption: 'Convert more and more of a clean batch’s durations to minutes and compare the two checks.' },
+    { predict: { prompt: 'Training mean 50 s, training sd 40 s. A batch of 64 rows has mean 35 s. What is the z-score of the batch mean?', answer: -3, tolerance: 0.01, explain: 'Standard error 40/√64 = 5; (35 − 50)/5 = −3.', misconceptions: [{ answer: -0.375, feedback: 'Divide by the standard error of the mean, σ/√n = 5, not by σ.' }] } },
+    { p: 2 }, { p: 3 },
+    { cell: 2 },
+    { p: 4 },
+    { math: true },
+  ],
+  'l28-versioning': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 },
+    { predict: { prompt: 'Two data versions, three configurations, one code version. How many distinct run ids can they form?', answer: 6, explain: '2 × 3 × 1 = 6: each combination hashes to its own id.' } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l28-tracking': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 },
+    { predict: { prompt: 'One stored duration is edited in place by 0.1 s after training. Does a rebuild from the recorded data reproduce the recorded weights fingerprint? (1 = yes, 0 = no)', answer: 0, explain: 'No: the “recorded data” is no longer the data that was trained on. The data hash would have changed too — which is why stored versions must never be edited in place.' } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+    { ladder: 'contract' },
+  ],
+}

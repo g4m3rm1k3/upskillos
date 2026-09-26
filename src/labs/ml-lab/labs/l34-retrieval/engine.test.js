@@ -13,4 +13,11 @@ describe('lab 34 retrieval', () => {
     const q = 'why are my builds slow after changing the lockfile'
     expect(answer(retrieve(idx, q), q).id).toBe('ci-cache')
   })
+  it('a paraphrase retrieved by the semantic method is also answered from it (not reported as missing)', () => {
+    const idx = buildIndex(chunk(DOCS, 2)), q = 'workers crash from insufficient RAM'
+    const res = retrieve(idx, q, { method: 'semantic' })
+    expect(res[0].id).toBe('oom')
+    expect(answer(res, q, { semantic: true }).id).toBe('oom')
+    expect(answer(res, q)).toBeNull()        // literal word overlap alone finds nothing: the bug this guards against
+  })
 })

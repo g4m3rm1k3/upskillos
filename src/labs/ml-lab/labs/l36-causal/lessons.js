@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l36-predict-vs-cause',
@@ -87,3 +89,6 @@ export const sources = [
   { title: 'Rosenbaum & Rubin (1983) · The central role of the propensity score', url: 'https://doi.org/10.1093/biomet/70.1.41' },
   { title: 'Gelman & Carlin (2014) · Beyond power calculations: type S and type M errors', url: 'https://doi.org/10.1177/1745691614551642' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

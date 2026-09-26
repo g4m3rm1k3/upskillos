@@ -1,3 +1,5 @@
+import { APP } from './app.js'
+
 export default {
   filename: 'end_to_end.py', packages: ['numpy'],
   title: 'A compact end-to-end pipeline.',
@@ -82,4 +84,5 @@ _small = {"mae": 9.0, "baseline_mae": 10.0, "improvement": 1.0, "ci": (-0.5, 2.5
 assert decide(_small, 0.5) == "inconclusive"
 print(f"PASS: ship on signal (MAE {_good['mae']:.2f} vs {_good['baseline_mae']:.2f}), reject on noise, inconclusive when uncertain")
 `,
+  local: { filename: 'buildtime_app.py', note: 'The worked exemplar as a real application on your own machine (Python and NumPy): `python buildtime_app.py data` writes the bundled 60-day build log, `train` builds the evidence and writes artifact.json and model_card.md, `serve` answers POST requests on http://127.0.0.1:8033/v1/predict, `monitor new.csv` checks a new batch, and `check` runs all of it in a temporary folder and checks every step. Put your own log in builds.csv (same columns) to run the same pipeline on your data.', code: APP },
 }

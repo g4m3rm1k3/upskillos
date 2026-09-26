@@ -91,7 +91,7 @@ for d in [4, 16, 64, 256]:
     },
   },
   'l26-masks': {
-    formulaTex: '$$S_{ij} = -\\infty\\ \\ (j > i)$$ $$\\mathrm{PE}_{p,\\,2i} = \\sin\\!\\big(p/10000^{2i/d}\\big) \\qquad \\mathrm{PE}_{p,\\,2i+1} = \\cos\\!\\big(p/10000^{2i/d}\\big)$$',
+    formulaTex: '$$S_{ij} = -\\infty\\ \\ (j > i)$$ $$\\mathrm{PE}_{p,\\,2i} = \\sin\\!\\big(p/10000^{2i/d}\\big)$$ $$\\mathrm{PE}_{p,\\,2i+1} = \\cos\\!\\big(p/10000^{2i/d}\\big)$$',
     mathCode: {
       rows: [
         ['$S_{ij} = -\\infty,\\ j > i$', 'S[np.triu(np.ones((T, T), bool), k=1)] = -np.inf', 'The causal mask: no weight on later positions.'],
@@ -143,7 +143,7 @@ print("with positions added                                    :", np.allclose(a
     },
   },
   'l26-heads': {
-    formulaTex: '$$(T, d) \\to (h, T, d/h) \\to (h, T, T) \\to (T, d)$$ $$x \\leftarrow x + \\mathrm{MHA}(\\mathrm{LN}(x)) \\qquad x \\leftarrow x + \\mathrm{MLP}(\\mathrm{LN}(x))$$',
+    formulaTex: '$$(T, d) \\to (h, T, d/h) \\to (h, T, T) \\to (T, d)$$ $$x \\leftarrow x + \\mathrm{MHA}(\\mathrm{LN}(x))$$ $$x \\leftarrow x + \\mathrm{MLP}(\\mathrm{LN}(x))$$',
     mathCode: {
       rows: [
         ['split into heads', 'M.reshape(T, h, d // h).transpose(1, 0, 2)', '(T, d) to (h, T, d/h).'],

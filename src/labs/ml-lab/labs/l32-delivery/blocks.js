@@ -1,0 +1,46 @@
+// Lesson order for Lab 32: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l32-triggers': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 },
+    { p: 2 }, { p: 3 },
+    { cell: 1 },
+    { predict: { prompt: 'Of the four slices in the cell (shared, dedicated, cache hit, cache miss), how many are worse after retraining?', answer: 2, explain: 'Two: dedicated runners (5.9 → 7.8 s) and cache misses (6.5 → 9.4 s). The overall 18% gain comes from the shared and cache-hit builds — the features cannot express the new cache’s interaction with size.' } },
+    { p: 4 },
+    { math: true },
+  ],
+  'l32-gates': [
+    { p: 0 }, { p: 1 },
+    { figure: 'GateBoard', caption: 'The playground’s candidates against the production model on the same recent holdout. Change the candidate and the latency budget.' },
+    { p: 2 }, { p: 3 },
+    { cell: 0 }, { cell: 1 },
+    { predict: { prompt: 'Durations have normal noise with standard deviation 5 s. Even a perfect model has MAE σ·√(2/π). What is that, in seconds? (One decimal.)', answer: 4, tolerance: 0.05, explain: '5 × 0.798 = 3.99 s. A candidate far below that — the leaky one scores 2.37 s — is predicting the noise, which is only possible if it has seen the answer.' } },
+    { p: 4 },
+    { math: true },
+  ],
+  'l32-staged': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 }, { cell: 1 },
+    { predict: { prompt: 'A day has 300 jobs and the canary gets 5% of them. How many jobs decide whether the canary looks worse than control that day?', answer: 15, explain: '5% of 300 = 15 jobs: a handful of long builds can make a good model look bad for a day. Hence persistence and a tolerance set from normal variation.' } },
+    { p: 3 },
+    { figure: 'CanaryTimeline', caption: 'Canary error over control error each day of the playground’s schedule. Change the candidate and the tolerance.' },
+    { p: 4 },
+    { math: true },
+  ],
+  'l32-ci': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 },
+    { predict: { prompt: 'The minutes model changes the output unit. The current version is 1.4.0. What is the new major version number?', answer: 2, explain: '2.0.0: a contract change is a major bump, whatever the model’s accuracy — every consumer that reads the prediction must be told and updated.', misconceptions: [{ answer: 1, feedback: 'A change of output unit breaks consumers: that is a major change, not a minor one.' }] } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l32-loops': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 },
+    { predict: { prompt: 'Builds predicted over 60 s all go to dedicated runners. Under that policy alone, how many builds predicted long appear on shared runners in tomorrow’s data?', answer: 0, explain: 'None: the policy never lets them happen, so the next training set has no evidence at all about long builds on shared runners. The 5% random holdout keeps 275 of them in the cell.' } },
+    { cell: 1 },
+    { p: 2 }, { p: 3 }, { p: 4 },
+    { math: true },
+    { ladder: 'release' },
+  ],
+}

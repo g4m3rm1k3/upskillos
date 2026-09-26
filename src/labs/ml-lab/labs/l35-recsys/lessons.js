@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l35-feedback',
@@ -87,3 +89,6 @@ export const sources = [
   { title: 'Chaney, Stewart & Engelhardt (2018) · How algorithmic confounding in recommendation systems increases homogeneity', url: 'https://arxiv.org/abs/1710.11214' },
   { title: 'Google · Recommendation systems course', url: 'https://developers.google.com/machine-learning/recommendation' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

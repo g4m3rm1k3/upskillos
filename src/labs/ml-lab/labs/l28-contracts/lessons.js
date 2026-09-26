@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l28-assumptions',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'DVC · data version control', url: 'https://dvc.org/doc/start' },
   { title: 'MLflow · tracking', url: 'https://mlflow.org/docs/latest/tracking.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

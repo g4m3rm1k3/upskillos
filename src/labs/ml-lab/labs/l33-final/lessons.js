@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l33-choose',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Chip Huyen · Designing Machine Learning Systems', url: 'https://huyenchip.com/books/' },
   { title: 'Mitchell et al. (2019) · Model cards for model reporting', url: 'https://arxiv.org/abs/1810.03993' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

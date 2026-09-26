@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l34-rag',
@@ -87,3 +89,6 @@ export const sources = [
   { title: 'Manning, Raghavan & Schütze · Introduction to Information Retrieval (free book)', url: 'https://nlp.stanford.edu/IR-book/' },
   { title: 'OWASP · Top 10 for LLM applications (prompt injection)', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

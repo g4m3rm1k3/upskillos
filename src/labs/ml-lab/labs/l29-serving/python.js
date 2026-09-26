@@ -1,3 +1,4 @@
+import { SERVE } from './serve.js'
 const TRAIN = `import json
 import numpy as np
 
@@ -22,6 +23,7 @@ def offline_predict(model, req):
 `
 export default {
   filename: 'serving.py', packages: ['numpy'],
+  local: { filename: 'serve.py', note: 'The browser cannot open a network port, so the real service runs on your machine. With Python and NumPy installed, `python serve.py` serves the model on http://127.0.0.1:8029/v1/predict; `python serve.py --check` starts it, sends real HTTP requests, checks parity with the offline model and the 422/400 errors, and stops.', code: SERVE },
   title: 'A serializable predictor with parity and contract tests.',
   intro: 'The offline training pipeline is provided. Build the serving side: save everything the model needs to a JSON artifact, load it into a `Predictor` that validates each request against a contract and returns versioned responses, and write the parity test that proves serving matches training.',
   steps: [

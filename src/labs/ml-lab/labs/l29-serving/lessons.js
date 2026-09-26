@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l29-modes',
@@ -68,7 +70,7 @@ export const lessons = [
     paragraphs: [
       'State latency goals as percentiles: "p95 under 50 ms" means 95% of requests finish within 50 ms. Averages hide the slow tail that users notice.',
       'Total latency = waiting in the queue + processing. When requests arrive at random, waiting time grows sharply as **utilization** (the fraction of time the server is busy) approaches 100%. In the playground, a server that takes 10 ms per request can handle 100 requests per second — and at exactly that rate its latency explodes.',
-      'Capacity = requests handled per second. With a per-call overhead o and a per-item cost c, one-at-a-time serving handles 1000/(o + c) requests per second; batches of B handle 1000·B/(o + c·B). With o = 8 ms, c = 2 ms: 100 per second alone, 400 per second in batches of 8.',
+      'Capacity = requests handled per second. With a per-call overhead o and a per-item cost c, one-at-a-time serving handles 1000/(o + c) requests per second; batches of B handle 1000·B/(o + c·B). With o = 8 ms, c = 2 ms: 100 per second alone, about 333 per second in batches of 8 (8,000/24).',
       '**Micro-batching** waits a few milliseconds to collect requests, trading a little latency at low traffic for much higher capacity at high traffic. Accelerators (GPUs) benefit most, because their per-call overhead is large and per-item cost small.',
       'Set resource limits deliberately: memory for the model and batch, CPU or GPU per replica, timeouts on every call, and a maximum queue length that rejects early rather than letting every request time out. Scale by adding replicas before utilization gets high.',
     ],
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Chip Huyen · Designing Machine Learning Systems, ch. 7 (deployment and prediction service)', url: 'https://huyenchip.com/books/' },
   { title: 'Dean & Barroso (2013) · The tail at scale', url: 'https://doi.org/10.1145/2408776.2408794' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

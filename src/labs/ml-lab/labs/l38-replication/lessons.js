@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l38-read',
@@ -29,7 +31,7 @@ export const lessons = [
       'With 40 training points, which 40 you draw changes test accuracy by several points. A single run cannot tell a real gain from a lucky draw. Report results over several seeds, with the mean and spread.',
       '**Pair** the comparison: give both methods the same seed, hence the same training data, and analyse the per-seed differences. Pairing removes the variation that affects both methods alike, so the interval for the difference is much narrower than comparing two separate averages.',
       'With 10 paired differences, a 95% interval is mean ± 2.262 × sd/√10 (the t value for 9 degrees of freedom), or a bootstrap interval (Lab 05). If the interval excludes 0, the direction is supported; compare the interval with the claimed size separately.',
-      'The paper\'s seed 9 happens to be the most favourable of the first twenty. Whether chosen deliberately or by luck, a reported single run tends to be an optimistic one — the same selection effect as the winner\'s curse (Lab 36). Fresh seeds put the gain at about a third of the claim.',
+      'The paper\'s seed 9 happens to be the most favourable of the first twenty. Whether chosen deliberately or by luck, a reported single run tends to be an optimistic one — the same selection effect as the winner\'s curse (Lab 36). Fresh seeds put the gain at 3.4 points — about 40% of the claimed 8.6.',
       'Report the distribution, not only the best number: mean, standard deviation or interval, and the number of seeds. When you publish results yourself, fix the seeds in advance and report all of them.',
     ],
     formula: 'dᵢ = accᴬ(seed i) − accᴮ(seed i)     d̄ ± t₀.₉₇₅,ₙ₋₁ · s_d / √n',
@@ -92,3 +94,6 @@ export const sources = [
   { title: 'Lipton & Steinhardt (2018) · Troubling trends in machine learning scholarship', url: 'https://arxiv.org/abs/1807.03341' },
   { title: 'Papers with Code · ML reproducibility challenge', url: 'https://paperswithcode.com/rc2022' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

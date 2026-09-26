@@ -1,13 +1,15 @@
 import { lazy } from 'react'
 import { lessons, sources } from './lessons.js'
 import python from './python.js'
-
+import { blocks } from './blocks.js'
+import { withBlocks } from '../../kit/blocks.js'
+import { serve } from './ladder.js'
 export default {
   number: 29,
   short: 'Serving & integration',
   question: 'Does the model behave the same once it is serving real requests?',
   intro: 'Package a model with its preprocessing, prove training–serving parity, design a prediction API contract, and reason about latency and capacity under real traffic.',
-  lessons, sources, python,
+  lessons: withBlocks(lessons, blocks), sources, python, figures: () => import('./figures.jsx'), ladders: { serve },
   math: ['ai.stability', 'stat.percentiles'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Batch versus online prediction, model artifacts and serialization, training–serving skew and parity tests, API contracts, versioned responses and fallbacks, latency percentiles, utilization, micro-batching, and testing the full prediction path.',

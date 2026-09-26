@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l27-question',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Bouthillier et al. (2021) · Accounting for variance in machine learning benchmarks', url: 'https://arxiv.org/abs/2103.03098' },
   { title: 'Lipton & Steinhardt (2018) · Troubling trends in machine learning scholarship', url: 'https://arxiv.org/abs/1807.03341' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

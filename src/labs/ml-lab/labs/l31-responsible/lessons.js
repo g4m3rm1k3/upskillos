@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l31-data',
@@ -108,3 +110,6 @@ export const sources = [
   { title: 'Kleinberg, Mullainathan & Raghavan (2016) · Inherent trade-offs in the fair determination of risk scores', url: 'https://arxiv.org/abs/1609.05807' },
   { title: 'NIST · AI Risk Management Framework', url: 'https://www.nist.gov/itl/ai-risk-management-framework' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

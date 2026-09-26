@@ -1,0 +1,47 @@
+// Lesson order for Lab 31: each paragraph followed by what makes it concrete (see LessonFlow).
+export const blocks = {
+  'l31-data': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 },
+    { p: 2 },
+    { predict: { prompt: 'A team of 4 has an average resolution time of 3.75 h. After one person joins, the published average of the 5 is 4.92 h. What is the newcomer’s own average? (One decimal.)', answer: 9.6, tolerance: 0.05, explain: '5 × 4.92 − 4 × 3.75 = 24.6 − 15 = 9.6 h. Two harmless-looking aggregates reveal one person’s number — why small groups need care.' } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l31-subgroups': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 },
+    { p: 2 },
+    { figure: 'GroupCalibration', caption: 'Calibration of the one pooled score within each region. Change region B’s input noise.' },
+    { cell: 1 },
+    { p: 3 },
+    { predict: { prompt: 'A group has 30 urgent tickets and the model finds 21 (recall 0.70). Roughly how wide is each side of a 95% interval for that recall? (Two decimals.)', answer: 0.16, tolerance: 0.01, explain: '1.96 × √(0.7 × 0.3 / 30) ≈ 0.16 (Wilson gives 0.52–0.83). A 10-point gap between two such groups is well inside the noise.' } },
+    { cell: 2 },
+    { p: 4 },
+    { math: true },
+  ],
+  'l31-fairness': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 }, { cell: 1 },
+    { predict: { prompt: 'Region B’s threshold is lowered until its recall matches A’s. Does B’s precision rise or fall? (1 = rises, 0 = falls)', answer: 0, explain: 'It falls (0.753 → 0.620 in the cell): a lower threshold flags more tickets, and in noisy region B many of the extra flags are false alarms.' } },
+    { p: 2 },
+    { figure: 'FairnessTradeoff', caption: 'Move region B’s threshold and watch every criterion’s gap.' },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l31-oversight': [
+    { p: 0 }, { p: 1 }, { p: 2 },
+    { cell: 0 },
+    { predict: { prompt: 'Each day 3,000 tickets arrive and a band of ±0.15 sends 6.2% of them to review. One reviewer can handle 150 a day. How many reviewers are needed?', answer: 2, explain: '3,000 × 0.062 = 186 tickets; 186/150 = 1.24, so 2 reviewers. Size the band to the people you actually have, or the review becomes a rubber stamp.', misconceptions: [{ answer: 1, feedback: '186 tickets is more than one reviewer’s 150: round up.' }] } },
+    { p: 3 }, { p: 4 },
+    { math: true },
+  ],
+  'l31-card': [
+    { p: 0 }, { p: 1 },
+    { cell: 0 }, { cell: 1 },
+    { predict: { prompt: 'Region A’s precision is 0.982. About how many of every 100 region A flags are false alarms?', answer: 2, tolerance: 0.5, explain: '(1 − 0.982) × 100 ≈ 2 — against about 25 in region B. A frequency is easier to act on than two percentages.' } },
+    { p: 2 }, { p: 3 }, { p: 4 },
+    { math: true },
+    { ladder: 'audit' },
+  ],
+}

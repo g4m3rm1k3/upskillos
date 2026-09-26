@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l30-tests',
@@ -29,7 +31,7 @@ export const lessons = [
       '**Covariate shift**: the input distribution changes (more jobs on shared runners). **Concept drift**: the relationship between inputs and target changes (a new cache makes hits faster). **Label shift**: the target distribution changes. Pipeline bugs look like extreme covariate shift. Each needs a different response.',
       'The **Population Stability Index** compares a current distribution with a reference: bin the reference (e.g. into deciles), compute the share of reference (e) and current (a) values per bin, and sum `(a − e)·ln(a/e)`. With shares (0.5, 0.5) moving to (0.7, 0.3): 0.2·ln(1.4) + (−0.2)·ln(0.6) ≈ 0.067 + 0.102 = 0.170.',
       'Common rules of thumb: PSI below 0.1 is small, 0.1–0.25 moderate, above 0.25 large. Alternatives include the Kolmogorov–Smirnov statistic for continuous features and the Jensen–Shannon distance; all summarize "how different are these distributions" in one number.',
-      'Every drift statistic is noisy for small samples: comparing 80 fresh values in 10 bins with the reference gives a typical PSI near 0.17 even when nothing changed — which would trip a 0.1 threshold daily. The playground uses 400 requests per day. Estimate the no-change distribution of your statistic from quiet historical periods before choosing thresholds.',
+      'Every drift statistic is noisy for small samples: comparing 80 fresh values in 10 bins with the reference gives a typical PSI near 0.12 even when nothing changed — above a 0.1 threshold on more than half of all days. With 400 values per day, as in the playground, the typical no-change PSI is about 0.025. Estimate the no-change distribution of your statistic from quiet historical periods before choosing thresholds.',
       'For categories, compute PSI directly on category shares, and treat never-seen categories as an alert on their own. Monitor prediction drift the same way; it needs no labels.',
     ],
     formula: 'PSI = Σ_bins (a_i − e_i) · ln(a_i / e_i)',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Rabanser et al. (2019) · Failing loudly: detecting dataset shift', url: 'https://arxiv.org/abs/1810.11953' },
   { title: 'Evidently AI · data drift concepts', url: 'https://docs.evidentlyai.com/' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])
