@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const rel = p => relative(root, p).split('\\').join('/')
-const DEFAULT_DOCS = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', ...readdirSync(join(root, 'docs/contributing')).filter(f => f.endsWith('.md')).map(f => `docs/contributing/${f}`)]
+const DEFAULT_DOCS = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'docs/contributor-experience-and-lms-roadmap.md', ...readdirSync(join(root, 'docs/contributing')).filter(f => f.endsWith('.md')).map(f => `docs/contributing/${f}`)]
 const files = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_DOCS
 
 const scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}

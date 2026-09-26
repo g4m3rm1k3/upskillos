@@ -66,5 +66,6 @@ Don't start a dev server and leave it running. If you need one for a browser che
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): the contributor entry point.
 - [docs/contributing/](docs/contributing/): setup, first change, repository tour.
+- [docs/contributor-experience-and-lms-roadmap.md](docs/contributor-experience-and-lms-roadmap.md): the prioritized backlog. Update its status board when completing or changing planned work.
 - [docs/lesson-writing-standard.md](docs/lesson-writing-standard.md): how a good lesson is written.
 - [ARCHITECTURE.md](ARCHITECTURE.md): design history. Parts describe systems that have since been replaced; trust the code and the repository tour first.

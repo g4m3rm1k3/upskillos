@@ -1,7 +1,108 @@
 # Contributor Experience and LMS Roadmap
 
-Status: audit and implementation plan; first slice implemented  
+Status: living backlog; foundation implemented and remaining work prioritized
+
 Audited: 2026-09-26
+
+Last reconciled: 2026-09-26
+
+## Current status and prioritized backlog
+
+This is the master plan for contributor experience, application orientation, and the LMS direction. Keep this section current as work lands. The generated [project inventory](generated/project-inventory.md) is the source of truth for catalog counts and duplicate-content findings; do not copy its changing file lists here.
+
+Priority describes the recommended order of work. It does not mean that every open item blocks an unrelated pull request. The contributor-foundation changes described below have passed their applicable checks and can be reviewed independently of the older catalog and engineering debt.
+
+Status markers:
+
+- [x] completed and verified;
+- [ ] not started or not yet verified;
+- **In progress** must include a branch or pull-request link when one exists;
+- **Blocked** must name the decision or dependency that blocks it.
+
+### Last verified baseline
+
+| Check | Result on 2026-09-26 | Meaning |
+|---|---|---|
+| Contributor documentation check | Passed for all seven canonical contributor documents | Links, literal repository paths, and documented npm commands resolve |
+| Catalog freshness check | Passed with 23 pre-existing integrity findings | Generated files are current; the findings themselves remain open |
+| Focused navigation and ML tests | 69 tests passed | The changed Help, router-link, and ML flows work in tests |
+| Full automated test suite | 105 files and 6,927 tests passed | No test regression was found in the current working tree |
+| Production build | Passed | The app builds, with the warning cleanup listed under P2 still open |
+| Targeted production browser check | Passed at desktop and 390 px widths | Home, About counts, and Help-to-builder navigation worked without horizontal overflow |
+| Broad route smoke check | Incomplete | Heavy Monaco routes timed out or initialized unreliably in the harness; this remains P2 work |
+| TypeScript check | Not clean | Existing errors need a recorded baseline and repair; do not describe the repository as type-clean |
+
+### P0 — Repair content identity and protect learner progress
+
+This is the next correctness project. The inventory currently reports 17 duplicate-id groups, five duplicate course/slug keys, and one duplicate route. These categories overlap, so treat the generated report as 23 integrity findings rather than 23 simple file edits.
+
+- [ ] Decide the canonical lesson in each duplicate group before changing an id, slug, filename, or route.
+- [ ] Add real top-level lesson ids to the 12 geometry lessons currently being identified as `ScienceNotebook`.
+- [ ] Replace the lesson-id generator's first-textual-`id:` behavior with structural extraction or another method that cannot mistake a nested component id for the lesson id.
+- [ ] Assign unique stable ids to the remaining duplicate-id groups, including the calculus/precalculus, Guttag Python, and linear-algebra collisions.
+- [ ] Resolve the five duplicate course/slug keys so every lesson has its own manifest entry.
+- [ ] Resolve the duplicate Guttag Python route and preserve the old URL with a redirect when a published route changes.
+- [ ] Add an explicit progress migration for every published id that changes. Where an old id is ambiguous, define and test whether progress is copied, mapped by route, or conservatively left untouched.
+- [ ] Add regression tests proving that lesson ids, manifest keys, and routes are unique and that migrated progress survives reload.
+- [ ] Regenerate the title, id, project-facts, and inventory files; finish only when the generated inventory has no unexplained integrity findings.
+
+**Dependency:** complete this work before learning paths rely on lesson ids as durable step references.
+
+### P1 — Finish the contributor system
+
+- [ ] Rewrite `ARCHITECTURE.md` around the current `courseLoader`, lab discovery, game registry, HashRouter routes, shell, renderers, and progress system. Move obsolete architecture into `docs/history/` when it remains useful.
+- [ ] Finish the task guides planned under `docs/contributing/`: an index plus lessons, visualizations, UI/features, labs/games, tests/verification, documentation, and pull-request guides.
+- [ ] Add and validate a machine-readable change-impact map so contributors can determine which checks, generated files, and documentation accompany a change.
+- [ ] Choose one canonical schema document and remove or generate the duplicate `Schema.md` / `docs/Schema.md` copy.
+- [ ] Expand the in-app contributor lessons to teach the production course layout, ordinary React changes, tests, generated files, and the checks for each change type.
+- [ ] Add an obvious link to the contributor learning series from the contributor entry point and from the in-app Contribute destination.
+- [ ] Test the setup and first-change guides on a clean clone rather than only against an already configured development machine.
+
+### P1 — Finish navigation, Help, About, and accessibility
+
+- [ ] Stop the first-visit welcome overlay from blocking every top-bar control on a phone; retain a clear dismiss and reopen path.
+- [ ] Remove or repair guided-tour targets that point at the unmounted `MobileBottomNav`.
+- [ ] Give every full-page course, lesson, lab, game, builder, and tool a consistent visible way to return to Home or its parent context.
+- [ ] Decide whether the unused mobile bottom navigation should be mounted or deleted; if mounted, keep labels visible and account for safe-area spacing.
+- [ ] Split the 3,600-line Help modal into clear Help, Feedback, Contribute, and About destinations with smaller components or data modules.
+- [ ] Make GitHub Issues the visible account-independent reporting fallback and document what feedback is public, private, or sent through a webhook.
+- [ ] Keep About counts and inventories generated; assign an owner and review rule for its hand-written feature highlights and roadmap claims.
+- [ ] Run a keyboard, focus-order, screen-reader-label, contrast, reduced-motion, and responsive audit of primary navigation and reporting flows; add focused automated tests for defects found.
+- [ ] Add integration coverage for entering and leaving representative courses, lessons, labs, games, and builders in the production HashRouter build.
+
+### P2 — Establish an engineering-health baseline
+
+- [ ] Capture the current `npm run typecheck` output, group errors by subsystem, and drive it to zero without hiding errors through broad exclusions.
+- [ ] Make the broad route smoke test deterministic for Monaco and other heavy routes, with per-route results and useful failure artifacts.
+- [ ] Fix the React `ref` warnings observed during route smoke testing.
+- [ ] Correct the CSS syntax warning containing `-3: -1` and narrow the Tailwind content patterns that currently scan `node_modules`.
+- [ ] Review build-time `eval` warnings and mixed static/dynamic import warnings; remove avoidable cases and document accepted third-party cases.
+- [ ] Measure the largest production chunks and lazy-load expensive features where doing so improves first-use performance without breaking offline behavior.
+- [ ] Define a repeatable content-quality sample for lesson rendering, mathematics, code cells, and interactive exercises across supported browsers. Automated tests alone do not prove all 1,214 lessons are correct.
+- [ ] Record supported browsers, mobile widths, and desktop/Electron release checks in the verification guide.
+
+### P3 — Add learning paths and converge the LMS model
+
+- [ ] Define versioned `LearningPath` and `PathStep` contracts using stable resource ids, prerequisites, outcomes, optional/review steps, and completion evidence.
+- [ ] Add a validated path registry plus `/paths` and `/paths/:pathId` routes.
+- [ ] Ship the contributor path first, with Continue, path progress, recovery links, and skip behavior.
+- [ ] Reshape Home into clear Continue, Start Here, Explore, Practice/Projects, and Create/Contribute areas while preserving useful topic filters.
+- [ ] Inventory every lesson shape and renderer capability, then define one executable, versioned lesson contract.
+- [ ] Add adapters for current lesson formats and migrate course by course with semantic and visual regression coverage.
+- [ ] Update Lesson Builder import/export to use the normalized contract.
+- [ ] Keep completion language tied to evidence: visited, practiced, completed, and independently demonstrated must remain distinct.
+
+### Continuous maintenance
+
+- [ ] Update this status board in the same pull request whenever an item is completed, split, blocked, or superseded.
+- [ ] Run `npm run facts` for catalog changes and commit its generated outputs.
+- [ ] Run `npm run docs:check` for contributor-document changes and add newly canonical documents to the checker.
+- [ ] Keep `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, About, and in-app Help linked to canonical material instead of copying volatile facts.
+- [ ] Re-run the full test suite, production build, and relevant browser flows before a release-sized merge.
+
+### Completion record
+
+The foundation already completed includes root agent rules, generated project facts, a short contributor entry point, three starter guides, corrected contributor lessons, a labeled Home action, router-safe Help links, generated About counts, contributor CI checks, and reliable lesson-title generation for lessons that import images. The detailed implementation record follows.
 
 ## Progress: first slice (2026-09-26)
 
@@ -9,7 +110,7 @@ The nine items under "Recommended first implementation slice" are implemented:
 
 | Item | Where |
 |---|---|
-| Agent rules with current paths and real commands | `AGENTS.md`. The old `docs/AGENT_WORKFLOW.md` moved to `docs/history/`, marked superseded |
+| Agent rules with current paths and real commands | `AGENTS.md`. The old guide moved to [docs/history/AGENT_WORKFLOW-legacy.md](history/AGENT_WORKFLOW-legacy.md), marked superseded |
 | Generated project facts | `scripts/generate-project-facts.mjs` writes `src/data/projectFacts.json` and `docs/generated/project-inventory.md`, and updates marked README blocks. `npm run facts` regenerates, `npm run catalog:check` fails when stale; dev and build regenerate |
 | Short `CONTRIBUTING.md` | Quick start, task chooser, check matrix, pull-request workflow. The old guide is `docs/history/CONTRIBUTING-legacy.md` |
 | Starter guides | `docs/contributing/setup.md`, `first-change.md`, `repository-tour.md` |
@@ -47,7 +148,9 @@ UpSkillOS has grown into a large learning application, but its contributor exper
 
 The immediate problem is not a lack of documentation. It is that the same facts are copied into several places and have drifted apart. The long-term problem is that the application has course, lesson, lab, game, progress, and planning systems, but no shared learning-path model tying them together.
 
-## Verified current state
+## Original audit findings (before the first implementation slice)
+
+This section preserves the evidence that led to the plan. Statements here describe the repository before the completion record above; use the status board at the top for the current state.
 
 The following findings were checked against the repository rather than inferred from the public documentation.
 
@@ -79,27 +182,27 @@ The generated manifests do not currently agree on a lesson total: `lessonTitles.
 
 ### The main contribution guide teaches removed paths and workflows
 
-`CONTRIBUTING.md` is more than 1,300 lines. Large parts still instruct contributors to edit or create files under `src/content/`, manually import lessons into chapter `index.js` files, and update `src/content/index.js`. The current course loader does not use that structure.
+The former contribution guide was more than 1,300 lines. Large parts instructed contributors to edit or create files under the removed *src/content* tree, manually import lessons into chapter index files, and update a removed content index. The current course loader does not use that structure.
 
 Examples of obsolete references include:
 
-- `src/content/{course-folder}/`;
-- `src/content/index.js` and `src/content/courses.js`;
-- `src/content/videos/videoDatabase.js`;
-- `src/content/videos/videoPlacementMap.js`;
+- the former src/content course folders;
+- the former content index and course registry;
+- the former video database;
+- the former video placement map;
 - old chapter index registration steps.
 
 The current validator in `scripts/validate-lesson-schema.mjs` correctly scans `src/courses` and derives routes from filenames. The guide and the validator therefore teach two different systems.
 
 ### The architecture guide is a historical document presented as current
 
-`ARCHITECTURE.md` documents routes and files that no longer exist, including `LearningPathsPage.jsx`, `src/data/learningPaths.js`, `src/content/index.js`, and other former content-system files. It also describes manual registries that were replaced by `import.meta.glob` discovery.
+`ARCHITECTURE.md` documents routes and files that no longer exist, including the former Learning Paths page, learning-path data file, content index, and other retired content-system files. It also describes manual registries that were replaced by `import.meta.glob` discovery.
 
 The guide was last updated in April 2026. It is useful as design history, but unsafe as an implementation reference until rewritten around the live system.
 
 ### Agent instructions are hidden and actively misleading
 
-There is no repository-root `AGENTS.md`. The nearest equivalent, `docs/AGENT_WORKFLOW.md`, says it is mandatory but is not automatically discoverable by most coding agents. It contains old paths and requires `node scripts/check-doc-drift.js`, a script that does not exist.
+There was no repository-root `AGENTS.md`. The nearest equivalent is now archived at [docs/history/AGENT_WORKFLOW-legacy.md](history/AGENT_WORKFLOW-legacy.md). It contained old paths and required a nonexistent documentation-drift script.
 
 It also contains a fixed local path from another machine and says lesson files must be manually registered. An agent following it can make unnecessary edits or report a false verification result.
 
@@ -110,7 +213,7 @@ Contributor guidance currently lives in at least these places:
 - `README.md`;
 - `CONTRIBUTING.md`;
 - `ARCHITECTURE.md`;
-- `docs/AGENT_WORKFLOW.md`;
+- [docs/history/AGENT_WORKFLOW-legacy.md](history/AGENT_WORKFLOW-legacy.md);
 - `docs/lesson-writing-standard.md`;
 - `Schema.md`;
 - `docs/Schema.md`;
@@ -199,11 +302,11 @@ docs/contributing/
   pull-requests.md          # sync, scope, screenshots, review workflow
 ```
 
-Move detailed lesson-quality policy into `docs/content/` and link to it from `lessons.md`. Avoid embedding the full lesson schema in the general contribution guide.
+Move detailed lesson-quality policy into a planned `docs/content/<topic>.md` structure and link to it from `lessons.md`. Avoid embedding the full lesson schema in the general contribution guide.
 
 ### A change-impact map
 
-Create one machine-readable map, for example `docs/change-impact.yml`, that describes coupled changes:
+Create one machine-readable map, for example **docs/change-impact.yml**, that describes coupled changes:
 
 ```yaml
 rules:
@@ -567,4 +670,3 @@ A successful learner experience lets a newcomer answer:
 - Why is this step in my path?
 - What can I skip, review, or try next?
 - What evidence of progress has the app actually recorded?
-
