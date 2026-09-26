@@ -2,6 +2,7 @@
 // A full in-app documentation site for contributors of all skill levels.
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTour } from "../../context/TourContext.jsx";
 import {
   X,
   Download,
@@ -3639,6 +3640,7 @@ const SECTION_MAP = {
 
 export default function HelpModal({ isOpen, onClose }) {
   const [activeSection, setActiveSection] = useState("feedback");
+  const tour = useTour();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3680,13 +3682,24 @@ export default function HelpModal({ isOpen, onClose }) {
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-            aria-label="Close docs"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Reachable at every screen width, unlike Delta's panel — the one way to reopen the tour on a phone. */}
+            {tour && (
+              <button
+                onClick={() => { onClose(); tour.startTour(); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              >
+                Take the tour
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              aria-label="Close docs"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-1 min-h-0 overflow-hidden relative bg-slate-50/30 dark:bg-slate-950/30">

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useTour, TOUR_SEEN_KEY } from '../../context/TourContext.jsx'
 
 // Starts the Delta-hosted tour on a visitor's first-ever visit. Delayed so
-// the Taskbar/MobileBottomNav (the tour's anchor targets) have mounted.
+// the tour's anchor targets (Taskbar, top bar, home page) have mounted.
 export default function TourAutoStart() {
   const { startTour } = useTour()
 

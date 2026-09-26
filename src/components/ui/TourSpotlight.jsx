@@ -8,14 +8,15 @@ function useTargetRect(selector, active) {
     if (!active || !selector) { setRect(null); return }
 
     const measure = () => {
-      const el = document.querySelector(selector)
-      setRect(el ? el.getBoundingClientRect() : null)
+      const r = document.querySelector(selector)?.getBoundingClientRect()
+      // A target hidden at this breakpoint (display:none) measures 0×0 — treat it as missing.
+      setRect(r && (r.width > 0 || r.height > 0) ? r : null)
     }
 
     measure()
-    // Targets live in the Taskbar/MobileBottomNav, which don't resize their
-    // own position often, but the window does — keep the highlight glued to
-    // the real element instead of drifting on resize/orientation change.
+    // Targets (Taskbar, top bar, home page) rarely move on their own, but the
+    // window does — keep the highlight glued to the real element instead of
+    // drifting on resize/orientation change.
     window.addEventListener('resize', measure)
     const interval = setInterval(measure, 400) // cheap re-check for late-mounted targets
     return () => {
@@ -50,9 +51,12 @@ export default function TourSpotlight() {
         transition: 'all 0.25s ease',
       }
     : {
+        // No target to highlight: dim the page but let taps through, so the tour never
+        // locks someone out of the top bar (it did on phones). The card has Skip.
         position: 'fixed',
         inset: 0,
         background: 'rgba(15,23,42,0.55)',
+        pointerEvents: 'none',
         zIndex: 9990,
       }
 

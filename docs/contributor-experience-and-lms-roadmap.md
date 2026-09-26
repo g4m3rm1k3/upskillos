@@ -70,10 +70,10 @@ These 14 are the only findings left; the `la8-001` collision and the Guttag Pyth
 
 ### P1 — Finish navigation, Help, About, and accessibility
 
-- [ ] Stop the first-visit welcome overlay from blocking every top-bar control on a phone; retain a clear dismiss and reopen path.
-- [ ] Remove or repair guided-tour targets that point at the unmounted `MobileBottomNav`.
+- [x] First-visit tour no longer blocks the phone's top bar: a step with no target dims the page but lets taps through, and targets hidden at the current width count as missing (`TourSpotlight.jsx`). Reopen path at every width: **Take the tour** in the Help modal header.
+- [x] Tour steps below `lg` only target elements that exist there: greeting centered, no search step (the mobile home page has none), Explore highlights the mobile home's course list, farewell points at the ? button (`TourContext.jsx`). Desktop steps unchanged.
 - [ ] Give every full-page course, lesson, lab, game, builder, and tool a consistent visible way to return to Home or its parent context.
-- [ ] Decide whether the unused mobile bottom navigation should be mounted or deleted; if mounted, keep labels visible and account for safe-area spacing.
+- [x] Deleted the unmounted `MobileBottomNav.jsx` (it covered phones' on-screen buttons without safe-area handling), and the unrouted `AllCoursesPage.jsx`, `GamesPage.jsx` and the `GridPage.jsx` only they used (`/courses` and `/games` redirect home).
 - [ ] Split the 3,600-line Help modal into clear Help, Feedback, Contribute, and About destinations with smaller components or data modules.
 - [ ] Make GitHub Issues the visible account-independent reporting fallback and document what feedback is public, private, or sent through a webhook.
 - [ ] Keep About counts and inventories generated; assign an owner and review rule for its hand-written feature highlights and roadmap claims.
