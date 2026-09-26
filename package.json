@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && vite",
-    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env NODE_OPTIONS=--max-old-space-size=12288 vite build",
     "preview": "vite preview",
     "index": "node src/scripts/build-lesson-titles.js",
     "lesson-ids": "node scripts/build-lesson-ids.mjs",
