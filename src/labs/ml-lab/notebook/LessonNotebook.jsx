@@ -5,7 +5,7 @@ import { setupOpenCalcMonaco } from '../../../utils/monacoThemes.js'
 import { useGlobalTheme } from '../../../context/ThemeContext.jsx'
 import { getCodeFontFamily, getCodeFontSize } from '../../../components/ui/CodeSettingsModal.jsx'
 import * as runtime from './runtime.js'
-import { loadDraft, saveDraft, rebaseDraft, clearDraft, getSession, setSession } from './drafts.js'
+import { loadDraft, saveDraft, rebaseDraft, clearDraft, summarizeDraft, getSession, setSession } from './drafts.js'
 
 // A lesson's runnable cells. The learner's code is the source of truth: it is saved as a draft
 // on every edit and is what "Download" and "Copy to Notebook Lab" export. Python runs in a
@@ -120,8 +120,9 @@ export function useNotebook(id, notebook) {
   const [draft, setDraft] = useState(() => loadDraft(id, originals))
   const [session, setSessionState] = useState(() => getSession(id) ?? emptySession(originals.length))
   const [rt, setRt] = useState(null), [pending, setPending] = useState([]), [notice, setNotice] = useState('')
-  const codes = draft.codes, codesRef = useRef(codes), mounted = useRef(true)
+  const codes = draft.codes, codesRef = useRef(codes), draftRef = useRef(draft), mounted = useRef(true)
   codesRef.current = codes
+  draftRef.current = draft
   useEffect(() => { mounted.current = true; const off = runtime.subscribe(setRt); return () => { mounted.current = false; off() } }, [])
   // The session store, not component state, is the source of truth: a run that finishes after
   // the learner hides the notebook or moves to another lesson still records its output.
@@ -135,8 +136,13 @@ export function useNotebook(id, notebook) {
   const setCode = (i, code) => {
     const next = codesRef.current.map((c, k) => k === i ? code : c)
     codesRef.current = next
-    const saved = saveDraft(id, originals, next)
-    setDraft(d => ({ ...d, codes: next, edited: next.some((c, k) => c !== originals[k]) || d.outdated }))
+    // Undoing a cell back to the lesson's code also drops what that cell's edit was based on.
+    const { bases, orphans } = draftRef.current
+    const nextBases = bases.map((b, k) => k === i && code === originals[k] ? null : b)
+    const saved = saveDraft(id, originals, next, { bases: nextBases, orphans })
+    const nextDraft = summarizeDraft(next, nextBases, orphans, originals)
+    draftRef.current = nextDraft
+    setDraft(nextDraft)
     setNotice(saved ? '' : 'Could not save your edits on this device (storage is full or blocked). Download the notebook to keep them.')
   }
 
@@ -166,15 +172,26 @@ export function useNotebook(id, notebook) {
   const restart = () => { runtime.resetNamespace(id); updateSession(s => ({ ...s, counts: s.counts.map(() => null), reset: true })) }
   const resetAll = () => {
     if (!(window.confirm?.('Replace every cell in this notebook with the original lesson code? Your edits to this notebook will be lost; other notebooks are not affected.') ?? true)) return
-    clearDraft(id); setDraft({ codes: [...originals], edited: false, outdated: false }); setNotice('Restored the original cells.')
+    clearDraft(id); setDraft(summarizeDraft([...originals], originals.map(() => null), [], originals)); setNotice('Restored the original cells.')
   }
-  const keepMine = () => { rebaseDraft(id, originals, codes); setDraft(d => ({ ...d, outdated: false })) }
+  // Keep the learner's code in the cells, accepting the updated lesson as its new base.
+  const keepMine = () => {
+    const { orphans } = draftRef.current
+    rebaseDraft(id, originals, codes, { orphans })
+    setDraft(summarizeDraft(codes, codes.map((c, k) => c !== originals[k] ? originals[k] : null), orphans, originals))
+  }
+  // Edits that no longer match any cell are shown to the learner; this lets them let go of them.
+  const discardOrphans = () => {
+    const { bases } = draftRef.current
+    saveDraft(id, originals, codes, { bases, orphans: [] })
+    setDraft(summarizeDraft(codes, bases, [], originals))
+  }
 
   const everRan = session.counts.some(c => c != null) || session.generation != null
   const variablesLost = session.reset || (session.generation != null && rt && rt.generation !== session.generation)
   // Cells above i that have not run in the current Python session (their variables may be missing).
   const missingBefore = i => codes.slice(0, i).map((_, k) => k).filter(k => session.counts[k] == null || variablesLost)
-  return { id, notebook, originals, codes, draft, session, rt, pending, notice, setNotice, setCode, runCells, restart, resetAll, keepMine, everRan, variablesLost, missingBefore, busy: pending.length > 0 }
+  return { id, notebook, originals, codes, draft, session, rt, pending, notice, setNotice, setCode, runCells, restart, resetAll, keepMine, discardOrphans, everRan, variablesLost, missingBefore, busy: pending.length > 0 }
 }
 
 export function NotebookToolbar({ nb }) {
@@ -192,7 +209,11 @@ export function NotebookToolbar({ nb }) {
       {rt?.state === 'loading' || rt?.state === 'running' ? rt.text : variablesLost ? `${rt?.state === 'idle' ? 'Python was shut down to free memory' : 'Python was restarted'} since this notebook last ran, so its variables are gone (your code is kept). Use “Run all”, or run the cells from the top.` : everRan ? 'Cells in this notebook share variables, like a Jupyter notebook. Other lessons’ notebooks cannot see them.' : rt?.text}
       {' '}Shift + Enter runs the cell you are editing. In an editor, press Ctrl + M to let Tab move focus out.
     </p>
-    {draft.outdated && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={nb.keepMine}>Keep my version</button> <button onClick={nb.resetAll}>Use the updated version</button></p>}
+    {draft.bases.some((b, i) => b !== null && b !== nb.originals[i] && codes[i] !== nb.originals[i]) && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={nb.keepMine}>Keep my version</button> <button onClick={nb.resetAll}>Use the updated version</button></p>}
+    {draft.orphans.length > 0 && <div className="ml-warning" role="status">
+      <p>This lesson’s notebook has been updated, and {draft.orphans.length === 1 ? 'one of your earlier edits no longer matches' : `${draft.orphans.length} of your earlier edits no longer match`} any cell, so {draft.orphans.length === 1 ? 'it is' : 'they are'} not shown in the notebook. Copy anything you want to keep. <button onClick={nb.discardOrphans}>Discard {draft.orphans.length === 1 ? 'it' : 'them'}</button></p>
+      {draft.orphans.map((o, k) => <details key={k}><summary>Earlier edit {k + 1}</summary><pre>{o.code}</pre></details>)}
+    </div>}
     {notice && <p className="ml-caption" role="status">{notice}</p>}
   </>
 }

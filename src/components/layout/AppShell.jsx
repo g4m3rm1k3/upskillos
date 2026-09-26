@@ -163,11 +163,20 @@ function TopBar() {
         <AuthButton />
       </div>
 
-      {/* CENTER — nav links */}
+      {/* CENTER — nav links. Home is labelled here as well as on the logo, so returning to the
+          catalog never depends on knowing the logo is a link. Shown at every width: this bar is
+          the only navigation phones get. */}
       <div className="flex-1 flex items-center gap-1">
         <Link
+          to="/"
+          aria-current={location.pathname === "/" ? "page" : undefined}
+          className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 aria-[current=page]:text-slate-900 dark:aria-[current=page]:text-slate-100 transition-colors"
+        >
+          Home
+        </Link>
+        <Link
           to="/blog"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           Blog
         </Link>
@@ -217,7 +226,10 @@ function TopBar() {
 
         <NavSep className="hidden lg:block" />
 
-        <NavClock />
+        {/* Phones show the time already; on narrow screens the space goes to Home and Help. */}
+        <div className="hidden sm:block">
+          <NavClock />
+        </div>
       </div>
     </header>
   );

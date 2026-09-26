@@ -1,3 +1,5 @@
+> **Historical document.** This plan targets the removed `src/content/` system and manual chapter indexes. Do not assign these tasks without rewriting them for the current `src/courses/` layout and current lesson contract.
+
 # UpSkillOS — Agent Task Plan
 
 This document outlines the structured tasks to be handed off to AI agents to upgrade the UpSkillOS content to the "Gold Standard". 
@@ -75,7 +77,7 @@ Identify lessons that do not have a `previewVisualizationId` in their hook or la
 ## Agent Protocol
 
 Every agent working on these tasks MUST:
-1. Read `docs/AGENT_WORKFLOW.md` before touching code.
+1. Read `AGENTS.md` before touching code.
 2. Run `npm run build` frequently.
-3. Run `node scripts/check-doc-drift.js` after structural changes.
+3. Run `npm run docs:check` after contributor-document changes and `npm run catalog:check` after catalog changes.
 4. Report their completion status clearly, including any unresolved issues from the 14-point checklist.

@@ -23,7 +23,9 @@
 
 UpSkillOS is a complete STEM learning environment that runs entirely in the browser — no account, no subscription, no install required. It is the only open-source platform that combines university-level curriculum, real interactive coding environments, physics and CNC simulations, a built-in AI tutor, and a WYSIWYG lesson authoring system in a single free application.
 
-**784 lessons. 31 courses. 38 interactive labs and simulators. 15 games built on real math and physics. All free. All open source.**
+<!-- facts:headline -->
+**1214 lessons. 41 courses. 49 interactive labs and simulators. 15 games built on real math and physics. All free. All open source.**
+<!-- /facts:headline -->
 
 ---
 
@@ -67,7 +69,7 @@ Every lesson follows the same contract — **Hook → Intuition → Math → Rig
 7. **Checkpoints** — progress tracking so nothing gets skipped
 8. **Quiz** — spaced retrieval at the end of every lesson
 
-This structure is not cosmetic. It is the architecture of every lesson file in the codebase, enforced consistently across all 784 lessons.
+This structure is not cosmetic. It is the architecture of the lesson files in the codebase.
 
 ---
 
@@ -75,10 +77,12 @@ This structure is not cosmetic. It is the architecture of every lesson file in t
 
 | | Count |
 |---|---|
-| Lessons | **784** |
-| Courses | **31** |
-| Interactive labs & simulators | **38** |
+<!-- facts:scale -->
+| Lessons | **1214** |
+| Courses | **41** |
+| Interactive labs & simulators | **49** |
 | Games built on real math & physics | **15** |
+<!-- /facts:scale -->
 | Code environments (Python, JS, C++, SQL, React) | **5** |
 | Lesson-aware AI tutor interactions | Unlimited |
 
@@ -86,10 +90,14 @@ This structure is not cosmetic. It is the architecture of every lesson file in t
 
 ## What's Inside
 
-### 31 Courses
+<!-- facts:courses-heading -->
+### 41 Courses
+<!-- /facts:courses-heading -->
 
 <details>
-<summary>View full course list</summary>
+<summary>View course highlights</summary>
+
+The generated [project inventory](docs/generated/project-inventory.md#courses) contains the complete current list.
 
 | Course | Depth | Environments |
 |---|---|---|
@@ -129,7 +137,9 @@ This structure is not cosmetic. It is the architecture of every lesson file in t
 
 </details>
 
-### 38 Interactive Labs and Simulators
+<!-- facts:labs-heading -->
+### 49 Interactive Labs and Simulators
+<!-- /facts:labs-heading -->
 
 - **Python Notebook** — Pyodide-powered, fully offline, runs numpy/scipy/matplotlib in the browser
 - **CNC Simulator** — write G-Code, watch real toolpaths, verify programs before touching a machine
@@ -222,7 +232,7 @@ export default {
 }
 ```
 
-This format is what makes the Lesson Builder work — and what makes 784 lessons parseable, searchable, and exportable without a database.
+This format is what makes the Lesson Builder work — and what makes the lessons parseable, searchable, and exportable without a database.
 
 ### Stack
 
@@ -262,7 +272,7 @@ npm run backend:lan  # optional LAN server for institutional deployments
 
 ## Getting Started (Developers)
 
-**Requirements:** Node.js 18+, npm 9+
+**Requirements:** Node.js 24 and the npm version bundled with it
 
 ```bash
 git clone https://github.com/g4m3rm1k3/upskillos.git
@@ -283,7 +293,7 @@ npm run desktop:build    # Windows .exe / macOS .dmg
 
 ```
 src/
-  courses/               # 31 course packages
+  courses/               # course packages
     {courseId}/
       {N}-{chapter}/     # chapter folders
         {NNN}-{slug}.js  # one lesson file per lesson
@@ -302,10 +312,9 @@ src/
     layout/              # AppShell, TopBar, MobileBottomNav
     math/                # KaTeX wrappers, MarkdownProse
     viz/                 # VizFrame registry (maps string IDs to components)
-  labs/                  # 38 standalone labs and simulators
+  labs/                  # standalone labs and simulators
   games/                 # 15 math and physics games
   pages/                 # top-level route components
-  courses/               # courseLoader — lazy-loads lesson content
   context/               # progress, theme, pins
   data/
     lessonTitles.json    # real lesson titles, generated at build time
@@ -347,7 +356,9 @@ Access to high-quality, interactive STEM education is not equally distributed. T
 ### What We've Already Built
 
 Without institutional funding, one developer has shipped:
-- **784 lessons** across **31 courses** covering the full STEM-to-employability pipeline
+<!-- facts:built -->
+- **1214 lessons** across **41 courses** covering the full STEM-to-employability pipeline
+<!-- /facts:built -->
 - A **live Python execution environment** (Pyodide) that runs numpy, scipy, pandas, matplotlib, and scikit-learn with no server
 - A **CNC programming simulator** — one of the most in-demand industrial skills in the country, fully learnable without access to a physical machine
 - A **PLC ladder logic simulator** for industrial automation training

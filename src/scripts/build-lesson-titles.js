@@ -5,9 +5,14 @@
 // Run: node src/scripts/build-lesson-titles.js
 // Called automatically before dev/build via npm scripts
 
-import { writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
+import { register } from 'module'
+
+// Lessons that import diagrams (`x.svg?url`) cannot be loaded by plain Node; these hooks
+// stub image imports so those lessons get their real titles too.
+register('../../scripts/lib/asset-import-hooks.mjs', import.meta.url)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '../..')
@@ -23,6 +28,7 @@ function titleFromSlug(slug) {
 async function buildTitles(root) {
   const coursesDir = resolve(root, 'src/courses')
   const titles = {}
+  const failures = []
   let lessonCount = 0
 
   const courseIds = readdirSync(coursesDir).filter(name => {
@@ -59,7 +65,10 @@ async function buildTitles(root) {
           // every single lesson and the title map came out empty.
           const mod = await import(pathToFileURL(lessonPath).href)
           lesson = mod?.default ?? mod?.lesson ?? {}
-        } catch { continue }
+        } catch (e) {
+          failures.push(`${courseId}/${chapterDir}/${lessonFile}: ${e.message.split('\n')[0]}`)
+          continue
+        }
 
         titles[`${chapterId}/${lessonSlug}`] = lesson.title ?? titleFromSlug(lessonSlug)
         lessonCount++
@@ -67,17 +76,32 @@ async function buildTitles(root) {
     }
   }
 
-  return { titles, lessonCount }
+  return { titles, lessonCount, failures }
 }
 
 async function main() {
-  const { titles, lessonCount } = await buildTitles(root)
+  const { titles, lessonCount, failures } = await buildTitles(root)
 
   const dataDir = resolve(root, 'src/data')
   if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true })
-  writeFileSync(resolve(dataDir, 'lessonTitles.json'), JSON.stringify(titles))
+  const output = resolve(dataDir, 'lessonTitles.json')
+  const expected = JSON.stringify(titles)
+  if (process.argv.includes('--check')) {
+    const current = existsSync(output) ? readFileSync(output, 'utf8').trim() : ''
+    if (current !== expected) {
+      console.error('✗ src/data/lessonTitles.json is out of date. Run `npm run facts` and commit it.')
+      process.exit(1)
+    }
+  } else {
+    writeFileSync(output, expected)
+  }
 
-  console.log(`✓ Lesson titles built: ${lessonCount} lessons`)
+  console.log(`✓ Lesson titles ${process.argv.includes('--check') ? 'are current' : 'built'}: ${lessonCount} lessons`)
+  if (failures.length) {
+    // Reported, not fatal: these lessons fall back to a title made from their filename.
+    console.warn(`⚠ ${failures.length} lesson file(s) could not be imported for their title:`)
+    for (const f of failures) console.warn(`  ${f}`)
+  }
 }
 
 main().catch((e) => {

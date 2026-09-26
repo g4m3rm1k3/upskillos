@@ -9,11 +9,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && vite",
-    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "dev": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && vite",
+    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "preview": "vite preview",
     "index": "node src/scripts/build-lesson-titles.js",
     "lesson-ids": "node scripts/build-lesson-ids.mjs",
+    "facts": "node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs",
+    "catalog:check": "node src/scripts/build-lesson-titles.js --check && node scripts/build-lesson-ids.mjs --check && node scripts/generate-project-facts.mjs --check",
+    "docs:check": "node scripts/check-docs.mjs",
     "backend": "node backend/server.mjs",
     "backend:lan": "node backend/server.mjs --host-lan",
     "graph": "node scripts/generate-graph.mjs",

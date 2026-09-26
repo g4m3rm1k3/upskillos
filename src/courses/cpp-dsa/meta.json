@@ -1,4 +1,5 @@
 {
+  "label": "C++ Data Structures and Algorithms",
   "icon": "🌲",
   "description": "Data structures and algorithms in C++ — complexity, linked structures, trees, graphs, sorting, and advanced techniques",
   "domain": "cs"

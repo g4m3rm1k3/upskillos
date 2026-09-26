@@ -1,3 +1,5 @@
+> **Historical document.** This was `CONTRIBUTING.md` until 2026-09-26. Much of it describes an earlier version of the app: `src/content/`, chapter `index.js` registration and the video database no longer exist. For current guidance see [CONTRIBUTING.md](../../CONTRIBUTING.md). The lesson-quality material below (narrative style, quizzes, supporting sections) is kept for reference.
+
 # Contributing to upSkillOS
 
 Thanks for helping improve open-calc. This guide covers everything you need to add a lesson, a visualization, or fix a bug — including the pitfalls that are easy to miss.

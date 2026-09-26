@@ -31,6 +31,16 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
 
+      # Before the build: the build regenerates these files, which would hide a stale commit.
+      - name: Project facts are up to date
+        run: npm run catalog:check
+
+      - name: Contributor docs point at things that exist
+        run: npm run docs:check
+
+      - name: In-app links use the router
+        run: npx vitest run src/components/ui/routerLinks.test.js
+
       - name: Build
         run: npm run build
 

@@ -1,52 +1,46 @@
 ## What does this PR do?
 
-<!-- One paragraph. What changed and why. -->
+<!-- One paragraph: what changed and why. -->
 
 ## Type of change
 
-- [ ] New lesson(s)
-- [ ] New visualization
-- [ ] Lesson quality upgrade (adding missing sections)
+- [ ] Lesson content (new lesson or a fix)
+- [ ] Visualization
+- [ ] Lab or game
 - [ ] Bug fix
-- [ ] Documentation
 - [ ] UI / component change
+- [ ] Documentation
 - [ ] Build / tooling
 
----
+## Checks I ran
 
-## Checklist — All PRs
+<!-- Paste the commands and their result. CONTRIBUTING.md#checks lists which apply. -->
 
-- [ ] `npm run build` completes without errors
-- [ ] No duplicate IDs in any JS content object
+## Checklist: all PRs
 
-## Checklist — New or updated lessons
+- [ ] One concern in this PR
+- [ ] Branch synced with `upstream/main`
+- [ ] Links inside the app use router links (`<Link to>` / `navigate`), not plain `href="/..."`
 
-- [ ] `id` is unique across the entire codebase
-- [ ] `slug` is lowercase, hyphenated, ≤ 4 words
-- [ ] `chapter` matches the chapter `number` in its `index.js`
-- [ ] Lesson is registered in the chapter's `index.js`
-- [ ] `quiz` array has at least 6 questions
-- [ ] At least one quiz question is type `input` (mathjs-graded)
-- [ ] All `choice` answer strings verbatim match one option string
-- [ ] All `examples` entries have unique `id` fields
-- [ ] `semantics.core` covers every symbol introduced in the lesson
-- [ ] `spiral.recoveryPoints` and `spiral.futureLinks` are present
-- [ ] `mentalModel` has 3–5 entries (≤ 10 words each)
-- [ ] `misconceptions` has at least 2 entries
-- [ ] `mastery.targetLevel` is declared
-- [ ] `intuition.prose[0]` begins with `**Where you are in the story:**`
-- [ ] A `type: 'sequencing'` callout is present in `intuition.callouts`
+## Checklist: content added, removed or renamed
 
-## Checklist — New visualizations
+- [ ] Ran `npm run facts` and committed the regenerated files (`npm run catalog:check` passes)
+- [ ] New lessons are at `src/courses/<course>/<N>-<chapter>/<NNN>-<slug>.js`; nothing needs registering
+- [ ] Each new lesson has an `id` that is unique across all courses
+- [ ] No published lesson's `id` changed (it is the key learners' progress is saved under)
+- [ ] `node scripts/validate-lesson-schema.mjs <file>` passes for each changed lesson
 
-- [ ] Component is in the correct subfolder (`d3/`, `react/`, `three/`, `matter/`)
-- [ ] Registered in `VizFrame.jsx` with a unique string key
-- [ ] Accepts `params = {}` prop
-- [ ] Dark mode supported (D3: color token object; React: `dark:` classes)
-- [ ] D3 visualizations use `ResizeObserver` for responsive redraw
-- [ ] `mathBridge` follows: orient → numbered steps → "The key lesson:"
+## Checklist: visualizations
 
-## Screenshots / GIFs (if UI change)
+- [ ] Course visualizations are in `src/courses/<course>/viz/<Name>.jsx` (found by file name; shared ones are registered in `src/components/viz/VizFrame.jsx`)
+- [ ] Works in light and dark mode
+- [ ] Resizes with its container
+
+## Checklist: contributor docs
+
+- [ ] `npm run docs:check` passes
+
+## Screenshots (for visible changes)
 
 <!-- Drag images here -->
 

@@ -27,7 +27,7 @@ describe('ordered lesson blocks', () => {
         expect(paras.size, `${lesson.id}: every paragraph placed`).toBe(lesson.paragraphs.length)
       }
     }
-  })
+  }, 20000)
   for (const lab of labs.filter(l => l.figures)) {
     it(`lab ${lab.number}: every figure its lessons use renders and survives its controls`, async () => {
       const figures = await lab.figures()

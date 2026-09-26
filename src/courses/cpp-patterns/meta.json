@@ -1,4 +1,5 @@
 {
+  "label": "C++ Patterns",
   "icon": "🧩",
   "description": "Production C++ patterns and idioms — generic design, testing, error handling, I/O, and performance",
   "domain": "cs"

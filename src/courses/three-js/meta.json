@@ -1,4 +1,5 @@
 {
+  "label": "Three.js",
   "icon": "\ud83e\uddca",
   "description": "3D graphics from WebGL fundamentals to Three.js scenes and shaders",
   "domain": "creative"

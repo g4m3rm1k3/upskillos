@@ -69,19 +69,48 @@ describe('notebook drafts', () => {
   const originals = ['a = 1', 'print(a)']
   it('saves only real edits and restores them', () => {
     saveDraft('n', originals, ['a = 2', 'print(a)'])
-    expect(loadDraft('n', originals)).toEqual({ codes: ['a = 2', 'print(a)'], edited: true, outdated: false })
+    expect(loadDraft('n', originals)).toMatchObject({ codes: ['a = 2', 'print(a)'], edited: true, outdated: false, orphans: [] })
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY)).n.edits).toEqual([{ base: 'a = 1', code: 'a = 2' }])
     saveDraft('n', originals, [...originals])
     expect(JSON.parse(localStorage.getItem(DRAFT_KEY)).n).toBeUndefined()
   })
-  it('detects a course update and keeps the learner’s code until they choose', () => {
+  it('keeps an edit with its cell when cells are added above it', () => {
+    saveDraft('n', originals, ['a = 2', 'print(a)'])
+    const updated = ['minutes = 42\nprint(minutes + 1)', 'a = 1', 'print(a)']
+    expect(loadDraft('n', updated)).toMatchObject({ codes: ['minutes = 42\nprint(minutes + 1)', 'a = 2', 'print(a)'], outdated: false })
+  })
+  it('shows lesson updates to cells the learner never edited', () => {
     saveDraft('n', originals, ['a = 2', 'print(a)'])
     const updated = ['a = 1', 'print(a * 10)', 'print("new")']
+    expect(loadDraft('n', updated)).toMatchObject({ codes: ['a = 2', 'print(a * 10)', 'print("new")'], edited: true, outdated: false })
+  })
+  it('reports an update to an edited cell and keeps the learner’s code until they choose', () => {
+    const base = ['import numpy as np\nx = np.array([2, 3, 4])\nprint(2 * x)\nprint(x.sum())', 'print(1)']
+    saveDraft('n', base, ['import numpy as np\nx = np.array([2, 3, 4])\nprint(2 * x)\nprint(x.sum())\nprint(x + x)', 'print(1)'])
+    const updated = ['print("intro")', 'import numpy as np\nx = np.array([2, 3, 4])\nprint(2 * x)\nprint(x.mean())', 'print(1)']
     const d = loadDraft('n', updated)
-    expect(d).toMatchObject({ edited: true, outdated: true })
-    expect(d.codes).toEqual(['a = 2', 'print(a)', 'print("new")'])
+    expect(d).toMatchObject({ edited: true, outdated: true, orphans: [] })
+    expect(d.codes[0]).toBe('print("intro")')
+    expect(d.codes[1]).toContain('print(x + x)')
     rebaseDraft('n', updated, d.codes)
-    expect(loadDraft('n', updated).outdated).toBe(false)
-    expect(fingerprint(originals)).not.toBe(fingerprint(updated))
+    expect(loadDraft('n', updated)).toMatchObject({ outdated: false, codes: d.codes })
+  })
+  it('keeps an edit that matches no cell aside instead of forcing it into one', () => {
+    saveDraft('n', originals, ['a = 2', 'print(a)'])
+    const d = loadDraft('n', ['print("something else entirely")'])
+    expect(d).toMatchObject({ codes: ['print("something else entirely")'], outdated: true })
+    expect(d.orphans).toEqual([{ base: 'a = 1', code: 'a = 2' }])
+  })
+  it('migrates an old position-based draft without shifting it into the wrong cell', () => {
+    // The reported bug: a cell was inserted at the top of a notebook with a saved draft.
+    const oldCells = ['import numpy as np\nx_list = [2, 3, 4]\nx_arr = np.array([2, 3, 4])\nprint(2 * x_list)\nprint(2 * x_arr)', 'print("second")']
+    const edited = ['import numpy as np\nx_list = [2, 3, 4]\nx_arr = np.array([2, 3, 4])\nprint(x_list + x_list)\nprint(x_arr + x_arr)\nprint(2 * x_list)\nprint(2 * x_arr)', 'print("second")']
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ n: { base: fingerprint(oldCells), cells: edited } }))
+    const updated = ['minutes = 42\nprint(minutes + 1)', ...oldCells]
+    expect(loadDraft('n', updated)).toMatchObject({ codes: ['minutes = 42\nprint(minutes + 1)', edited[0], 'print("second")'], orphans: [] })
+    // Unchanged lesson: an old draft's positions are still right.
+    expect(loadDraft('n', oldCells).codes).toEqual(edited)
+    expect(fingerprint(oldCells)).not.toBe(fingerprint(updated))
   })
 })
 
@@ -172,11 +201,24 @@ describe('edits survive every transition on the lesson page', () => {
     expect(screen.getByText(/Python was restarted since this notebook last ran/)).toBeTruthy()
     expect(screen.getAllByText(/variables from earlier cells are gone/).length).toBeGreaterThan(0)
   })
-  it('reports a course update to an edited notebook instead of overwriting it', async () => {
+  it('shows an old edit that matches no cell instead of forcing it into cell 1', async () => {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({ arrays: { base: 'old', cells: ['print("mine")'] } }))
     render(<MLLab />)
     await openNotebook()
-    expect(screen.getByLabelText('Notebook cell 1 code').value).toBe('print("mine")')
+    expect(screen.getByLabelText('Notebook cell 1 code').value).not.toBe('print("mine")')
+    expect(screen.getByText(/one of your earlier edits no longer matches any cell/)).toBeTruthy()
+    expect(screen.getByText('print("mine")')).toBeTruthy()
+    fireEvent.click(screen.getByText('Discard it'))
+    expect(screen.queryByText(/no longer matches any cell/)).toBeNull()
+    expect(JSON.parse(localStorage.getItem(DRAFT_KEY)).arrays).toBeUndefined()
+  })
+  it('reports a lesson update to an edited cell and lets the learner keep their version', async () => {
+    const first = (await import('../labs/l01-foundations/notebooks.js')).extras.arrays.notebook.cells[1].code
+    const old = first.replace('print(2 * x_arr)', 'print(2 * x_arr)  # old lesson line')
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ arrays: { edits: [{ base: old, code: old + '\nprint("mine")' }] } }))
+    render(<MLLab />)
+    await openNotebook()
+    expect(screen.getByLabelText('Notebook cell 2 code').value).toContain('print("mine")')
     expect(screen.getByText(/has been updated since you edited it/)).toBeTruthy()
     fireEvent.click(screen.getByText('Keep my version'))
     expect(screen.queryByText(/has been updated since you edited it/)).toBeNull()

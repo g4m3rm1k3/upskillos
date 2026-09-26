@@ -1,4 +1,5 @@
 {
+  "label": "NoSQL",
   "icon": "\ud83d\uddc4\ufe0f",
   "description": "NoSQL database systems and document-oriented data design",
   "domain": "data"

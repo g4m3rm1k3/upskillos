@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import UniverseBackground from "../components/backgrounds/UniverseBackground.jsx";
+// Counts and the course list come from the generated inventory (npm run facts), so they never
+// drift from what the app actually contains.
+import PROJECT_FACTS from "../data/projectFacts.json";
+
+const COUNTS = PROJECT_FACTS.counts;
 
 // ── Animation hook ─────────────────────────────────────────────────────────────
 function useFadeIn(threshold = 0.12) {
@@ -60,7 +65,7 @@ function SectionBadge({ children, color = "indigo" }) {
 
 const STATS = [
   {
-    value: "31",
+    value: String(COUNTS.courses),
     label: "Courses",
     icon: "📚",
     color: "text-indigo-300",
@@ -68,7 +73,7 @@ const STATS = [
     glow: "rgba(99,102,241,0.1)",
   },
   {
-    value: "38",
+    value: String(COUNTS.labs),
     label: "Interactive Labs",
     icon: "🔬",
     color: "text-cyan-300",
@@ -76,7 +81,7 @@ const STATS = [
     glow: "rgba(6,182,212,0.1)",
   },
   {
-    value: "15",
+    value: String(COUNTS.games),
     label: "STEM Games",
     icon: "🎮",
     color: "text-fuchsia-300",
@@ -107,94 +112,21 @@ const CONTRIBUTORS = [
   },
 ];
 
-// 31 real courses
-const COURSES_BY_DOMAIN = [
-  {
-    icon: "∑",
-    label: "Mathematics",
-    color: "text-indigo-300",
-    border: "border-indigo-500/20",
-    bg: "bg-indigo-900/10",
-    courses: [
-      "Pre-Calculus — functions, trig, complex numbers, series",
-      "Calculus — limits, derivatives, integrals, series (ch 0–6)",
-      "Geometry — proofs, constructions, similarity, coordinates",
-      "Linear Algebra — vectors, matrices, eigenvalues, transforms",
-      "Discrete Math — logic, sets, induction, combinatorics, graph theory",
-      "Applied Statistics — inference, regression, distributions",
-      "Simulation — numerical methods, ODE solvers",
-    ],
-  },
-  {
-    icon: "⚛",
-    label: "Natural Sciences",
-    color: "text-cyan-300",
-    border: "border-cyan-500/20",
-    bg: "bg-cyan-900/10",
-    courses: [
-      "Physics — kinematics, forces, waves, energy, electromagnetism",
-      "Chemistry — periodic table, reactions, molecular structure",
-      "Electronics — circuits, Ohm's law, components, analysis",
-    ],
-  },
-  {
-    icon: "⌨",
-    label: "Programming",
-    color: "text-emerald-300",
-    border: "border-emerald-500/20",
-    bg: "bg-emerald-900/10",
-    courses: [
-      "Python — core language, data structures, OOP, algorithms",
-      "JavaScript — language internals, async, closures, prototypes",
-      "C++ — from zero to systems programmer (standard library, STL)",
-      "Web Development — HTML, DOM, APIs, reactivity",
-      "Canvas — 2D graphics, animation, game loops",
-      "Three.js — 3D graphics, shaders, geometries, WebGL",
-      "Command Line — shell, bash, scripting, file systems",
-      "Git — version control, branching, merging, collaboration",
-    ],
-  },
-  {
-    icon: "⟁",
-    label: "Data & AI",
-    color: "text-violet-300",
-    border: "border-violet-500/20",
-    bg: "bg-violet-900/10",
-    courses: [
-      "Data Science — NumPy, Pandas, visualization, ML foundations",
-      "AI Engineering — math foundations, ML algorithms, LLMs, function calling, RAG",
-      "SQL — relational databases, queries, joins, aggregations",
-      "NoSQL — document stores, key-value, graph databases",
-      "Data Structures & Algorithms — arrays, trees, graphs, sorting, complexity",
-      "Dynamic Programming — memoization, tabulation, classic problems",
-    ],
-  },
-  {
-    icon: "⚙",
-    label: "Engineering & Hardware",
-    color: "text-amber-300",
-    border: "border-amber-500/20",
-    bg: "bg-amber-900/10",
-    courses: [
-      "CNC Machining — G-code, toolpaths, coordinate systems, fixturing",
-      "G-code Parser — build a CNC interpreter from scratch",
-      "Programmable Logic Controllers — ladder logic, FSMs, Allen-Bradley",
-      "Digital Fundamentals — binary, Boolean, combinational/sequential circuits",
-    ],
-  },
-  {
-    icon: "∇",
-    label: "Creative & Project-Driven",
-    color: "text-rose-300",
-    border: "border-rose-500/20",
-    bg: "bg-rose-900/10",
-    courses: [
-      "Design Systems — typography, color theory, component design",
-      "Build Tetris — complete game from scratch, project-driven",
-      "Logic — propositional and predicate calculus, proof theory",
-    ],
-  },
+// Domain headings are hand-written; the courses under each come from each course's meta.json.
+const DOMAIN_STYLES = [
+  { domain: "math", icon: "∑", label: "Mathematics", color: "text-indigo-300", border: "border-indigo-500/20", bg: "bg-indigo-900/10" },
+  { domain: "science", icon: "⚛", label: "Natural Sciences", color: "text-cyan-300", border: "border-cyan-500/20", bg: "bg-cyan-900/10" },
+  { domain: "cs", icon: "⌨", label: "Programming", color: "text-emerald-300", border: "border-emerald-500/20", bg: "bg-emerald-900/10" },
+  { domain: "data", icon: "⟁", label: "Data & AI", color: "text-violet-300", border: "border-violet-500/20", bg: "bg-violet-900/10" },
+  { domain: "engineering", icon: "⚙", label: "Engineering & Hardware", color: "text-amber-300", border: "border-amber-500/20", bg: "bg-amber-900/10" },
+  { domain: "creative", icon: "∇", label: "Creative & Project-Driven", color: "text-rose-300", border: "border-rose-500/20", bg: "bg-rose-900/10" },
 ];
+const OTHER_DOMAIN = { icon: "◇", label: "Other", color: "text-slate-300", border: "border-slate-500/20", bg: "bg-slate-900/10" };
+const courseLine = (c) => (c.description ? `${c.label} — ${c.description}` : c.label);
+const COURSES_BY_DOMAIN = [
+  ...DOMAIN_STYLES.map((d) => ({ ...d, courses: PROJECT_FACTS.courses.filter((c) => c.domain === d.domain).map(courseLine) })),
+  { ...OTHER_DOMAIN, courses: PROJECT_FACTS.courses.filter((c) => !DOMAIN_STYLES.some((d) => d.domain === c.domain)).map(courseLine) },
+].filter((d) => d.courses.length > 0);
 
 const LABS_HIGHLIGHTS = [
   {
@@ -532,11 +464,11 @@ const STACK = [
 ];
 
 const ROADMAP_DONE = [
-  "31 courses across math, science, CS, engineering, data, and creative domains",
+  `${COUNTS.courses} courses across math, science, CS, engineering, data, and creative domains`,
   "Python runtime in the browser — no install, real NumPy, Pandas, and opencalc",
   "JavaScript notebooks, Monaco editor, and a full code playground",
-  "38 interactive labs — simulations, simulators, visualizers, and full environments",
-  "15 STEM games — arcade, puzzle, sports, and adventure formats",
+  `${COUNTS.labs} interactive labs — simulations, simulators, visualizers, and full environments`,
+  `${COUNTS.games} STEM games — arcade, puzzle, sports, and adventure formats`,
   "AI Tutor (Delta) with lesson-aware context in every page",
   "Global course/lab/game search, calendar, brain workspace, health tracker",
   "Formula Atlas for math and science reference",
@@ -584,8 +516,8 @@ export default function AboutPage() {
             </p>
             <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-3xl leading-relaxed mb-10">
               From Pre-Calculus to AI Engineering, from CNC Machining to Digital
-              Logic, from CSS to C++ — 31 courses, 38 interactive labs, 15 STEM
-              games, a built-in AI tutor, and an entire suite of tools. Runs
+              Logic, from CSS to C++ — {COUNTS.courses} courses, {COUNTS.labs} interactive labs,{" "}
+              {COUNTS.games} STEM games, a built-in AI tutor, and an entire suite of tools. Runs
               entirely in your browser.{" "}
               <em className="text-indigo-300 not-italic font-semibold">
                 Free forever.
@@ -770,7 +702,7 @@ export default function AboutPage() {
         <section className="px-4 py-20">
           <div className="max-w-7xl mx-auto">
             <FadeSection className="text-center mb-12">
-              <SectionBadge color="indigo">📚 31 Courses</SectionBadge>
+              <SectionBadge color="indigo">📚 {COUNTS.courses} Courses</SectionBadge>
               <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                 Every Domain. First Principles.
               </h2>
@@ -820,7 +752,7 @@ export default function AboutPage() {
         <section className="px-4 py-20">
           <div className="max-w-7xl mx-auto">
             <FadeSection className="text-center mb-12">
-              <SectionBadge color="cyan">🔬 38 Interactive Labs</SectionBadge>
+              <SectionBadge color="cyan">🔬 {COUNTS.labs} Interactive Labs</SectionBadge>
               <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                 Hands-On Environments
               </h2>
@@ -854,7 +786,7 @@ export default function AboutPage() {
         <section className="px-4 py-20">
           <div className="max-w-7xl mx-auto">
             <FadeSection className="text-center mb-12">
-              <SectionBadge color="fuchsia">🎮 15 STEM Games</SectionBadge>
+              <SectionBadge color="fuchsia">🎮 {COUNTS.games} STEM Games</SectionBadge>
               <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                 Learn Through Play
               </h2>

@@ -57,8 +57,18 @@ function buildLessonIds() {
 
   const dataDir = resolve(root, 'src/data')
   if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true })
-  writeFileSync(resolve(dataDir, 'lessonIds.json'), JSON.stringify(lessonIds))
-  console.log(`✓ Lesson id map built: ${count} lessons`)
+  const output = resolve(dataDir, 'lessonIds.json')
+  const expected = JSON.stringify(lessonIds)
+  if (process.argv.includes('--check')) {
+    const current = existsSync(output) ? readFileSync(output, 'utf8').trim() : ''
+    if (current !== expected) {
+      console.error('✗ src/data/lessonIds.json is out of date. Run `npm run facts` and commit it.')
+      process.exit(1)
+    }
+  } else {
+    writeFileSync(output, expected)
+  }
+  console.log(`✓ Lesson id map ${process.argv.includes('--check') ? 'is current' : 'built'}: ${count} lessons`)
 }
 
 buildLessonIds()

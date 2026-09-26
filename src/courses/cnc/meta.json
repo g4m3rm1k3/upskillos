@@ -1,4 +1,5 @@
 {
+  "label": "CNC",
   "icon": "\u2699\ufe0f",
   "description": "CNC macro programming, G-code systems, and toolpath math",
   "domain": "engineering"

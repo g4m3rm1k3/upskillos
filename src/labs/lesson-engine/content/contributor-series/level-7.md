@@ -33,9 +33,12 @@ Types of contributions (easiest to hardest):
    → Recommended: discuss in a GitHub issue first, so you know the topic is wanted.
 
 5. Add a new lab component
-   → Requires React, TypeScript, and AppShell wiring knowledge.
+   → Requires React. A folder in src/labs/ with a meta.js and an index.jsx
+     is discovered automatically; nothing else needs wiring up.
    → Discuss first. Not a beginner task.
 ```
+
+The steps above are for this lab's Markdown series, which are registered in `series.ts`. The app's main courses work differently: a lesson is a `.js` file at `src/courses/<course>/<N>-<chapter>/<NNN>-<slug>.js` and is found automatically, with nothing to register. `CONTRIBUTING.md` in the repository covers those.
 
 ## The full contribution workflow
 
@@ -84,7 +87,7 @@ git push -u origin fix/typo-css-responsive-level-2
 When a maintainer reviews your PR, they check:
 
 Content quality:
-  ✓ Does the lesson follow the contract? (UPSKILLOS_CURRICULUM_CONTRACT.md)
+  ✓ Does the lesson follow the same structure as the other levels in its series?
   ✓ Is the CS lens or SE lens genuinely insightful?
   ✓ Does the challenge actually test the concept?
   ✓ Are the test assertions meaningful (not trivially passable)?
@@ -130,7 +133,7 @@ git push   # pushes to the same branch — the PR updates automatically
 - Opening a PR before testing locally — run `npm run dev` and click through every level before pushing. Reviewing broken content wastes the reviewer's time.
 - Ignoring review comments — a PR with unresponded comments stalls. Even a "I see your point, will fix shortly" response keeps the process moving.
 
-**Debug tip:** If your PR shows merge conflicts (GitHub shows a red warning), it means main has changed since you branched. Sync your branch: `git fetch upstream && git rebase upstream/main` then `git push --force-with-lease`. Resolve any conflicts, then push again.
+**Debug tip:** If your PR shows merge conflicts (GitHub shows a red warning), it means main has changed since you branched. Sync your branch: `git fetch upstream && git merge upstream/main`, resolve any conflicts, commit, and `git push`. Merging adds one commit and leaves your branch's history alone, which matters once a reviewer has seen it; avoid rebasing and force-pushing a branch that is already under review.
 
 **You did it.** You now have all the skills to contribute: Markdown, git, branches, PRs, reading code, writing great lessons, understanding components and theming, and navigating the review process. The first PR is the hardest. After that, it becomes routine.
 

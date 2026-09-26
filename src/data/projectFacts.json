@@ -1,0 +1,898 @@
+{
+  "generatedBy": "scripts/generate-project-facts.mjs — do not edit by hand; run `npm run facts`",
+  "rules": {
+    "course": "A folder in src/courses/ that has a meta.json or at least one lesson file (src/courses/courseLoader.js).",
+    "lesson": "A file src/courses/<course>/<N>-<chapter>/<NNN>-<slug>.js — exactly the pattern the course loader discovers. Its route is /chapter/<course>-<N>/<slug>.",
+    "chapter": "A folder src/courses/<course>/<N>-<chapter>/ containing at least one lesson.",
+    "lab": "A folder in src/labs/ with a meta.js (src/labs/labRegistryLoader.js).",
+    "game": "An entry in GAMES in src/games/registry.js."
+  },
+  "counts": {
+    "courses": 41,
+    "chapters": 212,
+    "lessons": 1214,
+    "labs": 49,
+    "games": 15
+  },
+  "courses": [
+    {
+      "id": "ai-engineering",
+      "label": "AI Engineering",
+      "domain": "data",
+      "description": "Machine learning, LLMs, and AI systems from foundations to deployment",
+      "chapters": 4,
+      "lessons": 69
+    },
+    {
+      "id": "applied-statistics",
+      "label": "Applied Statistics",
+      "domain": "math",
+      "description": "Statistical thinking, probability, inference, and regression analysis",
+      "chapters": 7,
+      "lessons": 36
+    },
+    {
+      "id": "c-plus-plus",
+      "label": "C++",
+      "domain": "cs",
+      "description": "C++ from foundations through the standard library to advanced techniques",
+      "chapters": 5,
+      "lessons": 50
+    },
+    {
+      "id": "calculus",
+      "label": "Calculus",
+      "domain": "math",
+      "description": "Limits, derivatives, integrals, and the mathematics of change",
+      "chapters": 7,
+      "lessons": 99
+    },
+    {
+      "id": "canvas",
+      "label": "Canvas",
+      "domain": "creative",
+      "description": "2D graphics programming with the HTML Canvas API",
+      "chapters": 1,
+      "lessons": 9
+    },
+    {
+      "id": "chemistry",
+      "label": "Chemistry",
+      "domain": "science",
+      "description": "Atomic structure, bonding, reactions, and chemical systems",
+      "chapters": 4,
+      "lessons": 23
+    },
+    {
+      "id": "cnc",
+      "label": "CNC",
+      "domain": "engineering",
+      "description": "CNC macro programming, G-code systems, and toolpath math",
+      "chapters": 1,
+      "lessons": 32
+    },
+    {
+      "id": "command-line-interface",
+      "label": "Command Line Interface",
+      "domain": "creative",
+      "description": "Command line fundamentals and terminal mastery",
+      "chapters": 1,
+      "lessons": 10
+    },
+    {
+      "id": "cpp-dsa",
+      "label": "C++ Data Structures and Algorithms",
+      "domain": "cs",
+      "description": "Data structures and algorithms in C++ — complexity, linked structures, trees, graphs, sorting, and advanced techniques",
+      "chapters": 6,
+      "lessons": 25
+    },
+    {
+      "id": "cpp-from-scratch",
+      "label": "C++ from Scratch",
+      "domain": "cs",
+      "description": "C++ from first principles — types, memory, pointers, OOP, templates, concurrency, and modern idioms",
+      "chapters": 6,
+      "lessons": 35
+    },
+    {
+      "id": "cpp-patterns",
+      "label": "C++ Patterns",
+      "domain": "cs",
+      "description": "Production C++ patterns and idioms — generic design, testing, error handling, I/O, and performance",
+      "chapters": 6,
+      "lessons": 18
+    },
+    {
+      "id": "css-masterclass",
+      "label": "CSS Masterclass",
+      "domain": "cs",
+      "description": "The CSS Masterclass — box model, layout, and the browser rendering engine, one property at a time",
+      "chapters": 5,
+      "lessons": 17
+    },
+    {
+      "id": "css-masterclass-advanced",
+      "label": "CSS Masterclass: Advanced",
+      "domain": "cs",
+      "description": "The canonical CSS Masterclass — 18 modules of browser-engine-deep CSS: parsing, layout algorithms, color science, and production architecture",
+      "chapters": 18,
+      "lessons": 43
+    },
+    {
+      "id": "cyber-lab",
+      "label": "Cyber Lab",
+      "domain": "cs",
+      "description": "Interactive labs for security fundamentals — hashing, encryption, and the vulnerabilities they defend against",
+      "chapters": 1,
+      "lessons": 2
+    },
+    {
+      "id": "data-science",
+      "label": "Data Science",
+      "domain": "data",
+      "description": "Computational methods for data analysis and scientific exploration",
+      "chapters": 4,
+      "lessons": 42
+    },
+    {
+      "id": "data-structures-and-algorithms",
+      "label": "Data Structures and Algorithms",
+      "domain": "cs",
+      "description": "Data structures and algorithms for efficient computing",
+      "chapters": 8,
+      "lessons": 20
+    },
+    {
+      "id": "design",
+      "label": "Design",
+      "domain": "creative",
+      "description": "Interface design systems, typography, and visual hierarchy",
+      "chapters": 1,
+      "lessons": 10
+    },
+    {
+      "id": "digital-fundamentals",
+      "label": "Digital Fundamentals",
+      "domain": "engineering",
+      "description": "Binary, logic gates, boolean algebra, and digital circuits",
+      "chapters": 6,
+      "lessons": 22
+    },
+    {
+      "id": "discrete-math",
+      "label": "Discrete Math",
+      "domain": "math",
+      "description": "Logic, sets, graphs, and the mathematics of computing",
+      "chapters": 6,
+      "lessons": 18
+    },
+    {
+      "id": "dynamic-programming",
+      "label": "Dynamic Programming",
+      "domain": "cs",
+      "description": "Dynamic programming patterns and algorithmic problem solving",
+      "chapters": 8,
+      "lessons": 31
+    },
+    {
+      "id": "electronics",
+      "label": "Electronics",
+      "domain": "engineering",
+      "description": "Electrical fundamentals through semiconductors, RF, and systems integration",
+      "chapters": 7,
+      "lessons": 70
+    },
+    {
+      "id": "gcode-parser",
+      "label": "G-code Parser",
+      "domain": "engineering",
+      "description": "Math and geometry foundations for CNC toolpaths",
+      "chapters": 1,
+      "lessons": 5
+    },
+    {
+      "id": "geometry",
+      "label": "Geometry",
+      "domain": "math",
+      "description": "Angles, proofs, circles, transformations, and geometric reasoning",
+      "chapters": 6,
+      "lessons": 42
+    },
+    {
+      "id": "git",
+      "label": "Git",
+      "domain": "creative",
+      "description": "Version control with Git from fundamentals to internals and logic",
+      "chapters": 1,
+      "lessons": 20
+    },
+    {
+      "id": "guttag-python",
+      "label": "Computation and Programming Using Python",
+      "domain": "cs",
+      "description": "MIT's Introduction to Computation and Programming Using Python — 48 lessons from the REPL to machine learning",
+      "chapters": 7,
+      "lessons": 49
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "domain": "cs",
+      "description": "JavaScript runtime model, async, closures, OOP, and browser APIs",
+      "chapters": 8,
+      "lessons": 26
+    },
+    {
+      "id": "linear-algebra",
+      "label": "Linear Algebra",
+      "domain": "math",
+      "description": "Vectors, matrices, eigenvalues, and computational linear algebra",
+      "chapters": 10,
+      "lessons": 68
+    },
+    {
+      "id": "logic",
+      "label": "Logic",
+      "domain": "cs",
+      "description": "Boolean logic, digital fundamentals, and combinational circuit design",
+      "chapters": 1,
+      "lessons": 8
+    },
+    {
+      "id": "machine-learning",
+      "label": "Machine Learning",
+      "domain": "cs",
+      "description": "Machine learning derived from first principles — the mathematics, the algorithms, and the engineering",
+      "chapters": 1,
+      "lessons": 1
+    },
+    {
+      "id": "native-languages",
+      "label": "Native Languages",
+      "domain": "cs",
+      "description": "Real compilers and interpreters, run locally in the OpenCalc desktop app — no third-party remote compile service involved",
+      "chapters": 1,
+      "lessons": 3
+    },
+    {
+      "id": "nosql",
+      "label": "NoSQL",
+      "domain": "data",
+      "description": "NoSQL database systems and document-oriented data design",
+      "chapters": 1,
+      "lessons": 4
+    },
+    {
+      "id": "physics",
+      "label": "Physics",
+      "domain": "science",
+      "description": "Kinematics, Newtonian mechanics, energy, momentum, and waves",
+      "chapters": 9,
+      "lessons": 80
+    },
+    {
+      "id": "precalculus",
+      "label": "Precalculus",
+      "domain": "math",
+      "description": "Algebra, trigonometry, exponentials, and pre-calculus foundations",
+      "chapters": 5,
+      "lessons": 34
+    },
+    {
+      "id": "programmable-logic-controllers",
+      "label": "Programmable Logic Controllers",
+      "domain": "engineering",
+      "description": "PLC programming fundamentals and industrial automation systems",
+      "chapters": 1,
+      "lessons": 10
+    },
+    {
+      "id": "pyside6",
+      "label": "PySide6",
+      "domain": "cs",
+      "description": "Real, native desktop GUIs with PySide6 — runs for real only in the OpenCalc desktop app, since a browser tab can't open an OS window",
+      "chapters": 2,
+      "lessons": 2
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "domain": "cs",
+      "description": "Python from core syntax through data science, OOP, and vectorization",
+      "chapters": 20,
+      "lessons": 42
+    },
+    {
+      "id": "simulation",
+      "label": "Simulation",
+      "domain": "engineering",
+      "description": "Physics simulations, 3D scenes, and interactive real-time systems",
+      "chapters": 3,
+      "lessons": 26
+    },
+    {
+      "id": "sql",
+      "label": "SQL",
+      "domain": "data",
+      "description": "SQL mastery from zero to advanced queries and Python integration",
+      "chapters": 2,
+      "lessons": 34
+    },
+    {
+      "id": "tetris",
+      "label": "Tetris",
+      "domain": "creative",
+      "description": "Build Tetris from scratch — game loop, collision, and polish",
+      "chapters": 1,
+      "lessons": 10
+    },
+    {
+      "id": "three-js",
+      "label": "Three.js",
+      "domain": "creative",
+      "description": "3D graphics from WebGL fundamentals to Three.js scenes and shaders",
+      "chapters": 13,
+      "lessons": 49
+    },
+    {
+      "id": "web",
+      "label": "Web",
+      "domain": "cs",
+      "description": "Web systems from HTML and CSS through async JavaScript and capstone",
+      "chapters": 7,
+      "lessons": 20
+    }
+  ],
+  "labs": [
+    {
+      "id": "abstraction-viz",
+      "label": "Abstraction Visualizer",
+      "kind": "visualizer",
+      "path": "/lab/abstraction-viz"
+    },
+    {
+      "id": "backend-lab",
+      "label": "Backend Lab",
+      "kind": "lesson",
+      "path": "/lab/backend-lab"
+    },
+    {
+      "id": "cad-cnc",
+      "label": "CAD + CNC Workspace",
+      "kind": "lab",
+      "path": "/cad-cnc"
+    },
+    {
+      "id": "cad-pro",
+      "label": "CAD Pro",
+      "kind": "builder",
+      "path": "/cad-pro"
+    },
+    {
+      "id": "canvas-notes",
+      "label": "Canvas Notes",
+      "kind": "builder",
+      "path": "/lab/canvas-notes"
+    },
+    {
+      "id": "chemistry",
+      "label": "Chemistry Lab",
+      "kind": "lab",
+      "path": "/lab/chemistry"
+    },
+    {
+      "id": "cmm-lab",
+      "label": "CMM Lab",
+      "kind": "lab",
+      "path": "/cmm-lab"
+    },
+    {
+      "id": "cnc-sim",
+      "label": "CNC Simulator",
+      "kind": "lab",
+      "path": "/cnc-sim"
+    },
+    {
+      "id": "code-typing",
+      "label": "Code Typing Studio",
+      "kind": "lab",
+      "path": "/lab/code-typing"
+    },
+    {
+      "id": "codelens",
+      "label": "CodeLens",
+      "kind": "visualizer",
+      "path": "/codelens"
+    },
+    {
+      "id": "css-mastery",
+      "label": "CSS 0 to Mastery",
+      "kind": "lesson",
+      "path": "/web-learn/css-mastery"
+    },
+    {
+      "id": "decomp-lab",
+      "label": "Decomp Lab",
+      "kind": "lab",
+      "path": "/decomp-lab"
+    },
+    {
+      "id": "dp-lab",
+      "label": "Dynamic Programming Lab",
+      "kind": "lab",
+      "path": "/lab/dp-lab"
+    },
+    {
+      "id": "drone-lab",
+      "label": "Drone Lab",
+      "kind": "lab",
+      "path": "/drone-lab"
+    },
+    {
+      "id": "dsa-arrays-lab",
+      "label": "Arrays & Memory Lab",
+      "kind": "lab",
+      "path": "/lab/dsa-arrays-lab"
+    },
+    {
+      "id": "dsa-linked-lists-lab",
+      "label": "Linked Lists Lab",
+      "kind": "lab",
+      "path": "/lab/dsa-linked-lists-lab"
+    },
+    {
+      "id": "dsa-patterns",
+      "label": "DSA + Design Patterns",
+      "kind": "lesson",
+      "path": "/learn/dsa-patterns/01"
+    },
+    {
+      "id": "five-axis",
+      "label": "5-Axis Kinematics",
+      "kind": "visualizer",
+      "path": "/five-axis"
+    },
+    {
+      "id": "html-lab",
+      "label": "HTML Lab",
+      "kind": "builder",
+      "path": "/html-lab"
+    },
+    {
+      "id": "html-lessons",
+      "label": "HTML Lab Lessons",
+      "kind": "lesson",
+      "path": "/lab/html-lessons"
+    },
+    {
+      "id": "image-lab",
+      "label": "Image Lab Junior",
+      "kind": "lab",
+      "path": "/lab/image-lab"
+    },
+    {
+      "id": "image-lab-wip",
+      "label": "Image Lab",
+      "kind": "lab",
+      "path": "/lab/image-lab-wip"
+    },
+    {
+      "id": "lesson-builder",
+      "label": "Lesson Builder",
+      "kind": "builder",
+      "path": "/lesson-builder"
+    },
+    {
+      "id": "lesson-engine",
+      "label": "Lesson Engine",
+      "kind": "lesson",
+      "path": "/lab/lesson-engine"
+    },
+    {
+      "id": "little-schemer",
+      "label": "Little Schemer Sandbox",
+      "kind": "lesson",
+      "path": "/lab/little-schemer"
+    },
+    {
+      "id": "logic-sim",
+      "label": "Logic Suite",
+      "kind": "lab",
+      "path": "/logic-sim"
+    },
+    {
+      "id": "matrix-3d-lab",
+      "label": "Matrix 3D Lab",
+      "kind": "lab",
+      "path": "/matrix-3d-lab"
+    },
+    {
+      "id": "matrix-lab",
+      "label": "Matrix Lab",
+      "kind": "lab",
+      "path": "/matrix-lab"
+    },
+    {
+      "id": "ml-lab",
+      "label": "Machine Learning Lab",
+      "kind": "lab",
+      "path": "/lab/ml-lab"
+    },
+    {
+      "id": "music-lab",
+      "label": "Music Lab",
+      "kind": "builder",
+      "path": "/music-lab"
+    },
+    {
+      "id": "notebook-lab",
+      "label": "Notebook Lab",
+      "kind": "lab",
+      "path": "/notebook-lab"
+    },
+    {
+      "id": "odds-lab",
+      "label": "Probability Casino Lab",
+      "kind": "lab",
+      "path": "/odds-lab"
+    },
+    {
+      "id": "openmat",
+      "label": "OpenMAT",
+      "kind": "lab",
+      "path": "/openmat"
+    },
+    {
+      "id": "physics",
+      "label": "Physics Engine",
+      "kind": "lab",
+      "path": "/lab/physics"
+    },
+    {
+      "id": "plc-lab",
+      "label": "PLC Ladder Logic Lab",
+      "kind": "lab",
+      "path": "/plc-lab"
+    },
+    {
+      "id": "project-studio",
+      "label": "Project Studio",
+      "kind": "lab",
+      "path": "/lab/project-studio"
+    },
+    {
+      "id": "react-mastery",
+      "label": "React 0 to Mastery",
+      "kind": "lesson",
+      "path": "/web-learn/react-mastery"
+    },
+    {
+      "id": "resource-lab",
+      "label": "Resource Lab",
+      "kind": "lab",
+      "path": "/resource-lab"
+    },
+    {
+      "id": "robot-arm-sim",
+      "label": "Robot Arm Simulator",
+      "kind": "lab",
+      "path": "/robot-arm-lab"
+    },
+    {
+      "id": "sicp-js",
+      "label": "SICP — JavaScript",
+      "kind": "lesson",
+      "path": "/learn/sicp/1-1"
+    },
+    {
+      "id": "sim-lab",
+      "label": "Sim Lab",
+      "kind": "lab",
+      "path": "/sim-lab"
+    },
+    {
+      "id": "sprite-forge",
+      "label": "Sprite Forge",
+      "kind": "builder",
+      "path": "/lab/sprite-forge"
+    },
+    {
+      "id": "svg-studio",
+      "label": "SVG Studio",
+      "kind": "builder",
+      "path": "/lab/svg-studio"
+    },
+    {
+      "id": "tile-mapper",
+      "label": "Tile Mapper",
+      "kind": "builder",
+      "path": "/lab/tile-mapper"
+    },
+    {
+      "id": "ts-lab",
+      "label": "OpenSocial — TypeScript Lab",
+      "kind": "lesson",
+      "path": "/lab/ts-lab"
+    },
+    {
+      "id": "universal-calc",
+      "label": "Universal Calc",
+      "kind": "lab",
+      "path": "/universal-calc"
+    },
+    {
+      "id": "visual-code",
+      "label": "Visual Code Studio",
+      "kind": "builder",
+      "path": "/lab/visual-code"
+    },
+    {
+      "id": "viz-builder",
+      "label": "Viz Builder",
+      "kind": "builder",
+      "path": "/viz-builder"
+    },
+    {
+      "id": "vue-studio",
+      "label": "Vue Studio",
+      "kind": "lesson",
+      "path": "/lab/vue-studio"
+    }
+  ],
+  "games": [
+    {
+      "id": "rubiks-cube",
+      "label": "Rubik's Cube",
+      "path": "/game/rubiks-cube"
+    },
+    {
+      "id": "matrix-game",
+      "label": "Linear Algebra Arcade",
+      "path": "/game/matrix-game"
+    },
+    {
+      "id": "stem-tetris",
+      "label": "STEM Tetris",
+      "path": "/game/stem-tetris"
+    },
+    {
+      "id": "card-quest",
+      "label": "Card Quest",
+      "path": "/game/card-quest"
+    },
+    {
+      "id": "card-academy",
+      "label": "STEM Card Academy",
+      "path": "/game/card-academy"
+    },
+    {
+      "id": "asteroids-la",
+      "label": "Vector Asteroids",
+      "path": "/game/asteroids-la"
+    },
+    {
+      "id": "vector-command",
+      "label": "Vector Command 3D",
+      "path": "/game/vector-command"
+    },
+    {
+      "id": "arkanoid",
+      "label": "Arkanoid Learn",
+      "path": "/game/arkanoid"
+    },
+    {
+      "id": "stem-quest",
+      "label": "STEM Quest",
+      "path": "/game/stem-quest"
+    },
+    {
+      "id": "open-craft",
+      "label": "OpenCraft",
+      "path": "/game/open-craft"
+    },
+    {
+      "id": "reality-runner",
+      "label": "Reality Runner",
+      "path": "/game/reality-runner"
+    },
+    {
+      "id": "basketball",
+      "label": "Basketball Lab"
+    },
+    {
+      "id": "pool",
+      "label": "Physics Pool"
+    },
+    {
+      "id": "golf",
+      "label": "Mini Golf"
+    },
+    {
+      "id": "football",
+      "label": "Football Calculus"
+    }
+  ],
+  "issues": {
+    "lessonsWithoutId": [],
+    "lessonsWithoutTitle": [],
+    "duplicateIds": [
+      {
+        "value": "ch3-002",
+        "files": [
+          "src/courses/calculus/4-applications-of-derivatives/003-mean-value-theorem.js",
+          "src/courses/precalculus/3-trigonometry-transcendental-functions/009-trig-in-calculus.js"
+        ]
+      },
+      {
+        "value": "ch3-001",
+        "files": [
+          "src/courses/calculus/4-applications-of-derivatives/004-linear-approximation.js",
+          "src/courses/precalculus/3-trigonometry-transcendental-functions/007-trig-identities-deep-dive.js"
+        ]
+      },
+      {
+        "value": "ch3-003",
+        "files": [
+          "src/courses/calculus/4-applications-of-derivatives/009-curve-sketching.js",
+          "src/courses/precalculus/3-trigonometry-transcendental-functions/010-logarithm-relationships.js"
+        ]
+      },
+      {
+        "value": "ch3-004",
+        "files": [
+          "src/courses/calculus/4-applications-of-derivatives/010-optimization.js",
+          "src/courses/precalculus/3-trigonometry-transcendental-functions/005-inverse-trig-functions.js"
+        ]
+      },
+      {
+        "value": "ch3-005",
+        "files": [
+          "src/courses/calculus/4-applications-of-derivatives/011-lhopital.js",
+          "src/courses/precalculus/3-trigonometry-transcendental-functions/011-trig-applications.js"
+        ]
+      },
+      {
+        "value": "ch4-001",
+        "files": [
+          "src/courses/calculus/5-integration/004-riemann-sums.js",
+          "src/courses/precalculus/4-exponential-logarithmic-functions/001-exponential-functions.js"
+        ]
+      },
+      {
+        "value": "ch4-003",
+        "files": [
+          "src/courses/calculus/5-integration/006-fundamental-theorem.js",
+          "src/courses/precalculus/4-exponential-logarithmic-functions/003-logarithms-intro.js"
+        ]
+      },
+      {
+        "value": "ch4-004",
+        "files": [
+          "src/courses/calculus/5-integration/008-indefinite-integrals.js",
+          "src/courses/precalculus/4-exponential-logarithmic-functions/004-log-properties.js"
+        ]
+      },
+      {
+        "value": "ch4-005",
+        "files": [
+          "src/courses/calculus/5-integration/010-applications.js",
+          "src/courses/precalculus/4-exponential-logarithmic-functions/005-solving-exponential-log.js"
+        ]
+      },
+      {
+        "value": "ch4-006",
+        "files": [
+          "src/courses/calculus/5-integration/012-u-substitution.js",
+          "src/courses/precalculus/4-exponential-logarithmic-functions/006-exponential-applications.js"
+        ]
+      },
+      {
+        "value": "ch5-001",
+        "files": [
+          "src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/002-series-intro.js",
+          "src/courses/precalculus/5-polar-complex-vectors/001-polar-coordinates-deep.js"
+        ]
+      },
+      {
+        "value": "ch5-002",
+        "files": [
+          "src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/003-convergence-tests.js",
+          "src/courses/precalculus/5-polar-complex-vectors/002-complex-polar-demoivre.js"
+        ]
+      },
+      {
+        "value": "ch5-003",
+        "files": [
+          "src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/004-power-series.js",
+          "src/courses/precalculus/5-polar-complex-vectors/003-vectors-2d.js"
+        ]
+      },
+      {
+        "value": "ch5-004",
+        "files": [
+          "src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/005-taylor-maclaurin.js",
+          "src/courses/precalculus/5-polar-complex-vectors/004-vectors-dot-product.js"
+        ]
+      },
+      {
+        "value": "ScienceNotebook",
+        "files": [
+          "src/courses/geometry/3-geometry-3/005-midpoint-section.js",
+          "src/courses/geometry/3-geometry-3/006-locus.js",
+          "src/courses/geometry/3-geometry-3/007-coordinate-proofs.js",
+          "src/courses/geometry/4-geometry-4/003-nets-cross-sections.js",
+          "src/courses/geometry/4-geometry-4/004-euler-formula.js",
+          "src/courses/geometry/4-geometry-4/005-frustum-composite.js",
+          "src/courses/geometry/4-geometry-4/006-platonic-solids.js",
+          "src/courses/geometry/4-geometry-4/007-3d-coordinates.js",
+          "src/courses/geometry/6-geometry-6/004-quadrilaterals.js",
+          "src/courses/geometry/6-geometry-6/005-composite-figures.js",
+          "src/courses/geometry/6-geometry-6/006-geometric-probability.js",
+          "src/courses/geometry/6-geometry-6/007-optimization.js"
+        ]
+      },
+      {
+        "value": "gp-20-iterators-and-generators",
+        "files": [
+          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
+          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
+        ]
+      },
+      {
+        "value": "la8-001",
+        "files": [
+          "src/courses/linear-algebra/5-python-in-the-browser/001-numpy-scipy-intro.js",
+          "src/courses/linear-algebra/8-applications-of-linear-algebra/001-pca-dimensionality-reduction.js"
+        ]
+      }
+    ],
+    "duplicateIdKeys": [
+      {
+        "value": "geometry/similarity",
+        "files": [
+          "src/courses/geometry/2-geometry-2/006-similarity.js",
+          "src/courses/geometry/5-geometry-5/001-similarity.js"
+        ]
+      },
+      {
+        "value": "guttag-python/iterators-and-generators",
+        "files": [
+          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
+          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
+        ]
+      },
+      {
+        "value": "sql/what-is-a-database",
+        "files": [
+          "src/courses/sql/1-sql-zero-to-mastery/002-what-is-a-database.js",
+          "src/courses/sql/2-python-sql/001-what-is-a-database.js"
+        ]
+      },
+      {
+        "value": "sql/acid-transactions",
+        "files": [
+          "src/courses/sql/1-sql-zero-to-mastery/026-acid-transactions.js",
+          "src/courses/sql/2-python-sql/006-acid-transactions.js"
+        ]
+      },
+      {
+        "value": "three-js/scene-graph",
+        "files": [
+          "src/courses/three-js/10-transforms-the-scene-graph/002-scene-graph.js",
+          "src/courses/three-js/7-engine-architecture/001-scene-graph.js"
+        ]
+      }
+    ],
+    "duplicateRoutes": [
+      {
+        "value": "/chapter/guttag-python-3/iterators-and-generators",
+        "files": [
+          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
+          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
+        ]
+      }
+    ],
+    "labIdsUsedByGames": []
+  }
+}

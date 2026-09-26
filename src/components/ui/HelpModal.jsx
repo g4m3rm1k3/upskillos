@@ -1,6 +1,7 @@
 // HelpModal.jsx — Interactive contributor tutorial system
 // A full in-app documentation site for contributors of all skill levels.
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   X,
   Download,
@@ -1199,7 +1200,7 @@ function SectionFeedback() {
 
 // ─── SECTION: OVERVIEW ───────────────────────────────────────────────────────
 
-function SectionOverview() {
+function SectionOverview({ onNavigate }) {
   return (
     <div>
       <SectionHeading sub="Two paths to contribute — pick the one that fits.">
@@ -1221,12 +1222,13 @@ function SectionOverview() {
             Visual editor built into the app. Add cells, preview instantly, no
             setup needed.
           </div>
-          <a
-            href="/lesson-builder"
+          <Link
+            to="/lesson-builder"
+            onClick={onNavigate}
             className="text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline"
           >
             → Open Lesson Builder
-          </a>
+          </Link>
         </div>
         <div className="p-5 rounded-2xl border-2 border-sky-400/50 bg-sky-50/60 dark:bg-sky-950/20">
           <div className="text-2xl mb-2">🔭</div>
@@ -1237,12 +1239,13 @@ function SectionOverview() {
             Build interactive visualizations and diagrams. Export directly into
             any lesson.
           </div>
-          <a
-            href="/viz-builder"
+          <Link
+            to="/viz-builder"
+            onClick={onNavigate}
             className="text-xs font-bold text-sky-700 dark:text-sky-300 hover:underline"
           >
             → Open Viz Builder
-          </a>
+          </Link>
         </div>
         <div className="p-5 rounded-2xl border-2 border-slate-300/50 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40">
           <div className="text-2xl mb-2">💻</div>
@@ -1888,7 +1891,7 @@ quick_transform([[0, -1], [1, 0]])      # 90° rotation`}</CodeBlock>
 
 // ─── SECTION: USING VIZ ──────────────────────────────────────────────────────
 
-function SectionUseViz() {
+function SectionUseViz({ onNavigate }) {
   return (
     <div>
       <SectionHeading sub="Add any existing visualization to a lesson — just one line.">
@@ -1902,7 +1905,7 @@ function SectionUseViz() {
 
       <Note color="green">
         <strong>No code editor?</strong> Open the{" "}
-        <a href="/viz-builder" className="font-bold underline">Viz Builder</a>{" "}
+        <Link to="/viz-builder" onClick={onNavigate} className="font-bold underline">Viz Builder</Link>{" "}
         (🔭 in Labs), configure a viz in the Build tab, click{" "}
         <strong>Export →</strong>, then <strong>"Or insert directly into a
         lesson"</strong>. Search for the target lesson, pick a section
@@ -3748,7 +3751,7 @@ export default function HelpModal({ isOpen, onClose }) {
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8 sm:mt-0 mt-[68px] bg-transparent sidebar-scroll">
             <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ActiveSection key={activeSection} />
+              <ActiveSection key={activeSection} onNavigate={onClose} />
             </div>
           </div>
         </div>

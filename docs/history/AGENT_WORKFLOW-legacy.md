@@ -1,3 +1,5 @@
+> **Historical document, superseded by [AGENTS.md](../../AGENTS.md).** It describes the old `src/content/` system and refers to a `check-doc-drift.js` script that does not exist. Do not follow it.
+
 # UpSkillOS — Agent Workflow Rules
 
 > **This document is mandatory reading for any AI agent working on this codebase.**

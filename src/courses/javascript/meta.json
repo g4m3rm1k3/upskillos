@@ -1,4 +1,5 @@
 {
+  "label": "JavaScript",
   "icon": "\u26a1",
   "description": "JavaScript runtime model, async, closures, OOP, and browser APIs",
   "domain": "cs"
