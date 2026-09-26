@@ -1,8 +1,9 @@
 import DEFAULT_NOTES from './default-notes.json'
 
 // Shared read/write logic for NotesListWindow.jsx + NoteEditorWindow.jsx.
-// Same storage key and merge behavior the old StickyNote.jsx / PinsNotesPopup.jsx
-// used, so notes written before this refactor keep showing up unchanged.
+// Same storage key and merge behavior as the earlier lesson-anchored notes (removed), so
+// notes written before this refactor keep showing up unchanged. Older notes and
+// default-notes.json are keyed "<lesson id>:<section>"; new notes are "manual:<id>".
 export const STORAGE_KEY = 'oc-sticky-notes'
 
 export function readUserNotes() {
