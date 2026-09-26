@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l22-sgd',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Loshchilov & Hutter (2019) · Decoupled weight decay regularization (AdamW)', url: 'https://arxiv.org/abs/1711.05101' },
   { title: 'Karpathy · A recipe for training neural networks', url: 'https://karpathy.github.io/2019/04/25/recipe/' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

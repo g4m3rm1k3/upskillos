@@ -22,6 +22,9 @@ export const blocks = {
     { figure: 'IntervalWidth', caption: 'Interval half-width for n = 20, 80, 320 and 1,280.' },
     { predict: { prompt: 'You have 50 observations. How many do you need to halve the standard error?', answer: 200, explain: 'The standard error falls like 1/√n, so halving it needs 4× the data: 200.' } },
     { p: 4 },
+    { cell: 2 },
+    { tool: 'sampling' },
+    { predict: { prompt: 'In the simulator, one press of **+1000** with n = 20 adds 1,000 sample means to the histogram. How many **individual** values did it draw from the population?', answer: 20000, explain: '1,000 samples × 20 values each = 20,000 values. The histogram keeps only the 1,000 means.', misconceptions: [{ answer: 1000, feedback: '1,000 is the number of sample means. Each one averages 20 individual values.' }, { answer: 20, feedback: '20 is the size of one sample. There are 1,000 samples.' }] } },
   ],
   'l05-bootstrap': [
     { p: 0 }, { p: 1 },
@@ -42,7 +45,15 @@ export const blocks = {
     { ladder: 'interval' },
   ],
   'l05-likelihood': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 }, { p: 1 },
+    { bridge: { title: 'logarithms, and why they turn products into sums', body: [
+      'In this lab **log** means the **natural logarithm** ln, the one NumPy’s `np.log` computes: log x is the power you must raise **e ≈ 2.71828** to in order to get x. So log 1 = 0 (e⁰ = 1), log e = 1, and log x is negative exactly when 0 < x < 1: log 0.5 = −0.6931.',
+      'Two rules do all the work here. **A product becomes a sum:** log(a·b) = log a + log b — so log(0.5 × 0.5) = −0.6931 + (−0.6931) = −1.3863 = log 0.25. **A power becomes a multiple:** log(aᵏ) = k·log a. Together they turn `pᵏ(1 − p)ⁿ⁻ᵏ` into `k log p + (n − k) log(1 − p)`.',
+      'Why bother: a product of many probabilities becomes too small for the computer. 0.9 multiplied by itself 100 times is about 0.0000266. With 10,000 factors the true value is about 10⁻⁴⁵⁸, far below the smallest number a float can hold (about 5 × 10⁻³²⁴): `0.9 ** 10000` prints `0.0`, and multiplying the factors one by one ends at a meaningless `2.5e-323`. The sum of logs stays an ordinary number: 100 × log 0.9 = −10.536, and 10,000 × log 0.9 = −1053.6.',
+      'Logs keep order: if a > b > 0 then log a > log b. So the p that makes log L largest is the same p that makes L largest — maximizing the log-likelihood gives the same answer.',
+      'The next paragraph differentiates: the slope of log p is **1/p** (and of log(1 − p) it is −1/(1 − p), by the chain rule from Lab 01, lesson 00b).',
+    ] } },
+    { p: 2 },
     { figure: 'LikelihoodCurve', caption: 'The log-likelihood of p for k successes in n trials, relative to its peak.' },
     { predict: { prompt: '3 successes in 12 trials. What is the maximum-likelihood estimate of p?', answer: 0.25, tolerance: 0.001, explain: 'p̂ = k/n = 3/12 = 0.25.' } },
     { cell: 0 },

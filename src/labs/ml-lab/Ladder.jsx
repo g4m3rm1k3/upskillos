@@ -189,7 +189,7 @@ function ReviewStep({ spec, state, update, ready }) {
   </div>
 }
 
-export default function Ladder({ name, spec, saved, onUpdate }) {
+export default function Ladder({ name, spec, saved, onUpdate, onReview }) {
   const stored = saved.ladders?.[name]
   const state = stored ?? emptyState(spec.version)
   const [plain, setPlain] = useState(readPlain)
@@ -211,6 +211,7 @@ export default function Ladder({ name, spec, saved, onUpdate }) {
     <span className="ml-eyebrow">Practice ladder</span>
     <h3>{spec.title}</h3>
     <p><LessonText>{spec.intro}</LessonText></p>
+    {spec.review && onReview && <p className="ml-ladder-review"><LessonText>{spec.review.text}</LessonText> <button onClick={() => onReview(spec.review.lab, spec.review.lesson)}>{spec.review.label}</button></p>}
     {stored && stored.version !== spec.version && <p className="ml-caption">This ladder has changed since you last worked on it. Your earlier results are kept and marked with the version they were made on.</p>}
     <Evidence spec={spec} state={state} />
     <label className="ml-caption ml-ladder-inline"><input type="checkbox" checked={plain} onChange={e => { setPlain(e.target.checked); writePlain(e.target.checked) }} /> Use a plain text box instead of the code editor</label>

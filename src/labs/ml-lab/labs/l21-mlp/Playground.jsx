@@ -44,7 +44,7 @@ export default function Playground() {
       <Slider label="Units per hidden layer" value={width} min={1} max={32} onChange={setWidth} />
       <Slider label="Hidden layers" value={depth} min={1} max={3} onChange={setDepth} />
       <Choice label="Learning rate" value={String(rate)} onChange={v => setRate(Number(v))} options={['0.03', '0.1', '0.5', '1', '3']} />
-      <Choice label="Weight initialization" value={scheme} onChange={setScheme} options={[['he', 'He: N(0, 2/fan_in)'], ['xavier', 'Xavier: N(0, 1/fan_in)'], ['zero', 'All zeros'], ['large', 'Too large: N(0, 9)']]} />
+      <Choice label="Weight initialization" value={scheme} onChange={setScheme} options={[['he', 'He: N(0, 2/fan_in)'], ['xavier', 'LeCun: N(0, 1/fan_in)'], ['zero', 'All zeros'], ['large', 'Too large: N(0, 9)']]} />
     </Controls>
     <Actions>
       <button className="ml-primary" onClick={() => setRunning(r => !r)}>{running ? 'Pause' : 'Train'}</button>

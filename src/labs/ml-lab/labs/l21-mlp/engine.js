@@ -25,7 +25,7 @@ const matmul = (A, W) => A.map(r => W[0].map((_, j) => r.reduce((t, v, k) => t +
 export function init(sizes, scheme = 'he', seed = 1) {
   const rng = random(seed)
   return sizes.slice(1).map((out, l) => {
-    const fanIn = sizes[l], scale = scheme === 'zero' ? 0 : scheme === 'xavier' ? Math.sqrt(1 / fanIn) : scheme === 'large' ? 3 : Math.sqrt(2 / fanIn)
+    const fanIn = sizes[l], scale = scheme === 'zero' ? 0 : scheme === 'xavier' ? Math.sqrt(1 / fanIn) /* LeCun's 1/fan_in (the key is kept for saved settings) */ : scheme === 'large' ? 3 : Math.sqrt(2 / fanIn)
     return { W: range(fanIn).map(() => range(out).map(() => scale * normal(rng))), b: Array(out).fill(0) }
   })
 }

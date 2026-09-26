@@ -1,13 +1,16 @@
 import { lazy } from 'react'
 import { lessons, sources } from './lessons.js'
 import python from './python.js'
+import { blocks } from './blocks.js'
+import { withBlocks } from '../../kit/blocks.js'
+import { backprop } from './ladder.js'
 
 export default {
   number: 20,
   short: 'Graphs & backpropagation',
   question: 'How does a computer find millions of derivatives at once?',
   intro: 'Break computations into graphs, pass gradients backwards with local derivatives, and build the automatic-differentiation engine every deep-learning framework is based on.',
-  lessons, sources, python,
+  lessons: withBlocks(lessons, blocks), sources, python, figures: () => import('./figures.jsx'), ladders: { backprop },
   math: ['calc.chain', 'ai.autodiff', 'la.matcalc', 'dm.graphs', 'calc.linapprox'],
   Playground: lazy(() => import('./Playground.jsx')),
   scope: 'Computation graphs, forward passes, local derivatives, reverse-mode differentiation (backpropagation), gradient accumulation and topological order, saturation, gradient checking, and a scalar autodiff engine.',

@@ -6,6 +6,15 @@ let createWorker = () => new Worker(new URL('./notebook.worker.js', import.meta.
 export function setWorkerFactory(factory) { createWorker = factory }   // tests use a fake worker
 
 let worker = null, generation = 0, jobCounter = 0, current = null
+// Python holds a few hundred MB while it is loaded. After this long with nothing running it is shut
+// down, and it restarts (from the browser's cache) on the next run.
+export const IDLE_LIMIT_MS = 10 * 60 * 1000
+let idleLimit = IDLE_LIMIT_MS, idleTimer = null
+export function setIdleLimit(ms) { idleLimit = ms }                     // tests use a short limit
+function armIdle() {
+  clearTimeout(idleTimer); idleTimer = null
+  if (worker && !current && !queue.length) idleTimer = setTimeout(() => release('idle'), idleLimit)
+}
 const queue = [], listeners = new Set()
 let status = { state: 'idle', text: 'Python starts the first time you run a cell.' }
 
@@ -20,6 +29,7 @@ function finish(result) {
   current = null
   job?.resolve({ ...result, generation })
   startNext()
+  armIdle()
   emit()
 }
 
@@ -50,6 +60,7 @@ function ensureWorker() {
 
 function startNext() {
   if (current || !queue.length) return
+  clearTimeout(idleTimer); idleTimer = null
   current = queue.shift()
   ensureWorker()
   worker.postMessage({ type: 'run', job: current.job, ns: current.ns, code: current.code, importsFrom: current.importsFrom })
@@ -71,6 +82,7 @@ export function run(ns, code, { onStream, timeoutMs, importsFrom } = {}) {
 // Terminates Python: the running cell and everything queued are cancelled, and every
 // notebook's variables are gone. Code and drafts live on the page and are not affected.
 export function stop(reason) {
+  clearTimeout(idleTimer); idleTimer = null
   worker?.terminate(); worker = null
   clearTimeout(deadline); deadline = null
   generation++
@@ -78,6 +90,25 @@ export function stop(reason) {
   current = null; queue.length = 0
   status = { state: 'stopped', text: `${timedOut ? 'A check ran past its time limit, so Python was stopped' : 'Python was stopped'} and will restart on the next run. Variables from earlier runs are gone in every notebook; your code is kept.` }
   cancelled.forEach(job => job.resolve({ ok: false, stopped: true, timedOut, generation }))
+  emit()
+}
+
+// Shut Python down to free its memory: after `idle` time with nothing running, or when the learner
+// leaves the ML Lab (`leave`, which also cancels anything still running). Like stop(), every notebook's
+// variables are gone; unlike stop(), an idle shutdown never interrupts a run.
+export function release(reason = 'leave') {
+  clearTimeout(idleTimer); idleTimer = null
+  if (!worker) return
+  if (reason === 'idle' && (current || queue.length)) return
+  worker.terminate(); worker = null
+  clearTimeout(deadline); deadline = null
+  generation++
+  const cancelled = [current, ...queue].filter(Boolean)
+  current = null; queue.length = 0
+  status = { state: 'idle', text: reason === 'idle'
+    ? `Python was shut down after ${Math.round(idleLimit / 60000)} minutes without a run, to free memory. It restarts on the next run; variables from earlier runs are gone, your code is kept.`
+    : 'Python was shut down when you left the lab. It restarts on the next run; your code is kept.' }
+  cancelled.forEach(job => job.resolve({ ok: false, stopped: true, timedOut: false, generation }))
   emit()
 }
 

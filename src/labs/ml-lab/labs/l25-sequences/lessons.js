@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l25-tokens',
@@ -27,7 +29,7 @@ export const lessons = [
     prerequisite: 'Lesson 25.1; baselines (Lab 06).',
     paragraphs: [
       'The simplest sequence model averages the token embeddings and feeds the result to a classifier. It is fast, works for any length, and is a strong baseline for tasks like topic classification.',
-      'Averaging is invariant to order: "deploy, error" and "error, deploy" have the same mean. In the playground the label depends on exactly that order, so the pooled model can do no better than exploit token frequencies — it stays close to the base rate of about 57%.',
+      'Averaging is invariant to order: "deploy, error" and "error, deploy" have the same mean. In the playground the label depends on exactly that order, so the pooled model can do no better than exploit token frequencies — it stays close to the base rate: about 60% of test sequences are negative, and it scores about 59%.',
       'Always build this baseline. If it is almost as good as a sequence model, order barely matters for your task and the simpler model may be enough. If a sequence model is far better, you have evidence that order carries the signal.',
       'Many tasks are largely order-insensitive (spam detection, many document classifiers). Others hinge on order: causality in event logs, negation in sentences ("not good"), and anything about time. Decide from the problem, then confirm with the baseline.',
       'A large gap can also mean something unintended: a sequence model may be exploiting position artifacts or sequence length. Inspect what distinguishes the examples it gets right.',
@@ -87,16 +89,16 @@ export const lessons = [
     prerequisite: 'Lessons 25.1–25.4; leakage (Lab 06).',
     paragraphs: [
       'A model minimizes loss with whatever signal is easiest. If an irrelevant artifact correlates with the label in the training data, the model may learn the artifact instead of the intended rule — **shortcut learning**.',
-      'In the playground, turning on the shortcut inserts a "[bot]" token into 90% of positive training examples — like an automated reporter that only posts about real incidents. The pooled model reaches about 95% training accuracy by learning "[bot] → incident" and falls to about 60% on clean test data.',
+      'In the playground, turning on the shortcut inserts a "[bot]" token into 90% of positive training examples — like an automated reporter that only posts about real incidents. The pooled model reaches about 95% training accuracy by learning "[bot] → incident" and falls to about 60% on clean test data — no better than always answering "no incident".',
       'Sequence data are prone to **contamination**: the same template message in train and test, overlapping windows cut from one long log, duplicated documents, or future events leaking into past windows. Split by source and time (Lab 06) and deduplicate before splitting.',
       'Probe for shortcuts: evaluate on data where the suspected artifact is removed or randomized; inspect the most influential tokens (the embedding plot is a start); try an adversarial test set built by domain experts. Improvement that vanishes under these probes was never real.',
       'You have completed this lab when you can: embed tokens and track shapes; explain why pooling ignores order and use it as a baseline; compute an RNN forward pass and explain BPTT; pad and mask correctly; and detect shortcut learning and contamination. The Python challenge implements embeddings, masking and an RNN forward pass.',
     ],
     formula: 'test on data without the artifact: a large drop ⇒ the model relied on a shortcut',
     experiment: 'Turn on the shortcut and train the pooled model, then the RNN. Compare training and clean-test accuracy for both. Does the RNN resist the shortcut?',
-    question: 'A model scores 95% on training data containing an artifact and 60% on clean test data, where the base rate is 57%. By how many percentage points does it beat the base rate on clean data?',
-    answer: 3,
-    explanation: '60 − 57 = 3 points: nearly all of its apparent skill came from the shortcut.',
+    question: 'A model scores 95.3% on training data containing an artifact and 59.7% on clean test data, where always predicting the majority class scores 59.7%. By how many percentage points does it beat that baseline on clean data?',
+    answer: 0,
+    explanation: '59.7 − 59.7 = 0 points: all of its apparent skill came from the shortcut. These are the playground’s own numbers.',
     reflection: 'Name one artifact in your data that could correlate with the label for the wrong reason. How would you test for it?',
   },
 ]
@@ -106,3 +108,6 @@ export const sources = [
   { title: 'Olah · Understanding LSTM networks', url: 'https://colah.github.io/posts/2015-08-Understanding-LSTMs/' },
   { title: 'Geirhos et al. (2020) · Shortcut learning in deep neural networks', url: 'https://arxiv.org/abs/2004.07780' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

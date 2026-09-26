@@ -56,12 +56,17 @@ export const POPULATIONS = {
   },
 }
 
-// Draw `count` sample means of size n, continuing the given generator's stream.
-export function drawSampleMeans(pop, n, count, rng) {
+// Draw `count` sample means of size n, continuing the given generator's stream. `last`, if given,
+// receives the n individual values of the final sample (same stream: it does not change the means).
+export function drawSampleMeans(pop, n, count, rng, last) {
   const means = new Array(count)
   for (let i = 0; i < count; i++) {
     let sum = 0
-    for (let j = 0; j < n; j++) sum += pop.sample(rng)
+    for (let j = 0; j < n; j++) {
+      const x = pop.sample(rng)
+      sum += x
+      if (last && i === count - 1) last.push(x)
+    }
     means[i] = sum / n
   }
   return means

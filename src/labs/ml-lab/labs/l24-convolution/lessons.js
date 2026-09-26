@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l24-why',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'Dumoulin & Visin · A guide to convolution arithmetic for deep learning', url: 'https://arxiv.org/abs/1603.07285' },
   { title: 'He et al. (2016) · Deep residual learning for image recognition', url: 'https://arxiv.org/abs/1512.03385' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

@@ -6,13 +6,20 @@
 import { chromium } from 'playwright'
 const URL = process.argv[2] || 'http://localhost:5173/scratch/ml-preview.html'
 const OUT = process.argv[3] || 'ladder'
-let failed = 0
-const log = (name, ok, detail = '') => { if (!ok) failed++; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`) }
+import { writeFileSync } from 'node:fs'
+let failed = 0, lastPassed = '(none)'
+const log = (name, ok, detail = '') => { if (!ok) failed++; else lastPassed = name; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`) }
+// Everything the page and its workers print, with times, kept for the failure report.
+const consoleLines = [], t00 = Date.now()
+const keep = src => m => consoleLines.push(`${((Date.now() - t00) / 1000).toFixed(1)}s ${src} ${m.type()}: ${m.text()}`)
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } })
 page.setDefaultTimeout(240000)
 page.on('pageerror', e => { failed++; console.log('pageerror:', e.message) })
+page.on('console', keep('page'))
+page.on('worker', w => w.on('console', keep('worker')))
+try {
 console.log('browser', browser.version())
 await page.goto(URL, { waitUntil: 'domcontentloaded' })
 await page.selectOption('select[aria-label="Choose lab"]', '3')
@@ -93,6 +100,19 @@ await ladder.scrollIntoViewIfNeeded()
 const overflow = await page.evaluate(() => { const l = document.querySelector('section.ml-ladder'); return l.scrollWidth - l.clientWidth })
 log('ladder fits 390 px without horizontal scroll', overflow <= 1, `overflow ${overflow}px`)
 await ladder.screenshot({ path: `${OUT}-phone.png` })
+} catch (error) {
+  // A step that never completed (for example a wait that timed out): keep what is needed to diagnose it.
+  failed++
+  console.log(`FAIL  a step did not complete after "${lastPassed}": ${error.message.split('\n')[0]}`)
+  for (const p of browser.contexts().flatMap(c => c.pages())) {
+    const i = browser.contexts().flatMap(c => c.pages()).indexOf(p)
+    await p.screenshot({ path: `${OUT}-failure-${i}.png`, fullPage: true }).catch(() => {})
+    const ladders = await p.locator('section.ml-ladder').allInnerTexts().catch(() => [])
+    writeFileSync(`${OUT}-failure-${i}.txt`, `After: ${lastPassed}\nError: ${error.stack}\n\nLadder text:\n${ladders.join('\n----\n')}\n`)
+  }
+  writeFileSync(`${OUT}-console.log`, consoleLines.join('\n') + '\n')
+  console.log(`Saved ${OUT}-failure-*.png, ${OUT}-failure-*.txt and ${OUT}-console.log`)
+}
 await browser.close()
 console.log(failed ? `${failed} problem(s)` : 'all ladder browser checks passed')
 process.exit(failed ? 1 : 0)

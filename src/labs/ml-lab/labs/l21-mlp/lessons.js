@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l21-layers',
@@ -69,7 +71,7 @@ export const lessons = [
       'Let Δ⁽ˡ⁾ = ∂L/∂Z⁽ˡ⁾, shape `(n, d_l)`. At the output, Δ = (P − Y)/n. Everything else follows from Z = A_prev W + b.',
       'Weight gradient: `∂L/∂W = A_prevᵀ Δ`, shape `(d_{l−1}, d_l)` — each weight\'s gradient sums input-times-error over the batch, the same Xᵀ(error) pattern as Lab 03. Bias gradient: the column sums of Δ.',
       'Error for the layer below: `∂L/∂A_prev = Δ Wᵀ`, then multiply elementwise by the activation derivative: `Δ_prev = (Δ Wᵀ) ⊙ φ′(Z_prev)`. Repeat down to the first layer. Two matrix products per layer; the backward pass costs about twice the forward pass.',
-      'Initialization matters. All-zero weights give every hidden unit identical outputs and identical gradients: they stay identical forever (**symmetry**). Random weights break symmetry, but their scale must keep activations and gradients from shrinking or exploding across layers: **He** initialization N(0, 2/fan_in) for ReLU, **Xavier/Glorot** N(0, 1/fan_in) for tanh.',
+      'Initialization matters. All-zero weights give every hidden unit identical outputs and identical gradients: they stay identical forever (**symmetry**). Random weights break symmetry, but their scale must keep activations and gradients from shrinking or exploding across layers: **He** initialization N(0, 2/fan_in) for ReLU; for tanh, variance 1/fan_in (LeCun’s rule, the playground’s “LeCun” option), or **Xavier/Glorot**’s 2/(fan_in + fan_out), which is the same number when a layer has as many outputs as inputs.',
       'Verify with finite differences on a few weights per layer (the playground\'s "Check gradients"). A correct implementation agrees to about 10⁻⁷ relative error. Then train, and watch both training and validation loss.',
     ],
     formula: '∂L/∂W⁽ˡ⁾ = A⁽ˡ⁻¹⁾ᵀ Δ⁽ˡ⁾     ∂L/∂b⁽ˡ⁾ = Σ_rows Δ⁽ˡ⁾     Δ⁽ˡ⁻¹⁾ = (Δ⁽ˡ⁾ W⁽ˡ⁾ᵀ) ⊙ φ′(Z⁽ˡ⁻¹⁾)',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'He et al. (2015) · Delving deep into rectifiers (He initialization)', url: 'https://arxiv.org/abs/1502.01852' },
   { title: 'CS231n · Neural networks part 1–3 notes', url: 'https://cs231n.github.io/neural-networks-1/' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

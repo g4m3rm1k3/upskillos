@@ -249,8 +249,8 @@ print("criterion met:", (err_model.mean() <= err_base.mean() / 2) and lo > 0)`,
       ],
     },
     notebook: {
-      title: 'Lab 16.6 · The report, and your own project',
-      intro: 'Generate a reproducible report from the actual numbers, then apply the same process to a second, scaffolded problem.',
+      title: 'Lab 16.6 · The report',
+      intro: 'Generate a reproducible report from the actual numbers.',
       cells: [{
         title: 'A report generated from the numbers',
         prose: 'Every number below is computed, not typed. Re-running gives the same report; changing a seed or a package version changes the fingerprint line.',
@@ -268,28 +268,131 @@ CV        baseline {base.mean():.1f} ± {base.std():.1f} s; linear {lin.mean():.
 TEST      linear model {test_mae:.1f} s on {len(test)} locked rows (opened once).
 VERSIONS  numpy {np.__version__}, pandas {pd.__version__}, scikit-learn {sklearn.__version__}.
 LIMITS    one simulated cluster; random rather than time-based test split; errors grow with build size.""")`,
-      }, {
-        title: 'Your turn: a second problem, scaffolded',
-        prose: 'Predict how long a **test suite** takes from its number of tests, the share that touch a database, and whether it runs in parallel. The cell runs as given: data, locked test set, baseline and a raw linear model. Follow the TODOs to add features from the recipe’s structure, compare on the same folds, and write the decision.',
+      }],
+    },
+  },
+  'l16-project': {
+    formulaTex: '$$g_k = \\mathrm{MAE}^{(k)}_A - \\mathrm{MAE}^{(k)}_B$$ $$\\bar g \\pm 2\\,s_g/\\sqrt K$$ $$\\text{accept} \\iff \\bar g - 2\\,s_g/\\sqrt K > 0 \\ \\text{and}\\ \\bar g \\ge \\delta$$',
+    mathCode: {
+      rows: [
+        ['$g_k$', 'fold_maes(model, cols_a) - fold_maes(model, cols_b)', 'The gain on fold k: the same folds for both, so the differences are paired.'],
+        ['$\\bar g \\pm 2\\,s_g/\\sqrt K$', 'gain.mean() ± 2 * gain.std(ddof=1) / np.sqrt(len(gain))', 'Mean gain and a rough 95% interval over K = 5 folds.'],
+        ['$\\delta$', 'worth_it=0.5', 'The smallest gain worth acting on, set when framing the problem, before looking.'],
+      ],
+    },
+    notebook: {
+      title: 'Lab 16.7 · Your project: guided, then on your own',
+      intro: 'Stage 2: a second problem with checks at each step. Stage 3: a real dataset, a rubric and a report checker.',
+      cells: [{
+        title: 'Stage 2 · Test-suite durations: data, locked test set, baseline',
+        prose: 'The same process as 16.1–16.6 on a new problem. Runs as given.',
         code: `import numpy as np, pandas as pd
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.linear_model import LinearRegression
 from sklearn.dummy import DummyRegressor
 rng = np.random.default_rng(7)
 n = 500
-suites = pd.DataFrame({"tests": rng.integers(20, 2000, n), "db_share": rng.uniform(0, 0.6, n), "parallel": rng.integers(0, 2, n)})
-per_test = 0.05 + 0.4 * suites.db_share                            # database tests are slower
+suites = pd.DataFrame({"tests": rng.integers(20, 2000, n),      # tests in the suite
+                       "db_share": rng.uniform(0, 0.6, n),     # share of tests that touch a database
+                       "parallel": rng.integers(0, 2, n)})     # 1 = runs on 4 workers
+per_test = 0.05 + 0.4 * suites.db_share                          # seconds per test: database tests are slower
 suites["seconds"] = suites.tests * per_test / np.where(suites.parallel == 1, 4, 1) + 5 + rng.normal(0, 3, n)
-test = suites.sample(frac=0.2, random_state=7); dev = suites.drop(test.index)
+test = suites.sample(frac=0.2, random_state=7)                  # locked: opened once, at the end
+dev = suites.drop(test.index).copy()
 folds = KFold(5, shuffle=True, random_state=0)
-def cv(model, cols):
-    return -cross_val_score(model, dev[cols], dev.seconds, cv=folds, scoring="neg_mean_absolute_error").mean()
-print(f"baseline CV MAE {cv(DummyRegressor(), ['tests']):.1f} s")
-print(f"raw linear CV MAE {cv(LinearRegression(), ['tests', 'db_share', 'parallel']):.1f} s")
-# TODO 1: the recipe says time = tests × (0.05 + 0.4·db_share) / (4 if parallel else 1). Build columns a linear
-#         model can use for that (hint: tests × db_share, and each of those divided by the parallel factor).
-# TODO 2: score your feature set with cv(LinearRegression(), [...]) on the same folds, and one tree ensemble.
-# TODO 3: open the test set once for the model you choose; write PROBLEM / DATA / CV / TEST / DECISION lines.`,
+
+def fold_maes(model, cols):
+    """MAE on each of the 5 folds (same folds for every model)."""
+    return -cross_val_score(model, dev[cols], dev.seconds, cv=folds, scoring="neg_mean_absolute_error")
+
+print(f"{len(dev)} development suites, {len(test)} locked for the test")
+print(f"baseline (predict the mean)  CV MAE {fold_maes(DummyRegressor(), ['tests']).mean():6.2f} s")
+print(f"linear, raw columns          CV MAE {fold_maes(LinearRegression(), ['tests', 'db_share', 'parallel']).mean():6.2f} s")`,
+      }, {
+        title: 'Stage 2 · Your features',
+        prose: 'Follow the TODO. **Check:** the raw columns score 40.55 s; the right two columns bring the CV MAE to about 2.6 s, the noise level.',
+        code: `# TODO: the recipe is  seconds ≈ tests × (0.05 + 0.4·db_share) / (4 if parallel else 1) + 5.
+# A linear model can only add up columns times weights, so give it columns in which that formula is linear.
+# Hint: write the time as 0.05·[tests / factor] + 0.4·[tests·db_share / factor] + 5, and make those two columns.
+factor = np.where(dev.parallel == 1, 4, 1)
+# dev["..."] = ...
+my_cols = ["tests", "db_share", "parallel"]        # replace with your new columns
+scores = fold_maes(LinearRegression(), my_cols)
+print(f"your columns {my_cols}: CV MAE {scores.mean():.2f} s (fold spread ±{scores.std(ddof=1) / np.sqrt(5):.2f})")
+print("The noise in these times has a standard deviation of 3 s, so no model can do much better than about 2.4 s.")`,
+      }, {
+        title: 'Stage 2 · The rule you could have written instead',
+        prose: '**Predict** whether a formula with no training can match your model.',
+        code: `# The same recipe, written as a rule: no training, no features to learn.
+def rule(d):
+    return d.tests * (0.05 + 0.4 * d.db_share) / np.where(d.parallel == 1, 4, 1) + 5
+
+print(f"rule from the recipe   MAE on the development suites {np.mean(np.abs(rule(dev) - dev.seconds)):.2f} s")
+print(f"mean of the targets    MAE {np.mean(np.abs(dev.seconds.mean() - dev.seconds)):.2f} s")`,
+      }, {
+        title: 'Stage 2 · Accept or reject an improvement',
+        prose: 'Two comparisons on the same folds. **Predict** which one is worth accepting.',
+        code: `def compare(cols_a, cols_b, worth_it=0.5):
+    """Is B better than A? Paired over the same 5 folds: accept only if the gain's interval is above 0
+    AND the gain is at least worth_it seconds, the smallest improvement anyone would act on."""
+    gain = fold_maes(LinearRegression(), cols_a) - fold_maes(LinearRegression(), cols_b)
+    mean, se = gain.mean(), gain.std(ddof=1) / np.sqrt(len(gain))
+    lo, hi = mean - 2 * se, mean + 2 * se
+    verdict = "accept" if lo > 0 and mean >= worth_it else "reject"
+    print(f"gain {mean:+.3f} s, interval {lo:+.3f} to {hi:+.3f} s -> {verdict}")
+
+fac = np.where(dev.parallel == 1, 4, 1)
+dev["tests_eff"], dev["db_tests_eff"] = dev.tests / fac, dev.tests * dev.db_share / fac
+engineered = ["tests_eff", "db_tests_eff"]
+compare(["tests", "db_share", "parallel"], engineered)                 # raw columns -> engineered
+compare(engineered, engineered + ["tests", "db_share", "parallel"])     # engineered -> engineered + raw`,
+      }, {
+        title: 'Stage 3 · Your turn: a real dataset',
+        prose: 'The data are loaded and the test set is locked. Everything after that is yours.',
+        code: `import numpy as np, pandas as pd
+from sklearn.datasets import load_diabetes
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
+from sklearn.dummy import DummyRegressor
+X, y = load_diabetes(return_X_y=True, as_frame=True)     # real data, shipped inside scikit-learn (BSD licence)
+X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=0.2, random_state=0)   # the test set is now locked
+folds = KFold(5, shuffle=True, random_state=0)
+print(X_dev.shape, "development rows and features;", len(X_test), "rows locked for the test")
+print(X_dev.head(3).round(3))
+baseline = -cross_val_score(DummyRegressor(), X_dev, y_dev, cv=folds, scoring="neg_mean_absolute_error")
+print(f"baseline CV MAE {baseline.mean():.1f} (progression units)")
+configs_tried = 1          # add one for every model setting you score
+# Your work goes below: at least two models on these same folds, then the test set once for the one you choose.`,
+      }, {
+        title: 'Stage 3 · Your report, checked',
+        prose: 'Fill in the report as you work and run this cell to check it is complete and consistent.',
+        code: `report = {
+    "problem":  "",           # what is predicted, for what decision, and the success threshold you set before looking
+    "data":     "",           # source, rows, how the test set was separated
+    "baseline_cv_mae": None,  # a number
+    "models":   {},           # name -> CV MAE, for every configuration you scored
+    "configs_tried": None,    # a number: the count behind "models"
+    "chosen":   "",           # the name of the model you chose, from "models"
+    "test_mae": None,         # a number: the chosen model, test set opened once
+    "decision": "",           # ship / do not ship, and why, against your threshold
+    "limits":   "",           # what the evidence does not show
+}
+
+def check_report(r):
+    """Checks that the report is complete and self-consistent. It cannot check that your reasoning is right."""
+    problems = []
+    for key in ["problem", "data", "decision", "limits"]:
+        if len(str(r.get(key, "")).split()) < 5: problems.append(f"'{key}' needs a sentence or more")
+    for key in ["baseline_cv_mae", "test_mae", "configs_tried"]:
+        if not isinstance(r.get(key), (int, float)): problems.append(f"'{key}' must be a number")
+    if len(r.get("models", {})) < 2: problems.append("compare at least two models on the same folds")
+    if r.get("chosen") not in r.get("models", {}): problems.append("'chosen' must be one of the models you scored")
+    if isinstance(r.get("configs_tried"), (int, float)) and r["configs_tried"] < len(r.get("models", {})):
+        problems.append("'configs_tried' is smaller than the number of models listed")
+    if not problems and r["models"][r["chosen"]] >= r["baseline_cv_mae"]:
+        problems.append("the chosen model does not beat the baseline in cross-validation: say so in 'decision'")
+    print("\\n".join(problems) if problems else "Complete: every section is filled in and the numbers are consistent.")
+
+check_report(report)`,
       }],
     },
   },

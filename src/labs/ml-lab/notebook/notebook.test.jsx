@@ -120,9 +120,10 @@ describe('export and hints', () => {
 })
 
 describe('edits survive every transition on the lesson page', () => {
-  // Lesson 00a shows its cells inline, beside the paragraphs they illustrate.
-  const openNotebook = async () => await screen.findByLabelText('Notebook cell 2 code')
-  const cell = () => screen.getByLabelText('Notebook cell 2 code')
+  // Lesson 00a shows its cells inline, beside the paragraphs they illustrate. Cell 1 is the orientation
+  // cell; cell 3 holds the weights.
+  const openNotebook = async () => await screen.findByLabelText('Notebook cell 3 code')
+  const cell = () => screen.getByLabelText('Notebook cell 3 code')
   it('reflection, checkpoint, hide/show, lesson change and reload', async () => {
     render(<MLLab />)
     fireEvent.change(await openNotebook(), { target: { value: 'weights = np.array([4, 6])  # my edit' } })
@@ -131,8 +132,8 @@ describe('edits survive every transition on the lesson page', () => {
     fireEvent.change(screen.getByLabelText('Checkpoint answer'), { target: { value: '23' } })
     fireEvent.click(screen.getByText('Check answer', { selector: 'button' }))
     expect(cell().value).toMatch(/my edit/)
-    fireEvent.click(screen.getByText('Show all 5 cells in order'))
-    expect(screen.getAllByLabelText('Notebook cell 2 code').every(c => /my edit/.test(c.value))).toBe(true)
+    fireEvent.click(screen.getByText('Show all 6 cells in order'))
+    expect(screen.getAllByLabelText('Notebook cell 3 code').every(c => /my edit/.test(c.value))).toBe(true)
     fireEvent.click(screen.getByText('Hide the full list of cells'))
     expect(await openNotebook()).toHaveProperty('value', expect.stringMatching(/my edit/))
     fireEvent.click(screen.getByText('Next lesson →', { selector: 'button' }))
@@ -146,12 +147,12 @@ describe('edits survive every transition on the lesson page', () => {
     fireEvent.change(await openNotebook(), { target: { value: 'weights = np.array([9, 9])' } })
     fireEvent.click(screen.getByText(/Copy my version to Notebook Lab/))
     const saved = Object.values(JSON.parse(localStorage.getItem('oc-notebook-lab')))[0]
-    expect(saved.cells[1].code).toBe('weights = np.array([9, 9])')
-    expect(saved.cells.map(c => c.cellTitle)[0]).toBe('Same expression, two meanings')
+    expect(saved.cells[2].code).toBe('weights = np.array([9, 9])')
+    expect(saved.cells.map(c => c.cellTitle).slice(0, 2)).toEqual(['How the cells work', 'Same expression, two meanings'])
     let blob
     URL.createObjectURL = vi.fn(b => { blob = b; return 'blob:x' }); URL.revokeObjectURL = vi.fn()
     fireEvent.click(screen.getByText(/Download my notebook/))
-    expect(JSON.parse(await blob.text()).cells.filter(c => c.cell_type === 'code')[1].source.join('')).toBe('weights = np.array([9, 9])')
+    expect(JSON.parse(await blob.text()).cells.filter(c => c.cell_type === 'code')[2].source.join('')).toBe('weights = np.array([9, 9])')
     fireEvent.click(screen.getByText('Reset to the original cells'))
     expect(cell().value).toMatch(/weights = np.array\(\[4, 5\]\)/)
   })
@@ -161,9 +162,9 @@ describe('edits survive every transition on the lesson page', () => {
     const first = within(screen.getByRole('region', { name: /Cell 1/ }))
     fireEvent.click(first.getByText('Run cell'))
     await flush()
-    expect(first.getByText(/ran: import numpy as np/)).toBeTruthy()
+    expect(first.getByText(/ran: minutes = 42/)).toBeTruthy()
     fireEvent.change(cell(), { target: { value: 'while True: pass' } })
-    fireEvent.click(within(screen.getByRole('region', { name: /Cell 2/ })).getByText('Run cell'))
+    fireEvent.click(within(screen.getByRole('region', { name: /Cell 3/ })).getByRole('button', { name: /^Run cell/ }))   // “Run cells 2 and this one”
     await flush()
     fireEvent.click(screen.getByText('Stop', { selector: 'button' }))
     await flush()
@@ -192,3 +193,85 @@ if (process.env.ML_WRITE_IPYNB) {
       { outputs: [null, { text: '5\n', value: '5' }, { text: '', figures: ['iVBORw0KGgo='], error: { ename: 'NameError', evalue: 'n', traceback: 'Traceback\nNameError: n' } }], counts: [null, 3, 4], ranCode: [null, 'print(x)\nx', 'plt.plot([1])'] }))
   })
 }
+
+import PythonStatus, { describeJob, SHOW_AFTER_MS } from './PythonStatus.jsx'
+const wait = ms => act(() => new Promise(r => setTimeout(r, ms)))
+
+describe('freeing Python and showing that it runs', () => {
+  afterEach(() => runtime.setIdleLimit(runtime.IDLE_LIMIT_MS))
+  it('shuts Python down after the idle limit, and the next run starts a fresh one', async () => {
+    runtime.setIdleLimit(30)
+    const gen = runtime.getGeneration()
+    await runtime.run('nb1', 'print(1)')
+    await wait(60)
+    expect(FakeWorker.all[0].terminated).toBe(true)
+    expect(runtime.getGeneration()).toBe(gen + 1)
+    let status; const off = runtime.subscribe(s => { status = s }); off()
+    expect(status).toMatchObject({ state: 'idle' })
+    expect(status.text).toMatch(/without a run, to free memory/)
+    expect(await runtime.run('nb1', 'print(2)')).toMatchObject({ ok: true })
+    expect(FakeWorker.all).toHaveLength(2)
+  })
+  it('never shuts down in the middle of a run', async () => {
+    runtime.setIdleLimit(20)
+    await runtime.run('nb1', 'print(1)')
+    const loop = runtime.run('nb1', 'while True: pass')
+    await wait(60)
+    expect(FakeWorker.all[0].terminated).toBe(false)
+    runtime.stop(); await loop
+  })
+  it('release("leave") cancels what is running and frees the worker', async () => {
+    const loop = runtime.run('nb1', 'while True: pass')
+    runtime.release('leave')
+    expect(await loop).toMatchObject({ stopped: true })
+    expect(FakeWorker.all[0].terminated).toBe(true)
+  })
+  it('leaving the ML Lab frees lesson Python', async () => {
+    const { unmount } = render(<MLLab />)
+    await runtime.run('nb1', 'print(1)')
+    unmount()
+    expect(FakeWorker.all[0].terminated).toBe(true)
+  })
+  it('names what is running and offers Stop, but only once a run lasts', async () => {
+    expect(describeJob('ladder:prediction:fill')).toBe('a practice check')
+    expect(describeJob('l19-order', [{ id: 'l19-order', title: '19.1 · Order' }])).toBe('the notebook in “19.1 · Order”')
+    render(<PythonStatus lessons={[]} />)
+    const loop = runtime.run('ladder:x:y', 'while True: pass')
+    await flush()
+    expect(screen.queryByRole('status')).toBeNull()
+    await wait(SHOW_AFTER_MS + 50)
+    expect(screen.getByRole('status').textContent).toMatch(/Python is running a practice check/)
+    fireEvent.click(screen.getByRole('button', { name: 'Stop Python' }))
+    expect(await loop).toMatchObject({ stopped: true })
+    await flush()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+})
+
+describe('check time limits', () => {
+  it('count from when the code starts running, not while packages download', async () => {
+    let w
+    runtime.setWorkerFactory(() => { w = new FakeWorker(); w.postMessage = msg => { w.sent.push(msg) }; return w })
+    const res = runtime.run('ladder:x:y', 'import sklearn', { timeoutMs: 30 })
+    w.onmessage({ data: { type: 'status', state: 'loading', text: 'Loading scikit-learn…', job: w.sent[0].job } })
+    await wait(80)                                  // a slow download, longer than the limit
+    expect(w.terminated).toBe(false)
+    w.onmessage({ data: { type: 'status', state: 'running', text: 'Running…', job: w.sent[0].job } })
+    await wait(80)                                  // now the code itself runs past the limit
+    expect(w.terminated).toBe(true)
+    expect(await res).toMatchObject({ stopped: true, timedOut: true })
+  })
+})
+
+import { figureAlt } from './LessonNotebook.jsx'
+describe('figure descriptions', () => {
+  it('uses the worker’s description of the figure, and says when there is none', () => {
+    const out = { figures: ['a', 'b'], figureAlts: ['Titled “Loss”; x axis “epoch”, y axis “loss”; 2 lines.', ''] }
+    expect(figureAlt(out, 0, 2)).toBe('Figure 1 from cell 3: Titled “Loss”; x axis “epoch”, y axis “loss”; 2 lines.')
+    expect(figureAlt(out, 1, 2)).toBe('Figure 2 from cell 3 (no description available)')
+  })
+  it('exports the description with the image in .ipynb', () => {
+    const nb = JSON.parse(toIpynb({ title: 't', cells: [{ code: 'x' }] }, ['x'], { outputs: [{ text: '', figures: ['iVBORw0KGgo='], figureAlts: ['1 line.'] }], counts: [1], ranCode: ['x'] }))
+    expect(nb.cells.find(c => c.cell_type === 'code').outputs[0].data['text/plain']).toEqual(['<Figure 1: 1 line.>'])
+  })
+})

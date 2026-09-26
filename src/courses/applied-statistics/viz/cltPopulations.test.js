@@ -44,3 +44,19 @@ describe('CLT simulator populations', () => {
     }
   })
 })
+
+describe('the last sample and the ML Lab 05 reference run', () => {
+  it('recording the last sample does not change the stream, and its mean is the last sample mean', () => {
+    const plain = drawSampleMeans(POPULATIONS.skewed, 20, 50, makeRng(3))
+    const last = [], withLast = drawSampleMeans(POPULATIONS.skewed, 20, 50, makeRng(3), last)
+    expect(withLast).toEqual(plain)
+    expect(last).toHaveLength(20)
+    expect(last.reduce((a, b) => a + b, 0) / 20).toBeCloseTo(plain[49], 12)
+  })
+  it('seed 1, right-skewed, n = 20, +1000: the numbers ML Lab 05.2 quotes', () => {
+    const m = drawSampleMeans(POPULATIONS.skewed, 20, 1000, makeRng(1))
+    const mean = m.reduce((a, b) => a + b, 0) / m.length
+    const sd = Math.sqrt(m.reduce((s, x) => s + (x - mean) ** 2, 0) / (m.length - 1))
+    expect([mean.toFixed(3), sd.toFixed(3), (POPULATIONS.skewed.sigma / Math.sqrt(20)).toFixed(3)]).toEqual(['0.497', '0.077', '0.079'])
+  })
+})

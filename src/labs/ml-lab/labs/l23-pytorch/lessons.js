@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l23-tensors',
@@ -70,7 +72,7 @@ export const lessons = [
       'Copy identical weights into both: `torch.tensor(W1_numpy)`, remembering that `nn.Linear` stores its weight as (out, in), the transpose of the (in, out) convention used in Lab 21. Feed the same inputs. The outputs should agree to about 10⁻⁶ in float32.',
       'Run `loss.backward()` and compare each parameter\'s `.grad` with your NumPy backward pass. Differences usually come from a transposed weight, a loss averaged versus summed, or a different softmax/cross-entropy convention (PyTorch\'s `cross_entropy` takes raw logits and applies log-softmax itself).',
       'Apply one optimizer step in both and compare again. Then train both for a few hundred steps: identical settings should give nearly identical loss curves.',
-      'Float32 (the framework default) has about 7 significant digits, float64 (NumPy\'s default) about 16. Use tolerances like `rtol=1e-5` when comparing across them, or set `torch.set_default_dtype(torch.float64)` for exact checks. The downloadable script does all of this.',
+      'Float32 (the framework default) has about 7 significant digits, float64 (NumPy\'s default) about 16. When comparing across them use a relative tolerance like `rtol=1e-5` together with an absolute one scaled to the outputs (entries near zero have large relative errors), or set `torch.set_default_dtype(torch.float64)` for exact checks. The downloadable script does all of this.',
     ],
     formula: 'nn.Linear weight = W_numpyᵀ     compare outputs, .grad and one step with rtol ≈ 1e-5 (float32)',
     experiment: 'Download the PyTorch verification script from the "Implement in Python" tab. Before running it, predict which comparison is most likely to fail if you forget the transpose.',
@@ -107,3 +109,6 @@ export const sources = [
   { title: 'PyTorch · Reproducibility', url: 'https://pytorch.org/docs/stable/notes/randomness.html' },
   { title: 'Dive into Deep Learning · Chapter 6: builders’ guide', url: 'https://d2l.ai/chapter_builders-guide/index.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

@@ -15,6 +15,13 @@ const NOTEBOOK_LAB_KEY = 'oc-notebook-lab'
 const emptySession = n => ({ outputs: Array(n).fill(null), counts: Array(n).fill(null), ranCode: Array(n).fill(null), counter: 0, generation: null, reset: false })
 
 // Plain-language guidance next to an ordinary Python traceback. Never replaces it.
+// Alt text for a matplotlib image: the worker's description of the figure (titles, axis labels,
+// legend, what each panel contains), or a plain label when it could not describe it.
+export function figureAlt(out, k, index) {
+  const about = out.figureAlts?.[k]
+  return `Figure ${k + 1} from cell ${index + 1}${about ? `: ${about}` : ' (no description available)'}`
+}
+
 export function errorHint(result) {
   if (result.stopped) return 'Stopped. Python restarted, so variables from earlier cells are gone. Your code is kept.'
   if (result.runtimeError) return 'Python itself could not run (often a network problem while downloading Python or a package). Check your connection and run the cell again.'
@@ -44,7 +51,7 @@ export function toIpynb(notebook, codes, session) {
     if (current) {
       if (out.text) outputs.push({ output_type: 'stream', name: 'stdout', text: lines(out.text) })
       if (out.value != null) outputs.push({ output_type: 'execute_result', execution_count: count, data: { 'text/plain': lines(out.value) }, metadata: {} })
-      out.figures?.forEach((png, k) => outputs.push({ output_type: 'display_data', data: { 'image/png': png, 'text/plain': [`<Figure ${k + 1}>`] }, metadata: {} }))
+      out.figures?.forEach((png, k) => outputs.push({ output_type: 'display_data', data: { 'image/png': png, 'text/plain': [out.figureAlts?.[k] ? `<Figure ${k + 1}: ${out.figureAlts[k]}>` : `<Figure ${k + 1}>`] }, metadata: {} }))
       if (out.error && !out.error.stopped) outputs.push({ output_type: 'error', ename: out.error.ename ?? 'Error', evalue: out.error.evalue ?? '', traceback: (out.error.traceback || `${out.error.ename}: ${out.error.evalue}`).split('\n') })
     }
     cells.push({ cell_type: 'code', metadata: {}, execution_count: current ? count : null, source: lines(codes[i]), outputs })
@@ -98,7 +105,10 @@ function Output({ out, index }) {
     {out.value != null && <pre className="ml-nb-value">{out.value}</pre>}
     {out.error && !out.error.stopped && <pre className="ml-nb-error">{out.error.traceback || `${out.error.ename}: ${out.error.evalue}`}</pre>}
     {hint && <p className="ml-nb-hint">{hint}</p>}
-    {out.figures?.map((png, k) => <img key={k} src={`data:image/png;base64,${png}`} alt={`Figure ${k + 1} produced by cell ${index + 1}`} />)}
+    {out.figures?.map((png, k) => <figure key={k} className="ml-nb-figure">
+      <img src={`data:image/png;base64,${png}`} alt={figureAlt(out, k, index)} />
+      <figcaption className="ml-caption">Static image from matplotlib (it cannot be zoomed or hovered).{out.figureAlts?.[k] ? ` ${out.figureAlts[k]}` : ''}</figcaption>
+    </figure>)}
   </div>
 }
 
@@ -143,7 +153,7 @@ export function useNotebook(id, notebook) {
         return {
           // Only a run that completed proves which Python session holds this notebook's variables.
           ...s, counter, generation: result.stopped ? s.generation : result.generation, reset: result.stopped ? s.reset : false,
-          outputs: s.outputs.map((o, k) => k === i ? { text, value: result.value, error: result.ok ? null : result, figures: result.figures ?? [] } : o),
+          outputs: s.outputs.map((o, k) => k === i ? { text, value: result.value, error: result.ok ? null : result, figures: result.figures ?? [], figureAlts: result.figureAlts ?? [] } : o),
           counts: s.counts.map((c, k) => k === i ? (result.stopped ? null : counter) : c),
           ranCode: s.ranCode.map((c, k) => k === i ? code : c),
         }
@@ -179,7 +189,7 @@ export function NotebookToolbar({ nb }) {
       {draft.edited && <button onClick={nb.resetAll}>Reset to the original cells</button>}
     </div>
     <p className="ml-caption" role="status">
-      {rt?.state === 'loading' || rt?.state === 'running' ? rt.text : variablesLost ? 'Python was restarted since this notebook last ran, so its variables are gone (your code is kept). Use “Run all”, or run the cells from the top.' : everRan ? 'Cells in this notebook share variables, like a Jupyter notebook. Other lessons’ notebooks cannot see them.' : rt?.text}
+      {rt?.state === 'loading' || rt?.state === 'running' ? rt.text : variablesLost ? `${rt?.state === 'idle' ? 'Python was shut down to free memory' : 'Python was restarted'} since this notebook last ran, so its variables are gone (your code is kept). Use “Run all”, or run the cells from the top.` : everRan ? 'Cells in this notebook share variables, like a Jupyter notebook. Other lessons’ notebooks cannot see them.' : rt?.text}
       {' '}Shift + Enter runs the cell you are editing. In an editor, press Ctrl + M to let Tab move focus out.
     </p>
     {draft.outdated && <p className="ml-warning" role="status">This lesson’s notebook has been updated since you edited it. Your version is kept. <button onClick={nb.keepMine}>Keep my version</button> <button onClick={nb.resetAll}>Use the updated version</button></p>}
@@ -204,6 +214,7 @@ export function NotebookCell({ nb, i, inline = false }) {
       {state && <span className="ml-caption">{state === 'running' ? 'Running…' : 'Waiting to run'}</span>}
       {stale && <span className="ml-nb-badge">edited since it ran</span>}
       {edited && <button onClick={() => nb.setCode(i, originals[i])}>Undo my edits to this cell</button>}
+      {cell.showRestart && <button disabled={busy} onClick={nb.restart} title="Forget this notebook’s variables; keep the code">Restart Python for this notebook</button>}
     </div>
     <CellEditor code={codes[i]} onChange={v => nb.setCode(i, v)} onRun={() => !busy && nb.runCells(before.length ? [...before, i] : [i])} label={`Notebook cell ${i + 1} code`} />
     <Output out={session.outputs[i]} index={i} />

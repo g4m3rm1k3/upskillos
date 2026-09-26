@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
+import ToolTask from './ToolTask.jsx'
 import LessonText from './LessonText.jsx'
 import { useNotebook, NotebookCell, NotebookToolbar } from './notebook/LessonNotebook.jsx'
 const Ladder = lazy(() => import('./Ladder.jsx'))
@@ -66,7 +67,7 @@ function Prose({ lesson, i }) {
   return <section className="ml-reading-section"><h3><LessonText>{lesson.sections?.[i] || `Step ${i + 1}`}</LessonText></h3><p><LessonText>{lesson.paragraphs[i]}</LessonText></p></section>
 }
 
-function Flow({ lab, lesson, nb, saved, onSave, onUpdate, renderMath, renderDerivation }) {
+function Flow({ lab, lesson, nb, saved, onSave, onUpdate, onReview, renderMath, renderDerivation }) {
   const figures = useFigures(lab)
   const blocks = lesson.blocks
   const placed = { p: new Set(), cell: new Set(), math: false, derivation: false }
@@ -80,7 +81,9 @@ function Flow({ lab, lesson, nb, saved, onSave, onUpdate, renderMath, renderDeri
     if (b.predict) return <Predict key={k} spec={b.predict} done={solved.includes(k)} onDone={() => markSolved(k)} />
     if (b.math) return <React.Fragment key={k}>{renderMath()}</React.Fragment>
     if (b.derivation) return <React.Fragment key={k}>{renderDerivation()}</React.Fragment>
-    if (b.ladder) return lab.ladders?.[b.ladder] ? <Suspense key={k} fallback={<p className="ml-caption">Loading the practice ladder…</p>}><Ladder name={b.ladder} spec={lab.ladders[b.ladder]} saved={saved} onUpdate={onUpdate} /></Suspense> : null
+    if (b.bridge) return <details key={k} className="ml-bridge"><summary>{b.bridge.label ?? `Refresher (optional): ${b.bridge.title}`}</summary>{b.bridge.body.map((t, j) => <p key={j}><LessonText>{t}</LessonText></p>)}{b.bridge.code && <pre className="ml-bridge-code"><code>{b.bridge.code}</code></pre>}{b.bridge.output && <><p className="ml-caption">Output:</p><pre className="ml-bridge-code"><code>{b.bridge.output}</code></pre></>}</details>
+    if (b.tool) return lab.tools?.[b.tool] ? <ToolTask key={k} spec={lab.tools[b.tool]} /> : null
+    if (b.ladder) return lab.ladders?.[b.ladder] ? <Suspense key={k} fallback={<p className="ml-caption">Loading the practice ladder…</p>}><Ladder name={b.ladder} spec={lab.ladders[b.ladder]} saved={saved} onUpdate={onUpdate} onReview={onReview} /></Suspense> : null
     return null
   }
   const leftover = lesson.paragraphs.map((_, i) => i).filter(i => !placed.p.has(i))

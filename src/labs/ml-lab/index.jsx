@@ -1,4 +1,6 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import * as notebookRuntime from './notebook/runtime.js'
+import PythonStatus from './notebook/PythonStatus.jsx'
 import { labs, labByNumber, labForLesson } from './labs/index.js'
 import { roadmap } from './roadmap.js'
 import './ml.css'
@@ -67,7 +69,7 @@ export default function MLLab({ onBack }) {
   const lesson=lessons[Math.min(lessonIndex,lessons.length-1)], code=codes[lab.number] ?? lab.python.starter, journal=journals[lab.number] ?? ''
   const setCode=value=>setCodes(c=>({...c,[lab.number]:value})), setJournal=value=>setJournals(j=>({...j,[lab.number]:value}))
   useEffect(()=>{try {localStorage.setItem(STORE,JSON.stringify({progress,journal:journals[1]??'',code:codes[1]??labByNumber(1).python.starter,journals,codes,lessonId:lesson.id}));setStorageError('')} catch {setStorageError('Device storage is unavailable. Export your notes before leaving.')}},[progress,journals,codes,lesson.id])
-  useEffect(()=>()=>{worker.current?.terminate();clearTimeout(timer.current)},[])
+  useEffect(()=>()=>{worker.current?.terminate();clearTimeout(timer.current);notebookRuntime.release('leave')},[])   // leaving the ML Lab frees lesson Python too
   const stopWorker=()=>{worker.current?.terminate();worker.current=null;clearTimeout(timer.current);setBusy(false)}
   const openLab=(number,index=0,nextTab='learn',back=null)=>{stopWorker();setReturnTo(back);setLabNumber(number);setLessonIndex(index);setTab(nextTab);setShowSolution(false);setPythonStatus('');setOutput('Implement the functions, then run the checks.')}
   const stopPython=()=>{stopWorker();setPythonStatus('Stopped');setOutput(o=>o+'\nExecution stopped. You can edit and retry.')}
@@ -97,6 +99,7 @@ export default function MLLab({ onBack }) {
     <nav className="ml-tabs" aria-label="ML workspace">{[['learn','Learn & experiment'],['code','Implement in Python'],['path','Your learning path']].map(([id,label])=><button key={id} aria-current={tab===id?'page':undefined} className={tab===id?'active':''} onClick={()=>setTab(id)}>{label}</button>)}<span>{lessons.filter(l=>progress[l.id]?.passed).length}/{lessons.length} checkpoints</span></nav>
     {storageError && <p className="ml-warning" role="alert">{storageError}</p>}
     {returnTo && returnTo.number!==lab.number && <p className="ml-return" role="note">Reviewing a prerequisite. <button onClick={()=>{openLab(returnTo.number,returnTo.index);rootRef.current?.scrollTo?.({top:0})}}>← Back to Lab {String(returnTo.number).padStart(2,'0')}</button></p>}
+    <PythonStatus lessons={lab.lessons} />
     {tab==='learn' && <div className="ml-layout">
       <aside className="ml-syllabus"><span className="ml-eyebrow">Module {n2} / {lab.short}</span><h2>{lab.question}</h2><p>{lab.intro}</p>
         <nav aria-label="Lessons">{lessons.map((l,i)=><button key={l.id} className={i===lessonIndex?'selected':''} aria-current={i===lessonIndex?'step':undefined} onClick={()=>setLessonIndex(i)}><span>{l.title}</span>{progress[l.id]?.passed && <span aria-label="Checkpoint passed">✓</span>}</button>)}</nav>
@@ -109,7 +112,7 @@ export default function MLLab({ onBack }) {
           const prose = <div className="ml-reading">{lesson.paragraphs.map((p,i)=><section className="ml-reading-section" key={i}><h3><LessonText>{lesson.sections?.[i] || `Step ${i+1}`}</LessonText></h3><p><LessonText>{p}</LessonText></p></section>)}</div>
           const renderMath = () => <div className="ml-equation"><span className="ml-eyebrow">Math ↔ code</span>{lesson.formulaTex ? <div className="ml-formula-tex"><LessonText>{lesson.formulaTex}</LessonText></div> : <div>{lesson.formula}</div>}<MathCode mathCode={lesson.mathCode} /></div>
           const renderDerivation = () => lesson.derivation ? <Derivation key={`d-${lesson.id}`} derivation={lesson.derivation} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} /> : null
-          if (lesson.blocks) return <Suspense fallback={prose}><LessonFlow key={`f-${lesson.id}`} lab={lab} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} onUpdate={fn=>setProgress(p=>({...p,[lesson.id]:fn(p[lesson.id]||{})}))} renderMath={renderMath} renderDerivation={renderDerivation} /></Suspense>
+          if (lesson.blocks) return <Suspense fallback={prose}><LessonFlow key={`f-${lesson.id}`} lab={lab} lesson={lesson} saved={progress[lesson.id] || {}} onSave={value=>setProgress(p=>({...p,[lesson.id]:value}))} onUpdate={fn=>setProgress(p=>({...p,[lesson.id]:fn(p[lesson.id]||{})}))} onReview={(number,index)=>{openLab(number,index,'learn',{number:lab.number,index:lessonIndex});rootRef.current?.scrollTo?.({top:0})}} renderMath={renderMath} renderDerivation={renderDerivation} /></Suspense>
           return <>{prose}{renderMath()}{renderDerivation()}<NotebookCells key={`n-${lesson.id}`} id={lesson.id} notebook={lesson.notebook} /></>
         })()}
         <div className="ml-experiment"><span className="ml-eyebrow">Predict before you run</span><p><LessonText>{lesson.experiment}</LessonText></p></div>

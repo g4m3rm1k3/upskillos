@@ -62,6 +62,16 @@ for n in [5, 20, 200]:
         code: `x = rng.choice(population, 20)
 se = np.std(x, ddof=1) / np.sqrt(len(x))
 print(f"mean {x.mean():.2f}, SE {se:.2f}, 95% interval {x.mean() - 1.96 * se:.2f} to {x.mean() + 1.96 * se:.2f}  (true mean {mu:.2f})")`,
+      }, {
+        title: 'The same experiment as the statistics course’s simulator',
+        prose: 'The simulator’s “right-skewed” population is Gamma(shape 2, scale 0.25): mean 0.5, σ = 0.25·√2. Draw 5,000 samples of n = 20 and keep only each sample’s mean. **Predict** the SD of those means from σ/√n before running.',
+        code: `rng_sim = np.random.default_rng(0)                 # its own generator: the result does not depend on earlier cells
+samples = rng_sim.gamma(shape=2.0, scale=0.25, size=(5000, 20))   # 5000 samples, 20 values each
+means = samples.mean(axis=1)                          # one mean per sample: 5000 numbers
+print(f"individual values drawn: {samples.size}, sample means kept: {means.size}")
+print(f"sigma / sqrt(n)            = {0.25 * np.sqrt(2) / np.sqrt(20):.4f}")
+print(f"mean of the sample means   = {means.mean():.4f}   (population mean 0.5)")
+print(f"SD of the sample means     = {means.std(ddof=1):.4f}")`,
       }],
     },
   },

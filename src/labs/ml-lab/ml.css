@@ -958,6 +958,8 @@
 .ml-flow > .ml-ladder { margin: 28px 0 30px; }
 .ml-ladder { padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .ml-ladder h3 { margin: 2px 0 6px; }
+.ml-ladder-review { margin: 0 0 10px; padding: 8px 10px; border-left: 3px solid var(--accent); font-size: 14px; }
+.ml-ladder-review button { margin-left: 4px; }
 .ml-ladder-evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 16px; margin: 10px 0; font-size: 13px; }
 .ml-ladder-evidence dt { color: var(--muted); font-size: 12px; }
 .ml-ladder-evidence dd { margin: 2px 0 0; }
@@ -985,3 +987,34 @@
 .ml-returns { margin: 14px 0; font-size: 13px; }
 .ml-returns ul { list-style: none; padding: 0; margin: 4px 0 0; }
 .ml-returns li { margin: 4px 0; }
+
+/* Lesson Python status, shown anywhere in the lab while Python starts or runs. */
+.ml-python-status { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 16px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); font-size: 14px; }
+.ml-python-status button { margin-left: auto; }
+.ml-python-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: ml-python-pulse 1.2s ease-in-out infinite; }
+@keyframes ml-python-pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .ml-python-dot { animation: none; } }
+.ml-nb-figure { margin: 8px 0; }
+.ml-nb-figure img { display: block; max-width: 100%; height: auto; }
+.ml-nb-figure figcaption { margin-top: 4px; }
+
+/* A task in one of the app's math tools, with the hand / Python / tool comparison. */
+.ml-flow > .ml-tooltask { margin: 24px 0; }
+.ml-tooltask { padding: 14px 18px; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; background: var(--surface); }
+.ml-tooltask h3 { margin: 2px 0 6px; }
+.ml-tooltask ol { margin: 6px 0 10px; padding-left: 22px; list-style: decimal; }
+.ml-tooltask li { margin: 4px 0; }
+.ml-tooltask li p { margin: 0; }
+.ml-tooltask-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.ml-tooltask-table caption { text-align: left; font-weight: 600; margin-bottom: 4px; }
+.ml-tooltask-table th, .ml-tooltask-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+@media (max-width: 560px) { .ml-tooltask-table { display: block; overflow-x: auto; } }
+
+/* An optional refresher at the point of use: closed by default. */
+.ml-flow > .ml-bridge { margin: 14px 0; }
+.ml-bridge { padding: 8px 14px; border: 1px dashed var(--border); border-radius: 10px; background: var(--surface); }
+.ml-bridge summary { cursor: pointer; font-weight: 600; }
+.ml-bridge p { margin: 8px 0; }
+.ml-bridge-code { margin: 6px 0; padding: 8px 12px; background: var(--bg, transparent); border: 1px solid var(--border); border-radius: 6px; font: 12.5px/1.5 "JetBrains Mono", monospace; white-space: pre; overflow-x: auto; }
+.ml-bridge-code code { background: none; padding: 0; border: 0; border-radius: 0; color: inherit; font: inherit; box-decoration-break: slice; -webkit-box-decoration-break: slice; }
+.ml-fig-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }

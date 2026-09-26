@@ -1,0 +1,18 @@
+import { chromium } from 'playwright'
+import { readFileSync } from 'node:fs'
+const code = readFileSync(process.argv[2], 'utf8')
+const browser = await chromium.launch()
+const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } })
+page.setDefaultTimeout(60000)
+page.on('pageerror', e => console.log('pageerror', e.message))
+await page.addInitScript(code => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('openmat-documents', JSON.stringify([{ id: 'doc-test', name: 'ml-test.m', code }])); localStorage.setItem('openmat-active-document-id', JSON.stringify('doc-test')) } }, code)
+await page.goto('http://localhost:5173/#/openmat', { waitUntil: 'domcontentloaded' })
+await page.getByRole('button', { name: /^Run$/ }).first().click()
+await page.waitForTimeout(3000)
+await page.getByRole('button', { name: 'Console', exact: true }).first().click()
+await page.waitForTimeout(800)
+const txt = await page.locator('body').innerText()
+const i = txt.indexOf('LAST RUN')
+console.log(txt.slice(i, i + 700))
+await page.screenshot({ path: process.argv[3] })
+await browser.close()

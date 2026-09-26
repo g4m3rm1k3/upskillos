@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l20-graph',
@@ -106,3 +108,6 @@ export const sources = [
   { title: 'Dive into Deep Learning · 5.3 forward propagation, backward propagation and computational graphs', url: 'https://d2l.ai/chapter_multilayer-perceptrons/backprop.html' },
   { title: 'Baydin et al. (2018) · Automatic differentiation in machine learning: a survey', url: 'https://jmlr.org/papers/v18/17-468.html' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

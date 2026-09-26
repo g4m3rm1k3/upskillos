@@ -24,21 +24,42 @@ function buildHistogram(data, min, max) {
   return counts.map((c, i) => ({ x: min + i * binW, count: c, density: c / (data.length * binW) }))
 }
 
+// The most recent sample itself: its n individual values (dots) and its one mean (a tick), so a sample
+// and a sample mean are never confused.
+function LastSample({ values, pop }) {
+  const lo = Math.min(...values, pop.mu - 3 * pop.sigma), hi = Math.max(...values, pop.mu + 3 * pop.sigma)
+  const x = v => 10 + ((v - lo) / (hi - lo || 1)) * (W - 20)
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  return <figure className="mt-3">
+    <svg viewBox={`0 0 ${W} 44`} className="w-full" role="img" aria-label={`The last sample: ${values.length} values, mean ${mean.toFixed(3)}`}>
+      <line x1={10} x2={W - 10} y1={22} y2={22} stroke="#94a3b8" />
+      {values.map((v, i) => <circle key={i} cx={x(v)} cy={22} r={3} fill={pop.color} opacity={0.7} />)}
+      <line x1={x(mean)} x2={x(mean)} y1={8} y2={36} stroke="#4f46e5" strokeWidth={2.5} />
+    </svg>
+    <figcaption className="text-xs text-slate-500 dark:text-slate-400">
+      The last sample: its {values.length} individual values (dots) and their mean {mean.toFixed(3)} (indigo tick) — one of the values in the histogram above.
+    </figcaption>
+  </figure>
+}
+
 export default function CLTSimulatorViz() {
   const [popKey, setPopKey] = useState('exponential')
   const [sampleSize, setSampleSize] = useState(30)
   const [sampleMeans, setSampleMeans] = useState([])
+  const [lastSample, setLastSample] = useState([])
   const [seed, setSeed] = useState(1)
   // One generator stream per run: the same seed and the same clicks reproduce the same histogram.
   const rng = useRef(makeRng(1))
-  const restart = (s = seed) => { rng.current = makeRng(s); setSampleMeans([]) }
+  const restart = (s = seed) => { rng.current = makeRng(s); setSampleMeans([]); setLastSample([]) }
 
   const pop = POPULATIONS[popKey]
   const theoreticalSE = pop.sigma / Math.sqrt(sampleSize)
 
   const addSamples = useCallback((batchSize = 200) => {
-    const batch = drawSampleMeans(pop, sampleSize, batchSize, rng.current)
+    const last = []
+    const batch = drawSampleMeans(pop, sampleSize, batchSize, rng.current, last)
     setSampleMeans(prev => [...prev, ...batch])
+    setLastSample(last)
   }, [pop, sampleSize])
 
   const reset = () => restart()
@@ -136,11 +157,11 @@ export default function CLTSimulatorViz() {
 
       <div className="flex gap-2 mb-3">
         <button onClick={() => addSamples(200)}
-          className="px-4 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/300 hover:bg-indigo-600 text-white text-xs font-semibold transition-colors">
-          Draw 200 Samples
+          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors">
+          Draw 200 samples of n = {sampleSize}
         </button>
-        <button onClick={() => addSamples(1000)}
-          className="px-4 py-2 rounded-lg bg-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 dark:bg-indigo-900/300 text-white text-xs font-semibold transition-colors">
+        <button onClick={() => addSamples(1000)} aria-label={`Draw 1000 samples of n = ${sampleSize}`}
+          className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold transition-colors">
           +1000
         </button>
         <button onClick={reset}
@@ -151,15 +172,15 @@ export default function CLTSimulatorViz() {
 
       <div className="grid grid-cols-4 gap-2 text-xs">
         <div className="bg-white dark:bg-slate-800 rounded-lg p-2 text-center">
-          <div className="text-slate-500 mb-1">Samples</div>
+          <div className="text-slate-500 mb-1">Sample means</div>
           <div className="font-mono font-semibold text-indigo-600 dark:text-indigo-400">{sampleMeans.length}</div>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-2 text-center">
-          <div className="text-slate-500 mb-1">Observed x̄</div>
+          <div className="text-slate-500 mb-1">Mean of the means</div>
           <div className="font-mono font-semibold text-amber-600 dark:text-amber-400">{mu !== null ? mu.toFixed(3) : '—'}</div>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-2 text-center">
-          <div className="text-slate-500 mb-1">Observed SE</div>
+          <div className="text-slate-500 mb-1">SD of the means (observed SE)</div>
           <div className="font-mono font-semibold text-green-600 dark:text-green-400">{sd !== null ? sd.toFixed(3) : '—'}</div>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-2 text-center">
@@ -168,7 +189,11 @@ export default function CLTSimulatorViz() {
         </div>
       </div>
 
+      {lastSample.length > 0 && <LastSample values={lastSample} pop={pop} />}
+
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+        Each click draws whole samples of n values from the population and keeps only each sample’s mean: the histogram
+        counts sample means, not individual values ({sampleMeans.length * sampleSize} individual values drawn so far).
         The indigo curve shows N(μ, σ²/n) — what the CLT predicts for large n, whatever the population’s shape. This population has μ = {pop.mu.toFixed(3)} and σ = {pop.sigma.toFixed(3)}.
       </p>
     </div>

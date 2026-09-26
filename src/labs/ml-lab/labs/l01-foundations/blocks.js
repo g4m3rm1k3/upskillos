@@ -1,9 +1,12 @@
 // Lesson order for Lab 01: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   arrays: [
+    { p: 9 },
+    { cell: 0 },
+    { predict: { prompt: 'You ran the cell, then renamed `minutes` to `mins` on the first line only and ran it again **without restarting**. What does it print?', answer: 43, explain: 'The second line still reads `minutes`, and `minutes` still exists: the first run put it in Python’s memory, and nothing removed it. Only after a restart does the stale name disappear and the NameError appear.' } },
     { p: 0 },
     { figure: 'ListVsArray', caption: 'The same expression on a Python list and on a NumPy array.' },
-    { cell: 0 },
+    { cell: 1 },
     { p: 1 },
     { figure: 'ShapeBoxes', caption: 'Two arrays holding the same three numbers, with different shapes.' },
     { p: 2 },
@@ -11,15 +14,15 @@ export const blocks = {
     { p: 3 },
     { p: 4 },
     { figure: 'WeightedSum', caption: 'Each input times its own weight, then added. Change any input or weight and watch its bar.' },
-    { cell: 1 },
+    { cell: 2 },
     { p: 5 },
     { predict: { prompt: 'What is the dot product of `[1, 2]` and `[3, 4]`?', answer: 11, explain: '1×3 + 2×4 = 3 + 8 = 11: multiply matching entries, then add.', misconceptions: [{ answer: 10, feedback: 'That adds all four numbers. Multiply matching entries first: 1×3 and 2×4.' }] } },
     { p: 6 },
-    { cell: 2 },
     { cell: 3 },
+    { cell: 4 },
     { p: 7 },
     { figure: 'ShapeTrap', caption: 'Predictions minus targets, with matching shapes and with a column against a flat vector.' },
-    { cell: 4 },
+    { cell: 5 },
     { p: 8 },
   ],
   slopes: [

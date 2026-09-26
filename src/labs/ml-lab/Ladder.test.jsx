@@ -577,3 +577,100 @@ describe('Lab 19 ladder values', () => {
     expect(code).toContain("_np.array(a, dtype=int) if isinstance(a, list) else int(a)")
   })
 })
+
+describe('prerequisite review link', () => {
+  it('the prediction ladder offers Lab 01’s weighted-sum lesson and opens it', () => {
+    const onReview = vi.fn()
+    render(<Ladder name="prediction" spec={prediction} saved={{}} onUpdate={() => {}} onReview={onReview} />)
+    fireEvent.click(screen.getByRole('button', { name: /Review weighted sums in Lab 01/ }))
+    expect(onReview).toHaveBeenCalledWith(1, 0)
+    cleanup()
+    render(<Ladder name="prediction" spec={prediction} saved={{}} onUpdate={() => {}} />)
+    expect(screen.queryByRole('button', { name: /Review weighted sums/ })).toBeNull()
+  })
+})
+
+// ---- Lab 20: Backpropagation ---------------------------------------------------------------------------
+import { backprop as lab20, chainOf, NEURON_CASES } from './labs/l20-backprop/ladder.js'
+describe('Lab 20 ladder values', () => {
+  it('the trace follows from the helper; neuron gradients match NumPy', () => {
+    const ch = chainOf(1, 2, -4)
+    expect(lab20.steps[0].fields.map(f => f.answer)).toEqual([ch.e, ch.L, ch.gE, ch.gA, ch.gC])
+    expect(chainOf(2, -3, 10)).toMatchObject({ gA: -24, gB: 16, gC: 8 })
+    expect(NEURON_CASES.map(c => c.expected.map(v => Math.round(v * 1e6) / 1e6))).toEqual([
+      [1.415584, 0, 0.707792], [-2.299757, -4.599515, -2.299757], [0.690437, 2.301458], [-0.79271, 1.585421, -0.396355, -0.79271]])
+  })
+})
+
+// ---- Lab 21: A neural network in NumPy ----------------------------------------------------------------
+import { mlp as lab21, nParams, softmaxOf, DELTA_CASES } from './labs/l21-mlp/ladder.js'
+describe('Lab 21 ladder values', () => {
+  it('the trace follows from the helpers; hidden deltas match NumPy', () => {
+    const p = [0.7, 0.2, 0.1]
+    expect(lab21.steps[0].fields.map(f => f.answer)).toEqual([3 * 4, nParams([3, 4, 2]), 5 * 4, p[1] - 1, p[0]])
+    expect(nParams([2, 8, 2])).toBe(42)
+    expect(softmaxOf([2, 1, 0]).map(v => Math.round(v * 1000) / 1000)).toEqual([0.665, 0.245, 0.09])
+    expect(DELTA_CASES.map(c => c.expected)).toEqual([[[-1, 0, -1]], [[0.1, 0], [0, -0.4]], [[1, -1, 0], [0, -0.5, 1], [-0.5, 0.5, -1]], [[6, 0]]])
+  })
+})
+
+// ---- Lab 22: Optimization ------------------------------------------------------------------------------
+import { optim as lab22, adamUpdateOf, clipOf, ADAM_CASES } from './labs/l22-optimization/ladder.js'
+describe('Lab 22 ladder values', () => {
+  it('the trace follows from the rules; Adam cases match NumPy', () => {
+    let v = 0; const vs = [1, 1, -1].map(g => (v = 0.9 * v + g))
+    const f = lab22.steps[0].fields.map(x => x.answer)
+    expect(f.slice(0, 2).map(x => Math.round(x * 1e9) / 1e9)).toEqual(vs.slice(1).map(x => Math.round(x * 1e9) / 1e9))
+    expect(Math.abs(f[2] - adamUpdateOf(5, 0, 0, 1, 0.01)[0])).toBeLessThan(1e-6)
+    expect(f.slice(3)).toEqual([0.2 * 0.5 * (1 + Math.cos(Math.PI / 2)) > 0.0999 ? 0.1 : NaN, 1024 / 32])
+    expect(clipOf([6, 8], 5)).toEqual([3, 4])
+    expect(ADAM_CASES.map(c => c.expected.map(x => Math.round(x * 1e6) / 1e6))).toEqual([[0.1, 0.2, 0.004], [0.1, 0.38, 0.007996], [0.001197, 0.35, 0.2008], [-0.002709, -0.06, 0.05004]])
+  })
+})
+
+// ---- Lab 23: PyTorch conventions -----------------------------------------------------------------------
+import { torch as lab23, trainOf, TRAIN_CASES } from './labs/l23-pytorch/ladder.js'
+describe('Lab 23 ladder values', () => {
+  it('the trace and repair prompt follow from the helpers; training cases match NumPy', () => {
+    expect(lab23.steps[0].fields.map(f => f.answer)).toEqual([2, 3 * 2 + 2, 2 * 8, 4 * 2, 1 / (1 - 0.25)])
+    expect(trainOf([-1, 0, 1, 2], [-4, -1, 2, 5], 50, 0.05, false).map(v => Math.round(v * 1000) / 1000)).toEqual([3.714, 1.554])
+    expect(TRAIN_CASES.map(c => c.expected.map(v => Math.round(v * 1e4) / 1e4))).toEqual([[2.9643, -0.9425], [0.0846, 0.8826], [-0.3941, 0], [1.7293, 0.6151]])
+  })
+})
+
+// ---- Lab 24: Convolution -------------------------------------------------------------------------------
+import { conv as lab24, xcorrOf, outSizeOf, XCORR_CASES } from './labs/l24-convolution/ladder.js'
+describe('Lab 24 ladder values', () => {
+  it('the trace and repair prompt follow from the helpers; cross-correlations match NumPy', () => {
+    const o = xcorrOf([[1, 2, 0], [0, 1, 3], [2, 1, 0]], [[1, 0], [0, -1]])
+    expect(lab24.steps[0].fields.map(f => f.answer)).toEqual([o[0][0], o[0][1], o[1][1], outSizeOf(9, 3, 2, 1), 3 * 3 * 3 * 8 + 8])
+    expect(xcorrOf([[1, 2, 0], [0, 1, 3], [2, 1, 0]], [[1, 0], [0, -1]], true)).toEqual([[0, 1], [1, -1]])
+    expect(XCORR_CASES.map(c => c.expected)).toEqual([[[0, -1], [-1, 1]], [[4, 4]], [[44, 54, 64], [84, 94, 104], [124, 134, 144]], [[2]]])
+  })
+})
+
+// ---- Lab 25: Sequences ---------------------------------------------------------------------------------
+import { rnn as lab25, rnnStatesOf, MASK_CASES } from './labs/l25-sequences/ladder.js'
+describe('Lab 25 ladder values', () => {
+  it('the trace follows from the recurrence; masked RNN cases match NumPy and ignore pads', () => {
+    const f = lab25.steps[0].fields.map(x => x.answer)
+    const h = rnnStatesOf([[1], [0], [2]].map((_, i) => i), [[1], [0], [2]], [[1]], [[0.5]]).map(v => v[0])
+    expect(f.slice(0, 3).map(v => Math.round(v * 1e4) / 1e4)).toEqual(h.map(v => Math.round(v * 1e4) / 1e4))
+    expect(f.slice(3)).toEqual([40, 4])
+    expect(MASK_CASES.map(c => c.expected.map(v => Math.round(v * 1e6) / 1e6))).toEqual([[0.371254, 0.437793], [0.673781, -0.046897], [0.336376, 0.244919], [0.564213, 0.248907]])
+  })
+})
+
+// ---- Lab 26: Attention ---------------------------------------------------------------------------------
+import { attn as lab26, attentionOf, ATT_CASES } from './labs/l26-attention/ladder.js'
+describe('Lab 26 ladder values', () => {
+  it('the trace follows from attention; cases match NumPy', () => {
+    const f = lab26.steps[0].fields.map(x => x.answer)
+    const out = attentionOf([[1, 0]], [[1, 0], [0, 1]], [[4], [8]], { scale: false })[0][0]
+    expect(Math.abs(f[1] - out)).toBeLessThan(1e-12)
+    expect(Math.abs(f[2] - attentionOf([[1, 0, 0, 0]], [[1, 0, 0, 0], [0, 0, 0, 0]], [[1], [0]])[0][0])).toBeLessThan(1e-12)
+    expect(f.slice(3)).toEqual([10, 64])
+    expect(ATT_CASES.map(c => c.expected.map(r => r.map(v => Math.round(v * 1e6) / 1e6)))).toEqual([
+      [[3, 4], [2.712068, 3.712068], [2.593327, 3.593327]], [[18.222059]], [[0.892958, 0.214084, 0.892958], [0.669762, 0.660477, 0.669762]], [[6]]])
+  })
+})

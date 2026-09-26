@@ -132,6 +132,7 @@ export const prediction = {
   templates: TEMPLATES,
   templateNames: { forward: 'Predict a row', missing: 'Find a missing weight', debug: 'Find the wrong prediction' },
   generate, workedSolution, bugLabel, view,
+  review: { lab: 1, lesson: 0, text: 'Step 1 is a weighted sum: each input times its weight, then added up. Lab 01’s first lesson builds one input at a time.', label: 'Review weighted sums in Lab 01 →' },
   intro: 'Seven steps, from tracing one prediction to writing `predict` yourself and solving tables you have not seen. Each step shows what it asks for and what counts as done. Nothing here locks the rest of the lab: skip ahead if you already know a step, and come back if a later step goes wrong.',
   steps: [
     {

@@ -18,6 +18,13 @@ export const extras = {
       title: 'Lab 01 · 00a · Lists, arrays and weighted sums',
       intro: 'Five tiny experiments. For each cell: **predict** what it prints, **run** it, **change** the value suggested, and **explain** the difference in one sentence.',
       cells: [{
+        title: 'How the cells work',
+        prose: '**Run** this cell. It prints 43.',
+        code: `minutes = 42          # a variable: Python remembers it after this cell runs
+print(minutes + 1)`,
+        tryThis: 'Rename `minutes` to `mins` on the **first line only** and run again: it still prints 43, because the old `minutes` is still in Python’s memory. Press **Restart Python for this notebook** and run once more: now the last line of the error reads `NameError: name \'minutes\' is not defined`. Fix the second line to `print(mins + 1)` and run: 43 again.',
+        showRestart: true,
+      }, {
         title: 'Same expression, two meanings',
         prose: '**Predict** both lines before running. **Then change** `2 *` to `x_list + x_list` and `x_arr + x_arr`.',
         code: `import numpy as np

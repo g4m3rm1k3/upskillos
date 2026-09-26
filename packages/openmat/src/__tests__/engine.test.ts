@@ -199,3 +199,23 @@ describe('polyfit / polyval', () => {
     expect(vals[2]).toBeCloseTo(5)
   })
 })
+
+describe('sum, prod and mean along a dimension', () => {
+  const ws = (r: any, name: string) => r.workspace.find((w: any) => w.name === name)?.value
+  it('dim 2 gives one result per row, dim 1 one per column, and no dim keeps the single total', () => {
+    const r = executeScript('C = [1 2 2; 1 4 8; 1 6 4; 1 8 6];\nrows = sum(C, 2);\ncols = sum(C, 1);\nall = sum(C);\nm = mean(C, 1);\np = prod([1 2; 3 4], 2);')
+    expect(ws(r, 'rows')).toEqual([5, 13, 11, 15])
+    expect(ws(r, 'cols')).toEqual([4, 20, 20])
+    expect(ws(r, 'all')).toBe(44)
+    expect(ws(r, 'm')).toEqual([1, 5, 5])
+    expect(ws(r, 'p')).toEqual([2, 12])
+  })
+  it('the row sums of X * diag(w) are the predictions X * w (ML Lab 03.2)', () => {
+    const r = executeScript('X = [1 1 1; 1 2 4; 1 3 2; 1 4 3];\nw = [1; 2; 2];\na = sum(X * diag(w), 2);\nb = X * w;')
+    expect(ws(r, 'a')).toEqual(ws(r, 'b'))
+    expect(ws(r, 'b')).toEqual([5, 13, 11, 15])
+  })
+  it('rejects a dimension other than 1 or 2 with a clear message', () => {
+    expect(() => executeScript('s = sum([1 2; 3 4], 3)')).toThrow(/dimension must be 1 \(down columns\) or 2 \(across rows\)/)
+  })
+})

@@ -87,6 +87,7 @@ LINEAR ALGEBRA
 
 STATISTICS
   mean  median  std  var  min  max  sum  prod
+  sum(A,1) column sums   sum(A,2) row sums   (also prod, mean)
   sort  unique  find  any  all  mod  rem  fix
   hist(v,bins)  cumsum  cumprod  diff
 
@@ -390,9 +391,21 @@ export function createExecutionEngine(options: EngineOptions = {}): {
     }
     return statMin(a)
   })
-  parser.set("sum",    (v: any) => statSum(v))
-  parser.set("prod",   (v: any) => statProd(v))
-  parser.set("mean",   (v: any) => statMean(v))
+  // sum/prod/mean(A, dim), as in MATLAB: dim 1 reduces down each column (one result per column),
+  // dim 2 across each row (one result per row). Results are plain vectors, the way OpenMAT stores
+  // [a; b; c]. Without dim the existing behaviour is kept: every entry reduced to one number.
+  const alongDim = (reduce: (xs: number[]) => number, whole: (v: any) => number) => (v: any, dim?: any) => {
+    if (dim === undefined) return whole(v)
+    const d = Number(realValue(dim))
+    if (d !== 1 && d !== 2) throw new Error(`dimension must be 1 (down columns) or 2 (across rows), not ${d}`)
+    const plain = toPlain(v)
+    if (!isMatrix(plain)) return d === 1 ? normalizeVector(plain).map((x: number) => reduce([x])) : reduce(normalizeVector(plain))
+    const rows = toNumericMatrix(plain)!
+    return d === 2 ? rows.map((r: number[]) => reduce(r)) : rows[0].map((_: number, j: number) => reduce(rows.map((r: number[]) => r[j])))
+  }
+  parser.set("sum",    alongDim(xs => xs.reduce((a, b) => a + b, 0), statSum))
+  parser.set("prod",   alongDim(xs => xs.reduce((a, b) => a * b, 1), statProd))
+  parser.set("mean",   alongDim(xs => xs.reduce((a, b) => a + b, 0) / xs.length, statMean))
   parser.set("median", (v: any) => statMedian(v))
   parser.set("std",    (v: any, f?: any) => statStd(v, f))
   parser.set("var",    (v: any, f?: any) => statVar(v, f))

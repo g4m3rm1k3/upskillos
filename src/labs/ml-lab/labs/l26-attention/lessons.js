@@ -1,3 +1,5 @@
+import { extras } from './notebooks.js'
+
 export const lessons = [
   {
     id: 'l26-lookup',
@@ -112,3 +114,6 @@ export const sources = [
   { title: 'Karpathy · nanoGPT (a small, readable transformer)', url: 'https://github.com/karpathy/nanoGPT' },
   { title: 'Jain & Wallace (2019) · Attention is not explanation', url: 'https://arxiv.org/abs/1902.10186' },
 ]
+
+// Runnable cells, typeset formulas and math ↔ code tables for each lesson live in notebooks.js.
+for (const lesson of lessons) Object.assign(lesson, extras[lesson.id])

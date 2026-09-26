@@ -5,6 +5,12 @@ export const blocks = {
     { figure: 'LineVsSigmoid', caption: 'Twelve yes/no labels. Orange: a least-squares line. Purple: logistic regression.' },
     { cell: 0 },
     { p: 1 }, { p: 2 },
+    { bridge: { title: 'the number e and the sigmoid σ(z) = 1/(1 + e⁻ᶻ)', body: [
+      '**e ≈ 2.71828** is the base of the natural logarithm (Lab 05.5). The function eᶻ — `np.exp(z)` — is always positive: e⁰ = 1, e² = 7.3891, and a negative power is one over the positive one, e⁻² = 1/e² = 0.1353.',
+      'The sigmoid uses e⁻ᶻ. A large positive score z makes e⁻ᶻ tiny, so σ(z) = 1/(1 + e⁻ᶻ) is close to 1. A large negative score makes e⁻ᶻ huge, so σ(z) is close to 0. At z = 0, e⁰ = 1 and σ(0) = 1/2.',
+      'Three values to check the curve against: σ(−2) = 1/(1 + 7.3891) = 0.1192, σ(0) = 0.5, σ(2) = 1/(1 + 0.1353) = 0.8808. The two ends add to 1: σ(−z) = 1 − σ(z).',
+      'For the gradient (lesson 08.4) you need two slopes: the slope of eᶻ is eᶻ itself, and the slope of log z is 1/z. The chain rule from Lab 01, lesson 00b, combines them.',
+    ] } },
     { predict: { prompt: 'w = 2, b = −1 and x = 0.5. What probability does σ(w·x + b) give?', answer: 0.5, tolerance: 0.001, explain: 'z = 2 × 0.5 − 1 = 0, and σ(0) = 0.5.' } },
     { cell: 1 },
     { p: 3 }, { p: 4 },

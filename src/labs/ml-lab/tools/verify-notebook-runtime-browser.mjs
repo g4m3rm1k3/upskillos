@@ -17,17 +17,36 @@ page.on('pageerror', e => console.log('pageerror:', e.message))
 console.log('browser', browser.version())
 await page.goto(URL, { waitUntil: 'domcontentloaded' })
 
+// Two layouts: lessons told in order keep the full notebook in "The whole notebook" at the end of the
+// lesson (its cells also appear inline, so every locator is scoped to that section); older lessons open
+// the notebook on request. `scope` is where the current lesson's full cell list lives.
+let scope = page
+const openNotebook = async () => {
+  const whole = page.locator('section.ml-runcells')
+  if (await whole.count()) {
+    await whole.getByRole('button', { name: /Show all \d+ cells in order/ }).click()
+    scope = whole
+  } else {
+    await page.getByText(/Open \d+ notebook cells here/).click()
+    scope = page
+  }
+  await scope.locator('.ml-nb-cell').first().waitFor()
+  await scope.locator('.ml-nb-cell .monaco-editor').first().waitFor()
+}
+const closeNotebook = async () => {
+  if (scope !== page) await scope.getByRole('button', { name: 'Hide the full list of cells' }).click()
+  else await page.getByText('Hide the notebook cells').click()
+}
 const lab = async (n, lesson) => {
   await page.selectOption('select[aria-label="Choose lab"]', String(n))
   await page.locator('nav[aria-label="Lessons"] button').nth(lesson).click()
-  await page.getByText(/Open \d+ notebook cells here/).click()
-  await page.locator('.ml-nb-cell').first().waitFor()
-  await page.locator('.ml-nb-cell .monaco-editor').first().waitFor()
+  await page.waitForTimeout(300)
+  await openNotebook()
 }
-const cell = k => page.locator('.ml-nb-cell').nth(k)
+const cell = k => scope.locator('.ml-nb-cell').nth(k)
 const setCode = async (k, code) => {
   await cell(k).locator('.monaco-editor .view-lines').click()
-  await page.keyboard.press('Control+A'); await page.keyboard.press('Delete')
+  await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.press('Delete')
   await page.keyboard.insertText(code)
 }
 const runCell = async k => { await cell(k).getByText('Run cell', { exact: true }).click(); await waitIdle() }
@@ -37,14 +56,14 @@ const output = async k => (await cell(k).locator('.ml-nb-output').allInnerTexts(
 // 1. Loading and imports: run every cell of the pandas lesson in order.
 let t0 = Date.now()
 await lab(2, 2)
-await page.getByText('Run all', { exact: true }).click()
-await page.waitForFunction(() => [...document.querySelectorAll('.ml-nb-count')].every(e => /\[\d+\]/.test(e.textContent)), null, { timeout: 240000 })
+await scope.getByText('Run all', { exact: true }).click()
+await page.waitForFunction(() => [...document.querySelectorAll('section.ml-runcells .ml-nb-count, .ml-nb .ml-nb-count')].every(e => /\[\d+\]/.test(e.textContent)), null, { timeout: 240000 })
 const outs = await Promise.all([0, 1, 2, 3].map(output))
 log('cold start + pandas notebook, Run all', outs.every(o => o && !/Error/.test(o)) && /duration_s\s+object|duration_s\s+str/.test(outs[0]) && /dev\s+24/.test(outs[3]), `${((Date.now() - t0) / 1000).toFixed(1)} s; cell 1 dtypes shown: ${/duration_s\s+(object|str)/.exec(outs[0])?.[0]}`)
 await page.screenshot({ path: `${OUT}-pandas.png`, fullPage: false })
 
 // 2. Shared state inside a notebook, and an ordinary traceback with guidance.
-await page.getByText('Hide the notebook cells').click()
+await closeNotebook()
 await lab(3, 0)
 await setCode(0, 'shared_value = 41')
 await runCell(0)
@@ -63,13 +82,16 @@ await runCell(3)
 const imgs = await cell(3).locator('.ml-nb-output img').count()
 const natural = imgs ? await cell(3).locator('.ml-nb-output img').first().evaluate(i => i.naturalWidth) : 0
 log('matplotlib figure is captured as an image', imgs === 1 && natural > 100, `${imgs} image(s), ${natural}px wide`)
+const alt = imgs ? await cell(3).locator('.ml-nb-output img').first().getAttribute('alt') : ''
+const caption = imgs ? await cell(3).locator('.ml-nb-output figcaption').first().innerText() : ''
+log('the figure is described from its contents and labelled as a static image', /“it works”/.test(alt) && /1 line/.test(alt) && /Static image/.test(caption), alt)
 await cell(3).screenshot({ path: `${OUT}-plot.png` })
 
 // 4. Isolation: another lesson's notebook cannot see shared_value.
-await page.getByText('Hide the notebook cells').click()
+await closeNotebook()
 await page.locator('nav[aria-label="Lessons"] button').nth(1).click()
-await page.getByText(/Open \d+ notebook cells here/).click()
-await page.locator('.ml-nb-cell .monaco-editor').first().waitFor()
+await page.waitForTimeout(300)
+await openNotebook()
 await setCode(0, 'print(shared_value)')
 await runCell(0)
 log('a different lesson notebook cannot see those variables', /NameError: name 'shared_value'/.test(await output(0)))
@@ -81,10 +103,10 @@ await page.waitForTimeout(3000)
 t0 = Date.now()
 const responsive = await Promise.race([page.evaluate(() => { document.body.dataset.ping = 'pong'; return true }), new Promise(r => setTimeout(() => r(false), 2000))])
 log('page stays responsive during an infinite loop', responsive === true, `main-thread round trip ${Date.now() - t0} ms`)
-await page.getByText('Stop', { exact: true }).click()
+await scope.getByText('Stop', { exact: true }).click()
 await page.waitForTimeout(500)
 const code1 = (await cell(1).locator('.monaco-editor .view-lines').innerText()).replace(/ /g, ' ')
-const status = await page.locator('.ml-nb > p.ml-caption[role=status]').first().innerText()
+const status = await scope.locator('p.ml-caption[role=status]').first().innerText()
 log('Stop ends the loop and keeps the code', /while True/.test(code1) && /variables from earlier cells are gone|variables are gone|Python was stopped/.test(await output(1) + status), status.slice(0, 120))
 await setCode(2, 'print("alive after stop")')
 await runCell(2)
@@ -94,7 +116,7 @@ log('Python runs again after Stop', /alive after stop/.test(await output(2)))
 await page.reload({ waitUntil: 'domcontentloaded' })
 await page.locator('select[aria-label="Choose lab"]').waitFor()
 await lab(3, 1)
-const shown = await page.waitForFunction(() => /while\s+True/.test((document.querySelectorAll('.ml-nb-cell')[1]?.querySelector('.view-lines')?.innerText ?? '').replace(/\u00a0/g, ' ')), null, { timeout: 20000 }).then(() => true, () => false)
+const shown = await page.waitForFunction(() => /while\s+True/.test(((document.querySelector('section.ml-runcells') ?? document).querySelectorAll('.ml-nb-cell')[1]?.querySelector('.view-lines')?.innerText ?? '').replace(/\u00a0/g, ' ')), null, { timeout: 20000 }).then(() => true, () => false)
 const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('upskillos.ml-lab.notebooks.v1') || '{}')['l03-matmul']?.cells?.[1])
 log('edits survive a page reload', shown && /while True/.test(stored ?? ''), `editor shows it: ${shown}; saved draft: ${JSON.stringify(stored)}`)
 
