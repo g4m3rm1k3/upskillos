@@ -3,7 +3,7 @@
 
 import { GLASS_META } from '../styles/courseColors.js'
 import LESSON_TITLES from '../data/lessonTitles.json'
-// "<courseId>/<slug>" -> the lesson's own hardcoded `id` field, pre-built by
+// "<chapterId>/<slug>" (as in the lesson's route) -> the lesson's own `id` field, pre-built by
 // scripts/build-lesson-ids.mjs (runs automatically before dev/build). Used
 // to construct stable, rename-proof progress keys instead of the old
 // route-derived ones (which broke when lesson files got renamed — confirmed
@@ -62,7 +62,7 @@ for (const filePath of Object.keys(ALL_MODULES)) {
   tree[courseId][chapterNum].lessons.push({
     title: LESSON_TITLES[`${courseId}-${chapterNum}/${lessonSlug}`] ?? slugToTitle(lessonSlug),
     slug: lessonSlug,
-    id: LESSON_IDS[`${courseId}/${lessonSlug}`] ?? null,
+    id: LESSON_IDS[`${chapterId}/${lessonSlug}`] ?? null,
     _order: lessonOrder,
     _path: filePath,
   })
@@ -84,10 +84,24 @@ export function getAllChapters() {
   return Object.keys(tree).flatMap(getChapters)
 }
 
-// Plain "<courseId>/<slug>" -> id map, pre-built at dev/build time (see the
-// LESSON_IDS import above) — synchronous, no lazy module loading needed.
+// "<courseId>/<slug>" -> id, the shape of the old route-derived progress keys that
+// progressMigration.ts converts. Built from LESSON_IDS (synchronous, no lazy loading). When two
+// chapters of a course share a slug, an old "<courseId>/<slug>" key cannot say which lesson it
+// meant, so that slug is left out and its old progress is not guessed at.
+let LEGACY_ID_LOOKUP = null
 export function getLessonIdLookup() {
-  return LESSON_IDS
+  if (LEGACY_ID_LOOKUP) return LEGACY_ID_LOOKUP
+  const lookup = {}, ambiguous = new Set()
+  for (const [key, id] of Object.entries(LESSON_IDS)) {
+    const m = key.match(/^(.+)-\d+\/(.+)$/)
+    if (!m) continue
+    const legacyKey = `${m[1]}/${m[2]}`
+    if (legacyKey in lookup) ambiguous.add(legacyKey)
+    lookup[legacyKey] = id
+  }
+  for (const key of ambiguous) delete lookup[key]
+  LEGACY_ID_LOOKUP = lookup
+  return lookup
 }
 
 const courseIds = [...new Set([

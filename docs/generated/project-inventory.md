@@ -134,9 +134,9 @@
 
 ## Problems found
 
-### duplicateIds (17)
+### duplicateIds (16)
 
-The same `id:` in more than one lesson file. Progress for one of them is recorded against the other.
+The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course; lesson notes are saved by id alone, so they are shared across courses too.
 
 - `ch3-002`: `src/courses/calculus/4-applications-of-derivatives/003-mean-value-theorem.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/009-trig-in-calculus.js`
 - `ch3-001`: `src/courses/calculus/4-applications-of-derivatives/004-linear-approximation.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/007-trig-identities-deep-dive.js`
@@ -152,19 +152,8 @@ The same `id:` in more than one lesson file. Progress for one of them is recorde
 - `ch5-002`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/003-convergence-tests.js`, `src/courses/precalculus/5-polar-complex-vectors/002-complex-polar-demoivre.js`
 - `ch5-003`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/004-power-series.js`, `src/courses/precalculus/5-polar-complex-vectors/003-vectors-2d.js`
 - `ch5-004`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/005-taylor-maclaurin.js`, `src/courses/precalculus/5-polar-complex-vectors/004-vectors-dot-product.js`
-- `ScienceNotebook`: `src/courses/geometry/3-geometry-3/005-midpoint-section.js`, `src/courses/geometry/3-geometry-3/006-locus.js`, `src/courses/geometry/3-geometry-3/007-coordinate-proofs.js`, `src/courses/geometry/4-geometry-4/003-nets-cross-sections.js`, `src/courses/geometry/4-geometry-4/004-euler-formula.js`, `src/courses/geometry/4-geometry-4/005-frustum-composite.js`, `src/courses/geometry/4-geometry-4/006-platonic-solids.js`, `src/courses/geometry/4-geometry-4/007-3d-coordinates.js`, `src/courses/geometry/6-geometry-6/004-quadrilaterals.js`, `src/courses/geometry/6-geometry-6/005-composite-figures.js`, `src/courses/geometry/6-geometry-6/006-geometric-probability.js`, `src/courses/geometry/6-geometry-6/007-optimization.js`
 - `gp-20-iterators-and-generators`: `src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js`, `src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js`
 - `la8-001`: `src/courses/linear-algebra/5-python-in-the-browser/001-numpy-scipy-intro.js`, `src/courses/linear-algebra/8-applications-of-linear-algebra/001-pca-dimensionality-reduction.js`
-
-### duplicateIdKeys (5)
-
-The same course and slug in more than one chapter. src/data/lessonIds.json is keyed by "<course>/<slug>", so these files share one entry and one of them gets the other's id.
-
-- `geometry/similarity`: `src/courses/geometry/2-geometry-2/006-similarity.js`, `src/courses/geometry/5-geometry-5/001-similarity.js`
-- `guttag-python/iterators-and-generators`: `src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js`, `src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js`
-- `sql/what-is-a-database`: `src/courses/sql/1-sql-zero-to-mastery/002-what-is-a-database.js`, `src/courses/sql/2-python-sql/001-what-is-a-database.js`
-- `sql/acid-transactions`: `src/courses/sql/1-sql-zero-to-mastery/026-acid-transactions.js`, `src/courses/sql/2-python-sql/006-acid-transactions.js`
-- `three-js/scene-graph`: `src/courses/three-js/10-transforms-the-scene-graph/002-scene-graph.js`, `src/courses/three-js/7-engine-architecture/001-scene-graph.js`
 
 ### duplicateRoutes (1)
 

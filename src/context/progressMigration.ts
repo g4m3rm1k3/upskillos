@@ -105,6 +105,48 @@ export function migrateOldProgressKeys(
   return { migrated: result, changed }
 }
 
+// The first generated lesson-id map accidentally read the first textual `id:` in a lesson
+// file. In some lessons that belonged to a notebook, quiz answer, or code sample. A deployed
+// v1 migration could therefore have moved valid route-keyed progress onto one of those bad
+// ids. Apply a small, explicit alias table so those records follow the corrected lesson id.
+// Unknown and ambiguous keys are deliberately left untouched.
+export function migrateProgressKeyAliases(
+  progress: ProgressMap | null | undefined,
+  aliases: Record<string, string>
+): { migrated: ProgressMap | null | undefined; changed: boolean } {
+  if (!progress) return { migrated: progress, changed: false }
+
+  let changed = false
+  let result: ProgressMap = { ...progress }
+  for (const [oldKey, newKey] of Object.entries(aliases)) {
+    const oldValue = result[oldKey]
+    if (!oldValue || oldKey === newKey) continue
+
+    const existing = result[newKey]
+    const merged = mergeProgress(
+      { [newKey]: oldValue },
+      existing ? { [newKey]: existing } : null
+    )
+    if (merged?.[newKey]) result[newKey] = merged[newKey]
+    delete result[oldKey]
+    changed = true
+  }
+  return { migrated: result, changed }
+}
+
+export function normalizeLessonProgress(
+  progress: ProgressMap | null | undefined,
+  idLookup: IdLookup,
+  aliases: Record<string, string>
+): { migrated: ProgressMap | null | undefined; changed: boolean } {
+  const routeMigration = migrateOldProgressKeys(progress, idLookup)
+  const idRepair = migrateProgressKeyAliases(routeMigration.migrated, aliases)
+  return {
+    migrated: idRepair.migrated,
+    changed: routeMigration.changed || idRepair.changed,
+  }
+}
+
 // ── Generic sync-key merge strategies ───────────────────────────────────────
 // Used by AuthContext.jsx's syncOnSignIn() for every SYNC_KEY except
 // oc-progress (which uses mergeProgress above) — replaces a blind

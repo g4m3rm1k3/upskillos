@@ -49,11 +49,9 @@ for (const courseId of readdirSync(coursesDir).filter(n => isDir(join(coursesDir
     for (const file of files) {
       const slug = file.replace(/\.js$/, '').replace(/^\d+-/, '')
       const path = join(courseDir, chapterDir, file)
-      const idMatch = readFileSync(path, 'utf8').match(/\bid\s*:\s*['"`]([^'"`]+)['"`]/)
-      lessons.push({
-        course: courseId, file: rel(path), route: `/chapter/${courseId}-${chapterNum}/${slug}`,
-        idKey: `${courseId}/${slug}`, titleKey: `${courseId}-${chapterNum}/${slug}`, id: idMatch?.[1] ?? null,
-      })
+      // Both manifests are keyed "<chapterId>/<slug>", the lesson's route without /chapter/.
+      const key = `${courseId}-${chapterNum}/${slug}`
+      lessons.push({ course: courseId, file: rel(path), route: `/chapter/${key}`, key, id: ids[key] ?? null })
       count++
     }
   }
@@ -83,18 +81,16 @@ const groupDuplicates = (items, key) => {
 }
 const issues = {
   lessonsWithoutId: lessons.filter(l => !l.id).map(l => l.file),
-  lessonsWithoutTitle: lessons.filter(l => !(l.titleKey in titles)).map(l => l.file),
+  lessonsWithoutTitle: lessons.filter(l => !(l.key in titles)).map(l => l.file),
   duplicateIds: groupDuplicates(lessons, l => l.id),
-  duplicateIdKeys: groupDuplicates(lessons, l => l.idKey),
   duplicateRoutes: groupDuplicates(lessons, l => l.route),
   labIdsUsedByGames: games.filter(g => labs.some(l => l.id === g.id)).map(g => g.id),
 }
 // A lesson whose id-map key is shared with another file gets that file's id at runtime.
 const describeIssue = {
-  lessonsWithoutId: 'Lesson files with no `id:` field. Progress for these falls back to a route-derived key, which breaks if the file is renamed.',
+  lessonsWithoutId: 'Lesson files whose lesson object has no `id`, or that could not be loaded (see the warnings from scripts/build-lesson-ids.mjs). Progress for these falls back to a route-derived key, which breaks if the file is renamed.',
   lessonsWithoutTitle: 'Lesson files missing from src/data/lessonTitles.json. They show a title made from the filename. Run `node src/scripts/build-lesson-titles.js` and read its warnings.',
-  duplicateIds: 'The same `id:` in more than one lesson file. Progress for one of them is recorded against the other.',
-  duplicateIdKeys: 'The same course and slug in more than one chapter. src/data/lessonIds.json is keyed by "<course>/<slug>", so these files share one entry and one of them gets the other\'s id.',
+  duplicateIds: 'The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course; lesson notes are saved by id alone, so they are shared across courses too.',
   duplicateRoutes: 'More than one file with the same route. Only one of them can be reached.',
   labIdsUsedByGames: 'Identifiers used by both a lab and a game.',
 }

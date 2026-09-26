@@ -9,6 +9,8 @@ import {
   buildProgressKey,
   mergeProgress,
   migrateOldProgressKeys,
+  migrateProgressKeyAliases,
+  normalizeLessonProgress,
   mergeArrayUnion,
   mergeArrayUnionById,
   mergeKeyedObject,
@@ -84,6 +86,70 @@ describe('migrateOldProgressKeys', () => {
   it('handles an empty/null progress object', () => {
     expect(migrateOldProgressKeys(null, idLookup)).toEqual({ migrated: null, changed: false })
     expect(migrateOldProgressKeys({}, idLookup).changed).toBe(false)
+  })
+})
+
+describe('migrateProgressKeyAliases', () => {
+  const aliases = {
+    'three-js::ambient-demo': 'three-js::three-js-3-0-lighting-equation',
+  }
+
+  it('moves progress saved under a bad generated id to the corrected lesson id', () => {
+    const progress = {
+      'three-js::ambient-demo': { completedCheckpoints: ['read-intuition'], readingProgress: 40 },
+      'unrelated::lesson': { completedCheckpoints: ['keep-me'] },
+    }
+    const { migrated, changed } = migrateProgressKeyAliases(progress, aliases)
+    expect(changed).toBe(true)
+    expect(migrated!['three-js::ambient-demo']).toBeUndefined()
+    expect(migrated!['three-js::three-js-3-0-lighting-equation']).toEqual(progress['three-js::ambient-demo'])
+    expect(migrated!['unrelated::lesson']).toEqual(progress['unrelated::lesson'])
+  })
+
+  it('merges into progress already saved under the corrected id without losing data', () => {
+    const progress = {
+      'three-js::ambient-demo': {
+        completedCheckpoints: ['old-key-checkpoint'],
+        readingProgress: 70,
+        quiz: { attemptedAt: 100 },
+      },
+      'three-js::three-js-3-0-lighting-equation': {
+        completedCheckpoints: ['correct-key-checkpoint'],
+        readingProgress: 20,
+        quiz: { attemptedAt: 200 },
+      },
+    }
+    const { migrated } = migrateProgressKeyAliases(progress, aliases)
+    const repaired = migrated!['three-js::three-js-3-0-lighting-equation']
+    expect(new Set(repaired.completedCheckpoints)).toEqual(new Set(['old-key-checkpoint', 'correct-key-checkpoint']))
+    expect(repaired.readingProgress).toBe(70)
+    expect(repaired.quiz!.attemptedAt).toBe(200)
+  })
+
+  it('preserves keys that have no safe alias', () => {
+    const progress = { 'geometry::ScienceNotebook': { completedCheckpoints: ['ambiguous'] } }
+    expect(migrateProgressKeyAliases(progress, aliases)).toEqual({ migrated: progress, changed: false })
+  })
+})
+
+describe('normalizeLessonProgress', () => {
+  it('handles an old route key and a bad generated id in one pass', () => {
+    const progress = {
+      'demo/intro': { completedCheckpoints: ['route'] },
+      'demo::nested-id': { completedCheckpoints: ['bad-id'] },
+      'demo::lesson-id': { completedCheckpoints: ['already-correct'] },
+    }
+    const { migrated, changed } = normalizeLessonProgress(
+      progress,
+      { 'demo/intro': 'lesson-id' },
+      { 'demo::nested-id': 'demo::lesson-id' }
+    )
+    expect(changed).toBe(true)
+    expect(migrated!['demo/intro']).toBeUndefined()
+    expect(migrated!['demo::nested-id']).toBeUndefined()
+    expect(new Set(migrated!['demo::lesson-id'].completedCheckpoints)).toEqual(
+      new Set(['route', 'bad-id', 'already-correct'])
+    )
   })
 })
 

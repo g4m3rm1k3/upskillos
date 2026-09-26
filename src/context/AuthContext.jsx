@@ -17,8 +17,10 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase'
-import { mergeProgress, SYNC_MERGE_STRATEGIES } from './progressMigration.ts'
+import { mergeProgress, normalizeLessonProgress, SYNC_MERGE_STRATEGIES } from './progressMigration.ts'
 import { writeLocalStorageKey } from '../hooks/useLocalStorage.js'
+import { getLessonIdLookup } from '../courses/courseLoader.js'
+import LESSON_ID_REPAIRS from '../data/lessonIdRepairs.json'
 
 // ── Localhost guard ───────────────────────────────────────────────────────────
 // Never write to production Firestore from a dev machine.
@@ -105,10 +107,15 @@ function restoreToLocalStorage(data) {
   }
 }
 
+function normalizeProgress(progress) {
+  return normalizeLessonProgress(progress, getLessonIdLookup(), LESSON_ID_REPAIRS).migrated
+}
+
 // ── Firestore operations ──────────────────────────────────────────────────────
 async function pushToFirestore(uid) {
   if (IS_LOCAL_ENV) return // never write dev data to production
   const data = snapshotLocalStorage()
+  if (data['oc-progress']) data['oc-progress'] = normalizeProgress(data['oc-progress'])
   if (Object.keys(data).length === 0) return
   const ref = doc(db, 'users', uid, 'appData', 'snapshot')
   await setDoc(ref, { ...data, _syncedAt: Date.now() }, { merge: true })
@@ -134,7 +141,7 @@ async function syncOnSignIn(uid) {
     // oc-progress — lesson-keyed union semantics (checkpoints unioned,
     // reading % takes the max, latest quiz attempt wins).
     const localProgress = safeJSON(localStorage.getItem('oc-progress'))
-    const mergedProgress = mergeProgress(localProgress, remote['oc-progress'] ?? null)
+    const mergedProgress = normalizeProgress(mergeProgress(localProgress, remote['oc-progress'] ?? null))
     if (mergedProgress) {
       writeLocalStorageKey('oc-progress', mergedProgress)
       if (JSON.stringify(mergedProgress) !== JSON.stringify(remote['oc-progress'] ?? null)) {
@@ -179,6 +186,7 @@ async function syncOnSignIn(uid) {
   } else {
     // First sign-in for this account — upload whatever local data exists
     const local = snapshotLocalStorage()
+    if (local['oc-progress']) local['oc-progress'] = normalizeProgress(local['oc-progress'])
     if (Object.keys(local).length > 0) {
       await setDoc(ref, { ...local, _syncedAt: Date.now() })
       localStorage.setItem(TS_KEY, String(Date.now()))

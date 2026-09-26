@@ -24,9 +24,9 @@ Status markers:
 | Check | Result on 2026-09-26 | Meaning |
 |---|---|---|
 | Contributor documentation check | Passed for all seven canonical contributor documents | Links, literal repository paths, and documented npm commands resolve |
-| Catalog freshness check | Passed with 23 pre-existing integrity findings | Generated files are current; the findings themselves remain open |
+| Catalog freshness check | Passed with 17 pre-existing integrity findings | Generated files are current; the findings themselves remain open |
 | Focused navigation and ML tests | 69 tests passed | The changed Help, router-link, and ML flows work in tests |
-| Full automated test suite | 105 files and 6,927 tests passed | No test regression was found in the current working tree |
+| Full automated test suite | 106 files and 6,938 tests passed | No test regression was found in the current working tree |
 | Production build | Passed | The app builds, with the warning cleanup listed under P2 still open |
 | Targeted production browser check | Passed at desktop and 390 px widths | Home, About counts, and Help-to-builder navigation worked without horizontal overflow |
 | Broad route smoke check | Incomplete | Heavy Monaco routes timed out or initialized unreliably in the harness; this remains P2 work |
@@ -34,13 +34,22 @@ Status markers:
 
 ### P0 — Repair content identity and protect learner progress
 
-This is the next correctness project. The inventory currently reports 17 duplicate-id groups, five duplicate course/slug keys, and one duplicate route. These categories overlap, so treat the generated report as 23 integrity findings rather than 23 simple file edits.
+**How progress is keyed:** the lesson page saves progress as `<course>::<lesson.id>` (`src/pages/LessonPage.jsx`), using the id on the loaded lesson object. So an id shared by two *courses* does not mix up progress. Lesson notes are keyed by `lesson.id` alone (`MicroCycleLesson.jsx`), so they do collide across courses. Course cards count completion from `src/data/lessonIds.json`.
 
-- [ ] Decide the canonical lesson in each duplicate group before changing an id, slug, filename, or route.
-- [ ] Add real top-level lesson ids to the 12 geometry lessons currently being identified as `ScienceNotebook`.
-- [ ] Replace the lesson-id generator's first-textual-`id:` behavior with structural extraction or another method that cannot mistake a nested component id for the lesson id.
-- [ ] Assign unique stable ids to the remaining duplicate-id groups, including the calculus/precalculus, Guttag Python, and linear-algebra collisions.
-- [ ] Resolve the five duplicate course/slug keys so every lesson has its own manifest entry.
+**Fixed 2026-09-26:** `scripts/build-lesson-ids.mjs` took the first `id:` text in each file, and so recorded the wrong id for 48 lessons (notebook ids, quiz answers, code fragments). Those lessons always showed as incomplete on course cards, although their progress was saved correctly. It now loads each lesson as the app does, and keys the map by chapter and slug. No lesson object's id changed. A v2 compatibility migration repairs the 31 bad progress id values that the earlier v1 route migration could create deterministically, including both LF and CRLF forms of the three values containing line breaks; the ambiguous historical `geometry::ScienceNotebook` record is preserved rather than guessed at or deleted. The inventory went from 23 findings to 17. `src/courses/courseLoader.test.js` compares every map entry with the loaded lesson's id, and fails against the old generator.
+
+Remaining findings in the generated inventory:
+
+- **14 calculus/precalculus shared ids:** notes only. The chosen direction is to add the course to note keys, and copy each existing note to both lessons where its id is shared, so no lesson id changes.
+- **`la8-001`:** used by two linear-algebra lessons (chapters 5 and 8). This is the one real progress collision.
+- **Guttag Python:** two files share an id and a route, and look like an accidental duplicate.
+
+- [x] Replace the lesson-id generator's first-textual-`id:` behavior with a method that cannot mistake a nested id for the lesson id.
+- [x] The 12 geometry lessons shown as `ScienceNotebook`: they already had real ids; only the generator was wrong.
+- [x] Give every lesson its own manifest entry (map keyed by chapter and slug; the old course/slug shape is derived for the progress migration, leaving out ambiguous slugs).
+- [ ] Add the course to lesson-note keys, with the copy-to-both migration for shared ids.
+- [ ] Decide which linear-algebra lesson keeps `la8-001`, give the other a new id, and migrate its progress.
+- [ ] Decide whether the second Guttag Python file is a duplicate to delete or a separate lesson that needs its own slug and id.
 - [ ] Resolve the duplicate Guttag Python route and preserve the old URL with a redirect when a published route changes.
 - [ ] Add an explicit progress migration for every published id that changes. Where an old id is ambiguous, define and test whether progress is copied, mapped by route, or conservatively left untouched.
 - [ ] Add regression tests proving that lesson ids, manifest keys, and routes are unique and that migrated progress survives reload.

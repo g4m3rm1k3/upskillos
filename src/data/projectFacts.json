@@ -816,23 +816,6 @@
         ]
       },
       {
-        "value": "ScienceNotebook",
-        "files": [
-          "src/courses/geometry/3-geometry-3/005-midpoint-section.js",
-          "src/courses/geometry/3-geometry-3/006-locus.js",
-          "src/courses/geometry/3-geometry-3/007-coordinate-proofs.js",
-          "src/courses/geometry/4-geometry-4/003-nets-cross-sections.js",
-          "src/courses/geometry/4-geometry-4/004-euler-formula.js",
-          "src/courses/geometry/4-geometry-4/005-frustum-composite.js",
-          "src/courses/geometry/4-geometry-4/006-platonic-solids.js",
-          "src/courses/geometry/4-geometry-4/007-3d-coordinates.js",
-          "src/courses/geometry/6-geometry-6/004-quadrilaterals.js",
-          "src/courses/geometry/6-geometry-6/005-composite-figures.js",
-          "src/courses/geometry/6-geometry-6/006-geometric-probability.js",
-          "src/courses/geometry/6-geometry-6/007-optimization.js"
-        ]
-      },
-      {
         "value": "gp-20-iterators-and-generators",
         "files": [
           "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
@@ -844,43 +827,6 @@
         "files": [
           "src/courses/linear-algebra/5-python-in-the-browser/001-numpy-scipy-intro.js",
           "src/courses/linear-algebra/8-applications-of-linear-algebra/001-pca-dimensionality-reduction.js"
-        ]
-      }
-    ],
-    "duplicateIdKeys": [
-      {
-        "value": "geometry/similarity",
-        "files": [
-          "src/courses/geometry/2-geometry-2/006-similarity.js",
-          "src/courses/geometry/5-geometry-5/001-similarity.js"
-        ]
-      },
-      {
-        "value": "guttag-python/iterators-and-generators",
-        "files": [
-          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
-          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
-        ]
-      },
-      {
-        "value": "sql/what-is-a-database",
-        "files": [
-          "src/courses/sql/1-sql-zero-to-mastery/002-what-is-a-database.js",
-          "src/courses/sql/2-python-sql/001-what-is-a-database.js"
-        ]
-      },
-      {
-        "value": "sql/acid-transactions",
-        "files": [
-          "src/courses/sql/1-sql-zero-to-mastery/026-acid-transactions.js",
-          "src/courses/sql/2-python-sql/006-acid-transactions.js"
-        ]
-      },
-      {
-        "value": "three-js/scene-graph",
-        "files": [
-          "src/courses/three-js/10-transforms-the-scene-graph/002-scene-graph.js",
-          "src/courses/three-js/7-engine-architecture/001-scene-graph.js"
         ]
       }
     ],

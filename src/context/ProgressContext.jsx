@@ -9,10 +9,11 @@ import { createContext, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { useAuth } from './AuthContext.jsx'
 import { getLessonIdLookup } from '../courses/courseLoader.js'
-import { migrateOldProgressKeys } from './progressMigration.ts'
+import LESSON_ID_REPAIRS from '../data/lessonIdRepairs.json'
+import { normalizeLessonProgress } from './progressMigration.ts'
 import { celebrate } from '../features/compass/montyNudge.ts'
 
-const MIGRATION_FLAG = '_oc_progress_migrated_v1'
+const MIGRATION_FLAG = '_oc_progress_migrated_v2'
 
 export const ProgressContext = createContext(null)
 
@@ -31,7 +32,7 @@ export function ProgressProvider({ children }) {
     if (ranMigration.current) return
     ranMigration.current = true
     if (localStorage.getItem(MIGRATION_FLAG)) return
-    const { migrated, changed } = migrateOldProgressKeys(progress, getLessonIdLookup())
+    const { migrated, changed } = normalizeLessonProgress(progress, getLessonIdLookup(), LESSON_ID_REPAIRS)
     if (changed) {
       setProgress(migrated)
       // Persist the recovered progress to Firestore right away — don't wait
