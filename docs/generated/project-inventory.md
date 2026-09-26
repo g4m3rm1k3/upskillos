@@ -2,7 +2,7 @@
 
 # Project inventory
 
-41 courses · 212 chapters · 1214 lessons · 49 labs · 15 games
+41 courses · 212 chapters · 1213 lessons · 49 labs · 15 games
 
 ## How things are counted
 
@@ -40,7 +40,7 @@
 | G-code Parser | `gcode-parser` | engineering | 1 | 5 |
 | Geometry | `geometry` | math | 6 | 42 |
 | Git | `git` | creative | 1 | 20 |
-| Computation and Programming Using Python | `guttag-python` | cs | 7 | 49 |
+| Computation and Programming Using Python | `guttag-python` | cs | 7 | 48 |
 | JavaScript | `javascript` | cs | 8 | 26 |
 | Linear Algebra | `linear-algebra` | math | 10 | 68 |
 | Logic | `logic` | cs | 1 | 8 |
@@ -134,9 +134,9 @@
 
 ## Problems found
 
-### duplicateIds (16)
+### duplicateIds (14)
 
-The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course; lesson notes are saved by id alone, so they are shared across courses too.
+The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course. Across courses it is harmless for progress; ids are still meant to be unique (AGENTS.md).
 
 - `ch3-002`: `src/courses/calculus/4-applications-of-derivatives/003-mean-value-theorem.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/009-trig-in-calculus.js`
 - `ch3-001`: `src/courses/calculus/4-applications-of-derivatives/004-linear-approximation.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/007-trig-identities-deep-dive.js`
@@ -152,11 +152,3 @@ The same lesson `id` in more than one lesson file. Progress is saved as "<course
 - `ch5-002`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/003-convergence-tests.js`, `src/courses/precalculus/5-polar-complex-vectors/002-complex-polar-demoivre.js`
 - `ch5-003`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/004-power-series.js`, `src/courses/precalculus/5-polar-complex-vectors/003-vectors-2d.js`
 - `ch5-004`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/005-taylor-maclaurin.js`, `src/courses/precalculus/5-polar-complex-vectors/004-vectors-dot-product.js`
-- `gp-20-iterators-and-generators`: `src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js`, `src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js`
-- `la8-001`: `src/courses/linear-algebra/5-python-in-the-browser/001-numpy-scipy-intro.js`, `src/courses/linear-algebra/8-applications-of-linear-algebra/001-pca-dimensionality-reduction.js`
-
-### duplicateRoutes (1)
-
-More than one file with the same route. Only one of them can be reached.
-
-- `/chapter/guttag-python-3/iterators-and-generators`: `src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js`, `src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js`

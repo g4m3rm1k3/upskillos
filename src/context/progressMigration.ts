@@ -134,6 +134,28 @@ export function migrateProgressKeyAliases(
   return { migrated: result, changed }
 }
 
+// When two lessons in one course shared an id, their progress was saved under one key and
+// cannot be told apart. Giving one lesson a new id would drop its learners' progress, so the
+// shared record is copied to the new key and also kept for the lesson that keeps the old id.
+// Learners see what they saw before (both lessons as far along as the shared record says).
+export function copyProgressKeys(
+  progress: ProgressMap | null | undefined,
+  splits: Record<string, string[]>
+): { migrated: ProgressMap | null | undefined; changed: boolean } {
+  if (!progress) return { migrated: progress, changed: false }
+  let changed = false
+  const result: ProgressMap = { ...progress }
+  for (const [oldKey, newKeys] of Object.entries(splits)) {
+    const value = progress[oldKey]
+    if (!value) continue
+    for (const newKey of newKeys) {
+      const merged = mergeProgress({ [newKey]: value }, result[newKey] ? { [newKey]: result[newKey] } : null)
+      if (merged?.[newKey]) { result[newKey] = merged[newKey]; changed = true }
+    }
+  }
+  return { migrated: result, changed }
+}
+
 export function normalizeLessonProgress(
   progress: ProgressMap | null | undefined,
   idLookup: IdLookup,

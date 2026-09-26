@@ -7,6 +7,7 @@ import { DAPSession } from './codelens/DAPBridge.mjs'
 import { GoAdapter } from './codelens/adapters/GoAdapter.mjs'
 import { checkTools } from './codelens/toolcheck.mjs'
 import { isEmbeddable } from './checkEmbed.mjs'
+import { resolveAllowedPath, isUntrustedCaller } from './devFsGuard.mjs'
 
 const args = new Set(process.argv.slice(2))
 const host = args.has('--host-lan') ? '0.0.0.0' : (readOption('--host') ?? process.env.OPEN_CALC_BACKEND_HOST ?? '127.0.0.1')
@@ -14,8 +15,6 @@ const port = Number(readOption('--port') ?? process.env.OPEN_CALC_BACKEND_PORT ?
 const runtimeRoot = path.resolve(process.env.OPEN_CALC_RUNTIME_ROOT ?? process.cwd())
 const distDir = path.resolve(process.env.OPEN_CALC_DIST_DIR ?? path.join(runtimeRoot, 'dist'))
 const dataDir = resolveDataDir()
-const srcDir  = path.join(runtimeRoot, 'src')
-const pubDir  = path.join(runtimeRoot, 'public')
 const overridesDir = path.join(dataDir, 'overrides', 'lessons')
 const docsDir = path.join(dataDir, 'docs')
 const userDocsDir = path.join(docsDir, 'user')
@@ -278,6 +277,8 @@ server.listen(port, host, () => {
 
 async function handleDevFs(request, response, url) {
   applyCors(response)
+  // Only pages on this machine and the desktop app may use the editing API (see devFsGuard.mjs).
+  if (isUntrustedCaller(request.headers)) return json(response, 403, { error: 'Forbidden origin' })
   const action = url.pathname.replace(/^\/api\/dev-fs\/?/, '')
 
   // ping — lets the frontend know the editing API is reachable
@@ -289,8 +290,8 @@ async function handleDevFs(request, response, url) {
   if (action === 'list' && request.method === 'GET') {
     const dir  = url.searchParams.get('dir') || 'src'
     const exts = (url.searchParams.get('ext') || 'svg').split(',').map(e => e.trim().replace(/^\./, ''))
-    const absDir = path.resolve(runtimeRoot, dir)
-    if (!absDir.startsWith(runtimeRoot)) return json(response, 403, { error: 'Forbidden' })
+    const absDir = resolveAllowedPath(runtimeRoot, dir)
+    if (!absDir) return json(response, 403, { error: 'Only folders inside src/ or public/ can be listed' })
     const entries = await fs.readdir(absDir).catch(() => [])
     const files = entries
       .filter(f => exts.some(e => f.endsWith(`.${e}`)))
@@ -301,8 +302,8 @@ async function handleDevFs(request, response, url) {
   // read — return raw file content
   if (action === 'read' && request.method === 'GET') {
     const filePath = url.searchParams.get('path') || ''
-    const absPath  = path.resolve(runtimeRoot, filePath)
-    if (!absPath.startsWith(runtimeRoot)) return json(response, 403, { error: 'Forbidden' })
+    const absPath  = resolveAllowedPath(runtimeRoot, filePath)
+    if (!absPath) return json(response, 403, { error: 'Only files inside src/ or public/ can be read' })
     try {
       const content = await fs.readFile(absPath, 'utf-8')
       response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' })
@@ -318,9 +319,8 @@ async function handleDevFs(request, response, url) {
     const body = await readJsonBody(request)
     const { filePath, content } = body || {}
     if (!filePath || content === undefined) return json(response, 400, { error: 'Missing filePath or content' })
-    const absPath = path.resolve(runtimeRoot, filePath)
-    const inSrc = absPath.startsWith(srcDir + path.sep) || absPath.startsWith(pubDir + path.sep)
-    if (!inSrc) return json(response, 403, { error: 'Writes are only allowed inside src/ or public/' })
+    const absPath = resolveAllowedPath(runtimeRoot, filePath)
+    if (!absPath) return json(response, 403, { error: 'Writes are only allowed inside src/ or public/' })
     await fs.mkdir(path.dirname(absPath), { recursive: true })
     await fs.writeFile(absPath, content, 'utf-8')
     return json(response, 200, { ok: true })

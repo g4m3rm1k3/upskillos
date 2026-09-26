@@ -90,7 +90,7 @@ const issues = {
 const describeIssue = {
   lessonsWithoutId: 'Lesson files whose lesson object has no `id`, or that could not be loaded (see the warnings from scripts/build-lesson-ids.mjs). Progress for these falls back to a route-derived key, which breaks if the file is renamed.',
   lessonsWithoutTitle: 'Lesson files missing from src/data/lessonTitles.json. They show a title made from the filename. Run `node src/scripts/build-lesson-titles.js` and read its warnings.',
-  duplicateIds: 'The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course; lesson notes are saved by id alone, so they are shared across courses too.',
+  duplicateIds: 'The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course. Across courses it is harmless for progress; ids are still meant to be unique (AGENTS.md).',
   duplicateRoutes: 'More than one file with the same route. Only one of them can be reached.',
   labIdsUsedByGames: 'Identifiers used by both a lab and a game.',
 }

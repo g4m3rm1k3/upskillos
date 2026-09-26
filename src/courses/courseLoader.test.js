@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { getAllChapters, getLessonIdLookup, loadLesson } from './courseLoader.js'
 import LESSON_IDS from '../data/lessonIds.json'
 import LESSON_ID_REPAIRS from '../data/lessonIdRepairs.json'
+import LESSON_ID_SPLITS from '../data/lessonIdSplits.json'
 
 // The course tree's lesson ids come from src/data/lessonIds.json (scripts/build-lesson-ids.mjs).
 // Course cards count completed lessons with these ids, so a wrong or missing id shows the wrong
@@ -62,5 +63,16 @@ describe('one-time repairs for ids produced by the old generator', () => {
       if (!exists) missing.push(`${oldKey} -> ${newKey}`)
     }
     expect(missing).toEqual([])
+  })
+})
+
+describe('one-time copies for lessons split off a shared id', () => {
+  it('copies from and to ids that current lessons in the same course use', () => {
+    const exists = key => {
+      const [course, id] = [key.slice(0, key.indexOf('::')), key.slice(key.indexOf('::') + 2)]
+      return Object.entries(LESSON_IDS).some(([route, lessonId]) => route.startsWith(`${course}-`) && lessonId === id)
+    }
+    const problems = Object.entries(LESSON_ID_SPLITS).flatMap(([from, tos]) => [from, ...tos].filter(k => !exists(k)))
+    expect(problems).toEqual([])
   })
 })

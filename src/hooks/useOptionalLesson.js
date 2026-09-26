@@ -17,22 +17,28 @@ async function probeDevServer(url) {
 }
 
 export function useOptionalLesson(lessonKey, builtInLesson) {
+  // State remembers the key and lesson it was computed for. The effect below only runs after a
+  // render, so when the lesson changes the stored state belongs to the previous lesson for a
+  // render; returning it then would show — and save progress for — the wrong lesson.
   const [state, setState] = useState({
     isLoadingOverride: false,
     lessonOverride: builtInLesson,
     lessonSource: 'built-in',
+    forKey: lessonKey,
+    forLesson: builtInLesson,
   })
 
   useEffect(() => {
     let cancelled = false
+    const tag = { forKey: lessonKey, forLesson: builtInLesson }
 
     const fallback = () => {
-      if (!cancelled) setState({ isLoadingOverride: false, lessonOverride: builtInLesson, lessonSource: 'built-in' })
+      if (!cancelled) setState({ isLoadingOverride: false, lessonOverride: builtInLesson, lessonSource: 'built-in', ...tag })
     }
 
     if (!lessonKey || !builtInLesson) { fallback(); return () => { cancelled = true } }
 
-    setState({ isLoadingOverride: true, lessonOverride: builtInLesson, lessonSource: 'built-in' })
+    setState({ isLoadingOverride: true, lessonOverride: builtInLesson, lessonSource: 'built-in', ...tag })
 
     const url = buildOptionalBackendUrl('/api/lesson-override', { key: lessonKey })
 
@@ -46,7 +52,7 @@ export function useOptionalLesson(lessonKey, builtInLesson) {
         const payload = await response.json()
         if (cancelled) return
         if (payload?.override) {
-          setState({ isLoadingOverride: false, lessonOverride: mergeLessonOverride(builtInLesson, payload.override), lessonSource: 'override' })
+          setState({ isLoadingOverride: false, lessonOverride: mergeLessonOverride(builtInLesson, payload.override), lessonSource: 'override', ...tag })
         } else {
           fallback()
         }
@@ -59,5 +65,9 @@ export function useOptionalLesson(lessonKey, builtInLesson) {
     return () => { cancelled = true }
   }, [lessonKey, builtInLesson])
 
-  return state
+  if (state.forKey !== lessonKey || state.forLesson !== builtInLesson) {
+    return { isLoadingOverride: !!builtInLesson, lessonOverride: builtInLesson, lessonSource: 'built-in' }
+  }
+  const { forKey, forLesson, ...current } = state
+  return current
 }

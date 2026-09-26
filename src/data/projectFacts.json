@@ -10,7 +10,7 @@
   "counts": {
     "courses": 41,
     "chapters": 212,
-    "lessons": 1214,
+    "lessons": 1213,
     "labs": 49,
     "games": 15
   },
@@ -213,7 +213,7 @@
       "domain": "cs",
       "description": "MIT's Introduction to Computation and Programming Using Python — 48 lessons from the REPL to machine learning",
       "chapters": 7,
-      "lessons": 49
+      "lessons": 48
     },
     {
       "id": "javascript",
@@ -814,31 +814,9 @@
           "src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/005-taylor-maclaurin.js",
           "src/courses/precalculus/5-polar-complex-vectors/004-vectors-dot-product.js"
         ]
-      },
-      {
-        "value": "gp-20-iterators-and-generators",
-        "files": [
-          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
-          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
-        ]
-      },
-      {
-        "value": "la8-001",
-        "files": [
-          "src/courses/linear-algebra/5-python-in-the-browser/001-numpy-scipy-intro.js",
-          "src/courses/linear-algebra/8-applications-of-linear-algebra/001-pca-dimensionality-reduction.js"
-        ]
       }
     ],
-    "duplicateRoutes": [
-      {
-        "value": "/chapter/guttag-python-3/iterators-and-generators",
-        "files": [
-          "src/courses/guttag-python/3-writing-good-programs/001-iterators-and-generators.js",
-          "src/courses/guttag-python/3-writing-good-programs/006-iterators-and-generators.js"
-        ]
-      }
-    ],
+    "duplicateRoutes": [],
     "labIdsUsedByGames": []
   }
 }

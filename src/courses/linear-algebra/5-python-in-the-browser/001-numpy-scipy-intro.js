@@ -1,5 +1,8 @@
 export default {
-  id: 'la8-001',
+  // Was 'la8-001', the PCA lesson's id (chapter 8), by mistake. Other lessons already linked here
+  // as 'la5-001'. Saved progress is copied over by the one-time split in
+  // src/context/progressMigration.ts (src/data/lessonIdSplits.json).
+  id: 'la5-001',
   slug: 'numpy-scipy-intro',
   chapter: 'la5',
   order: 1,

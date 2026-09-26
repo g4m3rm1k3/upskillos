@@ -10,10 +10,13 @@ import { useLocalStorage } from '../hooks/useLocalStorage.js'
 import { useAuth } from './AuthContext.jsx'
 import { getLessonIdLookup } from '../courses/courseLoader.js'
 import LESSON_ID_REPAIRS from '../data/lessonIdRepairs.json'
-import { normalizeLessonProgress } from './progressMigration.ts'
+import LESSON_ID_SPLITS from '../data/lessonIdSplits.json'
+import { normalizeLessonProgress, copyProgressKeys } from './progressMigration.ts'
 import { celebrate } from '../features/compass/montyNudge.ts'
 
 const MIGRATION_FLAG = '_oc_progress_migrated_v2'
+// Separate flag: learners who already ran the migration above still need the split copy.
+const SPLIT_FLAG = '_oc_progress_split_v1'
 
 export const ProgressContext = createContext(null)
 
@@ -21,26 +24,43 @@ export function ProgressProvider({ children }) {
   const [progress, setProgress] = useLocalStorage('oc-progress', {})
   const { pushNow } = useAuth() ?? {}
 
-  // One-time migration off the old route-derived progress key shape
-  // ("<courseId>/<slug>", which breaks the moment a lesson file gets
-  // renamed — confirmed real incident) onto a stable, content-derived one
-  // ("<courseId>::<lesson.id>"). getLessonIdLookup() is a plain, pre-built
-  // synchronous map (see courseLoader.js), so this runs once on mount with
-  // no loading gap.
+  // One-time progress migrations, run once on mount, in order, on one value, saved once:
+  //
+  // 1. (MIGRATION_FLAG) off the old route-derived progress key shape ("<courseId>/<slug>",
+  //    which breaks the moment a lesson file gets renamed — confirmed real incident) onto a
+  //    stable, content-derived one ("<courseId>::<lesson.id>"), plus repairs for ids the first
+  //    generated id map got wrong. getLessonIdLookup() is a plain, pre-built synchronous map
+  //    (see courseLoader.js), so there is no loading gap.
+  // 2. (SPLIT_FLAG) copies for lessons split off a shared id (src/data/lessonIdSplits.json).
+  //    Only progress is copied: current notes are not keyed by lesson
+  //    (see src/components/ui/notesStore.js).
+  //
+  // Both steps work on the same value so the second cannot overwrite the first's result.
   const ranMigration = useRef(false)
   useEffect(() => {
     if (ranMigration.current) return
     ranMigration.current = true
-    if (localStorage.getItem(MIGRATION_FLAG)) return
-    const { migrated, changed } = normalizeLessonProgress(progress, getLessonIdLookup(), LESSON_ID_REPAIRS)
+    let current = progress
+    let changed = false
+    if (!localStorage.getItem(MIGRATION_FLAG)) {
+      const step = normalizeLessonProgress(current, getLessonIdLookup(), LESSON_ID_REPAIRS)
+      current = step.migrated
+      changed = changed || step.changed
+    }
+    if (!localStorage.getItem(SPLIT_FLAG)) {
+      const step = copyProgressKeys(current, LESSON_ID_SPLITS)
+      current = step.migrated
+      changed = changed || step.changed
+    }
     if (changed) {
-      setProgress(migrated)
+      setProgress(current)
       // Persist the recovered progress to Firestore right away — don't wait
       // for the next checkpoint/quiz/5-minute interval, since this IS the
       // recovery of previously-orphaned data.
       pushNow?.()
     }
     localStorage.setItem(MIGRATION_FLAG, '1')
+    localStorage.setItem(SPLIT_FLAG, '1')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

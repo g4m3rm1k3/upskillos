@@ -11,6 +11,7 @@ import {
   migrateOldProgressKeys,
   migrateProgressKeyAliases,
   normalizeLessonProgress,
+  copyProgressKeys,
   mergeArrayUnion,
   mergeArrayUnionById,
   mergeKeyedObject,
@@ -241,5 +242,32 @@ describe('generic sync-key merge strategies', () => {
     expect(mergeLearningTime(null, { totalMs: 500 }).totalMs).toBe(500)
     expect(mergeLearningTime({ totalMs: 500 }, undefined).totalMs).toBe(500)
     expect(mergeLearningTime(null, null).totalMs).toBe(0)
+  })
+})
+
+// Lessons split off a shared id (src/data/lessonIdSplits.json): the shared record cannot be
+// told apart, so it is copied to the new id and kept for the lesson that keeps the old one.
+describe('copyProgressKeys', () => {
+  const splits = { 'linear-algebra::la8-001': ['linear-algebra::la5-001'] }
+
+  it('copies the shared record to the new key and keeps the original', () => {
+    const shared = { completedCheckpoints: ['read-intuition'], lastVisitedAt: 5 }
+    const { migrated, changed } = copyProgressKeys({ 'linear-algebra::la8-001': shared }, splits)
+    expect(changed).toBe(true)
+    expect(migrated?.['linear-algebra::la8-001']).toEqual(shared)
+    expect(migrated?.['linear-algebra::la5-001']?.completedCheckpoints).toEqual(['read-intuition'])
+  })
+
+  it('merges into progress already saved under the new key instead of replacing it', () => {
+    const { migrated } = copyProgressKeys({
+      'linear-algebra::la8-001': { completedCheckpoints: ['a'] },
+      'linear-algebra::la5-001': { completedCheckpoints: ['b'] },
+    }, splits)
+    expect([...(migrated?.['linear-algebra::la5-001']?.completedCheckpoints ?? [])].sort()).toEqual(['a', 'b'])
+  })
+
+  it('does nothing when the shared key has no progress', () => {
+    const progress = { 'calculus::ch2-001': { completedCheckpoints: ['x'] } }
+    expect(copyProgressKeys(progress, splits)).toEqual({ migrated: progress, changed: false })
   })
 })

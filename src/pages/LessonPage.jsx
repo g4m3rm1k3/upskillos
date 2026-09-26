@@ -34,8 +34,11 @@ export default function LessonPage() {
   const courseId = chapterId?.replace(/-\d+$/, '') ?? ''
   const rawLesson = LESSON_MAP[key];
 
-  // For lessons not in the old LESSON_MAP, load dynamically from courseLoader
-  const [courseLesson, setCourseLesson] = useState(null)
+  // For lessons not in the old LESSON_MAP, load dynamically from courseLoader.
+  // The loaded lesson is stored with the route it belongs to: right after navigating to another
+  // lesson, state still holds the previous one for a render, and pairing it with the new route's
+  // courseId saved progress under the wrong key (e.g. "sql::geo-3-5").
+  const [courseLesson, setCourseLesson] = useState(null) // { key, lesson }
   const [loadingCourse, setLoadingCourse] = useState(!rawLesson)
   useEffect(() => {
     if (rawLesson) { setLoadingCourse(false); return }
@@ -43,12 +46,14 @@ export default function LessonPage() {
     setLoadingCourse(true)
     setCourseLesson(null)
     loadLesson(chapterId, lessonSlug).then(l => {
-      if (!cancelled) { setCourseLesson(l); setLoadingCourse(false) }
-    }).catch(() => { if (!cancelled) setLoadingCourse(false) })
+      if (!cancelled) { setCourseLesson({ key, lesson: l }); setLoadingCourse(false) }
+    }).catch(() => { if (!cancelled) { setCourseLesson({ key, lesson: null }); setLoadingCourse(false) } })
     return () => { cancelled = true }
-  }, [chapterId, lessonSlug, rawLesson])
+  }, [chapterId, lessonSlug, rawLesson, key])
 
-  const builtInLesson = rawLesson ?? courseLesson
+  const builtInLesson = rawLesson ?? (courseLesson?.key === key ? courseLesson.lesson : null)
+  // Until this route's lesson has loaded (or failed to), the page is still loading.
+  const lessonPending = !rawLesson && (loadingCourse || courseLesson?.key !== key)
 
   const { lessonSource, lessonOverride, isLoadingOverride } = useOptionalLesson(
     key,
@@ -145,7 +150,7 @@ export default function LessonPage() {
     markVisited(progressKey);
   }, [progressKey, markVisited]);
 
-  if (!lesson && loadingCourse) {
+  if (!lesson && lessonPending) {
     return (
       <div className="py-20 text-center text-slate-400 dark:text-slate-500 text-sm">
         Loading lesson…

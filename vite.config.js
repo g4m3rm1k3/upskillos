@@ -5,6 +5,7 @@ import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
 import { isEmbeddable } from "./backend/checkEmbed.mjs";
+import { resolveAllowedPath, isUntrustedCaller } from "./backend/devFsGuard.mjs";
 
 function emitVersionJson() {
   return {
@@ -33,6 +34,8 @@ function devFsPlugin() {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(data));
         };
+        // Only pages on this machine may use these endpoints (see backend/devFsGuard.mjs).
+        if (isUntrustedCaller(req.headers)) return json({ error: "Forbidden origin" }, 403);
 
         try {
           if (action === "ping") {
@@ -98,8 +101,8 @@ function devFsPlugin() {
           } else if (action === "list" && req.method === "GET") {
             const dir = url.searchParams.get("dir") || "src/courses/geometry/diagrams";
             const extParam = url.searchParams.get("ext");
-            const absDir = path.resolve(root, dir);
-            if (!absDir.startsWith(root)) return json({ error: "Forbidden" }, 403);
+            const absDir = resolveAllowedPath(root, dir);
+            if (!absDir) return json({ error: "Only folders inside src/ or public/ can be listed" }, 403);
             if (!fs.existsSync(absDir)) return json([]);
             const entries = fs.readdirSync(absDir, { withFileTypes: true });
             let files;
@@ -113,8 +116,8 @@ function devFsPlugin() {
 
           } else if (action === "read" && req.method === "GET") {
             const filePath = url.searchParams.get("path") || "";
-            const absPath = path.resolve(root, filePath);
-            if (!absPath.startsWith(root)) return json({ error: "Forbidden" }, 403);
+            const absPath = resolveAllowedPath(root, filePath);
+            if (!absPath) return json({ error: "Only files inside src/ or public/ can be read" }, 403);
             const content = fs.readFileSync(absPath, "utf-8");
             res.statusCode = 200;
             res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -126,8 +129,8 @@ function devFsPlugin() {
             req.on("end", () => {
               try {
                 const { filePath, content } = JSON.parse(body);
-                const absPath = path.resolve(root, filePath);
-                if (!absPath.startsWith(root)) return json({ error: "Forbidden" }, 403);
+                const absPath = resolveAllowedPath(root, filePath);
+                if (!absPath) return json({ error: "Writes are only allowed inside src/ or public/" }, 403);
                 fs.mkdirSync(path.dirname(absPath), { recursive: true });
                 fs.writeFileSync(absPath, content, "utf-8");
                 json({ ok: true });
