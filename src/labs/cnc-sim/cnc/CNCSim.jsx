@@ -46,6 +46,14 @@ function channelStateToMs(ch) {
   };
 }
 
+function formatEngineDiagnostics(diagnostics = []) {
+  return diagnostics.map((issue) => {
+    const location = issue.line ? ` line ${issue.line}` : "";
+    const channel = issue.channelId != null ? ` CH${issue.channelId + 1}` : "";
+    return `${String(issue.level || "error").toUpperCase()}:${channel}${location} ${issue.message}`;
+  });
+}
+
 function engineDefToMachCfg(def) {
   const isLathe =
     def.class === "lathe" || def.class === "millturn" || def.class === "swiss";
@@ -590,6 +598,9 @@ const normalizeToolDefinition = (
   fallbackClass = "mill",
 ) => {
   const units = inferUnits(raw.units ?? raw.unit ?? raw.uom, "mm");
+  const geometryUnits = raw.geometryUnits === "mm" || Number(raw.schema) >= TOOL_SCHEMA_VERSION
+    ? "mm"
+    : units;
   const geom = raw.geometry || {};
   const holder = raw.holder || {};
   const offsets = raw.offsets || {};
@@ -605,7 +616,7 @@ const normalizeToolDefinition = (
       raw.cuttingDiameter,
       raw.cutterDiameter,
     ),
-    units,
+    geometryUnits,
   );
   const cr = toMm(
     pickNumber(
@@ -616,7 +627,7 @@ const normalizeToolDefinition = (
       raw.noseRadius,
       raw.tipRadius,
     ),
-    units,
+    geometryUnits,
   );
   const tlo = toMm(
     pickNumber(
@@ -628,7 +639,7 @@ const normalizeToolDefinition = (
       raw.gaugeLength,
       raw.gaugeLen,
     ),
-    units,
+    geometryUnits,
   );
   const lc = toMm(
     pickNumber(
@@ -638,7 +649,7 @@ const normalizeToolDefinition = (
       geom.fluteLength,
       raw.cutLength,
     ),
-    units,
+    geometryUnits,
   );
   const lt = toMm(
     pickNumber(
@@ -648,19 +659,19 @@ const normalizeToolDefinition = (
       geom.overallLength,
       raw.totalLength,
     ),
-    units,
+    geometryUnits,
   );
   const shank = toMm(
     pickNumber(raw.shank, raw.shankDiameter, geom.shank, geom.shankDiameter),
-    units,
+    geometryUnits,
   );
   const hdia = toMm(
     pickNumber(raw.hdia, holder.dia, holder.diameter, raw.holderDiameter),
-    units,
+    geometryUnits,
   );
   const hlen = toMm(
     pickNumber(raw.hlen, holder.length, holder.len, raw.holderLength),
-    units,
+    geometryUnits,
   );
   const wearR = toMm(
     pickNumber(
@@ -670,11 +681,11 @@ const normalizeToolDefinition = (
       offsets.d,
       raw.dWear,
     ),
-    units,
+    geometryUnits,
   );
   const wearL = toMm(
     pickNumber(raw.wearL, raw.lengthWear, offsets.lengthWear, offsets.hWear),
-    units,
+    geometryUnits,
   );
 
   return {
@@ -697,6 +708,7 @@ const normalizeToolDefinition = (
     desc:
       raw.desc || raw.description || raw.name || `Tool ${toolNo || ""}`.trim(),
     units,
+    geometryUnits: "mm",
     dia,
     cr,
     tlo: tlo || lt,
@@ -707,8 +719,8 @@ const normalizeToolDefinition = (
     mat: raw.mat || raw.material || "Carbide",
     hdia,
     hlen,
-    neckDia: toMm(pickNumber(raw.neckDia, geom.neckDia), units),
-    neckLen: toMm(pickNumber(raw.neckLen, geom.neckLen), units),
+    neckDia: toMm(pickNumber(raw.neckDia, geom.neckDia), geometryUnits),
+    neckLen: toMm(pickNumber(raw.neckLen, geom.neckLen), geometryUnits),
     wearR,
     wearL,
     iAngle: Number(raw.iAngle ?? raw.insertAngle ?? 80) || 80,
@@ -1914,6 +1926,7 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
     tc: 0,
     time: 0,
     dist: 0,
+    units: "mm",
   });
   const [curPt, setCurPt] = useState(0);
   const [pointer, setPointer] = useState(0);
@@ -1963,6 +1976,7 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
     }
   });
   const [editTool, setEditTool] = useState({
+    schema: TOOL_SCHEMA_VERSION,
     n: 7,
     cls: "lathe",
     type: "OD Turning",
@@ -2008,8 +2022,12 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
   const msRef = useRef(ms);
   const activeChannelRef = useRef(activeChannel);
   const playRef = useRef(null);
+  const editorReloadRef = useRef(null);
   const toolPathAnimRef = useRef(null);
   const engineRef = useRef(null);
+  const backplotWorkerRef = useRef(null);
+  const backplotRequestRef = useRef(0);
+  const backplotAlarmsRef = useRef([]);
   const doneRef = useRef(false);
   const playingRef = useRef(false);
   const dragRef = useRef({ on: false, btn: 0, lx: 0, ly: 0 });
@@ -2035,6 +2053,38 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
   useEffect(() => {
     projectFilesRef.current = projectFiles;
   }, [projectFiles]);
+  useEffect(() => {
+    if (typeof Worker === "undefined") return undefined;
+    const worker = new Worker(new URL("./cncEngine.worker.js", import.meta.url), {
+      type: "module",
+    });
+    worker.onmessage = ({ data }) => {
+      if (!data || data.requestId !== backplotRequestRef.current) return;
+      if (data.error) {
+        const next = [`ERROR: Backplot worker failed: ${data.error}`];
+        backplotAlarmsRef.current = next;
+        setAlarms(next);
+        return;
+      }
+      const nextPath = Array.isArray(data.pathPoints) ? data.pathPoints : [];
+      const nextAlarms = formatEngineDiagnostics(data.diagnostics);
+      pathRef.current = nextPath;
+      backplotAlarmsRef.current = nextAlarms;
+      setPathPts(nextPath);
+      setPStats(data.stats || { blocks: 0, rapid: 0, cut: 0, arc: 0, tc: 0, time: 0, dist: 0, units: "mm" });
+      setAlarms(nextAlarms);
+    };
+    worker.onerror = (event) => {
+      const next = [`ERROR: Backplot worker failed: ${event.message || "unknown error"}`];
+      backplotAlarmsRef.current = next;
+      setAlarms(next);
+    };
+    backplotWorkerRef.current = worker;
+    return () => {
+      worker.terminate();
+      backplotWorkerRef.current = null;
+    };
+  }, []);
   useEffect(() => {
     setCoordinateSystems((prev) => {
       const next = syncCoordinateSystemsFromOffsets(prev, ms.offsets);
@@ -2120,23 +2170,31 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
   // machDefId effect (which also depends on `reload`), and reset stock.
   const toolsRef = useRef(tools);
   toolsRef.current = tools;
+  const toolUnitsRef = useRef(toolUnits);
+  toolUnitsRef.current = toolUnits;
   const reload = useCallback(
-    (src) => {
+    (src, options = {}) => {
       const s = src ?? compileProjectSources();
-      const defId = machDefId;
+      const defId = options.machDefId || machDefId;
       const def =
         MACHINE_DEFINITIONS[defId] || MACHINE_DEFINITIONS["fanuc_mill"];
 
-      setAlarms([]);
       setValidationIssues(validateProjectFiles(projectFilesRef.current, def));
       const engine = new CNCEngine(def);
-      engine.setToolTable(toolsRef.current, "mm");
+      engine.setToolTable(toolsRef.current, toolUnitsRef.current);
+      const workOffsets = options.offsets || msRef.current.offsets;
+      engine.setWorkOffsets(workOffsets);
+      const processingAlarms = [];
+      const worker = backplotWorkerRef.current;
       try {
-        engine.loadPrograms(s);
+        engine.loadPrograms(s, { buildPath: !worker });
       } catch (err) {
         console.error("Engine processing error:", err);
-        setAlarms([`Parse/Trace Error: ${err.message}`]);
+        processingAlarms.push(`ERROR: Parse/trace failure: ${err.message}`);
       }
+      const engineAlarms = formatEngineDiagnostics(engine.getDiagnostics());
+      backplotAlarmsRef.current = engineAlarms;
+      setAlarms([...processingAlarms, ...engineAlarms]);
       engineRef.current = engine;
 
       const pts = engine.getPathPoints();
@@ -2150,6 +2208,17 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
       pathRef.current = pts;
       setPathPts(pts);
       setPStats(stats);
+      if (worker) {
+        const requestId = ++backplotRequestRef.current;
+        worker.postMessage({
+          requestId,
+          machineId: defId,
+          sources: s,
+          toolTable: toolsRef.current,
+          toolUnits: toolUnitsRef.current,
+          offsets: workOffsets,
+        });
+      }
       setChannelStates(state);
       setChannelBlocks(engine.channels.map((ch) => ch.blocks || []));
       setBlocks(engine.channels[nextActive]?.blocks || []);
@@ -2180,7 +2249,13 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
 
   useEffect(() => {
     reload(compileProjectSources(projectFilesRef.current));
-  }, [tools, reload, compileProjectSources]);
+  }, [tools, toolUnits, reload, compileProjectSources]);
+
+  useEffect(() => () => {
+    clearTimeout(playRef.current);
+    cancelAnimationFrame(playRef.current);
+    clearTimeout(editorReloadRef.current);
+  }, []);
 
   // ─── When preset changes, apply machine config + reset stock ───
   useEffect(() => {
@@ -2203,14 +2278,16 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
         z: 0,
       });
     }
-    setMs(initMS());
-    setCoordinateSystems(createDefaultCoordinateSystems(initMS().offsets));
+    const initialState = initMS();
+    setMs(initialState);
+    msRef.current = initialState;
+    setCoordinateSystems(createDefaultCoordinateSystems(initialState.offsets));
     setActiveCoordinateSystemId("wcs_G54");
     const lib = getProgLib(def);
     if (lib?.length) {
       const nextFiles = exampleToProject(lib[0], "main", null, def);
       loadProjectFiles(nextFiles);
-      setTimeout(() => reload(buildProjectSources(nextFiles)), 0);
+      setTimeout(() => reload(buildProjectSources(nextFiles), { machDefId, offsets: initialState.offsets }), 0);
     }
   }, [machDefId, reload, loadProjectFiles]);
 
@@ -2224,6 +2301,10 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
     }
 
     const result = engine.stepAll();
+    setAlarms([...new Set([
+      ...backplotAlarmsRef.current,
+      ...formatEngineDiagnostics(engine.getDiagnostics()),
+    ])]);
     const focused =
       result[Math.min(activeChannel, Math.max(0, result.length - 1))] ||
       result[0];
@@ -2258,8 +2339,8 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
       setIsPlaying(false);
       return;
     }
-    const blks = blksRef.current;
-    if (ptrRef.current >= blks.length) {
+    const engine = engineRef.current;
+    if (!engine || engine.isDone()) {
       setIsPlaying(false);
       doneRef.current = true;
       return;
@@ -2267,7 +2348,7 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
     if (speedMode === "max") {
       for (
         let i = 0;
-        i < 30 && !doneRef.current && ptrRef.current < blks.length;
+        i < 30 && !doneRef.current;
         i++
       )
         step();
@@ -2327,27 +2408,22 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
   }, []);
 
   const updateCoordinateSystem = useCallback((id, patch) => {
-    setCoordinateSystems((prev) => {
-      let updatedFrame = null;
-      const next = prev.map((frame) => {
-        if (frame.id !== id) return frame;
-        updatedFrame = makeCoordinateSystem({
-          ...frame,
-          ...patch,
-          origin: { ...frame.origin, ...(patch.origin || {}) },
-          rotation: { ...frame.rotation, ...(patch.rotation || {}) },
-        });
-        return updatedFrame;
-      });
-      if (updatedFrame?.id?.startsWith("wcs_")) {
-        setMs((m) => ({
-          ...m,
-          offsets: applyCoordinateSystemToOffsets(m.offsets, updatedFrame),
-        }));
-      }
-      return next;
+    const current = coordinateSystems.find((frame) => frame.id === id);
+    if (!current) return;
+    const updatedFrame = makeCoordinateSystem({
+      ...current,
+      ...patch,
+      origin: { ...current.origin, ...(patch.origin || {}) },
+      rotation: { ...current.rotation, ...(patch.rotation || {}) },
     });
-  }, []);
+    setCoordinateSystems((prev) => prev.map((frame) => frame.id === id ? updatedFrame : frame));
+    if (updatedFrame.id.startsWith("wcs_")) {
+      const nextOffsets = applyCoordinateSystemToOffsets(msRef.current.offsets, updatedFrame);
+      msRef.current = { ...msRef.current, offsets: nextOffsets };
+      setMs(msRef.current);
+      reload(undefined, { offsets: nextOffsets });
+    }
+  }, [coordinateSystems, reload]);
 
   const addCoordinateSystem = useCallback(() => {
     const nextIndex =
@@ -3882,9 +3958,11 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
       type: "application/json",
     });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(b);
+    const url = URL.createObjectURL(b);
+    a.href = url;
     a.download = `cnc-tools-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   const importToolLibrary = (f) => {
@@ -3933,9 +4011,11 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
       type: "application/json",
     });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(b);
+    const url = URL.createObjectURL(b);
+    a.href = url;
     a.download = `cnc_${new Date().toISOString().slice(0, 10)}.cncsetup`;
     a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
   const importSetup = (f) => {
     if (!f) return;
@@ -3964,7 +4044,11 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
             lathe: normalizeToolTable(d.toolLibraries.lathe || {}, "lathe"),
           });
         }
-        if (d.tools) setTools(normalizeToolTable(d.tools, activeToolClass));
+        if (d.tools) {
+          const importedDef = MACHINE_DEFINITIONS[d.machDefId] || machDef;
+          const importedClass = importedDef.class === "lathe" ? "lathe" : "mill";
+          setTools(normalizeToolTable(d.tools, importedClass));
+        }
         if (d.stock) setStock(d.stock);
         if (d.fixtures) setFixtures(d.fixtures);
         if (d.offsets || d.wcs || d.home) {
@@ -3987,15 +4071,13 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
         if (d.savedProgs) setSavedProgs(d.savedProgs);
         if (d.geomDepth) setGeomDepth(d.geomDepth);
         if (d.geomFeed) setGeomFeed(d.geomFeed);
-        setTimeout(
-          () =>
-            reload(
-              Array.isArray(d.projectFiles) && d.projectFiles.length
-                ? buildProjectSources(d.projectFiles)
-                : d.code,
-            ),
-          100,
-        );
+        const importedOffsets = d.offsets || msRef.current.offsets;
+        setTimeout(() => reload(
+          Array.isArray(d.projectFiles) && d.projectFiles.length
+            ? buildProjectSources(d.projectFiles)
+            : d.code,
+          { machDefId: d.machDefId || machDefId, offsets: importedOffsets },
+        ), 0);
       } catch (err) {
         alert("Import error: " + err.message);
       }
@@ -4079,7 +4161,7 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
   // Use ms.units (G-code execution units) to match path-point coordinate space.
   const backplotZOffset = mach.isLathe
     ? 0
-    : (stock.depth ?? 40) / (ms.units === "inch" ? 25.4 : 1);
+    : (stock.depth ?? 40) / ((pStats.units || ms.units) === "inch" ? 25.4 : 1);
   const backplotPathPoints = useMemo(
     () =>
       pathPts.map((p) => ({
@@ -4695,11 +4777,13 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
                   </div>
                   <div className="mvar">
                     <span className="mvar-k">Est. time</span>
-                    <span className="mvar-v">{pStats.time}s</span>
+                    <span className="mvar-v">{Number(pStats.time || 0).toFixed(2)}s</span>
                   </div>
                   <div className="mvar">
                     <span className="mvar-k">Path length</span>
-                    <span className="mvar-v">{pStats.dist}mm</span>
+                    <span className="mvar-v">
+                      {Number(pStats.dist || 0).toFixed(3)}{pStats.units === "inch" ? "in" : "mm"}
+                    </span>
                   </div>
                 </>
               )}
@@ -6167,7 +6251,8 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
                   <span
                     style={{ fontSize: 9, color: C.txt3, marginLeft: "auto" }}
                   >
-                    {pStats.dist}mm | {pStats.time}s
+                    {Number(pStats.dist || 0).toFixed(3)}
+                    {pStats.units === "inch" ? "in" : "mm"} | {Number(pStats.time || 0).toFixed(2)}s
                   </span>
                 </div>
                 <div
@@ -7401,9 +7486,11 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
                     onClick={() => {
                       const b = new Blob([code], { type: "text/plain" });
                       const a = document.createElement("a");
-                      a.href = URL.createObjectURL(b);
+                      const url = URL.createObjectURL(b);
+                      a.href = url;
                       a.download = currentProjectFile?.name || "program.nc";
                       a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 0);
                     }}
                   >
                     ↓ DL
@@ -7500,8 +7587,8 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
                   spellCheck={false}
                   onChange={(e) => {
                     replaceCurrentFileContent(e.target.value);
-                    clearTimeout(window._ct);
-                    window._ct = setTimeout(() => reload(), 900);
+                    clearTimeout(editorReloadRef.current);
+                    editorReloadRef.current = setTimeout(() => reload(), 900);
                   }}
                   style={{
                     flex: 1,
@@ -7681,6 +7768,22 @@ export default function CNCSimPro({ importedGCode = null } = {}) {
                 </div>
                 <div className="div" />
                 <div className="sec">Validation</div>
+                {alarms.map((alarm, idx) => {
+                  const isError = alarm.startsWith("ERROR:");
+                  return (
+                    <div
+                      key={`engine-${idx}`}
+                      className="alarm-i"
+                      style={{
+                        background: isError ? C.redBg : C.amberBg,
+                        color: isError ? C.red2 : C.amber2,
+                        borderColor: isError ? `${C.red}25` : `${C.amber}25`,
+                      }}
+                    >
+                      {alarm}
+                    </div>
+                  );
+                })}
                 {validationIssues.length === 0 && (
                   <div style={{ fontSize: 9, color: C.green2 }}>
                     No structural project issues detected.

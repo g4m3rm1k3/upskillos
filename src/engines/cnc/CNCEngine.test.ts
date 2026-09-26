@@ -6,7 +6,7 @@ import {
   TOOL_TEMPLATES,
   buildFullToolProfile,
   getHolderProfile,
-} from "./CNCEngine";
+} from "./CNCEngine.js";
 import type { MachineDefinition, ChannelSnapshot, PathPoint } from "./types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -392,5 +392,140 @@ describe("CNCEngine — stepChannel", () => {
     expect(state).toHaveProperty("activeT");
     expect(state).toHaveProperty("units");
     expect(state).toHaveProperty("done");
+  });
+});
+
+// ─── Regression coverage for simulator audit ────────────────────────────────
+
+describe("CNCEngine — safe macro evaluation", () => {
+  it("rejects JavaScript instead of executing it", () => {
+    (globalThis as any).__cncAuditSentinel = 0;
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("#1=globalThis.__cncAuditSentinel=73\nM30");
+    expect((globalThis as any).__cncAuditSentinel).toBe(0);
+    expect(engine.getDiagnostics()[0]?.message).toContain("Invalid macro expression");
+    delete (globalThis as any).__cncAuditSentinel;
+  });
+
+  it("still evaluates CNC arithmetic, variables, comparisons, and trig", () => {
+    const { state } = runToCompletion([
+      "#100=2",
+      "#101=#100*3+SIN[30]",
+      "IF [#101 GT 6] GOTO 20",
+      "G00 X99",
+      "N20 G01 X#101 F100",
+      "M30",
+    ].join("\n"));
+    expect(state.pos.X).toBeCloseTo(6.5, 6);
+  });
+
+  it("supports indirect variables and boolean operators", () => {
+    const { state } = runToCompletion("#1=100\n#100=7\n#101=[1 EQ 1] AND [0 EQ 1]\nG01 X#[#1] Y#101 F100\nM30");
+    expect(state.pos.X).toBe(7);
+    expect(state.pos.Y).toBe(0);
+  });
+});
+
+describe("CNCEngine — audited modal semantics", () => {
+  it("retains a separately programmed spindle speed for M03", () => {
+    const { state } = runToCompletion("S2000\nM03\nM30");
+    expect(state.rpm).toBe(2000);
+  });
+
+  it("preselects a mill tool without activating it before M06", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("T2\nM06\nM30");
+    engine.stepAll();
+    expect(engine.getState()[0].activeT).toBe(0);
+    engine.stepAll();
+    expect(engine.getState()[0].activeT).toBe(2);
+  });
+
+  it("applies configured WCS offsets and G53 machine coordinates", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.setWorkOffsets({ G54: { X: 100, Y: 20, Z: 5 } });
+    engine.loadPrograms("G54 G00 X10 Y2 Z1\nG53 G00 X0 Y0 Z0\nM30");
+    while (!engine.isDone()) engine.stepAll();
+    const state = engine.getState()[0];
+    expect(state.pos.X).toBe(-100);
+    expect(state.pos.Y).toBe(-20);
+    expect(state.pos.Z).toBe(-5);
+    expect(state.machinePos).toEqual({ X: 0, Y: 0, Z: 0 });
+  });
+
+  it("returns all axes home for a bare G28", () => {
+    const { state } = runToCompletion("G00 X10 Y20 Z30\nG28\nM30");
+    expect(state.pos).toMatchObject({ X: 0, Y: 0, Z: 0 });
+  });
+});
+
+describe("CNCEngine — audited arc geometry and statistics", () => {
+  it("counts one arc command and measures consecutive segments", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G00 X10 Y0\nG03 X0 Y10 I-10 J0 F60\nM30");
+    expect(engine.getStats().arc).toBe(1);
+    expect(engine.getStats().dist).toBeCloseTo(10 + Math.PI * 5, 1);
+    expect(engine.getStats().time).toBeCloseTo(15.78, 1);
+  });
+
+  it("plots G18 arcs in XZ and interpolates the helical Y axis", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G18\nG00 X10 Y0 Z0\nG03 X0 Y8 Z10 I-10 K0 F60\nM30");
+    const arc = engine.getPathPoints().filter((p: PathPoint) => p.m === "G03");
+    expect(arc.length).toBeGreaterThan(2);
+    expect(arc[0].y).toBeGreaterThan(0);
+    expect(arc[0].y).toBeLessThan(8);
+    expect(arc.at(-1)).toMatchObject({ x: 0, y: 8, z: 10 });
+  });
+
+  it("plots G19 arcs in YZ", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G19\nG00 Y10 Z0\nG03 Y0 Z10 J-10 K0 F60\nM30");
+    expect(engine.getPathPoints().at(-1)).toMatchObject({ y: 0, z: 10 });
+  });
+
+  it("uses negative R for the major arc", () => {
+    const minor = new CNCEngine(fanuc);
+    minor.loadPrograms("G00 X10 Y0\nG03 X0 Y10 R10 F60\nM30");
+    const major = new CNCEngine(fanuc);
+    major.loadPrograms("G00 X10 Y0\nG03 X0 Y10 R-10 F60\nM30");
+    expect(major.getStats().dist).toBeGreaterThan(minor.getStats().dist * 2);
+  });
+});
+
+describe("CNCEngine — execution guards and diagnostics", () => {
+  it("rejects zero peck depth without hanging", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G83 X0 Y0 Z-10 R3 Q0 F100\nM30");
+    expect(engine.getDiagnostics().some((d: any) => d.message.includes("positive Q"))).toBe(true);
+  });
+
+  it("accounts for canned-cycle travel and returns to the initial plane under G98", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G00 Z10\nG98 G81 X0 Y0 Z-5 R2 F100\nM30");
+    expect(engine.getStats().dist).toBeGreaterThan(25);
+    while (!engine.isDone()) engine.stepAll();
+    expect(engine.getState()[0].pos.Z).toBe(10);
+  });
+
+  it("repeats a canned cycle at new XY positions using the modal depth", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("G00 Z10\nG99 G81 X0 Y0 Z-5 R2 F100\nX10\nG80\nM30");
+    const cuts = engine.getPathPoints().filter((p: PathPoint) => p.m === "G01");
+    expect(cuts).toHaveLength(2);
+    expect(cuts[1]).toMatchObject({ x: 10, z: -5 });
+  });
+
+  it("reports missing subprograms", () => {
+    const engine = new CNCEngine(fanuc);
+    engine.loadPrograms("M98 P9999\nM30");
+    expect(engine.getDiagnostics().some((d: any) => d.message.includes("O9999"))).toBe(true);
+  });
+
+  it("stops unbounded macro loops at the execution budget", () => {
+    const engine = new CNCEngine(fanuc);
+    (engine as any)._maxSteps = 25;
+    engine.loadPrograms("WHILE [1 EQ 1] DO1\nEND1\nM30");
+    expect(engine.getDiagnostics().some((d: any) => d.message.includes("Execution limit"))).toBe(true);
   });
 });

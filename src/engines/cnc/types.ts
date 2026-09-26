@@ -198,6 +198,7 @@ export interface EngineStats {
   dist: number;
   time: number;
   blocks: number;
+  units?: 'mm' | 'inch' | string;
 }
 
 // ─── Channel Snapshot (getState output) ──────────────────────────────────────

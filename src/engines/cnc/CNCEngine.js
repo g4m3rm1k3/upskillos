@@ -900,6 +900,7 @@ class ChannelState {
     // Spindle / feed
     this.feed = 0;
     this.rpm = 0;
+    this.commandedRPM = 0;
     this.dir = "";
     this.coolant = { flood: false, mist: false, through: false, air: false };
     this.cssMode = false;
@@ -935,6 +936,7 @@ class ChannelState {
     this.done = false;
     this.error = null;
     this.message = "";
+    this.steps = 0;
 
     // Misc
     this.posMode = "G90"; // G90/G91
@@ -944,6 +946,7 @@ class ChannelState {
     this.optSkip = false;
     this.blockDelete = false;
     this.home = { X: 0, Y: 0, Z: 0, A: 0, B: 0, C: 0 };
+    this.cycleParams = null;
   }
 
   clone() {
@@ -960,12 +963,14 @@ class ChannelState {
           modals: this.modals,
           feed: this.feed,
           rpm: this.rpm,
+          commandedRPM: this.commandedRPM,
           dir: this.dir,
           activeT: this.activeT,
           activeH: this.activeH,
           activeD: this.activeD,
           pendingT: this.pendingT,
           activeWCS: this.activeWCS,
+          offsets: this.offsets,
           posMode: this.posMode,
           plane: this.plane,
           units: this.units,
@@ -973,6 +978,8 @@ class ChannelState {
           cssSpeed: this.cssSpeed,
           diamMode: this.diamMode,
           home: this.home,
+          steps: this.steps,
+          cycleParams: this.cycleParams,
         }),
       ),
     );
@@ -1199,88 +1206,142 @@ class ExpressionEvaluator {
     if (typeof val !== "string") return null;
     try {
       return this._evalExpr(val);
-    } catch {
+    } catch (error) {
+      this.ch.error = `Invalid macro expression "${val}": ${error.message}`;
       return null;
     }
   }
 
   _evalExpr(expr) {
     if (typeof expr === "number") return expr;
-    let e = String(expr).trim();
-
-    // Strip outer brackets if present [expr]
-    if (e.startsWith("[") && e.endsWith("]")) e = e.slice(1, -1).trim();
-
-    // Step 1: substitute named vars #[name]
-    e = e.replace(/#\[([^\]]+)\]/g, (_, name) => {
-      return this.ch.vars.get(`_NAME_${name.toUpperCase()}`) ?? 0;
-    });
-
-    // Step 2: substitute numeric vars #100, #101 etc. — loop until stable
-    // (handles nested: #103 = #100 * 360. / #101 — all must be resolved)
-    let prev;
-    let safety = 0;
-    do {
-      prev = e;
-      e = e.replace(/#(\d+)/g, (_, n) => {
-        return this.ch.vars.get(parseInt(n)) ?? 0;
-      });
-      safety++;
-    } while (e !== prev && safety < 10);
-
-    // Step 3: Siemens R-vars
-    e = e.replace(/\bR(\d+)\b/gi, (_, n) => {
-      return this.ch.rVars.get(parseInt(n)) ?? 0;
-    });
-
-    // Step 4: Fanuc trig (degrees) — now safe since vars are substituted
-    e = e.replace(/SIN\[([^\]]+)\]/gi, (_, x) =>
-      Math.sin((this._evalExpr(x) * Math.PI) / 180),
-    );
-    e = e.replace(/COS\[([^\]]+)\]/gi, (_, x) =>
-      Math.cos((this._evalExpr(x) * Math.PI) / 180),
-    );
-    e = e.replace(/TAN\[([^\]]+)\]/gi, (_, x) =>
-      Math.tan((this._evalExpr(x) * Math.PI) / 180),
-    );
-    e = e.replace(
-      /ATAN\[([^\]]+)\]/gi,
-      (_, x) => (Math.atan(this._evalExpr(x)) * 180) / Math.PI,
-    );
-    e = e.replace(/SQRT\[([^\]]+)\]/gi, (_, x) => Math.sqrt(this._evalExpr(x)));
-    e = e.replace(/ABS\[([^\]]+)\]/gi, (_, x) => Math.abs(this._evalExpr(x)));
-    e = e.replace(/ROUND\[([^\]]+)\]/gi, (_, x) =>
-      Math.round(this._evalExpr(x)),
-    );
-    e = e.replace(/FIX\[([^\]]+)\]/gi, (_, x) => Math.trunc(this._evalExpr(x)));
-    e = e.replace(/FUP\[([^\]]+)\]/gi, (_, x) => Math.ceil(this._evalExpr(x)));
-
-    // Step 5: Siemens trig (degrees)
-    e = e.replace(/SIN\(([^)]+)\)/gi, (_, x) =>
-      Math.sin((this._evalExpr(x) * Math.PI) / 180),
-    );
-    e = e.replace(/COS\(([^)]+)\)/gi, (_, x) =>
-      Math.cos((this._evalExpr(x) * Math.PI) / 180),
-    );
-    e = e.replace(/SQRT\(([^)]+)\)/gi, (_, x) => Math.sqrt(this._evalExpr(x)));
-    e = e.replace(/ABS\(([^)]+)\)/gi, (_, x) => Math.abs(this._evalExpr(x)));
-
-    // Step 6: Boolean comparison operators (Fanuc macro)
-    // Support compact expressions like #1EQ#2 (no spaces).
-    e = e
-      .replace(/(?<![A-Z])EQ(?![A-Z])/gi, "===")
-      .replace(/(?<![A-Z])NE(?![A-Z])/gi, "!==")
-      .replace(/(?<![A-Z])GT(?![A-Z])/gi, ">")
-      .replace(/(?<![A-Z])LT(?![A-Z])/gi, "<")
-      .replace(/(?<![A-Z])GE(?![A-Z])/gi, ">=")
-      .replace(/(?<![A-Z])LE(?![A-Z])/gi, "<=");
-
-    // Evaluate
-    try {
-      return Function(`"use strict"; return (${e})`)();
-    } catch {
-      return 0;
+    const source = String(expr).trim();
+    const tokens = [];
+    const tokenRe = /\s*(#\[[A-Za-z_][A-Za-z0-9_]*\]|#\d+|#|R\d+|\d*\.\d+(?:E[-+]?\d+)?|\d+(?:\.\d*)?(?:E[-+]?\d+)?|<=|>=|<>|==|!=|[+\-*\/<>=(),\[\]]|[A-Za-z_][A-Za-z0-9_]*)/iy;
+    let cursor = 0;
+    while (cursor < source.length) {
+      tokenRe.lastIndex = cursor;
+      const match = tokenRe.exec(source);
+      if (!match || match.index !== cursor) {
+        throw new Error(`unsupported token at column ${cursor + 1}`);
+      }
+      tokens.push(match[1]);
+      cursor = tokenRe.lastIndex;
     }
+    let index = 0;
+    const peek = () => tokens[index];
+    const take = () => tokens[index++];
+    const consume = (value) => {
+      if (String(peek()).toUpperCase() === value) {
+        index++;
+        return true;
+      }
+      return false;
+    };
+    const functions = {
+      SIN: (x) => Math.sin((x * Math.PI) / 180),
+      COS: (x) => Math.cos((x * Math.PI) / 180),
+      TAN: (x) => Math.tan((x * Math.PI) / 180),
+      ATAN: (x) => (Math.atan(x) * 180) / Math.PI,
+      SQRT: (x) => Math.sqrt(x),
+      ABS: (x) => Math.abs(x),
+      ROUND: (x) => Math.round(x),
+      FIX: (x) => Math.trunc(x),
+      FUP: (x) => Math.ceil(x),
+    };
+    let parseOr;
+    const parsePrimary = () => {
+      const token = take();
+      if (token == null) throw new Error("unexpected end of expression");
+      if (token === "[" || token === "(") {
+        const value = parseOr();
+        const close = token === "[" ? "]" : ")";
+        if (take() !== close) throw new Error(`missing ${close}`);
+        return value;
+      }
+      if (/^#\d+$/.test(token)) return Number(this.ch.vars.get(Number(token.slice(1))) ?? 0);
+      if (token === "#") {
+        if (take() !== "[") throw new Error("indirect variable requires brackets");
+        const variableId = Math.trunc(parseOr());
+        if (take() !== "]") throw new Error("missing ]");
+        return Number(this.ch.vars.get(variableId) ?? 0);
+      }
+      if (/^#\[[A-Za-z_][A-Za-z0-9_]*\]$/.test(token)) {
+        const name = token.slice(2, -1).toUpperCase();
+        return Number(this.ch.vars.get(`_NAME_${name}`) ?? 0);
+      }
+      if (/^R\d+$/i.test(token)) return Number(this.ch.rVars.get(Number(token.slice(1))) ?? 0);
+      if (/^(?:\d*\.\d+|\d+\.?\d*)(?:E[-+]?\d+)?$/i.test(token)) return Number(token);
+      const fn = functions[token.toUpperCase()];
+      if (fn) {
+        const open = take();
+        if (open !== "[" && open !== "(") throw new Error(`${token} requires brackets`);
+        const value = parseOr();
+        const close = open === "[" ? "]" : ")";
+        if (take() !== close) throw new Error(`missing ${close}`);
+        const result = fn(value);
+        if (!Number.isFinite(result)) throw new Error(`${token} produced a non-finite result`);
+        return result;
+      }
+      throw new Error(`unsupported identifier ${token}`);
+    };
+    const parseUnary = () => consume("+") ? parseUnary() : consume("-") ? -parseUnary() : consume("NOT") ? (parseUnary() ? 0 : 1) : parsePrimary();
+    const parseMul = () => {
+      let value = parseUnary();
+      while (true) {
+        if (consume("*")) value *= parseUnary();
+        else if (consume("/")) {
+          const divisor = parseUnary();
+          if (divisor === 0) throw new Error("division by zero");
+          value /= divisor;
+        } else if (consume("MOD")) value %= parseUnary();
+        else return value;
+      }
+    };
+    const parseAdd = () => {
+      let value = parseMul();
+      while (true) {
+        if (consume("+")) value += parseMul();
+        else if (consume("-")) value -= parseMul();
+        else return value;
+      }
+    };
+    const parseCompare = () => {
+      let value = parseAdd();
+      const op = String(peek() ?? "").toUpperCase();
+      const comparisons = ["EQ", "NE", "GT", "LT", "GE", "LE", "=", "==", "!=", "<>", ">", "<", ">=", "<="];
+      if (!comparisons.includes(op)) return value;
+      take();
+      const right = parseAdd();
+      if (op === "EQ" || op === "=" || op === "==") return value === right ? 1 : 0;
+      if (op === "NE" || op === "!=" || op === "<>") return value !== right ? 1 : 0;
+      if (op === "GT" || op === ">") return value > right ? 1 : 0;
+      if (op === "LT" || op === "<") return value < right ? 1 : 0;
+      if (op === "GE" || op === ">=") return value >= right ? 1 : 0;
+      return value <= right ? 1 : 0;
+    };
+    const parseAnd = () => {
+      let value = parseCompare();
+      while (consume("AND")) {
+        const right = parseCompare();
+        value = value && right ? 1 : 0;
+      }
+      return value;
+    };
+    parseOr = () => {
+      let value = parseAnd();
+      while (true) {
+        if (consume("OR")) {
+          const right = parseAnd();
+          value = value || right ? 1 : 0;
+        }
+        else if (consume("XOR")) value = Boolean(value) !== Boolean(parseAnd()) ? 1 : 0;
+        else return value;
+      }
+    };
+    const result = parseOr();
+    if (index !== tokens.length) throw new Error(`unexpected token ${peek()}`);
+    if (!Number.isFinite(result)) throw new Error("non-finite result");
+    return Number(result);
   }
 
   setVar(id, val) {
@@ -1314,6 +1375,7 @@ export class CNCEngine {
       dist: 0,
       time: 0,
       blocks: 0,
+      units: "mm",
     };
     this.backplotPathPoints = [];
     this.backplotStats = {
@@ -1324,10 +1386,12 @@ export class CNCEngine {
       dist: 0,
       time: 0,
       blocks: 0,
+      units: "mm",
     };
     this.evalors = this.channels.map((ch) => new ExpressionEvaluator(ch));
     this.toolTable = {};
     this.toolUnits = "mm";
+    this.diagnostics = [];
     this._maxSteps = 100000; // infinite-loop guard
   }
 
@@ -1335,6 +1399,33 @@ export class CNCEngine {
     this.toolTable =
       toolTable && typeof toolTable === "object" ? toolTable : {};
     this.toolUnits = units === "inch" ? "inch" : "mm";
+  }
+
+  setWorkOffsets(offsets = {}) {
+    for (const ch of this.channels) {
+      for (const [key, value] of Object.entries(offsets || {})) {
+        if (!value || typeof value !== "object") continue;
+        ch.offsets[key] = {
+          ...(ch.offsets[key] || {}),
+          ...Object.fromEntries(
+            Object.entries(value).map(([axis, amount]) => [axis, Number(amount) || 0]),
+          ),
+        };
+      }
+    }
+  }
+
+  _addDiagnostic(level, message, block = null, channelId = null) {
+    const item = {
+      level,
+      message,
+      line: block?.lineIndex != null ? block.lineIndex + 1 : null,
+      channelId,
+    };
+    if (!this.diagnostics.some((d) => d.level === item.level && d.message === item.message && d.line === item.line && d.channelId === item.channelId)) {
+      this.diagnostics.push(item);
+    }
+    return item;
   }
 
   _selectParsedEntryBlocks(parsed, sourceName = "MAIN") {
@@ -1351,9 +1442,11 @@ export class CNCEngine {
   }
 
   // ── Load one or multiple program texts ──────────────────────────────────
-  loadPrograms(sources) {
+  loadPrograms(sources, options = {}) {
     // sources: { main: "...", O9001: "...", ... }  OR  single string
     const srcMap = typeof sources === "string" ? { MAIN: sources } : sources;
+    this.programs.clear();
+    this.diagnostics = [];
     const explicitChannelBlocks = new Map();
 
     for (const [name, src] of Object.entries(srcMap)) {
@@ -1393,8 +1486,14 @@ export class CNCEngine {
       });
     }
 
-    // Pre-run full path for backplot
+    // UI callers may move the expensive full trace to a Web Worker while
+    // retaining this parsed engine for interactive single-block execution.
+    if (options.buildPath !== false) this._buildFullPath();
+  }
+
+  buildFullPath() {
     this._buildFullPath();
+    return { pathPoints: this.getPathPoints(), stats: this.getStats(), diagnostics: this.getDiagnostics() };
   }
 
   // ── Split blocks into channels by tag ────────────────────────────────────
@@ -1442,7 +1541,7 @@ export class CNCEngine {
   _buildFullPath() {
     const recorder = {
       pathPoints: [],
-      stats: { rapid: 0, cut: 0, arc: 0, tc: 0, dist: 0, time: 0, blocks: 0 },
+      stats: { rapid: 0, cut: 0, arc: 0, tc: 0, dist: 0, time: 0, blocks: 0, units: "mm" },
     };
     const tempChannels = this.channels.map((ch) => ch.clone());
     const tempEvalors = tempChannels.map((ch) => new ExpressionEvaluator(ch));
@@ -1473,7 +1572,13 @@ export class CNCEngine {
       )
         break; // deadlock
     }
-    recorder.stats.blocks = recorder.pathPoints.length;
+    if (totalSteps >= this._maxSteps) {
+      this._addDiagnostic("error", `Execution limit of ${this._maxSteps} blocks exceeded while building the toolpath`);
+    }
+    if (!allDone && tempChannels.some((ch) => ch.waiting && !ch.done)) {
+      this._addDiagnostic("error", "Channel synchronization deadlock while building the toolpath");
+    }
+    recorder.stats.units = tempChannels[0]?.units || "mm";
     this.backplotPathPoints = recorder.pathPoints;
     this.backplotStats = recorder.stats;
   }
@@ -1520,6 +1625,7 @@ export class CNCEngine {
       dist: 0,
       time: 0,
       blocks: 0,
+      units: "mm",
     };
     // Reload blocks
     const mainBlocks = this._getMainBlocks();
@@ -1529,6 +1635,13 @@ export class CNCEngine {
 
   // ── Execute one block on a channel ───────────────────────────────────────
   _executeBlock(ch, ev, pathOnly, recorder = null) {
+    ch.steps = (ch.steps || 0) + 1;
+    if (ch.steps > this._maxSteps) {
+      ch.error = `Execution limit of ${this._maxSteps} blocks exceeded`;
+      ch.done = true;
+      this._addDiagnostic("error", ch.error, null, ch.id);
+      return;
+    }
     const blks = ch.callStack.length
       ? ch.callStack[ch.callStack.length - 1].blocks
       : ch.blocks;
@@ -1562,6 +1675,7 @@ export class CNCEngine {
 
     if (!b || b.type === "cmt") return;
     if (b.skip && ch.optSkip) return;
+    if (recorder) recorder.stats.blocks++;
 
     // Comment-only
     if (!b.words && !b.keyword) {
@@ -1579,26 +1693,41 @@ export class CNCEngine {
 
     // ── Siemens / Okuma keywords ───────────────────────────────────────────
     if (b.keyword) {
-      this._execKeyword(ch, ev, b, blks, pathOnly);
+      this._execKeyword(ch, ev, b, blks, pathOnly, recorder);
       return;
     }
 
     // ── Variable assignment (#100 = ...) ──────────────────────────────────
     const assignMatch = (b.clean || "").match(/^#(\d+)\s*=\s*(.+)$/);
     if (assignMatch) {
-      ch.vars.set(parseInt(assignMatch[1]), ev._evalExpr(assignMatch[2]));
+      try {
+        ch.vars.set(parseInt(assignMatch[1]), ev._evalExpr(assignMatch[2]));
+      } catch (error) {
+        ch.error = `Invalid macro expression on line ${b.lineIndex + 1}: ${error.message}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
+      }
       return;
     }
     const namedAssign = (b.clean || "").match(/^#\[([^\]]+)\]\s*=\s*(.+)$/i);
     if (namedAssign) {
-      ev.setVar(namedAssign[1], ev._evalExpr(namedAssign[2]));
+      try {
+        ev.setVar(namedAssign[1], ev._evalExpr(namedAssign[2]));
+      } catch (error) {
+        ch.error = `Invalid macro expression on line ${b.lineIndex + 1}: ${error.message}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
+      }
       return;
     }
     // Siemens R-var: R10=3.14
     if (ch.machDef.dialect === "siemens") {
       const rAssign = (b.clean || "").match(/^R(\d+)\s*=\s*(.+)$/i);
       if (rAssign) {
-        ch.rVars.set(parseInt(rAssign[1]), ev._evalExpr(rAssign[2]));
+        try {
+          ch.rVars.set(parseInt(rAssign[1]), ev._evalExpr(rAssign[2]));
+        } catch (error) {
+          ch.error = `Invalid macro expression on line ${b.lineIndex + 1}: ${error.message}`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
+        }
         return;
       }
     }
@@ -1624,8 +1753,6 @@ export class CNCEngine {
         ch.activeH = w._toolOffset;
         ch.pendingT = w._toolNum;
       } else if (!ms2.includes(6)) {
-        ch.activeT = w.T;
-        ch.activeH = w.T;
         ch.pendingT = w.T;
       } else {
         ch.pendingT = w.T;
@@ -1636,8 +1763,18 @@ export class CNCEngine {
     if (w.D != null) ch.activeD = w.D;
 
     // ── F S H ─────────────────────────────────────────────────────────────
-    if (w.F != null) ch.feed = ev.resolve(w.F) ?? w.F;
-    if (w.S != null && ch.dir) ch.rpm = ev.resolve(w.S) ?? w.S;
+    if (w.F != null) {
+      const feed = ev.resolve(w.F);
+      if (feed != null) ch.feed = feed;
+      else this._addDiagnostic("error", ch.error || `Invalid feed expression on line ${b.lineIndex + 1}`, b, ch.id);
+    }
+    if (w.S != null) {
+      const commanded = ev.resolve(w.S);
+      if (commanded != null) {
+        ch.commandedRPM = commanded;
+        if (ch.dir) ch.rpm = commanded;
+      }
+    }
     if (w.S != null && ch.cssMode) ch.cssSpeed = ev.resolve(w.S) ?? w.S;
     if (w.H != null && !gs.includes(43) && !gs.includes(44)) ch.activeH = w.H;
 
@@ -1698,9 +1835,11 @@ export class CNCEngine {
         if (w.S != null) ch.cssSpeedMax = w.S;
         break; // G50 spindle clamp (lathe) or scale (HAAS)
       case 52:
-        /* G52 local coord shift - no-op for now */ break;
+        this._addDiagnostic("warn", "G52 local coordinate shifts are not yet simulated", b, ch.id);
+        break;
       case 53:
-        /* G53 machine coord */ break;
+        b._machineCoord = true;
+        break;
       case 54:
         ch.activeWCS = "G54";
         break;
@@ -1743,6 +1882,7 @@ export class CNCEngine {
       case 80:
         ch.motionMode = "G80";
         ch.modals.cycle = "G80";
+        ch.cycleParams = null;
         break;
       case 81:
       case 82:
@@ -1777,7 +1917,8 @@ export class CNCEngine {
         break;
       case 97:
         ch.cssMode = false;
-        if (w.S != null) ch.rpm = w.S;
+        if (w.S != null) ch.commandedRPM = ev.resolve(w.S) ?? ch.commandedRPM;
+        if (ch.dir) ch.rpm = ch.commandedRPM;
         break;
       case 98:
         if (ch.machDef.class === "lathe") ch.modals.feed = "G98";
@@ -1788,9 +1929,7 @@ export class CNCEngine {
         else ch.modals.retPlane = "G99";
         break;
       case 28: // G28 return to reference
-        ch.pos.X = ch.home.X;
-        ch.pos.Y = ch.home.Y;
-        ch.pos.Z = ch.home.Z;
+        b._returnHome = true;
         break;
     }
     // Siemens units
@@ -1812,14 +1951,17 @@ export class CNCEngine {
 
     if (match(def.spindleCW)) {
       ch.dir = "CW";
-      if (w.S != null) ch.rpm = w.S;
+      if (w.S != null) ch.commandedRPM = ev.resolve(w.S) ?? ch.commandedRPM;
+      ch.rpm = ch.commandedRPM;
     }
     if (match(def.spindleCCW)) {
       ch.dir = "CCW";
-      if (w.S != null) ch.rpm = w.S;
+      if (w.S != null) ch.commandedRPM = ev.resolve(w.S) ?? ch.commandedRPM;
+      ch.rpm = ch.commandedRPM;
     }
     if (match(def.spindleStop)) {
       ch.dir = "";
+      ch.rpm = 0;
     }
     if (match(def.liveToolCW)) {
       ch.liveDir = "CW";
@@ -1856,7 +1998,7 @@ export class CNCEngine {
         ch.activeT = ch.pendingT;
         ch.activeH = ch.pendingT;
       }
-      ch.stats && ch.stats.tc++;
+      if (recorder) recorder.stats.tc++;
     }
     if (match(def.spindleOrient)) {
       /* no-op */
@@ -1896,9 +2038,15 @@ export class CNCEngine {
     const mode = ch.motionMode;
     const abs = ch.posMode === "G90";
     const shouldRecordPath = Boolean(recorder);
-    const av = (cur, v) => {
-      const resolved = ev.resolve(v) ?? v;
-      return abs ? resolved : cur + resolved;
+    const activeOffset = ch.offsets[ch.activeWCS] || { X: 0, Y: 0, Z: 0 };
+    const av = (axis, cur, v) => {
+      const resolved = ev.resolve(v);
+      if (resolved == null || !Number.isFinite(Number(resolved))) {
+        this._addDiagnostic("error", ch.error || `Invalid ${axis} expression on line ${b.lineIndex + 1}`, b, ch.id);
+        return cur;
+      }
+      if (b?._machineCoord) return Number(resolved) - Number(activeOffset[axis] || 0);
+      return abs ? Number(resolved) : cur + Number(resolved);
     };
 
     const hasXYZ = w.X != null || w.Y != null || w.Z != null;
@@ -1906,7 +2054,7 @@ export class CNCEngine {
     const hasArcCenterWords =
       w.I != null || w.J != null || w.K != null || w.R != null;
     const hasArcMotion = isArcMode && (hasXYZ || hasArcCenterWords);
-    const hasCyc = [
+    const cycleModes = [
       "G81",
       "G82",
       "G83",
@@ -1919,32 +2067,68 @@ export class CNCEngine {
       "G74",
       "G75",
       "G76",
-    ].includes(mode);
+    ];
+    const cycleCommand = this._gList(w).some((g) => cycleModes.includes(`G${Math.floor(g)}`));
+    const hasCyc = cycleModes.includes(mode) && (hasXYZ || cycleCommand);
 
-    if (!hasXYZ && !hasCyc && !hasArcMotion) return;
+    if (!hasXYZ && !hasCyc && !hasArcMotion && !b?._returnHome) return;
 
-    const nx = w.X != null ? av(ch.pos.X, w.X) : ch.pos.X;
-    const ny = w.Y != null ? av(ch.pos.Y, w.Y) : ch.pos.Y;
-    const nz = w.Z != null ? av(ch.pos.Z, w.Z) : ch.pos.Z;
-    if (w.B != null) ch.pos.B = av(ch.pos.B, w.B);
-    if (w.C != null) ch.pos.C = av(ch.pos.C, w.C);
+    let nx = w.X != null ? av("X", ch.pos.X, w.X) : ch.pos.X;
+    let ny = w.Y != null ? av("Y", ch.pos.Y, w.Y) : ch.pos.Y;
+    let nz = w.Z != null ? av("Z", ch.pos.Z, w.Z) : ch.pos.Z;
+    if (w.B != null) ch.pos.B = av("B", ch.pos.B, w.B);
+    if (w.C != null) ch.pos.C = av("C", ch.pos.C, w.C);
 
-    if (shouldRecordPath && (mode === "G00" || mode === "G01")) {
+    if (hasCyc) {
+      if (cycleCommand) {
+        const rValue = w.R != null ? ev.resolve(w.R) : null;
+        ch.cycleParams = {
+          depth: nz,
+          r: rValue == null ? ch.pos.Z + 3 : ch.posMode === "G90" ? rValue : ch.pos.Z + rValue,
+          q: w.Q != null ? Math.abs(Number(ev.resolve(w.Q))) : null,
+          initialZ: ch.pos.Z,
+        };
+      } else if (ch.cycleParams?.depth != null) {
+        nz = ch.cycleParams.depth;
+      }
+    }
+
+    if (b?._returnHome) {
+      if (shouldRecordPath && hasXYZ) this._addPathPoint(ch, nx, ny, nz, "G00", b, recorder);
+      ch.pos.X = nx;
+      ch.pos.Y = ny;
+      ch.pos.Z = nz;
+      nx = Number(ch.home.X || 0) - Number(activeOffset.X || 0);
+      ny = Number(ch.home.Y || 0) - Number(activeOffset.Y || 0);
+      nz = Number(ch.home.Z || 0) - Number(activeOffset.Z || 0);
+      if (shouldRecordPath) this._addPathPoint(ch, nx, ny, nz, "G00", b, recorder);
+    }
+
+    let cycleEndZ = nz;
+    if (!b?._returnHome && shouldRecordPath && (mode === "G00" || mode === "G01")) {
       this._addPathPoint(ch, nx, ny, nz, mode, b, recorder);
     } else if (shouldRecordPath && isArcMode) {
       this._addArcPath(ch, ev, w, nx, ny, nz, mode, b, recorder);
     } else if (shouldRecordPath && hasCyc) {
-      this._addCyclePoints(ch, ev, w, nx, ny, nz, mode, b, recorder);
+      cycleEndZ = this._addCyclePoints(ch, ev, w, nx, ny, nz, mode, b, recorder);
+    } else if (!shouldRecordPath && hasCyc) {
+      const retractPlane = ch.cycleParams?.r ?? ch.pos.Z + 3;
+      const peck = w.Q != null ? Math.abs(Number(ev.resolve(w.Q))) : ch.cycleParams?.q;
+      if (mode === "G83" && !(peck > 0)) {
+        ch.error = `G83 requires a positive Q peck amount on line ${b.lineIndex + 1}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
+      }
+      cycleEndZ = ch.modals?.retPlane === "G98" ? (ch.cycleParams?.initialZ ?? ch.pos.Z) : retractPlane;
     }
 
     ch.pos.X = nx;
     ch.pos.Y = ny;
-    ch.pos.Z = nz;
-    const off = ch.offsets[ch.activeWCS] || { X: 0, Y: 0, Z: 0 };
+    ch.pos.Z = hasCyc ? cycleEndZ : nz;
+    const off = activeOffset;
     ch.machinePos = {
       X: nx + (off.X || 0),
       Y: ny + (off.Y || 0),
-      Z: nz + (off.Z || 0),
+      Z: ch.pos.Z + (off.Z || 0),
     };
 
     // Update system vars
@@ -2010,8 +2194,11 @@ export class CNCEngine {
     const wearR = Number(t?.wearR ?? 0);
     if (Number.isFinite(wearR)) radius += wearR;
     if (!(radius > 0)) return 0;
-    if (this.toolUnits === ch.units) return radius;
-    return this.toolUnits === "inch" ? radius * 25.4 : radius / 25.4;
+    const sourceUnits = t?.geometryUnits === "inch" || t?.geometryUnits === "mm"
+      ? t.geometryUnits
+      : this.toolUnits;
+    if (sourceUnits === ch.units) return radius;
+    return sourceUnits === "inch" ? radius * 25.4 : radius / 25.4;
   }
 
   _applyCutterComp(ch, target, start = null) {
@@ -2065,65 +2252,80 @@ export class CNCEngine {
   }
 
   _addArcPath(ch, ev, w, nx, ny, nz, mode, b, recorder) {
-    const I = ev.resolve(w.I) ?? 0;
-    const J = ev.resolve(w.J) ?? 0;
-    const K = ev.resolve(w.K) ?? 0;
-    let ocx = ch.pos.X + I,
-      ocy = ch.pos.Y + J;
+    const plane = ch.plane || "G17";
+    const config = plane === "G18"
+      ? { u: "Z", v: "X", w: "Y", cu: "K", cv: "I" }
+      : plane === "G19"
+        ? { u: "Y", v: "Z", w: "X", cu: "J", cv: "K" }
+        : { u: "X", v: "Y", w: "Z", cu: "I", cv: "J" };
+    const start = { X: ch.pos.X, Y: ch.pos.Y, Z: ch.pos.Z };
+    const end = { X: nx, Y: ny, Z: nz };
+    const su = start[config.u], sv = start[config.v], sw = start[config.w];
+    const eu = end[config.u], evv = end[config.v], ew = end[config.w];
+    let centerU = su + (ev.resolve(w[config.cu]) ?? 0);
+    let centerV = sv + (ev.resolve(w[config.cv]) ?? 0);
+    const sweepForCenter = (cu, cv) => {
+      const a0 = Math.atan2(sv - cv, su - cu);
+      const a1 = Math.atan2(evv - cv, eu - cu);
+      let sweep = a1 - a0;
+      if (mode === "G02" && sweep >= 0) sweep -= 2 * Math.PI;
+      if (mode === "G03" && sweep <= 0) sweep += 2 * Math.PI;
+      return { a0, sweep };
+    };
+    let angles;
     if (w.R != null) {
-      const R = ev.resolve(w.R),
-        dx = nx - ch.pos.X,
-        dy = ny - ch.pos.Y,
-        len = Math.sqrt(dx * dx + dy * dy);
-      if (Math.abs(R) + 1e-6 < len / 2) {
-        ch.message = `Invalid R arc: |R| (${Number(R).toFixed(3)}) < half-chord (${(len / 2).toFixed(3)})`;
+      const programmedR = ev.resolve(w.R);
+      const radius = Math.abs(Number(programmedR));
+      const du = eu - su, dv = evv - sv;
+      const chord = Math.hypot(du, dv);
+      if (!(radius > 0) || chord < 1e-9 || radius + 1e-6 < chord / 2) {
+        ch.error = `Invalid R arc on line ${b.lineIndex + 1}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
         this._addPathPoint(ch, nx, ny, nz, "G01", b, recorder);
         return;
       }
-      if (len > 0.001) {
-        const h = Math.sqrt(Math.max(0, R * R - (len / 2) ** 2));
-        const mx = (ch.pos.X + nx) / 2,
-          my = (ch.pos.Y + ny) / 2;
-        const nx2 = -dy / len,
-          ny2 = dx / len,
-          sign = mode === "G02" ? 1 : -1;
-        ocx = mx + sign * h * nx2;
-        ocy = my + sign * h * ny2;
+      const h = Math.sqrt(Math.max(0, radius ** 2 - (chord / 2) ** 2));
+      const midU = (su + eu) / 2, midV = (sv + evv) / 2;
+      const pu = -dv / chord, pv = du / chord;
+      const candidates = [
+        { u: midU + pu * h, v: midV + pv * h },
+        { u: midU - pu * h, v: midV - pv * h },
+      ].map((center) => ({ ...center, ...sweepForCenter(center.u, center.v) }));
+      const wantsMajor = Number(programmedR) < 0;
+      const selected = candidates.find((candidate) => wantsMajor ? Math.abs(candidate.sweep) >= Math.PI - 1e-9 : Math.abs(candidate.sweep) <= Math.PI + 1e-9) || candidates[0];
+      centerU = selected.u;
+      centerV = selected.v;
+      angles = selected;
+    } else {
+      angles = sweepForCenter(centerU, centerV);
+      const hasPlaneEnd = w[config.u] != null || w[config.v] != null;
+      if (!hasPlaneEnd && (w[config.cu] != null || w[config.cv] != null)) {
+        angles.sweep = mode === "G02" ? -2 * Math.PI : 2 * Math.PI;
       }
     }
-    const r = Math.sqrt((ch.pos.X - ocx) ** 2 + (ch.pos.Y - ocy) ** 2) || 1;
-    const hasArcEndXY = w.X != null || w.Y != null;
-    let a0 = Math.atan2(ch.pos.Y - ocy, ch.pos.X - ocx),
-      a1 = Math.atan2(ny - ocy, nx - ocx);
-    let da = a1 - a0;
-    // Fanuc: if endpoint is omitted on G02/G03 with I/J/K center format,
-    // treat as a full-circle move ending at the current XY.
-    if (
-      !hasArcEndXY &&
-      w.R == null &&
-      (w.I != null || w.J != null || w.K != null)
-    ) {
-      da = mode === "G02" ? -2 * Math.PI : 2 * Math.PI;
+    const radius = Math.hypot(su - centerU, sv - centerV);
+    if (!(radius > 1e-9)) {
+      ch.error = `Arc radius is zero on line ${b.lineIndex + 1}`;
+      this._addDiagnostic("error", ch.error, b, ch.id);
+      this._addPathPoint(ch, nx, ny, nz, "G01", b, recorder);
+      return;
     }
-    if (mode === "G02") {
-      if (da > 0) da -= 2 * Math.PI;
-    } else {
-      if (da < 0) da += 2 * Math.PI;
-    }
-    const steps = Math.max(8, Math.round((Math.abs(da) * r) / 2));
-    let prevRaw = { x: ch.pos.X, y: ch.pos.Y, z: ch.pos.Z };
+    const steps = Math.min(10000, Math.max(8, Math.ceil((Math.abs(angles.sweep) * radius) / 2)));
+    const spd = this._effectiveFeedRate(ch, mode);
+    let previous = { x: start.X, y: start.Y, z: start.Z };
+    recorder.stats.arc++;
     for (let s = 1; s <= steps; s++) {
-      const a = a0 + (da * s) / steps;
-      const px = ocx + r * Math.cos(a),
-        py = ocy + r * Math.sin(a);
-      const d = Math.sqrt(
-        (px - ch.pos.X) ** 2 + (py - ch.pos.Y) ** 2 + (nz - ch.pos.Z) ** 2,
-      );
-      recorder.stats.dist += d;
-      recorder.stats.arc++;
-      const spd = this._effectiveFeedRate(ch, mode);
-      if (spd > 0) recorder.stats.time += (d / spd) * 60;
-      const comp = this._applyCutterComp(ch, { x: px, y: py, z: nz }, prevRaw);
+      const t = s / steps;
+      const angle = angles.a0 + angles.sweep * t;
+      const point = { X: start.X, Y: start.Y, Z: start.Z };
+      point[config.u] = s === steps ? eu : centerU + radius * Math.cos(angle);
+      point[config.v] = s === steps ? evv : centerV + radius * Math.sin(angle);
+      point[config.w] = sw + (ew - sw) * t;
+      const raw = { x: point.X, y: point.Y, z: point.Z };
+      const distance = Math.hypot(raw.x - previous.x, raw.y - previous.y, raw.z - previous.z);
+      recorder.stats.dist += distance;
+      if (spd > 0) recorder.stats.time += (distance / spd) * 60;
+      const comp = this._applyCutterComp(ch, raw, previous);
       recorder.pathPoints.push({
         x: comp.x,
         y: comp.y,
@@ -2135,108 +2337,62 @@ export class CNCEngine {
         bi: b?._ptr,
         cutComp: ch.modals?.cutComp || "G40",
       });
-      prevRaw = { x: px, y: py, z: nz };
+      previous = raw;
     }
   }
 
   _addCyclePoints(ch, ev, w, nx, ny, nz, mode, b, recorder) {
-    const rz =
-      w.R != null
-        ? ch.posMode === "G90"
-          ? w.R
-          : ch.pos.Z + w.R
-        : ch.pos.Z + 3;
-    const dz = nz;
+    const initialZ = ch.pos.Z;
+    const rz = ch.cycleParams?.r ?? initialZ + 3;
+    const retractZ = ch.modals?.retPlane === "G98" ? (ch.cycleParams?.initialZ ?? initialZ) : rz;
     const bi = b?._ptr;
-    recorder.pathPoints.push({
-      x: nx,
-      y: ny,
-      z: rz,
-      m: "G00",
-      channelId: ch.id,
-      feed: 0,
-      tool: ch.activeT,
-      bi,
-    });
-    recorder.pathPoints.push({
-      x: nx,
-      y: ny,
-      z: dz,
-      m: "G01",
-      channelId: ch.id,
-      feed: ch.feed,
-      tool: ch.activeT,
-      bi,
-    });
-    recorder.pathPoints.push({
-      x: nx,
-      y: ny,
-      z: rz,
-      m: "G00",
-      channelId: ch.id,
-      feed: 0,
-      tool: ch.activeT,
-      bi,
-    });
-    recorder.stats.cut += 2;
-    recorder.stats.rapid += 2;
-    if (mode === "G83" && w.Q != null) {
-      // Peck — add multiple pecks
-      const q = Math.abs(w.Q),
-        totalDepth = Math.abs(dz - rz);
+    let previous = { x: ch.pos.X, y: ch.pos.Y, z: initialZ };
+    const pushMove = (x, y, z, motion) => {
+      const distance = Math.hypot(x - previous.x, y - previous.y, z - previous.z);
+      const speed = this._effectiveFeedRate(ch, motion);
+      recorder.stats.dist += distance;
+      if (speed > 0) recorder.stats.time += (distance / speed) * 60;
+      if (motion === "G00") recorder.stats.rapid++;
+      else recorder.stats.cut++;
+      recorder.pathPoints.push({
+        x, y, z, m: motion, channelId: ch.id,
+        feed: motion === "G00" ? 0 : ch.feed,
+        tool: ch.activeT, bi,
+      });
+      previous = { x, y, z };
+    };
+    pushMove(nx, ny, rz, "G00");
+    if (mode === "G83") {
+      const q = w.Q != null ? Math.abs(Number(ev.resolve(w.Q))) : ch.cycleParams?.q;
+      if (!(q > 0)) {
+        ch.error = `G83 requires a positive Q peck amount on line ${b.lineIndex + 1}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
+        pushMove(nx, ny, retractZ, "G00");
+        return retractZ;
+      }
+      const direction = Math.sign(nz - rz);
       let currentZ = rz;
-      while (currentZ > dz) {
-        const peckZ = Math.max(dz, currentZ - q);
-        recorder.pathPoints.push({
-          x: nx,
-          y: ny,
-          z: peckZ,
-          m: "G01",
-          channelId: ch.id,
-          feed: ch.feed,
-          tool: ch.activeT,
-          bi,
-        });
-        recorder.pathPoints.push({
-          x: nx,
-          y: ny,
-          z: rz,
-          m: "G00",
-          channelId: ch.id,
-          feed: 0,
-          tool: ch.activeT,
-          bi,
-        });
-        currentZ = peckZ;
-        recorder.stats.cut++;
-        recorder.stats.rapid++;
+      let pecks = 0;
+      while (Math.abs(nz - currentZ) > 1e-9 && pecks++ < 10000) {
+        const nextZ = direction > 0 ? Math.min(nz, currentZ + q) : Math.max(nz, currentZ - q);
+        pushMove(nx, ny, nextZ, "G01");
+        currentZ = nextZ;
+        if (Math.abs(nz - currentZ) > 1e-9) pushMove(nx, ny, rz, "G00");
       }
-    }
-    if (mode === "G76") {
-      // Threading: add a few spring passes
-      for (let p = 0; p < 3; p++) {
-        recorder.pathPoints.push({
-          x: nx,
-          y: ny,
-          z: dz,
-          m: "G32",
-          channelId: ch.id,
-          feed: ch.feed,
-          tool: ch.activeT,
-          bi,
-        });
-        recorder.pathPoints.push({
-          x: nx,
-          y: ny,
-          z: rz,
-          m: "G00",
-          channelId: ch.id,
-          feed: 0,
-          tool: ch.activeT,
-          bi,
-        });
+      if (pecks >= 10000) {
+        ch.error = `G83 peck limit exceeded on line ${b.lineIndex + 1}`;
+        this._addDiagnostic("error", ch.error, b, ch.id);
       }
+    } else if (mode === "G76" && ch.machDef.class === "lathe") {
+      for (let pass = 0; pass < 3; pass++) {
+        pushMove(nx, ny, nz, "G32");
+        if (pass < 2) pushMove(nx, ny, rz, "G00");
+      }
+    } else {
+      pushMove(nx, ny, nz, "G01");
     }
+    pushMove(nx, ny, retractZ, "G00");
+    return retractZ;
   }
 
   // ── Sub-program call / return ────────────────────────────────────────────
@@ -2268,6 +2424,7 @@ export class CNCEngine {
 
     if (!subBlocks) {
       ch.error = `Sub O${progNum} not found`;
+      this._addDiagnostic("error", ch.error, null, ch.id);
       return;
     }
     const returnPtr = ch.callStack.length
@@ -2319,10 +2476,18 @@ export class CNCEngine {
       }
     }
 
-    if (!subBlocks) return;
+    if (!subBlocks) {
+      ch.error = `Sub O${progNum} not found`;
+      this._addDiagnostic("error", ch.error, null, ch.id);
+      return;
+    }
     const tempCh = ch.clone();
     const tempEv = new ExpressionEvaluator(tempCh);
     tempCh.blocks = subBlocks;
+    tempCh.callStack = [];
+    if (repeat > 50) {
+      this._addDiagnostic("warn", `Backplot repeat count for O${progNum} was limited to 50`, null, ch.id);
+    }
     for (let r = 0; r < Math.min(repeat, 50); r++) {
       tempCh.pointer = 0;
       tempCh.done = false;
@@ -2332,10 +2497,20 @@ export class CNCEngine {
         if (tempCh.done) break;
       }
     }
+    Object.assign(ch.pos, tempCh.pos);
+    ch.motionMode = tempCh.motionMode;
+    ch.posMode = tempCh.posMode;
+    ch.plane = tempCh.plane;
+    ch.feed = tempCh.feed;
+    ch.rpm = tempCh.rpm;
+    ch.commandedRPM = tempCh.commandedRPM;
+    ch.activeT = tempCh.activeT;
+    ch.activeH = tempCh.activeH;
+    ch.vars = new Map(tempCh.vars);
   }
 
   // ── Siemens / Okuma keywords ─────────────────────────────────────────────
-  _execKeyword(ch, ev, b, blks, pathOnly) {
+  _execKeyword(ch, ev, b, blks, pathOnly, recorder = null) {
     const kw = b.keyword;
     const line = b.clean || "";
 
@@ -2354,8 +2529,9 @@ export class CNCEngine {
               : ch.pointer;
             this._skipToMatchingLoopEnd(ch, blks, Math.max(0, ptr - 1));
           }
-        } catch {
-          /* expr error, skip */
+        } catch (error) {
+          ch.error = `Invalid WHILE expression on line ${b.lineIndex + 1}: ${error.message}`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
         }
       }
     }
@@ -2386,7 +2562,10 @@ export class CNCEngine {
           const condExpr = (condMatch[1] ?? condMatch[2] ?? "").trim();
           const cond = ev._evalExpr(condExpr);
           if (cond) this._gotoLabel(ch, blks, condMatch[3]);
-        } catch {}
+        } catch (error) {
+          ch.error = `Invalid IF expression on line ${b.lineIndex + 1}: ${error.message}`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
+        }
         return;
       }
       // IF ... THEN block
@@ -2403,7 +2582,10 @@ export class CNCEngine {
               blks,
               Math.max(0, ch.pointer - 1),
             );
-        } catch {}
+        } catch (error) {
+          ch.error = `Invalid IF expression on line ${b.lineIndex + 1}: ${error.message}`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
+        }
       }
     }
 
@@ -2435,6 +2617,37 @@ export class CNCEngine {
             repeat: 1,
             loopCount: 0,
           });
+        } else {
+          ch.error = `Subprogram ${subName} not found`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
+        }
+      } else if (callMatch && pathOnly) {
+        const subName = callMatch[1];
+        const subBlocks = this.programs.get(subName) || this.programs.get(`O${subName}`);
+        if (subBlocks) {
+          const tempCh = ch.clone();
+          tempCh.blocks = subBlocks;
+          tempCh.callStack = [];
+          tempCh.pointer = 0;
+          tempCh.done = false;
+          const tempEv = new ExpressionEvaluator(tempCh);
+          let guard = 0;
+          while (!tempCh.done && guard++ < this._maxSteps) {
+            this._executeBlock(tempCh, tempEv, true, recorder);
+          }
+          Object.assign(ch.pos, tempCh.pos);
+          ch.motionMode = tempCh.motionMode;
+          ch.posMode = tempCh.posMode;
+          ch.plane = tempCh.plane;
+          ch.feed = tempCh.feed;
+          ch.rpm = tempCh.rpm;
+          ch.commandedRPM = tempCh.commandedRPM;
+          ch.activeT = tempCh.activeT;
+          ch.activeH = tempCh.activeH;
+          ch.vars = new Map(tempCh.vars);
+        } else {
+          ch.error = `Subprogram ${subName} not found`;
+          this._addDiagnostic("error", ch.error, b, ch.id);
         }
       }
     }
@@ -2665,7 +2878,10 @@ export class CNCEngine {
     return this.backplotPathPoints;
   }
   getStats() {
-    return { ...this.backplotStats, blocks: this.backplotPathPoints.length };
+    return { ...this.backplotStats };
+  }
+  getDiagnostics() {
+    return this.diagnostics.map((item) => ({ ...item }));
   }
   isDone() {
     return this.channels.every((ch) => ch.done);
