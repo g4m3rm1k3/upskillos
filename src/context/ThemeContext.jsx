@@ -3,6 +3,8 @@ import { STUDIO_THEMES } from '../utils/studioThemes';
 import { extractThemeColors, generateThemeStyleString, DEFAULT_PALETTE_RGB } from '../utils/themeEngine';
 
 const ThemeContext = createContext({
+  pageEffect: 'none',
+  setPageEffect: () => {},
   studioTheme: 'default',
   setStudioTheme: () => {},
   isDarkGlobal: true, // We'll assume true since it's mainly for dark mode
@@ -241,6 +243,15 @@ export function ThemeProvider({ children }) {
     return localStorage.getItem('oc-laser-enabled') === 'true';
   });
 
+  const [pageEffect, setPageEffectState] = useState(() => {
+    return localStorage.getItem('oc-page-effect') === 'fire' ? 'fire' : 'none';
+  });
+  const setPageEffect = useCallback((effect) => {
+    const next = effect === 'fire' ? 'fire' : 'none';
+    setPageEffectState(next);
+    localStorage.setItem('oc-page-effect', next);
+  }, []);
+
   const [laserColor, setLaserColorState] = useState(() => {
     return localStorage.getItem('oc-laser-color') || '#06b6d4'; // Cyan-500
   });
@@ -265,9 +276,9 @@ export function ThemeProvider({ children }) {
       studioTheme, setStudioTheme, isDarkGlobal, themeStyles, 
       typography, setTypography, codeTypography, setCodeTypography, 
       taskbarStyle, setTaskbarStyle, macAnimation, setMacAnimation,
-      laserEnabled, setLaserEnabled, laserColor, setLaserColor
+      laserEnabled, setLaserEnabled, laserColor, setLaserColor, pageEffect, setPageEffect
     }),
-    [studioTheme, setStudioTheme, isDarkGlobal, themeStyles, typography, setTypography, codeTypography, setCodeTypography, taskbarStyle, setTaskbarStyle, macAnimation, setMacAnimation, laserEnabled, setLaserEnabled, laserColor, setLaserColor]
+    [studioTheme, setStudioTheme, isDarkGlobal, themeStyles, typography, setTypography, codeTypography, setCodeTypography, taskbarStyle, setTaskbarStyle, macAnimation, setMacAnimation, laserEnabled, setLaserEnabled, laserColor, setLaserColor, pageEffect, setPageEffect]
   );
 
   return (

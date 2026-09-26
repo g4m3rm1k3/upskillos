@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import FloatingWindow from './FloatingWindow.jsx'
+import { useGlobalTheme } from '../../context/ThemeContext.jsx'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Taskbar from './Taskbar.jsx'
 
 const DesktopContext = createContext(null)
@@ -10,6 +12,8 @@ const BASE_Z = 1700
 export default function DesktopProvider({ children }) {
   const [windows, setWindows] = useState([])
   const [focusOrder, setFocusOrder] = useState([])
+  const { pageEffect } = useGlobalTheme()
+  const reduceMotion = useReducedMotion()
   const [style, setStyleState] = useState(
     () => localStorage.getItem('oc-desktop-style') || 'taskbar'
   )
@@ -74,19 +78,46 @@ export default function DesktopProvider({ children }) {
   return (
     <DesktopContext.Provider value={value}>
       {children}
-      {windows
-        .filter(w => w.state !== 'minimized')
-        .map(w => (
-          <FloatingWindow
-            key={w.id}
-            win={w}
-            zIndex={w.state === 'maximized' ? 1800 : BASE_Z + focusOrder.indexOf(w.id)}
-            onClose={() => closeWindow(w.id)}
-            onMinimize={() => minimizeWindow(w.id)}
-            onMaximize={() => toggleMaximize(w.id)}
-            onFocus={() => focusWindow(w.id)}
-          />
-        ))}
+      <AnimatePresence>
+        {windows
+          .filter(w => w.state !== 'minimized')
+          .map(w => {
+            const exit = !reduceMotion && pageEffect === 'fire' ? {
+              opacity: 0,
+              filter: 'sepia(1) hue-rotate(-30deg) saturate(5) blur(10px) brightness(2) contrast(1.5)',
+              scale: 0.9,
+              y: -30,
+              transition: { duration: 0.5 }
+            } : {
+              opacity: 0,
+              transition: { duration: 0 }
+            }
+
+            return (
+              <motion.div
+                key={w.id}
+                initial={false}
+                animate={{ opacity: 1, scale: 1, filter: 'sepia(0) hue-rotate(0deg) saturate(1) blur(0px) brightness(1) contrast(1)', y: 0 }}
+                exit={exit}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  zIndex: w.state === 'maximized' ? 1800 : BASE_Z + focusOrder.indexOf(w.id)
+                }}
+              >
+                <FloatingWindow
+                  win={w}
+                  zIndex={w.state === 'maximized' ? 1800 : BASE_Z + focusOrder.indexOf(w.id)}
+                  onClose={() => closeWindow(w.id)}
+                  onMinimize={() => minimizeWindow(w.id)}
+                  onMaximize={() => toggleMaximize(w.id)}
+                  onFocus={() => focusWindow(w.id)}
+                />
+              </motion.div>
+            )
+          })}
+      </AnimatePresence>
       <Taskbar
         windows={windows}
         desktopStyle={style}

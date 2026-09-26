@@ -219,7 +219,7 @@ function TopBar() {
           <CubeIconButton
             glyph="?"
             title="Contributor Docs"
-            colorClass="text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 text-[15px] font-black"
+            colorClass="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 text-[15px] font-black star-glow-effect"
             onClick={() => window.dispatchEvent(new CustomEvent('oc-toggle-help'))}
           />
         </div>

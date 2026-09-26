@@ -80,6 +80,7 @@ For what a branch, fetch and merge actually do, see the Git lessons in [src/docs
 
 - [AGENTS.md](AGENTS.md): the same rules in more operational detail, written for coding agents.
 - [docs/contributor-experience-and-lms-roadmap.md](docs/contributor-experience-and-lms-roadmap.md): the prioritized remaining-work checklist and longer-term LMS plan.
+- [docs/authoring-system-plan.md](docs/authoring-system-plan.md): the plan for editing courses, SVGs, labs, and games from a shared Author mode.
 - [ARCHITECTURE.md](ARCHITECTURE.md): design history. Parts describe systems that have since been replaced.
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md) (report security problems privately, not in an issue).
 - [docs/history/CONTRIBUTING-legacy.md](docs/history/CONTRIBUTING-legacy.md): the previous contributor guide. Its lesson-quality sections are still useful reference; its file layout and registration steps are out of date.

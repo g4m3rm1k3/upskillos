@@ -50,6 +50,7 @@ This is the next correctness project. The inventory currently reports 17 duplica
 
 ### P1 — Finish the contributor system
 
+- [ ] Implement the unified course/lab/game authoring system described in [the Authoring System Plan](authoring-system-plan.md), starting with safe course editing and a native Machine Learning Lab adapter.
 - [ ] Rewrite `ARCHITECTURE.md` around the current `courseLoader`, lab discovery, game registry, HashRouter routes, shell, renderers, and progress system. Move obsolete architecture into `docs/history/` when it remains useful.
 - [ ] Finish the task guides planned under `docs/contributing/`: an index plus lessons, visualizations, UI/features, labs/games, tests/verification, documentation, and pull-request guides.
 - [ ] Add and validate a machine-readable change-impact map so contributors can determine which checks, generated files, and documentation accompany a change.

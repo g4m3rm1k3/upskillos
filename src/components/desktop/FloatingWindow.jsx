@@ -142,8 +142,9 @@ export default function FloatingWindow({ win, zIndex, onClose, onMinimize, onMax
   if (isMax) {
     return (
       <div
+        data-desktop-window={win.id}
         className="fixed inset-0 flex flex-col"
-        style={{ zIndex }}
+        style={{ zIndex, pointerEvents: 'auto' }}
         onMouseDown={onFocus}
       >
         {/* A real row (not absolute-over-content) — reserves actual height so
@@ -190,8 +191,9 @@ export default function FloatingWindow({ win, zIndex, onClose, onMinimize, onMax
         />
       )}
       <div
+        data-desktop-window={win.id}
         className="fixed flex flex-col rounded-xl overflow-hidden shadow-2xl border border-black/15 dark:border-white/[0.08]"
-        style={{ left: pos.x, top: pos.y, width: size.w, height: size.h, zIndex }}
+        style={{ left: pos.x, top: pos.y, width: size.w, height: size.h, zIndex, pointerEvents: 'auto' }}
         onMouseDown={onFocus}
       >
         <div

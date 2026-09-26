@@ -188,7 +188,7 @@ function ThemeCard({ theme, isActive, onClick }) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function ThemeModal({ onClose }) {
-  const { studioTheme, setStudioTheme, typography, setTypography, taskbarStyle, setTaskbarStyle, macAnimation, setMacAnimation, laserEnabled, setLaserEnabled, laserColor, setLaserColor } = useGlobalTheme();
+  const { studioTheme, setStudioTheme, typography, setTypography, taskbarStyle, setTaskbarStyle, macAnimation, setMacAnimation, laserEnabled, setLaserEnabled, laserColor, setLaserColor, pageEffect, setPageEffect } = useGlobalTheme();
   const [activeTab, setActiveTab] = useState('themes'); // 'themes' | 'typography' | 'interface'
   const [activeGroup, setActiveGroup] = useState(() => {
     for (const g of GROUPS) {
@@ -564,7 +564,7 @@ function ThemeModal({ onClose }) {
                   <Monitor className="w-5 h-5 text-indigo-500" />
                   <h3 className="text-xl font-bold">Taskbar Layout</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
                     { id: 'win10', name: 'Classic (Windows 10)', desc: 'Left-aligned Start button and icons.', icon: '🖥️' },
@@ -689,6 +689,44 @@ function ThemeModal({ onClose }) {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-center gap-2 mb-6 mt-12">
+                  <Monitor className="w-5 h-5 text-indigo-500" />
+                  <h3 className="text-xl font-bold">Page Close Effect</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { id: 'none', name: 'None', desc: 'Standard instant close.', icon: '⚡' },
+                    { id: 'fire', name: 'Burn (Compiz)', desc: 'Windows burn up like fire on close.', icon: '🔥' },
+                  ].map(style => {
+                    const isActive = pageEffect === style.id;
+                    return (
+                      <button
+                        key={style.id}
+                        onClick={() => setPageEffect(style.id)}
+                        className={`relative flex flex-col text-left p-6 rounded-2xl border-2 transition-all group focus:outline-none ${
+                          isActive
+                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 shadow-md'
+                            : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-lg bg-white dark:bg-slate-800/50'
+                        }`}
+                      >
+                        <div className="text-3xl mb-4 group-hover:scale-110 transition-transform origin-bottom-left">{style.icon}</div>
+                        <div className={`font-bold mb-2 ${isActive ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-900 dark:text-slate-100'}`}>
+                          {style.name}
+                        </div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {style.desc}
+                        </div>
+                        {isActive && (
+                          <div className="absolute top-4 right-4 text-indigo-500">
+                            <Check className="w-5 h-5" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -2748,3 +2748,18 @@
     }
   }
 }
+
+/* Star glow effect */
+@keyframes starGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgb(var(--tw-custom-brand-500))) drop-shadow(0 0 4px rgb(var(--tw-custom-brand-500) / 0.5)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 6px rgb(var(--tw-custom-brand-400))) drop-shadow(0 0 12px rgb(var(--tw-custom-brand-400) / 0.8)); transform: scale(1.08); }
+}
+.star-glow-effect {
+  animation: starGlow 3s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-glow-effect {
+    animation: none;
+  }
+}
