@@ -14,3 +14,29 @@ describe('entry links', () => {
     expect(takeEntryLink('mesh-lab')).toBeNull()
   })
 })
+
+describe('useEntryLink', () => {
+  it('takes a pending link on mount, then hears later ones', async () => {
+    const React = await import('react')
+    const { act } = React
+    const { createRoot } = await import('react-dom/client')
+    const { useEntryLink } = await import('./entryLinks.js')
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    const heard = []
+    function Lab() {
+      useEntryLink('ml-lab', (search) => heard.push(search))
+      return null
+    }
+    setEntryLink('ml-lab', '?lab=3')
+    const host = document.createElement('div')
+    const root = createRoot(host)
+    await act(async () => root.render(React.createElement(Lab)))
+    expect(heard).toEqual(['?lab=3'])
+    await act(async () => setEntryLink('ml-lab', '?lab=8'))
+    await act(async () => setEntryLink('notebook-lab', '?lesson=ml-vectors'))
+    expect(heard).toEqual(['?lab=3', '?lab=8'])
+    expect(takeEntryLink('ml-lab')).toBeNull()
+    await act(async () => root.unmount())
+    delete globalThis.IS_REACT_ACT_ENVIRONMENT
+  })
+})

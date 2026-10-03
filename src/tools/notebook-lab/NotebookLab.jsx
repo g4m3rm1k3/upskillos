@@ -9,6 +9,7 @@ import {
 } from './notebookStorage.js'
 import { downloadIpynb, fromIpynb, fetchColabNotebook } from './ipynbConverter.js'
 import { SERIES, findLesson, isAvailable, loadLessonCells } from './series.js'
+import { useLocation } from 'react-router-dom'
 import {
   loadSeriesState, setSeriesCollapsed, saveLessonCells, setLessonCompleted,
   resetLessonCells, lessonStatus, savedLessonCells,
@@ -105,6 +106,15 @@ export default function NotebookLab() {
     try { localStorage.setItem(LAST_OPEN_KEY, JSON.stringify(next)) } catch { /* ignore */ }
     if (window.innerWidth < 768) setSidebarOpen(false)
   }
+
+  // A deep link such as #/notebook-lab?lesson=ml-vectors (from a Project Studio lesson) opens that lesson.
+  const { search } = useLocation()
+  useEffect(() => {
+    const id = new URLSearchParams(search).get('lesson')
+    const found = id ? findLesson(id) : null
+    if (found && isAvailable(found.lesson)) select({ kind: 'lesson', id })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   // Cells handed to the notebook when it opens. Only recomputed when a
   // different notebook opens (or a lesson is reset) — recomputing on every

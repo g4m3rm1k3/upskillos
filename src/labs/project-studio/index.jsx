@@ -493,6 +493,7 @@ export default function ProjectStudio() {
       continuationLabel={continuation ? `${continuation.trackKey === trackKey ? 'Continue to lesson' : 'Continue to chapter'}: ${continuation.trackKey === trackKey ? continuation.lesson.title : series.chapters.find(chapter => chapter.key === continuation.trackKey).label}` : null}
       onContinue={continueSeries}
       seriesNote={series?.planned}
+      seriesLessons={series ? series.chapters.flatMap(chapter => TRACKS[chapter.key] ?? []) : lessons}
       checkState={checkStates[step.id]}
       onCheck={runChecks}
       canCheck={fs.available && !!fs.root}
