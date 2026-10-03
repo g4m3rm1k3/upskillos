@@ -1,7 +1,8 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import * as notebookRuntime from './notebook/runtime.js'
 import PythonStatus from './notebook/PythonStatus.jsx'
-import { labs, labByNumber, labForLesson } from './labs/index.js'
+import { labs, labByNumber, labForLesson, isAvailable as isLabAvailable } from './labs/index.js'
+import { useEntryLink } from '../../utils/entryLinks.js'
 import { roadmap } from './roadmap.js'
 import './ml.css'
 import { useGlobalTheme, getFontFamily, getFontSize, getLineHeight } from '../../context/ThemeContext.jsx'
@@ -74,6 +75,8 @@ export default function MLLab({ onBack }) {
   useEffect(()=>()=>{worker.current?.terminate();clearTimeout(timer.current);notebookRuntime.release('leave')},[])   // leaving the ML Lab frees lesson Python too
   const stopWorker=()=>{worker.current?.terminate();worker.current=null;clearTimeout(timer.current);setBusy(false)}
   const openLab=(number,index=0,nextTab='learn',back=null)=>{stopWorker();setReturnTo(back);setLabNumber(number);setLessonIndex(index);setTab(nextTab);setShowSolution(false);setPythonStatus('');setOutput('Implement the functions, then run the checks.')}
+  // A deep link such as #/lab/ml-lab?lab=3 (from a Project Studio lesson) opens that lab.
+  useEntryLink('ml-lab', search => { const n=Number(new URLSearchParams(search).get('lab')); if (isLabAvailable(n)) openLab(n) })
   const stopPython=()=>{stopWorker();setPythonStatus('Stopped');setOutput(o=>o+'\nExecution stopped. You can edit and retry.')}
   const runPython=()=>{
     setBusy(true);setOutput('');setPythonStatus('Starting Python…')

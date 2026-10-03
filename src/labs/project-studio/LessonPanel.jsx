@@ -5,6 +5,7 @@
 import MarkdownProse from '../../components/math/MarkdownProse.jsx';
 import DiffBlock from './DiffBlock.jsx';
 import PredictionBox from './PredictionBox.jsx';
+import LessonCompanions from './LessonCompanions.jsx';
 import { MARKER_SPLIT } from './predictions.js';
 
 // MarkdownProse defaults to article typography — large serif body text with
@@ -25,7 +26,7 @@ export default function LessonPanel({
   onPrev, onNext, onSelectLesson, C,
   checkState, onCheck, canCheck, isStepDone, isLessonDone,
   onCreateProvided, providedError,
-  continuationLabel, onContinue, seriesNote,
+  continuationLabel, onContinue, seriesNote, seriesLessons,
 }) {
   const atFirst = stepIndex === 0;
   const atLast = stepIndex >= lesson.steps.length - 1;
@@ -50,6 +51,7 @@ export default function LessonPanel({
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+        {atFirst && <LessonCompanions lesson={lesson} seriesLessons={seriesLessons} isStepDone={isStepDone} C={C} />}
         {atFirst && lesson.intro && (
           <div style={{ color: C.text, marginBottom: 12, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
             <MarkdownProse text={lesson.intro} className={COMPACT_PROSE} />
