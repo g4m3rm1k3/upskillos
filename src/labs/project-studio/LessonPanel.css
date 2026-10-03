@@ -1,0 +1,14 @@
+/* Studio code follows the resizable pane instead of the article reading cap.
+   Soft wrapping preserves source whitespace without horizontal scrolling. */
+.project-studio-lesson pre {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.project-studio-lesson pre.oc-code-block > code {
+  white-space: inherit;
+  overflow-wrap: inherit;
+}

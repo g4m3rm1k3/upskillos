@@ -4,6 +4,7 @@
 // courses use), so bold/inline-code/lists all behave as they do elsewhere.
 import MarkdownProse from '../../components/math/MarkdownProse.jsx';
 import DiffBlock from './DiffBlock.jsx';
+import './LessonPanel.css';
 import PredictionBox from './PredictionBox.jsx';
 import LessonCompanions from './LessonCompanions.jsx';
 import { MARKER_SPLIT } from './predictions.js';
@@ -33,7 +34,7 @@ export default function LessonPanel({
   const hasChecks = step.checks?.length > 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden', background: C.surface }}>
+    <div className="project-studio-lesson" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden', background: C.surface }}>
       <div style={{ padding: '6px 10px', borderBottom: `1px solid ${C.border}`, display: 'flex', gap: 6, alignItems: 'center' }}>
         <select
           aria-label="Lesson"

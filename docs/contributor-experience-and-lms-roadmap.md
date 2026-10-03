@@ -21,6 +21,8 @@ Status markers:
 
 ### Last verified baseline
 
+- [x] **Install and Studio baseline audit (2026-10-03):** regenerated missing lockfile peers with current npm and verified isolated Windows/Linux dependency selection; excluded learner walkthrough fixtures from the route scanner. Clean production build, grouped Studio unit tests, compiled C++ foundations and a live matplotlib probe were checked. Remaining findings and exact verification are in [the baseline audit](baseline-audit-2026-10-03.md).
+
 | Check | Result on 2026-09-26 | Meaning |
 |---|---|---|
 | Contributor documentation check | Passed for all seven canonical contributor documents | Links, literal repository paths, and documented npm commands resolve |
@@ -82,6 +84,7 @@ Each was confirmed against the renderer; none is fixed yet.
 - [x] **C++ series navigation:** group discovered C++ topics into one ordered series with chapter and lesson selectors, continuation between lessons/chapters, and explicit planned extensions. Existing lesson ids, progress and folder keys remain intact.
 - [x] **Machine Learning — From Mathematics to Production (2026-10-03):** a Project Studio series (`ml-*` tracks) from Python-as-software to scikit-learn. Chapters 00–03 (16 lessons: Text Analysis CLI, Dataset Explorer, mathematics through computation, linear regression from scratch) are written, each step checked against the learner's real project, with planted wrong answers and verified predictions (`mlProduction.desktop.test.js`, which also runs on macOS and Linux). Lessons declare concepts and link their Notebook Lab and ML Lab companions, which now accept deep links (`useEntryLink`); mastery is counted from passed checks. Chapters 04–17 (web app, FastAPI, databases, authentication and security, classification through PyTorch, ML Studio, capstone) are planned in [the ML Project Studio curriculum](ml-project-studio-curriculum.md).
 - [x] **Studio surface and explorer consistency:** show the explorer with a folder-selection explanation when a chapter has no assigned root, keep Show/Hide available, and give the lab/bottom pane opaque contained surfaces with height bounds.
+- [x] **Studio Markdown width:** remove the article reading-width cap within Studio lessons and soft-wrap long displayed output/reference lines, so widening the lesson pane expands its rendered boxes without changing learner source files.
 - [x] **Pong lesson 1 teaching revision:** replace the code-copying introduction with a supplied starter, small code blocks followed by bullet explanations, and nine runnable changes focused on one paddle. Each step identifies whether to read supplied `main.cpp` or edit it; `game.h` stays provided. Full references are optional, and existing tracks retain their default display. The complete rally prototype is preserved outside the beginner lesson.
 
 - [ ] Implement the unified course/lab/game authoring system described in [the Authoring System Plan](authoring-system-plan.md), starting with safe course editing and a native Machine Learning Lab adapter.

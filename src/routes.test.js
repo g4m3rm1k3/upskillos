@@ -34,7 +34,9 @@ function sourceFiles(dir) {
     if (['docs', 'courses', 'node_modules', 'dist', 'posts'].includes(name)) continue
     const path = join(dir, name)
     if (statSync(path).isDirectory()) out.push(...sourceFiles(path))
-    else if (/\.(jsx?|tsx?)$/.test(name) && !/\.test\./.test(name)) out.push(path)
+    // Walkthroughs contain learner files and intentionally broken HTML answers,
+    // not navigation rendered by the app.
+    else if (/\.(jsx?|tsx?)$/.test(name) && !/\.(test|walkthrough)\./.test(name)) out.push(path)
   }
   return out
 }

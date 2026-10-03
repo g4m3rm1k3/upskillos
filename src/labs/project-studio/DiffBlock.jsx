@@ -56,13 +56,14 @@ export default function DiffBlock({ current, target, C }) {
                 background: op.type === 'add' ? 'rgba(45, 212, 191, 0.16)' : 'transparent',
                 borderLeft: op.type === 'add' ? '3px solid #2dd4bf' : '3px solid transparent',
                 padding: '0 10px 0 7px',
-                whiteSpace: 'pre',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
               }}
             >
               <span style={{ color: op.type === 'add' ? '#2dd4bf' : '#4b5563', width: 14, flexShrink: 0, userSelect: 'none' }}>
                 {op.type === 'add' ? '+' : ' '}
               </span>
-              <span style={{ color: op.type === 'add' ? '#e6fffb' : '#8a8f98' }}>{op.line || ' '}</span>
+              <span style={{ color: op.type === 'add' ? '#e6fffb' : '#8a8f98', minWidth: 0, flex: 1 }}>{op.line || ' '}</span>
             </div>
           ))}
       </pre>
