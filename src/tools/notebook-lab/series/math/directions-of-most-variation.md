@@ -13,6 +13,14 @@ This lesson covers:
 
 ## Covariance
 
+::: math
+\[ \operatorname{cov}(x, y) = \frac{1}{n - 1}\sum_i (x_i - \bar{x})(y_i - \bar{y}), \qquad r = \frac{\operatorname{cov}(x, y)}{s_x s_y}, \qquad C = \frac{X^\mathsf{T} X}{n - 1} \]
+- $X$: the centred data, one row per part, one column per measurement
+- $C$ is symmetric with the variances on its diagonal; $-1 \le r \le 1$
+In code: `C = Xc.T @ Xc / (n - 1)`, the same as `np.cov(X, rowvar=False)`
+:::
+
+
 Two measurements that rise and fall together are **correlated**. The **covariance** of x and y over n samples measures this:
 
 \[ \text{cov}(x, y) = \frac{1}{n - 1} \sum_i (x_i - \bar{x})(y_i - \bar{y}) \]
@@ -43,6 +51,14 @@ The simulated brackets share a hidden "heat" factor that stretches both dimensio
 The covariance is positive: brackets that come out long also come out wide, because the same heat factor drives both. The correlation of about 0.91 says the two measurements mostly move together; only a small part of each is independent noise. That shared movement is a direction in the data, and PCA finds it.
 
 ## Variance along a direction
+
+::: math
+\[ \operatorname{var}(\mathbf{u}) = \mathbf{u}^\mathsf{T} C\,\mathbf{u}, \qquad \mathbf{u} = (\cos\alpha, \sin\alpha) \]
+- $\mathbf{u}^\mathsf{T}\mathbf{x}$: each part's coordinate along the unit vector $\mathbf{u}$
+- the spread is largest in one direction and smallest at right angles to it
+In code: `u @ C @ u` for every angle from 0° to 179°
+:::
+
 
 Project the centred data onto a unit vector u: each part becomes the single number uᵀx, its coordinate along u. The variance of these projections is
 
@@ -75,6 +91,14 @@ The spread is largest at about 32° and smallest at 122°, a right angle away. T
 
 ## Principal components
 
+::: math
+\[ C\mathbf{v}_k = \lambda_k\mathbf{v}_k, \qquad \lambda_1 \ge \lambda_2 \ge \dots \ge 0, \qquad \sum_k \lambda_k = \operatorname{tr} C \]
+- the eigenvectors $\mathbf{v}_k$ are the principal components; $\lambda_k$ is the variance along each
+- explained share: $\lambda_k / \sum_j \lambda_j$; the scores $X\mathbf{v}_k$ are uncorrelated
+In code: `vals, vecs = np.linalg.eigh(C)`, sorted largest first; `scores = Xc @ vecs`
+:::
+
+
 Maximising uᵀCu over unit vectors u is an eigenvalue problem: the maximum is the largest eigenvalue of C, reached at its eigenvector. Because C is symmetric, its eigenvalues are real and its eigenvectors perpendicular; and because each eigenvalue is a variance (uᵀCu for its eigenvector), none is negative. The eigenvectors, ordered by eigenvalue, are the **principal components** (PCs); each eigenvalue is the variance along its component; and the eigenvalues add up to the total variance (the trace of C). `np.linalg.eigh` handles symmetric matrices and returns eigenvalues in increasing order. Predict before running: what share of the brackets' variation lies along the first component?
 
 ```python
@@ -94,6 +118,14 @@ The **scores**, the data's coordinates along the components, are uncorrelated: r
 The first component carries about 96% of the variance and points at 32°, the direction the scan found. The scores have zero covariance between them. For these brackets, one number, the score on PC1, summarises the heat effect on both dimensions, and the second is essentially measurement noise.
 
 ## Many measurements, few factors
+
+::: math
+\[ \text{explained}_k = \frac{\lambda_k}{\sum_j \lambda_j}, \qquad \text{smallest } m \text{ with } \sum_{k \le m} \text{explained}_k \ge 0.95 \]
+- a few large eigenvalues reveal a few hidden factors; the rest is noise
+- a scree plot shows the sharp drop
+In code: `np.cumsum(explained) >= 0.95` on `np.linalg.eigvalsh(Cc)`
+:::
+
 
 PCA earns its keep in higher dimensions. The castings have six measurements driven by two hidden factors, mould temperature and pattern wear, each affecting the six dimensions in its own proportions, plus independent noise. Looking at a 6 × 6 covariance matrix reveals little; its eigenvalues reveal the structure at once. A **scree plot** of the explained variance per component shows a sharp drop after the real factors. Predict before running: how many components are needed to explain 95% of the variation?
 
@@ -125,6 +157,14 @@ Two components explain over 99% of the variation, and the last four are pure noi
 
 ## Units and unusual parts
 
+::: math
+\[ \hat{\mathbf{z}} = V_m V_m^\mathsf{T}\,\mathbf{z}, \qquad e = \lVert \mathbf{z} - \hat{\mathbf{z}} \rVert \]
+- $V_m$: the top $m$ components as columns; $\mathbf{z}$: a centred part
+- a large reconstruction error $e$ flags an unusual combination of dimensions
+In code: `recon = Z @ top @ top.T`, then `np.sqrt(((Z - recon) ** 2).sum(axis=1))`
+:::
+
+
 PCA uses variances, so it depends on units: measure one dimension in micrometres and it will dominate every component. When measurements have different units or very different scales, **standardise** first: divide each centred column by its standard deviation, which is PCA on the correlation matrix. Once the main components are known, PCA also flags unusual parts: project each part onto the top components and back, and measure the **reconstruction error**, what the components cannot explain. A part with an unusual combination of dimensions (a casting with a cracked wall, say, thin where it should be normal) has a large error even if each dimension alone is within limits. Predict before running: one casting has a wall 0.15 mm too thin, inside its tolerance. Does PCA notice?
 
 ```python
@@ -145,6 +185,14 @@ Projecting onto the top two components and back, `Z @ top @ top.T`, keeps only t
 The thin wall is within the range seen in the other parts, so a simple tolerance check misses it. But its combination of dimensions does not fit the two-factor pattern, and its reconstruction error is several times the median, ranking it the most unusual of the 500 castings. This is how multivariate statistical process control catches problems that single-dimension charts cannot.
 
 ## PCA in OpenMAT
+
+::: math
+\[ C = \frac{X_c^\mathsf{T} X_c}{n - 1}, \qquad CV = VD, \qquad \text{share}_1 = \frac{\lambda_1}{\lambda_1 + \lambda_2} \]
+- centre each column, form $C$, then decompose
+- $n - 1 = 4$ for five parts
+In code: `C = (Xc' * Xc) / 4`, then `[V, D] = eig(C)`
+:::
+
 
 The covariance matrix and its eigen-decomposition are a few lines in MATLAB-style notation: `X(:, 1)` is the first column, `X'` is the transpose, and `[V, D] = eig(C)` gives the components. The cell shares no variables with Python. Predict before running: for five parts with two measurements, how much of the variance is on the first component?
 

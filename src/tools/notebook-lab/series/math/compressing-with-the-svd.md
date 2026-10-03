@@ -13,6 +13,14 @@ This lesson covers:
 
 ## Rotate, stretch, rotate
 
+::: math
+\[ A = U\Sigma V^\mathsf{T}, \qquad U^\mathsf{T} U = I, \quad V^\mathsf{T} V = I, \qquad \Sigma = \operatorname{diag}(\sigma_1, \sigma_2, \dots), \;\; \sigma_1 \ge \sigma_2 \ge \dots \ge 0 \]
+- rotate ($V^\mathsf{T}$), stretch along the axes ($\Sigma$), rotate again ($U$)
+- the unit circle maps to an ellipse with semi-axes $\sigma_1$ and $\sigma_2$
+In code: `U, s, Vt = np.linalg.svd(A)`
+:::
+
+
 Every m × n matrix A can be factored as
 
 \[ A = U \Sigma V^\mathsf{T} \]
@@ -50,6 +58,14 @@ The shear stretches the circle into an ellipse with semi-axes 1.618 and 0.618 (t
 
 ## A sum of rank-one pieces
 
+::: math
+\[ A = \sum_i \sigma_i\,\mathbf{u}_i\mathbf{v}_i^\mathsf{T}, \qquad A_k = \sum_{i=1}^{k} \sigma_i\,\mathbf{u}_i\mathbf{v}_i^\mathsf{T}, \qquad \lVert A - A_k\rVert_F = \sqrt{\sigma_{k+1}^2 + \sigma_{k+2}^2 + \cdots} \]
+- each $\mathbf{u}_i\mathbf{v}_i^\mathsf{T}$ is a rank-one outer product
+- Eckart–Young: $A_k$ is the best rank-$k$ approximation
+In code: `Tk = (U[:, :k] * s[:k]) @ Vt[:k]`
+:::
+
+
 Multiplying out UΣVᵀ column by column writes A as a sum of simple matrices:
 
 \[ A = \sigma_1 \mathbf{u}_1 \mathbf{v}_1^\mathsf{T} + \sigma_2 \mathbf{u}_2 \mathbf{v}_2^\mathsf{T} + \cdots \]
@@ -58,7 +74,7 @@ Each term uᵢvᵢᵀ is an **outer product**, a matrix whose rows are all multi
 
 \[ \lVert A - A_k \rVert_F = \sqrt{\sigma_{k+1}^2 + \sigma_{k+2}^2 + \cdots} \]
 
-where the **Frobenius norm** ‖·‖_F is the square root of the sum of all squared entries. Predict before running: a table of temperatures (rows: positions along a shaft; columns: times) produced by one decaying mode plus a little noise. How many singular values matter?
+where the **Frobenius norm** ‖·‖_F is the square root of the sum of all squared entries. Predict before running: a table of temperatures (rows: positions along a shaft; columns: times) produced by two decaying patterns (a slow one and a fast one) plus a little noise. How many singular values matter?
 
 ```python
 rng = np.random.default_rng(47)
@@ -78,6 +94,14 @@ for k in [1, 2, 3, 10]:
 Two singular values stand far above the rest, one for each physical mode; the others are small and roughly equal, the noise floor. The rank-2 approximation has a relative error of about 0.7%, close to the level of the noise itself, and its error matches √(Σ of the remaining σ²) exactly, as Eckart–Young promises. The 2,400-number table really contains two patterns in space, each with its own decay in time.
 
 ## Compressing an image
+
+::: math
+\[ \text{storage} = k\,(m + n + 1) \;\text{ instead of }\; mn \]
+- keep $k$ columns of $U$, $k$ singular values and $k$ rows of $V^\mathsf{T}$
+- $300 \times 400$ at rank 20: 14,020 numbers instead of 120,000
+In code: `approx = (U[:, :k] * s[:k]) @ Vt[:k]` for several ranks `k`
+:::
+
 
 An image works the same way. Store a rank-k approximation as k columns of U, k singular values and k rows of Vᵀ: k(m + n + 1) numbers instead of mn. For a 300 × 400 image, rank 20 needs 14,020 numbers instead of 120,000, about 12%. Images with large smooth regions compress well; fine texture needs more terms. Predict before running: at what rank does a synthetic test image become hard to tell from the original?
 
@@ -104,9 +128,18 @@ print("rank needed for 99% of the energy (sum of σ²):", int(np.argmax(energy >
 
 `np.mgrid` builds the pixel coordinates. The image combines a smooth wave pattern, a bright disc, a dark rectangle and fine noise. The **energy** captured by k terms is the fraction of Σσ² they hold.
 
-Rank 1 already shows the overall brightness pattern; rank 5 shows the shapes, blurred; by rank 20 the image is hard to tell from the original at 12% of the storage, the remaining error being mostly the fine noise. The circle's curved edge needs more terms than the axis-aligned rectangle, because a rectangle is close to rank one (one row pattern times one column pattern). Real image formats (JPEG) use a related but cheaper idea, the cosine transform of the spectrum lessons, on small blocks.
+Rank 1 already shows the overall brightness pattern; rank 5 shows the shapes, blurred; by rank 20 the image is hard to tell from the original at 12% of the storage, the remaining error being mostly the fine noise. The circle's curved edge needs more terms than the axis-aligned rectangle, because an axis-aligned rectangle on its own is exactly rank one (one row pattern times one column pattern). Real image formats (JPEG) use a related but cheaper idea: on small 8 × 8 blocks they use a fixed set of cosine patterns (the discrete cosine transform, a relative of the frequency analysis in the spectrum lessons) instead of computing a basis for each image.
 
 ## The SVD, PCA and conditioning
+
+::: math
+\[ X = U\Sigma V^\mathsf{T} \;\Longrightarrow\; X^\mathsf{T} X = V\Sigma^2 V^\mathsf{T}, \qquad \lambda_i = \frac{\sigma_i^2}{n - 1}, \qquad \kappa = \frac{\sigma_{\max}}{\sigma_{\min}} \]
+- the columns of $V$ are the principal components of the centred data $X$
+- $\lambda_i$: the PCA variances (eigenvalues of the covariance matrix); $n$: the number of data rows
+- $\kappa$: the condition number
+In code: `np.linalg.svd(Xc, full_matrices=False)` against `np.linalg.eigvalsh(np.cov(data, rowvar=False))`
+:::
+
 
 The SVD of a centred data matrix is PCA in disguise: if X = UΣVᵀ, then XᵀX = VΣ²Vᵀ, so V's columns are the principal components and σᵢ²/(n − 1) are their variances. Computing PCA through the SVD avoids forming XᵀX, which squares the condition number and loses accuracy. The ratio σ_max/σ_min is the **condition number** met in the two-equation lesson: it measures how close the matrix is to losing rank. Predict before running: do the SVD route and the covariance route give the same PCA variances?
 
@@ -115,8 +148,8 @@ data = rng.normal(size=(200, 3)) @ np.array([[3.0, 1.0, 0.5], [0.0, 1.0, 0.3], [
 Xc = data - data.mean(axis=0)
 _, sv, Vt_d = np.linalg.svd(Xc, full_matrices=False)
 cov_vals = np.sort(np.linalg.eigvalsh(np.cov(data, rowvar=False)))[::-1]
-print("σ²/(n-1):", (sv ** 2 / (len(data) - 1)).round(5))
-print("covariance eigenvalues:", cov_vals.round(5))
+print("σ²/(n-1):", np.round(sv ** 2 / (len(data) - 1), 5).tolist())
+print("covariance eigenvalues:", np.round(cov_vals, 5).tolist())
 nearly = np.array([[1.0, 1.0], [1.0, 1.001]])
 sn = np.linalg.svd(nearly, compute_uv=False)
 print(f"nearly singular matrix: σ = {sn.round(6)}, condition number {sn[0] / sn[1]:.0f} (np.linalg.cond {np.linalg.cond(nearly):.0f})")
@@ -127,6 +160,14 @@ print(f"nearly singular matrix: σ = {sn.round(6)}, condition number {sn[0] / sn
 The two routes agree on the PCA variances. The nearly parallel lines of the two-equation lesson have singular values about 2 and 0.0005, a condition number of about 4,000, the same value `np.linalg.cond` gives, because it is computed this way.
 
 ## The SVD in OpenMAT
+
+::: math
+\[ A = USV^\mathsf{T}, \qquad A_1 = \sigma_1\,\mathbf{u}_1\mathbf{v}_1^\mathsf{T} \]
+- OpenMAT returns $V$ itself, so $A$ is `U * S * V'`
+- a nearly rank-one matrix is well approximated by its first term
+In code: `[U, S, V] = svd(A)`, then `A1 = S(1, 1) * U(:, 1:1) * V(:, 1:1)'`
+:::
+
 
 MATLAB-style notation returns the three factors with `[U, S, V] = svd(A)`; note that it returns V itself, not its transpose, so A = U S V'. Keeping the first term gives the best rank-one approximation. The cell shares no variables with Python. Predict before running: how close is the rank-one approximation of this nearly rank-one matrix?
 
@@ -266,7 +307,7 @@ for _bad in (0, 1, -0.1):
         assert False, f"tol = {_bad} should raise ValueError."
     except ValueError:
         pass
-assert energy(_N, 3) > 0.9999 and energy(_N, 80 if False else 60) == 1.0 and type(energy(_N, 1)) is float, "Energy fractions."
+assert energy(_N, 3) > 0.9999 and energy(_N, 60) == 1.0 and type(energy(_N, 1)) is float, "Energy fractions."
 _c = compress(_N, 0.01)
 assert _c["k"] == 3 and _c["U"].shape == (60, 3) and _c["s"].shape == (3,) and _c["Vt"].shape == (3, 80), "Truncated factors."
 assert _c["ratio"] == round(3 * 141 / 4800, 4), "Storage fraction."

@@ -13,6 +13,14 @@ This lesson covers:
 
 ## The chain rule
 
+::: math
+\[ \frac{d}{dx} f\big(g(x)\big) = f'\big(g(x)\big)\cdot g'(x), \qquad \frac{dy}{dx} = \frac{dy}{du}\,\frac{du}{dx} \]
+- outside derivative, evaluated at the inside, times the inside derivative
+- $\dfrac{d}{dx}\sin(x^2) = \cos(x^2)\cdot 2x$
+In code: `central(lambda x: math.sin(x ** 2), 1.5)` against the formula; `sp.diff` for more
+:::
+
+
 If y = f(g(x)), a small change Δx changes the inner value g by about g′(x)Δx, and that changes f by about f′(g(x)) times that. So
 
 \[ \frac{dy}{dx} = f'(g(x)) \cdot g'(x) \]
@@ -33,15 +41,23 @@ chain = math.cos(x0 ** 2) * 2 * x0
 print(f"chain rule: cos(x²) · 2x = {chain:.8f}, numerical slope {central(lambda x: math.sin(x ** 2), x0):.8f}")
 
 x = sp.symbols("x")
-for expr in [sp.sin(x ** 2), sp.exp(-3 * x) ** 2, sp.log(1 + sp.exp(2 * x)), sp.sqrt(1 + sp.sin(x) ** 2)]:
-    print(f"d/dx {expr} = {sp.simplify(sp.diff(expr, x))}")
+for expr in [sp.sin(x ** 2), sp.exp(-3 * x ** 2), sp.log(1 + sp.exp(2 * x)), sp.sqrt(1 + sp.sin(x) ** 2)]:
+    print(f"d/dx {expr} = {sp.diff(expr, x)}")
 ```
 
 SymPy applies the chain rule automatically for every nested function.
 
-At x = 1.5 the chain rule gives about −1.885, and the numerical slope agrees to many digits. SymPy's results follow the same pattern: e^(−3x) squared differentiates to −6e^(−6x), and log(1 + e^(2x)) to 2e^(2x)/(1 + e^(2x)), outside derivative times inside derivative each time.
+At x = 1.5 the chain rule gives about −1.885, and the numerical slope agrees to many digits. SymPy's results follow the same pattern: e^(−3x²) differentiates to −6x·e^(−3x²), and log(1 + e^(2x)) to 2e^(2x)/(1 + e^(2x)), outside derivative times inside derivative each time.
 
 ## Computational graphs
+
+::: math
+\[ a = x^2,\; b = \sin a,\; c = e^{-x},\; y = bc, \qquad \frac{dy}{dx} = \frac{dy}{da}\cdot 2x + \frac{dy}{dc}\cdot\big(-e^{-x}\big) \]
+- backward pass: $\dfrac{dy}{db} = c$, $\dfrac{dy}{dc} = b$, $\dfrac{dy}{da} = \dfrac{dy}{db}\cos a$
+- $x$ reaches $y$ along two paths, so their contributions add
+In code: `dy_db, dy_dc = c, b`, then `dy_da = dy_db * math.cos(a)`, and so on
+:::
+
 
 A computer evaluates a formula as a sequence of simple steps: the **forward pass**. To differentiate, record each step's local derivative and multiply them along the chain, starting from the output and moving backwards: the **backward pass**. For y = sin(x²)·e^(−x), the steps are a = x², b = sin a, c = e^(−x), y = b·c. The backward pass reuses the forward values: dy/db = c, dy/dc = b, then dy/da = (dy/db) cos a, and x receives contributions from both paths, dy/dx = (dy/da)·2x + (dy/dc)·(−e^(−x)), added together because x feeds the output along two routes. Predict before running: does this step-by-step backward pass match the numerical slope?
 
@@ -60,9 +76,19 @@ print(f"backward: dy/dx = {dy_dx:.8f}, numerical {central(lambda t: math.sin(t *
 
 Each backward line multiplies the derivative arriving from the output side by one step's local derivative; where two paths meet at x, their contributions add.
 
-The backward pass gives the same derivative as the numerical slope. This bookkeeping, each node passing back "how much does the output change per unit change in me", is backpropagation. Its cost is about the same as one forward pass, however many inputs there are, which is why it can compute gradients with respect to billions of parameters.
+The backward pass gives the same derivative as the numerical slope. This bookkeeping, each node passing back "how much does the output change per unit change in me", is backpropagation. Its cost is a small multiple (typically two to three times) of one forward pass, however many inputs there are, which is why it can compute gradients with respect to billions of parameters.
 
 ## A one-neuron model
+
+::: math
+\[ p = \sigma(wv + b), \qquad \sigma(z) = \frac{1}{1 + e^{-z}}, \qquad L = -\overline{y\log p + (1 - y)\log(1 - p)} \]
+- $v$: vibration level; $y$: 1 if the bearing failed, else 0; $w$ and $b$: the parameters to learn
+- an overline is the mean over all bearings in the data
+- $\sigma'(z) = \sigma(z)\big(1 - \sigma(z)\big)$, so the chain rule simplifies
+- $\dfrac{\partial L}{\partial w} = \overline{(p - y)\,v}$ and $\dfrac{\partial L}{\partial b} = \overline{p - y}$
+In code: `sigmoid(z)`, `loss(w, b)` and `grad(w, b)`, checked against central differences
+:::
+
 
 To predict whether a bearing will fail within a month from its vibration level v (in mm/s), use a single **neuron**: a weighted input w·v + b passed through the **sigmoid** σ(z) = 1/(1 + e^(−z)), which squashes any number into (0, 1):
 
@@ -106,6 +132,14 @@ The analytic gradient matches the numerical one to six decimals: the **gradient 
 
 ## Training the neuron
 
+::: math
+\[ w \leftarrow w - \eta\,\frac{\partial L}{\partial w}, \qquad b \leftarrow b - \eta\,\frac{\partial L}{\partial b}, \qquad \text{boundary: } v = -\frac{b}{w} \]
+- gradient descent on the loss; $\eta$: the learning rate (0.02 here)
+- predicted risk crosses 50% where $wv + b = 0$
+In code: `w -= 0.02 * gw` and `b -= 0.02 * gb`, repeated 20,000 times
+:::
+
+
 With the gradient in hand, training is the descent loop of the walking-downhill lesson: w ← w − η ∂L/∂w, b ← b − η ∂L/∂b, repeated. As the loss falls, the predicted probabilities line up with the outcomes. The learned rule is easy to read: the predicted risk crosses 50% where wv + b = 0, at v = −b/w, the **decision boundary**. Predict before running: after training, above what vibration level does the model predict failure as more likely than not?
 
 ```python
@@ -138,6 +172,14 @@ The inputs are not standardised here, so a small learning rate and many steps ar
 The loss falls steadily and the learned risk curve settles close to the true one, with the 50% boundary near 6.8 mm/s, about where the true risk crosses 50%. The model classifies most training bearings correctly; the rest are genuinely unlucky or lucky bearings that no rule based on vibration alone could predict. Everything here generalises: more inputs mean more weights, more layers mean longer chains, and the chain rule handles all of it.
 
 ## Automatic differentiation
+
+::: math
+\[ \frac{\partial y}{\partial x} = \sum_{\text{paths } x \to y}\; \prod_{\text{edges on the path}} \frac{\partial(\text{child})}{\partial(\text{parent})} \]
+- every operation records its parents and the local derivatives
+- the backward sweep multiplies along paths and adds across them
+In code: `class Var` stores `parents` with local derivatives; `backward()` accumulates `grad`
+:::
+
 
 Deriving gradients by hand does not scale. **Automatic differentiation** (autodiff) does what the backward pass above did, mechanically: every arithmetic operation records its inputs and its local derivatives, building the computational graph as the forward pass runs; then a backward sweep multiplies and adds derivatives along every path. This is how PyTorch, JAX and TensorFlow compute gradients. A minimal version fits in a few lines. Predict before running: does it reproduce the hand-derived gradient of the neuron's loss for one data point?
 
@@ -246,7 +288,7 @@ Hint: σ(z) = 1/(1 + e^(−z)) with `np.exp`. The chain rule is `outer_prime(inn
 :::
 
 ::: challenge Training a neuron [medium]
-Write `cross_entropy(w, b, xs, ys)`: the mean cross-entropy loss of predictions σ(w x + b) against 0/1 labels, clipping predictions to [1e-12, 1 − 1e-12], as a plain float. Write `gradient(w, b, xs, ys)`: the pair (mean((p − y)x), mean(p − y)) as plain floats. Then write `train(xs, ys, lr=0.1, steps=2000, standardise=True)`: when `standardise` is True, first transform x to z = (x − mean)/std (population std), train w, b from 0 on z by gradient descent, and convert back so that the returned `(w, b)` apply to the **original** x (w_x = w_z/std, b_x = b_z − w_z·mean/std); with `standardise` False, train on x directly. Return plain floats. Finally `boundary(w, b)`: the x where the predicted probability is 0.5.
+Write `cross_entropy(w, b, xs, ys)`: the mean cross-entropy loss of predictions σ(w x + b) against 0/1 labels, clipping predictions to [1e-12, 1 − 1e-12], as a plain float. Write `gradient(w, b, xs, ys)`: the tuple (mean((p − y)x), mean(p − y)) of plain floats. Then write `train(xs, ys, lr=0.1, steps=2000, standardise=True)`: when `standardise` is True, first transform x to z = (x − mean)/std (population std), train w, b from 0 on z by gradient descent, and convert back so that the returned `(w, b)` apply to the **original** x (w_x = w_z/std, b_x = b_z − w_z·mean/std); with `standardise` False, train on x directly. Return plain floats. Finally `boundary(w, b)`: the x where the predicted probability is 0.5.
 
 ```python starter
 def cross_entropy(w, b, xs, ys):
@@ -319,7 +361,7 @@ Hint: p = σ(w x + b); the gradient is the mean of (p − y)x and of (p − y). 
 :::
 
 ::: challenge A tiny autodiff engine [hard]
-Write a class `Node` for reverse-mode automatic differentiation with a `.value`, a `.grad` (starting at 0.0), and support for `+`, `-`, `*`, `/` (each with a plain number on either side), unary minus, `**` with a plain-number exponent, and the methods `.exp()`, `.log()`, `.sin()` and `.tanh()`. Each operation returns a new `Node` that records its parents and the local derivative with respect to each. A method `.backward()` sets the output's gradient to 1 and propagates gradients to every node it depends on, **adding** contributions when a node is used more than once, and visiting nodes in an order where each node is processed only after all nodes that use it (a topological order). Then write `grad(f, *values)`: build `Node`s for the inputs, call `f` on them, run backward, and return a tuple of the inputs' gradients as plain floats.
+Write a class `Node` for reverse-mode automatic differentiation with a `.value`, a `.grad` (starting at 0.0), and support for `+`, `-`, `*`, `/` (each with a plain number on either side), unary minus, `**` with a plain-number exponent, and the methods `.exp()`, `.log()`, `.sin()` and `.tanh()`. Each operation returns a new `Node` that records its parents and the local derivative with respect to each. A method `.backward()` sets the output's gradient to 1 and propagates gradients to every node it depends on, **adding** contributions when a node is used more than once, and visiting nodes in an order where each node is processed only after all nodes that use it (a topological order). Then write `grad(f, *values)`: build `Node`s for the inputs, call `f` on them, run backward, and return a tuple of the inputs' gradients as plain floats. Test graphs can be more than a thousand operations deep, so build the order without recursion (an explicit stack), unlike the lesson's `Var`.
 
 ```python starter
 class Node:
@@ -433,6 +475,10 @@ def _num(f, vals, i, h=1e-6):
     return (f(*up) - f(*dn)) / (2 * h)
 assert grad(lambda a, b: a * b + a, 3.0, 4.0) == (5.0, 3.0), "d(ab + a)/da = b + 1, /db = a."
 assert grad(lambda a: a * a * a, 2.0) == (12.0,), "A node used several times accumulates its gradient."
+def _shared(a, b):
+    u = a * b
+    return u * u + u.sin() - u / 2
+assert abs(grad(_shared, 0.7, 1.3)[0] - (2 * 0.91 + math.cos(0.91) - 0.5) * 1.3) < 1e-9, "An intermediate node used several times must collect all its gradient before passing it on: process nodes in topological order."
 _cases = [
     (lambda a, b: (a * b).sin() + (a / b).exp(), lambda a, b: math.sin(a * b) + math.exp(a / b), (1.3, 0.7)),
     (lambda a, b: (a ** 3 - 2 * b).tanh() * a, lambda a, b: math.tanh(a ** 3 - 2 * b) * a, (0.6, 0.2)),
@@ -445,7 +491,6 @@ for _f, _plain, _vals in _cases:
     for _i in range(len(_vals)):
         assert abs(_g[_i] - _num(_plain, _vals, _i)) < 1e-6, f"Gradient mismatch for argument {_i} at {_vals}: {_g[_i]} vs {_num(_plain, _vals, _i)}."
     assert all(type(_v) is float for _v in _g), "Plain floats."
-_deep = lambda a: a
 _chain_f = lambda a: (((a.sin() * 1.1).sin() * 1.1).sin() * 1.1).sin()
 _chain_p = lambda a: math.sin(math.sin(math.sin(math.sin(a) * 1.1) * 1.1) * 1.1)
 assert abs(grad(_chain_f, 0.8)[0] - _num(_chain_p, (0.8,), 0)) < 1e-6, "A long chain of compositions."

@@ -1,6 +1,6 @@
 # When numbers betray you
 
-A formula can be perfectly correct on paper and give garbage on a computer. The quadratic formula, taught to every student, loses all its accuracy on some ordinary equations. The textbook formula for variance can return a negative number. A probability computed as e^1000/(e^1000 + 1) comes out as "nan". None of these are bugs in the computer: floating-point numbers carry about 16 significant digits, and certain operations destroy those digits. The first lesson of this series met floating point's basic limits. This lesson studies the classic traps that catch working engineers, each with its standard cure, and separates two very different problems: a calculation done badly (an **unstable** algorithm, fixable) and a question that is inherently sensitive (an **ill-conditioned** problem, which no algorithm can rescue).
+A formula can be perfectly correct on paper and give garbage on a computer. The quadratic formula, taught to every student, loses all its accuracy on some ordinary equations. The textbook formula for variance can return a negative number. A probability computed in NumPy as e^1000/(e^1000 + 1) comes out as "nan". None of these are bugs in the computer: floating-point numbers carry about 16 significant digits, and certain operations destroy those digits. The first lesson of this series met floating point's basic limits. This lesson studies the classic traps that catch working engineers, each with its standard cure, and separates two very different problems: a calculation done badly (an **unstable** algorithm, fixable) and a question that is inherently sensitive (an **ill-conditioned** problem, which no algorithm can rescue).
 
 This lesson covers:
 
@@ -12,6 +12,14 @@ This lesson covers:
 - comparing floating-point numbers with tolerances.
 
 ## Catastrophic cancellation
+
+::: math
+\[ 1 - \cos x = 2\sin^2\frac{x}{2} \]
+- the left side subtracts two numbers near 1: catastrophic cancellation for small $x$
+- the right side has no subtraction and keeps full precision
+In code: `1 - math.cos(x)` against `2 * math.sin(x / 2) ** 2`
+:::
+
 
 Subtracting two nearly equal numbers keeps only the digits where they differ. If each is accurate to 16 digits and they agree in the first 12, the difference has only 4 meaningful digits: the rest are rounding noise, now promoted to the leading positions. This is **catastrophic cancellation**. It hides in innocent formulas. 1 − cos x for small x subtracts two numbers near 1; the identity 1 − cos x = 2 sin²(x/2) computes the same quantity without any subtraction. Predict before running: for x = 10⁻⁸, how many correct digits does each version give?
 
@@ -31,9 +39,17 @@ print("(1e8 + 1) - 1e8 =", (big + step) - big, "   (1e16 + 1) - 1e16 =", (1e16 +
 
 The rearranged formula involves no subtraction, so it serves as the accurate reference.
 
-At x = 10⁻² the two versions agree to eleven digits. At 10⁻⁵ the naive one is wrong from the eighth digit on (5.0000004137e−11 against 4.9999999996e−11), and at 10⁻⁸ it returns exactly 0, because cos(10⁻⁸) rounds to exactly 1: all information is lost. The rearranged formula stays accurate to full precision. The last line shows the root cause: adding 1 to 10¹⁶ is lost entirely, since 10¹⁶ + 1 is not representable.
+At x = 10⁻² the two versions agree to twelve digits. At 10⁻⁵ the naive one is wrong from the eighth digit on (5.0000004137e−11 against 4.9999999996e−11), and at 10⁻⁸ it returns exactly 0, because cos(10⁻⁸) rounds to exactly 1: all information is lost. The rearranged formula stays accurate to full precision. The last line shows the root cause: adding 1 to 10¹⁶ is lost entirely, since 10¹⁶ + 1 is not representable.
 
 ## The stable quadratic formula
+
+::: math
+\[ q = -\tfrac{1}{2}\Big(b + \operatorname{sign}(b)\sqrt{b^2 - 4ac}\Big), \qquad x_1 = \frac{q}{a}, \qquad x_2 = \frac{c}{q} \]
+- $q$ adds numbers of the same sign, so nothing cancels
+- the second root uses the product of roots, $x_1 x_2 = c/a$
+In code: `textbook(a, b, c)` against `stable(a, b, c)` with `q = -0.5 * (b + math.copysign(d, b))`
+:::
+
 
 The roots of ax² + bx + c = 0 are (−b ± √(b² − 4ac))/(2a). When b² is much larger than 4ac, √(b² − 4ac) is very close to |b|, and one of the two roots subtracts nearly equal numbers. The cure uses the fact that the product of the roots is c/a: compute the large root safely (adding numbers of the same sign), then the small one as c/(a × large root). Predict before running: for x² + 10⁸x + 1 = 0, whose small root is very close to −10⁻⁸, what does the textbook formula give?
 
@@ -59,6 +75,14 @@ for b in [10.0, 1e4, 1e8]:
 For b = 10 both agree. For b = 10⁴ the textbook small root has lost about half its digits; for b = 10⁸ it gives −7.45 × 10⁻⁹, wrong by 25%, while the stable version gives −1.0000000000 × 10⁻⁸, and substituting it back leaves a residual at rounding level. The algebra is identical; only the order of operations differs. Numerical libraries use the stable form.
 
 ## Variance without disaster
+
+::: math
+\[ \delta = x_k - \bar{x}_{k-1}, \qquad \bar{x}_k = \bar{x}_{k-1} + \frac{\delta}{k}, \qquad M_k = M_{k-1} + \delta\,(x_k - \bar{x}_k), \qquad s^2 = \frac{M_n}{n - 1} \]
+- $E[x^2] - (E[x])^2$ subtracts two huge, nearly equal numbers
+- Welford's update keeps a running mean and a running sum of squared deviations $M$
+In code: `naive_var(xs)` against `welford(xs)`: `mean += delta / k`, `m2 += delta * (x - mean)`
+:::
+
 
 The variance is the mean of the squares minus the square of the mean: var = E[x²] − (E[x])². On paper that is fine. On a computer, for data with a large mean and a small spread, such as gauge readings around 25.000 mm or timestamps around 1.7 × 10⁹ s, both terms are huge and nearly equal, and their difference is cancellation noise; it can even come out negative. Subtracting the mean first (the two-pass method) avoids it. **Welford's algorithm** does it in a single pass, updating a running mean and a running sum of squared deviations, which suits streaming sensor data. Predict before running: for 10,000 readings of 10⁹ + small noise, what does the one-pass textbook formula give?
 
@@ -94,6 +118,14 @@ The true variance is about 10⁻⁴. The textbook formula subtracts two numbers 
 
 ## Exponentials that overflow
 
+::: math
+\[ p_i = \frac{e^{x_i}}{\sum_j e^{x_j}} = \frac{e^{x_i - m}}{\sum_j e^{x_j - m}}, \qquad \log\sum_i e^{x_i} = m + \log\sum_i e^{x_i - m}, \qquad m = \max_i x_i \]
+- $e^x$ overflows for $x$ above about 709
+- subtracting the largest score changes nothing mathematically and prevents overflow
+In code: `np.exp(x - np.max(x))` in `softmax`, and `logsumexp(x)`
+:::
+
+
 Floating point covers about 10⁻³⁰⁸ to 10³⁰⁸, and e^x overflows to infinity once x exceeds about 709. Probability calculations meet this constantly: the **softmax** pᵢ = e^(xᵢ)/Σⱼ e^(xⱼ), which turns scores into probabilities in classification models, and the sigmoid of the chain-rule lesson. The cure is to shift before exponentiating: softmax is unchanged by subtracting the same constant from every score, so subtract the largest; then the biggest exponential is e⁰ = 1 and nothing overflows. The same idea gives the **log-sum-exp** trick, log Σ e^(xᵢ) = m + log Σ e^(xᵢ − m) with m = max xᵢ. Predict before running: what does the naive softmax of the scores (1000, 1001, 1002) give?
 
 ```python
@@ -119,11 +151,19 @@ with np.errstate(over="ignore"):
     print(np.log(np.sum(np.exp(scores))))
 ```
 
-`np.errstate` silences NumPy's overflow warnings for the deliberately naive versions.
+In desktop Python the deliberately naive versions would print overflow warnings, which `np.errstate` silences; in the browser no warnings appear anyway.
 
 The naive softmax overflows to infinity and returns `nan` for every probability. The shifted version gives (0.090, 0.245, 0.665), exactly the softmax of (0, 1, 2), as it must be. Log-sum-exp returns 1002.41 where the naive form returns infinity. Every machine-learning library computes these the shifted way; the probability lessons' log-probabilities rely on the same idea.
 
 ## Conditioning versus stability
+
+::: math
+\[ H_{ij} = \frac{1}{i + j - 1}, \qquad \text{digits lost} \approx \log_{10}\kappa(H) \]
+- ill-conditioned: tiny input changes cause huge answer changes, whatever the algorithm
+- $\kappa$: the condition number
+In code: `np.linalg.solve(H, H @ x_true)` and `np.linalg.cond(H)` for $n$ = 4, 8, 12
+:::
+
 
 The traps so far were **unstable algorithms**: a better formula fixed them. Some problems are different: they are **ill-conditioned**, meaning a tiny change in the input changes the exact answer enormously, so no algorithm can recover accuracy that the data do not contain. The condition number from the linear-algebra lessons measures it: roughly, you lose log₁₀(κ) of your 16 digits. The **Hilbert matrix**, Hᵢⱼ = 1/(i + j − 1), is the classic example; it appears when fitting high-degree polynomials. Predict before running: solving H x = H·(1, 1, ..., 1) should give all ones. How many correct digits survive for a 12 × 12 Hilbert matrix?
 
@@ -142,6 +182,14 @@ The 4 × 4 system keeps about 12 digits, the 8 × 8 about 6, the 12 × 12 almost
 
 ## Comparing floating-point numbers
 
+::: math
+\[ |a - b| \le \max\big(\text{rel\_tol}\cdot\max(|a|, |b|),\; \text{abs\_tol}\big) \]
+- relative tolerance for ordinary sizes; absolute tolerance near zero
+- never compare computed floats with plain equality
+In code: `math.isclose(a, b, rel_tol=1e-9, abs_tol=...)`, and `math.fsum` for accurate sums
+:::
+
+
 Since results carry rounding error, `==` between computed floats is almost always wrong: 0.1 + 0.2 == 0.3 is False. Compare with a **tolerance**: a relative tolerance for numbers of ordinary size (are they equal to 9 significant digits?), plus an absolute tolerance for numbers near zero, where relative comparisons break down. `math.isclose` and `np.isclose` do this. Predict before running: which of these comparisons succeed?
 
 ```python
@@ -151,7 +199,7 @@ total = 0.0
 for _ in range(10):
     total += 0.1
 print("loop adding ten 0.1s == 1:", total == 1.0, f"({total!r});  sum():", sum([0.1] * 10) == 1.0, "  math.fsum:", math.fsum([0.1] * 10) == 1.0)
-print("1e15 + 0.3 vs 1e15:", math.isclose(1e15 + 0.3, 1e15), "(relatively equal: differ in the 16th digit)")
+print("1e15 + 0.3 vs 1e15:", math.isclose(1e15 + 0.3, 1e15), "(relatively equal: they differ by 3 parts in 10¹⁶)")
 ```
 
 `math.isclose(a, b)` uses a relative tolerance of 10⁻⁹ by default and no absolute tolerance, so comparisons with exactly zero need `abs_tol`.
@@ -308,11 +356,11 @@ assert len(vars(_w)) <= 4 and not any(isinstance(_v, (list, np.ndarray)) for _v 
 "SUCCESS: Update the mean and the squared deviations as readings arrive: accurate for any offset, and no data need to be kept."
 ```
 
-Hint: For each new reading x: count += 1; delta = x − mean; mean += delta / count; m2 += delta × (x − new mean). The variance is m2 / (count − 1).
+Hint: For each new reading x: self.count += 1; delta = x − self._mean; self._mean += delta / self.count; self._m2 += delta × (x − new mean). (Name the running mean `_mean`, so it does not hide the `mean()` method.) The variance is m2 / (count − 1).
 :::
 
 ::: challenge Safe probabilities [hard]
-Write `logsumexp(xs)`: log Σ exp(xᵢ) computed stably by shifting by the maximum, as a plain float; return −∞ if all inputs are −∞; raise `ValueError` for an empty input. Write `softmax(xs)` returning a NumPy array of probabilities that sum to 1, computed stably. Write `stable_sigmoid(z)` for numbers or arrays that never overflows: for z ≥ 0 use 1/(1 + e^(−z)), for z < 0 use e^z/(1 + e^z). Then write `log_sigmoid(z)`, log σ(z), accurately even for very negative z (where σ underflows to 0): log σ(z) = −logsumexp([0, −z]), as a NumPy array or float.
+Write `logsumexp(xs)`: log Σ exp(xᵢ) computed stably by shifting by the maximum, as a plain float; return −∞ if all inputs are −∞; raise `ValueError` for an empty input. Write `softmax(xs)` returning a NumPy array of probabilities that sum to 1, computed stably. Write `stable_sigmoid(z)` for numbers or arrays that never overflows: for z ≥ 0 use 1/(1 + e^(−z)), for z < 0 use e^z/(1 + e^z) (`np.where` evaluates both branches, so split the array or exponentiate −|z|; the tests reject any `np.exp` that overflows). Then write `log_sigmoid(z)`, log σ(z), accurately even for very negative z (where σ underflows to 0): log σ(z) = −logsumexp([0, −z]), as a NumPy array or float.
 
 ```python starter
 def logsumexp(xs):
@@ -375,9 +423,20 @@ with _w.catch_warnings():
     _p = softmax([1000.0, 1001.0, 1002.0])
     assert np.allclose(_p, softmax([0.0, 1.0, 2.0])) and abs(_p.sum() - 1) < 1e-12 and np.all(np.isfinite(_p)), "Shift-invariant, finite probabilities."
     _z = np.array([-800.0, -30.0, 0.0, 30.0, 800.0])
-    _sg = stable_sigmoid(_z)
+    _real_exp = np.exp
+    def _guarded_exp(*_a, **_k):
+        _r = _real_exp(*_a, **_k)
+        if np.any(np.isinf(_r)):
+            raise FloatingPointError("np.exp overflowed to infinity: exponentiate only non-positive numbers.")
+        return _r
+    np.exp = _guarded_exp
+    try:
+        _sg = stable_sigmoid(_z)
+        _sg30 = stable_sigmoid(-30.0)
+    finally:
+        np.exp = _real_exp
     assert np.all(np.isfinite(_sg)) and _sg[0] == 0.0 and _sg[-1] == 1.0 and abs(_sg[2] - 0.5) < 1e-15, "No overflow at ±800."
-    assert abs(stable_sigmoid(-30.0) - math.exp(-30) / (1 + math.exp(-30))) < 1e-25, "Accurate tiny probabilities."
+    assert abs(_sg30 - math.exp(-30) / (1 + math.exp(-30))) < 1e-25, "Accurate tiny probabilities."
     _ls = log_sigmoid(np.array([-800.0, 0.0, 800.0]))
     assert abs(_ls[0] + 800) < 1e-9 and abs(_ls[1] + math.log(2)) < 1e-12 and abs(_ls[2]) < 1e-12, f"log σ(−800) ≈ −800, not −inf; got {_ls}."
 try:
@@ -388,7 +447,7 @@ except ValueError:
 "SUCCESS: Shift by the maximum before exponentiating and pick the form that cannot overflow: probabilities that stay finite at any score."
 ```
 
-Hint: Subtract the maximum before exponentiating, then add it back after the logarithm. For the sigmoid, split the array by the sign of z and use whichever formula only exponentiates negative numbers. `np.logaddexp(0, -z)` computes log(1 + e^(−z)) stably.
+Hint: Subtract the maximum before exponentiating, then add it back after the logarithm. For the sigmoid, split the array by the sign of z and use whichever formula only exponentiates negative numbers.
 :::
 
 ## What you learned
