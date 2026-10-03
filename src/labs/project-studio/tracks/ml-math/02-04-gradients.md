@@ -84,6 +84,8 @@ file tests/test_gradients.py -- Click "Create provided tests/test_gradients.py" 
 
 Stand at $(0, 0)$ on the bowl. Ask one question at a time: if I move a tiny bit in the $x$ direction only, keeping $y$ fixed, how fast does the height change? That's the **partial derivative** with respect to $x$, written $\frac{\partial f}{\partial x}$ (the curly $\partial$ means "only this variable changes"). With $y$ held at 0, the bowl is just $(x-3)^2 + 2$, a one-variable function, and last lesson's `derivative` can measure its slope.
 
+*Picture it as* standing on a hillside with a map. "How steep is it if I walk due east?" and "how steep is it if I walk due north?" are separate questions with separate answers. Each is a partial derivative: the slope in one compass direction, with the other held still.
+
 So a partial derivative is an ordinary derivative of a **slice** through the landscape. Create `gradients.py`:
 
 ```python file=gradients.py
@@ -101,7 +103,7 @@ def partial(f, point: list[float], i: int, h: float = 1e-5) -> float:
 
 `along` is a function defined **inside** `partial`. It takes one number, `t`, puts it in position `i` of a *copy* of the point, and returns the height there. That's exactly the one-variable slice: every coordinate fixed except number `i`. Then `calculus.derivative` measures the slope of the slice at the point's own coordinate.
 
-`along` can read `point` and `i` even though they aren't its parameters: an inner function sees the variables of the function around it. (A function that carries variables from where it was made is called a **closure**.)
+`along` can read `point` and `i` even though they aren't its parameters: an inner function sees the variables of the function around it. (A function that carries variables from where it was made is called a **closure**. *Picture it as* a worker sent off with a clipboard: the clipboard holds the details of the job, `point` and `i`, so the worker doesn't need to be told them again on each call.)
 
 `list(point)` copies the point, so the caller's list is never changed: the second test checks that.
 
@@ -114,6 +116,11 @@ run ".venv/Scripts/python -m pytest -q tests/test_gradients.py -k partial" label
 ## The gradient
 
 Put every partial derivative into one vector, and you have the **gradient**, written $\nabla f$ ("nabla f" or "grad f"):
+
+> **Gradient**: the vector of a function's partial derivatives, one per input. It points in the direction in which the function increases fastest, and its length says how fast.
+>
+> *Picture it as* an arrow painted on the ground at every spot on the hillside, pointing straight up the steepest way, longer where the slope is steeper. Gradient descent ignores where the arrows point and walks the opposite way. **Where the picture stops working:** a hillside has two directions; a model with a thousand weights has a "hillside" in a thousand directions, and the gradient has a thousand entries. The arithmetic doesn't change.
+
 
 $$\nabla f = \left[\frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \ldots, \frac{\partial f}{\partial x_n}\right]$$
 
@@ -149,6 +156,8 @@ run ".venv/Scripts/python -m pytest -q tests/test_gradients.py -k gradient_colle
 ## Roll downhill
 
 Now gradient descent in any number of dimensions. It's last lesson's step, applied to every coordinate at once:
+
+*Picture it as* walking downhill in thick fog. You can't see the valley floor, but you can feel which way the ground slopes under your feet. Take a step that way, feel again, step again. The learning rate is your stride length: too short and you take all day; too long and you stride straight across the valley and up the other side.
 
 $$\mathbf{p}_{\text{new}} = \mathbf{p} - \eta \, \nabla f(\mathbf{p})$$
 

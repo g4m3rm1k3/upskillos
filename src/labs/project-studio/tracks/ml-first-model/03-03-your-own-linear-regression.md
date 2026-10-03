@@ -135,6 +135,8 @@ class LinearRegression:
 
 Two kinds of attribute, and the difference is the design:
 
+*Picture the difference as* the settings you key into a machine before a run (feed rate, number of passes) versus the measurements the run produces. You choose the first; the run determines the second.
+
 - **Settings**, given to `__init__`: `rate` and `steps`, called **hyperparameters**. You choose them; the algorithm doesn't learn them. `__init__` only stores them: it never touches data.
 - **Learned values**, created by `fit`, named with a trailing underscore: `coef_` (the weights, in original units), `intercept_` (the bias), `scaler_` and `history_`. They don't exist until the model has seen data, which is how `predict` can tell whether `fit` has run: `hasattr(self, "coef_")` asks whether the object has that attribute yet.
 
@@ -191,6 +193,10 @@ run ".venv/Scripts/python weights.py" stdout="1000 steps: sqft +171, bedrooms -5
 
 Here's the problem with every RMSE so far: it was measured on **the same houses the model learned from**. A model could memorise those 45 prices and score perfectly, and know nothing about the next house to come on the market. What matters is **generalisation**: how well the model predicts houses it has never seen.
 
+> **Generalisation**: a model's ability to make good predictions on examples it was not trained on. **Training set**: the examples used to choose the parameters. **Test set**: examples kept aside and used only to measure the finished model.
+>
+> *Picture it as* the difference between memorising the answers to a practice exam and understanding the subject. Grading a student on the same practice questions they studied says nothing; the real exam uses new questions, kept sealed until the end. The test set is that sealed exam, and opening it early (training on it, or tuning against it) ruins it.
+
 The standard answer: before training, set some houses aside. Train on the rest (the **training set**); measure on the ones set aside (the **test set**). The model never sees the test houses during `fit`, so they stand in for the future. Create `houses/split.py`:
 
 ```python file=houses/split.py
@@ -204,7 +210,7 @@ def train_test_split(X: np.ndarray, y: np.ndarray, test_fraction: float = 0.25, 
     return X[train], X[test], y[train], y[test]
 ```
 
-- **`permutation(len(y))`** shuffles the row numbers `0 … n−1` into a random order. Shuffling matters: if the file were sorted by price or by date, the last rows would be a biased sample.
+- **`permutation(len(y))`** shuffles the row numbers `0 … n−1` into a random order, like shuffling a deck before dealing two hands. At the prompt, `np.random.default_rng(0).permutation(5)` gives `array([2, 4, 3, 0, 1])`, every time, because the seed is fixed. Shuffling matters: if the file were sorted by price or by date, the last rows would be a biased sample.
 - **`X[train]`** is **fancy indexing**: indexing an array with an array of row numbers picks those rows, in that order. Using the same `train` numbers for `X` and `y` keeps each house's features with its price; the second test checks this.
 - **A seed** makes the shuffle repeatable. Without one, every run would test on different houses and the numbers would never be comparable.
 

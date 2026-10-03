@@ -174,6 +174,8 @@ def gradient_descent(X: np.ndarray, y: np.ndarray, rate: float, steps: int) -> t
     return w, b, history
 ```
 
+*Picture the loop as* the dial-adjusting routine from lesson 3.1, done by the computer: measure the error on every house, work out for each dial which way and how hard the errors are pushing it (the gradient), turn every dial a little that way (the learning rate sets how far), and repeat.
+
 - **Start at zero.** `np.zeros(X.shape[1])`: one weight per column of `X`, all 0. Every prediction starts at 0.
 - **Step.** Each parameter moves against its own partial derivative, scaled by the learning rate.
 - **Record.** `history` holds the loss before training and after every step. A training loop that doesn't record its loss is a black box: the history is how you see whether it's learning, stuck or exploding.
@@ -249,7 +251,9 @@ The fix is to change the landscape, not the learning rate. If every feature were
 
 $$z = \frac{x - \mu}{\sigma}$$
 
-A house of average area gets $z = 0$; one standard deviation bigger gets $z = 1$. This is a **z-score**, and it's lesson 1.2's mean and standard deviation, used to measure each value in "standard deviations from typical". Create `houses/scaling.py`:
+A house of average area gets $z = 0$; one standard deviation bigger gets $z = 1$.
+
+*Picture it as* converting every measurement on a drawing into the same unit before comparing them: you can't tell whether 1,540 is "big" next to 3 until both are expressed as "how many typical deviations from normal". After standardising, square feet and bedrooms are on the same scale, and so are their slopes on the loss landscape, which is what gradient descent needed. This is a **z-score**, and it's lesson 1.2's mean and standard deviation, used to measure each value in "standard deviations from typical". Create `houses/scaling.py`:
 
 ```python file=houses/scaling.py
 import numpy as np
@@ -269,6 +273,8 @@ class Standardizer:
         w_original = w / self.std_
         return w_original, b - float(w_original @ self.mean_)
 ```
+
+*Picture it as* a gauge that has to be zeroed before use. `fit` is the calibration: it measures the reference parts (the training data) and remembers the settings. `transform` is measuring with the calibrated gauge: it uses the stored settings on whatever you hand it, new parts included. Recalibrating on every new part would make every reading mean something different.
 
 This is your first class with **methods** that share **state**: `fit` computes and stores the means and standard deviations on the object (`self.mean_`), and `transform` and `unscale` use them later. That's why it's a class and not three functions: the three operations need to share the numbers `fit` learned. (The trailing underscore in `mean_` is scikit-learn's convention for "learned by `fit`"; you'll see the same names there in lesson 3.4.)
 

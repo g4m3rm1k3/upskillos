@@ -32,6 +32,8 @@ Picture where this project is heading. The counting functions will soon be joine
 
 A **package** is a folder of modules imported under one name: `textstats.stats`, `textstats.cli`. The folder is the boundary: everything inside is the tool; everything outside (data, tests, settings) is not.
 
+> *Picture it as* a labelled cabinet of drawers. Each drawer is a module; the cabinet's label, `textstats`, is the one name anyone needs to know to find any drawer in it: `textstats.stats`, `textstats.cli`. **Where the picture stops working:** opening the cabinet runs code (its `__init__.py`, next step); a real cabinet doesn't do anything when you open it.
+
 Make the folder and move `stats.py` into it:
 
 ```powershell
@@ -206,7 +208,7 @@ def test_main_rejects_a_top_that_is_not_a_number(tmp_path, capsys):
 
 New things in this file:
 
-- **`tmp_path` and `capsys` as parameters.** pytest looks at each test function's parameter names and, for names it recognises, passes in a ready-made object. These are called **fixtures**. `tmp_path` is a brand-new empty folder (a `pathlib.Path`) for this test alone, deleted later, so tests can write real files without touching your project. `capsys` captures everything printed, so `capsys.readouterr().out` is the text that went to the screen. Neither test needs `data.txt`: each makes the exact file it needs.
+- **`tmp_path` and `capsys` as parameters.** pytest looks at each test function's parameter names and, for names it recognises, passes in a ready-made object. These are called **fixtures**: things a test needs set up before it runs, provided by the test runner. *Picture it as* a work holder already clamped on the machine when the operator arrives: the test only states what it needs by name, and it's there. `tmp_path` is a brand-new empty folder (a `pathlib.Path`) for this test alone, deleted later, so tests can write real files without touching your project. `capsys` captures everything printed, so `capsys.readouterr().out` is the text that went to the screen. Neither test needs `data.txt`: each makes the exact file it needs.
 - **`pytest.raises(SystemExit)`**: the code inside the `with` block is *expected* to raise `SystemExit`. If it doesn't, the test fails. `stopped.value` is the exception that was raised.
 - **`cli.main([str(poem)])`**: the tests call `main` with a list of strings, exactly the words a person would type after the program name. That one design decision is what makes a command line testable, as you'll see.
 
@@ -246,7 +248,11 @@ run ".venv/Scripts/python -m pytest -q tests/test_cli.py -k report" label="build
 
 ## Arguments from the command line
 
-When you type `python -m textstats data.txt --top 3`, the operating system hands Python a list of strings: the words after the program name. Python stores them in `sys.argv`. You *could* read that list yourself, but then you'd also have to write the error messages, the `--help` text, the conversion of `"3"` into the number 3, and the rules for options in any order. The standard library's `argparse` does all of that from a description of the arguments. Add `main` to `cli.py`:
+> **Command-line arguments**: the words typed after a program's name when it's started. `data.txt` and `--top 3` in `python -m textstats data.txt --top 3`. A **positional argument** is identified by where it is (the first word is the file); an **option** is identified by a name starting with dashes (`--top`) and is usually optional.
+>
+> *Picture it as* a job ticket handed to a machine operator with the part: the same machine, a different job each time, depending on what's written on the ticket. Positional arguments are the fields that are always in the same box on the ticket; options are the extras someone writes in only when they need them.
+
+When you type `python -m textstats data.txt --top 3`, the operating system hands Python a list of strings: the words after the program name. Python stores them in `sys.argv`. Make a throwaway file `show_args.py` containing `import sys` and `print(sys.argv)`, run `.venv\Scripts\python show_args.py data.txt --top 3`, and you'll see `['show_args.py', 'data.txt', '--top', '3']`: every word is a string, even the `3`. Delete the file afterwards. You *could* read that list yourself, but then you'd also have to write the error messages, the `--help` text, the conversion of `"3"` into the number 3, and the rules for options in any order. The standard library's `argparse` does all of that from a description of the arguments. Add `main` to `cli.py`:
 
 ```python file=textstats/cli.py
 import argparse
@@ -286,8 +292,21 @@ What each part does:
 - **`add_argument("file")`**: a name without dashes is a **positional** argument: required, and identified by position. `args.file` will hold whatever word was typed.
 - **`add_argument("--top", type=int, default=5)`**: a name with dashes is an **option**: optional, identified by name. `type=int` makes argparse call `int("3")` on the text; if that fails, argparse prints an error and stops the program with exit code 2. `default=5` is used when `--top` isn't given.
 - **`parse_args(argv)`**: reads the list and returns an object with one attribute per argument. When `argv` is `None`, argparse reads `sys.argv[1:]` itself.
-- **`with open(args.file) as f:`**: opens the file and guarantees it's closed when the block ends, even if an error happens inside. `count.py` never closed its file; for one small file it didn't matter, but a program that opens thousands of files without closing them runs out of file handles.
+- **`with open(args.file) as f:`**: opens the file and guarantees it's closed when the block ends, even if an error happens inside. `count.py` never closed its file; for one small file it didn't matter, but a program that opens thousands of files without closing them runs out of file handles (the operating system lets each program have only a limited number open at once).
 - **`return 0`**: by convention a program reports success with exit code 0. The next section uses it.
+
+
+> **`with` statement**: runs a block of code between a guaranteed setup and a guaranteed cleanup. For a file, the cleanup is closing it. Python runs it as if you'd written:
+>
+> ```python
+> f = open(args.file)
+> try:
+>     text = f.read()
+> finally:
+>     f.close()   # runs even if the block raised an error
+> ```
+>
+> *Picture it as* a lockout/tagout procedure: the lock comes off at the end of the job however the job went, because the procedure, not your memory, puts it back.
 
 ```predict
 question: main takes argv and passes it to parse_args. If it called parse_args() with no argument instead, would the tests still pass?
@@ -312,6 +331,10 @@ raise SystemExit(main())
 ```
 
 `python -m textstats` means "find the package `textstats` and run its `__main__.py` as the program". This file calls `main()` with no argument, so argparse reads the real command line. `raise SystemExit(code)` ends the program and makes `code` its **exit code**: 0 from a successful `main`.
+
+> **Exit code**: a whole number every program hands back to whatever started it when it ends. By convention 0 means success and anything else means some kind of failure; which number means which failure is up to each program (argparse uses 2 for "the command was typed wrong").
+>
+> *Picture it as* the green or red light on a machine at the end of a cycle. The operator, or the next machine in the line, doesn't need to inspect the part to know whether the cycle went well: the light says so.
 
 Try it:
 
@@ -352,7 +375,7 @@ choice: The same as python -m textstats data.txt
 choice: ModuleNotFoundError: No module named 'textstats'
 choice: It opens textstats as a file and fails to read it
 answer: ModuleNotFoundError: No module named 'textstats'
-explain: Run as a path, `textstats/__main__.py` is run as a script, and for a script Python puts **the script's own folder** first in `sys.path`: that's `text-analysis\textstats`. Then `from textstats.cli import main` searches that folder for a `textstats` package, and there isn't one inside itself. The project folder, which does contain the package, isn't searched at all.
+explain: `sys.path` is the list of folders Python searches, in order, when you import something: like checking your pockets in the same order every time you look for your keys, and stopping at the first pocket that has them. Run as a path, `textstats/__main__.py` is run as a script, and for a script Python puts **the script's own folder** first in `sys.path`: that's `text-analysis\textstats`. Then `from textstats.cli import main` searches that folder for a `textstats` package, and there isn't one inside itself. The project folder, which does contain the package, isn't searched at all.
 
 With `-m`, Python puts the **current folder** first in `sys.path` instead (the same rule that made `python -m pytest` find your modules), so `textstats` is found in `text-analysis`. That's why packages are run with `-m`.
 ```

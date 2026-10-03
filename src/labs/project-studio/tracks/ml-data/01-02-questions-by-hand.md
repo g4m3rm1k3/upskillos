@@ -94,7 +94,7 @@ def test_group_mean_leaves_out_rows_with_a_missing_group():
     assert set(describe.group_mean(ROWS, "garage", "price")) == {"no", "yes"}
 ```
 
-New in this file: **`approx`**. Decimal fractions like 0.1 can't be stored exactly in binary floating point, so `0.1 + 0.2 == 0.3` is `False` in Python (and in every language using standard floats). `approx(246333.33, abs=0.01)` accepts any number within 0.01 of that value. Comparing floats with `==` is almost always a bug; comparing them with a tolerance is how numerical code is tested. The dictionary comparisons work because `approx` can wrap a whole dictionary.
+New in this file: **`approx`**. Decimal fractions like 0.1 can't be stored exactly in binary floating point, so `0.1 + 0.2 == 0.3` is `False` in Python (and in every language using standard floats). `approx(246333.33, abs=0.01)` accepts any number within 0.01 of that value. Comparing floats with `==` is almost always a bug; comparing them with a tolerance is how numerical code is tested, the same way a dimension is checked against a tolerance rather than for being exactly the nominal value. Try `0.1 + 0.2` at the prompt: it prints `0.30000000000000004`. The dictionary comparisons work because `approx` can wrap a whole dictionary.
 
 ```check
 file tests/test_describe.py -- Click "Create provided tests/test_describe.py" above.
@@ -106,7 +106,9 @@ The **mean** (the everyday "average") of values $x_1, x_2, \ldots, x_n$ is their
 
 $$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$$
 
-$\sum_{i=1}^{n} x_i$ ("sigma") is mathematics' way of writing a loop: add up $x_i$ for every $i$ from 1 to $n$. $\bar{x}$ ("x-bar") is the usual name for a mean. Read the formula as code and it's one line. Create `explorer/describe.py`:
+$\sum_{i=1}^{n} x_i$ ("sigma") is mathematics' way of writing a loop: add up $x_i$ for every $i$ from 1 to $n$. $\bar{x}$ ("x-bar") is the usual name for a mean. Read the formula as code and it's one line.
+
+> *Picture it as* the **balance point**. Put a plank on a pivot and stack a coin on it at the position of each value: the plank balances at the mean. One coin moved far out to the right shifts the balance point a long way; that's why the mean is sensitive to extreme values, which the median (next step) isn't. Create `explorer/describe.py`:
 
 ```python file=explorer/describe.py
 def present(values: list) -> list:
@@ -135,7 +137,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_describe.py -k test_mean" labe
 
 ## The median
 
-The **median** is the middle value once the values are sorted: half are below it, half above. With an even number of values there's no single middle, so it's the mean of the two in the middle. Add it:
+The **median** is the middle value once the values are sorted: half are below it, half above. *Picture it as* lining people up by height and picking the person in the middle of the line: how tall the tallest person is doesn't matter, only who's in the middle. With an even number of values there's no single middle, so it's the mean of the two in the middle. Add it:
 
 ```python file=explorer/describe.py
 def present(values: list) -> list:
@@ -154,7 +156,7 @@ def median(values: list[float]) -> float:
     return (ordered[middle - 1] + ordered[middle]) / 2
 ```
 
-Trace `[4, 1, 3, 2]`: `ordered` is `[1, 2, 3, 4]`, `middle` is `4 // 2 = 2` (`//` divides and rounds down), the length is even, so the answer is the mean of `ordered[1]` and `ordered[2]`: (2 + 3) / 2 = 2.5. For `[3, 1, 2]`: `middle` is 1, the length is odd, and `ordered[1]` is 2.
+Trace `[4, 1, 3, 2]`: `ordered` is `[1, 2, 3, 4]`, `middle` is `4 // 2 = 2` (`//` divides and rounds down; `%` gives the remainder, so `len(ordered) % 2 == 1` asks "is the length odd?"), the length is even, so the answer is the mean of `ordered[1]` and `ordered[2]`: (2 + 3) / 2 = 2.5. For `[3, 1, 2]`: `middle` is 1, the length is odd, and `ordered[1]` is 2.
 
 `sorted(values)` returns a **new** sorted list. `values.sort()` would sort the caller's list in place, a side effect the caller didn't ask for: the fourth test exists to catch that.
 
@@ -182,6 +184,10 @@ The obvious idea, the average distance from the mean, has a problem: distances a
 $$\sigma^2 = \frac{1}{n}\sum_{i=1}^{n}(x_i - \bar{x})^2$$
 
 Squaring has a cost: if prices are in dollars, the variance is in *dollars squared*, which means nothing to anyone. So take the square root to get back to dollars: the **standard deviation**, $\sigma$ ("sigma").
+
+> **Standard deviation**: the square root of the mean squared distance from the mean; roughly, the typical distance of a value from the mean, in the values' own units.
+>
+> If you've worked with statistical process control, this is not an analogy: it's the same σ. A process's control limits are drawn at the mean ± 3σ, and a process capability index compares the tolerance band with 6σ. Here the "process" is house prices, and σ says how far a typical house sits from the average price.
 
 Work through the test's example, `[2, 4, 4, 4, 5, 5, 7, 9]`. The mean is 40 ÷ 8 = 5. The distances from 5 are −3, −1, −1, −1, 0, 0, 2, 4; squared, 9, 1, 1, 1, 0, 0, 4, 16, which add up to 32. The variance is 32 ÷ 8 = 4, and the standard deviation is √4 = 2. Add them:
 
@@ -212,6 +218,14 @@ def variance(values: list[float]) -> float:
 
 def std(values: list[float]) -> float:
     return math.sqrt(variance(values))
+```
+
+`sum((x - m) ** 2 for x in values)` is a **generator expression** inside `sum`: it produces one squared distance per value and `sum` adds them as they come. As a plain loop:
+
+```python
+total = 0
+for x in values:
+    total += (x - m) ** 2
 ```
 
 `variance` computes the mean once, before the loop. Writing `(x - mean(values)) ** 2` inside the generator would recompute the mean for every value: correct, but 48 times the work, and a million times the work for a million values.
@@ -345,7 +359,7 @@ def group_mean(rows: list[Row], by: str, of: str) -> dict[str, float]:
 ```
 
 - **`value_counts`** is lesson 0.2's word counter applied to a column. `None` is counted too: "how many are missing" is part of the answer. Sorting only by `-count` (no tie-break this time) works because `sorted` never has to compare two *keys*. Comparing `None` with `"yes"` would raise `TypeError`.
-- **`group_mean`** is the important one. It **splits** the rows into groups by one column, **applies** `mean` to another column within each group, and **combines** the results into one dictionary. *Split, apply, combine* is the pattern behind every "average X per Y" question. `groups.setdefault(key, [])` returns the list for `key`, first storing an empty one if there isn't one yet.
+- **`group_mean`** is the important one. It **splits** the rows into groups by one column, **applies** `mean` to another column within each group, and **combines** the results into one dictionary. *Split, apply, combine* is the pattern behind every "average X per Y" question. *Picture it as* sorting a mixed tray of parts into bins by part number (split), weighing what's in each bin (apply), and writing every bin's weight onto one sheet (combine). `groups.setdefault(key, [])` returns the list for `key`, first storing an empty one if there isn't one yet.
 - Rows whose group (or value) is missing are left out, because there's no honest group to put them in.
 
 ```predict

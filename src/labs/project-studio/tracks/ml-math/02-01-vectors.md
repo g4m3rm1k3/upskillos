@@ -19,6 +19,10 @@ sqft = 1540, bedrooms = 3, age = 54
 
 Write it as a list, `[1540, 3, 54]`, and it becomes something mathematics has studied for centuries: a **vector**, an ordered list of numbers. Every house is a vector with three entries. Every model in this series works on vectors: it adds them, compares them, and combines them with weights. This chapter teaches the mathematics models are built from, but only the parts a model needs, and each one through code you write.
 
+> **Vector**: an ordered list of numbers, where the position of each number gives it its meaning. `[1540, 3, 54]` means "1540 square feet, 3 bedrooms, 54 years" only because everyone agreed the first entry is area, the second bedrooms, the third age. The number of entries is the vector's **dimension**.
+>
+> *Picture it as* two things at once, and both are useful. A row on an inspection sheet: one part, its measurements in fixed columns. And an arrow: with two entries, `[3, 4]` is an arrow from the origin to the point (3, 4), with a direction and a length. With three entries it's an arrow in space; with 48, nobody can draw it, but the arithmetic is identical. **Where the picture stops working:** an arrow suggests the entries are all the same kind of quantity (distances along each axis). A house's entries are square feet, bedrooms and years, which is why distances between houses need care (later in this lesson).
+
 This chapter's project is a **maths workbench**: small, separate modules you can read in a minute, each tested. No package, no command line: these are experiments, and a package's structure would only get in the way of reading them.
 
 ## A new project
@@ -160,6 +164,10 @@ def dot(u: list[float], v: list[float]) -> float:
     return sum(a * b for a, b in zip(u, v, strict=True))
 ```
 
+> **Dot product**: for two vectors of the same dimension, multiply the entries in matching positions and add up the products. The result is one number.
+>
+> *Picture it as* totalling an invoice. One vector is the quantities ordered (3 bolts, 2 brackets, 5 washers), the other is the unit prices (0.40, 2.10, 0.05). Quantity times price for each line, then add the lines: 3 × 0.40 + 2 × 2.10 + 5 × 0.05 = 5.65. That's a dot product, and it's exactly how a model prices a house.
+
 That one line is the most important operation in machine learning, and the second test shows why. Suppose each square foot adds 140 dollars to a house's price, each bedroom 6,000, and each year of age *subtracts* 700. Then for house 1:
 
 ```text
@@ -219,7 +227,7 @@ def distance(u: list[float], v: list[float]) -> float:
     return magnitude(subtract(u, v))
 ```
 
-Distance is how a model decides that two houses are **similar**: the k-nearest-neighbours algorithm (Part XVI) predicts a house's price from the houses closest to it. But look at the numbers:
+Distance is how a model decides that two houses are **similar**: the k-nearest-neighbours algorithm (Part XVI) predicts a house's price from the houses closest to it. *Picture it as* the straight-line distance between two points on a map, measured with a ruler, except the map can have as many directions as there are features. But look at the numbers:
 
 ```predict
 question: The two houses differ by [190, 1, 26]: 190 sqft, 1 bedroom, 26 years. Their distance is about 191.8. Which feature decides that distance?
@@ -378,6 +386,10 @@ np.float64(191.77330366868065)
 >>> u + np.array([1, 2])
 ValueError: operands could not be broadcast together with shapes (3,) (2,)
 ```
+
+> **NumPy array**: a grid of numbers, all of one type, stored side by side in one block of memory, with arithmetic that works on every element at once.
+>
+> *Picture it as* the stamping press from lesson 1.3 again: the work you wrote as a loop over entries is done in one operation over the whole array. Your `vectors.py` and NumPy compute the same things; NumPy just doesn't make Python visit each number.
 
 Every one matches your function. In NumPy, `+`, `-` and `*` work **elementwise** on arrays, so `u + v` *is* your `add`, written as arithmetic. `@` is the dot product. And mismatched sizes are an error, like your `strict=True`. (The error mentions *broadcasting*, NumPy's rule for combining arrays of different shapes; `0.5 * u` used it, stretching one number across three entries. You'll use more of it in the next lesson.)
 

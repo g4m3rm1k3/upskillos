@@ -105,6 +105,26 @@ The prompt's 14-part lesson standard maps onto steps:
 12. **Put it into the application**: the chapter's project grows (`textstats`, `explorer`, `houses`).
 13. **Exercise** and 14. **Challenge**: predictions, and a closing challenge step with checks but no code.
 
+### Teaching a learner who can barely write a script
+
+The reader knows variables, loops, `if`, functions, lists and dictionaries, and not much more. The ML is rarely what loses them; the code and the logic around it are. So every lesson also teaches the Python, and the logic, as carefully as the mathematics. The Reinforcement Learning track (`tracks/rl-pygame/`) is the model to match.
+
+**Every new term: definition first, then a picture.** The first time a term appears it gets a precise definition in the field's own vocabulary, then, where it helps, an analogy marked *Picture it as*. The analogy assists the definition and never replaces it: a learner must leave knowing the real word, because documentation and colleagues will use it. Where the picture stops matching the real thing, say so ("**Where the picture stops working:** …"). The format is a blockquote:
+
+```markdown
+> **Virtual environment**: a folder containing a Python launcher and an empty `site-packages` of its own, so …
+>
+> *Picture it as* giving each job its own toolbox … **Where the picture stops working:** the toolboxes still share one workbench …
+```
+
+Prefer pictures from workshops and production lines (gauges, fixtures, offsets, bills of materials, inspection sheets, andon cords): concrete, physical, and familiar to many learners. Where a manufacturing idea is the real thing rather than an analogy (σ in statistical process control *is* the standard deviation), say that instead.
+
+**Every new Python construct: name it, say what Python executes, show the longhand.** The first `lambda` comes with the equivalent `def`; the first comprehension with the equivalent loop; the first `with` with its `try`/`finally`; the first `@dataclass` with the methods it writes; the first library function that hides a loop (`argmax`, `sorted(key=…)`) with the loop it replaces.
+
+**Logic gets traced, with real values.** Loops, sorts, recursion and updates get a table showing each step's values (`counts.get` over `"b a b"`, the sort labels for `"b a c b a"`, the first gradient-descent step).
+
+**Explore at the prompt before explaining.** Short `>>>` sessions with "predict each answer before pressing Enter": every line's output in the lesson is measured.
+
 Every important code block answers: what is it, why do we need it, what does each part do, what does Python execute, what goes in and out, and what would break without it. Every number in a lesson is measured by running the code (the walkthrough runs every step and checks the quoted output).
 
 **Break-it exercises** are built in twice: in the text (wrong learning rates, unscaled features, training on the test set, unseen categories, extrapolation, nonsense input) and in the walkthrough, where every check must reject at least one planted wrong answer.

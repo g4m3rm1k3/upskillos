@@ -121,6 +121,10 @@ def load_frame(path: str | Path) -> pd.DataFrame:
 >>> df.dtypes           # each column's type
 ```
 
+> **DataFrame**: pandas' table type: named columns, each holding values of one type, plus row labels. **Series**: one column on its own, with its row labels.
+>
+> *Picture it as* a spreadsheet tab where every column has been formatted as one kind of value (number, text, date) and the row numbers down the left are part of the data. **Where the picture stops working:** in a spreadsheet you can type text into a number column; in a DataFrame each column really is one type, which is what makes it fast.
+
 A **Series** is one column: values plus an **index**, the labels down the left side (0 to 47 here, one per row). A DataFrame is a set of Series sharing one index. `df["price"]` picks a column by name; `df.loc[5]` picks a row by its index label. Type `exit()` to leave.
 
 Now look at the types pandas chose:
@@ -222,7 +226,10 @@ For 48 houses that's 47 instead of 48, a factor of $\sqrt{48/47} \approx 1.0106$
 Why would anyone divide by $n - 1$? Because the two formulas answer different questions:
 
 - **Population** standard deviation ($\div n$, your version): *how spread out are these 48 houses?* If these 48 are all you care about, this is the exact answer.
+
 - **Sample** standard deviation ($\div (n - 1)$, pandas' default): *these 48 houses are a sample from a town of thousands; how spread out is the town?*
+
+*Picture it as* inspection. Measure every part in a box of 48 and you know that box's spread exactly: population. Measure 48 parts pulled from a run of 10,000 and you're estimating the whole run's spread from a sample, and the formula needs a small correction to avoid underestimating it.
 
 For the second question, dividing by $n$ comes out **too small on average**. The distances are measured from $\bar{x}$, the mean of *this sample*, and the sample mean sits, by construction, as close as possible to the sample's own values: any other number, including the town's true mean, would give a larger sum of squared distances. So squared distances from $\bar{x}$ understate squared distances from the true mean. Dividing by $n - 1$ instead of $n$ corrects for this exactly, on average. (It's called **Bessel's correction**; the Notebook Lab's *Estimation and uncertainty* lesson simulates it so you can watch the bias disappear.)
 
@@ -294,7 +301,7 @@ def group_mean(df: pd.DataFrame, by: str, of: str) -> dict:
 
 **`df[df[name] == value]`** reads strangely the first time. Take it apart:
 
-1. `df["neighbourhood"] == "Hillcrest"` doesn't give one `True` or `False`. A Series compared with a value compares **every element**, giving a Series of 48 booleans: `False, True, True, False, …`. This is called a **mask**.
+1. `df["neighbourhood"] == "Hillcrest"` doesn't give one `True` or `False`. A Series compared with a value compares **every element**, giving a Series of 48 booleans: `False, True, True, False, …`. This is called a **mask**: a column of `True`/`False` values that says, row by row, whether to keep the row. *Picture it as* a stencil laid over the table: the holes are where the mask is `True`, and `df[mask]` keeps only the rows you can see through the holes. Try `df["neighbourhood"] == "Hillcrest"` at the prompt to see the mask itself before it's used.
 2. `df[mask]` keeps the rows where the mask is `True`.
 
 Masks combine with `&` (and), `|` (or) and `~` (not), with parentheses around each comparison. The question that took three chained calls by hand is one expression:
@@ -349,7 +356,7 @@ print(f"a pandas column is stored as: {type(column.to_numpy()).__name__} of {col
 
 On the machine this lesson was written on, your `std` took about 0.1 seconds for a million values and pandas about 0.01: **roughly 10 times faster**, for the same answer. Your numbers will differ; the ratio is what matters.
 
-Why? Your `variance` runs a Python loop: for each of a million values, the interpreter fetches the next object from the list, checks its type, subtracts, squares, adds, and each of those is several bytecode instructions. The last line of output gives pandas' secret: a pandas column is stored as an **`ndarray` of `float64`**, a NumPy array. That's one contiguous block of memory holding a million raw 8-byte numbers, with no Python objects in it at all, and NumPy loops over it in compiled C code, where subtracting and squaring each number takes a nanosecond or so.
+Why? *Picture it as* hand-cutting a million blanks with shears, checking each one, versus feeding a coil through a stamping press: same parts, but the press does the repetitive part in one continuous machine operation. Your `variance` is the shears. It runs a Python loop: for each of a million values, the interpreter fetches the next object from the list, checks its type, subtracts, squares, adds, and each of those is several bytecode instructions. The last line of output gives pandas' secret: a pandas column is stored as an **`ndarray` of `float64`**, a NumPy array. That's one contiguous block of memory holding a million raw 8-byte numbers, with no Python objects in it at all, and NumPy loops over it in compiled C code, where subtracting and squaring each number takes a nanosecond or so.
 
 ```check
 run ".venv/Scripts/python bench.py" stdout="times faster" label="bench.py compares the two"

@@ -88,6 +88,8 @@ file tests/test_calculus.py -- Click "Create provided tests/test_calculus.py" ab
 
 In mathematics a **function** takes an input and gives exactly one output: $x \to f(x)$. $f(x) = x^2$ takes 3 and gives 9. A Python function that takes a number and returns a number, with no side effects, is the same thing, and that's how this lesson will treat both.
 
+*Picture it as* a machine with one input slot and one output chute, where the same input always produces the same output. You can't see inside, but you can feed it values and write down what comes out, which is exactly what a table does.
+
 A **table** of a function, its inputs paired with outputs, is the oldest way to see what it does. Create `calculus.py`:
 
 ```python file=calculus.py
@@ -113,7 +115,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_calculus.py -k table" label="t
 
 ## Slope between two points
 
-The steepness between two points is the **slope**: how much the output changed, divided by how much the input changed.
+The steepness between two points is the **slope**: how much the output changed, divided by how much the input changed. *Picture it as* the grade of a road: a road that climbs 6 metres over 100 metres of travel has a slope of 0.06, a 6% grade.
 
 $$\text{slope} = \frac{\Delta y}{\Delta x} = \frac{f(x_2) - f(x_1)}{x_2 - x_1}$$
 
@@ -147,6 +149,11 @@ Shrink the gap. The slope of $x^2$ from 2 to $2 + h$:
 | 0.001 | 4.001 |
 
 As $h$ shrinks, the slope approaches 4, and the slope it approaches is the **derivative** of $f$ at 2, written $f'(2)$:
+
+> **Derivative**: the slope of a function *at a single point*: how fast its output is changing there, per unit of input. It's the value the slope between $x$ and $x + h$ gets closer and closer to as $h$ shrinks towards 0.
+>
+> *Picture it as* the difference between your average speed for a trip and the speedometer reading at one moment. Average speed is distance divided by time over the whole trip: a slope between two points. The speedometer reads how fast you're going right now, over a vanishingly short stretch of time: the derivative. **Where the picture stops working:** a car measures its speed directly; for a function, the derivative is either worked out with algebra or estimated with a small $h$, as here.
+
 
 $$f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}$$
 
@@ -231,7 +238,7 @@ and the simplest possible model: price is a weight times area, $\hat{y} = wx$. H
 
 $$L(w) = \frac{1}{n}\sum_{i=1}^{n}(wx_i - y_i)^2$$
 
-$L$ is the **loss**: a single number that says how bad the weight is. It's a function of $w$, so it has a derivative, and the derivative says how the loss changes when $w$ changes.
+$L$ is the **loss**: a single number that says how bad the weight is. *Picture it as* a scrap-and-rework cost for a batch: every part's deviation from spec costs something, big deviations cost much more than small ones (that's the squaring), and the loss is the average cost per part. A better weight means a cheaper batch. It's a function of $w$, so it has a derivative, and the derivative says how the loss changes when $w$ changes.
 
 You can work it out exactly. For one house, the loss term is $(wx - y)^2$. If $u = wx - y$, the term is $u^2$, whose derivative with respect to $u$ is $2u$; and $u$ changes $x$ times as fast as $w$ does. Multiply the two rates (this is the **chain rule**, and you'll see it in full in Part XXIV, where it becomes backpropagation):
 

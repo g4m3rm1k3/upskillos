@@ -15,7 +15,13 @@ problem: The counting is tangled up with reading a file and printing. How do you
 assert count_words("one two three") == 3
 ```
 
-That line is a **test**. If the function returns 3, nothing happens; if it returns anything else, Python raises `AssertionError`. A file full of lines like it is a test file, and pytest is the program that runs test files and reports which lines failed.
+> **Function**: a named block of code that takes **inputs** (its **parameters**), does some work, and **returns** an output to whoever called it. `def count_words(text):` defines one; `count_words("one two three")` **calls** it, and the value in the brackets is the **argument** given to the parameter `text`.
+>
+> *Picture it as* a machine on a production line: material goes in one side, a finished part comes out the other, and the machine doesn't care which station fed it or where the part goes next. That independence is the point. A function that also reads files and prints is a machine that insists on fetching its own material and delivering its own parts: it only works in the one spot it was built for.
+
+That line is a **test**: code that runs other code with an input whose correct answer you already know, and complains if the answer is wrong. `assert` is the Python statement that complains: `assert condition` does nothing if the condition is true and raises `AssertionError` if it's false. A file full of lines like it is a test file, and pytest is the program that runs test files and reports which lines failed.
+
+> *Picture it as* a go/no-go gauge on an inspection bench: it doesn't measure how good the part is, it answers one yes-or-no question, and it's quick enough to use on every part. Each `assert` is one gauge.
 
 ## Read the tests first
 
@@ -118,6 +124,26 @@ def count_lines(text):
 
 Two functions that each take a string and **return** a number. They don't read files and they don't print. That's the whole point: the caller decides where the text comes from and what to do with the answer.
 
+**`return` is not `print`.** Beginners often mix them up, because at the prompt both seem to "show the answer". They do completely different things. `print` writes text to the screen and gives back nothing. `return` hands a value back to the code that called the function, and shows nothing. Try it at the prompt (`.venv\Scripts\python`), predicting each line before pressing Enter:
+
+```text
+>>> def shout(text):
+...     print(text.upper())
+...
+>>> def loud(text):
+...     return text.upper()
+...
+>>> a = shout("hi")
+HI
+>>> b = loud("hi")
+>>> print(a)
+None
+>>> b
+'HI'
+```
+
+(At the prompt, a `def` continues over several lines: type the body after `...`, then an empty line to finish.) `shout("hi")` printed `HI`, but the variable `a` got **`None`**, Python's value for "nothing", because `shout` has no `return`. `loud("hi")` printed nothing, but `b` holds `'HI'`, which the rest of the program can use: compare it, count it, put it in a report. Tests can only check what a function returns.
+
 `count_lines` could have been written `text.count("\n")`, counting line breaks. Run that idea against the tests in your head: `"no line break at the end"` has no `"\n"` and would get 0 lines. `splitlines()` handles both cases: a line counts whether or not it ends with a line break.
 
 Run just these tests. `-k` selects tests whose names contain the words given, and `or` combines them:
@@ -165,7 +191,21 @@ def words(text):
     return WORD.findall(text.lower())
 ```
 
-Read the pattern piece by piece:
+> **Regular expression** (regex): a small language for describing a *pattern* of text, such as "one or more letters". `re.findall(pattern, text)` returns every piece of `text` that fits the pattern, left to right.
+>
+> *Picture it as* a template you slide along the text: wherever the text fits the template's shape, that piece is cut out and kept. **Where the picture stops working:** a real template has a fixed size; a pattern with `+` stretches to grab as much as fits.
+
+Try a simpler pattern first, at the prompt:
+
+```text
+>>> import re
+>>> re.findall(r"[a-z]+", "it's 2 times")
+['it', 's', 'times']
+>>> re.findall(r"[a-z0-9]+(?:'[a-z0-9]+)*", "it's 2 times")
+["it's", '2', 'times']
+```
+
+`[a-z]+` means "one or more lowercase letters", so the apostrophe breaks `it's` in two and the `2` isn't a letter at all. The full pattern fixes both. Read it piece by piece:
 
 | Piece | Means |
 |---|---|
@@ -258,14 +298,45 @@ def most_common(text, n):
     return ranked[:n]
 ```
 
-**Counting.** `counts.get(word, 0)` returns the word's count so far, or `0` if the word isn't a key yet. Adding 1 and storing it back counts this occurrence. For `"b a b"` the dictionary goes `{}` → `{"b": 1}` → `{"b": 1, "a": 1}` → `{"b": 2, "a": 1}`.
+> **Dictionary**: a collection that maps **keys** to **values**: give it a key, get back the value stored under it. `counts["the"]` is the value stored under the key `"the"`.
+>
+> *Picture it as* a tally sheet with one row per word: the word is written once in the left column, and every time it turns up you add a mark in the right column.
+
+**Counting.** `counts.get(word, 0)` returns the word's count so far, or `0` if the word isn't a key yet. (Plain `counts[word]` would raise `KeyError` for a word not seen before.) Adding 1 and storing it back counts this occurrence. Trace it for `"b a b"`:
+
+| word | `counts.get(word, 0)` | after `counts[word] = … + 1` |
+|---|---|---|
+| (start) | | `{}` |
+| `b` | 0 | `{"b": 1}` |
+| `a` | 0 | `{"b": 1, "a": 1}` |
+| `b` | 1 | `{"b": 2, "a": 1}` |
 
 **Ranking.** `counts.items()` gives `(word, count)` pairs. `sorted` puts them in order, comparing whatever the `key` function returns for each pair. Here the key is a tuple, `(-count, word)`, and Python compares tuples element by element:
 
 1. `-count` first: sorting ascending on the negated count puts the **largest** count first (−11 < −10).
 2. Only when two counts are equal does the second element decide: the word, alphabetically.
 
-`lambda pair: (-pair[1], pair[0])` is a function written inline: it takes a pair and returns the tuple. `ranked[:n]` keeps the first `n`, and slicing past the end of a list is safe, which the last test relies on.
+**`lambda`** writes a small function without giving it a name. These two mean the same thing:
+
+```python
+key=lambda pair: (-pair[1], pair[0])
+
+def sort_label(pair):
+    return (-pair[1], pair[0])
+key=sort_label
+```
+
+`sorted` calls the key function once for each item and sorts the items by what it returns. *Picture it as* writing a label on a sticky note for each item and then sorting by the notes, not by the items themselves. Trace it for `"b a c b a"`:
+
+| item from `counts.items()` | sticky note `(-count, word)` |
+|---|---|
+| `("b", 2)` | `(-2, "b")` |
+| `("a", 2)` | `(-2, "a")` |
+| `("c", 1)` | `(-1, "c")` |
+
+Sorted by note: `(-2, "a")`, `(-2, "b")`, `(-1, "c")`. So the result is `[("a", 2), ("b", 2), ("c", 1)]`. Check the two comparisons that decided it at the prompt: `(-2, "a") < (-2, "b")` is `True` (first elements equal, so the words decide), and `(-2, "b") < (-1, "a")` is `True` (the first elements already differ, so the words are never looked at).
+
+`ranked[:n]` keeps the first `n` items: a **slice**. Slicing past the end of a list is safe (`[1, 2][:10]` is `[1, 2]`), which the last test relies on.
 
 ```predict
 question: The key is (-count, word). If it were only -count, which test would fail?
@@ -343,7 +414,9 @@ for word, count in stats.most_common(text, 5):
     print(f"  {word:<10} {count}")
 ```
 
-`f"  {word:<10} {count}"` is an **f-string**: the parts in braces are replaced by values. `:<10` pads the word on the right to 10 characters, so the counts line up. Click **Run**:
+`for word, count in stats.most_common(text, 5):` loops over a list of pairs and **unpacks** each pair into two names: on the first time round, `word` is `"the"` and `count` is `11`.
+
+`f"  {word:<10} {count}"` is an **f-string** (the `f` before the quote): the parts in braces are replaced by values. After a colon comes a **format specification**: `:<10` means "left-aligned, padded with spaces to 10 characters", so the counts line up in a column. At the prompt, `f"[{'the':<10}]"` gives `'[the       ]'`. Click **Run**:
 
 ```text
 Characters: 418
@@ -356,6 +429,10 @@ Most common:
   was        10
   we         4
 ```
+
+> **Module**: a `.py` file whose definitions other code can use by **importing** it. `stats.py` is the module `stats`.
+>
+> *Picture it as* a drawer of tools with a label on the front. `import stats` fetches the drawer and puts it on your bench under the label `stats`; `stats.words` is "the `words` tool from that drawer".
 
 `import stats` is the first line that matters. When Python executes it:
 
@@ -408,6 +485,10 @@ if __name__ == "__main__":
 ```
 
 Every module has a variable named `__name__`. When Python imports a module, `__name__` is the module's name: `"count"`. When Python **runs** a file as the program, it names that module `"__main__"` instead. So `if __name__ == "__main__":` is true only when the file is the program being run.
+
+*Picture it as* a name badge Python pins on each file as it loads it. A file that's been borrowed by another program wears its own name; the file that *is* the program wears the badge "main". The `if` reads the badge and only starts the work when it says "main".
+
+See both badges for yourself. Add `print(__name__)` as the first line of `count.py` for a moment, then run `.venv\Scripts\python count.py` (it prints `__main__`) and `.venv\Scripts\python -c "import count"` (it prints `count`). Take the line out again afterwards.
 
 Now `import count` defines `main` and returns quietly, and **Run** still prints the report. Check both:
 
