@@ -211,6 +211,9 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | **10 · Clustering** (`ml-clustering`) — project: customer segments | 10.1 Groups nobody labelled: k-means | clustering (assign and update by hand; identical to `KMeans` from the same start) | ml-k-means / 17 |
 | | 10.2 How many groups, and can you trust them? | clustering (local minima and restarts, scaling, elbow, silhouette by hand) | ml-k-means / 17 |
 | | 10.3 Using the segments: new customers and odd ones out | clustering (a fitted segmenter, profiles, distance-based anomaly screening) | ml-k-means / 17 |
+| **11 · Dimensionality Reduction** (`ml-pca`) — project: CMM inspection data | 11.1 Ten measurements, how many facts? Covariance | PCA (covariance by matrix multiplication, the correlation matrix's blocks) | ml-eigenvectors-and-svd / 18 |
+| | 11.2 The directions that matter: principal components | PCA (variance along a direction, power iteration, deflation; identical to `PCA` up to sign) | ml-pca / 18 |
+| | 11.3 Three numbers instead of ten | PCA (scores, reconstruction, residual screening, a tool-wear trend) | ml-pca / 18 |
 
 ### Planned
 
@@ -218,7 +221,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 11 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |
 | 12 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy; mini-batches and momentum | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand, ml-optimisers / 20, 21, 22 |
 | 13 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
 | 14 | NLP: Document Classifier | "Back to text, where Chapter 0 began" | n-grams, TF-IDF pipelines, embeddings, cosine similarity | ml-embeddings / 25, 34 |
