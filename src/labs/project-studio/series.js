@@ -48,8 +48,10 @@ const SERIES = [
       ['ml-nlp', '14 · NLP: Maintenance Work Orders'],
       ['ml-studio', '15 · Production ML: The Defect Studio'],
       ['ml-capstone', '16 · Capstone: Your Own ML Product'],
+      ['ml-timeseries', '17 · Advanced: Time Series, a Spindle Bearing Watch'],
+      ['ml-boosting', '18 · Advanced: Boosting and SVMs'],
     ],
-    planned: 'Optional advanced tracks are planned: boosting and SVMs, time series, sequence models and transformers, retrieval, and recommender systems. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'More optional advanced tracks are planned: sequence models and transformers, retrieval, and recommender systems. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 
