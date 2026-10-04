@@ -234,6 +234,10 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 16.2 Let the physics choose the model | ML testing (Taylor's equation linear in logs beats a forest; exponents checked against handbook values) | ml-capstone / 33 |
 | | 16.3 The advisor as a service | ML testing (solving the model for speed; flagging extrapolation; an API) | ml-capstone / 33 |
 | | 16.4 Ship it, report it, make it yours | deployment (a container, an honest results section, the whole method as a checklist) | ml-capstone / 33 |
+| **17 · Advanced: Time Series** (`ml-timeseries`) — project: a spindle bearing watch (predictive maintenance) | 17.1 Readings in time order | time series (datetimes, order checks, gaps and linear interpolation, trailing means, daily and weekly cycles, trend) | ml-time-series / 19 |
+| | 17.2 Tomorrow looks like today | time series (horizon, backtests, lagged-copy baselines, errors broken down by week) | ml-time-series / 19 |
+| | 17.3 Learning from the past | time series (lag features with a leakage test, shuffled against walk-forward folds, trees can't extrapolate, nightly retraining) | ml-time-series / 19 |
+| | 17.4 Warning before the limit | time series (a condition indicator, days to the limit along a line, a backtested warning and why it's always optimistic) | ml-time-series / 19 |
 
 ### Design notes
 
@@ -243,7 +247,7 @@ Several projects use manufacturing data (injection-moulding defects, CMM inspect
 
 The ML Studio architecture in Chapter 15 is **arrived at**: Chapter 4 starts from one file and one route; Chapter 5 adds a repository when SQL leaks into routes; Chapter 15 splits the studio into `data.py`, `ml.py`, `artifacts.py`, `database.py`, `services.py` and `api.py`, each introduced by the problem that needs it, and adds `monitoring.py`, `forecast.py` and `startup.py` once the studio is depended on.
 
-Optional advanced tracks (planned, prompt Part XLII): classical ML (SVM, boosting), sequence models, attention and transformers, retrieval, recommender systems, and time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).
+Optional advanced tracks (prompt Part XLII) come after the capstone, numbered on from 17. Time series is written (Chapter 17, predictive maintenance on a spindle bearing). Still planned: classical ML (SVM, boosting), sequence models, attention and transformers, retrieval and recommender systems. Each can link the matching ML Lab labs (14, 15, 25, 26, 34, 35).
 
 ## Runtime decisions
 

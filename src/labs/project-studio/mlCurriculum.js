@@ -79,6 +79,7 @@ export const ML_CONCEPTS = {
   'backpropagation': { label: 'Backpropagation', area: 'Machine learning', requires: ['neural-networks', 'gradients'] },
   'pytorch': { label: 'PyTorch', area: 'Machine learning', requires: ['backpropagation'] },
   'embeddings': { label: 'Embeddings and similarity', area: 'Machine learning', requires: ['dot-product', 'neural-networks'] },
+  'time-series': { label: 'Time series: lags, seasonality and walk-forward evaluation', area: 'Machine learning', requires: ['cross-validation', 'linear-regression'] },
 
   // Software around the model
   'http': { label: 'HTTP requests and responses', area: 'Software', requires: ['command-line'] },
