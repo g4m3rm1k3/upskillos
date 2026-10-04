@@ -43,8 +43,9 @@ const SERIES = [
       ['ml-trees', '09 · Trees and Neighbours: Predicting Defects'],
       ['ml-clustering', '10 · Clustering: Customer Segments'],
       ['ml-pca', '11 · Dimensionality Reduction: Inspection Data'],
+      ['ml-neural', '12 · Neural Networks: A Tolerance Zone'],
     ],
-    planned: 'Next in this series: neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 

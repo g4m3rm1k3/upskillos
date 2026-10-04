@@ -214,6 +214,9 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | **11 · Dimensionality Reduction** (`ml-pca`) — project: CMM inspection data | 11.1 Ten measurements, how many facts? Covariance | PCA (covariance by matrix multiplication, the correlation matrix's blocks) | ml-eigenvectors-and-svd / 18 |
 | | 11.2 The directions that matter: principal components | PCA (variance along a direction, power iteration, deflation; identical to `PCA` up to sign) | ml-pca / 18 |
 | | 11.3 Three numbers instead of ten | PCA (scores, reconstruction, residual screening, a tool-wear trend) | ml-pca / 18 |
+| **12 · Neural Networks** (`ml-neural`) — project: a GD&T true-position tolerance zone | 12.1 Beyond a straight line: layers | neural networks (why one neuron fails, ReLU, a hand-made diamond network) | ml-perceptron-limits / 20 |
+| | 12.2 Learning every layer: backpropagation | backpropagation (every gradient checked numerically; the learned zone drawn) | ml-backprop-by-hand / 21 |
+| | 12.3 Training well | backpropagation (symmetry and zero starts, learning rates, momentum, mini-batches, `MLPClassifier`) | ml-optimisers / 22 |
 
 ### Planned
 
@@ -221,7 +224,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 12 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy; mini-batches and momentum | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand, ml-optimisers / 20, 21, 22 |
 | 13 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
 | 14 | NLP: Document Classifier | "Back to text, where Chapter 0 began" | n-grams, TF-IDF pipelines, embeddings, cosine similarity | ml-embeddings / 25, 34 |
 | 15 | Production ML: Upskillos ML Studio | "Everything, for real users" | the full architecture (`api/`, `services/`, `ml/`, `database/`, `templates/`), CRUD for users, projects, datasets, models and experiments; background training jobs; model artifacts and metadata; experiment tracking; data, model and integration tests; reproducibility; Docker and deployment; logging and observability; ML-specific security (unsafe pickle files, untrusted datasets, prediction abuse); consuming external APIs with retries, timeouts and caching | / 28, 29, 30, 32 |
