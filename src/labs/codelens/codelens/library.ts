@@ -15,14 +15,17 @@ export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 
 export interface LibraryVariant {
   code: string
-  /** What the program prints, line by line. */
+  /** What the program prints, line by line, as CodeLens shows it (with `input`, if any). */
   output: string[]
+  /** What goes in the Input box (scriptedInput.ts): the lines the program reads, and for
+   *  pygame programs the scripted keys and clicks. Loaded with the code. */
+  input?: string
 }
 
 export interface LibraryExample {
   id: string
   title: string
-  group: 'Data Structures' | 'Algorithms' | 'Design Patterns' | 'Functional Programming' | 'React Internals'
+  group: 'Data Structures' | 'Algorithms' | 'Design Patterns' | 'Functional Programming' | 'Input and Games' | 'React Internals'
   difficulty: Difficulty
   /** What the example teaches, in a few sentences. */
   concept: string
@@ -1100,6 +1103,282 @@ export const LIBRARY: LibraryExample[] = [
           'Console.WriteLine(total);',
         ),
         output: ['60'],
+      },
+    },
+  },
+
+  // ── Input and games: programs that read the Input box ──────────────────────
+  {
+    id: 'asking-questions',
+    title: 'Asking questions: reading input',
+    group: 'Input and Games',
+    difficulty: 'Beginner',
+    concept: 'A program that asks questions waits for an answer at each read. CodeLens records the whole run before you step through it, so the answers are written in advance, in the Input box, one per line: every read takes the next line. The Input box loaded with this example holds the answers Ada, 3, 10, 20 and 12. Each language reads a line its own way: input() in Python, prompt() in JavaScript, Console.ReadLine() in C#, std::getline and std::cin >> in C++, scanf in C.',
+    prerequisites: [],
+    watch: [
+      'The Input box under the editor: each line is one answer.',
+      'The step after each read: its explanation says what was read, and the new variable holds it.',
+      'In Python, JavaScript and C#, the Output shows each answer after its question, the way a terminal shows what was typed.',
+      'In C and C++, the program reads the Input box as a file (like `program < input.txt`), so the answers don\'t appear in the Output.',
+    ],
+    edgeCases: [
+      'Delete the last line of the Input box: the program asks for an answer that isn\'t there. Python stops with EOFError, JavaScript\'s prompt() returns null, C#\'s Console.ReadLine() returns null, and C++\'s std::cin >> fails and leaves the variable unchanged.',
+      'Type "three" instead of 3: converting it to a number fails, each language in its own way.',
+    ],
+    exercises: [
+      'Ask for the numbers on one line, separated by spaces, and split it.',
+      'Ask again when an answer isn\'t a number (and add a wrong answer to the Input box to test it).',
+    ],
+    variants: {
+      py: {
+        code: lines(
+          'name = input("Name? ")',
+          'count = int(input("How many numbers? "))',
+          'total = 0',
+          'for i in range(count):',
+          '    total += int(input(f"Number {i + 1}? "))',
+          'print(f"{name}, the total is {total}")',
+        ),
+        input: 'Ada\n3\n10\n20\n12\n',
+        output: ['Name? Ada', 'How many numbers? 3', 'Number 1? 10', 'Number 2? 20', 'Number 3? 12', 'Ada, the total is 42'],
+      },
+      js: {
+        code: lines(
+          "const name = prompt('Name? ')",
+          "const count = Number(prompt('How many numbers? '))",
+          'let total = 0',
+          'for (let i = 0; i < count; i++) {',
+          '  total += Number(prompt(`Number ${i + 1}? `))',
+          '}',
+          'console.log(`${name}, the total is ${total}`)',
+        ),
+        input: 'Ada\n3\n10\n20\n12\n',
+        output: ['Name? Ada', 'How many numbers? 3', 'Number 1? 10', 'Number 2? 20', 'Number 3? 12', 'Ada, the total is 42'],
+      },
+      cs: {
+        code: lines(
+          'Console.Write("Name? ");',
+          'var name = Console.ReadLine();',
+          'Console.Write("How many numbers? ");',
+          'var count = int.Parse(Console.ReadLine());',
+          'var total = 0;',
+          'for (int i = 0; i < count; i++)',
+          '{',
+          '    Console.Write($"Number {i + 1}? ");',
+          '    total += int.Parse(Console.ReadLine());',
+          '}',
+          'Console.WriteLine($"{name}, the total is {total}");',
+        ),
+        input: 'Ada\n3\n10\n20\n12\n',
+        output: ['Name? Ada', 'How many numbers? 3', 'Number 1? 10', 'Number 2? 20', 'Number 3? 12', 'Ada, the total is 42'],
+      },
+      cpp: {
+        code: lines(
+          '#include <iostream>',
+          '#include <string>',
+          'int main() {',
+          '    std::string name;',
+          '    std::cout << "Name?" << std::endl;',
+          '    std::getline(std::cin, name);',
+          '    int count;',
+          '    std::cout << "How many numbers?" << std::endl;',
+          '    std::cin >> count;',
+          '    int total = 0;',
+          '    for (int i = 0; i < count; i++) {',
+          '        int number;',
+          '        std::cout << "Number " << i + 1 << "?" << std::endl;',
+          '        std::cin >> number;',
+          '        total += number;',
+          '    }',
+          '    std::cout << name << ", the total is " << total << std::endl;',
+          '}',
+        ),
+        input: 'Ada\n3\n10\n20\n12\n',
+        output: ['Name?', 'How many numbers?', 'Number 1?', 'Number 2?', 'Number 3?', 'Ada, the total is 42'],
+      },
+      c: {
+        code: lines(
+          '#include <stdio.h>',
+          'int main(void) {',
+          '    char name[50];',
+          '    int count, total = 0;',
+          '    printf("Name?\\n");',
+          '    scanf("%49s", name);',
+          '    printf("How many numbers?\\n");',
+          '    scanf("%d", &count);',
+          '    for (int i = 0; i < count; i++) {',
+          '        int number;',
+          '        printf("Number %d?\\n", i + 1);',
+          '        scanf("%d", &number);',
+          '        total += number;',
+          '    }',
+          '    printf("%s, the total is %d\\n", name, total);',
+          '    return 0;',
+          '}',
+        ),
+        input: 'Ada\n3\n10\n20\n12\n',
+        output: ['Name?', 'How many numbers?', 'Number 1?', 'Number 2?', 'Number 3?', 'Ada, the total is 42'],
+      },
+    },
+  },
+  {
+    id: 'until-the-input-ends',
+    title: 'Reading until the input ends',
+    group: 'Input and Games',
+    difficulty: 'Beginner',
+    concept: 'A program doesn\'t have to know in advance how much input there is. It can read until the input ends: the end of a file, or Ctrl+Z / Ctrl+D at a terminal. Each language signals the end differently, and this loop is the same idea in each: read, stop at the end, otherwise use what was read. Here the Input box holds three numbers, so the loop runs three times and the fourth read finds the end.',
+    prerequisites: ['Asking questions: reading input'],
+    watch: [
+      'The loop\'s condition on its last check: the read that finds no more input.',
+      'Python: `for line in sys.stdin` stops by itself; JavaScript\'s prompt() and C#\'s ReadLine() return null; C++\'s `std::cin >> number` is false; C\'s scanf returns how many values it read, here 0 or EOF.',
+      'Each `line` in Python and C# still ends where the line did: int() and int.Parse() ignore the surrounding whitespace.',
+    ],
+    edgeCases: [
+      'Empty the Input box: the loop never runs, and the count is 0.',
+      'Add a blank line between two numbers: Python\'s int("\\n") fails, but C++\'s >> skips blank lines.',
+    ],
+    exercises: ['Print the largest number as well.', 'Read words instead of numbers and count how often each appears (a dictionary or map).'],
+    variants: {
+      py: {
+        code: lines(
+          'import sys',
+          '',
+          'total = 0',
+          'count = 0',
+          'for line in sys.stdin:',
+          '    total += int(line)',
+          '    count += 1',
+          'print(f"{count} numbers, total {total}")',
+        ),
+        input: '5\n8\n13\n',
+        output: ['5', '8', '13', '3 numbers, total 26'],
+      },
+      js: {
+        code: lines(
+          'let total = 0',
+          'let count = 0',
+          'let line = prompt()',
+          'while (line !== null) {',
+          '  total += Number(line)',
+          '  count++',
+          '  line = prompt()',
+          '}',
+          'console.log(`${count} numbers, total ${total}`)',
+        ),
+        input: '5\n8\n13\n',
+        output: ['5', '8', '13', '3 numbers, total 26'],
+      },
+      cs: {
+        code: lines(
+          'var total = 0;',
+          'var count = 0;',
+          'string line;',
+          'while ((line = Console.ReadLine()) != null)',
+          '{',
+          '    total += int.Parse(line);',
+          '    count++;',
+          '}',
+          'Console.WriteLine($"{count} numbers, total {total}");',
+        ),
+        input: '5\n8\n13\n',
+        output: ['5', '8', '13', '3 numbers, total 26'],
+      },
+      cpp: {
+        code: lines(
+          '#include <iostream>',
+          'int main() {',
+          '    int total = 0;',
+          '    int count = 0;',
+          '    int number;',
+          '    while (std::cin >> number) {',
+          '        total += number;',
+          '        count++;',
+          '    }',
+          '    std::cout << count << " numbers, total " << total << std::endl;',
+          '}',
+        ),
+        input: '5\n8\n13\n',
+        output: ['3 numbers, total 26'],
+      },
+      c: {
+        code: lines(
+          '#include <stdio.h>',
+          'int main(void) {',
+          '    int total = 0, count = 0, number;',
+          '    while (scanf("%d", &number) == 1) {',
+          '        total += number;',
+          '        count++;',
+          '    }',
+          '    printf("%d numbers, total %d\\n", count, total);',
+          '    return 0;',
+          '}',
+        ),
+        input: '5\n8\n13\n',
+        output: ['3 numbers, total 26'],
+      },
+    },
+  },
+  {
+    id: 'pygame-scripted',
+    title: 'A pygame game on scripted keys',
+    group: 'Input and Games',
+    difficulty: 'Intermediate',
+    concept: 'A game is a loop that runs once per frame: take the events (keys, clicks, the close button), update the game, draw it, show the picture with display.flip(), and wait for the next frame with clock.tick(). CodeLens can\'t give a traced program a live window, so it runs the game on the moves written in the Input box ("@frame 1 keydown right": the → key goes down while frame 1 is being drawn) and keeps every picture the program shows. Step through the trace and the Screen panel shows the window as it was at that step.',
+    prerequisites: ['Asking questions: reading input'],
+    watch: [
+      'The Screen panel: it changes only at display.flip(). Everything drawn before that is off screen.',
+      '`pygame.event.get()` on frame 1: it returns the KEYDOWN that the Input box scripted for frame 1.',
+      '`keys[pygame.K_RIGHT]` staying true on frames 1, 2 and 3: a key is held from its keydown to its keyup, which is how get_pressed() makes smooth movement.',
+      'clock.tick(30) returning 33 without waiting: CodeLens\'s clock is pretend, so every run takes the same steps.',
+    ],
+    edgeCases: [
+      'Remove "@frame 10 quit": CodeLens closes the window one frame after the last event, so the loop still ends.',
+      'Script a tap with "@frame 6 key left": it is held for exactly one frame.',
+      'Draw the square after display.flip() instead of before: the Screen shows each picture one frame late.',
+    ],
+    exercises: [
+      'Add ↑ and ↓ (K_UP, K_DOWN), and script them in the Input box.',
+      'Keep the square inside the window: clamp x between 10 and 230.',
+      'Move by speed × time instead of 20 per frame: use the milliseconds clock.tick() returns.',
+    ],
+    variants: {
+      py: {
+        code: lines(
+          'import pygame',
+          '',
+          'pygame.init()',
+          'screen = pygame.display.set_mode((240, 120))',
+          'clock = pygame.time.Clock()',
+          'x, y = 30, 60',
+          'running = True',
+          'while running:',
+          '    for event in pygame.event.get():',
+          '        if event.type == pygame.QUIT:',
+          '            running = False',
+          '        elif event.type == pygame.MOUSEBUTTONDOWN:',
+          '            x, y = event.pos',
+          '    keys = pygame.key.get_pressed()',
+          '    if keys[pygame.K_RIGHT]:',
+          '        x += 20',
+          '    if keys[pygame.K_LEFT]:',
+          '        x -= 20',
+          '    screen.fill((25, 25, 45))',
+          '    pygame.draw.rect(screen, (90, 200, 120), (x - 10, y - 10, 20, 20))',
+          '    pygame.display.flip()',
+          '    clock.tick(30)',
+          '',
+          'pygame.quit()',
+          'print(f"ended at ({x}, {y}) after {pygame.time.get_ticks()} ms")',
+        ),
+        input: lines(
+          '@# Hold → for frames 1-3, tap ← on frame 6, click on frame 8, close on frame 10.',
+          '@frame 1 keydown right',
+          '@frame 4 keyup right',
+          '@frame 6 key left',
+          '@frame 8 click 180 40',
+          '@frame 10 quit',
+        ) + '\n',
+        output: ['ended at (180, 40) after 363 ms'],
       },
     },
   },

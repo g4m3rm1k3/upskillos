@@ -20,6 +20,12 @@ import CallTreeView from './renderer/CallTreeView'
 import StackDepthMeter from './renderer/StackDepthMeter'
 import WatchWindow from './renderer/WatchWindow'
 import LibraryBrowser from './LibraryBrowser'
+import InputPanel, { readsInput } from './InputPanel'
+import ScreenPanel from './ScreenPanel'
+import PackagesDialog from './PackagesDialog'
+import ExpressionSteps from './ExpressionSteps'
+import { codelensPythonStatus, type CodeLensPythonStatus } from './interpreter/codelensPythonEnv'
+import { parseScriptedInput, stdinText } from './scriptedInput'
 import { LANGUAGE_LABELS, type LibraryExample } from './library'
 import { setupOpenCalcMonaco } from '../../../utils/monacoThemes.js'
 import { CodeLensThemeProvider, useCodeLensTheme } from './ThemeContext'
@@ -33,7 +39,7 @@ import type {
 import {
   ChevronRight, ChevronDown, Code2, Boxes, Braces, ArrowLeft,
   Zap, Play, Pause, StepForward, StepBack, SkipForward, Terminal,
-  Palette, Info, Network, Layers, GitBranch, X, Eye, Square, BookOpen, RotateCcw,
+  Palette, Info, Network, Layers, GitBranch, X, Eye, Square, BookOpen, RotateCcw, Package,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -884,6 +890,13 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   const [fnModal, setFnModal]       = useState<FnModalState | null>(null)
   const [editorW, setEditorW]       = useState<number | null>(null)  // null = auto flex-grow
   const [breakpoints, setBreakpoints] = useState<Set<number>>(() => new Set())
+  // The Input box: what the program reads while it's traced (scriptedInput.ts).
+  const [inputText, setInputText]   = useState('')
+  const [inputOpen, setInputOpen]   = useState(false)
+  const scriptedInput = useMemo(() => parseScriptedInput(inputText), [inputText])
+  // Opens by itself once the program reads input; only the learner closes it.
+  const programReadsInput = readsInput(source, lang)
+  useEffect(() => { if (programReadsInput) setInputOpen(true) }, [programReadsInput])
   const eventListRef                = useRef<HTMLDivElement>(null)
   const editorRef                   = useRef<Parameters<NonNullable<Parameters<typeof Editor>[0]['onMount']>>[0] | null>(null)
   const decorRef                    = useRef<string[]>([])
@@ -893,9 +906,15 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   const activeExecutionRef         = useRef<Pick<JavaScriptExecutionHandle, 'stop'> | null>(null)
   // Where the last run happened, e.g. "your Python 3.13.14" on the desktop app.
   const [runHost, setRunHost]       = useState<string | null>(null)
+  // What the desktop Python environment is doing before the trace, e.g. "Installing pygame-ce…".
+  const [runProgress, setRunProgress] = useState<string | null>(null)
   // Languages beyond JS/TS/Python, offered only where they can actually run: C and C++
   // need the desktop app with GDB; Go needs the CodeLens backend with go and dlv.
   const [extraLangs, setExtraLangs] = useState<Lang[]>([])
+  // The desktop app's CodeLens Python environment, for the Packages menu; null elsewhere.
+  const [pythonEnv, setPythonEnv]   = useState<CodeLensPythonStatus | null>(null)
+  const [showPackages, setShowPackages] = useState(false)
+  useEffect(() => { codelensPythonStatus().then(setPythonEnv) }, [])
   useEffect(() => {
     let alive = true
     nativeToolchains().then(toolchains => {
@@ -919,6 +938,25 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   const totalSteps   = execution?.events?.length ?? 0
   const currentEvent: TraceEvent | null = execution?.events?.[step]      ?? null
   const prevEvent: TraceEvent | null    = execution?.events?.[step - 1]  ?? null
+  // Python: the current line's sub-expressions in evaluation order (ExpressionSteps.tsx),
+  // and which one is highlighted in the editor. A new step starts with none highlighted.
+  const expressionSteps: [number, unknown][] = currentEvent?.type === 'statement_enter'
+    ? ((currentEvent.outcome as { expressions?: [number, unknown][] } | undefined)?.expressions ?? [])
+    : []
+  const [expressionPart, setExpressionPart] = useState<number | null>(null)
+  useEffect(() => { setExpressionPart(null) }, [step, execution])
+  const expressionDecorRef = useRef<string[]>([])
+  useEffect(() => {
+    const ed = editorRef.current
+    if (!ed || !monaco) return
+    const span = expressionPart !== null ? execution?.expressions?.[expressionSteps[expressionPart]?.[0]] : undefined
+    const stale = source !== lastRunSourceRef.current
+    expressionDecorRef.current = ed.deltaDecorations(expressionDecorRef.current, span && !stale ? [{
+      // The tracer's columns count from 0; Monaco's from 1.
+      range: new monaco.Range(span.line, span.col + 1, span.endLine, span.endCol + 1),
+      options: { className: 'cl-expression-part', hoverMessage: { value: `\`${span.code}\`` } },
+    }] : [])
+  }, [expressionPart, step, execution, monaco, source]) // eslint-disable-line react-hooks/exhaustive-deps
   const compilerDiagnostics = source === lastRunSourceRef.current
     ? execution?.diagnostics ?? []
     : []
@@ -1094,19 +1132,22 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
     try {
       let result: ExecutionResult
       if (lang === 'py') {
-        const handle = startPythonExecution(source)
+        setRunProgress(null)
+        const handle = startPythonExecution(source, scriptedInput, line => {
+          if (generation === runGenerationRef.current) setRunProgress(line.length > 90 ? `${line.slice(0, 89)}…` : line)
+        })
         activeExecutionRef.current = handle
         handle.host.then(host => { if (generation === runGenerationRef.current) setRunHost(host) })
         result = withExecutionStatus(await handle.promise)
       } else if (lang === 'c' || lang === 'cpp' || lang === 'cs') {
-        const handle = startNativeExecution(lang, source)
+        const handle = startNativeExecution(lang, source, stdinText(scriptedInput))
         activeExecutionRef.current = handle
         handle.host.then(host => { if (generation === runGenerationRef.current) setRunHost(host) })
         result = withExecutionStatus(await handle.promise)
       } else if (lang === 'go') {
         result = withExecutionStatus(await runNative(source, 'go'))
       } else {
-        const handle = startJavaScriptExecution(source, lang)
+        const handle = startJavaScriptExecution(source, lang, scriptedInput.stdin)
         activeExecutionRef.current = handle
         result = await handle.promise
       }
@@ -1135,7 +1176,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
         setRunning(false)
       }
     }
-  }, [source, lang])
+  }, [source, lang, scriptedInput])
 
   const handleStop = useCallback(() => {
     activeExecutionRef.current?.stop()
@@ -1235,6 +1276,11 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
         .cl-shadow-line {
           background: rgba(99,102,241,0.05) !important;
         }
+        .cl-expression-part {
+          background: rgba(251,191,36,0.28) !important;
+          outline: 1px solid rgba(251,191,36,0.8);
+          border-radius: 2px;
+        }
         .cl-inline-hint-dim {
           color: #64748b !important;
           opacity: 0.65 !important;
@@ -1277,6 +1323,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
         <span style={{ fontWeight: 700, fontSize: 14 }}>CodeLens</span>
         <span style={{ fontSize: 12, color: ui.textFaint }}>· Execution Visualizer</span>
         {runHost && <span style={{ fontSize: 11, color: ui.textFaint }} title="Where the last run happened">· ran on {runHost}</span>}
+        {running && runProgress && <span style={{ fontSize: 11, color: ui.amberSoft }} role="status">· {runProgress}</span>}
 
         {/* Language toggle */}
         <div style={{ display: 'flex', gap: 2, background: ui.panelBg,
@@ -1322,6 +1369,13 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
         <Btn onClick={() => setLibraryOpen(true)} title="Browse examples with notes, in every language">
           <BookOpen size={12} /> Library
         </Btn>
+
+        {/* Desktop app: CodeLens's Python environment and its packages (PackagesDialog.tsx) */}
+        {lang === 'py' && pythonEnv && (
+          <Btn onClick={() => setShowPackages(true)} title="The Python packages CodeLens's environment has: install, change version, remove">
+            <Package size={12} /> Packages
+          </Btn>
+        )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Structure/Tokens/AST — buttons along the header, not a body
@@ -1665,6 +1719,14 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
               />
             </div>
           </div>
+          <InputPanel
+            lang={lang}
+            value={inputText}
+            onChange={setInputText}
+            parsed={scriptedInput}
+            open={inputOpen}
+            onToggle={() => setInputOpen(open => !open)}
+          />
         </div>
 
         {/* ── Drag handle ── */}
@@ -1712,9 +1774,17 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             {runTab === 'explain' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {currentEvent
-                  ? <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} />
+                  ? <>
+                      <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} />
+                      {expressionSteps.length > 0 && execution?.expressions && (
+                        <ExpressionSteps spans={execution.expressions} steps={expressionSteps} selected={expressionPart} onSelect={setExpressionPart} />
+                      )}
+                    </>
                   : <IdleHero />
                 }
+                {(execution?.frames?.length ?? 0) > 0 && (
+                  <ScreenPanel frames={execution!.frames!} event={currentEvent} />
+                )}
                 {(currentEvent?.heapDelta?.length ?? 0) > 0 && (
                   <Panel title="Heap Changes" icon={Boxes} badge={currentEvent!.heapDelta!.length}>
                     {currentEvent!.heapDelta!.map((d, i) => (
@@ -1902,6 +1972,9 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             abandonActiveRun()
             setLang(exampleLang)
             setSource(example.variants[exampleLang]!.code)
+            // The input belongs to the program: load the example's, or empty the box.
+            setInputText(example.variants[exampleLang]!.input ?? '')
+            if (example.variants[exampleLang]!.input) setInputOpen(true)
             setExecution(null)
             setStep(0)
             setModel(null)
@@ -1910,6 +1983,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
           }}
         />
       )}
+
+      {showPackages && pythonEnv && <PackagesDialog status={pythonEnv} onClose={() => setShowPackages(false)} />}
 
       {showSandboxGuide && (
         <CodeDetailModal title="JavaScript and TypeScript sandbox" icon={Info} onClose={() => setShowSandboxGuide(false)}>

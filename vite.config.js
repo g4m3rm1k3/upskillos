@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { isEmbeddable } from "./backend/checkEmbed.mjs";
 import { resolveAllowedPath, isUntrustedCaller } from "./backend/devFsGuard.mjs";
+import { bundledEntries, pyodideInfo, servedLock } from "./scripts/pyodide-bundle.mjs";
 
 function emitVersionJson() {
   return {
@@ -17,12 +18,16 @@ function emitVersionJson() {
   };
 }
 
-// Serve Pyodide from the installed npm package in development and copy the
-// runtime into production builds. This keeps Python lessons working when a CDN
-// is blocked or unavailable without committing ~65 MB of generated binaries.
+// Serve Pyodide and its package wheels from our own files in development and
+// copy them into production builds, so Python lessons work when the CDN is
+// blocked or down, and on the desktop with no network at all.
 function localPyodidePlugin() {
-  const sourceDir = path.resolve(process.cwd(), "node_modules/pyodide");
-  const included = file => /\.(?:js|mjs|wasm|zip|whl|json)$/.test(file);
+  // The core runtime comes from the npm package; package wheels come from the
+  // checksum-verified cache that scripts/fetch-pyodide-packages.mjs fills. The
+  // served pyodide-lock.json points bundled packages at these files and every
+  // other package at the CDN (scripts/pyodide-bundle.mjs).
+  const info = pyodideInfo();
+  const core = file => /\.(?:js|mjs|wasm|zip)$/.test(file);
   const contentTypes = {
     ".js": "text/javascript; charset=utf-8",
     ".mjs": "text/javascript; charset=utf-8",
@@ -30,29 +35,57 @@ function localPyodidePlugin() {
     ".json": "application/json; charset=utf-8",
     ".zip": "application/zip",
     ".whl": "application/octet-stream",
+    ".tar": "application/x-tar",
+  };
+  const cached = file => fs.existsSync(path.join(info.cacheDir, file));
+  // Bundled wheels that are in the cache. `strict` (the build) fails on a gap
+  // instead of quietly shipping a site that needs the CDN.
+  const localWheels = strict => {
+    const entries = bundledEntries(info.lock);
+    const missing = entries.filter(pkg => !cached(pkg.file_name));
+    if (missing.length && strict) {
+      throw new Error(
+        `${missing.length} bundled Pyodide packages are not in ${path.relative(process.cwd(), info.cacheDir)}, ` +
+        `for example ${missing[0].file_name}. Run: node scripts/fetch-pyodide-packages.mjs`,
+      );
+    }
+    if (missing.length) {
+      console.warn(`[pyodide] ${missing.length} bundled packages aren't cached yet and will load from the CDN. Run: node scripts/fetch-pyodide-packages.mjs`);
+    }
+    return new Set(entries.filter(pkg => cached(pkg.file_name)).map(pkg => pkg.file_name));
   };
 
   return {
     name: "local-pyodide-runtime",
     configureServer(server) {
+      const lockJson = JSON.stringify(servedLock(info, localWheels(false)));
       server.middlewares.use("/pyodide/", (req, res, next) => {
         const requested = decodeURIComponent((req.url || "").split("?")[0]).replace(/^\/+/, "");
-        if (!requested || path.basename(requested) !== requested || !included(requested)) return next();
-        const file = path.join(sourceDir, requested);
+        if (!requested || path.basename(requested) !== requested) return next();
+        const send = (type, body) => {
+          res.statusCode = 200;
+          res.setHeader("Content-Type", type);
+          res.setHeader("Cache-Control", "no-cache");
+          if (typeof body === "string") res.end(body);
+          else body.pipe(res);
+        };
+        if (requested === "pyodide-lock.json") return send(contentTypes[".json"], lockJson);
+        const file = core(requested) ? path.join(info.coreDir, requested) : path.join(info.cacheDir, requested);
         if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return next();
-        res.statusCode = 200;
-        res.setHeader("Content-Type", contentTypes[path.extname(file)] || "application/octet-stream");
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-        fs.createReadStream(file).pipe(res);
+        send(contentTypes[path.extname(file)] || "application/octet-stream", fs.createReadStream(file));
       });
     },
     writeBundle(options) {
       const outputDir = path.resolve(options.dir || "dist", "pyodide");
       fs.mkdirSync(outputDir, { recursive: true });
-      for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-        if (!entry.isFile() || !included(entry.name)) continue;
-        fs.copyFileSync(path.join(sourceDir, entry.name), path.join(outputDir, entry.name));
+      for (const entry of fs.readdirSync(info.coreDir, { withFileTypes: true })) {
+        if (entry.isFile() && core(entry.name)) {
+          fs.copyFileSync(path.join(info.coreDir, entry.name), path.join(outputDir, entry.name));
+        }
       }
+      const wheels = localWheels(true);
+      for (const file of wheels) fs.copyFileSync(path.join(info.cacheDir, file), path.join(outputDir, file));
+      fs.writeFileSync(path.join(outputDir, "pyodide-lock.json"), JSON.stringify(servedLock(info, wheels)));
     },
   };
 }

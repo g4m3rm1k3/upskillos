@@ -73,6 +73,10 @@ Each was confirmed against the renderer; none is fixed yet.
 
 ### P1 — Connected maths demo
 
+- [ ] **Mathematics Through Computation completion (2026-10-04, in progress):** finish missing notebooks in manifest order before deciding whether to rewrite older material. New notebooks follow the [teaching and reference standard](math-notebook-teaching-standard.md): explain operations and code before compact notation, define symbols locally, link prerequisites, and include reusable reference procedures. The geometry continuation through `math-conic-sections` is authored and passes its Pyodide, LaTeX and prerequisite-link checks; browser verification is being recorded with the batch. The next unwritten topic is `math-the-dot-product`. Earlier notebooks remain unchanged.
+
+- [x] **Notebook Lab trigonometric identities (2026-10-04):** completed the next Mathematics Through Computation notebook, `math-trig-identities`, with geometric derivations, vibration experiments, and graded challenges covering rotations, amplitude/phase, and cancellation-safe displacement. The series checker executes the demos and verifies failing starters and passing reference solutions; parsed notebook LaTeX also passes validation. Browser Run all produced the expected outputs and rendered plots. See [verification details](trig-identities-verification.md).
+
 - [x] Apply discovery-first starting states, optional comparison views, and transfer prompts across the connected maths lab. Add everyday experiments for sharing, fractions, measurement, equality, volume, proportion, observer frames, repeating multiples, and near-base calculation.
 
 - [x] Counting assessment pilot: observation, prediction, independent construction, supported retry, and stable-ID progress persistence.

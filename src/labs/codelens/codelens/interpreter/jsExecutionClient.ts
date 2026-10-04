@@ -132,6 +132,8 @@ function timeoutResult(
 export function startJavaScriptExecution(
   source: string,
   language: 'js' | 'ts' = 'js',
+  /** prompt() answers, from the Input box (scriptedInput.ts). */
+  stdin: string[] = [],
 ): JavaScriptExecutionHandle {
   const worker = new Worker(new URL('./jsExecution.worker.ts', import.meta.url), { type: 'module' })
   const events: TraceEvent[] = []
@@ -202,6 +204,7 @@ export function startJavaScriptExecution(
     source,
     language,
     limits: JAVASCRIPT_EXECUTION_LIMITS,
+    stdin,
   })
 
   return {

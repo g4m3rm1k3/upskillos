@@ -30,15 +30,19 @@ export default function LibraryBrowser({ available, preferredLang, initialExampl
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const example = LIBRARY.find(e => e.id === selectedId) ?? LIBRARY[0]
   const languages = variantLanguages(example)
-  const [lang, setLang] = useState<Lang>(languages.includes(preferredLang) ? preferredLang : languages[0])
+  const fallbackLang = languages.includes(preferredLang) ? preferredLang : languages[0]
+  const [chosenLang, setLang] = useState<Lang>(fallbackLang)
+  // Worked out while rendering, not fixed up afterwards: an example without a variant in
+  // the chosen language (a Python-only one while JavaScript is chosen) must never be
+  // rendered with that language, even for one render.
+  const lang = example.variants[chosenLang] ? chosenLang : fallbackLang
   const [compareWith, setCompareWith] = useState<Lang | null>(null)
   const [copied, setCopied] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // Keep the shown language valid for the selected example.
+  // Keep the compared language valid for the selected example.
   useEffect(() => {
-    if (!example.variants[lang]) setLang(languages.includes(preferredLang) ? preferredLang : languages[0])
     if (compareWith && !example.variants[compareWith]) setCompareWith(null)
   }, [example]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -215,6 +219,12 @@ export default function LibraryBrowser({ available, preferredLang, initialExampl
               <div>
                 {compareWith && <div style={{ fontSize: 11, color: ui.textMuted, marginBottom: 4 }}>{LANGUAGE_LABELS[lang]}</div>}
                 {codeBlock(variant.code)}
+                {variant.input && (
+                  <>
+                    <div style={{ fontSize: 11, color: ui.textMuted, margin: '8px 0 4px' }}>Input box (loaded with the code; each line is read in turn)</div>
+                    {codeBlock(variant.input.replace(/\n$/, ''))}
+                  </>
+                )}
               </div>
               {compareWith && example.variants[compareWith] && (
                 <div>

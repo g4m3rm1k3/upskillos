@@ -9,6 +9,7 @@ interface RunRequest {
   source: string
   language: 'js' | 'ts'
   limits: ExecutionLimits
+  stdin?: string[]
 }
 
 const EVENT_BATCH_SIZE = 100
@@ -60,6 +61,7 @@ self.onmessage = (event: MessageEvent<RunRequest>) => {
   let pendingPrinted = ''
   const raw = run(code, {
     limits: event.data.limits,
+    stdin: event.data.stdin ?? [],
     onEvent: (traceEvent: TraceEvent) => {
       const mapped = remap(traceEvent)
       if (pendingPrinted) {

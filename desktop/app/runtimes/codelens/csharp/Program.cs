@@ -406,10 +406,14 @@ sealed class Instrumenter(SemanticModel model) : CSharpSyntaxRewriter
     StatementSyntax Embedded(StatementSyntax original) =>
         original is BlockSyntax ? (StatementSyntax)Visit(original) : SyntaxFactory.Block(InstrumentList([original]));
 
-    // `L(line, ...) && (condition)`: every check of a loop's condition is a step.
+    // `(L(line, ...) is var _) && (condition)`: every check of a loop's condition is a step.
+    // Not plain `L(...) && (condition)`: the compiler can't know L always returns true, so a
+    // variable the condition assigns, as in `while ((line = Console.ReadLine()) != null)`,
+    // would no longer be definitely assigned after the loop, and the traced copy wouldn't
+    // compile. `is var _` always matches, which the compiler does know.
     ExpressionSyntax Check(int line, StatementSyntax loop, ExpressionSyntax condition) =>
         SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression,
-            SyntaxFactory.ParseExpression($"{CL}.L({line}, {loop.SpanStart}{Locals(condition)})"),
+            SyntaxFactory.ParseExpression($"({CL}.L({line}, {loop.SpanStart}{Locals(condition)}) is var _)"),
             SyntaxFactory.ParenthesizedExpression((ExpressionSyntax)Visit(condition)));
 
     // ── statements ──────────────────────────────────────────────────────────

@@ -43,6 +43,13 @@ export interface TraceEvent {
   timestamp?: number
   operationCount?: number
   error?: { type: string; message: string } | null
+  /** Lines of standard input the program read since the previous event (scriptedInput.ts). */
+  inputRead?: string[]
+  /** pygame programs (python/codelens_pygame.py): the frame being drawn, the picture on
+   *  screen (an index into ExecutionResult.frames) and events received since the previous event. */
+  gameFrame?: number
+  screen?: number
+  gameEvents?: string[]
   // Per-event-type payload fields (functionName, args, name, value, oldValue,
   // newValue, condition, branch, result, iteration, loopType, objectType,
   // objectId, property, returnValue, errorType, message, scopeId, ...) vary by
@@ -106,6 +113,33 @@ export interface ExecutionResult {
   diagnostics?: CompilerDiagnostic[]
   status?: ExecutionStatus
   limit?: { kind: ExecutionLimitKind; message: string }
+  /** Pictures a pygame program drew, one per changed frame (python/codelens_pygame.py).
+   *  An event's `screen` is the index of the picture on screen at that step. */
+  frames?: ScreenFrame[]
+  /** Python: every sub-expression the tracer records values for, by id. Events carry
+   *  `expressions: [id, depth, value][]`, collected per line into `outcome.expressions`. */
+  expressions?: ExpressionSpan[]
+}
+
+/** Where a sub-expression is in the source: lines from 1, columns in characters from 0. */
+export interface ExpressionSpan {
+  line: number
+  col: number
+  endLine: number
+  endCol: number
+  code: string
+}
+
+/** One picture of a pygame program's window, saved when it called display.flip(). */
+export interface ScreenFrame {
+  /** Which frame: 0 is the first picture shown. */
+  frame: number
+  /** The pretend clock (pygame.time.get_ticks()) when it was shown. */
+  timeMs: number
+  width: number
+  height: number
+  /** Base64 PNG. */
+  png: string
 }
 
 export interface HeapObjectEntry {

@@ -34,6 +34,16 @@ jobs:
       - name: Install dependencies
         run: npm install --prefer-offline
 
+      # Pyodide's package wheels, checksum-verified against its lockfile
+      # (scripts/fetch-pyodide-packages.mjs). The build ships them, so the
+      # site and the desktop app don't load them from the CDN.
+      - name: Cache Pyodide packages
+        uses: actions/cache@v4
+        with:
+          path: .cache/pyodide-packages
+          key: pyodide-packages-${{ hashFiles('package-lock.json', 'scripts/pyodide-bundle.mjs') }}
+          restore-keys: pyodide-packages-
+
       - name: Build
         run: npm run build
 

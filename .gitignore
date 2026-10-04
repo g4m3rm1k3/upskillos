@@ -41,3 +41,6 @@ src/labs/game-studio/runtime/dist/
 
 # Temporary check scripts written by coding agents during verification
 .claude-*.mjs
+
+# Pyodide package wheels, checksum-verified (scripts/fetch-pyodide-packages.mjs)
+.cache/

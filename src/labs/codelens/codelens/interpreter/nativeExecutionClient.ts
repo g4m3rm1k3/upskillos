@@ -59,7 +59,8 @@ function shortVersion(compilerVersion: string, fallback: string): string {
 // the desktop app itself not answering.
 const CLIENT_TIMEOUT_MS = 60_000
 
-export function startNativeExecution(lang: NativeLang, source: string): NativeExecutionHandle {
+/** stdin: the Input box's standard input as text (scriptedInput.ts stdinText). */
+export function startNativeExecution(lang: NativeLang, source: string, stdin = ''): NativeExecutionHandle {
   const api = desktopApi()
   let settled = false
   let runId: string | null = null
@@ -113,7 +114,7 @@ export function startNativeExecution(lang: NativeLang, source: string): NativeEx
       }
     }
     unsubscribe = api.onScriptOutput((event: any) => { events.push(event); check() })
-    const res = await api.runCode('codelens', JSON.stringify({ lang: DESKTOP_LANG[lang], source }))
+    const res = await api.runCode('codelens', JSON.stringify({ lang: DESKTOP_LANG[lang], source, stdin }))
     if (!res?.ok) { finish(failed(res?.reason ?? 'Could not start the tracer.')); return }
     runId = res.runId
     check()

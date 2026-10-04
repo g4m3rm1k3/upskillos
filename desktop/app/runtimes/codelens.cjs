@@ -118,8 +118,10 @@ async function readResult(runDir, killed) {
 
 async function runCode(app, payloadText, onOutput) {
   try {
-    const { lang, source } = JSON.parse(payloadText)
-    if (lang === 'csharp' && typeof source === 'string') return runCSharp(app, source, onOutput)
+    const { lang, source, stdin } = JSON.parse(payloadText)
+    // The CodeLens Input box's standard input (src/labs/codelens/codelens/scriptedInput.ts).
+    const input = typeof stdin === 'string' ? stdin : ''
+    if (lang === 'csharp' && typeof source === 'string') return runCSharp(app, source, input, onOutput)
     const spec = LANGUAGES[lang]
     if (!spec || typeof source !== 'string') return { ok: false, reason: `CodeLens can't trace ${lang} on the desktop` }
     const gdb = await systemGdb()
@@ -135,6 +137,7 @@ async function runCode(app, payloadText, onOutput) {
     // file may sit inside an asar archive, which only Electron (not GDB) can read.
     await fs.writeFile(path.join(runDir, 'gdb_tracer.py'), await fs.readFile(TRACER, 'utf8'), 'utf8')
     await fs.writeFile(path.join(runDir, 'codelens_unbuffered.h'), UNBUFFERED_HEADER, 'utf8')
+    await fs.writeFile(path.join(runDir, 'program_input.txt'), input, 'utf8')
 
     const emit = (stream, text) => onOutput?.({ runId, stream, text })
     const cleanup = () => fs.rm(runDir, { recursive: true, force: true }).catch(() => {})
@@ -252,13 +255,14 @@ async function attachStatements(runDir, result) {
   return result
 }
 
-async function runCSharp(app, source, onOutput) {
+async function runCSharp(app, source, input, onOutput) {
   const toolchain = await csharpToolchain()
   if (!toolchain) return { ok: false, reason: 'Tracing C# needs the .NET SDK (8 or later) on this computer' }
   const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const runDir = path.join(scratchDir(app), runId)
   await fs.mkdir(runDir, { recursive: true })
   await fs.writeFile(path.join(runDir, 'Program.cs'), source, 'utf8')
+  await fs.writeFile(path.join(runDir, 'program_input.txt'), input, 'utf8')
 
   const cleanup = () => fs.rm(runDir, { recursive: true, force: true }).catch(() => {})
   const finish = (result) => {

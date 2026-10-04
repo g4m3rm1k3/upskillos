@@ -19,6 +19,7 @@ const lispRuntime = require('./runtimes/lisp.cjs')
 const javaRuntime = require('./runtimes/java.cjs')
 const dotnetRuntime = require('./runtimes/dotnet.cjs')
 const codelensRuntime = require('./runtimes/codelens.cjs')
+const codelensPythonRuntime = require('./runtimes/codelens-python.cjs')
 const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
@@ -31,7 +32,7 @@ const { evalInPage } = require('./page-eval.cjs')
 // detached GUI process rather than a run-to-completion one; it's included
 // here too so desktop:runtime-status/desktop:install-runtime work uniformly
 // across all five.
-const RUNTIMES = { python: pythonRuntime, cpp: cppRuntime, lisp: lispRuntime, java: javaRuntime, dotnet: dotnetRuntime, codelens: codelensRuntime }
+const RUNTIMES = { python: pythonRuntime, cpp: cppRuntime, lisp: lispRuntime, java: javaRuntime, dotnet: dotnetRuntime, codelens: codelensRuntime, 'codelens-python': codelensPythonRuntime }
 
 const execAsync = promisify(exec)
 

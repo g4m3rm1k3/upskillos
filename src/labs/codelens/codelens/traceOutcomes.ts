@@ -18,6 +18,13 @@ export interface LineOutcome {
   heap?: HeapDelta[]
   moreHeap?: number
   printed?: string
+  /** Lines of standard input the line read (scriptedInput.ts). */
+  inputRead?: string[]
+  /** pygame events the line received (python/codelens_pygame.py). */
+  gameEvents?: string[]
+  /** The line's own sub-expressions in evaluation order, as [expression id, value]; the ids
+   *  index ExecutionResult.expressions (Python: codelens_tracer.py _ExpressionRecorder). */
+  expressions?: [number, unknown][]
   nextLine?: number
   returned?: boolean
   returnValue?: unknown
@@ -85,6 +92,9 @@ export function annotateOutcomes(events: TraceEvent[], options: OutcomeOptions =
     const heap: HeapDelta[] = []
     const calls: string[] = []
     let printed = ''
+    const inputRead: string[] = []
+    const gameEvents: string[] = []
+    const expressions: [number, unknown][] = []
     const outcome: LineOutcome = {}
     let ended = false   // the statement has finished; now only looking for the next line
 
@@ -93,6 +103,12 @@ export function annotateOutcomes(events: TraceEvent[], options: OutcomeOptions =
       if (!ended) {
         heap.push(...(later.heapDelta ?? []))
         printed += later.printed ?? ''
+        inputRead.push(...(later.inputRead ?? []))
+        gameEvents.push(...(later.gameEvents ?? []))
+        // Recorded at this line's depth: its own; deeper ones belong to the lines of functions it called.
+        for (const [id, at, value] of (later.expressions ?? []) as [number, number, unknown][]) {
+          if (at === depth) expressions.push([id, value])
+        }
         // Functions the line called directly (built-ins like console.log aren't frames).
         if (later.type === 'function_call' && !later.native && laterDepth === depth + 1 && calls.length < MAX_CALLS) {
           calls.push(later.functionName)
@@ -138,6 +154,9 @@ export function annotateOutcomes(events: TraceEvent[], options: OutcomeOptions =
       if (heap.length > MAX_HEAP) outcome.moreHeap = heap.length - MAX_HEAP
     }
     if (printed) outcome.printed = printed
+    if (inputRead.length) outcome.inputRead = inputRead
+    if (gameEvents.length) outcome.gameEvents = gameEvents
+    if (expressions.length) outcome.expressions = expressions
     if (calls.length) outcome.calls = calls
     const binding = bound.get(event)
     if (binding?.length) outcome.changes = [...binding, ...(outcome.changes ?? []).filter(c => !binding.some(b => b.name === c.name))]

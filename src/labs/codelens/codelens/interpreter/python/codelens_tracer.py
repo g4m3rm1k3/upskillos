@@ -35,6 +35,7 @@ import ast
 import collections
 import io
 import json
+import re
 import sys
 import time
 import types
@@ -51,6 +52,8 @@ DEFAULT_LIMITS = {
     'maxHeapObjects': 400,
     'maxSnapshotItems': 60,
     'maxSnapshotChars': 200,
+    'maxExpressions': 30000,         # expression values recorded in the whole run
+    'maxExpressionsPerStep': 120,    # ...and between two events (a long comprehension)
 }
 
 _CONTAINERS = (list, tuple, dict, set, frozenset, collections.deque)
@@ -97,6 +100,37 @@ class _Output(io.TextIOBase):
         return text.split('\n') if text else []
 
 
+class _ScriptedStdin(io.TextIOBase):
+    """Standard input from the Input box (scriptedInput.ts), read one line at a time.
+
+    input() reads through sys.stdin.readline() whenever sys.stdin isn't a terminal, so
+    replacing sys.stdin is enough for input(), sys.stdin.readline() and `for line in
+    sys.stdin`. Each line read is echoed into the output, the way a terminal shows what
+    was typed, and reported on the next trace event as `inputRead`."""
+
+    def __init__(self, tracer, lines):
+        self.tracer = tracer
+        self.lines = list(lines)
+
+    def readable(self):
+        return True
+
+    def readline(self, size=-1):
+        if not self.lines:
+            return ''   # end of input: input() raises EOFError, as at a real end of file
+        line = self.lines.pop(0)
+        self.tracer.input_read.append(line)
+        if self.tracer.output is not None:
+            self.tracer.output.write(line + '\n')
+        return line + '\n'
+
+    def read(self, size=-1):
+        text = ''
+        while self.lines and (size < 0 or len(text) < size):
+            text += self.readline()
+        return text
+
+
 class Tracer:
     def __init__(self, limits):
         self.limits = {**DEFAULT_LIMITS, **(limits or {})}
@@ -111,6 +145,31 @@ class Tracer:
         self.statements = {}    # line -> what the statement starting on it is (statement_info)
         self.output = None      # the _Output capturing print(), for 'printed'
         self.printed_parts = 0  # how many output parts earlier events have already reported
+        self.input_read = []    # standard-input lines read since the previous event
+        self.screen = None      # the pygame stand-in (codelens_pygame.Screen), if the program uses one
+        self.expressions = []   # (expression id, depth, value) recorded since the previous event
+        self.expression_count = 0
+
+    def record_expression(self, ident, value):
+        """The rewritten program calls this with each sub-expression's value (see
+        _ExpressionRecorder); it returns the value unchanged."""
+        if self.expression_count < self.limits['maxExpressions'] and len(self.expressions) < self.limits['maxExpressionsPerStep'] \
+                and not isinstance(value, _NOT_DATA):   # a function or module named in the code isn't a result
+            self.expression_count += 1
+            self.expressions.append([ident, self.depth, self.expression_value(value)])
+        return value
+
+    def expression_value(self, value):
+        """Like value(), but never numbers a new object: a temporary list in an expression
+        would otherwise shift the numbers of the program's own objects, and be kept alive
+        (see object_id) for the rest of the run. An object already numbered shows as itself."""
+        if self.is_tracked(value):
+            small = self.ids.get(id(value))
+            if small is not None:
+                return {'$ref': small}
+            text = repr(value)
+            return text if len(text) <= 60 else text[:59] + '…'
+        return self.value(value)
 
     # ── values ──────────────────────────────────────────────────────────────
 
@@ -335,6 +394,17 @@ class Tracer:
         }
         if printed:
             event['printed'] = printed   # what print() wrote since the previous event
+        if self.input_read:
+            event['inputRead'] = self.input_read   # standard-input lines read since the previous event
+            self.input_read = []
+        if self.screen is not None:
+            self.screen.annotate(event)
+        if self.expressions:
+            # [[expression id, depth, value], ...] in evaluation order; the ids index the
+            # result's `expressions` table. depth tells a line's own expressions apart from
+            # those of functions it called.
+            event['expressions'] = self.expressions
+            self.expressions = []
         if event_type == 'statement_enter' and line in self.statements:
             event['statement'] = self.statements[line]
         self.events.append(event)
@@ -467,8 +537,158 @@ def statement_info(source):
     return info
 
 
-def run(source, limits=None):
-    """Trace `source`; return a CodeLens ExecutionResult as a dict."""
+# ── expressions ──────────────────────────────────────────────────────────────
+#
+# A line event only says which line is about to run, so `total += price * qty - discount`
+# would show only its end result. To show its steps, the program's syntax tree is rewritten
+# before it runs: each sub-expression `e` becomes `__codelens_expr__(n, e)`, a call that
+# records expression n's value and returns it unchanged. Python evaluates the arguments
+# before the call, so the inner parts are recorded first: the log is the evaluation order.
+# `a and b` still skips b when a is false, since b's wrapper sits inside the `and`.
+#
+# Left alone, because rewriting them would change what the program means or is allowed:
+# assignment and `del` targets, the function part of a call (`super()` only works called
+# directly), patterns in `match`, annotations, decorators, `yield`, `await`, `*args`,
+# slices (`a[1:2]`), and constants (their value is in the code already).
+
+EXPR_HOOK = '__codelens_expr__'
+
+
+class _ExpressionRecorder(ast.NodeTransformer):
+    def __init__(self, source):
+        self.source = source
+        self.lines = source.split('\n')
+        self.spans = []   # expression id -> {line, col, endLine, endCol, code}; columns count characters from 0
+
+    def column(self, line, byte_offset):
+        """The syntax tree counts columns in UTF-8 bytes; an editor counts characters."""
+        text = self.lines[line - 1] if 0 < line <= len(self.lines) else ''
+        return len(text.encode('utf-8')[:byte_offset].decode('utf-8', 'replace'))
+
+    def wrap(self, node):
+        if node is None:
+            return None
+        if isinstance(node, (ast.Constant, ast.Starred, ast.Slice, ast.Yield, ast.YieldFrom, ast.Await, ast.Lambda)) \
+                or not isinstance(getattr(node, 'ctx', ast.Load()), ast.Load):
+            return self.visit(node)
+        inner = self.visit(node)
+        code = ast.get_source_segment(self.source, node) or ''
+        if not code:
+            return inner
+        ident = len(self.spans)
+        self.spans.append({'line': node.lineno, 'col': self.column(node.lineno, node.col_offset),
+                           'endLine': node.end_lineno, 'endCol': self.column(node.end_lineno, node.end_col_offset),
+                           'code': code if len(code) <= 80 else code[:79] + '…'})
+        call = ast.Call(func=ast.Name(id=EXPR_HOOK, ctx=ast.Load()), args=[ast.Constant(ident), inner], keywords=[])
+        return ast.copy_location(call, node)
+
+    # Expressions: wrap each child expression, then the parent wraps this node.
+    def generic_visit(self, node):
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                setattr(node, field, [self.wrap(item) if isinstance(item, ast.expr) else self.visit(item) if isinstance(item, ast.AST) else item for item in value])
+            elif isinstance(value, ast.expr):
+                setattr(node, field, self.wrap(value))
+            elif isinstance(value, ast.AST):
+                setattr(node, field, self.visit(value))
+        return node
+
+    def visit_Call(self, node):
+        # The function itself isn't wrapped (see above), but what it is looked up on is:
+        # in `rows[i].append(x)`, `rows[i]` is recorded.
+        if isinstance(node.func, ast.Attribute):
+            node.func.value = self.wrap(node.func.value)
+        elif not isinstance(node.func, ast.Name):
+            node.func = self.visit(node.func)
+        node.args = [self.wrap(arg) for arg in node.args]
+        for keyword in node.keywords:
+            keyword.value = self.wrap(keyword.value)
+        return node
+
+    def visit_Subscript(self, node):
+        node.value = self.wrap(node.value)
+        index = node.slice
+        if isinstance(index, ast.Slice):
+            node.slice = self.visit(index)
+        elif isinstance(index, ast.Tuple) and any(isinstance(e, ast.Slice) for e in index.elts):
+            index.elts = [self.visit(e) if isinstance(e, ast.Slice) else self.wrap(e) for e in index.elts]
+        else:
+            node.slice = self.wrap(index)
+        return node
+
+    def visit_Attribute(self, node):
+        node.value = self.wrap(node.value)
+        return node
+
+    def visit_Lambda(self, node):
+        node.body = self.wrap(node.body)
+        return node
+
+    def visit_JoinedStr(self, node):
+        for part in node.values:
+            if isinstance(part, ast.FormattedValue):
+                part.value = self.wrap(part.value)
+        return node
+
+    def visit_Dict(self, node):
+        node.keys = [self.wrap(key) if key is not None else None for key in node.keys]
+        node.values = [self.wrap(value) for value in node.values]
+        return node
+
+    # Statements: only the parts that are evaluated as values.
+    def visit_FunctionDef(self, node):
+        node.body = [self.visit(statement) for statement in node.body]
+        return node
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_ClassDef(self, node):
+        node.body = [self.visit(statement) for statement in node.body]
+        return node
+
+    def visit_AnnAssign(self, node):
+        if node.value is not None:
+            node.value = self.wrap(node.value)
+        node.target = self.visit(node.target)
+        return node
+
+    def visit_Match(self, node):
+        node.subject = self.wrap(node.subject)
+        for case in node.cases:
+            if case.guard is not None:
+                case.guard = self.wrap(case.guard)
+            case.body = [self.visit(statement) for statement in case.body]
+        return node
+
+    def visit_arguments(self, node):
+        return node   # defaults are evaluated once, at the def; not worth the noise
+
+    def visit_ExceptHandler(self, node):
+        if node.type is not None:
+            node.type = self.wrap(node.type)
+        node.body = [self.visit(statement) for statement in node.body]
+        return node
+
+
+def _compile_with_expressions(source):
+    """(code object, expression spans), or (plain code object, []) if rewriting fails."""
+    try:
+        tree = ast.parse(source, USER_FILE)
+        recorder = _ExpressionRecorder(source)
+        tree = ast.fix_missing_locations(recorder.visit(tree))
+        return compile(tree, USER_FILE, 'exec'), recorder.spans
+    except SyntaxError:
+        raise
+    except Exception:
+        return compile(source, USER_FILE, 'exec'), []
+
+
+def run(source, limits=None, inputs=None):
+    """Trace `source`; return a CodeLens ExecutionResult as a dict.
+
+    `inputs` is the parsed Input box (scriptedInput.ts): {"stdin": [lines], "events":
+    [scripted pygame events]}."""
+    inputs = inputs or {}
     tracer = Tracer(limits)
     output = _Output(tracer)
     tracer.output = output
@@ -476,17 +696,25 @@ def run(source, limits=None):
     result = {'events': tracer.events, 'output': [], 'error': None, 'status': 'completed'}
 
     try:
-        code = compile(source, USER_FILE, 'exec')
+        code, spans = _compile_with_expressions(source)
     except SyntaxError as error:
         result['error'] = {'type': 'SyntaxError', 'message': error.msg, 'line': error.lineno}
         result['status'] = 'syntax-error'
         return result
 
-    saved_stdout = sys.stdout
+    saved_stdout, saved_stdin = sys.stdout, sys.stdin
     sys.stdout = output
+    sys.stdin = _ScriptedStdin(tracer, inputs.get('stdin') or [])
+    try:
+        _install_pygame_stand_in(source, tracer, inputs.get('events') or [])
+    except ValueError as error:   # a key name pygame doesn't know, in the Input box
+        sys.stdout, sys.stdin = saved_stdout, saved_stdin
+        result['status'] = 'runtime-error'
+        result['error'] = {'type': 'InputError', 'message': str(error)}
+        return result
     sys.settrace(tracer.trace)
     try:
-        exec(code, {'__name__': '__main__', '__builtins__': __builtins__})
+        exec(code, {'__name__': '__main__', '__builtins__': __builtins__, EXPR_HOOK: tracer.record_expression})
     except _LimitReached as limit:
         result['status'] = 'limit'
         result['limit'] = {'kind': limit.kind, 'message': limit.message}
@@ -497,14 +725,17 @@ def run(source, limits=None):
         result['limit'] = {'kind': 'recursion', 'message': f'RecursionError: {error}'}
     except BaseException as error:   # the learner's own uncaught exception
         line = _user_line(error)
+        message = str(error)
+        if isinstance(error, EOFError) and isinstance(sys.stdin, _ScriptedStdin) and not sys.stdin.lines:
+            message += ': the program asked for more input than the Input box has'
         result['status'] = 'runtime-error'
-        result['error'] = {'type': type(error).__name__, 'message': str(error)}
+        result['error'] = {'type': type(error).__name__, 'message': message}
         tracer.events.append({
             'stepId': len(tracer.events),
             'type': 'error_thrown',
             'language': 'python',
             'errorType': type(error).__name__,
-            'message': str(error),
+            'message': message,
             'line': line,
             'sourceLocation': {'line': line} if line else None,
             'stackSnapshot': tracer.events[-1]['stackSnapshot'] if tracer.events else [],
@@ -512,11 +743,43 @@ def run(source, limits=None):
         })
     finally:
         sys.settrace(None)
-        sys.stdout = saved_stdout
+        sys.stdout, sys.stdin = saved_stdout, saved_stdin
+        _uninstall_pygame_stand_in()
     result['output'] = output.lines()
+    if tracer.screen is not None:
+        result['frames'] = tracer.screen.frames
+    if spans:
+        result['expressions'] = spans
     return result
 
 
-def run_to_json(source, limits=None):
+def _install_pygame_stand_in(source, tracer, events):
+    """If the program imports pygame, it gets the real library with its window, clock and
+    input replaced (codelens_pygame.py), so a game runs without a window, at a fixed frame
+    rate, on the scripted events, and every picture it draws is recorded. The stand-in is
+    installed only for a program that imports pygame; one that doesn't pays nothing. If
+    pygame isn't installed, nothing is installed, and the program's own import fails with
+    the usual ModuleNotFoundError."""
+    if not re.search(r'^\s*(?:import|from)\s+pygame\b', source, re.M):
+        return
+    try:
+        import codelens_pygame
+    except ImportError:
+        return
+    codelens_pygame.prepare()
+    try:
+        import pygame  # noqa: F401  (only to find out whether it's installed)
+    except ImportError:
+        return
+    codelens_pygame.install(tracer, events)
+
+
+def _uninstall_pygame_stand_in():
+    stand_in = sys.modules.get('codelens_pygame')
+    if stand_in is not None:
+        stand_in.uninstall()
+
+
+def run_to_json(source, limits=None, inputs=None):
     """run() as a JSON string; what both hosts call."""
-    return json.dumps(run(source, limits), ensure_ascii=False, default=str)
+    return json.dumps(run(source, limits, inputs), ensure_ascii=False, default=str)

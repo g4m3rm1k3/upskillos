@@ -6,6 +6,9 @@
 import type { ExecutionResult } from '../types'
 import { annotateOutcomes } from '../traceOutcomes'
 import TRACER_SOURCE from './python/codelens_tracer.py?raw'
+import PYGAME_SOURCE from './python/codelens_pygame.py?raw'
+import type { ScriptedInput } from '../scriptedInput'
+import { codelensPythonStatus, runInCodeLensPython } from './codelensPythonEnv'
 
 export const PYTHON_TRACE_LIMITS = Object.freeze({
   maxRuntimeMs: 5_000,
@@ -60,14 +63,25 @@ async function desktopPython(): Promise<{ run: (lang: string, code: string) => P
   }
 }
 
-// The tracer's source, then a call that prints the result as one marked line. The
-// learner's program is embedded as a JSON string, which is also a valid Python string
-// literal, so no quoting can break out of it.
-export function desktopScript(source: string): string {
-  return `${TRACER_SOURCE}
+/** What the tracer receives from the Input box: lines of standard input and game events. */
+export type PythonInputs = Pick<ScriptedInput, 'stdin' | 'events'>
 
-import sys as _codelens_sys
-_codelens_sys.stdout.write(${JSON.stringify(RESULT_MARKER)} + run_to_json(${JSON.stringify(source)}, ${JSON.stringify(PYTHON_TRACE_LIMITS)}) + "\\n")
+const NO_INPUT: PythonInputs = { stdin: [], events: [] }
+
+// The pygame stand-in as an importable module (codelens_pygame), the tracer's source, then
+// a call that prints the result as one marked line. The learner's program, the stand-in and
+// the input are embedded as JSON strings, which are also valid Python string literals, so
+// no quoting can break out of them.
+export function desktopScript(source: string, inputs: PythonInputs = NO_INPUT): string {
+  return `import sys as _codelens_sys, types as _codelens_types
+_codelens_pygame = _codelens_types.ModuleType('codelens_pygame')
+exec(compile(${JSON.stringify(PYGAME_SOURCE)}, 'codelens_pygame.py', 'exec'), _codelens_pygame.__dict__)
+_codelens_sys.modules['codelens_pygame'] = _codelens_pygame
+
+${TRACER_SOURCE}
+
+_codelens_inputs = json.loads(${JSON.stringify(JSON.stringify({ stdin: inputs.stdin, events: inputs.events }))})
+_codelens_sys.stdout.write(${JSON.stringify(RESULT_MARKER)} + run_to_json(${JSON.stringify(source)}, ${JSON.stringify(PYTHON_TRACE_LIMITS)}, _codelens_inputs) + "\\n")
 `
 }
 
@@ -85,8 +99,10 @@ export function parseDesktopResult(stdout: string): ExecutionResult | null {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-export function startPythonExecution(source: string): PythonExecutionHandle {
+/** onProgress: what the desktop environment is doing first, e.g. "Installing pygame-ce…". */
+export function startPythonExecution(source: string, inputs: PythonInputs = NO_INPUT, onProgress?: (line: string) => void): PythonExecutionHandle {
   let settled = false
+  let stopDesktop: () => void = () => {}
   let resolvePromise: (result: ExecutionResult) => void = () => {}
   let resolveHost: (host: string) => void = () => {}
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -101,11 +117,31 @@ export function startPythonExecution(source: string): PythonExecutionHandle {
   }
 
   ;(async () => {
+    // Desktop: CodeLens's own environment first, which installs the packages the program
+    // imports (codelensPythonEnv.ts), then the learner's Python as it is.
+    const env = await codelensPythonStatus()
+    if (settled) return
+    if (env) {
+      resolveHost(`CodeLens's Python environment${env.base ? ` (Python ${env.base.version})` : ''}, on this computer`)
+      const handle = runInCodeLensPython({ action: 'trace', script: desktopScript(source, inputs), source }, onProgress)
+      stopDesktop = handle.stop
+      const run = await handle.promise
+      const parsed = run ? parseDesktopResult(run.stdout) : null
+      const notes = run?.notices.length ? `\n\n${run.notices.join('\n')}` : ''
+      if (parsed) {
+        if (parsed.error && notes && parsed.error.type === 'ModuleNotFoundError') parsed.error.message += notes
+        finish(parsed)
+      } else {
+        finish(failed('PythonError', (run?.stderr?.trim() || 'Python did not return a trace.') + notes))
+      }
+      return
+    }
+
     const desktop = await desktopPython()
     if (settled) return
     if (desktop) {
       resolveHost(desktop.label)
-      const run = await desktop.run('python', desktopScript(source))
+      const run = await desktop.run('python', desktopScript(source, inputs))
       const parsed = run ? parseDesktopResult(run.stdout) : null
       if (parsed) finish(parsed)
       else finish(failed('PythonError', run?.stderr?.trim() || 'Python did not return a trace.'))
@@ -129,7 +165,7 @@ export function startPythonExecution(source: string): PythonExecutionHandle {
       }
     }
     active.onerror = (event) => { discardWorker(); finish(failed('WorkerError', event.message || 'The Python worker failed')) }
-    active.postMessage({ type: 'run', source, limits: PYTHON_TRACE_LIMITS })
+    active.postMessage({ type: 'run', source, limits: PYTHON_TRACE_LIMITS, inputs: { stdin: inputs.stdin, events: inputs.events } })
   })().catch(error => finish(failed('PythonError', error instanceof Error ? error.message : String(error))))
 
   return {
@@ -137,8 +173,10 @@ export function startPythonExecution(source: string): PythonExecutionHandle {
     host,
     stop: () => {
       // A browser run is ended by discarding its worker (the next run starts a fresh one);
-      // a desktop run is already bounded by the tracer's own runtime limit.
+      // a desktop run in CodeLens's environment may be installing packages, so it's stopped
+      // too. A run on the learner's own Python is bounded by the tracer's runtime limit.
       discardWorker()
+      stopDesktop()
       finish({ events: [], output: [], error: null, status: 'stopped' })
     },
   }

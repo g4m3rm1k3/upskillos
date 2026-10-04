@@ -16,10 +16,10 @@ const hasDotnet = spawnSync('dotnet', ['--list-sdks']).stdout?.toString().trim()
 const runtime = hasDotnet ? require('../../../../../desktop/app/runtimes/codelens.cjs') : null
 const app = { getPath: () => path.join(os.tmpdir(), 'opencalc-codelens-test') }
 
-function trace(source: string): Promise<ExecutionResult> {
+function trace(source: string, stdin = ''): Promise<ExecutionResult> {
   return new Promise((resolve, reject) => {
     let stdout = ''
-    runtime.runCode(app, JSON.stringify({ lang: 'csharp', source }), (event: any) => {
+    runtime.runCode(app, JSON.stringify({ lang: 'csharp', source, stdin }), (event: any) => {
       if (event.stream === 'stdout') stdout += event.text
       if (event.stream === 'exit') resolve(JSON.parse(stdout))
     }).then((res: any) => { if (!res.ok) reject(new Error(res.reason)) })
@@ -32,6 +32,39 @@ function explain(result: ExecutionResult): string[] {
 }
 
 describe.skipIf(!runtime)('CodeLens C# tracer (.NET SDK)', () => {
+  it('reads Console.ReadLine from the Input box, echoing each line', async () => {
+    const result = await trace([
+      'Console.Write("Name? ");',
+      'var name = Console.ReadLine();',
+      'var age = int.Parse(Console.ReadLine());',
+      'Console.WriteLine($"{name} is {age}");',
+      'var more = Console.ReadLine();',
+      'Console.WriteLine(more == null ? "no more input" : more);',
+    ].join('\n'), 'Ada\n36\n')
+    expect(result.status).toBe('completed')
+    expect(result.output).toEqual(['Name? Ada', '36', 'Ada is 36', 'no more input'])
+    expect(result.events.filter(e => e.inputRead).map(e => e.inputRead)).toEqual([['Ada'], ['36']])
+  }, 120_000)
+
+  it('keeps definite assignment through loop conditions: assigned there, or a pattern variable', async () => {
+    // The tracer adds a step to every loop check; the traced copy must still compile when
+    // the condition assigns a variable used after the loop, or declares one used inside it.
+    const result = await trace([
+      'string line;',
+      'var count = 0;',
+      'while ((line = Console.ReadLine()) != null) count++;',
+      'Console.WriteLine($"{count} lines, last read {line ?? "null"}");',
+      'object next = 41;',
+      'while (next is int n && n < 43)',
+      '{',
+      '    Console.WriteLine(n);',
+      '    next = n + 1;',
+      '}',
+    ].join('\n'), 'a\nb\n')
+    expect(result.error).toBeNull()
+    expect(result.output).toEqual(['a', 'b', '2 lines, last read null', '41', '42'])
+  }, 120_000)
+
   it('explains each line with its real values', async () => {
     const result = await trace([
       'int Square(int x) => x * x;',

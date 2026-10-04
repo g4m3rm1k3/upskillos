@@ -29,7 +29,17 @@ npm install
 npm run dev
 ```
 
-`npm run dev` first regenerates a few data files (lesson titles, lesson ids, the project inventory and some manifests) and builds Game Studio's game runtime (`npm run game:runtime`), then starts the development server. Open the address it prints, normally http://localhost:5173.
+`npm run dev` first regenerates a few data files (lesson titles, lesson ids, the project inventory and some manifests), builds Game Studio's game runtime (`npm run game:runtime`) and fetches the Python packages the app serves itself (see below), then starts the development server. Open the address it prints, normally http://localhost:5173.
+
+### Python packages (Pyodide)
+
+Python in the browser is Pyodide. The app serves Pyodide and the packages its lessons import (numpy, pandas, matplotlib, pygame-ce and about 90 more, roughly 70 MB) from its own files, so Python lessons don't depend on a CDN. The first `npm run dev` or `npm run build` downloads them into `.cache/pyodide-packages/`, checking each file against the checksum in Pyodide's lockfile; later runs use the cache without the network. A package outside that set still loads from the CDN when a program imports it. The set, and how to change it, is in `scripts/pyodide-bundle.mjs`.
+
+| Command | What it does |
+|---|---|
+| `node scripts/fetch-pyodide-packages.mjs` | Downloads the bundled packages into the cache (`dev` and `build` run it) |
+| `node scripts/fetch-pyodide-packages.mjs --check` | Checks the cache against the lockfile without downloading |
+| `node scripts/fetch-pyodide-packages.mjs --all` | Mirrors every Pyodide package (about 440 MB) |
 
 The server uses port 5173 only and stops with an error if it's already in use, because the browser caches some large downloads per port. If you need a second server, run `npx vite --port 5174`.
 

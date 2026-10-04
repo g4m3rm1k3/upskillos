@@ -146,6 +146,9 @@ class Interpreter {
     this.builtinNames = new Set()
     this.output   = []   // console.log lines
     this.labels   = new Map()
+    // prompt() answers, from the CodeLens Input box (src/labs/codelens/codelens/scriptedInput.ts).
+    this.stdin    = Array.isArray(options.stdin) ? [...options.stdin] : []
+    this.inputRead = []  // answers read since the previous event, reported as `inputRead`
   }
 
   // ── Execution entry ────────────────────────────────────────────────────────
@@ -1561,6 +1564,17 @@ class Interpreter {
       error: native('console.error', (_, args) => { const line = args.map(a => self._display(a)).join(' '); self._pushOutput('[error] ' + line); return undefined }),
     }, 'const')
 
+    // prompt(message) answers with the next line of the Input box. The message and the
+    // answer are printed as one line, the way a terminal shows a question and what was
+    // typed. With no input left it returns null, as a browser does when the dialog is cancelled.
+    env.define('prompt', native('prompt', (_, [message]) => {
+      const answer = self.stdin.length ? self.stdin.shift() : null
+      if (answer !== null) self.inputRead.push(answer)
+      const question = message === undefined ? '' : String(message)
+      if (question || answer !== null) self._pushOutput(question + (answer ?? ''))
+      return answer
+    }), 'const')
+
     // Override MemberExpression lookup for console.log etc.
     env.define('__console_log__', native('console.log', (_, args) => {
       const line = args.map(a => self._display(a)).join(' ')
@@ -1914,6 +1928,10 @@ class Interpreter {
     const heapDelta = this.heap.drainDeltas()
 
     const event = makeEvent(type, this.stepId, loc, stackSnapshot, heapDelta, payload)
+    if (this.inputRead.length) {
+      event.inputRead = this.inputRead
+      this.inputRead = []
+    }
     if (Number.isFinite(this.limits.maxTraceChars)) {
       const eventChars = JSON.stringify(event).length
       if (this.traceChars + eventChars > this.limits.maxTraceChars) {

@@ -54,6 +54,23 @@ namespace __CodeLensRuntime
             public override void Write(string value) { if (value == null) return; if (pending.Length < 20000) pending.Append(value); programOutput.Write(value); }
         }
 
+        // Console.ReadLine reads the Input box (program_input.txt, written by codelens.cjs).
+        // Each line read is echoed into the output, the way a terminal shows typed text, and
+        // carried by the next event as `inputRead`, like the Python tracer's.
+        sealed class ScriptedIn : StringReader
+        {
+            public ScriptedIn(string text) : base(text) { }
+            public override string ReadLine()
+            {
+                var line = base.ReadLine();
+                if (line == null) return null;
+                pendingInput.Add(line);
+                Console.Out.Write(line + "\n");
+                return line;
+            }
+        }
+
+        static readonly List<string> pendingInput = new List<string>();
         static readonly List<Frame> stack = new List<Frame>();
         static readonly Dictionary<object, int> ids = new Dictionary<object, int>(ReferenceEqualityComparer.Instance);
         static readonly Dictionary<int, object> objects = new Dictionary<int, object>();
@@ -101,7 +118,7 @@ namespace __CodeLensRuntime
             var tee = new Tee();
             Console.SetOut(tee);
             Console.SetError(tee);
-            Console.SetIn(new StringReader(""));
+            Console.SetIn(new ScriptedIn(File.Exists("program_input.txt") ? File.ReadAllText("program_input.txt") : ""));
             AppDomain.CurrentDomain.FirstChanceException += (_, e) => OnThrow(e.Exception);
             AppDomain.CurrentDomain.ProcessExit += (_, _) => Finish(null);   // Environment.Exit in the program
             clock = Stopwatch.StartNew();
@@ -336,6 +353,13 @@ namespace __CodeLensRuntime
 
         static void Printed(Utf8JsonWriter w)
         {
+            if (pendingInput.Count > 0)
+            {
+                w.WriteStartArray("inputRead");
+                foreach (var line in pendingInput) w.WriteStringValue(line);
+                w.WriteEndArray();
+                pendingInput.Clear();
+            }
             if (pending.Length == 0) return;
             w.WriteString("printed", pending.ToString());
             pending.Clear();

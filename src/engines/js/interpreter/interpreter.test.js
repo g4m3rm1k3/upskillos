@@ -195,3 +195,17 @@ function binarySearch(values, target) {
     expect(streamedOutput).toEqual(['started'])
   })
 })
+
+describe('CodeLens scripted input', () => {
+  it('answers prompt() from the Input box, then returns null when it runs out', () => {
+    const result = run([
+      "const name = prompt('Name? ')",
+      "const age = Number(prompt('Age? '))",
+      "console.log(name, age + 1)",
+      "console.log(prompt('More? '))",
+    ].join('\n'), { stdin: ['Ada', '36'] })
+    expect(result.error).toBeNull()
+    expect(result.output).toEqual(['Name? Ada', 'Age? 36', 'Ada 37', 'More? ', 'null'])
+    expect(result.events.filter(e => e.inputRead).map(e => e.inputRead)).toEqual([['Ada'], ['36']])
+  })
+})

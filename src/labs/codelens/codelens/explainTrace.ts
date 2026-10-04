@@ -83,7 +83,7 @@ interface Statement {
   name?: string; call?: string; expression?: string; isElif?: boolean; update?: string; prints?: boolean
 }
 interface Outcome {
-  changes?: Change[]; heap?: HeapDelta[]; moreHeap?: number; printed?: string
+  changes?: Change[]; heap?: HeapDelta[]; moreHeap?: number; printed?: string; inputRead?: string[]; gameEvents?: string[]
   nextLine?: number; returned?: boolean; returnValue?: unknown; calls?: string[]
 }
 
@@ -158,6 +158,8 @@ export function explainStatement(event: TraceEvent, language: string): Explanati
   const effectList = [
     ...changes.map(change => describeChange(change, language)),
     ...heap,
+    ...(outcome.inputRead?.length ? [`reads ${outcome.inputRead.map(line => `"${printedText(line)}"`).join(', ')} from the input`] : []),
+    ...(outcome.gameEvents?.length ? [`receives ${outcome.gameEvents.join(', ')}`] : []),
     ...(outcome.printed ? [`prints "${printedText(outcome.printed)}"`] : []),
   ]
   const effects = effectList.length ? ` What it did: ${effectList.join('; ')}.` : ''

@@ -14,7 +14,7 @@ Status: **draft**. Lesson titles and order may change until a lesson ships. Afte
 - **Rigour rises.** Intuition, experiment, calculation, notation, generalisation, definition, proof. The deepening blocks add definitions and derivations; the advanced block adds proofs.
 - **Implement once from scratch, then use the library.** Every major numerical method is written by hand before `numpy.linalg`, `scipy.integrate` or `scipy.optimize` is trusted with it, and the two are compared.
 
-The learner has finished Python from Zero (or knows variables, loops, functions, lists, dictionaries and classes). Python is introduced as a mathematical instrument from the first lesson; no lesson teaches `print`.
+The learner has finished Python from Zero (or knows variables, loops, functions, lists, dictionaries and classes). Every mathematical use of code must still be taught: connect the operation to explicit Python steps before using compact notation or library shortcuts. Prior Python knowledge does not imply knowledge of NumPy, summation notation, or mathematical programming. Follow the [learning-path and reference standard](math-notebook-teaching-standard.md) for new notebooks and revisions.
 
 ## Lesson format and standard
 
@@ -22,7 +22,7 @@ The same format and standard as the other series (see [notebook-series-curriculu
 
 Additions for this series:
 
-- **OpenMAT cells.** A fenced block marked `openmat` is a runnable OpenMAT demo cell: the notebook runs it with the in-browser OpenMAT engine and shows its text output and any figure. The checker runs these cells too. Use them only where the lesson's computational mode includes OpenMAT, and pair them with the same idea in Python, explaining the mathematics, not the syntax.
+- **OpenMAT cells.** A fenced block marked `openmat` is a runnable OpenMAT demo cell: the notebook runs it with the in-browser OpenMAT engine and shows its text output and any figure. The checker runs these cells too. Use them only where the lesson's computational mode includes OpenMAT, pair them with the same idea in Python, and explain both the mathematics and any unfamiliar syntax needed to understand the computation.
 - **Mathematics in prose.** `$inline$` and `\[display\]` LaTeX, as in the other series.
 - **Applications are concrete and engineering-flavoured** where they can be: machining, mechanisms, sensors, vibration, robotics, CAD, process data, plus physics, chemistry, biology, finance and computing. Data sets are generated in the lesson or come from scikit-learn and SciPy (Pyodide has no network access).
 

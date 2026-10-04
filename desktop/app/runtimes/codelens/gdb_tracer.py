@@ -50,6 +50,7 @@ SCALAR_CODES = (gdb.TYPE_CODE_INT, gdb.TYPE_CODE_FLT, gdb.TYPE_CODE_BOOL,
 
 
 PROGRAM_OUTPUT = 'program_output.txt'   # the program's stdout, kept apart from GDB's messages
+PROGRAM_INPUT = 'program_input.txt'     # the program's stdin: the CodeLens Input box
 
 
 def run_quietly(command):
@@ -751,8 +752,9 @@ def main():
     gdb.events.stop.connect(on_signal)
 
     try:
-        # The program's own output goes to a file, so GDB's messages can't mix into it.
-        run_quietly(f'start > {PROGRAM_OUTPUT}')
+        # The program's own output goes to a file, so GDB's messages can't mix into it. Its
+        # standard input is the Input box (program_input.txt, written by codelens.cjs).
+        run_quietly(f'start > {PROGRAM_OUTPUT} < {PROGRAM_INPUT}')
         while program_running():
             frame = gdb.newest_frame()
             if signal.get('name'):

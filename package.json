@@ -9,8 +9,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && npm run game:runtime && vite",
-    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && npm run game:runtime && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "dev": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && npm run game:runtime && node scripts/fetch-pyodide-packages.mjs --optional && vite",
+    "build": "node scripts/generate-graph.mjs && node scripts/build-concept-manifest.mjs && node scripts/build-practice-manifest.mjs && node scripts/build-blog-manifest.mjs && node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/generate-project-facts.mjs && npm run game:runtime && node scripts/fetch-pyodide-packages.mjs && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "preview": "vite preview",
     "index": "node src/scripts/build-lesson-titles.js",
     "lesson-ids": "node scripts/build-lesson-ids.mjs",
@@ -26,9 +26,9 @@
     "desktop:dev": "node scripts/run-desktop-dev.mjs",
     "desktop:sync-package": "node scripts/sync-desktop-package.mjs",
     "desktop:prepare-build": "node scripts/prepare-desktop-build.mjs",
-    "desktop:build": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging",
-    "desktop:build:win": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging --win portable",
-    "desktop:build:mac": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging --mac dmg",
+    "desktop:build": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/fetch-pyodide-packages.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging",
+    "desktop:build:win": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/fetch-pyodide-packages.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging --win portable",
+    "desktop:build:mac": "cross-env ELECTRON_BUILD=1 node src/scripts/build-lesson-titles.js && node scripts/build-lesson-ids.mjs && node scripts/fetch-pyodide-packages.mjs && cross-env ELECTRON_BUILD=1 vite build && npm run desktop:sync-package && npm run desktop:prepare-build && node --max-old-space-size=4096 ./node_modules/electron-builder/cli.js --projectDir desktop/staging --mac dmg",
     "test-lessons": "node scripts/run-lesson.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "check": "vite build",

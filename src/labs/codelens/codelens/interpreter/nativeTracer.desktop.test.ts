@@ -16,10 +16,10 @@ const hasGcc = spawnSync('g++', ['--version']).status === 0
 const runtime = hasGdb && hasGcc ? require('../../../../../desktop/app/runtimes/codelens.cjs') : null
 const app = { getPath: () => path.join(os.tmpdir(), 'opencalc-codelens-test') }
 
-function trace(lang: 'c' | 'cpp', source: string): Promise<ExecutionResult> {
+function trace(lang: 'c' | 'cpp', source: string, stdin = ''): Promise<ExecutionResult> {
   return new Promise((resolve, reject) => {
     let stdout = ''
-    runtime.runCode(app, JSON.stringify({ lang, source }), (event: any) => {
+    runtime.runCode(app, JSON.stringify({ lang, source, stdin }), (event: any) => {
       if (event.stream === 'stdout') stdout += event.text
       if (event.stream === 'exit') resolve(JSON.parse(stdout))
     }).then((res: any) => { if (!res.ok) reject(new Error(res.reason)) })
@@ -29,6 +29,33 @@ function trace(lang: 'c' | 'cpp', source: string): Promise<ExecutionResult> {
 const creates = (result: ExecutionResult) => result.events.flatMap(e => e.heapDelta ?? []).filter(d => d.op === 'create')
 
 describe.skipIf(!runtime)('CodeLens C/C++ tracer (GDB)', () => {
+  it('reads standard input from the Input box', async () => {
+    const result = await trace('cpp', `#include <iostream>
+#include <string>
+int main() {
+    std::string name;
+    int age;
+    std::getline(std::cin, name);
+    std::cin >> age;
+    std::cout << name << " is " << age << std::endl;
+}
+`, 'Ada Lovelace\n36\n')
+    expect(result.status).toBe('completed')
+    expect(result.output).toEqual(['Ada Lovelace is 36'])
+  }, 60_000)
+
+  it('reads with scanf in C', async () => {
+    const result = await trace('c', `#include <stdio.h>
+int main(void) {
+    int a, b;
+    scanf("%d %d", &a, &b);
+    printf("%d\\n", a + b);
+    return 0;
+}
+`, '20 22\n')
+    expect(result.output).toEqual(['42'])
+  }, 60_000)
+
   it('draws a linked list built with pointers, and the recursion over it', async () => {
     const result = await trace('cpp', `#include <iostream>
 struct Node { int value; Node* next; };
