@@ -1,0 +1,401 @@
+id,trade,note
+WO0001,coolant,no coolant flow on saw 1. changed coolant
+WO0002,mechanical,mill 5 belt slipping
+WO0003,coolant,no coolant flow on lathe 3
+WO0004,electrical,saw 1 won't power on
+WO0005,coolant,press 1 coolant tank overflowing. fixed float switch
+WO0006,electrical,sparks from mill 2 panel. rewired e-stop
+WO0007,mechanical,grinding noise from mill 2 spindle. replaced spindle bearings
+WO0008,mechanical,press 4 vibrating badly. greased ways
+WO0009,controls,grinder 2 won't load program. updated software
+WO0010,controls,grinder 2 leaking. rebooted controller
+WO0011,controls,lathe 3 screen frozen. replaced encoder cable
+WO0012,mechanical,press 1 down. replaced coupling
+WO0013,electrical,saw 1 not running right. replaced relay
+WO0014,hydraulic,slow cylinder on oven 1. replaced hose
+WO0015,mechanical,loud rattle from saw 1. replaced spindle bearings
+WO0016,controls,press 4 pump not working
+WO0017,coolant,coolant smells bad on press 1. cleaned nozzles
+WO0018,controls,mill 2 stopped mid cycle
+WO0019,mechanical,grinding noise from oven 1 spindle
+WO0020,mechanical,chatter on press 4. realigned and balanced
+WO0021,electrical,no power to mill 2. rewired e-stop
+WO0022,mechanical,grinder 2 gearbox knocking. replaced gearbox
+WO0023,mechanical,grinding noise from compressor spindle. replaced gearbox
+WO0024,hydraulic,hydraulic pump whining on mill 5. replaced o-ring on manifold
+WO0025,coolant,operator reports fault on saw 1
+WO0026,electrical,operator reports fault on grinder 2
+WO0027,controls,robot cell 2 encoder error
+WO0028,coolant,coolant smells bad on saw 1. changed coolant
+WO0029,coolant,coolant smells bad on saw 1. adjusted concentration to 7 percent
+WO0030,electrical,mill 2 not running right
+WO0031,coolant,mill 5 coolant pump dead
+WO0032,hydraulic,press 1 hydraulic hose weeping. topped up hydraulic oil
+WO0033,controls,saw 1 motor overheating. replaced encoder cable
+WO0034,electrical,compressor keeps losing power. tightened terminals in cabinet
+WO0035,coolant,no coolant flow on mill 5. cleaned sump and filters
+WO0036,hydraulic,grinder 2 clamp not holding pressure. cleaned and refilled tank
+WO0037,hydraulic,oven 1 motor overheating. replaced seal kit
+WO0038,controls,grinder 2 not running right. rebooted controller
+WO0039,mechanical,chatter on press 1
+WO0040,electrical,compressor display blank. replaced fuse
+WO0041,coolant,mill 5 pump not working. replaced coolant pump
+WO0042,hydraulic,slow cylinder on press 1
+WO0043,controls,compressor down. replaced encoder cable
+WO0044,mechanical,bearing noise on grinder 2. replaced gearbox
+WO0045,electrical,compressor stopped mid cycle. replaced power supply
+WO0046,electrical,press 4 motor not starting. replaced relay
+WO0047,mechanical,mill 2 way covers damaged
+WO0048,hydraulic,oil leak under compressor. tightened fitting
+WO0049,coolant,robot cell 2 coolant pump dead. changed coolant
+WO0050,electrical,mill 2 leaking. replaced fuse
+WO0051,hydraulic,oil leak under robot cell 2. topped up hydraulic oil
+WO0052,coolant,oven 1 stopped mid cycle. skimmed tramp oil
+WO0053,coolant,mill 5 coolant tank overflowing. cleaned nozzles
+WO0054,electrical,grinder 2 tripping breaker. tightened terminals in cabinet
+WO0055,electrical,press 4 pump not working. replaced contactor
+WO0056,controls,mill 2 pump not working. recalibrated axis
+WO0057,controls,lathe 3 lost its home position. reloaded parameters from backup
+WO0058,mechanical,grinder 2 not running right
+WO0059,controls,lathe 3 encoder error
+WO0060,electrical,mill 5 stopped mid cycle. replaced relay
+WO0061,electrical,sparks from grinder 2 panel. replaced motor starter
+WO0062,coolant,robot cell 2 stopped mid cycle. cleaned nozzles
+WO0063,mechanical,press 4 leaking. realigned and balanced
+WO0064,coolant,lathe 3 not running right. added defoamer
+WO0065,electrical,saw 1 tripping breaker. rewired e-stop
+WO0066,coolant,operator reports fault on press 4. adjusted concentration to 7 percent
+WO0067,controls,grinder 2 parameters wrong after update
+WO0068,hydraulic,oil leak under robot cell 2. replaced seal kit
+WO0069,electrical,oven 1 display blank. rewired e-stop
+WO0070,hydraulic,slow cylinder on press 4. replaced o-ring on manifold
+WO0071,controls,compressor lost its home position. updated software
+WO0072,mechanical,lathe 3 belt slipping. greased ways
+WO0073,controls,mill 2 encoder error
+WO0074,mechanical,loud rattle from press 4. replaced coupling
+WO0075,electrical,oven 1 not running right
+WO0076,electrical,e-stop circuit fault on mill 2. rewired e-stop
+WO0077,electrical,oven 1 display blank. replaced fuse
+WO0078,coolant,mill 2 coolant concentration low. adjusted concentration to 7 percent
+WO0079,electrical,sparks from robot cell 2 panel. replaced relay
+WO0080,hydraulic,oil leak under mill 2. cleaned and refilled tank
+WO0081,controls,compressor not running right. replaced network switch
+WO0082,coolant,coolant foaming on press 4. replaced coolant pump
+WO0083,controls,saw 1 pump not working. recalibrated axis
+WO0084,hydraulic,hydraulic pump whining on press 4. cleaned and refilled tank
+WO0085,coolant,press 1 coolant pump dead. skimmed tramp oil
+WO0086,mechanical,mill 2 motor overheating
+WO0087,controls,grinder 2 won't load program. replaced encoder cable
+WO0088,electrical,press 4 display blank. replaced relay
+WO0089,controls,saw 1 leaking
+WO0090,electrical,lathe 3 down. replaced power supply
+WO0091,hydraulic,press 4 clamp not holding pressure. topped up hydraulic oil
+WO0092,mechanical,press 1 gearbox knocking. replaced belt
+WO0093,controls,compressor alarm 1050 axis following error
+WO0094,electrical,press 1 won't power on
+WO0095,coolant,robot cell 2 pump not working. cleaned sump and filters
+WO0096,controls,robot cell 2 stopped mid cycle
+WO0097,controls,mill 5 alarm 1050 axis following error
+WO0098,hydraulic,oil leak under saw 1. replaced o-ring on manifold
+WO0099,mechanical,grinding noise from press 1 spindle. adjusted gibs
+WO0100,electrical,grinder 2 making a strange noise
+WO0101,controls,lathe 3 making a strange noise. replaced network switch
+WO0102,controls,saw 1 alarm 1050 axis following error. recalibrated axis
+WO0103,coolant,oven 1 coolant tank overflowing
+WO0104,controls,compressor pump not working. restored program from backup
+WO0105,hydraulic,robot cell 2 stopped mid cycle. replaced hose
+WO0106,mechanical,lathe 3 gearbox knocking. replaced coupling
+WO0107,mechanical,press 1 way covers damaged. replaced spindle bearings
+WO0108,electrical,e-stop circuit fault on press 4. replaced motor starter
+WO0109,hydraulic,oil leak under mill 2. topped up hydraulic oil
+WO0110,hydraulic,press 4 making a strange noise. topped up hydraulic oil
+WO0111,controls,lathe 3 pump not working
+WO0112,coolant,oven 1 coolant concentration low. adjusted concentration to 7 percent
+WO0113,controls,grinder 2 won't load program. reloaded parameters from backup
+WO0114,electrical,lathe 3 keeps losing power. replaced motor starter
+WO0115,mechanical,bearing noise on grinder 2. replaced coupling
+WO0116,hydraulic,mill 2 stopped mid cycle. tightened fitting
+WO0117,mechanical,bearing noise on oven 1. adjusted gibs
+WO0118,hydraulic,hydraulic pump whining on lathe 3. replaced pump
+WO0119,mechanical,press 4 way covers damaged. tightened mounting bolts
+WO0120,mechanical,mill 5 gearbox knocking. replaced gearbox
+WO0121,controls,mill 2 pump not working. replaced encoder cable
+WO0122,controls,mill 5 lost its home position
+WO0123,coolant,coolant foaming on saw 1. cleaned nozzles
+WO0124,electrical,e-stop circuit fault on oven 1. replaced motor starter
+WO0125,electrical,compressor making a strange noise. reset breaker and found loose wire
+WO0126,hydraulic,oil leak under press 1. replaced pump
+WO0127,electrical,press 1 display blank. tightened terminals in cabinet
+WO0128,hydraulic,press 4 making a strange noise. replaced seal kit
+WO0129,electrical,saw 1 display blank
+WO0130,controls,saw 1 down
+WO0131,hydraulic,press 4 not running right. replaced pump
+WO0132,controls,lathe 3 motor overheating. replaced encoder cable
+WO0133,controls,compressor down
+WO0134,controls,press 1 screen frozen. replaced network switch
+WO0135,controls,mill 5 won't load program. updated software
+WO0136,coolant,press 1 coolant tank overflowing. skimmed tramp oil
+WO0137,hydraulic,operator reports fault on oven 1. tightened fitting
+WO0138,coolant,lathe 3 coolant tank overflowing. adjusted concentration to 7 percent
+WO0139,hydraulic,operator reports fault on robot cell 2
+WO0140,mechanical,chatter on compressor
+WO0141,hydraulic,robot cell 2 hydraulic hose weeping
+WO0142,controls,robot cell 2 network connection down. recalibrated axis
+WO0143,mechanical,saw 1 belt slipping. tightened mounting bolts
+WO0144,hydraulic,hydraulic pump whining on compressor
+WO0145,coolant,press 1 coolant tank overflowing. cleaned sump and filters
+WO0146,hydraulic,slow cylinder on press 4
+WO0147,mechanical,oven 1 leaking. tightened mounting bolts
+WO0148,mechanical,loud rattle from press 4. replaced belt
+WO0149,hydraulic,grinder 2 not running right. bled air from system
+WO0150,mechanical,mill 2 way covers damaged. realigned and balanced
+WO0151,controls,mill 2 screen frozen. recalibrated axis
+WO0152,mechanical,bearing noise on press 4. replaced spindle bearings
+WO0153,mechanical,grinder 2 motor overheating. replaced spindle bearings
+WO0154,coolant,lathe 3 coolant concentration low. replaced coolant pump
+WO0155,hydraulic,slow cylinder on mill 5. replaced o-ring on manifold
+WO0156,mechanical,grinder 2 motor overheating
+WO0157,electrical,saw 1 leaking. replaced motor starter
+WO0158,controls,robot cell 2 not running right. updated software
+WO0159,mechanical,mill 5 leaking. replaced coupling
+WO0160,electrical,e-stop circuit fault on mill 5. replaced power supply
+WO0161,mechanical,compressor not running right. replaced coupling
+WO0162,mechanical,saw 1 stopped mid cycle. tightened mounting bolts
+WO0163,coolant,coolant nozzle blocked on mill 2. adjusted concentration to 7 percent
+WO0164,mechanical,mill 2 vibrating badly. greased ways
+WO0165,hydraulic,puddle of oil by mill 5. bled air from system
+WO0166,electrical,sparks from lathe 3 panel. replaced relay
+WO0167,coolant,coolant smells bad on press 4
+WO0168,hydraulic,hydraulic pump whining on lathe 3
+WO0169,mechanical,operator reports fault on mill 2. tightened mounting bolts
+WO0170,hydraulic,hydraulic pump whining on grinder 2. topped up hydraulic oil
+WO0171,electrical,press 4 motor overheating. replaced power supply
+WO0172,controls,robot cell 2 stopped mid cycle. replaced network switch
+WO0173,controls,mill 2 pump not working
+WO0174,coolant,mill 2 motor overheating. changed coolant
+WO0175,coolant,coolant nozzle blocked on saw 1. adjusted concentration to 7 percent
+WO0176,hydraulic,robot cell 2 making a strange noise. cleaned and refilled tank
+WO0177,coolant,coolant foaming on mill 2. fixed float switch
+WO0178,electrical,e-stop circuit fault on robot cell 2. reset breaker and found loose wire
+WO0179,hydraulic,hydraulic oil dripping from lathe 3. topped up hydraulic oil
+WO0180,electrical,e-stop circuit fault on grinder 2. rewired e-stop
+WO0181,mechanical,saw 1 stopped mid cycle. replaced belt
+WO0182,electrical,mill 2 motor not starting. replaced relay
+WO0183,hydraulic,puddle of oil by press 1. cleaned and refilled tank
+WO0184,coolant,mill 5 leaking
+WO0185,electrical,press 1 keeps losing power. replaced contactor
+WO0186,electrical,no power to saw 1. replaced motor starter
+WO0187,electrical,sparks from saw 1 panel. replaced contactor
+WO0188,controls,mill 5 making a strange noise. rehomed axes
+WO0189,coolant,mill 2 motor overheating. skimmed tramp oil
+WO0190,hydraulic,compressor not running right. replaced o-ring on manifold
+WO0191,mechanical,mill 2 pump not working. tightened mounting bolts
+WO0192,controls,press 1 encoder error. reloaded parameters from backup
+WO0193,coolant,press 4 coolant tank overflowing
+WO0194,electrical,robot cell 2 motor not starting
+WO0195,mechanical,loud rattle from lathe 3
+WO0196,mechanical,lathe 3 making a strange noise. replaced coupling
+WO0197,hydraulic,oven 1 stopped mid cycle
+WO0198,electrical,saw 1 display blank. replaced contactor
+WO0199,mechanical,operator reports fault on press 1. replaced gearbox
+WO0200,mechanical,press 1 way covers damaged. replaced belt
+WO0201,controls,lathe 3 won't load program. recalibrated axis
+WO0202,controls,press 4 screen frozen. reloaded parameters from backup
+WO0203,controls,lathe 3 leaking. rebooted controller
+WO0204,electrical,grinder 2 won't power on. replaced contactor
+WO0205,coolant,no coolant flow on grinder 2. adjusted concentration to 7 percent
+WO0206,controls,mill 5 motor overheating. updated software
+WO0207,controls,operator reports fault on robot cell 2. replaced network switch
+WO0208,mechanical,mill 5 leaking. replaced belt
+WO0209,hydraulic,hydraulic pump whining on saw 1. replaced pump
+WO0210,coolant,mill 5 coolant concentration low. cleaned sump and filters
+WO0211,coolant,grinder 2 coolant concentration low
+WO0212,electrical,saw 1 motor not starting. replaced relay
+WO0213,mechanical,operator reports fault on mill 5. replaced coupling
+WO0214,controls,mill 5 leaking. replaced encoder cable
+WO0215,mechanical,saw 1 vibrating badly
+WO0216,mechanical,press 4 way covers damaged. replaced belt
+WO0217,electrical,compressor tripping breaker
+WO0218,coolant,robot cell 2 making a strange noise. added defoamer
+WO0219,coolant,press 4 not running right. cleaned nozzles
+WO0220,mechanical,lathe 3 down. greased ways
+WO0221,electrical,lathe 3 display blank. replaced fuse
+WO0222,mechanical,robot cell 2 belt slipping. replaced coupling
+WO0223,hydraulic,operator reports fault on robot cell 2. topped up hydraulic oil
+WO0224,hydraulic,compressor motor overheating. cleaned and refilled tank
+WO0225,coolant,press 1 not running right. skimmed tramp oil
+WO0226,electrical,no power to grinder 2. rewired e-stop
+WO0227,controls,saw 1 encoder error
+WO0228,hydraulic,robot cell 2 losing pressure. tightened fitting
+WO0229,mechanical,grinding noise from press 4 spindle. replaced spindle bearings
+WO0230,electrical,no power to lathe 3. rewired e-stop
+WO0231,mechanical,grinder 2 way covers damaged. tightened mounting bolts
+WO0232,coolant,coolant smells bad on oven 1. skimmed tramp oil
+WO0233,mechanical,lathe 3 pump not working. adjusted gibs
+WO0234,coolant,coolant foaming on compressor. skimmed tramp oil
+WO0235,hydraulic,press 1 clamp not holding pressure. cleaned and refilled tank
+WO0236,hydraulic,operator reports fault on press 1. tightened fitting
+WO0237,mechanical,robot cell 2 vibrating badly. replaced belt
+WO0238,electrical,mill 2 leaking. reset breaker and found loose wire
+WO0239,electrical,lathe 3 keeps losing power. replaced power supply
+WO0240,controls,compressor motor overheating
+WO0241,controls,saw 1 network connection down. restored program from backup
+WO0242,hydraulic,press 4 making a strange noise
+WO0243,hydraulic,oil leak under lathe 3
+WO0244,mechanical,bearing noise on mill 2. replaced spindle bearings
+WO0245,controls,oven 1 parameters wrong after update. reloaded parameters from backup
+WO0246,mechanical,oven 1 stopped mid cycle. replaced coupling
+WO0247,coolant,grinder 2 coolant tank overflowing. skimmed tramp oil
+WO0248,controls,lathe 3 network connection down. replaced network switch
+WO0249,electrical,mill 2 stopped mid cycle. tightened terminals in cabinet
+WO0250,electrical,sparks from press 1 panel. rewired e-stop
+WO0251,mechanical,loud rattle from grinder 2. replaced belt
+WO0252,controls,mill 5 alarm 1050 axis following error. rebooted controller
+WO0253,coolant,compressor coolant pump dead. adjusted concentration to 7 percent
+WO0254,hydraulic,mill 5 hydraulic hose weeping. topped up hydraulic oil
+WO0255,electrical,sparks from robot cell 2 panel. replaced power supply
+WO0256,hydraulic,lathe 3 motor overheating
+WO0257,mechanical,compressor vibrating badly. greased ways
+WO0258,controls,mill 2 screen frozen. reloaded parameters from backup
+WO0259,controls,press 1 alarm 1050 axis following error. updated software
+WO0260,controls,saw 1 won't load program. restored program from backup
+WO0261,electrical,robot cell 2 keeps losing power. replaced relay
+WO0262,coolant,oven 1 down
+WO0263,controls,press 1 network connection down. rehomed axes
+WO0264,coolant,rust on parts from robot cell 2. added defoamer
+WO0265,electrical,sparks from mill 2 panel. replaced contactor
+WO0266,mechanical,compressor way covers damaged. adjusted gibs
+WO0267,hydraulic,hydraulic pump whining on press 4. replaced hose
+WO0268,electrical,lathe 3 won't power on. replaced fuse
+WO0269,coolant,coolant nozzle blocked on mill 5
+WO0270,controls,lathe 3 making a strange noise. rebooted controller
+WO0271,hydraulic,puddle of oil by mill 2. replaced pump
+WO0272,coolant,grinder 2 coolant tank overflowing
+WO0273,controls,grinder 2 down
+WO0274,hydraulic,slow cylinder on lathe 3
+WO0275,electrical,e-stop circuit fault on compressor. replaced motor starter
+WO0276,coolant,lathe 3 down. replaced coolant pump
+WO0277,coolant,oven 1 not running right. added defoamer
+WO0278,hydraulic,oven 1 pump not working. topped up hydraulic oil
+WO0279,electrical,saw 1 stopped mid cycle. replaced fuse
+WO0280,controls,compressor program crashing
+WO0281,coolant,grinder 2 coolant tank overflowing. fixed float switch
+WO0282,controls,lathe 3 program crashing
+WO0283,mechanical,bearing noise on oven 1
+WO0284,coolant,mill 5 stopped mid cycle. replaced coolant pump
+WO0285,coolant,grinder 2 coolant concentration low. changed coolant
+WO0286,hydraulic,robot cell 2 pump not working
+WO0287,electrical,saw 1 leaking. rewired e-stop
+WO0288,hydraulic,mill 2 losing pressure. replaced hose
+WO0289,controls,compressor won't load program. reloaded parameters from backup
+WO0290,electrical,mill 2 motor overheating. tightened terminals in cabinet
+WO0291,coolant,robot cell 2 coolant concentration low
+WO0292,coolant,robot cell 2 not running right. added defoamer
+WO0293,hydraulic,mill 2 clamp not holding pressure. replaced seal kit
+WO0294,coolant,no coolant flow on press 4. replaced coolant pump
+WO0295,controls,press 4 screen frozen
+WO0296,coolant,mill 5 coolant concentration low. changed coolant
+WO0297,coolant,no coolant flow on oven 1. replaced coolant pump
+WO0298,electrical,press 4 not running right. tightened terminals in cabinet
+WO0299,hydraulic,mill 2 clamp not holding pressure. replaced pump
+WO0300,hydraulic,hydraulic pump whining on oven 1. bled air from system
+WO0301,mechanical,bearing noise on compressor. adjusted gibs
+WO0302,coolant,grinder 2 coolant pump dead. added defoamer
+WO0303,hydraulic,hydraulic oil dripping from grinder 2. topped up hydraulic oil
+WO0304,electrical,no power to press 1
+WO0305,hydraulic,compressor hydraulic hose weeping. replaced hose
+WO0306,hydraulic,lathe 3 stopped mid cycle. replaced hose
+WO0307,controls,press 1 won't load program. reloaded parameters from backup
+WO0308,coolant,coolant foaming on press 1. adjusted concentration to 7 percent
+WO0309,mechanical,grinding noise from mill 5 spindle. replaced coupling
+WO0310,coolant,mill 5 pump not working. cleaned nozzles
+WO0311,controls,saw 1 lost its home position. recalibrated axis
+WO0312,coolant,saw 1 pump not working. changed coolant
+WO0313,coolant,mill 5 coolant pump dead. replaced coolant pump
+WO0314,hydraulic,hydraulic oil dripping from lathe 3. bled air from system
+WO0315,electrical,oven 1 motor overheating. replaced contactor
+WO0316,hydraulic,hydraulic pump whining on grinder 2. cleaned and refilled tank
+WO0317,hydraulic,hydraulic oil dripping from mill 5. bled air from system
+WO0318,hydraulic,press 4 stopped mid cycle. replaced o-ring on manifold
+WO0319,coolant,lathe 3 coolant tank overflowing. cleaned sump and filters
+WO0320,coolant,mill 2 pump not working. added defoamer
+WO0321,hydraulic,press 4 losing pressure. bled air from system
+WO0322,controls,press 4 stopped mid cycle. replaced network switch
+WO0323,coolant,coolant nozzle blocked on oven 1. cleaned nozzles
+WO0324,controls,mill 5 lost its home position. updated software
+WO0325,electrical,lathe 3 making a strange noise. replaced contactor
+WO0326,controls,press 4 parameters wrong after update
+WO0327,coolant,coolant nozzle blocked on oven 1. replaced coolant pump
+WO0328,hydraulic,hydraulic pump whining on saw 1. replaced o-ring on manifold
+WO0329,controls,lathe 3 won't load program
+WO0330,mechanical,robot cell 2 vibrating badly
+WO0331,coolant,grinder 2 coolant pump dead. fixed float switch
+WO0332,electrical,saw 1 won't power on. replaced relay
+WO0333,controls,grinder 2 alarm 1050 axis following error. restored program from backup
+WO0334,controls,grinder 2 program crashing. recalibrated axis
+WO0335,mechanical,mill 5 belt slipping. realigned and balanced
+WO0336,mechanical,grinding noise from lathe 3 spindle
+WO0337,mechanical,mill 5 motor overheating
+WO0338,mechanical,lathe 3 vibrating badly. realigned and balanced
+WO0339,electrical,saw 1 motor not starting. replaced fuse
+WO0340,coolant,robot cell 2 coolant concentration low. skimmed tramp oil
+WO0341,mechanical,saw 1 belt slipping. greased ways
+WO0342,hydraulic,hydraulic pump whining on saw 1. bled air from system
+WO0343,hydraulic,mill 5 losing pressure
+WO0344,coolant,coolant foaming on robot cell 2
+WO0345,mechanical,mill 5 down. adjusted gibs
+WO0346,hydraulic,lathe 3 hydraulic hose weeping
+WO0347,controls,lathe 3 screen frozen. replaced network switch
+WO0348,mechanical,chatter on compressor. adjusted gibs
+WO0349,electrical,compressor won't power on. replaced fuse
+WO0350,electrical,grinder 2 keeps losing power
+WO0351,electrical,press 4 display blank. reset breaker and found loose wire
+WO0352,coolant,saw 1 not running right. fixed float switch
+WO0353,controls,oven 1 alarm 1050 axis following error
+WO0354,hydraulic,mill 2 stopped mid cycle. replaced hose
+WO0355,hydraulic,oven 1 hydraulic hose weeping. cleaned and refilled tank
+WO0356,mechanical,mill 2 vibrating badly
+WO0357,mechanical,compressor way covers damaged
+WO0358,hydraulic,hydraulic oil dripping from press 1. topped up hydraulic oil
+WO0359,coolant,coolant nozzle blocked on press 1
+WO0360,mechanical,loud rattle from mill 5. adjusted gibs
+WO0361,coolant,coolant foaming on press 4. cleaned nozzles
+WO0362,electrical,press 4 stopped mid cycle. replaced relay
+WO0363,electrical,oven 1 motor not starting. reset breaker and found loose wire
+WO0364,hydraulic,press 4 stopped mid cycle. replaced hose
+WO0365,mechanical,grinder 2 gearbox knocking. adjusted gibs
+WO0366,mechanical,oven 1 vibrating badly. replaced belt
+WO0367,controls,press 1 stopped mid cycle. reloaded parameters from backup
+WO0368,electrical,mill 5 leaking. replaced relay
+WO0369,controls,lathe 3 down. replaced encoder cable
+WO0370,coolant,robot cell 2 down. adjusted concentration to 7 percent
+WO0371,controls,press 4 network connection down
+WO0372,mechanical,grinder 2 gearbox knocking. realigned and balanced
+WO0373,mechanical,oven 1 belt slipping. replaced gearbox
+WO0374,electrical,robot cell 2 motor overheating. replaced contactor
+WO0375,coolant,coolant smells bad on compressor. adjusted concentration to 7 percent
+WO0376,electrical,compressor display blank. replaced relay
+WO0377,controls,saw 1 program crashing
+WO0378,electrical,operator reports fault on lathe 3. rewired e-stop
+WO0379,coolant,press 1 down. adjusted concentration to 7 percent
+WO0380,hydraulic,compressor clamp not holding pressure
+WO0381,electrical,oven 1 won't power on. replaced fuse
+WO0382,electrical,oven 1 motor not starting. tightened terminals in cabinet
+WO0383,electrical,grinder 2 motor not starting. replaced fuse
+WO0384,hydraulic,puddle of oil by press 4. tightened fitting
+WO0385,hydraulic,lathe 3 making a strange noise. replaced pump
+WO0386,coolant,coolant smells bad on mill 5. cleaned nozzles
+WO0387,electrical,press 4 keeps losing power. tightened terminals in cabinet
+WO0388,coolant,coolant nozzle blocked on press 1. replaced coolant pump
+WO0389,controls,mill 5 stopped mid cycle
+WO0390,hydraulic,grinder 2 hydraulic hose weeping. cleaned and refilled tank
+WO0391,hydraulic,press 1 losing pressure. topped up hydraulic oil
+WO0392,mechanical,compressor pump not working. replaced coupling
+WO0393,hydraulic,oil leak under compressor
+WO0394,hydraulic,mill 2 pump not working. replaced seal kit
+WO0395,mechanical,chatter on lathe 3. adjusted gibs
+WO0396,mechanical,lathe 3 gearbox knocking. adjusted gibs
+WO0397,controls,operator reports fault on mill 5. rehomed axes
+WO0398,coolant,press 4 coolant concentration low. cleaned nozzles
+WO0399,controls,press 1 leaking. recalibrated axis
+WO0400,hydraulic,oil leak under press 4. replaced pump

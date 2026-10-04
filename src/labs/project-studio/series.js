@@ -45,8 +45,9 @@ const SERIES = [
       ['ml-pca', '11 · Dimensionality Reduction: Inspection Data'],
       ['ml-neural', '12 · Neural Networks: A Tolerance Zone'],
       ['ml-pytorch', '13 · PyTorch: Reading Handwritten Digits'],
+      ['ml-nlp', '14 · NLP: Maintenance Work Orders'],
     ],
-    planned: 'Next in this series: NLP on maintenance work orders, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 
