@@ -66,6 +66,10 @@ This is the shape of nearly all data a model learns from, and it comes with voca
 
 `id` is neither feature nor target: it's a name for each row. A model that learned from `id` would be learning which row of the file a house was in, which predicts nothing.
 
+> **Feature** and **target**: the measured inputs a model is allowed to look at, and the one quantity it has to predict from them.
+>
+> *Picture it as* an inspection record. The features are the things you can measure on a part before final test (dimensions, weight, which machine made it); the target is the final test result you'd like to predict without running the test.
+
 Now the tests:
 
 ```python file=tests/test_dataset.py provided
@@ -179,6 +183,23 @@ What Python does:
 
 So a dataset is now a **list of dictionaries**: one dictionary per row, keyed by column name. Dictionaries keep their keys in insertion order, which is why the second test can check the column order.
 
+Look at it at the prompt, predicting each answer first:
+
+```text
+>>> from explorer import dataset
+>>> rows = dataset.load_rows("data/houses.csv")
+>>> len(rows)
+48
+>>> rows[0]["sqft"]
+'1540'
+>>> rows[5]["age"]
+''
+>>> type(rows[0]["price"])
+<class 'str'>
+```
+
+`rows[0]` is the first house's dictionary; `rows[0]["sqft"]` is the value stored under `"sqft"` in it. The quotes around `'1540'` are the clue to the next step: it's text, not a number. And house 6's age (`rows[5]`, since counting starts at 0) is an empty string.
+
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_dataset.py -k raw" label="load_rows reads every row as a dictionary" -- return list(csv.DictReader(f)) inside the with block.
 ```
@@ -243,7 +264,11 @@ def typed(raw: dict[str, str]) -> Row:
 
 - **`Value = int | str | None`** and **`Row = dict[str, Value]`** are **type aliases**: names for types, so signatures stay readable. A row maps column names to an int, a string, or nothing.
 - **`SCHEMA`** maps each column name to a **function that converts text**: `int` and `str` are functions too. `int("1540")` is `1540`; `str("Oldtown")` is unchanged. Storing functions in a dictionary and calling them later is ordinary Python, and it means the conversion rule for each column lives in one table.
+
+  > **Schema**: the agreed description of a dataset's columns: their names, their types, and which values are allowed. *Picture it as* the spec sheet that comes with a batch of parts: it says what each measurement is and in what units, so nobody has to guess from the numbers.
 - **An empty cell becomes `None`.** Python's way of saying "no value". Not `0`: a house with an unknown age is not a new house, and if missing ages became `0`, the average age would quietly drop.
+
+  *Picture it as* an inspection sheet with a box left blank because the gauge was out for calibration. Writing "0" in that box would be a lie that looks like a measurement; leaving it visibly blank tells everyone downstream that it's unknown.
 - **A bad value raises `ValueError` naming the column.** `int("big")` fails with `invalid literal for int() with base 10: 'big'`, which doesn't say *where*. Re-raising with the column name turns it into something a person can fix. `from None` hides the original exception, because the new message already says everything in it.
 
 ```check
@@ -307,6 +332,14 @@ def kind(name: str) -> str:
     return "numerical" if SCHEMA[name] is int else "categorical"
 ```
 
+- **`load_dataset`** is a **list comprehension**: `[typed(raw) for raw in load_rows(path)]` builds a new list by applying `typed` to every raw row. Written as a loop, it's:
+
+  ```python
+  result = []
+  for raw in load_rows(path):
+      result.append(typed(raw))
+  return result
+  ```
 - **`column`** turns the table sideways: from "one dictionary per house" to "one list per feature". Statistics are computed on columns, so you'll call this constantly.
 - **`missing_counts`** is a **dictionary comprehension**: `{key: value for … in …}`. For each column name (the keys of the first row), it counts the `None`s in that column.
 - **`kind`** decides from the schema: integer columns are numerical, text columns categorical. `SCHEMA[name] is int` asks whether the converter *is* the `int` function itself.

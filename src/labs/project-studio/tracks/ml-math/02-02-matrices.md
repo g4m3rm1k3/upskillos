@@ -83,6 +83,10 @@ file tests/test_matrices.py -- Click "Create provided tests/test_matrices.py" ab
 
 ## Shapes, rows and columns
 
+> **Matrix**: a rectangle of numbers arranged in rows and columns. Its **shape** is (number of rows, number of columns). Entry $M_{ij}$ is the number in row $i$, column $j$.
+>
+> *Picture it as* a filled-in inspection sheet: one row per part, one column per measurement. A vector is one row of it (or one column); the matrix is the whole sheet.
+
 A **matrix** is a rectangle of numbers. Its **shape** is (rows, columns): the two houses above form a 2×3 matrix (2 houses, 3 features). In Python, a list of row lists. Create `matrices.py`:
 
 ```python file=matrices.py
@@ -153,7 +157,9 @@ Now suppose you have **three** candidate sets of weights and want every house pr
 
 $$(XW)_{ij} = \text{row } i \text{ of } X \;\cdot\; \text{column } j \text{ of } W$$
 
-That's **matrix multiplication**: every row of the left matrix dotted with every column of the right. The rows of $X$ have $k$ entries and the columns of $W$ have as many entries as $W$ has rows, so those must match. The shape rule:
+That's **matrix multiplication**: every row of the left matrix dotted with every column of the right.
+
+*Picture it as* a pile of order forms and a stack of price lists from different suppliers. Each order (a row of quantities) totalled against each supplier's price list (a column of unit prices) gives one invoice total. The answer is a table of totals: one row per order, one column per supplier. Every order needs a price for every item on it, which is the shape rule below. The rows of $X$ have $k$ entries and the columns of $W$ have as many entries as $W$ has rows, so those must match. The shape rule:
 
 ```text
 (n × k)  @  (k × m)  =  (n × m)
@@ -194,6 +200,18 @@ def matmul(a: Matrix, b: Matrix) -> Matrix:
 
 def identity(n: int) -> Matrix:
     return [[1 if i == j else 0 for j in range(n)] for i in range(n)]
+```
+
+The last line is a **nested list comprehension**: one comprehension inside another. Written as loops, it's:
+
+```python
+result = []
+for row in a:                      # outer: one result row per row of a
+    new_row = []
+    for col in columns:            # inner: one entry per column of b
+        new_row.append(vectors.dot(row, col))
+    result.append(new_row)
+return result
 ```
 
 `transpose(b)` turns `b`'s columns into rows, so "each column of `b`" is a simple loop. It's computed once, outside the comprehension, rather than once per row of `a`.
@@ -257,7 +275,7 @@ What each NumPy operation is, in terms you've already built:
 | `np.abs(errors)`, `np.mean(...)` | elementwise absolute value, then the mean | a loop and `mean` |
 | `predictions[:3]` | the first three entries | slicing a list |
 
-`+ b` is **broadcasting**: NumPy stretches the single number `b` across all 48 entries, without copying it 48 times. Here's the output:
+`+ b` is **broadcasting**: NumPy's rule for combining arrays of different shapes by repeating the smaller one across the larger, without actually copying it. Here it stretches the single number `b` across all 48 entries. *Picture it as* adding the same fixed setup charge to every invoice in the pile: you don't write it 48 times, you apply one charge to all of them. Here's the output:
 
 ```powershell
 .venv\Scripts\python predict.py

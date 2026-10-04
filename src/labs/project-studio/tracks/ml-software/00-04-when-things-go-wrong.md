@@ -92,7 +92,24 @@ file tests/test_errors.py -- Click "Create provided tests/test_errors.py" above.
 
 ## Which encoding?
 
-A file holds **bytes**, numbers from 0 to 255. Text is characters. An **encoding** is the rule that converts between them. For plain English letters every common encoding agrees (`a` is byte 97 everywhere), which is why `data.txt` worked. For anything else they disagree:
+A file holds **bytes**, numbers from 0 to 255. Text is characters. An **encoding** is the rule that converts between them.
+
+> **Encoding**: a fixed table that says which bytes stand for which characters. **Encoding** text turns characters into bytes (to save it); **decoding** turns bytes back into characters (to read it). The same encoding must be used both ways.
+>
+> *Picture it as* a codebook for a message sent in numbers. The numbers on the page don't change, but read them with a different codebook and you get different letters, or nonsense. A file doesn't record which codebook wrote it, so the reader has to know.
+
+See it at the prompt:
+
+```text
+>>> "café".encode("utf-8")
+b'caf\xc3\xa9'
+>>> "café".encode("cp1252")
+b'caf\xe9'
+>>> b'caf\xc3\xa9'.decode("cp1252")
+'cafÃ©'
+```
+
+`b'…'` is a **bytes** value; `\xc3` is one byte written in hexadecimal (C3 is 195). UTF-8 stores `é` as two bytes; cp1252 stores it as one. Decoding UTF-8 bytes with the wrong codebook turns `é` into the two characters `Ã©`: you've probably seen that garbage on web pages. For plain English letters every common encoding agrees (`a` is byte 97 everywhere), which is why `data.txt` worked. For anything else they disagree:
 
 | Text | UTF-8 bytes | cp1252 bytes |
 |---|---|---|
@@ -225,7 +242,13 @@ run ".venv/Scripts/python -m pytest -q tests/test_stats.py" label="the original 
 
 ## Fail with a message, not a traceback
 
+> **Exception**: an object Python creates to report that something went wrong, together with what kind of thing (its **class**, such as `FileNotFoundError`) and a message. **Raising** an exception stops normal execution; **catching** it (with `try`/`except`) lets some code decide what to do about it.
+>
+> *Picture it as* an andon cord on a production line. When a station hits a problem it can't handle, it pulls the cord: work stops there and the problem goes up the line, to the team lead, then the supervisor, until someone whose job it is to deal with that kind of problem responds. If nobody responds, the whole line stops: that's the traceback.
+
 When something goes wrong, Python **raises an exception**: it stops the current function, and the one that called it, and so on outwards, until some code **catches** it with `try`/`except`. If nothing catches it, Python prints the traceback and exits with code 1.
+
+The traceback reads from the outermost call at the top to where it went wrong at the bottom. Run `.venv\Scripts\python -m textstats nope.txt` again and read it upwards from the last line: `FileNotFoundError` (what happened), raised inside `read_text` in `files.py` (where), which was called by `main` in `cli.py` (by whom), which was called from `__main__.py`.
 
 Exceptions are classes, arranged in a family tree. The part that matters here:
 
@@ -290,6 +313,10 @@ What Python does with this:
 3. `except OSError as error` binds the exception object to `error`. `error.strerror` is the operating system's own description, such as `No such file or directory`.
 4. Nothing else is caught. A `TypeError` from a bug in `build_report` still produces a traceback, which is right: that's a bug, and hiding it would make it harder to find.
 
+> **Standard output (stdout)** and **standard error (stderr)**: the two text streams every program gets when it starts. By convention results go to stdout and complaints go to stderr. Both appear in the terminal unless one is redirected somewhere else.
+>
+> *Picture it as* two chutes at the end of a machine: good parts go down one onto the conveyor, rejects down the other into a bin. Both chutes are in plain view, but only the first one feeds the next station.
+
 **`print(..., file=sys.stderr)`** writes to **standard error** instead of standard output. A program has two output streams so that results and complaints can go to different places: `python -m textstats a.txt > report.txt` redirects the report into a file, and an error still appears on screen instead of hiding inside `report.txt`. The tests check this: on failure `captured.out == ""`.
 
 **`return 1`**: exit code 1 means "ran, but couldn't do the job". With argparse's 2 for "you typed the command wrong" and 0 for success, the tool now reports all three outcomes in a way other programs can test.
@@ -342,6 +369,10 @@ def most_common(text: str, n: int) -> list[tuple[str, int]]:
     ranked = sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))
     return ranked[:n]
 ```
+
+> **Type hint**: a note in a function's first line saying what type each parameter should be (after a colon) and what type it returns (after `->`). `def words(text: str) -> list[str]:` reads "words takes a string called text and returns a list of strings".
+>
+> *Picture it as* the label on a parts bin: it says what belongs in there, so nobody has to open it to find out. **Where the picture stops working:** that's exactly as far as it goes. The label doesn't stop anyone putting the wrong part in, and Python doesn't check hints when the code runs, as the prediction below shows.
 
 `list[str]` is "a list of strings"; `tuple[str, int]` is "a pair of a string and an int", so `most_common` returns a list of `(word, count)` pairs. Read the signature and you know how to call the function and what you'll get back, without reading its body.
 

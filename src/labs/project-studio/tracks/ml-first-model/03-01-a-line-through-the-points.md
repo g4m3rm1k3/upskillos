@@ -32,7 +32,7 @@ numpy==2.5.3
 
 4. `.venv\Scripts\python -m pip install -r requirements.txt`
 
-This project will grow for the rest of the chapter (and, in the planned chapters after it, into a web service), so it's a package from the start: `houses`.
+This project will grow for the rest of the chapter (and the model you build here goes behind a web service in Chapter 4), so it's a package from the start: `houses`.
 
 ```check
 run ".venv/Scripts/python -c \"import numpy, pytest\"" label="NumPy and pytest are installed in the project's Python" -- python -m venv .venv, then .venv\Scripts\python -m pip install -r requirements.txt
@@ -156,6 +156,10 @@ $$\hat{y} = wx + b$$
 - $w$, the **weight**: how many dollars each extra square foot adds, the line's **slope**;
 - $b$, the **bias** (or intercept): the price the line gives a house of zero area, where it crosses the vertical axis.
 
+> **Model**: a function that turns features into a prediction, with some numbers in it left open. **Parameters**: those open numbers. **Training** (or **fitting**): choosing the parameters, using examples whose answers are known, so the predictions come out close to the answers.
+>
+> *Picture it as* a machine with adjustment dials. The machine's design (a straight line) is fixed; the dial settings ($w$ and $b$) decide what it actually produces. Training is the setup procedure: run test pieces, measure how far off they are, adjust the dials, repeat. **Where the picture stops working:** a machinist adjusts dials by experience; the next lesson computes exactly which way, and how far, to turn each one.
+
 $w$ and $b$ are the model's **parameters**. Choosing them *is* the model: "learning" will mean finding good values for them. With several features, $w$ becomes a vector of weights, one per feature, and the prediction is the dot product plus the bias: $\hat{y} = \mathbf{w} \cdot \mathbf{x} + b$. For every house at once, it's lesson 2.2's matrix multiplication: $\hat{\mathbf{y}} = X\mathbf{w} + b$.
 
 Then you need a way to score a choice of parameters. For each house the **error** is $\hat{y}_i - y_i$, prediction minus truth. Square them (so positive and negative errors don't cancel, as with the variance), average them, and you have the **mean squared error**; take its square root to get back to dollars, the **root mean squared error**:
@@ -263,7 +267,11 @@ tried 441 lines
 best: w = 155, b = 10,000, RMSE 28,552
 ```
 
+> **Grid search**: trying every combination of parameter values from a fixed list for each, and keeping the best. *Picture it as* opening a combination lock by trying every combination: guaranteed to work, and hopeless once there are many wheels.
+
 21 values of $w$ times 21 values of $b$: 441 lines, and the best is about 1,500 dollars better than the hand guess. It's a real result: **155 dollars per square foot, on top of about 10,000**. The model has learned something from the data, by the crudest method possible.
+
+Notice the nested loops: the inner loop over `b` runs completely for **each** value of the outer loop's `w`. Trace the start: `w = 100, b = -50000`; `w = 100, b = -45000`; …; `w = 100, b = 50000`; then `w = 105, b = -50000`, and so on. `best` holds a tuple `(error, w, b)` for the best line so far; `best is None` is true only on the very first line tried, when there's nothing to compare against yet.
 
 ```predict
 question: The grid tried 21 values for each parameter. With 3 features (3 weights plus b), and 21 values for each, how many models would the same grid search try?

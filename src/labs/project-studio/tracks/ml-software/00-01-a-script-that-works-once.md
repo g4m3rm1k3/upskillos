@@ -13,9 +13,15 @@ This is the first lesson of **Machine Learning — From Mathematics to Productio
 
 That's a long way from here, and the series doesn't start with machine learning. It starts with something more basic that every later chapter depends on: **turning a Python script into software**. A script is a file that runs. Software is code that other people (and other code) can run, test, reuse and change without breaking. Every machine-learning project you'll build is software in this sense, and most ML code that fails in practice fails as software, not as mathematics.
 
+> **Software**: code that people other than its author, and other programs, can run on their own inputs, test, reuse and change without breaking it.
+>
+> *Picture it as* the difference between a note you scribble to remember a measurement and a drawing released to the shop floor. The note works for you, today. The drawing has to be complete enough that someone else can make the part next year without asking you anything.
+
 You need basic Python: variables, `if`, loops, functions, lists, dictionaries, and reading a file. Everything else is taught when a problem needs it.
 
 **How each lesson works.** You type the code (the panel shows exactly what changes in each step), and **Check my work** runs your real code in your real project folder. Some steps ask you to **predict** what will happen before you run something: commit to an answer, then read the explanation. Wrong predictions are the useful ones.
+
+**How new words are introduced.** Every new term gets a definition first: the precise meaning, in the words the rest of the field uses. Then, where it helps, a picture to hang it on, marked *Picture it as*. The picture is there to help the definition click, never to replace it: when you read documentation or talk to other programmers, they'll use the real term. Where a picture stops matching the real thing, the lesson says so.
 
 **Three ways to learn each idea.** The box above lists the concepts this lesson's checks demonstrate, and links to the same ideas in the **Notebook Lab** (short runnable notebooks) and, from Chapter 1 on, the **Machine Learning Lab** (interactive visualisations). Use them when something here doesn't click.
 
@@ -26,7 +32,13 @@ This chapter's project is a **text analysis tool**. You'll start it the way most
 1. Click **Choose folder…** in the middle of this window.
 2. Go to your **Documents** folder, make a **New folder** named `text-analysis`, select it and click **Select Folder**.
 
-The terminal at the bottom now runs inside `text-analysis`. Check which Python you have:
+The terminal at the bottom now runs inside `text-analysis`.
+
+> **Terminal**: a program that runs other programs from commands you type. The one in this window is **PowerShell**, the standard terminal on Windows. **Current working directory**: the folder a running program treats as "here". The terminal has one (it's shown in its prompt), and every program you start from it inherits it.
+>
+> *Picture it as* where you're standing in a building. Directions like "second door on the left" only work from the spot you were standing when you got them. A file name without a folder, like `data.txt`, is that kind of direction. This matters at the end of the lesson.
+
+ Check which Python you have:
 
 ```powershell
 python --version
@@ -46,7 +58,11 @@ run "python -c \"import sys; assert sys.version_info >= (3, 12), sys.version\"" 
 
 ## A Python of its own
 
-When you `pip install` a package, it goes into one Python installation's `site-packages` folder, shared by every program that uses that Python. Two projects that need different versions of the same package would break each other. A **virtual environment** prevents that: a folder holding a Python of its own, with its own empty `site-packages`.
+A **package** (in this sense) is a library of Python code that someone published so others can install it: NumPy, pandas and pytest are packages. **pip** is the program that downloads and installs them. When you `pip install` a package, it goes into one Python installation's `site-packages` folder, shared by every program that uses that Python. Two projects that need different versions of the same package would break each other. A **virtual environment** prevents that: a folder holding a Python of its own, with its own empty `site-packages`.
+
+> **Virtual environment**: a folder containing a Python launcher and an empty `site-packages` of its own, so that packages installed for this project are invisible to every other project, and the other way round.
+>
+> *Picture it as* giving each job its own toolbox instead of one shared drawer that every job takes from and puts back into. **Where the picture stops working:** the toolboxes still share one workbench. The standard library (`os`, `json`, `random`, …) comes from the main Python installation and isn't copied; only installed packages are kept separate.
 
 ```powershell
 python -m venv .venv
@@ -93,6 +109,8 @@ One package. **pytest** runs test files: small programs that call your code with
 You may have expected NumPy, pandas or scikit-learn here. They're coming, but this series has a rule: **a library appears when a problem needs it**, so you know what it's for. NumPy arrives when Python lists become too slow for arithmetic on thousands of numbers. pandas arrives when hand-written dataset code gets painful. Right now the only problem is "how do we know the code works?", and pytest answers it.
 
 `==9.1.1` **pins** an exact version. Without a pin, pip installs whatever is newest on the day you run it, and a project that worked in March can break in June with no change to your code. With a pin, every install of this project gets the same pytest.
+
+> *Picture it as* a bill of materials. "M6 bolts" gets you whatever the stores have this week; "M6 × 20, ISO 4762, grade 8.8" gets you the same part every time. `pytest` is the first kind of line; `pytest==9.1.1` is the second.
 
 ```check
 contains requirements.txt "pytest==9.1.1" -- One line: pytest==9.1.1
@@ -159,12 +177,33 @@ Words: 85
 Lines: 8
 ```
 
-Line by line, here is what Python executes:
+Before reading the explanation, try the pieces yourself on a short string. Typing `.venv\Scripts\python` with no file name starts Python's **interactive prompt**, `>>>`: each line you type runs immediately, and the value of an expression is shown. Type the lines after `>>>` one at a time, and **predict each answer before pressing Enter**:
+
+```text
+.venv\Scripts\python
+>>> text = "It was the best\nof times,\n"
+>>> len(text)
+26
+>>> text.split()
+['It', 'was', 'the', 'best', 'of', 'times,']
+>>> text.splitlines()
+['It was the best', 'of times,']
+>>> print("Words:", 6)
+Words: 6
+>>> exit()
+```
+
+`"\n"` inside a string is how you write a **line break** (a "newline"): one character, even though it takes two to type. That's why `len` says 26: 15 characters, a newline, 9 more, a newline.
+
+Now `count.py` line by line. Here is what Python executes:
 
 1. `open("data.txt")` asks the operating system for the file named `data.txt` and returns a **file object**. `.read()` reads all of it into one string. Every line break in the file is in that string as the character `"\n"`.
 2. `len(text)` counts characters, and the 8 line breaks are characters too: the passage has 410 visible characters (spaces included) plus 8 `"\n"`.
 3. `text.split()` with no argument splits on **any run of whitespace** (spaces, tabs, line breaks) and drops empty pieces, so `"of times,\nit"` becomes `["of", "times,", "it"]`. Notice `"times,"`: the comma is part of the "word".
 4. `text.splitlines()` splits at line breaks. A final `"\n"` at the end of the file doesn't start a ninth, empty line.
+5. `print("Characters:", characters)` prints each argument it's given, separated by a space. So one call can print a label and a number together.
+
+A **string** is Python's type for text: a sequence of characters. A **method** is a function that belongs to a value and is called with a dot: `text.split()` means "the `split` function of this particular string". Strings come with dozens of methods; `split`, `splitlines` and `lower` are the ones this chapter uses.
 
 ```check
 run ".venv/Scripts/python count.py" stdout="Words: 85" label="count.py reports 85 words" -- Save count.py and data.txt, then press Run.

@@ -116,7 +116,7 @@ for name, model in [("yours", LinearRegression()), ("scikit-learn", LibraryRegre
     print(f"{name:<13} {weights}, intercept {model.intercept_:,.2f}  ({seconds * 1000:.1f} ms)")
 ```
 
-The loop treats both models identically: construct, `fit`, read `coef_` and `intercept_`. That works only because they share the same **interface**, the same method and attribute names. It's the most valuable design decision in scikit-learn: any code written against `fit`/`predict` works with any of its models, including ones that don't exist yet.
+The loop treats both models identically: construct, `fit`, read `coef_` and `intercept_`. That works only because they share the same **interface**, the same method and attribute names. *Picture it as* a standard tool holder: any tool built to the standard fits any machine built to the standard, so the machine doesn't need to know which tool it's holding. It's the most valuable design decision in scikit-learn: any code written against `fit`/`predict` works with any of its models, including ones that don't exist yet.
 
 ```powershell
 .venv\Scripts\python compare.py
@@ -172,7 +172,7 @@ $$R^2 = 1 - \frac{\text{MSE of the model}}{\text{MSE of always guessing the mean
 - $R^2 = 0$: no better than guessing the mean.
 - $R^2 < 0$: **worse** than guessing the mean, which a badly broken model can manage.
 
-$R^2 = 0.90$ means "the model's squared error is 10% of the baseline's": it accounts for 90% of the variation in prices. Because it's a ratio, it has no units. Create `houses/metrics.py`:
+$R^2 = 0.90$ means "the model's squared error is 10% of the baseline's": it accounts for 90% of the variation in prices. *Picture it as* how much of the scatter in prices the model has explained away: start with all the variation around the average price, subtract what the model accounts for, and R² is the fraction removed. Because it's a ratio, it has no units. Create `houses/metrics.py`:
 
 ```python file=houses/metrics.py
 import numpy as np
@@ -288,4 +288,4 @@ You started with points on a page and ended with a tool that estimates house pri
 - A model is only as good as its error on data it **hasn't seen**.
 - scikit-learn solves the same problem exactly, faster, with more checks, and gives the same answer.
 
-The tool still has a limit that no amount of mathematics fixes: it runs in a terminal on one computer. A website, a phone app or another program can't ask it for a price. The next chapter of this series (planned) starts there: **HTTP**, the language programs use to ask each other things over a network, and **FastAPI**, which turns `predict` into a web service. The model you trained stays exactly as it is; what changes is who can reach it.
+The tool still has a limit that no amount of mathematics fixes: it runs in a terminal on one computer. A website, a phone app or another program can't ask it for a price. The next chapter starts there: **HTTP**, the language programs use to ask each other things over a network, and **FastAPI**, which turns `predict` into a web service. The model you trained stays exactly as it is; what changes is who can reach it.

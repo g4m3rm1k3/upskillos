@@ -23,6 +23,10 @@ Correct, and useless. In almost any English text the most common words are *the*
 
 But which words to ignore depends on the text and the person. That's a **setting**: something that changes how the program behaves without being part of the program. This lesson adds a settings file, and changes how you work with tests: until now the tests were handed to you. From here on, you write them, and you write them **first**.
 
+> **Configuration** (settings): values that change how a program behaves, kept outside its code so they can change without anyone editing or re-testing the code.
+>
+> *Picture it as* the difference between a CNC program and the machine's offsets. The program describes the part and is proven once; the work offsets and tool offsets change from setup to setup. Nobody rewrites the program because a fixture moved.
+
 ## Settings that aren't code
 
 Create `textstats.toml` in the project folder:
@@ -115,7 +119,11 @@ E   ModuleNotFoundError: No module named 'textstats.config'
 1 error in 0.05s
 ```
 
-This is the first step of **test-driven development**: write a failing test (**red**), write the code that makes it pass (**green**), then tidy up with the tests guarding you (**refactor**). Seeing it fail first matters. A test you've never seen fail might not be testing anything, for example if it accidentally never runs.
+This is the first step of **test-driven development** (TDD): write a failing test (**red**), write the code that makes it pass (**green**), then tidy up with the tests guarding you (**refactor**).
+
+> *Picture it as* making the inspection gauge before machining the part. The gauge is the specification in physical form: once it exists, "is the part right?" has a quick, objective answer, and you can't fool yourself about it.
+
+Seeing the test fail first matters. A test you've never seen fail might not be testing anything, for example if it accidentally never runs.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_config.py" exit=2 stdout="No module named 'textstats.config'" label="the new tests fail, because config.py doesn't exist yet (red)" -- Create tests/test_config.py exactly as shown. It should fail to import textstats.config.
@@ -172,9 +180,30 @@ Piece by piece:
 
 **`class ConfigError(Exception)`** defines a new kind of exception by **inheriting** from `Exception`. It adds nothing but a name, and the name is the point: `main` can catch *this* problem without catching anything else. The docstring is its only body.
 
-**`@dataclass(frozen=True) class Settings`.** A **class** is a blueprint for objects that carry named values together; `Settings(top=3)` makes one, and `s.top` reads it. Writing such a class by hand means writing `__init__` (to store the values), `__eq__` (so `==` compares values, which the tests need) and `__repr__` (so a failing test prints `Settings(top=3, ignore=…)` instead of `<Settings object at 0x…>`). The `@dataclass` decorator reads the annotated names and writes those three methods for you. `frozen=True` forbids changing a field after creation, so settings, once loaded, can't be changed by accident somewhere deep in the program.
+**`@dataclass(frozen=True) class Settings`.**
 
-**`frozenset`** is a set that can't be changed. A set because the only question asked of `ignore` is "is this word in it?", which a set answers in one step however many words it holds; a list would compare against every element. Frozen because a dataclass default must not be a shared mutable object.
+> **Class**: a definition of a new type of value: which named values (**attributes**) each one carries and which functions (**methods**) work on it. An **object** (or **instance**) is one value of that type, made by calling the class like a function: `Settings(top=3)`.
+>
+> *Picture it as* a part drawing and the parts made from it. The drawing (`class Settings`) says every part has a `top` and an `ignore`; each part made (`Settings(top=3)`, `Settings(top=5)`) has its own actual values. One drawing, any number of parts.
+
+`Settings(top=3)` makes a `Settings` object, and `s.top` reads its attribute. Writing such a class by hand means writing `__init__` (to store the values), `__eq__` (so `==` compares values, which the tests need) and `__repr__` (so a failing test prints `Settings(top=3, ignore=…)` instead of `<Settings object at 0x…>`). The `@dataclass` **decorator** (a line starting with `@` just above a definition, which hands the definition to a function that changes or adds to it) reads the annotated names and writes those three methods for you. Here is roughly what it writes, so nothing is hidden:
+
+```python
+class Settings:
+    def __init__(self, top=5, ignore=frozenset()):
+        self.top = top            # self is the object being made
+        self.ignore = ignore
+
+    def __eq__(self, other):
+        return (self.top, self.ignore) == (other.top, other.ignore)
+
+    def __repr__(self):
+        return f"Settings(top={self.top!r}, ignore={self.ignore!r})"
+```
+
+`self` is the object the method was called on: in `Settings(top=3)`, Python makes an empty object and calls `__init__` with that object as `self`, so `self.top = top` stores 3 on *that* object. Methods whose names start and end with double underscores are **special methods**: Python calls them for you, `__init__` when an object is made, `__eq__` when you write `==`, `__repr__` when an object is printed in a test failure. `frozen=True` forbids changing a field after creation, so settings, once loaded, can't be changed by accident somewhere deep in the program.
+
+**`frozenset`** is a set that can't be changed. A **set** is a collection with no order and no duplicates, built for one question: "is this in it?". At the prompt, `"the" in {"the", "of"}` is `True`, and `{"the", "the"}` is just `{"the"}`. A set because the only question asked of `ignore` is "is this word in it?", which a set answers in one step however many words it holds; a list would compare against every element. Frozen because a dataclass default must not be a shared mutable object.
 
 **`tomllib.loads(text)`** parses TOML text into a dictionary: `{"top": 3, "ignore": ["the", "of", "it", "was"]}`. A syntax error raises `TOMLDecodeError`, which becomes a `ConfigError`. `raise … from error` keeps the original exception attached, so a programmer debugging it can still see the parser's exact complaint.
 
@@ -304,7 +333,13 @@ def most_common(text: str, n: int, ignore: frozenset[str] = frozenset()) -> list
     return ranked[:n]
 ```
 
-`word for word in words(text) if word not in ignore` is a **generator expression**: like a list comprehension, but it hands words to `Counter` one at a time instead of building a list first. Words are already lowercased by `words()`, and `load_settings` lowercased the ignore list, so `"The"` in the text matches `"the"` in the settings.
+`word for word in words(text) if word not in ignore` is a **generator expression**: like a list comprehension, but it hands words to `Counter` one at a time instead of building a list first. Written out as an ordinary loop, it means:
+
+```python
+for word in words(text):
+    if word not in ignore:
+        # hand this word to Counter
+``` Words are already lowercased by `words()`, and `load_settings` lowercased the ignore list, so `"The"` in the text matches `"the"` in the settings.
 
 `ignore` has a default, `frozenset()`, so every existing call to `most_common` (and every existing test) still works. Adding a parameter with a default is how a function grows without breaking its callers.
 
