@@ -229,7 +229,9 @@ export class Game {
       this.agentFrames.set(n, k + 1);
       if (k % decideEvery(n) !== 0) return;
       this.guard(n, 'act', () => {
-        n.act(decide(policy, { observation: n.observe(), legal: legal as number[] | undefined, features: typeof n.features === 'function' ? (a) => n.features!(a).map(Number) : undefined, temperature: Number(n.temperature) || 0 }));
+        // An agent with features but no turns may do any of its actions.
+        const moves = (legal as number[] | undefined) ?? (typeof n.features === 'function' && Array.isArray(n.actions) ? n.actions.map((_, i) => i) : undefined);
+        n.act(decide(policy, { observation: n.observe(), legal: moves, features: typeof n.features === 'function' ? (a) => n.features!(a).map(Number) : undefined, temperature: Number(n.temperature) || 0 }));
       });
     });
   }

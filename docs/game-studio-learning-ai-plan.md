@@ -143,11 +143,47 @@ Supporting pieces built for the tasks:
 - Checks can call a script's exports: `module(path)`.
 - `play({ training })` runs a check as training does.
 
-**Next:**
-- The chapter 10 lessons (course-sources/making-games.yaml, mg10-001 … mg10-012), each linking its task, with
-  notebooks and tests.
-- Then `npm run facts`.
-- Not yet browser-checked: SVG editing in the editor tab, and the cribbage tasks in the panel.
+**Chapter 10 lessons (built, 2026-10-04):**
+- mg10-001 … mg10-012 in src/courses/making-games/10-cribbage/, each linking its task.
+- The source is course-sources/making-games.yaml. The chapter 10 block is written by the scratchpad generator
+  c10/build10.mjs from l1–l12.mjs; if the scratchpad is gone, edit the YAML directly.
+- Notebook cells reuse the game's own modules (imports and exports stripped), so lessons and game agree.
+- src/courses/making-games/cribbage.test.js checks every number quoted in the prose against a cell run, and that
+  every challenge fails as given and passes when solved.
+- Browser-checked:
+  - lesson 10.3's SVG cells render as images;
+  - the crib-svg task: an SVG edited in its tab, the live preview (left of the text, clear of the task panel), saved,
+    step ticked.
+
+**Not yet browser-checked:** each cribbage task done step by step through the UI (the tests prove every start and
+solution), and the remaining lessons' notebooks on the page (the JS-cell checker and the tests run every cell).
+
+**Chapter 9 finished (2026-10-04):**
+- **Table masks.** Table Q-learning now masks illegal moves (choose and max over legal actions only). Non-turn-based
+  agents make the same random draws as before; the locked Breakout results are unchanged.
+- **Linear Q for any agent** with features(action).
+- **9.8's Try it:** `paddle-features`, Breakout Lab's paddle with nine features. It clears 42 of 48 bricks (the
+  table: 48). Its brain is in tasks/goals/paddle-features.json (TRAIN=1 goals.test.ts retrains it).
+- **Ghost Lab** (examples/ghostLab.ts): Maze Chase's ghost as a turn-based agent.
+  - Legal moves are the ways at a junction, never straight back.
+  - A wandering player is the scripted opponent; both ghosts share one brain.
+  - With no brain, the ghost plans (breadth-first search). TRAP is a second map.
+  - examples/ghostLab.test.ts; MEASURE=1 also checks the trained measurements.
+- **Lessons 9.9** (NPCs that learn), **9.10** (learn or plan?) and **9.11** (capstone). They are in the YAML between
+  chapter 9's end markers, written by scratchpad c9b/build9b.mjs. Tasks: ghost-agent, learn-or-plan, second-npc.
+- **The notebooks** use a grid version of Ghost Lab (one cell a step). src/courses/making-games/npcs.test.js
+  checks every quoted number.
+
+| Measured (grid version) | Result |
+|---|---|
+| Open maze: learned against planning | 10.0 against 9.4 |
+| Trap, wandering player: learned against planning | −26.1 against −27.3 |
+| Trap, still player: planning | −10.0 (exact) |
+| Trap, still player: ghost trained on the wanderer | −150.0 (never catches) |
+| Fetch, trained / pickup-reward bug | home 200 of 200 / home 14 of 200 |
+| Two chasers on one brain / chaser with ambusher | 4.9 steps / 6.7 to 10.1 steps (the ambusher did not help) |
+
+**Next:** the modelling course from lesson 11.2. Optional later: tutorials.shots pictures for the new tasks.
 
 **4. The lessons: a mini-series**, every step present.
 1. The finished game, played against the trained AI.

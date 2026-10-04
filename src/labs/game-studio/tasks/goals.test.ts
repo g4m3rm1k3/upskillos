@@ -17,8 +17,12 @@ import { evaluateQ, qLearning, type QOptions, type QPolicy } from '../ml/qlearni
 import { breakout } from '../examples/breakout';
 import { BREAKOUT_SPEC } from '../ml/breakout';
 import { cliffWalk, CLIFF_SPEC } from '../examples/cliffWalk';
-import { breakoutLabCode, PADDLE_AGENT, PADDLE_SPEC } from '../examples/breakoutLab';
-import { FINISHED, GOAL_RECIPES, GOAL_BRAINS, type GoalName } from './goals';
+import { breakoutLabCode, PADDLE_AGENT, PADDLE_AGENT_FEATURES, PADDLE_SPEC } from '../examples/breakoutLab';
+import { ghostLabCode, GHOST_SPEC } from '../examples/ghostLab';
+import { FINISHED, GOAL_RECIPES, GOAL_BRAINS, PADDLE_FEATURES_GOAL, PADDLE_FEATURES_RECIPE, type GoalName } from './goals';
+import { evaluatePolicy } from '../ml/cem';
+import { linearQLearning } from '../ml/linearq';
+import type { LinearQPolicy } from '../ml/brain';
 
 afterAll(() => { for (const k of ['input', 'scene', 'time', 'math', 'physics', 'ai', 'Vec2', 'PhysicsBody2D', ...Object.keys(NODE_CLASSES)]) delete (globalThis as Record<string, unknown>)[k]; });
 
@@ -27,6 +31,7 @@ const GAMES: Record<GoalName, { code: string; spec: EnvSpec }> = {
   breakout: { code: breakout.code, spec: BREAKOUT_SPEC },
   cliff: { code: cliffWalk.code, spec: CLIFF_SPEC },
   paddle: { code: `${breakoutLabCode()}\nproject.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT)})`, spec: PADDLE_SPEC },
+  ghost: { code: ghostLabCode(), spec: GHOST_SPEC },
 };
 
 async function envFor(name: GoalName): Promise<GameEnv> {
@@ -53,6 +58,27 @@ describe.runIf(process.env.TRAIN)('training the finished agents', () => {
   }
 });
 
+/** The paddle with features, for lesson 9.8's task. */
+async function featuresEnv(): Promise<GameEnv> {
+  const d = new Doc(newProject('paddle-features'));
+  for (const path of FINISHED.paddle.images) d.importAsset(path, { mime: 'image/png', width: 192, height: 176 });
+  d.runCode('Build', `${breakoutLabCode()}\nproject.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT_FEATURES)})`);
+  Object.assign(globalThis, NODE_CLASSES);
+  return GameEnv.create(d.project, { agent: 'Paddle', maxSteps: 1200 }, load);
+}
+
+describe.runIf(process.env.TRAIN)('training the paddle with features', () => {
+  it('the recipe makes the saved linear Q brain', async () => {
+    const env = await featuresEnv();
+    const run = linearQLearning(env, PADDLE_FEATURES_RECIPE);
+    let r = run.next();
+    while (!r.done) r = run.next();
+    const brain = { actions: env.actionNames, observation: env.observationNames, method: 'linear-q' as const, policy: r.value, trained: { steps: PADDLE_FEATURES_RECIPE.episodes, score: Math.round(evaluatePolicy(env, r.value, 3, 7) * 1000) / 1000, random: Math.round(evaluate(env, 'random', 3, 7) * 1000) / 1000 } };
+    if (process.env.TRAIN === 'write') writeFileSync(new URL('./goals/paddle-features.json', import.meta.url), `${JSON.stringify(brain)}\n`);
+    else expect(r.value.weights).toEqual((PADDLE_FEATURES_GOAL.policy as LinearQPolicy).weights);
+  }, 300000);
+});
+
 describe('the finished agents', () => {
   it('play far better than random play', async () => {
     for (const name of Object.keys(GAMES) as GoalName[]) {
@@ -62,5 +88,9 @@ describe('the finished agents', () => {
       console.log(`${name}: finished agent ${score.toFixed(1)}, random ${random.toFixed(1)}`);
       expect(score).toBeGreaterThan(random + 10);
     }
+    const env = await featuresEnv();
+    const featured = evaluatePolicy(env, PADDLE_FEATURES_GOAL.policy as LinearQPolicy, 3, 7);
+    console.log(`paddle with features: ${featured.toFixed(1)}`);
+    expect(featured).toBeGreaterThan(30);
   }, 120000);
 });

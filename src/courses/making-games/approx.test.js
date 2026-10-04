@@ -23,3 +23,10 @@ describe('lesson 9.8: beyond tables', () => {
     expect(run(challenge.startCode).at(-1)).toBe('0 of 3 cases pass.');
   });
 });
+
+describe('lesson 9.8: its Try it', () => {
+  it('opens paddle-features', async () => {
+    const { default: l } = await import('./9-game-ai-that-learns/008-beyond-tables.js');
+    expect(l.intuition.visualizations.find((v) => v.id === 'GameStudioTask').props).toEqual({ task: 'paddle-features', lesson: 'mg9-008', checkpoint: 'cp-mg9-008-9' });
+  });
+});

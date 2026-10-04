@@ -101,6 +101,22 @@ export const PADDLE_AGENT_SIDEWAYS = PADDLE_AGENT
   .replace("observations = ['ball across', 'ball falling'];", "observations = ['ball across', 'ball falling', 'ball going right'];")
   .replace('return [(this.ball.position.x - this.position.x) / 480, this.ball.velocity.y > 0 ? 1 : 0];', 'return [(this.ball.position.x - this.position.x) / 480, this.ball.velocity.y > 0 ? 1 : 0, this.ball.velocity.x > 0 ? 1 : 0];');
 
+/**
+ * The paddle with features (lesson 9.8): instead of bins, each move is described by three numbers, in its own block
+ * of the list (so each move learns its own weights): 1, how far the ball is across, and how far either way. Linear Q
+ * then values a move as w · features.
+ */
+export const PADDLE_AGENT_FEATURES = PADDLE_AGENT.replace('  ready() {', `  // What each move is like (Run › Train an agent…, Features (linear Q)): three numbers in that move's block of nine.
+  featureNames = ['left: bias', 'left: across', 'left: distance', 'stay: bias', 'stay: across', 'stay: distance', 'right: bias', 'right: across', 'right: distance'];
+  features(action) {
+    const across = (this.ball.position.x - this.position.x) / 480;
+    const phi = new Array(9).fill(0);
+    [1, across, Math.abs(across)].forEach((x, i) => { phi[action * 3 + i] = x; });
+    return phi;
+  }
+
+  ready() {`);
+
 /** The agent's environment: 7 bins across (the middle one "over the paddle") × falling or not = 14 states. */
 export const PADDLE_SPEC: EnvSpec = { agent: 'Paddle', bins: [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5]], maxSteps: 1200 };
 

@@ -13,7 +13,7 @@ import { svgSize } from '../core/api';
 function SvgPreview({ text }: { text: string }) {
   const size = svgSize(text);
   return (
-    <div data-testid="svg-preview" style={{ width: 300, borderLeft: `1px solid ${C.border}`, padding: 10, overflow: 'auto', fontSize: 12, color: C.dim, background: '#2a2d33' }}>
+    <div data-testid="svg-preview" style={{ width: 300, borderRight: `1px solid ${C.border}`, padding: 10, overflow: 'auto', fontSize: 12, color: C.dim, background: '#2a2d33' }}>
       <div style={{ color: C.faint, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>PREVIEW</div>
       {typeof size === 'string'
         ? <div data-testid="svg-problem" style={{ color: C.warn }}>{size}</div>
@@ -107,6 +107,8 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
         <span role="link" data-testid="script-reference" onClick={() => store.showReference()} title="Every class, method and global a script can use" style={{ color: C.accent, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>API reference</span>
       </div>
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        {/* The preview on the left: a task's panel sits over the right of this area. */}
+        {svg && <SvgPreview text={text} />}
         <div style={{ flex: 1, minWidth: 0 }}>
         <Editor
           path={`file:///${path}`}
@@ -119,7 +121,6 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
           options={{ fontSize: 13, minimap: { enabled: false }, tabSize: 2, scrollBeyondLastLine: false, automaticLayout: true, wordWrap: svg ? 'on' : 'off' }}
         />
         </div>
-        {svg && <SvgPreview text={text} />}
       </div>
     </div>
   );

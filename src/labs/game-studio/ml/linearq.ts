@@ -1,5 +1,5 @@
 // Training an agent whose moves are described by features: semi-gradient Q-learning with a linear Q (Sutton & Barto
-// §10.1), for a turn-based agent with legalActions() and features(action) (ml/env.ts).
+// §10.1), for an agent with features(action), turn-based (legalActions()) or not (every action is legal) (ml/env.ts).
 //
 // A table needs one row per state, and a card game has far too many states (which cards, which count, whose crib).
 // Instead each move a is described by numbers φ(s, a), its features (the points it scores now, whether it leaves
@@ -131,7 +131,7 @@ export class LinearQLearner {
   private lastEpisode: LinearQEpisode | null = null;
 
   constructor(private readonly env: GameEnv, private readonly opts: LinearQOptions) {
-    if (!env.turnBased || !env.featureNames.length) throw new Error('Linear Q needs a turn-based agent with legalActions() and features(action)');
+    if (!env.featureNames.length) throw new Error('Linear Q needs an agent whose script has features(action): what each move is like, as numbers');
     this.features = env.featureNames;
     this.w = opts.weights && opts.weights.length === this.features.length ? [...opts.weights] : new Array(this.features.length).fill(0);
     this.algorithm = opts.algorithm ?? 'q';
