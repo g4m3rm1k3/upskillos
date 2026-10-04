@@ -7,7 +7,8 @@ import DiffBlock from './DiffBlock.jsx';
 import './LessonPanel.css';
 import PredictionBox from './PredictionBox.jsx';
 import LessonCompanions from './LessonCompanions.jsx';
-import { MARKER_SPLIT } from './predictions.js';
+import HintLadder from './HintLadder.jsx';
+import { BLOCK_SPLIT } from './hints.js';
 
 // MarkdownProse defaults to article typography — large serif body text with
 // generous leading, which is right for a full-width lesson page and far too
@@ -162,17 +163,24 @@ export default function LessonPanel({
   );
 }
 
-// Step prose with its prediction checkpoints (```predict fences) in the places they were written.
+// Step prose with its prediction checkpoints (```predict fences) and hint ladders (```hints
+// fences) in the places they were written.
 function StepText({ text, step, C }) {
-  const parts = text.split(MARKER_SPLIT);
-  return parts.map((part, i) => {
-    if (i % 2 === 0) return part.trim() ? <MarkdownProse key={i} text={part} className={COMPACT_PROSE} /> : null;
-    const index = Number(part);
-    const prediction = step.predictions?.[index];
-    if (!prediction) return null;
-    const id = `${step.id}-predict-${index}`;
-    return <PredictionBox key={id} id={id} prediction={prediction} C={C} proseClass={COMPACT_PROSE} />;
-  });
+  const parts = text.split(BLOCK_SPLIT);
+  const out = [];
+  for (let i = 0; i < parts.length; i += 3) {
+    if (parts[i].trim()) out.push(<MarkdownProse key={i} text={parts[i]} className={COMPACT_PROSE} />);
+    if (i + 2 >= parts.length) break;
+    const kind = parts[i + 1];
+    const index = Number(parts[i + 2]);
+    const id = `${step.id}-${kind}-${index}`;
+    if (kind === 'predict' && step.predictions?.[index]) {
+      out.push(<PredictionBox key={id} id={id} prediction={step.predictions[index]} C={C} proseClass={COMPACT_PROSE} />);
+    } else if (kind === 'hints' && step.hints?.[index]) {
+      out.push(<HintLadder key={id} id={id} hints={step.hints[index]} C={C} proseClass={COMPACT_PROSE} />);
+    }
+  }
+  return out;
 }
 
 function ChecksBox({ step, state, onCheck, canCheck, C }) {

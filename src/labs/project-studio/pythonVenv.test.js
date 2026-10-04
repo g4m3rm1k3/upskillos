@@ -41,6 +41,28 @@ describe('Python project runs', () => {
     expect(cmd.command).toBe(managedExe);
   });
 
+  it('run a package’s __main__.py as python -m <package>, from the project folder', async () => {
+    const root = path.join(tmp, 'package');
+    touch(python.venvPython(root));
+    touch(path.join(root, 'breakout', '__init__.py'));
+    touch(path.join(root, 'breakout', '__main__.py'));
+    const cmd = await python.projectCommand(app, path.join(root, 'breakout', '__main__.py'), root);
+    expect(cmd.args).toEqual(['-m', 'breakout']);
+  });
+
+  it('name a nested package with dots, and run a __main__.py outside any package by its path', async () => {
+    const root = path.join(tmp, 'nested');
+    touch(python.venvPython(root));
+    touch(path.join(root, 'forge', '__init__.py'));
+    touch(path.join(root, 'forge', 'editor', '__init__.py'));
+    touch(path.join(root, 'forge', 'editor', '__main__.py'));
+    touch(path.join(root, 'scripts', '__main__.py'));
+    expect((await python.projectCommand(app, path.join(root, 'forge', 'editor', '__main__.py'), root)).args)
+      .toEqual(['-m', 'forge.editor']);
+    const loose = path.join(root, 'scripts', '__main__.py');
+    expect((await python.projectCommand(app, loose, root)).args).toEqual([loose]);
+  });
+
   it('report not installed when there is neither', async () => {
     const empty = { getPath: () => path.join(tmp, 'empty-userData') };
     const root = path.join(tmp, 'nothing');

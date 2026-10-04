@@ -268,13 +268,28 @@ function venvPython(root) {
     : path.join(root, '.venv', 'bin', 'python')
 }
 
+// A package's __main__.py can't be run by its path: Python would put the package's own folder on
+// sys.path, so the package couldn't import itself. Running `python -m <package>` from the project
+// folder is what a learner types, so Run does the same (the Forge series' `run: breakout/__main__.py`).
+async function runArgs(absFile, root) {
+  if (!root || path.basename(absFile) !== '__main__.py') return [absFile]
+  const rel = path.relative(root, path.dirname(absFile))
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return [absFile]
+  const parts = rel.split(path.sep)
+  for (let i = 1; i <= parts.length; i++) {
+    if (!(await pathExists(path.join(root, ...parts.slice(0, i), '__init__.py')))) return [absFile]
+  }
+  return ['-m', parts.join('.')]
+}
+
 async function projectCommand(app, absFile, root) {
+  const args = await runArgs(absFile, root)
   if (root && (await pathExists(venvPython(root)))) {
-    return { command: venvPython(root), args: [absFile], env: { ...UNBUFFERED, PYTHONUTF8: '1' } }
+    return { command: venvPython(root), args, env: { ...UNBUFFERED, PYTHONUTF8: '1' } }
   }
   const exe = pythonExePath(app)
   if (!(await pathExists(exe))) return null
-  return { command: exe, args: [absFile], env: UNBUFFERED }
+  return { command: exe, args, env: UNBUFFERED }
 }
 
 module.exports = { getStatus, install, runScript, runCode, killRun, killAllScripts, projectCommand, venvPython }
