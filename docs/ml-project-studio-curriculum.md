@@ -208,6 +208,9 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 9.2 One good question: impurity and the best split | decision trees (Gini impurity, thresholds; the hidden process limits recovered) | ml-decision-trees / 12 |
 | | 9.3 Questions about the answers: growing a tree | decision trees (recursion, reading the rules, depth and pruning) | ml-decision-trees / 12 |
 | | 9.4 Many trees are wiser than one: random forests | ensembles (bootstrap, decorrelated trees, voting, feature importance and its limits) | ml-random-forests / 13 |
+| **10 · Clustering** (`ml-clustering`) — project: customer segments | 10.1 Groups nobody labelled: k-means | clustering (assign and update by hand; identical to `KMeans` from the same start) | ml-k-means / 17 |
+| | 10.2 How many groups, and can you trust them? | clustering (local minima and restarts, scaling, elbow, silhouette by hand) | ml-k-means / 17 |
+| | 10.3 Using the segments: new customers and odd ones out | clustering (a fitted segmenter, profiles, distance-based anomaly screening) | ml-k-means / 17 |
 
 ### Planned
 
@@ -215,7 +218,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 10 | Unsupervised: Customer Segmentation | "There are no labels" | distance, k-means from scratch, choosing k | ml-k-means / 17 |
 | 11 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |
 | 12 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy; mini-batches and momentum | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand, ml-optimisers / 20, 21, 22 |
 | 13 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
