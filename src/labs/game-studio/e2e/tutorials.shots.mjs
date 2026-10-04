@@ -20,6 +20,43 @@ const only = process.argv[2];
 // Tasks whose steps carry on in the same running game (one training run in view across several steps).
 const KEEP_RUNNING = new Set(['td-step', 'sarsa-vs-q']);   // a task id (or the start of one, like tetris), to make just those pictures
 
+/**
+ * The task's start script with these functions, methods or fields replaced by the solution's: how the script looks
+ * once those steps are done. A function is \nexport function name( … \n}; a method \n  name( … \n  }; either may be
+ * one line; a field or constant is one line (name = …).
+ */
+function take(into, from, names) {
+  const find = (src, name) => {
+    let m = new RegExp(`\\nexport function ${name}\\(`).exec(src), indent = '';
+    if (!m) { m = new RegExp(`\\n  ${name}\\(`).exec(src); indent = '  '; }
+    if (!m) {
+      m = new RegExp(`\\n(export const |  )${name} = `).exec(src);
+      if (!m) throw new Error(`take: no ${name}`);
+      return [m.index, src.indexOf('\n', m.index + 1)];
+    }
+    const lineEnd = src.indexOf('\n', m.index + 1);
+    if (/\}\s*(\/\/.*)?$/.test(src.slice(m.index, lineEnd)) && !src.slice(m.index, lineEnd).trimEnd().endsWith('{')) return [m.index, lineEnd];
+    const close = src.indexOf(`\n${indent}}`, lineEnd);
+    return [m.index, close + indent.length + 2];
+  };
+  for (const name of names) { const [a, b] = find(into, name), [c, d] = find(from, name); into = into.slice(0, a) + from.slice(c, d) + into.slice(b); }
+  return into;
+}
+
+// The five of hearts, a step at a time (the crib-svg task).
+const HEART = 'M0,8 C-3,5 -10,1 -10,-4 C-10,-8 -7,-10 -4.5,-10 C-2.5,-10 -0.8,-8.8 0,-7 C0.8,-8.8 2.5,-10 4.5,-10 C7,-10 10,-8 10,-4 C10,1 3,5 0,8 Z';
+const corner = '  <text x="11" y="23" font-family="Georgia, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#c1121f">5</text>\n';
+const cornerHeart = '  <use href="#heart" transform="translate(11 35) scale(0.55)"/>\n';
+const pips = (turned) => [[30, 30], [70, 30], [50, 70], [30, 110], [70, 110]].map(([x, y]) => `  <use href="#heart" transform="translate(${x} ${y})${turned && y > 75 ? ' rotate(180)' : ''}"/>\n`).join('');
+const svg = (body) => `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <defs><path id="heart" d="${HEART}" fill="#c1121f"/></defs>\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>\n${body}</svg>\n`;
+const FIVE = [
+  `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>\n${corner}</svg>\n`,
+  svg(corner + cornerHeart),
+  svg(corner + cornerHeart + pips(false)),
+  svg(corner + cornerHeart + `  <g transform="rotate(180 50 70)">\n  ${corner}  ${cornerHeart}  </g>\n` + pips(true)),
+];
+const GHOST_SPEC = { agent: 'Ghosts/Ghost', bins: [[-0.5, 0.5], [-0.5, 0.5]], maxSteps: 150 };
+
 const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => {
   let focus = null;
   const mark = (loc) => { focus = loc; return loc; };
@@ -92,6 +129,42 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       spec.observation = spec.observation.map((o) => { const { bins, ...r } = o; void bins; return o.minus && across ? { ...r, bins: across } : o.path === 'Ball:velocity.y' && vy ? { ...r, bins: vy } : r; });
       await mark(t('train-spec')).fill(JSON.stringify(spec, null, 2));
     },
+    // A script as it is once some of its functions or methods are written: the task's start with those taken from
+    // its solution (tasks/solutions.ts), typed in. names: functions (export function), methods, or one-line fields.
+    code: async (task, path, names) => {
+      const [start, sol] = await page.evaluate(([a, b]) => [window.__gameStudio.startScripts(a)[b], window.__gameStudio.solutionScripts(a)[b]], [task, path]);
+      await t('left-files').click(); await ui.openScript(path);
+      await ui.script(take(start, sol, names));
+    },
+    // An SVG image's text, typed in and saved (an image is saved, not left in the editor).
+    svg: async (path, text) => {
+      await t('left-files').click(); await t(`asset-${path}`).click();
+      await ui.script(text); await page.keyboard.press('ControlOrMeta+S'); await page.waitForTimeout(400);
+      mark(t('svg-preview'));
+    },
+    // Run, then press keys in the game (it has the focus once it runs).
+    play: async (...keys) => { await ui.run(); for (const k of keys) { await page.keyboard.press(k); await page.waitForTimeout(700); } mark(page.locator('iframe[title="Running game"]')); },
+    // Train an agent… with Features (linear Q): the settings typed in, Train, and wait.
+    linear: async (spec, { episodes, alpha, alphaEnd, gamma, from, to } = {}) => {
+      if (!(await t('train-spec').count())) { await t('menu-Run').click(); await t('item-Train an agent…').click(); }
+      await t('train-method-linear-q').click();
+      if (spec) await t('train-spec').fill(JSON.stringify(spec, null, 2));
+      for (const [id, v] of [['train-episodes', episodes], ['train-alpha', alpha], ['train-alpha-end', alphaEnd], ['train-gamma', gamma], ['train-epsilon', from], ['train-epsilon-end', to]]) if (v !== undefined) await t(id).fill(String(v));
+      await t('train-start').click();
+      await page.getByTestId('train-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 600000 });
+      mark(t('train-feature-weights'));
+    },
+    // Table (TD) on this environment with these episodes, the default settings otherwise.
+    table: async (spec, episodes) => {
+      if (!(await t('train-spec').count())) { await t('menu-Run').click(); await t('item-Train an agent…').click(); }
+      await t('train-method-q').click();
+      await t('train-spec').fill(JSON.stringify(spec, null, 2));
+      await ui.td({ algorithm: 'q', episodes, alpha: 0.2, gamma: 0.97, from: 0.3, to: 0.02, schedule: 'linear', explore: 'epsilon', q0: 0 });
+      await t('train-start').click();
+      await page.getByTestId('train-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 600000 });
+      mark(t('train-curve'));
+    },
+    saveBrain: async (path) => { await t('train-brain-path').fill(path); await mark(t('train-save-brain')).click(); },
     label: async (name, y, text) => { await ui.add('Label', 'HUD'); await ui.rename('Label', name); await ui.select(name); await ui.prop('text', text); await ui.prop('position-x', 640); await ui.prop('position-y', y); },
   };
   const boardSteps = (task, n) => Array.from({ length: n }, (_, k) => () => ui.board(task, k));
@@ -408,6 +481,116 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       },
     ],
     // A game that learns: every step is in Run › Train an agent…. The spec is edited as JSON, as a learner types it.
+    // ── Cribbage (chapter 10): each module written a function at a time ──
+    'crib-tour': [
+      () => ui.play('Digit2'),
+      async () => { const sol = await ui.solution('crib-tour', 'scripts/table.js'); await t('left-files').click(); await ui.openScript('scripts/table.js'); await ui.script(sol.replace("difficulty = 'Hard';", "difficulty = 'Medium';")); },
+      async () => { await ui.script(await ui.solution('crib-tour', 'scripts/table.js')); await page.keyboard.press('ControlOrMeta+S'); },
+    ],
+    'crib-cards': [
+      () => ui.code('crib-cards', 'scripts/cards.js', ['value']),
+      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName']),
+      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName', 'newDeck']),
+      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName', 'newDeck', 'shuffle']),
+      () => ui.play('Digit2'),
+    ],
+    'crib-svg': [
+      () => ui.svg('assets/cards/5H.svg', FIVE[0]),
+      () => ui.svg('assets/cards/5H.svg', FIVE[1]),
+      () => ui.svg('assets/cards/5H.svg', FIVE[2]),
+      () => ui.svg('assets/cards/5H.svg', FIVE[3]),
+      () => ui.play('Digit2'),
+    ],
+    'crib-score': [
+      () => ui.code('crib-score', 'scripts/score.js', ['fifteens']),
+      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs']),
+      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs', 'runs']),
+      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs', 'runs', 'flush', 'nobs']),
+      () => ui.play('Digit2'),
+    ],
+    'crib-peg': [
+      () => ui.code('crib-peg', 'scripts/score.js', ['countOf']),
+      () => ui.code('crib-peg', 'scripts/score.js', ['countOf', 'pegPoints']),
+      async () => { mark(page.locator('.monaco-editor')); },
+      async () => { mark(page.locator('.monaco-editor')); },
+      () => ui.code('crib-peg', 'scripts/table.js', ['options']),
+      () => ui.code('crib-peg', 'scripts/table.js', ['options', 'nextTurn']),
+    ],
+    'crib-table': [
+      () => ui.code('crib-table', 'scripts/table.js', ['newHand']),
+      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards']),
+      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'award']),
+      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'award', 'cut']),
+      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'cut', 'award', 'startShow']),
+      () => ui.play('Digit2'),
+    ],
+    'crib-screen': [
+      () => ui.code('crib-screen', 'scripts/cardsprite.js', ['update']),
+      () => ui.code('crib-screen', 'scripts/cardsprite.js', ['update', 'contains']),
+      () => ui.code('crib-screen', 'scripts/table.js', ['takeInput']),
+      async () => { mark(page.locator('.monaco-editor')); },
+      () => ui.play('Digit2'),
+    ],
+    'crib-rules': [
+      () => ui.code('crib-rules', 'scripts/features.js', ['unseen']),
+      () => ui.code('crib-rules', 'scripts/features.js', ['unseen', 'expectedHand']),
+      () => ui.code('crib-rules', 'scripts/partner.js', ['rulesThrow']),
+      () => ui.code('crib-rules', 'scripts/partner.js', ['rulesThrow', 'rulesPlay']),
+      () => ui.play('Digit2', 'KeyD'),
+    ],
+    'crib-agent': [
+      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions']),
+      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions']),
+      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act']),
+      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act', 'reward']),
+      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act', 'reward', 'done']),
+    ],
+    'crib-features': [
+      () => ui.code('crib-features', 'scripts/features.js', ['discardFeatures']),
+      () => ui.code('crib-features', 'scripts/features.js', ['discardFeatures', 'pegFeatures']),
+      async () => { mark(page.locator('.monaco-editor')); },
+      async () => { mark(page.locator('.monaco-editor')); },
+      async () => { mark(page.locator('.monaco-editor')); },
+    ],
+    'crib-train': [
+      () => ui.linear({ agent: 'Opponent', maxSteps: 40 }, { episodes: 2000 }),
+      () => ui.saveBrain('brains/cribbage.json'),
+      async () => { await t('dialog-close').click().catch(() => {}); await ui.play('Digit2', 'KeyD'); },
+      async () => { await ui.stop(); await ui.linear(null, { episodes: 200 }); },
+    ],
+    'crib-difficulty': [
+      () => ui.code('crib-difficulty', 'scripts/table.js', ['DIFFICULTY']),
+      () => ui.code('crib-difficulty', 'scripts/opponent.js', ['remember']),
+      async () => { mark(page.locator('.monaco-editor')); },
+      () => ui.play('Digit3', 'KeyD'),
+    ],
+    // ── Game AI that learns, 9.8: the paddle with features ──
+    'paddle-features': [
+      async () => { await t('left-files').click(); await ui.openScript('scripts/paddle.js'); await ui.script(await ui.solution('paddle-features', 'scripts/paddle.js')); },
+      () => ui.linear({ agent: 'Paddle', maxSteps: 1200 }, { episodes: 100, alpha: 0.05, alphaEnd: 0.005, gamma: 0.97, from: 0.3, to: 0.02 }),
+      () => ui.saveBrain('brains/paddle.json'),
+      () => ui.table({ agent: 'Paddle', bins: [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5]], maxSteps: 1200 }, 100),
+    ],
+    // ── Game AI that learns, 9.9 to 9.11: Ghost Lab ──
+    'ghost-agent': [
+      () => ui.code('ghost-agent', 'scripts/ghost.js', ['observe']),
+      () => ui.code('ghost-agent', 'scripts/ghost.js', ['observe', 'legalActions']),
+      () => ui.code('ghost-agent', 'scripts/ghost.js', ['observe', 'legalActions', 'act', 'reward', 'done']),
+      () => ui.table(GHOST_SPEC, 300),
+      async () => { await ui.saveBrain('brains/ghost.json'); await t('dialog-close').click().catch(() => {}); await ui.play(); },
+    ],
+    'learn-or-plan': [
+      () => ui.play(),
+      () => ui.table(GHOST_SPEC, 300),
+      async () => { await t('dialog-close').click().catch(() => {}); await t('left-files').click(); await ui.openScript('scripts/player.js'); await ui.script(await ui.solution('learn-or-plan', 'scripts/player.js')); },
+      () => ui.table(GHOST_SPEC, 300),
+    ],
+    'second-npc': [
+      async () => { await t('left-files').click(); await t('new-script-file').click(); await t('new-script-name').fill('ambusher'); await t('new-script-name').press('Enter'); await ui.script(await ui.solution('second-npc', 'scripts/ambusher.js')); },
+      async () => { await ui.select('Ghost2'); await t('detach-script').click(); await mark(t('attach-script')).selectOption('scripts/ambusher.js'); },
+      () => ui.table({ ...GHOST_SPEC, agent: 'Ghosts/Ghost2' }, 300),
+      async () => { await ui.saveBrain('brains/ambusher.json'); await t('dialog-close').click().catch(() => {}); await ui.play(); },
+    ],
     'q-agent': [
       async () => { await t('menu-Run').click(); await t('item-Train an agent…').click(); await ui.spec({ across: [-0.25, -0.1, -0.03, 0.03, 0.1, 0.25] }); },
       () => ui.spec({ across: [-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], vy: [0] }),
@@ -451,6 +634,8 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
         if (!KEEP_RUNNING.has(id)) await ui.stop();
       }
       await ui.stop();
+      // A step may end with a dialog open (Train an agent…): close it, so the next task's menus can be reached.
+      if (await t('dialog-close').count()) await t('dialog-close').click().catch(() => {});
       await page.locator('[data-testid="task-finished"]').waitFor({ timeout: 8000 }).catch(async () => bad.push(`${id}: not finished: ${JSON.stringify(await page.evaluate(() => window.__gameStudio.store.task?.results))}`));
     } catch (e) {
       bad.push(`${id}: ${e.message.split('\n')[0]}`);

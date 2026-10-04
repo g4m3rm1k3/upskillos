@@ -70,7 +70,7 @@ export function Files({ store }: { store: Store }) {
           ))}
           {namer('scene')}
         </Group>
-        <Group title="scripts/" action={<Btn small onClick={() => setNaming('script')} title="New script file">+</Btn>}>
+        <Group title="scripts/" action={<Btn small testid="new-script-file" onClick={() => setNaming('script')} title="New script file">+</Btn>}>
           {p.scripts.map((x) => (
             <div key={x.path} data-testid={`file-${x.path}`} onClick={() => store.openScript(x.path)} style={item(store.tab.kind === 'script' && store.tab.path === x.path)}>
               <span style={{ color: C.warn, fontSize: 10 }}>JS</span><span>{x.path.replace(/^scripts\//, '')}{store.isScriptDirty(x.path) ? ' ●' : ''}</span>

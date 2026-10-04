@@ -41,7 +41,7 @@ export function TaskPanel({ store, onBack, onWatchFinished }: { store: Store; on
         <>
           <div style={{ margin: '2px 0 6px' }}>{t.def.goal}</div>
           {t.def.finished && (
-            <div data-testid="task-finished" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 7px', marginBottom: 8, background: '#1d2a22' }}>
+            <div data-testid="task-goal" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 7px', marginBottom: 8, background: '#1d2a22' }}>
               <div style={{ color: C.faint, fontSize: 10, fontWeight: 700, letterSpacing: 0.4 }}>WHAT YOU ARE BUILDING</div>
               <div style={{ margin: '2px 0 4px' }}>{t.def.finished.what}</div>
               <button type="button" data-testid="task-watch-finished" onClick={onWatchFinished} disabled={!onWatchFinished} style={{ ...btn, background: store.previewing ? C.accent : C.raised }}

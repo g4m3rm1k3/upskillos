@@ -183,7 +183,17 @@ solution), and the remaining lessons' notebooks on the page (the JS-cell checker
 | Fetch, trained / pickup-reward bug | home 200 of 200 / home 14 of 200 |
 | Two chasers on one brain / chaser with ambusher | 4.9 steps / 6.7 to 10.1 steps (the ambusher did not help) |
 
-**Next:** the modelling course from lesson 11.2. Optional later: tutorials.shots pictures for the new tasks.
+**Step pictures (2026-10-04):** every new task's steps are done through the editor by e2e/tutorials.shots.mjs
+(`npm run game:shots`, or with a task id prefix), each ticks, and its picture is in tasks/shots/.
+
+Fixes the pictures run found:
+- The whole-game check stops when the game is stuck, instead of playing 20,000 frames on every edit.
+- crib-table writes award() before cut(), which uses it.
+- A turn-based agent's trained score, like its random play's, is over 100 games, not 3.
+
+**Not built (optional):** Train in view and the step-through trace only for Table (TD), not for Features (linear Q).
+
+**Next:** the modelling course from lesson 11.2.
 
 **4. The lessons: a mini-series**, every step present.
 1. The finished game, played against the trained AI.

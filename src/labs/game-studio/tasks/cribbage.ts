@@ -553,15 +553,6 @@ const tableTask: GameTask = {
       }),
     },
     {
-      text: 'Write cut(): the starter is the top card of the deck. A jack is 2 points for the dealer, "his heels".',
-      check: moduleCheck(async (v) => {
-        const { t } = await table(v, { setup: (t) => fresh(t, { dealer: 1, you: '2H 5C 9D JH', ai: 'AH 3D 4C 7S', deck: '4D 8S JD' }) });
-        call(t, 'cut');
-        if (named(t.starter ? [t.starter] : []) !== 'JD') return 'The starter should be the top of the deck: the last card, deck.pop().';
-        return t.scores[1] === 2 || `The starter is a jack and the AI dealt, so the AI pegs 2 for his heels; it has ${t.scores[1]}.`;
-      }),
-    },
-    {
       text: 'Write award(seat, points, why): the back peg moves to where the front peg was, the front peg moves on, and reaching the goal (121) ends the game at once, even in the middle of a hand.',
       check: moduleCheck(async (v) => {
         const { t } = await table(v, { setup: (t) => fresh(t, { dealer: 0, you: '2H', ai: '3D' }) });
@@ -571,6 +562,15 @@ const tableTask: GameTask = {
         call(t, 'award', 1, 6, 'test');
         if (t.scores[1] !== 121) return 'A score never goes past the goal: 118 + 6 is 121.';
         return t.phase === 'over' || 'Reaching 121 ends the game: phase \'over\'.';
+      }),
+    },
+    {
+      text: 'Write cut(): the starter is the top card of the deck. A jack is 2 points for the dealer, "his heels".',
+      check: moduleCheck(async (v) => {
+        const { t } = await table(v, { setup: (t) => fresh(t, { dealer: 1, you: '2H 5C 9D JH', ai: 'AH 3D 4C 7S', deck: '4D 8S JD' }) });
+        call(t, 'cut');
+        if (named(t.starter ? [t.starter] : []) !== 'JD') return 'The starter should be the top of the deck: the last card, deck.pop().';
+        return t.scores[1] === 2 || `The starter is a jack and the AI dealt, so the AI pegs 2 for his heels; it has ${t.scores[1]}.`;
       }),
     },
     {
@@ -589,8 +589,15 @@ const tableTask: GameTask = {
       text: 'Play a whole game: with your table finished, the game runs from the deal to 121. (The check plays one at full speed, the rules player in both seats.)',
       check: moduleCheck(async (v) => {
         const { t, r } = await table(v, { setup: (t) => { t.autoplay = true; t.fast = true; } });
-        for (let f = 0; f < 20000 && t.phase !== 'over'; f++) r.game.step(1 / 60);
+        // A game that makes no progress (the same phase and scores for 300 frames) is stuck: say where, at once.
+        let last = '', still = 0;
+        for (let f = 0; f < 20000 && t.phase !== 'over' && still < 300; f++) {
+          r.game.step(1 / 60);
+          const now = `${t.phase} ${t.scores?.join(',')} ${t.pile?.length}`;
+          still = now === last ? still + 1 : 0; last = now;
+        }
         if (r.errors.length) return r.errors[0];
+        if (still >= 300) return `The game is stuck in the ${t.phase} phase: finish the steps above.`;
         return (t.phase === 'over' && Math.max(...t.scores) === 121) || `After 20,000 frames the game is still at ${t.scores.join(' to ')} (${t.phase}).`;
       }),
     },

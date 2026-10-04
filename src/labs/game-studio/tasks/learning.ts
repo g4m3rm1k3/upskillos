@@ -189,7 +189,7 @@ function ghostTasks(): GameTask[] {
           check: { kind: 'project', test: (v) => { const src = v.script('scripts/ambusher.js') ?? ''; return (/extends\s+Ghost/.test(src) && /brains\/ambusher\.json/.test(src) && /observe\s*\(/.test(src)) || 'scripts/ambusher.js should extend Ghost, name brains/ambusher.json and have its own observe().'; } },
         },
         {
-          text: 'Select the second ghost (Ghosts/Ghost2) and set its script to scripts/ambusher.js. The first ghost keeps the chaser\'s brain.',
+          text: 'Select the second ghost (Ghosts/Ghost2). In the Inspector\'s Script section press Detach, then choose scripts/ambusher.js under Attach existing…. The first ghost keeps the chaser\'s brain.',
           check: { kind: 'play', test: async (v) => {
             const { g } = await trainingGhost(v, 'Ghosts/Ghost2');
             if (!g || g.brain !== 'brains/ambusher.json') return 'Set the second ghost\'s script to scripts/ambusher.js.';

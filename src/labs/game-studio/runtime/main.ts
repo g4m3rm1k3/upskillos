@@ -125,7 +125,7 @@ async function startTraining(scene: Phaser.Scene, t: TrainInView, project: Extra
   const buffer = new BufferedRenderer(), real = new PhaserRenderer(scene);
   try {
     const headless = await GameEnv.create(project, t.spec, load);
-    const random = evaluate(headless, 'random', 3, 7);
+    const random = evaluate(headless, 'random', headless.turnBased ? 100 : 3, 7);
     const env = await GameEnv.create(project, t.spec, load, { renderer: buffer });
     trainer = { env, learner: new QLearner(env, t.options), buffer, real, speed: t.speed, credit: 0, lastLive: 0, finishing: false, headless, last: null, sent: null };
     send({ type: 'trainStart', actions: env.actionNames, observation: env.observationNames, bins: env.bins, random });
@@ -165,7 +165,7 @@ function tickOnce(t: Trainer): void {
   if (out.episode) send({ type: 'trainEpisode', episode: out.episode });
   if (out.policy) {
     t.finishing = true;
-    const score = evaluateQ(t.headless, out.policy, 3, 7);
+    const score = evaluateQ(t.headless, out.policy, t.headless.turnBased ? 100 : 3, 7);
     send({ type: 'trainDone', policy: out.policy, score });
   }
 }
