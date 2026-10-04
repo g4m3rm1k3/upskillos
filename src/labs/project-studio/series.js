@@ -40,8 +40,9 @@ const SERIES = [
       ['ml-security', '06 · Authentication and Security: Multi-user Studio'],
       ['ml-evaluation', '07 · Evaluation: Is the Model Any Good?'],
       ['ml-classification', '08 · Classification: A Spam Detector'],
+      ['ml-trees', '09 · Trees and Neighbours: Predicting Defects'],
     ],
-    planned: 'Next in this series: decision trees and forests, clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 

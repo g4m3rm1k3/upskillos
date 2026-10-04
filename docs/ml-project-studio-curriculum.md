@@ -204,6 +204,10 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 8.3 Every word is evidence: naive Bayes | naive Bayes (smoothing, log scores; identical to `MultinomialNB`) | ml-naive-bayes / 11 |
 | | 8.4 Learning the weights: logistic regression | logistic regression (sigmoid, log loss, gradient checked numerically, L2 penalty) | ml-logistic-regression / 8 |
 | | 8.5 95% accurate, and is that good? | classification metrics (confusion matrix, precision, recall, F1, thresholds, ROC AUC) | ml-classification-metrics / 9 |
+| **09 · Trees and Neighbours** (`ml-trees`) — project: defect predictor (injection-moulding runs) | 9.1 Like the runs before it: k-nearest neighbours | nearest neighbours (distance, why units matter, scaling in a pipeline) | ml-knn / 10 |
+| | 9.2 One good question: impurity and the best split | decision trees (Gini impurity, thresholds; the hidden process limits recovered) | ml-decision-trees / 12 |
+| | 9.3 Questions about the answers: growing a tree | decision trees (recursion, reading the rules, depth and pruning) | ml-decision-trees / 12 |
+| | 9.4 Many trees are wiser than one: random forests | ensembles (bootstrap, decorrelated trees, voting, feature importance and its limits) | ml-random-forests / 13 |
 
 ### Planned
 
@@ -211,7 +215,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 09 | Trees: Decision Tree and Random Forest | "A model you can explain, rule by rule" | entropy, information gain, recursive splitting, bagging, feature importance; plus k-NN and feature scaling | ml-knn, ml-decision-trees, ml-random-forests / 10, 12, 13 |
 | 10 | Unsupervised: Customer Segmentation | "There are no labels" | distance, k-means from scratch, choosing k | ml-k-means / 17 |
 | 11 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |
 | 12 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy; mini-batches and momentum | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand, ml-optimisers / 20, 21, 22 |
