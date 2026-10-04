@@ -26,8 +26,8 @@ it('automatically keeps newly discovered C++ topics inside the C++ series',()=>{
 });
 it('groups the ml-* tracks into the Machine Learning series, in chapter order',()=>{
  const grouped=studioSeries(TRACKS,TRACK_KEYS,trackTitle);const ml=grouped.find(item=>item.key==='ml-production');
- expect(ml.chapters.map(item=>item.key)).toEqual(['ml-software','ml-data','ml-math','ml-first-model','ml-web','ml-database','ml-security']);
+ expect(ml.chapters.map(item=>item.key)).toEqual(['ml-software','ml-data','ml-math','ml-first-model','ml-web','ml-database','ml-security','ml-evaluation']);
  expect(grouped.some(item=>item.key==='ml-data')).toBe(false);
  expect(nextSeriesLesson(ml,TRACKS,'ml-software',TRACKS['ml-software'].at(-1).id)).toEqual({trackKey:'ml-data',lesson:TRACKS['ml-data'][0]});
- expect(ml.planned).toContain('evaluation');
+ expect(ml.planned).toContain('classification');
 });

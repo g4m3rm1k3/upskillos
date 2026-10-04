@@ -64,6 +64,8 @@ export const ML_CONCEPTS = {
   'generalization': { label: 'Train/test splits and generalization', area: 'Machine learning', requires: ['linear-regression'] },
   'scikit-learn': { label: 'scikit-learn estimators', area: 'Machine learning', requires: ['linear-regression', 'classes'] },
   'regression-metrics': { label: 'Regression metrics (MAE, RMSE, R²)', area: 'Machine learning', requires: ['loss', 'generalization'] },
+  'regularization': { label: 'Overfitting and regularization', area: 'Machine learning', requires: ['generalization', 'gradients'] },
+  'cross-validation': { label: 'Cross-validation, leakage and pipelines', area: 'Machine learning', requires: ['generalization', 'scikit-learn'] },
   'logistic-regression': { label: 'Logistic regression', area: 'Machine learning', requires: ['linear-regression', 'probability'] },
   'classification-metrics': { label: 'Classification metrics', area: 'Machine learning', requires: ['logistic-regression'] },
   'nearest-neighbours': { label: 'k-nearest neighbours', area: 'Machine learning', requires: ['distance', 'feature-scaling'] },
