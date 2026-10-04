@@ -137,9 +137,9 @@ export interface BrainData {
   /** The agent's actions and what it sees, by name, in order (for reading the brain; the policy uses positions). */
   actions: string[];
   observation: string[];
-  method: 'q' | 'cem';
-  /** A Q table over binned states, or a linear policy's weights (ml/brain.ts). */
-  policy: { kind: 'q'; bins: number[][]; table: number[][]; visits?: number[] } | { weights: number[][] };
+  method: 'q' | 'cem' | 'linear-q';
+  /** A Q table over binned states, a linear policy's weights, or linear Q's weights for each feature (ml/brain.ts). */
+  policy: { kind: 'q'; bins: number[][]; table: number[][]; visits?: number[] } | { weights: number[][] } | { kind: 'linear-q'; features: string[]; weights: number[] };
   /** How it was trained: the episodes (or generations), and its score against random play's. */
   trained: { steps: number; score: number; random: number };
 }

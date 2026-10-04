@@ -366,12 +366,14 @@ export default function ProjectStudio() {
       return;
     }
     setCheckStates((prev) => ({ ...prev, [id]: { running: false, results: res.results, error: null } }));
-    if (res.results.every((r) => r.pass)) progress.markDone(id);
-  }, [step, fs, flushActive, progress.markDone]);
+    const passed = res.results.length === step.checks.length && res.results.every(r => r.pass);
+    if (step.optional) progress.setChallenge(id, passed ? 'passed' : 'needs practice');
+    else if (passed) progress.markDone(id);
+  }, [step, fs, flushActive, progress.markDone, progress.setChallenge]);
 
   const isStepDone = useCallback((s) => (s.checks?.length ? progress.isDone(s.id) : false), [progress]);
   const isLessonDone = useCallback((l) => {
-    const checked = l.steps.filter((s) => s.checks?.length);
+    const checked = l.steps.filter((s) => !s.optional && s.checks?.length);
     return checked.length > 0 && checked.every((s) => progress.isDone(s.id));
   }, [progress]);
 
@@ -448,12 +450,16 @@ export default function ProjectStudio() {
     await fs.pick();
   }, [flushProject, running, stopProject, fs]);
   const goPrev = useCallback(() => setStepIndex((i) => Math.max(0, i - 1)), []);
-  const goNext = useCallback(() => setStepIndex((i) => Math.min((lesson?.steps.length ?? 1) - 1, i + 1)), [lesson]);
+  const goNext = useCallback(() => {
+    if (step && !step.optional) progress.markCovered?.(step.id);
+    setStepIndex(i => Math.min((lesson?.steps.length ?? 1) - 1, i + 1));
+  }, [lesson, step, progress.markCovered]);
 
   const series = SERIES.find(item => item.chapters.some(chapter => chapter.key === trackKey)) ?? SERIES[0];
   const continuation = lesson && series ? nextSeriesLesson(series, TRACKS, trackKey, lesson.id) : null;
   const continueSeries = async () => {
     if (!continuation || !(await flushProject())) return;
+    if (step && !step.optional) progress.markCovered?.(step.id);
     if (continuation.trackKey !== trackKey) await selectTrack(continuation.trackKey);
     else { setLessonId(continuation.lesson.id); setStepIndex(0); }
   };
@@ -487,6 +493,11 @@ export default function ProjectStudio() {
       currentContent={step.file ? (buffers[step.file] ?? '') : ''}
       onCreateProvided={createProvided}
       providedError={providedError}
+      onSelectStep={(id, index) => { setLessonId(id); setStepIndex(index); }}
+      onDefer={() => { progress.setChallenge(step.id, 'deferred'); if (stepIndex < lesson.steps.length - 1) goNext(); else void continueSeries(); }}
+      challengeStatus={progress.challengeStatus}
+      isCovered={progress.isCovered}
+      onCover={() => progress.markCovered(step.id)}
       onPrev={goPrev}
       onNext={goNext}
       onSelectLesson={selectLesson}

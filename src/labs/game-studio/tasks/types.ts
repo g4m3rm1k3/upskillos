@@ -16,6 +16,8 @@ import type { DrawItem, Game, View } from '../engine/game';
 import type { Node } from '../engine/nodes';
 import type { EnvSpec } from '../ml/env';
 import type { QOptions } from '../ml/qlearning';
+import type { LinearQOptions } from '../ml/linearq';
+import type { FinishedAgent } from './goals';
 
 export type CheckResult = true | string;
 
@@ -43,6 +45,8 @@ export interface PlayOptions {
   keys?: string[];
   /** When the keys go down, in seconds (0 unless given): after landing, say. */
   keysAt?: number;
+  /** Run it as training does: ai.training is true (a practice partner plays the other seats), and this agent is left to the check. */
+  training?: string;
   /** Arrange the game after it starts and before it runs: put the player on a coin, say. */
   setup?: (game: Game) => void;
   /** Called after every frame, with where the camera looked, to watch something as it happens: the highest point of a jump. */
@@ -61,9 +65,11 @@ export interface PlayResult {
   drawn: DrawItem[];
 }
 
-/** What a play check can do: run the learner's game, as many times as it needs. */
+/** What a play check can do: run the learner's game, as many times as it needs, and call what a script exports. */
 export interface PlayView {
   play(opts: PlayOptions): Promise<PlayResult>;
+  /** Everything a script exports (its functions and constants), loaded as the game loads it. */
+  module(path: string): Promise<Record<string, unknown>>;
 }
 
 /** What the learner has done in Run › Train an agent… since the task started (ml/). */
@@ -71,7 +77,7 @@ export interface TrainingView {
   /** The environment as typed in the dialog (when it is valid JSON), or null. */
   draft: EnvSpec | null;
   /** Every training run that finished: how it trained, on what (and with which settings), and how it then scored against random play. */
-  runs: { method: 'q' | 'cem'; spec: EnvSpec; score: number; random: number; options?: QOptions; inView?: boolean }[];
+  runs: { method: 'q' | 'cem' | 'linear-q'; spec: EnvSpec; score: number; random: number; options?: QOptions | LinearQOptions; inView?: boolean }[];
   /** Updates stepped through one at a time (Train in view's Step), and Predict's answers checked: how many were right. */
   stepped?: number;
   predictions?: { right: number; total: number };
@@ -119,6 +125,8 @@ export interface GameTask {
   solution: string;
   /** What to read next, said when it is done (the lesson usually takes over). */
   done: string;
+  /** What a learning task builds towards, shown first: the finished game with a trained brain (tasks/goals.ts). */
+  finished?: FinishedAgent;
   /** The environment Run › Train an agent… starts from in this task (instead of the example's). */
   agent?: EnvSpec;
   /** For steps done in the editor rather than the project (training an agent): what the editor looks like

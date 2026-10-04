@@ -27,14 +27,15 @@ import type { EnvSpec } from '../ml/env';
 import type { CemOptions, Generation } from '../ml/cem';
 import type { QEpisode, QLive, QOptions, QTransition } from '../ml/qlearning';
 import type { TrainInView } from '../runtime/protocol';
-import { isQPolicy, type AgentPolicy } from '../ml/policy';
+import { isLinearQ, isQPolicy, type AgentPolicy } from '../ml/policy';
+import type { LinearQOptions } from '../ml/linearq';
 import type { CompareConfig, CompareRun } from '../ml/compare';
 
 import { EXAMPLES } from '../examples';
 import { sendArt } from '../../../utils/artBridge.js';
 
 /** How Run › Train an agent… trains: Q-learning (a table of values) or the cross-entropy method (a search over weights). */
-export type TrainMethod = 'q' | 'cem';
+export type TrainMethod = 'q' | 'cem' | 'linear-q';
 
 export interface OutputLine { level: 'log' | 'info' | 'warn' | 'error' | 'system'; text: string; file?: string | null; line?: number | null; column?: number | null; node?: string | null }
 
@@ -157,7 +158,7 @@ export class Store {
       let view: SceneData | null = null;
       const shown = (id: string) => { if (!id.includes(':')) return !!findNode(s!, id); try { view ??= expandScene(doc.project, s!); } catch { return false; } return !!findNode(view, id); };
       this.selection = s ? this.selection.filter(shown) : [];
-      this.tabs = this.tabs.filter((t) => t.kind === 'scene' || doc.project.scripts.some((x) => x.path === t.path));
+      this.tabs = this.tabs.filter((t) => t.kind === 'scene' || doc.project.scripts.some((x) => x.path === t.path) || doc.project.assets.some((a) => a.path === t.path && a.svg !== undefined));
       if (this.tab.kind === 'script' && !this.tabs.some((t) => t.kind === 'script' && t.path === (this.tab as { path: string }).path)) this.tab = { kind: 'scene' };
       this.drawSvgs();
       this.scheduleRecovery();
@@ -235,7 +236,7 @@ export class Store {
   // ── tasks: "Try it" from the course, and Help › Tutorials (docs/game-studio-course-plan.md) ──
 
   /** The task being done, its link back to the lesson, and its checks' latest results. */
-  task: { def: GameTask; link: TaskLink | null; results: CheckResult[]; ran: boolean; finished: boolean; runs: TrainingView['runs']; watched: boolean; saved?: string[]; stepped?: number; predictions?: { right: number; total: number }; compared?: NonNullable<TrainingView['compared']> } | null = null;
+  task: { def: GameTask; link: TaskLink | null; results: CheckResult[]; ran: boolean; finished: boolean; runs: TrainingView['runs']; watched: boolean; sawFinished?: boolean; saved?: string[]; stepped?: number; predictions?: { right: number; total: number }; compared?: NonNullable<TrainingView['compared']> } | null = null;
   /** The environment as typed in Run › Train an agent… (when it parses), for a task's checks. */
   trainDraft: EnvSpec | null = null;
   /** Called once when a task's every step passes (Game Studio marks the lesson's checkpoint). */
@@ -786,18 +787,35 @@ export class Store {
 
   // ── scripts ─────────────────────────────────────────────────────────────
 
-  scriptText(path: string): string { return this.buffers.get(path) ?? this.doc?.project.scripts.find((s) => s.path === path)?.source ?? ''; }
+  // An SVG image (assets/….svg) is text too, and opens in the same editor: its saved text is the asset's source.
+  private savedText(path: string): string | undefined {
+    return path.endsWith('.svg') ? this.doc?.project.assets.find((a) => a.path === path)?.svg : this.doc?.project.scripts.find((s) => s.path === path)?.source;
+  }
+  scriptText(path: string): string { return this.buffers.get(path) ?? this.savedText(path) ?? ''; }
   isScriptDirty(path: string): boolean {
     const b = this.buffers.get(path);
-    return b !== undefined && b !== this.doc?.project.scripts.find((s) => s.path === path)?.source;
+    return b !== undefined && b !== this.savedText(path);
   }
   editScript(path: string, text: string): void { this.buffers.set(path, text); if (this.task) this.scheduleCheck(700); this.changed(); }
   saveScript(path: string): void {
     const b = this.buffers.get(path);
     if (b === undefined || !this.isScriptDirty(path)) return;
-    this.act((d) => d.writeScript(path, b));
+    if (path.endsWith('.svg')) {
+      // A picture that is not a picture yet (no xmlns, no size) stays unsaved, with the reason said.
+      if (this.act((d) => d.writeSvg(path, b)) === undefined) return;
+    } else this.act((d) => d.writeScript(path, b));
     this.buffers.delete(path);
     this.changed();
+  }
+
+  /** A new SVG image, a plain rectangle to start from, opened as text. */
+  newSvg(stem: string): void {
+    const name = stem.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!name || !this.doc) return;
+    let path = `assets/${name}.svg`, k = 2;
+    while (this.doc.project.assets.some((a) => a.path === path)) path = `assets/${name}_${k++}.svg`;
+    const start = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="white" stroke="#555555" stroke-width="2"/>\n</svg>\n`;
+    if (this.act((d) => d.writeSvg(path, start, `New SVG image ${path}`)) !== undefined) this.openScript(path);
   }
 
   openScript(path: string, reveal?: { line: number; column: number }): void {
@@ -889,7 +907,9 @@ export class Store {
     table: number[][] | null; visits: number[] | null;
     policy: AgentPolicy | null; score: number | null; error: string | null; total: number;
     /** What the agent can do and sees, by name, and its bins (from the trainer: a script agent's come from its script). */
-    described: { actions: string[]; observation: string[]; bins: number[][] } | null;
+    described: { actions: string[]; observation: string[]; bins: number[][]; features?: string[] } | null;
+    /** Linear Q: the weights at the latest check, to show while it trains. */
+    weights?: number[] | null;
   } = { running: false, method: 'q', spec: null, random: null, generations: [], episodes: [], table: null, visits: null, policy: null, score: null, error: null, total: 0, described: null };
   /** Compare: settings, each trained over the same seeds in a worker of its own, and the runs as they finish. */
   comparison: { configs: CompareConfig[]; seeds: number[]; runs: CompareRun[]; running: boolean; error: string | null; random: number | null } = { configs: [], seeds: [1, 2, 3, 4, 5], runs: [], running: false, error: null, random: null };
@@ -936,7 +956,7 @@ export class Store {
   trainLive: QLive | null = null;
   trainSpeed = 4;
   /** The settings of the latest table-learning run (in the worker or in view), for a task's checks. */
-  private lastOptions: QOptions | null = null;
+  private lastOptions: QOptions | LinearQOptions | null = null;
   /** Train in view: the latest update, with every number in it, and the settings it was made with. */
   trainTransition: QTransition | null = null;
   trainOptions: QOptions | null = null;
@@ -966,24 +986,24 @@ export class Store {
   }
 
   /** Train in a worker; each episode's (or generation's) scores arrive as it finishes. */
-  startTraining(spec: EnvSpec, job: { method: 'q'; options: QOptions } | { method: 'cem'; options: CemOptions }): void {
+  startTraining(spec: EnvSpec, job: { method: 'q'; options: QOptions } | { method: 'cem'; options: CemOptions } | { method: 'linear-q'; options: LinearQOptions }): void {
     if (!this.doc) return;
     this.stopTraining();
     for (const path of [...this.buffers.keys()]) if (this.isScriptDirty(path)) this.saveScript(path);
-    const total = job.method === 'q' ? job.options.episodes : job.options.generations;
+    const total = job.method === 'cem' ? job.options.generations : job.options.episodes;
     this.inView = false;
-    this.lastOptions = job.method === 'q' ? job.options : null;
+    this.lastOptions = job.method === 'cem' ? null : job.options;
     this.training = { running: true, method: job.method, spec, random: null, generations: [], episodes: [], table: null, visits: null, policy: null, score: null, error: null, total, described: null };
     const w = this.trainer = new Worker(new URL('../ml/train.worker.ts', import.meta.url), { type: 'module' });
     w.onmessage = (e: MessageEvent) => {
-      const m = e.data as { type: string; score?: number; policy?: AgentPolicy; message?: string; actions?: string[]; observation?: string[]; bins?: number[][] } & Generation & QEpisode;
+      const m = e.data as { type: string; score?: number; policy?: AgentPolicy; message?: string; actions?: string[]; observation?: string[]; bins?: number[][]; features?: string[]; weights?: number[] } & Generation & QEpisode;
       const t = this.training;
-      if (m.type === 'describe') this.training = { ...t, described: { actions: m.actions!, observation: m.observation!, bins: m.bins! } };
+      if (m.type === 'describe') this.training = { ...t, described: { actions: m.actions!, observation: m.observation!, bins: m.bins!, features: m.features ?? [] } };
       else if (m.type === 'random') this.training = { ...t, random: m.score! };
       else if (m.type === 'generation') this.training = { ...t, generations: [...t.generations, { generation: m.generation, best: m.best, eliteMean: m.eliteMean, mean: m.mean, champion: m.champion }], policy: m.champion };
       else if (m.type === 'episode') {
         const ep: QEpisode = { episode: m.episode, total: m.total, epsilon: m.epsilon, visited: m.visited, steps: m.steps, ...(m.greedy === undefined ? {} : { greedy: m.greedy }) };
-        this.training = { ...t, episodes: [...t.episodes, ep], table: m.table ?? t.table, visits: m.visits ?? t.visits };
+        this.training = { ...t, episodes: [...t.episodes, ep], table: m.table ?? t.table, visits: m.visits ?? t.visits, weights: m.weights ?? t.weights ?? null };
       }
       else if (m.type === 'done') { this.stopTraining(false); this.trainingFinished(m.policy!, m.score!); }
       else if (m.type === 'error') { this.training = { ...t, running: false, error: m.message! }; this.stopTraining(false); }
@@ -997,7 +1017,7 @@ export class Store {
   /** Training finished (in the worker, or in view): keep the policy, and tell a task's checks. */
   private trainingFinished(policy: AgentPolicy, score: number): void {
     const t = this.training;
-    this.training = { ...t, running: false, policy, score, table: isQPolicy(policy) ? policy.table : t.table, visits: isQPolicy(policy) ? policy.visits ?? null : t.visits };
+    this.training = { ...t, running: false, policy, score, table: isQPolicy(policy) ? policy.table : t.table, visits: isQPolicy(policy) ? policy.visits ?? null : t.visits, weights: isLinearQ(policy) ? policy.weights : t.weights ?? null };
     this.trainLive = null;
     if (this.task && t.spec) { this.task = { ...this.task, runs: [...this.task.runs, { method: t.method, spec: t.spec, score, random: t.random ?? 0, ...(this.lastOptions ? { options: this.lastOptions } : {}), inView: this.inView }] }; this.scheduleCheck(0); }
     this.changed();
@@ -1080,10 +1100,52 @@ export class Store {
 
   pause(): void { if (this.running) this.running.game.send({ type: this.running.paused ? 'resume' : 'pause' }); }
   restart(): void { if (this.running) { this.output.push({ level: 'system', text: '↻ Restart' }); this.running.game.send({ type: 'restart' }); this.changed(); } }
+  /** The game running is a task's finished agent (watchFinished), not the project. */
+  previewing = false;
+
+  /**
+   * A learning task's finished agent: its game, built from its code on the side (its images from the starter art, its
+   * SVG images from their source), run in the game area with its trained brain. The project is not touched: ■ Stop,
+   * and ▶ Run runs yours again.
+   */
+  async watchFinished(container: HTMLElement): Promise<void> {
+    const f = this.task?.def.finished;
+    if (!f) return;
+    this.stop();
+    try {
+      const d = new Doc(newProject('The finished agent'));
+      const assets: { path: string; mime: string; bytes: ArrayBuffer }[] = [];
+      for (const path of f.images) {
+        const img = starterImage(path);
+        if (!img) throw new Error(`The finished agent needs ${path}, which is not in the starter art`);
+        const blob = await (await fetch(img.url)).blob();
+        const bitmap = await createImageBitmap(blob);
+        d.importAsset(path, { mime: blob.type || 'image/png', width: bitmap.width, height: bitmap.height });
+        assets.push({ path, mime: blob.type || 'image/png', bytes: await blob.arrayBuffer() });
+      }
+      d.runCode('The finished agent', f.code);
+      const p = d.project;
+      for (const a of p.assets) if (a.svg !== undefined) assets.push({ path: a.path, mime: a.mime, bytes: new TextEncoder().encode(a.svg).buffer as ArrayBuffer });
+      const scene = p.settings.mainScene;
+      if (!scene) throw new Error('The finished agent has no main scene');
+      this.output = [{ level: 'system', text: '▶ The finished agent: what this task builds. Your project is unchanged; ■ Stop, then ▶ Run, to run yours.' }];
+      const game = await runGame({ project: p, scene, assets, container, onMessage: (m) => {
+        if (m.type === 'running' && f.agent && this.running) this.running.game.send({ type: 'agent', spec: f.agent.spec, policy: f.agent.policy });
+        this.onRuntime(m);
+      } });
+      this.running = { game, scene, paused: false, live: null };
+      this.previewing = true;
+      if (this.task) { this.task = { ...this.task, sawFinished: true }; }
+      this.changed();
+      game.frame.focus();
+    } catch (e) { this.say(e instanceof Error ? e.message : String(e)); }
+  }
+
   stop(): void {
     if (!this.running) return;
     this.running.game.stop();
     this.running = null;
+    this.previewing = false;
     // Training in view stops with the game; what it learned so far is in the last table it reported.
     if (this.inView && this.training.running) this.training = { ...this.training, running: false };
     this.trainLive = null;

@@ -321,7 +321,7 @@ const ENTRIES: ApiEntry[] = [
   },
   {
     name: 'input', kind: 'global', godot: 'Input',
-    doc: 'The keyboard, as named actions from Project › Input map (move_left, jump…). Ask about actions, not keys, so the keys can change without changing scripts.',
+    doc: 'The keyboard and mouse, as named actions from Project › Input map (move_left, jump…). Ask about actions, not keys, so the keys can change without changing scripts. Mouse buttons are the keys MouseLeft, MouseMiddle and MouseRight, so a click is an action too: project.addAction("select", ["MouseLeft"]).',
     example: `export default class Mover extends Node2D {
   update(dt) {
     const dir = input.vector('move_left', 'move_right', 'move_up', 'move_down');
@@ -336,6 +336,8 @@ const ENTRIES: ApiEntry[] = [
       m('axis', '(negative: string, positive: string): number', '−1, 0 or 1: for example axis("move_left", "move_right").', 'get_axis()'),
       m('vector', '(left: string, right: string, up: string, down: string): Vec2', 'A direction from four actions, with length at most 1, so going diagonally is not faster.', 'get_vector()'),
       p('actionNames', 'string[]', 'The names of every action in the input map.', 'InputMap.get_actions()', { readonly: true }),
+      p('mouse', 'Vec2', 'Where the pointer is in the world: compare it with a node\'s position to see what it is over (through the camera, if there is one).', 'get_global_mouse_position()', { readonly: true }),
+      p('mouseScreen', 'Vec2', 'Where the pointer is on the screen, in the game\'s pixels: compare it with the position of a node under a CanvasLayer.', 'get_viewport().get_mouse_position()', { readonly: true }),
     ],
   },
   {
@@ -381,11 +383,14 @@ const ENTRIES: ApiEntry[] = [
   },
   {
     name: 'ai', kind: 'global', godot: '(none: Godot has no built-in learning agents)',
-    doc: 'Trained agents (Run › Train an agent…). A node whose script has observe() and act(action) is an agent; give it brain = \'brains/name.json\' and the engine asks the brain what to do every decideEvery frames (4 unless the script says). Training drives the same two methods, so the agent behaves the same in training and in the game. Optional: actions (names, in order), observations (names), reward() (earned since the last decision) and done() (the episode is over).',
+    doc: 'Trained agents (Run › Train an agent…). A node whose script has observe() and act(action) is an agent; give it brain = \'brains/name.json\' and the engine asks the brain what to do every decideEvery frames (4 unless the script says). Training drives the same two methods, so the agent behaves the same in training and in the game. Optional: actions (names, in order), observations (names), reward() (earned since the last decision) and done() (the episode is over). A turn-based agent (a card game\'s player) adds legalActions(), the moves it may make now ([] when it is not its turn): the brain chooses only among them, and in training a step plays on to its next turn. features(action) describes a move as numbers for a linear Q brain (featureNames names them), and temperature (0 unless set) makes the brain choose by softmax, a difficulty setting.',
     members: [
       p('training', 'boolean', 'True while an agent is being trained: a player script can play itself then (flee, wander), so an NPC can learn before anyone plays.', '', { readonly: true }),
       m('has', '(path: string): boolean', 'Whether the project has a brain at this path.', ''),
       m('act', '(path: string, observation: number[]): number', 'What that brain does for these numbers: the number of an action. For asking a brain directly, instead of the brain field.', ''),
+      m('values', '(path: string, features: number[][]): number[]', 'A linear Q brain\'s value for each move, given each move\'s features: Q = w · features. For a developer view that shows why the AI chose, or a practice partner that plays with a saved brain.', ''),
+      m('weights', '(path: string): number[]', 'A linear Q brain\'s weights, one per feature, in the order of its features. Each weight × feature is one term of a move\'s Q: the biggest terms say why it chose that move.', ''),
+      m('choose', '(path: string, features: number[][], temperature?: number): number', 'Which of these moves a linear Q brain picks: an index into the list. A temperature above 0 picks by softmax, so a move worth 1 less is e^(−1/temperature) as likely: a difficulty setting.', ''),
     ],
   },
   {

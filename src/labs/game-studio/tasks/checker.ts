@@ -13,7 +13,10 @@ import { NODE_CLASSES, PhysicsBody2D, type Node } from '../engine/nodes';
 import { Vec2 } from '../engine/vec2';
 import type { CheckResult, EditorView, GameTask, PlayOptions, PlayResult, ProjectView } from './types';
 
-/** Load a project's scripts as classes, by path. Throws with a sentence (a syntax error, a missing import). */
+/**
+ * Load a project's scripts as classes, by path, and everything each exports under "module:" and its path. Throws
+ * with a sentence (a syntax error, a missing import).
+ */
 export type ScriptLoader = (project: Project) => Promise<Map<string, unknown>>;
 
 export function projectView(project: Project): ProjectView {
@@ -42,7 +45,9 @@ export async function evaluateTask(task: GameTask, project: Project, editor: Edi
     const errors: string[] = [];
     let view: View = { x: 0, y: 0, zoom: 1 }, drawn: DrawItem[] = [];
     const game = new Game(project, scene, { frame: (items, v) => { drawn = items; view = v; } }, { scriptClass: (p) => classes!.get(p) as typeof Node | undefined, onError: (e) => errors.push(`${e.file ?? e.node}: ${e.message}`) });
+    if (opts.training) game.training = true;
     Object.assign(globalThis, scriptGlobals(game));
+    if (opts.training) { const n = game.root.find(opts.training); if (!n) throw new Error(`There is no node "${opts.training}" to train`); game.trainee = n; }
     game.start();
     opts.setup?.(game);
     const fps = opts.fps ?? 60, pressAt = Math.round((opts.keysAt ?? 0) * fps);
@@ -53,11 +58,18 @@ export async function evaluateTask(task: GameTask, project: Project, editor: Edi
     }
     return { game, node: <T extends Node = Node>(path: string) => game.root.find<T>(path), errors, view, drawn };
   };
+  const module = async (path: string): Promise<Record<string, unknown>> => {
+    Object.assign(globalThis, NODE_CLASSES, { Vec2, math: MATH, PhysicsBody2D });
+    classes ??= await load(project);
+    const m = classes.get(`module:${path}`);
+    if (!m) throw new Error(`There is no ${path} in the project`);
+    return m as Record<string, unknown>;
+  };
   const out: CheckResult[] = [];
   for (const step of task.steps) {
     try {
       const c = step.check;
-      out.push(c.kind === 'project' ? c.test(view) : c.kind === 'editor' ? c.test({ ...view, ...editor }) : await c.test({ ...view, play }));
+      out.push(c.kind === 'project' ? c.test(view) : c.kind === 'editor' ? c.test({ ...view, ...editor }) : await c.test({ ...view, play, module }));
     } catch (e) {
       out.push(e instanceof Error ? e.message : String(e));
     }

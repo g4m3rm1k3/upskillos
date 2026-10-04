@@ -60,7 +60,8 @@ describe('every example', () => {
     it(`"${ex.title}" builds with the Scene API, is sound, and its GUI → code log replays to the same project`, () => {
       const d = build(ex);
       expect(problems(d.project)).toEqual([]);
-      expect(d.project.assets.map((a) => a.path).sort()).toEqual([...new Set(ex.images)].sort());
+      // Its imported images are its starter art; an SVG image is drawn by the code itself (project.writeSvg).
+      expect(d.project.assets.filter((a) => a.svg === undefined).map((a) => a.path).sort()).toEqual([...new Set(ex.images)].sort());
       const replay = newProject(ex.title);
       runSceneCode(replay, d.log.map((l) => l.code).join('\n'));
       expect(serialize(replay)).toBe(serialize(d.project));

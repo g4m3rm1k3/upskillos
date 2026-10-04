@@ -7,9 +7,10 @@ import { ANIMATION, TILEMAPS } from './animationTiles';
 import { SCENES } from './scenes';
 import { TETRIS } from './tetris';
 import { LEARNING } from './learning';
+import { CRIBBAGE } from './cribbage';
 
 export type { GameTask };
-export const TASKS: GameTask[] = [...FIRST_STEPS, ...PHYSICS, ...CAMERA_HUD, ...ANIMATION, ...TILEMAPS, ...SCENES, ...TETRIS, ...LEARNING];
+export const TASKS: GameTask[] = [...FIRST_STEPS, ...PHYSICS, ...CAMERA_HUD, ...ANIMATION, ...TILEMAPS, ...SCENES, ...TETRIS, ...LEARNING, ...CRIBBAGE];
 
 export function taskById(id: string): GameTask | undefined { return TASKS.find((t) => t.id === id); }
 

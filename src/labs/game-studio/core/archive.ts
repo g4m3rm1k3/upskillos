@@ -15,7 +15,7 @@
 // you export (runtime/main.ts loads itself when no editor is around it).
 
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
-import type { Project, SceneData } from './types';
+import type { AssetData, Project, SceneData } from './types';
 import { deserialize, serialize } from './serialize';
 import { walk } from './project';
 
@@ -33,13 +33,18 @@ Open it in Game Studio with Project › Import project (.zip)…
 `;
 
 /** The project as a .zip: scenes and scripts as their own files, so they can be read and edited anywhere. */
+/** An asset's bytes: an SVG image's are its source text, kept in the project; an imported image's come from storage. */
+function assetBytes(a: AssetData, bytes: AssetBytes): Uint8Array | undefined {
+  return a.svg !== undefined ? strToU8(a.svg) : bytes(a.path);
+}
+
 export function projectZip(p: Project, bytes: AssetBytes): Uint8Array {
   const files: Record<string, Uint8Array> = {};
   const index = { ...p, scenes: p.scenes.map((s) => s.path), scripts: p.scripts.map((s) => s.path) };
   files['project.json'] = strToU8(JSON.stringify(index, null, 1));
   for (const s of p.scenes) files[s.path] = strToU8(JSON.stringify(s, null, 1));
   for (const s of p.scripts) files[s.path] = strToU8(s.source);
-  for (const a of p.assets) { const b = bytes(a.path); if (b) files[a.path] = b; }
+  for (const a of p.assets) { const b = assetBytes(a, bytes); if (b) files[a.path] = b; }
   files['README.txt'] = strToU8(README(p.name));
   return zipSync(files, { level: 6 });
 }
@@ -112,7 +117,7 @@ export function gameZip(p: Project, runtime: string, bytes: AssetBytes): Uint8Ar
     'game.js': strToU8(runtime),
     'project.json': strToU8(serialize(game)),
   };
-  for (const a of game.assets) { const b = bytes(a.path); if (!b) throw new Error(`The image ${a.path} is missing`); files[a.path] = b; }
+  for (const a of game.assets) { const b = assetBytes(a, bytes); if (!b) throw new Error(`The image ${a.path} is missing`); files[a.path] = b; }
   return zipSync(files, { level: 6 });
 }
 
@@ -121,7 +126,7 @@ const base64 = (b: Uint8Array) => { let s = ''; for (let i = 0; i < b.length; i 
 /** The game as one HTML file: the runtime, the project and its images inside, so it runs from anywhere, even a double-click. */
 export function gameHtmlFile(p: Project, runtime: string, bytes: AssetBytes): string {
   const game = gameProject(p);
-  const assets = game.assets.map((a) => { const b = bytes(a.path); if (!b) throw new Error(`The image ${a.path} is missing`); return { path: a.path, mime: a.mime, data: base64(b) }; });
+  const assets = game.assets.map((a) => { const b = assetBytes(a, bytes); if (!b) throw new Error(`The image ${a.path} is missing`); return { path: a.path, mime: a.mime, data: base64(b) }; });
   // "</script" would end the script element early, so it is escaped wherever it appears.
   const data = JSON.stringify({ project: game, assets }).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
   return page(game, `<script>window.GAME_DATA = ${data};</script>\n<script>${runtime.replace(/<\/script/gi, '<\\/script')}</script>`);

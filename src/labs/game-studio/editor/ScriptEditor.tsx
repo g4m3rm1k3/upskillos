@@ -7,6 +7,25 @@ import Editor, { type OnMount } from '@monaco-editor/react';
 import type { Store } from './store';
 import { C, useStore } from './kit';
 import { ENGINE_DTS } from './engineTypes';
+import { svgSize } from '../core/api';
+
+/** An SVG image beside its text: the picture as it stands now, unsaved edits included, or what is wrong with it. */
+function SvgPreview({ text }: { text: string }) {
+  const size = svgSize(text);
+  return (
+    <div data-testid="svg-preview" style={{ width: 300, borderLeft: `1px solid ${C.border}`, padding: 10, overflow: 'auto', fontSize: 12, color: C.dim, background: '#2a2d33' }}>
+      <div style={{ color: C.faint, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>PREVIEW</div>
+      {typeof size === 'string'
+        ? <div data-testid="svg-problem" style={{ color: C.warn }}>{size}</div>
+        : <>
+          <div style={{ background: 'repeating-conic-gradient(#3a3d44 0% 25%, #30333a 0% 50%) 50% / 16px 16px', display: 'inline-block', padding: 6, borderRadius: 4 }}>
+            <img alt="" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`} style={{ display: 'block', width: Math.min(size.width * 2, 270), maxWidth: 270 }} />
+          </div>
+          <div style={{ marginTop: 6 }}>{size.width} × {size.height} pixels (shown {Math.min(size.width * 2, 270) / size.width}×). Save (Ctrl/Cmd+S) and every sprite using it shows it.</div>
+        </>}
+    </div>
+  );
+}
 
 type MonacoEditor = Parameters<OnMount>[0];
 
@@ -24,6 +43,7 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
   useStore(store);
   const ed = useRef<MonacoEditor | null>(null);
   const text = store.scriptText(path);
+  const svg = path.endsWith('.svg');
 
   const reveal = store.reveal;
   useEffect(() => {
@@ -86,17 +106,20 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
         <span style={{ flex: 1 }}>{path}{store.isScriptDirty(path) ? '  ● unsaved (Ctrl/Cmd+S)' : '  saved'}</span>
         <span role="link" data-testid="script-reference" onClick={() => store.showReference()} title="Every class, method and global a script can use" style={{ color: C.accent, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>API reference</span>
       </div>
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
         <Editor
           path={`file:///${path}`}
           keepCurrentModel   // every script stays a model (see syncModels), so closing a tab does not dispose one
-          language="javascript"
+          language={svg ? 'xml' : 'javascript'}
           theme="vs-dark"
           value={text}
           onChange={(v) => store.editScript(path, v ?? '')}
           onMount={onMount}
-          options={{ fontSize: 13, minimap: { enabled: false }, tabSize: 2, scrollBeyondLastLine: false, automaticLayout: true }}
+          options={{ fontSize: 13, minimap: { enabled: false }, tabSize: 2, scrollBeyondLastLine: false, automaticLayout: true, wordWrap: svg ? 'on' : 'off' }}
         />
+        </div>
+        {svg && <SvgPreview text={text} />}
       </div>
     </div>
   );

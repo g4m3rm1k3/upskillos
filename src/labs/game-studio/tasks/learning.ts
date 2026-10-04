@@ -15,6 +15,7 @@ import { cliffWalk, CLIFF_SPEC } from '../examples/cliffWalk';
 import { breakoutLab, breakoutLabCode, PADDLE_AGENT, PADDLE_AGENT_SIDEWAYS, PADDLE_SPEC, FULL_WALL, PYRAMID, wallScript } from '../examples/breakoutLab';
 import type { PlayView, ProjectView } from './types';
 import type { QOptions } from '../ml/qlearning';
+import { FINISHED } from './goals';
 
 /** Breakout's environment without bins: what the agent sees, does and earns, but no states yet. */
 const UNBINNED: EnvSpec = { ...BREAKOUT_SPEC, observation: BREAKOUT_SPEC.observation!.map(({ bins: _bins, ...r }) => r) };
@@ -46,6 +47,7 @@ const goodRun = (runs: TrainingView['runs']) =>
 export const LEARNING: GameTask[] = [
   {
     id: 'q-agent',
+    finished: FINISHED.breakout,
     chain: 'A game that learns',
     title: 'Train an agent with Q-learning',
     goal: 'Turn Breakout into an environment with states, and train a Q-learning agent that clears the wall on its own.',
@@ -94,6 +96,7 @@ export const LEARNING: GameTask[] = [
   // ── Chapter 9, "Game AI that learns" ─────────────────────────────────────
   {
     id: 'td-step',
+    finished: FINISHED.cliff,
     chain: 'Game AI that learns',
     title: 'Step through TD updates',
     goal: 'Watch Q-learning learn Cliff Walk one update at a time, predict updates yourself, and see what the step size α does.',
@@ -133,6 +136,7 @@ export const LEARNING: GameTask[] = [
   },
   {
     id: 'explore-compare',
+    finished: FINISHED.cliff,
     chain: 'Game AI that learns',
     title: 'Ways to explore',
     goal: 'Compare exploration schedules, and see an optimistic start explore with no randomness at all.',
@@ -146,7 +150,7 @@ export const LEARNING: GameTask[] = [
       },
       {
         text: 'Optimism. Back on Table (TD), set ε from 0 to 0 (always greedy: never a random move) and Q₀ 0, and press ▶ Train in view at 4×. Every real return on the cliff is negative, so 0 is optimistic: any move it has not tried still looks better than one it has, and it tries them. Watch the colours spread over the grid, then let it finish: −13.',
-        check: { kind: 'editor', test: (v) => !!(v.training?.runs ?? []).find((r) => r.inView && r.options && r.options.explore !== 'softmax' && (r.options.epsilon ?? 1) === 0 && (r.options.epsilonEnd ?? 1) === 0 && !(r.options.initialQ ?? 0) && r.score === -13) || 'Train in view with ε 0 to 0 and Q₀ 0, and let it finish (it should reach −13).' },
+        check: { kind: 'editor', test: (v) => !!(v.training?.runs ?? []).find((r) => r.inView && (r.options as QOptions) && (r.options as QOptions).explore !== 'softmax' && ((r.options as QOptions).epsilon ?? 1) === 0 && ((r.options as QOptions).epsilonEnd ?? 1) === 0 && !((r.options as QOptions).initialQ ?? 0) && r.score === -13) || 'Train in view with ε 0 to 0 and Q₀ 0, and let it finish (it should reach −13).' },
       },
       {
         text: 'Pessimism. Compare two greedy settings (ε 0 to 0) over 5 seeds: Q₀ 0, and Q₀ −100. With −100 every untried move looks worse than the walk it already knows, so it stops exploring early and keeps a longer walk on some seeds.',
@@ -169,6 +173,7 @@ export const LEARNING: GameTask[] = [
   },
   {
     id: 'breakout-scratch',
+    finished: FINISHED.paddle,
     chain: 'Game AI that learns',
     title: 'Breakout learns, from scratch',
     goal: 'Turn Breakout’s paddle into an agent yourself (what it sees, does and earns), train it, ship its brain, and change the wall to see it learn again.',
@@ -252,6 +257,7 @@ project.writeScript('scripts/wall.js', ${JSON.stringify(wallScript(PYRAMID))})`,
   },
   {
     id: 'sarsa-vs-q',
+    finished: FINISHED.cliff,
     chain: 'Game AI that learns',
     title: 'SARSA against Q-learning',
     goal: 'Train SARSA and Q-learning on Cliff Walk, see one walk safe and one walk the edge, and compare them over seeds.',
@@ -288,6 +294,7 @@ project.writeScript('scripts/wall.js', ${JSON.stringify(wallScript(PYRAMID))})`,
   },
   {
     id: 'all-four',
+    finished: FINISHED.cliff,
     chain: 'Game AI that learns',
     title: 'Four ways to update',
     goal: 'Compare Q-learning, SARSA, Expected SARSA and Double Q-learning on Cliff Walk, then push the step size to 1.',
@@ -318,6 +325,7 @@ project.writeScript('scripts/wall.js', ${JSON.stringify(wallScript(PYRAMID))})`,
   },
   {
     id: 'experiments',
+    finished: FINISHED.cliff,
     chain: 'Game AI that learns',
     title: 'A parameter study',
     goal: 'Sweep the step size α on Cliff Walk over seeds, read the means and their spread, and see more seeds tighten them.',
@@ -348,6 +356,7 @@ project.writeScript('scripts/wall.js', ${JSON.stringify(wallScript(PYRAMID))})`,
   },
   {
     id: 'state-design',
+    finished: FINISHED.paddle,
     chain: 'Game AI that learns',
     title: 'How many states?',
     goal: 'Train Breakout’s agent on coarser and finer bins, then give it one more number, and see what each does to learning.',

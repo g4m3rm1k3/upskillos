@@ -9,7 +9,8 @@ import { Btn, C, useStore } from './kit';
 import { Modal } from './Dialogs';
 import type { EnvSpec } from '../ml/env';
 import type { QEpisode, QOptions, TdAlgorithm } from '../ml/qlearning';
-import { isQPolicy } from '../ml/policy';
+import { isLinearQ, isQPolicy } from '../ml/policy';
+import type { LinearQOptions } from '../ml/linearq';
 import { CompareView } from './CompareView';
 
 const W = 460, H = 150, PAD = 26;
@@ -133,23 +134,59 @@ export const ALGORITHM_TEXT: Record<TdAlgorithm, [string, string]> = {
   'double-q': ['Double Q-learning', 'two tables: one picks the best next action, the other values it, so noise is not mistaken for value'],
 };
 
+/** Linear Q's settings (ml/linearq.ts): the step size and exploration each fall from a start to an end over training. */
+export interface LinearSettings { episodes: number; algorithm: 'q' | 'sarsa'; alpha: number; alphaEnd: number; gamma: number; start: number; end: number }
+export const DEFAULT_LINEAR: LinearSettings = { episodes: 2000, algorithm: 'q', alpha: 0.1, alphaEnd: 0.005, gamma: 1, start: 0.2, end: 0.02 };
+export const linearOptions = (l: LinearSettings): LinearQOptions => ({
+  episodes: l.episodes, algorithm: l.algorithm, alpha: l.alpha, alphaEnd: l.alphaEnd, gamma: l.gamma, epsilon: l.start, epsilonEnd: l.end,
+  schedule: 'linear', seed: 1, checkEvery: Math.max(10, Math.round(l.episodes / 20)), checkEpisodes: 100,
+});
+
+/** Linear Q's weights: one per feature. A positive weight makes a move worth more the more it has of that feature. */
+function WeightTable({ features, weights }: { features: string[]; weights: number[] }) {
+  const top = Math.max(1e-9, ...weights.map(Math.abs));
+  return (
+    <div style={{ maxHeight: 260, overflow: 'auto', border: `1px solid ${C.border}`, borderRadius: 3 }}>
+      <table data-testid="train-feature-weights" style={{ fontSize: 11, fontFamily: C.mono, borderCollapse: 'collapse', color: C.text, width: '100%' }}>
+        <tbody>{features.map((f, i) => (
+          <tr key={f}>
+            <td style={{ padding: '1px 6px', whiteSpace: 'nowrap' }}>{f}</td>
+            <td style={{ padding: '1px 6px', textAlign: 'right', color: weights[i] >= 0 ? C.ok : C.warn }}>{weights[i].toFixed(2)}</td>
+            <td style={{ padding: '1px 6px', width: 120 }}>
+              <div style={{ height: 8, width: `${(Math.abs(weights[i]) / top) * 100}%`, background: weights[i] >= 0 ? C.ok : C.warn, marginLeft: 0, borderRadius: 2 }} />
+            </td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
 export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store: Store; onClose: () => void; onWatch: () => void; onTrainInView: (spec: EnvSpec, options: QOptions) => void }) {
   useStore(store);
   const t = store.training;
   const [text, setText] = useState(() => JSON.stringify(t.spec ?? store.defaultAgentSpec(), null, 2));
-  const [method, setMethod] = useState<TrainMethod | 'compare'>(t.method);
+  // An agent with no bins is a turn-based one (a card game's player): it learns with features, not a table.
+  const [method, setMethod] = useState<TrainMethod | 'compare'>(() => {
+    const s = t.spec ?? store.defaultAgentSpec();
+    return !t.spec && s.agent && !s.bins ? 'linear-q' : t.method;
+  });
   const [generations, setGenerations] = useState(10);
   const [population, setPopulation] = useState(24);
   const [td, setTd] = useState<TdSettings>(store.tdSettings ?? DEFAULT_TD);
+  const [lin, setLin] = useState<LinearSettings>(DEFAULT_LINEAR);
+  const setL = (patch: Partial<LinearSettings>) => setLin((l) => ({ ...l, ...patch }));
   const setT = (patch: Partial<TdSettings>) => setTd((t) => { const n = { ...t, ...patch }; store.tdSettings = n; return n; });
   const parsed = useMemo((): { spec: EnvSpec } | { error: string } => {
     try {
       const spec = JSON.parse(text) as EnvSpec;
       if (typeof spec.agent === 'string') {
-        // A script agent: its script says what it sees, does and earns; the spec gives the bins.
+        // A script agent: its script says what it sees, does and earns; the spec gives the bins (a table needs them).
+        if (method === 'linear-q') return { spec };
         if (method !== 'cem' && !(Array.isArray(spec.bins) && spec.bins.some((c) => Array.isArray(c) && c.length))) return { error: 'Q-learning needs "bins": a list of cut points for each number the agent\'s observe() returns ([] for one that is not binned).' };
         return { spec };
       }
+      if (method === 'linear-q') return { error: 'Linear Q needs "agent": a turn-based agent whose script has legalActions() and features(action).' };
       if (!Array.isArray(spec.actions) || !Array.isArray(spec.observation) || !Array.isArray(spec.reward)) return { error: 'It needs actions, observation and reward lists, or "agent": the path of a node whose script has observe() and act().' };
       if (method !== 'cem' && !spec.observation.some((o) => o.bins?.length)) return { error: 'Q-learning needs "bins" on at least one observation reading: the cut points that turn its numbers into states.' };
       return { spec };
@@ -177,13 +214,16 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
   const start = () => {
     if (!('spec' in parsed)) return;
     if (method === 'q') store.startTraining(parsed.spec, { method: 'q', options: qOptions(td) });
+    else if (method === 'linear-q') store.startTraining(parsed.spec, { method: 'linear-q', options: linearOptions(lin) });
     else store.startTraining(parsed.spec, { method: 'cem', options: { generations, population, elite: 0.2, noise: 1, seed: 3 } });
   };
   const status = t.error ? `Could not train: ${t.error}`
-    : t.running ? (shown === 'q'
+    : t.running ? (shown === 'linear-q'
+      ? (lastEp ? `Episode ${lastEp.episode} of ${t.total}: return ${lastEp.total.toFixed(1)}, ε ${lastEp.epsilon.toFixed(2)}${lastCheck ? `; last greedy check ${lastCheck.greedy!.toFixed(2)}` : ''}` : 'Starting: loading the game and playing at random first…')
+      : shown === 'q'
       ? (lastEp ? `Episode ${lastEp.episode} of ${t.total}: return ${lastEp.total.toFixed(1)}, ε ${lastEp.epsilon.toFixed(2)}, ${lastEp.visited} states visited${lastCheck ? `; last greedy check ${lastCheck.greedy!.toFixed(1)}` : ''}` : 'Starting: loading the game and playing at random first…')
       : (lastGen ? `Generation ${lastGen.generation} of ${t.total}: best ${lastGen.best.toFixed(1)}, elite average ${lastGen.eliteMean.toFixed(1)}` : 'Starting: loading the game and playing at random first…'))
-    : t.score !== null ? `Trained. It averages ${t.score.toFixed(1)} a game; playing at random averages ${t.random?.toFixed(1)}.`
+    : t.score !== null ? `Trained. It averages ${t.score.toFixed(shown === 'linear-q' ? 2 : 1)} an episode; playing at random averages ${t.random?.toFixed(shown === 'linear-q' ? 2 : 1)}.`
     : 'Not trained yet.';
   return (
     <Modal title="Train an agent" onClose={() => { onClose(); }} width={800} testid="train-dialog">
@@ -197,8 +237,9 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
         method
         <Btn small testid="train-method-q" active={method === 'q'} onClick={() => setMethod('q')} title="A table of Q(s, a): the return it expects for each action in each state, learned from every step (Q-learning, SARSA and their relatives)">Table (TD)</Btn>
         <Btn small testid="train-method-compare" active={method === 'compare'} onClick={() => setMethod('compare')} title="Several settings, each trained over the same seeds: averaged learning curves, and mean ± spread">Compare</Btn>
+        <Btn small testid="train-method-linear-q" active={method === 'linear-q'} onClick={() => setMethod('linear-q')} title="Q(s, a) = weights · features of the move: for a turn-based agent (a card game) whose script describes each legal move as numbers">Features (linear Q)</Btn>
         <Btn small testid="train-method-cem" active={method === 'cem'} onClick={() => setMethod('cem')} title="Many random weightings of a linear policy; keep the best and search around them">Cross-entropy</Btn>
-        <span style={{ color: C.faint, marginLeft: 6 }}>{method === 'q' ? 'learns a value for every state and action, one step at a time (ML Lab lessons 37.4 and 37.5)' : method === 'compare' ? 'settings side by side, each averaged over seeds: add the current settings, change them, add again' : 'searches over the weights of a linear policy, one whole game at a time'}</span>
+        <span style={{ color: C.faint, marginLeft: 6 }}>{method === 'linear-q' ? 'learns one weight per feature of a move, from every move it makes: for games with too many states for a table' : method === 'q' ? 'learns a value for every state and action, one step at a time (ML Lab lessons 37.4 and 37.5)' : method === 'compare' ? 'settings side by side, each averaged over seeds: add the current settings, change them, add again' : 'searches over the weights of a linear policy, one whole game at a time'}</span>
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -207,7 +248,19 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
             style={{ width: '100%', height: 300, boxSizing: 'border-box', background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, fontFamily: C.mono, fontSize: 11, padding: 6 }} />
           {'error' in parsed && <div data-testid="train-spec-error" style={{ color: C.warn, fontSize: 11 }}>{parsed.error}</div>}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, fontSize: 12, color: C.dim, flexWrap: 'wrap' }}>
-            {method !== 'cem' ? <>
+            {method === 'linear-q' ? <>
+              <label style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>update
+                <select data-testid="train-linear-algorithm" value={lin.algorithm} onChange={(e) => setL({ algorithm: e.target.value as 'q' | 'sarsa' })} style={sel}>
+                  <option value="q">Q-learning</option><option value="sarsa">SARSA</option>
+                </select>
+              </label>
+              {field('episodes', lin.episodes, (v) => setL({ episodes: v }), { min: 1, max: 20000, testid: 'train-episodes' })}
+              {field('α from', lin.alpha, (v) => setL({ alpha: v }), { min: 0.0001, max: 1, step: 0.01, testid: 'train-alpha', title: 'Step size at the start: how far each update moves the weights' })}
+              {field('to', lin.alphaEnd, (v) => setL({ alphaEnd: v }), { min: 0.0001, max: 1, step: 0.001, testid: 'train-alpha-end', title: 'Step size at the end: smaller, so the weights settle' })}
+              {field('γ', lin.gamma, (v) => setL({ gamma: v }), { min: 0, max: 1, step: 0.01, testid: 'train-gamma', title: 'Discount per move' })}
+              {field('ε from', lin.start, (v) => setL({ start: v }), { min: 0, max: 1, step: 0.05, testid: 'train-epsilon', title: 'Exploration at the start: a random legal move with this probability' })}
+              {field('to', lin.end, (v) => setL({ end: v }), { min: 0, max: 1, step: 0.01, testid: 'train-epsilon-end' })}
+            </> : method !== 'cem' ? <>
               <label style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>update
                 <select data-testid="train-algorithm" value={td.algorithm} onChange={(e) => setT({ algorithm: e.target.value as TdAlgorithm })} style={sel} title={ALGORITHM_TEXT[td.algorithm][1]}>
                   {(Object.keys(ALGORITHM_TEXT) as TdAlgorithm[]).map((a) => <option key={a} value={a}>{ALGORITHM_TEXT[a][0]}</option>)}
@@ -246,8 +299,8 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
         </div>
         <div style={{ width: 470 }}>
           {method === 'compare' ? <CompareView store={store} spec={'spec' in parsed ? parsed.spec : null} /> : <>
-          {shown === 'q'
-            ? <QCurve episodes={t.episodes} random={t.random} total={t.total || td.episodes} />
+          {shown === 'q' || shown === 'linear-q'
+            ? <QCurve episodes={t.episodes} random={t.random} total={t.total || (shown === 'q' ? td.episodes : lin.episodes)} />
             : <CemCurve points={t.generations} random={t.random} total={t.total || generations} />}
           <div data-testid="train-status" style={{ fontSize: 12, color: t.error ? C.warn : C.dim, margin: '6px 0' }}>{status}</div>
           {shown === 'q' && t.table && t.described && (
@@ -258,7 +311,15 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
               <QTable described={t.described} table={t.table} visits={t.visits} />
             </>
           )}
-          {shown === 'cem' && t.policy && !isQPolicy(t.policy) && t.described && (
+          {shown === 'linear-q' && t.described?.features && (t.weights ?? (t.policy && isLinearQ(t.policy) ? t.policy.weights : null)) && (
+            <>
+              <div style={{ fontSize: 11, color: C.faint, fontWeight: 700, margin: '8px 0 4px' }}>
+                {t.running ? 'THE WEIGHTS AT THE LAST CHECK' : 'WHAT IT LEARNED'} (a move's Q is the sum of weight × feature; it plays the legal move with the highest)
+              </div>
+              <WeightTable features={t.described.features} weights={(t.weights ?? (t.policy && isLinearQ(t.policy) ? t.policy.weights : []))!} />
+            </>
+          )}
+          {shown === 'cem' && t.policy && !isQPolicy(t.policy) && !isLinearQ(t.policy) && t.described && (
             <>
               <div style={{ fontSize: 11, color: C.faint, fontWeight: 700, margin: '8px 0 4px' }}>WHAT IT LEARNED (the weights: for each action, a score from what it sees; it takes the highest)</div>
               <table data-testid="train-weights" style={{ fontSize: 11, fontFamily: C.mono, borderCollapse: 'collapse', color: C.text }}>

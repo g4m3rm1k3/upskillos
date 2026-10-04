@@ -31,7 +31,7 @@ describe('project archives', () => {
       expect(strFromU8(files[p.scripts[0].path])).toBe(p.scripts[0].source);   // a script is plain JavaScript
       const back = readProjectZip(zip);
       expect(serialize(back.project)).toBe(serialize(p));
-      for (const a of p.assets) expect(back.bytes.get(a.id)).toEqual(starter(a.path));
+      for (const a of p.assets) expect(back.bytes.get(a.id)).toEqual(a.svg !== undefined ? strToU8(a.svg) : starter(a.path));
     });
   }
 

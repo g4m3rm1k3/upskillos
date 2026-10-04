@@ -12,7 +12,11 @@
 //   input.vector('move_left', 'move_right', 'move_up', 'move_down')   length at most 1
 //
 // Keys are KeyboardEvent.code values ("ArrowLeft", "KeyA", "Space"), so they mean
-// the same key whatever the keyboard layout.
+// the same key whatever the keyboard layout. Mouse buttons are keys too, "MouseLeft" and "MouseRight", so an action
+// can be a click: addAction('select', ['MouseLeft']).
+//
+//   input.mouse          where the pointer is, in the world (where a node's position would be)
+//   input.mouseScreen    where it is on the screen, in the game's pixels (as a CanvasLayer's children are placed)
 
 import { Vec2 } from './vec2';
 import type { InputAction } from '../core/types';
@@ -26,6 +30,9 @@ export class Input {
   /** True while physicsUpdate runs: "just" then means since the last physics step. */
   inPhysics = false;
   private actions = new Map<string, string[]>();
+  private _pointer = new Vec2(0, 0);
+  /** Screen to world, through the camera (the game sets it). */
+  _toWorld: (screen: Vec2) => Vec2 = (p) => p;
 
   constructor(actions: InputAction[]) {
     for (const a of actions) this.actions.set(a.name, [...a.keys]);
@@ -36,6 +43,12 @@ export class Input {
     if (pressed && !this.held.has(code)) { this.held.add(code); this.down.add(code); this.physicsDown.add(code); }
     if (!pressed && this.held.has(code)) { this.held.delete(code); this.up.add(code); this.physicsUp.add(code); }
   }
+
+  /** Feed the pointer's position on the screen, in the game's pixels (from the page). */
+  _move(x: number, y: number): void { this._pointer = new Vec2(x, y); }
+
+  get mouseScreen(): Vec2 { return this._pointer; }
+  get mouse(): Vec2 { return this._toWorld(this._pointer); }
 
   /** Forget "just" presses and releases: called once at the end of each frame. */
   endFrame(): void { this.down.clear(); this.up.clear(); }

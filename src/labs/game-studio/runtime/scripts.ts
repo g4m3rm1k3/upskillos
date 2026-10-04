@@ -100,6 +100,7 @@ export async function loadScripts(scripts: ScriptFile[]): Promise<LoadedScripts>
     try {
       const mod = await import(/* @vite-ignore */ urlOf.get(path)!);
       classes.set(path, mod.default);
+      classes.set(`module:${path}`, mod);   // everything it exports, for a task's checks (tasks/checker.ts)
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       (err as Error & { file?: string }).file = path;

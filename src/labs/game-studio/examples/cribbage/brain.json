@@ -1,0 +1,71 @@
+{
+  "actions": [
+    "throw 1+2",
+    "throw 1+3",
+    "throw 1+4",
+    "throw 1+5",
+    "throw 1+6",
+    "throw 2+3",
+    "throw 2+4",
+    "throw 2+5",
+    "throw 2+6",
+    "throw 3+4",
+    "throw 3+5",
+    "throw 3+6",
+    "throw 4+5",
+    "throw 4+6",
+    "throw 5+6",
+    "play 1",
+    "play 2",
+    "play 3",
+    "play 4"
+  ],
+  "observation": [
+    "my score",
+    "your score",
+    "count"
+  ],
+  "method": "linear-q",
+  "policy": {
+    "kind": "linear-q",
+    "features": [
+      "discard: bias",
+      "discard: hand kept (expected points)",
+      "discard: crib (expected points, + mine − theirs)",
+      "discard: my crib",
+      "peg: bias",
+      "peg: points now",
+      "peg: count after",
+      "peg: chance of 15 or 31 against",
+      "peg: chance of a pair against",
+      "peg: chance of a run against",
+      "peg: leads low",
+      "peg: card value",
+      "peg: my hand (show)",
+      "peg: crib (expected, + mine − theirs)",
+      "peg: my crib"
+    ],
+    "weights": [
+      -8.513136092758836,
+      10.241801477538223,
+      5.7100730543856715,
+      3.4359071245039847,
+      -9.135173454440581,
+      3.4443851098819205,
+      -0.00024084528071790005,
+      -0.23123638429227944,
+      -2.086925873466617,
+      -2.274912236664921,
+      0.5733727851140136,
+      -0.1891355709558987,
+      10.137904037850967,
+      8.472600307668317,
+      1.6400627843316813
+    ]
+  },
+  "trained": {
+    "steps": 8000,
+    "score": 0.23,
+    "random": -5.33
+  }
+}

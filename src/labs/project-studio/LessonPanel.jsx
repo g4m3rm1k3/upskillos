@@ -28,10 +28,14 @@ export default function LessonPanel({
   checkState, onCheck, canCheck, isStepDone, isLessonDone,
   onCreateProvided, providedError,
   continuationLabel, onContinue, seriesNote, seriesLessons,
+  onSelectStep, onDefer, challengeStatus, isCovered, onCover,
 }) {
   const atFirst = stepIndex === 0;
   const atLast = stepIndex >= lesson.steps.length - 1;
   const hasChecks = step.checks?.length > 0;
+
+  const challenges = lessons.flatMap(l => l.steps.flatMap((s, index) => s.optional ? [{ lesson: l, step: s, index }] : []));
+  const teaching = lessons.flatMap(l => l.steps.filter(s => !s.optional));
 
   return (
     <div className="project-studio-lesson" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden', background: C.surface }}>
@@ -51,6 +55,20 @@ export default function LessonPanel({
         </select>
       </div>
 
+      {lesson.meta?.pedagogy === 'typed' && (
+        <div style={{ padding: '8px 12px', fontSize: 12, borderBottom: `1px solid ${C.border}` }}>
+          <p style={{ margin: '0 0 6px' }}>Material covered: {teaching.filter(s => isCovered?.(s.id)).length}/{teaching.length} steps.
+            {' '}Challenges demonstrated: {challenges.filter(({ step: s }) => challengeStatus?.(s.id) === 'passed').length}/{challenges.length}.</p>
+          <details><summary>Practice to revisit · optional challenges</summary>
+            {challenges.map(({ lesson: l, step: s, index }) => (
+              <button key={s.id} onClick={() => onSelectStep?.(l.id, index)}
+                style={{ display: 'block', margin: '5px 0', color: C.text, background: C.surface2, border: `1px solid ${C.border}`, textAlign: 'left' }}>
+                {l.title}: {s.title} — {challengeStatus?.(s.id) || 'not attempted'}
+              </button>
+            ))}
+          </details>
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
         {atFirst && <LessonCompanions lesson={lesson} seriesLessons={seriesLessons} isStepDone={isStepDone} C={C} />}
         {atFirst && lesson.intro && (
@@ -78,6 +96,12 @@ export default function LessonPanel({
           {step.title}
         </h3>
 
+        {step.optional && <div style={{ padding: 10, border: `1px solid ${C.border}`, borderRadius: 6 }}>
+          <strong>Optional challenge · {challengeStatus?.(step.id) || 'not attempted'}</strong>
+          <p>Continue whenever you choose. Deferring does not mark this challenge as passed; return through Practice to revisit.</p>
+          <button onClick={onDefer} style={navBtn(C, false)}>Defer and continue →</button>
+        </div>}
+        {step.edit && <p style={{ fontSize: 12, color: C.hint }}>Type in <code>{step.file}</code>. {step.edit.mode === 'append' ? 'Add the fragment at the end of the file.' : 'Replace the file contents with this small revision.'} Your editor is never filled for you.</p>}
         {lesson.meta?.reference === 'optional' && step.file && (
           <div style={{ padding: '6px 8px', marginBottom: 8, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text }}>
             {step.provided ? `Create and read the supplied ${step.file}; no code edits in this step.` : `Edit ${step.file}; change only the lines described below.`}
@@ -124,6 +148,7 @@ export default function LessonPanel({
         {hasChecks && (
           <ChecksBox step={step} state={checkState} onCheck={onCheck} canCheck={canCheck} C={C} />
         )}
+        {lesson.meta?.pedagogy === 'typed' && !step.optional && <button onClick={onCover} style={navBtn(C, false)}>{isCovered?.(step.id) ? 'Material covered' : 'Mark material covered'}</button>}
         {atLast && seriesNote && <p style={{ fontSize: 12, color: C.hint }}>{seriesNote}</p>}
       </div>
 

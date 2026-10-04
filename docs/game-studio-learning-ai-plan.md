@@ -104,6 +104,51 @@ another method in Train an agent….
 - **Training:** against a scripted opponent, then self-play. Measured against random play and against the scripted
   player, over seeds.
 
+**Progress (2026-10-04):**
+
+**Engine and ML**
+- SVG images (`project.writeSvg`): core/svg.test.ts.
+- Mouse input (`input.mouse`, `input.mouseScreen`, MouseLeft and MouseRight as keys).
+- Turn-based agents: `legalActions()`, `features(action)`, `featureNames`, `temperature`. The engine decides only on
+  the agent's turn, among its legal moves; `GameEnv` steps to the next turn.
+- `ai.values`, `ai.choose`, `ai.weights`.
+- Linear Q-learner (ml/linearq.ts, α schedule), tested in ml/linearq.test.ts.
+- Train an agent's Features (linear Q) mode, with a weights table.
+
+**The Cribbage example**
+- Built: examples/cribbage.ts with cribbage/*.js. The art is all SVG; the developer view shows Q for each move, and
+  why (weight × difference from the runner-up).
+- The brain: TRAIN=1 cribbage.brain.test.ts retrains it and checks it is the same.
+
+| Measured (Cribbage) | Result |
+|---|---|
+| Per hand, against the rules player, same 1000 deals | learned +0.21; rules +0.16; random −4.70 |
+| Whole games won, of 150 (Easy τ 2, Medium τ 0.6, Hard τ 0) | Easy 26, Medium 57, Hard 80 |
+
+- Features learned so far: the crib's expected value (CRIB_VALUE, by exact enumeration) has to appear in the pegging
+  features too, or the discard's crib value is lost one bootstrap step later.
+
+**Finished agent first**
+- Every ML task has `finished` (tasks/goals.ts) and ▶ Watch the finished agent in the task panel.
+- The brains in tasks/goals/*.json are retrained by TRAIN=1 tasks/goals.test.ts.
+- Browser-checked: Cliff Walk draws its table, Breakout is driven by its spec, and Breakout Lab's paddle clears the
+  wall.
+
+**Chapter 10 tasks (built, 2026-10-04):** tasks/cribbage.ts has 12 tasks (crib-tour, cards, svg, score, peg, table,
+screen, rules, agent, features, train, difficulty). Each starts from the game with a module stubbed. Each has the
+finished game first. All pass tasks.test.ts.
+
+Supporting pieces built for the tasks:
+- SVG images are edited as text with a live preview (Files › New SVG…, or click an .svg asset).
+- Checks can call a script's exports: `module(path)`.
+- `play({ training })` runs a check as training does.
+
+**Next:**
+- The chapter 10 lessons (course-sources/making-games.yaml, mg10-001 … mg10-012), each linking its task, with
+  notebooks and tests.
+- Then `npm run facts`.
+- Not yet browser-checked: SVG editing in the editor tab, and the cribbage tasks in the panel.
+
 **4. The lessons: a mini-series**, every step present.
 1. The finished game, played against the trained AI.
 2. Cards and the deck.

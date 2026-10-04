@@ -56,7 +56,7 @@ function parseFenceInfo(info) {
     const idx = part.indexOf('=');
     if (idx > 0) attrs[part.slice(0, idx)] = part.slice(idx + 1).replace(/^["']|["']$/g, '');
   }
-  return { lang, file: attrs.file || null, provided: parts.includes('provided') };
+  return { lang, file: attrs.file || null, edit: attrs.edit || null, mode: attrs.mode || 'append', provided: parts.includes('provided') };
 }
 
 /**
@@ -85,6 +85,15 @@ function parseStepBody(rawBody) {
   // reject: a step changes one file.
   const fileFences = [...body.matchAll(fenceRe)].filter((m) => parseFenceInfo(m[1]).file);
   const extraTargets = fileFences.slice(1).map((m) => parseFenceInfo(m[1]).file);
+  const edits = [...body.matchAll(fenceRe)].filter(m => parseFenceInfo(m[1]).edit);
+  if (edits.length) {
+    if (edits.length !== 1 || fileFences.length) throw new Error('An edit step must contain exactly one edit fence and no full-file target');
+    const m = edits[0];
+    const { edit: file, lang, mode } = parseFenceInfo(m[1]);
+    if (!['append', 'replace'].includes(mode)) throw new Error(`Unknown edit mode: ${mode}`);
+    return { prose: body.trim(), explain: '', file, lang, target: null, checks, predictions,
+      edit: { mode, code: m[2] }, extraTargets: [] };
+  }
   let match;
   while ((match = fenceRe.exec(body)) !== null) {
     const { lang, file, provided } = parseFenceInfo(match[1]);
@@ -119,7 +128,7 @@ export function parseLesson(text, id) {
   for (let i = 1; i < parts.length; i += 2) {
     const heading = parts[i];
     const parsed = parseStepBody(parts[i + 1] ?? '');
-    steps.push({ id: `${id}-step-${steps.length + 1}`, title: heading, ...parsed });
+    steps.push({ id: `${id}-step-${steps.length + 1}`, title: heading, optional: /^Challenge\s*[—:-]/i.test(heading), ...parsed });
   }
 
   return {

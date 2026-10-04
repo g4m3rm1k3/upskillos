@@ -210,6 +210,19 @@ function drive(g: Game): void {
 window.addEventListener('keydown', (e) => { if (trainer) return; game?.input.key(e.code, true); if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
 window.addEventListener('keyup', (e) => { if (!trainer) game?.input.key(e.code, false); });
 window.addEventListener('blur', () => game?.input.releaseAll());
+// The pointer, in the game's pixels (the canvas is scaled to fit), and its buttons as the keys MouseLeft and MouseRight.
+const pointerAt = (e: PointerEvent) => {
+  const c = phaser?.canvas, s = lastLoad?.project.settings;
+  if (!c || !s || !game) return false;
+  const r = c.getBoundingClientRect();
+  game.input._move((e.clientX - r.left) * s.width / r.width, (e.clientY - r.top) * s.height / r.height);
+  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+};
+const BUTTONS = ['MouseLeft', 'MouseMiddle', 'MouseRight'];
+window.addEventListener('pointermove', (e) => { if (!trainer) pointerAt(e); });
+window.addEventListener('pointerdown', (e) => { if (!trainer && pointerAt(e) && BUTTONS[e.button]) game!.input.key(BUTTONS[e.button], true); });
+window.addEventListener('pointerup', (e) => { if (!trainer) { pointerAt(e); if (BUTTONS[e.button]) game?.input.key(BUTTONS[e.button], false); } });
+window.addEventListener('contextmenu', (e) => e.preventDefault());
 
 /** The live values of a node's registered properties, for the Inspector while running. */
 function inspect(path: string): Record<string, unknown> | null {

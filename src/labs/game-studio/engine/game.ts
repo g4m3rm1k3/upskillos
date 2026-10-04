@@ -17,6 +17,9 @@
 // brain in the project (brains/ghost.json), then at the start of every decideEvery-th frame (4 unless the
 // script says) the engine asks it what it sees, looks up what the brain does there, and calls act(). Training
 // (ml/env.ts) drives the same two methods itself, so an agent behaves the same in training and in the game.
+// An agent whose moves change (a card game: the cards in its hand) has legalActions(): it decides only when that
+// list is not empty (its turn), the brain chooses among those moves only, and features(action) describes each move
+// to a linear Q brain. Its temperature field (0 unless set) makes the brain's choice a softmax: a difficulty setting.
 
 import type { Connection, NodeData, Project, PropValue, SceneData } from '../core/types';
 import { propsOf } from '../core/registry';
@@ -27,7 +30,7 @@ import { scans, separate } from './physics';
 import { tilesetGrid } from '../core/tiles';
 import { expandScene, expandSceneRoot } from '../core/instances';
 import { Vec2 } from './vec2';
-import { actPolicy, type AgentPolicy } from '../ml/brain';
+import { actPolicy, decide, dot, isLinearQ, pick, type AgentPolicy } from '../ml/brain';
 
 export const PHYSICS_DT = 1 / 60;
 
@@ -93,6 +96,7 @@ export class Game {
     }
     // With no camera, the screen shows the world from (0, 0) to (width, height).
     this.view = { x: this.screenSize.w / 2, y: this.screenSize.h / 2, zoom: 1 };
+    this.input._toWorld = (p) => new Vec2(this.view.x + (p.x - this.screenSize.w / 2) / this.view.zoom, this.view.y + (p.y - this.screenSize.h / 2) / this.view.zoom);
     for (const b of project.brains ?? []) this.brains.set(b.path, b.policy as AgentPolicy);
     this.project = project;
     this.scenePath = scene.path;
@@ -217,10 +221,16 @@ export class Game {
       const field = (n as unknown as { brain?: unknown }).brain;
       const policy = this.agentOverrides.get(n.path) ?? (typeof field === 'string' ? this.brains.get(field) : undefined);
       if (!policy) return;
+      const turns = typeof n.legalActions === 'function';
+      // A turn-based agent decides as soon as its turn comes (it has legal moves), then every decideEvery frames.
+      const legal = turns ? this.guard(n, 'legalActions', () => n.legalActions!()) : undefined;
+      if (turns && !(Array.isArray(legal) && legal.length)) { this.agentFrames.set(n, 0); return; }
       const k = this.agentFrames.get(n) ?? 0;
       this.agentFrames.set(n, k + 1);
       if (k % decideEvery(n) !== 0) return;
-      this.guard(n, 'act', () => { n.act(actPolicy(policy, n.observe())); });
+      this.guard(n, 'act', () => {
+        n.act(decide(policy, { observation: n.observe(), legal: legal as number[] | undefined, features: typeof n.features === 'function' ? (a) => n.features!(a).map(Number) : undefined, temperature: Number(n.temperature) || 0 }));
+      });
     });
   }
 
@@ -230,7 +240,7 @@ export class Game {
   }
 
   /** Whether a brain is in the project, and what it does for an observation: for scripts (the ai global). Built
-   *  with a closure, so a script reaches these three and not the game itself. */
+   *  with a closure, so a script reaches these and not the game itself. */
   readonly ai = ((game: Game) => ({
     get training() { return game.training; },
     has(path: string) { return game.brains.has(path); },
@@ -238,6 +248,23 @@ export class Game {
       const p = game.brains.get(path);
       if (!p) throw new Error(`There is no brain "${path}" in the project (train one with Run › Train an agent…, then Save as brain)`);
       return actPolicy(p, observation);
+    },
+    /** A linear Q brain's value for each move, from each move's features (developer views, a practice partner). */
+    values(path: string, features: number[][]) {
+      const p = game.brains.get(path);
+      if (!p) throw new Error(`There is no brain "${path}" in the project (train one with Run › Train an agent…, then Save as brain)`);
+      if (!isLinearQ(p)) throw new Error(`${path} is not a linear Q brain: ai.values scores moves by their features`);
+      return features.map((phi) => dot(p.weights, phi.map(Number)));
+    },
+    /** A linear Q brain's weights, one per feature (a copy): for showing why it chose. */
+    weights(path: string) {
+      const p = game.brains.get(path);
+      if (!p || !isLinearQ(p)) throw new Error(`There is no linear Q brain "${path}" in the project`);
+      return [...p.weights];
+    },
+    /** Which of these moves (by their features) a linear Q brain picks: an index into the list. temperature above 0 makes it a softmax choice. */
+    choose(path: string, features: number[][], temperature = 0) {
+      return pick(this.values(path, features), temperature);
     },
   }))(this);
 
@@ -460,7 +487,15 @@ export function scriptGlobals(game: Game): Record<string, unknown> {
 }
 
 /** A node whose script makes it an agent: it can say what it sees and do an action. */
-export type AgentNode = Node & { observe(): number[]; act(action: number): void; reward?(): number; done?(): boolean; actions?: string[]; observations?: string[]; decideEvery?: number };
+export type AgentNode = Node & {
+  observe(): number[]; act(action: number): void; reward?(): number; done?(): boolean; actions?: string[]; observations?: string[]; decideEvery?: number;
+  /** A turn-based agent: the moves it may make now ([] when it is not its turn). */
+  legalActions?(): number[];
+  /** What a move is like, as numbers (a linear Q brain scores w · features). featureNames name them. */
+  features?(action: number): number[]; featureNames?: string[];
+  /** How a brain chooses for it: 0 the best move, above 0 a softmax (a difficulty setting). */
+  temperature?: number;
+};
 export function isAgent(n: Node): n is AgentNode {
   const a = n as unknown as Record<string, unknown>;
   return typeof a.observe === 'function' && typeof a.act === 'function';

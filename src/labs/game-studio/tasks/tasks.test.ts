@@ -23,7 +23,9 @@ const load: ScriptLoader = async (project) => {
   for (const path of order) {
     const src = rewriteImports(project.scripts.find((x) => x.path === path)!.source, new Map([...imports.get(path)!].map(([spec, target]) => [spec, urls.get(target)!])));
     urls.set(path, `data:text/javascript;base64,${Buffer.from(src).toString('base64')}`);
-    classes.set(path, (await import(/* @vite-ignore */ urls.get(path)!)).default);
+    const mod = await import(/* @vite-ignore */ urls.get(path)!);
+    classes.set(path, mod.default);
+    classes.set(`module:${path}`, mod);
   }
   return classes;
 };
@@ -49,7 +51,7 @@ describe('every task', () => {
       expect(problems(d.project)).toEqual([]);
       const after = await evaluateTask(task, d.project, { ran: true, ...task.solvedEditor }, load);
       expect(after).toEqual(task.steps.map(() => true));
-    });
+    }, 60000);
   }
 
 });

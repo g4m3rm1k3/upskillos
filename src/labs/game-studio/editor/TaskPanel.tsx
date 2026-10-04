@@ -12,7 +12,7 @@ import { nextTask } from '../tasks';
 const SHOTS = import.meta.glob('../tasks/shots/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const shot = (task: string, step: number): string | undefined => SHOTS[`../tasks/shots/${task}-${step}.webp`];
 
-export function TaskPanel({ store, onBack }: { store: Store; onBack: (route: string) => void }) {
+export function TaskPanel({ store, onBack, onWatchFinished }: { store: Store; onBack: (route: string) => void; onWatchFinished?: () => void }) {
   useStore(store);
   const [open, setOpen] = useState(true);
   const [hint, setHint] = useState<number | null>(null);
@@ -40,6 +40,14 @@ export function TaskPanel({ store, onBack }: { store: Store; onBack: (route: str
       {open && (
         <>
           <div style={{ margin: '2px 0 6px' }}>{t.def.goal}</div>
+          {t.def.finished && (
+            <div data-testid="task-finished" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 7px', marginBottom: 8, background: '#1d2a22' }}>
+              <div style={{ color: C.faint, fontSize: 10, fontWeight: 700, letterSpacing: 0.4 }}>WHAT YOU ARE BUILDING</div>
+              <div style={{ margin: '2px 0 4px' }}>{t.def.finished.what}</div>
+              <button type="button" data-testid="task-watch-finished" onClick={onWatchFinished} disabled={!onWatchFinished} style={{ ...btn, background: store.previewing ? C.accent : C.raised }}
+                title="Runs the finished game, trained brain and all, in the game area. Your project is not changed.">{store.previewing ? '■ Stop to go back to yours' : t.sawFinished ? '▶ Watch it again' : '▶ Watch the finished agent'}</button>
+            </div>
+          )}
           <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {t.def.steps.map((step, i) => {
               const ok = t.results[i] === true, here = i === current;

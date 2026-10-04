@@ -9,9 +9,9 @@ const KEY = 'project-studio-progress-v1';
 function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { position: v.position || {}, done: v.done || {} };
+    return { position: v.position || {}, done: v.done || {}, covered: v.covered || {}, challenges: v.challenges || {} };
   } catch {
-    return { position: {}, done: {} };
+    return { position: {}, done: {}, covered: {}, challenges: {} };
   }
 }
 
@@ -41,7 +41,25 @@ export function useProgress() {
     });
   }, []);
 
+  const markCovered = useCallback((stepId) => {
+    setState(prev => {
+      if (prev.covered[stepId]) return prev;
+      const next = { ...prev, covered: { ...prev.covered, [stepId]: true } };
+      save(next); return next;
+    });
+  }, []);
+  const setChallenge = useCallback((stepId, status) => {
+    setState(prev => {
+      const done = { ...prev.done };
+      if (status === 'passed') done[stepId] = true;
+      else delete done[stepId];
+      const next = { ...prev, done, challenges: { ...prev.challenges, [stepId]: status } };
+      save(next); return next;
+    });
+  }, []);
+  const isCovered = useCallback(id => !!state.covered[id], [state.covered]);
+  const challengeStatus = useCallback(id => state.challenges[id] || (state.done[id] ? 'passed' : 'not attempted'), [state.challenges, state.done]);
   const isDone = useCallback((stepId) => !!state.done[stepId], [state.done]);
 
-  return useMemo(() => ({ position: state.position, savePosition, markDone, isDone }), [state, savePosition, markDone, isDone]);
+  return useMemo(() => ({ position: state.position, savePosition, markDone, isDone, markCovered, isCovered, setChallenge, challengeStatus }), [state, savePosition, markDone, isDone, markCovered, isCovered, setChallenge, challengeStatus]);
 }

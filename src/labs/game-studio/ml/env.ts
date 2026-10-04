@@ -39,6 +39,16 @@
 //   }
 //
 // While an agent trains, scripts see ai.training as true: a player script can play itself then.
+//
+// A turn-based agent (a card game's player) also has legalActions(), the moves it may make now ([] when it is not
+// its turn), and features(action), what each move is like as numbers (for linear Q, ml/linearq.ts):
+//
+//     legalActions() { return this.myTurn ? this.hand.map((_, i) => i) : [] }
+//     features(action) { return [pointsIfPlayed, leavesFive, …] }
+//     featureNames = ['points now', 'leaves 5 or 21', …]
+//
+// Then a step is one move: act(action), and the game plays on (the other player too) until it is the agent's turn
+// again or the episode ends. Its reward is everything it earned in between.
 
 import type { Project, SceneData } from '../core/types';
 import { Game, MATH, decideEvery, isAgent, scriptGlobals, type AgentNode, type Renderer } from '../engine/game';
@@ -136,6 +146,12 @@ export class GameEnv {
   bins: number[][] = [];
   /** How many numbers the agent sees. */
   observationSize = 0;
+  /** A turn-based agent (legalActions()): a step plays on to its next turn. */
+  turnBased = false;
+  /** For an agent with features(action): their names and how many. */
+  featureNames: string[] = [];
+  /** Frames a turn-based step may wait for the agent's next turn before it is an error. */
+  static readonly MAX_WAIT = 100000;
 
   private constructor(readonly project: Project, readonly spec: EnvSpec, private classes: Map<string, unknown>, private scene: SceneData, private renderer: Renderer) {
     this.fps = spec.fps ?? 60;
@@ -168,6 +184,16 @@ export class GameEnv {
       if (spec.bins && spec.bins.length !== o.length) throw new Error(`"bins" has ${spec.bins.length} lists, but observe() gives ${o.length} numbers: one list each ([] for a number that is not binned)`);
       env.bins = spec.bins ?? o.map(() => []);
       if (spec.frameSkip === undefined) env.frameSkip = decideEvery(a);
+      env.turnBased = typeof a.legalActions === 'function';
+      if (typeof a.features === 'function') {
+        const legal = env.legal();
+        if (env.errors.length) throw new Error(env.errors[0]);
+        if (!legal.length) throw new Error(`${spec.agent} has no legal move at the start of an episode, so its features cannot be read`);
+        const phi = env.features(legal[0]);
+        if (env.errors.length) throw new Error(env.errors[0]);
+        if (!phi.length) throw new Error(`${spec.agent}'s features(action) must return a list of numbers`);
+        env.featureNames = Array.isArray(a.featureNames) && a.featureNames.length === phi.length ? a.featureNames.map(String) : phi.map((_, i) => `feature ${i + 1}`);
+      }
       return env;
     }
     if (!spec.actions?.length) throw new Error('The spec has no actions (or name an "agent": a node whose script has observe() and act())');
@@ -207,6 +233,8 @@ export class GameEnv {
       }
       Object.assign(globalThis, scriptGlobals(this.game));
       this.game.start();
+      // A turn-based agent's episode starts at its first turn.
+      if (this.agentNode && typeof this.agentNode.legalActions === 'function') this.waitForTurn();
     });
     this.steps = 0; this.held = [];
     this.last = (this.spec.reward ?? []).map((r) => readPath(this.game!, r.path));
@@ -218,6 +246,7 @@ export class GameEnv {
     const game = this.game;
     if (!game) throw new Error('Call reset() before step()');
     if (!(action >= 0 && action < this.actionCount)) throw new Error(`There is no action ${action}: the actions are 0 to ${this.actionCount - 1}`);
+    if (this.turnBased && !this.legal().includes(action)) throw new Error(`${this.spec.agent}: ${this.actionNames[action]} is not a legal move now (legalActions() is [${this.legal().join(', ')}])`);
     const agent = this.agentNode;
     let reward = 0, ended = false;
     this.within(() => {
@@ -230,7 +259,8 @@ export class GameEnv {
         pressAction(game, this.project.input, this.held, keys);
         this.held = keys;
       }
-      for (let f = 0; f < this.frameSkip; f++) game.step(1 / this.fps);
+      if (this.turnBased) this.waitForTurn(true);
+      else for (let f = 0; f < this.frameSkip; f++) game.step(1 / this.fps);
       if (agent) {
         reward = Number(game._run(agent, 'reward', () => (agent.reward ? agent.reward() : 0)) ?? 0) || 0;
         ended = agent._freed || !!game._run(agent, 'done', () => (agent.done ? agent.done() : false));
@@ -248,6 +278,43 @@ export class GameEnv {
     }
     const terminated = this.errors.length > 0 || ended;
     return { observation: this.observe(), reward, terminated, truncated: !terminated && this.steps >= this.maxSteps, info: { step: this.steps, errors: this.errors } };
+  }
+
+  /**
+   * Play frames until the turn-based agent has a legal move or its episode is over (at least one frame after a move,
+   * so the game sees it). Inside within().
+   */
+  private waitForTurn(afterMove = false): void {
+    const game = this.game!, agent = this.agentNode!;
+    for (let f = 0; ; f++) {
+      if (f > 0 || afterMove) game.step(1 / this.fps);
+      if (this.errors.length || agent._freed) return;
+      if (game._run(agent, 'done', () => (agent.done ? agent.done() : false))) return;
+      const legal = game._run(agent, 'legalActions', () => agent.legalActions!());
+      if (Array.isArray(legal) && legal.length) return;
+      if (f >= GameEnv.MAX_WAIT) { this.errors.push(`${this.spec.agent}: no legal move for ${GameEnv.MAX_WAIT} frames, and the episode did not end (done())`); return; }
+    }
+  }
+
+  /** The moves the agent may make now: legalActions() for a turn-based agent, else every action. */
+  legal(): number[] {
+    if (!this.turnBased) return this.actionNames.map((_, i) => i);
+    const game = this.game!, agent = this.agentNode!;
+    let out: unknown;
+    this.within(() => { Object.assign(globalThis, scriptGlobals(game)); out = game._run(agent, 'legalActions', () => agent.legalActions!()); });
+    if (!Array.isArray(out)) { if (!this.errors.length) this.errors.push(`${this.spec.agent}: legalActions() must return a list of action numbers`); return []; }
+    return out.map(Number).filter((a) => Number.isInteger(a) && a >= 0 && a < this.actionCount);
+  }
+
+  /** What a move is like, as numbers: the agent's features(action). */
+  features(action: number): number[] {
+    const game = this.game!, agent = this.agentNode!;
+    let out: unknown;
+    this.within(() => { Object.assign(globalThis, scriptGlobals(game)); out = game._run(agent, 'features', () => agent.features!(action)); });
+    const list = Array.isArray(out) ? out.map(Number) : [];
+    if (!Array.isArray(out) && !this.errors.length) this.errors.push(`${this.spec.agent}: features(action) must return a list of numbers`);
+    const n = this.featureNames.length;
+    return n && list.length !== n ? new Array(n).fill(0) : list.map((x) => (Number.isFinite(x) ? x : 0));
   }
 
   /** The running game, to look at (the engine's own objects). */

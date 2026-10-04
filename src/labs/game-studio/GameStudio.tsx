@@ -263,7 +263,8 @@ export default function GameStudio({ onBack }: { onBack?: () => void }) {
           </div>
           {!running && store.tab.kind === 'scene' && !store.task && <Guide store={store} />}
           {/* Shown while the game runs too, so a step like "run the game" ticks where you can see it. */}
-          <TaskPanel store={store} onBack={(route) => { navigate(route); desktop?.minimizeWindow?.('game-studio'); }} />
+          <TaskPanel store={store} onBack={(route) => { navigate(route); desktop?.minimizeWindow?.('game-studio'); }}
+            onWatchFinished={() => { if (store.previewing) store.stop(); else if (gameBox.current) void store.watchFinished(gameBox.current); }} />
           {!running && store.tab.kind === 'script' && <div style={{ position: 'absolute', inset: 0 }}><ScriptEditor key={store.tab.path} store={store} path={store.tab.path} /></div>}
           <div ref={gameBox} data-testid="game-box" style={{ position: 'absolute', inset: 0, bottom: running && trainHudShown(store) ? TRAIN_HUD_HEIGHT : 0, display: running ? 'block' : 'none', background: '#000' }} />
           {running && <TrainHud store={store} onOpenDialog={() => setDialog('train')} onWatch={() => { if (gameBox.current) void store.run('project', gameBox.current, { agent: true }); }} />}

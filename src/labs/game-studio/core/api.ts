@@ -361,8 +361,13 @@ export function brainProblem(b: BrainData): string | null {
   const nA = Array.isArray(b.actions) ? b.actions.length : 0;
   if (!nA) return `${b.path}: a brain needs its actions`;
   if (!Array.isArray(b.observation)) return `${b.path}: a brain needs the names of what it sees`;
-  if (b.method !== 'q' && b.method !== 'cem') return `${b.path}: the method is "q" or "cem"`;
-  const pol = b.policy as { kind?: string; bins?: unknown; table?: unknown; weights?: unknown };
+  if (b.method !== 'q' && b.method !== 'cem' && b.method !== 'linear-q') return `${b.path}: the method is "q", "cem" or "linear-q"`;
+  const pol = b.policy as { kind?: string; bins?: unknown; table?: unknown; weights?: unknown; features?: unknown };
+  if (b.method === 'linear-q') {
+    if (pol?.kind !== 'linear-q' || !Array.isArray(pol.features) || !Array.isArray(pol.weights)) return `${b.path}: a linear Q brain needs its features' names and a weight for each`;
+    if ((pol.weights as unknown[]).length !== (pol.features as unknown[]).length || (pol.weights as unknown[]).some((w) => typeof w !== 'number')) return `${b.path}: a linear Q brain needs one number per feature (it has ${(pol.features as unknown[]).length} features)`;
+    return null;
+  }
   if (b.method === 'q') {
     if (pol?.kind !== 'q' || !Array.isArray(pol.bins) || !Array.isArray(pol.table)) return `${b.path}: a Q brain needs bins and a table`;
     const states = (pol.bins as number[][]).reduce((n, c) => (c.length ? n * (c.length + 1) : n), 1);

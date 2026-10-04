@@ -25,19 +25,20 @@ export function Files({ store }: { store: Store }) {
   useStore(store);
   const p = store.project;
   const file = useRef<HTMLInputElement>(null);
-  const [naming, setNaming] = useState<'scene' | 'script' | null>(null);
+  const [naming, setNaming] = useState<'scene' | 'script' | 'svg' | null>(null);
   const [rootType, setRootType] = useState('Node2D');
   if (!p) return null;
 
-  const create = (kind: 'scene' | 'script', raw: string) => {
+  const create = (kind: 'scene' | 'script' | 'svg', raw: string) => {
     setNaming(null);
+    if (kind === 'svg') { store.newSvg(raw); return; }
     const stem = raw.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
     if (!stem) return;
     if (kind === 'scene') store.createScene(`scenes/${stem}.scene`, rootType);
     else { store.act((d) => d.writeScript(`scripts/${stem}.js`, `// ${stem}.js\n`, `New script scripts/${stem}.js`)); store.openScript(`scripts/${stem}.js`); }
   };
   // A new scene's root can be any node type, as in Godot: a coin scene's root is an Area2D, a player's a CharacterBody2D.
-  const namer = (kind: 'scene' | 'script') => naming === kind && (
+  const namer = (kind: 'scene' | 'script' | 'svg') => naming === kind && (
     <div style={{ display: 'flex', gap: 4, margin: '2px 8px 4px 14px' }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) create(kind, (e.currentTarget.querySelector('input') as HTMLInputElement).value); }}>
       {kind === 'scene' && (
@@ -45,7 +46,7 @@ export function Files({ store }: { store: Store }) {
           {nodeTypes().filter((t) => t.addable).map((t) => <option key={t.type} value={t.type}>{t.type}</option>)}
         </select>
       )}
-      <input autoFocus data-testid={`new-${kind}-name`} placeholder={kind === 'scene' ? 'level_1' : 'utils'}
+      <input autoFocus data-testid={`new-${kind}-name`} placeholder={kind === 'scene' ? 'level_1' : kind === 'svg' ? 'card' : 'utils'}
         onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') create(kind, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setNaming(null); }}
         style={{ flex: 1, minWidth: 0, background: C.bg, color: C.text, border: `1px solid ${C.accent}`, fontSize: 12, padding: '1px 4px' }} />
     </div>
@@ -87,6 +88,7 @@ export function Files({ store }: { store: Store }) {
           </Group>
         )}
         <Group title="assets/" action={<>
+          <Btn small testid="new-svg" onClick={() => setNaming('svg')} title="A new SVG image: a picture written as text (shapes, paths and words), edited beside a live preview">New SVG…</Btn>
           <Btn small testid="new-sprite" onClick={() => store.newSprite()} title="Draw a new sprite in Sprite Forge. Send it back from there (Send to Game Studio) and it is added here and put in the scene.">New sprite…</Btn>
           <Btn small testid="import-image" onClick={() => file.current?.click()} title="Import images (PNG, JPEG, WebP, GIF), or a Tiled map (.tmx or .tmj) with its tileset files (.tsx, .tsj): choose them together">Import…</Btn>
         </>}>
@@ -96,10 +98,11 @@ export function Files({ store }: { store: Store }) {
             const img = store.images.get(a.id);
             return (
               <div key={a.id} data-testid={`asset-${a.path}`} draggable onDragStart={(e) => { e.dataTransfer.setData(ASSET_DRAG, a.path); e.dataTransfer.effectAllowed = 'copy'; }}
-                title={`${a.path} · ${a.width} × ${a.height}. Drag into the viewport to make a Sprite2D.`} style={item(false)}>
+                onClick={a.svg !== undefined ? () => store.openScript(a.path) : undefined}
+                title={`${a.path} · ${a.width} × ${a.height}. Drag into the viewport to make a Sprite2D.${a.svg !== undefined ? ' Click to edit its SVG.' : ''}`} style={item(store.tab.kind === 'script' && store.tab.path === a.path)}>
                 {img ? <img src={img.src} alt="" style={{ width: 18, height: 18, objectFit: 'contain', imageRendering: 'pixelated' }} /> : <span>🖼</span>}
-                <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.path.replace(/^assets\//, '')}</span>
-                {a.width <= 128 && a.height <= 128 && (
+                <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.path.replace(/^assets\//, '')}{store.isScriptDirty(a.path) ? ' ●' : ''}</span>
+                {a.svg === undefined && a.width <= 128 && a.height <= 128 && (
                   <button type="button" data-testid={`edit-sprite-${a.path}`} onClick={(e) => { e.stopPropagation(); store.editInSpriteForge(a.path); }}
                     title={`Edit in Sprite Forge. Send it back from there and this picture is updated everywhere it is used (Ctrl+Z puts the old one back).${a.origin?.startsWith('sprite-forge:') ? ' It was made there, so the original opens, frames and all.' : ''}`}
                     style={{ background: 'none', border: 'none', color: C.dim, cursor: 'pointer', padding: '0 2px', fontSize: 12 }}>✎</button>
@@ -107,6 +110,7 @@ export function Files({ store }: { store: Store }) {
               </div>
             );
           })}
+          {namer('svg')}
           {!p.assets.length && <div style={{ padding: '2px 14px', color: C.faint, fontSize: 11 }}>No images yet.</div>}
         </Group>
       </div>
