@@ -217,6 +217,10 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | **12 · Neural Networks** (`ml-neural`) — project: a GD&T true-position tolerance zone | 12.1 Beyond a straight line: layers | neural networks (why one neuron fails, ReLU, a hand-made diamond network) | ml-perceptron-limits / 20 |
 | | 12.2 Learning every layer: backpropagation | backpropagation (every gradient checked numerically; the learned zone drawn) | ml-backprop-by-hand / 21 |
 | | 12.3 Training well | backpropagation (symmetry and zero starts, learning rates, momentum, mini-batches, `MLPClassifier`) | ml-optimisers / 22 |
+| **13 · PyTorch** (`ml-pytorch`) — project: reading handwritten digits | 13.1 Gradients for free: tensors and autograd | PyTorch (autograd checked against Chapter 12's backpropagation, weight for weight) | ml-autograd-engine / 23 |
+| | 13.2 The training loop, the PyTorch way | PyTorch (modules, `BCEWithLogitsLoss`, SGD with momentum, `DataLoader`, every loop line) | ml-training-a-network / 23 |
+| | 13.3 Ten answers, not two: reading digits | PyTorch (softmax and cross-entropy by hand, Adam, a confusion matrix; no better than logistic regression) | ml-training-a-network / 23 |
+| | 13.4 Looking for shapes: convolutional networks | PyTorch (convolution by hand, a CNN, shift augmentation, saving with `weights_only=True`) | ml-cnns / 24 |
 
 ### Planned
 
@@ -224,7 +228,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 13 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
 | 14 | NLP: Document Classifier | "Back to text, where Chapter 0 began" | n-grams, TF-IDF pipelines, embeddings, cosine similarity | ml-embeddings / 25, 34 |
 | 15 | Production ML: Upskillos ML Studio | "Everything, for real users" | the full architecture (`api/`, `services/`, `ml/`, `database/`, `templates/`), CRUD for users, projects, datasets, models and experiments; background training jobs; model artifacts and metadata; experiment tracking; data, model and integration tests; reproducibility; Docker and deployment; logging and observability; ML-specific security (unsafe pickle files, untrusted datasets, prediction abuse); consuming external APIs with retries, timeouts and caching | / 28, 29, 30, 32 |
 | 16 | Capstone: Build Your Own ML Product | "Your own problem" | problem definition → data analysis → mathematical justification → baseline → model → evaluation → architecture → API → database → UI → tests → security → deployment | ml-capstone / 33 |
