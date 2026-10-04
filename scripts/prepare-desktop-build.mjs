@@ -19,7 +19,7 @@ await fs.copyFile(path.join(appDir, 'main.cjs'),       path.join(staging, 'main.
 await fs.copyFile(path.join(appDir, 'preload.cjs'),    path.join(staging, 'preload.cjs'))
 await fs.copyFile(path.join(appDir, 'project-fs.cjs'), path.join(staging, 'project-fs.cjs'))
 // Project Studio's terminal and step checks.
-for (const f of ['terminal.cjs', 'project-checks.cjs', 'page-eval.cjs']) {
+for (const f of ['terminal.cjs', 'project-checks.cjs', 'page-eval.cjs', 'process-tree.cjs']) {
   await fs.copyFile(path.join(appDir, f), path.join(staging, f))
 }
 
@@ -64,7 +64,7 @@ const stagingPkg = {
     },
 
     // Only the Electron process files go into app.asar
-    files: ['main.cjs', 'preload.cjs', 'project-fs.cjs', 'terminal.cjs', 'project-checks.cjs', 'page-eval.cjs', 'runtimes/**/*', 'node_modules/node-pty/**/*'],
+    files: ['main.cjs', 'preload.cjs', 'project-fs.cjs', 'terminal.cjs', 'project-checks.cjs', 'page-eval.cjs', 'process-tree.cjs', 'runtimes/**/*', 'node_modules/node-pty/**/*'],
     // A native module can't be loaded from inside app.asar, and node-pty also starts helper
     // programs (OpenConsole.exe, winpty-agent.exe) from its own folder.
     asarUnpack: ['node_modules/node-pty/**/*'],
@@ -104,4 +104,4 @@ await fs.writeFile(
 )
 
 console.log(`desktop/staging/ ready  (v${appPkg.version})`)
-console.log('  main.cjs  preload.cjs  project-fs.cjs  terminal.cjs  project-checks.cjs  page-eval.cjs  runtimes/  node_modules/node-pty/  package.json')
+console.log('  main.cjs  preload.cjs  project-fs.cjs  terminal.cjs  project-checks.cjs  page-eval.cjs  process-tree.cjs  runtimes/  node_modules/node-pty/  package.json')

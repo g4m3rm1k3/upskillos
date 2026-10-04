@@ -80,6 +80,18 @@ describe('run checks', () => {
     expect(r[2].detail).toContain('1 + 1 = 2');
   });
 
+  it('gives the program exactly the text in stdin=: one final newline, and non-ASCII intact', async () => {
+    // Prints what arrived on stdin as JSON, with CRLF folded to LF the way C++ and Python
+    // text input does. Before the fix, Windows gave "3 4\n\n" (an extra line) and "caf??".
+    fs.writeFileSync(path.join(root, 'echo.js'), 'let d = ""; process.stdin.on("data", (c) => { d += c }); process.stdin.on("end", () => console.log(JSON.stringify(d.replace(/\\r\\n/g, "\\n"))));\n');
+    const r = await check(root, [
+      'run "node echo.js" stdin="3 4\\n" stdout="\\"3 4\\\\n\\""',
+      'run "node echo.js" stdin="café\\n" stdout="\\"café\\\\n\\""',
+      'run "node echo.js" stdin="a\\nb\\n" stdout="\\"a\\\\nb\\\\n\\""',
+    ].join('\n'));
+    expect(r.map((x) => x.detail ?? 'pass')).toEqual(['pass', 'pass', 'pass']);
+  });
+
   it('checks the exit code and the output', async () => {
     const r = await check(root, [
       'run "node hello.js" stdout="Hello from Node"',

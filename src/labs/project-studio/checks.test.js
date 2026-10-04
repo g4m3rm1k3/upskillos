@@ -92,7 +92,7 @@ describe('every bundled track', () => {
       }
     }
     expect(problems).toEqual([]);
-  });
+  }, 60000); // loads every track (hundreds of lesson files); slow under a full parallel run
 });
 
 describe('parseLesson with checks', () => {

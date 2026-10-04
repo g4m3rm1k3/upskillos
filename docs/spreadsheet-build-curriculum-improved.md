@@ -660,17 +660,22 @@ The parser is introduced because the formula language has become too complex to 
 
 ## Sprint 8 — Dependencies and recalculation
 
-**Demo:** changing A1 updates every dependent cell.
+**Demo:** changing A1 recalculates only the cells that depend on it, and the measurement
+shows how much less work that is.
 
-Build:
+Where sprint 7 left things: every edit recalculates all 2,600 cells (`showAll`), a cell
+used by several formulas is recalculated once per use, and cycles are already caught (7.6
+introduced `Set` and the "in progress" check, which shows `#CYCLE!`). Sprint 8 starts by
+**measuring** that cost (counting `cellValue` calls, timing an edit on a sheet of formulas),
+then builds:
 
-- dependency graph
-- reverse dependencies
-- `Set` (first introduced here, compared with a Python set)
-- graph traversal
-- cycle detection
-- topological ordering
-- incremental recalculation
+- dependency graph: which cells each formula reads (from its tree)
+- reverse dependencies: which cells read a given cell
+- graph traversal: everything downstream of an edit
+- topological ordering: recalculate each affected cell once, after everything it reads
+- a cache of computed values, so a cell used twice is calculated once
+- cycle detection revisited: the graph view of the same circles 7.6 catches
+- measuring again, to show the improvement with numbers
 
 Introduce:
 
@@ -1191,6 +1196,34 @@ The learner should finish knowing how to recover from mistakes, not merely how t
 
 The repository may contain reference material, but the learner does not copy the production implementation.
 
+## Spreadsheet Lab
+
+Reference:
+
+```text
+src/labs/spreadsheet-lab/
+```
+
+UpSkillOS's own spreadsheet, merged on 2026-10-03. It is not complete, but it is a working,
+tested spreadsheet engine, and it is the closest reference this series has. When writing a
+sprint, read the matching part first: how it was solved, what its tests cover, and where the
+series' simpler version should deliberately differ.
+
+| Sprint | Reference in the lab |
+|---|---|
+| 6 (addresses) | `engine/address.js`: the same bijective base-26 column names, 0-based internally, A1 shown to the learner |
+| 7 (formulas) | `engine/parser.js`, `engine/evaluate.js`, `engine/values.js` (error values) |
+| 9 (functions, ranges) | `engine/functions/`, `functions.test.js` |
+| 12 (editing, fill, references shifting) | `engine/editing.js`, `engine/fill.js`, `engine/rewrite.js` |
+| 13 (persistence, CSV) | `engine/workbook.js`, `engine/csv.js`, `engine/xlsx.js` |
+| 15–16 (Python and JavaScript in workers) | `runtime/python.worker.js`, `runtime/code.worker.js`, `runtime/runtime.js` |
+
+Charts, conditional formatting, pivot tables and Excel import/export are in the lab but not
+in the series' MVP; they are natural extensions for the learner after the series.
+
+As with OpenMat: the learner builds their own, never copies the lab's code, and a lesson may
+compare the two designs when the comparison teaches something.
+
 ## OpenMat
 
 Reference:
@@ -1462,6 +1495,27 @@ Where the real tool produces an error, use the real error.
 ### Rule 10 — No fake difficulty
 
 Do not intentionally break correct learner code merely to manufacture a lesson.
+
+### Rule 11 — Explain the logic, not just the code
+
+Saying what each line does is not enough. A lesson explains **why the code works**: the
+reasoning that makes it correct, what would go wrong with an obvious alternative, and how
+the learner could have arrived at it themselves. "`index = Math.floor(index / 26) - 1`
+divides by 26 and subtracts 1" describes the code; the lesson must explain why subtracting
+one is what makes `26` become `AA` rather than `BA`.
+
+### Rule 12 — Analogies come after the code is explained
+
+An analogy is a helper for remembering, never a substitute for explaining. First explain
+the code and its logic in its own terms; only then, if it helps, add the analogy. A lesson
+that offers an analogy and leaves the code unexplained has failed, however vivid the
+analogy is.
+
+### Rule 13 — Small changes, each explained, in this order
+
+Keep the established rhythm of the series: one small change at a time, explained when it
+is made, with no large blocks of code handed over to be read later. The order of sprints
+and lessons in this plan stands.
 
 ---
 

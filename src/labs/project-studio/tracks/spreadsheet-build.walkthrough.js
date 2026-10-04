@@ -753,7 +753,9 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'Enter never stores in the sheet', edit: [['    sheet.set(selected, formulaBar.value);\n', '']], fails: [3, 4] },
       { name: 'formula bar shows the cell text, not the sheet', edit: [['  formulaBar.value = sheet.get(address);', '  formulaBar.value = "";']], fails: [4] },
-      { name: 'column and row swapped when clicking', edit: [['select({ column: c, row: r })', 'select({ column: r, row: c })']], fails: [3, 4] },
+      // Swapped consistently, so going back to "C2" finds what was typed there (check 4 passes);
+      // writing C2 and the last row expose it.
+      { name: 'column and row swapped when clicking', edit: [['select({ column: c, row: r })', 'select({ column: r, row: c })']], fails: [3, 5] },
       { name: 'old cell never un-outlined', edit: [['  cellAt(selected)?.classList.remove("selected");\n', '']], fails: [6] },
     ],
   },
@@ -793,6 +795,142 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'merged but did not push', run: ['git commit -am "src"', 'git switch main', 'git merge tests-and-model', 'git branch -d tests-and-model'], fails: [3] },
       { name: 'did not merge', run: ['git commit -am "src"'], fails: [0, 1] },
+    ],
+  },
+
+  // ── 7.1 ──────────────────────────────────────────────────────────────────
+  '07-01-tokens#A branch': {
+    run: ['git switch -c formulas'],
+    wrong: [{ name: 'stayed on main', fails: [0] }],
+  },
+  '07-01-tokens#The tests first': {
+    wrong: [{ name: 'no test file', fails: [0, 1] }],
+  },
+  '07-01-tokens#The lexer': {
+    wrong: [
+      { name: 'no branch for spaces', edit: [['    if (char === " ") {\n      i++;\n    } else if', '    if']], fails: [0, 2] },
+      { name: 'records where a number ends, not where it starts', edit: [['tokens.push({ kind: "number", value, start });', 'tokens.push({ kind: "number", value, start: i });']], fails: [0, 2] },
+      { name: 'words made of letters only (B12 is read as B)', edit: [['while (isLetter(text.charAt(i)) || isDigit(text.charAt(i))) {', 'while (isLetter(text.charAt(i))) {']], fails: [0, 2] },
+    ],
+  },
+  '07-01-tokens#Commit': {
+    run: ['git add src/lexer.ts src/lexer.test.ts', 'git commit -m "Add the formula lexer"'],
+    wrong: [{ name: 'commit -a only (new files left out)', run: ['git commit -am "Lexer"'], fails: [0, 1] }],
+  },
+
+  // ── 7.2 ──────────────────────────────────────────────────────────────────
+  '07-02-trees#Values: what a cell can hold': {
+    wrong: [{ name: 'no file', fails: [0, 1] }],
+  },
+  "07-02-trees#The tree's type": {
+    wrong: [{ name: 'no file', fails: [0] }],
+  },
+  '07-02-trees#Tests with hand-built trees': {
+    wrong: [{ name: 'no test file', fails: [0, 1] }],
+  },
+  '07-02-trees#The evaluator, and recursion': {
+    wrong: [
+      { name: 'text counts as 0 instead of #VALUE!', edit: [['return value === "" ? 0 : { error: "#VALUE!" };', 'return 0;']], fails: [0, 2] },
+      { name: 'no division-by-zero check (gives Infinity)', edit: [['return right === 0 ? { error: "#DIV/0!" } : left / right;', 'return left / right;']], fails: [0, 2] },
+      { name: 'left and right swapped in calculate', edit: [['return calculate(expression.op, left, right);', 'return calculate(expression.op, right, left);']], fails: [0, 2] },
+    ],
+  },
+  '07-02-trees#Commit': {
+    run: ['git add src/values.ts src/expression.ts src/evaluate.ts src/evaluate.test.ts', 'git commit -m "Add expression trees and the evaluator"'],
+    wrong: [{ name: 'commit -a only', run: ['git commit -am "Evaluator"'], fails: [0, 1] }],
+  },
+
+  // ── 7.3 ──────────────────────────────────────────────────────────────────
+  '07-03-parser#The tests': {
+    wrong: [{ name: 'no test file', fails: [0, 1] }],
+  },
+  '07-03-parser#The parser': {
+    wrong: [
+      {
+        name: 'precedence flipped: + and - in the deeper rule',
+        edit: [
+          ['while (token.kind === "operator" && (token.op === "+" || token.op === "-")) {', 'while (token.kind === "operator" && (token.op === "*" || token.op === "/")) {'],
+          ['while (token.kind === "operator" && (token.op === "*" || token.op === "/")) {\n      advance();\n      left = { kind: "binary", op: token.op, left, right: factor() };', 'while (token.kind === "operator" && (token.op === "+" || token.op === "-")) {\n      advance();\n      left = { kind: "binary", op: token.op, left, right: factor() };'],
+        ],
+        fails: [0, 2],
+      },
+      { name: 'groups right to left (10-2-3 = 11)', edit: [['left = { kind: "binary", op: token.op, left, right: term() };', 'left = { kind: "binary", op: token.op, left, right: expression() };']], fails: [0, 2] },
+      { name: 'no check for text after the formula', edit: [['  if (extra.kind !== "end") {\n    throw new FormulaError("Unexpected text after the end of the formula", extra.start);\n  }\n', '']], fails: [0, 3] },
+    ],
+  },
+  '07-03-parser#Commit': {
+    run: ['git add src/parser.ts src/parser.test.ts', 'git commit -m "Add the formula parser"'],
+    wrong: [{ name: 'commit -a only', run: ['git commit -am "Parser"'], fails: [0, 1] }],
+  },
+
+  // ── 7.4 ──────────────────────────────────────────────────────────────────
+  '07-04-cell-values#The tests': {
+    wrong: [{ name: 'no test file', fails: [0, 1] }],
+  },
+  '07-04-cell-values#compute.ts': {
+    wrong: [
+      { name: 'no blank check (empty cells become 0)', edit: [['if (text.trim() !== "" && !Number.isNaN(Number(text))) {', 'if (!Number.isNaN(Number(text))) {']], fails: [0, 2] },
+      { name: 'valueAt gives the raw text, not the value', edit: [['return evaluate(expression, (other) => cellValue(sheet, other));', 'return evaluate(expression, (other) => sheet.get(other));']], fails: [0, 2] },
+    ],
+  },
+  '07-04-cell-values#Commit': {
+    run: ['git add src/compute.ts src/compute.test.ts', 'git commit -m "Work out cell values, formulas included"'],
+    wrong: [{ name: 'commit -a only', run: ['git commit -am "Compute"'], fails: [0, 1] }],
+  },
+
+  // ── 7.5 ──────────────────────────────────────────────────────────────────
+  '07-05-formulas-on-the-page#Try it': {
+    wrong: [{ name: 'Enter stores the text but never redraws', editFiles: { 'src/grid.ts': [['    showAll();\n', '']] }, fails: [1, 2] }],
+  },
+  '07-05-formulas-on-the-page#Commit': {
+    run: ['git commit -am "Show formula values in the grid"'],
+    wrong: [{ name: 'did not commit', fails: [0] }],
+  },
+
+  // ── 7.6 ──────────────────────────────────────────────────────────────────
+  '07-06-cycles#The tests': {
+    wrong: [{ name: 'did not add the cycle tests', typeFile: false, fails: [0] }],
+  },
+  '07-06-cycles#Mark the error': {
+    wrong: [{ name: 'no #CYCLE! code', fails: [0] }],
+  },
+  '07-06-cycles#Track the cells in progress': {
+    wrong: [
+      { name: 'never takes a cell off the list (no finally)', edit: [['    } finally {\n      visiting.delete(key);\n    }\n', '    }\n']], fails: [0, 2] },
+      { name: 'a new list for each cell (the set is not passed on)', edit: [['cellValue(sheet, other, visiting)', 'cellValue(sheet, other)']], fails: [0, 2, 3] },
+    ],
+  },
+  '07-06-cycles#Commit': {
+    run: ['git commit -am "Show #CYCLE! instead of crashing on circular references"'],
+    wrong: [{ name: 'did not commit', fails: [0] }],
+  },
+
+  // ── 7.7 ──────────────────────────────────────────────────────────────────
+  '07-07-challenge-negatives#How to think about it': {
+    editFiles: {
+      'src/expression.ts': [['  | { kind: "cell"; address: Address }\n', '  | { kind: "cell"; address: Address }\n  | { kind: "negate"; operand: Expression }\n']],
+      'src/parser.ts': [['    if (token.kind === "open") {', '    if (token.kind === "operator" && token.op === "-") {\n      return { kind: "negate", operand: factor() };\n    }\n    if (token.kind === "open") {']],
+      'src/evaluate.ts': [['    case "binary": {', '    case "negate": {\n      const operand = toNumber(evaluate(expression.operand, valueAt));\n      return typeof operand === "number" ? -operand : operand;\n    }\n    case "binary": {']],
+    },
+    wrong: [
+      { name: 'did nothing', fails: [2, 3, 4] },
+      { name: 'added the kind to the type only', editFiles: { 'src/expression.ts': [['  | { kind: "cell"; address: Address }\n', '  | { kind: "cell"; address: Address }\n  | { kind: "negate"; operand: Expression }\n']] }, fails: [0, 2, 3, 4] },
+      {
+        name: 'negation that forgets the minus',
+        editFiles: {
+          'src/expression.ts': [['  | { kind: "cell"; address: Address }\n', '  | { kind: "cell"; address: Address }\n  | { kind: "negate"; operand: Expression }\n']],
+          'src/parser.ts': [['    if (token.kind === "open") {', '    if (token.kind === "operator" && token.op === "-") {\n      return { kind: "negate", operand: factor() };\n    }\n    if (token.kind === "open") {']],
+          'src/evaluate.ts': [['    case "binary": {', '    case "negate": {\n      return toNumber(evaluate(expression.operand, valueAt));\n    }\n    case "binary": {']],
+        },
+        fails: [2, 3],
+      },
+    ],
+  },
+  '07-07-challenge-negatives#Merge the sprint and push': {
+    run: ['git add src', 'git commit -m "Support negative numbers: =-A1, =2*-3"', 'git switch main', 'git merge formulas', 'git push', 'git branch -d formulas'],
+    wrong: [
+      { name: 'merged but did not push', run: ['git add src', 'git commit -m "Negatives"', 'git switch main', 'git merge formulas', 'git branch -d formulas'], fails: [3] },
+      { name: 'did not merge', run: ['git add src', 'git commit -m "Negatives"'], fails: [0, 1] },
     ],
   },
 

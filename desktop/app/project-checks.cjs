@@ -12,6 +12,7 @@ const { promises: fs } = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
 const { spawn } = require('node:child_process')
+const { killTree } = require('./process-tree.cjs')
 
 function resolveInRoot(root, rel) {
   const abs = path.resolve(root, rel || '.')
@@ -23,24 +24,6 @@ async function stat(p) {
   try { return await fs.stat(p) } catch { return null }
 }
 
-// Killing the shell isn't enough: on Windows the program it started (node, npm, ...) keeps
-// running on its own, and keeps the project folder locked. Kill the whole process tree.
-// Resolves once the processes are gone, so the caller can safely delete or reuse the folder.
-function killTree(child) {
-  return new Promise((resolve) => {
-    if (child.exitCode != null) return resolve()
-    if (process.platform === 'win32' && child.pid) {
-      try {
-        const k = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' })
-        k.on('close', () => resolve())
-        k.on('error', () => resolve())
-      } catch { resolve() }
-    } else {
-      try { child.kill('SIGKILL') } catch {}
-      resolve()
-    }
-  })
-}
 
 // Run a process to completion and capture its output. Never through a shell unless asked:
 // Git and the like get argument arrays, so a path with spaces needs no quoting.
@@ -87,11 +70,18 @@ async function shellRun(cmd, opts = {}) {
   if (process.platform === 'win32' && opts.input != null) {
     // A program started by `powershell -Command` doesn't reliably read PowerShell's own stdin,
     // so pipe the text in from a file, the way a learner would type `Get-Content in.txt | ./calc`.
+    // Two Windows PowerShell 5.1 behaviours, measured 2026-10-04 with a program that echoes its
+    // stdin exactly:
+    // - It pipes text to programs as ASCII unless $OutputEncoding says otherwise: "café"
+    //   arrived as "caf??". Setting UTF-8 (without a byte-order mark) fixes it.
+    // - It always ends piped text with its own CRLF: "3 4\n" arrived as "3 4\n\r\n", one line
+    //   too many. So one final newline is dropped here and PowerShell's takes its place.
+    //   (C++ and Python read text in a mode that turns CRLF into a newline; Node sees the \r.)
     const file = path.join(os.tmpdir(), `project-check-input-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.txt`)
-    await fs.writeFile(file, opts.input, 'utf8')
+    await fs.writeFile(file, String(opts.input).replace(/\r?\n$/, ''), 'utf8')
     try {
       const quoted = file.replace(/'/g, "''")
-      return await shellRun(`Get-Content -Raw -LiteralPath '${quoted}' | ${cmd}`, { ...opts, input: undefined })
+      return await shellRun(`$OutputEncoding = New-Object System.Text.UTF8Encoding $false; Get-Content -Raw -Encoding UTF8 -LiteralPath '${quoted}' | ${cmd}`, { ...opts, input: undefined })
     } finally {
       fs.rm(file, { force: true }).catch(() => {})
     }

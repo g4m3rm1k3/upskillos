@@ -15,6 +15,7 @@
 const { promises: fs } = require('node:fs')
 const path = require('node:path')
 const { spawn } = require('node:child_process')
+const { killTree } = require('./process-tree.cjs')
 const { dialog } = require('electron')
 
 // Directories that would swamp the tree and that nobody is editing by
@@ -185,7 +186,17 @@ async function rename(app, fromRel, toRel, scope) {
     if (!(await fs.stat(absFrom)).isFile()) return { ok: false, reason: 'Rename currently supports files only' }
     await fs.mkdir(path.dirname(absTo), { recursive: true })
     // Exclusive link creation avoids rename() overwriting an existing target.
-    await fs.link(absFrom, absTo)
+    try {
+      await fs.link(absFrom, absTo)
+    } catch (error) {
+      if (error.code === 'EEXIST' || error.code === 'ENOENT') throw error
+      // Some drives can't make hard links (FAT32/exFAT USB sticks, some network shares). There,
+      // check the name is free and rename; the gap between the two is harmless for one person
+      // editing their own project, and still never overwrites a file that was already there.
+      if (await pathExists(absTo)) throw Object.assign(new Error('exists'), { code: 'EEXIST' })
+      await fs.rename(absFrom, absTo)
+      return { ok: true }
+    }
     try { await fs.unlink(absFrom) }
     catch (error) { await fs.unlink(absTo).catch(() => {}); throw error }
     return { ok: true }
@@ -248,17 +259,18 @@ async function runProjectFile(app, runtimes, runtimeKey, relPath, onOutput, scop
   }
 }
 
+// Stop ends the whole tree (process-tree.cjs): a program the run started, such as a Python
+// script's subprocess, would otherwise keep running unseen.
 function killAllProjectRuns() {
-  for (const child of runningProcs.values()) {
-    try { child.kill() } catch {}
-  }
+  for (const child of runningProcs.values()) killTree(child)
   runningProcs.clear()
 }
 
 function killProjectRun(runId) {
   const child = runningProcs.get(runId)
   if (!child) return false
-  return child.kill()
+  killTree(child)
+  return true
 }
 
 module.exports = {

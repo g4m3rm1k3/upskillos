@@ -13,9 +13,11 @@ let selected;
 const module = { exports: {} };
 vm.runInNewContext(fs.readFileSync(require.resolve('../../../desktop/app/project-fs.cjs'), 'utf8'), {
   module, process, console,
-  require: name => name === 'electron' ? { dialog: { showOpenDialog: async () => ({ filePaths: [selected] }) } } : require(name),
+  require: name => name === 'electron' ? { dialog: { showOpenDialog: async () => ({ filePaths: [selected] }) } } : name.startsWith('./') ? require('../../../desktop/app/' + name.slice(2)) : require(name),
 });
 const project = module.exports;
+let hasPython = true;
+try { require('node:child_process').execFileSync('python', ['--version'], { stdio: 'ignore' }); } catch { hasPython = false; }
 afterAll(() => fs.rmSync(tmp, {recursive:true,force:true}));
 describe('Project Studio track folder isolation', () => {
   it('does not assign the old shared folder to any track', async () => {
@@ -69,5 +71,46 @@ describe('Project Studio track folder isolation', () => {
     expect((await project.readFile(app, 'correct.cpp', 'cpp-game')).content).toBe('int main() {}');
     expect((await project.readFile(app, 'taken.cpp', 'cpp-game')).content).toBe('existing work');
     expect((await project.rename(app, 'correct.cpp', '../sheet/correct.cpp', 'cpp-game')).ok).toBe(false);
+  });
+
+  // Measured 2026-10-04 on Windows: a Node program's own children die with it, but a child
+  // started by Python's subprocess.Popen kept running after the run was killed, and kept the
+  // project folder locked. So the parent here is Python, the case the ML and RL tracks hit.
+  it.skipIf(!hasPython)('Stop ends the program and anything it started', async () => {
+    // parent.py starts child.js, which would run for a minute and writes its process id.
+    fs.writeFileSync(path.join(folders[0], 'child.js'), 'require("fs").writeFileSync("child.pid", String(process.pid)); setTimeout(() => {}, 60000);\n');
+    fs.writeFileSync(path.join(folders[0], 'parent.py'), `import subprocess, time\nsubprocess.Popen([r"${process.execPath}", "child.js"])\ntime.sleep(60)\n`);
+    const runtimes = { python: { projectCommand: async (_app, file) => ({ command: 'python', args: [file], windowsHide: true }) } };
+    const res = await project.runProjectFile(app, runtimes, 'python', 'parent.py', () => {}, 'cpp-game');
+    expect(res.ok).toBe(true);
+    const pidFile = path.join(folders[0], 'child.pid');
+    for (let i = 0; i < 50 && !fs.existsSync(pidFile); i++) await new Promise(r => setTimeout(r, 100));
+    const childPid = Number(fs.readFileSync(pidFile, 'utf8'));
+    const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+    expect(alive(childPid)).toBe(true);
+    expect(project.killProjectRun(res.runId)).toBe(true);
+    for (let i = 0; i < 50 && alive(childPid); i++) await new Promise(r => setTimeout(r, 100));
+    expect(alive(childPid)).toBe(false);
+  }, 20000);
+
+  it('still renames on a drive that cannot make hard links, and still never overwrites', async () => {
+    // FAT32/exFAT drives and some network shares refuse fs.link. Load a second copy of
+    // project-fs whose fs.promises.link always fails that way.
+    const realFs = require('node:fs');
+    const noLinks = { ...realFs, promises: { ...realFs.promises, link: async () => { throw Object.assign(new Error('operation not permitted, link'), { code: 'EPERM' }); } } };
+    const m = { exports: {} };
+    vm.runInNewContext(fs.readFileSync(require.resolve('../../../desktop/app/project-fs.cjs'), 'utf8'), {
+      module: m, process, console,
+      require: name => name === 'electron' ? { dialog: {} } : name === 'node:fs' ? noLinks : name.startsWith('./') ? require('../../../desktop/app/' + name.slice(2)) : require(name),
+    });
+    const fat = m.exports;
+    await fat.writeFile(app, 'draft.cpp', 'draft work', 'cpp-game');
+    expect((await fat.rename(app, 'draft.cpp', 'final.cpp', 'cpp-game')).ok).toBe(true);
+    expect((await fat.readFile(app, 'final.cpp', 'cpp-game')).content).toBe('draft work');
+    expect((await fat.readFile(app, 'draft.cpp', 'cpp-game')).missing).toBe(true);
+    const clash = await fat.rename(app, 'final.cpp', 'taken.cpp', 'cpp-game');
+    expect(clash.ok).toBe(false);
+    expect(clash.reason).toContain('already exists');
+    expect((await fat.readFile(app, 'taken.cpp', 'cpp-game')).content).toBe('existing work');
   });
 });
