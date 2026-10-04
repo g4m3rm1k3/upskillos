@@ -1,6 +1,6 @@
 # Robot arm kinematics
 
-A pick-and-place arm on a packing line has to put its gripper on a part, pointing the right way, then carry it along a straight path without hitting anything. The Jacobian lesson met a two-link arm and solved its angles with Newton's method. Real arms add a wrist, and the wrist changes the problem: there are now more joints than the target needs, so the arm can reach the same point in endlessly many ways, and choosing among them becomes an optimisation. This lesson brings together several earlier ideas: matrices that move points, the law of cosines, vectors and gradients, and the Jacobian. Together they make the arm reach.
+A pick-and-place arm on a packing line has to put its gripper on a part, pointing the right way, then carry it along a straight path without hitting anything. The Jacobian lesson met a two-link arm and solved its angles with Newton's method. Real arms add a wrist, and the wrist changes the problem: there are now more joints than the target needs, so the arm can reach the same point in endlessly many ways, and choosing among them becomes an optimisation. This lesson brings together several earlier ideas: matrices that move points, vectors and gradients, and the Jacobian, plus one new piece of geometry, the law of cosines. Together they make the arm reach.
 
 This lesson covers:
 
@@ -67,12 +67,13 @@ The gripper points at 15°, the sum 30 + 45 − 60, and the rotation block of T,
 ::: math
 \[ d^2 = x^2 + y^2 = l_1^2 + l_2^2 + 2 l_1 l_2 \cos\theta_2 \;\Longrightarrow\; \cos\theta_2 = \frac{x^2 + y^2 - l_1^2 - l_2^2}{2 l_1 l_2} \]
 \[ \theta_1 = \operatorname{atan2}(y, x) - \operatorname{atan2}\big(l_2\sin\theta_2,\; l_1 + l_2\cos\theta_2\big) \]
-- the law of cosines in the triangle formed by the base, the elbow and the tip
+- the law of cosines in the triangle formed by the base, the elbow and the tip: $c^2 = a^2 + b^2 - 2ab\cos C$
+- the triangle's angle at the elbow is $180° - \theta_2$, and $\cos(180° - \theta_2) = -\cos\theta_2$, which turns the minus sign into the plus sign above
 - $\theta_2 = \pm\arccos(\cdot)$: two mirror-image solutions; no solution when the right-hand side is outside $[-1, 1]$
 In code: `ik2(x, y, l1, l2, elbow)` with `t2 = elbow * math.acos(c2)`
 :::
 
-Newton's method found joint angles by iteration. For two links there is an exact answer, because the base, the elbow and the tip form a triangle with known sides: l₁, l₂, and the distance d from the base to the target. The law of cosines gives the elbow angle. The shoulder angle is then the direction to the target, minus the angle the forearm adds at the elbow, which is the direction of the vector (l₁ + l₂ cos θ₂, l₂ sin θ₂).
+Newton's method found joint angles by iteration. For two links there is an exact answer, because the base, the elbow and the tip form a triangle with known sides: l₁, l₂, and the distance d from the base to the target. The **law of cosines**, c² = a² + b² − 2ab cos C for a triangle with sides a, b, c and angle C opposite c, gives the elbow angle. It is Pythagoras with a correction for angles other than 90°. The shoulder angle is then the direction to the target, minus the angle the forearm adds at the elbow, which is the direction of the vector (l₁ + l₂ cos θ₂, l₂ sin θ₂).
 
 The arccosine has two answers, ±θ₂, so there are two mirror-image ways to reach the point (the two Newton solutions of the Jacobian lesson). If |cos θ₂| would exceed 1, the target lies outside the ring of reachable points.
 
@@ -152,13 +153,14 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
-All 720 combinations reach: the wrist circle of radius 0.15 m around (0.5, 0.1) lies entirely inside the two-link ring, which runs from 0.1 m to 0.7 m from the base. The gripper-down pose needs the last joint at about −160°. The pose that moves least points the gripper at −71° with the elbow bent the other way, a total change of about 63.7° (the root of the sum of the squared joint changes). A real controller would add other costs: joint limits, distance from obstacles, distance from singular poses. Choosing among redundant solutions is an optimisation problem.
+All 720 combinations reach: the wrist circle of radius 0.15 m around (0.5, 0.1) lies entirely inside the two-link ring, which runs from 0.1 m to 0.7 m from the base. The gripper-down pose needs the last joint at about −160°. The pose that moves least points the gripper at −71° with the elbow bent the other way from the gripper-down pose (θ₂ negative), a total change of about 63.7° (the root of the sum of the squared joint changes). A real controller would add other costs: joint limits, distance from obstacles, distance from singular poses. Choosing among redundant solutions is an optimisation problem.
 
 ## Reaching as optimisation
 
 ::: math
 \[ E(\boldsymbol{\theta}) = \tfrac{1}{2}\lVert \mathbf{t} - \mathbf{p}(\boldsymbol{\theta}) \rVert^2, \qquad \nabla E = -J^\mathsf{T}\mathbf{e}, \qquad \mathbf{e} = \mathbf{t} - \mathbf{p}(\boldsymbol{\theta}) \]
 \[ \text{transpose: } \Delta\boldsymbol{\theta} = \eta\,J^\mathsf{T}\mathbf{e}, \qquad \text{damped least squares: } \Delta\boldsymbol{\theta} = J^\mathsf{T}\big(JJ^\mathsf{T} + \lambda^2 I\big)^{-1}\mathbf{e}, \qquad J_{:,j} = \begin{pmatrix} -(y_\text{tip} - y_j) \\ x_\text{tip} - x_j \end{pmatrix} \]
+- $\mathbf{t}$: the target; $\mathbf{p}(\boldsymbol{\theta})$: the tip position for joint angles $\boldsymbol{\theta}$
 - $J$: the 2 × 3 Jacobian per radian; column $j$ is the tip velocity when joint $j$ turns, perpendicular to the line from that joint to the tip
 - $\eta$: a learning rate; $\lambda$: damping that keeps steps bounded near singular poses
 In code: `jac(angles, lengths)` builds $J$ from the joint positions; `reach(target, angles, lengths, method)` iterates
@@ -228,7 +230,7 @@ The unreachable target shows why the damping matters, and that its size is a tra
 - interpolating the joints moves the tip along a curve, because $\mathbf{p}(\boldsymbol{\theta})$ is non-linear
 - straight-line motion solves IK at many points of the line, each starting from the previous solution
 - distance of a point $\mathbf{q}$ from the line: $\dfrac{|(\mathbf{b} - \mathbf{a}) \times (\mathbf{q} - \mathbf{a})|}{\lVert \mathbf{b} - \mathbf{a} \rVert}$
-In code: `thA + s * (thB - thA)` against `reach(A + s * (B - A), th, L, "dls")` with `th` carried forward
+In code: `thA + si * (thB - thA)` against `reach(A + si * (B - A), th, L, "dls")` with `th` carried forward
 :::
 
 There are two ways to move from one point to another. Moving each joint smoothly from its start angle to its end angle is simple, and robot controllers offer it as a "joint move". But the tip then follows whatever curve the kinematics produce, which can swing wide. For gluing, welding or sliding a part into a slot, the tip must follow a straight line (a "linear move"). That means solving inverse kinematics at closely spaced points along the line, starting each solve from the previous answer (a **warm start**), so that consecutive poses stay close together.
@@ -251,21 +253,21 @@ s = np.linspace(0, 1, 101)
 joint_move = np.array([frames(thA + si * (thB - thA), L)[0][-1] for si in s])
 
 th = thA.copy()
-linear_move, biggest_step = [], 0.0
+line_tips, biggest_step = [], 0.0
 for si in s:
     new = reach(A + si * (B - A), th, L, "dls")[0]
     biggest_step = max(biggest_step, np.abs(new - th).max())
     th = new
-    linear_move.append(frames(th, L)[0][-1])
-linear_move = np.array(linear_move)
+    line_tips.append(frames(th, L)[0][-1])
+line_tips = np.array(line_tips)
 
 print(f"joint move: tip strays up to {off_line(joint_move).max() * 1000:.0f} mm from the line")
-print(f"linear move: tip within {off_line(linear_move).max() * 1000:.4f} mm; largest joint change between neighbouring points {biggest_step:.2f}°")
+print(f"linear move: tip within {off_line(line_tips).max() * 1000:.4f} mm; largest joint change between neighbouring points {biggest_step:.2f}°")
 print("final angles, joint move:", thB.round(2), "  linear move:", th.round(2))
 
 fig, ax = plt.subplots(figsize=(5, 4))
 ax.plot(joint_move[:, 0], joint_move[:, 1], label="joint move")
-ax.plot(linear_move[:, 0], linear_move[:, 1], "--", label="linear move")
+ax.plot(line_tips[:, 0], line_tips[:, 1], "--", label="linear move")
 for angles in [thA, thB]:
     p = frames(angles, L)[0]
     ax.plot(p[:, 0], p[:, 1], "o-", color="grey", alpha=0.6)
@@ -426,7 +428,7 @@ except ValueError:
 "SUCCESS: The law of cosines gives the elbow, atan2 the shoulder, and a fixed gripper direction moves the problem back to the wrist."
 ```
 
-Hint: cos θ₂ = (x² + y² − l₁² − l₂²)/(2 l₁ l₂); θ₂ = bend × acos of that; θ₁ = atan2(y, x) − atan2(l₂ sin θ₂, l₁ + l₂ cos θ₂). For the wrist, step back l₃ from the target along φ, solve the two-link problem there, and set θ₃ = φ − θ₁ − θ₂. Wrap every angle with `% 360`.
+Hint: cos θ₂ = (x² + y² − l₁² − l₂²)/(2 l₁ l₂); θ₂ = bend × acos of that; θ₁ = atan2(y, x) − atan2(l₂ sin θ₂, l₁ + l₂ cos θ₂). For the wrist, step back l₃ from the target along φ, solve the two-link problem there, and set θ₃ = φ − θ₁ − θ₂. Wrap every angle into (−180, 180]: take it `% 360`, then subtract 360 if the result is above 180.
 :::
 
 ::: challenge Damped least squares and straight lines [hard]
@@ -533,6 +535,9 @@ for _k, _row in enumerate(_m):
     _p = np.array(_tip(_row, _L))
     assert np.linalg.norm(_p - (_A + _k / 20 * _d)) < 1e-5, f"Row {_k} must put the tip at a + {_k}/20 (b - a)."
 assert np.abs(np.diff(_m, axis=0)).max() < 15, "Warm starts keep neighbouring poses close together."
+for _k in range(1, 21):
+    _ref = dls_reach(_A + _k / 20 * _d, tuple(_m[_k - 1]), _L)[0]
+    assert np.allclose(_m[_k], _ref, atol=1e-9), "Start each solve from the previous row's angles (warm start)."
 try:
     linear_move((60, -30, -20), _A, (1.2, 0.0), _L, n=5)
     assert False, "A line leaving the workspace should raise RuntimeError."

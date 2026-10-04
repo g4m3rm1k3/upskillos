@@ -102,7 +102,7 @@ After 30 minutes the middle has reached about 61 °C, and 0.1 m from the furnace
 In code: 400 steps of `ftcs_step` with `r` = 0.25, 0.5 and 0.55
 :::
 
-Rewrite the update as a combination of the three old values. When r ≤ ½ all three weights are non-negative and add up to 1, so every new temperature is an average of old ones: it can never go above the hottest or below the coldest. When r > ½ the middle weight 1 − 2r is negative. A tiny zigzag between neighbouring points (inevitable from rounding) then flips sign and grows every step.
+Rewrite the update as a combination of the three old values. When r ≤ ½ all three weights are non-negative and add up to 1, so every new temperature is an average of old ones: it can never go above the hottest or below the coldest. When r > ½ the middle weight 1 − 2r is negative. A tiny zigzag between neighbouring points (from any sharp feature, or from rounding) then flips sign and grows every step.
 
 So the time step must satisfy Δt ≤ Δx²/(2α). This is the price of an explicit method: halving the grid spacing for accuracy forces four times as many time steps. **Implicit** methods, covered in the PDE block, remove the limit at the cost of solving a linear system every step.
 
@@ -125,6 +125,7 @@ At r = 0.25 and 0.5 the temperatures stay between 20 and 200 °C, as the averagi
 \[ \frac{d^2\theta}{dx^2} = m^2\theta, \quad \theta = u - T_\text{air}, \quad m^2 = \frac{hP}{kA} = \frac{4h}{kD}, \qquad \theta(0) = \theta_b, \quad \theta'(L) = 0 \]
 \[ \theta_{i-1} - (2 + m^2\Delta x^2)\,\theta_i + \theta_{i+1} = 0, \qquad \text{exact: } \theta(x) = \theta_b\,\frac{\cosh m(L - x)}{\cosh mL} \]
 - $h$: heat-transfer coefficient to the air; $P$ and $A$: perimeter and cross-section area; $D$: diameter
+- $\theta_b = T_\text{base} - T_\text{air}$; $L$: the shaft's length
 - insulated tip: a ghost point $\theta_{N+1} = \theta_{N-1}$ makes the slope zero there
 In code: the matrix `A` has $-(2 + m^2\Delta x^2)$ on the diagonal and 1 beside it; `np.linalg.solve(A, rhs)`
 :::
@@ -168,7 +169,7 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
-The tip settles at about 49.3 °C, and the 60-interval solution matches the exact cosh profile to within about 0.002 °C everywhere. The heat leaving through the shaft, k A θ′ at the base, is about 9.5 W. With mL ≈ 1.9 the outer part of the shaft is already near air temperature. That is why cooling fins are short: beyond about mL = 2 extra length adds almost nothing. Every unknown in the system touched only its two neighbours. Large heat-flow models in 2D and 3D give the same kind of sparse matrix, millions of unknowns with a handful of entries per row.
+The tip settles at about 49.3 °C, and the 60-interval solution matches the exact cosh profile to within about 0.002 °C everywhere. The heat leaving through the shaft, −k A θ′(0) at the base, is about 9.5 W. With mL ≈ 1.9 the tip's excess over the air has fallen to about 29% of the base's, and the heat flow, proportional to tanh mL ≈ 0.96, is already 96% of what an infinitely long shaft would carry. That is why cooling fins are short: beyond about mL = 2 extra length adds almost nothing. Every unknown in the system touched only its two neighbours. Large heat-flow models in 2D and 3D give the same kind of sparse matrix, millions of unknowns with a handful of entries per row.
 
 ## Sine modes: why sharp detail fades first
 
@@ -183,7 +184,7 @@ With both ends held at the same temperature, the heat equation has special solut
 
 Any starting profile is a sum of these sines: its Fourier sine series, with coefficients found by projection, as in the building-signals lesson. Each term then decays on its own. Higher modes have more wiggles, steeper curvature, and so decay n² times faster.
 
-Predict before running: a welding torch leaves a 3 cm wide hot spot of 100 °C, 0.15 m along the bar, with both ends at 20 °C. How many modes are needed to describe the profile at the start, and how many after 30 minutes?
+Predict before running: a welding torch leaves a hot spot of 100 °C, about 5 cm wide at half height, 0.15 m along the bar, with both ends at 20 °C. How many modes are needed to describe the profile at the start, and how many after 30 minutes?
 
 ```python
 spot = lambda xq: 20 + 80 * np.exp(-((xq - 0.15) / 0.03) ** 2)
@@ -218,7 +219,7 @@ plt.show()
 The first mode's time constant is about 35 minutes; the 10th mode's is 21 s and the 20th's about 5 s. At the start, five modes cannot draw a 3 cm spike: they miss by about 34 °C. After 30 minutes every mode above the fifth has decayed by a factor of more than e³⁰, so five modes describe the bar to within rounding. The spot has spread into a gentle hump peaking near 26 °C, and the finite-difference simulation agrees with the mode sum to within about 0.005 °C. The heat equation acts as a low-pass filter: it destroys high spatial frequencies fastest, so diffusion always smooths.
 
 ::: challenge The explicit step [easy]
-Write `second_difference(u, dx)`: for a NumPy array of samples spaced dx apart, return the array of (u[i+1] − 2u[i] + u[i−1])/dx² for the interior points only (length len(u) − 2). Raise `ValueError` if u has fewer than 3 points or dx is not positive. Then write `heat_step(u, r)`: one explicit step of the heat equation with r = αΔt/Δx², returning a **new** array in which the two end values are unchanged and each interior value becomes u[i] + r(u[i+1] − 2u[i] + u[i−1]), all computed from the old values. Do not modify the input array. Raise `ValueError` if r is negative or greater than 0.5.
+Write `second_difference(u, dx)`: for a NumPy array or list of samples spaced dx apart, return the array of (u[i+1] − 2u[i] + u[i−1])/dx² for the interior points only (length len(u) − 2). Raise `ValueError` if u has fewer than 3 points or dx is not positive. Then write `heat_step(u, r)`: one explicit step of the heat equation with r = αΔt/Δx², returning a **new** array in which the two end values are unchanged and each interior value becomes u[i] + r(u[i+1] − 2u[i] + u[i−1]), all computed from the old values. Do not modify the input array. Raise `ValueError` if r is negative or greater than 0.5.
 
 ```python starter
 import numpy as np

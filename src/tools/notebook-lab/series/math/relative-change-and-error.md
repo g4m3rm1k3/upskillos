@@ -63,7 +63,7 @@ logs = [math.log(1 + c) for c in changes]
 print(f"sum of the five log changes {sum(logs):.6f} = log of the overall factor {math.log(factor):.6f}")
 ```
 
-100 → 125 and 125 → 100 give log changes of +0.2231 and −0.2231: perfectly symmetric. At 1% the two measures differ in the fifth decimal place; at a doubling they differ a lot (1.0 against 0.693). The five yearly log changes add up to the log of the overall factor exactly. Log changes are the natural unit whenever changes compound: growth, decay, returns, inflation.
+100 → 125 and 125 → 100 give log changes of +0.2231 and −0.2231: perfectly symmetric. At 1% they differ by only 0.00005; at a doubling they differ a lot (1.0 against 0.693). The five yearly log changes add up to the log of the overall factor exactly. Log changes are the natural unit whenever changes compound: growth, decay, returns, inflation.
 
 ## Inflation: nominal and real
 
@@ -107,7 +107,7 @@ The salary rose 33.6% in money terms, while prices rose 34.0%. In real terms it 
 \[ e_\text{abs} = |x_\text{meas} - x_\text{true}|, \qquad e_\text{rel} = \frac{|x_\text{meas} - x_\text{true}|}{|x_\text{true}|}, \qquad \text{float rounding: } e_\text{rel} \le \frac{\varepsilon}{2} \approx 1.1 \times 10^{-16} \]
 - the same absolute error can be negligible or disastrous depending on the size of the quantity
 - relative error is undefined when the true value is 0; then only an absolute error makes sense
-In code: `meas - true` and `(meas - true) / true` for three parts; `np.finfo(float).eps`
+In code: `measured - true` and `(measured - true) / true` for three parts; `np.finfo(float).eps`
 :::
 
 An error of 0.05 mm means nothing on its own. On a 1 m shaft it is 0.005%, far below anything that matters. On a 10 mm pin it is 0.5%, enough to spoil a fit. On a 0.5 mm wire it is 10%. **Relative error** expresses this. Significant figures are a rough relative-error statement: a value written to 3 significant figures has a relative error of up to about 0.05% to 0.5%. Floating-point numbers also have a relative precision: every arithmetic result is correctly rounded to within half the machine epsilon, about 1.1 × 10⁻¹⁶ of its size, whatever that size is.
@@ -115,13 +115,17 @@ An error of 0.05 mm means nothing on its own. On a 1 m shaft it is 0.005%, far b
 Predict before running: a 0.05 error on parts of nominal size 10, 1000 and 0.5. What are the relative errors?
 
 ```python
+from fractions import Fraction
+
 for true, measured in [(10.0, 10.05), (1000.0, 1000.05), (0.5, 0.55)]:
-    print(f"true {true:>7}: measured {measured:>8}, absolute error {measured - true:.3f}, relative error {(measured - true) / true:.4%}")
+    print(f"true {true:>7}: measured {measured:>8}, absolute error {measured - true!r}, relative error {(measured - true) / true:.4%}")
 eps = np.finfo(float).eps
-print(f"machine epsilon {eps:.3e}; 0.1 is stored with relative error {abs(0.1 - 3602879701896397 / 2 ** 55) / 0.1:.1e}")
+stored = Fraction(0.1)
+print(f"machine epsilon {eps:.3e}; 0.1 is stored as {stored.numerator}/2^{stored.denominator.bit_length() - 1}, "
+      f"a relative error of {float(abs(stored - Fraction(1, 10)) / Fraction(1, 10)):.1e}")
 ```
 
-The same 0.05 is a relative error of 0.5%, 0.005% and 10%. The printed absolute errors also show floating point at work: 0.05 on 1000 comes out as 0.049999999999954525, because 1000.05 is stored with a relative error near 10⁻¹⁷, which on a number of size 1000 is an absolute error near 10⁻¹³. Rounding error is relative, so it is largest in absolute terms for large numbers, and subtracting two large numbers exposes it.
+The same 0.05 is a relative error of 0.5%, 0.005% and 10%. The printed absolute errors also show floating point at work: 0.05 on 1000 comes out as 0.049999999999954525, because 1000.05 is stored with a relative error of about 4.5 × 10⁻¹⁷, which on a number of size 1000 is an absolute error of about 4.5 × 10⁻¹⁴. `Fraction(0.1)` reveals the exact binary value behind 0.1, about 5.6 × 10⁻¹⁷ away from a tenth in relative terms. Rounding error is relative, so it is largest in absolute terms for large numbers, and subtracting two large numbers exposes it.
 
 ## Instrument accuracy: of reading, or of full scale?
 
@@ -129,7 +133,7 @@ The same 0.05 is a relative error of 0.5%, 0.005% and 10%. The printed absolute 
 \[ u = \frac{a_\text{rd}}{100}\,|x| + \frac{a_\text{fs}}{100}\,R + \frac{\delta}{2}, \qquad u_\text{rel} = \frac{u}{|x|} \]
 - $x$: the reading; $R$: the full-scale range; $a_\text{rd}$ and $a_\text{fs}$: accuracy in % of reading and % of full scale; $\delta$: display resolution
 - the full-scale term is a fixed amount, so it dominates small readings: read near the top of the range
-In code: `uncertainty(reading, rng, 0.25, 0.25, res)` for three gauge ranges and three readings
+In code: `gauge_uncertainty(reading, rng, 0.25, 0.25, res)` for three gauge ranges and three readings
 :::
 
 Instrument specifications state accuracy in two ways. A "% of reading" term scales with the value shown. A "% of full scale" (FS) term is the same absolute amount everywhere on the range. Many gauges, transmitters and meters quote both, plus the display resolution. The FS term is the trap: a gauge "accurate to 0.25% FS" on a 0 to 100 bar range is uncertain by 0.25 bar at every reading, which is 25% of a 1 bar reading.
@@ -137,13 +141,13 @@ Instrument specifications state accuracy in two ways. A "% of reading" term scal
 Predict before running: three gauges, ranges 10, 25 and 100 bar, each 0.25% of reading plus 0.25% FS, with resolutions 0.01, 0.01 and 0.1 bar. What is the relative uncertainty of a 1 bar reading on each?
 
 ```python
-def uncertainty(reading, rng, pct_reading, pct_fs, resolution):
+def gauge_uncertainty(reading, rng, pct_reading, pct_fs, resolution):
     return pct_reading / 100 * abs(reading) + pct_fs / 100 * rng + resolution / 2
 
 for rng, res in [(10, 0.01), (25, 0.01), (100, 0.1)]:
     row = []
     for reading in [1.0, 5.0, 9.0]:
-        u = uncertainty(reading, rng, 0.25, 0.25, res)
+        u = gauge_uncertainty(reading, rng, 0.25, 0.25, res)
         row.append(f"{reading:>4} bar ± {u:.4f} ({100 * u / reading:5.2f}%)")
     print(f"{rng:>3} bar gauge: " + ";  ".join(row))
 ```
@@ -189,7 +193,7 @@ print(relative_change(100, 125), undo(25), chain([12, -8, 5, -15, 20]))
 ```python test
 for _n in ["relative_change", "undo", "chain"]:
     assert _n in dir(), f"Define {_n}."
-assert relative_change(100, 125) == 0.25 and relative_change(125, 100) == -0.2, "The base is the old value."
+assert relative_change(100, 125) == 0.25 and abs(relative_change(125, 100) + 0.2) < 1e-12, "The base is the old value."
 assert type(relative_change(3, 4)) is float and abs(relative_change(-50, -40) - (-0.2)) < 1e-12, "Plain float; (new - old)/old even for negatives."
 try:
     relative_change(0, 5)
@@ -373,6 +377,7 @@ except ValueError:
 _x = usable_range(_specs[0], 0.01)
 assert type(_x) is float and abs(_x - 0.03 / 0.0075) < 1e-9, f"The 10 bar gauge reaches 1% at 4 bar; got {_x}."
 assert abs(relative_uncertainty(_x, _specs[0]) - 0.01) < 1e-12, "At that reading the relative uncertainty is exactly the limit."
+assert usable_range(_specs[0], 0.004) is None, "Even a full-scale reading is worse than 0.4%: None."
 assert usable_range(_specs[2], 0.001) is None and usable_range((10, 1.0, 0.0, 0.0), 0.005) is None, "Too strict a limit: None."
 assert abs(usable_range((10, 0.0, 0.1, 0.0), 0.05) - 0.2) < 1e-12, "Pure full-scale accuracy: 0.01 / 0.05 = 0.2."
 "SUCCESS: A full-scale error is a fixed amount, so small readings on big ranges are poor: pick the range that keeps the relative uncertainty low."

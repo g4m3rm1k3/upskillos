@@ -60,7 +60,7 @@ The fit gives τ ≈ 24.95 min and a final temperature of 79.94 °C, against the
 ::: math
 \[ C\,\frac{dT}{dt} = P(t) - \frac{T - T_\text{amb}}{R}, \qquad R = \frac{\Delta T_\text{rated}}{P_\text{rated}}, \qquad C = \frac{\tau}{R} \]
 - $P(t)$: heat generated (losses, W); $R$: thermal resistance to the room (K/W); $C$: heat capacity (J/K); $\tau = RC$
-- losses scale with the square of the load current: 150% load gives $1.5^2 = 2.25$ times the losses
+- copper losses scale with the square of the load current; treating all losses that way, 150% load gives $1.5^2 = 2.25$ times the losses
 In code: `heat_rhs(t, T)` with the duty-cycle `losses(t)`, solved by `solve_ivp`
 :::
 
@@ -98,7 +98,7 @@ ax.set_ylabel("frame °C")
 plt.show()
 ```
 
-After about two hours the temperature settles into a sawtooth between about 88.6 °C and 123.8 °C. It peaks at the end of each overload period, and spends about 5 minutes of every hour above the 120 °C limit, even though the average-loss equilibrium is only 104 °C. With a 25-minute time constant, a 20-minute overload is long enough to climb well above the average. The fix is either shorter overload bursts (the motor's heat capacity then smooths them) or more cooling. The sawtooth itself is what the next section has to cope with.
+After about two hours the temperature settles into a sawtooth between about 88.6 °C and 123.8 °C. It peaks at the end of each overload period, and spends about 5 minutes of every hour above the 120 °C limit, even though the average-loss equilibrium is only 104 °C. With a 25-minute time constant, a 20-minute overload is long enough to climb well above the average. The fix is either shorter overload bursts (the motor's heat capacity then smooths them) or more cooling. The sawtooth itself is what the mounts, two sections on, have to cope with.
 
 ## Reading the vibration spectrum
 
@@ -107,7 +107,7 @@ After about two hours the temperature settles into a sawtooth between about 88.6
 - $A_1$: acceleration amplitude at running speed (1×); $\omega = 2\pi f_\text{run}$; $X_1$: displacement amplitude
 - $r = \omega/\omega_n$, $\omega_n = \sqrt{k/m}$: the spring–mass amplification read backwards gives the shaking force $F_0$
 - $U$: the rotor's unbalance (mass × offset), since an offset mass produces $F_0 = U\omega^2$
-In code: a Hann-windowed `np.fft.rfft` of the accelerometer, the 1× peak `a1`, then `F0` and `U`
+In code: a Hann-windowed `np.fft.rfft` of the accelerometer, the 1× peak `a1`, then `F0` and the unbalance `F0 / omega ** 2`
 :::
 
 An accelerometer on the motor feet records 4 seconds at 2 kHz. The spectrum separates its causes, as in the seeing-frequencies lesson. 1× running speed (1480 rpm, 24.67 Hz) means imbalance, 2× means misalignment, and 100 Hz is the electrical hum at twice the supply frequency. The 1× acceleration converts to displacement by dividing by ω², because a sinusoid's acceleration is −ω² times its displacement. The spring–mass lesson's amplification formula, read backwards, then gives the force the rotor produces. The mounts are 100 kN/m in total, with damping ratio 0.08.
@@ -152,7 +152,7 @@ Three peaks stand out: 1× at 24.75 Hz (the nearest 0.25 Hz bin to 24.67 Hz), 2�
 \[ k(T) = k_{20}\,\big(1 - \beta\,(T - 20)\big), \qquad \text{sag} = \frac{mg}{k(T)}, \qquad \text{TR} = \sqrt{\frac{1 + (2\zeta r)^2}{(1 - r^2)^2 + (2\zeta r)^2}}, \quad r = \frac{\omega}{\sqrt{k(T)/m}} \]
 - $\beta = 0.003$ per K: the rubber loses 0.3% of its stiffness per degree
 - the sag sets the belt alignment; the transmissibility TR is the fraction of the shaking force reaching the floor
-In code: `k_of(T_motor)` along the whole duty-cycle simulation, then `sag` and `trans(r, zeta)` at every instant
+In code: `k_of(T_motor)` along the whole duty-cycle simulation, then `sag_mm` and `trans(r, zeta)` at every instant
 :::
 
 Rubber softens as it warms, and the mounts sit right under the hot frame (assume they follow its temperature). Softer mounts let the motor sit lower, which shifts the belt alignment; the drive tolerates up to 6 mm of sag. Softer mounts also lower the natural frequency, which helps isolation. Feeding the temperature from the duty-cycle simulation into the mount model shows both effects through the day.
@@ -194,7 +194,7 @@ The sag grows from 3.95 mm cold to 5.70 mm at the hottest moment of the cycle: i
 \[ P(\text{fail}) \approx \frac{1}{N}\,\#\big\{\,j : k_{20}(1 + \varepsilon_j) \notin [k_\text{min}, k_\text{max}]\,\big\}, \qquad \varepsilon_j \sim \mathcal{N}(0, \sigma^2) \]
 - the hot sag sets a minimum stiffness; the cold transmissibility (limit 0.15) sets a maximum
 - real mounts vary: stiffness scatter of $\sigma$ = 8% is typical for rubber
-In code: a grid of `ks` tested against both limits, then a Monte Carlo of `k_choice * rng.normal(1, sd, N)`
+In code: a grid of `ks` tested against both limits, then a Monte Carlo of `k_choice * rng.normal(1, sd, n)`
 :::
 
 Each requirement turns into a bound on the cold stiffness k₂₀. Sag at the hottest temperature must stay below 6 mm, which needs enough stiffness. Transmissibility when cold, the stiffest state, must stay below 0.15, which limits the stiffness. Any k₂₀ between the bounds meets both requirements on paper. But catalogue mounts are made to a tolerance, so a design choice should be judged by the fraction of real mounts that would fail: a probability, estimated by simulation as in the probability lessons.
@@ -221,7 +221,7 @@ for sd in [0.08, 0.05, 0.03]:
 The window runs from 95.0 to 115.3 kN/m, only about ±9.7% around its middle. With the usual 8% scatter, even a nominal stiffness in the middle fails about 23% of the time (choosing an edge fails about half the time). With 5% scatter the middle fails roughly 5%, and with 3% about 0.1%. So the numbers give the decision: either buy mounts graded to about ±3% (pre-sorted by stiffness, at a price), or widen the window by attacking a cause. Balancing the rotor halves the shaking force, so the transmissibility limit could relax. Shortening the overload bursts lowers the peak temperature and the hot sag. Each option can be tested by changing one line above, which is the real payoff of building the model.
 
 ::: challenge Fitting a warm-up curve [easy]
-Write `fit_warmup(t, T, taus)`: for each candidate time constant in `taus`, fit T ≈ a + b(1 − e^(−t/τ)) by linear least squares (design matrix with columns 1 and 1 − e^(−t/τ)), and return `(tau, a, b)` for the candidate with the smallest sum of squared residuals, as three plain floats. Raise `ValueError` if t and T have different lengths, there are fewer than 3 points, or `taus` is empty or contains a non-positive value.
+Write `fit_warmup(t, T, taus)`: for each candidate time constant in `taus`, fit T ≈ a + b(1 − e^(−t/τ)) by linear least squares (design matrix with columns 1 and 1 − e^(−t/τ)), and return `(tau, a, b)` for the candidate with the smallest sum of squared residuals, as three plain floats. Raise `ValueError` if t and T have different lengths, there are fewer than 3 points, or `taus` is empty or contains a non-positive value. t and T may be lists or NumPy arrays.
 
 ```python starter
 import numpy as np
@@ -269,6 +269,8 @@ _g = np.random.default_rng(7)
 _noisy = 15 + 40 * (1 - np.exp(-_t / 12)) + _g.normal(0, 0.3, _t.size)
 _f = fit_warmup(_t, _noisy, np.arange(2, 40.001, 0.1))
 assert abs(_f[0] - 12) < 0.5 and abs(_f[1] - 15) < 0.5 and abs(_f[2] - 40) < 0.5, f"Noisy data: close to (12, 15, 40); got {_f}."
+_X = np.column_stack([np.ones_like(_t), 1 - np.exp(-_t / _f[0])])
+assert np.allclose(_f[1:], np.linalg.lstsq(_X, _noisy, rcond=None)[0], atol=1e-8), "a and b are the least-squares fit for that τ, not read off the data."
 _f2 = fit_warmup(list(_t), list(_noisy), [10.0, 12.0, 30.0])
 assert _f2[0] == 12.0, "Picks the candidate with the smallest squared error from a short list."
 for _bad in [(_t, _noisy[:-1], [10.0]), (_t[:2], _noisy[:2], [10.0]), (_t, _noisy, []), (_t, _noisy, [10.0, 0.0])]:
@@ -284,7 +286,7 @@ Hint: Inside a loop over τ, build `np.column_stack([np.ones_like(t), 1 - np.exp
 :::
 
 ::: challenge The thermal model [medium]
-Write `simulate_temperature(R, C, T_amb, power, t_end, dt)`: integrate C dT/dt = P(t) − (T − T_amb)/R from T(0) = T_amb with Euler steps of length dt, where `power` is a function of time (seconds) returning watts. Return `(times, temps)` as NumPy arrays including t = 0, with the number of steps `round(t_end / dt)`. Raise `ValueError` if R, C, dt or t_end is not positive, or if dt ≥ RC (Euler would be inaccurate or unstable). Then write `time_above(times, temps, limit, start=0.0)`: the total time (s) at or after `start` during which the temperature is above `limit`, counting each step whose **starting** temperature is above the limit as dt of time above, as a plain float.
+Write `simulate_temperature(R, C, T_amb, power, t_end, dt)`: integrate C dT/dt = P(t) − (T − T_amb)/R from T(0) = T_amb with Euler steps of length dt, where `power` is a function of time (seconds) returning watts. Return `(times, temps)` as NumPy arrays including t = 0, with the number of steps `round(t_end / dt)`. Raise `ValueError` if R, C, dt or t_end is not positive, or if dt ≥ RC (Euler would be inaccurate or unstable). Then write `time_above(times, temps, limit, start=0.0)`: the total time (s) at or after `start` during which the temperature is above `limit`, counting each step whose **starting** temperature is above the limit as dt of time above, as a plain float (times and temps may be lists or arrays).
 
 ```python starter
 import numpy as np

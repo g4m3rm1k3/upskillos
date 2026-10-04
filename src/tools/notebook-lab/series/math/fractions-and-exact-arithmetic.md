@@ -23,7 +23,7 @@ A fraction is in **lowest terms** when the numerator and denominator have no com
 
 It is fast: the numbers at least halve every two steps, so the number of steps grows with the number of digits, not with the size. The slowest case, step for step, is a pair of consecutive Fibonacci numbers, where every quotient is 1.
 
-Predict before running: how many steps for gcd(1071, 462), for the Fibonacci pair (987, 610), and for two ten-digit numbers?
+Predict before running: how many steps for gcd(1071, 462), for the Fibonacci pair (987, 610), and for a ten-digit and a nine-digit number?
 
 ```python
 import math
@@ -43,7 +43,7 @@ for a, b in [(1071, 462), (987, 610), (1234567890, 987654321), (10 ** 12, 7)]:
 print("1071/462 in lowest terms:", Fraction(1071, 462))
 ```
 
-gcd(1071, 462) = 21 after 3 steps (1071 → 462 → 147 → 21), so 1071/462 = 51/22. The Fibonacci pair needs 14 steps for its gcd of 1, the slow case. The ten-digit pair needs only 4, and a trillion with 7 just 2. `Fraction` runs exactly this algorithm every time it is created, which is why it is always in lowest terms.
+gcd(1071, 462) = 21 after 3 steps (1071 → 462 → 147 → 21), so 1071/462 = 51/22. The Fibonacci pair needs 14 steps for its gcd of 1, the slow case. The ten- and nine-digit pair needs only 4, and a trillion with 7 just 2. `Fraction` runs exactly this algorithm every time it is created, which is why it is always in lowest terms.
 
 ## Exact sums and growing denominators
 
@@ -179,10 +179,10 @@ for err, q, p in pairs[:4]:
     print(f"best pairs with 20-100 teeth: {p}/{q}, relative error {float(err):.6f}")
 ```
 
-The convergents of 1.27 are 1, 4/3, 5/4, 14/11, 33/26, 47/37 and finally 127/100 itself. Their errors fall from 21% to 0.021% for 47/37, the substitute that lathe handbooks list. But the search over every pair up to 100 teeth finds something better: 80/63, with an error of 0.0125%. It is the semiconvergent (33 + 47)/(26 + 37), the mediant of two neighbouring convergents. It fills the gap that the convergent sequence jumps over, because 37 + 63 is still within the tooth limit. Continued fractions list every candidate; the bound on the teeth decides which one wins. Next come 47/37 and its double 94/74, which gives the same ratio. A 0.0125% ratio error makes a thread's pitch drift by 1.25 µm per 10 mm of length, which is fine for most work.
+The convergents of 1.27 are 1, 4/3, 5/4, 14/11, 33/26, 47/37 and finally 127/100 itself. Their errors fall from 21% to 0.021% for 47/37, a substitute sometimes quoted. But the search over every pair up to 100 teeth finds something better: 80/63, with an error of 0.0125%. It is the semiconvergent (33 + 47)/(26 + 37), the mediant of two neighbouring convergents. It fills the gap that the convergent sequence jumps over: 80 and 63 both fit within the tooth limit, while the next convergent, 127/100, needs a 127-tooth gear. Continued fractions list every candidate; the bound on the teeth decides which one wins. Next come 47/37 and its double 94/74, which gives the same ratio. A 0.0125% ratio error makes a thread's pitch drift by 1.25 µm per 10 mm of length, which is fine for most work.
 
 ::: challenge Euclid and the hunting tooth [easy]
-Write `gcd_steps(a, b)` for non-negative integers, not both zero: return `(g, steps)`, the greatest common divisor by Euclid's algorithm and the number of remainder steps (each replacement of (a, b) by (b, a mod b) is one step), as plain ints. Raise `ValueError` for negative numbers, non-integers or two zeros. Then write `hunting(n1, n2)` for two positive tooth counts: return `(partners, repeat_turns)` where `partners` is how many of gear 1's teeth each tooth of gear 2 meets, n1/gcd(n1, n2), and `repeat_turns` is the number of turns of gear 2 before the same pair of teeth meets again, lcm(n1, n2)/n2. Do not use `math.gcd` or `math.lcm` (use your own function).
+Write `gcd_steps(a, b)` for non-negative integers, not both zero: return `(g, steps)`, the greatest common divisor by Euclid's algorithm and the number of remainder steps (each replacement of (a, b) by (b, a mod b) is one step), as plain ints. Raise `ValueError` for negative numbers, non-integers (booleans count as non-integers) or two zeros. Then write `hunting(n1, n2)` for two tooth counts (raise `ValueError` unless both are positive integers): return `(partners, repeat_turns)` where `partners` is how many of gear 1's teeth each tooth of gear 2 meets, n1/gcd(n1, n2), and `repeat_turns` is the number of turns of gear 2 before the same pair of teeth meets again, lcm(n1, n2)/n2. Do not use `math.gcd` or `math.lcm` (use your own function).
 
 ```python starter
 def gcd_steps(a, b):
@@ -408,6 +408,7 @@ assert best_pair(Fraction(5, 127), 100) == (3, 76), "5/127 with at most 100 teet
 assert best_pair(3, 10) == (3, 1) and best_pair(Fraction(1, 2), 10, 4) == (4, 8), "Ties go to the smallest q; min_teeth applies to both."
 assert best_pair(10, 5) == (5, 1), "A target out of range gets the closest allowed pair."
 _pi = Fraction(math.pi)
+assert best_pair(Fraction(5, 12) - Fraction(1, 10 ** 20), 3) == (1, 3), "Exact comparison: just below 5/12, 1/3 is closer than 1/2."
 assert best_pair(_pi, 110) == (22, 7) and best_pair(_pi, 340) == (333, 106) and best_pair(_pi, 400) == (355, 113), "π: both numbers are limited, so 22/7 up to 110, 333/106 up to 340, 355/113 up to 400."
 for _bad in [lambda: continued_fraction(0), lambda: best_pair(Fraction(-1, 2), 10), lambda: best_pair(1, 10, 11), lambda: best_pair(1, 10, 0)]:
     try:

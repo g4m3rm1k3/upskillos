@@ -45,6 +45,7 @@ The string needs about 70.7 N, the weight of a 7.2 kg mass, and waves run along 
 ::: math
 \[ \frac{y_i^{k+1} - 2y_i^k + y_i^{k-1}}{\Delta t^2} = c^2\,\frac{y_{i+1}^k - 2y_i^k + y_{i-1}^k}{\Delta x^2} \;\Longrightarrow\; y_i^{k+1} = 2y_i^k - y_i^{k-1} + C^2\big(y_{i+1}^k - 2y_i^k + y_{i-1}^k\big) \]
 \[ C = \frac{c\,\Delta t}{\Delta x} \le 1 \quad\text{(the CFL condition)}, \qquad \text{first step from rest: } y_i^1 = y_i^0 + \tfrac{1}{2}C^2\big(y_{i+1}^0 - 2y_i^0 + y_{i-1}^0\big) \]
+- $y_i^k$: displacement at point $i$ (spacing $\Delta x$) and time step $k$ (length $\Delta t$)
 - the second difference now appears in time as well as in space; each new value needs the two previous time levels
 - $C$: the Courant number, how many grid spaces a wave moves in one time step
 In code: `leapfrog(y0, C, steps)` keeps `prev` and `cur` and builds `nxt` from both
@@ -167,7 +168,7 @@ The rows give each harmonic's amplitude relative to the fundamental. Plucked in 
 \[ y(x_0, t) = \sum_n b_n \sin\frac{n\pi x_0}{L}\,\cos(2\pi f_n t) \;\Longrightarrow\; \text{spectral peaks at } f_n \text{ with heights } \propto \Big|b_n \sin\frac{n\pi x_0}{L}\Big| \]
 - a pickup at $x_0$ hears each harmonic weighted by how much that mode moves at $x_0$
 - a time step $\Delta t$ means the sampling rate is $1/\Delta t$, far above the highest harmonic of interest
-In code: record `cur[pickup]` every step, then `np.fft.rfft(signal * np.hanning(len(signal)))`
+In code: record `cur[pickup]` every step, then `w = np.hanning(signal.size)` and `np.fft.rfft(signal * w)`
 :::
 
 An electric guitar's pickup senses the string's motion at one point. Recording the simulated displacement there for half a second and taking its spectrum, as in the seeing-frequencies lesson, shows which harmonics the pluck produced. The time step is about 30 µs, a sampling rate near 33 kHz, so aliasing is not an issue.
@@ -206,7 +207,7 @@ ax.set_ylabel("amplitude (mm)")
 plt.show()
 ```
 
-The spectrum shows peaks at multiples of 82.4 Hz (each within one 2 Hz frequency bin). The 5th and 10th are missing: they show as 0.0000 mm, in fact below 10⁻⁶ mm, more than 100,000 times weaker than their neighbours. The other harmonics are scaled by how much each mode moves at the pickup. A pickup near the bridge moves little in the low modes, so it hears relatively more of the high ones: another way guitar makers shape tone. Real strings also lose energy and are slightly stiff, which bends the harmonics a little sharp. Adding those effects is a matter of extra terms in the same equation.
+The spectrum shows peaks at multiples of 82.4 Hz (each within one 2 Hz frequency bin). The 5th and 10th are missing: they show as 0.0000 mm, in fact below 10⁻⁶ mm, tens of thousands of times weaker than their neighbours. The other harmonics are scaled by how much each mode moves at the pickup. A pickup near the bridge moves little in the low modes, so it hears relatively more of the high ones: another way guitar makers shape tone. Real strings also lose energy and are slightly stiff, which bends the harmonics a little sharp. Adding those effects is a matter of extra terms in the same equation.
 
 ::: challenge Strings and their harmonics [easy]
 Write `string_frequencies(tension, mu, length, count)`: the first `count` mode frequencies f_n = n c/(2L) with c = √(T/μ), as a list of plain floats. Write `tension_for(f1, length, mu)`: the tension (N) that gives fundamental frequency f1, as a plain float. Then write `cable_tension(length, mu, round_trip)`: the tension from the time (s) a ripple takes to travel to the far end and back. Raise `ValueError` in all three if any physical input (tension, mu, length, f1, round_trip) is not positive, or if count < 1.
@@ -274,7 +275,7 @@ Hint: c = √(T/μ) and f_n = nc/(2L). Turning f₁ = c/(2L) round gives T = μ(
 :::
 
 ::: challenge Harmonics from a shape [medium]
-Write `sine_coefficients(y, length, n_max)`: given the string's shape sampled at equally spaced points from x = 0 to x = length (both ends included, y a NumPy array), return a NumPy array of b₁ ... b_{n_max} with bₙ = (2/L) ∫₀ᴸ y(x) sin(nπx/L) dx, computed with the trapezoid rule. Raise `ValueError` if there are fewer than 3 samples, length is not positive or n_max < 1. Then write `missing_harmonics(coeffs, rel_tol=1e-3)`: the list of harmonic numbers n (counting from 1, as plain ints) whose |bₙ| is below rel_tol times the largest |bₙ|.
+Write `sine_coefficients(y, length, n_max)`: given the string's shape sampled at equally spaced points from x = 0 to x = length (both ends included, y a NumPy array or a list), return a NumPy array of b₁ ... b_{n_max} with bₙ = (2/L) ∫₀ᴸ y(x) sin(nπx/L) dx, computed with the trapezoid rule. Raise `ValueError` if there are fewer than 3 samples, length is not positive or n_max < 1. Then write `missing_harmonics(coeffs, rel_tol=1e-3)`: the list of harmonic numbers n (counting from 1, as plain ints) whose |bₙ| is below rel_tol times the largest |bₙ|.
 
 ```python starter
 import numpy as np
@@ -402,7 +403,7 @@ _keep = _mode.copy()
 _quarter = 1 / (4 * 2 * _c / (2 * _L))
 _y = np.asarray(simulate_string(_mode, _c, _L, _quarter))
 assert np.array_equal(_mode, _keep), "Do not modify y0."
-assert _y.shape == _mode.shape and _y[0] == _mode[0] and _y[-1] == _mode[-1], "Same shape, ends held at their starting values."
+assert _y.shape == _mode.shape and np.abs(_y[[0, -1]] - _mode[[0, -1]]).max() < 1e-15, "Same shape, ends held at their starting values."
 assert np.abs(_y).max() < 2e-5, f"Mode 2 passes through zero after a quarter of its period; largest |y| {np.abs(_y).max():.2e}."
 _half = np.asarray(simulate_string(_mode, _c, _L, 2 * _quarter))
 assert np.allclose(_half, -_mode, atol=3e-5), "After half its period, mode 2 is upside down."
