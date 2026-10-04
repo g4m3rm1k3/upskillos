@@ -259,7 +259,7 @@ print(f"logistic regression on 64 pixels: {line.score(test_images.reshape(len(te
 model = digits.make_mlp()
 history = digits.train(model, train_images, train_labels, epochs=30)
 predictions = digits.predict(model, test_images)
-print(f"network (64 → 64 → 10), after 30 epochs: {np.mean(predictions == test_labels):.3f}")
+print(f"network (64 -> 64 -> 10), after 30 epochs: {np.mean(predictions == test_labels):.3f}")
 
 print("\nrows: the real digit; columns: what the network read")
 print("   " + " ".join(f"{d:>3}" for d in range(10)))
@@ -282,7 +282,7 @@ for row in test_images[wrong]:
 ```text
 1347 training and 450 test images, 8 × 8 pixels
 logistic regression on 64 pixels: 0.969
-network (64 → 64 → 10), after 30 epochs: 0.967
+network (64 -> 64 -> 10), after 30 epochs: 0.967
 
 rows: the real digit; columns: what the network read
      0   1   2   3   4   5   6   7   8   9

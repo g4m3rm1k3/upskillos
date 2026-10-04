@@ -47,8 +47,9 @@ const SERIES = [
       ['ml-pytorch', '13 · PyTorch: Reading Handwritten Digits'],
       ['ml-nlp', '14 · NLP: Maintenance Work Orders'],
       ['ml-studio', '15 · Production ML: The Defect Studio'],
+      ['ml-capstone', '16 · Capstone: Your Own ML Product'],
     ],
-    planned: 'Next in this series: your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Optional advanced tracks are planned: boosting and SVMs, time series, sequence models and transformers, retrieval, and recommender systems. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 

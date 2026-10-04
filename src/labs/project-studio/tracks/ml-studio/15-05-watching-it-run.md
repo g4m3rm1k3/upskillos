@@ -308,7 +308,7 @@ class Studio:
         X, y = data.parse_runs(text)
         digest = artifacts.fingerprint(text.encode())
         (self.folder / "datasets").mkdir(exist_ok=True)
-        (self.folder / "datasets" / f"{digest}.csv").write_text(text)
+        (self.folder / "datasets" / f"{digest}.csv").write_text(text, encoding="utf-8")
         dataset_id = database.add_dataset(self.db, name, len(y), digest)
         log.info("dataset %s uploaded: %d runs", dataset_id, len(y))
         return {"id": dataset_id, "rows": len(y), "defect_rate": round(float(y.mean()), 3)}
@@ -327,7 +327,7 @@ class Studio:
         try:
             record = database.get_experiment(self.db, experiment_id)
             dataset = database.get_dataset(self.db, record["dataset_id"])
-            X, y = data.parse_runs((self.folder / "datasets" / f"{dataset['sha256']}.csv").read_text())
+            X, y = data.parse_runs((self.folder / "datasets" / f"{dataset['sha256']}.csv").read_text(encoding="utf-8"))
             model, metrics = ml.train(X, y, record["kind"])
             artifact = artifacts.save(model, {"experiment": experiment_id, "kind": record["kind"],
                                               "dataset_sha256": dataset["sha256"], "profile": monitoring.profile(X),

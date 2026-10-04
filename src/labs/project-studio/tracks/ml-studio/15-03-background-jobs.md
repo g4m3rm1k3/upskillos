@@ -306,7 +306,7 @@ class Studio:
         X, y = data.parse_runs(text)
         digest = artifacts.fingerprint(text.encode())
         (self.folder / "datasets").mkdir(exist_ok=True)
-        (self.folder / "datasets" / f"{digest}.csv").write_text(text)
+        (self.folder / "datasets" / f"{digest}.csv").write_text(text, encoding="utf-8")
         dataset_id = database.add_dataset(self.db, name, len(y), digest)
         log.info("dataset %s uploaded: %d runs", dataset_id, len(y))
         return {"id": dataset_id, "rows": len(y), "defect_rate": round(float(y.mean()), 3)}
@@ -325,7 +325,7 @@ class Studio:
         try:
             record = database.get_experiment(self.db, experiment_id)
             dataset = database.get_dataset(self.db, record["dataset_id"])
-            X, y = data.parse_runs((self.folder / "datasets" / f"{dataset['sha256']}.csv").read_text())
+            X, y = data.parse_runs((self.folder / "datasets" / f"{dataset['sha256']}.csv").read_text(encoding="utf-8"))
             model, metrics = ml.train(X, y, record["kind"])
             artifact = artifacts.save(model, {"experiment": experiment_id, "kind": record["kind"],
                                               "dataset_sha256": dataset["sha256"], **metrics}, self.folder / "models")
@@ -360,7 +360,7 @@ class Studio:
 How the pieces fit:
 
 - **`db` is a property with one connection per thread.** A SQLite connection belongs to the thread that opened it (Python refuses to let another thread use it, unless told otherwise). Sharing one connection between threads, even where it's allowed, lets their statements interleave: one thread's `INSERT` can read back the row number from another thread's statement. So each thread opens its **own** connection to the same file. **`threading.local()`** is an object whose attributes are separate for every thread: `self.connections.db` is a different connection on each thread. **`@property`** makes `self.db` look like an attribute while running this method each time it's read, so the rest of the code just says `self.db`. The rule in one line: *share the database, not the connection*.
-- **`upload`** validates first (lesson 15.1), so bad data never reaches the folder or the database. The file is stored under its own fingerprint, and the database records it.
+- **`upload`** validates first (lesson 15.1), so bad data never reaches the folder or the database. The file is stored under its own fingerprint, and the database records it. **`encoding="utf-8"`** on both writing and reading (lesson 8.1's habit): without it, Windows uses an older encoding that can't store every character someone might upload.
 - **`start`** checks the request, records an experiment as `queued`, hands `self.run` to the executor, and returns at once. It never trains.
 - **`run`** is the job itself, on a worker thread: mark it `running`, re-read the dataset, train (lesson 15.1), save the artifact (lesson 15.2), record `done` with its metrics and fingerprint.
 - **`except Exception as error:`** catches *any* failure inside the job. A job that crashed on a worker thread would otherwise vanish: nobody is waiting on its Future to see the error. Here the failure becomes part of the record, `failed` with its message, and **`log.exception`** writes the full traceback to the log for whoever investigates. Catching everything is usually a bad habit; at the outer edge of a background job it's exactly right.

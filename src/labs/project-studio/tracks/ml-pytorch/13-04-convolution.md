@@ -225,8 +225,8 @@ import vision
 
 train_images, test_images, train_labels, test_labels = digits.split(*digits.load())
 
-print(f"{'model':<42}{'weights':>8}{'centred':>9}{'right':>7}{'left':>7}")
-for name, make in [("network (64 → 64 → 10)", digits.make_mlp), ("convolutional network", vision.make_cnn)]:
+print(f"{'model':<44}{'weights':>8}{'centred':>9}{'right':>7}{'left':>7}")
+for name, make in [("network (64 -> 64 -> 10)", digits.make_mlp), ("convolutional network", vision.make_cnn)]:
     for shifted_training in [False, True]:
         model = make()
         images, labels = vision.with_shifts(train_images, train_labels) if shifted_training else (train_images, train_labels)
@@ -234,7 +234,7 @@ for name, make in [("network (64 → 64 → 10)", digits.make_mlp), ("convolutio
         scores = [np.mean(digits.predict(model, vision.shift(test_images, columns)) == test_labels) for columns in [0, 1, -1]]
         weights = sum(p.numel() for p in model.parameters())
         label = name + (", trained on shifts" if shifted_training else "")
-        print(f"{label:<42}{weights:>8}{scores[0]:>9.3f}{scores[1]:>7.3f}{scores[2]:>7.3f}")
+        print(f"{label:<44}{weights:>8}{scores[0]:>9.3f}{scores[1]:>7.3f}{scores[2]:>7.3f}")
 ```
 
 ```powershell
@@ -244,18 +244,18 @@ for name, make in [("network (64 → 64 → 10)", digits.make_mlp), ("convolutio
 It trains four networks, so give it half a minute.
 
 ```text
-model                                      weights  centred  right   left
-network (64 → 64 → 10)                        4810    0.967  0.429  0.438
-network (64 → 64 → 10), trained on shifts     4810    0.962  0.953  0.971
-convolutional network                         1898    0.967  0.553  0.687
-convolutional network, trained on shifts      1898    0.980  0.978  0.980
+model                                        weights  centred  right   left
+network (64 -> 64 -> 10)                        4810    0.967  0.429  0.438
+network (64 -> 64 -> 10), trained on shifts     4810    0.962  0.953  0.971
+convolutional network                           1898    0.967  0.553  0.687
+convolutional network, trained on shifts        1898    0.980  0.978  0.980
 ```
 
 - **Without augmentation**, both networks fall apart on shifted digits, but the CNN less badly (55–69% against 43–44%): shared filters and pooling give it some tolerance for free.
 - **With augmentation**, both recover. The CNN is best everywhere: **98% on centred and shifted digits alike**, with fewer than half the weights. Building in what's true about images (local shapes, shared everywhere) *plus* teaching which changes don't matter beats either alone.
 
 ```check
-run ".venv/Scripts/python compare.py" stdout="model                                      weights  centred  right   left" label="compare.py trains and tests both networks with and without shifted training"
+run ".venv/Scripts/python compare.py" stdout="model                                        weights  centred  right   left" label="compare.py trains and tests both networks with and without shifted training"
 ```
 
 ## Keeping the trained model

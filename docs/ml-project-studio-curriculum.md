@@ -131,7 +131,7 @@ Every important code block answers: what is it, why do we need it, what does eac
 
 ## Concept graph, mastery and spaced repetition
 
-`ML_CONCEPTS` in `mlCurriculum.js` is the concept graph: each concept names its area and the concepts it requires. It covers the whole series, including chapters not yet written, so planned lessons attach to existing nodes.
+`ML_CONCEPTS` in `mlCurriculum.js` is the concept graph: each concept names its area and the concepts it requires. It covers the whole series, and `mlCurriculum.test.js` checks that every `revisits:` names a concept an earlier lesson teaches.
 
 **Mastery comes from demonstrated work.** A concept's bar is the share of checked steps, across every lesson that teaches it, whose checks have passed in the learner's own project folder (`conceptMastery`). Reading a lesson moves nothing.
 
@@ -140,11 +140,11 @@ Every important code block answers: what is it, why do we need it, what does eac
 | Idea | First | Again |
 |---|---|---|
 | Squared distance from a centre | variance (1.2) | MSE loss (2.3, 3.1); R² (3.4) |
-| Dot product | weighted sum of features (2.1) | `X @ w` (2.2); the gradient `Xᵀe` (3.2); planned: similarity, embeddings, neural layers |
-| Cosine | angle between vectors (2.1) | correlation (2.1); planned: embedding similarity (Part XXVIII) |
-| Mean and standard deviation | describing a column (1.2) | standardisation (3.2); the baseline RMSE (3.1) |
-| Boundaries that validate input | `read_text` (0.4), `load_settings` (0.5) | `typed` (1.1); planned: FastAPI request models |
-| Passing in what a function depends on | `main(argv)` (0.3) | pytest fixtures (0.3, 0.5); planned: FastAPI dependency injection |
+| Dot product | weighted sum of features (2.1) | `X @ w` (2.2); the gradient `Xᵀe` (3.2); a network layer (12.1); similarity search (14.2) |
+| Cosine | angle between vectors (2.1) | correlation (2.1); TF-IDF search (14.2); embeddings (14.3) |
+| Mean and standard deviation | describing a column (1.2) | standardisation (3.2); the baseline RMSE (3.1); scaling for k-NN and k-means (9.1, 10.2); drift (15.5) |
+| Boundaries that validate input | `read_text` (0.4), `load_settings` (0.5) | `typed` (1.1); FastAPI request models (4.3); injection (6.4); `data.py` (15.1, 16.1) |
+| Passing in what a function depends on | `main(argv)` (0.3) | pytest fixtures (0.3, 0.5); FastAPI dependency injection (4.3); executors and clients (15.3, 15.5) |
 | Hidden dependence on the current folder | `open("data.txt")` (0.1) | the leaking settings file in tests (0.5); `__file__`-relative test data (1.1) |
 
 ## Three scales of project
@@ -152,8 +152,8 @@ Every important code block answers: what is it, why do we need it, what does eac
 | Scale | Purpose | In this series |
 |---|---|---|
 | Level 1: mathematical experiments | tiny, flat modules, easy to read in a minute | `math-lab` (Chapter 2): `vectors.py`, `matrices.py`, `calculus.py`, `gradients.py` |
-| Level 2: standalone projects | one algorithm or tool, complete | `text-analysis` (`textstats`, Chapter 0), `dataset-explorer` (Chapter 1), `house-prices` (Chapter 3); planned: spam detector, digit classifier, segmentation, document classifier |
-| Level 3: the main application | everything integrated | `price-service` (Chapter 4): the house-price model behind an HTTP API and a web page; it grows into **Upskillos ML Studio** (Chapter 15) |
+| Level 2: standalone projects | one algorithm or tool, complete | `text-analysis` (`textstats`, Chapter 0), `dataset-explorer` (Chapter 1), `house-prices` (Chapter 3), `spam-detector` (8), `defect-predictor` (9), `customer-segments` (10), `inspection-pca` (11), `tolerance-net` (12), `digit-reader` (13), `work-orders` (14), `tool-life-advisor` (16) |
+| Level 3: the main application | everything integrated | `price-service` (Chapter 4): the house-price model behind an HTTP API and a web page; the full application is the **Defect Studio** (`defect-studio`, Chapter 15) |
 
 Each chapter is its own Project Studio project folder, so a learner can always run any chapter's project on its own.
 
@@ -230,18 +230,20 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 15.4 The API, and tests an ML system needs | ML testing (an app factory, status codes; quality gate and behavioural model tests) | ml-sklearn-workflow / 30 |
 | | 15.5 Watching it run | deployment (prediction log, drift against a training profile, retries, backoff, caching) | ml-sklearn-workflow / 30 |
 | | 15.6 Shipping it | deployment (crash recovery, pinned requirements, a non-root container with a data volume) | ml-sklearn-workflow / 32 |
+| **16 · Capstone** (`ml-capstone`) — project: a cutting-tool life advisor, then your own | 16.1 Start from the decision | ML testing (the project brief, validated data, a dummy baseline) | ml-capstone / 33 |
+| | 16.2 Let the physics choose the model | ML testing (Taylor's equation linear in logs beats a forest; exponents checked against handbook values) | ml-capstone / 33 |
+| | 16.3 The advisor as a service | ML testing (solving the model for speed; flagging extrapolation; an API) | ml-capstone / 33 |
+| | 16.4 Ship it, report it, make it yours | deployment (a container, an honest results section, the whole method as a checklist) | ml-capstone / 33 |
 
-### Planned
+### Design notes
 
-Each planned chapter names the problem that introduces its technology. The original map had an "Optimization" chapter before the web app; Chapters 2 and 3 already teach gradient descent and the learning rate, so the web app (the prompt's Parts V–VIII) follows the first model directly, regularisation is in Chapter 7, where evaluation makes it necessary, and the remaining optimisation topics (mini-batches, momentum) are in Chapter 12, where training a network gets slow. Mathematics for probability and statistics (prompt Parts 3.7–3.8) is taught where classification first needs it, in Chapter 8, so no chapter of mathematics stands without an application.
+Every chapter in the map is now written. The original map had an "Optimization" chapter before the web app; Chapters 2 and 3 already teach gradient descent and the learning rate, so the web app (the prompt's Parts V–VIII) follows the first model directly, regularisation is in Chapter 7, where evaluation makes it necessary, and the remaining optimisation topics (mini-batches, momentum) are in Chapter 12, where training a network gets slow. Mathematics for probability and statistics (prompt Parts 3.7–3.8) is taught where classification first needs it, in Chapter 8, so no chapter of mathematics stands without an application.
 
-| # | Chapter | The problem that starts it | Builds | Companions to link |
-|---|---|---|---|---|
-| 16 | Capstone: Build Your Own ML Product | "Your own problem" | problem definition → data analysis → mathematical justification → baseline → model → evaluation → architecture → API → database → UI → tests → security → deployment | ml-capstone / 33 |
+Several projects use manufacturing data (injection-moulding defects, CMM inspection results, a GD&T tolerance zone, maintenance work orders, cutting-tool life). Every data set is made up for the course by a seeded generator from known rules plus noise, so lessons can show a model recovering the hidden rules (Chapter 9's process limits, Chapter 11's causes, Chapter 16's Taylor exponents).
 
-Optional advanced tracks after Chapter 15 (prompt Part XLII): classical ML (SVM, boosting), deep learning (CNNs, sequence models, attention, transformers), NLP and retrieval, recommender systems, time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).
+The ML Studio architecture in Chapter 15 is **arrived at**: Chapter 4 starts from one file and one route; Chapter 5 adds a repository when SQL leaks into routes; Chapter 15 splits the studio into `data.py`, `ml.py`, `artifacts.py`, `database.py`, `services.py` and `api.py`, each introduced by the problem that needs it, and adds `monitoring.py`, `forecast.py` and `startup.py` once the studio is depended on.
 
-The ML Studio architecture in Chapter 15 must be **arrived at**: Chapter 4 starts from one file per server and one route; Chapter 5 adds a repository when SQL leaks into routes; Chapter 6 adds services when two routes need the same authorisation logic; Chapter 15 splits `api/`, `services/`, `ml/` and `database/` when the single app file has become hard to change.
+Optional advanced tracks (planned, prompt Part XLII): classical ML (SVM, boosting), sequence models, attention and transformers, retrieval, recommender systems, and time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).
 
 ## Runtime decisions
 
