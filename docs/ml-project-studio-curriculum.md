@@ -199,6 +199,11 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 7.2 A penalty for wiggling: regularisation | regularization (ridge from the normal equations; train, validation and test) | ml-regularisation / 7 |
 | | 7.3 Every point takes a turn: cross-validation | cross-validation (k-fold by hand, identical to scikit-learn's) | ml-cross-validation / 6 |
 | | 7.4 When cross-validation lies: leakage and pipelines | cross-validation (feature-selection leakage, `Pipeline`) | ml-leakage-and-imbalance / 6 |
+| **08 · Classification** (`ml-classification`) — project: spam detector | 8.1 Spam or not? Probability by counting | probability (conditional probability, Bayes' rule, base rates) | ml-probability-by-simulation / 4 |
+| | 8.2 Text becomes numbers: bag of words | text features (tokens, vocabulary, stratified split; identical to `CountVectorizer`) | ml-naive-bayes / 11 |
+| | 8.3 Every word is evidence: naive Bayes | naive Bayes (smoothing, log scores; identical to `MultinomialNB`) | ml-naive-bayes / 11 |
+| | 8.4 Learning the weights: logistic regression | logistic regression (sigmoid, log loss, gradient checked numerically, L2 penalty) | ml-logistic-regression / 8 |
+| | 8.5 95% accurate, and is that good? | classification metrics (confusion matrix, precision, recall, F1, thresholds, ROC AUC) | ml-classification-metrics / 9 |
 
 ### Planned
 
@@ -206,7 +211,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 08 | Classification: Spam Detector | "Some predictions are categories, not numbers" | probability and conditional probability by simulation; tokenisation, bag-of-words, TF-IDF; logistic regression and naive Bayes from scratch, then scikit-learn; confusion matrix, precision, recall, ROC | ml-probability-by-simulation, ml-logistic-regression, ml-naive-bayes, ml-classification-metrics / 4, 8, 9, 11 |
 | 09 | Trees: Decision Tree and Random Forest | "A model you can explain, rule by rule" | entropy, information gain, recursive splitting, bagging, feature importance; plus k-NN and feature scaling | ml-knn, ml-decision-trees, ml-random-forests / 10, 12, 13 |
 | 10 | Unsupervised: Customer Segmentation | "There are no labels" | distance, k-means from scratch, choosing k | ml-k-means / 17 |
 | 11 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |

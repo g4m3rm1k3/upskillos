@@ -39,8 +39,9 @@ const SERIES = [
       ['ml-database', '05 · Databases: The Experiment Database'],
       ['ml-security', '06 · Authentication and Security: Multi-user Studio'],
       ['ml-evaluation', '07 · Evaluation: Is the Model Any Good?'],
+      ['ml-classification', '08 · Classification: A Spam Detector'],
     ],
-    planned: 'Next in this series: classification, then trees, clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: decision trees and forests, clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 
