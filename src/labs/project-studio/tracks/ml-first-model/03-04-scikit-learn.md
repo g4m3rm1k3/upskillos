@@ -288,4 +288,4 @@ You started with points on a page and ended with a tool that estimates house pri
 - A model is only as good as its error on data it **hasn't seen**.
 - scikit-learn solves the same problem exactly, faster, with more checks, and gives the same answer.
 
-The tool still has a limit that no amount of mathematics fixes: it runs in a terminal on one computer. A website, a phone app or another program can't ask it for a price. The next chapter of this series (planned) starts there: **HTTP**, the language programs use to ask each other things over a network, and **FastAPI**, which turns `predict` into a web service. The model you trained stays exactly as it is; what changes is who can reach it.
+The tool still has a limit that no amount of mathematics fixes: it runs in a terminal on one computer. A website, a phone app or another program can't ask it for a price. The next chapter starts there: **HTTP**, the language programs use to ask each other things over a network, and **FastAPI**, which turns `predict` into a web service. The model you trained stays exactly as it is; what changes is who can reach it.

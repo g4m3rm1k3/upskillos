@@ -32,7 +32,7 @@ numpy==2.5.3
 
 4. `.venv\Scripts\python -m pip install -r requirements.txt`
 
-This project will grow for the rest of the chapter (and, in the planned chapters after it, into a web service), so it's a package from the start: `houses`.
+This project will grow for the rest of the chapter (and the model you build here goes behind a web service in Chapter 4), so it's a package from the start: `houses`.
 
 ```check
 run ".venv/Scripts/python -c \"import numpy, pytest\"" label="NumPy and pytest are installed in the project's Python" -- python -m venv .venv, then .venv\Scripts\python -m pip install -r requirements.txt

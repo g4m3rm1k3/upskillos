@@ -153,7 +153,7 @@ Every important code block answers: what is it, why do we need it, what does eac
 |---|---|---|
 | Level 1: mathematical experiments | tiny, flat modules, easy to read in a minute | `math-lab` (Chapter 2): `vectors.py`, `matrices.py`, `calculus.py`, `gradients.py` |
 | Level 2: standalone projects | one algorithm or tool, complete | `text-analysis` (`textstats`, Chapter 0), `dataset-explorer` (Chapter 1), `house-prices` (Chapter 3); planned: spam detector, digit classifier, segmentation, document classifier |
-| Level 3: the main application | everything integrated | planned: `house-prices` grows into the prediction web app (Chapter 5), then **Upskillos ML Studio** (Chapter 16) |
+| Level 3: the main application | everything integrated | `price-service` (Chapter 4): the house-price model behind an HTTP API and a web page; it grows into **Upskillos ML Studio** (Chapter 15) |
 
 Each chapter is its own Project Studio project folder, so a learner can always run any chapter's project on its own.
 
@@ -181,31 +181,33 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 3.2 Learning: gradient descent on real data | gradient descent, feature scaling | ml-gradient-descent, ml-multiple-regression / 1 |
 | | 3.3 Your own LinearRegression | linear regression, classes, generalisation | ml-multiple-regression, ml-overfitting / 6 |
 | | 3.4 scikit-learn: the professional version | scikit-learn, regression metrics | ml-sklearn-workflow, ml-least-squares / 6 |
+| **04 · Web + ML** (`ml-web`) — project: prediction web service | 4.1 Programs that talk: HTTP by hand | HTTP | / 29 |
+| | 4.2 JSON, POST and status codes | web APIs | / 29 |
+| | 4.3 FastAPI: declare it, don't write it | web APIs (validation, OpenAPI, dependency injection) | / 29 |
+| | 4.4 A page for people: HTML, templates and HTMX | HTML, templates, HTMX | / 29 |
 
 ### Planned
 
-Each planned chapter names the problem that introduces its technology. Mathematics for probability and statistics (prompt Parts 3.7–3.8) is taught where classification first needs it, in Chapter 9, so no chapter of mathematics stands without an application.
+Each planned chapter names the problem that introduces its technology. The original map had an "Optimization" chapter before the web app; Chapters 2 and 3 already teach gradient descent and the learning rate, so the web app (the prompt's Parts V–VIII) follows the first model directly, and the remaining optimisation topics (mini-batches, momentum, regularisation) live in Chapter 7, where evaluation makes them necessary. Mathematics for probability and statistics (prompt Parts 3.7–3.8) is taught where classification first needs it, in Chapter 8, so no chapter of mathematics stands without an application.
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 04 | Optimization | "Training is slow and the learning rate is a guess" | learning-rate schedules, mini-batches, momentum; polynomial features and overfitting; regularisation | ml-optimisers, ml-overfitting, ml-regularisation / 7, 22 |
-| 05 | Web + ML: Prediction Web App | "Other programs can't ask the model anything" | HTTP by hand with `http.server`, then FastAPI; `GET /predict?sqft=…`; HTML forms, Jinja, HTMX partial updates | / 29 |
-| 06 | APIs: FastAPI ML Service | "Bad input crashes the model; clients can't tell what to send" | request/response models, validation, status codes, dependency injection, `/models`, `/models/{id}/predict`, OpenAPI docs | / 29 |
-| 07 | Databases: Experiment Database | "Experiments vanish when the process ends" | SQLite and SQL by hand (CRUD, keys, constraints, indexes), then a repository layer, SQLAlchemy, Alembic migrations | / 28 |
-| 08 | Authentication: Multi-user Platform | "Two people now need separate projects" | password hashing, sessions, cookies, login/logout, protected routes; then the security part: SQL injection, XSS, CSRF, path traversal, upload safety, rate limiting, secrets, each shown vulnerable → attacked → fixed | / 31 |
-| 09 | Classification: Spam Detector | "Some predictions are categories, not numbers" | probability and conditional probability by simulation; tokenisation, bag-of-words, TF-IDF; logistic regression and naive Bayes from scratch, then scikit-learn; confusion matrix, precision, recall, ROC | ml-probability-by-simulation, ml-logistic-regression, ml-naive-bayes, ml-classification-metrics / 4, 8, 9, 11 |
-| 10 | Trees: Decision Tree and Random Forest | "A model you can explain, rule by rule" | entropy, information gain, recursive splitting, bagging, feature importance; plus k-NN and feature scaling | ml-knn, ml-decision-trees, ml-random-forests / 10, 12, 13 |
-| 11 | Unsupervised: Customer Segmentation | "There are no labels" | distance, k-means from scratch, choosing k | ml-k-means / 17 |
-| 12 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |
-| 13 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand / 20, 21 |
-| 14 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
-| 15 | NLP: Document Classifier | "Back to text, where Chapter 0 began" | n-grams, TF-IDF pipelines, embeddings, cosine similarity | ml-embeddings / 25, 34 |
-| 16 | Production ML: Upskillos ML Studio | "Everything, for real users" | the full architecture (`api/`, `services/`, `ml/`, `database/`, `templates/`), CRUD for users, projects, datasets, models and experiments; background training jobs; model artifacts and metadata; experiment tracking; data, model and integration tests; reproducibility; Docker and deployment; logging and observability; ML-specific security (unsafe pickle files, untrusted datasets, prediction abuse); consuming external APIs with retries, timeouts and caching | / 28, 29, 30, 32 |
-| 17 | Capstone: Build Your Own ML Product | "Your own problem" | problem definition → data analysis → mathematical justification → baseline → model → evaluation → architecture → API → database → UI → tests → security → deployment | ml-capstone / 33 |
+| 05 | Databases: Experiment Database | "Every estimate is lost as soon as it's sent; nobody can compare models" | SQLite and SQL by hand (CRUD, keys, constraints, indexes), then a repository layer, SQLAlchemy, Alembic migrations; prediction history | / 28 |
+| 06 | Authentication and Security: Multi-user Platform | "Two people now need separate projects" | password hashing, sessions, cookies, login/logout, protected routes, custom error responses; then SQL injection, XSS, CSRF, path traversal, upload safety, rate limiting, secrets, each shown vulnerable → attacked → fixed | / 31 |
+| 07 | Evaluation and Overfitting | "The test score changes every time the split does" | cross-validation, polynomial features and overfitting, regularisation, learning curves, leakage; mini-batches and momentum where training gets slow | ml-overfitting, ml-regularisation, ml-cross-validation, ml-optimisers / 6, 7, 22 |
+| 08 | Classification: Spam Detector | "Some predictions are categories, not numbers" | probability and conditional probability by simulation; tokenisation, bag-of-words, TF-IDF; logistic regression and naive Bayes from scratch, then scikit-learn; confusion matrix, precision, recall, ROC | ml-probability-by-simulation, ml-logistic-regression, ml-naive-bayes, ml-classification-metrics / 4, 8, 9, 11 |
+| 09 | Trees: Decision Tree and Random Forest | "A model you can explain, rule by rule" | entropy, information gain, recursive splitting, bagging, feature importance; plus k-NN and feature scaling | ml-knn, ml-decision-trees, ml-random-forests / 10, 12, 13 |
+| 10 | Unsupervised: Customer Segmentation | "There are no labels" | distance, k-means from scratch, choosing k | ml-k-means / 17 |
+| 11 | Dimensionality Reduction: PCA Explorer | "Too many features to see" | covariance, eigenvectors, projection, explained variance | ml-eigenvectors-and-svd, ml-pca / 18 |
+| 12 | Neural Network From Scratch | "A line can't separate these points" | neurons, layers, activations, forward pass; backpropagation by the chain rule in NumPy | ml-perceptron-limits, ml-neural-networks, ml-backprop-by-hand / 20, 21 |
+| 13 | PyTorch: Image Classifier | "Hand-written gradients don't scale" | tensors, autograd, modules, datasets, dataloaders, optimisers; every line of the training loop explained; handwritten digits | ml-autograd-engine, ml-training-a-network, ml-cnns / 23, 24 |
+| 14 | NLP: Document Classifier | "Back to text, where Chapter 0 began" | n-grams, TF-IDF pipelines, embeddings, cosine similarity | ml-embeddings / 25, 34 |
+| 15 | Production ML: Upskillos ML Studio | "Everything, for real users" | the full architecture (`api/`, `services/`, `ml/`, `database/`, `templates/`), CRUD for users, projects, datasets, models and experiments; background training jobs; model artifacts and metadata; experiment tracking; data, model and integration tests; reproducibility; Docker and deployment; logging and observability; ML-specific security (unsafe pickle files, untrusted datasets, prediction abuse); consuming external APIs with retries, timeouts and caching | / 28, 29, 30, 32 |
+| 16 | Capstone: Build Your Own ML Product | "Your own problem" | problem definition → data analysis → mathematical justification → baseline → model → evaluation → architecture → API → database → UI → tests → security → deployment | ml-capstone / 33 |
 
-Optional advanced tracks after Chapter 16 (prompt Part XLII): classical ML (SVM, boosting), deep learning (CNNs, sequence models, attention, transformers), NLP and retrieval, recommender systems, time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).
+Optional advanced tracks after Chapter 15 (prompt Part XLII): classical ML (SVM, boosting), deep learning (CNNs, sequence models, attention, transformers), NLP and retrieval, recommender systems, time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).
 
-The ML Studio architecture in Chapter 16 must be **arrived at**: Chapter 5 starts from one file with one route; Chapter 6 splits routes from the model when validation makes the file unreadable; Chapter 7 adds a repository when SQL leaks into routes; Chapter 8 adds services when two routes need the same authorisation logic.
+The ML Studio architecture in Chapter 15 must be **arrived at**: Chapter 4 starts from one file per server and one route; Chapter 5 adds a repository when SQL leaks into routes; Chapter 6 adds services when two routes need the same authorisation logic; Chapter 15 splits `api/`, `services/`, `ml/` and `database/` when the single app file has become hard to change.
 
 ## Runtime decisions
 
