@@ -73,6 +73,8 @@ export const ML_CONCEPTS = {
   'nearest-neighbours': { label: 'k-nearest neighbours', area: 'Machine learning', requires: ['distance', 'feature-scaling'] },
   'decision-trees': { label: 'Decision trees', area: 'Machine learning', requires: ['probability', 'aggregation'] },
   'ensembles': { label: 'Random forests and ensembles', area: 'Machine learning', requires: ['decision-trees'] },
+  'boosting': { label: 'Gradient boosting', area: 'Machine learning', requires: ['ensembles', 'gradient-descent'] },
+  'svm': { label: 'Support vector machines and kernels', area: 'Machine learning', requires: ['logistic-regression', 'feature-scaling', 'distance'] },
   'clustering': { label: 'Clustering (k-means)', area: 'Machine learning', requires: ['distance'] },
   'pca': { label: 'Dimensionality reduction (PCA)', area: 'Machine learning', requires: ['correlation', 'matrices'] },
   'neural-networks': { label: 'Neural networks', area: 'Machine learning', requires: ['logistic-regression', 'matrices'] },
