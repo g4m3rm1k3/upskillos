@@ -62,6 +62,7 @@ export function readProjectZip(zip: Uint8Array): { project: Project; bytes: Map<
   const project = deserialize(JSON.stringify({ ...index, scenes, scripts }));
   const bytes = new Map<string, Uint8Array>();
   for (const a of project.assets) {
+    if (a.svg !== undefined) { bytes.set(a.id, strToU8(a.svg)); continue; }   // an SVG image is its source, in project.json
     const b = files[root + a.path];
     if (!b) throw new Error(`The project uses ${a.path}, but the .zip does not have it`);
     bytes.set(a.id, b);

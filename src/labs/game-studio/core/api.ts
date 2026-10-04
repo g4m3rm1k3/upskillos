@@ -323,6 +323,11 @@ export interface ProjectApi {
    * shows the new picture. It gets a new id, so undo brings back the old one, whose bytes are kept.
    */
   replaceAsset(path: string, info: { mime: string; width: number; height: number; origin?: string }): string;
+  /**
+   * An SVG image from its source text, at assets/….svg: code can draw a picture (a card, a button, a tile) instead of
+   * importing one. Replaces one already at the path (a new id, so undo brings it back). Returns the asset's id.
+   */
+  writeSvg(path: string, source: string): string;
   /** A new tileset file: an image cut into tiles of this size. */
   createTileset(path: string, opts: { image: string; tileWidth: number; tileHeight: number; margin?: number; spacing?: number; solid?: number[] }): TilesetHandle;
   /** An existing tileset: set its fields, e.g. project.tileset('tilesets/a.tileset').solid = [1, 2]. */
@@ -372,6 +377,22 @@ export function checkProjectPath(path: string, folder: string, ext: RegExp): str
   if (!ext.test(path)) return `"${path}" has the wrong extension`;
   if (/[^A-Za-z0-9_\-./]/.test(path) || path.includes('..') || path.includes('//')) return `"${path}": use letters, digits, - _ . and / only`;
   return null;
+}
+
+/**
+ * What is wrong with an SVG's source, or its size in pixels. A browser draws an SVG as a picture only when its root
+ * element has xmlns="http://www.w3.org/2000/svg", and the game needs width and height to know how big it is.
+ */
+export function svgSize(source: string): { width: number; height: number } | string {
+  const root = /<svg\b([^>]*)>/.exec(source);
+  if (!root) return 'An SVG image needs an <svg …> element';
+  const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`).exec(root[1])?.[1];
+  if (attr('xmlns') !== 'http://www.w3.org/2000/svg') return 'The <svg> element needs xmlns="http://www.w3.org/2000/svg", or a browser will not draw it as a picture';
+  const size = (name: string) => { const v = attr(name); const m = v === undefined ? null : /^\s*(\d+(?:\.\d+)?)\s*(px)?\s*$/.exec(v); return m ? Math.round(Number(m[1])) : null; };
+  const width = size('width'), height = size('height');
+  if (!width || !height) return 'The <svg> element needs a width and height in pixels, such as width="100" height="140"';
+  if (width > 4096 || height > 4096) return 'An SVG image can be at most 4096 pixels across';
+  return { width, height };
 }
 
 export function projectApi(p: Project): ProjectApi {
@@ -451,12 +472,22 @@ export function projectApi(p: Project): ProjectApi {
     },
     tileset(path) { if (!(p.tilesets ?? []).some((t) => t.path === path)) throw new Error(`No tileset at "${path}"`); return tilesetHandle(p, path); },
     importAsset(path, info) {
-      const bad = checkProjectPath(path, 'assets', /\.(png|jpe?g|webp|gif)$/i);
+      const bad = checkProjectPath(path, 'assets', /\.(png|jpe?g|webp|gif|svg)$/i);
       if (bad) throw new Error(bad);
       if (p.assets.some((a) => a.path === path)) throw new Error(`There is already an asset at "${path}"`);
       const a: AssetData = { id: nextId(p, 'a'), path, kind: info.kind ?? 'image', mime: info.mime, width: info.width, height: info.height };
       if (info.origin) a.origin = info.origin;
       p.assets.push(a);
+      return a.id;
+    },
+    writeSvg(path, source) {
+      const bad = checkProjectPath(path, 'assets', /\.svg$/);
+      if (bad) throw new Error(bad);
+      const text = String(source), size = svgSize(text);
+      if (typeof size === 'string') throw new Error(`${path}: ${size}`);
+      const a: AssetData = { id: nextId(p, 'a'), path, kind: 'image', mime: 'image/svg+xml', width: size.width, height: size.height, svg: text };
+      const i = p.assets.findIndex((x) => x.path === path);
+      if (i >= 0) p.assets[i] = a; else p.assets.push(a);
       return a.id;
     },
     replaceAsset(path, info) {

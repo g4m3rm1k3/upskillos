@@ -10,8 +10,8 @@
   "counts": {
     "courses": 44,
     "chapters": 236,
-    "lessons": 1338,
-    "labs": 54,
+    "lessons": 1344,
+    "labs": 55,
     "games": 15
   },
   "courses": [
@@ -253,7 +253,7 @@
       "domain": "cs",
       "description": "Learn to build games in Game Studio, one idea at a time: each lesson explains it, you try it in the editor with checks that tick as you work, then come back to see why it works. It ends with Tetris, built step by step.",
       "chapters": 9,
-      "lessons": 35
+      "lessons": 41
     },
     {
       "id": "mesh-engine",
@@ -692,6 +692,12 @@
       "label": "Data Science on the Web",
       "kind": "lab",
       "path": "/lab/web-data-science"
+    },
+    {
+      "id": "where-maths-comes-from",
+      "label": "Where Maths Comes From",
+      "kind": "lab",
+      "path": "/lab/where-maths-comes-from"
     }
   ],
   "games": [

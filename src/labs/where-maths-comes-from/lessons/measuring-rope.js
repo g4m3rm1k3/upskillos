@@ -1,0 +1,18 @@
+import { defineLesson } from '../schema.js'
+import { drawing } from '../modelTools.js'
+export default defineLesson({
+  id:'measuring-rope',title:'Which rope is longer?',chapter:'Measurement',order:25,
+  prompt:'Can you compare lengths when their starting points do not line up?',
+  discovery:{start:'Two ropes lie at different starting positions.',notice:'You can change a rope length, line up their starts, or choose a measuring stick. None of those actions changes the other rope.',question:'Which rope would reach further, and how could you check?',transfer:'Two people report different numbers for the same rope. Could their measuring sticks explain the difference?'},
+  panels:{explore:`<label>First rope length <input id="rope-a" type="range" min="60" max="240" value="180"></label><label>Second rope length <input id="rope-b" type="range" min="60" max="240" value="160"></label><div class="row"><button id="align-ropes">Line up the starts</button><button id="measure-rope">Try a measuring stick</button></div><label id="stick-choice" hidden>Stick size <select id="stick-size"><option value="40">Short stick</option><option value="80">Long stick</option></select></label>`,scene:`<svg id="ropes" viewBox="0 0 420 210" role="img" aria-label="Two ropes and an optional measuring stick"></svg>`,connections:`<p id="rope-record"></p>`,explanation:`<p id="rope-language"></p>`},
+  mount(ctx){const {$,on,say}=ctx,d=drawing(ctx,'ropes');let aligned=false,measured=false;
+    function draw(){d.clear();const a=+$('rope-a').value,b=+$('rope-b').value,unit=+$('stick-size').value,x=aligned?30:110;
+      d.shape('line',{x1:30,y1:60,x2:30+a,y2:60,stroke:'var(--a)','stroke-width':10,'stroke-linecap':'round'});d.shape('line',{x1:x,y1:110,x2:x+b,y2:110,stroke:'var(--b)','stroke-width':10,'stroke-linecap':'round'});
+      if(measured)for(let start=0;start<a;start+=unit)d.shape('rect',{x:30+start,y:150,width:Math.min(unit,a-start)-2,height:16,fill:'var(--c)',opacity:start+unit>a?.4:1});
+      $('rope-record').textContent=measured?`The first rope spans ${(a/unit).toFixed(2)} of your chosen sticks. A faint end piece is a partial stick.`:aligned?'Both ropes start at the same place. Their far ends can now be compared.':'Their far ends are in different places, but so are their starts.';
+      $('rope-language').textContent=measured?`A measurement is length divided by unit length: ${a} / ${unit} = ${a/unit}. Changing the unit changes the reported number, not the rope.`:'Comparing endpoints is reliable only when the starting points match. Length does not depend on position.';
+      say(aligned?`${a===b?'The ropes end together':a>b?'The first rope reaches further':'The second rope reaches further'} when their starts line up.`:'The ropes begin at different places.', measured?'A longer stick needs fewer repeats along the same rope. Part of a repeat still represents real length.':aligned?'Moving a rope did not stretch it. Aligning starts lets the far ends reveal which length is greater.':'The farthest endpoint does not necessarily belong to the longest rope. Position and length are different properties.', 'Would changing the stick make the rope shorter, or just change your report? You can line up, measure, or move back to the original positions.');
+    }
+    on($('align-ropes'),'click',()=>{aligned=!aligned;$('align-ropes').textContent=aligned?'Separate the starts':'Line up the starts';draw()});on($('measure-rope'),'click',()=>{measured=!measured;$('stick-choice').hidden=!measured;$('measure-rope').textContent=measured?'Put away the stick':'Try a measuring stick';draw()});['rope-a','rope-b'].forEach(id=>on($(id),'input',draw));on($('stick-size'),'change',draw);draw();
+  },
+})

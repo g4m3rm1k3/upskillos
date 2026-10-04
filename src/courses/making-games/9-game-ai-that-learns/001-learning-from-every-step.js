@@ -165,7 +165,7 @@ export default {
       'Formal statement: for a finite MDP and a fixed policy, tabular TD(0) with Robbins–Monro step sizes converges to $V^\\pi$ with probability 1 (Dayan, 1992; Jaakkola, Jordan & Singh, 1994).',
       'Invariant: in the random walk, the true values are the unique solution of $V(s) = \\tfrac12 V(s-1) + \\tfrac12 V(s+1)$ with $V = 0$ off the left and 1 off the right: a straight line, $V(s) = (s+1)/6$.',
       "Geometric picture: each update pulls one coordinate of the value vector towards a noisy target; Monte Carlo's targets scatter around the truth, TD's scatter less but around the current estimate, which moves.",
-      'Where it goes: lesson 9.2 asks how the agent should explore while it learns, and 9.3 compares the two TD control methods, SARSA and Q-learning.',
+      'Where it goes: lesson 9.2 asks how the agent should explore while it learns, 9.3 applies all of this to Breakout from scratch, and 9.4 compares the two TD control methods, SARSA and Q-learning.',
     ],
     callouts: [],
     visualizations: [],

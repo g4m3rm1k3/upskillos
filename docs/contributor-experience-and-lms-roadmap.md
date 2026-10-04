@@ -71,6 +71,16 @@ Each was confirmed against the renderer; none is fixed yet.
 - [ ] **Two prerequisite field names.** The Lesson Builder edits `prerequisites`; the concept explorer graph reads `prereqs`. Pick one and migrate.
 - [x] **Printed figures showed raw JSON.** `print(fig.show())` (11 lesson files, and the Help guide's own advice) printed the figure data. `PythonNotebook` now draws a printed figure as well as a returned one.
 
+### P1 — Connected maths demo
+
+- [x] Apply discovery-first starting states, optional comparison views, and transfer prompts across the connected maths lab. Add everyday experiments for sharing, fractions, measurement, equality, volume, proportion, observer frames, repeating multiples, and near-base calculation.
+
+- [x] Counting assessment pilot: observation, prediction, independent construction, supported retry, and stable-ID progress persistence.
+
+- [x] Adapt the user-supplied “Where math comes from” demo into a discovered lab with a two-by-two desktop layout, shared theme tokens, scoped interactions, and animation cleanup.
+- [x] Split experiences into independently mountable, schema-validated lesson files; discover contributor additions automatically, support custom sequences, and explain meaningful interactive states. Pascal entries now expose the selections they count. See [the authoring guide](contributing/intuition-lessons.md).
+- [ ] Review the adapted experiences with learners before extending the curriculum or treating exploration as mastery.
+
 ### P1 — Finish the contributor system
 
 - [x] **Desktop classic-game C++ starting point (2026-10-03):** Project Studio uses the existing desktop compiler to build a persistent C++ entry file and headers. Pong lesson 1, compiler setup UI, and compiled behavior tests are implemented; the course loader remains unchanged. Scope, validation, and the proposed next classics are in [the C++ Project Studio guide](cpp-classic-games-project-studio.md).

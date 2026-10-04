@@ -28,7 +28,7 @@ export default {
 
   prerequisites: ['mg9-001'],
 
-  nextLesson: null,
+  nextLesson: 'mg9-003',
 
   hook: {
     question: 'You find a restaurant you like. Do you go back every time, or try the new place, which might be better or worse? An agent faces that choice on every step, and its answer decides what it can ever learn.',
@@ -128,7 +128,7 @@ export default {
     prose: [
       '**Under the hood (optional).** ε-greedy picks each of $|\\mathcal{A}|$ actions with probability $\\varepsilon/|\\mathcal{A}|$, plus $1 - \\varepsilon$ for the greedy one (shared among ties): $\\pi(a \\mid s) = \\varepsilon/|\\mathcal{A}| + (1 - \\varepsilon)\\,[a = \\arg\\max_b Q(s, b)]$.',
       "With sample averages, each estimate is the mean of its rewards, so its error shrinks like $1/\\sqrt{N(a)}$. UCB's bonus $c\\sqrt{\\ln t / N(a)}$ is shaped like that error: it is an optimistic estimate, the top of a confidence interval, and its regret grows only logarithmically in t.",
-      'Convergence of Q-learning and SARSA to the optimal policy needs every state–action pair visited infinitely often; SARSA additionally needs the policy to become greedy in the limit. ε-greedy with $\\varepsilon_t = 1/t$ is GLIE; a constant ε is not, which is why a constant-ε SARSA learns the value of the exploring policy (lesson 9.3).',
+      'Convergence of Q-learning and SARSA to the optimal policy needs every state–action pair visited infinitely often; SARSA additionally needs the policy to become greedy in the limit. ε-greedy with $\\varepsilon_t = 1/t$ is GLIE; a constant ε is not, which is why a constant-ε SARSA learns the value of the exploring policy (lesson 9.4).',
     ],
     equations: [
       {
@@ -159,9 +159,9 @@ export default {
   rigor: {
     prose: [
       "Formal statement: for a bandit with sub-Gaussian rewards, UCB1's expected regret after t pulls is $O(\\sum_{a: \\Delta_a > 0} \\ln t / \\Delta_a)$, where $\\Delta_a$ is how much worse arm a is than the best (Auer, Cesa-Bianchi & Fischer, 2002); constant-ε greedy's regret grows linearly.",
-      'Invariant: with a constant step α, the weight on the reward k steps ago is $\\alpha(1-\\alpha)^k$ (cell 3): an exponentially recency-weighted average, right for problems that change over time.',
+      'Invariant: "with a constant step α, the weight on the reward k steps ago is $\\\\alpha(1-\\\\alpha)^k$ (cell 3): an" exponentially recency-weighted average, right for problems that change over time.',
       "Geometric picture: softmax's temperature slides between uniform (τ → ∞) and greedy (τ → 0) along a smooth path; ε-greedy jumps between the two.",
-      'Where it goes: lesson 9.3 shows the two TD control methods differ exactly in how exploration enters the target.',
+      'Where it goes: lesson 9.3 builds an agent for Breakout from scratch, and 9.4 shows the two TD control methods differ exactly in how exploration enters the target.',
     ],
     callouts: [],
     visualizations: [],

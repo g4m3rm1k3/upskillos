@@ -493,6 +493,7 @@ export const SCENE_API: SceneApiEntry[] = [
       { name: 'scene', type: '(path: string): SceneHandle', doc: 'An existing scene.' },
       { name: 'setMainScene', type: '(path: string): void', doc: 'The scene ▶ Run starts.' },
       { name: 'writeScript', type: '(path: string, source: string): void', doc: 'Create or replace a script in scripts/.' },
+      { name: 'writeSvg', type: '(path: string, source: string): string', doc: 'Create or replace an image in assets/ from SVG source text: code draws the picture, no image file needed. The <svg> needs xmlns="http://www.w3.org/2000/svg" and a width and height in pixels: writeSvg("assets/card.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140"><rect width="100" height="140" rx="8" fill="white"/></svg>`). Use it as a texture like any image.' },
       { name: 'saveBrain', type: '(path: string, brain: { actions, observation, method, policy, trained }): void', doc: 'Save a trained agent\'s brain in brains/ (Run › Train an agent… does this). A node whose script is an agent and names it in its brain field is driven by it.' },
       { name: 'removeBrain', type: '(path: string): void', doc: 'Delete a brain from brains/.' },
       { name: 'addAction', type: '(name: string, keys: string[]): void', doc: 'A new input action, with KeyboardEvent.code key names ("Space", "KeyA", "ArrowLeft").' },

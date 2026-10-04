@@ -159,10 +159,12 @@ export class Store {
       this.selection = s ? this.selection.filter(shown) : [];
       this.tabs = this.tabs.filter((t) => t.kind === 'scene' || doc.project.scripts.some((x) => x.path === t.path));
       if (this.tab.kind === 'script' && !this.tabs.some((t) => t.kind === 'script' && t.path === (this.tab as { path: string }).path)) this.tab = { kind: 'scene' };
+      this.drawSvgs();
       this.scheduleRecovery();
       if (this.task) this.scheduleCheck();
       this.changed();
     });
+    this.drawSvgs();
     this.changed();
     // Art sent from Sprite Forge or Tile Mapper while no project was open goes into this one.
     if (this.inbox.length) { const waiting = this.inbox; this.inbox = []; queueMicrotask(() => { for (const m of waiting) void this.receiveArt(m); }); }
@@ -754,6 +756,21 @@ export class Store {
     if (!this.doc || !s) { this.say('Open a scene first: the map goes into it'); return; }
     sendArt('tile-mapper', { type: 'new-map', name: 'map', link: { project: this.projectId!, projectName: this.doc.project.name, scene: s.path, node: null } });
     this.openLab('tile-mapper');
+  }
+
+  /**
+   * An SVG image (project.writeSvg) is its source text: give each one new to the editor its bytes and a loaded picture,
+   * as an imported image has. An id's source never changes (writing again makes a new id), so each is drawn once.
+   */
+  private drawSvgs(): void {
+    for (const a of this.doc?.project.assets ?? []) {
+      if (a.svg === undefined || this.blobs.has(a.id)) continue;
+      const blob = new Blob([a.svg], { type: 'image/svg+xml' }), id = a.id;
+      this.blobs.set(id, blob);
+      const i = new Image();
+      i.onload = () => { this.images.set(id, i); this.changed(); };
+      i.src = URL.createObjectURL(blob);
+    }
   }
 
   private async loadImages(): Promise<void> {

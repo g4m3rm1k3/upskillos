@@ -6,6 +6,7 @@ import { breakout } from './breakout';
 import { mazeChase } from './mazeChase';
 import { zombieArena } from './zombieArena';
 import { cliffWalk } from './cliffWalk';
+import { breakoutLab } from './breakoutLab';
 
 export type { GameExample };
-export const EXAMPLES: GameExample[] = [potionHunt, platformer, breakout, mazeChase, zombieArena, cliffWalk];
+export const EXAMPLES: GameExample[] = [potionHunt, platformer, breakout, mazeChase, zombieArena, cliffWalk, breakoutLab];

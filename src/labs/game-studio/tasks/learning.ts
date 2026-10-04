@@ -12,6 +12,8 @@ import type { EnvSpec, Reading } from '../ml/env';
 import { breakout } from '../examples/breakout';
 import { BREAKOUT_SPEC } from '../ml/breakout';
 import { cliffWalk, CLIFF_SPEC } from '../examples/cliffWalk';
+import { breakoutLab, breakoutLabCode, PADDLE_AGENT, PADDLE_AGENT_SIDEWAYS, PADDLE_SPEC, FULL_WALL, PYRAMID, wallScript } from '../examples/breakoutLab';
+import type { PlayView, ProjectView } from './types';
 import type { QOptions } from '../ml/qlearning';
 
 /** Breakout's environment without bins: what the agent sees, does and earns, but no states yet. */
@@ -165,9 +167,246 @@ export const LEARNING: GameTask[] = [
       },
     },
   },
+  {
+    id: 'breakout-scratch',
+    chain: 'Game AI that learns',
+    title: 'Breakout learns, from scratch',
+    goal: 'Turn Breakout’s paddle into an agent yourself (what it sees, does and earns), train it, ship its brain, and change the wall to see it learn again.',
+    images: breakoutLab.images,
+    start: breakoutLabCode(),
+    agent: { agent: 'Paddle' },
+    steps: [
+      {
+        text: 'Make the paddle an agent that can act. In scripts/paddle.js add actions = [\'left\', \'stay\', \'right\'] and move = 0, and a method act(action) that sets this.move = action − 1 and launches the ball if it is resting (if (!ball.launched && ball.lives > 0 && ball.left > 0) ball.launch(), with ball = scene.get(\'Ball\')). In physicsUpdate, steer with this.move while ai.training (or when a brain is driving), and with the keys otherwise.',
+        hint: 'const steer = ai.training || ai.has(this.brain) ? this.move : input.axis(\'move_left\', \'move_right\')',
+        check: { kind: 'play', test: async (v) => {
+          const src = v.script('scripts/paddle.js') ?? '';
+          if (!/actions\s*=\s*\[/.test(src)) return 'The paddle needs a list of its actions: actions = [\'left\', \'stay\', \'right\'].';
+          if (!/\bact\s*\(\s*\w+\s*\)\s*\{/.test(src)) return 'The paddle needs a method act(action).';
+          const r = await v.play({ seconds: 0.2 });
+          if (r.errors.length) return `The game stopped: ${r.errors[0]}`;
+          const p = r.node('Paddle') as unknown as { act?: (a: number) => void; actions?: unknown[]; move?: number };
+          if (!p?.act || !Array.isArray(p.actions)) return 'Paddle has no act(action) or actions while the game runs: is paddle.js attached to it?';
+          p.act(2);
+          if (p.move !== 1) return 'act(2) (right) should set this.move to 1: this.move = action − 1.';
+          const ball = r.node('Ball') as unknown as { launched?: boolean };
+          if (!ball?.launched) return 'act() should launch the ball when it is resting on the paddle.';
+          return /ai\.training/.test(src) || 'In physicsUpdate, steer with this.move while ai.training (training cannot press keys).';
+        } },
+      },
+      {
+        text: 'What it sees: add observe(), returning the numbers that decide the move. Return [(ball.x − paddle.x) / 480, falling ? 1 : 0]: how far the ball is across from the paddle, scaled to about −1 to 1, and whether it is coming down (velocity.y > 0). Give their names too: observations = [\'ball across\', \'ball falling\'].',
+        check: { kind: 'play', test: async (v) => observes(v) },
+      },
+      {
+        text: 'What it earns: add reward(), the reward since the last decision: +1 for each brick (10 points of ball.score) and −3 for each lost ball (ball.lives going down). Keep the last score and lives in ready() and update them each call. And done(): true when ball.lives <= 0 or ball.left <= 0.',
+        check: { kind: 'play', test: async (v) => {
+          const r = await v.play({ seconds: 0.2 });
+          const p = r.node('Paddle') as unknown as { reward?: () => unknown; done?: () => unknown };
+          if (typeof p?.reward !== 'function') return 'Paddle needs reward(): what it earned since the last decision.';
+          if (typeof p?.done !== 'function') return 'Paddle needs done(): whether the episode is over.';
+          const rw = p.reward(), d = p.done();
+          if (typeof rw !== 'number' || !Number.isFinite(rw)) return `reward() should return a number; it returned ${String(rw)}.`;
+          if (rw !== 0) return `At the start nothing has happened, so reward() should be 0; it returned ${rw}.`;
+          return d === false || `At the start the game is not over, so done() should be false; it returned ${String(d)}.`;
+        } },
+      },
+      {
+        text: 'Train it. Run › Train an agent…: the environment is { "agent": "Paddle" }. Q-learning needs states: add "bins": [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5]] (7 bins across, the middle one "over the paddle"; and falling or not: 14 states). Press Train or ▶ Train in view. It should beat random play by far.',
+        check: { kind: 'editor', test: (v) => {
+          const runs = (v.training?.runs ?? []).filter((r) => r.spec.agent === 'Paddle');
+          if (!runs.length) return 'Train with { "agent": "Paddle", "bins": … } and wait for "Trained."';
+          return runs.some((r) => r.score > r.random + 10) || 'Trained, but it did not beat random play by much: check observe() (the difference across, not the two positions) and the bins.';
+        } },
+      },
+      {
+        text: 'Ship it: in the dialog press Save as brain (brains/paddle.json), and give the paddle’s script brain = \'brains/paddle.json\'. Press ▶ Run: the brain plays, no keys needed.',
+        check: { kind: 'editor', test: (v) => {
+          if (!(v.training?.saved ?? []).includes('brains/paddle.json') && !(v.project.brains ?? []).some((b) => b.path === 'brains/paddle.json')) return 'Save the trained agent as brains/paddle.json (Save as brain in the dialog).';
+          return /brain\s*=\s*['"]brains\/paddle\.json['"]/.test(v.script('scripts/paddle.js') ?? '') || 'Give the paddle’s script brain = \'brains/paddle.json\'.';
+        } },
+      },
+      {
+        text: 'Change the level: in scripts/wall.js edit the map (# a brick, . a gap): one row, a pyramid, two columns at the sides. Train again (Compare the old and new walls if you like). The agent sees only the ball, not the bricks, so it learns the same skill, keeping the ball in play, and the wall changes how much that skill earns and how long learning takes.',
+        check: { kind: 'editor', test: (v) => {
+          const wall = v.script('scripts/wall.js') ?? '';
+          if (wall.includes(JSON.stringify(FULL_WALL, null, 2))) return 'Edit the MAP in scripts/wall.js: change some # to . (or add rows).';
+          return (v.training?.runs ?? []).filter((r) => r.spec.agent === 'Paddle').length >= 2 || 'Train again on the new wall.';
+        } },
+      },
+    ],
+    solution: `project.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT)})
+project.writeScript('scripts/wall.js', ${JSON.stringify(wallScript(PYRAMID))})`,
+    done: 'You built a learning agent for a game from scratch. Back to the lesson: the same recipe works for your own games.',
+    solvedEditor: {
+      training: {
+        draft: PADDLE_SPEC,
+        runs: [
+          { method: 'q', spec: PADDLE_SPEC, score: 48, random: -5, options: { episodes: 100 } },
+          { method: 'q', spec: PADDLE_SPEC, score: 20, random: -6, options: { episodes: 100 } },
+        ],
+        watched: false,
+        saved: ['brains/paddle.json'],
+      },
+    },
+  },
+  {
+    id: 'sarsa-vs-q',
+    chain: 'Game AI that learns',
+    title: 'SARSA against Q-learning',
+    goal: 'Train SARSA and Q-learning on Cliff Walk, see one walk safe and one walk the edge, and compare them over seeds.',
+    images: cliffWalk.images,
+    start: cliffWalk.code,
+    agent: CLIFF_SPEC,
+    steps: [
+      {
+        text: 'Run › Train an agent… with Table (TD). Set the update to SARSA, episodes 500, α 0.5, γ 1, ε from 0.1 to 0.1, constant, and press ▶ Train in view. Watch the arrows: SARSA’s run along the top row, away from the spikes. Let it finish.',
+        check: { kind: 'editor', test: (v) => !!(v.training?.runs ?? []).find((r) => r.inView && r.options?.algorithm === 'sarsa') || 'Train in view with the update set to SARSA, and let it finish.' },
+      },
+      {
+        text: 'Now the same with the update set to Q-learning. Its arrows run along the row next to the spikes: the 13-move walk, −13. Exploring, a random step there falls off, which is why Q-learning earns less per episode while it learns.',
+        check: { kind: 'editor', test: (v) => !!(v.training?.runs ?? []).find((r) => r.inView && (r.options?.algorithm ?? 'q') === 'q' && r.options?.schedule === 'constant') || 'Train in view with Q-learning (ε 0.1 constant), and let it finish.' },
+      },
+      {
+        text: 'Compare them: in Compare, add SARSA and Q-learning with those settings (300 episodes is enough), seeds 5, Compare. SARSA has the better late return (it pays less for exploring), Q-learning the better greedy score (its walk is shorter): two questions, two answers.',
+        check: { kind: 'editor', test: (v) => !!(v.training?.compared ?? []).find((c) => c.seeds >= 3 && c.options.some((o) => o.algorithm === 'sarsa') && c.options.some((o) => (o.algorithm ?? 'q') === 'q')) || 'Compare SARSA and Q-learning over 3 or more seeds.' },
+      },
+    ],
+    solution: '// Every step of this task is done in Run › Train an agent…',
+    done: 'You saw on-policy and off-policy learning disagree. Back to the lesson for why.',
+    solvedEditor: {
+      training: {
+        draft: CLIFF_SPEC,
+        runs: [
+          { method: 'q', spec: CLIFF_SPEC, score: -17, random: -1751, inView: true, options: { episodes: 500, algorithm: 'sarsa', alpha: 0.5, gamma: 1, epsilon: 0.1, epsilonEnd: 0.1, schedule: 'constant' } },
+          { method: 'q', spec: CLIFF_SPEC, score: -13, random: -1751, inView: true, options: { episodes: 500, algorithm: 'q', alpha: 0.5, gamma: 1, epsilon: 0.1, epsilonEnd: 0.1, schedule: 'constant' } },
+        ],
+        watched: false,
+        compared: [{ seeds: 5, options: [{ episodes: 300, algorithm: 'sarsa' }, { episodes: 300, algorithm: 'q' }] }],
+      },
+    },
+  },
+  {
+    id: 'all-four',
+    chain: 'Game AI that learns',
+    title: 'Four ways to update',
+    goal: 'Compare Q-learning, SARSA, Expected SARSA and Double Q-learning on Cliff Walk, then push the step size to 1.',
+    images: cliffWalk.images,
+    start: cliffWalk.code,
+    agent: CLIFF_SPEC,
+    steps: [
+      {
+        text: 'Run › Train an agent… › Compare. With episodes 300, α 0.5, γ 1, ε 0.1 to 0.1 constant, add four settings, one per update: Q-learning, SARSA, Expected SARSA, Double Q-learning. Seeds 5, Compare. Which earns most while learning? Which walks are shortest?',
+        check: { kind: 'editor', test: (v) => !!(v.training?.compared ?? []).find((c) => c.seeds >= 3 && ['q', 'sarsa', 'expected-sarsa', 'double-q'].every((a) => c.options.some((o) => (o.algorithm ?? 'q') === a))) || 'Compare all four updates (Q-learning, SARSA, Expected SARSA, Double Q-learning) over 3 or more seeds.' },
+      },
+      {
+        text: 'A bigger step: compare SARSA and Expected SARSA with α 1 (the rest the same). SARSA’s target depends on the one random next action it happens to pick, so a full step chases that noise; Expected SARSA averages over the next actions and holds up.',
+        check: { kind: 'editor', test: (v) => !!(v.training?.compared ?? []).find((c) => c.seeds >= 3 && c.options.some((o) => o.algorithm === 'sarsa' && o.alpha === 1) && c.options.some((o) => o.algorithm === 'expected-sarsa' && o.alpha === 1)) || 'Compare SARSA and Expected SARSA, both with α 1, over 3 or more seeds.' },
+      },
+    ],
+    solution: '// Every step of this task is done in Run › Train an agent…',
+    done: 'You compared the four TD updates. Back to the lesson for maximization bias.',
+    solvedEditor: {
+      training: {
+        draft: CLIFF_SPEC, runs: [], watched: false,
+        compared: [
+          { seeds: 5, options: [{ episodes: 300, algorithm: 'q' }, { episodes: 300, algorithm: 'sarsa' }, { episodes: 300, algorithm: 'expected-sarsa' }, { episodes: 300, algorithm: 'double-q' }] },
+          { seeds: 5, options: [{ episodes: 300, algorithm: 'sarsa', alpha: 1 }, { episodes: 300, algorithm: 'expected-sarsa', alpha: 1 }] },
+        ],
+      },
+    },
+  },
+  {
+    id: 'experiments',
+    chain: 'Game AI that learns',
+    title: 'A parameter study',
+    goal: 'Sweep the step size α on Cliff Walk over seeds, read the means and their spread, and see more seeds tighten them.',
+    images: cliffWalk.images,
+    start: cliffWalk.code,
+    agent: CLIFF_SPEC,
+    steps: [
+      {
+        text: 'Run › Train an agent… › Compare. Q-learning, 100 episodes, γ 1, ε 0.1 to 0.1 constant; add α 0.1, 0.3, 0.5 and 0.9 (four settings). Seeds 5, Compare. Read each late return as mean ± spread: which α is best here, and do the spreads overlap?',
+        check: { kind: 'editor', test: (v) => !!(v.training?.compared ?? []).find((c) => c.seeds >= 5 && new Set(c.options.map((o) => o.alpha)).size >= 3) || 'Compare at least three values of α over 5 or more seeds.' },
+      },
+      {
+        text: 'The same four settings with 10 seeds. The means move a little and the ± numbers (sample standard deviations over seeds) settle; the uncertainty of each mean shrinks like 1/√(seeds). A difference you would report should be larger than that uncertainty.',
+        check: { kind: 'editor', test: (v) => !!(v.training?.compared ?? []).find((c) => c.seeds >= 10 && new Set(c.options.map((o) => o.alpha)).size >= 3) || 'Compare the same α values over 10 or more seeds.' },
+      },
+    ],
+    solution: '// Every step of this task is done in Run › Train an agent…',
+    done: 'You ran a parameter study. Back to the lesson for intervals and reporting.',
+    solvedEditor: {
+      training: {
+        draft: CLIFF_SPEC, runs: [], watched: false,
+        compared: [
+          { seeds: 5, options: [0.1, 0.3, 0.5, 0.9].map((alpha) => ({ episodes: 100, alpha })) },
+          { seeds: 10, options: [0.1, 0.3, 0.5, 0.9].map((alpha) => ({ episodes: 100, alpha })) },
+        ],
+      },
+    },
+  },
+  {
+    id: 'state-design',
+    chain: 'Game AI that learns',
+    title: 'How many states?',
+    goal: 'Train Breakout’s agent on coarser and finer bins, then give it one more number, and see what each does to learning.',
+    images: breakoutLab.images,
+    start: `${breakoutLabCode()}\nproject.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT)})`,
+    agent: PADDLE_SPEC,
+    steps: [
+      {
+        text: 'The paddle is already an agent (lesson 9.3). Run › Train an agent… with coarse bins across: "bins": [[-0.1, 0.1], [0.5]] (3 × 2 = 6 states: left of, over, or right of the paddle). Train. Compare its score with the 14-state agent’s (48 on most seeds).',
+        check: { kind: 'editor', test: (v) => !!binnedRuns(v).find((b) => b[0] <= 2) || 'Train with only 2 cut points across, such as [-0.1, 0.1].' },
+      },
+      {
+        text: 'Now fine bins: "bins": [[-0.5, -0.3, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5], [0.5]] (13 × 2 = 26 states). Train. Finer is not better here: each state is visited less in the same 100 episodes.',
+        check: { kind: 'editor', test: (v) => !!binnedRuns(v).find((b) => b[0] >= 10) || 'Train with 10 or more cut points across.' },
+      },
+      {
+        text: 'One more number: in scripts/paddle.js make observe() return a third number, 1 if the ball is going right (velocity.x > 0) and 0 if not, and add \'ball going right\' to observations. Train with "bins": [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5], [0.5]] (28 states). It can now tell a ball coming back off a wall from one flying away; it also has twice the states to learn.',
+        check: { kind: 'editor', test: (v) => !!binnedRuns(v).find((b) => b.length >= 3) || 'Add a third number to observe(), a third list to "bins", and train.' },
+      },
+    ],
+    solution: `project.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT_SIDEWAYS)})`,
+    done: 'You measured what states cost and buy. Back to the lesson for aliasing and the Markov property.',
+    solvedEditor: {
+      training: {
+        draft: PADDLE_SPEC, watched: false,
+        runs: [
+          { method: 'q', spec: { ...PADDLE_SPEC, bins: [[-0.1, 0.1], [0.5]] }, score: 21, random: -5 },
+          { method: 'q', spec: { ...PADDLE_SPEC, bins: [[-0.5, -0.3, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5], [0.5]] }, score: 46, random: -5 },
+          { method: 'q', spec: { ...PADDLE_SPEC, bins: [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5], [0.5]] }, score: 44, random: -5 },
+        ],
+      },
+    },
+  },
 ];
 
 /** A run with Q-learning, γ 1 and this α (the textbook's cliff settings otherwise). */
 function textbookQ(o: QOptions | undefined, alpha: number): boolean {
   return !!o && (o.algorithm ?? 'q') === 'q' && Math.abs((o.alpha ?? 0.2) - alpha) < 1e-9 && (o.gamma ?? 0.97) === 1;
+}
+
+/** Step 2's check: observe() returns two finite numbers that change as the ball moves across. */
+async function observes(v: PlayView & ProjectView): Promise<true | string> {
+  if (!/observe\s*\(\s*\)\s*\{/.test(v.script('scripts/paddle.js') ?? '')) return 'The paddle needs a method observe() that returns a list of numbers.';
+  const r = await v.play({ seconds: 0.2 });
+  if (r.errors.length) return `The game stopped: ${r.errors[0]}`;
+  const p = r.node('Paddle') as unknown as { observe?: () => unknown; position: { x: number } };
+  const ball = r.node('Ball') as unknown as { position: { x: number } };
+  const o = p?.observe?.();
+  if (!Array.isArray(o) || !o.length || !o.every((x) => typeof x === 'number' && Number.isFinite(x))) return `observe() should return a list of numbers; it returned ${JSON.stringify(o)}.`;
+  if (o.length !== 2) return `Return two numbers (across, falling); observe() gave ${o.length}.`;
+  // Measured against where things are now (a saved brain may already have moved the paddle).
+  const want = (ball.position.x - p.position.x) / 480;
+  if (Math.abs(o[0] - want) > 1e-6) return `The first number should be (ball x − paddle x) / 480 = ${+want.toFixed(4)} here; it is ${+o[0].toFixed(4)}.`;
+  p.position.x -= 240;
+  const o2 = p.observe!() as number[];
+  return Math.abs(o2[0] - (want + 0.5)) < 1e-6 || `Moving the paddle 240 pixels left should add 240 / 480 = 0.5 to the first number; it went from ${+o[0].toFixed(4)} to ${+o2[0].toFixed(4)}.`;
+}
+
+/** The cut counts of each binned reading, for each Paddle training run (lesson 9.7's task). */
+function binnedRuns(v: { training?: TrainingView }): number[][] {
+  return (v.training?.runs ?? []).filter((r) => r.spec.agent === 'Paddle').map((r) => (r.spec.bins ?? []).filter((c) => c.length).map((c) => c.length));
 }

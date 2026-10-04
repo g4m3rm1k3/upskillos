@@ -4,16 +4,17 @@
 //
 //   curve     the average over seeds of each episode's return, smoothed over the last `window` episodes
 //   late      each run's average return over its last `lateEpisodes` episodes: how it does while still learning
-//   greedy    each run's final table played greedily (no exploring) on held-out games: what it has learned
+//   greedy    each run's kept table (the best of its greedy checks, as Train keeps) played greedily on held-out games:
+//             what training would give you
 import type { GameEnv } from './env';
 import { QLearner, evaluateQ, type QOptions } from './qlearning';
 
 export interface CompareConfig { label: string; options: QOptions }
 export interface CompareRun { config: number; seed: number; returns: number[]; greedy: number }
 
-/** Train one setting with one seed to the end: its returns per episode, and its greedy score. */
+/** Train one setting with one seed to the end, as Train does: its returns per episode, and its greedy score. */
 export function runOnce(env: GameEnv, options: QOptions, seed: number): { returns: number[]; greedy: number } {
-  const L = new QLearner(env, { ...options, seed, checkEvery: 0 });
+  const L = new QLearner(env, { checkEvery: 10, ...options, seed });
   const returns: number[] = [];
   for (;;) {
     const t = L.tick();

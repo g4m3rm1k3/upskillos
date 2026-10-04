@@ -265,6 +265,11 @@ export class Doc {
     this.run(label, null, `project.writeScript(${lit(path)}, ${lit(source)})`, () => projectApi(this.project).writeScript(path, source));
   }
 
+  /** An SVG image from its source text (see ProjectApi.writeSvg). Returns its id. */
+  writeSvg(path: string, source: string, label = `Save ${path}`): string {
+    return this.run(label, null, `project.writeSvg(${lit(path)}, ${lit(source)})`, () => projectApi(this.project).writeSvg(path, source));
+  }
+
   /** Save a trained agent's brain (Run › Train an agent… › Save as brain). */
   saveBrain(path: string, brain: Omit<BrainData, 'path'>): void {
     this.run(`Save brain ${path}`, null, `project.saveBrain(${lit(path)}, ${lit(brain)})`, () => projectApi(this.project).saveBrain(path, brain));

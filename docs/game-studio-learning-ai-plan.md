@@ -51,14 +51,73 @@ Each lesson has:
 |---|---|---|---|
 | 1 | Learning from every step | Prediction vs control; Monte Carlo vs TD(0); bootstrapping; the TD error; the random walk (Ex. 6.2) | Step and Predict through Cliff Walk's updates |
 | 2 | Exploration | ε-greedy and its schedules, softmax (Boltzmann), optimistic initial values; exploration vs exploitation | Compare schedules and starting values on the cliff |
-| 3 | On-policy and off-policy: SARSA and Q-learning | The two targets; why SARSA walks safe and Q-learning walks the edge (Ex. 6.6, Fig. 6.4) | Train both in view; Compare them over seeds |
-| 4 | Expected SARSA and Double Q-learning | Averaging over the policy; maximization bias (Ex. 6.7) and its fix | Compare all four updates |
-| 5 | Experiments that mean something | α, γ and episodes; seeds and spread; learning curves vs greedy scores; reporting results | Compare sweeps of α and γ |
-| 6 | Bigger state spaces | Binning, aliasing and the Markov property; how many bins; state design | Breakout and the chaser: bins measured |
-| 7 | Beyond tables | Linear function approximation, features, the semi-gradient update; DQN's replay buffer and target network | (notebook; linear Q in Game Studio later) |
-| 8 | NPCs that learn in your own game | Script agents, brains, ai.training, scripted opponents, shared brains | Maze Chase: a ghost that learns |
-| 9 | When not to learn | Search, state machines, behaviour trees vs learning, measured | The learned ghost vs the breadth-first-search ghost |
-| 10 | Capstone | A learning enemy in your own game | Your project |
+| 3 | Breakout from scratch (added 2026-10-04, the user: "learn how to apply it from scratch to the breakout game", and change the map to see it learn differently) | The recipe: actions, observations (relative, scaled, deciding), reward (failure costly; check random), done, bins; train, judge, ship; a new wall | Breakout Lab: make the paddle an agent, train, Save as brain, edit the wall's map, retrain |
+| 4 | On-policy and off-policy: SARSA and Q-learning | The two targets; why SARSA walks safe and Q-learning walks the edge (Ex. 6.6, Fig. 6.4) | Train both in view; Compare them over seeds |
+| 5 | Expected SARSA and Double Q-learning | Averaging over the policy; maximization bias (Ex. 6.7) and its fix | Compare all four updates |
+| 6 | Experiments that mean something | α, γ and episodes; seeds and spread; learning curves vs greedy scores; reporting results | Compare sweeps of α and γ |
+| 7 | Bigger state spaces | Binning, aliasing and the Markov property; how many bins; state design | Breakout and the chaser: bins measured |
+| 8 | Beyond tables | Linear function approximation, features, the semi-gradient update; DQN's replay buffer and target network | (notebook; linear Q in Game Studio later) |
+| 9 | NPCs that learn in your own game | Script agents, brains, ai.training, scripted opponents, shared brains | Maze Chase: a ghost that learns |
+| 10 | When not to learn | Search, state machines, behaviour trees vs learning, measured | The learned ghost vs the breadth-first-search ghost |
+| 11 | Capstone | A learning enemy in your own game | Your project |
+
+## Cribbage with a learning opponent, and labs that start from the finished agent (2026-10-04)
+
+**The user asked for:**
+- how to build a card game, cribbage, with machine learning as the opponent, with a developer mode that shows the
+  AI's hand;
+- every machine-learning lab to start with the final, already-trained model, to show what is being built;
+- no steps left out, so the learner can apply the recipe to any game.
+
+**1. Every ML lab starts with the finished agent.**
+- A task gets a `goal`: the finished project (the game plus its trained brain). The task panel's first item, ▶ Watch
+  the finished agent, runs it in the game area without touching the learner's project.
+- The brains are trained ahead of time by a script and stored as a generated file. A test checks they match a fresh
+  training run, so they cannot drift from the code.
+
+**2. Cribbage, the game.** A Cribbage Lab example, built step by step in tasks:
+- Rules as a script module (`scripts/cribbage.js`):
+  - the deck and the deal; the discard to the crib; the cut (starter card, his heels);
+  - pegging: the count to 31, go, and scoring 15, 31, pairs, runs and last card;
+  - the show: fifteens, pairs, runs, flush and nobs, for the hand and the crib; a game to 121 (61 for training).
+- Every scoring rule is tested against known hands (a 29 hand, and so on).
+- **Input:** keys 1–6 select cards, Enter confirms; the engine has no mouse input yet.
+- **Card faces: SVG, drawn by code.** The user asked that the lessons teach SVG along the way: a JavaScript game
+  doesn't need pixel art. So an image can be SVG source text kept in the project (`project.writeSvg(path, source)`,
+  undoable, and in the GUI → code log). The Scene API code builds all 52 faces and the back from one function: a
+  rounded rect, the corner rank and suit, and the pips. A lesson teaches SVG's coordinates, shapes, paths, text and
+  `<g transform>`.
+- **Developer mode** (key D): the AI's hand face up, and beside each move it could make, the value it gives that
+  move, so you see why it chose.
+
+**3. Agents with changing legal moves.** Cribbage does not fit a fixed action list or bins:
+- the moves change every turn (the cards in hand, the pairs that could be thrown);
+- the state is too large for a table.
+So script agents gain `legalActions()` and `features(action)`. A new learner scores each legal move as
+Q(s, a) = w · φ(s, a): semi-gradient Q-learning with features of the move (lesson 9.8, now in Game Studio). It is
+another method in Train an agent….
+- **Discard:** a one-step choice (a contextual bandit). Its features describe the kept four and the two thrown, and
+  whose crib it is. The reward is the points that follow.
+- **Pegging:** each card's features are the points it scores now, the count after it, whether it leaves 5 or 21
+  (dangerous), whether it sets up a pair or run for the opponent, and its rank. The reward is points pegged minus
+  points conceded.
+- **Training:** against a scripted opponent, then self-play. Measured against random play and against the scripted
+  player, over seeds.
+
+**4. The lessons: a mini-series**, every step present.
+1. The finished game, played against the trained AI.
+2. Cards and the deck.
+3. The deal and the crib.
+4. Scoring the show.
+5. Pegging.
+6. A full game with a scripted opponent.
+7. Developer mode.
+8. The AI's discard: features and a bandit.
+9. The AI's pegging: linear Q over moves.
+10. Self-play and judging the AI.
+11. Shipping the brain.
+
+Each lesson has a notebook and a Game Studio task, with the task's first item showing the finished AI.
 
 ## Order of work
 
@@ -157,9 +216,93 @@ real bottleneck is measuring each lesson's claims (training runs over seeds), no
   - Greedy ε 0: Q₀ 0 gives −13 on every seed; Q₀ −100 gives a greedy return of −14.2 ± 1.1.
 - **Test:** `explore.test.js`.
 
+**Lesson 9.3, "Breakout from Scratch": done (2026-10-04).**
+- **Breakout Lab example** (`examples/breakoutLab.ts`):
+  - the wall is built when the game starts from a text map in scripts/wall.js;
+  - the paddle starts as a plain player's paddle;
+  - `PADDLE_AGENT` is the written-out agent, and `PADDLE_SPEC` gives 14 states.
+- **The `breakout-scratch` task, 6 steps** (shots: all tick):
+  - the first 3 are play checks that run your script (act, observe, reward and done);
+  - then train, Save as brain and set the brain field, then edit the map and retrain.
+- **Measured** (`ml/breakoutLab.test.ts`): random −5; trained 48 (full wall) and 20 (pyramid); absolute positions
+  learn nothing.
+  - Over 3 seeds: full 35/48/48, one row 12/10/12, pyramid 20/19/20, sides 16/16/16.
+  - Without the falling bit: 43.
+- **Notebook:** absolute vs relative on a 20-column catch (10% against 100%), rewards from the score, how states
+  multiply, and the observe() challenge. Test: `scratch.test.js`.
+- **Compare now keeps the best checked table**, as Train does (`runOnce` with checkEvery 10). On Breakout the final
+  table alone was unreliable.
+
+**Lesson 9.4, "SARSA and Q-learning": done (2026-10-04).**
+- `004-sarsa-and-q-learning.js`.
+- **Notebook,** on a plain-JS cliff:
+  - one step, both targets: −9 against −41 (Expected SARSA −9.875);
+  - 10 seeds: Q-learning earns −50.4 while learning but walks 13 every time; SARSA earns −27.2 and walks 17 on
+    most seeds (two greedy tables loop);
+  - edge values: Q-learning −11.0 against SARSA −20.4 at column 1;
+  - ε faded to exactly 0: SARSA still walks 17 after 5000 episodes;
+  - the two walks drawn; the SARSA-target challenge.
+- **Try it:** the `sarsa-vs-q` task (3 steps tick). Test: `sarsa.test.js`.
+
+**Lesson 9.5, "Expected SARSA and Double Q-learning": done (2026-10-04).**
+- `005-expected-sarsa-and-double-q-learning.js`.
+- **Notebook:**
+  - the max of noisy estimates is 1.541, 0.701 and 0.345 (1, 5 and 20 samples; truth 0), against the double
+    estimate's 0.003;
+  - Example 6.7: Q-learning goes left 70% of the time in the first 10 episodes and 86% in the first 50, peaking at
+    96%; Double Q 50% and 28%, peaking at 53%;
+  - the cliff at α 1: SARSA −102.7 against Expected SARSA −24.8;
+  - the Fig. 6.5 curve; the Double Q target challenge.
+- **Try it:** the `all-four` task (2 steps tick). Game Studio's Compare at α 1: SARSA −91.1 ± 15.4 against Expected
+  SARSA −22.3 ± 2.1.
+- **Test:** `double.test.js`.
+
+**Lesson 9.6, "Experiments That Mean Something": done (2026-10-04).**
+- `006-experiments-that-mean-something.js`.
+- **Notebook:**
+  - 10 seeds of one setting span −73.1 to −92.7 (sd 5.7);
+  - 95% intervals: ±9.1, 4.1, 3.3 and 2.0 for 5, 10, 20 and 50 seeds;
+  - the α study on the cliff: bigger is better, because the cliff is deterministic;
+  - the γ corridor (+1 near against +10 nine steps away, threshold 0.774, exploring starts): 1, 0.9 and 0.8 go far;
+    0.7 and 0.5 go near;
+  - the α study drawn with bars; the reporting challenge (the population sd fails it).
+- **Try it:** the `experiments` task (an α sweep over 5 then 10 seeds; ticks). Test: `experiments.test.js`.
+- **YAML builds now auto-quote** plain values containing ": " (scratchpad safeyaml.py). That had broken three
+  lessons, once as an invalid JS object.
+
+**Lesson 9.7, "Bigger State Spaces": done (2026-10-04).**
+- `007-bigger-state-spaces.js`.
+- **Notebook** (the catch game):
+  - resolution: 2 bins get worse with training (0.45 → 0.10 → 0.00); 3 and 7 bins catch everything; 39 exact bins
+    are slow (0.79 at 100 episodes, 0.67 at 1000, 1.00 at 5000);
+  - aliasing with a drifting ball: 0.46 seeing ball − paddle, 0.84 adding the drift, 1.00 with "landing − paddle";
+  - updates per state for several designs; the bins-to-state challenge, matched to `brain.ts`.
+- **Try it:** the `state-design` task on Breakout Lab (the agent pre-written; ticks).
+  - 3 bins across 39/21/21; 7 bins 35/48/48; 13 bins 38/46/42; with "ball going right" 40/44/45 (3 seeds,
+    100 episodes).
+- **Test:** `states.test.js`. New export: `PADDLE_AGENT_SIDEWAYS`.
+
+**Lesson 9.8, "Beyond Tables": done, notebook only (2026-10-04).**
+- `008-beyond-tables.js`.
+- **Notebook** (5 seeds):
+  - table 0.62/0.91/0.97; tiles alone 0.21/0.41/0.40 (they straddle d = 0); tiles + side feature 0.90/1.00/1.00;
+  - one update spreads as a tent from d = 1 to 9;
+  - a semi-gradient step by hand;
+  - replay: the table catches 0.91 at 30 episodes, not 0.62;
+  - the linear update challenge.
+- **No Try it task yet:** Game Studio has no linear Q. The lesson says so. Test: `approx.test.js`.
+- **Fixed:** `safeyaml.py` now skips block scalars. It had quoted code lines containing ` ? … : …`.
+
 **Next:**
-- the lessons above, from 9.3;
-- then step 2 (shared brains, a scripted opponent), the NPC overlay, and linear Q in Game Studio.
+- linear Q (tile coding) in Game Studio's QLearner, then a Try it task for 9.8;
+- 9.9 NPCs (shared brains, scripted opponent, Maze Chase ghost);
+- 9.10 when not to learn;
+- 9.11 capstone.
+
+**Building notes for the next session:**
+- Lessons are generated from `course-sources/making-games.yaml`. The chapter 8 and 9 blocks are written by scratchpad
+  scripts (q/build.mjs, c9/build9.mjs with l1–l6.mjs). If the scratchpad is gone, edit the YAML directly.
+- `course:create --force` regenerates every lesson; only changed files differ.
 
 **Earlier list, kept for reference:**
 - step 2: shared brains, several NPCs learning one table, and a scripted opponent in an example;

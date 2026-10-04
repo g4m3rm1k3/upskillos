@@ -93,6 +93,8 @@ export interface AssetData {
   height: number;
   /** Where the picture was made, so it can be opened there again: "sprite-forge:<sprite id>". */
   origin?: string;
+  /** An SVG image written as text (project.writeSvg): the picture is this source, kept in the project, not separate bytes. */
+  svg?: string;
 }
 
 /** A named input action and the keys bound to it (KeyboardEvent.code values, e.g. "ArrowLeft", "KeyA"). */

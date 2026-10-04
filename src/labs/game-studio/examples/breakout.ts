@@ -10,10 +10,10 @@
 import type { GameExample } from './types';
 import { BREAKOUT_SPEC } from '../ml/breakout';
 
-const P = 'assets/puzzle-pack';
-const BRICKS = ['red', 'yellow', 'green', 'blue'].map((c) => `${P}/tiles-${c}/tile${c}_62.png`);   // 208 × 108
-const PADDLE = `${P}/paddles/paddle_01.png`;   // 520 × 140
-const BALL = `${P}/balls/ballblue_01.png`;     // 128 × 128
+export const P = 'assets/puzzle-pack';
+export const BRICKS = ['red', 'yellow', 'green', 'blue'].map((c) => `${P}/tiles-${c}/tile${c}_62.png`);   // 208 × 108
+export const PADDLE = `${P}/paddles/paddle_01.png`;   // 520 × 140
+export const BALL = `${P}/balls/ballblue_01.png`;     // 128 × 128
 
 const paddle = `export default class Paddle extends CharacterBody2D {
   speed = 480;   // pixels per second
@@ -99,7 +99,7 @@ const ball = `export default class Ball extends RigidBody2D {
 }
 `;
 
-const code = `// Breakout: the whole 960 × 540 screen, with no camera, so the world is the screen.
+export const BREAKOUT_CODE = `// Breakout: the whole 960 × 540 screen, with no camera, so the world is the screen.
 scene = project.createScene('scenes/breakout.scene', 'Node2D', 'Breakout')
 project.setSettings({ background: '#1b1f3b', pixelArt: false, gravity: 980 })   // smooth art, so no pixel-art scaling
 
@@ -161,7 +161,7 @@ export const breakout: GameExample = {
   blurb: 'Bat the ball into a wall of 48 bricks with the paddle, and clear them all with three balls. A ball that moves by itself and bounces, bricks that break, aiming off the paddle, and collision layers.',
   art: 'Kenney Puzzle Pack 2 (CC0)',
   images: [...BRICKS, PADDLE, BALL],
-  code,
+  code: BREAKOUT_CODE,
   guide: [
     'Press ▶ Run (F5). ← → or A and D move the paddle; Space launches the ball. Where the ball lands on the paddle aims it: the middle sends it straight up, the ends out to the side.',
     'Select Ball. It is a RigidBody2D: once launched, its script never moves it. Physics does, using its velocity (the script only sets that velocity). gravityScale is 0, so it does not fall, and bounce is 1, so it leaves every wall and brick as fast as it came.',

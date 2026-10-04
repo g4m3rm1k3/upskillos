@@ -18,7 +18,7 @@ const CHAR = `${PP}/characters/tile_0000.png`, WALK2 = `${PP}/characters/tile_00
 const BALL = 'assets/puzzle-pack/balls/ballblue_01.png', SHEET = 'assets/tiny-dungeon/tilemap/tilemap_packed.png';
 const only = process.argv[2];
 // Tasks whose steps carry on in the same running game (one training run in view across several steps).
-const KEEP_RUNNING = new Set(['td-step']);   // a task id (or the start of one, like tetris), to make just those pictures
+const KEEP_RUNNING = new Set(['td-step', 'sarsa-vs-q']);   // a task id (or the start of one, like tetris), to make just those pictures
 
 const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => {
   let focus = null;
@@ -60,6 +60,16 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       if (schedule) await t('train-schedule').selectOption(schedule);
       if (q0 !== undefined) await t('train-initial-q').fill(String(q0));
       for (const [id, v] of [['train-episodes', episodes], ['train-alpha', alpha], ['train-gamma', gamma], ['train-epsilon', from], ['train-epsilon-end', to]]) if (v !== undefined) await t(id).fill(String(v));
+    },
+    // Train an agent… with this environment typed in, Table (TD) with the default settings, and wait for it.
+    trainSpec: async (spec) => {
+      if (!(await t('train-spec').count())) { await t('menu-Run').click(); await t('item-Train an agent…').click(); }
+      await t('train-method-q').click();
+      await mark(t('train-spec')).fill(JSON.stringify(spec, null, 2));
+      await ui.td({ algorithm: 'q', episodes: 100, alpha: 0.2, gamma: 0.97, from: 0.3, to: 0.02, schedule: 'linear', explore: 'epsilon', q0: 0 });
+      await t('train-start').click();
+      await page.getByTestId('train-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 300000 });
+      mark(t('train-curve'));
     },
     // Compare: add each setting, then run them all over `seeds` seeds and wait for the table.
     compare: async (settings, seeds) => {
@@ -225,6 +235,105 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.board('tetris-finish', 1),
       async () => { await t('file-scenes/main.scene').click(); await ui.label('Next', 92, 'Next'); await ui.board('tetris-finish', 2); },
     ],
+    // Game AI that learns, 9.7: coarse bins, fine bins, one more number.
+    'state-design': [
+      async () => { await ui.trainSpec({ agent: 'Paddle', bins: [[-0.1, 0.1], [0.5]], maxSteps: 1200 }); },
+      async () => { await ui.trainSpec({ agent: 'Paddle', bins: [[-0.5, -0.3, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5], [0.5]], maxSteps: 1200 }); },
+      async () => {
+        await t('dialog-close').click().catch(() => {});
+        await t('left-files').click(); await ui.openScript('scripts/paddle.js'); await ui.script(await ui.solution('state-design', 'scripts/paddle.js'));
+        await ui.trainSpec({ agent: 'Paddle', bins: [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5], [0.5]], maxSteps: 1200 });
+      },
+    ],
+    // Game AI that learns, 9.6: an α sweep over 5 seeds, then 10.
+    'experiments': [
+      async () => {
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        const base = { algorithm: 'q', episodes: 100, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 };
+        await ui.compare([0.1, 0.3, 0.5, 0.9].map((alpha) => ({ ...base, alpha })), 5);
+      },
+      async () => {
+        await t('compare-seeds').fill('10');
+        await t('compare-start').click();
+        await page.getByTestId('compare-status').filter({ hasText: 'Done: 40 runs' }).waitFor({ timeout: 600000 });
+        mark(t('compare-view'));
+      },
+    ],
+    // Game AI that learns, 9.5: all four updates compared, then SARSA and Expected SARSA at α 1.
+    'all-four': [
+      async () => {
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        const base = { episodes: 300, alpha: 0.5, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 };
+        await ui.compare(['q', 'sarsa', 'expected-sarsa', 'double-q'].map((algorithm) => ({ ...base, algorithm })), 5);
+      },
+      async () => {
+        while (await page.locator('[data-testid="compare-table"] button').count()) await page.locator('[data-testid="compare-table"] button').first().click();
+        const base = { episodes: 300, alpha: 1, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 };
+        await ui.compare([{ ...base, algorithm: 'sarsa' }, { ...base, algorithm: 'expected-sarsa' }], 5);
+      },
+    ],
+    // Game AI that learns, 9.4: SARSA and Q-learning in view, then compared.
+    'sarsa-vs-q': [
+      async () => {
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        await t('train-method-q').click();
+        await ui.td({ algorithm: 'sarsa', episodes: 500, alpha: 0.5, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 });
+        await t('train-in-view').click();
+        await page.getByTestId('train-hud-status').filter({ hasText: /Episode \d+ of 500/ }).waitFor({ timeout: 60000 });
+        await t('train-speed-1024').click();
+        await page.getByTestId('train-hud-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 300000 });
+        mark(page.locator('[data-testid="game-box"]'));
+      },
+      async () => {
+        await ui.stop();
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        await ui.td({ algorithm: 'q' });
+        await t('train-in-view').click();
+        await page.getByTestId('train-hud-status').filter({ hasText: /Episode \d+ of 500/ }).waitFor({ timeout: 60000 });
+        await t('train-speed-1024').click();
+        await page.getByTestId('train-hud-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 300000 });
+        mark(page.locator('[data-testid="game-box"]'));
+      },
+      async () => {
+        await ui.stop();
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        await t('train-method-compare').click();
+        while (await page.locator('[data-testid="compare-table"] button').count()) await page.locator('[data-testid="compare-table"] button').first().click();
+        await ui.compare([
+          { algorithm: 'sarsa', episodes: 300, alpha: 0.5, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 },
+          { algorithm: 'q', episodes: 300, alpha: 0.5, gamma: 1, from: 0.1, to: 0.1, schedule: 'constant', explore: 'epsilon', q0: 0 },
+        ], 5);
+      },
+    ],
+    // Game AI that learns, 9.3: the paddle made an agent (typed in, as a learner would), trained, shipped, a new wall.
+    'breakout-scratch': [
+      async () => { await t('left-files').click(); await ui.openScript('scripts/paddle.js'); await ui.script(await ui.solution('breakout-scratch', 'scripts/paddle.js')); },
+      async () => { mark(page.locator('.monaco-editor')); },
+      async () => { mark(page.locator('.monaco-editor')); },
+      async () => {
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        await t('train-method-q').click();
+        await mark(t('train-spec')).fill(JSON.stringify({ agent: 'Paddle', bins: [[-0.25, -0.1, -0.03, 0.03, 0.1, 0.25], [0.5]], maxSteps: 1200 }, null, 2));
+        await ui.td({ algorithm: 'q', episodes: 100, alpha: 0.2, gamma: 0.97, from: 0.3, to: 0.02, schedule: 'linear', explore: 'epsilon', q0: 0 });
+        await t('train-start').click();
+        await page.getByTestId('train-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 300000 });
+        mark(t('train-curve'));
+      },
+      async () => {
+        await t('train-brain-path').fill('brains/paddle.json');
+        await t('train-save-brain').click();
+        await t('dialog-close').click().catch(() => {});
+        await ui.run(); await page.waitForTimeout(2500);
+      },
+      async () => {
+        await ui.stop();
+        await ui.openScript('scripts/wall.js'); await ui.script(await ui.solution('breakout-scratch', 'scripts/wall.js'));
+        await t('menu-Run').click(); await t('item-Train an agent…').click();
+        await t('train-start').click();
+        await page.getByTestId('train-status').filter({ hasText: 'Trained.' }).waitFor({ timeout: 300000 });
+        mark(t('train-curve'));
+      },
+    ],
     // Game AI that learns, 9.2: exploration schedules compared, optimism in view, optimism against pessimism.
     'explore-compare': [
       async () => {
@@ -342,7 +451,7 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
         if (!KEEP_RUNNING.has(id)) await ui.stop();
       }
       await ui.stop();
-      await page.locator('[data-testid="task-finished"]').waitFor({ timeout: 8000 }).catch(() => bad.push(`${id}: not finished`));
+      await page.locator('[data-testid="task-finished"]').waitFor({ timeout: 8000 }).catch(async () => bad.push(`${id}: not finished: ${JSON.stringify(await page.evaluate(() => window.__gameStudio.store.task?.results))}`));
     } catch (e) {
       bad.push(`${id}: ${e.message.split('\n')[0]}`);
       console.log(`✗ ${id}: ${e.message.split('\n')[0]}`);
