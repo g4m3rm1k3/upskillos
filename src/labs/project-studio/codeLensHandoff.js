@@ -1,5 +1,5 @@
 // codeLensHandoff.js
-// "Trace in CodeLens" for C++ lessons: hands the learner's file to CodeLens, which compiles it
+// "Trace in CodeLens" for C++ and Python lessons: hands the learner's file to CodeLens. A C++ file is compiled
 // with debug information and steps through it under GDB, showing every line's variables, the
 // call stack and the heap. Uses the same localStorage handoff as the blog's code blocks
 // (CodeLensPage.tsx reads it once on mount), plus a return path back to Project Studio.
@@ -9,9 +9,20 @@
 // Definitions that live in another .cpp file can't be traced this way.
 
 export const TRACEABLE_FILE = /\.(cpp|cc|cxx)$/i;
+// Python traces one .py file too (CodeLens runs it in its own environment, pygame-ce included),
+// so a Python lesson can offer a small self-contained file to step through.
+export const TRACEABLE_PYTHON = /\.py$/i;
 
 export function canTrace(lesson, file) {
-  return lesson?.runtime === 'cpp' && Boolean(file) && TRACEABLE_FILE.test(file);
+  if (!file) return false;
+  if (lesson?.runtime === 'cpp') return TRACEABLE_FILE.test(file);
+  if (lesson?.runtime === 'python') return TRACEABLE_PYTHON.test(file);
+  return false;
+}
+
+// CodeLens's own name for the language of a traceable file.
+export function traceLang(file) {
+  return TRACEABLE_PYTHON.test(file ?? '') ? 'py' : 'cpp';
 }
 
 function dirOf(file) {
@@ -49,8 +60,8 @@ export async function inlineLocalHeaders(code, file, readFile, seen = new Set())
   return out.join('\n');
 }
 
-export function handOffToCodeLens(code, { storage = globalThis.localStorage, session = globalThis.sessionStorage } = {}) {
-  storage.setItem('codelens-handoff', JSON.stringify({ code, lang: 'cpp', ts: Date.now() }));
+export function handOffToCodeLens(code, { lang = 'cpp', storage = globalThis.localStorage, session = globalThis.sessionStorage } = {}) {
+  storage.setItem('codelens-handoff', JSON.stringify({ code, lang, ts: Date.now() }));
   session.setItem('codelens_return_path', '#/lab/project-studio');
   session.setItem('codelens_return_label', 'Back to Project Studio');
 }

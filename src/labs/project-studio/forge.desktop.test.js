@@ -66,6 +66,11 @@ async function getEnv() {
 
 function write(dir, rel, content) {
   const abs = path.join(dir, rel);
+  // A file that already says this (git may have rewritten it with CRLF line endings) is left as it
+  // is, as a learner's editor would leave it: rewriting it with LF would show as a change in git.
+  try {
+    if (fs.readFileSync(abs, 'utf8').replace(/\r\n/g, '\n') === content) return;
+  } catch {}
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, content);
 }

@@ -1,6 +1,6 @@
 # Forge: learn software engineering by building a game engine, editor and service in Python — series plan
 
-Status (2026-10-04): **Chapters 0–4 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7).** The user opened 0.1 in the
+Status (2026-10-04): **Chapters 0–6 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5).** The user opened 0.1 in the
 app and approved it as the bar; they review the rest by doing the lessons, so writing continues in plan order
 without pausing.
 
@@ -34,6 +34,30 @@ without pausing.
   a provided `check_walls.py` that mutates a temporary copy), game states (a `GameState` state machine built on
   a `game-states` branch, fast-forward merge), and a merge conflict resolved on purpose (`title-text`).
   Final: 63 tests.
+- Chapter 5 (`forge-data/`): a level in a file (text format, `breakout/levels/`, `parse_level`/`load_level` as
+  functional core and imperative shell, `Game` given its bricks), when the file is wrong (`LevelError(ValueError)`,
+  parametrised error tests, `--level`, exit 1 vs 2; bug hunt: a UTF-8 byte order mark, fixed with `utf-8-sig`),
+  a level is more than a wall (JSON with `name`, `lives`, `wall`; validation by hand with `object`, `isinstance`
+  and `cast`; a frozen `Level` that keeps rows and makes fresh bricks, the aliasing reason), let the types check
+  it (pydantic 2.13.5 as a runtime dependency in `pyproject.toml`: strict, `extra="forbid"`, frozen,
+  `Annotated` constraints, `AfterValidator`; every problem reported; tests written first for friendly row
+  locations), settings the player keeps (TOML read with `tomllib`, `breakout/config.py` with `Controls` as a
+  small InputMap and `KEYS`, `--config`, paths relative to the file, precedence command line > file > default,
+  `model_validator` for a key used twice), and coverage (pytest-cov 7.1.0, `.coverage` ignored,
+  `[tool.coverage.run] patch = ["subprocess"]` so the characterisation tests count, the untested keyboard
+  shell named as a known gap for Chapter 11, mutation testing and Goodhart's law; the chapter zoom-out "who
+  controls this data?"). Final: 96 tests; `app.py` 86% covered, everything else 100%.
+- Chapter 6 (`forge-saving/`): a score that outlives the game (`breakout/scores.py`, `--scores FILE`, test runs
+  keep no scores, the player's folder via `pygame.system.get_pref_path`, UTC and ruff's `DTZ` rules; Your turn:
+  ISO 8601 round trip, with `default=str` as the caught shortcut), files you didn't write (pickle's `__reduce__`
+  shown with a harmless provided `make_gift.py`; a cut-off `tests/data/broken-scores.json`; `TypeAdapter` over
+  the dataclass with `AwareDatetime`; Your turn: warn, play on, never overwrite; atomic-save challenge), tables
+  (the `python -m sqlite3` shell, a STRICT table with `CHECK`, transactions with `with db:`, placeholders; Your
+  turn: `best` with `MAX` and `(level,)`), Bob's Castle (a provided teammate's `breakout/report.py` built with
+  f-strings; injection shown on a copy; ruff `extend-select = ["S608"]`; Your turn: placeholders and attack
+  regression tests), and fixtures (`tests/conftest.py` with a `yield` fixture `db`, the testing pyramid measured
+  with `--durations`, a declared `slow` marker with `--strict-markers`; Your turn: `new_game` and `game`
+  fixtures replace 5.1's duplicated helpers). Final: 106 tests; `pytest -m "not slow"` runs 95 in about 3 s.
 - Project Studio change: Run on a package's `__main__.py` runs `python -m <package>` from the project folder
   (`desktop/app/runtimes/python.cjs`, tested in `pythonVenv.test.js`), so later lessons use
   `run: breakout/__main__.py`.
@@ -408,6 +432,24 @@ So, everywhere in the series, the simple version is built by hand before the too
 
 The tool is introduced once the learner knows the job it does, and the lesson shows that the tool's answer
 matches theirs. After that, using the tool is a choice made with understanding, not a dependency.
+
+## Two more threads (added 2026-10-04, at the user's request)
+
+**Example games and tutorials, from Part 2 on.** The user wants to learn to build example games and tutorials
+the way Game Studio has them. So it isn't saved for Chapter 25: every engine chapter (Part 2) ends with a
+small **example game** built on that chapter's feature, in the spirit of Game Studio's examples (Coin Run for
+physics, Potion Hunt for tilemaps and the camera, Maze Chase for scenes and signals, Zombie Arena for spawning),
+and a short **tutorial** for it that the learner writes: steps, what to try, and a check. Writing tutorials is
+technical writing practised a little at a time. Chapter 25 then turns them into Forge's in-editor tutorials
+with checks, and Chapter 38 into the *Making Games with Forge* course, so by then the learner has written
+a dozen.
+
+**Trace it in CodeLens.** Project Studio's "Trace in CodeLens" button now works for Python files
+(`codeLensHandoff.js`), and CodeLens traces pygame-ce code. Lessons with game logic worth stepping through
+(bounces, collisions, physics steps, state transitions, recursion over the scene tree) supply a small
+self-contained `trace_*.py` file that reproduces the logic in a few frames, and ask the learner to step through
+it and answer predictions about what they see. CodeLens traces one file, so trace files don't import the
+project's package.
 
 ## Forge as a product: what it takes from Game Studio
 

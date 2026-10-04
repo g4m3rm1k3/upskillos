@@ -134,7 +134,7 @@ contains ruff.toml "line-length = 120"
 ```
 
 ```text
-4 files reformatted, 11 files left unchanged
+4 files reformatted, 12 files left unchanged
 ```
 
 (Your counts may differ slightly, depending on which challenges you did.) Look at what changed:

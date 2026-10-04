@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canTrace, handOffToCodeLens, inlineLocalHeaders } from './codeLensHandoff.js';
+import { canTrace, handOffToCodeLens, inlineLocalHeaders, traceLang } from './codeLensHandoff.js';
 
 const files = {
   'area.h': '#pragma once\n\ndouble circle_area(double radius);\n',
@@ -13,6 +13,9 @@ describe('Trace in CodeLens', () => {
     expect(canTrace({ runtime: 'cpp' }, 'src/game.cc')).toBe(true);
     expect(canTrace({ runtime: 'cpp' }, 'area.h')).toBe(false);
     expect(canTrace({ runtime: 'python' }, 'main.cpp')).toBe(false);
+    expect(canTrace({ runtime: 'python' }, 'trace_bounce.py')).toBe(true);
+    expect(canTrace({ runtime: 'python' }, 'levels/classic.txt')).toBe(false);
+    expect(canTrace({ runtime: 'none' }, 'hello.py')).toBe(false);
     expect(canTrace({ runtime: 'cpp' }, null)).toBe(false);
   });
 
@@ -39,5 +42,14 @@ describe('Trace in CodeLens', () => {
     handOffToCodeLens('int main() {}', { storage: fake, session: fake });
     expect(JSON.parse(store['codelens-handoff'])).toMatchObject({ code: 'int main() {}', lang: 'cpp' });
     expect(store.codelens_return_path).toBe('#/lab/project-studio');
+  });
+
+  it('hands a Python file over as Python', () => {
+    const store = {};
+    const fake = { setItem: (k, v) => { store[k] = v; } };
+    expect(traceLang('trace_bounce.py')).toBe('py');
+    expect(traceLang('main.cpp')).toBe('cpp');
+    handOffToCodeLens('print(1)', { lang: traceLang('trace_bounce.py'), storage: fake, session: fake });
+    expect(JSON.parse(store['codelens-handoff'])).toMatchObject({ code: 'print(1)', lang: 'py' });
   });
 });

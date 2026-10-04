@@ -544,6 +544,320 @@ const CONFLICT = `<<<<<<< HEAD
 `;
 const RESOLVED = '    GameState.TITLE: "BREAKOUT: press Space to play",\n';
 
+const L51 = 'forge-data/05-01-a-level-in-a-file';
+const L52 = 'forge-data/05-02-when-the-file-is-wrong';
+const L53 = 'forge-data/05-03-a-level-is-more-than-a-wall';
+const L53_ERRORS = `import json
+
+import pytest
+
+from breakout import level
+
+
+def level_text(**changes: object) -> str:
+    """A good level's JSON, with these fields changed."""
+    return json.dumps({"name": "Test", "lives": 3, "wall": ["BBBBBBBB"], **changes})
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("", "line 1, column 1: not valid JSON: Expecting value"),
+        ('["BBBBBBBB"]', "the level: must be a JSON object, { ... }"),
+        ('{"name": "Test", "lives": 3}', "wall: is missing"),
+        (level_text(speed=2), "speed: isn't part of a level, which has lives, name, wall"),
+        (level_text(name=""), "name: must be some text"),
+        (level_text(lives=10), "lives: must be a whole number from 1 to 9"),
+        (level_text(lives=True), "lives: must be a whole number from 1 to 9"),
+        (level_text(wall="BBBBBBBB"), 'wall: must be a list of rows, like ["BBBBBBBB"]'),
+        (level_text(wall=["BBBBBBBB"] * 11), "wall: a level has at most 10 rows, and this one has 11"),
+        (level_text(wall=["BBBBBBBB", 8]), 'wall, row 2: must be text, like "BBBBBBBB"'),
+        (level_text(wall=["BBBBBBB"]), "wall, row 1: a row has 8 places, and this one has 7"),
+        (level_text(wall=["BBBBXBBB"]), "wall, row 1, column 5: unknown brick 'X': use T, B or ."),
+    ],
+)
+def test_a_bad_level_is_refused_with_where_and_why(text: str, message: str):
+    with pytest.raises(level.LevelError) as refused:
+        level.parse_level(text)
+    assert str(refused.value) == message
+`;
+const L54 = 'forge-data/05-04-let-the-types-check-it';
+const WHERE_BASIC = '    return ", ".join(str(part) for part in location) or "the level"\n';
+const whereAs = (row) => ({
+  editFiles: { 'breakout/level.py': [[WHERE_BASIC, `    parts = [f"${row}" if isinstance(part, int) else part for part in location]\n    return ", ".join(parts) or "the level"\n`]] },
+});
+const L55 = 'forge-data/05-05-settings-the-player-keeps';
+const BANANA_CASE = String.raw`            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+        ),
+`;
+const CLASH_CASE = String.raw`        ('[controls]\nleft = "a"\nright = "a"\n', "controls: left and right both use 'a'"),
+`;
+const PAUSE_FIELD = '    pause: Key = "p"\n';
+const EVERY_CLASH = `
+    @model_validator(mode="after")
+    def no_key_does_two_things(self) -> Self:
+        actions: dict[str, str] = {}
+        for action, key in self.model_dump().items():
+            if key in actions:
+                raise ValueError(f"{actions[key]} and {action} both use {key!r}")
+            actions[key] = action
+        return self
+`;
+const LEFT_RIGHT_CLASH = `
+    @model_validator(mode="after")
+    def no_key_does_two_things(self) -> Self:
+        if self.left == self.right:
+            raise ValueError(f"left and right both use {self.left!r}")
+        return self
+`;
+const clashRule = (rule, { test = true } = {}) => ({
+  editFiles: {
+    'breakout/config.py': [
+      ['from typing import Annotated\n', 'from typing import Annotated, Self\n'],
+      ['ConfigDict, Field, ValidationError\n', 'ConfigDict, Field, ValidationError, model_validator\n'],
+      [PAUSE_FIELD, PAUSE_FIELD + rule],
+    ],
+    ...(test ? { 'tests/test_config.py': [[BANANA_CASE, BANANA_CASE + CLASH_CASE]] } : {}),
+  },
+});
+const L56 = 'forge-data/05-06-what-the-tests-dont-touch';
+const LAST_CHARACTERISATION = '        == "frames=600 paddle_x=7 score=60 lives=3 bricks=34 inside=True"\n    )\n';
+const LEVEL_REFUSAL_TEST = String.raw`
+
+def test_a_level_that_cannot_be_read_stops_the_game_with_exit_code_1(tmp_path: Path):
+    missing = tmp_path / "missing.json"
+    result = play("--test-run", "5", "--level", str(missing))
+    assert result.returncode == 1
+    assert result.stderr.startswith(f"breakout: {missing}: ")`;
+const CONFIG_REFUSAL_TEST = String.raw`
+
+
+def test_bad_settings_stop_the_game_with_exit_code_1(tmp_path: Path):
+    settings = tmp_path / "settings.toml"
+    settings.write_text("speed = 2\n", encoding="utf-8")
+    result = play("--test-run", "5", "--config", str(settings))
+    assert result.returncode == 1
+    assert result.stderr == f"breakout: {settings}: speed: Extra inputs are not permitted\n"
+`;
+const refusalTests = (...tests) => ({
+  editFiles: { 'tests/test_characterisation.py': [[LAST_CHARACTERISATION, LAST_CHARACTERISATION + tests.join('')]] },
+});
+const L61 = 'forge-saving/06-01-a-score-that-outlives-the-game';
+const SAVE_ASDICT = '    path.write_text(json.dumps([asdict(score) for score in scores], indent=2), encoding="utf-8")\n';
+const SAVE_ISO = '    data = [{"level": score.level, "points": score.points, "when": score.when.isoformat()} for score in scores]\n    path.write_text(json.dumps(data, indent=2), encoding="utf-8")\n';
+const LOAD_UNPACK = '    return [Score(**item) for item in data]\n';
+const LOAD_ISO = '    return [Score(item["level"], item["points"], datetime.fromisoformat(item["when"])) for item in data]\n';
+const ASDICT_IMPORT = ['from dataclasses import asdict, dataclass\n', 'from dataclasses import dataclass\n'];
+const L62 = 'forge-saving/06-02-files-you-didnt-write';
+const SCORES_IMPORT = ['from breakout.scores import Score, add_score, best, load_scores\n', 'from breakout.scores import Score, ScoresError, add_score, best, load_scores\n'];
+const BEST_LINE = '    best_score = best(load_scores(scores_file), level.name) if scores_file else None\n';
+const playOn = (stopSaving = true) => ({
+  editFiles: {
+    'breakout/app.py': [
+      SCORES_IMPORT,
+      [BEST_LINE, `    best_score = None
+    if scores_file:
+        try:
+            best_score = best(load_scores(scores_file), level.name)
+        except (OSError, ScoresError) as error:
+            print(f"breakout: {scores_file}: {error}; playing without keeping scores", file=sys.stderr)
+${stopSaving ? '            scores_file = None\n' : ''}`],
+    ],
+  },
+});
+const L63 = 'forge-saving/06-03-tables';
+const SQLITE = '.venv\\Scripts\\python -m sqlite3 practice.db';
+const PRACTICE = [
+  `${SQLITE} "CREATE TABLE scores (id INTEGER PRIMARY KEY, level TEXT NOT NULL, points INTEGER NOT NULL CHECK (points >= 0), played_at TEXT NOT NULL) STRICT"`,
+  `${SQLITE} "INSERT INTO scores (level, points, played_at) VALUES ('Classic', 560, '2026-10-04T15:30:05+00:00')"`,
+  `${SQLITE} "INSERT INTO scores (level, points, played_at) VALUES ('Classic', 70, '2026-10-04T15:41:00+00:00')"`,
+  `${SQLITE} "INSERT INTO scores (level, points, played_at) VALUES ('Castle', 150, '2026-10-05T09:02:30+00:00')"`,
+];
+const BEST_STUB = `    raise NotImplementedError("lesson 6.3's Your turn")\n`;
+const bestIs = (body) => ({ editFiles: { 'breakout/scores.py': [[BEST_STUB, body]] } });
+const BEST_SQL = '    (points,) = db.execute("SELECT MAX(points) FROM scores WHERE level = ?", (level,)).fetchone()\n    return points\n';
+const L64 = 'forge-saving/06-04-bobs-castle';
+const REPORT_SELECT_F = `        f"SELECT COUNT(*), MAX(points), AVG(points) FROM scores WHERE level = '{level}'"\n    ).fetchone()`;
+const REPORT_SELECT_Q = `        "SELECT COUNT(*), MAX(points), AVG(points) FROM scores WHERE level = ?", (level,)\n    ).fetchone()`;
+const REPORT_DELETE_F = `        return db.execute(f"DELETE FROM scores WHERE level = '{level}'").rowcount`;
+const REPORT_DELETE_Q = `        return db.execute("DELETE FROM scores WHERE level = ?", (level,)).rowcount`;
+const TEST_REPORT = `import sqlite3
+from datetime import UTC, datetime
+from pathlib import Path
+
+from breakout.report import forget, report
+from breakout.scores import Score, add_score, load_scores, open_scores
+
+WHEN = datetime(2026, 10, 4, 15, 30, 5, tzinfo=UTC)
+INJECTION = "x' OR '1'='1"
+
+
+def scores_for(tmp_path: Path, *levels: str) -> sqlite3.Connection:
+    """A new scores database with one 100-point game on each of these levels."""
+    db = open_scores(tmp_path / "scores.db")
+    for level in levels:
+        add_score(db, Score(level, 100, WHEN))
+    return db
+
+
+def test_a_level_with_an_apostrophe_is_reported(tmp_path: Path):
+    db = scores_for(tmp_path, "Bob's Castle")
+    assert report(db, "Bob's Castle") == "Bob's Castle: 1 played, best 100, average 100"
+    db.close()
+
+
+def test_sql_in_a_level_name_is_only_a_name(tmp_path: Path):
+    db = scores_for(tmp_path, "Classic", "Castle")
+    assert report(db, INJECTION) == f"{INJECTION}: no scores yet"
+    db.close()
+
+
+def test_forgetting_a_name_with_sql_in_it_deletes_nothing(tmp_path: Path):
+    db = scores_for(tmp_path, "Classic", "Castle")
+    assert forget(db, INJECTION) == 0
+    assert len(load_scores(db)) == 2
+    db.close()
+`;
+const reportFix = ({ select = true, del = true, tests = true } = {}) => ({
+  editFiles: {
+    'breakout/report.py': [
+      ...(select ? [[REPORT_SELECT_F, REPORT_SELECT_Q]] : []),
+      ...(del ? [[REPORT_DELETE_F, REPORT_DELETE_Q]] : []),
+    ],
+  },
+  files: tests ? { 'tests/test_report.py': TEST_REPORT } : {},
+});
+const L65 = 'forge-saving/06-05-setup-that-cleans-up-after-itself';
+const GAME_FIXTURES = {
+  'tests/conftest.py': `"""Fixtures: setup that any test in this folder can ask for by name."""
+
+import random
+import sqlite3
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+
+from breakout import level, model
+from breakout.scores import open_scores
+
+
+@pytest.fixture
+def db(tmp_path: Path) -> Iterator[sqlite3.Connection]:
+    """A new, empty scores database, closed after the test however the test ends."""
+    connection = open_scores(tmp_path / "scores.db")
+    yield connection
+    connection.close()
+
+
+@pytest.fixture
+def new_game() -> model.Game:
+    """A game of the classic level with seed 0, waiting on the title screen."""
+    return model.Game(random.Random(0), level.load_level(level.LEVELS / "classic.json").bricks())
+
+
+@pytest.fixture
+def game(new_game: model.Game) -> model.Game:
+    """The same game, started."""
+    new_game.start()
+    return new_game
+`,
+  'tests/test_game.py': `import pygame
+from pygame import Vector2
+
+from breakout import model
+
+
+def test_a_new_game_waits_on_the_title_screen(new_game: model.Game):
+    assert (new_game.score, new_game.lives, len(new_game.bricks)) == (0, 3, 40)
+    assert new_game.state == model.GameState.TITLE
+
+
+def test_ten_seconds_of_autopilot_matches_the_test_run(game: model.Game):
+    for _ in range(600):
+        game.update(model.autopilot(game.ball, game.paddle), 1 / 60)
+    assert (game.paddle.rect().x, game.score, game.lives, len(game.bricks)) == (435, 70, 3, 33)
+
+
+def test_a_missed_ball_costs_a_life_and_a_new_ball_is_served(game: model.Game):
+    game.ball = model.Ball(Vector2(100, model.HEIGHT + 20), Vector2(0, 300))
+    game.update(0, 1 / 60)
+    assert game.lives == 2
+    assert game.ball.position == Vector2(320, 240)
+
+
+def test_a_ball_that_hits_a_brick_breaks_it_and_bounces(game: model.Game):
+    game.bricks = [model.Brick(pygame.Rect(300, 200, 70, 20), (34, 197, 94))]
+    game.ball = model.Ball(Vector2(330, 225), Vector2(0, -240))
+    game.update(0, 1 / 60)
+    assert (game.score, len(game.bricks)) == (10, 0)
+    assert game.ball.velocity.y == 240
+
+
+def test_losing_the_last_life_ends_the_game(game: model.Game):
+    game.lives = 1
+    game.ball = model.Ball(Vector2(100, model.HEIGHT + 20), Vector2(0, 300))
+    game.update(0, 1 / 60)
+    assert game.lives == 0
+    assert game.state == model.GameState.OVER
+    before = (game.score, game.lives, len(game.bricks))
+    game.update(0, 1 / 60)
+    assert (game.score, game.lives, len(game.bricks)) == before
+
+
+def test_breaking_the_last_brick_wins(game: model.Game):
+    game.bricks = [model.Brick(pygame.Rect(300, 200, 70, 20), (34, 197, 94))]
+    game.ball = model.Ball(Vector2(330, 225), Vector2(0, -240))
+    game.update(0, 1 / 60)
+    assert game.bricks == []
+    assert game.score == 10
+    assert game.state == model.GameState.WON
+`,
+  'tests/test_states.py': `from pygame import Vector2
+
+from breakout import model
+
+
+def test_starting_from_the_title_begins_play(game: model.Game):
+    assert game.state == model.GameState.PLAYING
+
+
+def test_p_pauses_and_p_again_resumes(game: model.Game):
+    game.toggle_pause()
+    assert game.state == model.GameState.PAUSED
+    game.toggle_pause()
+    assert game.state == model.GameState.PLAYING
+
+
+def test_a_paused_game_does_not_move(game: model.Game):
+    game.toggle_pause()
+    before = Vector2(game.ball.position)
+    game.update(0, 1 / 60)
+    assert game.ball.position == before
+
+
+def test_pausing_on_the_title_screen_does_nothing(new_game: model.Game):
+    new_game.toggle_pause()
+    assert new_game.state == model.GameState.TITLE
+`,
+};
+const L51_ANSWER = [`${L52}#The basic tests so far`, `${L52}#The level tests so far`];
+const MAKE_CASTLE = String.raw`.venv\Scripts\python -c "from pathlib import Path; Path('breakout/levels/castle.txt').write_text('B.BBBB.B\nBBTTTTBB\nBB....BB\n', encoding='utf-8-sig')"`;
+const BOM_TEST = String.raw`
+
+def test_a_level_saved_with_a_byte_order_mark_loads(tmp_path: Path):
+    path = tmp_path / "castle.txt"
+    path.write_text("B.BBBB.B\nBBTTTTBB\nBB....BB\n", encoding="utf-8-sig")
+    assert len(level.load_level(path)) == 18
+`;
+const LAST_LEVEL_TEST = '    assert [brick.colour for brick in bricks] == model.ROW_COLOURS[:2]\n';
+const bomFix = ({ code = true, test = true } = {}) => ({
+  editFiles: {
+    ...(code ? { 'breakout/level.py': [['read_text(encoding="utf-8")', 'read_text(encoding="utf-8-sig")']] } : {}),
+    ...(test ? { 'tests/test_level.py': [['import pygame\n', 'from pathlib import Path\n\nimport pygame\n'], [LAST_LEVEL_TEST, LAST_LEVEL_TEST + BOM_TEST]] } : {}),
+  },
+});
+
 const TWO_STORIES = `### Pause
 As a player, I want to pause the game with P, so that I can stop without losing a life.
 - [ ] Pressing P stops the ball and paddle; pressing it again continues.
@@ -1135,6 +1449,169 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'the markers committed as they were', run: ['git add breakout/draw.py', 'git commit -m "Merge title-text"', 'git branch -d title-text'], fails: [0, 1, 2] },
       { name: 'resolved, but the merge never committed', editFiles: { 'breakout/draw.py': [[CONFLICT, RESOLVED]] }, fails: [4, 5, 6] },
+    ],
+  },
+  [`${L51}#Your turn: test the level reader`]: {
+    targetOf: L51_ANSWER,
+    run: ['git add .', 'git commit -m "Read the wall from a level file"'],
+    wrong: [
+      { name: 'the old wall tests left in', targetOf: [`${L52}#The level tests so far`], fails: [0, 2] },
+      { name: 'not committed', targetOf: L51_ANSWER, fails: [5, 6] },
+    ],
+  },
+  [`${L52}#Your turn: bug hunt — the castle that won't load`]: {
+    before: [MAKE_CASTLE],
+    ...bomFix(),
+    run: ['git add .', 'git commit -m "Accept level files that start with a byte order mark"'],
+    wrong: [
+      { name: 'the file fixed instead of the game', before: [MAKE_CASTLE, "Set-Content breakout/levels/castle.txt 'B.BBBB.B','BBTTTTBB','BB....BB'"], editFiles: {}, fails: [1, 2] },
+      { name: 'the game fixed, but no regression test', before: [MAKE_CASTLE], ...bomFix({ test: false }), fails: [1, 2] },
+      { name: 'not committed', before: [MAKE_CASTLE], ...bomFix(), fails: [5, 6] },
+    ],
+  },
+  [`${L53}#A level is a JSON file`]: {
+    run: ['Remove-Item breakout\\levels\\classic.txt'],
+    wrong: [{ name: 'classic.txt left in place', typeFile: true, fails: [1] }],
+  },
+  [`${L53}#The castle, as JSON`]: {
+    run: ['Remove-Item breakout\\levels\\castle.txt'],
+    wrong: [
+      { name: 'castle.txt left in place', typeFile: true, fails: [0] },
+      { name: 'castle.txt deleted, castle.json never made', run: ['Remove-Item breakout\\levels\\castle.txt'], fails: [1] },
+    ],
+  },
+  [`${L53}#Your turn: every refusal, tested`]: {
+    files: { 'tests/test_level_errors.py': L53_ERRORS },
+    run: ['git add .', 'git commit -m "Test every way a JSON level is refused"'],
+    wrong: [
+      { name: 'the old text-level cases left as they were', run: ['git add .', 'git commit -m "JSON levels" --allow-empty'], fails: [0, 1, 2, 3] },
+      { name: 'eleven cases: lives of true never tested', files: { 'tests/test_level_errors.py': L53_ERRORS.replace('        (level_text(lives=True), "lives: must be a whole number from 1 to 9"),\n', '') }, run: ['git add .', 'git commit -m "Test JSON level errors"'], fails: [0, 3] },
+      { name: 'not committed', files: { 'tests/test_level_errors.py': L53_ERRORS }, fails: [6, 7] },
+    ],
+  },
+  [`${L54}#A dependency the game needs`]: {
+    run: ['.venv\\Scripts\\python -m pip install -r requirements.txt'],
+  },
+  [`${L54}#Your turn: rows a designer can find`]: {
+    ...whereAs('row {part + 1}'),
+    run: ['git add .', 'git commit -m "Read levels with pydantic, naming rows in its errors"'],
+    wrong: [
+      { name: 'where still counts from 0', run: ['git add .', 'git commit -m "Read levels with pydantic"'], fails: [1, 2] },
+      { name: 'off by one: the first row called row 0', ...whereAs('row {part}'), run: ['git add .', 'git commit -m "pydantic rows"'], fails: [1, 2] },
+      { name: 'the tests changed to match the code', editFiles: { 'tests/test_level_errors.py': [['wall, row 2', 'wall, 1', 'all'], ['wall, row 1', 'wall, 0', 'all']] }, run: ['git add .', 'git commit -m "pydantic"'], fails: [0] },
+      { name: 'not committed', ...whereAs('row {part + 1}'), fails: [5, 6] },
+    ],
+  },
+  [`${L55}#Your turn: one key, two actions`]: {
+    ...clashRule(EVERY_CLASH),
+    run: ['git add .', 'git commit -m "Refuse settings that use a key twice"'],
+    wrong: [
+      { name: 'only left and right compared', ...clashRule(LEFT_RIGHT_CLASH), run: ['git add .', 'git commit -m "A key used twice"'], fails: [0] },
+      { name: 'the rule, but no test for it', ...clashRule(EVERY_CLASH, { test: false }), run: ['git add .', 'git commit -m "A key used twice"'], fails: [2, 3] },
+      { name: 'not committed', ...clashRule(EVERY_CLASH), fails: [6, 7] },
+    ],
+  },
+  [`${L56}#A tool that measures tests`]: {
+    run: ['.venv\\Scripts\\python -m pip install -r requirements.txt'],
+  },
+  [`${L56}#Your turn: test the refusals`]: {
+    ...refusalTests(LEVEL_REFUSAL_TEST, CONFIG_REFUSAL_TEST),
+    run: ['git add .', 'git commit -m "Test that bad levels and settings stop the game with exit code 1"'],
+    wrong: [
+      { name: 'only the level refusal tested', ...refusalTests(LEVEL_REFUSAL_TEST), run: ['git add .', 'git commit -m "Test the exit code"'], fails: [0, 1] },
+      { name: 'not committed', ...refusalTests(LEVEL_REFUSAL_TEST, CONFIG_REFUSAL_TEST), fails: [4, 5] },
+    ],
+  },
+  [`${L61}#Your turn: dates that survive the trip`]: {
+    editFiles: { 'breakout/scores.py': [ASDICT_IMPORT, [LOAD_UNPACK, LOAD_ISO], [SAVE_ASDICT, SAVE_ISO]] },
+    run: ['git add .', 'git commit -m "Save score times as ISO 8601 text"'],
+    wrong: [
+      {
+        name: 'default=str: the crash hidden, not fixed',
+        editFiles: { 'breakout/scores.py': [['indent=2)', 'indent=2, default=str)']] },
+        run: ['git add .', 'git commit -m "ISO 8601"'],
+        fails: [0, 3],
+      },
+      {
+        name: 'saved as ISO 8601, but read back as text',
+        editFiles: { 'breakout/scores.py': [ASDICT_IMPORT, [SAVE_ASDICT, SAVE_ISO]] },
+        run: ['git add .', 'git commit -m "ISO 8601"'],
+        fails: [0, 3],
+      },
+      { name: 'not committed', editFiles: { 'breakout/scores.py': [ASDICT_IMPORT, [LOAD_UNPACK, LOAD_ISO], [SAVE_ASDICT, SAVE_ISO]] }, fails: [6, 7] },
+    ],
+  },
+  [`${L62}#The shortcut: pickle`]: {
+    run: [
+      '.venv\\Scripts\\python make_gift.py',
+      `.venv\\Scripts\\python -c "import pickle; pickle.load(open('gift.pickle', 'rb'))"`,
+      'Remove-Item make_gift.py, gift.pickle',
+    ],
+  },
+  [`${L62}#Your turn: play on, and don't make it worse`]: {
+    ...playOn(),
+    run: ['git add .', `git commit -m "Play on when the scores file can't be read"`],
+    wrong: [
+      { name: 'nothing caught: the game still crashes', run: ['git add .', 'git commit -m "scores file"'], fails: [0, 1] },
+      { name: 'caught, but the broken file is still saved over', ...playOn(false), run: ['git add .', 'git commit -m "scores file"'], fails: [1] },
+      { name: 'not committed', ...playOn(), fails: [6, 7] },
+    ],
+  },
+  [`${L63}#SQL, by hand`]: { run: PRACTICE },
+  [`${L63}#Your turn: the best score, in SQL`]: {
+    ...bestIs(BEST_SQL),
+    run: ['git add .', 'git commit -m "Find the best score with SQLite"'],
+    wrong: [
+      {
+        name: 'the row returned, not the number in it',
+        ...bestIs('    return db.execute("SELECT MAX(points) FROM scores WHERE level = ?", (level,)).fetchone()\n'),
+        run: ['git add .', 'git commit -m "SQLite best"'],
+        fails: [0, 3],
+      },
+      {
+        name: '(level) without its comma is not a tuple',
+        ...bestIs(BEST_SQL.replace('(level,)', '(level)')),
+        run: ['git add .', 'git commit -m "SQLite best"'],
+        fails: [0, 3],
+      },
+      { name: 'not committed', ...bestIs(BEST_SQL), fails: [6, 7] },
+    ],
+  },
+  [`${L64}#When data becomes code`]: {
+    run: [
+      'Copy-Item scores.db attack.db',
+      `.venv\\Scripts\\python -m breakout.report attack.db "x' OR '1'='1"`,
+      `.venv\\Scripts\\python -m breakout.report attack.db "x' OR '1'='1" --forget`,
+      'Remove-Item attack.db',
+    ],
+  },
+  [`${L64}#Your turn: names are only names`]: {
+    ...reportFix(),
+    run: ['git add .', 'git commit -m "Pass level names to SQL as parameters, closing the injection"'],
+    wrong: [
+      { name: 'the report fixed, but forget still injectable', ...reportFix({ del: false }), run: ['git add .', 'git commit -m "injection"'], fails: [2, 3, 4, 5] },
+      {
+        name: 'apostrophes doubled by hand',
+        editFiles: { 'breakout/report.py': [[`'{level}'`, `'{level.replace("'", "''")}'`, 'all']] },
+        files: { 'tests/test_report.py': TEST_REPORT },
+        run: ['git add .', 'git commit -m "injection"'],
+        fails: [3],
+      },
+      { name: 'fixed, but no tests', ...reportFix({ tests: false }), run: ['git add .', 'git commit -m "injection"'], fails: [4, 5] },
+      { name: 'not committed', ...reportFix(), fails: [7, 8] },
+    ],
+  },
+  [`${L65}#Your turn: one game, set up once`]: {
+    files: GAME_FIXTURES,
+    run: ['git add .', 'git commit -m "Share the game setup between tests with fixtures"'],
+    wrong: [
+      {
+        name: 'fixtures added, but the old helpers still used',
+        files: { 'tests/conftest.py': GAME_FIXTURES['tests/conftest.py'] },
+        run: ['git add .', 'git commit -m "fixture"'],
+        fails: [0, 1, 2, 3],
+      },
+      { name: 'not committed', files: GAME_FIXTURES, fails: [10, 11] },
     ],
   },
 };

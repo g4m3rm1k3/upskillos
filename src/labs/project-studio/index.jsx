@@ -28,7 +28,7 @@ import LessonPanel from './LessonPanel.jsx';
 import OutputPanel from './OutputPanel.jsx';
 import TerminalPanel from './TerminalPanel.jsx';
 import CppProjectRuntime from './CppProjectRuntime.jsx';
-import { canTrace, handOffToCodeLens, inlineLocalHeaders } from './codeLensHandoff.js';
+import { canTrace, handOffToCodeLens, inlineLocalHeaders, traceLang } from './codeLensHandoff.js';
 import { useProgress } from './progress.js';
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -333,8 +333,10 @@ export default function ProjectStudio() {
       const res = await fs.api?.read(rel);
       return res?.ok && !res.missing ? res.content : null;
     };
-    const code = await inlineLocalHeaders(buffers[activeFile] ?? '', activeFile, read);
-    handOffToCodeLens(code);
+    const lang = traceLang(activeFile);
+    const source = buffers[activeFile] ?? '';
+    const code = lang === 'cpp' ? await inlineLocalHeaders(source, activeFile, read) : source;
+    handOffToCodeLens(code, { lang });
     navigate('/codelens');
   }, [activeFile, buffers, flushActive, fs, navigate]);
 
@@ -587,7 +589,9 @@ export default function ProjectStudio() {
         {canTrace(lesson, activeFile) && (
           <button
             onClick={traceInCodeLens}
-            title="Step through this file line by line in CodeLens: variables, the call stack and the heap at every step. Needs GDB. Traces one .cpp file (its own headers are included)."
+            title={traceLang(activeFile) === 'py'
+              ? 'Step through this file line by line in CodeLens: every variable and the call stack at each step. Traces this one .py file.'
+              : 'Step through this file line by line in CodeLens: variables, the call stack and the heap at every step. Needs GDB. Traces one .cpp file (its own headers are included).'}
             style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, cursor: 'pointer' }}
           >
             🔬 Trace in CodeLens

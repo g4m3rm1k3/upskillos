@@ -645,6 +645,43 @@ run ".venv/Scripts/python breakout.py --test-run 400 --hold auto" stdout="inside
 run ".venv/Scripts/python breakout.py --test-run 400 --hold auto --lag-at 40" stdout="inside=False" label="with a half-second frame at frame 40, the ball ends up off screen (for now)" -- This step is meant to show the bug: if the ball stays inside, compare your wall code with the lesson's.
 ```
 
+## Five frames, one line at a time
+
+**Build:** the wall's logic on its own, small enough to watch line by line.
+
+The game is 113 lines and runs 60 frames a second, which is too much to follow by eye. Debugging gets much easier when you cut a problem down to the smallest program that still shows it, a **minimal reproduction**. Create `trace_wall.py`, which keeps only what the top wall does to a ball for five frames, one of them slow:
+
+```python file=trace_wall.py
+# Lesson 1.4's wall bug in five frames, small enough to step through in CodeLens.
+# One frame is slow (dt = 0.5), like a frame spent dragging the window.
+BALL_RADIUS = 6
+
+y = 80.0
+vy = -240.0
+for dt in [1 / 60, 0.5, 1 / 60, 1 / 60, 1 / 60]:
+    y += vy * dt
+    if y < BALL_RADIUS:
+        vy = -vy
+    print(f"dt={dt:.3f}  y={y:6.1f}  vy={vy:+.0f}")
+```
+
+Run it in the terminal with `python trace_wall.py`. Then open it in the editor and press **🔬 Trace in CodeLens** above it. CodeLens runs the program one line at a time and shows every variable after each line; use its step buttons to move forwards and backwards. Watch `y` and `vy` from the slow frame on.
+
+```predict
+question: After the slow frame (the second), what does `vy` do on each of the next three frames?
+choice: It stays at +240: the ball heads back down and recovers
+choice: It flips sign every frame: -240, +240, -240
+choice: It becomes 0
+answer: It flips sign every frame: -240, +240, -240
+explain: The slow frame takes `y` to -44, past the wall, so `vy` flips to +240. The next frame moves the ball only 4 pixels, to -40: still past the wall, so `vy` flips again, to -240. The next frame takes it back to -44, and so on. The ball never gets back below 6. In CodeLens you can see it happen on the `vy = -vy` line, every frame. The output's last line is `dt=0.017  y= -40.0  vy=-240`.
+```
+
+Five frames and four variables are the whole bug. The next step finds the same behaviour in the real game, with a debugger, and fixes it.
+
+```check
+run "python trace_wall.py" stdout="dt=0.017  y= -40.0  vy=-240" label="the five-frame reproduction shows the ball stuck past the wall" -- Type trace_wall.py exactly as shown.
+```
+
 ## Your turn: bug hunt — the ball that escapes
 
 **Build, on your own:** find out why one slow frame lets the ball escape, and fix it.
