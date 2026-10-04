@@ -35,7 +35,10 @@ afterAll(() => {
 
 let baseEnv;
 async function getEnv() {
-  if (!baseEnv) baseEnv = await shellEnv();
+  // No __pycache__: Python treats cached bytecode as current when the source's modification
+  // time (in whole seconds) and size match, so a wrong answer that changes a file within the
+  // same second, to text of the same length, could otherwise be checked as the old code.
+  if (!baseEnv) baseEnv = { ...(await shellEnv()), PYTHONDONTWRITEBYTECODE: '1' };
   return baseEnv;
 }
 
@@ -60,6 +63,12 @@ async function perform(dir, lesson, step, action = {}) {
       content = content.replace(from, to);
     }
     fs.writeFileSync(path.join(dir, step.file), content);
+  }
+  // files: { path: content } written as they are (a wrong answer's version of a whole file).
+  for (const [rel, content] of Object.entries(action.files ?? {})) {
+    const abs = path.join(dir, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, content);
   }
   for (const cmd of action.run ?? []) {
     const r = await shellRun(cmd, { cwd: dir, env: await getEnv(), timeoutMs: 600000 });
