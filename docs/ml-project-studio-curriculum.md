@@ -190,6 +190,11 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | | 5.3 A repository, and a service that remembers | data-access layers | / 29 |
 | | 5.4 SQLAlchemy: the SQL is still there | data-access layers (ORM, echo, N + 1) | / 28 |
 | | 5.5 Changing the schema safely: migrations | data-access layers (migrations; Alembic mapped) | / 32 |
+| **06 · Authentication and Security** (`ml-security`) — project: multi-user studio | 6.1 Who are you? Storing passwords | authentication (scrypt, salts, constant-time checks) | / 31 |
+| | 6.2 Staying logged in: sessions and cookies | authentication (tokens, cookie flags, HTTPS) | / 31 |
+| | 6.3 Yours, not theirs: authorisation | authentication, web security (IDOR, attacked then fixed) | / 31 |
+| | 6.4 When input becomes code: injection, XSS and path traversal | web security (each attacked then fixed) | / 31 |
+| | 6.5 Defence in depth: limits, origins, headers and secrets | web security (rate limiting, CSRF, headers, secrets) | / 31 |
 
 ### Planned
 
@@ -197,7 +202,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 06 | Authentication and Security: Multi-user Platform | "Two people now need separate projects" | password hashing, sessions, cookies, login/logout, protected routes, custom error responses; then SQL injection, XSS, CSRF, path traversal, upload safety, rate limiting, secrets, each shown vulnerable → attacked → fixed | / 31 |
 | 07 | Evaluation and Overfitting | "The test score changes every time the split does" | cross-validation, polynomial features and overfitting, regularisation, learning curves, leakage; mini-batches and momentum where training gets slow | ml-overfitting, ml-regularisation, ml-cross-validation, ml-optimisers / 6, 7, 22 |
 | 08 | Classification: Spam Detector | "Some predictions are categories, not numbers" | probability and conditional probability by simulation; tokenisation, bag-of-words, TF-IDF; logistic regression and naive Bayes from scratch, then scikit-learn; confusion matrix, precision, recall, ROC | ml-probability-by-simulation, ml-logistic-regression, ml-naive-bayes, ml-classification-metrics / 4, 8, 9, 11 |
 | 09 | Trees: Decision Tree and Random Forest | "A model you can explain, rule by rule" | entropy, information gain, recursive splitting, bagging, feature importance; plus k-NN and feature scaling | ml-knn, ml-decision-trees, ml-random-forests / 10, 12, 13 |
