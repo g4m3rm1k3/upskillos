@@ -1,0 +1,342 @@
+id,label,text
+1,ham,"Offer still stands, you can stay at ours tonight"
+2,ham,"Claim your seat early, the room fills up at 6"
+3,spam,"Exclusive deal: claim a free phone free, just text PRIZE"
+4,ham,"Running late, see you at the station after lunch"
+5,ham,Bring the burgers leftovers if there are any
+6,spam,"Hey it's Ana! Long time, check out my new pics at the link"
+7,ham,Ok see you this weekend
+8,ham,Free tonight? We could go to the cafe
+9,ham,Free at 7? We could go to the library
+10,ham,"Text me now, it's urgent"
+11,ham,You won the raffle at work! Collect the prize from reception later
+12,ham,"New phone, who dis? It's Leo, save my number"
+13,ham,"The meeting moved to tonight, same room"
+14,spam,"Win a holiday! Free to enter, text YES now"
+15,ham,Did you claim the refund for the train tickets?
+16,ham,"Hi Leo, are we still on for mum's tomorrow?"
+17,ham,Let me know if you need a lift after lunch
+18,ham,Reply YES if you want tacos on Friday
+19,spam,We tried to deliver your package at 7. Reschedule at the link
+20,spam,Your subscription has expired. Renew now at the link to avoid losing access
+21,ham,Pay me back for the pizza when you can
+22,ham,"Hi Tom, are we still on for the park at 6?"
+23,ham,Text me the code for the door at the library
+24,ham,Reply YES if you want burgers after lunch
+25,spam,Get a new tablet free when you reply GO now
+26,ham,"Last chance to sign the card for Mia, it's at the shop"
+27,spam,Get a gift card free when you reply YES now
+28,ham,Final notice from the library: return the book this weekend
+29,ham,Is the tacos place still open at 6?
+30,ham,"Leo won tickets to the gig tonight, want to come?"
+31,ham,"Get well soon Ana, we miss you at the cafe"
+32,spam,FREE entry to win a gift card! Text GO now
+33,ham,Is the tacos place still open tomorrow?
+34,spam,You are a winner! Text STOP to receive a new tablet
+35,ham,Can you send me the photos from the cafe?
+36,ham,"Your order has shipped. Track it online, arrives at 7"
+37,ham,Your table for tacos is booked this weekend. Reply STOP to cancel
+38,spam,Cash prize waiting! Reply CLAIM now to claim £500
+39,ham,Let me know if you need a lift on Friday
+40,spam,Earn $500 a week from home! No experience needed. Text GO
+41,ham,Reply YES if you want curry at 6
+42,ham,Congratulations on the new house Raj!
+43,ham,Happy birthday Ella! Hope you have a great day
+44,spam,Act now: £500 guaranteed prize. Reply CLAIM
+45,ham,Bring the pizza leftovers if there are any
+46,ham,Final notice from the library: return the book at 7
+47,ham,"Get well soon Ana, we miss you at work"
+48,ham,Did you finish the report? Boss wants it after lunch
+49,ham,Did you finish the report? Boss wants it tonight
+50,ham,Text me the code for the door at the gym
+51,ham,Pay me back for the curry when you can
+52,ham,"Selected for jury duty, can you believe it"
+53,ham,"Running late, see you at the shop after lunch"
+54,ham,"Joe says hi, we're at the cafe"
+55,ham,Can I borrow your charger this weekend?
+56,ham,"Your prize for the quiz is at work, claim it this weekend"
+57,spam,WINNER! Claim a free phone today. Text CLAIM to 80080
+58,spam,You are owed a tax refund of $500. Apply at the link
+59,ham,Can you call the bank after lunch? They need to confirm the account
+60,ham,"Your order has shipped. Track it online, arrives later"
+61,ham,"I'm at the park, where are you?"
+62,ham,"Running late, see you at the cafe tonight"
+63,spam,Your mobile number has won £500. To claim call now
+64,ham,Won the match tomorrow! Drinks at the library?
+65,ham,"Great news, I got the job!"
+66,ham,Won a free coffee at the cafe! Reply if you want it
+67,ham,Can you send me the photos from work?
+68,spam,"Exclusive deal: claim a free phone free, just text WIN"
+69,ham,Let me know if you need a lift at 6
+70,ham,"Get well soon Joe, we miss you at the station"
+71,spam,Congratulations! You have been selected for a holiday. Reply YES to claim
+72,spam,Get a cash prize free when you reply STOP now
+73,spam,Final notice: your prize of $500 is waiting. Call now
+74,ham,Reply YES if you want noodles tonight
+75,ham,"Claim your seat early, the room fills up tonight"
+76,ham,"The meeting moved to at 6, same room"
+77,ham,"Lunch was lovely, thank you Mia"
+78,ham,Let me know if you need a lift tonight
+79,ham,Let me know if you need a lift tomorrow
+80,spam,You are owed a tax refund of £1000. Apply at the link
+81,spam,Earn £1000 a week from home! No experience needed. Text STOP
+82,ham,"Sorry I missed your call, I'll ring you at 7"
+83,ham,Text me the code for the door at work
+84,ham,"Hi Leo, are we still on for the library tonight?"
+85,ham,"Your order has shipped. Track it online, arrives after lunch"
+86,ham,"Raj says hi, we're at the gym"
+87,ham,Free tomorrow? We could go to mum's
+88,ham,Mum wants to know if you're coming at 7
+89,spam,Act now: $1000 guaranteed prize. Reply CLAIM
+90,spam,Hot singles near you are waiting to chat. Reply CLAIM
+91,ham,"Last chance to sign the card for Kim, it's at the park"
+92,ham,Can I borrow your charger on Friday?
+93,spam,Limited offer: free a cash prize for the first 100 to reply
+94,ham,"Last chance to sign the card for Joe, it's at the gym"
+95,spam,Cash prize waiting! Reply PRIZE now to claim £1000
+96,ham,Reminder: dentist appointment after lunch. Reply YES to confirm
+97,ham,Happy birthday Ana! Hope you have a great day
+98,ham,"Lunch was lovely, thank you Joe"
+99,ham,Cash or card for the pizza on Friday?
+100,ham,Congratulations on the new house Mia!
+101,spam,"Win a cash prize! Free to enter, text PRIZE now"
+102,ham,Congratulations on the new house Priya!
+103,ham,The link for the meeting is in your email
+104,spam,Congratulations! You have been selected for a holiday. Reply STOP to claim
+105,ham,Won a free coffee at work! Reply if you want it
+106,ham,Can you call the bank later? They need to confirm the account
+107,ham,Reply YES if you want soup on Friday
+108,spam,URGENT! You have won a new tablet. Call now to claim
+109,ham,Ok see you tonight
+110,spam,We tried to deliver your package after lunch. Reschedule at the link
+111,spam,"Lowest rates on loans, approved in minutes. Call today"
+112,ham,Is the noodles place still open after lunch?
+113,ham,Can you call the bank at 7? They need to confirm the account
+114,ham,"Your prize for the quiz is at the library, claim it on Friday"
+115,ham,"The parcel came, I left it at the library"
+116,ham,Won the match tonight! Drinks at the cafe?
+117,ham,Call me when you get this
+118,ham,"I'm at work, where are you?"
+119,ham,Free this weekend? We could go to the library
+120,spam,FREE entry to win free tickets! Text GO now
+121,ham,"Your order has shipped. Track it online, arrives this weekend"
+122,ham,"Get well soon Priya, we miss you at mum's"
+123,ham,Final notice from the library: return the book tonight
+124,ham,Happy birthday Leo! Hope you have a great day
+125,ham,Fancy soup at 6?
+126,ham,"Hi Ella, are we still on for the shop this weekend?"
+127,ham,Text me the code for the door at the park
+128,spam,Your mobile number has won $500. To claim call now
+129,ham,"Claim your seat early, the room fills up after lunch"
+130,ham,"New phone, who dis? It's Ella, save my number"
+131,ham,Cash or card for the pizza after lunch?
+132,ham,"Free tickets to the match this weekend, text me if you want them"
+133,spam,Act now: £250 guaranteed prize. Reply STOP
+134,ham,"The meeting moved to tomorrow, same room"
+135,ham,"The parcel came, I left it at mum's"
+136,ham,Text me the code for the door at mum's
+137,ham,"Tom says hi, we're at the gym"
+138,ham,"Free parking at mum's later, worth knowing"
+139,ham,Pay me back for the noodles when you can
+140,ham,"Congratulations! You passed the exam, call me"
+141,ham,"Hi Joe, are we still on for the library at 6?"
+142,ham,"New phone, who dis? It's Ana, save my number"
+143,ham,Can you call the bank tonight? They need to confirm the account
+144,ham,Reminder: dentist appointment tonight. Reply YES to confirm
+145,ham,Won the match on Friday! Drinks at the library?
+146,ham,"Mia says hi, we're at mum's"
+147,ham,"Claim your seat early, the room fills up later"
+148,ham,Won the match at 7! Drinks at the shop?
+149,ham,"Reply when you can, no rush"
+150,ham,Cash or card for the noodles after lunch?
+151,ham,Cash or card for the noodles on Friday?
+152,spam,"Hey it's Sam! Long time, check out my new pics at the link"
+153,ham,"Sam won tickets to the gig later, want to come?"
+154,spam,"Hi Ana, you have been chosen to win a free phone. Call now"
+155,ham,You won the raffle at work! Collect the prize from reception tomorrow
+156,spam,Urgent: your account has won £1000. Call to claim today
+157,ham,"Your prize for the quiz is at mum's, claim it at 7"
+158,ham,"Get well soon Priya, we miss you at the cafe"
+159,ham,"Free tickets to the match tomorrow, text me if you want them"
+160,ham,Can I borrow your charger at 7?
+161,ham,Won the match on Friday! Drinks at the cafe?
+162,spam,Congratulations! You have been selected for free tickets. Reply CLAIM to claim
+163,ham,Ok see you at 6
+164,ham,"The parcel came, I left it at the cafe"
+165,spam,Cash prize waiting! Reply STOP now to claim £1000
+166,ham,Mum wants to know if you're coming on Friday
+167,ham,"Just got home, so tired"
+168,ham,"Urgent: the boiler is leaking, call the plumber now"
+169,ham,Your table for burgers is booked after lunch. Reply STOP to cancel
+170,ham,You won the raffle at work! Collect the prize from reception at 6
+171,ham,"Your order has shipped. Track it online, arrives tomorrow"
+172,ham,"Running late, see you at work at 7"
+173,spam,Get a cash prize free when you reply YES now
+174,ham,"Lunch was lovely, thank you Kim"
+175,ham,"The parcel came, I left it at the shop"
+176,ham,Can I borrow your charger tonight?
+177,spam,Congratulations! You have been selected for a free phone. Reply WIN to claim
+178,ham,Won the match tonight! Drinks at work?
+179,ham,Your table for pizza is booked tonight. Reply STOP to cancel
+180,ham,"Call now if you can, it's about Sam"
+181,ham,"Joe won tickets to the gig after lunch, want to come?"
+182,spam,We tried to deliver your package tomorrow. Reschedule at the link
+183,spam,WINNER! Claim a new tablet today. Text YES to 80080
+184,spam,You are a winner! Text YES to receive a cash prize
+185,spam,We tried to deliver your package on Friday. Reschedule at the link
+186,ham,Did you finish the report? Boss wants it later
+187,ham,"The meeting moved to this weekend, same room"
+188,ham,Text me the code for the door at the station
+189,spam,Limited offer: free a gift card for the first 100 to reply
+190,ham,Reminder: dentist appointment later. Reply YES to confirm
+191,ham,Cash or card for the curry tonight?
+192,ham,Congratulations on the new house Sam!
+193,ham,Let me know if you need a lift this weekend
+194,ham,"Claim your seat early, the room fills up at 7"
+195,ham,Won a free coffee at the park! Reply if you want it
+196,ham,Bring the tacos leftovers if there are any
+197,spam,"Hi Ana, you have been chosen to win a gift card. Call now"
+198,ham,Cash or card for the soup this weekend?
+199,ham,Let me know if you need a lift at 7
+200,ham,Bring the noodles leftovers if there are any
+201,ham,"Last chance to sign the card for Sam, it's at the station"
+202,ham,Pay me back for the burgers when you can
+203,ham,Mum wants to know if you're coming after lunch
+204,ham,Mum wants to know if you're coming tomorrow
+205,spam,You have won $1000 cash! Claim now before it expires
+206,spam,"Mum it's me, I lost my phone. This is my new number, can you send money?"
+207,ham,"Call now if you can, it's about Raj"
+208,ham,Won the match tonight! Drinks at the gym?
+209,spam,Urgent: your account has won $1000. Call to claim today
+210,ham,"Ella says hi, we're at the station"
+211,ham,Cash or card for the noodles later?
+212,ham,"Offer still stands, you can stay at ours later"
+213,ham,Your table for burgers is booked later. Reply STOP to cancel
+214,spam,Hot singles near you are waiting to chat. Reply WIN
+215,ham,Mum wants to know if you're coming at 6
+216,ham,"Free tickets to the match at 7, text me if you want them"
+217,ham,"Call now if you can, it's about Tom"
+218,ham,Don't forget the keys are under the mat
+219,spam,"Win a free phone! Free to enter, text YES now"
+220,spam,Act now: $1000 guaranteed prize. Reply WIN
+221,ham,Can I borrow your charger tomorrow?
+222,spam,Earn £1000 a week from home! No experience needed. Text YES
+223,ham,"New phone, who dis? It's Mia, save my number"
+224,ham,Fancy noodles this weekend?
+225,spam,You have won £500 cash! Claim now before it expires
+226,spam,Urgent: your account has won $500. Call to claim today
+227,ham,Fancy burgers this weekend?
+228,spam,You are owed a tax refund of $1000. Apply at the link
+229,spam,URGENT! You have won a free phone. Call now to claim
+230,ham,Fancy noodles later?
+231,ham,Reminder: dentist appointment tomorrow. Reply YES to confirm
+232,ham,"Hi Kim, are we still on for the shop after lunch?"
+233,ham,"The parcel came, I left it at work"
+234,spam,Final notice: your prize of £250 is waiting. Call now
+235,ham,Mum wants to know if you're coming tonight
+236,ham,"Lunch was lovely, thank you Tom"
+237,ham,"Kim says hi, we're at the shop"
+238,ham,Happy birthday Tom! Hope you have a great day
+239,spam,WINNER! Claim a cash prize today. Text CLAIM to 80080
+240,spam,"Exclusive deal: claim a new tablet free, just text YES"
+241,ham,"Sorry I missed your call, I'll ring you tomorrow"
+242,spam,Limited offer: free a new tablet for the first 100 to reply
+243,ham,Reminder: dentist appointment on Friday. Reply YES to confirm
+244,ham,Your table for noodles is booked this weekend. Reply STOP to cancel
+245,ham,Free this weekend? We could go to the station
+246,ham,Is the burgers place still open tomorrow?
+247,ham,"Get well soon Raj, we miss you at the gym"
+248,spam,URGENT! You have won a cash prize. Call now to claim
+249,ham,Did you finish the report? Boss wants it on Friday
+250,ham,Free tomorrow? We could go to the cafe
+251,ham,Ok see you after lunch
+252,spam,We tried to deliver your package tonight. Reschedule at the link
+253,ham,Can you send me the photos from the station?
+254,ham,You won the raffle at work! Collect the prize from reception on Friday
+255,spam,You are a winner! Text PRIZE to receive a free phone
+256,ham,"Offer still stands, you can stay at ours after lunch"
+257,ham,Free later? We could go to mum's
+258,spam,Limited offer: free a holiday for the first 100 to reply
+259,ham,Congratulations on the new house Joe!
+260,spam,Your mobile number has won £2000. To claim call now
+261,ham,Did you finish the report? Boss wants it this weekend
+262,ham,Can you call the bank at 6? They need to confirm the account
+263,ham,"The meeting moved to on Friday, same room"
+264,ham,"Your order has shipped. Track it online, arrives tonight"
+265,ham,"Hi Leo, are we still on for work tomorrow?"
+266,ham,"Free tickets to the match after lunch, text me if you want them"
+267,spam,URGENT! You have won a holiday. Call now to claim
+268,ham,Can you send me the photos from the library?
+269,spam,Cash prize waiting! Reply CLAIM now to claim $500
+270,spam,Earn $1000 a week from home! No experience needed. Text GO
+271,ham,Won the match this weekend! Drinks at mum's?
+272,ham,Reply YES if you want tacos this weekend
+273,ham,Won the match tomorrow! Drinks at mum's?
+274,spam,Get a new tablet free when you reply YES now
+275,ham,"Sorry I missed your call, I'll ring you after lunch"
+276,ham,Did you see the game last night?
+277,ham,"Hi Ana, are we still on for the library on Friday?"
+278,ham,"Your prize for the quiz is at the shop, claim it at 7"
+279,ham,Reply YES if you want noodles this weekend
+280,ham,"Mia says hi, we're at work"
+281,ham,"Sorry I missed your call, I'll ring you later"
+282,ham,Reply YES if you want soup tonight
+283,spam,"Win a gift card! Free to enter, text STOP now"
+284,ham,Free later? We could go to the shop
+285,ham,Is the soup place still open at 7?
+286,ham,Reply YES if you want burgers at 6
+287,spam,Hot singles near you are waiting to chat. Reply PRIZE
+288,ham,You won the raffle at work! Collect the prize from reception tonight
+289,spam,Your mobile number has won £1000. To claim call now
+290,spam,"Hi Leo, you have been chosen to win free tickets. Call now"
+291,ham,Can you send me the photos from mum's?
+292,ham,"Get well soon Sam, we miss you at the station"
+293,ham,"Lunch was lovely, thank you Raj"
+294,ham,"The meeting moved to after lunch, same room"
+295,ham,"Ella won tickets to the gig later, want to come?"
+296,spam,"Exclusive deal: claim free tickets free, just text WIN"
+297,spam,"Hi Joe, you have been chosen to win free tickets. Call now"
+298,spam,Your bank account is locked. Confirm your details at the link today
+299,ham,Text me when the train gets in
+300,ham,Won a free coffee at the library! Reply if you want it
+301,spam,"Hey it's Tom! Long time, check out my new pics at the link"
+302,ham,Reminder: dentist appointment this weekend. Reply YES to confirm
+303,spam,Hot singles near you are waiting to chat. Reply YES
+304,spam,WINNER! Claim free tickets today. Text YES to 80080
+305,ham,"Free parking at the cafe tonight, worth knowing"
+306,ham,Ok see you tomorrow
+307,spam,You have won $500 cash! Claim now before it expires
+308,ham,Congratulations on the new house Ana!
+309,ham,"Your order has shipped. Track it online, arrives at 6"
+310,ham,Reminder: dentist appointment at 7. Reply YES to confirm
+311,ham,Happy birthday Raj! Hope you have a great day
+312,ham,Reply YES if you want burgers tonight
+313,spam,You have won £1000 cash! Claim now before it expires
+314,spam,Earn £250 a week from home! No experience needed. Text STOP
+315,ham,Claim form for the insurance is on the table
+316,ham,"Last chance to sign the card for Kim, it's at the shop"
+317,ham,Ok see you at 7
+318,ham,"Call now if you can, it's about Kim"
+319,ham,Bring the curry leftovers if there are any
+320,ham,Pay me back for the tacos when you can
+321,ham,Pay me back for the soup when you can
+322,ham,"Free parking at work this weekend, worth knowing"
+323,ham,"New phone, who dis? It's Kim, save my number"
+324,ham,"Get well soon Priya, we miss you at the library"
+325,ham,"Offer still stands, you can stay at ours this weekend"
+326,spam,FREE entry to win a free phone! Text PRIZE now
+327,ham,"Lunch was lovely, thank you Ella"
+328,ham,Can you send me the photos from the park?
+329,ham,"Your order has shipped. Track it online, arrives on Friday"
+330,ham,"Sorry I missed your call, I'll ring you on Friday"
+331,ham,"Thanks for today, it was really fun"
+332,ham,Can you send me the photos from the gym?
+333,ham,Congratulations on the new house Ella!
+334,ham,Won a free coffee at mum's! Reply if you want it
+335,ham,"Hi Tom, are we still on for the gym tomorrow?"
+336,ham,Can you pick up some milk on the way home?
+337,ham,Text me the code for the door at the cafe
+338,ham,"Leo says hi, we're at work"
+339,spam,We tried to deliver your package later. Reschedule at the link
+340,spam,Your parcel is on hold. Pay the 1.99 fee at the link to release it
+341,ham,Can you call the bank tomorrow? They need to confirm the account

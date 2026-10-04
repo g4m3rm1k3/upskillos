@@ -4,7 +4,8 @@
 // new .md into tracks/<track>/ and it appears, in filename order.
 import { parseLesson } from './parseTrack.js';
 
-const FILES = import.meta.glob('./tracks/**/*.md', { query: '?raw', import: 'default', eager: true });
+// Markdown under a track's support/ folder is a file supplied to the learner (a brief, a README), not a lesson.
+const FILES = import.meta.glob(['./tracks/**/*.md', '!./tracks/*/support/**'], { query: '?raw', import: 'default', eager: true });
 const SUPPORT_FILES = import.meta.glob('./tracks/*/support/**/*', { query: '?raw', import: 'default', eager: true });
 
 // Opt-in supplied infrastructure stays out of the lesson's teaching code blocks. A name may
