@@ -224,6 +224,12 @@ Lesson files are numbered `<chapter>-<lesson>-<slug>.md`. A lesson's progress ke
 | **14 · NLP** (`ml-nlp`) — project: maintenance work orders | 14.1 Words that matter: TF-IDF | text features (IDF by hand, identical to `TfidfVectorizer`; routing work orders to a trade) | ml-naive-bayes / 11 |
 | | 14.2 Has this happened before? Similarity search | text features (cosine similarity search, and where matching words fails) | ml-embeddings / 34 |
 | | 14.3 Meaning, not just matching: embeddings | embeddings (latent semantic analysis by SVD; "leak" near "weeping"; search by meaning) | ml-embeddings / 25 |
+| **15 · Production ML** (`ml-studio`) — project: the Defect Studio | 15.1 A studio, not a script: layers and data validation | ML testing (layers; refusing bad data with a reason; cross-validated training against a baseline) | ml-sklearn-workflow / 28 |
+| | 15.2 Models you can trust: artifacts | model persistence (content-addressed models; a planted pickle refused before it runs; reproducible fingerprints) | ml-sklearn-workflow / 28 |
+| | 15.3 Training in the background | background jobs (experiments as a state machine, executors, failures recorded, a connection per thread) | ml-sklearn-workflow / 29 |
+| | 15.4 The API, and tests an ML system needs | ML testing (an app factory, status codes; quality gate and behavioural model tests) | ml-sklearn-workflow / 30 |
+| | 15.5 Watching it run | deployment (prediction log, drift against a training profile, retries, backoff, caching) | ml-sklearn-workflow / 30 |
+| | 15.6 Shipping it | deployment (crash recovery, pinned requirements, a non-root container with a data volume) | ml-sklearn-workflow / 32 |
 
 ### Planned
 
@@ -231,7 +237,6 @@ Each planned chapter names the problem that introduces its technology. The origi
 
 | # | Chapter | The problem that starts it | Builds | Companions to link |
 |---|---|---|---|---|
-| 15 | Production ML: Upskillos ML Studio | "Everything, for real users" | the full architecture (`api/`, `services/`, `ml/`, `database/`, `templates/`), CRUD for users, projects, datasets, models and experiments; background training jobs; model artifacts and metadata; experiment tracking; data, model and integration tests; reproducibility; Docker and deployment; logging and observability; ML-specific security (unsafe pickle files, untrusted datasets, prediction abuse); consuming external APIs with retries, timeouts and caching | / 28, 29, 30, 32 |
 | 16 | Capstone: Build Your Own ML Product | "Your own problem" | problem definition → data analysis → mathematical justification → baseline → model → evaluation → architecture → API → database → UI → tests → security → deployment | ml-capstone / 33 |
 
 Optional advanced tracks after Chapter 15 (prompt Part XLII): classical ML (SVM, boosting), deep learning (CNNs, sequence models, attention, transformers), NLP and retrieval, recommender systems, time series. Each can link the matching ML Lab labs (14, 15, 19, 25, 26, 34, 35).

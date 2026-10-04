@@ -88,6 +88,7 @@ export const ML_CONCEPTS = {
   'data-access-layers': { label: 'Repositories, ORMs and migrations', area: 'Software', requires: ['sql', 'classes'] },
   'authentication': { label: 'Authentication and sessions', area: 'Software', requires: ['web-api', 'sql'] },
   'web-security': { label: 'Web security', area: 'Software', requires: ['authentication', 'html-htmx'] },
+  'ml-testing': { label: 'Data validation and testing ML systems', area: 'Software', requires: ['testing', 'scikit-learn', 'cross-validation'] },
   'model-persistence': { label: 'Model artifacts and experiment tracking', area: 'Software', requires: ['scikit-learn', 'sql'] },
   'background-jobs': { label: 'Background jobs', area: 'Software', requires: ['web-api', 'model-persistence'] },
   'deployment': { label: 'Deployment and observability', area: 'Software', requires: ['web-api', 'virtual-environments'] },

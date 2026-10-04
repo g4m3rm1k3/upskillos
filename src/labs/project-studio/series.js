@@ -46,8 +46,9 @@ const SERIES = [
       ['ml-neural', '12 · Neural Networks: A Tolerance Zone'],
       ['ml-pytorch', '13 · PyTorch: Reading Handwritten Digits'],
       ['ml-nlp', '14 · NLP: Maintenance Work Orders'],
+      ['ml-studio', '15 · Production ML: The Defect Studio'],
     ],
-    planned: 'Next in this series: ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 
