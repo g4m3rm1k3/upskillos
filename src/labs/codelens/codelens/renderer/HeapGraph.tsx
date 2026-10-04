@@ -8,6 +8,7 @@
 import type { HeapSnapshot, HeapObjectEntry, HeapDelta } from '../types'
 import { useCodeLensTheme } from '../ThemeContext'
 import type { CodeLensUiPalette } from '../theme'
+import { heapObjectLabel } from './heapSnapshot'
 
 function typeColor(t: string, ui: CodeLensUiPalette): string {
   const TYPE_COLOR: Record<string, string> = {
@@ -30,15 +31,17 @@ export default function HeapGraph({ snapshot, heapDelta }: HeapGraphProps) {
   if (!snapshot || snapshot.objects.size === 0) return <EmptyState ui={ui} />
 
   const objects = [...snapshot.objects.values()]
-  const arrays  = objects.filter(o => o.type === 'Array')
-  const others  = objects.filter(o => o.type !== 'Array')
+  const isSequence = (o: HeapObjectEntry) => ['Array', 'list', 'tuple'].includes(o.type)
+  const arrays  = objects.filter(isSequence)
+  const others  = objects.filter(o => !isSequence(o))
 
   const mutatedProps = buildMutatedProps(heapDelta)
 
   // ── Check for SICP-style pair structures before falling into flat grid ─────
   // Check tree first (branching pairs), then chain (linear list).
-  const sicpTreeRoot  = arrays.length >= 3 ? detectSicpTree(arrays) : null
-  const arraySiciChain = !sicpTreeRoot && arrays.length >= 2 ? detectSicpChain(arrays) : null
+  const pairs = arrays.filter(o => o.type === 'Array')
+  const sicpTreeRoot  = pairs.length >= 3 ? detectSicpTree(pairs) : null
+  const arraySiciChain = !sicpTreeRoot && pairs.length >= 2 ? detectSicpChain(pairs) : null
 
   // ── SICP pair tree → tree diagram ─────────────────────────────────────────
   if (sicpTreeRoot != null) {
@@ -191,7 +194,7 @@ function ObjectCard({ obj, snapshot, isNew, isMutated, mutatedProps, compact, ui
     if (obj.type === 'Array' && k === 'length') continue
     if (isRef(v)) {
       const target = snapshot.objects.get(v.$ref)
-      refs.push({ key: k, label: target ? `${target.type} #${v.$ref}` : `#${v.$ref}`, id: v.$ref })
+      refs.push({ key: k, label: target ? heapObjectLabel(target) : `#${v.$ref}`, id: v.$ref })
     } else {
       prims.push({ key: k, val: v })
     }
@@ -221,10 +224,10 @@ function ObjectCard({ obj, snapshot, isNew, isMutated, mutatedProps, compact, ui
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
         <span style={{ color, fontWeight: 700, fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}>
-          {obj.type}
+          {heapObjectLabel(obj)}
         </span>
         <span style={{ color: ui.borderStrong, fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}>
-          #{obj.id}
+          {obj.names?.length ? `${obj.type} #${obj.id}` : ''}
         </span>
         {isNew && (
           <span style={{
@@ -309,8 +312,9 @@ function ArrayCells({ obj, isNew, mutated, ui }: ArrayCellsProps) {
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
         <span style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: ui.cyan, fontWeight: 700 }}>
-          Array #{obj.id}
+          {heapObjectLabel(obj)}
         </span>
+        {obj.names?.length ? <span style={{ fontSize: 10, color: ui.textFaint }}>{obj.type} #{obj.id}</span> : null}
         <span style={{
           fontSize: 10, padding: '1px 6px', borderRadius: 99,
           background: ui.border, color: ui.textFaint, fontFamily: 'JetBrains Mono, monospace',
@@ -326,7 +330,7 @@ function ArrayCells({ obj, isNew, mutated, ui }: ArrayCellsProps) {
         {elems.map((v, i) => {
           const hit = mutated.has(String(i))
           return (
-            <div key={i} title={`[${i}] = ${v}`} style={{
+            <div key={i} title={`[${i}] = ${fmtVal(v)}`} style={{
               width: cellW, height: cellH,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               borderRadius: 5, cursor: 'default',
@@ -338,7 +342,7 @@ function ArrayCells({ obj, isNew, mutated, ui }: ArrayCellsProps) {
               <span style={{
                 fontSize: cellW < 32 ? 11 : 13, fontFamily: 'JetBrains Mono, monospace',
                 fontWeight: 600, color: hit ? ui.amberSoft : ui.green, lineHeight: 1,
-              }}>{v === undefined ? '·' : String(v)}</span>
+              }}>{v === undefined ? '·' : fmtVal(v)}</span>
               <span style={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace', color: ui.borderStrong, marginTop: 2, lineHeight: 1 }}>
                 {i}
               </span>
@@ -687,6 +691,10 @@ function fmtVal(v: unknown): string {
   if (v === null)      return 'null'
   if (v === undefined) return 'undefined'
   if (typeof v === 'string') return `"${v.length > 18 ? v.slice(0, 18) + '…' : v}"`
-  if (typeof v === 'object') return '{…}'
+  if (typeof v === 'object') {
+    if ('$ref' in v) return `→ #${v.$ref}`
+    if ('objectId' in v) return `→ #${v.objectId}`
+    return '{…}'
+  }
   return String(v)
 }

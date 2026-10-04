@@ -61,3 +61,34 @@ describe('lesson action clarity', () => {
     expect(host.querySelector('pre').textContent).toBe('reference source');
   });
 });
+
+describe('non-blocking challenges', () => {
+  it('keeps continuation enabled after a failed check, and exposes deferral and revisit', async () => {
+    const challenge = { id: 'challenge', title: 'Challenge — transfer', optional: true, prose: 'Try this independently.', checks: [{ label: 'Correct behavior' }] };
+    const teaching = { id: 'teaching', title: 'Read the explanation', checks: [] };
+    const lesson = { id: 'typed', title: 'Typed course', meta: { pedagogy: 'typed' }, steps: [challenge, teaching] };
+    const onNext = vi.fn(), onDefer = vi.fn(), onSelectStep = vi.fn();
+    await act(async () => root.render(<LessonPanel C={C} lesson={lesson} lessons={[lesson]} step={challenge}
+      stepIndex={0} onNext={onNext} onDefer={onDefer} onSelectStep={onSelectStep}
+      challengeStatus={() => 'needs practice'} isCovered={() => false}
+      checkState={{ results: [{ pass: false, detail: 'Boundary case failed' }] }} canCheck />));
+    const next = [...host.querySelectorAll('button')].find(b => b.textContent === 'Next step →');
+    expect(next.disabled).toBe(false);
+    await act(async () => next.click());
+    expect(onNext).toHaveBeenCalledOnce();
+    await act(async () => [...host.querySelectorAll('button')].find(b => b.textContent === 'Defer and continue →').click());
+    expect(onDefer).toHaveBeenCalledOnce();
+    await act(async () => host.querySelector('details button').click());
+    expect(onSelectStep).toHaveBeenCalledWith('typed', 0);
+    expect(host.textContent).toContain('Material covered: 0/1');
+    expect(host.textContent).toContain('needs practice');
+  });
+  it('shows typed fragments without a full solution or a create-code button', async () => {
+    const step = { id: 'fragment', title: 'One expression', file: 'Main.java', target: null, edit: { mode: 'append', code: 'return value;' }, prose: 'Explain execution', checks: [] };
+    const lesson = { id: 'typed', title: 'Java', meta: { pedagogy: 'typed' }, steps: [step] };
+    await act(async () => root.render(<LessonPanel C={C} lesson={lesson} lessons={[lesson]} step={step} stepIndex={0} />));
+    expect(host.textContent).toContain('Your editor is never filled for you');
+    expect(host.textContent).not.toContain('reference source');
+    expect(host.textContent).not.toContain('Create provided');
+  });
+});

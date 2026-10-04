@@ -186,7 +186,7 @@ export function TrainDialog({ store, onClose, onWatch, onTrainInView }: { store:
         if (method !== 'cem' && !(Array.isArray(spec.bins) && spec.bins.some((c) => Array.isArray(c) && c.length))) return { error: 'Q-learning needs "bins": a list of cut points for each number the agent\'s observe() returns ([] for one that is not binned).' };
         return { spec };
       }
-      if (method === 'linear-q') return { error: 'Linear Q needs "agent": a turn-based agent whose script has legalActions() and features(action).' };
+      if (method === 'linear-q') return { error: 'Linear Q needs "agent": an agent whose script has features(action).' };
       if (!Array.isArray(spec.actions) || !Array.isArray(spec.observation) || !Array.isArray(spec.reward)) return { error: 'It needs actions, observation and reward lists, or "agent": the path of a node whose script has observe() and act().' };
       if (method !== 'cem' && !spec.observation.some((o) => o.bins?.length)) return { error: 'Q-learning needs "bins" on at least one observation reading: the cut points that turn its numbers into states.' };
       return { spec };

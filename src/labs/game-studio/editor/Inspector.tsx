@@ -214,14 +214,14 @@ export function Inspector({ store }: { store: Store }) {
             <Row label="file"><span style={{ fontFamily: C.mono, color: C.warn }}>{n.script}</span></Row>
             <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
               <Btn small testid="open-script" onClick={() => store.openScript(n.script!)}>Open</Btn>
-              <Btn small onClick={() => store.act((d) => d.setScript(s.id, n.id, null))}>Detach</Btn>
+              <Btn small testid="detach-script" onClick={() => store.act((d) => d.setScript(s.id, n.id, null))}>Detach</Btn>
             </div>
           </>
         ) : (
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
             <Btn small testid="new-script" onClick={() => store.newScriptFor(n.id)} title="A new JavaScript file for this node, from a template">New script</Btn>
             {p.scripts.length > 0 && (
-              <select value="" onChange={(e) => e.target.value && store.act((d) => d.setScript(s.id, n.id, e.target.value))} style={selectStyle}>
+              <select data-testid="attach-script" value="" onChange={(e) => e.target.value && store.act((d) => d.setScript(s.id, n.id, e.target.value))} style={selectStyle}>
                 <option value="">Attach existing…</option>
                 {p.scripts.map((x) => <option key={x.path} value={x.path}>{x.path}</option>)}
               </select>

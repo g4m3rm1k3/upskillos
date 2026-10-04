@@ -34,6 +34,7 @@ What each line does
 import ast
 import collections
 import io
+import reprlib
 import json
 import re
 import sys
@@ -59,6 +60,30 @@ DEFAULT_LIMITS = {
 _CONTAINERS = (list, tuple, dict, set, frozenset, collections.deque)
 _NOT_DATA = (types.FunctionType, types.BuiltinFunctionType, types.MethodType,
              types.ModuleType, type, types.GeneratorType, types.CodeType, types.FrameType)
+
+
+# How previews of objects are written: a few items of each container, short strings.
+_PREVIEW = reprlib.Repr()
+_PREVIEW.maxlist = _PREVIEW.maxtuple = _PREVIEW.maxset = _PREVIEW.maxfrozenset = _PREVIEW.maxdeque = 10
+_PREVIEW.maxdict = 6
+_PREVIEW.maxstring = 40
+_PREVIEW.maxother = 60
+_PREVIEW.maxlevel = 3
+
+
+def _is_numpy(value):
+    return getattr(type(value), '__module__', '') == 'numpy'
+
+
+def _is_numpy_scalar(value):
+    return _is_numpy(value) and getattr(value, 'ndim', None) == 0 and hasattr(value, 'item')
+
+
+def _is_small_array(value):
+    """A numpy array CodeLens records like a list: 1-D or 2-D, up to a few thousand numbers.
+    Checked by name, so numpy is never imported for programs that don't use it."""
+    return (type(value).__name__ == 'ndarray' and _is_numpy(value)
+            and value.ndim in (1, 2) and value.size <= 4000)
 
 
 class _LimitReached(BaseException):
@@ -146,6 +171,9 @@ class Tracer:
         self.output = None      # the _Output capturing print(), for 'printed'
         self.printed_parts = 0  # how many output parts earlier events have already reported
         self.input_read = []    # standard-input lines read since the previous event
+        self.previews = {}      # object id -> (preview, type name), last seen (with_preview)
+        self.skip_lines = set() # first lines of functions marked '# codelens: skip' (skip_lines())
+        self.skipped_lines = 0
         self.screen = None      # the pygame stand-in (codelens_pygame.Screen), if the program uses one
         self.expressions = []   # (expression id, depth, value) recorded since the previous event
         self.expression_count = 0
@@ -153,6 +181,8 @@ class Tracer:
     def record_expression(self, ident, value):
         """The rewritten program calls this with each sub-expression's value (see
         _ExpressionRecorder); it returns the value unchanged."""
+        if self.skip_lines and self.inside_skipped(sys._getframe(1)):
+            return value   # a function marked '# codelens: skip', or one it called
         if self.expression_count < self.limits['maxExpressions'] and len(self.expressions) < self.limits['maxExpressionsPerStep'] \
                 and not isinstance(value, _NOT_DATA):   # a function or module named in the code isn't a result
             self.expression_count += 1
@@ -166,7 +196,7 @@ class Tracer:
         if self.is_tracked(value):
             small = self.ids.get(id(value))
             if small is not None:
-                return {'$ref': small}
+                return self.with_preview({'$ref': small}, value)
             text = repr(value)
             return text if len(text) <= 60 else text[:59] + '…'
         return self.value(value)
@@ -174,12 +204,58 @@ class Tracer:
     # ── values ──────────────────────────────────────────────────────────────
 
     def is_tracked(self, value):
-        if isinstance(value, _CONTAINERS):
+        if isinstance(value, _CONTAINERS) or _is_small_array(value):
             return True
         if isinstance(value, _NOT_DATA):
             return False
         # Instances of the learner's own classes (defined in the program, so in __main__).
         return getattr(type(value), '__module__', None) == '__main__'
+
+    def preview(self, obj):
+        """A short text of what an object holds, such as (0, 1) or [-1, -1, -5, -7], for
+        explanations: "Returns (0, 1)" says more than "Returns object #4". Instances of the
+        learner's classes without their own __repr__ show their fields: Point(x=1, y=2)."""
+        try:
+            if _is_numpy(obj) and type(obj).__name__ == 'ndarray':
+                # numpy's own repr spans lines ("array([[0., 0.],\n  ..."); a list reads in one.
+                text = _PREVIEW.repr(obj.tolist()) if _is_small_array(obj) else f'array of shape {obj.shape}'
+            elif not isinstance(obj, _CONTAINERS) and type(obj).__repr__ is object.__repr__:
+                fields = [(k, v) for k, v in vars(obj).items() if not k.startswith('__')][:6]
+                text = f"{type(obj).__name__}({', '.join(f'{k}={_PREVIEW.repr(v)}' for k, v in fields)})"
+            else:
+                text = _PREVIEW.repr(obj)
+        except Exception:
+            return None
+        return text if len(text) <= 80 else text[:79] + '…'
+
+    def with_preview(self, shown, obj):
+        """{"$ref": n} plus the object's preview and type, for values an explanation names."""
+        text = self.preview(obj)
+        if not text:
+            return shown
+        # Remembered, so a later "x: (3, 1) → (3, 2)" can show the old object too, after it is gone.
+        self.previews[shown['$ref']] = (text, self.type_name(obj))
+        return {**shown, 'preview': text, 'objectType': self.type_name(obj)}
+
+    def shown(self, obj):
+        """value(), with a preview when it is a numbered object."""
+        out = self.value(obj)
+        return self.with_preview(out, obj) if isinstance(out, dict) and '$ref' in out else out
+
+    def preview_changes(self, frame, changes):
+        """Copies of the changes, with a preview for a variable that now holds an object. (The
+        stack snapshot keeps the bare {"$ref": n}, which the heap view compares.)"""
+        out = []
+        for change in changes:
+            value = change['newValue']
+            if isinstance(value, dict) and '$ref' in value and change['name'] in frame.f_locals:
+                change = {**change, 'newValue': self.with_preview(value, frame.f_locals[change['name']])}
+            old = change.get('oldValue')
+            if isinstance(old, dict) and '$ref' in old and old['$ref'] in self.previews:
+                text, type_name = self.previews[old['$ref']]
+                change = {**change, 'oldValue': {**old, 'preview': text, 'objectType': type_name}}
+            out.append(change)
+        return out
 
     def object_id(self, value):
         key = id(value)
@@ -191,6 +267,8 @@ class Tracer:
         return small
 
     def value(self, value):
+        if _is_numpy_scalar(value):
+            value = value.item()   # np.int64(3) -> 3, np.bool_(True) -> True
         if value is None or isinstance(value, bool):
             return value
         if isinstance(value, int):
@@ -212,13 +290,32 @@ class Tracer:
         return text if len(text) <= 80 else text[:79] + '…'
 
     def type_name(self, obj):
+        # A numpy array taken from another (Q[s], Q[:, 0]) shares its numbers: a "view".
+        # Writing into it changes the original too, which learners need to see.
+        # Only a view of an array the program can see counts: numpy also builds results as
+        # views of its own temporaries (np.flatnonzero), which share nothing with the program.
+        if _is_small_array(obj) and obj.base is not None:
+            root = obj.base
+            while getattr(root, 'base', None) is not None:
+                root = root.base
+            if id(root) in self.ids:
+                return 'ndarray view'
         return type(obj).__name__
 
     def properties(self, obj):
         """The object's contents as {name: value}, bounded by maxSnapshotItems."""
         limit = self.limits['maxSnapshotItems']
         props = {}
-        if isinstance(obj, (list, tuple, collections.deque)):
+        if _is_small_array(obj):
+            # A 1-D array is like a list. A 2-D array (a Q-table) keeps each row as one
+            # property holding the row's numbers, so the Data dock can draw it as a grid and
+            # a change shows as that row changing. (Rows of an array aren't objects of their
+            # own: numpy makes a new view each time one is read.)
+            for index, item in enumerate(obj.tolist()[:limit]):
+                props[str(index)] = [self.value(v) for v in item[:limit]] if obj.ndim == 2 else self.value(item)
+            if len(obj) > limit:
+                props['…'] = f'{len(obj) - limit} more'
+        elif isinstance(obj, (list, tuple, collections.deque)):
             for index, item in enumerate(obj):
                 if index >= limit:
                     props['…'] = f'{len(obj) - limit} more'
@@ -389,7 +486,7 @@ class Tracer:
             'sourceLocation': {'line': line},
             'stackSnapshot': stack,
             'heapDelta': self.heap_delta(frame),
-            'changes': self.changes(frame, current_locals),
+            'changes': self.preview_changes(frame, self.changes(frame, current_locals)),
             **payload,
         }
         if printed:
@@ -409,15 +506,40 @@ class Tracer:
             event['statement'] = self.statements[line]
         self.events.append(event)
 
+    # ── skipped functions ───────────────────────────────────────────────────
+    # A function whose `def` line has the comment `# codelens: skip` runs at full speed
+    # with no steps recorded, and so does everything it calls: drawing a frame, say, or
+    # fast-forwarding a simulation. Its effects still show at the next recorded step.
+
+    def inside_skipped(self, frame):
+        while frame is not None:
+            if self.is_user_frame(frame) and frame.f_code.co_firstlineno in self.skip_lines:
+                return True
+            frame = frame.f_back
+        return False
+
+    def watch_skipped(self, frame, event, arg):
+        """Trace function for skipped code: records nothing, but still stops a run that
+        goes on too long (a loop that never ends inside a skipped function)."""
+        if event == 'line':
+            self.skipped_lines += 1
+            if self.skipped_lines % 5000 == 0:
+                elapsed_ms = (time.monotonic() - self.started) * 1000
+                if elapsed_ms > self.limits['maxRuntimeMs']:
+                    raise _LimitReached('timeout', f"Runtime limit ({self.limits['maxRuntimeMs']:,} ms) reached inside a function marked '# codelens: skip'")
+        return self.watch_skipped
+
     def trace(self, frame, event, arg):
         if not self.is_user_frame(frame) or (event == 'call' and self.is_class_body(frame)):
             return None   # library code: don't trace inside it (calls back into user code still are)
+        if event == 'call' and self.skip_lines and self.inside_skipped(frame):
+            return self.watch_skipped
         if event == 'call':
             self.depth += 1
             if self.depth > self.limits['maxRecursionDepth']:
                 raise _LimitReached('recursion', f"Recursion limit ({self.limits['maxRecursionDepth']} nested calls) reached")
             if frame.f_code.co_name != '<module>':
-                args = [self.value(frame.f_locals.get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
+                args = [self.shown(frame.f_locals.get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
                 arg_names = list(frame.f_code.co_varnames[: frame.f_code.co_argcount])
                 self.emit('function_call', frame, functionName=self.frame_name(frame), args=args, argNames=arg_names)
             return self.trace
@@ -428,7 +550,7 @@ class Tracer:
         elif event == 'return':
             self.depth -= 1
             if frame.f_code.co_name != '<module>':
-                self.emit('function_return', frame, functionName=self.frame_name(frame), returnValue=self.value(arg))
+                self.emit('function_return', frame, functionName=self.frame_name(frame), returnValue=self.shown(arg))
             else:
                 # A 'line' event fires before its line runs, so without this the effect of
                 # the program's last line would never be shown.
@@ -568,7 +690,8 @@ class _ExpressionRecorder(ast.NodeTransformer):
     def wrap(self, node):
         if node is None:
             return None
-        if isinstance(node, (ast.Constant, ast.Starred, ast.Slice, ast.Yield, ast.YieldFrom, ast.Await, ast.Lambda)) \
+        negative_literal = isinstance(node, ast.UnaryOp) and isinstance(node.operand, ast.Constant)   # -1 is a constant too
+        if negative_literal or isinstance(node, (ast.Constant, ast.Starred, ast.Slice, ast.Yield, ast.YieldFrom, ast.Await, ast.Lambda)) \
                 or not isinstance(getattr(node, 'ctx', ast.Load()), ast.Load):
             return self.visit(node)
         inner = self.visit(node)
@@ -670,6 +793,24 @@ class _ExpressionRecorder(ast.NodeTransformer):
         return node
 
 
+SKIP_COMMENT = re.compile(r'#\s*codelens:\s*skip\b', re.I)
+
+
+def skip_lines(source):
+    """The first lines of functions marked `# codelens: skip` on their `def` line, as Python
+    numbers a function's code (co_firstlineno): its first decorator, if it has any."""
+    lines = source.split('\n')
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set()
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and SKIP_COMMENT.search(lines[node.lineno - 1]):
+            out.add(min([node.lineno] + [d.lineno for d in node.decorator_list]))
+    return out
+
+
 def _compile_with_expressions(source):
     """(code object, expression spans), or (plain code object, []) if rewriting fails."""
     try:
@@ -693,6 +834,7 @@ def run(source, limits=None, inputs=None):
     output = _Output(tracer)
     tracer.output = output
     tracer.statements = statement_info(source)
+    tracer.skip_lines = skip_lines(source)
     result = {'events': tracer.events, 'output': [], 'error': None, 'status': 'completed'}
 
     try:

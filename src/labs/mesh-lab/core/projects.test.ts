@@ -616,6 +616,19 @@ describe('UV and material projects', () => {
     expect(e.trace!.steps[0].quiz!.answer[0]).toBeCloseTo(1.3, 9);
   });
 
+  it('pose chain: the chain posed root first, and the Hand\'s skin matrix', () => {
+    const { e, r } = open('pose-chain');
+    expect(r.error).toBeNull();
+    expect(r.output).toEqual([
+      'Upper posed tail (0, 0.866, 0.5)',
+      'Lower posed tail (0, 1.1248, 1.4659)',
+      'Hand posed tail (0, 1.2543, 1.9489)',
+      'chain Upper → Lower → Hand; the Hand\u2019s tail (0, 1.2543, 1.9489)',
+    ]);
+    expect(e.trace!.steps.map((x) => x.phase)).toEqual(['Chain', 'Pose', 'Pose', 'Pose', 'Skin matrix']);
+    expect(e.trace!.steps[3].quiz!.answer[2]).toBeCloseTo(1.9489, 3);
+  });
+
   it('gltf clip: channels, times and bytes', () => {
     const { e, r } = open('gltf-clip');
     expect(r.error).toBeNull();

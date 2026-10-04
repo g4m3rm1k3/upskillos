@@ -30,6 +30,8 @@ const WORDING: Record<string, { none: string; frame: string }> = {
 
 export function format(value: unknown, language: string): string {
   if (value === null || value === undefined) return WORDING[language]?.none ?? 'nothing'
+  // A row of a numpy array arrives as a list of numbers.
+  if (Array.isArray(value)) return `[${value.map(item => format(item, language)).join(', ')}]`
   if (typeof value === 'string') {
     // Tracers describe things that aren't data as "[Function: f]", "[Class: C]", like the
     // JavaScript interpreter; show those as they are, not as quoted strings.
@@ -38,7 +40,12 @@ export function format(value: unknown, language: string): string {
     if ((language === 'javascript' || language === 'typescript') && /^[[{][\s\S]*[\]}]$/.test(value)) return value
     return JSON.stringify(value)
   }
-  if (typeof value === 'object' && '$ref' in (value as object)) return `object #${(value as { $ref: number }).$ref}`
+  if (typeof value === 'object' && '$ref' in (value as object)) {
+    // Tracers that can (Python) add what the object holds: (0, 1) (tuple #4). The number is
+    // the one the Structures view shows; without a preview it is all there is.
+    const ref = value as { $ref: number; preview?: string; objectType?: string }
+    return ref.preview ? `${ref.preview} (${ref.objectType ?? 'object'} #${ref.$ref})` : `object #${ref.$ref}`
+  }
   if (typeof value === 'boolean' && language === 'python') return value ? 'True' : 'False'
   return String(value)
 }
@@ -53,10 +60,15 @@ function describeHeap(deltas: HeapDelta[], language: string): string[] {
   const out: string[] = []
   for (const delta of deltas) {
     if (delta.op === 'create') {
-      out.push(`A new ${delta.objectType ?? 'object'} (#${delta.objectId}) is created`)
+      out.push(delta.objectType === 'ndarray view'
+        ? `A new ndarray view (#${delta.objectId}) is created: it shares its numbers with the array it was taken from, not a copy, so writing into either changes both (use .copy() for a separate array)`
+        : `A new ${delta.objectType ?? 'object'} (#${delta.objectId}) is created`)
     } else if (delta.op === 'mutate') {
       const type = (delta as { objectType?: string }).objectType ?? 'object'
-      const target = /^\d+$/.test(delta.property) ? `#${delta.objectId}[${delta.property}]` : `#${delta.objectId}.${delta.property}`
+      // A 2-D numpy array changes a row at a time (codelens_tracer.py properties).
+      const numpyRow = type.startsWith('ndarray') && Array.isArray((delta as { newValue?: unknown }).newValue)
+      const target = numpyRow ? `#${delta.objectId}, row ${delta.property},`
+        : /^\d+$/.test(delta.property) ? `#${delta.objectId}[${delta.property}]` : `#${delta.objectId}.${delta.property}`
       // Tracers leave out oldValue for a property that didn't exist before.
       out.push('oldValue' in delta
         ? `${type} ${target} changes from ${format(delta.oldValue, language)} to ${format(delta.newValue, language)}`
@@ -98,6 +110,18 @@ const OPERATOR_WORDS: Record<string, string> = {
 
 // How an assignment works differs: a Python name refers to a value somewhere else; a C or
 // C++ variable is its own piece of memory, and assigning copies the value into it.
+// Assigning to an item or field (`Q[s, a] = v`, `p.x = v`) is different: no name changes;
+// an existing object is changed in place, and every name for that object sees it.
+function itemAssignmentWhy(language: string, targets: string): string {
+  if (language === 'python') {
+    return `This changes something inside an existing object; it doesn't make a new name. Python evaluates the right side first, then stores the result in ${targets}: inside the object the name before the brackets or dot refers to. The object is changed in place, so every name that refers to the same object sees the change.`
+  }
+  if (language === 'c' || language === 'cpp') {
+    return `The right side is evaluated first, then the result is copied into ${targets}: one element or field of an existing array, struct or object, changed in place.`
+  }
+  return `The right side is evaluated first, then the result is stored in ${targets}: inside an existing object or array, which is changed in place. Every variable that refers to that same object sees the change.`
+}
+
 function assignmentWhy(language: string, targets: string, plural: boolean): string {
   if (language === 'javascript' || language === 'typescript') {
     return `An assignment works right to left: the expression on the right is evaluated first, then the result is stored in ${targets}. If the result is an object or array, the variable holds a reference to it, not a copy, so another variable can point at the same object.`
@@ -116,7 +140,8 @@ function namedValue(value: unknown, language: string, created: Map<number, strin
   if (value && typeof value === 'object' && '$ref' in (value as object)) {
     const id = (value as { $ref: number }).$ref
     const type = created.get(id)
-    if (type) return `a new ${type} (#${id})`
+    const preview = (value as { preview?: string }).preview
+    if (type) return `a new ${type} (#${id})${preview ? ` holding ${preview}` : ''}`
   }
   return format(value, language)
 }
@@ -134,7 +159,14 @@ function propertyChanges(targets: string[], heap: HeapDelta[]): Change[] {
   for (const target of targets) {
     const property = target.match(/\[\s*([^\]]+?)\s*\]$/)?.[1]?.replace(/^["']|["']$/g, '') ?? target.split(/\.|->/).pop()
     const delta = heap.find(d => d.op === 'mutate' && d.property === property) as { oldValue?: unknown; newValue?: unknown } | undefined
-    if (!delta) continue
+    if (!delta) {
+      // `Q[s, a] = v` on a 2-D numpy array: the tracer records the whole row as changed
+      // (codelens_tracer.py properties); the entry that differs is this line's change.
+      const row = heap.find(d => d.op === 'mutate' && Array.isArray(d.oldValue) && Array.isArray(d.newValue)) as { oldValue: unknown[]; newValue: unknown[] } | undefined
+      const differs = row ? row.newValue.map((v, i) => i).filter(i => row.newValue[i] !== row.oldValue[i]) : []
+      if (row && differs.length === 1) out.push({ name: target, oldValue: row.oldValue[differs[0]], newValue: row.newValue[differs[0]], isNew: false })
+      continue
+    }
     out.push('oldValue' in delta
       ? { name: target, oldValue: delta.oldValue, newValue: delta.newValue, isNew: false }
       : { name: target, newValue: delta.newValue, isNew: true })
@@ -189,9 +221,11 @@ export function explainStatement(event: TraceEvent, language: string): Explanati
     case 'AnnAssign': {
       const targets = (statement.targets ?? []).map(t => `\`${t}\``).join(', ')
       const shown = changes.length ? changes : propertyChanges(statement.targets ?? [], outcome.heap ?? [])
+      // `Q[s, a] = v`, `p.x = v`: storing into an object, not naming a value.
+      const intoObject = (statement.targets ?? []).length > 0 && (statement.targets ?? []).every(t => /[[.]|->/.test(t))
       return {
         summary: shown.length ? `Assigns ${changeSummary(shown, language, created)}` : `Assigns ${targets || 'a value'}`,
-        why: `${assignmentWhy(language, targets, (statement.targets?.length ?? 0) > 1)}${calls}${effects}`,
+        why: `${intoObject ? itemAssignmentWhy(language, targets) : assignmentWhy(language, targets, (statement.targets?.length ?? 0) > 1)}${calls}${effects}`,
         concept: heap.length ? 'Heap / References' : 'Scope / Mutation',
       }
     }

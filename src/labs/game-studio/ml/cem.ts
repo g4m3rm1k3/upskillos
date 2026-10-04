@@ -9,15 +9,18 @@
 // Seeded throughout, so a run can be repeated exactly (and tested).
 
 import { seeded, type GameEnv } from './env';
-import { actLinear as act, type LinearPolicy } from './brain';
+import { actLinear as act, decide, type AgentPolicy, type LinearPolicy } from './brain';
 
 export { act, type LinearPolicy };
 
-/** Play one episode; its total reward. `choose` picks each action (a policy, or random). */
-export function episode(env: GameEnv, choose: (observation: number[]) => number, seed: number): { total: number; steps: number } {
+/**
+ * Play one episode; its total reward. `choose` picks each action (a policy, or random) from what the agent sees and
+ * the moves that are legal now (every action, unless the agent is turn-based).
+ */
+export function episode(env: GameEnv, choose: (observation: number[], legal: number[]) => number, seed: number): { total: number; steps: number } {
   let { observation } = env.reset(seed), total = 0;
   for (;;) {
-    const r = env.step(choose(observation));
+    const r = env.step(choose(observation, env.legal()));
     total += r.reward; observation = r.observation;
     if (r.terminated || r.truncated) return { total, steps: r.info.step };
   }
@@ -26,9 +29,16 @@ export function episode(env: GameEnv, choose: (observation: number[]) => number,
 /** The average total reward of a policy (or a random one) over several seeded episodes. */
 export function evaluate(env: GameEnv, policy: LinearPolicy | 'random', episodes: number, seed: number): number {
   const rand = seeded(seed ^ 0x9e3779b9);
-  const choose = policy === 'random' ? () => Math.floor(rand() * env.actionCount) : (o: number[]) => act(policy, o);
+  const choose = policy === 'random' ? (_o: number[], legal: number[]) => legal[Math.floor(rand() * legal.length)] : (o: number[]) => act(policy, o);
   let sum = 0;
   for (let e = 0; e < episodes; e++) sum += episode(env, choose, seed + e).total;
+  return sum / episodes;
+}
+
+/** The average return of any brain playing greedily among the legal moves (a turn-based agent's included). */
+export function evaluatePolicy(env: GameEnv, policy: AgentPolicy, episodes: number, seed: number): number {
+  let sum = 0;
+  for (let e = 0; e < episodes; e++) sum += episode(env, (o, legal) => decide(policy, { observation: o, legal, features: (a) => env.features(a) }), seed + e).total;
   return sum / episodes;
 }
 

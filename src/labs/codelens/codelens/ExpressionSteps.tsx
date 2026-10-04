@@ -15,7 +15,10 @@ export function pythonValue(value: unknown): string {
     const text = value.length > 40 ? `${value.slice(0, 39)}…` : value
     return `'${text}'`
   }
-  if (typeof value === 'object' && '$ref' in (value as object)) return `object #${(value as { $ref: number }).$ref}`
+  if (typeof value === 'object' && '$ref' in (value as object)) {
+    const ref = value as { $ref: number; preview?: string }
+    return ref.preview ? `${ref.preview} (#${ref.$ref})` : `object #${ref.$ref}`
+  }
   return String(value)
 }
 
@@ -60,9 +63,9 @@ export default function ExpressionSteps({ spans, steps, selected, onSelect }: Ex
                 }}
               >
                 <span style={{ color: ui.textFaint, minWidth: 18 }}>{index + 1}.</span>
-                <span style={{ color: ui.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{span.code}</span>
+                <span style={{ color: ui.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0, maxWidth: '55%' }}>{span.code}</span>
                 <span style={{ color: ui.textFaint }}>→</span>
-                <span style={{ color: ui.green, whiteSpace: 'nowrap' }}>{pythonValue(value)}</span>
+                <span style={{ color: ui.green, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }} title={pythonValue(value)}>{pythonValue(value)}</span>
               </button>
             </li>
           )

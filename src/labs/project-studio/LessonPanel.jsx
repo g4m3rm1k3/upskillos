@@ -36,6 +36,7 @@ export default function LessonPanel({
   const hasChecks = step.checks?.length > 0;
 
   const challenges = lessons.flatMap(l => l.steps.flatMap((s, index) => s.optional ? [{ lesson: l, step: s, index }] : []));
+  const checkableChallenges = challenges.filter(({ step: s }) => s.checks?.length);
   const teaching = lessons.flatMap(l => l.steps.filter(s => !s.optional));
 
   return (
@@ -59,7 +60,7 @@ export default function LessonPanel({
       {lesson.meta?.pedagogy === 'typed' && (
         <div style={{ padding: '8px 12px', fontSize: 12, borderBottom: `1px solid ${C.border}` }}>
           <p style={{ margin: '0 0 6px' }}>Material covered: {teaching.filter(s => isCovered?.(s.id)).length}/{teaching.length} steps.
-            {' '}Challenges demonstrated: {challenges.filter(({ step: s }) => challengeStatus?.(s.id) === 'passed').length}/{challenges.length}.</p>
+            {' '}Challenge checks passed: {checkableChallenges.filter(({ step: s }) => challengeStatus?.(s.id) === 'passed').length}/{checkableChallenges.length}.</p>
           <details><summary>Practice to revisit · optional challenges</summary>
             {challenges.map(({ lesson: l, step: s, index }) => (
               <button key={s.id} onClick={() => onSelectStep?.(l.id, index)}

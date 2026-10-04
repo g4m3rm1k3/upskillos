@@ -28,12 +28,16 @@ export { actQ, binOf, greedy, stateCount, stateOf, type QPolicy } from './brain'
 export const binsOf = (readings: Reading[]): number[][] => readings.map((r) => r.bins ?? []);
 
 /** The greedy action with ties broken at random (as the ML Lab's Q-learning does): an untried state's row is all
- *  zeros, and always taking the first action there would make the agent's exploration lopsided. */
-function greedyRandomTies(row: number[], rand: () => number): number {
-  const best = Math.max(...row), ties: number[] = [];
-  row.forEach((q, a) => { if (q === best) ties.push(a); });
+ *  zeros, and always taking the first action there would make the agent's exploration lopsided. Only the legal
+ *  actions are considered (every action, unless the agent is turn-based). */
+function greedyRandomTies(row: number[], rand: () => number, legal: number[]): number {
+  const best = Math.max(...legal.map((a) => row[a])), ties: number[] = [];
+  for (const a of legal) if (row[a] === best) ties.push(a);
   return ties[Math.floor(rand() * ties.length)];
 }
+
+/** The best legal action in a row (the first of the highest). */
+const greedyAmong = (row: number[], legal: number[]): number => legal.reduce((b, a) => (row[a] > row[b] ? a : b), legal[0]);
 
 /**
  * Which update the learner makes (Sutton & Barto ch. 6). All four learn a table Q(s, a) from single steps; they differ
@@ -95,10 +99,10 @@ export interface QTransition {
   probs?: number[];
 }
 
-/** The average return of a Q policy playing greedily on seeded episodes. */
+/** The average return of a Q policy playing greedily on seeded episodes (among the legal actions). */
 export function evaluateQ(env: GameEnv, policy: QPolicy, episodes: number, seed: number): number {
   let sum = 0;
-  for (let e = 0; e < episodes; e++) sum += episode(env, (o) => actQ(policy, o), seed + e).total;
+  for (let e = 0; e < episodes; e++) sum += episode(env, (o, legal) => (env.turnBased ? greedyAmong(policy.table[stateOf(o, policy.bins)], legal) : actQ(policy, o)), seed + e).total;
   return sum / episodes;
 }
 
@@ -169,6 +173,9 @@ export class QLearner {
   private checkSum = 0;
   private checkTotal = 0;
   private checkObs: number[] = [];
+  /** The actions legal now: every action, unless the agent is turn-based (legalActions()). */
+  private legalNow: number[] = [];
+  private readonly all: number[];
   private lastEpisode: QEpisode | null = null;
 
   constructor(private readonly env: GameEnv, private readonly opts: QOptions) {
@@ -177,6 +184,7 @@ export class QLearner {
     this.algorithm = opts.algorithm ?? 'q';
     this.explore = opts.explore ?? 'epsilon';
     this.A = env.actionCount;
+    this.all = [...Array(this.A).keys()];
     const q0 = opts.initialQ ?? 0, S = stateCount(this.bins);
     this.qa = Array.from({ length: S }, () => new Array(this.A).fill(q0));
     this.qb = this.algorithm === 'double-q' ? Array.from({ length: S }, () => new Array(this.A).fill(q0)) : null;
@@ -205,21 +213,28 @@ export class QLearner {
   /** The table as it is now (a copy). */
   snapshot(): QPolicy { return { kind: 'q', bins: this.bins, table: this.table(), visits: [...this.visits] }; }
 
-  /** The exploring policy's choice in state s: ε-greedy (ties at random), or a softmax sample. */
-  private choose(s: number): number {
+  /** The legal actions now: a turn-based agent says (legalActions()); otherwise all of them. */
+  private legal(): number[] { return this.env.turnBased ? this.env.legal() : this.all; }
+
+  /** The exploring policy's choice in state s, among the legal actions: ε-greedy (ties at random), or a softmax sample. */
+  private choose(s: number, legal: number[] = this.all): number {
     const row = this.qb ? this.row(s) : this.qa[s];
     if (this.explore === 'softmax') {
-      const p = softmax(row, this.epsilon);
-      let u = this.rand(), a = 0;
-      while (a < p.length - 1 && u >= p[a]) { u -= p[a]; a++; }
-      return a;
+      const p = softmax(legal.map((a) => row[a]), this.epsilon);
+      let u = this.rand(), i = 0;
+      while (i < p.length - 1 && u >= p[i]) { u -= p[i]; i++; }
+      return legal[i];
     }
-    return this.rand() < this.epsilon ? Math.floor(this.rand() * this.A) : greedyRandomTies(row, this.rand);
+    return this.rand() < this.epsilon ? legal[Math.floor(this.rand() * legal.length)] : greedyRandomTies(row, this.rand, legal);
   }
 
-  /** The exploring policy's probabilities in a state (Expected SARSA's average). */
-  private probs(row: number[]): number[] {
-    return this.explore === 'softmax' ? softmax(row, this.epsilon) : epsilonGreedyProbs(row, this.epsilon);
+  /** The exploring policy's probabilities over every action in a state (0 for illegal ones): Expected SARSA's average. */
+  private probs(row: number[], legal: number[] = this.all): number[] {
+    const sub = legal.map((a) => row[a]);
+    const p = this.explore === 'softmax' ? softmax(sub, this.epsilon) : epsilonGreedyProbs(sub, this.epsilon);
+    const out = new Array(row.length).fill(0);
+    legal.forEach((a, i) => { out[a] = p[i]; });
+    return out;
   }
 
   /** Advance by one tick. It reports an episode when one finishes (with its check, if one was due), each update's numbers, and the policy at the end. */
@@ -233,28 +248,32 @@ export class QLearner {
         this.s = stateOf(env.reset(this.seed * 1000 + this.ep).observation, this.bins);
         this.total = 0; this.steps = 0;
         this.seen.add(this.s);
-        if (this.algorithm === 'sarsa') this.pending = this.choose(this.s);
+        this.legalNow = this.legal();
+        if (this.algorithm === 'sarsa') this.pending = this.choose(this.s, this.legalNow);
         this.mode = 'learn';
         return {};
       }
       case 'learn': {
         const s = this.s;
-        const a = this.algorithm === 'sarsa' ? this.pending : this.choose(s);
+        const a = this.algorithm === 'sarsa' ? this.pending : this.choose(s, this.legalNow);
         const r = env.step(a);
         const next = stateOf(r.observation, this.bins);
         // A truncated episode was cut short, not ended: its next state still has a future, so it is bootstrapped.
         const future = !r.terminated;
+        // What it may do next (a turn-based agent's next turn): the target only considers those.
+        const nextLegal = future ? this.legal() : this.all;
+        this.legalNow = nextLegal;
         let table = this.qa, target: number, a2: number | undefined, updated: 'A' | 'B' | undefined, probs: number[] | undefined;
         const nextRow = [...this.row(next)];
-        if (this.algorithm === 'q') target = r.reward + (future ? this.gamma * Math.max(...this.qa[next]) : 0);
+        if (this.algorithm === 'q') target = r.reward + (future ? this.gamma * Math.max(...nextLegal.map((b) => this.qa[next][b])) : 0);
         else if (this.algorithm === 'sarsa') {
           // A′ is chosen now, by the same exploring policy, and is the action taken next. A truncated episode still
           // chooses one, to bootstrap from; only a real ending has no future.
-          a2 = r.terminated ? undefined : this.choose(next);
+          a2 = r.terminated ? undefined : this.choose(next, nextLegal);
           target = r.reward + (a2 !== undefined ? this.gamma * this.qa[next][a2] : 0);
           this.pending = a2 ?? -1;
         } else if (this.algorithm === 'expected-sarsa') {
-          const row = this.qa[next], p = this.probs(row);
+          const row = this.qa[next], p = this.probs(row, nextLegal);
           probs = p;
           target = r.reward + (future ? this.gamma * row.reduce((sum, q, i) => sum + p[i] * q, 0) : 0);
         } else {
@@ -263,7 +282,7 @@ export class QLearner {
           table = first ? this.qa : this.qb!;
           const other = first ? this.qb! : this.qa;
           updated = first ? 'A' : 'B';
-          target = r.reward + (future ? this.gamma * other[next][greedy(table[next])] : 0);
+          target = r.reward + (future ? this.gamma * other[next][this.env.turnBased ? greedyAmong(table[next], nextLegal) : greedy(table[next])] : 0);
         }
         const before = table[s][a];
         table[s][a] += this.alpha * (target - table[s][a]);
@@ -285,7 +304,8 @@ export class QLearner {
         this.mode = 'check';
         return {};
       case 'check': {
-        const r = env.step(greedy(this.row(stateOf(this.checkObs, this.bins))));
+        const row = this.row(stateOf(this.checkObs, this.bins));
+        const r = env.step(this.env.turnBased ? greedyAmong(row, this.legal()) : greedy(row));
         this.checkTotal += r.reward; this.checkObs = r.observation;
         if (!(r.terminated || r.truncated)) return {};
         this.checkSum += this.checkTotal;

@@ -1928,6 +1928,21 @@ class Interpreter {
     const heapDelta = this.heap.drainDeltas()
 
     const event = makeEvent(type, this.stepId, loc, stackSnapshot, heapDelta, payload)
+    // A small cursor, rather than a copy of the complete output on every event.
+    event.outputCount = this.output.length
+    // Display snapshots contain readable strings; retain object identities separately
+    // so Structures can label objects without guessing from equal-looking contents.
+    event.heapBindings = {}
+    const bindingNames = new Set()
+    for (let scope = env ?? this.globalEnv; scope; scope = scope.parent) {
+      for (const [name, binding] of scope.bindings) {
+        if (bindingNames.has(name)) continue
+        bindingNames.add(name)
+        if (binding.initialized && isRef(binding.value)) {
+          event.heapBindings[name] = binding.value
+        }
+      }
+    }
     if (this.inputRead.length) {
       event.inputRead = this.inputRead
       this.inputRead = []

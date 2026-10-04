@@ -1,6 +1,7 @@
 // Replay heap deltas up to a given step to reconstruct the full heap state.
 // Called on every step change — fast enough because each delta is a few ops.
 import type { TraceEvent, HeapSnapshot, HeapObjectEntry, HeapGraphData } from '../types'
+import { visibleVariables, refId } from '../tableModel'
 
 export function buildHeapSnapshot(events: TraceEvent[], stepIndex: number): HeapSnapshot {
   const objects = new Map<number, HeapObjectEntry>()
@@ -38,7 +39,38 @@ export function buildHeapSnapshot(events: TraceEvent[], stepIndex: number): Heap
     }
   }
 
+  // Resolve names from this event's live bindings. Rebuilding on every seek
+  // avoids retaining an old alias after reassignment or showing a future name.
+  const queue: { id: number; path: string; depth: number }[] = []
+  const event = events[Math.min(stepIndex, events.length - 1)] ?? null
+  const bindings = event?.heapBindings ? Object.entries(event.heapBindings) : visibleVariables(event)
+  for (const [name, value] of bindings) {
+    const id = refId(value)
+    const object = id === null ? undefined : objects.get(id)
+    if (!object) continue
+    object.names ??= []
+    object.names.push(name)
+    queue.push({ id: object.id, path: name, depth: 0 })
+  }
+  const expanded = new Set<number>()
+  while (queue.length) {
+    const { id, path, depth } = queue.shift()!
+    if (expanded.has(id) || depth >= 3) continue
+    expanded.add(id)
+    for (const [key, value] of objects.get(id)?.properties ?? []) {
+      const childId = refId(value)
+      const child = childId === null ? undefined : objects.get(childId)
+      if (!child) continue
+      const childPath = /^\d+$/.test(key) ? `${path}[${key}]` : `${path}.${key}`
+      if (!child.names?.length) child.names = [childPath]
+      queue.push({ id: child.id, path: childPath, depth: depth + 1 })
+    }
+  }
   return { objects, lastCreated, lastMutated }
+}
+
+export function heapObjectLabel(object: HeapObjectEntry): string {
+  return object.names?.length ? object.names.join(' = ') : `${object.type} #${object.id}`
 }
 
 // Extract nodes + directed edges from a heap snapshot for the D3 graph.

@@ -27,7 +27,7 @@ export default {
 
   prerequisites: ['mg9-007'],
 
-  nextLesson: null,
+  nextLesson: 'mg9-009',
 
   hook: {
     question: 'A table needs to visit every state many times. An Atari screen has more possible states than there are atoms in the universe. How did an agent learn to play from it?',
@@ -61,7 +61,7 @@ export default {
       {
         type: 'insight',
         title: 'In Game Studio',
-        body: "Game Studio's trainers use tables today (bins). Linear Q-learning with tiles is planned for it; the notebook's code is exactly what it will run.",
+        body: "Run › Train an agent… has Features (linear Q): an agent's script gives features(action), the numbers that describe each move, and it learns one weight per feature with exactly this update. The Try it task gives Breakout Lab's paddle nine features (1, across and its size, in a block for each move) and trains them: the paddle clears 42 of 48 bricks, and each weight can be read.",
       },
     ],
     visualizations: [
@@ -102,6 +102,15 @@ export default {
               },
             ],
           },
+        },
+      },
+      {
+        id: 'GameStudioTask',
+        title: 'Breakout with features',
+        props: {
+          task: 'paddle-features',
+          lesson: 'mg9-008',
+          checkpoint: 'cp-mg9-008-9',
         },
       },
     ],
@@ -457,6 +466,11 @@ export default {
       id: 'cp-mg9-008-8',
       label: 'Pass the linear Q-learning challenge',
       type: 'challenge',
+    },
+    {
+      id: 'cp-mg9-008-9',
+      label: 'Complete "Breakout with features" in Game Studio',
+      type: 'lab',
     },
   ],
 

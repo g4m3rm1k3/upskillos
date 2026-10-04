@@ -38,7 +38,8 @@ self.onmessage = async (e: MessageEvent<Job>) => {
       let r = run.next();
       // Each episode's numbers, and on a check a copy of the table so far, for the dialog to draw.
       for (; !r.done; r = run.next()) postMessage({ type: 'episode', ...r.value });
-      postMessage({ type: 'done', policy: r.value, score: evaluateQ(env, r.value, 3, 7) });
+      // A turn-based agent's games vary more, so its score, like its random play's, is over 100 games.
+      postMessage({ type: 'done', policy: r.value, score: evaluateQ(env, r.value, env.turnBased ? 100 : 3, 7) });
     } else {
       const run = cem(env, job.options);
       let r = run.next();

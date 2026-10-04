@@ -14,8 +14,12 @@ import { cribbage, cribbageCode } from '../examples/cribbage';
 import BREAKOUT_BRAIN from './goals/breakout.json';
 import CLIFF_BRAIN from './goals/cliff.json';
 import PADDLE_BRAIN from './goals/paddle.json';
+import PADDLE_FEATURES_BRAIN from './goals/paddle-features.json';
+import GHOST_BRAIN from './goals/ghost.json';
+import { ghostLab, ghostLabCode } from '../examples/ghostLab';
+import type { LinearQOptions } from '../ml/linearq';
 
-export type GoalName = 'breakout' | 'cliff' | 'paddle';
+export type GoalName = 'breakout' | 'cliff' | 'paddle' | 'ghost';
 
 /** How each was trained: Run › Train an agent…'s settings. */
 export const GOAL_RECIPES: Record<GoalName, QOptions> = {
@@ -24,10 +28,16 @@ export const GOAL_RECIPES: Record<GoalName, QOptions> = {
   // Sutton & Barto's Example 6.6 settings: ε 0.1 constant, α 0.5, γ 1, 500 episodes.
   cliff: { episodes: 500, algorithm: 'q', alpha: 0.5, gamma: 1, explore: 'epsilon', schedule: 'constant', epsilon: 0.1, epsilonEnd: 0.1, seed: 3, checkEvery: 10 },
   paddle: { episodes: 100, algorithm: 'q', alpha: 0.2, gamma: 0.97, explore: 'epsilon', schedule: 'linear', epsilon: 0.3, epsilonEnd: 0.02, seed: 3, checkEvery: 10 },
+  // Ghost Lab's ghost: 300 episodes against the wandering player, a greedy check of 3 games every 10.
+  ghost: { episodes: 300, algorithm: 'q', alpha: 0.2, gamma: 0.97, explore: 'epsilon', schedule: 'linear', epsilon: 0.3, epsilonEnd: 0.02, seed: 3, checkEvery: 10, checkEpisodes: 3 },
 };
 
+/** The paddle with features (lesson 9.8), trained by linear Q-learning: the settings its task asks for. */
+export const PADDLE_FEATURES_RECIPE: LinearQOptions = { episodes: 100, algorithm: 'q', alpha: 0.05, alphaEnd: 0.005, gamma: 0.97, epsilon: 0.3, epsilonEnd: 0.02, schedule: 'linear', seed: 3, checkEvery: 10, checkEpisodes: 2 };
+
 type SavedBrain = Omit<BrainData, 'path'>;
-export const GOAL_BRAINS: Record<GoalName, SavedBrain> = { breakout: BREAKOUT_BRAIN as SavedBrain, cliff: CLIFF_BRAIN as SavedBrain, paddle: PADDLE_BRAIN as SavedBrain };
+export const GOAL_BRAINS: Record<GoalName, SavedBrain> = { breakout: BREAKOUT_BRAIN as SavedBrain, cliff: CLIFF_BRAIN as SavedBrain, paddle: PADDLE_BRAIN as SavedBrain, ghost: GHOST_BRAIN as SavedBrain };
+export const PADDLE_FEATURES_GOAL = PADDLE_FEATURES_BRAIN as SavedBrain;
 
 /** A finished agent: its game (Scene API code, with the brain saved in it when the game's script drives it) and what to watch for. */
 export interface FinishedAgent {
@@ -55,6 +65,10 @@ export const FINISHED: Record<GoalName | 'cribbage', FinishedAgent> = {
   paddle: {
     what: 'Breakout Lab\'s paddle as a learning agent you will build: it sees the ball across from it and whether it is falling, and clears the wall.',
     images: breakoutLab.images, code: `${breakoutLabCode()}\nproject.writeScript('scripts/paddle.js', ${JSON.stringify(PADDLE_AGENT)})${save('brains/paddle.json', GOAL_BRAINS.paddle)}`,
+  },
+  ghost: {
+    what: 'Maze Chase\'s two ghosts sharing one learned brain: at every junction each looks at where you are and chooses, from habits learned against a wandering player.',
+    images: ghostLab.images, code: ghostLabCode() + save('brains/ghost.json', GOAL_BRAINS.ghost),
   },
   cribbage: {
     what: 'Cribbage against the AI you will build: choose a difficulty and play, and press D for the developer view, the AI\'s hand and what its brain thinks of every move.',
