@@ -122,6 +122,48 @@ describe.skipIf(!python)('CodeLens Python tracer on CPython', () => {
     expect(explainTraceEvent(returned).summary).toMatch(/returns \(1, 0\) \(tuple #\d+\)/)
   })
 
+  it('records a 2-D numpy array as rows of numbers, and numpy numbers as plain numbers', () => {
+    const result = trace('import numpy as np\nQ = np.zeros((2, 3))\nQ[1, 2] = -0.5\nbest = Q[1].argmin()\n')
+    const deltas = result.events.flatMap(e => e.heapDelta ?? [])
+    expect(deltas.find(d => d.op === 'create')).toMatchObject({ objectType: 'ndarray', properties: { 0: [0, 0, 0], 1: [0, 0, 0] } })
+    expect(deltas.find(d => d.op === 'mutate')).toMatchObject({ property: '1', oldValue: [0, 0, 0], newValue: [0, 0, -0.5] })
+    const globals = result.events.at(-1)!.stackSnapshot!.at(-1)!.locals as Record<string, unknown>
+    expect(globals.best).toBe(2)   // np.int64(2) arrives as 2
+  })
+
+  it('explains an item assignment, and that a numpy row is a view of the array, not a copy', () => {
+    const result = trace('import numpy as np\nQ = np.zeros((2, 2))\nQ[1, 0] = -0.5\nrow = Q[1]\nrow[1] = 5\n')
+    const at = (line: number) => explainTraceEvent(result.events.find(e => e.type === 'statement_enter' && e.line === line)!)
+    expect(at(3).summary).toBe('Assigns `Q[1, 0]`: 0 → -0.5')
+    expect(at(3).why).toContain("doesn't make a new name")
+    expect(at(4).summary).toContain('a new ndarray view')
+    expect(at(4).why).toContain('shares its numbers')
+    // Writing through the view changes Q's row too.
+    expect(at(5).why).toMatch(/ndarray #\d+, row 1, changes from \[-0\.5, 0\] to \[-0\.5, 5\]/)
+  })
+
+  it("runs a function marked '# codelens: skip' without recording its steps, and what it calls", () => {
+    const source = [
+      'def helper(n):',
+      '    return n * 2',
+      '',
+      'def busy(n):  # codelens: skip',
+      '    total = 0',
+      '    for i in range(n):',
+      '        total += helper(i)',
+      '    return total',
+      '',
+      'result = busy(1000)',
+      'print(result)',
+    ].join('\n') + '\n'
+    const result = trace(source)
+    expect(result.output).toEqual(['999000'])
+    const frames = new Set(result.events.flatMap(e => (e.stackSnapshot ?? []).map(f => f.name)))
+    expect(frames.has('busy')).toBe(false)
+    expect(frames.has('helper')).toBe(false)
+    expect(result.events.length).toBeLessThan(20)
+  })
+
   it('says so when the program reads more input than there is', () => {
     const result = trace('a = input()\nb = input()\n', parseScriptedInput('only one\n'))
     expect(result.status).toBe('runtime-error')

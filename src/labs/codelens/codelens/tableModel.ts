@@ -63,8 +63,14 @@ export function buildTables(snapshot: HeapSnapshot | null, event: TraceEvent | n
   if (!snapshot) return []
   const changed = new Set<string>()
   const created = new Set<number>()
+  // A numpy row is one property holding a list of numbers: keep both versions, so only the
+  // entries that actually differ are highlighted.
+  const rowChanges = new Map<string, { oldValue?: unknown; newValue?: unknown }>()
   for (const delta of event?.heapDelta ?? []) {
-    if (delta.op === 'mutate') changed.add(`${delta.objectId}:${delta.property}`)
+    if (delta.op === 'mutate') {
+      changed.add(`${delta.objectId}:${delta.property}`)
+      rowChanges.set(`${delta.objectId}:${delta.property}`, delta as { oldValue?: unknown; newValue?: unknown })
+    }
     if (delta.op === 'create') created.add(delta.objectId)
   }
   const isChanged = (objectId: number, key: string) => changed.has(`${objectId}:${key}`) || created.has(objectId)
@@ -94,6 +100,30 @@ export function buildTables(snapshot: HeapSnapshot | null, event: TraceEvent | n
       const childId = refId(v)
       return childId != null ? snapshot.objects.get(childId) : undefined
     })
+
+    // A 2-D numpy array: every item is a row of plain numbers (codelens_tracer.py properties).
+    if (items.length > 0 && items.every(([, v]) => Array.isArray(v))) {
+      const width = Math.max(...items.map(([, v]) => (v as unknown[]).length))
+      const columnKeys = Array.from({ length: width }, (_, i) => String(i))
+      const labels = nameLists.find(list => list.labels.length === width && list.name !== name)
+      tables.push({
+        name, objectId: obj.id, kind: 'grid', type: obj.type,
+        shape: `${items.length} × ${width}`,
+        columns: labels?.labels ?? columnKeys,
+        columnSource: labels?.name,
+        rows: items.map(([key, v]) => {
+          const change = rowChanges.get(`${obj.id}:${key}`)
+          const before = Array.isArray(change?.oldValue) ? change!.oldValue as unknown[] : null
+          const cells = (v as unknown[]).map((value, i) => ({
+            value,
+            changed: created.has(obj.id) || (!!change && (!before || before[i] !== value)),
+          }))
+          return { key, cells, changed: cells.some(c => c.changed) }
+        }),
+        more: typeof more === 'string' ? `${more} rows` : undefined,
+      })
+      continue
+    }
 
     // Every item is itself an indexed container: rows of a grid.
     if (items.length > 0 && children.every(child => child && isIndexed(entries(child).map(([k]) => k)))) {

@@ -1,4 +1,4 @@
-export const INSPECTOR_IDS = ['explain', 'events', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast'] as const
+export const INSPECTOR_IDS = ['explain', 'events', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'] as const
 export type InspectorId = typeof INSPECTOR_IDS[number]
 export interface InspectorPane { tabs: InspectorId[]; active: InspectorId | null }
 export interface InspectorWorkspace {
@@ -13,7 +13,7 @@ export function defaultWorkspace(): InspectorWorkspace {
   return {
     panes: [
       { tabs: ['explain', 'events'], active: 'explain' },
-      { tabs: ['output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast'], active: 'output' },
+      { tabs: ['output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'], active: 'output' },
     ],
     direction: 'row', sizes: [1, 1],
   }

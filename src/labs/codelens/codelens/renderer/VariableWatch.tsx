@@ -7,11 +7,12 @@
  * reported as hard to read at the old sizes, since it's the panel students
  * stare at the longest while stepping through execution.
  */
-import { useState, useMemo, useCallback, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useMemo, useCallback, useContext, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import type { TraceEvent, StackFrame, HeapSnapshot } from '../types'
 import { useCodeLensTheme } from '../ThemeContext'
 import type { CodeLensUiPalette } from '../theme'
 import { heapObjectLabel } from './heapSnapshot'
+import { HeapPreviewContext, objectPreview } from './valuePreview'
 
 // ── Type helpers ──────────────────────────────────────────────────────────────
 
@@ -28,18 +29,24 @@ function isRefValue(v: unknown): v is { $ref: number } {
   return v !== null && typeof v === 'object' && '$ref' in v
 }
 
-function fmtVal(v: unknown, heap: HeapSnapshot | null | undefined): string {
-  if (v === null)      return 'null'
-  if (v === undefined) return 'undefined'
-  if (typeof v === 'boolean') return String(v)
+function fmtVal(v: unknown, heap: HeapSnapshot | null | undefined, language?: string): string {
+  const py = language === 'py'
+  if (v === null)      return py ? 'None' : 'null'
+  if (v === undefined) return py ? 'None' : 'undefined'
+  if (typeof v === 'boolean') return py ? (v ? 'True' : 'False') : String(v)
   if (typeof v === 'number')  return String(v)
   if (typeof v === 'string') {
     const s = v.length > 28 ? v.slice(0, 28) + '…' : v
-    return `"${s}"`
+    if (/^\[(Function|Class|Module): /.test(v)) return v   // a function or class, not text
+    if (py && /^-?inf$|^nan$/.test(v)) return v   // Python's float('inf'), sent as text
+    return py ? `'${s}'` : `"${s}"`
   }
   if (isRefValue(v)) {
     const obj  = heap?.objects?.get(v.$ref)
     const type = obj?.type ?? 'Object'
+    // What it holds, e.g. "[0, 0, -0.5, 0] (ndarray #39)" (valuePreview.ts).
+    const preview = obj && !obj.names?.length ? objectPreview(v.$ref, heap, 60, language) : null
+    if (preview) return `${preview} (${type} #${v.$ref})`
     if (obj?.names?.length) return `→ ${heapObjectLabel(obj)} (${type} #${v.$ref})`
     if (type === 'Array') {
       const len = obj?.properties?.get('length')
@@ -391,7 +398,8 @@ function VarRow({ name, value, diff, heap, indent = 20, timeline, step, onSeek, 
   const [expanded, setExpanded] = useState(false)
   const type    = getType(value)
   const meta    = typeMeta(type, ui)
-  const display = fmtVal(value, heap)
+  const { language } = useContext(HeapPreviewContext)
+  const display = fmtVal(value, heap, language)
   const changed = !!diff
   const isRef   = type === 'ref'
 
@@ -447,7 +455,7 @@ function VarRow({ name, value, diff, heap, indent = 20, timeline, step, onSeek, 
           <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 4,
             fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>
             <span style={{ color: ui.textMuted, textDecoration: 'line-through', fontSize: 11, flexShrink: 0 }}>
-              {fmtVal(diff!.old, heap)}
+              {fmtVal(diff!.old, heap, language)}
             </span>
             <span style={{ color: ui.textFaint, flexShrink: 0 }}>→</span>
             <span style={{ color: ui.amber, fontWeight: 600, overflow: 'hidden',

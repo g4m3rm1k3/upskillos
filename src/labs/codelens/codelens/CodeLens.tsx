@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef, type ReactNode, type CSSProperties } from 'react'
+import { useState, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode, type CSSProperties } from 'react'
 import Editor, { useMonaco } from '@monaco-editor/react'
 import { buildProgramModel } from '../../../engines/js/parser/jsParser.js'
 import { startPythonExecution } from './interpreter/pythonExecutionClient'
@@ -25,6 +25,8 @@ import WatchWindow from './renderer/WatchWindow'
 import LibraryBrowser from './LibraryBrowser'
 import InputPanel, { readsInput } from './InputPanel'
 import DataDock from './DataDock'
+import { HeapPreviewContext, referenceText } from './renderer/valuePreview'
+import ScreenPanel from './ScreenPanel'
 import PackagesDialog from './PackagesDialog'
 import ExpressionSteps from './ExpressionSteps'
 import { codelensPythonStatus, type CodeLensPythonStatus } from './interpreter/codelensPythonEnv'
@@ -757,8 +759,22 @@ function EventCard({ event, active }: { event: TraceEvent; active: boolean }) {
 
 // ── Stack frame display ───────────────────────────────────────────────────────
 
+// A variable's value as the Call Stack shows it: an object with what it holds,
+// "[0, 0, -0.5, 0] (ndarray #39)", and Python's own spelling of None, True and strings.
+function localText(value: unknown, snapshot: HeapSnapshot | null, language: string | undefined, maxChars = 48): string {
+  const reference = referenceText(value, snapshot, maxChars, language)
+  if (reference) return reference
+  if (language === 'py') {
+    if (value === null || value === undefined) return 'None'
+    if (value === true || value === false) return value ? 'True' : 'False'
+    if (typeof value === 'string' && !/^\[(Function|Class|Module): /.test(value) && !/^-?inf$|^nan$/.test(value)) return `'${value}'`
+  }
+  return formatValue(value)
+}
+
 function StackFrame({ frame, depth }: { frame: StackFrame; depth: number }) {
   const { theme: { ui } } = useCodeLensTheme()
+  const heap = useContext(HeapPreviewContext)
   const [open, setOpen] = useState(depth === 0)
   const locals = Object.entries(frame.locals ?? {})
   return (
@@ -790,7 +806,9 @@ function StackFrame({ frame, depth }: { frame: StackFrame; depth: number }) {
               fontFamily: 'JetBrains Mono, monospace', marginBottom: 2,
             }}>
               <span style={{ color: ui.cyan, minWidth: 80 }}>{name}</span>
-              <span style={{ color: ui.green }}>{formatValue(value)}</span>
+              <span style={{ color: ui.green, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={localText(value, heap.snapshot, heap.language, 400)}>
+                {localText(value, heap.snapshot, heap.language)}
+              </span>
             </div>
           ))}
         </div>
@@ -929,22 +947,23 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
 
   // Playback from the keyboard: ← → step, Home/End jump, Space plays or pauses. Not while
   // typing in the editor or a field, where those keys edit text.
-  useEffect(() => {
+  // Also called for keys pressed in the pop-out screen window (DataDock / ScreenPopOut).
+  const stepFromKey = useCallback((e: KeyboardEvent) => {
     if (!totalSteps) return
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      if (e.altKey || e.ctrlKey || e.metaKey || !target) return
-      if (target.closest('input, textarea, select, [contenteditable="true"], .monaco-editor, [role="dialog"]')) return
-      const go = (to: number) => { e.preventDefault(); setPlaying(false); setStep(Math.max(0, Math.min(totalSteps - 1, to))) }
-      if (e.key === 'ArrowRight') go(step + 1)
-      else if (e.key === 'ArrowLeft') go(step - 1)
-      else if (e.key === 'Home') go(0)
-      else if (e.key === 'End') go(totalSteps - 1)
-      else if (e.key === ' ' && target.tagName !== 'BUTTON') { e.preventDefault(); setPlaying(p => !p) }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    const target = e.target as HTMLElement | null
+    if (e.altKey || e.ctrlKey || e.metaKey || !target) return
+    if (target.closest?.('input, textarea, select, [contenteditable="true"], .monaco-editor, [role="dialog"]')) return
+    const go = (to: number) => { e.preventDefault(); setPlaying(false); setStep(Math.max(0, Math.min(totalSteps - 1, to))) }
+    if (e.key === 'ArrowRight') go(step + 1)
+    else if (e.key === 'ArrowLeft') go(step - 1)
+    else if (e.key === 'Home') go(0)
+    else if (e.key === 'End') go(totalSteps - 1)
+    else if (e.key === ' ' && target.tagName !== 'BUTTON') { e.preventDefault(); setPlaying(p => !p) }
   }, [step, totalSteps])
+  useEffect(() => {
+    window.addEventListener('keydown', stepFromKey)
+    return () => window.removeEventListener('keydown', stepFromKey)
+  }, [stepFromKey])
 
   useEffect(() => () => {
     runGenerationRef.current += 1
@@ -1185,6 +1204,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
     : null
   // The Data dock under the editor (DataDock.tsx) shows tables whenever the tracer recorded objects.
   const dockSnapshot = heapSnapshot ?? (execution ? buildHeapSnapshot(execution.events, step) : null)
+  // For panels that show what objects hold (Call Stack, Values): renderer/valuePreview.ts.
+  const heapPreview = useMemo(() => ({ snapshot: dockSnapshot, language: lang }), [dockSnapshot, lang])
 
   // Variable/function names pulled from the parsed AST/model, offered as
   // autocomplete suggestions in the floating Watch window instead of relying
@@ -1208,6 +1229,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
     { id: 'output' as const, label: 'Output' }, { id: 'variables' as const, label: 'Values' },
     { id: 'heap' as const, label: 'Structures' }, { id: 'calltree' as const, label: 'Calls' },
     { id: 'scope' as const, label: 'Scope' }, ...CODE_TABS,
+    // A pygame program's window (python/codelens_pygame.py); also in the Data dock and a pop-out.
+    ...((execution?.frames?.length ?? 0) > 0 ? [{ id: 'screen' as const, label: 'Screen' }] : []),
   ]
   const visibleOutput = useMemo(() => outputAtStep(execution, step), [execution, step])
   const renderInspector = (tabId: InspectorId) => (
@@ -1289,6 +1312,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
                 </div>
               )
             )}
+            {tabId === 'screen' && execution?.frames && <ScreenPanel frames={execution.frames} event={currentEvent} fit="column" />}
             {tabId === 'output' && (
               visibleOutput.length > 0 ? (
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
@@ -1314,7 +1338,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
               <VariableWatch
                 currentEvent={currentEvent}
                 prevEvent={prevEvent}
-                heapSnapshot={heapSnapshot}
+                heapSnapshot={dockSnapshot}
                 heapDelta={currentEvent?.heapDelta}
                 events={execution?.events}
                 step={step}
@@ -1832,7 +1856,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             onToggle={() => setInputOpen(open => !open)}
           />
           {/* Tables and the pygame screen, at a fixed height so nothing moves while stepping. */}
-          {execution && <DataDock lang={lang} snapshot={dockSnapshot} event={currentEvent} frames={execution.frames} />}
+          {execution && <DataDock lang={lang} snapshot={dockSnapshot} event={currentEvent} frames={execution.frames} onStepKey={stepFromKey} />}
         </div>
 
         {/* ── Drag handle ── */}
@@ -1851,7 +1875,9 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
           }} />
         </div>
 
-        <InspectorWorkspace state={workspace} onChange={setWorkspace} tabs={inspectorTabs} render={renderInspector} />
+        <HeapPreviewContext.Provider value={heapPreview}>
+          <InspectorWorkspace state={workspace} onChange={setWorkspace} tabs={inspectorTabs} render={renderInspector} />
+        </HeapPreviewContext.Provider>
 
       </div>
 

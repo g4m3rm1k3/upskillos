@@ -5,14 +5,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Monitor, Table2 } from 'lucide-react'
 import { useCodeLensTheme } from './ThemeContext'
 import { buildTables, type Cell, type Table } from './tableModel'
-import ScreenPanel from './ScreenPanel'
+import { objectPreview, shortNumber } from './renderer/valuePreview'
+import ScreenPanel, { ScreenPopOut } from './ScreenPanel'
 import type { HeapSnapshot, Lang, ScreenFrame, TraceEvent } from './types'
 
-function show(value: unknown, lang: Lang): string {
+function show(value: unknown, lang: Lang, snapshot: HeapSnapshot | null): string {
   if (value === undefined) return ''
   if (value === null) return lang === 'py' ? 'None' : 'null'
   if (value === true || value === false) return lang === 'py' ? (value ? 'True' : 'False') : String(value)
-  if (typeof value === 'number') return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(3)))
+  if (typeof value === 'number') return shortNumber(value)
   if (typeof value === 'string') {
     if (/^-?inf$|^nan$/.test(value)) return value   // Python's float('inf'), sent as text
     return /^\[(Function|Class|Module):/.test(value) ? value : `'${value.length > 24 ? value.slice(0, 23) + '…' : value}'`
@@ -20,12 +21,14 @@ function show(value: unknown, lang: Lang): string {
   if (typeof value === 'object') {
     const ref = value as { $ref?: number; preview?: string; objectId?: number }
     if (ref.preview) return ref.preview
-    if (ref.$ref != null || ref.objectId != null) return `#${ref.$ref ?? ref.objectId}`
+    const id = ref.$ref ?? ref.objectId
+    // An object inside a cell, such as a tuple in a list: show what it holds.
+    if (id != null) return objectPreview(id, snapshot, 40, lang) ?? `#${id}`
   }
   return String(value)
 }
 
-function TableView({ table, lang }: { table: Table; lang: Lang }) {
+function TableView({ table, lang, snapshot }: { table: Table; lang: Lang; snapshot: HeapSnapshot | null }) {
   const { theme: { ui } } = useCodeLensTheme()
   const cellStyle = (cell: Cell | { changed: boolean }) => ({
     padding: '3px 8px', borderBottom: `1px solid ${ui.border}`, whiteSpace: 'nowrap' as const, textAlign: 'right' as const,
@@ -57,7 +60,7 @@ function TableView({ table, lang }: { table: Table; lang: Lang }) {
               <th style={{ ...head, position: 'static', textAlign: 'left', background: row.changed ? ui.amberDeep + '33' : 'transparent' }}>
                 {table.kind === 'row' ? 'value' : row.key}
               </th>
-              {row.cells.map((cell, i) => <td key={i} style={cellStyle(cell)} title={JSON.stringify(cell.value)}>{show(cell.value, lang)}</td>)}
+              {row.cells.map((cell, i) => <td key={i} style={cellStyle(cell)} title={JSON.stringify(cell.value)}>{show(cell.value, lang, snapshot)}</td>)}
             </tr>
           ))}
           {table.rows.length === 0 && <tr><td style={{ ...cellStyle({ changed: false }), color: ui.textFaint }}>empty</td></tr>}
@@ -73,23 +76,38 @@ interface DataDockProps {
   snapshot: HeapSnapshot | null
   event: TraceEvent | null
   frames?: ScreenFrame[]
+  /** Arrow keys etc. pressed in the pop-out screen window, to step from there. */
+  onStepKey?: (e: KeyboardEvent) => void
 }
 
 const HEIGHT_KEY = 'codelens.dataDock.height'
 
-export default function DataDock({ lang, snapshot, event, frames }: DataDockProps) {
+export default function DataDock({ lang, snapshot, event, frames, onStepKey }: DataDockProps) {
   const { theme: { ui } } = useCodeLensTheme()
   const tables = useMemo(() => buildTables(snapshot, event), [snapshot, event])
   const hasScreen = (frames?.length ?? 0) > 0
   const tabs = [...(hasScreen ? [{ id: 'screen', label: 'Screen', detail: '' }] : []), ...tables.map(t => ({ id: `t:${t.name}`, label: t.name, detail: t.shape }))]
   const [chosen, setChosen] = useState<string | null>(null)
   const [open, setOpen] = useState(true)
+  const [poppedOut, setPoppedOut] = useState(false)
+  const [popOutBlocked, setPopOutBlocked] = useState(false)
   // Keep the learner's choice while stepping; fall back to the first tab only when it vanishes.
   const active = tabs.some(t => t.id === chosen) ? chosen! : tabs[0]?.id
   const [height, setHeight] = useState(() => {
     try { return Number(localStorage.getItem(HEIGHT_KEY)) || 240 } catch { return 240 }
   })
   useEffect(() => { try { localStorage.setItem(HEIGHT_KEY, String(height)) } catch { /* private window */ } }, [height])
+
+  const popOut = hasScreen && poppedOut && frames && (
+    <ScreenPopOut
+      title="CodeLens screen"
+      background={ui.bg}
+      onKey={e => onStepKey?.(e)}
+      onClosed={blocked => { setPoppedOut(false); setPopOutBlocked(blocked) }}
+    >
+      <ScreenPanel frames={frames} event={event} fit="window" />
+    </ScreenPopOut>
+  )
 
   if (!tabs.length) return null
   const table = tables.find(t => `t:${t.name}` === active)
@@ -105,6 +123,8 @@ export default function DataDock({ lang, snapshot, event, frames }: DataDockProp
   }
 
   return (
+    <>
+    {popOut}
     <div style={{ marginTop: 8, background: ui.panelBg, border: `1px solid ${ui.border}`, borderRadius: 10, flexShrink: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: ui.headerBg, borderBottom: open ? `1px solid ${ui.border}` : 'none', overflowX: 'auto' }}>
         <button onClick={() => setOpen(o => !o)} aria-expanded={open} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', color: ui.text, cursor: 'pointer', padding: 0, flexShrink: 0 }}>
@@ -127,11 +147,19 @@ export default function DataDock({ lang, snapshot, event, frames }: DataDockProp
       {open && (
         <>
           <div style={{ height, overflow: 'auto', padding: 8 }}>
-            {active === 'screen' && frames ? <ScreenPanel frames={frames} event={event} /> : table ? <TableView table={table} lang={lang} /> : null}
+            {active === 'screen' && frames
+              ? <>
+                  {popOutBlocked && <div style={{ fontSize: 11, color: ui.amberSoft, marginBottom: 4 }}>The browser blocked the pop-out window. Allow pop-ups for this site, then try again.</div>}
+                  {poppedOut
+                    ? <div style={{ fontSize: 12, color: ui.textMuted }}>The screen is in its own window. Step with the arrow keys there or here; close that window to bring it back.</div>
+                    : <ScreenPanel frames={frames} event={event} fit={height - 60} onPopOut={() => { setPopOutBlocked(false); setPoppedOut(true) }} />}
+                </>
+              : table ? <TableView table={table} lang={lang} snapshot={snapshot} /> : null}
           </div>
           <div onMouseDown={startResize} title="Drag to resize" style={{ height: 6, cursor: 'row-resize', background: ui.border, opacity: 0.6 }} />
         </>
       )}
     </div>
+    </>
   )
 }

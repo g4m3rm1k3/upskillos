@@ -37,7 +37,7 @@ import sys
 import zlib
 
 MAX_FRAMES = 600            # pictures kept; later flips still count, but aren't saved
-MAX_PICTURE_WIDTH = 480     # pictures are scaled down to this width at most
+MAX_PICTURE_WIDTH = 800     # pictures are scaled down to this width at most (small text stays readable)
 AUTO_QUIT_FRAME = 60        # when nothing is scripted at all
 
 _ORIGINALS = {}
