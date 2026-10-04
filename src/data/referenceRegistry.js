@@ -33,6 +33,13 @@ export const REFERENCE_ITEMS = [
     Component: lazy(() => import('../pages/LAConceptExplorerPage.jsx')),
   },
   {
+    key: 'greek-letters',
+    label: 'Greek Letters in Maths',
+    emoji: 'λ',
+    color: 'amber',
+    Component: lazy(() => import('../pages/GreekLettersReferencePage.jsx')),
+  },
+  {
     key: 'latex-notes',
     label: 'LaTeX Field Notes',
     emoji: '✎',
