@@ -14,6 +14,9 @@ import {
 import { EXPLAIN, CONCEPT_GLOSSARY } from '../../../engines/js/eventStream.js'
 import { buildHeapSnapshot } from './renderer/heapSnapshot'
 import HeapGraph from './renderer/HeapGraph'
+import InspectorWorkspace from './InspectorWorkspace'
+import { readWorkspace, activateInspector, WORKSPACE_KEY, type InspectorId } from './inspectorLayoutState'
+import { outputAtStep } from './tracePresentation'
 import CallGraphView from './renderer/CallGraphView'
 import VariableWatch from './renderer/VariableWatch'
 import CallTreeView from './renderer/CallTreeView'
@@ -322,39 +325,6 @@ function Panel({ title, icon: Icon, children, badge, style, accent }: PanelProps
         {children}
       </div>
     </div>
-  )
-}
-
-function InspectorLayoutPicker({
-  value,
-  onChange,
-}: {
-  value: InspectorLayout
-  onChange: (value: InspectorLayout) => void
-}) {
-  const { theme: { ui } } = useCodeLensTheme()
-  return (
-    <label style={{
-      display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-      color: ui.textFaint, fontSize: 10, fontWeight: 700,
-      fontFamily: 'JetBrains Mono, monospace',
-    }}>
-      VIEW
-      <select
-        aria-label="Choose what appears beside the editor"
-        value={value}
-        onChange={event => onChange(event.target.value as InspectorLayout)}
-        style={{
-          flex: 1, background: ui.panelBg, border: `1px solid ${ui.border}`,
-          color: ui.textSoft, padding: '4px 7px', borderRadius: 6,
-          fontSize: 11, fontFamily: 'JetBrains Mono, monospace', outline: 'none',
-        }}
-      >
-        <option value="learn">Learn & output</option>
-        <option value="data">Data structures</option>
-        <option value="both">Split view</option>
-      </select>
-    </label>
   )
 }
 
@@ -831,10 +801,7 @@ function StackFrame({ frame, depth }: { frame: StackFrame; depth: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type RunTab = 'events' | 'output' | 'explain'
-type DataTab = 'variables' | 'heap' | 'calltree' | 'scope'
 type CodeTab = 'structure' | 'tokens' | 'ast'
-type InspectorLayout = 'learn' | 'data' | 'both'
 
 interface FnModalState { node: CallGraphNode; callGraph: CallGraph | undefined }
 
@@ -871,12 +838,11 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   const [execution, setExecution]   = useState<ExecutionResult | null>(null)
   const [step, setStep]             = useState(0)
   const [running, setRunning]       = useState(false)
-  // Inspector nav: three always-visible columns (Run / Data / Code), each
-  // with its own remembered sub-tab — replaces the old rightMode/rightTab/tab
-  // tri-state, which crammed 5 tabs into one column and 6 more into another.
-  const [runTab, setRunTab]         = useState<RunTab>('explain')
-  const [dataTab, setDataTab]       = useState<DataTab>('variables')
-  const [inspectorLayout, setInspectorLayout] = useState<InspectorLayout>('learn')
+  const [workspace, setWorkspace] = useState(readWorkspace)
+  useEffect(() => {
+    try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace)) } catch { /* storage may be unavailable */ }
+  }, [workspace])
+  const openInspector = useCallback((id: InspectorId) => setWorkspace(current => activateInspector(current, id)), [])
   const [codeModalTab, setCodeModalTab] = useState<CodeTab | null>(null)
   const [showThemes, setShowThemes] = useState(false)
   const [showSandboxGuide, setShowSandboxGuide] = useState(false)
@@ -1155,7 +1121,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
       setExecution(result)
       setStep(0)
       setPlaying(false)
-      setRunTab('explain')
+      openInspector('explain')
     } catch (error) {
       if (generation !== runGenerationRef.current) return
       setExecution({
@@ -1169,7 +1135,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
       })
       setStep(0)
       setPlaying(false)
-      setRunTab('explain')
+      openInspector('explain')
     } finally {
       if (generation === runGenerationRef.current) {
         activeExecutionRef.current = null
@@ -1204,24 +1170,6 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   // produces them; other languages do when their tracer records objects (Python does).
   const hasHeapView = lang === 'js' || lang === 'ts' || !!execution?.events.some(e => (e.heapDelta?.length ?? 0) > 0)
 
-  const chooseInspectorLayout = useCallback((layout: InspectorLayout) => {
-    setInspectorLayout(layout)
-    if (layout === 'data') {
-      setDataTab(hasHeapView ? 'heap' : 'variables')
-    }
-  }, [hasHeapView])
-
-  // ── Inspector nav: Run / Data / Code groups, each with its own tab strip ──
-  const RUN_TABS: { id: RunTab; label: string; icon: LucideIcon }[] = [
-    { id: 'explain', label: 'Explain', icon: Info },
-    { id: 'events',  label: 'Events',  icon: Play },
-    { id: 'output',  label: 'Output',  icon: Terminal },
-  ]
-  const DATA_TABS: { id: DataTab; label: string; icon: LucideIcon }[] = [
-    { id: 'variables', label: 'Values',     icon: Layers },
-    ...(hasHeapView ? [{ id: 'heap' as const, label: 'Structures', icon: Network }] : []),
-    { id: 'calltree',  label: 'Calls',      icon: GitBranch },
-  ]
   const CODE_TABS: { id: CodeTab; label: string; icon: LucideIcon }[] = (lang === 'c' || lang === 'cpp' || lang === 'cs')
     ? []   // no structure view for compiled languages yet
     : (lang === 'py' || lang === 'go')
@@ -1254,6 +1202,159 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
     })
     return [...names].sort()
   }, [model])
+
+  const inspectorTabs = [
+    { id: 'explain' as const, label: 'Explain' }, { id: 'events' as const, label: 'Events' },
+    { id: 'output' as const, label: 'Output' }, { id: 'variables' as const, label: 'Values' },
+    { id: 'heap' as const, label: 'Structures' }, { id: 'calltree' as const, label: 'Calls' },
+    { id: 'scope' as const, label: 'Scope' }, ...CODE_TABS,
+  ]
+  const visibleOutput = useMemo(() => outputAtStep(execution, step), [execution, step])
+  const renderInspector = (tabId: InspectorId) => (
+    <div ref={tabId === 'events' ? eventListRef : undefined} style={{ height: '100%', overflow: 'auto', minWidth: 0 }}>
+            {tabId === 'explain' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {currentEvent
+                  ? <>
+                      <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} />
+                      {expressionSteps.length > 0 && execution?.expressions && (
+                        <ExpressionSteps spans={execution.expressions} steps={expressionSteps} selected={expressionPart} onSelect={setExpressionPart} />
+                      )}
+                    </>
+                  : <IdleHero />
+                }
+                {(currentEvent?.heapDelta?.length ?? 0) > 0 && (
+                  <Panel title="Heap Changes" icon={Boxes} badge={currentEvent!.heapDelta!.length}>
+                    {currentEvent!.heapDelta!.map((d, i) => (
+                      <div key={i} style={{
+                        padding: '5px 8px', borderRadius: 6, marginBottom: 4,
+                        background: d.op === 'create' ? ui.greenDeep + '22' : ui.amberDeep + '22',
+                        border: `1px solid ${d.op === 'create' ? ui.greenDeep : ui.amberDeep}`,
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                      }}>
+                        <span style={{ color: d.op === 'create' ? ui.green : ui.amberSoft }}>
+                          {d.op === 'create' ? `+ ${d.objectType} #${d.objectId}` : `~ #${d.objectId}.${(d as { property?: string }).property}`}
+                        </span>
+                        {d.op === 'mutate' && (
+                          <span style={{ color: ui.textDim }}>
+                            {' '}{formatValue((d as { oldValue?: unknown }).oldValue)} → {formatValue((d as { newValue?: unknown }).newValue)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </Panel>
+                )}
+                {currentEvent && (
+                  <Panel title="Call Stack" icon={Code2} badge={currentEvent.stackSnapshot?.length ?? 0}>
+                    {(currentEvent.stackSnapshot?.length ?? 0) > 0 ? (
+                      // Innermost first; the JavaScript interpreter lists its global frame last,
+                      // so put any global frame at the bottom.
+                      [...currentEvent.stackSnapshot!].reverse()
+                        .sort((a, b) => Number(a.name === '__global__') - Number(b.name === '__global__'))
+                        .map((frame, i) => (
+                        <StackFrame key={i} frame={frame} depth={i} />
+                      ))
+                    ) : (
+                      <span style={{ color: ui.textFaint, fontSize: 12 }}>Global scope</span>
+                    )}
+                  </Panel>
+                )}
+              </div>
+            )}
+            {tabId === 'events' && (
+              execution ? (
+                execution.events.length === 0
+                  ? <span style={{ color: ui.textFaint, fontSize: 12 }}>No events.</span>
+                  : execution.events.map((evt, i) => (
+                      <div
+                        key={i}
+                        data-active={i === step ? 'true' : 'false'}
+                        onClick={() => setStep(i)}
+                        style={{ opacity: i > step ? 0.35 : 1, cursor: 'pointer' }}
+                      >
+                        {i <= step ? <EventCard event={evt} active={i === step} /> : (
+                          <div style={{ padding: 8, color: ui.textFaint, fontSize: 11 }}>Step {i + 1}: {eventLabel(evt)} — select to advance</div>
+                        )}
+                      </div>
+                    ))
+              ) : (
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  justifyContent: 'center', height: '100%', gap: 10,
+                }}>
+                  <Play size={28} color={ui.accentDeep} />
+                  <span style={{ fontSize: 13, color: ui.textMuted, textAlign: 'center' }}>
+                    Press Run to execute the code<br />and see the event stream here.
+                  </span>
+                </div>
+              )
+            )}
+            {tabId === 'output' && (
+              visibleOutput.length > 0 ? (
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
+                  {visibleOutput.map((line, i) => (
+                    <div key={i} style={{
+                      padding: '3px 8px', borderRadius: 4, marginBottom: 2,
+                      background: line.startsWith('[error]') ? '#7f1d1d22'
+                        : line.startsWith('[warn]') ? ui.amberDeep + '22' : ui.panelBg,
+                      color: line.startsWith('[error]') ? ui.redSoft
+                        : line.startsWith('[warn]') ? ui.amberSoft : ui.green,
+                    }}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: ui.textFaint, fontSize: 12 }}>
+                  {execution ? 'No output at this step.' : 'Run code first.'}
+                </span>
+              )
+            )}
+            {tabId === 'variables' && (
+              <VariableWatch
+                currentEvent={currentEvent}
+                prevEvent={prevEvent}
+                heapSnapshot={heapSnapshot}
+                heapDelta={currentEvent?.heapDelta}
+                events={execution?.events}
+                step={step}
+                onSeek={(s) => { setPlaying(false); setStep(s) }}
+                onShowEnvModel={() => openInspector('scope')}
+              />
+            )}
+            {tabId === 'scope' && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <button
+                  onClick={() => openInspector('variables')}
+                  style={{ background: 'none', border: 'none', borderBottom: `1px solid ${ui.border}`,
+                    cursor: 'pointer', padding: '6px 10px', textAlign: 'left',
+                    color: ui.borderStrong, fontSize: 10, fontFamily: 'JetBrains Mono, monospace',
+                    flexShrink: 0 }}
+                >
+                  ← Back to Variables
+                </button>
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <ScopeChainView event={currentEvent} />
+                </div>
+              </div>
+            )}
+            {tabId === 'calltree' && (
+              <CallTreeView
+                events={execution?.events ?? []}
+                step={step}
+                onSeek={(s) => { setPlaying(false); setStep(s) }}
+              />
+            )}
+            {tabId === 'heap' && (
+              <HeapPanel snapshot={heapSnapshot} heapDelta={currentEvent?.heapDelta} />
+            )}
+      {tabId === 'structure' && (lang === 'py'
+        ? <PyStructureView source={source} execution={execution} />
+        : <StructureView model={model} currentEvent={currentEvent} onNodeClick={node => setFnModal({ node, callGraph: model?.callGraph })} />)}
+      {tabId === 'tokens' && <TokensView model={model} source={source} />}
+      {tabId === 'ast' && <AstView model={model} />}
+    </div>
+  )
 
   return (
     <div style={{
@@ -1350,7 +1451,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
               setExecution(null)
               setStep(0)
               setModel(null)
-              setDataTab('variables')
+              openInspector('variables')
               setBreakpoints(new Set())
             }} style={{
               padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
@@ -1750,197 +1851,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
           }} />
         </div>
 
-        {/* The learner chooses the right-side workspace. Learn is the calm
-            default; Data exposes the DSA visualizers; Split remains available
-            when comparing narration with state is useful. */}
-
-        {/* ── Run column ── */}
-        {inspectorLayout !== 'data' && (
-        <div style={{ flex: editorW || inspectorLayout === 'both' ? '1 1 360px' : '0 0 min(44vw, 520px)', minWidth: 300, marginLeft: 10, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0 }}>
-          <InspectorLayoutPicker value={inspectorLayout} onChange={chooseInspectorLayout} />
-          <div style={{
-            display: 'flex', gap: 3, background: ui.panelBg,
-            borderRadius: 6, padding: 3, border: `1px solid ${ui.border}`, flexShrink: 0,
-          }}>
-            {RUN_TABS.map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setRunTab(id)} style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                padding: '4px 0', borderRadius: 4, border: 'none', cursor: 'pointer',
-                fontSize: 10, fontWeight: 600,
-                background: runTab === id ? ui.border : 'transparent',
-                color: runTab === id ? ui.accent : ui.textMuted,
-              }}>
-                <Icon size={11} />{label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }} ref={eventListRef}>
-            {runTab === 'explain' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {currentEvent
-                  ? <>
-                      <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} />
-                      {expressionSteps.length > 0 && execution?.expressions && (
-                        <ExpressionSteps spans={execution.expressions} steps={expressionSteps} selected={expressionPart} onSelect={setExpressionPart} />
-                      )}
-                    </>
-                  : <IdleHero />
-                }
-                {(currentEvent?.heapDelta?.length ?? 0) > 0 && (
-                  <Panel title="Heap Changes" icon={Boxes} badge={currentEvent!.heapDelta!.length}>
-                    {currentEvent!.heapDelta!.map((d, i) => (
-                      <div key={i} style={{
-                        padding: '5px 8px', borderRadius: 6, marginBottom: 4,
-                        background: d.op === 'create' ? ui.greenDeep + '22' : ui.amberDeep + '22',
-                        border: `1px solid ${d.op === 'create' ? ui.greenDeep : ui.amberDeep}`,
-                        fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
-                      }}>
-                        <span style={{ color: d.op === 'create' ? ui.green : ui.amberSoft }}>
-                          {d.op === 'create' ? `+ ${d.objectType} #${d.objectId}` : `~ #${d.objectId}.${(d as { property?: string }).property}`}
-                        </span>
-                        {d.op === 'mutate' && (
-                          <span style={{ color: ui.textDim }}>
-                            {' '}{formatValue((d as { oldValue?: unknown }).oldValue)} → {formatValue((d as { newValue?: unknown }).newValue)}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </Panel>
-                )}
-                {currentEvent && (
-                  <Panel title="Call Stack" icon={Code2} badge={currentEvent.stackSnapshot?.length ?? 0}>
-                    {(currentEvent.stackSnapshot?.length ?? 0) > 0 ? (
-                      // Innermost first; the JavaScript interpreter lists its global frame last,
-                      // so put any global frame at the bottom.
-                      [...currentEvent.stackSnapshot!].reverse()
-                        .sort((a, b) => Number(a.name === '__global__') - Number(b.name === '__global__'))
-                        .map((frame, i) => (
-                        <StackFrame key={i} frame={frame} depth={i} />
-                      ))
-                    ) : (
-                      <span style={{ color: ui.textFaint, fontSize: 12 }}>Global scope</span>
-                    )}
-                  </Panel>
-                )}
-              </div>
-            )}
-            {runTab === 'events' && (
-              execution ? (
-                execution.events.length === 0
-                  ? <span style={{ color: ui.textFaint, fontSize: 12 }}>No events.</span>
-                  : execution.events.map((evt, i) => (
-                      <div
-                        key={i}
-                        data-active={i === step ? 'true' : 'false'}
-                        onClick={() => setStep(i)}
-                        style={{ opacity: i > step ? 0.35 : 1, cursor: 'pointer' }}
-                      >
-                        <EventCard event={evt} active={i === step} />
-                      </div>
-                    ))
-              ) : (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', height: '100%', gap: 10,
-                }}>
-                  <Play size={28} color={ui.accentDeep} />
-                  <span style={{ fontSize: 13, color: ui.textMuted, textAlign: 'center' }}>
-                    Press Run to execute the code<br />and see the event stream here.
-                  </span>
-                </div>
-              )
-            )}
-            {runTab === 'output' && (
-              (execution?.output?.length ?? 0) > 0 ? (
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
-                  {execution!.output.map((line, i) => (
-                    <div key={i} style={{
-                      padding: '3px 8px', borderRadius: 4, marginBottom: 2,
-                      background: line.startsWith('[error]') ? '#7f1d1d22'
-                        : line.startsWith('[warn]') ? ui.amberDeep + '22' : ui.panelBg,
-                      color: line.startsWith('[error]') ? ui.redSoft
-                        : line.startsWith('[warn]') ? ui.amberSoft : ui.green,
-                    }}>
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span style={{ color: ui.textFaint, fontSize: 12 }}>
-                  {execution ? 'No output.' : 'Run code first.'}
-                </span>
-              )
-            )}
-          </div>
-        </div>
-        )}
-
-        {/* ── Data column ── */}
-        {inspectorLayout !== 'learn' && (
-        <div style={{ flex: editorW || inspectorLayout === 'both' ? '1 1 360px' : '0 0 min(44vw, 520px)', minWidth: 300, marginLeft: 10, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0 }}>
-          {inspectorLayout === 'data' && (
-            <InspectorLayoutPicker value={inspectorLayout} onChange={chooseInspectorLayout} />
-          )}
-          <div style={{
-            display: 'flex', gap: 3, background: ui.panelBg,
-            borderRadius: 6, padding: 3, border: `1px solid ${ui.border}`, flexShrink: 0,
-          }}>
-            {DATA_TABS.map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setDataTab(id)} style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                padding: '4px 0', borderRadius: 4, border: 'none', cursor: 'pointer',
-                fontSize: 10, fontWeight: 600,
-                background: dataTab === id ? ui.border : 'transparent',
-                color: dataTab === id ? ui.accent : ui.textMuted,
-              }}>
-                <Icon size={11} />{label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            {dataTab === 'variables' && (
-              <VariableWatch
-                currentEvent={currentEvent}
-                prevEvent={prevEvent}
-                heapSnapshot={heapSnapshot}
-                heapDelta={currentEvent?.heapDelta}
-                events={execution?.events}
-                step={step}
-                onSeek={(s) => { setPlaying(false); setStep(s) }}
-                onShowEnvModel={() => setDataTab('scope')}
-              />
-            )}
-            {dataTab === 'scope' && (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <button
-                  onClick={() => setDataTab('variables')}
-                  style={{ background: 'none', border: 'none', borderBottom: `1px solid ${ui.border}`,
-                    cursor: 'pointer', padding: '6px 10px', textAlign: 'left',
-                    color: ui.borderStrong, fontSize: 10, fontFamily: 'JetBrains Mono, monospace',
-                    flexShrink: 0 }}
-                >
-                  ← Back to Variables
-                </button>
-                <div style={{ flex: 1, overflow: 'auto' }}>
-                  <ScopeChainView event={currentEvent} />
-                </div>
-              </div>
-            )}
-            {dataTab === 'calltree' && (
-              <CallTreeView
-                events={execution?.events ?? []}
-                step={step}
-                onSeek={(s) => { setPlaying(false); setStep(s) }}
-              />
-            )}
-            {dataTab === 'heap' && (
-              <HeapPanel snapshot={heapSnapshot} heapDelta={currentEvent?.heapDelta} />
-            )}
-          </div>
-        </div>
-        )}
+        <InspectorWorkspace state={workspace} onChange={setWorkspace} tabs={inspectorTabs} render={renderInspector} />
 
       </div>
 

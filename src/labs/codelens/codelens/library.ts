@@ -10,6 +10,7 @@
 // C# and C++ run in the desktop app only.
 import type { Lang } from './types'
 import { SNIPPET_CATEGORIES } from './snippets'
+import { LEARNING_EXAMPLES } from './learningExamples'
 
 export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 
@@ -57,6 +58,7 @@ function snippet(name: string): string {
 const lines = (...text: string[]) => text.join('\n')
 
 export const LIBRARY: LibraryExample[] = [
+  ...LEARNING_EXAMPLES,
   // ── Data structures ────────────────────────────────────────────────────────
   {
     id: 'linked-list',
@@ -1390,7 +1392,7 @@ export const LIBRARY: LibraryExample[] = [
     group: 'Reinforcement Learning',
     difficulty: 'Beginner',
     concept: 'A Q-table has one row per state and one column per action: Q[state][action] says how good that action is in that state. This program fills in the row for one state of a 5 × 5 grid, the top-left cell (0, 0), by trying each of the four moves and scoring where it lands. It is a stepping stone, not yet real Q-learning: each score here only looks one step ahead (minus the distance left to the goal), while a real Q-value is the total discounted reward from taking the action and then carrying on as well as possible. The next example computes those for the same grid.',
-    prerequisites: [],
+    prerequisites: ['Variables and loops', 'Functions and return values', 'Try One grid move first for tuple unpacking'],
     watch: [
       '`return new_row, new_col`: the comma builds a tuple, one object holding both numbers. The explanation shows it as (1, 0) (tuple #4); the number is how the Structures view tells objects apart, since every call makes a new tuple.',
       '`next_r, next_c = get_next_position(...)`: unpacking takes the tuple apart again into two variables.',
@@ -1425,8 +1427,14 @@ export const LIBRARY: LibraryExample[] = [
           "    return new_row, new_col",
           "",
           "def calculate_score(row, col, goal_row=4, goal_col=4):",
-          "    # Score is negative Manhattan distance: -(|row diff| + |col diff|)",
-          "    return -(abs(row - goal_row) + abs(col - goal_col))",
+          "    # abs removes direction: we count how many row steps remain.",
+          "    row_steps_left = abs(row - goal_row)",
+          "    # Horizontal steps are counted separately: diagonal moves are not allowed.",
+          "    col_steps_left = abs(col - goal_col)",
+          "    # Manhattan distance adds the vertical and horizontal step counts.",
+          "    distance_left = row_steps_left + col_steps_left",
+          "    # Negating makes closer positions score higher: -7 is better than -8.",
+          "    return -distance_left",
           "",
           "# Starting at State 0: cell (0, 0)",
           "current_row = 0",

@@ -12,7 +12,7 @@ import type { CodeLensUiPalette } from '../theme'
 const CALL = 'function_call'
 const RET  = 'function_return'
 
-const NODE_W  = 108
+const NODE_W  = 190
 const NODE_H  = 42
 const COL_GAP = 10
 const ROW_H   = 76
@@ -33,12 +33,13 @@ interface TreeNode {
 
 // ── Tree builder ──────────────────────────────────────────────────────────────
 
-function buildTree(events: TraceEvent[]): TreeNode {
+export function buildTree(events: TraceEvent[], step = events.length - 1): TreeNode {
   const root: TreeNode = { id: '__root__', name: '__root__', args: [], children: [],
     returnValue: undefined, stepStart: 0, stepEnd: events.length - 1 }
   const stack: TreeNode[] = [root]
 
   events.forEach((evt, i) => {
+    if (i > step) return
     if (evt.type === CALL) {
       const node: TreeNode = {
         id:          `n${i}`,
@@ -117,8 +118,9 @@ function computeLayout(tree: TreeNode, maxDepth: number): TreeLayout {
 
     if (depth < maxDepth && node.children.length > 0) {
       const totalChildW = node.children.reduce((s, c) => s + (c._w ?? 0), 0)
-      let childCx = cx - totalChildW / 2 + (node.children[0]._w ?? 0) / 2
+      let childLeft = cx - totalChildW / 2
       for (const child of node.children) {
+        const childCx = childLeft + (child._w ?? 0) / 2
         const childY = (depth + 1) * ROW_H
         const midY   = (y + NODE_H + childY) / 2
         edgeList.push({
@@ -127,7 +129,7 @@ function computeLayout(tree: TreeNode, maxDepth: number): TreeLayout {
           to:   child.id,
         })
         place(child, childCx, depth + 1)
-        childCx += child._w ?? 0
+        childLeft += child._w ?? 0
       }
     }
   }
@@ -138,7 +140,7 @@ function computeLayout(tree: TreeNode, maxDepth: number): TreeLayout {
     cx += r._w ?? 0
   }
 
-  const svgH = (maxDepth + 1) * ROW_H + NODE_H + 40
+  const svgH = (Math.max(0, ...nodeList.map(entry => entry.depth)) + 1) * ROW_H + NODE_H + 40
   return { nodeList, edgeList, svgW: totalW, svgH }
 }
 
@@ -233,7 +235,7 @@ export default function CallTreeView({ events, step, onSeek }: CallTreeViewProps
   const { theme: { ui } } = useCodeLensTheme()
   const [maxDepth, setMaxDepth] = useState(4)
 
-  const tree = useMemo(() => buildTree(events ?? []), [events])
+  const tree = useMemo(() => buildTree(events ?? [], step), [events, step])
 
   const { nodeList, edgeList, svgW, svgH } = useMemo(
     () => computeLayout(tree, maxDepth),
@@ -269,7 +271,7 @@ export default function CallTreeView({ events, step, onSeek }: CallTreeViewProps
     return <Empty ui={ui}>Run code to see the call tree.</Empty>
   }
   if (tree.children.length === 0) {
-    return <Empty ui={ui}>No function calls detected.</Empty>
+    return <Empty ui={ui}>No function calls yet at this step.</Empty>
   }
 
   return (
@@ -372,9 +374,9 @@ export default function CallTreeView({ events, step, onSeek }: CallTreeViewProps
               const isCurrent = node.id === currentId
               const isInPath  = activePath.has(node.id)
               const retStr    = fmtReturn(node.returnValue)
-              const hasReturn = node.returnValue !== undefined
+              const hasReturn = node.stepEnd >= 0 && node.stepEnd <= step
               const argsStr   = node.args.slice(0, 3).join(', ')
-              const nameStr   = node.name.length > 11 ? node.name.slice(0, 10) + '…' : node.name
+              const nameStr   = node.name.length > 22 ? node.name.slice(0, 21) + '…' : node.name
               const callStr   = `${nameStr}(${argsStr})`
               const clipId    = `clt_clip_${node.id}`
 
@@ -384,6 +386,7 @@ export default function CallTreeView({ events, step, onSeek }: CallTreeViewProps
                   onClick={() => handleNodeClick(node)}
                   style={{ cursor: 'pointer' }}
                 >
+                  <title>{node.name}({node.args.join(', ')}){hasReturn ? ` → ${retStr ?? 'undefined'}` : ' — in progress'}</title>
                   <rect
                     x={x} y={y} width={NODE_W} height={NODE_H} rx={6}
                     fill={isCurrent ? ui.accentBg : isInPath ? ui.panelBg : ui.panelBg2}
@@ -399,12 +402,12 @@ export default function CallTreeView({ events, step, onSeek }: CallTreeViewProps
                     {callStr}
                   </text>
 
-                  {hasReturn && retStr !== null ? (
+                  {hasReturn ? (
                     <text x={cx} y={y + 31} textAnchor="middle"
                       fill={isCurrent ? ui.amberSoft : ui.green}
                       fontSize={9} fontFamily="JetBrains Mono, monospace"
                       clipPath={`url(#${clipId})`}>
-                      → {retStr}
+                      → {retStr ?? 'undefined'}
                     </text>
                   ) : !hasReturn ? (
                     <text x={cx} y={y + 31} textAnchor="middle"

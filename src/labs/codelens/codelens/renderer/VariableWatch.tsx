@@ -11,6 +11,7 @@ import { useState, useMemo, useCallback, useRef, useEffect, type MouseEvent as R
 import type { TraceEvent, StackFrame, HeapSnapshot } from '../types'
 import { useCodeLensTheme } from '../ThemeContext'
 import type { CodeLensUiPalette } from '../theme'
+import { heapObjectLabel } from './heapSnapshot'
 
 // ── Type helpers ──────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ function fmtVal(v: unknown, heap: HeapSnapshot | null | undefined): string {
   if (isRefValue(v)) {
     const obj  = heap?.objects?.get(v.$ref)
     const type = obj?.type ?? 'Object'
+    if (obj?.names?.length) return `→ ${heapObjectLabel(obj)} (${type} #${v.$ref})`
     if (type === 'Array') {
       const len = obj?.properties?.get('length')
       return `→ Array[${len ?? '?'}] #${v.$ref}`

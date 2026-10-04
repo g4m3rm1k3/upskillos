@@ -145,6 +145,8 @@ export interface ScreenFrame {
 export interface HeapObjectEntry {
   id: number
   type: string
+  /** Current variable aliases (or an owning property path), never future bindings. */
+  names?: string[]
   properties: Map<string, unknown>
   prototype: unknown
 }
