@@ -36,8 +36,9 @@ const SERIES = [
       ['ml-math', '02 · Mathematics Through Computation'],
       ['ml-first-model', '03 · Your First Model: Predict a Number'],
       ['ml-web', '04 · Web + ML: The Prediction Web App'],
+      ['ml-database', '05 · Databases: The Experiment Database'],
     ],
-    planned: 'Next in this series: the experiment database (SQL, SQLAlchemy), multi-user accounts and web security, then classification, trees, clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
+    planned: 'Next in this series: multi-user accounts and web security, evaluation and overfitting, then classification, trees, clustering, PCA, neural networks and PyTorch, ending in ML Studio and your own capstone. The full map is in docs/ml-project-studio-curriculum.md.',
   },
 ];
 

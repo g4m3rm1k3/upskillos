@@ -190,7 +190,15 @@ describe.skipIf(!enabled)('Machine Learning — From Mathematics to Production w
           // verify command prints is marked as if the learner had typed it.
           for (const p of step.predictions ?? []) {
             if (!p.verify) continue;
-            const r = await shellRun(localCommand(p.verify), { cwd: project, env: await getEnv(), timeoutMs: 120000 });
+            // `verify: script name.py` runs tracks/<track>/verify/name.py inside the project.
+            const script = p.verify.match(/^script (\S+\.py)$/)?.[1];
+            let command = p.verify;
+            if (script) {
+              fs.copyFileSync(new URL(`./tracks/${track}/verify/${script}`, import.meta.url), path.join(project, `_verify_${script}`));
+              command = `.venv/Scripts/python _verify_${script}`;
+            }
+            const r = await shellRun(localCommand(command), { cwd: project, env: await getEnv(), timeoutMs: 120000 });
+            if (script) fs.rmSync(path.join(project, `_verify_${script}`), { force: true });
             const lines = r.stdout.trim().split(/\r?\n/);
             const said = lines[lines.length - 1].trim();
             expect(r.code, `${lesson.title} / ${step.title}: verify for "${p.question}" failed\n${r.stdout}\n${r.stderr}`).toBe(0);
