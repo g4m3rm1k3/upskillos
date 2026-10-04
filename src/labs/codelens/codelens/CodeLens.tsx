@@ -21,7 +21,7 @@ import StackDepthMeter from './renderer/StackDepthMeter'
 import WatchWindow from './renderer/WatchWindow'
 import LibraryBrowser from './LibraryBrowser'
 import InputPanel, { readsInput } from './InputPanel'
-import ScreenPanel from './ScreenPanel'
+import DataDock from './DataDock'
 import PackagesDialog from './PackagesDialog'
 import ExpressionSteps from './ExpressionSteps'
 import { codelensPythonStatus, type CodeLensPythonStatus } from './interpreter/codelensPythonEnv'
@@ -1235,6 +1235,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
   const heapSnapshot = (hasHeapView && execution)
     ? buildHeapSnapshot(execution.events, step)
     : null
+  // The Data dock under the editor (DataDock.tsx) shows tables whenever the tracer recorded objects.
+  const dockSnapshot = heapSnapshot ?? (execution ? buildHeapSnapshot(execution.events, step) : null)
 
   // Variable/function names pulled from the parsed AST/model, offered as
   // autocomplete suggestions in the floating Watch window instead of relying
@@ -1662,7 +1664,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
         >
           <div style={{
             flex: 1, background: ui.panelBg, border: `1px solid ${ui.border}`,
-            borderRadius: 10, overflow: 'hidden', minHeight: 0,
+            // The Input box and the Data dock sit below; the editor keeps room to read code.
+            borderRadius: 10, overflow: 'hidden', minHeight: 160,
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -1727,6 +1730,8 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             open={inputOpen}
             onToggle={() => setInputOpen(open => !open)}
           />
+          {/* Tables and the pygame screen, at a fixed height so nothing moves while stepping. */}
+          {execution && <DataDock lang={lang} snapshot={dockSnapshot} event={currentEvent} frames={execution.frames} />}
         </div>
 
         {/* ── Drag handle ── */}
@@ -1782,9 +1787,6 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
                     </>
                   : <IdleHero />
                 }
-                {(execution?.frames?.length ?? 0) > 0 && (
-                  <ScreenPanel frames={execution!.frames!} event={currentEvent} />
-                )}
                 {(currentEvent?.heapDelta?.length ?? 0) > 0 && (
                   <Panel title="Heap Changes" icon={Boxes} badge={currentEvent!.heapDelta!.length}>
                     {currentEvent!.heapDelta!.map((d, i) => (
@@ -3564,7 +3566,11 @@ function formatValue(v: unknown): string {
   if (v === null)      return 'null'
   if (v === undefined) return 'undefined'
   if (typeof v === 'function') return '[Function]'
-  if (isDisplayedReference(v)) return `Object #${referenceId(v)}`
+  if (isDisplayedReference(v)) {
+    // Python's tracer adds what the object holds, e.g. "(0, 1)" for a returned tuple.
+    const preview = (v as { preview?: string }).preview
+    return preview ? `${preview.length > 28 ? preview.slice(0, 27) + '…' : preview} #${referenceId(v)}` : `Object #${referenceId(v)}`
+  }
   if (typeof v === 'object' && v !== null && (v as { type?: string }).type === 'function') return `[Function ${(v as { name?: string }).name ?? ''}]`
   if (typeof v === 'object') return JSON.stringify(v).slice(0, 30)
   if (typeof v === 'string') return `"${v.length > 20 ? v.slice(0, 20) + '…' : v}"`

@@ -38,7 +38,12 @@ export function format(value: unknown, language: string): string {
     if ((language === 'javascript' || language === 'typescript') && /^[[{][\s\S]*[\]}]$/.test(value)) return value
     return JSON.stringify(value)
   }
-  if (typeof value === 'object' && '$ref' in (value as object)) return `object #${(value as { $ref: number }).$ref}`
+  if (typeof value === 'object' && '$ref' in (value as object)) {
+    // Tracers that can (Python) add what the object holds: (0, 1) (tuple #4). The number is
+    // the one the Structures view shows; without a preview it is all there is.
+    const ref = value as { $ref: number; preview?: string; objectType?: string }
+    return ref.preview ? `${ref.preview} (${ref.objectType ?? 'object'} #${ref.$ref})` : `object #${ref.$ref}`
+  }
   if (typeof value === 'boolean' && language === 'python') return value ? 'True' : 'False'
   return String(value)
 }
@@ -116,7 +121,8 @@ function namedValue(value: unknown, language: string, created: Map<number, strin
   if (value && typeof value === 'object' && '$ref' in (value as object)) {
     const id = (value as { $ref: number }).$ref
     const type = created.get(id)
-    if (type) return `a new ${type} (#${id})`
+    const preview = (value as { preview?: string }).preview
+    if (type) return `a new ${type} (#${id})${preview ? ` holding ${preview}` : ''}`
   }
   return format(value, language)
 }

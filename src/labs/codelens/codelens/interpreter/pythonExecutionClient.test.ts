@@ -67,7 +67,7 @@ describe.skipIf(!python)('CodeLens Python tracer on CPython', () => {
       '7: Next item: `n`: 1 → 2',
       '8: Updates `total`: 1 → 3',
       '7: The loop is finished',
-      '9: Assigns `items` = a new list (#1)',
+      '9: Assigns `items` = a new list (#1) holding []',
       '10: Calls `items.append(...)`',
       '11: Prints "total 3 6"',
       '2: `n <= 1` is false, so the block is skipped',
@@ -114,6 +114,12 @@ describe.skipIf(!python)('CodeLens Python tracer on CPython', () => {
     expect(steps(2)).toEqual(['n → 1', 'n → 1', 'n + n → 2'])
     const span = result.expressions!.find(s => s.code === 'price * qty')!
     expect([span.line, span.col, span.endLine, span.endCol]).toEqual([5, 8, 5, 19])
+  })
+
+  it('shows what a returned object holds, not only its number', () => {
+    const result = trace('def move(row, col):\n    return row + 1, col\n\nr, c = move(0, 0)\n')
+    const returned = result.events.find(e => e.type === 'function_return')!
+    expect(explainTraceEvent(returned).summary).toMatch(/returns \(1, 0\) \(tuple #\d+\)/)
   })
 
   it('says so when the program reads more input than there is', () => {

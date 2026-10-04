@@ -34,6 +34,7 @@ What each line does
 import ast
 import collections
 import io
+import reprlib
 import json
 import re
 import sys
@@ -59,6 +60,15 @@ DEFAULT_LIMITS = {
 _CONTAINERS = (list, tuple, dict, set, frozenset, collections.deque)
 _NOT_DATA = (types.FunctionType, types.BuiltinFunctionType, types.MethodType,
              types.ModuleType, type, types.GeneratorType, types.CodeType, types.FrameType)
+
+
+# How previews of objects are written: a few items of each container, short strings.
+_PREVIEW = reprlib.Repr()
+_PREVIEW.maxlist = _PREVIEW.maxtuple = _PREVIEW.maxset = _PREVIEW.maxfrozenset = _PREVIEW.maxdeque = 10
+_PREVIEW.maxdict = 6
+_PREVIEW.maxstring = 40
+_PREVIEW.maxother = 60
+_PREVIEW.maxlevel = 3
 
 
 class _LimitReached(BaseException):
@@ -146,6 +156,7 @@ class Tracer:
         self.output = None      # the _Output capturing print(), for 'printed'
         self.printed_parts = 0  # how many output parts earlier events have already reported
         self.input_read = []    # standard-input lines read since the previous event
+        self.previews = {}      # object id -> (preview, type name), last seen (with_preview)
         self.screen = None      # the pygame stand-in (codelens_pygame.Screen), if the program uses one
         self.expressions = []   # (expression id, depth, value) recorded since the previous event
         self.expression_count = 0
@@ -166,7 +177,7 @@ class Tracer:
         if self.is_tracked(value):
             small = self.ids.get(id(value))
             if small is not None:
-                return {'$ref': small}
+                return self.with_preview({'$ref': small}, value)
             text = repr(value)
             return text if len(text) <= 60 else text[:59] + '…'
         return self.value(value)
@@ -180,6 +191,49 @@ class Tracer:
             return False
         # Instances of the learner's own classes (defined in the program, so in __main__).
         return getattr(type(value), '__module__', None) == '__main__'
+
+    def preview(self, obj):
+        """A short text of what an object holds, such as (0, 1) or [-1, -1, -5, -7], for
+        explanations: "Returns (0, 1)" says more than "Returns object #4". Instances of the
+        learner's classes without their own __repr__ show their fields: Point(x=1, y=2)."""
+        try:
+            if not isinstance(obj, _CONTAINERS) and type(obj).__repr__ is object.__repr__:
+                fields = [(k, v) for k, v in vars(obj).items() if not k.startswith('__')][:6]
+                text = f"{type(obj).__name__}({', '.join(f'{k}={_PREVIEW.repr(v)}' for k, v in fields)})"
+            else:
+                text = _PREVIEW.repr(obj)
+        except Exception:
+            return None
+        return text if len(text) <= 80 else text[:79] + '…'
+
+    def with_preview(self, shown, obj):
+        """{"$ref": n} plus the object's preview and type, for values an explanation names."""
+        text = self.preview(obj)
+        if not text:
+            return shown
+        # Remembered, so a later "x: (3, 1) → (3, 2)" can show the old object too, after it is gone.
+        self.previews[shown['$ref']] = (text, type(obj).__name__)
+        return {**shown, 'preview': text, 'objectType': type(obj).__name__}
+
+    def shown(self, obj):
+        """value(), with a preview when it is a numbered object."""
+        out = self.value(obj)
+        return self.with_preview(out, obj) if isinstance(out, dict) and '$ref' in out else out
+
+    def preview_changes(self, frame, changes):
+        """Copies of the changes, with a preview for a variable that now holds an object. (The
+        stack snapshot keeps the bare {"$ref": n}, which the heap view compares.)"""
+        out = []
+        for change in changes:
+            value = change['newValue']
+            if isinstance(value, dict) and '$ref' in value and change['name'] in frame.f_locals:
+                change = {**change, 'newValue': self.with_preview(value, frame.f_locals[change['name']])}
+            old = change.get('oldValue')
+            if isinstance(old, dict) and '$ref' in old and old['$ref'] in self.previews:
+                text, type_name = self.previews[old['$ref']]
+                change = {**change, 'oldValue': {**old, 'preview': text, 'objectType': type_name}}
+            out.append(change)
+        return out
 
     def object_id(self, value):
         key = id(value)
@@ -389,7 +443,7 @@ class Tracer:
             'sourceLocation': {'line': line},
             'stackSnapshot': stack,
             'heapDelta': self.heap_delta(frame),
-            'changes': self.changes(frame, current_locals),
+            'changes': self.preview_changes(frame, self.changes(frame, current_locals)),
             **payload,
         }
         if printed:
@@ -417,7 +471,7 @@ class Tracer:
             if self.depth > self.limits['maxRecursionDepth']:
                 raise _LimitReached('recursion', f"Recursion limit ({self.limits['maxRecursionDepth']} nested calls) reached")
             if frame.f_code.co_name != '<module>':
-                args = [self.value(frame.f_locals.get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
+                args = [self.shown(frame.f_locals.get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
                 arg_names = list(frame.f_code.co_varnames[: frame.f_code.co_argcount])
                 self.emit('function_call', frame, functionName=self.frame_name(frame), args=args, argNames=arg_names)
             return self.trace
@@ -428,7 +482,7 @@ class Tracer:
         elif event == 'return':
             self.depth -= 1
             if frame.f_code.co_name != '<module>':
-                self.emit('function_return', frame, functionName=self.frame_name(frame), returnValue=self.value(arg))
+                self.emit('function_return', frame, functionName=self.frame_name(frame), returnValue=self.shown(arg))
             else:
                 # A 'line' event fires before its line runs, so without this the effect of
                 # the program's last line would never be shown.
@@ -568,7 +622,8 @@ class _ExpressionRecorder(ast.NodeTransformer):
     def wrap(self, node):
         if node is None:
             return None
-        if isinstance(node, (ast.Constant, ast.Starred, ast.Slice, ast.Yield, ast.YieldFrom, ast.Await, ast.Lambda)) \
+        negative_literal = isinstance(node, ast.UnaryOp) and isinstance(node.operand, ast.Constant)   # -1 is a constant too
+        if negative_literal or isinstance(node, (ast.Constant, ast.Starred, ast.Slice, ast.Yield, ast.YieldFrom, ast.Await, ast.Lambda)) \
                 or not isinstance(getattr(node, 'ctx', ast.Load()), ast.Load):
             return self.visit(node)
         inner = self.visit(node)
