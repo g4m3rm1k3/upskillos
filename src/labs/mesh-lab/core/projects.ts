@@ -2477,6 +2477,43 @@ for (const name of ['Spine', 'Tilted', 'Arm']) {            // Arm last: the tra
 }`,
   },
   {
+    id: 'pose-chain',
+    title: 'Posing a chain of bones',
+    icon: '🦾',
+    group: 'Learning',
+    desc: 'Three bones, Upper, Lower and Hand, each the child of the one before. Upper is posed 30° about its x axis and Lower 45° more about its own: the trace walks the chain from the root, posing each bone in its parent\u2019s posed frame, then builds the Hand\u2019s skin matrix S = P · B⁻¹.',
+    lang: 'js',
+    setup: { select: 'Arm rig', bone: 'Hand', trace: true, predict: true, tab: 'trace', view: 'all' },
+    guide: [
+      'The output panel: each bone\u2019s posed tail. Lower is turned 75° in all: Upper\u2019s 30° carries it, then it adds its own 45°.',
+      'In the Algorithm trace, press Play: the chain (root first), each bone posed in turn (predict where the Hand\u2019s tail goes), then the skin matrix.',
+      step('Ctrl+Tab for pose mode: select Lower and turn it with R (or type a rotation in the inspector). The Hand comes with it, and the arm bends.', (e, s) => did(e, s, 'Pose bone')),
+      step('Select the Hand and use Object › Trace posing the bone (active bone, down its chain) again: the trace starts from your new pose.', (e, s) => e.trace?.op === 'Trace posing the bone' && e.trace !== s.trace),
+    ],
+    code: `// A chain of three bones up +y, each the child of the one before, and an arm-shaped tube bound to them.
+const rad = (d) => d * Math.PI / 180
+const rig = scene.add.armature({ name: 'Arm rig', bones: [
+  { name: 'Upper', head: [0, 0, 0], tail: [0, 1, 0] },
+  { name: 'Lower', parent: 'Upper', head: [0, 1, 0], tail: [0, 2, 0] },
+  { name: 'Hand', parent: 'Lower', head: [0, 2, 0], tail: [0, 2.5, 0] },
+] })
+const N = 12, K = 25, verts = [], faces = []
+for (let k = 0; k <= K; k++) for (let j = 0; j < N; j++) { const a = (j / N) * 2 * Math.PI; verts.push([0.15 * Math.cos(a), (2.5 * k) / K, -0.15 * Math.sin(a)]) }
+for (let k = 0; k < K; k++) for (let j = 0; j < N; j++) { const a = k * N + j, b = k * N + ((j + 1) % N); faces.push([a, b, b + N, a + N]) }
+faces.push(Array.from({ length: N }, (_, j) => N - 1 - j), Array.from({ length: N }, (_, j) => K * N + j))
+const arm = scene.add.mesh({ name: 'Arm', verts, faces })
+arm.smooth = true
+arm.bindTo(rig)
+
+// The pose: Upper 30° about its own x axis, Lower 45° more about its own, the Hand not turned.
+rig.bone('Upper').pose = [rad(30), 0, 0]
+rig.bone('Lower').pose = [rad(45), 0, 0]
+const v = (a) => '(' + Array.from(a, (x) => +(+x).toFixed(4)).join(', ') + ')'
+for (const name of ['Upper', 'Lower', 'Hand']) log(name + ' posed tail ' + v(rig.bone(name).posedTail))
+const r = rig.bone('Hand').tracePose()                       // the chain, and the Hand's skin matrix
+log('chain ' + r.chain.join(' → ') + '; the Hand\u2019s tail ' + v(r.tail))`,
+  },
+  {
     id: 'walk-and-wave',
     title: 'Rigged character: walk and wave',
     icon: '🚶',

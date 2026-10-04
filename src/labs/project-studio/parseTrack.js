@@ -128,7 +128,7 @@ export function parseLesson(text, id) {
   for (let i = 1; i < parts.length; i += 2) {
     const heading = parts[i];
     const parsed = parseStepBody(parts[i + 1] ?? '');
-    steps.push({ id: `${id}-step-${steps.length + 1}`, title: heading, optional: /^Challenge\s*[—:-]/i.test(heading), ...parsed });
+    steps.push({ id: `${id}-step-${steps.length + 1}`, title: heading, optional: meta.pedagogy === 'typed' && /^Challenge\s*[—:-]/i.test(heading), ...parsed });
   }
 
   return {
