@@ -12,7 +12,7 @@
     "chapters": 239,
     "lessons": 1374,
     "labs": 55,
-    "games": 15
+    "games": 16
   },
   "courses": [
     {
@@ -701,6 +701,11 @@
     }
   ],
   "games": [
+    {
+      "id": "circuit-clash",
+      "label": "Circuit Clash",
+      "path": "/game/circuit-clash"
+    },
     {
       "id": "rubiks-cube",
       "label": "Rubik's Cube",

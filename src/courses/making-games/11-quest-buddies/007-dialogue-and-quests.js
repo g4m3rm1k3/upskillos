@@ -17,12 +17,13 @@ export default {
   },
   intuition: {
     prose: [
-      '**Depth: build it.** The Try it task writes talk() and the typewriter, then the quest.',
-      '**The box.** A Panel Dialogue in the HUD, with a Label Name (who is talking) and a Label Text (wrapWidth set so long lines wrap). It is hidden until someone talks.',
+      '**Depth: build it.** The Try it task builds the dialogue box and writes talk() and the typewriter; then E; then the ranger, the amulet and the quest.',
+      '**The box.** A Panel Dialogue in the HUD, with a Label Name (who is talking) and a Label Text (wrapWidth set so long lines wrap). It is hidden until someone talks. Two more Labels sit at the HUD\'s top level: Message, for news like New quest, and Hint, for what a key would do here, like E: talk. The HUD gets a method for each, say(text) and hint(text), so other scripts never need to know the labels\' paths. And a new input action, interact, on E and Space.',
       '**talk(name, lines, done).** The HUD keeps the lines still to say, shows the box, and starts the first. The HUD is busy while lines remain, so the hero stands still. Every frame it types: shown grows by 40 × dt, and Text.visibleCharacters is set to its whole part, or −1 once the whole line is there. A 78-letter line takes 1.95 s (cell 1).',
       '**E moves it on.** If the line is still typing, E shows it all at once (players read faster than 40 letters a second). If it is all shown, E goes to the next line. After the last line, the box hides and done() runs: that is where the quest moves on. One detail: the E that opened the conversation must not also skip its first line, so the HUD remembers the frame it opened on and ignores E that frame.',
       '**The words wrap as if all shown.** visibleCharacters shows the first letters of the text but wraps it as if all of it were there, so a word does not start on one line and jump to the next as it appears.',
       '**A quest is a state machine.** The amulet quest\'s stage, state.quests.amulet, is one of not started, started, found and done. Events move it along arrows: talk moves not started to started, picking up the amulet moves started to found, talk moves found to done (with 50 gold). Anything else changes nothing (cell 2). The ranger\'s talk() picks her lines by the stage; the amulet appears only while the quest is started (it frees itself in ready() otherwise). Because the stage is in state, it lasts across maps and saves.',
+      '**Someone to talk to.** The ranger is an Area2D in the town at (168, 72), with her picture (tile 112) and a circle shape 40 pixels across, much bigger than she is, so you can talk from a step away. When the hero walks into the circle, her bodyEntered sets the hero\'s near to her and shows the hint E: talk; bodyExited clears both, but only if near is still her (you may already have walked up to someone else). The hero\'s update() does the rest: if someone is near, the HUD is not busy and interact was just pressed, call near.talk(). The hero does not know who the ranger is, only that whoever is near has a talk(); any character with a talk() works the same way.',
       '**A table instead of ifs.** Cell 2 writes the machine as a table, stage → event → next stage, and drives the ranger\'s words from another table. With many quests, tables are easier to read and check than chains of if.',
       '**Branching.** Choices make dialogue a graph: each line names the lines its choices lead to (cell 3). The same box shows it, with Buttons in a VBoxContainer for the choices (lesson 11.5); the choice made can set a quest stage or a flag in state, so the world remembers what you said.',
     ],
@@ -110,7 +111,7 @@ export default {
   rigor: {
     prose: [
       'Keeping each quest\'s stage as one value (not a handful of booleans like talkedToRanger, hasAmulet) makes impossible combinations impossible: the quest cannot be both done and not started. Every place that cares reads the one value.',
-      'Where it goes: 11.8 adds the sounds (a blip as letters type); chapter 12\'s buddy can be given things to say about the quest\'s stage.',
+      'Where it goes: 11.8 adds sound effects (a blip as each letter types would be one more); chapter 12\'s buddy can be given things to say about the quest\'s stage.',
     ],
     callouts: [],
     visualizations: [],

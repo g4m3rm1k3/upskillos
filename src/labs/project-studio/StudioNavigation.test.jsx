@@ -10,6 +10,7 @@ vi.mock('./TerminalPanel.jsx',()=>({default:()=> <div>Terminal</div>}));
 vi.mock('./CppProjectRuntime.jsx',()=>({default:()=>null}));
 vi.mock('../../components/math/MarkdownProse.jsx',()=>({default:({text})=><p>{text}</p>}));
 import ProjectStudio from './index.jsx';
+import {setEntryLink} from '../../utils/entryLinks.js';
 it('shows grouped C++ chapters, keeps explorer available without a folder, and confines the bottom pane',async()=>{
  globalThis.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();window.openCalcDesktop={onScriptOutput:()=>()=>{}};
  const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
@@ -26,6 +27,10 @@ it('shows grouped C++ chapters, keeps explorer available without a folder, and c
   const terminal=[...host.querySelectorAll('div')].find(el=>el.textContent==='Terminal'&&el.children.length===0);
   expect(terminal.parentElement.style.overflow).toBe('hidden');expect(terminal.parentElement.style.position).toBe('relative');
   expect(terminal.parentElement.style.background).toBe('#1e293b');
+  await act(async()=>setEntryLink('project-studio','?track=circuit-clash'));
+  expect(host.querySelector('[aria-label="Series"]').value).toBe('circuit-clash');
+  expect(host.textContent).toContain('Launch Circuit Clash');
+  await act(async()=>setEntryLink('project-studio','?track=missing-track'));
+  expect(host.querySelector('[aria-label="Series"]').value).toBe('circuit-clash');
  }finally{await act(async()=>root.unmount());host.remove();delete window.openCalcDesktop;delete globalThis.IS_REACT_ACT_ENVIRONMENT;localStorage.clear();}
 });
-

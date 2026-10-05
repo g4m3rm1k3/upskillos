@@ -87,6 +87,9 @@ Each was confirmed against the renderer; none is fixed yet.
 
 ### P1 — Finish the contributor system
 
+- [x] **Circuit Clash playable reference (2026-10-05):** add a browser-playable third-person kart racer with combat, persistent garage choices, trained tactical Q-learning, reproducible evaluation, and a Project Studio opening lesson that launches the sample before setup. [Scope and implementation status](circuit-clash-course.md).
+- [ ] **Circuit Clash standalone C# guided course:** select and validate the engine/toolchain, then teach foundations through the full reference game's behavior with learner-typed, fully explained code, meaningful tests and nonblocking challenges. Only the introduction is published; the browser sample is not a C# engine export.
+
 - [x] **Desktop classic-game C++ starting point (2026-10-03):** Project Studio uses the existing desktop compiler to build a persistent C++ entry file and headers. Pong lesson 1, compiler setup UI, and compiled behavior tests are implemented; the course loader remains unchanged. Scope, validation, and the proposed next classics are in [the C++ Project Studio guide](cpp-classic-games-project-studio.md).
 - [ ] Extend the classic-game track with smaller Pong refinements and subsequent classic projects; validate each runnable step and deliberately broken game rules before publishing lessons.
 - [x] **Common Ground guided-series completion (2026-10-04):** complete the remaining framework/test explanations, move required input/branch teaching ahead of optional practice, and finish the release/recovery rehearsal, independent review rubric and engineering handoff. The [lesson-by-lesson review](java-software-engineering-series-review.md) records coverage and the boundary between guided completion and independent competence.

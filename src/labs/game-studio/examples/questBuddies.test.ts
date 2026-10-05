@@ -52,7 +52,14 @@ describe('Quest Buddies', () => {
     r.step();
     expect(r.g.sceneApi.path).toBe('scenes/town.scene');
     expect(r.get<CharacterBody2D>('Player').position).toMatchObject({ x: 56, y: 96 });
-    expect(r.get<ProgressBar>('HUD/Status/Hp').value).toBe(10);
+    expect(r.get<ProgressBar>('HUD/Hp').value).toBe(10);
+
+    // The coin: 10 gold, shown in the HUD, and the coin is gone.
+    r.goTo(120, 140);
+    expect(state().gold).toBe(10);
+    expect(state().taken).toEqual(['Coin']);
+    r.step();
+    expect(r.get<Label>('HUD/Gold').text).toBe('Gold: 10');
 
     // The ranger: walk up, press E, read both lines (E finishes a line, E again goes on).
     r.goTo(168, 90);
@@ -114,9 +121,11 @@ describe('Quest Buddies', () => {
     r.goTo(168, 90);
     r.press('KeyE'); r.step(120); r.press('KeyE');
     expect(state().quests.amulet).toBe('done');
-    expect(state().gold).toBe(50);
+    expect(state().gold).toBe(60);
     expect(state().bag).toEqual([]);
-    expect(r.get<Label>('HUD/Status/Gold').text).toBe('Gold: 50');
+    r.step();
+    expect(r.get<Label>('HUD/Gold').text).toBe('Gold: 60');
+    expect(r.g.root.find('Coin')).toBeNull();   // taken in the first run, and the save remembers
     expect(r.errors).toEqual([]);
   });
 

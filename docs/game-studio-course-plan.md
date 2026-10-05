@@ -357,6 +357,40 @@ All three labs run in the same page, so they can hand work over directly, with n
   rather than losing them silently; Tile Mapper has neither.
 - **Art that arrives while no project is open** waits, and goes into the next project opened.
 
+## The standard for every game chapter (the user, 2026-10-05)
+
+The user asked that every game be built in full, "no steps skipped", the same for all games. A game chapter meets
+this standard when:
+
+1. **It is a build path from empty.** The chapter's first task starts from an empty project (or from a named earlier
+   chapter's finished game), and every task starts exactly where the one before ended.
+2. **Nothing appears that the learner did not build.** No scene, node, script, action or asset arrives ready-made in a
+   task's start. The one exception is something an earlier chapter had the learner build, and then the step says so.
+3. **A test enforces it.** Replaying every task's step code in order, from the empty project, gives exactly the
+   finished example game. The example's build code *is* that chain of steps, so the two cannot drift apart.
+4. **Every line is explained.** Each lesson's notebook ends with a walkthrough of the code its task built, line by
+   line, and a short "Questions you might have" section.
+
+The tour lesson that opens a chapter (play the finished game first) is the exception to rule 1: its task opens the
+finished game to play and change.
+
+Status, 2026-10-05: Quest Buddies (chapters 11 and 12) is being brought to it first, then Cribbage (chapter 10). New
+starters (Kart Circuit onward) are built to it from the start.
+
+- **Chapter 11: rules 1 to 3 done.** Every script version and step lives in `src/labs/game-studio/examples/questBuddiesBuild.ts`;
+  the example's code is `QB_FINISHED` (all steps in order) and each task's start is `qbStart(id)`. A new first build
+  task, qb-maps (lesson 11.2's first Try it card), builds the maps and the hero from an empty project. The campfire,
+  the title screen, the inventory and interact actions, and the dialogue box, which tasks used to hand over, are now
+  steps. `tasks/tasks.test.ts` ("one build, from an empty project") checks the chain. Rule 4 (the line-by-line
+  walkthroughs and "Questions you might have") is not done yet for any lesson.
+- **Chapter 12: rules 1 to 3 done.** `src/labs/game-studio/examples/questAdventureBuild.ts` derives every script from
+  chapter 11's final ones (`QB_FINAL`, with `swap`, which fails loudly when chapter 11 changes under it); the chain
+  starts at `QB_FINISHED` and the example's code is `QA_FINISHED`. The slime scene, the attack action and sounds, the
+  spawner (now qa-combat's fourth step), the buddy scene and its collision layers, the skills panel and the teach keys
+  are now steps. The old all-in-one build of the starter is gone. `tasks/tasks.test.ts` checks this chain too.
+- **Next:** rule 4 for all 14 lessons (a walkthrough cell of the code each task built, line by line, and "Questions
+  you might have"); then Cribbage (chapter 10) to the standard.
+
 ## Added 2026-10-05: chapter 11, Quest Buddies
 
 The first starter project's chapter (plan and progress: [game-studio-starters-plan.md](game-studio-starters-plan.md)).

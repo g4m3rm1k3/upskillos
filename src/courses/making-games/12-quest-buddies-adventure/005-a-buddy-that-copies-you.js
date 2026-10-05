@@ -17,7 +17,7 @@ export default {
   },
   intuition: {
     prose: [
-      '**Depth: build it, and go deep.** The Try it task adds teach mode and copying to the buddy.',
+      '**Depth: build it, and go deep.** The Try it task adds the input actions teach (T) and buddy_1 to buddy_4 (keys 1 to 4), then teach mode and copying to the buddy.',
       '**Showing it.** T turns teach mode on (state.buddy.teaching). Keys 1 to 4 choose its move: follow, fight, guard, rest. While teaching, decide() does your move instead of its own, and counts it: state.buddy.shown[situation][move] += 1. Four decisions a second, so a minute of teaching is 240 examples.',
       '**Copying: behaviour cloning.** On its own again, in a situation you showed it, it does what you did most there. How often depends on how much you showed: with n examples it copies with chance n / (n + 10) (cell 1). After 5 examples it copies a third of the time; after 50, 83%; after 300, 97%. Otherwise it makes its own ε-greedy choice. Few examples are not trusted much; many are.',
       '**Learning from you: off-policy.** Your moves are decisions like its own, so decide() runs the same Q-learning update on them. The update uses max Q(s′, ·), the best value of the next situation, not the move that will actually be made next. So Q-learning learns how good each move is whoever chooses: it is off-policy. Cell 2 chooses completely at random, the buddy never chooses at all, and it still learns that fighting is better near a slime.',

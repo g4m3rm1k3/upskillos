@@ -17,7 +17,7 @@ export default {
   },
   intuition: {
     prose: [
-      '**Depth: build it, and go deep.** The Try it task writes loot.js and makes the bag usable.',
+      '**Depth: build it, and go deep.** The Try it task writes loot.js, gives newGame() a lootSeed and a weapon slot (weapon: null), and makes the bag usable.',
       '**A weighted table.** TABLE = [[\'nothing\', 40], [\'gold\', 30], [\'potion\', 20], [\'weapon\', 10]]. Each weight over the total (100) is that item\'s chance: a weapon is a tenth of drops. To choose, line the weights up end to end, nothing from 0 up to 40, gold up to 70, potion up to 90, weapon up to 100, roll a number in that range and see where it lands (cell 1). A roll of 75 is a potion. Weights need not add to 100; only their shares matter.',
       '**Seeded random numbers.** Math.random() gives different numbers every run, so a bug in the drops cannot be repeated. math.rng(seed) makes a generator of its own: the same seed always gives the same numbers (cell 2). rollLoot() makes one from state.lootSeed, rolls, and saves the generator\'s state back into state.lootSeed: the next drop carries on the sequence, a saved game carries on where it was, and a test sets the seed and knows exactly what will drop.',
       '**What to expect.** 10,000 rolls come out within a percent of the table (cell 3). On average a weapon takes 10 slimes, but "on average" hides the spread: some players get one in the first slime, some wait 30. That is worth knowing before a designer complains the drops are broken.',

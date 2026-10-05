@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 55 labs · 15 games
+44 courses · 239 chapters · 1374 lessons · 55 labs · 16 games
 
 ## How things are counted
 
@@ -125,6 +125,7 @@
 
 | Game | Id | Route |
 |---|---|---|
+| Circuit Clash | `circuit-clash` | `/game/circuit-clash` |
 | Rubik's Cube | `rubiks-cube` | `/game/rubiks-cube` |
 | Linear Algebra Arcade | `matrix-game` | `/game/matrix-game` |
 | STEM Tetris | `stem-tetris` | `/game/stem-tetris` |

@@ -584,8 +584,13 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.qb('qb-tour', 1, { script: 'scripts/game.js' }),
       () => ui.qb('qb-tour', 2, { script: 'scripts/ranger.js' }),
     ],
+    'qb-maps': [
+      () => ui.qb('qb-maps', 0, { scene: 'scenes/town.scene', node: 'Walls' }),
+      () => ui.qb('qb-maps', 1, { scene: 'scenes/forest.scene', node: 'Walls' }),
+      () => ui.qb('qb-maps', 2, { run: true }),
+    ],
     'qb-doors': [
-      () => ui.qb('qb-doors', 0, { scene: 'scenes/town.scene', node: 'Door to forest' }),
+      async () => { await ui.stop(); await ui.qb('qb-doors', 0, { scene: 'scenes/town.scene', node: 'Door to forest' }); },
       () => ui.qb('qb-doors', 1, { scene: 'scenes/forest.scene', node: 'FromTown' }),
       () => ui.qb('qb-doors', 2, { script: 'scripts/door_to_town.js' }),
     ],
@@ -595,9 +600,10 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.qb('qb-state', 2, { script: 'scripts/coin.js' }),
     ],
     'qb-save': [
-      () => ui.qb('qb-save', 0, { script: 'scripts/campfire.js' }),
-      () => ui.qb('qb-save', 1, { script: 'scripts/title.js' }),
-      () => ui.qb('qb-save', 2, { run: true }),
+      () => ui.qb('qb-save', 0, { scene: 'scenes/forest.scene', node: 'Campfire' }),
+      () => ui.qb('qb-save', 1, { run: true }),
+      async () => { await ui.stop(); await ui.qb('qb-save', 2, { script: 'scripts/title.js' }); },
+      () => ui.qb('qb-save', 3, { run: true }),
     ],
     'qb-menus': [
       () => ui.qb('qb-menus', 0, { scene: 'scenes/title.scene', node: 'Buttons' }),
@@ -610,7 +616,7 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.qb('qb-bars', 2, { script: 'scripts/hud.js' }),
     ],
     'qb-talk': [
-      () => ui.qb('qb-talk', 0, { script: 'scripts/hud.js' }),
+      () => ui.qb('qb-talk', 0, { scene: 'scenes/hud.scene', node: 'Dialogue' }),
       () => ui.qb('qb-talk', 1, { script: 'scripts/hud.js' }),
       () => ui.qb('qb-talk', 2, { script: 'scripts/ranger.js' }),
     ],
@@ -632,12 +638,13 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.qb('qa-loot', 2, { script: 'scripts/hud.js' }),
     ],
     'qa-combat': [
-      () => ui.qb('qa-combat', 0, { script: 'scripts/slime.js' }),
+      () => ui.qb('qa-combat', 0, { scene: 'scenes/slime.scene', node: 'Puff' }),
       () => ui.qb('qa-combat', 1, { script: 'scripts/player.js' }),
       () => ui.qb('qa-combat', 2, { scene: 'scenes/forest.scene', node: 'Enemies' }),
+      () => ui.qb('qa-combat', 3, { scene: 'scenes/forest.scene', node: 'Spawner' }),
     ],
     'qa-buddy': [
-      () => ui.qb('qa-buddy', 0, { script: 'scripts/buddy.js' }),
+      () => ui.qb('qa-buddy', 0, { scene: 'scenes/buddy.scene', node: 'Buddy' }),
       () => ui.qb('qa-buddy', 1, { script: 'scripts/buddy.js' }),
       async () => { await ui.qb('qa-buddy', 2, { script: 'scripts/buddy.js' }); },
       () => ui.qb('qa-buddy', 3, { scene: 'scenes/hud.scene', node: 'Skills' }),

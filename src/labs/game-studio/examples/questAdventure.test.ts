@@ -9,7 +9,7 @@ import { memoryStore } from '../engine/saves';
 import { NODE_CLASSES, type CharacterBody2D, type Node } from '../engine/nodes';
 import { Vec2 } from '../engine/vec2';
 import { dataUrlLoader } from '../ml/testLoader';
-import { questAdventure, QA_SCRIPTS } from './questAdventure';
+import { questAdventure } from './questAdventure';
 import { rng } from '../engine/random';
 
 afterAll(() => { for (const k of ['input', 'scene', 'time', 'state', 'save', 'tween', 'debug', 'math', 'physics', 'ai', 'Vec2', 'PhysicsBody2D', ...Object.keys(NODE_CLASSES)]) delete (globalThis as Record<string, unknown>)[k]; });
@@ -139,7 +139,6 @@ describe('Quest Buddies: Adventure', () => {
     r.press('ArrowDown'); r.press('Enter');                 // Focus: no points left, so it is disabled
     expect(r.st().buddy.focus).toBe(0);
     expect(r.errors).toEqual([]);
-    void QA_SCRIPTS;
   });
 
   it('the buddy copies you: taught to rest for a minute, it rests on its own; its Q-learning learned from your choices', async () => {

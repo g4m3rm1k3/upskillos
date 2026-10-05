@@ -1,5 +1,15 @@
 export const GAMES = [
   {
+    key: 'circuit-clash',
+    label: 'Circuit Clash',
+    emoji: '🏎️',
+    color: 'emerald',
+    desc: 'A third-person kart combat racer: mountain circuit, garage upgrades, weapons and Q-learning rivals. Play the software engineering course reference.',
+    path: '/game/circuit-clash',
+    tags: ['3D', 'Racing', 'Software Engineering', 'Q-learning'],
+    cover: { grad: 'from-emerald-800 via-teal-900 to-slate-900', mark: 'CC', sub: 'Play first. Build it yourself.' },
+  },
+  {
     key: 'rubiks-cube',
     label: "Rubik's Cube",
     emoji: '🎲',

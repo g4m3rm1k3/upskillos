@@ -1,24 +1,18 @@
-// Chapter 12 of the course, "Quest Buddies: Adventure": classes and levels, loot, and combat, added to the finished
-// chapter 11 game (docs/game-studio-starters-plan.md). As in chapter 11, each task starts where the one before ends,
-// and each step has code of its own (qaStep) that the tests and the step pictures use.
+// Chapter 12 of the course, "Quest Buddies: Adventure": classes and levels, loot, combat, a buddy that learns, a buddy
+// that copies you, and enemies matched to you, added to chapter 11's finished game (docs/game-studio-course-plan.md,
+// "The standard for every game chapter"). Every task starts exactly where the one before ends, and the finished
+// example is chapter 11's game plus all these steps: both come from examples/questAdventureBuild.ts.
 
 import type { GameTask, PlayOptions } from './types';
 import type { Game } from '../engine/game';
 import { named, noErrors, type Pos } from './helpers';
 import { rng } from '../engine/random';
-import { questBuddies } from '../examples/questBuddies';
-import { BUDDY_CODE, BUDDY_START, CLASSES_CODE, COMBAT_CODE, COMBAT_START, COPY_CODE, COPY_START, LOOT_CODE, MATCH_CODE, QA_SCRIPTS, questAdventure } from '../examples/questAdventure';
+import { QA_IMAGES as IMAGES, qaStart, qaSolution } from '../examples/questAdventureBuild';
+
+export { qaStepCode, qaStep } from '../examples/questAdventureBuild';
 
 type G = Game & { state: Record<string, any> };
 type Mod = Record<string, any>;
-const IMAGES = questAdventure.images;
-const block = (c: string) => `{\n${c}\n}`;
-const START_CLASSES = questBuddies.code;
-const START_LOOT = `${questBuddies.code}\n${block(CLASSES_CODE)}`;
-const START_COMBAT = `${START_LOOT}\n${block(LOOT_CODE)}\n${block(COMBAT_START)}`;
-const START_BUDDY = `${START_COMBAT}\n${block(COMBAT_CODE)}\n${block(BUDDY_START)}`;
-const START_COPY = `${START_BUDDY}\n${block(BUDDY_CODE)}\n${block(COPY_START)}`;
-const START_MATCH = `${START_COPY}\n${block(COPY_CODE)}`;
 
 /** A watch that presses keys at frames: [frame, code], each held for two frames. */
 function presses(list: [number, string][]): (g: Game) => void {
@@ -29,96 +23,6 @@ const both = (...ws: ((g: Game) => void)[]) => (g: Game) => { for (const w of ws
 /** Start a new game of a class (with the game's own newGame) on a map. */
 const startAs = (game: Mod, className: string | undefined, map: string): PlayOptions['setup'] => (g) => { game.newGame(className); g.sceneApi.change(map); };
 const hero = (g: Game) => named<{ position: Pos; gainXp?: (n: number) => void }>(g, 'Player');
-
-// ── step code: as a learner might write each step ───────────────────────
-
-// A loot table before affixes: weapons have only their own bonus.
-const LOOT_PLAIN = QA_SCRIPTS.loot.replace("export const AFFIXES = [['', 0, 70], [' of Might', 1, 22], [' of the Hero', 3, 8]];      // name part, extra bonus, weight",
-  "export const AFFIXES = [['', 0, 100]];      // no affixes yet: every weapon is plain");
-// A slime that can be hurt and beaten, but does not move yet.
-const SLIME_STILL = QA_SCRIPTS.slime.replace(/\n  physicsUpdate\(dt\) \{[\s\S]*?\n  \}\n\n  hurt/, '\n  hurt');
-
-// The buddy at 12.4, step 1: it only follows.
-const BUDDY_FOLLOWS = `// The buddy: for now it follows the hero, stopping a little way off.
-export default class Buddy extends CharacterBody2D {
-  speed = 64;
-
-  physicsUpdate(dt) {
-    const hero = scene.find('Player');
-    if (!hero || scene.get('HUD').busy) { this.velocity = { x: 0, y: 0 }; return; }
-    const gap = hero.position.sub(this.position);
-    this.velocity = gap.length() > 24 ? gap.normalized().scale(this.speed) : { x: 0, y: 0 };
-    this.moveAndSlide();
-  }
-}
-`;
-// Step 2: it sees and chooses, but does not learn yet (no Q update).
-const BUDDY_CHOOSES = QA_SCRIPTS.buddy.replace(/\n    if \(this\.last\) \{\n[\s\S]*?\n    \}\n/, '\n');
-// 12.5, step 1: teach mode and counting, but on its own it does not copy yet.
-const BUDDY_TAUGHT = QA_SCRIPTS.buddyCopies.replace(`    const shown = (this.mind.shown[key] ?? []).slice(0, this.mind.moves), n = shown.reduce((t, c) => t + c, 0);
-    if (n > 0 && Math.random() < n / (n + 10)) return shown.indexOf(Math.max(...shown));
-`, '');
-// 12.6, step 2: slimes take their kind, but fights are not rated yet.
-const SLIME_KINDS = QA_SCRIPTS.slimeMatched.replace(`
-    rate(this.dealt === 0 ? 1 : this.dealt < 3 ? 0.75 : 0.5, this.tier.rating);   // a clean win counts for most`, '');
-
-const QA_STEPS: Record<string, string[]> = {
-  'qa-classes': [
-    `project.writeScript('scripts/classes.js', ${JSON.stringify(QA_SCRIPTS.classes)})`,
-    `project.writeScript('scripts/game.js', ${JSON.stringify(QA_SCRIPTS.game)})
-project.writeScript('scripts/player.js', ${JSON.stringify(QA_SCRIPTS.playerLevels)})`,
-    `project.writeScript('scripts/title.js', ${JSON.stringify(QA_SCRIPTS.title)})
-const titleScene = project.scene('scenes/title.scene')
-titleScene.add('Panel', { name: 'Classes', parent: 'Menu', position: { x: 240, y: 90 }, size: { x: 480, y: 280 } })
-titleScene.add('Label', { name: 'Choose', parent: 'Menu/Classes', position: { x: 30, y: 20 }, fontSize: 28, color: '#ffd43b', text: 'Choose your class' })
-titleScene.add('VBoxContainer', { name: 'List', parent: 'Menu/Classes', position: { x: 30, y: 80 }, separation: 12 })`,
-    `project.writeScript('scripts/hud.js', ${JSON.stringify(QA_SCRIPTS.hudLevels)})
-project.writeSound('assets/sounds/levelup.wav', { wave: 'triangle', from: 523, to: 1046, length: 0.5, attack: 0.02, volume: 0.45 })
-const hudScene = project.scene('scenes/hud.scene')
-hudScene.add('AudioStreamPlayer', { name: 'LevelUp', parent: 'Sounds', stream: 'assets/sounds/levelup.wav' })
-hudScene.get('Status').size = { x: 260, y: 100 }
-hudScene.add('Label', { name: 'Level', parent: 'Status', position: { x: 12, y: 64 }, fontSize: 16, color: '#c5f6fa', text: 'Level 1' })
-hudScene.add('ProgressBar', { name: 'Xp', parent: 'Status', position: { x: 12, y: 86 }, size: { x: 200, y: 6 }, value: 0, maxValue: 10, fillColor: '#4dabf7' })`,
-  ],
-  'qa-loot': [
-    `project.writeScript('scripts/loot.js', ${JSON.stringify(LOOT_PLAIN)})`,
-    `project.writeScript('scripts/loot.js', ${JSON.stringify(QA_SCRIPTS.loot)})`,
-    `project.writeScript('scripts/hud.js', ${JSON.stringify(QA_SCRIPTS.hud)})`,
-  ],
-  'qa-combat': [
-    `project.writeScript('scripts/slime.js', ${JSON.stringify(SLIME_STILL)})
-project.scene('scenes/slime.scene').root.script = 'scripts/slime.js'`,
-    `project.writeScript('scripts/player.js', ${JSON.stringify(QA_SCRIPTS.player)})`,
-    `project.writeScript('scripts/slime.js', ${JSON.stringify(QA_SCRIPTS.slime)})`,
-  ],
-  'qa-buddy': [
-    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_FOLLOWS)})
-project.scene('scenes/buddy.scene').root.script = 'scripts/buddy.js'`,
-    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_CHOOSES)})`,
-    `project.writeScript('scripts/buddy.js', ${JSON.stringify(QA_SCRIPTS.buddy)})`,
-    `project.writeScript('scripts/hud.js', ${JSON.stringify(QA_SCRIPTS.hudSkills)})`,
-  ],
-  'qa-copy': [
-    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_TAUGHT)})`,
-    `project.writeScript('scripts/buddy.js', ${JSON.stringify(QA_SCRIPTS.buddyCopies)})`,
-    '',
-  ],
-  'qa-match': [
-    `project.writeScript('scripts/tiers.js', ${JSON.stringify(QA_SCRIPTS.tiers)})
-project.writeScript('scripts/game.js', ${JSON.stringify(QA_SCRIPTS.gameMatched)})`,
-    `project.writeScript('scripts/slime.js', ${JSON.stringify(SLIME_KINDS)})`,
-    `project.writeScript('scripts/slime.js', ${JSON.stringify(QA_SCRIPTS.slimeMatched)})
-project.writeScript('scripts/player.js', ${JSON.stringify(QA_SCRIPTS.playerMatched)})
-project.writeScript('scripts/spawner.js', ${JSON.stringify(QA_SCRIPTS.spawnerMatched)})`,
-  ],
-};
-
-/** Steps 1 to k + 1 of a chapter 12 task as one piece of code, each step in its own block. */
-export function qaStepCode(taskId: string, k: number): string {
-  return (QA_STEPS[taskId] ?? []).slice(0, k + 1).filter(Boolean).map(block).join('\n');
-}
-/** Step k + 1 of a chapter 12 task on its own (the step pictures do the steps one after another). */
-export const qaStep = (taskId: string, k: number): string => QA_STEPS[taskId]?.[k] ?? '';
 
 // ── checks ──────────────────────────────────────────────────────────────
 
@@ -139,7 +43,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'Classes, stats and levels',
     goal: 'Classes as a table of data, a new game made from the class chosen on a menu, and levels that need more experience each time.',
     images: IMAGES,
-    start: START_CLASSES,
+    start: qaStart('qa-classes'),
     steps: [
       { text: 'Make scripts/classes.js: export const CLASSES, a table of at least three classes, each { picture, hp, attack, speed, hpPerLevel, attackPerLevel, about } (pictures: tiles 96, 98 and 84). Also export function xpToNext(level): Math.round(10 * Math.pow(1.5, level - 1)).',
         check: { kind: 'play', test: async (v) => {
@@ -174,7 +78,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           if (r.game.sceneApi.path !== 'scenes/town.scene') return 'Enter (New game), ↓, Enter should choose the second class and start in the town.';
           return st.className === second || `That chose ${st.className}: ↓ from the first class should choose ${second}.`;
         } } },
-      { text: 'Levels: player.js gets gainXp(amount): add to state.xp; while it is at least xpToNext(state.level), take that off, add a level, raise maxHp and attack by the class’s per-level amounts, heal fully, and add a skill point. In hud.scene, show it: a Label Level and a thin ProgressBar Xp in Status, set every frame.',
+      { text: 'Levels: player.js gets gainXp(amount): add to state.xp; while it is at least xpToNext(state.level), take that off, add a level, raise maxHp and attack by the class’s per-level amounts, heal fully, and add a skill point. Give hud.scene an AudioStreamPlayer LevelUp under Sounds (a rising triangle, assets/sounds/levelup.wav), and show the level: a Label Level and a thin ProgressBar Xp below the health bar, set every frame.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod, c = (await v.module('scripts/classes.js')) as Mod;
           const name = Object.keys(c.CLASSES ?? {})[0], row = c.CLASSES?.[name];
@@ -185,11 +89,11 @@ export const QUEST_ADVENTURE: GameTask[] = [
           const st = (r.game as G).state;
           if (st.level !== 3 || st.xp !== 1) return `26 experience from level 1 should reach level 3 with 1 left over (10 + 15 = 25): it reached level ${st.level} with ${st.xp}.`;
           if (st.maxHp !== row.hp + 2 * row.hpPerLevel || st.skillPoints !== 2) return `Two levels should add ${2 * row.hpPerLevel} max hit points and 2 skill points: maxHp is ${st.maxHp}, skill points ${st.skillPoints}.`;
-          const level = r.game.root.find('HUD/Status/Level') as unknown as { text: string } | null;
-          return (!!level && /3/.test(level.text) && !!r.game.root.find('HUD/Status/Xp')) || 'The HUD should show the level (HUD/Status/Level, a Label) and an experience bar (HUD/Status/Xp).';
+          const level = r.game.root.find('HUD/Level') as unknown as { text: string } | null;
+          return (!!level && /3/.test(level.text) && !!r.game.root.find('HUD/Xp')) || 'The HUD should show the level (HUD/Level, a Label) and an experience bar (HUD/Xp).';
         } } },
     ],
-    solution: CLASSES_CODE,
+    solution: qaSolution('qa-classes'),
     done: 'Classes from a table, and levels. Back in the lesson: stats as data, and why experience needed grows each level.',
   },
   {
@@ -198,9 +102,9 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'Items and loot',
     goal: 'A loot table rolled with a seeded random generator, weapons with generated name parts, and a bag whose items you can use.',
     images: IMAGES,
-    start: START_LOOT,
+    start: qaStart('qa-loot'),
     steps: [
-      { text: 'Make scripts/loot.js: a TABLE of [kind, weight] (nothing 40, gold 30, potion 20, weapon 10) and export function rollLoot(): make const r = math.rng(state.lootSeed), pick a kind with r.weighted(TABLE), make the item (gold: { kind: \'gold\', amount: r.int(2, 6) }; potion; weapon: from a WEAPONS table with a bonus), then save state.lootSeed = r.state and return it (null for nothing).',
+      { text: 'Make scripts/loot.js, and give newGame() a lootSeed: Math.floor(Math.random() * 1e9). loot.js has a TABLE of [kind, weight] (nothing 40, gold 30, potion 20, weapon 10) and export function rollLoot(): make const r = math.rng(state.lootSeed), pick a kind with r.weighted(TABLE), make the item (gold: { kind: \'gold\', amount: r.int(2, 6) }; potion; weapon: from a WEAPONS table with a bonus), then save state.lootSeed = r.state and return it (null for nothing).',
         hint: 'Saving r.state back into state.lootSeed is what makes the next roll different, and a saved game carry on the same sequence.',
         check: { kind: 'play', test: async (v) => {
           const a = await rolls(v, 2000, 5), b = await rolls(v, 50, 5);
@@ -218,7 +122,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           if (!named.length) return 'No weapon in 4000 rolls has an affix (a name part like " of Might").';
           return named.some((x) => (x!.bonus ?? 0) > 3) || 'An affix should add its extra bonus to the weapon’s own.';
         } } },
-      { text: 'A bag you can use: in hud.js, make each item in state.bag that has a kind a Button (not a Label). Pressed: a potion heals 5 (up to maxHp) and is gone; a weapon becomes state.weapon (the one equipped goes back in the bag). Rebuild the list after, and give its first button the focus so Enter works.',
+      { text: 'A bag you can use: newGame() gets weapon: null, and the Gold label shows the weapon’s name when there is one. In hud.js, make each item in state.bag that has a kind a Button (not a Label). Pressed: a potion heals 5 (up to maxHp) and is gone; a weapon becomes state.weapon (the one equipped goes back in the bag). Rebuild the list after, and give its first button the focus so Enter works.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           let set = false;
@@ -230,7 +134,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           return st.weapon?.name === 'Sword' || 'Enter on the weapon (now the first row) should equip it as state.weapon.';
         } } },
     ],
-    solution: LOOT_CODE,
+    solution: qaSolution('qa-loot'),
     done: 'A loot table and a bag that works. Back in the lesson: weighted choice, seeds, and generated items.',
   },
   {
@@ -239,9 +143,9 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'Combat',
     goal: 'Slimes you can hit, that flash, are knocked back, drop loot and give experience; an attack with a reach and a cooldown; slimes that chase and hurt.',
     images: IMAGES,
-    start: START_COMBAT,
+    start: qaStart('qa-combat'),
     steps: [
-      { text: 'Give the slime scene a script, scripts/slime.js, with hp = 4 and hurt(damage, from): take damage off hp, flash (sprite.modulate red, then tween it back to white), knock it back away from from, burst its Puff particles; at 0 hp, die(): give the hero 4 experience (gainXp), roll the loot (rollLoot) and put it in the bag or the gold, and queueFree().',
+      { text: 'Slimes. Make scenes/slime.scene: a CharacterBody2D Slime in the group enemies, with a Sprite2D (tile 108), a 10 × 9 CollisionShape2D and a Particles2D Puff (8 green specks that fall). In the forest add a Node2D Enemies and put three slimes in it, at (200, 60), (240, 120) and (120, 100). Add sounds hit.wav and pickup.wav, with AudioStreamPlayers Hit and Pickup under HUD/Sounds. The slime’s script, scripts/slime.js, has hp = 4 and hurt(damage, from): take damage off hp, flash (sprite.modulate red, then tween it back to white), knock it back away from from, burst its Puff particles; at 0 hp, die(): give the hero 4 experience (gainXp), roll the loot (rollLoot) and put it in the bag or the gold, and queueFree().',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           let hit = false;
@@ -253,7 +157,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           if (st.xp !== 4) return `Beating a slime should give 4 experience: state.xp is ${st.xp}.`;
           return st.lootSeed !== 3 || 'Beating a slime should roll the loot table (rollLoot).';
         } } },
-      { text: 'The hero’s attack: remember which way it last walked (facing). When attack (J) is pressed and the cooldown (0.4 s) is over, every enemy within 16 pixels of a point 14 pixels ahead is hurt for state.attack plus the weapon’s bonus.',
+      { text: 'The hero’s attack. Add an input action attack (J and X), sounds swing.wav and hurt.wav with players Swing and Hurt under HUD/Sounds, and a Particles2D Swing in player.scene. In player.js, remember which way the hero last walked (facing). When attack (J) is pressed and the cooldown (0.4 s) is over, every enemy within 16 pixels of a point 14 pixels ahead is hurt for state.attack plus the weapon’s bonus. Write the hero’s hurt(amount, from) and die() too, for the next step’s slimes: lose hit points, flash, be knocked back and kept safe 0.8 s; at 0, wake at the campfire with half the gold.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           let placed = false;
@@ -274,8 +178,18 @@ export const QUEST_ADVENTURE: GameTask[] = [
           const st = (r.game as G).state;
           return st.hp < st.maxHp || 'A slime that reaches the hero should hurt it.';
         } } },
+      { text: 'Slimes come back: in the forest add a Node2D Spawner with three Node2D spots under it, at (260, 40), (280, 150) and (200, 168). Its script, scripts/spawner.js: every 6 seconds, if Enemies has fewer than 3 children, make a slime (scene.instantiate(\'scenes/slime.scene\')) at a spot more than 80 pixels from the hero and add it to Enemies.',
+        hint: 'const slime = scene.instantiate(\'scenes/slime.scene\'); slime.position = spot.position; scene.get(\'Enemies\').addChild(slime);',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          let cleared = false;
+          const r = await v.play({ seconds: 6.5, setup: startAs(game, 'Warrior', 'scenes/forest.scene'), watch: (g) => { if (cleared || g.sceneApi.path !== 'scenes/forest.scene') return; cleared = true; for (const s of g.sceneApi.getNodesInGroup('enemies')) (s as unknown as { queueFree(): void }).queueFree(); hero(g)!.position = { x: 40, y: 90 }; } });
+          noErrors(r);
+          const n = r.game.sceneApi.getNodesInGroup('enemies').length;
+          return n === 1 || `With every slime gone, after 6 seconds one should come back: there are ${n}.`;
+        } } },
     ],
-    solution: COMBAT_CODE,
+    solution: qaSolution('qa-combat'),
     done: 'A fight. Back in the lesson: damage formulas, cooldowns, hit feedback, and enemies that find their way.',
   },
   {
@@ -284,9 +198,9 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'A buddy that learns',
     goal: 'A buddy who follows you, sees its situation, chooses moves, learns from what happens by Q-learning, and gets better with your skill points.',
     images: IMAGES,
-    start: START_BUDDY,
+    start: qaStart('qa-buddy'),
     steps: [
-      { text: 'Give scenes/buddy.scene a script, scripts/buddy.js: a CharacterBody2D that, in physicsUpdate, walks towards the hero at 64 pixels a second and stops 24 pixels away.',
+      { text: 'The buddy. Make scenes/buddy.scene: a CharacterBody2D Buddy with a Sprite2D (tile 99) and a 10 × 10 CollisionShape2D, on collision layer 2 with mask 16 (layer 5), and put the walls of both maps on layers 1 and 5 (collisionLayer 17), so walls stop the buddy but the hero and the slimes do not. Put an instance in both maps. Its script, scripts/buddy.js: a CharacterBody2D that, in physicsUpdate, walks towards the hero at 64 pixels a second and stops 24 pixels away.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           let start = 0;
@@ -322,7 +236,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           if (!near || near.every((x: number) => x === 0)) return 'After four minutes beside slimes, the values for "slime near" have not moved: is the Q update in decide()?';
           return near[1] > near[0] || `After four minutes, fighting a near slime is worth ${near[1].toFixed(2)} and following ${near[0].toFixed(2)}: check the rewards for hits and slimes beaten.`;
         } } },
-      { text: 'Skill points: in hud.js, K (the skills action) shows and hides the Skills panel; its three buttons spend a point on senses (up to 3), moves (up to 4) or focus (up to 3), and are disabled with no points or at the top.',
+      { text: 'Skill points: add an input action skills (K), and in hud.scene a hidden Panel Skills with Labels Title and Points and a VBoxContainer List of three Buttons, Senses, Moves and Focus. In hud.js, K shows and hides the Skills panel; its three buttons spend a point on senses (up to 3), moves (up to 4) or focus (up to 3), and are disabled with no points or at the top.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           let set = false;
@@ -333,7 +247,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           return (st.buddy.senses === 2 && st.buddy.moves === 3 && st.skillPoints === 0) || `Enter on Senses, then ↓ and Enter on Moves, should spend both points: senses ${st.buddy.senses}, moves ${st.buddy.moves}, points left ${st.skillPoints}.`;
         } } },
     ],
-    solution: BUDDY_CODE,
+    solution: qaSolution('qa-buddy'),
     done: 'A buddy that learns while you play. Back in the lesson: states, moves, rewards and ε, in a real game.',
   },
   {
@@ -342,9 +256,9 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'A buddy that copies you',
     goal: 'Teach your buddy by choosing its moves; it copies what you showed it, and its Q-learning learns from your choices too.',
     images: IMAGES,
-    start: START_COPY,
+    start: qaStart('qa-copy'),
     steps: [
-      { text: 'Teach mode: T (the teach action) flips state.buddy.teaching; keys 1 to 4 (buddy_1 to buddy_4) choose its move. While teaching, decide() does your move instead of its own, and counts it: state.buddy.shown[situation][move] += 1.',
+      { text: 'Teach mode: add an input action teach (T), and buddy_1 to buddy_4 (keys 1 to 4). T flips state.buddy.teaching; keys 1 to 4 choose its move. While teaching, decide() does your move instead of its own, and counts it: state.buddy.shown[situation][move] += 1.',
         check: { kind: 'play', test: async (v) => {
           const game = (await v.module('scripts/game.js')) as Mod;
           const r = await v.play({ seconds: 10, setup: startAs(game, undefined, 'scenes/town.scene'), watch: presses([[6, 'KeyT'], [12, 'Digit2']]) });
@@ -371,7 +285,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           return (typeof q === 'number' && q < -0.2) || `Taught to rest far from the hero, its value for resting is ${q}: it should have learned it costs (about −0.5).`;
         } } },
     ],
-    solution: COPY_CODE,
+    solution: qaSolution('qa-copy'),
     done: 'A buddy that learns from you and from itself. Back in the lesson: imitation learning, and why Q-learning can learn from your choices.',
   },
   {
@@ -380,7 +294,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
     title: 'Enemies matched to the player',
     goal: 'A rating for the hero, kinds of slime with ratings, and each new slime the kind just above the hero: an Elo system.',
     images: IMAGES,
-    start: START_MATCH,
+    start: qaStart('qa-match'),
     steps: [
       { text: 'Make scripts/tiers.js: TIERS (at least three kinds of slime, each with rating, hp, speed, damage, xp, colour); expected(a, b) = 1 / (1 + 10^((b − a) / 400)); rate(result, enemyRating) moves state.rating by 32 × (result − expected(state.rating, enemyRating)); tierFor(rating) is the kind closest to rating + 50. In newGame, rating: 1000.',
         check: { kind: 'play', test: async (v) => {
@@ -413,7 +327,7 @@ export const QUEST_ADVENTURE: GameTask[] = [
           return (r.game as G).state.rating < afterWin || 'Being beaten should lower the rating (rate(0, …) in the hero’s die()).';
         } } },
     ],
-    solution: MATCH_CODE,
+    solution: qaSolution('qa-match'),
     done: 'Enemies that keep pace with the player. Back in the lesson: Elo ratings, expected scores, and dynamic difficulty.',
   },
 ];

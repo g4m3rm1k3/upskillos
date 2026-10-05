@@ -51,7 +51,7 @@ describe('chapter 12: Quest Buddies: Adventure', () => {
   });
 
   it('the notebooks agree with the game: 12.4\'s update is buddy.js\'s, 12.6\'s Elo is tiers.js\'s', async () => {
-    const { QA_SCRIPTS } = await import('../../labs/game-studio/examples/questAdventure');
+    const { QA_SCRIPTS } = await import('../../labs/game-studio/examples/questAdventureBuild');
     expect(QA_SCRIPTS.buddy).toContain('row[this.last.action] = q + ALPHA * (this.earned + GAMMA * Math.max(...now) - q);');
     expect(QA_SCRIPTS.buddy).toContain('export const ALPHA = 0.2, GAMMA = 0.9;');
     expect(QA_SCRIPTS.tiers).toContain('return 1 / (1 + Math.pow(10, (b - a) / 400));');

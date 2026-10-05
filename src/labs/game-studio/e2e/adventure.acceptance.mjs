@@ -41,10 +41,10 @@ const failed = await withGameStudio(5200, async ({ page, t, check }) => {
   };
   // Through the east door: to the doorway's row, along to it, and in.
   await walkTo(296, 88, 200, 2);   // within 2 pixels of the doorway's middle: it is one tile, and the hero 10 pixels tall
-  await key('ArrowRight', 800);
-  await page.waitForTimeout(800);
+  // Walk right until the hero is in the forest: how far a held key goes depends on how many frames a busy machine draws.
+  let before = null;
+  for (let i = 0; i < 10; i++) { await key('ArrowRight', 400); await page.waitForTimeout(300); before = await where(); if (before && before.x < 150) break; }
   // In the forest (the hero stands at 32, 88): up to the first slime (at 200, 60) and attack it as it comes.
-  const before = await where();
   check('The door took the hero into the forest (it arrives at x 32, on the west side; in town it was at x 300)', !!before && before.x < 150, JSON.stringify(before));
   await walkTo(150, 64, 120);
   for (let i = 0; i < 12; i++) { await key('ArrowRight', 100); await key('KeyJ', 60); if (i === 3 && OUT) await frame.screenshot({ path: `${OUT}/qa-hit.png` }); }

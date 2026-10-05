@@ -17,12 +17,13 @@ export default {
   },
   intuition: {
     prose: [
-      '**Depth: build it.** The Try it task adds a health bar and a bag to the HUD.',
+      '**Depth: build it.** The Try it task adds a health bar and a bag to the HUD, and makes the campfire heal.',
       '**A bar is a fraction.** A ProgressBar draws its back, then a filled part value / maxValue of its width. The fraction is clamped to 0..1: an hp of 12 out of 10 fills it and no more, −2 empties it and no less, and a maxValue of 0 shows empty rather than dividing by zero (cell 1). showText writes "7 / 10" on it.',
       '**Read state every frame.** The HUD sets the bar\'s maxValue and value from state.maxHp and state.hp in update(). It does not count hits itself; whatever changes state.hp (a slime, a potion, the campfire, a loaded save) is shown on the next frame. This is the same idea as the gold label in lesson 11.3.',
       '**A list from data.** The bag is a Panel Bag with a VBoxContainer List. I (the inventory action) shows and hides it. Each time it opens, the HUD throws away the old rows (queueFree) and makes a new Label for each item in state.bag; the container places them one under another. Rebuilding is simple and never out of date (cell 2): there is no way for a row to show an item you no longer have.',
       '**How big is a row?** A container must know each child\'s size to place the next. Buttons, Panels and bars have a size; a Label\'s size depends on its text, which is not drawn yet, so the engine estimates it: 0.55 × fontSize per letter across and 1.2 × fontSize per line. With wrapWidth, a long line wraps into as many rows as it needs, so a two-row note pushes the next item down (cell 3).',
       '**The hero waits.** While the bag is open the hero stands still: the HUD\'s busy is true when Bag is showing, as for the pause menu.',
+      '**Resting heals.** Now there are hit points, the campfire can do what campfires do: one line, state.hp = state.maxHp, before it saves. The bar shows it on the next frame, because the HUD reads state.',
     ],
     callouts: [
       {

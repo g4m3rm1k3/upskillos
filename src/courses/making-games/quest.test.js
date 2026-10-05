@@ -11,12 +11,13 @@ const outOf = (n, cell) => run(cellsOf(LESSONS[n - 1])[cell].startCode);
 describe('chapter 11: Quest Buddies', () => {
   it('has 8 lessons, mg11-001 to mg11-008, each a notebook and a Try it card for a real task', () => {
     expect(LESSONS.map((l) => l.id)).toEqual([...Array(8).keys()].map((k) => `mg11-00${k + 1}`));
-    const tasks = LESSONS.map((l) => l.intuition.visualizations.find((v) => v.id === 'GameStudioTask').props);
-    expect(tasks.map((t) => t.task)).toEqual(['qb-tour', 'qb-doors', 'qb-state', 'qb-save', 'qb-menus', 'qb-bars', 'qb-talk', 'qb-sounds']);
-    tasks.forEach((t, i) => {
-      expect(t.lesson).toBe(LESSONS[i].id);
+    const tasks = LESSONS.flatMap((l) => l.intuition.visualizations.filter((v) => v.id === 'GameStudioTask').map((v) => v.props));
+    expect(tasks.map((t) => t.task)).toEqual(['qb-tour', 'qb-maps', 'qb-doors', 'qb-state', 'qb-save', 'qb-menus', 'qb-bars', 'qb-talk', 'qb-sounds']);
+    tasks.forEach((t) => {
+      const lesson = LESSONS.find((l) => l.id === t.lesson);
+      expect(lesson, t.task).toBeDefined();
       expect(taskById(t.task), t.task).toBeDefined();
-      expect(LESSONS[i].checkpoints.some((c) => c.id === t.checkpoint && c.type === 'lab'), t.checkpoint).toBe(true);
+      expect(lesson.checkpoints.some((c) => c.id === t.checkpoint && c.type === 'lab'), t.checkpoint).toBe(true);
     });
   });
 
@@ -31,9 +32,14 @@ describe('chapter 11: Quest Buddies', () => {
   it('11.1–11.4: the quest as events, maps and doors, state, saves', () => {
     expect(outOf(1, 0).at(-1)).toBe('talk to the ranger         → map town   quest done        gold 50 bag []');
     expect(outOf(1, 1)[1]).toMatch(/^pick up the amulet\s+→ nothing happens/);
-    expect(outOf(2, 0)).toEqual(['town → cave: forest (at FromTown), cave (at Entrance)  — 2 doors', 'cave → castle: forest (at FromCave), town (at FromForest), castle (at Gate)  — 3 doors', 'castle → forest: no way through']);
-    expect(outOf(2, 1)).toEqual(['FromTown   → (32, 88)', 'Campfire   → (160, 132)', 'FromCave   → (56, 96)', 'undefined  → (56, 96)']);
-    expect(outOf(2, 2).at(-1)).toBe('end of the frame: switch to scenes/cave.scene');
+    expect(outOf(2, 0).slice(-2)).toEqual(['wall cells: 59  (top and bottom 40, sides 20, minus the gap 1)', 'the gap is at x 304 to 320 , y 80 to 96 ; its middle 312 88']);
+    expect(outOf(2, 0)[5]).toBe(' 5 #...................');
+    expect(outOf(2, 1)[0]).toBe('f per frame: 0.1248');
+    expect(outOf(2, 1)).toContain('after 15 frames (0.250 s): view at 86.5  gap 13.5');
+    expect(outOf(2, 1).at(-1)).toBe('the camera sees 320 × 180 pixels of a 320 × 192 map');
+    expect(outOf(2, 2)).toEqual(['town → cave: forest (at FromTown), cave (at Entrance)  — 2 doors', 'cave → castle: forest (at FromCave), town (at FromForest), castle (at Gate)  — 3 doors', 'castle → forest: no way through']);
+    expect(outOf(2, 3)).toEqual(['FromTown   → (32, 88)', 'Campfire   → (160, 132)', 'FromCave   → (56, 96)', 'undefined  → (56, 96)']);
+    expect(outOf(2, 4).at(-1)).toBe('end of the frame: switch to scenes/cave.scene');
     expect(outOf(3, 0)).toEqual(['in town, the player node has 10 gold', 'in the forest, the player node has 0 gold', 'with state: in the forest, state.gold is 10']);
     expect(outOf(3, 1)).toEqual(['change a field:     HUD sees 25', 'replace the object: HUD sees 25  (this script sees 99)']);
     expect(outOf(3, 2).at(-1)).toMatch(/^heroNode\s+the node \(cannot even be saved/);

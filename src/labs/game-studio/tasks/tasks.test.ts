@@ -14,6 +14,10 @@ import { gameStudioLink, parseTaskLink } from './links';
 import type { GameTask } from './types';
 import { TETRIS, tetrisStepCode } from './tetris';
 import { QUEST_BUDDIES, qbStepCode } from './questBuddies';
+import { QB_CHAIN, QB_FINISHED } from '../examples/questBuddiesBuild';
+import { questBuddies } from '../examples/questBuddies';
+import { QA_CHAIN, QA_FINISHED } from '../examples/questAdventureBuild';
+import { questAdventure } from '../examples/questAdventure';
 import { QUEST_ADVENTURE, qaStepCode } from './questAdventure';
 
 const pngSize = (path: string) => { const b = readFileSync(fileURLToPath(new URL(`../starter/${path.replace(/^assets\//, '')}`, import.meta.url))); return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }; };
@@ -84,6 +88,48 @@ describe('Quest Buddies (chapters 11 and 12), step by step', () => {
       }
     }, 60000);
   }
+});
+
+describe('Quest Buddies chapter 11 is one build, from an empty project', () => {
+  // The standard for every game chapter (docs/game-studio-course-plan.md): each task starts exactly where the one
+  // before it ended, and the finished example is nothing but the steps, in order.
+  const built = (code: string) => {
+    const d = new Doc(newProject('Quest Buddies'));
+    for (const path of QUEST_BUDDIES[0].images) d.importAsset(path, { mime: 'image/png', ...pngSize(path) });
+    d.runCode('Build', code);
+    return JSON.stringify({ ...d.project, name: '' });
+  };
+  it('lists every task after the tour, in the course\'s order', () => {
+    expect(QB_CHAIN).toEqual(QUEST_BUDDIES.filter((t) => t.id !== 'qb-tour').map((t) => t.id));
+    expect(QUEST_BUDDIES.find((t) => t.id === 'qb-maps')!.start).toBe('');
+  });
+  it('each task starts where the one before ends, and the last ends at the finished example', () => {
+    const tasks = QB_CHAIN.map((id) => QUEST_BUDDIES.find((t) => t.id === id)!);
+    for (let i = 1; i < tasks.length; i++) expect(built(tasks[i].start), tasks[i].id).toBe(built(`${tasks[i - 1].start}\n${tasks[i - 1].solution}`));
+    const last = tasks[tasks.length - 1];
+    expect(questBuddies.code).toBe(QB_FINISHED);
+    expect(built(questBuddies.code)).toBe(built(`${last.start}\n${last.solution}`));
+    expect(QUEST_BUDDIES.find((t) => t.id === 'qb-tour')!.start).toBe(questBuddies.code);
+  });
+});
+
+describe('Quest Buddies: Adventure (chapter 12) is one build, on top of chapter 11\'s game', () => {
+  const built = (code: string) => {
+    const d = new Doc(newProject('Quest Buddies: Adventure'));
+    for (const path of QUEST_ADVENTURE[0].images) d.importAsset(path, { mime: 'image/png', ...pngSize(path) });
+    d.runCode('Build', code);
+    return JSON.stringify({ ...d.project, name: '' });
+  };
+  it('lists every task in the course\'s order, the first starting from chapter 11\'s finished game', () => {
+    expect(QA_CHAIN).toEqual(QUEST_ADVENTURE.map((t) => t.id));
+    expect(built(QUEST_ADVENTURE[0].start)).toBe(built(questBuddies.code));
+  });
+  it('each task starts where the one before ends, and the last ends at the finished example', () => {
+    for (let i = 1; i < QUEST_ADVENTURE.length; i++) expect(built(QUEST_ADVENTURE[i].start), QUEST_ADVENTURE[i].id).toBe(built(`${QUEST_ADVENTURE[i - 1].start}\n${QUEST_ADVENTURE[i - 1].solution}`));
+    const last = QUEST_ADVENTURE[QUEST_ADVENTURE.length - 1];
+    expect(questAdventure.code).toBe(QA_FINISHED);
+    expect(built(questAdventure.code)).toBe(built(`${last.start}\n${last.solution}`));
+  });
 });
 
 describe('the course\'s Try it cards', () => {

@@ -17,12 +17,12 @@ export default {
   },
   intuition: {
     prose: [
-      '**Depth: build it, and go deep.** This lesson opens Quest Buddies: Adventure, chapter 11\'s game with the systems of this chapter added. Its Try it task starts from the finished chapter 11 game.',
+      '**Depth: build it, and go deep.** This lesson opens Quest Buddies: Adventure, chapter 11\'s game with the systems of this chapter added. Its Try it task starts from the finished chapter 11 game, exactly as your own chapter 11 build ends, and the chapter\'s tasks go on from there one after another: nothing in the finished Adventure is anything you did not build.',
       '**A class is a row of data.** classes.js exports CLASSES: Warrior { hp 14, attack 3, speed 60, hpPerLevel 3, attackPerLevel 1 }, Ranger, Mage, each with a picture and a line about it. Everything that differs between classes is in the table. So comparing them is arithmetic (cell 1): a Mage beats a slime (4 hit points) in one hit but survives only 7 touches; a Warrior needs two hits and survives 13.',
       '**One table, many uses.** newGame(className) copies a row into state: hp and maxHp, attack, speed, level 1, xp 0, skill points 0. The hero moves at state.speed and shows the class\'s picture. The title screen\'s class menu is built from the table too: title.js makes a Button for each row. Add a fourth row and it is playable and on the menu, with no other change. That is data-driven design.',
       '**Experience on a curve.** Beating a slime gives 4 experience. The next level needs xpToNext(level) = round(10 × 1.5^(level − 1)): 10, 15, 23, 34, 51 and on, each half as much again as the last (cell 2). Level 2 takes 3 slimes; level 5, 21 slimes in all; level 9, 124. Early levels come quickly, so a new player feels progress; later ones take longer, so each still means something.',
       '**Levelling up.** gainXp(amount) adds to state.xp, and while it is at least what the next level needs: take that off, add a level, add the class\'s hpPerLevel to maxHp, heal fully, add attackPerLevel to attack, and add a skill point. While, not if: a big reward can raise several levels at once. Cell 3 shows the classes diverge: by level 10 a Mage hits for 22 with 17 hit points, a Warrior for 12 with 41.',
-      '**Showing it.** The HUD\'s Status panel gets a Label Level and a thin ProgressBar Xp, set from state every frame (lesson 11.6): its maxValue is xpToNext(state.level), its value state.xp. Skill points are saved with everything else; lesson 12.4 spends them on the buddy.',
+      '**Showing it.** The HUD gets a Label Level and a thin ProgressBar Xp under the health bar, set from state every frame (lesson 11.6), and an AudioStreamPlayer LevelUp under Sounds, a rising triangle wave (lesson 11.8): its maxValue is xpToNext(state.level), its value state.xp. Skill points are saved with everything else; lesson 12.4 spends them on the buddy.',
     ],
     callouts: [
       {

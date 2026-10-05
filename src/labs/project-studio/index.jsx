@@ -30,6 +30,7 @@ import TerminalPanel from './TerminalPanel.jsx';
 import CppProjectRuntime from './CppProjectRuntime.jsx';
 import { canTrace, handOffToCodeLens, inlineLocalHeaders, traceLang } from './codeLensHandoff.js';
 import { useProgress } from './progress.js';
+import { useEntryLink } from '../../utils/entryLinks.js';
 
 const SAVE_DEBOUNCE_MS = 400;
 const SERIES = studioSeries(TRACKS, TRACK_KEYS, trackTitle);
@@ -446,6 +447,11 @@ export default function ProjectStudio() {
     if (running) { await stopProject(); if (startingRunRef.current) return; }
     setTrackKey(key); setLessonId(TRACKS[key][0]?.id); setStepIndex(0);
   }, [flushProject, running, stopProject]);
+  useEntryLink('project-studio', search => {
+    const requested = new URLSearchParams(search).get('track');
+    // Use the normal switch path so unsaved files and running processes stay protected.
+    if (requested && Object.hasOwn(TRACKS, requested)) void selectTrack(requested);
+  });
   const pickProject = useCallback(async () => {
     if (!(await flushProject())) return;
     if (running) { await stopProject(); if (startingRunRef.current) return; }
