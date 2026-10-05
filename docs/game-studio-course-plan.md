@@ -357,6 +357,18 @@ All three labs run in the same page, so they can hand work over directly, with n
   rather than losing them silently; Tile Mapper has neither.
 - **Art that arrives while no project is open** waits, and goes into the next project opened.
 
+## Added 2026-10-05: chapter 11, Quest Buddies
+
+The first starter project's chapter (plan and progress: [game-studio-starters-plan.md](game-studio-starters-plan.md)).
+Eight lessons, `src/courses/making-games/11-quest-buddies/`, mg11-001 to mg11-008: the finished starter to play and
+change, then maps and doors, state, saving, menus, a health bar and a bag, dialogue and quests, and sound made from
+numbers. Each lesson says its depth (play and tweak, build it, go deep) and decodes its formulas.
+
+Its eight tasks (`tasks/questBuddies.ts`, chain "Quest Buddies") build the game from two empty maps: each task's start is
+the one before's start plus its solution. Each also has step-by-step code (`qbStep`), which the tests check (each
+step's code ticks that step and every one before) and the step pictures replay. The chapter's notebook outputs are
+tested in `src/courses/making-games/quest.test.js`.
+
 ## Still open
 
 - ~~The course's name~~: "Building Games with Game Studio" (decided 2026-10-01).

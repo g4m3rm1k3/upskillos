@@ -138,3 +138,32 @@ it('shows a successful save and clears its draft', async () => {
 run "npm test --prefix frontend" timeout=180
 run "npm run build --prefix frontend" timeout=180
 ```
+
+## Verify recovery clears stale feedback
+
+A rejected save leaves the draft and an error message. After the server becomes available, a successful Refresh should replace that error with Ready while keeping the unsaved draft. Otherwise the screen shows fresh data beside an obsolete failure message, leaving the user unsure whether recovery worked.
+
+This test begins with the same controlled failure as before. After observing the error, set rejectSave to false and click the real Refresh control. Awaiting Ready establishes that successful refresh updated feedback. The final assertion ensures a read did not discard the unsaved draft. This is a characterization test of refresh's success branch, not a new source of truth replacing the application contract.
+
+Type this fragment yourself. Append to `frontend/src/Board.test.tsx`:
+
+```tsx edit=frontend/src/Board.test.tsx mode=append
+it('clears stale feedback after refresh without discarding an unsaved draft', async () => {
+  rejectSave = true;
+  render(<Board />);
+  await screen.findByText('Ready');
+  fireEvent.change(screen.getByLabelText('Task title'), { target: { value: 'Keep this draft' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+  await screen.findByText(/Request failed \(503\)/);
+  rejectSave = false;
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  await screen.findByText('Ready');
+  expect(screen.getByLabelText('Task title')).toHaveProperty('value', 'Keep this draft');
+});
+```
+
+Temporarily omit setMessage('Ready') from refresh on a practice branch. This test should fail while the earlier save-path tests can remain green. Restore the statement and run again. A recovery requirement needs an observation of recovery, not only an observation of initial failure.
+
+```check
+run "npm test --prefix frontend" timeout=180
+```

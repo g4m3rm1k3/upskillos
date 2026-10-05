@@ -1,5 +1,6 @@
 // Project and game archives (core/archive.ts, Phase 8): a project survives the round trip through a .zip
 // exactly; a bad .zip says what is wrong; a game carries only what it needs, by relative paths.
+import { soundBytes } from './sound';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
@@ -31,7 +32,7 @@ describe('project archives', () => {
       expect(strFromU8(files[p.scripts[0].path])).toBe(p.scripts[0].source);   // a script is plain JavaScript
       const back = readProjectZip(zip);
       expect(serialize(back.project)).toBe(serialize(p));
-      for (const a of p.assets) expect(back.bytes.get(a.id)).toEqual(a.svg !== undefined ? strToU8(a.svg) : starter(a.path));
+      for (const a of p.assets) expect(back.bytes.get(a.id)).toEqual(a.svg !== undefined ? strToU8(a.svg) : a.sound ? soundBytes(a.sound) : starter(a.path));   // a made sound: its recipe's .wav
     });
   }
 

@@ -9,6 +9,7 @@ import { cliffWalk } from './cliffWalk';
 import { breakoutLab } from './breakoutLab';
 import { cribbage } from './cribbage';
 import { ghostLab } from './ghostLab';
+import { questBuddies } from './questBuddies';
 
 export type { GameExample };
-export const EXAMPLES: GameExample[] = [potionHunt, platformer, breakout, mazeChase, zombieArena, cliffWalk, breakoutLab, ghostLab, cribbage];
+export const EXAMPLES: GameExample[] = [potionHunt, platformer, breakout, mazeChase, zombieArena, cliffWalk, breakoutLab, ghostLab, cribbage, questBuddies];

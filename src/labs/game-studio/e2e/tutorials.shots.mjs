@@ -90,6 +90,20 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       await ui.script(await page.evaluate(([a, b]) => window.__gameStudio.tetrisStepScripts(a)[b], [task, step]));
       await ui.run(); mark(page.locator('iframe[title="Running game"]'));
     },
+    // Quest Buddies (chapter 11): do step k of a task (tasks/questBuddies.ts) as its code, then show it: a script
+    // opened, a scene opened with a node selected, or the game running (with keys pressed in it, for menus).
+    qb: async (task, k, show = {}) => {
+      const code = await page.evaluate(([a, b]) => window.__gameStudio.qbStep(a, b), [task, k]);
+      if (code) await page.evaluate(([c, label]) => window.__gameStudio.store.act((d) => d.runCode(label, c)), [code, `${task} step ${k + 1}`]);
+      if (show.scene) { await t('left-files').click(); await t(`file-${show.scene}`).click(); if (show.node) await ui.select(show.node); else mark(t('viewport')); }
+      if (show.script) { await t('left-files').click(); await ui.openScript(show.script); mark(page.locator('.monaco-editor')); }
+      if (show.run) {
+        await ui.run();
+        const frame = page.locator('iframe[title="Running game"]');
+        if (show.keys) { await frame.click({ position: { x: 5, y: 5 } }); for (const key of show.keys) { await page.keyboard.press(key); await page.waitForTimeout(500); } }
+        mark(frame);
+      }
+    },
     // Run › Train an agent…: the table-learning settings, typed in.
     td: async ({ algorithm = 'q', episodes, alpha, gamma, from, to, schedule, explore, q0 }) => {
       await t('train-algorithm').selectOption(algorithm);
@@ -563,6 +577,47 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.code('crib-difficulty', 'scripts/opponent.js', ['remember']),
       async () => { mark(page.locator('.monaco-editor')); },
       () => ui.play('Digit3', 'KeyD'),
+    ],
+    // ── Quest Buddies (chapter 11): each step done as its code, then shown ──
+    'qb-tour': [
+      () => ui.qb('qb-tour', 0, { run: true, keys: ['Enter'] }),
+      () => ui.qb('qb-tour', 1, { script: 'scripts/game.js' }),
+      () => ui.qb('qb-tour', 2, { script: 'scripts/ranger.js' }),
+    ],
+    'qb-doors': [
+      () => ui.qb('qb-doors', 0, { scene: 'scenes/town.scene', node: 'Door to forest' }),
+      () => ui.qb('qb-doors', 1, { scene: 'scenes/forest.scene', node: 'FromTown' }),
+      () => ui.qb('qb-doors', 2, { script: 'scripts/door_to_town.js' }),
+    ],
+    'qb-state': [
+      () => ui.qb('qb-state', 0, { scene: 'scenes/town.scene', node: 'Coin' }),
+      () => ui.qb('qb-state', 1, { scene: 'scenes/hud.scene', node: 'Gold' }),
+      () => ui.qb('qb-state', 2, { script: 'scripts/coin.js' }),
+    ],
+    'qb-save': [
+      () => ui.qb('qb-save', 0, { script: 'scripts/campfire.js' }),
+      () => ui.qb('qb-save', 1, { script: 'scripts/title.js' }),
+      () => ui.qb('qb-save', 2, { run: true }),
+    ],
+    'qb-menus': [
+      () => ui.qb('qb-menus', 0, { scene: 'scenes/title.scene', node: 'Buttons' }),
+      () => ui.qb('qb-menus', 1, { run: true }),
+      async () => { await ui.stop(); await ui.qb('qb-menus', 2, { run: true, keys: ['Enter', 'Escape'] }); },
+    ],
+    'qb-bars': [
+      () => ui.qb('qb-bars', 0, { scene: 'scenes/hud.scene', node: 'Hp' }),
+      () => ui.qb('qb-bars', 1, { scene: 'scenes/hud.scene', node: 'List' }),
+      () => ui.qb('qb-bars', 2, { script: 'scripts/hud.js' }),
+    ],
+    'qb-talk': [
+      () => ui.qb('qb-talk', 0, { script: 'scripts/hud.js' }),
+      () => ui.qb('qb-talk', 1, { script: 'scripts/hud.js' }),
+      () => ui.qb('qb-talk', 2, { script: 'scripts/ranger.js' }),
+    ],
+    'qb-sounds': [
+      async () => { await ui.qb('qb-sounds', 0); await t('left-files').click(); await t('asset-assets/sounds/coin.wav').click(); mark(t('sound-preview')); },
+      () => ui.qb('qb-sounds', 1, { scene: 'scenes/hud.scene', node: 'Coin' }),
+      async () => { await ui.qb('qb-sounds', 2); await t('left-files').click(); await t('asset-assets/sounds/arrive.wav').click(); mark(t('sound-preview')); },
     ],
     // ── Game AI that learns, 9.8: the paddle with features ──
     'paddle-features': [

@@ -19,6 +19,7 @@ import { QuestionDialog, TutorialsDialog } from './editor/Dialogs';
 import { parseTaskLink } from './tasks/links';
 import { solutionScripts, startScripts } from './tasks/solutions';
 import { tetrisStepScripts } from './tasks/tetris';
+import { qbStep } from './tasks/questBuddies';
 import { listenForArt } from '../../utils/artBridge.js';
 import { useOpenLab } from '../../components/desktop/useOpenLab.js';
 import { useDesktop } from '../../components/desktop/DesktopProvider.jsx';
@@ -80,7 +81,7 @@ export default function GameStudio({ onBack }: { onBack?: () => void }) {
   const resizing = useRef<{ y: number; h: number } | null>(null);
 
   // A handle for debugging and browser tests, in development only.
-  useEffect(() => { if (import.meta.env?.DEV) (window as unknown as { __gameStudio?: unknown }).__gameStudio = { store, solutionScripts, startScripts, tetrisStepScripts }; }, [store]);
+  useEffect(() => { if (import.meta.env?.DEV) (window as unknown as { __gameStudio?: unknown }).__gameStudio = { store, solutionScripts, startScripts, tetrisStepScripts, qbStep }; }, [store]);
 
   // A lesson's "Try it" link opens its task; otherwise open the last project, or show the project list.
   useEffect(() => {

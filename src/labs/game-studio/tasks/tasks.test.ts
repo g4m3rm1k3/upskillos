@@ -13,6 +13,7 @@ import { TASKS, chains, nextTask } from './index';
 import { gameStudioLink, parseTaskLink } from './links';
 import type { GameTask } from './types';
 import { TETRIS, tetrisStepCode } from './tetris';
+import { QUEST_BUDDIES, qbStepCode } from './questBuddies';
 
 const pngSize = (path: string) => { const b = readFileSync(fileURLToPath(new URL(`../starter/${path.replace(/^assets\//, '')}`, import.meta.url))); return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }; };
 
@@ -67,6 +68,20 @@ describe('Tetris, step by step', () => {
         expect(got.slice(0, k + 1), `${task.id} after step ${k + 1}`).toEqual(got.slice(0, k + 1).map(() => true));
       }
     });
+  }
+});
+
+describe('Quest Buddies, step by step', () => {
+  for (const task of QUEST_BUDDIES) {
+    it(`"${task.title}": each step's code, from the start, passes that step and every one before it`, async () => {
+      for (let k = 0; k < task.steps.length; k++) {
+        const d = begin(task);
+        d.runCode('Steps', qbStepCode(task.id, k));
+        expect(problems(d.project)).toEqual([]);
+        const got = await evaluateTask(task, d.project, { ran: true }, load);
+        expect(got.slice(0, k + 1), `${task.id} after step ${k + 1}`).toEqual(got.slice(0, k + 1).map(() => true));
+      }
+    }, 60000);
   }
 });
 

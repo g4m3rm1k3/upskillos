@@ -125,6 +125,12 @@ Only after ruling out null do we call `input.strip()`. String objects are **immu
 
 **Predict:** what fails if you move `input.strip()` above the null check? A null argument throws `NullPointerException` before the intended exception can be constructed. Our exception assertion should catch this regression because the error type is part of the contract.
 
+### Combine conditions in later rules
+
+Logical AND, written `&&`, requires both conditions to be true. It skips the right side when the left is false. For example, checking `input != null && input.length() > 0` avoids calling length on an absent reference. OR skips its right side when the left is true; AND skips it when the left is false. Predict each side separately before combining them.
+
+The comparisons `>=` and `<=` include equality, unlike `>` and `<`. An inclusive range needs a lower comparison and an upper comparison joined with AND. These operators belong to the guided foundation even if you defer the following range challenge; they reappear in request policies and retry limits.
+
 ### Refactor against evidence
 
 First run the tests unchanged and see green. Then consider naming the limit. A constant declared as `private static final int MAX_TITLE_LENGTH = 80;` belongs to the class and cannot be reassigned; its uppercase name is a convention. Replace only the comparison's 80 with that name, rerun, and inspect the diff. Do not change the requirement or test expectation as part of this refactor.

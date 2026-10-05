@@ -42,7 +42,7 @@ Calling a React component returns a description of UI. React calls it again when
 
 `const [tasks, setTasks] = useState<Task[]>([])` uses array destructuring: bind the returned pair's first item to tasks and second item to setTasks. The initial value is an empty array, typed as Task[]. Calling setTasks with a new array asks React to render again with that state. It does not change the tasks value already captured in the current callback. Title, message and busy each have independent state pairs.
 
-`refresh` awaits the API then passes the returned array into setTasks. The effect also performs an initial load. Effects run after React commits the UI, so network activity is separated from merely calculating a view. The empty dependency array says the effect does not depend on changing props or state. A future projectId used inside it must become a dependency rather than leaving stale data on screen.
+`refresh` awaits the API, passes the returned array into setTasks, then sets the message to Ready. Clearing an earlier error only after a successful read keeps feedback aligned with the displayed data. The effect also performs an initial load. Effects run after React commits the UI, so network activity is separated from merely calculating a view. The empty dependency array says the effect does not depend on changing props or state. A future projectId used inside it must become a dependency rather than leaving stale data on screen.
 
 AbortController creates a cancellation controller. Its signal is passed into fetch through our helper. `.then` registers what to do when the promise fulfills; `.catch` handles rejection. The effect returns a cleanup function, `() => controller.abort()`, rather than calling abort immediately. React calls cleanup when removing this effect, including unmounting. Cancellation rejection is recognized by its AbortError name and suppressed as an expected cleanup outcome.
 
@@ -69,7 +69,7 @@ export function Board() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('Loading…');
   const [busy, setBusy] = useState(false);
-  async function refresh() { setTasks(await api<Task[]>('/api/tasks')); }
+  async function refresh() { setTasks(await api<Task[]>('/api/tasks')); setMessage('Ready'); }
   useEffect(() => {
     const controller = new AbortController();
     api<Task[]>('/api/tasks', { signal: controller.signal })
