@@ -72,12 +72,14 @@ How many decisions does the main loop make, and how deeply nested are they?
 Select-String -Path breakout.py -Pattern "^\s+if "
 ```
 
+This pattern is a **regular expression**, a small language for describing text: `^` means "the start of a line", `\s+` means "one or more spaces", and then the literal `if ` with its space. So it matches lines that start with indentation followed by `if `, which are the `if` statements, and not lines that merely contain the letters "if" somewhere.
+
 16 lines, and 15 of them are inside the loop (the first is the argument check at the top). The deepest code is four levels in: the `while`, then three `if`s inside each other.
 
 **Understand: what those numbers mean.**
 
 - **143 lines in one loop, with no names for its parts.** To understand "how does the ball bounce off the paddle?" you have to find the right 5 lines among 143. A function called `bounce_off_paddle` would say where it is and what it does.
-- **Every variable is global**: created at the top level, and readable and changeable from anywhere in the file. `ball_vx` is changed on 6 lines. To know what it might be at any moment, you have to read all of them, and anything you add later might change it too.
+- **Every variable is global**: created at the top level, and readable and changeable from anywhere in the file. `ball_vx` is used or changed on 6 lines (assigned a new value on 5 of them). To know what it might be at any moment, you have to read all of them, and anything you add later might change it too.
 - **One loop does five jobs**: handling input, moving the paddle, physics, scoring, drawing. And a sixth that isn't part of the game at all: the test-run machinery (`test_frames` appears on 6 lines, and the autopilot lives inside the paddle code).
 
 > **Engineer:** there's a name for code in this state, that started simple and grew by adding a bit more to the same place until no part can be changed without understanding all of it: a **big ball of mud**. Almost every program becomes one if nothing stops it, and it doesn't take bad programmers, only small additions without structure. Every chapter from here on adds a piece of structure that resists it, and you'll know exactly which problem each piece solves, because you'll have listed them yourself.
@@ -89,7 +91,7 @@ Select-String -Path breakout.py -Pattern "^\s+if "
 Here is what's wrong with `breakout.py`, with the evidence for each:
 
 1. **No parts with names.** Everything is one 143-line script. The code for "the ball bounces off the paddle" can't be found by name, read on its own, reused, or run on its own.
-2. **Everything is global.** Any line can change any variable (`ball_vx` changes on 6 lines), so understanding one line means understanding all of them.
+2. **Everything is global.** Any line can change any variable (`ball_vx` is used or changed on 6 lines), so understanding one line means understanding all of them.
 3. **Duplication.** The ball's starting position and velocity are written twice: before the loop, and again after a miss (lines 46 and 121 both say `ball_vx = BALL_SPEED * 0.6`). Change one, forget the other, and the ball behaves differently after the first miss.
 4. **Unexplained numbers.** `6` (the ball's radius) appears in the wall code six times; `50` is half the paddle's width; `76` and `26` are brick spacings; `40` and `60` in the autopilot. Numbers written directly into code like this are called **magic numbers**: nobody reading the code knows what they mean, and changing the ball's size means finding every 6 that is the radius and none of the 6s that aren't.
 5. **Hidden coupling.** Brick colours depend on the spacing formula (the crash above).
@@ -125,7 +127,7 @@ answer: ~~~markdown
 
 - The ball's starting position and velocity are set twice (lines 44–47 and 119–122): changing the starting speed means changing both, and forgetting one makes the ball behave differently after a miss.
 - Brick colours are worked out backwards from the brick's y position (line 126), so changing the row spacing crashes the game: spacing 40 gives row 6 of 5.
-- Everything is global: ball_vx is changed on 6 lines, so understanding or changing the ball's movement means reading the whole loop.
+- Everything is global: ball_vx is used or changed on 6 lines, so understanding or changing the ball's movement means reading the whole loop.
 - The only way to test anything is a whole test run: checking that the game can be won takes 10,000 frames, and "does the ball bounce off the left wall" can't be checked on its own.
 - The test-run code (test_frames, hold, lag_at, the autopilot) is mixed into the game code, on at least 6 lines, so the game can't be read without it.
 - --hold sideways is silently ignored, and --lag-at with no number crashes with IndexError: only --test-run is checked.

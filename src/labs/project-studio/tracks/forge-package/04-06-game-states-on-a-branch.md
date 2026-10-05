@@ -276,23 +276,33 @@ The states are a `GameState` enum (lesson 3.4). The transitions:
 | `PLAYING` | the last life is lost, in `update` | `OVER` |
 | `PLAYING` | the last brick breaks, in `update` | `WON` |
 
+The last two happen at the end of `update`, which checks `if self.lives == 0:` first and `elif not self.bricks:` second. Traced for an unlucky frame where the ball breaks the last brick and is then lost below the screen:
+
+```text
+bricks 1 → 0   (the brick breaks)
+lives  1 → 0   (the ball is lost)
+self.lives == 0   True   →  state = OVER, and the elif is never checked
+```
+
+So when both happen in the same frame, it's a loss. That's a choice; checking bricks first would make it a win. What matters is that it's decided in one place, in a fixed order, and a test can pin it down.
+
 Every other combination does nothing: `start()` while playing is ignored, `toggle_pause()` on the title screen is ignored. Those are decisions, not accidents: a key pressed at the wrong moment shouldn't break anything. Drawn as a diagram:
 
 ```text
-           start()                    last life lost
-  TITLE ──────────▶  PLAYING  ─────────────────────────▶  OVER
-                     │     ▲
-      toggle_pause() │     │ toggle_pause()          last brick breaks
-                     ▼     │                    ┌─────────────────────▶  WON
-                     PAUSED                     │
-                                         (from PLAYING)
+            start()                       last life lost
+   TITLE ───────────▶  PLAYING  ───────────────────────────▶  OVER
+                        │  ▲  │
+         toggle_pause() │  │  │           last brick breaks
+                        ▼  │  └────────────────────────────▶  WON
+                       PAUSED
+            (toggle_pause() again goes back up to PLAYING)
 ```
 
 `update` now starts with `if self.state != GameState.PLAYING: return`: when paused, on the title screen or after the end, nothing moves, which is what *paused* means. `playing()` is gone: "is the game being played?" is now `game.state == GameState.PLAYING`, a fact stored once, instead of being worked out from `lives` and `bricks` everywhere it's needed.
 
 > **Engineer:** without a state machine, states hide in combinations of variables (`lives > 0 and bricks and not paused and started`), and every new state multiplies the combinations, and the bugs. With one, the current state is one value, the allowed changes are a short list, and "what happens if P is pressed on the game-over screen?" has an answer you can look up and test.
 
-Commit the model on the branch:
+This commit leaves the game tests failing, as the next step shows: they still expect a game that plays without being started. On a branch that's fine for a moment, because `main` still has the working game. Commit the model on the branch:
 
 ```powershell
 git add breakout/model.py
@@ -488,7 +498,7 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** Two new events in the loop. **Space**: on the game-over or won screen, make a new `Game` first (with the same random generator, so its serves continue the same sequence), then `start()` it; on the title screen, just `start()`. **P**: `toggle_pause()`. The keyboard only sends **events** to the state machine; the rules about what each event means in each state stay in the model, where they're tested.
+**Understand.** Two new events in the loop: a `KEYDOWN` whose key is `pygame.K_SPACE`, the Space bar, or `pygame.K_p`, the P key. **Space**: on the game-over or won screen, make a new `Game` first (with the same random generator, so its serves continue the same sequence), then `start()` it; on the title screen, just `start()`. `game.state in (GameState.OVER, GameState.WON)` asks whether the state is one of the two in that tuple: `in` works on any sequence. The random generator is now made once into its own variable, `rng = random.Random(seed)`, instead of directly inside `Game(...)`, precisely so the Space handler can hand the *same* generator to the new game. **P**: `toggle_pause()`. The keyboard only sends **events** to the state machine; the rules about what each event means in each state stay in the model, where they're tested.
 
 A test run calls `game.start()` straight away, so it skips the title screen and every characterisation test still sees exactly the same game.
 
@@ -531,9 +541,9 @@ def draw(screen: pygame.Surface, font: pygame.font.Font, game: Game) -> None:
         screen.blit(text, text.get_rect(center=screen.get_rect().center))
 ```
 
-**Understand.** `MESSAGES` maps each state to its text. `MESSAGES.get(game.state)` returns the text, or `None` for a state that isn't in the dictionary, `PLAYING`, which shows no message. A dictionary of states to behaviour is a common way to keep a state machine's per-state details in one place, instead of a chain of `if`s.
+**Understand.** `MESSAGES` is a **dictionary** written out in full: `{key: value, key: value}`, each state paired with its text. `MESSAGES` maps each state to its text. `MESSAGES.get(game.state)` returns the text, or `None` for a state that isn't in the dictionary, `PLAYING`, which shows no message. A dictionary of states to behaviour is a common way to keep a state machine's per-state details in one place, instead of a chain of `if`s.
 
-`text.get_rect(center=screen.get_rect().center)` is lesson 1.5's challenge: a `Rect` the size of the rendered text, placed with its centre at the screen's centre, so every message is exactly centred whatever its length.
+`font.render(...)` makes the text as a surface, a picture of the words. Every surface has a `get_rect()` method returning a `Rect` the size of the picture, and giving it `center=` places that `Rect` with its centre at a point: here `screen.get_rect().center`, the screen's centre, (320, 240). Blitting the text at that `Rect` puts it exactly in the middle, whatever its length: a 200-pixel message starts at x 220, a 300-pixel one at 170.
 
 Run the game: the title screen waits for Space, P pauses and resumes, and losing or winning offers another game.
 
@@ -544,6 +554,8 @@ contains breakout/draw.py "MESSAGES"
 ## The replay starts its game
 
 **Build:** `replay.py`, starting its game and watching for the end states.
+
+`replay.py` stopped when `game.playing()` became false; that method is gone. It now starts its game with `game.start()` and stops when the state is `OVER` or `WON`. Not `!= PLAYING`: a game that's `PAUSED` or on the `TITLE` screen isn't over, and the replay should only stop at a real ending.
 
 ```python file=replay.py
 """Plays a game with the autopilot, without a window, and reports each change of score, lives or bricks."""
@@ -602,7 +614,14 @@ git merge game-states
 git branch -d game-states
 ```
 
-Read what `git merge` prints before deleting anything.
+Read what `git merge` prints before deleting anything. **Merging** brings the commits of one branch into the branch you're on. Here, `main` hasn't moved since `game-states` was made from it, so there's nothing to combine: Git just moves the `main` name forward to the branch's latest commit, and says `Fast-forward`:
+
+```text
+before:   A ── B ── C ── D        main → B,  game-states → D
+after:    A ── B ── C ── D        main → D,  game-states → D
+```
+
+No new commit is made. Then `git branch -d game-states` deletes only the branch's **name**; its commits are on `main` now. The next lesson meets a merge where both branches have moved.
 
 ```hints
 nudge: Each test is three or four lines: make a game, do the event(s), check `game.state` (or, for the third, compare the ball's position before and after). Which helper in `test_game.py` already makes a started game?

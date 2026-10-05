@@ -150,7 +150,7 @@ git diff --stat
  tests/test_characterisation.py | 39 +++++++++++++++++++++++++++++++--------
 ```
 
-Read the diffs: a stray blank line removed from `breakout.py` (three blank lines between definitions instead of two), one added to `replay.py`, and the long recorded-line assertions split so that each fits in 120 characters.
+`--stat` shows only a summary: each changed file, with how many lines changed, as `+` for added and `-` for removed. Run plain `git diff` to read the changes themselves. Read the diffs: a stray blank line removed from `breakout.py` (three blank lines between definitions instead of two), one added to `replay.py`, and the long recorded-line assertions split so that each fits in 120 characters.
 
 **Understand: what a formatter guarantees.** ruff reads each file into the same structure Python itself builds when it compiles code, the **syntax tree**, then writes the code out again from that tree by its own fixed rules. Because it works from the structure, it only ever changes layout: spacing, line breaks, quotes, blank lines. It never changes what the code does. Run the tests to see that for yourself, then commit the formatting **on its own**:
 
@@ -197,6 +197,8 @@ Found 3 errors.
 | `I001` | imports (from isort) | the imports aren't in the standard order: standard library first, then other packages, each group alphabetical |
 | `PLW1510` | pylint warnings | `subprocess.run` was called without saying what should happen if the program fails (`check=`) |
 
+Which rules run without being asked for depends on the ruff version: the version pinned in `requirements.txt` turns these families on by default, among others. To read the full explanation of any rule, with examples, run `.venv\Scripts\python -m ruff rule SIM114`.
+
 `[*]` marks a finding ruff can fix by itself, safely. Apply those:
 
 ```powershell
@@ -217,9 +219,18 @@ The fix to `breakout.py`:
                  running = False
 ```
 
+```predict
+question: With `A = False`, `B = True` and `C = False`, what is `A or B and C`?
+choice: True
+choice: False
+answer: False
+explain: `and` is worked out before `or`, so it's `A or (B and C)`: `B and C` is `True and False`, which is `False`, and then `False or False` is `False`. Read left to right instead, `(A or B) and C`, it would be `True and False`, also `False` here, but not always: with `A = True` and `C = False`, `A or (B and C)` is `True` while `(A or B) and C` is `False`. The game's condition is `QUIT or (KEYDOWN and ESCAPE)`, the right one.
+verify: .venv/Scripts/python -c "print(False or True and False)"
+```
+
 **Understand: why the combined condition is right.** It reads as `A or B and C`, which looks ambiguous, but Python has a rule: `and` is evaluated before `or` (it has higher **precedence**, the same way `×` comes before `+`). So it means `A or (B and C)`: quit, or Escape pressed, exactly the two old branches. Many people would add the brackets anyway for readers who don't remember the rule; that's allowed, and the formatter leaves them alone.
 
-A linter's suggestion is a **question**, not an order. `SIM114` is right here, because the two branches really are one rule ("these events end the game"). If two branches only happened to do the same thing today, but stood for different rules that might change separately, keeping them apart would be the better design, and you'd tell ruff so for that line with a comment: `# noqa: SIM114` ("no quality assurance" for that rule).
+A linter's suggestion is a **question**, not an order. `SIM114` is right here, because the two branches really are one rule ("these events end the game"). If two branches only happened to do the same thing today, but stood for different rules that might change separately, keeping them apart would be the better design, and you'd tell ruff so for that line with a comment: `# noqa: SIM114`. (`noqa` is conventionally read as "no quality assurance": ruff skips that rule on that one line.)
 
 Run the tests, then commit:
 

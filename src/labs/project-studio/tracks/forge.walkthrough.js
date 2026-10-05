@@ -196,7 +196,7 @@ const debtSection = (items) => `${LAST_DONE}\n# Technical debt\n\n${items.map((i
 const DEBT = [
   'The ball\'s starting position and velocity are set twice (lines 44-47 and 119-122): changing the starting speed means changing both.',
   'Brick colours are worked out backwards from the brick\'s y position (line 126), so changing the row spacing crashes the game.',
-  'Everything is global: ball_vx is changed on 6 lines, so changing the ball\'s movement means reading the whole loop.',
+  'Everything is global: ball_vx is used or changed on 6 lines, so changing the ball\'s movement means reading the whole loop.',
   'The only way to test anything is a whole test run: checking that the game can be won takes 10,000 frames.',
   'The test-run code is mixed into the game code, so the game can\'t be read without it.',
 ];
@@ -841,6 +841,10 @@ def test_pausing_on_the_title_screen_does_nothing(new_game: model.Game):
     assert new_game.state == model.GameState.TITLE
 `,
 };
+const L71 = 'forge-records/07-01-who-played';
+const CONNECT = '    db = sqlite3.connect(path)\n';
+const FK_ON = '    db = sqlite3.connect(path)\n    db.execute("PRAGMA foreign_keys = ON")\n';
+const FIXTURE_OPEN = '    connection = open_scores(tmp_path / "scores.db")\n';
 const L51_ANSWER = [`${L52}#The basic tests so far`, `${L52}#The level tests so far`];
 const MAKE_CASTLE = String.raw`.venv\Scripts\python -c "from pathlib import Path; Path('breakout/levels/castle.txt').write_text('B.BBBB.B\nBBTTTTBB\nBB....BB\n', encoding='utf-8-sig')"`;
 const BOM_TEST = String.raw`
@@ -951,10 +955,14 @@ export const WALKTHROUGH = {
     ],
   },
 
-  [`${L11}#Let a program run the game`]: {
+  [`${L11}#Stop after that many frames`]: {
     wrong: [
-      { name: 'a test run still waits for the clock', edit: [['    if test_frames is None:\n        clock.tick(60)\n', '    clock.tick(60)\n']], fails: [1] },
-      { name: 'the summary is never printed', edit: [['    print(f"frames={frames}")', '    pass']], fails: [0, 1] },
+      { name: 'the summary is never printed', edit: [['    print(f"frames={frames}")', '    pass']], fails: [0] },
+    ],
+  },
+  [`${L11}#No window, no waiting`]: {
+    wrong: [
+      { name: 'a test run still waits for the clock', edit: [['    if test_frames is None:\n        clock.tick(60)\n', '    clock.tick(60)\n']], fails: [0] },
     ],
   },
   [`${L11}#Your turn: a usage message`]: {
@@ -1004,7 +1012,7 @@ export const WALKTHROUGH = {
       { name: 'the paddle left at the top-left corner', edit: [['paddle.midbottom = (WIDTH // 2, HEIGHT - 30)\n', '']], fails: [0] },
     ],
   },
-  [`${L13}#Move it with the keys`]: {
+  [`${L13}#A paddle a program can steer`]: {
     wrong: [
       { name: 'left and right swapped', edit: [['elif hold == "left":\n        direction = -1', 'elif hold == "left":\n        direction = 1'], ['elif hold == "right":\n        direction = 1', 'elif hold == "right":\n        direction = -1']], fails: [0, 1] },
       { name: 'speed per frame instead of per second', edit: [['direction * PADDLE_SPEED * dt', 'direction * PADDLE_SPEED']], fails: [0, 1] },
@@ -1028,6 +1036,11 @@ export const WALKTHROUGH = {
   },
 
   [`${L14}#A ball that moves`]: {
+    wrong: [
+      { name: 'the ball never moves', edit: [['    ball_x += ball_vx * dt\n    ball_y += ball_vy * dt\n', '']], fails: [0] },
+    ],
+  },
+  [`${L14}#Is the ball still on screen?`]: {
     wrong: [
       { name: 'the ball never moves', edit: [['    ball_x += ball_vx * dt\n    ball_y += ball_vy * dt\n', '']], fails: [1] },
     ],
@@ -1142,14 +1155,14 @@ export const WALKTHROUGH = {
       { name: 'a different starting speed after a miss', edit: [['            lives -= 1\n            ball_x, ball_y, ball_vx, ball_vy = start_ball()\n', '            lives -= 1\n            ball_x, ball_y, ball_vx, ball_vy = WIDTH / 2, HEIGHT / 2, BALL_SPEED * 0.8, -BALL_SPEED * 0.6\n']], fails: [1] },
     ],
   },
-  [`${L22}#Bounces with names`]: {
+  [`${L22}#The paddle bounce in a function`]: {
     wrong: [
       { name: 'the paddle bounce steers from the paddle\'s full width', edit: [['(paddle.width / 2)', 'paddle.width']], fails: [2] },
     ],
   },
-  [`${L22}#Bricks and drawing`]: {
+  [`${L22}#The wall in a function`]: {
     wrong: [
-      { name: 'bricks drawn, but the rows one gap too close', edit: [['            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)\n', '            y = WALL_TOP + row * BRICK_HEIGHT\n']], fails: [3] },
+      { name: 'bricks drawn, but the rows one gap too close', edit: [['            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)\n', '            y = WALL_TOP + row * BRICK_HEIGHT\n']], fails: [2] },
     ],
   },
   [`${L22}#Your turn: the paddle's functions`]: {
@@ -1163,7 +1176,8 @@ export const WALKTHROUGH = {
     ],
   },
 
-  [`${L23}#A main function`]: {
+  [`${L23}#The arguments, read by a function`]: { before: ['Remove-Item whoami.py'] },
+  [`${L23}#Only when run directly`]: {
     wrong: [
       { name: 'main is called even when the file is imported', edit: [['if __name__ == "__main__":\n    main(sys.argv[1:])', 'main(sys.argv[1:])']], fails: [0] },
     ],
@@ -1243,9 +1257,14 @@ export const WALKTHROUGH = {
     ],
   },
 
-  [`${L31}#A class for the ball`]: {
+  [`${L31}#A ball that moves itself`]: {
     wrong: [
-      { name: 'move forgets dt', edit: [['        self.x += self.vx * dt\n', '        self.x += self.vx\n']], fails: [1] },
+      { name: 'move forgets dt', edit: [['        self.x += self.vx * dt\n', '        self.x += self.vx\n']], fails: [0] },
+    ],
+  },
+  [`${L31}#No new ball after the last life`]: {
+    wrong: [
+      { name: 'a new ball served after the last life', edit: [['                if lives > 0:\n                    ball = serve(rng)\n', '                ball = serve(rng)\n']], fails: [0] },
     ],
   },
   [`${L31}#Your turn: a paddle that knows itself`]: {
@@ -1256,7 +1275,7 @@ export const WALKTHROUGH = {
       { name: 'not committed', targetOf: L31_ANSWER, fails: [6, 7] },
     ],
   },
-  [`${L32}#Vectors`]: {
+  [`${L32}#The game uses the vectors`]: {
     wrong: [
       { name: 'every serve shares one centre vector', edit: [['def serve(rng: random.Random) -> Ball:', 'CENTRE = Vector2(WIDTH / 2, HEIGHT / 2)\n\n\ndef serve(rng: random.Random) -> Ball:'], ['return Ball(Vector2(WIDTH / 2, HEIGHT / 2),', 'return Ball(CENTRE,']], fails: [1] },
     ],
@@ -1301,9 +1320,9 @@ export const WALKTHROUGH = {
     ],
   },
 
-  [`${L35}#A game object`]: {
+  [`${L35}#The rules move into the game`]: {
     wrong: [
-      { name: 'a missed ball serves a new one even after the last life', edit: [['            if self.lives > 0:\n                self.ball = serve(self.rng)\n', '            self.ball = serve(self.rng)\n']], fails: [2] },
+      { name: 'a missed ball serves a new one even after the last life', edit: [['            if self.lives > 0:\n                self.ball = serve(self.rng)\n', '            self.ball = serve(self.rng)\n']], fails: [1] },
     ],
   },
   [`${L35}#Your turn: the end of a game`]: {
@@ -1371,14 +1390,13 @@ export const WALKTHROUGH = {
       { name: 'not committed', targetOf: L42_ANSWER, fails: [7, 8] },
     ],
   },
-  [`${L43}#One file for the whole project`]: { run: ['git rm pytest.ini ruff.toml pyrightconfig.json'] },
+  [`${L43}#Every tool's settings in one file`]: { run: ['git rm pytest.ini ruff.toml pyrightconfig.json'] },
   [`${L43}#Install the project`]: {
-    editFiles: { '.gitignore': [['__pycache__/\n', '__pycache__/\n\n# Generated: package metadata, written by pip install -e .\n*.egg-info/\n']] },
     run: [PIP_INSTALL],
     wrong: [
       // No pip in a wrong answer: its copy shares the real .venv, and an editable install there would
       // point the real environment at the copy. git check-ignore works on a path that doesn't exist yet.
-      { name: 'the metadata folder not ignored', editFiles: {}, fails: [0] },
+      { name: 'the metadata folder not ignored', files: { '.gitignore': "# Generated: rebuilt from requirements.txt with python -m venv .venv\n.venv/\n\n# Generated: Python's compiled bytecode\n__pycache__/\n" }, fails: [0] },
     ],
   },
   [`${L43}#Your turn: who controls this data?`]: {
@@ -1544,7 +1562,7 @@ export const WALKTHROUGH = {
   [`${L62}#The shortcut: pickle`]: {
     run: [
       '.venv\\Scripts\\python make_gift.py',
-      `.venv\\Scripts\\python -c "import pickle; pickle.load(open('gift.pickle', 'rb'))"`,
+      `.venv\\Scripts\\python -c "import pickle; from pathlib import Path; pickle.loads(Path('gift.pickle').read_bytes())"`,
       'Remove-Item make_gift.py, gift.pickle',
     ],
   },
@@ -1612,6 +1630,27 @@ export const WALKTHROUGH = {
         fails: [0, 1, 2, 3],
       },
       { name: 'not committed', files: GAME_FIXTURES, fails: [10, 11] },
+    ],
+  },
+  [`${L71}#The app records who played`]: {
+    run: [
+      'Remove-Item scores.db -ErrorAction Ignore',
+      '.venv\\Scripts\\breakout --test-run 10000 --hold auto --scores scores.db --player Mia',
+      '.venv\\Scripts\\breakout --test-run 600 --hold none --scores scores.db',
+    ],
+  },
+  [`${L71}#Your turn: bug hunt — the reference nobody checks`]: {
+    editFiles: { 'breakout/scores.py': [[CONNECT, FK_ON]] },
+    run: ['git add .', 'git commit -m "Enforce foreign keys on every connection"'],
+    wrong: [
+      { name: 'nothing changed', run: ['git add .', 'git commit -m "foreign key"'], fails: [0, 1, 2] },
+      {
+        name: 'switched on in the test fixture only',
+        editFiles: { 'tests/conftest.py': [[FIXTURE_OPEN, FIXTURE_OPEN + '    connection.execute("PRAGMA foreign_keys = ON")\n']] },
+        run: ['git add .', 'git commit -m "foreign key"'],
+        fails: [0],
+      },
+      { name: 'not committed', editFiles: { 'breakout/scores.py': [[CONNECT, FK_ON]] }, fails: [5, 6] },
     ],
   },
 };

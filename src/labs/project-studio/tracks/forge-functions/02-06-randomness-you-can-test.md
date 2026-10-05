@@ -244,14 +244,14 @@ choice: A different list: the numbers are random
 choice: The same list, exactly
 choice: The same numbers in a different order
 answer: The same list, exactly
-explain: Both runs print `[6, 1, 1, 6, 3, 2, 2, 2, 6, 1]`. `random.Random(42)` creates a **generator** whose internal state is set from the number 42, the **seed**. Each call to `randint` does a fixed calculation on that state, which produces the next number and updates the state. Same seed, same starting state, same calculations: the same sequence, every time, on every computer. Seed 43 gives a completely different list: `[1, 3, 6, 2, 4, 3, 6, 6, 1, 4]`.
+explain: Both runs print `[6, 1, 1, 6, 3, 2, 2, 2, 6, 1]`. `random.Random(42)` creates a **random number generator** object (an **RNG**; not the same thing as Python's "generator functions", which you'll meet much later) whose internal state is set from the number 42, the **seed**. Each call to `randint` does a fixed calculation on that state, which produces the next number and updates the state. Same seed, same starting state, same calculations: the same sequence, every time, on every computer. Seed 43 gives a completely different list: `[1, 3, 6, 2, 4, 3, 6, 6, 1, 4]`.
 ```
 
 **Understand: seeds and generators.**
 
 > **Pseudo-random number generator (PRNG)**: a calculation that turns a starting value, the **seed**, into a long sequence of numbers that pass statistical tests for randomness but are entirely determined by the seed. Python's is called the Mersenne Twister.
 
-- `random.Random(seed)` makes a generator of your own. Its methods produce the numbers: `randint(1, 6)` a whole number from 1 to 6, `uniform(a, b)` a float between `a` and `b`, `choice(list)` an item of a list.
+- `random.Random(seed)` makes a generator of your own. Its methods produce the numbers: `randint(1, 6)` a whole number from 1 to 6, `uniform(a, b)` a float between `a` and `b`, with every value in that range equally likely, `choice(list)` an item of a list.
 - `random.Random()` with no seed (or `None`) seeds itself from the operating system's source of unpredictable data, so each run differs. That's what a game wants when a person is playing.
 - The functions directly in the `random` module, like `random.randint`, use one hidden, shared generator. Any code anywhere can draw numbers from it and change what everyone else gets next: lesson 1.6's global state problem, in the standard library.
 
@@ -481,6 +481,8 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
+**Understand: the command line gains `--seed`.** `USAGE` mentions it, and `parse_args` reads it with `number_after`, exactly like `--test-run` and `--lag-at`, and returns it as a fourth value, so `main` now unpacks four.
+
 **Understand: the serve.** `start_ball` now takes a generator, `rng`, and asks it for one number: how much of the speed goes sideways, `across`, anywhere from −0.6 to 0.6. The rest must go upwards, at the speed that keeps the total exactly `BALL_SPEED`. That's lesson 1.4's Pythagoras, solved for the missing side:
 
 ```text
@@ -495,9 +497,9 @@ across = -0.3 →  up = √(1 − 0.09) = √0.91 ≈ 0.954    (a little to the 
 
 **Understand: who chooses the seed.** In `main`:
 
-- a test run with `--seed N` uses seed N;
-- a test run without one uses seed **0**, so test runs stay deterministic, which every check relies on;
-- a normal game has `seed = None`, so `random.Random(None)` seeds itself unpredictably, and every game is different.
+- **a test run with `--seed N`**: `test_frames` isn't `None`, so the outer `if` runs; `seed` is N, so `seed is None` is false and N is kept;
+- **a test run without `--seed`**: the outer `if` runs, `seed` is `None`, so the inner `if` sets it to **0**, and test runs stay deterministic, which every check relies on;
+- **a normal game without `--seed`**: the outer `if` is skipped, `seed` stays `None`, and `random.Random(None)` seeds itself unpredictably, so every game is different. (A normal game *with* `--seed N` uses N too, which is handy for playing the same serve again.)
 
 The generator is made once, in `main`, and passed to `start_ball` each time a ball is served. One generator for the whole game, owned by `main`, visible in every call that uses it.
 
@@ -818,6 +820,10 @@ def test_each_row_of_bricks_has_its_own_colour():
     assert breakout.brick_colour(bricks[0]) == breakout.ROW_COLOURS[0]
     assert breakout.brick_colour(bricks[-1]) == breakout.ROW_COLOURS[4]
 ```
+
+**Understand: why `==` failed for the speed.** With seed 0, the default for every test run, the serve's speed comes out as `300.00000000000006`, not 300; with seed 9 it's `299.99999999999994`. Of seeds 0 to 99, 17 aren't exactly 300. The maths is right; the arithmetic isn't exact. A float is stored in binary with about 16 significant digits, so most decimal fractions can't be stored exactly, and each operation rounds a tiny amount: try `python -c "print(0.1 + 0.2)"`, which prints `0.30000000000000004`. Squaring, adding and taking a square root, as `math.hypot` does, rounds several times.
+
+So two floats that come from arithmetic should be compared as **close enough**, not equal. `math.isclose(a, b)` is `True` when the difference between them is tiny compared with their size (by default, within about one part in a billion). The earlier tests that use `==`, like `start_ball` in lesson 2.4 or `(x, y) == (320, 240)` here, are safe only because those values come out exact: `640 / 2` is exactly 320. When a value comes from a calculation that can round, use `isclose`.
 
 Add a story for the serve to `BACKLOG.md` under *Done* (*As a player, I want the ball to start in a different direction each game, so that games aren't all the same*, with its checks ticked), update the *Technical debt* list, and commit with a message that mentions the **serve**:
 

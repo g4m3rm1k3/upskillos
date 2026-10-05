@@ -473,6 +473,15 @@ def test_a_tough_brick_survives_its_first_hit():
     assert brick.hits_left == 1
 ```
 
+```predict
+question: `Brick` has no `hits_left` field yet. When you run this test, how will it fail?
+choice: An AssertionError: the brick isn't broken when it should be
+choice: A TypeError: Brick() doesn't accept hits_left
+choice: It won't fail: Brick ignores what it doesn't know
+answer: A TypeError: Brick() doesn't accept hits_left
+explain: The test fails before it reaches any `assert`. Its first line calls `Brick(..., hits_left=2)`, and the `__init__` that `@dataclass` wrote only accepts the fields the class declares, `rect` and `colour`. An unknown keyword argument is a `TypeError`, raised by the call itself.
+```
+
 Run it:
 
 ```powershell
@@ -1383,6 +1392,8 @@ def test_a_tough_brick_scores_its_points_when_it_breaks():
     assert brick.hits_left == 0
 ```
 
+The wall test above it loses its `bricks[0] == ...` line: the top-left brick is a tough one now, so that expectation would be wrong, and the new test checks the first brick properly instead.
+
 **Understand.** `test_the_top_row_is_tough` checks the first brick completely, then uses `all(...)` for the rest: `all` takes a sequence of true/false values and is true only if every one is. `brick.hits_left == 2 for brick in bricks[:8]` is a **generator expression**: like a list comprehension without the square brackets, producing the values one at a time for `all` to check. `bricks[:8]` is the first eight bricks (the top row, since `make_bricks` builds row by row), and `bricks[8:]` all the others.
 
 ```check
@@ -1655,7 +1666,11 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand.** In the loop, a hit no longer removes the brick unconditionally: `score += bricks[hit].hit()` adds whatever the hit scored (0 for a crack), and the brick is removed only once `hits_left` reaches 0. The ball bounces either way.
+**Understand.** In `make_bricks`, `row` counts from 0 at the top, so `row == 0` is the top row, the one at `y = WALL_TOP`: those bricks get `hits_left=2, points=30`, and every other row the defaults. The `Rect` is made once, as `rect`, because both branches need it.
+
+In the loop, a hit no longer removes the brick unconditionally: `score += bricks[hit].hit()` adds whatever the hit scored (0 for a crack), and the brick is removed only once `hits_left` reaches 0. The ball bounces either way.
+
+One thing changes underneath. Lesson 1.5 said reversing `vy` at a brick was safe because the brick disappears that same frame. A tough brick *doesn't* disappear on its first hit. On an ordinary frame that's still fine: the ball moves at most 5 pixels a frame, so it can only be 5 pixels into the brick, and reversing takes it straight back out. After a slow frame, though, the ball can end up deeper, still overlap next frame, and crack and break the brick at once. It's rare, and Chapter 12's physics fixes it properly, by pushing the ball out of whatever it overlaps. Until then, it's a known flaw.
 
 Now the unit tests pass, and one characterisation test fails:
 
@@ -1718,7 +1733,7 @@ Work in the cycle:
 
 1. **Red:** write two tests, named `test_an_untouched_brick_keeps_its_colour` and `test_a_cracked_brick_is_drawn_darker`, calling a method `current_colour()` that doesn't exist yet. Run them; see them fail, for the right reason.
 2. **Green:** add `current_colour()` to `Brick`, and whatever it needs to know. Run until both pass. **Commit.**
-3. **Refactor:** make `draw` use `brick.current_colour()`. Run every test, then play the game and hit a red brick once. **Commit**, with a message that mentions **cracked**.
+3. **Wire it in:** make `draw` use `brick.current_colour()`. (This isn't a refactor: it changes what the player sees. It's the rest of making the feature work, checked by playing.) Run every test, then play the game and hit a red brick once. **Commit**, with a message that mentions **cracked**.
 
 `int(x)` rounds a positive float down to a whole number: `int(143.4)` is 143.
 

@@ -6,9 +6,235 @@ run: breakout.py
 
 This lesson adds the ball and finishes two stories, **Bounce the ball** and **Lose a life**. It's also where you'll hunt your first real game bug: one that only appears when a frame takes too long, that most Breakout tutorials have, and that you'll find with a **debugger**, a tool that stops a running program so you can look inside it.
 
+## The paddle clamp so far
+
+**Build:** make sure `breakout.py` matches the end of lesson 1.3, with the reference answer to its Your turn: the paddle clamped to the screen.
+
+If your answer differs, the lines below show where. Yours may be fine; matching the reference means the rest of the chapter's steps line up with your file exactly.
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES [--hold left|right|none]
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+hold = "none"
+if "--hold" in args:
+    hold = args[args.index("--hold") + 1]
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+PADDLE_SPEED = 420
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+paddle = pygame.Rect(0, 0, 100, 14)
+paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+paddle_x = float(paddle.x)
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        dt = clock.tick(60) / 1000
+    else:
+        dt = 1 / 60
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    direction = 0
+    if test_frames is None:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            direction -= 1
+        if keys[pygame.K_RIGHT]:
+            direction += 1
+    elif hold == "left":
+        direction = -1
+    elif hold == "right":
+        direction = 1
+    paddle_x += direction * PADDLE_SPEED * dt
+    paddle_x = max(0, min(paddle_x, WIDTH - paddle.width))
+    paddle.x = round(paddle_x)
+
+    screen.fill(BACKGROUND)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames} paddle_x={paddle.x}")
+```
+
+```check
+run ".venv/Scripts/python breakout.py --test-run 60 --hold left" stdout="paddle_x=0"
+run ".venv/Scripts/python breakout.py --test-run 60 --hold right" stdout="paddle_x=540"
+```
+
 ## A ball that moves
 
 **Build:** a ball that flies in a straight line.
+
+The ball needs a colour, a speed, a position and a direction. Its position changes every frame the same way the paddle's does, by speed × `dt`, but in two directions at once. Add the constants, the ball's starting values before the loop, three lines in the loop to move it, and one to draw it:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES [--hold left|right|none]
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+hold = "none"
+if "--hold" in args:
+    hold = args[args.index("--hold") + 1]
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+PADDLE_SPEED = 420
+BALL_SPEED = 300
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+paddle = pygame.Rect(0, 0, 100, 14)
+paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+paddle_x = float(paddle.x)
+
+ball = pygame.Rect(0, 0, 12, 12)
+ball_x = WIDTH / 2
+ball_y = HEIGHT / 2
+ball_vx = BALL_SPEED * 0.6
+ball_vy = -BALL_SPEED * 0.8
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        dt = clock.tick(60) / 1000
+    else:
+        dt = 1 / 60
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    direction = 0
+    if test_frames is None:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            direction -= 1
+        if keys[pygame.K_RIGHT]:
+            direction += 1
+    elif hold == "left":
+        direction = -1
+    elif hold == "right":
+        direction = 1
+    paddle_x += direction * PADDLE_SPEED * dt
+    paddle_x = max(0, min(paddle_x, WIDTH - paddle.width))
+    paddle.x = round(paddle_x)
+
+    ball_x += ball_vx * dt
+    ball_y += ball_vy * dt
+    ball.center = (round(ball_x), round(ball_y))
+
+    screen.fill(BACKGROUND)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames} paddle_x={paddle.x}")
+```
+
+Run it: the ball flies up and to the right, and off the screen. Run it again to see it again.
+
+**Understand: velocity.** The ball's position is `(ball_x, ball_y)`, floats for the reason lesson 1.3 found. Its **velocity** is how fast it moves in each direction, in pixels per second: `ball_vx` across and `ball_vy` down. Each frame moves it by velocity × `dt`, the same rule as the paddle:
+
+```text
+first frame of a test run (dt = 1/60):
+ball_x = 320 + 180 × (1/60) = 323
+ball_y = 240 + (-240) × (1/60) = 236     (negative vy is upwards, since y grows downwards)
+```
+
+**Why `0.6` and `0.8`?** They make the ball move at exactly `BALL_SPEED`, 300 pixels a second, along a slant. In one second the ball moves 180 pixels across (300 × 0.6) and 240 up (300 × 0.8), from the centre (320, 240) to (500, 0). How far is that, along the slant? Draw it: the path is the long side of a triangle with a square corner, whose other two sides are the 180 across and the 240 up:
+
+```text
+                      ● (500, 0)   after one second
+                     /|
+          how far?  / |
+                   /  |  240 up
+                  /   |
+       (320, 240) ●---┘
+                  180 across
+```
+
+**Pythagoras' theorem** says that in a triangle with a square corner (a **right angle**), the long side multiplied by itself equals the other two sides, each multiplied by itself, added together. A number multiplied by itself is its **square**, written ², and the **square root**, written √, undoes squaring: √*n* is the number that, multiplied by itself, gives *n*. So:
+
+```text
+long side²  = 180² + 240² = 32,400 + 57,600 = 90,000
+long side   = √90,000 = 300          (because 300 × 300 = 90,000)
+```
+
+300 pixels in one second: exactly `BALL_SPEED`. That works for any speed because 0.6² + 0.8² = 0.36 + 0.64 = 1, so the slant is always 1 × the speed. A velocity like `(vx, vy)` is often drawn as an arrow, and the arrow's length, worked out this way, is the actual speed.
+
+`ball_x = WIDTH / 2` uses `/`, not lesson 1.3's `//`: `/` always gives a float (`320.0`), which is what a position that moves by fractions of a pixel needs.
+
+`ball.center = (round(ball_x), round(ball_y))` places the 12 × 12 `Rect` so that its centre is on the float position. The `Rect` is used for drawing and, soon, for collisions. `pygame.draw.ellipse` draws the largest ellipse that fits in a rectangle, which for a square is a circle.
+
+> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 41) work.
+
+```check
+contains breakout.py "ball_x += ball_vx * dt" -- Move the ball by ball_vx * dt and ball_vy * dt each frame.
+contains breakout.py "pygame.draw.ellipse(screen, BALL_COLOUR, ball)"
+```
+
+## Is the ball still on screen?
+
+**Build:** the test-run summary says whether the ball is still inside the window, so a check can tell a ball in play from one that's flown off.
 
 ```python file=breakout.py
 import os
@@ -101,29 +327,9 @@ if test_frames is not None:
     print(f"frames={frames} paddle_x={paddle.x} inside={inside}")
 ```
 
-Run it: the ball flies up and to the right, and off the screen. Run it again to see it again.
-
-**Understand: velocity.** The ball's position is `(ball_x, ball_y)`, floats for the reason lesson 1.3 found. Its **velocity** is how fast it moves in each direction, in pixels per second: `ball_vx` across and `ball_vy` down. Each frame moves it by velocity × `dt`, the same rule as the paddle:
-
-```text
-first frame of a test run (dt = 1/60):
-ball_x = 320 + 180 × (1/60) = 323
-ball_y = 240 + (-240) × (1/60) = 236     (negative vy is upwards, since y grows downwards)
-```
-
-Why `0.6` and `0.8`? Together they make a speed of exactly 300 in the direction they point. A velocity `(vx, vy)` is an arrow, and its length, the actual speed, comes from Pythagoras' theorem: the arrow is the long side of a right-angled triangle whose other sides are `vx` and `vy`:
-
-```text
-speed = √(vx² + vy²) = √(180² + 240²) = √(32,400 + 57,600) = √90,000 = 300
-```
-
-0.6² + 0.8² = 0.36 + 0.64 = 1, so multiplying both by `BALL_SPEED` gives an arrow exactly `BALL_SPEED` long, pointing up and to the right.
-
-`ball.center = (round(ball_x), round(ball_y))` places the 12 × 12 `Rect` so that its centre is on the float position. The `Rect` is used for drawing and, soon, for collisions. `pygame.draw.ellipse` draws the largest ellipse that fits in a rectangle, which for a square is a circle.
-
 The test-run summary now ends with `inside=`: whether the ball's `Rect` is entirely inside the window. `Rect.contains(other)` is `True` when `other` fits completely within it.
 
-> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 34) work.
+`pygame.Rect(0, 0, WIDTH, HEIGHT)` is a rectangle exactly the size of the window, made just to ask the question. Traced for the first frame of a test run, with the ball's 12 × 12 `Rect` centred on (323, 236): it covers x 317 to 328 and y 230 to 241, all within 0 to 639 and 0 to 479, so `inside` is `True`. Two seconds later the ball is far above the top, y below 0, and it's `False`.
 
 ```check
 run ".venv/Scripts/python breakout.py --test-run 30" stdout="inside=True" label="after half a second, the ball is still on screen"
@@ -364,7 +570,7 @@ both  →  colliderect is True
 
 **Why `and ball_vy > 0`?** The ball moves 4 or 5 pixels a frame and the paddle is 14 thick, so the ball overlaps the paddle for **several frames** in a row. Without the condition, the first overlapping frame flips the ball upwards; the next frame it still overlaps, so it flips back down; and so on, the ball shuddering inside the paddle. Only bouncing when the ball is moving **down** (positive `vy`, since y grows downwards) means each touch bounces exactly once. It's a small rule that matters: *collision isn't an event that happens once, it's a state that lasts several frames*, so code that reacts to it must ask whether it has already reacted.
 
-**The autopilot.** A test run can't hold the arrow keys at the right moments, so `--hold auto` steers for it: if the ball is left of the paddle's middle (more than 10 pixels left of `paddle_x + 50`), move left; if right of it, move right; otherwise stay. It's a simple rule, and it's enough to keep the ball in play.
+**The autopilot.** A test run can't hold the arrow keys at the right moments, so `--hold auto` steers for it: if the ball is left of the paddle's middle (more than 10 pixels left of `paddle_x + 50`), move left; if right of it, move right; otherwise stay. It's a simple rule, and it's enough to keep the ball in play. Why `paddle_x + 50`? `paddle_x` is the paddle's left edge and the paddle is 100 wide, so its middle is 50 further on; the code compares the ball with `paddle_x + 40` and `paddle_x + 60`, 10 pixels either side of that. Why not move whenever the ball isn't exactly at the middle? A paddle moving 7 pixels a frame would overshoot by a few pixels, then move back and overshoot the other way, wobbling forever. The 20-pixel **dead zone** in the middle, where it stays still, stops that.
 
 ```check
 run ".venv/Scripts/python breakout.py --test-run 600 --hold auto" stdout="inside=True" label="with the autopilot, the ball is still in play after 10 seconds" -- Bounce when ball.colliderect(paddle) and ball_vy > 0.
@@ -628,6 +834,8 @@ if test_frames is not None:
 
 `--lag-at 40` makes frame 40 of a test run that half-second frame, so the effect can be reproduced exactly, on any computer, as often as needed. **Reproduce** is step 2 of the debugging method from lesson 0.3, and this is how it's done for bugs that depend on timing: make the timing an input.
 
+In the code, `elif frames == lag_at:` is checked only in a test run. `frames` counts the passes already finished, so it's 40 at the start of the 41st pass: "frame 40" counts from 0, like a list index. When there's no `--lag-at`, `lag_at` is `None`, and `frames == None` is simply `False` every time. `==` can compare a number with `None`; it's `>`, `<`, `>=` and `<=` that can't (lesson 1.1's `TypeError`).
+
 Run it:
 
 ```powershell
@@ -665,7 +873,7 @@ for dt in [1 / 60, 0.5, 1 / 60, 1 / 60, 1 / 60]:
     print(f"dt={dt:.3f}  y={y:6.1f}  vy={vy:+.0f}")
 ```
 
-Run it in the terminal with `python trace_wall.py`. Then open it in the editor and press **🔬 Trace in CodeLens** above it. CodeLens runs the program one line at a time and shows every variable after each line; use its step buttons to move forwards and backwards. Watch `y` and `vy` from the slow frame on.
+Its `print` uses three **format specifications** after the colons: `{dt:.3f}` shows 3 decimal places; `{y:6.1f}` shows 1 decimal place and pads the number to at least 6 characters wide, so the columns line up (that's why `-40.0` prints as ` -40.0`, with a space in front); and `{vy:+.0f}` shows no decimal places and always a sign, `+240` or `-240`. Run it in the terminal with `python trace_wall.py`. Then open it in the editor and press **🔬 Trace in CodeLens** above it. CodeLens runs the program one line at a time and shows every variable after each line; use its step buttons to move forwards and backwards. Watch `y` and `vy` from the slow frame on.
 
 ```predict
 question: After the slow frame (the second), what does `vy` do on each of the next three frames?
@@ -737,6 +945,8 @@ Now **form a hypothesis** from that evidence, before changing anything. What is 
 | `.venv\Scripts\python breakout.py --test-run 600 --hold auto` | `lives=3 inside=True` |
 
 The fix must work for all three walls, not just the top one: a slow frame at frame 78 puts the ball past a side wall.
+
+One built-in function you may want: `abs(x)` is the size of a number without its sign, so `abs(-240)` and `abs(240)` are both `240`. That makes `abs(v)` always positive and `-abs(v)` always negative, whatever `v` was.
 
 Try it for about 15 minutes before taking a hint. This is a real bug in a real kind of code; finding it yourself is worth the time.
 
@@ -913,7 +1123,7 @@ ball hits the middle:      (320 - 320) / 50 =  0.0  →  ball_vx = 0            
 ball hits the right end:   (370 - 320) / 50 =  1.0  →  ball_vx = 240                       (sharply right)
 ```
 
-(The ball can overlap the paddle's very end with its centre slightly past it, so `offset` can be a little beyond ±1.) Dividing by the half-width turns a distance in pixels into a number from −1 to 1 that doesn't depend on the paddle's size: a **normalised** value. The `0.8` keeps the ball from ever going completely sideways.
+(The ball can overlap the paddle's very end with its centre slightly past it, so `offset` can be a little beyond ±1.) Dividing by the half-width turns a distance in pixels into a number from −1 to 1 that doesn't depend on the paddle's size: a **normalised** value. The `0.8` limits how sharply the ball can be steered. At the very end of the paddle, `ball_vx` is 300 × 0.8 = 240, the same size as `ball_vy`'s 240, so the steepest bounce is a perfect diagonal, 45°. Without the `0.8` it would be 300 across for every 240 up: a flatter path that takes longer to travel between the paddle and the bricks, and is harder to play.
 
 One honest flaw: the ball's *speed* now changes. `ball_vy` keeps its size while `ball_vx` changes, so a ball sent off at an angle is faster than one sent straight up (√(240² + 240²) ≈ 339 against 240). Many Breakout games have that quirk; it's added to the list for lesson 1.6.
 

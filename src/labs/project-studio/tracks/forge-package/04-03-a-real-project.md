@@ -414,6 +414,8 @@ contains breakout/app.py "def run() -> None:"
 
 **Build:** `python -m breakout` starts through `run` too.
 
+`__main__.py` calls `run()` instead of `main(sys.argv[1:])`: the same function the `breakout` command will call, so both ways of starting the game go through one door, and anything `run` does at startup happens for both.
+
 ```python file=breakout/__main__.py
 from breakout.app import run
 
@@ -426,7 +428,77 @@ run ".venv/Scripts/python -m breakout --test-run 600 --hold auto" stdout="frames
 
 ## One file for the whole project
 
-**Build:** `pyproject.toml`, the standard file that describes a Python project and holds every tool's settings.
+**Build:** `pyproject.toml`, the standard file that describes a Python project, starting with what the project is and how it's built.
+
+A TOML file (lesson 3.6) is divided into **tables**, each started by a `[name]` heading; dotted names like `[tool.ruff]` are tables inside tables. Create `pyproject.toml` with three:
+
+```toml file=pyproject.toml
+[project]
+name = "breakout"
+version = "0.1.0"
+description = "Breakout, built through the Forge series."
+requires-python = ">=3.12"
+dependencies = ["pygame-ce==2.5.8"]
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["breakout"]
+```
+
+**Understand: the parts.**
+
+- **`[project]`** describes the project for every Python tool, in a format defined by the Python packaging standards: its `name`, its `version`, a one-line `description`, which Pythons it supports, and the packages it needs to **run**. `requires-python = ">=3.12"` means "3.12 or newer": `>=` allows any version from that one up, where `==`, used in `requirements.txt`, pins exactly one. `dependencies` lists only pygame-ce: pytest, pyright and ruff are needed to *develop* the game, not to play it, so they aren't listed here.
+- **`[build-system]`** says which tool turns this folder into an installable package: **setuptools**, one of several **build backends**, at version 80 or newer. pip reads this table first, installs setuptools in a temporary environment, and asks it to do the building. `build-backend` names the module inside setuptools that pip calls to build: `setuptools.build_meta`.
+- **`[tool.setuptools]`** tells setuptools which package to include: `breakout`. Left to itself, setuptools would try to discover packages by looking through the folder, and could pick up `tests` or the Chapter 0 scripts; saying exactly which one avoids surprises.
+
+pygame-ce is now written down in two places: here, and in `requirements.txt`. They do different jobs. `requirements.txt` is how *this* development environment is built, with every tool at an exact version; `pyproject.toml`'s `dependencies` is what anyone installing the game needs to run it. The next step connects them.
+
+A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 51 is about releases and what changing it means.
+
+```check
+file pyproject.toml
+contains pyproject.toml "[build-system]"
+```
+
+## A command for the game
+
+**Build:** a table that turns the game into a command you can type, once it's installed.
+
+Add it after `[project]`:
+
+```toml file=pyproject.toml
+[project]
+name = "breakout"
+version = "0.1.0"
+description = "Breakout, built through the Forge series."
+requires-python = ">=3.12"
+dependencies = ["pygame-ce==2.5.8"]
+
+[project.scripts]
+breakout = "breakout.app:run"
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["breakout"]
+```
+
+**Understand.** `[project.scripts]` declares a **command**: installing the project will create a program named `breakout`. Its value, `"breakout.app:run"`, has two parts either side of the colon: the **module** to import, `breakout.app`, and the **function** in it to call, `run`. So typing `breakout` will import `breakout.app` and call `run()`. A command declared like this is called an **entry point**. It doesn't exist yet: installing the project, in the next step, creates it.
+
+```check
+contains pyproject.toml "breakout = \"breakout.app:run\""
+```
+
+## Every tool's settings in one file
+
+**Build:** move the settings of pytest, ruff and pyright into `pyproject.toml`, and delete the three files they came from.
+
+Each tool looks for its own table in `pyproject.toml`, under `[tool.<name>]`. Add the three, holding exactly the settings from `pytest.ini`, `ruff.toml` and `pyrightconfig.json`:
 
 ```toml file=pyproject.toml
 [project]
@@ -464,18 +536,11 @@ Then delete the three settings files it replaces, telling Git:
 git rm pytest.ini ruff.toml pyrightconfig.json
 ```
 
-**Understand: the parts.** A TOML file (lesson 3.6) is divided into **tables**, each started by a `[name]` heading; dotted names like `[tool.ruff]` are tables inside tables.
+**Understand.** `[tool.pytest.ini_options]`, `[tool.ruff]` and `[tool.pyright]` are the old files' settings, moved into one place, so one file describes the whole project. `testpaths = ["tests"]` tells pytest where the tests are, so it no longer searches every folder in the project.
 
-- **`[project]`** describes the project for every Python tool, in a format defined by the Python packaging standards: its `name`, its `version`, a one-line `description`, which Pythons it supports (`requires-python`), and the packages it needs to **run** (`dependencies`): only pygame-ce. pytest, pyright and ruff are needed to *develop* it, not to play it, so they aren't listed here.
-- **`[project.scripts]`** declares a **command**: installing the project creates a program named `breakout` that calls `run` in the module `breakout.app`. This is called an **entry point**.
-- **`[build-system]`** says which tool turns this folder into an installable package: **setuptools**, one of several **build backends**. pip reads this table first, installs setuptools in a temporary environment, and lets it do the building.
-- **`[tool.setuptools]`** tells setuptools which package to include: `breakout`, and not `tests` or the Chapter 0 scripts.
-- **`[tool.pytest.ini_options]`**, **`[tool.ruff]`** and **`[tool.pyright]`** are the settings from the three deleted files, moved into one place. Each tool looks for its own table here. `testpaths = ["tests"]` tells pytest where the tests are, so it no longer searches every folder in the project. `pythonpath` isn't needed any more: the next step installs the package.
-
-A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 39 is about releases and what changing it means.
+One setting doesn't move: `pytest.ini`'s `pythonpath = .`, which let the tests import `breakout` from the project folder. Without it, the tests can't find the game until the next step installs it, so don't run them until then.
 
 ```check
-file pyproject.toml
 missing pytest.ini -- git rm pytest.ini ruff.toml pyrightconfig.json: their settings are in pyproject.toml now.
 missing ruff.toml
 missing pyrightconfig.json
@@ -537,7 +602,13 @@ And anyone who clones this project and runs `pip install -r requirements.txt` ge
 
 **One more generated thing.** Building the editable install also wrote a folder, `breakout.egg-info`, into the project: the package's **metadata** (its name, version and dependencies, read from `pyproject.toml`), in the form setuptools uses. Like `.venv` and `__pycache__`, it's generated from files you write, so it must not be committed (lesson 1.2). Add it to `.gitignore`:
 
-```text
+```text file=.gitignore
+# Generated: rebuilt from requirements.txt with python -m venv .venv
+.venv/
+
+# Generated: Python's compiled bytecode
+__pycache__/
+
 # Generated: package metadata, written by pip install -e .
 *.egg-info/
 ```
@@ -618,7 +689,8 @@ options:
 **Understand.** `argparse.ArgumentParser` is a **declarative** parser: instead of writing code that searches the list of words, you **declare** each option and what it accepts, and the parser does the searching, checking and error messages.
 
 - `add_argument("--test-run", type=int, metavar="FRAMES", help=...)`: an option that takes one value; `type=int` converts the text with `int(...)`, and if that fails, reports it. `metavar` is the placeholder shown in the usage line; `help` is its line in `--help`.
-- `add_argument("--hold", choices=[...], default="none", ...)`: the value must be one of the choices, or it's an error; if the option isn't given, it's `"none"`.
+- `argparse.ArgumentParser(prog="breakout", description=...)`: `prog` is the program's name in the usage line and the error messages (`usage: breakout ...`); without it, argparse would use the name of whatever was run, which differs between `python -m breakout` and `breakout`. `description` is the paragraph `--help` shows under the usage line.
+- `add_argument("--hold", choices=[...], default="none", ...)`: the value must be one of the choices, or it's an error; if the option isn't given, it's `"none"`. argparse only ever hands back text, so the choices and the default are the enum's *values*, the strings; `Hold(options.hold)` then turns the string into the member (lesson 3.4's lookup by value).
 - `parse_args(args)` returns a **namespace**: an object with one attribute per option, named after it with the dashes turned into underscores (`--test-run` becomes `options.test_run`), and `None` for options not given without a default.
 - **On an error**, it prints the usage line and a message to **standard error** (the separate output channel for errors, lesson 0.1), and calls `sys.exit(2)`, the "used wrong" code from lesson 0.1:
 
@@ -626,6 +698,17 @@ options:
 breakout: error: argument --test-run: invalid int value: 'ten'
 breakout: error: argument --hold: invalid choice: 'sideways' (choose from none, left, right, auto)
 breakout: error: argument --lag-at: expected one argument
+```
+
+`make_parser()` builds the parser and returns it, and `parse_args` uses it with `make_parser().parse_args(args)`: the call makes a parser, then calls that parser's own `parse_args` method on the arguments. Keeping the building in its own function means it can be used on its own too, for instance to print the help.
+
+```predict
+question: The game is started with no `--hold`. What is `options.hold` after `parse_args`?
+choice: None
+choice: "none"
+choice: Hold.NONE
+answer: "none"
+explain: An option that isn't given gets its `default`, and the default is the string `"none"`: argparse deals only in text. `None` is what an option without a default gets. `Hold.NONE` only appears one line later, when `Hold(options.hold)` looks the member up by its value.
 ```
 
 `-h` and `--help` come for free. `number_after` and the `USAGE` constant are gone: thirty lines of hand-written checking replaced by four declarations, with better messages.
@@ -821,7 +904,7 @@ Make `--test-run` accept only whole numbers of at least 1:
 | `breakout --test-run ten` | `... invalid positive_int value: 'ten'` | 2 |
 | `breakout --test-run 3` | `frames=3 ...` | 0 |
 
-`type=` doesn't have to be `int`: it can be **any function** that takes the text and returns the value, or raises an exception if the text is unacceptable. `argparse` catches `ValueError` (and reports *invalid … value*, using the function's name) and `argparse.ArgumentTypeError` (and reports the exception's own message).
+`type=` doesn't have to be `int`: it can be **any function**, passed by its name with no brackets, `type=positive_int`, because the name of a function on its own is a value, the function itself, which argparse calls later on each piece of text. The function takes the text and returns the value, or raises an exception if the text is unacceptable. `argparse` catches `ValueError` (and reports *invalid … value*, using the function's name) and `argparse.ArgumentTypeError` (and reports the exception's own message).
 
 Write the function, named `positive_int`, test first: two tests in `tests/test_arguments.py`, `test_a_negative_frame_count_is_a_usage_error` and `test_zero_frames_is_a_usage_error`. Commit with a message that mentions the **command line**.
 

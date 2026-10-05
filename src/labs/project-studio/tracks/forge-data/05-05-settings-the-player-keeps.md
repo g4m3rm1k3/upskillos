@@ -133,27 +133,338 @@ serve = "w"
 Python reads TOML with `tomllib`, in the standard library since Python 3.11:
 
 ```powershell
-.venv\Scripts\python -c "import tomllib; print(tomllib.load(open('examples/left-hand.toml', 'rb')))"
+.venv\Scripts\python -c "import tomllib; from pathlib import Path; print(tomllib.loads(Path('examples/left-hand.toml').read_text(encoding='utf-8')))"
 ```
 
 ```text
 {'level': '../breakout/levels/castle.json', 'controls': {'left': 'a', 'right': 'd', 'serve': 'w'}}
 ```
 
-A dict, with the table as a dict inside it. `tomllib` only **reads** TOML; Python has no standard way to write it, which fits: settings files are written by people.
+A dict, with the table as a dict inside it. `tomllib.loads` ("load string") reads TOML from text, like `json.loads` in lesson 5.3, and `read_text(encoding="utf-8")` gets the text with the encoding said out loud.
+
+You'll also see `tomllib.load(open(path, "rb"))`, which reads straight from an open file. The file must be opened in **binary** mode, `"rb"` (**r**ead, **b**inary): Python then hands over raw **bytes**, the numbers stored in the file, without decoding them, and `tomllib` decodes them as UTF-8 itself, because the TOML standard says a TOML file is always UTF-8. Both give the same dict; this series uses `loads`, so every file it reads names its encoding in the same place.
+
+`tomllib` only **reads** TOML; Python has no standard way to write it, which fits: settings files are written by people.
 
 **Which format when?** JSON for data programs write and read (Part 3's editor will save scenes as JSON). TOML for configuration people edit. You'll also meet **YAML**, used by many tools for configuration; it's more flexible than TOML and has more ways to surprise you, which is why Python chose TOML for `pyproject.toml`.
 
 ```check
 file examples/left-hand.toml
-run ".venv/Scripts/python -c \"import tomllib; print(tomllib.load(open('examples/left-hand.toml', 'rb'))['controls'])\"" stdout="{'left': 'a', 'right': 'd', 'serve': 'w'}" label="the example file is valid TOML with a controls table"
+run ".venv/Scripts/python -c \"import tomllib; from pathlib import Path; print(tomllib.loads(Path('examples/left-hand.toml').read_text(encoding='utf-8'))['controls'])\"" stdout="{'left': 'a', 'right': 'd', 'serve': 'w'}" label="the example file is valid TOML with a controls table"
 ```
 
-## The config module
+## Key names a player can write
 
-**Build:** a module that reads and checks a settings file.
+**Build:** the start of a module for settings: the keys a player may choose, by name.
+
+A settings file will say `left = "a"`. pygame's key events don't carry names, they carry numbers: `pygame.K_a`, `pygame.K_LEFT`. So the first thing the module needs is a dictionary from the names a person writes to the numbers pygame uses.
 
 Create `breakout/config.py`:
+
+```python file=breakout/config.py
+"""Settings a player keeps in a file: the level to start with, and which keys do what."""
+
+import pygame
+
+KEYS = {
+    "left": pygame.K_LEFT,
+    "right": pygame.K_RIGHT,
+    "up": pygame.K_UP,
+    "down": pygame.K_DOWN,
+    "space": pygame.K_SPACE,
+    "return": pygame.K_RETURN,
+} | {chr(code): code for code in range(pygame.K_a, pygame.K_z + 1)}
+```
+
+**Understand.** The first six items are written out: a name, and pygame's number for it. The second half is a **dict comprehension**, `{key: value for ...}`, the dict version of a list comprehension. pygame numbers the letter keys `K_a` to `K_z` with consecutive numbers, the character codes of `a` to `z`, and `chr(code)` turns a code back into its character. Traced:
+
+```text
+range(pygame.K_a, pygame.K_z + 1)  =  range(97, 123)      +1, because range stops before its end
+code  97  →  chr(97)  = "a"   →  "a": 97
+code  98  →  chr(98)  = "b"   →  "b": 98
+...
+code 122  →  chr(122) = "z"   →  "z": 122
+```
+
+`|` between two dicts makes a new dict with the items of both: 6 named keys and 26 letters.
+
+```powershell
+.venv\Scripts\python -c "from breakout import config; print(len(config.KEYS), config.KEYS['a'], config.KEYS['z'], config.KEYS['left'])"
+```
+
+```text
+32 97 122 1073741904
+```
+
+The arrow keys have no character, so pygame gives them numbers far above any character code. Nobody needs to remember them: that's what the names are for.
+
+Why a list of allowed keys and not every key pygame knows? Because a game should accept what it has tested, and because the message for a wrong key can then say what *is* allowed.
+
+```check
+run ".venv/Scripts/python -c \"from breakout import config; print(len(config.KEYS), config.KEYS['a'], config.KEYS['z'])\"" stdout="32 97 122" label="32 key names: six named keys and the letters a to z"
+```
+
+## Actions and their keys
+
+**Build:** the game's actions, each with a key, checked against `KEYS`.
+
+The game shouldn't ask "is the left arrow pressed?" but "is *left* pressed?", and let the settings say which key that is. A model with one field per action:
+
+```python file=breakout/config.py
+"""Settings a player keeps in a file: the level to start with, and which keys do what."""
+
+from typing import Annotated
+
+import pygame
+from pydantic import AfterValidator, BaseModel, ConfigDict
+
+KEYS = {
+    "left": pygame.K_LEFT,
+    "right": pygame.K_RIGHT,
+    "up": pygame.K_UP,
+    "down": pygame.K_DOWN,
+    "space": pygame.K_SPACE,
+    "return": pygame.K_RETURN,
+} | {chr(code): code for code in range(pygame.K_a, pygame.K_z + 1)}
+
+
+def check_key(name: str) -> str:
+    if name not in KEYS:
+        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+    return name
+
+
+Key = Annotated[str, AfterValidator(check_key)]
+
+
+class Controls(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    left: Key = "left"
+    right: Key = "right"
+    serve: Key = "space"
+    pause: Key = "p"
+```
+
+**Understand.** `check_key` is a validator like `check_row` in lesson 5.4: it gets a `str` that pydantic has already checked, raises `ValueError` if the name isn't in `KEYS`, and returns it if it is. `Key = Annotated[str, AfterValidator(check_key)]` names that rule, as `Row` did.
+
+**`Controls`** has a field for each **action**, and each field's type is `Key`. Every field has a **default** after `=`, as in a dataclass, so a model can be made with none, some or all of them given. The config is lesson 5.4's: strict, no unknown fields, frozen. This is Godot's **InputMap** in miniature: the game asks about an action, and the map says which key it is today.
+
+```powershell
+.venv\Scripts\python -c "from breakout import config; print(config.Controls()); print(config.Controls(left='a'))"
+```
+
+```text
+left='left' right='right' serve='space' pause='p'
+left='a' right='right' serve='space' pause='p'
+```
+
+Given only `left`, the other three keep their defaults. A name that isn't a key, and an action that doesn't exist, are both refused:
+
+```powershell
+.venv\Scripts\python -c "from breakout import config; config.Controls(left='banana')"
+.venv\Scripts\python -c "from breakout import config; config.Controls(jump='w')"
+```
+
+```text
+left
+  Value error, unknown key 'banana': use a letter, or left, right, up, down, space or return [type=value_error, ...]
+jump
+  Extra inputs are not permitted [type=extra_forbidden, ...]
+```
+
+```check
+contains breakout/config.py "class Controls(BaseModel):"
+run ".venv/Scripts/python -c \"from breakout import config; print(config.Controls(left='a'))\"" stdout="left='a' right='right' serve='space' pause='p'" label="one action changed, the others keep their defaults"
+run ".venv/Scripts/python -c \"from breakout import config; config.Controls(left='banana')\"" exit=1 stderr="unknown key 'banana'" label="a key that doesn't exist is refused"
+```
+
+## The whole file, as a model
+
+**Build:** a model for the whole settings file: a level, and the controls.
+
+```python file=breakout/config.py
+"""Settings a player keeps in a file: the level to start with, and which keys do what."""
+
+from pathlib import Path
+from typing import Annotated
+
+import pygame
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+KEYS = {
+    "left": pygame.K_LEFT,
+    "right": pygame.K_RIGHT,
+    "up": pygame.K_UP,
+    "down": pygame.K_DOWN,
+    "space": pygame.K_SPACE,
+    "return": pygame.K_RETURN,
+} | {chr(code): code for code in range(pygame.K_a, pygame.K_z + 1)}
+
+
+def check_key(name: str) -> str:
+    if name not in KEYS:
+        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+    return name
+
+
+Key = Annotated[str, AfterValidator(check_key)]
+
+
+class Controls(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    left: Key = "left"
+    right: Key = "right"
+    serve: Key = "space"
+    pause: Key = "p"
+
+
+class Config(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    level: Path | None = Field(default=None, strict=False)
+    controls: Controls = Controls()
+```
+
+**Understand.** `controls: Controls = Controls()` is a **nested model**: a field whose type is another model. In the file it will be the `[controls]` table, and pydantic checks it with the `Controls` rules. Its default, `Controls()`, is one `Controls` with every action's default key, made once, when the class is defined, and used by every `Config` that doesn't give its own. Sharing one object is safe only because `Controls` is frozen: nobody can change the shared one.
+
+So there are three ways a file can treat the controls, and two of them end up the same:
+
+```text
+no [controls] table      →  the field is missing          →  the default, Controls()
+an empty [controls]      →  {} is checked as a Controls    →  every field defaulted: the same as Controls()
+[controls] left = "a"    →  {"left": "a"}                  →  left is "a", the rest defaulted
+```
+
+`level` is a `Path`, or `None` when the file doesn't name one. TOML has no path type, only strings, and strict mode would refuse a string where a `Path` is wanted. `Field(default=None, strict=False)` gives the default and relaxes strictness for this field alone, so a string is turned into a `Path`.
+
+`Config.model_validate(data)` checks a Python **dict** against the model, as lesson 5.4's `model_validate_json` did with JSON text. Which is exactly what `tomllib` will give it:
+
+```powershell
+.venv\Scripts\python -c "from breakout import config; print(repr(config.Config.model_validate({'level': 'castle.json', 'controls': {'left': 'a'}})))"
+```
+
+```text
+Config(level=WindowsPath('castle.json'), controls=Controls(left='a', right='right', serve='space', pause='p'))
+```
+
+`repr` shows the types: the string became a `WindowsPath` (a `Path`, on Windows), and the inner dict became a `Controls`.
+
+```check
+run ".venv/Scripts/python -c \"from breakout import config; print(repr(config.Config.model_validate({'level': 'castle.json', 'controls': {'left': 'a'}})))\"" stdout="controls=Controls(left='a', right='right'" label="the inner table becomes a Controls"
+run ".venv/Scripts/python -c \"from breakout import config; print(config.Config.model_validate({'controls': {}}) == config.Config())\"" stdout="True" label="an empty controls table is the same as none"
+```
+
+## Reading the file
+
+**Build:** read a settings file, and turn every problem in it into one `ConfigError`.
+
+```python file=breakout/config.py
+"""Settings a player keeps in a file: the level to start with, and which keys do what."""
+
+import tomllib
+from pathlib import Path
+from typing import Annotated
+
+import pygame
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError
+from pydantic_core import ErrorDetails
+
+KEYS = {
+    "left": pygame.K_LEFT,
+    "right": pygame.K_RIGHT,
+    "up": pygame.K_UP,
+    "down": pygame.K_DOWN,
+    "space": pygame.K_SPACE,
+    "return": pygame.K_RETURN,
+} | {chr(code): code for code in range(pygame.K_a, pygame.K_z + 1)}
+
+
+class ConfigError(ValueError):
+    """A settings file that can't be used, with every problem found in it."""
+
+    def __init__(self, problems: list[str]) -> None:
+        super().__init__("; ".join(problems))
+        self.problems = problems
+
+
+def check_key(name: str) -> str:
+    if name not in KEYS:
+        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+    return name
+
+
+Key = Annotated[str, AfterValidator(check_key)]
+
+
+class Controls(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    left: Key = "left"
+    right: Key = "right"
+    serve: Key = "space"
+    pause: Key = "p"
+
+
+class Config(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    level: Path | None = Field(default=None, strict=False)
+    controls: Controls = Controls()
+
+
+def describe(error: ErrorDetails) -> str:
+    where = ".".join(str(part) for part in error["loc"]) or "the file"
+    return f"{where}: {error['msg'].removeprefix('Value error, ')}"
+
+
+def load_config(path: Path) -> Config:
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8-sig"))
+    except tomllib.TOMLDecodeError as error:
+        raise ConfigError([f"not valid TOML: {error}"]) from None
+    try:
+        return Config.model_validate(data)
+    except ValidationError as error:
+        raise ConfigError([describe(problem) for problem in error.errors()]) from None
+```
+
+**Understand.** `ConfigError` is lesson 5.4's `LevelError` again: a `ValueError` that keeps the list of problems.
+
+`load_config` can fail in two different ways, so it has two `try` blocks. First, the text might not be TOML at all: `tomllib.loads` raises `TOMLDecodeError`, whose message says where (`Invalid value (at line 1, column 9)`). Then the TOML might not be good settings: `model_validate` raises `ValidationError`, with every problem. `encoding="utf-8-sig"` accepts a file with or without a byte order mark, as levels do since lesson 5.2.
+
+**`describe`** is like `describe` in `level.py`, but joins a location with dots: `controls.left`. That's how TOML itself names a key inside a table (`controls.left = "a"` is valid TOML), so it's what a person editing the file will recognise. Two functions that look alike but serve different formats, and will change for different reasons, aren't the duplication the "don't repeat yourself" rule is about. That rule is about one piece of *knowledge* written in two places.
+
+`pyproject.toml` is valid TOML, but not a settings file:
+
+```powershell
+.venv\Scripts\python -c "from pathlib import Path; from breakout import config; config.load_config(Path('pyproject.toml'))"
+```
+
+```text
+breakout.config.ConfigError: project: Extra inputs are not permitted; build-system: Extra inputs are not permitted; tool: Extra inputs are not permitted
+```
+
+Now load the example, and ask whether the level it names exists:
+
+```powershell
+.venv\Scripts\python -c "from pathlib import Path; from breakout import config; c = config.load_config(Path('examples/left-hand.toml')); print(repr(c.level), c.level.exists())"
+```
+
+```text
+WindowsPath('../breakout/levels/castle.json') False
+```
+
+It doesn't. `..` means "the folder above", and a relative path is found from the **current** folder: the project folder, whose parent has no `breakout\levels`. The file meant "above *my* folder", `examples`. That's lesson 0.1's hidden input again, and the next step fixes it.
+
+```check
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout import config; config.load_config(Path('pyproject.toml'))\"" exit=1 stderr="project: Extra inputs are not permitted" label="a TOML file that isn't settings is refused, every problem named"
+```
+
+## Paths from the file's folder
+
+**Build:** a relative `level` in a settings file is found from the settings file's folder.
 
 ```python file=breakout/config.py
 """Settings a player keeps in a file: the level to start with, and which keys do what."""
@@ -228,17 +539,19 @@ def load_config(path: Path) -> Config:
     return config.model_copy(update={"level": path.parent / config.level})
 ```
 
-**Understand, from the top.**
+**Understand.** The model is checked into `config` first. If it names no level, there's nothing to fix. Otherwise the level path is joined onto the settings file's folder, `path.parent`. Traced for the example:
 
-**`KEYS`** maps every key name a player may use to pygame's number for that key. The second half is a **dict comprehension**, `{key: value for ...}`, the dict version of a list comprehension: pygame numbers the letter keys `K_a` to `K_z` with consecutive numbers (they're the character codes of `a` to `z`), and `chr(code)` turns a code into its character, so it makes `{"a": 97, "b": 98, ...}`. `|` between two dicts makes a new dict with the items of both. Why a list of allowed keys and not every key pygame knows? Because a game should accept what it has tested, and because the message for a wrong key can then say what *is* allowed.
+```text
+path                        examples/left-hand.toml
+path.parent                 examples
+config.level                ../breakout/levels/castle.json
+path.parent / config.level  examples/../breakout/levels/castle.json
+                            = into examples, up out of it, into breakout/levels: the castle
+```
 
-**`Controls`** is the game's **actions** and the key for each. Every field has a **default**, so a settings file only needs to mention what it changes: a file with just `left = "a"` keeps the other three. Each field's type is `Key`, a `str` that `check_key` checks is in `KEYS`. This is Godot's **InputMap** in miniature: the game asks "is *left* pressed?", and the map says which key that is today.
+That works from whichever folder the game is started in, because it only depends on where the settings file is.
 
-**`Config`** is the whole file. `controls: Controls = Controls()` is a **nested model**: in the file it's the `[controls]` table, and pydantic checks it with the `Controls` rules. `level` is a `Path`, but TOML has no path type, only strings, and strict mode would refuse a string where a `Path` is wanted. `Field(default=None, strict=False)` relaxes strictness for this field alone, so a string is turned into a `Path`.
-
-**`describe`** is like `describe` in `level.py`, but joins a location with dots: `controls.left`. That's how TOML itself names a key inside a table (`controls.left = "a"` is valid TOML), so it's what a person editing the file will recognise. Two functions that look alike but serve different formats, and will change for different reasons, aren't the duplication the "don't repeat yourself" rule is about. That rule is about one piece of *knowledge* written in two places.
-
-**`load_config`**: `tomllib.loads` reads the text as TOML and raises `TOMLDecodeError` with a line and column if it isn't. `Config.model_validate(data)` checks a Python dict against the model; lesson 5.4's `model_validate_json` did the same from JSON text. Then one more step: a relative `level` path is taken from the **settings file's folder**, not the current folder. The example says `../breakout/levels/castle.json` because the file is in `examples`, and it works from whichever folder the game is started in: lesson 0.1's hidden input again. A frozen model can't be changed, so `model_copy(update={...})` makes a copy with `level` replaced.
+`config` is frozen, so its `level` can't be changed. **`model_copy(update={...})`** makes a new model with the same fields, except those named in `update`; the original is left as it was. pydantic doesn't check the `update` values again, which is fine here: a `Path` joined to a `Path` is a `Path`.
 
 ```predict
 question: What is `Path("C:/games/examples") / "C:/levels/castle.json"`?
@@ -250,8 +563,8 @@ explain: When the right-hand side of `/` is an absolute path, pathlib's result i
 ```
 
 ```check
-contains breakout/config.py "class Controls(BaseModel):"
-run ".venv/Scripts/python -c \"from pathlib import Path; from breakout import config; c = config.load_config(Path('examples/left-hand.toml')); print(c.level.name, c.controls.left, c.controls.pause)\"" stdout="castle.json a p" label="the example loads: the castle, A to go left, and P still pauses"
+contains breakout/config.py "model_copy(update="
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout import config; c = config.load_config(Path('examples/left-hand.toml')); print(c.level.name, c.level.exists(), c.controls.left, c.controls.pause)\"" stdout="castle.json True a p" label="the example loads: the castle (found this time), A to go left, and P still pauses"
 ```
 
 ## The config stands alone
@@ -485,7 +798,18 @@ level_file = settings.level or config.level or LEVELS / "classic.json"
 
 `or` gives the first value that's set: `None` counts as false, so it's skipped. The command line is a choice for *this* run, so it beats the file; the file is the player's standing choice, so it beats the game's default. So a player whose file says "castle" can still try the classic wall once with `--level`, without editing the file.
 
-**Controls.** Every key the game reacts to now goes through `KEYS[controls.<action>]`: the action's key name from the settings, then pygame's number for it. Escape isn't configurable, on purpose: however wrong someone's settings are, there's always a way out.
+**Which settings?** `load_config(settings.config) if settings.config else Config()` is a conditional expression (lesson 5.2): with `--config`, read that file; without it, `settings.config` is `None`, which counts as false, and `Config()` gives every default. Either way, `config` is a `Config`, and the rest of `main` doesn't care which.
+
+**Controls.** Every key the game reacts to now goes through `KEYS[controls.<action>]`: the action's key name from the settings, then pygame's number for it. Traced for steering left, with and without the example file:
+
+```text
+                     --config examples/left-hand.toml     no --config
+controls.left        "a"                                  "left"
+KEYS[controls.left]  97 (pygame.K_a)                      1073741904 (pygame.K_LEFT)
+keys[...]            True while A is held                 True while the left arrow is held
+```
+
+The loop is the same code for both players; only the data differs. Escape isn't configurable, on purpose: however wrong someone's settings are, there's always a way out.
 
 A bad settings file stops the game before it starts, with the same kind of message as a bad level, and exit code 1:
 
@@ -508,7 +832,63 @@ lacks breakout/app.py "pygame.K_LEFT" -- Steering uses the settings now: KEYS[co
 
 ## Tests for the settings
 
-**Build:** tests for the config module.
+**Build:** tests for what a good settings file gives.
+
+```python file=tests/test_config.py
+from pathlib import Path
+
+from breakout import config
+
+
+def write_config(folder: Path, text: str) -> Path:
+    path = folder / "settings.toml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_without_a_file_the_controls_are_the_arrows_space_and_p():
+    assert config.Config() == config.Config(
+        level=None, controls=config.Controls(left="left", right="right", serve="space", pause="p")
+    )
+
+
+def test_a_file_changes_only_what_it_mentions(tmp_path: Path):
+    path = write_config(tmp_path, '[controls]\nleft = "a"\nright = "d"\n')
+    loaded = config.load_config(path)
+    assert loaded.controls == config.Controls(left="a", right="d", serve="space", pause="p")
+    assert loaded.level is None
+
+
+def test_a_level_is_found_from_the_file_s_own_folder(tmp_path: Path):
+    path = write_config(tmp_path, 'level = "levels/castle.json"\n')
+    assert config.load_config(path).level == tmp_path / "levels" / "castle.json"
+
+
+def test_an_empty_file_is_all_defaults(tmp_path: Path):
+    assert config.load_config(write_config(tmp_path, "")) == config.Config()
+```
+
+**Understand.** `write_config` writes a settings file into the test's own temporary folder (`tmp_path`, lesson 5.2), so no test depends on a file in the project or on anyone's real settings.
+
+The tests compare whole models with `==`. Two models are **equal** when they're the same class and every field is equal, like dataclasses; they don't have to be the same object:
+
+```powershell
+.venv\Scripts\python -c "from breakout import config; a = config.Controls(left='a'); b = config.Controls(left='a'); print(a == b, a is b, a == config.Controls())"
+```
+
+```text
+True False False
+```
+
+`a` and `b` are two objects (`is` is false) with the same fields (`==` is true); `Controls()` has a different `left`. So one `assert` checks all four controls at once, and a failure shows both models side by side. `test_a_level_is_found_from_the_file_s_own_folder` pins down the last step's path rule: the file is in `tmp_path`, so its `levels/castle.json` must come back as `tmp_path / "levels" / "castle.json"`.
+
+```check
+run ".venv/Scripts/python -m pytest -q tests/test_config.py" stdout="4 passed"
+```
+
+## Bad settings, every kind
+
+**Build:** one test for every kind of mistake a settings file can have.
 
 ```python file=tests/test_config.py
 from pathlib import Path
@@ -565,7 +945,15 @@ def test_bad_settings_are_refused_with_where_and_why(tmp_path: Path, text: str, 
     assert str(refused.value) == message
 ```
 
-**Understand.** `write_config` writes a settings file into the test's own temporary folder (`tmp_path`, lesson 5.2), so no test depends on a file in the project or on anyone's real settings. `test_a_level_is_found_from_the_file_s_own_folder` pins down the relative-path rule; the parametrised test, one case per kind of mistake, is lesson 5.2's pattern again.
+**Understand.** Lesson 5.2's pattern: a list of `(text, message)` pairs, and one test function that pytest runs once per pair, so five cases make five tests. Each case is a different kind of mistake, and each message says where and why:
+
+```text
+level = \n                     not TOML at all              the TOML error, with line and column
+speed = 2                     a setting that doesn't exist  speed
+[controls] jump = "w"         an action that doesn't exist  controls.jump
+[controls] left = 1           a number, not a key name      controls.left
+[controls] left = "banana"    a name that isn't a key       controls.left, and the keys that are
+```
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_config.py" stdout="9 passed"
@@ -584,7 +972,30 @@ With `left = "p"`, pressing P would steer left **and** pause. The game shouldn't
 | `left = "p"` (pause is still `p`) | `controls: left and pause both use 'p'` |
 | no `[controls]` at all | the defaults, which don't clash |
 
-The rule is about the **whole** set of controls, not one field, so `AfterValidator` on a field can't see enough. pydantic's **`model_validator`** runs a method of the model after every field has been checked; finding out how to write one is part of the exercise (pydantic's documentation calls them "model validators"). Add the first row of the table as a case in `test_bad_settings_are_refused_with_where_and_why`. When all 94 tests pass and every check is clean, commit with a message that mentions **twice**, as in "a key used twice".
+The rule is about the **whole** set of controls, not one field, so `AfterValidator` on a field can't see enough. You need three new pieces, shown here on a model that has nothing to do with Breakout.
+
+```python
+from typing import Self
+
+from pydantic import BaseModel, model_validator
+
+
+class Window(BaseModel):
+    low: int
+    high: int
+
+    @model_validator(mode="after")
+    def low_not_above_high(self) -> Self:
+        if self.low > self.high:
+            raise ValueError(f"low is {self.low}, above high {self.high}")
+        return self
+```
+
+- **`@model_validator(mode="after")`** above a method makes pydantic call it once every field has been checked ("after"), with the finished model as `self`. Like a field validator, it raises `ValueError` to refuse, and returns the model to accept. `Window(low=9, high=5)` is refused with `low is 9, above high 5`; `Window(low=1, high=5)` is made.
+- **`Self`**, from `typing`, means "this class": the method returns a `Window` here, a `Controls` in yours, without naming it.
+- **`model_dump()`** returns a model's fields as a plain dict, in the order they're declared: `Window(low=1, high=5).model_dump()` is `{'low': 1, 'high': 5}`, and `Controls().model_dump()` is `{'left': 'left', 'right': 'right', 'serve': 'space', 'pause': 'p'}`. A dict can be looped over, which a model's fields, written one by one, can't.
+
+A problem raised by a model validator belongs to no single field, so its location is the model's own: inside a `Config`, that's `controls`. Add the first row of the table as a case in `test_bad_settings_are_refused_with_where_and_why`. When all 94 tests pass and every check is clean, commit with a message that mentions **twice**, as in "a key used twice".
 
 ```hints
 nudge: The validator needs every action and its key. Which method gives a model's fields as a dict? And as you go through them, how will you remember which action already used a key?
@@ -611,7 +1022,7 @@ at the end of `Controls`, with `from typing import Annotated, Self` and `model_v
 ```
 
 ```check
-run ".venv/Scripts/python -c \"from breakout import config; config.Controls(left='p')\"" stderr="left and pause both use 'p'" label="a key used for two actions is refused, naming both"
+run ".venv/Scripts/python -c \"from breakout import config; config.Controls(left='p')\"" exit=1 stderr="left and pause both use 'p'" label="a key used for two actions is refused, naming both"
 run ".venv/Scripts/python -c \"from breakout import config; print(config.Controls())\"" stdout="left='left' right='right' serve='space' pause='p'" label="the default controls are still accepted"
 run ".venv/Scripts/python -m pytest -q tests/test_config.py" stdout="10 passed"
 run ".venv/Scripts/python -m pytest -q" stdout="94 passed"
@@ -631,4 +1042,4 @@ git-clean
 - **Actions, not keys**: the game asks about *left*, and the settings say which key that is.
 - **`model_validator`** for rules about several fields at once.
 
-C# programs read settings through `IConfiguration`, from layers added in order (`appsettings.json`, then environment variables, then the command line), with later layers winning, which is this lesson's precedence rule built into the framework; `IOptions<T>` binds a section to a typed class and validates it with the same data annotations as lesson 5.4. Java's Spring Boot does the same with `application.properties` or `application.yml`, `@ConfigurationProperties` classes and `@Validated`, and documents an order in which command-line arguments beat files. Godot keeps project settings in `project.godot` and its input actions in the **InputMap**, which you just built a small version of. Real games also look for a settings file in the player's own folder (on Windows, under `%APPDATA%`) without being told; Chapter 37, which exports the game as a program of its own, does that, once there's an installed game for it to belong to.
+C# programs read settings through `IConfiguration`, from layers added in order (`appsettings.json`, then environment variables, then the command line), with later layers winning, which is this lesson's precedence rule built into the framework; `IOptions<T>` binds a section to a typed class and validates it with the same data annotations as lesson 5.4. Java's Spring Boot does the same with `application.properties` or `application.yml`, `@ConfigurationProperties` classes and `@Validated`, and documents an order in which command-line arguments beat files. Godot keeps project settings in `project.godot` and its input actions in the **InputMap**, which you just built a small version of. Real games also look for a settings file in the player's own folder (on Windows, under `%APPDATA%`) without being told; Chapter 49, which exports the game as a program of its own, does that, once there's an installed game for it to belong to.

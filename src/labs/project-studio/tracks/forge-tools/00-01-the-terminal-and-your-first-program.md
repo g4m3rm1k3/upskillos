@@ -210,7 +210,9 @@ See the list:
 $env:PATH -split ";"
 ```
 
-The shell searches those folders **in order**, and the **first** `python.exe` it finds is the one that runs. `Get-Command` does the same search and tells you which file won. Traced, with a shortened `PATH`:
+`$env:PATH` is how PowerShell reads an environment variable: a `$` in front marks a PowerShell variable, and `env:` says to look among the environment variables. `-split ";"` cuts the text at every `;`, so each folder prints on its own line.
+
+The shell searches those folders **in order**, and the **first** `python.exe` it finds is the one that runs. `Get-Command` does the same search and tells you which file won: `Get-Command python` returns a description of the program it would run, and the brackets let you take one piece of that description, `.Source`, the file's full path. Traced, with a shortened `PATH`:
 
 ```text
 PATH folder                                  python.exe here?
@@ -250,6 +252,8 @@ python hello.py
 Hello from Forge!
 Arguments: ['hello.py']
 ```
+
+`import sys` makes Python's `sys` **module** available to the program. A module is a file of Python code that other code can use by **importing** it, and `sys` comes with Python: it holds information about the running program. After the import, its contents are reached with a dot, like `sys.argv`, the list of words on the command line (the next steps look at it closely).
 
 **Understand: what happens when you press Enter.** Five things, in order:
 
@@ -297,7 +301,7 @@ When a process ends, it gives the shell one whole number, its **exit code**.
 
 > **Exit code**: the number a process returns when it ends. **0 means success.** Any other number means failure, and programs document what their non-zero codes mean.
 
-PowerShell keeps the last program's exit code in a variable named `LASTEXITCODE`. Run `hello.py` again, then look at it:
+PowerShell keeps the last program's exit code in a variable named `LASTEXITCODE`, written `$LASTEXITCODE` (a `$` in front marks a PowerShell variable). Run `hello.py` again, then look at it:
 
 ```powershell
 python hello.py
@@ -334,7 +338,9 @@ ZeroDivisionError: division by zero
 1
 ```
 
-A program can also choose its exit code. `sys.exit(n)` ends the program right there, with exit code `n`. `-c` tells Python to run the text that follows as a program, which is handy for one-liners:
+The traceback goes to a second output channel, **standard error**, which the terminal also shows. Keeping it separate from standard output lets other programs tell a program's real output from its error messages: the checks in this series look at the two separately.
+
+A program can also choose its exit code. `sys.exit(n)` ends the program right there, with exit code `n`. `-c` tells Python to run the text that follows as a program, which is handy for one-liners. Inside it, `;` separates statements, so several fit on one line:
 
 ```powershell
 python -c "import sys; print('quitting'); sys.exit(3)"
@@ -385,7 +391,7 @@ name = sys.argv[1]
 print(f"Hello, {name}!")
 ~~~
 
-Checking for the wrong input first, and leaving early, is called a **guard clause**. Everything after it can assume the input is valid, so the main work isn't buried inside an `if`. `sys.argv[1]` is the first word after the script's name. Running off the end of the file exits with 0.
+`f"Hello, {name}!"` is an **f-string**: the `f` before the opening quote makes Python evaluate whatever is inside each pair of braces and put its text there, so with `name` holding `"Ada"` it becomes `"Hello, Ada!"`. Checking for the wrong input first, and leaving early, is called a **guard clause**. Everything after it can assume the input is valid, so the main work isn't buried inside an `if`. `sys.argv[1]` is the first word after the script's name. Running off the end of the file exits with 0.
 ```
 
 ```check

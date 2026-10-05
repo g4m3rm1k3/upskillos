@@ -258,7 +258,7 @@ choice: Nothing: it's a correct, useful test
 choice: It tests how Paddle stores its position, not what a paddle does
 choice: It tests pygame, not Breakout
 answer: It tests how Paddle stores its position, not what a paddle does
-explain: `_x` is private (lesson 3.4): the leading underscore says it's the class's own business, and pyright had to be told to ignore the rule against reading it, which is a warning sign in itself. If the paddle later stored its centre instead of its left edge, or used an integer, this test would fail even though the paddle still works perfectly. A test should check **behaviour**, what other code can observe through the public interface: `model.Paddle().rect().x == 270`, or `paddle.x`. Tests of internals break when you improve the code, so they discourage improving it.
+explain: `_x` is private (lesson 3.4): the leading underscore says it's the class's own business, and pyright had to be told to ignore the rule against reading it, which is a warning sign in itself: a comment `# pyright: ignore[reportPrivateUsage]` at the end of a line switches off that one named rule, on that line only. If the paddle later stored its centre instead of its left edge, or used an integer, this test would fail even though the paddle still works perfectly. A test should check **behaviour**, what other code can observe through the public interface: `model.Paddle().rect().x == 270`, or `paddle.x`. Tests of internals break when you improve the code, so they discourage improving it.
 ```
 
 ```predict
@@ -306,7 +306,7 @@ In `breakout/model.py`, in `Ball.bounce_off_walls`, change the right-wall condit
         if self.position.x >= WIDTH - BALL_RADIUS:
 ```
 
-Run all the tests. All 56 pass: none of them notices. Now run just the colleague's good test against a similar change at the left wall, `<` to `<=`, and it fails. Put both back with `git restore breakout/model.py`.
+Run all the tests. All 56 pass: none of them notices. Now run just the colleague's good test against a similar change at the left wall, `<` to `<=`: `.venv\Scripts\python -m pytest -q review_these_tests.py -k left_wall`. It fails. Put both back with `git restore breakout/model.py`.
 
 **Understand: equivalence classes and boundaries.** Lesson 2.4 chose one test per **equivalence class**: a group of inputs the code treats the same way. For the left wall there are two classes: past the wall (`x < 6`: bounce) and not past it (`x ≥ 6`: leave alone). The project's tests pick a value well inside each class: x = 3 and x = 100. The mistake of writing `<=` instead of `<` only changes what happens at **exactly** x = 6, the **boundary** between the two classes, so tests that stay away from the boundary can't notice it.
 
@@ -357,11 +357,11 @@ Read it before running it. For each of three mistakes, it:
 
 1. makes a **temporary folder** (`tempfile.TemporaryDirectory`), which Python deletes at the end of the `with` block (lesson 2.4's `with` again: a block that sets something up and is guaranteed to clean up after itself);
 2. copies the game and the tests into it (`shutil.copytree`), so your own files are never touched;
-3. makes the mistake in the copy of `model.py`, with `str.replace`;
-4. runs `tests/test_boundaries.py` against the damaged copy, in that folder, so `import breakout` finds the copy. `-p no:cacheprovider` stops pytest writing its cache folder there;
+3. makes the mistake in the copy of `model.py`: `read_text()` reads the whole file as one string, `str.replace(right, wrong)` swaps the correct line for the mistaken one, and `write_text(...)` writes the result back;
+4. runs `tests/test_boundaries.py` against the damaged copy, in that folder, so `import breakout` finds the copy. Why the copy, when lesson 4.3's editable install makes `import breakout` find your real project from anywhere? Because `-m` puts the current folder, the copy, first on `sys.path`, and Python's normal search through `sys.path` happens **before** the editable install's finder is asked: the finder was added at the end of the list of places Python looks. A `breakout` found on `sys.path` wins. `-p no:cacheprovider` stops pytest writing its cache folder there;
 5. counts the mistake as **caught** if the tests fail (a non-zero exit code), and **missed** if they still pass.
 
-A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 40 uses a full tool for it on the whole project.
+A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 52 uses a full tool for it on the whole project.
 
 ```check
 file check_walls.py -- Click "Create provided check_walls.py" above.

@@ -119,7 +119,11 @@ Then create `breakout/__init__.py`:
 
 > **Module**: one `.py` file, imported by its name. **Package**: a folder of modules that can be imported as a whole, marked by a file named `__init__.py`. Modules inside a package are named with a dot: `breakout.model` is the module `model.py` in the package `breakout`.
 
-When Python imports `breakout` now, the search through `sys.path` (lesson 0.2) finds a **folder** named `breakout` containing `__init__.py`, and that wins: the package is created and `__init__.py` runs, exactly as a module's file runs when it's imported (lesson 2.3). Its first statement is a string, so it's the package's **docstring**, the description tools show for it. Asked from Python:
+When Python imports `breakout` now, the search through `sys.path` (lesson 0.2) finds a **folder** named `breakout` containing `__init__.py`, and imports it as a **package**: the package is created and `__init__.py` runs, exactly as a module's file runs when it's imported (lesson 2.3). Its first statement is a string, so it's the package's **docstring**, the description tools show for it. Ask Python about it:
+
+```powershell
+.venv\Scripts\python -c "import breakout; print(breakout.__file__); print(breakout.__path__); print(breakout.__doc__)"
+```
 
 ```text
 breakout.__file__   C:\Users\you\Documents\forge\breakout\__init__.py
@@ -129,7 +133,7 @@ breakout.__doc__    Breakout: the game built through the Forge series.
 
 `__path__` is what makes a package a package: the folder Python searches for its submodules. `import breakout.model` finds `model.py` there, runs it once, and stores it as an attribute of the package, `breakout.model`.
 
-**Why `git mv`?** Git doesn't really record moves: it records that `breakout.py` disappeared and `breakout/model.py` appeared, and works out afterwards that it was a move because the contents are almost the same. `git mv` moves the file and stages both halves at once, so the move shows up as one change, and `git log --follow breakout/model.py` can still find the file's history from before it moved.
+**Why `git mv`?** Git doesn't really record moves: it records that `breakout.py` disappeared and `breakout/model.py` appeared, and works out afterwards that it was a move because the contents are almost the same. `git mv` is a convenience: it moves the file and stages both halves in one command, so `git status` straight away shows `renamed: breakout.py -> breakout/model.py`. Moving the file any other way and then running `git add -A` ends up the same, because Git detects the move from the contents either way. That detection is also what lets `git log --follow breakout/model.py` find the file's history from before it moved.
 
 Right now nothing runs: `python breakout.py` says `can't open file ... breakout.py: [Errno 2] No such file or directory`. The next step gives the package a way to start.
 
@@ -161,6 +165,15 @@ And since the command has changed, change the usage line near the top of `breako
 
 ```text
 frames=600 paddle_x=435 score=70 lives=3 bricks=33 inside=True
+```
+
+```predict
+question: What happens if you run the file by its path instead: `.venv\Scripts\python breakout/__main__.py --test-run 60`?
+choice: The same as -m: the game runs
+choice: ModuleNotFoundError: No module named 'breakout'
+choice: Nothing happens
+answer: ModuleNotFoundError: No module named 'breakout'
+explain: Running a file by its path puts the file's own folder, `breakout`, at the front of `sys.path` (lesson 0.2), not the project folder. So when `__main__.py` says `from breakout.model import main`, Python looks for a `breakout` inside `breakout`, and there isn't one. The explanation below shows why `-m` doesn't have this problem.
 ```
 
 **Understand: what `-m` does.** `python -m breakout` means "find the module or package named `breakout`, the way `import` would, and run it as the main program". For a package, "run it" means run its `__main__.py`, with `__name__` set to `"__main__"` (lesson 2.3). Two details matter:
@@ -460,7 +473,7 @@ def test_a_broken_brick_cannot_be_hit_again():
     assert brick.hits_left == 0
 ```
 
-**Understand.** `from breakout import model` imports the submodule and binds the name `model` to it, so `model.clamp`, `model.Ball` and `model.BALL_SPEED` read as what they are: things from the model. Importing the **module** and naming things through it, rather than importing every name separately (`from breakout.model import clamp, Ball, ...`), keeps it obvious where each name comes from, and keeps the import list short.
+**Understand.** `from breakout import model` works in two steps: Python first looks for an attribute named `model` on the package `breakout`; if there isn't one, it imports the submodule `breakout.model` and uses that. That's why it works even though `import breakout` on its own never runs `model.py`. Either way it binds the name `model` to the module, so `model.clamp`, `model.Ball` and `model.BALL_SPEED` read as what they are: things from the model. Importing the **module** and naming things through it, rather than importing every name separately (`from breakout.model import clamp, Ball, ...`), keeps it obvious where each name comes from, and keeps the import list short.
 
 ```check
 contains tests/test_breakout.py "from breakout import model"

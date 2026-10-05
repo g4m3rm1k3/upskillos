@@ -30,6 +30,11 @@ const keyOf = (lesson, step) => `${lesson.id}#${step.title}`;
 const wrongFromIndex = process.env.FORGE_WRONG_FROM
   ? lessons.findIndex((l) => l.id.startsWith(process.env.FORGE_WRONG_FROM))
   : 0;
+// FORGE_UNTIL=<lesson id prefix> stops after that lesson: the lessons after it are skipped, so one
+// rewritten lesson can be checked without walking the rest of the series.
+const untilIndex = process.env.FORGE_UNTIL
+  ? lessons.findIndex((l) => l.id.startsWith(process.env.FORGE_UNTIL))
+  : lessons.length - 1;
 const stepsByKey =new Map(lessons.flatMap((l) => l.steps.map((s) => [keyOf(l, s), s])));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-walk-'));
 const project = path.join(tmp, 'forge');
@@ -58,7 +63,9 @@ async function getEnv() {
     // SDL's dummy video driver everywhere: a wrong answer that starts the real game (say, an
     // import without the __main__ guard) runs invisibly until its check times out, instead of
     // opening a window on the machine running the walkthrough.
-    baseEnv = { ...(await shellEnv()), PYTHONDONTWRITEBYTECODE: '1', SDL_VIDEODRIVER: 'dummy' };
+    // The silent audio driver too: the game has no sound, and a machine whose sound device has stopped
+    // responding makes pygame.init() hang forever, which would fail every check by timeout.
+    baseEnv = { ...(await shellEnv()), PYTHONDONTWRITEBYTECODE: '1', SDL_VIDEODRIVER: 'dummy', SDL_AUDIODRIVER: 'dummy' };
     for (const k of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'GIT_DIR', 'GIT_WORK_TREE']) delete baseEnv[k];
   }
   return { ...baseEnv, GIT_CONFIG_GLOBAL: globalConfig, GIT_PAGER: 'cat' };
@@ -177,7 +184,7 @@ describe.skipIf(!isWindows)('Forge walkthrough', () => {
   });
 
   for (const lesson of lessons) {
-    it(`${lesson.id}: ${lesson.title}`, async () => {
+    it.skipIf(lessons.indexOf(lesson) > untilIndex)(`${lesson.id}: ${lesson.title}`, async () => {
       for (const step of lesson.steps) {
         const action = WALKTHROUGH[keyOf(lesson, step)] ?? {};
         const checks = step.checks;

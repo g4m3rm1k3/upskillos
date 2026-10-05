@@ -105,7 +105,7 @@ __pycache__/
 
 Git may print `warning: in the working copy of '.gitignore', LF will be replaced by CRLF`. Windows and macOS end lines of text with different characters, and Git for Windows converts between them so a project works on both. It's harmless.
 
-> **Engineer:** a repository holds what people **write**, never what's **generated** from it. The same rule will keep build folders, caches, log files, databases of test data and secrets (passwords and keys, Chapter 30) out of every project you make.
+> **Engineer:** a repository holds what people **write**, never what's **generated** from it. The same rule will keep build folders, caches, log files, databases of test data and secrets (passwords and keys, Chapter 37) out of every project you make.
 
 ```check
 git-ignored .venv -- Create .gitignore in the forge folder (with the dot at the start), containing the line .venv/
@@ -196,11 +196,11 @@ Start Breakout: a window and a game loop
 - A **tree** is a folder listing: for each entry, its name and the hash of the blob (or, for a subfolder, the tree) holding its content.
 - A **commit** names one tree (the whole project at that moment), the commit before it (its **parent**; the first commit has none), the author, and the message.
 
-> **Hash**: a fixed-length number computed from content, here 40 hexadecimal digits, by an algorithm (SHA-1) designed so that any change to the content, even one character, gives a completely different number, and two different contents practically never give the same one.
+> **Hash**: a fixed-length number computed from content, here 40 **hexadecimal** digits (base 16: the digits 0–9, then a–f standing for 10 to 15, so `f` is 15 and `10` is sixteen), by an algorithm (SHA-1) designed so that any change to the content, even one character, gives a completely different number, and two different contents practically never give the same one.
 
 Every object is stored under the hash of its own content, so the hash is its name. That gives Git its guarantees. Two files with identical content are stored once, because their blobs have the same hash. And history can't be changed quietly: change one character of an old file, and its blob's hash changes, so the tree listing it changes, so the commit naming that tree changes, and every commit after it, since each names its parent's hash.
 
-`HEAD` is Git's name for "the commit you're on now". `HEAD^{tree}` means "that commit's tree".
+`HEAD` is Git's name for "the commit you're on now". `HEAD^{tree}` means "that commit's tree". It's in quotes because PowerShell gives `{ }` a meaning of its own; the quotes pass the text to Git untouched.
 
 ```predict
 question: You change one character in `breakout.py` and commit again. Which of these get new hashes?

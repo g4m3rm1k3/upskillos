@@ -87,28 +87,386 @@ Remove-Item breakout\levels\classic.txt
 | `true`, `false` | `true` | `True`, `False` |
 | `null` | `null` | `None` |
 
-So this file is one object with three **fields**: `name` (a string), `lives` (a number) and `wall` (an array of strings, the rows). JSON is strict where Python is relaxed: names must be in double quotes, a comma after the last item is an error, and there are no comments. That strictness is why every language can read it the same way, and why it's how programs send data to each other over the web (Chapter 26's asset library speaks it).
+So this file is one object with three **fields**: `name` (a string), `lives` (a number) and `wall` (an array of strings, the rows). JSON is strict where Python is relaxed: names must be in double quotes, a comma after the last item is an error, and there are no comments. That strictness is why every language can read it the same way, and why it's how programs send data to each other over the web (Chapter 33's asset library speaks it).
 
 Python reads it with the `json` module, in the standard library:
 
 ```powershell
-.venv\Scripts\python -c "import json; print(json.load(open('breakout/levels/classic.json')))"
+.venv\Scripts\python -c "import json; from pathlib import Path; print(json.loads(Path('breakout/levels/classic.json').read_text(encoding='utf-8')))"
 ```
 
 ```text
 {'name': 'Classic', 'lives': 3, 'wall': ['TTTTTTTT', 'BBBBBBBB', 'BBBBBBBB', 'BBBBBBBB', 'BBBBBBBB']}
 ```
 
-A Python `dict` of a `str`, an `int` and a `list`. The game is broken from now until the app step, since it still looks for `classic.txt`.
+`read_text` reads the file with the encoding said out loud (lesson 5.1's rule), and `json.loads` turns the text into Python values: a `dict` of a `str`, an `int` and a `list`. The game is broken from now until the app step, since it still looks for `classic.txt`.
 
 ```check
 file breakout/levels/classic.json
 missing breakout/levels/classic.txt -- Delete classic.txt: the level is JSON now.
 ```
 
-## Reading and checking a level
+## A level is data
 
-**Build:** a level module that reads JSON and checks every part of it.
+**Build:** the level module reads JSON into a `Level`, with no checking yet.
+
+First the shape of things, with the checks left out: a `Level` holding a name, the lives and the wall's rows; `parse_level` reading the JSON into one; and `make_bricks`, the double loop from before, now building bricks from a `Level`'s rows. Replace `breakout/level.py`:
+
+```python file=breakout/level.py
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+MAX_ROWS = 10
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, where: str) -> None:
+        super().__init__(f"{where}: {message}")
+        self.where = where
+
+
+@dataclass(frozen=True)
+class Level:
+    name: str
+    lives: int
+    wall: tuple[str, ...]
+
+    def bricks(self) -> list[Brick]:
+        """A new wall of bricks, ready to be broken."""
+        return make_bricks(self.wall)
+
+
+def parse_level(text: str) -> Level:
+    data = json.loads(text)
+    return Level(data["name"], data["lives"], tuple(data["wall"]))  # type: ignore
+
+
+def make_bricks(wall: tuple[str, ...]) -> list[Brick]:
+    bricks: list[Brick] = []
+    for row, line in enumerate(wall):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> Level:
+    return parse_level(path.read_text(encoding="utf-8-sig"))
+```
+
+**Understand.** **`Level`** is what a level *is* once it's been read: a frozen dataclass (lesson 3.2) with a name, a number of lives, and the wall's rows as a `tuple[str, ...]`, a tuple of any length whose items are all strings. A tuple, not a list, because a tuple can't be changed, so a frozen `Level` really can't change. It keeps the **rows**, not bricks, and its method `bricks()` makes a fresh list of `Brick` objects from them every time it's called. The predictions below show why.
+
+`json.loads(text)` ("load string") turns JSON text into Python values: here a dict, so `data["name"]` is the level's name and `data["wall"]` its list of rows. `tuple(...)` makes the list into a tuple.
+
+**`make_bricks`** is lesson 5.1's loop, moved out of `parse_level` and given the rows instead of the text. `Level.bricks()` calls it, although `make_bricks` is written further down the file: a function's body only looks names up when it **runs**, by which time the whole module has been read, so the order of definitions doesn't matter for calls inside functions.
+
+`# type: ignore` at the end of the `return` line tells pyright to skip that one line. It's needed for the moment, because nothing has checked what `data` holds yet: it could be a list, or have no `"name"` at all, and pyright says so. The next four steps check every part of it, and then the comment goes.
+
+**`LevelError`** now says *where* with a piece of text, not a line number, because in a JSON level the place is a field (`lives`) or a row of the wall (`wall, row 2`), whichever line it's written on.
+
+```check
+contains breakout/level.py "def parse_level(text: str) -> Level:"
+run ".venv/Scripts/python -c \"from breakout import level; l = level.load_level(level.LEVELS / 'classic.json'); print(l.name, l.lives, len(l.bricks()))\"" stdout="Classic 3 40" label="the classic level loads: name, lives and 40 bricks"
+```
+
+## Is it JSON?
+
+**Build:** text that isn't JSON at all is refused with a `LevelError` saying where the problem is.
+
+`parse_level` checks from the outside in, and refuses at the first problem. The outermost question is whether the text is JSON at all:
+
+```python file=breakout/level.py
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+MAX_ROWS = 10
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, where: str) -> None:
+        super().__init__(f"{where}: {message}")
+        self.where = where
+
+
+@dataclass(frozen=True)
+class Level:
+    name: str
+    lives: int
+    wall: tuple[str, ...]
+
+    def bricks(self) -> list[Brick]:
+        """A new wall of bricks, ready to be broken."""
+        return make_bricks(self.wall)
+
+
+def parse_level(text: str) -> Level:
+    try:
+        data: object = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise LevelError(f"not valid JSON: {error.msg}", f"line {error.lineno}, column {error.colno}") from None
+    return Level(data["name"], data["lives"], tuple(data["wall"]))  # type: ignore
+
+
+def make_bricks(wall: tuple[str, ...]) -> list[Brick]:
+    bricks: list[Brick] = []
+    for row, line in enumerate(wall):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> Level:
+    return parse_level(path.read_text(encoding="utf-8-sig"))
+```
+
+**Is it JSON?** `json.loads(text)` ("load string") turns JSON text into Python values, and raises `json.JSONDecodeError` if the text isn't JSON. That exception carries `msg`, `lineno` and `colno` (what's wrong, and where), which become a `LevelError`. `raise ... from None` tells Python not to print the original exception as well: the `LevelError` says everything the player needs.
+
+Without `from None`, the player would see two tracebacks, the `JSONDecodeError` and then the `LevelError`, joined by the line *During handling of the above exception, another exception occurred*: true, but noise. With it, only the `LevelError` is shown.
+
+`data: object` is a deliberate annotation: more on it in the next step.
+
+```check
+run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('')\"" exit=1 stderr="line 1, column 1: not valid JSON: Expecting value" label="text that is not JSON is refused, with its line and column"
+```
+
+## An object, with exactly the right fields
+
+**Build:** the JSON must be an object with exactly the fields a level has: no field missing, and none it doesn't know.
+
+```python file=breakout/level.py
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import cast
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+MAX_ROWS = 10
+FIELDS = {"name", "lives", "wall"}
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, where: str) -> None:
+        super().__init__(f"{where}: {message}")
+        self.where = where
+
+
+@dataclass(frozen=True)
+class Level:
+    name: str
+    lives: int
+    wall: tuple[str, ...]
+
+    def bricks(self) -> list[Brick]:
+        """A new wall of bricks, ready to be broken."""
+        return make_bricks(self.wall)
+
+
+def parse_level(text: str) -> Level:
+    try:
+        data: object = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise LevelError(f"not valid JSON: {error.msg}", f"line {error.lineno}, column {error.colno}") from None
+    if not isinstance(data, dict):
+        raise LevelError("must be a JSON object, { ... }", "the level")
+    fields = cast(dict[str, object], data)
+    missing = sorted(FIELDS - fields.keys())
+    if missing:
+        raise LevelError("is missing", missing[0])
+    unknown = sorted(fields.keys() - FIELDS)
+    if unknown:
+        raise LevelError(f"isn't part of a level, which has {', '.join(sorted(FIELDS))}", unknown[0])
+
+    return Level(fields["name"], fields["lives"], tuple(fields["wall"]))  # type: ignore
+
+
+def make_bricks(wall: tuple[str, ...]) -> list[Brick]:
+    bricks: list[Brick] = []
+    for row, line in enumerate(wall):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> Level:
+    return parse_level(path.read_text(encoding="utf-8-sig"))
+```
+
+**Is it an object?** `data: object` is a deliberate annotation. `json.loads` can return any JSON value, a list or a number as easily as a dict, so `object`, "could be anything", is the honest type: pyright won't let you use an `object` as a dict, or as anything, until you've checked what it is. `isinstance(data, dict)` is that check.
+
+**`cast`, a promise to pyright.** After `isinstance(data, dict)`, pyright knows `data` is a dict, but not what's inside it: `dict[Unknown, Unknown]`, which strict mode refuses to use. `cast(dict[str, object], data)` tells pyright "treat this as a dict of strings to anything". At run time `cast` does **nothing**: it returns `data` unchanged and checks nothing. It's a promise, and it's only safe because this one is true: the keys of a JSON object are always strings, and `object` claims nothing about the values. `cast(list[object], wall)` makes the same promise about the wall. A cast that isn't true hides a bug from the type checker, so every `cast` should come with a reason this clear.
+
+**Are exactly the right fields there?** `fields.keys()` behaves like a set, and `-` between sets is **set difference**, the items in the first and not the second: `FIELDS - fields.keys()` is the fields that are missing, and `fields.keys() - FIELDS` the ones that shouldn't be there. A misspelt `"lifes": 5` is refused instead of silently ignored, and the error names it. `sorted(...)` puts them in alphabetical order, so the same file always gives the same message (a set has no order of its own).
+
+Traced for a level with a typo, `{"name": "A", "lifes": 5, "wall": [...]}`:
+
+```text
+FIELDS          = {"name", "lives", "wall"}
+fields.keys()   = {"name", "lifes", "wall"}
+FIELDS - keys   = {"lives"}          missing: what a level needs and this one hasn't got
+keys - FIELDS   = {"lifes"}          unknown: what this one has and a level doesn't
+sorted(missing) = ["lives"]   →  LevelError("is missing", "lives")  →  "lives: is missing"
+```
+
+```check
+run ".venv/Scripts/python -c \"import json; from breakout import level; level.parse_level(json.dumps({'name': 'A'}))\"" exit=1 stderr="lives: is missing" label="a level without lives is refused"
+```
+
+## Is each value the right kind?
+
+**Build:** the name must be some text, and the lives a whole number from 1 to 9.
+
+```python file=breakout/level.py
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import cast
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+MAX_ROWS = 10
+MAX_LIVES = 9
+FIELDS = {"name", "lives", "wall"}
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, where: str) -> None:
+        super().__init__(f"{where}: {message}")
+        self.where = where
+
+
+@dataclass(frozen=True)
+class Level:
+    name: str
+    lives: int
+    wall: tuple[str, ...]
+
+    def bricks(self) -> list[Brick]:
+        """A new wall of bricks, ready to be broken."""
+        return make_bricks(self.wall)
+
+
+def parse_level(text: str) -> Level:
+    try:
+        data: object = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise LevelError(f"not valid JSON: {error.msg}", f"line {error.lineno}, column {error.colno}") from None
+    if not isinstance(data, dict):
+        raise LevelError("must be a JSON object, { ... }", "the level")
+    fields = cast(dict[str, object], data)
+    missing = sorted(FIELDS - fields.keys())
+    if missing:
+        raise LevelError("is missing", missing[0])
+    unknown = sorted(fields.keys() - FIELDS)
+    if unknown:
+        raise LevelError(f"isn't part of a level, which has {', '.join(sorted(FIELDS))}", unknown[0])
+
+    name = fields["name"]
+    if not isinstance(name, str) or not name.strip():
+        raise LevelError("must be some text", "name")
+
+    lives = fields["lives"]
+    if isinstance(lives, bool) or not isinstance(lives, int) or not 1 <= lives <= MAX_LIVES:
+        raise LevelError(f"must be a whole number from 1 to {MAX_LIVES}", "lives")
+
+    return Level(name, lives, tuple(fields["wall"]))  # type: ignore
+
+
+def make_bricks(wall: tuple[str, ...]) -> list[Brick]:
+    bricks: list[Brick] = []
+    for row, line in enumerate(wall):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> Level:
+    return parse_level(path.read_text(encoding="utf-8-sig"))
+```
+
+**Is each field the right kind of value?** `name` must be a string with something in it besides spaces (`strip()` removes spaces from both ends). `lives` must be an integer from 1 to 9: `1 <= lives <= MAX_LIVES` is a **chained comparison**, meaning `1 <= lives and lives <= MAX_LIVES`. `wall` must be a list that isn't empty, of at most 10 rows.
+
+These conditions rely on `or` stopping early, as `and` did in lesson 1.1. Traced for `"name": 5`:
+
+```text
+not isinstance(5, str)    True      →  or stops here: the whole condition is True
+not name.strip()          never evaluated, which matters: 5 has no .strip(), so it would crash
+```
+
+The lives condition is the same, three checks long: each one only runs if the ones before it were false, so `1 <= lives` is only ever reached once `lives` is known to be an `int` that isn't a `bool`.
+
+```predict
+question: Without `isinstance(lives, bool)`, what would `"lives": true` do?
+choice: Be refused: true isn't a number
+choice: Be accepted, as 1 life
+choice: Crash the game
+answer: Be accepted, as 1 life
+explain: In Python, `bool` is a subclass of `int`: `True` is the integer 1 and `False` is 0 (`True + True` is 2), so `isinstance(True, int)` is `True` and `1 <= True <= 9` passes. A level with `"lives": true` is almost certainly a mistake, so the check rules booleans out first. This is the kind of rule that's easy to forget when checking by hand.
+```
+```check
+run ".venv/Scripts/python -c \"import json; from breakout import level; level.parse_level(json.dumps({'name': 'A', 'lives': True, 'wall': ['BBBBBBBB']}))\"" exit=1 stderr="lives: must be a whole number from 1 to 9" label="lives of true are refused"
+```
+
+## Is each row a good row?
+
+**Build:** the wall must be a list of up to 10 rows, each a string of 8 places, each `T`, `B` or `.`; and the `# type: ignore` goes.
 
 ```python file=breakout/level.py
 import json
@@ -209,32 +567,13 @@ def load_level(path: Path) -> Level:
     return parse_level(path.read_text(encoding="utf-8-sig"))
 ```
 
-**Understand, from the top.**
+**Is each row a good row?** `check_row` returns the row as a `str` once it has checked that it is one, of 8 places, each `T`, `B` or `.`. `char not in "TB."` asks whether a one-character string appears in `"TB."`. The **generator expression** `check_row(row, line) for row, line in enumerate(rows)` checks every row in turn, and `tuple(...)` collects the results.
 
-**`Level`** is what a level *is* once it's been read: a frozen dataclass (lesson 3.5) with a name, a number of lives, and the wall's rows as a `tuple[str, ...]`, a tuple of any length whose items are all strings. A tuple, not a list, because a tuple can't be changed, so a frozen `Level` really can't change. It keeps the **rows**, not bricks, and its method `bricks()` makes a fresh list of `Brick` objects from them every time it's called. The predictions below show why.
+The generator stops at the first row that raises: `tuple(...)` never gets to the rows after it, and the `LevelError` from `check_row` goes straight up to whoever called `parse_level`.
 
-**`LevelError`** now says *where* with a piece of text, not a line number, because in a JSON level the place is a field (`lives`) or a row of the wall (`wall, row 2`), whichever line it's written on.
-
-**`parse_level(text)`** goes from the outside in, and refuses at the first problem:
-
-1. **Is it JSON?** `json.loads(text)` ("load string") turns JSON text into Python values, and raises `json.JSONDecodeError` if the text isn't JSON. That exception carries `msg`, `lineno` and `colno` (what's wrong, and where), which become a `LevelError`. `raise ... from None` tells Python not to print the original exception as well: the `LevelError` says everything the player needs.
-2. **Is it an object?** `data: object` is a deliberate annotation. `json.loads` can return any JSON value, a list or a number as easily as a dict, so `object`, "could be anything", is the honest type: pyright won't let you use an `object` as a dict, or as anything, until you've checked what it is. `isinstance(data, dict)` is that check.
-3. **Are exactly the right fields there?** `fields.keys()` behaves like a set, and `-` between sets is **set difference**, the items in the first and not the second: `FIELDS - fields.keys()` is the fields that are missing, and `fields.keys() - FIELDS` the ones that shouldn't be there. A misspelt `"lifes": 5` is refused instead of silently ignored, and the error names it. `sorted(...)` puts them in alphabetical order, so the same file always gives the same message (a set has no order of its own).
-4. **Is each field the right kind of value?** `name` must be a string with something in it besides spaces (`strip()` removes spaces from both ends). `lives` must be an integer from 1 to 9: `1 <= lives <= MAX_LIVES` is a **chained comparison**, meaning `1 <= lives and lives <= MAX_LIVES`. `wall` must be a list that isn't empty, of at most 10 rows.
-5. **Is each row a good row?** `check_row` returns the row as a `str` once it has checked that it is one, of 8 places, each `T`, `B` or `.`. `char not in "TB."` asks whether a one-character string appears in `"TB."`. The **generator expression** `check_row(row, line) for row, line in enumerate(rows)` checks every row in turn, and `tuple(...)` collects the results.
-
-**`cast`, a promise to pyright.** After `isinstance(data, dict)`, pyright knows `data` is a dict, but not what's inside it: `dict[Unknown, Unknown]`, which strict mode refuses to use. `cast(dict[str, object], data)` tells pyright "treat this as a dict of strings to anything". At run time `cast` does **nothing**: it returns `data` unchanged and checks nothing. It's a promise, and it's only safe because this one is true: the keys of a JSON object are always strings, and `object` claims nothing about the values. `cast(list[object], wall)` makes the same promise about the wall. A cast that isn't true hides a bug from the type checker, so every `cast` should come with a reason this clear.
+`LevelError` used to keep `line` and `column` attributes; now it keeps `where`, because in JSON a place is a field or a row of the wall, wherever it happens to be written in the file.
 
 **`make_bricks`** no longer checks anything: it's only ever given a wall that `parse_level` has already checked. Once a `Level` exists, its data is good; everything after the boundary can rely on that. This is **parse, don't validate**: turn unchecked input into a type that only holds checked data, at one place, and pass that type around instead of checking again everywhere.
-
-```predict
-question: Without `isinstance(lives, bool)`, what would `"lives": true` do?
-choice: Be refused: true isn't a number
-choice: Be accepted, as 1 life
-choice: Crash the game
-answer: Be accepted, as 1 life
-explain: In Python, `bool` is a subclass of `int`: `True` is the integer 1 and `False` is 0 (`True + True` is 2), so `isinstance(True, int)` is `True` and `1 <= True <= 9` passes. A level with `"lives": true` is almost certainly a mistake, so the check rules booleans out first. This is the kind of rule that's easy to forget when checking by hand.
-```
 
 ```predict
 question: Suppose `Level` stored the bricks, `bricks: list[Brick]`, and every new game was given `level.bricks`. After the player wins and presses Space, what does the new game's wall look like?
@@ -244,10 +583,10 @@ choice: It crashes: a frozen dataclass can't be changed
 answer: Empty: the first game broke every brick in that list
 explain: `frozen=True` stops `level.bricks = ...`, giving the field a new value. It doesn't stop changing the list the field refers to, and `Game` removes bricks from its list as they break. Both games would be given the **same** list object, so the second gets whatever the first left: an empty wall, and an instant win. Two names for one changeable object is called **aliasing**, and it's behind many of the hardest bugs to find. Keeping immutable rows and making new bricks from them each time avoids it completely.
 ```
-
 ```check
-contains breakout/level.py "def parse_level(text: str) -> Level:"
-run ".venv/Scripts/python -c \"from breakout import level; l = level.load_level(level.LEVELS / 'classic.json'); print(l.name, l.lives, len(l.bricks()))\"" stdout="Classic 3 40" label="the classic level loads: name, lives and 40 bricks"
+contains breakout/level.py "def check_row(row: int, line: object) -> str:"
+lacks breakout/level.py "type: ignore" -- Every value is checked now, so pyright needs no line skipped.
+run ".venv/Scripts/python -c \"from breakout import level; l = level.load_level(level.LEVELS / 'classic.json'); print(l.name, l.lives, len(l.bricks()))\"" stdout="Classic 3 40" label="the classic level still loads"
 ```
 
 ## Lives come from the level
@@ -822,7 +1161,24 @@ def test_a_level_saved_with_a_byte_order_mark_loads(tmp_path: Path):
     assert len(level.load_level(path).bricks()) == 18
 ```
 
-**Understand.** `json.dumps` ("dump string") is the reverse of `json.loads`: Python values in, JSON text out. `level_text("B.B.....")` builds a whole level's JSON around the rows a test cares about, so each test still says only what matters to it. `*rows: str` collects any number of arguments into a tuple: `level_text("B.......", "B.......")` passes two rows.
+**Understand.** `json.dumps` ("dump string") is the reverse of `json.loads`: Python values in, JSON text out. `level_text("B.B.....")` builds a whole level's JSON around the rows a test cares about, so each test still says only what matters to it. `*rows: str` collects any number of arguments into a tuple: `level_text("B.......", "B.......")` passes two rows. JSON has no tuples, only arrays, so `list(rows)` makes the tuple into a list first.
+
+**Two more forms of the star, which the Your turn needs.** A double star collects **keyword** arguments into a dict, the way one star collects positional ones:
+
+```python
+def show(**changes: object) -> None:
+    print(changes)
+
+show(lives=10, name="X")       # prints {'lives': 10, 'name': 'X'}
+```
+
+And inside braces, `**` unpacks a dict into a new one: `{**good, **changes}` makes a dict with everything in `good`, then adds everything in `changes`, replacing any key that's in both. Traced:
+
+```text
+good    = {"name": "Test", "lives": 3}
+changes = {"lives": 10}
+{**good, **changes}  =  {"name": "Test", "lives": 10}      lives replaced, name kept
+```
 
 `test_every_game_gets_a_whole_new_wall` pins down the aliasing prediction: it cracks a tough brick from one call to `bricks()`, then checks the next call's brick is whole. If someone "optimises" `Level` to store its bricks, this test says why not.
 
@@ -899,7 +1255,7 @@ def test_a_bad_level_is_refused_with_where_and_why(text: str, message: str):
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_level_errors.py" stdout="12 passed" label="twelve refusals, each tested"
 contains tests/test_level_errors.py "not valid JSON: Expecting value"
-contains tests/test_level_errors.py "at most 10 rows, and this one has 11"
+contains tests/test_level_errors.py "wall: a level has at most 10 rows"
 run ".venv/Scripts/python -m pytest -q" stdout="80 passed"
 run ".venv/Scripts/python -m pyright breakout tests replay.py" stdout="0 errors"
 run ".venv/Scripts/python -m ruff check ." stdout="All checks passed!"

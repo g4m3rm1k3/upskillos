@@ -486,7 +486,922 @@ run ".venv/Scripts/python -m pytest -q" stdout="45 passed"
 
 ## A game object
 
-**Build:** a `Game` class that owns everything in play and knows the rules that connect it.
+**Build:** a `Game` class that owns everything in play.
+
+`main` keeps the game's state in six local variables, the paddle, the ball, the bricks, the score, the lives and the random generator, and the loop passes them around one by one. Gather them into one object. First, only the holding: a `Game` whose `__init__` makes them all. In `main`, make one `Game` and use `game.paddle`, `game.score` and so on wherever the loop used the six variables. The rules stay in the loop for now.
+
+```python file=breakout.py
+import math
+import os
+import random
+import sys
+from dataclasses import dataclass
+from enum import Enum
+
+import pygame
+from pygame import Vector2
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+TEXT_COLOUR = (230, 230, 230)
+ROW_COLOURS = [(239, 68, 68), (249, 115, 22), (234, 179, 8), (34, 197, 94), (59, 130, 246)]
+PADDLE_SPEED = 420
+PADDLE_WIDTH, PADDLE_HEIGHT = 100, 14
+BALL_SPEED = 300
+BALL_RADIUS = 6
+BRICK_WIDTH, BRICK_HEIGHT, BRICK_GAP = 70, 20, 6
+WALL_LEFT, WALL_TOP = 16, 60
+USAGE = "usage: python breakout.py [--test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]]"
+
+
+
+class Hold(Enum):
+    NONE = "none"
+    LEFT = "left"
+    RIGHT = "right"
+    AUTO = "auto"
+
+
+@dataclass(frozen=True)
+class Settings:
+    test_frames: int | None = None
+    hold: Hold = Hold.NONE
+    lag_at: int | None = None
+    seed: int | None = None
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(value, high))
+
+
+def number_after(args: list[str], name: str) -> int | None:
+    if name not in args:
+        return None
+    i = args.index(name)
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print(USAGE)
+        sys.exit(2)
+    return int(args[i + 1])
+
+
+def parse_args(args: list[str]) -> Settings:
+    # A test run lets another program play the game, with no window:
+    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]
+    hold = Hold.NONE
+    if "--hold" in args:
+        i = args.index("--hold")
+        names = [h.value for h in Hold]
+        if i + 1 >= len(args) or args[i + 1] not in names:
+            print(USAGE)
+            sys.exit(2)
+        hold = Hold(args[i + 1])
+    return Settings(
+        test_frames=number_after(args, "--test-run"),
+        hold=hold,
+        lag_at=number_after(args, "--lag-at"),
+        seed=number_after(args, "--seed"),
+    )
+
+
+@dataclass
+class Ball:
+    position: Vector2
+    velocity: Vector2
+
+    def move(self, dt: float) -> None:
+        self.position += self.velocity * dt
+
+    def bounce_off_walls(self) -> None:
+        if self.position.x < BALL_RADIUS:
+            self.position.x = BALL_RADIUS
+            self.velocity.x = abs(self.velocity.x)
+        if self.position.x > WIDTH - BALL_RADIUS:
+            self.position.x = WIDTH - BALL_RADIUS
+            self.velocity.x = -abs(self.velocity.x)
+        if self.position.y < BALL_RADIUS:
+            self.position.y = BALL_RADIUS
+            self.velocity.y = abs(self.velocity.y)
+
+    def rect(self) -> pygame.Rect:
+        r = pygame.Rect(0, 0, BALL_RADIUS * 2, BALL_RADIUS * 2)
+        r.center = (round(self.position.x), round(self.position.y))
+        return r
+
+
+def serve(rng: random.Random) -> Ball:
+    across = rng.uniform(-0.6, 0.6)
+    up = math.sqrt(1 - across * across)
+    return Ball(Vector2(WIDTH / 2, HEIGHT / 2), Vector2(across, -up) * BALL_SPEED)
+
+
+class Paddle:
+    # Invariant: the whole paddle is always on the screen, 0 <= x <= WIDTH - PADDLE_WIDTH.
+    def __init__(self) -> None:
+        self._x = float(WIDTH // 2 - PADDLE_WIDTH // 2)
+
+    @property
+    def x(self) -> float:
+        return self._x
+
+    def move(self, direction: int, dt: float) -> None:
+        self._x = clamp(self._x + direction * PADDLE_SPEED * dt, 0, WIDTH - PADDLE_WIDTH)
+
+    def rect(self) -> pygame.Rect:
+        return pygame.Rect(round(self._x), HEIGHT - 30 - PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT)
+
+
+def autopilot(ball: Ball, paddle: Paddle) -> int:
+    middle = paddle.x + PADDLE_WIDTH / 2
+    if ball.position.x < middle - 10:
+        return -1
+    if ball.position.x > middle + 10:
+        return 1
+    return 0
+
+
+def bounce_off_paddle(ball: Ball, paddle: pygame.Rect) -> None:
+    rect = ball.rect()
+    if rect.colliderect(paddle) and ball.velocity.y > 0:
+        offset = (rect.centerx - paddle.centerx) / (paddle.width / 2)
+        ball.velocity = Vector2(BALL_SPEED * 0.8 * offset, -ball.velocity.y)
+
+
+@dataclass
+class Brick:
+    rect: pygame.Rect
+    colour: tuple[int, int, int]
+    hits_left: int = 1
+    points: int = 10
+    cracked: bool = False
+
+    def hit(self) -> int:
+        if self.hits_left == 0:
+            raise ValueError("this brick is already broken")
+        self.hits_left -= 1
+        self.cracked = True
+        if self.hits_left == 0:
+            return self.points
+        return 0
+
+    def current_colour(self) -> tuple[int, int, int]:
+        if not self.cracked:
+            return self.colour
+        r, g, b = self.colour
+        return int(r * 0.6), int(g * 0.6), int(b * 0.6)
+
+
+def make_bricks() -> list[Brick]:
+    bricks = []
+    for row, colour in enumerate(ROW_COLOURS):
+        for col in range(8):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if row == 0:
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            else:
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def hit_brick(ball: pygame.Rect, bricks: list[Brick]) -> int | None:
+    i = ball.collidelist([brick.rect for brick in bricks])
+    if i == -1:
+        return None
+    return i
+
+
+class Game:
+    def __init__(self, rng: random.Random) -> None:
+        self.rng = rng
+        self.paddle = Paddle()
+        self.ball = serve(rng)
+        self.bricks = make_bricks()
+        self.score = 0
+        self.lives = 3
+
+
+def draw(screen: pygame.Surface, font: pygame.font.Font, paddle: pygame.Rect, ball: Ball,
+         bricks: list[Brick], score: int, lives: int) -> None:
+    screen.fill(BACKGROUND)
+    for brick in bricks:
+        pygame.draw.rect(screen, brick.current_colour(), brick.rect)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball.rect())
+    screen.blit(font.render(f"Score {score}   Lives {lives}", True, TEXT_COLOUR), (16, 16))
+    if lives == 0:
+        screen.blit(font.render("Game over", True, TEXT_COLOUR), (260, 240))
+    elif not bricks:
+        screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
+
+
+def main(args: list[str]) -> None:
+    settings = parse_args(args)
+    seed = settings.seed
+    if settings.test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if seed is None:
+            seed = 0
+    game = Game(random.Random(seed))
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Breakout")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    frames = 0
+    running = True
+    while running:
+        if settings.test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == settings.lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+
+        if game.lives > 0 and game.bricks:
+            direction = 0
+            if settings.test_frames is None:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT]:
+                    direction -= 1
+                if keys[pygame.K_RIGHT]:
+                    direction += 1
+            elif settings.hold == Hold.LEFT:
+                direction = -1
+            elif settings.hold == Hold.RIGHT:
+                direction = 1
+            elif settings.hold == Hold.AUTO:
+                direction = autopilot(game.ball, game.paddle)
+            game.paddle.move(direction, dt)
+
+            game.ball.move(dt)
+            game.ball.bounce_off_walls()
+            bounce_off_paddle(game.ball, game.paddle.rect())
+
+            hit = hit_brick(game.ball.rect(), game.bricks)
+            if hit is not None:
+                game.score += game.bricks[hit].hit()
+                if game.bricks[hit].hits_left == 0:
+                    game.bricks.pop(hit)
+                game.ball.velocity.y = -game.ball.velocity.y
+
+            if game.ball.rect().top > HEIGHT:
+                game.lives -= 1
+                if game.lives > 0:
+                    game.ball = serve(game.rng)
+
+        draw(screen, font, game.paddle.rect(), game.ball, game.bricks, game.score, game.lives)
+        pygame.display.flip()
+
+        frames += 1
+        if settings.test_frames is not None and frames >= settings.test_frames:
+            running = False
+
+    pygame.quit()
+    if settings.test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(game.ball.rect())
+        print(f"frames={frames} paddle_x={game.paddle.rect().x} score={game.score} lives={game.lives} bricks={len(game.bricks)} inside={inside}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+```
+
+**Understand: composition.** A `Game` **has** a paddle, a ball, a list of bricks, a score and a number of lives. Its `__init__` creates them, and its `update(direction, dt)` method runs exactly the rules the loop ran before, on its own attributes. Building a bigger object out of smaller ones like this is called **composition**, and it's the main way programs are structured.
+
+`self.rng = rng` keeps the random generator on the game, because serving a new ball later needs it: `serve(game.rng)`.
+
+```check
+contains breakout.py "class Game:"
+run ".venv/Scripts/python -m pytest -q" stdout="45 passed" label="the game behaves exactly as before"
+run ".venv/Scripts/python -m pyright breakout.py" stdout="0 errors"
+```
+
+## A name for "still playing"
+
+**Build:** one method that says whether the game is still going.
+
+The loop asks `game.lives > 0 and game.bricks`, and the drawing code asks much the same thing in other words (`lives == 0`, `not bricks`). Give the question a name, on the game:
+
+```python file=breakout.py
+import math
+import os
+import random
+import sys
+from dataclasses import dataclass
+from enum import Enum
+
+import pygame
+from pygame import Vector2
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+TEXT_COLOUR = (230, 230, 230)
+ROW_COLOURS = [(239, 68, 68), (249, 115, 22), (234, 179, 8), (34, 197, 94), (59, 130, 246)]
+PADDLE_SPEED = 420
+PADDLE_WIDTH, PADDLE_HEIGHT = 100, 14
+BALL_SPEED = 300
+BALL_RADIUS = 6
+BRICK_WIDTH, BRICK_HEIGHT, BRICK_GAP = 70, 20, 6
+WALL_LEFT, WALL_TOP = 16, 60
+USAGE = "usage: python breakout.py [--test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]]"
+
+
+
+class Hold(Enum):
+    NONE = "none"
+    LEFT = "left"
+    RIGHT = "right"
+    AUTO = "auto"
+
+
+@dataclass(frozen=True)
+class Settings:
+    test_frames: int | None = None
+    hold: Hold = Hold.NONE
+    lag_at: int | None = None
+    seed: int | None = None
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(value, high))
+
+
+def number_after(args: list[str], name: str) -> int | None:
+    if name not in args:
+        return None
+    i = args.index(name)
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print(USAGE)
+        sys.exit(2)
+    return int(args[i + 1])
+
+
+def parse_args(args: list[str]) -> Settings:
+    # A test run lets another program play the game, with no window:
+    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]
+    hold = Hold.NONE
+    if "--hold" in args:
+        i = args.index("--hold")
+        names = [h.value for h in Hold]
+        if i + 1 >= len(args) or args[i + 1] not in names:
+            print(USAGE)
+            sys.exit(2)
+        hold = Hold(args[i + 1])
+    return Settings(
+        test_frames=number_after(args, "--test-run"),
+        hold=hold,
+        lag_at=number_after(args, "--lag-at"),
+        seed=number_after(args, "--seed"),
+    )
+
+
+@dataclass
+class Ball:
+    position: Vector2
+    velocity: Vector2
+
+    def move(self, dt: float) -> None:
+        self.position += self.velocity * dt
+
+    def bounce_off_walls(self) -> None:
+        if self.position.x < BALL_RADIUS:
+            self.position.x = BALL_RADIUS
+            self.velocity.x = abs(self.velocity.x)
+        if self.position.x > WIDTH - BALL_RADIUS:
+            self.position.x = WIDTH - BALL_RADIUS
+            self.velocity.x = -abs(self.velocity.x)
+        if self.position.y < BALL_RADIUS:
+            self.position.y = BALL_RADIUS
+            self.velocity.y = abs(self.velocity.y)
+
+    def rect(self) -> pygame.Rect:
+        r = pygame.Rect(0, 0, BALL_RADIUS * 2, BALL_RADIUS * 2)
+        r.center = (round(self.position.x), round(self.position.y))
+        return r
+
+
+def serve(rng: random.Random) -> Ball:
+    across = rng.uniform(-0.6, 0.6)
+    up = math.sqrt(1 - across * across)
+    return Ball(Vector2(WIDTH / 2, HEIGHT / 2), Vector2(across, -up) * BALL_SPEED)
+
+
+class Paddle:
+    # Invariant: the whole paddle is always on the screen, 0 <= x <= WIDTH - PADDLE_WIDTH.
+    def __init__(self) -> None:
+        self._x = float(WIDTH // 2 - PADDLE_WIDTH // 2)
+
+    @property
+    def x(self) -> float:
+        return self._x
+
+    def move(self, direction: int, dt: float) -> None:
+        self._x = clamp(self._x + direction * PADDLE_SPEED * dt, 0, WIDTH - PADDLE_WIDTH)
+
+    def rect(self) -> pygame.Rect:
+        return pygame.Rect(round(self._x), HEIGHT - 30 - PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT)
+
+
+def autopilot(ball: Ball, paddle: Paddle) -> int:
+    middle = paddle.x + PADDLE_WIDTH / 2
+    if ball.position.x < middle - 10:
+        return -1
+    if ball.position.x > middle + 10:
+        return 1
+    return 0
+
+
+def bounce_off_paddle(ball: Ball, paddle: pygame.Rect) -> None:
+    rect = ball.rect()
+    if rect.colliderect(paddle) and ball.velocity.y > 0:
+        offset = (rect.centerx - paddle.centerx) / (paddle.width / 2)
+        ball.velocity = Vector2(BALL_SPEED * 0.8 * offset, -ball.velocity.y)
+
+
+@dataclass
+class Brick:
+    rect: pygame.Rect
+    colour: tuple[int, int, int]
+    hits_left: int = 1
+    points: int = 10
+    cracked: bool = False
+
+    def hit(self) -> int:
+        if self.hits_left == 0:
+            raise ValueError("this brick is already broken")
+        self.hits_left -= 1
+        self.cracked = True
+        if self.hits_left == 0:
+            return self.points
+        return 0
+
+    def current_colour(self) -> tuple[int, int, int]:
+        if not self.cracked:
+            return self.colour
+        r, g, b = self.colour
+        return int(r * 0.6), int(g * 0.6), int(b * 0.6)
+
+
+def make_bricks() -> list[Brick]:
+    bricks = []
+    for row, colour in enumerate(ROW_COLOURS):
+        for col in range(8):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if row == 0:
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            else:
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def hit_brick(ball: pygame.Rect, bricks: list[Brick]) -> int | None:
+    i = ball.collidelist([brick.rect for brick in bricks])
+    if i == -1:
+        return None
+    return i
+
+
+class Game:
+    def __init__(self, rng: random.Random) -> None:
+        self.rng = rng
+        self.paddle = Paddle()
+        self.ball = serve(rng)
+        self.bricks = make_bricks()
+        self.score = 0
+        self.lives = 3
+
+    def playing(self) -> bool:
+        return self.lives > 0 and len(self.bricks) > 0
+
+
+def draw(screen: pygame.Surface, font: pygame.font.Font, paddle: pygame.Rect, ball: Ball,
+         bricks: list[Brick], score: int, lives: int) -> None:
+    screen.fill(BACKGROUND)
+    for brick in bricks:
+        pygame.draw.rect(screen, brick.current_colour(), brick.rect)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball.rect())
+    screen.blit(font.render(f"Score {score}   Lives {lives}", True, TEXT_COLOUR), (16, 16))
+    if lives == 0:
+        screen.blit(font.render("Game over", True, TEXT_COLOUR), (260, 240))
+    elif not bricks:
+        screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
+
+
+def main(args: list[str]) -> None:
+    settings = parse_args(args)
+    seed = settings.seed
+    if settings.test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if seed is None:
+            seed = 0
+    game = Game(random.Random(seed))
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Breakout")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    frames = 0
+    running = True
+    while running:
+        if settings.test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == settings.lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+
+        if game.playing():
+            direction = 0
+            if settings.test_frames is None:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT]:
+                    direction -= 1
+                if keys[pygame.K_RIGHT]:
+                    direction += 1
+            elif settings.hold == Hold.LEFT:
+                direction = -1
+            elif settings.hold == Hold.RIGHT:
+                direction = 1
+            elif settings.hold == Hold.AUTO:
+                direction = autopilot(game.ball, game.paddle)
+            game.paddle.move(direction, dt)
+
+            game.ball.move(dt)
+            game.ball.bounce_off_walls()
+            bounce_off_paddle(game.ball, game.paddle.rect())
+
+            hit = hit_brick(game.ball.rect(), game.bricks)
+            if hit is not None:
+                game.score += game.bricks[hit].hit()
+                if game.bricks[hit].hits_left == 0:
+                    game.bricks.pop(hit)
+                game.ball.velocity.y = -game.ball.velocity.y
+
+            if game.ball.rect().top > HEIGHT:
+                game.lives -= 1
+                if game.lives > 0:
+                    game.ball = serve(game.rng)
+
+        draw(screen, font, game.paddle.rect(), game.ball, game.bricks, game.score, game.lives)
+        pygame.display.flip()
+
+        frames += 1
+        if settings.test_frames is not None and frames >= settings.test_frames:
+            running = False
+
+    pygame.quit()
+    if settings.test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(game.ball.rect())
+        print(f"frames={frames} paddle_x={game.paddle.rect().x} score={game.score} lives={game.lives} bricks={len(game.bricks)} inside={inside}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+```
+
+**Understand.** `playing()` returns `True` while there are lives left and bricks left. `len(self.bricks) > 0` says the same as the truthiness test `bricks` used before (an empty list counts as false), but spelled out, which also lets pyright see the result is a `bool`, as the return type says. One name, one place: if "still playing" ever changes, say with a time limit, it changes here.
+
+```check
+contains breakout.py "def playing(self) -> bool:"
+run ".venv/Scripts/python -m pytest -q" stdout="45 passed" label="the game behaves exactly as before"
+```
+
+## The rules move into the game
+
+**Build:** the rules that connect the paddle, the ball, the bricks and the lives become the game's `update` method.
+
+Everything the loop did inside `if game.playing():` is the game's business: move the paddle and the ball, bounce, break bricks, count lives. Move it into a method, `update(direction, dt)`, with `self.` where the loop had `game.`, and the loop calls it once a frame. The steering code stays in the loop, because it reads the keyboard, and moves back one level, since the `if` around it goes.
+
+```python file=breakout.py
+import math
+import os
+import random
+import sys
+from dataclasses import dataclass
+from enum import Enum
+
+import pygame
+from pygame import Vector2
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+TEXT_COLOUR = (230, 230, 230)
+ROW_COLOURS = [(239, 68, 68), (249, 115, 22), (234, 179, 8), (34, 197, 94), (59, 130, 246)]
+PADDLE_SPEED = 420
+PADDLE_WIDTH, PADDLE_HEIGHT = 100, 14
+BALL_SPEED = 300
+BALL_RADIUS = 6
+BRICK_WIDTH, BRICK_HEIGHT, BRICK_GAP = 70, 20, 6
+WALL_LEFT, WALL_TOP = 16, 60
+USAGE = "usage: python breakout.py [--test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]]"
+
+
+
+class Hold(Enum):
+    NONE = "none"
+    LEFT = "left"
+    RIGHT = "right"
+    AUTO = "auto"
+
+
+@dataclass(frozen=True)
+class Settings:
+    test_frames: int | None = None
+    hold: Hold = Hold.NONE
+    lag_at: int | None = None
+    seed: int | None = None
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(value, high))
+
+
+def number_after(args: list[str], name: str) -> int | None:
+    if name not in args:
+        return None
+    i = args.index(name)
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print(USAGE)
+        sys.exit(2)
+    return int(args[i + 1])
+
+
+def parse_args(args: list[str]) -> Settings:
+    # A test run lets another program play the game, with no window:
+    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]
+    hold = Hold.NONE
+    if "--hold" in args:
+        i = args.index("--hold")
+        names = [h.value for h in Hold]
+        if i + 1 >= len(args) or args[i + 1] not in names:
+            print(USAGE)
+            sys.exit(2)
+        hold = Hold(args[i + 1])
+    return Settings(
+        test_frames=number_after(args, "--test-run"),
+        hold=hold,
+        lag_at=number_after(args, "--lag-at"),
+        seed=number_after(args, "--seed"),
+    )
+
+
+@dataclass
+class Ball:
+    position: Vector2
+    velocity: Vector2
+
+    def move(self, dt: float) -> None:
+        self.position += self.velocity * dt
+
+    def bounce_off_walls(self) -> None:
+        if self.position.x < BALL_RADIUS:
+            self.position.x = BALL_RADIUS
+            self.velocity.x = abs(self.velocity.x)
+        if self.position.x > WIDTH - BALL_RADIUS:
+            self.position.x = WIDTH - BALL_RADIUS
+            self.velocity.x = -abs(self.velocity.x)
+        if self.position.y < BALL_RADIUS:
+            self.position.y = BALL_RADIUS
+            self.velocity.y = abs(self.velocity.y)
+
+    def rect(self) -> pygame.Rect:
+        r = pygame.Rect(0, 0, BALL_RADIUS * 2, BALL_RADIUS * 2)
+        r.center = (round(self.position.x), round(self.position.y))
+        return r
+
+
+def serve(rng: random.Random) -> Ball:
+    across = rng.uniform(-0.6, 0.6)
+    up = math.sqrt(1 - across * across)
+    return Ball(Vector2(WIDTH / 2, HEIGHT / 2), Vector2(across, -up) * BALL_SPEED)
+
+
+class Paddle:
+    # Invariant: the whole paddle is always on the screen, 0 <= x <= WIDTH - PADDLE_WIDTH.
+    def __init__(self) -> None:
+        self._x = float(WIDTH // 2 - PADDLE_WIDTH // 2)
+
+    @property
+    def x(self) -> float:
+        return self._x
+
+    def move(self, direction: int, dt: float) -> None:
+        self._x = clamp(self._x + direction * PADDLE_SPEED * dt, 0, WIDTH - PADDLE_WIDTH)
+
+    def rect(self) -> pygame.Rect:
+        return pygame.Rect(round(self._x), HEIGHT - 30 - PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT)
+
+
+def autopilot(ball: Ball, paddle: Paddle) -> int:
+    middle = paddle.x + PADDLE_WIDTH / 2
+    if ball.position.x < middle - 10:
+        return -1
+    if ball.position.x > middle + 10:
+        return 1
+    return 0
+
+
+def bounce_off_paddle(ball: Ball, paddle: pygame.Rect) -> None:
+    rect = ball.rect()
+    if rect.colliderect(paddle) and ball.velocity.y > 0:
+        offset = (rect.centerx - paddle.centerx) / (paddle.width / 2)
+        ball.velocity = Vector2(BALL_SPEED * 0.8 * offset, -ball.velocity.y)
+
+
+@dataclass
+class Brick:
+    rect: pygame.Rect
+    colour: tuple[int, int, int]
+    hits_left: int = 1
+    points: int = 10
+    cracked: bool = False
+
+    def hit(self) -> int:
+        if self.hits_left == 0:
+            raise ValueError("this brick is already broken")
+        self.hits_left -= 1
+        self.cracked = True
+        if self.hits_left == 0:
+            return self.points
+        return 0
+
+    def current_colour(self) -> tuple[int, int, int]:
+        if not self.cracked:
+            return self.colour
+        r, g, b = self.colour
+        return int(r * 0.6), int(g * 0.6), int(b * 0.6)
+
+
+def make_bricks() -> list[Brick]:
+    bricks = []
+    for row, colour in enumerate(ROW_COLOURS):
+        for col in range(8):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if row == 0:
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            else:
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def hit_brick(ball: pygame.Rect, bricks: list[Brick]) -> int | None:
+    i = ball.collidelist([brick.rect for brick in bricks])
+    if i == -1:
+        return None
+    return i
+
+
+class Game:
+    def __init__(self, rng: random.Random) -> None:
+        self.rng = rng
+        self.paddle = Paddle()
+        self.ball = serve(rng)
+        self.bricks = make_bricks()
+        self.score = 0
+        self.lives = 3
+
+    def playing(self) -> bool:
+        return self.lives > 0 and len(self.bricks) > 0
+
+    def update(self, direction: int, dt: float) -> None:
+        if not self.playing():
+            return
+        self.paddle.move(direction, dt)
+        self.ball.move(dt)
+        self.ball.bounce_off_walls()
+        bounce_off_paddle(self.ball, self.paddle.rect())
+
+        hit = hit_brick(self.ball.rect(), self.bricks)
+        if hit is not None:
+            self.score += self.bricks[hit].hit()
+            if self.bricks[hit].hits_left == 0:
+                self.bricks.pop(hit)
+            self.ball.velocity.y = -self.ball.velocity.y
+
+        if self.ball.rect().top > HEIGHT:
+            self.lives -= 1
+            if self.lives > 0:
+                self.ball = serve(self.rng)
+
+
+def draw(screen: pygame.Surface, font: pygame.font.Font, paddle: pygame.Rect, ball: Ball,
+         bricks: list[Brick], score: int, lives: int) -> None:
+    screen.fill(BACKGROUND)
+    for brick in bricks:
+        pygame.draw.rect(screen, brick.current_colour(), brick.rect)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball.rect())
+    screen.blit(font.render(f"Score {score}   Lives {lives}", True, TEXT_COLOUR), (16, 16))
+    if lives == 0:
+        screen.blit(font.render("Game over", True, TEXT_COLOUR), (260, 240))
+    elif not bricks:
+        screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
+
+
+def main(args: list[str]) -> None:
+    settings = parse_args(args)
+    seed = settings.seed
+    if settings.test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if seed is None:
+            seed = 0
+    game = Game(random.Random(seed))
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Breakout")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    frames = 0
+    running = True
+    while running:
+        if settings.test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == settings.lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+
+        direction = 0
+        if settings.test_frames is None:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                direction -= 1
+            if keys[pygame.K_RIGHT]:
+                direction += 1
+        elif settings.hold == Hold.LEFT:
+            direction = -1
+        elif settings.hold == Hold.RIGHT:
+            direction = 1
+        elif settings.hold == Hold.AUTO:
+            direction = autopilot(game.ball, game.paddle)
+        game.update(direction, dt)
+
+        draw(screen, font, game.paddle.rect(), game.ball, game.bricks, game.score, game.lives)
+        pygame.display.flip()
+
+        frames += 1
+        if settings.test_frames is not None and frames >= settings.test_frames:
+            running = False
+
+    pygame.quit()
+    if settings.test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(game.ball.rect())
+        print(f"frames={frames} paddle_x={game.paddle.rect().x} score={game.score} lives={game.lives} bricks={len(game.bricks)} inside={inside}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+```
+
+**Understand.** `update` starts with a **guard**: `if not self.playing(): return`. A bare `return` in a method that returns nothing (`-> None`) just ends it there. The loop now calls `update` every frame, even after the game is over, so the game itself refuses to change once it's over, instead of relying on its caller to check. That's also why the steering code can run every frame: when the game's over, the `direction` it works out is simply ignored.
+
+`main` is now what it should be: setup, then a loop that turns the outside world into calls on the game (keys or the autopilot become a `direction`, the clock becomes `dt`) and turns the game into pixels (`draw(screen, font, game)`). It knows nothing about bricks breaking or lives being lost. `draw` takes the whole game instead of seven separate values.
+
+```check
+contains breakout.py "def update(self, direction: int, dt: float) -> None:"
+run ".venv/Scripts/python -m pytest -q" stdout="45 passed" label="the game behaves exactly as before"
+run ".venv/Scripts/python -m pyright breakout.py" stdout="0 errors"
+```
+
+## Drawing takes the game
+
+**Build:** `draw` is given the whole game instead of five separate values.
 
 ```python file=breakout.py
 import math
@@ -783,15 +1698,11 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand: composition.** A `Game` **has** a paddle, a ball, a list of bricks, a score and a number of lives. Its `__init__` creates them, and its `update(direction, dt)` method runs exactly the rules the loop ran before, on its own attributes. Building a bigger object out of smaller ones like this is called **composition**, and it's the main way programs are structured.
-
-`main` is now what it should be: setup, then a loop that turns the outside world into calls on the game (keys or the autopilot become a `direction`, the clock becomes `dt`) and turns the game into pixels (`draw(screen, font, game)`). It knows nothing about bricks breaking or lives being lost. `draw` takes the whole game instead of seven separate values.
-
-`Game.playing()` names a rule that appeared in two places as `lives > 0 and bricks`: one name, one place.
+**Understand.** `draw(screen, font, game)` reads what it needs from the game: `game.bricks`, `game.paddle.rect()`, `game.score`. The test-run summary reads the game too. Its `print` is now split across lines: two string literals written next to each other, inside the brackets, are joined into one, so a long f-string can be broken anywhere between two pieces without changing what's printed.
 
 **Composition, not inheritance.** Python also lets one class be made **from** another: `class Ball(pygame.Rect):` would make a ball a special kind of `Rect`, **inheriting** all its methods. That's **inheritance**, and it means *is-a*: a ball would *be* a rectangle. It's tempting, since the ball has a rectangle. But then every `Rect` method would be part of the ball's interface (`ball.inflate`, `ball.width = 90`), anything could change it in ways that ignore `position`, and lesson 3.1's "one source of truth" would be gone. A ball **has** a position and **can make** a rectangle; it isn't one. The usual advice, "prefer composition to inheritance", comes from exactly this: inheritance shares *everything*, composition shares only what you choose. Chapter 10 uses inheritance where it fits, for the node types of the engine.
 
-> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 18) and a machine-learning agent (Chapter 31).
+> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 18) and a machine-learning agent (Chapter 38).
 
 ```check
 contains breakout.py "class Game:"
@@ -850,6 +1761,8 @@ def test_a_ball_that_hits_a_brick_breaks_it_and_bounces():
     assert game.ball.velocity.y == 240
 ```
 
+`--durations=5` asks pytest to list the 5 slowest tests with their times (very fast ones are left out of the list):
+
 ```powershell
 .venv\Scripts\python -m pytest -q tests/test_game.py --durations=5
 ```
@@ -861,7 +1774,19 @@ def test_a_ball_that_hits_a_brick_breaks_it_and_bounces():
 
 **Understand.** `test_ten_seconds_of_autopilot_matches_the_test_run` plays 600 frames, the same game as the characterisation test `test_autopilot_plays_for_ten_seconds`, and gets the same numbers. The characterisation test takes about a second, because it starts Python and pygame in a new process. This one takes a hundredth of a second, because it's 600 method calls on an object.
 
-The other three tests **arrange** a situation directly, by setting the game's attributes: a ball just below the screen, or a wall of one brick with the ball inside it. Then one `update`, then check the result. Before `Game` existed, testing "a missed ball costs a life" meant playing until the ball happened to be missed. Now it's three lines.
+`for _ in range(frames):` repeats `frames` times. `_` is the usual name for a loop variable whose value isn't used: it says "I only need the repeating". `autopilot_game(seed, frames)` is a **helper**: it makes a game with that seed and runs it for that many frames with the autopilot steering, so the test only has to say how many.
+
+Two of the other tests **arrange** a situation directly, by setting the game's attributes, then run one `update` and check the result; the third, `test_a_new_game`, just checks a fresh game. Traced:
+
+```text
+a ball just below the screen:   ball at y = HEIGHT + 20 = 500, moving down 300 a second, moves 5 pixels
+                                to 505; its Rect's top, 499, is below 480
+                                → a life is lost, 3 → 2, and a new ball is served at (320, 240)
+a wall of one brick:            the brick covers y 200 to 219; the ball at (330, 225) moving up
+                                240 a second moves 4 pixels to y = 221, so its Rect covers 215 to 226,
+                                which overlaps the brick's bottom rows → score 10, no bricks left,
+                                and velocity.y flips to +240
+``` Before `Game` existed, testing "a missed ball costs a life" meant playing until the ball happened to be missed. Now it's three lines.
 
 These are **integration tests**: they test several pieces working together (`Game`, `Ball`, `Paddle`, `Brick`), which no unit test does, but without the whole program around them. They sit in the middle of the testing pyramid from lesson 2.4: slower and broader than unit tests, far faster and more precise than characterisation tests.
 
@@ -932,7 +1857,7 @@ choice: The same lines as now
 choice: An empty list, or just "the game is over"
 choice: A line for every frame
 answer: An empty list, or just "the game is over"
-explain: `before = game` doesn't copy the game: it's a second name for the same object (lesson 3.1's aliasing). After `update`, `after` is that same object too, so `after != before` is always `False`, and no change is ever reported. The tuple works because it copies the three *numbers* at that moment: integers can't change, so the tuple keeps the "before" values even after the game moves on.
+explain: `before = game` doesn't copy the game: it's a second name for the same object (lesson 3.1's aliasing). After `update`, `after` is that same object too, so `after != before` is always `False`, and no change is ever reported. The tuple works for a different reason than you might think. It doesn't copy anything: it holds references to the three int objects the game's attributes referred to at that moment. Then `self.score += 10` doesn't change that int object (ints can't be changed); it makes a new int and **rebinds** the game's `score` attribute to it. The tuple still refers to the old one, so it keeps the "before" values. Compare lesson 3.2's `Vector2`: `+=` on a vector *does* change the object in place, so a tuple holding the game's position vector would have changed with it.
 ```
 
 Now run it and compare with your predictions:

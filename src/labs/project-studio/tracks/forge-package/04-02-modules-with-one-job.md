@@ -505,6 +505,8 @@ run ".venv/Scripts/python -m breakout --test-run 600 --hold auto" stdout="frames
 
 **Build:** the argument tests, importing the module they test.
 
+`parse_args`, `Settings` and `Hold` live in `breakout.settings` now, so the argument tests import them from there instead of from the model. Nothing else in the tests changes: they test the same functions, found at their new address.
+
 ```python file=tests/test_arguments.py
 # Lesson 2.4, with --seed added in 2.6: what the game's command line should accept, and what it should refuse.
 import pytest
@@ -637,7 +639,9 @@ def main(args: list[str]) -> None:
         )
 ```
 
-**Understand.** `app.py` is the **application**: the piece that starts pygame, reads the keyboard and the clock, asks the model to update, and draws. It imports what it uses from the other modules, and nothing imports it except `__main__.py`.
+**Understand.** `main` is moved here unchanged: the only new lines are the imports at the top. To work out what to import, read `main` and list every name it uses but doesn't define itself: `parse_args` and `Hold` (from settings), `Game`, `autopilot`, `draw`, `WIDTH` and `HEIGHT` (from the model), and the standard library's `os` and `random`, and pygame. Each comes from the module it lives in.
+
+`app.py` is the **application**: the piece that starts pygame, reads the keyboard and the clock, asks the model to update, and draws. It imports what it uses from the other modules, and nothing imports it except `__main__.py`.
 
 ```check
 file breakout/app.py
@@ -646,6 +650,8 @@ file breakout/app.py
 ## The model, without the loop
 
 **Build:** remove `main` and the imports only it needed from `model.py`.
+
+When code moves out of a module, some of its imports can become unused: `os` was only ever used by `main`, to set the video driver. An import nobody uses still runs, and misleads readers about what the module needs, so delete it. ruff spots them too (rule `F401`, an unused import), so after any move, `ruff check` will tell you if you've missed one.
 
 ```python file=breakout/model.py
 import math
@@ -836,6 +842,8 @@ lacks breakout/model.py "import os" -- Only main used os.
 
 **Build:** `__main__.py` starts the game from its new home.
 
+`main` isn't in the model any more, so `__main__.py` imports it from `breakout.app`: one changed import line, and the game starts exactly as before.
+
 ```python file=breakout/__main__.py
 import sys
 
@@ -853,7 +861,7 @@ run ".venv/Scripts/python -m pyright breakout" stdout="0 errors"
 
 **Build:** start moving drawing into its own module, the obvious way, and find out why it doesn't work.
 
-First, make `app.py` import `draw` from a new module, `breakout.draw`, and keep the four colours in `app.py` for now (the drawing code needs them, and they were next to `draw` in the model):
+First, make `app.py` import `draw` from a new module, `breakout.draw`, and keep the four colours in `app.py` for now (the drawing code needs them, and they were next to `draw` in the model). The colours are also still in `model.py`; this step deliberately takes them from `app.py`, the obvious-looking place, to show what goes wrong:
 
 ```python file=breakout/app.py
 import os
@@ -955,6 +963,15 @@ def draw(screen: pygame.Surface, font: pygame.font.Font, game: Game) -> None:
         screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
 ```
 
+```predict
+question: `app.py` imports `draw` from `draw.py`, and `draw.py` imports the colours from `app.py`. What happens when the game starts?
+choice: It runs: each module finds what it needs in the other
+choice: An ImportError: one of them isn't finished when the other needs it
+choice: Python loops forever, importing each from the other
+answer: An ImportError: one of them isn't finished when the other needs it
+explain: Python never imports the same module twice at once, so it doesn't loop. But `app.py` stops at its import of `draw` to run `draw.py`, and `draw.py` then asks for `BACKGROUND` from an `app.py` that hasn't got that far yet. The trace below follows it line by line.
+```
+
 Run the game:
 
 ```powershell
@@ -982,7 +999,7 @@ python -m breakout runs __main__.py
             → ImportError: cannot import name 'BACKGROUND' from partially initialized module
 ```
 
-`app.py` needs `draw.py` finished before it can continue, and `draw.py` needs `app.py` finished before *it* can continue. Neither can finish first. That's a **circular import**, and it's always a sign that the code is in the wrong place, not that Python is being awkward: two modules that need each other aren't really two separate jobs.
+`app.py` needs `draw.py` finished before it can continue, and `draw.py` needs `app.py` finished before *it* can continue. Neither can finish first. That's a **circular import**, and it's almost always a sign that the code is in the wrong place, not that Python is being awkward: two modules that need each other aren't really two separate jobs.
 
 ```check
 run ".venv/Scripts/python -m breakout --test-run 5" exit=1 stderr="circular import" label="the circle stops the game from starting (for now)" -- This step is meant to fail: draw.py imports from app.py, and app.py imports draw.py.
@@ -995,7 +1012,7 @@ run ".venv/Scripts/python -m breakout --test-run 5" exit=1 stderr="circular impo
 The fix comes from asking which module the colours **belong** to. They're used only to draw: they're part of the drawing job. So:
 
 1. Move the four colours into `breakout/draw.py`, and remove them from `app.py`. `draw.py` imports `Game` from the model and nothing from `app.py`.
-2. Remove `draw` and the four colours from `model.py` too, if they're still there: drawing isn't part of the model. (`ROW_COLOURS` stays: each brick's colour is part of the brick.)
+2. Remove `draw` and the four colours from `model.py` too: drawing isn't part of the model. (`ROW_COLOURS` stays: each brick's colour is part of the brick.)
 3. Write `tests/test_architecture.py`, with three tests that check which of the game's modules each module **loads** when it's imported on its own:
 
 | Test name | Importing… | …loads exactly these game modules |
@@ -1003,6 +1020,24 @@ The fix comes from asking which module the colours **belong** to. They're used o
 | `test_settings_depend_on_nothing_else_in_the_game` | `breakout.settings` | `breakout`, `breakout.settings` |
 | `test_the_model_depends_on_nothing_else_in_the_game` | `breakout.model` | `breakout`, `breakout.model` |
 | `test_drawing_depends_only_on_the_model` | `breakout.draw` | `breakout`, `breakout.draw`, `breakout.model` |
+
+Every set in the table includes `breakout` itself, because importing `breakout.settings` first imports the package `breakout` (it runs `__init__.py`), then the module.
+
+**Sets, new here.** The tests compare **sets**: collections with no order and no repeats, written in braces, `{"breakout", "breakout.model"}`. Two sets are `==` when they hold the same items, whatever order they were written or found in, which is exactly right for "these modules, and no others". A **set comprehension** builds one the way a list comprehension builds a list, with braces: `{name for name in names if name.startswith("breakout")}`. Try it:
+
+```powershell
+.venv\Scripts\python -c "print({'b', 'a'} == {'a', 'b'}, {n for n in ['x', 'y', 'x']})"
+```
+
+```text
+True {'x', 'y'}
+```
+
+(The second set may print in either order.) And to see what one import loads, in a fresh Python:
+
+```powershell
+.venv\Scripts\python -c "import sys, breakout.model; print([name for name in sys.modules if name.startswith('breakout')])"
+```
 
 `sys.modules` (lesson 2.3) is the dictionary of every module imported so far. Importing a module and then listing the keys of `sys.modules` that start with `breakout` shows exactly which game modules it pulled in. Do it in a **fresh** Python, with `subprocess.run` as in the characterisation tests: the Python running the tests has already imported every module that any test uses, so its own `sys.modules` would show everything.
 

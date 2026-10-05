@@ -746,7 +746,7 @@ if __name__ == "__main__":
 
 > **Enumeration (enum)**: a type with a fixed set of named values, its **members**, and no others.
 
-`class Hold(Enum):` declares one. Each line in its body is a member: `Hold.AUTO` is a value of type `Hold`, with a **name** (`"AUTO"`) and a **value** (`"auto"`, the word used on the command line).
+`class Hold(Enum):` declares one. The `(Enum)` means `Hold` **inherits** from `Enum`, a class in the standard library: `Hold` gets all of `Enum`'s behaviour, and that behaviour is what turns each assignment in its body into a member. (Lesson 3.5 says more about making one class from another.) Compare a dataclass: there, `x: float` in the body declares a field that every *object* will have its own value for; here, `NONE = "none"` makes one member, created once, that everyone shares. Each line in its body is a member: `Hold.AUTO` is a value of type `Hold`, with a **name** (`"AUTO"`) and a **value** (`"auto"`, the word used on the command line).
 
 ```text
 list(Hold)          [<Hold.NONE: 'none'>, <Hold.LEFT: 'left'>, <Hold.RIGHT: 'right'>, <Hold.AUTO: 'auto'>]
@@ -756,9 +756,11 @@ Hold.AUTO.name      'AUTO'
 Hold("sideways")    ValueError: 'sideways' is not a valid Hold
 ```
 
+Calling `Hold("auto")` looks like making a new object, the way `Ball(...)` does, but it isn't: an enum's members all exist already, and calling the class **looks one up** by its value. Looping over the class, as `list(Hold)` and `[h.value for h in Hold]` do, gives its members in order.
+
 Now `main` compares with `Hold.LEFT`, `Hold.AUTO`: names, not strings. Misspell one, `Hold.ATUO`, and pyright reports `Cannot access attribute "ATUO" for class "type[Hold]"` before the program runs, and the program would stop with an `AttributeError` if it did. A typo can't be silent any more.
 
-`parse_args` still checks the word against the allowed values (now built from the enum itself, `[h.value for h in Hold]`, so the list can't drift out of step with the members), then turns it into a member with `Hold(args[i + 1])`. From there on, the rest of the program only ever sees `Hold`s.
+`parse_args` still checks the word against the allowed values (now built from the enum itself, `[h.value for h in Hold]`, so the check can't drift out of step with the members; the `USAGE` text still lists the words by hand, so that one can), then turns it into a member with `Hold(args[i + 1])`. From there on, the rest of the program only ever sees `Hold`s.
 
 One trap remains: a `Hold` is not equal to its value. `settings.hold == "auto"` is `False` even when the hold is `Hold.AUTO`, because a member and a string are different types. Inside the program, always compare members with members.
 
@@ -1137,13 +1139,24 @@ So the paddle now keeps its position in `self._x`. A leading underscore is Pytho
 
 **`@property`** makes a method behave like an attribute. `paddle.x` *calls* the method `x` and returns its result, with no parentheses at the call. Because there's only a "get" method and no "set" method, `paddle.x` can be read but not assigned:
 
+```predict
+question: Code outside the class runs `paddle.x = 900`. What happens now?
+choice: It works: the paddle moves off the screen
+choice: It's silently ignored
+choice: An AttributeError
+answer: An AttributeError
+explain: A property with only a "get" method has no way to be assigned, so Python refuses with `AttributeError: property 'x' of 'Paddle' object has no setter`, and pyright reports it before the program even runs. The rule can't be broken from outside any more; it fails loudly instead of quietly.
+```
+
+Try it: `.venv\Scripts\python -c "import breakout; p = breakout.Paddle(); p.x = 900"`.
+
 ```text
 paddle.x = 900
 AttributeError: property 'x' of 'Paddle' object has no setter        (when run)
 error: Cannot assign to attribute "x" for class "Paddle"              (pyright, before running)
 ```
 
-Everything that read `paddle.x` before, `autopilot`, the tests, still reads it the same way. That's the point of a property: the **interface** stays the same while the class takes control of its **implementation**. The only way to change `_x` is `move`, and `move` keeps the rule.
+Everything that read `paddle.x` before, `autopilot`, the tests, still reads it the same way. That's the point of a property: the **interface** stays the same while the class takes control of its **implementation**. The only way to change `_x` is `move`, and `move` keeps the rule. Inside the class, methods like `rect` use `self._x` directly: `self.x` would work too (it would call the property), but the class owns `_x`, and reads it without the detour.
 
 The comment at the top of the class states the invariant. Writing it down tells every future reader what `move`, and any method added later, must preserve.
 
@@ -1160,7 +1173,7 @@ run ".venv/Scripts/python -m pyright breakout.py" stdout="0 errors"
 
 **Build:** set your uncommitted work aside, check something, and bring it back.
 
-You have uncommitted changes: the paddle property. Suppose a test had failed just now. The first question is always *did my change break it, or was it already broken?* To answer it, you need to run the tests on the code **without** your change, and then get your change back.
+You have uncommitted changes: the paddle property. Now make a slip on purpose, as if by accident while you worked: change `PADDLE_SPEED = 420` to `PADDLE_SPEED = 421`, and run the tests. Some fail. The first question is always *did my change break it, or was it already broken?* To answer it, you need to run the tests on the code **without** your changes, and then get your changes back.
 
 ```powershell
 git stash
@@ -1178,7 +1191,7 @@ git status --short
 git stash list
 ```
 
-`git status` prints nothing: the working tree is back to the last commit. The tests run against that code. `git stash list` shows the saved work: `stash@{0}: WIP on main: ...`. Now bring it back:
+`git status` prints nothing: the working tree is back to the last commit. The tests run against that code, and they all pass: so the failures came from your uncommitted work, not from what was already committed. `git stash list` shows the saved work: `stash@{0}: WIP on main: ...`. Now bring it back:
 
 ```powershell
 git stash pop
@@ -1191,7 +1204,9 @@ git stash pop
 Dropped refs/stash@{0} (07e2de691cc65bd8bfa200802c8d843706959191)
 ```
 
-**Understand.** `git stash` takes every uncommitted change, in the working tree and the staging area, saves it as a special commit that isn't on any branch, and then restores your files to the last commit. *WIP* stands for "work in progress". `git stash pop` reapplies the saved changes to your files and **drops** the stash, deleting it. (`git stash apply` reapplies without dropping, if you want to keep it.) Stashes form a **stack**: the most recent is `stash@{0}`, and `pop` takes the top one.
+Run the tests again: they fail again, because your changes, slip included, are back. Now you know where to look. Find the slip, put `PADDLE_SPEED` back to 420, and run the tests: they pass.
+
+**Understand.** `git stash` takes every uncommitted change, in the working tree and the staging area, saves it as a special commit kept aside from your history, and then restores your files to the last commit. *WIP* stands for "work in progress". `git stash pop` reapplies the saved changes to your files and **drops** the stash, deleting it. (`git stash apply` reapplies without dropping, if you want to keep it.) Stashes form a **stack**: the most recent is `stash@{0}`, and `pop` takes the top one.
 
 Untracked files, new files Git has never seen, are not stashed unless you add `-u`. A stash is also easy to forget about: `git stash list` shows what's there. For anything longer than a few minutes, a commit on a branch (Chapter 4) is safer.
 
@@ -1211,10 +1226,12 @@ git-clean -- git stash pop brings your change back; then commit it.
 
 **Build, on your own, test first:** the brick's invariant.
 
-A brick's `hits_left` is never negative. Right now, calling `hit()` on a brick that's already broken would make it −1, and score its points a second time if the code allowed it. The game doesn't do that today (broken bricks are removed at once), but nothing in `Brick` prevents it. Make `Brick` keep its own rule:
+A brick's `hits_left` is never negative. Right now, calling `hit()` on a brick that's already broken would make `hits_left` −1: a brick in a state that can't exist, broken and then broken some more. The game doesn't do that today (broken bricks are removed at once), but nothing in `Brick` prevents it. Make `Brick` keep its own rule:
 
 - Hitting a brick with `hits_left == 0` raises **`ValueError`**, with a message saying the brick is already broken, and changes nothing.
 - Everything else behaves as before.
+
+You'll need one thing that's new: **raising** an exception yourself. `raise ValueError("message")` stops the function at that line and sends a `ValueError` up to whoever called it, exactly like the exceptions Python raises itself (lesson 0.3). Try it: `.venv\Scripts\python -c "raise ValueError('this brick is already broken')"` ends with a traceback whose last line is `ValueError: this brick is already broken`. `ValueError` is Python's standard exception for "the right type of value, but not an acceptable one".
 
 **Red** first: a test named `test_a_broken_brick_cannot_be_hit_again` that breaks an ordinary brick with one hit, then checks that a second `hit()` raises `ValueError` (lesson 2.4's `pytest.raises`) and that `hits_left` is still 0. **Green**: the smallest change to `hit`. Commit with a message that mentions **broken**.
 

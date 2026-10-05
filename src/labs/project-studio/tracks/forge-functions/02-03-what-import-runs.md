@@ -261,14 +261,439 @@ if __name__ == "__main__":
 
 Names with two underscores on each side, like `__name__` and `__file__` (lesson 0.2), are called **dunder** names ("double underscore"). They're Python's own: set or used by the language itself.
 
+These checks run `python`, the system Python, not `.venv\Scripts\python`: `whoami.py` imports nothing outside the standard library, so any Python 3.12 or newer gives the same answer.
+
 ```check
 run "python whoami.py" stdout="my name is __main__" label="run directly, its name is __main__"
 run "python -c \"import whoami\"" stdout="my name is whoami" label="imported, its name is whoami"
 ```
 
-## A main function
+## The arguments, read by a function
 
-**Build:** move everything that *does* something into a function, `main`, and call it only when the file is run as a program.
+**Build:** reading the command line becomes a function that's given the arguments and returns the settings.
+
+First, delete `whoami.py`: it was an experiment, and left in the project it would be committed with the game. `Remove-Item whoami.py`.
+
+Right now the top of the file reads `sys.argv` the moment the file runs. Cut that block, from the `# A test run` comment to the line that reads `--lag-at`, and paste it just above `def start_ball():`, as the body of a new function `parse_args(args)`. Inside it, the `os.environ` line goes (that's a side effect, and moves down), and the function ends by returning the three settings. The block's first line, `args = sys.argv[1:]`, isn't moved but deleted: `args` is now the function's parameter, given by whoever calls it. Then, just above `pygame.init()`, call it:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+TEXT_COLOUR = (230, 230, 230)
+ROW_COLOURS = [(239, 68, 68), (249, 115, 22), (234, 179, 8), (34, 197, 94), (59, 130, 246)]
+PADDLE_SPEED = 420
+PADDLE_WIDTH, PADDLE_HEIGHT = 100, 14
+BALL_SPEED = 300
+BALL_RADIUS = 6
+BRICK_WIDTH, BRICK_HEIGHT, BRICK_GAP = 70, 20, 6
+WALL_LEFT, WALL_TOP = 16, 60
+
+
+
+def clamp(value, low, high):
+    return max(low, min(value, high))
+
+
+def parse_args(args):
+    # A test run lets another program play the game, with no window:
+    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME]
+    test_frames = None
+    if "--test-run" in args:
+        i = args.index("--test-run")
+        if i + 1 >= len(args) or not args[i + 1].isdigit():
+            print("usage: python breakout.py [--test-run FRAMES]")
+            sys.exit(2)
+        test_frames = int(args[i + 1])
+    hold = "none"
+    if "--hold" in args:
+        hold = args[args.index("--hold") + 1]
+    lag_at = None
+    if "--lag-at" in args:
+        lag_at = int(args[args.index("--lag-at") + 1])
+    return test_frames, hold, lag_at
+
+
+def start_ball():
+    return WIDTH / 2, HEIGHT / 2, BALL_SPEED * 0.6, -BALL_SPEED * 0.8
+
+
+def move_paddle(paddle_x, direction, dt):
+    return clamp(paddle_x + direction * PADDLE_SPEED * dt, 0, WIDTH - PADDLE_WIDTH)
+
+
+def autopilot(ball_x, paddle_x):
+    middle = paddle_x + PADDLE_WIDTH / 2
+    if ball_x < middle - 10:
+        return -1
+    if ball_x > middle + 10:
+        return 1
+    return 0
+
+
+def bounce_off_walls(x, y, vx, vy):
+    if x < BALL_RADIUS:
+        x, vx = BALL_RADIUS, abs(vx)
+    if x > WIDTH - BALL_RADIUS:
+        x, vx = WIDTH - BALL_RADIUS, -abs(vx)
+    if y < BALL_RADIUS:
+        y, vy = BALL_RADIUS, abs(vy)
+    return x, y, vx, vy
+
+
+def bounce_off_paddle(ball, paddle, vx, vy):
+    if ball.colliderect(paddle) and vy > 0:
+        offset = (ball.centerx - paddle.centerx) / (paddle.width / 2)
+        return BALL_SPEED * 0.8 * offset, -vy
+    return vx, vy
+
+
+def make_bricks():
+    bricks = []
+    for row in range(len(ROW_COLOURS)):
+        for col in range(8):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            bricks.append(pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT))
+    return bricks
+
+
+def brick_colour(brick):
+    row = (brick.y - WALL_TOP) // (BRICK_HEIGHT + BRICK_GAP)
+    return ROW_COLOURS[row]
+
+
+def draw(screen, font, paddle, ball, bricks, score, lives):
+    screen.fill(BACKGROUND)
+    for brick in bricks:
+        pygame.draw.rect(screen, brick_colour(brick), brick)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball)
+    screen.blit(font.render(f"Score {score}   Lives {lives}", True, TEXT_COLOUR), (16, 16))
+    if lives == 0:
+        screen.blit(font.render("Game over", True, TEXT_COLOUR), (260, 240))
+    elif not bricks:
+        screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
+
+
+test_frames, hold, lag_at = parse_args(sys.argv[1:])
+if test_frames is not None:
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36)
+
+paddle = pygame.Rect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT)
+paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+paddle_x = float(paddle.x)
+
+ball = pygame.Rect(0, 0, BALL_RADIUS * 2, BALL_RADIUS * 2)
+ball_x, ball_y, ball_vx, ball_vy = start_ball()
+
+bricks = make_bricks()
+
+score = 0
+lives = 3
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        dt = clock.tick(60) / 1000
+    elif frames == lag_at:
+        dt = 0.5
+    else:
+        dt = 1 / 60
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    if lives > 0 and bricks:
+        direction = 0
+        if test_frames is None:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                direction -= 1
+            if keys[pygame.K_RIGHT]:
+                direction += 1
+        elif hold == "left":
+            direction = -1
+        elif hold == "right":
+            direction = 1
+        elif hold == "auto":
+            direction = autopilot(ball_x, paddle_x)
+        paddle_x = move_paddle(paddle_x, direction, dt)
+        paddle.x = round(paddle_x)
+
+        ball_x += ball_vx * dt
+        ball_y += ball_vy * dt
+        ball_x, ball_y, ball_vx, ball_vy = bounce_off_walls(ball_x, ball_y, ball_vx, ball_vy)
+        ball.center = (round(ball_x), round(ball_y))
+        ball_vx, ball_vy = bounce_off_paddle(ball, paddle, ball_vx, ball_vy)
+
+        hit = ball.collidelist(bricks)
+        if hit != -1:
+            bricks.pop(hit)
+            ball_vy = -ball_vy
+            score += 10
+
+        if ball.top > HEIGHT:
+            lives -= 1
+            ball_x, ball_y, ball_vx, ball_vy = start_ball()
+
+    draw(screen, font, paddle, ball, bricks, score, lives)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(ball)
+    print(f"frames={frames} paddle_x={paddle.x} score={score} lives={lives} bricks={len(bricks)} inside={inside}")
+```
+
+**Understand.** `parse_args(args)` takes the argument list and **returns** the three settings, instead of reading `sys.argv` itself. A function that reads `sys.argv` can only ever be given the real command line; one that takes `args` as a parameter can be given any list, for instance by a test. `test_frames, hold, lag_at = parse_args(...)` unpacks the three returned values into three names, like `WIDTH, HEIGHT = 640, 480` did in lesson 1.1.
+
+The dummy video driver is set by the caller, not by `parse_args`, because it's a side effect: it belongs where things happen, not in the function that reads the settings. `parse_args` still has two side effects of its own, the usage `print` and `sys.exit(2)`. They stay for now, and lesson 2.4 shows they can still be tested, because `sys.exit` works by raising an exception.
+
+```check
+missing whoami.py -- Delete whoami.py: Remove-Item whoami.py. It was an experiment, not part of the game.
+contains breakout.py "def parse_args(args):"
+run ".venv/Scripts/python -m pytest -q" stdout="8 passed" label="the game still behaves exactly the same" -- main must do exactly what the top-level code did.
+```
+
+## Everything else in main
+
+**Build:** move everything that *does* something into a function, `main`.
+
+Above the `parse_args` call, add `def main(args):`, change the call to `parse_args(args)`, and indent everything from the call to the end of the file by one level, 4 spaces: select those lines and press **Tab**. The step's code shows it as one instruction, not as every line again:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+BALL_COLOUR = (245, 245, 245)
+TEXT_COLOUR = (230, 230, 230)
+ROW_COLOURS = [(239, 68, 68), (249, 115, 22), (234, 179, 8), (34, 197, 94), (59, 130, 246)]
+PADDLE_SPEED = 420
+PADDLE_WIDTH, PADDLE_HEIGHT = 100, 14
+BALL_SPEED = 300
+BALL_RADIUS = 6
+BRICK_WIDTH, BRICK_HEIGHT, BRICK_GAP = 70, 20, 6
+WALL_LEFT, WALL_TOP = 16, 60
+
+
+
+def clamp(value, low, high):
+    return max(low, min(value, high))
+
+
+def parse_args(args):
+    # A test run lets another program play the game, with no window:
+    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME]
+    test_frames = None
+    if "--test-run" in args:
+        i = args.index("--test-run")
+        if i + 1 >= len(args) or not args[i + 1].isdigit():
+            print("usage: python breakout.py [--test-run FRAMES]")
+            sys.exit(2)
+        test_frames = int(args[i + 1])
+    hold = "none"
+    if "--hold" in args:
+        hold = args[args.index("--hold") + 1]
+    lag_at = None
+    if "--lag-at" in args:
+        lag_at = int(args[args.index("--lag-at") + 1])
+    return test_frames, hold, lag_at
+
+
+def start_ball():
+    return WIDTH / 2, HEIGHT / 2, BALL_SPEED * 0.6, -BALL_SPEED * 0.8
+
+
+def move_paddle(paddle_x, direction, dt):
+    return clamp(paddle_x + direction * PADDLE_SPEED * dt, 0, WIDTH - PADDLE_WIDTH)
+
+
+def autopilot(ball_x, paddle_x):
+    middle = paddle_x + PADDLE_WIDTH / 2
+    if ball_x < middle - 10:
+        return -1
+    if ball_x > middle + 10:
+        return 1
+    return 0
+
+
+def bounce_off_walls(x, y, vx, vy):
+    if x < BALL_RADIUS:
+        x, vx = BALL_RADIUS, abs(vx)
+    if x > WIDTH - BALL_RADIUS:
+        x, vx = WIDTH - BALL_RADIUS, -abs(vx)
+    if y < BALL_RADIUS:
+        y, vy = BALL_RADIUS, abs(vy)
+    return x, y, vx, vy
+
+
+def bounce_off_paddle(ball, paddle, vx, vy):
+    if ball.colliderect(paddle) and vy > 0:
+        offset = (ball.centerx - paddle.centerx) / (paddle.width / 2)
+        return BALL_SPEED * 0.8 * offset, -vy
+    return vx, vy
+
+
+def make_bricks():
+    bricks = []
+    for row in range(len(ROW_COLOURS)):
+        for col in range(8):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            bricks.append(pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT))
+    return bricks
+
+
+def brick_colour(brick):
+    row = (brick.y - WALL_TOP) // (BRICK_HEIGHT + BRICK_GAP)
+    return ROW_COLOURS[row]
+
+
+def draw(screen, font, paddle, ball, bricks, score, lives):
+    screen.fill(BACKGROUND)
+    for brick in bricks:
+        pygame.draw.rect(screen, brick_colour(brick), brick)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.draw.ellipse(screen, BALL_COLOUR, ball)
+    screen.blit(font.render(f"Score {score}   Lives {lives}", True, TEXT_COLOUR), (16, 16))
+    if lives == 0:
+        screen.blit(font.render("Game over", True, TEXT_COLOUR), (260, 240))
+    elif not bricks:
+        screen.blit(font.render("You win!", True, TEXT_COLOUR), (270, 240))
+
+
+def main(args):
+    test_frames, hold, lag_at = parse_args(args)
+    if test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Breakout")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    paddle = pygame.Rect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT)
+    paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+    paddle_x = float(paddle.x)
+
+    ball = pygame.Rect(0, 0, BALL_RADIUS * 2, BALL_RADIUS * 2)
+    ball_x, ball_y, ball_vx, ball_vy = start_ball()
+
+    bricks = make_bricks()
+
+    score = 0
+    lives = 3
+    frames = 0
+    running = True
+    while running:
+        if test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+
+        if lives > 0 and bricks:
+            direction = 0
+            if test_frames is None:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT]:
+                    direction -= 1
+                if keys[pygame.K_RIGHT]:
+                    direction += 1
+            elif hold == "left":
+                direction = -1
+            elif hold == "right":
+                direction = 1
+            elif hold == "auto":
+                direction = autopilot(ball_x, paddle_x)
+            paddle_x = move_paddle(paddle_x, direction, dt)
+            paddle.x = round(paddle_x)
+
+            ball_x += ball_vx * dt
+            ball_y += ball_vy * dt
+            ball_x, ball_y, ball_vx, ball_vy = bounce_off_walls(ball_x, ball_y, ball_vx, ball_vy)
+            ball.center = (round(ball_x), round(ball_y))
+            ball_vx, ball_vy = bounce_off_paddle(ball, paddle, ball_vx, ball_vy)
+
+            hit = ball.collidelist(bricks)
+            if hit != -1:
+                bricks.pop(hit)
+                ball_vy = -ball_vy
+                score += 10
+
+            if ball.top > HEIGHT:
+                lives -= 1
+                ball_x, ball_y, ball_vx, ball_vy = start_ball()
+
+        draw(screen, font, paddle, ball, bricks, score, lives)
+        pygame.display.flip()
+
+        frames += 1
+        if test_frames is not None and frames >= test_frames:
+            running = False
+
+    pygame.quit()
+    if test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(ball)
+        print(f"frames={frames} paddle_x={paddle.x} score={score} lives={lives} bricks={len(bricks)} inside={inside}")
+```
+
+Now run the file: `.venv\Scripts\python breakout.py --test-run 60`.
+
+```predict
+question: What does `breakout.py --test-run 60` print now?
+choice: frames=60 and the rest of the summary, as before
+choice: Nothing but pygame's greeting
+choice: A NameError: main is not defined
+answer: Nothing but pygame's greeting
+explain: The file now defines `main` and never calls it. A `def` only creates the function; its body runs when something calls it, and nothing does. So the program imports pygame, defines its constants and functions, and ends. The characterisation tests fail for the same reason. The next step adds the call.
+```
+
+**Understand.** Every game variable, `paddle_x`, `ball_vx`, `lives`, `score`, `bricks`, is now a **local variable of `main`**. Nothing outside `main` can see or change them, and the only way a function can affect them is by returning a value that `main` chooses to store.
+
+```check
+contains breakout.py "def main(args):"
+contains breakout.py "test_frames, hold, lag_at = parse_args(args)"
+```
+
+## Only when run directly
+
+**Build:** call `main`, but only when the file is run as a program.
+
+The `whoami.py` step showed how a file can tell: `__name__` is `"__main__"` only when the file is run directly. Add two lines at the very end, not indented:
 
 ```python file=breakout.py
 import os
@@ -480,8 +905,6 @@ No game. The first line is pygame announcing itself, which it does whenever it's
 **Understand: what moved, and why it matters.**
 
 - **The top level now only defines things**: imports, constants, functions. Importing it has no effect except making those names available.
-- **`parse_args(args)`** takes the argument list and returns the three settings, instead of reading `sys.argv` itself. A function that reads `sys.argv` can only ever be given the real command line; one that takes `args` as a parameter can be given any list, for instance by a test. (The dummy video driver moved into `main`, because it's a side effect: it belongs where things happen, not in the function that reads the settings.)
-- **`main(args)`** holds the setup and the game loop. Every game variable, `paddle_x`, `ball_vx`, `lives`, `score`, `bricks`, is now a **local variable of `main`**. Nothing outside `main` can see or change them, and the only way a function can affect them is by returning a value that `main` chooses to store.
 - **The last two lines** call `main` only when the file is the program: `sys.argv[1:]` is passed in from there, the one place that knows about the real command line.
 
 Look back at lesson 1.6's list. *Everything is global: `ball_vx` is changed on 6 lines.* It's still changed in several places, but all of them are now inside `main`, and the functions that compute its new values receive it as a parameter and return the result. To understand the ball's velocity you read `main` and the functions it calls, not the whole file.
@@ -516,7 +939,7 @@ def test_clamp_leaves_a_value_in_range_alone():
 9 passed in 8.22s
 ```
 
-Run just the new file and look at the time:
+Give pytest a file's path and it runs only the tests in that file. Run just the new file and look at the time:
 
 ```powershell
 .venv\Scripts\python -m pytest -q tests/test_breakout.py

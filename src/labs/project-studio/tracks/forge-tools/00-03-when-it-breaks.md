@@ -60,7 +60,15 @@ Traceback (most recent call last):
 ZeroDivisionError: division by zero
 ```
 
-`:.1f` inside the braces of an f-string is a **format specification**: show the number with one digit after the decimal point, so 183.333… prints as `183.3`.
+**Understand the program first.** `players` is a **dictionary**: each name (a **key**) is paired with a list of scores (its **value**). `players.items()` gives the pairs one at a time, and `for name, scores in ...` unpacks each pair into two names:
+
+```text
+pass 1   ("Ada", [120, 340, 90])   →  name = "Ada",   scores = [120, 340, 90]
+pass 2   ("Grace", [410, 220])     →  name = "Grace", scores = [410, 220]
+pass 3   ("Linus", [])             →  name = "Linus", scores = []
+```
+
+`average` adds up a list with a loop (`total += score` is short for `total = total + score`) and divides by `len(scores)`, how many there are: for Ada, (120 + 340 + 90) / 3 = 183.33…. `:.1f` inside the braces of an f-string is a **format specification**: show the number with one digit after the decimal point, so 183.333… prints as `183.3`.
 
 Ada and Grace were printed before the crash, and Linus wasn't. Nothing after the error ran: an exception stops the program at the line where it happens (lesson 0.1), and the exit code is 1.
 
@@ -186,7 +194,7 @@ explain: `+` means different things for different **types**: it adds numbers and
 | Exception | What it means | Usually caused by |
 |---|---|---|
 | `NameError: name 'scroe' is not defined. Did you mean: 'score'?` | no variable or function with that name exists here | a typo, or using a variable before assigning it |
-| `TypeError: can only concatenate str (not "int") to str` | an operation got a value of a type it can't work with | mixing text and numbers, or a value being `None` when you expected something else |
+| `TypeError: can only concatenate str (not "int") to str` | an operation got a value of a type it can't work with | mixing text and numbers, or a value being `None` (Python's "nothing here" value, met properly two steps on) when you expected something else |
 | `IndexError: list index out of range` | a list position that doesn't exist | counting from 1 instead of 0: a 3-item list has indexes 0, 1, 2 |
 | `KeyError: 'score'` | a dictionary has no such key | a typo, or a key that was never added |
 | `AttributeError: 'str' object has no attribute 'uppper'. Did you mean: 'upper'?` | that kind of value has no method or attribute with that name | a typo, or the value isn't the type you think it is |
@@ -203,6 +211,8 @@ Notice the `Did you mean` suggestions: recent Pythons compare the name you typed
 **Build:** type a program whose crash is three functions away from its mistake.
 
 Create `leaderboard.py`. It says where a player ranks:
+
+Read it before running it. `SCORES` is a dictionary from each name to a score (written in capitals because it's meant never to change). `find_score` goes through `SCORES.items()`, name and score together, and returns the score whose name matches. `rank` counts how many scores in `SCORES.values()`, the scores alone, are higher than the player's, and adds 1.
 
 ```python file=leaderboard.py
 import sys
@@ -278,7 +288,7 @@ TypeError: '>' not supported between instances of 'int' and 'NoneType'
    Run `python leaderboard.py Ada` again: it prints `DEBUG score = None` before crashing. **`repr`** shows a value the way you'd write it in code, so text appears with its quotes (`'Ada'` rather than `Ada`) and stray spaces become visible. Always use it when printing a value to debug.
 5. **Isolate.** Why is it `None`? Follow it to where it came from: `find_score("Ada")`. That loop compares `"Ada"` with each key, `"ada"`, `"grace"`, `"linus"`, and `==` on strings is exact, capital letters included, so no key matches. The loop ends without reaching `return score`.
 
-   > **`None`**: Python's value for "nothing here". A function that ends without running a `return` statement returns `None`. Its type is called `NoneType`, which is the name in the error message. To test for it, write `value is None`.
+   > **`None`**: Python's value for "nothing here". A function that ends without running a `return` statement returns `None`. Its type is called `NoneType`, which is the name in the error message. To test for it, write `value is None`. `is` asks whether two names refer to the very **same object**, not just equal ones; there is only ever one `None` object, so `is None` is exact, and it's the form every Python programmer uses.
 
    So the cause is in `find_score`, two calls before the crash, and there are really **two** problems: names don't match regardless of capitals, and a name that isn't on the board at all (try `python leaderboard.py Bob`) crashes too, when it should get a message.
 6. **Fix**: the next step is yours.

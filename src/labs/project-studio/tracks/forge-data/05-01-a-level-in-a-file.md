@@ -81,11 +81,78 @@ b'TTTTTTTT\nBBBBBBBB\nBB'
 file breakout/levels/classic.txt
 ```
 
-## Reading a level
+## Text into bricks
 
-**Build:** a module that turns a level's text into bricks.
+**Build:** a function that turns a level's text into the list of bricks it describes.
 
-Create `breakout/level.py`:
+This is `make_bricks`'s double loop, moved here and changed in one way: instead of putting a brick at every position, it reads the character at that position and decides. Create `breakout/level.py`:
+
+```python file=breakout/level.py
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+def parse_level(text: str) -> list[Brick]:
+    bricks: list[Brick] = []
+    for row, line in enumerate(text.splitlines()):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+```
+
+**Understand, piece by piece.** `parse_level(text: str) -> list[Brick]` turns text into bricks:
+
+- `text.splitlines()` splits the text into lines, removing the line endings, whichever kind: `\n`, `\r\n` (Windows) or `\r`. That's why it doesn't matter how a file's lines end.
+- `enumerate` numbers the lines (`row`) and, inside, the characters of each line (`col`): lesson 3.2's numbering loop, nested as in lesson 1.5.
+- `ROW_COLOURS[row % len(ROW_COLOURS)]`: `%` is the **remainder** after division, so with 5 colours, rows 0–4 take colours 0–4 and row 5 starts again at colour 0. A level can have more rows than there are colours.
+- Each `T` or `B` becomes a `Brick` at the position its row and column give, with lesson 3.3's tough-brick rules for `T`. Any other character, like `.`, makes nothing: a gap.
+
+The `if` and `elif` have no `else`, so a character that's neither `T` nor `B` simply falls through and makes nothing. That's how `.` makes a gap, and, as the next lesson finds, it's also how a typo makes a gap without anyone noticing.
+
+Traced for a one-row level, `"B.B"`:
+
+```text
+row 0, colour ROW_COLOURS[0 % 5] = ROW_COLOURS[0]
+col 0  'B'  x = 16 + 0 × (70 + 6) = 16     →  a brick at (16, 60)
+col 1  '.'  neither T nor B                →  nothing
+col 2  'B'  x = 16 + 2 × (70 + 6) = 168    →  a brick at (168, 60)
+```
+
+```predict
+question: How many bricks does `parse_level("TB.\n..B")` make? (`\n` is the newline between the two rows.)
+answer: 3
+explain: Row 0 is `TB.`: a tough brick, an ordinary one, and a gap. Row 1 is `..B`: two gaps and one brick. Each `T` or `B` makes one brick, wherever it is: 3 in all, two on the top row and one below.
+verify: .venv/Scripts/python -c "from breakout import level; print(len(level.parse_level('TB.\n..B')))"
+```
+
+Try it:
+
+```powershell
+.venv\Scripts\python -c "from breakout import level; print([brick.rect.x for brick in level.parse_level('B.B')])"
+```
+
+```text
+[16, 168]
+```
+
+```check
+contains breakout/level.py "def parse_level(text: str) -> list[Brick]:"
+run ".venv/Scripts/python -c \"from breakout import level; print([brick.rect.x for brick in level.parse_level('B.B')])\"" stdout="[16, 168]" label="parse_level turns B.B into two bricks with a gap"
+```
+
+## Reading the file
+
+**Build:** where the levels are, and a function that reads one from its file.
+
+`parse_level` works on text. Add the folder the levels live in, and a function that reads a file and hands its text to `parse_level`:
 
 ```python file=breakout/level.py
 from pathlib import Path
@@ -116,16 +183,7 @@ def load_level(path: Path) -> list[Brick]:
     return parse_level(path.read_text(encoding="utf-8"))
 ```
 
-**Understand, piece by piece.**
-
-`LEVELS = Path(__file__).parent / "levels"`: the `levels` folder **next to this module**, found from the module's own location (lesson 2.1's `Path(__file__)`). Not from the current folder: that would be lesson 0.1's hidden input, and the game would only find its levels when started from the right place.
-
-`parse_level(text: str) -> list[Brick]` turns text into bricks:
-
-- `text.splitlines()` splits the text into lines, removing the line endings, whichever kind: `\n`, `\r\n` (Windows) or `\r`. That's why it doesn't matter how a file's lines end.
-- `enumerate` numbers the lines (`row`) and, inside, the characters of each line (`col`): lesson 3.2's numbering loop, nested as in lesson 1.5.
-- `ROW_COLOURS[row % len(ROW_COLOURS)]`: `%` is the **remainder** after division, so with 5 colours, rows 0–4 take colours 0–4 and row 5 starts again at colour 0. A level can have more rows than there are colours.
-- Each `T` or `B` becomes a `Brick` at the position its row and column give, with lesson 3.3's tough-brick rules for `T`. Any other character, like `.`, makes nothing: a gap.
+**Understand.** `LEVELS = Path(__file__).parent / "levels"`: the `levels` folder **next to this module**, found from the module's own location (lesson 2.1's `Path(__file__)`). Not from the current folder: that would be lesson 0.1's hidden input, and the game would only find its levels when started from the right place.
 
 `load_level(path)` reads a file and hands the text to `parse_level`. `Path.read_text(encoding="utf-8")` opens the file, decodes its bytes as UTF-8, and returns the text, closing the file again: three steps in one call.
 

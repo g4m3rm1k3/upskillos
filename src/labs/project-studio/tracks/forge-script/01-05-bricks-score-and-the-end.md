@@ -308,6 +308,8 @@ if test_frames is not None:
 
 `bricks.pop(hit)` removes the item at that index from the list (and returns it, which isn't needed here). From the next frame on, the brick isn't drawn and can't be hit, because both drawing and collision go through the list. Then the ball reverses its up-down direction and the score goes up by 10.
 
+Lesson 1.4's bug hunt taught *set the direction from the facts, don't flip it*, because a ball that stays past a wall for several frames gets flipped back and forth. So why is flipping safe here? Because the brick is removed in the same frame it's hit. Next frame there's nothing left to overlap, so this flip can only ever happen once per brick. The wall never goes away, which is what made flipping wrong there.
+
 **A simplification, honestly stated:** the ball always reverses vertically, even when it hits a brick from the side, where reversing horizontally would be correct. Working out which side was hit needs the overlap measured in each direction, which Chapter 12's physics does properly. For now it looks fine almost all the time.
 
 ```text
@@ -512,9 +514,9 @@ Where does the check go, and what should it cover? Think about which part of eac
 Try it for about 15 minutes before taking a hint.
 
 ```hints
-nudge: Each frame does three things: handle events, update the game (paddle, ball, walls, paddle, bricks, lives), and draw. When the game is over, which of the three should stop? If events stopped, could the player still close the window?
+nudge: Each frame does three things: handle events, update the game (paddle, ball, walls, paddle bounce, bricks, lives), and draw. When the game is over, which of the three should stop? If events stopped, could the player still close the window?
 concept: Only the update should stop. Events must still be handled (Escape and the close button), and drawing must continue, or the "Game over" text would never be seen. So the whole update part of the frame goes inside one `if` that's true only while the game is being played: there are lives left **and** bricks left. In Python, a list is true when it's not empty (lesson 0.3's truthiness), so `bricks` on its own means "there are bricks left". The end messages are drawn with the same `font.render` and `screen.blit` as the score.
-shape: `if lives > 0 and bricks:` just after the event loop, with everything from `direction = 0` down to the end of the lives check indented one level inside it. Then, in the drawing part, after the score line: if `lives == 0`, blit "Game over" near the middle of the screen; `elif not bricks`, blit "You win!".
+shape: `if lives > 0 and bricks:` just after the event loop, with everything from `direction = 0` down to the end of the lives check indented one level inside it. To indent many lines at once, select them in the editor and press **Tab** (**Shift+Tab** moves them back). Then, in the drawing part, after the score line: if `lives == 0`, blit "Game over" near the middle of the screen; `elif not bricks`, blit "You win!".
 answer: The update, indented inside the new `if`:
 
 ~~~python

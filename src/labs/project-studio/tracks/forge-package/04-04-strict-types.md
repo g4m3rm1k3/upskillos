@@ -200,7 +200,15 @@ bricks.append(Brick(…))  append takes an Unknown, so anything is accepted
 return bricks            the function returns list[Unknown]
 ```
 
-Every caller of `make_bricks` then gets a list of `Unknown`, so a typo like `brick.colur` on one of its items would never be reported. Strict mode reports an `Unknown` where it **starts**, so it can't spread.
+So inside `make_bricks`, nothing checks what goes into the list: `bricks.append("oops")` would be accepted without a word. Its callers are protected only because the function declares `-> list[Brick]`, and pyright believes the declaration. A function *without* that annotation would hand `list[Unknown]` to every caller, and then a typo like `brick.colur` on one of its items would never be reported anywhere. Strict mode reports an `Unknown` where it **starts**, so it can't spread.
+
+```predict
+question: In default mode, `bricks = []` followed by `bricks.append("oops")` inside `make_bricks`. Does pyright report anything?
+choice: Yes: "oops" isn't a Brick
+choice: No: the list's type is Unknown, so anything is accepted
+answer: No: the list's type is Unknown, so anything is accepted
+explain: `[]` gives pyright nothing to infer from, so the list is `list[Unknown]`, and appending anything to it is allowed. The mistake would only show up at run time, when something used `"oops"` as a brick. The next step says what the list will hold, and then the same line is reported.
+```
 
 Seventeen errors, but only four causes:
 
@@ -391,7 +399,7 @@ The only change is in `make_bricks`:
     bricks: list[Brick] = []
 ```
 
-**Understand.** A type hint can go on a variable as well as on a parameter: `name: type = value`. For most variables pyright doesn't need one, because it infers the type from the value: `score = 0` is obviously an `int`. An empty list is the exception: `[]` could become a list of anything, so it's the one place where saying what it will hold is required in strict mode. With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
+**Understand.** A type hint can go on a variable as well as on a parameter: `name: type = value`. For most variables pyright doesn't need one, because it infers the type from the value: `score = 0` is obviously an `int`. Empty collections are the exception: `[]` could become a list of anything, and the same goes for an empty `{}` dictionary or `set()`, so that's where saying what it will hold is required in strict mode. With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
 
 ```powershell
 .venv\Scripts\python -m pyright breakout
@@ -420,7 +428,7 @@ must report `0 errors`. You'll need three types you haven't met:
 
 - **`subprocess.CompletedProcess[str]`** is what `subprocess.run(..., text=True)` returns: the `[str]` says its output is text.
 - **`pytest.CaptureFixture[str]`** is the type of the `capsys` fixture.
-- For **`*args`**, the hint is the type of **each** argument, not of the tuple: `*args: str` means every positional argument is a string, and inside the function `args` is a `tuple[str, ...]`.
+- For **`*args`**, the hint is the type of **each** argument, not of the tuple: `*args: str` means every positional argument is a string, and inside the function `args` is a `tuple[str, ...]` (a tuple of any number of `str`s: the `...` means "any length").
 
 Then make strict checking of everything part of done: in `BACKLOG.md`, change the pyright command in the definition of done to `.venv\Scripts\python -m pyright breakout tests replay.py`. Commit with a message that mentions **strict**.
 

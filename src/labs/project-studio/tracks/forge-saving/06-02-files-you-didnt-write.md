@@ -80,11 +80,20 @@ First, the appeal. Python's `pickle` module saves almost any object, with no con
 True
 ```
 
-No `isoformat`, no `fromisoformat`: `pickle.dumps` turns the `Score` into bytes and `pickle.loads` turns them back, `datetime` and all. Now run the provided file, then load what it made, as a game would load a scores file:
+`pickle.dumps` ("dump string") turns the `Score` into bytes, and `pickle.loads` turns them back, `datetime` and all: no `isoformat`, no `fromisoformat`. The `s` names follow `json.loads` and `tomllib.loads` (lessons 5.3 and 5.5): `dumps`/`loads` work on bytes in memory, `dump`/`load` on an open file.
+
+**Read the provided file before you run it.** It's harmless, and the habit isn't.
+
+- `class Gift` has one method, `__reduce__`. It's one of Python's special double-underscore names: pickle calls it, if a class has one, to ask "how should an object of yours be rebuilt?" The answer is a pair: a function, and a tuple of arguments to call it with. `Gift` answers: `print`, with a message.
+- `("This pickle ... files.",)` is a tuple of **one** item. The comma makes it a tuple; without it, the brackets would only group, and it would be a plain string. `tuple[str]` is that type: exactly one `str`. And `tuple[object, tuple[str]]` is the pair, a function (any object) and those arguments.
+- `with open("gift.pickle", "wb") as file:` opens the file for **w**riting **b**ytes (pickles are bytes, not text; lesson 5.5's `"rb"` was the reading side), and `with` closes it at the end of the block, even if an exception is raised inside: the reliable way to make sure a file is closed.
+- `pickle.dump(Gift(), file)` asks the `Gift` how to rebuild it, and writes the answer into the file.
+
+Now make the file, then load it, as a game would load a scores file:
 
 ```powershell
 .venv\Scripts\python make_gift.py
-.venv\Scripts\python -c "import pickle; pickle.load(open('gift.pickle', 'rb'))"
+.venv\Scripts\python -c "import pickle; from pathlib import Path; pickle.loads(Path('gift.pickle').read_bytes())"
 ```
 
 ```text
@@ -92,9 +101,42 @@ made gift.pickle
 This pickle just ran code on your computer. It could as easily have deleted your files.
 ```
 
-**Understand: how pickle rebuilds objects.** A pickle isn't data in the way JSON is: it's a small **program** for rebuilding objects, of instructions like "import `breakout.scores`, get `Score`, call it with these values". When a class can't be rebuilt that simple way, it can say how with a method named `__reduce__`, which returns a function and the arguments to call it with; the pickle stores both, and loading **calls** them. `Gift.__reduce__` returns `print` and a message, so loading the file prints. A file made by someone else can name any function in Python instead: one that deletes files, or downloads and runs a program. Nothing is checked first, because pickle can't tell rebuilding an object from anything else a function might do. Python's documentation opens with a warning: **never unpickle data you didn't write yourself**, or that could have been changed by anyone else.
+**Understand: what's inside a pickle.** Python can show you, with the standard `pickletools` module:
 
-`with open("gift.pickle", "wb") as file:` opens the file for **w**riting **b**ytes, and `with` closes it again at the end of the block, even if an exception is raised inside: the reliable way to make sure a file is closed.
+```powershell
+.venv\Scripts\python -m pickletools gift.pickle
+```
+
+```text
+    0: \x80 PROTO      5
+    2: \x95 FRAME      116
+   11: \x8c SHORT_BINUNICODE 'builtins'
+   21: \x94 MEMOIZE    (as 0)
+   22: \x8c SHORT_BINUNICODE 'print'
+   29: \x94 MEMOIZE    (as 1)
+   30: \x93 STACK_GLOBAL
+   31: \x94 MEMOIZE    (as 2)
+   32: \x8c SHORT_BINUNICODE 'This pickle just ran code on your computer. It could as easily have deleted your files.'
+  121: \x94 MEMOIZE    (as 3)
+  122: \x85 TUPLE1
+  123: \x94 MEMOIZE    (as 4)
+  124: R    REDUCE
+  125: \x94 MEMOIZE    (as 5)
+  126: .    STOP
+```
+
+A pickle isn't data in the way JSON is: it's a small **program**, one instruction per line, for a simple machine that keeps a stack of values. Skip `PROTO`, `FRAME` and `MEMOIZE` (housekeeping), and four instructions are left:
+
+```text
+SHORT_BINUNICODE 'builtins', 'print'   push two strings
+STACK_GLOBAL                           import builtins, get print: push the function
+SHORT_BINUNICODE '...'  TUPLE1         push the message, wrap it in a one-item tuple
+REDUCE                                 call the function with the tuple: print(...)
+```
+
+`REDUCE` calls a function, and the file chooses which. A file made by someone else can name any function in Python instead: one that deletes files, or downloads and runs a program. Nothing is checked first, because pickle can't tell rebuilding an object from anything else a function might do. Python's documentation opens with a warning: **never unpickle data you didn't write yourself**, or that could have been changed by anyone else.
+
+An ordinary object, like a `Score`, is rebuilt differently, and it's worth knowing how: the pickle says "import `breakout.scores`, get `Score`, make an **empty** one (`NEWOBJ`), then set its fields to these values (`BUILD`)". `Score.__init__` is never called. Any check you put in `__init__`, or in a dataclass's `__post_init__`, is skipped on loading: whatever the file says, the object holds.
 
 Two more costs. A pickle can only be read by Python, so no other program or language can use the scores. And it stores **where the class lives** (`breakout.scores`, `Score`): rename the module or the class and every saved file stops loading. A format you design yourself, like the JSON from lesson 6.1, has neither problem.
 
@@ -127,7 +169,7 @@ Create the folder `tests/data` and in it `broken-scores.json`, exactly as below,
     "points": 70,
 ```
 
-**Understand: how this happens.** `write_text` doesn't put the whole file on disk in one step: the operating system writes it in pieces. If the game crashes or the power goes off partway through, the file is left with only its first part. That's this file: the second score was being written when it stopped, after its points and before its time.
+**Understand: how this happens.** `write_text` opens the file for writing, and opening a file for writing **empties it first**: the old scores are gone before the first new byte arrives. Then the new text goes to disk in pieces, as the operating system gets to it. If the game crashes or the power goes off partway through, the file holds only the first part of the new text, and none of the old. That's this file: the second score was being written when it stopped, after its points and before its time.
 
 ```powershell
 .venv\Scripts\breakout --test-run 10 --scores tests/data/broken-scores.json
@@ -141,7 +183,7 @@ json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes:
 
 The game won't start at all, because of a file it only needs for one number on the screen. And a file someone edited by hand is worse in a quieter way: with `"points": "lots"`, `load_scores` makes a `Score` whose points are a string, nothing complains, and the screen shows `Best lots`. A dataclass doesn't check its fields; lesson 6.1's code trusts the file completely.
 
-Data the tests need, kept as a file in the project, is called a **test fixture file**. It's committed, unlike `scores.json`, because it's part of the tests.
+A file the tests need, kept in the project, is a **test data file** (you'll also hear "fixture file"; pytest's *fixtures* are something else, in lesson 6.5). It's committed, unlike `scores.json`, because it's part of the tests.
 
 ```check
 file tests/data/broken-scores.json
@@ -149,7 +191,156 @@ file tests/data/broken-scores.json
 
 ## Scores checked at the boundary
 
-**Build:** check every scores file with pydantic, as levels and settings are checked.
+**Build:** read and write the scores file with pydantic, so what comes in is checked.
+
+`Score` stays a dataclass. Lesson 5.4 checked a `BaseModel`; pydantic can check other types too, through a **type adapter**:
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in a file between games."""
+
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+from pydantic import TypeAdapter
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+SCORES = TypeAdapter(list[Score])
+
+
+def load_scores(path: Path) -> list[Score]:
+    if not path.exists():
+        return []
+    return SCORES.validate_json(path.read_bytes())
+
+
+def save_scores(path: Path, scores: list[Score]) -> None:
+    path.write_bytes(SCORES.dump_json(scores, indent=2))
+
+
+def add_score(path: Path, score: Score) -> None:
+    save_scores(path, [*load_scores(path), score])
+
+
+def best(scores: list[Score], level: str) -> int | None:
+    return max((score.points for score in scores if score.level == level), default=None)
+```
+
+**Understand.** **`TypeAdapter(list[Score])`** gives pydantic's checking to any type, not only a `BaseModel`: here, a list of the `Score` dataclass. pydantic reads the dataclass's fields and types the same way it reads a model's. `SCORES` is made once, when the module is imported, because building the checker takes work, and every load and save then reuses it.
+
+- `SCORES.validate_json(...)` reads JSON and checks it against the type, returning a `list[Score]` or raising `ValidationError`.
+- `SCORES.dump_json(scores, indent=2)` writes the list as JSON. pydantic knows how to write a `datetime` as ISO 8601 and read it back, so lesson 6.1's conversions are gone, and the file is the same format, except that pydantic writes UTC as `Z` (another ISO 8601 spelling of `+00:00`).
+
+Both work on **bytes**, not text: `read_bytes` and `write_bytes`. JSON files are UTF-8 by the JSON standard, so pydantic decodes and encodes them itself, as `tomllib` did with TOML in lesson 5.5. There's no `encoding=` to forget.
+
+The edited file from the last step is refused now:
+
+```powershell
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 'lots', 'when': '2026-10-04T15:30:05Z'}])))"
+```
+
+```text
+pydantic_core._pydantic_core.ValidationError: 1 validation error for list[Score]
+0.points
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='lots', input_type=str]
+```
+
+But this is pydantic's default, **lax** mode (lesson 5.4), and it lets two things through. A time with no zone:
+
+```powershell
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05'}])))"
+```
+
+```text
+[Score(level='Classic', points=5, when=datetime.datetime(2026, 10, 4, 15, 30, 5))]
+```
+
+And points written as text, `"5"`, are quietly turned into `5`. The next step closes both.
+
+```check
+contains breakout/scores.py "SCORES = TypeAdapter(list[Score])"
+run ".venv/Scripts/python -c \"import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 'lots', 'when': '2026-10-04T15:30:05Z'}])))\"" exit=1 stderr="Input should be a valid integer" label="points that aren't a number are refused"
+run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="5 passed" label="the scores tests still pass: same behaviour, less code"
+```
+
+## Strict, and always with a time zone
+
+**Build:** strict checking for a score, and a time that must say its zone.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in a file between games."""
+
+from dataclasses import dataclass
+from pathlib import Path
+
+from pydantic import AwareDatetime, ConfigDict, TypeAdapter
+
+
+@dataclass(frozen=True)
+class Score:
+    __pydantic_config__ = ConfigDict(strict=True, extra="forbid")
+
+    level: str
+    points: int
+    when: AwareDatetime
+
+
+SCORES = TypeAdapter(list[Score])
+
+
+def load_scores(path: Path) -> list[Score]:
+    if not path.exists():
+        return []
+    return SCORES.validate_json(path.read_bytes())
+
+
+def save_scores(path: Path, scores: list[Score]) -> None:
+    path.write_bytes(SCORES.dump_json(scores, indent=2))
+
+
+def add_score(path: Path, score: Score) -> None:
+    save_scores(path, [*load_scores(path), score])
+
+
+def best(scores: list[Score], level: str) -> int | None:
+    return max((score.points for score in scores if score.level == level), default=None)
+```
+
+**Understand.** **`AwareDatetime`** is a `datetime` that must include a time zone; it's from pydantic, and to pyright it's simply a `datetime`. A naive time (lesson 6.1) is refused, so every score in the file is a moment that can be compared with every other.
+
+**`__pydantic_config__`** is lesson 5.4's `model_config` for a dataclass: a class attribute, with exactly this name, that pydantic looks for. It has no type annotation, so the dataclass doesn't make it a field. `strict=True` refuses `"5"` for an `int`; `extra="forbid"` refuses a field `Score` doesn't have.
+
+```powershell
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05'}])))"
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': '5', 'when': '2026-10-04T15:30:05Z'}])))"
+```
+
+```text
+0.when
+  Input should have timezone info [type=timezone_aware, input_value='2026-10-04T15:30:05', input_type=str]
+0.points
+  Input should be a valid integer [type=int_type, input_value='5', input_type=str]
+```
+
+Strict mode still reads `"2026-10-04T15:30:05Z"` as a `datetime`: JSON has no date type, so a date in JSON is always a string, and pydantic accepts an ISO 8601 string there even in strict mode.
+
+**What's checked, and what isn't.** Only data coming **in** through `SCORES` is checked. Unlike lesson 5.4's `BaseModel`, a dataclass created in code, `Score("Classic", 560, ...)`, isn't checked by pydantic; pyright checks it instead, before the code runs. Both together cover both directions: pyright for what your code creates, pydantic for what arrives from outside.
+
+```check
+contains breakout/scores.py "when: AwareDatetime"
+run ".venv/Scripts/python -c \"import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05'}])))\"" exit=1 stderr="Input should have timezone info" label="a time with no zone is refused"
+```
+
+## Every problem, in words
+
+**Build:** one `ScoresError` that names every problem, in words a player can follow.
 
 ```python file=breakout/scores.py
 """The scores players have made, kept in a file between games."""
@@ -207,21 +398,33 @@ def best(scores: list[Score], level: str) -> int | None:
     return max((score.points for score in scores if score.level == level), default=None)
 ```
 
-**Understand.**
+**Understand.** `ScoresError` and the `try`/`except` follow lesson 5.4's `LevelError`: catch pydantic's `ValidationError`, and raise one error holding a line for every problem, `from None` so the player sees only that.
 
-**`TypeAdapter(list[Score])`** gives any type pydantic's checking, not only a `BaseModel`. Here it's a list of the existing `Score` dataclass: pydantic reads the dataclass's fields and types the same way it reads a model's. `validate_json` reads JSON bytes and checks them against the type; `dump_json` writes it as JSON bytes. Strictness and refusing extra fields are set by `__pydantic_config__`, a class attribute pydantic looks for on dataclasses. It has no type annotation, so it isn't a field.
+`describe` differs in one way. A scores file is a list, so most locations start with a position: `(0, "points")` is the `points` of item 0. People count scores from 1, so each `int` part becomes `score` and the position plus 1, with the conditional expression from lesson 5.2; a `str` part, a field name, stays as it is. Traced:
 
-**`AwareDatetime`** is a `datetime` that must include a time zone. A naive time (lesson 6.1) is refused, so every score in the file is a moment that can be compared with every other.
+```text
+loc               parts                   joined
+(0, "points")     ["score 1", "points"]   "score 1, points"
+(1, "when")       ["score 2", "when"]     "score 2, when"
+()                []                      "" or "the file" = "the file"
+```
 
-**No more conversions.** pydantic knows how to write a `datetime` as ISO 8601 and read it back, so the code you wrote in 6.1's Your turn is gone: `save_scores` is one line, and the file is the same format, except that pydantic writes UTC as `Z` (another ISO 8601 spelling of `+00:00`).
+The empty location is a problem with the whole file: not JSON at all, or not a list.
 
-**What's checked, and what isn't.** Only data coming **in** through `SCORES` is checked. Unlike lesson 5.4's `BaseModel`, a dataclass created in code, `Score("Classic", 560, ...)`, isn't checked by pydantic; pyright checks it instead, before the code runs. Both together cover both directions: pyright for what your code creates, pydantic for what arrives from outside.
+```powershell
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}])))"
+```
 
-`describe` and `ScoresError` follow lesson 5.4's pattern: every problem, with where (`score 2, when`) and why.
+```text
+breakout.scores.ScoresError: score 2, points: Input should be a valid integer; score 2, when: Field required
+```
+
+The first score is fine; the second has two problems, and both are named.
 
 ```check
-contains breakout/scores.py "SCORES = TypeAdapter(list[Score])"
-run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="5 passed" label="the scores tests still pass: same behaviour, less code"
+contains breakout/scores.py "class ScoresError(ValueError):"
+run ".venv/Scripts/python -c \"import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}])))\"" exit=1 stderr="score 2, points: Input should be a valid integer; score 2, when: Field required" label="every problem, with which score and which field"
+run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="5 passed"
 ```
 
 ## Tests for what's refused
@@ -298,7 +501,15 @@ def test_a_file_someone_edited_badly_is_refused(tmp_path: Path, text: str, messa
     assert str(refused.value) == message
 ```
 
-**Understand.** `DATA = Path(__file__).parent / "data"` finds the fixture folder from the test file's own location (lesson 5.1's rule), and `test_a_file_cut_off_while_it_was_saved_is_refused` uses the broken file. The parametrised test covers the ways a person editing the file could get it wrong.
+**Understand.** `DATA = Path(__file__).parent / "data"` finds the test data folder from the test file's own location (lesson 5.1's rule), and `test_a_file_cut_off_while_it_was_saved_is_refused` uses the broken file. The parametrised test covers the ways a person editing the file could get it wrong, one case each:
+
+```text
+the file holds                                  refused because                    location
+{"level": "Classic"}                             an object, not a list              the file
+[{... "points": "lots" ...}]                     points not a whole number          score 1, points
+[{... "when": "2026-10-04T15:30:05"}]            a time with no zone                score 1, when
+[{"level": "Classic", "points": 5}]             no time at all                     score 1, when
+```
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="10 passed"
@@ -361,7 +572,7 @@ git-clean
 - **`TypeAdapter`** checks any type, including plain dataclasses; **`AwareDatetime`** refuses naive times.
 - **pyright checks what your code creates; pydantic checks what comes in.**
 - **Failure policy follows purpose**: a bad level stops the game; bad scores are reported, skipped, and left untouched.
-- **Test fixture files**, committed in `tests/data`, found from the test file's own location.
+- **Test data files**, committed in `tests/data`, found from the test file's own location.
 - `with` closes a file however its block ends.
 
 C# had its own pickle, `BinaryFormatter`, which ran into exactly this problem: Microsoft marked it dangerous and then removed it from .NET entirely, and tells programs to use `System.Text.Json` instead. Java's built-in serialisation (`ObjectInputStream`) has been behind a long line of remote-code-execution attacks for the same reason, and its own architects have called it a mistake. In every language: data formats you design, checked when they're read.

@@ -23,13 +23,15 @@ python -m pip --version
 pip 25.3 from C:\Python314\Lib\site-packages\pip (python 3.14)
 ```
 
-`-m pip` means "run the module named `pip`" with this `python`. pip is itself a package, and it lives in a folder named **`site-packages`**. That's where every package installed into this Python goes.
+`-m pip` means "run the module named `pip`" with this `python`. A **module** is one `.py` file you can import (lesson 0.1); a **package** is a folder of modules imported under one name. pip is itself a package, and it lives in a folder named **`site-packages`**. That's where every package installed into this Python goes.
 
 Now ask Python where `import` looks:
 
 ```powershell
 python -c "import sys; print('\n'.join(sys.path))"
 ```
+
+`sys.path` is a list, and `'\n'.join(sys.path)` turns it into one piece of text, with the items glued together by `\n`, a new line (inside a string, `\n` stands for the new-line character), so each folder prints on its own line.
 
 ```text
 
@@ -45,7 +47,7 @@ C:\Python314\Lib\site-packages
 
 The entries, top to bottom:
 
-- The **empty first line** is an empty string, which means "the current directory". That's why a file `hello.py` next to your script can be imported, and also why naming your own file `random.py` breaks `import random` everywhere in that folder: yours is found first.
+- The **empty first line** is an empty string, which means "the current directory". It's there because this command used `-c`. When Python runs a **script**, `python game.py`, the first entry is instead the **script's own folder**, wherever you ran it from. Either way it comes first, which is why a file `hello.py` next to your script can be imported, and also why naming your own file `random.py` breaks `import random` for scripts in that folder: yours is found first.
 - `python314.zip`, `DLLs` and `Lib` hold the **standard library**, the modules that come with Python (`sys`, `os`, `json`, `random`, …).
 - The two `site-packages` folders hold installed packages: one for your user account, one for this Python installation.
 
@@ -128,7 +130,7 @@ C:\Python314\python.exe
 C:\Users\you\Documents\forge\.venv\Scripts\python.exe
 ```
 
-The first command searched `PATH` for `python` and found the system one. The second named a file by its path, which skips the `PATH` search entirely. Compare their import paths too:
+`sys.executable` is the full path of the Python program that is running. The first command searched `PATH` for `python` and found the system one. The second named a file by its path, which skips the `PATH` search entirely. Compare their import paths too:
 
 ```powershell
 .venv\Scripts\python -c "import sys; print('\n'.join(sys.path))"
@@ -337,7 +339,7 @@ if v < (3, 12):
 print(f"Setup OK: Python {version} in a virtual environment")
 ~~~
 
-The two `\\` in the first message are each one backslash: inside a Python string, `\` starts an **escape sequence** (`\n` is a new line), so a real backslash is written `\\`. The version text is built once and used in both messages. `v < (3, 12)` is the same tuple comparison as before, the other way round.
+The two `\\` in the first message are each one backslash: inside a Python string, `\` starts an **escape sequence** (`\n` is a new line), so a real backslash is written `\\`. `sys.version_info` is a tuple whose items also have names, so `v.major` reads the item named `major` (`3`), `v.minor` the next (`14`), and `v.micro` the last; the f-string (lesson 0.1) joins them as `3.14.3`. The version text is built once and used in both messages. `v < (3, 12)` is the same tuple comparison as before, the other way round.
 ```
 
 ```check

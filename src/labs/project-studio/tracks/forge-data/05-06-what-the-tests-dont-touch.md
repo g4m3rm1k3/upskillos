@@ -93,7 +93,7 @@ def load_config(path: Path) -> Config:
 ```
 
 ```check
-run ".venv/Scripts/python -c \"from breakout import config; config.Controls(left='p')\"" stderr="left and pause both use 'p'"
+run ".venv/Scripts/python -c \"from breakout import config; config.Controls(left='p')\"" exit=1 stderr="left and pause both use 'p'"
 ```
 
 ## The settings tests so far
@@ -201,10 +201,9 @@ __pycache__/
 
 # Generated: coverage data, written by pytest --cov
 .coverage
-.coverage.*
 ```
 
-`.coverage.*` covers the extra files coverage writes while it measures several processes at once, which the next step needs. Then:
+Then:
 
 ```powershell
 .venv\Scripts\python -m pytest -q --cov=breakout --cov-report=term-missing
@@ -227,7 +226,7 @@ TOTAL                    366     99    73%
 
 **Understand: reading the table.** `--cov=breakout` measures the `breakout` package; `--cov-report=term-missing` prints the table with the line numbers that never ran. For each module: **Stmts**, the number of **statements**, the lines of code that can run (blank lines and comments don't count); **Miss**, how many of them never ran; **Cover**, the percentage that did; **Missing**, which ones, as line numbers and ranges.
 
-**How it works.** Python lets a program ask to be told each time a new line starts running (in Python 3.12 and later, through `sys.monitoring`). coverage asks, keeps a set of every `(file, line)` it's told about, and at the end compares that set with all the statements in each file.
+**How it works.** Python lets a program ask to be told each time a new line starts running (through `sys.settrace`, or since Python 3.12 the faster `sys.monitoring`; coverage picks one for you). coverage asks, keeps a set of every `(file, line)` it's told about, and at the end compares that set with all the statements in each file.
 
 **And `app.py` is 0%.** Not one line, when nine characterisation tests play the game. Look at how they play it: `subprocess.run([sys.executable, "-m", "breakout", ...])`, a **new Python process**. coverage is watching the process the tests run in, and the game runs in a different one. The number is accurate about what it measured, and it measured the wrong thing. That's the first lesson of coverage: before trusting a number, know exactly what was counted.
 
@@ -273,6 +272,25 @@ typeCheckingMode = "strict"
 patch = ["subprocess"]
 ```
 
+Measuring several processes means several data files for a moment, named `.coverage.` followed by the computer's name and the process number. Ignore those too:
+
+```text file=.gitignore
+# Generated: rebuilt from requirements.txt with python -m venv .venv
+.venv/
+
+# Generated: Python's compiled bytecode
+__pycache__/
+
+# Generated: package metadata, written by pip install -e .
+*.egg-info/
+
+# Generated: coverage data, written by pytest --cov
+.coverage
+.coverage.*
+```
+
+Then measure again:
+
 ```powershell
 .venv\Scripts\python -m pytest -q --cov=breakout --cov-report=term-missing
 ```
@@ -285,7 +303,14 @@ breakout\draw.py          18      0   100%
 TOTAL                    366     17    95%
 ```
 
-**Understand.** coverage reads its settings from `[tool.coverage.run]` in `pyproject.toml`, like pytest, ruff and pyright read theirs. `patch = ["subprocess"]` makes coverage start itself inside every Python process the tests start, and combine what all of them recorded into one report. Now the characterisation tests count, and the table is honest.
+**Understand.** coverage reads its settings from `[tool.coverage.run]` in `pyproject.toml`, like pytest, ruff and pyright read theirs. `patch = ["subprocess"]` makes coverage follow the tests into every Python process they start. How, step by step:
+
+1. Before the tests run, coverage sets an **environment variable** (lesson 0.1), `COVERAGE_PROCESS_CONFIG`, holding its settings, in the test process. A process started from it gets a copy of its environment, so the game's process has the variable too.
+2. Installing coverage put a file named `a1_coverage.pth` in `.venv\Lib\site-packages`. Python reads every `.pth` file there as it starts, and runs any line that begins with `import`; coverage's line checks for the variable. In a Python you start yourself it isn't set, and nothing happens. In the game's process it is, so coverage starts measuring before `breakout` is even imported.
+3. When the child exits, it writes what it recorded to its own file, `.coverage.<computer>.<process number>...`: two processes writing to one file at once would spoil it.
+4. When the tests finish, pytest-cov **combines** every `.coverage.*` file with the test process's own data into `.coverage`, and deletes them. The table is made from the combined data.
+
+Now the characterisation tests count, and the table is honest.
 
 **Reading what's missing in `app.py`.** Open it beside the list:
 
@@ -300,6 +325,7 @@ TOTAL                    366     17    95%
 The first two rows are behaviour a player will meet, and that a careless change could break without anyone noticing: a real gap. Rows three to five are a different kind of gap: the game's **interactive** shell, which a test run deliberately replaces. Notice what that means for lesson 5.5: the configurable controls were checked by you, playing, and by nothing automatic. Chapter 11 builds an Input class that tests can press keys on; until then, it's a known gap, and knowing it is the point.
 
 ```check
+git-ignored .coverage.MYPC.1234.XyZ -- Add .coverage.* to .gitignore: the files each process writes while it is measured.
 run ".venv/Scripts/python -m pytest -q --cov=breakout" stdout="95%" label="with the game's own process measured: 95%"
 ```
 
@@ -353,7 +379,7 @@ def test_bad_settings_stop_the_game_with_exit_code_1(tmp_path: Path):
     assert result.stderr == f"breakout: {settings}: speed: Extra inputs are not permitted\n"
 ~~~
 
-The first test checks only the start of the message, because the rest comes from Windows (`[Errno 2] No such file or directory: ...`) and would differ on another operating system; the part that's the game's own is checked exactly. The second message is all the game's, so it's checked whole. `print(..., file=sys.stderr)` ends with a newline, hence the `\n`.
+The first test checks only the start of the message, because the rest is Python's description of the operating system's error (`[Errno 2] No such file or directory: ...`), whose wording isn't the game's to promise and differs between systems for other errors; the part that's the game's own is checked exactly. The second message is all the game's, so it's checked whole. `print(..., file=sys.stderr)` ends with a newline, hence the `\n`.
 ```
 
 ```check
@@ -381,6 +407,6 @@ The chapter started with a wall written as code and ends with levels and setting
 
 - **The game's own files** (`classic.json`, shipped in the package): written by you, tested by your tests. Trusted, and still checked, because you make mistakes too.
 - **The player's settings**: written by the person playing, on their own computer. A mistake is likely; malice isn't, since they'd only be attacking themselves. Clear messages matter most.
-- **Levels from someone else**: so far, a teammate. In Part 4, strangers will upload levels to the asset library, and anything they upload is **hostile input**: written by someone who may want to crash the game, or worse. What protects you then is what this chapter built: one model that refuses anything outside it, at the boundary, before any other code sees it. The model's limits (8 columns, at most 10 rows, a short list of fields) are also limits on what an attacker can make your program do. Chapter 6 meets the first file format that's dangerous even to *open*.
+- **Levels from someone else**: so far, a teammate. In Part 5, strangers will upload levels to the asset library, and anything they upload is **hostile input**: written by someone who may want to crash the game, or worse. What protects you then is what this chapter built: one model that refuses anything outside it, at the boundary, before any other code sees it. The model's limits (8 columns, at most 10 rows, a short list of fields) are also limits on what an attacker can make your program do. Chapter 6 meets the first file format that's dangerous even to *open*.
 
 The same few ideas did all the work, and they'll do it in every program you write: **parse at the boundary** into a type that can only hold good data; **report every problem with where and why**; **paths relative to their file**; **the most specific setting wins**; and **tests that pin each rule**, measured, so you know what they don't touch.

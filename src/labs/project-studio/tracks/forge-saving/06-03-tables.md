@@ -194,7 +194,7 @@ CREATE TABLE scores (
 - `level TEXT NOT NULL`: text, and `NOT NULL` means every row must have one. `NULL` is SQL's "no value", its `None`.
 - `points INTEGER NOT NULL CHECK (points >= 0)`: a whole number that must be at least 0. A `CHECK` **constraint** is a rule the database itself enforces, whatever program writes to it.
 - `played_at TEXT NOT NULL`: SQLite has no date type, so dates are stored as ISO 8601 text (lesson 6.1), which sorts correctly as text.
-- `STRICT`: without it, SQLite will store any value in any column, a string in `points` included. A `STRICT` table refuses values of the wrong type, like pydantic's strict mode.
+- `STRICT`: without it, SQLite will store any value in any column, a string in `points` included. A `STRICT` table refuses a value it can't store as the column's type. It's not quite pydantic's strict mode: text that is exactly a whole number, like `'5'`, is quietly converted and stored as the number 5; only text like `'lots'` is refused.
 
 **Rows.** Add three:
 
@@ -216,7 +216,7 @@ SELECT * FROM scores;
 (3, 'Castle', 150, '2026-10-05T09:02:30+00:00')
 ```
 
-Each row comes back as a Python tuple. `WHERE` keeps only the rows that match; `ORDER BY ... DESC` sorts, highest first; `LIMIT` keeps the first few:
+Each row comes back as a Python tuple. `WHERE` keeps only the rows that match; `ORDER BY ... DESC` sorts, highest first (**desc**ending); `LIMIT` keeps the first few:
 
 ```sql
 SELECT level, points FROM scores WHERE level = 'Classic' ORDER BY points DESC LIMIT 1;
@@ -224,6 +224,16 @@ SELECT level, points FROM scores WHERE level = 'Classic' ORDER BY points DESC LI
 
 ```text
 ('Classic', 560)
+```
+
+Read it as a pipeline, each part working on what the one before it left:
+
+```text
+FROM scores                 (1, Classic, 560)  (2, Classic, 70)  (3, Castle, 150)
+WHERE level = 'Classic'     (1, Classic, 560)  (2, Classic, 70)
+ORDER BY points DESC        (1, Classic, 560)  (2, Classic, 70)      560 before 70
+LIMIT 1                     (1, Classic, 560)
+SELECT level, points        ('Classic', 560)
 ```
 
 And SQL can calculate over many rows at once with **aggregate functions**: `MAX`, `MIN`, `COUNT`, `SUM`, `AVG`:
@@ -236,6 +246,8 @@ SELECT MAX(points), COUNT(*) FROM scores WHERE level = 'Classic';
 (560, 2)
 ```
 
+`MAX(points)` is the largest `points` among the rows `WHERE` kept. `COUNT(*)` counts those rows: the `*` means "whole rows", not any one column. One row comes back, however many rows went in.
+
 Last, try to break a rule:
 
 ```sql
@@ -246,7 +258,17 @@ INSERT INTO scores (level, points, played_at) VALUES ('Classic', -5, '2026-10-05
 IntegrityError (SQLITE_CONSTRAINT_CHECK): CHECK constraint failed: points >= 0
 ```
 
-The database refuses, and nothing is added. Type `.quit` to leave the shell.
+The database refuses, and nothing is added. And a value of the wrong type:
+
+```sql
+INSERT INTO scores (level, points, played_at) VALUES ('Classic', 'lots', '2026-10-05T10:00:00+00:00');
+```
+
+```text
+IntegrityError (unknown): cannot store TEXT value in INTEGER column scores.points
+```
+
+That's `STRICT` at work. Type `.quit` to leave the shell.
 
 **Understand: what you just did.** SQL is **declarative**: `SELECT MAX(points) ... WHERE level = 'Classic'` says *what* you want, not how to find it. The database decides how: which rows to read, in what order, using what shortcuts (Chapter 7 measures one, an **index**). That's the opposite of the Python you've written, where every loop says exactly how. It's why one short SQL statement can replace a loop over every score in memory.
 
@@ -263,7 +285,155 @@ run ".venv/Scripts/python -m sqlite3 practice.db \"SELECT MAX(points), COUNT(*) 
 
 ## The scores module, on SQLite
 
-**Build:** keep scores in an SQLite database instead of a JSON file.
+**Build:** a scores module that opens a database, and makes sure the table is there.
+
+This replaces the whole JSON version: `TypeAdapter`, `ScoresError` and `describe` all go. The app still imports the old names, so `breakout` won't start until "The app opens the database", three steps on; the checks until then use the module on its own.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in an SQLite database between games."""
+
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY,
+    level TEXT NOT NULL,
+    points INTEGER NOT NULL CHECK (points >= 0),
+    played_at TEXT NOT NULL
+) STRICT
+"""
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def open_scores(path: Path) -> sqlite3.Connection:
+    db = sqlite3.connect(path)
+    db.execute(SCHEMA)
+    return db
+```
+
+**Understand.** `SCHEMA` is the `CREATE TABLE` from the practice, as a string, with one addition: `IF NOT EXISTS`, so running it creates the table the first time and does nothing every time after. The **schema** is the design of the tables: their names, columns, types and rules. `Score` is back to a plain dataclass, with a plain `datetime`.
+
+**`open_scores(path)`** opens the database file, creating it if needed: `sqlite3.connect` returns a **connection**, the program's line to the database. `db.execute(SCHEMA)` runs one SQL statement through it. Then the connection is returned, for the rest of the program to use.
+
+```powershell
+.venv\Scripts\python -c "from pathlib import Path; from breakout.scores import open_scores; open_scores(Path('scores.db')).close()"
+.venv\Scripts\python -m sqlite3 scores.db "SELECT sql FROM sqlite_schema"
+```
+
+```text
+('CREATE TABLE scores (\n    id INTEGER PRIMARY KEY,\n    level TEXT NOT NULL,\n    points INTEGER NOT NULL CHECK (points >= 0),\n    played_at TEXT NOT NULL\n) STRICT',)
+```
+
+`sqlite_schema` is a table SQLite keeps about the database itself: one row per table, with the SQL that made it. The table is there, made by your code.
+
+`sqlite3.connect` doesn't read the file, it only opens it. A file that isn't a database is noticed on the first `execute`:
+
+```powershell
+.venv\Scripts\python -c "import sqlite3; db = sqlite3.connect('tests/data/broken-scores.json'); print('connected'); db.execute('SELECT 1')"
+```
+
+```text
+connected
+...
+sqlite3.DatabaseError: file is not a database
+```
+
+So in `open_scores`, it's `db.execute(SCHEMA)` that raises for a bad file: worth knowing when the app decides what to catch.
+
+```check
+contains breakout/scores.py "def open_scores(path: Path) -> sqlite3.Connection:"
+contains breakout/scores.py "STRICT"
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); print(db.execute('SELECT COUNT(*) FROM scores').fetchone())\"" stdout="(0,)" label="open_scores makes the table"
+```
+
+The check opens `Path(":memory:")`: that name is special to SQLite, a database held in memory only, gone when it's closed, so checking never leaves anything behind.
+
+## Adding a score, in a transaction
+
+**Build:** add one score with an `INSERT`.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in an SQLite database between games."""
+
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY,
+    level TEXT NOT NULL,
+    points INTEGER NOT NULL CHECK (points >= 0),
+    played_at TEXT NOT NULL
+) STRICT
+"""
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def open_scores(path: Path) -> sqlite3.Connection:
+    db = sqlite3.connect(path)
+    db.execute(SCHEMA)
+    return db
+
+
+def add_score(db: sqlite3.Connection, score: Score) -> None:
+    with db:
+        db.execute(
+            "INSERT INTO scores (level, points, played_at) VALUES (?, ?, ?)",
+            (score.level, score.points, score.when.isoformat()),
+        )
+```
+
+**Understand.** The values aren't written into the SQL text. Each `?` is a **placeholder**, and the values are passed separately, as a tuple. The database fills them in itself, **in order**, as values, never as SQL:
+
+```text
+INSERT INTO scores (level,        points,        played_at)
+VALUES             (?,            ?,             ?)
+                    score.level   score.points   score.when.isoformat()
+```
+
+The first `?` takes the first item of the tuple, and so on: positions, not names. Swap two items, and `STRICT` refuses `'Classic'` as `points`. A single value is still a tuple, with the comma of lesson 6.2: `(level,)`. Why placeholders matter so much is the next lesson.
+
+**`with db:`** makes the `INSERT` a **transaction**: everything inside the block happens completely or not at all. At the end of the block the transaction is **committed**, made permanent on disk; if an exception is raised inside it, it's **rolled back**, as if nothing happened. The database writes changes so that a crash at any moment leaves either the old data or the new, never half: lesson 6.2's challenge, done for you.
+
+Careful: this `with` is not lesson 6.2's `with open(...)`. Leaving `with db:` commits or rolls back, and the connection **stays open**, ready for the next statement. Closing it is still `db.close()`. And a change that's never committed is thrown away. Add one score inside a transaction, then one without, and look:
+
+```powershell
+.venv\Scripts\python -c "from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import Score, add_score, open_scores; db = open_scores(Path('scores.db')); add_score(db, Score('Classic', 70, datetime(2026, 10, 4, 15, 41, tzinfo=UTC))); db.close()"
+.venv\Scripts\python -c "from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path('scores.db')); db.execute('INSERT INTO scores (level, points, played_at) VALUES (?, ?, ?)', ('Castle', 150, '2026-10-05T09:02:30+00:00')); db.close()"
+.venv\Scripts\python -m sqlite3 scores.db "SELECT * FROM scores"
+```
+
+```text
+(1, 'Classic', 70, '2026-10-04T15:41:00+00:00')
+```
+
+One row. The second `INSERT` ran without an error, but nothing committed it, so closing the connection rolled it back. Every change to the database goes through a transaction, and `with db:` is how this module makes sure each one ends.
+
+```check
+contains breakout/scores.py "with db:"
+run ".venv/Scripts/python -c \"from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import Score, add_score; add_score(db, Score('Classic', 70, datetime.now(UTC))); print(db.execute('SELECT level, points FROM scores').fetchone())\"" stdout="('Classic', 70)" label="add_score puts a row in the table"
+```
+
+## Reading the scores back
+
+**Build:** read every score, in the order they were added, and leave a place for the best score.
 
 ```python file=breakout/scores.py
 """The scores players have made, kept in an SQLite database between games."""
@@ -313,113 +483,30 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     raise NotImplementedError("lesson 6.3's Your turn")
 ```
 
-**Understand.**
+**Understand.** `db.execute(...)` returns a **cursor**: an object that hands out the rows of a result one at a time. Two ways to take them:
 
-**`open_scores(path)`** opens the database file, creating it if needed: `sqlite3.connect` returns a **connection**, the program's line to the database. Then it runs the `SCHEMA`, the `CREATE TABLE` from the practice, with `IF NOT EXISTS`, so it creates the table the first time and does nothing every time after. The **schema** is the design of the tables: their names, columns, types and rules.
-
-**`add_score`** runs one `INSERT`. The values aren't written into the SQL text. Each `?` is a **placeholder**, and the values are passed separately, as a tuple: `(score.level, score.points, score.when.isoformat())`. The database fills them in itself, as values, never as SQL. Why that matters is the next lesson.
-
-**`with db:`** makes the `INSERT` a **transaction**: everything inside the block happens completely or not at all. At the end of the block the transaction is **committed**, made permanent on disk; if an exception is raised inside it, it's **rolled back**, as if nothing happened. The database writes changes so that a crash at any moment leaves either the old data or the new, never half: lesson 6.2's challenge, done for you.
-
-**`load_scores`** runs a `SELECT` and goes through the rows it returns, each a tuple of the three columns asked for, unpacked as `level, points, played_at`. `ORDER BY id` matters: SQL promises **no** order for rows unless you ask for one, so without it the scores could come back in any order.
-
-**`best`** isn't written yet: it's the Your turn.
-
-**Gone:** `ScoresError` and the pydantic checking. The database refuses wrong types (`STRICT`) and impossible points (`CHECK`) when the data is written, so what comes back out is already right.
-
-```check
-contains breakout/scores.py "def open_scores(path: Path) -> sqlite3.Connection:"
-contains breakout/scores.py "STRICT"
-```
-
-## Tests against a real database
-
-**Build:** the scores tests, for a database.
-
-```python file=tests/test_scores.py
-"""What the scores database must do, and what it must refuse."""
-
-import sqlite3
-from datetime import UTC, datetime
-from pathlib import Path
-
-import pytest
-
-from breakout.scores import Score, add_score, best, load_scores, open_scores
-
-WIN = Score("Classic", 400, datetime(2026, 10, 4, 15, 30, 5, tzinfo=UTC))
-LOSS = Score("Classic", 70, datetime(2026, 10, 4, 15, 41, 0, tzinfo=UTC))
-CASTLE = Score("Castle", 150, datetime(2026, 10, 5, 9, 2, 30, tzinfo=UTC))
-DATA = Path(__file__).parent / "data"
-
-
-def test_a_new_database_has_no_scores(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    assert load_scores(db) == []
-    db.close()
-
-
-def test_scores_come_back_exactly_as_they_were_saved(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    add_score(db, WIN)
-    add_score(db, CASTLE)
-    assert load_scores(db) == [WIN, CASTLE]
-    db.close()
-
-
-def test_scores_are_still_there_when_the_database_is_opened_again(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    add_score(db, WIN)
-    db.close()
-    db = open_scores(tmp_path / "scores.db")
-    assert load_scores(db) == [WIN]
-    db.close()
-
-
-def test_the_best_score_is_the_highest_on_that_level(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    for score in [LOSS, CASTLE, WIN]:
-        add_score(db, score)
-    assert best(db, "Classic") == 400
-    db.close()
-
-
-def test_a_level_never_played_has_no_best(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    add_score(db, WIN)
-    assert best(db, "Castle") is None
-    db.close()
-
-
-def test_negative_points_are_refused_by_the_database(tmp_path: Path):
-    db = open_scores(tmp_path / "scores.db")
-    with pytest.raises(sqlite3.IntegrityError):
-        add_score(db, Score("Classic", -5, WIN.when))
-    assert load_scores(db) == []
-    db.close()
-
-
-def test_a_file_that_is_not_a_database_is_refused():
-    with pytest.raises(sqlite3.DatabaseError):
-        open_scores(DATA / "broken-scores.json")
-```
+- **Loop over it**, as `load_scores` does: each row is a tuple of the columns asked for, here unpacked as `level, points, played_at`.
+- **`.fetchone()`**: the next row, as a tuple, or `None` if there are no rows left. For a query that always gives exactly one row, like a `COUNT(*)`, it's the whole answer.
 
 ```powershell
-.venv\Scripts\python -m pytest -q tests/test_scores.py
+.venv\Scripts\python -c "from pathlib import Path; from breakout.scores import load_scores, open_scores; db = open_scores(Path('scores.db')); print(db.execute('SELECT COUNT(*) FROM scores').fetchone()); print(load_scores(db))"
 ```
 
 ```text
-FAILED tests/test_scores.py::test_the_best_score_is_the_highest_on_that_level - NotImplementedError: lesson 6.3's Your turn
-FAILED tests/test_scores.py::test_a_level_never_played_has_no_best - NotImplementedError: lesson 6.3's Your turn
-2 failed, 5 passed
+(1,)
+[Score(level='Classic', points=70, when=datetime.datetime(2026, 10, 4, 15, 41, tzinfo=datetime.timezone.utc))]
 ```
 
-**Understand.** Every test makes a **real** SQLite database in its own `tmp_path`: not a pretend one, so the tests check the real SQL, the real constraints and the real file. `test_scores_are_still_there_when_the_database_is_opened_again` checks the point of the whole chapter: close it, open it again, and the score is still there. `test_negative_points_are_refused_by_the_database` checks the `CHECK` constraint and that a refused `INSERT` leaves nothing behind. And the cut-off JSON file from lesson 6.2 has a new use: it's a file that isn't a database.
+`(1,)` is a row of one column, so a tuple of one. To get the 1 itself, unpack it, as lesson 5.1's tests unpacked a list of one brick: `(count,) = row`.
 
-Every test repeats the same two lines, open at the start and `db.close()` at the end, and a test that fails before its last line never closes its database at all. Lesson 6.5 fixes both.
+`ORDER BY id` matters: SQL promises **no** order for rows unless you ask for one, so without it the scores could come back in any order.
+
+**`best`** isn't written yet: it's the Your turn. `raise NotImplementedError(...)` makes it fail loudly, with a message saying why, if anything calls it before then.
+
+**What's checked now?** `STRICT` refuses text in `points`, and `CHECK` refuses negative points, when the data is written, by any program. Not everything: `played_at` is `TEXT`, so the database would take `'yesterday'` or a time with no zone, and `datetime.fromisoformat` would then fail on loading, or return a naive time. That's acceptable only because every row is written by `add_score`, from a `datetime` your code made. The database checks what it can; the rest relies on there being one way in.
 
 ```check
-run ".venv/Scripts/python -m pytest -q tests/test_scores.py" exit=1 stdout="2 failed, 5 passed" label="everything but the best score works"
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import load_scores; print(load_scores(db))\"" stdout="[]" label="a new database has no scores"
 ```
 
 ## The app opens the database
@@ -547,7 +634,9 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** The app opens the database once, at the start, and keeps the connection, `db`, for the whole run: every finished game is one `add_score`. It's closed after the game loop. The policy from lesson 6.2 stays: if the database can't be opened (`sqlite3.Error` is the parent of every error the `sqlite3` module raises), warn and play without keeping scores.
+**Understand.** The app opens the database once, at the start, and keeps the connection, `db`, for the whole run: every finished game is one `add_score`. It's closed after the game loop. The policy from lesson 6.2 stays: if the database can't be opened (`sqlite3.Error` is the parent of every error the `sqlite3` module raises), warn and play without keeping scores. `db = None` in the `except` matters: `open_scores` raised before returning, so `db` was never set to a connection, but setting it again says plainly that from here on there's no database, and `if db` checks it, like `if scores_file` did.
+
+Every finished game calls `best(db, level.name)`, which still raises `NotImplementedError`: a game played with a scores database stops at its end until the Your turn. Test runs without `--scores` keep none and never call it.
 
 ```powershell
 .venv\Scripts\breakout --test-run 10 --scores tests/data/broken-scores.json
@@ -561,6 +650,96 @@ frames=10 ...
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_characterisation.py" stdout="11 passed"
 run ".venv/Scripts/breakout --test-run 10 --scores tests/data/broken-scores.json" stderr="file is not a database; playing without keeping scores" label="a file that isn't a database is reported, not fatal"
+```
+
+## Tests against a real database
+
+**Build:** the scores tests, for a database.
+
+```python file=tests/test_scores.py
+"""What the scores database must do, and what it must refuse."""
+
+import sqlite3
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+
+from breakout.scores import Score, add_score, best, load_scores, open_scores
+
+WIN = Score("Classic", 400, datetime(2026, 10, 4, 15, 30, 5, tzinfo=UTC))
+LOSS = Score("Classic", 70, datetime(2026, 10, 4, 15, 41, 0, tzinfo=UTC))
+CASTLE = Score("Castle", 150, datetime(2026, 10, 5, 9, 2, 30, tzinfo=UTC))
+DATA = Path(__file__).parent / "data"
+
+
+def test_a_new_database_has_no_scores(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    assert load_scores(db) == []
+    db.close()
+
+
+def test_scores_come_back_exactly_as_they_were_saved(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    add_score(db, WIN)
+    add_score(db, CASTLE)
+    assert load_scores(db) == [WIN, CASTLE]
+    db.close()
+
+
+def test_scores_are_still_there_when_the_database_is_opened_again(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    add_score(db, WIN)
+    db.close()
+    db = open_scores(tmp_path / "scores.db")
+    assert load_scores(db) == [WIN]
+    db.close()
+
+
+def test_the_best_score_is_the_highest_on_that_level(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    for score in [LOSS, CASTLE, WIN]:
+        add_score(db, score)
+    assert best(db, "Classic") == 400
+    db.close()
+
+
+def test_a_level_never_played_has_no_best(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    add_score(db, WIN)
+    assert best(db, "Castle") is None
+    db.close()
+
+
+def test_negative_points_are_refused_by_the_database(tmp_path: Path):
+    db = open_scores(tmp_path / "scores.db")
+    with pytest.raises(sqlite3.IntegrityError):
+        add_score(db, Score("Classic", -5, WIN.when))
+    assert load_scores(db) == []
+    db.close()
+
+
+def test_a_file_that_is_not_a_database_is_refused():
+    with pytest.raises(sqlite3.DatabaseError):
+        open_scores(DATA / "broken-scores.json")
+```
+
+```powershell
+.venv\Scripts\python -m pytest -q tests/test_scores.py
+```
+
+```text
+FAILED tests/test_scores.py::test_the_best_score_is_the_highest_on_that_level - NotImplementedError: lesson 6.3's Your turn
+FAILED tests/test_scores.py::test_a_level_never_played_has_no_best - NotImplementedError: lesson 6.3's Your turn
+2 failed, 5 passed
+```
+
+**Understand.** Every test makes a **real** SQLite database in its own `tmp_path`: not a pretend one, so the tests check the real SQL, the real constraints and the real file. `test_scores_are_still_there_when_the_database_is_opened_again` checks the point of the whole chapter: close it, open it again, and the score is still there. `test_negative_points_are_refused_by_the_database` checks the `CHECK` constraint and that a refused `INSERT` leaves nothing behind. And the cut-off JSON file from lesson 6.2 has a new use: it's a file that isn't a database.
+
+Every test repeats the same two lines, open at the start and `db.close()` at the end, and a test that fails before its last line never closes its database at all. Lesson 6.5 fixes both.
+
+```check
+run ".venv/Scripts/python -m pytest -q tests/test_scores.py" exit=1 stdout="2 failed, 5 passed" label="everything but the best score works"
 ```
 
 ## Your turn: the best score, in SQL

@@ -114,9 +114,169 @@ run ".venv/Scripts/python -m pytest -q" stdout="96 passed"
 
 ## What a score is
 
-**Build:** a module for scores: what one is, and how they're kept.
+**Build:** a module for scores, starting with what one score is, and how to find the best.
 
 Create `breakout/scores.py`:
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in a file between games."""
+
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def best(scores: list[Score], level: str) -> int | None:
+    return max((score.points for score in scores if score.level == level), default=None)
+```
+
+**Understand.** `Score` is a frozen dataclass (lesson 3.2): which level, how many points, and **when**, as a `datetime` from the standard library's `datetime` module: a date and a time of day in one object.
+
+`best` finds the highest points on one level. The **generator expression** `score.points for score in scores if score.level == level` produces the matching points one at a time, without building a list, and `max` takes the largest. Traced for three scores, looking for `"Classic"`:
+
+```text
+score                     score.level == "Classic"?   produced
+Score("Classic", 70)      yes                         70
+Score("Castle", 150)      no                          (skipped)
+Score("Classic", 400)     yes                         400
+max(70, 400)                                          400
+```
+
+```powershell
+.venv\Scripts\python -c "from datetime import UTC, datetime; from breakout.scores import Score, best; t = datetime(2026, 10, 4, tzinfo=UTC); print(best([Score('Classic', 70, t), Score('Castle', 150, t), Score('Classic', 400, t)], 'Classic'))"
+```
+
+```text
+400
+```
+
+The 150 is the highest score of all, and it isn't the answer: it was on another level. `max(..., default=None)` returns `None` when nothing is produced, instead of raising `ValueError`, which is what `max` does with nothing to compare.
+
+```predict
+question: What does `best([], "Classic")` return?
+choice: 0
+choice: None
+choice: It raises ValueError
+answer: None
+explain: With no scores at all, the generator produces nothing, and `max` returns its `default`, `None`. That's more honest than 0: "no best yet" and "a best of 0 points" are different facts, and the screen will show them differently. The return type, `int | None`, makes every caller deal with both.
+```
+
+```check
+contains breakout/scores.py "class Score:"
+run ".venv/Scripts/python -c \"from breakout.scores import best; print(best([], 'Classic'))\"" stdout="None" label="no scores, no best"
+```
+
+## Saving scores
+
+**Build:** write a list of scores to a file, as JSON.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in a file between games."""
+
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def save_scores(path: Path, scores: list[Score]) -> None:
+    path.write_text(json.dumps([asdict(score) for score in scores], indent=2), encoding="utf-8")
+
+
+def best(scores: list[Score], level: str) -> int | None:
+    return max((score.points for score in scores if score.level == level), default=None)
+```
+
+**Understand.** JSON can't hold a dataclass, only objects, arrays, strings, numbers, `true`/`false` and `null` (lesson 5.3). So each `Score` is first turned into a dict: `dataclasses.asdict(score)` makes a dict of a dataclass's fields, name to value. The list comprehension does that for every score, `json.dumps(..., indent=2)` turns the list of dicts into JSON text, indented two spaces so a person can read the file, and `write_text` writes it, replacing whatever the file held.
+
+Look at what `asdict` gives for one score:
+
+```powershell
+.venv\Scripts\python -c "from datetime import UTC, datetime; from dataclasses import asdict; from breakout.scores import Score; print(asdict(Score('Classic', 70, datetime(2026, 10, 4, 15, 41, tzinfo=UTC))))"
+```
+
+```text
+{'level': 'Classic', 'points': 70, 'when': datetime.datetime(2026, 10, 4, 15, 41, tzinfo=datetime.timezone.utc)}
+```
+
+A `str`, an `int`, and a `datetime`, copied as it is. Keep that last one in mind: the game is about to find out what `json.dumps` thinks of it.
+
+```check
+contains breakout/scores.py "def save_scores(path: Path, scores: list[Score]) -> None:"
+run ".venv/Scripts/python -c \"from breakout.scores import save_scores; print('ok')\"" stdout="ok" label="scores.py still imports cleanly"
+```
+
+## Loading scores
+
+**Build:** read the scores back from the file.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in a file between games."""
+
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def load_scores(path: Path) -> list[Score]:
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return [Score(**item) for item in data]
+
+
+def save_scores(path: Path, scores: list[Score]) -> None:
+    path.write_text(json.dumps([asdict(score) for score in scores], indent=2), encoding="utf-8")
+
+
+def best(scores: list[Score], level: str) -> int | None:
+    return max((score.points for score in scores if score.level == level), default=None)
+```
+
+**Understand.** `load_scores` returns an empty list if the file doesn't exist yet, which is normal: the very first game has no scores before it. Otherwise `json.loads` turns the text into a list of dicts, and a `Score` is made from each.
+
+`Score(**item)` is **dictionary unpacking** in a call (lesson 5.3 met `**` collecting keyword arguments; this is the other direction): each key of the dict is passed as a keyword argument, so `{"level": "Classic", "points": 70, "when": ...}` becomes `Score(level="Classic", points=70, when=...)`. Try both paths:
+
+```powershell
+.venv\Scripts\python -c "from pathlib import Path; from breakout.scores import Score, load_scores; print(load_scores(Path('nowhere.json'))); print(Score(**{'level': 'Classic', 'points': 70, 'when': '2026-10-04T15:41:00+00:00'}))"
+```
+
+```text
+[]
+Score(level='Classic', points=70, when='2026-10-04T15:41:00+00:00')
+```
+
+The second line is a warning. The dict's `when` was a string, as it would be in any JSON file, and the `Score` took it: a dataclass doesn't check types at run time (lesson 3.2), only pyright does, and pyright can't see inside a JSON file. A `Score` whose `when` is a `str` is wrong in a way nothing has caught yet.
+
+```check
+contains breakout/scores.py "def load_scores(path: Path) -> list[Score]:"
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import load_scores; print(load_scores(Path('nowhere.json')))\"" stdout="[]" label="no file yet means no scores"
+```
+
+## Adding a score
+
+**Build:** add one score to the file.
 
 ```python file=breakout/scores.py
 """The scores players have made, kept in a file between games."""
@@ -153,30 +313,19 @@ def best(scores: list[Score], level: str) -> int | None:
     return max((score.points for score in scores if score.level == level), default=None)
 ```
 
-**Understand.**
+**Understand.** `add_score` reads every score, adds one at the end, and writes them all back. `[*old, new]` is **list unpacking**: a new list with the items of `old`, then `new`. Traced, for a file that holds one score:
 
-`Score` is a frozen dataclass: which level, how many points, and **when**, as a `datetime` from the standard library's `datetime` module: a date and a time of day in one object.
-
-`load_scores` returns an empty list if the file doesn't exist yet, which is normal: the very first game has no scores before it. Otherwise it reads the JSON, a list of objects, and makes a `Score` from each. `Score(**item)` is **dictionary unpacking** in a call: `**` passes each key of the dict as a keyword argument, so `{"level": "Classic", "points": 70, "when": ...}` becomes `Score(level="Classic", points=70, when=...)`.
-
-`save_scores` does the reverse. `dataclasses.asdict(score)` turns a dataclass into a dict of its fields, and `json.dumps(..., indent=2)` writes the list as JSON, indented two spaces so a person can read the file.
-
-`add_score` reads every score, adds one at the end, and writes them all back: `[*old, new]` is **list unpacking**, a new list with the items of `old`, then `new`. Rewriting the whole file to add one score is fine for a few hundred scores and a problem for a million; lesson 6.3 comes back to it.
-
-`best` finds the highest points on one level. The **generator expression** `score.points for score in scores if score.level == level` produces the matching points one at a time, and `max(..., default=None)` returns `None` when there are none, instead of raising `ValueError`, which is what `max` does with nothing to compare.
-
-```predict
-question: What does `best([], "Classic")` return?
-choice: 0
-choice: None
-choice: It raises ValueError
-answer: None
-explain: With no scores at all, the generator produces nothing, and `max` returns its `default`, `None`. That's more honest than 0: "no best yet" and "a best of 0 points" are different facts, and the screen will show them differently. The return type, `int | None`, makes every caller deal with both.
+```text
+the file before                 [{"level": "Classic", "points": 70, ...}]
+load_scores(path)               [Score("Classic", 70, ...)]
+[*load_scores(path), score]     [Score("Classic", 70, ...), Score("Classic", 400, ...)]
+the file after                  [{"level": "Classic", "points": 70, ...}, {"level": "Classic", "points": 400, ...}]
 ```
 
+Rewriting the whole file to add one score is fine for a few hundred scores and a problem for a million; lesson 6.3 comes back to it.
+
 ```check
-contains breakout/scores.py "class Score:"
-run ".venv/Scripts/python -c \"from breakout.scores import best; print(best([], 'Classic'))\"" stdout="None"
+contains breakout/scores.py "[*load_scores(path), score]"
 ```
 
 ## Where scores are kept
@@ -295,8 +444,110 @@ def draw(screen: pygame.Surface, font: pygame.font.Font, game: Game, best: int |
 
 **Understand.** `draw` is given the best score, `int | None`, and adds `Best 560` to the status line only when there is one. It isn't given the scores file: drawing shows things, and doesn't read files.
 
+`draw` now needs four arguments, and the app passes three: the game would crash on its first frame with `TypeError: draw() missing 1 required positional argument: 'best'`. Until the app knows a best score, give it `None`, "no best yet":
+
+```python file=breakout/app.py
+import os
+import random
+import sys
+
+import pygame
+
+from breakout.config import KEYS, Config, ConfigError, load_config
+from breakout.draw import draw
+from breakout.level import LEVELS, LevelError, load_level
+from breakout.model import HEIGHT, WIDTH, Game, GameState, autopilot
+from breakout.settings import Hold, parse_args
+
+
+def main(args: list[str]) -> None:
+    settings = parse_args(args)
+    seed = settings.seed
+    if settings.test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if seed is None:
+            seed = 0
+    rng = random.Random(seed)
+    try:
+        config = load_config(settings.config) if settings.config else Config()
+    except (OSError, ConfigError) as error:
+        print(f"breakout: {settings.config}: {error}", file=sys.stderr)
+        sys.exit(1)
+    controls = config.controls
+    level_file = settings.level or config.level or LEVELS / "classic.json"
+    try:
+        level = load_level(level_file)
+    except (OSError, LevelError) as error:
+        print(f"breakout: {level_file}: {error}", file=sys.stderr)
+        sys.exit(1)
+    game = Game(rng, level.bricks(), level.lives)
+    if settings.test_frames is not None:
+        game.start()
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption(f"Breakout: {level.name}")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    frames = 0
+    running = True
+    while running:
+        if settings.test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == settings.lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == KEYS[controls.serve]:
+                if game.state in (GameState.OVER, GameState.WON):
+                    game = Game(rng, level.bricks(), level.lives)
+                game.start()
+            elif event.type == pygame.KEYDOWN and event.key == KEYS[controls.pause]:
+                game.toggle_pause()
+
+        direction = 0
+        if settings.test_frames is None:
+            keys = pygame.key.get_pressed()
+            if keys[KEYS[controls.left]]:
+                direction -= 1
+            if keys[KEYS[controls.right]]:
+                direction += 1
+        elif settings.hold == Hold.LEFT:
+            direction = -1
+        elif settings.hold == Hold.RIGHT:
+            direction = 1
+        elif settings.hold == Hold.AUTO:
+            direction = autopilot(game.ball, game.paddle)
+        game.update(direction, dt)
+
+        draw(screen, font, game, None)
+        pygame.display.flip()
+
+        frames += 1
+        if settings.test_frames is not None and frames >= settings.test_frames:
+            running = False
+
+    pygame.quit()
+    if settings.test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(game.ball.rect())
+        print(
+            f"frames={frames} paddle_x={game.paddle.rect().x} score={game.score} lives={game.lives} "
+            f"bricks={len(game.bricks)} inside={inside}"
+        )
+
+
+def run() -> None:
+    main(sys.argv[1:])
+```
+
 ```check
 contains breakout/draw.py "best: int | None"
+run ".venv/Scripts/breakout --test-run 60" stdout="frames=60" label="the game still runs, with no best score to show"
 ```
 
 ## The app keeps score
@@ -417,9 +668,21 @@ def run() -> None:
 
 **Where.** `pygame.system.get_pref_path("forge", "breakout")` returns a folder that belongs to this program and this user, creating it if needed: on Windows, `C:\Users\<you>\AppData\Roaming\forge\breakout\`. Every operating system has a place for this, and a program should use it rather than its own install folder, which a player may not be allowed to write to.
 
-**When.** A game ends once, but the loop keeps running afterwards, frame after frame, with the state still `OVER` or `WON`. So the app remembers the state from `before` the update, and saves only on the frame where the state **changes** to an end state: one game, one score.
+**Whether.** `scores_file` is a `Path` or `None`: `None` in a test run without `--scores`. `if scores_file` and `... if scores_file else None` rely on truthiness: `None` counts as false, and a `Path` always counts as true, whatever it names. So here they mean "if there is a scores file", and a test run never reads or writes one.
 
-**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Scores saved in summer and winter, or on two computers in different countries, couldn't be compared reliably. ruff's `DTZ` rules flag naive datetimes for exactly this reason. Store times in UTC, with the zone recorded, and convert to local time only to show them.
+**When.** A game ends once, but the loop keeps running afterwards, frame after frame, with the state still `OVER` or `WON`. So the app remembers the state from `before` the update, and saves only on the frame where the state **changes** to an end state. Traced around the frame the last brick breaks:
+
+```text
+frame   before    after update   changed?   an end state?   saved?
+N-1     PLAYING   PLAYING        no         no              no
+N       PLAYING   WON            yes        yes             yes: one score
+N+1     WON       WON            no         yes             no
+N+2     WON       WON            no         yes             no
+```
+
+One game, one score. Without the `before` comparison, frame N+1 and every frame after it would save the same win again, sixty times a second.
+
+**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Scores saved in summer and winter, or on two computers in different countries, couldn't be compared reliably. ruff has a group of rules, `DTZ`, that flags naive datetimes for exactly this reason; it isn't on by default, and lesson 6.4 shows how to turn on a group. Store times in UTC, with the zone recorded, and convert to local time only to show them.
 
 Now play the classic level to the end, keeping scores in a file:
 
@@ -519,7 +782,9 @@ FAILED tests/test_scores.py::test_a_new_score_is_added_after_the_old_ones - Type
 2 failed, 3 passed
 ```
 
-**Understand.** Turning objects into bytes or text that can be stored or sent, and back, is **serialisation** (and **deserialisation**). Lesson 5.3's table lists everything JSON can hold: objects, arrays, strings, numbers, `true`/`false`, `null`. A `datetime` isn't one of them, so `json.dumps` refuses it rather than guess. The crash happened only when a game was won, minutes into play; these tests reproduce it in a fraction of a second, and say exactly what "fixed" means: a score must come back **equal** to what was saved, `datetime` and all.
+**Understand.** The three scores are made with `datetime(2026, 10, 4, 15, 30, 5, tzinfo=UTC)`: year, month, day, hour, minute, second, and `tzinfo`, the time zone, as a keyword. Fixed times, not `datetime.now()`, so every run of the tests compares the same values.
+
+Turning objects into bytes or text that can be stored or sent, and back, is **serialisation** (and **deserialisation**). Lesson 5.3's table lists everything JSON can hold: objects, arrays, strings, numbers, `true`/`false`, `null`. A `datetime` isn't one of them, so `json.dumps` refuses it rather than guess. The crash happened only when a game was won, minutes into play; these tests reproduce it in a fraction of a second, and say exactly what "fixed" means: a score must come back **equal** to what was saved, `datetime` and all.
 
 ```check
 file tests/test_scores.py -- Click "Create provided tests/test_scores.py" above.
@@ -575,7 +840,7 @@ git-clean
 
 - **Memory belongs to a running program**; keeping anything means serialising it to a file or database, and deserialising it later.
 - **JSON holds six kinds of value.** Anything else (a `datetime`, your own class) needs a representation you choose, written and read back explicitly.
-- **ISO 8601** for dates and times as text; **UTC** for storing them, with the zone recorded; ruff's `DTZ` rules catch naive datetimes.
+- **ISO 8601** for dates and times as text; **UTC** for storing them, with the zone recorded; ruff's `DTZ` rules can catch naive datetimes, once turned on.
 - **A round-trip test**: save, load, and compare with what you started with.
 - **A test run touches nothing it wasn't given**, and a real game keeps its data in the user's data folder.
 - `**dict` and `*list` unpacking; `max(..., default=None)`.

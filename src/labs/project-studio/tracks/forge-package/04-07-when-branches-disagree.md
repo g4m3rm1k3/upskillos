@@ -81,7 +81,7 @@ git-message "Friendlier title text"
 
 **Build:** a different change to the same line, on `main`.
 
-Switch back, and you'll see `draw.py` as it was: the branch's change lives only on the branch.
+Switch back, and you'll see `draw.py` as it was: the branch's change lives only on the branch. `git switch main` rewrites every tracked file in the folder to match the commit `main` points at, so the editor shows `main`'s version of `draw.py`. (Git refuses to switch if that would overwrite changes you haven't committed.)
 
 ```powershell
 git switch main
@@ -100,6 +100,8 @@ git log --oneline --graph --all
 |/
 * 6a93d9c Test the state machine
 ```
+
+(Your hashes will be different: a commit's hash is worked out from its contents, its author and the time it was made, so the same commit made on another computer, or a minute later, gets a different one.)
 
 **Understand.** `--graph` draws the history as lines, and `--all` includes every branch. The two commits share a parent, `Test the state machine`, and then **diverge**: each line has a commit the other doesn't. No fast-forward is possible now: neither branch is simply ahead of the other.
 
@@ -122,6 +124,8 @@ CONFLICT (content): Merge conflict in breakout/draw.py
 Automatic merge failed; fix conflicts and then commit the result.
 ```
 
+`git status --short` shows one line per file, with two letters for its state: the first for the staging area, the second for the working tree.
+
 ```powershell
 git status --short
 ```
@@ -140,13 +144,21 @@ Open `breakout/draw.py`:
 >>>>>>> title-text
 ```
 
-**Understand: how Git merges.** A merge compares **three** versions of each file:
+**Understand: how Git merges.** This is a **three-way merge**: it compares **three** versions of each file:
 
 1. the **merge base**, the last commit both branches share (`Test the state machine`);
 2. `main`'s latest version (`HEAD`, since you're on `main`);
 3. `title-text`'s latest version.
 
-For each part of the file, if only one side changed it compared with the base, Git takes that side's change: that's what *Auto-merging* means, and it handles most of a typical merge silently. If **both** sides changed the same lines, differently, Git can't know which you want, so it stops and writes both into the file between **conflict markers**:
+For each part of the file, if only one side changed it compared with the base, Git takes that side's change: that's what *Auto-merging* means, and it handles most of a typical merge silently. For example, if one branch had changed the title line and the other the game-over line:
+
+```text
+line        base             main             title-text       merged result
+title       "BREAKOUT: ..."  "BREAKOUT: ..."  "Press Space..." "Press Space..."   only the branch changed it
+game over   "Game over..."   "GAME OVER..."   "Game over..."   "GAME OVER..."     only main changed it
+```
+
+Both changes are kept, with no questions asked. If **both** sides changed the same lines, differently, Git can't know which you want, so it stops and writes both into the file between **conflict markers**:
 
 - `<<<<<<< HEAD` to `=======` is your side (`main`'s version);
 - `=======` to `>>>>>>> title-text` is the other side (the branch's version).

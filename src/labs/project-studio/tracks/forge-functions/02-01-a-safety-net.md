@@ -32,7 +32,7 @@ Then install, exactly as in lesson 0.2:
 pytest 9.1.1
 ```
 
-**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, and Chapter 39 shows how to pin everything when a release needs to be exactly reproducible.
+**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, and Chapter 51 shows how to pin everything when a release needs to be exactly reproducible.
 
 ```check
 contains requirements.txt "pytest==9.1.1"
@@ -87,9 +87,11 @@ tests\test_characterisation.py .                                         [100%]
 
 **`assert`** is a Python statement: `assert condition` does nothing if the condition is true and raises `AssertionError` if it's false. So `assert last_line(...) == "..."` passes when the game printed exactly that line.
 
+`-q` ("quiet") makes pytest print one character per test, `.` for a pass and `F` for a failure, and a one-line summary at the end, instead of a line per test. The checks use it, and so will you.
+
 **Understand: the helpers, piece by piece.**
 
-`Path(__file__)` is the path of this test file, as a `Path` object from Python's `pathlib` module: an object representing a file path, with methods for working with it. `.parent` is the folder it's in (`tests`), and `.parent.parent` the folder above that (the project). The `/` operator joins a `Path` and a name, so `GAME` is the full path of `breakout.py`, however the tests are started and from whatever folder. Lesson 0.1's rule about relative paths, applied: no hidden input.
+`Path(__file__)` is the path of this test file, as a `Path` object from Python's `pathlib` module. An **object** is a value that carries its own data together with functions that work on it, called its **methods**, reached with a dot; you've used them already, like `"600".isdigit()`. A `Path` object represents a file path, with methods for working with it. `.parent` is the folder it's in (`tests`), and `.parent.parent` the folder above that (the project). The `/` operator joins a `Path` and a name, so `GAME` is the full path of `breakout.py`, however the tests are started and from whatever folder. Lesson 0.1's rule about relative paths, applied: no hidden input.
 
 `subprocess.run([...])` starts another program as a separate **process**, exactly as the shell did in lesson 0.1, waits for it to finish, and returns a result object. The list is the program and its arguments, already split into words:
 
@@ -99,7 +101,7 @@ tests\test_characterisation.py .                                         [100%]
 
 The result has `.stdout` (everything the game printed) and `.returncode` (its exit code).
 
-**`*args`** in `def play(*args)` collects all the positional arguments the function is given into a tuple named `args`: `play("--test-run", "600")` gives `args = ("--test-run", "600")`. In the list `[sys.executable, str(GAME), *args]`, the `*` does the opposite: it **unpacks** the tuple, putting its items into the list one by one. Traced:
+**`*args`** in `def play(*args)` collects all the positional arguments the function is given into a **tuple** named `args` (a tuple is a fixed sequence of values written in round brackets, like a list that can't be changed): `play("--test-run", "600")` gives `args = ("--test-run", "600")`. In the list `[sys.executable, str(GAME), *args]`, the `*` does the opposite: it **unpacks** the tuple, putting its items into the list one by one. Traced:
 
 ```text
 last_line("--test-run", "600", "--hold", "auto")
@@ -124,15 +126,6 @@ run ".venv/Scripts/python -m pytest -q" stdout="1 passed" label="pytest finds on
 **Build:** nothing to keep. Find out what a failing test looks like before you need to read one for real.
 
 In `breakout.py`, change `BALL_SPEED = 300` to `BALL_SPEED = 310`: a ball 3% faster. Don't run the tests yet.
-
-```predict
-question: You add five more tests like the first one (the next step). With the ball 3% faster, how many of the six will fail?
-choice: All six: everything the game does has changed
-choice: Some of them, but not all
-choice: None: 3% is too small to notice
-answer: Some of them, but not all
-explain: A test only notices what it looks at. A faster ball changes where the ball goes, so the tests that let the ball play for a while see different numbers. But the test that holds right for half a second checks a moment before the ball reaches anything that would differ, and the usage-error test never starts the game at all. When this lesson was written, 3 of the 6 failed. A test suite isn't a guarantee that nothing changed; it's a guarantee that *what it checks* didn't change.
-```
 
 Run the single test now:
 
@@ -240,7 +233,7 @@ tests\test_characterisation.py ......                                    [100%]
 
 **Understand.** Each test is one behaviour, and its **name says what the behaviour is**, so a failure report like `FAILED ...::test_nobody_at_the_paddle_loses` tells you what broke before you read any code. A good test name reads as a sentence about the program.
 
-The last test checks two things about one behaviour (the exit code, then the message): if the first `assert` fails, the second doesn't run, and the report points at the first. `startswith` checks only the beginning of the usage line, on purpose: lesson 2.4 will change what comes after `usage: python breakout.py`, and this test is about *getting* a usage message, not its exact wording.
+The last test checks two things about one behaviour (the exit code, then the message): if the first `assert` fails, the second doesn't run, and the report points at the first. `s.startswith(p)` returns `True` when the string `s` begins with `p`. It checks only the beginning of the usage line, on purpose: lesson 2.4 will change what comes after `usage: python breakout.py`, and this test is about *getting* a usage message, not its exact wording.
 
 Notice what the slow-frame test records: `lives=2`. With bricks in the way, the half-second frame now costs a life. Is that right? It doesn't matter here. A characterisation test pins down **what happens**, right or wrong, so that you notice when it changes. Deciding what *should* happen comes with unit tests, in lesson 2.4.
 
@@ -253,6 +246,19 @@ Notice what the slow-frame test records: `lives=2`. With bricks in the way, the 
 ```
 
 Six tests, six and a half seconds, because each one starts Python, starts pygame and plays thousands of frames. Fine for a safety net; far too slow to run after every small change, and far too coarse to say *which* part is wrong when one fails. Both problems are what lesson 2.4 fixes.
+
+Now try the experiment from the last step again, with all six:
+
+```predict
+question: Change `BALL_SPEED` to 310 again, a ball 3% faster. How many of the six tests will fail?
+choice: All six: everything the game does has changed
+choice: Some of them, but not all
+choice: None: 3% is too small to notice
+answer: Some of them, but not all
+explain: A test only notices what it looks at. A faster ball changes where the ball goes, so the tests that let the ball play for a while see different numbers. But the test that holds right for half a second checks a moment before the ball reaches anything that would differ, and the usage-error test never starts the game at all. When this lesson was written, 3 of the 6 failed. A test suite isn't a guarantee that nothing changed; it's a guarantee that *what it checks* didn't change.
+```
+
+Put `BALL_SPEED` back to 300 before checking.
 
 ```check
 run ".venv/Scripts/python -m pytest -q" stdout="6 passed" label="all six characterisation tests pass"
@@ -292,7 +298,7 @@ git-clean
 | `left_edge` | holding **left** for **one second** (60 frames) leaves the paddle at the left edge |
 | `stays_lost` | with nobody at the paddle, the game after **1000** frames is exactly as it was when it was lost (compare with the 600-frame test's line) |
 
-Record the real output first, by running the command yourself and copying its last line. Then write the test, run it, and **make it fail once on purpose** (as above) to be sure it can. Put the code back before checking.
+Record the real output first, by running the command yourself and copying its last line. The checks run your new tests on their own with `-k`: `pytest -k left_edge` runs only the tests whose names contain `left_edge`, which is also how you'll run one test while you work on it. Then write the test, run it, and **make it fail once on purpose** (as above) to be sure it can. Put the code back before checking.
 
 ```hints
 nudge: Run `.venv\Scripts\python breakout.py --test-run 60 --hold left` and look at its last line: that's the expected value for the first test. What command gives the second one?

@@ -215,7 +215,206 @@ run ".venv/Scripts/python -m pytest -q" stdout="66 passed"
 
 ## Refuse what can't be played
 
-**Build:** `parse_level` checks the level as it reads it, and raises a `LevelError` saying what's wrong and where.
+**Build:** an exception of your own, `LevelError`, and the first rule: a level with nothing in it is refused.
+
+`parse_level` happily makes whatever it can from any text, so a broken level gives a broken wall and no clue why. It should refuse a level it can't use, saying what's wrong and where. That needs an exception that carries a place in the file. Add the class, and check the first rule before the loop:
+
+```python file=breakout/level.py
+from pathlib import Path
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, line: int, column: int | None = None) -> None:
+        where = f"line {line}" if column is None else f"line {line}, column {column}"
+        super().__init__(f"{where}: {message}")
+        self.line = line
+        self.column = column
+
+
+def parse_level(text: str) -> list[Brick]:
+    lines = text.splitlines()
+    if not lines:
+        raise LevelError("the level is empty", 1)
+    bricks: list[Brick] = []
+    for row, line in enumerate(lines):
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> list[Brick]:
+    return parse_level(path.read_text(encoding="utf-8"))
+```
+
+**Understand: your own exception.** `class LevelError(ValueError):` declares a new kind of exception that **is a** `ValueError`: the brackets name the class it **inherits** from (lesson 3.5's *is-a*). Everything a `ValueError` can do, a `LevelError` can do, so any code that already catches `ValueError` catches this too, and code that wants only level problems can catch `LevelError` alone. Exceptions are where inheritance is used most, because "is a kind of" is exactly how errors relate: a `LevelError` is a kind of bad value.
+
+Its `__init__` takes the message and the position. `super().__init__(...)` calls the **parent class's** `__init__`, `ValueError`'s, with the full text: that text is what `str(error)` returns and what a traceback prints. `super()` means "the class I inherit from", so the parent's setup still happens, with your addition. The position is also kept as attributes, `line` and `column`, so a program (an editor, Chapter 18) can put the cursor on the problem instead of parsing the message.
+
+`where = f"line {line}" if column is None else f"line {line}, column {column}"` is a **conditional expression**: `A if condition else B` is `A` when the condition is true and `B` when it's false, one value chosen in one line. Traced:
+
+```text
+LevelError("the level is empty", 1)                  column is None   →  where = "line 1"
+LevelError("unknown brick 'X'...", 1, 5)            column is 5      →  where = "line 1, column 5"
+str(error)                                            →  "line 1: the level is empty"
+```
+
+Without the `super().__init__(...)` call, `ValueError` would never receive the text, and `str(error)` would be an empty string: the traceback would say `LevelError` and nothing else. And `lines = text.splitlines()` is now made once, before the loop, because the rules need it too: an empty text gives an empty list, `[]`, which counts as false, so `not lines` is true.
+
+```check
+contains breakout/level.py "class LevelError(ValueError):"
+run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('')\"" exit=1 stderr="line 1: the level is empty" label="an empty level is refused"
+```
+
+## Rows of the right length
+
+**Build:** every row must have exactly 8 places, the width of the wall.
+
+Name the width, and check each row's length at the start of the loop:
+
+```python file=breakout/level.py
+from pathlib import Path
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, line: int, column: int | None = None) -> None:
+        where = f"line {line}" if column is None else f"line {line}, column {column}"
+        super().__init__(f"{where}: {message}")
+        self.line = line
+        self.column = column
+
+
+def parse_level(text: str) -> list[Brick]:
+    lines = text.splitlines()
+    if not lines:
+        raise LevelError("the level is empty", 1)
+    bricks: list[Brick] = []
+    for row, line in enumerate(lines):
+        if len(line) != COLUMNS:
+            raise LevelError(f"a row has {COLUMNS} places, and this one has {len(line)}", row + 1)
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+    return bricks
+
+
+def load_level(path: Path) -> list[Brick]:
+    return parse_level(path.read_text(encoding="utf-8"))
+```
+
+**Understand.** A row with fewer than 8 characters would leave the right of the wall empty without anyone meaning it to; one with more would put bricks off the right of the screen. Traced for `"BBBB"`:
+
+```text
+lines = ["BBBB"]       not empty, so the first rule passes
+row 0: len("BBBB") = 4, and 4 != 8   →  LevelError("a row has 8 places, and this one has 4", 0 + 1)
+str(error) = "line 1: a row has 8 places, and this one has 4"
+```
+
+Line and column numbers count from **1**, as editors and people do; Python's `enumerate` counts from 0, hence `row + 1`. In `f"unknown brick {char!r}"`, the `!r` shows the character's `repr` (lesson 0.3), quotes included, so a space or an invisible character is visible in the message: `' '` is clearly a space, where a bare space would be lost.
+
+```check
+run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('BBBB')\"" exit=1 stderr="line 1: a row has 8 places, and this one has 4" label="a short row is refused, saying where and why"
+```
+
+## Only bricks and gaps
+
+**Build:** a character that isn't `T`, `B` or `.` is refused, instead of silently making a gap.
+
+Lesson 5.1 noticed that a typo falls through the `if`/`elif` and makes nothing. Give it somewhere to go:
+
+```python file=breakout/level.py
+from pathlib import Path
+
+import pygame
+
+from breakout.model import BRICK_GAP, BRICK_HEIGHT, BRICK_WIDTH, ROW_COLOURS, WALL_LEFT, WALL_TOP, Brick
+
+LEVELS = Path(__file__).parent / "levels"
+COLUMNS = 8
+
+
+class LevelError(ValueError):
+    """A level that can't be used, saying where in it the problem is."""
+
+    def __init__(self, message: str, line: int, column: int | None = None) -> None:
+        where = f"line {line}" if column is None else f"line {line}, column {column}"
+        super().__init__(f"{where}: {message}")
+        self.line = line
+        self.column = column
+
+
+def parse_level(text: str) -> list[Brick]:
+    lines = text.splitlines()
+    if not lines:
+        raise LevelError("the level is empty", 1)
+    bricks: list[Brick] = []
+    for row, line in enumerate(lines):
+        if len(line) != COLUMNS:
+            raise LevelError(f"a row has {COLUMNS} places, and this one has {len(line)}", row + 1)
+        colour = ROW_COLOURS[row % len(ROW_COLOURS)]
+        for col, char in enumerate(line):
+            x = WALL_LEFT + col * (BRICK_WIDTH + BRICK_GAP)
+            y = WALL_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
+            rect = pygame.Rect(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+            if char == "T":
+                bricks.append(Brick(rect, colour, hits_left=2, points=30))
+            elif char == "B":
+                bricks.append(Brick(rect, colour))
+            elif char != ".":
+                raise LevelError(f"unknown brick {char!r}: use T, B or .", row + 1, col + 1)
+    return bricks
+
+
+def load_level(path: Path) -> list[Brick]:
+    return parse_level(path.read_text(encoding="utf-8"))
+```
+
+**Understand.** Why `elif char != "."` and not a plain `else`? Because `.` must also get past the `T` and `B` checks: it's a gap on purpose, so it makes no brick and no error. A plain `else: raise ...` would refuse the dots too. Only something that is none of the three reaches the `raise`. The column is passed too, `col + 1`, so the message says exactly where:
+
+```text
+"BBBBXBBB", col 4 is 'X': not T, not B, and 'X' != '.'
+→  LevelError("unknown brick 'X': use T, B or .", 1, 5)
+→  "line 1, column 5: unknown brick 'X': use T, B or ."
+```
+
+```check
+run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('BBBBXBBB')\"" exit=1 stderr="line 1, column 5: unknown brick 'X': use T, B or ." label="an unknown character is refused, with its line and column"
+```
+
+## No more rows than fit
+
+**Build:** a level has at most 10 rows, the most that fit above the paddle.
+
+Name the limit, and check it with the empty-level rule, before the loop:
 
 ```python file=breakout/level.py
 from pathlib import Path
@@ -267,11 +466,7 @@ def load_level(path: Path) -> list[Brick]:
     return parse_level(path.read_text(encoding="utf-8"))
 ```
 
-**Understand: your own exception.** `class LevelError(ValueError):` declares a new kind of exception that **is a** `ValueError`: the brackets name the class it **inherits** from (lesson 3.5's *is-a*). Everything a `ValueError` can do, a `LevelError` can do, so any code that already catches `ValueError` catches this too, and code that wants only level problems can catch `LevelError` alone. Exceptions are where inheritance is used most, because "is a kind of" is exactly how errors relate: a `LevelError` is a kind of bad value.
-
-Its `__init__` takes the message and the position. `super().__init__(...)` calls the **parent class's** `__init__`, `ValueError`'s, with the full text: that text is what `str(error)` returns and what a traceback prints. `super()` means "the class I inherit from", so the parent's setup still happens, with your addition. The position is also kept as attributes, `line` and `column`, so a program (an editor, Chapter 18) can put the cursor on the problem instead of parsing the message.
-
-**Understand: the rules**, checked in order, each stopping the parse at the first problem:
+**Understand.** The rule's line number is `MAX_ROWS + 1`: the first row past the limit is line 11, so that's where an editor should point. The four rules, checked in order, each stopping the parse at the first problem:
 
 | Problem | Message |
 |---|---|
@@ -280,14 +475,11 @@ Its `__init__` takes the message and the position. `super().__init__(...)` calls
 | a row that isn't 8 places | `line 3: a row has 8 places, and this one has 7` |
 | a character other than `T`, `B` or `.` | `line 2, column 5: unknown brick 'X': use T, B or .` |
 
-Line and column numbers count from **1**, as editors and people do; Python's `enumerate` counts from 0, hence `row + 1`. In `f"unknown brick {char!r}"`, the `!r` shows the character's `repr` (lesson 0.3), quotes included, so a space or an invisible character is visible in the message: `' '` is clearly a space, where a bare space would be lost.
-
-`else` versus `elif char != "."`: a `.` is a gap, so it makes no brick and no error; anything else falls through to the error.
-
 > **Engineer:** **validate at the boundary**. A file is input from outside the program (lesson 4.3's *who controls this data?*), so it's checked once, completely, where it enters, and turned into values the rest of the program can trust. Nothing past `parse_level` ever has to wonder whether a row might be short. And the error is for a **person**: what's wrong, where, and what would be right.
 
 ```check
 contains breakout/level.py "class LevelError(ValueError):"
+run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('BBBBBBBB\\n' * 11)\"" exit=1 stderr="line 11: a level has at most 10 rows, and this one has 11" label="eleven rows are refused"
 run ".venv/Scripts/python -c \"from breakout import level; level.parse_level('BBBB')\"" exit=1 stderr="line 1: a row has 8 places, and this one has 4" label="a short row is refused, saying where and why"
 ```
 
@@ -332,7 +524,7 @@ test_a_bad_level_is_refused_with_where_and_why[BBBBXBBB-line 1, column 5: unknow
 5 passed
 ```
 
-**Understand: parametrised tests.** `@pytest.mark.parametrize(names, cases)` is a decorator (lesson 3.2) that turns one test function into many: for each case in the list, pytest runs the test with the case's values passed as the named parameters, `text` and `message`. Each run is a separate test, with the case shown in square brackets after its name (`-v`, *verbose*, lists them), so a failure says exactly which case failed, and the others still run.
+**Understand: parametrised tests.** `@pytest.mark.parametrize(names, cases)` is a decorator (lesson 3.2) that turns one test function into many: for each case in the list, pytest runs the test with the case's values passed as the named parameters, `text` and `message`. The first argument, `("text", "message")`, names the parameters, exactly matching the test function's own parameter names; each case is a tuple of values in the same order. So the second case, `("BBBBBBB", "line 1: a row has 8 places, and this one has 7")`, runs the test as `text="BBBBBBB"`, `message="line 1: a row has 8 places, and this one has 7"`. Each run is a separate test, with the case shown in square brackets after its name (`-v`, *verbose*, lists them), so a failure says exactly which case failed, and the others still run.
 
 Lesson 2.4 said: one representative test for each group of inputs that the code treats the same way. Here the five groups are the five rules, and adding a sixth bad level is one more line in the list, not one more function. `"BBBBBBBB\n" * 11` repeats a string 11 times: an eleven-row level in one expression.
 
@@ -460,9 +652,131 @@ def parse_args(args: list[str]) -> Settings:
 contains breakout/settings.py "--level"
 ```
 
+## The app reads the chosen level
+
+**Build:** the app plays the level given with `--level`, or the classic wall if there isn't one.
+
+```python file=breakout/app.py
+import os
+import random
+import sys
+
+import pygame
+
+from breakout.draw import draw
+from breakout.level import LEVELS, load_level
+from breakout.model import HEIGHT, WIDTH, Game, GameState, autopilot
+from breakout.settings import Hold, parse_args
+
+
+def main(args: list[str]) -> None:
+    settings = parse_args(args)
+    seed = settings.seed
+    if settings.test_frames is not None:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if seed is None:
+            seed = 0
+    rng = random.Random(seed)
+    level = settings.level or LEVELS / "classic.txt"
+    game = Game(rng, load_level(level))
+    if settings.test_frames is not None:
+        game.start()
+
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Breakout")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
+
+    frames = 0
+    running = True
+    while running:
+        if settings.test_frames is None:
+            dt = clock.tick(60) / 1000
+        elif frames == settings.lag_at:
+            dt = 0.5
+        else:
+            dt = 1 / 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                if game.state in (GameState.OVER, GameState.WON):
+                    game = Game(rng, load_level(level))
+                game.start()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                game.toggle_pause()
+
+        direction = 0
+        if settings.test_frames is None:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                direction -= 1
+            if keys[pygame.K_RIGHT]:
+                direction += 1
+        elif settings.hold == Hold.LEFT:
+            direction = -1
+        elif settings.hold == Hold.RIGHT:
+            direction = 1
+        elif settings.hold == Hold.AUTO:
+            direction = autopilot(game.ball, game.paddle)
+        game.update(direction, dt)
+
+        draw(screen, font, game)
+        pygame.display.flip()
+
+        frames += 1
+        if settings.test_frames is not None and frames >= settings.test_frames:
+            running = False
+
+    pygame.quit()
+    if settings.test_frames is not None:
+        inside = pygame.Rect(0, 0, WIDTH, HEIGHT).contains(game.ball.rect())
+        print(
+            f"frames={frames} paddle_x={game.paddle.rect().x} score={game.score} lives={game.lives} "
+            f"bricks={len(game.bricks)} inside={inside}"
+        )
+
+
+def run() -> None:
+    main(sys.argv[1:])
+```
+
+**Understand.** `settings.level or LEVELS / "classic.txt"`: `or` returns its left side if that's true, otherwise its right side, and `None` counts as false (lesson 0.3's truthiness), so no `--level` means the classic wall.
+
+`or` has lower **precedence** than `/`, so the line means `settings.level or (LEVELS / "classic.txt")`: the path is built first, then `or` chooses.
+
+Now give it a level that isn't there:
+
+```predict
+question: What happens with `breakout --test-run 5 --level nowhere.txt`?
+choice: The classic wall, since the file isn't there
+choice: A traceback ending in FileNotFoundError, and exit code 1
+choice: An empty wall
+answer: A traceback ending in FileNotFoundError, and exit code 1
+explain: `load_level` asks for the file's text, the operating system says there's no such file, and Python raises `FileNotFoundError`. Nothing catches it, so the program stops with a traceback, as every uncaught exception does (lesson 0.3). Correct, but no way to talk to a player: the next step catches it.
+```
+
+```powershell
+.venv\Scripts\breakout --test-run 5 --level nowhere.txt
+```
+
+```text
+Traceback (most recent call last):
+  ...
+FileNotFoundError: [Errno 2] No such file or directory: 'nowhere.txt'
+```
+
+```check
+run ".venv/Scripts/breakout --test-run 5 --level nowhere.txt" exit=1 stderr="FileNotFoundError" label="a missing level file crashes the game (for now)"
+```
+
 ## Friendly errors
 
-**Build:** the app reads the chosen level, and reports a missing or broken one without a traceback.
+**Build:** catch the two problems a level file can have, and report them in one line instead of a traceback.
+
+A missing file raises `FileNotFoundError`; a broken one, your `LevelError`. Wrap the loading in a `try`, and handle both in an `except`:
 
 ```python file=breakout/app.py
 import os
@@ -556,9 +870,18 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** `settings.level or LEVELS / "classic.txt"`: `or` returns its left side if that's true, otherwise its right side, and `None` counts as false (lesson 0.3's truthiness), so no `--level` means the classic wall.
+**Understand: `try` and `except`.** Python runs the lines in the `try:` block. If none of them raises an exception, the `except` block is skipped entirely, and the program carries on after it. If one of them raises an exception of a kind the `except` names, Python stops the `try` block at that line, skips the rest of it, and runs the `except` block instead, with the exception in `error`. Traced, both ways:
 
-`try:` / `except (OSError, LevelError) as error:` runs `load_level`, and if it raises either kind of exception, jumps to the `except` block instead of crashing, with the exception in `error`. **`OSError`** is Python's exception for operating-system failures: a missing file raises `FileNotFoundError`, which *is an* `OSError`, as `LevelError` is a `ValueError`. The block prints one line to standard error and exits with **1**:
+```text
+--level breakout/levels/classic.txt          --level nowhere.txt
+  try: bricks = load_level(level)              try: bricks = load_level(level)
+       (returns 40 bricks)                          (raises FileNotFoundError)
+  except block skipped                         except (OSError, LevelError) as error:   matches
+  game = Game(rng, bricks)                         print("breakout: nowhere.txt: [Errno 2] ...")
+                                                   sys.exit(1)
+```
+
+`except (OSError, LevelError)` names a **tuple** of exception types: any of them matches. **`OSError`** is Python's exception for operating-system failures: a missing file raises `FileNotFoundError`, which *is an* `OSError`, as `LevelError` is a `ValueError`, so naming the parent catches the child. The block prints one line to standard error and exits with **1**:
 
 ```text
 breakout --test-run 5 --level nowhere.txt
@@ -605,13 +928,13 @@ Work through the method from lesson 0.3. **Reproduce** it as small as possible: 
 | `breakout --test-run 600 --hold auto --level breakout/levels/castle.txt` | plays: `frames=600 ... bricks=15 ...` |
 | a test named `test_a_level_saved_with_a_byte_order_mark_loads` | passes |
 
-For the test, write a file in a **temporary folder** that pytest provides: name a parameter `tmp_path` and pytest passes a `Path` to a new, empty folder for that test alone, deleted afterwards (a **fixture**, like `capsys`). Commit with a message that mentions the **byte order mark**.
+For the test, write the file yourself: `Path.write_text(text, encoding=...)` is `read_text`'s reverse, writing a string to a file, creating it or replacing what was there. Write it in a **temporary folder** that pytest provides: name a parameter `tmp_path` and pytest passes a `Path` to a new, empty folder for that test alone, deleted afterwards (a **fixture**, like `capsys`). Commit with a message that mentions the **byte order mark**.
 
 Try it for about 20 minutes before taking a hint.
 
 ```hints
 nudge: Print the file's text with its `repr`: `.venv\Scripts\python -c "from pathlib import Path; print(repr(Path('breakout/levels/castle.txt').read_text(encoding='utf-8')))"`. What's before the first `B`, and why doesn't the editor show it?
-concept: `'﻿'` is the **byte order mark** (BOM): the character U+FEFF, which some programs write at the very start of a UTF-8 file to say "this is UTF-8". It's invisible in editors, but it's still a character, so the first row has 9. Python has an encoding for exactly this: `"utf-8-sig"` reads UTF-8 and drops a BOM at the start if there is one, and reads files without one exactly like `"utf-8"`.
+concept: `'\ufeff'` (the text starts with it, before the first `B`) is the **byte order mark** (BOM): the character U+FEFF, which some programs write at the very start of a UTF-8 file to say "this is UTF-8". It's invisible in editors, but it's still a character, so the first row has 9. Python has an encoding for exactly this: `"utf-8-sig"` reads UTF-8 and drops a BOM at the start if there is one, and reads files without one exactly like `"utf-8"`.
 shape: One word in `load_level`: `encoding="utf-8-sig"`. The test writes the castle into `tmp_path / "castle.txt"` with `write_text(..., encoding="utf-8-sig")`, which writes the BOM, then checks `load_level` returns its 18 bricks.
 answer: ~~~python
 def load_level(path: Path) -> list[Brick]:

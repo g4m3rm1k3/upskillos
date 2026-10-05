@@ -6,9 +6,149 @@ run: breakout.py
 
 This lesson finishes the backlog's first story, **Move the paddle**: *left and right arrows move the paddle at the same speed on any computer, and the paddle never leaves the screen.* Each half of that sentence hides an idea every game depends on: where things are on a screen, and how to make movement take the same time on a fast computer and a slow one.
 
+## The usage check so far
+
+**Build:** make sure `breakout.py` matches the end of lesson 1.1, with the reference answer to its Your turn.
+
+If your answer differs, the lines below show where. Yours may be fine; matching the reference means the rest of the chapter's steps line up with your file exactly.
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+WIDTH, HEIGHT = 640, 480
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames}")
+```
+
+```check
+run ".venv/Scripts/python breakout.py --test-run" exit=2 stdout="usage: python breakout.py [--test-run FRAMES]"
+run ".venv/Scripts/python breakout.py --test-run 5" stdout="frames=5"
+```
+
+## A background colour
+
+**Build:** fill the window with a dark blue-grey instead of black.
+
+A colour in pygame is three numbers. Name the colour as a constant, and at the start of each frame's drawing, fill the whole surface with it:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    screen.fill(BACKGROUND)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames}")
+```
+
+**Understand: colours.** Each pixel of a screen is three tiny lights, red, green and blue, and a colour is how bright each one is, from 0 (off) to 255 (full). `(24, 26, 33)` is nearly black with a hint of blue; `(94, 234, 212)` is mostly green and blue, a teal. Each of the three is one **byte** of the surface's memory (lesson 1.1), which is why they stop at 255: a byte holds 256 different values, 0 to 255.
+
+`screen.fill(BACKGROUND)` writes that colour into every one of the surface's 307,200 pixels. Run it: the window is now dark blue-grey.
+
+```check
+contains breakout.py "screen.fill(BACKGROUND)"
+```
+
 ## Draw the paddle
 
-**Build:** a background colour and a paddle near the bottom of the window.
+**Build:** a paddle near the bottom of the window, and its position in the test-run summary.
+
+Drawing anything means saying **where**, so first, how pygame counts positions.
+
+**Understand: screen coordinates.** A position on the screen is `(x, y)`, counted in pixels from the **top-left corner**: x grows to the right, and y grows **downwards**, the opposite of a graph in maths. Screens are drawn row by row from the top, so row 0 is the top one. The window's corners:
+
+```text
+(0, 0) ─────────────── (639, 0)
+  │                        │
+  │                        │
+(0, 479) ───────────── (639, 479)
+```
+
+Pixels are numbered 0 to 639 across and 0 to 479 down: 640 and 480 of them.
+
+> **Rect**: pygame's rectangle: a position and a size, `Rect(x, y, width, height)`, where `(x, y)` is the top-left corner. It also offers many other names for its edges and points, all calculated from those four numbers: `left`, `right`, `top`, `bottom`, `centerx`, `centery`, `center`, `midbottom`, and more. Assigning to any of them moves the rectangle; its size stays the same.
+
+A paddle is a rectangle. Make one before the loop, place it, draw it each frame after the background, and report its position in a test run:
 
 ```python file=breakout.py
 import os
@@ -67,21 +207,6 @@ if test_frames is not None:
 
 Run it: a dark window with a teal paddle centred near the bottom.
 
-**Understand: colours.** Each pixel of a screen is three tiny lights, red, green and blue, and a colour is how bright each one is, from 0 (off) to 255 (full). `(24, 26, 33)` is nearly black with a hint of blue; `(94, 234, 212)` is mostly green and blue, a teal. Each of the three is one **byte** of the surface's memory (lesson 1.1), which is why they stop at 255: a byte holds 256 different values, 0 to 255.
-
-**Understand: screen coordinates.** A position on the screen is `(x, y)`, counted in pixels from the **top-left corner**: x grows to the right, and y grows **downwards**, the opposite of a graph in maths. Screens are drawn row by row from the top, so row 0 is the top one. The window's corners:
-
-```text
-(0, 0) ─────────────── (639, 0)
-  │                        │
-  │                        │
-(0, 479) ───────────── (639, 479)
-```
-
-Pixels are numbered 0 to 639 across and 0 to 479 down: 640 and 480 of them.
-
-> **Rect**: pygame's rectangle: a position and a size, `Rect(x, y, width, height)`, where `(x, y)` is the top-left corner. It also offers many other names for its edges and points, all calculated from those four numbers: `left`, `right`, `top`, `bottom`, `centerx`, `centery`, `center`, `midbottom`, and more. Assigning to any of them moves the rectangle; its size stays the same.
-
 `pygame.Rect(0, 0, 100, 14)` makes a 100 × 14 rectangle at the top-left. Then `paddle.midbottom = (320, 450)` moves it so that the middle of its bottom edge is at that point. Worked through:
 
 ```text
@@ -91,6 +216,10 @@ midbottom = (320, 450)  →  x = 320 - 100 / 2 = 270,  y = 450 - 14 = 436
 ```
 
 So the paddle covers x from 270 to 369 and y from 436 to 449. Moving a `Rect` by naming the point you care about, instead of calculating the corner yourself, is the reason `Rect` has all those names.
+
+A `Rect`'s `right` and `bottom` are **one past** its last pixel: this paddle's `right` is 370 and its `bottom` is 450 (the point `midbottom` was set to), but the last pixels it covers are column 369 and row 449. That's what makes the sizes add up: from 270 up to, but not including, 370 is exactly 100 pixels.
+
+`pygame.draw.rect(screen, PADDLE_COLOUR, paddle)` takes three things: **where** to draw (the surface), **what colour**, and **which rectangle**.
 
 **Understand: drawing order.** `screen.fill(BACKGROUND)` writes the background colour into all 307,200 pixels, which also wipes out the previous frame. Then `pygame.draw.rect` writes the paddle's colour into the pixels inside the rectangle. Drawing only ever *overwrites* pixels, so whatever is drawn last is on top. Without the `fill`, a moving paddle would leave a trail of every place it had been, since nothing would erase its old pixels. A game redraws the whole picture every frame. That sounds wasteful, but it's simple and always correct, and for a picture this size it takes well under a millisecond.
 
@@ -102,9 +231,203 @@ The test-run summary now includes `paddle_x={paddle.x}`, so a checking program c
 run ".venv/Scripts/python breakout.py --test-run 1" stdout="paddle_x=270" label="the paddle starts at x = 270" -- paddle.midbottom = (WIDTH // 2, HEIGHT - 30) puts a 100-pixel paddle's left edge at 270.
 ```
 
-## Move it with the keys
+## Which way?
 
-**Build:** the arrow keys move the paddle, at the same speed on any computer.
+**Build:** the arrow keys move the paddle.
+
+After the events are collected, work out which way the player is pushing, and move the paddle a few pixels that way:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+paddle = pygame.Rect(0, 0, 100, 14)
+paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    direction = 0
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        direction -= 1
+    if keys[pygame.K_RIGHT]:
+        direction += 1
+    paddle.x += direction * 7
+
+    screen.fill(BACKGROUND)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames} paddle_x={paddle.x}")
+```
+
+**Understand: held keys, not key presses.** Lesson 1.1 handled Escape with a `KEYDOWN` *event*: one event per press, which is right for "do this once". A paddle needs the opposite: move for as long as the key is *held*. pygame keeps a table of which keys are down right now, updated as it processes events, and `pygame.key.get_pressed()` returns it. `keys[pygame.K_LEFT]` is `True` while the left arrow is held. (That's why it's read *after* `event.get()` in the frame: the table is brought up to date while the events are collected.)
+
+`direction` starts at 0 each frame, goes down by 1 if left is held and up by 1 if right is: so it's `-1`, `0` or `1`, and holding both gives 0, which stands still. One variable for "which way" keeps the movement code in one line, whichever key caused it.
+
+`paddle.x += direction * 7` moves the paddle 7 pixels a frame in that direction: `-7`, `0` or `+7`. Run it, click the window so it receives the keys, and hold the arrows.
+
+```predict
+question: The paddle moves 7 pixels every frame. On a computer that can only manage 30 frames a second, how fast does it move, in pixels a second?
+answer: 210
+explain: 7 pixels a frame × 30 frames a second = 210 pixels a second. At 60 frames a second it's 420. The same game would play at half speed on a slower computer, or whenever the computer is busy with something else. Speed shouldn't depend on how fast the frames come: the next step fixes that.
+verify: .venv/Scripts/python -c "print(7 * 30)"
+```
+
+```check
+contains breakout.py "pygame.key.get_pressed()" -- Read the held keys each frame with pygame.key.get_pressed(), after the events are collected.
+run ".venv/Scripts/python breakout.py --test-run 1" stdout="paddle_x=270" label="with no keys held, the paddle stays where it started"
+```
+
+## The same speed on any computer
+
+**Build:** a speed in pixels per **second**, and each frame moves by however long that frame took.
+
+**Understand: movement per second, not per frame.** The prediction showed the problem: 7 pixels a frame is 420 pixels a second at 60 frames a second, and 210 at 30, but the story says "the same speed on any computer". So speeds are written **per second**, and each frame moves by the speed times the length of that frame:
+
+> **Delta time** (`dt`): the time since the previous frame, in seconds. Movement each frame = speed (pixels per second) × `dt` (seconds) = pixels.
+
+`clock.tick(60)` returns milliseconds since its last call (lesson 1.1), so `/ 1000` gives seconds. The two cases, worked through:
+
+```text
+60 frames a second:  dt = 0.0167 s,  420 × 0.0167 =  7 pixels a frame,  × 60 frames = 420 pixels a second
+30 frames a second:  dt = 0.0333 s,  420 × 0.0333 = 14 pixels a frame,  × 30 frames = 420 pixels a second
+```
+
+Same speed, on both. **In a test run**, `dt` is exactly 1/60 every frame, as if the game ran at a perfect 60 frames a second. That makes test runs **deterministic**: the same command gives the same result every time, on every computer, which a check needs.
+
+Three changes: a `PADDLE_SPEED` constant; `dt` from the clock each frame (and exactly 1/60 in a test run); and the paddle's position kept in a float, `paddle_x`, which the `Rect` copies:
+
+```python file=breakout.py
+import os
+import sys
+
+import pygame
+
+# A test run lets another program play the game, with no window:
+#   python breakout.py --test-run FRAMES
+args = sys.argv[1:]
+test_frames = None
+if "--test-run" in args:
+    i = args.index("--test-run")
+    if i + 1 >= len(args) or not args[i + 1].isdigit():
+        print("usage: python breakout.py [--test-run FRAMES]")
+        sys.exit(2)
+    test_frames = int(args[i + 1])
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+WIDTH, HEIGHT = 640, 480
+BACKGROUND = (24, 26, 33)
+PADDLE_COLOUR = (94, 234, 212)
+PADDLE_SPEED = 420
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
+
+paddle = pygame.Rect(0, 0, 100, 14)
+paddle.midbottom = (WIDTH // 2, HEIGHT - 30)
+paddle_x = float(paddle.x)
+
+frames = 0
+running = True
+while running:
+    if test_frames is None:
+        dt = clock.tick(60) / 1000
+    else:
+        dt = 1 / 60
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+
+    direction = 0
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        direction -= 1
+    if keys[pygame.K_RIGHT]:
+        direction += 1
+    paddle_x += direction * PADDLE_SPEED * dt
+    paddle.x = round(paddle_x)
+
+    screen.fill(BACKGROUND)
+    pygame.draw.rect(screen, PADDLE_COLOUR, paddle)
+    pygame.display.flip()
+
+    frames += 1
+    if test_frames is not None and frames >= test_frames:
+        running = False
+
+pygame.quit()
+if test_frames is not None:
+    print(f"frames={frames} paddle_x={paddle.x}")
+```
+
+**Understand: why `paddle_x` is a float.** `Rect` stores whole numbers. Give it a fraction and it **truncates**, dropping everything after the point: `rect.x = 1.67` stores 1. A slow-moving object can lose most of its movement to that, or all of it:
+
+```predict
+question: A `Rect` starts at x = 0, and `rect.x += 0.6` runs 60 times. What is `rect.x` at the end?
+answer: 0
+explain: Each time, `rect.x + 0.6` is `0 + 0.6 = 0.6`, and storing 0.6 in the `Rect` truncates it to 0. So every frame starts from 0 again, and the rectangle never moves at all: an object moving at 36 pixels a second, at 60 frames a second, would stand still. With a float the sixty steps add up to 36. That's why the paddle's real position is kept in `paddle_x`, a float, which is moved by exactly `speed × dt`, and the `Rect` is only set from it, with `round`, for drawing and collisions.
+verify: .venv/Scripts/python -c "import pygame; r = pygame.Rect(0, 0, 1, 1); exec('for _ in range(60): r.x += 0.6'); print(r.x)"
+```
+
+`float(paddle.x)` makes the starting float from the `Rect`'s 270. `round(paddle_x)` rounds to the nearest whole number for the `Rect`.
+
+> **Engineer:** keep the exact value, and convert only at the edge where precision is lost on purpose. The same rule applies to money (store cents, not rounded dollars, and round only when printing), to measurements, and to anything accumulated over many steps: round the stored value each step and the errors add up.
+
+```check
+contains breakout.py "paddle_x += direction * PADDLE_SPEED * dt" -- Move by speed × dt, and keep the exact position in the float paddle_x.
+run ".venv/Scripts/python breakout.py --test-run 1" stdout="paddle_x=270"
+```
+
+## A paddle a program can steer
+
+**Build:** a test run can hold an arrow key too, so a check can see the paddle move.
+
+A test run has no keyboard, so `--hold left` or `--hold right` stands in for it, the same way `--test-run` stands in for the close button. Read it after `--test-run`, with `"none"` as the default, and use it instead of the keyboard during a test run:
 
 ```python file=breakout.py
 import os
@@ -182,37 +505,7 @@ if test_frames is not None:
     print(f"frames={frames} paddle_x={paddle.x}")
 ```
 
-Run it, click the window so it receives the keys, and hold the arrows. Hold right for a moment and notice what happens at the edge of the screen.
-
-**Understand: held keys, not key presses.** Lesson 1.1 handled Escape with a `KEYDOWN` *event*: one event per press, which is right for "do this once". A paddle needs the opposite: move for as long as the key is *held*. pygame keeps a table of which keys are down right now, updated as it processes events, and `pygame.key.get_pressed()` returns it. `keys[pygame.K_LEFT]` is `True` while the left arrow is held. (That's why it's read *after* `event.get()` in the frame: the table is brought up to date while the events are collected.)
-
-`direction` starts at 0 each frame, goes down by 1 if left is held and up by 1 if right is: so it's `-1`, `0` or `1`, and holding both gives 0, which stands still. One variable for "which way" keeps the movement code in one line, whichever key caused it.
-
-**Understand: movement per second, not per frame.** Suppose the paddle moved 7 pixels every frame. At 60 frames a second, that's 420 pixels a second. On a computer that only manages 30 frames a second, it's 210: the game runs at half speed, and the story says "the same speed on any computer". So speeds are written **per second**, and each frame moves by the speed times the length of that frame:
-
-> **Delta time** (`dt`): the time since the previous frame, in seconds. Movement each frame = speed (pixels per second) × `dt` (seconds) = pixels.
-
-`clock.tick(60)` returns milliseconds since its last call (lesson 1.1), so `/ 1000` gives seconds. The two cases, worked through:
-
-```text
-60 frames a second:  dt = 0.0167 s,  420 × 0.0167 =  7 pixels a frame,  × 60 frames = 420 pixels a second
-30 frames a second:  dt = 0.0333 s,  420 × 0.0333 = 14 pixels a frame,  × 30 frames = 420 pixels a second
-```
-
-Same speed, on both. **In a test run**, `dt` is exactly 1/60 every frame, as if the game ran at a perfect 60 frames a second. That makes test runs **deterministic**: the same command gives the same result every time, on every computer, which a check needs.
-
-`--hold left` or `--hold right` stands in for the keyboard in a test run, the same way `--test-run` stands in for the close button. Its default is `"none"`.
-
-**Understand: why `paddle_x` is a float.** `Rect` stores whole numbers. Give it a fraction and it **truncates**, dropping everything after the point: `rect.x = 1.67` stores 1. A slow-moving object can lose most of its movement to that, or all of it:
-
-```predict
-question: A `Rect` starts at x = 0, and `rect.x += 0.6` runs 60 times. What is `rect.x` at the end?
-answer: 0
-explain: Each time, `rect.x + 0.6` is `0 + 0.6 = 0.6`, and storing 0.6 in the `Rect` truncates it to 0. So every frame starts from 0 again, and the rectangle never moves at all: an object moving at 36 pixels a second, at 60 frames a second, would stand still. With a float the sixty steps add up to 36. That's why the paddle's real position is kept in `paddle_x`, a float, which is moved by exactly `speed × dt`, and the `Rect` is only set from it, with `round`, for drawing and collisions.
-verify: .venv/Scripts/python -c "import pygame; r = pygame.Rect(0, 0, 1, 1); exec('for _ in range(60): r.x += 0.6'); print(r.x)"
-```
-
-`float(paddle.x)` makes the starting float from the `Rect`'s 270. `round(paddle_x)` rounds to the nearest whole number for the `Rect`.
+**Understand.** `hold` is read the same way the number of frames is: find `"--hold"`, take the word after it. Notice it has none of the checking you added for `--test-run`: `--hold` with nothing after it crashes with an `IndexError`, and the usage line doesn't mention it. That's a deliberate shortcut, since only checks use `--hold`; lesson 1.6 puts it on the list of what's wrong with this script, and Chapter 2 fixes it. The keyboard block moves inside `if test_frames is None:`, so a person uses the keys and a test run uses `hold`. In both, the result is a `direction`, and the line that moves the paddle doesn't need to know which.
 
 **Test it:**
 
@@ -224,9 +517,7 @@ verify: .venv/Scripts/python -c "import pygame; r = pygame.Rect(0, 0, 1, 1); exe
 frames=30 paddle_x=480
 ```
 
-30 frames at 1/60 s is half a second; at 420 pixels a second that's 210 pixels; 270 + 210 = 480.
-
-> **Engineer:** keep the exact value, and convert only at the edge where precision is lost on purpose. The same rule applies to money (store cents, not rounded dollars, and round only when printing), to measurements, and to anything accumulated over many steps: round the stored value each step and the errors add up.
+30 frames at 1/60 s is half a second; at 420 pixels a second that's 210 pixels; 270 + 210 = 480. Hold right for a moment in the real game too, and notice what happens at the edge of the screen.
 
 ```check
 run ".venv/Scripts/python breakout.py --test-run 30 --hold right" stdout="paddle_x=480" label="holding right for half a second moves the paddle 210 pixels" -- Move by direction * PADDLE_SPEED * dt, with dt = 1 / 60 in a test run, and keep the position in the float paddle_x.
