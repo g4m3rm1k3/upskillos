@@ -8,6 +8,7 @@ import './LessonPanel.css';
 import PredictionBox from './PredictionBox.jsx';
 import LessonCompanions from './LessonCompanions.jsx';
 import HintLadder from './HintLadder.jsx';
+import FigureBlock from './FigureBlock.jsx';
 import { BLOCK_SPLIT } from './hints.js';
 
 // MarkdownProse defaults to article typography — large serif body text with
@@ -164,8 +165,8 @@ export default function LessonPanel({
   );
 }
 
-// Step prose with its prediction checkpoints (```predict fences) and hint ladders (```hints
-// fences) in the places they were written.
+// Step prose with its prediction checkpoints (```predict fences), hint ladders (```hints
+// fences) and interactive figures (```figure fences) in the places they were written.
 function StepText({ text, step, C }) {
   const parts = text.split(BLOCK_SPLIT);
   const out = [];
@@ -179,6 +180,8 @@ function StepText({ text, step, C }) {
       out.push(<PredictionBox key={id} id={id} prediction={step.predictions[index]} C={C} proseClass={COMPACT_PROSE} />);
     } else if (kind === 'hints' && step.hints?.[index]) {
       out.push(<HintLadder key={id} id={id} hints={step.hints[index]} C={C} proseClass={COMPACT_PROSE} />);
+    } else if (kind === 'figure' && step.figures?.[index]) {
+      out.push(<FigureBlock key={id} figure={step.figures[index]} proseClass={COMPACT_PROSE} />);
     }
   }
   return out;

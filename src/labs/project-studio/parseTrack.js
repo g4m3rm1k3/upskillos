@@ -34,6 +34,7 @@
 import { parseChecks } from './checks.js';
 import { MARKER, parsePrediction } from './predictions.js';
 import { HINTS_MARKER, parseHints } from './hints.js';
+import { FIGURE_MARKER, parseFigure } from './figures.js';
 
 function parseFrontmatter(text) {
   const match = text.match(/^---\n([\s\S]*?)\n---\n?/);
@@ -69,6 +70,7 @@ function parseStepBody(rawBody) {
   const checks = [];
   const predictions = [];
   const hints = [];
+  const figures = [];
   const body = rawBody
     .replace(/```check[^\n]*\n([\s\S]*?)```\n?/g, (_, inner) => {
       checks.push(...parseChecks(inner));
@@ -84,6 +86,11 @@ function parseStepBody(rawBody) {
     .replace(/```hints[^\n]*\n([\s\S]*?)```\n?/g, (_, inner) => {
       hints.push(parseHints(inner));
       return `\n${HINTS_MARKER(hints.length - 1)}\n\n`;
+    })
+    // A ```figure fence (figures.js) too: the panel puts the interactive figure there.
+    .replace(/```figure[^\n]*\n([\s\S]*?)```\n?/g, (_, inner) => {
+      figures.push(parseFigure(inner));
+      return `\n${FIGURE_MARKER(figures.length - 1)}\n\n`;
     });
 
   const fenceRe = /```([^\n]*)\n([\s\S]*?)```/g;
@@ -98,7 +105,7 @@ function parseStepBody(rawBody) {
     const m = edits[0];
     const { edit: file, lang, mode } = parseFenceInfo(m[1]);
     if (!['append', 'replace'].includes(mode)) throw new Error(`Unknown edit mode: ${mode}`);
-    return { prose: body.trim(), explain: '', file, lang, target: null, checks, predictions, hints,
+    return { prose: body.trim(), explain: '', file, lang, target: null, checks, predictions, hints, figures,
       edit: { mode, code: m[2] }, extraTargets: [] };
   }
   let match;
@@ -115,12 +122,13 @@ function parseStepBody(rawBody) {
       checks,
       predictions,
       hints,
+      figures,
       extraTargets,
     };
   }
   // A step with no target file is legitimate — a pure "read this / predict
   // what happens" beat between two code steps, or a step done in the terminal.
-  return { prose: body.trim(), explain: '', target: null, file: null, lang: null, checks, predictions, hints };
+  return { prose: body.trim(), explain: '', target: null, file: null, lang: null, checks, predictions, hints, figures };
 }
 
 export function parseLesson(text, id) {

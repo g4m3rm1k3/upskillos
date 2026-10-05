@@ -1,0 +1,39 @@
+/* The colours the ML Lab's figure kit draws with (ml.css defines them on .ml-lab, the full-screen
+   lab window). A figure in a Project Studio lesson gets the same ones on its own box. */
+.ps-figure {
+  --surface: rgb(var(--tw-custom-slate-100));
+  --border: rgb(var(--tw-custom-slate-300));
+  --text: rgb(var(--tw-custom-slate-900));
+  --muted: rgb(var(--tw-custom-slate-500));
+  --accent: rgb(var(--tw-custom-brand-600));
+  --accent-text: #ffffff;
+  --chart-train: #3b82f6;
+  --chart-val: #f97316;
+  --chart-model: var(--accent);
+  --chart-ref: var(--muted);
+  --chart-good: #16a34a;
+  --chart-bad: #dc2626;
+  color: var(--text);
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dark .ps-figure {
+  --surface: rgb(var(--tw-custom-slate-900));
+  --border: rgb(var(--tw-custom-slate-700));
+  --text: rgb(var(--tw-custom-slate-100));
+  --muted: rgb(var(--tw-custom-slate-400));
+  --accent: rgb(var(--tw-custom-brand-400));
+  --accent-text: rgb(var(--tw-custom-slate-950));
+  --chart-good: #4ade80;
+  --chart-bad: #f87171;
+}
+.ps-figure.ml-inline-figure { padding: 10px 12px; }
+.ps-figure .ml-fig-sum { font-size: 12.5px; line-height: 1.6; margin: 6px 0 0; }
+.ps-figure .ml-fig-controls { font-size: 12px; }
+.ps-figure .ml-fig-controls input[type=range] { width: 120px; }
+.ps-figure button {
+  font-size: 12px; padding: 3px 9px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--text);
+}
+.ps-figure button:disabled { opacity: 0.45; cursor: default; }
+.ps-figure figcaption { font-size: 12px; color: var(--muted); }

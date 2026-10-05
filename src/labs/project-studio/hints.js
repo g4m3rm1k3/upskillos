@@ -49,6 +49,6 @@ export function parseHints(raw) {
 
 export const HINTS_MARKER = (i) => `@@hints-${i}@@`;
 
-// Splits step prose on prediction and hint markers. The result alternates text, kind, index:
-// ['text', 'predict', '0', 'more text', 'hints', '0', 'end'].
-export const BLOCK_SPLIT = /^@@(predict|hints)-(\d+)@@$/m;
+// Splits step prose on prediction, hint and figure markers. The result alternates text, kind,
+// index: ['text', 'predict', '0', 'more text', 'hints', '0', 'end'].
+export const BLOCK_SPLIT = /^@@(predict|hints|figure)-(\d+)@@$/m;

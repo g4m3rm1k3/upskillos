@@ -1,0 +1,449 @@
+<html data-theme="dark" style="color-scheme: dark;"><head><style data-merge-styles="true"></style><!-- frame-runtime --><script>window.__FRAME_PREAMBLE={"v":1,"cred":"cookie","capabilities":{"artifact":"artifact.w_ePPE-a.js","assets":"assets.DOAjpBS9.js","comments":"comments.CnGjamYN.js","db":"db.zFlAA4qL.js","downloads":"downloads.axDW2QAi.js","embed":"embed.DcZf-TSv.js","endpoints":"endpoints.BPfoKaE1.js","files":"files.IkpCjcgM.js","mcp":"mcp.kl0G36TA.js","network":"network.B5UA9Su4.js","permissions":"permissions.BHAs_S4o.js","room":"room.Dy3vHyq9.js","sample":"sample.t8BQC4US.js","self":"artifact.w_ePPE-a.js","user":"user.CB0zJsP2.js"},"transforms":"_transforms.OOT2SKiU.js","comments":"_comments.DUaNQZcg.js","translate":"_translate.DqxC5ek1.js","ldx":"_ldx.B4FSryPi.js"}                                                                                                                                                                           </script><script>(function(){"use strict";function ir(t){return t==="cookie"||t==="query"?t:void 0}function lr(t){return typeof t=="number"&&Number.isSafeInteger(t)&&t>0?t:void 0}var Wn=3e5;function cr(t,e){try{const r=t("navigation")[0],o=[r.responseStart,r.redirectEnd-r.redirectStart,r.domContentLoadedEventStart,e(),r.connectEnd-r.domainLookupStart,r.responseStart-r.requestStart];r.requestStart>0||(o.length=4);for(let a=0;a<o.length;a++)if(o[a]>=0&&o[a]<=3e5)o[a]=o[a]|0;else{if(a<4)return;o.length=4}return o}catch{return}}var ur=["light","dark","system"],fr=/^[A-Za-z0-9_-]{1,64}$/,Tt=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,dr=new Set(["class","hidden","value","checked","style","title","alt","placeholder","lang","dir","role","tabindex","disabled","readonly","contenteditable","open","colspan","rowspan"]);function hr(t){const e=t.toLowerCase();return e.startsWith("data-")||e.startsWith("aria-")||dr.has(e)}var Lt="data-ldx-props";function pr(t,e){if(e.toLowerCase()===Lt)return!0;const r=t.getAttribute(Lt);if(r===null)return!1;try{const o=JSON.parse(r);if(o===null||typeof o!="object"||Array.isArray(o))return!0;const a=e.toLowerCase();return Object.keys(o).some(s=>s.toLowerCase()===a)}catch{return!0}}var Xn="http://www.w3.org/1999/xhtml",mr="http://www.w3.org/2000/svg",vr=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),_r=new Set(["script","style"]);function yr(t){const e=t.localName.toLowerCase();return t.namespaceURI==="http://www.w3.org/1999/xhtml"?!vr.has(e):t.namespaceURI===mr?!_r.has(e):!1}function tt(t,e){return t===e||(t===160||t===32)&&(e===160||e===32)}function gr(t,e){const r=t.length,o=e.length;let a=0;for(;a<r&&a<o&&tt(t.charCodeAt(a),e.charCodeAt(a));)a++;let s=0;for(;s<r-a&&s<o-a&&tt(t.charCodeAt(r-1-s),e.charCodeAt(o-1-s));)s++;return{p:a,s}}function wr(t,e){const r=t.firstChild;if(t.childNodes.length!==1||r===null||r.nodeType!==Node.TEXT_NODE){t.textContent=e;return}const o=r.data,a=o.length,s=e.length,{p:l,s:d}=gr(o,e);l===a&&d===0&&a===s||r.replaceData(l,a-l-d,e.slice(l,s-d));const T=r.data,S=t.ownerDocument.getSelection?.()??null,b=S!==null&&S.rangeCount>0&&(S.anchorNode===r||S.focusNode===r)?{anchor:S.anchorNode,anchorOffset:S.anchorOffset,focus:S.focusNode,focusOffset:S.focusOffset}:null;let p=-1,R=-1;for(let m=0;m<T.length&&m<e.length;m++){const C=T.charCodeAt(m),k=e.charCodeAt(m);C!==k&&tt(C,k)&&(p<0&&(p=m),R=m)}const L=p>=0;if(L&&r.replaceData(p,R-p+1,e.slice(p,R+1)),L&&b!==null&&b.anchor!==null&&b.focus!==null)try{S.setBaseAndExtent(b.anchor,b.anchorOffset,b.focus,b.focusOffset)}catch{}}var br=new Set(["html","head","body","frameset"]);function Er(t){return t.namespaceURI==="http://www.w3.org/1999/xhtml"&&br.has(t.localName)}function Sr(t){if(t===null||typeof t!="object")return!1;const e=t;if(typeof e.target!="string"||!fr.test(e.target)||e.text!==void 0&&typeof e.text!="string")return!1;if(e.attrsSet!==void 0){if(e.attrsSet===null||typeof e.attrsSet!="object")return!1;for(const[r,o]of Object.entries(e.attrsSet))if(!Tt.test(r)||typeof o!="string")return!1}if(e.attrsRemoved!==void 0){if(!Array.isArray(e.attrsRemoved))return!1;for(const r of e.attrsRemoved)if(typeof r!="string"||!Tt.test(r))return!1}return!0}function Rr(t,e){if(t===null||typeof t!="object")return!1;const{seq:r,elements:o}=t;if(typeof r!="number"||!Number.isSafeInteger(r)||!Array.isArray(o)||o.length===0||o.length>64)return!1;for(let a=0;a<o.length;a++)if(!e(o[a]))return!1;return!0}function kr(t){return t===null||typeof t!="object"?!1:Rr(t.__frame_patch,Sr)}function Ar(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_init;return e!==null&&typeof e=="object"}function Tr(t){return t!==null&&typeof t=="object"&&t.__frame_size_poke===!0}function Lr(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_host_visible;return e!==null&&typeof e=="object"&&typeof e.visible=="boolean"}function Or(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_theme;if(e===null||typeof e!="object")return!1;const r=e.theme;return typeof r=="string"&&ur.includes(r)}var Pr=["ok","empty","snapshot_error","snapshot_timeout","unclonable","oversize","unavailable","restore_error","withheld"],Mr=["TypeError","RangeError","ReferenceError","SyntaxError","DataCloneError","QuotaExceededError","AbortError","TimeoutError","SecurityError","Error","other"];function Nr(t){return typeof t=="string"&&Mr.includes(t)?t:"other"}var Cr=Object.freeze({until:null,now:!1}),jr="__claude_hot",Fr="__claude_hot_in",Ir=/^__claude_hot(?:_in)?(?::|$)/,Ot=/^[0-9a-z]{1,32}$/,rt=t=>t===void 0?jr:"__claude_hot:"+t,Le=t=>t===void 0?Fr:"__claude_hot_in:"+t;function xr(t,e){const r=[];for(let o=0;o<t.length;o++){const a=t.key(o);a!==null&&a!==e&&Ir.test(a)&&r.push(a)}for(const o of r)t.removeItem(o)}function Dr(t){let e=null;try{e=D(JSON.parse(t)?.hot)}catch{return null}return e===null||typeof e.k!="string"||!Ot.test(e.k)?null:he(e.g)?{k:e.k,g:e.g}:{k:e.k}}var Yn=262144,Hr=3e3,qr=5e3,Pt=/^[a-z0-9._:-]{1,64}$/,Br=["none","hot-restart","hard-reload"],Ur=["asset","doc","added","removed"],Kr=1500,Gr=/^[0-9a-f]{64}$/;function D(t){return t!==null&&typeof t=="object"?t:null}function he(t){return typeof t=="number"&&Number.isInteger(t)&&t>=0&&t<2**31}function Mt(t){return t===void 0||typeof t=="number"&&Number.isFinite(t)}function $r(t){return t===void 0||typeof t=="string"&&Pt.test(t)}function Nt(t){const e=D(t);return e!==null&&(e.until===null||typeof e.until=="number"&&Number.isFinite(e.until))&&typeof e.now=="boolean"}function nt(t){const e=D(t);return e!==null&&typeof e.ver=="string"&&e.ver.length<=128&&Mt(e.seq)&&typeof e.handoff=="string"&&Pr.includes(e.handoff)&&$r(e.note)}function Ct(t){const e=D(t);return e!==null&&he(e.gen)&&(e.phase==="final"||e.phase==="pending")&&(e.from===null||nt(e.from))}function zr(t){const e=D(t);return e!==null&&e.kv===1&&he(e.gen)&&nt(e.from)&&Object.hasOwn(e,"data")}function Vr(t){const e=D(t);return e!==null&&e.__frame_hot_snapshot===!0&&he(e.gen)&&typeof e.timeoutMs=="number"&&e.timeoutMs>=0&&e.timeoutMs<=6e4&&(e.handoff===void 0||typeof e.handoff=="boolean")&&(e.deadline===void 0||Nt(e.deadline))&&Mt(e.seq)&&(e.note===void 0||typeof e.note=="string")&&(e.key===void 0||typeof e.key=="string")}function Wr(t){const e=D(t);return e!==null&&e.__frame_hot_start===!0&&he(e.gen)&&nt(e.from)}function Xr(t){return typeof t=="string"&&t.length>=1&&t.length<=128}function jt(t){return D(t)!==null&&!Array.isArray(t)}function Yr(t){const e=D(t);return e!==null&&e.__frame_cap_grant===!0&&typeof e.cap=="string"&&Xr(e.ver)&&(e.grant===void 0||jt(e.grant))&&(e.budgets===void 0||jt(e.budgets)&&Object.values(e.budgets).every(Number.isFinite))&&(e.brokerGen===void 0||he(e.brokerGen))}function Jr(t){const e=D(t);return e!==null&&e.__frame_cap_rewired===!0&&(e.caps===void 0||Array.isArray(e.caps)&&e.caps.every(r=>typeof r=="string"))&&(e.brokerGen===void 0||he(e.brokerGen))}function Ge(t){const e=D(t);return e!==null&&typeof e.ver=="string"&&e.ver.length<=128&&Number.isFinite(e.seq)}function Ft(t){if(t==null||typeof t=="string")return!0;const e=D(t);return e!==null&&typeof e.doc=="string"&&typeof e.profile=="string"}function Zr(t){const e=D(t);return e!==null&&typeof e.path=="string"&&Ur.includes(e.kind)&&Ft(e.from)&&Ft(e.to)}function Qr(t){return t===null?null:Object.freeze(t.filter(Zr))}function en(t){const e=D(t);return e!==null&&e.__frame_hot_update===!0&&Number.isFinite(e.id)&&Ge(e.from)&&Ge(e.to)&&(e.changed===null||Array.isArray(e.changed))&&Br.includes(e.required)&&Nt(e.deadline)&&typeof e.verdictTimeoutMs=="number"&&e.verdictTimeoutMs>=0&&e.verdictTimeoutMs<=6e4&&(e.preflight===void 0||typeof e.preflight=="string"&&Gr.test(e.preflight))}function tn(t){const e=D(t);return e!==null&&e.__frame_hot_readdress===!0&&Ge(e.from)&&Ge(e.to)}var pe=/^[\w.-]+\.js$/;function rn(t,e,r){return r?"inert":typeof e=="string"&&pe.test(e)?t?[e]:"inert":t?"inert":"framed"}var It=Object.freeze({[Symbol("claude.hot.restart")]:!0});function xt(t,e){let r;try{r=t??sessionStorage}catch{return null}const o=rt(e?.k),a=Le(e?.k);let s=null;try{s=r.getItem(o)}catch{}try{r.removeItem(o)}catch{}try{xr(r,a)}catch{}let l=null;if(s!==null&&!(e!==null&&e.g===void 0))try{const d=JSON.parse(s);zr(d)&&(e===null||d.gen===e.g)&&(l=d)}catch{}if(l===null)try{r.removeItem(a)}catch{}return l}function Dt(){const t=/^\/_f\/([^/]{1,128})\//.exec(location.pathname);return t?t[1]:""}var nn=/^[^/\\?#]{1,128}$/,ot=t=>nn.test(t)&&t!=="."&&t!=="..";function Ht(t,e,r){const o=new URL(t),a="/_f/"+e+"/";if(!e||!o.pathname.startsWith(a)||!ot(r))return null;const s=o.search.slice(1).split("&").filter(l=>!/^__frame_t(?:=|$)/.test(l)).join("&");return o.origin+"/_f/"+r+"/"+o.pathname.slice(a.length)+(s?"?"+s:"")+o.hash}var $e="{}";function Oe(t){if(!t)return null;const e={ver:t.ver,handoff:t.handoff};return t.seq!==void 0&&(e.seq=t.seq),t.note!==void 0&&(e.note=t.note),e}function qt(t,e){return t!==null&&t.note===void 0&&e?.note!==void 0?{...t,note:e.note}:t}function Bt(t){const e=t?.k;return e!==null&&typeof e=="object"?e:void 0}function on(t,e,r,o=null){const a=setTimeout,s=clearTimeout,l=queueMicrotask,d=performance.now.bind(performance),T=new TextEncoder;let S=null,b=null;try{S=history,b=S.replaceState.bind(S)}catch{}const p=(...n)=>{try{console.warn(...n)}catch{}};let R=Dt(),L=null;try{L=sessionStorage}catch{}const m={storage:L,fetch:typeof fetch=="function"?fetch.bind(globalThis):null,entry:location.origin+location.pathname+location.search,ver:R,priors:[],key:o?.k};let C=o?.k;const k=typeof requestAnimationFrame=="function"?requestAnimationFrame:n=>a(()=>n(d()),16);let h=e?.data??{},I=Oe(e?.from),j=e?.gen??0,B=e!==null,Q=!1,V=!1,U=null,be=!1;const je=new AbortController;let Fe=null,H=null,Ee=null,Ie=!1,le=()=>{};const ce=new Promise(n=>{le=n});let ve=!1,c=!1,y=!1,_,E=null,x=!1,W=!1,q=!1,te=!1,X=!1,_e=!1;const ye=n=>{for(const u of[rt(n),Le(n)])try{L?.removeItem(u)}catch{}},K=(n,u)=>{try{u!==null&&r.post(n,u)}catch{}},xe=()=>X||=q&&(H===null||te),Y=()=>{const n={__frame_hot:!0,ready:H!==null,accept:Ee!==null,demand:!0};_e=!X,_e&&(n.booting=!0),ve&&(n.readData=!0),y&&(n.threw=!0),E?.assess&&(n.preflight=!0),K(n,U)};let De=!1,re=!1,ue=!1,He=!1;const Je=()=>{De||!be||ue||(De=!0,K({__frame_reveal_hold:!0},"*"))},Se=()=>new Promise(n=>{let u,f=0;const v=O=>{if(u===void 0)u=O;else if(O!==u||++f>=8){n();return}try{k(v)}catch{n()}};try{k(v)}catch{n()}}),qe=()=>{ue=!0,K({__frame_reveal_ready:!0},"*")},Be=n=>{re||(re=!0,n.then(u=>{if(u===!1)return;let f=null;try{f=E?.settle?.()??null}catch{}return(f===null?Se():new Promise(v=>{a(v,50),Promise.resolve(f).then(v,v)}).then(Se)).then(qe)}))},yt=()=>{if(He||!ue)return;He=!0;const n=()=>{try{E?.afterReveal?.()}catch{}};n(),Se().then(()=>{n(),qe()})},ee=(n=!1)=>{if(Ie||H===null||!B||!V)return;Ie=!0;const u=H,f=h;l(()=>{let v;try{v=u(f)}catch(P){throw le(!1),P}let O=!1;try{O=typeof v?.then=="function"}catch{}if(!O){le(!0);return}Promise.resolve(v).then(()=>le(!0),P=>{le(!1),l(()=>{throw P})})}),Be(n?ce:r.dcl.then(()=>ce))},fe=n=>typeof n=="string"&&Pt.test(n)?n:void 0,Re=n=>{const u={__frame_hot_restart:!0},f=fe(n?.note);f!==void 0&&(u.note=f),n?.required==="hard-reload"&&(u.required="hard-reload"),K(u,U)},Ue=Object.freeze({get data(){return V||(c=!0),!B&&!ve&&(ve=!0,V&&Y()),h},get from(){return I},get gen(){return j},signal:je.signal,snapshot(n){typeof n=="function"&&(Fe=n)},ready(n){typeof n!="function"||H!==null||(H=n,Je(),Y(),Q&&K({__frame_hot_ready:!0,gen:j},U),ee())},accept(n){typeof n=="function"&&(Ee=n,Y())},restart(n){const u={note:n?.note,required:n?.required};if(V){Re(u);return}const f=_;_={note:fe(f?.note)??u.note,required:f?.required==="hard-reload"||u.required==="hard-reload"?"hard-reload":void 0}}});let i=null,g=()=>{};const w=new Promise(n=>{g=n});let M=null;const J=()=>M??=r.dcl.then(()=>{let n=!1;try{n=i!==null&&i.expect()}catch{}if(!n)return;const u=i.maxMs;return new Promise(f=>{w.then(f),a(f,u)})}),Z=()=>{if(!x||W||E===null)return;W=!0;const n=E;J().then(()=>{try{ue||n.afterStart(Bt(e),!1)}catch{}})},de=n=>{e!==null&&c&&(ve=!0),h={},I=null,j=0;try{L?.removeItem(Le(o?.k))}catch{}e!==null&&!n&&Be(r.dcl.then(()=>H!==null?ce:void 0))},Dn=()=>{x=!0,Be(J().then(()=>H!==null?ce:void 0)),Z()};try{addEventListener("error",()=>{y||H!==null||(y=!0,Y())})}catch{}const rr=()=>{a(()=>{!X&&xe()&&_e&&Y()},0)};try{q=document.readyState==="complete",q||addEventListener("load",()=>{q=!0,rr()},{once:!0})}catch{q=!0}xe(),ce.then(()=>{te=!0,rr()});let ge=-1,gt,wt,Ke=!0,bt=!1,Et,Ze=null;const St=n=>{const u=Ze===null;Ze=Ke&&n[0]!=="withheld"?n:["withheld",n[1],$e];let f=n[0];if(Ke&&f!=="withheld"){const O={ver:R,handoff:f};gt!==void 0&&(O.seq=gt),wt!==void 0&&(O.note=wt);try{if(L===null)throw new Error("no storage");L.setItem(rt(C),'{"kv":1,"gen":'+ge+',"from":'+JSON.stringify(O)+(Et!==void 0?',"k":'+JSON.stringify(Et):"")+',"data":'+(f==="ok"?n[2]:$e)+"}")}catch{f="unavailable"}}else{f="withheld",ye(C);try{E?.release?.()}catch{}}const v={__frame_hot_snapshotted:!0,gen:ge,handoff:f,bytes:n[1]};n[3]!==void 0&&(v.errName=n[3]),K(v,U),u&&(f==="snapshot_error"||f==="unclonable"||f==="oversize")&&p("claude.hot: snapshot",f,n[3])},ke=n=>{try{return Nr(n?.name)}catch{return"other"}},Ae=(n,u,f=0)=>St(u===void 0?[n,f,$e]:[n,f,$e,ke(u)]),Hn=n=>{if(n.gen<=ge)return;const u=ge>=0;if(ge=n.gen,gt=n.seq,wt=fe(n.note),typeof n.key=="string"&&Ot.test(n.key)&&n.key!==C&&(ye(C),C=n.key),Ke&&=n.handoff!==!1,u){Ze!==null?St(Ze):bt&&K({__frame_hot_held:!0,gen:ge},U);return}je.abort();const f=Object.freeze({handoff:Ke,timeoutMs:n.timeoutMs,deadline:n.deadline??Cr}),v=Fe,O=()=>{if(Ke)try{Et=E?.capture()}catch{}if(v===null){Ae("empty");return}let A=!1;const G=a(()=>{A||(A=!0,Ae("snapshot_timeout"))},Math.max(0,f.timeoutMs));Promise.resolve().then(()=>v(f)).then(Te=>{if(A)return;A=!0,s(G);let ne;try{ne=JSON.stringify(Te)}catch(Rt){Ae("unclonable",Rt);return}if(typeof ne!="string"){Ae("unclonable");return}let oe=ne.length;try{oe=T.encode(ne).length}catch{}if(oe>262144){Ae("oversize",void 0,oe);return}St(["ok",oe,ne])},Te=>{A||(A=!0,s(G),Ae("snapshot_error",Te))})};let P=null;try{P=E?.holdForIme()??null}catch{}if(P===null)O();else{bt=!0,K({__frame_hot_held:!0,gen:ge},U);const A=()=>{bt=!1,O()};P.then(A,A)}},qn=n=>{if(!Q||B||H===null||n.gen!==j)return;let u=null;try{u=xt(L,o&&{k:o.k,g:n.gen})}catch{}if(u!==null&&u.gen!==n.gen){u=null;try{L?.removeItem(Le(o?.k))}catch{}}h=u?.data??{},I=qt(Oe(u?.from??n.from),Oe(n.from)),u!==null&&(j=u.gen),B=!0,Q=!1;const f=Bt(u);ce.then(v=>{try{v&&E?.afterStart(f,!0)}catch{}}),ee(!0)},nr=n=>{const u=R,f=m.entry;let v="",O,P=null;try{if(v=location.href,O=S.state,P=Ht(v,u,n),P!==null)if(b(O,"",P),location.pathname.startsWith("/_f/"+n+"/"))P=location.href;else return{failed:"navigate event canceled"}}catch(A){return{failed:ke(A)}}R=m.ver=n,m.priors.push(u)>8&&m.priors.splice(1,1);try{m.entry=Ht(f,u,n)??f}catch{}return[P,u,f,v,O]},Bn=({from:n,to:u})=>{let f,v;if(!ot(u.ver))f="adopt_failed",v="not a version path segment";else if(u.ver===R)f="adopted";else if(!R||n.ver!==R)f="stale";else{const P=nr(u.ver);"failed"in P?(f="adopt_failed",v=P.failed):f=P[0]===null?"adopt_skipped":"adopted"}v!==void 0&&p(`claude.hot: could not move this page's URL to its new version folder /_f/${u.ver}/ (${v})`);const O={__frame_hot_readdressed:!0,to:u.ver,at:R,outcome:f};K(O,U)};let Qe=0;const Un=n=>{const u=Ee;if(u===null||n.id<=Qe)return;Qe=n.id;const f=E?.assess;if(n.preflight===void 0||f===void 0){or(n,u);return}let v=!1;const O=G=>{v||(v=!0,s(A),n.id===Qe&&or(n,u,G))},P=()=>O(f.timeout(n)),A=a(P,Kr+100);f.run(n,window).then(O,P)},or=(n,u,f)=>{let v,O=!1,P=!1,A,G,Te=null;const ne=N=>{if(P)return!1;if(A!==void 0&&A!==N)return p(`claude.hot: u.${N}() ignored - u.${A}() was called first`),!1;const ae=A===void 0;return A=N,ae},oe=N=>{A="restart",p(`claude.hot: ${N} - restarting`)},Rt=()=>{if(!ne("adopt")||n.id!==Qe)return;const N=n.to.ver;if(et.required!=="none"){oe(`u.adopt() needs required 'none', it is '${et.required}'`);return}if(!ot(N)){oe("u.adopt() cannot address this version");return}if(!R||N===R)return;const ae=nr(N);if("failed"in ae){G="adopt_failed",oe(`adopt_failed ${ae.failed}; URL not changed`);return}const[$,At,$n,sr,zn]=ae;$===null?(G="adopt_skipped",p(`claude.hot: adopt_skipped - page already left /_f/${At}/; URL not changed, update still applied`)):G="adopted",Te=()=>{if(R===N){if($!==null)try{if(location.href!==$)p("claude.hot: adopt_revert_skipped - update not applied; URL left where the page navigated");else{if(b(zn,"",sr),location.href!==sr){p("claude.hot: adopt_revert_failed navigate event canceled - URL still at the new version");return}G="adopt_reverted",p("claude.hot: adopt_reverted - adopt() was called but the handler threw; URL restored")}}catch(Vn){p(`claude.hot: adopt_revert_failed ${ke(Vn)} - URL still at the new version`);return}R=m.ver=At,m.entry=$n,m.priors[m.priors.length-1]===At&&m.priors.pop(),$===null&&(G=void 0)}}},et=Object.freeze({from:{ver:n.from.ver,seq:n.from.seq},to:{ver:n.to.ver,seq:n.to.seq},changed:Qr(n.changed),required:n.required,deadline:n.deadline,adopt:Rt,defer(){return ne("defer")&&et.deadline.now&&oe("u.defer() past the deadline"),It},restart(N){return ne("restart"),A==="restart"&&!P&&(v??=fe(N?.note),O||=N?.required==="hard-reload"),It},...f?.update}),Kn=(N,ae)=>{P=!0,N==="threw"?(Te?.(),v??=ke(ae).toLowerCase()):A===void 0&&p(N==="timeout"?"claude.hot: accept handler did not answer in time - restarting":"claude.hot: accept handler settled without defer/restart/adopt - restarting");const $={__frame_hot_verdict:!0,id:n.id};$.verdict=N==="threw"||A===void 0||A==="restart"?"restart":A==="adopt"?"applied":"deferred",$.verdict==="restart"&&(O&&($.required="hard-reload"),v!==void 0&&($.note=v)),G!==void 0&&($.verdict==="applied"||G!=="adopted")&&($.adopt=G),K(Object.assign($,f?.verdict),U)};let ar=!1;const kt=(N,ae)=>ar?!1:(ar=!0,s(Gn),Kn(N,ae),!0),Gn=a(()=>kt("timeout"),n.verdictTimeoutMs);Promise.resolve().then(()=>u(et)).then(()=>kt("settled"),N=>{!kt("threw",N)&&A==="adopt"&&Re({note:ke(N).toLowerCase()}),p("claude.hot: accept",ke(N))})};try{t.hot===void 0&&Object.defineProperty(t,"hot",{value:Ue,writable:!1,configurable:!1,enumerable:!1})}catch{}return{hot:Ue,boot:m,afterConnect(){be=!0,(e!==null||H!==null)&&Je()},onInit(n,u){U=u,V=!0;const f=Ct(n)?n:null;f?.phase==="final"&&e!==null&&e.gen===f.gen?(B=!0,I=qt(I,Oe(f.from)),Dn()):(Q=f?.phase==="pending",de(Q),B=!Q,j=f?.gen??0,I=Oe(f?.from)),Y(),_e&&a(()=>{X||(X=!0,Y())},qr),Q&&H!==null&&K({__frame_hot_ready:!0,gen:j},u),_!==void 0&&(Re(_),_=void 0),ee()},onNoInit(){V=!0,de(!1),B=!0,ee()},onShell(n){return n?.__frame_revealed===!0?(yt(),!1):Vr(n)?(Hn(n),!0):Wr(n)?(qn(n),!0):en(n)?(Un(n),!0):tn(n)?(Bn(n),!0):!1},attachExtras(n){E=n,Z(),n.assess&&Y()},inSlot:()=>Le(C),hydration(n,u){i??={expect:n,maxMs:u}},hydrated(){g()},carried(){return B?h:{}},presented:()=>ue}}var Jn="frame_ldx_runtime",an="frame_ldx_build",Zn="script#an-form",sn=256;function Ut(t,e,r){for(const o of t)r(o)&&t.delete(o);t.size>=sn&&!t.has(e)&&t.delete(t.values().next().value),t.add(e)}function Pe(t,e,r,o){try{const a=t[e];if(typeof a!="function")return;t[e]=function(...s){if(o){let d;try{d=o(this)}catch{}if(d!==void 0)return d}const l=a.apply(this,s);try{r?.(this)}catch{}return l}}catch{}}var at;function ln(){if(at)return at;const t={media:new Set,contexts:new Set,gate:null,onStart:null,onStop:null};at=t;const e=l=>t.gate?.(l),r=l=>{t.onStop?.(l)},o=window.HTMLMediaElement?.prototype;o&&(Pe(o,"play",l=>{Ut(t.media,l,d=>d.paused),t.onStart?.(l)},e),Pe(o,"pause",r));const a=window.AudioContext,s=window.AudioNode?.prototype;return a&&s&&(Pe(s,"connect",l=>{const d=l.context;d instanceof a&&(Ut(t.contexts,d,T=>T.state==="closed"),t.onStart?.(d))}),Pe(a.prototype,"resume",void 0,e),Pe(a.prototype,"suspend",r)),t}function cn(t){let e=window;for(let r=0;e.parent&&e.parent!==e&&r<8;r++)if(e=e.parent,t(e))return!0;return!1}function un(){let t=null;const e=()=>t??parent,r=o=>t?o===t:cn(a=>a===o);return{post(o,a){if(t){e().postMessage(o,a);return}let s=parent;for(let l=0;l<8&&(s.postMessage(o,a),!(!s.parent||s.parent===s));l++)s=s.parent},on(o){const a=s=>{const l=s.source;r(l)&&o(s.data,s.origin,s.isTrusted,()=>{t??=l})};return addEventListener("message",a),()=>removeEventListener("message",a)},port:o=>({post(a,s){if(s?.activation){e().postMessage(a,{targetOrigin:o,includeUserActivation:!0});return}if(s?.transfer){e().postMessage(a,o,s.transfer);return}e().postMessage(a,o)},on(a,s){const l=d=>{r(d.source)&&d.origin===o&&a(d.data,d)};return addEventListener("message",l,s),()=>removeEventListener("message",l,s)}})}}function fn(){const t={post:()=>{},on:()=>()=>{}};return{...t,port:()=>t}}var dn=500,hn=2e4,pn="data-token-reads",mn="data-frame-refused-watch",vn="data-frame-unsupported",_n=/(?:^|\s)stylesheet(?:\s|$)/i;function yn(t,e){let r="";if(t instanceof HTMLScriptElement?r=t.src:t instanceof HTMLLinkElement&&_n.test(t.rel)&&(r=t.href),!r)return null;try{const o=new URL(r);return o.origin===location.origin&&o.pathname.startsWith(e)?o.origin+o.pathname:null}catch{return null}}function gn(t,e,r){if(!t||e!=="query")return;const o="/_f/"+t+"/";document.documentElement.setAttribute(mn,"");const a=location.href,s=fetch,l=setTimeout,d={method:"HEAD",cache:"no-store",credentials:"same-origin"},T=m=>m.ok||m.status===304;let S=!1,b=!1;const p=()=>removeEventListener("error",L,!0),R=async m=>{const C=await s(m,d);if(T(C))b=!0;else if(C.status===403){const k=await s(a,d);if(T(k)){const h=(await s(m,d)).status;h===403?(b=!0,document.documentElement.setAttribute(vn,""),r()):h<500&&(b=!0)}else k.status>=400&&k.status<500&&(b=!0)}},L=m=>{if(b||S)return;if(document.documentElement.hasAttribute(pn)){b=!0,p();return}const C=yn(m.target,o);C&&(S=!0,l(()=>{R(C).catch(()=>{}).finally(()=>{S=!1,b&&p()})},dn))};addEventListener("error",L,!0),addEventListener("load",p,{once:!0}),l(p,hn)}var st="__frame_scroll",wn=150,bn=310,En=160,Sn=3e4;function Rn(){let t=0,e=!1,r=!1,o=!1,a=0,s=null;const l=h=>{try{sessionStorage.setItem(st,JSON.stringify({y:h}))}catch{}},d=()=>{if(clearTimeout(t),s===null)return;const h=s;s=null,l(h)},T=()=>{if(e){e=!1;return}r=!0,s=scrollY,clearTimeout(t),t=setTimeout(d,wn)};try{addEventListener("scroll",T,{passive:!0}),addEventListener("pagehide",d)}catch{}const S=()=>{let h;try{h=sessionStorage.getItem(st)}catch{return null}if(h===null)return null;let I;try{I=JSON.parse(h)}catch{I=null}const j=I?.y;if(!(typeof j=="number"&&Number.isFinite(j)&&j>=0)){try{sessionStorage.removeItem(st)}catch{}return null}return j};let b=!1;const p=h=>{try{const I=scrollY;scrollTo({top:h,left:0,behavior:"instant"}),a=h,o=!0,clearTimeout(t),s=null,l(h);const j=scrollY;j!==I&&(e=!0),j!==h&&!b&&(b=!0,addEventListener("load",()=>{try{if(scrollY===j){const B=S();p(B!==null?B:a)}}catch{}},{once:!0}))}catch{}},R=()=>{try{return!!location.hash}catch{return!0}};let L=!1;const m=()=>{try{if(L||innerWidth>bn||innerHeight>En)return;L=!0;const h=Date.now(),I=()=>{try{removeEventListener("resize",I)}catch{}if(Date.now()-h>Sn||r||R())return;const j=S();p(j!==null?j:a)};addEventListener("resize",I)}catch{}};let C=!1,k=!1;return{restore(){if(C||(C=!0,R()))return;const h=S();h!==null&&(p(h),m())},promoted(){if(k||(k=!0,R()))return;const h=S();h!==null?(p(h),m()):o&&p(a)}}}function kn(t,e,r,o){let a=null;try{a=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:T=>T})??null}catch{}const s=window.Worker,l=s?.prototype,d=Object.freeze({Worker:s,workerOn:l?.addEventListener,workerPost:l?.postMessage,workerTerminate:l?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,now:Date.now,policy:a,origins:e});r(t).then(T=>T?.bootTopLevel?T.bootTopLevel(d,o):o.settle()).catch(()=>o.settle())}var Qn="modulepreload",eo=function(t){return"/"+t},to={},An=function(e,r,o){let a=Promise.resolve();function s(l){const d=new Event("vite:preloadError",{cancelable:!0});if(d.payload=l,window.dispatchEvent(d),!d.defaultPrevented)throw l}return a.then(l=>{for(const d of l||[])d.status==="rejected"&&s(d.reason);return e().catch(s)})},Tn=window===top,Kt=Object.getOwnPropertyDescriptor(window,"claude"),ze=rn(Tn,window.__FRAME_PREAMBLE?.topLevel,Kt?.writable===!1),it=typeof ze=="object"&&ze[0],F=it?fn():un();(function(){const t=Object.defineProperty,e=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let o=0;for(let a=0;a<r.length;a++){const s=r[a];try{t(e,s,{value:void 0,writable:!1,configurable:!1})}catch{try{delete e[s]}catch{}try{t(e,s,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof e[s]=="function"&&o++}if(o&&ze==="framed")try{F.post({__frame_rtc_lockdown_failed:o},"*")}catch{}})();var Gt=1e4,Ln=2e3,lt=2e3,ct=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function $t(t){for(const e of ct)if(e.endsWith(":*"))try{const r=new URL(t);if(`${r.protocol}//${r.hostname}:*`===e)return!0}catch{}else if(t===e)return!0;return!1}var Me=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),Ne=window.__FRAME_PREAMBLE?.transforms,ut=window.__FRAME_PREAMBLE?.comments,ft=window.__FRAME_PREAMBLE?.translate,me=window.__FRAME_PREAMBLE?.ldx,Ve=ir(window.__FRAME_PREAMBLE?.cred),zt=(()=>{try{const[t]=performance.getEntriesByType("navigation"),e=t?.serverTiming?.find(r=>r.name==="frame-cred-exp");return e!==void 0&&/^\d{1,15}$/.test(e.description)?lr(Number(e.description)):void 0}catch{return}})();function Vt(t){return An(()=>import("/_runtime/"+t),void 0)}var Ce=new Set,Wt=setTimeout,On=fetch,Pn=AbortController,Mn=800+800*Math.random(),Nn=3e3,We=null,Xt=new Map;function Cn(t,e){let r=Xt.get(t);return r||Xt.set(t,r=jn(t,e)),r}function jn(t,e){if(We?.has(t))return Promise.resolve("csp");if(navigator.onLine===!1)return Promise.resolve("offline");const r=new Pn;let o=!1;return Wt(()=>{o=!0,r.abort()},Nn),On("/_runtime/"+t,{signal:r.signal}).then(a=>(r.abort(),a.ok?/javascript/i.test(a.headers.get("content-type")??"")?e instanceof Error&&/:\d+:\d+\)?$/m.test(e.stack??"")?"eval":"served":"mime":"http"),()=>o?"timeout":We?.has(t)?"csp":"net")}function se(t){if(!We){const e=We=new Set;try{document.addEventListener("securitypolicyviolation",r=>{const o=/\/_runtime\/([^/?#]+)/.exec(r.blockedURI);o&&r.disposition!=="report"&&e.add(o[1])})}catch{}}return Vt(t).catch(()=>new Promise(e=>Wt(e,Mn)).then(()=>Vt(t+"?r=1")).then(e=>(e!==void 0&&Ce.add(t),e)))}function Yt(t,e,r){return{contract:t.contract,changes:new Set(t.changes??[]),flags:new Set(t.flags??[]),capabilities:t.capabilities??{},capBudgets:t.capBudgets??{},brokerGen:t.brokerGen,transforms:new Map,shellOrigin:e,shell:r,mount:_t,hooks:Xe,pipe:()=>({wrap:(o,a)=>(...s)=>{try{return a(...s)}catch(l){return Promise.reject(l)}}})}}var we=null,z=null;function Jt(t,e,r){try{Object.defineProperty(t,e,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(t,e,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var dt=!1,Xe={editBefore:null,edit:null};function Fn(t,e,r=!1){const o=[];let a;if(r)try{Xe.editBefore?.(t)}catch{}for(const s of t.elements){const l=document.querySelector(`[data-id="${s.target}"]`);if(!l){a=s.target;break}if([...Object.keys(s.attrsSet??{}),...s.attrsRemoved??[]].some(d=>!hr(d)||pr(l,d))){a=s.target;break}if(s.text!==void 0&&(!yr(l)||Er(l))){a=s.target;break}for(const[d,T]of Object.entries(s.attrsSet??{}))if(!Qt(l,d)){try{l.setAttribute(d,T)}catch{}Zt(l,d,T)}for(const d of s.attrsRemoved??[])Qt(l,d)||(l.removeAttribute(d),Zt(l,d,null));typeof s.text=="string"&&wr(l,s.text),o.push(s.target)}if(r)try{Xe.edit?.(t.seq,o,a)}catch{}if(a!==void 0){F.post({__frame_patch_miss:{seq:t.seq}},e);return}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:t.seq,targets:o}}))}catch{}}function Zt(t,e,r){if(!(t instanceof HTMLInputElement))return;const o=e.toLowerCase();o==="checked"?t.checked=r!==null:o==="value"&&t.type!=="file"&&(t.value=r??"")}function Qt(t,e){const r=e.toLowerCase(),o=t;return r==="data-id"||(r==="value"||r==="checked")&&(o.__artifactSecret===!0||/^(password|hidden|file)$/.test(o.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${t.getAttribute("autocomplete")??""} ${o.autocomplete??""}`))}function er(t){const e=document.documentElement;t==="light"||t==="dark"?(e.dataset.theme=t,e.style.colorScheme=t,dt=!0):dt&&(delete e.dataset.theme,e.style.colorScheme="",dt=!1)}var ie=new Map,ht=null;function pt(){let t;const e={u:new Promise(r=>{t=r}),r:r=>{e.done=!0,t(r)},done:!1,nulled:!1};return e}function Ye(t,e){t.nulled=!0,t.ver=e,t.r(null)}function mt(t,e){for(const[r,o]of ie)o.done||(e&&o.asked?e(r,o):Ye(o,t))}function In(){for(const t of ie.values())if(t.asked&&!t.done)return!0;return!1}var xn=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),vt=!1,_t=(t,e)=>{let r=ie.get(t);if(r?.nulled&&vt)r=pt(),ie.set(t,r);else if(!r||r.done){r?.nulled&&z&&F.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:t,phase:"install"}},z);return}const o=typeof e=="function"?Object.setPrototypeOf(e,xn):Object.assign(Object.create(null),e);typeof o.then=="function"&&delete o.then,r.want=void 0,r.r(Object.freeze(o))};function tr(){const t=Kt?.value??{};Jt(window,"claude",t);for(const e of Object.keys(Me)){if(t[e]!==void 0){Jt(t,e,t[e]);continue}ie.set(e,pt())}if(t.use===void 0){const e=r=>{if(typeof r!="string"||!Object.hasOwn(Me,r))return Promise.resolve(null);let o=ie.get(r);return o?(ht&&(o.nulled||o.want!==void 0)&&(o=ht(r,o)),o.asked=!0,o.u):Promise.resolve(t[r]??null)};try{Object.defineProperty(t,"use",{value:e,writable:!0,configurable:!0,enumerable:!1})}catch{}}return t}if(ze==="framed"){let t;const e=Ne&&pe.test(Ne)?se(Ne).catch(c=>{t={f:Ne,e:c}}):Promise.resolve(void 0),r=c=>{if(c.type==="auxclick"&&c.button!==1)return;const y=c.target,_=y&&y.closest?y.closest("a[href],area[href]"):null;if(!_)return;const E=_.getAttribute("href");if(!E)return;let x;try{x=new URL(E,document.baseURI)}catch{return}if((x.protocol==="http:"||x.protocol==="https:")&&x.origin!==location.origin){c.preventDefault();const W=(_.getAttribute("target")??"").toLowerCase(),q=c.type==="auxclick"||c.metaKey||c.ctrlKey||c.shiftKey||c.altKey||!["","_self","_top","_parent"].includes(W);F.post({__frame_nav:!0,url:x.href,newTab:q},"*")}};addEventListener("click",r,!0),addEventListener("auxclick",r,!0);const o={},a=c=>{c.isTrusted&&(o.pointer=!0)},s=c=>{c.isTrusted&&(o.click=!0)};addEventListener("pointermove",a,{capture:!0,passive:!0}),addEventListener("click",s,{capture:!0,passive:!0});const l={cb:null};addEventListener("keydown",c=>l.cb?.(c),!0);const d={cb:null};addEventListener("keydown",c=>d.cb?.(c));const T=ln();e.then(c=>c?.installEscapeForward?.(l,y=>{z&&F.post(y,z)})),e.then(c=>{try{c?.installFocusKeep?.()}catch{}}),e.then(c=>{if(!c?.wireNav)return;const y=F.port("*");c.wireNav(y),removeEventListener("click",r,!0),removeEventListener("auxclick",r,!0),removeEventListener("pointermove",a,!0),removeEventListener("click",s,!0),c.wireEngagement?.(o,y,T)});let S=null;try{S=Rn()}catch{}const b=document.readyState==="loading"?new Promise(c=>document.addEventListener("DOMContentLoaded",()=>c(),{once:!0})):Promise.resolve();let p="dcl",R=!1;b.then(()=>{R=!0});let L=null,m=null;try{m=Dr(window.name),L=xt(null,m)}catch{}const C=tr();let k=null;try{k=on(C,L,{post:(c,y)=>F.post(c,y),dcl:b},m)}catch{}e.then(c=>{try{k&&c?.installHotExtras?.(k)}catch{}});let h=null;const I=()=>Array.isArray(h?.flags)&&h.flags.includes("frame_ldx_runtime")&&!!me&&pe.test(me)&&document.querySelector("script#an-form")!==null;try{k?.hydration(I,Hr)}catch{}let j=null,B=0;const Q=F.on((c,y,_,E)=>{$t(y)&&Ar(c)&&(E(),h=c.__frame_init,z=y,Q(),clearTimeout(B),j?.())});if(Ve){const c=zt===void 0?{__frame_cred:Ve}:{__frame_cred:Ve,exp:zt};for(const y of ct)try{y.endsWith(":*")||F.post(c,y)}catch{}}F.post({__frame_connect:!0},"*");try{k?.afterConnect()}catch{}const V=setTimeout,U=clearTimeout;let be=()=>NaN,je=()=>[];try{be=performance.now.bind(performance),je=performance.getEntriesByType.bind(performance)}catch{}let Fe=0;const H=()=>{try{F.post({__frame_alive:!0},"*")}catch{}Fe=V(H,Ln)},Ee=()=>U(Fe);H(),addEventListener("load",Ee,{once:!0});const Ie=new Promise(c=>{j=c,B=setTimeout(()=>{Q(),c()},Gt)}),le=new WeakSet;addEventListener("error",c=>{c.target&&le.add(c.target)},!0);try{gn(Dt(),Ve,()=>{e.then(c=>{try{c?.drawRefusedNotice?.()}catch{}})})}catch{}const ce=()=>{let c=[];try{c=[...document.querySelectorAll("link[rel~=stylesheet]:not([rel~=alternate])")].filter(_=>!_.sheet&&!_.disabled&&!le.has(_)&&_.getAttribute("href")&&URL.canParse(_.href)&&(!_.media||matchMedia(_.media).matches))}catch{}let y=c.length;return y===0?Promise.resolve():new Promise(_=>{try{const E=lt-be();E>0&&(p="sheets");const x=V(_,E>0?E<lt?E:lt:0),W=()=>{--y===0&&(U(x),_())};for(const q of c)q.addEventListener("load",W,{once:!0}),q.addEventListener("error",W,{once:!0})}catch{_()}})};b.then(()=>{try{S?.restore()}catch{}}),Promise.all([Ie,b,e]).then(([,,c])=>{if(h?.hostOverlays!==!0||!z)return;let y=!1;try{y=c?.declaresCover?.()===!0}catch{}F.post({__frame_layout:{cover:y}},z)});const ve={cb:null};F.on((c,y)=>{if($t(y)&&Tr(c)){try{S?.promoted()}catch{}ve.cb?.()}}),Ie.then(async()=>{if(!h||!z){mt();try{k?.onNoInit()}catch{}return}if(er(h.theme),h.hostVisible===!1&&e.then(i=>i?.applyHostVisible?.(!1,T)),h.hostKeys!==void 0){const i=z,g=h.hostKeys;e.then(w=>w?.installHostKeyForward?.(d,g,M=>F.post(M,i)))}try{k?.onInit(h.hot,z)}catch{}let c;const y=()=>{try{!c&&me&&I()&&(c=se(me),c.then(i=>i?.prefetch?.()).catch(()=>{}))}catch{}};y(),b.then(y);const _=z,E=F.port(_),x=(i,g)=>F.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:i,phase:g}},_),W=(i,g,w)=>{new Promise(M=>M(Cn(g,w))).then(M=>x(i,M),()=>x(i))},q=i=>F.post({__frame_cap_recovered:{cap:i}},_);let te=h.brokerGen;const X=()=>k?.boot.ver??"",_e=X(),ye=(i,g)=>{const w=X();U(g.t),g.want=w,g.t=V(()=>{g.done||Ye(g,w)},Gt),F.post({__frame_cap_want:!0,cap:i,ver:w},_)},K=(i,g)=>{const w=ie.get(i.cap),M=Me[i.cap];if(!g||!w||w.done||w.want!==i.ver||!pe.test(M))return;if(U(w.t),w.want=void 0,te=i.brokerGen??te,i.ver!==X()){ye(i.cap,w);return}if(!i.grant||i.cap==="network"){Ye(w,i.ver);return}const J=we,Z=we={...J,capabilities:{...J.capabilities,[i.cap]:i.grant},capBudgets:{...J.capBudgets,[i.cap]:{...J.capBudgets[i.cap],...i.budgets}}};se(M).then(de=>{Ce.has(M)&&q(i.cap),Z.brokerGen=te,vt=!0;try{de?.install?.(Z)}catch{x(i.cap,"install")}finally{vt=!1}},de=>W(i.cap,M,de)).then(()=>{w.done||Ye(w,i.ver)})};let xe=!1,Y=!1;F.on((i,g,w)=>{if(g!==_)return;try{if(k?.onShell(i))return}catch{}if(Or(i)&&er(i.__frame_theme.theme),Yr(i)&&K(i,w),w&&Jr(i)&&(te=i.brokerGen??te),Lr(i)){const Z=i.__frame_host_visible.visible;e.then(de=>de?.applyHostVisible?.(Z,T))}kr(i)&&Fn(i.__frame_patch,_,w);const M=i?.__fc_mode;M&&typeof M=="object"&&!xe&&ut&&pe.test(ut)&&(xe=!0,se(ut).then(Z=>Z.install?.(_,M.on===!0,E)).catch(()=>{}));const J=i?.__ft_cmd;J&&typeof J=="object"&&!Y&&ft&&pe.test(ft)&&(Y=!0,se(ft).then(Z=>Z.install?.(_,J,E)).catch(()=>{}))});const De=Object.keys(h.capabilities??{}).filter(i=>Object.hasOwn(Me,i)).map(i=>[i,Me[i]]).filter(i=>typeof i[1]=="string"&&pe.test(i[1])),re=_;let ue=!1,He=()=>{};const Je=new Promise(i=>{He=()=>{ue=!0,i()}}),Se=()=>(ue||(p="caps"),Je),qe=L!==null||Ct(h.hot)||h.hostVisible===!1||h.hostOverlays===!0;R&&(p="init");const Be=b.then(()=>qe?Se():new Promise(i=>V(i,0))).then(ce).then(()=>{let i=!0;try{i=qe||In()}catch{}return i?Se():void 0}).then(()=>{Ee();const i=cr(je,be);F.post(i?{__frame_ready:!0,nav:i,gate:p}:{__frame_ready:!0,gate:p},re),e.then(g=>{g?.installSizeReporter?.(re,ve,E),g?.installPaintReporter?.(E)})}),yt=await Promise.allSettled(De.map(([,i])=>se(i))),ee=await e;if(ee?.buildBoot||(t?W("_transforms",t.f,t.e):x("_transforms")),ee?.buildBoot)try{we=ee.buildBoot(h,ee.TRANSFORMS??{},{shellOrigin:re,mount:_t,hooks:Xe,shell:E},i=>F.post({__frame_cap_telemetry:i},re))}catch{x("_transforms","install"),we=Yt(h,re,E)}else we=Yt(h,re,E);ee?.buildBoot&&Ce.has(Ne??"")&&q("_transforms");const fe=we;fe.brokerGen=te,yt.forEach((i,g)=>{const[w,M]=De[g];if(i.status!=="fulfilled"){W(w,M,i.reason);return}Ce.has(M)&&q(w);try{i.value?.install?.(fe)}catch{x(w,"install")}});const Re=h.capWants===!0;Re&&(ht=(i,g)=>{const w=X();if(!w)return g;if(!g.nulled)return g.want!==w&&ye(i,g),g;if(w===g.ver)return g;const M=pt();return ie.set(i,M),ye(i,M),M}),mt(_e,Re&&X()!==_e?ye:void 0),He(),await Be;let Ue=!1;try{Ue=I()}catch{}me&&Ue?(c??se(me)).then(i=>i?.boot?.({shellOrigin:_,build:fe.flags.has(an),hot:k?.hot??null,carried:k?.carried(),presented:()=>k?.presented()??!0})).catch(()=>!1).then(i=>{k?.hydrated(),i!==!0?x("_ldx"):Ce.has(me)&&q("_ldx")}):k?.hydrated()})}else it&&(tr(),kn(it,ct,se,{settle:mt,mount:_t}))})();</script><!-- /frame-runtime --><meta charset="utf8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}</style><style>:root{color-scheme:light dark;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}}:root[data-theme="dark"]{color-scheme:dark;--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}:root[data-theme="light"]{color-scheme:light}@media print{:root,:root[data-theme="dark"]{color-scheme:light;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}}body{background:var(--md-bg);color:var(--md-text);max-width:720px;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:10px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;overflow-wrap:break-word}body>:first-child{margin-top:0}h1,h2,h3,h4,h5,h6{margin:6px 0 0;line-height:1.25;font-weight:600;text-wrap:balance}h1{font-size:1.35em}h2{font-size:1.15em;color:var(--md-muted)}h3,h4,h5,h6{font-size:1em}p,ul,ol,blockquote,table,pre,hr{margin:0}strong{font-weight:600}a{color:var(--md-link);text-decoration:none}a:hover{text-decoration:underline}ul,ol{display:flex;flex-direction:column;gap:6px;padding-left:22px}ul{list-style:disc}ol{list-style:decimal}:is(li,td,th)>*+:is(p,ul,ol,blockquote){margin-top:6px}blockquote{display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--md-rule);padding-left:10px;color:var(--md-muted)}:not(pre)>code{background:var(--md-fill);padding:1px 3px;border-radius:4px;font:.92em 'SF Mono',ui-monospace,Menlo,Consolas,monospace}a>code{background:none;color:inherit}pre{background:var(--md-fill);padding:10px 12px;border-radius:6px;overflow-x:auto;font:12px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;margin-block:4px}pre code{background:none;padding:0;font:inherit}table{width:100%;border-collapse:separate;border-spacing:2px;font:inherit}th,td{padding:6px 8px;border-radius:3px;text-align:left;vertical-align:top}th{background:var(--md-fill-strong);font-weight:600}td{background:var(--md-fill)}:is(th,td) :not(pre)>code{background:transparent}hr{border:0;border-top:1px solid var(--md-rule-strong);margin-block:10px}img{max-width:100%;height:auto;border-radius:4px}</style>
+</head><body>
+<h1>CartPole and Q-learning: a notebook you type out</h1>
+<p><strong>How to use this:</strong> make a new Jupyter cell for each numbered block. Type the code, run it, compare your output to the output shown, then read the explanation. Every output below came from really running the code. Cells that use randomness start with <code>random.seed(...)</code> so your numbers match mine. Run the cells in order, because later cells use names defined in earlier ones.</p>
+<p><strong>The problem.</strong> A pole is hinged on top of a cart. Every tick (0.02 s) you choose one of two actions: push the cart left or push it right. If the pole tilts past 12 degrees, or the cart leaves the track (more than 2.4 m from the centre), you fail. You earn +1 reward for every tick you survive, and 500 ticks counts as a win. The goal is to learn <em>which push to choose in which situation</em>.</p>
+<hr>
+<h2>Cell 1: imports</h2>
+<pre><code class="language-python">import math
+import random
+import numpy as np
+</code></pre>
+<p><strong>Logic:</strong> <code>math</code> provides <code>sin</code>, <code>cos</code> and <code>pi</code>, which the physics needs. <code>random</code> provides random numbers: the starting wobble, random exploring, and tie-breaking. <code>numpy</code> (nicknamed <code>np</code>) provides arrays, which will hold the Q-table. Nothing prints because importing only makes tools available.</p>
+<hr>
+<h2>Cell 2: the constants of the world</h2>
+<pre><code class="language-python">GRAVITY = 9.8
+MASS_CART = 1.0
+MASS_POLE = 0.1
+TOTAL_MASS = MASS_CART + MASS_POLE
+HALF_POLE = 0.5
+POLE_MASS_LEN = MASS_POLE * HALF_POLE
+FORCE = 10.0
+TAU = 0.02
+X_LIMIT = 2.4
+THETA_LIMIT = 12 * math.pi / 180
+MAX_STEPS = 500
+
+print(TOTAL_MASS)
+print(POLE_MASS_LEN)
+print(THETA_LIMIT)
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">1.1
+0.05
+0.20943951023931953
+</code></pre>
+<p><strong>Logic:</strong> Each line creates a name holding one number that never changes (capital letters are the convention for that). <code>GRAVITY</code> is 9.8 metres per second squared, the acceleration pulling the pole down. The cart weighs 1.0 kg and the pole 0.1 kg. <code>TOTAL_MASS</code> adds them (1.1), because when you push the cart you also move the pole. <code>HALF_POLE</code> is 0.5 m: physics uses the distance from the hinge to the pole's centre of mass, which is half the pole's length. <code>POLE_MASS_LEN</code> multiplies pole mass by that distance (0.1 x 0.5 = 0.05), a combination that shows up in several equations later, so it is computed once. <code>FORCE</code> is the size of each push in newtons. <code>TAU</code> is how much time passes per tick, 0.02 seconds, so there are 50 ticks per simulated second. <code>X_LIMIT</code> is the track edge. <code>THETA_LIMIT</code> converts 12 degrees to <strong>radians</strong>, the angle unit <code>math.sin</code> and <code>math.cos</code> expect. A full circle is 360 degrees or 2*pi radians, so multiply by pi/180. The printed 0.2094 is 12 degrees in radians. <code>MAX_STEPS</code> is the 500-tick win condition.</p>
+<hr>
+<h2>Cell 3: the state</h2>
+<pre><code class="language-python">state = [0.0, 0.0, 0.05, 0.0]
+x, x_dot, theta, theta_dot = state
+print("position  ", x)
+print("velocity  ", x_dot)
+print("angle     ", theta)
+print("ang. speed", theta_dot)
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">position   0.0
+velocity   0.0
+angle      0.05
+ang. speed 0.0
+</code></pre>
+<p><strong>Logic:</strong> The <strong>state</strong> is everything you need to know to predict what happens next. For CartPole it is exactly four numbers in a list. <code>x</code> is where the cart is (0 is the centre, positive is right). <code>x_dot</code> is how fast the cart is moving (the dot means "rate of change", so it is the rate of change of <code>x</code>). <code>theta</code> is the pole's angle in radians (0 is straight up, positive is leaning right). <code>theta_dot</code> is how fast the angle is changing, the pole's spin. The second line is <em>unpacking</em>: it takes the four list entries in order and puts them into four separate names. This state is a cart at rest in the centre with the pole leaning slightly right (0.05 rad is about 3 degrees).</p>
+<p>Compare this to your grid world, where a state was one of 25 cells. Here a state is a point in four-dimensional space, and the numbers are <em>continuous</em> (any decimal is possible). That difference is what makes this problem harder, and we deal with it in Cell 11.</p>
+<hr>
+<h2>Cell 4: starting a new episode</h2>
+<pre><code class="language-python">def reset():
+    return [random.uniform(-0.05, 0.05) for _ in range(4)]
+
+random.seed(1)
+print(reset())
+print(reset())
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[-0.03656357558875988, 0.03474337369372327, 0.02637746189766141, -0.024493097426057833]
+[-0.0004564912908059035, -0.005050893521126185, 0.0151592972722763, 0.02887233511355132]
+</code></pre>
+<p><strong>Logic:</strong> <code>def reset():</code> defines a function that needs no input. <code>random.uniform(-0.05, 0.05)</code> gives a random decimal anywhere between those two bounds with equal chance. The <code>[... for _ in range(4)]</code> part is a list comprehension: it repeats the expression four times and collects the results in a list (the <code>_</code> is a throwaway loop variable, since we do not need the counter). So <code>reset()</code> returns a list of four small random numbers: a nearly balanced pole and a nearly still cart. An <strong>episode</strong> is one attempt from <code>reset()</code> until failure or 500 ticks. <code>random.seed(1)</code> fixes the random sequence so everyone gets the same two states. Each call gives a different state, because the random generator advances.</p>
+<hr>
+<h2>Cell 5: the physics, one piece at a time</h2>
+<p>This is the heart of the environment. We do it once by hand before wrapping it in a function.</p>
+<pre><code class="language-python">state = [0.0, 0.0, 0.05, 0.0]
+action = 1
+
+x, x_dot, theta, theta_dot = state
+force = FORCE if action == 1 else -FORCE
+sin_t = math.sin(theta)
+cos_t = math.cos(theta)
+print("force", force)
+print("sin, cos", sin_t, cos_t)
+
+temp = (force + POLE_MASS_LEN * theta_dot ** 2 * sin_t) / TOTAL_MASS
+print("temp", temp)
+
+theta_acc = (GRAVITY * sin_t - cos_t * temp) / (
+    HALF_POLE * (4.0 / 3.0 - MASS_POLE * cos_t ** 2 / TOTAL_MASS))
+print("theta_acc", theta_acc)
+
+x_acc = temp - POLE_MASS_LEN * theta_acc * cos_t / TOTAL_MASS
+print("x_acc", x_acc)
+
+new_state = [x + TAU * x_dot,
+             x_dot + TAU * x_acc,
+             theta + TAU * theta_dot,
+             theta_dot + TAU * theta_acc]
+print(new_state)
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">force 10.0
+sin, cos 0.04997916927067833 0.9987502603949663
+temp 9.09090909090909
+theta_acc -13.824878764357754
+x_acc 9.71852733026505
+[0.0, 0.194370546605301, 0.05, -0.2764975752871551]
+</code></pre>
+<p><strong>Logic, line by line:</strong></p>
+<p><code>action = 1</code> means push right (0 means push left). Those are the only two actions, so the Q-table will have two columns.</p>
+<p><code>force = FORCE if action == 1 else -FORCE</code> is a one-line if/else. If the action is 1 the force is +10, otherwise -10. The sign is the direction.</p>
+<p><code>sin_t</code> and <code>cos_t</code> compute the sine and cosine of the pole angle. They appear because gravity pulls straight down but the pole can only rotate, so only the sideways part of gravity matters, and that part is <code>sin(theta)</code>. For small angles <code>sin(theta)</code> is nearly <code>theta</code> itself (0.04998 vs 0.05), and <code>cos(theta)</code> is nearly 1.</p>
+<p><code>temp</code> is an intermediate quantity: the cart's acceleration if the pole were not pushing back. It is the push <code>force</code>, plus a term for the pole's spin flinging weight outward (<code>POLE_MASS_LEN * theta_dot**2 * sin_t</code>, zero here because <code>theta_dot</code> is 0), divided by <code>TOTAL_MASS</code>. This is Newton's F = m a rearranged to a = F / m. Pushing with 10 N on 1.1 kg gives 9.09 m/s^2.</p>
+<p><code>theta_acc</code> is the pole's <strong>angular acceleration</strong> (how quickly its spin changes). The top, <code>GRAVITY * sin_t - cos_t * temp</code>, is the competition between two effects: gravity tipping the pole over (positive, pulls toward leaning right) and the cart accelerating underneath it (pushing right makes the pole lag behind and lean left). The bottom is the pole's effective inertia (how hard it is to start rotating). The result is -13.8: negative, so pushing right makes the pole start tipping <em>left</em>, which is the opposite of what intuition about the cart might suggest. This is exactly why balancing is tricky.</p>
+<p><code>x_acc</code> is the cart's real acceleration: <code>temp</code> corrected for the pole's reaction on the cart. Here <code>theta_acc</code> is negative (the pole is tipping left), so the subtracted term is negative and the correction <em>adds</em> to the cart's acceleration: 9.09 + 0.63 = 9.72 m/s^2.</p>
+<p>The last block is <strong>Euler integration</strong>, and it is the one idea you need for all simulation: <em>new value = old value + (time step) x (rate of change)</em>. If a car is at 100 m going 20 m/s, then after 0.02 s it is at 100 + 0.02 x 20 = 100.4 m. Position changes by velocity, velocity changes by acceleration, angle changes by spin, and spin changes by angular acceleration. Four lines, one per state number. Position stays 0.0 because velocity was 0. Velocity became 0.02 x 9.72 = 0.194. Angle stayed 0.05 because spin was 0. Spin became 0.02 x -13.82 = -0.276. The state after one tick is therefore a cart starting to roll right while the pole starts to rotate left.</p>
+<hr>
+<h2>Cell 6: wrap it in a function and test both actions</h2>
+<pre><code class="language-python">def step(state, action):
+    x, x_dot, theta, theta_dot = state
+    force = FORCE if action == 1 else -FORCE
+    sin_t = math.sin(theta)
+    cos_t = math.cos(theta)
+    temp = (force + POLE_MASS_LEN * theta_dot ** 2 * sin_t) / TOTAL_MASS
+    theta_acc = (GRAVITY * sin_t - cos_t * temp) / (
+        HALF_POLE * (4.0 / 3.0 - MASS_POLE * cos_t ** 2 / TOTAL_MASS))
+    x_acc = temp - POLE_MASS_LEN * theta_acc * cos_t / TOTAL_MASS
+    return [x + TAU * x_dot,
+            x_dot + TAU * x_acc,
+            theta + TAU * theta_dot,
+            theta_dot + TAU * theta_acc]
+
+start = [0.0, 0.0, 0.0, 0.0]
+print("push left :", step(start, 0))
+print("push right:", step(start, 1))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">push left : [0.0, -0.1951219512195122, 0.0, 0.2926829268292683]
+push right: [0.0, 0.1951219512195122, 0.0, -0.2926829268292683]
+</code></pre>
+<p><strong>Logic:</strong> The function is Cell 5 with the printing removed. It takes a state and an action and returns the next state. This is the <strong>environment's transition function</strong>, the same job <code>move</code> did in your grid. Starting perfectly upright and still, push left: the cart picks up velocity -0.195 (moving left) and the pole picks up spin +0.293 (starting to lean right). Push right and everything flips sign. The mirror-image results are a good sanity check: the physics is symmetric. And notice the pole always tips <em>opposite</em> to the push. To catch a pole that is falling right, you must push right so the cart goes under it. That is the strategy a good policy must discover.</p>
+<hr>
+<h2>Cell 7: watching the pole fall</h2>
+<pre><code class="language-python">state = [0.0, 0.0, 0.0, 0.0]
+for tick in range(1, 11):
+    state = step(state, 0)
+    print(tick, "x =", round(state[0], 4), " theta =", round(state[2], 4))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">1 x = 0.0  theta = 0.0
+2 x = -0.0039  theta = 0.0059
+3 x = -0.0117  theta = 0.0176
+4 x = -0.0234  theta = 0.0352
+5 x = -0.039  theta = 0.0587
+6 x = -0.0586  theta = 0.0884
+7 x = -0.082  theta = 0.1242
+8 x = -0.1094  theta = 0.1664
+9 x = -0.1407  theta = 0.2152
+10 x = -0.1759  theta = 0.2707
+</code></pre>
+<p><strong>Logic:</strong> Pushing left ten times in a row, feeding each new state into the next <code>step</code>. <code>range(1, 11)</code> counts 1 through 10. <code>round(value, 4)</code> trims to four decimals. At tick 1 nothing seems to have moved, because position and angle only change by velocity and spin, which started at 0 (they change from tick 2). The angle growth is not steady: 0.0059, 0.0176, 0.0352, 0.0587... the increases get bigger every tick. That is <strong>exponential-style growth</strong>, a leaning pole falls faster the further it leans. At tick 9 the angle is 0.2152, past the limit 0.2094, so a real episode would have ended there. A pole left alone falls in under a fifth of a second of simulated time, so the controller must react constantly.</p>
+<hr>
+<h2>Cell 8: when does the episode end?</h2>
+<pre><code class="language-python">def is_done(state):
+    return abs(state[0]) &gt; X_LIMIT or abs(state[2]) &gt; THETA_LIMIT
+
+print(is_done([0.0, 0.0, 0.0, 0.0]))
+print(is_done([0.0, 0.0, 0.25, 0.0]))
+print(is_done([2.5, 0.0, 0.0, 0.0]))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">False
+True
+True
+</code></pre>
+<p><strong>Logic:</strong> <code>state[0]</code> is <code>x</code> and <code>state[2]</code> is <code>theta</code> (lists count from 0). <code>abs</code> removes the sign, so the limit applies to both sides. The function returns True if the cart is past the track edge <em>or</em> the pole is past 12 degrees. The three tests: upright centre is fine (False), angle 0.25 rad is past the limit (True), and x = 2.5 is off the track (True). The 500-tick win is handled separately by <code>MAX_STEPS</code>.</p>
+<hr>
+<h2>Cell 9: a full episode with a random policy</h2>
+<pre><code class="language-python">def run_episode(policy):
+    state = reset()
+    steps = 0
+    while not is_done(state) and steps &lt; MAX_STEPS:
+        action = policy(state)
+        state = step(state, action)
+        steps += 1
+    return steps
+
+def random_policy(state):
+    return random.randrange(2)
+
+random.seed(0)
+scores = [run_episode(random_policy) for _ in range(10)]
+print(scores)
+print(sum(scores) / len(scores))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[11, 62, 37, 55, 12, 22, 22, 11, 47, 23]
+30.2
+</code></pre>
+<p><strong>Logic:</strong> A <strong>policy</strong> is any function that takes a state and returns an action. This is the key vocabulary word of reinforcement learning. <code>run_episode</code> takes a policy as an input (functions can be passed around like any value). It starts from <code>reset()</code>, then repeats: ask the policy for an action, apply <code>step</code>, count one more tick. The <code>while</code> condition says keep going as long as we have not failed <em>and</em> have not reached 500. It returns the tick count. Since reward is +1 per tick, <strong>the number of ticks is the total reward</strong>, and that is our score. <code>random.randrange(2)</code> returns 0 or 1 with equal chance: a policy that ignores the state completely. Ten random episodes survive about 30 ticks on average (0.6 seconds). That is our baseline. Learning has succeeded if we beat it.</p>
+<hr>
+<h2>Cell 10: a hand-written policy to compare</h2>
+<pre><code class="language-python">def rule_policy(state):
+    return 1 if state[3] &gt; 0 else 0
+
+random.seed(0)
+scores = [run_episode(rule_policy) for _ in range(10)]
+print(scores)
+print(sum(scores) / len(scores))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[265, 173, 178, 258, 170, 165, 288, 253, 264, 183]
+219.7
+</code></pre>
+<p><strong>Logic:</strong> <code>state[3]</code> is <code>theta_dot</code>, the pole's spin. The rule: if the pole is rotating rightward, push right; otherwise push left. That moves the cart under the falling pole. This single if-statement beats random by 7x (about 220 vs 30). It is not perfect since it ignores angle and cart position, so it eventually drifts off the track.</p>
+<p>Why this matters: a human wrote that rule using physics insight. <strong>Reinforcement learning is about getting the agent to find a rule like this by itself</strong>, from nothing but the reward signal. The Q-table will be the memory in which it stores what it learns.</p>
+<hr>
+<h2>Cell 11: the problem with a table, and the fix</h2>
+<p>A Q-table needs a row for every state. The grid had 25. Here the state is four <em>continuous</em> numbers, so there are infinitely many possible states, and a table cannot hold infinitely many rows. The fix is <strong>discretization</strong>: chop each number's range into a few buckets (bins) and say two states in the same buckets count as the same state.</p>
+<pre><code class="language-python">LOW  = np.array([-X_LIMIT, -3.0, -THETA_LIMIT, -3.5])
+HIGH = np.array([ X_LIMIT,  3.0,  THETA_LIMIT,  3.5])
+BINS = np.array([3, 3, 6, 6])
+
+def discretize(state):
+    ratio = (np.array(state) - LOW) / (HIGH - LOW)
+    index = (ratio * BINS).astype(int)
+    index = np.clip(index, 0, BINS - 1)
+    return tuple(int(i) for i in index)
+
+print(discretize([0.0, 0.0, 0.0, 0.0]))
+print(discretize([-2.0, 0.0, 0.0, 0.0]))
+print(discretize([0.0, 0.0, 0.1, -1.0]))
+print(discretize([0.0, 0.0, 5.0, 0.0]))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">(1, 1, 3, 3)
+(0, 1, 3, 3)
+(1, 1, 4, 2)
+(1, 1, 5, 3)
+</code></pre>
+<p><strong>Logic:</strong> <code>LOW</code> and <code>HIGH</code> are the smallest and largest value we care about for each of the four numbers, in order (position, velocity, angle, spin). Position and angle use the failure limits. For velocity and spin I chose +/-3.0 and +/-3.5 because those cover almost everything that happens before failure. <code>BINS</code> says how many buckets each number gets: 3 for position, 3 for velocity, 6 for angle, 6 for spin. More buckets on angle and spin because they matter most for balancing. Total distinct states: 3 x 3 x 6 x 6 = 324.</p>
+<p>Inside <code>discretize</code>:</p>
+<ol>
+<li><code>np.array(state) - LOW</code> turns the list into an array and subtracts, element by element, each number's minimum. Now each number is measured from the bottom of its range.</li>
+<li>Dividing by <code>HIGH - LOW</code> (the width of each range) produces <code>ratio</code>: 0.0 means the very bottom of the range, 1.0 the very top, 0.5 the middle.</li>
+<li><code>ratio * BINS</code> stretches that to the bucket scale. A ratio of 0.5 with 6 bins is 3.0, meaning "boundary of bucket 3".</li>
+<li><code>.astype(int)</code> chops off the decimals, so 4.43 becomes bucket 4.</li>
+<li><code>np.clip(index, 0, BINS - 1)</code> forces each bucket number to stay between 0 and (bins minus 1). Without this, a value at or past the top, or outside the range, would give a bucket number that does not exist.</li>
+<li>The last line turns the array into a tuple of plain Python integers, which can be used as an address into the table.</li>
+</ol>
+<p>Reading the tests: a perfectly still, upright, centred cart lands in the middle buckets <code>(1, 1, 3, 3)</code>. Position -2.0 is in the left bucket 0. Angle 0.1 and spin -1.0 land in buckets 4 and 2. Angle 5.0 is far out of range, but <code>clip</code> puts it in the last bucket, 5, instead of crashing.</p>
+<hr>
+<h2>Cell 12: seeing the arithmetic inside <code>discretize</code></h2>
+<pre><code class="language-python">ratio = (np.array([0.0, 0.0, 0.1, -1.0]) - LOW) / (HIGH - LOW)
+print(ratio)
+print(ratio * BINS)
+print((ratio * BINS).astype(int))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[0.5        0.5        0.73873241 0.35714286]
+[1.5        1.5        4.43239449 2.14285714]
+[1 1 4 2]
+</code></pre>
+<p><strong>Logic:</strong> The same steps, printed. Check the third number by hand. Angle is 0.1, <code>LOW</code> is -0.2094 and <code>HIGH</code> is +0.2094. So (0.1 - (-0.2094)) / (0.2094 - (-0.2094)) = 0.3094 / 0.4189 = 0.7387, matching the output. Times 6 bins is 4.43, and cutting off the decimals gives bucket 4. Position 0.0 sits at ratio 0.5, the exact middle, times 3 gives 1.5, which becomes bucket 1 (the middle of three buckets 0, 1, 2).</p>
+<hr>
+<h2>Cell 13: the Q-table itself</h2>
+<pre><code class="language-python">Q = np.zeros(tuple(BINS) + (2,))
+print(Q.shape)
+print(Q.size)
+
+s = discretize([0.0, 0.0, 0.1, -1.0])
+print(Q[s])
+Q[s + (1,)] = 5.0
+print(Q[s])
+print(Q[s].max(), Q[s].argmax())
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">(3, 3, 6, 6, 2)
+648
+[0. 0.]
+[0. 5.]
+5.0 1
+</code></pre>
+<p><strong>Logic:</strong> <code>tuple(BINS)</code> is <code>(3, 3, 6, 6)</code>, and <code>+ (2,)</code> appends one more dimension of size 2 (one slot per action). <code>np.zeros</code> builds an array of that shape filled with 0.0. It is a 5-dimensional block: four dimensions pick the state, the last picks the action. It holds 3 x 3 x 6 x 6 x 2 = 648 numbers, the printed <code>Q.size</code>. In your grid world the table was a flat 25 x 4 sheet. This is the same idea with four "row coordinates" instead of one row number.</p>
+<p><code>Q[s]</code> with <code>s = (1, 1, 4, 2)</code> selects four of the five coordinates and leaves the action coordinate open, so you get the 2-number row for that state: <code>[0. 0.]</code> (value of push-left, value of push-right). <code>s + (1,)</code> extends the state address with action 1, addressing a single box, and we set that box to 5.0. Now the row reads <code>[0. 5.]</code>. <code>.max()</code> is the best value in the row (5.0) and <code>.argmax()</code> is the <em>position</em> of the best value (1, push right). These are the same two operations as in your grid: max answers "how good is this situation?", argmax answers "which action is best?"</p>
+<hr>
+<h2>Cell 14: choosing actions (exploration vs exploitation)</h2>
+<pre><code class="language-python">def choose_action(Q, s, epsilon):
+    if random.random() &lt; epsilon:
+        return random.randrange(2)
+    row = Q[s]
+    if row[0] == row[1]:
+        return random.randrange(2)
+    return int(np.argmax(row))
+
+random.seed(0)
+Q = np.zeros(tuple(BINS) + (2,))
+s = (1, 1, 3, 3)
+print([choose_action(Q, s, 0.0) for _ in range(10)])
+Q[s + (1,)] = 5.0
+print([choose_action(Q, s, 0.0) for _ in range(10)])
+print([choose_action(Q, s, 0.5) for _ in range(10)])
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[1, 1, 1, 1, 0, 1, 0, 1, 0, 0]
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]
+</code></pre>
+<p><strong>Logic:</strong> This is <strong>epsilon-greedy</strong>. <code>random.random()</code> gives a decimal in [0, 1). If it is below <code>epsilon</code>, we ignore the table and act randomly, which is <strong>exploring</strong>: it lets the agent try actions it currently thinks are bad, in case it is wrong. Otherwise we <strong>exploit</strong> by taking the best-known action, <code>argmax</code> of the row. The tie check handles an untrained row <code>[0, 0]</code>: <code>argmax</code> would always return the first index, so the agent would always push left on untrained states, which is a hidden bias. Breaking ties randomly is fairer.</p>
+<p>The three tests: with an all-zero table and epsilon 0 the choices are a random mix (a tie every time). After setting push-right to 5.0, epsilon 0 gives ten 1s (always exploit). With epsilon 0.5, about half the choices are random, so occasional 0s sneak in (two of ten here).</p>
+<hr>
+<h2>Cell 15: one Q-learning update, by hand</h2>
+<pre><code class="language-python">ALPHA = 0.2
+GAMMA = 0.99
+
+Q = np.zeros(tuple(BINS) + (2,))
+s_next = (1, 1, 3, 3)
+Q[s_next + (0,)] = 10.0
+Q[s_next + (1,)] = 20.0
+
+s = (1, 1, 3, 2)
+a = 1
+reward = 1
+
+old = Q[s + (a,)]
+best_next = Q[s_next].max()
+target = reward + GAMMA * best_next
+new = old + ALPHA * (target - old)
+print(old, best_next, target, new)
+
+Q[s + (a,)] = new
+print(Q[s])
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">0.0 20.0 20.8 4.16
+[0.   4.16]
+</code></pre>
+<p><strong>Logic:</strong> This is the entire learning algorithm, the same three lines from your grid world. We stage a situation: the state we will land in already has known values 10 and 20. We are in state <code>s</code>, took action 1, got reward 1 (one tick survived).</p>
+<p><code>old</code> is the current box value (0.0, we know nothing yet). <code>best_next</code> is the best number in the row of the state we landed in (20.0): "if I play well from there, I expect about 20 more". <code>target = reward + GAMMA * best_next</code> = 1 + 0.99 x 20 = 20.8: what this action <em>should</em> be worth, given what we just saw. <strong>Gamma (the discount factor)</strong> is how much future reward is worth compared to immediate reward. At 0.99 a reward one step ahead counts for 99% of its face value, and rewards far ahead fade slowly. <code>new = old + ALPHA * (target - old)</code> moves the old guess 20% of the way toward the target: 0 + 0.2 x (20.8 - 0) = 4.16. <strong>Alpha (the learning rate)</strong> is that fraction. Small alpha learns slowly but smoothly, large alpha learns fast but jumps around. Only one box changed: the row went from <code>[0, 0]</code> to <code>[0, 4.16]</code>.</p>
+<hr>
+<h2>Cell 16: the training loop</h2>
+<pre><code class="language-python">def train(episodes, alpha=0.2, gamma=0.99, eps_start=1.0, eps_min=0.01, eps_decay=0.999):
+    Q = np.zeros(tuple(BINS) + (2,))
+    epsilon = eps_start
+    history = []
+    for episode in range(episodes):
+        state = reset()
+        s = discretize(state)
+        steps = 0
+        while True:
+            a = choose_action(Q, s, epsilon)
+            state = step(state, a)
+            steps += 1
+            failed = is_done(state)
+            s_next = discretize(state)
+
+            reward = 1
+            best_next = 0.0 if failed else Q[s_next].max()
+            target = reward + gamma * best_next
+            Q[s + (a,)] += alpha * (target - Q[s + (a,)])
+
+            s = s_next
+            if failed or steps &gt;= MAX_STEPS:
+                break
+        epsilon = max(eps_min, epsilon * eps_decay)
+        history.append(steps)
+    return Q, history
+
+random.seed(0)
+Q, history = train(300)
+print(history[:10])
+print(sum(history[:100]) / 100, sum(history[200:300]) / 100)
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[16, 16, 21, 11, 15, 24, 21, 25, 36, 36]
+23.62 26.18
+</code></pre>
+<p><strong>Logic:</strong> The function's inputs have default values (<code>alpha=0.2</code>, etc.), so you can call <code>train(300)</code> and override any of them by name. Setup: a fresh all-zero table, <code>epsilon</code> starting at 1.0 (always explore at first, since the table knows nothing), and an empty list <code>history</code> to record how long each episode lasted.</p>
+<p>Outer loop, once per episode: <code>reset()</code> gives a start state, and <code>discretize</code> turns it into the table address <code>s</code>. Inner loop, once per tick:</p>
+<ol>
+<li><code>choose_action</code> picks an action using the current <code>s</code> and <code>epsilon</code>.</li>
+<li><code>step</code> applies it. The environment gives the new continuous state.</li>
+<li><code>failed = is_done(state)</code> asks whether that ended the episode. <code>s_next</code> is the table address of the new state.</li>
+<li>The reward is 1 for surviving. <code>best_next</code> is the best value in the next state's row, <strong>except when we failed</strong>: then it is 0, because after failure there is no future to count. This is the "terminal state" rule from your grid world, and it is what makes failing <em>look worse</em> than surviving. A failing action's target is only 1, while a surviving action's target is 1 + 0.99 x (something positive). Over many repeats the table learns which situations lead to failure.</li>
+<li><code>+=</code> applies the update from Cell 15 in one line (<code>Q[x] += alpha * (target - Q[x])</code> means the same as <code>Q[x] = Q[x] + alpha * (target - Q[x])</code>).</li>
+<li><code>s = s_next</code> moves on. The loop breaks when we fail or hit 500 ticks.</li>
+</ol>
+<p>After each episode, <code>epsilon * eps_decay</code> shrinks epsilon by 0.1% (multiplying by 0.999), and <code>max(eps_min, ...)</code> stops it going below 0.01. So the agent explores a lot early and mostly exploits later. <code>history.append(steps)</code> records the episode length.</p>
+<p>The output: 300 episodes is too few to see much. Early episodes last 11 to 36 ticks (basically random), and the average over episodes 0 to 99 is 23.6, versus 26.2 for 200 to 299. Learning has barely begun, which is normal.</p>
+<hr>
+<h2>Cell 17: the real training run</h2>
+<pre><code class="language-python">random.seed(0)
+Q, history = train(4000)
+for i in range(0, 4000, 500):
+    print("episodes", i, "to", i + 499, ": average", round(sum(history[i:i+500]) / 500, 1))
+print("table entries changed:", np.count_nonzero(Q), "of", Q.size)
+</code></pre>
+<p>Output (takes about 10 seconds):</p>
+<pre><code class="language-text">episodes 0 to 499 : average 29.1
+episodes 500 to 999 : average 53.4
+episodes 1000 to 1499 : average 77.3
+episodes 1500 to 1999 : average 92.5
+episodes 2000 to 2499 : average 119.1
+episodes 2500 to 2999 : average 187.6
+episodes 3000 to 3499 : average 248.6
+episodes 3500 to 3999 : average 334.6
+table entries changed: 368 of 648
+</code></pre>
+<p><strong>Logic:</strong> <code>range(0, 4000, 500)</code> counts 0, 500, 1000, ... 3500 (the third number is the step size). <code>history[i:i+500]</code> is a slice: the 500 entries from position <code>i</code> up to but not including <code>i+500</code>. We average each block of 500 episodes. <strong>This is the learning curve</strong>: survival climbs from 29 ticks (random level) to 335, an 11x improvement, using only reward feedback and a 648-number table. Nobody told it the physics or the rule from Cell 10.</p>
+<p><code>np.count_nonzero(Q)</code> counts how many boxes were ever updated: 368 of 648. The rest are state/action combinations never visited, such as being far off the track with the pole spinning wildly, which a decent policy avoids. Note that these averages include random exploring moves (epsilon was still about 0.02 at the end), so the true skill is a bit higher than shown. Your exact curve will differ if you change the seed, because learning depends on luck. The upward trend should stay.</p>
+<hr>
+<h2>Cell 18: test the learned policy with no exploration</h2>
+<pre><code class="language-python">def greedy_policy(state):
+    return int(np.argmax(Q[discretize(state)]))
+
+random.seed(5)
+scores = [run_episode(greedy_policy) for _ in range(20)]
+print(scores)
+print(sum(scores) / len(scores))
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-text">[275, 170, 136, 274, 277, 265, 168, 280, 269, 214, 319, 345, 350, 124, 318, 300, 158, 163, 282, 160]
+242.35
+</code></pre>
+<p><strong>Logic:</strong> The learned policy is just the table in use: discretize the current state, look up its row, take the best action (<code>argmax</code>, no randomness at all). It is a policy function like <code>random_policy</code> and <code>rule_policy</code>, so <code>run_episode</code> accepts it unchanged. Twenty test episodes average about 242 ticks: roughly 8x the random baseline (30) and comparable to our hand-written rule (220). Results vary from 124 to 350 because the starting states differ and a 324-bucket table is a coarse picture of the real state.</p>
+<hr>
+<h2>Cell 19 (optional): plot the learning curve</h2>
+<p>This needs <code>matplotlib</code> (<code>pip install matplotlib</code> if missing).</p>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+
+window = 100
+smooth = [sum(history[i:i+window]) / window for i in range(0, len(history) - window)]
+plt.plot(smooth)
+plt.xlabel("episode")
+plt.ylabel("average ticks survived")
+plt.show()
+</code></pre>
+<p><strong>Logic:</strong> For every starting position <code>i</code>, it averages the next 100 episodes and stores that, producing a smoothed line (raw episode lengths jump around too much to read). <code>plt.plot</code> draws it, the two label lines name the axes, and <code>plt.show()</code> displays it. You should see a noisy line that rises from about 30 at the left to a few hundred at the right.</p>
+<hr>
+<h2>What you just built, in one paragraph</h2>
+<p>CartPole is a loop. The <strong>state</strong> (4 numbers) goes into a <strong>policy</strong>, which returns an <strong>action</strong> (0 or 1). The <strong>environment</strong> (<code>step</code>) uses physics to produce the next state, and gives a <strong>reward</strong> (+1 per tick). Q-learning improves the policy by keeping a table of how good each action is in each situation, and nudging one box per tick toward <code>reward + gamma * (best value of the next situation)</code>. Because CartPole's states are continuous, we first <strong>discretized</strong> them into buckets so the table has finitely many rows. Epsilon-greedy exploring early, then exploiting later, is what lets the table fill with useful numbers.</p>
+<h2>Experiments to understand it better</h2>
+<p>Change one thing at a time, rerun Cells 17 and 18, and compare:</p>
+<ol>
+<li><strong><code>BINS = np.array([1, 1, 6, 12])</code></strong> (re-run Cell 11 first): ignore position and velocity entirely. It often learns faster, but cannot see the cart drifting toward an edge.</li>
+<li><strong><code>eps_min=0.3</code></strong> in <code>train</code>: too much permanent randomness. Predict the effect before you run it.</li>
+<li><strong><code>alpha=0.02</code></strong>: learns much more slowly. Compare the curve.</li>
+<li><strong><code>gamma=0.5</code></strong>: the agent becomes short-sighted. Think about why it struggles when failure is caused by decisions made many ticks earlier.</li>
+<li><strong><code>train(4000)</code> with <code>random.seed(1)</code>, <code>(2)</code>, <code>(3)</code></strong>: how much does luck matter?</li>
+</ol>
+<p>When you are done, tell me what you saw and I can help explain any result that surprised you.</p>
+
+</body></html>

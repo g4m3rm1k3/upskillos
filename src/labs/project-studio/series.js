@@ -54,6 +54,33 @@ const SERIES = [
     planned: 'More optional advanced tracks are planned: sequence models and transformers, retrieval, and recommender systems. The full map is in docs/ml-project-studio-curriculum.md.',
   },
   {
+    // Plan, lesson standard, chapter map and status: docs/applied-ml-series-plan.md.
+    key: 'applied-ml',
+    label: 'Applied Machine Learning — From Zero to Real Tools',
+    prefix: 'aml-',
+    chapters: [
+      ['aml-python', '00 · Python from Zero: A CI Report'],
+      ['aml-project', '01 · A Project of Its Own'],
+      ['aml-pandas', '02 · pandas, Rebuilt by Hand'],
+      ['aml-seeing', '03 · Seeing Data: Your First Streamlit App'],
+      ['aml-git', '04 · Your Own Data: Git History'],
+      ['aml-vectors', '05 · Vectors and Similarity: Duplicate Bug Reports'],
+      ['aml-change', '06 · Change and Slopes'],
+      ['aml-first-model', '07 · Your First Model: When Will a Test Blow Its Budget?'],
+      ['aml-evaluation', '08 · Is It Any Good?'],
+      ['aml-flaky', '09 · Will This Run Fail? A Flaky-Test Detector'],
+      ['aml-text', '10 · Triaging Bug Reports'],
+      ['aml-trees', '11 · A Risky-Change Warning'],
+      ['aml-anomaly', '12 · Latency Anomalies and Clustering'],
+      ['aml-neural', '13 · Neural Networks from Scratch, then PyTorch'],
+      ['aml-shipping', '14 · Shipping the Toolkit'],
+      ['aml-service', '15 · A Model Service'],
+      ['aml-workflow', "16 · ML in the Team's Workflow"],
+      ['aml-capstone', '17 · Capstone: Your Own Tool on Your Own Data'],
+    ],
+    planned: 'Applied Machine Learning is being written chapter by chapter, from Python basics up. The full map is in docs/applied-ml-series-plan.md.',
+  },
+  {
     // Plan, chapter map and status: docs/pygame-engine-series-plan.md.
     key: 'forge',
     label: 'Forge — Learn Software Engineering by Building a Game Engine in Python',

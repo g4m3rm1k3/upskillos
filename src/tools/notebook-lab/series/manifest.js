@@ -126,6 +126,14 @@ export const SERIES_MANIFEST = [
       ['capstone', 'Capstone: from data to a defensible model'],
     ]),
 
+  series('rl', 'rl', 'rl', 'Reinforcement Learning: the Q-Maze and CartPole',
+    'Two classic problems in depth: Q-learning on a maze and on CartPole, then the same agents with a neural network instead of a table (deep Q-learning).', [
+      ['q-maze', 'Q-learning on a maze'],
+      ['cartpole', 'CartPole and Q-learning'],
+      ['deep-q-maze', 'Deep Q-learning on the maze'],
+      ['deep-q-cartpole', 'Deep Q-learning on CartPole'],
+    ]),
+
   series('dsa', 'dsa', 'dsa', 'Algorithms & Design Patterns',
     'Data structures, algorithms and object design, taught together.', [
       ['what-an-algorithm-is', 'What an algorithm is'],

@@ -24,6 +24,14 @@ it('automatically keeps newly discovered C++ topics inside the C++ series',()=>{
  expect(grouped.find(item=>item.key==='cpp-mastery').chapters.some(chapter=>chapter.key==='cpp-graphics')).toBe(true);
  expect(grouped.some(item=>item.key==='cpp-graphics')).toBe(false);
 });
+it('groups the aml-* tracks into the Applied Machine Learning series, separate from the ml-* series',()=>{
+ const grouped=studioSeries(TRACKS,TRACK_KEYS,trackTitle);const aml=grouped.find(item=>item.key==='applied-ml');
+ expect(aml.chapters[0].key).toBe('aml-python');
+ expect(aml.chapters.every(chapter=>chapter.key.startsWith('aml-'))).toBe(true);
+ expect(grouped.find(item=>item.key==='ml-production').chapters.some(chapter=>chapter.key.startsWith('aml-'))).toBe(false);
+ expect(grouped.some(item=>item.key==='aml-python')).toBe(false);
+ expect(aml.planned).toContain('docs/applied-ml-series-plan.md');
+});
 it('groups the ml-* tracks into the Machine Learning series, in chapter order',()=>{
  const grouped=studioSeries(TRACKS,TRACK_KEYS,trackTitle);const ml=grouped.find(item=>item.key==='ml-production');
  expect(ml.chapters.map(item=>item.key)).toEqual(['ml-software','ml-data','ml-math','ml-first-model','ml-web','ml-database','ml-security','ml-evaluation','ml-classification','ml-trees','ml-clustering','ml-pca','ml-neural','ml-pytorch','ml-nlp','ml-studio','ml-capstone','ml-timeseries','ml-boosting']);
