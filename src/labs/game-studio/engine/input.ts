@@ -79,4 +79,8 @@ export class Input {
   }
 
   get actionNames(): string[] { return [...this.actions.keys()]; }
+
+  /** For the engine's buttons: a key (not an action) that went down, or came up, since the last frame. */
+  _keyJustDown(code: string): boolean { return this.down.has(code); }
+  _keyJustUp(code: string): boolean { return this.up.has(code); }
 }

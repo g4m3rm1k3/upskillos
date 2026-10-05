@@ -86,11 +86,19 @@ export function Inspector({ store }: { store: Store }) {
         return <Row key={def.name} label={def.name} help={help}>
           <select data-testid={`prop-${def.name}`} value={(v as string) ?? ''} onChange={(e) => set(def.name, e.target.value || null)} style={{ ...selectStyle, flex: 1 }}>
             <option value="">(none)</option>
-            {p.assets.map((a) => <option key={a.id} value={a.path}>{a.path.replace(/^assets\//, '')}</option>)}
+            {p.assets.filter((a) => a.kind !== 'sound').map((a) => <option key={a.id} value={a.path}>{a.path.replace(/^assets\//, '')}</option>)}
           </select>
           {img && <img src={img.src} alt="" style={{ width: 22, height: 22, objectFit: 'contain', imageRendering: 'pixelated', background: C.bg }} />}
         </Row>;
       }
+      case 'sound':
+        return <Row key={def.name} label={def.name} help={help}>
+          <select data-testid={`prop-${def.name}`} value={(v as string) ?? ''} onChange={(e) => set(def.name, e.target.value || null)} style={{ ...selectStyle, flex: 1 }}>
+            <option value="">(none)</option>
+            {p.assets.filter((a) => a.kind === 'sound').map((a) => <option key={a.id} value={a.path}>{a.path.replace(/^assets\//, '')}</option>)}
+          </select>
+          {typeof v === 'string' && <button data-testid={`play-${def.name}`} title="Hear it" onClick={() => store.previewSound(v)} style={{ background: 'none', border: 'none', color: C.text, cursor: 'pointer' }}>▶</button>}
+        </Row>;
       case 'enum':
         return <Row key={def.name} label={def.name} help={help} live={lv}>
           <select data-testid={`prop-${def.name}`} value={v as string} onChange={(e) => set(def.name, e.target.value)} style={{ ...selectStyle, flex: 1 }}>
@@ -258,7 +266,7 @@ function Groups({ store, node, editable }: { store: Store; node: NodeData; edita
 }
 
 /** The engine's own signals for a node type (its callbacks, also emitted as signals). */
-const BUILTIN_SIGNALS: Record<string, string[]> = { Area2D: ['bodyEntered', 'bodyExited'], RigidBody2D: ['onCollision'], AnimatedSprite2D: ['animationFinished'], AnimationPlayer: ['animationFinished'] };
+const BUILTIN_SIGNALS: Record<string, string[]> = { Button: ['pressed'], AudioStreamPlayer: ['finished'], Area2D: ['bodyEntered', 'bodyExited'], RigidBody2D: ['onCollision'], AnimatedSprite2D: ['animationFinished'], AnimationPlayer: ['animationFinished'] };
 
 /** Signal connections: when this node emits a signal, a method of another node runs. Saved in the scene. */
 function Signals({ store, node, editable }: { store: Store; node: NodeData; editable: boolean }) {

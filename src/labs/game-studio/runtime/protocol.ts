@@ -11,7 +11,8 @@ import type { QEpisode, QLive, QOptions, QPolicy, QTransition } from '../ml/qlea
 export interface TrainInView { spec: EnvSpec; options: QOptions; speed: number }
 
 export type ToRuntime =
-  | { type: 'load'; project: Project; scene: string; assets: { path: string; mime: string; bytes: ArrayBuffer }[]; train?: TrainInView }
+  /** saves: the project's save slots (JSON text by slot name), which the editor keeps (engine/saves.ts). */
+  | { type: 'load'; project: Project; scene: string; assets: { path: string; mime: string; bytes: ArrayBuffer }[]; train?: TrainInView; saves?: Record<string, string> }
   /** Train in view: how fast to play (game frames per drawn frame). */
   | { type: 'trainSpeed'; speed: number }
   /** Train in view, paused: play on to the next update, and report it. */
@@ -31,6 +32,8 @@ export type FromRuntime =
   | { type: 'log'; level: LogLevel; text: string }
   | { type: 'error'; message: string; file: string | null; line: number | null; column: number | null; node: string | null; phase: string | null }
   | { type: 'state'; path: string; props: Record<string, unknown> | null }
+  /** The game saved into a slot (json) or emptied it (null): the editor keeps the change. */
+  | { type: 'save'; slot: string; json: string | null }
   | { type: 'paused'; paused: boolean }
   /** Train in view: what the agent can do and sees, and how random play scores (measured headless first). */
   | { type: 'trainStart'; actions: string[]; observation: string[]; bins: number[][]; random: number }

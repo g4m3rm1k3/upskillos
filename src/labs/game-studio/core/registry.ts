@@ -10,9 +10,9 @@ import type { PropValue } from './types';
  * 'enum' is one of `options`; 'layers' is a set of collision layers 1–16, stored as bits (layer n is bit n − 1);
  * 'spriteFrames' is a list of named animations, each a list of pictures (SpriteAnimation[]);
  * 'animations' is a list of AnimationPlayer animations, each tracks of keyframes (AnimationClip[]);
- * 'tileset' is a tileset's project path, or null; 'cells' is a TileMapLayer's painted cells (core/tiles.ts).
+ * 'sound' is a sound asset's project path, or null; 'tileset' is a tileset's project path, or null; 'cells' is a TileMapLayer's painted cells (core/tiles.ts).
  */
-export type PropType = 'number' | 'angle' | 'vec2' | 'bool' | 'string' | 'color' | 'texture' | 'enum' | 'layers' | 'spriteFrames' | 'animations' | 'tileset' | 'cells';
+export type PropType = 'number' | 'angle' | 'vec2' | 'bool' | 'string' | 'color' | 'texture' | 'sound' | 'enum' | 'layers' | 'spriteFrames' | 'animations' | 'tileset' | 'cells';
 
 export interface PropDef {
   name: string;
@@ -116,6 +116,70 @@ const TYPES: NodeTypeDef[] = [
       { name: 'text', type: 'string', default: 'Label', help: 'The words shown. A script can change it: this.text = `Score: ${score}`.' },
       { name: 'fontSize', type: 'number', default: 24, min: 4, max: 256, step: 1, help: 'The height of the letters, in pixels.' },
       { name: 'color', type: 'color', default: '#ffffff', help: 'The colour of the text.' },
+      { name: 'wrapWidth', type: 'number', default: 0, min: 0, step: 1, help: 'Wrap the text onto new lines at this width in pixels: for dialogue and descriptions. 0 does not wrap.' },
+      { name: 'visibleCharacters', type: 'number', default: -1, min: -1, step: 1, help: 'How many letters are shown: −1 shows them all. Raise it a few letters at a time for typewriter dialogue. The text wraps as if it were all shown, so words do not jump lines as they appear.' },
+    ],
+  },
+  {
+    type: 'Panel', base: 'Node2D', icon: '▢', addable: true,
+    help: 'A box: the background of a menu, a dialogue box or an inventory. Its position is its top-left corner. Put it under a CanvasLayer to keep it on the screen.',
+    props: [
+      { name: 'size', type: 'vec2', default: { x: 200, y: 120 }, step: 1, help: 'Width and height in pixels.' },
+      { name: 'color', type: 'color', default: '#1e2433', help: 'The colour inside.' },
+      { name: 'borderColor', type: 'color', default: '#8899bb', help: 'The colour of its edge.' },
+      { name: 'borderWidth', type: 'number', default: 2, min: 0, max: 32, step: 1, help: 'How thick its edge is, in pixels. 0 has no edge.' },
+    ],
+  },
+  {
+    type: 'Button', base: 'Node2D', icon: '🔘', addable: true,
+    help: 'A button: click it, or give it the focus (grabFocus()) and use the arrow keys and Enter. It emits pressed, and calls its script\u2019s pressed(). Its position is its top-left corner.',
+    props: [
+      { name: 'text', type: 'string', default: 'Button', help: 'The words on it.' },
+      { name: 'size', type: 'vec2', default: { x: 140, y: 40 }, step: 1, help: 'Width and height in pixels: the area you can click.' },
+      { name: 'fontSize', type: 'number', default: 18, min: 4, max: 128, step: 1, help: 'The height of its letters, in pixels.' },
+      { name: 'color', type: 'color', default: '#3b5bdb', help: 'Its colour. It lightens under the pointer and darkens while pressed.' },
+      { name: 'textColor', type: 'color', default: '#ffffff', help: 'The colour of its words.' },
+      { name: 'disabled', type: 'bool', default: false, help: 'Greyed out: it cannot be pressed or given the focus. A script can turn this on and off (not enough gold, say).' },
+    ],
+  },
+  {
+    type: 'ProgressBar', base: 'Node2D', icon: '▬', addable: true,
+    help: 'A bar that fills from left to right: health, experience, a cooldown. Set value from a script. Its position is its top-left corner.',
+    props: [
+      { name: 'size', type: 'vec2', default: { x: 160, y: 16 }, step: 1, help: 'Width and height in pixels.' },
+      { name: 'value', type: 'number', default: 50, step: 1, help: 'How full it is, from 0 to maxValue.' },
+      { name: 'maxValue', type: 'number', default: 100, min: 0, step: 1, help: 'The value that fills it.' },
+      { name: 'fillColor', type: 'color', default: '#40c057', help: 'The colour of the filled part.' },
+      { name: 'backColor', type: 'color', default: '#2b2f3a', help: 'The colour of the empty part.' },
+      { name: 'showText', type: 'bool', default: false, help: 'Show "value / maxValue" on the bar.' },
+    ],
+  },
+  {
+    type: 'BoxContainer', base: 'Node2D', icon: '☰', addable: false,
+    help: 'Places its children one after another. Use VBoxContainer or HBoxContainer.',
+    props: [
+      { name: 'separation', type: 'number', default: 8, min: 0, step: 1, help: 'The gap between one child and the next, in pixels.' },
+    ],
+  },
+  {
+    type: 'VBoxContainer', base: 'BoxContainer', icon: '☰', addable: true,
+    help: 'Places its children in a column, top to bottom: a menu of buttons, an inventory list. It sets their positions, so add, remove or hide children and the rest move up.',
+    props: [],
+  },
+  {
+    type: 'HBoxContainer', base: 'BoxContainer', icon: '⫼', addable: true,
+    help: 'Places its children in a row, left to right: a hotbar, a row of hearts. It sets their positions, so add, remove or hide children and the rest move along.',
+    props: [],
+  },
+  {
+    type: 'AudioStreamPlayer', base: 'Node', icon: '🔊', addable: true,
+    help: 'Plays a sound: an effect or music. Call play() from a script (this.get("Coin sound").play()), or turn on autoplay. It emits finished when a sound ends.',
+    props: [
+      { name: 'stream', type: 'sound', default: null, help: 'The sound it plays: one made with Files › New sound… (project.writeSound).' },
+      { name: 'volume', type: 'number', default: 1, min: 0, max: 1, step: 0.05, help: 'How loud: 0 is silent, 1 is as recorded. (Godot measures this in decibels, volume_db.)' },
+      { name: 'pitchScale', type: 'number', default: 1, min: 0.25, max: 4, step: 0.05, help: 'Faster and higher, or slower and lower: 2 is an octave up and half as long. A little random pitch on each play keeps a repeated sound from tiring the ear.' },
+      { name: 'autoplay', type: 'bool', default: false, help: 'Start playing when the scene starts: music, or a sound that should play once at the beginning.' },
+      { name: 'loop', type: 'bool', default: false, help: 'Play again from the start each time it ends, until stop(): music and engine hums.' },
     ],
   },
   {
@@ -228,6 +292,8 @@ export function checkProp(def: PropDef, v: unknown): string | null {
       return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? null : `${def.name} must be a colour like "#ff8800"`;
     case 'texture':
       return v === null || typeof v === 'string' ? null : `${def.name} must be an image path, or null`;
+    case 'sound':
+      return v === null || typeof v === 'string' ? null : `${def.name} must be a sound path, or null`;
     case 'enum':
       return typeof v === 'string' && def.options!.includes(v) ? null : `${def.name} must be one of ${def.options!.map((o) => `"${o}"`).join(', ')}`;
     case 'layers':

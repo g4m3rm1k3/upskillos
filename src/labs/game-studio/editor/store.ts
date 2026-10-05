@@ -22,6 +22,7 @@ import type { CheckResult, GameTask, TrainingView } from '../tasks/types';
 import type { GameExample } from '../examples/types';
 import { mapNodeOf, mapToSceneCode, sceneToMap, type ArtMap } from '../core/artMaps';
 import { gameHtmlFile, gameZip, projectZip, readProjectZip } from '../core/archive';
+import { soundBytes, type SoundRecipe } from '../core/sound';
 import { loadRuntimeSource } from './runner';
 import type { EnvSpec } from '../ml/env';
 import type { CemOptions, Generation } from '../ml/cem';
@@ -158,7 +159,7 @@ export class Store {
       let view: SceneData | null = null;
       const shown = (id: string) => { if (!id.includes(':')) return !!findNode(s!, id); try { view ??= expandScene(doc.project, s!); } catch { return false; } return !!findNode(view, id); };
       this.selection = s ? this.selection.filter(shown) : [];
-      this.tabs = this.tabs.filter((t) => t.kind === 'scene' || doc.project.scripts.some((x) => x.path === t.path) || doc.project.assets.some((a) => a.path === t.path && a.svg !== undefined));
+      this.tabs = this.tabs.filter((t) => t.kind === 'scene' || doc.project.scripts.some((x) => x.path === t.path) || doc.project.assets.some((a) => a.path === t.path && (a.svg !== undefined || !!a.sound)));
       if (this.tab.kind === 'script' && !this.tabs.some((t) => t.kind === 'script' && t.path === (this.tab as { path: string }).path)) this.tab = { kind: 'scene' };
       this.drawSvgs();
       this.scheduleRecovery();
@@ -765,6 +766,8 @@ export class Store {
    */
   private drawSvgs(): void {
     for (const a of this.doc?.project.assets ?? []) {
+      // A made sound (project.writeSound): its .wav, made from its recipe. Like an SVG, a new recipe is a new id.
+      if (a.sound && !this.blobs.has(a.id)) { this.blobs.set(a.id, new Blob([soundBytes(a.sound) as BlobPart], { type: 'audio/wav' })); continue; }
       if (a.svg === undefined || this.blobs.has(a.id)) continue;
       const blob = new Blob([a.svg], { type: 'image/svg+xml' }), id = a.id;
       this.blobs.set(id, blob);
@@ -780,6 +783,14 @@ export class Store {
     })));
   }
 
+  /** Play a sound asset in the editor, to hear it (the ▶ beside a sound). */
+  previewSound(path: string): void {
+    const a = this.doc?.project.assets.find((x) => x.path === path), blob = a && this.blobs.get(a.id);
+    if (!blob) { this.say(`There is no sound "${path}"`); return; }
+    const audio = new Audio(URL.createObjectURL(blob));
+    void audio.play().catch(() => this.say('The browser would not play the sound'));
+  }
+
   imageFor(path: string | null): HTMLImageElement | undefined {
     const a = path ? this.doc?.project.assets.find((x) => x.path === path) : undefined;
     return a ? this.images.get(a.id) : undefined;
@@ -788,7 +799,9 @@ export class Store {
   // ── scripts ─────────────────────────────────────────────────────────────
 
   // An SVG image (assets/….svg) is text too, and opens in the same editor: its saved text is the asset's source.
+  // So is a made sound (assets/….wav): its text is its recipe, as JSON.
   private savedText(path: string): string | undefined {
+    if (path.endsWith('.wav')) { const r = this.doc?.project.assets.find((a) => a.path === path)?.sound; return r ? `${JSON.stringify(r, null, 2)}\n` : undefined; }
     return path.endsWith('.svg') ? this.doc?.project.assets.find((a) => a.path === path)?.svg : this.doc?.project.scripts.find((s) => s.path === path)?.source;
   }
   scriptText(path: string): string { return this.buffers.get(path) ?? this.savedText(path) ?? ''; }
@@ -803,9 +816,30 @@ export class Store {
     if (path.endsWith('.svg')) {
       // A picture that is not a picture yet (no xmlns, no size) stays unsaved, with the reason said.
       if (this.act((d) => d.writeSvg(path, b)) === undefined) return;
+    } else if (path.endsWith('.wav')) {
+      // A recipe that does not read as JSON, or is not a sound yet, stays unsaved, with the reason said.
+      let recipe: SoundRecipe;
+      try { recipe = JSON.parse(b); } catch (e) { this.say(`${path} is not saved: ${e instanceof Error ? e.message : String(e)}`); return; }
+      if (this.act((d) => d.writeSound(path, recipe)) === undefined) return;
     } else this.act((d) => d.writeScript(path, b));
     this.buffers.delete(path);
     this.changed();
+  }
+
+  /** A new sound effect, a coin's "ding" to start from, opened as its recipe. */
+  newSound(stem: string): void {
+    const name = stem.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!name || !this.doc) return;
+    let path = `assets/${name}.wav`, k = 2;
+    while (this.doc.project.assets.some((a) => a.path === path)) path = `assets/${name}_${k++}.wav`;
+    const start: SoundRecipe = { wave: 'square', from: 880, to: 1760, length: 0.15, attack: 0.005, volume: 0.4 };
+    if (this.act((d) => d.writeSound(path, start, `New sound ${path}`)) !== undefined) this.openScript(path);
+  }
+
+  /** Play a recipe that may not be saved yet (the sound editor's ▶). */
+  hearRecipe(recipe: SoundRecipe): void {
+    const audio = new Audio(URL.createObjectURL(new Blob([soundBytes(recipe) as BlobPart], { type: 'audio/wav' })));
+    void audio.play().catch(() => this.say('The browser would not play the sound'));
   }
 
   /** A new SVG image, a plain rectangle to start from, opened as text. */
@@ -864,7 +898,7 @@ export class Store {
     }
     this.output = [{ level: 'system', text: `▶ Running ${scene}` }];
     const assets = await Promise.all(p.assets.map(async (a) => ({ path: a.path, mime: a.mime, bytes: await (this.blobs.get(a.id) ?? new Blob()).arrayBuffer() })));
-    const game = await runGame({ project: p, scene, assets, container, onMessage: (m) => this.onRuntime(m), ...(opts.train ? { train: opts.train } : {}) });
+    const game = await runGame({ project: p, scene, assets, container, onMessage: (m) => this.onRuntime(m), saves: this.savedGames(), ...(opts.train ? { train: opts.train } : {}) });
     this.running = { game, scene, paused: false, live: null };
     if (this.task && !this.task.ran) { this.task = { ...this.task, ran: true }; this.scheduleCheck(0); }
     if (this.task && this.watchingAgent && !this.task.watched) { this.task = { ...this.task, watched: true }; this.scheduleCheck(0); }
@@ -872,8 +906,40 @@ export class Store {
     game.frame.focus();
   }
 
+  // ── saved games (engine/saves.ts) ─────────────────────────────────────
+  // The game's frame cannot reach browser storage, so the editor keeps each project's save slots, in this
+  // page's storage under the project's id. They are not part of the project: Export does not include them.
+  private savesKey(): string | null { return this.projectId ? `game-studio-saves:${this.projectId}` : null; }
+
+  /** This project's save slots: JSON text by slot name. */
+  savedGames(): Record<string, string> {
+    const key = this.savesKey();
+    if (!key) return {};
+    try { return JSON.parse(localStorage.getItem(key) ?? '{}'); } catch { return {}; }
+  }
+
+  private keepSave(slot: string, json: string | null): void {
+    const key = this.savesKey();
+    if (!key) return;
+    const all = this.savedGames();
+    if (json === null) delete all[slot]; else all[slot] = json;
+    try { localStorage.setItem(key, JSON.stringify(all)); } catch { this.say('Could not keep the saved game: this browser blocks storage'); }
+  }
+
+  /** Run › Clear saved games: every slot of this project emptied, so the game starts as if never played. */
+  clearSavedGames(): void {
+    const key = this.savesKey();
+    const n = Object.keys(this.savedGames()).length;
+    if (key) try { localStorage.removeItem(key); } catch { /* blocked: nothing kept */ }
+    this.say(n ? `Cleared ${n} saved game${n === 1 ? '' : 's'}` : 'There were no saved games');
+  }
+
   private onRuntime(m: FromRuntime): void {
     if (!this.running) return;
+    if (m.type === 'save') {
+      this.keepSave(m.slot, m.json);
+      this.output.push({ level: 'system', text: m.json === null ? `Save slot "${m.slot}" emptied` : `Saved to slot "${m.slot}"` });
+    }
     if (m.type === 'log') this.output.push({ level: m.level, text: m.text });
     else if (m.type === 'error') this.output.push({ level: 'error', text: m.message, file: m.file, line: m.line, column: m.column, node: m.node });
     else if (m.type === 'paused') this.running.paused = m.paused;
@@ -1126,6 +1192,7 @@ export class Store {
       d.runCode('The finished agent', f.code);
       const p = d.project;
       for (const a of p.assets) if (a.svg !== undefined) assets.push({ path: a.path, mime: a.mime, bytes: new TextEncoder().encode(a.svg).buffer as ArrayBuffer });
+      for (const a of p.assets) if (a.sound) assets.push({ path: a.path, mime: a.mime, bytes: soundBytes(a.sound).buffer as ArrayBuffer });
       const scene = p.settings.mainScene;
       if (!scene) throw new Error('The finished agent has no main scene');
       this.output = [{ level: 'system', text: '▶ The finished agent: what this task builds. Your project is unchanged; ■ Stop, then ▶ Run, to run yours.' }];

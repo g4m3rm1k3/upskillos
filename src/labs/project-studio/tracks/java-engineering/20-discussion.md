@@ -11,6 +11,14 @@ A teammate needs to explain a task without changing its title. We add comments a
 
 ## Add a related table
 
+### Decide which fact each column owns
+
+id identifies one comment independently of its text. task_id relates it to a task, so two comments can belong to the same task without sharing a primary key. author records the server-established identity. body stores bounded text. Every value is required; the foreign key rejects a task id absent from tasks.
+
+The schema does not yet declare a creation timestamp or a chronological index. Therefore the later ORDER BY id promises stable identifier order, not discussion chronology. If chronological conversation is required, add an explicit time/order contract and migrate it rather than assuming random UUID order means creation order.
+
+**Predict:** deleting a task with related comments would require a deliberate policy—reject, cascade, or preserve history differently. We have not implemented deletion, and the foreign key's default restriction prevents silently orphaning comments. A new product operation can change which existing constraints need design work.
+
 A foreign key prevents comments attached to nonexistent tasks. Author stores the authenticated username for this local application; a production identity system should use a stable subject id and separately manage display names. The body limit bounds storage and response size per comment.
 
 Adding a new table with IF NOT EXISTS works for this learning schema. Changing an existing table's shape needs a versioned migration, which we practice later. Restart after adding this schema fragment.
@@ -27,6 +35,14 @@ CREATE TABLE IF NOT EXISTS comments (
 ```
 
 ## Define comment resources and reads
+
+### Reuse the mapping pattern with a new ownership boundary
+
+@RequestMapping contains a taskId placeholder, so every read is scoped by its parent task's identity. The constructor receives JdbcTemplate; it does not construct a separate database connection for each request. The nested Comment record describes response data, while NewComment describes only the client-supplied body.
+
+The SELECT asks for id, author and body from comments belonging to the bound task id. For each row, the mapper constructs a Comment from those three strings. The returned list becomes a JSON array. The UUID in the path is converted to text for the database parameter, keeping its representation consistent with task_id.
+
+An empty array can mean the task has no comments; in this read implementation it can also mean no task with that id exists, because we do not separately query tasks. Creation does perform the existence check. Record this distinction in the API contract; if the product requires GET to distinguish those cases, that is a behavior change needing its own test.
 
 A nested resource communicates which task the discussion belongs to. This small adapter uses JDBC directly; compare that with a separate comment service. Extraction becomes valuable when another entry point or substantial business policy appears. We do not add layers solely to match a diagram.
 
@@ -57,6 +73,16 @@ public class CommentController {
 
 ## Take the author from the security context
 
+### Separate client input from server authority
+
+The parameter taskId comes from the URL, request comes from JSON, and principal comes from authenticated security state. These sources have different trust. A caller can invent a body property named author, but our NewComment record only accepts body and the saved author comes from principal.getName().
+
+The ternary `request.body() == null ? "" : request.body().strip()` selects an empty string for absent text or normalized text otherwise. Only the selected branch is evaluated, so strip is never called on null. The next if rejects emptiness or excessive length before database work.
+
+`SELECT COUNT(*) ... WHERE id=?` returns the number of matching task rows. queryForObject asks for one scalar result of type Integer, supplying Integer.class as the conversion target. A primary key means the count should be zero or one. The null check guards the boxed value before comparing it to zero, which requires unboxing.
+
+The comment id is generated on the server; the author is taken from the principal; the body is normalized user input. Bind all four inserted values in column order. **Predict:** moving author into the request record and trusting it would let a client write someone else's name without changing its login. This is a data provenance failure even if SQL parameters and CSRF remain correct.
+
 Principal is the identity established by the security filter chain. There is no author field in NewComment, so a client cannot impersonate someone through this request. The existence check improves the not-found response; the foreign key is still the final data integrity boundary.
 
 There is no task deletion in this release. If deletion is added, consider a concurrent deletion between the check and insert and translate the resulting constraint failure appropriately. Design correctness is always relative to a set of supported operations.
@@ -79,6 +105,16 @@ Type this fragment yourself. Append to `src/main/java/workspace/CommentControlle
 ```
 
 ## Give a task an independent discussion component
+
+### Decode props destructuring and state ownership
+
+A component receives one props object. `Discussion({ taskId }: { taskId: string })` destructures its taskId property into a local name and annotates the expected props shape. It is not a Java constructor. Board supplies the value with `<Discussion taskId={task.id} />` for each rendered task.
+
+Each mounted Discussion instance has its own comments, body, message and busy state. The path template inserts that instance's id into the nested URL. Load is a user-triggered action, so rendering a board does not immediately request every discussion. This reduces initial requests at the cost of requiring an explicit load before seeing comments.
+
+Send awaits creation, clears only the accepted draft, then reloads this discussion. If the reload fails after creation, the comment may already be stored. That is the same acceptance-versus-refresh distinction as the board. Reuse that reasoning rather than treating every component as a new special case.
+
+**Trace with two tasks:** type a draft under task A and expand task B. B should have its own empty draft. Then refresh the board and inspect whether A's identity and draft are preserved. This tests the interaction between parent keys and child state ownership.
 
 This component owns its draft and fetched comments. TaskId is a prop from the parent, not duplicated state. Load is explicit so collapsed discussions do not fetch every thread on the board. The same API helper carries authentication and CSRF behavior.
 
@@ -109,6 +145,14 @@ export function Discussion({ taskId }: { taskId: string }) {
 
 ## Render discussion with named controls
 
+### Follow the native structure beneath React
+
+Details contains a summary control that toggles disclosure using built-in browser interaction. Load comments has type button so it does not accidentally become a form submission control if markup is later rearranged. The comment form appears after the board's creation form has closed; forms must not nest.
+
+The template `comment-${taskId}` creates a distinct id for each input. The label's htmlFor expression produces exactly that same string. A shared id such as comment on every row would make label targeting ambiguous. Both dynamic expressions must use the same identity source.
+
+The comments map produces list items keyed by comment id. Strong wraps the author with semantic emphasis, while the body remains an ordinary escaped text expression. Browser safety does not depend on authors being honest; even a comment containing markup-like text remains text here.
+
 Unique input ids keep labels associated with the correct task's field. Details and summary provide native disclosure behavior. The comment form is inside the task list, not inside the board's create form; nested forms would be invalid HTML.
 
 In Board.tsx, type `import { Discussion } from './Discussion';` beside the other imports. Immediately after the Advance button in each task's li, type `<Discussion taskId={task.id} />`. This is a focused insertion, not a replacement of the component. Test with two tasks to ensure drafts stay attached to the correct ids.
@@ -135,6 +179,14 @@ run "npm run build --prefix frontend" timeout=180
 ```
 
 ## Reject forged attribution
+
+### Trace the attempted forgery through input conversion
+
+The test creates a real task and sends JSON containing body plus an extra author property. The test identity is alice. Under our current Jackson configuration the unknown author field is ignored when mapping NewComment, and the handler obtains alice from Principal. The response must therefore contain author alice even though the submitted text asked for admin.
+
+`"/api/tasks/" + task.id() + "/comments"` concatenates the fixed path pieces and the task's UUID string representation. The quoted JSON inside the Java string uses escaped double quotes, as in ApiTest. The request includes an editor role and CSRF token so permission or token denial does not hide the attribution behavior.
+
+`.andExpect(jsonPath("$.author").value("alice"))` checks the actual returned field. A successful status alone would miss forged attribution. For blank-body and unknown-task cases, first write the expected error status and unchanged database state, then add requests varying only that input. Do not declare the whole discussion feature tested by this one case.
 
 The attacker-controlled author field is ignored by the request record mapping; the response must still name alice. This test crosses JSON binding, authorization, principal injection and persistence. Add your own blank-body and unknown-task cases before moving on; keep the expected status tied to the published API contract.
 

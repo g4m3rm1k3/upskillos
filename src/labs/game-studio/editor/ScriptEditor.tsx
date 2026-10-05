@@ -8,6 +8,7 @@ import type { Store } from './store';
 import { C, useStore } from './kit';
 import { ENGINE_DTS } from './engineTypes';
 import { svgSize } from '../core/api';
+import { SAMPLE_RATE, soundProblem, synthesize, type SoundRecipe } from '../core/sound';
 
 /** An SVG image beside its text: the picture as it stands now, unsaved edits included, or what is wrong with it. */
 function SvgPreview({ text }: { text: string }) {
@@ -23,6 +24,49 @@ function SvgPreview({ text }: { text: string }) {
           </div>
           <div style={{ marginTop: 6 }}>{size.width} × {size.height} pixels (shown {Math.min(size.width * 2, 270) / size.width}×). Save (Ctrl/Cmd+S) and every sprite using it shows it.</div>
         </>}
+    </div>
+  );
+}
+
+/** A sound's recipe beside its text: the waveform as it stands now (unsaved edits included), ▶ to hear it, and what
+ *  each number means. */
+function SoundPreview({ store, text }: { store: Store; text: string }) {
+  let recipe: SoundRecipe | null = null, problem: string | null = null;
+  try { recipe = JSON.parse(text); problem = soundProblem(recipe!); } catch (e) { problem = e instanceof Error ? e.message : String(e); }
+  const canvas = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = canvas.current;
+    if (!c) return;
+    const g = c.getContext('2d')!, w = c.width, h = c.height;
+    g.fillStyle = '#1f2126'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(255,255,255,0.15)'; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+    if (problem || !recipe) return;
+    // Each column shows the highest and lowest sample it covers: the waveform's outline.
+    const s = synthesize(recipe), per = s.length / w;
+    g.strokeStyle = '#69db7c'; g.beginPath();
+    for (let x = 0; x < w; x++) {
+      let lo = 0, hi = 0;
+      for (let i = Math.floor(x * per); i < Math.min(s.length, Math.floor((x + 1) * per) + 1); i++) { lo = Math.min(lo, s[i]); hi = Math.max(hi, s[i]); }
+      g.moveTo(x + 0.5, h / 2 - hi * h / 2); g.lineTo(x + 0.5, h / 2 - lo * h / 2);
+    }
+    g.stroke();
+  });
+  return (
+    <div data-testid="sound-preview" style={{ width: 300, borderRight: `1px solid ${C.border}`, padding: 10, overflow: 'auto', fontSize: 12, color: C.dim, background: '#2a2d33' }}>
+      <div style={{ color: C.faint, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>WAVEFORM</div>
+      <canvas ref={canvas} width={270} height={90} style={{ display: 'block', borderRadius: 4 }} />
+      {problem
+        ? <div data-testid="sound-problem" style={{ color: C.warn, marginTop: 6 }}>{problem}</div>
+        : <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button data-testid="hear-recipe" onClick={() => store.hearRecipe(recipe!)} style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 4, padding: '3px 10px', cursor: 'pointer' }}>▶ Hear it</button>
+          <span>{Math.round(recipe!.length * SAMPLE_RATE)} samples. Save (Ctrl/Cmd+S) to use it.</span>
+        </div>}
+      <div style={{ marginTop: 10, lineHeight: 1.5 }}>
+        <div><b>wave</b>: square (bright), triangle (soft), sine (pure), saw (buzzy), noise (hiss)</div>
+        <div><b>from</b>, <b>to</b>: the pitch at the start and end, in hertz; it slides between them. 440 is the A above middle C; double it for an octave up.</div>
+        <div><b>length</b>: seconds. <b>attack</b>: seconds to fade in, then it fades out to the end.</div>
+        <div><b>volume</b>: 0 to 1. <b>seed</b>: which noise.</div>
+      </div>
     </div>
   );
 }
@@ -43,7 +87,7 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
   useStore(store);
   const ed = useRef<MonacoEditor | null>(null);
   const text = store.scriptText(path);
-  const svg = path.endsWith('.svg');
+  const svg = path.endsWith('.svg'), wav = path.endsWith('.wav');
 
   const reveal = store.reveal;
   useEffect(() => {
@@ -109,11 +153,12 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {/* The preview on the left: a task's panel sits over the right of this area. */}
         {svg && <SvgPreview text={text} />}
+        {wav && <SoundPreview store={store} text={text} />}
         <div style={{ flex: 1, minWidth: 0 }}>
         <Editor
           path={`file:///${path}`}
           keepCurrentModel   // every script stays a model (see syncModels), so closing a tab does not dispose one
-          language={svg ? 'xml' : 'javascript'}
+          language={svg ? 'xml' : wav ? 'json' : 'javascript'}
           theme="vs-dark"
           value={text}
           onChange={(v) => store.editScript(path, v ?? '')}

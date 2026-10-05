@@ -9,6 +9,7 @@
 // storage). A project model is small: a scene of a thousand nodes is a few
 // hundred kilobytes of JSON.
 
+import type { SoundRecipe } from './sound';
 import type { BrainData, NodeData, Project, PropValue, SceneData } from './types';
 import { addInstance, addNode, connect, deleteNode, disconnect, duplicate, nodeHandle as nodeHandleFor, projectApi, rename, reparent, runSceneCode, setGroups, setProp, setScript } from './api';
 import { expandScene } from './instances';
@@ -263,6 +264,11 @@ export class Doc {
 
   writeScript(path: string, source: string, label = `Save ${path}`): void {
     this.run(label, null, `project.writeScript(${lit(path)}, ${lit(source)})`, () => projectApi(this.project).writeScript(path, source));
+  }
+
+  /** A sound effect from a recipe (see ProjectApi.writeSound). Returns its id. */
+  writeSound(path: string, recipe: SoundRecipe, label = `Save ${path}`): string {
+    return this.run(label, null, `project.writeSound(${lit(path)}, ${lit(recipe)})`, () => projectApi(this.project).writeSound(path, recipe));
   }
 
   /** An SVG image from its source text (see ProjectApi.writeSvg). Returns its id. */

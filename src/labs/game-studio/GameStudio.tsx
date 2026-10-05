@@ -188,6 +188,7 @@ export default function GameStudio({ onBack }: { onBack?: () => void }) {
       ['Restart', () => store.restart(), '', !running],
       ['Stop', () => store.stop(), 'F8', !running],
       ['Train an agent…', () => setDialog('train'), '', noProject],
+      ['Clear saved games', () => store.clearSavedGames(), '', noProject],
     ],
     Help: [
       ['API reference', () => store.showReference(), 'F1'],

@@ -9,11 +9,19 @@ console: true
 
 **Common Ground** is a collaborative project workspace. You will build a task board with a browser interface, persistent tasks and discussion, permissions, concurrent editing protection, and an operational release process. The project starts small because each addition must be understood, not because the final application is a toy.
 
-This course is for self-taught scripters, graduates, and people who can assemble programs but want to understand and own their behavior. No framework knowledge is assumed. A little familiarity with variables is helpful; the opening lessons explain Java execution directly. There is no agent section.
+This course is for self-taught scripters, graduates, and people who can assemble programs but want to understand and own their behavior. No programming or framework knowledge is assumed. The opening instruction introduces values, variables, method calls, command-line arguments and decisions before asking you to combine them. There is no agent section.
 
 Every code fragment is typed by you. There is no starter download or solution injection. Read the explanation, predict the behavior, type the fragment, and inspect what happens. Small fragments sometimes leave an unfinished class until the next step; the lesson tells you when to compile. Optional challenges never unlock or block teaching content. Passing checks is evidence about particular behavior, not a certificate of mastery.
 
 ## Decide what the first release means
+
+### Translate scope into examples you can observe
+
+A user story such as “I want to track work” is too broad to test directly. Make one event and its outcome explicit: an editor submits `Plan release`; the accepted task has TODO status and revision 0; after restarting the server it can still be retrieved. That example names the actor, input, state and durability expectation without selecting a database library.
+
+A **non-goal** describes work intentionally excluded from this release. “No public signup” means our local identity setup is sufficient for this learning release, not that authentication is unimportant. A **constraint** is a condition the implementation must respect, such as preserving a rejected draft or keeping unauthorized writers out. Distinguish both from an assumption, such as expecting one small team's workload.
+
+For decisions/001-scope.md, write an example of success and an example of rejection for creation, advancing and discussion. A rejection is part of the product: after a stale edit, the previous winner's state must remain intact and the losing user must have a recovery path. We will revisit these examples at release rather than declaring completion because all planned files exist.
 
 A requirement states observable behavior, not an implementation. “Use React” chooses a tool; “a teammate can see whether a task was saved” describes behavior. Our first release supports one team's shared board. Editors create tasks, change status and discuss work; readers inspect it. Authentication uses local development accounts before external identity becomes an extension.
 
@@ -28,6 +36,18 @@ file decisions/001-scope.md
 ```
 
 ## Prepare a real development folder
+
+### Know what is being installed
+
+An editor changes source text. A terminal displays a shell, which launches commands. A compiler translates a programming language into executable instructions. A runtime executes those instructions. These roles may appear together in one application but are not interchangeable.
+
+The JDK, Java Development Kit, contains javac for compilation and java for launching the Java Virtual Machine. Maven coordinates building multiple Java files and resolving libraries. Git records source history. Node runs JavaScript tools outside the browser, and npm installs packages and runs their scripts. You do not need to know their internal implementation to start, but you should know which role a failed command belongs to.
+
+A **path** identifies a file or directory. A relative path starts from the process's current directory; an absolute path starts from the filesystem's root. Our instructions say project root to mean the learning folder containing your decisions, scratch work and later pom.xml. Do not type these learning commands in the UpSkillOS source repository.
+
+Open the terminal in that learning folder. On macOS/Linux, pwd prints the current directory and ls lists its contents. In PowerShell, Get-Location and Get-ChildItem provide those observations. Use your editor's folder-opening action to select the same directory. If a file exists in the explorer but a command cannot find it, compare these locations before reinstalling tools.
+
+Each version command below asks one installed program to report information and exit. Some print to the diagnostic stream rather than standard output; seeing a version is still expected. “Command not found” means the shell could not locate the executable, not that your Java source is wrong. A version check establishes availability, not that a whole project can build.
 
 Choose a new empty folder in Project Studio. Keep it for this entire course. The explorer's new-file action accepts paths; create the parent folders when needed. Files you type are ordinary files on disk. In the browser edition, use your own editor and terminal alongside these lessons; execution checks require the desktop edition.
 
@@ -56,6 +76,14 @@ run "node --version"
 ```
 
 ## Keep evidence without blocking progress
+
+### Know what finishing this course means
+
+The guided path ends with a locally packaged Common Ground application and a repeatable release/recovery exercise. The optional independent change evaluates whether you can transfer that reasoning without another implementation fragment. You may finish reading and the guided build while that evidence remains deferred.
+
+Keep separate entries for **observed**, **explained**, and **independently applied**. For example, seeing a stale-write test pass is an observation. Tracing why its SQL predicate matters is an explanation. Designing equivalent protection in an unfamiliar workflow is transfer. Checking a box for one should not silently claim the others.
+
+When a guided experiment deliberately breaks behavior, restore the specified working version before proceeding with the build. An optional challenge uses its own files or branch so deferring it never leaves a required application class missing. Later prerequisites are taught in guided material, even when a challenge revisits them.
 
 Create `learning-log.md`. For each lesson record a prediction, one observed result, and one design choice you could explain to another engineer. When an expectation is wrong, record the smallest example that changed your mind.
 

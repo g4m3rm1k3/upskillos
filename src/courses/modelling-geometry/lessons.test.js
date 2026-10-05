@@ -78,6 +78,7 @@ import lesson105, { checkTip } from './10-animation/005-motion-through-a-hierarc
 import lesson106, { checkWalkSpeed } from './10-animation/006-a-walk-cycle.js';
 import lesson107, { checkClipBytes } from './10-animation/007-animation-in-files.js';
 import lesson111, { checkBoneTurn } from './11-rigging-and-skinning/001-bones.js';
+import lesson112, { checkPoseTail } from './11-rigging-and-skinning/002-posing.js';
 import { evalExpr } from '../../engines/mesh/core/expr';
 
 // fileURLToPath, not .pathname: on Windows a file URL keeps a leading slash
@@ -3354,5 +3355,61 @@ describe('lesson 11.1: bones', () => {
     expect(at('Math.acos(0.8) * 180 / Math.PI')).toMatch(/horizontal/);
     expect(at('Math.acos(-0.6) * 180 / Math.PI')).toMatch(/reflex/);
     expect(at('Math.acos(3) * 180 / Math.PI')).toMatch(/unit direction/);
+  });
+});
+
+describe('lesson 11.2: posing', () => {
+  const cells = lesson112.intuition.visualizations[0].props.lesson.cells;
+  const challenge = cells.find((c) => c.type === 'challenge');
+  const run = (cell) => {
+    const out = [];
+    const ctx = new Proxy({}, { get: () => () => {}, set: () => true });
+    const document = { createElement: () => ({ style: {}, getContext: () => ctx }), body: { appendChild: () => {} } };
+    new Function('console', 'document', cell.startCode)({ log: (...a) => out.push(a.join(' ')), error: () => {} }, document);
+    return out;
+  };
+  const chain = [
+    { name: 'Upper', parent: null, head: [0, 0, 0], tail: [0, 1, 0], pose: [Math.PI / 6, 0, 0] },
+    { name: 'Lower', parent: 'Upper', head: [0, 1, 0], tail: [0, 2, 0], pose: [Math.PI / 4, 0, 0] },
+    { name: 'Hand', parent: 'Lower', head: [0, 2, 0], tail: [0, 2.5, 0], pose: [0, 0, 0] },
+  ];
+
+  it('one bone, the chain, the order, the skin matrix and the picture', () => {
+    expect(run(cells[0])).toEqual(['rest tail (0, 1, 0) → posed tail (0, 0.866, 0.5)', 'its head stays at (0, 0, 0)']);
+    expect(run(cells[1])).toEqual([
+      'Upper  head (0, 0, 0)  tail (0, 0.866, 0.5)  turned 30° from +y',
+      'Lower  head (0, 0.866, 0.5)  tail (0, 1.1248, 1.4659)  turned 75° from +y',
+      'Hand   head (0, 1.1248, 1.4659)  tail (0, 1.2543, 1.9489)  turned 75° from +y',
+    ]);
+    expect(run(cells[2])).toEqual(['parents first:  Lower tail (0, 1.1248, 1.4659), Hand tail (0, 1.2543, 1.9489)', 'children first: Lower tail (0, 1.7071, 0.7071), Hand tail (0, 2.5, 0)']);
+    expect(run(cells[3])).toEqual(['rest pose: S rows [1, 0, 0] [0, 1, 0] [0, 0, 1], translation (0, 0, 0)', 'posed: the vertex (0.1, 1.5, 0) goes to (0.1, 0.9954, 0.983)', "check: Lower's rest tail (0, 2, 0) goes to (0, 1.1248, 1.4659), its posed tail"]);
+    expect(run(cells[4])).toEqual(['drawn: 3 bones, rest and posed, and one vertex']);
+  });
+
+  it('the notebook agrees with MeshLab\'s boneMatrices and posedEnds', async () => {
+    const { boneMatrices, posedEnds } = await import('../../engines/mesh/core/armature');
+    const { Vector3 } = await import('three');
+    const f = (v) => `(${v.map((x) => +(Math.abs(x) < 1e-9 ? 0 : x).toFixed(4)).join(', ')})`;
+    const ends = posedEnds(chain);
+    const lines = run(cells[1]);
+    for (const [i, n] of ['Upper', 'Lower', 'Hand'].entries()) expect(lines[i]).toContain(`head ${f(ends.get(n).head)}  tail ${f(ends.get(n).tail)}`);
+    const v = new Vector3(0.1, 1.5, 0).applyMatrix4(boneMatrices(chain).get('Lower').skin);
+    expect(run(cells[3])[1]).toBe(`posed: the vertex (0.1, 1.5, 0) goes to ${f([v.x, v.y, v.z])}`);
+    const child = posedEnds([
+      { name: 'Upper', parent: null, head: [0, 0, 0], tail: [0, 1, 0], pose: [0, 0, Math.PI / 2] },
+      { name: 'Lower', parent: 'Upper', head: [0, 1, 0], tail: [0, 2, 0], pose: [0, 0, 0] },
+    ]).get('Lower').tail;
+    expect(checkPoseTail(`const tail = [${child.map((x) => +x.toFixed(4)).join(', ')}]`).pass).toBe(true);
+  });
+
+  it('the challenge: each slip is named', () => {
+    const at = (v) => checkPoseTail(`const tail = [${v}]`).message;
+    expect(checkPoseTail(challenge.solutionCode).pass).toBe(true);
+    expect(checkPoseTail(challenge.startCode).pass).toBe(false);
+    expect(at('0, 2, 0')).toMatch(/rest tail/);
+    expect(at('2, 0, 0')).toMatch(/wrong side/);
+    expect(at('-1, 0, 0')).toMatch(/Lower's head/);
+    expect(at('-1, 1, 0')).toMatch(/turns with its parent/);
+    expect(at('1, 2')).toMatch(/three/);
   });
 });

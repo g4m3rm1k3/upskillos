@@ -4,7 +4,7 @@ import { newProject } from '../core/project';
 import { nodeTypes, propsOf, type PropDef } from '../core/registry';
 import type { PropValue } from '../core/types';
 import { Game, PHYSICS_DT, type DrawItem, type ScriptError, type View } from './game';
-import { AnimatedSprite2D, AnimationPlayer, Area2D, CharacterBody2D, Node, Node2D, RigidBody2D, Sprite2D } from './nodes';
+import { AnimatedSprite2D, AnimationPlayer, Area2D, AudioStreamPlayer, CharacterBody2D, Node, Node2D, RigidBody2D, Sprite2D } from './nodes';
 
 const recorder = () => { const frames: DrawItem[][] = [], views: View[] = []; return { frames, views, renderer: { frame: (items: DrawItem[], view: View) => { frames.push(items); views.push(view); } } }; };
 
@@ -312,6 +312,8 @@ describe('no fake controls', () => {
       const auto: Record<string, PropValue> = !autoTexture ? {} : type === 'Sprite2D' ? { texture: 'assets/a.png' } : type === 'AnimatedSprite2D' ? ANIMATED : type === 'AnimationPlayer' ? PLAYER : type === 'TileMapLayer' ? TILES : {};
       const n = d.addNode(id, type, undefined, { name: 'N', props: { ...auto, ...props } });
       if (type !== 'Sprite2D' && type !== 'AnimatedSprite2D') d.addNode(id, 'Sprite2D', n.id, { name: 'Drawn', props: { texture: 'assets/a.png' } });
+      // A container places its children apart: a second one shows the gap.
+      if (type.endsWith('BoxContainer')) d.addNode(id, 'Label', n.id, { name: 'Second' });
     });
     const rec = recorder();
     const g = new Game(project, s, rec.renderer);
@@ -373,6 +375,30 @@ describe('no fake controls', () => {
     }),
     // A column of solid tiles (8 px, x 100 to 108, y 0 to 32) stops the probe, unless it is on a layer the probe does not scan.
     'TileMapLayer.collisionLayer': (v) => outcome((d, id) => { probe(d, id); d.addNode(id, 'TileMapLayer', undefined, { name: 'N', props: { position: { x: 100, y: 0 }, tileset: 'tilesets/t.tileset', cells: [0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0], ...(v === undefined ? {} : { collisionLayer: v }) } }); }),
+    // Not physics: what a sound player tells the audio output over a second, from a 0.4 s sound that autoplays
+    // (except when autoplay itself is the property changed: then it starts off).
+    ...Object.fromEntries(['stream', 'volume', 'pitchScale', 'autoplay', 'loop'].map((prop) => [`AudioStreamPlayer.${prop}`, (v: PropValue | undefined) => {
+      const { project, scene: s } = scene((d, id) => {
+        d.writeSound('assets/a.wav', { wave: 'square', from: 440, to: 440, length: 0.4 });
+        d.writeSound('assets/b.wav', { wave: 'sine', from: 440, to: 440, length: 0.4 });
+        d.addNode(id, 'AudioStreamPlayer', undefined, { name: 'N', props: { stream: 'assets/a.wav', autoplay: prop !== 'autoplay', ...(v === undefined ? {} : { [prop]: prop === 'stream' ? 'assets/b.wav' : v }) } });
+      });
+      const calls: unknown[] = [];
+      const g = new Game(project, s, recorder().renderer, { audio: { play: (...a) => calls.push(['play', ...a]), stop: (id) => calls.push(['stop', id]) } });
+      g.start();
+      for (let i = 0; i < 60; i++) g.step(1 / 60);
+      return JSON.stringify({ calls, playing: g.root.get<AudioStreamPlayer>('N').playing });
+    }])),
+    // Not physics: a container's gap shows only between two children, so its scenario is a column of two labels.
+    'BoxContainer.separation': (v) => {
+      const { project, scene: s } = scene((d, id) => {
+        const box = d.addNode(id, 'VBoxContainer', undefined, { name: 'N', props: v === undefined ? {} : { separation: v } });
+        d.addNode(id, 'Label', box.id, { name: 'A' }); d.addNode(id, 'Label', box.id, { name: 'B' });
+      });
+      const rec = recorder();
+      new Game(project, s, rec.renderer).start();
+      return JSON.stringify(rec.frames.at(-1)!.map((i) => [i.x, i.y]));
+    },
     // An area on the probe's path notices it only if its mask scans the probe's layer.
     'Area2D.collisionMask': (v) => outcome((d, id) => { probe(d, id); wall(d, id, 'Area2D', 'N', v === undefined ? {} : { collisionMask: v }); }),
   };
@@ -382,6 +408,8 @@ describe('no fake controls', () => {
     for (const t of nodeTypes()) {
       for (const def of propsOf(t.type)) {
         const key = `${t.type}.${def.name}`, own = t.props.includes(def);
+        // A type that cannot be added (BoxContainer) is checked through its scenarios, and through the types built on it.
+        if (!t.addable && !PHYSICS[key]) continue;
         if (own && PHYSICS[key]) {
           expect(PHYSICS[key](changed(def)), `${key} is in the registry but changes nothing its physics does`).not.toBe(PHYSICS[key](undefined));
         } else {

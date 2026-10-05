@@ -74,12 +74,28 @@ export class PhaserRenderer implements Renderer {
         const r = o as Phaser.GameObjects.Rectangle;
         r.setSize(it.width, it.height);
         r.setFillStyle(Phaser.Display.Color.HexStringToColor(it.color).color, 1);
+        if (it.stroke && it.strokeWidth) r.setStrokeStyle(it.strokeWidth, Phaser.Display.Color.HexStringToColor(it.stroke).color, 1);
+        else r.isStroked = false;
       }
       else if (it.kind === 'text') {
         const t = o as Phaser.GameObjects.Text;
-        if (t.text !== it.text) t.setText(it.text);
         t.setFontSize(it.fontSize);
         t.setColor(it.color);
+        // A button's words are centred on it; a label's top-left is its position. Wrapped at `wrap` pixels when given.
+        t.setOrigin(it.center ? 0.5 : 0, it.center ? 0.5 : 0);
+        if (it.visible === undefined) {
+          if ((t.style.wordWrapWidth ?? 0) !== (it.wrap ?? 0)) t.setWordWrapWidth(it.wrap || null);
+          if (t.text !== it.text) t.setText(it.text);
+        } else {
+          // Typewriter: wrap the whole text first, then show its first `visible` letters on those same lines.
+          t.setWordWrapWidth(it.wrap || null);
+          const lines = it.wrap ? t.getWrappedText(it.text) : it.text.split('\n');
+          let left = it.visible;
+          const shown = lines.map((l) => { const part = l.slice(0, Math.max(0, left)); left -= l.length; return part; });
+          t.setWordWrapWidth(null);
+          const text = shown.join('\n');
+          if (t.text !== text) t.setText(text);
+        }
       }
     }
     for (const [id, rec] of this.objects) if (!seen.has(id)) { this.drop(rec); this.objects.delete(id); }

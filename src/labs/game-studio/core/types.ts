@@ -2,6 +2,7 @@
 //
 // This is the single source of truth (docs/game-studio-architecture.md, ADR 2).
 // The editor changes it only through commands; the runtime receives a copy.
+import type { SoundRecipe } from './sound';
 
 export const FORMAT_VERSION = 4;
 
@@ -80,7 +81,7 @@ export interface TilesetData {
   solid: number[];
 }
 
-export type AssetKind = 'image';
+export type AssetKind = 'image' | 'sound';
 
 /** An imported file. Its bytes live outside the model (storage), keyed by id. */
 export interface AssetData {
@@ -95,6 +96,8 @@ export interface AssetData {
   origin?: string;
   /** An SVG image written as text (project.writeSvg): the picture is this source, kept in the project, not separate bytes. */
   svg?: string;
+  /** A sound made from a recipe (project.writeSound, core/sound.ts): its .wav bytes are made from this, kept in the project. */
+  sound?: SoundRecipe;
 }
 
 /** A named input action and the keys bound to it (KeyboardEvent.code values, e.g. "ArrowLeft", "KeyA"). */

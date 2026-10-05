@@ -17,6 +17,7 @@ import { findNode } from '../core/project';
 import { apply, invert, multiply, type Mat2D } from '../core/math2d';
 import { propValue } from '../core/registry';
 import type { Vec2 } from '../core/types';
+import { widgetParts, WIDGET_TYPES } from '../core/widgets';
 import { bucketEdits, rectEdits, solidRects, tileFlags, tileId, tileRect, tileTransform, usedRect, type CellEdit } from '../core/tiles';
 
 interface Camera { x: number; y: number; zoom: number }
@@ -26,6 +27,21 @@ export const STARTER_DRAG = 'application/x-game-studio-starter';
 
 const measure = document.createElement('canvas').getContext('2d')!;
 const labelFont = (size: number) => `${size}px system-ui, sans-serif`;
+
+/** Text broken into lines no wider than `wrap` pixels (0: only at line breaks), as the game wraps it. */
+function wrapLines(text: string, wrap: number): string[] {
+  if (!wrap) return text.split('\n');
+  const out: string[] = [];
+  for (const para of text.split('\n')) {
+    let line = '';
+    for (const word of para.split(' ')) {
+      const next = line ? `${line} ${word}` : word;
+      if (line && measure.measureText(next).width > wrap) { out.push(line); line = word; } else line = next;
+    }
+    out.push(line);
+  }
+  return out;
+}
 
 /** The rectangle a node is drawn in, in its own coordinates: a sprite's image (centred), a label's text (from its top-left). */
 function localBox(store: Store, p: PlacedNode): { x: number; y: number; w: number; h: number } | null {
@@ -48,9 +64,14 @@ function localBox(store: Store, p: PlacedNode): { x: number; y: number; w: numbe
     return { x: -w / 2, y: -h / 2, w, h };
   }
   if (p.node.type === 'Label') {
-    const size = propValue('Label', p.node.props, 'fontSize') as number;
+    const size = propValue('Label', p.node.props, 'fontSize') as number, wrap = propValue('Label', p.node.props, 'wrapWidth') as number;
     measure.font = labelFont(size);
-    return { x: 0, y: 0, w: Math.max(8, measure.measureText(String(propValue('Label', p.node.props, 'text'))).width), h: size * 1.2 };
+    const lines = wrapLines(String(propValue('Label', p.node.props, 'text')), wrap);
+    return { x: 0, y: 0, w: wrap || Math.max(8, ...lines.map((l) => measure.measureText(l).width)), h: size * 1.2 * lines.length };
+  }
+  if (WIDGET_TYPES.has(p.node.type)) {
+    const sz = propValue(p.node.type, p.node.props, 'size') as Vec2;
+    return { x: 0, y: 0, w: sz.x, h: sz.y };
   }
   return null;
 }
@@ -159,14 +180,36 @@ export function Viewport({ store, onFrameRef }: { store: Store; onFrameRef?: (fn
       if (circle) g.arc(0, 0, box.w / 2, 0, Math.PI * 2); else g.rect(box.x, box.y, box.w, box.h);
       g.fill(); g.stroke();
     }
+    // Widgets (panels, buttons, bars) at rest, as the game draws them (core/widgets.ts).
+    for (const pn of placed) {
+      if (!pn.visible || !WIDGET_TYPES.has(pn.node.type)) continue;
+      set(pn.world);
+      for (const part of widgetParts(pn.node.type, (k) => propValue(pn.node.type, pn.node.props, k)) ?? []) {
+        if (part.kind === 'rect') {
+          g.fillStyle = part.color; g.fillRect(part.x, part.y, part.w, part.h);
+          if (part.stroke && part.strokeWidth) { g.strokeStyle = part.stroke; g.lineWidth = part.strokeWidth; g.strokeRect(part.x + part.strokeWidth / 2, part.y + part.strokeWidth / 2, part.w - part.strokeWidth, part.h - part.strokeWidth); }
+        } else {
+          g.font = labelFont(part.fontSize); g.fillStyle = part.color;
+          g.textAlign = part.center ? 'center' : 'left'; g.textBaseline = part.center ? 'middle' : 'top';
+          g.fillText(part.text, part.x, part.y);
+          g.textAlign = 'left';
+        }
+      }
+    }
     // Labels, over the sprites of their layer.
     for (const pn of placed) {
       if (!pn.visible || pn.node.type !== 'Label') continue;
       set(pn.world);
-      g.font = labelFont(propValue('Label', pn.node.props, 'fontSize') as number);
+      const size = propValue('Label', pn.node.props, 'fontSize') as number;
+      g.font = labelFont(size);
       g.fillStyle = propValue('Label', pn.node.props, 'color') as string;
       g.textBaseline = 'top';
-      g.fillText(String(propValue('Label', pn.node.props, 'text')), 0, 0);
+      measure.font = g.font;
+      let left = propValue('Label', pn.node.props, 'visibleCharacters') as number;   // −1: all of it
+      wrapLines(String(propValue('Label', pn.node.props, 'text')), propValue('Label', pn.node.props, 'wrapWidth') as number).forEach((line, i) => {
+        g.fillText(left < 0 ? line : line.slice(0, left), 0, i * size * 1.2);
+        if (left >= 0) left = Math.max(0, left - line.length);
+      });
     }
     // Each camera's frame: what it will show (the game's size, divided by its zoom), centred on it.
     for (const pn of placed) {

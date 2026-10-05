@@ -11,6 +11,14 @@ Finishing a sequence does not make every engineering judgment automatic. The use
 
 ## Separate principles from particular tools
 
+### Test transfer with a changed assumption
+
+In Java we used immutable Task snapshots. Imagine another language where assigning an object variable also shares mutable fields. Copying our method names would not preserve snapshot behavior. The transferable requirement is that an old observation remain unchanged; you must learn the new language's reference and copying semantics to implement it.
+
+In the browser we retained drafts until server acceptance. Imagine a mobile application that queues writes while offline. A locally queued operation is not yet server acceptance. The useful transfer is to distinguish draft, queued, accepted and failed states explicitly, not to copy the same success message.
+
+For each mapping below, write a small counterexample like these before claiming transfer. Name what stays invariant, what assumption changed, and the experiment that would test the new implementation. Familiarity with vocabulary is the beginning of transfer; predicting behavior under changed conditions is stronger evidence.
+
 Explain these mappings in `learning-review.md`:
 
 - Java interfaces isolate a contract; another language may use protocols, traits or structural typing.
@@ -26,6 +34,26 @@ file learning-review.md
 ```
 
 ## Inspect the product and your next decisions
+
+### Close the guided release with an evidence ledger
+
+Review the first scope note against what the packaged application actually does. For every promised workflow, name its implementation location, a test or manual observation, and a known limit. For example, discussion persists and derives authors from identity, but identifier ordering does not establish chronology. The board reads a bounded first page; a complete search UI remains independent product work.
+
+Your handoff should contain these authored artifacts: scope and design decisions, application/test source, dependency manifests and lockfile, release record, runbook, incident investigation, and learning review. Include the independent-change review only if you attempted it, clearly marked with its actual assessment status. A missing optional challenge is not a missing dependency of the guided product.
+
+Finish with three explanations in your own words:
+
+1. Trace a successful task creation from keyboard input to durable data and back to the screen. Identify every place data changes representation.
+2. Trace two users acting on the same old revision. Explain which UI conveniences help and which server/database rule establishes correctness.
+3. Trace a release that starts successfully but serves no frontend assets. Explain why unit tests could pass, what evidence distinguishes the fault, and how to rebuild and verify the artifact.
+
+If you cannot yet explain one path, record its precise recovery lesson and return later. Do not replace the gap with “the framework handles it.” The aim is to know what the framework does, which contract you rely on, and how to investigate when that contract is not met.
+
+### Choose further work from evidence
+
+The guided series is complete when you have followed its implementation and release/recovery exercises and recorded their outcomes. That does not require passing every optional challenge. Independent competence is a separate claim supported by the rubric and transfer observations, not by reading the final page.
+
+Choose one next application with different assumptions: an offline inventory tool, a reservation system with competing bookings, or a document review workflow. Before selecting libraries, describe its state, identity, consistency and failure requirements. Carry over the engineering method while testing the assumptions that changed. Keep unresolved challenges available as deliberate practice instead of treating them as a reason to stop learning.
 
 Walk through the packaged application as a teammate: sign in, create work, advance it, discuss it, recover from a conflict and find a request in logs. Inspect keyboard behavior and a narrow viewport. List what is implemented and what is still a design exercise.
 

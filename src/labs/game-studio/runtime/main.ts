@@ -8,7 +8,8 @@
 // project.
 
 import * as Phaser from 'phaser';
-import { Game, MATH, scriptGlobals, type ScriptError } from '../engine/game';
+import { Game, MATH, scriptGlobals, type AudioOut, type ScriptError } from '../engine/game';
+import { memoryStore, type SaveStore } from '../engine/saves';
 import { NODE_CLASSES, Node, nodeTypeOf } from '../engine/nodes';
 import { Vec2 } from '../engine/vec2';
 import { sceneAt } from '../core/project';
@@ -50,12 +51,28 @@ let phaser: Phaser.Game | null = null;
 let game: Game | null = null;
 let lastLoad: Extract<ToRuntime, { type: 'load' }> | null = null;
 let paused = false;
+/** The save slots, made at the first load and kept through restarts (engine/saves.ts). */
+let saves: SaveStore | null = null;
+
+/** An exported game keeps its slots in its own page's storage, under the game's name. If that storage is
+ *  blocked (a private window), the slots last only while the page is open. */
+function pageStore(name: string): SaveStore {
+  const key = `game-studio-saves:${name}`;
+  let initial: Record<string, string> = {};
+  try { initial = JSON.parse(localStorage.getItem(key) ?? '{}'); } catch { /* none, or blocked */ }
+  const store = memoryStore(initial, () => {
+    try { localStorage.setItem(key, JSON.stringify(Object.fromEntries(store.list().map((s) => [s, store.get(s)!])))); } catch { /* blocked: memory only */ }
+  });
+  return store;
+}
 
 async function start(msg: Extract<ToRuntime, { type: 'load' }>): Promise<void> {
   lastLoad = msg;
   phaser?.destroy(true);
   phaser = null; game = null; paused = false; trainer = null;
   const { project } = msg;
+  // In the editor, slots come with the load and every change goes back to it; standing alone, the page keeps them.
+  saves ??= window.parent === window ? pageStore(project.name) : memoryStore(msg.saves ?? {}, (slot, json) => send({ type: 'save', slot, json }));
   const scene = sceneAt(project, msg.scene);
   if (!scene) { report({ message: `There is no scene "${msg.scene}"` }, null, null); return; }
 
@@ -70,11 +87,15 @@ async function start(msg: Extract<ToRuntime, { type: 'load' }>): Promise<void> {
   }
 
   const urls = new Map(msg.assets.map((a) => [a.path, URL.createObjectURL(new Blob([a.bytes], { type: a.mime }))]));
+  const sounds = new Set(msg.assets.filter((a) => a.mime.startsWith('audio/')).map((a) => a.path));
   const onError = (e: ScriptError) => report({ message: e.message, stack: e.stack, file: e.file }, e.node, e.phase);
 
   const s = project.settings;
   const scenes = class extends Phaser.Scene {
-    preload() { for (const [path, url] of urls) this.load.image(path, url); }
+    preload() {
+      this.load.on('loaderror', (file: Phaser.Loader.File) => console.warn(`Could not load ${file.key}: the browser could not read it`));
+      for (const [path, url] of urls) if (sounds.has(path)) this.load.audio(path, url); else this.load.image(path, url);
+    }
     create() {
       const classes = scripts!.classes;
       if (msg.train) { void startTraining(this, msg.train, project, classes); return; }
@@ -88,6 +109,8 @@ async function start(msg: Extract<ToRuntime, { type: 'load' }>): Promise<void> {
         game = new Game(project, scene!, renderer, {
           scriptClass: (path) => { const c = classes.get(path); return typeof c === 'function' ? (c as typeof Node) : undefined; },
           onError,
+          saves: saves!,
+          audio: phaserAudio(this),
         });
       } catch (e) { report(e as Error, null, 'build'); return; }
       Object.assign(globalThis, scriptGlobals(game));
@@ -105,6 +128,22 @@ async function start(msg: Extract<ToRuntime, { type: 'load' }>): Promise<void> {
     scene: scenes, banner: false, input: { keyboard: false }, pixelArt: s.pixelArt !== false, roundPixels: s.pixelArt !== false,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   });
+}
+
+/** Sounds played with Phaser's sound manager: one Phaser sound per play, gone when it ends or is stopped. Browsers
+ *  only start audio after the player has clicked or pressed a key in the game, so a sound before that is silent. */
+function phaserAudio(scene: Phaser.Scene): AudioOut {
+  const playing = new Map<number, Phaser.Sound.BaseSound>();
+  return {
+    play(id, stream, o) {
+      if (!scene.cache.audio.exists(stream)) { console.warn(`Could not play ${stream}: it did not load`); return; }
+      const s = scene.sound.add(stream, { volume: o.volume, rate: o.pitch, loop: o.loop });
+      s.once('complete', () => { playing.delete(id); s.destroy(); });
+      playing.set(id, s);
+      s.play();
+    },
+    stop(id) { const s = playing.get(id); if (s) { playing.delete(id); s.stop(); s.destroy(); } },
+  };
 }
 
 // ── Train in view: Q-learning inside the visible game (ml/qlearning.ts) ───

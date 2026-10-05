@@ -25,12 +25,15 @@ import type { Connection, NodeData, Project, PropValue, SceneData } from '../cor
 import { propsOf } from '../core/registry';
 import { decompose } from '../core/math2d';
 import { Input } from './input';
-import { NODE_CLASSES, AnimatedSprite2D, AnimationPlayer, TileMapLayer, type Collider, type TilesetInfo, Area2D, Camera2D, CanvasLayer, CharacterBody2D, Label, Node, Node2D, PhysicsBody2D, RigidBody2D, Sprite2D } from './nodes';
+import { NODE_CLASSES, AnimatedSprite2D, AnimationPlayer, TileMapLayer, type Collider, type TilesetInfo, Area2D, AudioStreamPlayer, BoxContainer, Button, Camera2D, CanvasLayer, CharacterBody2D, Label, Node, Node2D, PhysicsBody2D, RigidBody2D, Sprite2D, nodeTypeOf } from './nodes';
+import { boxLayout, nodeSize, widgetParts, WIDGET_TYPES } from '../core/widgets';
+import { apply, invert } from '../core/math2d';
 import { scans, separate } from './physics';
 import { tilesetGrid } from '../core/tiles';
 import { expandScene, expandSceneRoot } from '../core/instances';
 import { Vec2 } from './vec2';
 import { actPolicy, decide, dot, isLinearQ, pick, type AgentPolicy } from '../ml/brain';
+import { memoryStore, saveApi, type SaveApi, type SaveStore } from './saves';
 
 export const PHYSICS_DT = 1 / 60;
 
@@ -46,11 +49,12 @@ interface DrawBase {
 /** One thing to draw: an image (centred on x, y) or text (top-left at x, y). */
 export type DrawItem =
   | (DrawBase & { kind: 'sprite'; texture: string; flipX: boolean; flipY: boolean })
-  | (DrawBase & { kind: 'text'; text: string; fontSize: number; color: string })
+  /** Text: its top-left at x, y, or its centre when `center`; wrapped at `wrap` pixels when given; only the first `visible` letters shown when given. */
+  | (DrawBase & { kind: 'text'; text: string; fontSize: number; color: string; center?: boolean; wrap?: number; visible?: number })
   /** A tile layer: its top-left at x, y; cells as [x, y, tile, …]; `version` changes when the cells do. */
   | (DrawBase & { kind: 'tiles'; texture: string; tileWidth: number; tileHeight: number; margin: number; spacing: number; columns: number; cells: number[]; version: number })
   /** A filled rectangle centred on x, y (drawn by learning overlays: a Q table's values over a grid). */
-  | (DrawBase & { kind: 'rect'; width: number; height: number; color: string });
+  | (DrawBase & { kind: 'rect'; width: number; height: number; color: string; stroke?: string; strokeWidth?: number });
 
 /** Where the camera looks: the world point at the centre of the screen, and how close. */
 export interface View { x: number; y: number; zoom: number }
@@ -60,18 +64,34 @@ export interface Renderer {
   frame(items: DrawItem[], view: View): void;
 }
 
+/** Where sounds are played: the game says what to play and when to stop; this does the playing (runtime/main.ts). */
+export interface AudioOut {
+  play(id: number, stream: string, o: { volume: number; pitch: number; loop: boolean }): void;
+  stop(id: number): void;
+}
+
 export interface ScriptError { message: string; file: string | null; stack: string; node: string; phase: string }
 
 export interface GameOptions {
   /** The class for a node's script, or undefined if it has none. */
   scriptClass?: (path: string) => typeof Node | undefined;
   onError?: (e: ScriptError) => void;
+  /** Where save slots are kept (engine/saves.ts). Without one, slots last only as long as this game. */
+  saves?: SaveStore;
+  /** Where sounds are played. Without one the game keeps time for sounds but plays nothing (training, tests). */
+  audio?: AudioOut;
 }
 
 export class Game {
   readonly input: Input;
   root: Node;   // replaced when scene.change() switches scenes
   readonly time = { now: 0, frame: 0 };
+  /** The button with the keyboard focus (Button.grabFocus), if any. */
+  _focus: Button | null = null;
+  /** The game's own data (the state global): it survives scene changes; a new Game starts it empty. */
+  readonly state: Record<string, unknown> = {};
+  /** The save global: slots kept in the options' store. */
+  readonly save: SaveApi;
   /** The time step now running: 1/60 in physicsUpdate, the frame time in update. */
   stepDelta = 0;
   private accumulator = 0;
@@ -98,10 +118,40 @@ export class Game {
     this.view = { x: this.screenSize.w / 2, y: this.screenSize.h / 2, zoom: 1 };
     this.input._toWorld = (p) => new Vec2(this.view.x + (p.x - this.screenSize.w / 2) / this.view.zoom, this.view.y + (p.y - this.screenSize.h / 2) / this.view.zoom);
     for (const b of project.brains ?? []) this.brains.set(b.path, b.policy as AgentPolicy);
+    for (const a of project.assets) if (a.sound) this.soundLengths.set(a.path, a.sound.length);
+    this.save = saveApi(opts.saves ?? memoryStore(), this.state);
     this.project = project;
     this.scenePath = scene.path;
     this.root = this.buildTree(expandScene(project, scene).root);
     this.root._game = this;
+  }
+
+  /** Each sound's length in seconds, by path. */
+  private soundLengths = new Map<string, number>();
+  private nextPlayId = 1;
+
+  /** AudioStreamPlayer.play(): start its stream, and note when it will end. */
+  _playSound(n: AudioStreamPlayer): void {
+    if (!n.stream) throw new Error(`"${n.path}" has no sound to play: set its stream`);
+    const length = this.soundLengths.get(n.stream);
+    if (length === undefined) throw new Error(`There is no sound "${n.stream}" in the project`);
+    this._stopSound(n);
+    n._playId = this.nextPlayId++;
+    n._endsAt = n.loop ? Infinity : this.time.now + length / Math.max(0.01, n.pitchScale);
+    this.opts.audio?.play(n._playId, n.stream, { volume: n.volume, pitch: n.pitchScale, loop: n.loop });
+  }
+
+  _stopSound(n: AudioStreamPlayer): void {
+    if (n._endsAt === null) return;
+    n._endsAt = null;
+    this.opts.audio?.stop(n._playId);
+  }
+
+  /** A node leaving the game: its sound stops, and destroyed() runs. */
+  private retire(n: Node): void {
+    n._freed = true;
+    if (n instanceof AudioStreamPlayer) this._stopSound(n);
+    this.call(n, 'destroyed');
   }
 
   /** The project's trained brains, by path. */
@@ -162,9 +212,10 @@ export class Game {
   /** Replace the running scene: the old one's nodes get destroyed(), the new one's ready(). */
   private switchScene(path: string): void {
     this.nextScene = null;
-    const gone = (n: Node) => { for (const c of n._children) gone(c); n._freed = true; this.call(n, 'destroyed'); };
+    const gone = (n: Node) => { for (const c of n._children) gone(c); this.retire(n); };
     gone(this.root);
     this.ids = new WeakMap();
+    this._focus = null;
     this.scenePath = path;
     this.root = this.buildTree(expandSceneRoot(this.project, path));
     this.root._game = this;
@@ -180,6 +231,7 @@ export class Game {
     readyAll(this.root);
     // Autoplay: the named animation starts now, so the first frame already shows its values.
     this.each((n) => { if (n instanceof AnimationPlayer && n.autoplay) this.guard(n, 'autoplay', () => n.play(n.autoplay)); });
+    this.each((n) => { if (n instanceof AudioStreamPlayer && n.autoplay && n.stream) this.guard(n, 'autoplay', () => this._playSound(n)); });
     this.updateCamera(0, true);
     this.draw();
   }
@@ -189,6 +241,8 @@ export class Game {
     this.time.frame++;
     this.time.now += dt;
     this.driveAgents();
+    this.layout();
+    this.ui();
     this.accumulator = Math.min(this.accumulator + dt, 0.25);
     while (this.accumulator >= PHYSICS_DT - 1e-12) {
       this.stepDelta = PHYSICS_DT;
@@ -205,6 +259,8 @@ export class Game {
     this.each((n) => { if (n instanceof AnimationPlayer && this.guard(n, 'animation', () => n._advance(dt))) this.call(n, 'animationFinished', n.currentAnimation); });
     this.each((n) => { if (n instanceof AnimatedSprite2D && this.guard(n, 'animation', () => n._advance(dt))) this.call(n, 'animationFinished', n.animation); });
     this.each((n) => this.call(n, 'update', dt));
+    // Sounds that have played to their end.
+    this.each((n) => { if (n instanceof AudioStreamPlayer && n._endsAt !== null && n._endsAt <= this.time.now + 1e-9) { n._endsAt = null; this.call(n, 'finished'); } });
     this.flushFree();
     if (this.nextScene) this.switchScene(this.nextScene);
     this.updateCamera(dt);
@@ -380,7 +436,7 @@ export class Game {
   private flushFree(): void {
     for (const node of this.freeQueue) {
       if (node._freed || node === this.root) continue;
-      const gone = (n: Node) => { for (const c of n._children) gone(c); n._freed = true; this.call(n, 'destroyed'); };
+      const gone = (n: Node) => { for (const c of n._children) gone(c); this.retire(n); };
       gone(node);
       if (node._parent) node._parent._children = node._parent._children.filter((c) => c !== node);
       node._parent = null;
@@ -418,8 +474,82 @@ export class Game {
     return { x: axis(c.x, tl.x, br.x, hw), y: axis(c.y, tl.y, br.y, hh) };
   }
 
+  // ── UI widgets (core/widgets.ts) ───────────────────────────────────────
+
+  /** Whether a node and everything above it are visible. */
+  private shown(n: Node): boolean {
+    for (let p: Node | null = n; p; p = p._parent) if (p instanceof Node2D && !p.visible) return false;
+    return true;
+  }
+
+  /** Whether a node is under a CanvasLayer (placed on the screen, not in the world). */
+  private onScreen(n: Node): boolean {
+    for (let p = n._parent; p; p = p._parent) if (p instanceof CanvasLayer) return true;
+    return false;
+  }
+
+  /** Containers place their visible 2D children, innermost containers first so an outer one knows their sizes. */
+  private layout(): void {
+    const boxes: BoxContainer[] = [];
+    this.each((n) => { if (n instanceof BoxContainer) boxes.push(n); });
+    for (const box of boxes.reverse()) {
+      const kids = box._children;
+      const sizes = kids.map((c) => (c instanceof Node2D && c.visible ? this.sizeOf(c) : null));
+      const at = boxLayout(box.vertical, box.separation, sizes);
+      kids.forEach((c, i) => { const p = at[i]; if (p && c instanceof Node2D) c.position = p; });
+      const placed = sizes.filter((s): s is { w: number; h: number } => !!s);
+      const along = placed.reduce((t, s) => t + (box.vertical ? s.h : s.w), 0) + box.separation * Math.max(0, placed.length - 1);
+      const across = placed.reduce((m, s) => Math.max(m, box.vertical ? s.w : s.h), 0);
+      box._layoutSize = box.vertical ? { w: across, h: along } : { w: along, h: across };
+    }
+  }
+
+  private sizeOf(n: Node): { w: number; h: number } {
+    if (n instanceof BoxContainer) return n._layoutSize;
+    return nodeSize(nodeTypeOf(n), (k) => (n as unknown as Record<string, unknown>)[k]) ?? { w: 0, h: 0 };
+  }
+
+  /** Buttons: the pointer over them, clicks (down and up on the same button), and the keyboard focus. */
+  private ui(): void {
+    const buttons: Button[] = [];
+    this.each((n) => { if (n instanceof Button && !n._broken && this.shown(n)) buttons.push(n); });
+    if (this._focus && (this._focus.disabled || !buttons.includes(this._focus))) this._focus = null;
+    const down = this.input._keyJustDown('MouseLeft'), up = this.input._keyJustUp('MouseLeft');
+    for (const b of buttons) {
+      const p = apply(invert(b.worldTransform), this.onScreen(b) ? this.input.mouseScreen : this.input.mouse);
+      b._hover = !b.disabled && p.x >= 0 && p.y >= 0 && p.x <= b.size.x && p.y <= b.size.y;
+      if (down && b._hover) b._down = true;
+      if (up) { const clicked = b._down && b._hover; b._down = false; if (clicked) this.press(b); }
+    }
+    const f = this._focus;
+    if (!f) return;
+    const k = (code: string) => this.input._keyJustDown(code);
+    const dir = k('ArrowUp') ? { x: 0, y: -1 } : k('ArrowDown') ? { x: 0, y: 1 } : k('ArrowLeft') ? { x: -1, y: 0 } : k('ArrowRight') ? { x: 1, y: 0 } : null;
+    if (dir) { const next = this.nearestButton(f, dir, buttons); if (next) this._focus = next; }
+    else if (k('Enter') || k('NumpadEnter') || k('Space')) this.press(f);
+  }
+
+  /** The enabled button nearest in a direction from another: straight ahead counts more than off to the side. */
+  private nearestButton(from: Button, dir: { x: number; y: number }, buttons: Button[]): Button | null {
+    const centre = (b: Button) => apply(b.worldTransform, { x: b.size.x / 2, y: b.size.y / 2 });
+    const c = centre(from);
+    let best: Button | null = null, bestScore = Infinity;
+    for (const b of buttons) {
+      if (b === from || b.disabled) continue;
+      const d = centre(b), dx = d.x - c.x, dy = d.y - c.y;
+      const ahead = dx * dir.x + dy * dir.y, side = Math.abs(dx * dir.y - dy * dir.x);
+      if (ahead <= 0) continue;
+      const score = ahead + 2 * side;
+      if (score < bestScore) { bestScore = score; best = b; }
+    }
+    return best;
+  }
+
+  private press(b: Button): void { if (!b.disabled) this.call(b, 'pressed'); }
+
   /** The draw list: visible sprites with a texture and visible labels, in world (or screen) coordinates. */
   private draw(): void {
+    this.layout();
     const items: DrawItem[] = [];
     let order = 0;
     const idOf = (n: Node) => { let id = this.ids.get(n); if (id === undefined) { id = this.nextDrawId++; this.ids.set(n, id); } return id; };
@@ -441,7 +571,24 @@ export class Game {
         const t = decompose(n.worldTransform);
         const base = { id: idOf(n), x: t.position.x, y: t.position.y, rotation: t.rotation, scaleX: t.scale.x, scaleY: t.scale.y, depth: zz + (order++) * 1e-6, screen: scr };
         if (n instanceof Sprite2D || n instanceof AnimatedSprite2D) items.push({ ...base, kind: 'sprite', texture: picture!, flipX: n.flipX, flipY: n.flipY, alpha: n.opacity });
-        else if (n instanceof Label) items.push({ ...base, kind: 'text', text: String(n.text), fontSize: n.fontSize, color: n.color, alpha: 1 });
+        else if (n instanceof Label) items.push({ ...base, kind: 'text', text: String(n.text), fontSize: n.fontSize, color: n.color, alpha: 1, ...(n.wrapWidth > 0 ? { wrap: n.wrapWidth } : {}), ...(n.visibleCharacters >= 0 ? { visible: Math.floor(n.visibleCharacters) } : {}) });
+      }
+      // A widget: its parts, placed through its transform (a rectangle by its centre, as rects are drawn).
+      const type = vis && n instanceof Node2D ? nodeTypeOf(n) : '';
+      if (WIDGET_TYPES.has(type)) {
+        const b = n as Button, m = (n as Node2D).worldTransform, t = decompose(m);
+        const parts = widgetParts(type, (k) => (n as unknown as Record<string, unknown>)[k], n instanceof Button ? { hover: b._hover, down: b._down && b._hover, focused: this._focus === b } : {}) ?? [];
+        for (const part of parts) {
+          // Parts get negative ids, so they never meet the ids of nodes drawn whole.
+          const common = { id: -(idOf(n) * 8 + parts.indexOf(part) + 1), rotation: t.rotation, scaleX: t.scale.x, scaleY: t.scale.y, depth: zz + (order++) * 1e-6, screen: scr, alpha: 1 };
+          if (part.kind === 'rect') {
+            const c = apply(m, { x: part.x + part.w / 2, y: part.y + part.h / 2 });
+            items.push({ ...common, x: c.x, y: c.y, kind: 'rect', width: part.w, height: part.h, color: part.color, ...(part.stroke ? { stroke: part.stroke, strokeWidth: part.strokeWidth } : {}) });
+          } else {
+            const c = apply(m, { x: part.x, y: part.y });
+            items.push({ ...common, x: c.x, y: c.y, kind: 'text', text: part.text, fontSize: part.fontSize, color: part.color, ...(part.center ? { center: true } : {}), ...(part.wrap ? { wrap: part.wrap } : {}) });
+          }
+        }
       }
       for (const c of n._children) visit(c, vis, zz, scr);
     };
@@ -485,7 +632,7 @@ export function applyProps(node: Node, type: string, props: Record<string, PropV
 
 /** The globals a script sees (ADR 4). */
 export function scriptGlobals(game: Game): Record<string, unknown> {
-  return { input: game.input, scene: game.sceneApi, time: game.time, math: MATH, physics: { gravity: game.gravity }, ai: game.ai, Vec2, PhysicsBody2D, ...NODE_CLASSES };
+  return { input: game.input, scene: game.sceneApi, time: game.time, state: game.state, save: game.save, math: MATH, physics: { gravity: game.gravity }, ai: game.ai, Vec2, PhysicsBody2D, ...NODE_CLASSES };
 }
 
 /** A node whose script makes it an agent: it can say what it sees and do an action. */
@@ -506,7 +653,7 @@ export function isAgent(n: Node): n is AgentNode {
 export const decideEvery = (n: AgentNode): number => Math.max(1, Math.round(Number(n.decideEvery) || 4));
 
 /** Engine callbacks that are also emitted as signals of the same name. */
-const SIGNALS = new Set(['bodyEntered', 'bodyExited', 'animationFinished', 'onCollision']);
+const SIGNALS = new Set(['bodyEntered', 'bodyExited', 'animationFinished', 'onCollision', 'pressed', 'finished']);
 
 /** Small maths helpers scripts use all the time. */
 export const MATH = {

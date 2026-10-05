@@ -37,6 +37,8 @@ export interface ApiEntry {
   members: ApiMember[];
   /** JavaScript's own, not the engine's: listed because scripts use it. */
   builtin?: boolean;
+  /** An index signature for a global with no fixed members, like state's "[name: string]: any". */
+  index?: string;
 }
 
 const p = (name: string, type: string, doc: string, godot?: string, more: Partial<ApiMember> = {}): ApiMember => ({ name, kind: 'property', type, doc, godot, ...more });
@@ -206,13 +208,107 @@ const ENTRIES: ApiEntry[] = [
   },
   {
     name: 'Label', kind: 'class', extends: 'Node2D', godot: 'Label (a Control in Godot; a Node2D here)',
-    doc: 'Text. Its position is the top-left corner of the text.',
+    doc: 'Text. Its position is the top-left corner of the text. wrapWidth wraps it; visibleCharacters shows only its first letters, for typewriter dialogue.',
     example: `export default class Clock extends Label {
   update(dt) {
     this.text = \`Time: \${time.now.toFixed(1)}\`;
   }
+}
+// Typewriter dialogue: 30 letters a second.
+export class Line extends Label {
+  shown = 0;
+  say(words) { this.text = words; this.shown = 0; }
+  update(dt) {
+    this.shown += 30 * dt;
+    this.visibleCharacters = this.shown >= this.totalCharacters ? -1 : Math.floor(this.shown);
+  }
+}`,
+    members: [
+      p('totalCharacters', 'number', 'How many letters the text has: a typewriter has finished when it has shown them all.', 'get_total_character_count()', { readonly: true }),
+    ],
+  },
+  {
+    name: 'Panel', kind: 'class', extends: 'Node2D', godot: 'Panel (a Control in Godot; a Node2D here)',
+    doc: 'A box with an edge: the background of a menu, a dialogue box or an inventory. Its position is its top-left corner. Put it under a CanvasLayer so it stays on the screen.',
+    members: [],
+  },
+  {
+    name: 'Button', kind: 'class', extends: 'Node2D', godot: 'Button (a Control in Godot; a Node2D here)',
+    doc: 'A button. Clicking it (the mouse goes down and comes up on it) presses it. So does Enter or Space while it has the keyboard focus, and the arrow keys move the focus to the nearest button that way. Pressing calls its script\u2019s pressed() and emits the pressed signal, which a script elsewhere can connect to. Its position is its top-left corner.',
+    example: `// On a VBoxContainer holding the buttons New game, Continue and Quit:
+export default class Menu extends VBoxContainer {
+  ready() {
+    this.get('Continue').disabled = !save.has('slot1');
+    this.get('New game').connect('pressed', this, 'newGame');
+    this.get('Continue').connect('pressed', this, 'continueGame');
+    this.get('New game').grabFocus();   // the arrow keys and Enter work at once
+  }
+  newGame() { scene.change('scenes/town.scene'); }
+  continueGame() { save.load('slot1'); scene.change(state.map); }
+}`,
+    members: [
+      cb('pressed', '(): void', 'Runs when it is pressed. It is also emitted as the pressed signal.', 'pressed signal'),
+      p('hasFocus', 'boolean', 'Whether it has the keyboard focus.', 'has_focus()', { readonly: true }),
+      m('grabFocus', '(): void', 'Take the keyboard focus, so the arrow keys and Enter work the menu. A disabled button cannot take it.', 'grab_focus()'),
+      m('releaseFocus', '(): void', 'Give up the focus, so the arrow keys, Enter and Space go back to the game alone.', 'release_focus()'),
+    ],
+  },
+  {
+    name: 'ProgressBar', kind: 'class', extends: 'Node2D', godot: 'ProgressBar (a Control in Godot; a Node2D here)',
+    doc: 'A bar that fills from left to right, value out of maxValue: health, experience, a cooldown. Its position is its top-left corner.',
+    example: `export default class HealthBar extends ProgressBar {
+  update() {
+    this.maxValue = state.maxHp;
+    this.value = state.hp;
+  }
 }`,
     members: [],
+  },
+  {
+    name: 'BoxContainer', kind: 'class', extends: 'Node2D', godot: 'BoxContainer',
+    doc: 'What VBoxContainer and HBoxContainer share: it places its visible 2D children one after another, separation pixels apart, every frame. A child\u2019s size is its size property, or a Label\u2019s text (estimated at 0.55 × fontSize per letter), or 0. Hide a child and the rest close up.',
+    members: [
+      p('vertical', 'boolean', 'True for a column (VBoxContainer), false for a row (HBoxContainer).', 'vertical', { readonly: true }),
+    ],
+  },
+  {
+    name: 'VBoxContainer', kind: 'class', extends: 'BoxContainer', godot: 'VBoxContainer',
+    doc: 'Places its children in a column, top to bottom: a menu, a list. Add children from a script and they line up.',
+    example: `export default class Inventory extends VBoxContainer {
+  ready() {
+    for (const item of state.bag ?? []) {
+      const row = new Label();
+      row.text = item.name;
+      row.fontSize = 16;
+      this.addChild(row);
+    }
+  }
+}`,
+    members: [],
+  },
+  {
+    name: 'HBoxContainer', kind: 'class', extends: 'BoxContainer', godot: 'HBoxContainer',
+    doc: 'Places its children in a row, left to right: a hotbar, a row of hearts.',
+    members: [],
+  },
+  {
+    name: 'AudioStreamPlayer', kind: 'class', extends: 'Node', godot: 'AudioStreamPlayer',
+    doc: 'Plays a sound: an effect or music. Make sounds with Files › New sound… (project.writeSound). The browser starts sound only after the player has clicked or pressed a key in the game, so a sound before that is silent.',
+    example: `export default class Coin extends Area2D {
+  bodyEntered(body) {
+    if (body.name !== 'Player') return;
+    const ding = scene.get('Sounds/Coin');
+    ding.pitchScale = math.randRange(0.9, 1.1);   // a little different each time
+    ding.play();
+    this.queueFree();
+  }
+}`,
+    members: [
+      p('playing', 'boolean', 'Whether a sound is playing now.', 'playing', { readonly: true }),
+      m('play', '(): void', 'Play the stream from the start (again, if it was playing).', 'play()'),
+      m('stop', '(): void', 'Stop playing.', 'stop()'),
+      cb('finished', '(): void', 'Runs when a sound ends by itself: not when stopped, never while looping. Also emitted as the finished signal.', 'finished signal'),
+    ],
   },
   {
     name: 'CanvasLayer', kind: 'class', extends: 'Node', godot: 'CanvasLayer',
@@ -363,6 +459,39 @@ const ENTRIES: ApiEntry[] = [
     ],
   },
   {
+    name: 'state', kind: 'global', godot: 'an autoload (singleton) script',
+    doc: 'The game\u2019s own data, shared by every script and kept when scene.change() moves to another scene: the gold, the party, the quests. Add anything to it: state.gold = 10. It starts empty each time the game starts. Change its fields; don\u2019t replace it (state = … would make a new object no other script sees).',
+    example: `export default class Door extends Area2D {
+  target = 'scenes/forest.scene';
+
+  bodyEntered(body) {
+    if (body.name !== 'Player') return;
+    state.arriveAt = 'FromTown';   // the next map reads this to place the player
+    scene.change(this.target);
+  }
+}`,
+    index: '[name: string]: any',
+    members: [],
+  },
+  {
+    name: 'save', kind: 'global', godot: 'FileAccess with user://, ConfigFile',
+    doc: 'Saved games: copies of data kept in named slots after the game stops, until you save over them or empty them (Run › Clear saved games). A save is a copy, so changing state afterwards does not change it. Save plain values (numbers, strings, true/false, lists, objects), not nodes. Every slot name defaults to "main".',
+    example: `export default class SavePoint extends Area2D {
+  bodyEntered(body) {
+    if (body.name === 'Player') save.write('slot1');   // all of state
+  }
+}
+// On the title screen:  if (save.load('slot1')) scene.change(state.map);`,
+    members: [
+      m('write', '(slot?: string, data?: any): void', 'Save a copy of data in a slot, replacing what was there. Without data, all of state is saved.', 'FileAccess.store_var()'),
+      m('read', '(slot?: string): any', 'A copy of what a slot holds, or null if it is empty.', 'FileAccess.get_var()'),
+      m('load', '(slot?: string): boolean', 'Replace everything in state with what a slot holds (it must hold an object). False, with state untouched, if the slot is empty.'),
+      m('has', '(slot?: string): boolean', 'Whether a slot has something saved in it.', 'FileAccess.file_exists()'),
+      m('remove', '(slot?: string): void', 'Empty a slot.', 'DirAccess.remove_absolute()'),
+      m('slots', '(): string[]', 'The names of the slots with something saved, in order: for a "Continue" menu.'),
+    ],
+  },
+  {
     name: 'physics', kind: 'global', godot: 'ProjectSettings physics/2d/default_gravity',
     doc: 'The project’s physics settings (Project › Settings).',
     members: [
@@ -407,7 +536,7 @@ const ENTRIES: ApiEntry[] = [
 
 const PROP_TYPE: Record<PropDef['type'], (d: PropDef) => string> = {
   vec2: () => 'Vec2', number: () => 'number', angle: () => 'number', bool: () => 'boolean', string: () => 'string', color: () => 'string',
-  texture: () => 'string | null', tileset: () => 'string | null', cells: () => 'number[]', animations: () => '{ name: string; length: number; loop: boolean; tracks: { path: string; property: string; keys: { time: number; value: any }[] }[] }[]', spriteFrames: () => '{ name: string; fps: number; loop: boolean; frames: string[] }[]', enum: (d) => (d.options ?? []).map((o) => `'${o}'`).join(' | '), layers: () => 'number',
+  texture: () => 'string | null', sound: () => 'string | null', tileset: () => 'string | null', cells: () => 'number[]', animations: () => '{ name: string; length: number; loop: boolean; tracks: { path: string; property: string; keys: { time: number; value: any }[] }[] }[]', spriteFrames: () => '{ name: string; fps: number; loop: boolean; frames: string[] }[]', enum: (d) => (d.options ?? []).map((o) => `'${o}'`).join(' | '), layers: () => 'number',
 };
 
 /** The Inspector properties a class adds: its registry properties not already declared by a class it extends. */
@@ -464,7 +593,7 @@ export function engineDts(): string {
     'type AnyNode = Node & { [name: string]: any };',
   ];
   for (const e of API_REFERENCE) {
-    const body = e.members.map((x) => declare(x, '  ')).join('\n');
+    const body = [...e.members.map((x) => declare(x, '  ')), ...(e.index ? [`  ${e.index};`] : [])].join('\n');
     const head = `/** ${e.doc}${e.godot ? ` Godot: ${e.godot}.` : ''} */`;
     if (e.kind === 'class') out.push(head, `declare class ${e.name}${e.extends ? ` extends ${e.extends}` : ''} {\n${body}\n}`);
     else out.push(head, `declare const ${e.name}: {\n${body}\n};`);
@@ -499,6 +628,7 @@ export const SCENE_API: SceneApiEntry[] = [
       { name: 'setMainScene', type: '(path: string): void', doc: 'The scene ▶ Run starts.' },
       { name: 'writeScript', type: '(path: string, source: string): void', doc: 'Create or replace a script in scripts/.' },
       { name: 'writeSvg', type: '(path: string, source: string): string', doc: 'Create or replace an image in assets/ from SVG source text: code draws the picture, no image file needed. The <svg> needs xmlns="http://www.w3.org/2000/svg" and a width and height in pixels: writeSvg("assets/card.svg", `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140"><rect width="100" height="140" rx="8" fill="white"/></svg>`). Use it as a texture like any image.' },
+      { name: 'writeSound', type: '(path: string, recipe: { wave, from, to, length, attack?, volume?, seed? }): string', doc: 'Create or replace a sound effect in assets/ from a recipe: no sound file needed. wave is "square", "triangle", "sine", "saw" or "noise"; from and to are the pitch at the start and end in hertz (it slides between them); length and attack are in seconds; volume is 0 to 1; seed picks which noise. writeSound("assets/coin.wav", { wave: "square", from: 880, to: 1760, length: 0.15 }). Play it with an AudioStreamPlayer.' },
       { name: 'saveBrain', type: '(path: string, brain: { actions, observation, method, policy, trained }): void', doc: 'Save a trained agent\'s brain in brains/ (Run › Train an agent… does this). A node whose script is an agent and names it in its brain field is driven by it.' },
       { name: 'removeBrain', type: '(path: string): void', doc: 'Delete a brain from brains/.' },
       { name: 'addAction', type: '(name: string, keys: string[]): void', doc: 'A new input action, with KeyboardEvent.code key names ("Space", "KeyA", "ArrowLeft").' },

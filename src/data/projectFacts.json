@@ -10,7 +10,7 @@
   "counts": {
     "courses": 44,
     "chapters": 237,
-    "lessons": 1359,
+    "lessons": 1360,
     "labs": 55,
     "games": 15
   },
@@ -269,7 +269,7 @@
       "domain": "creative",
       "description": "The maths, algorithms, computer graphics and tools behind 3D modelling: meshes, transforms, the rendering pipeline, picking, modelling operations, subdivision, curvature, UVs, shading, animation and skinning, each built by hand in a notebook and then used in MeshLab",
       "chapters": 11,
-      "lessons": 72
+      "lessons": 73
     },
     {
       "id": "native-languages",

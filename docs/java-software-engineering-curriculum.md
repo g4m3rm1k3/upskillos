@@ -14,6 +14,27 @@ The course is discovered from `src/labs/project-studio/tracks/java-engineering/`
 - There is no agent section. Agent-assisted engineering is outside this course.
 - Challenges never block navigation and are not prerequisites for subsequent code. Covered material, automated check results and deferred practice are separate records. Open-ended review is not automatically marked passed.
 
+## Explanation standard and editorial review
+
+The reference lessons are [Pygame’s window and loop](../src/labs/project-studio/tracks/rl-pygame/00-03-a-window-and-a-loop.md), [its Q-table representation](../src/labs/project-studio/tracks/rl-pygame/01-01-the-shape-of-a-q-table.md), and [the PySide6 editor’s first window](../src/labs/project-studio/tracks/pyside6-engine/01-a-window.md). Follow their causal explanations and concrete experiments, while preserving this course's requirement that learners type all source themselves.
+
+The initial Java course named many constructs without teaching their execution. The revision introduces prerequisite syntax before challenges and explains callbacks, references, state and boundaries at their point of use. It adds traces, prediction checkpoints, deliberate break-and-restore experiments, and comparisons that identify when a design should change. Existing lesson and step progress keys, typed source fragments and challenge independence remain intact.
+
+Review every newly introduced construct against these questions:
+
+1. What concrete problem makes this operation necessary?
+2. What do its tokens and argument positions mean? Which earlier explanation supplies any assumed knowledge?
+3. Who invokes it, when does it execute, what values flow through it, and what state changes?
+4. What would happen if it were omitted, reordered or replaced with a plausible wrong alternative?
+5. Can a learner predict a small example, inspect the result, and explain a different case?
+6. What does the test establish, and which nearby failure could still escape it?
+
+The review covers Java execution and tests; repository/build mechanics; records, collections and graph loops; HTML/CSS/DOM behavior; HTTP and Spring construction; JDBC, transactions and streams; TypeScript/React lifecycles; security and test doubles; concurrency, search, migration, diagnostics and release ordering. Independent work includes worked requirement analysis without providing its implementation.
+
+Automated checks validate parsing, fragment reconstruction and selected product behavior. A minimum prose length does not establish explanation quality and is not used as an editorial pass criterion. These revisions still need learner observation to assess pacing, retention and independent transfer; passing the executable walkthrough does not certify those outcomes.
+
+The [series completion review](java-software-engineering-series-review.md) maps every lesson to its explanation coverage and observable evidence. The completion pass also removes required instruction from optional practice and finishes release/recovery, independent review and handoff procedures.
+
 ## Learning progression
 
 | Stage | Work and evidence |
@@ -62,3 +83,28 @@ JAVA_COURSE_MAVEN=/absolute/path/to/mvn npx vitest run src/labs/project-studio/j
 Optionally set `JAVA_COURSE_REPOSITORY` to a temporary Maven cache. The walkthrough reconstructs fragments and the explicitly taught file moves/insertions in a temporary directory, verifies the intended red failure and subsequent Java milestones, and plants regressions that the learner-authored tests must reject. It never supplies this reconstructed source to learners. Frontend dependencies/build and packaged browser smoke testing are separate verification steps.
 
 Official references: [Java 21 API](https://docs.oracle.com/en/java/javase/21/docs/api/), [Maven installation](https://maven.apache.org/install.html), [Spring Boot requirements](https://docs.spring.io/spring-boot/3.5/system-requirements.html), [React fundamentals](https://react.dev/learn), [Vite guide](https://vite.dev/guide/), [H2 tutorial](https://h2database.com/html/tutorial.html). Pinned teaching versions support reproducibility, not a claim of perpetual security or latest-version status.
+
+### Explanation revision verification — 2026-10-04
+
+Commands run after the revision:
+
+```sh
+npx vitest run src/labs/project-studio/javaEngineering.test.js src/labs/project-studio/LessonPanel.test.jsx src/labs/project-studio/progress.test.jsx src/labs/project-studio/StudioNavigation.test.jsx src/labs/project-studio/series.test.js
+```
+
+Printed `Test Files 5 passed (5)` and `Tests 18 passed (18)`.
+
+```sh
+JAVA_COURSE_MAVEN=/tmp/apache-maven-3.9.11/bin/mvn JAVA_COURSE_REPOSITORY=/tmp/java-course-m2 npx vitest run src/labs/project-studio/javaEngineering.desktop.test.js
+```
+
+Printed `Test Files 1 passed (1)` and `Tests 2 passed (2)`. This replays Java milestones, including intended behavioral red, and verifies planted title, transaction and authorization regressions are rejected. The temporary tool/cache paths reflect this local verification environment, not required learner paths.
+
+```sh
+npm run docs:check
+git diff --check
+```
+
+The documentation check printed `✓ Contributor docs checked: 9 file(s), links, paths and commands all exist.` The whitespace check printed nothing and exited successfully. Vite/Vitest also printed existing toolchain deprecation, browser-data age and uncached Pyodide-package notices; the selected checks completed successfully.
+
+A read-only comparison with HEAD confirmed unchanged step ids, headings, typed source fragments, checks and optional flags. New prediction fences parsed successfully. A local browser inspection confirmed the execution explanation and table render, submitting a prediction reveals its explanation, and Next remains available. The temporary preview was stopped afterward. No full UpSkillOS production build was run for these teaching-content edits; the frontend implementation was unchanged.

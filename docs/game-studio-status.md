@@ -1017,6 +1017,9 @@ In this order (proposed to the user, 2026-10-01):
    2026-10-03, with a Try it task, and ML Lab lesson 37.4 links to it.
 5. ~~Phase 8, export~~ and ~~Phase 9 in Game Studio~~: done (above). For the ML Lab, the user chose a bonus lesson
    at the end of the course, linked from the ML Lab (item 4). A bridge from its Python stays possible later.
+6. **Starter projects** (2026-10-04): Quest Buddies (a multi-map RPG with a learning buddy), Kart Circuit (driving)
+   and LAN Arena (co-op over a LAN). Each closes engine gaps as general features and has a chapter of lessons.
+   Plan and progress: [game-studio-starters-plan.md](game-studio-starters-plan.md).
 
 ## Phases
 

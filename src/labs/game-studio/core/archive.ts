@@ -18,6 +18,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import type { AssetData, Project, SceneData } from './types';
 import { deserialize, serialize } from './serialize';
 import { walk } from './project';
+import { soundBytes } from './sound';
 
 /** Bytes for an asset, by its project path. */
 export type AssetBytes = (path: string) => Uint8Array | undefined;
@@ -33,9 +34,10 @@ Open it in Game Studio with Project › Import project (.zip)…
 `;
 
 /** The project as a .zip: scenes and scripts as their own files, so they can be read and edited anywhere. */
-/** An asset's bytes: an SVG image's are its source text, kept in the project; an imported image's come from storage. */
+/** An asset's bytes: an SVG image's are its source text and a made sound's are made from its recipe, both kept in the
+ *  project; an imported file's come from storage. */
 function assetBytes(a: AssetData, bytes: AssetBytes): Uint8Array | undefined {
-  return a.svg !== undefined ? strToU8(a.svg) : bytes(a.path);
+  return a.svg !== undefined ? strToU8(a.svg) : a.sound ? soundBytes(a.sound) : bytes(a.path);
 }
 
 export function projectZip(p: Project, bytes: AssetBytes): Uint8Array {
@@ -68,6 +70,7 @@ export function readProjectZip(zip: Uint8Array): { project: Project; bytes: Map<
   const bytes = new Map<string, Uint8Array>();
   for (const a of project.assets) {
     if (a.svg !== undefined) { bytes.set(a.id, strToU8(a.svg)); continue; }   // an SVG image is its source, in project.json
+    if (a.sound) { bytes.set(a.id, soundBytes(a.sound)); continue; }            // a made sound is its recipe, in project.json
     const b = files[root + a.path];
     if (!b) throw new Error(`The project uses ${a.path}, but the .zip does not have it`);
     bytes.set(a.id, b);
@@ -117,7 +120,7 @@ export function gameZip(p: Project, runtime: string, bytes: AssetBytes): Uint8Ar
     'game.js': strToU8(runtime),
     'project.json': strToU8(serialize(game)),
   };
-  for (const a of game.assets) { const b = assetBytes(a, bytes); if (!b) throw new Error(`The image ${a.path} is missing`); files[a.path] = b; }
+  for (const a of game.assets) { const b = assetBytes(a, bytes); if (!b) throw new Error(`The file ${a.path} is missing`); files[a.path] = b; }
   return zipSync(files, { level: 6 });
 }
 
@@ -126,7 +129,7 @@ const base64 = (b: Uint8Array) => { let s = ''; for (let i = 0; i < b.length; i 
 /** The game as one HTML file: the runtime, the project and its images inside, so it runs from anywhere, even a double-click. */
 export function gameHtmlFile(p: Project, runtime: string, bytes: AssetBytes): string {
   const game = gameProject(p);
-  const assets = game.assets.map((a) => { const b = assetBytes(a, bytes); if (!b) throw new Error(`The image ${a.path} is missing`); return { path: a.path, mime: a.mime, data: base64(b) }; });
+  const assets = game.assets.map((a) => { const b = assetBytes(a, bytes); if (!b) throw new Error(`The file ${a.path} is missing`); return { path: a.path, mime: a.mime, data: base64(b) }; });
   // "</script" would end the script element early, so it is escaped wherever it appears.
   const data = JSON.stringify({ project: game, assets }).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
   return page(game, `<script>window.GAME_DATA = ${data};</script>\n<script>${runtime.replace(/<\/script/gi, '<\\/script')}</script>`);

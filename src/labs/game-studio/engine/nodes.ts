@@ -404,6 +404,108 @@ export class Label extends Node2D {
   text = 'Label';
   fontSize = 24;
   color = '#ffffff';
+  /** Wrap onto new lines at this width in pixels; 0 does not wrap. */
+  wrapWidth = 0;
+  /** How many letters are shown; −1 shows them all (typewriter dialogue). */
+  visibleCharacters = -1;
+  /** How many letters the text has, so a typewriter knows when it has finished. */
+  get totalCharacters(): number { return String(this.text).length; }
+}
+
+// ── UI widgets (core/widgets.ts says how they look and how containers place children) ──
+
+/** A box for a menu or dialogue. Its position is its top-left corner. */
+export class Panel extends Node2D {
+  name = 'Panel';
+  private _size = new Vec2(200, 120);
+  get size(): Vec2 { return this._size; }
+  set size(v: { x: number; y: number }) { this._size = new Vec2(v.x, v.y); }
+  color = '#1e2433';
+  borderColor = '#8899bb';
+  borderWidth = 2;
+}
+
+/** A button: clicked, or pressed with Enter while it has the focus. It emits pressed and calls pressed(). */
+export class Button extends Node2D {
+  name = 'Button';
+  text = 'Button';
+  private _size = new Vec2(140, 40);
+  get size(): Vec2 { return this._size; }
+  set size(v: { x: number; y: number }) { this._size = new Vec2(v.x, v.y); }
+  fontSize = 18;
+  color = '#3b5bdb';
+  textColor = '#ffffff';
+  disabled = false;
+  /** The pointer is over it (set by the engine each frame). */
+  _hover = false;
+  /** The mouse went down on it and has not come up yet. */
+  _down = false;
+  /** Runs when it is pressed (also emitted as the pressed signal). */
+  pressed(): void {}
+  /** Whether it has the keyboard focus: the arrow keys move the focus between buttons, Enter or Space presses. */
+  get hasFocus(): boolean { return this._game?._focus === this; }
+  /** Take the keyboard focus (a menu's first button, when the menu opens). */
+  grabFocus(): void { if (this._game && !this.disabled) this._game._focus = this; }
+  /** Give up the focus, so the arrow keys and Enter go back to the game. */
+  releaseFocus(): void { if (this._game?._focus === this) this._game._focus = null; }
+}
+
+/** A bar that fills from left to right with value / maxValue. Its position is its top-left corner. */
+export class ProgressBar extends Node2D {
+  name = 'ProgressBar';
+  private _size = new Vec2(160, 16);
+  get size(): Vec2 { return this._size; }
+  set size(v: { x: number; y: number }) { this._size = new Vec2(v.x, v.y); }
+  value = 50;
+  maxValue = 100;
+  fillColor = '#40c057';
+  backColor = '#2b2f3a';
+  showText = false;
+}
+
+/** Places its visible 2D children one after another, `separation` pixels apart. */
+export class BoxContainer extends Node2D {
+  name = 'BoxContainer';
+  separation = 8;
+  /** True for a column (VBoxContainer). */
+  get vertical(): boolean { return true; }
+  /** The size its children take up, after the engine last placed them. */
+  _layoutSize = { w: 0, h: 0 };
+}
+/** Places its children in a column, top to bottom. */
+export class VBoxContainer extends BoxContainer {
+  name = 'VBoxContainer';
+  get vertical(): boolean { return true; }
+}
+/** Places its children in a row, left to right. */
+export class HBoxContainer extends BoxContainer {
+  name = 'HBoxContainer';
+  get vertical(): boolean { return false; }
+}
+
+/**
+ * Plays a sound (assets made with project.writeSound). The engine keeps time: playing is true from play() until the
+ * sound's length (divided by pitchScale) has passed, then finished() runs; the game's audio output does the playing.
+ */
+export class AudioStreamPlayer extends Node {
+  name = 'AudioStreamPlayer';
+  stream: string | null = null;
+  volume = 1;
+  pitchScale = 1;
+  autoplay = false;
+  loop = false;
+  /** The game time the sound now playing ends (Infinity while it loops), or null when it is not playing. */
+  _endsAt: number | null = null;
+  /** Which play this is, for the audio output. */
+  _playId = 0;
+  /** Whether a sound is playing now. */
+  get playing(): boolean { return this._endsAt !== null; }
+  /** Play the stream from the start (again, if it was already playing). */
+  play(): void { if (!this._game) throw new Error(`"${this.name}" is not in a running game`); this._game._playSound(this); }
+  /** Stop playing. */
+  stop(): void { this._game?._stopSound(this); }
+  /** Runs when a sound ends by itself (not when stopped, and never while it loops). Also emitted as the finished signal. */
+  finished(): void {}
 }
 
 /** A rectangle or circle: the solid part of the body or area it is directly under. */
@@ -513,7 +615,7 @@ export class Area2D extends Node2D {
 }
 
 /** The built-in classes, by registry type name. */
-export const NODE_CLASSES: Record<string, typeof Node> = { Node, Node2D, Sprite2D, AnimatedSprite2D, AnimationPlayer, TileMapLayer, Camera2D, Label, CanvasLayer, CollisionShape2D, StaticBody2D, CharacterBody2D, RigidBody2D, Area2D };
+export const NODE_CLASSES: Record<string, typeof Node> = { Node, Node2D, Sprite2D, AnimatedSprite2D, AnimationPlayer, TileMapLayer, Camera2D, Label, Panel, Button, ProgressBar, BoxContainer, VBoxContainer, HBoxContainer, AudioStreamPlayer, CanvasLayer, CollisionShape2D, StaticBody2D, CharacterBody2D, RigidBody2D, Area2D };
 
 /** The registered type a runtime node is: its class, or the nearest built-in class it extends. */
 export function nodeTypeOf(n: Node): string {

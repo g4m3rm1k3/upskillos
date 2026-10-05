@@ -14,6 +14,7 @@ import type { AssetData, BrainData, NodeData, Project, PropValue, SceneData, Til
 import { applyEdits, cellMap, rectEdits, textEdits, tilesetProblem, type CellEdit } from './tiles';
 import { checkProp, isNodeType, nodeType, propDef, propsOf, propValue } from './registry';
 import { expandScene, expandSceneRoot, wouldLoop } from './instances';
+import { soundProblem, type SoundRecipe } from './sound';
 import { checkName, cloneWithNewIds, contains, findNode, newNode, nextId, nodeAt, parentOf, pathOf, sceneAt, uniqueName } from './project';
 
 const same = (a: PropValue, b: PropValue) => JSON.stringify(a) === JSON.stringify(b);
@@ -328,6 +329,11 @@ export interface ProjectApi {
    * importing one. Replaces one already at the path (a new id, so undo brings it back). Returns the asset's id.
    */
   writeSvg(path: string, source: string): string;
+  /**
+   * A sound effect from a recipe, at assets/….wav (core/sound.ts): { wave, from, to, length, attack?, volume?, seed? }.
+   * The project keeps the recipe; the .wav is made from it. Write again to change it. Returns its id.
+   */
+  writeSound(path: string, recipe: SoundRecipe): string;
   /** A new tileset file: an image cut into tiles of this size. */
   createTileset(path: string, opts: { image: string; tileWidth: number; tileHeight: number; margin?: number; spacing?: number; solid?: number[] }): TilesetHandle;
   /** An existing tileset: set its fields, e.g. project.tileset('tilesets/a.tileset').solid = [1, 2]. */
@@ -491,6 +497,16 @@ export function projectApi(p: Project): ProjectApi {
       const text = String(source), size = svgSize(text);
       if (typeof size === 'string') throw new Error(`${path}: ${size}`);
       const a: AssetData = { id: nextId(p, 'a'), path, kind: 'image', mime: 'image/svg+xml', width: size.width, height: size.height, svg: text };
+      const i = p.assets.findIndex((x) => x.path === path);
+      if (i >= 0) p.assets[i] = a; else p.assets.push(a);
+      return a.id;
+    },
+    writeSound(path, recipe) {
+      const bad = checkProjectPath(path, 'assets', /\.wav$/) ?? soundProblem(recipe);
+      if (bad) throw new Error(`${path}: ${bad}`);
+      const keep = ['wave', 'from', 'to', 'length', 'attack', 'volume', 'seed'] as const;
+      const r = Object.fromEntries(keep.filter((k) => recipe[k] !== undefined).map((k) => [k, recipe[k]])) as unknown as SoundRecipe;
+      const a: AssetData = { id: nextId(p, 'a'), path, kind: 'sound', mime: 'audio/wav', width: 0, height: 0, sound: r };
       const i = p.assets.findIndex((x) => x.path === path);
       if (i >= 0) p.assets[i] = a; else p.assets.push(a);
       return a.id;

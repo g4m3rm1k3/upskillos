@@ -12,6 +12,7 @@ import { checkProp, isNodeType, propDef, propValue } from './registry';
 import { walk } from './project';
 import { brainProblem, checkProjectPath } from './api';
 import { tileId, tilesetGrid, tilesetProblem } from './tiles';
+import { soundProblem } from './sound';
 
 /** Deterministic: the same project always gives the same text (keys in the model's own order). */
 export function serialize(p: Project): string {
@@ -59,6 +60,7 @@ export function problems(p: Project): string[] {
     brainPaths.add(b.path);
   }
   const assets = new Set(p.assets.map((a) => a.path));
+  for (const a of p.assets) if (a.kind === 'sound' && a.sound) { const bad = soundProblem(a.sound); if (bad) out.push(`${a.path}: ${bad}`); }
   if (p.settings.mainScene && !p.scenes.some((s) => s.path === p.settings.mainScene)) out.push(`The main scene "${p.settings.mainScene}" does not exist`);
   const tilesets = new Map<string, TilesetData>();
   for (const ts of p.tilesets ?? []) {
@@ -109,6 +111,7 @@ export function problems(p: Project): string[] {
         const bad = checkProp(def, v);
         if (bad) out.push(`${at}: ${bad}`);
         if (def.type === 'texture' && typeof v === 'string' && !assets.has(v)) out.push(`${at}: missing image "${v}"`);
+        if (def.type === 'sound' && typeof v === 'string' && !assets.has(v)) out.push(`${at}: missing sound "${v}"`);
         if (def.type === 'tileset' && typeof v === 'string' && !tilesets.has(v)) out.push(`${at}: missing tileset "${v}"`);
         if (def.type === 'cells' && !bad) {
           const count = tileCount(propValue(n.type, n.props, 'tileset') as string);

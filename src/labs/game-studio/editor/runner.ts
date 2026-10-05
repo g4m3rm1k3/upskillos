@@ -36,6 +36,8 @@ export interface RunOptions {
   onMessage: (m: FromRuntime) => void;
   /** Train in view instead of playing: Q-learning in the visible game. */
   train?: TrainInView;
+  /** The project's save slots, sent with the project (engine/saves.ts). */
+  saves?: Record<string, string>;
 }
 
 export async function runGame(o: RunOptions): Promise<RunningGame> {
@@ -51,7 +53,7 @@ export async function runGame(o: RunOptions): Promise<RunningGame> {
   const onMsg = (ev: MessageEvent) => {
     if (ev.source !== frame.contentWindow || ev.data?.channel !== CHANNEL) return;
     const m = ev.data as FromRuntime;
-    if (m.type === 'ready') post({ type: 'load', project: structuredClone(o.project), scene: o.scene, assets: o.assets, ...(o.train ? { train: structuredClone(o.train) } : {}) });
+    if (m.type === 'ready') post({ type: 'load', project: structuredClone(o.project), scene: o.scene, assets: o.assets, ...(o.train ? { train: structuredClone(o.train) } : {}), ...(o.saves ? { saves: { ...o.saves } } : {}) });
     o.onMessage(m);
   };
   window.addEventListener('message', onMsg);

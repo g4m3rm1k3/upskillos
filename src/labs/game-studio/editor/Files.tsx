@@ -25,20 +25,21 @@ export function Files({ store }: { store: Store }) {
   useStore(store);
   const p = store.project;
   const file = useRef<HTMLInputElement>(null);
-  const [naming, setNaming] = useState<'scene' | 'script' | 'svg' | null>(null);
+  const [naming, setNaming] = useState<'scene' | 'script' | 'svg' | 'sound' | null>(null);
   const [rootType, setRootType] = useState('Node2D');
   if (!p) return null;
 
-  const create = (kind: 'scene' | 'script' | 'svg', raw: string) => {
+  const create = (kind: 'scene' | 'script' | 'svg' | 'sound', raw: string) => {
     setNaming(null);
     if (kind === 'svg') { store.newSvg(raw); return; }
+    if (kind === 'sound') { store.newSound(raw); return; }
     const stem = raw.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
     if (!stem) return;
     if (kind === 'scene') store.createScene(`scenes/${stem}.scene`, rootType);
     else { store.act((d) => d.writeScript(`scripts/${stem}.js`, `// ${stem}.js\n`, `New script scripts/${stem}.js`)); store.openScript(`scripts/${stem}.js`); }
   };
   // A new scene's root can be any node type, as in Godot: a coin scene's root is an Area2D, a player's a CharacterBody2D.
-  const namer = (kind: 'scene' | 'script' | 'svg') => naming === kind && (
+  const namer = (kind: 'scene' | 'script' | 'svg' | 'sound') => naming === kind && (
     <div style={{ display: 'flex', gap: 4, margin: '2px 8px 4px 14px' }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) create(kind, (e.currentTarget.querySelector('input') as HTMLInputElement).value); }}>
       {kind === 'scene' && (
@@ -89,6 +90,7 @@ export function Files({ store }: { store: Store }) {
         )}
         <Group title="assets/" action={<>
           <Btn small testid="new-svg" onClick={() => setNaming('svg')} title="A new SVG image: a picture written as text (shapes, paths and words), edited beside a live preview">New SVG…</Btn>
+          <Btn small testid="new-sound" onClick={() => setNaming('sound')} title="A new sound effect, made from a few numbers (a wave, a pitch slide, a length) and edited beside its waveform. Play it with an AudioStreamPlayer.">New sound…</Btn>
           <Btn small testid="new-sprite" onClick={() => store.newSprite()} title="Draw a new sprite in Sprite Forge. Send it back from there (Send to Game Studio) and it is added here and put in the scene.">New sprite…</Btn>
           <Btn small testid="import-image" onClick={() => file.current?.click()} title="Import images (PNG, JPEG, WebP, GIF), or a Tiled map (.tmx or .tmj) with its tileset files (.tsx, .tsj): choose them together">Import…</Btn>
         </>}>
@@ -96,6 +98,15 @@ export function Files({ store }: { store: Store }) {
             onChange={async (e) => { await store.importFiles(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
           {p.assets.map((a) => {
             const img = store.images.get(a.id);
+            if (a.sound) return (
+              <div key={a.id} data-testid={`asset-${a.path}`} onClick={() => store.openScript(a.path)}
+                title={`${a.path} · a ${a.sound.wave} wave, ${a.sound.length} s. Click to edit its recipe; ▶ to hear it. Play it with an AudioStreamPlayer.`} style={item(store.tab.kind === 'script' && store.tab.path === a.path)}>
+                <span>🔊</span>
+                <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.path.replace(/^assets\//, '')}{store.isScriptDirty(a.path) ? ' ●' : ''}</span>
+                <button type="button" data-testid={`hear-${a.path}`} onClick={(e) => { e.stopPropagation(); store.previewSound(a.path); }} title="Hear it"
+                  style={{ background: 'none', border: 'none', color: C.dim, cursor: 'pointer', padding: '0 2px', fontSize: 11 }}>▶</button>
+              </div>
+            );
             return (
               <div key={a.id} data-testid={`asset-${a.path}`} draggable onDragStart={(e) => { e.dataTransfer.setData(ASSET_DRAG, a.path); e.dataTransfer.effectAllowed = 'copy'; }}
                 onClick={a.svg !== undefined ? () => store.openScript(a.path) : undefined}
@@ -111,7 +122,8 @@ export function Files({ store }: { store: Store }) {
             );
           })}
           {namer('svg')}
-          {!p.assets.length && <div style={{ padding: '2px 14px', color: C.faint, fontSize: 11 }}>No images yet.</div>}
+          {namer('sound')}
+          {!p.assets.length && <div style={{ padding: '2px 14px', color: C.faint, fontSize: 11 }}>No images or sounds yet.</div>}
         </Group>
       </div>
     </div>
