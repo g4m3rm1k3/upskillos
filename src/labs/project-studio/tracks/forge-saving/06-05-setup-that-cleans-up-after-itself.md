@@ -80,7 +80,7 @@ def db(tmp_path: Path) -> Iterator[sqlite3.Connection]:
 
 **`conftest.py`** is a name pytest looks for. Fixtures defined in it are available to every test in its folder without importing anything. Fixtures that only one test file needs can live in that file instead.
 
-**`yield`** is what makes the fixture clean up. A function with `yield` in it is a **generator**: it runs until the `yield`, hands over the value, and **pauses**. pytest runs the test, then resumes the fixture after the `yield`, so `connection.close()` runs after the test: **setup** before the `yield`, **teardown** after. The return type says so: `Iterator[sqlite3.Connection]`, something that produces connections one at a time, here exactly one.
+**`yield`** is what makes the fixture clean up. A function with `yield` in it is a **generator**: it runs until the `yield`, hands over the value, and **pauses**. pytest runs the test, then resumes the fixture after the `yield`, so `connection.close()` runs after the test: **setup** before the `yield`, **teardown** after. The return type says so: `Iterator[sqlite3.Connection]`, something that produces connections one at a time, here exactly one. `Iterator` comes from `collections.abc`, the standard library's module of general container types ("abstract base classes"). The most exact type for a generator is `Generator[sqlite3.Connection, None, None]`, which also describes what can be sent into it and what it returns; for one that only yields, `Iterator` says the same thing more simply, and is the usual choice.
 
 ```predict
 question: A test that uses the `db` fixture fails at its first `assert`. Is the database closed?
@@ -91,8 +91,61 @@ answer: Yes: pytest resumes the fixture after the test however the test ended
 explain: The teardown isn't part of the test: it's in the fixture, after the `yield`, and pytest runs it after every test that used the fixture, whether the test passed, failed, or crashed. That's the difference from `db.close()` as a test's last line, which runs only if every line before it succeeded. Cleanup that must happen belongs in a fixture's teardown.
 ```
 
+**See it happen.** Click **Create provided watch_fixture.py**: a fixture that prints when it sets up and tears down, and two tests that use it, one passing and one failing.
+
+```python file=watch_fixture.py provided
+"""Watch a fixture run. Delete this file afterwards."""
+
+from collections.abc import Iterator
+
+import pytest
+
+
+@pytest.fixture
+def resource() -> Iterator[str]:
+    print("\n  setup")
+    yield "the resource"
+    print("  teardown")
+
+
+def test_passes(resource: str):
+    print("  test_passes, given", resource)
+
+
+def test_fails(resource: str):
+    print("  test_fails, given", resource)
+    assert resource == "something else"
+```
+
+pytest normally hides what tests print, and shows it only for a failure; `-s` lets it through as it happens:
+
+```powershell
+.venv\Scripts\python -m pytest -q -s watch_fixture.py
+```
+
+```text
+  setup
+  test_passes, given the resource
+.  teardown
+
+  setup
+  test_fails, given the resource
+F  teardown
+...
+1 failed, 1 passed in 0.18s
+```
+
+For each test: the fixture up to its `yield`, then the test, then pytest's mark for the result (`.` passed, `F` failed), then the rest of the fixture. The failing test's teardown runs exactly like the passing one's. And each test gets its own `setup`: the fixture runs again for every test that asks for it.
+
+Delete the file: it was for the demonstration.
+
+```powershell
+Remove-Item watch_fixture.py
+```
+
 ```check
 contains tests/conftest.py "@pytest.fixture"
+missing watch_fixture.py -- Delete watch_fixture.py: Remove-Item watch_fixture.py
 run ".venv/Scripts/python -m pytest -q" stdout="106 passed" label="nothing uses the fixture yet, so nothing changes"
 ```
 
@@ -159,6 +212,16 @@ def test_a_file_that_is_not_a_database_is_refused():
 ```
 
 **Understand.** Each test now says only what it's about: `db: sqlite3.Connection` in its parameters, and no opening or closing. The type annotation is for pyright and for the reader; pytest matches fixtures by **name** alone. One test still opens and closes its own database: `test_scores_are_still_there_when_the_database_is_opened_again`, because closing and reopening is the thing it tests.
+
+**Why closing matters.** An open connection holds its file open, and on Windows a file that's open can't be deleted:
+
+```text
+PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'scores.db'
+```
+
+Python closes a connection eventually, when nothing refers to it any more, but "eventually" isn't a time you can rely on. A test suite that leaves connections open can find, later in the same run, that it can't delete or replace a database file; closing in the teardown makes it never happen.
+
+**How often a fixture runs** is its **scope**. The default, `scope="function"`, runs it once for every test that asks for it, which is why each test here gets a new, empty database. `@pytest.fixture(scope="module")` would run it once per test file, and `scope="session"` once for the whole run, sharing one result among tests: faster for something expensive, and only safe for something no test changes. A shared database would let one test's scores leak into the next, so `db` keeps the default.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="7 passed"
@@ -384,7 +447,7 @@ def test_bad_settings_stop_the_game_with_exit_code_1(tmp_path: Path):
     assert result.stderr == f"breakout: {settings}: speed: Extra inputs are not permitted\n"
 ```
 
-**Understand.** `pytestmark = pytest.mark.slow` at the top of a test file marks every test in it. Now:
+**Understand.** `pytestmark = pytest.mark.slow` at the top of a test file marks every test in it. The name matters: pytest looks for a module-level variable called exactly `pytestmark`, as it looks for `conftest.py` and for functions starting with `test_`. Now:
 
 ```powershell
 .venv\Scripts\python -m pytest -q -m "not slow"

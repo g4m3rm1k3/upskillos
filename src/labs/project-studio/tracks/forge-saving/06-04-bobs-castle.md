@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
 **Understand: reading it.** This is lesson 3.5's skill again: someone else's code, read before it's trusted.
 
-- `report` runs one `SELECT` with three aggregates (`COUNT(*)` rows, the `MAX` points, the `AVG`, average, points), unpacks the one row it returns into three names, and turns them into a sentence. `{average:.0f}` formats a number with no decimal places.
+- `report` runs one `SELECT` with three aggregates (`COUNT(*)` rows, the `MAX` points, the `AVG`, average, points), unpacks the one row it returns into three names, and turns them into a sentence. `{average:.0f}` formats a number with no decimal places, **rounded** to the nearest whole number, not cut off: 286.67 is shown as 287.
 - `forget` deletes every score on a level, in a transaction, and returns `rowcount`, the number of rows the `DELETE` changed.
 - At the bottom, `sys.argv[1]` is the database file and `sys.argv[2]` the level; `--forget` anywhere after them switches to forgetting.
 - And both queries are built with **f-strings**: the level's name is pasted into the SQL text between single quotes.
@@ -210,7 +210,7 @@ forgot 3 scores
 Classic: no scores yet
 ```
 
-Every score, gone, by asking to forget a level that doesn't exist. This is **SQL injection**: input meant to be **data** is pasted into a command and becomes part of the **code**. In a real service, the same mistake lets a stranger read every user's data, log in as anyone, or delete everything, and it's how many of the largest data breaches on record began. The well-known joke is a mother who named her son `Robert'); DROP TABLE Students;--` and a school that lost its records.
+Every score, gone, by asking to forget a level that doesn't exist. This is **SQL injection**: input meant to be **data** is pasted into a command and becomes part of the **code**. In a real service, the same mistake lets a stranger read every user's data, log in as anyone, or delete everything, and it's how many of the largest data breaches on record began. The well-known joke is xkcd comic 327, "Exploits of a Mom": a mother who named her son `Robert'); DROP TABLE Students;--`, and a school that lost its records.
 
 Remove the copy:
 
@@ -218,7 +218,7 @@ Remove the copy:
 Remove-Item attack.db
 ```
 
-**Why not double the apostrophes?** It's tempting to fix it by escaping: `level.replace("'", "''")`. That works for this one database and this one kind of quote, until it doesn't: other databases have other rules (backslashes, other quote characters, text encodings), and every query written by every person on the team must remember it, forever. The real fix removes the problem instead of patching it: the **placeholder** from lesson 6.3. With `?`, the SQL text is fixed and the value travels **separately**. The database receives "compare `level` with the first value", and the value is only ever a value, whatever characters it contains. There's nothing to escape because nothing is pasted.
+**Why not double the apostrophes?** It's tempting to fix it by escaping: `level.replace("'", "''")`. That works for this one database and this one kind of quote, until it doesn't: other databases have other rules (backslashes, other quote characters, text encodings), and every query written by every person on the team must remember it, forever. The real fix removes the problem instead of patching it: the **placeholder** from lesson 6.3. With `?`, the SQL text is fixed and the value travels **separately**. The database receives "compare `level` with the first value", and the value is only ever a value, whatever characters it contains. There's nothing to escape because nothing is pasted. You'll see this called a **parameterised query**, or **parameter binding**: the `?` is a parameter, and the value is bound to it.
 
 ```check
 missing attack.db -- Remove-Item attack.db: it was only for the attack.
@@ -276,7 +276,7 @@ S608 Possible SQL injection vector through string-based query construction
 Found 2 errors.
 ```
 
-**Understand.** ruff's default rules are a careful minimum. `[tool.ruff.lint]` adds more, by code: `extend-select = ["S608"]` adds one rule from its **S** group, which comes from the security linter **Bandit**, and spots strings that look like SQL being built with f-strings, `+` or `%`. Turning it on makes `ruff check`, part of the definition of done since lesson 3.6, fail until the report is fixed. A tool like this doesn't replace knowing why: it catches the slip on a tired day, in code you didn't write, and in code an AI assistant wrote for you.
+**Understand.** ruff's default rules (lesson 3.6: which ones depends on the version) are chosen to be safe to run in any project, and `S608` isn't among them. `[tool.ruff.lint]` adds more, by code: `extend-select = ["S608"]` adds one rule from its **S** group, which comes from the security linter **Bandit**, and spots strings that look like SQL being built with f-strings, `+` or `%`. Turning it on makes `ruff check`, part of the definition of done since lesson 3.6, fail until the report is fixed. A tool like this doesn't replace knowing why: it catches the slip on a tired day, in code you didn't write, and in code an AI assistant wrote for you.
 
 ```check
 run ".venv/Scripts/python -m ruff check ." exit=1 stdout="Found 2 errors." label="ruff finds both injectable queries"

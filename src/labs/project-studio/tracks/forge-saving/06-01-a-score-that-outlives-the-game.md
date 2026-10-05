@@ -682,7 +682,7 @@ N+2     WON       WON            no         yes             no
 
 One game, one score. Without the `before` comparison, frame N+1 and every frame after it would save the same win again, sixty times a second.
 
-**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Scores saved in summer and winter, or on two computers in different countries, couldn't be compared reliably. ruff has a group of rules, `DTZ`, that flags naive datetimes for exactly this reason; it isn't on by default, and lesson 6.4 shows how to turn on a group. Store times in UTC, with the zone recorded, and convert to local time only to show them.
+**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Scores saved in summer and winter, or on two computers in different countries, couldn't be compared reliably. ruff's `DTZ` rules flag naive datetimes for exactly this reason, and the pinned ruff version runs them by default: write `datetime.now()` and `ruff check` reports `DTZ005`, "called without a `tz` argument". Store times in UTC, with the zone recorded, and convert to local time only to show them.
 
 Now play the classic level to the end, keeping scores in a file:
 
@@ -840,7 +840,7 @@ git-clean
 
 - **Memory belongs to a running program**; keeping anything means serialising it to a file or database, and deserialising it later.
 - **JSON holds six kinds of value.** Anything else (a `datetime`, your own class) needs a representation you choose, written and read back explicitly.
-- **ISO 8601** for dates and times as text; **UTC** for storing them, with the zone recorded; ruff's `DTZ` rules can catch naive datetimes, once turned on.
+- **ISO 8601** for dates and times as text; **UTC** for storing them, with the zone recorded; ruff's `DTZ` rules catch naive datetimes.
 - **A round-trip test**: save, load, and compare with what you started with.
 - **A test run touches nothing it wasn't given**, and a real game keeps its data in the user's data folder.
 - `**dict` and `*list` unpacking; `max(..., default=None)`.

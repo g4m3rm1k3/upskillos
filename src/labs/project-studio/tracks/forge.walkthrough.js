@@ -667,6 +667,7 @@ ${stopSaving ? '            scores_file = None\n' : ''}`],
 });
 const L63 = 'forge-saving/06-03-tables';
 const SQLITE = '.venv\\Scripts\\python -m sqlite3 practice.db';
+const PLAYERS_SQL = '.venv\\Scripts\\python -m sqlite3 players.db';
 const PRACTICE = [
   `${SQLITE} "CREATE TABLE scores (id INTEGER PRIMARY KEY, level TEXT NOT NULL, points INTEGER NOT NULL CHECK (points >= 0), played_at TEXT NOT NULL) STRICT"`,
   `${SQLITE} "INSERT INTO scores (level, points, played_at) VALUES ('Classic', 560, '2026-10-04T15:30:05+00:00')"`,
@@ -1619,6 +1620,7 @@ export const WALKTHROUGH = {
       { name: 'not committed', ...reportFix(), fails: [7, 8] },
     ],
   },
+  [`${L65}#A fixture of your own`]: { run: ['Remove-Item watch_fixture.py'] },
   [`${L65}#Your turn: one game, set up once`]: {
     files: GAME_FIXTURES,
     run: ['git add .', 'git commit -m "Share the game setup between tests with fixtures"'],
@@ -1630,6 +1632,15 @@ export const WALKTHROUGH = {
         fails: [0, 1, 2, 3],
       },
       { name: 'not committed', files: GAME_FIXTURES, fails: [10, 11] },
+    ],
+  },
+  [`${L71}#Two tables, by hand`]: {
+    run: [
+      `${PLAYERS_SQL} "CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE CHECK (name <> '')) STRICT"`,
+      `${PLAYERS_SQL} "INSERT INTO players (name) VALUES ('Mia'), ('Sam')"`,
+      `${PLAYERS_SQL} "CREATE TABLE scores (id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL REFERENCES players (id), level TEXT NOT NULL, points INTEGER NOT NULL CHECK (points >= 0), played_at TEXT NOT NULL) STRICT"`,
+      `${PLAYERS_SQL} "INSERT INTO scores (player_id, level, points, played_at) VALUES (1, 'Classic', 400, '2026-10-04T15:30:05+00:00'), (2, 'Classic', 70, '2026-10-04T15:41:00+00:00'), (1, 'Castle', 150, '2026-10-05T09:02:30+00:00')"`,
+      `${PLAYERS_SQL} "INSERT INTO players (name) VALUES ('Mia') ON CONFLICT (name) DO NOTHING"`,
     ],
   },
   [`${L71}#The app records who played`]: {

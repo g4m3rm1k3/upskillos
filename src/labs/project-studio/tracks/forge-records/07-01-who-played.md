@@ -149,9 +149,268 @@ def test_pausing_on_the_title_screen_does_nothing(new_game: model.Game):
 run ".venv/Scripts/python -m pytest -q" stdout="106 passed"
 ```
 
-## Two tables
+## Two tables, by hand
 
-**Build:** a players table, and scores that belong to a player.
+**Build:** a players table and a scores table that refers to it, in a practice database, typed in the SQL shell.
+
+Open a new practice database (`*.db` is already ignored, lesson 6.3):
+
+```powershell
+.venv\Scripts\python -m sqlite3 players.db
+```
+
+**A table of players**, each stored once:
+
+```sql
+CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE CHECK (name <> '')) STRICT;
+INSERT INTO players (name) VALUES ('Mia'), ('Sam');
+SELECT * FROM players;
+```
+
+```text
+(1, 'Mia')
+(2, 'Sam')
+```
+
+`UNIQUE` means no two rows can have the same `name`, and `CHECK (name <> '')` that it can't be empty (`<>` is SQL's "not equal"). One `INSERT` can add several rows: one bracket of values each. SQLite numbered them 1 and 2.
+
+**A table of scores that refers to players.** Instead of a name, each score holds the **number** of its player:
+
+```sql
+CREATE TABLE scores (id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL REFERENCES players (id), level TEXT NOT NULL, points INTEGER NOT NULL CHECK (points >= 0), played_at TEXT NOT NULL) STRICT;
+INSERT INTO scores (player_id, level, points, played_at) VALUES (1, 'Classic', 400, '2026-10-04T15:30:05+00:00'), (2, 'Classic', 70, '2026-10-04T15:41:00+00:00'), (1, 'Castle', 150, '2026-10-05T09:02:30+00:00');
+SELECT * FROM scores;
+```
+
+```text
+(1, 1, 'Classic', 400, '2026-10-04T15:30:05+00:00')
+(2, 2, 'Classic', 70, '2026-10-04T15:41:00+00:00')
+(3, 1, 'Castle', 150, '2026-10-05T09:02:30+00:00')
+```
+
+`player_id INTEGER NOT NULL REFERENCES players (id)` is a **foreign key**: a column whose value is the primary key of a row in another table. The second column of each row says whose score it is: 1 is Mia, 2 is Sam. Declaring it with `REFERENCES` promises two rules:
+
+- a score can't name a player who doesn't exist: `player_id` 99 would be refused;
+- a player who has scores can't be deleted, because their scores would then point at nothing.
+
+**Asking across both tables.** A number isn't a name. A **join** pairs each score with the player it refers to:
+
+```sql
+SELECT players.name, scores.level, scores.points FROM scores JOIN players ON players.id = scores.player_id;
+```
+
+```text
+('Mia', 'Classic', 400)
+('Sam', 'Classic', 70)
+('Mia', 'Castle', 150)
+```
+
+Traced: for each score, find the player row whose `id` equals the score's `player_id`, and put the two rows side by side.
+
+```text
+score row                          player_id   matching player row   selected
+(1, 1, 'Classic', 400, ...)        1           (1, 'Mia')            ('Mia', 'Classic', 400)
+(2, 2, 'Classic', 70, ...)         2           (2, 'Sam')            ('Sam', 'Classic', 70)
+(3, 1, 'Castle', 150, ...)         1           (1, 'Mia')            ('Mia', 'Castle', 150)
+```
+
+Both tables have an `id`, so columns are named with their table, `players.name`, `scores.level`: `id` alone would be ambiguous.
+
+**A player who's already there.** Add Mia again:
+
+```sql
+INSERT INTO players (name) VALUES ('Mia');
+```
+
+```text
+IntegrityError (SQLITE_CONSTRAINT_UNIQUE): UNIQUE constraint failed: players.name
+```
+
+`UNIQUE` refused it. The game will add a player every time it saves a score, and most of the time they'll already exist, so it needs "add this player unless they're already there":
+
+```sql
+INSERT INTO players (name) VALUES ('Mia') ON CONFLICT (name) DO NOTHING;
+SELECT COUNT(*) FROM players;
+```
+
+```text
+(2,)
+```
+
+No error, and still two players. `ON CONFLICT (name) DO NOTHING` says what to do when the insert would break the `UNIQUE` rule on `name`: skip it, quietly. It only works on a column that has a `UNIQUE` rule (or is the primary key): without one there's never a conflict to handle, and SQLite refuses the clause. Type `.quit` to leave the shell.
+
+```check
+run ".venv/Scripts/python -m sqlite3 players.db \"SELECT players.name, scores.points FROM scores JOIN players ON players.id = scores.player_id WHERE scores.level = 'Castle'\"" stdout="('Mia', 150)" label="players.db joins each score to its player"
+run ".venv/Scripts/python -m sqlite3 players.db \"SELECT COUNT(*) FROM players\"" stdout="(2,)" label="Mia is in the players table once"
+```
+
+## Two tables in the schema
+
+**Build:** the game's schema, with the two tables you just typed.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in an SQLite database between games."""
+
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS players (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE CHECK (name <> '')
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY,
+    player_id INTEGER NOT NULL REFERENCES players (id),
+    level TEXT NOT NULL,
+    points INTEGER NOT NULL CHECK (points >= 0),
+    played_at TEXT NOT NULL
+) STRICT;
+"""
+
+
+@dataclass(frozen=True)
+class Score:
+    level: str
+    points: int
+    when: datetime
+
+
+def open_scores(path: Path) -> sqlite3.Connection:
+    db = sqlite3.connect(path)
+    db.executescript(SCHEMA)
+    return db
+
+
+def add_score(db: sqlite3.Connection, score: Score) -> None:
+    with db:
+        db.execute(
+            "INSERT INTO scores (level, points, played_at) VALUES (?, ?, ?)",
+            (score.level, score.points, score.when.isoformat()),
+        )
+
+
+def load_scores(db: sqlite3.Connection) -> list[Score]:
+    rows = db.execute("SELECT level, points, played_at FROM scores ORDER BY id")
+    return [Score(level, points, datetime.fromisoformat(played_at)) for level, points, played_at in rows]
+
+
+def best(db: sqlite3.Connection, level: str) -> int | None:
+    (points,) = db.execute("SELECT MAX(points) FROM scores WHERE level = ?", (level,)).fetchone()
+    return points
+```
+
+**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.4 looks at that problem properly. The usual design stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key. Each score belongs to exactly one player, and a player can have any number of scores: a **one-to-many** relationship.
+
+**The schema** is two statements now, separated by `;`. `execute` runs exactly one, and refuses more: `ProgrammingError: You can only execute one statement at a time`. **`executescript`** runs a whole script of them, in order. One difference to know: if a transaction is open, `executescript` commits it first, so it isn't for use in the middle of one. Here it runs straight after `connect`, with nothing open.
+
+```check
+contains breakout/scores.py "REFERENCES players (id)"
+run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); print(db.execute('SELECT COUNT(*) FROM players').fetchone(), db.execute('SELECT COUNT(*) FROM scores').fetchone())\"" stdout="(0,) (0,)" label="open_scores makes both tables, empty"
+```
+
+`add_score` and `load_scores` still use the old table's columns, and the app still makes a `Score` with no player: they change in the next two steps and in "The app records who played", and nothing plays a game with scores before then.
+
+## A score knows its player
+
+**Build:** a `Score` says who made it, and `add_score` stores the player once and the score with their id.
+
+```python file=breakout/scores.py
+"""The scores players have made, kept in an SQLite database between games."""
+
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS players (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE CHECK (name <> '')
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY,
+    player_id INTEGER NOT NULL REFERENCES players (id),
+    level TEXT NOT NULL,
+    points INTEGER NOT NULL CHECK (points >= 0),
+    played_at TEXT NOT NULL
+) STRICT;
+"""
+
+
+@dataclass(frozen=True)
+class Score:
+    player: str
+    level: str
+    points: int
+    when: datetime
+
+
+def open_scores(path: Path) -> sqlite3.Connection:
+    db = sqlite3.connect(path)
+    db.executescript(SCHEMA)
+    return db
+
+
+def add_score(db: sqlite3.Connection, score: Score) -> None:
+    with db:
+        db.execute("INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING", (score.player,))
+        db.execute(
+            "INSERT INTO scores (player_id, level, points, played_at) SELECT id, ?, ?, ? FROM players WHERE name = ?",
+            (score.level, score.points, score.when.isoformat(), score.player),
+        )
+
+
+def load_scores(db: sqlite3.Connection) -> list[Score]:
+    rows = db.execute("SELECT level, points, played_at FROM scores ORDER BY id")
+    return [Score(level, points, datetime.fromisoformat(played_at)) for level, points, played_at in rows]
+
+
+def best(db: sqlite3.Connection, level: str) -> int | None:
+    (points,) = db.execute("SELECT MAX(points) FROM scores WHERE level = ?", (level,)).fetchone()
+    return points
+```
+
+**Understand.** `Score` gains a `player` field, first, so it reads like a sentence: Mia, Classic, 400, at this time.
+
+**`add_score`** does two things in one transaction:
+
+1. `INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING` adds the player if they're new, and skips quietly if they're not, as in the shell. You'll hear inserts like this called **upserts**, from "update or insert": strictly, an upsert updates the row that's already there (`ON CONFLICT ... DO UPDATE`), and `DO NOTHING` is its "insert or ignore" form.
+2. `INSERT INTO scores (...) SELECT id, ?, ?, ? FROM players WHERE name = ?` adds the score, taking the values from a `SELECT` instead of from `VALUES`: one statement looks up the player's `id` and inserts the score with it.
+
+The second statement has **four** placeholders, filled in order:
+
+```text
+SELECT id,  ?,            ?,             ?                        FROM players WHERE name = ?
+            score.level   score.points   score.when.isoformat()                         score.player
+```
+
+The fourth `?` is in the `WHERE`, which is why `score.player` comes last in the tuple, though it's first in the `Score`.
+
+**Why the first statement must come first.** If no player has that name, the `SELECT` finds no rows, and `INSERT ... SELECT` inserts nothing at all: no error, just a score silently not saved. The first statement makes sure the player exists, so the second always finds exactly one. Both are inside `with db:`, so a player is never half-added and a score never saved without its player.
+
+```powershell
+.venv\Scripts\python -c "from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import Score, add_score, open_scores; db = open_scores(Path(':memory:')); t = datetime(2026, 10, 4, tzinfo=UTC); [add_score(db, Score(p, 'Classic', n, t)) for p, n in [('Mia', 400), ('Sam', 70), ('Mia', 150)]]; print(db.execute('SELECT * FROM players').fetchall()); print(db.execute('SELECT player_id, points FROM scores').fetchall())"
+```
+
+```text
+[(1, 'Mia'), (2, 'Sam')]
+[(1, 400), (2, 70), (1, 150)]
+```
+
+`fetchall()` gives every row of a result at once, as a list of tuples, where `fetchone()` gives one. Three scores, two players: Mia's second score found her existing row, id 1.
+
+```check
+run ".venv/Scripts/python -c \"from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import Score, add_score; t = datetime(2026, 10, 4, tzinfo=UTC); add_score(db, Score('Mia', 'Classic', 400, t)); add_score(db, Score('Mia', 'Castle', 150, t)); print(db.execute('SELECT * FROM players').fetchall(), db.execute('SELECT player_id FROM scores').fetchall())\"" stdout="[(1, 'Mia')] [(1,), (1,)]" label="two scores by Mia: one player, and both scores point at her"
+```
+
+## Scores with names, by a join
+
+**Build:** `load_scores` gives each score its player's name back.
 
 ```python file=breakout/scores.py
 """The scores players have made, kept in an SQLite database between games."""
@@ -216,25 +475,11 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     return points
 ```
 
-**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.4 looks at that problem properly. The usual design stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key.
-
-**The schema**, now two statements, so it's run with `executescript`, which runs several statements separated by `;`:
-
-- `players`: an `id`, and a `name` that is `UNIQUE`, so no two rows can have the same name, and can't be empty (`CHECK (name <> '')`, where `<>` is SQL's "not equal").
-- `scores.player_id INTEGER NOT NULL REFERENCES players (id)`: a **foreign key**, a column whose value is the primary key of a row in another table. It declares a **relationship**: each score belongs to exactly one player, and a player can have any number of scores, which is called **one-to-many**.
-
-**`add_score`** does two things in one transaction:
-
-1. `INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING` adds the player if they're new. If a row with that name already exists, the `UNIQUE` rule would refuse the insert, and `ON CONFLICT (name) DO NOTHING` says to quietly skip it instead. An insert that may already have been done is often called an **upsert**.
-2. `INSERT INTO scores (...) SELECT id, ?, ?, ? FROM players WHERE name = ?` adds the score, taking the player's `id` from a `SELECT` instead of from `VALUES`: one statement looks up the player and inserts the score.
-
-Both inside `with db:`, so a score is never saved without its player, or a player half-added.
-
-**`load_scores`** asks one question across both tables with a **join**. `FROM scores JOIN players ON players.id = scores.player_id` pairs each score with the player row whose `id` matches its `player_id`. Columns are then named with their table, `players.name` or `scores.level`, because both tables have an `id`. The result is one row per score, with the player's name in it, exactly as if the name had been stored in the score, without storing it twice.
+**Understand.** The query is the shell's join, with the `played_at` column too, and `ORDER BY scores.id` so the scores come back in the order they were added. The result is one row per score with the player's name in it, exactly as if the name had been stored in the score, without storing it twice. A query this long is easier to read over several lines, so it's in a triple-quoted string: SQL doesn't mind the line breaks.
 
 ```check
-contains breakout/scores.py "REFERENCES players (id)"
 contains breakout/scores.py "JOIN players ON players.id = scores.player_id"
+run ".venv/Scripts/python -c \"from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import Score, add_score, load_scores; t = datetime(2026, 10, 4, tzinfo=UTC); add_score(db, Score('Mia', 'Classic', 400, t)); add_score(db, Score('Sam', 'Classic', 70, t)); print([(s.player, s.points) for s in load_scores(db)])\"" stdout="[('Mia', 400), ('Sam', 70)]" label="each score comes back with its player's name"
 ```
 
 ## Tests for players
@@ -395,6 +640,13 @@ def positive_int(text: str) -> int:
     return value
 
 
+def player_name(text: str) -> str:
+    name = text.strip()
+    if not name:
+        raise argparse.ArgumentTypeError("must have something in it besides spaces")
+    return name
+
+
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="breakout", description="Play Breakout. A test run lets another program play it."
@@ -413,7 +665,7 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--level", type=Path, metavar="FILE", help="play this level file (default: the classic wall)")
     parser.add_argument("--config", type=Path, metavar="FILE", help="read settings from this TOML file")
     parser.add_argument("--scores", type=Path, metavar="FILE", help="keep scores in this file (test runs keep none)")
-    parser.add_argument("--player", metavar="NAME", help="whose scores these are (default: from the settings file)")
+    parser.add_argument("--player", type=player_name, metavar="NAME", help="whose scores these are (default: from the settings file)")
     return parser
 
 
@@ -431,8 +683,89 @@ def parse_args(args: list[str]) -> Settings:
     )
 ```
 
+**Understand.** `player_name` is a `type` function, like `positive_int` (lesson 4.3): argparse calls it with the text after `--player`, and uses what it returns. It removes spaces from both ends, and refuses a name with nothing else in it, so `--player "   "` is a usage error, as `--test-run 0` is. Without it, a name of three spaces would get past the database's `CHECK (name <> '')`: three spaces aren't empty.
+
+Two tests for it, at the end of `tests/test_arguments.py`:
+
+```python file=tests/test_arguments.py
+# Lesson 2.4, with --seed added in 2.6: what the game's command line should accept, and what it should refuse.
+import pytest
+
+from breakout import settings
+from breakout.settings import Hold, Settings
+
+
+def test_no_arguments_is_a_normal_game():
+    assert settings.parse_args([]) == Settings()
+
+
+def test_a_test_run_with_every_option():
+    assert settings.parse_args(["--test-run", "600", "--hold", "auto", "--lag-at", "40", "--seed", "7"]) == Settings(
+        test_frames=600, hold=Hold.AUTO, lag_at=40, seed=7
+    )
+
+
+def test_an_unknown_hold_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "5", "--hold", "sideways"])
+    assert stopped.value.code == 2
+
+
+def test_a_hold_with_nothing_after_it_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "5", "--hold"])
+    assert stopped.value.code == 2
+
+
+def test_a_lag_with_nothing_after_it_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "5", "--lag-at"])
+    assert stopped.value.code == 2
+
+
+def test_a_lag_that_is_not_a_number_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "5", "--lag-at", "soon"])
+    assert stopped.value.code == 2
+
+
+def test_a_usage_error_says_how_to_use_the_game(capsys: pytest.CaptureFixture[str]):
+    with pytest.raises(SystemExit):
+        settings.parse_args(["--hold", "sideways"])
+    assert capsys.readouterr().err.startswith("usage: breakout")
+
+
+def test_a_seed_that_is_not_a_number_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "5", "--seed", "lucky"])
+    assert stopped.value.code == 2
+
+
+def test_a_negative_frame_count_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "-5"])
+    assert stopped.value.code == 2
+
+
+def test_zero_frames_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--test-run", "0"])
+    assert stopped.value.code == 2
+
+
+def test_a_player_name_is_kept_without_the_spaces_around_it():
+    assert settings.parse_args(["--player", " Mia "]).player == "Mia"
+
+
+def test_a_player_name_of_only_spaces_is_a_usage_error():
+    with pytest.raises(SystemExit) as stopped:
+        settings.parse_args(["--player", "   "])
+    assert stopped.value.code == 2
+```
+
 ```check
-run ".venv/Scripts/python -m pytest -q tests/test_arguments.py" stdout="10 passed"
+run ".venv/Scripts/python -m pytest -q tests/test_arguments.py" stdout="12 passed"
+run ".venv/Scripts/breakout --test-run 5 --player \"   \"" exit=2 stderr="must have something in it besides spaces" label="a name of only spaces is a usage error"
 ```
 
 ## A player in the settings file
@@ -522,10 +855,74 @@ def load_config(path: Path) -> Config:
     return config.model_copy(update={"level": path.parent / config.level})
 ```
 
-**Understand.** `player` is a name with something in it besides spaces, like a level's name (lesson 5.4), and `Player` if the file doesn't say.
+**Understand.** `player` is a name with something in it besides spaces, like a level's name (lesson 5.4), and `Player` if the file doesn't say. The same rule as `--player`, written the pydantic way: `strip_whitespace=True`, then `min_length=1`.
+
+And its tests: one for the default and a name read from the file, and one more refusal in the parametrised test:
+
+```python file=tests/test_config.py
+from pathlib import Path
+
+import pytest
+
+from breakout import config
+
+
+def write_config(folder: Path, text: str) -> Path:
+    path = folder / "settings.toml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_without_a_file_the_controls_are_the_arrows_space_and_p():
+    assert config.Config() == config.Config(
+        level=None, controls=config.Controls(left="left", right="right", serve="space", pause="p")
+    )
+
+
+def test_a_file_changes_only_what_it_mentions(tmp_path: Path):
+    path = write_config(tmp_path, '[controls]\nleft = "a"\nright = "d"\n')
+    loaded = config.load_config(path)
+    assert loaded.controls == config.Controls(left="a", right="d", serve="space", pause="p")
+    assert loaded.level is None
+
+
+def test_a_level_is_found_from_the_file_s_own_folder(tmp_path: Path):
+    path = write_config(tmp_path, 'level = "levels/castle.json"\n')
+    assert config.load_config(path).level == tmp_path / "levels" / "castle.json"
+
+
+def test_an_empty_file_is_all_defaults(tmp_path: Path):
+    assert config.load_config(write_config(tmp_path, "")) == config.Config()
+
+
+def test_the_player_is_called_player_unless_the_file_names_one(tmp_path: Path):
+    assert config.Config().player == "Player"
+    assert config.load_config(write_config(tmp_path, 'player = " Mia "\n')).player == "Mia"
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("level = \n", "not valid TOML: Invalid value (at line 1, column 9)"),
+        ("speed = 2\n", "speed: Extra inputs are not permitted"),
+        ('[controls]\njump = "w"\n', "controls.jump: Extra inputs are not permitted"),
+        ("[controls]\nleft = 1\n", "controls.left: Input should be a valid string"),
+        (
+            '[controls]\nleft = "banana"\n',
+            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+        ),
+        ('[controls]\nleft = "a"\nright = "a"\n', "controls: left and right both use 'a'"),
+        ('player = "   "\n', "player: String should have at least 1 character"),
+    ],
+)
+def test_bad_settings_are_refused_with_where_and_why(tmp_path: Path, text: str, message: str):
+    with pytest.raises(config.ConfigError) as refused:
+        config.load_config(write_config(tmp_path, text))
+    assert str(refused.value) == message
+```
 
 ```check
-run ".venv/Scripts/python -m pytest -q tests/test_config.py" stdout="10 passed"
+run ".venv/Scripts/python -m pytest -q tests/test_config.py" stdout="12 passed"
 ```
 
 ## The app records who played
@@ -670,7 +1067,15 @@ Remove-Item scores.db -ErrorAction Ignore
 ('Player', 'Classic', 40)
 ```
 
-`-ErrorAction Ignore` makes `Remove-Item` say nothing if the file isn't there. A player's own database is different: it can't be deleted to make room for a new design. That's the next lesson.
+`-ErrorAction Ignore` makes `Remove-Item` say nothing if the file isn't there.
+
+If you played real games in Chapter 6, the database in your data folder (lesson 6.1's `get_pref_path`) has the old table as well, and the next real game would crash when it ends, with `table scores has no column named player_id`. It's your own test data, so delete it too:
+
+```powershell
+Remove-Item "$env:APPDATA\forge\breakout\scores.db" -ErrorAction Ignore
+```
+
+`$env:APPDATA` is the environment variable (lesson 0.1) holding your `AppData\Roaming` folder. A real player's database is different: it can't be deleted to make room for a new design. That's the next lesson.
 
 ```check
 run ".venv/Scripts/python -m sqlite3 scores.db \"SELECT players.name, scores.points FROM scores JOIN players ON players.id = scores.player_id WHERE players.name = 'Mia'\"" stdout="('Mia', 560)" label="Mia's win is saved under her name"
@@ -714,14 +1119,14 @@ FAILED tests/test_foreign_keys.py::test_a_player_who_has_scores_cannot_be_delete
 2 failed
 ```
 
-The schema says `REFERENCES players (id)`. Above the summary, pytest explains each failure: `Failed: DID NOT RAISE IntegrityError`. The database accepts a score for player 99, who doesn't exist, and lets a player who has scores be deleted, leaving scores that belong to no one: **orphans**. Try it yourself in the shell on `scores.db`, and count the rows before and after. Then find out why. This one is about SQLite itself, so its documentation on foreign keys is the place to look. (`pytest.raises(...), db` in a `with` is two context managers in one statement: the transaction and the check that it raises.)
+The schema says `REFERENCES players (id)`. Above the summary, pytest explains each failure: `Failed: DID NOT RAISE IntegrityError`. The database accepts a score for player 99, who doesn't exist, and lets a player who has scores be deleted, leaving scores that belong to no one: **orphans**. Try it yourself in the shell on `scores.db`, and count the rows before and after. Then find out why. This one is about SQLite itself, so its documentation on foreign keys is the place to look. One new piece of syntax in the tests: `with pytest.raises(sqlite3.IntegrityError), db:` is two context managers in one `with`, entered left to right and left in reverse order. So `db`'s transaction ends first: if the `INSERT` raised, it's rolled back, and the exception carries on out. Then `pytest.raises` catches it and checks its type. If nothing raised, the transaction commits, and `pytest.raises` fails the test with `DID NOT RAISE`. It's the same as one `with` inside the other.
 
 | Test / check | Result |
 |---|---|
 | `pytest -q tests/test_foreign_keys.py` | `2 passed` |
 | every connection `open_scores` returns | refuses orphans: in the game, the report tool and the tests, not only in the tests |
 
-When all 110 tests pass and every check is clean, commit with a message that mentions **foreign key**.
+When all 114 tests pass and every check is clean, commit with a message that mentions **foreign key**.
 
 ```hints
 nudge: The schema is right: the rule is declared. So is the database ignoring it? Search SQLite's documentation for "foreign key support". What does it say about whether foreign keys are enforced by default?
@@ -735,13 +1140,13 @@ def open_scores(path: Path) -> sqlite3.Connection:
     return db
 ~~~
 
-Putting it in `open_scores` means every connection the program makes gets it, because there's only one way to open the scores database. That's a reason to have exactly one function that opens it. Other databases (PostgreSQL, MySQL with InnoDB, SQL Server) always enforce foreign keys; SQLite's default is a historical leftover that every SQLite program has to deal with, and now you know to look for it. A rule the database declares but doesn't check is worse than no rule: everyone reading the schema believes it.
+Putting it in `open_scores` means every connection the program makes gets it, because there's only one way to open the scores database. That's a reason to have exactly one function that opens it. Other databases (PostgreSQL, MySQL with InnoDB, SQL Server) enforce foreign keys by default; SQLite's default is a historical leftover that every SQLite program has to deal with, and now you know to look for it. A rule the database declares but doesn't check is worse than no rule: everyone reading the schema believes it.
 ```
 
 ```check
 run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; print(open_scores(Path('scores.db')).execute('PRAGMA foreign_keys').fetchone())\"" stdout="(1,)" label="every connection open_scores makes enforces foreign keys" -- Run PRAGMA foreign_keys = ON in open_scores itself, not only in the test fixture.
 run ".venv/Scripts/python -m pytest -q tests/test_foreign_keys.py" stdout="2 passed"
-run ".venv/Scripts/python -m pytest -q" stdout="110 passed"
+run ".venv/Scripts/python -m pytest -q" stdout="114 passed"
 run ".venv/Scripts/python -m pyright breakout tests replay.py" stdout="0 errors"
 run ".venv/Scripts/python -m ruff check ." stdout="All checks passed!"
 git-message "foreign key"
