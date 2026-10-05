@@ -50,6 +50,14 @@ const failed = await withGameStudio(5200, async ({ page, t, check }) => {
   for (let i = 0; i < 12; i++) { await key('ArrowRight', 100); await key('KeyJ', 60); if (i === 3 && OUT) await frame.screenshot({ path: `${OUT}/qa-hit.png` }); }
   await page.waitForTimeout(300);
   if (OUT) await frame.screenshot({ path: `${OUT}/qa-fight.png` });
+  // The buddy's skills (K): its senses, moves and focus, and the points to spend.
+  await key('KeyK'); await page.waitForTimeout(400);
+  if (OUT) await frame.screenshot({ path: `${OUT}/qa-skills.png` });
+  await key('KeyK');
+  await t('tab-debug').click(); await page.waitForTimeout(600);
+  const watches = await page.getByTestId('panel-debug').innerText();
+  check('The Debug tab shows what the buddy sees and its values, and your rating', /buddy sees/.test(watches) && /buddy values/.test(watches) && /your rating/.test(watches), watches.replace(/\s+/g, ' ').slice(0, 200));
+  if (OUT) await page.screenshot({ path: `${OUT}/qa-debug.png` });
   const out = await store(() => window.__gameStudio.store.output.map((o) => `${o.level}: ${o.text}`));
   check('No errors or sound warnings while playing', !out.some((l) => l.startsWith('error') || l.includes('Could not')), out.join(' | '));
   await t('stop').click();

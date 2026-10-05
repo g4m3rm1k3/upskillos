@@ -11,7 +11,7 @@ import type { GameExample } from './types';
 import { questBuddies, QB_SCRIPTS } from './questBuddies';
 
 const tile = (n: number) => `assets/tiny-dungeon/tiles/tile_${String(n).padStart(4, '0')}.png`;
-const WARRIOR = 96, RANGER_CLASS = 98, MAGE = 84, SLIME = 108, POTION = 115, BLADE = 104;
+const WARRIOR = 96, RANGER_CLASS = 98, MAGE = 84, SLIME = 108, BUDDY = 99, POTION = 115, BLADE = 104;
 
 // ── data ────────────────────────────────────────────────────────────────
 
@@ -261,6 +261,8 @@ export default class Slime extends CharacterBody2D {
     if (this.stunned > 0) { this.moveAndSlide(); return; }
     const far = this.position.distanceTo(hero.position);
     if (far < 12) hero.hurt(1, this.position);
+    const buddy = scene.find('Buddy');
+    if (buddy && this.position.distanceTo(buddy.position) < 12) buddy.hurt(1, this.position);
     if (far > this.sight) { this.velocity = { x: 0, y: 0 }; return; }
     // Find the way again a few times a second, not every frame: pathfinding costs more than moving.
     this.think -= dt;
@@ -338,6 +340,299 @@ const hud = hudLevels
     for (const item of state.bag) { const row = item.kind ? this.useRow(item) : this.row(item.name + ': ' + item.note, '#ffffff'); list.addChild(row); first ??= row; }
     if (first instanceof Button) first.grabFocus();   // Enter uses the first item; the arrow keys move between them`);
 
+// ── 12.4: the buddy that learns ─────────────────────────────────────────
+
+const buddy = `// The buddy: a friend who fights beside you and learns how while you play, by Q-learning (chapter 9) in this script.
+// Everything it has learned is in state.buddy, so it is saved with the game. Skill points make it better:
+//   senses  how many things it notices, so how many situations it can tell apart (1 to 3)
+//   moves   how many things it can do (2 to 4)
+//   focus   how rarely it tries a random move: ε = 0.3 × 0.5^focus
+export const MOVES = ['follow', 'fight', 'guard', 'rest'];
+export const ALPHA = 0.2, GAMMA = 0.9;
+
+export default class Buddy extends CharacterBody2D {
+  hp = 6;
+  maxHp = 6;
+  speed = 64;
+  cooldown = 0;     // seconds until it can hit again
+  safe = 0;         // seconds it cannot be hurt again
+  down = 0;         // seconds it is knocked out
+  think = 0;        // seconds until it decides again
+  last = null;      // its last decision: { key, action }, to learn from
+  earned = 0;       // reward since that decision
+
+  ready() {
+    state.buddy ??= { q: {}, senses: 1, moves: 2, focus: 0, decisions: 0, beaten: 0 };
+    const hero = scene.find('Player');
+    if (hero) this.position = hero.position.add({ x: -16, y: 0 });
+  }
+
+  get mind() { return state.buddy; }
+  get epsilon() { return 0.3 * Math.pow(0.5, this.mind.focus); }
+
+  nearestSlime() {
+    let best = null;
+    for (const s of scene.getNodesInGroup('enemies')) if (!best || this.position.distanceTo(s.position) < this.position.distanceTo(best.position)) best = s;
+    return best;
+  }
+
+  // What it sees: the situation, as words, from the senses it has. Each different key is a different state.
+  see() {
+    const slime = this.nearestSlime(), hero = scene.find('Player');
+    const seen = [slime && this.position.distanceTo(slime.position) < 70 ? 'slime near' : 'no slime'];
+    if (this.mind.senses >= 2) seen.push(hero && this.position.distanceTo(hero.position) > 60 ? 'hero far' : 'hero near');
+    if (this.mind.senses >= 3) seen.push(this.hp <= 2 ? 'hurt' : 'healthy');
+    return seen.join(', ');
+  }
+
+  // Q(s, ·): the values of each move it has, in a state (new states and new moves start at 0).
+  values(key) {
+    const row = this.mind.q[key] ?? (this.mind.q[key] = []);
+    while (row.length < this.mind.moves) row.push(0);
+    return row;
+  }
+
+  decide() {
+    const hero = scene.find('Player');
+    if (hero && this.position.distanceTo(hero.position) > 80) this.earned -= 0.5;   // a buddy should stay a buddy
+    const key = this.see(), now = this.values(key);
+    // Q-learning: move the last decision's value towards what it earned plus the best it can expect from here.
+    //   Q(s, a) ← Q(s, a) + α (r + γ max Q(s′, ·) − Q(s, a))
+    if (this.last) {
+      const row = this.values(this.last.key), q = row[this.last.action];
+      row[this.last.action] = q + ALPHA * (this.earned + GAMMA * Math.max(...now) - q);
+    }
+    // ε-greedy: usually the best move it knows, sometimes a random one, to find out.
+    const action = Math.random() < this.epsilon ? Math.floor(Math.random() * this.mind.moves) : now.indexOf(Math.max(...now));
+    this.last = { key, action };
+    this.earned = 0;
+    this.mind.decisions++;
+    debug.watch('buddy sees', key);
+    debug.watch('buddy values', now.map((v, i) => MOVES[i] + ' ' + v.toFixed(2)).join(', '));
+    debug.watch('buddy ε', this.epsilon);
+  }
+
+  physicsUpdate(dt) {
+    const hero = scene.find('Player');
+    if (!hero || scene.get('HUD').busy) { this.velocity = { x: 0, y: 0 }; return; }
+    this.cooldown -= dt; this.safe -= dt;
+    if (this.down > 0) {   // knocked out: it gets up after 4 s, healed
+      this.down -= dt;
+      if (this.down <= 0) { this.hp = this.maxHp; this.get('Sprite').opacity = 1; }
+      return;
+    }
+    this.think -= dt;
+    if (this.think <= 0) { this.think = 0.25; this.decide(); }
+    const move = MOVES[this.last.action], slime = this.nearestSlime();
+    if (move === 'rest') { this.velocity = { x: 0, y: 0 }; this.hp = Math.min(this.maxHp, this.hp + dt); return; }
+    let target = hero.position, stop = 24;
+    if (move === 'fight' && slime) { target = slime.position; stop = 10; }
+    if (move === 'guard' && slime) { target = hero.position.lerp(slime.position, 0.5); stop = 4; }
+    const gap = target.sub(this.position);
+    this.velocity = gap.length() > stop ? gap.normalized().scale(this.speed) : { x: 0, y: 0 };
+    this.moveAndSlide();
+    if (move === 'fight' && slime && this.position.distanceTo(slime.position) < 16 && this.cooldown <= 0) {
+      this.cooldown = 0.6;
+      slime.hurt(2, this.position);
+      this.earned += 1;
+      if (slime.hp <= 0) { this.earned += 3; this.mind.beaten++; }
+    }
+  }
+
+  hurt(amount, from) {
+    if (this.safe > 0 || this.down > 0) return;
+    this.safe = 0.8;
+    this.hp -= amount;
+    this.earned -= 1;
+    const sprite = this.get('Sprite');
+    sprite.modulate = '#ff4040';
+    tween.to(sprite, { modulate: '#ffffff' }, 0.4);
+    if (from) { this.velocity = this.position.sub(from).normalized().scale(120); this.moveAndSlide(); }
+    if (this.hp <= 0) { this.down = 4; this.earned -= 2; sprite.opacity = 0.35; }
+  }
+}
+`;
+
+// 12.5: the buddy that copies you. Teach mode (T): keys 1 to 4 choose its move, and it counts your choices in each
+// situation. Off it, it copies what you did most there, trusting it more the more you showed it; and its Q-learning
+// learns from your choices as from its own (Q-learning is off-policy: it learns whoever chooses).
+const buddyCopies = buddy
+  .replace(`//   focus   how rarely it tries a random move: ε = 0.3 × 0.5^focus
+`, `//   focus   how rarely it tries a random move: ε = 0.3 × 0.5^focus
+// And it copies you (lesson 12.5): in teach mode (T) keys 1 to 4 choose its move, and it counts what you chose.
+`)
+  .replace(`  earned = 0;       // reward since that decision
+`, `  earned = 0;       // reward since that decision
+  taught = 0;       // the move you chose for it, in teach mode
+`)
+  .replace(`    state.buddy ??= { q: {}, senses: 1, moves: 2, focus: 0, decisions: 0, beaten: 0 };`,
+    `    state.buddy ??= { q: {}, senses: 1, moves: 2, focus: 0, decisions: 0, beaten: 0 };
+    state.buddy.shown ??= {};       // your choices: shown[situation][move] = how many times
+    state.buddy.teaching ??= false;`)
+  .replace(`    // ε-greedy: usually the best move it knows, sometimes a random one, to find out.
+    const action = Math.random() < this.epsilon ? Math.floor(Math.random() * this.mind.moves) : now.indexOf(Math.max(...now));`,
+    `    const action = this.mind.teaching ? this.learnFromYou(key) : this.choose(key, now);`)
+  .replace(`  physicsUpdate(dt) {`, `  // Teach mode: do what you chose, and count it.
+  learnFromYou(key) {
+    const action = Math.min(this.taught, this.mind.moves - 1);
+    const row = this.mind.shown[key] ?? (this.mind.shown[key] = []);
+    while (row.length < MOVES.length) row.push(0);
+    row[action] += 1;
+    return action;
+  }
+
+  // On its own: copy what you did most in this situation, with a chance that grows with how often you showed it
+  // (n / (n + 10)); otherwise its own ε-greedy choice from what it has learned.
+  choose(key, now) {
+    const shown = (this.mind.shown[key] ?? []).slice(0, this.mind.moves), n = shown.reduce((t, c) => t + c, 0);
+    if (n > 0 && Math.random() < n / (n + 10)) return shown.indexOf(Math.max(...shown));
+    return Math.random() < this.epsilon ? Math.floor(Math.random() * this.mind.moves) : now.indexOf(Math.max(...now));
+  }
+
+  update(dt) {
+    if (input.isJustPressed('teach')) {
+      this.mind.teaching = !this.mind.teaching;
+      scene.get('HUD').say(this.mind.teaching ? 'Teaching your buddy: 1 follow, 2 fight, 3 guard, 4 rest' : 'Your buddy is on its own again');
+    }
+    for (let k = 0; k < MOVES.length; k++) if (input.isJustPressed('buddy_' + (k + 1))) this.taught = k;
+  }
+
+  physicsUpdate(dt) {`);
+
+// 12.6: enemies matched to the player. An Elo rating (chess's) for the hero, a rating for each kind of slime, and each
+// new slime the kind just above the hero.
+const tiers = `// Enemies matched to the player (lesson 12.6). Each kind of slime has a rating; the hero has one too, state.rating,
+// which goes up when it beats slimes cleanly and down when it is beaten. Each new slime is the kind whose rating is
+// closest to just above the hero's, so the fights stay close.
+export const TIERS = [
+  { name: 'Green slime', rating: 850,  hp: 3, speed: 24, damage: 1, xp: 3, colour: '#b2f2bb' },
+  { name: 'Slime',       rating: 1000, hp: 4, speed: 30, damage: 1, xp: 4, colour: '#ffffff' },
+  { name: 'Red slime',   rating: 1150, hp: 6, speed: 36, damage: 1, xp: 6, colour: '#ff8787' },
+  { name: 'Dark slime',  rating: 1300, hp: 9, speed: 42, damage: 2, xp: 9, colour: '#9775fa' },
+];
+
+// Elo's expected score: how likely a rating a is to beat a rating b, from 0 to 1. 400 points apart is 10 to 1.
+export function expected(a, b) {
+  return 1 / (1 + Math.pow(10, (b - a) / 400));
+}
+
+// After a fight: result 1 (a win), 0.5, or 0 (a loss). The rating moves by K times how much better or worse than expected.
+export function rate(result, enemyRating, k = 32) {
+  state.rating = (state.rating ?? 1000) + k * (result - expected(state.rating ?? 1000, enemyRating));
+}
+
+// The kind for a new slime: the one closest to 50 points above the hero.
+export function tierFor(rating = 1000) {
+  return TIERS.reduce((best, t) => (Math.abs(t.rating - (rating + 50)) < Math.abs(best.rating - (rating + 50)) ? t : best));
+}
+`;
+
+const slimeMatched = slime
+  .replace(`import { rollLoot } from './loot.js';`, `import { rollLoot } from './loot.js';
+import { tierFor, rate } from './tiers.js';`)
+  .replace(`  stunned = 0;     // seconds of knockback, when it does not move by itself
+`, `  stunned = 0;     // seconds of knockback, when it does not move by itself
+  tier = null;     // its kind, chosen for the hero's rating (lesson 12.6)
+  dealt = 0;       // damage it has done to the hero, to rate the fight
+
+  ready() {
+    this.tier = tierFor(state.rating);
+    this.hp = this.tier.hp;
+    this.speed = this.tier.speed;
+    this.get('Sprite').modulate = this.tier.colour;
+  }
+`)
+  .replace(`    if (far < 12) hero.hurt(1, this.position);`, `    if (far < 12) {
+      state.lastHitBy = this.tier.rating;   // if this hit beats the hero, the fight is rated as a loss against this kind
+      if (hero.hurt(this.tier.damage, this.position)) this.dealt += this.tier.damage;
+    }`)
+  .replace(`    tween.to(sprite, { modulate: '#ffffff' }, 0.25);`, `    tween.to(sprite, { modulate: this.tier.colour }, 0.25);`)
+  .replace(`    scene.find('Player')?.gainXp(4);`, `    scene.find('Player')?.gainXp(this.tier.xp);
+    rate(this.dealt === 0 ? 1 : this.dealt < 3 ? 0.75 : 0.5, this.tier.rating);   // a clean win counts for most`);
+const playerMatched = player
+  .replace(`import { CLASSES, xpToNext } from './classes.js';`, `import { CLASSES, xpToNext } from './classes.js';
+import { rate } from './tiers.js';`)
+  .replace(`  hurt(amount, from) {
+    if (this.safe > 0) return;`, `  hurt(amount, from) {
+    if (this.safe > 0) return false;`)
+  .replace(`    if (state.hp <= 0) this.die();
+  }`, `    if (state.hp <= 0) this.die();
+    return true;
+  }`)
+  .replace(`  die() {
+    state.hp = state.maxHp;`, `  die() {
+    if (state.lastHitBy) rate(0, state.lastHitBy);   // a loss: the rating goes down, and the slimes get easier
+    state.hp = state.maxHp;`);
+const gameMatched = game.replace(`    gold: 0, bag: [], weapon: null,`, `    gold: 0, bag: [], weapon: null,
+    rating: 1000,   // how well you fight: slimes are matched to it (lesson 12.6)`);
+
+const spawner = `// Slimes come back: every 6 seconds, if the forest has fewer than 3, one appears at a spawn point away from the hero.
+export default class Spawner extends Node2D {
+  wait = 6;
+
+  update(dt) {
+    this.wait -= dt;
+    if (this.wait > 0) return;
+    this.wait = 6;
+    const enemies = scene.get('Enemies');
+    if (enemies.children.length >= 3) return;
+    const hero = scene.find('Player');
+    const spots = this.children.filter((s) => !hero || s.position.distanceTo(hero.position) > 80);
+    if (!spots.length) return;
+    const slime = scene.instantiate('scenes/slime.scene');
+    slime.position = spots[Math.floor(Math.random() * spots.length)].position;
+    enemies.addChild(slime);
+  }
+}
+`;
+
+const spawnerMatched = spawner.replace(`  update(dt) {
+    this.wait -= dt;`, `  update(dt) {
+    debug.watch('your rating', Math.round(state.rating ?? 1000));
+    this.wait -= dt;`);
+
+// The HUD's skills menu (K): spend skill points on the buddy.
+const hudSkills = (base: string) => base
+  .replace(`  get busy() { return this.lines.length > 0 || this.get('Pause').visible || this.get('Bag').visible; }`,
+    `  get busy() { return this.lines.length > 0 || this.get('Pause').visible || this.get('Bag').visible || this.get('Skills').visible; }`)
+  .replace(`    for (const name of ['Dialogue', 'Pause', 'Bag']) this.get(name).visible = false;`,
+    `    for (const name of ['Dialogue', 'Pause', 'Bag', 'Skills']) this.get(name).visible = false;
+    for (const [name, field, max] of [['Senses', 'senses', 3], ['Moves', 'moves', 4], ['Focus', 'focus', 3]]) this.get('Skills/List/' + name).connect('pressed', () => this.spend(field, max));`)
+  .replace(`    if (input.isJustPressed('inventory') && !this.get('Pause').visible) this.toggleBag();`,
+    `    if (input.isJustPressed('inventory') && !this.get('Pause').visible && !this.get('Skills').visible) this.toggleBag();
+    if (input.isJustPressed('skills') && !this.get('Pause').visible && !this.get('Bag').visible) this.toggleSkills();
+    if (this.get('Skills').visible) this.showSkills();`)
+  .replace(/\n}\n$/, `
+
+  // ── the buddy's skills (lesson 12.4): skill points buy senses, moves and focus ──
+  toggleSkills() {
+    const panel = this.get('Skills');
+    panel.visible = !panel.visible;
+    if (panel.visible) this.get('Skills/List/Senses').grabFocus();
+  }
+
+  showSkills() {
+    const b = state.buddy;
+    if (!b) return;
+    this.get('Skills/Points').text = 'Skill points: ' + state.skillPoints;
+    for (const [name, field, max] of [['Senses', 'senses', 3], ['Moves', 'moves', 4], ['Focus', 'focus', 3]]) {
+      const button = this.get('Skills/List/' + name);
+      button.text = name + ': ' + b[field] + ' of ' + max;
+      button.disabled = state.skillPoints <= 0 || b[field] >= max;
+    }
+  }
+
+  spend(field, max) {
+    const b = state.buddy;
+    if (!b || state.skillPoints <= 0 || b[field] >= max) return;
+    state.skillPoints -= 1;
+    b[field] += 1;
+    this.say('Your buddy\\u2019s ' + field + ' is now ' + b[field] + '.');
+    scene.get('HUD/Sounds/LevelUp').play();
+  }
+}
+`);
+
 // ── building it ─────────────────────────────────────────────────────────
 
 /** 12.1: classes, levels and the class menu. */
@@ -389,17 +684,62 @@ project.scene('scenes/slime.scene').root.script = 'scripts/slime.js'`;
 
 
 
-const code = `${questBuddies.code}\n${[CLASSES_CODE, LOOT_CODE, COMBAT_START + '\n' + COMBAT_CODE].map((c) => `{\n${c}\n}`).join('\n')}\n`.replace('// Quest Buddies: an RPG starter.', '// Quest Buddies: Adventure. The RPG starter with classes, loot and combat.');
+/** 12.4's start: the buddy's scene in both maps (no script yet), the spawner, the skills menu's nodes, the K action. */
+export const BUDDY_START = `// ── 12.4: the buddy that learns ──
+project.addAction('skills', ['KeyK'])
+project.writeScript('scripts/spawner.js', ${JSON.stringify(spawner)})
+const buddyScene = project.createScene('scenes/buddy.scene', 'CharacterBody2D', 'Buddy')
+// Collision layers are bits (layer n is 1 << (n − 1)). The walls go on layer 5 too (1 + 16 = 17), and the buddy
+// scans only layer 5: walls stop it, the hero and the slimes do not. It is on layer 2, which nothing else scans.
+buddyScene.root.collisionLayer = 2
+buddyScene.root.collisionMask = 16
+for (const map of ['scenes/town.scene', 'scenes/forest.scene']) project.scene(map).get('Walls').collisionLayer = 17
+buddyScene.add('Sprite2D', { name: 'Sprite', texture: '${tile(BUDDY)}' })
+buddyScene.add('CollisionShape2D', { name: 'Shape', size: { x: 10, y: 10 } })
+for (const map of ['scenes/town.scene', 'scenes/forest.scene']) project.scene(map).instance('scenes/buddy.scene', { name: 'Buddy', zIndex: 2 })
+const forest = project.scene('scenes/forest.scene')
+forest.add('Node2D', { name: 'Spawner', script: 'scripts/spawner.js' })
+for (const [x, y] of [[260, 40], [280, 150], [200, 168]]) forest.add('Node2D', { name: 'Spot', parent: 'Spawner', position: { x, y } })
+const hudScene = project.scene('scenes/hud.scene')
+hudScene.add('Panel', { name: 'Skills', position: { x: 300, y: 120 }, size: { x: 360, y: 260 }, visible: false })
+hudScene.add('Label', { name: 'Title', parent: 'Skills', position: { x: 20, y: 14 }, fontSize: 22, text: 'Your buddy (K to close)' })
+hudScene.add('Label', { name: 'Points', parent: 'Skills', position: { x: 20, y: 50 }, fontSize: 16, color: '#c5f6fa', text: 'Skill points: 0' })
+hudScene.add('VBoxContainer', { name: 'List', parent: 'Skills', position: { x: 20, y: 84 }, separation: 10 })
+for (const name of ['Senses', 'Moves', 'Focus']) hudScene.add('Button', { name, parent: 'Skills/List', text: name, size: { x: 320, y: 40 }, fontSize: 16 })
+project.scene('scenes/title.scene').get('Menu/Box/Help').text = 'Arrow keys or WASD: walk. J: attack. E: talk and read on. I: your bag. K: your buddy\\u2019s skills. Esc: pause. Rest at a campfire to save.'`;
+
+/** 12.4's solution: the buddy's script, and the HUD's skills menu. */
+export const BUDDY_CODE = `project.writeScript('scripts/buddy.js', ${JSON.stringify(buddy)})
+project.scene('scenes/buddy.scene').root.script = 'scripts/buddy.js'
+project.writeScript('scripts/hud.js', ${JSON.stringify(hudSkills(hud))})`;
+
+
+/** 12.5: teach mode, and the buddy that copies you. */
+export const COPY_START = `// ── 12.5: the buddy that copies you ──
+project.addAction('teach', ['KeyT'])
+for (let k = 1; k <= 4; k++) project.addAction('buddy_' + k, ['Digit' + k])`;
+export const COPY_CODE = `project.writeScript('scripts/buddy.js', ${JSON.stringify(buddyCopies)})
+project.scene('scenes/title.scene').get('Menu/Box/Help').text = 'Arrow keys or WASD: walk. J: attack. E: talk. I: your bag. K: your buddy\\u2019s skills. T: teach your buddy (then 1 to 4). Esc: pause.'`;
+
+/** 12.6: slimes matched to the hero's rating. */
+export const MATCH_CODE = `// ── 12.6: enemies matched to the player ──
+project.writeScript('scripts/tiers.js', ${JSON.stringify(tiers)})
+project.writeScript('scripts/game.js', ${JSON.stringify(gameMatched)})
+project.writeScript('scripts/slime.js', ${JSON.stringify(slimeMatched)})
+project.writeScript('scripts/player.js', ${JSON.stringify(playerMatched)})
+project.writeScript('scripts/spawner.js', ${JSON.stringify(spawnerMatched)})`;
+
+const code = `${questBuddies.code}\n${[CLASSES_CODE, LOOT_CODE, COMBAT_START + '\n' + COMBAT_CODE, BUDDY_START + '\n' + BUDDY_CODE, COPY_START + '\n' + COPY_CODE, MATCH_CODE].map((c) => `{\n${c}\n}`).join('\n')}\n`.replace('// Quest Buddies: an RPG starter.', '// Quest Buddies: Adventure. The RPG starter with classes, loot and combat.');
 
 /** Its scripts' text, for chapter 12's tasks. */
-export const QA_SCRIPTS = { classes, loot, game, title, player, playerLevels, slime, hud, hudLevels };
+export const QA_SCRIPTS = { classes, loot, game, title, player, playerLevels, slime, hud, hudLevels, buddy, buddyCopies, spawner, hudSkills: hudSkills(hud), tiers, slimeMatched, playerMatched, spawnerMatched, gameMatched };
 
 export const questAdventure: GameExample = {
   id: 'quest-adventure',
   title: 'Quest Buddies: Adventure',
   blurb: 'Quest Buddies with classes (Warrior, Ranger, Mage) and levels, slimes to fight, loot rolled from a table, weapons to equip and potions to drink. Chapter 12 builds it, and then a buddy that learns.',
   art: 'Kenney Tiny Dungeon (CC0)',
-  images: [...questBuddies.images, ...[WARRIOR, MAGE, SLIME].map(tile)],
+  images: [...questBuddies.images, ...[WARRIOR, MAGE, SLIME, BUDDY].map(tile)],
   code,
   guide: [
     'Press ▶ Run. New game opens the class menu: three Buttons made by title.js from the table in scripts/classes.js. Choose one.',

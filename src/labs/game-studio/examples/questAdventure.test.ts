@@ -9,7 +9,8 @@ import { memoryStore } from '../engine/saves';
 import { NODE_CLASSES, type CharacterBody2D, type Node } from '../engine/nodes';
 import { Vec2 } from '../engine/vec2';
 import { dataUrlLoader } from '../ml/testLoader';
-import { questAdventure } from './questAdventure';
+import { questAdventure, QA_SCRIPTS } from './questAdventure';
+import { rng } from '../engine/random';
 
 afterAll(() => { for (const k of ['input', 'scene', 'time', 'state', 'save', 'tween', 'debug', 'math', 'physics', 'ai', 'Vec2', 'PhysicsBody2D', ...Object.keys(NODE_CLASSES)]) delete (globalThis as Record<string, unknown>)[k]; });
 
@@ -100,4 +101,101 @@ describe('Quest Buddies: Adventure', () => {
     const drops = (seed: number) => { r.st().lootSeed = seed; return JSON.stringify([...Array(20)].map(() => loot.rollLoot())); };
     expect(drops(99)).toBe(drops(99));
   });
+
+  it('the buddy learns while it plays: after three minutes near slimes it values fighting above following', async () => {
+    const real = Math.random, r = rng(2026);
+    Math.random = () => r.next();   // the buddy explores with Math.random: seeded here, so the test is the same every run
+    try {
+      const d = build();
+      Object.assign(globalThis, NODE_CLASSES, { Vec2, math: MATH });
+      const classes = await dataUrlLoader(d.project);
+      const forest = d.project.scenes.find((s) => s.path === 'scenes/forest.scene')!;
+      const errors: string[] = [];
+      const g = new Game(d.project, forest, { frame: () => undefined }, { saves: memoryStore(), scriptClass: (p) => classes.get(p) as typeof Node, onError: (e) => errors.push(e.message) });
+      Object.assign(globalThis, scriptGlobals(g));
+      g.start();
+      const st = g.state as Record<string, any>, hero = g.root.get<CharacterBody2D>('Player');
+      // The hero stands in the middle of the forest and cannot be beaten, so only the buddy fights; its rating is held
+      // at 950, so every slime is an ordinary one (lesson 12.6's matching is tested on its own).
+      for (let f = 0; f < 60 * 180; f++) { Object.assign(st, { hp: 99, maxHp: 99, rating: 950 }); hero.position = new Vec2(150, 90); g.step(1 / 60); }
+      expect(errors).toEqual([]);
+      const near = st.buddy.q['slime near'];
+      expect(near[1]).toBeGreaterThan(near[0]);          // fight above follow
+      expect(st.buddy.beaten).toBeGreaterThan(10);
+      expect(st.buddy.decisions).toBeGreaterThan(500);   // four decisions a second
+    } finally { Math.random = real; }
+  }, 120000);
+
+  it('skill points buy the buddy senses, moves and focus in the skills menu (K)', async () => {
+    const r = await run(build());
+    r.press('Enter'); r.press('Enter'); r.step();          // a Warrior
+    Object.assign(r.st(), { skillPoints: 2 });
+    r.press('KeyK');
+    expect(r.g.root.get<Node & { visible: boolean }>('HUD/Skills').visible).toBe(true);
+    r.press('Enter');                                       // Senses has the focus: 1 → 2
+    r.press('ArrowDown'); r.press('Enter');                 // Moves: 2 → 3
+    expect(r.st().buddy).toMatchObject({ senses: 2, moves: 3, focus: 0 });
+    expect(r.st().skillPoints).toBe(0);
+    r.press('ArrowDown'); r.press('Enter');                 // Focus: no points left, so it is disabled
+    expect(r.st().buddy.focus).toBe(0);
+    expect(r.errors).toEqual([]);
+    void QA_SCRIPTS;
+  });
+
+  it('the buddy copies you: taught to rest for a minute, it rests on its own; its Q-learning learned from your choices', async () => {
+    const real = Math.random, r = rng(7);
+    Math.random = () => r.next();
+    try {
+      const d = build();
+      Object.assign(globalThis, NODE_CLASSES, { Vec2, math: MATH });
+      const classes = await dataUrlLoader(d.project);
+      const town = d.project.scenes.find((s) => s.path === 'scenes/town.scene')!;   // no slimes: the situation is "no slime"
+      const errors: string[] = [];
+      const g = new Game(d.project, town, { frame: () => undefined }, { saves: memoryStore(), scriptClass: (p) => classes.get(p) as typeof Node, onError: (e) => errors.push(e.message) });
+      Object.assign(globalThis, scriptGlobals(g));
+      g.start();
+      const st = g.state as Record<string, any>;
+      st.buddy.moves = 4;                                      // it can rest
+      const press = (code: string) => { g.input.key(code, true); g.step(1 / 60); g.input.key(code, false); g.step(1 / 60); };
+      press('KeyT'); press('Digit4');                          // teach mode, and choose rest
+      // You teach it to rest while you walk away (the hero far off): each rest costs it −0.5 for straying.
+      const hero = g.root.get<CharacterBody2D>('Player');
+      for (let f = 0; f < 60 * 60; f++) { hero.position = new Vec2(280, 88); g.step(1 / 60); }
+      expect(st.buddy.teaching).toBe(true);
+      expect(st.buddy.shown['no slime'][3]).toBeGreaterThan(200);   // four decisions a second, for a minute
+      expect(st.buddy.q['no slime'][3]).toBeCloseTo(-0.5, 2);       // learned from your choices: r + γ·max = −0.5 + 0.9 × 0 (follow is still 0)
+      press('KeyT');                                                 // on its own again
+      const buddy = g.root.get<Node & { last: { action: number } }>('Buddy');
+      let rested = 0, decisions = 0, before = st.buddy.decisions;
+      for (let f = 0; f < 60 * 30; f++) { hero.position = new Vec2(280, 88); g.step(1 / 60); if (st.buddy.decisions !== before) { before = st.buddy.decisions; decisions++; if (buddy.last.action === 3) rested++; } }
+      expect(rested / decisions).toBeGreaterThan(0.8);               // n / (n + 10) with n over 200: it copies you, even against its own values
+      expect(errors).toEqual([]);
+    } finally { Math.random = real; }
+  }, 120000);
+
+  it('enemies matched to the player: clean wins raise the rating and bring harder slimes; being beaten lowers it', async () => {
+    const r = await run(build());
+    r.press('Enter'); r.press('Enter'); r.step();                     // a Warrior
+    const tiers = r.classes.get('module:scripts/tiers.js') as { expected(a: number, b: number): number; rate(s: number, b: number): void; tierFor(r: number): { name: string } };
+    expect(tiers.expected(1000, 1000)).toBe(0.5);
+    expect(tiers.expected(1400, 1000)).toBeCloseTo(10 / 11, 9);       // 400 points apart: 10 to 1
+    expect(r.st().rating).toBe(1000);
+    expect(tiers.tierFor(1000).name).toBe('Slime');
+    // Ten clean wins against ordinary slimes: each moves the rating 32 × (1 − expected).
+    for (let i = 0; i < 10; i++) tiers.rate(1, 1000);
+    expect(r.st().rating).toBeGreaterThan(1100);
+    expect(tiers.tierFor(r.st().rating).name).toBe('Red slime');
+    // In the forest, new slimes are red: 6 hit points, tinted.
+    r.hero().position = { x: 312, y: 88 }; r.step(3); r.step();
+    const slime = r.g.sceneApi.getNodesInGroup('enemies')[0] as Node & { hp: number; tier: { name: string } };
+    expect(slime.tier.name).toBe('Red slime');
+    expect(slime.hp).toBe(6);
+    // Beaten: the rating falls.
+    const before = r.st().rating;
+    Object.assign(r.st(), { hp: 1 });
+    r.hero().position = { x: (slime as unknown as { position: Vec2 }).position.x, y: (slime as unknown as { position: Vec2 }).position.y }; r.step(3); r.step();
+    expect(r.st().rating).toBeLessThan(before);
+    expect(r.errors).toEqual([]);
+  });
 });
+

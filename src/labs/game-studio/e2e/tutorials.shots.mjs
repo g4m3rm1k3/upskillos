@@ -636,6 +636,22 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       () => ui.qb('qa-combat', 1, { script: 'scripts/player.js' }),
       () => ui.qb('qa-combat', 2, { scene: 'scenes/forest.scene', node: 'Enemies' }),
     ],
+    'qa-buddy': [
+      () => ui.qb('qa-buddy', 0, { script: 'scripts/buddy.js' }),
+      () => ui.qb('qa-buddy', 1, { script: 'scripts/buddy.js' }),
+      async () => { await ui.qb('qa-buddy', 2, { script: 'scripts/buddy.js' }); },
+      () => ui.qb('qa-buddy', 3, { scene: 'scenes/hud.scene', node: 'Skills' }),
+    ],
+    'qa-copy': [
+      () => ui.qb('qa-copy', 0, { script: 'scripts/buddy.js' }),
+      () => ui.qb('qa-copy', 1, { script: 'scripts/buddy.js' }),
+      async () => { await ui.qb('qa-copy', 2); await t('left-files').click(); await ui.openScript('scripts/buddy.js'); mark(page.locator('.monaco-editor')); },
+    ],
+    'qa-match': [
+      () => ui.qb('qa-match', 0, { script: 'scripts/tiers.js' }),
+      () => ui.qb('qa-match', 1, { script: 'scripts/slime.js' }),
+      () => ui.qb('qa-match', 2, { script: 'scripts/player.js' }),
+    ],
     // ── Game AI that learns, 9.8: the paddle with features ──
     'paddle-features': [
       async () => { await t('left-files').click(); await ui.openScript('scripts/paddle.js'); await ui.script(await ui.solution('paddle-features', 'scripts/paddle.js')); },

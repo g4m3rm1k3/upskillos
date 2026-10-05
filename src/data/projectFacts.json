@@ -10,7 +10,7 @@
   "counts": {
     "courses": 44,
     "chapters": 239,
-    "lessons": 1371,
+    "lessons": 1374,
     "labs": 55,
     "games": 15
   },
@@ -253,7 +253,7 @@
       "domain": "cs",
       "description": "Learn to build games in Game Studio, one idea at a time: each lesson explains it, you try it in the editor with checks that tick as you work, then come back to see why it works. It ends with Tetris, built step by step.",
       "chapters": 12,
-      "lessons": 67
+      "lessons": 70
     },
     {
       "id": "mesh-engine",

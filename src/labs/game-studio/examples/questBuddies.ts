@@ -374,7 +374,7 @@ doorway(town, 'Door to forest', 19, 5, 'scripts/door_to_forest.js')
 town.add('Area2D', { name: 'Ranger', position: { x: 168, y: 72 }, script: 'scripts/ranger.js' })
 town.add('Sprite2D', { name: 'Sprite', parent: 'Ranger', texture: '${tile(RANGER)}' })
 town.add('CollisionShape2D', { name: 'Shape', parent: 'Ranger', shape: 'circle', size: { x: 40, y: 40 } })
-town.instance('scenes/player.scene', { name: 'Player', zIndex: 2 })
+town.instance('scenes/player.scene', { name: 'Player', position: { x: 56, y: 96 }, zIndex: 2 })
 town.instance('scenes/hud.scene', { name: 'HUD' })
 
 // The forest: a door west back to town, the campfire that saves, and (during the quest) the amulet.
@@ -388,7 +388,7 @@ forest.add('CollisionShape2D', { name: 'Shape', parent: 'Campfire', size: { x: 1
 forest.add('Area2D', { name: 'Amulet', position: { x: 280, y: 40 }, script: 'scripts/amulet.js' })
 forest.add('Sprite2D', { name: 'Sprite', parent: 'Amulet', texture: '${tile(AMULET)}' })
 forest.add('CollisionShape2D', { name: 'Shape', parent: 'Amulet', size: { x: 10, y: 10 } })
-forest.instance('scenes/player.scene', { name: 'Player', zIndex: 2 })
+forest.instance('scenes/player.scene', { name: 'Player', position: { x: 32, y: 88 }, zIndex: 2 })   // where it stands when the forest is run on its own (F6)
 forest.instance('scenes/hud.scene', { name: 'HUD' })
 
 // The title screen: where the game starts.

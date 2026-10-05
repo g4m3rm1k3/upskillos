@@ -2,7 +2,7 @@ export default {
   chapter: 'making-games-12',
   order: 3,
   id: 'mg12-003',
-  nextLesson: null,
+  nextLesson: 'mg12-004',
   slug: 'combat',
   title: 'Combat',
   subtitle: 'An attack with a reach and a cooldown, damage from stats, hit flashes, knockback and particles, and slimes that chase round walls.',

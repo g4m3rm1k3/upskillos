@@ -5,8 +5,9 @@
 import type { GameTask, PlayOptions } from './types';
 import type { Game } from '../engine/game';
 import { named, noErrors, type Pos } from './helpers';
+import { rng } from '../engine/random';
 import { questBuddies } from '../examples/questBuddies';
-import { CLASSES_CODE, COMBAT_CODE, COMBAT_START, LOOT_CODE, QA_SCRIPTS, questAdventure } from '../examples/questAdventure';
+import { BUDDY_CODE, BUDDY_START, CLASSES_CODE, COMBAT_CODE, COMBAT_START, COPY_CODE, COPY_START, LOOT_CODE, MATCH_CODE, QA_SCRIPTS, questAdventure } from '../examples/questAdventure';
 
 type G = Game & { state: Record<string, any> };
 type Mod = Record<string, any>;
@@ -15,6 +16,9 @@ const block = (c: string) => `{\n${c}\n}`;
 const START_CLASSES = questBuddies.code;
 const START_LOOT = `${questBuddies.code}\n${block(CLASSES_CODE)}`;
 const START_COMBAT = `${START_LOOT}\n${block(LOOT_CODE)}\n${block(COMBAT_START)}`;
+const START_BUDDY = `${START_COMBAT}\n${block(COMBAT_CODE)}\n${block(BUDDY_START)}`;
+const START_COPY = `${START_BUDDY}\n${block(BUDDY_CODE)}\n${block(COPY_START)}`;
+const START_MATCH = `${START_COPY}\n${block(COPY_CODE)}`;
 
 /** A watch that presses keys at frames: [frame, code], each held for two frames. */
 function presses(list: [number, string][]): (g: Game) => void {
@@ -33,6 +37,30 @@ const LOOT_PLAIN = QA_SCRIPTS.loot.replace("export const AFFIXES = [['', 0, 70],
   "export const AFFIXES = [['', 0, 100]];      // no affixes yet: every weapon is plain");
 // A slime that can be hurt and beaten, but does not move yet.
 const SLIME_STILL = QA_SCRIPTS.slime.replace(/\n  physicsUpdate\(dt\) \{[\s\S]*?\n  \}\n\n  hurt/, '\n  hurt');
+
+// The buddy at 12.4, step 1: it only follows.
+const BUDDY_FOLLOWS = `// The buddy: for now it follows the hero, stopping a little way off.
+export default class Buddy extends CharacterBody2D {
+  speed = 64;
+
+  physicsUpdate(dt) {
+    const hero = scene.find('Player');
+    if (!hero || scene.get('HUD').busy) { this.velocity = { x: 0, y: 0 }; return; }
+    const gap = hero.position.sub(this.position);
+    this.velocity = gap.length() > 24 ? gap.normalized().scale(this.speed) : { x: 0, y: 0 };
+    this.moveAndSlide();
+  }
+}
+`;
+// Step 2: it sees and chooses, but does not learn yet (no Q update).
+const BUDDY_CHOOSES = QA_SCRIPTS.buddy.replace(/\n    if \(this\.last\) \{\n[\s\S]*?\n    \}\n/, '\n');
+// 12.5, step 1: teach mode and counting, but on its own it does not copy yet.
+const BUDDY_TAUGHT = QA_SCRIPTS.buddyCopies.replace(`    const shown = (this.mind.shown[key] ?? []).slice(0, this.mind.moves), n = shown.reduce((t, c) => t + c, 0);
+    if (n > 0 && Math.random() < n / (n + 10)) return shown.indexOf(Math.max(...shown));
+`, '');
+// 12.6, step 2: slimes take their kind, but fights are not rated yet.
+const SLIME_KINDS = QA_SCRIPTS.slimeMatched.replace(`
+    rate(this.dealt === 0 ? 1 : this.dealt < 3 ? 0.75 : 0.5, this.tier.rating);   // a clean win counts for most`, '');
 
 const QA_STEPS: Record<string, string[]> = {
   'qa-classes': [
@@ -62,6 +90,26 @@ hudScene.add('ProgressBar', { name: 'Xp', parent: 'Status', position: { x: 12, y
 project.scene('scenes/slime.scene').root.script = 'scripts/slime.js'`,
     `project.writeScript('scripts/player.js', ${JSON.stringify(QA_SCRIPTS.player)})`,
     `project.writeScript('scripts/slime.js', ${JSON.stringify(QA_SCRIPTS.slime)})`,
+  ],
+  'qa-buddy': [
+    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_FOLLOWS)})
+project.scene('scenes/buddy.scene').root.script = 'scripts/buddy.js'`,
+    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_CHOOSES)})`,
+    `project.writeScript('scripts/buddy.js', ${JSON.stringify(QA_SCRIPTS.buddy)})`,
+    `project.writeScript('scripts/hud.js', ${JSON.stringify(QA_SCRIPTS.hudSkills)})`,
+  ],
+  'qa-copy': [
+    `project.writeScript('scripts/buddy.js', ${JSON.stringify(BUDDY_TAUGHT)})`,
+    `project.writeScript('scripts/buddy.js', ${JSON.stringify(QA_SCRIPTS.buddyCopies)})`,
+    '',
+  ],
+  'qa-match': [
+    `project.writeScript('scripts/tiers.js', ${JSON.stringify(QA_SCRIPTS.tiers)})
+project.writeScript('scripts/game.js', ${JSON.stringify(QA_SCRIPTS.gameMatched)})`,
+    `project.writeScript('scripts/slime.js', ${JSON.stringify(SLIME_KINDS)})`,
+    `project.writeScript('scripts/slime.js', ${JSON.stringify(QA_SCRIPTS.slimeMatched)})
+project.writeScript('scripts/player.js', ${JSON.stringify(QA_SCRIPTS.playerMatched)})
+project.writeScript('scripts/spawner.js', ${JSON.stringify(QA_SCRIPTS.spawnerMatched)})`,
   ],
 };
 
@@ -229,5 +277,143 @@ export const QUEST_ADVENTURE: GameTask[] = [
     ],
     solution: COMBAT_CODE,
     done: 'A fight. Back in the lesson: damage formulas, cooldowns, hit feedback, and enemies that find their way.',
+  },
+  {
+    id: 'qa-buddy',
+    chain: 'Quest Buddies: Adventure',
+    title: 'A buddy that learns',
+    goal: 'A buddy who follows you, sees its situation, chooses moves, learns from what happens by Q-learning, and gets better with your skill points.',
+    images: IMAGES,
+    start: START_BUDDY,
+    steps: [
+      { text: 'Give scenes/buddy.scene a script, scripts/buddy.js: a CharacterBody2D that, in physicsUpdate, walks towards the hero at 64 pixels a second and stops 24 pixels away.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          let start = 0;
+          const r = await v.play({ seconds: 1.5, setup: startAs(game, undefined, 'scenes/town.scene'), watch: (g) => { const b = g.root.find('Buddy') as unknown as { position: Pos } | null, h = hero(g); if (!b || !h) return; if (!start) { h.position = { x: 250, y: 96 }; b.position = { x: 60, y: 96 }; start = 190; } } });
+          noErrors(r);
+          const b = r.game.root.find('Buddy') as unknown as { position: Pos } | null, h = hero(r.game)!;
+          if (!b) return 'There is no Buddy in the town.';
+          const gap = Math.hypot(h.position.x - b.position.x, h.position.y - b.position.y);
+          return gap < 120 || `After 1.5 s the buddy is still ${Math.round(gap)} pixels from the hero (it started 190 away).`;
+        } } },
+      { text: 'Senses and choices: state.buddy = { q: {}, senses: 1, moves: 2, focus: 0, decisions: 0 } (made in ready if missing). see() names the situation (\'slime near\' or \'no slime\'; more words with more senses); values(key) is that state’s row in state.buddy.q; every 0.25 s decide() picks a move ε-greedily (ε = 0.3 × 0.5^focus) from MOVES = [\'follow\', \'fight\', \'guard\', \'rest\'], and physicsUpdate does it.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          const r = await v.play({ seconds: 2, setup: startAs(game, undefined, 'scenes/forest.scene') });
+          noErrors(r);
+          const b = (r.game as G).state.buddy;
+          if (!b) return 'state.buddy is not there: make it in the buddy’s ready().';
+          if (!(b.decisions >= 4)) return `In 2 seconds the buddy decided ${b.decisions ?? 0} times: it should decide every 0.25 s.`;
+          return Object.keys(b.q ?? {}).some((k) => /slime/.test(k)) || 'state.buddy.q has no situation named yet: decide() should look up values(see()).';
+        } } },
+      { text: 'Learning: in decide(), before choosing, move the last decision’s value towards what it earned plus the best value now: Q(s, a) ← Q(s, a) + 0.2 (r + 0.9 max Q(s′, ·) − Q(s, a)). Earned: +1 a hit, +3 a slime beaten, −1 hurt, −0.5 a decision far from the hero.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          // Learning has luck in it (ε's random moves, the slimes): Math.random is seeded for this check, so the same
+          // buddy.js always gets the same result.
+          const real = Math.random, seededRandom = rng(2026);
+          Math.random = () => seededRandom.next();
+          let r: Awaited<ReturnType<typeof v.play>>;
+          try { r = await v.play({ seconds: 240, fps: 30, setup: startAs(game, 'Warrior', 'scenes/forest.scene'), watch: (g) => { const st = (g as G).state; Object.assign(st, { hp: 99, maxHp: 99, rating: 950 }); const h = hero(g); if (h) h.position = { x: 150, y: 90 }; } }); }
+          finally { Math.random = real; }
+          noErrors(r);
+          const b = (r.game as G).state.buddy, near = b?.q?.['slime near'];
+          if (!near || near.every((x: number) => x === 0)) return 'After four minutes beside slimes, the values for "slime near" have not moved: is the Q update in decide()?';
+          return near[1] > near[0] || `After four minutes, fighting a near slime is worth ${near[1].toFixed(2)} and following ${near[0].toFixed(2)}: check the rewards for hits and slimes beaten.`;
+        } } },
+      { text: 'Skill points: in hud.js, K (the skills action) shows and hides the Skills panel; its three buttons spend a point on senses (up to 3), moves (up to 4) or focus (up to 3), and are disabled with no points or at the top.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          let set = false;
+          const r = await v.play({ seconds: 0.8, setup: startAs(game, undefined, 'scenes/town.scene'), watch: both((g) => { if (!set && (g as G).state.buddy) { set = true; (g as G).state.skillPoints = 2; } }, presses([[8, 'KeyK'], [14, 'Enter'], [20, 'ArrowDown'], [26, 'Enter']])) });
+          noErrors(r);
+          const st = (r.game as G).state;
+          if (!(r.game.root.find('HUD/Skills') as unknown as { visible: boolean } | null)?.visible) return 'K should show the Skills panel.';
+          return (st.buddy.senses === 2 && st.buddy.moves === 3 && st.skillPoints === 0) || `Enter on Senses, then ↓ and Enter on Moves, should spend both points: senses ${st.buddy.senses}, moves ${st.buddy.moves}, points left ${st.skillPoints}.`;
+        } } },
+    ],
+    solution: BUDDY_CODE,
+    done: 'A buddy that learns while you play. Back in the lesson: states, moves, rewards and ε, in a real game.',
+  },
+  {
+    id: 'qa-copy',
+    chain: 'Quest Buddies: Adventure',
+    title: 'A buddy that copies you',
+    goal: 'Teach your buddy by choosing its moves; it copies what you showed it, and its Q-learning learns from your choices too.',
+    images: IMAGES,
+    start: START_COPY,
+    steps: [
+      { text: 'Teach mode: T (the teach action) flips state.buddy.teaching; keys 1 to 4 (buddy_1 to buddy_4) choose its move. While teaching, decide() does your move instead of its own, and counts it: state.buddy.shown[situation][move] += 1.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          const r = await v.play({ seconds: 10, setup: startAs(game, undefined, 'scenes/town.scene'), watch: presses([[6, 'KeyT'], [12, 'Digit2']]) });
+          noErrors(r);
+          const b = (r.game as G).state.buddy;
+          if (!b?.teaching) return 'T should turn teach mode on (state.buddy.teaching).';
+          const n = b.shown?.['no slime']?.[1] ?? 0;
+          return n > 20 || `After 10 s of teaching with 2 (fight) chosen, state.buddy.shown['no slime'][1] is ${n}: count each decision you made for it.`;
+        } } },
+      { text: 'Copying: on its own, in a situation you showed it, it does what you did most there with probability n / (n + 10), where n is how many times you showed it; otherwise its own ε-greedy choice.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          let set = false, rested = 0, total = 0, last = -1;
+          const r = await v.play({ seconds: 20, setup: startAs(game, undefined, 'scenes/town.scene'), watch: (g) => { const st = (g as G).state; if (!st.buddy) return; if (!set) { set = true; Object.assign(st.buddy, { moves: 4, teaching: false, shown: { 'no slime': [0, 0, 0, 300] } }); } const b = g.root.find('Buddy') as unknown as { last?: { action: number } }; if (st.buddy.decisions !== last && b?.last) { last = st.buddy.decisions; total++; if (b.last.action === 3) rested++; } } });
+          noErrors(r);
+          return (total > 20 && rested / total > 0.8) || `Shown rest 300 times, it rested in ${rested} of ${total} decisions: with n = 300 it should copy you about 97% of the time.`;
+        } } },
+      { text: 'Learning from you: your choices are decisions like its own, so the Q update in decide() learns from them too (Q-learning learns whoever chooses: it is off-policy). Teach it to rest while you walk away, and watch its value for resting there fall in the Debug tab.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          const r = await v.play({ seconds: 30, setup: startAs(game, undefined, 'scenes/town.scene'), watch: both((g) => { const st = (g as G).state; if (st.buddy) st.buddy.moves = 4; const h = hero(g); if (h) h.position = { x: 280, y: 88 }; }, presses([[6, 'KeyT'], [12, 'Digit4']])) });
+          noErrors(r);
+          const q = (r.game as G).state.buddy?.q?.['no slime']?.[3];
+          return (typeof q === 'number' && q < -0.2) || `Taught to rest far from the hero, its value for resting is ${q}: it should have learned it costs (about −0.5).`;
+        } } },
+    ],
+    solution: COPY_CODE,
+    done: 'A buddy that learns from you and from itself. Back in the lesson: imitation learning, and why Q-learning can learn from your choices.',
+  },
+  {
+    id: 'qa-match',
+    chain: 'Quest Buddies: Adventure',
+    title: 'Enemies matched to the player',
+    goal: 'A rating for the hero, kinds of slime with ratings, and each new slime the kind just above the hero: an Elo system.',
+    images: IMAGES,
+    start: START_MATCH,
+    steps: [
+      { text: 'Make scripts/tiers.js: TIERS (at least three kinds of slime, each with rating, hp, speed, damage, xp, colour); expected(a, b) = 1 / (1 + 10^((b − a) / 400)); rate(result, enemyRating) moves state.rating by 32 × (result − expected(state.rating, enemyRating)); tierFor(rating) is the kind closest to rating + 50. In newGame, rating: 1000.',
+        check: { kind: 'play', test: async (v) => {
+          const t = (await v.module('scripts/tiers.js')) as Mod;
+          if (!Array.isArray(t.TIERS) || t.TIERS.length < 3) return 'tiers.js should export TIERS with at least three kinds.';
+          if (typeof t.expected !== 'function' || Math.abs(t.expected(1400, 1000) - 10 / 11) > 1e-9 || t.expected(1000, 1000) !== 0.5) return 'expected(a, b) should be 1 / (1 + 10^((b − a) / 400)): expected(1000, 1000) is 0.5, expected(1400, 1000) is 10/11.';
+          let after = 0, name = '';
+          const r = await v.play({ seconds: 0.02, setup: (g) => { (g as G).state.rating = 1000; t.rate(1, 1000); after = (g as G).state.rating; name = t.tierFor(1000)?.name; } });
+          noErrors(r);
+          if (after !== 1016) return `A win against an equal rating should add 32 × 0.5 = 16: the rating became ${after}.`;
+          const closest = [...t.TIERS].sort((a: Mod, b: Mod) => Math.abs(a.rating - 1050) - Math.abs(b.rating - 1050))[0];
+          return name === closest.name || `tierFor(1000) gives ${name}: the kind closest to 1050 is ${closest.name}.`;
+        } } },
+      { text: 'Slimes take their kind: in slime.js’s ready(), this.tier = tierFor(state.rating), and hp, speed and the sprite’s modulate come from it (the hit flash tweens back to the kind’s colour); damage and xp come from it too.',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod, t = (await v.module('scripts/tiers.js')) as Mod;
+          const high = [...t.TIERS].sort((a: Mod, b: Mod) => b.rating - a.rating)[0];
+          const r = await v.play({ seconds: 0.2, setup: (g) => { game.newGame('Warrior'); (g as G).state.rating = high.rating; g.sceneApi.change('scenes/forest.scene'); } });
+          noErrors(r);
+          const s = r.game.sceneApi.getNodesInGroup('enemies')[0] as unknown as { hp: number; tier?: Mod } | undefined;
+          return (s?.hp === high.hp) || `With the hero rated ${high.rating}, a slime should be a ${high.name} with ${high.hp} hit points: it has ${s?.hp}.`;
+        } } },
+      { text: 'Rate the fights: when a slime is beaten, rate(1 if it never hurt the hero, 0.75 if it did less than 3 damage, else 0.5, its rating); when the hero is beaten, rate(0, the rating of the slime that hit it last: state.lastHitBy).',
+        check: { kind: 'play', test: async (v) => {
+          const game = (await v.module('scripts/game.js')) as Mod;
+          let done = false, afterWin = 0;
+          const r = await v.play({ seconds: 0.6, setup: startAs(game, 'Warrior', 'scenes/forest.scene'), watch: (g) => { if (done || g.sceneApi.path !== 'scenes/forest.scene') return; const s = g.sceneApi.getNodesInGroup('enemies')[0] as unknown as { hurt?: (d: number, f: Pos) => void; position: Pos }; if (!s?.hurt) return; done = true; s.hurt(99, { x: 0, y: 0 }); afterWin = (g as G).state.rating; const o = g.sceneApi.getNodesInGroup('enemies')[1] as unknown as { position: Pos }; (g as G).state.hp = 1; hero(g)!.position = { ...o.position }; } });
+          noErrors(r);
+          if (!(afterWin > 1000)) return `Beating a slime cleanly should raise the rating above 1000: it is ${afterWin}.`;
+          return (r.game as G).state.rating < afterWin || 'Being beaten should lower the rating (rate(0, …) in the hero’s die()).';
+        } } },
+    ],
+    solution: MATCH_CODE,
+    done: 'Enemies that keep pace with the player. Back in the lesson: Elo ratings, expected scores, and dynamic difficulty.',
   },
 ];
