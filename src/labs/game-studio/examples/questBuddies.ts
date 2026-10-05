@@ -286,7 +286,12 @@ export default class Title extends Node2D {
 
 // ── building it ─────────────────────────────────────────────────────────
 
-const code = `// Quest Buddies: an RPG starter. A title screen, two maps joined by doors, a quest, a save point and a HUD.
+/** Its scripts' text, for the chapter's tasks (tasks/questBuddies.ts) and for chapter 12's example, which changes some. */
+export const QB_SCRIPTS = { game, door, player, ranger, amulet, campfire, hud, title };
+
+/** The build code, with these scripts, and more code at the end (chapter 12's Adventure adds its own). */
+export function questBuddiesCode(s: typeof QB_SCRIPTS = QB_SCRIPTS, more = ''): string {
+  return `// Quest Buddies: an RPG starter. A title screen, two maps joined by doors, a quest, a save point and a HUD.
 project.setSettings({ background: '#141018', pixelArt: true, gravity: 0 })
 project.addAction('interact', ['KeyE', 'Space'])
 project.addAction('menu', ['Escape'])
@@ -302,16 +307,16 @@ project.writeSound('assets/sounds/blip.wav', { wave: 'square', from: 700, to: 70
 project.writeSound('assets/sounds/click.wav', { wave: 'triangle', from: 600, to: 400, length: 0.06, volume: 0.4 })
 
 // Scripts.
-project.writeScript('scripts/game.js', ${JSON.stringify(game)})
-project.writeScript('scripts/door.js', ${JSON.stringify(door)})
+project.writeScript('scripts/game.js', ${JSON.stringify(s.game)})
+project.writeScript('scripts/door.js', ${JSON.stringify(s.door)})
 project.writeScript('scripts/door_to_forest.js', ${JSON.stringify(doorTo('scenes/forest.scene', 'FromTown'))})
 project.writeScript('scripts/door_to_town.js', ${JSON.stringify(doorTo('scenes/town.scene', 'FromForest'))})
-project.writeScript('scripts/player.js', ${JSON.stringify(player)})
-project.writeScript('scripts/ranger.js', ${JSON.stringify(ranger)})
-project.writeScript('scripts/amulet.js', ${JSON.stringify(amulet)})
-project.writeScript('scripts/campfire.js', ${JSON.stringify(campfire)})
-project.writeScript('scripts/hud.js', ${JSON.stringify(hud)})
-project.writeScript('scripts/title.js', ${JSON.stringify(title)})
+project.writeScript('scripts/player.js', ${JSON.stringify(s.player)})
+project.writeScript('scripts/ranger.js', ${JSON.stringify(s.ranger)})
+project.writeScript('scripts/amulet.js', ${JSON.stringify(s.amulet)})
+project.writeScript('scripts/campfire.js', ${JSON.stringify(s.campfire)})
+project.writeScript('scripts/hud.js', ${JSON.stringify(s.hud)})
+project.writeScript('scripts/title.js', ${JSON.stringify(s.title)})
 
 // The HUD scene: put into every map as an instance.
 const hud = project.createScene('scenes/hud.scene', 'CanvasLayer', 'HUD')
@@ -396,10 +401,10 @@ titleScreen.add('VBoxContainer', { name: 'Buttons', parent: 'Menu/Box', position
 for (const name of ['New game', 'Continue', 'How to play']) titleScreen.add('Button', { name, parent: 'Menu/Box/Buttons', text: name, size: { x: 300, y: 48 } })
 titleScreen.add('Label', { name: 'Help', parent: 'Menu/Box', position: { x: 40, y: 300 }, fontSize: 16, wrapWidth: 300, text: 'Arrow keys or WASD: walk. E: talk and read on. I: your bag. Esc: pause. Rest at a campfire to save.' })
 project.setMainScene('scenes/title.scene')
-`;
+${more}`;
+}
 
-/** Its scripts' text, for the chapter's tasks (tasks/questBuddies.ts). */
-export const QB_SCRIPTS = { game, door, player, ranger, amulet, campfire, hud, title };
+const code = questBuddiesCode();
 
 export const questBuddies: GameExample = {
   id: 'quest-buddies',

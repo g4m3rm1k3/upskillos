@@ -13,7 +13,7 @@ const COLOR = { log: C.text, info: C.accent, warn: C.warn, error: C.bad, system:
 
 export function BottomPanel({ store }: { store: Store }) {
   useStore(store);
-  type Tab = 'output' | 'code' | 'animation' | 'tilemap';
+  type Tab = 'output' | 'code' | 'debug' | 'animation' | 'tilemap';
   const [tab, setTabState] = useState<Tab>('output');
   // The Animation panel previews, and the TileMap panel paints, only while showing.
   const setTab = (t: Tab) => {
@@ -34,15 +34,31 @@ export function BottomPanel({ store }: { store: Store }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 6px', background: C.panel2, borderBottom: `1px solid ${C.border}` }}>
-        {(['output', 'code', 'animation', 'tilemap'] as const).map((t) => (
+        {(['output', 'code', 'debug', 'animation', 'tilemap'] as const).map((t) => (
           <button key={t} type="button" data-testid={`tab-${t}`} onClick={() => setTab(t)} style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === t ? C.accent : 'transparent'}`, color: tab === t ? C.text : C.dim, padding: '5px 9px', fontSize: 12, cursor: 'pointer' }}>
-            {t === 'output' ? `Output${errors ? ` (${errors} error${errors === 1 ? '' : 's'})` : ''}` : t === 'code' ? `GUI → code (${log.length})` : t === 'animation' ? 'Animation' : 'TileMap'}
+            {t === 'output' ? `Output${errors ? ` (${errors} error${errors === 1 ? '' : 's'})` : ''}` : t === 'code' ? `GUI → code (${log.length})` : t === 'debug' ? `Debug${store.debugWidgets.length ? ` (${store.debugWidgets.length})` : ''}` : t === 'animation' ? 'Animation' : 'TileMap'}
           </button>
         ))}
         <span style={{ flex: 1 }} />
         {tab === 'output' && <Btn small onClick={() => { store.output = []; store.changed(); }}>Clear</Btn>}
         {tab === 'code' && <Btn small onClick={() => void navigator.clipboard?.writeText(log.map((l) => l.code).join('\n'))} title="Copy the whole log as a script">Copy</Btn>}
       </div>
+      {tab === 'debug' && <div data-testid="panel-debug" style={{ flex: 1, overflowY: 'auto', padding: '6px 10px', fontSize: 12 }}>
+        {!store.running ? <div style={{ color: C.faint }}>Run the game: controls a script asks for with the debug global (debug.slider, debug.toggle, debug.button, debug.watch) appear here, and change the running game.</div>
+          : !store.debugWidgets.length ? <div style={{ color: C.faint }}>No debug controls yet. In a script: this.speed = debug.slider('speed', this.speed, 0, 200)</div>
+          : store.debugWidgets.map((w) => (
+            <div key={w.name} data-testid={`debug-${w.name}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '3px 0' }}>
+              <span style={{ width: 140, color: C.dim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</span>
+              {w.kind === 'slider' && <>
+                <input data-testid={`debug-slider-${w.name}`} type="range" min={w.min} max={w.max} step={w.step} value={w.value} onChange={(e) => store.setDebug(w.name, Number(e.target.value))} style={{ width: 220 }} />
+                <input data-testid={`debug-number-${w.name}`} type="number" step={w.step} value={Number(w.value.toPrecision(6))} onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v)) store.setDebug(w.name, v); }} style={{ width: 80, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 3, padding: '1px 4px', fontFamily: C.mono }} />
+              </>}
+              {w.kind === 'toggle' && <input data-testid={`debug-toggle-${w.name}`} type="checkbox" checked={w.value} onChange={(e) => store.setDebug(w.name, e.target.checked)} />}
+              {w.kind === 'button' && <Btn small testid={`debug-button-${w.name}`} onClick={() => store.pressDebug(w.name)}>{w.name}</Btn>}
+              {w.kind === 'watch' && <span style={{ fontFamily: C.mono, color: C.text }}>{w.value}</span>}
+            </div>
+          ))}
+      </div>}
       {tab === 'animation' && <div data-testid="panel-animation" style={{ flex: 1, minHeight: 0, padding: '4px 8px' }}><Timeline store={store} /></div>}
       {tab === 'tilemap' && <div data-testid="panel-tilemap" style={{ flex: 1, minHeight: 0, padding: '4px 8px' }}><TilePanel store={store} /></div>}
       {(tab === 'output' || tab === 'code') && <div data-testid={`panel-${tab}`} style={{ flex: 1, overflowY: 'auto', fontFamily: C.mono, fontSize: 12, padding: '4px 8px' }}>

@@ -64,6 +64,7 @@ const TYPES: NodeTypeDef[] = [
       { name: 'flipX', type: 'bool', default: false, help: 'Mirror the image left to right.' },
       { name: 'flipY', type: 'bool', default: false, help: 'Mirror the image top to bottom.' },
       { name: 'opacity', type: 'number', default: 1, min: 0, max: 1, step: 0.05, help: '1 is solid, 0 is invisible.' },
+      { name: 'modulate', type: 'color', default: '#ffffff', help: 'A colour the picture is multiplied by: white leaves it as it is, red tints it red. Tween it for a hit flash. (Godot: modulate.)' },
     ],
   },
   {
@@ -78,6 +79,7 @@ const TYPES: NodeTypeDef[] = [
       { name: 'flipX', type: 'bool', default: false, help: 'Mirror the pictures left to right.' },
       { name: 'flipY', type: 'bool', default: false, help: 'Mirror the pictures top to bottom.' },
       { name: 'opacity', type: 'number', default: 1, min: 0, max: 1, step: 0.05, help: '1 is solid, 0 is invisible.' },
+      { name: 'modulate', type: 'color', default: '#ffffff', help: 'A colour the picture is multiplied by: white leaves it as it is, red tints it red. Tween it for a hit flash. (Godot: modulate.)' },
     ],
   },
   {
@@ -170,6 +172,24 @@ const TYPES: NodeTypeDef[] = [
     type: 'HBoxContainer', base: 'BoxContainer', icon: '⫼', addable: true,
     help: 'Places its children in a row, left to right: a hotbar, a row of hearts. It sets their positions, so add, remove or hide children and the rest move along.',
     props: [],
+  },
+  {
+    type: 'Particles2D', base: 'Node2D', icon: '✨', addable: true,
+    help: 'Sparks, smoke, dust, a burst when something is hit. Turn emitting on for a steady stream, or call burst() from a script for a puff. Particles fly from its position and stay in the world where they were made; each fades as it ages.',
+    props: [
+      { name: 'emitting', type: 'bool', default: false, help: 'Make particles all the time, rate a second. Off: only burst() makes them.' },
+      { name: 'rate', type: 'number', default: 20, min: 0, max: 1000, step: 1, help: 'Particles a second while emitting.' },
+      { name: 'amount', type: 'number', default: 12, min: 1, max: 500, step: 1, help: 'How many particles burst() makes.' },
+      { name: 'lifetime', type: 'number', default: 0.6, min: 0.05, max: 10, step: 0.05, help: 'How long each particle lasts, in seconds. It fades out over that time.' },
+      { name: 'speed', type: 'number', default: 60, min: 0, max: 2000, step: 1, help: 'How fast particles leave, in pixels a second.' },
+      { name: 'direction', type: 'angle', default: -1.5708, help: 'Which way they fly (the Inspector shows degrees): −90° is up.' },
+      { name: 'spread', type: 'angle', default: 3.14159, help: 'How far either side of the direction they may go: 180° is every way.' },
+      { name: 'gravity', type: 'number', default: 0, min: -2000, max: 2000, step: 10, help: 'Downward pull in pixels a second a second: 200 makes sparks fall.' },
+      { name: 'size', type: 'number', default: 3, min: 1, max: 64, step: 1, help: 'Each particle\u2019s size in pixels (a square), when there is no texture.' },
+      { name: 'color', type: 'color', default: '#ffd43b', help: 'The squares\u2019 colour, when there is no texture.' },
+      { name: 'texture', type: 'texture', default: null, help: 'A picture for each particle instead of a square.' },
+      { name: 'seed', type: 'number', default: 1, min: 0, step: 1, help: 'Which random particles: the same seed makes the same burst every time.' },
+    ],
   },
   {
     type: 'AudioStreamPlayer', base: 'Node', icon: '🔊', addable: true,

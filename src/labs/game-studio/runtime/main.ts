@@ -120,7 +120,7 @@ async function start(msg: Extract<ToRuntime, { type: 'load' }>): Promise<void> {
     }
     update(_time: number, delta: number) {
       if (trainer) { if (!paused) trainFrame(); return; }
-      if (game && !paused) { if (agent) drive(game); game.step(Math.min(delta / 1000, 0.25)); }
+      if (game && !paused) { if (agent) drive(game); game.step(Math.min(delta / 1000, 0.25)); sendDebug(game); }
     }
   };
   phaser = new Phaser.Game({
@@ -144,6 +144,15 @@ function phaserAudio(scene: Phaser.Scene): AudioOut {
     },
     stop(id) { const s = playing.get(id); if (s) { playing.delete(id); s.stop(); s.destroy(); } },
   };
+}
+
+/** The debug controls go to the editor's Debug tab when they change, at most ten times a second. */
+let debugSent = -1, debugAt = 0;
+function sendDebug(g: Game): void {
+  const now = performance.now();
+  if (g.debug.version === debugSent || now - debugAt < 100) return;
+  debugSent = g.debug.version; debugAt = now;
+  send({ type: 'debug', widgets: g.debug.list() });
 }
 
 // ── Train in view: Q-learning inside the visible game (ml/qlearning.ts) ───
@@ -284,6 +293,8 @@ addEventListener('message', (ev: MessageEvent) => {
   else if (m.type === 'trainSpeed') { if (trainer) trainer.speed = Math.max(1, m.speed); }
   else if (m.type === 'trainStep') stepTraining();
   else if (m.type === 'inspect') send({ type: 'state', path: m.path, props: inspect(m.path) });
+  else if (m.type === 'debugSet') game?.debug.setValue(m.name, m.value);
+  else if (m.type === 'debugPress') game?.debug.press(m.name);
   else if (m.type === 'agent') {
     if (agent && game) { pressAction(game, lastLoad!.project.input, agent.held, []); if (agent.spec.agent) game.setAgentPolicy(agent.spec.agent, null); }
     agent = m.policy ? { spec: m.spec, policy: m.policy, frame: 0, held: [] } : null;

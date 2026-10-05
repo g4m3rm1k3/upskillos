@@ -185,6 +185,7 @@ const ENTRIES: ApiEntry[] = [
   }
 }`,
     members: [
+      m('findPath', '(from: { x: number; y: number }, to: { x: number; y: number }, options?: { diagonal?: boolean }): Vec2[] | null', 'The shortest way between two world points that avoids this layer\u2019s solid tiles (A*): one world point per cell centre, from the next cell to the goal\u2019s cell; [] when already there, null when there is no way. diagonal: true also steps diagonally (never cutting a corner). Walk the points in turn to go round walls.', 'AStarGrid2D.get_point_path()'),
       p('tileSize', 'Vec2', 'The size of one cell in pixels, from the tileset.', 'tile_set.tile_size', { readonly: true }),
       m('getCell', '(x: number, y: number): number', 'The tile in a cell, or −1 for none.', 'get_cell_atlas_coords(), get_cell_source_id()'),
       m('setCell', '(x: number, y: number, tile: number): void', 'Put a tile in a cell (−1 erases). Collision follows at once.', 'set_cell()'),
@@ -290,6 +291,21 @@ export default class Menu extends VBoxContainer {
     name: 'HBoxContainer', kind: 'class', extends: 'BoxContainer', godot: 'HBoxContainer',
     doc: 'Places its children in a row, left to right: a hotbar, a row of hearts.',
     members: [],
+  },
+  {
+    name: 'Particles2D', kind: 'class', extends: 'Node2D', godot: 'GPUParticles2D / CPUParticles2D',
+    doc: 'Particles: sparks, smoke, dust, a burst. emitting makes rate a second; burst() makes amount at once. Each flies out at about speed (between half and all of it) within spread either side of direction, falls with gravity, and fades out over lifetime. They stay in the world where they were made, so a moving emitter leaves a trail. The same seed makes the same particles.',
+    example: `export default class Slime extends CharacterBody2D {
+  hit() {
+    const puff = this.get('Puff');   // a Particles2D child: green, gravity 200
+    puff.burst(16);
+  }
+}`,
+    members: [
+      m('burst', '(n?: number): void', 'Make n particles at once (amount unless given).', 'restart() with one_shot'),
+      m('clear', '(): void', 'Remove every particle now.', 'restart()'),
+      p('count', 'number', 'How many particles are alive now.', '', { readonly: true }),
+    ],
   },
   {
     name: 'AudioStreamPlayer', kind: 'class', extends: 'Node', godot: 'AudioStreamPlayer',
@@ -492,6 +508,44 @@ export default class Menu extends VBoxContainer {
     ],
   },
   {
+    name: 'tween', kind: 'global', godot: 'create_tween().tween_property()',
+    doc: 'Change a node\u2019s properties smoothly over time: a slide, a fade, a pop, a flash. Numbers, { x, y } and colours ("#rrggbb") can be tweened. Each starts from where the property is when the tween starts. An easing curve shapes the motion: linear, inQuad (slow, then fast), outQuad (fast, then slow; the default), inOutQuad, outCubic, outBack (overshoots and settles: a pop), outBounce. A tween on a node that is freed simply stops, and changing scene stops them all.',
+    example: `export default class Chest extends Area2D {
+  bodyEntered(body) {
+    if (body.name !== 'Player') return;
+    const lid = this.get('Sprite');
+    tween.to(lid, { scale: { x: 1.3, y: 1.3 } }, 0.15, { ease: 'outBack', yoyo: true });   // a pop
+    tween.to(lid, { opacity: 0 }, 0.4, { delay: 0.3, then: () => this.queueFree() });     // then fade away
+  }
+}`,
+    members: [
+      m('to', '(node: Node, props: { [name: string]: number | { x: number; y: number } | string }, seconds: number, options?: { ease?: string; delay?: number; then?: () => void; yoyo?: boolean; repeat?: number }): { stop(): void; readonly finished: boolean }', 'Tween these properties of a node to these values over seconds. Options: ease (the curve), delay (seconds before it starts), then (run when it finishes), yoyo (come back again), repeat (more runs; −1 for ever). Returns the tween: stop() stops it where it is.', 'Tween.tween_property()'),
+      m('stopAll', '(node?: Node): void', 'Stop every tween on a node, or every tween at all.', 'Tween.kill()'),
+      p('eases', 'string[]', 'The easing curves\u2019 names.', 'Tween.TransitionType', { readonly: true }),
+    ],
+  },
+  {
+    name: 'debug', kind: 'global', godot: 'an editor plugin, or Dear ImGui',
+    doc: 'Controls for tuning a running game, shown in the editor\u2019s Debug tab, in the style of Dear ImGui: ask for a control every frame, and use what it returns. The first value is where a slider starts; once you move it in the Debug tab, the call returns the slider\u2019s value. Outside the editor (an exported game, training) every call returns the script\u2019s own value, so the game plays the same.',
+    example: `export default class Player extends CharacterBody2D {
+  speed = 70;
+
+  physicsUpdate(dt) {
+    this.speed = debug.slider('speed', this.speed, 0, 200);   // drag it while the game runs
+    debug.watch('position', this.position);
+    if (debug.button('back to start')) this.position = { x: 56, y: 96 };
+    this.velocity = input.vector('move_left', 'move_right', 'move_up', 'move_down').scale(this.speed);
+    this.moveAndSlide();
+  }
+}`,
+    members: [
+      m('slider', '(name: string, value: number, min: number, max: number, step?: number): number', 'A number to tune between min and max: returns the slider\u2019s value once moved, value until then.', ''),
+      m('toggle', '(name: string, value: boolean): boolean', 'A switch: returns the panel\u2019s once flipped, value until then.', ''),
+      m('button', '(name: string): boolean', 'A button: true on the one call after it is pressed in the Debug tab.', ''),
+      m('watch', '(name: string, value: any): void', 'Show a value (numbers to 4 significant figures).', ''),
+    ],
+  },
+  {
     name: 'physics', kind: 'global', godot: 'ProjectSettings physics/2d/default_gravity',
     doc: 'The project’s physics settings (Project › Settings).',
     members: [
@@ -508,6 +562,7 @@ export default class Menu extends VBoxContainer {
       m('degToRad', '(d: number): number', 'Degrees to radians.', 'deg_to_rad()'),
       m('radToDeg', '(r: number): number', 'Radians to degrees.', 'rad_to_deg()'),
       m('randRange', '(lo: number, hi: number): number', 'A random number from lo up to (not including) hi.', 'randf_range()'),
+      m('rng', '(seed?: number): { next(): number; range(lo: number, hi: number): number; int(lo: number, hi: number): number; chance(p: number): boolean; pick<T>(items: T[]): T; weighted(table: any[][]): any; shuffle<T>(items: T[]): T[]; readonly state: number }', 'A random-number generator of its own, from a seed: the same seed always gives the same numbers, so loot and maps can be repeated (and tested). next() is 0 to 1; range(lo, hi); int(lo, hi) includes both; chance(p); pick(list); weighted([[item, weight], …]); shuffle(list) returns a new list; state lets a saved game carry on: math.rng(saved.state).', 'RandomNumberGenerator (seed, randf, randi_range)'),
     ],
   },
   {

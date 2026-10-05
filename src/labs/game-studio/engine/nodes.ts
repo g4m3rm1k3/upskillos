@@ -10,6 +10,10 @@
 // sets them after the constructor runs, so a script's own fields (speed = 200) are
 // kept and the scene's values win for registered properties.
 
+import { astar } from './pathfind';
+import { apply as applyMat, invert } from '../core/math2d';
+import { rng as seeded } from './random';
+const mathRng = (seed: number) => { const r = seeded(seed); return () => r.next(); };
 import { Vec2 } from './vec2';
 import { IDENTITY, local, multiply, apply, type Mat2D } from '../core/math2d';
 import type { Game } from './game';
@@ -179,6 +183,8 @@ export class Sprite2D extends Node2D {
   flipX = false;
   flipY = false;
   opacity = 1;
+  /** A colour the picture is multiplied by: '#ffffff' leaves it as it is. */
+  modulate = '#ffffff';
 }
 
 /** A tileset as the engine uses it: its data, and how many tiles across and in all its image makes. */
@@ -233,6 +239,23 @@ export class TileMapLayer extends Node2D {
 
   /** Whether the tile in a cell is one its tileset marks solid. */
   isCellSolid(x: number, y: number): boolean { const t = this.getCell(x, y), info = this._info(); return t >= 0 && !!info && info.data.solid.includes(t); }
+
+  /**
+   * The shortest way from one world point to another that avoids this layer's solid tiles (A*, engine/pathfind.ts):
+   * world points, one per cell centre, from the cell after the start to the goal's cell. [] if already there, null if
+   * there is no way. Searched within the painted cells' rectangle and one cell round it. The layer must not be turned.
+   */
+  findPath(from: { x: number; y: number }, to: { x: number; y: number }, options: { diagonal?: boolean } = {}): Vec2[] | null {
+    const m = this.worldTransform, back = invert(m);
+    const cellOf = (p: { x: number; y: number }) => this.localToMap(applyMat(back, p));
+    const used = this.getUsedCells();
+    const a = cellOf(from), b = cellOf(to);
+    const xs = [...used.map((c) => c.x), a.x, b.x], ys = [...used.map((c) => c.y), a.y, b.y];
+    const bounds = { x0: Math.min(...xs) - 1, y0: Math.min(...ys) - 1, x1: Math.max(...xs) + 1, y1: Math.max(...ys) + 1 };
+    const { path } = astar((x, y) => !this.isCellSolid(x, y), a, b, { bounds, diagonal: !!options.diagonal });
+    if (!path) return null;
+    return path.slice(1).map((c) => { const p = applyMat(m, this.mapToLocal(c)); return new Vec2(p.x, p.y); });
+  }
 
   /** The solid tiles as world rectangles (axis-aligned, like every shape in Phase 4). */
   shapes(): WorldShape[] {
@@ -329,6 +352,8 @@ export class AnimatedSprite2D extends Node2D {
   flipX = false;
   flipY = false;
   opacity = 1;
+  /** A colour the picture is multiplied by: '#ffffff' leaves it as it is. */
+  modulate = '#ffffff';
   /** Seconds into the current frame. */
   _elapsed = 0;
 
@@ -483,6 +508,50 @@ export class HBoxContainer extends BoxContainer {
   get vertical(): boolean { return false; }
 }
 
+/** One particle, in world coordinates. */
+interface Particle { x: number; y: number; vx: number; vy: number; age: number }
+
+/** Sparks, smoke, bursts: particles that fly out, fall with gravity and fade (the engine moves them each frame). */
+export class Particles2D extends Node2D {
+  name = 'Particles2D';
+  emitting = false;
+  rate = 20;
+  amount = 12;
+  lifetime = 0.6;
+  speed = 60;
+  direction = -1.5708;
+  spread = 3.14159;
+  gravity = 0;
+  size = 3;
+  color = '#ffd43b';
+  texture: string | null = null;
+  seed = 1;
+  /** The particles alive now. */
+  _particles: Particle[] = [];
+  private _random: (() => number) | null = null;
+  private _owed = 0;
+  /** How many particles are alive now. */
+  get count(): number { return this._particles.length; }
+  /** Make amount particles at once (or n). */
+  burst(n: number = this.amount): void { for (let i = 0; i < n; i++) this._spawn(); }
+  /** Remove every particle now. */
+  clear(): void { this._particles = []; }
+
+  private _spawn(): void {
+    this._random ??= mathRng(this.seed);
+    const r = this._random, a = this.direction + (r() * 2 - 1) * this.spread, v = this.speed * (0.5 + 0.5 * r());
+    const at = this.globalPosition;
+    this._particles.push({ x: at.x, y: at.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0 });
+  }
+
+  /** Move every particle on by dt, age them, and make new ones while emitting (the engine calls this). */
+  _advance(dt: number): void {
+    if (this.emitting) { this._owed += this.rate * dt; while (this._owed >= 1) { this._owed -= 1; this._spawn(); } }
+    for (const p of this._particles) { p.vy += this.gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.age += dt; }
+    this._particles = this._particles.filter((p) => p.age < this.lifetime);
+  }
+}
+
 /**
  * Plays a sound (assets made with project.writeSound). The engine keeps time: playing is true from play() until the
  * sound's length (divided by pitchScale) has passed, then finished() runs; the game's audio output does the playing.
@@ -615,7 +684,7 @@ export class Area2D extends Node2D {
 }
 
 /** The built-in classes, by registry type name. */
-export const NODE_CLASSES: Record<string, typeof Node> = { Node, Node2D, Sprite2D, AnimatedSprite2D, AnimationPlayer, TileMapLayer, Camera2D, Label, Panel, Button, ProgressBar, BoxContainer, VBoxContainer, HBoxContainer, AudioStreamPlayer, CanvasLayer, CollisionShape2D, StaticBody2D, CharacterBody2D, RigidBody2D, Area2D };
+export const NODE_CLASSES: Record<string, typeof Node> = { Node, Node2D, Sprite2D, AnimatedSprite2D, AnimationPlayer, TileMapLayer, Camera2D, Label, Panel, Button, ProgressBar, BoxContainer, VBoxContainer, HBoxContainer, Particles2D, AudioStreamPlayer, CanvasLayer, CollisionShape2D, StaticBody2D, CharacterBody2D, RigidBody2D, Area2D };
 
 /** The registered type a runtime node is: its class, or the nearest built-in class it extends. */
 export function nodeTypeOf(n: Node): string {

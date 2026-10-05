@@ -26,6 +26,24 @@ export const ASSET_DRAG = 'application/x-game-studio-asset';
 export const STARTER_DRAG = 'application/x-game-studio-starter';
 
 const measure = document.createElement('canvas').getContext('2d')!;
+
+/** A picture multiplied by a colour (a sprite's modulate), as the game tints it; made once per picture and colour. */
+const tinted = new WeakMap<HTMLImageElement, Map<string, HTMLCanvasElement>>();
+function tintedImage(img: HTMLImageElement, colour: string): CanvasImageSource {
+  if (!colour || colour.toLowerCase() === '#ffffff') return img;
+  let byColour = tinted.get(img);
+  if (!byColour) tinted.set(img, (byColour = new Map()));
+  let c = byColour.get(colour);
+  if (!c) {
+    c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = colour; g.fillRect(0, 0, c.width, c.height);
+    g.globalCompositeOperation = 'destination-in'; g.drawImage(img, 0, 0);   // keep the picture's own transparency
+    byColour.set(colour, c);
+  }
+  return c;
+}
 const labelFont = (size: number) => `${size}px system-ui, sans-serif`;
 
 /** Text broken into lines no wider than `wrap` pixels (0: only at line breaks), as the game wraps it. */
@@ -149,7 +167,7 @@ export function Viewport({ store, onFrameRef }: { store: Store; onFrameRef?: (fn
       set(multiply(pn.world, [look.flipX ? -1 : 1, 0, 0, look.flipY ? -1 : 1, 0, 0]));
       g.globalAlpha = look.opacity;
       g.imageSmoothingEnabled = p.settings.pixelArt === false;   // pixel art stays crisp when zoomed, as in the game
-      if (img) g.drawImage(img, box.x, box.y);
+      if (img) g.drawImage(tintedImage(img, look.modulate), box.x, box.y);
       else { g.setLineDash([4 / z, 3 / z]); g.strokeStyle = C.faint; g.lineWidth = 1 / z; g.strokeRect(-16, -16, 32, 32); g.setLineDash([]); }
       g.globalAlpha = 1;
     }

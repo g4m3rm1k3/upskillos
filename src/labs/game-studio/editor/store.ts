@@ -23,6 +23,7 @@ import type { GameExample } from '../examples/types';
 import { mapNodeOf, mapToSceneCode, sceneToMap, type ArtMap } from '../core/artMaps';
 import { gameHtmlFile, gameZip, projectZip, readProjectZip } from '../core/archive';
 import { soundBytes, type SoundRecipe } from '../core/sound';
+import type { DebugWidget } from '../engine/debug';
 import { loadRuntimeSource } from './runner';
 import type { EnvSpec } from '../ml/env';
 import type { CemOptions, Generation } from '../ml/cem';
@@ -897,6 +898,7 @@ export class Store {
       return;
     }
     this.output = [{ level: 'system', text: `▶ Running ${scene}` }];
+    this.debugWidgets = [];
     const assets = await Promise.all(p.assets.map(async (a) => ({ path: a.path, mime: a.mime, bytes: await (this.blobs.get(a.id) ?? new Blob()).arrayBuffer() })));
     const game = await runGame({ project: p, scene, assets, container, onMessage: (m) => this.onRuntime(m), saves: this.savedGames(), ...(opts.train ? { train: opts.train } : {}) });
     this.running = { game, scene, paused: false, live: null };
@@ -934,8 +936,20 @@ export class Store {
     this.say(n ? `Cleared ${n} saved game${n === 1 ? '' : 's'}` : 'There were no saved games');
   }
 
+  /** The running game's debug controls (the debug global), for the Debug tab. */
+  debugWidgets: DebugWidget[] = [];
+  /** Move a debug slider or flip a toggle in the running game. */
+  setDebug(name: string, value: number | boolean): void {
+    this.running?.game.send({ type: 'debugSet', name, value });
+    this.debugWidgets = this.debugWidgets.map((w) => (w.name === name && (w.kind === 'slider' || w.kind === 'toggle') ? { ...w, value } as DebugWidget : w));
+    this.changed();
+  }
+  /** Press a debug button in the running game. */
+  pressDebug(name: string): void { this.running?.game.send({ type: 'debugPress', name }); }
+
   private onRuntime(m: FromRuntime): void {
     if (!this.running) return;
+    if (m.type === 'debug') { this.debugWidgets = m.widgets; this.changed(); return; }
     if (m.type === 'save') {
       this.keepSave(m.slot, m.json);
       this.output.push({ level: 'system', text: m.json === null ? `Save slot "${m.slot}" emptied` : `Saved to slot "${m.slot}"` });

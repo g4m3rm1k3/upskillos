@@ -25,7 +25,7 @@ import type { Connection, NodeData, Project, PropValue, SceneData } from '../cor
 import { propsOf } from '../core/registry';
 import { decompose } from '../core/math2d';
 import { Input } from './input';
-import { NODE_CLASSES, AnimatedSprite2D, AnimationPlayer, TileMapLayer, type Collider, type TilesetInfo, Area2D, AudioStreamPlayer, BoxContainer, Button, Camera2D, CanvasLayer, CharacterBody2D, Label, Node, Node2D, PhysicsBody2D, RigidBody2D, Sprite2D, nodeTypeOf } from './nodes';
+import { NODE_CLASSES, AnimatedSprite2D, AnimationPlayer, TileMapLayer, type Collider, type TilesetInfo, Area2D, AudioStreamPlayer, BoxContainer, Button, Camera2D, Particles2D, CanvasLayer, CharacterBody2D, Label, Node, Node2D, PhysicsBody2D, RigidBody2D, Sprite2D, nodeTypeOf } from './nodes';
 import { boxLayout, nodeSize, widgetParts, WIDGET_TYPES } from '../core/widgets';
 import { apply, invert } from '../core/math2d';
 import { scans, separate } from './physics';
@@ -34,6 +34,9 @@ import { expandScene, expandSceneRoot } from '../core/instances';
 import { Vec2 } from './vec2';
 import { actPolicy, decide, dot, isLinearQ, pick, type AgentPolicy } from '../ml/brain';
 import { memoryStore, saveApi, type SaveApi, type SaveStore } from './saves';
+import { rng } from './random';
+import { Tween, EASES, type TweenOptions } from './tween';
+import { DebugPanel } from './debug';
 
 export const PHYSICS_DT = 1 / 60;
 
@@ -48,7 +51,7 @@ interface DrawBase {
 }
 /** One thing to draw: an image (centred on x, y) or text (top-left at x, y). */
 export type DrawItem =
-  | (DrawBase & { kind: 'sprite'; texture: string; flipX: boolean; flipY: boolean })
+  | (DrawBase & { kind: 'sprite'; texture: string; flipX: boolean; flipY: boolean; tint?: string })
   /** Text: its top-left at x, y, or its centre when `center`; wrapped at `wrap` pixels when given; only the first `visible` letters shown when given. */
   | (DrawBase & { kind: 'text'; text: string; fontSize: number; color: string; center?: boolean; wrap?: number; visible?: number })
   /** A tile layer: its top-left at x, y; cells as [x, y, tile, …]; `version` changes when the cells do. */
@@ -86,6 +89,28 @@ export class Game {
   readonly input: Input;
   root: Node;   // replaced when scene.change() switches scenes
   readonly time = { now: 0, frame: 0 };
+  /** The debug global's controls (engine/debug.ts): the editor shows them while the game runs. */
+  readonly debug = new DebugPanel(() => this.time.frame);
+
+  /** Tweens running now, with the node each belongs to (engine/tween.ts). */
+  private tweens: { node: Node; tween: Tween }[] = [];
+
+  /** The tween global: change a node's properties smoothly over time. */
+  readonly tween = ((game: Game) => ({
+    /** Tween a node's properties to these values over seconds: tween.to(this, { position: { x: 100, y: 40 } }, 0.3). */
+    to(node: Node, props: Record<string, number | { x: number; y: number } | string>, seconds: number, opts: TweenOptions = {}) {
+      if (!(node instanceof Node)) throw new Error('tween.to(node, { property: value }, seconds): the first argument is a node');
+      for (const k of Object.keys(props)) if (!(k in node)) throw new Error(`"${node.path}" has no property "${k}" to tween`);
+      const t = new Tween(node as unknown as Record<string, unknown>, props, seconds, opts);
+      game.tweens.push({ node, tween: t });
+      return t;
+    },
+    /** Stop every tween on a node (or every tween, with no node). */
+    stopAll(node?: Node) { for (const x of game.tweens) if (!node || x.node === node) x.tween.stop(); },
+    /** The easing curves' names. */
+    get eases() { return Object.keys(EASES); },
+  }))(this);
+
   /** The button with the keyboard focus (Button.grabFocus), if any. */
   _focus: Button | null = null;
   /** The game's own data (the state global): it survives scene changes; a new Game starts it empty. */
@@ -216,6 +241,7 @@ export class Game {
     gone(this.root);
     this.ids = new WeakMap();
     this._focus = null;
+    this.tweens = [];
     this.scenePath = path;
     this.root = this.buildTree(expandSceneRoot(this.project, path));
     this.root._game = this;
@@ -259,6 +285,10 @@ export class Game {
     this.each((n) => { if (n instanceof AnimationPlayer && this.guard(n, 'animation', () => n._advance(dt))) this.call(n, 'animationFinished', n.currentAnimation); });
     this.each((n) => { if (n instanceof AnimatedSprite2D && this.guard(n, 'animation', () => n._advance(dt))) this.call(n, 'animationFinished', n.animation); });
     this.each((n) => this.call(n, 'update', dt));
+    // Particles move, age and are made.
+    this.each((n) => { if (n instanceof Particles2D) this.guard(n, 'particles', () => n._advance(dt)); });
+    // Tweens move on (a mistake in one's then() is reported against its node); those finished, or whose node is gone, end.
+    this.tweens = this.tweens.filter(({ node, tween }) => !node._freed && !!this.guard(node, 'tween', () => tween.advance(dt)));
     // Sounds that have played to their end.
     this.each((n) => { if (n instanceof AudioStreamPlayer && n._endsAt !== null && n._endsAt <= this.time.now + 1e-9) { n._endsAt = null; this.call(n, 'finished'); } });
     this.flushFree();
@@ -570,8 +600,15 @@ export class Game {
       if (vis && n instanceof Node2D && (picture || n instanceof Label)) {
         const t = decompose(n.worldTransform);
         const base = { id: idOf(n), x: t.position.x, y: t.position.y, rotation: t.rotation, scaleX: t.scale.x, scaleY: t.scale.y, depth: zz + (order++) * 1e-6, screen: scr };
-        if (n instanceof Sprite2D || n instanceof AnimatedSprite2D) items.push({ ...base, kind: 'sprite', texture: picture!, flipX: n.flipX, flipY: n.flipY, alpha: n.opacity });
+        if (n instanceof Sprite2D || n instanceof AnimatedSprite2D) items.push({ ...base, kind: 'sprite', texture: picture!, flipX: n.flipX, flipY: n.flipY, alpha: n.opacity, ...(n.modulate && n.modulate.toLowerCase() !== '#ffffff' ? { tint: n.modulate } : {}) });
         else if (n instanceof Label) items.push({ ...base, kind: 'text', text: String(n.text), fontSize: n.fontSize, color: n.color, alpha: 1, ...(n.wrapWidth > 0 ? { wrap: n.wrapWidth } : {}), ...(n.visibleCharacters >= 0 ? { visible: Math.floor(n.visibleCharacters) } : {}) });
+      }
+      // Particles: each a square (or the texture) where it is in the world, fading as it ages.
+      if (vis && n instanceof Particles2D) {
+        n._particles.forEach((p, i) => {
+          const fade = Math.max(0, 1 - p.age / n.lifetime), common = { id: -(idOf(n) * 8 + 1) * 100000 - i, rotation: 0, scaleX: 1, scaleY: 1, depth: zz + (order++) * 1e-6, screen: scr, alpha: fade, x: p.x, y: p.y };
+          items.push(n.texture ? { ...common, kind: 'sprite', texture: n.texture, flipX: false, flipY: false } : { ...common, kind: 'rect', width: n.size, height: n.size, color: n.color });
+        });
       }
       // A widget: its parts, placed through its transform (a rectangle by its centre, as rects are drawn).
       const type = vis && n instanceof Node2D ? nodeTypeOf(n) : '';
@@ -632,7 +669,7 @@ export function applyProps(node: Node, type: string, props: Record<string, PropV
 
 /** The globals a script sees (ADR 4). */
 export function scriptGlobals(game: Game): Record<string, unknown> {
-  return { input: game.input, scene: game.sceneApi, time: game.time, state: game.state, save: game.save, math: MATH, physics: { gravity: game.gravity }, ai: game.ai, Vec2, PhysicsBody2D, ...NODE_CLASSES };
+  return { input: game.input, scene: game.sceneApi, time: game.time, state: game.state, save: game.save, tween: game.tween, debug: game.debug.api, math: MATH, physics: { gravity: game.gravity }, ai: game.ai, Vec2, PhysicsBody2D, ...NODE_CLASSES };
 }
 
 /** A node whose script makes it an agent: it can say what it sees and do an action. */
@@ -665,4 +702,6 @@ export const MATH = {
   radToDeg: (r: number) => (r * 180) / Math.PI,
   /** A random number in [lo, hi). */
   randRange: (lo: number, hi: number) => lo + Math.random() * (hi - lo),
+  /** A random-number generator of its own: the same seed always gives the same numbers (engine/random.ts). */
+  rng,
 };

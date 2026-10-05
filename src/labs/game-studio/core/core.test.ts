@@ -20,7 +20,7 @@ function sample() {
 
 describe('the registry', () => {
   it('gives each type its bases’ properties first, and defaults when a property is not set', () => {
-    expect(propsOf('Sprite2D').map((p) => p.name)).toEqual(['position', 'rotation', 'scale', 'visible', 'zIndex', 'texture', 'flipX', 'flipY', 'opacity']);
+    expect(propsOf('Sprite2D').map((p) => p.name)).toEqual(['position', 'rotation', 'scale', 'visible', 'zIndex', 'texture', 'flipX', 'flipY', 'opacity', 'modulate']);
     expect(isA('CharacterBody2D', 'Node2D')).toBe(true);
     expect(isA('Node2D', 'Sprite2D')).toBe(false);
     expect(propValue('Sprite2D', {}, 'scale')).toEqual({ x: 1, y: 1 });

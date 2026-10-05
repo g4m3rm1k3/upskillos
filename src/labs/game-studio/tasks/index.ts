@@ -9,9 +9,10 @@ import { TETRIS } from './tetris';
 import { LEARNING } from './learning';
 import { CRIBBAGE } from './cribbage';
 import { QUEST_BUDDIES } from './questBuddies';
+import { QUEST_ADVENTURE } from './questAdventure';
 
 export type { GameTask };
-export const TASKS: GameTask[] = [...FIRST_STEPS, ...PHYSICS, ...CAMERA_HUD, ...ANIMATION, ...TILEMAPS, ...SCENES, ...TETRIS, ...LEARNING, ...CRIBBAGE, ...QUEST_BUDDIES];
+export const TASKS: GameTask[] = [...FIRST_STEPS, ...PHYSICS, ...CAMERA_HUD, ...ANIMATION, ...TILEMAPS, ...SCENES, ...TETRIS, ...LEARNING, ...CRIBBAGE, ...QUEST_BUDDIES, ...QUEST_ADVENTURE];
 
 export function taskById(id: string): GameTask | undefined { return TASKS.find((t) => t.id === id); }
 

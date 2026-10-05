@@ -6,6 +6,7 @@ import type { Project } from '../core/types';
 import type { EnvSpec } from '../ml/env';
 import type { AgentPolicy } from '../ml/policy';
 import type { QEpisode, QLive, QOptions, QPolicy, QTransition } from '../ml/qlearning';
+import type { DebugWidget } from '../engine/debug';
 
 /** Train in view: Q-learning inside the visible game. `speed` is game frames per drawn frame (1 is real time). */
 export interface TrainInView { spec: EnvSpec; options: QOptions; speed: number }
@@ -22,7 +23,11 @@ export type ToRuntime =
   | { type: 'restart' }
   | { type: 'inspect'; path: string }
   /** A trained agent plays (ml/): every frameSkip frames it looks at the game and holds an action's keys. null stops it. */
-  | { type: 'agent'; spec: EnvSpec; policy: AgentPolicy | null };
+  | { type: 'agent'; spec: EnvSpec; policy: AgentPolicy | null }
+  /** The Debug tab moved a slider or flipped a toggle (engine/debug.ts). */
+  | { type: 'debugSet'; name: string; value: number | boolean }
+  /** The Debug tab pressed a button. */
+  | { type: 'debugPress'; name: string };
 
 export type LogLevel = 'log' | 'info' | 'warn' | 'error';
 
@@ -32,6 +37,8 @@ export type FromRuntime =
   | { type: 'log'; level: LogLevel; text: string }
   | { type: 'error'; message: string; file: string | null; line: number | null; column: number | null; node: string | null; phase: string | null }
   | { type: 'state'; path: string; props: Record<string, unknown> | null }
+  /** The debug global's controls now, for the Debug tab (sent when they change, at most ten times a second). */
+  | { type: 'debug'; widgets: DebugWidget[] }
   /** The game saved into a slot (json) or emptied it (null): the editor keeps the change. */
   | { type: 'save'; slot: string; json: string | null }
   | { type: 'paused'; paused: boolean }

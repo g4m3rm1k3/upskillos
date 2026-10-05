@@ -93,7 +93,7 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
     // Quest Buddies (chapter 11): do step k of a task (tasks/questBuddies.ts) as its code, then show it: a script
     // opened, a scene opened with a node selected, or the game running (with keys pressed in it, for menus).
     qb: async (task, k, show = {}) => {
-      const code = await page.evaluate(([a, b]) => window.__gameStudio.qbStep(a, b), [task, k]);
+      const code = await page.evaluate(([a, b]) => (a.startsWith('qa-') ? window.__gameStudio.qaStep : window.__gameStudio.qbStep)(a, b), [task, k]);
       if (code) await page.evaluate(([c, label]) => window.__gameStudio.store.act((d) => d.runCode(label, c)), [code, `${task} step ${k + 1}`]);
       if (show.scene) { await t('left-files').click(); await t(`file-${show.scene}`).click(); if (show.node) await ui.select(show.node); else mark(t('viewport')); }
       if (show.script) { await t('left-files').click(); await ui.openScript(show.script); mark(page.locator('.monaco-editor')); }
@@ -618,6 +618,23 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       async () => { await ui.qb('qb-sounds', 0); await t('left-files').click(); await t('asset-assets/sounds/coin.wav').click(); mark(t('sound-preview')); },
       () => ui.qb('qb-sounds', 1, { scene: 'scenes/hud.scene', node: 'Coin' }),
       async () => { await ui.qb('qb-sounds', 2); await t('left-files').click(); await t('asset-assets/sounds/arrive.wav').click(); mark(t('sound-preview')); },
+    ],
+    // ── Quest Buddies: Adventure (chapter 12) ──
+    'qa-classes': [
+      () => ui.qb('qa-classes', 0, { script: 'scripts/classes.js' }),
+      () => ui.qb('qa-classes', 1, { script: 'scripts/game.js' }),
+      () => ui.qb('qa-classes', 2, { run: true, keys: ['Enter'] }),
+      async () => { await ui.stop(); await ui.qb('qa-classes', 3, { scene: 'scenes/hud.scene', node: 'Xp' }); },
+    ],
+    'qa-loot': [
+      () => ui.qb('qa-loot', 0, { script: 'scripts/loot.js' }),
+      () => ui.qb('qa-loot', 1, { script: 'scripts/loot.js' }),
+      () => ui.qb('qa-loot', 2, { script: 'scripts/hud.js' }),
+    ],
+    'qa-combat': [
+      () => ui.qb('qa-combat', 0, { script: 'scripts/slime.js' }),
+      () => ui.qb('qa-combat', 1, { script: 'scripts/player.js' }),
+      () => ui.qb('qa-combat', 2, { scene: 'scenes/forest.scene', node: 'Enemies' }),
     ],
     // ── Game AI that learns, 9.8: the paddle with features ──
     'paddle-features': [

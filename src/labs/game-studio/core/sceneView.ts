@@ -69,7 +69,7 @@ export function placeNodes(scene: SceneData): PlacedNode[] {
 }
 
 /** How a node that shows a picture looks in the editor: the same picture the game would show first. */
-export interface SpriteLook { texture: string | null; flipX: boolean; flipY: boolean; opacity: number }
+export interface SpriteLook { texture: string | null; flipX: boolean; flipY: boolean; opacity: number; modulate: string }
 
 /**
  * The picture a Sprite2D or AnimatedSprite2D shows, or null for any other node. An
@@ -78,9 +78,9 @@ export interface SpriteLook { texture: string | null; flipX: boolean; flipY: boo
  */
 export function spriteLook(n: NodeData): SpriteLook | null {
   const get = (k: string) => propValue(n.type, n.props, k);
-  if (n.type === 'Sprite2D') return { texture: get('texture') as string | null, flipX: !!get('flipX'), flipY: !!get('flipY'), opacity: get('opacity') as number };
+  if (n.type === 'Sprite2D') return { texture: get('texture') as string | null, flipX: !!get('flipX'), flipY: !!get('flipY'), opacity: get('opacity') as number, modulate: get('modulate') as string };
   if (n.type !== 'AnimatedSprite2D') return null;
   const a = (get('frames') as SpriteAnimation[]).find((x) => x.name === get('animation'));
   const texture = a && a.frames.length ? a.frames[Math.min(Math.max(0, Math.floor(get('frame') as number)), a.frames.length - 1)] : null;
-  return { texture, flipX: !!get('flipX'), flipY: !!get('flipY'), opacity: get('opacity') as number };
+  return { texture, flipX: !!get('flipX'), flipY: !!get('flipY'), opacity: get('opacity') as number, modulate: get('modulate') as string };
 }

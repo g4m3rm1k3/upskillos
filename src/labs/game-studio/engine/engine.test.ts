@@ -389,6 +389,17 @@ describe('no fake controls', () => {
       for (let i = 0; i < 60; i++) g.step(1 / 60);
       return JSON.stringify({ calls, playing: g.root.get<AudioStreamPlayer>('N').playing });
     }])),
+    // Not physics: particles need time to appear, so each property's scenario is a burst and half a second of emitting
+    // (emitting itself starts off), recording every particle drawn.
+    ...Object.fromEntries(['emitting', 'rate', 'amount', 'lifetime', 'speed', 'direction', 'spread', 'gravity', 'size', 'color', 'texture', 'seed'].map((prop) => [`Particles2D.${prop}`, (v: PropValue | undefined) => {
+      const { project, scene: s } = scene((d, id) => { d.addNode(id, 'Particles2D', undefined, { name: 'N', props: { emitting: prop !== 'emitting', ...(v === undefined ? {} : { [prop]: v }) } }); });
+      const rec = recorder();
+      const g = new Game(project, s, rec.renderer);
+      g.start();
+      g.root.get<Node & { burst(): void }>('N').burst();
+      for (let i = 0; i < 30; i++) g.step(1 / 60);
+      return JSON.stringify(rec.frames.at(-1));
+    }])),
     // Not physics: a container's gap shows only between two children, so its scenario is a column of two labels.
     'BoxContainer.separation': (v) => {
       const { project, scene: s } = scene((d, id) => {

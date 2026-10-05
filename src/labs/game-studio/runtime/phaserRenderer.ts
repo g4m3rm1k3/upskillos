@@ -69,7 +69,11 @@ export class PhaserRenderer implements Renderer {
       o.setScale(it.scaleX, it.scaleY);
       o.setAlpha(it.alpha);
       o.setDepth(it.depth);
-      if (it.kind === 'sprite') (o as Phaser.GameObjects.Image).setFlip(it.flipX, it.flipY);
+      if (it.kind === 'sprite') {
+        const img = o as Phaser.GameObjects.Image;
+        img.setFlip(it.flipX, it.flipY);
+        if (it.tint) img.setTint(Phaser.Display.Color.HexStringToColor(it.tint).color); else img.clearTint();
+      }
       else if (it.kind === 'rect') {
         const r = o as Phaser.GameObjects.Rectangle;
         r.setSize(it.width, it.height);
