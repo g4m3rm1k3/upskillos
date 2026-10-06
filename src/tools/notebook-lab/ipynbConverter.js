@@ -13,7 +13,7 @@ export function toIpynb(notebook) {
       const source = (cell.code ?? '').split('\n').map((l, i, a) => i < a.length - 1 ? l + '\n' : l)
       const mdLines = [
         cell.cellTitle ? `# ${cell.cellTitle}\n` : null,
-        cell.prose ?? null,
+        Array.isArray(cell.prose) ? cell.prose.join('\n\n') : (cell.prose ?? null),
       ].filter(Boolean)
 
       if (mdLines.length && !cell.code?.trim()) {
@@ -29,7 +29,7 @@ export function toIpynb(notebook) {
         cell_type: 'code',
         execution_count: null,
         id: cell.id,
-        metadata: { oc_title: cell.cellTitle ?? '', oc_prose: cell.prose ?? '' },
+        metadata: { oc_title: cell.cellTitle ?? '', oc_prose: Array.isArray(cell.prose) ? cell.prose.join('\n\n') : (cell.prose ?? '') },
         outputs: cell.output
           ? [{ output_type: 'stream', name: 'stdout', text: [cell.output] }]
           : [],

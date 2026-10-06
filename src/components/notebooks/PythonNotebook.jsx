@@ -9,7 +9,9 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-python";
 import FigureRenderer from "./FigureRenderer";
+import { compareOutput } from "./compareOutput.js";
 import { parseProse } from "../math/parseProse.jsx";
+import { proseItems } from "../../tools/notebook-lab/lessonFormat.js";
 import { setupOpenCalcMonaco, applyPythonIndentRules } from "../../utils/monacoThemes.js";
 import { OPENCALC_LIB_SOURCE } from "./opencalcLibSource.js";
 import { useReportBug } from "../../hooks/useReportBug.js";
@@ -71,6 +73,54 @@ function cellTraceback(output) {
 function errorLine(output) {
   const lines = [...output.matchAll(/File "<exec>", line (\d+)/g)]
   return lines.length ? lines[lines.length - 1][1] : null
+}
+
+// ── ExpectedOutput ────────────────────────────────────────────────────────────
+// A type-along cell (typeIt, from a lesson's ```python type block) can carry the output its
+// reference code prints. Before running, it stays folded, so the learner can predict first;
+// after a run, it says whether the learner's output matches, and where it first differs.
+function ExpectedOutput({ cell, C }) {
+  if (!cell.typeIt || cell.expectedOutput == null) return null;
+  // A successful run puts the cell back to "idle" with an execution count.
+  const ran = cell.status === "error" || (cell.status === "idle" && cell.executionCount != null);
+  const result = ran && cell.status !== "error" ? compareOutput(cell.output, cell.expectedOutput) : null;
+  const box = { margin: "0 16px 12px", borderRadius: 8, fontSize: 13, lineHeight: 1.6 };
+  const pre = (text) => (
+    <pre style={{ margin: "6px 0 0", padding: "8px 10px", background: C.surface2, borderRadius: 6, fontSize: 12, overflowX: "auto", whiteSpace: "pre" }}>{text}</pre>
+  );
+  if (!ran) {
+    return (
+      <details style={{ ...box, padding: "6px 12px", border: `0.5px solid ${C.border}`, color: C.hint }}>
+        <summary style={{ cursor: "pointer" }}>Expected output (predict it first, then run your code)</summary>
+        {pre(cell.expectedOutput)}
+      </details>
+    );
+  }
+  if (cell.status === "error") {
+    return (
+      <div style={{ ...box, padding: "8px 12px", border: `1px solid ${C.amberBd}`, background: C.amberBg, color: C.amber }}>
+        Your code stopped with an error, so there's no output to compare yet. Read the last line of the error, compare your code with the code above, and run it again.
+      </div>
+    );
+  }
+  if (result.matches) {
+    return (
+      <div role="status" style={{ ...box, padding: "8px 12px", border: `1px solid ${C.tealBd ?? C.border}`, background: C.tealBg ?? C.surface2, color: C.teal }}>
+        ✓ Your output matches the expected output.
+      </div>
+    );
+  }
+  return (
+    <div role="status" style={{ ...box, padding: "8px 12px", border: `1px solid ${C.amberBd}`, background: C.amberBg, color: C.text }}>
+      <div style={{ color: C.amber, fontWeight: 600 }}>Your output differs from the expected output, first at line {result.line}.</div>
+      <div style={{ fontFamily: "monospace", fontSize: 12, marginTop: 4 }}>
+        <div>yours:    {result.yours === undefined ? "(no line)" : JSON.stringify(result.yours)}</div>
+        <div>expected: {result.expected === undefined ? "(no line)" : JSON.stringify(result.expected)}</div>
+      </div>
+      <div style={{ marginTop: 6, color: C.hint }}>Look for a typo in the code you typed: a missing line, a different number, or a print in a different place. The whole expected output:</div>
+      {pre(cell.expectedOutput)}
+    </div>
+  );
 }
 
 // ── CellOutput ────────────────────────────────────────────────────────────────
@@ -375,6 +425,66 @@ function ReferenceCodeBlock({ code, C }) {
   );
 }
 
+// ── Prose code block ──────────────────────────────────────────────────────
+function ProseCodeBlock({ lang, code, C, index }) {
+  const html = useMemo(() => {
+    try {
+      if (Prism.languages[lang]) {
+        return Prism.highlight(code, Prism.languages[lang], lang);
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [code, lang]);
+
+  return (
+    <div
+      style={{
+        margin: index === 0 ? "0 0 4px" : "14px 0 4px",
+        borderRadius: 7,
+        overflow: "hidden",
+        border: `1px solid ${C.border}`,
+      }}
+    >
+      {lang && (
+        <div
+          style={{
+            padding: "3px 10px",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+            color: C.muted,
+            background: `linear-gradient(90deg, ${C.surface2} 0%, ${C.surface} 100%)`,
+            borderBottom: `1px solid ${C.border}`,
+          }}
+        >
+          {lang}
+        </div>
+      )}
+      <pre
+        style={{
+          margin: 0,
+          padding: "10px 14px",
+          fontSize: 13.5,
+          lineHeight: 1.6,
+          overflowX: "auto",
+          background: C.bg,
+          color: C.text,
+          fontFamily: "monospace",
+        }}
+      >
+        {html ? (
+          <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <code>{code}</code>
+        )}
+      </pre>
+    </div>
+  );
+}
+
 // ── Memoized Cell Component ──────────────────────────────────────────────
 const CellComponent = React.memo(
   ({
@@ -560,7 +670,7 @@ const CellComponent = React.memo(
                 className="nb-prose"
               >
                 <style>{NB_PROSE_CSS}</style>
-                {(Array.isArray(cell.prose) ? cell.prose : [cell.prose]).map(
+                {(Array.isArray(cell.prose) ? cell.prose : proseItems((cell.prose || '').split('\n'))).map(
                   (p, i, all) => {
                     // ::: math box — the concept's mathematics before its code
                     if (typeof p === "string" && p.startsWith("::: math")) {
@@ -611,48 +721,7 @@ const CellComponent = React.memo(
                         .join("\n");
                       const lang =
                         lines[0].replace(/^```/, "").trim() || "bash";
-                      return (
-                        <div
-                          key={i}
-                          style={{
-                            margin: i === 0 ? "0 0 4px" : "14px 0 4px",
-                            borderRadius: 7,
-                            overflow: "hidden",
-                            border: `1px solid ${C.border}`,
-                          }}
-                        >
-                          {lang && (
-                            <div
-                              style={{
-                                padding: "3px 10px",
-                                fontSize: 10,
-                                fontWeight: 700,
-                                letterSpacing: "0.07em",
-                                textTransform: "uppercase",
-                                color: C.muted,
-                                background: `linear-gradient(90deg, ${C.surface2} 0%, ${C.surface} 100%)`,
-                                borderBottom: `1px solid ${C.border}`,
-                              }}
-                            >
-                              {lang}
-                            </div>
-                          )}
-                          <pre
-                            style={{
-                              margin: 0,
-                              padding: "10px 14px",
-                              fontSize: 13.5,
-                              lineHeight: 1.6,
-                              overflowX: "auto",
-                              background: C.bg,
-                              color: C.text,
-                              fontFamily: "monospace",
-                            }}
-                          >
-                            <code>{inner}</code>
-                          </pre>
-                        </div>
-                      );
+                      return <ProseCodeBlock key={i} index={i} lang={lang} code={inner} C={C} />;
                     }
                     // - Bullet list: string with lines starting with "- "
                     if (
@@ -985,6 +1054,7 @@ const CellComponent = React.memo(
 
         {/* Output */}
         <CellOutput cell={cell} C={C} />
+        <ExpectedOutput cell={cell} C={C} />
 
         {/* Hint toggle (challenge cells only) */}
         {isChallenge && cell.hint && (

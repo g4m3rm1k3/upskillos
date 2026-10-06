@@ -5,7 +5,9 @@
 //
 // For every written lesson:
 //   - it parses (lessonFormat.js), and its title matches the manifest;
-//   - it has enough prose to teach (not a summary) and at least two challenges;
+//   - it has enough prose to teach (not a summary) and at least two challenges
+//     (a type-along lesson, made of "python type" cells, needs none);
+//   - every type-along cell's code runs and prints exactly its "output" block;
 //   - every demo cell runs, in order, in a fresh namespace, and shows something
 //     (prints, returns a value or draws a figure);
 //   - every challenge: the starter FAILS the test (so the test tests something)
@@ -27,6 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'url'
 import { loadPyodide } from 'pyodide'
 import { SERIES_MANIFEST } from '../src/tools/notebook-lab/series/manifest.js'
 import { parseLesson } from '../src/tools/notebook-lab/lessonFormat.js'
+import { compareOutput } from '../src/components/notebooks/compareOutput.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const seriesDir = resolve(root, 'src/tools/notebook-lab/series')
@@ -139,8 +142,10 @@ async function run(code, ns) {
     await flushOutput()
   }
   const shown = result !== undefined && result !== null
+  // What the notebook shows: printed text, then the last expression's value.
+  const output = [captured.trimEnd(), shown ? String(result) : ''].filter(Boolean).join('\n')
   if (result?.destroy) result.destroy()
-  return { stdout: captured, shown }
+  return { stdout: captured, shown, output }
 }
 
 // OpenMAT cells run in the app's OpenMAT engine. The app imports its
@@ -209,8 +214,11 @@ for (const { series, lesson, file } of lessons) {
       if (!p.startsWith('```') && /^\s*\|.*\|\s*$/m.test(p)) problems.push(`"${p.slice(0, 40)}": Markdown tables do not render in the notebook; use a list`)
     }
 
+    // A type-along lesson checks every cell against its expected output, so
+    // its practice is the typing itself; it needs no separate challenges.
+    const typeAlong = cells.some(c => c.typeIt)
     const challenges = cells.filter(c => c.challengeType)
-    if (challenges.length < MIN_CHALLENGES) problems.push(`${challenges.length} challenge(s) (minimum ${MIN_CHALLENGES})`)
+    if (!typeAlong && challenges.length < MIN_CHALLENGES) problems.push(`${challenges.length} challenge(s) (minimum ${MIN_CHALLENGES})`)
 
     const ns = py.globals.get('dict')()
     for (const cell of cells) {
@@ -229,7 +237,7 @@ for (const { series, lesson, file } of lessons) {
       }
 
       if (series.id === 'python') {
-        const codes = cell.challengeType ? [['starter', cell.code], ['solution', cell.solution]] : [['code', cell.code]]
+        const codes = cell.challengeType ? [['starter', cell.code], ['solution', cell.solution]] : [['code', cell.typeIt ? cell.solution : cell.code]]
         for (const [part, code] of codes) {
           try {
             const used = featuresUsed(code).toJs()
@@ -250,6 +258,26 @@ for (const { series, lesson, file } of lessons) {
           if (!result.logs.join('').trim() && !result.figureJson) problems.push(`${where} (OpenMAT): runs but shows nothing`)
         } catch (err) {
           problems.push(`${where} (OpenMAT): ${lastLine(err)}`)
+        }
+        continue
+      }
+
+      if (cell.typeIt) {
+        // Type-along: run the code the learner will type, and check that the
+        // expected output shown to them is what it really prints.
+        if (!cell.prose?.length) problems.push(`${where}: no prose before the code; say what it shows`)
+        try {
+          const { stdout, shown, output } = await run(cell.solution, ns)
+          const figures = await figuresOpen(ns)
+          if (!stdout.trim() && !shown && !figures) problems.push(`${where}: runs but shows nothing`)
+          if (cell.expectedOutput == null) {
+            if (stdout.trim() || shown) problems.push(`${where}: prints output but has no "output" block to compare with`)
+          } else {
+            const diff = compareOutput(output, cell.expectedOutput)
+            if (!diff.matches) problems.push(`${where}: expected output differs at line ${diff.line}: printed ${JSON.stringify(diff.yours)}, expected ${JSON.stringify(diff.expected)}`)
+          }
+        } catch (err) {
+          problems.push(`${where}: ${lastLine(err)}`)
         }
         continue
       }

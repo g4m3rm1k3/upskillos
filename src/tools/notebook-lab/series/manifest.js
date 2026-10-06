@@ -128,6 +128,7 @@ export const SERIES_MANIFEST = [
 
   series('rl', 'rl', 'rl', 'Reinforcement Learning: the Q-Maze and CartPole',
     'Two classic problems in depth: Q-learning on a maze and on CartPole, then the same agents with a neural network instead of a table (deep Q-learning).', [
+      ['q-maze-diy', 'Q-maze, typed by hand: from numpy to Q-learning, planning and a neural network'],
       ['q-maze', 'Q-learning on a maze'],
       ['cartpole', 'CartPole and Q-learning'],
       ['deep-q-maze', 'Deep Q-learning on the maze'],

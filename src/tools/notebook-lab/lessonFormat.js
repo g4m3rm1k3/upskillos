@@ -28,6 +28,14 @@
 //   Hint: one paragraph.
 //   :::
 //
+//   ```python type
+//   a type-along cell: this code is shown to read, the editor starts empty,
+//   and the learner types it in and runs it
+//   ```
+//   ```output
+//   optional: the output their run should print; the notebook compares the two
+//   ```
+//
 //   ```openmat
 //   an OpenMAT (MATLAB-style) demo cell, shown as an embedded OpenMAT notebook
 //   ```
@@ -134,6 +142,27 @@ export function parseLesson(source) {
         if (errorDemo) cell.expectError = errorDemo[1]
         push(cell)
         prose = []
+      } else if (info === 'python type') {
+        // A type-along cell: the code is shown to read, the editor starts
+        // empty, and the learner types it in and runs it. An ```output block
+        // right after it (blank lines between are fine) is the output the
+        // learner's run is compared with.
+        if (!body.trim()) throw new LessonFormatError('empty python type block', i + 1)
+        const cell = { prose: proseItems(prose), code: '', typeIt: true, solution: body, cellTitle: '' }
+        let k = next
+        while (k < lines.length && !lines[k].trim()) k++
+        if (lines[k]?.trim() === '```output') {
+          const [, expected, after] = readFence(k)
+          cell.expectedOutput = expected
+          i = after
+        } else {
+          i = next
+        }
+        push(cell)
+        prose = []
+        continue
+      } else if (info === 'output') {
+        throw new LessonFormatError('an ```output block must come right after a ```python type block', i + 1)
       } else if (info === 'openmat') {
         // An OpenMAT (MATLAB-style) demo cell, run by the in-browser OpenMAT
         // engine instead of Python. Each OpenMAT cell runs on its own: it
