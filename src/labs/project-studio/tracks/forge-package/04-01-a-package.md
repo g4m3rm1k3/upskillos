@@ -117,7 +117,7 @@ Then create `breakout/__init__.py`:
 
 **Understand: modules and packages.**
 
-> **Module**: one `.py` file, imported by its name. **Package**: a folder of modules that can be imported as a whole, marked by a file named `__init__.py`. Modules inside a package are named with a dot: `breakout.model` is the module `model.py` in the package `breakout`.
+> **Module**: one `.py` file, imported by its name. **Package**: a folder of modules that can be imported as a whole, marked by a file named `__init__.py`. Modules inside a package are named with a dot: `breakout.model` is the module `model.py` in the package `breakout`. (Since Python 3.3, a folder *without* `__init__.py` still imports, as a **namespace package**, a special kind meant for packages spread over several folders, whose `__file__` is `None`. `python -c "import tests; print(tests.__file__)"` shows it with your `tests` folder. Always write `__init__.py` for an ordinary package.)
 
 When Python imports `breakout` now, the search through `sys.path` (lesson 0.2) finds a **folder** named `breakout` containing `__init__.py`, and imports it as a **package**: the package is created and `__init__.py` runs, exactly as a module's file runs when it's imported (lesson 2.3). Its first statement is a string, so it's the package's **docstring**, the description tools show for it. Ask Python about it:
 
@@ -126,14 +126,16 @@ When Python imports `breakout` now, the search through `sys.path` (lesson 0.2) f
 ```
 
 ```text
-breakout.__file__   C:\Users\you\Documents\forge\breakout\__init__.py
-breakout.__path__   ['C:\\Users\\you\\Documents\\forge\\breakout']
-breakout.__doc__    Breakout: the game built through the Forge series.
+C:\Users\you\Documents\forge\breakout\__init__.py
+['C:\\Users\\you\\Documents\\forge\\breakout']
+Breakout: the game built through the Forge series.
 ```
+
+The three lines are `__file__`, `__path__` and `__doc__`, in that order.
 
 `__path__` is what makes a package a package: the folder Python searches for its submodules. `import breakout.model` finds `model.py` there, runs it once, and stores it as an attribute of the package, `breakout.model`.
 
-**Why `git mv`?** Git doesn't really record moves: it records that `breakout.py` disappeared and `breakout/model.py` appeared, and works out afterwards that it was a move because the contents are almost the same. `git mv` is a convenience: it moves the file and stages both halves in one command, so `git status` straight away shows `renamed: breakout.py -> breakout/model.py`. Moving the file any other way and then running `git add -A` ends up the same, because Git detects the move from the contents either way. That detection is also what lets `git log --follow breakout/model.py` find the file's history from before it moved.
+**Why `git mv`?** Git doesn't really record moves: it records that `breakout.py` disappeared and `breakout/model.py` appeared, and works out afterwards that it was a move because the contents are almost the same. `git mv` is a convenience: it moves the file and stages both halves in one command, so `git status` straight away shows `renamed: breakout.py -> breakout/model.py`. Moving the file any other way and then running `git add .` ends up the same, because Git detects the move from the contents either way. That detection is also what lets `git log --follow breakout/model.py` find the file's history from before it moved.
 
 Right now nothing runs: `python breakout.py` says `can't open file ... breakout.py: [Errno 2] No such file or directory`. The next step gives the package a way to start.
 
@@ -176,14 +178,34 @@ answer: ModuleNotFoundError: No module named 'breakout'
 explain: Running a file by its path puts the file's own folder, `breakout`, at the front of `sys.path` (lesson 0.2), not the project folder. So when `__main__.py` says `from breakout.model import main`, Python looks for a `breakout` inside `breakout`, and there isn't one. The explanation below shows why `-m` doesn't have this problem.
 ```
 
+See the difference between the two ways of running on a package of your own, in the scratch folder. Make `scratch\pkgdemo\__init__.py`, empty, and `scratch\pkgdemo\__main__.py` containing `import sys; print(__name__); print(sys.path[0])`. Then, from `scratch`:
+
+```powershell
+cd scratch
+..\.venv\Scripts\python -m pkgdemo
+..\.venv\Scripts\python pkgdemo\__main__.py
+cd ..
+```
+
+```text
+__main__
+C:\Users\you\Documents\forge\scratch
+__main__
+C:\Users\you\Documents\forge\scratch\pkgdemo
+```
+
+Both run `__main__.py` as the main program, but the first puts the **current folder** first on `sys.path`, and the second puts **the file's own folder** there. That one difference is what the predict was about.
+
 **Understand: what `-m` does.** `python -m breakout` means "find the module or package named `breakout`, the way `import` would, and run it as the main program". For a package, "run it" means run its `__main__.py`, with `__name__` set to `"__main__"` (lesson 2.3). Two details matter:
 
 1. **`-m` puts the current folder at the front of `sys.path`**, which is how `breakout` is found when you're in the project folder. Run the file by its path instead, `python breakout/__main__.py`, and Python puts the file's own folder, `breakout`, on `sys.path`, so `from breakout.model import main` fails with `ModuleNotFoundError: No module named 'breakout'`: there's no `breakout` *inside* `breakout`. That's why packages are run with `-m`.
-2. **`from breakout.model import main`** is the **absolute** form of an import: the full dotted name from the top of the package. It imports the module `breakout.model` (running it if this is the first import) and then binds just the name `main` from it.
+2. **`from breakout.model import main`** is the **absolute** form of an import: the full dotted name from the top of the package. It imports the module `breakout.model` (running it if this is the first import) and then binds just the name `main` from it. There's also a **relative** form, `from .model import main`, where the dot means "from this package". It works only inside a package that was imported (it fails with `ImportError: attempted relative import with no known parent package` in a file run by its path). Forge uses absolute imports throughout: they read the same in every file, and a reader never has to work out where the dot points.
 
 The **Run** button now runs `breakout/__main__.py` the same way, as `python -m breakout` from the project folder.
 
-`__main__.py` doesn't need lesson 2.3's `if __name__ == "__main__":` guard: its whole job is to be run, and nothing should ever import it.
+`__main__.py` doesn't need lesson 2.3's `if __name__ == "__main__":` guard: its whole job is to be run, and nothing should ever import it. (If something did, `import breakout.__main__` would start the game, because importing runs the file.)
+
+`__init__.py` can hold more than a docstring. Real packages often **re-export** names there, `from breakout.model import Game`, so users can write `breakout.Game`; but every import of the package then runs those imports too. Forge keeps it to a docstring, so importing `breakout.settings` loads nothing else (lesson 4.2 tests exactly that).
 
 The game's own module, `model.py`, still has its guard at the bottom. It's harmless, and the next lesson moves `main` out of it altogether.
 
@@ -277,7 +299,7 @@ def test_a_different_seed_plays_a_different_game():
     )
 ```
 
-**Understand.** `play` now runs `python -m breakout`, with `cwd=ROOT`: the **current working directory** of the new process is the project folder, wherever pytest was started from, so `-m` finds the package (detail 1 above, applied deliberately). `ROOT` replaces `GAME`, since there's no single file to point at any more. The usage test expects the new usage line.
+**Understand.** `play` now runs `python -m breakout`, with `cwd=ROOT`: the **current working directory** of the new process is the project folder, wherever pytest was started from, so `-m` finds the package (detail 1 above, applied deliberately). Without it, starting pytest from inside `tests` would start the game from `tests` too, and `-m breakout` would fail with `No module named breakout`. `ROOT` replaces `GAME`, since there's no single file to point at any more. The usage test expects the new usage line.
 
 The long `subprocess.run(...)` call is split over three lines: that's ruff's formatter laying out a line that would be longer than 120 characters. Run `ruff format .` after typing and it will do the same.
 
@@ -534,7 +556,7 @@ def play(seed: int, frames: int) -> list[str]:
         game.update(model.autopilot(game.ball, game.paddle), 1 / 60)
 ~~~
 
-Search-and-replace (Ctrl+H in most editors) does this kind of change quickly, but read each replacement: a blind replace of `breakout.` would also change `"usage: python breakout.py"` in strings, and in other projects, words you didn't mean. The next lesson's first steps show the whole files.
+Search-and-replace (Ctrl+H in VS Code and most editors) does this kind of change quickly, but use **Replace** one match at a time, not **Replace All**, and read each one: a blind replace of `breakout.` would also change `"usage: python breakout.py"` in strings, and in other projects, words you didn't mean. The next lesson's first steps show the whole files.
 ```
 
 ```check
@@ -547,6 +569,20 @@ contains BACKLOG.md "pyright breakout`" -- The definition of done should run pyr
 git-message "package"
 git-clean
 ```
+
+From this chapter on, do challenges on a **branch** (lesson 4.6 teaches branches; until then, a copy of the file is fine).
+
+## Challenge: the replay, inside the package
+
+**Optional, ★.** Move `replay.py` into the package as `breakout/replay.py`, run it with `python -m breakout.replay 0 600` (a dotted name runs a module inside a package), and explain in a comment why `python breakout/replay.py 0 600` would fail.
+
+## Challenge: a package inside a package
+
+**Optional, ★★.** In the scratch folder, build `shapes/__init__.py`, `shapes/round/__init__.py` and `shapes/round/circle.py`. Import `circle` three ways (`import shapes.round.circle`, `from shapes.round import circle`, and a relative import from inside `shapes/round/__init__.py`), and print `__name__` and `__path__` for each package.
+
+## Challenge: a version number
+
+**Optional, ★★.** Give `breakout/__init__.py` a `__version__ = "0.1.0"`, and after lesson 4.3 add a test that it matches the version in `pyproject.toml`. What does every `import breakout.settings` now run, and does that matter?
 
 ## What did we actually learn?
 

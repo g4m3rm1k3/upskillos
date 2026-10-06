@@ -80,7 +80,7 @@ First, the appeal. Python's `pickle` module saves almost any object, with no con
 True
 ```
 
-`pickle.dumps` ("dump string") turns the `Score` into bytes, and `pickle.loads` turns them back, `datetime` and all: no `isoformat`, no `fromisoformat`. The `s` names follow `json.loads` and `tomllib.loads` (lessons 5.3 and 5.5): `dumps`/`loads` work on bytes in memory, `dump`/`load` on an open file.
+`pickle.dumps` turns the `Score` into bytes (the `s` once meant "string", from the days when Python's strings were bytes; today `dumps` returns `bytes` for pickle and `str` for json), and `pickle.loads` turns them back, `datetime` and all: no `isoformat`, no `fromisoformat`. The `s` names follow `json.loads` and `tomllib.loads` (lessons 5.3 and 5.5): `dumps`/`loads` work on bytes in memory, `dump`/`load` on an open file.
 
 **Read the provided file before you run it.** It's harmless, and the habit isn't.
 
@@ -123,9 +123,10 @@ This pickle just ran code on your computer. It could as easily have deleted your
   124: R    REDUCE
   125: \x94 MEMOIZE    (as 5)
   126: .    STOP
+highest protocol among opcodes = 4
 ```
 
-A pickle isn't data in the way JSON is: it's a small **program**, one instruction per line, for a simple machine that keeps a stack of values. Skip `PROTO`, `FRAME` and `MEMOIZE` (housekeeping), and four instructions are left:
+A pickle isn't data in the way JSON is: it's a small **program**, one instruction per line, for a simple machine that keeps a **stack** of values: a list where you only ever add to the end (**push**) or take from the end (**pop**), like a pile of plates. Skip `PROTO`, `FRAME` and `MEMOIZE` (housekeeping), and the last line (a summary), and four instructions are left:
 
 ```text
 SHORT_BINUNICODE 'builtins', 'print'   push two strings
@@ -134,11 +135,30 @@ SHORT_BINUNICODE '...'  TUPLE1         push the message, wrap it in a one-item t
 REDUCE                                 call the function with the tuple: print(...)
 ```
 
+The stack after each one:
+
+```text
+after                       stack
+'builtins', 'print'         ['builtins', 'print']
+STACK_GLOBAL                [<print>]                       two strings popped, the function pushed
+the message                 [<print>, 'This pickle...']
+TUPLE1                      [<print>, ('This pickle...',)]  the message popped, a tuple pushed
+REDUCE                      [None]                          both popped, print called, its result pushed
+```
+
 `REDUCE` calls a function, and the file chooses which. A file made by someone else can name any function in Python instead: one that deletes files, or downloads and runs a program. Nothing is checked first, because pickle can't tell rebuilding an object from anything else a function might do. Python's documentation opens with a warning: **never unpickle data you didn't write yourself**, or that could have been changed by anyone else.
 
-An ordinary object, like a `Score`, is rebuilt differently, and it's worth knowing how: the pickle says "import `breakout.scores`, get `Score`, make an **empty** one (`NEWOBJ`), then set its fields to these values (`BUILD`)". `Score.__init__` is never called. Any check you put in `__init__`, or in a dataclass's `__post_init__`, is skipped on loading: whatever the file says, the object holds.
+An ordinary object, like a `Score`, is rebuilt differently, and it's worth knowing how: the pickle says "import `breakout.scores`, get `Score`, make an **empty** one (`NEWOBJ`), then set its fields to these values (`BUILD`)". `Score.__init__` is never called. See it for yourself:
+
+```powershell
+.venv\Scripts\python -c "import pickle, pickletools; from datetime import UTC, datetime; from breakout.scores import Score; pickletools.dis(pickletools.optimize(pickle.dumps(Score('Classic', 560, datetime(2026, 10, 4, tzinfo=UTC)))))"
+```
+
+(`pickletools.optimize` leaves out the `MEMOIZE` housekeeping.) Find `STACK_GLOBAL` after `'breakout.scores'` and `'Score'`, then `NEWOBJ`, the empty object, and near the end `BUILD`, which sets its fields from the values pushed in between. Inside, the `datetime` is rebuilt with `REDUCE`, a function call, like the gift. Any check you put in `__init__`, or in a dataclass's `__post_init__`, is skipped on loading: whatever the file says, the object holds.
 
 Two more costs. A pickle can only be read by Python, so no other program or language can use the scores. And it stores **where the class lives** (`breakout.scores`, `Score`): rename the module or the class and every saved file stops loading. A format you design yourself, like the JSON from lesson 6.1, has neither problem.
+
+So is pickle ever right? Yes: for data your own program writes and reads back, with the same code, and nobody else can touch, like a cache, or the objects Python's `multiprocessing` sends between its own processes. Never for downloads, or saves that players share. `eval` (which runs a string as Python) and `yaml.load` without a safe loader share the danger, and ruff's `S301` rule flags `pickle.loads` for the same reason as lesson 6.4's `S608`.
 
 Delete both files: they were for the demonstration.
 
@@ -169,7 +189,26 @@ Create the folder `tests/data` and in it `broken-scores.json`, exactly as below,
     "points": 70,
 ```
 
-**Understand: how this happens.** `write_text` opens the file for writing, and opening a file for writing **empties it first**: the old scores are gone before the first new byte arrives. Then the new text goes to disk in pieces, as the operating system gets to it. If the game crashes or the power goes off partway through, the file holds only the first part of the new text, and none of the old. That's this file: the second score was being written when it stopped, after its points and before its time.
+**Understand: how this happens.** `write_text` opens the file for writing, and opening a file for writing **empties it first**: the old scores are gone before the first new byte arrives. Then the new text goes to disk in pieces, as the operating system gets to it. See both in the REPL, in a scratch file:
+
+```text
+>>> from pathlib import Path
+>>> p = Path("scratch/w.txt")
+>>> p.write_text("hello")
+5
+>>> f = open(p, "w")
+>>> p.stat().st_size
+0
+>>> f.write("abc")
+3
+>>> p.stat().st_size
+0
+>>> f.close()
+>>> p.stat().st_size
+3
+```
+
+(`p.stat().st_size` is the file's size on disk, in bytes.) Five bytes, then **zero** the moment it's opened for writing. After `write`, still zero: Python collected the three bytes in memory, a **buffer**, to write them later in one go, which is much faster than one at a time. They reached the disk on `close()`. Python and the operating system both buffer, so when each piece of a file actually lands is out of your program's hands. If the game crashes or the power goes off partway through, the file holds only the first part of the new text, and none of the old. That's this file: the second score was being written when it stopped, after its points and before its time.
 
 ```powershell
 .venv\Scripts\breakout --test-run 10 --scores tests/data/broken-scores.json
@@ -183,7 +222,7 @@ json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes:
 
 The game won't start at all, because of a file it only needs for one number on the screen. And a file someone edited by hand is worse in a quieter way: with `"points": "lots"`, `load_scores` makes a `Score` whose points are a string, nothing complains, and the screen shows `Best lots`. A dataclass doesn't check its fields; lesson 6.1's code trusts the file completely.
 
-A file the tests need, kept in the project, is a **test data file** (you'll also hear "fixture file"; pytest's *fixtures* are something else, in lesson 6.5). It's committed, unlike `scores.json`, because it's part of the tests.
+A file the tests need, kept in the project, is a **test data file** (you'll also hear "fixture file"; pytest's *fixtures*, like `tmp_path`, are something else, and lesson 6.5 writes your own). It's committed, unlike `scores.json`, because it's part of the tests.
 
 ```check
 file tests/data/broken-scores.json
@@ -233,7 +272,24 @@ def best(scores: list[Score], level: str) -> int | None:
     return max((score.points for score in scores if score.level == level), default=None)
 ```
 
-**Understand.** **`TypeAdapter(list[Score])`** gives pydantic's checking to any type, not only a `BaseModel`: here, a list of the `Score` dataclass. pydantic reads the dataclass's fields and types the same way it reads a model's. `SCORES` is made once, when the module is imported, because building the checker takes work, and every load and save then reuses it.
+**Understand.** First, a `TypeAdapter` on its own, with a simpler type, in the REPL:
+
+```text
+>>> from pydantic import TypeAdapter
+>>> ints = TypeAdapter(list[int])
+>>> ints.validate_json(b'[1, 2, "3"]')
+[1, 2, 3]
+>>> ints.validate_json(b'[1, "x"]')
+Traceback (most recent call last):
+  ...
+pydantic_core._pydantic_core.ValidationError: 1 validation error for list[int]
+1
+  Input should be a valid integer, unable to parse string as an integer [...]
+>>> ints.dump_json([1, 2])
+b'[1,2]'
+```
+
+It reads JSON and checks it in one step (`"3"` quietly became `3`: lax mode again), reports where a problem is (`1`, the second item: positions count from 0), and writes JSON too. **`TypeAdapter(list[Score])`** gives the same checking to any type, not only a `BaseModel`: here, a list of the `Score` dataclass. pydantic reads the dataclass's fields and types the same way it reads a model's. `SCORES` is made once, when the module is imported, because building the checker takes work (pydantic reads the type's fields and builds a validator in pydantic-core, as lesson 5.4 described), and every load and save then reuses it.
 
 - `SCORES.validate_json(...)` reads JSON and checks it against the type, returning a `list[Score]` or raising `ValidationError`.
 - `SCORES.dump_json(scores, indent=2)` writes the list as JSON. pydantic knows how to write a `datetime` as ISO 8601 and read it back, so lesson 6.1's conversions are gone, and the file is the same format, except that pydantic writes UTC as `Z` (another ISO 8601 spelling of `+00:00`).
@@ -262,7 +318,17 @@ But this is pydantic's default, **lax** mode (lesson 5.4), and it lets two thing
 [Score(level='Classic', points=5, when=datetime.datetime(2026, 10, 4, 15, 30, 5))]
 ```
 
-And points written as text, `"5"`, are quietly turned into `5`. The next step closes both.
+And points written as text:
+
+```powershell
+.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': '5', 'when': '2026-10-04T15:30:05Z'}])))"
+```
+
+```text
+[Score(level='Classic', points=5, when=datetime.datetime(2026, 10, 4, 15, 30, 5, tzinfo=TzInfo(0)))]
+```
+
+`"5"` was quietly turned into `5`. The next step closes both.
 
 ```check
 contains breakout/scores.py "SCORES = TypeAdapter(list[Score])"
@@ -313,9 +379,9 @@ def best(scores: list[Score], level: str) -> int | None:
     return max((score.points for score in scores if score.level == level), default=None)
 ```
 
-**Understand.** **`AwareDatetime`** is a `datetime` that must include a time zone; it's from pydantic, and to pyright it's simply a `datetime`. A naive time (lesson 6.1) is refused, so every score in the file is a moment that can be compared with every other.
+**Understand.** **`AwareDatetime`** is a `datetime` that must include a time zone; it's from pydantic, which arranges for pyright to see a plain `datetime` while pydantic adds the check at run time. A naive time (lesson 6.1) is refused, so every score in the file is a moment that can be compared with every other.
 
-**`__pydantic_config__`** is lesson 5.4's `model_config` for a dataclass: a class attribute, with exactly this name, that pydantic looks for. It has no type annotation, so the dataclass doesn't make it a field. `strict=True` refuses `"5"` for an `int`; `extra="forbid"` refuses a field `Score` doesn't have.
+**`__pydantic_config__`** is lesson 5.4's `model_config` for a dataclass: a class attribute, with exactly this name, that pydantic looks for. It has no type annotation, so the dataclass doesn't make it a field. `strict=True` refuses `"5"` for an `int`; `extra="forbid"` refuses a field `Score` doesn't have. For a dataclass, pydantic words that one differently from lesson 5.4's models: a level with `"bonus": 1` is refused with `bonus: Unexpected keyword argument`, not `Extra inputs are not permitted`, because a dataclass is filled in like a function call.
 
 ```powershell
 .venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05'}])))"
@@ -411,8 +477,10 @@ loc               parts                   joined
 
 The empty location is a problem with the whole file: not JSON at all, or not a list.
 
+To see it, write a scores file with one good score and one bad one, and load it. `scores.json` in the project is ignored by Git (lesson 6.1), so it's a safe place to try things:
+
 ```powershell
-.venv\Scripts\python -c "import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}])))"
+.venv\Scripts\python -c "import json; from pathlib import Path; from breakout.scores import load_scores; p = Path('scores.json'); p.write_text(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}]), encoding='utf-8'); load_scores(p)"
 ```
 
 ```text
@@ -423,7 +491,7 @@ The first score is fine; the second has two problems, and both are named.
 
 ```check
 contains breakout/scores.py "class ScoresError(ValueError):"
-run ".venv/Scripts/python -c \"import json; from breakout.scores import SCORES; print(SCORES.validate_json(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}])))\"" exit=1 stderr="score 2, points: Input should be a valid integer; score 2, when: Field required" label="every problem, with which score and which field"
+run ".venv/Scripts/python -c \"import json; from pathlib import Path; from breakout.scores import load_scores; p = Path('scores.json'); p.write_text(json.dumps([{'level': 'Classic', 'points': 5, 'when': '2026-10-04T15:30:05Z'}, {'level': 'Classic', 'points': 'lots'}]), encoding='utf-8'); load_scores(p)\"" exit=1 stderr="score 2, points: Input should be a valid integer; score 2, when: Field required" label="every problem, with which score and which field"
 run ".venv/Scripts/python -m pytest -q tests/test_scores.py" stdout="5 passed"
 ```
 
@@ -563,7 +631,19 @@ git-clean
 
 ## Challenge: never leave half a file
 
-**Optional, ★★.** The broken file came from a save cut off partway. Make `save_scores` **atomic**: either the whole new file is there afterwards, or the old one is, never half of either. The standard way is to write the new content to a temporary file **in the same folder**, then replace the old file with it in one step, with `os.replace(temporary, path)`, which the operating system does all at once. Name the temporary file from the real one (`path.with_suffix(".tmp")`), and think about what should happen to it if writing fails. There's no automatic check: the tests must still pass, and reading the code is the proof. Lesson 6.3's database does this for you, and much more.
+**Optional, ★★.** The broken file came from a save cut off partway. Make `save_scores` **atomic**: either the whole new file is there afterwards, or the old one is, never half of either. The standard way is to write the new content to a temporary file **in the same folder**, then replace the old file with it in one step, with `os.replace(temporary, path)`, which the operating system does all at once. Name the temporary file from the real one (`path.with_suffix(".tmp")`), and think about what should happen to it if writing fails. There's no automatic check, but you can write one: pytest's `monkeypatch` fixture replaces something for one test only, so `monkeypatch.setattr(Path, "write_bytes", fails_halfway)` (or whatever your code writes with) can make the write fail, and the test then checks the old file is unchanged. Lesson 6.3's database does this for you, and much more.
+
+## Challenge: pin the policy
+
+**Optional, ★.** The Your turn's policy, "warn, and don't touch the file", is only checked by hand. Pin it: a characterisation test that copies `broken-scores.json` into `tmp_path`, plays ten frames with `--scores` pointing at the copy, and asserts the exit code is 0, `stderr` contains `playing without keeping scores`, and the copy's bytes are unchanged (`read_bytes()` before and after). On a branch.
+
+## Challenge: rescue what's left
+
+**Optional, ★★.** Add `python -m breakout.scores repair BROKEN NEW`: read a broken scores file, keep every score that can still be read, and write them to a **new** file, never over the original. It needs the file's JSON to be readable, so first decide what to do when it isn't. On a branch.
+
+## Challenge: a pickle that only opens what you allow
+
+**Optional, ★★★.** Subclass `pickle.Unpickler` and override `find_class(module, name)` to allow only `breakout.scores.Score` and the `datetime` classes, raising `pickle.UnpicklingError` for anything else. Show that `gift.pickle` (make it again) is refused and a pickled `Score` loads. Then explain, in a comment, why this is still weaker than JSON plus validation: what does an allowed class's data still get to do? On a branch.
 
 ## What did we actually learn?
 

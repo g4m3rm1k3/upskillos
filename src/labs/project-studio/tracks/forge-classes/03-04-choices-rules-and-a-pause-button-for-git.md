@@ -746,7 +746,7 @@ if __name__ == "__main__":
 
 > **Enumeration (enum)**: a type with a fixed set of named values, its **members**, and no others.
 
-`class Hold(Enum):` declares one. The `(Enum)` means `Hold` **inherits** from `Enum`, a class in the standard library: `Hold` gets all of `Enum`'s behaviour, and that behaviour is what turns each assignment in its body into a member. (Lesson 3.5 says more about making one class from another.) Compare a dataclass: there, `x: float` in the body declares a field that every *object* will have its own value for; here, `NONE = "none"` makes one member, created once, that everyone shares. Each line in its body is a member: `Hold.AUTO` is a value of type `Hold`, with a **name** (`"AUTO"`) and a **value** (`"auto"`, the word used on the command line).
+`class Hold(Enum):` declares one. The `(Enum)` means `Hold` **inherits** from `Enum`, a class in the standard library: `Hold` starts with everything `Enum` has and adds its own members, so it gets all of `Enum`'s behaviour, and that behaviour is what turns each assignment in its body into a member. (Lesson 3.5 says more about making one class from another.) Compare a dataclass: there, `x: float` in the body declares a field that every *object* will have its own value for; here, `NONE = "none"` makes one member, created once, that everyone shares. Each line in its body is a member: `Hold.AUTO` is a value of type `Hold`, with a **name** (`"AUTO"`) and a **value** (`"auto"`, the word used on the command line).
 
 ```text
 list(Hold)          [<Hold.NONE: 'none'>, <Hold.LEFT: 'left'>, <Hold.RIGHT: 'right'>, <Hold.AUTO: 'auto'>]
@@ -756,15 +756,30 @@ Hold.AUTO.name      'AUTO'
 Hold("sideways")    ValueError: 'sideways' is not a valid Hold
 ```
 
-Calling `Hold("auto")` looks like making a new object, the way `Ball(...)` does, but it isn't: an enum's members all exist already, and calling the class **looks one up** by its value. Looping over the class, as `list(Hold)` and `[h.value for h in Hold]` do, gives its members in order.
+Calling `Hold("auto")` looks like making a new object, the way `Ball(...)` does, but it isn't: an enum's members all exist already, and calling the class **looks one up** by its value. See the table for yourself:
+
+```powershell
+.venv\Scripts\python -c "from breakout import Hold; print(list(Hold)); print(Hold('auto') is Hold.AUTO); print(Hold.AUTO.name, Hold.AUTO.value); Hold('sideways')"
+```
+
+```text
+[<Hold.NONE: 'none'>, <Hold.LEFT: 'left'>, <Hold.RIGHT: 'right'>, <Hold.AUTO: 'auto'>]
+True
+AUTO auto
+Traceback (most recent call last):
+  ...
+ValueError: 'sideways' is not a valid Hold
+```
+
+`Hold('auto') is Hold.AUTO` is `True`: the very same object, not a new one equal to it. Looping over the class, as `list(Hold)` and `[h.value for h in Hold]` do, gives its members in order.
 
 Now `main` compares with `Hold.LEFT`, `Hold.AUTO`: names, not strings. Misspell one, `Hold.ATUO`, and pyright reports `Cannot access attribute "ATUO" for class "type[Hold]"` before the program runs, and the program would stop with an `AttributeError` if it did. A typo can't be silent any more.
 
 `parse_args` still checks the word against the allowed values (now built from the enum itself, `[h.value for h in Hold]`, so the check can't drift out of step with the members; the `USAGE` text still lists the words by hand, so that one can), then turns it into a member with `Hold(args[i + 1])`. From there on, the rest of the program only ever sees `Hold`s.
 
-One trap remains: a `Hold` is not equal to its value. `settings.hold == "auto"` is `False` even when the hold is `Hold.AUTO`, because a member and a string are different types. Inside the program, always compare members with members.
+One trap remains: a `Hold` is not equal to its value. `settings.hold == "auto"` is `False` even when the hold is `Hold.AUTO`, because a member and a string are different types. Inside the program, always compare members with members. (Python 3.11 added `StrEnum`, whose members *are* strings, so `== "auto"` would be `True`. That removes the trap, and also lets plain strings back in wherever a `Hold` is expected; this series keeps the stricter plain `Enum`.)
 
-> **Engineer:** "make illegal states unrepresentable". When a value can only be one of a few things, give it a type that can only hold those things. Then a whole class of bugs (misspellings, unexpected values, forgotten cases) can't happen, instead of having to be checked for.
+> **Engineer:** "make illegal states unrepresentable". When a value can only be one of a few things, give it a type that can only hold those things. Then a whole class of bugs (misspellings, unexpected values) can't happen, instead of having to be checked for. Not every one, yet: if a fifth member were added to `Hold`, the `if`/`elif` chain in `main` would quietly ignore it. Making a *forgotten case* impossible too takes one more tool, which the challenges try.
 
 ```check
 contains breakout.py "class Hold(Enum):"
@@ -1135,7 +1150,7 @@ if __name__ == "__main__":
 
 The paddle's invariant: its whole width is on the screen, `0 <= x <= 540`. `move` keeps it, by clamping. But until now anything could break it from outside: `paddle.x = 900` was allowed. An invariant that depends on every other piece of code behaving is a hope, not a guarantee.
 
-So the paddle now keeps its position in `self._x`. A leading underscore is Python's convention for **private**: "this is internal; don't touch it from outside the class". Python doesn't enforce it (Python trusts programmers), but pyright, linters and every Python programmer read it that way.
+So the paddle now keeps its position in `self._x`. A leading underscore is Python's convention for **private**: "this is internal; don't touch it from outside the class". Python doesn't enforce it (Python trusts programmers): `paddle._x = 900` from outside still works, and pyright, in its current mode, doesn't object either. Every Python programmer reads the underscore as "keep out", and Chapter 4's strict mode makes pyright report it.
 
 **`@property`** makes a method behave like an attribute. `paddle.x` *calls* the method `x` and returns its result, with no parentheses at the call. Because there's only a "get" method and no "set" method, `paddle.x` can be read but not assigned:
 
@@ -1156,7 +1171,7 @@ AttributeError: property 'x' of 'Paddle' object has no setter        (when run)
 error: Cannot assign to attribute "x" for class "Paddle"              (pyright, before running)
 ```
 
-Everything that read `paddle.x` before, `autopilot`, the tests, still reads it the same way. That's the point of a property: the **interface** stays the same while the class takes control of its **implementation**. The only way to change `_x` is `move`, and `move` keeps the rule. Inside the class, methods like `rect` use `self._x` directly: `self.x` would work too (it would call the property), but the class owns `_x`, and reads it without the detour.
+Everything that read `paddle.x` before, `autopilot`, the tests, still reads it the same way. That's the point of a property: the **interface** (lesson 3.3: what callers write and get back, `paddle.x`) stays the same while the class takes control of its **implementation** (how it's done inside, here a private `_x`). The only way to change `_x` is `move`, and `move` keeps the rule. Inside the class, methods like `rect` use `self._x` directly: `self.x` would work too (it would call the property), but the class owns `_x`, and reads it without the detour.
 
 The comment at the top of the class states the invariant. Writing it down tells every future reader what `move`, and any method added later, must preserve.
 
@@ -1204,9 +1219,24 @@ git stash pop
 Dropped refs/stash@{0} (07e2de691cc65bd8bfa200802c8d843706959191)
 ```
 
-Run the tests again: they fail again, because your changes, slip included, are back. Now you know where to look. Find the slip, put `PADDLE_SPEED` back to 420, and run the tests: they pass.
+Run the tests again: they fail again, because your changes, slip included, are back. Now you know where to look: somewhere in your uncommitted changes. Pretend you don't know what the slip was, and find it the way you would for real. `git diff` (lesson 1.2) shows exactly what you've changed since the last commit:
 
-**Understand.** `git stash` takes every uncommitted change, in the working tree and the staging area, saves it as a special commit kept aside from your history, and then restores your files to the last commit. *WIP* stands for "work in progress". `git stash pop` reapplies the saved changes to your files and **drops** the stash, deleting it. (`git stash apply` reapplies without dropping, if you want to keep it.) Stashes form a **stack**: the most recent is `stash@{0}`, and `pop` takes the top one.
+```powershell
+git diff
+```
+
+```text
+-PADDLE_SPEED = 420
++PADDLE_SPEED = 421
+...
++    @property
++    def x(self) -> float:
+...
+```
+
+Most of the diff is the property, which you meant. One line isn't: `420` became `421`. Put `PADDLE_SPEED` back to 420, and run the tests: they pass. Stash told you *whether* your changes were to blame; the diff showed *which* change.
+
+**Understand.** `git stash` takes every uncommitted change, in the working tree and the staging area, saves it as a special commit kept aside from your history, and then restores your files to the last commit. *WIP* stands for "work in progress". `git stash pop` reapplies the saved changes to your files and **drops** the stash, deleting it. (`git stash apply` reapplies without dropping, if you want to keep it.) Stashes form a **stack**: a pile where the last thing put on is the first taken off. The most recent is `stash@{0}`, and `pop` takes the top one. If the files changed in the meantime, `pop` can stop with a **conflict**: the stash is then kept, not dropped, and once you've sorted the files out (Chapter 4 teaches conflicts), `git stash drop` removes it.
 
 Untracked files, new files Git has never seen, are not stashed unless you add `-u`. A stash is also easy to forget about: `git stash list` shows what's there. For anything longer than a few minutes, a commit on a branch (Chapter 4) is safer.
 
@@ -1225,6 +1255,8 @@ git-clean -- git stash pop brings your change back; then commit it.
 ## Your turn: a broken brick stays broken
 
 **Build, on your own, test first:** the brick's invariant.
+
+Try it for about 15 minutes before taking a hint.
 
 A brick's `hits_left` is never negative. Right now, calling `hit()` on a brick that's already broken would make `hits_left` −1: a brick in a state that can't exist, broken and then broken some more. The game doesn't do that today (broken bricks are removed at once), but nothing in `Brick` prevents it. Make `Brick` keep its own rule:
 
@@ -1270,6 +1302,18 @@ run ".venv/Scripts/python -m pyright breakout.py tests/test_breakout.py" stdout=
 git-message "broken"
 git-clean
 ```
+
+## Challenge: bricks that can't be made wrong
+
+**Optional, ★.** Your Your turn guards `hit()`, but `Brick(rect, colour, hits_left=-1)` can still be made, and `brick.hits_left = -3` can still be written: the invariant is only half kept. A dataclass can check its fields as soon as an object is made, in a method named `__post_init__` that `@dataclass` calls at the end of the `__init__` it writes. Test first: making a brick with `hits_left < 1` or `points < 0` raises `ValueError`.
+
+## Challenge: a paddle you can set
+
+**Optional, ★★.** A property can have a setter too: under `@property def x`, write `@x.setter` above `def x(self, value: float) -> None:`, and `paddle.x = 900` calls it. Make it clamp, with a test that `paddle.x = 900` leaves the paddle at 540. Then argue, in a comment, whether raising `ValueError` would be better. A design judgement with no single right answer.
+
+## Challenge: no forgotten cases
+
+**Optional, ★★.** Rewrite `main`'s hold `if`/`elif` chain as a `match settings.hold:` statement, one `case Hold.LEFT:` per member, ending with `case _: assert_never(settings.hold)` (`assert_never` is from `typing`). Then add a member, `Hold.WOBBLE`, and watch pyright refuse the program until you handle it. Forgotten cases, made impossible. In a copy.
 
 ## What did we actually learn?
 

@@ -232,7 +232,17 @@ run ".venv/Scripts/python -m pytest -q" stdout="33 passed"
 
 **Build:** nothing to keep. Find out where random numbers come from.
 
-A computer follows instructions exactly, so it can't be random by itself. What Python's `random` module gives you are **pseudo-random** numbers: a sequence produced by a fixed calculation that *looks* random. Run this twice:
+A computer follows instructions exactly, so it can't be random by itself. What Python's `random` module gives you are **pseudo-random** numbers: a sequence produced by a fixed calculation that *looks* random.
+
+The command below uses a **list comprehension**, a short way to build a list: `[n * n for n in range(5)]` means "`n * n` for each `n` in `range(5)`", and is `[0, 1, 4, 9, 16]`. It's the same as:
+
+```python
+squares = []
+for n in range(5):
+    squares.append(n * n)
+```
+
+Run this twice:
 
 ```powershell
 python -c "import random; r = random.Random(42); print([r.randint(1, 6) for _ in range(10)])"
@@ -256,6 +266,23 @@ explain: Both runs print `[6, 1, 1, 6, 3, 2, 2, 2, 6, 1]`. `random.Random(42)` c
 - The functions directly in the `random` module, like `random.randint`, use one hidden, shared generator. Any code anywhere can draw numbers from it and change what everyone else gets next: lesson 1.6's global state problem, in the standard library.
 
 The comprehension `[r.randint(1, 6) for _ in range(10)]` builds a list by evaluating `r.randint(1, 6)` once for each of 10 passes. `_` is the conventional name for a loop variable whose value isn't used.
+
+See the shared generator's danger in the REPL. Seed it, draw twice; then seed it again, and let "some other code" draw once in between:
+
+```text
+>>> import random
+>>> random.seed(1)
+>>> random.random(), random.random()
+(0.13436424411240122, 0.8474337369372327)
+>>> random.seed(1)
+>>> first = random.random()
+>>> random.random()       # some other code, somewhere, draws a number
+0.8474337369372327
+>>> first, random.random()
+(0.13436424411240122, 0.763774618976614)
+```
+
+Same seed, but the second number you got is different, because something else took the one you were going to get. In a program of many files, "something else" can be anything, and you'd never see it in your own code.
 
 > **Engineer:** randomness is just another input. If a function reaches for the shared generator, its output depends on something no caller can see or control, and it can't be tested. If it's **given** a generator, a test can give it one with a known seed and get a known result, and the game can give it an unseeded one. The function can't tell the difference, and doesn't need to.
 
@@ -495,7 +522,7 @@ across = -0.3 →  up = √(1 − 0.09) = √0.91 ≈ 0.954    (a little to the 
 
 `math.sqrt` is the square root, from Python's `math` module. Multiplying both by `BALL_SPEED` gives a velocity 300 long, whichever `across` was drawn.
 
-**Understand: who chooses the seed.** In `main`:
+**Understand: who chooses the seed.** Real games and simulations often **record** the seed they used (in a log, or on the screen), so that when a player reports something strange, that exact run can be replayed. That's the most practical reason seeds exist, and the first challenge below does it. In `main`:
 
 - **a test run with `--seed N`**: `test_frames` isn't `None`, so the outer `if` runs; `seed` is N, so `seed is None` is false and N is kept;
 - **a test run without `--seed`**: the outer `if` runs, `seed` is `None`, so the inner `if` sets it to **0**, and test runs stay deterministic, which every check relies on;
@@ -668,7 +695,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_arguments.py" stdout="8 passed
 
 **Build, on your own:** replace the old `start_ball` test in `tests/test_breakout.py` with tests for the random serve.
 
-A random function can't be tested by comparing with one fixed answer. Test its **properties** instead: things that must be true whatever number was drawn.
+A random function can't be tested by comparing with one fixed answer. Test its **properties** instead: things that must be true whatever number was drawn. This is called **property-based testing**: state what must hold for every input, then check it on many inputs. (The Hypothesis library generates the inputs for you; a challenge tries it.)
 
 | The test's name must contain | It checks |
 |---|---|
@@ -706,6 +733,18 @@ run ".venv/Scripts/python -m pytest -q -k every_serve" stdout="1 passed" label="
 lacks tests/test_breakout.py "start_ball()" -- Remove the old test that calls start_ball() with no generator.
 run ".venv/Scripts/python -m pytest -q" stdout="36 passed" label="the whole suite passes"
 ```
+
+## Challenge: replay any game
+
+**Optional, ★.** When a normal game has no `--seed`, choose one yourself with `random.randrange(1_000_000)` (the `_` in a number is only for reading), print `seed=N` when the game starts, and check that `--seed N` replays exactly the same serve. Randomness as an input, used for debugging.
+
+## Challenge: a random wall
+
+**Optional, ★★.** Add a `--gaps` option: a seeded generator removes about one brick in five. Write property tests over 100 seeds: every remaining brick is inside the window, no two overlap, and at least one is left. Property testing on a structure, not a number.
+
+## Challenge: Hypothesis
+
+**Optional, ★★★.** Install `hypothesis` (pin its version) and write a test with `@given(st.floats(...), st.floats(...), st.floats(...))` from `hypothesis` and `hypothesis.strategies as st`: for any value and any `low <= high`, `clamp`'s result is between `low` and `high`. Then break `clamp` on purpose and read how Hypothesis **shrinks** the failing example to the simplest one it can find. Chapter 12 uses it for physics.
 
 ## Done: the end of Chapter 2
 
@@ -823,7 +862,7 @@ def test_each_row_of_bricks_has_its_own_colour():
 
 **Understand: why `==` failed for the speed.** With seed 0, the default for every test run, the serve's speed comes out as `300.00000000000006`, not 300; with seed 9 it's `299.99999999999994`. Of seeds 0 to 99, 17 aren't exactly 300. The maths is right; the arithmetic isn't exact. A float is stored in binary with about 16 significant digits, so most decimal fractions can't be stored exactly, and each operation rounds a tiny amount: try `python -c "print(0.1 + 0.2)"`, which prints `0.30000000000000004`. Squaring, adding and taking a square root, as `math.hypot` does, rounds several times.
 
-So two floats that come from arithmetic should be compared as **close enough**, not equal. `math.isclose(a, b)` is `True` when the difference between them is tiny compared with their size (by default, within about one part in a billion). The earlier tests that use `==`, like `start_ball` in lesson 2.4 or `(x, y) == (320, 240)` here, are safe only because those values come out exact: `640 / 2` is exactly 320. When a value comes from a calculation that can round, use `isclose`.
+So two floats that come from arithmetic should be compared as **close enough**, not equal. `math.isclose(a, b)` is `True` when the difference between them is tiny compared with their size (by default, within about one part in a billion). The earlier tests that use `==`, like `start_ball` in lesson 2.4 or `(x, y) == (320, 240)` here, are safe only because those values come out exact: `640 / 2` is exactly 320. When a value comes from a calculation that can round, use `isclose`. One trap: "close compared with their size" means nothing when one of them is 0, so `math.isclose(1e-17, 0)` is `False`. When comparing with zero, say how close counts: `math.isclose(x, 0, abs_tol=1e-9)`.
 
 Add a story for the serve to `BACKLOG.md` under *Done* (*As a player, I want the ball to start in a different direction each game, so that games aren't all the same*, with its checks ticked), update the *Technical debt* list, and commit with a message that mentions the **serve**:
 
@@ -841,6 +880,8 @@ git-clean
 
 ## What did we actually learn? (Chapter 2)
 
+**Chapter 2's challenges**, to come back to: pin a different slow frame ★, nothing on the side ★★, a golden-master file ★★★ (2.1); finish the magic numbers ★, quitting is a decision ★★, two ways to remove a brick ★★ (2.2); what runs at import? ★, hidden inputs ★★, a parse that doesn't exit ★★ (2.3); one test per case ★, test the drawing ★★, find the untested lines ★★ (2.4); typos the checker can see ★, type the tests too ★★, a taste of strict ★★★ (2.5); replay any game ★, a random wall ★★, Hypothesis ★★★ (this lesson).
+
 This chapter changed almost every line of `breakout.py` without changing what the game does, then added a feature, safely. On the way:
 
 - **A safety net first**: characterisation tests pin down current behaviour before a refactoring, and make every later change visible.
@@ -852,6 +893,6 @@ This chapter changed almost every line of `breakout.py` without changing what th
 - **Floats round**: compare them with `math.isclose`, never `==`, after arithmetic.
 - **Tests that fail after an intentional change** are asking a question; answer it deliberately.
 
-Look at your technical debt list. Fixed: the duplicated ball set-up, the colour coupling, global state, the half-checked arguments, the magic numbers in the physics. Still there: the test machinery tangled into `main`, a `main` that's still long and deeply nested, and two "tuple" results, `parse_args`'s four values and the ball's four numbers passed everywhere, that only make sense if you remember which position means what. That last one is where **Chapter 3** starts: objects and data. A ball that knows its own position and velocity, a `Settings` object with names instead of positions, and a brick that knows its own colour.
+Look at your technical debt list. Fixed: the duplicated ball set-up, the colour coupling, global state, the half-checked arguments, most of the magic numbers in the physics (`0.8` for steering and the autopilot's `10` are still unnamed). Still there: the test machinery tangled into `main`, a `main` that's still long and deeply nested, and two "tuple" results, `parse_args`'s four values and the ball's four numbers passed everywhere, that only make sense if you remember which position means what. That last one is where **Chapter 3** starts: objects and data. A ball that knows its own position and velocity, a `Settings` object with names instead of positions, and a brick that knows its own colour.
 
 In C# and Java the same randomness discipline applies: `new Random(42)` in both is a seeded generator, and passing a `Random` (or, in modern Java, a `RandomGenerator`) into the code that needs it, instead of creating one inside, is how their tests control randomness. Comparing doubles with a tolerance, `Assert.Equal(expected, actual, precision)` in xUnit and `assertEquals(expected, actual, delta)` in JUnit, is the same lesson as `math.isclose`.

@@ -75,7 +75,33 @@ BBBBBBBB
 b'TTTTTTTT\nBBBBBBBB\nBB'
 ```
 
-`'rb'` opens it in **binary** mode: bytes, uninterpreted. The `b'...'` is Python's way of showing bytes; `\n` is one byte, number 10, the **newline** that ends each line. An **encoding** is the rule that turns bytes into characters and back. For these letters every common encoding agrees (`T` is byte 84 in all of them), but for anything beyond plain English letters they don't, so a program reading text must say which encoding the file uses. **UTF-8** is the standard: it can encode every character in every language, and it's what this series uses for every file. Windows text files sometimes end lines with two bytes, `\r\n`, instead of one; you'll see in the next step why that doesn't matter here.
+`'rb'` opens it in **binary** mode: bytes, uninterpreted. The `b'...'` is Python's way of showing bytes; `\n` is one byte, number 10, the **newline** that ends each line. An **encoding** is the rule that turns bytes into characters and back. For these letters every common encoding agrees (`T` is byte 84 in all of them), but for anything beyond plain English letters they don't, so a program reading text must say which encoding the file uses. **UTF-8** is the standard: it can encode every character in every language, and it's what this series uses for every file. Windows text files often end lines with two bytes, `\r\n` (carriage return, then newline), instead of one. If your output shows `b'TTTTTTTT\r\nBBBBBBBB\r\n'`, your editor saved Windows line endings (VS Code shows `CRLF` or `LF` in its status bar): nothing is wrong, and the next step shows why it doesn't matter here.
+
+**Encodings, seen.** "Every common encoding agrees on plain letters, and not beyond them" is easy to say; see it. In the REPL, take `é`, a letter outside plain English:
+
+```text
+>>> "é".encode("utf-8")
+b'\xc3\xa9'
+>>> "é".encode("cp1252")
+b'\xe9'
+>>> b'\xc3\xa9'.decode("cp1252")
+'Ã©'
+>>> b'\xe9'.decode("utf-8")
+Traceback (most recent call last):
+  ...
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe9 in position 0: unexpected end of data
+```
+
+`.encode` turns text into bytes, `.decode` turns bytes back into text, and each needs an encoding. In UTF-8, `é` is two bytes (`\x` and two hexadecimal digits is how Python shows one byte that isn't a printable letter); in **cp1252**, the old Windows encoding for Western European languages, it's one. Decode UTF-8 bytes with the wrong encoding and you get `Ã©`, garbled text with no error at all (it has a name, **mojibake**); decode cp1252 bytes as UTF-8 and you get an error. Both are why a program reading text must say which encoding it means: guessing gives wrong text, or a crash, depending on the file.
+
+**Opening a file.** The command above used the built-in `open`, which asks the operating system for the file and returns a **file object**, your handle on it; `.read()` returns its contents, and `.close()` gives the handle back. The one-liner never closes it, which is harmless only because the program ends at once. In a real program you write:
+
+```python
+with open("breakout/levels/classic.txt", encoding="utf-8") as file:
+    text = file.read()
+```
+
+Without `'rb'`, `open` reads **text**: it decodes the bytes with the encoding you name. `with` is lesson 2.4's context manager again: the file is closed at the end of the block, even if an error happens inside, and `file.closed` is `True` afterwards.
 
 ```check
 file breakout/levels/classic.txt
@@ -110,7 +136,7 @@ def parse_level(text: str) -> list[Brick]:
 
 **Understand, piece by piece.** `parse_level(text: str) -> list[Brick]` turns text into bricks:
 
-- `text.splitlines()` splits the text into lines, removing the line endings, whichever kind: `\n`, `\r\n` (Windows) or `\r`. That's why it doesn't matter how a file's lines end.
+- `text.splitlines()` splits the text into lines, removing the line endings, whichever kind: `\n`, `\r\n` (Windows), `\r`, and a few rarer line-break characters. That's why it doesn't matter how a file's lines end. (`text.split("\n")` would split only on `\n`, and leave a `\r` at the end of every line of a Windows file: a ninth character `parse_level` would treat as a gap.)
 - `enumerate` numbers the lines (`row`) and, inside, the characters of each line (`col`): lesson 3.2's numbering loop, nested as in lesson 1.5.
 - `ROW_COLOURS[row % len(ROW_COLOURS)]`: `%` is the **remainder** after division, so with 5 colours, rows 0–4 take colours 0–4 and row 5 starts again at colour 0. A level can have more rows than there are colours.
 - Each `T` or `B` becomes a `Brick` at the position its row and column give, with lesson 3.3's tough-brick rules for `T`. Any other character, like `.`, makes nothing: a gap.
@@ -147,6 +173,43 @@ Try it:
 contains breakout/level.py "def parse_level(text: str) -> list[Brick]:"
 run ".venv/Scripts/python -c \"from breakout import level; print([brick.rect.x for brick in level.parse_level('B.B')])\"" stdout="[16, 168]" label="parse_level turns B.B into two bricks with a gap"
 ```
+
+## Paths, on their own
+
+**Build:** nothing in the project. Try `pathlib` before the game depends on it.
+
+Lesson 2.1 used `Path(__file__).parent` and `/`. A `Path` can do much more, and this chapter uses most of it. In the REPL, started in your `forge` folder:
+
+```text
+>>> from pathlib import Path
+>>> p = Path("breakout/levels/classic.txt")
+>>> p.name, p.suffix, p.stem
+('classic.txt', '.txt', 'classic')
+>>> p.parent
+WindowsPath('breakout/levels')
+>>> p.exists(), p.is_absolute()
+(True, False)
+>>> Path("nowhere.txt").exists()
+False
+>>> Path.cwd()
+WindowsPath('C:/Users/you/forge')
+>>> p.resolve()
+WindowsPath('C:/Users/you/forge/breakout/levels/classic.txt')
+>>> Path("examples") / ".." / "breakout"
+WindowsPath('examples/../breakout')
+>>> (Path("examples") / "..").resolve()
+WindowsPath('C:/Users/you/forge')
+```
+
+(Your folder will differ.) Read it line by line:
+
+- `name` is the last part, `suffix` its ending, `stem` the name without the ending, `parent` everything before it. None of these look at the disk: a `Path` is just a description of a location.
+- `exists()` does look: it asks the operating system whether something is there.
+- `p` is **relative**: it means "from the current folder" (lesson 0.1's hidden input), and `is_absolute()` says so. `Path.cwd()` is the current working folder, and `resolve()` turns a relative path into the full, **absolute** one, from the drive down. Start Python in another folder and the same `p` resolves somewhere else, where `classic.txt` doesn't exist.
+- `..` means "the folder above". `/` keeps it as written; `resolve()` works it out.
+- `WindowsPath` is what `Path` becomes on Windows; on macOS and Linux it's `PosixPath`, with the same methods. Forward slashes work on every system.
+
+That third point is why the game must never find its levels from the current folder, as the next step shows.
 
 ## Reading the file
 
@@ -185,7 +248,9 @@ def load_level(path: Path) -> list[Brick]:
 
 **Understand.** `LEVELS = Path(__file__).parent / "levels"`: the `levels` folder **next to this module**, found from the module's own location (lesson 2.1's `Path(__file__)`). Not from the current folder: that would be lesson 0.1's hidden input, and the game would only find its levels when started from the right place.
 
-`load_level(path)` reads a file and hands the text to `parse_level`. `Path.read_text(encoding="utf-8")` opens the file, decodes its bytes as UTF-8, and returns the text, closing the file again: three steps in one call.
+One honest caveat. This works because lesson 4.3 installed the game with `pip install -e .`: an **editable** install runs the code from your project folder, so `breakout/levels/` is right there next to `level.py`. A normal install copies the package somewhere else, and setuptools copies only the files it's told about: Python files, by default, not `.txt` level files. Shipping the game to someone else means listing its data files (setuptools calls them **package data**), which Chapter 54, on exporting a game, does.
+
+`load_level(path)` reads a file and hands the text to `parse_level`. `Path.read_text(encoding="utf-8")` opens the file, decodes its bytes as UTF-8, and returns the text, closing the file again: three steps in one call, the same as the `with open(...)` block from earlier in this lesson.
 
 **Why two functions?** `parse_level` is **pure** (lesson 2.2): text in, bricks out, nothing else touched, so it can be tested with a string written in the test, no file needed. `load_level` does the one thing that touches the outside world, reading a file, and nothing else. Keeping the logic pure and the input and output in thin functions around it is sometimes called **functional core, imperative shell**: the core is easy to test exhaustively, and the shell is so simple it hardly needs it.
 
@@ -371,7 +436,7 @@ class Game:
             self.state = GameState.WON
 ```
 
-**Understand.** `Game.__init__(self, rng, bricks)` now receives its wall from whoever creates it, the same way it already received its random generator in lesson 2.6. The game doesn't know or care whether the bricks came from a file, a test, or a level editor (Chapter 18). Giving an object what it needs, instead of letting it build what it needs itself, is called **dependency injection**, and it's what makes the object usable in situations its author didn't think of. Chapter 9 makes it a habit.
+**Understand.** `Game.__init__(self, rng, bricks)` now receives its wall from whoever creates it, the same way it already received its random generator in lesson 2.6. The game doesn't know or care whether the bricks came from a file, a test, or a level editor (Chapter 21). Giving an object what it needs, instead of letting it build what it needs itself, is called **dependency injection**, and it's what makes the object usable in situations its author didn't think of. Picture the alternative: `Game.__init__` calling `load_level` itself. Every test would then need the level file on disk, and a test that wanted a wall of one brick, to check what happens when it breaks, would have to write a level file first. Chapter 9 makes it a habit.
 
 `make_bricks` is deleted: the wall's layout now lives in exactly one place, `classic.txt`. Nothing works yet: the app and every test still create `Game(rng)` without a wall. The next steps fix each.
 
@@ -567,7 +632,7 @@ def test_breaking_the_last_brick_wins():
     assert game.state == model.GameState.WON
 ```
 
-**Understand.** `classic_wall()` loads the classic level, and every `model.Game(...)` now passes it. `tests/test_states.py` needs exactly the same helper, which will be a second copy of the same three lines. Duplication in tests is still duplication: Chapter 6 introduces **fixtures**, pytest's way to share setup between test files, and removes it.
+**Understand.** `classic_wall()` loads the classic level, and every `model.Game(...)` now passes it. `tests/test_states.py` needs exactly the same helper, which will be a second copy of the same three lines. Duplication in tests is still duplication: Chapter 6 shows how to write your own **fixtures** (lesson 2.4's `capsys` was one of pytest's), pytest's way to share setup between test files, and removes it.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_game.py" stdout="6 passed"
@@ -763,13 +828,27 @@ git-message "level"
 git-clean
 ```
 
+## Challenge: list the levels
+
+**Optional, ★.** Add `breakout --list-levels`: print every level in `LEVELS`, found with `LEVELS.glob("*.txt")` (every path in the folder matching the pattern; `*` means "any name"), sorted, each with its brick count, then exit. A test with `capsys` checks `classic` is listed. On a branch.
+
+## Challenge: a preview in the terminal
+
+**Optional, ★★.** Write `scratch/preview_level.py`, which takes a level file and prints the wall with `█` for B, `▓` for T and a space for `.`. It works in the terminal. Now send its output to a file: `python scratch\preview_level.py breakout\levels\classic.txt > preview.txt`. It crashes with a `UnicodeEncodeError`. Find out why, using this lesson's encodings: what encoding is Python using for the file, and why isn't it UTF-8? Then fix it, with one argument to `open` or with `sys.stdout.reconfigure`.
+
+## Challenge: narrower levels
+
+**Optional, ★★★.** Let a level have fewer than 8 columns, centred on the screen. `parse_level` works out the left edge from the longest row instead of using `WALL_LEFT`. Test it with walls of 4, 6 and 8 columns: the arithmetic is where the bugs hide, so write the expected `x` of the first brick by hand first. On a branch.
+
 ## What did we actually learn?
 
 - **Data, not code**: a level as a text file anyone can edit, in a format you designed.
-- **Text is bytes plus an encoding**: always say `encoding="utf-8"`. `splitlines()` handles every kind of line ending.
+- **Text is bytes plus an encoding**: always say `encoding="utf-8"`; the wrong encoding gives garbled text or a `UnicodeDecodeError`. `splitlines()` handles every kind of line ending.
+- **Files**: `open`, a file object, and `with` to close it; `read_text` does all three.
+- **Paths** are descriptions of locations: relative to the current folder unless absolute; `resolve()`, `exists()`, `name`, `parent`.
 - **Find data from the code's own location** (`Path(__file__).parent`), never the current folder.
 - **Functional core, imperative shell**: pure `parse_level` does the work; thin `load_level` touches the file.
 - **Dependency injection**: the `Game` is given its wall, so anything can supply one.
 - **`%`** wraps a number around a range.
 
-C# reads a file with `File.ReadAllText(path, Encoding.UTF8)` and Java with `Files.readString(path, StandardCharsets.UTF_8)`: both, like Python, let you name the encoding, and both style guides tell you to. Data files that ship with a program are **resources** there (embedded resources in .NET, the classpath in Java), the equivalent of a package's data folder here; Chapter 17 builds Forge's own resource system.
+C# reads a file with `File.ReadAllText(path, Encoding.UTF8)` and Java with `Files.readString(path, StandardCharsets.UTF_8)`: both, like Python, let you name the encoding, and both style guides tell you to. Data files that ship with a program are **resources** there (embedded resources in .NET; in Java, files on the **classpath**, the list of folders and archives Java searches for classes and files), the equivalent of a package's data folder here; Chapter 18 builds Forge's own resource system.

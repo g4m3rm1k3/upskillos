@@ -114,6 +114,15 @@ git-message "Shout the game name on the title"
 
 **Build:** try to merge the branch into `main`.
 
+```predict
+question: Both branches changed the same line of `draw.py`, differently. What will `git merge title-text` do?
+choice: Fast-forward, as in lesson 4.6
+choice: Merge automatically, keeping the newer change
+choice: Stop, and ask you to decide
+answer: Stop, and ask you to decide
+explain: A fast-forward is only possible when `main` hasn't moved since the branch began, and here it has. Git doesn't judge which change is better, or newer: when both sides changed the same lines differently, it can't know what you meant, so it stops with a **conflict** and writes both versions into the file for you to decide. The explanation below shows exactly when it can merge on its own.
+```
+
 ```powershell
 git merge title-text
 ```
@@ -124,7 +133,7 @@ CONFLICT (content): Merge conflict in breakout/draw.py
 Automatic merge failed; fix conflicts and then commit the result.
 ```
 
-`git status --short` shows one line per file, with two letters for its state: the first for the staging area, the second for the working tree.
+`git status --short` (lesson 1.2) shows one line per file, with two letters for its state. During a merge, the letters change meaning: they describe the two sides, and `U` means **unmerged**.
 
 ```powershell
 git status --short
@@ -153,9 +162,9 @@ Open `breakout/draw.py`:
 For each part of the file, if only one side changed it compared with the base, Git takes that side's change: that's what *Auto-merging* means, and it handles most of a typical merge silently. For example, if one branch had changed the title line and the other the game-over line:
 
 ```text
-line        base             main             title-text       merged result
-title       "BREAKOUT: ..."  "BREAKOUT: ..."  "Press Space..." "Press Space..."   only the branch changed it
-game over   "Game over..."   "GAME OVER..."   "Game over..."   "GAME OVER..."     only main changed it
+line        base                main                title-text          merged result
+title       "Breakout: press.."  "Breakout: press.."  "Press Space to.."   "Press Space to.."   only the branch changed it
+game over   "Game over: ..."    "GAME OVER: ..."    "Game over: ..."    "GAME OVER: ..."    only main changed it
 ```
 
 Both changes are kept, with no questions asked. If **both** sides changed the same lines, differently, Git can't know which you want, so it stops and writes both into the file between **conflict markers**:
@@ -163,7 +172,9 @@ Both changes are kept, with no questions asked. If **both** sides changed the sa
 - `<<<<<<< HEAD` to `=======` is your side (`main`'s version);
 - `=======` to `>>>>>>> title-text` is the other side (the branch's version).
 
-`UU` in `git status` means "unmerged, changed on both sides". The merge is **in progress**: Git is waiting for you to decide, and nothing is committed yet. (`git merge --abort` would put everything back as it was before the merge, if you wanted to stop.)
+You'll hear the two sides called **ours** (the branch you're on, `HEAD`: VS Code's *Current Change*) and **theirs** (the branch being merged in: *Incoming Change*). `git checkout --ours FILE` or `--theirs FILE` takes one side's whole file, when that's what you want.
+
+`UU` in `git status` means "unmerged, changed on both sides". The merge is **in progress**: Git is waiting for you to decide, and nothing is committed yet. `git merge --abort` puts everything back as it was before the merge. Try it now, so a half-done merge never frightens you: run `git merge --abort`, then `git status --short` (nothing: back to normal), then `git merge title-text` again, to come back to the conflict.
 
 Notice that the game can't even run in this state: a file full of `<<<<<<<` lines isn't valid Python. A conflict always needs resolving before anything else.
 
@@ -178,7 +189,7 @@ contains breakout/draw.py "<<<<<<< HEAD" label="draw.py has a merge conflict, wa
 Resolving a conflict is a **decision**, not a mechanical choice between the two sides. The commit messages say what each side wanted: one wanted the text friendlier ("press Space to play"), the other wanted the name to stand out ("BREAKOUT"). A good resolution often keeps the intent of both. Here:
 
 1. Replace the five conflict lines with the single line you decide on, for example `GameState.TITLE: "BREAKOUT: press Space to play",`. Delete all three marker lines.
-2. Check that everything still works: tests, pyright, ruff, and run the game to see the title.
+2. Check that no conflict is left anywhere, in any file: `git diff --check` reports any leftover conflict markers, and `git status` says `All conflicts fixed but you are still merging` once every file is staged. In a merge touching many files, that check is what stops a stray `<<<<<<<` reaching a commit. Then check that everything still works: tests, pyright, ruff, and run the game to see the title.
 3. Tell Git the conflict is resolved by staging the file, then commit the merge, and delete the merged branch:
 
 ```powershell
@@ -206,10 +217,10 @@ and the graph afterwards:
 ~~~text
 *   84f206d Merge title-text: keep the shout, and say what Space does
 |\
-| * 4baf32b Friendlier title text
-* | a0a15b9 Shout the game name on the title
+| * 6e1f14b Friendlier title text
+* | c7b0416 Shout the game name on the title
 |/
-* 7f24e97 Test the state machine
+* 6a93d9c Test the state machine
 ~~~
 
 A merge commit is a commit with **two parents**. `git cat-file -p HEAD` (lesson 1.2) shows it: two `parent` lines, one for each line of work it joins. Deleting `title-text` removes only the name: its commit is reachable from the merge commit, so it stays in the history.
@@ -225,6 +236,18 @@ git-no-branch title-text -- Delete the merged branch: git branch -d title-text.
 git-clean
 ```
 
+## Challenge: clean merges and conflicts, on purpose
+
+**Optional, ★.** In a throwaway repository like lesson 4.6's, make two branches that change **different** lines of one file, and merge them: a clean three-way merge, with a merge commit. Then two branches that change the **same** line: a conflict. Then one where one branch deletes a line and the other edits it. Resolve each, and run `git merge --abort` once on purpose.
+
+## Challenge: a merge that's clean but wrong
+
+**Optional, ★★.** On two branches, change `PADDLE_SPEED` to different values, and on each add a test pinning its own value. Merge them: the conflict in `model.py` is easy, but then the tests disagree with the code. Resolve it so the code and the tests agree. A merge with no conflict markers left can still be wrong, which is why you run the tests after every merge.
+
+## Challenge: a commit with two parents
+
+**Optional, ★★.** After your merge, use `git log --oneline --graph`, `git cat-file -p HEAD` and `git show HEAD^2` to explain in one sentence each what `HEAD^1` and `HEAD^2` are.
+
 ## What did we actually learn? (Chapter 4)
 
 This chapter turned a 290-line script into a project:
@@ -237,6 +260,8 @@ This chapter turned a 290-line script into a project:
 - **A state machine**: one current state, defined transitions, events from outside.
 - **Branches**: a line of work kept apart until it's finished; **fast-forward** and **three-way** merges; **conflicts** as decisions.
 
-Look at the technical-debt list from lesson 1.6 again. Almost everything is gone: duplication, magic numbers, global state, hidden coupling, untestable code, hand-checked arguments, deep nesting in one long loop. What remains is the test-run machinery still woven through `app.py`, and one big idea that this chapter only started: levels and settings are still **code**. Change the wall's layout and you edit Python. **Chapter 5** moves the levels into data files the game reads, which brings files, formats, validation with **pydantic**, and the question every program reading files must answer: *what if the file is wrong?*
+Look at the technical-debt list from lesson 1.6 again. Almost everything is gone: duplication, magic numbers, global state, hidden coupling, untestable code, hand-checked arguments. What remains is the test-run machinery still woven through `app.py`, with `main`'s loop still four levels deep, and one big idea that this chapter only started: levels and settings are still **code**. Change the wall's layout and you edit Python. **Chapter 5** moves the levels into data files the game reads, which brings files, formats, validation with **pydantic**, and the question every program reading files must answer: *what if the file is wrong?*
 
-Every Git workflow in every language uses exactly this: short branches per change, merged into `main`, conflicts resolved by deciding what both sides meant. On a team, the merge usually happens through a **pull request** (Chapter 15), where someone else reads the branch's changes before they're merged.
+**Chapter 4's challenges**, to come back to (on branches): the replay inside the package ★, a package inside a package ★★, a version number ★★ (4.1); a circle of three ★, the rule as data ★★, imports without running anything ★★★ (4.2); --version ★, a function that makes validators ★★, a real wheel ★★ (4.3); constants that stay constant ★, rules beyond strict ★★, three ways to handle None ★★ (4.4); the paddle's edges ★, a mutation tool ★★, review your own tests ★★ (4.5); a READY state ★, transitions as data ★★, the rule that escaped the model ★★ (4.6); clean merges and conflicts ★, a merge that's clean but wrong ★★, a commit with two parents ★★ (this lesson).
+
+Every Git workflow in every language uses exactly this: short branches per change, merged into `main`, conflicts resolved by deciding what both sides meant. On a team, the merge usually happens through a **pull request** (Chapter 16), where someone else reads the branch's changes before they're merged.

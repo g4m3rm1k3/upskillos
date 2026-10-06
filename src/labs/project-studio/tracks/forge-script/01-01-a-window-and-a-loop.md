@@ -59,11 +59,26 @@ pygame.display.set_caption("Breakout")
 
 `WIDTH, HEIGHT = 640, 480` assigns two variables at once: the right side makes a tuple `(640, 480)`, and Python **unpacks** it into the two names on the left, in order. Names written in capitals are a convention meaning "a **constant**: set once, never changed". Python doesn't enforce it; it's a promise to the reader.
 
-`pygame.display.set_mode((WIDTH, HEIGHT))` asks the operating system for a window that size. The double brackets aren't a typo: `set_mode` takes **one** argument, the size, given as a tuple, so the inner brackets build the tuple `(640, 480)` and the outer ones are the call. It and returns its **surface**, which is kept in `screen`.
+`pygame.display.set_mode((WIDTH, HEIGHT))` asks the operating system for a window that size. The double brackets aren't a typo: `set_mode` takes **one** argument, the size, given as a tuple, so the inner brackets build the tuple `(640, 480)` and the outer ones are the call. It returns the window's **surface**, which is kept in `screen`.
 
 > **Surface**: a picture held in memory, as a block of numbers: a few bytes for each pixel (red, green and blue brightness, and sometimes opacity), row after row from the top-left. 640 × 480 is 307,200 pixels. Drawing on a surface means writing numbers into that block.
 
 Nothing has been drawn yet, so every pixel is 0, which is black. `set_caption` sets the text in the window's title bar.
+
+Look at a pixel yourself, in the REPL (lesson 0.1). Start it with the environment's Python, `.venv\Scripts\python`, so pygame is there:
+
+```text
+>>> import pygame
+>>> pygame.init()
+>>> screen = pygame.display.set_mode((640, 480))
+>>> screen.get_at((0, 0))
+Color(0, 0, 0, 255)
+>>> screen.get_size()
+(640, 480)
+>>> pygame.quit()
+```
+
+A window opens while you do it. `get_at((0, 0))` reads the top-left pixel: red 0, green 0, blue 0, which is black, and a fourth number, 255, its **opacity** (how solid it is, from 0, invisible, to 255, fully solid). `pygame.quit()` closes the window again.
 
 ```predict
 question: What will you see when you run it?
@@ -105,7 +120,7 @@ while running:
 
 **`pygame.display.flip()`** shows the surface in the window. A frame is drawn in many steps (background, then bricks, then ball). If the window showed the surface *while* it was being drawn, you'd sometimes see half a frame, which looks like flickering. So everything is drawn into the surface, which nobody sees, and `flip` copies the finished picture to the screen in one go. Drawing off screen and then showing the result all at once is called **double buffering**.
 
-Run it. The black window stays. Now click its close button. Nothing happens. Wait a few seconds and Windows greys the window out and labels it **Not Responding**. Stop it with **■ Stop** (or Ctrl+C in the terminal). Why that happens is the next step.
+Run it. The black window stays. Now click its close button. Nothing happens. Wait a few seconds and Windows greys the window out and labels it **Not Responding**. Stop it with **■ Stop** (or Ctrl+C in the terminal). If Windows offers to close the program for you, or to wait for it, closing it is fine too. Why that happens is the next step.
 
 ```check
 contains breakout.py "while running:"
@@ -116,7 +131,7 @@ contains breakout.py "pygame.display.flip()"
 
 **Build:** collect what the operating system sends the window, and stop when the close button is clicked.
 
-**The event queue.** Your program never asks "is a key down right now?" at the moment someone presses it, because at that moment it's busy doing something else. Instead, the operating system notices the key press, or the mouse click, or the close button, and puts a **message** in a queue belonging to the window. Messages wait there until the program collects them, and the last version never collected any. Windows uses that queue to decide whether a program is still alive: a window that doesn't collect its messages for about five seconds is marked **Not Responding**. So the loop must collect them on every pass:
+**The event queue.** Your program can't be interrupted at the moment someone presses a key, because at that moment it's busy doing something else. Instead, the operating system notices the key press, or the mouse click, or the close button, and puts a **message** in a queue belonging to the window. Messages wait there until the program collects them, and the last version never collected any. Windows uses that queue to decide whether a program is still alive: a window that doesn't collect its messages for about five seconds is marked **Not Responding**. So the loop must collect them on every pass:
 
 ```python file=breakout.py
 import pygame
@@ -156,7 +171,7 @@ answer: One processor core kept fully busy
 explain: Nothing in the loop ever waits. As soon as one pass ends, the next begins, many thousands of times a second, each copying a black picture to the screen. A processor core runs whatever it's given as fast as it can, so the one running this loop stays fully busy doing work nobody can see. A Python program like this one does one thing at a time, so it keeps only one core busy, and Task Manager shows its share of the whole processor: on an 8-core machine, about 12%. Close the window and watch the number drop.
 ```
 
-> **Engineer:** a game is an **event-driven** program: it doesn't run from top to bottom and stop, it waits for things to happen and reacts. Desktop apps, web servers and phone apps all have a loop like this at their centre, usually hidden inside a framework. In Chapter 18 you'll meet Qt's version, and it will look familiar.
+> **Engineer:** a game is an **event-driven** program: it doesn't run from top to bottom and stop, it waits for things to happen and reacts. Desktop apps, web servers and phone apps all have a loop like this at their centre, usually hidden inside a framework. In Chapter 21 you'll meet Qt's version, and it will look familiar.
 
 ```check
 contains breakout.py "pygame.event.get()" -- The loop must collect events every pass, or Windows marks the window Not Responding.
@@ -164,11 +179,46 @@ contains breakout.py "pygame.QUIT"
 contains breakout.py "pygame.quit()"
 ```
 
+## See the queue for yourself
+
+**Build:** a scratch program that prints every message the window is sent.
+
+A **scratch file** (lesson 0.1's scratch example, when a few lines are too many for the REPL) lives in its own folder, so it never mixes with the project's real files. Make a folder named `scratch`, and in it `events.py`:
+
+```python file=scratch/events.py
+import pygame
+
+pygame.init()
+pygame.display.set_mode((300, 200))
+running = True
+while running:
+    for event in pygame.event.get():
+        print(event)
+        if event.type == pygame.QUIT:
+            running = False
+pygame.quit()
+```
+
+```powershell
+.venv\Scripts\python scratch\events.py
+```
+
+Move the mouse over the little window, press a few keys, then close it. The terminal fills with lines like these:
+
+```text
+<Event(1024-MouseMotion {'pos': (152, 87), 'rel': (3, -1), 'buttons': (0, 0, 0), 'touch': False, 'window': None})>
+<Event(768-KeyDown {'unicode': 'a', 'key': 97, 'mod': 4096, 'scancode': 4, 'window': None})>
+<Event(769-KeyUp {'unicode': 'a', 'key': 97, 'mod': 4096, 'scancode': 4, 'window': None})>
+<Event(256-Quit {})>
+```
+
+**Understand.** Each message is an **event object**: a **type**, a number with a name (`1024-MouseMotion`, `768-KeyDown`), and details that depend on the type, like where the mouse is, or which key. They arrive in the order things happened, and a key press is two events, down and up. Closing the window is just one more event, `256-Quit`, which is the number `pygame.QUIT` stands for. Nothing happens to the window unless the program reads that event and decides to stop. (This loop never rests between passes, so it keeps one core busy while it runs: the next step is about exactly that.)
+
 ## Sixty frames a second
 
 **Build:** slow the loop down to the speed of the screen.
 
-Most screens show about 60 pictures a second, so drawing more than 60 is wasted work, and that wasted work is what keeps a core busy. pygame's `Clock` can hold the loop to 60 passes a second. Make one before the loop, and call its `tick` once at the start of each pass:
+Most screens show about 60 pictures a second, their **refresh rate**, 60 Hz (**hertz**: times per second), so drawing more than 60 is wasted work, and that wasted work is what keeps a core busy. pygame's `Clock` can hold the loop to 60 passes a second. Make one before the loop, and call its `tick` once at the start of each pass:
 
 ```python file=breakout.py
 import pygame
@@ -203,10 +253,52 @@ pygame.quit()
 
 If a frame's work takes **longer** than 16.7 ms, `tick` doesn't sleep, and the game runs slower than 60 frames a second. Nothing makes up the lost time.
 
-> **Engineer:** don't do work nobody will see. A game that keeps one core fully busy drains a laptop's battery and heats the machine for nothing. The same idea, *do only the work that has an effect*, comes back when the game has hundreds of objects (Chapter 14) and when training an agent wants the opposite: no sleeping at all, as fast as possible (Chapter 38).
+> **Engineer:** don't do work nobody will see. A game that keeps one core fully busy drains a laptop's battery and heats the machine for nothing. The same idea, *do only the work that has an effect*, comes back when the game has hundreds of objects (Chapter 14) and when training an agent wants the opposite: no sleeping at all, as fast as possible (Chapter 43).
 
 ```check
 contains breakout.py "clock.tick(60)" -- Make a pygame.time.Clock() before the loop, and call clock.tick(60) once per pass.
+```
+
+## See what tick measures
+
+**Build:** a scratch program that prints what `tick` returns, with and without work to do.
+
+```python file=scratch/tick.py
+import pygame
+
+pygame.init()
+clock = pygame.time.Clock()
+for frame in range(5):
+    print(clock.tick(60))
+print("now each frame does 30 ms of work:")
+for frame in range(5):
+    pygame.time.wait(30)
+    print(clock.tick(60))
+pygame.quit()
+```
+
+```powershell
+.venv\Scripts\python scratch\tick.py
+```
+
+```text
+17
+17
+17
+17
+17
+now each frame does 30 ms of work:
+30
+30
+31
+31
+31
+```
+
+**Understand.** With nothing to do, each `tick(60)` returns about 17: it slept until 16.7 ms had passed since the last call, and rounded to whole milliseconds. `pygame.time.wait(30)` stands in for a frame whose work takes 30 ms: now `tick` has nothing to sleep, and returns about 30, the real frame time. Step 4 above, measured. The game runs at about 33 frames a second instead of 60, and nothing makes the lost time up.
+
+```check
+run ".venv/Scripts/python scratch/tick.py" stdout="now each frame does 30 ms of work" label="scratch/tick.py runs"
 ```
 
 ## Escape to quit
@@ -258,7 +350,7 @@ So far, only a person can check this program: run it, look, close it. A checking
 .venv\Scripts\python breakout.py --test-run 600
 ```
 
-which runs exactly 600 frames, with no window and no waiting, then prints what happened. It takes three steps. First, read the number. Add two imports at the top, and the reading code before `WIDTH, HEIGHT`:
+which runs exactly 600 frames, with no window and no waiting, then prints what happened. It takes three steps. First, read the number. Add `import sys` at the top, and the reading code before `WIDTH, HEIGHT`. (The blank line between `import sys` and `import pygame` is a convention from Python's style guide, **PEP 8**: modules that come with Python first, then installed packages, so a reader sees at a glance what the program needs installed.)
 
 ```python file=breakout.py
 import sys
@@ -382,7 +474,7 @@ run ".venv/Scripts/python breakout.py --test-run 30" stdout="frames=30" label="a
 
 **Build:** in a test run, draw into memory instead of a window, and don't sleep between frames.
 
-Two changes: tell SDL, before the window is made, to use a display that exists only in memory; and call `clock.tick(60)` only when it isn't a test run:
+Three changes: import `os`; tell SDL, before the window is made, to use a display that exists only in memory; and call `clock.tick(60)` only when it isn't a test run:
 
 ```python file=breakout.py
 import os
@@ -428,7 +520,7 @@ if test_frames is not None:
     print(f"frames={frames}")
 ```
 
-**Understand.** `os.environ["SDL_VIDEODRIVER"] = "dummy"` sets an **environment variable** (lesson 0.1) inside this process. SDL reads it once, when pygame starts its display in `pygame.init()`, and the `dummy` driver gives it a window that exists only in memory: the program draws into a surface, as always, but nothing appears on screen. That's why it must be set before `pygame.init()` runs (set it afterwards and a real window opens anyway), and why it's inside the `if` that reads `--test-run`, near the top of the file.
+**Understand.** **`os`** is the standard library's module for talking to the operating system. **`os.environ`** behaves like a dictionary of this process's environment variables (lesson 0.1): reading a key gives its value, and assigning to one sets it for this process and for any program it starts, never for the shell that started it. So `os.environ["SDL_VIDEODRIVER"] = "dummy"` sets an **environment variable** inside this process. SDL reads it once, when pygame starts its display in `pygame.init()`, and the `dummy` driver gives it a window that exists only in memory: the program draws into a surface, as always, but nothing appears on screen. That's why it must be set before `pygame.init()` runs (set it afterwards and a real window opens anyway), and why it's inside the `if` that reads `--test-run`, near the top of the file.
 
 **No waiting.** In a test run, `clock.tick(60)` isn't called, so the frames run as fast as the computer allows: 600 frames take a fraction of a second instead of 10 seconds.
 
@@ -489,6 +581,18 @@ run ".venv/Scripts/python breakout.py --test-run 5" stdout="frames=5" label="--t
 run ".venv/Scripts/python breakout.py --test-run" exit=2 stdout="usage: python breakout.py [--test-run FRAMES]" label="--test-run with no number prints the usage line and exits with 2" -- Check that there is a word after --test-run before reading it.
 run ".venv/Scripts/python breakout.py --test-run ten" exit=2 stdout="usage: python breakout.py [--test-run FRAMES]" label="--test-run ten prints the usage line and exits with 2" -- .isdigit() is False for "ten".
 ```
+
+## Challenge: Space changes the colour
+
+**Optional, ★.** Each press of Space changes the window's background colour, cycling through three colours you choose. Pressing is an event (`event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE`), and the colour is state that lives between frames: a list of colours and an index into it, which goes back to 0 after the last. Fill the screen with `screen.fill(colour)` before `flip`. Do it in a copy, `scratch/colours.py`, so the main game stays as the lessons expect.
+
+## Challenge: the real frame rate
+
+**Optional, ★★.** Show the measured frames per second in the window's title, updated once a second. Add up `tick`'s returned milliseconds and count frames; when the total passes 1000, set the caption to the count, and start again. (pygame also has `clock.get_fps()`; try both and compare.) Then remove `tick(60)` and watch the number jump. In a copy, `scratch/fps.py`.
+
+## Challenge: --help
+
+**Optional, ★★.** Make `python breakout.py --help` print the usage line and exit with **0**, not 2: asking for help isn't a mistake, so it isn't a failure. Check with `$LASTEXITCODE`. In a copy of `breakout.py`, since the next lessons rewrite it.
 
 ## What did we actually learn?
 

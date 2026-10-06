@@ -263,7 +263,7 @@ def load_level(path: Path) -> list[Brick]:
 
 **Understand: your own exception.** `class LevelError(ValueError):` declares a new kind of exception that **is a** `ValueError`: the brackets name the class it **inherits** from (lesson 3.5's *is-a*). Everything a `ValueError` can do, a `LevelError` can do, so any code that already catches `ValueError` catches this too, and code that wants only level problems can catch `LevelError` alone. Exceptions are where inheritance is used most, because "is a kind of" is exactly how errors relate: a `LevelError` is a kind of bad value.
 
-Its `__init__` takes the message and the position. `super().__init__(...)` calls the **parent class's** `__init__`, `ValueError`'s, with the full text: that text is what `str(error)` returns and what a traceback prints. `super()` means "the class I inherit from", so the parent's setup still happens, with your addition. The position is also kept as attributes, `line` and `column`, so a program (an editor, Chapter 18) can put the cursor on the problem instead of parsing the message.
+Its `__init__` takes the message and the position. `super().__init__(...)` calls the **parent class's** `__init__`, `ValueError`'s, with the full text: that text is what `str(error)` returns and what a traceback prints. `super()` means "the class I inherit from", so the parent's setup still happens, with your addition. The position is also kept as attributes, `line` and `column`, so a program (an editor, Chapter 21) can put the cursor on the problem instead of parsing the message.
 
 `where = f"line {line}" if column is None else f"line {line}, column {column}"` is a **conditional expression**: `A if condition else B` is `A` when the condition is true and `B` when it's false, one value chosen in one line. Traced:
 
@@ -273,7 +273,22 @@ LevelError("unknown brick 'X'...", 1, 5)            column is 5      →  where 
 str(error)                                            →  "line 1: the level is empty"
 ```
 
-Without the `super().__init__(...)` call, `ValueError` would never receive the text, and `str(error)` would be an empty string: the traceback would say `LevelError` and nothing else. And `lines = text.splitlines()` is now made once, before the loop, because the rules need it too: an empty text gives an empty list, `[]`, which counts as false, so `not lines` is true.
+Without the `super().__init__(...)` call, `ValueError` would never receive your text: Python would fall back on the raw arguments the class was called with, so `str(error)` would be `"('the level is empty', 1)"`, a tuple, and your `line 1: ...` wording would never be built. See it with a small exception of your own, in `scratch/exceptions.py`:
+
+```python
+class Bad(ValueError):
+    def __init__(self, message, line):
+        super().__init__(f"line {line}: {message}")
+        self.line = line
+
+
+try:
+    raise Bad("oops", 3)
+except ValueError as error:
+    print(type(error).__name__, str(error), error.line, error.args)
+```
+
+`python scratch\exceptions.py` prints `Bad line 3: oops 3 ('line 3: oops',)`: `except ValueError` caught a `Bad`, because a `Bad` *is a* `ValueError`; `str(error)` is the text given to `super().__init__`, which also became `error.args`; and `error.line` is the extra attribute. Now delete the `super().__init__(...)` line and run it again: `Bad ('oops', 3) 3 ('oops', 3)`. With no text given to `ValueError`, `str(error)` falls back on `args`, the raw arguments the class was called with, shown as a tuple. And `lines = text.splitlines()` is now made once, before the loop, because the rules need it too: an empty text gives an empty list, `[]`, which counts as false, so `not lines` is true.
 
 ```check
 contains breakout/level.py "class LevelError(ValueError):"
@@ -774,7 +789,26 @@ run ".venv/Scripts/breakout --test-run 5 --level nowhere.txt" exit=1 stderr="Fil
 
 ## Friendly errors
 
-**Build:** catch the two problems a level file can have, and report them in one line instead of a traceback.
+**Build:** catch the problems a level file can have, and report them in one line instead of a traceback.
+
+First, `try` and `except` on their own (lesson 2.4 caught a `SystemExit` with them; now they handle real failures). In the REPL:
+
+```text
+>>> for text in ["5", "x"]:
+...     try:
+...         number = int(text)
+...         print("got", number)
+...     except ValueError as error:
+...         print("refused:", error)
+...     print("after")
+...
+got 5
+after
+refused: invalid literal for int() with base 10: 'x'
+after
+```
+
+With `"5"`, the `try` block runs to the end and the `except` is skipped. With `"x"`, `int` raises, the rest of the `try` block (the `print("got", ...)`) is skipped, and the `except` runs instead; either way the program carries on with `after`. Change `except ValueError` to `except KeyError` and run it again: now `"x"` crashes with the traceback, because an `except` only catches the kinds it names.
 
 A missing file raises `FileNotFoundError`; a broken one, your `LevelError`. Wrap the loading in a `try`, and handle both in an `except`:
 
@@ -802,7 +836,7 @@ def main(args: list[str]) -> None:
     level = settings.level or LEVELS / "classic.txt"
     try:
         bricks = load_level(level)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, bricks)
@@ -876,12 +910,18 @@ def run() -> None:
 --level breakout/levels/classic.txt          --level nowhere.txt
   try: bricks = load_level(level)              try: bricks = load_level(level)
        (returns 40 bricks)                          (raises FileNotFoundError)
-  except block skipped                         except (OSError, LevelError) as error:   matches
+  except block skipped                         except (...) as error:   matches
   game = Game(rng, bricks)                         print("breakout: nowhere.txt: [Errno 2] ...")
                                                    sys.exit(1)
 ```
 
-`except (OSError, LevelError)` names a **tuple** of exception types: any of them matches. **`OSError`** is Python's exception for operating-system failures: a missing file raises `FileNotFoundError`, which *is an* `OSError`, as `LevelError` is a `ValueError`, so naming the parent catches the child. The block prints one line to standard error and exits with **1**:
+`except (OSError, UnicodeDecodeError, LevelError)` names a **tuple** of exception types: any of them matches. They're the three ways a level file can fail:
+
+- **`OSError`**, Python's exception for operating-system failures. A missing file raises `FileNotFoundError`, a file you aren't allowed to read `PermissionError`, and on Windows a folder given as a level does too: each *is an* `OSError`, so naming the parent catches them all. (`[Errno 2]` in the message is the operating system's own error number; 2 means "no such file".)
+- **`UnicodeDecodeError`**: the file isn't UTF-8 text at all (lesson 5.1's encodings), say a level saved in another encoding, or a picture passed by mistake. It's a `ValueError`, not an `OSError`, so it needs naming.
+- **`LevelError`**: the text is fine, but it isn't a playable level.
+
+Try the middle one: `.venv\Scripts\python -c "from pathlib import Path; Path('scratch/not_text.txt').write_bytes(bytes([0xFF, 0xFE, 0x41]))"` writes three bytes that aren't UTF-8 text, and `.venv\Scripts\breakout --test-run 5 --level scratch/not_text.txt` reports `breakout: scratch\not_text.txt: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte`, without a traceback. The block prints one line to standard error and exits with **1**:
 
 ```text
 breakout --test-run 5 --level nowhere.txt
@@ -893,7 +933,7 @@ breakout: bad.txt: line 1: a row has 8 places, and this one has 7
 
 Exit code **1**, not 2: lesson 0.1's convention gives 2 for "you used the program wrong" (a bad option, which argparse reports) and 1 for "something went wrong while working" (the file is missing or broken). Scripts and other programs can tell the two apart.
 
-Only these two exceptions are caught. Anything else, a bug in the game itself, still crashes with a full traceback, which is what you want from a bug: catching every exception would hide them. Catch exactly what you expect and can explain to the user.
+Only these three are caught. Anything else, a bug in the game itself, still crashes with a full traceback, which is what you want from a bug: catching every exception (`except Exception:`) would hide them. Imagine a typo in `load_level`, `pars_level(...)`: it raises `NameError`, and with `except Exception` the player would see `breakout: classic.txt: name 'pars_level' is not defined`, as if the level were bad, and nobody would look for the typo. Catch exactly what you expect and can explain to the user. (One gap remains: pressing Space after a game reloads the level outside this `try`, so a level file deleted mid-game still crashes. Lesson 5.3 loads it once, which closes it.)
 
 ```check
 run ".venv/Scripts/breakout --test-run 5 --level nowhere.txt" exit=1 stderr="breakout: nowhere.txt:" label="a missing level file is reported without a traceback" -- Catch OSError and LevelError around load_level, print one line to sys.stderr, and sys.exit(1).
@@ -934,7 +974,7 @@ Try it for about 20 minutes before taking a hint.
 
 ```hints
 nudge: Print the file's text with its `repr`: `.venv\Scripts\python -c "from pathlib import Path; print(repr(Path('breakout/levels/castle.txt').read_text(encoding='utf-8')))"`. What's before the first `B`, and why doesn't the editor show it?
-concept: `'\ufeff'` (the text starts with it, before the first `B`) is the **byte order mark** (BOM): the character U+FEFF, which some programs write at the very start of a UTF-8 file to say "this is UTF-8". It's invisible in editors, but it's still a character, so the first row has 9. Python has an encoding for exactly this: `"utf-8-sig"` reads UTF-8 and drops a BOM at the start if there is one, and reads files without one exactly like `"utf-8"`.
+concept: `'\ufeff'` (the text starts with it, before the first `B`) is the **byte order mark** (BOM): the character U+FEFF (every character has a number, its **code point**, written U+ and hexadecimal; `'\ufeff'` is how Python writes the character whose code point is FEFF), which some programs write at the very start of a UTF-8 file to say "this is UTF-8". It's invisible in editors, but it's still a character, so the first row has 9. Python has an encoding for exactly this: `"utf-8-sig"` reads UTF-8 and drops a BOM at the start if there is one, and reads files without one exactly like `"utf-8"`.
 shape: One word in `load_level`: `encoding="utf-8-sig"`. The test writes the castle into `tmp_path / "castle.txt"` with `write_text(..., encoding="utf-8-sig")`, which writes the BOM, then checks `load_level` returns its 18 bricks.
 answer: ~~~python
 def load_level(path: Path) -> list[Brick]:
@@ -962,6 +1002,18 @@ run ".venv/Scripts/python -m ruff check ." stdout="All checks passed!"
 git-message "byte order mark"
 git-clean
 ```
+
+## Challenge: a level with nothing to break
+
+**Optional, ★.** `"........"` passes every rule, and the game starts already won. Add a rule, "a level needs at least one brick", with a case in the parametrised test. On a branch.
+
+## Challenge: every problem at once
+
+**Optional, ★★.** `parse_level` stops at the first problem. Make it collect every problem into a list and raise one `LevelError` holding them all, so a level designer fixes a file in one pass. Lesson 5.4 shows a library that does exactly this; do it by hand first. On a branch.
+
+## Challenge: a level checker
+
+**Optional, ★★★.** Add a second command in `[project.scripts]`, `check-levels`, which takes any number of level files, prints `OK` or the problems for each, and exits with 1 if any failed. A real tool for level designers: loops over paths, an exception caught per file, and an exit code that summarises them all. On a branch.
 
 ## What did we actually learn?
 

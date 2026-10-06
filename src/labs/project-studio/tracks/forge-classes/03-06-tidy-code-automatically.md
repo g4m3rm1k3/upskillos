@@ -117,7 +117,7 @@ Create `ruff.toml` in the project folder:
 line-length = 120
 ```
 
-**Understand.** ruff's default maximum line length is 88 characters, inherited from **Black**, the Python formatter that made automatic formatting the norm. Some of this project's lines, like the recorded game lines in the characterisation tests, are longer than that, and splitting them over four lines each makes them harder to read, not easier. So the project makes one decision, 120, and writes it down, once, where the tool reads it. That's the only formatting choice anyone in the project will make by hand.
+**Understand.** ruff's default maximum line length is 88 characters, inherited from **Black**, the Python formatter that made automatic formatting the norm. Most of this project's lines fit in 88, but a good number of its function signatures and test assertions run a little past it, and 88 would wrap them all. 120 keeps those on one line. (The longest lines, the recorded game lines in the characterisation tests, are about 130 characters, so they get split either way, and you'll see that below: that's fine.) There's no right number; what matters is that the project makes one decision and writes it down, once, where the tool reads it. That's the only formatting choice anyone in the project will make by hand.
 
 **TOML** (Tom's Obvious Minimal Language) is a settings format of `name = value` lines, with `[sections]` when needed: lesson 2.3's INI format, made precise. Chapter 4 moves this setting into `pyproject.toml`, alongside pytest's.
 
@@ -137,7 +137,7 @@ contains ruff.toml "line-length = 120"
 4 files reformatted, 12 files left unchanged
 ```
 
-(Your counts may differ slightly, depending on which challenges you did.) Look at what changed:
+(Your counts may differ slightly, depending on whether you did lesson 0.2's challenge, and kept any other files of your own.) Look at what changed:
 
 ```powershell
 git diff --stat
@@ -148,11 +148,19 @@ git diff --stat
  replay.py                      |  1 +
  tests/test_arguments.py        |  4 +++-
  tests/test_characterisation.py | 39 +++++++++++++++++++++++++++++++--------
+ 4 files changed, ...
 ```
 
 `--stat` shows only a summary: each changed file, with how many lines changed, as `+` for added and `-` for removed. Run plain `git diff` to read the changes themselves. Read the diffs: a stray blank line removed from `breakout.py` (three blank lines between definitions instead of two), one added to `replay.py`, and the long recorded-line assertions split so that each fits in 120 characters.
 
-**Understand: what a formatter guarantees.** ruff reads each file into the same structure Python itself builds when it compiles code, the **syntax tree**, then writes the code out again from that tree by its own fixed rules. Because it works from the structure, it only ever changes layout: spacing, line breaks, quotes, blank lines. It never changes what the code does. Run the tests to see that for yourself, then commit the formatting **on its own**:
+**Understand: what a formatter guarantees.** ruff reads each file into the same structure Python itself builds when it compiles code, the **syntax tree**, then writes the code out again from that tree by its own fixed rules. Because it works from the structure, it only ever changes layout: spacing, line breaks, quotes, blank lines. It never changes what the code does. You can see the tree it works from, with Python's own `ast` module (**abstract syntax tree**):
+
+```powershell
+.venv\Scripts\python -c "import ast; print(ast.dump(ast.parse('x = 1 +   2')))"
+.venv\Scripts\python -c "import ast; print(ast.dump(ast.parse('x=1+2')))"
+```
+
+Both print the same tree, `Module(body=[Assign(targets=[Name(id='x', ...)], value=BinOp(left=Constant(value=1), op=Add(), right=Constant(value=2)))])`: the spaces were never part of the program, only of the text. A formatter rewrites the text from the tree, so it can't change the program. Run the tests to see that for yourself, then commit the formatting **on its own**:
 
 ```powershell
 .venv\Scripts\python -m pytest -q
@@ -162,7 +170,7 @@ git commit -m "Format the code with ruff"
 
 A formatting commit that changes nothing else is easy to review ("it's only layout"), and keeps formatting noise out of the diffs of commits that change behaviour.
 
-> **Engineer:** formatting is a decision a team makes **once**, by choosing a tool and a configuration, and then never discusses again. Running the formatter before every commit means every file in the project always looks the way the tool says, so a diff shows only what someone actually changed.
+> **Engineer:** formatting is a decision a team makes **once**, by choosing a tool and a configuration, and then never discusses again. Running the formatter before every commit means every file in the project always looks the way the tool says, so a diff shows only what someone actually changed. Remembering to is the weak point, so it's usually made automatic: editors can format a file every time it's saved (VS Code's *Format on Save*, with ruff as the formatter), and a git **hook** can run the check before every commit (a challenge below); Chapter 17's continuous integration runs it on every push.
 
 ```check
 run ".venv/Scripts/python -m ruff format --check ." stdout="already formatted" label="every file is formatted" -- Run .venv\Scripts\python -m ruff format .
@@ -174,6 +182,30 @@ git-clean
 ## What the linter finds
 
 **Build:** ask ruff what else it notices, and apply the fixes it can make safely.
+
+First, see a linter on mistakes you made on purpose. Create `scratch/lint_me.py`:
+
+```python
+import os
+
+
+def f(x):
+    y = 1
+    if x == None:
+        return 0
+```
+
+```powershell
+.venv\Scripts\python -m ruff check scratch\lint_me.py
+```
+
+```text
+scratch\lint_me.py:1:8: F401 [*] `os` imported but unused
+scratch\lint_me.py:5:5: F841 Local variable `y` is assigned to but never used
+Found 2 errors.
+```
+
+(ruff prints each finding with the line shown and marked; the lines above are the gist.) Each finding has a **rule code** and says what it saw: an import nothing uses (it runs, and misleads the reader), and a variable given a value nobody reads (often a typo for one that is read). `.venv\Scripts\python -m ruff rule F841` prints the rule's full explanation. And notice what it **didn't** report: `x == None`, which should be `x is None` (lesson 0.3). There's a rule for that, `E711`, but it isn't in the set the pinned version runs by default: a linter only finds what its rules look for. Now the project:
 
 ```powershell
 .venv\Scripts\python -m ruff check .
@@ -292,6 +324,18 @@ git-message "lint"
 git-clean
 ```
 
+## Challenge: read three rules
+
+**Optional, ★.** Run `ruff rule` on `F401`, `B006` and `UP006`. Write, in your own words in a scratch file, what each one catches and why it matters, and add a few lines that trigger each (`ruff check --select F401,B006,UP006 scratch\yourfile.py` runs just those). Reading a tool's documentation is a skill of its own.
+
+## Challenge: a pre-commit hook
+
+**Optional, ★★.** Git runs the file `.git\hooks\pre-commit`, if it exists, before every commit, and refuses the commit if it fails. Write one (a short shell script, starting `#!/bin/sh`, which Git for Windows can run) that runs `.venv/Scripts/python -m ruff format --check .` and `.venv/Scripts/python -m ruff check .`. Prove it by trying to commit a badly formatted file. The definition of done, enforced by a tool instead of memory.
+
+## Challenge: a stricter family
+
+**Optional, ★★.** Add a `[lint]` section to `ruff.toml` with `extend-select = ["B"]` (the **flake8-bugbear** rules, likely bugs and design problems), run `ruff check .`, and for each finding decide: fix it, or keep it with `# noqa: CODE` and a comment saying why. A linter's suggestion is a question, not an order. In a copy.
+
 ## What did we actually learn? (Chapter 3)
 
 This chapter turned loose variables and tuples into objects with names, rules and responsibilities, and changed how features get built:
@@ -307,5 +351,9 @@ This chapter turned loose variables and tuples into objects with names, rules an
 - **Tools decide what humans shouldn't argue about**: the formatter for layout, the linter for common mistakes, both in the definition of done.
 
 The technical debt list is much shorter. Look at what's left: `main` still mixes the game loop with test-run machinery (`settings.test_frames` decides three different things), arguments are still parsed by hand, and the game can only be in one state, *playing*, with "won" and "lost" detected by checking numbers. And everything is still in one file, `breakout.py`, nearly 300 lines long. **Chapter 4** makes it a real project: a package with modules, a proper command-line interface, game states (title, playing, paused, game over) as a state machine, and your first git branches.
+
+**Chapter 3's challenges**, to come back to: a ball that knows its speed ★, two balls ★★, an aliasing bug on purpose ★★ (3.1); a paddle made of vectors ★, a Colour type ★★, dataclass, by hand ★★★ (3.2); strong bricks ★, a spike, then tests ★★, find the fake ★★ (3.3); bricks that can't be made wrong ★, a paddle you can set ★★, no forgotten cases ★★ (3.4); replay the cracks ★, a second client for the model ★★, the game owns the paddle bounce ★★★ (3.5); read three rules ★, a pre-commit hook ★★, a stricter family ★★ (this lesson).
+
+None of these ideas is about games. A web service's request and response are dataclasses (or pydantic models, Chapter 5); HTTP status codes are an enum; a shopping basket keeps an invariant (the total is the sum of its lines) the way the paddle does; and every serious application separates its model from its screens, as `Game` is separated from `draw`.
 
 In C# and Java, formatting and linting are just as standard: `dotnet format` and analyzers (with rule codes like `CA1822`) for C#, and Checkstyle, SpotBugs or the Google Java Format tool for Java, usually run automatically before code is accepted. The idea is identical: decide once, enforce by tool.

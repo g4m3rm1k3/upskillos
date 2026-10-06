@@ -587,7 +587,7 @@ const whereAs = (row) => ({
   editFiles: { 'breakout/level.py': [[WHERE_BASIC, `    parts = [f"${row}" if isinstance(part, int) else part for part in location]\n    return ", ".join(parts) or "the level"\n`]] },
 });
 const L55 = 'forge-data/05-05-settings-the-player-keeps';
-const BANANA_CASE = String.raw`            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+const BANANA_CASE = String.raw`            "controls.left: unknown key 'banana': use a-z, or left, right, up, down, space or return",
         ),
 `;
 const CLASH_CASE = String.raw`        ('[controls]\nleft = "a"\nright = "a"\n', "controls: left and right both use 'a'"),
@@ -678,6 +678,24 @@ const BEST_STUB = `    raise NotImplementedError("lesson 6.3's Your turn")\n`;
 const bestIs = (body) => ({ editFiles: { 'breakout/scores.py': [[BEST_STUB, body]] } });
 const BEST_SQL = '    (points,) = db.execute("SELECT MAX(points) FROM scores WHERE level = ?", (level,)).fetchone()\n    return points\n';
 const L64 = 'forge-saving/06-04-bobs-castle';
+const ATTACK_DB = String.raw`from datetime import UTC, datetime
+from pathlib import Path
+
+from breakout.scores import Score, add_score, open_scores
+
+db = open_scores(Path("attack.db"))
+when = datetime(2026, 10, 5, 12, 0, tzinfo=UTC)
+for level, points in [("Classic", 560), ("Classic", 40), ("Castle", 260)]:
+    add_score(db, Score(level, points, when))
+db.close()
+print("made attack.db: three scores")
+`;
+const EVIL_LEVEL = String.raw`{
+  "name": "x' OR '1'='1",
+  "lives": 3,
+  "wall": ["BBBBBBBB"]
+}
+`;
 const REPORT_SELECT_F = `        f"SELECT COUNT(*), MAX(points), AVG(points) FROM scores WHERE level = '{level}'"\n    ).fetchone()`;
 const REPORT_SELECT_Q = `        "SELECT COUNT(*), MAX(points), AVG(points) FROM scores WHERE level = ?", (level,)\n    ).fetchone()`;
 const REPORT_DELETE_F = `        return db.execute(f"DELETE FROM scores WHERE level = '{level}'").rowcount`;
@@ -843,6 +861,27 @@ def test_pausing_on_the_title_screen_does_nothing(new_game: model.Game):
 `,
 };
 const L71 = 'forge-records/07-01-who-played';
+const L73 = 'forge-records/07-03-how-is-each-level-going';
+const STATS_SQL = '.venv\\Scripts\\python -m sqlite3 stats.db';
+const LEVEL_TABLE = "def level_table(db: sqlite3.Connection) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        GROUP BY level\n        ORDER BY level\n        \"\"\"\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n    ]";
+const levelTableIs = (body) => ({ editFiles: { 'breakout/report.py': [[LEVEL_TABLE, body]] } });
+const L74 = 'forge-records/07-04-play-sessions';
+const SESSIONS_SQL = '.venv\\Scripts\\python -m sqlite3 sessions.db';
+const BEFORE_FORGET = "\n\ndef forget(db: sqlite3.Connection, level: str) -> int:";
+const sessionsReportIs = (fn) => ({ editFiles: { 'breakout/report.py': [[BEFORE_FORGET, '\n\n' + fn + BEFORE_FORGET]] } });
+const L72 = 'forge-records/07-02-a-database-thats-already-out-there';
+const LOAD_NO_WON = "    rows = db.execute(\n        \"\"\"\n        SELECT players.name, scores.level, scores.points, scores.played_at\n        FROM scores JOIN players ON players.id = scores.player_id\n        ORDER BY scores.id\n        \"\"\"\n    )\n    return [Score(name, level, points, datetime.fromisoformat(played_at)) for name, level, points, played_at in rows]";
+const LOAD_WON = "    rows = db.execute(\n        \"\"\"\n        SELECT players.name, scores.level, scores.points, scores.played_at, scores.won\n        FROM scores JOIN players ON players.id = scores.player_id\n        ORDER BY scores.id\n        \"\"\"\n    )\n    return [\n        Score(name, level, points, datetime.fromisoformat(played_at), None if won is None else bool(won))\n        for name, level, points, played_at, won in rows\n    ]";
+const LOAD_WON_RAW = "    rows = db.execute(\n        \"\"\"\n        SELECT players.name, scores.level, scores.points, scores.played_at, scores.won\n        FROM scores JOIN players ON players.id = scores.player_id\n        ORDER BY scores.id\n        \"\"\"\n    )\n    return [\n        Score(name, level, points, datetime.fromisoformat(played_at), won)\n        for name, level, points, played_at, won in rows\n    ]";
+const SAVE_NO_WON = "            add_score(db, Score(player, level.name, game.score, datetime.now(UTC)))\n";
+const SAVE_WON = "            add_score(db, Score(player, level.name, game.score, datetime.now(UTC), game.state == GameState.WON))\n";
+const HALF_DEMO = ".venv\\Scripts\\python -c \"from pathlib import Path; from breakout import scores; scores.MIGRATIONS.append('CREATE TABLE half (x INTEGER); NOT SQL;'); scores.open_scores(Path('half.db'))\"";
+const winsAnswer = (load, app) => ({
+  editFiles: {
+    ...(load ? { 'breakout/scores.py': [[LOAD_NO_WON, load]] } : {}),
+    ...(app ? { 'breakout/app.py': [[SAVE_NO_WON, SAVE_WON]] } : {}),
+  },
+});
 const CONNECT = '    db = sqlite3.connect(path)\n';
 const FK_ON = '    db = sqlite3.connect(path)\n    db.execute("PRAGMA foreign_keys = ON")\n';
 const FIXTURE_OPEN = '    connection = open_scores(tmp_path / "scores.db")\n';
@@ -903,6 +942,14 @@ export const WALKTHROUGH = {
     ],
   },
 
+  [`${L01}#Challenge: an exit code you choose`]: {
+    files: { 'count_args.py': "import sys\n\ncount = len(sys.argv) - 1\nprint(f\"{count} arguments\")\nsys.exit(count)\n" },
+    wrong: [{ name: 'prints the count but always exits with 0', files: { 'count_args.py': "import sys\n\ncount = len(sys.argv) - 1\nprint(f\"{count} arguments\")\nsys.exit(0)\n" }, fails: [0] }],
+  },
+  [`${L01}#Challenge: find a program the way the shell does`]: {
+    files: { 'which.py': "import os\nimport sys\n\nname = sys.argv[1]\nfor folder in os.environ[\"PATH\"].split(\";\"):\n    path = os.path.join(folder, name + \".exe\")\n    if os.path.exists(path):\n        print(path)\n        sys.exit(0)\nprint(f\"{name} not found\")\nsys.exit(1)\n" },
+    wrong: [{ name: 'says not found, but exits with 0', files: { 'which.py': "import os\nimport sys\n\nname = sys.argv[1]\nfor folder in os.environ[\"PATH\"].split(\";\"):\n    path = os.path.join(folder, name + \".exe\")\n    if os.path.exists(path):\n        print(path)\n        sys.exit(0)\nprint(f\"{name} not found\")\nsys.exit(0)\n" }, fails: [1] }],
+  },
   [`${L02}#Make a virtual environment`]: { run: ['python -m venv .venv'] },
   [`${L02}#Pin the packages`]: {
     wrong: [
@@ -927,6 +974,11 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'only the setup line, no package check', files: { 'check_setup.py': CHECK_SETUP }, fails: [0] },
     ],
+  },
+
+  [`${L02}#Challenge: two Pythons, explained`]: {
+    files: { 'which_python.py': "# The environment's Python shows .venv for the first three lines and its own site-packages;\n# the system Python shows its installation folder for all of them.\nimport sys\n\nprint(sys.executable)\nprint(sys.prefix)\nprint(sys.base_prefix)\nprint(next(p for p in sys.path if p.endswith(\"site-packages\")))\n" },
+    wrong: [{ name: 'prints the base Python only', files: { 'which_python.py': "import sys\nprint(sys.base_prefix)\n" }, fails: [0] }],
   },
 
   [`${L03}#A program that crashes`]: {
@@ -1392,8 +1444,8 @@ export const WALKTHROUGH = {
     ],
   },
   [`${L43}#Every tool's settings in one file`]: { run: ['git rm pytest.ini ruff.toml pyrightconfig.json'] },
-  [`${L43}#Install the project`]: {
-    run: [PIP_INSTALL],
+  [`${L43}#Install the project`]: { run: [PIP_INSTALL] },
+  [`${L43}#The metadata stays out of Git`]: {
     wrong: [
       // No pip in a wrong answer: its copy shares the real .venv, and an editable install there would
       // point the real environment at the copy. git check-ignore works on a path that doesn't exist yet.
@@ -1597,10 +1649,13 @@ export const WALKTHROUGH = {
     ],
   },
   [`${L64}#When data becomes code`]: {
+    files: { 'scratch/attack_db.py': ATTACK_DB, 'scratch/evil.json': EVIL_LEVEL },
     run: [
-      'Copy-Item scores.db attack.db',
+      '.venv\\Scripts\\python scratch\\attack_db.py',
       `.venv\\Scripts\\python -m breakout.report attack.db "x' OR '1'='1"`,
       `.venv\\Scripts\\python -m breakout.report attack.db "x' OR '1'='1" --forget`,
+      '.venv\\Scripts\\python scratch\\attack_db.py',
+      `.venv\\Scripts\\python -c "import sqlite3; from pathlib import Path; from breakout.level import load_level; from breakout.report import forget; db = sqlite3.connect('attack.db'); print('forgot', forget(db, load_level(Path('scratch/evil.json')).name), 'scores')"`,
       'Remove-Item attack.db',
     ],
   },
@@ -1620,7 +1675,7 @@ export const WALKTHROUGH = {
       { name: 'not committed', ...reportFix(), fails: [7, 8] },
     ],
   },
-  [`${L65}#A fixture of your own`]: { run: ['Remove-Item watch_fixture.py'] },
+  [`${L65}#Watch a fixture run`]: { run: ['Remove-Item watch_fixture.py'] },
   [`${L65}#Your turn: one game, set up once`]: {
     files: GAME_FIXTURES,
     run: ['git add .', 'git commit -m "Share the game setup between tests with fixtures"'],
@@ -1662,6 +1717,41 @@ export const WALKTHROUGH = {
         fails: [0],
       },
       { name: 'not committed', editFiles: { 'breakout/scores.py': [[CONNECT, FK_ON]] }, fails: [5, 6] },
+    ],
+  },
+  [`${L72}#Which design is this file?`]: { run: [`${PLAYERS_SQL} "PRAGMA user_version = 7"`] },
+  [`${L72}#A migration that stops halfway`]: { run: [HALF_DEMO, HALF_DEMO], allowFailure: true },
+  [`${L72}#Your turn: wins, recorded and read back`]: {
+    ...winsAnswer(LOAD_WON, true),
+    run: ['git add .', 'git commit -m "Save whether each game was won, and read it back"'],
+    wrong: [
+      { name: 'only the app changed: wins saved, never read', ...winsAnswer(null, true), run: ['git add .', 'git commit -m "won"'], fails: [0, 3] },
+      { name: 'read back as 1 and 0, not True and False', ...winsAnswer(LOAD_WON_RAW, true), run: ['git add .', 'git commit -m "won"'], fails: [0, 3] },
+      { name: 'read back, but the app never says', ...winsAnswer(LOAD_WON, false), run: ['git add .', 'git commit -m "won"'], fails: [2] },
+      { name: 'not committed', ...winsAnswer(LOAD_WON, true), fails: [6, 7] },
+    ],
+  },
+  [`${L73}#Groups, by hand`]: { run: ["CREATE TABLE scores (id INTEGER PRIMARY KEY, level TEXT NOT NULL, points INTEGER NOT NULL, won INTEGER) STRICT", "INSERT INTO scores (level, points, won) VALUES ('Classic', 560, 1), ('Classic', 70, 0), ('Castle', 150, 0), ('Classic', 40, 0), ('Classic', 310, NULL), ('Tiny', 20, NULL)"].map((sql) => `${STATS_SQL} "${sql}"`) },
+  [`${L73}#Your turn: only the levels played often enough`]: {
+    ...levelTableIs("def level_table(db: sqlite3.Connection, min_played: int = 1) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        GROUP BY level\n        HAVING COUNT(*) >= ?\n        ORDER BY level\n        \"\"\",\n        (min_played,),\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n    ]"),
+    run: ['git add .', 'git commit -m "Leave out levels with too few games, with HAVING"'],
+    wrong: [
+      { name: 'filtered in Python, after the database sent every level', ...levelTableIs("def level_table(db: sqlite3.Connection, min_played: int = 1) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        GROUP BY level\n        ORDER BY level\n        \"\"\"\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n        if played >= min_played\n    ]"), run: ['git add .', 'git commit -m "HAVING"'], fails: [1] },
+      { name: 'WHERE on a count: no groups exist yet', ...levelTableIs("def level_table(db: sqlite3.Connection, min_played: int = 1) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        WHERE COUNT(*) >= ?\n        GROUP BY level\n        ORDER BY level\n        \"\"\",\n        (min_played,),\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n    ]"), run: ['git add .', 'git commit -m "HAVING"'], fails: [0, 2] },
+      { name: 'the number pasted into the SQL', ...levelTableIs("def level_table(db: sqlite3.Connection, min_played: int = 1) -> list[str]:\n    rows = db.execute(\n        f\"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        GROUP BY level\n        HAVING COUNT(*) >= {min_played}\n        ORDER BY level\n        \"\"\"\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n    ]"), run: ['git add .', 'git commit -m "HAVING"'], fails: [4] },
+      { name: 'not committed', ...levelTableIs("def level_table(db: sqlite3.Connection, min_played: int = 1) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT level, COUNT(*), COALESCE(SUM(won), 0), MAX(points), AVG(points)\n        FROM scores\n        GROUP BY level\n        HAVING COUNT(*) >= ?\n        ORDER BY level\n        \"\"\",\n        (min_played,),\n    )\n    return [\n        f\"{level}: {played} played, {wins} won, best {best}, average {average:.0f}\"\n        for level, played, wins, best, average in rows\n    ]"), fails: [5, 6] },
+    ],
+  },
+  [`${L74}#A session is a row, changed later`]: { run: ["CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE) STRICT", "CREATE TABLE sessions (id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL REFERENCES players (id), started_at TEXT NOT NULL, ended_at TEXT) STRICT", "INSERT INTO players (name) VALUES ('Mia')", "INSERT INTO sessions (player_id, started_at) VALUES (1, '2026-10-05T15:00:00+00:00'), (1, '2026-10-05T17:00:00+00:00')", "UPDATE sessions SET ended_at = '2026-10-05T15:45:30+00:00' WHERE id = 1"].map((sql) => `${SESSIONS_SQL} "${sql}"`) },
+  [`${L74}#Every session, even the empty ones`]: { run: ["CREATE TABLE scores (id INTEGER PRIMARY KEY, session_id INTEGER REFERENCES sessions (id), points INTEGER NOT NULL) STRICT", "INSERT INTO scores (session_id, points) VALUES (1, 100), (1, 200)"].map((sql) => `${SESSIONS_SQL} "${sql}"`) },
+  [`${L74}#Your turn: how long did I play?`]: {
+    ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"),
+    run: ['git add .', 'git commit -m "Report each session: how long, and how many games"'],
+    wrong: [
+      { name: 'JOIN: the session with no games disappears', ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), run: ['git add .', 'git commit -m "session"'], fails: [0, 1] },
+      { name: 'COUNT(*): an empty session claims one game', ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(*)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), run: ['git add .', 'git commit -m "session"'], fails: [0, 1] },
+      { name: "every player's sessions, not just this one's", ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\"\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), run: ['git add .', 'git commit -m "session"'], fails: [0, 1] },
+      { name: 'not committed', ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), fails: [5, 6] },
     ],
   },
 };

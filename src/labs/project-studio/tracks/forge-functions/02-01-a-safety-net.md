@@ -32,7 +32,7 @@ Then install, exactly as in lesson 0.2:
 pytest 9.1.1
 ```
 
-**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, and Chapter 51 shows how to pin everything when a release needs to be exactly reproducible.
+**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, until it isn't: if a new `pluggy` comes out next month with a change pytest didn't expect, a fresh install on another machine gets it, and pytest breaks there but not here. `pip freeze` (lesson 0.2) shows the exact versions you have today, and Chapter 56 shows how to pin everything when a release needs to be exactly reproducible.
 
 ```check
 contains requirements.txt "pytest==9.1.1"
@@ -91,15 +91,36 @@ tests\test_characterisation.py .                                         [100%]
 
 **Understand: the helpers, piece by piece.**
 
-`Path(__file__)` is the path of this test file, as a `Path` object from Python's `pathlib` module. An **object** is a value that carries its own data together with functions that work on it, called its **methods**, reached with a dot; you've used them already, like `"600".isdigit()`. A `Path` object represents a file path, with methods for working with it. `.parent` is the folder it's in (`tests`), and `.parent.parent` the folder above that (the project). The `/` operator joins a `Path` and a name, so `GAME` is the full path of `breakout.py`, however the tests are started and from whatever folder. Lesson 0.1's rule about relative paths, applied: no hidden input.
+`Path(__file__)` is the path of this test file, as a `Path` object from Python's `pathlib` module (**`__file__`** is lesson 0.2's: the path of the file being run). An **object** is a value that carries its own data together with functions that work on it, called its **methods**, reached with a dot; you've used them already, like `"600".isdigit()`. A `Path` object represents a file path, with methods for working with it. `.parent` is the folder it's in (`tests`), and `.parent.parent` the folder above that (the project). The `/` operator joins a `Path` and a name, so `GAME` is the full path of `breakout.py`, however the tests are started and from whatever folder. Lesson 0.1's rule about relative paths, applied: no hidden input. Try it on a made-up path in the REPL:
+
+```text
+>>> from pathlib import Path
+>>> p = Path(r"C:\forge\tests\test_c.py")
+>>> p.parent
+WindowsPath('C:/forge/tests')
+>>> p.parent.parent / "breakout.py"
+WindowsPath('C:/forge/breakout.py')
+```
+
+(`r"..."` is a **raw string**: backslashes in it are just backslashes, not the start of an escape like lesson 0.2's `\n`. Python shows Windows paths with `/`, which Windows accepts too.)
 
 `subprocess.run([...])` starts another program as a separate **process**, exactly as the shell did in lesson 0.1, waits for it to finish, and returns a result object. The list is the program and its arguments, already split into words:
 
 - `sys.executable` is the path of the Python running this test: the `.venv` one, so the game runs with the same packages.
 - `str(GAME)` turns the `Path` back into text, which is what a command line is made of.
-- `capture_output=True` keeps the program's standard output and error instead of letting them appear in the terminal, and `text=True` gives them back as strings rather than bytes.
+- `capture_output=True` keeps the program's standard output and error instead of letting them appear in the terminal, and `text=True` gives them back as strings rather than bytes. Both are **keyword arguments**: the value is matched to the parameter by its name, not by its position, so optional settings can be given in any order or left out. (`print("a", end="")` is one you may have seen.)
 
-The result has `.stdout` (everything the game printed) and `.returncode` (its exit code).
+The result has `.stdout` (everything the game printed) and `.returncode` (its exit code). See one for yourself, with a tiny program instead of the game:
+
+```powershell
+.venv\Scripts\python -c "import subprocess, sys; r = subprocess.run([sys.executable, '-c', 'print(42); raise SystemExit(3)'], capture_output=True, text=True); print(repr(r.stdout), r.returncode)"
+```
+
+```text
+'42\n' 3
+```
+
+The inner program printed `42` and ended with exit code 3. `.stdout` is the text it printed, newline included (`repr`, lesson 0.3, shows it as `\n`), and `.returncode` is 3. (`raise SystemExit(3)` is what `sys.exit(3)` does inside; lesson 2.4 shows why that matters.)
 
 **`*args`** in `def play(*args)` collects all the positional arguments the function is given into a **tuple** named `args` (a tuple is a fixed sequence of values written in round brackets, like a list that can't be changed): `play("--test-run", "600")` gives `args = ("--test-run", "600")`. In the list `[sys.executable, str(GAME), *args]`, the `*` does the opposite: it **unpacks** the tuple, putting its items into the list one by one. Traced:
 
@@ -112,6 +133,25 @@ last_line("--test-run", "600", "--hold", "auto")
 ```
 
 `.strip()` removes the trailing newline, `.splitlines()` splits the text into a list of lines, and `[-1]` is the last one: negative indexes count from the end.
+
+Packing and unpacking, tried on their own in the REPL:
+
+```text
+>>> def show(*args):
+...     print(args)
+...
+>>> show()
+()
+>>> show("--test-run", "600")
+('--test-run', '600')
+>>> words = ("a", "b")
+>>> ["first", *words, "last"]
+['first', 'a', 'b', 'last']
+>>> ["first", words, "last"]
+['first', ('a', 'b'), 'last']
+```
+
+With no arguments, `args` is an empty tuple, `()`. The last two lines are the difference that matters in `play`: `*words` spreads the items into the list, and `words` alone puts the whole tuple in as one item.
 
 **Why `python -m pytest`, not `pytest`?** The same reason as `python -m pip` in lesson 0.2: it can only be this environment's pytest.
 
@@ -240,6 +280,7 @@ Notice what the slow-frame test records: `lives=2`. With bricks in the way, the 
 **These tests are slow.** Add `--durations=3` to see where the time goes:
 
 ```text
+============================= slowest 3 durations =============================
 2.51s call     tests/test_characterisation.py::test_autopilot_wins
 0.97s call     tests/test_characterisation.py::test_nobody_at_the_paddle_loses
 0.95s call     tests/test_characterisation.py::test_autopilot_plays_for_ten_seconds
@@ -321,6 +362,18 @@ run ".venv/Scripts/python -m pytest -q -k left_edge" stdout="1 passed" label="a 
 run ".venv/Scripts/python -m pytest -q -k stays_lost" stdout="1 passed" label="a test whose name contains stays_lost passes"
 run ".venv/Scripts/python -m pytest -q" stdout="8 passed" label="all eight tests pass"
 ```
+
+## Challenge: pin a different slow frame
+
+**Optional, ★.** Add characterisation tests for `--lag-at 57` and for a `--hold right` run long enough to reach the right edge. Record each line by running the command yourself, and make each test fail once on purpose before trusting it. Recording, then proving the recording can fail, with no help this time.
+
+## Challenge: nothing on the side
+
+**Optional, ★★.** The tests only look at standard output. Make `play` accept a `timeout` and pass it to `subprocess.run` (a game stuck in a loop then fails the test with `subprocess.TimeoutExpired`, instead of hanging), and add a test that a normal 600-frame run writes nothing to standard error: `assert play(...).stderr == ""`. Then add `1 / 0` after the game's summary print: only your new test notices. A test only sees what it looks at. Undo the `1 / 0` afterwards.
+
+## Challenge: a golden-master file
+
+**Optional, ★★★.** Store the full output of a 10,000-frame autopilot run in `tests/golden/autopilot.txt`, and a test that compares a new run with it (`Path.read_text()` reads a file's text). Add a small script, `record_golden.py`, that rewrites the file on purpose. Recording becomes a separate, deliberate act, which is called **approval testing**.
 
 ## What did we actually learn?
 

@@ -219,7 +219,7 @@ def number_after(args: list[str], name: str) -> int | None:
 
 def parse_args(args: list[str]) -> Settings:
     # A test run lets another program play the game, with no window:
-    #   python breakout.py --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]
+    #   python -m breakout --test-run FRAMES [--hold left|right|none|auto] [--lag-at FRAME] [--seed N]
     hold = Hold.NONE
     if "--hold" in args:
         i = args.index("--hold")
@@ -861,6 +861,28 @@ run ".venv/Scripts/python -m pyright breakout" stdout="0 errors"
 
 **Build:** start moving drawing into its own module, the obvious way, and find out why it doesn't work.
 
+First, a circle on its own, small enough to see everything: a package with two modules that import each other. In the scratch folder, make `scratch\circle\__init__.py` (empty), `scratch\circle\one.py`:
+
+```python
+from circle import two
+
+X = 1
+```
+
+and `scratch\circle\two.py`:
+
+```python
+from circle.one import X
+```
+
+From the scratch folder, run `..\.venv\Scripts\python -c "import circle.one"`:
+
+```text
+ImportError: cannot import name 'X' from partially initialized module 'circle.one' (most likely due to a circular import) (C:\Users\you\Documents\forge\scratch\circle\one.py)
+```
+
+`one` started, and stopped at its first line to import `two`; `two` asked `one` for `X`, which `one` hadn't reached yet. Now move `X = 1` in `one.py` **above** the import, and run it again: no error. So the failure is about order, not the circle itself, and that's exactly why fixing a circle by shuffling lines is fragile: the next person to tidy the imports into the usual place, at the top, breaks it again. The game's version follows.
+
 First, make `app.py` import `draw` from a new module, `breakout.draw`, and keep the four colours in `app.py` for now (the drawing code needs them, and they were next to `draw` in the model). The colours are also still in `model.py`; this step deliberately takes them from `app.py`, the obvious-looking place, to show what goes wrong:
 
 ```python file=breakout/app.py
@@ -1021,6 +1043,14 @@ The fix comes from asking which module the colours **belong** to. They're used o
 | `test_the_model_depends_on_nothing_else_in_the_game` | `breakout.model` | `breakout`, `breakout.model` |
 | `test_drawing_depends_only_on_the_model` | `breakout.draw` | `breakout`, `breakout.draw`, `breakout.model` |
 
+Each test runs a small program in a fresh Python with `python -c`. A program in `-c` can have several lines: in the text, `\n` is the new line between them (lesson 0.2), and four spaces indent a loop's body. For `breakout.model`, the program the hints build is:
+
+```python
+import sys, breakout.model
+for name in sys.modules:
+    print(name)
+```
+
 Every set in the table includes `breakout` itself, because importing `breakout.settings` first imports the package `breakout` (it runs `__init__.py`), then the module.
 
 **Sets, new here.** The tests compare **sets**: collections with no order and no repeats, written in braces, `{"breakout", "breakout.model"}`. Two sets are `==` when they hold the same items, whatever order they were written or found in, which is exactly right for "these modules, and no others". A **set comprehension** builds one the way a list comprehension builds a list, with braces: `{name for name in names if name.startswith("breakout")}`. Try it:
@@ -1109,14 +1139,28 @@ git-message "modules"
 git-clean
 ```
 
+## Challenge: a circle of three
+
+**Optional, ★.** In the scratch folder, make three modules that import each other in a ring, `a → b → c → a`, each importing a name from the next. Predict which name fails, and in which file, before running it.
+
+## Challenge: the rule as data
+
+**Optional, ★★.** Replace the three architecture tests with one table, `ALLOWED = {"breakout.settings": {...}, "breakout.model": {...}, "breakout.draw": {...}}`, and one test that checks every row and reports every module that breaks its rule (not just the first). The rule becomes data you can read at a glance. On a branch.
+
+## Challenge: imports without running anything
+
+**Optional, ★★★.** Write `scratch\imports.py`, which uses the standard library's `ast` module (lesson 3.6) to list every `import` and `from ... import` in each `breakout\*.py`, without importing or running any of them. Compare its answer with `loaded_by`. Reading code instead of running it is how real architecture-checking tools work.
+
 ## What did we actually learn?
 
 - **One module, one job**: settings, the model, drawing, the application. **Cohesion** is how well a module's contents belong together.
 - **Imports run modules**, and `sys.modules` records a module as soon as its import starts. A **circular import** finds the other module half-finished.
-- **A circle means misplaced code.** Ask what each piece belongs to, and move it; don't reach for tricks to make the circle work.
+- **A circle means misplaced code.** Ask what each piece belongs to, and move it; don't reach for tricks to make the circle work. You'll see two tricks in other people's code: an import moved **inside a function** (it runs only when the function is called, by which time the other module has finished), and imports under `if TYPE_CHECKING:` (from `typing`), which pyright reads and Python skips. Both make the error go away and leave the two modules just as tangled.
 - **Dependency direction**: settings and the model depend on nothing else in the game; drawing depends on the model; the app depends on everything. Arrows point one way: down.
 - **Architecture tests** turn that rule into something a failing test enforces.
 - **Import groups** (standard library, installed, project) show what a module depends on, inside and out.
+
+An arrow means *imports*:
 
 ```text
                  app.py          ← the outside world: pygame window, keys, clock

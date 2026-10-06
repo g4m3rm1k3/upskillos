@@ -52,7 +52,7 @@ def test_the_autopilot_steers_towards_the_ball():
 
 **Understand: the shape of a unit test.** Almost every unit test has three parts, often called **arrange, act, assert**:
 
-1. **Arrange**: set up the inputs. In the paddle tests, that's making a paddle `Rect` and a ball `Rect` at known positions.
+1. **Arrange**: set up the inputs. In the paddle-bounce tests two steps on, that will mean making a paddle `Rect` and a ball `Rect` at known positions; here, the arguments are all the arranging needed.
 2. **Act**: call the one function being tested.
 3. **Assert**: compare what it returned with what it should return.
 
@@ -74,7 +74,7 @@ autopilot(500, 270)        500 > 320 + 10                                  →  
 
 `start_ball()` returns floats, `320.0`, and the test compares them with whole numbers, `320`. Python treats `320.0 == 320` as `True`, so that's fine *here*, because each of these values comes out exact. That isn't always so with fractions: remember it for lesson 2.6.
 
-**Understand: each test is one behaviour.** `test_the_autopilot_steers_towards_the_ball` has three `assert`s, all about one behaviour, steering, so one test is right. If one fails, the test stops at that line, and pytest shows which. Mixing unrelated behaviours in one test hides failures: a failed first `assert` means nothing after it was checked at all.
+**Understand: each test is one behaviour.** `test_the_autopilot_steers_towards_the_ball` has three `assert`s, all about one behaviour, steering, so one test is right. If one fails, the test stops at that line, and pytest shows which. Mixing unrelated behaviours in one test hides failures: a failed first `assert` means nothing after it was checked at all. (pytest can also run one test once per case and report each separately, with `@pytest.mark.parametrize`; Chapter 5 uses it, and a challenge below tries it now.)
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_breakout.py" stdout="8 passed" label="eight unit tests pass" -- Copy the tests exactly; if one fails, read its E lines: the difference is between your function and the lesson's.
@@ -252,7 +252,21 @@ def test_the_paddle_ignores_a_ball_moving_up():
     assert breakout.bounce_off_paddle(ball, paddle, 180, -240) == (180, -240)
 ```
 
-**Understand: the arranged positions.** `pygame.Rect(270, 436, 100, 14)` is the paddle exactly where the game starts it: left edge 270, top 436 (lesson 1.3 worked that out from `midbottom` at 450). The ball's `Rect` is 12 × 12, and `ball.center = (320, 438)` puts it at x 314 to 325 and y 432 to 443: its bottom 6 rows overlap the paddle's top rows, which is what makes `colliderect` true. Then:
+**Understand: the arranged positions.** `pygame.Rect(270, 436, 100, 14)` is the paddle exactly where the game starts it: left edge 270, top 436 (lesson 1.3 worked that out from `midbottom` at 450). The ball's `Rect` is 12 × 12, and `ball.center = (320, 438)` puts it at x 314 to 325 and y 432 to 443: its bottom 8 rows (y 436 to 443) overlap the paddle's top rows, which is what makes `colliderect` true. Check the arrangement in the REPL before trusting it:
+
+```text
+>>> import pygame
+>>> paddle = pygame.Rect(270, 436, 100, 14)
+>>> ball = pygame.Rect(0, 0, 12, 12)
+>>> ball.center = (320, 438)
+>>> ball, ball.colliderect(paddle)
+(Rect(314, 432, 12, 12), True)
+>>> ball.center = (320, 420)
+>>> ball, ball.colliderect(paddle)
+(Rect(314, 414, 12, 12), False)
+```
+
+A test's arranged values are worth checking on their own like this: a test built on a ball that doesn't actually touch the paddle would test nothing. Then:
 
 ```text
 centre x 320, moving down (vy = 240):   offset (320 - 320) / 50 =  0  →  vx = 300 × 0.8 × 0 =   0,  vy = -240   →  (0, -240)
@@ -423,7 +437,7 @@ Put it back:
 git restore breakout.py
 ```
 
-**Understand: two kinds of test, two jobs.** The characterisation test says *something changed in the game* and nothing about where. The unit tests say *the top wall is wrong*, and their names say what the right behaviour is. That's why a project needs both kinds: tests of small pieces, which are fast and precise, and tests of the whole, which catch problems in how the pieces work together. This balance has a name, the **testing pyramid**: many fast unit tests at the bottom, fewer tests of larger pieces above them, and a few slow tests of the whole program at the top.
+**Understand: two kinds of test, two jobs.** The characterisation test says *something changed in the game* and nothing about where. The unit tests say *the top wall is wrong*, and their names say what the right behaviour is. That's why a project needs both kinds: tests of small pieces, which are fast and precise, and tests of the whole, which catch problems in how the pieces work together. This balance has a name, the **testing pyramid**: many fast **unit tests** at the bottom, fewer **integration tests** of several pieces together above them, and a few slow **end-to-end tests** of the whole program at the top. Your characterisation tests are end-to-end tests.
 
 ```check
 contains breakout.py "y, vy = BALL_RADIUS, abs(vy)" -- Put the file back with git restore breakout.py.
@@ -496,12 +510,34 @@ FAILED tests/test_arguments.py::test_a_usage_error_says_how_to_use_the_game
 
 (pytest cuts long summary lines short with `...`.)
 
-**Reading the bug report.** Three things in it are new:
+**First, catching an exception.** Until now an exception has always stopped the program. It doesn't have to. Try this scratch program, `scratch/catch.py`:
+
+```python
+import sys
+
+try:
+    sys.exit(2)
+except SystemExit as error:
+    print("caught it; the code was", error.code)
+print("still running")
+```
+
+```predict
+question: Will `still running` be printed?
+choice: No: `sys.exit(2)` ends the program
+choice: Yes: the exception is caught, and the program carries on after it
+answer: Yes: the exception is caught, and the program carries on after it
+explain: `sys.exit(2)` doesn't end the program by itself: it **raises** an exception, `SystemExit`, carrying the code 2. `try:` marks a block whose exceptions you're ready for. When something inside it raises, Python stops running the block and looks for an `except` naming that exception's type; `except SystemExit as error:` matches, binds the exception to `error`, and runs its block. After that the program carries on below, as if nothing happened. So it prints `caught it; the code was 2`, then `still running`. Only an exception nobody catches ends the program, with a traceback (or, for `SystemExit`, quietly with its code).
+```
+
+`try`/`except` is how a program deals with a failure it expected, instead of crashing. Chapter 5 uses it properly, for files a player got wrong; here it explains what pytest does for you.
+
+**Reading the bug report.** Four things in it are new:
 
 - **`sys.exit(2)` raises an exception.** It doesn't stop Python on the spot: it raises `SystemExit(2)`, and if nothing catches it, Python ends with that exit code. That's what lets a test check it.
-- **`with X as name:`** is a `with` statement, new here. It runs the indented block *inside* `X`, which gets to act before the block starts and after it ends, and can deal with an exception the block raises. `as stopped` names what `X` hands over, so the test can look at it afterwards.
+- **`with X as name:`** is a `with` statement, new here. `X` is a **context manager**: an object Python calls once when the block starts, and once when it ends, however it ends. The second call is told about any exception the block raised, and may catch it, like the `except` above. `as stopped` names what `X` hands over at the start, so the test can look at it afterwards. (Opening a file with `with open(...)`, in Chapter 5, is the same mechanism: there, the end of the block closes the file.)
 - **`with pytest.raises(SystemExit) as stopped:`** runs the indented code and **expects** it to raise `SystemExit`. If it does, the exception is caught, stored in `stopped.value`, and the test continues: `stopped.value.code` is the code given to `sys.exit`. If the code *doesn't* raise, the test fails with `DID NOT RAISE`. If it raises a *different* exception, like `IndexError`, that exception isn't caught, and the test fails with it.
-- **`capsys`** in `def test_…(capsys):` asks pytest for a helper object, by naming it as a parameter. While the test runs, pytest captures everything printed, and `capsys.readouterr()` returns it, split into `.out` (standard output) and `.err` (standard error), and empties the capture for whatever is printed next. (Objects pytest hands to tests this way are called **fixtures**; Chapter 6 writes its own.)
+- **`capsys`** in `def test_…(capsys):` asks pytest for a helper object, by naming it as a parameter. Before calling the test, pytest reads its parameter names, finds a helper with each name (`capsys` is built in), makes it, and passes it in: `test_…(capsys=<the capture object>)`. Misspell it, `capsy`, and the test fails with `fixture 'capsy' not found`. While the test runs, pytest captures everything printed, and `capsys.readouterr()` returns it, split into `.out` (standard output) and `.err` (standard error), and empties the capture for whatever is printed next. (Objects pytest hands to tests this way are called **fixtures**; Chapter 6 writes its own.)
 
 Now **fix `breakout.py`** until all seven tests pass, following the method: read each failure's `E` lines (*observe*), run one test at a time with `-k` (*reproduce*), and decide what each failure means before changing anything. The tests are the specification: you're done when they pass, and the existing tests still do.
 
@@ -557,6 +593,18 @@ run ".venv/Scripts/python -m pytest -q tests/test_arguments.py" stdout="7 passed
 run ".venv/Scripts/python -m pytest -q" stdout="33 passed" label="and every other test still passes"
 run ".venv/Scripts/python breakout.py --test-run 5 --hold sideways" exit=2 stdout="usage: python breakout.py" label="the real program refuses --hold sideways"
 ```
+
+## Challenge: one test per case
+
+**Optional, ★.** Rewrite `test_the_autopilot_steers_towards_the_ball` with `@pytest.mark.parametrize("ball_x, expected", [(100, -1), (320, 0), (500, 1), (309, -1), (331, 1)])` above it, and `ball_x` and `expected` as its parameters: pytest calls it once per pair and reports each by name (`-v` shows them). Add the exact edges of the dead zone, 310 and 330: what should they give? Testing at the boundaries is where off-by-one mistakes are found.
+
+## Challenge: test the drawing
+
+**Optional, ★★.** `draw` has side effects, and they can be tested too, by inspecting what it changed. Make a surface with no window, `pygame.Surface((640, 480))`, and a font (after `pygame.font.init()`), call `draw`, then check a pixel inside the first brick: `screen.get_at((20, 65))[:3] == breakout.ROW_COLOURS[0]`.
+
+## Challenge: find the untested lines
+
+**Optional, ★★.** Install `coverage` (pin its version in `requirements.txt`), run `.venv\Scripts\python -m coverage run -m pytest tests/test_breakout.py tests/test_arguments.py`, then `.venv\Scripts\python -m coverage report -m`. It lists, per file, which lines no test ran. Write unit tests for any line of the pure functions it reports. (Chapter 5 does this properly.)
 
 ## Done: commit it
 

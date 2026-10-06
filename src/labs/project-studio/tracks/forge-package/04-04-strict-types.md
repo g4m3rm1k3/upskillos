@@ -192,7 +192,36 @@ tests\test_characterisation.py:12:9 - error: Argument type is partially unknown
 17 errors, 0 warnings, 0 informations
 ```
 
-**Understand: `Unknown`.** When pyright can't work out a type, it gives the value the type **`Unknown`**, and in its default mode it then stops checking anything to do with that value. That's the gentleness: no false alarms, but also no checking, and `Unknown` **spreads**. In `make_bricks`:
+pyright has four modes, from least to most checking: **`off`**, **`basic`**, **`standard`** (the default, which you've used since lesson 2.5) and **`strict`**. Strict turns on a family of rules the others leave off, among them the `reportUnknown...` rules, `reportMissingParameterType` and `reportPrivateUsage` (lesson 3.4's `_x`).
+
+**Understand: `Unknown`.** When pyright can't work out a type, it gives the value the type **`Unknown`**, and in its default mode it then stops checking anything to do with that value. That's the gentleness: no false alarms, but also no checking, and `Unknown` **spreads**. See it with lesson 2.5's `reveal_type`, in `scratch/unknowns.py`:
+
+```python
+def make():
+    items = []
+    items.append(1)
+    return items
+
+
+reveal_type(make())
+x = make()[0]
+reveal_type(x)
+d = {}
+reveal_type(d)
+```
+
+```powershell
+.venv\Scripts\python -m pyright scratch\unknowns.py
+```
+
+```text
+  scratch\unknowns.py:7:13 - information: Type of "make()" is "list[Unknown]"
+  scratch\unknowns.py:9:13 - information: Type of "x" is "Unknown"
+  scratch\unknowns.py:11:13 - information: Type of "d" is "dict[Unknown, Unknown]"
+0 errors, 0 warnings, 3 informations
+```
+
+`items = []` gave pyright nothing to go on (it doesn't learn from the later `append`), so the list is a list of `Unknown`; everything taken out of it is `Unknown` too, and nothing done with `x` will ever be checked. No errors: in this mode, that silence is the problem. In `make_bricks`: In `make_bricks`:
 
 ```text
 bricks = []              an empty list: a list of what? Nothing says.  →  list[Unknown]
@@ -219,7 +248,7 @@ Seventeen errors, but only four causes:
 | `test_arguments.py` | the `capsys` fixture has no type, so everything done with it is `Unknown` |
 | `test_characterisation.py` | `play(*args)` and `last_line(*args)` have no types |
 
-One cause usually produces several errors, which is why reading errors from the top, and fixing the first cause before rereading, beats fixing them in the order they're listed.
+One cause usually produces several errors. So don't work through the list line by line: read the **first** error for each cause, fix that, run pyright again, and only then look at what's left. Errors further down are often consequences that vanish with their cause.
 
 ```check
 contains pyproject.toml "typeCheckingMode = \"strict\""
@@ -399,7 +428,11 @@ The only change is in `make_bricks`:
     bricks: list[Brick] = []
 ```
 
-**Understand.** A type hint can go on a variable as well as on a parameter: `name: type = value`. For most variables pyright doesn't need one, because it infers the type from the value: `score = 0` is obviously an `int`. Empty collections are the exception: `[]` could become a list of anything, and the same goes for an empty `{}` dictionary or `set()`, so that's where saying what it will hold is required in strict mode. With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
+**Understand.** A type hint can go on a variable as well as on a parameter: `name: type = value`. For most variables pyright doesn't need one, because it infers the type from the value: `score = 0` is obviously an `int`. Empty collections are the exception: `[]` could become a list of anything, and the same goes for an empty `{}` dictionary or `set()`, so that's where saying what it will hold is required in strict mode. (Add `items: list[int] = []` to `scratch\unknowns.py` and run pyright again: the reveals become `list[int]` and `int`.)
+
+Two more kinds of hint belong here. **`Final`**, from `typing`, marks a name that must never be given a new value: `WIDTH: Final = 640`. pyright then refuses `WIDTH = 800` anywhere, with `"WIDTH" is declared as Final and cannot be reassigned`. And **`Literal`**, also from `typing`, makes a type of exact values: `Literal["none", "left", "right", "auto"]` allows only those four strings. Lesson 3.4's `Hold` enum does the same job better, since its members can't be mistyped as plain strings. A challenge below makes the game's constants `Final`.
+
+Finally, the **escape hatches**, which you'll meet in other people's code: the type **`Any`** (anything goes, nothing checked), **`cast(T, value)`** ("trust me, this is a `T`"), and a comment **`# pyright: ignore[rule]`** on a line (lesson 4.5 has one, for a good reason). Each switches checking off in one place. None of them is wrong, but a reviewer should ask why each one is there, and strict mode reports an ignore that no longer ignores anything. With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
 
 ```powershell
 .venv\Scripts\python -m pyright breakout
@@ -445,7 +478,7 @@ def last_line(*args: str) -> str:                                               
 def test_a_usage_error_says_how_to_use_the_game(capsys: pytest.CaptureFixture[str]):       # tests/test_arguments.py
 ~~~
 
-Test functions themselves don't need `-> None`: pyright infers it, and strict mode only insists on types it *can't* infer. The `[str]` in `CompletedProcess[str]` and `CaptureFixture[str]` is a **type argument**: these are **generic** types, defined once for any type of output and specialised by what goes in the brackets, as `list[str]` is. Chapter 10 writes a generic type of its own.
+Test functions themselves don't need `-> None`: pyright infers it, and strict mode only insists on types it *can't* infer. The `[str]` in `CompletedProcess[str]` and `CaptureFixture[str]` is a **type argument**: these are lesson 2.5's **generic** types, defined once for any type of output and specialised by what goes in the brackets, as `list[str]` is. Chapter 10 writes a generic type of its own.
 ```
 
 ```check
@@ -457,6 +490,18 @@ git-message "strict"
 git-clean
 ```
 
+## Challenge: constants that stay constant
+
+**Optional, ★.** Mark every constant in `model.py` and `draw.py` as `Final`, then try to give one a new value in a scratch file that imports it, and read pyright's error. Types as promises the checker enforces. On a branch.
+
+## Challenge: rules beyond strict
+
+**Optional, ★★.** Strict isn't everything pyright can check. Turn on `reportImplicitOverride` or `reportUnnecessaryTypeIgnoreComment` in `[tool.pyright]`, see what (if anything) it finds, and write in the commit message whether the rule is worth keeping. Reading the configuration documentation and judging a rule's cost. On a branch.
+
+## Challenge: three ways to handle None
+
+**Optional, ★★.** Write `first_brick(bricks: list[Brick]) -> Brick | None` in a scratch file, use its result without a check, and read pyright's error. Then fix it three ways: an `if ... is None:` block, an early `return`, and an `assert`. Write in a comment which you'd use, and when.
+
 ## What did we actually learn?
 
 - **`Unknown` spreads**: a value pyright can't type turns off checking for everything that touches it. **Strict mode** reports it where it starts.
@@ -466,4 +511,4 @@ git-clean
 - **`*args: str`** types each argument.
 - **Check everything**: the tests are code too, and checking them catches mistakes in the safety net itself.
 
-This is as close as Python gets to C# and Java's compilers: in strict mode, every value has a known type, every call is checked against its signature, and `X | None` must be handled before use. The difference that remains is when: C# and Java refuse to *build* code with type errors, while Python runs it anyway and the checker is a separate step, which is why it's in the definition of done, and why Chapter 16 runs it automatically on every push. `var bricks = new List<Brick>();` in C# and `List<Brick> bricks = new ArrayList<>();` in Java are the same as `bricks: list[Brick] = []`: an empty collection always says what it will hold.
+This is as close as Python gets to C# and Java's compilers: in strict mode, every value has a known type and every call is checked against its signature (and `X | None` must be handled before use, as it has had to be since lesson 2.5). The difference that remains is when: C# and Java refuse to *build* code with type errors, while Python runs it anyway and the checker is a separate step, which is why it's in the definition of done, and why Chapter 17 runs it automatically on every push. `var bricks = new List<Brick>();` in C# and `List<Brick> bricks = new ArrayList<>();` in Java are the same as `bricks: list[Brick] = []`: an empty collection always says what it will hold.

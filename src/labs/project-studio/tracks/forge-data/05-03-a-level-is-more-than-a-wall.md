@@ -87,7 +87,7 @@ Remove-Item breakout\levels\classic.txt
 | `true`, `false` | `true` | `True`, `False` |
 | `null` | `null` | `None` |
 
-So this file is one object with three **fields**: `name` (a string), `lives` (a number) and `wall` (an array of strings, the rows). JSON is strict where Python is relaxed: names must be in double quotes, a comma after the last item is an error, and there are no comments. That strictness is why every language can read it the same way, and why it's how programs send data to each other over the web (Chapter 33's asset library speaks it).
+So this file is one object with three **fields**: `name` (a string), `lives` (a number) and `wall` (an array of strings, the rows). JSON is strict where Python is relaxed: names must be in double quotes, a comma after the last item is an error, and there are no comments. That strictness is why every language can read it the same way, and why it's how programs send data to each other over the web (Chapter 36's asset library speaks it).
 
 Python reads it with the `json` module, in the standard library:
 
@@ -252,7 +252,20 @@ def load_level(path: Path) -> Level:
 
 **Is it JSON?** `json.loads(text)` ("load string") turns JSON text into Python values, and raises `json.JSONDecodeError` if the text isn't JSON. That exception carries `msg`, `lineno` and `colno` (what's wrong, and where), which become a `LevelError`. `raise ... from None` tells Python not to print the original exception as well: the `LevelError` says everything the player needs.
 
-Without `from None`, the player would see two tracebacks, the `JSONDecodeError` and then the `LevelError`, joined by the line *During handling of the above exception, another exception occurred*: true, but noise. With it, only the `LevelError` is shown.
+What would happen without it? The player never sees a traceback either way, because the app catches `LevelError` and prints one line; it's a developer running `parse_level` directly who would. See it in a scratch file, `scratch/chain.py`:
+
+```python
+import json
+
+try:
+    json.loads("")
+except json.JSONDecodeError:
+    raise ValueError("not JSON")
+```
+
+`python scratch\chain.py` prints two tracebacks: first the `JSONDecodeError` (`Expecting value: line 1 column 1 (char 0)`), then the line *During handling of the above exception, another exception occurred:*, then the `ValueError`. Python keeps the first exception attached to the second, as its **context**, and shows both. Now add `from None` to the `raise` line and run it again: only `ValueError: not JSON`.
+
+Which to use? `from None` when the new error says everything that matters, as `LevelError` does, with the line and column copied into it. When the original's details would help someone fix a bug, keep them deliberately with `raise LevelError(...) from error`: Python then shows both, joined by *The above exception was the direct cause of the following exception*.
 
 `data: object` is a deliberate annotation: more on it in the next step.
 
@@ -336,11 +349,11 @@ def load_level(path: Path) -> Level:
     return parse_level(path.read_text(encoding="utf-8-sig"))
 ```
 
-**Is it an object?** `data: object` is a deliberate annotation. `json.loads` can return any JSON value, a list or a number as easily as a dict, so `object`, "could be anything", is the honest type: pyright won't let you use an `object` as a dict, or as anything, until you've checked what it is. `isinstance(data, dict)` is that check.
+**Is it an object?** `data: object` is a deliberate annotation. `json.loads` can return any JSON value, a list or a number as easily as a dict, so `object`, "could be anything", is the honest type: pyright won't let you use an `object` as a dict, or as anything, until you've checked what it is. `isinstance(data, dict)` is that check: **`isinstance(value, T)`** is `True` when `value`'s class is `T`, **or inherits from** `T` (lesson 5.2's `LevelError` is a `ValueError`). In the REPL: `isinstance(3, int)` is `True`, `isinstance("3", int)` is `False`, and `isinstance(True, int)` is `True`, a surprise that the predictions below come back to. pyright understands `isinstance` too: inside the `if`, it treats `data` as a dict. Narrowing a type with a check like this is called **type narrowing**.
 
-**`cast`, a promise to pyright.** After `isinstance(data, dict)`, pyright knows `data` is a dict, but not what's inside it: `dict[Unknown, Unknown]`, which strict mode refuses to use. `cast(dict[str, object], data)` tells pyright "treat this as a dict of strings to anything". At run time `cast` does **nothing**: it returns `data` unchanged and checks nothing. It's a promise, and it's only safe because this one is true: the keys of a JSON object are always strings, and `object` claims nothing about the values. `cast(list[object], wall)` makes the same promise about the wall. A cast that isn't true hides a bug from the type checker, so every `cast` should come with a reason this clear.
+**`cast`, a promise to pyright.** After `isinstance(data, dict)`, pyright knows `data` is a dict, but not what's inside it: `dict[Unknown, Unknown]`, which strict mode refuses to use. `cast(dict[str, object], data)` tells pyright "treat this as a dict of strings to anything". At run time `cast` does **nothing**: it returns `data` unchanged and checks nothing. See it: in the REPL, `from typing import cast`, then `x = cast(int, "hello")` and `print(x, type(x))` prints `hello <class 'str'>`. A string, whatever the cast said; pyright, meanwhile, would treat `x` as an `int`. It's a promise, and it's only safe because this one is true: the keys of a JSON object are always strings, and `object` claims nothing about the values. A cast that isn't true hides a bug from the type checker, so every `cast` should come with a reason this clear.
 
-**Are exactly the right fields there?** `fields.keys()` behaves like a set, and `-` between sets is **set difference**, the items in the first and not the second: `FIELDS - fields.keys()` is the fields that are missing, and `fields.keys() - FIELDS` the ones that shouldn't be there. A misspelt `"lifes": 5` is refused instead of silently ignored, and the error names it. `sorted(...)` puts them in alphabetical order, so the same file always gives the same message (a set has no order of its own).
+**Are exactly the right fields there?** `fields.keys()` is a **view** of a dict's keys, and it behaves like a set (lesson 4.2). `-` between sets is **set difference**, the items in the first and not the second. In the REPL: `{"a": 1, "b": 2}.keys() - {"b", "c"}` is `{'a'}`, and `{"b", "c"} - {"b": 1}.keys()` is `{'c'}`. Here: `FIELDS - fields.keys()` is the fields that are missing, and `fields.keys() - FIELDS` the ones that shouldn't be there. A misspelt `"lifes": 5` is refused instead of silently ignored, and the error names it. `sorted(...)` puts them in alphabetical order, so the same file always gives the same message (a set has no order of its own).
 
 Traced for a level with a typo, `{"name": "A", "lifes": 5, "wall": [...]}`:
 
@@ -441,7 +454,9 @@ def load_level(path: Path) -> Level:
     return parse_level(path.read_text(encoding="utf-8-sig"))
 ```
 
-**Is each field the right kind of value?** `name` must be a string with something in it besides spaces (`strip()` removes spaces from both ends). `lives` must be an integer from 1 to 9: `1 <= lives <= MAX_LIVES` is a **chained comparison**, meaning `1 <= lives and lives <= MAX_LIVES`. `wall` must be a list that isn't empty, of at most 10 rows.
+**Is each field the right kind of value?** `name` must be a string with something in it besides spaces (`strip()` removes spaces from both ends). `lives` must be an integer from 1 to 9: `1 <= lives <= MAX_LIVES` is a **chained comparison**, meaning `1 <= lives and lives <= MAX_LIVES`. (`wall` is only passed along here; the next step checks it.)
+
+One thing these checks can't see: JSON allows the same key twice, and `json.loads('{"lives": 3, "lives": 9}')` quietly keeps the last, `{'lives': 9}`. By the time `parse_level` sees the dict, the first value is gone. It's a known gap, and a challenge at the end of this lesson closes it.
 
 These conditions rely on `or` stopping early, as `and` did in lesson 1.1. Traced for `"name": 5`:
 
@@ -567,13 +582,23 @@ def load_level(path: Path) -> Level:
     return parse_level(path.read_text(encoding="utf-8-sig"))
 ```
 
+**Is the wall a list?** `wall` must be a list that isn't empty (`not wall` is `True` for an empty list), of at most 10 rows. After `isinstance(wall, list)`, pyright knows it's a list of `Unknown`, and `cast(list[object], wall)` makes the same kind of promise as the dict's: nothing claimed about the items, which `check_row` checks one by one.
+
 **Is each row a good row?** `check_row` returns the row as a `str` once it has checked that it is one, of 8 places, each `T`, `B` or `.`. `char not in "TB."` asks whether a one-character string appears in `"TB."`. The **generator expression** `check_row(row, line) for row, line in enumerate(rows)` checks every row in turn, and `tuple(...)` collects the results.
 
-The generator stops at the first row that raises: `tuple(...)` never gets to the rows after it, and the `LevelError` from `check_row` goes straight up to whoever called `parse_level`.
+The generator stops at the first row that raises. A generator makes its items one at a time, only when asked (lesson 3.3), so for a wall whose second row is bad:
+
+```text
+tuple() asks for item 1   check_row(row 0) returns it    kept
+tuple() asks for item 2   check_row(row 1) raises        tuple() is abandoned
+                          row 2 is never checked
+```
+
+The `LevelError` from `check_row` goes straight up to whoever called `parse_level`.
 
 `LevelError` used to keep `line` and `column` attributes; now it keeps `where`, because in JSON a place is a field or a row of the wall, wherever it happens to be written in the file.
 
-**`make_bricks`** no longer checks anything: it's only ever given a wall that `parse_level` has already checked. Once a `Level` exists, its data is good; everything after the boundary can rely on that. This is **parse, don't validate**: turn unchecked input into a type that only holds checked data, at one place, and pass that type around instead of checking again everywhere.
+**`make_bricks`** no longer checks anything: it's only ever given a wall that `parse_level` has already checked. Once a `Level` exists, its data is good; everything after the boundary can rely on that. This is **parse, don't validate**, a phrase from a well-known 2019 article of that name by Alexis King, worth searching for: turn unchecked input into a type that only holds checked data, at one place, and pass that type around instead of checking again everywhere.
 
 ```predict
 question: Suppose `Level` stored the bricks, `bricks: list[Brick]`, and every new game was given `level.bricks`. After the player wins and presses Space, what does the new game's wall look like?
@@ -799,7 +824,7 @@ def main(args: list[str]) -> None:
     level_file = settings.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -1161,7 +1186,7 @@ def test_a_level_saved_with_a_byte_order_mark_loads(tmp_path: Path):
     assert len(level.load_level(path).bricks()) == 18
 ```
 
-**Understand.** `json.dumps` ("dump string") is the reverse of `json.loads`: Python values in, JSON text out. `level_text("B.B.....")` builds a whole level's JSON around the rows a test cares about, so each test still says only what matters to it. `*rows: str` collects any number of arguments into a tuple: `level_text("B.......", "B.......")` passes two rows. JSON has no tuples, only arrays, so `list(rows)` makes the tuple into a list first.
+**Understand.** `json.dumps` ("dump string") is the reverse of `json.loads`: Python values in, JSON text out. In the REPL, `json.dumps({"a": True, "b": None, "c": (1, 2)})` gives `'{"a": true, "b": null, "c": [1, 2]}'`: the type table from the start of this lesson, read backwards. `level_text("B.B.....")` builds a whole level's JSON around the rows a test cares about, so each test still says only what matters to it. `*rows: str` collects any number of arguments into a tuple: `level_text("B.......", "B.......")` passes two rows. JSON has no tuples, only arrays, so `list(rows)` makes the tuple into a list first.
 
 **Two more forms of the star, which the Your turn needs.** A double star collects **keyword** arguments into a dict, the way one star collects positional ones:
 
@@ -1263,12 +1288,25 @@ git-message "JSON"
 git-clean
 ```
 
+## Challenge: there and back
+
+**Optional, ★.** A round-trip test: for the classic and castle levels, turn the `Level` back into a dict, `json.dumps` it, `parse_level` that, and check you get an equal `Level` (dataclasses compare field by field, lesson 3.2). On a branch.
+
+## Challenge: a key written twice
+
+**Optional, ★★.** Refuse a level that repeats a field. `json.loads(text, object_pairs_hook=f)` calls your function `f` with each JSON object's list of `(key, value)` pairs, before they become a dict, and uses what it returns: so `f` can see a repeat and raise `LevelError` naming it. A function you hand to another function, for it to call, is a **callback**. With a test. On a branch.
+
+## Challenge: point at the mistake
+
+**Optional, ★★★.** For a file that isn't JSON, print the offending line of the file with a `^` under the column, the way Python's own tracebacks point at code, using the error's `lineno` and `colno`. Test it with a level that's missing a comma. On a branch.
+
 ## What did we actually learn?
 
 - **JSON**: objects, arrays, strings, numbers, `true`/`false`, `null`, and the Python values each becomes. `json.loads` reads it; `json.dumps` writes it.
 - **Check from the outside in**: is it JSON, is it an object, are the right fields there, is each value the right kind, is each part of it right. Refuse at the first problem, and say where.
-- **`object` is the honest type of unchecked data**; `isinstance` narrows it; **`cast` is a promise**, checked by nobody, so make only true ones.
+- **`object` is the honest type of unchecked data**; `isinstance` narrows it (and counts subclasses); **`cast` is a promise**, checked by nobody, so make only true ones.
 - **`bool` is an `int`** in Python. Checks for numbers must rule it out.
+- **Exception chains**: `from None` hides the original exception, `from error` keeps it on purpose.
 - **Parse, don't validate**: unchecked input becomes a `Level` at one place, and the rest of the game trusts it.
 - **Aliasing**: a frozen object can still hold a list that changes. Keep immutable data, and make fresh changeable objects from it.
 

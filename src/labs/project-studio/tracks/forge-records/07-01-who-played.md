@@ -303,7 +303,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     return points
 ```
 
-**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.4 looks at that problem properly. The usual design stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key. Each score belongs to exactly one player, and a player can have any number of scores: a **one-to-many** relationship.
+**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.5 looks at that problem properly. The usual design stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key. Each score belongs to exactly one player, and a player can have any number of scores: a **one-to-many** relationship.
 
 **The schema** is two statements now, separated by `;`. `execute` runs exactly one, and refuses more: `ProgrammingError: You can only execute one statement at a time`. **`executescript`** runs a whole script of them, in order. One difference to know: if a transaction is open, `executescript` commits it first, so it isn't for use in the middle of one. Here it runs straight after `connect`, with nothing open.
 
@@ -665,7 +665,9 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--level", type=Path, metavar="FILE", help="play this level file (default: the classic wall)")
     parser.add_argument("--config", type=Path, metavar="FILE", help="read settings from this TOML file")
     parser.add_argument("--scores", type=Path, metavar="FILE", help="keep scores in this file (test runs keep none)")
-    parser.add_argument("--player", type=player_name, metavar="NAME", help="whose scores these are (default: from the settings file)")
+    parser.add_argument(
+        "--player", type=player_name, metavar="NAME", help="whose scores these are (default: from the settings file)"
+    )
     return parser
 
 
@@ -685,7 +687,13 @@ def parse_args(args: list[str]) -> Settings:
 
 **Understand.** `player_name` is a `type` function, like `positive_int` (lesson 4.3): argparse calls it with the text after `--player`, and uses what it returns. It removes spaces from both ends, and refuses a name with nothing else in it, so `--player "   "` is a usage error, as `--test-run 0` is. Without it, a name of three spaces would get past the database's `CHECK (name <> '')`: three spaces aren't empty.
 
-Two tests for it, at the end of `tests/test_arguments.py`:
+```check
+run ".venv/Scripts/breakout --test-run 5 --player \"   \"" exit=2 stderr="must have something in it besides spaces" label="a name of only spaces is a usage error"
+```
+
+## Tests for the player name
+
+**Build:** two tests for `--player`, at the end of `tests/test_arguments.py`.
 
 ```python file=tests/test_arguments.py
 # Lesson 2.4, with --seed added in 2.6: what the game's command line should accept, and what it should refuse.
@@ -765,7 +773,6 @@ def test_a_player_name_of_only_spaces_is_a_usage_error():
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_arguments.py" stdout="12 passed"
-run ".venv/Scripts/breakout --test-run 5 --player \"   \"" exit=2 stderr="must have something in it besides spaces" label="a name of only spaces is a usage error"
 ```
 
 ## A player in the settings file
@@ -803,7 +810,7 @@ class ConfigError(ValueError):
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -857,7 +864,13 @@ def load_config(path: Path) -> Config:
 
 **Understand.** `player` is a name with something in it besides spaces, like a level's name (lesson 5.4), and `Player` if the file doesn't say. The same rule as `--player`, written the pydantic way: `strip_whitespace=True`, then `min_length=1`.
 
-And its tests: one for the default and a name read from the file, and one more refusal in the parametrised test:
+```check
+contains breakout/config.py "player: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]"
+```
+
+## Tests for the player setting
+
+**Build:** tests for the `player` setting: one for the default and a name read from the file, and one more refusal in the parametrised test.
 
 ```python file=tests/test_config.py
 from pathlib import Path
@@ -909,7 +922,7 @@ def test_the_player_is_called_player_unless_the_file_names_one(tmp_path: Path):
         ("[controls]\nleft = 1\n", "controls.left: Input should be a valid string"),
         (
             '[controls]\nleft = "banana"\n',
-            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+            "controls.left: unknown key 'banana': use a-z, or left, right, up, down, space or return",
         ),
         ('[controls]\nleft = "a"\nright = "a"\n', "controls: left and right both use 'a'"),
         ('player = "   "\n', "player: String should have at least 1 character"),
@@ -957,7 +970,7 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
@@ -965,7 +978,7 @@ def main(args: list[str]) -> None:
     player = settings.player or config.player
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)

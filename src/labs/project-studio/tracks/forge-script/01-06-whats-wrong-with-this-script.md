@@ -64,7 +64,7 @@ Where is the ball's sideways velocity used or changed?
 Select-String -Path breakout.py -Pattern "ball_vx"
 ```
 
-`Select-String` prints every line containing the pattern, with its line number: 6 lines, from the top of the file to the middle of the loop. Try `ball_x` (10 lines) and `lives` (6).
+`Select-String` prints every line containing the pattern, with its line number (it ignores the difference between capital and small letters, unless you add `-CaseSensitive`): 6 lines, from the top of the file to the middle of the loop. Try `ball_x` (10 lines) and `lives` (6).
 
 How many decisions does the main loop make, and how deeply nested are they?
 
@@ -72,14 +72,32 @@ How many decisions does the main loop make, and how deeply nested are they?
 Select-String -Path breakout.py -Pattern "^\s+if "
 ```
 
-This pattern is a **regular expression**, a small language for describing text: `^` means "the start of a line", `\s+` means "one or more spaces", and then the literal `if ` with its space. So it matches lines that start with indentation followed by `if `, which are the `if` statements, and not lines that merely contain the letters "if" somewhere.
+This pattern is a **regular expression**, a small language for describing text: `^` means "the start of a line", `\s+` means "one or more whitespace characters" (spaces or tabs), and then the literal `if ` with its space. So it matches lines that start with indentation followed by `if `, which are the `if` statements, and not lines that merely contain the letters "if" somewhere.
 
 16 lines, and 15 of them are inside the loop (the first is the argument check at the top). The deepest code is four levels in: the `while`, then three `if`s inside each other.
 
 **Understand: what those numbers mean.**
 
 - **143 lines in one loop, with no names for its parts.** To understand "how does the ball bounce off the paddle?" you have to find the right 5 lines among 143. A function called `bounce_off_paddle` would say where it is and what it does.
-- **Every variable is global**: created at the top level, and readable and changeable from anywhere in the file. `ball_vx` is used or changed on 6 lines (assigned a new value on 5 of them). To know what it might be at any moment, you have to read all of them, and anything you add later might change it too.
+- **Every variable is global**: created at the top level, and readable and changeable from anywhere in the file. The opposite is a **local** variable, made inside a function, which exists only while that function runs. See both in the REPL:
+
+  ```text
+  >>> count = 0
+  >>> def f():
+  ...     n = 5
+  ...     return n
+  ...
+  >>> f()
+  5
+  >>> n
+  Traceback (most recent call last):
+    ...
+  NameError: name 'n' is not defined
+  >>> count
+  0
+  ```
+
+  `n` belongs to `f`, and is gone when `f` returns: nothing outside can read or change it. `count` belongs to the whole file. Every variable in `breakout.py` is like `count`. `ball_vx` is used or changed on 6 lines (assigned a new value on 5 of them). To know what it might be at any moment, you have to read all of them, and anything you add later might change it too.
 - **One loop does five jobs**: handling input, moving the paddle, physics, scoring, drawing. And a sixth that isn't part of the game at all: the test-run machinery (`test_frames` appears on 6 lines, and the autopilot lives inside the paddle code).
 
 > **Engineer:** there's a name for code in this state, that started simple and grew by adding a bit more to the same place until no part can be changed without understanding all of it: a **big ball of mud**. Almost every program becomes one if nothing stops it, and it doesn't take bad programmers, only small additions without structure. Every chapter from here on adds a piece of structure that resists it, and you'll know exactly which problem each piece solves, because you'll have listed them yourself.
@@ -97,9 +115,9 @@ Here is what's wrong with `breakout.py`, with the evidence for each:
 5. **Hidden coupling.** Brick colours depend on the spacing formula (the crash above).
 6. **Only testable as a whole.** The only way to check anything is to run the entire game for thousands of frames and look at five numbers at the end. "Does the ball bounce off the left wall?" can't be asked directly; checking that you can win takes 10,000 frames.
 7. **Test machinery mixed into the game.** `test_frames`, `hold`, `lag_at` and the autopilot are tangled through the game's own code. The game can't be read without reading them.
-8. **Arguments handled by hand, and half-handled.** `--test-run` is checked; `--hold sideways` is silently ignored (try it), and `--lag-at` with no number crashes with an `IndexError`.
+8. **Arguments handled by hand, and half-handled.** `--test-run` is checked; `--hold sideways` is silently ignored (try it), `--hold` or `--lag-at` with nothing after it crashes with an `IndexError`, and `--lag-at ten` crashes with a `ValueError`.
 9. **Deep nesting.** The deepest lines are four levels in: the `while`, then three `if`s inside each other. Each level is one more condition to hold in your head.
-10. **Known simplifications**, which are fine for now but must be written down so they aren't forgotten: the ball always bounces vertically off bricks, even from the side; steering changes the ball's speed; a very slow frame can still move the ball through a brick or the paddle without touching it.
+10. **Known simplifications**, which are fine for now but must be written down so they aren't forgotten: the ball always bounces vertically off bricks, even from the side; steering changes the ball's speed; a very slow frame can still move the ball through a brick or the paddle without touching it; and a ball overlapping two bricks at once flips twice and can carry on through the wall.
 
 None of these stops the game working. All of them make the next change harder, riskier or slower than it needs to be.
 
@@ -155,6 +173,14 @@ git-clean
 
 As you build it, notice *where* the code has to go, and how many existing lines you have to read and understand first. Is there one obvious place for "paused", or does it have to be threaded through the loop next to `lives > 0 and bricks`? Write down what you notice under *Technical debt*. Chapter 4 builds pausing properly, with **game states**, and you'll be able to compare.
 
+## Challenge: count the magic numbers
+
+**Optional, ★.** Measure one more smell: `Select-String -Path breakout.py -Pattern "\b\d+\b"` lists every line with a number in it (`\b` is a word boundary, `\d+` one or more digits). Sort what it finds into numbers explained by a named constant and **magic numbers**, unexplained ones, and add the worst three to your *Technical debt*, with their line numbers as evidence.
+
+## Challenge: a bigger window
+
+**Optional, ★★.** Make the window 800 × 600 by changing only `WIDTH, HEIGHT`. Before running it, predict what breaks: the brick layout's hand-picked numbers, where the messages appear, the autopilot? Then run it, write down each break you see, with its evidence, as technical debt, and `git restore breakout.py`.
+
 ## What did we actually learn? (Chapter 1)
 
 This chapter built a complete game, and on the way:
@@ -167,5 +193,7 @@ This chapter built a complete game, and on the way:
 - **What makes code hard to change**, measured on your own code: no named parts, global state, duplication, magic numbers, coupling, and checks that can only test the whole thing.
 
 That last list is the plan for what comes next. **Chapter 2** splits the script into **functions**, small named parts with clear inputs and outputs, and tests each one directly, so "does the ball bounce off the left wall?" becomes a question that takes a thousandth of a second to answer. Several items of your technical debt will be ticked off by the end of it.
+
+**Chapter 1's challenges**, to come back to: Space changes the colour ★, the real frame rate ★★, --help ★★ (lesson 1.1); bring back an older version ★, which rule ignored it? ★★, half a file in a commit ★★ (1.2); Shift for speed ★, a paddle with weight ★★, the mouse ★★ (1.3); the same speed after steering ★★, serve from the paddle ★★, no tunnelling ★★★ (1.4); rows worth more ★, tough bricks ★★, side hits ★★★, centre the messages ★ (1.5); count the magic numbers ★, a bigger window ★★, pause ★★ (this lesson).
 
 None of this is specific to games or to Python. A web server written as one long function, a data-processing script that grew for a year, a C# class with 3,000 lines: the same list applies, with the same evidence, and the same fixes, which are what the rest of this series teaches.

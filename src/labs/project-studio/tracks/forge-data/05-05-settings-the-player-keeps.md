@@ -140,9 +140,30 @@ Python reads TOML with `tomllib`, in the standard library since Python 3.11:
 {'level': '../breakout/levels/castle.json', 'controls': {'left': 'a', 'right': 'd', 'serve': 'w'}}
 ```
 
-A dict, with the table as a dict inside it. `tomllib.loads` ("load string") reads TOML from text, like `json.loads` in lesson 5.3, and `read_text(encoding="utf-8")` gets the text with the encoding said out loud.
+A dict, with the table as a dict inside it. Try each piece on its own in the REPL:
 
-You'll also see `tomllib.load(open(path, "rb"))`, which reads straight from an open file. The file must be opened in **binary** mode, `"rb"` (**r**ead, **b**inary): Python then hands over raw **bytes**, the numbers stored in the file, without decoding them, and `tomllib` decodes them as UTF-8 itself, because the TOML standard says a TOML file is always UTF-8. Both give the same dict; this series uses `loads`, so every file it reads names its encoding in the same place.
+```text
+>>> import tomllib
+>>> tomllib.loads('a = 1\nb = "x"\nc = true\n[t]\nk = 2\nu.v = 3')
+{'a': 1, 'b': 'x', 'c': True, 't': {'k': 2, 'u': {'v': 3}}}
+>>> tomllib.loads('a = ')
+Traceback (most recent call last):
+  ...
+tomllib.TOMLDecodeError: Invalid value (at end of document)
+```
+
+A number, a string, a boolean, and a table `t`. `u.v = 3` is a **dotted key**: a table `u` inside `t`, written in one line, so a location in TOML can be read as a path, `t.u.v`. This lesson's error messages use the same idea (`controls.left`). A file that isn't TOML raises `TOMLDecodeError`, with what's wrong and where.
+
+`tomllib.loads` ("load string") reads TOML from text, like `json.loads` in lesson 5.3, and `read_text(encoding="utf-8")` gets the text with the encoding said out loud.
+
+You'll also see `tomllib.load`, which reads straight from an open file:
+
+```python
+with open(path, "rb") as file:
+    data = tomllib.load(file)
+```
+
+(the `with` closes the file, lesson 5.1). The file must be opened in **binary** mode, `"rb"` (**r**ead, **b**inary): Python then hands over raw **bytes**, the numbers stored in the file, without decoding them, and `tomllib` decodes them as UTF-8 itself, because the TOML standard says a TOML file is always UTF-8. Both give the same dict; this series uses `loads`, so every file it reads names its encoding in the same place.
 
 `tomllib` only **reads** TOML; Python has no standard way to write it, which fits: settings files are written by people.
 
@@ -230,7 +251,7 @@ KEYS = {
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -246,7 +267,7 @@ class Controls(BaseModel):
     pause: Key = "p"
 ```
 
-**Understand.** `check_key` is a validator like `check_row` in lesson 5.4: it gets a `str` that pydantic has already checked, raises `ValueError` if the name isn't in `KEYS`, and returns it if it is. `Key = Annotated[str, AfterValidator(check_key)]` names that rule, as `Row` did.
+**Understand.** `check_key` is a validator like `check_row` in lesson 5.4: it gets a `str` that pydantic has already checked, raises `ValueError` if the name isn't in `KEYS`, and returns it if it is. `Key = Annotated[str, AfterValidator(check_key)]` names that rule, as `Row` did. Names are exact: `"A"` and `"Left"` aren't in `KEYS`, so they're refused, which is why the message says `a-z`, the lower-case letters. (A challenge at the end of the lesson accepts any case.)
 
 **`Controls`** has a field for each **action**, and each field's type is `Key`. Every field has a **default** after `=`, as in a dataclass, so a model can be made with none, some or all of them given. The config is lesson 5.4's: strict, no unknown fields, frozen. This is Godot's **InputMap** in miniature: the game asks about an action, and the map says which key it is today.
 
@@ -268,7 +289,7 @@ Given only `left`, the other three keep their defaults. A name that isn't a key,
 
 ```text
 left
-  Value error, unknown key 'banana': use a letter, or left, right, up, down, space or return [type=value_error, ...]
+  Value error, unknown key 'banana': use a-z, or left, right, up, down, space or return [type=value_error, ...]
 jump
   Extra inputs are not permitted [type=extra_forbidden, ...]
 ```
@@ -304,7 +325,7 @@ KEYS = {
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -391,7 +412,7 @@ class ConfigError(ValueError):
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -497,7 +518,7 @@ class ConfigError(ValueError):
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -550,6 +571,8 @@ path.parent / config.level  examples/../breakout/levels/castle.json
 ```
 
 That works from whichever folder the game is started in, because it only depends on where the settings file is.
+
+Notice what it allows: an absolute path, or one with `..` that leads out of the settings folder, anywhere on the disk. For the player's own file, that's fine: it's their computer, and their choice. For a file from a stranger (Part 5's shared levels), the same line would let the file reach any file the game can read, a hole called **path traversal**, which Chapter 18 closes.
 
 `config` is frozen, so its `level` can't be changed. **`model_copy(update={...})`** makes a new model with the same fields, except those named in `update`; the original is left as it was. pydantic doesn't check the `update` values again, which is fine here: a `Path` joined to a `Path` is a `Path`.
 
@@ -715,14 +738,14 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
     level_file = settings.level or config.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -798,6 +821,8 @@ level_file = settings.level or config.level or LEVELS / "classic.json"
 
 `or` gives the first value that's set: `None` counts as false, so it's skipped. The command line is a choice for *this* run, so it beats the file; the file is the player's standing choice, so it beats the game's default. So a player whose file says "castle" can still try the classic wall once with `--level`, without editing the file.
 
+**Two kinds of settings, two names.** `Settings` (lesson 4.3) is **this run's command line**: `--level`, `--config`, `--test-run`. `Config` is **the player's file**, kept between runs. `settings.config` is the command-line option naming the file; `config.level` is the level the file names; `settings.level` is the level the command line names.
+
 **Which settings?** `load_config(settings.config) if settings.config else Config()` is a conditional expression (lesson 5.2): with `--config`, read that file; without it, `settings.config` is `None`, which counts as false, and `Config()` gives every default. Either way, `config` is a `Config`, and the rest of `main` doesn't care which.
 
 **Controls.** Every key the game reacts to now goes through `KEYS[controls.<action>]`: the action's key name from the settings, then pygame's number for it. Traced for steering left, with and without the example file:
@@ -810,6 +835,8 @@ keys[...]            True while A is held                 True while the left ar
 ```
 
 The loop is the same code for both players; only the data differs. Escape isn't configurable, on purpose: however wrong someone's settings are, there's always a way out.
+
+**A known gap.** The title screen still says "press Space to play", and the pause screen "press P to go on": `draw.py`'s `MESSAGES` were written before keys could change. With `examples/left-hand.toml`, serving is W, and the screen tells the player to press Space, which now does nothing: the game says something that isn't true for this player. A challenge at the end of this lesson fixes it, the way this series fixes everything: a pure function, tested without a window.
 
 A bad settings file stops the game before it starts, with the same kind of message as a bad level, and exit code 1:
 
@@ -935,7 +962,7 @@ def test_an_empty_file_is_all_defaults(tmp_path: Path):
         ("[controls]\nleft = 1\n", "controls.left: Input should be a valid string"),
         (
             '[controls]\nleft = "banana"\n',
-            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+            "controls.left: unknown key 'banana': use a-z, or left, right, up, down, space or return",
         ),
     ],
 )
@@ -995,6 +1022,8 @@ class Window(BaseModel):
 - **`Self`**, from `typing`, means "this class": the method returns a `Window` here, a `Controls` in yours, without naming it.
 - **`model_dump()`** returns a model's fields as a plain dict, in the order they're declared: `Window(low=1, high=5).model_dump()` is `{'low': 1, 'high': 5}`, and `Controls().model_dump()` is `{'left': 'left', 'right': 'right', 'serve': 'space', 'pause': 'p'}`. A dict can be looped over, which a model's fields, written one by one, can't.
 
+Before writing Breakout's version, paste the `Window` example into `scratch/window.py` and run it with `print(Window(low=1, high=5).model_dump())` and then `Window(low=9, high=5)`: see both lines above happen.
+
 A problem raised by a model validator belongs to no single field, so its location is the model's own: inside a `Config`, that's `controls`. Add the first row of the table as a case in `test_bad_settings_are_refused_with_where_and_why`. When all 94 tests pass and every check is clean, commit with a message that mentions **twice**, as in "a key used twice".
 
 ```hints
@@ -1032,6 +1061,18 @@ git-message "twice"
 git-clean
 ```
 
+## Challenge: keys in any case
+
+**Optional, ★.** Accept `left = "A"` and store it as `"a"`. A **`BeforeValidator(str.lower)`** in `Key`, before the `AfterValidator`, changes the value before it's checked. Add test cases for `"A"` and `"Left"`. On a branch.
+
+## Challenge: messages that name the real keys
+
+**Optional, ★★.** Close the known gap: write a pure function `message_for(state, controls) -> str | None` in `draw.py` that says "press W to play" when serve is `w`, test it without a window, and use it in `draw`. On a branch.
+
+## Challenge: settings the game finds by itself
+
+**Optional, ★★★.** Without `--config`, read `Path.home() / ".breakout.toml"` if it exists (`Path.home()` is your user folder). Precedence becomes four layers: command line, `--config`, the home file, the defaults. Test it with pytest's **`monkeypatch`** fixture, which replaces something for one test only: `monkeypatch.setattr(Path, "home", lambda: tmp_path)`. On a branch.
+
 ## What did we actually learn?
 
 - **TOML** for files people edit: `key = value`, `[tables]`, comments. `tomllib` reads it. JSON for data programs exchange.
@@ -1042,4 +1083,4 @@ git-clean
 - **Actions, not keys**: the game asks about *left*, and the settings say which key that is.
 - **`model_validator`** for rules about several fields at once.
 
-C# programs read settings through `IConfiguration`, from layers added in order (`appsettings.json`, then environment variables, then the command line), with later layers winning, which is this lesson's precedence rule built into the framework; `IOptions<T>` binds a section to a typed class and validates it with the same data annotations as lesson 5.4. Java's Spring Boot does the same with `application.properties` or `application.yml`, `@ConfigurationProperties` classes and `@Validated`, and documents an order in which command-line arguments beat files. Godot keeps project settings in `project.godot` and its input actions in the **InputMap**, which you just built a small version of. Real games also look for a settings file in the player's own folder (on Windows, under `%APPDATA%`) without being told; Chapter 49, which exports the game as a program of its own, does that, once there's an installed game for it to belong to.
+C# programs read settings through `IConfiguration`, from layers added in order (`appsettings.json`, then environment variables, then the command line), with later layers winning, which is this lesson's precedence rule built into the framework; `IOptions<T>` binds a section to a typed class and validates it with the same data annotations as lesson 5.4. Java's Spring Boot does the same with `application.properties` or `application.yml`, `@ConfigurationProperties` classes and `@Validated`, and documents an order in which command-line arguments beat files. Godot keeps project settings in `project.godot` and its input actions in the **InputMap**, which you just built a small version of. Real games also look for a settings file in the player's own folder (on Windows, under `%APPDATA%`: the environment variable holding your own application folder, usually `C:\Users\you\AppData\Roaming`; `%NAME%` is how Windows writes a variable's value) without being told; Chapter 54, which exports the game as a program of its own, does that, once there's an installed game for it to belong to.

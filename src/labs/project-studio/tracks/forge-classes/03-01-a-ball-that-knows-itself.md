@@ -6,7 +6,7 @@ runtime: python
 run: breakout.py
 ---
 
-Chapter 2 ended with a smell. Look at how the ball travels through `breakout.py`: four separate numbers, `ball_x, ball_y, ball_vx, ball_vy`, unpacked from `start_ball`, passed into `bounce_off_walls`, returned and unpacked again. Nothing says they belong together. Nothing stops a call from passing them in the wrong order: `bounce_off_walls(x, y, vy, vx)` would type-check perfectly (they're all floats) and make the ball bounce off the walls in nonsense ways.
+Chapter 2 ended with a **code smell**: a sign in the code, not yet a bug, that its structure will cause bugs. Look at how the ball travels through `breakout.py`: four separate numbers, `ball_x, ball_y, ball_vx, ball_vy`, unpacked from `start_ball`, passed into `bounce_off_walls`, returned and unpacked again. Nothing says they belong together. Nothing stops a call from passing them in the wrong order: `bounce_off_walls(x, y, vy, vx)` would type-check perfectly (they're all floats) and make the ball bounce off the walls in nonsense ways.
 
 This chapter is about **objects**: values that bundle data together with the operations that belong to it. You've been *using* objects since lesson 1.1 (`pygame.Rect` is one: it holds a position and size, and knows how to `colliderect`). Now you'll make your own, and understand exactly what happens in memory when you do.
 
@@ -17,6 +17,32 @@ This chapter is about **objects**: values that bundle data together with the ope
 The game keeps the ball in four loose variables, `ball_x`, `ball_y`, `ball_vx` and `ball_vy`, which every function has to be handed one by one, in the right order. A **class** lets you make one value that holds all four.
 
 > **Class**: a description of a kind of object: what data each one holds and what operations it supports. **Object** (or **instance**): one value made from a class, with its own copy of the data. **Attribute**: a named piece of data stored on an object. **Method**: a function defined inside a class, called on an object.
+
+Try a class on its own first, away from the game. Create `scratch/counter.py`:
+
+```python
+class Counter:
+    def __init__(self, start):
+        self.n = start
+
+    def add(self):
+        self.n += 1
+
+
+a = Counter(0)
+b = Counter(10)
+a.add()
+a.add()
+b.add()
+print(a.n, b.n)
+```
+
+Run it: `python scratch\counter.py` prints `2 11`. Two objects from one class, and each has its own `n`: `a` was added to twice, `b` once, and neither touched the other. The definitions below explain every line; come back to this file and change it as you read them. Two experiments worth one run each:
+
+- In `__init__`, write `n = start` instead of `self.n = start`. Now it makes a local variable that vanishes when `__init__` returns, and the next line that reads `self.n` fails with `AttributeError: 'Counter' object has no attribute 'n'`.
+- Delete `self` from `def add(self):`. Now `a.add()` fails with `TypeError: Counter.add() takes 0 positional arguments but 1 was given`: the object really is passed as the first argument, whether the method asks for it or not.
+
+Put both back. Those two errors are the most common ones anyone makes with their first classes, and now you'll recognise them.
 
 Add the class just above `start_ball`. For now it has one method, `__init__`, which stores the four numbers:
 
@@ -265,7 +291,7 @@ if __name__ == "__main__":
 
 `self` is just the name of the first parameter: the object the method was called on. It isn't a keyword; it's a convention so strong that every Python programmer uses it.
 
-`__init__` is annotated `-> None` because it returns nothing: it only stores values on the object. The *call* `Ball(...)` is what returns the new object. pyright works out each attribute's type from the `__init__` parameters it's assigned from: `self.x = x`, with `x: float`, makes `b.x` a `float`.
+`__init__` is annotated `-> None` because it returns nothing: it only stores values on the object. The *call* `Ball(...)` is what returns the new object. pyright works out each attribute's type from the `__init__` parameters it's assigned from: `self.x = x`, with `x: float`, makes `b.x` a `float`. Type hints don't convert anything, though: `Ball(320, ...)` stores the `int` 320, which pyright accepts because an `int` is allowed where a `float` is expected (lesson 2.5). That's why the output above is `320`, not `320.0`; `move`, in the next step, makes floats.
 
 ```check
 contains breakout.py "class Ball:"
@@ -1570,7 +1596,7 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand.** Why isn't this a method of `Ball`, like the wall bounce? Because it involves **two** objects, the ball and the paddle. The rule *a method changes only its own object* would be broken whichever class it went in, so for now it stays a function, given both, changing the ball. Lesson 3.5 finds it a better home.
+**Understand.** Why isn't this a method of `Ball`, like the wall bounce? Because it involves **two** objects, the ball and the paddle. The rule *a method changes only its own object* would be broken whichever class it went in, so for now it stays a function, given both, changing the ball. Lesson 3.5 shows who calls it: the `Game` object that owns both the ball and the paddle (and the challenges there move it in).
 
 > **Engineer:** **encapsulation**: keep data together with the code that understands it. Everything about how a ball moves and bounces is now inside `Ball`. The main loop says *what* happens (`ball.move(dt)`, `ball.bounce_off_walls()`), and `Ball` knows *how*. To change how a ball bounces, there's one place to look.
 
@@ -1623,7 +1649,28 @@ True
 
 That's also how `bounce_off_paddle(ball, paddle)` works now: the parameter `ball` inside the function is another name for the same object `main` holds, so changing `ball.vy` inside the function changes the game's ball. Passing an object to a function passes a **reference** to it, never a copy.
 
-> **Engineer:** aliasing is how objects get shared, and how bugs get shared too. When a function changes an object it was given, every other part of the program holding that object sees the change. Be explicit about it: a function that changes its argument says so in its name and returns `None` (`bounce_off_paddle`), and one that doesn't change it returns a new value instead. Mixing the two, changing an argument *and* returning something, is a classic source of confusion.
+Don't mix this up with lesson 2.2's rule that assigning to a parameter doesn't affect the caller. Both are true, and the REPL shows the difference:
+
+```text
+>>> import breakout
+>>> def change(b):
+...     b.x = 99
+...
+>>> def replace(b):
+...     b = breakout.Ball(0, 0, 0, 0)
+...
+>>> a = breakout.Ball(1, 2, 3, 4)
+>>> change(a)
+>>> a.x
+99
+>>> replace(a)
+>>> a.x
+99
+```
+
+`change` changed **the object** both names refer to: the caller sees it. `replace` made its **name** `b` refer to a new object, which only moved the local name: the caller's `a` is untouched. When you do want an independent object, `copy.copy(a)` (from the standard library's `copy` module) makes a new one with the same attributes, and `copy.copy(a) is a` is `False`.
+
+> **Engineer:** aliasing is how objects get shared, and how bugs get shared too. When a function changes an object it was given, every other part of the program holding that object sees the change. Be explicit about it: a function that changes its argument returns `None` (`bounce_off_paddle`, `ball.move`), and one that doesn't change it returns a new value instead. Keeping "do something" and "answer a question" apart is called **command-query separation**. Mixing the two, changing an argument *and* returning something, is a classic source of confusion; lesson 3.3 breaks the rule once, on purpose, and says why.
 
 ## Test the ball
 
@@ -1834,6 +1881,18 @@ run ".venv/Scripts/python -m pyright breakout.py tests/test_breakout.py" stdout=
 git-message "classes" -- Commit with a message that mentions classes.
 git-clean
 ```
+
+## Challenge: a ball that knows its speed
+
+**Optional, ★.** Add a method `speed()` to `Ball` that returns the length of its velocity (`math.hypot`, lesson 1.4), and a test that every serve has speed `BALL_SPEED` (use `math.isclose`, lesson 2.6). A value worked out from the object's own data, with one place that knows how.
+
+## Challenge: two balls
+
+**Optional, ★★.** In a copy, keep a list of two `Ball`s in `main`, the second served from a different seed, each moving and bouncing itself. Count how many lines you'd have needed with eight loose variables instead. Objects carry their own state, and a loop over objects replaces a pile of parallel variables.
+
+## Challenge: an aliasing bug on purpose
+
+**Optional, ★★.** In the REPL, write `balls = [breakout.serve(random.Random(0))] * 3`, predict what moving `balls[0]` does to `balls[1]`, then check. `[x] * 3` repeats the **reference**, so it's one ball three times. Fix it with a comprehension that serves three separate balls.
 
 ## What did we actually learn?
 

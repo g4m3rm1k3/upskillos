@@ -146,7 +146,7 @@ Drawing anything means saying **where**, so first, how pygame counts positions.
 
 Pixels are numbered 0 to 639 across and 0 to 479 down: 640 and 480 of them.
 
-> **Rect**: pygame's rectangle: a position and a size, `Rect(x, y, width, height)`, where `(x, y)` is the top-left corner. It also offers many other names for its edges and points, all calculated from those four numbers: `left`, `right`, `top`, `bottom`, `centerx`, `centery`, `center`, `midbottom`, and more. Assigning to any of them moves the rectangle; its size stays the same.
+> **Rect**: pygame's rectangle: a position and a size, `Rect(x, y, width, height)`, where `(x, y)` is the top-left corner. It also offers many other names for its edges, points and size, all calculated from those four numbers: `left`, `right`, `top`, `bottom`, `centerx`, `centery`, `center`, `midbottom`, `width` and `height`, and more. Assigning to any of them moves the rectangle; its size stays the same.
 
 A paddle is a rectangle. Make one before the loop, place it, draw it each frame after the background, and report its position in a test run:
 
@@ -218,6 +218,23 @@ midbottom = (320, 450)  →  x = 320 - 100 / 2 = 270,  y = 450 - 14 = 436
 So the paddle covers x from 270 to 369 and y from 436 to 449. Moving a `Rect` by naming the point you care about, instead of calculating the corner yourself, is the reason `Rect` has all those names.
 
 A `Rect`'s `right` and `bottom` are **one past** its last pixel: this paddle's `right` is 370 and its `bottom` is 450 (the point `midbottom` was set to), but the last pixels it covers are column 369 and row 449. That's what makes the sizes add up: from 270 up to, but not including, 370 is exactly 100 pixels.
+
+Try a `Rect` on its own in the REPL (`.venv\Scripts\python`), predicting each answer first:
+
+```text
+>>> import pygame
+>>> r = pygame.Rect(0, 0, 100, 14)
+>>> r.midbottom = (320, 450)
+>>> r.x, r.y, r.right, r.bottom
+(270, 436, 370, 450)
+>>> r.right = 640
+>>> r.x
+540
+>>> r.width
+100
+```
+
+Setting `right` to 640 moved the whole rectangle so its right edge is there: `x` became 640 − 100 = 540, and the width didn't change. Hold on to that 540: you'll need it soon.
 
 `pygame.draw.rect(screen, PADDLE_COLOUR, paddle)` takes three things: **where** to draw (the surface), **what colour**, and **which rectangle**.
 
@@ -414,7 +431,26 @@ explain: Each time, `rect.x + 0.6` is `0 + 0.6 = 0.6`, and storing 0.6 in the `R
 verify: .venv/Scripts/python -c "import pygame; r = pygame.Rect(0, 0, 1, 1); exec('for _ in range(60): r.x += 0.6'); print(r.x)"
 ```
 
-`float(paddle.x)` makes the starting float from the `Rect`'s 270. `round(paddle_x)` rounds to the nearest whole number for the `Rect`.
+`float(paddle.x)` makes the starting float from the `Rect`'s 270. `round(paddle_x)` rounds to the nearest whole number for the `Rect`. (An exact half goes to the **even** neighbour: `round(2.5)` is 2 and `round(3.5)` is 4. Python does it to avoid always rounding halves up, which would push totals upwards. Harmless here, but surprising the first time you meet it.)
+
+See that speed × dt really is the same on any computer. In the REPL, move by 420 pixels a second for one second, once in 60 small steps and once in 30 bigger ones:
+
+```text
+>>> x = 0.0
+>>> for frame in range(60):
+...     x += 420 * (1 / 60)
+...
+>>> x
+420.0
+>>> x = 0.0
+>>> for frame in range(30):
+...     x += 420 * (1 / 30)
+...
+>>> x
+420.0
+```
+
+(The `...` prompt means Python is waiting for the rest of the `for` block; press Enter on an empty line to finish it.) Both arrive at 420: 60 steps of 7 pixels, or 30 steps of 14. (Fractions like 1/60 are stored only approximately, and with other numbers the last digit can come out a hair off; Chapter 2 deals with that.) The flip side of moving by elapsed time: if one frame takes half a second, everything jumps half a second's distance in one go. Lesson 1.4 shows what that does to a ball.
 
 > **Engineer:** keep the exact value, and convert only at the edge where precision is lost on purpose. The same rule applies to money (store cents, not rounded dollars, and round only when printing), to measurements, and to anything accumulated over many steps: round the stored value each step and the errors add up.
 
@@ -507,6 +543,16 @@ if test_frames is not None:
 
 **Understand.** `hold` is read the same way the number of frames is: find `"--hold"`, take the word after it. Notice it has none of the checking you added for `--test-run`: `--hold` with nothing after it crashes with an `IndexError`, and the usage line doesn't mention it. That's a deliberate shortcut, since only checks use `--hold`; lesson 1.6 puts it on the list of what's wrong with this script, and Chapter 2 fixes it. The keyboard block moves inside `if test_frames is None:`, so a person uses the keys and a test run uses `hold`. In both, the result is a `direction`, and the line that moves the paddle doesn't need to know which.
 
+Careful reading the `if`/`elif` chain: it tests two different things. The first branch asks about `test_frames`; the two `elif`s, at the same indentation, belong to that same chain and ask about `hold`. They're only reached when it *is* a test run. The two inner `if`s about keys belong to the first branch alone:
+
+```text
+test run?   hold     branch that runs            direction
+no          (any)    the keys                    -1, 0 or 1, from the arrows
+yes         left     elif hold == "left"         -1
+yes         right    elif hold == "right"        1
+yes         none     none of them                0
+```
+
 **Test it:**
 
 ```powershell
@@ -583,6 +629,18 @@ contains BACKLOG.md "- [x] The paddle never leaves the screen." -- Tick both of 
 git-message "paddle"
 git-clean
 ```
+
+## Challenge: Shift for speed
+
+**Optional, ★.** While either Shift key is held, the paddle moves twice as fast. `keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]` is `True` while one is down; the speed × dt rule does the rest. Try it in a copy, `scratch/paddle_shift.py`, so the main game stays as the next lessons expect.
+
+## Challenge: a paddle with weight
+
+**Optional, ★★.** Instead of moving at full speed at once, the paddle **accelerates**: give it a velocity that changes towards `direction * PADDLE_SPEED` by at most 3000 pixels per second each second, slowing down the same way when no key is held. It must still stop at the edges and move the same on any computer. Velocity changes by acceleration × dt, and position by velocity × dt: dt twice.
+
+## Challenge: the mouse
+
+**Optional, ★★.** Make the paddle's centre follow the mouse: `pygame.mouse.get_pos()` returns the pointer's `(x, y)`. Keep it on the screen. Then think: does this need dt? Why not? (Compare "move by" with "set to".)
 
 ## What did we actually learn?
 

@@ -113,6 +113,8 @@ verify: python -c "import re, subprocess, sys; r = subprocess.run([sys.executabl
 
 > **Engineer:** a traceback answers three questions in a fixed place each: **what** (the last line), **where** (the last frame) and **how did we get here** (every frame above it). Learn the shape once and you can read a traceback from any Python program, including libraries you've never seen: in a long traceback, scan upwards from the bottom for the first frame in *your* file, because that's usually where your code handed a library something it couldn't handle.
 
+One shape you'll meet soon: a traceback with the line *During handling of the above exception, another exception occurred* in the middle. That's two reports stacked: a second error happened while the program was dealing with the first. Read the last one first, as always, then the one above the line, which is usually the original cause.
+
 ## Where it broke, and where it's wrong
 
 **Build:** fix `scores.py`.
@@ -157,7 +159,7 @@ Grace: average 315.0
 Linus: no games yet
 ```
 
-> **Engineer:** a traceback shows where Python **noticed** a problem, which isn't always where the **mistake** is. The fix belongs where the wrong assumption was made, and finding it often means answering a question about what the program *should* do, not just how to make the error stop. Wrapping line 5 in something that silences the error would have hidden the question instead of answering it.
+> **Engineer:** a traceback shows where Python **noticed** a problem, which isn't always where the **mistake** is. The fix belongs where the wrong assumption was made, and finding it often means answering a question about what the program *should* do, not just how to make the error stop. Python has a way to catch an exception and carry on, `try` and `except`, which lesson 2.4 shows and Chapter 5 uses. Wrapping line 5 in it just to make the error go away would have hidden the question instead of answering it.
 
 ```check
 run "python scores.py" stdout="Linus: no games yet" label="scores.py reports Linus as having no games" -- Check for an empty list at the start of report, print the message and return.
@@ -210,9 +212,7 @@ Notice the `Did you mean` suggestions: recent Pythons compare the name you typed
 
 **Build:** type a program whose crash is three functions away from its mistake.
 
-Create `leaderboard.py`. It says where a player ranks:
-
-Read it before running it. `SCORES` is a dictionary from each name to a score (written in capitals because it's meant never to change). `find_score` goes through `SCORES.items()`, name and score together, and returns the score whose name matches. `rank` counts how many scores in `SCORES.values()`, the scores alone, are higher than the player's, and adds 1.
+Create `leaderboard.py`, which says where a player ranks. Read it before running it: `SCORES` is a dictionary from each name to a score (written in capitals because it's meant never to change). `find_score` goes through `SCORES.items()`, name and score together, and returns the score whose name matches. `rank` counts how many scores in `SCORES.values()`, the scores alone, are higher than the player's, and adds 1.
 
 ```python file=leaderboard.py
 import sys
@@ -288,7 +288,24 @@ TypeError: '>' not supported between instances of 'int' and 'NoneType'
    Run `python leaderboard.py Ada` again: it prints `DEBUG score = None` before crashing. **`repr`** shows a value the way you'd write it in code, so text appears with its quotes (`'Ada'` rather than `Ada`) and stray spaces become visible. Always use it when printing a value to debug.
 5. **Isolate.** Why is it `None`? Follow it to where it came from: `find_score("Ada")`. That loop compares `"Ada"` with each key, `"ada"`, `"grace"`, `"linus"`, and `==` on strings is exact, capital letters included, so no key matches. The loop ends without reaching `return score`.
 
-   > **`None`**: Python's value for "nothing here". A function that ends without running a `return` statement returns `None`. Its type is called `NoneType`, which is the name in the error message. To test for it, write `value is None`. `is` asks whether two names refer to the very **same object**, not just equal ones; there is only ever one `None` object, so `is None` is exact, and it's the form every Python programmer uses.
+   > **`None`**: Python's value for "nothing here". A function that ends without running a `return` statement returns `None`. Its type is called `NoneType`, which is the name in the error message. To test for it, write `value is None`. `is` asks whether two names refer to the very **same object**, not just equal ones; there is only ever one `None` object, so `is None` is exact, and it's the form every Python programmer uses. See the difference in the REPL (lesson 0.1):
+
+   ```text
+   >>> a = [1, 2]
+   >>> b = [1, 2]
+   >>> a == b
+   True
+   >>> a is b
+   False
+   >>> c = a
+   >>> c is a
+   True
+   >>> x = None
+   >>> x is None
+   True
+   ```
+
+   `a` and `b` are two lists with equal contents, so `==` is `True`, but they're two separate objects, so `is` is `False`. `c = a` doesn't copy anything: it's a second name for the same list, so `c is a` is `True`.
 
    So the cause is in `find_score`, two calls before the crash, and there are really **two** problems: names don't match regardless of capitals, and a name that isn't on the board at all (try `python leaderboard.py Bob`) crashes too, when it should get a message.
 6. **Fix**: the next step is yours.
@@ -314,7 +331,7 @@ run "python leaderboard.py Ada" exit=1 stderr="TypeError" label="leaderboard.py 
 | `python leaderboard.py LINUS` | `LINUS is ranked 1 of 3` | 0 |
 | `python leaderboard.py Bob` | `No player called Bob` | 1 |
 
-The name is printed the way the person typed it. Fix each problem where it's caused, not where it crashes: `rank` should never be handed a `None`.
+The name is printed the way the person typed it. Fix each problem where it's caused, not where it crashes: `rank` should never be handed a `None`. Why exit code 1 for Bob, not 2? The command was used correctly, with one name as the usage line asks; it's the data that doesn't contain the name, so it's "something went wrong while working", lesson 0.1's 1.
 
 Try it for about 10 minutes before taking a hint. When it works, run all four commands again: that's step 7 of the method.
 
@@ -342,7 +359,7 @@ def main():
     print(f"{name} is ranked {rank(name)} of {len(SCORES)}")
 ~~~
 
-`name.lower()` is used only for comparing: the printed name stays the way it was typed, as the table asks. The missing-player check is in `main` because it's about talking to the person: `find_score` reports "nobody" by returning `None`, and `main` decides what that means for the user (a message) and for other programs (exit code 1, lesson 0.1). `rank` can now assume it's given a real player, which is what its code already assumed.
+`name.lower()` is used only for comparing: the printed name stays the way it was typed, as the table asks. The missing-player check is in `main` because it's about talking to the person: `find_score` reports "nobody" by returning `None`, and `main` decides what that means for the user (a message) and for other programs (exit code 1, lesson 0.1). `rank` can now assume it's given a real player, which is what its code already assumed. One cost remains: `find_score(name)` now runs twice, once in `main` and again inside `rank`. With three players that's nothing; Chapter 2 fixes the shape properly, by looking the score up once and passing it in.
 ```
 
 ```check
@@ -353,6 +370,18 @@ run "python leaderboard.py Bob" exit=1 stdout="No player called Bob" label="Bob 
 run "python leaderboard.py Ada" without="DEBUG" label="the debugging line is gone"
 ```
 
+## Challenge: the best game too
+
+**Optional, ★.** Make `scores.py` also print each player's **best** single score, on the same line as the average, still handling Linus, who has played no games. Decide first what "best of no games" should print, and why. It's the same question as the average, and it deserves the same kind of answer.
+
+## Challenge: ties
+
+**Optional, ★★.** Give two players the same score, 1250, in `leaderboard.py`. Both should be "ranked 2", and the next player down "ranked 4" (the usual sports rule: two players share second place, so nobody is third). Write the expected output for every player first, then trace `rank` by hand for both tied players before changing any code. Does the current `rank` already do it? Find out by reasoning, then by running it.
+
+## Challenge: a bug of your own
+
+**Optional, ★★.** Write a program of about 15 lines whose crash is three function calls away from its cause: for example a function that returns `None` in one branch, called by one function, whose result is used by another. Put it away for a day (or swap it with a friend), then find the cause using only the traceback and the debugging method. Writing a bug on purpose teaches you what the traceback can and can't tell you.
+
 ## What did we actually learn?
 
 - **A traceback is the call stack at the moment of failure**, oldest call first. Read it from the bottom: *what* (the last line), *where* (the last frame), *how we got here* (the frames above).
@@ -362,5 +391,7 @@ run "python leaderboard.py Ada" without="DEBUG" label="the debugging line is gon
 - **`None` travels.** A function that silently returns `None` passes the problem along until something far away tries to use it. Making "nobody found" explicit, and handling it where it's decided, is a habit you'll use in every chapter.
 
 In C# and Java the same report is called a **stack trace**, and it's printed the other way up: the **most recent call first**, at the top, with the error message above it. The idea is identical; only the reading direction changes. `NullReferenceException` (C#) and `NullPointerException` (Java) are those languages' versions of using a `None` where a real value was expected, and they're the most common crash in both. Chapter 4's type checker will start catching this one before your program even runs.
+
+**Chapter 0's challenges**, to come back to: an exit code you choose ★, find a program the way the shell does ★★, greet everyone ★★ (lesson 0.1); two Pythons, explained ★★, check every pinned package ★★★ (lesson 0.2); the best game too ★, ties ★★, a bug of your own ★★ (this lesson).
 
 That's Chapter 0. You have a project folder, a terminal you understand, an isolated Python with pinned packages, and a method for when things break. Chapter 1 starts the game: Breakout, in a single file, and your first git commit.

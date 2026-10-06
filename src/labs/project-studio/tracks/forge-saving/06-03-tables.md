@@ -37,14 +37,14 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
     level_file = settings.level or config.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -141,6 +141,9 @@ run ".venv/Scripts/python -m pytest -q" stdout="106 passed"
 # Generated: Python's compiled bytecode
 __pycache__/
 
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
+
 # Generated: package metadata, written by pip install -e .
 *.egg-info/
 
@@ -177,7 +180,7 @@ Connected to 'practice.db'
 sqlite>
 ```
 
-`practice.db` didn't exist, so SQLite creates it. At the `sqlite>` prompt, type each **statement** below, ending with `;`, and press Enter. The version number may differ; nothing else will.
+`practice.db` didn't exist, so SQLite creates it. At the `sqlite>` prompt, type each **statement** below, ending with `;`, and press Enter. The version number may differ; nothing else will. SQL keywords aren't case-sensitive (`select` works too); writing them in capitals is a convention that separates SQL's words from your own names.
 
 **A table.** A database holds **tables**: rows of data, every row with the same **columns**, every column with a name and a type. Create one:
 
@@ -190,7 +193,7 @@ CREATE TABLE scores (
 ) STRICT;
 ```
 
-- `id INTEGER PRIMARY KEY`: the **primary key**, a value that identifies exactly one row, never shared by two. Leave it out when you add a row, and SQLite gives each new row the next number.
+- `id INTEGER PRIMARY KEY`: the **primary key**, a value that identifies exactly one row, never shared by two. Leave it out when you add a row, and SQLite gives each new row the next number: one more than the largest there now. (So if the row with the largest id is deleted, its number can be given out again. Adding `AUTOINCREMENT` after `PRIMARY KEY` prevents that, at a small cost.)
 - `level TEXT NOT NULL`: text, and `NOT NULL` means every row must have one. `NULL` is SQL's "no value", its `None`.
 - `points INTEGER NOT NULL CHECK (points >= 0)`: a whole number that must be at least 0. A `CHECK` **constraint** is a rule the database itself enforces, whatever program writes to it.
 - `played_at TEXT NOT NULL`: SQLite has no date type, so dates are stored as ISO 8601 text (lesson 6.1), which sorts correctly as text.
@@ -236,6 +239,8 @@ LIMIT 1                     (1, Classic, 560)
 SELECT level, points        ('Classic', 560)
 ```
 
+(Strictly, the database works out the `SELECT` columns before sorting, which is why `ORDER BY` can use a name defined in the `SELECT`. It's written last here because it's easiest to read that way: first which rows, then which columns of them.)
+
 And SQL can calculate over many rows at once with **aggregate functions**: `MAX`, `MIN`, `COUNT`, `SUM`, `AVG`:
 
 ```sql
@@ -268,9 +273,30 @@ INSERT INTO scores (level, points, played_at) VALUES ('Classic', 'lots', '2026-1
 IntegrityError (unknown): cannot store TEXT value in INTEGER column scores.points
 ```
 
-That's `STRICT` at work. Type `.quit` to leave the shell.
+That's `STRICT` at work.
 
-**Understand: what you just did.** SQL is **declarative**: `SELECT MAX(points) ... WHERE level = 'Classic'` says *what* you want, not how to find it. The database decides how: which rows to read, in what order, using what shortcuts (Chapter 7 measures one, an **index**). That's the opposite of the Python you've written, where every loop says exactly how. It's why one short SQL statement can replace a loop over every score in memory.
+**Changing and removing rows.** Add a row to practise on, change it with **`UPDATE`**, and remove it with **`DELETE`**:
+
+```sql
+INSERT INTO scores (level, points, played_at) VALUES ('Test', 5, '2026-10-05T10:00:00+00:00');
+UPDATE scores SET level = 'Practice' WHERE id = 4;
+SELECT * FROM scores WHERE id = 4;
+DELETE FROM scores WHERE level = 'Practice';
+SELECT COUNT(*) FROM scores;
+```
+
+```text
+(4, 'Practice', 5, '2026-10-05T10:00:00+00:00')
+(3,)
+```
+
+`UPDATE ... SET column = value WHERE ...` changes the rows `WHERE` picks; `DELETE FROM ... WHERE ...` removes them. Both print nothing. Look hard at the `WHERE`: **`DELETE FROM scores;` with no `WHERE` deletes every row**, and `UPDATE scores SET level = 'Practice';` changes every row, without asking. The `WHERE` is the only thing standing between "this row" and "all of them". Lesson 6.4 comes back to that.
+
+One more thing, which will matter two steps from now: this shell **saves each statement as soon as it runs**. Nothing you typed needs saving separately. Python programs work differently, as you'll see.
+
+Type `.quit` to leave the shell.
+
+**Understand: what you just did.** SQL is **declarative**: `SELECT MAX(points) ... WHERE level = 'Classic'` says *what* you want, not how to find it. The database decides how: which rows to read, in what order, using what shortcuts (Chapter 7 measures one, an **index**: a sorted list of one column's values, each pointing at its row, like the index at the back of a book). That's the opposite of the Python you've written, where every loop says exactly how. It's why one short SQL statement can replace a loop over every score in memory.
 
 ```predict
 question: Two copies of Breakout use the JSON scores file of lesson 6.1. Both start, so both read the same three scores. Copy A's game ends and saves; then copy B's game ends and saves. How many scores are in the file?
@@ -330,10 +356,10 @@ def open_scores(path: Path) -> sqlite3.Connection:
 ```
 
 ```text
-('CREATE TABLE scores (\n    id INTEGER PRIMARY KEY,\n    level TEXT NOT NULL,\n    points INTEGER NOT NULL CHECK (points >= 0),\n    played_at TEXT NOT NULL\n) STRICT',)
+('CREATE TABLE scores (\n    id INTEGER PRIMARY KEY,\n    level TEXT NOT NULL,\n    points INTEGER NOT NULL CHECK (points >= 0),\n    played_at TEXT NOT NULL\n) STRICT\n',)
 ```
 
-`sqlite_schema` is a table SQLite keeps about the database itself: one row per table, with the SQL that made it. The table is there, made by your code.
+`sqlite_schema` is a table SQLite keeps about the database itself: one row per table, with the SQL that made it. The table is there, made by your code. SQLite keeps the statement as written, down to the newline at the end of `SCHEMA` (the `\n` before `',)`), except for `IF NOT EXISTS`, which only mattered at the moment of creating it.
 
 `sqlite3.connect` doesn't read the file, it only opens it. A file that isn't a database is noticed on the first `execute`:
 
@@ -347,7 +373,7 @@ connected
 sqlite3.DatabaseError: file is not a database
 ```
 
-So in `open_scores`, it's `db.execute(SCHEMA)` that raises for a bad file: worth knowing when the app decides what to catch.
+So in `open_scores`, it's `db.execute(SCHEMA)` that raises for a bad file: worth knowing when the app decides what to catch. Notice also what's left behind when it raises: the connection `sqlite3.connect` made, never closed, because `open_scores` never returned it. On Windows, the file stays open, and can't be deleted, until the program ends. For a program that warns and carries on, that's a small leak; a challenge at the end of this lesson closes it.
 
 ```check
 contains breakout/scores.py "def open_scores(path: Path) -> sqlite3.Connection:"
@@ -400,7 +426,24 @@ def add_score(db: sqlite3.Connection, score: Score) -> None:
         )
 ```
 
-**Understand.** The values aren't written into the SQL text. Each `?` is a **placeholder**, and the values are passed separately, as a tuple. The database fills them in itself, **in order**, as values, never as SQL:
+**Understand.** Placeholders first, on their own. In the REPL, with a database in memory (`":memory:"`, gone when closed):
+
+```text
+>>> import sqlite3
+>>> db = sqlite3.connect(":memory:")
+>>> db.execute("SELECT ?, ?", ("Bob's", 5)).fetchone()
+("Bob's", 5)
+>>> db.execute("SELECT ?", ("level")).fetchone()
+Traceback (most recent call last):
+  ...
+sqlite3.ProgrammingError: Incorrect number of bindings supplied. The current statement uses 1, and there are 5 supplied.
+>>> db.execute("SELECT ?", ("level",)).fetchone()
+('level',)
+```
+
+The values come back exactly as they went in, the apostrophe in `Bob's` included. The middle one is a classic mistake: `("level")` is just a string in brackets, not a tuple, and a string is a sequence of characters, so sqlite3 counted five values, `l`, `e`, `v`, `e`, `l`. The comma makes the tuple.
+
+In `add_score`, the values aren't written into the SQL text either. Each `?` is a **placeholder**, and the values are passed separately, as a tuple. The database fills them in itself, **in order**, as values, never as SQL:
 
 ```text
 INSERT INTO scores (level,        points,        played_at)
@@ -410,9 +453,29 @@ VALUES             (?,            ?,             ?)
 
 The first `?` takes the first item of the tuple, and so on: positions, not names. Swap two items, and `STRICT` refuses `'Classic'` as `points`. A single value is still a tuple, with the comma of lesson 6.2: `(level,)`. Why placeholders matter so much is the next lesson.
 
-**`with db:`** makes the `INSERT` a **transaction**: everything inside the block happens completely or not at all. At the end of the block the transaction is **committed**, made permanent on disk; if an exception is raised inside it, it's **rolled back**, as if nothing happened. The database writes changes so that a crash at any moment leaves either the old data or the new, never half: lesson 6.2's challenge, done for you.
+**`with db:`** makes the `INSERT` a **transaction**: everything inside the block happens completely or not at all. At the end of the block the transaction is **committed**, made permanent on disk; if an exception is raised inside it, it's **rolled back**, as if nothing happened. The database writes changes so that a crash at any moment leaves either the old data or the new, never half: lesson 6.2's challenge, done for you. How: before changing anything in `scores.db`, SQLite copies the parts it's about to change into a second file, the **rollback journal**, `scores.db-journal`. Only then does it change the database. Committing deletes the journal. If the program crashes in between, the next time anyone opens the database, SQLite finds the journal and copies the old parts back.
 
-Careful: this `with` is not lesson 6.2's `with open(...)`. Leaving `with db:` commits or rolls back, and the connection **stays open**, ready for the next statement. Closing it is still `db.close()`. And a change that's never committed is thrown away. Add one score inside a transaction, then one without, and look:
+Careful: this `with` is not lesson 6.2's `with open(...)`. Leaving `with db:` commits or rolls back, and the connection **stays open**, ready for the next statement. Closing it is still `db.close()`. And a change that's never committed is thrown away.
+
+But the shell saved every statement straight away. Why is Python different? Python's `sqlite3` **starts a transaction for you**: before an `INSERT`, `UPDATE` or `DELETE`, it quietly sends `BEGIN` to the database, and then waits for you to call `db.commit()` (save it) or `db.rollback()` (undo it). `with db:` calls one or the other when the block ends. `db.in_transaction` tells you whether one is open. In the REPL, on the `:memory:` database from above:
+
+```text
+>>> db.execute("CREATE TABLE t (a TEXT)")
+<sqlite3.Cursor object at 0x...>
+>>> db.in_transaction
+False
+>>> db.execute("INSERT INTO t VALUES ('x')")
+<sqlite3.Cursor object at 0x...>
+>>> db.in_transaction
+True
+>>> db.commit()
+>>> db.in_transaction
+False
+```
+
+`CREATE TABLE` didn't start one (which is why `open_scores` needs no `with`); the `INSERT` did, and `commit()` ended it. The shell is the odd one out: it commits each statement itself, a mode called **autocommit**.
+
+Now add one score inside a transaction, then one without, and look:
 
 ```powershell
 .venv\Scripts\python -c "from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import Score, add_score, open_scores; db = open_scores(Path('scores.db')); add_score(db, Score('Classic', 70, datetime(2026, 10, 4, 15, 41, tzinfo=UTC))); db.close()"
@@ -483,7 +546,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     raise NotImplementedError("lesson 6.3's Your turn")
 ```
 
-**Understand.** `db.execute(...)` returns a **cursor**: an object that hands out the rows of a result one at a time. Two ways to take them:
+**Understand.** `db.execute(...)` returns a **cursor**: an object that hands out the rows of a result one at a time. It hands each row out **once**: loop over a cursor a second time and you get nothing (`rows = db.execute("SELECT * FROM scores")`, then `list(rows)` gives the rows and a second `list(rows)` gives `[]`). Two ways to take them:
 
 - **Loop over it**, as `load_scores` does: each row is a tuple of the columns asked for, here unpacked as `level, points, played_at`.
 - **`.fetchone()`**: the next row, as a tuple, or `None` if there are no rows left. For a query that always gives exactly one row, like a `COUNT(*)`, it's the whole answer.
@@ -503,7 +566,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 
 **`best`** isn't written yet: it's the Your turn. `raise NotImplementedError(...)` makes it fail loudly, with a message saying why, if anything calls it before then.
 
-**What's checked now?** `STRICT` refuses text in `points`, and `CHECK` refuses negative points, when the data is written, by any program. Not everything: `played_at` is `TEXT`, so the database would take `'yesterday'` or a time with no zone, and `datetime.fromisoformat` would then fail on loading, or return a naive time. That's acceptable only because every row is written by `add_score`, from a `datetime` your code made. The database checks what it can; the rest relies on there being one way in.
+**What's checked now?** `STRICT` refuses text in `points`, and `CHECK` refuses negative points, when the data is written, by any program. Not everything: `played_at` is `TEXT`, so the database would take `'yesterday'` or a time with no zone, and `datetime.fromisoformat` would then fail on loading, or return a naive time. That's acceptable only because every row is written by `add_score`, from a `datetime` your code made. The database checks what it can; the rest relies on there being one way in. (A `CHECK` could do more: SQLite's own `datetime(played_at)` function returns `NULL` for text that isn't a time. A challenge below uses it.)
 
 ```check
 run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import load_scores; print(load_scores(db))\"" stdout="[]" label="a new database has no scores"
@@ -541,14 +604,14 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
     level_file = settings.level or config.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -634,9 +697,19 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** The app opens the database once, at the start, and keeps the connection, `db`, for the whole run: every finished game is one `add_score`. It's closed after the game loop. The policy from lesson 6.2 stays: if the database can't be opened (`sqlite3.Error` is the parent of every error the `sqlite3` module raises), warn and play without keeping scores. `db = None` in the `except` matters: `open_scores` raised before returning, so `db` was never set to a connection, but setting it again says plainly that from here on there's no database, and `if db` checks it, like `if scores_file` did.
+**Understand.** The app opens the database once, at the start, and keeps the connection, `db`, for the whole run: every finished game is one `add_score`. It's closed after the game loop. The policy from lesson 6.2 stays: if the database can't be opened, warn and play without keeping scores. `sqlite3.Error` is the parent of every error the `sqlite3` module raises:
 
-Every finished game calls `best(db, level.name)`, which still raises `NotImplementedError`: a game played with a scores database stops at its end until the Your turn. Test runs without `--scores` keep none and never call it.
+```text
+sqlite3.Error
+└── sqlite3.DatabaseError       file is not a database
+    ├── sqlite3.IntegrityError  a CHECK or STRICT refusal
+    ├── sqlite3.OperationalError  no such table, database is locked
+    └── sqlite3.ProgrammingError  wrong number of placeholders, a closed connection
+```
+
+so `except sqlite3.Error` catches all of them, as `OSError` caught every kind of file problem in lesson 5.2. `db = None` in the `except` matters: `open_scores` raised before returning, so `db` was never set to a connection, but setting it again says plainly that from here on there's no database, and `if db` checks it, like `if scores_file` did.
+
+The app calls `best(db, level.name)` as soon as the database is open, for the title screen, and again after every finished game. `best` still raises `NotImplementedError`, which `except sqlite3.Error` doesn't catch: until the Your turn, a game started with a working scores database stops **before its first frame**, with a traceback ending `NotImplementedError: lesson 6.3's Your turn`. Test runs without `--scores` never call it, and nor does a file that isn't a database: `open_scores` fails first, as the next command shows.
 
 ```powershell
 .venv\Scripts\breakout --test-run 10 --scores tests/data/broken-scores.json
@@ -783,6 +856,18 @@ git-message "SQLite"
 git-clean
 ```
 
+## Challenge: more questions, one query each
+
+**Optional, ★.** Add `worst(db, level)` and `games_played(db, level)`, each one `SELECT` with a placeholder, with tests using the same kind of database as `best`'s. What should `worst` return for a level with no games? On a branch.
+
+## Challenge: a database that refuses bad times
+
+**Optional, ★★.** Make the table itself refuse a `played_at` that isn't a time: a `CHECK` using SQLite's `datetime(played_at) IS NOT NULL`. Test it by inserting `'yesterday'` directly with `db.execute`, and expect `sqlite3.IntegrityError`. Note that `CREATE TABLE IF NOT EXISTS` won't change a table that's already there: delete your `scores.db` to see the new rule (Chapter 7's migrations are how real programs change a table that holds data). On a branch.
+
+## Challenge: no connection left open
+
+**Optional, ★★.** Make `open_scores` close its connection when `db.execute(SCHEMA)` fails, then raise the error again: `except sqlite3.Error:`, `db.close()`, and a bare `raise`, which re-raises the exception being handled. Prove it with a test: open a copy of `broken-scores.json` in `tmp_path`, catch the error, then delete the copy with `unlink()`, which fails on Windows if the file is still open. On a branch.
+
 ## What did we actually learn?
 
 - **One file holding everything** means rewriting it all, lost updates, and half-written saves. A **database** is built to avoid them.
@@ -792,6 +877,6 @@ git-clean
 - **Placeholders**: values passed separately from the SQL, `?` and a tuple. A tuple of one needs its comma.
 - **Tests against a real database** in a temporary folder, not a pretend one.
 
-The scores saved by lessons 6.1 and 6.2 in the JSON file aren't moved into the database: for a game no one has released, starting again is fine. Once players have data, moving it is a job of its own, called a **migration**, and Chapter 17 does one.
+The scores saved by lessons 6.1 and 6.2 in the JSON file aren't moved into the database: for a game no one has released, starting again is fine. Once players have data, moving it is a job of its own, called a **migration**, and lesson 7.2 does one.
 
 C# talks to SQLite through `Microsoft.Data.Sqlite`, and to other databases through the same **ADO.NET** interface: a connection, a command, `@level` parameters instead of `?`, and a transaction. Java's equivalent is **JDBC**: `Connection`, `PreparedStatement` with `?` placeholders, exactly like this lesson's. The SQL itself barely changes between them: it's a language of its own, and the one thing every one of these programs has in common.

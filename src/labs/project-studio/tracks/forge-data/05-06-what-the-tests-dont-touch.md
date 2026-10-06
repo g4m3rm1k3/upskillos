@@ -41,7 +41,7 @@ class ConfigError(ValueError):
 
 def check_key(name: str) -> str:
     if name not in KEYS:
-        raise ValueError(f"unknown key {name!r}: use a letter, or left, right, up, down, space or return")
+        raise ValueError(f"unknown key {name!r}: use a-z, or left, right, up, down, space or return")
     return name
 
 
@@ -145,7 +145,7 @@ def test_an_empty_file_is_all_defaults(tmp_path: Path):
         ("[controls]\nleft = 1\n", "controls.left: Input should be a valid string"),
         (
             '[controls]\nleft = "banana"\n',
-            "controls.left: unknown key 'banana': use a letter, or left, right, up, down, space or return",
+            "controls.left: unknown key 'banana': use a-z, or left, right, up, down, space or return",
         ),
         ('[controls]\nleft = "a"\nright = "a"\n', "controls: left and right both use 'a'"),
     ],
@@ -165,6 +165,7 @@ run ".venv/Scripts/python -m pytest -q" stdout="94 passed"
 **Build:** add **pytest-cov** to the development tools, and install it.
 
 ```text file=requirements.txt
+coverage==7.16.2
 pygame-ce==2.5.8
 pytest==9.1.1
 pytest-cov==7.1.0
@@ -177,11 +178,59 @@ ruff==0.16.10
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-**Understand.** pytest-cov is a pytest **plugin**: a package that adds options to pytest when it's installed. It's a development tool, like pytest itself, so it goes in `requirements.txt`, not in the game's dependencies. It installs **coverage**, the program that does the measuring; pytest-cov runs it around your tests.
+**Understand.** pytest-cov is a pytest **plugin**: a package that adds options to pytest when it's installed. It's a development tool, like pytest itself, so it goes in `requirements.txt`, not in the game's dependencies. It installs **coverage**, the program that does the measuring; pytest-cov runs it around your tests. pip would install coverage anyway, as a transitive dependency, so why pin it too? Because the project will use coverage **directly**: its settings in `pyproject.toml` and its own `coverage report` command, both later in this lesson, and one of those settings exists only in recent versions. Lesson 5.4's rule: pin what you use directly.
 
 ```check
 run ".venv/Scripts/python -c \"import pytest_cov; print(pytest_cov.__version__)\"" stdout="7.1.0" label="pytest-cov 7.1.0 is installed"
 ```
+
+## Coverage on four lines
+
+**Build:** nothing in the project. Measure something small enough to check by eye.
+
+Make a folder `scratch/cov`, and in it `sign.py`:
+
+```python
+def sign(x):
+    if x < 0:
+        return -1
+    return 1
+```
+
+and `test_sign.py`, which tests only a positive number:
+
+```python
+from sign import sign
+
+
+def test_positive():
+    assert sign(5) == 1
+```
+
+Then, in that folder:
+
+```powershell
+cd scratch\cov
+..\..\.venv\Scripts\python -m pytest -q test_sign.py --cov=sign --cov-report=term-missing
+```
+
+```text
+Name      Stmts   Miss  Cover   Missing
+---------------------------------------
+sign.py       4      1    75%   3
+---------------------------------------
+TOTAL         4      1    75%
+```
+
+Four statements (`def`, `if`, and the two `return`s); one never ran, line 3, `return -1`, because no test gave a negative number. Check it by eye: that's exactly right. (Naming `test_sign.py` matters: with no file named, pytest would run the project's `tests` folder, the `testpaths` setting from lesson 4.3.) Now add `--cov-branch` to the command:
+
+```text
+Name      Stmts   Miss Branch BrPart  Cover   Missing
+-----------------------------------------------------
+sign.py       4      1      2      1    67%   3
+```
+
+**Branch coverage** counts each way an `if` can go: the `if` on line 2 has 2 branches (true, false), and 1 was only partly taken (**BrPart**), because it only ever went one way. Write a second test with `sign(-5)` and both reports reach 100%. `cd ..\..` to go back to the project.
 
 ## The first measurement
 
@@ -195,6 +244,9 @@ Coverage writes what it records to a file named `.coverage` in the project. It's
 
 # Generated: Python's compiled bytecode
 __pycache__/
+
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
 
 # Generated: package metadata, written by pip install -e .
 *.egg-info/
@@ -226,7 +278,30 @@ TOTAL                    366     99    73%
 
 **Understand: reading the table.** `--cov=breakout` measures the `breakout` package; `--cov-report=term-missing` prints the table with the line numbers that never ran. For each module: **Stmts**, the number of **statements**, the lines of code that can run (blank lines and comments don't count); **Miss**, how many of them never ran; **Cover**, the percentage that did; **Missing**, which ones, as line numbers and ranges.
 
-**How it works.** Python lets a program ask to be told each time a new line starts running (through `sys.settrace`, or since Python 3.12 the faster `sys.monitoring`; coverage picks one for you). coverage asks, keeps a set of every `(file, line)` it's told about, and at the end compares that set with all the statements in each file.
+**How it works.** Python lets a program ask to be told each time a new line starts running (through `sys.settrace`, or since Python 3.12 the faster `sys.monitoring`; coverage picks one for you). coverage asks, keeps a set of every `(file, line)` it's told about, and at the end compares that set with all the statements in each file. You can ask too. In `scratch/trace.py`:
+
+```python
+import sys
+
+
+def sign(x):
+    if x < 0:
+        return -1
+    return 1
+
+
+def tracer(frame, event, arg):
+    if event == "line":
+        print("line", frame.f_lineno)
+    return tracer
+
+
+sys.settrace(tracer)
+sign(5)
+sys.settrace(None)
+```
+
+`python scratch\trace.py` prints `line 5` and `line 7`: the `if`, then `return 1`. Line 6 never ran. `tracer` is a function Python calls for each event (`frame` is the running function's state, including `f_lineno`, its current line), and returning `tracer` asks to be told about the next one too. That's all coverage is told; everything else is bookkeeping.
 
 **And `app.py` is 0%.** Not one line, when nine characterisation tests play the game. Look at how they play it: `subprocess.run([sys.executable, "-m", "breakout", ...])`, a **new Python process**. coverage is watching the process the tests run in, and the game runs in a different one. The number is accurate about what it measured, and it measured the wrong thing. That's the first lesson of coverage: before trusting a number, know exactly what was counted.
 
@@ -272,25 +347,6 @@ typeCheckingMode = "strict"
 patch = ["subprocess"]
 ```
 
-Measuring several processes means several data files for a moment, named `.coverage.` followed by the computer's name and the process number. Ignore those too:
-
-```text file=.gitignore
-# Generated: rebuilt from requirements.txt with python -m venv .venv
-.venv/
-
-# Generated: Python's compiled bytecode
-__pycache__/
-
-# Generated: package metadata, written by pip install -e .
-*.egg-info/
-
-# Generated: coverage data, written by pytest --cov
-.coverage
-.coverage.*
-```
-
-Then measure again:
-
 ```powershell
 .venv\Scripts\python -m pytest -q --cov=breakout --cov-report=term-missing
 ```
@@ -325,8 +381,35 @@ Now the characterisation tests count, and the table is honest.
 The first two rows are behaviour a player will meet, and that a careless change could break without anyone noticing: a real gap. Rows three to five are a different kind of gap: the game's **interactive** shell, which a test run deliberately replaces. Notice what that means for lesson 5.5: the configurable controls were checked by you, playing, and by nothing automatic. Chapter 11 builds an Input class that tests can press keys on; until then, it's a known gap, and knowing it is the point.
 
 ```check
-git-ignored .coverage.MYPC.1234.XyZ -- Add .coverage.* to .gitignore: the files each process writes while it is measured.
 run ".venv/Scripts/python -m pytest -q --cov=breakout" stdout="95%" label="with the game's own process measured: 95%"
+```
+
+## Coverage's own files stay out of Git
+
+**Build:** ignore the files coverage writes for each process.
+
+Measuring several processes means several data files for a moment, named `.coverage.` followed by the computer's name and the process number. Ignore those too:
+
+```text file=.gitignore
+# Generated: rebuilt from requirements.txt with python -m venv .venv
+.venv/
+
+# Generated: Python's compiled bytecode
+__pycache__/
+
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
+
+# Generated: package metadata, written by pip install -e .
+*.egg-info/
+
+# Generated: coverage data, written by pytest --cov
+.coverage
+.coverage.*
+```
+
+```check
+git-ignored .coverage.MYPC.1234.XyZ -- Add .coverage.* to .gitignore: the files each process writes while it is measured.
 ```
 
 ## What 100% doesn't prove
@@ -339,7 +422,7 @@ choice: Lower: the deleted asserts were what tested it
 choice: Still 100%
 choice: 0%: tests without asserts don't count
 answer: Still 100%
-explain: Coverage records which lines **ran**, not whether anything checked what they did. The tests still call `load_level`, `parse_level` and `bricks()`, so every line runs; with no `assert`, a `parse_level` that put every brick in the wrong place would pass them all. Coverage can prove a line is **untested** (it never ran); it can't prove a line is **tested**.
+explain: Coverage records which lines **ran**, not whether anything checked what they did. The tests still call `load_level`, `parse_level` and `bricks()`, and `tests/test_level_errors.py` still runs every error path with its asserts intact (delete its asserts too, and it's still 100%), so every line runs; with no `assert`, a `parse_level` that put every brick in the wrong place would pass them all. Coverage can prove a line is **untested** (it never ran); it can't prove a line is **tested**.
 ```
 
 So what does test whether the tests check things? You did it in lesson 4.5, without a name for it: `check_walls.py` makes small deliberate mistakes in a copy of the code and checks that the tests **fail**. That's **mutation testing**, and tools like `mutmut` do it automatically across a whole project. It's slow, so it's run occasionally, where correctness matters most.
@@ -382,6 +465,8 @@ def test_bad_settings_stop_the_game_with_exit_code_1(tmp_path: Path):
 The first test checks only the start of the message, because the rest is Python's description of the operating system's error (`[Errno 2] No such file or directory: ...`), whose wording isn't the game's to promise and differs between systems for other errors; the part that's the game's own is checked exactly. The second message is all the game's, so it's checked whole. `print(..., file=sys.stderr)` ends with a newline, hence the `\n`.
 ```
 
+`--cov-report=` with nothing after the `=` means "measure, but print no table": the check reads the total separately, with `coverage report`.
+
 ```check
 run ".venv/Scripts/python -m pytest -q --cov=breakout --cov-report=" stdout="96 passed" label="all 96 tests pass, with coverage measured"
 run ".venv/Scripts/python -m coverage report --include=breakout/app.py --format=total" stdout="86" label="app.py is 86% covered: both refusals are tested"
@@ -391,9 +476,21 @@ git-message "exit code"
 git-clean
 ```
 
+## Challenge: read the partial branches
+
+**Optional, ★.** Run `pytest --cov=breakout --cov-branch --cov-report=term-missing` and list each partial branch in `app.py` and `level.py`. For each, one sentence in a Markdown file: needs a test, or tested another way. On a branch.
+
+## Challenge: mutants by hand
+
+**Optional, ★★.** On `level.py`: change `>` to `>=` in `check_wall`, change `!=` to `<` in `check_row`, and remove `strip_whitespace=True`, one at a time. For each, record which test fails. Add a test for any mutant that survives. Lesson 4.5's `check_walls.py` can do the changing for you. On a branch.
+
+## Challenge: a real mutation tool
+
+**Optional, ★★★.** Install **mutmut** on a branch, run it on `breakout/level.py` and `breakout/config.py`, and kill at least two surviving mutants with new tests. In the commit message, say why the others are acceptable.
+
 ## What did we actually learn?
 
-- **Coverage** records which lines run during the tests: `pytest --cov=breakout --cov-report=term-missing`.
+- **Coverage** records which lines run during the tests: `pytest --cov=breakout --cov-report=term-missing`; `--cov-branch` counts each way an `if` can go. Underneath, Python tells it about every line (`sys.settrace`).
 - **Know what was counted**: tests that start a new process measured nothing until `patch = ["subprocess"]`.
 - **Read the missing lines** and sort them: behaviour that needs a test, and shells that are tested another way or not yet.
 - **Coverage proves a line untested, never tested.** Mutation testing checks the tests themselves.
@@ -405,8 +502,10 @@ In C#, `dotnet test --collect:"XPlat Code Coverage"` collects coverage with **co
 
 The chapter started with a wall written as code and ends with levels and settings as files that people you'll never meet can write. Every file the game reads raised the same question: **who controls this data, and what's the worst it could contain?**
 
-- **The game's own files** (`classic.json`, shipped in the package): written by you, tested by your tests. Trusted, and still checked, because you make mistakes too.
+- **The game's own files** (`classic.json`, kept in the package folder): written by you, tested by your tests. Trusted, and still checked, because you make mistakes too.
 - **The player's settings**: written by the person playing, on their own computer. A mistake is likely; malice isn't, since they'd only be attacking themselves. Clear messages matter most.
-- **Levels from someone else**: so far, a teammate. In Part 5, strangers will upload levels to the asset library, and anything they upload is **hostile input**: written by someone who may want to crash the game, or worse. What protects you then is what this chapter built: one model that refuses anything outside it, at the boundary, before any other code sees it. The model's limits (8 columns, at most 10 rows, a short list of fields) are also limits on what an attacker can make your program do. Chapter 6 meets the first file format that's dangerous even to *open*.
+- **Levels from someone else**: so far, a teammate. In Part 5, strangers will upload levels to the asset library, and anything they upload is **hostile input**: written by someone who may want to crash the game, or worse. What protects you then is what this chapter built: one model that refuses anything outside it, at the boundary, before any other code sees it. The model's limits (8 columns, at most 10 rows, a short list of fields) limit what reaches the game. They don't limit what it costs to get that far: `read_text` reads the whole file, and pydantic parses all of it, before any rule runs, so a 2 GB level file still costs 2 GB of memory. Files from strangers also need a size check before reading (`path.stat().st_size`), which Part 5 adds. Chapter 6 meets the first file format that's dangerous even to *open*.
 
-The same few ideas did all the work, and they'll do it in every program you write: **parse at the boundary** into a type that can only hold good data; **report every problem with where and why**; **paths relative to their file**; **the most specific setting wins**; and **tests that pin each rule**, measured, so you know what they don't touch.
+The same few ideas did all the work, and they'll do it in every program you write: **parse at the boundary** into a type that can only hold good data; **report every problem with where and why**; **paths relative to their file**; **the most specific setting wins**; **say the encoding, and expect files that disagree** (the BOM, a file that isn't UTF-8); and **tests that pin each rule**, measured, so you know what they don't touch.
+
+**Chapter 5's challenges**, to come back to (on branches): list the levels ★, a preview in the terminal ★★, narrower levels ★★★ (5.1); a level with nothing to break ★, every problem at once ★★, a level checker ★★★ (5.2); there and back ★, a key written twice ★★, point at the mistake ★★★ (5.3); autocompletion for level files ★, friendlier messages ★★, a wall written as text ★★★ (5.4); keys in any case ★, messages that name the real keys ★★, settings the game finds by itself ★★★ (5.5); read the partial branches ★, mutants by hand ★★, a real mutation tool ★★★ (this lesson).

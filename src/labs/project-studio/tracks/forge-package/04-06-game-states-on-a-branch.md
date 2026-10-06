@@ -6,7 +6,7 @@ run: breakout/__main__.py
 
 The game starts the moment the window opens, can't be paused, and ends by checking numbers (`lives > 0 and bricks`). Real games have **states**: a title screen, playing, paused, game over, won, and rules for moving between them. This lesson builds them as a **state machine**, the pattern behind menus, network connections, characters in games and every app with screens.
 
-It's also a bigger change than any so far, touching four files. So it's done the way teams do any change bigger than a few lines: on a **branch** of its own, merged into the main line only when it's finished and every check passes.
+It's also a bigger change than any so far, touching six files. So it's done the way teams do any change bigger than a few lines: on a **branch** of its own, merged into the main line only when it's finished and every check passes.
 
 ## The boundary tests so far
 
@@ -41,6 +41,53 @@ run ".venv/Scripts/python check_walls.py" stdout="caught 3 of 3"
 git-clean -- Commit lesson 4.5's work before starting a branch.
 ```
 
+## Branches, in a throwaway repository
+
+**Build:** nothing in the project. Try branches where a mistake costs nothing.
+
+Make a new repository in your temporary folder, outside the project, and try every command this lesson uses:
+
+```powershell
+mkdir $env:TEMP\branches
+cd $env:TEMP\branches
+git init
+"one" > notes.txt
+git add .
+git commit -m "one"
+git switch -c idea
+"two" >> notes.txt
+git commit -am "two"
+git log --oneline --graph --all --decorate
+```
+
+`>>` adds a line to the end of a file, where `>` replaces it. `git commit -am` stages every change to files Git already tracks and commits in one go (`-a`, *all*). `git switch -c idea` **c**reates a branch named `idea` and switches to it. The log, drawn as a graph:
+
+```text
+* 1f870b3 (HEAD -> idea) two
+* 9e90787 (main) one
+```
+
+Two names: `main` still points at the first commit, `idea` at the second, and `HEAD` is on `idea`. Now switch back, look at the file, and merge:
+
+```powershell
+git switch main
+Get-Content notes.txt
+git merge idea
+git log --oneline --graph --all --decorate
+```
+
+```text
+one
+Updating 9e90787..1f870b3
+Fast-forward
+ notes.txt | 1 +
+ 1 file changed, 1 insertion(+)
+* 1f870b3 (HEAD -> main, idea) two
+* 9e90787 one
+```
+
+Switching to `main` **changed the file**: `notes.txt` went back to one line, because the working tree always shows the commit you're on. Merging moved the name `main` forward to `idea`'s commit (a **fast-forward**: no new commit, just a name moving). Your hashes will differ. Go back to the project, `cd` to your `forge` folder, and delete the experiment: `Remove-Item -Recurse -Force $env:TEMP\branches`.
+
 ## A branch for the work
 
 **Build:** a branch named `game-states`, and switch to it.
@@ -55,7 +102,7 @@ git branch
   main
 ```
 
-**Understand: what a branch is.** Lesson 1.2 showed that history is a chain of commits, each naming its parent. A **branch** is just a name that points at one commit, the latest on that line of work, and moves forward each time you commit on it. `main` has been that name all along. `git switch -c game-states` creates a new name pointing at the **same** commit as `main`, and switches to it, so your next commits move `game-states` forward and leave `main` where it is:
+**Understand: what a branch is.** Lesson 1.2 showed that history is a chain of commits, each naming its parent. A **branch** is just a name that points at one commit, the latest on that line of work, and moves forward each time you commit on it. `main` has been that name all along. `git switch -c game-states` (**c**reate) makes a new name pointing at the **same** commit as `main`, and switches to it, so your next commits move `game-states` forward and leave `main` where it is:
 
 ```text
 before:           ... ── A ── B          main, game-states (both at B)
@@ -67,7 +114,7 @@ after 2 commits:  ... ── A ── B          main
 
 `HEAD` (lesson 1.2) is now attached to `game-states`: "the commit I'm on" is "wherever game-states points". `git branch` lists the branches, with `*` beside the current one.
 
-Why bother, working alone? Because `main` stays a line of commits that each work. While the states are half-built, the game is broken; on a branch, that broken state never touches `main`. If the idea turns out badly, `git switch main` and `git branch -D game-states` throw it away whole. And from Chapter 15, when the project is on GitHub, a branch is how a change is reviewed before it joins `main`.
+Why bother, working alone? Because `main` always holds a working game. While the states are half-built, the game is broken, and on a branch that broken state never touches `main`. (Be clear about what that does and doesn't promise: when the branch is merged, its commits join `main`'s history, half-built ones included. Chapter 16 shows **squash merging**, which turns a branch into one finished commit on `main`.) If the idea turns out badly, `git switch main` and `git branch -D game-states` throw it away whole. And from Chapter 16, when the project is on GitHub, a branch is how a change is reviewed before it joins `main`.
 
 ```check
 git-branch game-states -- Run git switch -c game-states.
@@ -302,7 +349,7 @@ Every other combination does nothing: `start()` while playing is ignored, `toggl
 
 > **Engineer:** without a state machine, states hide in combinations of variables (`lives > 0 and bricks and not paused and started`), and every new state multiplies the combinations, and the bugs. With one, the current state is one value, the allowed changes are a short list, and "what happens if P is pressed on the game-over screen?" has an answer you can look up and test.
 
-This commit leaves the game tests failing, as the next step shows: they still expect a game that plays without being started. On a branch that's fine for a moment, because `main` still has the working game. Commit the model on the branch:
+This commit leaves the game tests failing, as the next step shows: they still expect a game that plays without being started. Lesson 3.3's habit was a commit at every green; on a branch, a small commit that's red for one step is a common, deliberate trade-off, because `main` still has the working game. Know what it costs, though: after the fast-forward merge at the end of this lesson, this commit will be in `main`'s history, a point where the tests fail, and Chapter 13's `git bisect` works best when every commit passes. Commit the model on the branch:
 
 ```powershell
 git add breakout/model.py
@@ -313,6 +360,48 @@ git commit -m "Add game states to the model"
 contains breakout/model.py "class GameState(Enum):"
 git-branch game-states -- Stay on the game-states branch.
 git-message "game states"
+```
+
+## A state machine you can hold in your head
+
+**Build:** nothing in the project. A state machine with no game in the way.
+
+A **turnstile**: locked until you put a coin in, then unlocked until you push through. In the REPL:
+
+```text
+>>> def coin(state):
+...     return "unlocked" if state == "locked" else state
+...
+>>> def push(state):
+...     return "locked"
+...
+>>> state = "locked"
+>>> state = coin(state); state
+'unlocked'
+>>> state = coin(state); state
+'unlocked'
+>>> state = push(state); state
+'locked'
+```
+
+Traced:
+
+```text
+state before   event   state after   why
+locked         coin    unlocked      the one change a coin makes
+unlocked       coin    unlocked      a second coin is ignored (it's already open)
+unlocked       push    locked        through, and locked behind you
+```
+
+Two **states**, two **events**, and a rule for each pair: that table is the whole machine. Some events do nothing in some states, on purpose, like P on the title screen. The game's `start()` and `toggle_pause()` are the same idea with more states.
+
+```predict
+question: The game is on the title screen and the player presses P. What is `game.state` afterwards?
+choice: PAUSED
+choice: TITLE
+choice: An error
+answer: TITLE
+explain: `toggle_pause` only changes `PLAYING` to `PAUSED` and back; in any other state it does nothing. There's nothing to pause on the title screen, so the event is ignored on purpose, like the turnstile's second coin. The Your turn below pins that down with a test.
 ```
 
 ## The tests meet the title screen
@@ -498,7 +587,7 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** Two new events in the loop: a `KEYDOWN` whose key is `pygame.K_SPACE`, the Space bar, or `pygame.K_p`, the P key. **Space**: on the game-over or won screen, make a new `Game` first (with the same random generator, so its serves continue the same sequence), then `start()` it; on the title screen, just `start()`. `game.state in (GameState.OVER, GameState.WON)` asks whether the state is one of the two in that tuple: `in` works on any sequence. The random generator is now made once into its own variable, `rng = random.Random(seed)`, instead of directly inside `Game(...)`, precisely so the Space handler can hand the *same* generator to the new game. **P**: `toggle_pause()`. The keyboard only sends **events** to the state machine; the rules about what each event means in each state stay in the model, where they're tested.
+**Understand.** Two new events in the loop: a `KEYDOWN` whose key is `pygame.K_SPACE`, the Space bar, or `pygame.K_p`, the P key. **Space**: on the game-over or won screen, make a new `Game` first (with the same random generator, so its serves continue the same sequence: a seeded session plays the same *series* of games, where a fresh `random.Random(seed)` would replay the first game's serves every time), then `start()` it; on the title screen, just `start()`. `game.state in (GameState.OVER, GameState.WON)` asks whether the state is one of the two in that tuple: `in` works on any sequence. The random generator is now made once into its own variable, `rng = random.Random(seed)`, instead of directly inside `Game(...)`, precisely so the Space handler can hand the *same* generator to the new game. **P**: `toggle_pause()`. The keyboard only sends **events** to the state machine; the rules about what each event means in each state stay in the model, where they're tested.
 
 A test run calls `game.start()` straight away, so it skips the title screen and every characterisation test still sees exactly the same game.
 
@@ -541,7 +630,7 @@ def draw(screen: pygame.Surface, font: pygame.font.Font, game: Game) -> None:
         screen.blit(text, text.get_rect(center=screen.get_rect().center))
 ```
 
-**Understand.** `MESSAGES` is a **dictionary** written out in full: `{key: value, key: value}`, each state paired with its text. `MESSAGES` maps each state to its text. `MESSAGES.get(game.state)` returns the text, or `None` for a state that isn't in the dictionary, `PLAYING`, which shows no message. A dictionary of states to behaviour is a common way to keep a state machine's per-state details in one place, instead of a chain of `if`s.
+**Understand.** `MESSAGES` is a **dictionary** written out in full: `{key: value, key: value}`, each state paired with its text. `MESSAGES.get(game.state)` returns the text, or `None` for a state that isn't in the dictionary, `PLAYING`, which shows no message. A dictionary of states to behaviour is a common way to keep a state machine's per-state details in one place, instead of a chain of `if`s.
 
 `font.render(...)` makes the text as a surface, a picture of the words. Every surface has a `get_rect()` method returning a `Rect` the size of the picture, and giving it `center=` places that `Rect` with its centre at a point: here `screen.get_rect().center`, the screen's centre, (320, 240). Blitting the text at that `Rect` puts it exactly in the middle, whatever its length: a 200-pixel message starts at x 220, a 300-pixel one at 170.
 
@@ -606,6 +695,8 @@ Write `tests/test_states.py` with these four tests:
 | `test_a_paused_game_does_not_move` | after pausing, an `update` leaves the ball's position unchanged |
 | `test_pausing_on_the_title_screen_does_nothing` | `toggle_pause()` on a new game leaves it on `TITLE` |
 
+Try it for about 15 minutes before taking a hint. One trap, worth knowing before you start: to check that the ball **didn't move**, you need its position from before the update. `before = game.ball.position` doesn't save it: it's a second name for the same `Vector2` (lesson 3.2's aliasing), so if the ball moved, `before` moved with it, and `before == game.ball.position` would be `True` either way. `Vector2(game.ball.position)` makes a new vector with the same numbers, a real copy.
+
 When all 63 tests pass and every other check is clean, commit them **on the branch**. Then merge the branch into `main`, and delete it:
 
 ```powershell
@@ -614,7 +705,7 @@ git merge game-states
 git branch -d game-states
 ```
 
-Read what `git merge` prints before deleting anything. **Merging** brings the commits of one branch into the branch you're on. Here, `main` hasn't moved since `game-states` was made from it, so there's nothing to combine: Git just moves the `main` name forward to the branch's latest commit, and says `Fast-forward`:
+Run `git log --oneline --graph --all --decorate` before and after the merge, to see the picture below for real. Read what `git merge` prints before deleting anything. **Merging** brings the commits of one branch into the branch you're on. Here, `main` hasn't moved since `game-states` was made from it, so there's nothing to combine: Git just moves the `main` name forward to the branch's latest commit, and says `Fast-forward`:
 
 ```text
 before:   A ── B ── C ── D        main → B,  game-states → D
@@ -680,6 +771,18 @@ git-tracked tests/test_states.py -- Commit the tests on the branch, then merge i
 git-no-branch game-states -- Delete the merged branch: git branch -d game-states.
 git-clean
 ```
+
+## Challenge: a READY state
+
+**Optional, ★.** On a branch `challenge-ready`, add a `READY` state between serves: after a life is lost, the ball waits above the paddle until Space is pressed. Write the new rows of the transition table in a comment first, then the tests, then the code. Merge it, or throw it away with `git branch -D`.
+
+## Challenge: transitions as data
+
+**Optional, ★★.** Replace `start` and `toggle_pause` with one method, `handle(event)`, driven by a dictionary of transitions, `{(GameState.TITLE, Event.START): GameState.PLAYING, ...}`, with `Event` an enum of your own. Every existing test must pass unchanged: a refactor under tests. On a branch.
+
+## Challenge: the rule that escaped the model
+
+**Optional, ★★.** "Space on a finished game makes a new game" lives in `app.py`, the one rule this lesson left outside the model, and untested. Move it into the model, as a method or a function, with a test. On a branch.
 
 ## What did we actually learn?
 

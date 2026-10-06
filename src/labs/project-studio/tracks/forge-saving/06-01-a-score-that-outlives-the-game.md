@@ -6,7 +6,7 @@ runtime: python
 run: breakout/__main__.py
 ---
 
-Close the game and everything in it is gone: every score, every best. The game's objects live in memory, and memory belongs to a running program. Keeping anything for later means writing it somewhere that outlives the program, a file or a database, in a form that can be turned back into objects next time. This chapter does that for scores, three ways: a JSON file in this lesson, what goes wrong with files and with Python's own `pickle` in the next, then a real database with SQL.
+Close the game and everything in it is gone: every score, every best. The game's objects live in memory, and memory belongs to a running program. Keeping anything for later means writing it somewhere that outlives the program, a file or a database, in a form that can be turned back into objects next time. Turning objects into bytes or text like that is called **serialisation**, and turning them back **deserialisation**. This chapter does that for scores, three ways: a JSON file in this lesson, what goes wrong with files and with Python's own `pickle` in the next, then a real database with SQL.
 
 ## The characterisation tests so far
 
@@ -138,6 +138,25 @@ def best(scores: list[Score], level: str) -> int | None:
 
 **Understand.** `Score` is a frozen dataclass (lesson 3.2): which level, how many points, and **when**, as a `datetime` from the standard library's `datetime` module: a date and a time of day in one object.
 
+`datetime` is new, so try it in the REPL first:
+
+```text
+>>> from datetime import UTC, datetime
+>>> t = datetime(2026, 10, 4, 15, 41, tzinfo=UTC)
+>>> print(t)
+2026-10-04 15:41:00+00:00
+>>> t.year, t.month, t.hour, t.tzinfo
+(2026, 10, 15, datetime.timezone.utc)
+>>> t.isoformat()
+'2026-10-04T15:41:00+00:00'
+>>> datetime(2026, 10, 4) < t
+Traceback (most recent call last):
+  ...
+TypeError: can't compare offset-naive and offset-aware datetimes
+```
+
+A `datetime` is made from its parts, year down to minute (seconds and smaller default to 0), and its parts can be read back. `tzinfo=UTC` says which **time zone** the time is in; `+00:00` at the end is its **offset**, how far that zone is from UTC, here not at all (Paris in summer is `+02:00`, two hours ahead). `isoformat()` writes it in the international standard format, **ISO 8601**, which this lesson's Your turn needs. A `datetime` without a time zone, like `datetime(2026, 10, 4)`, can't be compared with one that has one: Python refuses to guess which zone it meant. The step "The app keeps score" says why that matters.
+
 `best` finds the highest points on one level. The **generator expression** `score.points for score in scores if score.level == level` produces the matching points one at a time, without building a list, and `max` takes the largest. Traced for three scores, looking for `"Classic"`:
 
 ```text
@@ -212,7 +231,7 @@ Look at what `asdict` gives for one score:
 {'level': 'Classic', 'points': 70, 'when': datetime.datetime(2026, 10, 4, 15, 41, tzinfo=datetime.timezone.utc)}
 ```
 
-A `str`, an `int`, and a `datetime`, copied as it is. Keep that last one in mind: the game is about to find out what `json.dumps` thinks of it.
+A `str`, an `int`, and a `datetime`, copied as it is. Keep that last one in mind: the game is about to find out what `json.dumps` thinks of it. (If you can't wait: `.venv\Scripts\python -c "import json; from datetime import UTC, datetime; json.dumps({'when': datetime.now(UTC)})"`. Read the last line of what it prints, then carry on.)
 
 ```check
 contains breakout/scores.py "def save_scores(path: Path, scores: list[Score]) -> None:"
@@ -267,7 +286,7 @@ def best(scores: list[Score], level: str) -> int | None:
 Score(level='Classic', points=70, when='2026-10-04T15:41:00+00:00')
 ```
 
-The second line is a warning. The dict's `when` was a string, as it would be in any JSON file, and the `Score` took it: a dataclass doesn't check types at run time (lesson 3.2), only pyright does, and pyright can't see inside a JSON file. A `Score` whose `when` is a `str` is wrong in a way nothing has caught yet.
+The second line is a warning. The dict's `when` was a string, as it would be in any JSON file, and the `Score` took it: a dataclass doesn't check types at run time, only pyright does, and pyright can't see inside a JSON file. Try it: `.venv\Scripts\python -c "from breakout.scores import Score; print(Score('Classic', 'lots', 'today'))"` prints `Score(level='Classic', points='lots', when='today')`, without complaint. Type hints are for the type checker; Python itself ignores them. A `Score` whose `when` is a `str` is wrong in a way nothing has caught yet.
 
 ```check
 contains breakout/scores.py "def load_scores(path: Path) -> list[Score]:"
@@ -320,6 +339,12 @@ the file before                 [{"level": "Classic", "points": 70, ...}]
 load_scores(path)               [Score("Classic", 70, ...)]
 [*load_scores(path), score]     [Score("Classic", 70, ...), Score("Classic", 400, ...)]
 the file after                  [{"level": "Classic", "points": 70, ...}, {"level": "Classic", "points": 400, ...}]
+```
+
+```predict
+question: The file holds 1,000 scores. How many scores does `add_score` write to the file to add one more?
+answer: 1001
+explain: `add_score` loads every score, makes a new list with one more, and `save_scores` writes the whole list back: 1,000 old scores, rewritten unchanged, plus the new one. The work grows with the file, not with what changed.
 ```
 
 Rewriting the whole file to add one score is fine for a few hundred scores and a problem for a million; lesson 6.3 comes back to it.
@@ -444,7 +469,15 @@ def draw(screen: pygame.Surface, font: pygame.font.Font, game: Game, best: int |
 
 **Understand.** `draw` is given the best score, `int | None`, and adds `Best 560` to the status line only when there is one. It isn't given the scores file: drawing shows things, and doesn't read files.
 
-`draw` now needs four arguments, and the app passes three: the game would crash on its first frame with `TypeError: draw() missing 1 required positional argument: 'best'`. Until the app knows a best score, give it `None`, "no best yet":
+```check
+contains breakout/draw.py "best: int | None"
+```
+
+## No best score yet
+
+**Build:** the app passes `draw` its new argument.
+
+`draw` now needs four arguments, and the app still passes three, so right now the game crashes on its first frame with `TypeError: draw() missing 1 required positional argument: 'best'`. Until the app knows a best score, give it `None`, "no best yet":
 
 ```python file=breakout/app.py
 import os
@@ -470,14 +503,14 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
     level_file = settings.level or config.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -546,7 +579,6 @@ def run() -> None:
 ```
 
 ```check
-contains breakout/draw.py "best: int | None"
 run ".venv/Scripts/breakout --test-run 60" stdout="frames=60" label="the game still runs, with no best score to show"
 ```
 
@@ -581,14 +613,14 @@ def main(args: list[str]) -> None:
     rng = random.Random(seed)
     try:
         config = load_config(settings.config) if settings.config else Config()
-    except (OSError, ConfigError) as error:
+    except (OSError, UnicodeDecodeError, ConfigError) as error:
         print(f"breakout: {settings.config}: {error}", file=sys.stderr)
         sys.exit(1)
     controls = config.controls
     level_file = settings.level or config.level or LEVELS / "classic.json"
     try:
         level = load_level(level_file)
-    except (OSError, LevelError) as error:
+    except (OSError, UnicodeDecodeError, LevelError) as error:
         print(f"breakout: {level_file}: {error}", file=sys.stderr)
         sys.exit(1)
     game = Game(rng, level.bricks(), level.lives)
@@ -666,7 +698,7 @@ def run() -> None:
 
 **Understand.**
 
-**Where.** `pygame.system.get_pref_path("forge", "breakout")` returns a folder that belongs to this program and this user, creating it if needed: on Windows, `C:\Users\<you>\AppData\Roaming\forge\breakout\`. Every operating system has a place for this, and a program should use it rather than its own install folder, which a player may not be allowed to write to.
+**Where.** `pygame.system.get_pref_path("forge", "breakout")` returns a folder that belongs to this program and this user, creating it if needed: on Windows, `C:\Users\<you>\AppData\Roaming\forge\breakout\`. Every operating system has a place for this: on macOS it's under `~/Library/Application Support/`, and on Linux under `~/.local/share/` (`~` is your home folder). See yours: `.venv\Scripts\python -c "import pygame; print(pygame.system.get_pref_path('forge', 'breakout'))"`, then open that folder in Explorer. A program should use it rather than its own install folder: programs are usually installed under `C:\Program Files`, where a normal user isn't allowed to write, and one install is shared by everyone on the computer, while each player's scores are their own.
 
 **Whether.** `scores_file` is a `Path` or `None`: `None` in a test run without `--scores`. `if scores_file` and `... if scores_file else None` rely on truthiness: `None` counts as false, and a `Path` always counts as true, whatever it names. So here they mean "if there is a scores file", and a test run never reads or writes one.
 
@@ -682,7 +714,7 @@ N+2     WON       WON            no         yes             no
 
 One game, one score. Without the `before` comparison, frame N+1 and every frame after it would save the same win again, sixty times a second.
 
-**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Scores saved in summer and winter, or on two computers in different countries, couldn't be compared reliably. ruff's `DTZ` rules flag naive datetimes for exactly this reason, and the pinned ruff version runs them by default: write `datetime.now()` and `ruff check` reports `DTZ005`, "called without a `tz` argument". Store times in UTC, with the zone recorded, and convert to local time only to show them.
+**What time.** `datetime.now(UTC)` is the current time in **UTC**, Coordinated Universal Time, the same everywhere on Earth. `datetime.now()` without it gives the local time with no record of which time zone it's in, called a **naive** datetime. Two examples of what goes wrong without a zone. In the UK, clocks go back an hour at 02:00 on the last Sunday of October, so 01:30 happens twice that night: two naive scores saved at `01:30`, an hour apart, can't be put in order. And a game saved at 15:00 in London and one at 16:00 in Paris happened at the same moment: `+00:00` and `+01:00` record that, and a naive `15:00` and `16:00` lose it. ruff's `DTZ` rules flag naive datetimes for exactly this reason, and the pinned ruff version runs them by default: write `datetime.now()` and `ruff check` reports `DTZ005`, "called without a `tz` argument". See it: put `from datetime import datetime` and `print(datetime.now())` in `scratch/naive.py`, and run `.venv\Scripts\python -m ruff check scratch/naive.py`. Store times in UTC, with the zone recorded, and convert to local time only to show them.
 
 Now play the classic level to the end, keeping scores in a file:
 
@@ -712,6 +744,9 @@ run ".venv/Scripts/python -m pytest -q tests/test_characterisation.py" stdout="1
 
 # Generated: Python's compiled bytecode
 __pycache__/
+
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
 
 # Generated: package metadata, written by pip install -e .
 *.egg-info/
@@ -784,7 +819,7 @@ FAILED tests/test_scores.py::test_a_new_score_is_added_after_the_old_ones - Type
 
 **Understand.** The three scores are made with `datetime(2026, 10, 4, 15, 30, 5, tzinfo=UTC)`: year, month, day, hour, minute, second, and `tzinfo`, the time zone, as a keyword. Fixed times, not `datetime.now()`, so every run of the tests compares the same values.
 
-Turning objects into bytes or text that can be stored or sent, and back, is **serialisation** (and **deserialisation**). Lesson 5.3's table lists everything JSON can hold: objects, arrays, strings, numbers, `true`/`false`, `null`. A `datetime` isn't one of them, so `json.dumps` refuses it rather than guess. The crash happened only when a game was won, minutes into play; these tests reproduce it in a fraction of a second, and say exactly what "fixed" means: a score must come back **equal** to what was saved, `datetime` and all.
+This is serialisation, from the start of the lesson: turning objects into text that can be stored, and back. Lesson 5.3's table lists everything JSON can hold: objects, arrays, strings, numbers, `true`/`false`, `null`. A `datetime` isn't one of them, so `json.dumps` refuses it rather than guess. The crash happened only when a game was won, minutes into play; these tests reproduce it in a fraction of a second, and say exactly what "fixed" means: a score must come back **equal** to what was saved, `datetime` and all.
 
 ```check
 file tests/test_scores.py -- Click "Create provided tests/test_scores.py" above.
@@ -795,7 +830,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_scores.py" exit=1 stdout="2 fa
 
 **Build, on your own:** make `save_scores` and `load_scores` work, so that all five tests pass and a won game saves its score.
 
-You choose how a `datetime` is written in JSON, and `load_scores` must turn it back into an equal `datetime`, time zone included. There's an international standard for writing dates and times as text, and Python's `datetime` can write it and read it; finding it is part of the exercise. Don't change the tests.
+You choose how a `datetime` is written in JSON, and `load_scores` must turn it back into an equal `datetime`, time zone included. You met the standard at the start of this lesson: ISO 8601, which `isoformat()` writes. Reading it back is the other half, and finding the method that does it is part of the exercise: it's in Python's documentation for `datetime` (docs.python.org, the `datetime` module), next to `isoformat`. Reading the documentation for the method you need is an everyday engineering skill; this is a gentle first time. Don't change the tests.
 
 | Command / test | Result |
 |---|---|
@@ -835,6 +870,18 @@ run ".venv/Scripts/python -m ruff check ." stdout="All checks passed!"
 git-message "ISO 8601"
 git-clean
 ```
+
+## Challenge: the best score's date, in local time
+
+**Optional, ★.** Show when the best score was set on the title screen, in the player's **local** time: `when.astimezone()` converts a UTC time to the computer's own zone. Stored as UTC, shown as local: the rule from "What time". Test the formatting function with a fixed time. On a branch.
+
+## Challenge: the top scores, from the command line
+
+**Optional, ★★.** Add `python -m breakout.scores FILE --top N`, which prints the N best scores on each level, sorted, without starting the game (`if __name__ == "__main__":` at the end of `scores.py`, with `argparse`). `sorted(..., key=lambda score: score.points, reverse=True)` sorts by points. On a branch.
+
+## Challenge: let json do the conversion
+
+**Optional, ★★.** `json.dumps(data, default=f)` calls your function `f` for every value JSON can't hold, and `json.loads(text, object_hook=g)` calls `g` with every object it reads. Use them to convert `datetime`s both ways without building the dicts by hand. Then argue, in a comment, which version is clearer to read. On a branch.
 
 ## What did we actually learn?
 

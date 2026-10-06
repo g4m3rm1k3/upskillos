@@ -640,13 +640,33 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand: what `@dataclass` does.** The class body now only *lists* the attributes, each with a type hint: `x: float`. These are **annotations in the class body**: no `self.`, no value. On their own they create nothing. Without `@dataclass`, `Ball(1, 2, 3, 4)` would fail, because there would be no `__init__` taking four values; it's `self.x = ...` inside a method that puts an attribute on an object. `from dataclasses import dataclass` imports one name, `dataclass`, from the standard library's `dataclasses` module, so the code says `dataclass` rather than `dataclasses.dataclass`.
+**Understand: what `@dataclass` does.** The class body now only *lists* the attributes, each with a type hint: `x: float`. These are **annotations** (the fields' type hints) **in the class body**: no `self.`, no value. On their own they create nothing. Without `@dataclass`, `Ball(1, 2, 3, 4)` would fail, because there would be no `__init__` taking four values; it's `self.x = ...` inside a method that puts an attribute on an object. `from dataclasses import dataclass` imports one name, `dataclass`, from the standard library's `dataclasses` module, so the code says `dataclass` rather than `dataclasses.dataclass`.
 
-The line `@dataclass` above the class is a **decorator**: a function that receives the class just after it's created, and returns it changed. Writing `@dataclass` above `class Ball:` means exactly the same as writing `Ball = dataclass(Ball)` straight after the class: the class is passed to the function, and the name `Ball` is bound to whatever it returns. `dataclass` reads the list of annotated attributes, called **fields**, and writes three methods for you:
+The line `@dataclass` above the class is a **decorator**: a function that receives the class just after it's created, and returns it changed. Writing `@dataclass` above `class Ball:` means exactly the same as writing `Ball = dataclass(Ball)` straight after the class: the class is passed to the function, and the name `Ball` is bound to whatever it returns. See a decorator run, with one you write yourself, in the REPL:
+
+```text
+>>> def announce(cls):
+...     print("made the class", cls.__name__)
+...     return cls
+...
+>>> @announce
+... class A:
+...     pass
+...
+made the class A
+>>> A
+<class '__main__.A'>
+```
+
+`made the class A` is printed while the class is being **defined**, before any object exists: the decorator is just a function, called once, on the class. `announce` returns the class unchanged; `dataclass` returns it with methods added. `dataclass` reads the list of annotated attributes, called **fields**, and writes three methods for you:
 
 - `__init__(self, x: float, y: float, vx: float, vy: float)`, assigning each field: exactly the one you wrote by hand in lesson 3.1.
 - `__repr__`, which says how the object is shown when printed: `Ball(x=320.0, y=240.0, vx=180.0, vy=-240.0)` instead of `<breakout.Ball object at 0x00000129AECDCAD0>`. pytest uses it in failure reports, so a failing test now shows the ball's values.
 - `__eq__`, which `==` calls: two `Ball`s are equal when all their fields are equal, compared in order.
+
+See `__repr__`'s difference for yourself: `.venv\Scripts\python -c "import breakout; print(breakout.Ball(1, 2, 3, 4))"` printed `<breakout.Ball object at 0x...>` before this step (the number is where the object is in memory, different every run), and prints `Ball(x=1, y=2, vx=3, vy=4)` now.
+
+Two things a dataclass refuses, worth knowing before you meet them. A field can't have a list as its default, `bricks: list[Brick] = []`: that would be one list shared by every object, so `@dataclass` stops with `ValueError: mutable default <class 'list'> for field bricks is not allowed: use default_factory`, and `field(default_factory=list)` (from `dataclasses`) is the way to give each object a new empty list. And a dataclass that can be changed can't be put in a set or used as a dictionary key (it fails with a `TypeError` that says `unhashable type: 'Ball'`): a frozen one, later in this lesson, can.
 
 Dunder methods like these are how classes plug into Python's own syntax: `==` calls `__eq__`, `print` and the interactive prompt call `__repr__`, and calling the class calls `__init__`. Defining one changes what the syntax does for your objects.
 
@@ -1340,7 +1360,7 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand: the serve.** `Vector2(across, -up)` is a direction of length 1, and `* BALL_SPEED` scales it to the right speed. Traced for the old fixed serve, `across = 0.6`:
+**Understand: the serve.** `Vector2(across, -up)` is a direction of length 1, a **unit vector** (`Vector2.normalize()` makes one from any vector), and `* BALL_SPEED` scales it to the right speed. Traced for the old fixed serve, `across = 0.6`:
 
 ```text
 up = √(1 − 0.6²) = √0.64 = 0.8
@@ -1348,7 +1368,23 @@ Vector2(0.6, -0.8).length() = √(0.36 + 0.64) = √1 = 1
 Vector2(0.6, -0.8) * 300    = Vector2(180, -240)        the velocity lesson 1.4 started with
 ```
 
-**A trap, from lesson 3.1's aliasing.** A `Vector2` is a **mutable** object, and `+=` on it changes it **in place** rather than making a new one (for a float, `x += 1` makes a new number and rebinds `x`; a `Vector2` changes itself). Run:
+**A trap, from lesson 3.1's aliasing.** A `Vector2` is a **mutable** object, and `+=` on it changes it **in place** rather than making a new one (for a float, `x += 1` makes a new number and rebinds `x`; a `Vector2` changes itself). Lesson 2.2's **mutable** and **immutable**, seen with `id` (lesson 3.1), in the REPL:
+
+```text
+>>> from pygame import Vector2
+>>> x = 1.0
+>>> before = id(x)
+>>> x += 1
+>>> id(x) == before
+False
+>>> v = Vector2(1, 1)
+>>> before = id(v)
+>>> v += Vector2(1, 0)
+>>> id(v) == before
+True
+```
+
+After `x += 1`, `x` is a different object, a new float; after `v += ...`, `v` is the same object, changed. (One more `Vector2` surprise: `Vector2(1, 2) * Vector2(3, 4)` is `11.0`, a single number called the **dot product**, not a vector; Part 4 explains it.) Run:
 
 ```powershell
 .venv\Scripts\python -c "import breakout; from pygame import Vector2; start = Vector2(320, 240); a = breakout.Ball(start, Vector2(180, -240)); c = breakout.Ball(start, Vector2(0, -300)); a.move(1); print(c.position)"
@@ -1763,7 +1799,7 @@ if __name__ == "__main__":
 
 **Understand.** Lesson 1.6's crash came from working out a brick's colour backwards from its `y`. Lesson 2.2 made both use the same constants. Now nothing is worked out backwards at all: `make_bricks` gives each `Brick` its colour when it's made, and `draw` just uses `brick.colour`. `brick_colour` is gone, and so is the coupling.
 
-`for row, colour in enumerate(ROW_COLOURS):` loops over the colours and **numbers** them: `enumerate` gives pairs `(0, red)`, `(1, orange)`, …, unpacked into `row` and `colour`.
+`for row, colour in enumerate(ROW_COLOURS):` loops over the colours and **numbers** them: `enumerate` gives pairs `(0, red)`, `(1, orange)`, …, unpacked into `row` and `colour`. In the REPL, `for i, c in enumerate(["red", "orange", "yellow"]): print(i, c)` prints `0 red`, `1 orange`, `2 yellow`.
 
 `[brick.rect for brick in bricks]` in `hit_brick` is a **list comprehension**, like lesson 2.6's: a new list of each brick's `rect`, in the same order, because `collidelist` needs `Rect`s. The index it returns is the same in both lists. Notice `brick.rect` has no brackets while `ball.rect()` does: a brick never moves, so it **stores** its `Rect` as a field, while a ball **makes** one from its position each time, with a method. Brackets call a method; no brackets read an attribute.
 
@@ -1935,18 +1971,28 @@ run ".venv/Scripts/python -m pytest -q" stdout="38 passed"
 **Three things you'll need, new here:**
 
 - **Keyword arguments.** A call can name its arguments, `Settings(test_frames=600, seed=7)`, in any order, and leave out any that have defaults. The `__init__` that `@dataclass` writes accepts them like any function does.
-- **Defaults and their order.** A field written `seed: int | None = None` has a default. As with function parameters, fields with defaults must come after fields without one; here every field has one, so it doesn't arise.
+- **Defaults and their order.** A field written `seed: int | None = None` has a default. As with function parameters, fields with defaults must come after fields without one (otherwise Python stops with `TypeError: non-default argument 'y' follows default argument 'x'`); here every field has one, so it doesn't arise.
 - **A decorator with arguments.** `@dataclass(frozen=True)` makes the class refuse changes once an object is made. Try it:
 
-  ```powershell
-  .venv\Scripts\python -c "from dataclasses import dataclass; exec('@dataclass(frozen=True)\nclass P:\n    x: int = 0\np = P(x=5)\nprint(p)\np.x = 1')"
+  ```python
+  from dataclasses import dataclass
+
+
+  @dataclass(frozen=True)
+  class P:
+      x: int = 0
+
+
+  p = P(x=5)
+  print(p)
+  p.x = 1
   ```
 
-  It prints `P(x=5)`, then a traceback ending `dataclasses.FrozenInstanceError: cannot assign to field 'x'`.
+  Type that into `scratch/frozen_demo.py` and run it: it prints `P(x=5)`, then a traceback ending `dataclasses.FrozenInstanceError: cannot assign to field 'x'`. Frozen is **shallow**, though: it stops a field being given a new value, but if a field holds a list or a `Vector2`, that object itself can still be changed.
 
 A call too long for one line can carry on over several lines, as long as the break is inside its brackets: Python keeps reading until the brackets close.
 
-When all 38 tests pass and pyright finds no errors in `breakout.py` and `tests/test_breakout.py` (`tests/test_arguments.py` isn't type-checked yet: its helpers get their hints in Chapter 4), commit with a message that mentions **dataclass**.
+Try it for about 20 minutes before taking a hint. When all 38 tests pass and pyright finds no errors in `breakout.py` and `tests/test_breakout.py` (`tests/test_arguments.py` isn't type-checked yet: its helpers get their hints in Chapter 4), commit with a message that mentions **dataclass**.
 
 ```hints
 nudge: Start with the class: four fields with types and defaults, under `@dataclass(frozen=True)`. Then make `parse_args` build one and return it. Then follow pyright's errors through `main`: each one points at a line still using the old four variables.
@@ -2001,6 +2047,18 @@ run ".venv/Scripts/python -m pyright breakout.py tests/test_breakout.py" stdout=
 git-message "dataclass"
 git-clean
 ```
+
+## Challenge: a paddle made of vectors
+
+**Optional, ★.** Store the `Paddle`'s position as a `Vector2` too, keeping `paddle.x` working for everything that reads it. Vectors on a class you wrote yourself. In a copy, then `git restore`.
+
+## Challenge: a Colour type
+
+**Optional, ★★.** Replace the `tuple[int, int, int]` colours with a frozen dataclass `Colour(r, g, b)` with a method `darker(factor)` that returns a new, darker `Colour`. Value equality makes the tests easy: `Colour(10, 20, 30).darker(0.5) == Colour(5, 10, 15)`. In a copy.
+
+## Challenge: dataclass, by hand
+
+**Optional, ★★★.** Write your own decorator, `simple_init(cls)`, that reads `cls.__annotations__` (a dictionary from field name to type, which every class with annotations has) and gives the class an `__init__` that assigns each field in order. It shows there's no magic in what `@dataclass` writes: just a function that adds a function. In a scratch file.
 
 ## What did we actually learn?
 

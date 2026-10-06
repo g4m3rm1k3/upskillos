@@ -173,7 +173,7 @@ Run the tests:
 
 **Understand: what a function call does.** `def start_ball():` creates a function and binds it to the name `start_ball`; the body doesn't run yet. Each **call**, `start_ball()`, does this:
 
-1. Python creates a new **frame** for the call (lesson 0.3's call stack), with its own empty set of local variables.
+1. Python creates a new **stack frame** for the call (lesson 0.3's call stack), with its own empty set of local variables. (Not a game frame: the same word, for a different thing.)
 2. It runs the body from the top. `return WIDTH / 2, HEIGHT / 2, …` evaluates the four expressions, packs them into a tuple `(320.0, 240.0, 180.0, -240.0)`, and ends the call, handing the tuple back.
 3. The frame is thrown away, and the call expression *becomes* the returned value.
 
@@ -190,26 +190,40 @@ run ".venv/Scripts/python -m pytest -q" stdout="8 passed" label="all eight chara
 
 ## Where names live
 
-**Build:** nothing to keep. Find out how Python decides which variable a name means inside a function.
+**Build:** a scratch program that shows how Python decides which variable a name means inside a function.
 
-`start_ball` reads `WIDTH` and `BALL_SPEED`, which are defined at the top level of the file, outside any function. Reading them works. Changing one is different. Run this in the terminal:
+`start_ball` reads `WIDTH` and `BALL_SPEED`, which are defined at the top level of the file, outside any function. Reading them works. Changing one is different. Try three small functions side by side, in `scratch/scope_demo.py`:
 
-```powershell
-python -c "exec('speed = 300\ndef faster():\n    speed = speed + 10\n    return speed\nprint(faster())')"
-```
-
-`exec` runs a string as Python code, and inside the string `\n` stands for a new line, so the whole program fits on one command line. That's this small program:
-
-```python
+```python file=scratch/scope_demo.py
 speed = 300
-def faster():
+
+
+def show():
+    return speed
+
+
+def faster(speed):
+    return speed + 10
+
+
+def faster_broken():
     speed = speed + 10
     return speed
-print(faster())
+
+
+print(show())
+print(faster(speed), speed)
+print(faster_broken())
 ```
 
+```powershell
+python scratch\scope_demo.py
+```
+
+The first two lines print `300`, then `310 300`: `show` reads the global `speed`, and `faster` gets `speed` as a parameter and returns a new value, leaving the global alone.
+
 ```predict
-question: What will it print?
+question: What will the third line, `print(faster_broken())`, print?
 choice: 310
 choice: 300
 choice: An error
@@ -395,6 +409,8 @@ clamp(700, 0, 540)  →  max(0, min(700, 540))  →  max(0, 540)  →  540
 clamp(-20, 0, 540)  →  max(0, min(-20, 540))  →  max(0, -20)  →  0
 clamp(300, 0, 540)  →  max(0, min(300, 540))  →  max(0, 300)  →  300   (in range: unchanged)
 ```
+
+A function can also carry its own description, in a **docstring**: a string written as the first line of its body, which Python stores with the function. In the REPL, `help(max)` prints `max`'s, and VS Code shows a function's docstring when you hover over a call. The game's small functions are named well enough to need none yet; Chapter 3 starts writing them where a name alone can't say enough.
 
 The ball's `Rect` is now `BALL_RADIUS * 2` wide: the relationship between the two numbers is written down, not remembered. The `6`s in the wall bounces are still there; the next step replaces them.
 
@@ -585,9 +601,25 @@ grow(numbers)         # numbers is now [1, 2, 3, 4]
 ```predict
 question: After `grow(numbers)`, how many items does `numbers` have?
 answer: 4
-explain: `items` and `numbers` are two names for one list. `append` changes that list, so the caller sees four items. A number can never be changed in place (there's no way to make the 1 itself become 2), so a function given a number can only ever rebind its own name, which is why `bounce_off_walls` has to return its results. Lists, `Rect`s and surfaces can be changed in place, and `draw`, two steps on, relies on exactly that.
+explain: `items` and `numbers` are two names for one list. `append` changes that list, so the caller sees four items. A number can never be changed in place (there's no way to make the 1 itself become 2), so a function given a number can only ever rebind its own name, which is why `bounce_off_walls` has to return its results. Lists, `Rect`s and surfaces can be changed in place, and `draw`, in the *Drawing in a function* step, relies on exactly that.
 verify: .venv/Scripts/python -c "numbers = [1, 2, 3]; items = numbers; items.append(4); print(len(numbers))"
 ```
+
+> **Mutable**: an object that can be changed after it's made: a list, a dictionary, a `Rect`, a surface. **Immutable**: one that can't: a number, a string, a tuple, `None`. Passing either to a function passes the **same** object; only a mutable one can be changed through the parameter.
+
+One more case catches people out: giving a list parameter a **new** list. Try it in the REPL:
+
+```text
+>>> def replace(items):
+...     items = [9]
+...
+>>> numbers = [1, 2, 3]
+>>> replace(numbers)
+>>> numbers
+[1, 2, 3]
+```
+
+`items = [9]` makes the local name refer to a different list; it never touches the caller's. Changing an object (`append`) and rebinding a name (`=`) are different things, whatever the object is.
 
 Traced for a ball that has just gone past the left wall, `bounce_off_walls(-2.0, 300.0, -180.0, -240.0)`:
 
@@ -772,7 +804,7 @@ if test_frames is not None:
 
 **Understand.** `bounce_off_paddle(ball, paddle, vx, vy)` returns new velocities if the ball is touching the paddle and moving down, and the unchanged ones otherwise. A function can have more than one `return`: the first one reached ends it. `paddle.width / 2` replaces the `50` that was half the paddle's width (100 / 2 = 50.0, the same number), so the steering stays right if the paddle's size changes.
 
-It's pure too: it reads the two `Rect`s it's given but doesn't change them. A pure function is the easiest thing in programming to test: give it inputs, compare its output. Lesson 2.4 does exactly that.
+It's pure too: it reads the two `Rect`s it's given but doesn't change them. You can check that by reading: there's no assignment to `ball.something` or `paddle.something`, and no call of a method that changes a `Rect` (pygame's end in `_ip`, *in place*, like `move_ip`). A pure function is the easiest thing in programming to test: give it inputs, compare its output. Lesson 2.4 does exactly that.
 
 ```check
 contains breakout.py "def bounce_off_walls(x, y, vx, vy):"
@@ -1218,6 +1250,20 @@ run ".venv/Scripts/python -m pytest -q" stdout="8 passed" label="all eight chara
 git-message "functions" -- Commit with a message that mentions functions.
 git-clean
 ```
+
+> **Engineer:** how big should a function be? It should do **one thing you can name in a few words**. If the honest name needs an "and" (`move_and_draw_ball`), it's two functions. Before writing one, answer two questions: what does it need (its parameters), and what does it give back (its return value)?
+
+## Challenge: finish the magic numbers
+
+**Optional, ★.** Name the numbers still unexplained: the steering factor `0.8`, the autopilot's dead zone of `10`, the paddle's `30` pixels of lift, the `8` columns, the font size `36`. All eight tests must stay green. Then `git restore breakout.py`, since the next lesson's file replaces it: this is practice in naming without changing behaviour.
+
+## Challenge: quitting is a decision
+
+**Optional, ★★.** Write `wants_to_quit(events)`, which takes a list of events and returns `True` if any of them is the close button or Escape. Try it in a scratch file without a window: `pygame.event.Event(pygame.QUIT)` and `pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE)` make events by hand. Input handling turns out to be a pure decision too.
+
+## Challenge: two ways to remove a brick
+
+**Optional, ★★.** Write `remove_hit_brick(ball, bricks)`, which removes the brick the ball hits from the list and returns the points scored, and `bricks_after_hit(ball, bricks)`, which leaves the list alone and returns a **new** list and the points. Which one is easier to reason about when you read a call to it? Which one is cheaper? Mutable against immutable, as a design choice.
 
 ## What did we actually learn?
 

@@ -777,7 +777,7 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand: composition.** A `Game` **has** a paddle, a ball, a list of bricks, a score and a number of lives. Its `__init__` creates them, and its `update(direction, dt)` method runs exactly the rules the loop ran before, on its own attributes. Building a bigger object out of smaller ones like this is called **composition**, and it's the main way programs are structured.
+**Understand: composition.** A `Game` **has** a paddle, a ball, a list of bricks, a score and a number of lives. Its `__init__` creates them; two steps on, an `update` method will take over the rules the loop runs now. Building a bigger object out of smaller ones like this is called **composition**, and it's the main way programs are structured.
 
 `self.rng = rng` keeps the random generator on the game, because serving a new ball later needs it: `serve(game.rng)`.
 
@@ -1083,7 +1083,7 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-**Understand.** `playing()` returns `True` while there are lives left and bricks left. `len(self.bricks) > 0` says the same as the truthiness test `bricks` used before (an empty list counts as false), but spelled out, which also lets pyright see the result is a `bool`, as the return type says. One name, one place: if "still playing" ever changes, say with a time limit, it changes here.
+**Understand.** `playing()` returns `True` while there are lives left and bricks left. `len(self.bricks) > 0` says the same as the truthiness test `bricks` used before (an empty list counts as false), but spelled out, which also lets pyright see the result is a `bool`, as the return type says. One name, one place: if "still playing" ever changes, say with a time limit, it changes here. Why a method, `playing()`, when lesson 3.4 made the paddle's `x` a property? A rule of thumb: a **property** for something that reads like a stored value and is cheap to get (`paddle.x`); a **method** for a question or an action (`game.playing()`, `ball.move(dt)`). The brackets say "this works something out".
 
 ```check
 contains breakout.py "def playing(self) -> bool:"
@@ -1391,7 +1391,7 @@ if __name__ == "__main__":
 
 **Understand.** `update` starts with a **guard**: `if not self.playing(): return`. A bare `return` in a method that returns nothing (`-> None`) just ends it there. The loop now calls `update` every frame, even after the game is over, so the game itself refuses to change once it's over, instead of relying on its caller to check. That's also why the steering code can run every frame: when the game's over, the `direction` it works out is simply ignored.
 
-`main` is now what it should be: setup, then a loop that turns the outside world into calls on the game (keys or the autopilot become a `direction`, the clock becomes `dt`) and turns the game into pixels (`draw(screen, font, game)`). It knows nothing about bricks breaking or lives being lost. `draw` takes the whole game instead of seven separate values.
+`main` is now what it should be: setup, then a loop that turns the outside world into calls on the game (keys or the autopilot become a `direction`, the clock becomes `dt`) and hands what's on the game to `draw`. It knows nothing about bricks breaking or lives being lost. (The next step makes `draw` take the whole game, too.)
 
 ```check
 contains breakout.py "def update(self, direction: int, dt: float) -> None:"
@@ -1700,9 +1700,29 @@ if __name__ == "__main__":
 
 **Understand.** `draw(screen, font, game)` reads what it needs from the game: `game.bricks`, `game.paddle.rect()`, `game.score`. The test-run summary reads the game too. Its `print` is now split across lines: two string literals written next to each other, inside the brackets, are joined into one, so a long f-string can be broken anywhere between two pieces without changing what's printed.
 
-**Composition, not inheritance.** Python also lets one class be made **from** another: `class Ball(pygame.Rect):` would make a ball a special kind of `Rect`, **inheriting** all its methods. That's **inheritance**, and it means *is-a*: a ball would *be* a rectangle. It's tempting, since the ball has a rectangle. But then every `Rect` method would be part of the ball's interface (`ball.inflate`, `ball.width = 90`), anything could change it in ways that ignore `position`, and lesson 3.1's "one source of truth" would be gone. A ball **has** a position and **can make** a rectangle; it isn't one. The usual advice, "prefer composition to inheritance", comes from exactly this: inheritance shares *everything*, composition shares only what you choose. Chapter 10 uses inheritance where it fits, for the node types of the engine.
+**Composition, not inheritance.** Python also lets one class be made **from** another: `class Ball(pygame.Rect):` would make a ball a special kind of `Rect`, **inheriting** all its methods. That's **inheritance**, and it means *is-a*: a ball would *be* a rectangle. It's tempting, since the ball has a rectangle. But then every `Rect` method would be part of the ball's interface (`ball.inflate`, `ball.width = 90`), anything could change it in ways that ignore `position`, and lesson 3.1's "one source of truth" would be gone. A ball **has** a position and **can make** a rectangle; it isn't one. See what inheriting would allow, in `scratch/rect_ball.py`:
 
-> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 18) and a machine-learning agent (Chapter 38).
+```python
+import pygame
+
+
+class RectBall(pygame.Rect):
+    pass
+
+
+b = RectBall(0, 0, 12, 12)
+b.width = 90
+b.inflate_ip(50, 50)
+print(b)
+```
+
+`python scratch\rect_ball.py` prints `Rect(-25, -25, 140, 62)`: a "ball" 140 pixels wide (it even prints itself as a `Rect`), changed by two `Rect` methods nobody meant to give a ball, with nothing to stop them. Our `Ball` has no `width` or `inflate_ip`; its rectangle is made fresh from its position each time.
+
+> **Inheritance**: making a class from another one, `class Child(Parent):`. The new class is a **subclass**; the one it's made from is its **base class**. A subclass starts with everything the base class has, and can add more, or **override** a method by defining one with the same name, which replaces the base class's for objects of the subclass.
+
+The usual advice, "prefer composition to inheritance", comes from exactly this: inheritance shares *everything*, composition shares only what you choose. Chapter 10 uses inheritance where it fits, for the node types of the engine.
+
+> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 21) and a machine-learning agent (Chapter 43).
 
 ```check
 contains breakout.py "class Game:"
@@ -1768,9 +1788,14 @@ def test_a_ball_that_hits_a_brick_breaks_it_and_bounces():
 ```
 
 ```text
+============================= slowest 5 durations =============================
 0.01s call     tests/test_game.py::test_ten_seconds_of_autopilot_matches_the_test_run
+
+(9 durations < 0.005s hidden.  Use -vv to show these durations.)
 4 passed in 0.12s
 ```
+
+(The numbers of hidden durations and the times will differ a little on your machine.)
 
 **Understand.** `test_ten_seconds_of_autopilot_matches_the_test_run` plays 600 frames, the same game as the characterisation test `test_autopilot_plays_for_ten_seconds`, and gets the same numbers. The characterisation test takes about a second, because it starts Python and pygame in a new process. This one takes a hundredth of a second, because it's 600 method calls on an object.
 
@@ -1786,9 +1811,11 @@ a wall of one brick:            the brick covers y 200 to 219; the ball at (330,
                                 240 a second moves 4 pixels to y = 221, so its Rect covers 215 to 226,
                                 which overlaps the brick's bottom rows → score 10, no bricks left,
                                 and velocity.y flips to +240
-``` Before `Game` existed, testing "a missed ball costs a life" meant playing until the ball happened to be missed. Now it's three lines.
+```
 
-These are **integration tests**: they test several pieces working together (`Game`, `Ball`, `Paddle`, `Brick`), which no unit test does, but without the whole program around them. They sit in the middle of the testing pyramid from lesson 2.4: slower and broader than unit tests, far faster and more precise than characterisation tests.
+Before `Game` existed, testing "a missed ball costs a life" meant playing until the ball happened to be missed. Now it's three lines.
+
+These are **integration tests**: they test several pieces working together (`Game`, `Ball`, `Paddle`, `Brick`), which no unit test does, but without the whole program around them. They run **in-process**: inside the same running Python as pytest, instead of starting a new `python` program the way the characterisation tests do. They sit in the middle of the testing pyramid from lesson 2.4: slower and broader than unit tests, far faster and more precise than characterisation tests.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_game.py" stdout="4 passed"
@@ -1834,6 +1861,7 @@ A method for reading code you don't know, in order:
 2. **What goes in and out?** `play(seed: int, frames: int) -> list[str]`: a seed and a number of frames in, a list of lines out. The bottom says how it's run: `python replay.py SEED FRAMES`.
 3. **Follow the main path.** A game; a loop over frames; each frame, the score, lives and bricks before and after one `update`; a line if anything changed; stop early if the game ended.
 4. **Trace one case by hand**, before running it. Then run it and compare.
+5. **What does it rely on?** It reaches into `game.score`, `game.lives` and `game.bricks`, and calls `game.update` and `game.playing()`. Rename any of those in `breakout.py`, and `replay.py` breaks. Knowing what code depends on is what makes changing it safe.
 
 Answer these before running the module:
 
@@ -1847,7 +1875,7 @@ verify: .venv/Scripts/python -c "import replay; print(len(replay.play(0, 600)))"
 ```predict
 question: For a whole game, `play(0, 10000)`, how many lines? The autopilot wins, and the wall has 40 bricks, 8 of them tough.
 answer: 41
-explain: A tough brick's first hit only cracks it: the score doesn't change (it scores 0) and the number of bricks doesn't change, so `after == before` and nothing is reported. Only the 40 hits that *break* a brick change something: 40 lines. Then, on the frame the last brick breaks, `game.playing()` is false, so one more line, "the game is over", and `break` ends the loop at frame 7609, long before 10000.
+explain: A tough brick's first hit only cracks it: the score doesn't change (it scores 0) and the number of bricks doesn't change, so `after == before` and nothing is reported. Only the 40 hits that *break* a brick change something: 40 lines. Then, on the frame the last brick breaks, `game.playing()` is false, so one more line, "the game is over", and `break` ends the loop, long before frame 10000.
 verify: .venv/Scripts/python -c "import replay; print(len(replay.play(0, 10000)))"
 ```
 
@@ -1859,6 +1887,24 @@ choice: A line for every frame
 answer: An empty list, or just "the game is over"
 explain: `before = game` doesn't copy the game: it's a second name for the same object (lesson 3.1's aliasing). After `update`, `after` is that same object too, so `after != before` is always `False`, and no change is ever reported. The tuple works for a different reason than you might think. It doesn't copy anything: it holds references to the three int objects the game's attributes referred to at that moment. Then `self.score += 10` doesn't change that int object (ints can't be changed); it makes a new int and **rebinds** the game's `score` attribute to it. The tuple still refers to the old one, so it keeps the "before" values. Compare lesson 3.2's `Vector2`: `+=` on a vector *does* change the object in place, so a tuple holding the game's position vector would have changed with it.
 ```
+
+See both halves of that answer in the REPL:
+
+```text
+>>> from pygame import Vector2
+>>> score = 10
+>>> snap = (score,)
+>>> score += 10
+>>> snap
+(10,)
+>>> pos = Vector2(1, 1)
+>>> snap = (pos,)
+>>> pos += Vector2(1, 0)
+>>> snap
+(Vector2(2, 1),)
+```
+
+The tuple kept the old score, because `score += 10` made a new int; it didn't keep the old position, because `pos += ...` changed the vector it holds.
 
 Now run it and compare with your predictions:
 
@@ -1892,7 +1938,7 @@ run ".venv/Scripts/python replay.py 0 600" stdout="frame 492: score 70, lives 3,
 | `last_life` | a game with one life left, whose ball is below the screen: after one `update`, `lives` is 0, the game isn't `playing()`, and a further `update` changes nothing (score, lives and bricks all the same) |
 | `last_brick` | a game whose wall is a single brick, with the ball inside it: after one `update`, the brick is gone, the score went up by 10, and the game isn't `playing()` |
 
-Then make each fail once, on purpose (break the rule in `Game` it depends on), put it back, and commit with a message that mentions the **model**: this lesson made the game a model you can hold.
+Try it for about 15 minutes before taking a hint. Then make each fail once, on purpose (break the rule in `Game` it depends on), put it back, and commit with a message that mentions the **model**: this lesson made the game a model you can hold.
 
 ```hints
 nudge: Copy the arrange step of `test_a_missed_ball_costs_a_life_and_a_new_ball_is_served` and `test_a_ball_that_hits_a_brick_breaks_it_and_bounces`. What's different about the situations you need?
@@ -1932,6 +1978,18 @@ run ".venv/Scripts/python -m pyright breakout.py tests/test_breakout.py tests/te
 git-message "model"
 git-clean
 ```
+
+## Challenge: replay the cracks
+
+**Optional, ★.** Change `replay.py` so a tough brick's first hit is reported too, as `frame N: a brick cracked`. You'll need to notice a crack without the score or the brick count changing: count the cracked bricks before and after. Reading code you didn't write, then changing it safely.
+
+## Challenge: a second client for the model
+
+**Optional, ★★.** Write `stats.py`: play seeds 0 to 19 for 10,000 frames each, and print how many games the autopilot won and its average score. Not one line of `breakout.py` changes: that's what having a model separate from the window buys.
+
+## Challenge: the game owns the paddle bounce
+
+**Optional, ★★★.** Move `bounce_off_paddle` and `hit_brick` into `Game`, as methods whose names start with `_` (private, lesson 3.4), keeping every test green. Explain in the commit message why the game, which owns both the ball and the paddle, is the right home for the rule that connects them. A refactoring under tests, which settles lesson 3.1's open question. In a copy, since later lessons keep them as functions.
 
 ## What did we actually learn?
 

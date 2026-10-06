@@ -28,7 +28,7 @@ The cost of dynamic typing is *when* you find out. `'Score: ' + 10` on a line th
 
 ## Install a type checker
 
-**Build:** add **pyright**, the type checker built into VS Code's Python support.
+**Build:** add **pyright**, the type checker that VS Code's Python support (its Pylance extension) is built on.
 
 ```text file=requirements.txt
 pygame-ce==2.5.8
@@ -504,7 +504,18 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-The new function `hit_brick` returns the index of the brick the ball overlaps, or `None` if there isn't one: lesson 1.5 called the `-1` convention "a weak one", and `None` is Python's own value for "nothing". It's a new function, rather than a change inside the loop, so that its result has a type pyright works out and reports: `int | None`. But the loop still compares with `-1`. Don't run the game. Ask pyright:
+The new function `hit_brick` returns the index of the brick the ball overlaps, or `None` if there isn't one: lesson 1.5 called the `-1` convention "a weak one", and `None` is Python's own value for "nothing". It's a new function, rather than a change inside the loop, so that its result has a type pyright works out and reports: `int | None`. But the loop still compares with `-1`. Don't run the game.
+
+```predict
+question: pyright reads the file without running it. Will it report a problem, and where?
+choice: No problem: the code ran fine before
+choice: Yes, on the `if hit != -1:` line
+choice: Yes, on the `bricks.pop(hit)` line
+answer: Yes, on the `bricks.pop(hit)` line
+explain: Comparing `None` with `-1` is perfectly legal (it's just `True`), so the `if` line is fine. The problem is what happens next: inside the `if`, `hit` might still be `None`, and `pop` needs a whole-number index. pyright reports the line where `None` would be *used* wrongly, which is line 184.
+```
+
+Ask pyright:
 
 ```powershell
 .venv\Scripts\python -m pyright breakout.py
@@ -520,7 +531,7 @@ The new function `hit_brick` returns the index of the brick the ball overlaps, o
 
 **Understand: how pyright found it, without running anything.**
 
-1. `hit_brick` has two `return` statements: one returns `None`, the other `i`, an `int`. So its return type is **`int | None`**: *either an int or None*. The `|` makes a **union type**.
+1. `hit_brick` has two `return` statements: one returns `None`, the other `i`, an `int`. So its return type is **`int | None`**: *either an int or None*. The `|` makes a **union type**, a type that allows any one of several.
 2. `hit = hit_brick(ball, bricks)`, so `hit` is `int | None`.
 3. `if hit != -1:` doesn't rule `None` out: `None != -1` is `True`. So inside the `if`, `hit` can still be `None`.
 4. `bricks.pop(hit)` needs an index, a value that can act as a whole number (the `SupportsIndex` in the message), and `None` can't. In pyright's messages a **protocol** means "any type that has certain methods": `SupportsIndex` is any type with an `__index__` method, the method that lets a value be used as a list index. `int` has one; `None` doesn't.
@@ -535,7 +546,13 @@ So on any frame where the ball hits no brick, which is nearly every frame, the g
 7 failed, 26 passed in 5.94s
 ```
 
-and every failure ends in `TypeError: 'NoneType' object cannot be interpreted as an integer`. The tests found it by running the game; pyright found it in two seconds by reading 200 lines. On a line that only runs in rare situations, the tests might never have found it at all.
+Every one of the seven is a characterisation test, and every failure is an `AssertionError` whose actual value is pygame's greeting line, `pygame-ce 2.5.8 (SDL ...)`: the last thing the game printed before it crashed. The crash itself happened inside the game's own process, whose error output `play` captures and never shows. To see it, run the game yourself:
+
+```powershell
+.venv\Scripts\python breakout.py --test-run 60
+```
+
+The traceback ends in `TypeError: 'NoneType' object cannot be interpreted as an integer`. A test that fails for a reason it can't see is common with whole-program tests, and running the program directly is the way to the real error. The tests found it by running the game; pyright found it in two seconds by reading 200 lines. On a line that only runs in rare situations, the tests might never have found it at all.
 
 > **Engineer:** `None` where a real value was expected is the most common crash in Python, and its cousins are the most common in C# (`NullReferenceException`) and Java (`NullPointerException`). Its inventor, Tony Hoare, called the null reference his "billion-dollar mistake". Writing `X | None` and having a checker insist that every use checks for `None` first turns that whole family of crashes into errors you see before running.
 
@@ -766,6 +783,37 @@ if __name__ == "__main__":
 33 passed in 8.06s
 ```
 
+Try union types and narrowing on their own first. Create `scratch/maybe.py`:
+
+```python
+def first_even(numbers: list[int]) -> int | None:
+    for n in numbers:
+        if n % 2 == 0:
+            return n
+    return None
+
+
+x = first_even([1, 3])
+reveal_type(x)
+print(x + 1)
+if x is not None:
+    reveal_type(x)
+    print(x + 1)
+```
+
+```powershell
+.venv\Scripts\python -m pyright scratch\maybe.py
+```
+
+```text
+  scratch\maybe.py:9:13 - information: Type of "x" is "int | None"
+  scratch\maybe.py:10:7 - error: Operator "+" not supported for "None" (reportOptionalOperand)
+  scratch\maybe.py:12:17 - information: Type of "x" is "int"
+1 error, 0 warnings, 2 informations
+```
+
+**`reveal_type(x)`** asks pyright to report the type it has worked out for `x` at that line: the way to see what pyright **infers**, the types it works out for itself without being told (VS Code shows the same when you hover over a name). Outside the `if`, `x` is `int | None`, and `x + 1` is an error; inside `if x is not None:`, the same `x` is `int`. `reveal_type` is a message to pyright only: Python doesn't know it, and `python scratch\maybe.py` stops with `NameError: name 'reveal_type' is not defined`. Delete the two `reveal_type` lines and run it again: now it fails with `TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'`, the crash pyright predicted.
+
 **Understand: narrowing.** Inside `if hit is not None:`, pyright knows `hit` can't be `None`, because the block only runs when it isn't: so `hit` is narrowed from `int | None` to plain `int`, and `bricks.pop(hit)` is fine. This is called **type narrowing**, and it works with `is None`, `is not None`, and other checks pyright understands, such as `isinstance(value, int)`, which asks whether a value is of a given type.
 
 ```check
@@ -992,13 +1040,34 @@ if __name__ == "__main__":
 def clamp(value: float, low: float, high: float) -> float:
 ```
 
-- `float` accepts an `int` too: pyright treats whole numbers as acceptable wherever a float is expected, as maths does.
-- `list[str]` is a list whose items are all strings; `list[pygame.Rect]`, a list of `Rect`s.
+- `float` accepts an `int` too: pyright treats whole numbers as acceptable wherever a float is expected, as maths does (a special rule called **int-to-float promotion**). It only goes that way: a hint of `int` doesn't accept `3.5`.
+- `list[str]` is a list whose items are all strings; `list[pygame.Rect]`, a list of `Rect`s. A type that takes another type in square brackets, like `list`, is a **generic** type.
+- An empty list says nothing about what will go in it, so `bricks = []` would leave pyright guessing. A **variable annotation**, `bricks: list[pygame.Rect] = []`, says it, the same `name: type` as a parameter. Chapter 4's strict mode will insist on it; for now pyright accepts the guess.
 - `tuple[float, float, float, float]` is a tuple of exactly four floats, in that order: the four values `start_ball` and `bounce_off_walls` return.
 - `int | None` is an int or `None`.
 - `tuple[int | None, str, int | None]` for `parse_args`: frames (or `None`), the hold, the lag frame (or `None`).
 
-**Hints are not checked when the program runs.** Python stores them and otherwise ignores them: `clamp("a", "b", "c")` runs without any error and returns `"b"`, because `min` and `max` also work on strings, comparing them alphabetically: a nonsense call, a nonsense answer, and nothing to warn you. (`clamp("a", 0, 3)` would at least fail, inside `min`.) That's exactly the kind of mistake a checker exists for. They're for **readers** and for **tools**: they say exactly what a function accepts and returns, without reading its body, and pyright uses them to check every call against the function and every function against its own body. Now `breakout.start_ball()[5]` is an error pyright reports (a four-item tuple has no index 5), and so is calling `clamp` with a string.
+**Hints are not checked when the program runs.** See it for yourself first, in `scratch/hints_demo.py`:
+
+```python
+def double(n: int) -> int:
+    return n * 2
+
+
+print(double(21))
+print(double("ab"))
+```
+
+```predict
+question: `double` says it takes an `int`. What does `python scratch\hints_demo.py` print on its second line, for `double("ab")`?
+choice: An error: "ab" isn't an int
+choice: abab
+choice: Nothing: it skips the call
+answer: abab
+explain: Python runs the function exactly as written, and `"ab" * 2` is `"abab"`: repeating a string is perfectly legal. The hint `n: int` is stored and otherwise ignored when the program runs. `.venv\Scripts\python -m pyright scratch\hints_demo.py` is what objects: `Argument of type "Literal['ab']" cannot be assigned to parameter "n" of type "int"`. (`Literal['ab']` is pyright's name for "exactly the text 'ab'".)
+```
+
+Python stores hints and otherwise ignores them: `clamp("a", "b", "c")` runs without any error and returns `"b"`, because `min` and `max` also work on strings, comparing them alphabetically: a nonsense call, a nonsense answer, and nothing to warn you. (`clamp("a", 0, 3)` would at least fail, inside `min`.) That's exactly the kind of mistake a checker exists for. They're for **readers** and for **tools**: they say exactly what a function accepts and returns, without reading its body, and pyright uses them to check every call against the function and every function against its own body. Now `breakout.start_ball()[5]` is an error pyright reports (a four-item tuple has no index 5), and so is calling `clamp` with a string.
 
 > **Engineer:** a type hint is **documentation that can't go out of date**. A comment saying "returns the new position" can be wrong and nothing notices; a hint saying `-> float` is checked every time pyright runs. That's the same reason `requirements.txt` beats a note saying which packages to install.
 
@@ -1053,6 +1122,18 @@ git-message "types"
 git-clean
 ```
 
+## Challenge: typos the checker can see
+
+**Optional, ★.** `hold` is a `str`, so `elif hold == "rigth":` would pass pyright and never be true. Change its type to `Literal["left", "right", "none", "auto"]` (import `Literal` from `typing`): a type that allows only those exact strings. Then write the misspelt comparison and see pyright report it.
+
+## Challenge: type the tests too
+
+**Optional, ★★.** Run `.venv\Scripts\python -m pyright tests`, add `-> None` to every test function and a type to every helper, and fix what it reports. The tests are code too; Chapter 4 makes checking them part of the definition of done.
+
+## Challenge: a taste of strict
+
+**Optional, ★★★.** On a copy, set `"typeCheckingMode": "strict"` in `pyrightconfig.json` and fix every error in `breakout.py`: missing annotations, values whose type pyright can't know. Reading strict-mode messages is what Chapter 4 asks of you; this is the preview. Then `git restore` both files.
+
 ## What did we actually learn?
 
 - **Every value has a type**, which decides what can be done with it. Python checks types as each operation runs; a **type checker** checks them by reading the code, before it runs, on every line.
@@ -1061,4 +1142,4 @@ git-clean
 - **Tests and type checks catch different things**: tests check behaviour on the inputs they try; types check the shape of every value on every line, but not whether the numbers are right.
 - **The definition of done grows again**: tests pass *and* the type checker is satisfied.
 
-This is where Python meets C# and Java most directly. `def clamp(value: float, low: float, high: float) -> float` is `static double Clamp(double value, double low, double high)` in both, with the difference that their compilers *refuse to run* code with type errors, while Python runs it anyway and leaves the checking to a tool you run. `int | None` is C#'s `int?` (a "nullable" int), and for objects, C#'s nullable reference types (`Rect?`) and Java's `Optional<Rect>` are the same idea as `Rect | None`, checked the same way. Chapter 4 turns on pyright's **strict** mode, which brings it closer still.
+This is where Python meets C# and Java most directly. `def clamp(value: float, low: float, high: float) -> float` is `static double Clamp(double value, double low, double high)` in both, with the difference that their compilers *refuse to run* code with type errors, while Python runs it anyway and leaves the checking to a tool you run. `int | None` is C#'s `int?` (a "nullable" int), and for objects, C#'s nullable reference types (`Rect?`) are the same idea as `Rect | None`, checked the same way. Java's `Optional<Rect>` expresses the idea too, but Java's compiler doesn't make you check it; extra tools such as NullAway add that. Chapter 4 turns on pyright's **strict** mode, which brings it closer still.

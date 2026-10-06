@@ -35,9 +35,10 @@ Use your own name and email (an email you don't mind other people seeing, if you
 git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 git config --global init.defaultBranch main
+git config --global core.editor notepad
 ```
 
-**Understand.** Every saved version Git makes records who made it. `git config` stores settings, and `--global` puts them in a file in your user folder (`.gitconfig`) that applies to every project on this computer, so you only do this once. The third setting names the first line of history in each new project `main`, the name most teams now use. (Older Git versions call it `master`, which you'll still see in older projects.)
+**Understand.** Every saved version Git makes records who made it. `git config` stores settings, and `--global` puts them in a file in your user folder (`.gitconfig`) that applies to every project on this computer, so you only do this once. The third setting names the first line of history in each new project `main`, the name most teams now use. (Older Git versions call it `master`, which you'll still see in older projects.) The fourth tells Git to use Notepad when it needs you to type text, such as a commit message you forgot to give: without it, Git opens **Vim**, an editor that runs inside the terminal and doesn't quit with any key you'd guess. (If you ever find yourself in it anyway: press Esc, type `:q!`, and press Enter.)
 
 ```check
 git-config user.name -- Run git config --global user.name "Your Name", with your name.
@@ -75,13 +76,25 @@ No commits yet
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.venv/
 	breakout.py
 	check_setup.py
 	...
 ```
 
-**Untracked** means "in the folder, but not part of the history". Notice `.venv/` in the list. It shouldn't be.
+**Untracked** means "in the folder, but not part of the history". Every file you've written is listed. One thing in the folder isn't: `.venv`. Look inside it for a file named `.gitignore`:
+
+```powershell
+Get-Content .venv\.gitignore
+```
+
+```text
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*
+```
+
+`Get-Content` prints a file, like opening it to read. Since Python 3.13, `python -m venv` writes this small file into every environment it makes. A file named `.gitignore` tells Git which names to leave out (the next step explains it fully), and it applies to the folder it's in and everything inside. `*` matches every name, so Git leaves out everything in `.venv`, this file included. That's why `.venv` isn't listed: Python already told Git to ignore it.
+
+Older versions of Python don't write that file, and neither do other tools that make environments, and nothing in your project says the environment shouldn't be saved: that rule only exists because of how one tool made one folder. The project should say it for itself.
 
 ```check
 git-repo -- Run git init in the forge folder.
@@ -91,7 +104,22 @@ git-repo -- Run git init in the forge folder.
 
 **Build:** tell Git never to save the environment.
 
-Lesson 0.2 made the rule: `.venv` is **generated** from `requirements.txt`, it's specific to this computer, and it's never shared. Python also makes `__pycache__` folders of compiled bytecode next to your files when one module imports another, which are generated too. Create a file named `.gitignore`:
+Lesson 0.2 made the rule: `.venv` is **generated** from `requirements.txt`, it's specific to this computer, and it's never shared. Python generates something else too. Before it runs a module that another file imports, it **compiles** the module: it translates the text of your code into **bytecode**, a compact form that Python's interpreter runs faster, and saves it in a folder named `__pycache__` next to the file, so the next run can skip the translating. Make one on purpose, with the standard tool that does just that step:
+
+```powershell
+.venv\Scripts\python -m py_compile hello.py
+git status
+```
+
+```text
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	__pycache__/
+	breakout.py
+	...
+```
+
+`__pycache__/` is listed now: a folder of files you didn't write, made for this computer's Python version (the file inside is named `hello.cpython-314.pyc`, or your version's number). Create a file named `.gitignore` in the `forge` folder:
 
 ```text file=.gitignore
 # Generated: rebuilt from requirements.txt with python -m venv .venv
@@ -99,16 +127,19 @@ Lesson 0.2 made the rule: `.venv` is **generated** from `requirements.txt`, it's
 
 # Generated: Python's compiled bytecode
 __pycache__/
+
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
 ```
 
-**Understand.** Before Git lists or saves a file, it compares the file's path with every pattern in `.gitignore`. A pattern ending in `/` matches a folder of that name anywhere in the project, with everything inside it. Lines starting with `#` are comments, for the people reading the file. Run `git status` again: `.venv/` is gone from the list, and `.gitignore` itself has appeared, because it's a file you wrote and should be saved like any other.
+**Understand.** Before Git lists or saves a file, it compares the file's path with every pattern in `.gitignore`. A pattern ending in `/` matches a folder of that name anywhere in the project, with everything inside it. Lines starting with `#` are comments, for the people reading the file. Run `git status` again: `__pycache__/` is gone from the list, and `.gitignore` itself has appeared, because it's a file you wrote and should be saved like any other. `.venv/` is ignored twice over now, by its own file and by yours, which does no harm: yours is the one the project owns. And `scratch/` is ignored on purpose, although you wrote it: your experiments are yours to keep, but they're not the project, and nobody cloning it should get them.
 
-Git may print `warning: in the working copy of '.gitignore', LF will be replaced by CRLF`. Windows and macOS end lines of text with different characters, and Git for Windows converts between them so a project works on both. It's harmless.
-
-> **Engineer:** a repository holds what people **write**, never what's **generated** from it. The same rule will keep build folders, caches, log files, databases of test data and secrets (passwords and keys, Chapter 37) out of every project you make.
+> **Engineer:** a repository holds what people **write**, never what's **generated** from it. The same rule will keep build folders, caches, log files, databases of test data and secrets (passwords and keys, Chapter 40) out of every project you make.
 
 ```check
 git-ignored .venv -- Create .gitignore in the forge folder (with the dot at the start), containing the line .venv/
+git-ignored __pycache__/hello.cpython-314.pyc -- Add the line __pycache__/ to .gitignore.
+git-ignored scratch/events.py -- Add the line scratch/ to .gitignore.
 file .gitignore
 ```
 
@@ -117,17 +148,22 @@ file .gitignore
 **Build:** save the first version of the project.
 
 ```powershell
+git status --short
 git add .
 git status --short
-git commit -m "Start Breakout: a window and a game loop"
+git commit -m "Start the project: Chapter 0's practice files and a Breakout window"
 ```
 
 ```text
+?? .gitignore
+?? breakout.py
+?? check_setup.py
+...
 A  .gitignore
 A  breakout.py
 A  check_setup.py
 ...
-[main (root-commit) 46a93d4] Start Breakout: a window and a game loop
+[main (root-commit) 46a93d4] Start the project: Chapter 0's practice files and a Breakout window
  10 files changed, ...
 ```
 
@@ -143,15 +179,17 @@ working tree  ──git add──▶  staging area  ──git commit──▶  r
                              being assembled)
 ```
 
-- `git add .` copies the current content of every file in `.` (the current folder, and everything under it, minus what `.gitignore` excludes) into the **staging area**, also called the **index**. `git status --short` shows `A`, for *added to the staging area*; before that it showed `??`, for *untracked*.
+- `git add .` copies the current content of every file in `.` (the current folder, and everything under it, minus what `.gitignore` excludes) into the **staging area**, also called the **index**. `git status --short` shows `A`, for *added to the staging area*; before the `git add` it showed `??`, for *untracked*.
 - `git commit` makes a snapshot of exactly what's in the staging area, not your working tree. `-m` gives the message.
 
 The two steps exist so that a commit can contain just *some* of your changes: fix two unrelated things, then add and commit each one separately, so each commit means one thing.
 
-**Commit messages** are for the person reading the history later, often you. The common convention: one short line saying what the commit does, as an instruction ("Add the paddle", not "added paddle stuff"), so the history reads as a list of changes.
+`git add` may print `warning: in the working copy of '.gitignore', LF will be replaced by CRLF`. Lines of text end with an invisible character: **LF** (*line feed*, the `\n` of lesson 0.2) on macOS and Linux, and **CRLF** (a *carriage return* followed by a line feed) on Windows. Git for Windows converts between them, so a project works on both. It's harmless.
+
+**Commit messages** are for the person reading the history later, often you. A message must describe **everything** in the commit: this one holds Chapter 0's practice files as well as the game, so it says so. The common convention: one short line saying what the commit does, as an instruction ("Add the paddle", not "added paddle stuff"), so the history reads as a list of changes.
 
 ```check
-git-commits 1 -- Run git add . and then git commit -m "Start Breakout: a window and a game loop".
+git-commits 1 -- Run git add . and then git commit -m "Start the project: Chapter 0's practice files and a Breakout window".
 git-clean -- Every file must be committed: run git add . and git commit again.
 ```
 
@@ -170,6 +208,8 @@ Date:   Sun Oct 4 09:51:21 2026 -0400
 
     Start Breakout: a window and a game loop
 ```
+
+If git's output is longer than the terminal, git shows it one screen at a time, with a `:` at the bottom: Space shows the next screen, and **q** quits back to the prompt. `git log --oneline` prints one short line per commit, which is usually all you need.
 
 The long number is the commit's **hash**. Yours is different, because it's computed from everything in the commit, including your name and the exact second you committed. Now look at the commit itself, the way Git stores it:
 
@@ -190,6 +230,8 @@ Start Breakout: a window and a game loop
 ...
 ```
 
+`1791121881 -0400` is the time: seconds since the start of 1 January 1970 in UTC (the usual way computers store a moment, called **Unix time**), then the time zone, four hours behind UTC. `100644` means an ordinary file, one that isn't a program to run.
+
 **Understand: how Git stores history.** A commit is a short piece of text, and so is everything else Git stores:
 
 - A **blob** is the content of one file, nothing else, not even its name.
@@ -197,6 +239,22 @@ Start Breakout: a window and a game loop
 - A **commit** names one tree (the whole project at that moment), the commit before it (its **parent**; the first commit has none), the author, and the message.
 
 > **Hash**: a fixed-length number computed from content, here 40 **hexadecimal** digits (base 16: the digits 0–9, then a–f standing for 10 to 15, so `f` is 15 and `10` is sixteen), by an algorithm (SHA-1) designed so that any change to the content, even one character, gives a completely different number, and two different contents practically never give the same one.
+
+Compute one yourself. `git hash-object --stdin` prints the hash Git would give some content:
+
+```powershell
+"hello" | git hash-object --stdin
+"hello" | git hash-object --stdin
+"hellp" | git hash-object --stdin
+```
+
+```text
+ef0493b275aa2080237f676d2ef6559246f56636
+ef0493b275aa2080237f676d2ef6559246f56636
+d29a909a236bc1b8cc1344c6f8c8b79f6d65583f
+```
+
+(`|`, the **pipe**, sends one command's output into the next command as its input.) The same content gives the same hash, every time, on every computer; one letter changed gives a completely different one, with nothing in common. That's all a hash is.
 
 Every object is stored under the hash of its own content, so the hash is its name. That gives Git its guarantees. Two files with identical content are stored once, because their blobs have the same hash. And history can't be changed quietly: change one character of an old file, and its blob's hash changes, so the tree listing it changes, so the commit naming that tree changes, and every commit after it, since each names its parent's hash.
 
@@ -211,7 +269,7 @@ answer: breakout.py's blob, the project's tree, and the new commit
 explain: The other files' contents didn't change, so their blobs are the same objects as before, with the same hashes: the new tree simply lists them again. `breakout.py`'s content changed, so it has a new blob; the tree's listing changed, so it's a new tree; and the commit is new anyway, with the old commit as its parent. That's why a commit is cheap even in a huge project: only what changed is stored again.
 ```
 
-> **Engineer:** naming data by a hash of its content, **content addressing**, appears far beyond Git: package caches (pip's `Using cached` in lesson 0.2), build systems that skip work whose inputs haven't changed, and Forge's own asset import cache in Chapter 17. Whenever you need "has this changed?" or "have I seen this before?", a content hash answers it.
+> **Engineer:** naming data by a hash of its content, **content addressing**, appears far beyond Git: package caches (pip's `Using cached` in lesson 0.2), build systems that skip work whose inputs haven't changed, and Forge's own asset import cache in Chapter 18. Whenever you need "has this changed?" or "have I seen this before?", a content hash answers it.
 
 ## A backlog
 
@@ -318,6 +376,35 @@ git status --short
 
 **Careful:** `git restore` throws away uncommitted changes for good. Git can only bring back what was committed.
 
+**Choosing what goes in a commit.** The staging area lets a commit hold only some of your changes. See it: add a line at the end of `BACKLOG.md`, change the caption in `breakout.py` again, and stage only the backlog:
+
+```powershell
+git add BACKLOG.md
+git status --short
+```
+
+```text
+M  BACKLOG.md
+ M breakout.py
+```
+
+`git status --short` has **two** columns. The first is the staging area: `M` under it means *staged*, so `BACKLOG.md`'s change would go into the next commit. The second is the working tree: `M` there means *changed but not staged*, so `breakout.py`'s change would not. Throw both away: `git restore --staged BACKLOG.md` takes the change out of the staging area (the file keeps it), and `git restore BACKLOG.md breakout.py` puts both files back as committed.
+
+**An older version.** Every commit can be looked at, not only the last one. `HEAD~1` means "one commit before `HEAD`":
+
+```powershell
+git log --oneline
+git show HEAD~1:BACKLOG.md
+```
+
+```text
+5c0d2a1 Add the backlog
+46a93d4 Start the project: Chapter 0's practice files and a Breakout window
+fatal: path 'BACKLOG.md' exists on disk, but not in 'HEAD~1'
+```
+
+`git show COMMIT:FILE` prints a file as it was in that commit. One commit ago, the backlog didn't exist yet, and Git says exactly that. `git show HEAD~1:breakout.py` would print the game as it was then. A whole earlier version of a file can be brought back the same way, with `git restore --source=HEAD~1 breakout.py` (the challenges try it).
+
 > **Engineer:** commit often, in small steps that each work. Each commit is a point you can return to, and a small diff is one you can read and understand. A day of changes in one commit is almost as hard to undo as no commit at all.
 
 ```check
@@ -367,6 +454,18 @@ matches BACKLOG.md "(As a player[\s\S]*?){8}" label="BACKLOG.md has two more sto
 git-message "stories" -- Commit with a message that mentions stories, e.g. git commit -m "Add two stories: pause and a faster ball".
 git-clean -- Every change must be committed.
 ```
+
+## Challenge: bring back an older version
+
+**Optional, ★.** Make a change to `breakout.py` and commit it. Then bring the version before it back without retyping anything: `git log --oneline`, then `git restore --source=HASH breakout.py` with the earlier commit's hash. Look at `git diff`, and decide: commit the old version as a new commit, or `git restore breakout.py` to keep the new one. The intro promised Git can bring back any version; this is how.
+
+## Challenge: which rule ignored it?
+
+**Optional, ★★.** `git check-ignore -v PATH` says which ignore file, and which line in it, ignores a path. Ask it about `.venv\Lib`, `__pycache__\x.pyc` and `scratch\events.py`: two different files answer. Then add a pattern for log files, `*.log`, make a `debug.log` to prove it works, and commit the change.
+
+## Challenge: half a file in a commit
+
+**Optional, ★★.** Make two unrelated changes to `breakout.py`, far apart in the file. `git add -p breakout.py` asks about each changed part (a **hunk**) in turn: answer `y` to stage it, `n` to leave it. Commit the first change alone, then the second. The staging area works on parts of files, not only whole files.
 
 ## What did we actually learn?
 

@@ -219,13 +219,13 @@ long side²  = 180² + 240² = 32,400 + 57,600 = 90,000
 long side   = √90,000 = 300          (because 300 × 300 = 90,000)
 ```
 
-300 pixels in one second: exactly `BALL_SPEED`. That works for any speed because 0.6² + 0.8² = 0.36 + 0.64 = 1, so the slant is always 1 × the speed. A velocity like `(vx, vy)` is often drawn as an arrow, and the arrow's length, worked out this way, is the actual speed.
+300 pixels in one second: exactly `BALL_SPEED`. That works for any speed because 0.6² + 0.8² = 0.36 + 0.64 = 1, so the slant is always 1 × the speed. A velocity like `(vx, vy)` is often drawn as an arrow, and the arrow's length, worked out this way, is the actual speed. A pair of numbers with a direction and a length like this is called a **vector**, and its length is its **magnitude**. Python can work it out: in the REPL, `import math` then `math.hypot(180, 240)` gives `300.0` (`hypot` is short for *hypotenuse*, the slanted side).
 
 `ball_x = WIDTH / 2` uses `/`, not lesson 1.3's `//`: `/` always gives a float (`320.0`), which is what a position that moves by fractions of a pixel needs.
 
 `ball.center = (round(ball_x), round(ball_y))` places the 12 × 12 `Rect` so that its centre is on the float position. The `Rect` is used for drawing and, soon, for collisions. `pygame.draw.ellipse` draws the largest ellipse that fits in a rectangle, which for a square is a circle.
 
-> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 41) work.
+> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 46) work.
 
 ```check
 contains breakout.py "ball_x += ball_vx * dt" -- Move the ball by ball_vx * dt and ball_vy * dt each frame.
@@ -568,6 +568,19 @@ both  →  colliderect is True
 
 (`right` and `bottom` are one past the last pixel: a `Rect` at x 270 that's 100 wide covers 270 to 369, and its `right` is 370.)
 
+Try the rule on its own in the REPL, where you choose the rectangles:
+
+```text
+>>> import pygame
+>>> a = pygame.Rect(0, 0, 10, 10)
+>>> a.colliderect(pygame.Rect(9, 9, 5, 5))
+True
+>>> a.colliderect(pygame.Rect(10, 0, 5, 5))
+False
+```
+
+The first overlaps `a` by one pixel, at (9, 9). The second starts at x 10, exactly `a.right`: the two touch, but no pixel is in both, so they don't collide.
+
 **Why `and ball_vy > 0`?** The ball moves 4 or 5 pixels a frame and the paddle is 14 thick, so the ball overlaps the paddle for **several frames** in a row. Without the condition, the first overlapping frame flips the ball upwards; the next frame it still overlaps, so it flips back down; and so on, the ball shuddering inside the paddle. Only bouncing when the ball is moving **down** (positive `vy`, since y grows downwards) means each touch bounces exactly once. It's a small rule that matters: *collision isn't an event that happens once, it's a state that lasts several frames*, so code that reacts to it must ask whether it has already reacted.
 
 **The autopilot.** A test run can't hold the arrow keys at the right moments, so `--hold auto` steers for it: if the ball is left of the paddle's middle (more than 10 pixels left of `paddle_x + 50`), move left; if right of it, move right; otherwise stay. It's a simple rule, and it's enough to keep the ball in play. Why `paddle_x + 50`? `paddle_x` is the paddle's left edge and the paddle is 100 wide, so its middle is 50 further on; the code compares the ball with `paddle_x + 40` and `paddle_x + 60`, 10 pixels either side of that. Why not move whenever the ball isn't exactly at the middle? A paddle moving 7 pixels a frame would overshoot by a few pixels, then move back and overshoot the other way, wobbling forever. The 20-pixel **dead zone** in the middle, where it stays still, stops that.
@@ -884,7 +897,38 @@ answer: It flips sign every frame: -240, +240, -240
 explain: The slow frame takes `y` to -44, past the wall, so `vy` flips to +240. The next frame moves the ball only 4 pixels, to -40: still past the wall, so `vy` flips again, to -240. The next frame takes it back to -44, and so on. The ball never gets back below 6. In CodeLens you can see it happen on the `vy = -vy` line, every frame. The output's last line is `dt=0.017  y= -40.0  vy=-240`.
 ```
 
-Five frames and four variables are the whole bug. The next step finds the same behaviour in the real game, with a debugger, and fixes it.
+Five frames and four variables are the whole bug. The next step finds the same behaviour in the real game, with a **debugger**, and fixes it. Practise the debugger here first, where nothing else is going on. Copy the file into your scratch folder and add one line, `breakpoint()`, as the first line inside the `for` loop:
+
+```powershell
+Copy-Item trace_wall.py scratch\pdb_practice.py
+```
+
+```python
+for dt in [1 / 60, 0.5, 1 / 60, 1 / 60, 1 / 60]:
+    breakpoint()
+    y += vy * dt
+```
+
+Run `python scratch\pdb_practice.py`. It stops, and waits at a `(Pdb)` prompt:
+
+```text
+> C:\Users\you\Documents\forge\scratch\pdb_practice.py(8)<module>()
+-> breakpoint()
+(Pdb) p dt, y, vy
+(0.016666666666666666, 80.0, -240.0)
+(Pdb) n
+> C:\Users\you\Documents\forge\scratch\pdb_practice.py(9)<module>()
+-> y += vy * dt
+(Pdb) c
+dt=0.017  y=  76.0  vy=-240
+> C:\Users\you\Documents\forge\scratch\pdb_practice.py(8)<module>()
+-> breakpoint()
+(Pdb) p dt, y, vy
+(0.5, 76.0, -240.0)
+(Pdb) q
+```
+
+The first two lines say where it stopped: the file, the line number in brackets, and, after `->`, the line that runs **next**. `p` prints values; `n` runs one line and stops again; `c` carries on until the program reaches `breakpoint()` again, one frame later, now with the slow `dt` of 0.5. Type `q`, and `y` when asked, to stop. Keep stepping with `n` through the slow frame if you like: you'll watch `vy` flip, exactly as CodeLens showed.
 
 ```check
 run "python trace_wall.py" stdout="dt=0.017  y= -40.0  vy=-240" label="the five-frame reproduction shows the ball stuck past the wall" -- Type trace_wall.py exactly as shown.
@@ -918,8 +962,10 @@ At the `(Pdb)` prompt, these are the commands you need:
 | `n` | run the **n**ext line, then stop again |
 | `l` | **l**ist the lines around where the program stopped |
 | `q` | **q**uit: stop the program (answer `y` when asked) |
+| `w` | **w**here: the chain of calls that led here, like a traceback (lesson 0.3) |
+| `h` | **h**elp: every command, and `h p` explains one |
 
-Here is a real session. Read it before running your own:
+Here is a real session, shortened: before each `-> breakpoint()`, pdb also prints a line naming the file and line number, as in the practice. Read it before running your own:
 
 ```text
 -> breakpoint()
@@ -1123,7 +1169,7 @@ ball hits the middle:      (320 - 320) / 50 =  0.0  →  ball_vx = 0            
 ball hits the right end:   (370 - 320) / 50 =  1.0  →  ball_vx = 240                       (sharply right)
 ```
 
-(The ball can overlap the paddle's very end with its centre slightly past it, so `offset` can be a little beyond ±1.) Dividing by the half-width turns a distance in pixels into a number from −1 to 1 that doesn't depend on the paddle's size: a **normalised** value. The `0.8` limits how sharply the ball can be steered. At the very end of the paddle, `ball_vx` is 300 × 0.8 = 240, the same size as `ball_vy`'s 240, so the steepest bounce is a perfect diagonal, 45°. Without the `0.8` it would be 300 across for every 240 up: a flatter path that takes longer to travel between the paddle and the bricks, and is harder to play.
+(The ball can overlap the paddle's very end with its centre slightly past it, so `offset` can be a little beyond ±1.) Dividing by the half-width turns a distance in pixels into a number from −1 to 1 that doesn't depend on the paddle's size: a **normalised** value. The `0.8` limits how sharply the ball can be steered. At the very end of the paddle, `ball_vx` is 300 × 0.8 = 240, the same size as `ball_vy`'s 240, so the steepest bounce is a perfect diagonal, as far across as up: an angle of 45 degrees, half of a square corner's 90. Without the `0.8` it would be 300 across for every 240 up: a flatter path that takes longer to travel between the paddle and the bricks, and is harder to play.
 
 One honest flaw: the ball's *speed* now changes. `ball_vy` keeps its size while `ball_vx` changes, so a ball sent off at an angle is faster than one sent straight up (√(240² + 240²) ≈ 339 against 240). Many Breakout games have that quirk; it's added to the list for lesson 1.6.
 
@@ -1143,6 +1189,18 @@ contains BACKLOG.md "- [x] Missing the ball costs one of three lives, and the ba
 git-message "steering" -- Commit with the message shown, or one that mentions steering.
 git-clean
 ```
+
+## Challenge: the same speed after steering
+
+**Optional, ★★.** Steering changes `ball_vx` but not `ball_vy`, so a steep bounce makes the ball faster than `BALL_SPEED` (the lesson's honest flaw). After setting `ball_vx`, scale both parts so that `math.hypot(ball_vx, ball_vy)` is `BALL_SPEED` again: work out the current magnitude, then multiply both by `BALL_SPEED / magnitude`. Do it in a copy, `scratch/breakout_speed.py`: the next lessons' checks expect the numbers the main game gives.
+
+## Challenge: serve from the paddle
+
+**Optional, ★★.** After a miss, the ball sits on the paddle and moves with it until Space is pressed, then leaves upwards. That needs one more piece of state (is the ball being held?), and lesson 1.3's difference between a key press (an event) and a key being held. In a copy.
+
+## Challenge: no tunnelling
+
+**Optional, ★★★.** A slow frame near the paddle can carry the ball from above it to below it in one step, without the two ever overlapping: the ball **tunnels** through. Reproduce it with `--lag-at` (find a frame where the ball is just above the paddle), then fix it: remember where the ball was before the move, and bounce if its path crossed the paddle's top edge during the frame, not only if it overlaps now. In a copy.
 
 ## What did we actually learn?
 

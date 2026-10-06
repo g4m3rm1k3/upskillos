@@ -1,6 +1,6 @@
 # Forge: learn software engineering by building a game engine, editor and service in Python — series plan
 
-Status (2026-10-04): **Chapters 0–6 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5).** The user opened 0.1 in the
+Status (2026-10-05): **Chapters 0–6 and lesson 7.1 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5, 7.1).** Every lesson was reviewed against "Teaching, not describing" by reviewer agents and rewritten in small steps (2026-10-05); the walkthrough passes 0.1–7.1 with every wrong answer. The user opened 0.1 in the
 app and approved it as the bar; they review the rest by doing the lessons, so writing continues in plan order
 without pausing.
 
@@ -60,6 +60,17 @@ without pausing.
   fixtures replace 5.1's duplicated helpers). Final: 106 tests; `pytest -m "not slow"` runs 95 in about 3 s.
   **Promised:** lesson 7.1 opens with reference steps showing `tests/test_game.py` and `tests/test_states.py` in
   full (6.5's Your turn answer).
+- Chapter 7 (`forge-records/`): 7.1 who played (two tables typed in the shell first, a foreign key, a join,
+  `ON CONFLICT ... DO NOTHING`, `INSERT ... SELECT`, `--player` with a `player_name` type, a `player` setting;
+  bug hunt: SQLite enforces foreign keys only after `PRAGMA foreign_keys = ON`). Final: 114 tests.
+  Chapter 7 outline: 7.1 who played; 7.2 a database that's already out there (`PRAGMA user_version`, a
+  `MIGRATIONS` list, each migration in a transaction, migration tests with `monkeypatch`; Your turn: `won`
+  read back as `True`/`False`/`None`; 121 tests); 7.3 how is each level going (`GROUP BY`, aggregates skipping
+  `NULL`, `COALESCE`, `HAVING`; the report tool's level table; Your turn: `min_played` with `HAVING`; 126 tests);
+  7.4 play sessions (a sessions table by migration, `LEFT JOIN`, durations); 7.5 one fact in one place
+  (normalisation, felt first, fixed by a migration); 7.6 indexes measured (`EXPLAIN QUERY PLAN`, a million rows);
+  7.7 two writes at once (locking, busy timeout, `BEGIN IMMEDIATE`, WAL); 7.8 shipping v0.1 (sprint review,
+  retrospective, changelog, tag).
 - Project Studio change: Run on a package's `__main__.py` runs `python -m <package>` from the project folder
   (`desktop/app/runtimes/python.cjs`, tested in `pythonVenv.test.js`), so later lessons use
   `run: breakout/__main__.py`.
@@ -82,7 +93,7 @@ without pausing.
   no code shown and at least one wrong answer the checks reject.
 - Hint ladders (```` ```hints ```` fences: `hints.js`, `HintLadder.jsx`) were added to Project Studio for
   Your turn steps. Optional challenges already existed (a step heading starting "Challenge:").
-- The series is registered in `src/labs/project-studio/series.js` with all 54 chapters; only chapters with
+- The series is registered in `src/labs/project-studio/series.js` with all 59 chapters; only chapters with
   lessons appear.
 
 Decided with the user:
@@ -100,6 +111,23 @@ Decided with the user:
   renderer first and then the GPU through moderngl, with Godot-shaped 3D nodes and a 3D game; Part 6 goes
   well beyond Game Studio's Q-learning, to deep Q-learning, policy gradients, PPO and self-play. The series
   grew from 42 to 54 chapters; chapters after the editor were renumbered, and lessons' references with them.
+- **Nothing Game Studio had to add late is missed** (2026-10-05). Game Studio found its engine gaps (state
+  across scenes, save slots, UI widgets, dialogue, raycasts, gamepads, replays, networking, one-way platforms,
+  tweens, particles, pathfinding, a debug panel) only when its starter games needed them. Forge plans them from
+  the start: five chapters were added (15 UI, 19 game AI, 20 generated worlds, 41 and 42 multiplayer), Part 2
+  chapters took the rest, and a genre check (below) is re-run before each chapter is written. The series grew
+  from 54 to 59 chapters; chapters from 15 on were renumbered, and lessons' references with them.
+- **Deeper than Python, and the real ML libraries** (2026-10-05, the user: "even if later we have to get into
+  C Python internals... if we use machine learning libraries to build games to make it better"). Two
+  additions, placed after the full audit so chapters are renumbered once: **under Python** (how CPython runs
+  code: bytecode with `dis`, objects and reference counting, the GIL, why a Python loop is slow and NumPy
+  isn't; then a measured hot path, such as collision checks, rewritten as a C extension and tested against
+  the Python version); and **the ML libraries game developers use**, each after the method is built by hand:
+  Forge scenes as Gymnasium environments, training with Stable-Baselines3, and trained agents shipped inside
+  exported games with ONNX Runtime, each checked against the hand-built version.
+- **A full beginner audit** (2026-10-05): every written lesson reviewed for a reader with basic Python only;
+  each new concept gets a scratch example (tried alone first) and most lessons an optional challenge.
+  Findings in the working folder `audit/`.
 - **Machine learning, built from first principles** and then added to Forge as a feature (Part 6). Game
   Studio's Train dialog is the calculator; Forge is where the learner learns the mathematics behind it.
 - **PySide6 for the editor**, taught only as the editor needs it, starting from a deliberately tiny editor.
@@ -183,34 +211,38 @@ seen once. Chapter numbers refer to the chapter tables below.
 |---|---|---|
 | Functions, pure functions vs side effects | 2 | everywhere |
 | **Testing**: tests after, then tests first, what to test (thread 8) | 2, 3 | every chapter |
-| Fixtures, parametrised tests, fakes and mocks | 6, 11 | 34, 36 |
-| Property-based testing (Hypothesis) | 12 | 15 |
+| Fixtures, parametrised tests, fakes and mocks | 6, 11 | 37, 39 |
+| Property-based testing (Hypothesis) | 12 | 16 |
 | **Classes**: `__init__`, `self`, methods, invariants | 3 | everywhere |
-| Inheritance and composition, when to use which | 3, 10 | 17, 23 |
-| **Dataclasses** | 3 | 15, 19 |
+| Inheritance and composition, when to use which | 3, 10 | 18, 26 |
+| **Dataclasses** | 3 | 16, 22 |
 | **Type safety**: type hints, pyright, strict mode, generics (thread 9) | 2, 4 | every chapter |
-| Interfaces: Protocols and abstract base classes | 9 | 17, 23, 34 |
-| **pydantic**: validating data from outside the program | 5 (after validating by hand hurts) | 15, 33, 34 |
-| **Data that outlives the program**: why objects can't just be saved, objects vs tables | 6 | 17, 34 |
-| **SQL**: tables, primary keys, `SELECT`, `INSERT`, `UPDATE`, parameters | 6 | 7, 17, 34 |
-| Relationships, foreign keys, joins, normalisation, indexes, transactions, concurrent writes | 7 | 17, 34 |
-| Migrations, SQLAlchemy, and when not to use an ORM | 17, 34 | 35 |
-| Files, paths, JSON, text formats, versioned file formats | 5 | 15 |
-| Exceptions, error messages, logging | 5, 11 | 16, 52 |
-| Recursion and trees | 10 | 19, 20 |
-| Design patterns: state machine, observer, registry, command, plugin | 4, 11, 15, 21, 23 | each reused |
+| Interfaces: Protocols and abstract base classes | 9 | 18, 26, 37 |
+| **pydantic**: validating data from outside the program | 5 (after validating by hand hurts) | 16, 36, 37 |
+| **Data that outlives the program**: why objects can't just be saved, objects vs tables | 6 | 18, 37 |
+| **SQL**: tables, primary keys, `SELECT`, `INSERT`, `UPDATE`, parameters | 6 | 7, 18, 37 |
+| Relationships, foreign keys, joins, normalisation, indexes, transactions, concurrent writes | 7 | 18, 37 |
+| Migrations, SQLAlchemy, and when not to use an ORM | 7, 37 | 18, 38 |
+| Files, paths, JSON, text formats, versioned file formats | 5 | 16 |
+| Exceptions, error messages, logging | 5, 11 | 17, 57 |
+| Recursion and trees | 10 | 22, 23 |
+| Design patterns: state machine, observer, registry, command, plugin | 4, 11, 16, 24, 26 | each reused |
 | **Coupling and boundaries**: felt first, then fixed | 8 (the pain), 9 (the fix) | every later chapter |
-| Concurrency: threads, processes, a background job queue | 22 | 36 |
-| Performance: measuring with cProfile, then optimising | 14 | 52 |
-| **Machine learning from first principles**: environments, Q-learning, search, supervised learning, neural networks | 38–42 | 48, 53 |
-| NumPy, then PyTorch | 38, 42 | 48 |
-| HTTP, REST APIs, FastAPI | 33 | 36 |
-| Configuration and environments (dev, test, production) | 5 | 37 |
-| Containers and deployment | 37 | 51 |
-| **Packaging**: executables, export templates, installers, builds for each OS | 49 | 51 |
-| **3D mathematics**: vectors, matrices, projection, quaternions, measured then derived | 26, 29 | 31, 32, 47 |
-| **Rendering**: rasterising by hand, then the GPU pipeline and shaders | 27, 28, 30 | 31 |
-| **Deep reinforcement learning**: DQN, policy gradients, actor-critic, PPO, search and self-play | 43–46 | 47, 48, 53 |
+| Concurrency: threads, processes, a background job queue | 25 | 39 |
+| Performance: measuring with cProfile, then optimising | 14 | 57 |
+| **Machine learning from first principles**: environments, Q-learning, search, supervised learning, neural networks | 43–47 | 53, 58 |
+| NumPy, then PyTorch | 43, 47 | 53 |
+| HTTP, REST APIs, FastAPI | 36 | 39 |
+| Configuration and environments (dev, test, production) | 5 | 40 |
+| Containers and deployment | 40 | 56 |
+| **Packaging**: executables, export templates, installers, builds for each OS | 54 | 56 |
+| **UI from scratch**: text, layout as an algorithm, focus | 15 | 21–28 (the editor, where Qt does it) |
+| **Algorithms**: graph search (breadth-first, Dijkstra, A*), checked against an oracle | 19 | 20, 51 |
+| **Procedural generation**: seeds, weighted choice, noise | 2, 20 | 58 |
+| **Networking**: sockets, protocols, an authoritative host, lag | 41, 42 | 58 |
+| **3D mathematics**: vectors, matrices, projection, quaternions, measured then derived | 29, 32 | 34, 35, 52 |
+| **Rendering**: rasterising by hand, then the GPU pipeline and shaders | 30, 31, 33 | 34 |
+| **Deep reinforcement learning**: DQN, policy gradients, actor-critic, PPO, search and self-play | 48–51 | 52, 53, 58 |
 
 ### 2. Debugging, practised in every chapter
 
@@ -235,9 +267,11 @@ The tools are added a few at a time, each when the bug in front of the learner n
 | 12 | conditional breakpoints; a bug that appears on frame 400 |
 | 13 | `git bisect`: finding the commit that broke it; `git revert` |
 | 14 | the profiler as a debugger for "it's slow" |
-| 22 | bugs that only happen with threads: races, and how to make them reproducible |
-| 36 | debugging across two programs: client log, server log, the HTTP exchange between them |
-| 37 | debugging from production logs only, without a debugger |
+| 15 | a layout bug: drawing every widget's box to see what the layout code really computed |
+| 25 | bugs that only happen with threads: races, and how to make them reproducible |
+| 39 | debugging across two programs: client log, server log, the HTTP exchange between them |
+| 40 | debugging from production logs only, without a debugger |
+| 42 | debugging a networked game: timestamped logs from both programs, and a simulated bad network that repeats the bug |
 
 ### 3. Security: "who controls this data?"
 
@@ -249,12 +283,13 @@ time data enters the program, the lesson asks who controls it and what the worst
 | 4 | command-line arguments | values out of range, a crash instead of a message |
 | 5 | level and settings files | malformed or hostile files; validating at the boundary |
 | 6 | saved data | why `pickle` must never load a file you didn't write; SQL injection |
-| 16 | game scripts | scripts are code: running one gives it everything your program can do |
-| 17 | asset paths | path traversal: `../../` escaping the project folder |
-| 23 | plugins | trusting third-party code; what a plugin can touch |
-| 35 | users and uploads | passwords, tokens, authentication vs authorisation, upload validation, the OWASP Top 10 tried against your own server |
-| 37 | secrets and configuration | keys out of the repository; environment variables |
-| 51 | dependencies | the supply chain: pinned versions, `pip-audit` |
+| 17 | game scripts | scripts are code: running one gives it everything your program can do |
+| 18 | asset paths | path traversal: `../../` escaping the project folder |
+| 26 | plugins | trusting third-party code; what a plugin can touch |
+| 38 | users and uploads | passwords, tokens, authentication vs authorisation, upload validation, the OWASP Top 10 tried against your own server |
+| 40 | secrets and configuration | keys out of the repository; environment variables |
+| 41 | messages from other players | never trust a client: one that says it scored 1000 or walks through a wall; the host checks every message |
+| 56 | dependencies | the supply chain: pinned versions, `pip-audit` |
 
 ### 4. Reading code
 
@@ -265,9 +300,9 @@ Real work is mostly reading: understand 500 lines, change 20 safely. Exercises s
 | 3 | An unfamiliar module, not to be changed: explain what happens when the ball hits the paddle. Checked by predictions. |
 | 8 | A deliberately badly designed module: find the coupling. |
 | 12 | Read a physics function written in a different style; trace it with real numbers before using it. |
-| 19 | Read part of PySide6's documentation and an example, then use a class the lesson hasn't taught. |
-| 34 | Read a migration someone else wrote; find what it would do to existing data. |
-| 53 | The learner's own Forge subsystem from months earlier: add a feature without breaking it. |
+| 22 | Read part of PySide6's documentation and an example, then use a class the lesson hasn't taught. |
+| 37 | Read a migration someone else wrote; find what it would do to existing data. |
+| 58 | The learner's own Forge subsystem from months earlier: add a feature without breaking it. |
 
 ### 5. Directing work: specifying, handing off, reviewing
 
@@ -312,10 +347,10 @@ they've just had.
 | Ch 9 | **refactoring as a planned story**, technical debt in the backlog | the engine split is too big to do "on the side" |
 | Ch 12 | **estimating and splitting stories** | physics turned out three times bigger than expected |
 | Ch 13 | `git bisect`, `git revert` | something broke weeks ago |
-| Ch 15 | **GitHub**: remote, push and pull, issues, pull requests, reviewing a diff | the project lives on one machine |
-| Ch 16 | **continuous integration**: GitHub Actions runs the tests on every push | tests only pass "on my machine" |
-| Ch 33 | **a second codebase** and an API contract between the two | two programs that must keep agreeing as both change |
-| Ch 51 | **semantic versioning, a changelog, releases, open source** | strangers can't use, trust or help with what they can't understand |
+| Ch 16 | **GitHub**: remote, push and pull, issues, pull requests, reviewing a diff | the project lives on one machine |
+| Ch 17 | **continuous integration**: GitHub Actions runs the tests on every push | tests only pass "on my machine" |
+| Ch 36 | **a second codebase** and an API contract between the two | two programs that must keep agreeing as both change |
+| Ch 56 | **semantic versioning, a changelog, releases, open source** | strangers can't use, trust or help with what they can't understand |
 
 The backlog, the retrospectives, the reviews and the git history are part of the project, and checks read
 them.
@@ -338,11 +373,15 @@ already uses Python-style `snake_case`, so most names carry over:
 | `Camera2D`, `CanvasLayer`, `TileMapLayer` | the same names | offsets when blitting, separate surfaces |
 | signals, groups, the Input Map | the same ideas and names | — / `key.get_pressed` and events |
 | `Resource`, `PackedScene`, `instantiate()`, autoloads | the same ideas and names | a cache and an import database |
-| `.tscn` scenes, `project.godot` settings | Forge's own text formats, designed in Chapter 15 | — |
+| `Control`, `Label`, `Button`, containers, focus | the same names | `pygame.font` and the learner's own layout code |
+| `Timer`, `Tween`, `CPUParticles2D`, `ParallaxBackground`, `RayCast2D` | the same names | the loop, `Clock` and the learner's own maths |
+| `AStarGrid2D` | the same name; steering instead of navigation meshes | the learner's own graph search |
+| the high-level multiplayer API | a smaller `net` API: host, join, send, snapshots | Python's `socket` |
+| `.tscn` scenes, `project.godot` settings | Forge's own text formats, designed in Chapter 16 | — |
 | `EditorPlugin`, the Asset Library | the same ideas, in PySide6 and FastAPI | — |
 
 Each engine chapter links to the matching Game Studio lesson. Where Forge differs from Godot, the lesson says
-how and why. Godot compatibility is a direction, not a requirement: no lesson exists only to match Godot. (Godot itself has no built-in machine learning; the Godot RL Agents plugin is the nearest thing, and Chapter 48 compares with it.)
+how and why. Godot compatibility is a direction, not a requirement: no lesson exists only to match Godot. (Godot itself has no built-in machine learning; the Godot RL Agents plugin is the nearest thing, and Chapter 53 compares with it.)
 
 ### 8. Testing: after, then first, and knowing what to test
 
@@ -362,10 +401,12 @@ teaches the judgement: **what** to test, **how much**, and **when test-first is 
 | 11 | **Test doubles**: fakes, stubs and mocks, what each is, and how over-mocking produces tests that pass while the program is broken. | Signals connect objects; tests need to see the calls. |
 | 12 | **Property-based tests** (Hypothesis): state a rule ("a body never ends up inside a wall") and let the library hunt for a counterexample. | Physics has too many cases to list by hand. |
 | 13 | **Testing pictures**: checking pixels, and comparing against saved reference images. | Drawing code was the "don't TDD this" case; now it gets tested properly. |
-| 18–21 | **GUI tests** with pytest-qt: clicking and typing in tests. Why most editor logic is kept out of widgets so it can be tested without them. | The editor. |
-| 22 | **Flaky tests**: tests that pass sometimes, why threads and timing cause them, and how to make them deterministic. | Concurrency. |
-| 33 | **Contract tests**: the client and server both test against the written API contract. | Two codebases that must agree. |
-| 52 | **Mutation testing** (mutmut): deliberately break the code and see whether any test notices. Measures the tests themselves. | Judging a mature test suite. |
+| 19 | **Oracle tests**: a clever algorithm (A*) checked against a simple one that is obviously right (breadth-first search) on thousands of generated maps. | Pathfinding is easy to get almost right. |
+| 21–24 | **GUI tests** with pytest-qt: clicking and typing in tests. Why most editor logic is kept out of widgets so it can be tested without them. | The editor. |
+| 25 | **Flaky tests**: tests that pass sometimes, why threads and timing cause them, and how to make them deterministic. | Concurrency. |
+| 36 | **Contract tests**: the client and server both test against the written API contract. | Two codebases that must agree. |
+| 42 | **Testing networked code**: a simulated network with delay and loss, seeded so a failure happens again every run. | Two programs, and a network between them. |
+| 57 | **Mutation testing** (mutmut): deliberately break the code and see whether any test notices. Measures the tests themselves. | Judging a mature test suite. |
 
 From Chapter 3 on, each new feature's lesson says which approach it uses and **why**: test-first, test-after,
 or a spike followed by tests. The capstone asks the learner to choose for themselves.
@@ -383,7 +424,7 @@ familiar, not new.
 - **pyright** checks them from Chapter 2, in **strict mode** from Chapter 4. It's the same checker VS Code's
   Python extension (Pylance) uses, so errors show in the editor as you type, the way a C# IDE shows them.
   (mypy is the other common checker; the lesson mentions it, and the two mostly agree.)
-- **"pyright reports no errors" is part of the definition of done**, and CI checks it from Chapter 16.
+- **"pyright reports no errors" is part of the definition of done**, and CI checks it from Chapter 17.
 - `Any`, `# type: ignore` and untyped dictionaries passed around as objects count as bugs to be justified,
   not shortcuts. Where Forge genuinely needs runtime flexibility (loading scenes, the inspector, plugins),
   it's done with typed reflection, and the lesson compares it with reflection in C# and Java.
@@ -411,11 +452,12 @@ learner meets each idea once and learns it in three languages:
 | generics: `class Pool[T]`, `list[Node]` (Ch 10) | `class Pool<T>`, `List<Node>` | `class Pool<T>`, `List<Node>` |
 | `Callable[[int], None]`, bound methods (Ch 11) | delegates, `Action<int>` | functional interfaces, `Consumer<Integer>` |
 | `Signal` (Ch 11) | `event` | listeners |
-| `NewType` for ids, e.g. `NodeId` (Ch 15) | wrapper types, `readonly struct` | wrapper classes |
-| SQLAlchemy 2 typed models (Ch 34) | Entity Framework | JPA / Hibernate |
-| FastAPI with pydantic (Ch 33) | ASP.NET Core | Spring Boot |
+| `NewType` for ids, e.g. `NodeId` (Ch 16) | wrapper types, `readonly struct` | wrapper classes |
+| SQLAlchemy 2 typed models (Ch 37) | Entity Framework | JPA / Hibernate |
+| FastAPI with pydantic (Ch 36) | ASP.NET Core | Spring Boot |
 | pytest (Ch 2) | xUnit, NUnit | JUnit |
-| threads, `concurrent.futures` (Ch 22) | `Task`, `async`/`await` | `ExecutorService`, `CompletableFuture` |
+| sockets (Ch 41) | `System.Net.Sockets` | `java.net.Socket`, `DatagramSocket` |
+| threads, `concurrent.futures` (Ch 25) | `Task`, `async`/`await` | `ExecutorService`, `CompletableFuture` |
 
 Where Python and the other two genuinely differ (a type hint is checked by a tool, not enforced when the
 program runs; generics are erased in Java but not in C#), the note says so, so nothing is learned wrong.
@@ -445,12 +487,12 @@ matches theirs. After that, using the tool is a choice made with understanding, 
 ## Two more threads (added 2026-10-04, at the user's request)
 
 **Example games and tutorials, from Part 2 on.** The user wants to learn to build example games and tutorials
-the way Game Studio has them. So it isn't saved for Chapter 25: every engine chapter (Part 2) ends with a
+the way Game Studio has them. So it isn't saved for Chapter 28: every engine chapter (Part 2) ends with a
 small **example game** built on that chapter's feature, in the spirit of Game Studio's examples (Coin Run for
 physics, Potion Hunt for tilemaps and the camera, Maze Chase for scenes and signals, Zombie Arena for spawning),
 and a short **tutorial** for it that the learner writes: steps, what to try, and a check. Writing tutorials is
-technical writing practised a little at a time. Chapter 25 then turns them into Forge's in-editor tutorials
-with checks, and Chapter 50 into the *Making Games with Forge* course, so by then the learner has written
+technical writing practised a little at a time. Chapter 28 then turns them into Forge's in-editor tutorials
+with checks, and Chapter 55 into the *Making Games with Forge* course, so by then the learner has written
 a dozen.
 
 **Trace it in CodeLens.** Project Studio's "Trace in CodeLens" button now works for Python files
@@ -466,28 +508,62 @@ Forge isn't only an engine for this series. It ships as a product a game maker c
 Studio gives its users: example games, art to start with, tutorials inside the editor, a reference, a course,
 shortcuts, and export.
 
-**Game Studio is still being developed.** So this list is where things stood on 2026-10-04, not a fixed scope.
-**Before writing each chapter from Part 3 on, re-read [game-studio-status.md](game-studio-status.md) and the
-Game Studio course**, and bring in whatever has been added or changed that applies to a desktop Python engine.
-Record what was taken, left out and why in this plan's chapter notes.
+**Game Studio is still being developed.** So this list is where things stood on 2026-10-05, not a fixed scope.
+**Before writing each chapter from Part 2 on, re-read [game-studio-status.md](game-studio-status.md),
+[game-studio-starters-plan.md](game-studio-starters-plan.md) and the Game Studio course**, and bring in whatever
+has been added or changed that applies to a desktop Python engine. Record what was taken, left out and why in this
+plan's chapter notes.
 
-| Game Studio has (2026-10-04) | In Forge | Chapter |
+| Game Studio has (2026-10-05) | In Forge | Chapter |
 |---|---|---|
-| Example games (Potion Hunt, Coin Run, Breakout, Maze Chase, Zombie Arena, Tetris), each opening as a new project with a guide beside the viewport | **Four finished example games**, built during the series and shipped in the Project Manager: Breakout (Part 1), a top-down shooter like Zombie Arena (Ch 8), a platformer like Coin Run (Part 2), Tetris (capstone). Each runs headless in CI as an engineering test, as Game Studio's examples do. | 7, 8, 17, 41 |
-| Kenney CC0 starter art, with credits | the same packs (CC0 allows it), in the Project Manager, with `CREDITS.md` | 25 |
-| Projects dialog: list, thumbnails, create, open | the Project Manager (Godot's name for it) | 25 |
-| Menus, toolbar and shortcuts (save, undo, redo, duplicate, delete, frame, run, run scene, stop; W/E/R tools) | the same commands and keys, from one action registry; Help › Keyboard Shortcuts; user-changeable keys | 21, 24 |
-| Help › API reference (F1): every class, Godot's name, examples, search, tested against the engine both ways | the same, generated from Forge's docstrings and type hints, with the same two-way tests | 24 |
-| Script editor with completion, hover help and errors underlined | a built-in script editor with highlighting and errors that jump to the line, and full completion in VS Code through the typed engine | 24 |
-| Help › Tutorials: 18 tasks with steps that tick off, hints, "Back to the lesson" | Help › Tutorials with a task panel, checks against the live project, and hints | 25 |
-| The "Building Games with Game Studio" course (33 lessons, Try it cards) | **Making Games with Forge**: the same chapters (first steps, physics, camera and HUD, animation, tilemaps, scenes, Tetris), with Try it links opening Forge's tutorials. Started in Ch 39 as documentation practice; the rest written after the series. | 38 |
-| GUI → code: every editor action shown as Scene API code | every editor command can print itself as Python, from the command pattern | 21 |
-| Undo, redo, versioned saving with migrations and a problem report | the same | 15, 21 |
-| Sprite frames editor, animation timeline, tile palette, Tiled import, Sprite Forge and Tile Mapper import | the same panels; Tiled import; the two labs' export formats | 13, 14, 19 |
-| Move/rotate/scale tools, snapping, framing, reparenting that keeps world placement, pixel-art setting | the same | 20 |
-| Export: website `.zip`, one `.html` file, project `.zip` | a game `.exe` from export templates; project `.zip` export and import | 37 |
-| Run in a sandbox, errors with file and line in Output | the game in its own process, errors with file and line in Output | 21 |
-| Train an agent (Q-learning, linear Q, cross-entropy method) on a running game, with a live overlay | built by hand in Part 6, then a Train panel in the editor, trained agents saved as Resources, and agents as playtesters | 31–36 |
+| Example games (Potion Hunt, Coin Run, Breakout, Maze Chase, Zombie Arena, Tetris), each opening as a new project with a guide beside the viewport | **Finished example games**, built during the series and shipped in the Project Manager: Breakout (Part 1), a top-down shooter (Ch 8), a platformer (Part 2), one per genre in the genre check below, a 3D marble maze (Ch 35) and Tetris (capstone). Each runs headless in CI as an engineering test. | 7, 8, 11–20, 35, 42, 58 |
+| Starter projects (Quest Buddies, Kart Circuit, Ruin Diver, LAN Arena), each closing engine gaps | the genre check below, planned before writing, not discovered after | 11–20, 41, 42 |
+| `state` across scene changes, and `save` with slots | autoloads, and save slots that still load after an update | 16 |
+| UI widgets: Panel, Button, ProgressBar, containers, focus by keys and gamepad, wrapped and typewriter text | `Control` nodes built by hand, with menus and a dialogue box | 15 |
+| AudioStreamPlayer, and sounds made from numbers (waves, envelopes) | AudioStreamPlayer over `pygame.mixer`, music and volume buses; made sounds as a challenge | 13 |
+| `math.rng(seed)`, `tween`, Particles2D, `modulate` | seeded generators, `Tween`, `CPUParticles2D`, `modulate` | 2, 13, 20 |
+| `TileMapLayer.findPath` (A*) | `AStarGrid2D`, built by hand and tested against breadth-first search | 19 |
+| The `debug` global and the Debug tab (immediate mode) | an immediate-mode debug overlay | 14 |
+| Planned there, not built yet: raycasts, recording and replaying input, analog gamepads, a `net` API with LAN play, one-way platforms, room transitions, 2.5D | all planned here from the start | 11, 12, 14, 41, 42 |
+| Kenney CC0 starter art, with credits | the same packs (CC0 allows it), in the Project Manager, with `CREDITS.md` | 28 |
+| Projects dialog: list, thumbnails, create, open | the Project Manager (Godot's name for it) | 28 |
+| Menus, toolbar and shortcuts (save, undo, redo, duplicate, delete, frame, run, run scene, stop; W/E/R tools) | the same commands and keys, from one action registry; Help › Keyboard Shortcuts; user-changeable keys | 24, 27 |
+| Help › API reference (F1): every class, Godot's name, examples, search, tested against the engine both ways | the same, generated from Forge's docstrings and type hints, with the same two-way tests | 27 |
+| Script editor with completion, hover help and errors underlined | a built-in script editor with highlighting and errors that jump to the line, and full completion in VS Code through the typed engine | 27 |
+| Help › Tutorials: tasks with steps that tick off, hints, "Back to the lesson" | Help › Tutorials with a task panel, checks against the live project, and hints | 28 |
+| The "Building Games with Game Studio" course, with Try it cards | **Making Games with Forge**, with Try it links opening Forge's tutorials | 55 |
+| GUI → code: every editor action shown as Scene API code | every editor command can print itself as Python, from the command pattern | 24 |
+| Undo, redo, versioned saving with migrations and a problem report | the same | 16, 24 |
+| Sprite frames editor, animation timeline, tile palette, Tiled import, Sprite Forge and Tile Mapper import | the same panels; Tiled import; the two labs' export formats | 13, 14, 22 |
+| Move/rotate/scale tools, snapping, framing, reparenting that keeps world placement, pixel-art setting | the same | 23 |
+| Export: website `.zip`, one `.html` file, project `.zip` | a game `.exe` from export templates; project `.zip` export and import | 54 |
+| Run in a sandbox, errors with file and line in Output | the game in its own process, errors with file and line in Output | 24 |
+| Train an agent (Q-learning, linear Q, cross-entropy method) on a running game, with a live overlay; a learning buddy, imitation, difficulty matched to the player (planned in its starters) | built by hand in Part 6, then a Train panel in the editor, trained agents saved as Resources, companions, playtesters and matched difficulty | 43–53 |
+
+### The genre check
+
+Game Studio found most of its missing pieces only when a starter game needed them, and then had to add them to
+an engine that was already built. Forge checks first. By the end of Part 2, each genre below can be built from
+the engine's own features, and each has a small example game made in the chapter that completes it:
+
+| Genre | Pieces it needs | Chapters | Example game |
+|---|---|---|---|
+| Arcade (Breakout) | rects, a loop, states, levels as data | 1–7 | Breakout |
+| Top-down shooter | spawning, groups, signals | 8–11 | Ch 8 |
+| Racing (top down) | analog input, raycasts as sensors, checkpoints, ghost laps from replays | 11, 12 | Ch 12 |
+| Platformer | `CharacterBody2D`, one-way platforms, coyote time, animation, camera limits | 12–14 | Ch 13 |
+| Metroidvania | rooms the camera moves between, ability gates, per-room state, save rooms | 14, 16 | Ch 16 |
+| RPG with a companion | menus, dialogue, quests as state machines, inventory, loot, saves, autoloads | 15, 16, 20 | Ch 15 |
+| Tower defence or stealth | pathfinding, steering, vision cones, waves | 12, 19 | Ch 19 |
+| Roguelike | generated levels, seeds, turns | 20 | Ch 20 |
+| Puzzle (Sokoban-style) | grid moves, undo (the command pattern), level files | 5, 19, 24 | a challenge |
+| Co-op over a LAN | a gamepad per player, the `net` API, snapshots | 11, 41, 42 | Ch 42 |
+| Tetris | a grid, timers, scenes, the editor | Parts 2 and 3 | the capstone |
+| 3D | Part 4 | 29–35 | Ch 35 |
+
+**The rule:** before each chapter is written, this table is checked again against Game Studio's starters plan and
+its "Genres to check" list. A genre that needs a piece no chapter teaches is a change to this plan, made before
+writing, never a patch afterwards.
 
 ## Chapters
 
@@ -515,13 +591,16 @@ Each chapter is a Project Studio track with the prefix `forge-`, grouped as one 
 | 8 | `forge-second-game` | A second game | a top-down shooter, made by copying Breakout | **the pain, with no fix yet**: copied code drifting apart, a change that breaks five things, shared state; measuring coupling; reading a badly designed module; asking why it's happening |
 | 9 | `forge-engine` | The boundary | an `engine` package; both games rebuilt on it | what knows about what, a boundary, dependency direction checked by a test, then Protocols as the way Python states a boundary, an API as a promise, the first ADR; zoom-out lesson |
 | 10 | `forge-nodes` | Nodes and the scene tree | `Node`, `Node2D`, `SceneTree`, `get_node`, `queue_free` | trees and recursion, node paths, local and global transforms, the lifecycle, changing a list while looping over it, inheritance used well; zoom-out: trees everywhere |
-| 11 | `forge-input-signals` | Input and signals | the Input Map, `Input`, `Signal`, groups | the observer pattern, bound methods and closures, coupling again, errors in one listener not stopping the rest, mocks, logging |
-| 12 | `forge-physics` | Physics | `CharacterBody2D`, `move_and_slide`, `Area2D`, layers and masks | the fixed timestep, overlap tests, pushing out by the smallest overlap, sliding and bouncing, bitmasks, property-based tests |
-| 13 | `forge-sprites` | Sprites, animation and sound | `Sprite2D`, `AnimatedSprite2D`, `AnimationPlayer`, `AudioStreamPlayer` | surfaces and pixel formats, frame timing, keyframes and interpolation, the mixer; `git bisect` |
-| 14 | `forge-world` | Camera, HUD and tilemaps | `Camera2D`, `CanvasLayer`, `TileMapLayer`, Tiled import | world vs screen coordinates, smoothing and limits, drawing only what's visible, measuring before optimising |
-| 15 | `forge-scenes` | Scenes are files | Forge's scene format, `PackedScene`, autoloads, project settings | designing a file format on paper first, pydantic models for it, a registry of node types, versioning and upgrading old files, round-trip tests; GitHub |
-| 16 | `forge-scripts` | Scripts on nodes | game behaviour in the project's own `.py` files | `importlib`, reloading code while running, isolating errors in user code, untrusted code; continuous integration |
-| 17 | `forge-resources` | Resources and importing | `Resource`, `ResourceLoader`, an import step | caching, file hashes, an import database in SQLite, schema changes (migrations) by hand, path traversal |
+| 11 | `forge-input-signals` | Input and signals | the Input Map, `Input`, `Signal`, groups, `Timer`; gamepads; recording and replaying input | the observer pattern, bound methods and closures, coupling again, errors in one listener not stopping the rest, mocks, logging; gamepads: analog sticks, dead zones, one device per player; recording inputs and replaying them exactly, which proves the game is deterministic (ghost laps, and a bug replayed as a test) |
+| 12 | `forge-physics` | Physics | `CharacterBody2D`, `move_and_slide`, `Area2D`, layers and masks, `RayCast2D`, one-way platforms, a simple `RigidBody2D` | the fixed timestep, overlap tests, pushing out by the smallest overlap, sliding and bouncing, bitmasks, property-based tests; a ray against a rectangle (line of sight, a car's sensors); game feel measured in frames (coyote time, jump buffering); a spatial hash so hundreds of bodies stay fast; impulses and restitution, and when a real physics library (pymunk) is the right call |
+| 13 | `forge-sprites` | Sprites, animation and sound | `Sprite2D`, `AnimatedSprite2D`, `AnimationPlayer`, `AudioStreamPlayer`, `Tween`, `CPUParticles2D`, `modulate` | surfaces and pixel formats, frame timing, keyframes and interpolation; easing curves plotted, then used; particles; tinting; the mixer, music that loops and cross-fades, volume buses; sounds made from numbers (waves, envelopes) as a challenge; `git bisect` |
+| 14 | `forge-world` | Camera, HUD and tilemaps | `Camera2D`, `CanvasLayer`, `TileMapLayer`, Tiled import, `ParallaxBackground`, y-sorting, isometric maps, a debug overlay | world vs screen coordinates, smoothing and limits, rooms the camera moves between; drawing only what's visible, measuring before optimising; parallax; sorting by y and the isometric projection (2.5D); scaling the game to any window (stretch modes, pixel-perfect scaling, fullscreen); an immediate-mode debug overlay with sliders and readouts while the game runs |
+| 15 | `forge-ui` | Menus, HUDs and dialogue | `Control`, `Label`, `Button`, `Panel`, `ProgressBar`, `VBoxContainer` and `HBoxContainer`, focus; a title screen, pause and settings menus, a dialogue box | pygame has no widgets, so they're built: text with fonts, measured and wrapped; layout as an algorithm (containers measure their children, then place them); focus moved by keys and gamepad; a click as press and release on the same widget; typewriter text; conversations and quests as state machines; the settings players expect (volume, remapped keys, text size); translation tables; accessibility (never colour alone, readable sizes); widgets tested without a window |
+| 16 | `forge-scenes` | Scenes are files | Forge's scene format, `PackedScene`, autoloads, project settings, save slots, scene transitions | designing a file format on paper first, pydantic models for it, a registry of node types, versioning and upgrading old files, round-trip tests; **saving the game**: what a save holds (a copy of the state, never live objects), slots, saves that still load after an update; fades between scenes; GitHub |
+| 17 | `forge-scripts` | Scripts on nodes | game behaviour in the project's own `.py` files | `importlib`, reloading code while running, isolating errors in user code, untrusted code; continuous integration |
+| 18 | `forge-resources` | Resources and importing | `Resource`, `ResourceLoader`, an import step | caching, file hashes, an import database in SQLite, migrated with lesson 7.2's pattern, path traversal |
+| 19 | `forge-game-ai` | Game AI before learning | enemies that patrol, chase and give up; `AStarGrid2D` (A* on a tilemap); steering; a behaviour tree; a tower-defence or stealth example game | state machines for behaviour (4.6 again); graph search: breadth-first, Dijkstra, then A* with its heuristic, tested against breadth-first search as an oracle; steering (seek, arrive, separation, flocking); vision cones with Chapter 12's raycasts; behaviour trees and utility AI, each built small; zoom-out: this is the baseline Part 6's learned agents must beat |
+| 20 | `forge-procgen` | Generated worlds | levels and loot from a seed: a roguelike dungeon, weighted loot tables, terrain from noise | seeds and reproducibility (Chapter 2 again); weighted random choice; value noise, then gradient (Perlin-style) noise, built and plotted; rooms and corridors, and caves from cellular automata; a generated level proved playable with Chapter 19's search; property-based tests over thousands of seeds |
 
 ### Part 3 — The editor (PySide6, taught as needed, starting tiny)
 
@@ -529,15 +608,15 @@ No Qt lesson stands alone. Each Qt idea is taught at the point the editor needs 
 can find it in Qt's documentation. The first editor is deliberately small; everything after it is earned.
 
 | # | Track | Chapter | What's built | Qt taught here | Engineering taught |
-|---|---|---|---|---|---|
-| 18 | `forge-editor-tiny` | The smallest editor | open a project, list the scene's nodes, select one, show its properties (read-only) | `QApplication` and its event loop, `QMainWindow`, a layout, `QListWidget`, one signal and slot | a GUI is a loop waiting for events, just like the game; zoom-out lesson: what an editor is (a program that edits another program's data) |
-| 19 | `forge-editor-model` | The editor's architecture | the tree panel and an editable inspector | `QTreeView` and a model, form widgets, signals and slots properly | model/view separation; the editor's data vs the engine's running tree; an inspector generated from type hints; reading Qt docs |
-| 20 | `forge-editor-viewport` | The viewport | the scene drawn inside the editor; select, drag, zoom, pan | a pygame surface in a `QWidget`, `QTimer`, mouse events, `QPainter` overlays | two event loops made into one; the engine must not import Qt (a test); editor vs game coordinates |
-| 21 | `forge-editor-project` | Save, undo and Play | New/Open/Save, undo/redo, Play | `QUndoStack`, `QFileDialog`, `QProcess` | the command pattern, one way to change anything, dirty state, running the game in its own process |
-| 22 | `forge-editor-files` | The FileSystem dock | a file browser that imports assets in the background | `QFileSystemWatcher`, `QThreadPool`, signals across threads | **concurrency**: threads, races, a job queue, keeping the UI responsive |
-| 23 | `forge-editor-plugins` | Editor plugins | an `EditorPlugin` API and two plugins | menus and docks added at run time | designing a public API, entry points, what you've promised vs what you may change, trusting third-party code |
-| 24 | `forge-editor-help` | Shortcuts and help | keyboard shortcuts, Help › Keyboard Shortcuts, Help › API Reference (F1), help from the Inspector, a script editor | one `QAction` per command, `QShortcut`, `QSyntaxHighlighter`, `QTextBrowser` | **one source of truth**: every menu item, toolbar button and shortcut comes from one action registry, so they can't disagree; shortcuts the user can change, saved in settings; documentation generated from docstrings and type hints, and **tested both ways** (every documented name exists, nothing public is undocumented, every example runs); a typed engine (`py.typed`) so VS Code completes Forge's API too |
-| 25 | `forge-editor-tutorials` | Tutorials and examples inside Forge | Help › Tutorials with a task panel whose steps tick off as the learner works; a Project Manager with example projects and starter art | `QWizard` ideas, dock panels driven by data | checks as tests run against the live project (the same idea as this series' own checks); tutorials as data, not code; example games run in CI as engineering tests |
+|---|---|---|---|---|---|---|
+| 21 | `forge-editor-tiny` | The smallest editor | open a project, list the scene's nodes, select one, show its properties (read-only) | `QApplication` and its event loop, `QMainWindow`, a layout, `QListWidget`, one signal and slot | a GUI is a loop waiting for events, just like the game; zoom-out lesson: what an editor is (a program that edits another program's data) |
+| 22 | `forge-editor-model` | The editor's architecture | the tree panel and an editable inspector | `QTreeView` and a model, form widgets, signals and slots properly | model/view separation; the editor's data vs the engine's running tree; an inspector generated from type hints; reading Qt docs |
+| 23 | `forge-editor-viewport` | The viewport | the scene drawn inside the editor; select, drag, zoom, pan | a pygame surface in a `QWidget`, `QTimer`, mouse events, `QPainter` overlays | two event loops made into one; the engine must not import Qt (a test); editor vs game coordinates |
+| 24 | `forge-editor-project` | Save, undo and Play | New/Open/Save, undo/redo, Play | `QUndoStack`, `QFileDialog`, `QProcess` | the command pattern, one way to change anything, dirty state, running the game in its own process |
+| 25 | `forge-editor-files` | The FileSystem dock | a file browser that imports assets in the background | `QFileSystemWatcher`, `QThreadPool`, signals across threads | **concurrency**: threads, races, a job queue, keeping the UI responsive |
+| 26 | `forge-editor-plugins` | Editor plugins | an `EditorPlugin` API and two plugins | menus and docks added at run time | designing a public API, entry points, what you've promised vs what you may change, trusting third-party code |
+| 27 | `forge-editor-help` | Shortcuts and help | keyboard shortcuts, Help › Keyboard Shortcuts, Help › API Reference (F1), help from the Inspector, a script editor | one `QAction` per command, `QShortcut`, `QSyntaxHighlighter`, `QTextBrowser` | **one source of truth**: every menu item, toolbar button and shortcut comes from one action registry, so they can't disagree; shortcuts the user can change, saved in settings; documentation generated from docstrings and type hints, and **tested both ways** (every documented name exists, nothing public is undocumented, every example runs); a typed engine (`py.typed`) so VS Code completes Forge's API too |
+| 28 | `forge-editor-tutorials` | Tutorials and examples inside Forge | Help › Tutorials with a task panel whose steps tick off as the learner works; a Project Manager with example projects and starter art | `QWizard` ideas, dock panels driven by data | checks as tests run against the live project (the same idea as this series' own checks); tutorials as data, not code; example games run in CI as engineering tests |
 
 ### Part 4 — 3D, from first principles (the game: a small 3D game)
 
@@ -551,23 +630,29 @@ exist.
 
 | # | Track | Chapter | What's built | Engineering and mathematics taught |
 |---|---|---|---|---|
-| 26 | `forge-3d-space` | Space, vectors and matrices | a wireframe cube that turns, drawn with lines | 3D vectors; the dot and cross products measured, then derived; matrices as transformations; composing transforms; homogeneous coordinates; NumPy arrays for many points at once |
-| 27 | `forge-3d-raster` | A renderer by hand | solid models from triangles, drawn in the right order, in software | the camera and perspective projection derived; rasterising a triangle; the depth buffer; back-face culling; profiling, then vectorising with NumPy; why real renderers use the GPU |
-| 28 | `forge-3d-light` | Light and surfaces | lit, textured models | normals; diffuse and specular light (Lambert, Phong) measured; textures and UV coordinates; perspective-correct interpolation; colour spaces |
-| 29 | `forge-3d-rotation` | Rotation and cameras | an orbit camera and a first-person camera | Euler angles and gimbal lock, met as a bug; quaternions measured, then derived; slerp; look-at; a camera rig in the scene tree |
-| 30 | `forge-3d-gpu` | The graphics card | the same scenes drawn by the GPU through moderngl, many times faster | the graphics pipeline; vertex and index buffers; shaders in GLSL, written and debugged; uniforms; the software renderer as the test oracle for the GPU's pictures |
-| 31 | `forge-3d-nodes` | 3D nodes | `Node3D`, `Camera3D`, `MeshInstance3D`, `DirectionalLight3D`; meshes loaded from glTF; a 3D viewport in the editor | transforms in a tree, again in 3D; reading a file format someone else designed from its specification; resources shared between 2D and 3D |
-| 32 | `forge-3d-game` | A 3D game | a small 3D game (a marble maze) with `CharacterBody3D`, collision and raycasts; its example project and tutorial | bounding volumes, sphere and box tests, raycasting; the 2D physics ideas generalised; testing 3D maths with Hypothesis |
+| 29 | `forge-3d-space` | Space, vectors and matrices | a wireframe cube that turns, drawn with lines | 3D vectors; the dot and cross products measured, then derived; matrices as transformations; composing transforms; homogeneous coordinates; NumPy arrays for many points at once |
+| 30 | `forge-3d-raster` | A renderer by hand | solid models from triangles, drawn in the right order, in software | the camera and perspective projection derived; rasterising a triangle; the depth buffer; back-face culling; profiling, then vectorising with NumPy; why real renderers use the GPU |
+| 31 | `forge-3d-light` | Light and surfaces | lit, textured models | normals; diffuse and specular light (Lambert, Phong) measured; textures and UV coordinates; perspective-correct interpolation; colour spaces |
+| 32 | `forge-3d-rotation` | Rotation and cameras | an orbit camera and a first-person camera | Euler angles and gimbal lock, met as a bug; quaternions measured, then derived; slerp; look-at; a camera rig in the scene tree |
+| 33 | `forge-3d-gpu` | The graphics card | the same scenes drawn by the GPU through moderngl, many times faster | the graphics pipeline; vertex and index buffers; shaders in GLSL, written and debugged; uniforms; the software renderer as the test oracle for the GPU's pictures |
+| 34 | `forge-3d-nodes` | 3D nodes | `Node3D`, `Camera3D`, `MeshInstance3D`, `DirectionalLight3D`; meshes loaded from glTF; a 3D viewport in the editor | transforms in a tree, again in 3D; reading a file format someone else designed from its specification; resources shared between 2D and 3D |
+| 35 | `forge-3d-game` | A 3D game | a small 3D game (a marble maze) with `CharacterBody3D`, collision and raycasts; its example project and tutorial | bounding volumes, sphere and box tests, raycasting; the 2D physics ideas generalised; testing 3D maths with Hypothesis |
 
-### Part 5 — The Forge Asset Library (a web service)
+### Part 5 — Forge online: the Asset Library and multiplayer
+
+The asset library is a web service (HTTP, a database, users). Multiplayer is a different kind of network
+program: two copies of a game exchanging small messages many times a second, where lag and lost packets are
+normal. Both build on Part 3's concurrency.
 
 | # | Track | Chapter | What's built | Engineering taught |
 |---|---|---|---|---|
-| 33 | `forge-library-api` | An API | a FastAPI server: list, search, download | HTTP (requests, responses, status codes) by hand first, then FastAPI; REST, an API contract written first, pydantic on both sides, API tests; zoom-out lesson: client/server |
-| 34 | `forge-library-db` | Its database | assets, versions, tags, ratings | schema design, normalisation again at scale, joins and indexes, SQLAlchemy after raw SQL, migrations with Alembic, when raw SQL is better |
-| 35 | `forge-library-users` | Users and security | accounts, uploads, permissions | password hashing, tokens, authentication vs authorisation, checking permissions on the server, validating uploads, the OWASP Top 10 tried against your own server |
-| 36 | `forge-library-client` | The editor meets the server | browse and install assets from the editor | an HTTP client, timeouts, retries, errors shown to users, work off the UI thread, debugging across two programs |
-| 37 | `forge-library-deploy` | Running it for real | the server running with test and production settings | environment configuration, secrets, logs, database backups, containers (optional) |
+| 36 | `forge-library-api` | An API | a FastAPI server: list, search, download | HTTP (requests, responses, status codes) by hand first, then FastAPI; REST, an API contract written first, pydantic on both sides, API tests; zoom-out lesson: client/server |
+| 37 | `forge-library-db` | Its database | assets, versions, tags, ratings | schema design, normalisation again at scale, joins and indexes, SQLAlchemy after raw SQL, migrations with Alembic, when raw SQL is better |
+| 38 | `forge-library-users` | Users and security | accounts, uploads, permissions | password hashing, tokens, authentication vs authorisation, checking permissions on the server, validating uploads, the OWASP Top 10 tried against your own server |
+| 39 | `forge-library-client` | The editor meets the server | browse and install assets from the editor | an HTTP client, timeouts, retries, errors shown to users, work off the UI thread, debugging across two programs |
+| 40 | `forge-library-deploy` | Running it for real | the server running with test and production settings | environment configuration, secrets, logs, database backups, containers (optional) |
+| 41 | `forge-net-sockets` | Two programs, one game | two copies of a game talking on one machine: a lobby, and players' inputs sent to a host | sockets by hand: TCP and UDP and what each one guarantees; a protocol designed on paper, then as pydantic messages; framing (where one message ends); the host decides what happens and the others send inputs (an authoritative host); a loopback transport for tests; never trust a client |
+| 42 | `forge-net-play` | Playing together over a LAN | a co-op arena for two to four players on a LAN, empty slots filled by computer players | snapshots of the game state and interpolation between them; lag measured, then hidden (client-side prediction and reconciliation); simulated delay and packet loss in tests; finding games on the LAN; lockstep vs snapshots, and how Chapter 11's deterministic replay makes lockstep possible; debugging two programs from their logs |
 
 ### Part 6 — Machine learning, from first principles
 
@@ -578,23 +663,23 @@ and every piece of mathematics is first **measured** in code (a slope measured b
 measured by simulation) and only then derived. Game Studio's ML code (`src/labs/game-studio/ml/`: the
 environment, Q-learning, linear Q, the cross-entropy method, policies, comparison, the training worker and its
 overlay) is the reference for what Forge's version must be able to do, and is re-read before each chapter, as
-with the rest of Game Studio. Chapters 38–42 reach Game Studio's level; Chapters 43–47 go well past it,
+with the rest of Game Studio. Chapters 43–47 reach Game Studio's level; Chapters 48–52 go well past it,
 to the methods behind modern game-playing agents (deep Q-learning, policy gradients and actor-critic, PPO,
 search with self-play), each still measured and derived by hand before PyTorch is allowed to do the work.
 
 | # | Track | Chapter | What's built | Engineering and mathematics taught |
 |---|---|---|---|---|
-| 38 | `forge-ml-env` | The game as an environment | any Forge scene wrapped as an environment: observation, action, reward, episode end; a headless fast mode; a random agent as the baseline | the agent loop is the game loop; Gymnasium's interface and why it's shaped that way; seeds and repeatability; probability by simulation; averages, variance and the standard error, measured first; NumPy arrays, built up from lists |
-| 39 | `forge-ml-qlearning` | Learning to act | a Q-learning agent that learns to play Breakout | the running average and the step size; bandits and explore vs exploit; states from numbers (bins); Q-learning written by hand; judging an agent honestly (greedy runs, many seeds, error bars); zoom-out: what Game Studio's Train dialog was doing |
-| 40 | `forge-ml-search` | Learning without gradients | a policy evolved with the cross-entropy method; linear Q-learning with features | a policy as a function with numbers inside it; random search, then the cross-entropy method; features instead of tables; when a method needs no maths about the game at all |
-| 41 | `forge-ml-data` | Learning from data | **record your own play** into SQLite; a bot that imitates you | supervised learning: datasets, features and labels, train/test split; a straight-line model and logistic regression **from scratch**; the gradient measured by nudging, then derived; gradient descent; overfitting, measured; evaluation you can trust; the dataset in SQL (Chapters 6–7 again) |
-| 42 | `forge-ml-neural` | Neural networks | a small network written in NumPy, then the same network in PyTorch; a network policy for the platformer | layers, activations, the forward pass; backpropagation derived and checked against measured gradients; why PyTorch exists, once its job is known (automatic gradients, the GPU); Q-learning with a network (DQN) and why it's unstable |
-| 43 | `forge-ml-dqn` | Deep Q-learning | a DQN agent that learns Breakout from the game's numbers, then from its pixels | a network as the Q-function; why naive training diverges, measured; the replay buffer and the target network; frame stacking; reading training curves honestly (seeds, variance) |
-| 44 | `forge-ml-policy` | Learning the policy directly | REINFORCE, then actor-critic, on the platformer | the policy gradient measured, then derived (the likelihood-ratio trick); baselines and variance; the advantage; entropy |
-| 45 | `forge-ml-ppo` | PPO | a PPO agent trained on many copies of the game at once | why large policy steps break learning, measured; the clipped objective; generalised advantage estimation; environments in parallel processes; hyperparameters and ablations |
-| 46 | `forge-ml-selfplay` | Search and self-play | Monte Carlo tree search, then a small AlphaZero-style agent that teaches itself a board game | game trees and minimax; MCTS and UCB; a network guiding the search; self-play and its pitfalls; measuring strength with matches and Elo ratings |
-| 47 | `forge-ml-3d` | Agents in 3D | an agent that learns Part 4's 3D game | designing observations (raycasts vs pixels); reward shaping and its traps; curriculum learning; comparing methods fairly |
-| 48 | `forge-ml-in-forge` | Machine learning as a Forge feature | a **Train** panel in the editor (training in a background process, live chart, pause and stop); trained agents saved as Resources; an `Agent` node scripts can use; agents as automated playtesters that measure a level's difficulty; exported games that include a trained agent | training as a long-running job (Chapter 22 again); a model as a versioned file; ML behind a plugin API (Chapter 23 again); zoom-out lesson: **applying ML to a project**: when it's the right tool, when a hand-written rule is better, and how to test an idea of your own |
+| 43 | `forge-ml-env` | The game as an environment | any Forge scene wrapped as an environment: observation, action, reward, episode end; a headless fast mode; a random agent as the baseline | the agent loop is the game loop; Gymnasium's interface and why it's shaped that way; seeds and repeatability; probability by simulation; averages, variance and the standard error, measured first; NumPy arrays, built up from lists |
+| 44 | `forge-ml-qlearning` | Learning to act | a Q-learning agent that learns to play Breakout | the running average and the step size; bandits and explore vs exploit; states from numbers (bins); Q-learning written by hand; judging an agent honestly (greedy runs, many seeds, error bars); zoom-out: what Game Studio's Train dialog was doing |
+| 45 | `forge-ml-search` | Learning without gradients | a policy evolved with the cross-entropy method; linear Q-learning with features | a policy as a function with numbers inside it; random search, then the cross-entropy method; features instead of tables; when a method needs no maths about the game at all |
+| 46 | `forge-ml-data` | Learning from data | **record your own play** into SQLite (Chapter 11's input recorder); a bot that imitates you | supervised learning: datasets, features and labels, train/test split; a straight-line model and logistic regression **from scratch**; the gradient measured by nudging, then derived; gradient descent; overfitting, measured; evaluation you can trust; the dataset in SQL (Chapters 6–7 again) |
+| 47 | `forge-ml-neural` | Neural networks | a small network written in NumPy, then the same network in PyTorch; a network policy for the platformer | layers, activations, the forward pass; backpropagation derived and checked against measured gradients; why PyTorch exists, once its job is known (automatic gradients, the GPU); Q-learning with a network (DQN) and why it's unstable |
+| 48 | `forge-ml-dqn` | Deep Q-learning | a DQN agent that learns Breakout from the game's numbers, then from its pixels | a network as the Q-function; why naive training diverges, measured; the replay buffer and the target network; frame stacking; reading training curves honestly (seeds, variance) |
+| 49 | `forge-ml-policy` | Learning the policy directly | REINFORCE, then actor-critic, on the platformer | the policy gradient measured, then derived (the likelihood-ratio trick); baselines and variance; the advantage; entropy |
+| 50 | `forge-ml-ppo` | PPO | a PPO agent trained on many copies of the game at once | why large policy steps break learning, measured; the clipped objective; generalised advantage estimation; environments in parallel processes; hyperparameters and ablations |
+| 51 | `forge-ml-selfplay` | Search and self-play | Monte Carlo tree search, then a small AlphaZero-style agent that teaches itself a board game | game trees and minimax; MCTS and UCB; a network guiding the search; self-play and its pitfalls; measuring strength with matches and Elo ratings; several agents learning together, as teammates and as opponents, and who earned a shared reward |
+| 52 | `forge-ml-3d` | Agents in 3D | an agent that learns Part 4's 3D game | designing observations (raycasts vs pixels); reward shaping and its traps; curriculum learning; comparing methods fairly |
+| 53 | `forge-ml-in-forge` | Machine learning as a Forge feature | a **Train** panel in the editor (training in a background process, live chart, pause and stop); trained agents saved as Resources; an `Agent` node scripts can use; agents as automated playtesters that measure a level's difficulty (with a curiosity bonus for reaching new places); a learning companion whose skills the player unlocks; difficulty matched to the player with an Elo-style rating; exported games that include a trained agent | training as a long-running job (Chapter 25 again); a model as a versioned file; ML behind a plugin API (Chapter 26 again); zoom-out lesson: **applying ML to a project**: when it's the right tool, when a hand-written rule is better, and how to test an idea of your own |
 
 The rl-pygame track and the Machine Learning series go deeper into each method. This part is complete on its
 own, and links to them for the learner who wants more.
@@ -603,13 +688,13 @@ own, and links to them for the learner who wants more.
 
 | # | Track | Chapter | What's built | Engineering taught |
 |---|---|---|---|---|
-| 49 | `forge-export` | Export, like Godot | **Project › Export**: the editor turns a project into a standalone game `.exe` that runs on a computer without Python | what "freezing" a Python program means (PyInstaller: an interpreter, your code and its libraries bundled into one program), **export templates** built once and reused, packing the project into one data file (Godot's `.pck`), finding your files from inside a frozen program, export presets, why a Windows build can't be made on a Mac (build machines per OS in CI), antivirus and SmartScreen warnings and code signing; zoom-out: build vs run time |
-| 50 | `forge-docs` | Documentation and the Forge course | the Forge manual and the start of **Making Games with Forge**, a course whose "Try it" links open Forge's own tutorials; a docs website | docs as code (MkDocs), the four kinds of documentation (tutorials, how-to guides, reference, explanation) and why mixing them fails, writing for a reader who isn't you, code examples in the docs run as tests, screenshots generated by a script so they never go stale |
-| 51 | `forge-release` | Releasing Forge | the Forge editor as its own `.exe` and installer, published on GitHub Releases | packaging the editor (with Qt) vs the game runtime, an installer, semantic versioning, changelog, licence, README, CONTRIBUTING, dependency auditing, builds for Windows, macOS and Linux from CI |
-| 52 | `forge-health` | Keeping it healthy | a quality dashboard for the codebase | strict type checking, linting, coverage and what it doesn't tell you, profiling, measuring rot with numbers |
-| 53 | `forge-capstone` | Capstone | Tetris in Forge's editor, exported as a game `.exe`, with a trained agent that plays it; a feature added to your own months-old code; then a game and a plugin of your own, published to your library | the whole series, with no tests supplied for the second half; one full hand-off cycle directed by the learner |
+| 54 | `forge-export` | Export, like Godot | **Project › Export**: the editor turns a project into a standalone game `.exe` that runs on a computer without Python | what "freezing" a Python program means (PyInstaller: an interpreter, your code and its libraries bundled into one program), **export templates** built once and reused, packing the project into one data file (Godot's `.pck`), finding your files from inside a frozen program, export presets, why a Windows build can't be made on a Mac (build machines per OS in CI), antivirus and SmartScreen warnings and code signing; zoom-out: build vs run time |
+| 55 | `forge-docs` | Documentation and the Forge course | the Forge manual and the start of **Making Games with Forge**, a course whose "Try it" links open Forge's own tutorials; a docs website | docs as code (MkDocs), the four kinds of documentation (tutorials, how-to guides, reference, explanation) and why mixing them fails, writing for a reader who isn't you, code examples in the docs run as tests, screenshots generated by a script so they never go stale |
+| 56 | `forge-release` | Releasing Forge | the Forge editor as its own `.exe` and installer, published on GitHub Releases | packaging the editor (with Qt) vs the game runtime, an installer, semantic versioning, changelog, licence, README, CONTRIBUTING, dependency auditing, builds for Windows, macOS and Linux from CI |
+| 57 | `forge-health` | Keeping it healthy | a quality dashboard for the codebase | strict type checking, linting, coverage and what it doesn't tell you, profiling, measuring rot with numbers |
+| 58 | `forge-capstone` | Capstone | Tetris in Forge's editor, exported as a game `.exe`, with a trained agent that plays it; a feature added to your own months-old code; then a game and a plugin of your own, published to your library | the whole series, with no tests supplied for the second half; one full hand-off cycle directed by the learner |
 
-54 chapters (0–53), about 270 lessons. Lessons can be inserted later without renumbering (for example `03-04-…` between `03-03`
+59 chapters (0–58), about 295 lessons. Lessons can be inserted later without renumbering (for example `03-04-…` between `03-03`
 and `03-05`). A lesson's progress key is its file name, so a published file is never renamed.
 
 ## Teaching, not describing
@@ -741,16 +826,22 @@ describing" above comes first; these add to it.
 - **pygame-ce 2.5.8, Python 3.12 or newer**, same as rl-pygame. 3.12 also gives the new generics syntax
   (`class Pool[T]:`) and `typing.override`.
 - **Tooling, each pinned when first installed:** pytest (Ch 2), pyright (Ch 2), ruff (Ch 3), pytest-cov
-  (Ch 5), Hypothesis (Ch 12), pytest-qt (Ch 18), httpx with FastAPI's test client (Ch 33), mutmut (Ch 52), PyInstaller (Ch 49), NumPy (Ch 38), PyTorch (Ch 42), moderngl (Ch 30).
-  Type checking and tests run in CI from Chapter 16.
-- **PySide6** (Chapter 18), **pydantic v2** (Chapter 5), **SQLite** (standard library, Chapter 6),
-  **FastAPI** (Chapter 33), **SQLAlchemy 2** and **Alembic** (Chapter 34), each pinned in the chapter that
+  (Ch 5), Hypothesis (Ch 12), pytest-qt (Ch 21), httpx with FastAPI's test client (Ch 36), mutmut (Ch 57), PyInstaller (Ch 54), NumPy (Ch 43), PyTorch (Ch 47), moderngl (Ch 33).
+  Type checking and tests run in CI from Chapter 17.
+- **PySide6** (Chapter 21), **pydantic v2** (Chapter 5), **SQLite** (standard library, Chapter 6),
+  **FastAPI** (Chapter 36), **SQLAlchemy 2** and **Alembic** (Chapter 37), each pinned in the chapter that
   installs it. PySide6 and pygame-ce are LGPL, which allows Forge to be released under any open-source
-  licence; the licence is chosen in Chapter 51.
+  licence; the licence is chosen in Chapter 56.
+- **Networking uses Python's own `socket` module** (Chapters 41–42): TCP for the lobby, UDP for snapshots, and a
+  loopback transport for tests, before any library is considered.
+- **Gamepads through pygame's joystick and controller support** (Chapter 11), tested with recorded input, since
+  checks can't hold a real stick.
+- **Fonts are bundled** (open licences, credited) so text measures the same on every machine and tests can check
+  layout (Chapter 15).
 - **The engine never imports Qt, and never imports a game.** Tests the learner writes check both.
-- **The game runs in a separate process when launched from the editor** (Chapter 21), for the same reason
+- **The game runs in a separate process when launched from the editor** (Chapter 24), for the same reason
   Game Studio runs games in an iframe: the editor survives whatever the game does.
-- **The asset library server is its own repository** (Chapter 33).
+- **The asset library server is its own repository** (Chapter 36).
 - **Hand-off implementations are supplied files**, so checks are repeatable. A learner's review is checked
   for the specific problem in each one. Live AI hand-offs are optional extras from Part 5 on.
 - **pytest** for checks, with SDL's dummy drivers so tests run with no window; Qt checks use the `offscreen`
@@ -762,13 +853,13 @@ describing" above comes first; these add to it.
   inside it. Forge does the same: a game runtime (the engine, no Qt, no editor) is frozen once with
   PyInstaller into a template `.exe`; **Project › Export** copies it and packs the project into a single data
   file it reads at start-up. Exporting is fast, needs no Python on the player's computer, and the exported game
-  can't contain the editor, because the engine never imports Qt (checked since Chapter 20). Earlier chapters
-  prepare for this: assets are always loaded through `ResourceLoader` with project-relative paths (Ch 17), so
+  can't contain the editor, because the engine never imports Qt (checked since Chapter 23). Earlier chapters
+  prepare for this: assets are always loaded through `ResourceLoader` with project-relative paths (Ch 18), so
   the same code reads from the project folder or from the packed file.
 - **Executables for each operating system.** PyInstaller only builds for the system it runs on, so Windows,
   macOS and Linux builds come from CI build machines (GitHub Actions), as real projects do. The learner's own
   machine builds the Windows `.exe` directly.
-- **Containers are optional** in Chapter 37; the server runs without them and the lesson shows both.
+- **Containers are optional** in Chapter 40; the server runs without them and the lesson shows both.
 - **Verification** follows rl-pygame: a `forge-*.walkthrough.js` per track and a desktop test that walks it
   like a learner, typing each step, running each check, and trying wrong answers that must fail.
 

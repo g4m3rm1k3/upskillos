@@ -48,6 +48,42 @@ if __name__ == "__main__":
 run ".venv/Scripts/python -m pytest -q" stdout="106 passed"
 ```
 
+## Functions that pause
+
+**Build:** nothing in the project. Meet the one piece of Python this lesson's fixtures depend on.
+
+Lesson 2.6 promised **generator functions** for later; this is later. A function with `yield` in it is a **generator function**, and it behaves unlike any function so far. In the REPL:
+
+```text
+>>> def steps():
+...     print("setup")
+...     yield "the resource"
+...     print("teardown")
+...
+>>> g = steps()
+>>> next(g)
+setup
+'the resource'
+>>> next(g)
+teardown
+Traceback (most recent call last):
+  ...
+StopIteration
+```
+
+Traced:
+
+```text
+call         what runs                         printed     returned
+steps()      nothing at all                                a generator, g
+next(g)      from the top, up to the yield     setup       'the resource'
+next(g)      from after the yield, to the end  teardown    (raises StopIteration: nothing left)
+```
+
+Calling `steps()` runs **none** of its body: it makes a generator, paused before its first line. Each `next(g)` runs it until the next `yield`, which hands a value out and **pauses** the function, local variables and all. The next `next(g)` carries on from exactly there. When the function ends, `next` raises `StopIteration`, Python's signal for "nothing left". A `for` loop is built on the same thing: it calls `next` until `StopIteration`, which it catches quietly. Anything you can call `next()` on like this is an **iterator**.
+
+Keep the shape in mind: something before the `yield`, a value handed out, something after. That's setup, a resource, and teardown.
+
 ## A fixture of your own
 
 **Build:** a file of fixtures for the tests, with one fixture: a scores database.
@@ -76,11 +112,11 @@ def db(tmp_path: Path) -> Iterator[sqlite3.Connection]:
 
 **Understand.**
 
-**`@pytest.fixture`** marks `db` as a fixture. A test that has a parameter named `db` gets what this function provides, the same way a test with a parameter named `tmp_path` gets a temporary folder: pytest reads the test's parameter names, finds the fixture with each name, runs it, and passes the result in. A fixture can ask for other fixtures the same way: `db` asks for `tmp_path`.
+**`@pytest.fixture`** marks `db` as a fixture. A test that has a parameter named `db` gets what this function provides, the same way a test with a parameter named `tmp_path` gets a temporary folder: pytest reads the test's parameter names, finds the fixture with each name, runs it, and passes the result in. Reading a function's parameter names is ordinary Python: `import inspect`, then `list(inspect.signature(f).parameters)` for a `def f(db, tmp_path)` gives `['db', 'tmp_path']`. A fixture can ask for other fixtures the same way: `db` asks for `tmp_path`.
 
 **`conftest.py`** is a name pytest looks for. Fixtures defined in it are available to every test in its folder without importing anything. Fixtures that only one test file needs can live in that file instead.
 
-**`yield`** is what makes the fixture clean up. A function with `yield` in it is a **generator**: it runs until the `yield`, hands over the value, and **pauses**. pytest runs the test, then resumes the fixture after the `yield`, so `connection.close()` runs after the test: **setup** before the `yield`, **teardown** after. The return type says so: `Iterator[sqlite3.Connection]`, something that produces connections one at a time, here exactly one. `Iterator` comes from `collections.abc`, the standard library's module of general container types ("abstract base classes"). The most exact type for a generator is `Generator[sqlite3.Connection, None, None]`, which also describes what can be sent into it and what it returns; for one that only yields, `Iterator` says the same thing more simply, and is the usual choice.
+**`yield`** is what makes the fixture clean up: it's the generator from the step before. pytest calls `next()` on it once, to run the setup and get the connection; runs the test with it; then calls `next()` again, which runs `connection.close()` and ends the generator. That second `next()` sits in a `finally` inside pytest, so it happens however the test ended. **Setup** before the `yield`, **teardown** after. The return type says so: `Iterator[sqlite3.Connection]`, an iterator that hands out connections, here exactly one. `Iterator` comes from `collections.abc`, the standard library's module of types for things like iterators and containers. (You may also see `Generator[sqlite3.Connection, None, None]`: generators can also receive values and return one at the end, and the two `None`s say this one does neither. `Iterator` says the same thing more simply.)
 
 ```predict
 question: A test that uses the `db` fixture fails at its first `assert`. Is the database closed?
@@ -91,7 +127,16 @@ answer: Yes: pytest resumes the fixture after the test however the test ended
 explain: The teardown isn't part of the test: it's in the fixture, after the `yield`, and pytest runs it after every test that used the fixture, whether the test passed, failed, or crashed. That's the difference from `db.close()` as a test's last line, which runs only if every line before it succeeded. Cleanup that must happen belongs in a fixture's teardown.
 ```
 
-**See it happen.** Click **Create provided watch_fixture.py**: a fixture that prints when it sets up and tears down, and two tests that use it, one passing and one failing.
+```check
+contains tests/conftest.py "@pytest.fixture"
+run ".venv/Scripts/python -m pytest -q" stdout="106 passed" label="nothing uses the fixture yet, so nothing changes"
+```
+
+## Watch a fixture run
+
+**Build:** a fixture that prints, to watch the order pytest runs things in.
+
+Click **Create provided watch_fixture.py**: a fixture that prints when it sets up and tears down, and two tests that use it, one passing and one failing.
 
 ```python file=watch_fixture.py provided
 """Watch a fixture run. Delete this file afterwards."""
@@ -137,16 +182,51 @@ F  teardown
 
 For each test: the fixture up to its `yield`, then the test, then pytest's mark for the result (`.` passed, `F` failed), then the rest of the fixture. The failing test's teardown runs exactly like the passing one's. And each test gets its own `setup`: the fixture runs again for every test that asks for it.
 
-Delete the file: it was for the demonstration.
+Now watch a fixture shared between tests. Make `scratch/test_scope.py`, a fixture with `scope="module"` (one per file, explained in the next step), handing out a list that the first test changes:
+
+```python
+from collections.abc import Iterator
+
+import pytest
+
+
+@pytest.fixture(scope="module")
+def shared() -> Iterator[list[str]]:
+    print("\n  setup")
+    yield []
+    print("  teardown")
+
+
+def test_first(shared: list[str]):
+    shared.append("left by test_first")
+    print("  test_first sees", shared)
+
+
+def test_second(shared: list[str]):
+    print("  test_second sees", shared)
+```
+
+```powershell
+.venv\Scripts\python -m pytest -q -s scratch/test_scope.py
+```
+
+```text
+  setup
+  test_first sees ['left by test_first']
+.  test_second sees ['left by test_first']
+.  teardown
+```
+
+One setup, one teardown, around both tests, and `test_second` sees what `test_first` left behind: two tests that were meant to be independent aren't. That's why the `db` fixture keeps the default scope, a fresh one for every test.
+
+Delete the provided file: it was for the demonstration.
 
 ```powershell
 Remove-Item watch_fixture.py
 ```
 
 ```check
-contains tests/conftest.py "@pytest.fixture"
 missing watch_fixture.py -- Delete watch_fixture.py: Remove-Item watch_fixture.py
-run ".venv/Scripts/python -m pytest -q" stdout="106 passed" label="nothing uses the fixture yet, so nothing changes"
 ```
 
 ## The scores tests, with the fixture
@@ -213,11 +293,17 @@ def test_a_file_that_is_not_a_database_is_refused():
 
 **Understand.** Each test now says only what it's about: `db: sqlite3.Connection` in its parameters, and no opening or closing. The type annotation is for pyright and for the reader; pytest matches fixtures by **name** alone. One test still opens and closes its own database: `test_scores_are_still_there_when_the_database_is_opened_again`, because closing and reopening is the thing it tests.
 
-**Why closing matters.** An open connection holds its file open, and on Windows a file that's open can't be deleted:
+**Why closing matters.** An open connection holds its file open, and on Windows a file that's open can't be deleted. Cause it, in `scratch`:
+
+```powershell
+.venv\Scripts\python -c "import sqlite3, os; db = sqlite3.connect('scratch/x.db'); db.execute('CREATE TABLE IF NOT EXISTS t (a)'); os.remove('scratch/x.db')"
+```
 
 ```text
-PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'scores.db'
+PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'scratch/x.db'
 ```
+
+Run it again with `db.close();` before `os.remove(...)`, and the file is deleted without complaint.
 
 Python closes a connection eventually, when nothing refers to it any more, but "eventually" isn't a time you can rely on. A test suite that leaves connections open can find, later in the same run, that it can't delete or replace a database file; closing in the teardown makes it never happen.
 
@@ -337,7 +423,7 @@ typeCheckingMode = "strict"
 patch = ["subprocess"]
 ```
 
-**Understand.** `markers` declares a marker named `slow`, with a description. `--strict-markers`, added to every run by `addopts`, makes pytest refuse a marker that isn't declared, so `@pytest.mark.slwo` is an error, not a silently unmarked test.
+**Understand.** `markers` declares a marker named `slow`, with a description. `--strict-markers`, added to every run by `addopts`, makes pytest refuse a marker that isn't declared, so `@pytest.mark.slwo` is an error, `'slwo' not found in `markers` configuration option`, not a silently unmarked test. `addopts` is a list of command-line options pytest adds to every run as if you'd typed them.
 
 ```check
 contains pyproject.toml "--strict-markers"
@@ -457,7 +543,7 @@ def test_bad_settings_stop_the_game_with_exit_code_1(tmp_path: Path):
 95 passed, 11 deselected in 2.84s
 ```
 
-`-m` chooses tests by marker: `"not slow"` runs everything else, in a few seconds, as often as you like while you work. Run the whole suite, slow tests included, before every commit: the definition of done hasn't changed.
+Careful: this `-m` comes **after** `pytest`, so it's pytest's own option, "markers"; the `-m` after `python` is Python's "run this module". `-m` chooses tests by marker: `"not slow"` runs everything else, in a few seconds, as often as you like while you work. Run the whole suite, slow tests included, before every commit: the definition of done hasn't changed.
 
 ```check
 run ".venv/Scripts/python -m pytest -q -m \"not slow\"" stdout="95 passed, 11 deselected" label="the fast tests run without the slow ones"
@@ -526,11 +612,76 @@ git-message "fixture"
 git-clean
 ```
 
+## Challenge: a fixture that makes databases
+
+**Optional, ★.** A fixture can return a function. Write `scores_with`, a fixture returning a function so a test can write `db = scores_with("Classic", "Castle")` and get a database with one game on each level, replacing `add_games`. The fixture's teardown closes every database it made. On a branch.
+
+## Challenge: every test on two databases
+
+**Optional, ★★.** `@pytest.fixture(params=["memory", "file"])` runs every test that uses the fixture twice, once per value, which the fixture reads as `request.param` (`request` is a fixture too). Make `db` give an in-memory database for one and a file for the other, and watch the test count double. On a branch.
+
+## Challenge: a fixture made once
+
+**Optional, ★★.** Write a `scope="session"` fixture that writes a level JSON file once for the whole run (pytest's `tmp_path_factory` fixture makes folders for wider scopes), use it in two test files, and prove with `-s` that it runs once. In a comment, say why `db` must never be session-scoped. On a branch.
+
+## Bug hunt: the scores that vanish
+
+**Build:** nothing in the project. Find out why a program's saves disappear.
+
+A teammate wrote their own small score keeper, and says the database "forgets everything". Here's a version cut down to the problem. Save it as `scratch/vanish.py`:
+
+```python
+import sqlite3
+from pathlib import Path
+
+
+def add_score(db: sqlite3.Connection, level: str, points: int) -> None:
+    db.execute("INSERT INTO scores (level, points) VALUES (?, ?)", (level, points))
+
+
+def count(path: Path) -> int:
+    db = sqlite3.connect(path)
+    (n,) = db.execute("SELECT COUNT(*) FROM scores").fetchone()
+    db.close()
+    return n
+
+
+path = Path("scratch/vanish.db")
+path.unlink(missing_ok=True)
+db = sqlite3.connect(path)
+db.execute("CREATE TABLE scores (level TEXT, points INTEGER)")
+add_score(db, "Classic", 560)
+add_score(db, "Castle", 150)
+print("this connection sees", db.execute("SELECT COUNT(*) FROM scores").fetchone()[0], "scores")
+print("another connection sees", count(path))
+db.close()
+print("after closing, the file holds", count(path))
+```
+
+```powershell
+.venv\Scripts\python scratch\vanish.py
+```
+
+```text
+this connection sees 2 scores
+another connection sees 0
+after closing, the file holds 0
+```
+
+The program that added the scores can see them; nobody else ever can. Find the cause, and fix it in two ways: one with a single added line, and one in the style of `breakout/scores.py`. Try for ten minutes before the hints.
+
+```hints
+nudge: Something is different between the connection that sees the scores and every other one. What does `db.in_transaction` say just after the two `add_score` calls? Add a `print`.
+concept: Other connections only see **committed** data. Lesson 6.3: Python's `sqlite3` begins a transaction before an `INSERT`, and waits for a commit.
+answer: `True`: Python's `sqlite3` began a transaction before the first `INSERT` (lesson 6.3), and nothing ever ended it. Other connections only see committed data, and `close()` without a commit rolls back. One-line fix: `db.commit()` before `db.close()`. The `scores.py` fix: `with db:` around the `INSERT` inside `add_score`, so every score is committed as it's added.
+```
+
 ## What did we actually learn?
 
 - **Fixtures** provide what a test needs, by parameter name; `conftest.py` shares them with a whole folder; fixtures can use fixtures.
-- **`yield` fixtures** run their teardown however the test ends: cleanup that must happen goes there. A generator pauses at `yield`.
-- **A fixture runs again for every test**, so tests can't affect each other.
+- **Generator functions**: calling one runs nothing; `next()` runs it to the next `yield` and pauses it there; `StopIteration` says it's done.
+- **`yield` fixtures** run their teardown however the test ends: cleanup that must happen goes there.
+- **A fixture runs again for every test**, so tests can't affect each other; a wider `scope` shares one, and with it anything a test changes.
 - **The testing pyramid**: many unit tests, some integration tests, few end-to-end tests, measured with `--durations`.
 - **Markers** (`slow`, declared, with `--strict-markers`) and `-m "not slow"` for fast runs while working.
 
@@ -544,6 +695,8 @@ A program's objects die with it. The chapter kept scores alive three ways, each 
 - **`pickle`**: no conversions to write, Python only, tied to your class names, and **runs code when it loads**. Never for a file you didn't write.
 - **A database**: one row added at a time, transactions that complete or don't happen, constraints every writer must obey, and questions answered in SQL without loading everything.
 
-And the same security question from Chapter 5, **who controls this data?**, had two new answers. A file your own program wrote can still come back broken or edited, so it's checked. And a value can't be trusted just because it's "only a name": pasted into SQL, it became code. Values never become code: placeholders in SQL, and in every other language that runs commands.
+And the same security question from Chapter 5, **who controls this data?**, had two new answers. A file your own program wrote can still come back broken or edited, so it's checked. And a value can't be trusted just because it's "only a name": pasted into SQL, it became code. Values never become code: placeholders in SQL, and in everything else that runs commands. Starting a program is the same story: `subprocess.run(f"del {name}", shell=True)` hands a whole string to a shell, which a name like `x & del *` can turn into two commands, while `subprocess.run(["breakout", "--level", name])`, the list form the characterisation tests' `play()` already uses, passes `name` as one argument, whatever it contains.
+
+**Chapter 6's challenges**, to come back to (on branches): the best score's date in local time ★, the top scores from the command line ★★, let json do the conversion ★★ (6.1); pin the policy ★, never leave half a file ★★, rescue what's left ★★, a pickle that only opens what you allow ★★★ (6.2); more questions, one query each ★, a database that refuses bad times ★★, no connection left open ★★ (6.3); a database that isn't one ★, names that contain a word ★★, every level, attacked ★★★ (6.4); a fixture that makes databases ★, every test on two databases ★★, a fixture made once ★★ (this lesson).
 
 The next chapter gives the database more to hold (players, sessions, statistics) and the questions that come with several tables at once: how they connect, why duplicated data goes wrong, and what happens when two games write at the same moment. Then Breakout ships its first release.

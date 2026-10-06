@@ -261,6 +261,24 @@ if __name__ == "__main__":
 
 Names with two underscores on each side, like `__name__` and `__file__` (lesson 0.2), are called **dunder** names ("double underscore"). They're Python's own: set or used by the language itself.
 
+```predict
+question: `python -c "import whoami; import whoami"` imports the same file twice. How many times is `my name is whoami` printed?
+answer: 1
+explain: The first `import` runs the file and stores the finished module in `sys.modules`, a dictionary of every module this program has imported (point 4 above). The second `import` finds `whoami` already there and reuses it, without running the file again. That's why importing a module in ten files costs nothing extra, and also why changing a file while a program runs doesn't change the running program.
+verify: python -c "import subprocess, sys; r = subprocess.run([sys.executable, '-c', 'import whoami; import whoami'], capture_output=True, text=True); print(r.stdout.count('my name is whoami'))"
+```
+
+Check it, and look inside `sys.modules` while you're there:
+
+```powershell
+python -c "import whoami; import whoami; import sys; print('whoami' in sys.modules)"
+```
+
+```text
+my name is whoami
+True
+```
+
 These checks run `python`, the system Python, not `.venv\Scripts\python`: `whoami.py` imports nothing outside the standard library, so any Python 3.12 or newer gives the same answer.
 
 ```check
@@ -479,7 +497,7 @@ run ".venv/Scripts/python -m pytest -q" stdout="8 passed" label="the game still 
 
 **Build:** move everything that *does* something into a function, `main`.
 
-Above the `parse_args` call, add `def main(args):`, change the call to `parse_args(args)`, and indent everything from the call to the end of the file by one level, 4 spaces: select those lines and press **Tab**. The step's code shows it as one instruction, not as every line again:
+Above the `parse_args` call, add `def main(args):`, change the call to `parse_args(args)`, and indent everything from the call to the end of the file by one level, 4 spaces: select those lines and press **Tab** (in Project Studio's editor or VS Code; Shift+Tab undoes it). Python needs indentation made of spaces, used consistently: an `IndentationError` or `TabError` means some line isn't. The step's code shows it as one instruction, not as every line again:
 
 ```python file=breakout.py
 import os
@@ -682,7 +700,7 @@ answer: Nothing but pygame's greeting
 explain: The file now defines `main` and never calls it. A `def` only creates the function; its body runs when something calls it, and nothing does. So the program imports pygame, defines its constants and functions, and ends. The characterisation tests fail for the same reason. The next step adds the call.
 ```
 
-**Understand.** Every game variable, `paddle_x`, `ball_vx`, `lives`, `score`, `bricks`, is now a **local variable of `main`**. Nothing outside `main` can see or change them, and the only way a function can affect them is by returning a value that `main` chooses to store.
+**Understand.** Every game variable, `paddle_x`, `ball_vx`, `lives`, `score`, `bricks`, is now a **local variable of `main`**. Nothing outside `main` can **rebind** them. A function can change one only if `main` hands it a mutable object (lesson 2.2), like the `bricks` list or a `Rect`, and then you can see it happen, in the call. Everything else reaches `main` only as a returned value that `main` chooses to store.
 
 ```check
 contains breakout.py "def main(args):"
@@ -966,7 +984,7 @@ E   ModuleNotFoundError: No module named 'breakout'
 
 A hidden input again: the current folder.
 
-> **Unit test**: a test of one small piece of code (a function, or later a class) on its own, without the rest of the program. **Fast, precise, and narrow**: it runs in milliseconds and, when it fails, says exactly which piece is wrong, but it can't see how the pieces work together. That's what characterisation tests and, later, integration tests are for.
+> **Unit test**: a test of one small piece of code (a function, or later a class) on its own, without the rest of the program. **Fast, precise, and narrow**: it runs in milliseconds and, when it fails, says exactly which piece is wrong, but it can't see how the pieces work together. That's what characterisation tests and, later, **integration tests** (tests of several real pieces working together, from Chapter 6) are for.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_breakout.py" stdout="1 passed" label="the unit test passes"
@@ -993,7 +1011,16 @@ cd ..
 1 passed in 0.08s
 ```
 
-**Understand.** When pytest starts, it looks for a settings file, starting in the current folder and going up through the folders above it. `pytest.ini` is one of the names it looks for. The folder where it finds one becomes the **root folder** of the project, and the settings in it apply. `pythonpath = .` tells pytest to put the root folder (`.`, relative to the settings file) on `sys.path`, whichever folder you start from. The **INI** format is old and simple: a `[section]` heading, then `name = value` lines.
+**Understand.** When pytest starts, it looks for a settings file, starting in the current folder and going up through the folders above it. `pytest.ini` is one of the names it looks for. The folder where it finds one becomes the **root folder** of the project, and the settings in it apply. `pythonpath = .` tells pytest to put the root folder (`.`, relative to the settings file) on `sys.path`, whichever folder you start from. The **INI** format is old and simple: a `[section]` heading, then `name = value` lines. Traced, for `python -m pytest` started inside the `tests` folder:
+
+```text
+started in            forge\tests     no pytest.ini here: go up
+looks in              forge           pytest.ini found: forge is the root folder
+pythonpath = .        forge is added to sys.path
+import breakout       found as forge\breakout.py
+```
+
+pytest prints its decision in the header of a run without `-q`: `rootdir: C:\Users\you\Documents\forge` and `configfile: pytest.ini`.
 
 Now the setting is written down in the project, instead of depending on where you happen to be standing. Chapter 4 moves it into the project's main settings file, `pyproject.toml`.
 
@@ -1038,6 +1065,18 @@ run ".venv/Scripts/python -m pytest -q -k above_the_range" stdout="1 passed" lab
 git-message "main" -- Commit with a message that mentions main.
 git-clean
 ```
+
+## Challenge: what runs at import?
+
+**Optional, ★.** In `scratch/run_or_import.py`, put a `print` at the top level, another inside a function that's never called, and a third under `if __name__ == "__main__":`. Predict exactly what `python scratch\run_or_import.py` prints, and what `python -c "import sys; sys.path.insert(0, 'scratch'); import run_or_import"` prints, then check. (`sys.path.insert(0, ...)` puts a folder at the front of the import search, lesson 0.2.)
+
+## Challenge: hidden inputs
+
+**Optional, ★★.** `main` still reads things that aren't its parameters: the clock, the keyboard, `os.environ`. List every input `main` has that isn't passed in, under *Technical debt* in `BACKLOG.md`, with a line number for each. Spotting where a function reaches outside itself is the skill Chapter 9 depends on.
+
+## Challenge: a parse that doesn't exit
+
+**Optional, ★★.** On a copy, change `parse_args` so it never prints or exits: it returns either the settings or an error message, and `main` does the printing and `sys.exit(2)`. Note which of lesson 2.4's tests would have to change, and why. Moving side effects to the edge of a program, and what it costs. (A common shape for that edge is `sys.exit(main(sys.argv[1:]))`, with `main` returning the exit code; this series keeps `main` returning nothing, so a normal end exits with 0.)
 
 ## What did we actually learn?
 

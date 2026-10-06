@@ -90,7 +90,7 @@ typeCheckingMode = "strict"
 
 **Understand: why `pyproject.toml`, not `requirements.txt`.** Lesson 4.3 separated two kinds of dependency. pytest, pyright and ruff are **development tools**: you need them to work on the game, and a player doesn't. pydantic is a **runtime dependency**: the game imports it, so it can't run without it. Runtime dependencies go in `dependencies` in `pyproject.toml`, which is what pip reads when it installs the game, for you or for anyone else. `requirements.txt` ends with `-e .`, so installing it reinstalls the game, and with it everything in `dependencies`.
 
-Look at the last line pip printed: it installed more than pydantic. `pydantic-core` is pydantic's validation engine, written in **Rust**, a compiled language, and shipped already compiled for your Python and Windows, which is why pydantic is fast. `annotated-types` and `typing-inspection` are what it uses to read type hints. These are **transitive dependencies** (lesson 2.1): pydantic declares them, and pip installs them. You still pin only what you use directly.
+Look at the last line pip printed. It starts `Successfully installed`, and names more than pydantic: `annotated-types-0.8.0`, `pydantic-2.13.5`, `pydantic-core-2.46.5` and `typing-inspection-0.4.4` among them (your versions of the three that aren't pinned may be newer). `pydantic-core` is pydantic's validation engine, written in **Rust**, a **compiled** language: translated ahead of time into the processor's own instructions, so it runs much faster than Python, but it has to be built separately for each operating system and Python version. pip downloads a **wheel** (lesson 4.3's ready-to-install package) already built for your Python and Windows, so you never compile anything. `annotated-types` and `typing-inspection` are what it uses to read type hints. These are **transitive dependencies** (lesson 2.1): pydantic declares them, and pip installs them. You still pin only what you use directly.
 
 ```check
 run ".venv/Scripts/python -c \"import pydantic; print(pydantic.VERSION)\"" stdout="2.13.5" label="pydantic 2.13.5 is installed"
@@ -160,6 +160,45 @@ def load_level(path: Path) -> Level:
 
 **Understand.** `class Level(BaseModel)`: a **model**, pydantic's version of a dataclass. Its fields are declared the same way, `name: type`, but creating one **checks** every field, from JSON or from code.
 
+How can a class check anything? Through its annotations. When Python runs a `class` statement, it stores the class's annotations in a dict, `Level.__annotations__`, which any code can read. `BaseModel` reads it the moment the class is created, builds a **validator** for those fields inside pydantic-core, and gives the class an `__init__` that runs the validator. So `Level(name=5, ...)` goes: the generated `__init__` → the validator checks each field → it collects every problem → it raises one `ValidationError` holding them all. (pyright knows the parameters of that generated `__init__` because pydantic tells type checkers it behaves like a dataclass.)
+
+Try a model with nothing else in the way first. In `scratch/pyd_demo.py`:
+
+```python
+from pydantic import BaseModel, ValidationError
+
+
+class Point(BaseModel):
+    x: int
+    name: str
+
+
+print(Point.__annotations__)
+print(Point(x=3, name="a"))
+print(Point.model_validate_json('{"x": "3", "name": "a"}'))
+try:
+    Point(x="three", name=5)
+except ValidationError as error:
+    print(error)
+```
+
+```text
+{'x': <class 'int'>, 'name': <class 'str'>}
+x=3 name='a'
+x=3 name='a'
+2 validation errors for Point
+x
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='three', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+name
+  Input should be a valid string [type=string_type, input_value=5, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+```
+
+Line by line: the annotations are just a dict; a model made from code; a model made from JSON, where `"3"` quietly became `3` (pydantic's default, **lax** mode, which the next step turns off); and two problems reported **at once**, each with its field, a message, and an error `type` (`int_parsing`, `string_type`). Lesson 5.3's hand-written checks stopped at the first.
+
+**One thing breaks for a while.** `LevelError` changes shape in this step, so tests in `tests/test_level_errors.py` fail from now until the end of the lesson: the step "The errors, as they should read" rewrites them, and the Your turn makes the last four pass. Until then, `tests/test_level.py` is the one to watch.
+
 **Reading a level** is one call: `Level.model_validate_json(text)` reads the JSON *and* checks it against the model, in one step inside pydantic-core, and returns a `Level` or raises **`ValidationError`**.
 
 Give it a level with a name that's a number:
@@ -174,7 +213,7 @@ name
   Input should be a valid string [type=string_type, input_value=5, input_type=int]
 ```
 
-Refused, with where (`name`) and why. That one check replaces an `isinstance` you wrote by hand. But try a level with a misspelt field and the lives written as text:
+Refused, with where (`name`) and why. (`pydantic_core._pydantic_core.ValidationError` is where the class is defined: the leading `_` marks a private module inside pydantic-core. You import it as `from pydantic import ValidationError`.) That one check replaces an `isinstance` you wrote by hand. But try a level with a misspelt field and the lives written as text:
 
 ```powershell
 .venv\Scripts\python -c "import json; from breakout import level; level.parse_level(json.dumps({'name': 'A', 'lives': '3', 'lifes': 5, 'wall': ['BBBBBBBB']}))"
@@ -191,7 +230,24 @@ run ".venv/Scripts/python -c \"import json; from breakout import level; level.pa
 
 **Build:** three rules for the whole model: exact types only, no unknown fields, and no changes after it's made.
 
-A model reads its settings from a class attribute with exactly this name, `model_config`, which pydantic looks for and doesn't treat as a field:
+A model reads its settings from a **class attribute** named exactly `model_config`, which pydantic looks for and doesn't treat as a field. A class attribute is a variable set in the class body, not on `self`: it belongs to the class, and every object sees it until it's given its own. In the REPL:
+
+```text
+>>> class C:
+...     n = 1
+...
+>>> a, b = C(), C()
+>>> C.n, a.n, b.n
+(1, 1, 1)
+>>> a.n = 5
+>>> C.n, a.n, b.n
+(1, 5, 1)
+>>> C.n = 2
+>>> C.n, a.n, b.n
+(2, 5, 2)
+```
+
+`a.n = 5` gave `a` its own `n`, hiding the class's; `b` still reads the class's, so changing `C.n` changes what `b` sees. Lesson 3.1's `self.x = ...` in `__init__` is the other kind, an **instance attribute**, one per object. Here is the model with its settings:
 
 ```python file=breakout/level.py
 from pathlib import Path
@@ -336,7 +392,7 @@ def load_level(path: Path) -> Level:
     return parse_level(path.read_text(encoding="utf-8-sig"))
 ```
 
-**Understand.** `name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]`. **`Annotated[type, extra, ...]`** is standard Python, from `typing`: the type is `str`, and the extra items are information for whoever reads the annotation. pyright reads only the `str`. pydantic reads the rest as rules: remove spaces from both ends, then require at least one character.
+**Understand.** `name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]`. **`Annotated[type, extra, ...]`** is standard Python, from `typing`: the type is `str`, and the extra items are information for whoever reads the annotation. pyright reads only the `str`. pydantic reads the rest as rules: remove spaces from both ends, then require at least one character. Python itself ignores the extras completely: `x: Annotated[int, "anything at all"] = "oops"` runs without complaint (annotations are never checked at run time), and pyright reports only that `"oops"` isn't an `int`. Only a library that reads the annotation, like pydantic, gives the extras a meaning.
 
 `strip_whitespace=True` doesn't only check: it changes the stored value. A level named `"  Castle  "` is stored as `"Castle"`, and one named `"   "` becomes `""`, which then fails `min_length=1`.
 
@@ -448,7 +504,18 @@ def load_level(path: Path) -> Level:
 
 **Validators are plain functions.** `check_row` and `check_wall` receive a value that's already the right type: `check_row` gets a `str`, guaranteed, so there's no `isinstance` left in it, only the rules pydantic can't know (8 places, each `T`, `B` or `.`). A validator that finds a problem raises `ValueError` with a message; one that's happy returns the value. Rows are checked one by one first, then `check_wall` checks the number of rows, and only runs if every row was good.
 
-The order shows when a row and the row count are both wrong. Give it eleven rows where the first is `"BB"`: only `wall.0`, the short row, is reported. `check_wall` never ran, so the eleventh row goes unmentioned until the first is fixed.
+The order shows when a row and the row count are both wrong.
+
+```predict
+question: A level has eleven rows, and the first is only `"BB"`. Rows are checked first, then the whole wall. What does pydantic report?
+choice: Only the short row (`wall.0`)
+choice: Only the row count (`wall`)
+choice: Both: the short row and the row count
+answer: Only the short row (`wall.0`)
+explain: `check_wall` is an after-validator on the whole tuple: it runs only once the tuple has been built, and the tuple is built only if every row passed. Row 0 failed, so there's no tuple to check, and the row count goes unmentioned until the short row is fixed. "Every problem at once" means every problem pydantic could reach. Run it: `.venv\Scripts\python -c "import json; from breakout import level; level.parse_level(json.dumps({'name': 'A', 'lives': 3, 'wall': ['BB'] + ['BBBBBBBB'] * 10}))"`.
+```
+
+And a single bad character:
 
 ```powershell
 .venv\Scripts\python -c "import json; from breakout import level; level.parse_level(json.dumps({'name': 'A', 'lives': 3, 'wall': ['BBBBXBBB']}))"
@@ -573,7 +640,21 @@ For a level with 0 lives and a second row of `"BB"`, `error.errors()` is this li
 
 `type` is a fixed name for the kind of problem, for code that wants to react to one kind; `input` is the value that was refused. `describe` only needs `loc` and `msg`.
 
-The type of each problem is `ErrorDetails`, from `pydantic_core`: a **`TypedDict`**, a dict whose keys and the type of each key's value are declared, so pyright checks `error["loc"]` and `error["msg"]` like attributes.
+The type of each problem is `ErrorDetails`, from `pydantic_core`: a **`TypedDict`**, a dict whose keys and the type of each key's value are declared, so pyright checks `error["loc"]` and `error["msg"]` like attributes. Declaring one looks like a dataclass:
+
+```python
+from typing import TypedDict
+
+
+class Point(TypedDict):
+    x: int
+    y: int
+
+
+p: Point = {"x": 1, "y": 2}
+```
+
+At run time `p` is an ordinary dict; only pyright knows its shape, and it would flag `{"x": 1}` (missing `y`) or `p["z"]`.
 
 `where` turns a location into text: the parts, joined with commas, or `the level` for the empty location. `parse_level` turns each problem into one line and raises a `LevelError` holding all of them; `LevelError` now keeps the list as `problems`, and its message is the problems joined with `; `.
 
@@ -721,13 +802,30 @@ git-message "pydantic"
 git-clean
 ```
 
+## Where this comes from
+
+Every argument in this lesson, `StringConstraints`, `Field(ge=, le=)`, `strict`, `extra`, `AfterValidator`, came from pydantic's documentation, and from now on that's where you'll find the next one. The pages to know: **Models**, **Fields**, **Validators**, and **Strict Mode**, whose conversion table says exactly what lax mode would have converted. Look one thing up now: what `max_length` means on a `str` and on a tuple, and whether `check_wall` could be replaced by it.
+
+## Challenge: autocompletion for level files
+
+**Optional, ★.** `Level.model_json_schema()` describes the model as a **JSON Schema**, a standard format editors understand. Save it as `breakout/levels/level.schema.json` (with `json.dumps(..., indent=2)`), and point VS Code's `json.schemas` setting at it for `breakout/levels/*.json`: level files now get autocompletion and red squiggles, from the same model. On a branch.
+
+## Challenge: friendlier messages
+
+**Optional, ★★.** Give each pydantic error `type` (`missing`, `extra_forbidden`, `int_type`, ...) your own wording in `describe`, with a dictionary lookup and a fallback for types you didn't list. Update the parametrised tests first. On a branch.
+
+## Challenge: a wall written as text
+
+**Optional, ★★★.** Accept a wall written either as a list of rows or as one string with a row per line. A **`BeforeValidator`** runs before pydantic's own checks, so it can turn a string into a list with `splitlines()`. Test both forms, and explain in a comment why it has to be *before*. On a branch.
+
 ## What did we actually learn?
 
-- **Declare, don't check**: a pydantic `BaseModel` says what valid data is, and creating one checks it, from JSON or from code. `model_validate_json` reads and checks in one step.
+- **Declare, don't check**: a pydantic `BaseModel` says what valid data is, and creating one checks it, from JSON or from code. It works by reading the class's annotations when the class is created.
+- **Class attributes** belong to the class and are shared; **instance attributes** belong to each object. `model_validate_json` reads and checks in one step.
 - **`Annotated[type, rules]`**: the type for pyright, the rules for pydantic. `Field(ge=, le=)`, `StringConstraints(...)`, and `AfterValidator(function)` for rules of your own.
 - **Strict mode** refuses conversions (`"3"`, `true`); **`extra="forbid"`** refuses unknown fields; **`frozen=True`** makes the model immutable.
 - **Every problem at once**, each with a location; turning locations into words a person can follow.
 - **Runtime dependencies** go in `pyproject.toml`; transitive ones come with them.
 - **Test-first for messages**: tests that say exactly what a person should read, red before the code changes.
 
-In C#, the same model is a class with attributes from `System.ComponentModel.DataAnnotations`: `[Range(1, 9)] public int Lives { get; init; }`, `[Required]`, `[MinLength(1)]`, and an `IValidatableObject` for custom rules like `check_row`; `init` makes it immutable like `frozen`. In Java, it's a `record` with **Bean Validation** annotations, `@Min(1) @Max(9) int lives`, and a custom constraint for the rows. Both, like pydantic, put the rules on the type itself so they can't drift apart from it. pydantic is also how FastAPI checks every request in Chapter 33: the model you learned here is the one you'll use there.
+In C#, the same model is a class with attributes from `System.ComponentModel.DataAnnotations`: `[Range(1, 9)] public int Lives { get; init; }`, `[Required]`, `[MinLength(1)]`, and an `IValidatableObject` for custom rules like `check_row`; `init` makes it immutable like `frozen`. In Java, it's a `record` with **Bean Validation** annotations, `@Min(1) @Max(9) int lives`, and a custom constraint for the rows. Both, like pydantic, put the rules on the type itself so they can't drift apart from it. pydantic is also how FastAPI checks every request in Chapter 36: the model you learned here is the one you'll use there.

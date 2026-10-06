@@ -499,7 +499,7 @@ E       TypeError: Brick.__init__() got an unexpected keyword argument 'hits_lef
 
 Seeing it fail first matters, and *how* it fails matters too. This one fails with `TypeError: ... unexpected keyword argument 'hits_left'`: `Brick` has no `hits_left` yet, which is exactly right. If it had *passed*, the test would be checking something that already worked, so it couldn't tell you anything about your new code. If it had failed for an unexpected reason, a typo in the test say, you'd fix the test before writing any code.
 
-Writing the test first also designs the code. Before `Brick` had a `hit` method, the test had to decide what calling it looks like: `brick.hit()`, returning the points scored, `0` for a brick that only cracked. Deciding that from the **caller's side** tends to give simpler interfaces than deciding it while writing the inside.
+Writing the test first also designs the code. Before `Brick` had a `hit` method, the test had to decide what calling it looks like: `brick.hit()`, returning the points scored, `0` for a brick that only cracked. Deciding that from the **caller's side** tends to give simpler **interfaces** (an interface is what callers write and what they get back: here, `brick.hit()` and a number) than deciding it while writing the inside.
 
 ```check
 run ".venv/Scripts/python -m pytest -q -k survives_its_first_hit" exit=1 stdout="1 failed" label="the new test fails, because Brick has no hits yet" -- This step is the red one: the test should fail. If it passes, Brick already has hits_left.
@@ -767,7 +767,7 @@ if __name__ == "__main__":
 22 passed in 0.18s
 ```
 
-**Understand: "just enough".** `hit` always returns 0. That's obviously not the finished rule: a brick that breaks should score points. But no test says so *yet*, and the rule in TDD is to write only the code a failing test demands. It feels strange, and it's deliberate: every line of the finished code will exist because a test needed it, so every line is tested. The next test will force the points in.
+**Understand: "just enough".** `hit` always returns 0. That's obviously not the finished rule: a brick that breaks should score points. But no test says so *yet*, and the rule in TDD is to write only the code a failing test demands. It feels strange, and it's deliberate: every line of the finished code will exist because a test needed it, so every line is tested. The next test will force the points in. Adding a second example to force the general rule that one example let you fake is called **triangulation**: two points fix a line that one point can't.
 
 `hits_left: int = 1` gives the field a **default**, so every existing `Brick(rect, colour)` call still works and means "a brick that breaks in one hit". Fields with defaults must come after fields without them, because, as with function parameters, Python fills them in order.
 
@@ -1232,6 +1232,21 @@ git-message "scores its points"
 git-clean
 ```
 
+## Refactor: anything to improve?
+
+**Build:** nothing, unless you find something. This is TDD's third step, done on purpose.
+
+Every test passes, so this is the moment, and the only moment, to improve the code's structure: with every test green, any change that breaks behaviour is noticed straight away, and you know it was the change. (Refactoring on red would mix two problems: a test failing because the rule isn't there yet, and one failing because you broke something.) Look at what the last two steps wrote, and ask of each part: is it clear? Is anything said twice?
+
+- **`hit()`**: four lines, each needed by a test. Nothing to improve. It does break lesson 3.1's command-query separation: it changes the brick **and** returns a value. That's deliberate: the points belong to this one event, the brick breaking, and returning them is the only way the caller can know which hit it was. A rule you break on purpose, and say so, is still a rule you know.
+- **The tests**: three of them build a tough brick with the same long line, `breakout.Brick(pygame.Rect(0, 0, 70, 20), (239, 68, 68), hits_left=2, ...)`. A helper function, `tough_brick()`, would say it once. But each test would then need you to find and read the helper to know what it tests. Production code removes repetition (DRY, lesson 2.2); **tests often keep it**, so that each test can be read on its own, top to bottom, like a small story. That's a judgement, not a rule: if the brick's construction ever changed, a helper would save editing many tests, and then it would be worth it.
+
+Decision: nothing changes. That's a real outcome of the refactor step: you looked, with the tests' protection, and decided. When there **is** something to improve, you change it now, run the tests, and commit the change on its own, as "Refactor: ...", so the history separates changes in behaviour from changes in structure. The challenges below include one with a real refactor to do.
+
+```check
+run ".venv/Scripts/python -m pytest -q" stdout="passed" label="still green, before the next red"
+```
+
 ## Red: the wall has a tough row
 
 **Build:** a test that the wall's top row is tough.
@@ -1394,7 +1409,18 @@ def test_a_tough_brick_scores_its_points_when_it_breaks():
 
 The wall test above it loses its `bricks[0] == ...` line: the top-left brick is a tough one now, so that expectation would be wrong, and the new test checks the first brick properly instead.
 
-**Understand.** `test_the_top_row_is_tough` checks the first brick completely, then uses `all(...)` for the rest: `all` takes a sequence of true/false values and is true only if every one is. `brick.hits_left == 2 for brick in bricks[:8]` is a **generator expression**: like a list comprehension without the square brackets, producing the values one at a time for `all` to check. `bricks[:8]` is the first eight bricks (the top row, since `make_bricks` builds row by row), and `bricks[8:]` all the others.
+**Understand.** `test_the_top_row_is_tough` checks the first brick completely, then uses `all(...)` for the rest: `all` takes a sequence of true/false values and is true only if every one is. `brick.hits_left == 2 for brick in bricks[:8]` is a **generator expression**: like a list comprehension without the square brackets, producing the values one at a time for `all` to check. `bricks[:8]` is the first eight bricks (the top row, since `make_bricks` builds row by row), and `bricks[8:]` all the others. Try `all` on its own in the REPL:
+
+```text
+>>> all([True, True, False])
+False
+>>> all(n > 0 for n in [3, 1, 2])
+True
+>>> all(n > 0 for n in [])
+True
+```
+
+The last one is worth remembering: `all` of nothing is `True`, because nothing failed. A test that checks `all(...)` over an empty list passes without checking anything, which is why this test also checks the first brick directly, and the number of bricks is checked elsewhere.
 
 ```check
 run ".venv/Scripts/python -m pytest -q -k top_row_is_tough" exit=1 stdout="1 failed" label="the new test fails (red)"
@@ -1668,9 +1694,16 @@ if __name__ == "__main__":
 
 **Understand.** In `make_bricks`, `row` counts from 0 at the top, so `row == 0` is the top row, the one at `y = WALL_TOP`: those bricks get `hits_left=2, points=30`, and every other row the defaults. The `Rect` is made once, as `rect`, because both branches need it.
 
-In the loop, a hit no longer removes the brick unconditionally: `score += bricks[hit].hit()` adds whatever the hit scored (0 for a crack), and the brick is removed only once `hits_left` reaches 0. The ball bounces either way.
+In the loop, a hit no longer removes the brick unconditionally: `score += bricks[hit].hit()` adds whatever the hit scored (0 for a crack), and the brick is removed only once `hits_left` reaches 0. The ball bounces either way. Traced:
 
-One thing changes underneath. Lesson 1.5 said reversing `vy` at a brick was safe because the brick disappears that same frame. A tough brick *doesn't* disappear on its first hit. On an ordinary frame that's still fine: the ball moves at most 5 pixels a frame, so it can only be 5 pixels into the brick, and reversing takes it straight back out. After a slow frame, though, the ball can end up deeper, still overlap next frame, and crack and break the brick at once. It's rare, and Chapter 12's physics fixes it properly, by pushing the ball out of whatever it overlaps. Until then, it's a known flaw.
+```text
+brick       hits_left before   hit() returns   score   hits_left after   removed?
+tough       2                  0               +0      1                 no: cracked
+tough       1                  30              +30     0                 yes
+ordinary    1                  10              +10     0                 yes
+```
+
+One thing changes underneath. Lesson 1.5 said reversing `vy` at a brick was safe because the brick disappears that same frame. A tough brick *doesn't* disappear on its first hit. On an ordinary frame that's still fine: the ball moves only a few pixels a frame (at most about 7, after a steep bounce off the paddle's edge), so it can only be that far into the brick, and reversing takes it straight back out. (A ball that clips a tough brick's **side** can stay overlapping for a second frame too, since reversing `vy` doesn't move it out sideways: the same flaw, the same fix later.) After a slow frame, though, the ball can end up deeper, still overlap next frame, and crack and break the brick at once. It's rare, and Chapter 12's physics fixes it properly, by pushing the ball out of whatever it overlaps. Until then, it's a known flaw.
 
 Now the unit tests pass, and one characterisation test fails:
 
@@ -1705,6 +1738,8 @@ In `tests/test_characterisation.py`, change `test_autopilot_wins`'s recorded lin
 def test_autopilot_wins():
     assert last_line("--test-run", "10000", "--hold", "auto") == "frames=10000 paddle_x=371 score=560 lives=3 bricks=0 inside=True"
 ```
+
+Re-record only after you've explained the new number: 560 is 8 tough bricks × 30 + 32 ordinary ones × 10 = 240 + 320. A changed recording you can't explain is a bug report, not a chore.
 
 Then commit:
 
@@ -1794,6 +1829,18 @@ run ".venv/Scripts/python -m pyright breakout.py tests/test_breakout.py" stdout=
 git-message "cracked"
 git-clean
 ```
+
+## Challenge: strong bricks
+
+**Optional, ★.** TDD a new rule, without looking back at the tough-row code: the second row takes three hits and is worth 50. Red, green, then a real refactor step: with two special rows, is `make_bricks`'s `if` still clear? (Your test for the top row must still pass.) In a copy, since later lessons' files keep the rules as they are.
+
+## Challenge: a spike, then tests
+
+**Optional, ★★.** On a copy, spike a "shake the brick when cracked" effect: try things until it looks right, with no tests. Then throw the spike away, write down the one rule it taught you (for example, "a cracked brick is drawn 2 pixels lower for 6 frames"), and TDD that rule. The workflow the next section describes, done.
+
+## Challenge: find the fake
+
+**Optional, ★★.** Write the laziest `current_colour` you can that passes only the untouched-brick test, then add tests, one at a time, until no fake survives. Triangulation, practised until it's a habit.
 
 ## When not to test first
 

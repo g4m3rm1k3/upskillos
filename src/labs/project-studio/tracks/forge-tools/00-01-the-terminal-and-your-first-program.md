@@ -31,7 +31,7 @@ Each step works at three levels, and the lesson labels them:
 **Build:** a folder on your disk that will hold everything this series makes.
 
 1. Click **Choose folder…** in the middle of this window.
-2. In the window that opens, go to your **Documents** folder.
+2. In the window that opens, go to your **Documents** folder. (If its path contains `OneDrive`, your Documents are synced to the cloud, and the thousands of small files a project makes later will be slow to sync and can be locked mid-install. Go to your user folder, `C:\Users\you`, instead, and make `forge` there: everything in the series works the same, only the path in the examples differs.)
 3. Click **New folder**, name it `forge`, and press Enter.
 4. Select the new `forge` folder and click **Select Folder**.
 
@@ -57,7 +57,7 @@ The panel at the bottom of this window is a **terminal**.
 >
 > *Picture it as* a conversation by text message with the operating system's program launcher. You send a line, it does the work and replies, then waits. The picture breaks in one way that matters: the shell doesn't understand requests, it only runs programs by name, exactly as typed.
 
-On Windows the shell here is **PowerShell**. (On macOS it's **zsh**. Where the two differ, the lesson says so.) The text at the start of the line is the **prompt**:
+On Windows the shell here is **PowerShell**, and this series is written for Windows with PowerShell. On macOS and Linux the shell is usually **zsh** or **bash**: the ideas are the same, and so are short commands like `ls`, `cd`, `pwd` and `mkdir`, but PowerShell's own commands (the ones with a dash, like `Get-Command`, and `$env:PATH`) are written differently there, and the lessons don't give those forms. The text at the start of the line is the **prompt**:
 
 ```text
 PS C:\Users\you\Documents\forge>
@@ -77,7 +77,7 @@ Path
 C:\Users\you\Documents\forge
 ```
 
-**Understand.** `pwd` stands for "print working directory". (*Working directory* and *current directory* mean the same thing, and *directory* is another word for folder.) The shell printed its current directory, then showed a new prompt. The new prompt is how a shell says "that command has finished; I'm waiting for the next one."
+**Understand.** `pwd` stands for "print working directory". (*Working directory* and *current directory* mean the same thing, and *directory* is another word for folder.) The shell printed its current directory, then showed a new prompt. The new prompt is how a shell says "that command has finished; I'm waiting for the next one." While a program is still running there's no prompt, and if one ever runs for ever, **Ctrl+C** (hold Ctrl, press C) asks it to stop.
 
 The current directory is a setting **of the running shell**, not of your computer. Open a second terminal and it has a current directory of its own. Every program the shell starts is given a copy of it, which matters in a moment.
 
@@ -95,7 +95,17 @@ mkdir scratch
 ls
 ```
 
-The first `ls` prints nothing, because the folder is empty. `mkdir scratch` makes a folder (`mkdir` means "make directory") and PowerShell describes what it made; a `Mode` starting with `d` means a directory. The second `ls` lists it. Look at the file tree on the left: `scratch` is there too. The terminal and the file tree look at the same real folder.
+The first `ls` prints nothing, because the folder is empty. `mkdir scratch` makes a folder (`mkdir` means "make directory") and PowerShell describes what it made:
+
+```text
+    Directory: C:\Users\you\Documents\forge
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----          05/10/2026    15:00                scratch
+```
+
+A `Mode` starting with `d` means a directory; `Length` is empty because a folder has no size of its own. The second `ls` lists it. Look at the file tree on the left: `scratch` is there too. The terminal and the file tree look at the same real folder.
 
 Now move:
 
@@ -129,12 +139,14 @@ There are two kinds of path:
 - An **absolute path** starts from the top of the drive: `C:\Users\you\Documents\forge\scratch`. It names the same folder wherever you are.
 - A **relative path** is looked up starting from the current directory: `scratch` means "the `scratch` inside wherever I am now". From a different current directory it means a different folder, or nothing at all.
 
+A path with a space in it, like `C:\Users\Jane Doe\Documents`, must be put in quotes: `cd "C:\Users\Jane Doe\Documents"`. The shell splits what you type into words at spaces (you'll see exactly how later in this lesson), so without quotes it would read `C:\Users\Jane` and `Doe\Documents` as two separate words.
+
 Traced, with the current directory at each point:
 
 ```text
-command        current directory before       "scratch" means
-cd scratch     C:\Users\you\Documents\forge   C:\Users\you\Documents\forge\scratch
-cd ..          ...\forge\scratch              (not used; .. means ...\forge)
+command        current directory before            the path typed means
+cd scratch     C:\Users\you\Documents\forge        C:\Users\you\Documents\forge\scratch
+cd ..          C:\Users\you\Documents\forge\scratch C:\Users\you\Documents\forge
 ```
 
 In PowerShell, `ls`, `pwd` and `cd` are short nicknames (**aliases**) for commands named `Get-ChildItem`, `Get-Location` and `Set-Location`. The short names are the ones macOS and Linux use, so the same habits work everywhere.
@@ -157,7 +169,7 @@ It prints nothing when it works. (Its alias is `rm`.) Check with `ls`, or look a
 
 **Understand.** Deleting from the terminal **skips the Recycle Bin**: there's no undo. If the folder still had files in it, PowerShell would stop and ask first, and the default answer to its question is *Yes*. Read the question before pressing Enter.
 
-Two habits that save a lot of typing: **↑** brings back the previous command, and **Tab** finishes a file or folder name you've started typing.
+Two habits that save a lot of typing: **↑** brings back the previous command, and **Tab** finishes a file or folder name you've started typing. PowerShell writes the finished name its own way, `.\scratch\` for `scratch`: `.` means "this folder", and the `\` at the end marks a folder, so it's the same path.
 
 > **Engineer:** commands that can't be undone deserve a pause. Later in this chapter git will give you an undo for your files, and that's a large part of why engineers use it.
 
@@ -177,7 +189,7 @@ choice: Guess that you meant python, and run it
 choice: Report that it can't find a program called pyhton
 choice: Run nothing and print nothing
 answer: Report that it can't find a program called pyhton
-explain: A shell doesn't guess. It looks for a program whose name is exactly the word you typed, and there isn't one called `pyhton`, so it reports an error. The first line says it: *The term 'pyhton' is not recognized*. The `+ ~~~~~~` line underlines the part it couldn't find. The remaining lines are details meant for other programs, and you can usually skip them.
+explain: A shell doesn't guess. It looks for a program whose name is exactly the word you typed, and there isn't one called `pyhton`, so it reports an error. The first line says it: *The term 'pyhton' is not recognized*. That's all PowerShell 7 prints. The older Windows PowerShell (version 5, with a blue window) adds more lines: one with `+ ~~~~~~` underlining the part it couldn't find, and details meant for other programs that you can usually skip.
 ```
 
 ```powershell
@@ -198,7 +210,7 @@ C:\Python314\python.exe
 
 Your version and location may differ. This series needs **Python 3.12 or newer**.
 
-If the shell says `python` isn't recognized, or opens the Microsoft Store, install Python from [python.org](https://www.python.org/downloads/). In the installer, tick **Add python.exe to PATH**. Then close and reopen this window, so the terminal starts fresh and sees it.
+If the shell says `python` isn't recognized, or opens the Microsoft Store, install Python from [python.org](https://www.python.org/downloads/). Python.org offers it two ways, and either works: the **Python install manager** (run it, then run `py install 3.14` in a new terminal), or the classic **installer**, where you must tick **Add python.exe to PATH** on its first page. Then close and reopen this window, so the terminal starts fresh and sees it.
 
 **Understand: how the shell finds a program.** When you type a name like `python`, the shell has to turn it into a file to run. It reads an **environment variable** named `PATH`.
 
@@ -228,6 +240,37 @@ That's the whole mechanism behind "the Microsoft Store opens when I type python"
 ```check
 run "python -c \"import sys; assert sys.version_info >= (3, 12), sys.version\"" label="Python 3.12 or newer runs from the terminal" -- Install Python 3.12 or newer from python.org and tick "Add python.exe to PATH", then close and reopen this window.
 ```
+
+## Try Python one line at a time
+
+**Build:** use Python's interactive prompt, the place to try anything new.
+
+Type `python` on its own, with no file name, and press Enter. The prompt changes to `>>>`. Type each line after a `>>>` below and press Enter after each:
+
+```text
+>>> 2 + 3
+5
+>>> len("Forge")
+5
+>>> name = "Ada"
+>>> f"Hello, {name}!"
+'Hello, Ada!'
+>>> name.upper()
+'ADA'
+>>> exit()
+```
+
+> **REPL** (Read-Eval-Print Loop): Python reading one line you type, running it (*evaluating* it), printing the result, and waiting for the next line, until you leave with `exit()` (or Ctrl+Z, then Enter).
+
+**Understand.**
+
+- A line that has a value, like `2 + 3`, shows its value with no `print` needed. Text is shown with its quotes, `'Hello, Ada!'`, so you can see exactly where it starts and ends; `print` would show it without them.
+- Variables last until you leave: `name` set on one line is still there on the next. Leaving throws everything away, so nothing you try here can break your project.
+- `f"Hello, {name}!"` is an **f-string**: the `f` before the opening quote makes Python work out whatever is inside each pair of braces and put its text there. With `name` holding `"Ada"`, it becomes `"Hello, Ada!"`. You'll use f-strings constantly.
+
+Whenever a lesson meets something new, a function or an idea, it first has you try it **on its own**, here or in a few lines of a scratch file, before it goes into a real program. That's a **scratch example**: small, thrown away afterwards, and the fastest way to learn what something really does. Engineers do it all the time, with the documentation open beside them.
+
+> **Engineer:** when you're unsure what a piece of code does, don't guess and don't argue: try it on its own, with values you chose, and look. The REPL makes that cost a few seconds.
 
 ## Your first program, from the terminal
 
@@ -340,6 +383,16 @@ ZeroDivisionError: division by zero
 
 The traceback goes to a second output channel, **standard error**, which the terminal also shows. Keeping it separate from standard output lets other programs tell a program's real output from its error messages: the checks in this series look at the two separately.
 
+You can see them apart. `2>` is the shell's way of sending a program's standard error (channel number 2; standard output is 1) into a file instead of the terminal:
+
+```powershell
+python oops.py 2> err.txt
+Get-Content err.txt
+Remove-Item err.txt
+```
+
+The first line prints only `before`: standard output still comes to the terminal, but the traceback went into `err.txt`. `Get-Content` prints a file, and there it is. The last line deletes the file, which was only for looking.
+
 A program can also choose its exit code. `sys.exit(n)` ends the program right there, with exit code `n`. `-c` tells Python to run the text that follows as a program, which is handy for one-liners. Inside it, `;` separates statements, so several fit on one line:
 
 ```powershell
@@ -358,6 +411,7 @@ quitting
 
 ```check
 run "python oops.py" exit=1 stderr="ZeroDivisionError" label="oops.py fails with exit code 1 and a ZeroDivisionError" -- oops.py must divide by zero on line 2, as shown.
+missing err.txt -- Delete the file of error output: Remove-Item err.txt
 ```
 
 ## Your turn: a greeting with a usage message
@@ -391,7 +445,7 @@ name = sys.argv[1]
 print(f"Hello, {name}!")
 ~~~
 
-`f"Hello, {name}!"` is an **f-string**: the `f` before the opening quote makes Python evaluate whatever is inside each pair of braces and put its text there, so with `name` holding `"Ada"` it becomes `"Hello, Ada!"`. Checking for the wrong input first, and leaving early, is called a **guard clause**. Everything after it can assume the input is valid, so the main work isn't buried inside an `if`. `sys.argv[1]` is the first word after the script's name. Running off the end of the file exits with 0.
+`f"Hello, {name}!"` is the f-string you tried in the REPL. Checking for the wrong input first, and leaving early, is called a **guard clause**. Everything after it can assume the input is valid, so the main work isn't buried inside an `if`. `sys.argv[1]` is the first word after the script's name. Running off the end of the file exits with 0.
 ```
 
 ```check
@@ -419,6 +473,24 @@ run "python greet_all.py Ada Grace" stdout="Hello, Ada and Grace!" label="two na
 run "python greet_all.py Ada Grace Linus" stdout="Hello, Ada, Grace and Linus!" label="three names, commas then and"
 run "python greet_all.py Ada Grace Linus Barbara Edsger" stdout="Hello, Ada, Grace, Linus, Barbara and Edsger!" label="five names"
 run "python greet_all.py" exit=2 stdout="usage: python greet_all.py NAME..." label="no names: usage and exit code 2"
+```
+
+## Challenge: an exit code you choose
+
+**Optional, ★.** Write `count_args.py`: it prints how many arguments it was given, as `3 arguments`, and exits with that number as its exit code. Check it with `$LASTEXITCODE`. It shows that an exit code is just a number the program decides on: 0 only means "success" because everyone agrees it does.
+
+```check
+run "python count_args.py a b c" exit=3 stdout="3 arguments" label="three arguments, exit code 3"
+run "python count_args.py" exit=0 stdout="0 arguments" label="none, exit code 0"
+```
+
+## Challenge: find a program the way the shell does
+
+**Optional, ★★.** Write `which.py NAME`: it does the shell's `PATH` search itself, and prints the full path of the first `NAME.exe` it finds, or `NAME not found` and exits with 1. You'll need `os.environ["PATH"]`, which is the `PATH` text inside Python (`os` is the standard library's module for the operating system), `.split(";")`, `os.path.join(folder, name + ".exe")`, which joins a folder and a file name with the right separator, and `os.path.exists(path)`, which is `True` when a file exists. Compare its answer for `python` with `(Get-Command python).Source`: they should agree, because it's the same lookup.
+
+```check
+run "python which.py python" stdout="python.exe" label="finds python.exe on PATH"
+run "python which.py no-such-program" exit=1 stdout="not found" label="says so, and exits with 1, when there's none"
 ```
 
 ## What did we actually learn?

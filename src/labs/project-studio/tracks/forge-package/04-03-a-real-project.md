@@ -404,7 +404,7 @@ def run() -> None:
     main(sys.argv[1:])
 ```
 
-**Understand.** `run()` takes no arguments: it reads `sys.argv` itself and passes the words after the program's name to `main`. It's the one place that touches the real command line, and `main(args)` stays testable with any list. A command that a package installs, as the next steps do, calls a function with no arguments, and `run` is that function.
+**Understand.** `run()` takes no arguments: it reads `sys.argv` itself and passes the words after the program's name to `main`. It's the one place that touches the real command line, and `main(args)` stays testable with any list. A command that a package installs, as the next steps do, calls a function with no arguments, and `run` is that function. (The launcher actually runs `sys.exit(run())`: whatever `run` returns becomes the exit code, and `run` returning `None`, as it does, means 0.)
 
 ```check
 contains breakout/app.py "def run() -> None:"
@@ -450,13 +450,13 @@ packages = ["breakout"]
 
 **Understand: the parts.**
 
-- **`[project]`** describes the project for every Python tool, in a format defined by the Python packaging standards: its `name`, its `version`, a one-line `description`, which Pythons it supports, and the packages it needs to **run**. `requires-python = ">=3.12"` means "3.12 or newer": `>=` allows any version from that one up, where `==`, used in `requirements.txt`, pins exactly one. `dependencies` lists only pygame-ce: pytest, pyright and ruff are needed to *develop* the game, not to play it, so they aren't listed here.
-- **`[build-system]`** says which tool turns this folder into an installable package: **setuptools**, one of several **build backends**, at version 80 or newer. pip reads this table first, installs setuptools in a temporary environment, and asks it to do the building. `build-backend` names the module inside setuptools that pip calls to build: `setuptools.build_meta`.
+- **`[project]`** describes the project for every Python tool, in a format defined by the Python packaging standards: its `name`, its `version`, a one-line `description`, which Pythons it supports, and the packages it needs to **run**. `requires-python = ">=3.12"` means "3.12 or newer": `>=` allows any version from that one up, where `==`, used in `requirements.txt`, pins exactly one. `dependencies` lists only pygame-ce: pytest, pyright and ruff are needed to *develop* the game, not to play it, so they aren't listed here. (It pins an exact version, which suits an **application** like this game. A **library**, published for other projects to use, gives a range instead, `pygame-ce>=2.5,<3`, so it can be installed alongside other packages that need a slightly different version.)
+- **`[build-system]`** says which tool turns this folder into an installable package: **setuptools**, one of several **build backends**, at version 80 or newer. pip reads this table first, installs setuptools in a temporary environment, and asks it to do the building. (So installing even your own project downloads setuptools: an install with no internet connection fails here, and now you know why.) `build-backend` names the module inside setuptools that pip calls to build: `setuptools.build_meta`.
 - **`[tool.setuptools]`** tells setuptools which package to include: `breakout`. Left to itself, setuptools would try to discover packages by looking through the folder, and could pick up `tests` or the Chapter 0 scripts; saying exactly which one avoids surprises.
 
 pygame-ce is now written down in two places: here, and in `requirements.txt`. They do different jobs. `requirements.txt` is how *this* development environment is built, with every tool at an exact version; `pyproject.toml`'s `dependencies` is what anyone installing the game needs to run it. The next step connects them.
 
-A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 51 is about releases and what changing it means.
+A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 56 is about releases and what changing it means.
 
 ```check
 file pyproject.toml
@@ -538,7 +538,15 @@ git rm pytest.ini ruff.toml pyrightconfig.json
 
 **Understand.** `[tool.pytest.ini_options]`, `[tool.ruff]` and `[tool.pyright]` are the old files' settings, moved into one place, so one file describes the whole project. `testpaths = ["tests"]` tells pytest where the tests are, so it no longer searches every folder in the project.
 
-One setting doesn't move: `pytest.ini`'s `pythonpath = .`, which let the tests import `breakout` from the project folder. Without it, the tests can't find the game until the next step installs it, so don't run them until then.
+One setting doesn't move: `pytest.ini`'s `pythonpath = .`, which put the project folder on `sys.path` for pytest, whichever folder it was started from. From the project folder, the tests still pass without it, because `python -m pytest` puts the current folder on `sys.path` itself (lesson 4.1). Start pytest from inside `tests`, though, and they can't find the game:
+
+```powershell
+cd tests
+..\.venv\Scripts\python -m pytest -q test_breakout.py
+cd ..
+```
+
+That fails with `ModuleNotFoundError: No module named 'breakout'`: the current folder is `tests`, and there's no `breakout` in it. The next step fixes that for every folder, a better way than a pytest setting.
 
 ```check
 missing pytest.ini -- git rm pytest.ini ruff.toml pyrightconfig.json: their settings are in pyproject.toml now.
@@ -600,7 +608,20 @@ Two things are better now:
 
 And anyone who clones this project and runs `pip install -r requirements.txt` gets exactly the same setup.
 
-**One more generated thing.** Building the editable install also wrote a folder, `breakout.egg-info`, into the project: the package's **metadata** (its name, version and dependencies, read from `pyproject.toml`), in the form setuptools uses. Like `.venv` and `__pycache__`, it's generated from files you write, so it must not be committed (lesson 1.2). Add it to `.gitignore`:
+What editable doesn't cover: the **code** is live, but the project's **metadata** isn't. A change to `pyproject.toml` (the command's entry point, the dependencies, the version) means nothing until you install again. Keep that in mind for the bug hunt below. And the bare word `breakout`, with no `.venv\Scripts\` in front, works only while the environment is activated (lesson 0.2): activation is what puts `.venv\Scripts` on `PATH`. The checks always use the full path.
+
+(The wheel pip built is named `...-py3-none-any.whl`: any Python 3, no compiled code, any platform, a pure-Python wheel. As an editable wheel, it holds only the `.pth` file and the finder, not your code.)
+
+```check
+run ".venv/Scripts/breakout --test-run 600 --hold auto" stdout="frames=600 paddle_x=435 score=70" label="the breakout command runs the game" -- Add -e . to requirements.txt and run .venv\Scripts\python -m pip install -r requirements.txt.
+run "cd tests; ../.venv/Scripts/python -m pytest -q test_breakout.py" stdout="passed" label="the tests import the installed package from any folder"
+```
+
+## The metadata stays out of Git
+
+**Build:** ignore the folder the install wrote.
+
+Building the editable install also wrote a folder, `breakout.egg-info`, into the project: the package's **metadata** (its name, version and dependencies, read from `pyproject.toml`), in the form setuptools uses. Like `.venv` and `__pycache__`, it's generated from files you write, so it must not be committed (lesson 1.2). Add it to `.gitignore`:
 
 ```text file=.gitignore
 # Generated: rebuilt from requirements.txt with python -m venv .venv
@@ -608,6 +629,9 @@ And anyone who clones this project and runs `pip install -r requirements.txt` ge
 
 # Generated: Python's compiled bytecode
 __pycache__/
+
+# Your own experiments (lesson 1.1's scratch files): kept, never part of the project
+scratch/
 
 # Generated: package metadata, written by pip install -e .
 *.egg-info/
@@ -617,8 +641,92 @@ __pycache__/
 
 ```check
 git-ignored breakout.egg-info -- Add *.egg-info/ to .gitignore: it's generated by the install.
-run ".venv/Scripts/breakout --test-run 600 --hold auto" stdout="frames=600 paddle_x=435 score=70" label="the breakout command runs the game" -- Add -e . to requirements.txt and run .venv\Scripts\python -m pip install -r requirements.txt.
-run "cd tests; ../.venv/Scripts/python -m pytest -q test_breakout.py" stdout="passed" label="the tests import the installed package from any folder"
+```
+
+## Bug hunt: a command that won't start
+
+**Build:** nothing new: break the command the way a hurried teammate might, then find the cause with the debugging method.
+
+A teammate thinks the entry point should name the function that does the work, and changes one line of `pyproject.toml`:
+
+```toml
+breakout = "breakout.app:main"
+```
+
+Make that change yourself (it's the setup for the hunt), save, and run the game the two ways it can be started:
+
+```powershell
+.venv\Scripts\python -m breakout --test-run 5
+.venv\Scripts\breakout --test-run 5
+```
+
+Both work. **Observe** that: the change appears to be harmless. Now do what the next person to set up the project will do, and install it:
+
+```powershell
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\breakout --test-run 5
+```
+
+Now the command fails, while `python -m breakout` still works. Find out why with lesson 0.3's method before reading the hints: **reproduce** it (you just did), read the traceback **from the bottom**, form a **hypothesis** about what the launcher calls and with what, and check it against `app.py`. Then fix `pyproject.toml`, and think about what else you must do for the fix to take effect.
+
+```hints
+nudge: The traceback's last line names a function and an argument. Which function does the launcher call, and how many arguments does it give it? And why did the command keep working until you reinstalled?
+concept: The launcher calls the entry point's function with **no arguments** (this lesson's `run`). `main` needs one, `args`, so it fails with `TypeError: main() missing 1 required positional argument: 'args'`. It worked at first because the launcher in `.venv\Scripts` was made at the last install, from the old `pyproject.toml`: an editable install keeps code live, not metadata. `python -m breakout` never uses the entry point at all, so it couldn't show the bug.
+shape: Put `breakout = "breakout.app:run"` back in `[project.scripts]`, then reinstall with `.venv\Scripts\python -m pip install -r requirements.txt`, then run `.venv\Scripts\breakout --test-run 5`.
+answer: The entry point must name `run`, the function made to be called with no arguments, which reads the command line itself. Fix the line, **reinstall**, and the command works. Two lessons: a function's signature is part of its contract with whoever calls it, here a launcher you didn't write; and after changing `pyproject.toml`, reinstall, or you're testing the old metadata. A regression check for it is the first check below.
+```
+
+```check
+run ".venv/Scripts/breakout --test-run 5" stdout="frames=5" label="the installed command starts the game" -- The entry point must be breakout.app:run, and the project must be reinstalled after changing it.
+contains pyproject.toml "breakout = \"breakout.app:run\""
+```
+
+## argparse, on its own
+
+**Build:** a scratch program that tries Python's standard command-line parser before the game uses it.
+
+The game reads its command line by hand: find a word, take the one after it, check it, print a usage line. Python's standard library has a module that does all of that, `argparse`. Try it on a made-up program first:
+
+```python file=scratch/args_demo.py
+import argparse
+
+parser = argparse.ArgumentParser(prog="demo")
+parser.add_argument("--count", type=int, default=1)
+parser.add_argument("--colour", choices=["red", "blue"])
+parser.add_argument("--dry-run", action="store_true")
+
+print(parser.parse_args([]))
+print(parser.parse_args(["--count", "3", "--colour", "red", "--dry-run"]))
+options = parser.parse_args(["--count", "3"])
+print(options.count + 1, options.colour, options.dry_run)
+parser.parse_args(["--count", "three"])
+```
+
+```powershell
+.venv\Scripts\python scratch\args_demo.py
+```
+
+```text
+Namespace(count=1, colour=None, dry_run=False)
+Namespace(count=3, colour='red', dry_run=True)
+4 None False
+usage: demo [-h] [--count COUNT] [--colour {red,blue}] [--dry-run]
+demo: error: argument --count: invalid int value: 'three'
+```
+
+**Understand.** A **parser** is told which options exist (`add_argument`), then given the words (`parse_args`). It returns a **namespace**: an object with one attribute per option, named after it with dashes turned into underscores, `--dry-run` into `dry_run`. Traced:
+
+```text
+words                                      count   colour   dry_run
+[]                                         1       None     False    defaults: 1 given, None for the rest
+[--count 3 --colour red --dry-run]         3       'red'    True     "3" converted by type=int
+[--count three]                            error: int("three") fails, so: usage line, message, exit
+```
+
+`type=int` turns the text into a number (the namespace's `count` is the int 3, so `+ 1` gives 4). `choices` refuses anything not listed. `action="store_true"` makes an option that takes no value: present means `True`. And on a bad word, `argparse` prints the usage line and a message to standard error, then calls `sys.exit(2)`, which raises `SystemExit(2)` (lesson 2.4): that's why the last line is the last thing the program does, and why a test can catch it with `pytest.raises(SystemExit)`. The usage line was written for you.
+
+```check
+run ".venv/Scripts/python scratch/args_demo.py" exit=2 stdout="Namespace(count=3, colour='red', dry_run=True)" label="the scratch parser reads its options"
 ```
 
 ## Let argparse read the command line
@@ -692,7 +800,7 @@ options:
 - `argparse.ArgumentParser(prog="breakout", description=...)`: `prog` is the program's name in the usage line and the error messages (`usage: breakout ...`); without it, argparse would use the name of whatever was run, which differs between `python -m breakout` and `breakout`. `description` is the paragraph `--help` shows under the usage line.
 - `add_argument("--hold", choices=[...], default="none", ...)`: the value must be one of the choices, or it's an error; if the option isn't given, it's `"none"`. argparse only ever hands back text, so the choices and the default are the enum's *values*, the strings; `Hold(options.hold)` then turns the string into the member (lesson 3.4's lookup by value).
 - `parse_args(args)` returns a **namespace**: an object with one attribute per option, named after it with the dashes turned into underscores (`--test-run` becomes `options.test_run`), and `None` for options not given without a default.
-- **On an error**, it prints the usage line and a message to **standard error** (the separate output channel for errors, lesson 0.1), and calls `sys.exit(2)`, the "used wrong" code from lesson 0.1:
+- **On an error**, it prints the usage line and a message to **standard error** (the separate output channel for errors, lesson 0.1), and calls `sys.exit(2)`, the "used wrong" code from lesson 0.1. `sys.exit` raises `SystemExit(2)` (lesson 2.4), which is why `pytest.raises(SystemExit)` in the argument tests catches it, and `stopped.value.code` is 2:
 
 ```text
 breakout: error: argument --test-run: invalid int value: 'ten'
@@ -948,6 +1056,18 @@ run ".venv/Scripts/python -m pyright breakout" stdout="0 errors"
 git-message "command line"
 git-clean
 ```
+
+## Challenge: --version
+
+**Optional, ★.** Add `parser.add_argument("--version", action="version", version=...)`, with the version read from the installed metadata: `importlib.metadata.version("breakout")`. Test it with `capsys` (lesson 2.4). On a branch.
+
+## Challenge: a function that makes validators
+
+**Optional, ★★.** Write `int_between(low, high)`, which **returns** a validator function, and use it as `type=int_between(0, 100_000)` for `--lag-at`. Its error message must name both limits. A function that makes and returns another function, which remembers `low` and `high`, is called a **closure**; Chapter 11 uses them for signals.
+
+## Challenge: a real wheel
+
+**Optional, ★★.** Build a normal, non-editable wheel, `.venv\Scripts\python -m pip wheel . --no-deps -w dist`, make a second environment in the scratch folder, install the wheel into it, and run its `breakout`. Then change `model.py` in the project: the second environment's game doesn't change, because a normal install is a copy. Delete `dist` afterwards (or add it to `.gitignore`).
 
 ## What did we actually learn?
 

@@ -49,7 +49,7 @@ The entries, top to bottom:
 
 - The **empty first line** is an empty string, which means "the current directory". It's there because this command used `-c`. When Python runs a **script**, `python game.py`, the first entry is instead the **script's own folder**, wherever you ran it from. Either way it comes first, which is why a file `hello.py` next to your script can be imported, and also why naming your own file `random.py` breaks `import random` for scripts in that folder: yours is found first.
 - `python314.zip`, `DLLs` and `Lib` hold the **standard library**, the modules that come with Python (`sys`, `os`, `json`, `random`, …).
-- The two `site-packages` folders hold installed packages: one for your user account, one for this Python installation.
+- The two `site-packages` folders hold installed packages: one for your user account, one for this Python installation. (The user one is listed only if that folder exists, so you may see just one.)
 
 Try importing pygame now:
 
@@ -92,6 +92,8 @@ The file tree now shows `.venv`. The three things inside it that matter:
 - `.venv\pyvenv.cfg`: a short text file. Open it in the editor and read it.
 - `.venv\Scripts\python.exe`: this environment's Python. (On macOS and Linux: `.venv/bin/python`.)
 - `.venv\Lib\site-packages`: this project's packages. It holds only pip for now.
+
+There's also a one-line file, `.venv\.gitignore`, written by Python 3.13 and newer. It's for Git, the tool that saves your project's history, and lesson 1.2 explains it when you meet Git.
 
 **Understand: how a folder becomes a separate Python.** `.venv` doesn't contain a copy of Python. `.venv\Scripts\python.exe` is about 255 KB (255,320 bytes on the machine this lesson was written on), far smaller than a Python installation. It's a small **launcher**, and the separation comes from `pyvenv.cfg`:
 
@@ -179,6 +181,8 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 `RemoteSigned` lets scripts made on this computer run, and requires scripts downloaded from the internet to be signed by their publisher. `-Scope CurrentUser` changes it for you only and needs no administrator rights. Then run `Activate.ps1` again.
 
+(On macOS and Linux the script is `source .venv/bin/activate`.)
+
 Activation lasts only for this terminal session, because environment variables belong to a process (lesson 0.1). `deactivate` undoes it, and so does closing the terminal. That's why this series' checks never rely on it: they run `.venv\Scripts\python` by its path, which works whether or not you activated. The **Run** button does the same: when a project has a `.venv` folder, Run uses its Python.
 
 **Understand: `sys.version_info`.** One more thing both Pythons can tell you, which you'll need in a moment:
@@ -193,6 +197,21 @@ True
 ```
 
 `sys.version_info` is a **tuple**, a fixed-length sequence like a list that can't be changed, with names for its items. Tuples compare **item by item, left to right**, stopping at the first pair that differs: `(3, 14, 3, …) >= (3, 12)` compares 3 with 3 (equal, so go on), then 14 with 12 (larger, so the answer is `True`). If every item compared is equal and one tuple runs out, the shorter one counts as smaller. That's the check lesson 0.1's **Check my work** ran to make sure you had 3.12 or newer.
+
+Try the rule on its own in the REPL (lesson 0.1). Predict each answer before pressing Enter:
+
+```text
+>>> (3, 14, 3) >= (3, 12)
+True
+>>> (3, 11, 9) >= (3, 12)
+False
+>>> (3, 12) >= (3, 12, 0)
+False
+>>> (3, 12, 0) == (3, 12)
+False
+```
+
+The second stops at 11 against 12. The last two are the "shorter one is smaller" rule: `(3, 12)` runs out while `(3, 12, 0)` still has a `0`, so it counts as smaller, and the two aren't equal, even though a person would read both as "3.12". That's why the series compares with `>=` against the shortest tuple that says what it needs, `(3, 12)`.
 
 > **Engineer:** the environment's job is **isolation**: this project's packages can't affect another project, and another project's can't leak in. Isolation is one of the most important ideas in engineering. You'll meet it again as separate processes (a crashing game that can't take the editor down), separate tests that can't affect each other, and separate services that only talk through a contract.
 
@@ -248,9 +267,27 @@ verify: .venv/Scripts/python -c "import os, pygame; print('Inside .venv' if os.s
 **Understand: what pip did.** `-r requirements.txt` means "read the package list from this file". For each line, pip:
 
 1. asks PyPI for that package at that version;
-2. picks a **wheel**, a ready-to-install `.whl` file (a zip archive) built for your exact situation. Its name says which: `cp314` means CPython 3.14, and `win_amd64` means 64-bit Windows. A wheel made for another Python version or operating system won't be chosen;
+2. picks a **wheel**, a ready-to-install `.whl` file (a zip archive) built for your exact situation. Its name says which: `cp314` means CPython 3.14 (**CPython** is the standard Python, the one python.org gives you, named after the C language it's written in), and `win_amd64` means 64-bit Windows. A wheel made for another Python version or operating system won't be chosen;
 3. unpacks it into `site-packages`: here a `pygame` folder with the code;
 4. records what it installed in a `pygame_ce-2.5.8.dist-info` folder beside it, which is how `pip list` and `pip uninstall` know it's there.
+
+See what's installed now, and in exactly what form `requirements.txt` would need to record it:
+
+```powershell
+.venv\Scripts\python -m pip list
+.venv\Scripts\python -m pip freeze
+```
+
+```text
+Package   Version
+--------- -------
+pip       25.3
+pygame-ce 2.5.8
+
+pygame-ce==2.5.8
+```
+
+`pip list` shows every package in the environment as a table. `pip freeze` prints the installed packages in the `name==version` form of a requirements file (it leaves out pip itself, which comes with every environment). Here it's exactly your `requirements.txt`, because pygame-ce needs nothing else. Most packages aren't like that: a package can **depend on other packages**, and pip installs those too, called **transitive dependencies**. Your `requirements.txt` then pins only what *you* asked for, and `pip freeze` shows the rest. pytest, in Chapter 2, is the first package here that brings others with it.
 
 **Why `python -m pip` instead of just `pip`?** A bare `pip` is found by the `PATH` search, so it could be any Python's pip. `.venv\Scripts\python -m pip` can only be this environment's pip, installing into this environment. It's the same lookup-order lesson as before, avoided by naming the exact file.
 
@@ -314,7 +351,19 @@ run ".venv/Scripts/python -c \"import pygame; assert pygame.version.ver == '2.5.
 
 Check the environment first, then the version. The third row can't be checked automatically on your machine, since you don't have an old Python, so prove it works yourself: change `(3, 12)` to `(3, 99)` in your code, run it, see the message and the exit code, and change it back.
 
-Everything you need was in this lesson and the last: `sys.prefix`, `sys.base_prefix`, `sys.version_info`, and `sys.exit`. One trap: inside a Python string, a backslash starts an **escape sequence** (`\n` is a new line), so each backslash in `.venv\Scripts\python` must be typed as two, `\\`, to mean one real backslash.
+Everything you need was in this lesson and the last: `sys.prefix`, `sys.base_prefix`, `sys.version_info`, and `sys.exit`. One trap: inside a Python string, a backslash starts an **escape sequence** (`\n` is a new line), so each backslash in `.venv\Scripts\python` must be typed as two, `\\`, to mean one real backslash. See it in the REPL first:
+
+```text
+>>> print("a\nb")
+a
+b
+>>> len("\n")
+1
+>>> print("C:\\Users")
+C:\Users
+```
+
+`\n` is two characters to type and **one** character in the string: `len` says so. `\\` is likewise one backslash.
 
 Try it for about 10 minutes before taking a hint.
 
@@ -344,7 +393,8 @@ The two `\\` in the first message are each one backslash: inside a Python string
 
 ```check
 run ".venv/Scripts/python check_setup.py" stdout="Setup OK: Python 3." label="with the environment's Python, it reports the setup OK" -- sys.prefix and sys.base_prefix differ inside a virtual environment.
-run "python check_setup.py" exit=1 stdout="Not in a virtual environment." label="with the system Python, it says how to fix it and exits with 1" -- Compare sys.prefix with sys.base_prefix first, print the message and call sys.exit(1).```
+run "python check_setup.py" exit=1 stdout="Not in a virtual environment." label="with the system Python, it says how to fix it and exits with 1" -- Compare sys.prefix with sys.base_prefix first, print the message and call sys.exit(1).
+```
 
 ## Challenge: check every pinned package
 
@@ -357,6 +407,14 @@ This needs two things the series hasn't taught, on purpose. Practising finding t
 
 ```check
 run ".venv/Scripts/python check_setup.py" stdout="pygame-ce 2.5.8 OK" label="it reports pygame-ce 2.5.8 as OK"
+```
+
+## Challenge: two Pythons, explained
+
+**Optional, ★★.** Write `which_python.py`, which prints four lines: `sys.executable` (the Python running it), `sys.prefix`, `sys.base_prefix`, and the first entry of `sys.path` that ends with `site-packages`. Run it with the system `python`, then with `.venv\Scripts\python`, and write a comment at the top of the file explaining every line that differs between the two runs, and why.
+
+```check
+run ".venv/Scripts/python which_python.py" stdout=".venv" label="run with the environment's Python, it shows the environment"
 ```
 
 ## What did we actually learn?

@@ -304,11 +304,28 @@ if test_frames is not None:
     print(f"frames={frames} paddle_x={paddle.x} score={score} lives={lives} bricks={len(bricks)} inside={inside}")
 ```
 
-**Understand.** `ball.collidelist(bricks)` checks the ball against each `Rect` in the list, in order, and returns the **index** of the first one it overlaps, or `-1` if it overlaps none. `-1` can't be a real position in a list from the front, so it's safe to use for "none": a convention you'll see in many libraries, though it's a weak one, since forgetting to check for it gives a wrong answer instead of an error.
+**Understand.** `ball.collidelist(bricks)` checks the ball against each `Rect` in the list, in order, and returns the **index** of the first one it overlaps, or `-1` if it overlaps none. `-1` can't be a real position in a list from the front, so it's safe to use for "none": a convention you'll see in many libraries, though it's a weak one, since forgetting to check for it gives a wrong answer instead of an error. A special value that stands for "nothing" like this is called a **sentinel**.
+
+Try it on two bricks in the REPL:
+
+```text
+>>> import pygame
+>>> bricks = [pygame.Rect(0, 0, 10, 10), pygame.Rect(20, 0, 10, 10)]
+>>> pygame.Rect(22, 2, 4, 4).collidelist(bricks)
+1
+>>> pygame.Rect(50, 50, 1, 1).collidelist(bricks)
+-1
+>>> bricks.pop(1)
+Rect(20, 0, 10, 10)
+>>> len(bricks)
+1
+```
+
+The small rectangle at x 22 overlaps the second brick, index 1; the one far away overlaps nothing, so `-1`. `pop(1)` removes that brick and returns it, which the REPL shows.
 
 `bricks.pop(hit)` removes the item at that index from the list (and returns it, which isn't needed here). From the next frame on, the brick isn't drawn and can't be hit, because both drawing and collision go through the list. Then the ball reverses its up-down direction and the score goes up by 10.
 
-Lesson 1.4's bug hunt taught *set the direction from the facts, don't flip it*, because a ball that stays past a wall for several frames gets flipped back and forth. So why is flipping safe here? Because the brick is removed in the same frame it's hit. Next frame there's nothing left to overlap, so this flip can only ever happen once per brick. The wall never goes away, which is what made flipping wrong there.
+Lesson 1.4's bug hunt taught *set the direction from the facts, don't flip it*, because a ball that stays past a wall for several frames gets flipped back and forth. So why is flipping safe here? Because the brick is removed in the same frame it's hit. Next frame there's nothing left to overlap, so this flip can only ever happen once per brick. The wall never goes away, which is what made flipping wrong there. One case still goes wrong: the ball is 12 pixels across and the gap between bricks only 6, so it can overlap **two** bricks at once. The first is removed and the ball flips; next frame it still overlaps the second, so it flips back, and carries on through the wall. It's rare, and lesson 1.6 lists it among the script's honest simplifications.
 
 **A simplification, honestly stated:** the ball always reverses vertically, even when it hits a brick from the side, where reversing horizontally would be correct. Working out which side was hit needs the overlap measured in each direction, which Chapter 12's physics does properly. For now it looks fine almost all the time.
 
@@ -475,6 +492,18 @@ if test_frames is not None:
 2. `font.render(text, True, colour)` draws the text into a **new surface**, just big enough to hold it. `True` turns on **antialiasing**: edge pixels are blended with the background colour so curves look smooth rather than jagged.
 3. `screen.blit(surface, (16, 16))` copies that surface onto the screen with its top-left corner at (16, 16). **Blit** (from *block transfer*) is the name for copying one block of pixels onto another, and it's how every image in a pygame game gets onto the screen.
 
+See that the text really becomes a picture, sized to fit, in the REPL (after `import pygame` and `pygame.init()`):
+
+```text
+>>> font = pygame.font.Font(None, 36)
+>>> font.render("Hi", True, (255, 255, 255)).get_size()
+(24, 27)
+>>> font.render("Hello, Forge", True, (255, 255, 255)).get_size()
+(143, 27)
+```
+
+Same height, 27 pixels, because the font size is the same; the width grows with the text. That size is exactly what the centring challenge below needs.
+
 `render` makes a new surface every frame, even when the text hasn't changed. For one short line, that costs a fraction of a millisecond. If the game had hundreds of labels, it would be worth keeping each rendered surface and making a new one only when its text changes. Measuring whether that's needed comes in Chapter 14.
 
 ```check
@@ -560,6 +589,18 @@ contains breakout.py "You win!"
 **Optional, ★.** "Game over" and "You win!" are placed at hand-picked positions, so they're only roughly centred, and would be off-centre in any other font or size. Centre them exactly, whatever the text.
 
 You'll need to know that a surface has a `get_rect()` method, which returns a `Rect` the size of the surface at (0, 0), and that you can then move that `Rect`'s `center` (lesson 1.3) and pass the `Rect` to `blit` as the position. There's no automatic check for this one: run the game, lose on purpose, and look.
+
+## Challenge: rows worth more
+
+**Optional, ★.** The top row of bricks is worth 50 points, the next 40, down to 10 for the bottom row. You'll need each brick's row, which you can work out from its `y`, the way the wall was built. Notice how easily that calculation breaks if the wall's position changes: lesson 1.6 will have something to say about it. In a copy.
+
+## Challenge: tough bricks
+
+**Optional, ★★.** The top row needs two hits, and changes colour after the first. A `Rect` can't remember hits, so each brick needs more than a `Rect`: try a list of `[rect, hits_left]` pairs, and see what it does to every line that uses `bricks`. It's exactly the kind of strain that makes Chapters 2 and 3 give the program more structure. In a copy.
+
+## Challenge: side hits
+
+**Optional, ★★★.** A ball that hits a brick's side should bounce sideways, not up. Work out how much the ball and brick overlap across and how much down (`ball.clip(brick)` gives the overlapping `Rect`): if the overlap is narrower than it is tall, the ball came in from the side, so reverse `ball_vx` instead of `ball_vy`. In a copy.
 
 ## Done: commit it
 

@@ -211,7 +211,7 @@ run ".venv/Scripts/python -m pytest -q" stdout="56 passed"
 
 **Build:** nothing to write. Read a file of tests and judge each one.
 
-A colleague has written some tests for Breakout and asked for your review before they're added. Click **Create provided review_these_tests.py** and read it:
+A colleague has written some tests for Breakout and asked for your review before they're added. One line in it ends with `# pyright: ignore[reportPrivateUsage]`: a comment telling pyright to skip one named rule on that line (lesson 4.4's escape hatch). Notice it as you read. Click **Create provided review_these_tests.py** and read it:
 
 ```python file=review_these_tests.py provided
 # Tests a colleague wrote for Breakout, for you to review. Every one of them passes.
@@ -306,9 +306,31 @@ In `breakout/model.py`, in `Ball.bounce_off_walls`, change the right-wall condit
         if self.position.x >= WIDTH - BALL_RADIUS:
 ```
 
-Run all the tests. All 56 pass: none of them notices. Now run just the colleague's good test against a similar change at the left wall, `<` to `<=`: `.venv\Scripts\python -m pytest -q review_these_tests.py -k left_wall`. It fails. Put both back with `git restore breakout/model.py`.
+Run all the tests. All 56 pass: none of them notices. Now make the same change at the **left** wall too, `<` to `<=`, and run just the colleague's good test: `.venv\Scripts\python -m pytest -q review_these_tests.py -k left_wall`. It fails:
 
-**Understand: equivalence classes and boundaries.** Lesson 2.4 chose one test per **equivalence class**: a group of inputs the code treats the same way. For the left wall there are two classes: past the wall (`x < 6`: bounce) and not past it (`x ≥ 6`: leave alone). The project's tests pick a value well inside each class: x = 3 and x = 100. The mistake of writing `<=` instead of `<` only changes what happens at **exactly** x = 6, the **boundary** between the two classes, so tests that stay away from the boundary can't notice it.
+```text
+E       assert Vector2(180, -240) == Vector2(-180, -240)
+```
+
+Traced: the ball is at x = 6, exactly on the boundary, moving left. `6 <= 6` is `True`, so the changed code bounces it (`abs(-180)` is 180, moving right); the test expects it to keep going left. Put both back with `git restore breakout/model.py`.
+
+**Understand: equivalence classes and boundaries.** Lesson 2.4 chose its tests by this idea without naming it: one test per **equivalence class**, a group of inputs the code treats the same way. For the left wall there are two classes: past the wall (`x < 6`: bounce) and not past it (`x ≥ 6`: leave alone). The project's tests pick a value well inside each class: x = 3 and x = 100. The mistake of writing `<=` instead of `<` only changes what happens at **exactly** x = 6, the **boundary** between the two classes, so tests that stay away from the boundary can't notice it.
+
+Why is `<` right and `<=` wrong? Because of what the wall means: the wall is at x = 6 (the ball's radius from the edge), so a ball whose centre is exactly 6 is **touching** the wall, not past it, and the rule is to leave it alone until it's actually past. That's a decision, and `<=` would be a different decision, arguably just as reasonable. What makes `<=` a mistake here is that it isn't what the game was written to do. A boundary test pins the decision down, so nobody changes it by accident. Writing one is often what forces a vague rule to become exact.
+
+Try the idea on something you can hold in your head. A law says you can vote from the age of 18; someone wrote:
+
+```text
+>>> def can_vote(age):
+...     return age > 18
+...
+>>> can_vote(30), can_vote(5)
+(True, False)
+>>> can_vote(18)
+False
+```
+
+The two classes, adults and children, are both right. Only the boundary, 18 itself, shows that `>` should be `>=`.
 
 > **Boundary value**: an input at the edge where the code's behaviour changes, such as the exact value in a comparison. **Off-by-one error**: a mistake at a boundary, like `<` for `<=`, or a loop that runs once too often or too seldom. They're among the commonest bugs there are, precisely because ordinary tests don't go near the boundary.
 
@@ -355,13 +377,13 @@ print(f"caught {caught} of {len(MISTAKES)}")
 
 Read it before running it. For each of three mistakes, it:
 
-1. makes a **temporary folder** (`tempfile.TemporaryDirectory`), which Python deletes at the end of the `with` block (lesson 2.4's `with` again: a block that sets something up and is guaranteed to clean up after itself);
+1. makes a **temporary folder** (`tempfile.TemporaryDirectory`), which Python deletes at the end of the `with` block. That's lesson 2.4's context manager doing set-up at the start of the block and clean-up at the end, even if an error happens inside. In the REPL: `with tempfile.TemporaryDirectory() as folder: print(os.path.exists(folder))` prints `True`, and `os.path.exists(folder)` afterwards is `False`;
 2. copies the game and the tests into it (`shutil.copytree`), so your own files are never touched;
 3. makes the mistake in the copy of `model.py`: `read_text()` reads the whole file as one string, `str.replace(right, wrong)` swaps the correct line for the mistaken one, and `write_text(...)` writes the result back;
-4. runs `tests/test_boundaries.py` against the damaged copy, in that folder, so `import breakout` finds the copy. Why the copy, when lesson 4.3's editable install makes `import breakout` find your real project from anywhere? Because `-m` puts the current folder, the copy, first on `sys.path`, and Python's normal search through `sys.path` happens **before** the editable install's finder is asked: the finder was added at the end of the list of places Python looks. A `breakout` found on `sys.path` wins. `-p no:cacheprovider` stops pytest writing its cache folder there;
+4. runs `tests/test_boundaries.py` against the damaged copy, in that folder, so `import breakout` finds the copy. Why the copy, when lesson 4.3's editable install makes `import breakout` find your real project from anywhere? Because `-m` puts the current folder, the copy, first on `sys.path`, and Python's normal search through `sys.path` happens **before** the editable install's finder is asked: the finder was added at the **end** of `sys.meta_path`, a second list: of **finders**, the objects Python asks in turn to find a module. `.venv\Scripts\python -c "import sys; print(sys.meta_path)"` shows it: `PathFinder`, the finder that searches the folders in `sys.path`, comes before the editable install's `_EditableFinder`. A `breakout` found on `sys.path` wins. `-p no:cacheprovider` stops pytest writing its `.pytest_cache` folder into the copy, a little noise and time saved;
 5. counts the mistake as **caught** if the tests fail (a non-zero exit code), and **missed** if they still pass.
 
-A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 52 uses a full tool for it on the whole project.
+A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 57 uses a full tool for it on the whole project.
 
 ```check
 file check_walls.py -- Click "Create provided check_walls.py" above.
@@ -431,6 +453,18 @@ missing review_these_tests.py -- Delete review_these_tests.py: its job is done.
 git-message "boundaries"
 git-clean
 ```
+
+## Challenge: the paddle's edges
+
+**Optional, ★.** Write boundary tests for the paddle: at exactly `x == 0` and at exactly `x == WIDTH - PADDLE_WIDTH`, moving outwards, it must stay where it is. Then add mutations to a copy of `check_walls.py` that swap `max` and `min` in `clamp`, and check your tests catch them. On a branch.
+
+## Challenge: a mutation tool
+
+**Optional, ★★.** Turn `check_walls.py` into `mutate.py`, which reads its mutations from a list of `(file, right, wrong)` triples, runs the **whole** test suite against each, and prints the ones that survive. Find one mutation in `Brick.hit` that the current tests miss, and write the test that kills it.
+
+## Challenge: review your own tests
+
+**Optional, ★★.** Review `tests/test_game.py` against this lesson's rules, in a Markdown file on a branch: behaviour not implementation, boundaries, one reason to fail, names that read as specifications. Note also any test of trivial code, a line with no decision in it, which the behaviour tests already cover and which only adds maintenance. Propose one change, and make it.
 
 ## What did we actually learn?
 
