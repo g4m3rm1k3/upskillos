@@ -6,25 +6,46 @@
 // earlier version is cut from them: `without` removes whole functions, `swap` changes a line that must be there. A
 // cut that no longer finds its text is an error here, not a silent difference.
 
-import CARDS from './cribbage/cards.js?raw';
-import SCORE from './cribbage/score.js?raw';
-import CARD_TOOL from './cribbage/tools/cards.js?raw';
-import TABLE_6 from './cribbage/stages/table.6.js?raw';
-import TABLE_7 from './cribbage/stages/table.7.js?raw';
-import CARD_SPRITE from './cribbage/cardsprite.js?raw';
-import TABLE_TOOL from './cribbage/tools/table.js?raw';
-import FEATURES from './cribbage/features.js?raw';
-import PARTNER from './cribbage/partner.js?raw';
-import TABLE_8 from './cribbage/stages/table.8.js?raw';
-import TABLE_9 from './cribbage/stages/table.9.js?raw';
-import OPPONENT_9 from './cribbage/stages/opponent.9.js?raw';
-import OPPONENT_10 from './cribbage/stages/opponent.10.js?raw';
-import OPPONENT_11 from './cribbage/stages/opponent.11.js?raw';
-import OPPONENT from './cribbage/opponent.js?raw';
-import TABLE_10 from './cribbage/stages/table.10.js?raw';
-import TABLE_11 from './cribbage/stages/table.11.js?raw';
-import TABLE from './cribbage/table.js?raw';
+import CARDS_RAW from './cribbage/cards.js?raw';
+import SCORE_RAW from './cribbage/score.js?raw';
+import CARD_TOOL_RAW from './cribbage/tools/cards.js?raw';
+import TABLE_6_RAW from './cribbage/stages/table.6.js?raw';
+import TABLE_7_RAW from './cribbage/stages/table.7.js?raw';
+import CARD_SPRITE_RAW from './cribbage/cardsprite.js?raw';
+import TABLE_TOOL_RAW from './cribbage/tools/table.js?raw';
+import FEATURES_RAW from './cribbage/features.js?raw';
+import PARTNER_RAW from './cribbage/partner.js?raw';
+import TABLE_8_RAW from './cribbage/stages/table.8.js?raw';
+import TABLE_9_RAW from './cribbage/stages/table.9.js?raw';
+import OPPONENT_9_RAW from './cribbage/stages/opponent.9.js?raw';
+import OPPONENT_10_RAW from './cribbage/stages/opponent.10.js?raw';
+import OPPONENT_11_RAW from './cribbage/stages/opponent.11.js?raw';
+import OPPONENT_RAW from './cribbage/opponent.js?raw';
+import TABLE_10_RAW from './cribbage/stages/table.10.js?raw';
+import TABLE_11_RAW from './cribbage/stages/table.11.js?raw';
+import TABLE_RAW from './cribbage/table.js?raw';
 import BRAIN from './cribbage/brain.json';
+
+/** The files as text, with Unix line endings whatever the checkout has (Git on Windows may give \r\n). */
+const lf = (text: string) => text.replace(/\r\n/g, '\n');
+const CARDS = lf(CARDS_RAW);
+const SCORE = lf(SCORE_RAW);
+const CARD_TOOL = lf(CARD_TOOL_RAW);
+const TABLE_6 = lf(TABLE_6_RAW);
+const TABLE_7 = lf(TABLE_7_RAW);
+const CARD_SPRITE = lf(CARD_SPRITE_RAW);
+const TABLE_TOOL = lf(TABLE_TOOL_RAW);
+const FEATURES = lf(FEATURES_RAW);
+const PARTNER = lf(PARTNER_RAW);
+const TABLE_8 = lf(TABLE_8_RAW);
+const TABLE_9 = lf(TABLE_9_RAW);
+const OPPONENT_9 = lf(OPPONENT_9_RAW);
+const OPPONENT_10 = lf(OPPONENT_10_RAW);
+const OPPONENT_11 = lf(OPPONENT_11_RAW);
+const OPPONENT = lf(OPPONENT_RAW);
+const TABLE_10 = lf(TABLE_10_RAW);
+const TABLE_11 = lf(TABLE_11_RAW);
+const TABLE = lf(TABLE_RAW);
 
 /** Replace text that must be there. */
 export function swap(src: string, from: string | RegExp, to: string): string {
@@ -304,6 +325,7 @@ const OPPONENT_RULES = `// The AI's seat: for now a player with rules (scripts/p
 
 import { cardName } from './cards.js';
 import { rulesThrow, rulesPlay } from './partner.js';
+
 
 const AI = 1;
 

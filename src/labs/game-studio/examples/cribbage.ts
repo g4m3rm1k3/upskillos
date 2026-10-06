@@ -16,15 +16,25 @@
 
 import type { GameExample } from './types';
 import type { EnvSpec } from '../ml/env';
-import CARDS from './cribbage/cards.js?raw';
-import SCORE from './cribbage/score.js?raw';
-import FEATURES from './cribbage/features.js?raw';
-import PARTNER from './cribbage/partner.js?raw';
-import CARD_SPRITE from './cribbage/cardsprite.js?raw';
-import TABLE from './cribbage/table.js?raw';
-import OPPONENT from './cribbage/opponent.js?raw';
+import CARDS_RAW from './cribbage/cards.js?raw';
+import SCORE_RAW from './cribbage/score.js?raw';
+import FEATURES_RAW from './cribbage/features.js?raw';
+import PARTNER_RAW from './cribbage/partner.js?raw';
+import CARD_SPRITE_RAW from './cribbage/cardsprite.js?raw';
+import TABLE_RAW from './cribbage/table.js?raw';
+import OPPONENT_RAW from './cribbage/opponent.js?raw';
 import BRAIN from './cribbage/brain.json';
 import { CB_FINISHED, CB_FINISHED_NO_BRAIN } from './cribbageBuild';
+
+/** The files as text, with Unix line endings whatever the checkout has (Git on Windows may give \r\n). */
+const lf = (text: string) => text.replace(/\r\n/g, '\n');
+const CARDS = lf(CARDS_RAW);
+const SCORE = lf(SCORE_RAW);
+const FEATURES = lf(FEATURES_RAW);
+const PARTNER = lf(PARTNER_RAW);
+const CARD_SPRITE = lf(CARD_SPRITE_RAW);
+const TABLE = lf(TABLE_RAW);
+const OPPONENT = lf(OPPONENT_RAW);
 
 /** The game's scripts, by project path. */
 export const CRIBBAGE_SCRIPTS: Record<string, string> = {

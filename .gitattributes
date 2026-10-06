@@ -1,0 +1,2 @@
+# Game scripts that the build cuts and compares as text: always Unix line endings, on every machine.
+src/labs/game-studio/examples/cribbage/** text eol=lf
