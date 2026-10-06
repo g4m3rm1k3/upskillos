@@ -34,7 +34,6 @@ function peekLessonReturn(): { path: string | null; label: string | null } {
 
 export default function CodeLensPage() {
   const navigate = useNavigate()
-  const { taskbarStyle } = useGlobalTheme()
   const [handoff] = useState(peekHandoff)
   const [lessonReturn] = useState(peekLessonReturn)
   const cleanedUp = useRef(false)
@@ -65,9 +64,7 @@ export default function CodeLensPage() {
 
   return (
     <div
-      className={`fixed inset-x-0 top-0 bottom-0 overflow-hidden ${
-        taskbarStyle === 'mac' ? 'lg:bottom-16' : 'lg:bottom-12'
-      }`}
+      className="fixed inset-x-0 top-0 bottom-0 overflow-hidden"
       style={{
         background: '#080c14',
         zIndex: 1700,

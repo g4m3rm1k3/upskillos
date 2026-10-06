@@ -149,7 +149,7 @@ function TopBar() {
       };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] h-[52px] flex items-center px-4 gap-3 bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
+    <header className="fixed top-0 left-0 right-0 z-[1800] h-[52px] flex items-center px-4 gap-3 bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
 
       {/* LEFT — logo + app name + auth */}
       <div className="flex items-center gap-3 flex-shrink-0">
@@ -474,9 +474,9 @@ export default function AppShell({ children }) {
     return (
       <GrapherContext.Provider value={grapherContextValue}>
         <div
-          className={`h-screen overflow-hidden ${isCadProRoute || isFiveAxisRoute || isCodeLensRoute || isLearnRoute ? "bg-[#08111f]" : "bg-white dark:bg-slate-950"}`}
+          className={`h-screen overflow-hidden ${isCadProRoute || isFiveAxisRoute || isCodeLensRoute || isLearnRoute ? "bg-[#08111f]" : "bg-white dark:bg-slate-950"} relative z-[1700]`}
         >
-          <div className="h-[calc(100vh-var(--dock-space))] w-full overflow-hidden">
+          <div className="h-screen w-full overflow-hidden">
             {children ?? <Outlet />}
           </div>
           <Suspense fallback={null}>
@@ -639,7 +639,7 @@ export default function AppShell({ children }) {
 
           {/* Main content */}
           <main
-            className={`transition-[padding] duration-500 ease-in-out ${isChemistryRoute || isFullPageToolRoute || isScrollableFullPageRoute ? "flex flex-col h-[calc(100vh-var(--dock-space))] overflow-hidden" : isFullWidthRoute ? "min-h-screen pb-4 lg:pb-[var(--dock-space)]" : isDesktopRoute && !isMobile ? "h-screen" : "min-h-screen pb-4 lg:pb-[var(--dock-space)]"} ${isHealthRoute || isBrainRoute ? "bg-white dark:bg-slate-950" : ""} lg:pl-0 pt-[52px]`}
+            className={`transition-[padding] duration-500 ease-in-out ${isChemistryRoute || isFullPageToolRoute || isScrollableFullPageRoute ? "flex flex-col h-screen relative z-[1700] overflow-hidden" : isFullWidthRoute ? "min-h-screen pb-4 lg:pb-[var(--dock-space)]" : isDesktopRoute && !isMobile ? "h-screen" : "min-h-screen pb-4 lg:pb-[var(--dock-space)]"} ${isHealthRoute || isBrainRoute ? "bg-white dark:bg-slate-950" : ""} lg:pl-0 pt-[52px]`}
             style={{
               paddingRight: scratchSnap === "right" ? `${scratchSnapW}px` : undefined,
               ...(scratchSnap === "left"
