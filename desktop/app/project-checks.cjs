@@ -93,7 +93,13 @@ async function shellRun(cmd, opts = {}) {
     const wrapped = `$global:LASTEXITCODE = 0\n${cmd}\nif (-not $?) { if ($LASTEXITCODE) { exit $LASTEXITCODE } else { exit 1 } }\nexit $LASTEXITCODE`
     return capture('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', wrapped], opts)
   }
-  return capture(process.env.SHELL || '/bin/zsh', ['-l', '-c', cmd], opts)
+  return capture(process.env.SHELL || '/bin/zsh', ['-l', '-c', unixVenvPaths(cmd)], opts)
+}
+
+// Lessons write a virtual environment's programs the Windows way, `.venv/Scripts/python`.
+// On macOS and Linux the same programs are in `.venv/bin/`, so a check runs them from there.
+function unixVenvPaths(cmd) {
+  return cmd.replace(/(^|[\s"'=(])(\.?[\w.-]*venv)[\\/]Scripts[\\/]([\w.-]+?)(?:\.exe)?(?=$|[\s"')])/g, '$1$2/bin/$3')
 }
 
 // GIT_CEILING_DIRECTORIES stops Git from walking up past the project folder. Without it, a
@@ -480,4 +486,4 @@ async function runAll(ctx, checks) {
   return { ok: true, results }
 }
 
-module.exports = { runChecks, CHECK_KINDS: Object.keys(CHECKS), shellRun, parseTestOutput }
+module.exports = { runChecks, CHECK_KINDS: Object.keys(CHECKS), shellRun, parseTestOutput, unixVenvPaths }

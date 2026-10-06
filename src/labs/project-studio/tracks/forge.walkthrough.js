@@ -1696,6 +1696,8 @@ export const WALKTHROUGH = {
       `${PLAYERS_SQL} "CREATE TABLE scores (id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL REFERENCES players (id), level TEXT NOT NULL, points INTEGER NOT NULL CHECK (points >= 0), played_at TEXT NOT NULL) STRICT"`,
       `${PLAYERS_SQL} "INSERT INTO scores (player_id, level, points, played_at) VALUES (1, 'Classic', 400, '2026-10-04T15:30:05+00:00'), (2, 'Classic', 70, '2026-10-04T15:41:00+00:00'), (1, 'Castle', 150, '2026-10-05T09:02:30+00:00')"`,
       `${PLAYERS_SQL} "INSERT INTO players (name) VALUES ('Mia') ON CONFLICT (name) DO NOTHING"`,
+      `${PLAYERS_SQL} "INSERT INTO scores (player_id, level, points, played_at) SELECT id, 'Classic', 5, '2026-10-05T10:00:00+00:00' FROM players WHERE name = 'Zoe'"`,
+      `${PLAYERS_SQL} "INSERT INTO scores (player_id, level, points, played_at) SELECT id, 'Classic', 5, '2026-10-05T10:00:00+00:00' FROM players WHERE name = 'Sam'"`,
     ],
   },
   [`${L71}#The app records who played`]: {
@@ -1720,6 +1722,7 @@ export const WALKTHROUGH = {
     ],
   },
   [`${L72}#Which design is this file?`]: { run: [`${PLAYERS_SQL} "PRAGMA user_version = 7"`] },
+  [`${L72}#A column the old files don't have`]: { run: [`${PLAYERS_SQL} "ALTER TABLE scores ADD COLUMN won INTEGER"`] },
   [`${L72}#A migration that stops halfway`]: { run: [HALF_DEMO, HALF_DEMO], allowFailure: true },
   [`${L72}#Your turn: wins, recorded and read back`]: {
     ...winsAnswer(LOAD_WON, true),

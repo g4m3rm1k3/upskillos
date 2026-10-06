@@ -83,7 +83,7 @@ run ".venv/Scripts/python -m pytest -q" stdout="114 passed"
 
 **Build:** look inside your `scores.db` for a version number.
 
-SQLite keeps a few numbers in the first 100 bytes of every database file, its **header**. One of them, `user_version`, belongs to you: SQLite never uses it, and starts it at 0. A **pragma** (lesson 7.1) reads it and sets it:
+SQLite keeps a few numbers in the first 100 bytes of every database file, its **header**. One of them, `user_version`, belongs to you: SQLite never uses it, and starts it at 0. A **pragma** (lesson 7.1: a setting of SQLite itself) reads it and sets it. Unlike `foreign_keys`, which belongs to a connection, `user_version` is stored **in the file**, so it's still there next time:
 
 ```powershell
 .venv\Scripts\python -m sqlite3 scores.db "PRAGMA user_version"
@@ -104,7 +104,7 @@ Now set it on the practice database from lesson 7.1, and read it back:
 (7,)
 ```
 
-**Understand.** Your `scores.db` says 0, and so would a database made a minute ago by lesson 6.3's code, with no players table at all, and so would a brand new empty file. Three different designs, one number. Nothing in the file says which design it has, so a program opening it can only guess. The fix is to give every design a number and write that number into the file whenever its design changes. `user_version` is the place SQLite gives you for it.
+**Understand.** Your `scores.db` says 0, and so would a database made by lesson 6.3's code, with no players table at all, and so would a brand new empty file. Three different designs, one number. (Lesson 7.1 had you delete your Chapter 6 files, because no player ever had one: they only ever existed on your computer. So from here on, a version-0 file is either empty or lesson 7.1's design. A game that had shipped Chapter 6's design to players would need to handle that one too, and the step "Every change, in order" shows what goes wrong if it doesn't.) Nothing in the file says which design it has, so a program opening it can only guess. The fix is to give every design a number and write that number into the file whenever its design changes. `user_version` is the place SQLite gives you for it.
 
 ```check
 run ".venv/Scripts/python -m sqlite3 players.db \"PRAGMA user_version\"" stdout="(7,)" label="players.db remembers the version you gave it"
@@ -114,6 +114,22 @@ run ".venv/Scripts/python -m sqlite3 scores.db \"PRAGMA user_version\"" stdout="
 ## A column the old files don't have
 
 **Build:** a score records whether the game was won.
+
+First, try the one new piece of SQL on the practice file. `ALTER TABLE` changes a table that already exists, and `ADD COLUMN` adds a column to it, in the shell on `players.db`:
+
+```sql
+ALTER TABLE scores ADD COLUMN won INTEGER;
+SELECT * FROM scores;
+```
+
+```text
+(1, 1, 'Classic', 400, '2026-10-04T15:30:05+00:00', None)
+(2, 2, 'Classic', 70, '2026-10-04T15:41:00+00:00', None)
+(3, 1, 'Castle', 150, '2026-10-05T09:02:30+00:00', None)
+(4, 2, 'Classic', 5, '2026-10-05T10:00:00+00:00', None)
+```
+
+Every row is still there, and each has gained a last column holding `None`: the table changed shape around the data, and the rows already there got `NULL` in the new column. Type `.quit`.
 
 A score of 400 in a game that was won and 400 in a game that was lost are different results, and the statistics in lesson 7.3 will want to tell them apart. The scores table gets a new column, `won`, and `Score` a new field:
 
@@ -306,6 +322,8 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 - Migration 1 is lesson 7.1's design. It's the only one with `IF NOT EXISTS`: files made before versions existed already have those tables, at version 0, and for them migration 1 must change nothing but the number.
 - Migration 2 is the new column. `ALTER TABLE scores ADD COLUMN won ...` adds it to an existing table, keeping every row; the rows already there get `NULL` in the new column, which is the honest value: nobody recorded whether those games were won. A migration can't invent data the program never collected.
 
+SQLite's `ALTER TABLE` is limited, and the next migration you write may meet the limits. It can add a column, rename a column or a table, and drop a column, but it can't change a column's type or its rules, or add a constraint to a table that exists; and an added column can't be `NOT NULL` without a default (`Cannot add a NOT NULL column with default value NULL`), or have a default that's worked out, like the current time (`Cannot add a column with non-constant default`). For everything else, the standard procedure is: create the new table under another name, copy the rows across with lesson 7.1's `INSERT ... SELECT`, drop the old table, and rename the new one, all in one transaction. A challenge below does it.
+
 **`migrate`** reads the file's version, then runs every migration after it, in order. Each script ends by setting `user_version` to that migration's number, so the file always says how far it has got. `range(version + 1, len(MIGRATIONS) + 1)` counts from the first migration the file hasn't had up to the last; the migration numbered `number` is at list position `number - 1`, since lists count from 0. Traced for three files:
 
 ```text
@@ -316,6 +334,17 @@ a file this code made        2         range(3, 3)   none: the range is empty   
 ```
 
 The last row is the one that runs every time the game starts: one `PRAGMA`, an empty loop, and nothing else.
+
+**Two files this code doesn't handle**, and it's worth being exact about both:
+
+```text
+file                         version   range(...)    migrations run                         version after
+a Chapter 6 file             0         range(1, 3)   1 (makes players; scores exists, so    2, but scores has no player_id
+                                                     left alone), 2 (adds won)
+a file from a newer game     3         range(4, 3)   none                                   3, a design this code doesn't know
+```
+
+The first is stamped version 2 with the wrong design: `IF NOT EXISTS` only checks that a table **called** `scores` exists, not what's in it. No such file exists any more (lesson 7.1 deleted them), which is why this lesson can leave it; a game with players would have to detect it, with `PRAGMA table_info(scores)`, which lists a table's columns. The second can happen as soon as a player goes back to an older copy of the game: it carries on with a design it doesn't understand. Refusing it is this lesson's first challenge.
 
 **Two rules come with this list.**
 
@@ -383,6 +412,33 @@ run ".venv/Scripts/python -m sqlite3 half.db \"PRAGMA user_version\"" stdout="(2
 ## All or nothing
 
 **Build:** run each migration inside a transaction.
+
+Lesson 6.3's transactions were started for you, by Python, before an `INSERT`, `UPDATE` or `DELETE`, and ended by `with db:`. A migration is mostly `CREATE` and `ALTER`, which Python doesn't start one for, and `executescript` commits any open transaction before it starts (lesson 7.1). So `with db:` around it would protect nothing. The script has to say it itself, in SQL: **`BEGIN`** starts a transaction, **`COMMIT`** saves it, **`ROLLBACK`** throws it away. Try them in the shell on `players.db`, where `user_version` is 7:
+
+```sql
+BEGIN;
+CREATE TABLE t (x INTEGER);
+SELECT name FROM sqlite_schema;
+ROLLBACK;
+SELECT name FROM sqlite_schema;
+BEGIN;
+PRAGMA user_version = 99;
+ROLLBACK;
+PRAGMA user_version;
+```
+
+```text
+('players',)
+('sqlite_autoindex_players_1',)
+('scores',)
+('t',)
+('players',)
+('sqlite_autoindex_players_1',)
+('scores',)
+(7,)
+```
+
+Table `t` existed inside the transaction and was gone after `ROLLBACK`; `user_version` went to 99 and came back to 7. Both a table's creation and the version number are undone by a rollback, which is exactly what a migration needs. (`sqlite_autoindex_players_1` is the index SQLite made by itself to keep `name` unique.) Type `.quit`.
 
 ```python file=breakout/scores.py
 """The scores players have made, kept in an SQLite database between games."""
@@ -474,7 +530,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 When a statement fails, `executescript` stops and raises, and the `COMMIT` at the end never runs: the transaction is left open, with the half-done work in it. The `except` block handles that:
 
 1. `db.rollback()` ends the open transaction by throwing away everything done in it: the `half` table and the version change.
-2. `raise` on its own, with no exception after it, raises the same exception again, so whoever called `migrate` still finds out it failed. Swallowing it would hide a broken migration and let the game carry on with the old design.
+2. `raise` on its own, with no exception after it, raises the same exception again, so whoever called `migrate` still finds out it failed, with the original traceback and message, `near "NOT": syntax error`. Swallowing it would hide a broken migration and let the game carry on with the old design.
 
 Traced for the broken migration 3 on a new file:
 
@@ -587,7 +643,27 @@ def test_a_migration_that_fails_changes_nothing(db: sqlite3.Connection, monkeypa
   would fail for no reason. In the failing-migration test, `newest` is read **before** the broken migration is
   added, since afterwards the list is one longer.
 - `test_opening_a_database_again_runs_no_migration_twice`: if `migrate` ran migration 2 again, `ADD COLUMN won` would fail with `duplicate column name: won`, and `open_scores` would raise. Opening a file twice is what every player does every day.
-- `test_a_migration_that_fails_changes_nothing` needs a broken migration, without breaking the real list. **`monkeypatch`** is a fixture pytest provides: `monkeypatch.setattr(scores, "MIGRATIONS", new_list)` sets the module's `MIGRATIONS` to `new_list` for this test only, and puts the original back afterwards, however the test ends, like a `yield` fixture's teardown (lesson 6.5). `migrate` looks up `MIGRATIONS` in its module each time it runs, so it sees the patched list.
+- `test_a_migration_that_fails_changes_nothing` needs a broken migration, without breaking the real list. **`monkeypatch`** is a fixture pytest provides: `monkeypatch.setattr(scores, "MIGRATIONS", new_list)` sets the module's `MIGRATIONS` to `new_list` for this test only, and puts the original back afterwards, however the test ends, like a `yield` fixture's teardown (lesson 6.5). See both halves on something simple first, in `tests/test_scratch_monkeypatch.py`:
+
+```python
+import math
+
+import pytest
+
+
+def test_patched(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(math, "pi", 3)
+    assert math.pi == 3
+
+
+def test_restored():
+    assert math.pi > 3.14
+```
+
+`.venv\Scripts\python -m pytest -q tests/test_scratch_monkeypatch.py` gives `2 passed`: `pi` was 3 inside the first test, and back to 3.14159... for the second. Delete the file afterwards (`Remove-Item tests/test_scratch_monkeypatch.py`).
+
+Why does `migrate` see the patched list? Because it looks up the name `MIGRATIONS` in its module **each time it runs**, and `setattr` changed what that name means in the module. Patch the wrong name and it wouldn't: `from breakout.scores import MIGRATIONS` in the test makes a second name, in the test's module, for the same list (lesson 2.3: import binds names), and `monkeypatch.setattr` on **that** name would leave `scores.MIGRATIONS`, the one `migrate` reads, untouched. Patch the name where it's used.
+
 - `[*scores.MIGRATIONS, broken]` makes a **new** list. The demo in the last step used `append`, which changes the list itself: fine in a Python that exits straight afterwards, but in a test it would change the one list every other test in the run uses, and `monkeypatch` would only put back the name, not undo the change to the list. Rebinding versus mutating, from lesson 2.2.
 
 ```check
@@ -676,6 +752,18 @@ run ".venv/Scripts/python -m ruff check ." stdout="All checks passed!"
 git-message "won"
 git-clean
 ```
+
+## Challenge: a file from the future
+
+**Optional, ★.** Make `migrate` refuse a file whose version is higher than `len(MIGRATIONS)`, raising `sqlite3.DatabaseError("made by a newer version of the game")`, so the app says "playing without keeping scores" instead of carrying on with a design it doesn't know. Test it by setting `PRAGMA user_version = 99` on a file in `tmp_path`. On a branch.
+
+## Challenge: a column that can't be NULL
+
+**Optional, ★★.** On a branch you **won't merge** (lesson 7.3 needs `NULL` in `won`), write a migration 3 that makes `won` `NOT NULL DEFAULT 0` the long way: create `scores_new` with the new rule, `INSERT INTO scores_new SELECT ...` with `COALESCE(won, 0)` (lesson 7.3's "first value that isn't NULL"), drop `scores`, rename `scores_new` to `scores`, all between `BEGIN` and `COMMIT`. Test it against `LESSON_7_1_DATABASE`.
+
+## Challenge: a copy before changing anything
+
+**Optional, ★★.** Real programs back up a player's file before migrating it. Make `open_scores` copy the file to `scores.db.bak` (`db.backup(...)`, or a file copy before connecting) when, and only when, at least one migration is about to run. Test both cases with `tmp_path`. On a branch.
 
 ## What did we actually learn?
 

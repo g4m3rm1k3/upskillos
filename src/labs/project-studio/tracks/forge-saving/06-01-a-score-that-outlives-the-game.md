@@ -345,6 +345,7 @@ the file after                  [{"level": "Classic", "points": 70, ...}, {"leve
 question: The file holds 1,000 scores. How many scores does `add_score` write to the file to add one more?
 answer: 1001
 explain: `add_score` loads every score, makes a new list with one more, and `save_scores` writes the whole list back: 1,000 old scores, rewritten unchanged, plus the new one. The work grows with the file, not with what changed.
+verify: .venv/Scripts/python -c "old = ['score'] * 1000; written = [*old, 'new score']; print(len(written))"
 ```
 
 Rewriting the whole file to add one score is fine for a few hundred scores and a problem for a million; lesson 6.3 comes back to it.

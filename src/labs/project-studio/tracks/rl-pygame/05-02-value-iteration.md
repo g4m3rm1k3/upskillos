@@ -244,9 +244,235 @@ verify: .venv/Scripts/python -c "from grid import GridWorld, MAPS; from mdp impo
 run ".venv/Scripts/python -m pytest -q tests/test_best.py -k optimal" label="value_iteration finds the optimal values" -- value_iteration is evaluate_policy with the weighted average replaced by q_from_v(P, R, V, gamma).max(axis=1).
 ```
 
-## Plan in the window
+## Plan in the window: both methods
 
-The finished `planner_view.py` shows the values, plus the greedy arrows for whatever sweep is on screen. Two keys switch what's being computed: **O** flips between the random policy's values and the optimal ones, and **S** turns the ice on and off.
+**This step: give `planner_view.py` a `solve` function and a `mode`, so one window can show either the random policy's values or value iteration's.**
+
+Lesson 5.1's window could only evaluate the random policy. `solve` puts the choice in one place: it builds the tables, then runs `evaluate_policy` for `"random"` or `value_iteration` for `"optimal"`. `run` takes a `mode` instead of a slip (slip comes back as a key in two steps), and the panel names the mode.
+
+```python file=planner_view.py
+import sys
+
+import pygame
+
+from chart import mix
+from grid import ENDS, MAPS, GridWorld
+from mdp import tables
+from planning import evaluate_policy, uniform_policy, value_iteration
+from world_view import BACKGROUND, cell_rect, draw_panel, draw_world, window_size
+
+GAMMA = 0.9
+LOW, HIGH = -1.0, 1.0
+COLD, WARM, HOT = (127, 29, 29), (30, 41, 59), (45, 212, 191)
+TEXT = (226, 232, 240)
+MODES = {"random": "values of the random policy", "optimal": "value iteration: the best values"}
+
+
+def shade(value):
+    if value >= 0:
+        return mix(WARM, HOT, min(value / HIGH, 1.0))
+    return mix(WARM, COLD, min(value / LOW, 1.0))
+
+
+def draw_values(screen, font, env, V):
+    for state in range(env.n_states):
+        cell = env.cell_of(state)
+        if env.tile(cell) in ENDS + "#":
+            continue
+        rect = cell_rect(cell)
+        pygame.draw.rect(screen, shade(V[state]), rect.inflate(-2, -2))
+        screen.blit(font.render(f"{V[state]:+.2f}", True, TEXT), (rect.x + 6, rect.y + 6))
+
+
+def solve(env, mode):
+    P, R, terminal = tables(env)
+    if mode == "random":
+        _, history = evaluate_policy(P, R, terminal, uniform_policy(env.n_states, env.n_actions), GAMMA)
+    else:
+        _, history = value_iteration(P, R, terminal, GAMMA)
+    return P, R, history
+
+
+def run(name="walls", mode="optimal", max_frames=None):
+    slip = 0.0
+    env = GridWorld(MAPS[name], slip=slip)
+    P, R, history = solve(env, mode)
+    pygame.init()
+    screen = pygame.display.set_mode(window_size(env))
+    pygame.display.set_caption(f"Planning on {name}")
+    font = pygame.font.Font(None, 22)
+    clock = pygame.time.Clock()
+    sweep = 0
+    playing = False
+    frames = 0
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                sweep = min(sweep + 1, len(history) - 1)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                sweep = max(sweep - 1, 0)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                playing = not playing
+        if playing and frames % 6 == 0:
+            sweep = min(sweep + 1, len(history) - 1)
+        screen.fill(BACKGROUND)
+        draw_world(screen, env)
+        draw_values(screen, font, env, history[sweep])
+        lines = [MODES[mode], f"slip {slip}", f"sweep {sweep} of {len(history) - 1}",
+                 f"value of S: {history[sweep][env.state_of(env.start)]:+.4f}", "",
+                 "right / left: sweeps   space: play"]
+        draw_panel(screen, font, env, lines)
+        pygame.display.flip()
+        clock.tick(60)
+        frames += 1
+        if max_frames is not None and frames >= max_frames:
+            running = False
+    pygame.quit()
+    return frames
+
+
+if __name__ == "__main__":
+    run(sys.argv[1] if len(sys.argv) > 1 else "walls")
+```
+
+- Both methods return `(V, history)`. `solve` keeps only the history, because the window steps through it either way.
+- It returns `P` and `R` as well: the next step needs them to turn values into arrows.
+
+Run it: the window now opens on value iteration. Step through the sweeps and compare how many it needs with the random policy's evaluation in lesson 5.1.
+
+```check
+run ".venv/Scripts/python -m pytest -q tests/test_best.py -k history_for_each_mode" label="solve runs either method" -- solve: evaluate_policy with the random policy for "random", value_iteration for "optimal"; return P, R and the history.
+run ".venv/Scripts/python -m pytest -q tests/test_best.py -k window_opens" label="the window opens in both modes"
+```
+
+## Arrows from the values on screen
+
+**This step: draw the greedy policy's arrows for whatever sweep is on screen.**
+
+`greedy_policy(q_from_v(P, R, V, GAMMA))`, from earlier in this lesson, turns any values into the policy that acts greedily on them. Drawing it every frame shows the policy *those values* recommend, so you can watch it form.
+
+```python file=planner_view.py
+import sys
+
+import numpy as np
+import pygame
+
+from chart import mix
+from grid import ENDS, MAPS, GridWorld
+from mdp import tables
+from planning import evaluate_policy, greedy_policy, q_from_v, uniform_policy, value_iteration
+from qtable import ACTIONS
+from world_view import BACKGROUND, CELL, cell_rect, draw_panel, draw_world, window_size
+
+GAMMA = 0.9
+LOW, HIGH = -1.0, 1.0
+COLD, WARM, HOT = (127, 29, 29), (30, 41, 59), (45, 212, 191)
+TEXT = (226, 232, 240)
+ARROW = (241, 245, 249)
+MODES = {"random": "values of the random policy", "optimal": "value iteration: the best values"}
+
+
+def shade(value):
+    if value >= 0:
+        return mix(WARM, HOT, min(value / HIGH, 1.0))
+    return mix(WARM, COLD, min(value / LOW, 1.0))
+
+
+def draw_values(screen, font, env, V):
+    for state in range(env.n_states):
+        cell = env.cell_of(state)
+        if env.tile(cell) in ENDS + "#":
+            continue
+        rect = cell_rect(cell)
+        pygame.draw.rect(screen, shade(V[state]), rect.inflate(-2, -2))
+        screen.blit(font.render(f"{V[state]:+.2f}", True, TEXT), (rect.x + 6, rect.y + 6))
+
+
+def draw_policy(screen, env, policy):
+    for state in range(env.n_states):
+        cell = env.cell_of(state)
+        if env.tile(cell) in ENDS + "#" or (policy[state] > 0).all():
+            continue
+        centre = cell_rect(cell).center
+        for action in np.flatnonzero(policy[state] > 0):
+            d_row, d_col = ACTIONS[action]
+            tip = (centre[0] + d_col * CELL // 3, centre[1] + d_row * CELL // 3)
+            pygame.draw.line(screen, ARROW, centre, tip, 3)
+            pygame.draw.circle(screen, ARROW, tip, 4)
+
+
+def solve(env, mode):
+    P, R, terminal = tables(env)
+    if mode == "random":
+        _, history = evaluate_policy(P, R, terminal, uniform_policy(env.n_states, env.n_actions), GAMMA)
+    else:
+        _, history = value_iteration(P, R, terminal, GAMMA)
+    return P, R, history
+
+
+def run(name="walls", mode="optimal", max_frames=None):
+    slip = 0.0
+    env = GridWorld(MAPS[name], slip=slip)
+    P, R, history = solve(env, mode)
+    pygame.init()
+    screen = pygame.display.set_mode(window_size(env))
+    pygame.display.set_caption(f"Planning on {name}")
+    font = pygame.font.Font(None, 22)
+    clock = pygame.time.Clock()
+    sweep = 0
+    playing = False
+    frames = 0
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                sweep = min(sweep + 1, len(history) - 1)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                sweep = max(sweep - 1, 0)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                playing = not playing
+        if playing and frames % 6 == 0:
+            sweep = min(sweep + 1, len(history) - 1)
+        V = history[sweep]
+        screen.fill(BACKGROUND)
+        draw_world(screen, env)
+        draw_values(screen, font, env, V)
+        draw_policy(screen, env, greedy_policy(q_from_v(P, R, V, GAMMA)))
+        lines = [MODES[mode], f"slip {slip}", f"sweep {sweep} of {len(history) - 1}",
+                 f"value of S: {V[env.state_of(env.start)]:+.4f}", "",
+                 "right / left: sweeps   space: play"]
+        draw_panel(screen, font, env, lines)
+        pygame.display.flip()
+        clock.tick(60)
+        frames += 1
+        if max_frames is not None and frames >= max_frames:
+            running = False
+    pygame.quit()
+    return frames
+
+
+if __name__ == "__main__":
+    run(sys.argv[1] if len(sys.argv) > 1 else "walls")
+```
+
+- **`draw_policy`** draws an arrow for every action the policy chooses: a line from the cell's centre a third of the way towards the neighbour, with a dot at the tip. `np.flatnonzero(policy[state] > 0)` lists the chosen actions, so a tie between two actions shows two arrows.
+- It skips walls, endings and cells where all four actions tie (`(policy[state] > 0).all()`), such as every cell at sweep 0, where all the values are still 0.
+- **`V = history[sweep]`** names the values on screen once, because the numbers and the arrows both use them.
+
+```check
+run ".venv/Scripts/python -m pytest -q tests/test_best.py -k draws_arrows" label="arrows only where the policy chooses" -- draw_policy: skip walls, endings and cells where every action ties; otherwise draw an arrow for each action with probability above 0.
+```
+
+## Keys that change the world
+
+**This step: add two keys. O flips between the random policy and the optimal one; S turns the ice on and off.**
+
+Each key changes one setting, then rebuilds the world and the tables and starts again from sweep 0, so the window always shows exactly what the new world implies.
 
 ```python file=planner_view.py
 import sys
@@ -362,12 +588,8 @@ if __name__ == "__main__":
     run(sys.argv[1] if len(sys.argv) > 1 else "walls")
 ```
 
-What changed from lesson 5.1:
-
-- **`solve`** builds the tables and runs either `evaluate_policy` with the random policy or `value_iteration`, so one window shows both methods.
-- **`draw_policy`** draws an arrow for every action the policy chooses, and skips cells where all four tie (`(policy[state] > 0).all()`), such as the all-zero start of sweep 0.
-- **Arrows every frame** come from `greedy_policy(q_from_v(P, R, V, GAMMA))` on the values currently on screen, so you see the policy *those values* recommend.
-- Pressing O or S rebuilds the environment and the tables and starts again from sweep 0. The window shows exactly what the new world implies.
+- `event.key in (pygame.K_o, pygame.K_s)` handles both keys in one branch, because everything after the setting changes is the same for both.
+- `slip` is now a setting the window owns, which is why it left `run`'s parameters in the first step.
 
 Run it, step through the sweeps, and watch the arrows form. Press **O** to see the random policy's values, and notice that their greedy arrows already avoid the hole.
 

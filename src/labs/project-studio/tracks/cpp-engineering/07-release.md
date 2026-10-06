@@ -522,7 +522,7 @@ git-message "1.0.0"
 
 ## Step 7 — Where releases go from here
 
-**This step: read, then try the challenges. No checks.**
+**This step: read, then try the challenges. No checks. Steps 8 and 9 are the track's last required task.**
 
 In a real project the last mile is automated too. A second workflow runs when a tag is pushed, builds the packages on each system, and attaches them to a GitHub **release**:
 
@@ -551,6 +551,70 @@ Nobody builds a release on their own laptop, so every release is built the same 
 ### Challenges
 
 1. Keep a `CHANGELOG.md`: under a heading per version, list what was **Added**, **Changed** and **Fixed**, written for users, not developers. Write the 1.0.0 entry from `git log --oneline`.
-2. Add a `%` (remainder) operator, version **1.1.0**: tokenizer, parser (it has the rank of `*`), interpreter (`std::fmod`; zero is an error, like `/`), tests first, on a branch. Why MINOR and not PATCH?
-3. Add a `CMakePresets.json` with `default` and `asan` presets, so `cmake --preset asan` replaces the long configure command. Use the presets in `ci.yml`.
-4. Make CI build with both GCC and Clang on Ubuntu (a second matrix dimension, `compiler: [g++, clang++]`, passed as `-DCMAKE_CXX_COMPILER`). Which lesson's bug would Clang's warnings have caught?
+2. Add a `CMakePresets.json` with `default` and `asan` presets, so `cmake --preset asan` replaces the long configure command. Use the presets in `ci.yml`.
+3. Make CI build with both GCC and Clang on Ubuntu (a second matrix dimension, `compiler: [g++, clang++]`, passed as `-DCMAKE_CXX_COMPILER`). Which lesson's bug would Clang's warnings have caught?
+
+## Step 8 — Your change: a remainder operator
+
+**This step: no code is given. Add a `%` operator to interp, tests first, on a branch, and merge it into `main`.**
+
+Every practice in this track was shown to you first. This change uses all of them, and you decide the order of the work. `a % b` is the remainder after dividing `a` by `b`:
+
+| Line | Result |
+|---|---|
+| `7 % 3` | `= 1` |
+| `-7 % 3` | `= -1` (the sign follows the left side, as C++'s `std::fmod` does) |
+| `7.5 % 2` | `= 1.5` (numbers aren't only whole) |
+| `1 + 7 % 3 * 2` | `= 3` (`%` has the rank of `*` and `/`, and groups left to right) |
+| `5 % 0` | `error: division by zero`, and `calc` exits with 1 |
+
+The work, in the order a reviewer expects to see it:
+
+1. `git switch -c feature/remainder`.
+2. Write `tests/remainder_test.cpp` first, with at least three tests, one of them for remainder by zero (`CHECK_THROWS`, like `division_by_zero_is_an_error`). Build and watch them fail: a test you've never seen fail might not test anything.
+3. Make them pass. Three layers change: the tokenizer, the parser's `term`, and the interpreter. Follow how `/` goes through each.
+4. Run every test. One test written in lesson 1 now fails: find it, and decide whether your code or that test is wrong. When a behaviour changes on purpose, the test that pinned down the old behaviour changes with it, in the same commit, and the commit message says why.
+5. Run `ctest`, commit, switch to `main`, and merge the branch.
+
+**Before you merge, review your own change** the way a colleague would:
+
+- Does each commit message say what changed and why?
+- Is there a test that would fail if `%` had the rank of `+`? One that would fail if it threw away the fraction?
+- Does `-7 % 3` give what the table says, and do you know why?
+- Is anything in the diff unrelated to `%`? (`git diff main` shows it all.)
+
+```check
+git-has-branch feature/remainder -- git switch -c feature/remainder
+matches tests/remainder_test.cpp "(\bTEST(_F)?\s*\([\s\S]*){3}" label="remainder_test.cpp has at least three tests"
+matches tests/remainder_test.cpp "%\s*0\b" label="a test takes a remainder by zero"
+run "cmake --build build"
+tests "./build/interp_tests"
+run "./build/calc \"7 % 3\" \"-7 % 3\" \"7.5 % 2\" \"1 + 7 % 3 * 2\"" stdout="= 1\n= -1\n= 1.5\n= 3" label="calc gets the four remainders in the table right"
+run "./build/calc \"5 % 0\"" exit=1 stdout="error: division by zero" label="a remainder by zero is an error"
+git-branch main -- Switch back to main and merge: git switch main, then git merge feature/remainder
+git-merged feature/remainder main
+git-clean
+```
+
+## Step 9 — Release 1.1.0
+
+**This step: no code is given. Release your change as version 1.1.0: the version number, a changelog entry, a commit and a tag, all on `main`.**
+
+- **The version.** `%` adds something new and breaks nothing that worked before. Under semantic versioning that's a MINOR change: 1.0.0 becomes 1.1.0. (A PATCH, 1.0.1, would only fix a bug; a MAJOR, 2.0.0, would change behaviour people rely on.) There is one place to change it, from step 1.
+- **`CHANGELOG.md`.** Create it with a `## 1.1.0` heading and, under **Added**, one line about `%` written for someone who uses calc, not for someone who reads its code.
+- **Commit and tag**, as in step 6: the commit message names the version, and the tag `v1.1.0` goes on that commit.
+
+`calc --version` should now print `calc 1.1.0`, and `ctest` should still pass: its version test compares against the project's version, so it moved with it.
+
+```check
+matches CMakeLists.txt "project\s*\(\s*interp\s+VERSION\s+1\.1\.0" label="the project's version is 1.1.0"
+contains CHANGELOG.md "1.1.0"
+contains CHANGELOG.md "%"
+run "cmake --build build"
+run "./build/calc --version" stdout="calc 1.1.0"
+run "ctest --test-dir build" stdout="100% tests passed"
+git-clean
+git-tag v1.1.0 -- git tag -a v1.1.0 -m "interp 1.1.0"
+git-message "1.1.0"
+```
+

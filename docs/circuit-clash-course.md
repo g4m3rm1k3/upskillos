@@ -56,4 +56,4 @@ Core behavior in the reference must be implemented in the guided path. Optional 
 
 The sample's introductory promise is implemented. The remaining course work above is still open.
 
-Primary rendering reference: [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html). Engine selection must account for export targets; [Godot's C# web-export limitation](https://docs.godotengine.org/en/4.4/tutorials/export/exporting_for_web.html) is one reason not to label this browser implementation a Godot C# export.
+Primary rendering reference for the browser sample: [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html). The native course uses .NET 10 and Raylib-cs 8.1.0, as its first lesson sets up; only macOS on Apple silicon has been verified so far. Engine selection had to account for export targets; [Godot's C# web-export limitation](https://docs.godotengine.org/en/4.4/tutorials/export/exporting_for_web.html) is one reason not to label this browser implementation a Godot C# export.

@@ -78,4 +78,11 @@ export const WALKTHROUGH = {
   '01-03-pandas#Masks and groups': {
     wrong: [{ name: 'kept the rows that do not match', edit: [['return df[df[name] == value]', 'return df[df[name] != value]']], fails: [0] }],
   },
+  '01-03-pandas#Your turn: the best value per square foot': {
+    write: { 'value.py': "import pandas as pd\n\nfrom explorer.frame import load_frame\n\n\ndef median_price_per_sqft(df: pd.DataFrame) -> dict[str, float]:\n    per_sqft = df[\"price\"] / df[\"sqft\"]\n    return per_sqft.groupby(df[\"neighbourhood\"]).median().round(2).sort_values().to_dict()\n\n\nif __name__ == \"__main__\":\n    for name, value in median_price_per_sqft(load_frame(\"data/houses.csv\")).items():\n        print(f\"{name} {value:.2f}\")\n" },
+    wrong: [
+      { name: 'used the mean', write: { 'value.py': "import pandas as pd\n\nfrom explorer.frame import load_frame\n\n\ndef median_price_per_sqft(df: pd.DataFrame) -> dict[str, float]:\n    per_sqft = df[\"price\"] / df[\"sqft\"]\n    return per_sqft.groupby(df[\"neighbourhood\"]).mean().round(2).sort_values().to_dict()\n\n\nif __name__ == \"__main__\":\n    for name, value in median_price_per_sqft(load_frame(\"data/houses.csv\")).items():\n        print(f\"{name} {value:.2f}\")\n" }, fails: [0, 1] },
+      { name: 'read the CSV instead of the table it was given', write: { 'value.py': "import pandas as pd\n\nfrom explorer.frame import load_frame\n\n\ndef median_price_per_sqft(df: pd.DataFrame) -> dict[str, float]:\n    df = load_frame(\"data/houses.csv\")\n    per_sqft = df[\"price\"] / df[\"sqft\"]\n    return per_sqft.groupby(df[\"neighbourhood\"]).median().round(2).sort_values().to_dict()\n\n\nif __name__ == \"__main__\":\n    for name, value in median_price_per_sqft(load_frame(\"data/houses.csv\")).items():\n        print(f\"{name} {value:.2f}\")\n" }, fails: [1] },
+    ],
+  },
 };

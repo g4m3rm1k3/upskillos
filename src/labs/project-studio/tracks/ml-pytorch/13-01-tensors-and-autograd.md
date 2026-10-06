@@ -13,7 +13,7 @@ problem: Lesson 12.2's backward pass took careful algebra for a network with one
 
 Backpropagation (lesson 12.2) followed a rule: every operation in the forward pass has its own small backward rule, and the chain rule strings them together in reverse. Nothing about that needs a human. If a program **records** each operation as the forward pass runs, it can play the recording backwards and apply each operation's rule automatically.
 
-That's what **PyTorch** does, and it's why it (and libraries like it) made modern deep learning practical. You write only the forward pass, the part that's easy to think about. The gradients come for free, and they're exactly the ones you'd have derived.
+That's what **PyTorch** does, and it's why it (and libraries like it) made modern deep learning practical. You write only the forward pass, the part that's easy to think about. You don't write the gradients: autograd computes them, at roughly the cost of one more pass through the computation, and for differentiable operations they're exactly the ones you'd have derived.
 
 This chapter teaches PyTorch by checking it against your own code first, then uses it for something too big to do by hand: reading handwritten digits.
 

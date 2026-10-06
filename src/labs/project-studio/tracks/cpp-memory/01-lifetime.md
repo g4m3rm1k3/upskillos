@@ -7,7 +7,7 @@ reference: optional
 console: true
 ---
 
-This track is where C++ differs most from Python, Java or JavaScript. In those languages a **garbage collector** decides when objects disappear. In C++ the rules are precise and predictable, and you are in charge:
+This track is where C++ differs most from Python, Java or JavaScript. In those languages the runtime decides when objects disappear: Java and JavaScript use a **garbage collector**, and CPython frees most objects as soon as nothing refers to them, with a collector for the leftover reference cycles (other Python implementations differ). Either way the language doesn't promise you when. In C++ the rules are precise and predictable, and you are in charge:
 
 ```text
 STACK (automatic)                      HEAP (dynamic)

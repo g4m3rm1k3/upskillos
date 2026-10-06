@@ -428,7 +428,10 @@ export const WALKTHROUGH = {
   '05-02-value-iteration#Value iteration': {
     wrong: [{ name: 'averaged the actions instead of taking the best', edit: [['        new = q_from_v(P, R, V, gamma).max(axis=1)\n', '        new = q_from_v(P, R, V, gamma).mean(axis=1)\n']], fails: [0] }],
   },
-  '05-02-value-iteration#Plan in the window': {
+  '05-02-value-iteration#Plan in the window: both methods': {
+    wrong: [{ name: 'always runs value iteration', edit: [['    if mode == "random":', '    if False:']], fails: [0] }],
+  },
+  '05-02-value-iteration#Arrows from the values on screen': {
     wrong: [{ name: 'draws four arrows where every action ties', edit: [[' or (policy[state] > 0).all():', ':']], fails: [0] }],
   },
 

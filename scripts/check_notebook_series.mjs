@@ -19,6 +19,7 @@
 //   node scripts/check_notebook_series.mjs                 # every written lesson
 //   node scripts/check_notebook_series.mjs python          # one series
 //   node scripts/check_notebook_series.mjs py-running-code # one lesson id
+//   node scripts/check_notebook_series.mjs <file.md>...    # these lesson files (used by PR checks)
 
 import { existsSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
@@ -82,13 +83,17 @@ function lastLine(err) {
   return lines[lines.length - 1]
 }
 
-const filter = process.argv[2]
+// Each argument is a series id, a lesson id or a lesson file path; a lesson matching any is checked.
+const filters = process.argv.slice(2)
+const filter = filters.join(' ')
+const wanted = (series, lesson, file) =>
+  !filters.length || filters.some(f => f === series.id || f === lesson.id || resolve(root, f) === file)
 const lessons = []
 for (const series of SERIES_MANIFEST) {
   for (const lesson of series.lessons) {
     const file = resolve(seriesDir, series.dir, `${lesson.slug}.md`)
     if (!existsSync(file)) continue
-    if (filter && filter !== series.id && filter !== lesson.id) continue
+    if (!wanted(series, lesson, file)) continue
     lessons.push({ series, lesson, file })
   }
 }

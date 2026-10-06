@@ -25,7 +25,7 @@ export default function LessonCompanions({ lesson, seriesLessons = [], isStepDon
     <section aria-label="Concepts and companions" style={{ fontSize: 12, color: C.text, margin: '0 0 12px', padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 6 }}>
       {concepts.length > 0 && (
         <>
-          <p style={label}>Concepts you will demonstrate</p>
+          <p style={label}>Concepts these checks cover</p>
           <ul style={{ listStyle: 'none', margin: '0 0 8px', padding: 0 }}>
             {concepts.map(({ id, label: name }) => {
               const m = mastery[id] ?? { done: 0, total: 0 };
@@ -33,7 +33,7 @@ export default function LessonCompanions({ lesson, seriesLessons = [], isStepDon
                 <li key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
                   <span style={{ flex: 1 }}>{name}</span>
                   <Bar done={m.done} total={m.total} C={C} />
-                  <span style={{ color: C.muted, minWidth: 34, textAlign: 'right' }} title="Checked steps passed, across every lesson that teaches this concept">{m.done}/{m.total}</span>
+                  <span style={{ color: C.muted, minWidth: 34, textAlign: 'right' }} title="Required steps whose checks ran your code and passed, across every lesson that teaches this concept. Coverage, not proof you could apply it unaided.">{m.done}/{m.total}</span>
                 </li>
               );
             })}

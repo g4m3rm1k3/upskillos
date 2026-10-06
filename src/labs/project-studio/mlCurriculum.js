@@ -11,9 +11,9 @@
 //   notebook: ml-vectors                Notebook Lab series lessons (ids from series/manifest.js)
 //   lab: 3                              Machine Learning Lab numbers (src/labs/ml-lab/roadmap.js)
 //
-// Mastery is measured from demonstrated work only: a concept's bar is the share of checked steps,
-// in the lessons that teach it, whose checks have passed in the learner's own project. Reading a
-// lesson moves nothing. mlCurriculum.test.js keeps every id here and in the lessons resolvable.
+// A concept's bar is the share of required steps, in the lessons that teach it, whose checks ran
+// the learner's code and passed in their own project. Reading a lesson moves nothing. It is check
+// coverage, not proof the learner could apply the concept unaided. mlCurriculum.test.js keeps every id here and in the lessons resolvable.
 import { SERIES_MANIFEST } from '../../tools/notebook-lab/series/manifest.js';
 import { roadmap } from '../ml-lab/roadmap.js';
 
@@ -123,12 +123,16 @@ export function lessonCompanions(lesson) {
   };
 }
 
-// { conceptId: { done, total } } over the given lessons. Only steps with checks count: they are
-// the steps where the learner's own code was run and judged.
+// Check kinds that run the learner's code. A file, source-text or Git check shows something
+// exists, not that a concept works, so it doesn't count towards a concept.
+const BEHAVIOR_KINDS = new Set(['run', 'tests', 'page']);
+
+// { conceptId: { done, total } } over the given lessons. Only required steps whose checks run
+// the learner's code count. This is checked coverage, not a measure of independent mastery.
 export function conceptMastery(lessons, isStepDone) {
   const mastery = {};
   for (const lesson of lessons) {
-    const checked = lesson.steps.filter((step) => step.checks?.length);
+    const checked = lesson.steps.filter((step) => !step.optional && step.checks?.some((c) => BEHAVIOR_KINDS.has(c.kind)));
     if (!checked.length) continue;
     const done = checked.filter((step) => isStepDone(step)).length;
     for (const id of list(lesson.meta?.concepts)) {

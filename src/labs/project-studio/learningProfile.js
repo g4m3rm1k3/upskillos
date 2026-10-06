@@ -1,5 +1,23 @@
 // These are entry contracts, not claims that every lesson has passed review.
+//
+// The family profiles below (forge-, aml-, cpp-, ml-) were written for the chapters that existed
+// then. A chapter added to a family later doesn't inherit one, because later chapters need more:
+// it is labelled unreviewed until it gets its own line here.
+const REVIEWED_CHAPTERS = new Set([
+  'forge-tools', 'forge-script', 'forge-functions', 'forge-classes', 'forge-package', 'forge-data', 'forge-saving', 'forge-records',
+  'aml-python', 'aml-project',
+  'cpp-foundations', 'cpp-language-basics', 'cpp-memory', 'cpp-classes', 'cpp-generic', 'cpp-dsa', 'cpp-engineering',
+  'cpp-systems', 'cpp-networking', 'cpp-graphics', 'cpp-engines', 'cpp-game',
+  'ml-software', 'ml-data', 'ml-math', 'ml-first-model', 'ml-web', 'ml-database', 'ml-security', 'ml-evaluation',
+  'ml-classification', 'ml-trees', 'ml-clustering', 'ml-pca', 'ml-neural', 'ml-pytorch', 'ml-nlp', 'ml-studio',
+  'ml-capstone', 'ml-timeseries', 'ml-boosting',
+]);
+const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
+
 export function learningProfile(key) {
+  if (/^(forge|aml|cpp|ml)-/.test(key) && !REVIEWED_CHAPTERS.has(key) && !SERIES_KEYS.has(key)) {
+    return { level: 'unclassified', maturity: 'in-development', audience: "This chapter's prerequisites haven't been reviewed yet. It builds on the chapters before it in this series; start there." };
+  }
   if (key === 'forge' || key.startsWith('forge-')) return { level: 'beginner', maturity: 'in-development', recommended: true, audience: 'Recommended for self-taught Python scripters. Assumes variables, loops and functions; tools, testing and project structure are taught in order. Later engine chapters build on the earlier chapters.' };
   if (key === 'applied-ml' || key.startsWith('aml-')) return { level: 'beginner', maturity: 'in-development', audience: 'For Python beginners and scripters moving into data work. Start with Python from Zero, then A Project of Its Own; later chapters are still being authored.' };
   if (key === 'dice-learning' || key === 'dice-path-start') return { level: 'bridge', maturity: 'in-development', audience: 'For Python scripters trying C++. Start with the opening chapter; SDL and Vulkan chapters are planned, not a completed path.' };
@@ -11,7 +29,7 @@ export function learningProfile(key) {
     'java-engineering': { level: 'bridge', maturity: 'review-required', audience: 'For scripters moving into Java application development. Begin with a small Java execution experiment; build tools, databases and browser work follow. No Java framework experience is assumed.' },
     'rl-pygame': { level: 'bridge', maturity: 'review-required', audience: 'For Python scripters who can use functions, lists and dictionaries. Review the environment and testing chapters before Q-learning; game loops and learning terminology are introduced along the path.' },
     'circuit-clash': { level: 'bridge', maturity: 'in-development', audience: 'C# course in development. Start with the browser behavior reference and small console experiments. The native game needs a local .NET SDK and graphics display; cross-platform verification is incomplete.' },
-    'pyside6-engine': { level: 'advanced', maturity: 'review-required', audience: 'For learners already comfortable with Python classes, modules and debugging. Review Forge functions, objects and packaging first if GUI event handling and engine structure are unfamiliar.' },
+    'pyside6-engine': { level: 'advanced', maturity: 'in-development', audience: 'For learners already comfortable with Python classes, modules and debugging. Review Forge functions, objects and packaging first if GUI event handling and engine structure are unfamiliar. Only the first lesson, a window prototype, is written so far.' },
   };
   return profiles[key] || { level: 'unclassified', maturity: 'review-required', audience: 'Prerequisites have not been reviewed. Inspect the first lesson before choosing this track.' };
 }

@@ -1,6 +1,6 @@
 # Forge: learn software engineering by building a game engine, editor and service in Python — series plan
 
-Status (2026-10-05): **Chapters 0–6 and lesson 7.1 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5, 7.1).** Every lesson was reviewed against "Teaching, not describing" by reviewer agents and rewritten in small steps (2026-10-05); the walkthrough passes 0.1–7.1 with every wrong answer. The user opened 0.1 in the
+Status (2026-10-06): **Chapters 0–6 and lessons 7.1–7.4 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5, 7.1–7.4).** The beginner audit (below) is applied to all of them (2026-10-06): scratch examples, corrections, and challenges listed in each chapter's zoom-out. Every lesson was reviewed against "Teaching, not describing" by reviewer agents and rewritten in small steps (2026-10-05); the walkthrough passes 0.1–7.1 with every wrong answer. The user opened 0.1 in the
 app and approved it as the bar; they review the rest by doing the lessons, so writing continues in plan order
 without pausing.
 
@@ -127,7 +127,8 @@ Decided with the user:
   exported games with ONNX Runtime, each checked against the hand-built version.
 - **A full beginner audit** (2026-10-05): every written lesson reviewed for a reader with basic Python only;
   each new concept gets a scratch example (tried alone first) and most lessons an optional challenge.
-  Findings in the working folder `audit/`.
+  Findings in the working folder `audit/`. Applied to 0.1–7.4 on 2026-10-06; lessons written from 7.5 on
+  follow the same standard from the start.
 - **Machine learning, built from first principles** and then added to Forge as a feature (Part 6). Game
   Studio's Train dialog is the calculator; Forge is where the learner learns the mathematics behind it.
 - **PySide6 for the editor**, taught only as the editor needs it, starting from a deliberately tiny editor.

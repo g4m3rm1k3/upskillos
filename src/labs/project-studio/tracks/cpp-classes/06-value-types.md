@@ -398,6 +398,19 @@ tests "./money/build/money_tests" require="shows_two_decimal_places split_gives_
 
 Before you look at the reviewer's tests, try to break your own class. The requirements mention negative amounts twice. Did the specification test either?
 
+```hints
+nudge: Read the requirements table again and look for every place it mentions negative amounts. Which of those did the specification's tests try?
+concept: The cases worth testing are the ones where a plausible implementation goes wrong. For `to_string`, that's an amount under one unit: -5 cents has a whole part of 0, and 0 has no sign, so a version that prints the whole part and the cents separately loses the minus. For `split`, it's an amount that doesn't divide evenly, and a negative one.
+shape: Work out each expected value by hand from the requirements before you build:
+~~~cpp
+TEST(small_negative_amount_keeps_its_sign)
+{
+    CHECK_EQ(Money::from_cents(-5).to_string(), "-0.05");
+}
+~~~
+Then a negative split, for example -10.00 in 3 parts, which the table says splits like 10.00, negated.
+```
+
 ```cpp file=money/tests/money_test.cpp
 // My own tests for Money.
 #include "studio_test.hpp"

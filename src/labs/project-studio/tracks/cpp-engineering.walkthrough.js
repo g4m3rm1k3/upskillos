@@ -730,4 +730,186 @@ export const WALKTHROUGH = {
       },
     ],
   },
+  "07-release#Step 8 — Your change: a remainder operator": {
+    "editFiles": {
+      "tests/tokenizer_test.cpp": [
+          [
+            "CHECK_THROWS(interp::tokenize(\"x % 2\"), interp::SyntaxError);",
+            "CHECK_THROWS(interp::tokenize(\"x @ 2\"), interp::SyntaxError);"
+          ]
+        ],
+        "include/interp/tokenizer.h": [
+        [
+          "    slash,       // /\n",
+          "    slash,       // /\n    percent,     // %\n"
+        ]
+      ],
+      "src/tokenizer.cpp": [
+        [
+          "    case '/': return TokenKind::slash;\n",
+          "    case '/': return TokenKind::slash;\n    case '%': return TokenKind::percent;\n"
+        ]
+      ],
+      "src/parser.cpp": [
+        [
+          "//   term       = factor { (\"*\" | \"/\") factor }",
+          "//   term       = factor { (\"*\" | \"/\" | \"%\") factor }"
+        ],
+        [
+          "               peek().kind == TokenKind::slash) {",
+          "               peek().kind == TokenKind::slash ||\n               peek().kind == TokenKind::percent) {"
+        ]
+      ],
+      "src/interpreter.cpp": [
+        [
+          "#include <cctype>\n",
+          "#include <cctype>\n#include <cmath>\n"
+        ],
+        [
+          "            return left / right;\n",
+          "            return left / right;\n        case '%':\n            if (right == 0)\n                throw EvalError(\"division by zero\");\n            return std::fmod(left, right);\n"
+        ]
+      ]
+    },
+    "files": {
+      "tests/remainder_test.cpp": "// My tests for the % operator, written before the operator.\n#include \"studio_extras.hpp\"\n#include \"studio_test.hpp\"\n\n#include \"interp/interpreter.h\"\n\nstruct Remainder {\n    interp::Interpreter calc;\n};\n\nTEST_F(Remainder, of_whole_numbers)\n{\n    CHECK_EQ(calc.execute(\"7 % 3\"), 1.0);\n}\n\nTEST_F(Remainder, keeps_the_fraction)\n{\n    CHECK_EQ(calc.execute(\"7.5 % 2\"), 1.5);\n}\n\nTEST_F(Remainder, has_the_rank_of_times)\n{\n    CHECK_EQ(calc.execute(\"1 + 7 % 3 * 2\"), 3.0);\n}\n\nTEST_F(Remainder, by_zero_is_an_error)\n{\n    CHECK_THROWS(calc.execute(\"5 % 0\"), interp::EvalError);\n}\n"
+    },
+    "run": [
+      "git switch -c feature/remainder",
+      "git add -A",
+      "git commit -m \"Add the % operator, tests first\"",
+      "git switch main",
+      "git merge feature/remainder"
+    ],
+    "wrong": [
+      {
+        "name": "remainder of whole numbers only",
+        "editFiles": {
+          "tests/tokenizer_test.cpp": [
+          [
+            "CHECK_THROWS(interp::tokenize(\"x % 2\"), interp::SyntaxError);",
+            "CHECK_THROWS(interp::tokenize(\"x @ 2\"), interp::SyntaxError);"
+          ]
+        ],
+        "include/interp/tokenizer.h": [
+            [
+              "    slash,       // /\n",
+              "    slash,       // /\n    percent,     // %\n"
+            ]
+          ],
+          "src/tokenizer.cpp": [
+            [
+              "    case '/': return TokenKind::slash;\n",
+              "    case '/': return TokenKind::slash;\n    case '%': return TokenKind::percent;\n"
+            ]
+          ],
+          "src/parser.cpp": [
+            [
+              "//   term       = factor { (\"*\" | \"/\") factor }",
+              "//   term       = factor { (\"*\" | \"/\" | \"%\") factor }"
+            ],
+            [
+              "               peek().kind == TokenKind::slash) {",
+              "               peek().kind == TokenKind::slash ||\n               peek().kind == TokenKind::percent) {"
+            ]
+          ],
+          "src/interpreter.cpp": [
+            [
+              "            return left / right;\n",
+              "            return left / right;\n        case '%':\n            if (right == 0)\n                throw EvalError(\"division by zero\");\n            return static_cast<double>(static_cast<long long>(left) % static_cast<long long>(right));\n"
+            ]
+          ]
+        },
+        "files": {
+          "tests/remainder_test.cpp": "// My tests for the % operator, written before the operator.\n#include \"studio_extras.hpp\"\n#include \"studio_test.hpp\"\n\n#include \"interp/interpreter.h\"\n\nstruct Remainder {\n    interp::Interpreter calc;\n};\n\nTEST_F(Remainder, of_whole_numbers)\n{\n    CHECK_EQ(calc.execute(\"7 % 3\"), 1.0);\n}\n\nTEST_F(Remainder, keeps_the_fraction)\n{\n    CHECK_EQ(calc.execute(\"7.5 % 2\"), 1.5);\n}\n\nTEST_F(Remainder, has_the_rank_of_times)\n{\n    CHECK_EQ(calc.execute(\"1 + 7 % 3 * 2\"), 3.0);\n}\n\nTEST_F(Remainder, by_zero_is_an_error)\n{\n    CHECK_THROWS(calc.execute(\"5 % 0\"), interp::EvalError);\n}\n"
+        },
+        "fails": [
+          5
+        ]
+      },
+      {
+        "name": "% with the rank of +",
+        "editFiles": {
+          "tests/tokenizer_test.cpp": [
+          [
+            "CHECK_THROWS(interp::tokenize(\"x % 2\"), interp::SyntaxError);",
+            "CHECK_THROWS(interp::tokenize(\"x @ 2\"), interp::SyntaxError);"
+          ]
+        ],
+        "include/interp/tokenizer.h": [
+            [
+              "    slash,       // /\n",
+              "    slash,       // /\n    percent,     // %\n"
+            ]
+          ],
+          "src/tokenizer.cpp": [
+            [
+              "    case '/': return TokenKind::slash;\n",
+              "    case '/': return TokenKind::slash;\n    case '%': return TokenKind::percent;\n"
+            ]
+          ],
+          "src/parser.cpp": [
+            [
+              "               peek().kind == TokenKind::minus) {",
+              "               peek().kind == TokenKind::minus ||\n               peek().kind == TokenKind::percent) {"
+            ]
+          ],
+          "src/interpreter.cpp": [
+            [
+              "#include <cctype>\n",
+              "#include <cctype>\n#include <cmath>\n"
+            ],
+            [
+              "            return left / right;\n",
+              "            return left / right;\n        case '%':\n            if (right == 0)\n                throw EvalError(\"division by zero\");\n            return std::fmod(left, right);\n"
+            ]
+          ]
+        },
+        "files": {
+          "tests/remainder_test.cpp": "// My tests for the % operator, written before the operator.\n#include \"studio_extras.hpp\"\n#include \"studio_test.hpp\"\n\n#include \"interp/interpreter.h\"\n\nstruct Remainder {\n    interp::Interpreter calc;\n};\n\nTEST_F(Remainder, of_whole_numbers)\n{\n    CHECK_EQ(calc.execute(\"7 % 3\"), 1.0);\n}\n\nTEST_F(Remainder, keeps_the_fraction)\n{\n    CHECK_EQ(calc.execute(\"7.5 % 2\"), 1.5);\n}\n\nTEST_F(Remainder, has_the_rank_of_times)\n{\n    CHECK_EQ(calc.execute(\"1 + 7 % 3 * 2\"), 3.0);\n}\n\nTEST_F(Remainder, by_zero_is_an_error)\n{\n    CHECK_THROWS(calc.execute(\"5 % 0\"), interp::EvalError);\n}\n"
+        },
+        "fails": [
+          5
+        ]
+      }
+    ]
+  },
+  "07-release#Step 9 — Release 1.1.0": {
+    "editFiles": {
+      "CMakeLists.txt": [
+        [
+          "project(interp VERSION 1.0.0 LANGUAGES CXX)",
+          "project(interp VERSION 1.1.0 LANGUAGES CXX)"
+        ]
+      ]
+    },
+    "files": {
+      "CHANGELOG.md": "# Changelog\n\n## 1.1.0\n\n### Added\n\n- `%` gives the remainder of a division: `7 % 3` is 1, and `7.5 % 2` is 1.5.\n\n## 1.0.0\n\nThe first release: arithmetic, variables, `calc --version`, and packages.\n"
+    },
+    "run": [
+      "git add -A",
+      "git commit -m \"Release 1.1.0: the % operator\"",
+      "git tag -a v1.1.0 -m \"interp 1.1.0\""
+    ],
+    "wrong": [
+      {
+        "name": "called it a patch release",
+        "editFiles": {
+          "CMakeLists.txt": [
+            [
+              "project(interp VERSION 1.0.0 LANGUAGES CXX)",
+              "project(interp VERSION 1.0.1 LANGUAGES CXX)"
+            ]
+          ]
+        },
+        "files": {
+          "CHANGELOG.md": "# Changelog\n\n## 1.1.0\n\n### Added\n\n- `%` gives the remainder of a division: `7 % 3` is 1, and `7.5 % 2` is 1.5.\n\n## 1.0.0\n\nThe first release: arithmetic, variables, `calc --version`, and packages.\n"
+        },
+        "fails": [
+          0,
+          4
+        ]
+      }
+    ]
+  },
 };

@@ -736,3 +736,7 @@ A successful learner experience lets a newcomer answer:
 - Why is this step in my path?
 - What can I skip, review, or try next?
 - What evidence of progress has the app actually recorded?
+
+## Project Studio observation follow-up — 2026-10-06
+
+The [full observation audit](audits/project-studio-full-audit-2026-10-06.md) records the source census, test evidence, confirmed assessment defects and teaching review candidates. The [review queue](audits/project-studio-review-queue.md) gives track-specific actions and every lesson to review. Documentation is complete for this pass; implementation remains open. Prioritize honest saved assessment evidence and the UDP correction, then prerequisite/independent-work support, stable progress migration, platform validation and curriculum CI. Do not equate generated signal counts or successful reference programs with developer readiness.

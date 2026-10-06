@@ -93,7 +93,19 @@ SELECT * FROM sessions;
 (2, 1, '2026-10-05T17:00:00+00:00', None)
 ```
 
-`ended_at` has no `NOT NULL`, so a session can exist before anyone knows when it ends. `NULL` here means "not ended yet".
+`ended_at` has no `NOT NULL`, so a session can exist before anyone knows when it ends. `NULL` here means "not ended yet". Finding those sessions is lesson 7.3's `IS NULL`, never `= NULL`:
+
+```sql
+SELECT id FROM sessions WHERE ended_at = NULL;
+SELECT id FROM sessions WHERE ended_at IS NULL;
+```
+
+```text
+(1,)
+(2,)
+```
+
+Both sessions, from `IS NULL`; the `= NULL` line printed nothing at all, because a comparison with `NULL` is never true. (The shell shows only the second query's rows: the first had none.)
 
 **Changing a row: `UPDATE`.** The first session ends at 15:45:30:
 
@@ -109,7 +121,7 @@ SELECT * FROM sessions;
 
 `UPDATE table SET column = value WHERE condition` changes the column in **every row the condition matches**, and leaves the others alone. Here the condition picks one row by its primary key. The `WHERE` is what keeps an `UPDATE` small: without it, the condition is "every row", and `UPDATE sessions SET ended_at = ...` would end every session that has ever existed, at the same moment, with no error. Like `DELETE` in lesson 6.4, an `UPDATE` with no `WHERE` is almost always a bug.
 
-**How long was it?** Times are stored as ISO 8601 text, and text can't be subtracted. **`unixepoch(text)`** turns an ISO 8601 time into a number: the seconds since the start of 1970, in UTC, the usual way computers count time.
+**How long was it?** Times are stored as ISO 8601 text, and text can't be subtracted. **`unixepoch(text)`** turns an ISO 8601 time into a number: the seconds since the start of 1970, in UTC, the usual way computers count time. It's SQLite's own function (other databases have their own), and it arrived in SQLite 3.38, in 2022. The SQLite inside your Python is what counts: `.venv\Scripts\python -c "import sqlite3; print(sqlite3.sqlite_version)"`. On anything older, `strftime('%s', text)` does the same job.
 
 ```sql
 SELECT id, unixepoch(started_at), unixepoch(ended_at) FROM sessions;
@@ -204,6 +216,21 @@ SELECT sessions.id, COUNT(*), COUNT(scores.id) FROM sessions LEFT JOIN scores ON
 (1, 2, 2)
 (2, 1, 0)
 ```
+
+**One trap with `LEFT JOIN`.** Ask for sessions with a big score, putting the condition in `WHERE`, then in `ON`:
+
+```sql
+SELECT sessions.id, scores.points FROM sessions LEFT JOIN scores ON scores.session_id = sessions.id WHERE scores.points > 150;
+SELECT sessions.id, scores.points FROM sessions LEFT JOIN scores ON scores.session_id = sessions.id AND scores.points > 150;
+```
+
+```text
+(1, 200)
+(1, 200)
+(2, None)
+```
+
+The first query lost session 2. `WHERE` runs after the join, on its rows, and session 2's row has `scores.points` `NULL`, and `NULL > 150` is never true, so `WHERE` dropped it: the `LEFT JOIN` turned back into a plain `JOIN`, with no error. The second puts the condition in the `ON`, which decides which scores **pair** with each session; session 2 still gets its row of `NULL`s. A condition on the right-hand table of a `LEFT JOIN` belongs in its `ON`, unless you mean to drop the empty rows.
 
 Type `.quit` to leave the shell.
 
@@ -315,7 +342,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 
 **Understand.** Migration 3 goes at the end of the list (lesson 7.2's rule: add, never edit). It makes the `sessions` table from the practice, and adds a `session_id` column to `scores`, a foreign key to a session (lesson 7.1).
 
-`session_id` can be `NULL`, and must be. Every score saved before this migration has no session, so the new column is `NULL` in every old row: "not part of any session we know about". SQLite enforces that too: a `REFERENCES` column added by `ALTER TABLE` must have `NULL` as its default, because a default of 1 would point every old score at a session that may not exist. (`ALTER TABLE ... ADD COLUMN bad INTEGER REFERENCES sessions (id) DEFAULT 1` fails with `Cannot add a REFERENCES column with non-NULL default value`.)
+`session_id` can be `NULL`, and must be. Every score saved before this migration has no session, so the new column is `NULL` in every old row: "not part of any session we know about". SQLite enforces that too, when foreign keys are on and the table already has rows: then a `REFERENCES` column added by `ALTER TABLE` must have `NULL` as its default, because a default of 1 would point every old score at a session that may not exist. (`ALTER TABLE ... ADD COLUMN bad INTEGER REFERENCES sessions (id) DEFAULT 1` fails with `Cannot add a REFERENCES column with non-NULL default value`.)
 
 Opening your `scores.db` runs migration 3 on it, inside its transaction:
 
@@ -464,9 +491,9 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 1 0
 ```
 
-The first `INSERT` added one row (`rowcount` 1), id 1. The second inserted **nothing**: its `SELECT ... WHERE 1 = 0` finds no rows (lesson 7.1's zero-row `INSERT ... SELECT`). But `lastrowid` still says 1, because nothing newer was inserted on that connection. Code that trusted it would carry on with someone else's id. In `start_session` this can't happen: the first statement makes sure the player exists, so the `SELECT` always finds exactly one player, and the `INSERT` always adds one row.
+The first `INSERT` added one row (`rowcount` 1), id 1. The second inserted **nothing**: its `SELECT ... WHERE 1 = 0` finds no rows (lesson 7.1's zero-row `INSERT ... SELECT`). (`SELECT 2` with no `FROM` makes one row holding 2; `WHERE 1 = 0` is never true, so not even that one is kept.) But `lastrowid` still says 1, because nothing newer was inserted on that connection. Code that trusted it would carry on with someone else's id. In `start_session` this can't happen: the first statement makes sure the player exists, so the `SELECT` always finds exactly one player, and the `INSERT` always adds one row. (SQLite 3.35 and later also offer `INSERT ... RETURNING id`, which hands back the new row's id as the result of the `INSERT` itself, so there's nothing to go stale. This lesson uses `lastrowid` because it's what you'll see in most existing Python code; `RETURNING` is the neater habit.)
 
-**`assert cursor.lastrowid is not None`.** In Python's type information, `lastrowid` is `int | None`, since it's `None` on a connection that has never inserted anything. `start_session` promises an `int`, and pyright won't allow returning something that might be `None`. `assert` (lesson 3.4's invariants) states the fact we know, a row was just inserted, and pyright then treats `lastrowid` as an `int` after it. If it were ever false, the program would stop right there with `AssertionError`, not return a `None` that fails somewhere far away.
+**`assert cursor.lastrowid is not None`.** In Python's type information, `lastrowid` is `int | None`, since it's `None` on a connection that has never inserted anything. `start_session` promises an `int`, and pyright won't allow returning something that might be `None`. `assert` (lesson 3.4's invariants) states the fact we know, a row was just inserted, and pyright then treats `lastrowid` as an `int` after it. If it were ever false, the program would stop right there with `AssertionError`, not return a `None` that fails somewhere far away. One rule for `assert`: Python started with `-O` (optimise) skips every `assert`, so an `assert` may state a fact for the reader and the type checker, never do something the program needs done. You'll also notice `start_session` begins with the same player upsert as `add_score`: two copies of one idea, which the last challenge removes.
 
 `end_session` is the practice step's `UPDATE`, with placeholders: one row, picked by the session's id.
 
@@ -755,7 +782,7 @@ If the game crashes, step 4 never happens, and the session stays `NULL` in `ende
 .venv\Scripts\python -m sqlite3 scores.db "SELECT id, ended_at IS NOT NULL FROM sessions ORDER BY id DESC LIMIT 1"
 ```
 
-The last line prints the newest session's id and `1`: `ended_at IS NOT NULL` is a condition, and SQL shows true as 1. The test run ended normally, so the session did too.
+The last line prints the newest session's id and `1`: `ended_at IS NOT NULL` is a condition, and SQL shows true as 1. The test run ended normally, so the session did too. A session starts when the game opens, whether or not a game is played: one with 0 games is still a session, someone opened the game. Lesson 7.3's `HAVING` could leave them out of a report if a designer wanted.
 
 ```check
 contains breakout/app.py "start_session(db, player, datetime.now(UTC))"
@@ -890,7 +917,7 @@ def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:
     ]
 ~~~
 
-The f-string has another f-string inside it: the conditional expression picks either the plain text `'still going'` or the f-string `f'{minutes} minutes'`, and the outer f-string puts whichever it picked in place. Since Python 3.12, the inner one may use the same quotes as the outer; here it uses single quotes, which works in every version. If that's hard to read, a small helper function that returns the length text is just as good. The order of the joins matters for reading, not for the result: the `JOIN players` finds whose sessions they are, and the `LEFT JOIN scores` brings each session's games, or a row of `NULL`s.
+The f-string has another f-string inside it: the conditional expression picks either the plain text `'still going'` or the f-string `f'{minutes} minutes'`, and the outer f-string puts whichever it picked in place. Since Python 3.12, the inner one may use the same quotes as the outer; here it uses single quotes, which works in every version. If that's hard to read, a small helper function that returns the length text is just as good. Why may `sessions.started_at` and the length sit next to `GROUP BY sessions.id`, when lesson 7.3 called columns that aren't grouped a mistake? Because of 7.3's exception: the groups are made by `sessions.id`, a primary key, so every row in a group comes from the same session, and its `started_at` and `ended_at` have exactly one value per group. `GROUP BY sessions.id, sessions.started_at, sessions.ended_at` would give the same answer, and says so out loud, if you prefer. The order of the joins matters for reading, not for the result: the `JOIN players` finds whose sessions they are, and the `LEFT JOIN scores` brings each session's games, or a row of `NULL`s.
 ```
 
 ```check
@@ -910,6 +937,10 @@ git-clean
 ## Challenge: the longest session
 
 **Optional, ★.** Add `python -m breakout.report SCORES_DB --longest PLAYER` to the report tool: it prints the player's longest finished session, its length in minutes and its games. One query, using `ORDER BY` on the length, `DESC`, and `LIMIT 1` (lesson 6.3). What should it print for a player with no finished sessions? Decide, and write a test for that case too.
+
+## Challenge: one way to find a player
+
+**Optional, ★★.** `add_score` and `start_session` both start with the same upsert and lookup of the player. Extract `player_id(db, name) -> int` (the upsert, then `SELECT id`), use it in both, and change no test: the 133 tests are your safety net, as in lesson 3.3's refactors. On a branch.
 
 ## What did we actually learn?
 

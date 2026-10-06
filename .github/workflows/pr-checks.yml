@@ -44,6 +44,11 @@ jobs:
       - name: Every lab can be opened
         run: npx vitest run src/labs/labRegistry.test.js
 
+      # Parses every Project Studio lesson and checks its assessments. The desktop tests need
+      # each track's native toolchain, so they stay out of PR checks.
+      - name: Project Studio lessons parse and assess
+        run: npx vitest run src/labs/project-studio --exclude '**/*.desktop.test.js'
+
       - name: Build
         run: npm run build
 
@@ -90,6 +95,17 @@ jobs:
             echo "No lesson files changed — skipping JS cell check."
           else
             node scripts/check_js_cells.mjs --files $CHANGED
+          fi
+
+      # Runs each changed Notebook Lab series lesson in Pyodide: demo cells run, and every
+      # challenge's starter fails its test while the reference solution passes.
+      - name: Check changed Notebook series lessons
+        run: |
+          CHANGED=$(git diff --name-only --diff-filter=d "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" -- 'src/tools/notebook-lab/series/**/*.md')
+          if [ -z "$CHANGED" ]; then
+            echo "No Notebook series lessons changed — skipping."
+          else
+            node scripts/check_notebook_series.mjs $CHANGED
           fi
 
       - name: Install Playwright browsers

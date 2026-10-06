@@ -10,7 +10,7 @@ import LessonCompanions from './LessonCompanions.jsx';
 import HintLadder from './HintLadder.jsx';
 import FigureBlock from './FigureBlock.jsx';
 import { BLOCK_SPLIT } from './hints.js';
-import { checkEvidence } from './checkEvidence.js';
+import { checkEvidence, checksPassed } from './checkEvidence.js';
 
 // MarkdownProse defaults to article typography — large serif body text with
 // generous leading, which is right for a full-width lesson page and far too
@@ -191,7 +191,7 @@ function StepText({ text, step, C }) {
 function ChecksBox({ step, state, onCheck, canCheck, C }) {
   const running = state?.running;
   const results = state?.results;
-  const allPass = results && results.length === step.checks.length && results.every((r) => r.pass && !r.skipped);
+  const allPass = checksPassed(step.checks, results);
 
   return (
     <div style={{ marginTop: 14, border: `1px solid ${allPass ? C.teal : C.border}`, borderRadius: 8, overflow: 'hidden' }}>

@@ -14,7 +14,7 @@ Assume Python files, variables, functions, lists, dictionaries, loops and decisi
 - Include a transfer task with observable requirements and cases. The learner must make at least one decision without another complete implementation. A tiny new input rule or test can be enough; a second substantial project is unnecessary.
 - Attach progressive hints to each independent task: a nudge, the relevant concept, then the shape of a solution. Keep answers optional. Do not make hints merely restate the requirements.
 - State what the named checks establish and what they omit. Add a manual observation or learner-designed test for an omitted behavior. A file-existence check verifies a path, not a correct design.
-- Identify optional extensions explicitly. Keep their files or branches separate when a broken attempt could affect the guided project. Navigation remains available; deferral does not supply evidence of independent mastery.
+- Identify optional extensions explicitly. A `## Challenge: …` step is optional when its text opens with a bold **Optional** marker (`**Optional, ★★.** …`), or in a `pedagogy: typed` lesson; any other Challenge step is required. Keep their files or branches separate when a broken attempt could affect the guided project. Navigation remains available; deferral does not supply evidence of independent mastery.
 
 ## Authored exercises and reference files
 
@@ -22,7 +22,7 @@ Project Studio Markdown is parsed by src/labs/project-studio/parseTrack.js. A st
 
 Use the existing hints fence with nudge:, concept: and shape: in that order. A predict fence needs question: and explain:, plus choices and an answer when appropriate. Do not nest backtick fences inside these fences; use tilde fences for example code. See src/labs/project-studio/hints.js and predictions.js for the exact grammar.
 
-Lesson and step ids store learner progress. Preserve published file paths and the number/order of level-two headings during repairs; adding a level-two heading shifts later step ids. Use smaller headings for additions within an existing step unless a tested progress migration is part of the change.
+Lesson and step ids store learner progress. Preserve published file paths. A level-two heading is numbered by position (`<lesson>-step-N`), so inserting one would shift every later step's id. Give an inserted section its own key instead, `## Title {#key}`: it gets the id `<lesson>-key` and takes no number, so the steps after it keep theirs. Appending a section at the end of a lesson needs no key.
 
 ## Review and release
 

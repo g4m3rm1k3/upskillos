@@ -604,6 +604,12 @@ delete 1
 count
 ```
 
+```hints
+nudge: Split it into two problems: reading one command at a time until the input ends, and doing one command. Get the first working with a single command, `count`, before adding any others.
+concept: `while (std::cin >> word)` reads one word at a time and stops at the end of the input. After it reads the command word, the same `>>` reads that command's arguments (`std::cin >> id >> name >> city >> age`), because names and cities are single words. Each command is a call to one `Database` function: `insert` and `erase` return `bool`, `get` returns a pointer that may be `nullptr`, and `in_city` and `aged` return vectors you print one line at a time.
+shape: One `Database db;`, then a loop with an `if`/`else if` chain on the command word. Write a small function that prints one record as `id name city age`, and another that prints a vector of records followed by its count, using `(1 row)` for one and `(n rows)` otherwise; `city` and `age` both use it. The final `else` prints `unknown command: ` and the word.
+```
+
 ```cpp file=minidb/main.cpp
 // minidb: type commands to store and query people.
 #include <iostream>

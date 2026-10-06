@@ -271,9 +271,9 @@ Classic    560, 70, 40, 310           4          560           980 / 4 = 245.0
 Tiny       20                         1          20            20 / 1 = 20.0
 ```
 
-Without `GROUP BY`, the same aggregates make one row for the whole table: `SELECT COUNT(*), MAX(points) FROM scores` gives `(6, 560)`.
+Without `GROUP BY`, the same aggregates make one row for the whole table: `SELECT COUNT(*), MAX(points) FROM scores` gives `(6, 560)`. Notice `245.0`: `AVG` always gives a real number, a number with a decimal point, even when every value is a whole number. Lesson 7.4 meets a division that doesn't.
 
-**What can go next to `GROUP BY`.** Each column in the `SELECT` must have one value per group: either the column the groups are made from (`level`), or an aggregate over the group. `SELECT level, points FROM scores GROUP BY level` asks for "the points" of a group of four games, which has no single answer. Most databases refuse it; SQLite answers with the points of one of the group's rows, and doesn't promise which. Treat it as a mistake that SQLite happens not to report.
+**What can go next to `GROUP BY`.** Each column in the `SELECT` must have one value per group: either the column the groups are made from (`level`), or an aggregate over the group. `SELECT level, points FROM scores GROUP BY level` asks for "the points" of a group of four games, which has no single answer. Most databases refuse it; SQLite answers with the points of one of the group's rows, and doesn't promise which. Treat it as a mistake that SQLite happens not to report. There's one exception, and lesson 7.4 uses it: when you group by a table's **primary key**, every row in a group is the same row of that table, so its other columns *do* have one value per group. `GROUP BY sessions.id` lets you select `sessions.started_at` safely, and PostgreSQL, strict about this rule, accepts it too.
 
 **Aggregates skip `NULL`.** Predict, then ask:
 
@@ -297,19 +297,46 @@ SELECT level, COUNT(*), COUNT(won), SUM(won), AVG(won) FROM scores GROUP BY leve
 ```
 
 - `COUNT(*)` counts rows; `COUNT(won)` counts the rows where `won` isn't `NULL`. For Classic, 4 games, 3 of them with a known result.
-- For Tiny, every `won` is `NULL`, so `SUM(won)` has nothing to add and gives `NULL`, not 0. "No known results" isn't "no wins", and SQL keeps them apart. Python code reading this will get `None`, and remember that for the next step.
+- For Tiny, every `won` is `NULL`, so `SUM(won)` has nothing to add and gives `NULL`, not 0. "No known results" isn't "no wins", and SQL keeps them apart. Python code reading this gets `None`. Keep that in mind for the next step.
+
+**Comparing with `NULL`.** `NULL` means "unknown", and SQL takes that seriously: is an unknown value equal to 1? Unknown. So any comparison with `NULL` gives `NULL`, not true or false, and `WHERE` keeps only rows where its condition is true:
+
+```sql
+SELECT NULL = NULL, NULL IS NULL, 1 = NULL;
+SELECT COUNT(*) FROM scores WHERE won = NULL;
+SELECT COUNT(*) FROM scores WHERE won IS NULL;
+SELECT COUNT(*) FROM scores WHERE won <> 1;
+```
+
+```text
+(None, 1, None)
+(0,)
+(2,)
+(3,)
+```
+
+- `NULL = NULL` is `NULL`: two unknowns aren't known to be equal. `won = NULL` is never true, so it matches nothing, not even the two rows whose `won` is `NULL`.
+- **`IS NULL`** is the test for "is this unknown?", and is always true or false; **`IS NOT NULL`** is its opposite. Lesson 7.4 uses both.
+- `won <> 1` ("not won") gives 3, not 5: the two games with no recorded result are neither won nor not won, as far as SQL knows, so they're left out. A count of "games not won" that silently skips the unknown ones is exactly the kind of mistake this lesson is about.
+
+True, false and unknown: SQL's logic has three values, where Python's has two.
 
 **Choosing groups: `HAVING`.** `WHERE` filters **rows**, before they're grouped; `HAVING` filters **groups**, after the aggregates are worked out, so it can test them:
 
 ```sql
 SELECT level, COUNT(*) FROM scores WHERE points >= 100 GROUP BY level ORDER BY level;
-SELECT level, COUNT(*) FROM scores GROUP BY level HAVING COUNT(*) >= 2;
 ```
 
 ```text
 ('Castle', 1)
 ('Classic', 2)
+```
 
+```sql
+SELECT level, COUNT(*) FROM scores GROUP BY level HAVING COUNT(*) >= 2;
+```
+
+```text
 ('Classic', 4)
 ```
 
@@ -461,7 +488,7 @@ if __name__ == "__main__":
     db.close()
 ```
 
-**Understand.** **`COALESCE(a, b, ...)`** gives the first of its arguments that isn't `NULL`. `COALESCE(SUM(won), 0)` is the sum when there is one, and 0 when the sum is `NULL`. Traced for the three levels:
+**Understand.** **`COALESCE(a, b, ...)`** gives the first of its arguments that isn't `NULL`. On its own, in the shell (any database will do, `stats.db` for instance): `SELECT COALESCE(NULL, 0), COALESCE(5, 0), COALESCE(NULL, NULL, 'x'), COALESCE(NULL, NULL);` gives `(0, 5, 'x', None)`: the first value that's known, or `NULL` if none is. `COALESCE(SUM(won), 0)` is the sum when there is one, and 0 when the sum is `NULL`. Traced for the three levels:
 
 ```text
 level     SUM(won)   COALESCE(SUM(won), 0)
@@ -632,11 +659,24 @@ git-message "HAVING"
 git-clean
 ```
 
+## Challenge: how many are unknown?
+
+**Optional, ★.** Add an `unknown` column to `level_table`: the games whose result wasn't recorded, `COUNT(*) - COUNT(won)`. Test it with one game whose `won` is `None`. On a branch. (The report reads whatever file it's given with a plain `sqlite3.connect`: on a file from before lesson 7.2 it fails with `no such column: won`. Opening it with `open_scores` instead would migrate it first.)
+
+## Challenge: a table of players
+
+**Optional, ★★.** Add `player_table(db)`: one line per player with their games, wins and best score, joining `scores` to `players` (lesson 7.1) and grouping by `players.name`, with a `HAVING` that leaves out players with no wins. Test it. On a branch.
+
+## Challenge: a win rate
+
+**Optional, ★★.** Show each level's win rate as a percentage, worked out in SQL: `ROUND(AVG(won) * 100, 1)`. Decide what to print when every result is unknown (`AVG` of nothing known is `NULL`), and test that case. On a branch.
+
 ## What did we actually learn?
 
 - **`GROUP BY`** splits rows into groups that share a value; aggregates then give one answer per group.
 - **Only grouped columns and aggregates** belong next to `GROUP BY`; SQLite allows more, and the answer is then one row's value, chosen for you.
 - **Aggregates skip `NULL`** (all but `COUNT(*)`): averages leave unknown values out, and the sum of nothing known is `NULL`, not 0.
+- **`NULL` is unknown**: comparisons with it are unknown too, so test it with `IS NULL` / `IS NOT NULL`, never `= NULL`.
 - **`COALESCE`** chooses a value for `NULL`, deliberately.
 - **`WHERE` filters rows, `HAVING` filters groups**: `FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`.
 - **Let the database do the work** it's built for, and send back only what's needed.

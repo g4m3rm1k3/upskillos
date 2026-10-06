@@ -30,6 +30,7 @@ import TerminalPanel from './TerminalPanel.jsx';
 import CppProjectRuntime from './CppProjectRuntime.jsx';
 import { canTrace, handOffToCodeLens, inlineLocalHeaders, traceLang } from './codeLensHandoff.js';
 import { useProgress } from './progress.js';
+import { checksPassed, checkRevision } from './checkEvidence.js';
 import { useEntryLink } from '../../utils/entryLinks.js';
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -41,7 +42,11 @@ export default function ProjectStudio() {
   const monacoTheme = themeStyles?.monaco || (C.dark ? 'open-calc-dark' : 'open-calc-light');
   const progress = useProgress();
 
-  const [trackKey, setTrackKey] = useState(() => (TRACKS[progress.position.trackKey] ? progress.position.trackKey : TRACK_KEYS[0] ?? null));
+  // With no saved position, open the recommended series' first chapter rather than whichever
+  // track happens to sort first.
+  const [trackKey, setTrackKey] = useState(() => (TRACKS[progress.position.trackKey]
+    ? progress.position.trackKey
+    : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
   const fs = useProjectFs(trackKey);
   const lessons = useMemo(() => (trackKey ? TRACKS[trackKey] ?? [] : []), [trackKey]);
   const [lessonId, setLessonId] = useState(() => progress.position.lessonId ?? lessons[0]?.id ?? null);
@@ -369,16 +374,21 @@ export default function ProjectStudio() {
       return;
     }
     setCheckStates((prev) => ({ ...prev, [id]: { running: false, results: res.results, error: null } }));
-    const passed = res.results.length === step.checks.length && res.results.every(r => r.pass);
-    if (step.optional) progress.setChallenge(id, passed ? 'passed' : 'needs practice');
-    else if (passed) progress.markDone(id);
-  }, [step, fs, flushActive, progress.markDone, progress.setChallenge]);
+    const passed = checksPassed(step.checks, res.results);
+    // Every check skipped on this computer is neither a pass nor a failure: leave the record alone.
+    if (!passed && res.results.every(r => r.skipped)) return;
+    const proof = { root: fs.root, rev: checkRevision(step.checks) };
+    if (step.optional) progress.setChallenge(id, passed ? 'passed' : 'needs practice', proof);
+    else if (passed) progress.markDone(id, proof);
+    else progress.clearDone(id);
+  }, [step, fs, flushActive, progress.markDone, progress.clearDone, progress.setChallenge]);
 
-  const isStepDone = useCallback((s) => (s.checks?.length ? progress.isDone(s.id) : false), [progress]);
+  // Done means passed in the folder that is open now, against the lesson's current checks.
+  const isStepDone = useCallback((s) => (s.checks?.length ? progress.isDone(s.id, { root: fs.root, rev: checkRevision(s.checks) }) : false), [progress, fs.root]);
   const isLessonDone = useCallback((l) => {
     const checked = l.steps.filter((s) => !s.optional && s.checks?.length);
-    return checked.length > 0 && checked.every((s) => progress.isDone(s.id));
-  }, [progress]);
+    return checked.length > 0 && checked.every(isStepDone);
+  }, [isStepDone]);
 
   // ── new file / folder / delete ───────────────────────────────────────────
   const newFile = useCallback(async (rel) => {

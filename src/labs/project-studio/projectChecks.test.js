@@ -9,7 +9,7 @@ import path from 'node:path';
 import { parseChecks } from './checks.js';
 
 const require = createRequire(import.meta.url);
-const { runChecks } = require('../../../desktop/app/project-checks.cjs');
+const { runChecks, unixVenvPaths } = require('../../../desktop/app/project-checks.cjs');
 
 let hasGit = true;
 try { execFileSync('git', ['--version'], { stdio: 'ignore' }); } catch { hasGit = false; }
@@ -222,4 +222,16 @@ describe.skipIf(!hasGit)('git checks', () => {
     expect(r[0].pass).toBe(false);
     expect(r[0].detail).toBe("1 commit hasn't been pushed to origin/main yet.");
   }, 60000);
+});
+
+describe('virtual environment paths on macOS and Linux', () => {
+  it('runs .venv/Scripts programs from .venv/bin', () => {
+    expect(unixVenvPaths('.venv/Scripts/python -m pytest -q')).toBe('.venv/bin/python -m pytest -q');
+    expect(unixVenvPaths('.venv\\Scripts\\pip.exe install x')).toBe('.venv/bin/pip install x');
+    expect(unixVenvPaths('cd app && .venv/Scripts/python run.py')).toBe('cd app && .venv/bin/python run.py');
+  });
+  it('leaves other paths alone', () => {
+    expect(unixVenvPaths('python Scripts/tool.py')).toBe('python Scripts/tool.py');
+    expect(unixVenvPaths('./hello')).toBe('./hello');
+  });
 });

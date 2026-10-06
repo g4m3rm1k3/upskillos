@@ -427,6 +427,19 @@ run "cmake --build words/build --target text_tests" -- The definition must match
 
 Decide which inputs matter, and test them. Then run them.
 
+```hints
+nudge: Before writing any test, list the kinds of text `is_palindrome` has to handle. The requirement names three things it must ignore or treat specially.
+concept: A useful test checks one thing, and its expected answer comes from the requirement, not from running your code. Good inputs sit where a mistake would show: a plain palindrome, a near miss that isn't one, capitals, punctuation and spaces, digits, and odd and even lengths.
+shape: One `TEST(name)` per idea, each with a `CHECK` that states the expected answer:
+~~~cpp
+TEST(ignores_punctuation_and_spaces)
+{
+    CHECK(is_palindrome("Was it a car, or a cat I saw?"));
+}
+~~~
+Include at least one `CHECK(!is_palindrome(...))`: a test where every answer is `true` would also pass for a function that always returns `true`.
+```
+
 ```cpp file=words/tests/palindrome_test.cpp
 #include "studio_test.hpp"
 

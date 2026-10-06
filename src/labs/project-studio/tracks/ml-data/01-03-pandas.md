@@ -363,6 +363,32 @@ run ".venv/Scripts/python bench.py" stdout="times faster" label="bench.py compar
 run ".venv/Scripts/python bench.py" stdout="ndarray of float64" label="a pandas column is a NumPy array of float64"
 ```
 
+## Your turn: the best value per square foot
+
+**This step: no code is given. Create `value.py`, which answers a question the chapter didn't: in which neighbourhood do you get the most house for your money?**
+
+Price alone is unfair to small houses, so compare **price per square foot**. Write a function and a short script:
+
+- `median_price_per_sqft(df)` takes a DataFrame with `neighbourhood`, `price` and `sqft` columns and returns a `dict` from neighbourhood to its **median** price per square foot, rounded to 2 decimals, **cheapest first**.
+- Run as a script, it loads `data/houses.csv` with `load_frame` and prints one line per neighbourhood, `Oldtown 147.53`, cheapest first.
+
+You need one thing the chapter only hinted at: arithmetic on whole columns. `df["price"] / df["sqft"]` divides every row's price by its own square footage and gives a new Series of 48 numbers, compiled-loop fast, like the comparisons that made masks.
+
+Before you write it, **predict**: which neighbourhood has the highest mean price? Is it the one with the highest price per square foot? Check both once `value.py` runs, and say in a sentence why they can differ.
+
+Why the median? Price per square foot has a few unusual houses in every neighbourhood; lesson 1.2 showed which of mean and median they pull around.
+
+```hints
+nudge: Break it into three questions pandas answers in one line each: what is each house's price per square foot, how do you split those numbers by neighbourhood, and how do you order the result?
+concept: `df["price"] / df["sqft"]` is a Series aligned row by row with `df`. A Series can be grouped by another column of the same table, `series.groupby(df["neighbourhood"])`, or you can add it to the frame as a new column first and group the frame, as `group_mean` does. `.median()`, `.round(2)` and `.sort_values()` each return a new Series, so they chain.
+shape: One expression: divide, group by neighbourhood, take the median, round, sort, and `.to_dict()`. The script part loops over the dict's items and prints `f"{name} {value:.2f}"`. Put it under `if __name__ == "__main__":` so the checks can import the function without running the script.
+```
+
+```check
+run ".venv/Scripts/python value.py" stdout="Oldtown 147.53\nRiverside 158.71\nHillcrest 179.25" label="value.py ranks the neighbourhoods by median price per square foot"
+run ".venv/Scripts/python -c \"import pandas as pd, value; d = value.median_price_per_sqft(pd.DataFrame({'neighbourhood': ['A', 'A', 'A', 'B'], 'price': [100, 300, 500, 50], 'sqft': [1, 2, 1, 1]})); print(*[f'{k} {v:.2f}' for k, v in d.items()])\"" stdout="B 50.00 A 150.00" label="the function works on a table it has never seen" -- It should use the median, sort cheapest first, and read the table it's given, not the CSV file.
+```
+
 ### Chapter 1: what you know now
 
 - A dataset is a table: **observations** (rows) of **features** (columns), one of which may be the **target** to predict. Features are **numerical** or **categorical**, and some values are **missing**.

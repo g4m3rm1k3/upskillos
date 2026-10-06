@@ -84,7 +84,7 @@ describe('ML lessons and their companions', () => {
 });
 
 describe('concept mastery', () => {
-  const step = (id, checked = true) => ({ id, checks: checked ? [{ kind: 'file' }] : [] });
+  const step = (id, checked = true) => ({ id, checks: checked ? [{ kind: 'run' }] : [] });
   const lessons = [
     { meta: { concepts: 'vectors, dot-product' }, steps: [step('a'), step('b'), step('c', false)] },
     { meta: { concepts: 'vectors' }, steps: [step('d')] },
@@ -97,6 +97,14 @@ describe('concept mastery', () => {
       vectors: { done: 2, total: 3 },
       'dot-product': { done: 1, total: 2 },
     });
+  });
+
+  it('ignores presence-only checks and optional challenges', () => {
+    const extra = [{ meta: { concepts: 'vectors' }, steps: [
+      { id: 'f', checks: [{ kind: 'file' }, { kind: 'contains' }] },
+      { id: 'g', optional: true, checks: [{ kind: 'run' }] },
+    ] }];
+    expect(conceptMastery(extra, () => true)).toEqual({});
   });
 
   it('starts at nothing: reading a lesson demonstrates nothing', () => {

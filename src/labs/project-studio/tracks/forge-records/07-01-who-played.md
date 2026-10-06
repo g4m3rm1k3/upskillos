@@ -189,10 +189,14 @@ SELECT * FROM scores;
 (3, 1, 'Castle', 150, '2026-10-05T09:02:30+00:00')
 ```
 
-`player_id INTEGER NOT NULL REFERENCES players (id)` is a **foreign key**: a column whose value is the primary key of a row in another table. The second column of each row says whose score it is: 1 is Mia, 2 is Sam. Declaring it with `REFERENCES` promises two rules:
+`player_id INTEGER NOT NULL REFERENCES players (id)` is a **foreign key**: a column whose value is the primary key of a row in another table. The second column of each row says whose score it is: 1 is Mia, 2 is Sam. Declaring it with `REFERENCES` is meant to promise two rules:
 
-- a score can't name a player who doesn't exist: `player_id` 99 would be refused;
+- a score can't name a player who doesn't exist: `player_id` 99 should be refused;
 - a player who has scores can't be deleted, because their scores would then point at nothing.
+
+Whether SQLite actually keeps that promise is this lesson's bug hunt, at the end. Keeping every reference pointing at a real row is called **referential integrity**.
+
+Refusing the delete is the default, and you can choose otherwise when you declare the key: `REFERENCES players (id) ON DELETE CASCADE` deletes a player's scores along with them (right when the scores mean nothing without the player), and `ON DELETE SET NULL` keeps the scores with no player (right when they still matter on their own, and the column allows `NULL`). Refusing is the safest default: nothing disappears that you didn't ask to delete.
 
 **Asking across both tables.** A number isn't a name. A **join** pairs each score with the player it refers to:
 
@@ -238,7 +242,34 @@ SELECT COUNT(*) FROM players;
 (2,)
 ```
 
-No error, and still two players. `ON CONFLICT (name) DO NOTHING` says what to do when the insert would break the `UNIQUE` rule on `name`: skip it, quietly. It only works on a column that has a `UNIQUE` rule (or is the primary key): without one there's never a conflict to handle, and SQLite refuses the clause. Type `.quit` to leave the shell.
+No error, and still two players. `ON CONFLICT (name) DO NOTHING` says what to do when the insert would break the `UNIQUE` rule on `name`: skip it, quietly. It only works on a column that has a `UNIQUE` rule (or is the primary key): without one there's never a conflict to handle, and SQLite refuses the clause. (You'll also meet `INSERT OR IGNORE`, SQLite's older spelling. Avoid it: it skips the row on **any** broken rule, a failed `CHECK` or a missing `NOT NULL` included, not only the conflict you meant.)
+
+**A score, by the player's name.** The game knows a player's name, not their number. One statement can look up the number and insert the score with it: an `INSERT` that takes its values from a `SELECT` instead of from `VALUES`. Before you run it for a player who doesn't exist:
+
+```predict
+question: There's no player called Zoe. What does `INSERT INTO scores (player_id, level, points, played_at) SELECT id, 'Classic', 5, '2026-10-05T10:00:00+00:00' FROM players WHERE name = 'Zoe'` do?
+choice: An error: Zoe isn't a player
+choice: Adds a score with no player_id
+choice: Nothing, with no error
+answer: Nothing, with no error
+explain: `INSERT ... SELECT` inserts one row for every row the `SELECT` gives. `WHERE name = 'Zoe'` matches no player, so the `SELECT` gives no rows, and zero rows are inserted. That isn't an error to SQL: "insert all of these", where "these" is nothing, succeeded. The game avoids it by making sure the player exists first.
+```
+
+```sql
+INSERT INTO scores (player_id, level, points, played_at) SELECT id, 'Classic', 5, '2026-10-05T10:00:00+00:00' FROM players WHERE name = 'Zoe';
+SELECT COUNT(*) FROM scores;
+INSERT INTO scores (player_id, level, points, played_at) SELECT id, 'Classic', 5, '2026-10-05T10:00:00+00:00' FROM players WHERE name = 'Sam';
+SELECT * FROM scores WHERE id = 4;
+```
+
+```text
+(3,)
+(4, 2, 'Classic', 5, '2026-10-05T10:00:00+00:00')
+```
+
+Zoe: still three scores, and no error. Sam: the `SELECT` found his `id`, 2, and a fourth score was added with it. The values you write in the `SELECT` (`'Classic'`, `5`, ...) are simply the same in every row it gives.
+
+Type `.quit` to leave the shell.
 
 ```check
 run ".venv/Scripts/python -m sqlite3 players.db \"SELECT players.name, scores.points FROM scores JOIN players ON players.id = scores.player_id WHERE scores.level = 'Castle'\"" stdout="('Mia', 150)" label="players.db joins each score to its player"
@@ -304,7 +335,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     return points
 ```
 
-**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.5 looks at that problem properly. The usual design stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key. Each score belongs to exactly one player, and a player can have any number of scores: a **one-to-many** relationship.
+**Understand: why two tables.** The simplest way to record who played would be a `player` text column in `scores`, with the name written in every row. Then a player with a thousand scores has their name stored a thousand times, a typo in one row makes a second "player", and renaming someone means changing a thousand rows and hoping none is missed. Lesson 7.5 looks at that problem properly. The usual design, called **normalisation**, stores each player **once**, in a table of their own, and each score refers to its player by the player's primary key. Each score belongs to exactly one player, and a player can have any number of scores: a **one-to-many** relationship.
 
 **The schema** is two statements now, separated by `;`. `execute` runs exactly one, and refuses more: `ProgrammingError: You can only execute one statement at a time`. **`executescript`** runs a whole script of them, in order. One difference to know: if a transaction is open, `executescript` commits it first, so it isn't for use in the middle of one. Here it runs straight after `connect`, with nothing open.
 
@@ -380,8 +411,8 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
 
 **`add_score`** does two things in one transaction:
 
-1. `INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING` adds the player if they're new, and skips quietly if they're not, as in the shell. You'll hear inserts like this called **upserts**, from "update or insert": strictly, an upsert updates the row that's already there (`ON CONFLICT ... DO UPDATE`), and `DO NOTHING` is its "insert or ignore" form.
-2. `INSERT INTO scores (...) SELECT id, ?, ?, ? FROM players WHERE name = ?` adds the score, taking the values from a `SELECT` instead of from `VALUES`: one statement looks up the player's `id` and inserts the score with it.
+1. `INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING` adds the player if they're new, and skips quietly if they're not, as in the shell. You'll hear inserts like this called **upserts**, from "update or insert": strictly, an upsert updates the row that's already there (`ON CONFLICT ... DO UPDATE`), and `DO NOTHING` is its "insert or ignore" form. The updating form names what to change: `ON CONFLICT (name) DO UPDATE SET last_seen = excluded.last_seen`, where **`excluded`** means the row you tried to insert, so the existing row takes its new value. (`players` has no such column; it's only the shape.)
+2. `INSERT INTO scores (...) SELECT id, ?, ?, ? FROM players WHERE name = ?` is the shell's `INSERT ... SELECT`, with placeholders: one statement looks up the player's `id` and inserts the score with it. Step 1 is what makes it safe: the player always exists by then, so the `SELECT` always finds exactly one row, never Zoe's none.
 
 The second statement has **four** placeholders, filled in order:
 
@@ -403,7 +434,7 @@ The fourth `?` is in the `WHERE`, which is why `score.player` comes last in the 
 [(1, 400), (2, 70), (1, 150)]
 ```
 
-`fetchall()` gives every row of a result at once, as a list of tuples, where `fetchone()` gives one. Three scores, two players: Mia's second score found her existing row, id 1.
+`fetchall()` gives every row of a result at once, as a list of tuples, where `fetchone()` gives one. Three scores, two players: Mia's second score found her existing row, id 1. (`[add_score(...) for p, n in [...]]` is a list comprehension used only for a loop on one line: the list it builds, three `None`s, is thrown away. In a file you'd write a `for` loop.)
 
 ```check
 run ".venv/Scripts/python -c \"from datetime import UTC, datetime; from pathlib import Path; from breakout.scores import open_scores; db = open_scores(Path(':memory:')); from breakout.scores import Score, add_score; t = datetime(2026, 10, 4, tzinfo=UTC); add_score(db, Score('Mia', 'Classic', 400, t)); add_score(db, Score('Mia', 'Castle', 150, t)); print(db.execute('SELECT * FROM players').fetchall(), db.execute('SELECT player_id FROM scores').fetchall())\"" stdout="[(1, 'Mia')] [(1,), (1,)]" label="two scores by Mia: one player, and both scores point at her"
@@ -476,7 +507,7 @@ def best(db: sqlite3.Connection, level: str) -> int | None:
     return points
 ```
 
-**Understand.** The query is the shell's join, with the `played_at` column too, and `ORDER BY scores.id` so the scores come back in the order they were added. The result is one row per score with the player's name in it, exactly as if the name had been stored in the score, without storing it twice. A query this long is easier to read over several lines, so it's in a triple-quoted string: SQL doesn't mind the line breaks.
+**Understand.** The query is the shell's join, with the `played_at` column too, and `ORDER BY scores.id` so the scores come back in the order they were added. The result is one row per score with the player's name in it, exactly as if the name had been stored in the score, without storing it twice. A `JOIN` only gives rows that match, though: a score whose player is gone simply disappears from `load_scores`, without an error. Keep that in mind for the bug hunt. A query this long is easier to read over several lines, so it's in a triple-quoted string: SQL doesn't mind the line breaks.
 
 ```check
 contains breakout/scores.py "JOIN players ON players.id = scores.player_id"
@@ -1133,7 +1164,7 @@ FAILED tests/test_foreign_keys.py::test_a_player_who_has_scores_cannot_be_delete
 2 failed
 ```
 
-The schema says `REFERENCES players (id)`. Above the summary, pytest explains each failure: `Failed: DID NOT RAISE IntegrityError`. The database accepts a score for player 99, who doesn't exist, and lets a player who has scores be deleted, leaving scores that belong to no one: **orphans**. Try it yourself in the shell on `scores.db`, and count the rows before and after. Then find out why. This one is about SQLite itself, so its documentation on foreign keys is the place to look. One new piece of syntax in the tests: `with pytest.raises(sqlite3.IntegrityError), db:` is two context managers in one `with`, entered left to right and left in reverse order. So `db`'s transaction ends first: if the `INSERT` raised, it's rolled back, and the exception carries on out. Then `pytest.raises` catches it and checks its type. If nothing raised, the transaction commits, and `pytest.raises` fails the test with `DID NOT RAISE`. It's the same as one `with` inside the other.
+The schema says `REFERENCES players (id)`. Above the summary, pytest explains each failure: `Failed: DID NOT RAISE IntegrityError`. The database accepts a score for player 99, who doesn't exist, and lets a player who has scores be deleted, leaving scores that belong to no one: **orphans**. Try it yourself in the shell on the practice file, `players.db`, not your `scores.db`, which the next lessons rely on: count the rows, insert a score for player 99, count again, then delete it again with `DELETE FROM scores WHERE player_id = 99;`. Then find out why. This one is about SQLite itself, so its documentation on foreign keys is the place to look. One new piece of syntax in the tests: `with pytest.raises(sqlite3.IntegrityError), db:` is two context managers in one `with`, entered left to right and left in reverse order. So `db`'s transaction ends first: if the `INSERT` raised, it's rolled back, and the exception carries on out. Then `pytest.raises` catches it and checks its type. If nothing raised, the transaction commits, and `pytest.raises` fails the test with `DID NOT RAISE`. It's the same as one `with` inside the other.
 
 | Test / check | Result |
 |---|---|
@@ -1144,7 +1175,7 @@ When all 114 tests pass and every check is clean, commit with a message that men
 
 ```hints
 nudge: The schema is right: the rule is declared. So is the database ignoring it? Search SQLite's documentation for "foreign key support". What does it say about whether foreign keys are enforced by default?
-concept: For compatibility with old databases, SQLite **doesn't enforce foreign keys unless each connection asks it to**, with `PRAGMA foreign_keys = ON`. A **pragma** is an SQLite-specific command that changes how the connection behaves or reports on it: `PRAGMA foreign_keys` alone shows the current setting, `(0,)` or `(1,)`. It's per connection, not stored in the file, so it must be run every time the database is opened. That's also why the shell let you insert an orphan into `scores.db`: the shell's connection never asked.
+concept: For compatibility with old databases, SQLite **doesn't enforce foreign keys unless each connection asks it to**, with `PRAGMA foreign_keys = ON`. A **pragma** is an SQLite-specific command that changes how the connection behaves or reports on it: `PRAGMA foreign_keys` alone shows the current setting, `(0,)` or `(1,)`. It's per connection, not stored in the file, so it must be run every time the database is opened. That's also why the shell let you insert an orphan into `players.db`: the shell's connection never asked.
 shape: One line in `open_scores`, right after `sqlite3.connect`: `db.execute("PRAGMA foreign_keys = ON")`. Not in the test fixture: that would make the tests pass while the game, which opens the database through `open_scores` too, keeps accepting orphans.
 answer: ~~~python
 def open_scores(path: Path) -> sqlite3.Connection:
@@ -1157,6 +1188,25 @@ def open_scores(path: Path) -> sqlite3.Connection:
 Putting it in `open_scores` means every connection the program makes gets it, because there's only one way to open the scores database. That's a reason to have exactly one function that opens it. Other databases (PostgreSQL, MySQL with InnoDB, SQL Server) enforce foreign keys by default; SQLite's default is a historical leftover that every SQLite program has to deal with, and now you know to look for it. A rule the database declares but doesn't check is worse than no rule: everyone reading the schema believes it.
 ```
 
+**What a pragma is.** A **pragma** is an SQLite-specific command that changes how SQLite behaves, or reports on it, rather than working on your tables: `PRAGMA foreign_keys` alone shows the setting, and `PRAGMA foreign_keys = ON` changes it. This one belongs to the **connection**, not the file: it's forgotten when the connection closes, which is why it must be run every time the database is opened. See it work, in the shell on `players.db` (one shell session, so one connection):
+
+```sql
+PRAGMA foreign_keys;
+PRAGMA foreign_keys = ON;
+INSERT INTO scores (player_id, level, points, played_at) VALUES (99, 'x', 1, 'x');
+DELETE FROM players WHERE name = 'Mia';
+```
+
+```text
+(0,)
+IntegrityError (SQLITE_CONSTRAINT_FOREIGNKEY): FOREIGN KEY constraint failed
+IntegrityError (SQLITE_CONSTRAINT_FOREIGNKEY): FOREIGN KEY constraint failed
+```
+
+Off at first; then both rules kept. Quit the shell, open it again, and `PRAGMA foreign_keys;` says `(0,)` again: a new connection.
+
+One more thing a real schema adds: an **index** on `scores.player_id` (lesson 7.6), so finding a player's scores, for a join or for the check before deleting a player, doesn't mean reading every score.
+
 ```check
 run ".venv/Scripts/python -c \"from pathlib import Path; from breakout.scores import open_scores; print(open_scores(Path('scores.db')).execute('PRAGMA foreign_keys').fetchone())\"" stdout="(1,)" label="every connection open_scores makes enforces foreign keys" -- Run PRAGMA foreign_keys = ON in open_scores itself, not only in the test fixture.
 run ".venv/Scripts/python -m pytest -q tests/test_foreign_keys.py" stdout="2 passed"
@@ -1167,12 +1217,24 @@ git-message "foreign key"
 git-clean
 ```
 
+## Challenge: a player's own best
+
+**Optional, ★.** Add `best_for(db, player, level)`: one player's best on one level, using the join and a `WHERE` on both tables. Test it for a player who has played, and one who never has. On a branch.
+
+## Challenge: rename a player
+
+**Optional, ★★.** Add `rename_player(db, old, new)`: one `UPDATE` (lesson 6.3) on `players`, and every score follows, because each refers to the player by number. That's the payoff of storing the name once. Test it, and test that renaming to a name that's taken raises `IntegrityError`. On a branch.
+
+## Challenge: find the orphans
+
+**Optional, ★★.** `PRAGMA foreign_key_check` lists every row whose foreign key points at nothing. Add `python -m breakout.report SCORES_DB --orphans`, which prints them, and try it on a copy of `players.db` with an orphan you made with foreign keys off. Declared isn't enforced, and here's how you'd find out what slipped through. On a branch.
+
 ## What did we actually learn?
 
 - **Store each thing once**, and refer to it by its primary key: a **foreign key** and a **one-to-many relationship**.
 - **Joins** answer one question across two tables: `FROM scores JOIN players ON players.id = scores.player_id`.
 - **`UNIQUE`**, **upserts** (`ON CONFLICT ... DO NOTHING`) and **`INSERT ... SELECT`**; `executescript` for several statements.
-- **Declared isn't enforced**: SQLite checks foreign keys only after `PRAGMA foreign_keys = ON`, on every connection. One function that opens the database is the one place to say so.
+- **Declared isn't enforced**: SQLite checks foreign keys only after `PRAGMA foreign_keys = ON`, on every connection (a **pragma** is a setting of SQLite itself, and this one belongs to the connection). One function that opens the database is the one place to say so.
 - **Orphans**: rows that refer to something gone. Foreign keys exist to make them impossible.
 
 In C#, Entity Framework declares the same relationship with a navigation property (`public Player Player { get; set; }` on a score, `public List<Score> Scores` on a player) and writes the join for you; Java's JPA does it with `@ManyToOne` and `@OneToMany`. Both generate SQL much like this lesson's, against databases that enforce foreign keys, so the SQLite pragma is the one part you won't see there. Knowing the SQL underneath is what lets you read what those libraries do, and find out why when it's slow.

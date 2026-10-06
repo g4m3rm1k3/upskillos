@@ -140,11 +140,21 @@ export function parseLesson(text, id) {
   const parts = body.split(/^##\s+(.+?)\s*$/m);
   const intro = parts[0].trim();
 
+  // A step's id is the learner's progress key, so it must not move. By default it's the step's
+  // position among the numbered steps: `<lesson>-step-N`. A heading can instead carry its own key,
+  // `## Title {#key}`, giving `<lesson>-key` and taking no number, so a section inserted into a
+  // published lesson leaves every later step's id alone.
   const steps = [];
+  let numbered = 0;
   for (let i = 1; i < parts.length; i += 2) {
-    const heading = parts[i];
+    const keyed = parts[i].match(/^(.*?)\s*\{#([a-z0-9][a-z0-9-]*)\}$/);
+    const heading = keyed ? keyed[1] : parts[i];
     const parsed = parseStepBody(parts[i + 1] ?? '');
-    steps.push({ id: `${id}-step-${steps.length + 1}`, title: heading, optional: meta.pedagogy === 'typed' && /^Challenge\s*[—:-]/i.test(heading), ...parsed });
+    // A Challenge is optional in typed lessons, and in any lesson whose challenge text opens
+    // with a bold **Optional** marker (the Forge format). Other Challenge steps stay required.
+    const optional = /^Challenge\s*[—:-]/i.test(heading) && (meta.pedagogy === 'typed' || /^\*\*Optional\b/.test(parsed.prose));
+    const stepId = keyed ? `${id}-${keyed[2]}` : `${id}-step-${++numbered}`;
+    steps.push({ id: stepId, title: heading, optional, ...parsed });
   }
 
   return {

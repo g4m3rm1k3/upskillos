@@ -11,7 +11,7 @@ lab: 10
 problem: A moulding run has just finished with these settings. Will its parts fail inspection? The simplest possible idea is to look up the past runs most like this one and see how they turned out. How do you measure "most like", and why does the unit you record pressure in change the answer?
 ---
 
-This chapter's data is from a shop floor: 500 injection-moulding runs, each with its process settings (melt temperature, injection pressure, cooling time, shop humidity, and which of two materials was used) and whether its parts **failed inspection**. The job is to predict a defect from the settings, before the parts reach inspection, and, just as importantly, to understand *which* settings cause defects.
+This chapter's data describes a shop floor: 500 injection-moulding runs, each with its process settings (melt temperature, injection pressure, cooling time, shop humidity, and which of two materials was used) and whether its parts **failed inspection**. The job is to predict a defect from the settings, before the parts reach inspection, and, just as importantly, to understand *which* settings go with defects. A model trained on records like these finds association, not cause: it can't tell whether humidity causes failures or just tends to be high when something else is wrong. This chapter's data is simulated from hidden rules, which lesson 9.2 reveals, so you'll be able to check what the models find against the real cause; with real shop data you would need a controlled experiment for that.
 
 The data is made up for the course, from rules about what makes a part fail plus randomness, like real process variation. The rules are hidden, and in lesson 9.2 you'll recover them from the data.
 

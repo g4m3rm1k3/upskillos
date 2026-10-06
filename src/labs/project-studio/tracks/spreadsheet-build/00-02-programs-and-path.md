@@ -82,6 +82,7 @@ file greet.py -- Type the code into greet.py in the editor; the file is created 
 contains greet.py "os.environ.get(\"GREETING_NAME\"" -- Type the code into greet.py exactly as shown.
 run "python greet.py" stdout="Hello, stranger" os=windows
 run "python3 greet.py" stdout="Hello, stranger" os=mac
+run "python3 greet.py" stdout="Hello, stranger" os=linux
 ```
 
 ## Set a variable, then run the script
@@ -111,6 +112,7 @@ That's also why, after you install a new tool, an old terminal can't find it: it
 ```check
 run "$env:GREETING_NAME = 'Ada'; python greet.py" stdout="Hello, Ada" os=windows label="greet.py reads GREETING_NAME"
 run "GREETING_NAME=Ada python3 greet.py" stdout="Hello, Ada" os=mac label="greet.py reads GREETING_NAME"
+run "GREETING_NAME=Ada python3 greet.py" stdout="Hello, Ada" os=linux label="greet.py reads GREETING_NAME"
 ```
 
 ## Why programs use environment variables

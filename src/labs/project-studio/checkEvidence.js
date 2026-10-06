@@ -11,3 +11,21 @@ export function checkEvidence(checks) {
   evidence.push('Skipped checks supply no evidence. Passing checks does not establish that you can explain, debug or independently change the program.');
   return evidence;
 }
+
+// The one rule for whether a check run counts as passing, used both for what the panel shows
+// and for what progress saves. Every listed check must have reported back, at least one must
+// have actually run, and every one that ran must have passed. A check skipped on this computer
+// (os=) is not a pass: a run where every check was skipped proves nothing.
+export function checksPassed(checks, results) {
+  if (!results || results.length !== (checks?.length ?? 0)) return false;
+  const ran = results.filter(r => !r.skipped);
+  return ran.length > 0 && ran.every(r => r.pass);
+}
+
+// A short fingerprint of a step's checks: editing the checks makes earlier passes stale.
+export function checkRevision(checks) {
+  const text = JSON.stringify(checks || []);
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}

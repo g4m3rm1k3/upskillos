@@ -44,11 +44,11 @@ The two protocols you'll use sit on top of IP:
 | | TCP | UDP |
 |---|---|---|
 | Model | a connection: a two-way **stream of bytes** | separate **datagrams** (packets) |
-| Delivery | every byte, in order, or an error | each datagram arrives once, or never |
-| Boundaries | none: two sends can arrive as one read | each datagram is received whole |
+| Delivery | every byte, in order, or an error | no promises: a datagram can be lost, arrive twice, or arrive out of order |
+| Boundaries | none: two sends can arrive as one read | one send is one receive, but a buffer smaller than the datagram silently cuts off the rest |
 | Used for | the web, email, file transfer, most games' lobbies | voice, video, fast game updates, DNS |
 
-TCP does a lot of work for you (resending what's lost, putting bytes back in order), and costs a little latency for it. Lessons 2 to 6 use TCP. This lesson ends with one UDP datagram.
+TCP does a lot of work for you (resending what's lost, putting bytes back in order), and costs a little latency for it. A program using UDP does that work itself, if it needs it: a game, for example, numbers each update and ignores any that arrive older than the last one it applied, which handles duplicates and reordering in one rule. Lessons 2 to 6 use TCP. This lesson ends with one UDP datagram.
 
 ## Step 1 — Bytes on the wire
 
@@ -649,7 +649,7 @@ sent 13 bytes
 received "hello, socket" from 127.0.0.1:52790
 ```
 
-Your port numbers will differ on every run: that's port 0 at work, on both sockets. The datagram arrived whole, as one message of 13 bytes. On a real network it might not have arrived at all, and nothing would tell you: UDP leaves that to the program.
+Your port numbers will differ on every run: that's port 0 at work, on both sockets. The datagram arrived as one message of 13 bytes, all of it, because the receive buffer was bigger than the datagram. On a real network it might not have arrived at all, or arrived twice, or behind a later one, and nothing would tell you: UDP leaves that to the program.
 
 From the next lesson on, everything uses TCP, and its first surprise is that messages do **not** arrive whole.
 

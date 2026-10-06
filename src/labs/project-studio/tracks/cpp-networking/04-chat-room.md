@@ -809,6 +809,12 @@ cmake --build chat/build
 ./chat/build/chat_tests
 ```
 
+```hints
+nudge: In `handle`, follow what happens to a frame from a client that already has a name. Where does it go, and who receives it?
+concept: `/who` has to be recognised before that frame reaches `broadcast`, and answered with `send_to`, which writes to one client only. The names come from `clients_`, which is already in join order, because new clients are added with `push_back` and removed with `erase`.
+shape: In the branch for a client that has a name: if the frame is `/who`, build the list by looping over `clients_`, skipping any client whose name is still empty and putting `", "` between names. Send `"online: " + names` to this client, and `return` before the broadcast. Joining shows the same list being built.
+```
+
 ```cpp file=chat/chat_server.cpp
 #include "chat_server.h"
 

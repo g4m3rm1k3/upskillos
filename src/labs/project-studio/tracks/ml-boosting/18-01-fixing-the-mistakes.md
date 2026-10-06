@@ -11,7 +11,7 @@ lab: 14
 problem: A random forest grows hundreds of deep trees independently and averages them. Boosting grows small trees one after another, and each one is trained only on what the trees before it still get wrong. Why does that work so well on tables of shop data, and what is each new tree actually learning?
 ---
 
-This advanced track covers the two classical methods the core chapters left out. **Gradient boosting** is the method that wins most competitions on tabular data (rows and columns, the kind of data a shop actually has), and it's the default first choice for many working data scientists. **Support vector machines** (lesson 18.3) are older, and they introduce an idea that runs through the rest of machine learning: the kernel.
+This advanced track covers the two classical methods the core chapters left out. **Gradient boosting** is one of the strongest methods for tabular data (rows and columns, the kind of data a shop actually has), and many working data scientists reach for it early; which method wins on a given dataset still has to be measured, not assumed. **Support vector machines** (lesson 18.3) are older, and they introduce an idea that runs through the rest of machine learning: the kernel.
 
 The worked example for boosting is **surface finish** in finish turning. Every pass records its cutting conditions and the measured roughness:
 

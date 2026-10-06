@@ -130,3 +130,13 @@ Five lessons with independent-task headings and visible full targets now use opt
 - `git -c safe.directory=C:/Users/g4m3r/Documents/open-calc diff --check`: no whitespace errors.
 
 These checks establish parser, navigation, assessment UI and reference-program behavior. They do not certify every lesson's explanation, prerequisite sequence, independent task or effectiveness with learners. No full production build or live browser inspection was run in this pass.
+## Broader observation audit — 2026-10-06
+
+See the [full audit](audits/project-studio-full-audit-2026-10-06.md) and [all-track review queue](audits/project-studio-review-queue.md). This pass only changes documentation. The earlier statement that skipped checks cannot claim success applies to the visible panel; AUD-01 reproduces a separate saved-progress defect that remains open. Saved completion after failed rechecks/folder changes also remains open. Existing checked items describe the initial repair and do not certify all lessons.
+
+- [ ] Repair saved skipped/stale evidence (AUD-01/02).
+- [ ] Correct UDP guarantees (AUD-09).
+- [ ] Align concept coverage language, optional state and recommended entry (AUD-03/04/05).
+- [ ] Complete per-track prerequisite and independent-task review, then per-lesson editorial verification (AUD-06/07/08).
+- [ ] Reconcile maturity/docs, progress identity, platform support and CI (AUD-11/12/13/14).
+- [ ] Verify technical qualifiers and observe independent learner transfer (AUD-10/15).

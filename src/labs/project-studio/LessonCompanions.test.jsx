@@ -16,7 +16,7 @@ afterEach(async () => {
   delete globalThis.IS_REACT_ACT_ENVIRONMENT;
 });
 
-const checked = (id) => ({ id, checks: [{ kind: 'file' }] });
+const checked = (id) => ({ id, checks: [{ kind: 'run' }] });
 const lesson = { id: 'ml-math/02-01', meta: { concepts: 'vectors', revisits: 'tabular-data', notebook: 'ml-vectors', lab: '3' }, steps: [checked('a'), checked('b')] };
 
 describe('lesson companions', () => {

@@ -23,9 +23,11 @@ const SERIES = [
       ['cpp-engineering', 'Software Engineering'],
       ['cpp-systems', 'Systems Programming'],
       ['cpp-networking', 'Networking'],
+      ['cpp-graphics', 'Graphics from First Principles'],
+      ['cpp-engines', 'Games and Engines'],
       ['cpp-game', 'Game Project: Pong'],
     ],
-    planned: 'Graphics, further games and engines, and advanced mastery chapters are planned.',
+    planned: 'Further games, engine chapters and advanced mastery chapters are planned.',
   },
   {
     // Plan, chapter map and status: docs/cpp-games-learning-path.md.

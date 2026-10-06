@@ -32,6 +32,7 @@ Nothing new yet. That's the point: the next file does the same in JavaScript.
 ```check
 run "python hello.py" stdout="Hello from Python, building a spreadsheet" os=windows -- Type the code into hello.py, then check again.
 run "python3 hello.py" stdout="Hello from Python, building a spreadsheet" os=mac -- Type the code into hello.py, then check again.
+run "python3 hello.py" stdout="Hello from Python, building a spreadsheet" os=linux -- Type the code into hello.py, then check again.
 ```
 
 ## hello.js
@@ -119,6 +120,7 @@ You've probably seen a traceback like this. Read it from the **bottom**: the las
 file broken.py
 run "python broken.py" exit=1 stderr="ZeroDivisionError" os=windows label="broken.py fails with ZeroDivisionError"
 run "python3 broken.py" exit=1 stderr="ZeroDivisionError" os=mac label="broken.py fails with ZeroDivisionError"
+run "python3 broken.py" exit=1 stderr="ZeroDivisionError" os=linux label="broken.py fails with ZeroDivisionError"
 ```
 
 ## The same failure in JavaScript
