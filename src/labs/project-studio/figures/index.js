@@ -6,6 +6,7 @@
 const OWN = {
   aml: () => import('./aml.jsx'),
   dice: () => import('./dice.jsx'),
+  'dice-start': () => import('./dicePreview.jsx'),
 };
 const ML_LAB = import.meta.glob('../../ml-lab/labs/*/figures.jsx');
 

@@ -9,6 +9,8 @@ console: true
 
 This track teaches the core of the C++ language by building small, real tools: a calculator, a statistics program, a word counter, a grade book and an inventory. Each tool lives in its own folder inside this track's project folder, and each is built with the CMake you learned in *C++ from Zero*.
 
+**Prerequisites:** You can run a Python script using variables, arithmetic and decisions. Complete the C++ tools chapter first: you must be able to compile a small program and run CMake. If those commands fail, return to that chapter before changing the calculator. This lesson teaches typed values and input; you will design an expression calculator independently in Step 6.
+
 Choose a **new empty folder** for this track. You'll run every command from that folder. When a program reads from the keyboard, run it in the terminal and type: the **Run** button can't type for you.
 
 This first lesson starts the calculator. Along the way you'll meet the idea that most separates C++ from Python: **every value has a type, fixed before the program runs.**
@@ -58,7 +60,7 @@ double a = 7.5;
 
 - `double` is the type: a floating-point number, with about 15 significant digits.
 - `a` is the variable's name.
-- `= 7.5` **initialises** it: gives it its first value. Always initialise. An uninitialised `int x;` inside a function holds whatever bytes were already in memory.
+- `= 7.5` **initialises** it: gives it its first value. Always initialise. An uninitialised `int x;` inside a function has no value you may safely read in this C++20 program; reading it causes undefined behavior. Initialising it prevents that bug.
 
 | Type | Holds | Example |
 |---|---|---|
@@ -174,7 +176,7 @@ std::cout << a / b;
 
 ### What happens
 
-It prints `3`. When **both** operands are `int`, `/` is **integer division**: the fractional part is thrown away (rounded toward zero). Python spells that `//`. The *types* of the operands decide which division happens, not the values.
+It prints `3`. When **both** operands are `int`, `/` is **integer division**: the fractional part is thrown away (rounded toward zero). For these positive operands, Python's `//` also gives `3`. For negative results the rules differ: C++ `-7 / 2` gives `-3` (toward zero), whereas Python `-7 // 2` gives `-4` (toward negative infinity). Predict both, then test them in your scratch file and Python terminal. The *types* of the operands decide which division happens, not the values.
 
 To get `3.5`, at least one operand must be floating-point: `7.0 / 2`, or `static_cast<double>(a) / b`. `static_cast<T>(x)` is C++'s explicit, searchable way to convert a value to another type.
 
@@ -225,7 +227,7 @@ run "./calculator/build/calculator" stdin="3 4\n" stdout="3 / 4 = 0.75" -- With 
 
 ## Step 6 — Challenge: an expression calculator
 
-**This step: no code is given. Replace the four fixed lines with a calculator that reads one expression, like `3 * 4`, and evaluates it.**
+**This step: design your own solution before opening the optional full reference. Replace the four fixed lines with a calculator that reads one expression, like `3 * 4`, and evaluates it.**
 
 | Input | The output must include |
 |---|---|
@@ -267,7 +269,19 @@ default:
 }
 ```
 
-Check for division by zero **before** dividing. If a check fails, its message includes a hint.
+Check for division by zero **before** dividing. First write pseudocode: the steps in ordinary words, without C++ punctuation. Choose either an if chain or a switch, and explain why it suits four known operators. You do not need both.
+
+Before running, predict the route through your branches for `1 / 0` and `2 % 3`. After running, compare the output with that route. If it differs, trace the first branch that changed your expectation.
+
+```hints
+nudge: Separate reading an expression, selecting the operation, and printing the result. Which of those stages is failing?
+concept: Store the two operands as double and the operator as char. Comparison uses ==; an if chain or switch selects exactly one operation.
+shape: Read a, op and b. Handle +, -, * and / separately. In the / branch reject b == 0 before dividing. Use a final branch for unknown operators; print a result only after a valid operation.
+```
+
+The automated checks build the program and look for output fragments for five expressions. They do not prove every operator works, that input is valid, or that you understand the branches. Add manual cases for addition, negative operands, zero divided by a nonzero number, and invalid text. Record the input, expected result and observed result. Invalid-input handling is an optional extension; the reference includes it, but it is not required by these checks.
+
+After the required cases pass, independently add a message for invalid input in your own implementation. Hint: examine whether extraction into the three variables succeeded before using them. Keep this extension separate in your learning notes so you can distinguish required behavior from extra work.
 
 ```cpp file=calculator/main.cpp
 #include <iostream>

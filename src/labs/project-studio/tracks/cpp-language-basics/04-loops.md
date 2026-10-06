@@ -166,7 +166,7 @@ for (int i = 1; i < 10; ++i) {
 
 ### What happens
 
-Nine: `i` takes the values 1 to 9. When `i` becomes 10, the condition is false before the body runs. A loop `for (int i = a; i < b; ++i)` runs exactly `b - a` times.
+Nine: `i` takes the values 1 to 9. When `i` becomes 10, the condition is false before the body runs. When `a <= b` and incrementing stays within the integer range, a loop `for (int i = a; i < b; ++i)` runs `b - a` times. If `a > b`, the first condition is false and it runs zero times.
 
 This **half-open range**, written [a, b), includes `a` and excludes `b`, and it's the convention everywhere in C++: positions `0` to `size() - 1`, iterators from `begin()` up to `end()`. It exists to make **off-by-one errors**, the most common loop bug, less likely. You met one in *C++ from Zero*: `i <= scores.size()`.
 
@@ -184,6 +184,16 @@ $ ./stats/table
 
 - Numbers are separated by single spaces, with no space at the end of a line.
 - If `n` is missing, zero or negative, print `n must be a positive whole number` and return exit code `1` from `main`. A non-zero exit code is how command-line programs tell whoever ran them that something went wrong.
+
+Before opening the optional reference, sketch the rows for n = 2. Predict where each space and newline belongs. Your first implementation should produce that small example before you generalise to n rows.
+
+```hints
+nudge: One row needs several products, but only one newline. Which action belongs after the inner loop?
+concept: For row r and column c the value is r * c. Print a separating space before columns after the first, rather than after every value.
+shape: Read and validate n first. Loop row from 1 through n; inside it loop col from 1 through n. Print a space when col > 1, then row * col. Print a newline after the inner loop.
+```
+
+The checks compile and inspect output fragments for n = 1, 3, 5 and 0. They do not reject all extra text or establish correct handling of every invalid input. Manually test missing input, a negative number, and a two-row table; inspect trailing spaces as well as the numbers. Integer extraction may accept the integer prefix of decimal input: rejecting that entire line is an optional parsing extension, not a behavior these checks establish.
 
 You'll need a loop **inside** a loop: a **nested loop**. The outer loop goes through rows; for each row, the inner loop goes through columns.
 

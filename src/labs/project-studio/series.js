@@ -4,6 +4,8 @@
 // A series claims every discovered track whose folder starts with its prefix. Its listed
 // chapters come first, in the order given; a newly discovered track with the prefix joins it
 // automatically (before `insertBefore`, when that chapter exists, else at the end).
+import { learningProfile } from './learningProfile.js';
+
 const SERIES = [
   {
     key: 'cpp-mastery',
@@ -24,6 +26,17 @@ const SERIES = [
       ['cpp-game', 'Game Project: Pong'],
     ],
     planned: 'Graphics, further games and engines, and advanced mastery chapters are planned.',
+  },
+  {
+    // Plan, chapter map and status: docs/cpp-games-learning-path.md.
+    key: 'dice-learning',
+    label: 'C++ Games — From Python Scripts to Vulkan',
+    prefix: 'dice-path-',
+    position: 3,
+    chapters: [
+      ['dice-path-start', 'Start here · Meet the game and write C++'],
+    ],
+    planned: 'Upcoming chapters are still being authored: SDL3 windows and input, graphics and shaders, then Vulkan.',
   },
   {
     // Plan, chapter map and status: docs/ml-project-studio-curriculum.md.
@@ -151,18 +164,18 @@ const SERIES = [
 ];
 
 function buildSeries(def, tracks, keys, title) {
-  const chapters = def.chapters.filter(([key]) => tracks[key]?.length).map(([key, label]) => ({ key, label }));
+  const chapters = def.chapters.filter(([key]) => tracks[key]?.length).map(([key, label]) => ({ key, label, ...learningProfile(key) }));
   const known = new Set(def.chapters.map(([key]) => key));
-  const additional = keys.filter(key => key.startsWith(def.prefix) && !known.has(key)).map(key => ({ key, label: title(key) }));
+  const additional = keys.filter(key => key.startsWith(def.prefix) && !known.has(key)).map(key => ({ key, label: title(key), ...learningProfile(key) }));
   const at = def.insertBefore ? chapters.findIndex(chapter => chapter.key === def.insertBefore) : -1;
   chapters.splice(at < 0 ? chapters.length : at, 0, ...additional);
-  return { key: def.key, label: def.label, chapters, planned: def.planned };
+  return { key: def.key, label: def.label, chapters, planned: def.planned, ...learningProfile(def.key) };
 }
 
 export function studioSeries(tracks, keys, title) {
   const built = SERIES.map(def => ({ def, series: buildSeries(def, tracks, keys, title) })).filter(({ series }) => series.chapters.length);
   const grouped = new Set(built.flatMap(({ series }) => series.chapters.map(chapter => chapter.key)));
-  const result = keys.filter(key => !grouped.has(key)).map(key => ({ key, label: title(key), chapters: [{ key, label: title(key) }] }));
+  const result = keys.filter(key => !grouped.has(key)).map(key => ({ key, label: title(key), chapters: [{ key, label: title(key), ...learningProfile(key) }], ...learningProfile(key) }));
   // A series sits at its fixed `position`, or where its first chapter falls among the tracks.
   for (const { def, series } of built) {
     const first = keys.indexOf(series.chapters[0].key);

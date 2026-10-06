@@ -6,9 +6,9 @@ runtime: none
 pedagogy: typed
 ---
 
-This standalone series is being built around **Circuit Clash**, a third-person kart combat racer. The playable browser reference is available now. The C# implementation lessons are **not yet published**. This introduction is a preview of the learning destination, not a claim that the complete course is ready.
+This standalone series is being built around **Circuit Clash**, a third-person kart combat racer. The playable browser reference is available now. Draft C# implementation lessons are available after this introduction, starting with a one-line console experiment. The complete course has not finished its learning-quality or cross-platform review. This introduction is a preview of the learning destination, not a claim that the complete course is ready.
 
-You do not need to have taken the Java, Python or game-engine series. The planned guided path begins with execution, values, types and logic before combining them into classes, collections and game systems. You will type and understand your own implementation. Playing this sample does not copy source files into your project.
+You do not need to have taken the Java, Python or game-engine series. The guided path begins with execution, values, types and logic before combining them into classes, collections and game systems. You will type and understand your own implementation. Playing this sample does not copy source files into your project.
 
 ## Play the destination first
 

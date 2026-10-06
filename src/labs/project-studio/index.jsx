@@ -480,7 +480,7 @@ export default function ProjectStudio() {
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
       <label style={{ fontSize: 11 }}>Series <select aria-label="Series" value={series.key} style={pickerStyle}
         onChange={event => selectTrack(SERIES.find(item => item.key === event.target.value).chapters[0].key)}>
-        {SERIES.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+        {SERIES.map(item => <option key={item.key} value={item.key}>{item.label} · {item.level}{item.recommended ? ' · Recommended start' : ''}{item.maturity === 'in-development' ? ' · In development' : ' · Review pending'}</option>)}
       </select></label>
       {series.chapters.length > 1 && <label style={{ fontSize: 11 }}>Chapter <select aria-label="Chapter"
       value={trackKey}
@@ -489,6 +489,10 @@ export default function ProjectStudio() {
     >
       {series.chapters.map((chapter, index) => <option key={chapter.key} value={chapter.key}>{index + 1}. {chapter.label}</option>)}
     </select></label>}
+      <p style={{ flexBasis: '100%', margin: '4px 0', fontSize: 12, color: C.text }}>
+        {series.audience}
+        {series.chapters.length > 1 && <span> Chapter: {series.chapters.find(chapter => chapter.key === trackKey)?.audience}</span>}
+      </p>
     </div>
   );
 

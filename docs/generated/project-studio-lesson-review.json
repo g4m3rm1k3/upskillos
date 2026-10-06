@@ -1,0 +1,5039 @@
+{
+  "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
+  "summary": {
+    "lessons": 359,
+    "tracks": 48,
+    "errors": {},
+    "signals": {
+      "authored check limits not detected": 324,
+      "prediction not detected": 76,
+      "task lacks parsed hint ladder": 84,
+      "independent task heading not detected": 238
+    }
+  },
+  "lessons": [
+    {
+      "id": "aml-project/01-01-a-python-of-its-own",
+      "track": "aml-project",
+      "title": "1.1 — A Python of Its Own",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A package Python doesn't have",
+      "firstIndependentTask": "Your turn: an environment check",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-project/01-02-saving-your-work-with-git",
+      "track": "aml-project",
+      "title": "1.2 — Saving Your Work with Git",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Is Git installed?",
+      "firstIndependentTask": "Your turn: a README",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-project/01-03-modules",
+      "track": "aml-project",
+      "title": "1.3 — Modules: One File, One Job",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The plan",
+      "firstIndependentTask": "Your turn: history.py",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-project/01-04-a-package",
+      "track": "aml-project",
+      "title": "1.4 — A Package You Can Run from Anywhere",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A folder for the package",
+      "firstIndependentTask": "Your turn: use the package from a script",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-project/01-05-tests-with-pytest",
+      "track": "aml-project",
+      "title": "1.5 — Tests with pytest",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Your first test file",
+      "firstIndependentTask": "Your turn: test history.py",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-project/01-06-failing-well",
+      "track": "aml-project",
+      "title": "1.6 — When Things Go Wrong: Failing Well",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Three ways to fail",
+      "firstIndependentTask": "Your turn: results must be pass or fail",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-01-the-terminal-and-your-first-program",
+      "track": "aml-python",
+      "title": "0.1 — The Terminal and Your First Program",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "How every lesson works",
+      "firstIndependentTask": "Your turn: about.py",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-02-numbers-names-and-text",
+      "track": "aml-python",
+      "title": "0.2 — Numbers, Names and Text",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Arithmetic",
+      "firstIndependentTask": "Your turn: budget.py",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-03-lists-and-loops",
+      "track": "aml-python",
+      "title": "0.3 — Lists and Loops: Fifteen Timings",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A list",
+      "firstIndependentTask": "Your turn: upload.py",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-04-decisions",
+      "track": "aml-python",
+      "title": "0.4 — Decisions: Pass, Fail, Flaky",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "True or False",
+      "firstIndependentTask": "Your turn: a median for any length",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-05-functions",
+      "track": "aml-python",
+      "title": "0.5 — Functions: Write It Once",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Your first function",
+      "firstIndependentTask": "Your turn: nights since the last failure",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-06-files-and-dictionaries",
+      "track": "aml-python",
+      "title": "0.6 — Files and Dictionaries: Ninety Rows",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The data",
+      "firstIndependentTask": "Your turn: failure rates from the file",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "aml-python/00-07-the-ci-report",
+      "track": "aml-python",
+      "title": "0.7 — Your Tool: The CI Report",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "What the tool should do",
+      "firstIndependentTask": "Your turn: what needs attention",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/00-play-the-game",
+      "track": "circuit-clash",
+      "title": "Play Circuit Clash — the game you will learn to build",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Play the destination first",
+      "firstIndependentTask": "Challenge — write a behavior report",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/01-tools-and-first-run",
+      "track": "circuit-clash",
+      "title": "A terminal, a compiler, and your first execution",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose a folder you own",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/02-values-and-units",
+      "track": "circuit-clash",
+      "title": "Values, types, and the units behind motion",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Distinguish whole counts from fractional quantities",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/03-decisions-and-repetition",
+      "track": "circuit-clash",
+      "title": "Decisions, loops, and legal actions",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Guard a purchase before changing state",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/04-functions-and-red-green",
+      "track": "circuit-clash",
+      "title": "Functions and tests that can really fail",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Write an executable expectation first",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/05-objects-and-collections",
+      "track": "circuit-clash",
+      "title": "Objects, collections, and ownership",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create two objects with independent state",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/06-project-boundaries",
+      "track": "circuit-clash",
+      "title": "Build boundaries, dependencies, and Git",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make the rules a library",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/07-track-math",
+      "track": "circuit-clash",
+      "title": "A winding track from functions and vectors",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Define coordinates and a closed curve",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/08-karts-and-state",
+      "track": "circuit-clash",
+      "title": "Model a race without drawing it",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Name the finite choices and immutable inputs",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/09-triangles-and-light",
+      "track": "circuit-clash",
+      "title": "Low-poly geometry — transforms, normals, and light",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Rotate locally, then translate into the world",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/10-first-window",
+      "track": "circuit-clash",
+      "title": "Your first 3D frame and the rendering pipeline",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Open the window and describe a camera",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/11-build-the-kart",
+      "track": "circuit-clash",
+      "title": "Build the low-poly kart from reusable geometry",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Shade one triangle at the graphics boundary",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/12-race-contracts",
+      "track": "circuit-clash",
+      "title": "Race contracts — state, observations, and equipment",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Own the state and seed the experiment",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/13-driving-and-checkpoints",
+      "track": "circuit-clash",
+      "title": "Driving, recovery, and honest lap counting",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Recover to a validated checkpoint",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/14-combat-and-pickups",
+      "track": "circuit-clash",
+      "title": "Combat, collision, and shared resources",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Resolve defense before damage",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/15-tick-and-order",
+      "track": "circuit-clash",
+      "title": "One simulation step with a defined order",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Order results and establish the simulation transaction",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/16-test-the-race",
+      "track": "circuit-clash",
+      "title": "Tests that protect rules rather than appearances",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create an assertion with a process-level failure",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/17-camera-and-world",
+      "track": "circuit-clash",
+      "title": "A chase camera, track mesh, and low-poly scenery",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Follow the kart with a stable chase camera",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/18-human-controls",
+      "track": "circuit-clash",
+      "title": "Translate devices into simulation inputs",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Introduce a contract because callers need substitution",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/19-menu-primitives",
+      "track": "circuit-clash",
+      "title": "Immediate-mode menus and keyboard focus",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Track focus across a frame",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/20-save-the-garage",
+      "track": "circuit-clash",
+      "title": "Transactions, validation, and persistent upgrades",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make purchasing and equipping different operations",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/21-q-update-experiment",
+      "track": "circuit-clash",
+      "title": "Understand Q-learning before implementing a table",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn experience into a numerical target",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/22-the-policy-table",
+      "track": "circuit-clash",
+      "title": "A policy table, exploration, and independent snapshots",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Allocate rows only when a state is encountered",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/23-shared-drivers",
+      "track": "circuit-clash",
+      "title": "Program steering and compare tactical strategies",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Steer toward a point ahead of the kart",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/24-training-and-evaluation",
+      "track": "circuit-clash",
+      "title": "Train against snapshots and evaluate on held-out seeds",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create an episode with controlled variation",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/25-application-lifecycle",
+      "track": "circuit-clash",
+      "title": "Application state, focus pause, and fixed-step execution",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Own the application lifecycle explicitly",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/26-complete-menus",
+      "track": "circuit-clash",
+      "title": "Complete the menus, garage, training screen, and HUD",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Offer explicit entry points and honest policy selection",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/27-run-the-complete-game",
+      "track": "circuit-clash",
+      "title": "Launch the game and expose reproducible experiments",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Resolve a data directory and an offline training mode",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/28-regression-and-evidence",
+      "track": "circuit-clash",
+      "title": "Regression checks for saves, learning, and complete races",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Test purchasing through its public operation",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/29-profile-package-and-release",
+      "track": "circuit-clash",
+      "title": "Profile, package, and investigate a release",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Measure before changing architecture",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/30-transfer-and-design-review",
+      "track": "circuit-clash",
+      "title": "Transfer the engineering beyond this game",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Explain the system without reading method bodies",
+      "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/01-invariants",
+      "track": "cpp-classes",
+      "title": "1 — Invariants: a Fraction That Keeps Its Promises",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A struct cannot keep a promise",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/02-operators",
+      "track": "cpp-classes",
+      "title": "2 — Operator Overloading: Fractions That Do Arithmetic",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification for comparing and printing",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/03-inheritance",
+      "track": "cpp-classes",
+      "title": "3 — Inheritance and Virtual Functions",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Predict: which send runs?",
+      "firstIndependentTask": "Step 7 — Challenge: a push channel",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/04-interfaces",
+      "track": "cpp-classes",
+      "title": "4 — Composition and Interfaces: Code You Can Test",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/05-errors",
+      "track": "cpp-classes",
+      "title": "5 — Error Handling by Design: Exceptions, optional and expected",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Four ways to fail",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-classes/06-value-types",
+      "track": "cpp-classes",
+      "title": "6 — Value Semantics: Design Your Own Type",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A regular type in ten lines",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/01-complexity",
+      "track": "cpp-dsa",
+      "title": "1 — Complexity You Can See",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A benchmark harness",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/02-sequences",
+      "track": "cpp-dsa",
+      "title": "2 — vector, list and deque: the Cost of Memory",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": "Step 7 — Challenge: prepend",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/03-hash-map",
+      "track": "cpp-dsa",
+      "title": "3 — Build a Hash Map",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The interface",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/04-search-trees",
+      "track": "cpp-dsa",
+      "title": "4 — Binary Search Trees and std::map",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The interface",
+      "firstIndependentTask": "Step 7 — Challenge: lower_bound",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/05-heaps",
+      "track": "cpp-dsa",
+      "title": "5 — Heaps and Priority Queues",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A tree stored in a vector",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/06-graphs",
+      "track": "cpp-dsa",
+      "title": "6 — Graphs: BFS, DFS and Dijkstra",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The map",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/07-dynamic-programming",
+      "track": "cpp-dsa",
+      "title": "7 — Dynamic Programming: Never Solve the Same Problem Twice",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Count the calls",
+      "firstIndependentTask": "Step 8 — Challenge: edit distance",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-dsa/08-mini-database",
+      "track": "cpp-dsa",
+      "title": "8 — Project: a Mini In-Memory Database",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The interface",
+      "firstIndependentTask": "Step 8 — Challenge: the minidb program",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/01-git",
+      "track": "cpp-engineering",
+      "title": "1 — Version Control from the First Line",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A repository, and who you are",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/02-cmake",
+      "track": "cpp-engineering",
+      "title": "2 — CMake for Real Projects: a Library, an App and Tests",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A colleague's parser: the interface",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/03-tests-and-branches",
+      "track": "cpp-engineering",
+      "title": "3 — Testing Like a Professional, on a Branch",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A branch, and two test-framework ideas",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/04-style-and-analysis",
+      "track": "cpp-engineering",
+      "title": "4 — One Style, Checked by Tools: clang-format and clang-tidy",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A style file",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/05-sanitizers",
+      "track": "cpp-engineering",
+      "title": "5 — Sanitizers in the Test Run",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A SANITIZE option",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/06-ci",
+      "track": "cpp-engineering",
+      "title": "6 — Continuous Integration: Every Change, Every System",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A workflow: build and test on three systems",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engineering/07-release",
+      "track": "cpp-engineering",
+      "title": "7 — Packaging and Releases: interp 1.0.0",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A version, in one place",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engines/01-game-loop",
+      "track": "cpp-engines",
+      "title": "1 — The Game Loop: Fixed Timesteps",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engines/02-entities",
+      "track": "cpp-engines",
+      "title": "2 — Entities and Components",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification of the world",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engines/03-collision",
+      "track": "cpp-engines",
+      "title": "3 — Collision and Game Rules",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification of Pong",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engines/04-data-oriented",
+      "track": "cpp-engines",
+      "title": "4 — Data-Oriented Design",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification: two layouts, one world",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-engines/05-profiling",
+      "track": "cpp-engines",
+      "title": "5 — Profiling: Finding the Hot System",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification of the profiler",
+      "firstIndependentTask": "Step 5 — Challenge: a grid broad phase",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-foundations/01-first-program",
+      "track": "cpp-foundations",
+      "title": "1 — From a Text File to a Running Program",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Find your compiler",
+      "firstIndependentTask": "Step 7 — Challenge: two lines, no warnings",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-foundations/02-reading-errors",
+      "track": "cpp-foundations",
+      "title": "2 — Reading What the Compiler Tells You",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Build it and read the first error",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-foundations/03-compiler-and-linker",
+      "track": "cpp-foundations",
+      "title": "3 — When the Compiler Is Happy but the Build Fails",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A header: the promise",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-foundations/04-cmake",
+      "track": "cpp-foundations",
+      "title": "4 — Building with CMake",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Install CMake",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-foundations/05-first-crash",
+      "track": "cpp-foundations",
+      "title": "5 — Your First Crash, and the Debugger",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Run it and watch it fail",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-game/01-pong-court",
+      "track": "cpp-game",
+      "title": "1 — Pong: Understand and Move One Paddle",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Open the court before writing a rule",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/01-function-templates",
+      "track": "cpp-generic",
+      "title": "1 — Function Templates: Write It Once",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Three copies of one function",
+      "firstIndependentTask": "Step 6 — Challenge: two templates of your own",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/02-class-templates",
+      "track": "cpp-generic",
+      "title": "2 — Class Templates: a Stack for Any Type",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/03-concepts",
+      "track": "cpp-generic",
+      "title": "3 — Concepts: Say What a Template Needs",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — An error far from the mistake",
+      "firstIndependentTask": "Step 6 — Challenge: Summable",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/04-iterators",
+      "track": "cpp-generic",
+      "title": "4 — Iterators: Make Your Container Work with Everything",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A ring buffer: the specification",
+      "firstIndependentTask": "Step 5 — Challenge: Range, with a sentinel",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/05-lambdas",
+      "track": "cpp-generic",
+      "title": "5 — Lambdas and Function Objects",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A function object, and the lambda that writes one",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/06-ranges",
+      "track": "cpp-generic",
+      "title": "6 — Ranges, Views and the Standard Algorithms",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Views are lazy",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-generic/07-flat-set",
+      "track": "cpp-generic",
+      "title": "7 — Challenge: a Generic Container from a Specification",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Requirements and specification",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/01-pixels",
+      "track": "cpp-graphics",
+      "title": "1 — Pixels: an Image in Memory and on Disk",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/02-binary-images",
+      "track": "cpp-graphics",
+      "title": "2 — Binary Files: PPM and BMP",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A tool that reads images back",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/03-vectors",
+      "track": "cpp-graphics",
+      "title": "3 — Vectors: Position, Direction and Light",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/04-lines-and-triangles",
+      "track": "cpp-graphics",
+      "title": "4 — Rasterizing: Lines and Triangles",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification for lines",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/05-transforms",
+      "track": "cpp-graphics",
+      "title": "5 — Matrices: Move, Turn, Scale",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/06-3d-projection",
+      "track": "cpp-graphics",
+      "title": "6 — 3D: Cameras and Perspective",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification for Mat4",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/07-depth-and-shading",
+      "track": "cpp-graphics",
+      "title": "7 — Depth and Light: a Solid Cube",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification for depth",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-graphics/08-pipeline",
+      "track": "cpp-graphics",
+      "title": "8 — The Pipeline, Made Visible",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Pull the rasterizer out",
+      "firstIndependentTask": "Step 5 — Challenge: a debugging shader",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/01-values-and-input",
+      "track": "cpp-language-basics",
+      "title": "1 — Values, Types and a First Calculator",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The calculator's build file",
+      "firstIndependentTask": "Step 6 — Challenge: an expression calculator",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/02-functions-and-tests",
+      "track": "cpp-language-basics",
+      "title": "2 — Functions, Headers and Your First Unit Tests",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A test framework you can read",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/03-gcd-and-lcm",
+      "track": "cpp-language-basics",
+      "title": "3 — Independent Work: GCD and LCM",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification arrives as tests",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/04-loops",
+      "track": "cpp-language-basics",
+      "title": "4 — Loops: Summarising a Stream of Numbers",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Read until the input runs out",
+      "firstIndependentTask": "Step 4 — Challenge: a multiplication table",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/05-strings",
+      "track": "cpp-language-basics",
+      "title": "5 — Text: Building a Word Counter",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": "Step 10 — Challenge: palindromes",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/06-vectors",
+      "track": "cpp-language-basics",
+      "title": "6 — std::vector and Algorithms: a Grade Book",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": "Step 10 — Challenge: letter grades",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-language-basics/07-structs",
+      "track": "cpp-language-basics",
+      "title": "7 — Structs, References and const: an Inventory",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": "Step 13 — Challenge: categories (the header)",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/01-lifetime",
+      "track": "cpp-memory",
+      "title": "1 — Object Lifetime: the Stack, the Heap, and Who Cleans Up",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Predict the lifetimes",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/02-use-after-free",
+      "track": "cpp-memory",
+      "title": "2 — Use After Free, and AddressSanitizer",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A program that seems to work",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/03-dynamic-array",
+      "track": "cpp-memory",
+      "title": "3 — Build Your Own Dynamic Array",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/04-copies",
+      "track": "cpp-memory",
+      "title": "4 — Copies, Crashes and the Rule of Three",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Copying goes wrong",
+      "firstIndependentTask": "Step 4 — Challenge: bounds checking (the header)",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/05-move-semantics",
+      "track": "cpp-memory",
+      "title": "5 — Move Semantics: Stealing Instead of Copying",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification for moving",
+      "firstIndependentTask": "Step 6 — Challenge: Grid, with the rule of zero",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-memory/06-smart-pointers",
+      "track": "cpp-memory",
+      "title": "6 — Smart Pointers: Owning, Sharing and Observing",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A Tracer you can include",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/01-sockets",
+      "track": "cpp-networking",
+      "title": "1 — Sockets, Addresses and Byte Order",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Bytes on the wire",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/02-tcp-echo",
+      "track": "cpp-networking",
+      "title": "2 — A TCP Echo Server and Client",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Listen, accept, connect",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/03-framing",
+      "track": "cpp-networking",
+      "title": "3 — Protocol Design: Frames and Byte Packing",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/04-chat-room",
+      "track": "cpp-networking",
+      "title": "4 — Many Clients: a Chat Room",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Waiting for many sockets at once",
+      "firstIndependentTask": "Step 8 — Challenge: who is here?",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/05-http-server",
+      "track": "cpp-networking",
+      "title": "5 — An HTTP/1.1 Server",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The interface",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-networking/06-game-server",
+      "track": "cpp-networking",
+      "title": "6 — Project: a Multiplayer Game Server",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The rules",
+      "firstIndependentTask": "Step 9 — Challenge: the specification for talking",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/01-files",
+      "track": "cpp-systems",
+      "title": "1 — Files and std::filesystem: a Disk-Usage Tool",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The test framework",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/02-processes",
+      "track": "cpp-systems",
+      "title": "2 — Processes: Exit Codes, the Environment, and a Mini Shell",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Exit codes: a program's last word",
+      "firstIndependentTask": "Step 8 — Challenge: cd",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/03-pipes",
+      "track": "cpp-systems",
+      "title": "3 — Pipes, Standard Streams and Buffering",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A program that reads a stream",
+      "firstIndependentTask": "Step 7 — Challenge: keep, a filter",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/04-threads",
+      "track": "cpp-systems",
+      "title": "4 — Threads, Data Races and Mutexes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Four threads, one sum",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/05-condition-variables",
+      "track": "cpp-systems",
+      "title": "5 — Condition Variables: a Blocking Queue",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The specification",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/06-atomics",
+      "track": "cpp-systems",
+      "title": "6 — Atomics and the Memory Model",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — An atomic counter",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "cpp-systems/07-thread-pool",
+      "track": "cpp-systems",
+      "title": "7 — Project: a Thread Pool",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The project's build file",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/01-from-python-to-a-binary",
+      "track": "dice-cpp",
+      "title": "1 — A Python programmer meets the compiler",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Find the compiler",
+      "firstIndependentTask": "Your turn — Remaining points",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/02-state-and-rules",
+      "track": "dice-cpp",
+      "title": "2 — Make the rules deterministic",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "See a copy and a reference behave differently",
+      "firstIndependentTask": "Your turn — Bank without losing the old score",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/03-randomness-and-input",
+      "track": "dice-cpp",
+      "title": "3 — Random dice, predictable tests",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Advance an engine twice",
+      "firstIndependentTask": "Your turn — A threshold with an exact boundary",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/04-play-the-terminal-game",
+      "track": "dice-cpp",
+      "title": "4 — A complete console duel",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Follow continue through a loop",
+      "firstIndependentTask": "Your turn — Count accepted commands",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/05-the-agent-environment-boundary",
+      "track": "dice-cpp",
+      "title": "5 — Whose turn is a learning step?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Reward an outcome from one player’s perspective",
+      "firstIndependentTask": "Your turn — Reward from the opponent seat",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/06-addressing-the-q-table",
+      "track": "dice-cpp",
+      "title": "6 — From Python dictionaries to a C++ table",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Pack and unpack a state address",
+      "firstIndependentTask": "Your turn — Recover the pot from a row number",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/07-exploration-and-expectation",
+      "track": "dice-cpp",
+      "title": "7 — Explore without cheating",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Count the two paths to the best action",
+      "firstIndependentTask": "Your turn — Probability of choosing the best action",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/08-the-q-learning-update",
+      "track": "dice-cpp",
+      "title": "8 — A value learns from a target",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Compute one correction before naming Q-learning",
+      "firstIndependentTask": "Your turn — Update after a terminal loss",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/09-training-episodes",
+      "track": "dice-cpp",
+      "title": "9 — Let the opponent learn",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Make the exploration schedule visible",
+      "firstIndependentTask": "Your turn — A different exploration floor",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/10-evaluate-without-learning",
+      "track": "dice-cpp",
+      "title": "10 — Is it better, or just lucky?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Separate a rate from its uncertainty",
+      "firstIndependentTask": "Your turn — Report a win rate",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/11-save-and-validate",
+      "track": "dice-cpp",
+      "title": "11 — A model that survives closing the terminal",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Watch a stream lose and preserve digits",
+      "firstIndependentTask": "Your turn — Restore one model value",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-cpp/12-play-a-learned-opponent",
+      "track": "dice-cpp",
+      "title": "12 — Play against what you trained",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Mask an unavailable action in the display",
+      "firstIndependentTask": "Your turn — Choose from a frozen row legally",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/00-meet-dice-duel",
+      "track": "dice-path-start",
+      "title": "A00 — Play the game you will build",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A decision worth building a game around",
+      "firstIndependentTask": "Your turn — Trace without code",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/01-source-to-program",
+      "track": "dice-path-start",
+      "title": "A01 — Which program did you run?",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose a project folder and find the terminal",
+      "firstIndependentTask": "Your turn — Introduce your project",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/02-values-and-types",
+      "track": "dice-path-start",
+      "title": "A02 — Make the score a calculation",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A name holds a value",
+      "firstIndependentTask": "Your turn — Calculate a small report",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/03-input-and-failure",
+      "track": "dice-path-start",
+      "title": "A03 — Let the player supply a value",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read a number during execution",
+      "firstIndependentTask": "Your turn — Read a score and a pot",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/04-decisions-and-boundaries",
+      "track": "dice-path-start",
+      "title": "A04 — Exactly twelve must count",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose one of two paths",
+      "firstIndependentTask": "Your turn — Distinguish below, exact and above",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-start/05-functions-and-results",
+      "track": "dice-path-start",
+      "title": "A05 — Write a calculation once",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A function returns to its caller",
+      "firstIndependentTask": "Your turn — Answer a different rule question",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-01-a-ball-that-knows-itself",
+      "track": "forge-classes",
+      "title": "3.1 — A Ball That Knows Itself",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A class for the ball",
+      "firstIndependentTask": "Your turn: a paddle that knows itself",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-02-dataclasses-and-vectors",
+      "track": "forge-classes",
+      "title": "3.2 — Dataclasses and Vectors",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The whole files so far",
+      "firstIndependentTask": "Your turn: settings with names",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-03-test-first",
+      "track": "forge-classes",
+      "title": "3.3 — Test First",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The whole files so far",
+      "firstIndependentTask": "Your turn: cracked bricks look cracked",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-04-choices-rules-and-a-pause-button-for-git",
+      "track": "forge-classes",
+      "title": "3.4 — Choices, Rules and a Pause Button for Git",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The whole files so far",
+      "firstIndependentTask": "Your turn: a broken brick stays broken",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-05-a-game-you-can-hold",
+      "track": "forge-classes",
+      "title": "3.5 — A Game You Can Hold",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The whole files so far",
+      "firstIndependentTask": "Your turn: the end of a game",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-classes/03-06-tidy-code-automatically",
+      "track": "forge-classes",
+      "title": "3.6 — Tidy Code, Automatically",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The game tests so far",
+      "firstIndependentTask": "Your turn: the last finding",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-01-a-level-in-a-file",
+      "track": "forge-data",
+      "title": "5.1 — A Level in a File",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The drawing module so far",
+      "firstIndependentTask": "Your turn: test the level reader",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-02-when-the-file-is-wrong",
+      "track": "forge-data",
+      "title": "5.2 — When the File Is Wrong",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The basic tests so far",
+      "firstIndependentTask": "Your turn: bug hunt — the castle that won't load",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-03-a-level-is-more-than-a-wall",
+      "track": "forge-data",
+      "title": "5.3 — A Level Is More Than a Wall",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The level tests so far",
+      "firstIndependentTask": "Your turn: every refusal, tested",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-04-let-the-types-check-it",
+      "track": "forge-data",
+      "title": "5.4 — Let the Types Check It",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The error tests so far",
+      "firstIndependentTask": "Your turn: rows a designer can find",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-05-settings-the-player-keeps",
+      "track": "forge-data",
+      "title": "5.5 — Settings the Player Keeps",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The level module so far",
+      "firstIndependentTask": "Your turn: one key, two actions",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-data/05-06-what-the-tests-dont-touch",
+      "track": "forge-data",
+      "title": "5.6 — What the Tests Don't Touch",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The settings module so far",
+      "firstIndependentTask": "Your turn: test the refusals",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-01-a-safety-net",
+      "track": "forge-functions",
+      "title": "2.1 — A Safety Net",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Install pytest",
+      "firstIndependentTask": "Your turn: two more pins",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-02-name-the-parts",
+      "track": "forge-functions",
+      "title": "2.2 — Name the Parts",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "One ball, one place",
+      "firstIndependentTask": "Your turn: the paddle's functions",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-03-what-import-runs",
+      "track": "forge-functions",
+      "title": "2.3 — What Import Runs",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Call one function from outside",
+      "firstIndependentTask": "Your turn: pin down clamp",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-04-unit-tests",
+      "track": "forge-functions",
+      "title": "2.4 — Unit Tests",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Tests for the small functions",
+      "firstIndependentTask": "Your turn: bug hunt — the command line",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-05-types-you-can-check",
+      "track": "forge-functions",
+      "title": "2.5 — Types You Can Check",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "What a type is",
+      "firstIndependentTask": "Your turn: type every function",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-functions/02-06-randomness-you-can-test",
+      "track": "forge-functions",
+      "title": "2.6 — Randomness You Can Test",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The whole file so far",
+      "firstIndependentTask": "Your turn: test the serve",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-01-a-package",
+      "track": "forge-package",
+      "title": "4.1 — A Package",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The characterisation tests so far",
+      "firstIndependentTask": "Your turn: everything else",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-02-modules-with-one-job",
+      "track": "forge-package",
+      "title": "4.2 — Modules With One Job",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The game tests so far",
+      "firstIndependentTask": "Your turn: one direction only",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-03-a-real-project",
+      "track": "forge-package",
+      "title": "4.3 — A Real Project",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The model so far",
+      "firstIndependentTask": "Your turn: who controls this data?",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-04-strict-types",
+      "track": "forge-package",
+      "title": "4.4 — Strict Types",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The settings so far",
+      "firstIndependentTask": "Your turn: strict everywhere",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-05-what-to-test",
+      "track": "forge-package",
+      "title": "4.5 — What to Test",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The replay so far",
+      "firstIndependentTask": "Your turn: test the boundaries",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-06-game-states-on-a-branch",
+      "track": "forge-package",
+      "title": "4.6 — Game States, on a Branch",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The boundary tests so far",
+      "firstIndependentTask": "Your turn: test the transitions, then merge",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-package/04-07-when-branches-disagree",
+      "track": "forge-package",
+      "title": "4.7 — When Branches Disagree",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The state tests so far",
+      "firstIndependentTask": "Your turn: resolve it",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-01-who-played",
+      "track": "forge-records",
+      "title": "7.1 — Who Played?",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The test fixtures so far",
+      "firstIndependentTask": "Your turn: bug hunt — the reference nobody checks",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-02-a-database-thats-already-out-there",
+      "track": "forge-records",
+      "title": "7.2 — A Database That's Already Out There",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: wins, recorded and read back",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-03-how-is-each-level-going",
+      "track": "forge-records",
+      "title": "7.3 — How Is Each Level Going?",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: only the levels played often enough",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-04-play-sessions",
+      "track": "forge-records",
+      "title": "7.4 — Play Sessions",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The report so far",
+      "firstIndependentTask": "Your turn: how long did I play?",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-saving/06-01-a-score-that-outlives-the-game",
+      "track": "forge-saving",
+      "title": "6.1 — A Score That Outlives the Game",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The characterisation tests so far",
+      "firstIndependentTask": "Your turn: dates that survive the trip",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-saving/06-02-files-you-didnt-write",
+      "track": "forge-saving",
+      "title": "6.2 — Files You Didn't Write",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: play on, and don't make it worse",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-saving/06-03-tables",
+      "track": "forge-saving",
+      "title": "6.3 — Tables",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The app so far",
+      "firstIndependentTask": "Your turn: the best score, in SQL",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-saving/06-04-bobs-castle",
+      "track": "forge-saving",
+      "title": "6.4 — Bob's Castle",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: names are only names",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-saving/06-05-setup-that-cleans-up-after-itself",
+      "track": "forge-saving",
+      "title": "6.5 — Setup That Cleans Up After Itself",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The report so far",
+      "firstIndependentTask": "Your turn: one game, set up once",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-01-a-window-and-a-loop",
+      "track": "forge-script",
+      "title": "1.1 — A Window and a Loop",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Start pygame",
+      "firstIndependentTask": "Your turn: a usage message",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-02-saving-your-work-with-git",
+      "track": "forge-script",
+      "title": "1.2 — Saving Your Work with Git",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Is Git installed?",
+      "firstIndependentTask": "Your turn: two stories of your own",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-03-the-paddle",
+      "track": "forge-script",
+      "title": "1.3 — The Paddle",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The usage check so far",
+      "firstIndependentTask": "Your turn: keep the paddle on the screen",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-04-the-ball",
+      "track": "forge-script",
+      "title": "1.4 — The Ball",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The paddle clamp so far",
+      "firstIndependentTask": "Your turn: bug hunt — the ball that escapes",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-05-bricks-score-and-the-end",
+      "track": "forge-script",
+      "title": "1.5 — Bricks, Score, and the End",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A wall of bricks",
+      "firstIndependentTask": "Your turn: game over, and winning",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-script/01-06-whats-wrong-with-this-script",
+      "track": "forge-script",
+      "title": "1.6 — What's Wrong with This Script?",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Try a change",
+      "firstIndependentTask": "Your turn: write down the debt",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-tools/00-01-the-terminal-and-your-first-program",
+      "track": "forge-tools",
+      "title": "0.1 — The Terminal and Your First Program",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Make the project folder",
+      "firstIndependentTask": "Your turn: a greeting with a usage message",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-tools/00-02-a-python-of-its-own",
+      "track": "forge-tools",
+      "title": "0.2 — A Python of Its Own",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Where packages live",
+      "firstIndependentTask": "Your turn: a setup check",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-tools/00-03-when-it-breaks",
+      "track": "forge-tools",
+      "title": "0.3 — When It Breaks: Reading a Traceback",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A program that crashes",
+      "firstIndependentTask": "Your turn: bug hunt",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/00-start",
+      "track": "java-engineering",
+      "title": "Start here — build Common Ground",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Decide what the first release means",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/01-execution",
+      "track": "java-engineering",
+      "title": "Java — follow execution, not appearances",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A method and its inputs",
+      "firstIndependentTask": "Challenge — Capacity without a template",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/02-repository",
+      "track": "java-engineering",
+      "title": "Git — make changes you can inspect and recover",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Exclude reproducible output",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/03-build",
+      "track": "java-engineering",
+      "title": "Maven and dependencies — understand the build",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Give the build an identity",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/04-behavior",
+      "track": "java-engineering",
+      "title": "TDD — a meaningful failure before implementation",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Declare the seam before the solution",
+      "firstIndependentTask": "Challenge — A different boundary",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/05-model",
+      "track": "java-engineering",
+      "title": "Model state — values, identity and invariants",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Enumerate the allowed states",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/06-collections",
+      "track": "java-engineering",
+      "title": "Collections and algorithms — choose for the query",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Define the storage contract",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/06b-dependencies",
+      "track": "java-engineering",
+      "title": "Java reasoning — plan dependent work with a graph",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Start with a compilable contract",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/07-design",
+      "track": "java-engineering",
+      "title": "Design and testing — useful boundaries, misleading green",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Compare designs against a change",
+      "firstIndependentTask": "Challenge — A test suite that earns trust",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/08-html",
+      "track": "java-engineering",
+      "title": "HTML — structure before presentation",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Describe the page and its main content",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/09-css",
+      "track": "java-engineering",
+      "title": "CSS — layout, states and accessible feedback",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Establish a readable layout",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/10-javascript",
+      "track": "java-engineering",
+      "title": "JavaScript — events, state and rendering",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read an event and update state",
+      "firstIndependentTask": "Challenge — Filter without mutating the source",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/11-http",
+      "track": "java-engineering",
+      "title": "HTTP — inspect a request before adding a framework",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Expose one local resource",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/12-spring",
+      "track": "java-engineering",
+      "title": "Spring Boot — delegate plumbing you can explain",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Replace the build header deliberately",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/13-api-tests",
+      "track": "java-engineering",
+      "title": "Integration tests — verify the boundary users depend on",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Translate domain errors at the transport boundary",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/14-persistence",
+      "track": "java-engineering",
+      "title": "SQL and JDBC — keep data after the process ends",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Define a schema with invariants",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/15-transactions",
+      "track": "java-engineering",
+      "title": "Transactions and concurrent edits — one logical change",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Switch composition, preserve the contract",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/16-browser-api",
+      "track": "java-engineering",
+      "title": "Browser networking — state across a fallible boundary",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Move the static files into the application",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/17-react",
+      "track": "java-engineering",
+      "title": "React and TypeScript — derive UI from state",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Declare the frontend build without a generator",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/18-react-state",
+      "track": "java-engineering",
+      "title": "Components — ownership, effects and failure states",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Define the data contract and request helper",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/19-security",
+      "track": "java-engineering",
+      "title": "Security — identity, permission and browser trust",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Model the threats before configuration",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/20-discussion",
+      "track": "java-engineering",
+      "title": "Discussion — extend a system without scattering rules",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Add a related table",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/20b-browser-tests",
+      "track": "java-engineering",
+      "title": "Frontend tests — verify what the user can observe",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Choose testing tools and keep their boundary explicit",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/21-concurrency",
+      "track": "java-engineering",
+      "title": "Concurrency — reproduce an interleaving, do not guess",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Start competing workers together",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/22-retries",
+      "track": "java-engineering",
+      "title": "Failure handling — retries can repeat success",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Express a bounded read retry policy",
+      "firstIndependentTask": "Challenge — Decide under uncertainty",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/23-search",
+      "track": "java-engineering",
+      "title": "Search and performance — bound work before scaling it",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Validate query cost at the boundary",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/24-migration",
+      "track": "java-engineering",
+      "title": "Schema changes — preserve old data and old clients",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Write an additive migration",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/25-observability",
+      "track": "java-engineering",
+      "title": "Operations — make a failure diagnosable",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Record request outcome and duration",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/26-release",
+      "track": "java-engineering",
+      "title": "CI and packaging — reproduce the release from source",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Declare repeatable CI preparation",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/27-investigation",
+      "track": "java-engineering",
+      "title": "Debug an unfamiliar failure — form and test hypotheses",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Investigate a deliberate configuration failure",
+      "firstIndependentTask": "Challenge — Diagnose a misleading success",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/28-independent",
+      "track": "java-engineering",
+      "title": "Independent milestone — own a reviewable change",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Turn a request into bounded engineering work",
+      "firstIndependentTask": "Challenge — Ship and explain the change",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "java-engineering/29-transfer",
+      "track": "java-engineering",
+      "title": "Transfer the reasoning — know what you know",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Separate principles from particular tools",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-boosting/18-01-fixing-the-mistakes",
+      "track": "ml-boosting",
+      "title": "18.1 — Each Tree Fixes the Last One's Mistakes: Gradient Boosting",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-boosting/18-02-how-many-trees",
+      "track": "ml-boosting",
+      "title": "18.2 — How Many Trees, How Big a Step? Tuning and Early Stopping",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-boosting/18-03-the-widest-street",
+      "track": "ml-boosting",
+      "title": "18.3 — The Widest Street: Support Vector Machines and Kernels",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-capstone/16-01-start-from-the-decision",
+      "track": "ml-capstone",
+      "title": "16.1 — Start From the Decision: Brief, Data and the Number to Beat",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-capstone/16-02-let-the-physics-choose",
+      "track": "ml-capstone",
+      "title": "16.2 — Let the Physics Choose the Model",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Taylor's tool-life equation",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-capstone/16-03-the-advisor-as-a-service",
+      "track": "ml-capstone",
+      "title": "16.3 — The Advisor as a Service: Knowing What It Doesn't Know",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-capstone/16-04-ship-report-make-it-yours",
+      "track": "ml-capstone",
+      "title": "16.4 — Ship It, Report It, Make It Yours",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-classification/08-01-probability-by-counting",
+      "track": "ml-classification",
+      "title": "8.1 — Spam or Not? Probability by Counting",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-classification/08-02-bag-of-words",
+      "track": "ml-classification",
+      "title": "8.2 — Text Becomes Numbers: Bag of Words",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-classification/08-03-naive-bayes",
+      "track": "ml-classification",
+      "title": "8.3 — Every Word Is Evidence: Naive Bayes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-classification/08-04-logistic-regression",
+      "track": "ml-classification",
+      "title": "8.4 — Learning the Weights: Logistic Regression",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-classification/08-05-is-it-any-good",
+      "track": "ml-classification",
+      "title": "8.5 — 95% Accurate, and Is That Good? Classification Metrics",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-clustering/10-01-k-means",
+      "track": "ml-clustering",
+      "title": "10.1 — Groups Nobody Labelled: k-Means",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-clustering/10-02-how-many-groups",
+      "track": "ml-clustering",
+      "title": "10.2 — How Many Groups, and Can You Trust Them?",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-clustering/10-03-using-the-segments",
+      "track": "ml-clustering",
+      "title": "10.3 — Using the Segments: New Customers and Odd Ones Out",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-data/01-01-rows-and-columns",
+      "track": "ml-data",
+      "title": "1.1 — Rows, Columns and Missing Values",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-data/01-02-questions-by-hand",
+      "track": "ml-data",
+      "title": "1.2 — Asking Questions by Hand",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-data/01-03-pandas",
+      "track": "ml-data",
+      "title": "1.3 — pandas: The Same Questions, Less Code",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Install pandas",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-database/05-01-data-that-survives",
+      "track": "ml-database",
+      "title": "5.1 — Data That Survives: SQLite and SQL",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-database/05-02-models-and-relationships",
+      "track": "ml-database",
+      "title": "5.2 — Models, Predictions and the Links Between Them",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-database/05-03-a-repository-for-the-service",
+      "track": "ml-database",
+      "title": "5.3 — A Repository, and a Service That Remembers",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-database/05-04-sqlalchemy",
+      "track": "ml-database",
+      "title": "5.4 — SQLAlchemy: The SQL Is Still There",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Install SQLAlchemy",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-database/05-05-migrations",
+      "track": "ml-database",
+      "title": "5.5 — Changing the Schema Safely: Migrations",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-evaluation/07-01-overfitting",
+      "track": "ml-evaluation",
+      "title": "7.1 — Too Good to Be True: Overfitting",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-evaluation/07-02-regularisation",
+      "track": "ml-evaluation",
+      "title": "7.2 — A Penalty for Wiggling: Regularisation",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-evaluation/07-03-cross-validation",
+      "track": "ml-evaluation",
+      "title": "7.3 — Every Point Takes a Turn: Cross-Validation",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-evaluation/07-04-leakage",
+      "track": "ml-evaluation",
+      "title": "7.4 — When Cross-Validation Lies: Leakage and Pipelines",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-first-model/03-01-a-line-through-the-points",
+      "track": "ml-first-model",
+      "title": "3.1 — A Line Through the Points",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-first-model/03-02-gradient-descent",
+      "track": "ml-first-model",
+      "title": "3.2 — Learning: Gradient Descent on Real Data",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-first-model/03-03-your-own-linear-regression",
+      "track": "ml-first-model",
+      "title": "3.3 — Your Own LinearRegression",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-first-model/03-04-scikit-learn",
+      "track": "ml-first-model",
+      "title": "3.4 — scikit-learn: The Professional Version",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Install scikit-learn",
+      "firstIndependentTask": "Challenge: break it on purpose",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-math/02-01-vectors",
+      "track": "ml-math",
+      "title": "2.1 — A House Is a Vector",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-math/02-02-matrices",
+      "track": "ml-math",
+      "title": "2.2 — A Dataset Is a Matrix",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-math/02-03-derivatives",
+      "track": "ml-math",
+      "title": "2.3 — Which Way Is Downhill? Derivatives",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-math/02-04-gradients",
+      "track": "ml-math",
+      "title": "2.4 — Rolling Downhill: Gradients",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-neural/12-01-beyond-a-straight-line",
+      "track": "ml-neural",
+      "title": "12.1 — Beyond a Straight Line: Layers",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-neural/12-02-backpropagation",
+      "track": "ml-neural",
+      "title": "12.2 — Learning Every Layer: Backpropagation",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-neural/12-03-training-well",
+      "track": "ml-neural",
+      "title": "12.3 — Training Well: Starts, Steps, Batches and Momentum",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-nlp/14-01-tf-idf",
+      "track": "ml-nlp",
+      "title": "14.1 — Words That Matter: TF-IDF",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-nlp/14-02-similar-work-orders",
+      "track": "ml-nlp",
+      "title": "14.2 — Has This Happened Before? Similarity Search",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-nlp/14-03-embeddings",
+      "track": "ml-nlp",
+      "title": "14.3 — Meaning, Not Just Matching: Embeddings",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pca/11-01-covariance",
+      "track": "ml-pca",
+      "title": "11.1 — Ten Measurements, How Many Facts? Covariance",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pca/11-02-principal-components",
+      "track": "ml-pca",
+      "title": "11.2 — The Directions That Matter: Principal Components",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pca/11-03-using-the-components",
+      "track": "ml-pca",
+      "title": "11.3 — Three Numbers Instead of Ten: Using the Components",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pytorch/13-01-tensors-and-autograd",
+      "track": "ml-pytorch",
+      "title": "13.1 — Gradients for Free: Tensors and Autograd",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pytorch/13-02-modules-losses-optimisers",
+      "track": "ml-pytorch",
+      "title": "13.2 — The Training Loop, the PyTorch Way",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pytorch/13-03-ten-classes",
+      "track": "ml-pytorch",
+      "title": "13.3 — Ten Answers, Not Two: Reading Digits",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-pytorch/13-04-convolution",
+      "track": "ml-pytorch",
+      "title": "13.4 — Looking for Shapes: Convolutional Networks",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-security/06-01-passwords",
+      "track": "ml-security",
+      "title": "6.1 — Who Are You? Storing Passwords",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-security/06-02-sessions-and-cookies",
+      "track": "ml-security",
+      "title": "6.2 — Staying Logged In: Sessions and Cookies",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-security/06-03-authorisation",
+      "track": "ml-security",
+      "title": "6.3 — Yours, Not Theirs: Authorisation",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-security/06-04-injection",
+      "track": "ml-security",
+      "title": "6.4 — When Input Becomes Code: Injection, XSS and Path Traversal",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-security/06-05-defence-in-depth",
+      "track": "ml-security",
+      "title": "6.5 — Defence in Depth: Limits, Origins, Headers and Secrets",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-software/00-01-a-script-that-works-once",
+      "track": "ml-software",
+      "title": "0.1 — A Script That Works Once",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Choose the project folder",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-software/00-02-functions-you-can-test",
+      "track": "ml-software",
+      "title": "0.2 — Functions You Can Test",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-software/00-03-a-package-with-a-command-line",
+      "track": "ml-software",
+      "title": "0.3 — A Package With a Command Line",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Why a package",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-software/00-04-when-things-go-wrong",
+      "track": "ml-software",
+      "title": "0.4 — When Things Go Wrong",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-software/00-05-settings-and-your-own-tests",
+      "track": "ml-software",
+      "title": "0.5 — Settings, and Tests You Write Yourself",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Settings that aren't code",
+      "firstIndependentTask": "Challenge: a minimum word length",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-01-layers",
+      "track": "ml-studio",
+      "title": "15.1 — A Studio, Not a Script: Layers and Data Validation",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Layers",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-02-artifacts",
+      "track": "ml-studio",
+      "title": "15.2 — Models You Can Trust: Artifacts",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-03-background-jobs",
+      "track": "ml-studio",
+      "title": "15.3 — Training in the Background: Experiments and Jobs",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-04-api-and-model-tests",
+      "track": "ml-studio",
+      "title": "15.4 — The API, and Tests an ML System Needs",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-05-watching-it-run",
+      "track": "ml-studio",
+      "title": "15.5 — Watching It Run: Logs, Drift and Other People's Services",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-studio/15-06-shipping-it",
+      "track": "ml-studio",
+      "title": "15.6 — Shipping It: Restarts, Pins and a Container",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-timeseries/17-01-readings-in-time-order",
+      "track": "ml-timeseries",
+      "title": "17.1 — Readings in Time Order: Gaps, Smoothing and Cycles",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-timeseries/17-02-tomorrow-looks-like-today",
+      "track": "ml-timeseries",
+      "title": "17.2 — Tomorrow Looks Like Today: Baselines That Respect Time",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Two words: horizon and backtest",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-timeseries/17-03-learning-from-lags",
+      "track": "ml-timeseries",
+      "title": "17.3 — Learning From the Past: Lag Features and Walk-Forward Testing",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Turning a column into a table",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-timeseries/17-04-warning-before-the-limit",
+      "track": "ml-timeseries",
+      "title": "17.4 — Warning Before the Limit: How Many Days Are Left?",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-trees/09-01-nearest-neighbours",
+      "track": "ml-trees",
+      "title": "9.1 — Like the Runs Before It: k-Nearest Neighbours",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-trees/09-02-one-good-question",
+      "track": "ml-trees",
+      "title": "9.2 — One Good Question: Impurity and the Best Split",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-trees/09-03-growing-a-tree",
+      "track": "ml-trees",
+      "title": "9.3 — Questions About the Answers: Growing a Tree",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-trees/09-04-random-forests",
+      "track": "ml-trees",
+      "title": "9.4 — Many Trees Are Wiser Than One: Random Forests",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-web/04-01-http-by-hand",
+      "track": "ml-web",
+      "title": "4.1 — Programs That Talk: HTTP by Hand",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "A new project",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-web/04-02-json-and-post",
+      "track": "ml-web",
+      "title": "4.2 — JSON, POST and Status Codes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-web/04-03-fastapi",
+      "track": "ml-web",
+      "title": "4.3 — FastAPI: Declare It, Don't Write It",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Install FastAPI",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ml-web/04-04-a-page-for-people",
+      "track": "ml-web",
+      "title": "4.4 — A Page for People: HTML, Templates and HTMX",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Install the page tools",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyside6-engine/01-a-window",
+      "track": "pyside6-engine",
+      "title": "1 — A Window That Stays Open",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Make a window exist",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/00-01-project-and-venv",
+      "track": "rl-pygame",
+      "title": "0.1 — A Project With Its Own Python",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Choose the project folder",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/00-02-know-your-machine",
+      "track": "rl-pygame",
+      "title": "0.2 — Know Your Machine",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Which Python ran this?",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/00-03-a-window-and-a-loop",
+      "track": "rl-pygame",
+      "title": "0.3 — A Window and a Loop",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/01-01-the-shape-of-a-q-table",
+      "track": "rl-pygame",
+      "title": "1.1 — Arrays: the Shape of a Q-table",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/01-02-indexing-and-broadcasting",
+      "track": "rl-pygame",
+      "title": "1.2 — Indexing and Broadcasting: Reading and Writing Q[s, a]",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/02-01-probability-by-simulation",
+      "track": "rl-pygame",
+      "title": "2.1 — Probability by Simulation: a Slippery Floor",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/02-02-expectation-and-uncertainty",
+      "track": "rl-pygame",
+      "title": "2.2 — Expectation, Variance and the Standard Error",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/02-03-the-running-average",
+      "track": "rl-pygame",
+      "title": "2.3 — The Running Average and the Step Size α",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/03-01-a-room-of-slot-machines",
+      "track": "rl-pygame",
+      "title": "3.1 — A Room of Slot Machines",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/03-02-explore-or-exploit",
+      "track": "rl-pygame",
+      "title": "3.2 — Explore or Exploit",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/03-03-uncertainty-and-change",
+      "track": "rl-pygame",
+      "title": "3.3 — Exploring Where You're Unsure, and Machines That Change",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/04-01-the-grid-world",
+      "track": "rl-pygame",
+      "title": "4.1 — The Grid World as an Environment",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/04-02-the-workbench",
+      "track": "rl-pygame",
+      "title": "4.2 — The Workbench: Watching an Agent Act",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/04-03-returns-and-discounting",
+      "track": "rl-pygame",
+      "title": "4.3 — Returns and Discounting",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/04-04-testing-your-environment",
+      "track": "rl-pygame",
+      "title": "4.4 — Testing Your Own Environment",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A passing test isn't enough",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/04-05-the-world-as-tables",
+      "track": "rl-pygame",
+      "title": "4.5 — The World as Tables: a Markov Decision Process",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/05-01-policy-evaluation",
+      "track": "rl-pygame",
+      "title": "5.1 — Policy Evaluation: How Good Is Every State?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/05-02-value-iteration",
+      "track": "rl-pygame",
+      "title": "5.2 — Value Iteration: Computing the Best Policy",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/06-01-monte-carlo",
+      "track": "rl-pygame",
+      "title": "6.1 — Monte Carlo: Learning from Whole Episodes",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/06-02-temporal-difference",
+      "track": "rl-pygame",
+      "title": "6.2 — Temporal-Difference Learning: Learning from the Next Step",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/06-03-sarsa-and-the-cliff",
+      "track": "rl-pygame",
+      "title": "6.3 — SARSA: Learning to Act, on the Edge of a Cliff",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/07-01-q-learning",
+      "track": "rl-pygame",
+      "title": "7.1 — Q-learning: One Term Changes",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/07-02-judging-honestly",
+      "track": "rl-pygame",
+      "title": "7.2 — Judging an Agent Honestly",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/07-03-tuning",
+      "track": "rl-pygame",
+      "title": "7.3 — Tuning: Step Size, Exploration and Optimism",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/07-04-double-q-learning",
+      "track": "rl-pygame",
+      "title": "7.4 — The Maximisation Bias and Double Q-learning",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/07-05-reward-design",
+      "track": "rl-pygame",
+      "title": "7.5 — Reward Design: Getting What You Asked For",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/08-01-gymnasium-environment",
+      "track": "rl-pygame",
+      "title": "8.1 — Your Grid World as a Gymnasium Environment",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/08-02-frozenlake",
+      "track": "rl-pygame",
+      "title": "8.2 — FrozenLake: Your Agent on Someone Else's World",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/08-03-cartpole",
+      "track": "rl-pygame",
+      "title": "8.3 — CartPole: Where the Table Breaks",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "rl-pygame/08-04-capstone",
+      "track": "rl-pygame",
+      "title": "8.4 — Capstone: From a Blank File",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/00-01-folder-and-terminal",
+      "track": "spreadsheet-build",
+      "title": "0.1 — Your Project Folder and the Terminal",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Make the project's folder",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/00-02-programs-and-path",
+      "track": "spreadsheet-build",
+      "title": "0.2 — How the Shell Finds Programs",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Where is python?",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/00-03-install-node",
+      "track": "spreadsheet-build",
+      "title": "0.3 — Install Node.js",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Is Node already installed?",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/00-04-running-programs",
+      "track": "spreadsheet-build",
+      "title": "0.4 — Running Programs: Output, Errors and Exit Codes",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "hello.py",
+      "firstIndependentTask": "Challenge: choose your own exit code",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-01-install-git",
+      "track": "spreadsheet-build",
+      "title": "1.1 — Install Git and Introduce Yourself",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Is Git installed?",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-02-a-repository",
+      "track": "spreadsheet-build",
+      "title": "1.2 — Make the Folder a Repository",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Before: not a repository",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-03-first-commit",
+      "track": "spreadsheet-build",
+      "title": "1.3 — The First Commit",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Two steps: stage, then commit",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-04-seeing-changes",
+      "track": "spreadsheet-build",
+      "title": "1.4 — Seeing What Changed",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Change hello.js",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-05-ignore-and-line-endings",
+      "track": "spreadsheet-build",
+      "title": "1.5 — What Not to Commit, and Line Endings",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A file with a secret",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-06-undo-uncommitted",
+      "track": "spreadsheet-build",
+      "title": "1.6 — Undoing Changes You Haven't Committed",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Make a mess",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-07-branches",
+      "track": "spreadsheet-build",
+      "title": "1.7 — Branches: Trying Something on the Side",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Make a branch",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-08-github",
+      "track": "spreadsheet-build",
+      "title": "1.8 — Put the Project on GitHub",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A GitHub account and an empty repository",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01-a-page",
+      "track": "spreadsheet-build",
+      "title": "2.1 — A Page in the Browser",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Start a branch for the sprint",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-02-a-table",
+      "track": "spreadsheet-build",
+      "title": "2.2 — A Table: the First Grid",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The table",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-03-css",
+      "track": "spreadsheet-build",
+      "title": "2.3 — CSS: Make It Look Like a Spreadsheet",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Link a stylesheet",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-04-devtools",
+      "track": "spreadsheet-build",
+      "title": "2.4 — The Browser's Developer Tools",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Open DevTools",
+      "firstIndependentTask": "Challenge: right-align the row numbers",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-01-javascript-from-python",
+      "track": "spreadsheet-build",
+      "title": "3.1 — JavaScript, Seen from Python",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch for the sprint",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-02-functions-and-loops",
+      "track": "spreadsheet-build",
+      "title": "3.2 — Functions and Loops: Naming the Columns",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A function",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-03-the-dom",
+      "track": "spreadsheet-build",
+      "title": "3.3 — The DOM: Building the Grid from Code",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "An empty table in the page",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-04-selecting-a-cell",
+      "track": "spreadsheet-build",
+      "title": "3.4 — Events: Selecting a Cell",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The name box",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-05-typing-into-cells",
+      "track": "spreadsheet-build",
+      "title": "3.5 — The Formula Bar: Typing into Cells",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The input",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-06-columns-past-z",
+      "track": "spreadsheet-build",
+      "title": "3.6 — Challenge: Columns Past Z",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "See the bug on the page",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-01-modules",
+      "track": "spreadsheet-build",
+      "title": "4.1 — Modules: One File Becomes Two",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-02-npm",
+      "track": "spreadsheet-build",
+      "title": "4.2 — npm and package.json",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "package.json",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-03-dev-server",
+      "track": "spreadsheet-build",
+      "title": "4.3 — The Development Server",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Start Vite",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-04-build",
+      "track": "spreadsheet-build",
+      "title": "4.4 — Building for Release",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Build",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/05-01-typescript",
+      "track": "spreadsheet-build",
+      "title": "5.1 — TypeScript: Checking the Code Before It Runs",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/05-02-fixing-type-errors",
+      "track": "spreadsheet-build",
+      "title": "5.2 — Fixing the Type Errors",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Say what columnName takes and gives",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/05-03-types-in-the-workflow",
+      "track": "spreadsheet-build",
+      "title": "5.3 — Types in the Workflow, and Their Limits",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A check script, and a build that checks first",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-01-first-test",
+      "track": "spreadsheet-build",
+      "title": "6.1 — The First Test",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-02-test-first",
+      "track": "spreadsheet-build",
+      "title": "6.2 — Test First: Red, Green, Refactor",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Red: a test for code that doesn't exist",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-03-addresses",
+      "track": "spreadsheet-build",
+      "title": "6.3 — Addresses: a Type for a Cell's Position",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The tests",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-04-the-sheet",
+      "track": "spreadsheet-build",
+      "title": "6.4 — The Sheet: a Class for the Data",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Classes, from Python",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-05-wire-the-sheet",
+      "track": "spreadsheet-build",
+      "title": "6.5 — Wire the Grid to the Sheet, and Use a Debugger",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The new grid.ts",
+      "firstIndependentTask": null,
+      "signals": [
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-06-tidy-into-src",
+      "track": "spreadsheet-build",
+      "title": "6.6 — Tidy Up: a src Folder",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Remove the practice files",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-01-tokens",
+      "track": "spreadsheet-build",
+      "title": "7.1 — Formulas, Part 1: Reading the Text into Tokens",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-02-trees",
+      "track": "spreadsheet-build",
+      "title": "7.2 — Formulas, Part 2: A Tree, and Working It Out",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Values: what a cell can hold",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-03-parser",
+      "track": "spreadsheet-build",
+      "title": "7.3 — Formulas, Part 3: The Parser Builds the Tree",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The rules, written down first",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-04-cell-values",
+      "track": "spreadsheet-build",
+      "title": "7.4 — Formulas, Part 4: From Cell Text to Cell Value",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The tests",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-05-formulas-on-the-page",
+      "track": "spreadsheet-build",
+      "title": "7.5 — Formulas on the Page",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Show values, not text",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-06-cycles",
+      "track": "spreadsheet-build",
+      "title": "7.6 — Catching Cycles",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Remember what's in progress",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-07-challenge-negatives",
+      "track": "spreadsheet-build",
+      "title": "7.7 — Challenge: Negative Numbers",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "What should work",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    }
+  ]
+}

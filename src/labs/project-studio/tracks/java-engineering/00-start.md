@@ -9,11 +9,39 @@ console: true
 
 **Common Ground** is a collaborative project workspace. You will build a task board with a browser interface, persistent tasks and discussion, permissions, concurrent editing protection, and an operational release process. The project starts small because each addition must be understood, not because the final application is a toy.
 
-This course is for self-taught scripters, graduates, and people who can assemble programs but want to understand and own their behavior. No programming or framework knowledge is assumed. The opening instruction introduces values, variables, method calls, command-line arguments and decisions before asking you to combine them. There is no agent section.
+This course is for self-taught scripters, graduates, and people who can assemble programs but want to understand and own their behavior. Basic script experience is useful: running files, variables, functions and decisions. No Java or framework knowledge is assumed. The opening instruction introduces values, variables, method calls, command-line arguments and decisions before asking you to combine them. There is no agent section.
 
 Every code fragment is typed by you. There is no starter download or solution injection. Read the explanation, predict the behavior, type the fragment, and inspect what happens. Small fragments sometimes leave an unfinished class until the next step; the lesson tells you when to compile. Optional challenges never unlock or block teaching content. Passing checks is evidence about particular behavior, not a certificate of mastery.
 
 ## Decide what the first release means
+
+You already know that a Python file contains instructions and that running it produces output. Here the immediate goal is the same: print one sentence from a Java file. Install only JDK 21 for this experiment, using the installation link below. Maven, Git and Node are needed later in the guided project; they do not help this single instruction run.
+
+Choose a new empty learning folder and open its terminal. Create `scratch/Hello.java` in your editor. Java source files use the extension `.java`.
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Common Ground workshop");
+    }
+}
+```
+
+The outer braces group a named class, Hello. The inner braces group main, the starting instructions the launcher looks for. Keep the starting declaration exactly as written for now; the next lesson explains its words individually. System.out.println writes the text in quotes and ends the output line. The semicolon ends that instruction. This is a worked example, not an independent design task.
+
+From your learning folder run `java scratch/Hello.java`. Java's source-file launcher compiles and executes this small program. Expect `Common Ground workshop`. If the command cannot find the file, check your current folder; if it cannot find Java, reopen the terminal after installing the JDK.
+
+```predict
+question: You change workshop to started in the quoted text and save. What should the next run print?
+choice: Common Ground started
+choice: Common Ground workshop
+answer: Common Ground started
+explain: This command reads the saved source file again. Old output suggests an unsaved edit, the wrong file, or a different command. Compare the saved path before reinstalling anything.
+```
+
+Make the edit, run, and explain which evidence shows the edited source executed. Restore workshop afterward. The command proves only that this instruction can execute with your JDK; it does not test the future application. You now have a small success to return to when a later build fails.
+
+### Decide what the first release means
 
 ### Translate scope into examples you can observe
 
@@ -51,7 +79,7 @@ Each version command below asks one installed program to report information and 
 
 Choose a new empty folder in Project Studio. Keep it for this entire course. The explorer's new-file action accepts paths; create the parent folders when needed. Files you type are ordinary files on disk. In the browser edition, use your own editor and terminal alongside these lessons; execution checks require the desktop edition.
 
-Install a JDK 21, Maven 3.9+, Git, and Node 22.14+ using their official installation instructions. A JDK includes the compiler; a Java runtime alone does not. Open a fresh terminal and run each command separately:
+Before the following multi-file project chapters, install Maven 3.9+, Git, and Node 22.14+ using their official installation instructions. Keep the JDK 21 you used for the first experiment. A JDK includes the compiler; a Java runtime alone does not. Open a fresh terminal and run each command separately:
 
 ```text
 java -version

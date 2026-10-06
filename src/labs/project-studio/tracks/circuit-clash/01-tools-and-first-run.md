@@ -66,5 +66,13 @@ run "dotnet run --project Scratch" exit=0 stdout="Circuit Clash workshop" timeou
 
 This is optional. You can continue without completing it; no later guided step depends on your solution. Keep your attempt and revisit it.
 
+The check above establishes that one command succeeds and prints the expected text. It does not verify the graphics driver, your understanding of the build stages, or a complete game.
+
 Without looking at the original, recreate the one-line program in a separate scratch project and explain the roles of the shell, SDK, compiler, runtime, and Console. If a cached executable prints old text, which evidence would prove the edited source actually compiled?
 
+
+```hints
+nudge: Locate the smallest two files needed for the console experiment. Which file describes the build, and which one prints?
+concept: The project file selects the SDK and target framework. Console.WriteLine belongs in Program.cs, not in the XML project description.
+shape: Put the project and source inside a separate practice folder; select that folder with --project. Change the printed text, save, run again, and compare the exact output. A successful rebuild with the changed text is stronger evidence than launching an old executable.
+```

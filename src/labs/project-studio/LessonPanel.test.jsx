@@ -92,3 +92,15 @@ describe('non-blocking challenges', () => {
     expect(host.textContent).not.toContain('Create provided');
   });
 });
+
+it('describes passed checks as evidence and never treats a skipped check as passed', async () => {
+  const step={id:'evidence-step',title:'Check evidence',checks:[{kind:'file',args:['main.py'],label:'main.py exists'}]};
+  const lesson={id:'evidence',title:'Evidence',steps:[step]};
+  const renderEvidence=async results=>act(async()=>root.render(<LessonPanel C={C} lesson={lesson} lessons={[lesson]} step={step} stepIndex={0} checkState={{results}} canCheck />));
+  await renderEvidence([{pass:true}]);
+  expect(host.textContent).toContain('Listed checks passed');
+  expect(host.textContent).toContain('they do not inspect implementation quality');
+  await renderEvidence([{pass:true,skipped:true}]);
+  expect(host.textContent).not.toContain('Listed checks passed');
+  expect(host.textContent).toContain('not checked on this computer');
+});

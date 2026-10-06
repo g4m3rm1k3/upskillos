@@ -10,6 +10,7 @@ import LessonCompanions from './LessonCompanions.jsx';
 import HintLadder from './HintLadder.jsx';
 import FigureBlock from './FigureBlock.jsx';
 import { BLOCK_SPLIT } from './hints.js';
+import { checkEvidence } from './checkEvidence.js';
 
 // MarkdownProse defaults to article typography — large serif body text with
 // generous leading, which is right for a full-width lesson page and far too
@@ -190,13 +191,13 @@ function StepText({ text, step, C }) {
 function ChecksBox({ step, state, onCheck, canCheck, C }) {
   const running = state?.running;
   const results = state?.results;
-  const allPass = results && results.length === step.checks.length && results.every((r) => r.pass);
+  const allPass = results && results.length === step.checks.length && results.every((r) => r.pass && !r.skipped);
 
   return (
     <div style={{ marginTop: 14, border: `1px solid ${allPass ? C.teal : C.border}`, borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: C.surface2, borderBottom: `1px solid ${C.border}` }}>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: allPass ? C.teal : C.muted }}>
-          {allPass ? '✓ Step complete' : 'When you have done this step'}
+          {allPass ? '✓ Listed checks passed' : 'When you have done this step'}
         </span>
         <div style={{ flex: 1 }} />
         <button
@@ -211,11 +212,15 @@ function ChecksBox({ step, state, onCheck, canCheck, C }) {
           {running ? 'Checking…' : 'Check my work'}
         </button>
       </div>
+      <details style={{ padding: '6px 10px', fontSize: 12 }}>
+        <summary>What these checks establish</summary>
+        {checkEvidence(step.checks).map(text => <p key={text}>{text}</p>)}
+      </details>
       <ul style={{ listStyle: 'none', margin: 0, padding: '6px 10px' }}>
         {step.checks.map((check, i) => {
           const r = results?.[i];
-          const mark = !r ? '○' : r.pass ? '✓' : '✗';
-          const color = !r ? C.hint : r.pass ? C.teal : C.red ?? '#ef4444';
+          const mark = !r || r.skipped ? '○' : r.pass ? '✓' : '✗';
+          const color = !r || r.skipped ? C.hint : r.pass ? C.teal : C.red ?? '#ef4444';
           return (
             <li key={i} style={{ fontSize: 12, lineHeight: 1.5, padding: '3px 0', color: C.text }}>
               <span style={{ color, fontWeight: 700, display: 'inline-block', width: 16 }}>{mark}</span>

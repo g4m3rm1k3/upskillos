@@ -19,6 +19,11 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### Project Studio learning quality (2026-10-06)
+
+- [x] Catalog-wide structural audit and initial repairs: audience/maturity labels, a recommended Forge entry path, honest check evidence, optional independent references, and Java/C++/C# opening repairs. See [verification and remaining work](project-studio-lesson-quality-todos.md) and the generated [per-lesson review queue](generated/project-studio-lesson-review.md).
+- [ ] Complete human review and task-specific repairs across every lesson under the [Project Studio standard](project-studio-lesson-standard.md). Structural signals and passing references do not certify teaching quality.
+
 ### Last verified baseline
 
 - [x] **C++ games entry chapter (2026-10-06):** implemented the game-first opening and initial C++ foundations for Python script writers. Includes a playable, explicitly rule-based preview, incremental file diffs, explanations, predictions, experiments and independent challenges. Real compiler walkthroughs and browser/C++ rule-parity tests pass. Later classes, project structure, SDL3 and Vulkan chapters remain planned in [the learning path](cpp-games-learning-path.md).
