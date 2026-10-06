@@ -577,6 +577,18 @@ below the first override only their picture. Its tests pass unchanged.
 - `e2e/phase7.acceptance.mjs` (9/9).
 - `npm run game:acceptance`: all eight browser tests pass (15, 6, 9, 12, 10, 10, 13 and 9 checks).
 
+## Done: tool scripts, Game Studio's EditorScript (2026-10-05)
+
+Build code that is too repetitive to click (52 card pictures, a board's 242 holes) is now something a learner writes
+and runs in the editor, not something handed over.
+- A tool is a script in `scripts/tools/` whose default export is a function of the project. **Files › New tool…** makes
+  one; **▶ Run tool** at the top of the script runs it (`store.runTool`, `Doc.runTool`) as one undoable step, logged in
+  GUI → code as `project.runTool(path)` (`ProjectApi.runTool`, `toolFunction` in core/api.ts).
+- A tool cannot import other scripts (it runs in the editor, not as a module). The game imports it like any script,
+  which only defines the function, so the runtime needed no change.
+- Tests: `core/tools.test.ts` (one step, undo, replaying the log, the errors), `e2e/tools.acceptance.mjs` (6/6: New
+  tool…, ▶ Run tool, GUI → code, the game still runs, Ctrl+Z). The API reference documents it.
+
 ## Done: the whole course, 33 lessons (2026-10-01)
 
 "Building Games with Game Studio" (`src/courses/making-games/`, from `course-sources/making-games.yaml`):

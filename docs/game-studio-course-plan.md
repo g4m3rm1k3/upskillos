@@ -388,8 +388,23 @@ starters (Kart Circuit onward) are built to it from the start.
   starts at `QB_FINISHED` and the example's code is `QA_FINISHED`. The slime scene, the attack action and sounds, the
   spawner (now qa-combat's fourth step), the buddy scene and its collision layers, the skills panel and the teach keys
   are now steps. The old all-in-one build of the starter is gone. `tasks/tasks.test.ts` checks this chain too.
-- **Next:** rule 4 for all 14 lessons (a walkthrough cell of the code each task built, line by line, and "Questions
-  you might have"); then Cribbage (chapter 10) to the standard.
+- **Rule 4 done for both chapters.** Every notebook ends with "The code you wrote, line by line" and "Questions you
+  might have" (markdown cells). `src/labs/game-studio/tasks/stepLines.ts` replays the steps and lists every line each
+  task wrote (Scene API lines, and in each script the lines that were not there before); `quest.test.js` and
+  `adventure.test.js` fail if a lesson's walkthrough does not show one of them. Notebook markdown now draws fenced code
+  in a box that scrolls sideways (JSNotebook.jsx), and styles `####` headings.
+- **Cribbage (chapter 10): rules 1 to 3 done in code (2026-10-05).** `src/labs/game-studio/examples/cribbageBuild.ts`
+  holds every step; the example's code is `CB_FINISHED`, and `tasks.test.ts` checks the chain. Earlier versions of
+  table.js and opponent.js are files in `examples/cribbage/stages/`; the art is two tool scripts in
+  `examples/cribbage/tools/` (build.js is gone). The table runs from lesson 10.6 with a stand-in playing both seats;
+  10.7 gives your seat to clicks, 10.8 the AI's to the rules player. The pegging turns (options, nextTurn) moved from
+  the 10.5 task to 10.6. Step pictures regenerated.
+- **Cribbage lessons: rule 4 done (2026-10-06).** Each of 10.1–10.12 has a "Try it task" paragraph matching the new
+  steps, and ends with "The code you wrote, line by line" and "Questions you might have"; `cribbage.test.js` checks
+  every line is shown. stepLines.ts now compares SVG pictures line by line like scripts, and skips comments and saved
+  brains. Generators: scratchpad `c10/l*.mjs` → `build10.mjs` (YAML) → `npm run course:create -- course-sources/making-games.yaml --force`
+  (it rewrites chapters 1–10 from the YAML; check that only chapter 10 changed).
+- **All three game chapters (10, 11, 12) now meet the standard.** Next: Kart Circuit, built to it from the start.
 
 ## Added 2026-10-05: chapter 11, Quest Buddies
 

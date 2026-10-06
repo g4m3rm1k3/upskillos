@@ -148,6 +148,9 @@ export function ScriptEditor({ store, path }: { store: Store; path: string }) {
     <div data-testid="script-editor" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', padding: '3px 8px', fontSize: 11, color: C.faint, borderBottom: `1px solid ${C.border}`, fontFamily: C.mono }}>
         <span style={{ flex: 1 }}>{path}{store.isScriptDirty(path) ? '  ● unsaved (Ctrl/Cmd+S)' : '  saved'}</span>
+        {path.startsWith('scripts/tools/') && (
+          <button data-testid="run-tool" onClick={() => store.runTool(path)} title="Run this tool: its function builds part of the project, as one step you can undo (GUI → code shows it as project.runTool)" style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 4, padding: '1px 10px', marginRight: 12, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>▶ Run tool</button>
+        )}
         <span role="link" data-testid="script-reference" onClick={() => store.showReference()} title="Every class, method and global a script can use" style={{ color: C.accent, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>API reference</span>
       </div>
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>

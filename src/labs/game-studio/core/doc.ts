@@ -326,6 +326,12 @@ export class Doc {
     this.logScene = null;
   }
 
+  /** Run a tool script (scripts/tools/…): one command, logged as project.runTool(path). */
+  runTool(path: string): void {
+    this.run(`Run ${path}`, null, `project.runTool(${lit(path)})`, () => projectApi(this.project).runTool(path));
+    this.logScene = null;
+  }
+
   setProjectName(name: string): void {
     this.run('Rename project', null, `project.name = ${lit(name)}`, () => { projectApi(this.project).name = name; });
   }

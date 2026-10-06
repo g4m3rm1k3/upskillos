@@ -845,12 +845,31 @@ export class Store {
 
   /** A new SVG image, a plain rectangle to start from, opened as text. */
   newSvg(stem: string): void {
-    const name = stem.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    // A name can have folders and capitals: cards/5H makes assets/cards/5H.svg.
+    const name = stem.trim().replace(/[^A-Za-z0-9_\-/]+/g, '_').replace(/\/+/g, '/').replace(/^[_/]+|[_/]+$/g, '');
     if (!name || !this.doc) return;
     let path = `assets/${name}.svg`, k = 2;
     while (this.doc.project.assets.some((a) => a.path === path)) path = `assets/${name}_${k++}.svg`;
     const start = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="white" stroke="#555555" stroke-width="2"/>\n</svg>\n`;
     if (this.act((d) => d.writeSvg(path, start, `New SVG image ${path}`)) !== undefined) this.openScript(path);
+  }
+
+  /** A new tool script (Files › New tool…): scripts/tools/<name>.js, a function of the project to run with ▶ Run tool. */
+  newTool(stem: string): void {
+    const name = stem.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!name || !this.doc) return;
+    let path = `scripts/tools/${name}.js`, k = 2;
+    while (this.doc.project.scripts.some((x) => x.path === path)) path = `scripts/tools/${name}_${k++}.js`;
+    const start = `// A tool: code that builds part of the project, run from the editor with ▶ Run tool (like a Godot EditorScript).\n// project is the Scene API: the same calls the editor makes when you click (GUI → code shows them).\nexport default function (project) {\n}\n`;
+    if (this.act((d) => { d.writeScript(path, start, `New tool ${path}`); return true; })) this.openScript(path);
+  }
+
+  /** Run a tool script, saved first so it runs what you see: one undoable step, project.runTool(path) in GUI → code. */
+  runTool(path: string): void {
+    if (!this.doc) return;
+    if (this.isScriptDirty(path)) this.saveScript(path);
+    const ok = this.act((d) => { d.runTool(path); return true; });
+    if (ok) this.say(`Ran ${path}`);
   }
 
   openScript(path: string, reveal?: { line: number; column: number }): void {

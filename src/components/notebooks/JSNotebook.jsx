@@ -199,6 +199,9 @@ function InstructionText({ text, T }) {
           h1: ({ node, ...p }) => <h1 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "1rem", color: T.accent }} {...p} />,
           h2: ({ node, ...p }) => <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "0.75rem", color: T.accent }} {...p} />,
           h3: ({ node, ...p }) => <h3 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.5rem", color: T.accent }} {...p} />,
+          h4: ({ node, ...p }) => <h4 style={{ fontSize: "1rem", fontWeight: 600, margin: "1.25rem 0 0.5rem", color: T.accent }} {...p} />,
+          // A fenced code block: a box that scrolls sideways, so a long line is never cut off.
+          pre: ({ node, ...p }) => <pre style={{ background: T.panel2, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px 14px", margin: "8px 0 12px", overflowX: "auto", lineHeight: 1.6 }} {...p} />,
           p:  ({ node, ...p }) => <p style={{ marginBottom: "1rem" }} {...p} />,
           ul: ({ node, ...p }) => <ul style={{ listStyleType: "disc", paddingLeft: "1.5rem", marginBottom: "1rem" }} {...p} />,
           ol: ({ node, ...p }) => <ol style={{ listStyleType: "decimal", paddingLeft: "1.5rem", marginBottom: "1rem" }} {...p} />,

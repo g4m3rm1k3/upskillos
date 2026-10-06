@@ -43,18 +43,6 @@ function take(into, from, names) {
   return into;
 }
 
-// The five of hearts, a step at a time (the crib-svg task).
-const HEART = 'M0,8 C-3,5 -10,1 -10,-4 C-10,-8 -7,-10 -4.5,-10 C-2.5,-10 -0.8,-8.8 0,-7 C0.8,-8.8 2.5,-10 4.5,-10 C7,-10 10,-8 10,-4 C10,1 3,5 0,8 Z';
-const corner = '  <text x="11" y="23" font-family="Georgia, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#c1121f">5</text>\n';
-const cornerHeart = '  <use href="#heart" transform="translate(11 35) scale(0.55)"/>\n';
-const pips = (turned) => [[30, 30], [70, 30], [50, 70], [30, 110], [70, 110]].map(([x, y]) => `  <use href="#heart" transform="translate(${x} ${y})${turned && y > 75 ? ' rotate(180)' : ''}"/>\n`).join('');
-const svg = (body) => `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <defs><path id="heart" d="${HEART}" fill="#c1121f"/></defs>\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>\n${body}</svg>\n`;
-const FIVE = [
-  `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">\n  <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>\n${corner}</svg>\n`,
-  svg(corner + cornerHeart),
-  svg(corner + cornerHeart + pips(false)),
-  svg(corner + cornerHeart + `  <g transform="rotate(180 50 70)">\n  ${corner}  ${cornerHeart}  </g>\n` + pips(true)),
-];
 const GHOST_SPEC = { agent: 'Ghosts/Ghost', bins: [[-0.5, 0.5], [-0.5, 0.5]], maxSteps: 150 };
 
 const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => {
@@ -93,10 +81,11 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
     // Quest Buddies (chapter 11): do step k of a task (tasks/questBuddies.ts) as its code, then show it: a script
     // opened, a scene opened with a node selected, or the game running (with keys pressed in it, for menus).
     qb: async (task, k, show = {}) => {
-      const code = await page.evaluate(([a, b]) => (a.startsWith('qa-') ? window.__gameStudio.qaStep : window.__gameStudio.qbStep)(a, b), [task, k]);
+      const code = await page.evaluate(([a, b]) => (a.startsWith('qa-') ? window.__gameStudio.qaStep : a.startsWith('crib-') ? window.__gameStudio.cbStep : window.__gameStudio.qbStep)(a, b), [task, k]);
       if (code) await page.evaluate(([c, label]) => window.__gameStudio.store.act((d) => d.runCode(label, c)), [code, `${task} step ${k + 1}`]);
       if (show.scene) { await t('left-files').click(); await t(`file-${show.scene}`).click(); if (show.node) await ui.select(show.node); else mark(t('viewport')); }
       if (show.script) { await t('left-files').click(); await ui.openScript(show.script); mark(page.locator('.monaco-editor')); }
+      if (show.picture) { await t('left-files').click(); await t(`asset-${show.picture}`).click(); await page.waitForTimeout(400); mark(t('svg-preview')); }
       if (show.run) {
         await ui.run();
         const frame = page.locator('iframe[title="Running game"]');
@@ -502,80 +491,87 @@ const failed = await withGameStudio(5182, async ({ page, t, check, answer }) => 
       async () => { await ui.script(await ui.solution('crib-tour', 'scripts/table.js')); await page.keyboard.press('ControlOrMeta+S'); },
     ],
     'crib-cards': [
-      () => ui.code('crib-cards', 'scripts/cards.js', ['value']),
-      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName']),
-      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName', 'newDeck']),
-      () => ui.code('crib-cards', 'scripts/cards.js', ['value', 'cardName', 'newDeck', 'shuffle']),
-      () => ui.play('Digit2'),
+      () => ui.qb('crib-cards', 0, { script: 'scripts/cards.js' }),
+      () => ui.qb('crib-cards', 1, { script: 'scripts/cards.js' }),
+      () => ui.qb('crib-cards', 2, { script: 'scripts/cards.js' }),
+      () => ui.qb('crib-cards', 3, { script: 'scripts/cards.js' }),
     ],
     'crib-svg': [
-      () => ui.svg('assets/cards/5H.svg', FIVE[0]),
-      () => ui.svg('assets/cards/5H.svg', FIVE[1]),
-      () => ui.svg('assets/cards/5H.svg', FIVE[2]),
-      () => ui.svg('assets/cards/5H.svg', FIVE[3]),
-      () => ui.play('Digit2'),
+      () => ui.qb('crib-svg', 0, { picture: 'assets/cards/5H.svg' }),
+      () => ui.qb('crib-svg', 1, { picture: 'assets/cards/5H.svg' }),
+      () => ui.qb('crib-svg', 2, { picture: 'assets/cards/5H.svg' }),
+      () => ui.qb('crib-svg', 3, { picture: 'assets/cards/5H.svg' }),
+      () => ui.qb('crib-svg', 4, { script: 'scripts/tools/cards.js' }),
+      () => ui.qb('crib-svg', 5, { picture: 'assets/cards/KD.svg' }),
     ],
     'crib-score': [
-      () => ui.code('crib-score', 'scripts/score.js', ['fifteens']),
-      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs']),
-      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs', 'runs']),
-      () => ui.code('crib-score', 'scripts/score.js', ['fifteens', 'pairs', 'runs', 'flush', 'nobs']),
-      () => ui.play('Digit2'),
+      () => ui.qb('crib-score', 0, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-score', 1, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-score', 2, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-score', 3, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-score', 4, { script: 'scripts/score.js' }),
     ],
     'crib-peg': [
-      () => ui.code('crib-peg', 'scripts/score.js', ['countOf']),
-      () => ui.code('crib-peg', 'scripts/score.js', ['countOf', 'pegPoints']),
-      async () => { mark(page.locator('.monaco-editor')); },
-      async () => { mark(page.locator('.monaco-editor')); },
-      () => ui.code('crib-peg', 'scripts/table.js', ['options']),
-      () => ui.code('crib-peg', 'scripts/table.js', ['options', 'nextTurn']),
+      () => ui.qb('crib-peg', 0, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-peg', 1, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-peg', 2, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-peg', 3, { script: 'scripts/score.js' }),
+      () => ui.qb('crib-peg', 4, { script: 'scripts/score.js' }),
     ],
     'crib-table': [
-      () => ui.code('crib-table', 'scripts/table.js', ['newHand']),
-      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards']),
-      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'award']),
-      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'award', 'cut']),
-      () => ui.code('crib-table', 'scripts/table.js', ['newHand', 'throwCards', 'cut', 'award', 'startShow']),
-      () => ui.play('Digit2'),
+      () => ui.qb('crib-table', 0, { run: true }),
+      async () => { await ui.stop(); await ui.qb('crib-table', 1, { run: true }); },
+      async () => { await ui.stop(); await ui.qb('crib-table', 2, { script: 'scripts/table.js' }); },
+      () => ui.qb('crib-table', 3, { run: true }),
+      async () => { await ui.stop(); await ui.qb('crib-table', 4, { script: 'scripts/table.js' }); },
+      () => ui.qb('crib-table', 5, { script: 'scripts/table.js' }),
+      () => ui.qb('crib-table', 6, { run: true }),
+      async () => { await ui.stop(); await ui.qb('crib-table', 7, { run: true }); },
     ],
     'crib-screen': [
-      () => ui.code('crib-screen', 'scripts/cardsprite.js', ['update']),
-      () => ui.code('crib-screen', 'scripts/cardsprite.js', ['update', 'contains']),
-      () => ui.code('crib-screen', 'scripts/table.js', ['takeInput']),
-      async () => { mark(page.locator('.monaco-editor')); },
-      () => ui.play('Digit2'),
+      async () => { await ui.stop(); await ui.qb('crib-screen', 0, { scene: 'scenes/cribbage.scene', node: 'Board' }); },
+      () => ui.qb('crib-screen', 1, { run: true }),
+      async () => { await ui.stop(); await ui.qb('crib-screen', 2, { script: 'scripts/cardsprite.js' }); },
+      () => ui.qb('crib-screen', 3, { run: true, keys: ['Digit1', 'Digit3'] }),
+      async () => { await ui.stop(); await ui.qb('crib-screen', 4, { run: true, keys: ['Digit1', 'Digit3'] }); },
+      async () => { await ui.stop(); await ui.qb('crib-screen', 5, { run: true, keys: ['Digit1', 'Digit2', 'Enter'] }); },
     ],
     'crib-rules': [
-      () => ui.code('crib-rules', 'scripts/features.js', ['unseen']),
-      () => ui.code('crib-rules', 'scripts/features.js', ['unseen', 'expectedHand']),
-      () => ui.code('crib-rules', 'scripts/partner.js', ['rulesThrow']),
-      () => ui.code('crib-rules', 'scripts/partner.js', ['rulesThrow', 'rulesPlay']),
-      () => ui.play('Digit2', 'KeyD'),
+      async () => { await ui.stop(); await ui.qb('crib-rules', 0, { script: 'scripts/features.js' }); },
+      () => ui.qb('crib-rules', 1, { script: 'scripts/features.js' }),
+      () => ui.qb('crib-rules', 2, { script: 'scripts/partner.js' }),
+      () => ui.qb('crib-rules', 3, { script: 'scripts/partner.js' }),
+      () => ui.qb('crib-rules', 4, { run: true, keys: ['Digit1', 'Digit2', 'Enter'] }),
+      async () => { await ui.stop(); await ui.qb('crib-rules', 5, { run: true, keys: ['KeyD'] }); },
+      async () => { await ui.stop(); await ui.qb('crib-rules', 6, { script: 'scripts/table.js' }); },
     ],
     'crib-agent': [
-      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions']),
-      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions']),
-      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act']),
-      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act', 'reward']),
-      () => ui.code('crib-agent', 'scripts/opponent.js', ['actions', 'legalActions', 'act', 'reward', 'done']),
+      () => ui.qb('crib-agent', 0, { script: 'scripts/table.js' }),
+      () => ui.qb('crib-agent', 1, { script: 'scripts/opponent.js' }),
+      () => ui.qb('crib-agent', 2, { script: 'scripts/opponent.js' }),
+      () => ui.qb('crib-agent', 3, { script: 'scripts/opponent.js' }),
+      () => ui.qb('crib-agent', 4, { script: 'scripts/opponent.js' }),
+      () => ui.qb('crib-agent', 5, { script: 'scripts/opponent.js' }),
     ],
     'crib-features': [
-      () => ui.code('crib-features', 'scripts/features.js', ['discardFeatures']),
-      () => ui.code('crib-features', 'scripts/features.js', ['discardFeatures', 'pegFeatures']),
-      async () => { mark(page.locator('.monaco-editor')); },
-      async () => { mark(page.locator('.monaco-editor')); },
-      async () => { mark(page.locator('.monaco-editor')); },
+      () => ui.qb('crib-features', 0, { script: 'scripts/features.js' }),
+      () => ui.qb('crib-features', 1, { script: 'scripts/features.js' }),
+      () => ui.qb('crib-features', 2, { script: 'scripts/features.js' }),
+      () => ui.qb('crib-features', 3, { script: 'scripts/features.js' }),
+      () => ui.qb('crib-features', 4, { script: 'scripts/opponent.js' }),
     ],
     'crib-train': [
+      () => ui.qb('crib-train', 0, { script: 'scripts/opponent.js' }),
       () => ui.linear({ agent: 'Opponent', maxSteps: 40 }, { episodes: 2000 }),
       () => ui.saveBrain('brains/cribbage.json'),
       async () => { await t('dialog-close').click().catch(() => {}); await ui.play('Digit2', 'KeyD'); },
-      async () => { await ui.stop(); await ui.linear(null, { episodes: 200 }); },
+      async () => { await ui.stop(); await ui.qb('crib-train', 4, { script: 'scripts/table.js' }); },
+      async () => { await ui.linear(null, { episodes: 200 }); },
     ],
     'crib-difficulty': [
-      () => ui.code('crib-difficulty', 'scripts/table.js', ['DIFFICULTY']),
-      () => ui.code('crib-difficulty', 'scripts/opponent.js', ['remember']),
-      async () => { mark(page.locator('.monaco-editor')); },
+      async () => { await t('dialog-close').click().catch(() => {}); await ui.qb('crib-difficulty', 0, { run: true }); },
+      async () => { await ui.stop(); await ui.qb('crib-difficulty', 1, { run: true, keys: ['Digit3', 'KeyD'] }); },
+      async () => { await ui.stop(); await ui.qb('crib-difficulty', 2, { run: true, keys: ['Digit3', 'KeyD'] }); },
       () => ui.play('Digit3', 'KeyD'),
     ],
     // ── Quest Buddies (chapter 11): each step done as its code, then shown ──

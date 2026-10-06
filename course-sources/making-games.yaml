@@ -15455,7 +15455,7 @@ chapters:
             - "**The go.** If you cannot play without passing 31, you say \"go\" and the other player plays on as long as they can. When neither can play, the last to play pegs 1 for the go (nothing extra if they made exactly 31), the count goes back to 0, and the other player leads. The very last card of all pegs 1."
             - "**The show.** Players pick up their own four cards and count them with the starter: the non-dealer's hand first, then the dealer's, then the crib (the dealer's too). Fifteens: 2 for each different set of cards adding to 15. Pairs: 2 each. Runs: one point a card, for each different run of three or more. Flush: four cards of one suit in the hand, 4 (5 with the starter); the crib only counts a flush of all five. Nobs: the jack of the starter's suit, 1. Cell 2 counts four famous hands; the best possible is 29."
             - "**Winning.** Points are pegged on a board as they are scored, with two pegs each (the back one marks where you were). The first to 121 wins, at once, even in the middle of pegging; so the order of counting at the show matters near the end."
-            - "**The plan.** The game is seven scripts, each a lesson: cards.js (the deck, 10.2), pictures drawn as SVG by code (10.3), score.js (the show, 10.4, and pegging, 10.5), table.js (the game's flow, 10.6, and the screen and clicks, 10.7), partner.js (a rules player, 10.8), then the AI: opponent.js as a turn-based agent (10.9), features.js (what it sees of a move, 10.10), training it (10.11), and difficulty with the developer view (10.12). The rules know nothing of the screen and the AI knows nothing of the rules' insides: each asks the next for what it needs."
+            - "**The plan.** The game is seven scripts, each a lesson: cards.js (the deck, 10.2), pictures drawn as SVG by code (10.3), score.js (the show, 10.4, and pegging, 10.5), table.js (the game's flow, 10.6, and the screen and clicks, 10.7), partner.js (a rules player, 10.8), then the AI: opponent.js as a turn-based agent (10.9), features.js (what it sees of a move, 10.10), training it (10.11), and difficulty with the developer view (10.12). The rules know nothing of the screen and the AI knows nothing of the rules' insides: each asks the next for what it needs. The Try it tasks build it all from an empty project, each starting exactly where the last one ended: by 10.6 the game plays itself, by 10.7 you can play it, and from 10.8 the AI is in its seat. The finished game you just played is exactly those steps, in order."
           callouts:
             - type: procedure
               title: "Procedure: one hand of cribbage"
@@ -15505,7 +15505,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -15649,7 +15649,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -15796,7 +15796,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -15941,7 +15941,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -16071,6 +16071,34 @@ chapters:
                           else console.log('Case ' + (i + 1) + ', ' + crib + ' + ' + cut + ': you wrote ' + answers[i] + '. Count again: fifteens, pairs, runs, flush (all five in a crib), nobs.')
                         })
                         console.log(ok === cases.length ? '✓ All 4 cribs counted.' : ok + ' of 4 cribs counted.')
+                    - type: markdown
+                      instruction: |-
+                        ### 5. The code you wrote, line by line
+
+                        The tour changed two lines at the top of the Table class in scripts/table.js. Both are fields: values each table keeps, read by its methods.
+
+                        ```js
+                          goal = 61;
+                        ```
+
+                        The score that ends the game. award() compares every new score with this.goal, so a "short game" to 61 needed no other change.
+
+                        ```js
+                          difficulty = 'Hard';
+                        ```
+
+                        The difficulty the table has before you choose one on the title screen. start(difficulty) replaces it when you click Easy, Medium or Hard; the status line and the developer view read it. Lesson 10.12 builds the title screen and what each difficulty means.
+                    - type: markdown
+                      instruction: |-
+                        ### 6. Questions you might have
+
+                        **Why do the fields sit at the top of the class?** They are the table's settings: what a new table starts with. Reading them first tells you what the rest can be told to do.
+
+                        **Does changing goal to 61 change the AI?** No: the AI learned from hands, one at a time, not from games. It plays each hand the same way to 61 or to 121.
+
+                        **Where is the rest of the game?** In scripts/: cards.js (the cards), score.js (the rules for points), table.js (the game), cardsprite.js (a card on screen), partner.js (players with rules), features.js and opponent.js (the AI). Lessons 10.2 to 10.12 write each one from nothing.
+
+                        **What are scripts/tools/cards.js and table.js?** Tools: code that drew every picture in the game. They run in the editor, not in the game (lesson 10.3).
             - id: GameStudioTask
               title: Play the finished game
               props:
@@ -16476,6 +16504,62 @@ chapters:
                         else if (Object.keys(counts).length < 6) console.log('Only ' + Object.keys(counts).length + ' of the 6 orders came up: the cards are not being moved enough.')
                         else if (worst > 250) console.log('The orders came up ' + values.join(', ') + ' times: not equally likely. Choose j from 0 to i.')
                         else console.log('✓ All 6 orders equally likely: ' + values.join(', ') + '.')
+                    - type: markdown
+                      instruction: |-
+                        ### 6. The code you wrote, line by line
+
+                        All of it is scripts/cards.js, written a function at a time.
+
+                        ```js
+                        export const SUITS = ['S', 'H', 'D', 'C'];
+                        export const SUIT_SYMBOL = { S: '♠', H: '♥', D: '♦', C: '♣' };
+                        export const RANK_NAME = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+                        ```
+
+                        Three tables the rest reads. SUITS lists the suits by letter. SUIT_SYMBOL is an object that looks up a letter's symbol: SUIT_SYMBOL['H'] is '♥'. RANK_NAME is a list read by rank: RANK_NAME[1] is 'A', RANK_NAME[13] is 'K'. Its first entry is empty, '', because no card has rank 0; it is there so the rank and the place in the list are the same number. `export` lets other scripts import them.
+
+                        ```js
+                        export function value(card) { return Math.min(card.rank, 10); }
+                        ```
+
+                        What a card counts toward 15 and 31. `Math.min` gives the smaller of two numbers: a 7 is 7, a king (13) is 10.
+
+                        ```js
+                        export function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
+                        ```
+
+                        The rank's name and the suit's symbol joined: { rank: 10, suit: 'H' } is '10♥'.
+
+                        ```js
+                        export function newDeck() {
+                          const deck = [];
+                          for (const suit of SUITS) for (let rank = 1; rank <= 13; rank++) deck.push({ rank, suit });
+                          return deck;
+                        ```
+
+                        An empty list, then two loops, one inside the other: for each of the four suits, every rank from 1 to 13. `{ rank, suit }` is short for `{ rank: rank, suit: suit }`. 4 × 13 = 52 objects, in order (cell 2).
+
+                        ```js
+                        export function shuffle(deck) {
+                          for (let i = deck.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [deck[i], deck[j]] = [deck[j], deck[i]];
+                        ```
+
+                        Fisher–Yates. `i` counts down from the last place (51) to 1. `Math.random()` is a number from 0 up to (not including) 1; times (i + 1) and rounded down (`Math.floor`), it is a whole number from 0 to i. The last line swaps the two cards: `[a, b] = [b, a]` makes a list of the two and takes it apart the other way round. Place i now holds a random card from those not yet placed, and is never touched again (cell 3). The function then returns the same deck it was given: it shuffles in place.
+                    - type: markdown
+                      instruction: |-
+                        ### 7. Questions you might have
+
+                        **Why is an ace 1 and not 11?** In cribbage the ace is always low: it counts 1 toward 15 and 31, and A 2 3 is a run but Q K A is not.
+
+                        **Why `deck.pop()` for dealing, and not the first card?** pop() takes the last card, which costs nothing; taking the first would move every other card down. After a fair shuffle the last card is as random as the first.
+
+                        **Why not sort with a random comparison?** It is biased (the lesson's warning): sort expects a consistent comparison, and some orders come up far more often.
+
+                        **Does Math.random make every training run different?** While an agent trains, Game Studio replaces Math.random with a seeded generator, so the same seed deals the same cards: runs can be repeated and compared.
+
+                        **Why does newDeck make new objects each time?** So a game can change its deck (deal from it) without touching another's. Two objects for the same card are equal in value but not the same object; lesson 10.8's sameCard compares the values.
             - id: GameStudioTask
               title: Write cards.js
               props:
@@ -16728,7 +16812,7 @@ chapters:
           - transforms
         aliases: svg scalable vector graphics rect circle text path M L C Z defs use href transform translate rotate scale g group pattern viewBox xmlns width height writeSvg new svg texture sprite procedural art
         timeToComplete: 60
-        coreConcept: "An SVG image is text: an <svg> element with xmlns, a width and a height, holding shapes in a coordinate system whose y grows downwards. <rect>, <circle>, <text> and <path> (a pen's moves: M, L, C, Z) draw; <defs> holds a shape to reuse and <use href> draws copies; transform moves, turns and scales them. Because it is text, code can write it: one function draws any card from its rank and suit, and two loops draw all 52. In Game Studio an SVG image is an asset like a PNG: the build code writes it with project.writeSvg(path, text), or you write one in Files › New SVG…, and a sprite shows it by its path."
+        coreConcept: "An SVG image is text: an <svg> element with xmlns, a width and a height, holding shapes in a coordinate system whose y grows downwards. <rect>, <circle>, <text> and <path> (a pen's moves: M, L, C, Z) draw; <defs> holds a shape to reuse and <use href> draws copies; transform moves, turns and scales them. Because it is text, code can write it: one function draws any card from its rank and suit, and two loops draw all 52. In Game Studio an SVG image is an asset like a PNG: a tool script writes it with project.writeSvg(path, text), or you write one in Files › New SVG…, and a sprite shows it by its path."
         prerequisites:
           - mg10-002
         nextLesson: mg10-004
@@ -16744,7 +16828,7 @@ chapters:
             - "**Draw once, use many times.** A five has five hearts. Write the heart once inside <defs> with an id (things in <defs> are not drawn), then draw copies: <use href=\"#heart\" transform=\"translate(30 30)\"/> draws it with its (0, 0) at (30, 30). transform can translate (move), rotate (turn, in degrees) and scale (size); written together they apply right to left, so translate(30 110) rotate(180) turns the heart about its own centre and then moves it (cell 4). The lower pips of a real card are upside down, so the deck reads the same either way up."
             - "**Groups.** <g> groups elements so one transform moves them all. A card's bottom-right corner is its top-left corner turned half round: put a copy of the corner (the rank and a small suit) inside <g transform=\"rotate(180 50 70)\">, which turns everything about the card's centre, (50, 70)."
             - "**A card is a function.** Everything that differs between cards is the rank (the corner text, how many pips and where) and the suit (the shape and the colour). So cardSvg(rank, suit) builds the text with template strings: the pip positions come from a table, PIPS[rank], and face cards get a frame and a big letter. Two loops call it 52 times (cell 5): about 60,000 characters of SVG and not one image file. The back is one more picture, using a <pattern>, a small tile repeated to fill a shape and turned by patternTransform (cell 6)."
-            - "**Into the game: as an asset.** Game Studio keeps an SVG image in the project as its text, under assets/ like any picture. There are two ways to make one. Code: the Cribbage build calls project.writeSvg('assets/cards/5H.svg', cardSvg(5, 'H')) for every card, in a loop; that is Scene API code, the same language as GUI → code. By hand: Files › New SVG… makes assets/name.svg and opens it as text beside a live preview; save (Ctrl/Cmd+S) and every sprite that uses it changes. Click any .svg asset to edit it the same way."
+            - "**Into the game: as an asset.** Game Studio keeps an SVG image in the project as its text, under assets/ like any picture. There are two ways to make one. Code: a tool, scripts/tools/cards.js, calls project.writeSvg('assets/cards/5H.svg', cardSvg(5, 'H')) for every card, in a loop, when you press ▶ Run tool; that is Scene API code, the same language as GUI → code. A tool is a script whose default export is a function of the project (Files › New tool… makes one); it runs in the editor, like a Godot EditorScript, not in the game. By hand: Files › New SVG… makes assets/name.svg and opens it as text beside a live preview; save (Ctrl/Cmd+S) and every sprite that uses it changes. Click any .svg asset to edit it the same way."
             - "**Into the game: on a sprite.** A Sprite2D shows a picture by its path: its texture is 'assets/cards/5H.svg'. A script changes the picture by setting texture, so a card sprite shows its back or its face with this.texture = this.faceUp ? cardImage(this.card) : 'assets/cards/back.svg', where cardImage builds the path from the card's data (lesson 10.2). The card *data* never knows about pictures; the sprite looks up the picture for the data."
             - "**Size and sharpness.** The game turns each SVG into pixels once, at its width and height, then draws those pixels like any picture. So draw it at the largest size it will appear and scale the sprite down: the cards are drawn at 100 × 140 and shown at 0.8 (80 × 112). Scaling a small SVG up blurs it, as it would a PNG."
           callouts:
@@ -16759,7 +16843,7 @@ chapters:
               body: "An id is unique within one image. Cell 5 shows each card as its own image, so each card's #suit is its own. Put 52 cards inline in one web page and every <use href=\"#suit\"> finds the first card's spade."
             - type: insight
               title: Art as code
-              body: "A card drawn by a function can change with one edit: a new colour, a new corner, a new back, all 53 at once. Procedural art suits anything built from rules: cards, dice, board squares, health bars, buttons. The Cribbage board, its pegs and its buttons are SVG from code too (scripts and build code in the example)."
+              body: "A card drawn by a function can change with one edit: a new colour, a new corner, a new back, all 53 at once. Procedural art suits anything built from rules: cards, dice, board squares, health bars, buttons. The Cribbage board, its pegs and its buttons are SVG from code too (another tool, scripts/tools/table.js, in lesson 10.7)."
           visualizations:
             - id: JSNotebook
               title: "Build it: from a rectangle to a deck"
@@ -16935,6 +17019,176 @@ chapters:
                         const got = five.map(read)
                         const bad = got.findIndex((g, i) => !g || g[0] !== [30, 70, 50, 30, 70][i] || g[1] !== [30, 30, 70, 110, 110][i] || g[2] !== (i >= 3))
                         console.log(bad < 0 ? '✓ All 5 pips in place, the bottom two turned.' : 'Pip ' + (bad + 1) + ' is ' + JSON.stringify(five[bad]) + ': it should translate to (' + [30, 70, 50, 30, 70][bad] + ' ' + [30, 30, 70, 110, 110][bad] + ')' + (bad >= 3 ? ' and then rotate(180).' : '.'))
+                    - type: markdown
+                      instruction: |-
+                        ### 8. The code you wrote, line by line
+
+                        First the five of hearts, by hand, in assets/cards/5H.svg; then the tool that draws every card.
+
+                        **assets/cards/5H.svg**
+
+                        ```svg
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">
+                          <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>
+                          <text x="11" y="23" font-family="Georgia, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#c1121f">5</text>
+                        </svg>
+                        ```
+
+                        The picture is 100 × 140 pixels; `xmlns` tells the browser it is SVG, and `viewBox` says the drawing's coordinates run from 0, 0 to 100, 140. The `<rect>` is the card: white, a grey edge 2 wide, corners rounded by 8 (`rx`). The `<text>` is the 5 in the corner, red, centred (`text-anchor="middle"`) on x 11, with its baseline at y 23.
+
+                        ```svg
+                          <defs><path id="heart" d="M0,8 C-3,5 -10,1 -10,-4 C-10,-8 -7,-10 -4.5,-10 C-2.5,-10 -0.8,-8.8 0,-7 C0.8,-8.8 2.5,-10 4.5,-10 C7,-10 10,-8 10,-4 C10,1 3,5 0,8 Z" fill="#c1121f"/></defs>
+                          <g>
+                            <use href="#heart" transform="translate(11 35) scale(0.55)"/>
+                          </g>
+                        ```
+
+                        `<defs>` holds shapes that are not drawn until used. The heart is a `<path>`: its `d` is a pen's moves, M to move to a point, C to draw a curve (two control points, then the end), Z to close; it is drawn about (0, 0), 20 across. `<g>` groups the corner (the 5 and its heart) so it can be copied as one. `<use href="#heart">` draws the heart again; `transform="translate(11 35) scale(0.55)"` moves it under the 5 and makes it about half size.
+
+                        ```svg
+                          <use href="#heart" transform="translate(30 30)"/>
+                          <use href="#heart" transform="translate(70 30)"/>
+                          <use href="#heart" transform="translate(50 70)"/>
+                          <use href="#heart" transform="translate(30 110)"/>
+                          <use href="#heart" transform="translate(70 110)"/>
+                        ```
+
+                        The five pips, each the same heart moved to its place: two columns at x 30 and 70 and one in the middle.
+
+                        ```svg
+                          <g transform="rotate(180 50 70)">
+                            <use href="#heart" transform="translate(11 35) scale(0.55)"/>
+                          </g>
+                          <use href="#heart" transform="translate(30 110) rotate(180)"/>
+                          <use href="#heart" transform="translate(70 110) rotate(180)"/>
+                        ```
+
+                        The corner again, inside a group turned half round about the card's centre (50, 70), lands bottom-right, upside down. The two lower pips get `rotate(180)` after their move, so they point down, as on a real card.
+
+                        **scripts/tools/cards.js**, the tool
+
+                        ```js
+                        const SUIT_SHAPES = {
+                          H: '<path d="M0,8 C-3,5 -10,1 -10,-4 C-10,-8 -7,-10 -4.5,-10 C-2.5,-10 -0.8,-8.8 0,-7 C0.8,-8.8 2.5,-10 4.5,-10 C7,-10 10,-8 10,-4 C10,1 3,5 0,8 Z"/>',
+                          D: '<path d="M0,-10 L8,0 L0,10 L-8,0 Z"/>',
+                          S: '<path d="M0,-9 C-3,-6 -10,-2 -10,3 C-10,7 -7,9 -4.5,9 C-2.5,9 -0.8,7.8 0,6 C0.8,7.8 2.5,9 4.5,9 C7,9 10,7 10,3 C10,-2 3,-6 0,-9 Z M0,4 L-3.5,11 L3.5,11 Z"/>',
+                          C: '<circle cx="0" cy="-5" r="4.6"/><circle cx="-5.2" cy="1.5" r="4.6"/><circle cx="5.2" cy="1.5" r="4.6"/><path d="M0,0 L-3.5,11 L3.5,11 Z"/>',
+                        ```
+
+                        Each suit's shape as SVG text, about (0, 0): your heart; a diamond of four straight lines (L); a spade, an upside-down heart with a stem (a second M starts another shape in the same path); a club, three circles and a stem.
+
+                        ```js
+                        const SUIT_COLOUR = { H: '#c1121f', D: '#c1121f', S: '#111111', C: '#111111' };
+                        const RANK_NAME = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+                        ```
+
+                        Red and black, and the ranks' names again: a tool cannot import from cards.js (it runs in the editor, not as a module), so it has its own copy.
+
+                        ```js
+                        const PIPS = {
+                          1: [[50, 70]],
+                          2: [[50, 30], [50, 110]],
+                          3: [[50, 30], [50, 70], [50, 110]],
+                          4: [[30, 30], [70, 30], [30, 110], [70, 110]],
+                          5: [[30, 30], [70, 30], [50, 70], [30, 110], [70, 110]],
+                          6: [[30, 30], [70, 30], [30, 70], [70, 70], [30, 110], [70, 110]],
+                          7: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70], [30, 110], [70, 110]],
+                          8: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70], [50, 90], [30, 110], [70, 110]],
+                          9: [[30, 28], [70, 28], [30, 56], [70, 56], [50, 70], [30, 84], [70, 84], [30, 112], [70, 112]],
+                          10: [[30, 28], [70, 28], [50, 42], [30, 56], [70, 56], [30, 84], [70, 84], [50, 98], [30, 112], [70, 112]],
+                        ```
+
+                        Where the pips go on each number card, as [x, y] pairs: the five's are the ones you placed by hand. A table of data instead of ten drawings.
+
+                        ```js
+                        function cardSvg(rank, suit) {
+                          const ink = SUIT_COLOUR[suit], name = RANK_NAME[rank];
+                          const pip = (x, y, s) => `<use href="#suit" transform="translate(${x} ${y}) rotate(${y > 75 ? 180 : 0}) scale(${s})"/>`;
+                        ```
+
+                        One card as SVG text. `ink` is its colour and `name` its rank's name. `pip` is a small function that writes one `<use>` of the suit at (x, y), at size s, turned upside down if it is below the middle (y > 75): what you did by hand, as a rule. The backticks make a template string: `${…}` puts a value into the text.
+
+                        ```js
+                          const corner = `<text x="11" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-weight="bold" text-anchor="middle" fill="${ink}">${name}</text>${pip(11, 35, 0.55)}`;
+                          const middle = PIPS[rank].map(([x, y]) => pip(x, y, rank === 1 ? 2.4 : 0.95)).join('');
+                        ```
+
+                        The corner, as in your five, with the card's own name and colour. The middle: a pip at every place in PIPS for this rank (`map` makes a list of texts, `join('')` runs them together), large (2.4) for an ace's single pip.
+
+                        ```js
+                          return `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">
+                          <defs><g id="suit" fill="${ink}">${SUIT_SHAPES[suit]}</g></defs>
+                          <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>
+                          ${corner}<g transform="rotate(180 50 70)">${corner}</g>
+                          ${middle}
+                        </svg>`;
+                        ```
+
+                        The whole card: your five's structure, with the suit's shape defined once as `#suit` and filled in its colour.
+
+                        ```js
+                        const BACK = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">
+                          <defs><pattern id="weave" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                            <rect width="8" height="8" fill="#1d4ed8"/><rect width="3" height="8" fill="#3b82f6"/></pattern></defs>
+                          <rect x="1" y="1" width="98" height="138" rx="8" fill="#ffffff" stroke="#555555" stroke-width="2"/>
+                          <rect x="7" y="7" width="86" height="126" rx="5" fill="url(#weave)"/>
+                        </svg>`;
+                        ```
+
+                        The back of every card. A `<pattern>` is a tile, here 8 × 8 with a dark and a light stripe, repeated to fill a shape and turned 45° (`patternTransform`); the inner rectangle is filled with it (`fill="url(#weave)"`).
+
+                        ```js
+                        export default function (project) {
+                          for (const suit of ['S', 'H', 'D', 'C'])
+                            for (let rank = 1; rank <= 10; rank++) project.writeSvg(`assets/cards/${RANK_NAME[rank]}${suit}.svg`, cardSvg(rank, suit));
+                          project.writeSvg('assets/cards/back.svg', BACK);
+                        ```
+
+                        The tool itself: a function of the project. For every suit and every rank from the ace to the ten, write the picture at assets/cards/<name><suit>.svg; then the back.
+
+                        ```js
+                        project.runTool('scripts/tools/cards.js')
+                        ```
+
+                        What ▶ Run tool does, as a line of GUI → code: it runs the function above on the project, as one step you can undo.
+
+                        **The face cards**
+
+                        ```js
+                          let middle;
+                          if (rank <= 10) middle = PIPS[rank].map(([x, y]) => pip(x, y, rank === 1 ? 2.4 : 0.95)).join('');
+                          else middle = `<rect x="22" y="22" width="56" height="96" rx="4" fill="${ink === '#111111' ? '#e8eefc' : '#fdeaea'}" stroke="${ink}" stroke-width="1.5"/>
+                            <text x="50" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" text-anchor="middle" fill="${ink}">${name}</text>${pip(50, 98, 1)}${pip(50, 40, 1)}`;
+                        ```
+
+                        `let` because the middle is now chosen: pips up to the ten; above that, a framed panel (pale blue for black suits, pale pink for red), the letter large in its middle, and a suit above and below.
+
+                        ```js
+                            for (let rank = 1; rank <= 13; rank++) project.writeSvg(`assets/cards/${RANK_NAME[rank]}${suit}.svg`, cardSvg(rank, suit));
+                        ```
+
+                        The loop now goes to 13: run the tool again and all 52 are drawn (your hand-drawn five is replaced by the tool's, which is the same card).
+
+                        ```js
+                        export function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
+                        ```
+
+                        In scripts/cards.js: a card's picture, by the same naming rule the tool used, so the game can show any card.
+                      showPreviewByDefault: true
+                    - type: markdown
+                      instruction: |-
+                        ### 9. Questions you might have
+
+                        **Why write pictures as text at all?** Text can be made by code: one function and two loops draw 53 pictures exactly alike, and a change to the corner changes every card. A PNG would have to be drawn 53 times.
+
+                        **Why `viewBox`?** It sets the drawing's own coordinates. The card could be shown at any size and every shape would scale with it; the game shows it at 0.8.
+
+                        **Why does the tool have its own RANK_NAME instead of importing cards.js?** A tool runs in the editor as a function, not as a module, so it cannot import. It is a little repetition for a tool that can always run.
+
+                        **Does the game run the tool?** No. The game imports it like any script, which only defines the function; the pictures it made are in assets/, and the game just shows them.
+
+                        **Can a tool do more than pictures?** Anything the Scene API can: make scenes and nodes, write scripts, add input actions. Lesson 10.7 writes a second one for the board and the pegs.
+                      showPreviewByDefault: true
             - id: GameStudioTask
               title: Draw the five of hearts
               props:
@@ -17008,7 +17262,7 @@ chapters:
           - id: mg10-003-ch3
             title: Pictures for a new game
             difficulty: hard
-            problem: Write dieSvg(n) for the six faces of a die, and the line of build code that saves them all.
+            problem: Write dieSvg(n) for the six faces of a die, and the tool that saves them all.
             hint: Pip positions per face, like PIPS.
             answer: A table of pip positions for 1 to 6, circles at them on a rounded square; for (let n = 1; n <= 6; n++) project.writeSvg(`assets/die${n}.svg`, dieSvg(n)).
             walkthrough: []
@@ -17339,7 +17593,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -17523,6 +17777,94 @@ chapters:
                           if (got === want) ok++; else console.log(hand + ': your runs score ' + got + '; they should score ' + want + '.')
                         }
                         console.log(ok === cases.length ? '✓ All 6 hands\' runs scored.' : ok + ' of 6 hands scored.')
+                    - type: markdown
+                      instruction: |-
+                        ### 7. The code you wrote, line by line
+
+                        All of it is scripts/score.js, a rule at a time.
+
+                        ```js
+                        import { value } from './cards.js';
+                        function subsets(cards) {
+                          const out = [];
+                          for (let mask = 1; mask < 1 << cards.length; mask++) out.push(cards.filter((_, i) => mask & (1 << i)));
+                          return out;
+                        ```
+
+                        Every combination of the cards. `1 << n` is 2 to the power n (a 1 moved n places left in binary); for five cards, 32. Each `mask` from 1 to 31 is a different pattern of five bits, one bit per card: `mask & (1 << i)` is non-zero when card i's bit is set, so `filter` keeps exactly the cards that pattern picks (cell 1). 31 masks, 31 combinations. `subsets` is not exported: only this file uses it.
+
+                        ```js
+                        export function fifteens(cards) {
+                          const sets = subsets(cards).filter((s) => s.reduce((t, c) => t + value(c), 0) === 15);
+                          return sets.map((s) => ({ what: 'fifteen', cards: s, points: 2 }));
+                        ```
+
+                        The combinations whose values add to 15 (`reduce` adds them, starting from 0), each turned into a part: what it is, the cards, and 2 points. Every rule returns parts like this, so the game can say why.
+
+                        ```js
+                        export function pairs(cards) {
+                          for (let i = 0; i < cards.length; i++) for (let j = i + 1; j < cards.length; j++)
+                            if (cards[i].rank === cards[j].rank) out.push({ what: 'pair', cards: [cards[i], cards[j]], points: 2 });
+                        ```
+
+                        Every two cards once (j starts after i, so no pair is counted twice and no card is paired with itself), with the same rank: 2 each. Three sevens are three pairs, 6; four are six, 12. (It starts and ends like subsets: `const out = []` and `return out`.)
+
+                        ```js
+                        function isRun(cards) {
+                          const r = cards.map((c) => c.rank).sort((a, b) => a - b);
+                          return r.every((x, i) => i === 0 || x === r[i - 1] + 1);
+                        ```
+
+                        The ranks, sorted from low to high (`(a, b) => a - b` sorts numbers; without it, sort would sort them as text). A run if every rank after the first is one more than the one before.
+
+                        ```js
+                        export function runs(cards) {
+                          for (let length = cards.length; length >= 3; length--) {
+                            const found = subsets(cards).filter((s) => s.length === length && isRun(s));
+                            if (found.length) return found.map((s) => ({ what: `run of ${length}`, cards: s, points: length }));
+                          return [];
+                        ```
+
+                        From the longest possible down to 3: the combinations of that length that are runs. The first length that has any is the answer, one part per run, so 3 4 5 6 is one run of four, not two of three, and 3 4 4 5 is two runs of three. No run of three or more: nothing.
+
+                        ```js
+                        export function flush(hand, starter, isCrib) {
+                          if (!hand.every((c) => c.suit === hand[0].suit)) return [];
+                          if (starter.suit === hand[0].suit) return [{ what: 'flush', cards: [...hand, starter], points: 5 }];
+                          return isCrib ? [] : [{ what: 'flush', cards: hand, points: 4 }];
+                        ```
+
+                        All four in the hand the same suit as the first, or nothing. The starter matching too: 5. Otherwise 4, unless this is the crib, which only scores a flush of all five.
+
+                        ```js
+                        export function nobs(hand, starter) {
+                          const jack = hand.find((c) => c.rank === 11 && c.suit === starter.suit);
+                          return jack ? [{ what: 'nobs', cards: [jack], points: 1 }] : [];
+                        ```
+
+                        The jack (rank 11) of the starter's suit, if the hand has it (`find` gives the first match, or undefined): 1.
+
+                        ```js
+                        export function scoreHand(hand, starter, isCrib = false) {
+                          const all = [...hand, starter];
+                          const parts = [...fifteens(all), ...pairs(all), ...runs(all), ...flush(hand, starter, isCrib), ...nobs(hand, starter)];
+                          return { total: parts.reduce((t, p) => t + p.points, 0), parts };
+                        ```
+
+                        The show: the hand with the starter, every rule's parts in one list (`...` spreads each list into the new one), and the total of their points. Fifteens, pairs and runs use all five cards; flush and nobs need to know which is the starter.
+                    - type: markdown
+                      instruction: |-
+                        ### 8. Questions you might have
+
+                        **Why go through every combination instead of something cleverer?** Five cards have only 31 combinations, so trying them all is instant and obviously right. Clever shortcuts are where scoring bugs hide.
+
+                        **Why does runs() return at the first length with any?** Only the longest runs count: a run of four contains two runs of three, and counting those too would score it twice.
+
+                        **Why is isRun not exported?** It is a helper for runs() here (and pegging, in lesson 10.5). What a module exports is what other scripts may use; the rest is its own business.
+
+                        **What is `isCrib = false`?** A default: scoreHand(hand, starter) scores a hand, and only the crib passes true.
+
+                        **How does the 29 hand score 29?** 5 5 5 J with the 5 of the jack's suit cut: eight fifteens (16), six pairs of fives (12) and nobs (1). The lesson's notebook counts it.
             - id: GameStudioTask
               title: "Write score.js: the show"
               props:
@@ -17799,7 +18141,7 @@ chapters:
             - "**The turns, step by step** (cell 4 runs them on two hands, each playing its first legal card). (1) If every card has been played, the last to play pegs 1 for the last card, unless the count is exactly 31 (that already scored 2); then the show. (2) If the count is 31, it starts again from 0. (3) If the player to move can play, they play. (4) If not but the other can, the first says go and the other plays on, as many cards as they can. (5) If neither can, the last to play pegs 1 for the go, the count starts again, and the *other* player leads."
             - "**Who leads after a reset.** After a go or a 31, the player who did not play last leads. In cell 4 the non-dealer makes 31 with a 2, so the dealer leads the new count; later the non-dealer has no cards left, so the dealer plays its last two and pegs the last card."
             - "**What pegging is worth.** Cell 5 deals 20,000 hands and has both players play the card that pegs most now, never leaving the count on 5 or 21 (which hands the other a 15 or 31 with any ten). The dealer pegs 3.75 a hand and the non-dealer 2.17: the non-dealer leads, so the dealer is the one answering, and the dealer often gets the last card. Being dealer is worth about a point and a half in pegging, and the crib on top."
-            - "**In the game.** score.js has countOf and pegPoints; table.js has options(seat) and nextTurn(), which runs the five steps. The table waits (a fraction of a second, so you can follow) between plays, and the AI asks the table for its legal moves, the same options()."
+            - "**In the game.** score.js has countOf and pegPoints; table.js has options(seat) and nextTurn(), which runs the five steps. The table waits (a fraction of a second, so you can follow) between plays, and the AI asks the table for its legal moves, the same options(). You write those two in lesson 10.6, once there is a table; this lesson's Try it task writes the scoring, and sayParts(), which says the points aloud."
           callouts:
             - type: procedure
               title: "Procedure: whose turn (nextTurn)"
@@ -17930,7 +18272,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -18034,6 +18376,60 @@ chapters:
                         let ok = 0
                         for (const [pile, want] of cases) { const got = pegPoints(cards(pile)).total; if (got === want) ok++; else console.log(pile + ': ' + got + ', should be ' + want) }
                         console.log(ok === cases.length ? '✓ All 10 piles pegged right.' : ok + ' of 10 piles right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 7. The code you wrote, line by line
+
+                        Still scripts/score.js: the scoring that happens as each card is played.
+
+                        ```js
+                        export function countOf(pile) { return pile.reduce((t, c) => t + value(c), 0); }
+                        ```
+
+                        The count: the values of the cards played since it last started from 0, added up.
+
+                        ```js
+                        export function pegPoints(pile) {
+                          const parts = [], count = countOf(pile), card = pile[pile.length - 1];
+                          if (count === 15) parts.push({ what: 'fifteen', points: 2 });
+                          if (count === 31) parts.push({ what: 'thirty-one', points: 2 });
+                        ```
+
+                        The points for the card just played, the last of the pile (`pile.length - 1` is the last place). One `const` line can make several variables. A count of exactly 15 or 31 is 2.
+
+                        ```js
+                          let same = 1;
+                          while (same < pile.length && pile[pile.length - 1 - same].rank === card.rank) same++;
+                          if (same >= 2) parts.push({ what: ['', '', 'a pair', 'three of a kind', 'four of a kind'][same], points: [0, 0, 2, 6, 12][same] });
+                        ```
+
+                        Pairs: count back from the end while the cards have the played card's rank. `same` ends as how many in a row at the end share it: 2 is a pair, 3 three of a kind, 4 four. Two small lists, read at place `same`, give the name and the points. Only the end counts: 7 2 7 stops at the 2.
+
+                        ```js
+                          for (let length = pile.length; length >= 3; length--) {
+                            if (isRun(pile.slice(-length))) { parts.push({ what: `run of ${length}`, points: length }); break; }
+                        ```
+
+                        Runs: `slice(-length)` is the last `length` cards. From the whole pile down to the last three, the first that is a run (in any order) scores a point a card, and `break` leaves the loop: the longest run wins.
+
+                        ```js
+                        export function sayParts(parts) {
+                          let running = 0;
+                          return parts.map((p) => `${p.what} ${(running += p.points)}`).join(', ');
+                        ```
+
+                        The points said aloud, as players do: each part's name and the running total. `running += p.points` adds, and its value is the new total, so it can go straight into the text: "fifteen 2, a pair 4".
+                    - type: markdown
+                      instruction: |-
+                        ### 8. Questions you might have
+
+                        **Why does pegPoints only look at the end of the pile?** In pegging, a card scores with the cards just before it: a pair with the last card, a run with the last three or more. Cards played earlier have already scored.
+
+                        **Why `while` for pairs but `for` for runs?** The pair count does not know in advance how far back it will go: it stops at the first different rank. The run search tries a known set of lengths, longest first.
+
+                        **Can a card score a fifteen and a pair at once?** Yes: 5 then 5 is a pair (2), and 5 5 5 at 15 is three of a kind and a fifteen (8). Every rule adds its own part.
+
+                        **Where are the turns of pegging (go, 31, the last card)?** In the table, which you write in lesson 10.6: options(seat) and nextTurn(). This lesson's notebook models them.
             - id: GameStudioTask
               title: "Pegging: the count and the go"
               props:
@@ -18305,6 +18701,7 @@ chapters:
           realWorldContext: Every turn-based game, from chess apps to Hearthstone, is a state machine over phases and whose turn it is. Separating the flow (what comes next) from the timing (how long to show it) is also what lets those games run headless for testing, replays and AI training.
         intuition:
           prose:
+            - "**The Try it task builds it from nothing.** It starts where lesson 10.5 ended: cards, pictures and scoring, but no game. You make the scene (a Table node and a HUD of labels), then write table.js a phase at a time: the deal, the throw, points, the cut, pegging, the go and 31, the show. Until there are players, a stand-in plays both seats (the first move each may make), so the game can play itself from the second step, and the hands are shown as words. Lesson 10.7 puts cards on the table and gives you your seat."
             - "**The state.** Everything the game is, at any moment, lives in the Table script's fields: phase, dealer, hands (two lists of cards), crib, threw (the two each player threw, which they remember seeing), starter, deck, pile and count, played (which cards each has played), turn and waiting (whose move), scores and backPeg. Nothing about the game is kept anywhere else; the screen is drawn from these each frame."
             - "**The phases.** phase is one of: title (choose a difficulty), discard, cut, peg, show, over, and in training done. Each has a function that does its work and sets the next phase: newHand() deals and goes to discard; throwCards() moves two cards to the crib and, when both players have thrown, cuts; cut() turns the starter and starts pegging; nextTurn() (lesson 10.5) runs pegging to its end and starts the show; startShow() counts the hands and the crib and calls endHand(), which passes the deal and calls newHand() again. Cell 1 runs one hand through the same phases."
             - "**The deal.** newHand(): a new shuffled deck; six cards each from its top, one at a time, the non-dealer first; your hand sorted by rank; an empty crib; phase discard. It also puts a CardSprite on the table for each card (10.7) and says who dealt."
@@ -18352,7 +18749,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -18561,7 +18958,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -18768,6 +19165,368 @@ chapters:
                         award(s, 1, 6)
                         const b = s.scores[1] === 121 && s.back[1] === 118 && s.over
                         console.log(a && b ? '✓ The pegs move and 121 ends the game.' : !a ? 'After 5 points from 40: front peg 45, back peg 40; you have ' + s.scores[0] + ' and ' + s.back[0] + '.' : '118 + 6 should stop at 121 and end the game; you have ' + s.scores[1] + (s.over ? '' : ', and the game is not over') + '.')
+                    - type: markdown
+                      instruction: |-
+                        ### 5. The code you wrote, line by line
+
+                        In the order of the task's steps. Most of it is scripts/table.js.
+
+                        **The scene**
+
+                        ```js
+                        project.setSettings({ background: '#0b6b3a', pixelArt: false })
+                        const table = project.createScene('scenes/cribbage.scene', 'Node2D', 'Table')
+                        table.root.script = 'scripts/table.js'
+                        ```
+
+                        A green felt background, and smooth scaling (`pixelArt: false`): the cards are drawings, not pixel art. The scene's root, Table, runs the game.
+
+                        ```js
+                        table.add('CanvasLayer', { name: 'HUD' })
+                        table.add('Label', { name: 'Status', parent: 'HUD', position: { x: 30, y: 76 }, fontSize: 16, text: '' })
+                        table.add('Label', { name: 'Count', parent: 'HUD', position: { x: 196, y: 262 }, fontSize: 22, color: '#ffffff', text: '' })
+                        table.add('Label', { name: 'Message', parent: 'HUD', position: { x: 290, y: 372 }, fontSize: 17, color: '#ffe8a3', text: '' })
+                        table.add('Label', { name: 'CribLabel', parent: 'HUD', position: { x: 66, y: 398 }, fontSize: 13, color: '#a7f3d0', text: '' })
+                        table.add('Label', { name: 'Log', parent: 'HUD', position: { x: 30, y: 110 }, fontSize: 12, color: '#d1fae5', text: '' })
+                        table.add('Label', { name: 'Hands', parent: 'HUD', position: { x: 290, y: 200 }, fontSize: 18, color: '#ffffff', text: '' })
+                        project.setMainScene('scenes/cribbage.scene')
+                        ```
+
+                        Words on a CanvasLayer, drawn over everything: the scores, the count, a message, whose crib, a log of the last few things that happened, and, until lesson 10.7 puts the cards on the table, the hands as words.
+
+                        **scripts/table.js**: the deal
+
+                        ```js
+                        import { newDeck, shuffle, cardName } from './cards.js';
+                        export const YOU = 0, AI = 1;
+                        const NAMES = ['You', 'AI'];
+                        ```
+
+                        The seats are numbers, 0 and 1, so the table can keep two of everything in lists: this.hands[YOU], this.scores[AI]. `1 - seat` is the other seat. NAMES says them in words.
+
+                        ```js
+                        export default class Table extends Node2D {
+                          goal = 121;
+                          fast = false;
+                        ```
+
+                        The score that ends the game, and a switch the checks use: no pauses, so a whole game plays in a moment.
+
+                        ```js
+                          ready() {
+                            this.hud = {
+                              status: scene.get('HUD/Status'), message: scene.get('HUD/Message'), count: scene.get('HUD/Count'),
+                              log: scene.get('HUD/Log'), cribLabel: scene.get('HUD/CribLabel'), hands: scene.get('HUD/Hands'),
+                            };
+                            this.lines = [];          // the log, newest last
+                            this.pending = null;      // what happens when the timer runs out
+                            this.timer = 0;
+                            this.newGame();
+                        ```
+
+                        The labels, found once and kept in one object. The log's lines; `pending`, something to do later, and `timer`, how long until then. Then a new game.
+
+                        ```js
+                          newGame() {
+                            this.scores = [0, 0];
+                            this.backPeg = [0, 0];
+                            this.handsPlayed = 0;
+                            this.dealer = Math.random() < 0.5 ? YOU : AI;
+                            this.lines = [];
+                            this.newHand();
+                        ```
+
+                        Both scores 0; the back pegs (where each score was before its last points) too; a coin toss for the first dealer.
+
+                        ```js
+                          newHand() {
+                            this.deck = shuffle(newDeck());
+                            this.hands = [[], []];
+                            for (let k = 0; k < 6; k++) for (const seat of [1 - this.dealer, this.dealer]) this.hands[seat].push(this.deck.pop());
+                            this.hands[YOU].sort((a, b) => a.rank - b.rank);   // your hand in order, as a player would hold it
+                        ```
+
+                        A shuffled deck; two empty hands; six rounds, each a card from the top of the deck to the non-dealer then the dealer. Your hand sorted by rank.
+
+                        ```js
+                            this.crib = [];
+                            this.threw = [[], []];
+                            this.starter = null;
+                            this.thrown = [false, false];
+                            this.pile = []; this.older = []; this.history = []; this.count = 0;
+                            this.played = [[], []];
+                            this.showing = null;
+                            this.phase = 'discard';
+                            this.say(`${NAMES[this.dealer]} dealt. Throw two cards to ${this.dealer === YOU ? 'your' : "the AI's"} crib.`);
+                        ```
+
+                        Everything a hand keeps, set fresh: the crib, the two cards each seat threw, no starter, nobody has thrown; for pegging, the pile, the older piles, every card played, the count and which cards each has played; nothing being shown. The phase is discard.
+
+                        ```js
+                          update(dt) {
+                            if (this.pending) {
+                              this.timer -= dt;
+                              if (this.timer <= 0) { const then = this.pending; this.pending = null; then(); }
+                            }
+                            this.layout();
+                        ```
+
+                        Each frame: if something is waiting, count its time down, and when it runs out, do it (cleared first, so `then` can start another wait). Then draw.
+
+                        ```js
+                          wait(seconds, then) { this.pending = then; this.timer = this.fast ? 0 : seconds; }
+                          say(text) { this.hud.message.text = text; }
+                          note(text) { this.lines = [...this.lines, text].slice(-6); }
+                        ```
+
+                        wait(seconds, then): do `then` after a pause (none when fast). say() sets the message. note() adds a line to the log and keeps the last six (`slice(-6)`).
+
+                        ```js
+                          layout() {
+                            const hand = (seat) => this.hands[seat].map((c, k) => (this.played[seat]?.[k] ? '··' : cardName(c))).join(' ');
+                            this.hud.hands.text = `Your hand: ${hand(YOU)}\nAI's hand: ${hand(AI)}\nCrib: ${this.crib.length} cards   Starter: ${this.starter ? cardName(this.starter) : '–'}`;
+                            this.hud.status.text = `You ${this.scores[YOU]}   AI ${this.scores[AI]}   Dealer: ${NAMES[this.dealer]}`;
+                            this.hud.count.text = this.phase === 'peg' ? `Count\n${this.count}` : '';
+                            this.hud.cribLabel.text = this.dealer === YOU ? 'Your crib' : "AI's crib";
+                            this.hud.log.text = this.lines.join('\n');
+                        ```
+
+                        The state, as words: each hand (a played card as ··; `?.` because there is no played list before pegging), the crib and starter; the scores and dealer; the count while pegging; whose crib; the log. Words drawn from the state, every frame: when lesson 10.7 draws cards instead, nothing else changes.
+
+                        **The throw**
+
+                        ```js
+                        /** The 15 ways to throw two of six cards to the crib: [i, j] with i < j. */
+                        export const THROWS = [];
+                        for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) THROWS.push([i, j]);
+                        ```
+
+                        In scripts/features.js: every pair of places in a hand of six, once: [0, 1], [0, 2] … [4, 5], 15 of them. A throw is now a number from 0 to 14. Lesson 10.10 adds the AI's features to this file.
+
+                        ```js
+                        import { THROWS } from './features.js';
+                          throwCards(seat, t) {
+                            const [i, j] = THROWS[t], hand = this.hands[seat];
+                            this.crib.push(hand[i], hand[j]);
+                            this.threw[seat] = [hand[i], hand[j]];
+                            this.hands[seat] = hand.filter((_, k) => k !== i && k !== j);
+                            this.thrown[seat] = true;
+                            if (seat === AI) this.note(`AI threw two cards to the crib.`);
+                        ```
+
+                        Throw number t: its two places, i and j. Those two cards go to the crib and are remembered as this seat's throw; the hand keeps the rest (`filter` by place, `_` for the card it does not need).
+
+                        ```js
+                          decision(seat) {
+                            if (this.pending) return null;
+                            if (this.phase === 'discard' && !this.thrown[seat]) return { kind: 'throw', legal: THROWS.map((_, t) => t) };
+                            return null;
+                        ```
+
+                        What a seat must decide now, or nothing (`null`): nothing while the table is waiting; while throwing, if it has not thrown, any of the 15 throws (`THROWS.map((_, t) => t)` is 0 to 14); otherwise nothing. Every player, you, the stand-in, later the AI, asks this one method.
+
+                        ```js
+                          move(seat, action) {
+                            const d = this.decision(seat);
+                            if (!d || !d.legal.includes(action)) throw new Error(`${NAMES[seat]} cannot make move ${action} now`);
+                            this.throwCards(seat, action);
+                        ```
+
+                        Make a move, but only a legal one: anything else is a bug, so it throws an error with its reason.
+
+                        ```js
+                          standIn() {
+                            for (const seat of [YOU, AI]) {
+                              const d = this.decision(seat);
+                              if (d) { this.move(seat, d.legal[0]); return; }
+                          update(dt) {
+                            } else this.standIn();
+                        ```
+
+                        Until there are players, a stand-in plays both seats: the first legal move of the first seat that has one, one move a frame. In update(), it plays when nothing is waiting.
+
+                        **Points**
+
+                        ```js
+                          award(seat, points, why) {
+                            this.backPeg[seat] = this.scores[seat];
+                            this.scores[seat] = Math.min(this.goal, this.scores[seat] + points);
+                            this.note(`${NAMES[seat]} ${seat === YOU ? 'peg' : 'pegs'} ${points}: ${why}.`);
+                            if (this.scores[seat] >= this.goal) {
+                              this.phase = 'over';
+                              this.pending = null; this.waiting = null;
+                              this.say(seat === YOU ? `You win, ${this.scores[YOU]} to ${this.scores[AI]}!` : `The AI wins, ${this.scores[AI]} to ${this.scores[YOU]}.`);
+                        ```
+
+                        The back peg goes where the front peg was; the score goes up, never past the goal; the log says why. Reaching the goal ends the game at once, even mid-hand: phase over, nothing waiting.
+
+                        **The cut**
+
+                        ```js
+                            if (this.thrown[YOU] && this.thrown[AI]) this.wait(0.6, () => this.cut());
+                          cut() {
+                            this.phase = 'cut';
+                            this.starter = this.deck.pop();
+                            this.say(`The starter is ${cardName(this.starter)}.`);
+                            if (this.starter.rank === 11) this.award(this.dealer, 2, 'his heels (the starter is a jack)');
+                        ```
+
+                        When both have thrown (the last line of throwCards), wait a moment and cut: the starter is the top card. A jack is 2 for the dealer.
+
+                        **Pegging**
+
+                        ```js
+                        import { pegPoints, countOf, sayParts } from './score.js';
+                            if (this.phase === 'over') return;
+                            this.wait(1, () => this.startPegging());
+                        ```
+
+                        The end of cut(): unless his heels won the game, pegging starts after a second. (The import line names what the table now uses from score.js; at the show, scoreHand joins it.)
+
+                        ```js
+                          startPegging() {
+                            this.phase = 'peg';
+                            this.pile = []; this.count = 0; this.lastPlayer = null;
+                            this.played = [this.hands[YOU].map(() => false), this.hands[AI].map(() => false)];
+                            this.turn = 1 - this.dealer;   // the non-dealer plays first
+                            this.nextTurn();
+                        ```
+
+                        An empty pile at 0, nobody has played yet; for each hand a list of false, one per card; the non-dealer first.
+
+                        ```js
+                          options(seat) {
+                            const out = [];
+                            this.hands[seat].forEach((c, k) => { if (!this.played[seat][k] && this.count + Math.min(c.rank, 10) <= 31) out.push(k); });
+                            return out;
+                        ```
+
+                        The places of the cards a seat can play: not played yet, and keeping the count at 31 or under.
+
+                        ```js
+                          nextTurn() {
+                            this.waiting = null;
+                            if (this.options(this.turn).length) return this.waitFor(this.turn);
+                          waitFor(seat) {
+                            this.waiting = seat;
+                            this.say(seat === YOU ? 'Your turn.' : "The AI's turn.");
+                        ```
+
+                        For now, whose turn is simple: if the player whose turn it is can play, wait for them (this.waiting says who). The next step adds the rest.
+
+                        ```js
+                          play(seat, k) {
+                            const card = this.hands[seat][k];
+                            this.played[seat][k] = true;
+                            this.pile.push(card);
+                            this.history.push({ seat, card });
+                            this.count = countOf(this.pile);
+                            this.lastPlayer = seat;
+                            this.waiting = null;
+                            this.note(`${NAMES[seat]} played ${cardName(card)}: ${this.count}.`);
+                            const points = pegPoints(this.pile);
+                            if (points.total) this.award(seat, points.total, sayParts(points.parts));
+                            if (this.phase !== 'peg') return;
+                            this.turn = 1 - seat;
+                            this.wait(0.5, () => this.nextTurn());
+                        ```
+
+                        Play the k-th card: mark it played, put it on the pile, remember who played what (history, which lesson 10.10 uses), the new count, and who played last. Peg what lesson 10.5's pegPoints says, said aloud. If that did not end the game, it is the other's turn, after a moment.
+
+                        ```js
+                            if (this.phase === 'peg' && this.waiting === seat) return { kind: 'play', legal: this.options(seat).map((k) => 15 + k) };
+                            if (action < 15) this.throwCards(seat, action); else this.play(seat, action - 15);
+                        ```
+
+                        decision() and move() now cover playing too: a card is move 15 + its place, so all of a player's moves are one list of numbers, 0 to 18.
+
+                        **Go, 31, and the last card**
+
+                        ```js
+                          cardsLeft(seat) { return this.played[seat].filter((p) => !p).length; }
+                          resetCount() { this.older.push(...this.pile); this.pile = []; this.count = 0; }
+                        ```
+
+                        How many cards a seat has not played; and starting the count again, the pile moved to the older piles.
+
+                        ```js
+                            if (this.cardsLeft(YOU) + this.cardsLeft(AI) === 0) {
+                              if (this.count !== 31) this.award(this.lastPlayer, 1, 'last card');
+                              return;
+                            }
+                            if (this.count === 31) { this.wait(0.8, () => { this.resetCount(); this.nextTurn(); }); return; }
+                        ```
+
+                        The whole of nextTurn(), in order. Every card played: the last to play pegs 1, unless the count is 31 (that was already 2). At 31: the count starts again, and the same player carries on.
+
+                        ```js
+                            const other = 1 - this.turn;
+                            if (this.options(other).length) {
+                              if (this.cardsLeft(this.turn)) this.note(`${NAMES[this.turn]}: go.`);
+                              this.turn = other;
+                              return this.waitFor(other);
+                            }
+                            this.award(this.lastPlayer, 1, 'go');
+                            if (this.phase !== 'peg') return;
+                            this.wait(0.8, () => { this.resetCount(); this.turn = 1 - this.lastPlayer; this.nextTurn(); });
+                        ```
+
+                        The player whose turn it is cannot play, but the other can: "go" (said only if they still hold cards), and the other plays on. Neither can: the last to play pegs 1 for the go, and after a moment the count starts again, led by the player after the last to play.
+
+                        **The show**
+
+                        ```js
+                        import { scoreHand, pegPoints, countOf, sayParts } from './score.js';
+                              if (this.phase === 'peg') this.wait(1.2, () => this.startShow());
+                          startShow() {
+                            this.phase = 'show';
+                            this.resetCount(); this.older = [];
+                            const pone = 1 - this.dealer;
+                            const steps = [[pone, 'hand'], [this.dealer, 'hand'], [this.dealer, 'crib']];
+                        ```
+
+                        After the last card, the show. The pile is cleared away. The order of counting: the non-dealer's hand ("pone"), the dealer's, then the crib, which is the dealer's.
+
+                        ```js
+                            const next = (i) => {
+                              if (this.phase !== 'show') return;
+                              if (i === steps.length) return this.endHand();
+                              const [seat, what] = steps[i];
+                              const cards = what === 'crib' ? this.crib : this.hands[seat];
+                              const s = scoreHand(cards, this.starter, what === 'crib');
+                              this.showing = { seat, what, cards };
+                              const whose = seat === YOU ? 'Your' : "The AI's";
+                              this.say(`${whose} ${what}: ${s.total ? sayParts(s.parts) : 'no points'}.`);
+                              if (s.total) this.award(seat, s.total, `${what}`);
+                              if (this.phase === 'show') this.wait(4, () => next(i + 1));
+                            };
+                            next(0);
+                        ```
+
+                        A function that counts step i and waits four seconds before counting the next: so a count ending the game stops the show at once, and the others never happen. Each: score it with the starter (as a crib or not), show it, say it, peg it.
+
+                        ```js
+                          endHand() {
+                            this.handsPlayed++;
+                            this.showing = null;
+                            this.dealer = 1 - this.dealer;
+                            this.newHand();
+                        ```
+
+                        The deal passes to the other player, and the next hand is dealt.
+                    - type: markdown
+                      instruction: |-
+                        ### 6. Questions you might have
+
+                        **Why seats as numbers instead of two player objects?** Most of the table is "this seat, then the other": with numbers, that is a list read at seat and at 1 − seat, and one function serves both.
+
+                        **Why does every move go through decision() and move()?** One place decides what is legal. You, the stand-in, the rules player and the AI all ask the same question, so none of them can cheat or play out of turn.
+
+                        **Why wait() instead of just calling the next phase?** So you can follow the game, and so a click can hurry it (lesson 10.7). With fast on, every wait is 0 and a whole game plays in a moment, which is how the checks and training run it.
+
+                        **Why does nextTurn() call itself?** After a 31 or a go, the situation is new and the same questions apply again. It always ends: each call either waits for a play or empties the pile, and the cards run out.
+
+                        **What is the stand-in for, really?** A table that can play itself before anyone can play it. You can watch and test the rules now; the next lessons replace it seat by seat.
             - id: GameStudioTask
               title: Write the table's flow
               props:
@@ -19032,6 +19791,7 @@ chapters:
           realWorldContext: Separating what the game is (state) from how it looks (a view computed from the state) is how UI frameworks such as React work, and how card games keep animation, input and rules from tangling. Hit testing and screen-to-world conversion are in every game with a mouse or touch.
         intuition:
           prose:
+            - "**The Try it task.** A tool draws the board, the pegs and a button (Files › New tool…, as in lesson 10.3), and you put them in the scene; then a CardSprite for every card, which replaces the words that stood in for the hands; then your clicks, a step at a time: choosing cards, throwing them, playing them. From the fourth step your seat is yours, and the stand-in plays only the AI's."
             - "**A sprite per card.** When the table deals, it makes a CardSprite for each card: a Sprite2D that remembers its card (the data), whether it is faceUp, and its target, where it should be. newHand() creates them at the deck, so they slide out to the hands."
             - "**Sliding at any frame rate.** Each frame, update(dt) moves the sprite part of the way to its target. A fixed fraction per frame, say 0.2, slides fast on a 144 Hz screen and slowly on a 30 Hz one: after 0.2 seconds a card 300 pixels away is 0.5 px from its target at 144 fps and 78.6 px at 30 fps (cell 1). Using k = 1 − e^(−14 dt) makes the distance left after a given time the same at any frame rate, about 18 px after 0.2 s, because e^(−14 dt) multiplied over a second of frames is always e^(−14)."
             - "**Face up or down.** update() also sets the picture: this.texture = this.faceUp ? cardImage(this.card) : 'assets/cards/back.svg'. The table decides faceUp; the sprite only shows it."
@@ -19143,6 +19903,300 @@ chapters:
                         let ok = 0
                         for (const [p, want] of cases) { const got = pick(hand, p); const name = got ? got.name : null; if (name === want) ok++; else console.log('At (' + p.x + ', ' + p.y + ') you picked ' + name + '; it should be ' + want + '.') }
                         console.log(ok === cases.length ? '✓ All 6 clicks picked right.' : ok + ' of 6 clicks right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 6. The code you wrote, line by line
+
+                        In the order of the task's six steps.
+
+                        **The board and the pegs: scripts/tools/table.js**
+
+                        ```js
+                        function boardSvg() {
+                          let holes = '';
+                          for (const y of [18, 42]) {
+                            holes += `<circle cx="42" cy="${y}" r="2.6" fill="#3b2412"/>`;
+                            for (let s = 1; s <= 121; s++) holes += `<circle cx="${(62 + 6.7 * (s - 1)).toFixed(1)}" cy="${y}" r="1.9" fill="#3b2412"/>`;
+                        ```
+
+                        The board is 900 × 60. Two tracks, yours at y 18 and the AI's at y 42; each has a start hole at x 42, then 121 holes, hole s at x = 62 + 6.7 (s − 1). `+=` adds text to the end of `holes`; `toFixed(1)` writes the x with one decimal.
+
+                        ```js
+                          let marks = '';
+                          for (let s = 5; s < 121; s += 5) marks += `<line x1="${(62 + 6.7 * (s - 1) + 3.35).toFixed(1)}" y1="10" x2="${(62 + 6.7 * (s - 1) + 3.35).toFixed(1)}" y2="${s % 30 === 0 ? 52 : 14}" stroke="#7a4b22" stroke-width="${s % 30 === 0 ? 1.4 : 0.8}"/>`;
+                        ```
+
+                        A short mark after every fifth hole, halfway to the next (+ 3.35), and a long, thicker one every thirty (`s % 30 === 0`: 30 divides s exactly), as on a real board.
+
+                        ```js
+                          return `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="60" viewBox="0 0 900 60">
+                          <rect x="1" y="1" width="898" height="58" rx="12" fill="#c8903f" stroke="#6b3f17" stroke-width="2"/>
+                          <text x="10" y="22" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#3b2412">You</text>
+                          <text x="10" y="46" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#3b2412">AI</text>
+                          ${marks}${holes}
+                          <text x="878" y="34" font-family="Arial, sans-serif" font-size="10" fill="#3b2412" text-anchor="middle">121</text>
+                        </svg>`;
+                        ```
+
+                        A wooden rectangle, the two tracks' names, the marks and holes, and 121 at the end.
+
+                        ```js
+                        const peg = (colour) => `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+                          <circle cx="6" cy="6" r="5" fill="${colour}" stroke="#111111" stroke-width="1"/><circle cx="4.5" cy="4.5" r="1.6" fill="#ffffff" opacity="0.6"/></svg>`;
+                        const button = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+                          <rect x="1.5" y="1.5" width="${w - 3}" height="${h - 3}" rx="10" fill="#f4c542" stroke="#7a5a00" stroke-width="3"/></svg>`;
+                        ```
+
+                        A peg in any colour, with a small pale circle up and left so it looks round; a gold button of any size. Its words are a Label on top, so one picture serves any button.
+
+                        ```js
+                        export default function (project) {
+                          project.writeSvg('assets/board.svg', boardSvg());
+                          project.writeSvg('assets/peg-you.svg', peg('#e63946'));
+                          project.writeSvg('assets/peg-ai.svg', peg('#3a86ff'));
+                          project.writeSvg('assets/button.svg', button(160, 44));
+                        project.runTool('scripts/tools/table.js')
+                        ```
+
+                        The tool writes the board, a red peg and a blue one, and a 160 × 44 button; ▶ Run tool runs it.
+
+                        ```js
+                        const table = project.scene('scenes/cribbage.scene')
+                        table.add('Sprite2D', { name: 'Board', position: { x: 480, y: 38 }, texture: 'assets/board.svg' })
+                        table.add('Node2D', { name: 'Pegs', zIndex: 2 })
+                        for (const [name, texture, y, opacity] of [['YouBack', 'peg-you', 26, 0.45], ['YouFront', 'peg-you', 26, 1], ['AIBack', 'peg-ai', 50, 0.45], ['AIFront', 'peg-ai', 50, 1]])
+                          table.add('Sprite2D', { name, parent: 'Pegs', position: { x: 72, y }, texture: `assets/${texture}.svg`, opacity })
+                        table.add('Sprite2D', { name: 'Deck', position: { x: 108, y: 308 }, texture: 'assets/cards/back.svg', scale: { x: 0.8, y: 0.8 } })
+                        ```
+
+                        The board across the top. Four pegs under a Node2D drawn above the board (zIndex 2): for each player a back peg (faded, opacity 0.45) and a front one, all at the start hole. The deck, a card back.
+
+                        ```js
+                            this.pegs = [[scene.get('Pegs/YouBack'), scene.get('Pegs/YouFront')], [scene.get('Pegs/AIBack'), scene.get('Pegs/AIFront')]];
+                              const [back, front] = this.pegs[seat], y = seat === YOU ? 26 : 50;
+                              back.position = { x: holeX(this.backPeg[seat]), y };
+                              front.position = { x: holeX(this.scores[seat]), y };
+                        export function holeX(score) { return score <= 0 ? 72 : 92 + (score - 1) * 6.7; }
+                        ```
+
+                        In table.js: the pegs, a pair per seat, found in ready(); in layout(), for each seat (`for (const seat of [YOU, AI])`), the front peg at its score and the back peg where it was; holeX(score) is a hole's x on the screen (the board's holes, moved by where the board is drawn), 72 for the start.
+
+                        **Cards on the table: scripts/cardsprite.js**
+
+                        ```js
+                        import { cardImage } from './cards.js';
+                        export const CARD_BACK = 'assets/cards/back.svg';
+                        export const CARD_SCALE = 0.8;
+                        export default class CardSprite extends Sprite2D {
+                          constructor(card, from) {
+                            super();
+                        ```
+
+                        A card on screen is a Sprite2D made in code. A constructor runs when one is made with `new CardSprite(card, from)`; `super()` makes the Sprite2D it extends first.
+
+                        ```js
+                            this.card = card;
+                            this.name = 'Card';
+                            this.faceUp = false;
+                            this.position = new Vec2(from.x, from.y);
+                            this.target = { x: from.x, y: from.y };
+                            this.scale = new Vec2(CARD_SCALE, CARD_SCALE);
+                            this.texture = CARD_BACK;
+                        ```
+
+                        It knows its card, starts face down where it is dealt from, with a target (where it should be) the same as where it is, at 0.8 size: 80 × 112.
+
+                        ```js
+                          update(dt) {
+                            const k = 1 - Math.exp(-14 * dt), p = this.position, t = this.target;
+                            this.position = new Vec2(p.x + (t.x - p.x) * k, p.y + (t.y - p.y) * k);
+                            this.texture = this.faceUp ? cardImage(this.card) : CARD_BACK;
+                        ```
+
+                        Each frame it moves the fraction k of the way to its target: fast when far, slowing as it arrives, and the same speed at any frame rate (cell 1). And it shows its face or its back.
+
+                        ```js
+                          contains(point) {
+                            return this.visible && Math.abs(point.x - this.target.x) <= 50 * CARD_SCALE && Math.abs(point.y - this.target.y) <= 70 * CARD_SCALE;
+                        ```
+
+                        Whether a point is on it: within half its width and half its height of where it is going (so a card still sliding can be clicked where it will land).
+
+                        **scripts/table.js**: dealing sprites
+
+                        ```js
+                        import CardSprite from './cardsprite.js';
+                            this.cards = [];          // the CardSprite nodes on the table this hand
+                            this.clearCards();
+                            for (const card of [...this.hands[YOU], ...this.hands[AI]]) this.cards.push(this.addChild(new CardSprite(card, { x: 110, y: 310 })));
+                            this.cards.push(this.addChild(new CardSprite(this.starter, { x: 110, y: 310 })));
+                          clearCards() { for (const n of this.cards) n.queueFree(); this.cards = []; }
+                        ```
+
+                        ready() starts an empty list of sprites. newHand() first clears last hand's (clearCards frees each), then makes a sprite for each of the twelve cards, at the deck: `addChild` puts it in the scene and returns it. cut() makes one for the starter.
+
+                        ```js
+                              log: scene.get('HUD/Log'), cribLabel: scene.get('HUD/CribLabel'),
+                        project.scene('scenes/cribbage.scene').get('HUD/Hands').delete()
+                            } else {
+                              this.standIn();
+                        ```
+
+                        The Hands label goes, from the scene and from the labels the table finds: the cards say it now. (update() keeps calling the stand-in; its else gets braces, ready for your input next.)
+
+                        ```js
+                            const at = (n, x, y, faceUp, z) => { n.target = { x, y }; n.faceUp = faceUp; n.zIndex = z; n.opacity = 1; n.visible = true; };
+                            const showing = this.showing, counted = showing ? [...showing.cards, this.starter] : [];
+                            for (const n of this.cards) {
+                              const c = n.card;
+                        ```
+
+                        layout() now places every sprite. `at` sets where a card goes, face up or not, and which is drawn on top (zIndex). During the show, the cards being counted are the hand or crib and the starter.
+
+                        ```js
+                              const ci = counted.indexOf(c);
+                              if (ci >= 0) { at(n, 330 + ci * 90, 310, true, 20 + ci); continue; }
+                              if (c === this.starter) { at(n, 110, 310, true, 5); continue; }
+                              const pi = this.pile.indexOf(c);
+                              if (pi >= 0) { at(n, 330 + pi * 42, 310, true, 10 + pi); continue; }
+                              const oi = this.older.indexOf(c);
+                              if (oi >= 0) { at(n, 230 + oi * 3, 310, true, 2 + oi); n.opacity = 0.45; continue; }
+                              const cr = this.crib.indexOf(c);
+                              if (cr >= 0) { at(n, 110 + cr * 3, 470, false, 3 + cr); continue; }
+                        ```
+
+                        Each card is asked where it is, in order, and placed by the first answer (`continue` goes on to the next card): being counted, in a row in the middle; the starter, face up on the deck; the pile, overlapping in the middle; older piles, stacked and faded to the left; the crib, face down in a stack. `indexOf` is −1 when a card is not in a list.
+
+                        ```js
+                                const k = this.hands[seat].indexOf(c);
+                                if (k < 0) continue;
+                                if (this.played[seat]?.[k] && this.phase === 'peg') { n.visible = false; break; }
+                                const shown = seat === YOU || this.phase === 'show';
+                                if (seat === YOU) at(n, 330 + k * 86, 470, true, 30 + k);
+                                else at(n, 300 + k * 70, 165, shown, 30 + k);
+                        ```
+
+                        Otherwise it is in a hand (looking through both seats). A card played this hand is hidden (it is drawn in the pile). Yours are face up along the bottom; the AI's along the top, face down unless it is the show.
+
+                        **Your clicks**
+
+                        ```js
+                        project.addAction('select', ['MouseLeft'])
+                        for (let k = 1; k <= 6; k++) project.addAction(`pick_${k}`, [`Digit${k}`])
+                        ```
+
+                        A click is an input action like a key; and keys 1 to 6 pick a card by its place, for the keyboard.
+
+                        ```js
+                            this.selected = [];
+                            this.selected = seat === YOU ? [] : this.selected;
+                                if (seat === YOU) at(n, 330 + k * 86, 470 - (this.selected.includes(k) ? 24 : 0), true, 30 + k);
+                        ```
+
+                        The places of the cards you have chosen to throw: empty at the deal, and again once you have thrown. A selected card sits 24 pixels higher.
+
+                        ```js
+                              this.takeInput();
+                          takeInput() {
+                            const click = input.isJustPressed('select');
+                            let picked = -1;
+                            for (let k = 0; k < 6; k++) if (input.isJustPressed(`pick_${k + 1}`)) picked = k;
+                        ```
+
+                        When nothing is waiting, update() takes your input, then lets the stand-in play the AI's seat. `picked` is the place of the card you chose this frame, or −1 for none: first from the keys.
+
+                        ```js
+                            const mine = this.cards.filter((n) => this.hands[YOU].includes(n.card));
+                            if (click) { const n = mine.find((c) => c.contains(input.mouse)); if (n) picked = this.hands[YOU].indexOf(n.card); }
+                        ```
+
+                        Then from a click: your cards' sprites, the first that contains the pointer, and its place in your hand.
+
+                        ```js
+                            if (this.phase === 'discard' && !this.thrown[YOU]) {
+                              if (picked >= 0 && picked < this.hands[YOU].length) {
+                                const s = this.selected;
+                                this.selected = s.includes(picked) ? s.filter((x) => x !== picked) : s.length < 2 ? [...s, picked] : [s[1], picked];
+                        ```
+
+                        While you are throwing: a picked card is unselected if it was selected; otherwise added, unless two are already selected, when the older one gives way (`[s[1], picked]`).
+
+                        ```js
+                              const d = this.decision(AI);
+                              if (d) this.move(AI, d.legal[0]);
+                        ```
+
+                        The stand-in, now for the AI's seat only: your seat is yours.
+
+                        **Throwing**
+
+                        ```js
+                        project.addAction('confirm', ['Enter', 'Space'])
+                        table.add('Sprite2D', { name: 'Button', parent: 'HUD', position: { x: 878, y: 470 }, texture: 'assets/button.svg', visible: false })
+                        table.add('Label', { name: 'ButtonText', parent: 'HUD', position: { x: 822, y: 460 }, fontSize: 16, color: '#3b2a00', text: '', visible: false })
+                        ```
+
+                        Enter or Space confirms; a button, hidden until it is useful, with its words on it.
+
+                        ```js
+                              log: scene.get('HUD/Log'), button: scene.get('HUD/Button'), buttonText: scene.get('HUD/ButtonText'),
+                              cribLabel: scene.get('HUD/CribLabel'),
+                            const throwing = this.phase === 'discard' && !this.thrown[YOU];
+                            this.hud.button.visible = this.hud.buttonText.visible = throwing && this.selected.length === 2;
+                            this.hud.buttonText.text = 'Throw to crib';
+                        ```
+
+                        The table finds the button and its text; layout() shows both when you are throwing and have two selected (`a = b = value` sets both).
+
+                        ```js
+                            const click = input.isJustPressed('select'), confirm = input.isJustPressed('confirm');
+                              if (this.selected.length === 2 && (confirm || (click && this.hits('HUD/Button', 160, 44)))) {
+                                const [i, j] = [...this.selected].sort((a, b) => a - b);
+                                this.throwCards(YOU, THROWS.findIndex(([a, b]) => a === i && b === j));
+                        ```
+
+                        With two selected, Enter or a click on the button throws them: the two places, low first, and the number of that pair in THROWS (`findIndex` gives the place of the first match).
+
+                        ```js
+                          hits(path, width, height) {
+                            const n = scene.get(path), m = input.mouse;
+                            return n.visible && Math.abs(m.x - n.position.x) <= width / 2 && Math.abs(m.y - n.position.y) <= height / 2;
+                        ```
+
+                        Is the pointer on a sprite of this size? A picture is not a button by itself: the game asks where the click was.
+
+                        **Playing a card, and the words that say so**
+
+                        ```js
+                            if (this.phase === 'over') { if (click || confirm) this.newGame(); return; }
+                            } else if (this.phase === 'peg' && this.waiting === YOU && picked >= 0) {
+                              if (this.options(YOU).includes(picked)) this.play(YOU, picked);
+                              else if (!this.played[YOU][picked]) this.say(`That would take the count past 31: play another card.`);
+                        ```
+
+                        After a game, a click starts the next. While pegging, on your turn: a picked card is played if it is one of your options; if it is in your hand but would take the count past 31, the table says so.
+
+                        ```js
+                              if (input.isJustPressed('select') || input.isJustPressed('confirm')) this.timer = 0;
+                            this.say(seat === YOU ? 'Your turn: click a card to play it.' : "The AI's turn.");
+                            this.say(`${whose} ${what}: ${s.total ? sayParts(s.parts) : 'no points'}. Click to go on.`);
+                            this.say(seat === YOU ? `You win, ${this.scores[YOU]} to ${this.scores[AI]}! Click to play again.` : `The AI wins, ${this.scores[AI]} to ${this.scores[YOU]}. Click to play again.`);
+                        ```
+
+                        While the table waits, a click ends the wait at once: the show need not take four seconds a count. And the messages now say what a click does.
+                    - type: markdown
+                      instruction: |-
+                        ### 7. Questions you might have
+
+                        **Why does layout() place every card every frame, instead of moving a card when it is played?** The screen is drawn from the state: wherever a card is in the hands, pile or crib, layout() puts it there. Nothing can get out of step, and the cards slide because each sprite eases towards its target.
+
+                        **Why is the stand-in still there for the AI?** Your seat is yours now, but the AI's needs someone to play it until lesson 10.8 gives it rules.
+
+                        **Why does contains() check the target, not the position?** A card slides for a fifth of a second; you click where you see it going, and the hand does not jump about under the pointer.
+
+                        **Why `picked` from both a click and the keys?** So the game can be played with either, and so the rest of takeInput() does not care which: a place in your hand is a place in your hand.
+
+                        **Could the cards be one big picture of the table?** Then nothing could move. Separate sprites each with a target is what lets the deal, the pile and the show animate on their own.
             - id: GameStudioTask
               title: Cards on the screen, and your clicks
               props:
@@ -19415,6 +20469,7 @@ chapters:
           realWorldContext: "Scripted AIs, rules written by a designer, run most game opponents, and every machine-learning project needs a baseline: a simple method the learned one must beat. Developer and debug views that reveal hidden state are how game teams find out why an AI did what it did."
         intuition:
           prose:
+            - "**The Try it task.** unseen() and expectedHand() in features.js, rulesThrow() and rulesPlay() in a new partner.js, and then the AI's seat: an Opponent node with its own script that plays by those rules, so the stand-in goes. Then the developer view (D), and autoplay, a practice partner in your seat so the game can play itself again."
             - "**What a hand is worth before the cut.** When you throw, the starter is not yet known. So value the four you keep by their score averaged over every starter they could get: the 46 cards you have not seen (52 minus your six). unseen(known) lists them; expectedHand(kept, known) averages scoreHand over them. Keeping 5 5 J K from 5 5 J K 2 9 scores between 10 and 21 depending on the cut, and 572 points over 46 starters: 12.43 on average (cell 1). This is the honest way to compare throws: the average over what you cannot see."
             - "**The throw.** For each of the 15 ways to throw two, rulesThrow adds the kept hand's expected score and the crib points the two thrown cards bring (2 for a fifteen, 2 for a pair, 1 for each five), added if the crib is yours and taken away if it is not. It takes the best. From 3 4 6 9 J K it throws 6 and 9, a fifteen, into its own crib, but J and K into yours (cell 2): whose crib it is changes the answer."
             - "**Pegging rules.** rulesPlay scores each card it could play: 10 × the points it pegs now, −15 if it leaves the count on 5 or 21 (any ten then makes 15 or 31), and + value / 10 so that, other things equal, it plays a high card and keeps low ones for the end of a count. On a 5 it plays the king (15); leading, it plays the 9, not the 5; at 15 it plays the 9 to 24, not the 6 to 21; at 13 holding 7 8 3 it plays the 8 to 21 anyway, because the run 6 7 8 is worth 3 now, more than the risk (cell 3)."
@@ -19459,7 +20514,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -19758,7 +20813,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -20062,7 +21117,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -20364,7 +21419,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -20686,7 +21741,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -20978,7 +22033,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -21262,6 +22317,204 @@ chapters:
                           if (got === cardName(cards(want)[0])) ok++; else console.log('On ' + (pile || 'nothing') + ' holding ' + hand + ' you play ' + got + '; the rules say ' + cardName(cards(want)[0]) + '.')
                         }
                         console.log(ok === cases.length ? '✓ All 5 plays follow the rules.' : ok + ' of 5 plays right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 6. The code you wrote, line by line
+
+                        In the order of the task's seven steps.
+
+                        **What a player has not seen**
+
+                        ```js
+                        export function sameCard(a, b) { return a.rank === b.rank && a.suit === b.suit; }
+                        ```
+
+                        In cards.js: two card objects describe the same card if rank and suit match. `===` on two objects asks whether they are the very same object, which two decks' cards never are.
+
+                        ```js
+                        import { newDeck, sameCard } from './cards.js';
+                        export function unseen(known) {
+                          return newDeck().filter((c) => !known.some((k) => sameCard(k, c)));
+                        ```
+
+                        In features.js: a fresh deck, less every card in `known` (`some` is true if any known card is the same card). A player with six cards in hand has 46 they have not seen.
+
+                        ```js
+                        import { scoreHand } from './score.js';
+                        export function expectedHand(kept, known) {
+                          const starters = unseen(known);
+                          return starters.reduce((t, s) => t + scoreHand(kept, s).total, 0) / starters.length;
+                        ```
+
+                        What four kept cards will score on average: every card that could still be cut as the starter is equally likely, so score the hand with each and divide the total by how many there are (cell 1).
+
+                        **scripts/partner.js**: rules for the throw
+
+                        ```js
+                        import { value } from './cards.js';
+                        import { THROWS, expectedHand } from './features.js';
+                        export function rulesThrow(hand, myCrib) {
+                          let best = 0, bestScore = -Infinity;
+                        ```
+
+                        The best throw so far, and its score: `-Infinity` is lower than any number, so the first throw tried always beats it.
+
+                        ```js
+                          THROWS.forEach(([i, j], t) => {
+                            const kept = hand.filter((_, k) => k !== i && k !== j), a = hand[i], b = hand[j];
+                            const crib = (value(a) + value(b) === 15 ? 2 : 0) + (a.rank === b.rank ? 2 : 0) + (a.rank === 5 ? 1 : 0) + (b.rank === 5 ? 1 : 0);
+                            const score = expectedHand(kept, hand) + (myCrib ? crib : -crib);
+                            if (score > bestScore) { bestScore = score; best = t; }
+                          return best;
+                        ```
+
+                        For each of the 15 throws: the four it keeps and the two it throws. A rough guess at what the two give the crib: 2 for a fifteen, 2 for a pair, 1 for each five (fives make fifteens with every ten). The throw's score is what the hand keeps on average, plus that if the crib is yours, minus it if it is theirs. Return the number of the best.
+
+                        **Rules for pegging**
+
+                        ```js
+                        import { pegPoints, countOf } from './score.js';
+                        export function rulesPlay(hand, options, pile) {
+                          let best = options[0], bestScore = -Infinity;
+                          for (const k of options) {
+                            const after = [...pile, hand[k]], count = countOf(after);
+                            const score = pegPoints(after).total * 10 - (count === 5 || count === 21 ? 15 : 0) + value(hand[k]) / 10;
+                            if (score > bestScore) { bestScore = score; best = k; }
+                        ```
+
+                        For each card it may play: the pile with it played, and the count. The points it pegs now count most (× 10); leaving the count on 5 or 21 costs 15, because the other player's ten would make 15 or 31; and a sliver for the card's value prefers playing high cards first. The best card's place.
+
+                        **The AI's seat**
+
+                        ```js
+                        project.scene('scenes/cribbage.scene').add('Node2D', { name: 'Opponent', script: 'scripts/opponent.js' })
+                        ```
+
+                        The AI is a node of its own, with its own script: the table runs the game, the Opponent plays a seat in it.
+
+                        ```js
+                        import { cardName } from './cards.js';
+                        import { rulesThrow, rulesPlay } from './partner.js';
+                        const AI = 1;
+                        export default class Opponent extends Node2D {
+                          ready() {
+                            this.table = scene.root;
+                        ```
+
+                        scripts/opponent.js. The table is the scene's root; the Opponent keeps it.
+
+                        ```js
+                          act(action) {
+                            this.table.move(AI, action);
+                          update() {
+                            const t = this.table, d = t.decision(AI);
+                            if (!d) return;
+                            this.act(d.kind === 'throw' ? rulesThrow(t.hands[AI], t.dealer === AI) : 15 + rulesPlay(t.hands[AI], d.legal.map((a) => a - 15), t.pile));
+                        ```
+
+                        Every frame: if the table has a decision for the AI, make the move the rules choose: a throw (its crib if it dealt), or a card, as 15 + its place (`d.legal.map((a) => a - 15)` turns the legal moves back into places).
+
+                        ```js
+                          explain() {
+                            const t = this.table, lines = ['DEVELOPER VIEW', `AI hand: ${t.hands?.[AI]?.map(cardName).join(' ') ?? ''}`];
+                            return lines.join('\n');
+                        ```
+
+                        What the developer view shows, as lines of text: for now, its hand. `?.` and `?? ''` give an empty line before there is a hand.
+
+                        ```js
+                            this.opponent = scene.get('Opponent');
+                            this.think = 0;           // the AI's pause before it moves, so you can follow it
+                            this.think = this.thinkTime();
+                            if (seat === AI) this.think = this.thinkTime();
+                            this.say(seat === YOU ? 'Your turn: click a card to play it.' : 'The AI is thinking…');
+                          thinkTime() { return this.fast ? 0 : 0.8; }
+                            if (this.think > 0) this.think -= dt;
+                        ```
+
+                        In table.js: ready() finds the Opponent and starts with no thinking time. At the deal (newHand) and whenever it becomes the AI's turn (waitFor), it thinks for 0.8 seconds (none when fast), counted down each frame in update().
+
+                        ```js
+                          decision(seat, evenWhileThinking = false) {
+                            if (this.pending || (seat === AI && this.think > 0 && !evenWhileThinking)) return null;
+                            const d = this.decision(seat, true);
+                        ```
+
+                        While it thinks, decision() has nothing for the AI, so it waits. move() asks with `evenWhileThinking` true: a move the AI decided on is checked against the rules, not against the pause.
+
+                        ```js
+                            } else this.takeInput();
+                        ```
+
+                        The stand-in is gone: when nothing is waiting, update() takes your input, and the Opponent plays its own seat.
+
+                        **The developer view**
+
+                        ```js
+                        project.addAction('developer', ['KeyD'])
+                        const table = project.scene('scenes/cribbage.scene')
+                        table.add('Label', { name: 'DevHint', parent: 'HUD', position: { x: 760, y: 76 }, fontSize: 13, color: '#a7f3d0', text: 'D: developer view' })
+                        table.add('Label', { name: 'Developer', parent: 'HUD', position: { x: 700, y: 104 }, fontSize: 12, color: '#fde68a', text: '', visible: false })
+                        ```
+
+                        D, a hint at the top right, and a hidden label under it.
+
+                        ```js
+                          developer = false;
+                              log: scene.get('HUD/Log'), dev: scene.get('HUD/Developer'), devHint: scene.get('HUD/DevHint'),
+                              button: scene.get('HUD/Button'), buttonText: scene.get('HUD/ButtonText'), cribLabel: scene.get('HUD/CribLabel'),
+                            if (input.isJustPressed('developer')) this.developer = !this.developer;
+                                const shown = seat === YOU || this.developer || this.phase === 'show';
+                            this.hud.dev.visible = this.developer;
+                            this.hud.dev.text = this.developer ? this.opponent.explain() : '';
+                            this.hud.devHint.text = this.developer ? 'D: hide the AI\'s cards' : 'D: developer view';
+                        ```
+
+                        A field for the view, the two labels found in ready(), D turning it on and off, the AI's cards face up while it is on, and the label filled from explain().
+
+                        **Autoplay**
+
+                        ```js
+                        export const pickRandom = (list) => list[Math.floor(Math.random() * list.length)];
+                        ```
+
+                        In partner.js: one of a list at random.
+
+                        ```js
+                        import { rulesThrow, rulesPlay, pickRandom } from './partner.js';
+                          partner = 'rules';
+                          autoplay = false;
+                          partnerMove() {
+                            const d = this.decision(YOU);
+                            if (!d) return;
+                            let action;
+                            if (this.partner === 'random') action = pickRandom(d.legal);
+                            else action = d.kind === 'throw' ? rulesThrow(this.hands[YOU], this.dealer === YOU) : 15 + rulesPlay(this.hands[YOU], d.legal.map((a) => a - 15), this.pile);
+                            this.move(YOU, action);
+                        ```
+
+                        In table.js: who plays your seat when the game plays itself, and whether it does. partnerMove() makes your seat's move: random, or the rules, as the Opponent plays its own.
+
+                        ```js
+                              if (!this.autoplay && (input.isJustPressed('select') || input.isJustPressed('confirm'))) this.timer = 0;
+                            } else if (this.autoplay) this.partnerMove();
+                            else this.takeInput();
+                        ```
+
+                        With autoplay on, your seat is the partner's, and your clicks no longer hurry the game.
+                    - type: markdown
+                      instruction: |-
+                        ### 7. Questions you might have
+
+                        **Why is the AI a separate node and not part of the table?** The table is the game; the AI is a player. Keeping them apart means the AI can be swapped (rules now, a learner in 10.9) without touching the game, and it can only do what any player can: ask decision() and call move().
+
+                        **Why does the rules player use expectedHand instead of the cards it will actually be cut?** It cannot know the starter. Averaging over every card it has not seen is the best a player can do, and it never peeks.
+
+                        **Why −15 for leaving the count on 5 or 21?** Sixteen of the 52 cards are worth 10. A count of 5 or 21 hands the other player an easy 15 or 31, worth 2; −15 makes it lose to any card that scores now, but beat other quiet cards.
+
+                        **Why make the AI think for 0.8 seconds?** So you can see what it did. Training and the checks turn it off (fast).
+
+                        **Is the rules player good?** Reasonable: it is what you would write without machine learning, and the yardstick for the AI in lessons 10.11 and 10.12.
             - id: GameStudioTask
               title: A rules player, and the developer view
               props:
@@ -21528,6 +22781,7 @@ chapters:
           realWorldContext: "Board and card game AIs, from AlphaZero to poker bots, are turn-based agents with legal-move masks: the policy only ever chooses among legal moves. Rewards as score differences, and episodes as natural units of play (a hand, a game), are the standard choices."
         intuition:
           prose:
+            - "**The Try it task.** First the table learns about training (ai.training is true while an agent trains: no pauses, no drawing, one hand an episode, the partner in your seat), and the Opponent stands aside while it trains. Then, a piece at a time, the Opponent becomes an agent: its actions, legalActions(), what it observes, reward() and done()."
             - "**Numbered moves.** A brain chooses a number, so every move gets one: 0 to 14 are the 15 ways to throw two of six cards (THROWS[t] is the pair of places, from [0, 1] to [4, 5]), and 15 to 18 play the first to fourth card of its hand (cell 1). actions lists their names, for reading a brain."
             - "**Legal moves.** At any moment most of the 19 are impossible: while throwing, only the throws; while pegging, only cards it still holds that keep the count at 31 or under; when it is not its turn, none. Picking at random from all 19 at a pegging turn, 88% of picks would be illegal (cell 2). So legalActions() returns the moves possible now, from the table's decision(AI), and the brain chooses only among them. An empty list means \"not my turn\": the engine drives an agent with a brain only when its list is not empty."
             - "**act(action).** Make the move: this.table.move(AI, action). The table checks it is legal and does it. (When not training, it first remembers what its brain thought of each move, for the developer view in 10.12.)"
@@ -21573,7 +22827,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -21872,7 +23126,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -22180,7 +23434,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -22508,7 +23762,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -22844,6 +24098,102 @@ chapters:
                         let ok = 0
                         for (const [scores, want] of moments) { const got = reward(scores, seen); if (got === want) ok++; else console.log('At scores you ' + scores[0] + ', AI ' + scores[1] + ': reward ' + got + ', should be ' + want + '.') }
                         console.log(ok === moments.length ? '✓ All 5 rewards right: they add up to the hand\'s difference.' : ok + ' of 5 right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 6. The code you wrote, line by line
+
+                        In the order of the task's six steps.
+
+                        **Training mode, in table.js**
+
+                        ```js
+                          wait(seconds, then) { this.pending = then; this.timer = ai.training || this.fast ? 0 : seconds; }
+                          thinkTime() { return ai.training || this.fast ? 0 : 0.8; }
+                        ```
+
+                        `ai.training` is true while Run › Train an agent… is playing the game to teach an agent. Then nothing waits and the AI never pauses: thousands of hands in a minute.
+
+                        ```js
+                          note(text) {
+                            if (ai.training) return;
+                            this.lines = [...this.lines, text].slice(-6);
+                            if (!ai.training) this.layout();
+                        ```
+
+                        Nobody watches a training run, so the log is not kept and nothing is laid out on screen: less work each frame.
+
+                        ```js
+                            if (this.scores[seat] >= this.goal && !ai.training) {
+                            if (ai.training) { this.phase = 'done'; return; }   // an episode of training is one hand
+                        ```
+
+                        In training a hand is an episode, the unit an agent learns from: reaching the goal ends nothing, and at the end of the hand endHand() sets phase 'done' instead of dealing again.
+
+                        ```js
+                              if (!ai.training && !this.autoplay && (input.isJustPressed('select') || input.isJustPressed('confirm'))) this.timer = 0;
+                            } else if (ai.training || this.autoplay) this.partnerMove();
+                        ```
+
+                        In training, your seat is played by the practice partner, and clicks are ignored.
+
+                        ```js
+                            if (ai.training) return;
+                        ```
+
+                        In opponent.js, first thing in update(): while it trains, the trainer chooses its moves, so the rules player stands aside.
+
+                        **scripts/opponent.js**: the agent
+
+                        ```js
+                        import { THROWS } from './features.js';
+                        const AI = 1, YOU = 0;
+                          actions = [...THROWS.map(([i, j]) => `throw ${i + 1}+${j + 1}`), 'play 1', 'play 2', 'play 3', 'play 4'];
+                        ```
+
+                        An agent's moves have numbers and names. The names of the 15 throws come from THROWS ('throw 1+2' throws the first and second card, counting from 1 for people), then the four plays: 19 in all, numbered 0 to 18, the same numbers the table's moves use.
+
+                        ```js
+                          legalActions() { const d = this.table.decision(AI); return d ? d.legal : []; }
+                        ```
+
+                        The moves it may make now: what decision() allows, or none. A turn-based agent is only asked to choose when this is not empty, and only ever from it.
+
+                        ```js
+                          observations = ['my score', 'your score', 'count'];
+                          decideEvery = 1;
+                          observe() { const t = this.table; return [t.scores[AI], t.scores[YOU], t.count]; }
+                        ```
+
+                        What it observes, named, and the numbers themselves. (A linear brain, lesson 10.10, values moves by their features instead; these are what the training window shows.) decideEvery = 1 asks it every frame: whenever it has legal moves, it decides.
+
+                        ```js
+                            this.seen = [0, 0];
+                          reward() {
+                            const s = this.table.scores, r = (s[AI] - this.seen[AI]) - (s[YOU] - this.seen[YOU]);
+                            this.seen = [...s];
+                            return r;
+                        ```
+
+                        What it earned since it last moved: how much its score went up, less how much yours did. `this.seen` keeps the scores it last saw (a copy, `[...s]`, so later changes to the table's list do not change it). It learns to score, and to stop you scoring.
+
+                        ```js
+                          done() { return this.table.phase === 'done' || this.table.phase === 'over'; }
+                        ```
+
+                        The episode is over: a training hand has ended, or a game has.
+                    - type: markdown
+                      instruction: |-
+                        ### 7. Questions you might have
+
+                        **Why does the agent ask the table, rather than the table telling the agent?** The trainer drives the agent: each frame it asks for legal moves, the reward and whether it is done. Any game that answers those questions can be trained; the game does not need to know about learning.
+
+                        **Why is an episode one hand and not a game?** A game is 10 or more hands, and the points of a hand are what the AI's moves decide. Shorter episodes give it feedback sooner.
+
+                        **Why points minus yours, not just its points?** A move that pegs 2 but sets you up for 6 is a bad move. Counting both teaches it to defend as well as score.
+
+                        **What is the 'over' in done() for?** A game played with the brain, not training: when someone reaches the goal, the episode ends.
+
+                        **Why are clicks ignored in training?** Nobody is playing: the partner is in your seat, and the game runs as fast as it can.
             - id: GameStudioTask
               title: The AI as a turn-based agent
               props:
@@ -23108,6 +24458,7 @@ chapters:
           realWorldContext: "Features are how learning generalises: credit scoring uses income and debt, not a row per person; chess engines used material and mobility; even deep networks are learning their own features. Designing good ones, measurable, meaningful, scaled and fair, is most of the work in applying machine learning to a game."
         intuition:
           prose:
+            - "**The Try it task.** features.js gets the features' names, the crib table and discardFeatures(); then pegFeatures() in three steps (the first numbers, the risks, the rest); then the Opponent's features() and the table's known() and featuresFor(), so the trainer can ask for any legal move's 15 numbers."
             - "**No table.** A Q table has a value for every situation and move. There are 20,358,520 six-card hands; with whose crib it is, 40.7 million situations to throw from, and 15 throws each (cell 1). 8,000 training hands would visit at most one in 5,090 of those situations, about once each: nothing could be learned. Lesson 9.8 showed the answer: describe each move by a few features, and learn one weight per feature, so what is learned in one hand applies to every hand with similar numbers."
             - "**What makes a good feature.** It is a number about the move in its situation that makes the move better or worse more or less in proportion (more points now: better; a bigger chance the other player scores next: worse). It means the same thing in every hand. It uses only what this player has seen: its own cards, the starter, the cards played, never the other hand. And it is scaled to about 0 to 1, so no one feature's size swamps the others when the weights are learned (cell 5: most run 0 to 1, a few up to 2 or 3)."
             - "**The throw's features.** For each of the 15 throws: 1 (a bias), the expected show of the four kept / 10 (lesson 10.8's average over the 46 starters), the crib value of the two thrown / 10, + if the crib is mine and − if it is theirs, and ±1 for whose crib it is. From 5 5 J K 2 9, throwing 2 9 keeps the most (1.24, 12.4 points) and throwing 5 5 gives the crib the most (0.90) (cell 2). The weights will decide how to trade one against the other."
@@ -23165,7 +24516,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -23434,7 +24785,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -23717,7 +25068,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -23987,7 +25338,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -24261,7 +25612,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -24531,7 +25882,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -24788,6 +26139,171 @@ chapters:
                           if (Math.abs(got - want) < 1e-9) ok++; else console.log('Playing ' + c + ' on ' + (p || 'nothing') + ': ' + got.toFixed(3) + ', should be ' + want.toFixed(3) + '.')
                         }
                         console.log(ok === cases.length ? '✓ All 4 chances right.' : ok + ' of 4 right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 7. The code you wrote, line by line
+
+                        In the order of the task's five steps. Most of it is scripts/features.js.
+
+                        **The discard's features**
+
+                        ```js
+                        import { newDeck, sameCard, SUITS } from './cards.js';
+                        export const DISCARD_FEATURES = ['discard: bias', 'discard: hand kept (expected points)', 'discard: crib (expected points, + mine − theirs)', 'discard: my crib'];
+                        export const PEG_FEATURES = ['peg: bias', 'peg: points now', 'peg: count after', 'peg: chance of 15 or 31 against', 'peg: chance of a pair against', 'peg: chance of a run against', 'peg: leads low', 'peg: card value', 'peg: my hand (show)', 'peg: crib (expected, + mine − theirs)', 'peg: my crib'];
+                        export const FEATURE_NAMES = [...DISCARD_FEATURES, ...PEG_FEATURES];
+                        ```
+
+                        The names of the features, in order: four for a throw, eleven for a card, fifteen in all. A move fills its own block and leaves the other at 0, so the two kinds of decision learn separate weights.
+
+                        ```js
+                        export const CRIB_VALUE = [
+                          [5.49,4.4,4.52,5.43,5.69,4.22,4.04,4.08,4,3.91,4.17,3.81,3.7],
+                          [4.4,5.79,6.8,4.8,5.72,4.32,4.24,4.19,4.09,4.03,4.28,3.92,3.82],
+                          [4.52,6.8,6.12,5.45,6.38,4.23,4.31,4.25,4.07,4.1,4.36,4,3.89],
+                          [5.43,4.8,5.45,6.1,6.95,4.92,4.14,4.26,4.16,4.1,4.36,4,3.89],
+                          [5.69,5.72,6.38,6.95,8.96,7.05,6.37,5.71,5.69,6.98,7.24,6.88,6.77],
+                          [4.22,4.32,4.23,4.92,7.05,6.25,5.5,4.86,5.53,3.8,4.05,3.69,3.59],
+                          [4.04,4.24,4.31,4.14,6.37,5.5,6.07,6.72,4.31,3.68,4,3.64,3.53],
+                          [4.08,4.19,4.25,4.26,5.71,4.86,6.72,5.6,4.89,4.26,3.92,3.62,3.52],
+                          [4,4.09,4.07,4.16,5.69,5.53,4.31,4.89,5.49,4.8,4.46,3.51,3.46],
+                          [3.91,4.03,4.1,4.1,6.98,3.8,3.68,4.26,4.8,5.43,5.03,4.07,3.37],
+                          [4.17,4.28,4.36,4.36,7.24,4.05,4,3.92,4.46,5.03,5.93,4.99,4.28],
+                          [3.81,3.92,4,4,6.88,3.69,3.64,3.62,3.51,4.07,4.99,5.21,3.93],
+                          [3.7,3.82,3.89,3.89,6.77,3.59,3.53,3.52,3.46,3.37,4.28,3.93,4.99],
+                        ```
+
+                        A crib's average score when it holds two cards of these ranks: row a − 1, column b − 1. Two fives (row 5, column 5) is the best, 8.96; a five with any ten-card is about 7. cribTable() below computes it; the numbers are kept here so the game need not spend half a second recomputing them each time.
+
+                        ```js
+                        export function cribTable() {
+                          const table = [];
+                          for (let a = 1; a <= 13; a++) {
+                            table.push([]);
+                            for (let b = 1; b <= 13; b++) {
+                              const left = new Array(14).fill(4);
+                              left[a]--; left[b]--;
+                        ```
+
+                        For every pair of ranks thrown, a and b: how many of each rank are left in the deck, 4 each (`new Array(14).fill(4)`, places 1 to 13 used), less the two thrown.
+
+                        ```js
+                              let sum = 0, ways = 0;
+                              for (let c = 1; c <= 13; c++) for (let d = c; d <= 13; d++) {
+                                const pairs = c === d ? left[c] * (left[c] - 1) / 2 : left[c] * left[d];
+                                if (!pairs) continue;
+                        ```
+
+                        Every rank of the other two crib cards, c and d (d from c, so each pair of ranks once), and how many ways the deck can give them: two of the same rank from n left is n(n − 1)/2 ways; two different, one of each, left[c] × left[d].
+
+                        ```js
+                                for (let s = 1; s <= 13; s++) {
+                                  const w = pairs * (left[s] - (s === c ? 1 : 0) - (s === d ? 1 : 0));
+                                  if (w <= 0) continue;
+                                  const crib = [a, b, c, d].map((rank, i) => ({ rank, suit: SUITS[i] }));   // four different suits: no flush
+                                  sum += w * scoreHand(crib, { rank: s, suit: 'none' }, true).total;
+                                  ways += w;
+                        ```
+
+                        And every starter rank s, with what is left of it after c and d. Each whole crib is scored once and counted as many times as the deck can make it (w): a weighted average. Suits are ignored: a crib flush needs all five, and is rare enough to leave out.
+
+                        ```js
+                              table[a - 1].push(+(sum / ways + (a === 11 ? 0.25 : 0) + (b === 11 ? 0.25 : 0)).toFixed(2));
+                          return table;
+                        ```
+
+                        The average, plus a quarter for each jack thrown (nobs: a jack scores 1 when the starter is its suit, about a quarter of the time), to two decimals (`+` turns the text toFixed makes back into a number).
+
+                        ```js
+                        export function discardFeatures(hand, [i, j], myCrib) {
+                          const kept = hand.filter((_, k) => k !== i && k !== j), a = hand[i], b = hand[j];
+                          const sign = myCrib ? 1 : -1;   // points in the crib are good when it is mine, bad when it is theirs
+                          const block = [
+                            1,
+                            expectedHand(kept, hand) / 10,
+                            sign * CRIB_VALUE[a.rank - 1][b.rank - 1] / 10,
+                            sign,
+                          return [...block, ...new Array(PEG_FEATURES.length).fill(0)];
+                        ```
+
+                        A throw as four numbers: 1 (the bias, which lets the brain learn a baseline); what the kept four score on average, / 10 to be about 0 to 1; the crib's value of the two thrown, plus for my crib and minus for theirs; and which crib it is. Then eleven zeros for the pegging block.
+
+                        **The pegging features**
+
+                        ```js
+                        import { value, newDeck, sameCard, SUITS } from './cards.js';
+                        import { scoreHand, pegPoints, countOf } from './score.js';
+                        export function pegFeatures(card, pile, known, handShow, myCrib, threw) {
+                          const after = [...pile, card], count = countOf(after);
+                            pegPoints(after).total / 4,
+                            count / 31,
+                            0, 0, 0, 0, 0, 0, 0, 0,   // the rest, in the next steps
+                          return [...new Array(DISCARD_FEATURES.length).fill(0), ...block];
+                        ```
+
+                        Playing `card` onto `pile`: the pile after it and the count. Four zeros for the discard block, then the block, starting with 1, the points it pegs now (/ 4) and the count after (/ 31), and zeros for the rest so far, so the list is always 15 long.
+
+                        ```js
+                          const others = unseen(known);
+                          const fits = others.filter((c) => count + value(c) <= 31);
+                          const share = (test) => (others.length ? fits.filter(test).length / others.length : 0);
+                            share((c) => count + value(c) === 15 || count + value(c) === 31),
+                            share((c) => c.rank === card.rank),
+                            share((c) => pegPoints([...after, c]).parts.some((p) => p.what.startsWith('run'))),
+                            0, 0, 0, 0, 0,   // the last five, in the next step
+                        ```
+
+                        The risks. Of the cards this player has not seen (the other player's could be any of them), those that fit under 31; `share(test)` is the fraction of all unseen cards that fit and pass the test. The chance the reply makes 15 or 31, pairs this card, or makes a run.
+
+                        ```js
+                            pile.length === 0 && value(card) < 5 ? 1 : 0,
+                            value(card) / 10,
+                            handShow / 10,
+                            (myCrib ? 1 : -1) * CRIB_VALUE[threw[0].rank - 1][threw[1].rank - 1] / 10,
+                            myCrib ? 1 : -1,
+                        ```
+
+                        The last five: leading with a card under 5 (the reply cannot make 15); the card's value; and three that are the same for every card it could play: its hand's show score, the crib's value, and whose crib. They do not help choose a card, but they let the brain predict the points still to come, which is what Q means.
+
+                        **The agent's features**
+
+                        ```js
+                        import { FEATURE_NAMES, THROWS } from './features.js';
+                          featureNames = FEATURE_NAMES;
+                          features(action) { return this.table.featuresFor(AI, action); }
+                        ```
+
+                        In opponent.js: the names, for the training window and the developer view, and a move's features, from the table.
+
+                        ```js
+                        import { THROWS, discardFeatures, pegFeatures } from './features.js';
+                          known(seat) {
+                            return [...this.hands[seat], ...this.threw[seat], ...(this.starter ? [this.starter] : []), ...this.history.filter((h) => h.seat !== seat).map((h) => h.card)];
+                        ```
+
+                        In table.js: every card a seat has seen: its hand, the two it threw, the starter if cut, and the cards the other seat has played. Never the other hand.
+
+                        ```js
+                          featuresFor(seat, action) {
+                            if (action < 15) return discardFeatures(this.hands[seat], THROWS[action], this.dealer === seat);
+                            const card = this.hands[seat][action - 15];
+                            return pegFeatures(card, this.pile, this.known(seat), scoreHand(this.hands[seat], this.starter).total, this.dealer === seat, this.threw[seat]);
+                        ```
+
+                        A move's 15 numbers: a throw's from discardFeatures, a card's from pegFeatures with everything it needs, all from this seat's point of view.
+                    - type: markdown
+                      instruction: |-
+                        ### 8. Questions you might have
+
+                        **Why divide every feature by something?** So each is about 0 to 1. A feature ten times bigger than the others would get ten times the effect on every weight update and swamp them while the weights are learned.
+
+                        **What is the bias feature, always 1, for?** It lets the brain learn a value for "a throw" or "a card" in general, so the other weights only have to learn differences.
+
+                        **Why can't the AI see your hand?** It would learn to rely on it and play brilliantly in training, then badly against a human whose hand it cannot see. Features come from known(seat) only.
+
+                        **Why three features that are the same for every card?** Q is the points still to come, not only the difference between cards. Without them, the throw would learn nothing about the crib from the first pegging move's value.
+
+                        **Do I have to run cribTable()?** No: CRIB_VALUE is its answer. The lesson's test runs it and checks they agree, so the table cannot be wrong.
             - id: GameStudioTask
               title: "Features: what the AI sees"
               props:
@@ -25060,6 +26576,7 @@ chapters:
           realWorldContext: "Linear function approximation is where TD-Gammon's ancestors began and how many game AIs still learn: a few well-chosen features and a weight each, learned from play. Its update is the same one deep reinforcement learning uses, with a network in place of the dot product."
         intuition:
           prose:
+            - "**The Try it task.** First the code that lets the game use a brain: the Opponent's brain field, and the rules only while there is none. Then training, saving and playing it, in Run › Train an agent…; then self-play, a third partner for your seat (partner = 'brain'); and an experiment with fewer hands."
             - "**A move's value is a weighted sum.** Q(s, a) = w₁φ₁ + w₂φ₂ + … + w₁₅φ₁₅: each feature times its weight, added up. With the finished brain, on a 5 holding K 2 9 4, the king is worth −8.93 and the others about −10.5 to −10.9 (cell 1). Q is the points the AI expects from here to the end of the hand, its points minus yours, so negative here means the hand is going your way; what matters is that the king is about 1.6 better, mostly its points now (+1.72)."
             - "**The target, as in lesson 9.1.** After a move the AI earns R before its next turn, and there it will choose among its legal moves, the best worth max Q′. So the move was worth about R + max Q′ (γ = 1: a hand's points count the same whenever they come); at the end of the hand there is no next move, and the target is just R. The error is δ = target − Q."
             - "**The update.** A table would move one cell by α δ. A linear Q moves every weight by α δ φᵢ: each weight in proportion to how much of its feature the move had. If the move scored better than expected (δ > 0), the features it had become more valuable; if worse, less. Cell 2 does one update by hand: Q −3.96, target −5.10, δ −1.14, and with α = 0.1 the bias falls by 0.114 and \"points now\" by 0.057 (half as much, since its feature was 0.5); the new Q is −4.13, closer to the target. This is called semi-gradient: the target also depends on w but is treated as fixed."
@@ -25107,7 +26624,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -25428,7 +26945,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -25815,6 +27332,59 @@ chapters:
                           else console.log('update(' + JSON.stringify(w) + ', ' + JSON.stringify(phi) + ', ' + target + ', ' + alpha + ') gave ' + JSON.stringify(got.map((x) => +x.toFixed(4))) + '; it should give ' + JSON.stringify(want) + '.')
                         }
                         console.log(ok === cases.length ? '✓ All 3 updates right: that is the whole learning rule.' : ok + ' of 3 right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 7. The code you wrote, line by line
+
+                        Most of this lesson happens in Run › Train an agent…, not in code: training makes the brain, one weight per feature, and Save as brain writes it into the project as brains/cribbage.json. The code is what lets the game use it.
+
+                        **scripts/opponent.js**
+
+                        ```js
+                          brain = 'brains/cribbage.json';
+                        ```
+
+                        Which brain is its own. The training window's Save as brain writes to this path, and `ai.has(this.brain)` asks whether the project has one there yet.
+
+                        ```js
+                            if (ai.training || ai.has(this.brain)) return;
+                        ```
+
+                        update() now plays by the rules only while it has no brain. Once there is one, Game Studio's agent runtime asks it each turn: the features of every legal move, w · φ for each, and the best (lesson 10.12 adds the difficulty).
+
+                        ```js
+                            lines.push(ai.has(this.brain) ? 'Its brain decides (brains/cribbage.json).' : 'No brain yet: it plays by the rules.');
+                        ```
+
+                        The developer view says which.
+
+                        **scripts/table.js**
+
+                        ```js
+                            this.hud.status.text = `You ${this.scores[YOU]}   AI ${this.scores[AI]}   Dealer: ${NAMES[this.dealer]}${ai.has(this.opponent.brain) ? '' : '   (no brain yet: the AI plays by rules)'}`;
+                        ```
+
+                        So does the status line, until there is one.
+
+                        ```js
+                            const brain = this.opponent.brain;
+                            else if (this.partner === 'brain' && ai.has(brain)) action = d.legal[ai.choose(brain, d.legal.map((a) => this.featuresFor(YOU, a)))];
+                        ```
+
+                        Self-play: with partner = 'brain', your seat is played by the same brain, from your side. `ai.choose(brain, features)` takes a list of each legal move's features and returns the place of the move it values most; `d.legal[…]` turns that place back into a move.
+                    - type: markdown
+                      instruction: |-
+                        ### 8. Questions you might have
+
+                        **Where is the learning code?** In Game Studio: Run › Train an agent… with the Features (linear Q) method. It plays thousands of hands, asking the Opponent for its legal moves, features, reward and whether it is done, and moves each weight towards what the moves turned out to be worth. The lesson's notebook does the same arithmetic in plain JavaScript.
+
+                        **Why does it train against the rules player?** It is a steady opponent: good enough that winning means something, the same every hand, so the AI's progress shows.
+
+                        **What does self-play add?** A partner that gets better as it does. Against the rules player it can only learn to beat the rules player; against itself it meets its own habits.
+
+                        **Why do 200 hands learn less than 2,000?** Each hand moves the weights a little; the rare situations (a 29 hand, a run of four pegged) need many hands to be seen often enough to learn from.
+
+                        **Can I look inside the brain?** WHAT IT LEARNED in the training window lists its weights by feature name; brains/cribbage.json holds them.
             - id: GameStudioTask
               title: Train the AI
               props:
@@ -26088,6 +27658,7 @@ chapters:
           realWorldContext: Shipping game AI means difficulty settings, debugging tools and honest claims about strength. Softmax (Boltzmann) choice is a standard way to tune a learned agent's strength and variety; "why did it do that" views built from a model's own structure are the simplest kind of explainable AI.
         intuition:
           prose:
+            - "**The Try it task.** A title screen (two more pictures in the table tool, an Overlay of panel, words and buttons) and DIFFICULTY, a temperature for each level that start() gives the Opponent; then remember(), every move it could have made, valued and ranked; then why it chose; then a measurement of Easy against Hard."
             - "**One brain, many strengths.** The brain gives every legal move a value. Hard takes the best. For an easier opponent, do not retrain: choose by softmax at a temperature τ, each move with probability proportional to e^(Q / τ). Because Q is in points, τ is too: a move worth 1 point less is e^(−1/τ) as likely. On a 5 holding K 2 9 4, Hard plays the king every time, Medium (τ 0.6) 86% of the time, Easy (τ 2) 44% (cell 1)."
             - "**Mistakes that look human.** An ε-random opponent (a random move 30% of the time) plays a terrible move as often as a nearly-best one. Softmax mostly picks among the good moves: with values −8.9, −9.0 and −14.0, τ 2 plays the first two 49% and 47% and the bad one 4%; ε 0.3 plays the bad one 10% (cell 1). Easy then feels like a weaker player, not a broken one."
             - "**In the game.** The Opponent's temperature field is set from DIFFICULTY (Easy 2, Medium 0.6, Hard 0) when you choose on the title screen. The engine uses it: an agent with a temperature above 0 has its brain's choice made by softmax. Measured on the same 300 deals against the rules player (cell 3): Hard +0.21 points a hand, Medium −0.23, Easy −1.95."
@@ -26154,7 +27725,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -26458,7 +28029,7 @@ chapters:
                         /** A card's name, such as 10♥. */
                         function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-                        /** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+                        /** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
                         function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
                         /** A fresh deck: the 52 cards in order. */
@@ -26821,6 +28392,188 @@ chapters:
                           else console.log('probabilities(' + JSON.stringify(qs) + ', ' + tau + ') = ' + JSON.stringify(got.map((p) => +p.toFixed(4))) + '; it should be ' + JSON.stringify(want) + '.')
                         }
                         console.log(ok === cases.length ? '✓ All 4 right, even with Q in the thousands.' : ok + ' of 4 right.')
+                    - type: markdown
+                      instruction: |-
+                        ### 6. The code you wrote, line by line
+
+                        In the order of the task's steps.
+
+                        **The title screen**
+
+                        ```js
+                        const panel = `<svg xmlns="http://www.w3.org/2000/svg" width="620" height="320" viewBox="0 0 620 320">
+                          <rect x="2" y="2" width="616" height="316" rx="18" fill="#08351f" stroke="#f4c542" stroke-width="4" opacity="0.96"/></svg>`;
+                          project.writeSvg('assets/button-small.svg', button(140, 48));
+                          project.writeSvg('assets/panel.svg', panel);
+                        project.runTool('scripts/tools/table.js')
+                        ```
+
+                        Two more pictures in the table tool, a dark green panel with a gold edge and a smaller button, and the tool run again (it writes all its pictures; the others come out the same).
+
+                        ```js
+                        const table = project.scene('scenes/cribbage.scene')
+                        table.add('CanvasLayer', { name: 'Overlay', layer: 2 })
+                        table.add('Node2D', { name: 'Title', parent: 'Overlay' })
+                        table.add('Sprite2D', { name: 'Panel', parent: 'Overlay/Title', position: { x: 480, y: 290 }, texture: 'assets/panel.svg' })
+                        table.add('Label', { name: 'Heading', parent: 'Overlay/Title', position: { x: 395, y: 160 }, fontSize: 40, color: '#f4c542', text: 'Cribbage' })
+                        table.add('Label', { name: 'Blurb', parent: 'Overlay/Title', position: { x: 215, y: 222 }, fontSize: 16, color: '#d1fae5', text: 'Play to 121 against an AI that learned the game by playing it.\nChoose how well it plays (or press 1, 2 or 3):' })
+                        ```
+
+                        A second CanvasLayer, on layer 2 so it is drawn over the HUD (layer 1), with a Node2D Title holding everything on it: hiding Title hides it all. A panel, a heading and a line of text (`\n` starts a new line).
+
+                        ```js
+                        for (const [name, x] of [['Easy', 330], ['Medium', 480], ['Hard', 630]]) {
+                          table.add('Sprite2D', { name, parent: 'Overlay/Title', position: { x, y: 330 }, texture: 'assets/button-small.svg' })
+                          table.add('Label', { name: name + 'Text', parent: 'Overlay/Title', position: { x: x - 6 * name.length, y: 319 }, fontSize: 18, color: '#3b2a00', text: name })
+                        table.add('Label', { name: 'Hint', parent: 'Overlay/Title', position: { x: 215, y: 390 }, fontSize: 13, color: '#a7f3d0', text: 'Click cards to choose them. D shows the developer view: the AI\'s hand, and what its brain\nthinks of every move it could make.' })
+                        ```
+
+                        Three buttons in a row, each a picture with its name over it, roughly centred (6 pixels back for each letter); and a hint.
+
+                        **scripts/table.js**
+
+                        ```js
+                        export const DIFFICULTY = { Easy: 2, Medium: 0.6, Hard: 0 };
+                          difficulty = 'Medium';
+                        ```
+
+                        How the AI chooses at each difficulty: its temperature. 0 always plays the move it values most; above 0 it chooses by softmax, a move worth 1 point less being e^(−1/τ) as likely (the math section). The table starts at Medium.
+
+                        ```js
+                              title: scene.get('Overlay/Title'),
+                            const title = this.phase === 'title';
+                            this.hud.title.visible = title;
+                        ```
+
+                        The title is shown exactly while the phase is 'title'.
+
+                        ```js
+                            if (ai.training) { this.newHand(); return; }
+                            this.phase = 'title';
+                        ```
+
+                        A new game now starts at the title screen (its cards cleared), except in training, which deals at once.
+
+                        ```js
+                            if (this.phase === 'title') {
+                              const names = Object.keys(DIFFICULTY);
+                              names.forEach((name, i) => { if (picked === i || (click && this.hits(`Overlay/Title/${name}`, 140, 48))) this.start(name); });
+                        ```
+
+                        At the title, key 1, 2 or 3 (the first three picks), or a click on a button, starts that difficulty.
+
+                        ```js
+                          start(difficulty) {
+                            this.difficulty = difficulty;
+                            this.opponent.temperature = DIFFICULTY[difficulty];
+                        ```
+
+                        start() sets the difficulty and the Opponent's temperature, then deals (newHand).
+
+                        ```js
+                            } else if (ai.training || this.autoplay) {
+                              if (this.phase === 'title') this.start(this.difficulty);
+                              else this.partnerMove();
+                            } else this.takeInput();
+                        ```
+
+                        When the game plays itself, the title is passed at the table's own difficulty.
+
+                        ```js
+                            const dealer = this.phase === 'title' ? '' : `   Dealer: ${NAMES[this.dealer]}   AI: ${this.difficulty}${ai.has(this.opponent.brain) ? '' : ' (no brain yet: it plays by rules)'}`;
+                            this.hud.status.text = `You ${this.scores[YOU]}   AI ${this.scores[AI]}${dealer}`;
+                            this.hud.cribLabel.text = this.phase === 'title' ? '' : this.dealer === YOU ? 'Your crib' : "AI's crib";
+                        ```
+
+                        The status line adds the difficulty, and says nothing of dealers or cribs at the title.
+
+                        **scripts/opponent.js**
+
+                        ```js
+                          temperature = 0;
+                            if (!ai.has(this.brain)) lines.push('No brain yet: it plays by the rules.');
+                            else lines.push(`Difficulty: ${t.difficulty} (temperature ${this.temperature})`);
+                        ```
+
+                        The agent's temperature: Game Studio's agent runtime chooses by it. The developer view shows it.
+
+                        **Every move it could have made**
+
+                        ```js
+                          moveName(seat, action) {
+                            if (action >= 15) return `play ${cardName(this.hands[seat][action - 15])}`;
+                            const [i, j] = THROWS[action];
+                            return `throw ${cardName(this.hands[seat][i])} ${cardName(this.hands[seat][j])}`;
+                        ```
+
+                        In table.js: a move in words, "play 7♣" or "throw 5♥ J♦".
+
+                        ```js
+                            this.last = null;
+                            if (!ai.training) this.remember(action);
+                          remember(action) {
+                            const t = this.table, d = t.decision(AI, true);
+                            this.last = { kind: d.kind, chosen: t.moveName(AI, action), ranked: [], why: [], over: '' };
+                            if (!ai.has(this.brain)) return;
+                        ```
+
+                        In opponent.js: it starts with nothing to remember. act() remembers each move before making it (not in training: nobody is watching, and it would slow training). What it decided between, and what it chose; with no brain, that is all there is.
+
+                        ```js
+                            const phis = d.legal.map((a) => this.features(a)), values = ai.values(this.brain, phis);
+                            this.last.ranked = d.legal.map((a, i) => ({ a, name: t.moveName(AI, a), q: values[i], phi: phis[i] })).sort((x, y) => y.q - x.q);
+                        ```
+
+                        Every legal move's features (φ, phi) and the brain's value of each, Q = w · φ (`ai.values`); then every move with its name, value and features, best first.
+
+                        ```js
+                            const last = this.last;
+                            if (!last) return lines.join('\n');
+                            lines.push('', `It chose: ${last.chosen}`);
+                            if (last.ranked.length) {
+                              lines.push(last.kind === 'throw' ? 'Its best throws, by Q:' : 'Every card it could play, by Q:');
+                              for (const m of last.ranked.slice(0, 5)) lines.push(`  ${m.name.padEnd(15)} ${m.q.toFixed(2)}`);
+                        ```
+
+                        explain() adds the last decision: what it chose, and the five best moves with their values (`padEnd` lines the numbers up).
+
+                        **Why**
+
+                        ```js
+                            const chosen = this.last.ranked.find((m) => m.a === action), other = this.last.ranked.find((m) => m.a !== action);
+                            if (!other) return;
+                            this.last.over = other.name;
+                            const w = ai.weights(this.brain);
+                        ```
+
+                        Its move, and the best move it did not choose (none if there was only one).
+
+                        ```js
+                            this.last.why = chosen.phi.map((x, i) => ({ name: this.featureNames[i].replace(/^\w+: /, ''), part: w[i] * (x - other.phi[i]) }))
+                              .filter((p) => Math.abs(p.part) >= 0.01).sort((a, b) => Math.abs(b.part) - Math.abs(a.part)).slice(0, 4);
+                        ```
+
+                        Q is a sum of weight × feature, so the difference between two moves' Q is the sum, over the features, of weight × (the difference in that feature). Each of those terms is a reason, named by its feature (without 'peg: ' or 'discard: '); the tiny ones are dropped, and the four biggest kept, biggest first.
+
+                        ```js
+                              if (last.over) lines.push(`Why, over ${last.over} (weight × difference):`);
+                              for (const p of last.why) lines.push(`  ${p.name.slice(0, 30).padEnd(31)} ${p.part >= 0 ? '+' : ''}${p.part.toFixed(2)}`);
+                        ```
+
+                        The developer view lists them, with their signs.
+                    - type: markdown
+                      instruction: |-
+                        ### 7. Questions you might have
+
+                        **Why one number for the difficulty, instead of three brains?** One brain trained once, played at three temperatures, costs nothing and keeps the three levels in order: Easy is the same player, making more of its nearly-as-good moves.
+
+                        **Does Hard always win?** No: cards decide a lot in cribbage. The last step measures it over 24 games each: Hard wins more often than Easy, which is what a difficulty should do.
+
+                        **Are the reasons in the developer view the real reasons?** For a linear brain, exactly: the difference in Q between two moves is the sum of the listed terms (and the small ones left out). That is a reason linear Q is good to learn from.
+
+                        **Why remember only when not training?** Nobody looks at the developer view while it trains, and ranking every move every turn would slow thousands of hands.
+
+                        **Why is the title a CanvasLayer on layer 2?** CanvasLayers draw in order of their layer: the HUD's words and the title over the cards, the title over the HUD.
             - id: GameStudioTask
               title: Difficulty, and why the AI chose
               props:

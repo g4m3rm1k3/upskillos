@@ -11,7 +11,7 @@ export function value(card) { return Math.min(card.rank, 10); }
 /** A card's name, such as 10♥. */
 export function cardName(card) { return RANK_NAME[card.rank] + SUIT_SYMBOL[card.suit]; }
 
-/** Its picture: assets/cards/10H.svg (the build writes all 52, and the back). */
+/** Its picture: assets/cards/10H.svg (the card tool, scripts/tools/cards.js, draws all 52, and the back). */
 export function cardImage(card) { return `assets/cards/${RANK_NAME[card.rank]}${card.suit}.svg`; }
 
 /** A fresh deck: the 52 cards in order. */

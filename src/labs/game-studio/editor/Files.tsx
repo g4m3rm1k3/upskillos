@@ -25,13 +25,14 @@ export function Files({ store }: { store: Store }) {
   useStore(store);
   const p = store.project;
   const file = useRef<HTMLInputElement>(null);
-  const [naming, setNaming] = useState<'scene' | 'script' | 'svg' | 'sound' | null>(null);
+  const [naming, setNaming] = useState<'scene' | 'script' | 'svg' | 'sound' | 'tool' | null>(null);
   const [rootType, setRootType] = useState('Node2D');
   if (!p) return null;
 
-  const create = (kind: 'scene' | 'script' | 'svg' | 'sound', raw: string) => {
+  const create = (kind: 'scene' | 'script' | 'svg' | 'sound' | 'tool', raw: string) => {
     setNaming(null);
     if (kind === 'svg') { store.newSvg(raw); return; }
+    if (kind === 'tool') { store.newTool(raw); return; }
     if (kind === 'sound') { store.newSound(raw); return; }
     const stem = raw.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
     if (!stem) return;
@@ -39,7 +40,7 @@ export function Files({ store }: { store: Store }) {
     else { store.act((d) => d.writeScript(`scripts/${stem}.js`, `// ${stem}.js\n`, `New script scripts/${stem}.js`)); store.openScript(`scripts/${stem}.js`); }
   };
   // A new scene's root can be any node type, as in Godot: a coin scene's root is an Area2D, a player's a CharacterBody2D.
-  const namer = (kind: 'scene' | 'script' | 'svg' | 'sound') => naming === kind && (
+  const namer = (kind: 'scene' | 'script' | 'svg' | 'sound' | 'tool') => naming === kind && (
     <div style={{ display: 'flex', gap: 4, margin: '2px 8px 4px 14px' }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) create(kind, (e.currentTarget.querySelector('input') as HTMLInputElement).value); }}>
       {kind === 'scene' && (
@@ -47,7 +48,7 @@ export function Files({ store }: { store: Store }) {
           {nodeTypes().filter((t) => t.addable).map((t) => <option key={t.type} value={t.type}>{t.type}</option>)}
         </select>
       )}
-      <input autoFocus data-testid={`new-${kind}-name`} placeholder={kind === 'scene' ? 'level_1' : kind === 'svg' ? 'card' : 'utils'}
+      <input autoFocus data-testid={`new-${kind}-name`} placeholder={kind === 'scene' ? 'level_1' : kind === 'svg' ? 'card' : kind === 'tool' ? 'build_cards' : 'utils'}
         onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') create(kind, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setNaming(null); }}
         style={{ flex: 1, minWidth: 0, background: C.bg, color: C.text, border: `1px solid ${C.accent}`, fontSize: 12, padding: '1px 4px' }} />
     </div>
@@ -71,13 +72,17 @@ export function Files({ store }: { store: Store }) {
           ))}
           {namer('scene')}
         </Group>
-        <Group title="scripts/" action={<Btn small testid="new-script-file" onClick={() => setNaming('script')} title="New script file">+</Btn>}>
+        <Group title="scripts/" action={<>
+          <Btn small testid="new-tool" onClick={() => setNaming('tool')} title="A new tool: a script in scripts/tools/ that builds part of the project when you press ▶ Run tool (52 card pictures in a loop, say), like a Godot EditorScript">New tool…</Btn>
+          <Btn small testid="new-script-file" onClick={() => setNaming('script')} title="New script file">+</Btn>
+        </>}>
           {p.scripts.map((x) => (
             <div key={x.path} data-testid={`file-${x.path}`} onClick={() => store.openScript(x.path)} style={item(store.tab.kind === 'script' && store.tab.path === x.path)}>
               <span style={{ color: C.warn, fontSize: 10 }}>JS</span><span>{x.path.replace(/^scripts\//, '')}{store.isScriptDirty(x.path) ? ' ●' : ''}</span>
             </div>
           ))}
           {namer('script')}
+          {namer('tool')}
         </Group>
         {(p.tilesets ?? []).length > 0 && (
           <Group title="tilesets/">

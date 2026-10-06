@@ -13,6 +13,9 @@ import { TASKS, chains, nextTask } from './index';
 import { gameStudioLink, parseTaskLink } from './links';
 import type { GameTask } from './types';
 import { TETRIS, tetrisStepCode } from './tetris';
+import { CRIBBAGE } from './cribbage';
+import { CB_CHAIN, CB_FINISHED, cbStepCode } from '../examples/cribbageBuild';
+import { cribbage } from '../examples/cribbage';
 import { QUEST_BUDDIES, qbStepCode } from './questBuddies';
 import { QB_CHAIN, QB_FINISHED } from '../examples/questBuddiesBuild';
 import { questBuddies } from '../examples/questBuddies';
@@ -74,6 +77,34 @@ describe('Tetris, step by step', () => {
       }
     });
   }
+});
+
+describe('Cribbage (chapter 10), step by step', () => {
+  for (const task of CRIBBAGE.filter((t) => CB_CHAIN.includes(t.id))) {
+    it(`"${task.title}": each step's code, from the start, passes that step and every one before it`, async () => {
+      for (let k = 0; k < task.steps.length; k++) {
+        const d = begin(task);
+        d.runCode('Steps', cbStepCode(task.id, k));
+        expect(problems(d.project)).toEqual([]);
+        const got = await evaluateTask(task, d.project, { ran: true, ...task.solvedEditor }, load);
+        expect(got.slice(0, k + 1), `${task.id} after step ${k + 1}`).toEqual(got.slice(0, k + 1).map(() => true));
+      }
+    }, 60000);
+  }
+});
+
+describe('Cribbage chapter 10 is one build, from an empty project', () => {
+  const built = (code: string) => { const d = new Doc(newProject('Cribbage')); d.runCode('Build', code); return JSON.stringify({ ...d.project, name: '' }); };
+  it('lists every task after the tour, in the course\'s order, and each starts where the one before ends', () => {
+    expect(CB_CHAIN).toEqual(CRIBBAGE.filter((t) => t.id !== 'crib-tour').map((t) => t.id));
+    const tasks = CB_CHAIN.map((id) => CRIBBAGE.find((t) => t.id === id)!);
+    expect(tasks[0].start).toBe('');
+    for (let i = 1; i < tasks.length; i++) expect(built(tasks[i].start), tasks[i].id).toBe(built(`${tasks[i - 1].start}\n${tasks[i - 1].solution}`));
+    const last = tasks[tasks.length - 1];
+    expect(cribbage.code).toBe(CB_FINISHED);
+    expect(built(cribbage.code)).toBe(built(`${last.start}\n${last.solution}`));
+    expect(CRIBBAGE.find((t) => t.id === 'crib-tour')!.start).toBe(cribbage.code);
+  });
 });
 
 describe('Quest Buddies (chapters 11 and 12), step by step', () => {

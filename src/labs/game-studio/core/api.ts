@@ -338,6 +338,12 @@ export interface ProjectApi {
   createTileset(path: string, opts: { image: string; tileWidth: number; tileHeight: number; margin?: number; spacing?: number; solid?: number[] }): TilesetHandle;
   /** An existing tileset: set its fields, e.g. project.tileset('tilesets/a.tileset').solid = [1, 2]. */
   tileset(path: string): TilesetHandle;
+  /**
+   * Run a tool: a script in scripts/tools/ whose default export is a function of the project, like a Godot
+   * EditorScript. It builds what is too repetitive to click: 52 card pictures in a loop, a board's 242 holes. The game
+   * imports it like any script, which only defines the function, so it does nothing while the game runs.
+   */
+  runTool(path: string): void;
 }
 
 export interface TilesetHandle { readonly path: string; image: string; tileWidth: number; tileHeight: number; margin: number; spacing: number; solid: number[] }
@@ -407,7 +413,7 @@ export function svgSize(source: string): { width: number; height: number } | str
 }
 
 export function projectApi(p: Project): ProjectApi {
-  return {
+  const api: ProjectApi = {
     get name() { return p.name; },
     set name(v: string) { if (!String(v).trim()) throw new Error('A project needs a name'); p.name = String(v).trim(); },
     setSettings(patch) {
@@ -521,7 +527,28 @@ export function projectApi(p: Project): ProjectApi {
       p.assets[i] = a;
       return a.id;
     },
+    runTool(path) {
+      if (!path.startsWith('scripts/tools/')) throw new Error(`"${path}" is not a tool: tools are scripts in scripts/tools/`);
+      const script = p.scripts.find((x) => x.path === path);
+      if (!script) throw new Error(`No script at "${path}"`);
+      toolFunction(path, script.source)(api);
+    },
   };
+  return api;
+}
+
+/**
+ * A tool script's default export, as a function. A tool runs in the editor, not as a module, so it cannot import
+ * other scripts: it is self-contained, and anything it needs it writes itself.
+ */
+export function toolFunction(path: string, source: string): (project: ProjectApi) => void {
+  if (/^\s*import\s/m.test(source)) throw new Error(`${path}: a tool cannot import other scripts; put what it needs in the tool itself`);
+  if (!/^export default\s/m.test(source)) throw new Error(`${path}: a tool needs export default function (project) { … }`);
+  const body = source.replace(/^export default\s+/m, 'const __tool = ').replace(/^export\s+/gm, '');
+  // eslint-disable-next-line no-new-func
+  const fn = new Function(`"use strict";\n${body}\nreturn __tool;`)() as unknown;
+  if (typeof fn !== 'function') throw new Error(`${path}: its default export should be a function (project) { … }`);
+  return fn as (project: ProjectApi) => void;
 }
 
 /**

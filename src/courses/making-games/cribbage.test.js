@@ -1,6 +1,9 @@
 // Chapter 10, "Cribbage": every notebook cell prints what its lesson says (the numbers in the prose come from these
 // runs), every challenge fails as given and passes when solved, and every Try it card opens its task.
 import { describe, expect, it } from 'vitest';
+import { CB_CHAIN, CB_STEPS } from '../../labs/game-studio/examples/cribbageBuild';
+import { CRIBBAGE } from '../../labs/game-studio/tasks/cribbage';
+import { writtenBy, walkthroughLines } from '../../labs/game-studio/tasks/stepLines';
 
 const LESSONS = Object.values(import.meta.glob('./10-cribbage/*.js', { eager: true, import: 'default' })).sort((a, b) => a.order - b.order);
 const cellsOf = (l) => l.intuition.visualizations.find((v) => v.id === 'JSNotebook').props.lesson.cells;
@@ -63,4 +66,20 @@ describe('chapter 10: Cribbage', () => {
     expect(outOf(12, 1).at(-1)).toBe('  adds up to                    +1.59');
     expect(outOf(12, 2)).toEqual(['Hard    τ 0   +0.21 points a hand against the rules player', 'Medium  τ 0.6 -0.23 points a hand against the rules player', 'Easy    τ 2   -1.95 points a hand against the rules player']);
   }, 120000);
+
+  it('every lesson explains every line its task wrote, and ends with questions a learner asks', () => {
+    // The standard's rule 4 (docs/game-studio-course-plan.md). The tour's own change is its solution.
+    const chain = CB_CHAIN.flatMap((task) => CB_STEPS[task].map((code) => ({ task, code })));
+    const tour = { task: 'crib-tour', code: CRIBBAGE.find((t) => t.id === 'crib-tour').solution };
+    for (const l of LESSONS) {
+      const cells = cellsOf(l), walk = cells.find((c) => c.type === 'markdown' && /The code you wrote, line by line/.test(c.instruction));
+      expect(walk, l.id).toBeDefined();
+      expect(cells.at(-1).instruction, l.id).toMatch(/Questions you might have/);
+      const shown = walkthroughLines(walk.instruction);
+      for (const task of l.intuition.visualizations.filter((v) => v.id === 'GameStudioTask').map((v) => v.props.task)) {
+        const missing = writtenBy(task === 'crib-tour' ? [...chain, tour] : chain, task).flatMap((w) => w.lines.filter((line) => !shown.has(line)).map((line) => `${w.file || 'Scene API'}: ${line}`));
+        expect(missing, `${l.id} (${task}) does not show these lines`).toEqual([]);
+      }
+    }
+  });
 });

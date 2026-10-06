@@ -2,6 +2,8 @@
 // these runs), every challenge fails as given and passes when solved, and every Try it card opens its task.
 import { describe, expect, it } from 'vitest';
 import { taskById } from '../../labs/game-studio/tasks';
+import { QB_CHAIN, QB_STEPS } from '../../labs/game-studio/examples/questBuddiesBuild';
+import { writtenBy, walkthroughLines } from '../../labs/game-studio/tasks/stepLines';
 
 const LESSONS = Object.values(import.meta.glob('./11-quest-buddies/*.js', { eager: true, import: 'default' })).sort((a, b) => a.order - b.order);
 const cellsOf = (l) => l.intuition.visualizations.find((v) => v.id === 'JSNotebook').props.lesson.cells;
@@ -19,6 +21,24 @@ describe('chapter 11: Quest Buddies', () => {
       expect(taskById(t.task), t.task).toBeDefined();
       expect(lesson.checkpoints.some((c) => c.id === t.checkpoint && c.type === 'lab'), t.checkpoint).toBe(true);
     });
+  });
+
+  it('every lesson explains every line its tasks wrote, and ends with questions a learner asks', () => {
+    // The standard's rule 4 (docs/game-studio-course-plan.md): each line a task's steps write is shown in its lesson's
+    // "the code you wrote, line by line" cell, so a change to the build that the walkthrough misses fails here.
+    const chain = QB_CHAIN.flatMap((task) => QB_STEPS[task].map((code) => ({ task, code })));
+    const tour = QB_STEPS['qb-tour'].map((code) => ({ task: 'qb-tour', code }));
+    for (const l of LESSONS) {
+      const cells = cellsOf(l), walk = cells.find((c) => c.type === 'markdown' && /The code you wrote, line by line/.test(c.instruction));
+      expect(walk, l.id).toBeDefined();
+      expect(cells.at(-1).instruction, l.id).toMatch(/Questions you might have/);
+      const shown = walkthroughLines(walk.instruction);
+      const tasks = l.intuition.visualizations.filter((v) => v.id === 'GameStudioTask').map((v) => v.props.task);
+      for (const task of tasks) {
+        const missing = writtenBy(task === 'qb-tour' ? [...chain, ...tour] : chain, task).flatMap((w) => w.lines.filter((line) => !shown.has(line)).map((line) => `${w.file || 'Scene API'}: ${line}`));
+        expect(missing, `${l.id} (${task}) does not show these lines`).toEqual([]);
+      }
+    }
   });
 
   it('every challenge fails as given and passes when solved', () => {

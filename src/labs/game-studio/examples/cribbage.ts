@@ -1,7 +1,7 @@
 // Example: Cribbage, a card game against an AI that learned to play it (docs/game-studio-learning-ai-plan.md).
 //
-// Nothing here is pixel art: every card, the board, the pegs and the buttons are SVG, written by the build code
-// (cribbage/build.js). The game is in ordinary project scripts (cribbage/*.js), each one a lesson's worth:
+// Nothing here is pixel art: every card, the board, the pegs and the buttons are SVG, drawn by two tool scripts
+// (cribbage/tools/cards.js and table.js, run in the editor). The game is in ordinary project scripts (cribbage/*.js):
 //   cards.js     the deck: cards as { rank, suit }, shuffling
 //   score.js     scoring the show and pegging
 //   table.js     the game: deal, discard, cut, pegging, the show, to 121; your clicks; the layout
@@ -10,6 +10,9 @@
 //   partner.js   players without a brain (random, rules): the practice partner and the yardstick
 //   opponent.js  the AI: a turn-based agent, driven by a linear Q brain, with a difficulty and a developer view
 // The trained brain (cribbage/brain.json) is in the project, so the finished AI plays from the start.
+//
+// The example's code is chapter 10's task steps, in order, from an empty project (examples/cribbageBuild.ts): the
+// lessons build exactly this game.
 
 import type { GameExample } from './types';
 import type { EnvSpec } from '../ml/env';
@@ -20,8 +23,8 @@ import PARTNER from './cribbage/partner.js?raw';
 import CARD_SPRITE from './cribbage/cardsprite.js?raw';
 import TABLE from './cribbage/table.js?raw';
 import OPPONENT from './cribbage/opponent.js?raw';
-import BUILD from './cribbage/build.js?raw';
 import BRAIN from './cribbage/brain.json';
+import { CB_FINISHED, CB_FINISHED_NO_BRAIN } from './cribbageBuild';
 
 /** The game's scripts, by project path. */
 export const CRIBBAGE_SCRIPTS: Record<string, string> = {
@@ -37,16 +40,9 @@ export const CRIBBAGE_SCRIPTS: Record<string, string> = {
 /** The trained brain: linear Q weights, one per feature (cribbage.brain.test.ts has the recipe, and checks it makes these). */
 export const CRIBBAGE_BRAIN = BRAIN as { actions: string[]; observation: string[]; method: 'linear-q'; policy: { kind: 'linear-q'; features: string[]; weights: number[] }; trained: { steps: number; score: number; random: number } };
 
-/**
- * The Scene API code: the scripts, then the art and the scene (build.js), then the brain if wanted. A task can start
- * from it with some scripts or pictures replaced (a module still to write, a card still to draw).
- */
-export function cribbageCode(opts: { brain?: boolean; scripts?: Record<string, string>; svgs?: Record<string, string> } = {}): string {
-  const sources = { ...CRIBBAGE_SCRIPTS, ...opts.scripts };
-  const scripts = Object.entries(sources).map(([path, src]) => `project.writeScript(${JSON.stringify(path)}, ${JSON.stringify(src)})`).join('\n');
-  const svgs = Object.entries(opts.svgs ?? {}).map(([path, src]) => `project.writeSvg(${JSON.stringify(path)}, ${JSON.stringify(src)})`).join('\n');
-  const brain = opts.brain === false ? '' : `\n// The AI's trained brain: one weight per feature (Run › Train an agent… made it).\nproject.saveBrain('brains/cribbage.json', ${JSON.stringify(CRIBBAGE_BRAIN)})\n`;
-  return `// Cribbage: the game is in scripts/, the art is SVG drawn below, and the AI's brain is in brains/.\n${scripts}\n\n${BUILD}${svgs ? `\n${svgs}\n` : ''}${brain}`;
+/** The finished game's code: with its trained brain, or without one (the AI plays by the rules, and a test trains one). */
+export function cribbageCode(opts: { brain?: boolean } = {}): string {
+  return opts.brain === false ? CB_FINISHED_NO_BRAIN : CB_FINISHED;
 }
 
 /** The AI as an environment: a turn-based agent, an episode one hand. */
@@ -64,6 +60,6 @@ export const cribbage: GameExample = {
     'Press ▶ Run, choose Easy, Medium or Hard, and play to 121. Click two cards to throw to the crib, then click cards to play them. The count, your pegs and the AI\'s are on the board at the top.',
     'Press D for the developer view: the AI\'s cards turn face up, and on the right is what its brain thinks of every move it could make, a value for each (Q, in points). Hard always plays its best; Easy and Medium sometimes pick a move that is nearly as good.',
     'Open scripts/score.js: every scoring rule is a short function. Open scripts/features.js: the numbers the AI sees about each move. Its brain is one weight per feature (brains/cribbage.json).',
-    'Run › Train an agent… with { "agent": "Opponent" } and the Linear Q method trains a new brain from nothing, against the rules player in scripts/partner.js. The lessons in Building Games › Cribbage build all of this step by step.',
+    'Run › Train an agent… with { "agent": "Opponent" } and the Linear Q method trains a new brain from nothing, against the rules player in scripts/partner.js. Open scripts/tools/cards.js: the tool that drew every card. The lessons in Building Games › Cribbage build all of this step by step, from an empty project.',
   ],
 };

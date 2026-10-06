@@ -3,6 +3,9 @@
 import { describe, expect, it } from 'vitest';
 import { taskById } from '../../labs/game-studio/tasks';
 import { rng } from '../../labs/game-studio/engine/random';
+import { QB_CHAIN, QB_STEPS } from '../../labs/game-studio/examples/questBuddiesBuild';
+import { QA_CHAIN, QA_STEPS } from '../../labs/game-studio/examples/questAdventureBuild';
+import { writtenBy, walkthroughLines } from '../../labs/game-studio/tasks/stepLines';
 
 const LESSONS = Object.values(import.meta.glob('./12-quest-buddies-adventure/*.js', { eager: true, import: 'default' })).sort((a, b) => a.order - b.order);
 const cellsOf = (l) => l.intuition.visualizations.find((v) => v.id === 'JSNotebook').props.lesson.cells;
@@ -16,6 +19,21 @@ describe('chapter 12: Quest Buddies: Adventure', () => {
     expect(tasks.map((t) => t.task)).toEqual(['qa-classes', 'qa-loot', 'qa-combat', 'qa-buddy', 'qa-copy', 'qa-match']);
     expect(LESSONS.map((l) => l.nextLesson)).toEqual(['mg12-002', 'mg12-003', 'mg12-004', 'mg12-005', 'mg12-006', null]);
     tasks.forEach((t, i) => { expect(t.lesson).toBe(LESSONS[i].id); expect(taskById(t.task), t.task).toBeDefined(); expect(LESSONS[i].checkpoints.some((c) => c.id === t.checkpoint && c.type === 'lab')).toBe(true); });
+  });
+
+  it('every lesson explains every line its task wrote, and ends with questions a learner asks', () => {
+    // The standard's rule 4 (docs/game-studio-course-plan.md); chapter 12's steps run after chapter 11's.
+    const chain = [...QB_CHAIN.flatMap((task) => QB_STEPS[task].map((code) => ({ task, code }))), ...QA_CHAIN.flatMap((task) => QA_STEPS[task].map((code) => ({ task, code })))];
+    for (const l of LESSONS) {
+      const cells = cellsOf(l), walk = cells.find((c) => c.type === 'markdown' && /The code you wrote, line by line/.test(c.instruction));
+      expect(walk, l.id).toBeDefined();
+      expect(cells.at(-1).instruction, l.id).toMatch(/Questions you might have/);
+      const shown = walkthroughLines(walk.instruction);
+      for (const task of l.intuition.visualizations.filter((v) => v.id === 'GameStudioTask').map((v) => v.props.task)) {
+        const missing = writtenBy(chain, task).flatMap((w) => w.lines.filter((line) => !shown.has(line)).map((line) => `${w.file || 'Scene API'}: ${line}`));
+        expect(missing, `${l.id} (${task}) does not show these lines`).toEqual([]);
+      }
+    }
   });
 
   it('every challenge fails as given and passes when solved', () => {
