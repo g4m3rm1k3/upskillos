@@ -55,6 +55,7 @@ DEFAULT_LIMITS = {
     'maxSnapshotChars': 200,
     'maxExpressions': 30000,         # expression values recorded in the whole run
     'maxExpressionsPerStep': 120,    # ...and between two events (a long comprehension)
+    'maxReadsPerStep': 200,          # container reads (x[i]) recorded between two events
 }
 
 _CONTAINERS = (list, tuple, dict, set, frozenset, collections.deque)
@@ -177,6 +178,7 @@ class Tracer:
         self.screen = None      # the pygame stand-in (codelens_pygame.Screen), if the program uses one
         self.expressions = []   # (expression id, depth, value) recorded since the previous event
         self.expression_count = 0
+        self.reads = []         # [object id, key] or [object id, row key, column] read since the previous event
 
     def record_expression(self, ident, value):
         """The rewritten program calls this with each sub-expression's value (see
@@ -187,6 +189,38 @@ class Tracer:
                 and not isinstance(value, _NOT_DATA):   # a function or module named in the code isn't a result
             self.expression_count += 1
             self.expressions.append([ident, self.depth, self.expression_value(value)])
+        return value
+
+    def record_read(self, container, index):
+        """The rewritten program calls this for every `container[index]` it reads (see
+        _ExpressionRecorder.visit_Subscript), and gets the item back. For an object CodeLens
+        already shows, it notes which item was read, in the same form the object's properties
+        are recorded (properties()): a list's position as text, a dict's key, a 2-D array's
+        row and column. That's how the Picture tab marks the cells a line looked at, such as
+        the three neighbours a dynamic-programming cell is built from."""
+        value = container[index]
+        if len(self.reads) >= self.limits['maxReadsPerStep']:
+            return value
+        if self.skip_lines and self.inside_skipped(sys._getframe(1)):
+            return value
+        small = self.ids.get(id(container))
+        if small is None:
+            return value
+        try:
+            if _is_small_array(container):
+                if isinstance(index, tuple) and len(index) == 2 and container.ndim == 2                         and all(isinstance(i, int) or _is_numpy_scalar(i) for i in index):
+                    row, column = (int(i) for i in index)
+                    row, column = row % container.shape[0], column % container.shape[1]
+                    self.reads.append([small, str(row), column])
+                elif isinstance(index, int) or _is_numpy_scalar(index):
+                    self.reads.append([small, str(int(index) % len(container))])
+            elif isinstance(container, (list, tuple, collections.deque)):
+                if isinstance(index, int) and not isinstance(index, bool):
+                    self.reads.append([small, str(index % len(container))])
+            elif isinstance(container, dict):
+                self.reads.append([small, index if isinstance(index, str) else repr(index)])
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass
         return value
 
     def expression_value(self, value):
@@ -496,6 +530,9 @@ class Tracer:
             self.input_read = []
         if self.screen is not None:
             self.screen.annotate(event)
+        if self.reads:
+            event['reads'] = self.reads   # what record_read() saw since the previous event
+            self.reads = []
         if self.expressions:
             # [[expression id, depth, value], ...] in evaluation order; the ids index the
             # result's `expressions` table. depth tells a line's own expressions apart from
@@ -674,6 +711,7 @@ def statement_info(source):
 # slices (`a[1:2]`), and constants (their value is in the code already).
 
 EXPR_HOOK = '__codelens_expr__'
+READ_HOOK = '__codelens_read__'
 
 
 class _ExpressionRecorder(ast.NodeTransformer):
@@ -737,6 +775,11 @@ class _ExpressionRecorder(ast.NodeTransformer):
             index.elts = [self.visit(e) if isinstance(e, ast.Slice) else self.wrap(e) for e in index.elts]
         else:
             node.slice = self.wrap(index)
+            if isinstance(node.ctx, ast.Load):
+                # x[i] read as a value becomes __codelens_read__(x, i): the same lookup, in
+                # the same order, also noting which item was read (Tracer.record_read).
+                call = ast.Call(func=ast.Name(id=READ_HOOK, ctx=ast.Load()), args=[node.value, node.slice], keywords=[])
+                return ast.copy_location(call, node)
         return node
 
     def visit_Attribute(self, node):
@@ -856,7 +899,8 @@ def run(source, limits=None, inputs=None):
         return result
     sys.settrace(tracer.trace)
     try:
-        exec(code, {'__name__': '__main__', '__builtins__': __builtins__, EXPR_HOOK: tracer.record_expression})
+        exec(code, {'__name__': '__main__', '__builtins__': __builtins__, EXPR_HOOK: tracer.record_expression,
+                    READ_HOOK: tracer.record_read})
     except _LimitReached as limit:
         result['status'] = 'limit'
         result['limit'] = {'kind': limit.kind, 'message': limit.message}

@@ -15,6 +15,7 @@ import { EXPLAIN, CONCEPT_GLOSSARY } from '../../../engines/js/eventStream.js'
 import { buildHeapSnapshot } from './renderer/heapSnapshot'
 import HeapGraph from './renderer/HeapGraph'
 import InspectorWorkspace from './InspectorWorkspace'
+import Picture from './Picture'
 import { readWorkspace, activateInspector, WORKSPACE_KEY, type InspectorId } from './inspectorLayoutState'
 import { outputAtStep } from './tracePresentation'
 import CallGraphView from './renderer/CallGraphView'
@@ -1226,6 +1227,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
 
   const inspectorTabs = [
     { id: 'explain' as const, label: 'Explain' }, { id: 'events' as const, label: 'Events' },
+    { id: 'picture' as const, label: 'Picture' },
     { id: 'output' as const, label: 'Output' }, { id: 'variables' as const, label: 'Values' },
     { id: 'heap' as const, label: 'Structures' }, { id: 'calltree' as const, label: 'Calls' },
     { id: 'scope' as const, label: 'Scope' }, ...CODE_TABS,
@@ -1371,6 +1373,10 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             )}
             {tabId === 'heap' && (
               <HeapPanel snapshot={heapSnapshot} heapDelta={currentEvent?.heapDelta} />
+            )}
+            {tabId === 'picture' && (
+              <Picture events={execution?.events ?? []} step={step} snapshot={dockSnapshot}
+                source={lastRunSourceRef.current ?? source} lang={lang} />
             )}
       {tabId === 'structure' && (lang === 'py'
         ? <PyStructureView source={source} execution={execution} />

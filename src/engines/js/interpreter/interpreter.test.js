@@ -209,3 +209,30 @@ describe('CodeLens scripted input', () => {
     expect(result.events.filter(e => e.inputRead).map(e => e.inputRead)).toEqual([['Ada'], ['36']])
   })
 })
+
+describe('assignment destructuring', () => {
+  it('assigns into array items and object fields, so a one-line swap really swaps', () => {
+    const result = run([
+      'const a = [5, 2, 9];',
+      'let i = 0, j = 2;',
+      '[a[i], a[j]] = [a[j], a[i]];',
+      'const o = { p: 0, q: 0 };',
+      '({ x: o.p, y: o.q = 7 } = { x: 5 });',
+      '[a[1], ...o.rest] = [4, 8, 7];',
+      'let u, v;',
+      '[u, [v]] = [1, [2]];',
+      'console.log(a.join(","), o.p, o.q, o.rest.length, u, v);',
+    ].join('\n'))
+    expect(result.error).toBeNull()
+    expect(result.output).toEqual(['9,4,5 5 7 2 1 2'])
+  })
+})
+
+describe('reads', () => {
+  it('reports the array items and fields a statement read, for the Picture tab', () => {
+    const result = run('const a = [5, 2, 9]\nconst t = a[2] + a[0]\nconst n = a.length')
+    const id = result.events.flatMap(e => e.heapDelta ?? []).find(d => d.op === 'create').objectId
+    const reads = result.events.filter(e => e.reads).map(e => e.reads)
+    expect(reads).toEqual([[[id, '2'], [id, '0']]])   // length isn't an item
+  })
+})

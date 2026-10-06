@@ -1,4 +1,4 @@
-export const INSPECTOR_IDS = ['explain', 'events', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'] as const
+export const INSPECTOR_IDS = ['explain', 'events', 'picture', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'] as const
 export type InspectorId = typeof INSPECTOR_IDS[number]
 export interface InspectorPane { tabs: InspectorId[]; active: InspectorId | null }
 export interface InspectorWorkspace {
@@ -13,7 +13,7 @@ export function defaultWorkspace(): InspectorWorkspace {
   return {
     panes: [
       { tabs: ['explain', 'events'], active: 'explain' },
-      { tabs: ['output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'], active: 'output' },
+      { tabs: ['picture', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'], active: 'picture' },
     ],
     direction: 'row', sizes: [1, 1],
   }
@@ -33,6 +33,14 @@ export function restoreWorkspace(value: unknown): InspectorWorkspace {
     })
     return { tabs, active: tabs.includes(pane?.active as InspectorId) ? pane.active! : tabs[0] ?? null }
   })
+  // The Picture tab arrived after layouts were first saved: give it the front of the last pane,
+  // where the default layout puts it, rather than the end of the first.
+  if (!seen.has('picture')) {
+    const last = panes[panes.length - 1]
+    last.tabs.unshift('picture')
+    last.active = 'picture'
+    seen.add('picture')
+  }
   panes[0].tabs.push(...INSPECTOR_IDS.filter(id => !seen.has(id)))
   if (!panes[0].active) panes[0].active = panes[0].tabs[0] ?? null
   return {

@@ -11,6 +11,7 @@
 import type { Lang } from './types'
 import { SNIPPET_CATEGORIES } from './snippets'
 import { LEARNING_EXAMPLES } from './learningExamples'
+import { ALGORITHM_EXAMPLES } from './algorithmLibrary'
 
 export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 
@@ -26,7 +27,9 @@ export interface LibraryVariant {
 export interface LibraryExample {
   id: string
   title: string
-  group: 'Data Structures' | 'Algorithms' | 'Design Patterns' | 'Functional Programming' | 'Input and Games' | 'Reinforcement Learning' | 'React Internals'
+  group: 'Data Structures' | 'Algorithms' | 'Sorting and Shuffling' | 'Searching and Two Pointers' | 'Dynamic Programming'
+    | 'Graphs' | 'Backtracking' | 'Game Logic' | 'Machine Learning' | 'Design Patterns' | 'Functional Programming'
+    | 'Input and Games' | 'Reinforcement Learning' | 'React Internals'
   difficulty: Difficulty
   /** What the example teaches, in a few sentences. */
   concept: string
@@ -59,6 +62,7 @@ const lines = (...text: string[]) => text.join('\n')
 
 export const LIBRARY: LibraryExample[] = [
   ...LEARNING_EXAMPLES,
+  ...ALGORITHM_EXAMPLES,
   // ── Data structures ────────────────────────────────────────────────────────
   {
     id: 'linked-list',

@@ -149,6 +149,9 @@ class Interpreter {
     // prompt() answers, from the CodeLens Input box (src/labs/codelens/codelens/scriptedInput.ts).
     this.stdin    = Array.isArray(options.stdin) ? [...options.stdin] : []
     this.inputRead = []  // answers read since the previous event, reported as `inputRead`
+    // Items read with a[i] or obj.field since the previous event, as [objectId, key], reported as
+    // `reads` (CodeLens's Picture tab marks them: src/labs/codelens/codelens/pictureModel.ts).
+    this.reads    = []
   }
 
   // ── Execution entry ────────────────────────────────────────────────────────
@@ -816,12 +819,60 @@ class Interpreter {
     } else if (target.type === 'MemberExpression') {
       this._memberSet(target, value, env)
     } else if (target.type === 'ArrayPattern' || target.type === 'ObjectPattern') {
-      const pairs = this._destructure(target, value, env, 'assign')
-      for (const [n, v] of pairs) {
-        try { env.assign(n, v) } catch { env.define(n, v, 'var') }
-      }
+      this._assignPattern(target, value, env)
     }
     return value
+  }
+
+  // Assignment destructuring: [a[i], a[j]] = [a[j], a[i]] or ({ x: p.x } = point). Unlike a
+  // declaration (_destructure), each target can be anything assignable, a variable, a.b, a[i] or
+  // another pattern, so each goes through _doAssign: a swap of two array items really swaps them.
+  _assignPattern(pattern, value, env) {
+    if (pattern.type === 'ArrayPattern') {
+      const items = this._toIterable(value)
+      pattern.elements.forEach((el, i) => {
+        if (!el) return
+        if (el.type === 'RestElement') {
+          const rest = items.slice(i)
+          const ref  = this.heap.allocate('Array', { length: rest.length })
+          rest.forEach((v, j) => this.heap.set(ref, String(j), v))
+          this._assignTarget(el.argument, ref, env)
+        } else if (el.type === 'AssignmentPattern') {
+          this._assignTarget(el.left, items[i] !== undefined ? items[i] : this._evalExpr(el.right, env), env)
+        } else {
+          this._assignTarget(el, items[i], env)
+        }
+      })
+    } else {
+      const used = new Set()
+      for (const prop of pattern.properties) {
+        if (prop.type === 'RestElement') {
+          const rest = this.heap.allocate('Object', {})
+          if (isRef(value)) {
+            for (const k of this.heap.ownKeys(value)) if (!used.has(k)) this.heap.set(rest, k, this.heap.get(value, k))
+          }
+          this._assignTarget(prop.argument, rest, env)
+          continue
+        }
+        const key = String(prop.computed ? this._evalExpr(prop.key, env) : prop.key.name ?? prop.key.value)
+        used.add(key)
+        const v = isRef(value) ? this.heap.get(value, key) : value?.[key]
+        const target = prop.value ?? prop.key
+        if (target.type === 'AssignmentPattern') {
+          this._assignTarget(target.left, v !== undefined ? v : this._evalExpr(target.right, env), env)
+        } else {
+          this._assignTarget(target, v, env)
+        }
+      }
+    }
+  }
+
+  _assignTarget(target, value, env) {
+    // Assigning to a name that was never declared makes it (sloppy-mode JavaScript), as before.
+    if (target.type === 'Identifier') {
+      try { env.lookup(target.name) } catch { env.define(target.name, undefined, 'var') }
+    }
+    this._doAssign(target, value, env)
   }
 
   _evalConditional(node, env) {
@@ -891,6 +942,9 @@ class Interpreter {
         if (heapVal?.__kind === 'accessor') {
           if (!heapVal.getter) return undefined
           return this._apply(heapVal.getter, [], obj, node, env)
+        }
+        if (this.reads.length < 200 && prop !== 'length' && heapVal?.__kind !== 'function' && heapVal?.__kind !== 'native') {
+          this.reads.push([obj.objectId, prop])
         }
         return heapVal
       }
@@ -1946,6 +2000,10 @@ class Interpreter {
     if (this.inputRead.length) {
       event.inputRead = this.inputRead
       this.inputRead = []
+    }
+    if (this.reads.length) {
+      event.reads = this.reads
+      this.reads = []
     }
     if (Number.isFinite(this.limits.maxTraceChars)) {
       const eventChars = JSON.stringify(event).length

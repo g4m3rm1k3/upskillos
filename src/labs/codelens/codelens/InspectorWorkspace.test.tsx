@@ -11,10 +11,10 @@ function Harness() {
   const [state, setState] = useState(defaultWorkspace)
   return <InspectorWorkspace state={state} onChange={setState} tabs={INSPECTOR_IDS.map(id => ({ id, label: id }))} render={id => <p>{id} content</p>} />
 }
-it('shows explain beside output and supports dragging to a new pane', () => {
+it('shows explain beside the picture and supports dragging to a new pane', () => {
   render(<Harness />)
   expect(screen.getByText('explain content')).toBeTruthy()
-  expect(screen.getByText('output content')).toBeTruthy()
+  expect(screen.getByText('picture content')).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Number of inspector panes'), { target: { value: '3' } })
   const data = new Map<string, string>()
   const dataTransfer = { setData: (k: string, v: string) => data.set(k, v), getData: (k: string) => data.get(k), types: ['application/x-codelens-inspector'] }

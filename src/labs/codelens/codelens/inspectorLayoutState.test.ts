@@ -25,6 +25,13 @@ describe('inspector layout', () => {
     expect(repaired.panes[0].active).toBe('output')
     expect(repaired.sizes).toEqual([1, 1])
   })
+  it('puts the Picture tab at the front of the last pane of a layout saved before it existed', () => {
+    const saved = { panes: [{ tabs: ['explain', 'events'], active: 'explain' }, { tabs: ['output', 'heap'], active: 'heap' }], direction: 'row', sizes: [1, 1] }
+    const restored = restoreWorkspace(saved)
+    expect(restored.panes[1].tabs.slice(0, 3)).toEqual(['picture', 'output', 'heap'])
+    expect(restored.panes[1].active).toBe('picture')
+    expect(restored.panes.flatMap(p => p.tabs).filter(t => t === 'picture')).toHaveLength(1)
+  })
 })
 
 describe('trace time', () => {
