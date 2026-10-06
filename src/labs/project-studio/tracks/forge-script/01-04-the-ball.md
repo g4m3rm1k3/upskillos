@@ -225,7 +225,7 @@ long side   = √90,000 = 300          (because 300 × 300 = 90,000)
 
 `ball.center = (round(ball_x), round(ball_y))` places the 12 × 12 `Rect` so that its centre is on the float position. The `Rect` is used for drawing and, soon, for collisions. `pygame.draw.ellipse` draws the largest ellipse that fits in a rectangle, which for a square is a circle.
 
-> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 46) work.
+> **Engineer:** position and velocity, moved by velocity × time each frame, is the whole of motion in a game. Gravity (Chapter 12) will change velocity by acceleration × time in exactly the same way. The pattern, *state updated from its rate of change, a small step at a time*, is also how physics simulations, animations and even some machine learning (Chapter 47) work.
 
 ```check
 contains breakout.py "ball_x += ball_vx * dt" -- Move the ball by ball_vx * dt and ball_vy * dt each frame.

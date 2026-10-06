@@ -248,7 +248,7 @@ def load_level(path: Path) -> list[Brick]:
 
 **Understand.** `LEVELS = Path(__file__).parent / "levels"`: the `levels` folder **next to this module**, found from the module's own location (lesson 2.1's `Path(__file__)`). Not from the current folder: that would be lesson 0.1's hidden input, and the game would only find its levels when started from the right place.
 
-One honest caveat. This works because lesson 4.3 installed the game with `pip install -e .`: an **editable** install runs the code from your project folder, so `breakout/levels/` is right there next to `level.py`. A normal install copies the package somewhere else, and setuptools copies only the files it's told about: Python files, by default, not `.txt` level files. Shipping the game to someone else means listing its data files (setuptools calls them **package data**), which Chapter 54, on exporting a game, does.
+One honest caveat. This works because lesson 4.3 installed the game with `pip install -e .`: an **editable** install runs the code from your project folder, so `breakout/levels/` is right there next to `level.py`. A normal install copies the package somewhere else, and setuptools copies only the files it's told about: Python files, by default, not `.txt` level files. Shipping the game to someone else means listing its data files (setuptools calls them **package data**), which Chapter 55, on exporting a game, does.
 
 `load_level(path)` reads a file and hands the text to `parse_level`. `Path.read_text(encoding="utf-8")` opens the file, decodes its bytes as UTF-8, and returns the text, closing the file again: three steps in one call, the same as the `with open(...)` block from earlier in this lesson.
 

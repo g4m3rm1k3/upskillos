@@ -1722,7 +1722,7 @@ print(b)
 
 The usual advice, "prefer composition to inheritance", comes from exactly this: inheritance shares *everything*, composition shares only what you choose. Chapter 10 uses inheritance where it fits, for the node types of the engine.
 
-> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 21) and a machine-learning agent (Chapter 43).
+> **Engineer:** the `Game` object is the **model** of the game: its state and its rules, with nothing about screens or keyboards. `main` and `draw` are the edges that connect the model to the outside world. Separating the model from input and output is the most important structural idea in this series: it's what will let one engine run under a test, a game window, an editor (Chapter 21) and a machine-learning agent (Chapter 44).
 
 ```check
 contains breakout.py "class Game:"

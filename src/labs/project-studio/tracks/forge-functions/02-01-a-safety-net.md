@@ -32,7 +32,7 @@ Then install, exactly as in lesson 0.2:
 pytest 9.1.1
 ```
 
-**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, until it isn't: if a new `pluggy` comes out next month with a change pytest didn't expect, a fresh install on another machine gets it, and pytest breaks there but not here. `pip freeze` (lesson 0.2) shows the exact versions you have today, and Chapter 56 shows how to pin everything when a release needs to be exactly reproducible.
+**Understand: dependencies of dependencies.** pip installs more than pytest. Run `.venv\Scripts\python -m pip list` and you'll see `pluggy`, `iniconfig`, `packaging`, `colorama` and `Pygments` too. pytest needs them, so pip installed them as well: they're **transitive dependencies**, the dependencies of your dependencies. `requirements.txt` pins only the packages *you* use directly; the versions of the others are chosen by pip on the day. That's usually fine, until it isn't: if a new `pluggy` comes out next month with a change pytest didn't expect, a fresh install on another machine gets it, and pytest breaks there but not here. `pip freeze` (lesson 0.2) shows the exact versions you have today, and Chapter 57 shows how to pin everything when a release needs to be exactly reproducible.
 
 ```check
 contains requirements.txt "pytest==9.1.1"

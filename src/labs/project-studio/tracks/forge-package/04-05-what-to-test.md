@@ -383,7 +383,7 @@ Read it before running it. For each of three mistakes, it:
 4. runs `tests/test_boundaries.py` against the damaged copy, in that folder, so `import breakout` finds the copy. Why the copy, when lesson 4.3's editable install makes `import breakout` find your real project from anywhere? Because `-m` puts the current folder, the copy, first on `sys.path`, and Python's normal search through `sys.path` happens **before** the editable install's finder is asked: the finder was added at the **end** of `sys.meta_path`, a second list: of **finders**, the objects Python asks in turn to find a module. `.venv\Scripts\python -c "import sys; print(sys.meta_path)"` shows it: `PathFinder`, the finder that searches the folders in `sys.path`, comes before the editable install's `_EditableFinder`. A `breakout` found on `sys.path` wins. `-p no:cacheprovider` stops pytest writing its `.pytest_cache` folder into the copy, a little noise and time saved;
 5. counts the mistake as **caught** if the tests fail (a non-zero exit code), and **missed** if they still pass.
 
-A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 57 uses a full tool for it on the whole project.
+A test that passes against wrong code is a test that isn't testing; this tool makes each wrong version on purpose and checks that your tests notice. The idea has a name, **mutation testing**, and Chapter 58 uses a full tool for it on the whole project.
 
 ```check
 file check_walls.py -- Click "Create provided check_walls.py" above.

@@ -456,7 +456,7 @@ packages = ["breakout"]
 
 pygame-ce is now written down in two places: here, and in `requirements.txt`. They do different jobs. `requirements.txt` is how *this* development environment is built, with every tool at an exact version; `pyproject.toml`'s `dependencies` is what anyone installing the game needs to run it. The next step connects them.
 
-A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 56 is about releases and what changing it means.
+A **version** number follows lesson 0.2's semantic versioning: 0.1.0 means "early, not yet promised to stay the same". Chapter 57 is about releases and what changing it means.
 
 ```check
 file pyproject.toml

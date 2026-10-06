@@ -253,7 +253,7 @@ pygame.quit()
 
 If a frame's work takes **longer** than 16.7 ms, `tick` doesn't sleep, and the game runs slower than 60 frames a second. Nothing makes up the lost time.
 
-> **Engineer:** don't do work nobody will see. A game that keeps one core fully busy drains a laptop's battery and heats the machine for nothing. The same idea, *do only the work that has an effect*, comes back when the game has hundreds of objects (Chapter 14) and when training an agent wants the opposite: no sleeping at all, as fast as possible (Chapter 43).
+> **Engineer:** don't do work nobody will see. A game that keeps one core fully busy drains a laptop's battery and heats the machine for nothing. The same idea, *do only the work that has an effect*, comes back when the game has hundreds of objects (Chapter 14) and when training an agent wants the opposite: no sleeping at all, as fast as possible (Chapter 44).
 
 ```check
 contains breakout.py "clock.tick(60)" -- Make a pygame.time.Clock() before the loop, and call clock.tick(60) once per pass.
