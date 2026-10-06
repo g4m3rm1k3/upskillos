@@ -1,6 +1,6 @@
 # From Python Scripts to C++ Games and Vulkan
 
-Status: **complete-path curriculum draft, not a published or verified lesson series**. Drafted 2026-10-05 at the learner's request. The existing Dice Duel track is implemented; it is source material for the terminal part, not evidence that this expanded path has been authored. No new lessons are registered by this document.
+Status: **implementation started; the full path remains a curriculum draft**. Drafted 2026-10-05 at the learner's request. On 2026-10-06 the opening and first foundations chapter (A00–A05) were implemented in Project Studio. Later chapters remain planned. The existing Dice Duel track stays separate while the script-writer foundations are expanded.
 
 ## The learner and the destination
 
@@ -141,9 +141,9 @@ Preserve existing progress identities. Add foundational tracks or new bridge les
 | Work | Status | Completion evidence |
 |---|---|---|
 | Entire-path goals, lesson maps, vocabulary, classes and mastery gates | Drafted here | Editorial review and internal links |
-| Project showcases before the first code lesson | Storyboards drafted; actual media not produced | Verified project capture, captions, rules, first decision and learner goal |
+| Project showcases before the first code lesson | A00 has an interactive rule preview; later showcases remain storyboards | A00's browser rules are checked against the completed C++ game; it explicitly uses a fixed opponent, not a trained model |
 | Existing Dice Duel implementation | Implemented previously; needs baseline expansion | Existing compiler walkthrough, not a substitute for curriculum audit |
-| Part A foundations and migration | Not authored | Small-step lessons, independent tasks and real compiler walkthrough |
+| Part A foundations and migration | A00–A05 implemented; subsequent foundations and migration not authored | Small-step lessons, independent tasks and real compiler walkthrough |
 | Part B SDL3 | Not authored | Pinned dependency setup, game tests, bounded smoke runs and visual checks |
 | Part C SDL GPU | Not authored | Shader compilation, CPU references, GPU observations and backend reporting |
 | Part D Vulkan | Not authored | Feature checks, validation runs, lifetime/resize checks and presentation review |
@@ -151,6 +151,23 @@ Preserve existing progress identities. Add foundational tracks or new bridge les
 Implement in prerequisite order, one chapter at a time, after review of this complete draft. For each chapter, author the independent task and reviewer tests first, then derive the small explanations needed to solve it. Try plausible wrong implementations. Walk the whole chapter in a fresh folder and inspect the actual lesson in Project Studio. Follow [repository verification guidance](../AGENTS.md) and regenerate catalog facts if discovered content is added. Do not mark a chapter complete while compiler or hardware checks are skipped.
 
 Curriculum review must ask: could a Python script writer explain every new token in the first guided edit? Could they solve the final task with the example hidden? Does the next chapter rely on anything not yet taught? These questions take precedence over publishing speed.
+
+## Implemented entry chapter — 2026-10-06
+
+Open Project Studio and select **C++ Games — From Python Scripts to Vulkan**, then **Start here · Meet the game and write C++**. A00 opens on a playable rule preview before installation. A01–A05 teach compilation, output, values/types, extraction failure, decisions and functions. They include visible file comparisons, predictions, purposeful mistakes and independent practice. The chapter ends with a mastery task and a clear notice that subsequent chapters are being authored; it does not silently continue into the faster legacy track.
+
+The showcase uses repeatable teaching dice and a fixed bank-at-four opponent. Its bank/bust/win branches and legal state transitions are tested against the actual completed C++ rules. It does not claim to demonstrate a trained policy or a completed graphical sequel.
+
+Author [the entry chapter source](../scripts/author-dice-start.mjs), then run `node scripts/author-dice-start.mjs` to regenerate Markdown and author-side walkthrough fixtures. Hidden reference answers are test fixtures, not files supplied to learners. Existing published lesson identities are unchanged.
+
+Verification commands and results:
+
+- `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceStart.desktop.test.js src/labs/project-studio/series.test.js` printed `Test Files 2 passed (2)` and `Tests 14 passed (14)`. The real C++ walkthrough ran without skips, including wrong-answer trials.
+- `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceStart.test.js src/labs/project-studio/dicePreview.test.jsx src/labs/project-studio/dicePreviewParity.desktop.test.js src/labs/project-studio/figures.test.jsx src/labs/project-studio/diceCppPanel.test.jsx` printed `Test Files 5 passed (5)` and `Tests 18 passed (18)`. This includes compiled C++/browser rule parity, game controls, lesson discovery, small edits and the existing live-diff regression.
+- The runs printed existing Vite/esbuild deprecation and outdated Browserslist warnings. No production build or non-Windows compiler verification is claimed.
+- After a prose-only refinement to the practice instructions, `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceStart.test.js src/labs/project-studio/series.test.js` printed `Test Files 2 passed (2)` and `Tests 9 passed (9)`.
+- Browser verification opened the new series, played the opener's bank comparison (score 9, pot 0, opponent next), inspected the visible first-file diff, revealed a progressive hint without a solution, and checked the remaining lesson entry steps. The temporary development server was stopped after verification.
+- Regenerated lesson titles, IDs and project facts using their Node scripts, then ran each with `--check`; all reported current data. The inventory continues to report its pre-existing content problems. `node scripts/check-docs.mjs` passed for the contributor documents; the path and terminal-map documents also passed an explicit check.
 
 ## Draft verification
 

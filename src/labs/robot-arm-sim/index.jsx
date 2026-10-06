@@ -61,7 +61,7 @@ export const meta = {
 
 export default function RobotArmSimEntry({ onBack }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 20% 10%, #091520 0%, #07090f 55%, #0a1008 100%)', overflow: 'hidden', zIndex: 50, display: 'flex', justifyContent: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 20% 10%, #091520 0%, #07090f 55%, #0a1008 100%)', overflow: 'hidden', zIndex: 1700, display: 'flex', justifyContent: 'center' }}>
       <CircuitBg />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '1300px', height: '100%' }}>
         <RobotArmLab onBack={onBack} />

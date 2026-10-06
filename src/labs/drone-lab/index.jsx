@@ -42,7 +42,7 @@ export const meta = {
 
 export default function DroneLabEntry({ onBack }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 30% 0%, #091825 0%, #07090f 60%, #080a14 100%)', overflow: 'hidden', zIndex: 50, display: 'flex', justifyContent: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 30% 0%, #091825 0%, #07090f 60%, #080a14 100%)', overflow: 'hidden', zIndex: 1700, display: 'flex', justifyContent: 'center' }}>
       <SkyBg />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '1400px', height: '100%' }}>
         <DroneLab onBack={onBack} />

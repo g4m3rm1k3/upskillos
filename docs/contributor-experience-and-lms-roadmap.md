@@ -21,6 +21,8 @@ Status markers:
 
 ### Last verified baseline
 
+- [x] **C++ games entry chapter (2026-10-06):** implemented the game-first opening and initial C++ foundations for Python script writers. Includes a playable, explicitly rule-based preview, incremental file diffs, explanations, predictions, experiments and independent challenges. Real compiler walkthroughs and browser/C++ rule-parity tests pass. Later classes, project structure, SDL3 and Vulkan chapters remain planned in [the learning path](cpp-games-learning-path.md).
+
 - [x] **Install and Studio baseline audit (2026-10-03):** regenerated missing lockfile peers with current npm and verified isolated Windows/Linux dependency selection; excluded learner walkthrough fixtures from the route scanner. Clean production build, grouped Studio unit tests, compiled C++ foundations and a live matplotlib probe were checked. Remaining findings and exact verification are in [the baseline audit](baseline-audit-2026-10-03.md).
 
 | Check | Result on 2026-09-26 | Meaning |

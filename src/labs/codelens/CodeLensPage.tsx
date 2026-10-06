@@ -70,7 +70,7 @@ export default function CodeLensPage() {
       }`}
       style={{
         background: '#080c14',
-        zIndex: 50,
+        zIndex: 1700,
       }}
     >
       <CodeLens

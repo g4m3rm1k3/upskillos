@@ -137,7 +137,7 @@ export default function RobotArmLabPage() {
       inset: 0,
       background: 'radial-gradient(ellipse at 20% 10%, #091520 0%, #07090f 55%, #0a1008 100%)',
       overflow: 'hidden',
-      zIndex: 50,
+      zIndex: 1700,
       display: 'flex',
       justifyContent: 'center',
     }}>

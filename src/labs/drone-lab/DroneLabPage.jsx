@@ -83,7 +83,7 @@ export default function DroneLabPage() {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center bg-slate-50 dark:bg-[#07090f] overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[1700] flex justify-center bg-slate-50 dark:bg-[#07090f] overflow-hidden font-sans">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_30%_0%,rgba(14,165,233,0.1)_0%,transparent_60%)] dark:bg-[radial-gradient(ellipse_at_30%_0%,#091825_0%,transparent_60%)] z-0" />
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.03] z-0"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 39px,currentColor 39px,currentColor 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,currentColor 39px,currentColor 40px)' }} />

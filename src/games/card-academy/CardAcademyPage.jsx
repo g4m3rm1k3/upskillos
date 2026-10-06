@@ -111,7 +111,7 @@ export default function CardAcademyPage() {
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'auto',
-      zIndex: 50,
+      zIndex: 1700,
     }}>
       <CardsBg />
       <div style={{ position: 'relative', zIndex: 1 }}>

@@ -96,7 +96,7 @@ export default function CardQuestPage() {
       alignItems: 'flex-start',
       justifyContent: 'center',
       overflow: 'auto',
-      zIndex: 50,
+      zIndex: 1700,
     }}>
       <DiceParticles />
       {/* Back to Games button — always visible, top-left corner */}

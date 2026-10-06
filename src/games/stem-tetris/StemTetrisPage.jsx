@@ -118,7 +118,7 @@ export default function StemTetrisPage() {
       inset: 0,
       background: 'radial-gradient(ellipse at 20% 30%, #1a0533 0%, #05070f 55%, #0a0118 100%)',
       overflow: 'auto',
-      zIndex: 50,
+      zIndex: 1700,
     }}>
       <TetrisBg />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '16px 0' }}>

@@ -11,7 +11,7 @@ export const meta = {
 
 export default function DSAArraysLabEntry({ onBack }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#080c0f', overflow: 'hidden', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#080c0f', overflow: 'hidden', zIndex: 1700 }}>
       <DSA01Arrays onBack={onBack} />
     </div>
   )

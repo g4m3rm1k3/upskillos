@@ -781,7 +781,7 @@ export default function AppShell({ children }) {
             <TutorPanel lesson={null} />
 
             {footballOpen && (
-              <div className="fixed inset-0 z-[200] flex flex-col bg-slate-950 overflow-auto">
+              <div className="fixed inset-0 z-[1700] flex flex-col bg-slate-950 overflow-auto">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🏈</span>
@@ -805,12 +805,12 @@ export default function AppShell({ children }) {
               </div>
             )}
             {chemOpen && (
-              <div className="fixed inset-0 z-[200] flex flex-col bg-slate-950">
+              <div className="fixed inset-0 z-[1700] flex flex-col bg-slate-950">
                 <ChemistryPage onClose={() => setChemOpen(false)} />
               </div>
             )}
             {physicsOpen && (
-              <div className="fixed inset-0 z-[200] flex flex-col bg-slate-950">
+              <div className="fixed inset-0 z-[1700] flex flex-col bg-slate-950">
                 <PhysicsPage onClose={() => setPhysicsOpen(false)} />
               </div>
             )}

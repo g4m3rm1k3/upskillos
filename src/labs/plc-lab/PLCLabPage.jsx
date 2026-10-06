@@ -475,7 +475,7 @@ export default function PLCLabPage() {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
+      position: 'fixed', inset: 0, zIndex: 1700,
       display: 'flex', flexDirection: 'column',
       background: '#0a0f1e', color: '#e2e8f0',
       fontFamily: 'system-ui, sans-serif',

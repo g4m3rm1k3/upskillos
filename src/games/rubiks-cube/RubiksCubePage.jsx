@@ -17,7 +17,7 @@ export default function RubiksCubePage({ onBack, onClose }) {
       inset: 0,
       background: 'radial-gradient(ellipse at 30% 20%, #0a1a2e 0%, #050810 60%, #0d0a20 100%)',
       overflow: 'auto',
-      zIndex: 50,
+      zIndex: 1700,
     }}>
       <RubiksCube onBack={handleBack} />
     </div>

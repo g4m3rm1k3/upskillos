@@ -2,6 +2,8 @@
 
 **Status: opening-lesson specifications for the curriculum draft.** Return to the [learning path](../../cpp-games-learning-path.md).
 
+Implementation update, 2026-10-06: A00 now exists in the `dice-path-start` track with a playable browser rule preview, decision comparisons, rules, motivation and a personal-goal task. Its transitions are checked against the completed C++ rules. It is explicitly a fixed-opponent preview, not the planned recording of training/evaluation or a saved learned agent. Those additional captures and the B/C/D showcases remain unbuilt. See [implementation verification](../../cpp-games-learning-path.md#implemented-entry-chapter--2026-10-06).
+
 Every series begins with a **project showcase**: show the finished target, let the learner understand and try it, and establish the reason for learning the implementation. These are A00, B00, C00 and D00, before installation instructions. They are full lesson briefs, not promotional blurbs.
 
 The target sketches below are **conceptual screen layouts**, not screenshots of completed SDL/GPU/Vulkan applications. Before a series is published, replace its sketch with actual captured behavior from the verified project. A demo is used to observe behavior, not to provide source for copying. No learner files are prefilled by the showcase.

@@ -1522,7 +1522,7 @@ export default function PhysicsPoolLab({ onClose }) {
   const currentLevel = LEVELS[levelIdx % LEVELS.length]
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: C.bg, fontFamily: 'Inter, sans-serif' }}>
+    <div className="fixed inset-0 z-[1700] flex flex-col" style={{ background: C.bg, fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-2 shrink-0" style={{ background: C.surface, borderBottom: `1px solid ${C.border}` }}>

@@ -10,7 +10,7 @@ export default function CmmLabPage() {
   }, [])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 1700 }}>
       <CmmLab onBack={() => navigate('/')} />
     </div>
   )

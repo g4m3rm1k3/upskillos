@@ -15,7 +15,7 @@ interface Matrix3DLabEntryProps {
 
 export default function Matrix3DLabEntry({ onBack }: Matrix3DLabEntryProps) {
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 1700 }}>
       <Matrix3DLab onBack={onBack} />
     </div>
   )

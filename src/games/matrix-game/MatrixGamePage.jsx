@@ -91,7 +91,7 @@ export default function MatrixGamePage({ onBack, onClose }) {
       inset: 0,
       background: 'radial-gradient(ellipse at 25% 15%, #051428 0%, #04080f 55%, #080420 100%)',
       overflow: 'auto',
-      zIndex: 50,
+      zIndex: 1700,
     }}>
       <MathRainBg />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '1100px', margin: '0 auto' }}>

@@ -1,6 +1,6 @@
 # A — From a Python script to Dice Duel
 
-**Status: curriculum draft.** Return to the [path and teaching contract](../../cpp-games-learning-path.md). All paths below are proposed files inside the learner's `dice-lab/` project. Lesson codes are planning references, not published IDs.
+**Status: A00–A05 implemented; the rest remains a curriculum draft.** Return to the [path, implementation notes and teaching contract](../../cpp-games-learning-path.md). All paths below describe the learner's `dice-lab/` project. Lesson codes are curriculum references, not application progress IDs. The implemented first chapter is discovered from `dice-path-start`; its later chapters are not yet published.
 
 Entry: the learner can run a Python script containing variables, a list, decisions and a loop. No knowledge of functions, classes, tests, build systems, probability or reinforcement learning is required. Exit: the learner can develop, test, train, evaluate and explain a terminal game distributed across purposeful C++ files.
 

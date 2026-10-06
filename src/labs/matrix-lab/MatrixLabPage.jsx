@@ -11,7 +11,7 @@ export default function MatrixLabPage() {
   }, [])
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'#1a1a1a', overflow:'hidden', zIndex:50 }}>
+    <div style={{ position:'fixed', inset:0, background:'#1a1a1a', overflow:'hidden', zIndex: 1700 }}>
       <MatrixLab onBack={() => navigate('/')} />
     </div>
   )

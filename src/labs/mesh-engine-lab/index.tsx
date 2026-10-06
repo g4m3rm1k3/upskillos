@@ -9,7 +9,7 @@ interface MeshEngineLabEntryProps {
 
 export default function MeshEngineLabEntry({ onBack }: MeshEngineLabEntryProps) {
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 1700 }}>
       <MeshEngineLab onBack={onBack} />
     </div>
   )

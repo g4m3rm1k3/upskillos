@@ -822,7 +822,7 @@ export default function BasketballLab({ onClose }) {
   const fgPct = attempts > 0 ? Math.round((makes / attempts) * 100) : 0
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#060a14' }}>
+    <div className="fixed inset-0 z-[1700] flex flex-col" style={{ background: '#060a14' }}>
 
       <GameHelp
         title="Basketball Lab — First Person"
