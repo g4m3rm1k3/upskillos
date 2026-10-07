@@ -53,6 +53,25 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     check:  (checks, scope) => ipcRenderer.invoke('project:check', checks, scope),
   },
 
+  // The notebooks' Python kernel on the learner's own Python, keeping variables between
+  // cells. See desktop/app/runtimes/notebook-kernel.cjs.
+  kernel: {
+    status:          () => ipcRenderer.invoke('kernel:status'),
+    run:             (code) => ipcRenderer.invoke('kernel:run', code),
+    restart:         () => ipcRenderer.invoke('kernel:restart'),
+    chooseFolder:    () => ipcRenderer.invoke('kernel:choose-folder'),
+    choosePython:    () => ipcRenderer.invoke('kernel:choose-python'),
+    useSystemPython: () => ipcRenderer.invoke('kernel:use-system-python'),
+    // Creates the app's notebook environment (numpy … TensorFlow); progress arrives through
+    // onOutput as { type: 'setup', text }.
+    setupEnvironment: () => ipcRenderer.invoke('kernel:setup-environment'),
+    onOutput: (cb) => {
+      const handler = (_event, payload) => cb(payload)
+      ipcRenderer.on('kernel:output', handler)
+      return () => ipcRenderer.off('kernel:output', handler)
+    },
+  },
+
   // A real shell in the project folder. See desktop/app/terminal.cjs.
   terminal: {
     start:  (opts)               => ipcRenderer.invoke('terminal:start', opts),

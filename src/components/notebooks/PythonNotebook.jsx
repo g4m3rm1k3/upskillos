@@ -10,6 +10,7 @@ import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-python";
 import FigureRenderer from "./FigureRenderer";
 import { compareOutput } from "./compareOutput.js";
+import { terminalText } from "./terminalText.js";
 import { parseProse } from "../math/parseProse.jsx";
 import { proseItems } from "../../tools/notebook-lab/lessonFormat.js";
 import { setupOpenCalcMonaco, applyPythonIndentRules } from "../../utils/monacoThemes.js";
@@ -544,6 +545,10 @@ const CellComponent = React.memo(
   }) => {
     const [copied, setCopied] = useState(false);
     const [hintOpen, setHintOpen] = useState(false);
+    // Shift+Enter is wired up once, when the editor mounts, but must run the cell with the
+    // notebook as it is now (Python loaded, the code just typed), so it calls through a ref.
+    const runRef = useRef((code) => onRun(cell.id, code));
+    runRef.current = (code) => onRun(cell.id, code);
 
     const isChallenge = !!cell.challengeType;
     const isFillIn = cell.challengeType === "fill-in";
@@ -1098,10 +1103,20 @@ const CellComponent = React.memo(
             },
           }}
           onMount={(editor, monacoInstance) => {
-            // monaco.KeyMod.Shift | monaco.KeyCode.Enter = 1024 | 3
-            // We use the numerical constants to avoid referencing a global 'monaco' object
-            // which might not be in scope. Shift=1024, Enter=3
-            editor.addCommand(1024 | 3, () => onRun(cell.id));
+            // Shift+Enter runs this cell. Not editor.addCommand: Monaco keeps those in one
+            // registry for every editor on the page, so the last cell mounted would win; and
+            // its handler would keep the onRun from mount time, from before Python loaded.
+            editor.onKeyDown((e) => {
+              if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && e.keyCode === monacoInstance.KeyCode.Enter) {
+                e.preventDefault();
+                e.stopPropagation();
+                // The code straight from the editor: the notebook's copy of it can still be a
+                // keystroke or two behind when Shift+Enter follows the typing at once.
+                const code = editor.getValue();
+                onUpdate(cell.id, code);
+                runRef.current(code);
+              }
+            });
             // Re-apply after mount — see applyPythonIndentRules's comment for
             // why the beforeMount attempt alone loses a race with Monaco's
             // own lazily-loaded Python config.
@@ -1300,6 +1315,54 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
   const initialCells = normalizeCells(params?.initialCells);
   const [cells, setCells] = useState(initialCells);
   const [isExecuting, setIsExecuting] = useState(false);
+  // In the desktop app, cells can run on the learner's own Python (desktop/app/runtimes/
+  // notebook-kernel.cjs) instead of Pyodide: for TensorFlow, gymnasium, long training runs
+  // and their own files. The choice is remembered.
+  const desktopKernel = typeof window !== "undefined" ? window.openCalcDesktop?.kernel : undefined;
+  const [runLocal, setRunLocal] = useState(() => {
+    try { return !!desktopKernel && localStorage.getItem("notebook-run-local") === "1"; } catch { return false; }
+  });
+  const [kernelInfo, setKernelInfo] = useState(null);
+  const refreshKernelInfo = useCallback(async () => {
+    if (desktopKernel) setKernelInfo(await desktopKernel.status());
+  }, [desktopKernel]);
+  useEffect(() => { if (runLocal) refreshKernelInfo(); }, [runLocal, refreshKernelInfo]);
+  // The app's own notebook environment (numpy ... TensorFlow, in a private virtual environment):
+  // set up automatically the first time "this computer" is chosen, with its log shown here.
+  const [setupLog, setupLogSet] = useState("");
+  const [setupBusy, setSetupBusy] = useState(false);
+  const [setupError, setSetupError] = useState(null);
+  const setupTried = useRef(false);
+  const setupEnvironment = useCallback(async () => {
+    if (!desktopKernel?.setupEnvironment) return;
+    setSetupBusy(true);
+    setSetupError(null);
+    setupLogSet("");
+    const stop = desktopKernel.onOutput((msg) => {
+      if (msg.type === "setup") setupLogSet((log) => (log + msg.text).slice(-20000));
+    });
+    try {
+      const result = await desktopKernel.setupEnvironment();
+      if (!result?.ok) setSetupError(result?.reason ?? "The setup did not finish.");
+    } catch (err) {
+      setSetupError(err.message);
+    } finally {
+      stop();
+      setSetupBusy(false);
+      refreshKernelInfo();
+    }
+  }, [desktopKernel, refreshKernelInfo]);
+  useEffect(() => {
+    if (!runLocal || !kernelInfo || setupTried.current) return;
+    if (kernelInfo.env && !kernelInfo.env.ready && !kernelInfo.env.installing && !kernelInfo.python?.chosen) {
+      setupTried.current = true;
+      setupEnvironment();
+    }
+  }, [runLocal, kernelInfo, setupEnvironment]);
+  const chooseRunLocal = (local) => {
+    setRunLocal(local);
+    try { localStorage.setItem("notebook-run-local", local ? "1" : "0"); } catch { /* private window */ }
+  };
   const execCounterRef = useRef(0); // global execution counter — increments each time any cell runs
 
   // ── Uploaded data files ─────────────────────────────────────────────────
@@ -1355,10 +1418,76 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
   }, []);
 
   // ── Run a cell ─────────────────────────────────────────────────────────────
+  // A cell on the learner's own Python: output appears as it is printed (a training loop's
+  // progress), and plots come back as images. Results show the same way as a Pyodide run.
+  const runCellLocal = useCallback(
+    async (cellId, codeNow) => {
+      if (isExecuting || !desktopKernel) return;
+      const found = cells.find((c) => c.id === cellId);
+      if (!found) return;
+      const cell = codeNow == null ? found : { ...found, code: codeNow };
+      setIsExecuting(true);
+      setCells((prev) => prev.map((c) => (c.id === cellId ? { ...c, status: "running", output: "", figureJson: null, matplotlibImages: [] } : c)));
+      let streamed = "";
+      const stop = desktopKernel.onOutput((msg) => {
+        if (msg.type !== "stream") return;
+        streamed += msg.text;
+        const now = terminalText(streamed);
+        setCells((prev) => prev.map((c) => (c.id === cellId ? { ...c, output: now } : c)));
+      });
+      const textOf = (messages, type) => messages.filter((m) => m.type === type).map((m) => m.text).join("");
+      try {
+        const run = await desktopKernel.run(cell.code);
+        if (!run.ok) throw new Error(run.reason);
+        const printed = terminalText(textOf(run.messages, "stream"));
+        const error = textOf(run.messages, "error");
+        const result = textOf(run.messages, "result");
+        const images = run.messages.filter((m) => m.type === "figure").map((m) => `data:image/png;base64,${m.png}`);
+        let testFeedback = null;
+        if (!error && cell.testCode) {
+          // The same names a Pyodide run gives the test: what the cell printed, and its code.
+          await desktopKernel.run(`_stdout = ${JSON.stringify(printed)}\n_source = ${JSON.stringify(cell.code)}`);
+          const test = await desktopKernel.run(cell.testCode);
+          const testError = test.ok ? textOf(test.messages, "error") : test.reason;
+          const said = test.ok ? textOf(test.messages, "result") : "";
+          const success = !testError && (said === "true" || said.includes("SUCCESS"));
+          testFeedback = {
+            success,
+            message: testError
+              ? tracebackHeadline(testError).replace(/^AssertionError:?\s*/, "") || "The test failed. Try again!"
+              : said && said !== "true" && said !== "false" ? said.replace("SUCCESS:", "").trim()
+              : success ? "Great job! Your code passed the test." : "The test failed. Try again!",
+          };
+        }
+        execCounterRef.current += 1;
+        const count = execCounterRef.current;
+        setCells((prev) => prev.map((c) => (c.id === cellId ? {
+          ...c,
+          status: error ? "error" : "idle",
+          executionCount: error ? c.executionCount : count,
+          output: error ? [printed.trimEnd(), error].filter(Boolean).join("\n") : [printed.trimEnd(), result].filter(Boolean).join("\n"),
+          printedBeforeError: error ? printed.trimEnd() : undefined,
+          matplotlibImages: images,
+          testResult: testFeedback,
+        } : c)));
+      } catch (err) {
+        setCells((prev) => prev.map((c) => (c.id === cellId ? { ...c, status: "error", output: `Could not run on this computer: ${err.message}` } : c)));
+      } finally {
+        stop();
+        setIsExecuting(false);
+        refreshKernelInfo();
+      }
+    },
+    [cells, isExecuting, desktopKernel, refreshKernelInfo],
+  );
+
+  // codeNow: the cell's code, when the caller has it fresher than the notebook's state
+  // (Shift+Enter reads it from the editor).
   const runCell = useCallback(
-    async (cellId) => {
+    async (cellId, codeNow) => {
       // OpenMAT cells run inside their embedded OpenMAT notebook, not here.
       if (cells.find((c) => c.id === cellId)?.lang === "openmat") return;
+      if (runLocal && desktopKernel) return runCellLocal(cellId, codeNow);
       if (!pyodide || isExecuting) return;
       // Python runs on the page's thread, so code that never finishes freezes
       // the tab before React renders again. Hand the host the current cells
@@ -1373,7 +1502,8 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
         ),
       );
 
-      const cell = cells.find((c) => c.id === cellId);
+      const found = cells.find((c) => c.id === cellId);
+      const cell = codeNow == null ? found : { ...found, code: codeNow };
       let textOutput = "";
 
       // Capture stdout and stderr exactly as written. Python keeps text that
@@ -1522,7 +1652,7 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
         setIsExecuting(false);
       }
     },
-    [pyodide, cells, isExecuting, rawCode],
+    [pyodide, cells, isExecuting, rawCode, runLocal, desktopKernel, runCellLocal],
   );
 
   // ── Run all cells in order ─────────────────────────────────────────────────
@@ -1543,15 +1673,21 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
   // name learners defined anywhere in it, then resets this notebook's outputs
   // and execution counts so the next run starts from a known-empty state.
   const resetVariables = useCallback(async () => {
-    if (!pyodide || isExecuting) return;
-    await pyodide.runPythonAsync(
-      "(lambda g: [g.pop(n) for n in [n for n in list(g) if n not in g.get('_oc_base_names', g)]])(globals())",
-    );
+    if (isExecuting) return;
+    if (runLocal && desktopKernel) {
+      await desktopKernel.restart();
+      refreshKernelInfo();
+    } else {
+      if (!pyodide) return;
+      await pyodide.runPythonAsync(
+        "(lambda g: [g.pop(n) for n in [n for n in list(g) if n not in g.get('_oc_base_names', g)]])(globals())",
+      );
+    }
     execCounterRef.current = 0;
     setCells((prev) =>
       prev.map((c) => ({ ...c, output: "", status: "idle", figureJson: null, matplotlibImages: [], executionCount: undefined, testResult: null })),
     );
-  }, [pyodide, isExecuting]);
+  }, [pyodide, isExecuting, runLocal, desktopKernel, refreshKernelInfo]);
 
   const addCell = () => {
     const newId =
@@ -1784,6 +1920,90 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
             >
               ▶ Run all
             </button>
+          )}
+          {desktopKernel && runLocal && (setupBusy || setupError || (kernelInfo?.env && !kernelInfo.env.ready && !kernelInfo.python?.chosen)) && (
+            <div style={{ flexBasis: "100%", order: 99, marginTop: 4, padding: "8px 10px", borderRadius: 8, border: `0.5px solid ${setupError ? C.amberBd : C.border}`, background: C.surface2, fontSize: 12, color: C.text, lineHeight: 1.5 }}>
+              <div>
+                {setupBusy ? "Setting up this computer's notebook environment: " : "This computer's notebook environment is not set up yet: "}
+                {(kernelInfo?.env?.packages ?? []).join(", ")}, in a private Python environment (about 1 GB to download; a few minutes).
+                {" "}Until it is ready, cells run on {kernelInfo?.python ? `your Python ${kernelInfo.python.version}` : "your Python"}.
+              </div>
+              {setupError && <div style={{ color: C.amber, marginTop: 4 }}>{setupError}</div>}
+              {!setupBusy && (
+                <button
+                  onClick={setupEnvironment}
+                  style={{ marginTop: 6, fontSize: 12, padding: "4px 10px", borderRadius: 8, cursor: "pointer", border: `0.5px solid ${C.border}`, background: "transparent", color: C.text }}
+                >
+                  {setupError ? "Try again" : "Set it up"}
+                </button>
+              )}
+              {setupLog && (
+                <pre style={{ margin: "6px 0 0", maxHeight: 160, overflow: "auto", fontSize: 11, color: C.muted, whiteSpace: "pre-wrap" }}>
+                  {terminalText(setupLog).split("\n").slice(-12).join("\n")}
+                </pre>
+              )}
+            </div>
+          )}
+          {desktopKernel && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted }}>
+              Runs on
+              <select
+                value={runLocal ? "local" : "browser"}
+                onChange={(e) => chooseRunLocal(e.target.value === "local")}
+                disabled={isExecuting}
+                title="The browser's Python (Pyodide) runs anywhere; your computer's Python has your installed packages (TensorFlow, gymnasium) and your files"
+                style={{ fontSize: 12, padding: "5px 6px", borderRadius: 8, border: `0.5px solid ${C.border}`, background: "transparent", color: C.text }}
+              >
+                <option value="browser">this page (Pyodide)</option>
+                <option value="local">this computer</option>
+              </select>
+              {runLocal && kernelInfo && (
+                <>
+                  <span
+                    title={`Python: ${kernelInfo.python?.exe ?? "none found"}\nFolder: ${kernelInfo.cwd}\nImports and open() find files in the folder.`}
+                    style={{ fontSize: 11, color: kernelInfo.python ? C.muted : C.amber }}
+                  >
+                    {kernelInfo.python ? `Python ${kernelInfo.python.version}` : "no Python found"} · {String(kernelInfo.cwd ?? "").split(/[\\/]/).pop()}
+                  </span>
+                  <button
+                    onClick={async () => { await desktopKernel.chooseFolder(); refreshKernelInfo(); }}
+                    disabled={isExecuting}
+                    title="Choose the folder the cells run in (restarts Python)"
+                    style={{ fontSize: 11, padding: "4px 8px", borderRadius: 8, cursor: "pointer", border: `0.5px solid ${C.border}`, background: "transparent", color: C.muted }}
+                  >
+                    Folder…
+                  </button>
+                  <button
+                    onClick={async () => { await desktopKernel.choosePython(); refreshKernelInfo(); }}
+                    disabled={isExecuting}
+                    title="Choose which python.exe runs the cells, e.g. a virtual environment with TensorFlow (restarts Python)"
+                    style={{ fontSize: 11, padding: "4px 8px", borderRadius: 8, cursor: "pointer", border: `0.5px solid ${C.border}`, background: "transparent", color: C.muted }}
+                  >
+                    Python…
+                  </button>
+                  {kernelInfo.env?.ready && !kernelInfo.python?.chosen && !setupBusy && (
+                    <button
+                      onClick={setupEnvironment}
+                      disabled={isExecuting}
+                      title="Install the notebook packages again, or update them"
+                      style={{ fontSize: 11, padding: "4px 8px", borderRadius: 8, cursor: "pointer", border: `0.5px solid ${C.border}`, background: "transparent", color: C.muted }}
+                    >
+                      Reinstall packages
+                    </button>
+                  )}
+                  {kernelInfo.python?.chosen && (
+                    <button
+                      onClick={async () => { await desktopKernel.useSystemPython(); refreshKernelInfo(); }}
+                      disabled={isExecuting}
+                      title="Go back to the Python on PATH"
+                      style={{ fontSize: 11, padding: "4px 8px", borderRadius: 8, cursor: "pointer", border: `0.5px solid ${C.border}`, background: "transparent", color: C.muted }}
+                    >
+                      Use PATH Python
+                    </button>
+                  )}
+                </>
+              )}
+            </span>
           )}
           <button
             onClick={resetVariables}

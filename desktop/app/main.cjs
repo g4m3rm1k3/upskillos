@@ -20,6 +20,7 @@ const javaRuntime = require('./runtimes/java.cjs')
 const dotnetRuntime = require('./runtimes/dotnet.cjs')
 const codelensRuntime = require('./runtimes/codelens.cjs')
 const codelensPythonRuntime = require('./runtimes/codelens-python.cjs')
+const notebookKernel = require('./runtimes/notebook-kernel.cjs')
 const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
@@ -92,6 +93,7 @@ app.on('before-quit', () => {
   for (const mod of Object.values(RUNTIMES)) mod.killAllScripts?.()
   projectFs.killAllProjectRuns()
   terminal.killAll()
+  notebookKernel.stop()
 })
 
 app.on('activate', () => {
@@ -261,6 +263,17 @@ ipcMain.handle('desktop:install-runtime', async (_event, runtime) => {
   const emit = (payload) => mainWindow?.webContents.send('desktop:runtime-progress', { runtime, ...payload })
   return mod.install(app, emit)
 })
+
+// The notebooks' Python kernel on the learner's own Python (runtimes/notebook-kernel.cjs):
+// one process that keeps its variables between cells. Output streams as kernel:output.
+const kernelEmit = (payload) => mainWindow?.webContents.send('kernel:output', payload)
+ipcMain.handle('kernel:status', () => notebookKernel.status(app))
+ipcMain.handle('kernel:run', (_event, code) => notebookKernel.run(app, code, kernelEmit))
+ipcMain.handle('kernel:restart', () => notebookKernel.restart(app, kernelEmit))
+ipcMain.handle('kernel:choose-folder', () => notebookKernel.chooseFolder(app, dialog, mainWindow, kernelEmit))
+ipcMain.handle('kernel:choose-python', () => notebookKernel.choosePython(app, dialog, mainWindow, kernelEmit))
+ipcMain.handle('kernel:use-system-python', () => notebookKernel.useSystemPython(app, kernelEmit))
+ipcMain.handle('kernel:setup-environment', () => notebookKernel.setupEnvironment(app, kernelEmit))
 
 ipcMain.handle('desktop:run-python-script', async (_event, code) => {
   const emit = (payload) => mainWindow?.webContents.send('desktop:script-output', payload)
