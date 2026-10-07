@@ -12,7 +12,7 @@ Every form of leakage fails one question: **at the moment the model will really 
 
 A hospital wants to predict which patients have a heart condition, from age, blood pressure and cholesterol. A tempting extra column in the records is `on_medication`: whether the patient takes heart medication. It predicts the condition superbly, for the obvious reason: patients get the medication **because** they were diagnosed. At the moment the model would be used, for a new patient before diagnosis, that column does not exist yet.
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -41,6 +41,15 @@ for column in patients.columns:
     print(f"  {column:<15} AUC {roc_auc_score(condition, patients[column]):.3f}")
 ```
 
+```output
+AUC with on_medication: 0.956   without it: 0.765
+each feature on its own:
+  age             AUC 0.691
+  blood_pressure  AUC 0.668
+  cholesterol     AUC 0.585
+  on_medication   AUC 0.928
+```
+
 `scoring="roc_auc"` makes `cross_val_score` report the AUC from the classification metrics lesson instead of accuracy. With the leaky column the model scores 0.956; without it, 0.765. The 0.765 is the honest number, the one the hospital would actually get. A model deployed on the strength of 0.956 would disappoint badly.
 
 The second part shows the standard way to **detect** target leakage: score each feature **on its own**. Using a single column as the score, the real risk factors each manage 0.59 to 0.69, while `on_medication` alone reaches 0.93. A single feature that predicts almost perfectly is rarely a discovery; much more often it is a leak. The same warning sign appears as one feature dominating a tree model's importances. Typical culprits are anything recorded after or because of the outcome: treatments, follow-up actions, account closure reasons, "days until churn", or an ID that was assigned in order of the outcome.
@@ -51,7 +60,7 @@ A clinic records 10 scans from each of 60 patients and wants to predict a diagno
 
 The fix is to split by **group**: all of a patient's scans go to the same fold. scikit-learn's `GroupKFold` does this, given a `groups` array saying which patient each row belongs to:
 
-```python
+```python type
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GroupKFold, KFold, cross_val_score
@@ -72,6 +81,11 @@ print(f"random folds: {random_folds:.3f}")
 print(f"group folds:  {group_folds:.3f}")
 ```
 
+```output
+random folds: 0.985
+group folds:  0.562
+```
+
 `np.repeat(a, 10, axis=0)` repeats each row 10 times, giving each patient 10 near-identical scans. Random folds report 0.985. Group folds report 0.56: the diagnosis signal here is weak, and almost all of the 0.985 came from recognising patients. The same trap appears whenever rows come in related clusters: several photos of the same object, many transactions from the same customer, repeated sensor readings from the same machine, near-duplicate documents.
 
 ## Time leakage: training on the future
@@ -84,7 +98,7 @@ Features can leak time too. "Average spend over the customer's lifetime" compute
 
 Now the second problem. Here is a dataset where only 2% of examples are positive: think fraud, a rare disease or a failing machine part.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -106,6 +120,13 @@ for weights in [None, "balanced"]:
 print(f"always predicting negative: accuracy {(y_test == 0).mean():.3f}")
 ```
 
+```output
+positives: 50 of 2500 in training, 50 of 2500 in test
+class_weight=None      accuracy 0.983, flagged  18, caught 13 of 50 positives
+class_weight=balanced  accuracy 0.892, flagged 309, caught 44 of 50 positives
+always predicting negative: accuracy 0.980
+```
+
 `make_classification` generates a classification problem with the given class proportions (`weights=[0.98]` means 98% in class 0). Two things in the setup matter. `stratify=y` in `train_test_split` keeps the 2% rate in both halves; with so few positives, a plain random split could easily leave one side with far fewer. (`cross_val_score` already stratifies its folds for classifiers.)
 
 The plain model scores 0.983 accuracy, barely above the 0.980 of always saying "negative", and catches only 13 of the 50 positives. The loss treats every example equally, and with 49 negatives for every positive, the cheapest strategy is to say "negative" unless the evidence is overwhelming.
@@ -116,7 +137,7 @@ The plain model scores 0.983 accuracy, barely above the 0.980 of always saying "
 
 Class weights are one way to move a model to a different operating point. Lowering the threshold of the unweighted model is another. Which is better? Compare them where you will use them. Suppose the requirement is to catch 44 of the 50 positives. How many cases must each model flag to do that?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -136,6 +157,11 @@ for weights in [None, "balanced"]:
     flagged = (scores >= threshold).sum()
     print(f"class_weight={str(weights):<9} must flag {flagged:>3} cases to catch 44 positives; "
           f"average precision {average_precision_score(y_test, scores):.3f}")
+```
+
+```output
+class_weight=None      must flag 759 cases to catch 44 positives; average precision 0.488
+class_weight=balanced  must flag 300 cases to catch 44 positives; average precision 0.257
 ```
 
 The threshold is set to the 44th-highest score among the true positives, so that exactly 44 are caught. The plain model must flag 759 cases to get there; the weighted model only 300. Here, weighting changed which cases the model ranks highest, not just where the line is drawn, and at this operating point it is much better. That can happen because no straight line separates these classes well (`make_classification` places each class in two separate clumps): making the rare class's mistakes expensive **tilts** the best line towards the positives that are hardest to catch, rather than merely shifting it.

@@ -13,7 +13,7 @@ Such an order exists exactly when the graph has **no directed cycle** (a cycle w
 
 A task with no prerequisites, an in-degree of 0, can safely go first. Once it is done, remove it: the tasks that depended on it each have one fewer prerequisite, and some may now have none. So: compute every in-degree; put all vertices with in-degree 0 in a queue; repeatedly take one out, add it to the order, and reduce the in-degree of each of its successors, queueing any that reach 0. Each vertex and edge is handled once: O(V + E). Predict before running: what order does it give for getting dressed, and what must come first?
 
-```python
+```python type
 from collections import deque
 
 dressing = {
@@ -52,6 +52,11 @@ position = {item: i for i, item in enumerate(order)}
 print("every rule respected:", all(position[u] < position[v] for u in dressing for v in dressing[u]))
 ```
 
+```output
+['underwear', 'socks', 'shirt', 'watch', 'trousers', 'tie', 'belt', 'shoes', 'jacket']
+every rule respected: True
+```
+
 The check at the end confirms the definition directly: for every edge u → v, u appears before v.
 
 Underwear, socks, shirt and watch have no prerequisites and start the order; shoes wait until underwear, socks and trousers are done, and the jacket until the belt and tie. If the graph had a cycle, the vertices on it would never reach in-degree 0, so the order would come out **shorter** than the number of vertices: that is how Kahn's algorithm reports that no order exists, returning `None` here.
@@ -60,7 +65,7 @@ Underwear, socks, shirt and watch have no prerequisites and start the order; sho
 
 The previous lesson noticed that depth-first search **finishes** each vertex only after everything reachable from it has finished. So in the finishing order, every vertex comes **after** all of its successors; reverse that order, and every vertex comes **before** them. That is a topological order. Predict before running: will the DFS method give the same order as Kahn's algorithm?
 
-```python
+```python type
 def dfs_topological(graph):
     WHITE, GREY, BLACK = 0, 1, 2
     colour = {v: WHITE for v in graph}
@@ -91,6 +96,12 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+['watch', 'shirt', 'tie', 'socks', 'underwear', 'trousers', 'shoes', 'belt', 'jacket']
+every rule respected: True
+ValueError: cycle through a
+```
+
 The grey check from the three-colour cycle detection is kept, so a cycle raises an error instead of producing a bogus order.
 
 Both orders are valid, but they are different. Topological orders are usually **not unique**: whether the watch goes on first or last does not matter, since nothing depends on it. An order is unique only when every pair of consecutive tasks is joined by an edge, so that there is no freedom at all. Kahn's algorithm makes it easy to choose among valid orders (for example, always the alphabetically first ready task, using a heap instead of a queue: the second challenge). The DFS method is shorter to write, but recursive, so very long dependency chains need an explicit stack.
@@ -101,7 +112,7 @@ If each task takes some time, and independent tasks can happen at the same time 
 
 Computing it uses a topological order: process the tasks in that order, and give each task an **earliest finish time** equal to its own duration plus the latest finish time among its prerequisites. Since every prerequisite comes earlier in the order, its finish time is already known when needed. Predict before running: for the house-building plan below, how long does the project take, and which tasks are on the critical path?
 
-```python
+```python type
 durations = {"foundations": 5, "frame": 10, "roof": 6, "plumbing": 4, "wiring": 5,
              "walls": 7, "windows": 3, "painting": 4, "garden": 6}
 needs = {
@@ -134,6 +145,11 @@ while last is not None:
     last = came_from[last]
 print("project length:", max(finish.values()), "days (total of all durations:", sum(durations.values()), ")")
 print("critical path:", " -> ".join(reversed(path)))
+```
+
+```output
+project length: 31 days (total of all durations: 50 )
+critical path: foundations -> frame -> wiring -> walls -> painting
 ```
 
 The plan is given as "needs" lists, the natural way to write prerequisites, so it is first turned round into "successors" lists for Kahn's algorithm. `came_from` remembers, for each task, the prerequisite that finished last, which is the one that held it up.

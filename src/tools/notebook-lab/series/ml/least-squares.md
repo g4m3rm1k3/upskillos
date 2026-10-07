@@ -56,7 +56,7 @@ w = \frac{\text{Cov}(x, y)}{\text{Var}(x)}
 
 It makes sense: the more `y` moves together with `x` (covariance), the steeper the line, scaled by how spread out `x` is. (If you compute this with NumPy, use the same divisor for both: `np.cov` divides by `n − 1` but `np.var` by `n` unless you pass `ddof=1`, and mixing them gives a slightly wrong slope.) Check it against NumPy's own least squares fit:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -69,13 +69,18 @@ print(f"formula:    w = {w:.4f}, b = {b:.4f}")
 print("np.polyfit:", np.polyfit(x, y, 1).round(4))
 ```
 
+```output
+formula:    w = 2.6047, b = 3.5149
+np.polyfit: [2.6047 3.5149]
+```
+
 They agree exactly. No searching, no step size, no iterations: the formula goes straight to the best line.
 
 ## What the numbers mean
 
 The fitted numbers have plain meanings, and reading them is often the whole point of fitting a regression. Take the children's heights from the linear systems lesson:
 
-```python
+```python type
 import numpy as np
 
 ages = np.array([2, 3, 4, 5, 6, 7, 8, 9])
@@ -85,6 +90,12 @@ b = heights.mean() - w * ages.mean()
 print(f"height ≈ {w:.2f} × age + {b:.2f}")
 print("predicted height at 6.5 years:", round(w * 6.5 + b, 1))
 print("'predicted' height at 40 years:", round(w * 40 + b, 1))
+```
+
+```output
+height ≈ 6.57 × age + 74.86
+predicted height at 6.5 years: 117.6
+'predicted' height at 40 years: 337.7
 ```
 
 - The **slope** `w` has units of "label units per feature unit": about 6.6 cm per year. Each extra year of age goes with about 6.6 cm more height, **within this data**.
@@ -98,7 +109,7 @@ The differences between the true labels and the line's predictions, `yᵢ − ŷ
 
 Here are two datasets, each fitted with the best straight line. Predict which residual plot will show a problem:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -135,7 +146,7 @@ R^2 = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}
 
 The top is the squared error the model leaves; the bottom is the squared error of the baseline that predicts the mean. So R² is the fraction of the baseline's error that the model removes: the fraction of the variation in `y` that the model **explains**. An R² of 1 means a perfect fit; 0 means no better than predicting the mean; and on new data it can even be negative, if the model is worse than the mean.
 
-```python
+```python type
 import numpy as np
 
 def r_squared(y, y_pred):
@@ -150,13 +161,19 @@ for noise in [1, 5, 15]:
     print(f"noise {noise:>2}: w = {w:.2f}, R² = {r2:.3f}, r² = {np.corrcoef(x, y)[0, 1] ** 2:.3f}")
 ```
 
+```output
+noise  1: w = 2.98, R² = 0.988, r² = 0.988
+noise  5: w = 2.98, R² = 0.694, r² = 0.694
+noise 15: w = 2.24, R² = 0.164, r² = 0.164
+```
+
 With little noise, the line explains almost all the variation; with a lot, only a small part. The slope is also estimated less precisely as noise grows, but the main change is that most of the variation in `y` is noise that no line can explain. For a line with a single feature, R² equals the square of the correlation `r` from the expectation lesson, as the last column shows.
 
 ## A real example
 
 The exploration lesson found that BMI was the strongest single predictor of diabetes progression, with a correlation of about 0.59. Fit the line:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -172,13 +189,18 @@ print(f"progression ≈ {w:.1f} × BMI + {b:.1f}")
 print(f"R² = {r2:.3f}")
 ```
 
+```output
+progression ≈ 10.2 × BMI + -117.8
+R² = 0.344
+```
+
 Each extra point of BMI goes with about 10 more units of disease progression, and BMI alone explains about 34% of the variation (0.586² ≈ 0.34). That matches the exploration exactly: a clear relationship, but most of the variation left unexplained. Note that this R² is measured on the same data the line was fitted to. With only two parameters and 442 patients, it will be close to what a held-out test set would show, but a real evaluation measures it on data the model has not seen, as the last lesson explained. Combining several features, in the multiple regression lesson, will do better.
 
 ## The same thing in scikit-learn
 
 **scikit-learn** is Python's main machine learning library, and every model in it follows the same pattern: create the model, `fit` it to training data, then `predict`. Here is the same fit:
 
-```python
+```python type
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 
@@ -189,13 +211,18 @@ print(model.coef_, model.intercept_)
 print("R²:", round(model.score(df[["bmi"]], df["target"]), 3))
 ```
 
+```output
+[10.23312787] -117.7733665665647
+R²: 0.344
+```
+
 The fitted slope is in `coef_` and the intercept in `intercept_` (a trailing underscore is scikit-learn's convention for values learned from data), and `score` returns R². Notice `df[["bmi"]]` with double brackets: scikit-learn always expects the features as a 2D table, even when there is only one feature. You will use scikit-learn increasingly in later lessons; having built the model yourself, you know exactly what `fit` is doing.
 
 ## One point can pull the line
 
 Because the loss squares every error, a single point far from the others has a huge effect: the line bends towards it to avoid one enormous squared error. Predict how much one bad data point changes the slope:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(3)
@@ -205,6 +232,11 @@ print("slope without the outlier:", np.polyfit(x, y, 1)[0].round(3))
 x_bad = np.append(x, 10)
 y_bad = np.append(y, -30)
 print("slope with one outlier:   ", np.polyfit(x_bad, y_bad, 1)[0].round(3))
+```
+
+```output
+slope without the outlier: 1.941
+slope with one outlier:    0.942
 ```
 
 One data-entry error out of 31 points roughly halves the slope, from about 1.9 to about 0.9. This is why the exploration lesson looked for extreme values before modelling, and why the next lesson looks at losses that are less sensitive to them.

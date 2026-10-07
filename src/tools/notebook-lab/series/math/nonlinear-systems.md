@@ -23,7 +23,7 @@ Each equation in two unknowns describes a curve: the points where it holds. A sy
 
 Predict before running: the parabola y = x² − 6 has its lowest point at (0, −6), outside the circle x² + y² = 25. How many times does it cross the circle? And y = x² − 4, whose lowest point is inside?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,6 +47,11 @@ for shift in [6, 4]:
     print(f"y = x² - {shift}: the circle equation changes sign along the parabola at x ≈ {np.round(crossings, 4)}")
 ```
 
+```output
+y = x² - 6: the circle equation changes sign along the parabola at x ≈ [-3.1444 -1.0547  1.0548  3.1445]
+y = x² - 4: the circle equation changes sign along the parabola at x ≈ [-2.8477  2.8478]
+```
+
 The parabola y = x² − 6 starts below the circle, enters it, and leaves again on each side: four crossings, at x ≈ ±1.055 and ±3.144. The parabola y = x² − 4 starts **inside** the circle and only leaves it, once on each side: two crossings, at x ≈ ±2.848. Walking along each parabola and watching the sign of x² + y² − 25 counts the crossings without solving anything.
 
 ## Exact elimination
@@ -63,7 +68,7 @@ When one equation gives a variable directly, substituting it into the other **el
 
 Predict before running: for each system, how many solutions does SymPy return, and how many are real?
 
-```python
+```python type
 x, y = sp.symbols("x y")
 
 def real_solutions(eqs):
@@ -79,6 +84,12 @@ for shift in [6, 4]:
     total, real = real_solutions([x ** 2 + y ** 2 - 25, y - (x ** 2 - shift)])
     print(f"y = x² - {shift}: {total} solutions in all, {len(real)} real: {real}")
 print("x² values for the second system:", np.roots([1, -7, -9]).round(4))
+```
+
+```output
+y = x² - 6: 4 solutions in all, 4 real: [(-3.1444, 3.8875), (-1.0548, -4.8875), (1.0548, -4.8875), (3.1444, 3.8875)]
+y = x² - 4: 4 solutions in all, 2 real: [(-2.8478, 4.1098), (2.8478, 4.1098)]
+x² values for the second system: [ 8.1098 -1.1098]
 ```
 
 For y = x² − 6 SymPy finds four solutions, all real, at (±1.0548, −4.8875) and (±3.1444, 3.8875), matching the plot. For y = x² − 4 it also finds four, but only two are real, (±2.8478, 4.1098). The other two have x = ±1.0535i, from x² = −1.1098. Algebra always delivers the full count of solutions a polynomial system has; geometry shows which of them are real.
@@ -97,7 +108,7 @@ Finding a position from measured distances, **trilateration**, is how GPS, ultra
 
 Predict before running: a tag sits at (12.0, 7.5) m among four beacons. With distances measured to ±5 cm, how close is the trilaterated position?
 
-```python
+```python type
 beacons = np.array([[0.0, 0.0], [30.0, 0.0], [30.0, 20.0], [0.0, 20.0]])
 true_pos = np.array([12.0, 7.5])
 rng = np.random.default_rng(75)
@@ -118,6 +129,11 @@ for _ in range(2000):
 print(f"with ±5 cm distance noise: typical position error {np.median(errors) * 100:.1f} cm, 95% within {np.percentile(errors, 95) * 100:.1f} cm")
 ```
 
+```output
+exact distances: [14.151  19.5    21.9146 17.3277] -> position [12.   7.5]
+with ±5 cm distance noise: typical position error 4.5 cm, 95% within 9.4 cm
+```
+
 With exact distances the subtracted linear system returns (12.0, 7.5) exactly. With 5 cm of noise on each distance, the position is typically within about 4.5 cm and 95% of the time within about 9 cm. Four beacons spread around the room give good geometry; beacons nearly in a line would make the linear system ill-conditioned (the two-equation lesson's warning), and the errors would grow sharply in one direction.
 
 ## Newton's method for systems
@@ -134,7 +150,7 @@ The general tool is Newton's method in several variables, already met in the Jac
 
 Predict before running: starting `fsolve` from a grid of 2,500 points around the circle–parabola system (y = x² − 6), how are the starts shared among the four solutions?
 
-```python
+```python type
 def F(v):
     return [v[0] ** 2 + v[1] ** 2 - 25, v[1] - (v[0] ** 2 - 6)]
 
@@ -156,6 +172,15 @@ print(f"did not converge: {counts[4]}")
 print("one run from (2, 2):", np.round(fsolve(F, [2, 2]), 6))
 ```
 
+```output
+solution (-3.1444, +3.8875): 709 starts (28%)
+solution (-1.0548, -4.8875): 537 starts (21%)
+solution (+1.0548, -4.8875): 537 starts (21%)
+solution (+3.1444, +3.8875): 709 starts (28%)
+did not converge: 8
+one run from (2, 2): [3.144437 3.887482]
+```
+
 All but 8 of the 2,500 starts converge (`fsolve` gives up on a few that land where the Jacobian is nearly singular), and the four solutions share the grid unevenly: 28% each for the two upper solutions and 21% each for the lower pair, split symmetrically left and right. A start at (2, 2) goes to (3.1444, 3.8875). To find **all** solutions numerically, start from many points, as here, or use the plot to place one start near each crossing. A single run finds one solution and says nothing about the others.
 
 ## A four-bar linkage
@@ -174,7 +199,7 @@ A **four-bar linkage** has four rigid links joined in a loop: the fixed ground, 
 
 Predict before running: with a = 20, b = 70, c = 50 and d = 60 mm, can the crank turn fully, and through what angle does the rocker swing?
 
-```python
+```python type
 a, b, c, d = 20.0, 70.0, 50.0, 60.0
 lengths = sorted([a, b, c, d])
 print(f"Grashof: shortest + longest = {lengths[0] + lengths[3]:.0f} <= other two = {lengths[1] + lengths[2]:.0f}: {lengths[0] + lengths[3] <= lengths[1] + lengths[2]}; the crank is the shortest link")
@@ -212,6 +237,13 @@ ax.set_xlabel("crank angle (°)")
 ax.set_ylabel("rocker angle (°)")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+Grashof: shortest + longest = 90 <= other two = 110: True; the crank is the shortest link
+open assembly: rocker swings between 70.5° and 126.9°, a swing of 56.3°
+crossed assembly at a crank angle of 40°: rocker at -103.1° (open: 71.0°)
+loop-closure equations solved with fsolve at 40°: rocker 71.0°, coupler 29.5°
 ```
 
 The lengths 20, 50, 60 and 70 satisfy Grashof's condition (20 + 70 ≤ 50 + 60) with the crank shortest, so the crank turns fully and the rocker rocks back and forth. In the open assembly the rocker swings through about 56°, between 70.5° and 126.9°. The crossed assembly puts the rocker at a completely different angle for the same crank position: the same lengths, a different machine. Solving the loop-closure equations directly with `fsolve`, starting near the open solution, gives the same rocker angle as the circle intersection. A linkage cannot switch assembly mode while moving, so a simulation that follows the motion must keep choosing the solution nearest the previous one.

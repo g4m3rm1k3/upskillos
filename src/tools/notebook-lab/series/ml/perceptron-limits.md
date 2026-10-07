@@ -10,7 +10,7 @@ Two classes are **linearly separable** if some straight line (in more dimensions
 
 Take the logic operations on two inputs that are each 0 or 1. **AND** is true only when both inputs are 1; **OR** is true when at least one is. Plot the four possible inputs, coloured by the output, and a separating line is easy to draw for both:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -49,7 +49,7 @@ Add the middle two inequalities: `w₁ + w₂ + 2b > 0`, so `w₁ + w₂ + b > �
 
 Run the perceptron on XOR anyway. Predict what the mistake count will do:
 
-```python
+```python type
 import numpy as np
 
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
@@ -66,6 +66,26 @@ for epoch in range(1, 5):
     print(f"epoch {epoch}: mistakes {mistakes}")
 ```
 
+```output
+  epoch 1: fixed [0. 1.] (label +1) → w = [0. 1.], b = 1.0
+  epoch 1: fixed [1. 1.] (label -1) → w = [-1.  0.], b = 0.0
+epoch 1: mistakes 2
+  epoch 2: fixed [0. 1.] (label +1) → w = [-1.  1.], b = 1.0
+  epoch 2: fixed [1. 0.] (label +1) → w = [0. 1.], b = 2.0
+  epoch 2: fixed [1. 1.] (label -1) → w = [-1.  0.], b = 1.0
+epoch 2: mistakes 3
+  epoch 3: fixed [0. 0.] (label -1) → w = [-1.  0.], b = 0.0
+  epoch 3: fixed [0. 1.] (label +1) → w = [-1.  1.], b = 1.0
+  epoch 3: fixed [1. 0.] (label +1) → w = [0. 1.], b = 2.0
+  epoch 3: fixed [1. 1.] (label -1) → w = [-1.  0.], b = 1.0
+epoch 3: mistakes 4
+  epoch 4: fixed [0. 0.] (label -1) → w = [-1.  0.], b = 0.0
+  epoch 4: fixed [0. 1.] (label +1) → w = [-1.  1.], b = 1.0
+  epoch 4: fixed [1. 0.] (label +1) → w = [0. 1.], b = 2.0
+  epoch 4: fixed [1. 1.] (label -1) → w = [-1.  0.], b = 1.0
+epoch 4: mistakes 4
+```
+
 It never reaches zero mistakes. Follow the printed updates: each one fixes the example it was made for, which pushes the boundary so that another example lands on the wrong side. From the third epoch on, every example is a mistake and the same four updates repeat, epoch after epoch, returning to the same weights. Each update fixes one example by breaking another. On non-separable data the perceptron rule has no stopping point, which is why any practical implementation needs a maximum number of epochs.
 
 ## The convergence theorem
@@ -77,7 +97,7 @@ For separable data, there is a guarantee. It depends on two numbers:
 
 The **perceptron convergence theorem**, proved by Albert Novikoff in 1962, says the perceptron makes **at most** `(R / γ)²` mistakes in total before it separates the data, whatever order the examples come in. (With a bias, the theorem is applied to each example with an extra constant 1 appended, `(x, 1)`, so the bias becomes an ordinary weight; `R` and `γ` are measured for those extended vectors.) A wide gap means few mistakes; a narrow gap can mean very many. You can see the effect by squeezing two groups closer together:
 
-```python
+```python type
 import numpy as np
 
 def mistakes_to_converge(gap, seed=0):
@@ -100,6 +120,13 @@ def mistakes_to_converge(gap, seed=0):
 
 for gap in [0.5, 0.2, 0.05, 0.01]:
     print(f"half-gap {gap}: {mistakes_to_converge(gap)} mistakes in total")
+```
+
+```output
+half-gap 0.5: 4 mistakes in total
+half-gap 0.2: 7 mistakes in total
+half-gap 0.05: 15 mistakes in total
+half-gap 0.01: 25 mistakes in total
 ```
 
 The points are scattered in a square, labelled by which side of a slanted line they fall on, and every point closer to the line than `gap` is removed, leaving an empty band of half-width `gap`. (`distance` is each point's distance from the line, from the vectors lesson's geometry.) As the gap narrows, the total number of mistakes before convergence grows: 4, 7, 15, 25. The theorem's ceiling is far higher than these (in the tens of thousands for the narrowest gap), because it is a worst case over every possible order of examples: it guarantees an eventual answer, not a quick one.
@@ -136,7 +163,7 @@ XOR can also be built by combining simpler pieces, each of which a perceptron ca
 
 OR, NAND and AND are each linearly separable, so each is a single perceptron with hand-chosen weights. Feed the outputs of the first two into the third:
 
-```python
+```python type
 import numpy as np
 
 def unit(x, w, b):
@@ -150,6 +177,13 @@ def xor_network(a, b):
 for a in [0, 1]:
     for b in [0, 1]:
         print(a, b, "→", xor_network(a, b))
+```
+
+```output
+0 0 → 0
+0 1 → 1
+1 0 → 1
+1 1 → 0
 ```
 
 `h1` is OR (on if the sum is above 0.5), `h2` is NAND (on unless the sum is above 1.5), and the final unit is AND of the two (on only if both are). Three perceptrons, arranged in two **layers**, compute XOR, which one perceptron never can.

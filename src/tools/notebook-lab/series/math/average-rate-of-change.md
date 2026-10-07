@@ -28,7 +28,7 @@ the change in output divided by the change in input. Geometrically it is the slo
 
 A part dropped from a machine falls a distance s(t) = 4.9 t² metres in t seconds (ignoring air resistance). Its average speed over the first second is 4.9 m/s, but it is clearly going faster at the end of that second than at the start. Predict before running: what does the average speed over [1, 1 + h] approach as h shrinks?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,6 +41,15 @@ def average_rate(f, a, b):
 
 for h in [1, 0.5, 0.1, 0.01, 0.001, 0.0001]:
     print(f"over [1, {1 + h:<7}]: average speed {average_rate(fall, 1, 1 + h):.6f} m/s")
+```
+
+```output
+over [1, 2      ]: average speed 14.700000 m/s
+over [1, 1.5    ]: average speed 12.250000 m/s
+over [1, 1.1    ]: average speed 10.290000 m/s
+over [1, 1.01   ]: average speed 9.849000 m/s
+over [1, 1.001  ]: average speed 9.804900 m/s
+over [1, 1.0001 ]: average speed 9.800490 m/s
 ```
 
 The averages fall from 14.7 m/s over the interval [1, 2] toward 9.8 m/s, and they get there steadily: the excess is exactly 4.9h, because s(1 + h) − s(1) = 9.8h + 4.9h². Halve the interval, halve the excess.
@@ -59,7 +68,7 @@ The number the averages approach as h shrinks to zero is the **instantaneous rat
 
 Geometrically, as the second point slides toward the first, the secant lines swing toward a limiting line that just touches the curve at that point: the **tangent line**, whose slope is the derivative. Predict before running: how do the secants look on the graph as h shrinks?
 
-```python
+```python type
 ts = np.linspace(0, 2.2, 200)
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.plot(ts, fall(ts), color="black", label="s(t) = 4.9 t²")
@@ -74,6 +83,10 @@ ax.set_ylabel("distance fallen (m)")
 ax.legend(fontsize=8)
 plt.show()
 print("tangent line at t = 1: s ≈", fall(1), "+ 9.8 (t - 1)")
+```
+
+```output
+tangent line at t = 1: s ≈ 4.9 + 9.8 (t - 1)
 ```
 
 The secants pivot on the point (1, 4.9) and flatten toward the red tangent. Near t = 1 the tangent line is the best straight-line approximation to the curve, an idea that the calculus block turns into linear approximation and Newton's method.
@@ -94,7 +107,7 @@ Estimating a derivative from function values is called **numerical differentiati
 
 For the falling part, the central difference gives exactly 9.8 for any h: the 4.9h² terms cancel. In general the forward difference's error is proportional to h, while the central difference's error is proportional to h², so halving h halves one error but quarters the other. Predict before running: for f(x) = sin x at x = 1 (where the exact derivative is cos 1), how much more accurate is the central difference at h = 0.01?
 
-```python
+```python type
 x0 = 1.0
 exact = math.cos(x0)
 print(f"{'h':>8}  {'forward error':>14}  {'central error':>14}")
@@ -102,6 +115,15 @@ for h in [0.1, 0.05, 0.01, 0.005, 0.001]:
     fwd = (math.sin(x0 + h) - math.sin(x0)) / h
     ctr = (math.sin(x0 + h) - math.sin(x0 - h)) / (2 * h)
     print(f"{h:>8}  {fwd - exact:>14.3e}  {ctr - exact:>14.3e}")
+```
+
+```output
+       h   forward error   central error
+     0.1      -4.294e-02      -9.001e-04
+    0.05      -2.126e-02      -2.251e-04
+    0.01      -4.216e-03      -9.005e-06
+   0.005      -2.106e-03      -2.251e-06
+   0.001      -4.208e-04      -9.005e-08
 ```
 
 The forward error halves when h halves and drops tenfold when h drops tenfold: proportional to h. The central error drops fourfold and a hundredfold: proportional to h². At h = 0.01 the central difference is about 470 times more accurate, for the same two function evaluations. The orders come from the Taylor expansion in the calculus block, where the h² term's coefficient turns out to depend on the third derivative.
@@ -118,7 +140,7 @@ In code: `np.logspace(-15, -1, 57)` tries $h$ across 14 orders of magnitude
 
 Shrinking h should make the estimate ever better, but in floating point it does not. f(x + h) and f(x) agree in more and more leading digits as h shrinks, so subtracting them cancels those digits and leaves mostly rounding error, about 10⁻¹⁶ times f's size. Dividing by a tiny h then magnifies it. The total error is the method error (falling with h) plus the rounding error (growing like 10⁻¹⁶/h), so there is a best h in between. Predict before running: roughly where is the best h for the forward difference?
 
-```python
+```python type
 hs = np.logspace(-15, -1, 57)
 fwd_err = [abs((math.sin(x0 + h) - math.sin(x0)) / h - exact) for h in hs]
 ctr_err = [abs((math.sin(x0 + h) - math.sin(x0 - h)) / (2 * h) - exact) for h in hs]
@@ -130,6 +152,10 @@ ax.set_ylabel("absolute error")
 ax.legend()
 plt.show()
 print(f"best forward h ≈ {hs[np.argmin(fwd_err)]:.0e} (error {min(fwd_err):.1e}), best central h ≈ {hs[np.argmin(ctr_err)]:.0e} (error {min(ctr_err):.1e})")
+```
+
+```output
+best forward h ≈ 6e-09 (error 2.5e-09), best central h ≈ 6e-06 (error 3.8e-13)
 ```
 
 `np.logspace(-15, -1, 57)` gives 57 values evenly spaced in orders of magnitude from 10⁻¹⁵ to 10⁻¹. On log–log axes, each method's error is a V: a straight falling line where method error dominates (slope 1 for forward, 2 for central, the lesson on plotting's power-law slopes again), then a rising, ragged line where rounding dominates.
@@ -150,7 +176,7 @@ Measured data adds a second source of trouble. Every reading carries noise, and 
 
 The remedy is to difference over a **wider interval**, k samples on each side: v_i ≈ (x_{i+k} − x_{i−k}) / (t_{i+k} − t_{i−k}). The noise shrinks in proportion to 1/k, but the method error grows, because a wide interval blurs genuine changes in speed. Predict before running: for an encoder logging every millisecond with 0.1 mm of noise, is k = 1 or k = 20 better?
 
-```python
+```python type
 rng = np.random.default_rng(21)
 t = np.arange(0, 1.0, 0.001)
 true_x = 0.05 * (1 - np.cos(2 * math.pi * t))
@@ -164,6 +190,14 @@ for k in [1, 5, 20, 80, 200]:
     tk, vk = central_over(t, x_meas, k)
     err = vk - true_v[k:-k]
     print(f"k = {k:>3} (interval {2 * k} ms): rms speed error {np.sqrt((err ** 2).mean()) * 1000:7.2f} mm/s")
+```
+
+```output
+k =   1 (interval 2 ms): rms speed error   69.22 mm/s
+k =   5 (interval 10 ms): rms speed error   13.65 mm/s
+k =  20 (interval 40 ms): rms speed error    3.43 mm/s
+k =  80 (interval 160 ms): rms speed error    9.96 mm/s
+k = 200 (interval 400 ms): rms speed error   58.06 mm/s
 ```
 
 The arrays are sliced so that `x[2k:] - x[:-2k]` pairs each sample with the one 2k samples earlier, and the result is assigned to the middle time, `t[k:-k]`. The rms (root-mean-square) error is the typical size of the error.

@@ -8,7 +8,7 @@ An **embedding** replaces each word, or any other category (a product, a user, a
 
 An embedding layer is just a matrix E with one row per item and d columns. The embedding of item `i` is row `i`. Multiplying a one-hot vector by E gives exactly that row, so an embedding layer **is** a dense layer applied to one-hot inputs, computed the fast way, by looking up the row instead of multiplying by thousands of zeros:
 
-```python
+```python type
 import numpy as np
 
 vocab = ["cat", "dog", "bread", "apple"]
@@ -24,6 +24,12 @@ sentence = [1, 2, 1, 3]
 print("a sentence of word ids becomes a", E[sentence].shape, "array of vectors")
 ```
 
+```output
+one-hot @ E: [ 0.105 -0.536  0.362]
+row lookup:  [ 0.105 -0.536  0.362]
+a sentence of word ids becomes a (4, 3) array of vectors
+```
+
 `E[sentence]` looks up one row per word id, turning a sequence of ids into a sequence of vectors that any network can read. The question is how to get **good** vectors.
 
 ## Similarity: the cosine
@@ -34,7 +40,7 @@ To compare embeddings, the standard measure is the **cosine similarity**: the co
 
 Learning embeddings needs text. The idea behind every method is the **distributional hypothesis**: words that appear in similar contexts have similar meanings. "Cat" and "dog" both appear before "runs", "sleeps" and "in the garden"; "bread" and "rice" both appear after "eats" and "cooks". Here is a made-up corpus of short sentences built from a few templates, with a few odd sentences mixed in:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -62,6 +68,11 @@ print(f"{len(sentences)} sentences, {len(words)} words, vocabulary of {len(vocab
 print(sentences[:4])
 ```
 
+```output
+1500 sentences, 8880 words, vocabulary of 24
+['the farmer sleeps in the barn', 'the baker cooks apple in the kitchen', 'the cat runs in the garden', 'the cow runs in the field']
+```
+
 ## Method 1: count, then compress
 
 Count, for every pair of words, how often they appear within two positions of each other: a **co-occurrence matrix**, V × V. Raw counts are dominated by common words like "the", so convert them to **PPMI** (positive pointwise mutual information): how much more often two words appear together than they would if they were independent, on a log scale, with negative values set to zero:
@@ -72,7 +83,7 @@ Count, for every pair of words, how often they appear within two positions of ea
 
 Each row of the PPMI matrix already describes a word by its contexts. To get short, dense vectors, compress it with the SVD, much as PCA did (but without centring the columns first): keep the first `d` singular directions. Before running, predict: which words will be the nearest neighbours of "cat"?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -125,6 +136,14 @@ for word in ["cat", "dog", "bread", "chef", "garden"]:
     print(f"{word:<7} nearest: {neighbours(embeddings, word)}")
 ```
 
+```output
+cat     nearest: [('fox', 1.0), ('cow', 1.0), ('horse', 0.91)]
+dog     nearest: [('horse', 0.98), ('cow', 0.8), ('fox', 0.8)]
+bread   nearest: [('apple', 0.96), ('rice', 0.87), ('cheese', 0.83)]
+chef    nearest: [('baker', 0.99), ('child', 0.89), ('farmer', 0.87)]
+garden  nearest: [('barn', 1.0), ('kitchen', 1.0), ('field', 1.0)]
+```
+
 `np.errstate(divide="ignore")` silences the warning for log(0) on pairs that never co-occur (their PMI becomes −∞, and the `maximum` turns it into 0). `U[:, :6] * S[:6]` keeps the six strongest directions, scaled by their singular values: a 6-number vector for each of the 24 words. Neighbours are ranked by cosine similarity, with the word itself excluded.
 
 Without being told anything about categories, the vectors group the words: cat's nearest neighbours are fox, cow and horse; bread's are apple, rice and cheese; chef's are baker, then child and farmer; garden's are the other places. Notice "dog": its neighbours are still animals, but less closely (0.98, 0.80, 0.80, against 1.00 for cat's nearest), and it is not among cat's top three. Its contexts differ from the other animals' in small ways (it appears in "the dog eats the bread", for instance, though "the horse eats the apple" appears just as often), and with a corpus this small, such quirks are enough to move a word's vector noticeably; treat individual neighbours in a small corpus with caution. Embeddings reflect how words are **used**, not what they mean, which is both their power and, on real text, their danger: they absorb whatever associations, including biased ones, the text contains.
@@ -139,7 +158,7 @@ L = -\ln \sigma(w_{\text{centre}} \cdot c_{\text{context}}) - \sum_{\text{negati
 
 Words that share contexts get pushed towards the same context vectors, and so end up near each other. This is **word2vec** (2013), which made embeddings famous; trained on billions of words, its vectors even support analogies such as king − man + woman ≈ queen.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -208,6 +227,14 @@ def neighbours(E, word, k=3):
 print(f"{len(pairs)} (centre, context) pairs")
 for word in ["cat", "bread", "chef", "garden"]:
     print(f"{word:<7} nearest: {neighbours(W, word)}")
+```
+
+```output
+26520 (centre, context) pairs
+cat     nearest: [('fox', 0.99), ('cow', 0.99), ('horse', 0.88)]
+bread   nearest: [('apple', 0.99), ('rice', 0.96), ('cheese', 0.94)]
+chef    nearest: [('baker', 0.98), ('child', 0.74), ('farmer', 0.74)]
+garden  nearest: [('field', 1.0), ('kitchen', 0.99), ('barn', 0.97)]
 ```
 
 The gradients follow from the logistic regression lesson: for each positive pair, the gradient of −ln σ(s) with respect to the score s is σ(s) − 1 (`d_pos`); for each negative pair, the gradient of −ln σ(−s) is σ(s) (`d_neg`). Each is multiplied by the other vector of the pair. Negatives are drawn in proportion to word frequency to the power 0.75, the word2vec recipe, which samples rare words a little more often than their raw frequency would.

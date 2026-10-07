@@ -19,7 +19,7 @@ To multiply a matrix `M` by a vector `v`, take the dot product of **each row** o
 
 In NumPy the `@` operator does it:
 
-```python
+```python type
 import numpy as np
 
 M = np.array([[2, 1],
@@ -27,6 +27,11 @@ M = np.array([[2, 1],
 v = np.array([4, 5])
 print(M @ v)
 print(np.array([M[0] @ v, M[1] @ v]))
+```
+
+```output
+[13 15]
+[13 15]
 ```
 
 The second line computes the same thing row by row, to show that `@` is nothing more than a dot product for each row. For a dataset `X` and a weight vector `w`, `X @ w` is therefore one weighted sum per example, which is exactly what the linear model at the end of the last lesson computed.
@@ -42,13 +47,17 @@ There is a second, equally correct way to read that multiplication, and it is th
 = \begin{pmatrix} 13 \\ 15 \end{pmatrix}
 \]
 
-```python
+```python type
 import numpy as np
 
 M = np.array([[2, 1],
               [0, 3]])
 v = np.array([4, 5])
 print(4 * M[:, 0] + 5 * M[:, 1])
+```
+
+```output
+[13 15]
 ```
 
 Both readings give `[13, 15]`. The row reading is how you compute it; the column reading is how you understand it, as the next section shows.
@@ -65,7 +74,7 @@ Because every vector is a mix of `e1` and `e2`, and a matrix keeps the same mix 
 
 To see a transformation, apply it to a recognisable shape. This helper draws a shape before and after:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -94,12 +103,16 @@ The grey F is the original and the blue F is the result. The red and green arrow
 
 A note on `F @ M.T`. The points are stored as **rows**, one point per row, which is how data is always stored. To transform every row `p` by `M @ p` at once, NumPy computes `F @ M.T` (`.T` is the transpose). For a single point you can check that the two agree:
 
-```python
+```python type
 import numpy as np
 
 M = np.array([[2, 1], [0, 3]])
 p = np.array([4, 5])
 print(M @ p, p @ M.T)
+```
+
+```output
+[13 15] [13 15]
 ```
 
 The transpose rule near the end of this lesson explains why. You will see this "data times transposed matrix" pattern constantly.
@@ -108,7 +121,7 @@ The transpose rule near the end of this lesson explains why. You will see this "
 
 Each of these is just a choice of where to send `e1` and `e2`. Before running the cell, look at each matrix's columns and predict what will happen to the F.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -158,7 +171,7 @@ If you transform a vector by `B` and then by `A`, you get `A @ (B @ v)`. The mat
 
 To compute `A @ B`, multiply `A` by each column of `B` in turn; the results are the columns of the product:
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[1, 2], [3, 4]])
@@ -170,9 +183,17 @@ v = np.array([1, -1])
 print((A @ B) @ v, A @ (B @ v))
 ```
 
+```output
+[[10  5]
+ [20 11]]
+[[10  5]
+ [20 11]]
+[5 9] [5 9]
+```
+
 The column-by-column product matches `A @ B`, and applying the product to `v` gives the same as applying `B` then `A`. The order matters: `A @ B` means "do `B` first", reading right to left, like function composition. And in general `A @ B` and `B @ A` are **different**. Predict both results of the next cell before running it: what happens to `(1, 0)` if you rotate it by 90° and then stretch x by 2, or the other way round?
 
-```python
+```python type
 import numpy as np
 
 angle = np.radians(90)
@@ -186,6 +207,12 @@ print("stretch then rotate:", rotate @ stretch_x @ v)
 print(np.allclose(stretch_x @ rotate, rotate @ stretch_x))
 ```
 
+```output
+rotate then stretch: [0. 1.]
+stretch then rotate: [0. 2.]
+False
+```
+
 Rotating `(1, 0)` to point up and then stretching x leaves it pointing up with length 1, since it has no x part left to stretch. Stretching first makes it length 2, and then rotating points it up. Two different answers: matrix multiplication is not **commutative**, unlike ordinary multiplication of numbers. (`.round(10)` cleans up tiny floating-point leftovers like 6e-17, which `np.cos(90°)` produces instead of an exact 0.)
 
 ## Shapes must fit
@@ -196,12 +223,16 @@ Matrices do not have to be square. A matrix with shape `(m, n)` takes vectors of
 (m \times n) \; @ \; (n \times p) \;\to\; (m \times p)
 \]
 
-```python
+```python type
 import numpy as np
 
 X = np.ones((100, 3))
 W = np.ones((3, 4))
 print((X @ W).shape)
+```
+
+```output
+(100, 4)
 ```
 
 A dataset of 100 examples with 3 features, times a `(3, 4)` matrix, gives 100 examples with 4 new features each. This is exactly what one layer of a neural network does: it multiplies the data by a weight matrix to produce a new set of features, and learning means finding good numbers for that matrix. When the inner numbers do not match, NumPy tells you:
@@ -222,7 +253,7 @@ The **identity matrix**, `np.eye(n)`, has 1s on its main diagonal and 0s everywh
 
 The **transpose** `M.T` swaps rows and columns. One rule about it is used often: transposing a product reverses the order, `(A @ B).T` equals `B.T @ A.T`.
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[1, 2], [3, 4], [5, 6]])
@@ -230,6 +261,14 @@ B = np.array([[1, 0, 2], [0, 1, 1]])
 print(np.eye(3))
 print(np.array_equal(np.eye(3) @ A, A))
 print(np.array_equal((A @ B).T, B.T @ A.T))
+```
+
+```output
+[[1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+True
+True
 ```
 
 ## How much does a matrix stretch area?
@@ -242,11 +281,19 @@ A transformation changes areas by a fixed factor, the same everywhere. The unit 
 
 Using the gallery above, predict the determinant of each of the five matrices below before running the cell.
 
-```python
+```python type
 import numpy as np
 
 for name, M in [("stretch x by 2", [[2, 0], [0, 1]]), ("rotation", [[0, -1], [1, 0]]), ("shear", [[1, 1], [0, 1]]), ("reflection", [[-1, 0], [0, 1]]), ("projection", [[1, 0], [0, 0]])]:
     print(f"{name:15} det = {np.linalg.det(np.array(M, dtype=float)):.2f}")
+```
+
+```output
+stretch x by 2  det = 2.00
+rotation        det = 1.00
+shear           det = 1.00
+reflection      det = -1.00
+projection      det = 0.00
 ```
 
 Stretching doubles areas (det 2). Rotation and shear keep areas the same (det 1). Reflection keeps the area but flips the shape over, which the determinant records as a minus sign (det −1). And projection flattens everything onto a line, where every area is zero (det 0). A determinant of zero is the signal that a matrix destroys information and cannot be undone, which is the central question of the next lesson.

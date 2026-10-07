@@ -13,7 +13,7 @@ The key is to ask, for each item: **once a better item has arrived, can this one
 
 Scan the list left to right, keeping a stack of positions that are **still waiting** for a greater value. Their values are in **decreasing** order from bottom to top, because when a new value arrives, it is the answer for every waiting position with a smaller value: pop them all, recording the answer, and then push the new position to wait in turn. Positions still on the stack at the end never find a greater value. Predict before running: in `[2, 1, 2, 4, 3, 1, 5]`, what is the next greater value for the 4, and which positions never get one?
 
-```python
+```python type
 def next_greater(values, trace=False):
     answer = [None] * len(values)
     waiting = []
@@ -29,6 +29,17 @@ values = [2, 1, 2, 4, 3, 1, 5]
 print(next_greater(values, trace=True))
 ```
 
+```output
+  after 2: waiting values [2]
+  after 1: waiting values [2, 1]
+  after 2: waiting values [2, 2]
+  after 4: waiting values [4]
+  after 3: waiting values [4, 3]
+  after 1: waiting values [4, 3, 1]
+  after 5: waiting values [5]
+[4, 2, 4, 5, 5, 5, None]
+```
+
 The stack holds positions rather than values, so that the answer can be written into the right place; `values[waiting[-1]]` reads the value of the top waiting position.
 
 The 4 waits until the 5 arrives, as do the 3 and the second 1, popped together. The final 5 never finds anything greater. At every moment the waiting values are in decreasing order: that is the monotonic stack. Although there is a loop inside a loop, each position is pushed once and popped at most once, so the total work is at most 2n: O(n). The inner `while` does a lot of work only after a lot of pushing.
@@ -37,7 +48,7 @@ The 4 waits until the 5 arrives, as do the 3 and the second 1, popped together. 
 
 The same stack, scanned the same way, also answers questions about the **past**. A share's **span** on a given day is the number of consecutive days, ending today, on which the price was at most today's. Equivalently, it is the distance back to the previous day with a **higher** price. Keep a stack of days with decreasing prices; for each new day, pop every day whose price is at most today's (today's price makes them irrelevant for every later day too: anyone looking back past today sees today first, and it is at least as high). Whatever is left on top is the previous higher day. Predict before running: what is the span on the day the price is 85?
 
-```python
+```python type
 def spans(prices):
     result = []
     higher = []
@@ -53,6 +64,16 @@ for p, s in zip(prices, spans(prices)):
     print(f"price {p:>3}: span {s}")
 ```
 
+```output
+price 100: span 1
+price  80: span 1
+price  60: span 1
+price  70: span 2
+price  60: span 1
+price  75: span 4
+price  85: span 6
+```
+
 When the stack is empty, no earlier price was higher, so the span reaches back to the first day: i + 1 days.
 
 On the day of 85, the six days back to the 100 were all at most 85, so the span is 6. 85 pops 75 and 80 (the 60s and the 70 were already removed by 70 and 75), and all of them are gone for good, which is safe: 85 hides them from every future day.
@@ -61,7 +82,7 @@ On the day of 85, the six days back to the 100 were all at most 85, so the span 
 
 The maximum of every window of k consecutive values: the sliding window lesson's add-and-subtract trick does not work for maxima, because when the maximum leaves the window there is no way to "subtract" it. A **monotonic deque** solves it. Keep positions in the window whose values are in **decreasing** order. When a new value arrives, pop from the **back** every position with a smaller or equal value (they can never be a window's maximum again, since the new value is at least as big and will stay in the window longer). Then the **front** holds the window's maximum; pop it from the front once it slides out of the window. Each position enters and leaves once: O(n) for all windows. Predict before running: what are the 3-day maxima of the temperatures below?
 
-```python
+```python type
 from collections import deque
 
 def window_maxima(values, k):

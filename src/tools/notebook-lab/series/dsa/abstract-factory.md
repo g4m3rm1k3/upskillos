@@ -13,7 +13,7 @@ This lesson covers:
 
 A workshop's reports can be produced as Markdown (for the wiki) or as HTML (for email). A report has headings, tables and notes, and each has a renderer per format. The first version passes each renderer in separately. Predict before running: what is wrong with the second report?
 
-```python
+```python type
 def md_heading(text):
     return f"## {text}"
 
@@ -36,13 +36,23 @@ print()
 print(stock_report(rows, html_heading, md_table))
 ```
 
+```output
+## Low stock
+| bolt M8 | 12 |
+| washer | 40 |
+
+<h2>Low stock</h2>
+| bolt M8 | 12 |
+| washer | 40 |
+```
+
 The second call mixes an HTML heading with a Markdown table: a page that renders as a heading followed by lines of literal pipes. Nothing stopped it, because the two choices are independent arguments, and with three or four parts the number of wrong combinations grows. The rule that the parts must come from the **same** family exists only in the programmer's head.
 
 ## One factory per family
 
 The fix is to make the family itself an object. A **kit** (the abstract factory) has one method per kind of part, and each concrete kit creates all its parts in one format. The report takes one kit, so it cannot mix. Adding a format means writing one new kit, and every report gains it. Predict before running: how many arguments does `stock_report` need now, and could it produce the mixed output?
 
-```python
+```python type
 class MarkdownKit:
     def heading(self, text):
         return f"## {text}"
@@ -71,6 +81,17 @@ for kit in [MarkdownKit(), HtmlKit()]:
     print()
 ```
 
+```output
+## Low stock
+| bolt M8 | 12 |
+| washer | 40 |
+> Reorder anything below 20.
+
+<h2>Low stock</h2>
+<table><tr><td>bolt M8</td><td>12</td></tr><tr><td>washer</td><td>40</td></tr></table>
+<p><em>Reorder anything below 20.</em></p>
+```
+
 `stock_report` now asks one object for everything it builds. Whichever kit it is given, every part comes from that kit's family.
 
 One argument instead of one per part, and the mixed report is now impossible to write by accident: there is simply no way to pass "Markdown tables with HTML headings". The kits are the "concrete factories". Strictly, these kits create text parts rather than objects; the pattern's usual form, where each method returns a collaborator object, is the environment kit in the next section. The interface they share (`heading`, `table`, `note`) is the "abstract factory" the pattern is named after. In Python it is usually a protocol rather than a base class.
@@ -79,7 +100,7 @@ One argument instead of one per part, and the mixed report is now impossible to 
 
 The most valuable families in real programs are often not formats but **environments**. A program talks to a clock, a database and a mailer. In production all three are real. In tests all three should be fakes: a fixed clock, an in-memory store, and a mailer that records messages. A test that uses a fake clock with a real mailer could send real email about imaginary dates. An environment kit hands out a matching set, so a service needs one argument to run against either world. This is dependency injection from the earlier lesson, with the dependencies grouped into a family. Predict before running: which accounts get chased, and does anything real get sent?
 
-```python
+```python type
 from datetime import date
 
 class TestKit:
@@ -125,6 +146,11 @@ print("chased:", ChaseUnpaid(kit).run())
 print(kit.sent)
 ```
 
+```output
+chased: 1
+[('a@x.com', 'Invoice A-1 is 61 days old')]
+```
+
 The store and mailer classes are defined inside the methods so that each can use the kit's data directly. They are created fresh each time the kit is asked.
 
 Only `A-1` is chased: it is 61 days old. `B-7` is 11 days old, and `C-3` is paid. The recording mailer captured the message, and nothing left the program. A `ProductionKit` with the same three methods would return the real clock, a database store and an SMTP mailer, and `ChaseUnpaid` would not change at all.
@@ -135,7 +161,7 @@ The pattern has a known weak point. Adding a new **kind of part**, say a `chart`
 
 In Python, a kit does not need to be a class. Anything holding the right callables works: a module (`import html_kit as kit`), a `types.SimpleNamespace`, or a frozen dataclass of functions. Here a plain-text family is a namespace of three plain functions, and `stock_report` accepts it unchanged:
 
-```python
+```python type
 from types import SimpleNamespace
 
 plain = SimpleNamespace(
@@ -144,6 +170,13 @@ plain = SimpleNamespace(
     note=lambda text: f"NOTE: {text}",
 )
 print(stock_report(rows, plain))
+```
+
+```output
+LOW STOCK
+bolt M8        12
+washer         40
+NOTE: Reorder anything below 20.
 ```
 
 `SimpleNamespace(a=1, b=2)` creates an object whose attributes are exactly the keywords given: a quick record with no class definition.

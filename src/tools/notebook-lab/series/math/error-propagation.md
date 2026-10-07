@@ -27,7 +27,7 @@ The individual terms are as useful as the total. Their shares, the **uncertainty
 
 Predict before running: which of the three sides contributes most to the volume's uncertainty, and how big is the total compared with the worst case?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,6 +41,14 @@ print(f"volume {V:,.0f} mm³, relative uncertainty {rel:.3e}, so ±{V * rel:.0f}
 for name, x in sides.items():
     print(f"  {name:<7} {x:6.1f} mm: relative {s / x:.2e}, share of the variance {100 * (s / x) ** 2 / rel ** 2:5.1f}%")
 print(f"worst case (all errors the same way): ±{V * s * sum(1 / x for x in sides.values()):.0f} mm³")
+```
+
+```output
+volume 432,000 mm³, relative uncertainty 5.365e-04, so ±232 mm³
+  length   120.0 mm: relative 1.67e-04, share of the variance   9.7%
+  width     80.0 mm: relative 2.50e-04, share of the variance  21.7%
+  height    45.0 mm: relative 4.44e-04, share of the variance  68.6%
+worst case (all errors the same way): ±372 mm³
 ```
 
 The volume is 432,000 ± 232 mm³, a relative uncertainty of about 0.054%. The 45 mm height accounts for 69% of the variance, the 80 mm width 22% and the 120 mm length under 10%. Improving the length measurement would barely help; a better height measurement would. The worst case, ±372 mm³, assumes all three errors push the same way at once, which is possible but unlikely for independent errors.
@@ -62,7 +70,7 @@ Uncertainties are not always standard deviations. A drawing tolerance of ±0.05 
 
 Predict before running: does the simulation agree with ±232 mm³? And for parts made anywhere within ±0.05 mm, is the worst case ever reached?
 
-```python
+```python type
 n = 200_000
 Ls, Ws, Hs = (x + rng.normal(0, s, n) for x in sides.values())
 Vs = Ls * Ws * Hs
@@ -84,6 +92,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+normal errors: simulated sd 231.7 mm³ (formula 231.8); 95% interval -454 to +453 mm³
+uniform ±0.05: simulated sd 334.9, formula with a/√3 334.5; worst case ±930, largest seen in 200,000 parts 922
+```
+
 The simulated standard deviation, 231.7 mm³, matches the formula's 231.8, and the 95% interval, about ±454 mm³, is ±1.96σ, as for a normal distribution. For the uniform tolerances the formula with a/√3 (334.5) matches the simulation (334.9). The worst case, ±930 mm³, was approached (922) only by the most extreme of 200,000 simulated parts. The sum of three uniform errors is already nearly bell-shaped, the central limit theorem again, so stacking worst cases is very pessimistic.
 
 ## Powers amplify: which measurement to improve
@@ -100,7 +113,7 @@ The gradient lesson saw a squared diameter count twice. High powers make the eff
 
 Predict before running: the wire measures 2.00 ± 0.01 mm, the coil 20.0 ± 0.05 mm, there are 10 active coils, and the steel's shear modulus is 79.3 GPa ± 1%. Which input limits the spring rate, and what does a wire measurement five times better buy?
 
-```python
+```python type
 G, d, D, n_coils = 79_300.0, 2.00, 20.0, 10
 sd_G, sd_d, sd_D = 0.01 * 79_300.0, 0.01, 0.05
 k = G * d ** 4 / (8 * D ** 3 * n_coils)
@@ -111,6 +124,14 @@ for name, v in terms.items():
     print(f"  {name:<19} {v:.2e}  share {100 * v ** 2 / r ** 2:5.1f}%")
 better = math.sqrt((4 * 0.002 / d) ** 2 + (3 * sd_D / D) ** 2 + (sd_G / G) ** 2)
 print(f"with the wire to ±0.002 mm: ± {k * better:.4f} N/mm (relative {better:.2e})")
+```
+
+```output
+spring rate 1.9825 N/mm ± 0.0468 (relative 2.36e-02)
+  wire diameter (×4)  2.00e-02  share  71.9%
+  coil diameter (×3)  7.50e-03  share  10.1%
+  shear modulus       1.00e-02  share  18.0%
+with the wire to ±0.002 mm: ± 0.0260 N/mm (relative 1.31e-02)
 ```
 
 The spring rate is 1.98 ± 0.05 N/mm, a relative uncertainty of 2.4%. The wire's fourfold term supplies about 72% of the variance; the shear modulus 18% and the coil diameter 10%. Measuring the wire to ±0.002 mm (a micrometer instead of a caliper) cuts the total to 1.3%. After that, the material's shear modulus dominates, and only a test of the actual wire would improve it. A budget always says where the next improvement should go.
@@ -128,7 +149,7 @@ The rule "add in quadrature" assumes the errors are **independent**. Errors from
 
 Predict before running: with independent reading noise of 0.02 mm plus a shared 0.02 mm calibration offset, how big is the volume's uncertainty? And what if the offset were wrongly treated as independent?
 
-```python
+```python type
 x = np.array(list(sides.values()))
 g = np.array([x[1] * x[2], x[0] * x[2], x[0] * x[1]])
 sb = 0.02
@@ -141,6 +162,13 @@ print(f"offset treated as independent: ±{math.sqrt(g @ cov_wrong @ g):.0f} mm³
 off = rng.normal(0, sb, n)
 Vc = (x[0] + rng.normal(0, s, n) + off) * (x[1] + rng.normal(0, s, n) + off) * (x[2] + rng.normal(0, s, n) + off)
 print(f"simulation with one offset per measured block: ±{Vc.std():.0f} mm³")
+```
+
+```output
+reading noise only:            ±232 mm³
+plus a shared offset:          ±438 mm³
+offset treated as independent: ±328 mm³  (wrong)
+simulation with one offset per measured block: ±438 mm³
 ```
 
 The shared offset raises the uncertainty from ±232 to ±438 mm³. Treating the same offset as three independent errors gives ±328 mm³, a 25% underestimate, because it lets the offset partly cancel itself. The simulation, drawing one offset per block and adding it to all three sides, confirms ±438. Calibration errors, temperature effects on the whole part, and a shared reference standard all create correlations like this. They are the most common way real uncertainty statements end up too optimistic. Correlation can also help: when a result is a **difference** of two readings from the same instrument, the shared offset cancels.
@@ -158,7 +186,7 @@ The linear rule replaces f by its tangent near the measured values. When an inpu
 
 Predict before running: 5 V across a resistor, current measured as 10.0 mA with σ = 2 mA. Linear propagation says R = 500 ± 100 Ω. What does a simulation say about the average and the 95% interval?
 
-```python
+```python type
 Vv, I, sI = 5.0, 0.010, 0.002
 Is = I + rng.normal(0, sI, n)
 Rs = Vv / Is
@@ -166,6 +194,12 @@ lo, hi = np.percentile(Rs, [2.5, 97.5])
 print(f"linear: R = {Vv / I:.0f} ± {Vv / I ** 2 * sI:.0f} Ω, so 95% about {Vv / I - 1.96 * Vv / I ** 2 * sI:.0f} to {Vv / I + 1.96 * Vv / I ** 2 * sI:.0f}")
 print(f"simulation: mean {Rs.mean():.1f}, median {np.median(Rs):.1f}, sd {Rs.std():.1f}; 95% interval {lo:.0f} to {hi:.0f} Ω")
 print(f"second-order mean V/I × (1 + (σ/I)²) = {Vv / I * (1 + (sI / I) ** 2):.1f}")
+```
+
+```output
+linear: R = 500 ± 100 Ω, so 95% about 304 to 696
+simulation: mean 522.8, median 499.7, sd 123.5; 95% interval 359 to 821 Ω
+second-order mean V/I × (1 + (σ/I)²) = 520.0
 ```
 
 The simulated mean is about 523 Ω, not 500: a bias of +4.6%, close to the second-order estimate of 520. (Strictly, a normally distributed current can come arbitrarily close to zero, so V/I has no finite mean in theory, and an unlucky simulation can show a far larger average: about one seed in a couple of hundred gives over 1,000 Ω. The median and percentiles are stable, which is another reason to report them.) The median stays at 500 (the middle current gives the middle resistance), but the 95% interval runs from 359 to 821 Ω, lopsided, against the linear formula's symmetric 304 to 696. With a 20% relative error the linear rule is simply the wrong tool. The cure is better data, a longer measurement or a larger current, or reporting the Monte Carlo interval. A rule of thumb: once an input's relative uncertainty passes about 10% in a strongly curved formula, simulate.

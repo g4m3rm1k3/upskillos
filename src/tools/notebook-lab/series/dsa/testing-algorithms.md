@@ -13,7 +13,7 @@ This lesson covers:
 
 Here is a binary search for "the first index whose value is at least the target" with a subtle bug. It passes a reasonable set of hand-written tests. Predict before running: how many random trials does it take to find a failing case?
 
-```python
+```python type
 import random, bisect
 
 def lower_bound(values, target):
@@ -39,6 +39,11 @@ for trial in range(1, 1001):
         break
 ```
 
+```output
+example tests pass: True
+trial 8: lower_bound([0, 3, 6, 6], 10) = 3, expected 4
+```
+
 `bisect.bisect_left` from the standard library is the **oracle**: a trusted implementation of the same function. An oracle can also be a slow brute-force version, such as scanning the list for the first index.
 
 The bug is that `hi` starts at the last index instead of one past it, so a target larger than everything returns the last index instead of `len(values)`. None of the hand-picked examples had a target above every value. Random inputs found one within a few trials, and the printed case shows exactly what went wrong. Random testing does not need you to imagine the bug, only to describe the inputs. (The generator includes empty lists, where `lower_bound` happens to be right: always make generators produce the edge cases.)
@@ -53,7 +58,7 @@ Often there is no trusted second implementation, for example when you are writin
 
 Here run-length encoding is tested with a round trip and a minimality property, with no oracle anywhere. Predict before running: which property catches the bug?
 
-```python
+```python type
 from collections import Counter
 
 def rle_encode(text):
@@ -92,6 +97,11 @@ print("correct encoder:", check_properties(rle_encode))
 print("buggy encoder:  ", check_properties(buggy_encode))
 ```
 
+```output
+correct encoder: all properties hold
+buggy encoder:   not minimal for 'aaaaaaaaaaaabbbbb': [('a', 9), ('a', 3), ('b', 5)]
+```
+
 The buggy encoder caps runs at 9 (perhaps for a one-digit file format) and starts a new pair after that.
 
 The round trip still holds for the buggy version, because two pairs of the same character decode to the same text. But the minimality property, "no two neighbouring pairs share a character", catches it. One property is rarely enough: each checks one aspect, and bugs hide in the aspects nobody checked.
@@ -100,7 +110,7 @@ The round trip still holds for the buggy version, because two pairs of the same 
 
 A random failure is often large and noisy: a 40-item list where 2 items matter. **Shrinking** reduces it automatically. Repeatedly try smaller variants (drop an item, replace a number by a smaller one), and keep any variant that still fails, until nothing smaller fails. Libraries such as Hypothesis do this with great sophistication, but the core idea is a short loop. Predict before running: what is the smallest list that breaks this "remove duplicates" function?
 
-```python
+```python type
 def dedupe(values):
     out = []
     for i, v in enumerate(values):
@@ -139,6 +149,11 @@ print("random failure:", big)
 print("shrunk to:     ", shrink(big, fails))
 ```
 
+```output
+random failure: [39, 16, 47, 22, 50, 44, 47, 41, 33, 1, 29, 49, 15, 41, 3, 10, 7, 23, 30, 15, 24, 34, 6, 36, 15, 0, 46, 13, 26, 17, 11, 49, 24, 10, 48, 4, 8, 39, 39, 28]
+shrunk to:      [24, 49, 24]
+```
+
 `dict.fromkeys(values)` keeps the first occurrence of each value in order, making it a handy oracle for "remove duplicates, keep order".
 
 `dedupe` only removes duplicates that are **next to each other**. The shrinker reduced 40 random numbers to a three-item list in which a value reappears after a different one. That is the bug in its simplest form, and much easier to reason about than the original. Always shrink before debugging.
@@ -149,7 +164,7 @@ Data structures have **invariants**, conditions that must hold between operation
 
 **Model-based testing** goes further. Generate a random **sequence of operations**, apply it both to the structure under test and to a simple **model** (a plain Python list queried with `min()`, standing in for a heap), and compare every answer. Combined with shrinking the operation sequence, this finds and minimises bugs that only appear after a particular history. Predict before running: how short is the shrunk sequence that breaks the buggy heap?
 
-```python
+```python type
 class Heap:
     def __init__(self, sift_bug=False):
         self.a, self.sift_bug = [], sift_bug
@@ -220,6 +235,12 @@ while True:
         break
 print("shrunk to:", current, "->", run_ops(current, buggy))
 print("correct heap passes 300 random sequences:", all(run_ops(random_ops(rng, 30), Heap) is None for _ in range(300)))
+```
+
+```output
+failing sequence of 30 operations
+shrunk to: [8, 3, 9, 16, 8, 7, 'pop'] -> heap order broken at index 2: [8, 9, 7, 16, 8]
+correct heap passes 300 random sequences: True
 ```
 
 The buggy heap only ever compares a parent with its **left** child when sifting down, so a smaller right child is missed. The shrink loop here only removes operations (numbers inside a sequence of operations should not be halved blindly).

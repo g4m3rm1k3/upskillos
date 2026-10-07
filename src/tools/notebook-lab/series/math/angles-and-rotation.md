@@ -24,7 +24,7 @@ A full turn is 360 degrees by convention, a number chosen thousands of years ago
 
 Measured in radians, an angle θ cuts an arc of length s = rθ, and a sector has area ½r²θ, with no conversion factors. That simplicity is why calculus, physics and Python's `math` functions all work in radians. `math.radians` and `math.degrees` convert. Predict before running: what does `math.sin(90)` return, and why?
 
-```python
+```python type
 import math
 import numpy as np
 
@@ -35,6 +35,15 @@ r = 0.25
 for deg in [1, 30, 90, 360]:
     theta = math.radians(deg)
     print(f"{deg:>4}°: {theta:.4f} rad, arc {r * theta * 1000:7.2f} mm, sector area {0.5 * r ** 2 * theta * 1e4:7.2f} cm²")
+```
+
+```output
+1 rad = 57.29577951308232 degrees;  90° = 1.5707963267948966 rad = π/2: True
+math.sin(90) = 0.8939966636005579   math.sin(math.radians(90)) = 1.0
+   1°: 0.0175 rad, arc    4.36 mm, sector area    5.45 cm²
+  30°: 0.5236 rad, arc  130.90 mm, sector area  163.62 cm²
+  90°: 1.5708 rad, arc  392.70 mm, sector area  490.87 cm²
+ 360°: 6.2832 rad, arc 1570.80 mm, sector area 1963.50 cm²
 ```
 
 The arc and area columns use a radius of 0.25 m, converted to millimetres and square centimetres.
@@ -59,7 +68,7 @@ A point at radius r on a turning object travels an arc rΔθ in time Δt, so its
 
 with ω in rad/s. This is the cutting speed from the quantities lesson, π D n, rewritten: with D = 2r and ω = 2πn, v = ωr = πDn. Predict before running: a 6 mm drill and a 50 mm face mill both turn at 3,000 rpm. How do their cutting speeds compare?
 
-```python
+```python type
 def rpm_to_rad_s(rpm):
     return rpm * 2 * math.pi / 60
 
@@ -67,6 +76,12 @@ for name, d_mm in [("6 mm drill", 6), ("50 mm face mill", 50), ("250 mm grinding
     omega = rpm_to_rad_s(3000)
     v = omega * (d_mm / 2000)
     print(f"{name:<22} ω = {omega:.1f} rad/s, surface speed {v:5.2f} m/s = {v * 60:6.1f} m/min")
+```
+
+```output
+6 mm drill             ω = 314.2 rad/s, surface speed  0.94 m/s =   56.5 m/min
+50 mm face mill        ω = 314.2 rad/s, surface speed  7.85 m/s =  471.2 m/min
+250 mm grinding wheel  ω = 314.2 rad/s, surface speed 39.27 m/s = 2356.2 m/min
 ```
 
 Dividing the diameter in millimetres by 2000 gives the radius in metres.
@@ -87,7 +102,7 @@ When two pulleys are joined by a belt, the belt cannot stretch or slip (ideally)
 
 A gearbox chains stages, and the overall ratio is the product of the stage ratios. Torque goes the other way: ignoring losses, power P = Tω is the same on both sides, so slowing a shaft down multiplies its torque. Predict before running: a motor at 1,450 rpm with 12 N·m of torque drives a 100 mm pulley belted to a 300 mm pulley, then a 15-tooth gear driving a 60-tooth gear. What speed and torque come out?
 
-```python
+```python type
 motor_rpm, motor_torque = 1450, 12.0
 stages = [("belt", 100, 300), ("gears", 15, 60)]
 rpm, torque = motor_rpm, motor_torque
@@ -96,6 +111,12 @@ for name, driver, driven in stages:
     torque = torque * driven / driver
     print(f"after the {name}: {rpm:7.2f} rpm, {torque:5.1f} N·m")
 print("power in:", round(motor_torque * rpm_to_rad_s(motor_rpm)), "W   power out:", round(torque * rpm_to_rad_s(rpm)), "W")
+```
+
+```output
+after the belt:  483.33 rpm,  36.0 N·m
+after the gears:  120.83 rpm, 144.0 N·m
+power in: 1822 W   power out: 1822 W
 ```
 
 The overall reduction is 3 × 4 = 12, so the output turns at about 120.8 rpm with 144 N·m, twelve times the motor's torque. The power, about 1,822 W, is the same on both sides, as it must be for an ideal (lossless) drive; real gearboxes lose a few percent per stage.
@@ -117,7 +138,7 @@ An angle and the same angle plus any whole number of turns describe the same dir
 
 Averaging is a trap: the mean of 350° and 10° is 0°, but the arithmetic mean says 180°, exactly the wrong direction. Predict before running: what is the shortest turn from 350° to 10°?
 
-```python
+```python type
 def normalise(angle):
     a = angle % 360
     return a - 360 if a > 180 else a
@@ -129,6 +150,16 @@ for a in [370, -30, 180, 540, -180]:
     print(f"{a:>5}° -> [0, 360): {a % 360:>5}°   (-180, 180]: {normalise(a):>5}°")
 print("shortest turn 350° -> 10°:", shortest_turn(350, 10), "   10° -> 350°:", shortest_turn(10, 350))
 print("naive mean of 350° and 10°:", (350 + 10) / 2, "   mean of the offsets from 350°:", normalise(350 + shortest_turn(350, 10) / 2))
+```
+
+```output
+  370° -> [0, 360):    10°   (-180, 180]:    10°
+  -30° -> [0, 360):   330°   (-180, 180]:   -30°
+  180° -> [0, 360):   180°   (-180, 180]:   180°
+  540° -> [0, 360):   180°   (-180, 180]:   180°
+ -180° -> [0, 360):   180°   (-180, 180]:   180°
+shortest turn 350° -> 10°: 20    10° -> 350°: -20
+naive mean of 350° and 10°: 180.0    mean of the offsets from 350°: 0.0
 ```
 
 The mean is taken by stepping half the shortest turn from the first angle, which works for two angles; the sine and cosine lesson gives the general method.
@@ -147,7 +178,7 @@ In code: `(np.diff(readings) + 180) % 360 - 180`, then `np.cumsum`
 
 An absolute rotary encoder reports the shaft's angle within one turn, 0 to 359.9°. To track total rotation, or speed, the log must be **unwrapped**: whenever a reading jumps by more than half a turn, assume the shaft actually went the short way across the 0/360 boundary, and add or subtract 360 from that point on. This only works if the shaft turns less than half a turn between samples; otherwise the direction is ambiguous, the aliasing of the plotting lesson in another form. Predict before running: how many turns does this log record?
 
-```python
+```python type
 readings = np.array([300, 340, 20, 60, 100, 140, 180, 220, 260, 300, 340, 20, 60], dtype=float)
 steps = np.diff(readings)
 steps = (steps + 180) % 360 - 180
@@ -155,6 +186,12 @@ unwrapped = np.concatenate(([readings[0]], readings[0] + np.cumsum(steps)))
 print("unwrapped:", unwrapped)
 print("total rotation:", unwrapped[-1] - unwrapped[0], "degrees =", (unwrapped[-1] - unwrapped[0]) / 360, "turns")
 print("matches np.unwrap:", np.allclose(unwrapped, np.degrees(np.unwrap(np.radians(readings)))))
+```
+
+```output
+unwrapped: [300. 340. 380. 420. 460. 500. 540. 580. 620. 660. 700. 740. 780.]
+total rotation: 480.0 degrees = 1.3333333333333333 turns
+matches np.unwrap: True
 ```
 
 `(steps + 180) % 360 - 180` maps every step into [−180, 180), the shortest version of each step; the running total then rebuilds the continuous angle. NumPy's `np.unwrap` does the same, in radians.

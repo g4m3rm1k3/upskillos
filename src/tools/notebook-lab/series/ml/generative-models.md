@@ -23,7 +23,7 @@ Sampling is random, and you cannot backpropagate through "pick a random number".
 
 Here is a VAE on the digits: encoder 64 → 64 → (μ, log σ²) with a 2-number code, decoder 2 → 64 → 64 with a sigmoid output, trained with the binary cross-entropy reconstruction loss (the pixels are between 0 and 1) plus the KL, using Adam:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -100,6 +100,13 @@ ax.axis("off")
 plt.show()
 ```
 
+```output
+epoch  1: reconstruction loss 38.6 per image, KL 0.26
+epoch 10: reconstruction loss 24.5 per image, KL 1.49
+epoch 50: reconstruction loss 22.8 per image, KL 2.13
+code means across the dataset: [0.1  0.06]  spreads: [1.   0.94]
+```
+
 The backward pass is the autoencoder's, with three additions. The reconstruction loss is binary cross-entropy with a sigmoid output, so the output signal is simply p − x (as in logistic regression). Each code dimension gets two gradients: through the decoder (`dz`, passed to μ unchanged and to log σ² times ε·σ/2) and from the KL penalty. Differentiating −½(1 + log σ² − μ² − σ²) gives μ for the mean and, since σ² = e^(log σ²), −½(1 − σ²) = (σ² − 1)/2 for the log-variance; each is divided by n because the loss is averaged over the batch, giving μ/n and (σ² − 1)/(2n). And the encoder's hidden layer receives the gradient from both the μ and the log σ² heads.
 
 Over training the reconstruction loss falls (from about 39 to about 23 per image) while the KL rises to around 2: the codes are allowed to carry information, at a price. The codes of the whole dataset end up with mean about 0 and spread about 1 in each dimension, as the KL term encourages (it penalises μ² + σ² on average, which keeps the codes centred and of moderate size, though it does not pin down their spread exactly).
@@ -119,7 +126,7 @@ GANs have no reconstruction loss and no explicit likelihood: the discriminator *
 
 Here is the smallest possible GAN. The real data is a bell curve with mean 4 and standard deviation 1.25. The generator has just two parameters: G(z) = a·z + b, with z from N(0, 1), so it can match the target exactly with b = 4 and |a| = 1.25. The discriminator is logistic regression on the features x and x²/10, enough to compare both the position and the spread of two bell curves. Before running, predict: will the generator's spread settle smoothly at 1.25?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -158,6 +165,15 @@ ax.axhline(1.25, color="tab:orange", linestyle="--", linewidth=0.8)
 ax.set_xlabel("training step")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+step 1000: generator mean 4.08, spread 0.25
+step 2000: generator mean 4.22, spread 0.37
+step 3000: generator mean 3.90, spread 1.58
+step 4000: generator mean 3.81, spread 1.43
+step 5000: generator mean 4.16, spread 0.83
+step 6000: generator mean 4.07, spread 1.12
 ```
 
 Each step first updates the discriminator, using the logistic regression gradient with real examples labelled 1 and fakes labelled 0, then the generator. The generator's gradient goes back **through the discriminator**: the loss −log D(x) has derivative −(1 − D(x)) with respect to D's score, the score changes with x at the rate w₀ + 2w₁x/10, and x = a·z + b gives the last factor (z for a, 1 for b).

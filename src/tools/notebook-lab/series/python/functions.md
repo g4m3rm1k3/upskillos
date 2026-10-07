@@ -16,13 +16,20 @@ Functions give you three things:
 
 ## Defining and calling a function
 
-```python
+```python type
 def greet():
     print("Hello!")
     print("Welcome to functions.")
 
 greet()
 greet()
+```
+
+```output
+Hello!
+Welcome to functions.
+Hello!
+Welcome to functions.
 ```
 
 The `def` line **defines** a function. `def` is short for "define", then comes the function's name, a pair of parentheses, and a colon. The indented block below it is the function's **body**: the code it will run.
@@ -35,7 +42,7 @@ A function has to be defined before it is called. Python runs a cell from the to
 
 Most functions need some information to work with. A function lists what it needs in its parentheses as **parameters**, which are names for the values it will be given.
 
-```python
+```python type
 def greet(name):
     print(f"Hello, {name}!")
 
@@ -43,16 +50,26 @@ greet("Ada")
 greet("Grace")
 ```
 
+```output
+Hello, Ada!
+Hello, Grace!
+```
+
 `name` is a parameter. When you call `greet("Ada")`, the value `"Ada"` is called an **argument**, and Python makes the parameter `name` refer to it while the body runs. On the next call, `name` refers to `"Grace"`. The parameter is the placeholder in the definition; the argument is the actual value in the call.
 
 A function can have several parameters, separated by commas. The arguments are matched to them in order: the first argument to the first parameter, the second to the second.
 
-```python
+```python type
 def describe_pet(animal, pet_name):
     print(f"{pet_name} is a {animal}.")
 
 describe_pet("cat", "Mittens")
 describe_pet("Mittens", "cat")
+```
+
+```output
+Mittens is a cat.
+cat is a Mittens.
 ```
 
 The second call has the arguments in the wrong order, and Python does exactly what it was told: it prints "cat is a Mittens." Python has no idea which order you meant; it matches by position.
@@ -61,13 +78,18 @@ The second call has the arguments in the wrong order, and Python does exactly wh
 
 The functions above print things, but most of the built-in functions you know do something different: they give back a value that you can store or use in a calculation. `len("hello")` does not print 5; it gives you 5 to do something with. A function sends back a value with a `return` statement.
 
-```python
+```python type
 def fahrenheit(celsius):
     return celsius * 9 / 5 + 32
 
 today = fahrenheit(21)
 print(today)
 print(fahrenheit(100) - fahrenheit(0))
+```
+
+```output
+69.8
+180.0
 ```
 
 When Python reaches `return`, the function stops and the call is replaced by the returned value. So `fahrenheit(21)` becomes `69.8`, and that value is stored in `today`. Because a call to `fahrenheit` produces a number, it can be used anywhere a number can: in a calculation, in an f-string, as the argument to another function.
@@ -78,7 +100,7 @@ This is the most important distinction in this lesson, and the one that trips up
 
 Predict what each line of this cell shows.
 
-```python
+```python type
 def area_printed(width, height):
     print(width * height)
 
@@ -91,6 +113,12 @@ print("a is", a)
 print("b is", b)
 ```
 
+```output
+12
+a is None
+b is 12
+```
+
 `area_printed(3, 4)` prints `12` as it runs, but it returns nothing, so `a` is `None`: the same "nothing" value you met when `sort()` returned `None`. Any function that ends without reaching a `return` gives back `None`. `area_returned` prints nothing while it runs, but `b` holds 12 and can be used in further calculations. To see the difference, click **+ Add cell** at the bottom of the page and try `a + 1` and then `b + 1` in the new cell.
 
 The rule of thumb: a function that calculates something should **return** it, and let the caller decide whether to print it, store it or use it. Printing inside a function is only right when showing something is the function's whole purpose, like `greet`.
@@ -99,7 +127,7 @@ The rule of thumb: a function that calculates something should **return** it, an
 
 `return` stops the function immediately, even if there are more lines after it. This is often used to return early once the answer is known.
 
-```python
+```python type
 def sign(number):
     if number > 0:
         return "positive"
@@ -110,11 +138,15 @@ def sign(number):
 print(sign(7), sign(-2), sign(0))
 ```
 
+```output
+positive negative zero
+```
+
 Once `number > 0` is true and `"positive"` is returned, the rest of the body never runs. This is why the second test does not need to be an `elif`: if the first `return` happened, Python never reaches it. The final `return "zero"` only runs when neither earlier `return` did.
 
 A `return` inside a loop ends the loop and the function together. That makes searching very neat: return the moment you find what you are looking for.
 
-```python
+```python type
 def first_negative(numbers):
     for n in numbers:
         if n < 0:
@@ -123,6 +155,11 @@ def first_negative(numbers):
 
 print(first_negative([4, 8, -3, 5, -9]))
 print(first_negative([1, 2, 3]))
+```
+
+```output
+-3
+None
 ```
 
 Compare this with the `break` pattern from the last lesson. Here there is no extra variable to set and no `break`: `return n` hands back the answer and stops everything. The `return None` after the loop only runs if the loop finishes without finding a negative number.
@@ -147,7 +184,7 @@ print(tax)
 
 Once a function exists, other functions can call it, and that is how larger programs are built: small, tested pieces combined into bigger ones.
 
-```python
+```python type
 def average(numbers):
     return sum(numbers) / len(numbers)
 
@@ -159,19 +196,31 @@ def describe_scores(scores):
 print(describe_scores([72, 88, 95, 61]))
 ```
 
+```output
+4 scores, average 79.0, best 95
+```
+
 `describe_scores` does not need to know how an average is calculated; it just calls `average`. If you later improve `average`, every function that uses it benefits at once.
 
 ## Describing a function: docstrings
 
 A string on the first line of a function's body is its **docstring**, short for documentation string. It describes what the function does, what it expects and what it returns. It does not affect how the function runs, but Python keeps it, and the built-in `help` function shows it.
 
-```python
+```python type
 def bmi(weight_kg, height_m):
     """Return the body mass index for a weight in kilograms and a height in metres."""
     return weight_kg / height_m ** 2
 
 print(round(bmi(70, 1.75), 1))
 help(bmi)
+```
+
+```output
+22.9
+Help on function bmi:
+
+bmi(weight_kg, height_m)
+    Return the body mass index for a weight in kilograms and a height in metres.
 ```
 
 Docstrings are written in triple quotes by convention, even when they fit on one line. Writing one also helps you: if you cannot describe what a function does in a sentence, it is probably trying to do too many things.

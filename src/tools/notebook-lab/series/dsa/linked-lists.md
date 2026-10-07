@@ -14,7 +14,7 @@ Linked lists are rarely the right choice for storing data in Python (the list ty
 
 A node is a tiny object with two attributes: `value` and `next`. The list itself only needs to remember the first node, the **head**. The last node's `next` is `None`, marking the end. Predict before running: after pushing 1, 2 and 3 onto the front, in what order will the walk print them?
 
-```python
+```python type
 class Node:
     def __init__(self, value, next=None):
         self.value = value
@@ -47,6 +47,10 @@ for v in [1, 2, 3]:
 print(numbers, "length", len(numbers))
 ```
 
+```output
+3 -> 2 -> 1 -> None length 3
+```
+
 `__iter__` is written as a generator (with `yield`, from the Python series' iterators lesson): it walks from the head, handing out each value, until it reaches `None`.
 
 The walk prints 3 → 2 → 1: each push puts the new value in front of the others. `push_front` creates one node and changes one reference, `Node(value, self.head)` building a node that points at the old head, then making it the new head. No other node is touched, so it is O(1) at any length. The size is kept in a counter, so `len` is O(1) too; counting the nodes would be O(n).
@@ -55,7 +59,7 @@ The walk prints 3 → 2 → 1: each push puts the new value in front of the othe
 
 Anything that needs a particular position has to walk there from the head. Getting the item at index i follows i links. Predict before running: how many links must be followed to reach index 0, 1,000 and 1,999 in a 2,000-node list?
 
-```python
+```python type
 def get(self, index):
     if not 0 <= index < self._size:
         raise IndexError("index out of range")
@@ -75,6 +79,12 @@ for index in [0, 1_000, 1_999]:
     print(f"index {index:>5}: value {value:>5} after {hops:>5} hops")
 ```
 
+```output
+index     0: value     0 after     0 hops
+index  1000: value  1000 after  1000 hops
+index  1999: value  1999 after  1999 hops
+```
+
 As in the dynamic arrays lesson, `SinglyLinkedList.get = get` attaches a function as a method, so the class can grow cell by cell. Pushing `reversed(range(2_000))` onto the front leaves the values in order 0, 1, 2, ….
 
 Reaching index i takes exactly i hops, so access is O(n) in the worst case. An array computes the position of any slot directly; a linked list has no way to skip ahead. That one difference decides which structure fits a job: if you mostly access by position, use an array; if you mostly add and remove at a position you already hold, a linked list can win.
@@ -83,7 +93,7 @@ Reaching index i takes exactly i hops, so access is O(n) in the worst case. An a
 
 Given a node, inserting after it is O(1): make a new node pointing at the node's successor, then point the node at the new node. Removing the node after a given node is O(1) too: point it past its successor. The removed node is simply no longer referenced, and Python reclaims its memory. The order of the two steps matters: point the new node at the successor **before** overwriting the link, or the rest of the list is lost.
 
-```python
+```python type
 def insert_after(self, node, value):
     node.next = Node(value, node.next)
     self._size += 1
@@ -115,6 +125,12 @@ print("insert b after a:", letters)
 print("removed after c:", letters.remove_after(letters.find("c")), "->", letters)
 ```
 
+```output
+start:           'a' -> 'c' -> 'd' -> 'e' -> None
+insert b after a: 'a' -> 'b' -> 'c' -> 'd' -> 'e' -> None
+removed after c: d -> 'a' -> 'b' -> 'c' -> 'e' -> None
+```
+
 `find` returns the first node holding the value, or `None`: O(n), because it walks. The relinking itself is O(1). So "insert in the middle is O(1)" is true only if you already hold the node; finding it is the O(n) part. This is why linked lists shine when another structure hands you the node directly, as a dictionary does in the LRU cache project.
 
 Removing **the node itself** (rather than the one after it) is awkward in a singly linked list: its predecessor's link must change, and a node does not know its predecessor. That is the problem the doubly linked list solves.
@@ -125,7 +141,7 @@ In a **doubly linked list**, each node also has a `prev` reference. Any node can
 
 The edges are where linked-list code gets buggy: an empty list, removing the head, removing the last node, each needing special cases. A neat trick removes all of them: a **sentinel**, a dummy node that is always present and holds no item. The list is a ring: the sentinel's `next` is the first real node, its `prev` is the last, and in an empty list it points to itself. Every real node always has a real predecessor and successor (possibly the sentinel), so every insertion is the same four reference changes and every removal the same two. Predict before running: after the operations below, what will the list contain, from front to back?
 
-```python
+```python type
 class DNode:
     def __init__(self, value=None):
         self.value = value
@@ -182,6 +198,11 @@ d.unlink(handle)
 print("after unlinking the node for 'e':", list(d), "length", len(d))
 ```
 
+```output
+['a', 'b', 'c', 'd'] - pop_front gives a - ['b', 'c', 'd']
+after unlinking the node for 'e': ['b', 'c', 'd'] length 3
+```
+
 `node is not self._sentinel` compares identity: the walk stops when it comes round to the sentinel again.
 
 The list goes a, b, c, d; popping the front returns a; pushing then unlinking e leaves b, c, d. Notice that `push_front` and `push_back` return the new node: holding on to that **handle** lets the caller remove the item later in O(1) with `unlink`, without searching. Every operation here is O(1), and not one of them has an `if` for the empty or one-item case: the sentinel absorbs them all. `collections.deque` is also a doubly linked list, but each of its nodes holds a block of 64 items, to save memory.
@@ -190,7 +211,7 @@ The list goes a, b, c, d; popping the front returns a; pushing then unlinking e 
 
 On paper, a linked list wins at the front and loses at indexing. In practice, the constants matter too. Each node is a separate Python object with its own overhead, and walking from node to node jumps around memory, while a list's slots sit together. Predict before running: how will summing 3,000 values compare between a Python list and a linked list? And how will inserting at the front compare, for a short list and a long one?
 
-```python
+```python type
 import timeit
 
 values = list(range(3_000))

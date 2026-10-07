@@ -21,7 +21,7 @@ In code: multiply the cosine and sine by the radius, then add the corresponding 
 
 Predict before running: where is the point at three quarters of a turn? Should changing the centre change the point's distance from that centre?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,6 +35,13 @@ for theta in [0, math.pi / 2, math.pi, 3 * math.pi / 2]:
     x, y = circle_point(20, 30, 10, theta)
     distance = math.hypot(x - 20, y - 30)
     print(f"angle={theta:.3f} rad: ({x:.3f}, {y:.3f}) mm; radius check={distance:.3f} mm")
+```
+
+```output
+angle=0.000 rad: (30.000, 30.000) mm; radius check=10.000 mm
+angle=1.571 rad: (20.000, 40.000) mm; radius check=10.000 mm
+angle=3.142 rad: (10.000, 30.000) mm; radius check=10.000 mm
+angle=4.712 rad: (20.000, 20.000) mm; radius check=10.000 mm
 ```
 
 The last point is (20, 20) mm. `math.hypot(dx, dy)` computes the length of a displacement with horizontal component dx and vertical component dy. Subtracting the centre before calling it is essential: distance from the origin is a different quantity. Tiny residual coordinates at quarter turns are ordinary floating-point rounding.
@@ -54,12 +61,18 @@ In code: use `radius * abs(sweep)` for travel, and the half-angle sine for the s
 
 Predict before running: for a full turn, what happens to the travel distance and to the chord? The endpoint returns to the start, but the tool has still travelled around the circle.
 
-```python
+```python type
 radius = 10.0
 for sweep in [math.pi / 2, math.pi, 2 * math.pi]:
     arc_length = radius * abs(sweep)
     chord_length = 2 * radius * math.sin(abs(sweep) / 2)
     print(f"sweep={math.degrees(sweep):.0f}°: arc={arc_length:.6f} mm; chord={chord_length:.6f} mm")
+```
+
+```output
+sweep=90°: arc=15.707963 mm; chord=14.142136 mm
+sweep=180°: arc=31.415927 mm; chord=20.000000 mm
+sweep=360°: arc=62.831853 mm; chord=0.000000 mm
 ```
 
 The full-turn chord is zero to rounding accuracy; the travel is about 62.832 mm. For sweeps exceeding a full turn, arc length still counts all travel, but endpoint separation repeats. We restrict the displayed chord formula to one turn so its sine is nonnegative.
@@ -80,7 +93,7 @@ In code: `% (2 * math.pi)` wraps the angular difference; the clockwise branch re
 
 Predict before running: starting at 350° and ending at 10°, will the clockwise sweep be -20° or -340°?
 
-```python
+```python type
 def arc_sweep(start, end, clockwise=False):
     full_turn = 2 * math.pi
     if clockwise:
@@ -91,6 +104,11 @@ start, end = math.radians(350), math.radians(10)
 for clockwise in [False, True]:
     sweep = arc_sweep(start, end, clockwise)
     print("clockwise:", clockwise, "sweep (degrees):", round(math.degrees(sweep), 6))
+```
+
+```output
+clockwise: False sweep (degrees): 20.0
+clockwise: True sweep (degrees): -340.0
 ```
 
 The clockwise route is -340°. Some applications instead require the shortest route regardless of direction; that is a different contract. Naming the convention prevents a quiet geometry error. None of these functions can infer whether a coincident endpoint was meant to specify no motion or a full revolution.
@@ -152,7 +170,7 @@ In code: calculate an allowed angle, divide the whole sweep by it, and round upw
 
 Predict before running: for a quarter turn of radius 50 mm, will a tolerance of 0.01 mm require more segments than 0.1 mm? Halving the segment angle makes a small sagitta roughly four times smaller.
 
-```python
+```python type
 def segment_count(radius, sweep, tolerance):
     if radius <= 0 or not 0 < tolerance < radius:
         raise ValueError("Need 0 < tolerance < radius")
@@ -166,6 +184,11 @@ for tolerance in [0.1, 0.01]:
     actual_angle = (math.pi / 2) / count
     gap = 2 * 50 * math.sin(actual_angle / 4)**2
     print(f"Tolerance {tolerance} mm: {count} segments; maximum gap {gap:.6f} mm")
+```
+
+```output
+Tolerance 0.1 mm: 13 segments; maximum gap 0.091222 mm
+Tolerance 0.01 mm: 40 segments; maximum gap 0.009638 mm
 ```
 
 `math.ceil` returns the next integer at or above the requested count. Rounding downward could violate the gap bound. The calculation returns zero pieces for zero travel; the earlier sampler intentionally requires a positive count, so a caller should handle that no-motion case before invoking it. This tolerance describes geometric approximation only. It does not account for tool deflection, controller behaviour or measurement error.
@@ -185,7 +208,7 @@ In code: find d and beta from the point's offsets, then evaluate the circle at b
 
 Predict before running: for a radius-3 circle centred at the origin and external point (5, 0), should both contacts have positive horizontal coordinates? Will their heights have opposite signs?
 
-```python
+```python type
 cx, cy, radius = 0.0, 0.0, 3.0
 px, py = 5.0, 0.0
 dx, dy = px - cx, py - cy
@@ -205,6 +228,10 @@ ax.set(xlabel="x", ylabel="y", title="Two tangent paths from one external point"
 ax.set_aspect("equal", adjustable="box")
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Tangent contacts: [(1.7999999999999998, -2.4000000000000004), (1.7999999999999998, 2.4000000000000004)]
 ```
 
 The contacts are (1.8, -2.4) and (1.8, 2.4). The two straight tangent paths have equal length, 4 units, by the 3-4-5 right triangle. This construction is a building block for belt paths and transitions between straight and curved motion; a complete belt model must account for both pulleys and choose the intended tangent pair.

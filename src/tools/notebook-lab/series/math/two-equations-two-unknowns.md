@@ -28,7 +28,7 @@ An equation a x + b y = c, with a and b not both zero, holds for every point on 
 
 Predict before running: which of the three systems below has no solution?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,6 +49,12 @@ for ax, (name, eqs) in zip(axes, systems.items()):
 plt.show()
 for name, ((a1, b1, c1), (a2, b2, c2)) in systems.items():
     print(f"{name:<16} a1·b2 − a2·b1 = {a1 * b2 - a2 * b1}")
+```
+
+```output
+one solution     a1·b2 − a2·b1 = -3
+no solution      a1·b2 − a2·b1 = 0
+infinitely many  a1·b2 − a2·b1 = 0
 ```
 
 Each line is drawn by solving its equation for y; that works here because every b is non-zero.
@@ -73,7 +79,7 @@ Doing elimination once with letters in place of numbers gives a formula for ever
 
 This is **Cramer's rule**, used for the cable tensions and in the lines lesson. It fails exactly when D = 0, the parallel cases. Predict before running: does the formula agree with NumPy's solver?
 
-```python
+```python type
 def cramer(a1, b1, c1, a2, b2, c2):
     D = a1 * b2 - a2 * b1
     if D == 0:
@@ -87,6 +93,12 @@ try:
     cramer(1, 2, 4, 2, 4, 12)
 except ValueError as err:
     print("parallel lines:", err)
+```
+
+```output
+Cramer: (4.0, 6.0)   NumPy: [4. 6.]
+check both equations: 10.0 and 2.0
+parallel lines: the determinant is zero: no unique solution
 ```
 
 Both give x = 4, y = 6. Always substitute a solution back into the original equations: it costs one line and catches sign slips in the setup, which no solver can detect.
@@ -108,7 +120,7 @@ A machine shop keeps two coolant concentrates in stock, one at 8% and one at 2%,
 
 This is a 2 × 2 system. The same structure fits alloys (mass and composition), blending fuels (volume and energy content) and feed mixes (mass and protein). The answer must also make physical sense: a negative quantity means the target cannot be made from these two stocks. Predict before running: how much of each concentrate is needed, and what happens if 10% is requested?
 
-```python
+```python type
 def blend(c1, c2, target, total):
     return cramer(1, 1, total, c1, c2, target * total)
 
@@ -116,6 +128,11 @@ p, q = blend(0.08, 0.02, 0.05, 50)
 print(f"5%: {p:.2f} L of 8% and {q:.2f} L of 2%")
 p, q = blend(0.08, 0.02, 0.10, 50)
 print(f"10%: {p:.2f} L of 8% and {q:.2f} L of 2%  <- a negative amount: impossible")
+```
+
+```output
+5%: 25.00 L of 8% and 25.00 L of 2%
+10%: 66.67 L of 8% and -16.67 L of 2%  <- a negative amount: impossible
 ```
 
 5% sits exactly halfway between 2% and 8%, so the blend is 25 litres of each. Asking for 10% gives 66.67 L of the 8% stock and −16.67 L of the 2%: the algebra is fine, but no mixture of 2% and 8% can be stronger than 8%. A computed answer still needs checking against what is physically possible.
@@ -136,13 +153,18 @@ Circuits give systems directly. Two batteries share a resistor: battery 1 (V₁ 
 
 with battery 2 placed so that it pushes current anticlockwise round loop 2, against the chosen direction. Predict before running: is battery 2 delivering power or being charged?
 
-```python
+```python type
 V1, V2, R1, R2, R3 = 12, 6, 4, 2, 6
 I1, I2 = cramer(R1 + R3, -R3, V1, -R3, R2 + R3, -V2)
 print(f"I1 = {I1:.4f} A, I2 = {I2:.4f} A, shared resistor carries {I1 - I2:.4f} A")
 dissipated = I1 ** 2 * R1 + I2 ** 2 * R2 + (I1 - I2) ** 2 * R3
 supplied = V1 * I1 - V2 * I2
 print(f"power dissipated {dissipated:.4f} W, power supplied {supplied:.4f} W")
+```
+
+```output
+I1 = 1.3636 A, I2 = 0.2727 A, shared resistor carries 1.0909 A
+power dissipated 14.7273 W, power supplied 14.7273 W
 ```
 
 A resistor carrying current I dissipates I²R watts; a battery delivers V × I when the current leaves its positive terminal, and absorbs power when the current is forced through it the other way.
@@ -161,7 +183,7 @@ In code: `cramer(1, 1, 2, 1, 1.001, 2.001)` against the same with `2.002`
 
 When two lines are nearly parallel, their crossing point is very sensitive: tilt either line slightly and the crossing slides a long way. Measured coefficients always carry some error, so a nearly singular system can give answers that are mathematically correct and practically meaningless. The determinant hints at this: it is small compared with the coefficients. Predict before running: two nearly parallel lines, and a change of 0.001 in one right-hand side. How far does the solution move?
 
-```python
+```python type
 base = cramer(1, 1, 2, 1, 1.001, 2.001)
 nudged = cramer(1, 1, 2, 1, 1.001, 2.002)
 print("solution:", np.round(base, 6), "  after changing 2.001 to 2.002:", np.round(nudged, 6))
@@ -169,6 +191,13 @@ print("determinant:", round(1 * 1.001 - 1 * 1, 12))
 well = cramer(1, 1, 2, 1, -1, 0), cramer(1, 1, 2, 1, -1, 0.001)
 print("well-conditioned, same nudge:", np.round(well[0], 6), "->", np.round(well[1], 6))
 print("condition numbers:", round(np.linalg.cond([[1, 1], [1, 1.001]])), "and", round(np.linalg.cond([[1, 1], [1, -1]]), 3))
+```
+
+```output
+solution: [1. 1.]   after changing 2.001 to 2.002: [0. 2.]
+determinant: 0.001
+well-conditioned, same nudge: [1. 1.] -> [1.0005 0.9995]
+condition numbers: 4002 and 1.0
 ```
 
 `np.linalg.cond` gives the **condition number**: roughly, the factor by which relative errors in the data can be magnified in the solution. The linear algebra block derives it.

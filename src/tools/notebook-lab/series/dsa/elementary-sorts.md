@@ -14,7 +14,7 @@ and then compares them by counting comparisons and moves on different kinds of i
 
 Selection sort's invariant: **after i passes, the first i positions hold the i smallest items, in sorted order**, and they never move again. Each pass scans the unsorted part for its smallest item and swaps it into position i. Predict before running: how many comparisons will it make on 8 items, and does it depend on the order of the input?
 
-```python
+```python type
 def selection_sort(items):
     a = list(items)
     comparisons = swaps = 0
@@ -35,6 +35,27 @@ print(result, f"{comparisons} comparisons, {swaps} swaps")
 print("already sorted input:", selection_sort(list(range(8)))[1:], "(comparisons, swaps)")
 ```
 
+```output
+  after pass 0: [1] | [2, 8, 5, 9, 3, 7, 4]
+  after pass 1: [1, 2] | [8, 5, 9, 3, 7, 4]
+  after pass 2: [1, 2, 3] | [5, 9, 8, 7, 4]
+  after pass 3: [1, 2, 3, 4] | [9, 8, 7, 5]
+  after pass 4: [1, 2, 3, 4, 5] | [8, 7, 9]
+  after pass 5: [1, 2, 3, 4, 5, 7] | [8, 9]
+  after pass 6: [1, 2, 3, 4, 5, 7, 8] | [9]
+  after pass 7: [1, 2, 3, 4, 5, 7, 8, 9] | []
+[1, 2, 3, 4, 5, 7, 8, 9] 28 comparisons, 5 swaps
+  after pass 0: [0] | [1, 2, 3, 4, 5, 6, 7]
+  after pass 1: [0, 1] | [2, 3, 4, 5, 6, 7]
+  after pass 2: [0, 1, 2] | [3, 4, 5, 6, 7]
+  after pass 3: [0, 1, 2, 3] | [4, 5, 6, 7]
+  after pass 4: [0, 1, 2, 3, 4] | [5, 6, 7]
+  after pass 5: [0, 1, 2, 3, 4, 5] | [6, 7]
+  after pass 6: [0, 1, 2, 3, 4, 5, 6] | [7]
+  after pass 7: [0, 1, 2, 3, 4, 5, 6, 7] | []
+already sorted input: (28, 0) (comparisons, swaps)
+```
+
 `a = list(items)` sorts a copy, so the caller's list is unchanged. The `|` in the trace separates the sorted part from the rest.
 
 The sorted part grows by one item per pass, exactly as the invariant says. Selection sort always makes n(n − 1)/2 comparisons, 28 for 8 items, whatever the input, even when it is already sorted: it never notices. Its strength is that it makes at most n − 1 swaps, which matters only when moving items is far more expensive than comparing them.
@@ -43,7 +64,7 @@ The sorted part grows by one item per pass, exactly as the invariant says. Selec
 
 Insertion sort is how most people sort a hand of cards: take the next card and slide it left past the larger ones until it sits in place. Its invariant: **after processing i items, the first i positions hold those same items, in sorted order** (not necessarily the smallest overall; later items may still go in front of them). Predict before running: how many comparisons for a sorted input of 8 items, and for a reversed one?
 
-```python
+```python type
 def insertion_sort(items):
     a = list(items)
     comparisons = shifts = 0
@@ -65,6 +86,12 @@ for name, data in [("random", [5, 2, 8, 1, 9, 3, 7, 4]), ("sorted", list(range(8
     print(f"{name:<9} {result}  {comparisons:>2} comparisons, {shifts:>2} shifts")
 ```
 
+```output
+random    [1, 2, 3, 4, 5, 7, 8, 9]  18 comparisons, 13 shifts
+sorted    [0, 1, 2, 3, 4, 5, 6, 7]   7 comparisons,  0 shifts
+reversed  [1, 2, 3, 4, 5, 6, 7, 8]  28 comparisons, 28 shifts
+```
+
 Instead of swapping repeatedly, the larger items are **shifted** one place right and `current` is dropped into the gap, which halves the number of writes.
 
 On sorted input each item is compared once with its left neighbour and stays put: 7 comparisons, O(n). On reversed input every item slides all the way to the front: 28 comparisons, O(n²). Insertion sort is **adaptive**: its work depends on how unsorted the input is. Precisely, the number of shifts equals the number of **inversions**, pairs of items in the wrong order relative to each other, which the last challenge explores. That makes insertion sort the best choice for small or nearly sorted data, and real-world sorts (including Python's own) use it for short runs.
@@ -77,7 +104,7 @@ Bubble sort walks through the list swapping each neighbouring pair that is out o
 
 Counting operations on bigger inputs shows the differences clearly. The **nearly sorted** case (a sorted list with a few random swaps) is common in practice: data that was sorted, then lightly edited. Predict before running: which sort does best on nearly sorted data, and by how much?
 
-```python
+```python type
 import random
 
 random.seed(0)
@@ -96,6 +123,14 @@ for name, data in inputs.items():
     print(f"{name:<14} {sel_c:>22,} {ins_c:>22,} {ins_s:>17,}")
 ```
 
+```output
+input           selection comparisons  insertion comparisons  insertion shifts
+random                         79,800                 40,112            39,716
+sorted                         79,800                    399                 0
+reversed                       79,800                 79,800            79,800
+nearly sorted                  79,800                  1,402             1,003
+```
+
 Selection sort's printing trace would flood the output at this size, so its count is filled in from the formula n(n − 1)/2, which the first demo showed it always makes.
 
 Selection sort makes 79,800 comparisons every time. Insertion sort ranges from 399 (sorted) to 79,800 (reversed), and about half of that on random input. On the nearly sorted input it makes only about 1,400, under 2% of the worst case: a handful of swaps creates only a few inversions to fix. All three elementary sorts are O(n²) in the worst case, which is why lists of a million items need the O(n log n) sorts of the next lessons. But for small n, or nearly sorted data, insertion sort's low overhead makes it a winner.
@@ -104,7 +139,7 @@ Selection sort makes 79,800 comparisons every time. Insertion sort ranges from 3
 
 A sort is **stable** if items that compare equal keep their original relative order. That matters when sorting records by one field: sort people by surname, and those with the same surname should stay in the order they were in, perhaps already sorted by first name. Sorting by several keys can then be done one key at a time, least important first. Predict before running: after sorting by grade, will Ann still come before Cat?
 
-```python
+```python type
 students = [("Ann", "B"), ("Ben", "A"), ("Cat", "B"), ("Dan", "A"), ("Eve", "C")]
 
 def insertion_sort_by(records, key):
@@ -129,6 +164,12 @@ grade = lambda record: record[1]
 print("insertion:", insertion_sort_by(students, grade))
 print("selection:", selection_sort_by(students, grade))
 print("sorted():  ", sorted(students, key=grade))
+```
+
+```output
+insertion: [('Ben', 'A'), ('Dan', 'A'), ('Ann', 'B'), ('Cat', 'B'), ('Eve', 'C')]
+selection: [('Ben', 'A'), ('Dan', 'A'), ('Cat', 'B'), ('Ann', 'B'), ('Eve', 'C')]
+sorted():   [('Ben', 'A'), ('Dan', 'A'), ('Ann', 'B'), ('Cat', 'B'), ('Eve', 'C')]
 ```
 
 `key` is a function that extracts what to sort by, the same convention as Python's `sorted(..., key=...)`. `min(range(i, len(a)), key=...)` finds the position of the smallest remaining item.

@@ -14,7 +14,7 @@ p(x) = \pi_1 \, \mathcal{N}(x \mid \mu_1, \sigma_1^2) + \pi_2 \, \mathcal{N}(x \
 
 where 𝒩(x | μ, σ²) is the normal density from the Naive Bayes lesson, and the **mixing weights** π₁ = 0.6 and π₂ = 0.4 add up to 1. A mixture can be read as a recipe for generating data: for each person, first pick a group (the first with probability 0.6), then draw a height from that group's bell curve.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -60,7 +60,7 @@ These are just a weighted share, a weighted mean and a weighted variance.
 
 Run it on the heights, starting from a deliberately poor guess (means 150 and 190, standard deviations 10), and watch the **log-likelihood**, the log of the probability density of all the data under the current mixture, which measures how well the mixture fits:
 
-```python
+```python type
 import numpy as np
 
 def normal_pdf(x, mean, variance):
@@ -89,6 +89,15 @@ weighted_171 = weights * normal_pdf(171.0, means, variances)
 print("responsibilities for a height of 171:", (weighted_171 / weighted_171.sum()).round(3))
 ```
 
+```output
+step   1: log-likelihood  -2322.54, weights [0.54 0.46], means [162.8 177.2], sds [5.7 6.7]
+step   2: log-likelihood  -1823.46, weights [0.542 0.458], means [162.9 177.2], sds [5.8 6.8]
+step   5: log-likelihood  -1823.04, weights [0.545 0.455], means [163.  177.1], sds [5.9 7. ]
+step  20: log-likelihood  -1822.97, weights [0.552 0.448], means [163.2 177.2], sds [6. 7.]
+step 100: log-likelihood  -1822.92, weights [0.58 0.42], means [163.5 177.7], sds [6.1 6.8]
+responsibilities for a height of 171: [0.538 0.462]
+```
+
 `normal_pdf(x[:, None], means, variances)` broadcasts the 500 heights against the 2 components, giving a 500 × 2 table of densities; multiplying by `weights` and dividing each row by its sum gives the responsibilities `R`, whose rows add to 1. The M-step lines are the three formulas above, with `R` as the weights.
 
 The log-likelihood jumps from −2,323 to −1,823 in the first step and then creeps upwards, never down: **each EM step can only increase the likelihood** (or leave it unchanged), the same guarantee k-means had for its inertia. After 100 steps the estimates are weights 0.58/0.42, means 163.5 and 177.7, and standard deviations 6.1 and 6.8, close to the truth (0.6/0.4, 164 and 178, 6 and 7). They are still drifting slowly: with groups this overlapped, the likelihood is very flat near its peak, so EM needs many small steps.
@@ -105,7 +114,7 @@ In two or more dimensions, each component is a **multivariate normal**: a bell-s
 
 Here are two long, flat clusters lying one above the other, a shape k-means cannot handle. Predict before running: will the default `GaussianMixture`, which starts from the k-means answer, find them?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
@@ -133,6 +142,13 @@ axes[1].set_title("mixture: colour = probability of component 0", fontsize=9)
 plt.show()
 ```
 
+```output
+k-means                    ARI -0.00
+mixture, k-means start     ARI -0.00
+mixture, 10 random starts  ARI 1.00
+average log-likelihood per point: k-means start -4.210, random starts -3.708
+```
+
 Multiplying random points by `stretch` makes clouds 3 units wide but only 0.4 tall. k-means splits the data into left and right halves (ARI 0.00): for round clusters, that is the cheapest split. The mixture fitted with default settings does the same, because by default `GaussianMixture` **starts from the k-means answer**, and EM, like k-means, only climbs to the nearest peak of the likelihood.
 
 Started from 10 random choices of data points instead (`init_params="random_from_data", n_init=10`), the mixture finds the two flat clusters perfectly (ARI 1.00). `score(X)` reports the average log-likelihood per point, and it settles the question without any labels: −3.71 for the right answer against −4.21 for the left/right split. **Higher likelihood means a better fit**, so when runs disagree, keep the one with the highest likelihood; `n_init` does exactly that. The right-hand plot is coloured by `predict_proba`, the responsibilities: solid colours inside each cluster, shading only where they meet.
@@ -149,7 +165,7 @@ Because a mixture is a probability model, choosing `k` can use the likelihood, b
 
 where ln L is the total log-likelihood, `p` the number of parameters and `n` the number of points. Lower is better: the first term rewards fit, the second charges for complexity.
 
-```python
+```python type
 from sklearn.datasets import make_blobs
 from sklearn.mixture import GaussianMixture
 
@@ -157,6 +173,16 @@ X, _ = make_blobs(500, centers=4, cluster_std=[0.6, 1.0, 1.2, 0.8], random_state
 for k in range(1, 8):
     model = GaussianMixture(k, random_state=0).fit(X)
     print(f"k = {k}: BIC {model.bic(X):8.1f}")
+```
+
+```output
+k = 1: BIC   5747.7
+k = 2: BIC   4794.8
+k = 3: BIC   4162.5
+k = 4: BIC   4053.8
+k = 5: BIC   4080.5
+k = 6: BIC   4109.4
+k = 7: BIC   4146.4
 ```
 
 The BIC drops steeply to `k = 4` (4,054) and rises after that: the extra components improve the fit too little to pay for their parameters. With full covariances in 2 dimensions, each component costs 2 numbers for its mean, 3 for its covariance and 1 for its weight (minus one overall, since the weights must add to 1), so `p` = 6k − 1. You will compute the BIC yourself in a challenge.

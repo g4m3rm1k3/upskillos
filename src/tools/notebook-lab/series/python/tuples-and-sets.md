@@ -8,12 +8,18 @@ Neither can do anything a list could not do with some extra effort. But choosing
 
 You met tuples briefly in lesson 9: a function that returns several values returns a tuple, and a tuple can be unpacked into separate names. A tuple is written as values separated by commas, usually inside round brackets.
 
-```python
+```python type
 point = (3, 4)
 date = (14, "March", 1879)
 print(point[0], point[1])
 print(date[1])
 print(len(date))
+```
+
+```output
+3 4
+March
+3
 ```
 
 A tuple is a sequence, so indexing, slicing, `len`, `in` and `for` loops all work exactly as they do for lists and strings. The difference is that a tuple is **immutable**: once it is made, it can never be changed. There is no `append`, and you cannot assign to an item.
@@ -37,52 +43,75 @@ If a tuple is just a list you cannot change, why use one? There are three good r
 
 The commas make a tuple, not the brackets. The brackets are only there for readability, or to avoid confusion inside a longer expression.
 
-```python
+```python type
 a = 1, 2, 3
 b = (1, 2, 3)
 print(a == b)
 print(type(a))
 ```
 
+```output
+True
+<class 'tuple'>
+```
+
 That leads to the one trap with tuples. Predict the types of `c` and `d`.
 
-```python
+```python type
 c = (5)
 d = (5,)
 print(type(c))
 print(type(d))
 ```
 
+```output
+<class 'int'>
+<class 'tuple'>
+```
+
 `(5)` is just the number 5 in brackets, exactly as brackets work in arithmetic. A tuple with one item needs a trailing comma: `(5,)`. An empty tuple is `()`.
 
 `tuple()` and `list()` convert between the two, which is how you get a changeable copy of a tuple, or freeze a list:
 
-```python
+```python type
 frozen = tuple([3, 1, 2])
 thawed = list(frozen)
 thawed.append(4)
 print(frozen, thawed)
 ```
 
+```output
+(3, 1, 2) [3, 1, 2, 4]
+```
+
 ## Unpacking, revisited
 
 Unpacking assigns each item of a tuple to its own name, and it works for any sequence, not only tuples:
 
-```python
+```python type
 x, y = (3, 4)
 day, month, year = (14, "March", 1879)
 first, second = "hi"
 print(x, y, month, second)
 ```
 
+```output
+3 4 March i
+```
+
 When you only want some of the values, a name with a `*` in front collects "all the rest" into a list:
 
-```python
+```python type
 scores = [98, 91, 85, 77, 70]
 best, *others = scores
 print(best, others)
 *all_but_last, worst = scores
 print(all_but_last, worst)
+```
+
+```output
+98 [91, 85, 77, 70]
+[98, 91, 85, 77] 70
 ```
 
 A common convention is to unpack a value you do not need into a variable called `_`, which tells the reader it is deliberately ignored: `_, month, _ = date`.
@@ -91,7 +120,7 @@ A common convention is to unpack a value you do not need into a variable called 
 
 A **set** is an unordered collection of unique values. It is written with curly braces, like a dictionary but with single values instead of pairs.
 
-```python
+```python type
 colours = {"red", "green", "blue", "red", "green"}
 print(colours)
 print(len(colours))
@@ -107,11 +136,16 @@ print(colours[0])
 
 There is one more trap, and it is the reverse of the one-item tuple. Predict the type of `empty`.
 
-```python
+```python type
 empty = {}
 print(type(empty))
 really_empty = set()
 print(type(really_empty))
+```
+
+```output
+<class 'dict'>
+<class 'set'>
 ```
 
 `{}` is an empty **dictionary**, because dictionaries came first in Python's history. An empty set has to be written `set()`.
@@ -120,7 +154,7 @@ print(type(really_empty))
 
 **Removing duplicates.** Converting a list to a set throws away the repeats. Convert back to a list if you need one, remembering that the original order is lost.
 
-```python
+```python type
 visits = ["home", "about", "home", "shop", "home", "about"]
 unique_pages = set(visits)
 print(unique_pages)
@@ -132,7 +166,7 @@ print(sorted(unique_pages))
 
 **Changing a set.** Sets are mutable. `add` puts in one value (doing nothing if it is already there), `remove` takes one out (a `KeyError` if it is missing), and `discard` takes one out if it is there and quietly does nothing if not.
 
-```python
+```python type
 seen = set()
 seen.add("Ada")
 seen.add("Grace")
@@ -141,11 +175,15 @@ seen.discard("Linus")
 print(seen)
 ```
 
+```output
+{'Ada', 'Grace'}
+```
+
 ## Set operations
 
 The real power of sets is comparing them. These operations come straight from mathematics, where sets were studied long before computers.
 
-```python
+```python type
 python_club = {"Ada", "Grace", "Alan", "Linus"}
 chess_club = {"Alan", "Magnus", "Grace", "Judit"}
 print(python_club | chess_club)
@@ -161,11 +199,16 @@ print(python_club ^ chess_club)
 
 You can also ask whether one set is entirely inside another. `a <= b` is `True` when every item of `a` is also in `b`: `a` is a **subset** of `b`.
 
-```python
+```python type
 required = {"flour", "eggs", "milk"}
 cupboard = {"flour", "sugar", "eggs", "milk", "salt"}
 print(required <= cupboard)
 print(required - cupboard)
+```
+
+```output
+True
+set()
 ```
 
 A shopping check in one line: everything required is in the cupboard, and `required - cupboard` shows what is missing (nothing, here, so an empty set).

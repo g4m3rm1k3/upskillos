@@ -25,7 +25,7 @@ It is fast: the numbers at least halve every two steps, so the number of steps g
 
 Predict before running: how many steps for gcd(1071, 462), for the Fibonacci pair (987, 610), and for a ten-digit and a nine-digit number?
 
-```python
+```python type
 import math
 from fractions import Fraction
 import numpy as np
@@ -43,6 +43,14 @@ for a, b in [(1071, 462), (987, 610), (1234567890, 987654321), (10 ** 12, 7)]:
 print("1071/462 in lowest terms:", Fraction(1071, 462))
 ```
 
+```output
+gcd(1071, 462) = 21 in 3 steps (math.gcd: 21)
+gcd(987, 610) = 1 in 14 steps (math.gcd: 1)
+gcd(1234567890, 987654321) = 9 in 4 steps (math.gcd: 9)
+gcd(1000000000000, 7) = 1 in 2 steps (math.gcd: 1)
+1071/462 in lowest terms: 51/22
+```
+
 gcd(1071, 462) = 21 after 3 steps (1071 → 462 → 147 → 21), so 1071/462 = 51/22. The Fibonacci pair needs 14 steps for its gcd of 1, the slow case. The ten- and nine-digit pair needs only 4, and a trillion with 7 just 2. `Fraction` runs exactly this algorithm every time it is created, which is why it is always in lowest terms.
 
 ## Exact sums and growing denominators
@@ -58,13 +66,21 @@ Adding fractions means bringing them to a common denominator: (ad + bc)/bd, then
 
 Predict before running: the sum 1 + 1/2 + 1/3 + ... + 1/30. How many digits does its exact denominator have?
 
-```python
+```python type
 h = Fraction(0)
 for k in range(1, 31):
     h += Fraction(1, k)
     if k in (5, 10, 20, 30):
         print(f"H_{k} = {h}  ({len(str(h.denominator))}-digit denominator, ≈ {float(h):.6f})")
 print("lcm(12, 18) =", math.lcm(12, 18), "= 12 × 18 / gcd(12, 18) =", 12 * 18 // math.gcd(12, 18))
+```
+
+```output
+H_5 = 137/60  (2-digit denominator, ≈ 2.283333)
+H_10 = 7381/2520  (4-digit denominator, ≈ 2.928968)
+H_20 = 55835135/15519504  (8-digit denominator, ≈ 3.597740)
+H_30 = 9304682830147/2329089562800  (13-digit denominator, ≈ 3.994987)
+lcm(12, 18) = 36 = 12 × 18 / gcd(12, 18) = 36
 ```
 
 H₅ = 137/60 is still friendly, but H₃₀ has a 13-digit denominator (2,329,089,562,800), and the digits keep growing with n. Exact arithmetic is the right tool for ratios that stay simple, like gear trains, scale factors and probabilities of small events. It is the wrong tool for long numerical computations such as simulations, where floats and error estimates are the practical choice.
@@ -84,11 +100,18 @@ Gear designers avoid this by choosing coprime tooth counts. The extra tooth that
 
 Predict before running: a 12-tooth pinion drives a 36-tooth gear, or a 37-tooth one. How many partners does each pinion tooth meet?
 
-```python
+```python type
 for n1, n2 in [(36, 12), (37, 12), (40, 25), (41, 25)]:
     g = math.gcd(n1, n2)
     print(f"{n1} and {n2} teeth: gcd {g}, a tooth pair repeats every {math.lcm(n1, n2) // n2} turns of the {n2}-tooth gear; "
           f"each {n2}-tooth gear tooth meets {n1 // g} of the {n1} teeth")
+```
+
+```output
+36 and 12 teeth: gcd 12, a tooth pair repeats every 3 turns of the 12-tooth gear; each 12-tooth gear tooth meets 3 of the 36 teeth
+37 and 12 teeth: gcd 1, a tooth pair repeats every 37 turns of the 12-tooth gear; each 12-tooth gear tooth meets 37 of the 37 teeth
+40 and 25 teeth: gcd 5, a tooth pair repeats every 8 turns of the 25-tooth gear; each 25-tooth gear tooth meets 8 of the 40 teeth
+41 and 25 teeth: gcd 1, a tooth pair repeats every 41 turns of the 25-tooth gear; each 25-tooth gear tooth meets 41 of the 41 teeth
 ```
 
 With 36 and 12 teeth (gcd 12), each pinion tooth meets only 3 of the 36 gear teeth, the same 3 every time. With 37 teeth the counts are coprime: a pair repeats only every 37 turns of the pinion, and every pinion tooth works against all 37 gear teeth. The ratio changes by under 3% (37/12 instead of 3), and the wear spreads evenly. The same reasoning sets bicycle chain and sprocket counts.
@@ -108,7 +131,7 @@ The expansion terminates exactly when q has no prime factors other than 2 and 5,
 
 Predict before running: how long is the repeating part of 1/7, of 1/17 and of 1/97?
 
-```python
+```python type
 def long_division(p, q):
     whole, r = divmod(p, q)
     seen, digits = {}, ""
@@ -128,6 +151,16 @@ for p, q in [(1, 8), (5, 12), (1, 7), (1, 13), (1, 17), (1, 97), (22, 7)]:
     print(f"{p}/{q} = {shown[:60]}{'...' if len(shown) > 60 else ''}   repeating part: {len(rep)} digits")
 ```
 
+```output
+1/8 = 0.125   repeating part: 0 digits
+5/12 = 0.41(6)   repeating part: 1 digits
+1/7 = 0.(142857)   repeating part: 6 digits
+1/13 = 0.(076923)   repeating part: 6 digits
+1/17 = 0.(0588235294117647)   repeating part: 16 digits
+1/97 = 0.(010309278350515463917525773195876288659793814432989690721...   repeating part: 96 digits
+22/7 = 3.(142857)   repeating part: 6 digits
+```
+
 1/8 terminates; 5/12 = 0.41(6) has a non-repeating start and then repeats one digit. 1/7 repeats with period 6, 1/17 with period 16 and 1/97 with period 96, the longest possible for those denominators (q − 1). 22/7, the famous approximation to π, has the same 6-digit cycle as 1/7. A repeating period of q − 1 happens when 10 generates every non-zero remainder modulo q, a fact from number theory that the discrete-mathematics block returns to.
 
 ## Continued fractions and the 127-tooth gear
@@ -145,7 +178,7 @@ Inch and metric threads differ by a factor 25.4 = 127/5 mm per inch. A lathe wit
 
 Predict before running: is the best pair with at most 100 teeth one of the convergents of 1.27?
 
-```python
+```python type
 def cf_terms(x, n):
     terms = []
     for _ in range(n):
@@ -177,6 +210,22 @@ for c in conv(terms):
 pairs = sorted((abs(Fraction(p, q) - target) / target, q, p) for q in range(20, 101) for p in range(20, 101))
 for err, q, p in pairs[:4]:
     print(f"best pairs with 20-100 teeth: {p}/{q}, relative error {float(err):.6f}")
+```
+
+```output
+π = [3, 7, 15, 1, 292] -> ['3 (error 1.4e-01)', '22/7 (error 1.3e-03)', '333/106 (error 8.3e-05)', '355/113 (error 2.7e-07)', '103993/33102 (error 5.8e-10)']
+127/100 = [1, 3, 1, 2, 2, 1, 2]
+  convergent        1: relative error 0.212598
+  convergent      4/3: relative error 0.049869
+  convergent      5/4: relative error 0.015748
+  convergent    14/11: relative error 0.002147
+  convergent    33/26: relative error 0.000606
+  convergent    47/37: relative error 0.000213
+  convergent  127/100: relative error 0.000000
+best pairs with 20-100 teeth: 80/63, relative error 0.000125
+best pairs with 20-100 teeth: 47/37, relative error 0.000213
+best pairs with 20-100 teeth: 94/74, relative error 0.000213
+best pairs with 20-100 teeth: 33/26, relative error 0.000606
 ```
 
 The convergents of 1.27 are 1, 4/3, 5/4, 14/11, 33/26, 47/37 and finally 127/100 itself. Their errors fall from 21% to 0.021% for 47/37, a substitute sometimes quoted. But the search over every pair up to 100 teeth finds something better: 80/63, with an error of 0.0125%. It is the semiconvergent (33 + 47)/(26 + 37), the mediant of two neighbouring convergents. It fills the gap that the convergent sequence jumps over: 80 and 63 both fit within the tooth limit, while the next convergent, 127/100, needs a 127-tooth gear. Continued fractions list every candidate; the bound on the teeth decides which one wins. Next come 47/37 and its double 94/74, which gives the same ratio. A 0.0125% ratio error makes a thread's pitch drift by 1.25 µm per 10 mm of length, which is fine for most work.

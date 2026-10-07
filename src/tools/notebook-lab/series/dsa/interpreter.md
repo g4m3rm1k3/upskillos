@@ -15,7 +15,7 @@ This lesson covers:
 
 A pen plotter accepts commands, one per word pair. The first version splits the text and checks each command. Predict before reading on: how would this code handle `REPEAT 4 [ FORWARD 10 TURN 90 ]`?
 
-```python
+```python type
 import math
 
 def run_flat(program):
@@ -39,13 +39,18 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+(10.0, 5.0, 90.0)
+ValueError: unknown command REPEAT
+```
+
 Flat commands work. But a `REPEAT` holds a **block** of commands, and a block can hold another `REPEAT`. The structure is a tree, and reading the words in pairs cannot see it. Bolting on bracket counting would make the loop more and more tangled, and every new nesting construct would make it worse.
 
 ## A class per kind of command
 
 Give each kind of command a class with an `execute(turtle)` method. `Forward` and `Turn` change the turtle (the pen's position and heading). `Repeat` holds a count and a **block**, a list of commands, and executes the block that many times. Because a `Repeat`'s block can contain another `Repeat`, programs nest to any depth, with no special code: this is the composite pattern, where each node interprets itself. The program is just a list of nodes. Predict before running: what shape does `REPEAT 4 [ FORWARD 20 TURN 90 ]` draw, and where does the pen end up?
 
-```python
+```python type
 import math
 
 class Turtle:
@@ -93,6 +98,11 @@ star = [Repeat(5, [Forward(30), Turn(144)])]
 print("star corners:", len(run(star).path) - 1, "lines, ends at", run(star).path[-1])
 ```
 
+```output
+square path: [(0.0, 0.0), (20.0, 0.0), (20.0, 20.0), (0.0, 20.0), (0.0, 0.0)]
+star corners: 5 lines, ends at (0.0, 0.0)
+```
+
 The programs here are built by hand as trees of objects. The next section builds them from text.
 
 The square visits four corners and returns to (0, 0). The star draws five lines and also closes, because 5 × 144° is two full turns. `Repeat.execute` does not care what its block contains, so `Repeat(3, [Repeat(4, ...)])` works with no extra code.
@@ -110,7 +120,7 @@ Two steps turn program text into the tree.
 
 `parse_block` reads commands until it meets `]` or runs out of tokens. When it meets `REPEAT`, it reads the count, expects `[`, and calls `parse_block` again for the inner block. That recursive call is what lets blocks nest. Predict before running: how many nodes does the nested program produce at the top level?
 
-```python
+```python type
 def tokenize(text):
     return text.replace("[", " [ ").replace("]", " ] ").split()
 
@@ -166,6 +176,15 @@ for bad in ["FORWARD ten", "REPEAT 2 [ FORWARD 5", "JUMP 3", "FORWARD 5 ]"]:
         parse(bad)
     except SyntaxError as error:
         print(f"{bad!r:<24} -> SyntaxError: {error}")
+```
+
+```output
+top-level nodes: ['Turn', 'Repeat']
+lines drawn: 12
+'FORWARD ten'            -> SyntaxError: expected a number at token 2, found 'ten'
+'REPEAT 2 [ FORWARD 5'   -> SyntaxError: unexpected end of program
+'JUMP 3'                 -> SyntaxError: unknown command 'JUMP' at token 1
+'FORWARD 5 ]'            -> SyntaxError: unexpected ']' at token 3
 ```
 
 `take` hands out the next token and moves on; `number` takes a token and insists it is a number. Both report the position, so error messages can point at the problem.

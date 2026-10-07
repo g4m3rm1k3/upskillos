@@ -26,7 +26,7 @@ In a **weighted graph** each edge has a length (or time, or cost). The distance 
 
 over all edges (u, v). Distances are the solution. **Relaxation** solves them by iteration: start with d(s) = 0 and infinity elsewhere, then repeatedly apply the equation to every edge, lowering d(v) whenever d(u) + w(u, v) is smaller. After k rounds, d(v) is correct for every vertex whose shortest path uses at most k edges, so n − 1 rounds always suffice: the **Bellman–Ford** algorithm. Predict before running: in a small warehouse with 7 locations, how many rounds until the distances stop changing? (At most 6, but it can be fewer.)
 
-```python
+```python type
 import math
 import heapq
 import numpy as np
@@ -54,6 +54,12 @@ for v in range(n):
 print("every distance satisfies the Bellman equation")
 ```
 
+```output
+round 1: [0, 12, 22, 21, 30, 32, 37]
+round 2: [0, 12, 22, 21, 30, 32, 37]
+every distance satisfies the Bellman equation
+```
+
 Each aisle can be driven both ways, so every undirected aisle becomes two directed edges. A round with no change means the equations are satisfied and the iteration can stop.
 
 Here every distance is already correct after the first round, because the aisles happen to be listed roughly outward from the dock, so each relaxation builds on one done earlier in the same round; the second round confirms that nothing changes. Listed in an unlucky order it could take more: up to 4 rounds here, the most edges on any shortest path, and n − 1 in general. The shortest route from the dock to the picking station is 37 m (Dock–A1–A2–B2–Pick). The final check confirms every distance equals the minimum over its incoming edges, which is all a shortest-path solution means.
@@ -74,7 +80,7 @@ The previous lesson counted walks with powers of the adjacency matrix, where (A�
 
 and starting from the weight matrix W (0 on the diagonal, ∞ where there is no edge), the min-plus "power" W^⊗k holds the shortest distances using at most k edges. One **synchronous** relaxation round, in which every update uses the previous round's distances, is exactly one min-plus product; the in-place updates of the first demo can only be faster. Predict before running: after how many min-plus products does the distance table stop changing?
 
-```python
+```python type
 W = np.full((n, n), np.inf)
 np.fill_diagonal(W, 0)
 for a, b, w in aisles:
@@ -93,6 +99,14 @@ for k in range(2, n):
 print("distance row from the dock:", D[0])
 ```
 
+```output
+at most 2 edges: Dock -> Pick = inf, table changed: True
+at most 3 edges: Dock -> Pick = 44.0, table changed: True
+at most 4 edges: Dock -> Pick = 37.0, table changed: True
+at most 5 edges: Dock -> Pick = 37.0, table changed: False
+distance row from the dock: [ 0. 12. 22. 21. 30. 32. 37.]
+```
+
 `D[:, :, None] + E[None, :, :]` forms every sum D_ik + E_kj at once in a 3-D array; taking the minimum over the middle axis (k) gives the min-plus product, the analogue of a matrix product's sum.
 
 With at most 2 edges the dock cannot reach the picking station at all (∞); with 3 edges it is 44 m (Dock–A1–A2 and A2's direct aisle to Pick); with 4 edges it falls to 37 m; one more product changes nothing. The min-plus view is more than a curiosity: it lets all the tools of linear algebra (repeated squaring, for example) work on routing problems, and the same structure, the **tropical semiring**, appears in scheduling and in speech recognition.
@@ -109,7 +123,7 @@ In code: `dijkstra(n, edges, source)` with `heapq`; a triple loop over `k`, `i`,
 
 Bellman–Ford checks every edge in every round. When all lengths are non-negative, **Dijkstra's algorithm** is far faster: it settles vertices in order of distance, using a priority queue, so each edge is relaxed only once. It solves the same Bellman equations, in a clever order. For a table of distances between **every** pair of locations, the **Floyd–Warshall** algorithm lets each vertex in turn act as a possible stopover: D_ij ← min(D_ij, D_ik + D_kj) for k = 1, ..., n. Predict before running: do all three methods agree?
 
-```python
+```python type
 def dijkstra(n, edges, source):
     adj = {v: [] for v in range(n)}
     for u, v, w in edges:
@@ -136,6 +150,13 @@ print("all pairs agree with min-plus powers:", np.array_equal(F, D))
 print("longest shortest trip in the warehouse:", F.max(), "m, between", places[int(np.argmax(F) // n)], "and", places[int(np.argmax(F) % n)])
 ```
 
+```output
+Dijkstra from the dock: [0, 12, 22, 21, 30, 32, 37]
+Floyd-Warshall row 0:   [0.0, 12.0, 22.0, 21.0, 30.0, 32.0, 37.0]
+all pairs agree with min-plus powers: True
+longest shortest trip in the warehouse: 37.0 m, between Dock and Pick
+```
+
 `F[:, k:k+1] + F[k:k+1, :]` is the table of routes from every i to every j via k, built by broadcasting a column against a row.
 
 All three agree. The full table also answers planning questions directly: the longest of all shortest trips (the network's **diameter**, here 37 m from the dock to the picking station) tells a planner where a new aisle would save the most driving.
@@ -152,7 +173,7 @@ In code: `bellman_ford_distances(n, edges, source)` checks one extra round
 
 Some problems have negative edge lengths: a downhill run that recovers energy for an electric vehicle, or a trade that makes money. Bellman–Ford still works. Textbook Dijkstra, which finalises each vertex when it is first taken from the queue, does not: a later negative edge can undercut a distance already finalised. (The version above re-processes a vertex whenever its distance improves, so it stays correct, but it can take exponentially long, and on a negative cycle it never stops: do not run it on one.) A **negative cycle**, a loop with negative total length, is worse: going round it again and again makes distances fall without limit, so no shortest path exists. Bellman–Ford detects it: if anything still improves in an n-th round, a negative cycle is reachable. Predict before running: an electric tug gains charge running downhill. Is the cycle Top → Mid → Bottom → Top a negative cycle?
 
-```python
+```python type
 def bellman_ford_distances(n, edges, source):
     dist = [math.inf] * n
     dist[source] = 0
@@ -172,6 +193,12 @@ steeper = [(0, 1, -2.0), (1, 2, -3.0), (2, 0, 4.0), (2, 3, 1.0)]
 print("with a cheaper climb back:", bellman_ford_distances(4, steeper, 0), "(None means a negative cycle)")
 ```
 
+```output
+energy (kWh) from Top: [0, -2.0, -5.0, -4.0]
+re-processing Dijkstra agrees here: [0, -2.0, -5.0, -4.0]
+with a cheaper climb back: None (None means a negative cycle)
+```
+
 Energy use is positive, regeneration negative. Going round a negative-total loop would generate energy forever, which signals a modelling error rather than a free lunch.
 
 With a 6 kWh climb back up, the loop costs +1 kWh in total, so there is no negative cycle, and Bellman–Ford finds the energy to reach each point (−5 kWh to the bottom, a net gain). The re-processing Dijkstra agrees here; a textbook Dijkstra that finalised vertices on first removal could get such graphs wrong. With a 4 kWh climb the loop totals −1 kWh: going round forever would produce unlimited energy, Bellman–Ford reports the negative cycle, and the model needs fixing (real regeneration is never that efficient).
@@ -188,7 +215,7 @@ In code: `grid_search(grid, start, goal, use_heuristic)` with the heuristic on a
 
 A warehouse floor is naturally a **grid**: cells that are open floor or rack, with moves between neighbouring open cells. Dijkstra explores outwards in all directions equally. **A*** adds a guess h(v) of the remaining distance to the goal and expands cells in order of d(v) + h(v), heading towards the goal first. If the guess never overestimates (it is **admissible**), A* still finds a shortest path. On a grid with moves up, down, left and right, the Manhattan distance |Δx| + |Δy| from the coordinates lesson is admissible. Predict before running: how many fewer cells does A* expand than Dijkstra?
 
-```python
+```python type
 grid = ["....................",
         ".####.####.####.###.",
         ".####.####.####.###.",
@@ -224,6 +251,11 @@ start, goal = (0, 0), (8, 19)
 for name, flag in [("Dijkstra", False), ("A* (Manhattan)", True)]:
     length, expanded = grid_search(grid, start, goal, flag)
     print(f"{name:<15} route length {length}, cells expanded {expanded}")
+```
+
+```output
+Dijkstra        route length 27, cells expanded 105
+A* (Manhattan)  route length 27, cells expanded 28
 ```
 
 Each queue entry holds (priority, minus the distance so far, cell): when priorities tie, the cell already furthest along comes out first, which keeps A* pushing towards the goal instead of widening its search. Dijkstra is A* with a heuristic of zero.

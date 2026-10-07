@@ -24,7 +24,7 @@ The same slope is described three ways in different trades. Road signs and civil
 
 Predict before running: what angle is a 1-in-12 ramp, a 10% road and a 100% grade? How long must a ramp be to climb 0.75 m at 1 in 12?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,6 +43,14 @@ along = math.hypot(rise, run)
 print(f"climbing {rise} m at 1 in 12: run {run:.2f} m, ramp length along the slope {along:.3f} m")
 ```
 
+```output
+1 in 12 ramp   grade   8.33%  angle  4.764°  sin 0.0830
+10% road       grade  10.00%  angle  5.711°  sin 0.0995
+1 in 4 ramp    grade  25.00%  angle 14.036°  sin 0.2425
+100% grade     grade 100.00%  angle 45.000°  sin 0.7071
+climbing 0.75 m at 1 in 12: run 9.00 m, ramp length along the slope 9.031 m
+```
+
 A 1-in-12 ramp rises at 4.76°, a 10% road at 5.71°, and a 100% grade at exactly 45°. For gentle slopes the grade (as a fraction), the sine and the angle in radians nearly agree: 0.0833, 0.0830 and 0.0831 for the ramp. They drift apart on steep ones. Climbing 0.75 m at 1 in 12 needs 9 m of run and a ramp 9.031 m long along its surface. Building codes add landings every 9 m or so, which is why accessible entrances have their characteristic switchbacks.
 
 ## Forces on a slope
@@ -59,7 +67,7 @@ A load on a slope feels its weight mg straight down. Resolved along and across t
 
 Predict before running: a 200 kg crate on steel rollers (μ = 0.05) and on a wooden ramp (μ = 0.4). How hard must you push up a 10° ramp in each case, and at what angle does the crate start sliding back on its own?
 
-```python
+```python type
 m, g = 200.0, 9.81
 for surface, mu in [("rollers", 0.05), ("wood", 0.4)]:
     for deg in [5, 10, 20]:
@@ -68,6 +76,18 @@ for surface, mu in [("rollers", 0.05), ("wood", 0.4)]:
         print(f"{surface:<8} μ = {mu}: {deg:>2}° ramp needs {push:6.0f} N ({push / (m * g):.1%} of the weight)")
     print(f"  angle of repose: {math.degrees(math.atan(mu)):.1f}°")
 print(f"lifting straight up needs {m * g:.0f} N")
+```
+
+```output
+rollers  μ = 0.05:  5° ramp needs    269 N (13.7% of the weight)
+rollers  μ = 0.05: 10° ramp needs    437 N (22.3% of the weight)
+rollers  μ = 0.05: 20° ramp needs    763 N (38.9% of the weight)
+  angle of repose: 2.9°
+wood     μ = 0.4:  5° ramp needs    953 N (48.6% of the weight)
+wood     μ = 0.4: 10° ramp needs   1114 N (56.8% of the weight)
+wood     μ = 0.4: 20° ramp needs   1409 N (71.8% of the weight)
+  angle of repose: 21.8°
+lifting straight up needs 1962 N
 ```
 
 On rollers a 10° ramp needs about 437 N, 22% of the weight, so a ramp really is a force multiplier. On wood it needs about 1,114 N, more than half the weight, most of it spent fighting friction. The crate slides back on its own above 2.9° on rollers but only above 21.8° on wood. That is the tilting-board test for measuring a static friction coefficient: raise the board until the block starts to slide, and μ_s is the tangent of that angle.
@@ -86,7 +106,7 @@ The shadow method of the previous lesson needs sunshine. A height can also be fo
 
 Predict before running: a chimney's top is at 18° from one point and 27° from a point 30 m closer. How tall is it above eye level, and how far away? What does a 0.2° error in each angle do to the answer?
 
-```python
+```python type
 def height_two_angles(d, alpha_deg, beta_deg):
     cot = lambda deg: 1 / math.tan(math.radians(deg))
     h = d / (cot(alpha_deg) - cot(beta_deg))
@@ -97,6 +117,14 @@ print(f"height above eye level {h:.2f} m, distance from the nearer point {x:.2f}
 for da, db in [(0.2, 0), (0, 0.2), (0.2, -0.2), (-0.2, 0.2)]:
     hh, _ = height_two_angles(30.0, 18.0 + da, 27.0 + db)
     print(f"  angles off by ({da:+.1f}°, {db:+.1f}°): height {hh:.2f} m ({hh - h:+.2f})")
+```
+
+```output
+height above eye level 26.90 m, distance from the nearer point 52.80 m
+  angles off by (+0.2°, +0.0°): height 27.81 m (+0.90)
+  angles off by (+0.0°, +0.2°): height 26.50 m (-0.40)
+  angles off by (+0.2°, -0.2°): height 28.25 m (+1.35)
+  angles off by (-0.2°, +0.2°): height 25.67 m (-1.24)
 ```
 
 The chimney rises about 26.9 m above eye level and stands about 52.8 m from the nearer point. Angle errors matter. A 0.2° error in one angle moves the height by 0.4 to 0.9 m, and opposite errors in both move it by about 1.3 m, roughly 5%. The formula divides by cot α − cot β, which is small when the two angles are similar. As with the river in the previous lesson, good surveying geometry means making that difference large: a long baseline, or a nearer second point.
@@ -114,13 +142,21 @@ Engineers routinely replace sin θ and tan θ by θ for small angles: in the pen
 
 Predict before running: at 5°, 10°, 20° and 30°, what are the relative errors of sin θ ≈ θ and tan θ ≈ θ, and of cos θ ≈ 1 − θ²/2?
 
-```python
+```python type
 for deg in [1, 5, 10, 20, 30]:
     th = math.radians(deg)
     e_sin = (th - math.sin(th)) / math.sin(th)
     e_tan = (math.tan(th) - th) / math.tan(th)
     e_cos = (1 - th ** 2 / 2 - math.cos(th)) / math.cos(th)
     print(f"{deg:>2}°: sin≈θ {e_sin:8.4%} (θ²/6 {th ** 2 / 6:7.4%}), tan≈θ {e_tan:8.4%} (θ²/3 {th ** 2 / 3:7.4%}), cos≈1-θ²/2 {e_cos:+.2e}")
+```
+
+```output
+ 1°: sin≈θ  0.0051% (θ²/6 0.0051%), tan≈θ  0.0102% (θ²/3 0.0102%), cos≈1-θ²/2 -3.87e-09
+ 5°: sin≈θ  0.1270% (θ²/6 0.1269%), tan≈θ  0.2540% (θ²/3 0.2538%), cos≈1-θ²/2 -2.43e-06
+10°: sin≈θ  0.5095% (θ²/6 0.5077%), tan≈θ  1.0175% (θ²/3 1.0154%), cos≈1-θ²/2 -3.92e-05
+20°: sin≈θ  2.0600% (θ²/6 2.0308%), tan≈θ  4.0949% (θ²/3 4.0616%), cos≈1-θ²/2 -6.56e-04
+30°: sin≈θ  4.7198% (θ²/6 4.5693%), tan≈θ  9.3100% (θ²/3 9.1385%), cos≈1-θ²/2 -3.58e-03
 ```
 
 At 5° the approximations are within 0.13% (sine) and 0.25% (tangent); at 10°, within 0.5% and 1%. At 30° the tangent approximation is 9% off. The predicted θ²/6 and θ²/3 track the actual errors closely for small angles. The cosine approximation is far more accurate, its error growing like θ⁴: about 4 × 10⁻⁹ at 1° and 0.36% at 30°. A useful rule: below about 10°, replacing sin and tan by the angle in radians costs under 1%.
@@ -138,13 +174,22 @@ How do you set a workpiece at exactly 17.5° for grinding or inspection? A **sin
 
 Predict before running: on a 100 mm sine bar, what stack heights set 17.5°, 45° and 80°? If the stack is 1 µm out, how large is the angle error at each?
 
-```python
+```python type
 L_bar = 100.0
 for deg in [5, 17.5, 30, 45, 60, 80]:
     th = math.radians(deg)
     H = L_bar * math.sin(th)
     err_arcsec = math.degrees(0.001 / (L_bar * math.cos(th))) * 3600
     print(f"{deg:>5}°: stack {H:8.4f} mm; a 1 µm stack error moves the angle by {err_arcsec:5.2f} arc-seconds")
+```
+
+```output
+    5°: stack   8.7156 mm; a 1 µm stack error moves the angle by  2.07 arc-seconds
+ 17.5°: stack  30.0706 mm; a 1 µm stack error moves the angle by  2.16 arc-seconds
+   30°: stack  50.0000 mm; a 1 µm stack error moves the angle by  2.38 arc-seconds
+   45°: stack  70.7107 mm; a 1 µm stack error moves the angle by  2.92 arc-seconds
+   60°: stack  86.6025 mm; a 1 µm stack error moves the angle by  4.13 arc-seconds
+   80°: stack  98.4808 mm; a 1 µm stack error moves the angle by 11.88 arc-seconds
 ```
 
 17.5° needs a stack of 30.0706 mm, 45° needs 70.7107 mm and 80° needs 98.4808 mm. A 1 µm error in the stack moves the angle by about 2.1 arc-seconds at small angles, 2.9 at 45° and 11.9 at 80°, because the cosine in the denominator shrinks. One arc-second is 1/3600 of a degree, so even 12 is tiny. But it grows without limit near 90°, and inspection practice keeps sine-bar angles below about 45°, measuring steeper angles from the complementary side.

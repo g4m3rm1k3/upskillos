@@ -8,7 +8,7 @@ The lesson builds a network by hand, computes its **forward pass** with matrices
 
 Recall the logic gates from the perceptron lesson: a single neuron with the right weights computes AND, or OR. XOR is "OR, but not AND". So compute OR and AND first, with two neurons, then combine their answers with a third:
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -27,6 +27,13 @@ output = sigmoid(hidden @ w2 + b2)
 
 for inputs, h, out in zip(X, hidden, output):
     print(f"inputs {inputs.astype(int)} -> hidden (OR, AND) {h.round(3)} -> output {out:.3f}")
+```
+
+```output
+inputs [0 0] -> hidden (OR, AND) [0. 0.] -> output 0.000
+inputs [0 1] -> hidden (OR, AND) [1. 0.] -> output 1.000
+inputs [1 0] -> hidden (OR, AND) [1. 0.] -> output 1.000
+inputs [1 1] -> hidden (OR, AND) [1. 1.] -> output 0.000
 ```
 
 Large weights make each sigmoid behave almost like the perceptron's step: near 0 or near 1. The first column of `W1` with bias −10 gives OR: the score is −10 for no inputs, so its output is near 0, and +10 or more if either input is on. The second column with bias −30 gives AND: the score only becomes positive (+10) when both inputs are on. The output neuron computes "OR and not AND": +20 for OR, −20 for AND, and bias −10, so its score is positive only when OR is on and AND is off. The outputs are 0, 1, 1, 0: XOR.
@@ -51,7 +58,7 @@ The function σ between layers is called the **activation function**. The sigmoi
 
 Why not skip σ and just stack matrix multiplications? Because a stack of linear layers is just one linear layer in disguise. Multiplying by `A` and then by `B` is the same as multiplying once by the single matrix `AB`:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -66,13 +73,18 @@ print("three linear layers equal one?", np.allclose(layered, single))
 print("shape of the single equivalent matrix:", (A @ B @ C).shape)
 ```
 
+```output
+three linear layers equal one? True
+shape of the single equivalent matrix: (3, 6)
+```
+
 Three linear layers, 3 → 4 → 2 → 6, compute exactly what one 3 × 6 matrix computes. (With biases it is the same story: the result is one matrix plus one bias.) However many linear layers you stack, the network can still only draw straight lines. The activation function is what breaks this: σ(σ(XA)B) cannot be rewritten as a single layer. Every hidden layer must be followed by a non-linear activation, or it adds nothing.
 
 ## What hidden units do: carving up the plane
 
 Each hidden unit is a logistic-regression-like neuron, so each draws one line and says which side a point is on. The output neuron then combines those answers. With enough lines, the combination can surround any region. Here is a dataset no line can split, one ring of points inside another, with networks of growing hidden-layer size. scikit-learn's `MLPClassifier` ("multi-layer perceptron") is used here to do the training, which later lessons will do by hand:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import make_circles
@@ -96,6 +108,13 @@ for units, ax in zip([1, 2, 4], axes):
 plt.show()
 ```
 
+```output
+logistic regression: test accuracy 0.35
+1 hidden unit(s): test accuracy 0.31
+2 hidden unit(s): test accuracy 0.69
+4 hidden unit(s): test accuracy 1.00
+```
+
 `hidden_layer_sizes=(units,)` means one hidden layer of that many units, and `activation="tanh"` picks an S-shaped activation much like the sigmoid. Logistic regression scores 0.35, about chance or worse (any line leaves rings on both sides; on this split the best line even misclassifies the majority). One hidden unit is still one line (0.31). Two units give two lines, carving out a band (0.69). (Three lines forming a triangle would also do, but training does not always find such a tight solution, as later lessons explore.) Four units surround the inner ring with a four-sided boundary, rounded off by the smooth activations: test accuracy 1.00.
 
 ## One hidden layer can approximate anything
@@ -104,7 +123,7 @@ How far can this go? A famous result, the **universal approximation theorem**, s
 
 The idea is easy to see. The difference of two steep sigmoids, σ(k(x − a)) − σ(k(x − b)), is close to 1 between `a` and `b` and close to 0 elsewhere: a **bump**. Two hidden units make one bump, and the output layer can scale each bump to any height. (Here the output unit has no activation at all: it just adds up the scaled bumps.) Enough narrow bumps, side by side, can trace out any curve. Here is sin(x) built this way. Before running, guess roughly how the worst error changes each time the number of units doubles.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -126,6 +145,14 @@ for units in [4, 8, 16, 32, 64]:
         ax.plot(x, approx, label=f"{units} units")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+ 4 hidden units: largest error 0.718
+ 8 hidden units: largest error 0.550
+16 hidden units: largest error 0.302
+32 hidden units: largest error 0.155
+64 hidden units: largest error 0.078
 ```
 
 Each bump uses two hidden units (one rising sigmoid, one falling), and its height is the sine at the middle of its interval, which is what the output weight would be. With 4 units (2 bumps) the approximation is crude, with a worst error of 0.72. From 8 units on, each doubling roughly halves the worst error: 0.55, 0.30, 0.16, and 0.078 with 64 units.

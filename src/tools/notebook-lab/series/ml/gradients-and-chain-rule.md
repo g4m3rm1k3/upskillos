@@ -8,7 +8,7 @@ This lesson extends derivatives to functions of many variables. **Partial deriva
 
 A function of two variables takes two numbers and returns one, like the height of a landscape at each map position. You can picture it as a surface over a flat plane, or, more usefully on a flat screen, as a **contour plot**: a map with lines joining points of equal height, like the contour lines on a hiking map.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -42,7 +42,7 @@ How fast does `f` change as `x` changes? With two variables, the question needs 
 
 For `f(x, y) = x² + 3y²`, holding `y` fixed makes `3y²` a constant with derivative 0, so ∂f/∂x = 2x. Likewise, holding `x` fixed, ∂f/∂y = 6y. Numerically, it is the same central difference as before, nudging only one variable:
 
-```python
+```python type
 def f(x, y):
     return x ** 2 + 3 * y ** 2
 
@@ -51,6 +51,11 @@ df_dx = (f(x + h, y) - f(x - h, y)) / (2 * h)
 df_dy = (f(x, y + h) - f(x, y - h)) / (2 * h)
 print(df_dx, "rule: 2x =", 2 * x)
 print(df_dy, "rule: 6y =", 6 * y)
+```
+
+```output
+2.0000000000131024 rule: 2x = 2.0
+12.000000000078613 rule: 6y = 12.0
 ```
 
 At the point `(1, 2)`, moving in the x direction the height changes at rate 2, and in the y direction at rate 12. The surface is six times steeper in y there.
@@ -67,7 +72,7 @@ For a function of a thousand variables, the gradient has a thousand components, 
 
 Here is why. Near a point, a smooth surface is almost a flat tilted plane, so moving a tiny step in the direction of a unit vector `u` changes the height at the rate `∇f · u`: each coordinate's rate times how much of that coordinate the step contains. From the vectors lesson, that dot product is ‖∇f‖ cos θ, where θ is the angle between `u` and the gradient. It is largest when cos θ = 1, that is, when `u` points exactly along the gradient. You can check by trying every direction:
 
-```python
+```python type
 import numpy as np
 
 def f(x, y):
@@ -87,9 +92,15 @@ print("gradient direction:      ", np.degrees(np.arctan2(gradient[1], gradient[0
 print("steepest rate:", round(max(rates), 3), " length of gradient:", np.linalg.norm(gradient).round(3))
 ```
 
+```output
+steepest direction found: 70.0 degrees
+gradient direction:       71.6 degrees
+steepest rate: 6.322  length of gradient: 6.325
+```
+
 Of 36 directions tried, the steepest is the one closest to the gradient's direction (`np.arctan2(y, x)` gives the angle of a vector), and the steepest rate matches the gradient's length. So minus the gradient points straight **downhill**. At every point, it is also perpendicular to the contour line through that point, which makes sense: walking along a contour line keeps the height the same, so it is the direction of no change at all. Before running the next cell, predict: in this stretched bowl, will the downhill arrows point straight at the centre?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -123,7 +134,7 @@ Gradient descent works exactly as in one dimension, updating every variable at o
 
 The arrow `←` means "is replaced by", like assignment in Python. Predict the shape of the path from `(2.5, 1.5)`: a straight line to the centre, or something else?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -149,6 +160,10 @@ ax.set_aspect("equal")
 plt.show()
 ```
 
+```output
+finished at [0.0031 0.    ]
+```
+
 The path heads mostly downhill in `y` first, where the bowl is steepest, then curves round to finish at the minimum `(0, 0)`. Training a model is this exact loop, with the point replaced by the model's parameters and `f` by its error on the data.
 
 ## The chain rule
@@ -171,7 +186,7 @@ A worked example: `y = (3x + 1)²`. Call the inside `u = 3x + 1`, so `y = u²`. 
 
 Check it numerically:
 
-```python
+```python type
 def y(x):
     return (3 * x + 1) ** 2
 
@@ -180,13 +195,18 @@ print("numerical:", (y(x + h) - y(x - h)) / (2 * h))
 print("chain rule:", 6 * (3 * x + 1))
 ```
 
+```output
+numerical: 42.000000000896875
+chain rule: 42.0
+```
+
 Both give 42. The chain rule extends to longer chains in the obvious way: multiply the rate of every link. If `x` affects `a`, `a` affects `b`, and `b` affects the output, then the output's rate with respect to `x` is the product of three rates.
 
 ## Following derivatives backwards through a chain
 
 A neural network is a long chain of simple steps, and the chain rule is how its gradient is computed. Here is the idea on a three-step chain. Compute the output **forwards**, storing each step's value, then multiply local rates **backwards**:
 
-```python
+```python type
 import numpy as np
 
 x = 0.5
@@ -205,6 +225,12 @@ print("chain rule:", round(d_out_d_x, 6))
 
 f = lambda t: np.exp(-((3 * t + 2) ** 2) / 10)
 print("numerical: ", round((f(x + 1e-5) - f(x - 1e-5)) / 2e-5, 6))
+```
+
+```output
+forward values: 3.5 12.25 0.29376
+chain rule: -0.616891
+numerical:  -0.616891
 ```
 
 Each step's **local** derivative only needs its own input and output, and the total derivative is their product, accumulated from the output back to the input. (The derivative of `e` to a power uses the chain rule too: the derivative of `exp(−b/10)` is `exp(−b/10)` times the derivative of `−b/10`, which is `−1/10`.) Working backwards like this, reusing each partial product, is exactly the algorithm called **backpropagation**, which you will build from scratch later in the series. Everything a neural network library does when it trains is this, on a chain with millions of links.
@@ -227,7 +253,7 @@ The Σ (capital sigma) means "add up, for `i` from 1 to `n`". `L` is a function 
 
 Every time you derive a gradient by hand, check it numerically. This comparison is called **gradient checking**, and it catches the sign slips and missing factors of two that are otherwise very hard to find. The data below comes from the line with slope 2 and intercept 1; at the guess `m = 0.5, c = 0`, predict the sign of each gradient component before running it.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -246,6 +272,11 @@ numerical = np.array([(loss(m + h, c) - loss(m - h, c)) / (2 * h),
                       (loss(m, c + h) - loss(m, c - h)) / (2 * h)])
 print("formula:  ", gradient(m, c).round(6))
 print("numerical:", numerical.round(6))
+```
+
+```output
+formula:   [-32.418974  -9.747568]
+numerical: [-32.418974  -9.747568]
 ```
 
 They agree, so the formula is right. Both components are negative at `(0.5, 0)`: increasing `m` and increasing `c` would both reduce the error, which makes sense, since the true line has slope 2 and intercept 1.

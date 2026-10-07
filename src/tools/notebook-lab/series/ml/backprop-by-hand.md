@@ -20,7 +20,7 @@ Now the **backward pass**: how much does g change when each input changes? Work 
 - f = e + c: adding passes the gradient through unchanged, so ∂g/∂e = ∂g/∂f × 1 = −2, and ∂g/∂c = −2.
 - e = a·b: so ∂g/∂a = ∂g/∂e × b = (−2)(−3) = 6, and ∂g/∂b = ∂g/∂e × a = (−2)(2) = −4.
 
-```python
+```python type
 a, b, c, d = 2.0, -3.0, 10.0, -2.0
 
 e = a * b
@@ -39,6 +39,12 @@ print("backward: dg/da", grad_a, " dg/db", grad_b, " dg/dc", grad_c, " dg/dd", g
 
 nudge = 1e-6
 print("check dg/da by nudging a:", ((((a + nudge) * b + c) * d) - g) / nudge)
+```
+
+```output
+forward: -6.0 4.0 -8.0
+backward: dg/da 6.0  dg/db -4.0  dg/dc -2.0  dg/dd 4.0
+check dg/da by nudging a: 6.000000000838668
 ```
 
 Two patterns recur everywhere. An **addition** passes the incoming gradient to both inputs unchanged. A **multiplication** sends each input the incoming gradient times the **other** input. And one more rule, for when a value is used in several places: its gradient is the **sum** of the gradients arriving along each path. (If x feeds into both u and v, a change in x changes g through both.)
@@ -60,7 +66,7 @@ Backwards, one step at a time:
 3. Through the tanh, multiply by its local derivative, tanh′(z₁) = 1 − tanh(z₁)² = 1 − h²: δ₁ = (δ₂ · w₂) ⊙ (1 − h²). Here ⊙ means multiplying element by element.
 4. z₁ = x W₁ + b₁, so by the same "error times the input it multiplied" rule as step 2, ∂L/∂W₁ = the outer product of x and δ₁ (entry [i, j] is xᵢ × δ₁ⱼ), and ∂L/∂b₁ = δ₁.
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -96,6 +102,15 @@ for i in range(2):
 print("numerical gradient for W1:\n", numeric.round(6))
 ```
 
+```output
+backprop gradient for W1:
+ [[ 0.067358 -0.006308]
+ [-0.134715  0.012617]]
+numerical gradient for W1:
+ [[ 0.067358 -0.006308]
+ [-0.134715  0.012617]]
+```
+
 `np.outer(x, delta1)` makes the 2 × 2 table of products xᵢ δ₁ⱼ. The two printouts agree to six decimal places. Notice how the computation reused δ₂ for everything in the output layer and for building δ₁, and δ₁ for everything in the hidden layer. Each layer passes its error signal back to the one before, which is the whole algorithm.
 
 ## A batch in matrix form
@@ -113,7 +128,7 @@ The pattern for every layer is the same: the weight gradient is (the layer's inp
 
 Put it all together: a 2 → 3 → 1 network with tanh hidden units, trained on the four XOR cases by gradient descent using the batch formulas. Before running, predict: will both random starting points learn XOR?
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -143,6 +158,18 @@ for seed in [0, 2]:
         if epoch in (1, 100, 2000):
             print(f"seed {seed}, epoch {epoch:>4}: loss {loss:.4f}")
     print(f"seed {seed}: predictions {P.ravel().round(3)}\n")
+```
+
+```output
+seed 0, epoch    1: loss 0.7435
+seed 0, epoch  100: loss 0.0494
+seed 0, epoch 2000: loss 0.0013
+seed 0: predictions [0.    0.998 0.998 0.002]
+
+seed 2, epoch    1: loss 0.8420
+seed 2, epoch  100: loss 0.3799
+seed 2, epoch 2000: loss 0.3474
+seed 2: predictions [0.001 0.499 0.999 0.5  ]
 ```
 
 Each pass through the four examples is called an **epoch**. From seed 0, the loss falls from 0.74 to 0.05 within 100 epochs and keeps falling; the predictions are essentially 0, 1, 1, 0. The network has learned XOR, with every gradient computed by the four lines in the middle of the loop.

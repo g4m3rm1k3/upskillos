@@ -37,8 +37,12 @@ const SERIES = [
     position: 3,
     chapters: [
       ['dice-path-start', 'Start here · Meet the game and write C++'],
+      ['dice-path-state', 'State and tests · References, collections and classes'],
+      ['dice-path-objects', 'Objects and files · Construction, ownership and interfaces'],
+        ['dice-path-project', 'Build the project · Shared rules and repeatable builds'],
+        ['dice-path-learning', 'Learn from decisions · Probability and action values'],
     ],
-    planned: 'Upcoming chapters are still being authored: SDL3 windows and input, graphics and shaders, then Vulkan.',
+      planned: 'Upcoming chapters are still being authored: Q-learning and evaluation, SDL3, graphics and Vulkan. A full-stack application branch is also planned.',
   },
   {
     // Plan, chapter map and status: docs/ml-project-studio-curriculum.md.

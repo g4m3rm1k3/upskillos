@@ -13,7 +13,7 @@ This lesson covers:
 
 The best 7-day total in a year of daily sales: computing each window's sum from scratch costs 7 additions per window. Sliding instead, the next window's sum is the previous sum, plus the day entering, minus the day leaving: two operations, whatever the window size. Predict before running: how many additions will each method make for 365 days and a 30-day window?
 
-```python
+```python type
 import random
 
 random.seed(0)
@@ -45,6 +45,11 @@ for k in [7, 30]:
     print(f"k = {k:>2}: naive {best_window_naive(sales, k)},  sliding {best_window_sliding(sales, k)}   (best total, start day, operations)")
 ```
 
+```output
+k =  7: naive (967, 298, 2513),  sliding (967, 298, 723)   (best total, start day, operations)
+k = 30: naive (3604, 264, 10080),  sliding (3604, 264, 700)   (best total, start day, operations)
+```
+
 The weekend bonus (days where `d % 7` is 5 or 6) gives the data a weekly rhythm, as real sales data has.
 
 Both find the same best window; the naive version does about k/2 times as much work, over 10,000 additions for 30-day windows against about 700. The sliding version's cost does not depend on k at all. The same update works for averages, counts of items meeting a condition, and anything else that can be adjusted by adding the new item and removing the old.
@@ -55,7 +60,7 @@ Harder questions have no fixed size: "the **shortest** stretch whose total reach
 
 This works because the values are **positive**: adding an item can only increase the sum and removing one can only decrease it. So once a window starting at some left edge reaches the target, extending it further can only make it longer, and it is safe to move on. With negative numbers that reasoning fails; the next lesson shows how prefix sums handle exact-sum questions with negatives. Predict before running: what is the shortest stretch of the sales data with a total of at least 1,000?
 
-```python
+```python type
 def shortest_reaching(values, target):
     left, total = 0, 0
     best = None
@@ -74,6 +79,12 @@ print(shortest_reaching([2, 3, 1, 2, 4, 3], 7))
 print(shortest_reaching([1, 1, 1], 10))
 ```
 
+```output
+shortest stretch reaching 1000: (5, 12) length 8 total 1016
+(4, 5)
+None
+```
+
 The inner `while` shrinks the window as far as it can while the sum still reaches the target, recording each candidate on the way.
 
 The shortest stretch has 8 days (days 5 to 12, totalling 1,016), and for the small example, `[4, 3]` (positions 4 to 5) reaches 7 with just two items. When nothing reaches the target the result is `None`. Notice the shape of the loop: an outer `for` that always grows the window on the right, and an inner `while` that shrinks it on the left. Despite the nested loops it is O(n), because `left` only ever moves forward, at most n times in total.
@@ -82,7 +93,7 @@ The shortest stretch has 8 days (days 5 to 12, totalling 1,016), and for the sma
 
 When the condition depends on **which** items are in the window, keep a dictionary of counts. The classic problem: the longest stretch of a string with no repeated character. Extend the right edge; if the new character already appears in the window, shrink from the left until it does not. Predict before running: what is the longest stretch without repeats in "abcabcbb" and in "the quick brown fox"?
 
-```python
+```python type
 from collections import defaultdict
 
 def longest_without_repeats(text):
@@ -99,6 +110,13 @@ def longest_without_repeats(text):
 
 for text in ["abcabcbb", "bbbbb", "the quick brown fox", ""]:
     print(repr(text), "->", repr(longest_without_repeats(text)))
+```
+
+```output
+'abcabcbb' -> 'abc'
+'bbbbb' -> 'b'
+'the quick brown fox' -> 'quick brown'
+'' -> ''
 ```
 
 `best` holds the start and end (exclusive) of the longest window seen, so the answer can be returned as text.

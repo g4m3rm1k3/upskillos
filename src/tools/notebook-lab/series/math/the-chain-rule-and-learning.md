@@ -27,7 +27,7 @@ If y = f(g(x)), a small change Δx changes the inner value g by about g′(x)Δx
 
 the derivative of the outside, evaluated at the inside, times the derivative of the inside. In Leibniz notation, with u = g(x), dy/dx = (dy/du)(du/dx), which looks like fractions cancelling and is a good memory aid. Longer chains multiply more factors: the rate of change passes through each stage, multiplied by that stage's local rate. Predict before running: what is the derivative of sin(x²) at x = 1.5, and does a numerical slope agree?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,6 +43,14 @@ print(f"chain rule: cos(x²) · 2x = {chain:.8f}, numerical slope {central(lambd
 x = sp.symbols("x")
 for expr in [sp.sin(x ** 2), sp.exp(-3 * x ** 2), sp.log(1 + sp.exp(2 * x)), sp.sqrt(1 + sp.sin(x) ** 2)]:
     print(f"d/dx {expr} = {sp.diff(expr, x)}")
+```
+
+```output
+chain rule: cos(x²) · 2x = -1.88452087, numerical slope -1.88452087
+d/dx sin(x**2) = 2*x*cos(x**2)
+d/dx exp(-3*x**2) = -6*x*exp(-3*x**2)
+d/dx log(exp(2*x) + 1) = 2*exp(2*x)/(exp(2*x) + 1)
+d/dx sqrt(sin(x)**2 + 1) = sin(x)*cos(x)/sqrt(sin(x)**2 + 1)
 ```
 
 SymPy applies the chain rule automatically for every nested function.
@@ -61,7 +69,7 @@ In code: `dy_db, dy_dc = c, b`, then `dy_da = dy_db * math.cos(a)`, and so on
 
 A computer evaluates a formula as a sequence of simple steps: the **forward pass**. To differentiate, record each step's local derivative and multiply them along the chain, starting from the output and moving backwards: the **backward pass**. For y = sin(x²)·e^(−x), the steps are a = x², b = sin a, c = e^(−x), y = b·c. The backward pass reuses the forward values: dy/db = c, dy/dc = b, then dy/da = (dy/db) cos a, and x receives contributions from both paths, dy/dx = (dy/da)·2x + (dy/dc)·(−e^(−x)), added together because x feeds the output along two routes. Predict before running: does this step-by-step backward pass match the numerical slope?
 
-```python
+```python type
 x0 = 1.2
 a = x0 ** 2
 b = math.sin(a)
@@ -72,6 +80,11 @@ dy_da = dy_db * math.cos(a)
 dy_dx = dy_da * 2 * x0 + dy_dc * (-math.exp(-x0))
 print(f"forward: a = {a:.4f}, b = {b:.4f}, c = {c:.4f}, y = {y:.6f}")
 print(f"backward: dy/dx = {dy_dx:.8f}, numerical {central(lambda t: math.sin(t ** 2) * math.exp(-t), x0):.8f}")
+```
+
+```output
+forward: a = 1.4400, b = 0.9915, c = 0.3012, y = 0.298622
+backward: dy/dx = -0.20434264, numerical -0.20434264
 ```
 
 Each backward line multiplies the derivative arriving from the output side by one step's local derivative; where two paths meet at x, their contributions add.
@@ -100,7 +113,7 @@ p is the predicted probability of failure; w and b are the parameters to learn. 
 
 The error p − y, the gap between prediction and outcome, drives every update. Predict before running: do the formula and a numerical gradient agree?
 
-```python
+```python type
 rng = np.random.default_rng(48)
 n = 200
 vib = rng.uniform(1, 12, n)
@@ -126,6 +139,11 @@ print(f"chain-rule gradient ({gw:.6f}, {gb:.6f}), numerical ({nw:.6f}, {nb:.6f})
 print(f"failed bearings in the data: {int(failed.sum())} of {n}")
 ```
 
+```output
+chain-rule gradient (0.699390, 0.209360), numerical (0.699390, 0.209360)
+failed bearings in the data: 96 of 200
+```
+
 The labels are simulated: a bearing's chance of failing rises with vibration along a sigmoid curve, and each bearing then fails or not at random. The clip keeps the logarithm finite if a prediction reaches exactly 0 or 1.
 
 The analytic gradient matches the numerical one to six decimals: the **gradient check**, the standard test that a hand-derived (or hand-coded) gradient is right. It is worth doing whenever a gradient is written by hand, because a wrong gradient still lets training run, just badly.
@@ -142,7 +160,7 @@ In code: `w -= 0.02 * gw` and `b -= 0.02 * gb`, repeated 20,000 times
 
 With the gradient in hand, training is the descent loop of the walking-downhill lesson: w ← w − η ∂L/∂w, b ← b − η ∂L/∂b, repeated. As the loss falls, the predicted probabilities line up with the outcomes. The learned rule is easy to read: the predicted risk crosses 50% where wv + b = 0, at v = −b/w, the **decision boundary**. Predict before running: after training, above what vibration level does the model predict failure as more likely than not?
 
-```python
+```python type
 w, b = 0.0, 0.0
 history = []
 for step in range(20_000):
@@ -167,6 +185,16 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+step     0: loss 0.6720
+step  4000: loss 0.3029
+step  8000: loss 0.2826
+step 12000: loss 0.2773
+step 16000: loss 0.2753
+learned w = 1.031, b = -6.962; decision boundary at 6.75 mm/s (true risk crosses 50% at 6.82)
+training accuracy 86.0%
+```
+
 The inputs are not standardised here, so a small learning rate and many steps are needed; standardising would speed things up, as the walking-downhill lesson showed.
 
 The loss falls steadily and the learned risk curve settles close to the true one, with the 50% boundary near 6.8 mm/s, about where the true risk crosses 50%. The model classifies most training bearings correctly; the rest are genuinely unlucky or lucky bearings that no rule based on vibration alone could predict. Everything here generalises: more inputs mean more weights, more layers mean longer chains, and the chain rule handles all of it.
@@ -183,7 +211,7 @@ In code: `class Var` stores `parents` with local derivatives; `backward()` accum
 
 Deriving gradients by hand does not scale. **Automatic differentiation** (autodiff) does what the backward pass above did, mechanically: every arithmetic operation records its inputs and its local derivatives, building the computational graph as the forward pass runs; then a backward sweep multiplies and adds derivatives along every path. This is how PyTorch, JAX and TensorFlow compute gradients. A minimal version fits in a few lines. Predict before running: does it reproduce the hand-derived gradient of the neuron's loss for one data point?
 
-```python
+```python type
 class Var:
     def __init__(self, value, parents=()):
         self.value, self.parents, self.grad = value, parents, 0.0
@@ -226,6 +254,11 @@ L.backward()
 pv = 1 / (1 + math.exp(-(0.3 * 8.0 - 1.0)))
 print(f"autodiff: dL/dw = {wv.grad:.6f}, dL/db = {bv.grad:.6f}")
 print(f"formula:  dL/dw = {(pv - y_i) * v_i:.6f}, dL/db = {pv - y_i:.6f}")
+```
+
+```output
+autodiff: dL/dw = -1.582529, dL/db = -0.197816
+formula:  dL/dw = -1.582529, dL/db = -0.197816
 ```
 
 Each `Var` stores its value and, for each input, the local derivative of this operation with respect to that input. `backward` orders the graph so every node is processed after everything that depends on it, then pushes gradients back, adding contributions from every path.

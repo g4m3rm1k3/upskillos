@@ -27,7 +27,7 @@ xⁿ means n copies of x multiplied together. Three rules follow, and every othe
 
 Keeping the first rule true for every exponent forces the meaning of the others. x⁰ must be 1, because x⁰ · xᵃ = xᵃ. x⁻ⁿ must be 1/xⁿ, because x⁻ⁿ · xⁿ = x⁰ = 1. And x^(1/n) must be the n-th root, because (x^(1/n))ⁿ = x¹. So the square root of x is x^0.5 and a cube root is x^(1/3). Predict before running: what is the cube root of −27 in Python, and why?
 
-```python
+```python type
 import math
 
 print("2**10 =", 2 ** 10, "  2**-3 =", 2 ** -3, "  5**0 =", 5 ** 0)
@@ -36,6 +36,15 @@ print("square root of 2:", 2 ** 0.5, "=", math.sqrt(2))
 print("cube root of 1000:", 1000 ** (1 / 3), "  rounding error:", 1000 ** (1 / 3) - 10)
 print("(-27) ** (1/3) =", (-27) ** (1 / 3))
 print("math.cbrt(-27) =", math.cbrt(-27))
+```
+
+```output
+2**10 = 1024   2**-3 = 0.125   5**0 = 1
+rule check 3**4 * 3**5 == 3**9: True   (2**3)**4 == 2**12: True
+square root of 2: 1.4142135623730951 = 1.4142135623730951
+cube root of 1000: 9.999999999999998   rounding error: -1.7763568394002505e-15
+(-27) ** (1/3) = (1.5000000000000004+2.598076211353316j)
+math.cbrt(-27) = -3.0
 ```
 
 `math.cbrt` (Python 3.11 and later) computes the real cube root directly.
@@ -56,7 +65,7 @@ In code: `3 * math.floor(math.log10(abs(value)) / 3)` is the engineering exponen
 
 The SI prefixes step by factors of 1,000: kilo (k, 10³), mega (M, 10⁶), giga (G, 10⁹), and milli (m, 10⁻³), micro (µ, 10⁻⁶), nano (n, 10⁻⁹). Predict before running: how are a bore tolerance and a motor's power shown in each notation?
 
-```python
+```python type
 PREFIXES = {-12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T"}
 
 def engineering(value, unit):
@@ -68,6 +77,14 @@ def engineering(value, unit):
 
 for value, unit in [(0.0000124, "m"), (7_500, "W"), (2.2e9, "Hz"), (0.047, "s"), (6e15, "J")]:
     print(f"{value:<12g} scientific {value:.2e}   engineering {engineering(value, unit)}")
+```
+
+```output
+1.24e-05     scientific 1.24e-05   engineering 12.4 µm
+7500         scientific 7.50e+03   engineering 7.5 kW
+2.2e+09      scientific 2.20e+09   engineering 2.2 GHz
+0.047        scientific 4.70e-02   engineering 47 ms
+6e+15        scientific 6.00e+15   engineering 6e+03 TJ
 ```
 
 `math.log10(x)` is the power of ten that gives x, so its floor is the exponent in scientific notation. Rounding it down to a multiple of 3 gives the engineering exponent.
@@ -86,7 +103,7 @@ In code: `math.floor(math.log10(abs(x)))`
 
 The **order of magnitude** of a positive number is its power of ten, the floor of log₁₀ of it: 340 has order 2, 0.004 has order −3. Two quantities differ by n orders of magnitude when their ratio is about 10ⁿ. Thinking in orders of magnitude answers questions like "does this matter?": a 1 µm thermal expansion in a 10 m frame is a ratio of 10⁻⁷, irrelevant for a building and decisive for a precision stage. It is also how to read a log-scale chart. Predict before running: how many orders of magnitude separate a micrometre tolerance from the length of a factory?
 
-```python
+```python type
 def order(x):
     return math.floor(math.log10(abs(x)))
 
@@ -94,6 +111,16 @@ scales = {"atom": 1e-10, "machining tolerance": 5e-6, "bolt": 0.03, "machine": 2
 for name, metres in scales.items():
     print(f"{name:<20} {metres:>10.3g} m   order {order(metres):>3}")
 print("factory / tolerance spans", order(scales["factory"]) - order(scales["machining tolerance"]), "orders of magnitude")
+```
+
+```output
+atom                      1e-10 m   order -10
+machining tolerance       5e-06 m   order  -6
+bolt                       0.03 m   order  -2
+machine                     2.5 m   order   0
+factory                     300 m   order   2
+Earth's radius         6.37e+06 m   order   6
+factory / tolerance spans 8 orders of magnitude
 ```
 
 From a 5 µm tolerance (order −6) to a 300 m factory (order 2) is 8 orders of magnitude, and from an atom to the Earth is 16. A single plot with a linear axis cannot show such ranges; a logarithmic one can, as the logarithms lesson shows.
@@ -112,7 +139,7 @@ A **Fermi estimate**, named after the physicist Enrico Fermi, gets an answer to 
 
 Errors in the factors tend to partly cancel, some too high and some too low, so the product is usually much closer than the worst case in which every error points the same way. When you can only bound a factor, between a low and a high guess, the **geometric mean** √(low × high) is the natural middle on a multiplicative scale: halfway between 10 and 1,000 in orders of magnitude is 100, not 505. Predict before running: about how many bolts are there in all the cars in a country of 60 million people?
 
-```python
+```python type
 def geometric_mean(low, high):
     return math.sqrt(low * high)
 
@@ -123,6 +150,12 @@ estimate = people * cars_per_person * bolts_per_car
 print(f"cars per person ~ {cars_per_person:.2f}, bolts per car ~ {bolts_per_car:,.0f}")
 print(f"bolts in all the cars ~ {estimate:.1e} (order {order(estimate)})")
 print("arithmetic middle of 10 and 1000:", (10 + 1000) / 2, "  geometric middle:", geometric_mean(10, 1000))
+```
+
+```output
+cars per person ~ 0.46, bolts per car ~ 2,236
+bolts in all the cars ~ 6.1e+10 (order 10)
+arithmetic middle of 10 and 1000: 505.0   geometric middle: 100.0
 ```
 
 Each factor is a range turned into one number by its geometric mean.

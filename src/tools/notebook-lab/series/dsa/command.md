@@ -15,7 +15,7 @@ This lesson covers:
 
 An operator panel adjusts a machine: spindle speed, feed rate, coolant. The buttons call the machine's methods directly. Predict before reading on: after an operator mistypes 18,000 rpm instead of 8,000, how does the panel restore the previous speed?
 
-```python
+```python type
 class Machine:
     def __init__(self):
         self.rpm, self.feed, self.coolant = 6000, 400, False
@@ -28,13 +28,17 @@ m.feed = 650
 print(m, "- and the old values are gone")
 ```
 
+```output
+Machine(rpm=18000, feed=650, coolant=False) - and the old values are gone
+```
+
 It cannot: the old value was overwritten, and nothing recorded it. Adding "remember the previous value" to every button handler scatters undo logic everywhere, and undoing several steps in order (feed, then speed) would need a history that nothing keeps.
 
 ## Command objects and a history
 
 Make each action an object. A `SetAttribute` command holds the machine, a setting's name and its new value. `execute` remembers the old value and applies the new one, and `undo` puts the old value back. A `History` (in pattern language, the **invoker**) runs commands and keeps them on an **undo stack**. Undoing pops the latest command, reverses it, and pushes it onto a **redo stack**, so it can be redone. Running a **new** command clears the redo stack, because the redone action would no longer follow on from the current state. Predict before running: after two changes, two undos and one redo, what are the settings?
 
-```python
+```python type
 class SetAttribute:
     def __init__(self, machine, name, value):
         self.machine, self.name, self.value = machine, name, value
@@ -75,6 +79,13 @@ print("undo:", history.undo(), "->", m)
 print("redo:", history.redo(), "->", m)
 ```
 
+```output
+Machine(rpm=18000, feed=650, coolant=False)
+undo: set feed = 650 -> Machine(rpm=18000, feed=400, coolant=False)
+undo: set rpm = 18000 -> Machine(rpm=6000, feed=400, coolant=False)
+redo: set rpm = 18000 -> Machine(rpm=18000, feed=400, coolant=False)
+```
+
 `getattr(obj, name)` and `setattr(obj, name, value)` read and write an attribute whose name is a string, so one command class covers any setting.
 
 After two undos the machine is back to 6,000 rpm and 400 mm/min, and the redo re-applies the speed change, giving 18,000 rpm with the original feed. The machine class contains no undo code at all. Each command carries exactly what it needs to reverse itself: the old value, captured at the moment it ran.
@@ -85,7 +96,7 @@ A **macro command** is a command made of other commands (a composite, from the c
 
 A subtler point: if step three of five fails, the first two have already changed the machine. A macro should then undo the steps that succeeded, and re-raise the error, so the machine is left as it was. That makes the macro **all or nothing**, which is what a database calls a transaction. Predict before running: after the failing macro, are the speed and feed back to their starting values?
 
-```python
+```python type
 class Macro:
     def __init__(self, name, *commands):
         self.name, self.commands = name, commands
@@ -124,6 +135,12 @@ except RuntimeError as error:
     print("failed:", error, "->", m)
 ```
 
+```output
+Machine(rpm=12000, feed=900, coolant=True)
+after undo: Machine(rpm=6000, feed=400, coolant=False)
+failed: coolant pump not responding -> Machine(rpm=6000, feed=400, coolant=False)
+```
+
 A failed command never reaches the history, because `History.run` only appends after `execute` returns.
 
 The aluminium setup is undone in one step, in reverse order, back to the defaults. The bad setup changed the speed and feed, failed at the coolant, and rolled both back before re-raising, so the machine is exactly as it was. Without the rollback, a half-applied setup would leave the machine in a state nobody chose.
@@ -132,7 +149,7 @@ The aluminium setup is undone in one step, in reverse order, back to the default
 
 A command object can also be described as **data**: a small dict such as `{"op": "set", "name": "rpm", "value": 9000}`. Data can be written to a log file, sent over a network, or stored. A registry turns each dict back into a command object, so a log of everything an operator did can be **replayed** to rebuild the machine's state, for example after a restart, or to reproduce a problem exactly. Predict before running: does replaying the log on a fresh machine reproduce the final settings?
 
-```python
+```python type
 import json
 
 COMMANDS = {"set": lambda machine, d: SetAttribute(machine, d["name"], d["value"])}
@@ -150,6 +167,10 @@ fresh = Machine()
 for data in json.loads(operator_log):
     command_from(fresh, data).execute()
 print("replayed:", fresh)
+```
+
+```output
+replayed: Machine(rpm=9000, feed=720, coolant=True)
 ```
 
 `json.dumps` and `json.loads` turn the list of dicts into text and back, the form in which a log would be stored.

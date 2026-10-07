@@ -8,12 +8,17 @@ Along the way you will meet the **tuple**, Python's simplest way to bundle a few
 
 Some parameters almost always get the same value. A parameter can be given a **default**, which is used whenever the caller leaves that argument out.
 
-```python
+```python type
 def greet(name, greeting="Hello"):
     return f"{greeting}, {name}!"
 
 print(greet("Ada"))
 print(greet("Ada", "Good morning"))
+```
+
+```output
+Hello, Ada!
+Good morning, Ada!
 ```
 
 `greeting="Hello"` in the definition means: if no second argument is given, use `"Hello"`. The first call gives one argument, so `greeting` gets its default. The second gives two, so the default is ignored. A parameter with a default is **optional**; one without a default is **required**, and leaving it out is an error.
@@ -31,12 +36,17 @@ The message says exactly that: `parameter without a default follows parameter wi
 
 So far arguments have been matched to parameters by position. You can also pass an argument by writing the parameter's name, an equals sign and the value. This is called a **keyword argument**.
 
-```python
+```python type
 def describe_pet(animal, pet_name):
     return f"{pet_name} is a {animal}."
 
 print(describe_pet(pet_name="Mittens", animal="cat"))
 print(describe_pet("dog", pet_name="Rex"))
+```
+
+```output
+Mittens is a cat.
+Rex is a dog.
 ```
 
 With keyword arguments the order does not matter, because each value is labelled; the first call cannot suffer the mix-up you saw last lesson. You can combine the two styles, but positional arguments must come first.
@@ -45,7 +55,7 @@ Keyword arguments make calls much easier to read, especially for values like `Tr
 
 `print` itself has two useful keyword parameters. `sep` is what goes between the items, a space by default, and `end` is what goes at the end, a new line by default.
 
-```python
+```python type
 print("a", "b", "c", sep="-")
 print("no new line after this", end="")
 print(" ... so this continues it")
@@ -53,11 +63,17 @@ for i in range(5):
     print(i, end=" ")
 ```
 
+```output
+a-b-c
+no new line after this ... so this continues it
+0 1 2 3 4
+```
+
 ## Returning several values
 
 A function can return more than one value by separating them with commas. The caller can then unpack them into separate variables in one assignment.
 
-```python
+```python type
 def min_and_max(numbers):
     return min(numbers), max(numbers)
 
@@ -67,17 +83,27 @@ print("High:", high)
 print(min_and_max([7, 2, 9, 4]))
 ```
 
+```output
+Low: 2
+High: 9
+(2, 9)
+```
+
 `low, high = ...` is an **unpacking assignment**: the first value goes to `low`, the second to `high`. The last line shows what the function really returns: `(2, 9)`, a single value in round brackets. That is a **tuple**: a fixed sequence of values, written with commas and usually round brackets. You can index a tuple and loop over it like a list, but, like a string, a tuple cannot be changed once it is made. Lesson 11 looks at tuples properly; for now, all you need is that commas make a tuple, and that a tuple can be unpacked into separate names.
 
 Unpacking needs exactly the right number of names. `a, b = (1, 2, 3)` is a `ValueError`: too many values to unpack.
 
 Unpacking also gives Python its famous one-line swap. In lesson 2 you swapped two variables with a temporary third one. Now you can write:
 
-```python
+```python type
 a = 5
 b = 9
 a, b = b, a
 print(a, b)
+```
+
+```output
+9 5
 ```
 
 The right-hand side `b, a` is worked out first, making the tuple `(9, 5)`, and only then is it unpacked into `a` and `b`. Nothing is overwritten too early.
@@ -88,7 +114,7 @@ Tuples and unpacking make two built-in functions possible that clean up many `fo
 
 In lesson 6 you looped over positions with `range(len(items))` to get both the position and the item. `enumerate` does this directly: it gives you a tuple of (position, item) for each item, which you unpack in the `for` line.
 
-```python
+```python type
 runners = ["Kim", "Sam", "Lee"]
 for position, name in enumerate(runners):
     print(position, name)
@@ -96,15 +122,30 @@ for place, name in enumerate(runners, start=1):
     print(f"{place}. {name}")
 ```
 
+```output
+0 Kim
+1 Sam
+2 Lee
+1. Kim
+2. Sam
+3. Lee
+```
+
 `enumerate(runners, start=1)` counts from 1 instead of 0, which is exactly what a numbered list for people needs. No `runners[i]`, and no chance of an off-by-one mistake.
 
 `zip` walks through two (or more) lists side by side, giving a tuple of the matching items from each:
 
-```python
+```python type
 names = ["Ada", "Grace", "Alan"]
 scores = [91, 88, 79]
 for name, score in zip(names, scores):
     print(f"{name}: {score}")
+```
+
+```output
+Ada: 91
+Grace: 88
+Alan: 79
 ```
 
 If the lists have different lengths, `zip` stops when the shortest one runs out.
@@ -115,7 +156,7 @@ A name's **scope** is the part of the program where it can be used. Last lesson 
 
 A function can **read** a global variable:
 
-```python
+```python type
 tax_rate = 0.2
 
 def with_tax(price):
@@ -124,11 +165,15 @@ def with_tax(price):
 print(with_tax(50))
 ```
 
+```output
+60.0
+```
+
 When Python meets a name inside a function, it looks first among the function's local names, and if it is not there, among the global ones. `tax_rate` is not local, so the global one is used.
 
 **Assigning** to a name inside a function is different. Any assignment inside a function creates a local variable, even if a global variable has the same name. The global one is untouched:
 
-```python
+```python type
 count = 0
 
 def increase():
@@ -137,6 +182,11 @@ def increase():
 
 print(increase())
 print(count)
+```
+
+```output
+100
+0
 ```
 
 The function's `count` is a separate, local variable that happens to share a name. The global `count` is still 0. This protection is what lets you use common names inside functions without accidentally changing the rest of the program.
@@ -157,7 +207,7 @@ Because `count` is assigned inside the function, Python treats `count` as local 
 
 There is a keyword, `global`, that tells Python a name inside a function means the global variable, so it can be changed. It works, but programmers avoid it, because a function that changes global variables is hard to understand and hard to test: calling it has effects you cannot see from the call. The better design is almost always to pass the value in and return the new value out:
 
-```python
+```python type
 def increase(count):
     return count + 1
 
@@ -165,6 +215,10 @@ count = 0
 count = increase(count)
 count = increase(count)
 print(count)
+```
+
+```output
+2
 ```
 
 Everything the function uses comes in through its parameters, and everything it produces goes out through `return`. A function like this, whose result depends only on its arguments and which changes nothing else, is called a **pure function**. Pure functions are the easiest kind to reason about and to test, so write functions this way whenever you can.
@@ -175,7 +229,7 @@ Default values have one famous trap. A default value is created **once**, when t
 
 Predict what the three calls print.
 
-```python
+```python type
 def add_item(item, basket=[]):
     basket.append(item)
     return basket
@@ -185,13 +239,19 @@ print(add_item("bread"))
 print(add_item("milk"))
 ```
 
+```output
+['apple']
+['apple', 'bread']
+['apple', 'bread', 'milk']
+```
+
 You might expect three one-item baskets. Instead the basket keeps growing: `['apple']`, then `['apple', 'bread']`, then `['apple', 'bread', 'milk']`. All three calls used the one default list made when the function was defined, and each `append` changed it.
 
 Notice what this shows about lists and functions. When a function receives a list, its parameter refers to that **same** list, not to a copy, so `append` inside the function changes the list the caller has too. That is why the default list, one list shared by every call, kept growing. Lesson 12 explains exactly why Python works this way.
 
 The standard fix is to use `None` as the default, and create a fresh list inside the function when no list was given:
 
-```python
+```python type
 def add_item(item, basket=None):
     if basket is None:
         basket = []
@@ -200,6 +260,11 @@ def add_item(item, basket=None):
 
 print(add_item("apple"))
 print(add_item("bread"))
+```
+
+```output
+['apple']
+['bread']
 ```
 
 `basket is None` checks whether the value is `None`. (`is` asks whether two names refer to the very same object, which is the right way to test for `None`. Lesson 12 explains the difference between `is` and `==`.) Now each call without a basket gets its own new list. Never use a list, or anything else that can be changed, as a default value.

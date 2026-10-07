@@ -23,7 +23,7 @@ A temperature logger on the motor frame recorded a warm-up at rated load: a read
 
 Predict before running: from 61 noisy readings, how well can the time constant and the final temperature be recovered?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,6 +53,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+time constant 24.95 min, ambient 22.11 °C, rise 57.84 K, final 79.94 °C
+rms residual 0.49 °C
+```
+
 The fit gives τ ≈ 24.95 min and a final temperature of 79.94 °C, against the 25 min and 80 °C used to make the data. The rms residual, 0.49 °C, matches the 0.5 °C logger noise: the model explains everything except the noise. Two hours of logging pinned down a number that would otherwise need the motor's mass, materials and airflow.
 
 ## The overload duty cycle
@@ -70,7 +75,7 @@ The plant wants to run an overload cycle: every hour, 20 minutes at 150% load, t
 
 Predict before running: does the frame stay below 120 °C once the cycle has settled into its repeating pattern?
 
-```python
+```python type
 P_rated = 1200.0
 R = rise / P_rated
 C = tau * 60 / R
@@ -98,6 +103,13 @@ ax.set_ylabel("frame °C")
 plt.show()
 ```
 
+```output
+R = 0.0482 K/W, C = 31.1 kJ/K
+in the 8th hour: between 88.6 and 123.8 °C
+equilibrium for the average loss 104.0 °C; for continuous overload 152.2 °C
+time above 120 °C in the 8th hour: 5.3 min
+```
+
 After about two hours the temperature settles into a sawtooth between about 88.6 °C and 123.8 °C. It peaks at the end of each overload period, and spends about 5 minutes of every hour above the 120 °C limit, even though the average-loss equilibrium is only 104 °C. With a 25-minute time constant, a 20-minute overload is long enough to climb well above the average. The fix is either shorter overload bursts (the motor's heat capacity then smooths them) or more cooling. The sawtooth itself is what the mounts, two sections on, have to cope with.
 
 ## Reading the vibration spectrum
@@ -114,7 +126,7 @@ An accelerometer on the motor feet records 4 seconds at 2 kHz. The spectrum sepa
 
 Predict before running: which peaks stand out above the noise, and is the rotor's unbalance acceptable? (A common balance grade allows about 600 g·mm for this rotor.)
 
-```python
+```python type
 m, k20, zeta = 40.0, 1.0e5, 0.08
 f_run = 1480 / 60
 omega = 2 * math.pi * f_run
@@ -144,6 +156,15 @@ print(f"1×: {a1:.3f} m/s², displacement {X1 * 1e6:.1f} µm; natural frequency 
 print(f"shaking force {F0:.1f} N, unbalance {F0 / omega ** 2 * 1e6:.0f} g·mm")
 ```
 
+```output
+peak at  24.75 Hz (1.00× running speed), 0.838 m/s²
+peak at  49.25 Hz (2.00× running speed), 0.230 m/s²
+peak at 100.00 Hz (4.05× running speed), 0.138 m/s²
+peak at 561.00 Hz (22.74× running speed), 0.046 m/s²
+1×: 0.838 m/s², displacement 34.9 µm; natural frequency 7.96 Hz, r = 3.10
+shaking force 30.1 N, unbalance 1253 g·mm
+```
+
 Three peaks stand out: 1× at 24.75 Hz (the nearest 0.25 Hz bin to 24.67 Hz), 2× at 49.25 Hz and the 100 Hz hum. The fourth-largest "peak" is only noise, at 0.05 m/s². The 1× peak reads 0.838 m/s², a little under the true 0.9 because the tone falls between two frequency bins. That is a 35 µm vibration. The motor runs well above its 7.96 Hz natural frequency (r ≈ 3.1), where its own inertia does most of the resisting, so this small motion corresponds to a shaking force of about 30 N: an unbalance near 1,250 g·mm, about twice the allowance. The rotor needs balancing, and the spectrum said so without stopping the machine.
 
 ## Heat meets vibration
@@ -159,7 +180,7 @@ Rubber softens as it warms, and the mounts sit right under the hot frame (assume
 
 Predict before running: on the overload cycle, does the sag stay within 6 mm? And does warming make the floor vibration better or worse?
 
-```python
+```python type
 beta = 0.003
 
 def k_of(T):
@@ -185,6 +206,12 @@ for a in (a1x, a2x):
 plt.show()
 ```
 
+```output
+sag: 3.95 mm cold, up to 5.70 mm at the hottest
+transmissibility: 0.129 cold, down to 0.090 hot
+force reaching the floor at 1×: 3.9 N cold, 2.7 N hot
+```
+
 The sag grows from 3.95 mm cold to 5.70 mm at the hottest moment of the cycle: inside the 6 mm limit, but with little margin. The transmissibility improves as the rubber warms, from 0.129 to 0.090: the hot motor passes about 2.7 N of its 30 N shaking force to the floor, the cold one 3.9 N. The two goals pull in opposite directions. Stiffer mounts hold alignment but transmit more vibration; softer ones isolate better but sag more. That conflict calls for an optimisation.
 
 ## Choosing the mount, with scatter
@@ -201,7 +228,7 @@ Each requirement turns into a bound on the cold stiffness k₂₀. Sag at the ho
 
 Predict before running: how wide is the allowed window, and how many mounts fail if the nominal stiffness sits in its middle?
 
-```python
+```python type
 T_hot = T_motor.max()
 ks = np.linspace(4e4, 4e5, 3601)
 ok = (m * 9.81 / (ks * (1 - beta * (T_hot - 20))) <= 0.006) & (trans(omega / np.sqrt(ks / m), zeta) <= 0.15)
@@ -216,6 +243,13 @@ def fail_rate(k_choice, sd, n=100_000):
 k_mid = (k_lo + k_hi) / 2
 for sd in [0.08, 0.05, 0.03]:
     print(f"stiffness scatter {sd:.0%}: failures {fail_rate(k_lo, sd):5.1%} at the low edge, {fail_rate(k_mid, sd):5.1%} in the middle")
+```
+
+```output
+allowed cold stiffness: 95.0 to 115.3 kN/m (±9.7% about the middle)
+stiffness scatter 8%: failures 50.5% at the low edge, 22.6% in the middle
+stiffness scatter 5%: failures 49.7% at the low edge,  5.3% in the middle
+stiffness scatter 3%: failures 49.7% at the low edge,  0.1% in the middle
 ```
 
 The window runs from 95.0 to 115.3 kN/m, only about ±9.7% around its middle. With the usual 8% scatter, even a nominal stiffness in the middle fails about 23% of the time (choosing an edge fails about half the time). With 5% scatter the middle fails roughly 5%, and with 3% about 0.1%. So the numbers give the decision: either buy mounts graded to about ±3% (pre-sorted by stiffness, at a price), or widen the window by attacking a cause. Balancing the rotor halves the shaking force, so the transmissibility limit could relax. Shortening the overload bursts lowers the peak temperature and the hot sag. Each option can be tested by changing one line above, which is the real payoff of building the model.

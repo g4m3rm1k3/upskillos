@@ -15,7 +15,7 @@ This lesson covers:
 
 A tool-hire shop prints invoices from a CSV export of orders. Hiring a tool for 7 days or more earns a 15% weekly discount, and VAT at 20% is added at the end. Here is the program as it might first be written: one function, top to bottom.
 
-```python
+```python type
 orders_csv = """tool,days,daily_rate
 drill,2,12.50
 cement mixer,7,30.00
@@ -43,6 +43,16 @@ def print_invoice(csv_text):
 print_invoice(orders_csv)
 ```
 
+```output
+TOOL HIRE INVOICE
+drill           2 days  £   25.00
+cement mixer    7 days  £  178.50
+ladder          1 days  £    8.00
+subtotal               £  211.50
+VAT 20%                £   42.30
+total                  £  253.80
+```
+
 It works. Now consider three ordinary requests from the shop:
 
 1. "Check that the weekly discount is right for a 6, 7 and 8 day hire."
@@ -55,7 +65,7 @@ Predict before reading on: which lines of `print_invoice` would each request tou
 
 Request 1 asks to **test** one rule: the discount. But the rule has no name and no inputs of its own. It is two lines in the middle of a loop that also parses CSV text, formats lines and prints. To check it, a test must build CSV text, run the whole function, capture what it prints, and pick a number back out of the text. Here is that test, for one hire.
 
-```python
+```python type
 import io, contextlib
 
 def discount_cost_via_invoice(days, rate):
@@ -68,6 +78,12 @@ def discount_cost_via_invoice(days, rate):
 
 for days in [6, 7, 8]:
     print(days, "days at £10:", discount_cost_via_invoice(days, 10))
+```
+
+```output
+6 days at £10: 60.0
+7 days at £10: 59.5
+8 days at £10: 68.0
 ```
 
 `contextlib.redirect_stdout` sends everything printed inside the `with` block into a `StringIO` object, a string that behaves like a file. That is how a test can read what a function printed.
@@ -87,7 +103,7 @@ Give each job its own function, with inputs and outputs instead of prints:
 
 `print_invoice` survives, as one line chaining them together. Each function now has one reason to change: the CSV layout, the pricing rule, the tax rules, or the look of the output. Predict before running: how long is the test of the discount now?
 
-```python
+```python type
 def parse_orders(csv_text):
     orders = []
     for row in csv_text.strip().splitlines()[1:]:
@@ -120,11 +136,21 @@ assert [hire_cost(d, 10) for d in [6, 7, 8]] == [60, 59.5, 68]
 print_invoice(orders_csv)
 ```
 
+```output
+TOOL HIRE INVOICE
+drill           2 days  £   25.00
+cement mixer    7 days  £  178.50
+ladder          1 days  £    8.00
+subtotal               £  211.50
+VAT 20%                £   42.30
+total                  £  253.80
+```
+
 `format(0.2, '.0%')` writes a fraction as a whole percentage, `20%`.
 
 The output is identical, and the discount test is one line with no text in it. The other two requests now land in one place each:
 
-```python
+```python type
 def format_invoice_html(totals):
     rows = "".join(f"<tr><td>{tool}</td><td>{days}</td><td>£{cost:.2f}</td></tr>" for tool, days, cost in totals["lines"])
     return f"<table>{rows}<tr><td colspan=2>total</td><td>£{totals['total']:.2f}</td></tr></table>"
@@ -135,13 +161,25 @@ print()
 print(format_invoice(invoice_totals(orders, vat_rate=0)))
 ```
 
+```output
+<table><tr><td>drill</td><td>2</td><td>£25.00</td></tr><tr><td>cement mixer</td><td>7</td><td>£178.50</td></tr><tr><td>ladder</td><td>1</td><td>£8.00</td></tr><tr><td colspan=2>total</td><td>£253.80</td></tr></table>
+
+TOOL HIRE INVOICE
+drill           2 days  £   25.00
+cement mixer    7 days  £  178.50
+ladder          1 days  £    8.00
+subtotal               £  211.50
+VAT 0%                 £    0.00
+total                  £  211.50
+```
+
 HTML is a **new** function beside the old one. Nothing that already worked was edited, so nothing that already worked can break. VAT exemption is an argument. The pricing rule still exists exactly once, so a future change to it reaches both formats automatically. This is what high cohesion buys: a change maps onto the one piece responsible for it.
 
 ## Coupling through shared state
 
 The second force is coupling: how much pieces depend on each other's details. The tightest, most surprising kind is **shared mutable state**, usually a global variable that several functions read and some functions change. Suppose the VAT rate lived in a global, and the code for exempt customers set it to 0 and put it back afterwards. Predict before running: what VAT does the third customer pay?
 
-```python
+```python type
 VAT_RATE = 0.2
 
 def total_with_vat(subtotal):
@@ -159,6 +197,12 @@ def bill_exempt_customer(subtotal):
 print("ordinary customer:", total_with_vat(100.0))
 print("exempt customer, large order:", bill_exempt_customer(1500.0))
 print("ordinary customer:", total_with_vat(100.0))
+```
+
+```output
+ordinary customer: 120.0
+exempt customer, large order: 1500.0
+ordinary customer: 100.0
 ```
 
 `global VAT_RATE` lets a function assign to a module-level variable. Without it, the assignment would create a new local variable.

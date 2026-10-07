@@ -13,7 +13,7 @@ This lesson covers:
 
 A test lab receives sensor readings as files in several formats. Each format has a reader class. Wherever the program loads a file, it decides which reader to use:
 
-```python
+```python type
 import json
 
 class CsvReadings:
@@ -52,6 +52,10 @@ csv_text = "time,value\n0,20.5\n1,21.0\n2,23.5\n"
 print(average_reading("bench.csv", csv_text), peak_reading("bench.csv", csv_text))
 ```
 
+```output
+21.666666666666668 23.5
+```
+
 The format-choosing code is copied into both functions, and into every other function that loads a file. Adding a third format means finding them all. Predict before reading on: if one copy is missed, when does anyone find out?
 
 Only when that particular function meets the new format, possibly months later, as a `ValueError` in production. The using code (averaging, finding peaks) is also coupled to every concrete reader class, though all it needs is "something with `values()`".
@@ -60,7 +64,7 @@ Only when that particular function meets the new format, possibly months later, 
 
 Move the decision into one function, the **factory**, which takes whatever information decides the class (here, the file name) and returns a ready object. A dictionary from file extension to class makes the factory data-driven: adding a format is one new entry. The using code now names no reader class at all. Predict before running: what does adding a fixed-width format take?
 
-```python
+```python type
 READERS = {".csv": CsvReadings, ".jsonl": JsonLinesReadings}
 
 def open_readings(filename, text):
@@ -93,6 +97,11 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+21.666666666666668 25.0 21.25
+ValueError: unknown format 'notes.txt'; known: ['.csv', '.fw', '.jsonl']
+```
+
 `READERS` maps extensions to **classes**, not objects. In Python a class is itself a callable that makes instances, so `reader_class(text)` creates the right reader. A class is the simplest factory there is.
 
 The fixed-width format was one class and one dictionary entry, and both using functions handled it at once. This "simple factory" is not one of the 23 Gang of Four patterns, but it is the factory most Python programs actually use.
@@ -103,7 +112,7 @@ The Gang of Four's **factory method** solves a related problem. A base class run
 
 Here a `Report` base class always does the same things: collect the rows, build them with a formatter, and add a footer. Which formatter to use is left to `make_formatter()`. Predict before running: how many lines of `Report.render` change between the two reports?
 
-```python
+```python type
 class TextFormatter:
     def row(self, name, value):
         return f"{name:<10}{value:>8.2f}"
@@ -142,6 +151,15 @@ print(TextReport(rows).render())
 print(HtmlReport(rows).render())
 ```
 
+```output
+bench        21.67
+probe        22.00
+(2 rows)
+<tr><td>bench</td><td>21.67</td></tr>
+<tr><td>probe</td><td>22.00</td></tr>
+<tr><td colspan=2>2 rows</td></tr>
+```
+
 `render` is written once, in `Report`, and never changes. Each subclass contributes a single short method saying which formatter it needs.
 
 In Python, the same result is often reached more simply by **passing the factory in**, which is composition instead of inheritance: a `Report` whose `__init__` takes a `formatter` argument (any callable that makes a formatter), called as `Report(rows, formatter=TextFormatter)`. The factory method pattern earns its place when subclasses exist anyway for other reasons and the creation choice naturally belongs with them. Frameworks use it widely: a test framework's base class calls `make_client()`, and each test suite overrides it.
@@ -154,7 +172,7 @@ Two Python features cover most remaining factory needs.
 
 **Automatic registration.** With a registry dictionary, every new class must also remember to add itself to it. The special method `__init_subclass__` runs whenever a subclass is **defined**, so a base class can register each subclass automatically. Predict before running: is `Torque` in the registry, though no line adds it there?
 
-```python
+```python type
 class Quantity:
     unit = ""
     registry = {}
@@ -185,6 +203,11 @@ class Torque(Quantity):
 
 print(sorted(Quantity.registry))
 print([Quantity.from_string(t) for t in ["12.5 kg", "0.3 m", "45 Nm"]])
+```
+
+```output
+['Nm', 'kg', 'm']
+[Mass(12.5 kg), Length(0.3 m), Torque(45.0 Nm)]
 ```
 
 `super().__init_subclass__(**kwargs)` passes the call on, so this class still cooperates with any other base class that also uses the hook.

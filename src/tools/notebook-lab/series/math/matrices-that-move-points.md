@@ -26,7 +26,7 @@ Store a shape's corners as the **columns** of a 2 × n array P. Then A P multipl
 
 Rotation moves (x, y) to (x cos θ − y sin θ, x sin θ + y cos θ), anticlockwise by θ about the origin. Predict before running: what does the shear do to the letter L?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,6 +57,10 @@ plt.show()
 print("top corner (1, 3) after the shear:", transforms["shear k = 0.5"] @ np.array([1, 3]))
 ```
 
+```output
+top corner (1, 3) after the shear: [2.5 3. ]
+```
+
 The grey L is the original; the coloured one is the result. `ax.fill` draws a filled polygon through the points in order.
 
 The shear slides each point sideways in proportion to its height: points on the x axis stay put, and the top corner (1, 3) moves to (2.5, 3), so the L leans right like a stack of cards pushed at the top. Rotation keeps sizes and angles; scaling and shear distort; reflection makes a mirror image.
@@ -75,12 +79,23 @@ Where does a matrix send the unit vectors e₁ = (1, 0) and e₂ = (0, 1)? A e�
 
 This gives a way to build matrices by thinking, not memorising. A 90° anticlockwise rotation sends (1, 0) to (0, 1) and (0, 1) to (−1, 0), so its columns are those two vectors. Predict before running: what matrix sends e₁ to (2, 1) and e₂ to (1, 1), and where does it send the point (3, −1)?
 
-```python
+```python type
 R90 = np.column_stack([[0, 1], [-1, 0]])
 print("rotate 90° built from columns:\n", R90, "\nformula:\n", rotation(90).round(12) + 0.0)
 M = np.column_stack([[2, 1], [1, 1]])
 print("M e1 =", M @ [1, 0], " M e2 =", M @ [0, 1])
 print("M (3, -1) =", M @ [3, -1], "= 3 × column 1 − 1 × column 2 =", 3 * M[:, 0] - M[:, 1])
+```
+
+```output
+rotate 90° built from columns:
+ [[ 0 -1]
+ [ 1  0]]
+formula:
+ [[ 0. -1.]
+ [ 1.  0.]]
+M e1 = [2 1]  M e2 = [1 1]
+M (3, -1) = [5 2] = 3 × column 1 − 1 × column 2 = [5 2]
 ```
 
 `np.column_stack` builds a matrix from the given vectors as its columns.
@@ -101,7 +116,7 @@ Doing B first and then A sends p to A(B p). Matrix multiplication is defined so 
 
 Matrix multiplication is not commutative: in general AB ≠ BA. Rotating then stretching sideways differs from stretching sideways then rotating. Predict before running: for the unit square, do "scale x by 2, then rotate 90°" and "rotate 90°, then scale x by 2" give the same shape?
 
-```python
+```python type
 S = np.array([[2, 0], [0, 1]])
 R = rotation(90).round(12) + 0.0
 square = np.array([[0, 1, 1, 0], [0, 0, 1, 1]], dtype=float)
@@ -110,6 +125,22 @@ print("rotate then scale, S @ R:\n", S @ R)
 print("corners, scale then rotate:\n", R @ S @ square)
 print("corners, rotate then scale:\n", S @ R @ square)
 print("rotating by 30° then 45° is rotating by 75°:", np.allclose(rotation(45) @ rotation(30), rotation(75)))
+```
+
+```output
+scale then rotate, R @ S:
+ [[ 0. -1.]
+ [ 2.  0.]]
+rotate then scale, S @ R:
+ [[ 0. -2.]
+ [ 1.  0.]]
+corners, scale then rotate:
+ [[ 0.  0. -1. -1.]
+ [ 0.  2.  2.  0.]]
+corners, rotate then scale:
+ [[ 0.  0. -2. -2.]
+ [ 0.  1.  1.  0.]]
+rotating by 30° then 45° is rotating by 75°: True
 ```
 
 `R @ S @ square` evaluates left to right as `(R @ S) @ square`, which equals R applied to (S applied to the square).
@@ -132,7 +163,7 @@ Moving every point by a fixed offset, a **translation**, is the most common tran
 
 and the 2 × 2 transformations sit in the top-left corner. Now every move is a matrix, and any sequence of moves combines into one matrix by multiplication. Rotating about a point c instead of the origin is "translate c to the origin, rotate, translate back": T(c) R T(−c). Predict before running: rotating a part 90° about its own corner at (2, 1), where does the corner (3, 1) go?
 
-```python
+```python type
 def translate(dx, dy):
     return np.array([[1, 0, dx], [0, 1, dy], [0, 0, 1]], dtype=float)
 
@@ -146,6 +177,15 @@ corner = np.array([3, 1, 1])
 print("(3, 1) rotated 90° about (2, 1):", (about @ corner).round(12)[:2] + 0.0)
 print("the pivot (2, 1) stays put:", (about @ [2, 1, 1]).round(12)[:2] + 0.0)
 print("combined matrix:\n", about.round(12) + 0.0)
+```
+
+```output
+(3, 1) rotated 90° about (2, 1): [2. 2.]
+the pivot (2, 1) stays put: [2. 1.]
+combined matrix:
+ [[ 0. -1.  3.]
+ [ 1.  0. -1.]
+ [ 0.  0.  1.]]
 ```
 
 Read `translate(2, 1) @ rotate_h(90) @ translate(-2, -1)` from right to left: first move the pivot to the origin, then rotate, then move back.
@@ -170,7 +210,7 @@ When det ≠ 0 the transformation can be reversed by the **inverse matrix** A⁻
 
 Predict before running: the L has area 5. What are its areas after each of the four transformations?
 
-```python
+```python type
 def shoelace(P):
     x, y = P[0], P[1]
     return 0.5 * (np.dot(x[:-1], y[1:]) - np.dot(x[1:], y[:-1]))
@@ -181,6 +221,21 @@ for name, M in transforms.items():
 A = np.array([[2.0, 1], [1, 1]])
 Ainv = np.array([[1, -1], [-1, 2]]) / (2 * 1 - 1 * 1)
 print("A⁻¹ by formula:\n", Ainv, "\nA⁻¹ A:\n", Ainv @ A, "\nmatches np.linalg.inv:", np.allclose(Ainv, np.linalg.inv(A)))
+```
+
+```output
+original L: signed area 5.000
+scale (1.5, 0.5)   det +0.750   area after +3.750
+rotate 30°         det +1.000   area after +5.000
+reflect in x axis  det -1.000   area after -5.000
+shear k = 0.5      det +1.000   area after +5.000
+A⁻¹ by formula:
+ [[ 1. -1.]
+ [-1.  2.]]
+A⁻¹ A:
+ [[1. 0.]
+ [0. 1.]]
+matches np.linalg.inv: True
 ```
 
 The **shoelace formula** gives the area of a polygon from its corners listed in order, positive when they run anticlockwise and negative when clockwise; the L's corners repeat the first point at the end, as the formula needs.

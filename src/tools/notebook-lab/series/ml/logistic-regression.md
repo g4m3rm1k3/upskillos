@@ -12,7 +12,7 @@ Logistic regression computes the same score as the perceptron, `z = w · x + b`,
 \sigma(z) = \frac{1}{1 + e^{-z}}
 \]
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,6 +29,10 @@ ax.set_ylabel("output")
 ax.legend()
 plt.show()
 print("σ(−3), σ(0), σ(3):", sigmoid(np.array([-3.0, 0.0, 3.0])).round(3))
+```
+
+```output
+σ(−3), σ(0), σ(3): [0.047 0.5   0.953]
 ```
 
 The sigmoid is a smoothed version of the step. A very negative score gives a probability near 0, a very positive one gives near 1, and a score of 0, on the boundary, gives exactly 0.5. In between it changes gradually, so an example near the boundary gets a probability near 0.5: uncertain, which is honest.
@@ -61,11 +65,20 @@ Training needs a loss. The mean squared error between `p` and the 0/1 label is a
 
 It looks complicated but it is simple case by case. When the true label is 1, only the first term is left: the loss is `−ln p`. When it is 0, only the second: `−ln(1 − p)`. In words: **the loss is minus the log of the probability the model gave to the correct answer.**
 
-```python
+```python type
 import numpy as np
 
 for p in [0.99, 0.9, 0.6, 0.5, 0.1, 0.01]:
     print(f"true label 1, model says p = {p:<4}: loss {-np.log(p):.3f}")
+```
+
+```output
+true label 1, model says p = 0.99: loss 0.010
+true label 1, model says p = 0.9 : loss 0.105
+true label 1, model says p = 0.6 : loss 0.511
+true label 1, model says p = 0.5 : loss 0.693
+true label 1, model says p = 0.1 : loss 2.303
+true label 1, model says p = 0.01: loss 4.605
 ```
 
 Predict the pattern before you run it. A confident, correct prediction (p = 0.99) costs almost nothing. An uncertain one (p = 0.5) costs a moderate amount. A confident **wrong** prediction (p = 0.01) is punished heavily, and the loss grows without limit as p approaches 0. That is what you want: being sure and wrong should be very costly. The training loss is the average of this over all examples.
@@ -94,7 +107,7 @@ The gradient with respect to the score is simply the **error**: the predicted pr
 
 Compare with linear regression's gradient, `(2/n) X̃ᵀ(ŷ − y)`: it is the same shape, predictions minus labels, multiplied by the features. Both losses measure how improbable the labels are under the model, one assuming normal noise and the other yes/no outcomes, and in both cases the calculus collapses to the same simple form. As always, check it numerically:
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -115,11 +128,16 @@ print(formula.round(6))
 print(numerical.round(6))
 ```
 
+```output
+[-0.057852  0.365496 -0.009538]
+[-0.057852  0.365496 -0.009538]
+```
+
 Unlike least squares, there is no formula for the best weights. But the log loss for logistic regression is **convex**: a bowl with no false dips, so any minimum gradient descent settles into is the best one.
 
 There is one catch, and it involves the perceptron's favourite case. If the classes are **linearly separable**, the bowl has no bottom. A line that separates every point can always be made more confident by multiplying its weights by 2: every correct probability moves closer to 1, and the loss shrinks, forever. Watch the weights on separable data, without and then with a small ridge penalty (the regularisation lesson's idea, added to every weight except the bias):
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -140,11 +158,22 @@ for penalty in [0.0, 0.01]:
             print(f"penalty {penalty}: after {step:>6} steps, size of the weights {np.linalg.norm(theta[1:]):.2f}")
 ```
 
+```output
+penalty 0.0: after    100 steps, size of the weights 2.37
+penalty 0.0: after   1000 steps, size of the weights 3.66
+penalty 0.0: after  10000 steps, size of the weights 5.16
+penalty 0.0: after 100000 steps, size of the weights 6.79
+penalty 0.01: after    100 steps, size of the weights 1.95
+penalty 0.01: after   1000 steps, size of the weights 1.99
+penalty 0.01: after  10000 steps, size of the weights 1.99
+penalty 0.01: after 100000 steps, size of the weights 1.99
+```
+
 Without a penalty the weights keep growing (2.37, 3.66, 5.16, 6.79) and would never stop; with it they settle at 1.99 and stay there. On separable data, unpenalised logistic regression has no best answer, only ever-more-confident ones, and any fixed number of steps just stops somewhere along the way. This is one reason scikit-learn's `LogisticRegression` adds a ridge penalty by default (its strength is set by `C`; smaller `C` means a stronger penalty). Many real datasets with many features are separable, including the breast cancer training set used below.
 
 ## Training from scratch
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -177,13 +206,19 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+weights: [-1.347  1.793  1.85 ]
+log loss: 0.0796
+accuracy: 0.9833333333333333
+```
+
 `contourf` fills the plane with colour according to the predicted probability, and the black line is the decision boundary, where it is exactly 0.5. Unlike the perceptron's picture, this one shows **confidence**: deep red or blue far from the boundary, pale near it. These groups overlap a little, so no line gets every point right, but logistic regression does not need to: it finds the line that makes the observed labels most probable, and assigns honest, middling probabilities to the points in the overlap.
 
 ## A real example: diagnosing tumours
 
 scikit-learn includes the Wisconsin breast cancer dataset: 569 tumours, each described by 30 measurements of the cell nuclei in a sample, and labelled malignant or benign. Train logistic regression on a training split and test it:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 
@@ -207,11 +242,16 @@ print("test accuracy:", ((p_test > 0.5) == y[test]).mean().round(3))
 print("baseline (always predict the most common class):", max(y[test].mean(), 1 - y[test].mean()).round(3))
 ```
 
+```output
+test accuracy: 0.964
+baseline (always predict the most common class): 0.615
+```
+
 In this dataset label 1 means benign. With 30 standardised features the model classifies about 96% of unseen tumours correctly, far above the baseline of always guessing the more common diagnosis. The next lesson looks harder at what "96% correct" hides, since the two kinds of mistake here, missing a cancer and raising a false alarm, have very different costs.
 
 scikit-learn's version takes a few lines, and applies its default ridge penalty. This one uses `train_test_split`, so the split is different from the one above and the accuracy differs a little too:
 
-```python
+```python type
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -223,6 +263,13 @@ scaler = StandardScaler().fit(X_train)
 model = LogisticRegression().fit(scaler.transform(X_train), y_train)
 print("test accuracy:", round(model.score(scaler.transform(X_test), y_test), 3))
 print("probabilities for three tumours:", model.predict_proba(scaler.transform(X_test[:3])).round(3))
+```
+
+```output
+test accuracy: 0.977
+probabilities for three tumours: [[0.999 0.001]
+ [0.04  0.96 ]
+ [0.001 0.999]]
 ```
 
 `train_test_split` does the shuffling and splitting, and `StandardScaler` standardises with the training statistics (`fit` learns the mean and standard deviation, `transform` applies them). `predict_proba` returns, for each example, the probability of each class: column 0 for class 0 (malignant) and column 1 for class 1 (benign).

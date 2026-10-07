@@ -8,7 +8,7 @@ This lesson works up from the simplest method, a z-score on one number, to four 
 
 The simplest detector: flag values more than 3 standard deviations from the mean (a **z-score** above 3 in size). For a normal distribution, fewer than 0.3% of values lie that far out. Here are 200 normal readings around 50, with 20 faulty readings around 110 mixed in. Before running, predict: will the z-score rule catch all 20?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -25,6 +25,13 @@ robust_z = 0.6745 * (x - median) / mad
 print(f"median {median:.1f}, MAD {mad:.2f}")
 print(f"robust rule flags {(np.abs(robust_z) > 3.5)[faulty].sum()} of 20 faulty readings, "
       f"and {(np.abs(robust_z) > 3.5)[~faulty].sum()} normal ones")
+```
+
+```output
+mean 55.6, standard deviation 18.0
+z-score rule flags 10 of 20 faulty readings
+median 50.9, MAD 3.80
+robust rule flags 20 of 20 faulty readings, and 0 normal ones
 ```
 
 The z-score rule catches only 10 of the 20. The anomalies have corrupted the very statistics used to find them: they drag the mean up to 56 and inflate the standard deviation from about 5 to 18, so the faulty readings no longer look extreme. This is called **masking**: enough outliers hide each other.
@@ -44,7 +51,7 @@ With many features, an anomaly may be unremarkable on every single feature and o
 
 Here is data designed to separate these ideas. Normal points come in two clusters: a tight one (spread 0.3) and a loose one (spread 1.2). Six anomalies are planted: three just outside the tight cluster, and three in empty space.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
@@ -82,6 +89,13 @@ for ax, name in zip(axes, ["distance to 5th neighbour", "local outlier factor"])
 plt.show()
 ```
 
+```output
+Gaussian mixture density   average precision 1.00, planted anomalies among its top 6: 6
+distance to 5th neighbour  average precision 0.62, planted anomalies among its top 6: 3
+local outlier factor       average precision 0.95, planted anomalies among its top 6: 5
+isolation forest           average precision 0.70, planted anomalies among its top 6: 4
+```
+
 Each method returns a score, and the convention is made the same for all four: **higher means more anomalous** (scikit-learn's own scores point the other way, hence the minus signs). `kneighbors` returns distances to the 6 nearest points, the first being the point itself, so column −1 is the distance to the 5th real neighbour. Average precision, from the leakage lesson, summarises how well each score ranks the six anomalies above the 500 normal points.
 
 The results split cleanly. The density model (1.00) ranks all six planted points above every normal one, and LOF (0.95) nearly does. The plain distance method (0.62) and the isolation forest (0.70) miss anomalies beside the tight cluster. For the distance method the reason is simple: those points are only about 1.2 to 1.5 units from the tight cluster's centre, which is closer than many perfectly normal points in the loose cluster are to **their** neighbours. The isolation forest fails differently: its random thresholds are drawn across the whole range of the data, so they rarely happen to cut the narrow gap beside the tight cluster. The left plot shows it: by raw distance, the edge of the loose cluster looks as odd as the planted points. LOF asks the right question for this data: not "is this point far from others?" but "is it much farther from its neighbours than they are from theirs?". The red circles mark the planted anomalies.
@@ -90,7 +104,7 @@ The results split cleanly. The density model (1.00) ranks all six planted points
 
 Now a higher-dimensional test where the answer is known. Take the breast cancer data, keep all 357 benign tumours as "normal", and mix in just 20 malignant ones as the anomalies to find, 5% of the data. No method gets to see the labels.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import IsolationForest
@@ -119,6 +133,14 @@ for name, score in scores.items():
     top20 = np.argsort(score)[-20:]
     print(f"{name:<26} average precision {average_precision_score(is_anomaly, score):.2f}, "
           f"malignant among its 20 most anomalous: {int(is_anomaly[top20].sum())}")
+```
+
+```output
+fraction of anomalies: 0.053
+Gaussian density           average precision 0.41, malignant among its 20 most anomalous: 8
+distance to 5th neighbour  average precision 0.35, malignant among its 20 most anomalous: 6
+local outlier factor       average precision 0.35, malignant among its 20 most anomalous: 7
+isolation forest           average precision 0.63, malignant among its 20 most anomalous: 12
 ```
 
 A useless method would have an average precision near the base rate, 0.05, and find about 1 malignant tumour among its top 20. All four do far better; the isolation forest does best, with 12 of its 20 most suspicious tumours truly malignant, from a method that never saw a label. This time the plain distance and density methods trail. No method wins everywhere: the best detector depends on what the anomalies look like, which is why it pays to try several on whatever labelled examples you have.

@@ -14,7 +14,7 @@ The answer is that the expensive copies are **rare**, and they get rarer as the 
 
 `sys.getsizeof` reports how many bytes an object occupies. For a list, that includes the block of slots, so it reveals the list's **capacity**: how many items it has room for, as opposed to its length, how many it holds. Predict before running: as items are appended one at a time, does the capacity grow by one each time?
 
-```python
+```python type
 import struct
 import sys
 
@@ -35,6 +35,11 @@ print("(length when the list grew, new capacity):")
 print(growth_points)
 ```
 
+```output
+(length when the list grew, new capacity):
+[(1, 4), (5, 8), (9, 16), (17, 24), (25, 32), (33, 40), (41, 52), (53, 64), (65, 76), (77, 92), (93, 108), (109, 128), (129, 148), (149, 172), (173, 200)]
+```
+
 `struct.calcsize("P")` is the size of one slot (a memory address) on this computer, so the formula works whether addresses take 4 bytes (as here, in the browser) or 8 (on most desktops).
 
 The capacity jumps: 4, 8, 16, 24, 32, 40, 52, 64, 76, 92, … Between jumps, appends just fill empty slots, O(1) each. At a jump, every item is copied to the new block. CPython grows the capacity to roughly 1.125 times the needed size plus a few slots, so the jumps get further apart as the list grows. (The exact numbers are an implementation detail and differ between Python versions; the growth by a **factor** is what matters.)
@@ -45,7 +50,7 @@ To see why this averages out, count the work in a simple model: each append writ
 
 With doubling from capacity 1, copies happen when the array holds 1, 2, 4, 8, … items. For n appends, the copies cost at most 1 + 2 + 4 + … + n/2 + n, which is less than 2n. Adding the n writes, the total is under 3n: an average of less than **3 per append**, whatever n is. That is what "amortised O(1)" means. Predict before running: if each growth added a fixed 100 slots instead of doubling, what would the average cost per append look like as n grows?
 
-```python
+```python type
 def total_cost(n, grow):
     capacity, size, cost, biggest = 1, 0, 0, 0
     for _ in range(n):
@@ -64,6 +69,12 @@ for n in [1_000, 10_000, 100_000]:
           f"  +100 slots {adding / n:6.1f} per append")
 ```
 
+```output
+n =   1,000: doubling  2.02 per append (worst single copy    512);  +100 slots    5.5 per append
+n =  10,000: doubling  2.64 per append (worst single copy  8,192);  +100 slots   50.5 per append
+n = 100,000: doubling  2.31 per append (worst single copy 65,536);  +100 slots  500.5 per append
+```
+
 `grow` is a function passed in to choose the growth rule, so the same simulation compares both strategies.
 
 With doubling, the average stays below 3 whatever n is, even though a single append occasionally copies tens of thousands of items. Growing by a fixed 100 slots copies the whole array every 100 appends, about n/100 copies of average size n/2, so the total is about n²/200: the average per append grows **linearly** with n, and the whole sequence is O(n²). Any constant growth factor above 1 gives amortised O(1); CPython's modest factor of about 1.125 wastes less memory than doubling and copies a little more often, a trade-off between space and time.
@@ -74,7 +85,7 @@ The aggregate method needs the total cost worked out exactly. The **accounting m
 
 For the doubling array, charge **3** per append. One unit pays for writing the item. The other two are saved. When the array doubles from capacity m to 2m, the m/2 items appended since the last doubling have each saved 2 units, m in total, exactly enough to copy all m items. So the bank never goes negative. Checking this claim numerically, with a charge of 3 and then 2:
 
-```python
+```python type
 def lowest_balance(n, charge):
     capacity, size, balance, lowest = 1, 0, 0, 0
     for _ in range(n):
@@ -91,13 +102,18 @@ for charge in [3, 2]:
     print(f"charge {charge} per append: lowest bank balance over 100,000 appends = {lowest_balance(100_000, charge)}")
 ```
 
+```output
+charge 3 per append: lowest bank balance over 100,000 appends = 0
+charge 2 per append: lowest bank balance over 100,000 appends = -65534
+```
+
 A charge of 3 keeps the balance at zero or above throughout. A charge of 2 falls behind at every doubling and the debt keeps growing. The accounting method turns "trust me, it averages out" into a check that each operation pays its way.
 
 ## A second example: the binary counter
 
 Amortised analysis applies far beyond arrays. A binary counter stored as a list of bits increments by flipping trailing 1s to 0 and the next 0 to 1. Incrementing 0111 to 1000 flips four bits; incrementing 1000 to 1001 flips one. The worst single increment of a k-bit counter flips k bits. Predict before running: what is the **average** number of flips per increment over many increments?
 
-```python
+```python type
 def increment(bits):
     flips = 0
     i = 0
@@ -113,6 +129,10 @@ def increment(bits):
 bits = [0] * 20
 flips = [increment(bits) for _ in range(100_000)]
 print(f"worst single increment: {max(flips)} flips; average over 100,000 increments: {sum(flips) / len(flips):.4f}")
+```
+
+```output
+worst single increment: 17 flips; average over 100,000 increments: 1.9999
 ```
 
 The bits are stored lowest first: `bits[0]` is the 1s place, `bits[1]` the 2s place, and so on.

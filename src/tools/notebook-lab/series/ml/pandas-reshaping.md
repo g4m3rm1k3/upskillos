@@ -8,7 +8,7 @@ This lesson covers the pandas tools for these jobs: `groupby` to summarise group
 
 Two small tables from an online shop: `orders`, one row per order, and `customers`, one row per customer. Both are written as CSV text in the cell, as in the last lesson.
 
-```python
+```python type
 import io
 import pandas as pd
 
@@ -39,19 +39,39 @@ print(orders.shape, customers.shape)
 orders.head()
 ```
 
+```output
+(12, 8) (6, 4)
+   order_id customer_id        date  ... quantity unit_price  revenue
+0      1001          C1  2024-01-05  ...        1      29.99    29.99
+1      1002          C2  2024-01-07  ...        4       6.50    26.00
+2      1003          C1  2024-01-19  ...        2      24.00    48.00
+3      1004          C3  2024-02-02  ...        3      12.00    36.00
+4      1005          C4  2024-02-11  ...        1      29.99    29.99
+
+[5 rows x 8 columns]
+```
+
 Each order gets a `revenue` column, quantity times price. `assign` is another way to add a column: instead of changing the DataFrame in place, it returns a **new** DataFrame with the extra column, leaving the original untouched, which is what you want inside a function that must not change its input. Here the result is stored back in `orders`. Notice two deliberate mismatches: order 1010 is from customer `C6`, who is not in the customer table, and customer `C7` (Tim) has placed no orders. Real tables rarely match up perfectly, and you will see below how joins handle it.
 
 ## groupby: split, apply, combine
 
 "Total revenue per category" needs three steps: **split** the rows into groups by category, **apply** a calculation (the sum) to each group, and **combine** the results into one table. `groupby` does all three:
 
-```python
+```python type
 print(orders.groupby("category")["revenue"].sum())
+```
+
+```output
+category
+Bath        60.00
+Home       148.00
+Kitchen    167.97
+Name: revenue, dtype: float64
 ```
 
 Read it as: group the orders by category, take the revenue column, and sum it within each group. The result is a Series indexed by category. Predict which category makes the most revenue before running the next cell, which asks several questions at once:
 
-```python
+```python type
 summary = orders.groupby("category").agg(
     orders=("order_id", "count"),
     units=("quantity", "sum"),
@@ -61,25 +81,52 @@ summary = orders.groupby("category").agg(
 summary.sort_values("revenue", ascending=False).round(2)
 ```
 
+```output
+          orders  units  revenue  average_order
+category
+Kitchen        6     15   167.97           28.0
+Home           4     19   148.00           37.0
+Bath           2      5    60.00           30.0
+```
+
 `agg` computes several summaries at once. Each argument names an output column and says which input column to use and how to summarise it: `"count"`, `"sum"`, `"mean"`, `"min"`, `"max"`, `"median"`, `"nunique"` (number of distinct values) and more. This one line replaces a loop with a dictionary of running totals, the grouping pattern from Python lesson 10.
 
 You can group by several columns at once; each combination becomes a group:
 
-```python
+```python type
 orders.groupby(["category", "product"])["quantity"].sum()
+```
+
+```output
+category  product
+Bath      Towel       5
+Home      Candle     16
+          Lamp        3
+Kitchen   Kettle      3
+          Mug        12
+Name: quantity, dtype: int64
 ```
 
 The result has a **two-level index**, category then product. `reset_index()` turns the index levels back into ordinary columns, which is usually easier to work with:
 
-```python
+```python type
 orders.groupby(["category", "product"])["quantity"].sum().reset_index()
+```
+
+```output
+  category product  quantity
+0     Bath   Towel         5
+1     Home  Candle        16
+2     Home    Lamp         3
+3  Kitchen  Kettle         3
+4  Kitchen     Mug        12
 ```
 
 ## Dates
 
 The `date` column was read as text. Converting it to real dates lets pandas understand months, weekdays and time differences:
 
-```python
+```python type
 orders["date"] = pd.to_datetime(orders["date"])
 orders["month"] = orders["date"].dt.month
 orders["weekday"] = orders["date"].dt.day_name()
@@ -87,15 +134,39 @@ print(orders[["date", "month", "weekday"]].head(3))
 print(orders.groupby("month")["revenue"].sum())
 ```
 
+```output
+        date  month weekday
+0 2024-01-05      1  Friday
+1 2024-01-07      1  Sunday
+2 2024-01-19      1  Friday
+month
+1    103.99
+2    107.49
+3    164.49
+Name: revenue, dtype: float64
+```
+
 `pd.to_datetime` parses the text. The `.dt` accessor then gives parts of each date: `.dt.month`, `.dt.year`, `.dt.day_name()` and many others. Grouping by month gives monthly revenue, the most common question asked of any sales data.
 
 Subtracting two dates gives a time difference, and `.dt.days` turns it into a number of days. How long after joining did each customer place their first order?
 
-```python
+```python type
 customers["joined"] = pd.to_datetime(customers["joined"])
 first_order = orders.groupby("customer_id")["date"].min()
 wait = first_order - customers.set_index("customer_id")["joined"]
 print(wait.dt.days)
+```
+
+```output
+customer_id
+C1    583.0
+C2    357.0
+C3    794.0
+C4    155.0
+C5     19.0
+C6      NaN
+C7      NaN
+dtype: float64
 ```
 
 `set_index("customer_id")` makes the customer id the row labels, so the subtraction lines each customer's first order up with their own join date. Customers missing from either side (C6 has no join date, C7 no orders) get NaN.
@@ -104,9 +175,25 @@ print(wait.dt.days)
 
 To report revenue per **city**, you need information from both tables: the revenue is in `orders`, the city is in `customers`. The column they share, `customer_id`, is the **key** that links them. `pd.merge` combines them, matching rows with the same key:
 
-```python
+```python type
 joined = pd.merge(orders, customers, on="customer_id", how="left")
 joined[["order_id", "customer_id", "name", "city", "revenue"]]
+```
+
+```output
+    order_id customer_id      name     city  revenue
+0       1001          C1       Ada   London    29.99
+1       1002          C2     Grace    Leeds    26.00
+2       1003          C1       Ada   London    48.00
+3       1004          C3      Alan   London    36.00
+4       1005          C4     Linus  Bristol    29.99
+5       1006          C2     Grace    Leeds    28.50
+6       1007          C5  Margaret    Leeds    13.00
+7       1008          C3      Alan   London    24.00
+8       1009          C1       Ada   London    24.00
+9       1010          C6       NaN      NaN    47.50
+10      1011          C4     Linus  Bristol    39.00
+11      1012          C2     Grace    Leeds    29.99
 ```
 
 Each order row now carries its customer's name and city. The `how` argument decides what happens to rows without a match:
@@ -117,17 +204,33 @@ Each order row now carries its customer's name and city. The `how` argument deci
 
 Predict how many rows each kind of join produces, then check:
 
-```python
+```python type
 for how in ["inner", "left", "right", "outer"]:
     print(how, len(pd.merge(orders, customers, on="customer_id", how=how)))
+```
+
+```output
+inner 11
+left 12
+right 12
+outer 13
 ```
 
 Inner loses the order from `C6`, leaving 11. Left keeps it: 12. Right drops the order from `C6` but adds a row for Tim (`C7`), who has no orders, so it also has 12, for a different reason. Outer keeps both: 13. Choosing the wrong join is one of the most common data mistakes, because nothing fails: rows simply vanish, or appear with gaps. After any merge, check the number of rows against what you expected.
 
 Now revenue per city is a groupby on the joined table:
 
-```python
+```python type
 joined.groupby("city", dropna=False)["revenue"].sum().sort_values(ascending=False)
+```
+
+```output
+city
+London     161.99
+Leeds       97.49
+Bristol     68.99
+NaN         47.50
+Name: revenue, dtype: float64
 ```
 
 `dropna=False` keeps a group for the missing city, so the revenue from the unknown customer is not silently dropped from the totals.
@@ -136,15 +239,36 @@ joined.groupby("city", dropna=False)["revenue"].sum().sort_values(ascending=Fals
 
 `groupby` with two columns gives a long list. Often a **grid** is easier to read, with one variable down the side and another across the top. `pivot_table` builds one, exactly like a spreadsheet's pivot table:
 
-```python
+```python type
 grid = orders.pivot_table(index="category", columns="month", values="revenue", aggfunc="sum", fill_value=0)
 grid
 ```
 
+```output
+month         1      2      3
+category
+Bath       0.00  36.00  24.00
+Home      48.00  28.50  71.50
+Kitchen   55.99  42.99  68.99
+```
+
 Rows are categories, columns are months, and each cell is the total revenue for that combination. `fill_value=0` puts 0 where a category had no sales that month, instead of NaN. Going the other way, from a wide grid back to a long list, is called **melting**:
 
-```python
+```python type
 grid.reset_index().melt(id_vars="category", value_name="revenue")
+```
+
+```output
+  category month  revenue
+0     Bath     1     0.00
+1     Home     1    48.00
+2  Kitchen     1    55.99
+3     Bath     2    36.00
+4     Home     2    28.50
+5  Kitchen     2    42.99
+6     Bath     3    24.00
+7     Home     3    71.50
+8  Kitchen     3    68.99
 ```
 
 Each row is now one category and month again. Many plotting and modelling tools want the long form, so you will switch between the two.
@@ -153,7 +277,7 @@ Each row is now one category and month again. Many plotting and modelling tools 
 
 Real data is messier than these tables. Here is a column of city names as they might be typed by customers:
 
-```python
+```python type
 import pandas as pd
 
 raw = pd.Series(["London", " london", "LONDON ", "Leeds", "leeds.", "Bristol", None])
@@ -161,11 +285,19 @@ clean = raw.str.strip().str.lower().str.replace(".", "", regex=False).str.title(
 print(clean.value_counts(dropna=False))
 ```
 
+```output
+London     3
+Leeds      2
+Bristol    1
+None       1
+Name: count, dtype: int64
+```
+
 The `.str` accessor applies string methods, the ones from Python lesson 3, to every value in a column. Here: `strip` removes stray spaces, `lower` makes the case consistent, `replace` removes the full stop, and `title` capitalises each word for display. Seven messy values become three clean cities, plus a missing one. Without this, a `groupby` would treat "London", " london" and "LONDON " as three different cities.
 
 Two more checks belong in every cleaning session:
 
-```python
+```python type
 import pandas as pd
 
 sales = pd.DataFrame({"order": [1, 2, 2, 3], "amount": ["10.50", "7", "7", "n/a"]})
@@ -174,6 +306,17 @@ sales = sales.drop_duplicates()
 sales["amount"] = pd.to_numeric(sales["amount"], errors="coerce")
 print(sales)
 print(sales.dtypes)
+```
+
+```output
+1 duplicate row(s)
+   order  amount
+0      1    10.5
+1      2     7.0
+3      3     NaN
+order       int64
+amount    float64
+dtype: object
 ```
 
 `duplicated()` marks rows that repeat an earlier row exactly, and `drop_duplicates()` removes them: a row entered twice would otherwise be counted twice. Given a column name, `drop_duplicates("col")` instead keeps only the **first** row for each value of that column, which is handy after sorting: sort by revenue from highest to lowest, then `drop_duplicates("city")` keeps the top row for each city. `pd.to_numeric` converts text to numbers, and `errors="coerce"` turns anything that cannot be converted, like `"n/a"`, into NaN instead of raising an error. Numbers stored as text are extremely common in real files, and they make sums and means fail or, worse, behave strangely.

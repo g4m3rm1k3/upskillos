@@ -6,7 +6,7 @@ Writing each of these as a completely separate class means repeating the shared 
 
 ## A subclass
 
-```python
+```python type
 class Animal:
     def __init__(self, name):
         self.name = name
@@ -26,6 +26,11 @@ print(rex.describe())
 print(rex.speak())
 ```
 
+```output
+Rex is an animal.
+Woof!
+```
+
 `class Dog(Animal):` means "a `Dog` is a kind of `Animal`". The parent class goes in the brackets. `Dog` defines only one method, `speak`, yet `Dog("Rex")` works and `rex.describe()` works, because `Dog` **inherits** `__init__` and `describe` from `Animal`.
 
 `Dog` also defines its own `speak`, which replaces the one from `Animal` for dogs. Defining a method in a subclass with the same name as one in the parent is called **overriding** it.
@@ -36,7 +41,7 @@ When you call `rex.speak()`, Python looks for `speak` in a fixed order: first on
 
 At the top of every chain is a built-in class called `object`, which every class inherits from, whether you write it or not. That is where the default `__repr__` (the one that prints `<__main__.Dog object at 0x...>`) and the default `__eq__` come from. `isinstance` understands the chain too. Predict all five results before running the cell: is a `Dog` an `Animal`? Is an `Animal` a `Dog`?
 
-```python
+```python type
 class Animal:
     def __init__(self, name):
         self.name = name
@@ -49,13 +54,18 @@ print(isinstance(rex, Dog), isinstance(rex, Animal), isinstance(rex, object))
 print(issubclass(Dog, Animal), issubclass(Animal, Dog))
 ```
 
+```output
+True True True
+True False
+```
+
 `issubclass` asks the same question about classes rather than objects. A `Dog` is an `Animal`, but an `Animal` is not necessarily a `Dog`.
 
 ## Extending a method with super()
 
 Often a subclass does not want to replace a parent's method completely, only to add to it. The most common case is `__init__`: the subclass needs everything the parent sets up, plus some extra attributes of its own. `super()` gives you access to the parent class's version of a method. Predict both sentences this cell prints.
 
-```python
+```python type
 class Animal:
     def __init__(self, name):
         self.name = name
@@ -75,6 +85,11 @@ class Bird(Animal):
 
 print(Bird("Pingu", False).describe())
 print(Bird("Tweety", True).describe())
+```
+
+```output
+Pingu is an animal. It cannot fly.
+Tweety is an animal. It can fly.
 ```
 
 `super().__init__(name)` runs `Animal.__init__`, which sets `self.name`, and then `Bird.__init__` adds `self.can_fly`. Likewise `Bird.describe` takes the parent's sentence and adds to it, instead of copying its code.
@@ -100,7 +115,7 @@ The error says a `'Cat' object has no attribute 'name'`. Adding `super().__init_
 
 The real power of inheritance shows up when code works with a mix of related objects. Every shape below has an `area` method, each worked out its own way. The loop does not know or care which kind of shape it is dealing with; it just calls `area`, and each object runs its own version. Before running it, ask yourself: `describe` is written only in `Shape`, so when it calls `self.area()` for the first circle, which `area` runs?
 
-```python
+```python type
 class Shape:
     def area(self):
         raise NotImplementedError("each shape must define area()")
@@ -128,6 +143,13 @@ for shape in shapes:
 print("Total area:", round(sum(s.area() for s in shapes), 2))
 ```
 
+```output
+Circle with area 3.14
+Square with area 9.00
+Circle with area 19.63
+Total area: 31.78
+```
+
 This is called **polymorphism**, from the Greek for "many forms": one method call, `shape.area()`, with a different behaviour for each kind of object. Notice that `describe` is written once, in `Shape`, and calls `self.area()`. Because `self` is the actual object, a `Circle` or a `Square`, the call finds the right `area`. The parent class defines the general procedure, and the subclasses fill in the details. (`type(self).__name__` is the name of the object's actual class, which is how `describe` prints "Circle" or "Square".)
 
 `Shape.area` raises `NotImplementedError`, a built-in exception for exactly this purpose. `Shape` is not meant to be used on its own; it describes what every shape must provide. If someone writes a new shape and forgets to define `area`, they get a clear error the first time it is called, instead of a silently wrong answer. A class like this, meant only as a base for others, is called an **abstract base class**. (The standard library's `abc` module can enforce this more strictly, refusing even to create an object that has not defined every required method.)
@@ -136,7 +158,7 @@ This is called **polymorphism**, from the Greek for "many forms": one method cal
 
 Lesson 14 used Python's built-in exceptions, like `ValueError`. Exceptions are classes, and `except ValueError` catches a `ValueError` **or any subclass of it**. So you can make your own kinds of exception simply by inheriting from an existing one:
 
-```python
+```python type
 class InsufficientFundsError(ValueError):
     pass
 
@@ -154,6 +176,11 @@ try:
     withdraw(50, 80)
 except ValueError as e:
     print("General handler also works:", type(e).__name__)
+```
+
+```output
+Specific handler: balance 50 is less than 80
+General handler also works: InsufficientFundsError
 ```
 
 The class body is just `pass`, because it needs nothing new: its name is what matters. Code that cares specifically about insufficient funds can catch `InsufficientFundsError`, while code that handles any bad value can still catch `ValueError`. Choose the parent that describes the problem: `ValueError` for bad values, `LookupError` (the parent of `KeyError` and `IndexError`) for something not found, or `Exception` for a general error of your own.

@@ -25,18 +25,28 @@ Sizes: a lesson is one sitting (about 30–45 minutes), with 4–8 teaching sect
 
 ## Writing and checking a lesson
 
-The lesson list, in order, is [src/tools/notebook-lab/series/manifest.js](../src/tools/notebook-lab/series/manifest.js). A lesson is the Markdown file `src/tools/notebook-lab/series/<series>/<slug>.md`. Until that file exists, the sidebar shows the lesson as "soon". A lesson's id (`py-running-code`) is a learner's progress key, so never rename a slug once the lesson has shipped. Reordering the manifest is safe.
+The lesson list, in order, is [src/tools/notebook-lab/series/manifest.js](../src/tools/notebook-lab/series/manifest.js). A lesson is the Markdown file `src/tools/notebook-lab/series/<series>/<slug>.md`, or a Jupyter notebook `<slug>.ipynb` used as it is (each Markdown cell becomes the explanation of the code cell after it, and a comment-only code cell becomes an empty editor to type into). Until one of those files exists, the sidebar shows the lesson as "soon". A lesson's id (`py-running-code`) is a learner's progress key, so never rename a slug once the lesson has shipped. Reordering the manifest is safe.
 
 The format is parsed by [lessonFormat.js](../src/tools/notebook-lab/lessonFormat.js), which the app and the checker share:
 
 ````text
 # Lesson title                      (must match the manifest)
 
-Prose. Blank lines separate paragraphs. "## " starts a section.
-Lists use "- " or "1. ". Math: $inline$ and \[display\] (not $$).
+Prose. Blank lines separate paragraphs. "## " starts a section, "### " a
+subsection. Lists use "- " or "1. ". Tables use "| a | b |" rows.
+Math: $inline$ and \[display\] (not $$).
+
+```python type
+a type-along cell: the code is shown to read, the editor starts empty,
+and the learner types it in and runs it
+```
+
+```output
+what it prints; the notebook compares the learner's run with this
+```
 
 ```python
-a demo cell; the prose above it is shown with it
+a demo cell, already filled in (the prose above it is shown with it)
 ```
 
 ```python error NameError
@@ -56,6 +66,15 @@ assert ..., "message shown to the learner when it fails"
 Hint: one paragraph.
 :::
 ````
+
+Learners type the code: write demos as ```` ```python type ```` cells. Don't type the ```` ```output ```` blocks by hand; generate them by running the lesson in Pyodide, which also converts any plain ```` ```python ```` demos:
+
+```text
+node scripts/make_type_along.mjs py-running-code           # report what would change
+node scripts/make_type_along.mjs py-running-code --write   # rewrite the file
+```
+
+It leaves out the expected output of a cell whose output changes from run to run (unseeded randomness, times), since no learner could match it. Seed the randomness if the output matters.
 
 A challenge test runs after the learner's code, in the same namespace. It can also read `_stdout` (what the code printed) and `_source` (the code itself). Name any helper variables in a test with a leading underscore, so they cannot clash with the learner's names. Prose after the last cell is shown as text only.
 

@@ -15,7 +15,7 @@ This lesson covers:
 
 A parts store tracks stock. Its `remove` method refuses to take out more than there is, so the quantity can never go negative. But the quantities live in a public dictionary, and some other code, perhaps a quick fix in a report script, adjusts it directly. Predict before running: what quantity of bolts does the store report at the end?
 
-```python
+```python type
 class Stock:
     def __init__(self):
         self.levels = {}
@@ -39,6 +39,11 @@ store.levels["bolt M8"] -= 50
 print("bolts in stock:", store.levels["bolt M8"])
 ```
 
+```output
+refused: only 40 bolt M8 in stock
+bolts in stock: -10
+```
+
 `remove` correctly refused to take 50 bolts, but one line of outside code did it anyway, and the store now claims −10 bolts. Every piece of code that trusted the invariant, such as a reorder calculation, is now wrong, and the bug is not in `Stock` at all. The class could only keep its promise if every caller in the program behaved.
 
 ## Internal names, and handing out copies
@@ -47,7 +52,7 @@ Python has no `private` keyword. Instead, a convention everyone follows: a name 
 
 The second rule matters as much: never hand out the internal object itself. If a method returns `self._levels`, the caller holds the same dictionary and can change it. Return a **copy**, or a read-only view, instead. The Python from Zero lesson on properties showed the remaining tool: `@property` gives read access through a method that can compute, copy or check. Predict before running: does changing the returned dictionary affect the store?
 
-```python
+```python type
 from types import MappingProxyType
 
 class Stock:
@@ -84,6 +89,13 @@ print("the view follows the store:", dict(view))
 print("public attributes:", [name for name in vars(store) if not name.startswith("_")])
 ```
 
+```output
+view: {'bolt M8': 40}
+refused: 'mappingproxy' object does not support item assignment
+the view follows the store: {'bolt M8': 40, 'washer': 100}
+public attributes: []
+```
+
 `MappingProxyType` wraps a dictionary in a **read-only view**: it can be read like a dict and always shows the current contents, but any attempt to change it raises `TypeError`. It is cheaper than a copy and safer than the original. It is read-only one level deep only: if the values were lists, those lists could still be changed through it.
 
 The view cannot be changed, so every change to the stock goes through `add` and `remove`, which check. Nothing stops a determined programmer from writing `store._levels[...] = -10`, but the underscore makes it obvious that the line breaks the rules, and a reviewer will catch it. Python relies on this kind of agreement rather than on enforcement.
@@ -92,7 +104,7 @@ The view cannot be changed, so every change to the stock goes through `add` and 
 
 The second payoff of encapsulation is freedom to change the implementation. A machine shop models its floor as a grid of cells, each either empty or holding a machine's name. The first version stores a full list of lists. Then the shop's software is used for a warehouse with 2,000 × 2,000 cells, nearly all empty, and the list of lists wastes memory on four million `None`s. Because callers only ever used `get`, `place` and `count`, the storage can be swapped for a dictionary holding just the occupied cells. Predict before running: does the same client code give the same answer on both, and how much memory does each use?
 
-```python
+```python type
 import sys, tracemalloc
 
 class DenseFloor:
@@ -156,7 +168,7 @@ An **abstract base class** (ABC) declares the methods a family of classes must p
 
 A **protocol** describes an interface **structurally**: any class with the right methods counts, with no inheritance needed. This is Python's duck typing ("if it has `area()`, treat it as a shape"), written down so that type checkers, and with `@runtime_checkable` also `isinstance`, can check it. Predict before running: which line fails, and with what error?
 
-```python
+```python type
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable
 
@@ -201,6 +213,13 @@ class HasCount(Protocol):
 
 print("SparseFloor counts as HasCount:", isinstance(SparseFloor(5, 5), HasCount))
 print("a list counts as HasCount:", isinstance([1, 2], HasCount), "  an int:", isinstance(7, HasCount))
+```
+
+```output
+is (1, 1) free? False   is (2, 2) free? True
+TypeError: Can't instantiate abstract class ForgetfulFloor without an implementation for abstract methods 'count', 'get'
+SparseFloor counts as HasCount: True
+a list counts as HasCount: True   an int: False
 ```
 
 `...` (the ellipsis) is a placeholder body: these methods have no implementation in the base class.

@@ -16,7 +16,7 @@ This lesson covers:
 
 Before any algorithm, decide what a caller writes and receives. Callers want to say "route from the stores to bay 3 for a forklift" and get back something they can display: the list of places, the total distance, and each leg. A **`Route`** dataclass carries that, so callers never unpack anonymous tuples. Errors are specific: an unknown place, or no route possible for this vehicle. The network itself is built with plain method calls. Predict before running: what does a route object print as?
 
-```python
+```python type
 from dataclasses import dataclass
 import heapq, math
 
@@ -73,6 +73,11 @@ print(Route(("stores", "bay 3"), 140.0, (("stores", "bay 3", 140.0),)))
 print("places:", len(site.places), " roads:", sum(len(v) for v in site.roads.values()), " version:", site.version)
 ```
 
+```output
+Route(stops=('stores', 'bay 3'), distance=140.0, legs=(('stores', 'bay 3', 140.0),))
+places: 9  roads: 21  version: 20
+```
+
 `version` increases on every change to the network. The cache later uses it to know when old answers have gone stale.
 
 A frozen dataclass prints all its fields, compares by value and cannot be changed by the code that receives it: a good shape for a result. The site has 9 places and 21 road entries: each of the 10 two-way roads is stored in both directions, and the road from paint to despatch is one-way.
@@ -81,7 +86,7 @@ A frozen dataclass prints all its fields, compares by value and cannot be change
 
 The route search is Dijkstra's algorithm with a heap, as in the graph lessons, plus two design choices. A **vehicle rule** is a function deciding whether a vehicle may use a road, given the road's data: a strategy, so new vehicle types need no change to the search. And the search records each place's predecessor, so the route can be rebuilt, legs and all. Predict before running: how does the forklift's route differ from the car's, and what does the heavy truck get?
 
-```python
+```python type
 VEHICLES = {
     "car": lambda road: True,
     "forklift": lambda road: "ramp" not in road["tags"],
@@ -132,6 +137,20 @@ print()
 print(shortest_route(site, "yard", "weld bay", VEHICLES["heavy truck"]).stops)
 ```
 
+```output
+press shop -> weld bay: 140 m
+weld bay -> paint: 120 m
+total 260 m via 2 roads
+
+press shop -> stores: 90 m
+stores -> bay 3: 140 m
+bay 3 -> weld bay: 90 m
+weld bay -> paint: 120 m
+total 440 m via 4 roads
+
+('yard', 'gate', 'stores', 'press shop', 'weld bay')
+```
+
 `route_expanded` is a small global counter that records how many places the last search expanded, used in the next section to compare searches.
 
 The car takes the ramp straight from the press shop to the weld bay. The forklift must avoid the ramp, so it goes back through the stores and bay 3, a longer route. The heavy truck reaches the weld bay from the yard without the light bridge, by the long way round through the gate and the stores. Each rule is one line, and a new vehicle type is one more line.
@@ -140,7 +159,7 @@ The car takes the ramp straight from the press shop to the weld bay. The forklif
 
 Dijkstra explores outward in all directions. **A*** adds a **heuristic**: an estimate of the remaining distance, here the straight-line distance to the goal. It orders the queue by distance so far plus that estimate, so places in the right direction are tried first. Straight-line distance never overestimates a road distance, and here it is also **consistent** (each road's length is exactly the straight-line distance between its ends), which is what guarantees that A*, even though it never re-expands a place, still finds the shortest route. On a large grid of roads, the saving is large. Predict before running: how many places does each search expand on a 40 × 40 grid?
 
-```python
+```python type
 grid = Network()
 for i in range(40):
     for j in range(40):
@@ -161,6 +180,11 @@ print(f"Dijkstra: {r1.distance:.0f} m, expanded {dijkstra_work} places")
 print(f"A*:       {r2.distance:.0f} m, expanded {astar_work} places")
 ```
 
+```output
+Dijkstra: 500 m, expanded 1314 places
+A*:       500 m, expanded 782 places
+```
+
 The heuristic is passed in as a function, like the vehicle rule, so the search itself does not care which, if any, is used.
 
 Both find the same 500 m route, and A* expands about 40% fewer places, because the heuristic steers it towards the goal instead of exploring evenly in every direction. On a grid the saving is held back by ties: many different staircase routes have exactly the same length, and A* still examines many of them. On real road maps, with thousands of junctions and few ties, the saving is usually much larger, and that is what makes interactive route planning possible.
@@ -169,7 +193,7 @@ Both find the same 500 m route, and A* expands about 40% fewer places, because t
 
 Dispatchers ask the same questions all day. The `RoutePlanner` facade answers them and caches results in an LRU cache keyed by start, goal and vehicle. But a cached route is only valid for the network it was computed on: if a road closes, the cached answer may now be wrong. Including the network's `version` in the cache key makes stale entries unreachable automatically: after any change, every key is new. Predict before running: is the second request a cache hit, and does closing a road change the third answer?
 
-```python
+```python type
 from collections import OrderedDict
 
 class RoutePlanner:
@@ -206,6 +230,13 @@ try:
     planner.route("stores", "despatch", vehicle="drone")
 except ValueError as error:
     print("ValueError:", error)
+```
+
+```output
+('stores', 'bay 3', 'despatch')
+('stores', 'bay 3', 'despatch')  hits: 1
+('stores', 'bay 3', 'weld bay', 'paint', 'despatch')  hits: 1  misses: 2
+ValueError: unknown vehicle 'drone'; choose from ['car', 'forklift', 'heavy truck']
 ```
 
 The planner is a facade: callers name places and a vehicle, and never see heaps, heuristics or cache keys.

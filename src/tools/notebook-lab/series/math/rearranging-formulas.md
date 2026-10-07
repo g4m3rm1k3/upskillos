@@ -25,7 +25,7 @@ The square root is where care is needed: v² = 2E/m has **two** solutions, ±√
 
 Predict before running: what does SymPy return for v, first with plain symbols and then with positive ones?
 
-```python
+```python type
 import math
 import numpy as np
 import sympy as sp
@@ -36,6 +36,12 @@ Ep, mp, vp = sp.symbols("E m v", positive=True)
 speed = sp.solve(sp.Eq(Ep, mp * vp ** 2 / 2), vp)
 print("positive symbols:", speed)
 print("a 1,200 kg car with 150 kJ of kinetic energy:", float(speed[0].subs({Ep: 150e3, mp: 1200})), "m/s")
+```
+
+```output
+plain symbols:    [-sqrt(2)*sqrt(E/m), sqrt(2)*sqrt(E/m)]
+positive symbols: [sqrt(2)*sqrt(E)/sqrt(m)]
+a 1,200 kg car with 150 kJ of kinetic energy: 15.811388300841896 m/s
 ```
 
 With plain symbols SymPy gives both roots, −√2·√(E/m) and +√2·√(E/m). With positive symbols only the positive root survives. A 1,200 kg car carrying 150 kJ is doing 15.8 m/s, about 57 km/h. `subs` substitutes numbers for symbols, and `float` turns the exact result into a number.
@@ -56,7 +62,7 @@ The answer comes with a condition. The parallel combination is always smaller th
 
 Predict before running: what goes in parallel with 330 Ω to make 220 Ω, and what does the formula say for a target of 400 Ω?
 
-```python
+```python type
 R, R1, R2 = sp.symbols("R R_1 R_2", positive=True)
 partner = sp.solve(sp.Eq(R, R1 * R2 / (R1 + R2)), R2)[0]
 print("R2 =", partner)
@@ -64,6 +70,13 @@ print("for 220 Ω from 330 Ω:", partner.subs({R: 220, R1: 330}), "Ω")
 print("for 400 Ω from 330 Ω:", partner.subs({R: 400, R1: 330}), "Ω  <- negative: impossible, since R must be less than R1")
 check = sp.simplify(R1 * partner / (R1 + partner) - R)
 print("substituting back into the original equation leaves:", check)
+```
+
+```output
+R2 = -R*R_1/(R - R_1)
+for 220 Ω from 330 Ω: 660 Ω
+for 400 Ω from 330 Ω: -13200/7 Ω  <- negative: impossible, since R must be less than R1
+substituting back into the original equation leaves: 0
 ```
 
 SymPy writes the answer as −R R₁/(R − R₁), the same as R R₁/(R₁ − R). 220 Ω needs 660 Ω in parallel. Asking for 400 Ω returns −13200/7 Ω, a resistance that does not exist: the algebra is fine, the request is not. Substituting the general answer back into the original equation and simplifying leaves 0, the symbolic round trip. It proves the rearrangement correct for **all** valid values at once.
@@ -82,7 +95,7 @@ The unknown in an exponent comes down with a logarithm, once the exponential is 
 
 Predict before running: a 100 kΩ resistor charges 47 µF from 12 V, and a comparator trips at 8 V. How long is the delay?
 
-```python
+```python type
 V, Vs, Rr, Cc, t = sp.symbols("V V_s R C t", positive=True)
 delay = sp.solve(sp.Eq(V, Vs * (1 - sp.exp(-t / (Rr * Cc)))), t)[0]
 print("t =", sp.simplify(delay))
@@ -90,6 +103,13 @@ seconds = float(delay.subs({V: 8, Vs: 12, Rr: 100e3, Cc: 47e-6}))
 print(f"time constant {100e3 * 47e-6:.1f} s; trips at 8 V after {seconds:.3f} s")
 print("forward check:", round(12 * (1 - math.exp(-seconds / 4.7)), 9), "V")
 print("12 V (the supply itself):", delay.subs({V: 12, Vs: 12, Rr: 100e3, Cc: 47e-6}))
+```
+
+```output
+t = C*R*log(-V_s/(V - V_s))
+time constant 4.7 s; trips at 8 V after 5.163 s
+forward check: 8.0 V
+12 V (the supply itself): zoo
 ```
 
 SymPy produces a logarithm equivalent to RC ln(V_s/(V_s − V)). With a time constant of 4.7 s, the comparator trips after 5.163 s, and putting that time back into the charging law returns 8 V. Asking for the supply voltage itself gives `zoo`, SymPy's symbol for complex infinity, because the logarithm's argument divides by zero: the capacitor only approaches 12 V and never reaches it. Logarithms are the inverse of exponentials, so every "how long until" question about exponential growth, decay or charging rearranges this way.
@@ -107,7 +127,7 @@ The projectile lesson found the launch angles that hit a target by writing the t
 
 Predict before running: launched at 25 m/s, at what angles does a projectile hit a target 40 m away and 10 m up?
 
-```python
+```python type
 g, V, X, Y, u = sp.symbols("g V X Y u", real=True)
 aim = sp.Eq(Y, X * u - g * X ** 2 * (1 + u ** 2) / (2 * V ** 2))
 roots = sp.solve(aim, u)
@@ -118,6 +138,14 @@ values = [r.subs({g: 9.81, V: 25, X: 40, Y: 10}) for r in roots]
 print("angles (degrees):", [round(float(sp.deg(sp.atan(w))), 2) for w in values])
 flat = sp.lambdify((V, X, Y), roots[0].subs(g, 9.81))
 print("compiled flat-shot formula at (25, 40, 10):", flat(25, 40, 10), " at (25, 60, 0):", round(math.degrees(math.atan(flat(25, 60, 0))), 2), "°")
+```
+
+```output
+u = (V**2 - sqrt(V**4 - 2*V**2*Y*g - X**2*g**2))/(X*g)
+u = (V**2 + sqrt(V**4 - 2*V**2*Y*g - X**2*g**2))/(X*g)
+check, residual after substitution: [0, 0]
+angles (degrees): [36.21, 67.82]
+compiled flat-shot formula at (25, 40, 10): 0.7322329426244734  at (25, 60, 0): 35.17 °
 ```
 
 SymPy gives the two roots of the quadratic, and both check out to zero residual. At 25 m/s the target can be hit with a flat shot at 36.21° or a lob at 67.82°, the projectile lesson's answer. The compiled function evaluates the flat-shot formula like any Python function: at (25, 40, 10) it returns tan θ ≈ 0.732, and for a target 60 m away on level ground the flat shot needs 35.17°. When the discriminant under the square root is negative, there is no real solution: the target is out of reach.
@@ -135,7 +163,7 @@ Many useful equations cannot be rearranged. The unknown appears both inside and 
 
 Predict before running: what does SymPy do with Kepler's equation, and how many Newton steps reach full precision for M = 1, e = 0.3?
 
-```python
+```python type
 Ek, Mk, ek = sp.symbols("E M e")
 try:
     sp.solve(sp.Eq(Mk, Ek - ek * sp.sin(Ek)), Ek)
@@ -148,6 +176,16 @@ E_est = M_val
 for step in range(1, 6):
     E_est -= (E_est - e_val * math.sin(E_est) - M_val) / (1 - e_val * math.cos(E_est))
     print(f"Newton step {step}: E = {E_est:.15f}, residual {E_est - e_val * math.sin(E_est) - M_val:.1e}")
+```
+
+```output
+sp.solve: NotImplementedError - No algorithms are implemented to solve equation M + (-E + e*sin(E))
+sp.nsolve from E = 1: 1.28809131321184
+Newton step 1: E = 1.301275201218073, residual 1.2e-02
+Newton step 2: E = 1.288118592417824, residual 2.5e-05
+Newton step 3: E = 1.288091313328819, residual 1.1e-10
+Newton step 4: E = 1.288091313211838, residual 0.0e+00
+Newton step 5: E = 1.288091313211838, residual 0.0e+00
 ```
 
 SymPy's `solve` gives up with "No algorithms are implemented to solve equation". `nsolve` finds E ≈ 1.2880913132. Newton's method from E = M matches `nsolve` to 9 decimals after 3 steps and to all 15 printed digits after 4, the residual dropping to 0. The general strategy, then: rearrange symbolically when you can, because a formula shows how the answer depends on every input. Invert numerically when you cannot. Check either way, by substituting back.

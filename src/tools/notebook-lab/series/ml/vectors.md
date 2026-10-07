@@ -8,7 +8,7 @@ This lesson builds the ideas about vectors that the rest of the series depends o
 
 In NumPy, a vector is simply a 1D array. Each number is a **component**. A vector with two components can be drawn as an arrow from the origin, the point (0, 0), to the point given by its components:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -36,7 +36,7 @@ Vectors of the same length are added component by component, which is exactly Nu
 
 Multiplying a vector by a number, called a **scalar** in this context, multiplies every component. It stretches or shrinks the arrow without changing its direction; a negative number also flips it round.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -60,6 +60,11 @@ ax.grid(True)
 plt.show()
 ```
 
+```output
+a + b = [4 3]
+2a = [6 2]   -0.5b = [-0.5 -1. ]
+```
+
 The green arrow `a + b` goes straight to the point you reach by following `a` and then `b`. Subtraction is the reverse: `b - a` is the arrow that goes **from the tip of `a` to the tip of `b`**. Keep that in mind; it is how distances are measured below.
 
 ## Length
@@ -72,7 +77,7 @@ The length of a vector, also called its **norm** or **magnitude** and written wi
 
 The same formula works in any number of dimensions: square every component, add them up, take the square root.
 
-```python
+```python type
 import numpy as np
 
 a = np.array([3, 4])
@@ -83,16 +88,26 @@ house = np.array([120, 3, 25, 2])
 print(np.linalg.norm(house))
 ```
 
+```output
+5.0
+5.0
+122.62952336203546
+```
+
 `np.linalg.norm` computes it directly. (`np.linalg` is NumPy's linear algebra module, which the next few lessons use a lot.) The house vector has four components, and although you cannot draw a four-dimensional arrow, its length is computed in exactly the same way.
 
 Dividing a vector by its own length gives a vector of length 1 pointing the same way, called a **unit vector**. Scaling a vector to length 1 like this is called **normalising** it, and it is how you keep a vector's direction while discarding its size:
 
-```python
+```python type
 import numpy as np
 
 a = np.array([3, 4])
 unit = a / np.linalg.norm(a)
 print(unit, np.linalg.norm(unit))
+```
+
+```output
+[0.6 0.8] 1.0
 ```
 
 ## Distance between points
@@ -103,7 +118,7 @@ The distance between two points is the length of the arrow from one to the other
 \text{distance}(a, b) = \|a - b\|
 \]
 
-```python
+```python type
 import numpy as np
 
 home = np.array([2, 1])
@@ -113,6 +128,11 @@ print(np.linalg.norm(shop - home))
 houses = np.array([[120, 3], [95, 2], [130, 3], [60, 1]])
 target = np.array([125, 3])
 print(np.linalg.norm(houses - target, axis=1))
+```
+
+```output
+5.0
+[ 5.         30.01666204  5.         65.03076195]
 ```
 
 This straight-line distance is called the **Euclidean distance**. With `axis=1`, `np.linalg.norm` finds the length of each row, so the second calculation, which broadcasts `target` across every row, gives the distance from the target house to every house at once. The nearest houses are the most similar ones, and predicting something about a new house from the houses closest to it is the idea behind the k-nearest-neighbours method you will build later.
@@ -131,12 +151,20 @@ So cos θ is how far across you are, and sin θ how far up. At 0° you have not 
 
 NumPy's `np.cos` and `np.sin` measure angles in **radians**, not degrees. A full turn is 2π radians (about 6.28) instead of 360°, so 180° is π radians and 90° is π/2. `np.radians` converts degrees to radians, and `np.degrees` converts back.
 
-```python
+```python type
 import numpy as np
 
 for degrees in [0, 60, 90, 180, 270]:
     theta = np.radians(degrees)
     print(f"{degrees:>3}°  cos {np.cos(theta):6.3f}   sin {np.sin(theta):6.3f}")
+```
+
+```output
+  0°  cos  1.000   sin  0.000
+ 60°  cos  0.500   sin  0.866
+ 90°  cos  0.000   sin  1.000
+180°  cos -1.000   sin  0.000
+270°  cos -0.000   sin -1.000
 ```
 
 Some values print as tiny numbers like `6.1e-17` instead of 0: floating-point rounding again (Python lesson 2), since π itself cannot be stored exactly.
@@ -151,7 +179,7 @@ a \cdot b = a_1 b_1 + a_2 b_2 + \dots + a_n b_n
 
 The result is a single number. In NumPy it is written `a @ b`, or `np.dot(a, b)`:
 
-```python
+```python type
 import numpy as np
 
 a = np.array([3, 1])
@@ -159,6 +187,12 @@ b = np.array([1, 2])
 print((a * b).sum())
 print(a @ b)
 print(np.dot(a, b))
+```
+
+```output
+5
+5
+5
 ```
 
 All three give 3 × 1 + 1 × 2 = 5. The `@` operator is the one you will see most, because it also works for matrices, as the next lesson shows.
@@ -171,7 +205,7 @@ a \cdot b = \|a\|\,\|b\|\cos\theta
 
 You can check the formula on two vectors whose angle you know. `(2, 0)` points along the x-axis and `(3, 3)` points diagonally, 45° away:
 
-```python
+```python type
 import numpy as np
 
 a = np.array([2.0, 0.0])
@@ -180,14 +214,26 @@ print("a · b                  =", a @ b)
 print("|a| |b| cos(45°)       =", np.linalg.norm(a) * np.linalg.norm(b) * np.cos(np.radians(45)))
 ```
 
+```output
+a · b                  = 6.0
+|a| |b| cos(45°)       = 6.0
+```
+
 Both sides come to 6. Since cos θ is 1 when the vectors point the same way, 0 when they are at right angles, and −1 when they point in opposite directions, the dot product measures **how much two vectors point the same way**, scaled by their lengths. Before running the next cell, predict which of the four dot products will be negative and which will be zero.
 
-```python
+```python type
 import numpy as np
 
 right = np.array([1, 0])
 for name, v in [("same direction", [2, 0]), ("45 degrees", [1, 1]), ("right angle", [0, 3]), ("opposite", [-2, 0])]:
     print(f"{name:15} dot = {right @ np.array(v)}")
+```
+
+```output
+same direction  dot = 2
+45 degrees      dot = 1
+right angle     dot = 0
+opposite        dot = -2
 ```
 
 - **Positive**: the angle between them is less than 90 degrees; they point broadly the same way.
@@ -196,7 +242,7 @@ for name, v in [("same direction", [2, 0]), ("45 degrees", [1, 1]), ("right angl
 
 Rearranging the formula gives the angle between any two vectors, in any number of dimensions. Look back at the picture of `a = (3, 1)` and `b = (1, 2)` at the start of the lesson and estimate the angle between them before running this:
 
-```python
+```python type
 import numpy as np
 
 a = np.array([3, 1])
@@ -204,6 +250,11 @@ b = np.array([1, 2])
 cos_theta = (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))
 print(cos_theta)
 print(np.degrees(np.arccos(cos_theta)).round(6))
+```
+
+```output
+0.7071067811865475
+45.0
 ```
 
 `np.arccos` turns a cosine back into an angle, in radians, and `np.degrees` converts radians to degrees. The angle between `a` and `b` is 45 degrees. (Without the rounding it prints as `45.00000000000001`: rounding error once more.)
@@ -214,7 +265,7 @@ That cosine on its own, the dot product divided by both lengths, is called **cos
 
 Direction without size is often exactly what "similar" should mean. Represent each document by how many times it uses each of a few words. A long article and a short note about the same topic use the same words in similar **proportions**, so they point the same way, even though the long article's counts are all much bigger. Predict which pair will have the higher cosine similarity, and which the smaller straight-line distance:
 
-```python
+```python type
 import numpy as np
 
 words = ["goal", "match", "vote", "election"]
@@ -231,18 +282,29 @@ print("distance, note vs football report:", round(np.linalg.norm(football_note -
 print("distance, note vs politics report:", round(np.linalg.norm(football_note - politics_report), 1))
 ```
 
+```output
+cosine, note vs football report: 0.996
+cosine, note vs politics report: 0.026
+distance, note vs football report: 21.1
+distance, note vs politics report: 17.6
+```
+
 The two football texts have a cosine similarity near 1, and the football note and the politics report are close to 0. Straight-line distance gets it backwards: the football note is **closer** to the politics report than to the football report, simply because the football report is long and its counts are all large. Cosine similarity is used throughout search engines and recommendation systems, and to compare the learned vectors, called **embeddings**, that represent words and images in modern models.
 
 ## The dot product as a weighted sum
 
 There is one more way to read the dot product, and it is the one this series will use most. Look at the formula again: each component of one vector is multiplied by a matching number from the other, and the results are added. That is a **weighted sum**. If `x` holds the features of an example and `w` holds a weight for each feature, then `w @ x` scores the example, with each weight saying how much its feature counts.
 
-```python
+```python type
 import numpy as np
 
 weights = np.array([2000, 15000, -500])
 house = np.array([110, 3, 20])
 print(weights @ house + 50000)
+```
+
+```output
+305000
 ```
 
 This is a tiny linear model for a house price: 2000 per square metre, 15000 per bedroom, minus 500 per year of age, plus a starting amount of 50000. The weights are made up here. **Learning** those weights from data, so that the scores match real prices as closely as possible, is what linear regression does, a few lessons from now. When there are many examples, stacked as the rows of a 2D array `X`, `X @ weights` scores all of them in one step, as the next lesson explains.

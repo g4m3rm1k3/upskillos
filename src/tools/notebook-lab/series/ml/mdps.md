@@ -20,7 +20,7 @@ The word **Markov** names the key assumption: the next state and reward depend o
 
 Here is the slippery grid world from the earlier lesson written out as an MDP. For every state and action, the model lists the possible outcomes as tuples (probability, next state, reward, done). With slip probability 0.2, the intended move happens with probability 0.8 + 0.2/4 = 0.85, and each of the other three moves with 0.05 (a slip picks one of the four moves at random, which may be the intended one).
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -53,6 +53,14 @@ for p, nxt, reward, done in model[(2, 2)][3]:
 print("probabilities add to", sum(p for p, *_ in model[(2, 2)][3]))
 ```
 
+```output
+from (2, 2), trying right: probability 0.05 -> (1, 2), reward -1, episode ends False
+from (2, 2), trying right: probability 0.05 -> (3, 2), reward -1, episode ends False
+from (2, 2), trying right: probability 0.05 -> (2, 1), reward -1, episode ends False
+from (2, 2), trying right: probability 0.85 -> (2, 3), reward -10, episode ends True
+probabilities add to 1.0
+```
+
 `model[s][a]` is the list of outcomes for taking action a in state s. From square (2, 2), trying to go right lands in the pit at (2, 3) with probability 0.85, ending the episode with −10; with probability 0.05 each, a slip sends the agent up, down or left instead, each costing the usual −1. Writing the world out like this assumes we **know** its rules, which is called having a **model** of the environment. This lesson and the next use the model; later lessons learn without one.
 
 ## Value functions
@@ -74,7 +82,7 @@ V^\pi(s) = \sum_a \pi(a \mid s) \sum_{s'} P(s' \mid s, a)\,\big[ R(s, a, s') + \
 
 In words: the value of a state is the average, over the actions the policy might take and the outcomes each might have, of the immediate reward plus the discounted value of where you land. This is the **Bellman expectation equation**. There is one such equation for every non-terminal state, and the unknowns V^π(s) appear linearly. So it is a **system of linear equations**, which the linear systems lesson showed how to solve: with the values of all states as a vector v, it reads v = r + γ P_π v, where P_π[i, j] is the probability of moving from state i to state j under the policy and r[i] the expected immediate reward. Rearranged, (I − γ P_π) v = r.
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -121,6 +129,19 @@ for name, policy in [("random", random_policy), ("planned route", planned)]:
     V = evaluate(model, policy, gamma=1.0)
     print(f"{name}: value of the start square {V[0]:.2f}")
     print(V.reshape(4, 4).round(1))
+```
+
+```output
+random: value of the start square -18.30
+[[-18.3 -16.4 -17.9 -18.6]
+ [-16.2   0.  -14.6 -15.4]
+ [-17.3 -14.1 -12.    0. ]
+ [-17.7 -14.   -6.3   0. ]]
+planned route: value of the start square -1.16
+[[-1.2  0.5  2.3 -9.9]
+ [-9.   0.   4.3 -9.4]
+ [ 3.5  5.2  7.2  0. ]
+ [ 6.8  8.2  9.6  0. ]]
 ```
 
 A policy is now written as a table of action probabilities per state: the random policy gives each action 0.25, and the planned route from the earlier lesson puts probability 1 on one action. `evaluate` fills in P_π and r by summing over the policy's actions and each action's outcomes; transitions into a terminal state contribute their reward but no future value, so they are left out of P_π. Then `np.linalg.solve` finds all 16 values at once. With γ = 1 the system can still be solved here, because with slipping, every policy eventually ends the episode (without slips, a policy that walked into a wall for ever would never finish).

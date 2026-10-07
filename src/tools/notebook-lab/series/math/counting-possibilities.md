@@ -22,7 +22,7 @@ In code: `math.prod(settings.values())` and `length * math.log2(alphabet)`
 
 If one choice can be made in a ways and, independently, another in b ways, the pair can be made in a × b ways. For k independent choices from sets of sizes n₁, ..., n_k, the total is the product. A password of length L drawn from an alphabet of size A therefore has Aᴸ possibilities, and its strength is often quoted as **entropy** in bits, log₂(Aᴸ) = L log₂ A: each bit doubles the attacker's work. Predict before running: which is stronger, 8 characters from letters and digits, or 12 lowercase letters?
 
-```python
+```python type
 import math
 import itertools
 import numpy as np
@@ -36,6 +36,14 @@ for name, alphabet, length in [("8 × [a-zA-Z0-9]", 62, 8), ("12 × [a-z]", 26, 
     bits = length * math.log2(alphabet)
     years = space / 1e10 / 3600 / 24 / 365
     print(f"{name:<16} {space:.2e} possibilities, {bits:5.1f} bits, {years:12.4g} years at 10 billion guesses/s")
+```
+
+```output
+full test matrix: 4096 runs
+8 × [a-zA-Z0-9]  2.18e+14 possibilities,  47.6 bits,    0.0006924 years at 10 billion guesses/s
+12 × [a-z]       9.54e+16 possibilities,  56.4 bits,       0.3026 years at 10 billion guesses/s
+4-digit PIN      1.00e+04 possibilities,  13.3 bits,    3.171e-14 years at 10 billion guesses/s
+16 × [a-z]       4.36e+22 possibilities,  75.2 bits,    1.383e+05 years at 10 billion guesses/s
 ```
 
 The last column is the time to try every possibility at 10¹⁰ guesses per second, a fast offline attack.
@@ -54,7 +62,7 @@ In code: `math.factorial(n)` against `math.sqrt(2 * math.pi * n) * (n / math.e) 
 
 Arranging n distinct items in order: n choices for the first position, n − 1 for the second, and so on, giving **n!** (n factorial) **permutations**. Arranging k of the n in order gives n!/(n − k)!. Factorials grow faster than any exponential; **Stirling's approximation** n! ≈ √(2πn)(n/e)ⁿ estimates them. This is why trying every visiting order of a route (the travelling salesman's brute force from the DSA series) collapses beyond a dozen stops. Predict before running: how good is Stirling's formula at n = 10, and how long would checking every 20-stop route take?
 
-```python
+```python type
 for n in [5, 10, 12, 20]:
     exact = math.factorial(n)
     stirling = math.sqrt(2 * math.pi * n) * (n / math.e) ** n
@@ -62,6 +70,16 @@ for n in [5, 10, 12, 20]:
 print("orders of 4 jobs, by listing:", len(list(itertools.permutations("ABCD"))), "= 4! =", math.factorial(4))
 print("ways to pick and order 3 of 8 tools:", len(list(itertools.permutations(range(8), 3))), "= 8!/5! =", math.perm(8, 3))
 print(f"checking all 20-stop orders at a billion per second: {math.factorial(20) / 1e9 / 3600 / 24 / 365:.0f} years")
+```
+
+```output
+ 5! = 1.2000e+02, Stirling 1.1802e+02 (-1.65%)
+10! = 3.6288e+06, Stirling 3.5987e+06 (-0.83%)
+12! = 4.7900e+08, Stirling 4.7569e+08 (-0.69%)
+20! = 2.4329e+18, Stirling 2.4228e+18 (-0.42%)
+orders of 4 jobs, by listing: 24 = 4! = 24
+ways to pick and order 3 of 8 tools: 336 = 8!/5! = 336
+checking all 20-stop orders at a billion per second: 77 years
 ```
 
 `itertools.permutations(items, k)` lists every ordered selection of k items; `math.perm(n, k)` counts them without listing.
@@ -84,7 +102,7 @@ When order does not matter, each set of k items chosen from n is counted k! time
 
 read "n choose k", already met in the probability lessons. These numbers form **Pascal's triangle**, each entry the sum of the two above it, because a k-subset of n items either includes the last item (C(n − 1, k − 1) ways) or does not (C(n − 1, k) ways). They are also the coefficients of the **binomial theorem**, (x + y)ⁿ = Σ C(n, k) xᵏ yⁿ⁻ᵏ, and summing them gives 2ⁿ, the number of all subsets. Predict before running: a test lab can run any 3 of 10 sensors together. How many different line-ups is that, and how many line-ups of any size exist?
 
-```python
+```python type
 print("3 of 10 sensors:", math.comb(10, 3), "= listed", len(list(itertools.combinations(range(10), 3))))
 row = [1]
 for n in range(1, 9):
@@ -93,6 +111,13 @@ print("row 8 of Pascal's triangle:", row, "sum", sum(row), "= 2^8")
 print("all subsets of 10 sensors:", sum(math.comb(10, k) for k in range(11)), "= 2^10 =", 2 ** 10)
 x, y = 1.7, -0.4
 print("binomial theorem check:", math.isclose((x + y) ** 6, sum(math.comb(6, k) * x ** k * y ** (6 - k) for k in range(7))))
+```
+
+```output
+3 of 10 sensors: 120 = listed 120
+row 8 of Pascal's triangle: [1, 8, 28, 56, 70, 56, 28, 8, 1] sum 256 = 2^8
+all subsets of 10 sensors: 1024 = 2^10 = 1024
+binomial theorem check: True
 ```
 
 Each new row of Pascal's triangle is built by adding neighbouring pairs of the previous row, with a 1 at each end.
@@ -111,7 +136,7 @@ In code: `good += (-1) ** k * (62 - sum(excluded)) ** L` over `itertools.combina
 
 Password rules ("at least one digit and at least one capital") make counting harder: the easy count is of strings that **break** a rule. **Inclusion–exclusion** combines such counts. For two rules, |A ∪ B| = |A| + |B| − |A ∩ B|: adding the two sets counts their overlap twice, so subtract it once. In general, alternately add and subtract the intersections. The number of passwords obeying every rule is the total minus the number breaking at least one. Predict before running: of all 6-character strings from lowercase, uppercase and digits, what fraction contains at least one of each class?
 
-```python
+```python type
 lower, upper, digits = 26, 26, 10
 L = 6
 total = 62 ** L
@@ -126,6 +151,11 @@ classes = [set("ab"), set("C"), set("1")]
 brute = sum(1 for s in itertools.product(small, repeat=4) if all(set(s) & c for c in classes))
 formula = sum((-1) ** k * (4 - sum(len(c) for c in excl)) ** 4 for k in range(4) for excl in itertools.combinations(classes, k))
 print("check on a tiny alphabet (a, b, C, 1), length 4: brute force", brute, "formula", formula)
+```
+
+```output
+total 56,800,235,584, with all three classes 33,294,892,800 (58.6%)
+check on a tiny alphabet (a, b, C, 1), length 4: brute force 96 formula 96
 ```
 
 For each set of classes to leave out (none, one, two or all three), count the strings avoiding them all and add or subtract by the parity of the set's size.
@@ -144,7 +174,7 @@ In code: `pairwise_suite(levels)` with `uncovered` holding every `(i, j, a, b)`
 
 The control panel's 4,096 combinations are too many to test. Experience shows that most configuration bugs are triggered by a single setting or by an interaction between **two** settings. **Pairwise testing** therefore covers every pair of values for every pair of settings at least once. There are C(6, 2) × 16 = 240 such value pairs, and each test covers C(6, 2) = 15 of them at once, so no suite can have fewer than 16 tests (for six 4-value settings the true minimum is known to be 19). A simple **greedy** construction gets close: repeatedly pick, from a set of candidate tests, the one that covers the most still-uncovered pairs. Predict before running: how many tests does the greedy method need for the 6 settings?
 
-```python
+```python type
 def pairwise_suite(levels, candidates_per_step=200, seed=0):
     rng = np.random.default_rng(seed)
     k = len(levels)
@@ -167,6 +197,11 @@ suite = pairwise_suite([4] * 6)
 print(f"pairwise suite: {len(suite)} tests instead of {4 ** 6}; lower bound 16")
 covered = {(p, q, t[p], t[q]) for t in suite for p, q in itertools.combinations(range(6), 2)}
 print("every one of the 240 value pairs covered:", len(covered) == 240)
+```
+
+```output
+pairwise suite: 24 tests instead of 4096; lower bound 16
+every one of the 240 value pairs covered: True
 ```
 
 Each candidate test is random except that it is forced to cover one specific uncovered pair, which guarantees progress; the best of 200 candidates is kept.

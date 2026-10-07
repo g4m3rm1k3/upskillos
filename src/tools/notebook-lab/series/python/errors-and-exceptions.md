@@ -59,7 +59,7 @@ The three `File` lines say, in order:
 
 A `try` statement lets you attempt something that might fail and say what to do if it does.
 
-```python
+```python type
 text = "eighty-five"
 try:
     age = int(text)
@@ -67,6 +67,11 @@ try:
 except ValueError:
     print(f"'{text}' is not a whole number.")
 print("The program carries on.")
+```
+
+```output
+'eighty-five' is not a whole number.
+The program carries on.
 ```
 
 Python runs the `try` block. If no exception happens, the `except` block is skipped. If a `ValueError` is raised anywhere in the `try` block, Python immediately stops the block (so "Age is" is never printed), jumps to the matching `except` block and runs it, and then carries on after the whole statement as if nothing had gone wrong. The exception has been **caught** or **handled**. Change `text` to `"85"` and run it again to see the other path.
@@ -77,13 +82,17 @@ The `except` line names the kind of exception it handles. Any other kind of exce
 
 It is possible to write `except:` with no exception type, which catches everything. This is almost always a mistake, and the reason is worth seeing. Predict what this prints: the code is meant to turn text into a number.
 
-```python
+```python type
 text = "42"
 try:
     number = int(txt)
 except:
     number = 0
 print("Number:", number)
+```
+
+```output
+Number: 0
 ```
 
 It prints `0`, and gives no hint that anything is wrong. The real problem is a typo, `txt` instead of `text`, which is a `NameError`. The bare `except` caught it and quietly treated it as bad input. Bugs like this can hide for months. Written as `except ValueError:`, the typo would have produced a `NameError` straight away, pointing at the exact line.
@@ -94,16 +103,20 @@ So: catch the **specific** exception you expect, around the **smallest** piece o
 
 `except SomeError as e:` gives the exception object a name, so you can look at its message:
 
-```python
+```python type
 try:
     value = int("3.5")
 except ValueError as e:
     print("Could not convert:", e)
 ```
 
+```output
+Could not convert: invalid literal for int() with base 10: '3.5'
+```
+
 A `try` can have several `except` clauses, and Python uses the first one that matches. One clause can also handle several kinds by listing them in a tuple:
 
-```python
+```python type
 def safe_divide(a, b):
     try:
         return a / b
@@ -118,6 +131,13 @@ print(safe_divide(10, 0))
 print(safe_divide(10, "two"))
 ```
 
+```output
+2.5
+None
+Bad input: unsupported operand type(s) for /: 'int' and 'str'
+None
+```
+
 Writing `except (ValueError, TypeError):` would handle either kind with the same block.
 
 ## else and finally
@@ -127,7 +147,7 @@ A `try` statement can have two more parts:
 - `else:` runs only if the `try` block finished **without** an exception.
 - `finally:` runs **always**, whether there was an exception or not, and even if it was not caught.
 
-```python
+```python type
 def load_number(text):
     try:
         number = int(text)
@@ -144,13 +164,22 @@ print(load_number("12"))
 print(load_number("twelve"))
 ```
 
+```output
+  '12': converted
+  (finished trying '12')
+12
+  'twelve': not a number
+  (finished trying 'twelve')
+None
+```
+
 `else` keeps the `try` block small: only the line that might fail goes in `try`, and what to do after success goes in `else`. `finally` is for clean-up that must happen no matter what, such as closing a file; you will see it used that way in lesson 17. Notice that `finally` ran even though both paths had already reached a `return`.
 
 ## Raising your own exceptions
 
 Your own functions can raise exceptions too, with the `raise` statement. Do this when a function is given something it cannot sensibly work with. It is much better to stop at once, with a clear message, than to carry on and produce a wrong answer that causes a confusing failure somewhere else later.
 
-```python
+```python type
 def set_volume(level):
     if level < 0 or level > 10:
         raise ValueError(f"volume must be between 0 and 10, got {level}")
@@ -161,6 +190,11 @@ try:
     print(set_volume(11))
 except ValueError as e:
     print("Refused:", e)
+```
+
+```output
+Volume set to 7
+Refused: volume must be between 0 and 10, got 11
 ```
 
 `raise ValueError("message")` creates a `ValueError` with your message and raises it, exactly like Python's own. Choose the kind that matches the problem: `ValueError` for an unacceptable value, `TypeError` for the wrong type of value. And write the message for the person who will read it: say what was expected and what was actually received.
@@ -182,7 +216,7 @@ parse("oops")
 
 There are two styles of dealing with something that might fail. One is to check first: "look before you leap".
 
-```python
+```python type
 stock = {"apples": 5}
 if "pears" in stock:
     print(stock["pears"])
@@ -190,14 +224,22 @@ else:
     print("No pears")
 ```
 
+```output
+No pears
+```
+
 The other is to just try it and handle the failure: "it's easier to ask forgiveness than permission".
 
-```python
+```python type
 stock = {"apples": 5}
 try:
     print(stock["pears"])
 except KeyError:
     print("No pears")
+```
+
+```output
+No pears
 ```
 
 Both are fine, and Python programmers use both. Checking first is clearer when failure is common and the check is simple. Trying first is often better when failure is rare, or when the check would repeat the work, as with converting text to a number, where the easiest way to find out whether text is a valid number is to try converting it.

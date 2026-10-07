@@ -31,11 +31,17 @@ Follow the gradient backwards along the cell state. Since cₜ = fₜ ⊙ cₜ�
 
 Compare the surviving fraction after 50 steps. Predict first: if a plain RNN's factor is about 0.5 per step (as measured in the last lesson) and an LSTM's forget gate stays at 0.95, how big is each product?
 
-```python
+```python type
 import numpy as np
 
 for steps in [10, 50, 100]:
     print(f"{steps:>3} steps: plain RNN factor 0.5 → {0.5 ** steps:.1e}   LSTM forget gate 0.95 → {0.95 ** steps:.2f}   forget gate 0.99 → {0.99 ** steps:.2f}")
+```
+
+```output
+ 10 steps: plain RNN factor 0.5 → 9.8e-04   LSTM forget gate 0.95 → 0.60   forget gate 0.99 → 0.90
+ 50 steps: plain RNN factor 0.5 → 8.9e-16   LSTM forget gate 0.95 → 0.08   forget gate 0.99 → 0.61
+100 steps: plain RNN factor 0.5 → 7.9e-31   LSTM forget gate 0.95 → 0.01   forget gate 0.99 → 0.37
 ```
 
 After 50 steps, 0.5 per step has shrunk the gradient to about 10⁻¹⁵; a forget gate of 0.95 keeps 8% of it, and one of 0.99 keeps 61%. The LSTM can still learn from something 50 or even 100 steps back.
@@ -44,7 +50,7 @@ After 50 steps, 0.5 per step has shrunk the gradient to about 10⁻¹⁵; a forg
 
 Now train both kinds of network on a task that needs long memory. Each sequence starts with a signal, +2 or −2, followed by random noise; the label is simply which signal came first. The network must carry one bit of information through every noisy step to the end. Both networks below use 8 hidden units, read a 50-step sequence, predict from their final hidden state with a sigmoid, and train with Adam using backpropagation through time. Before running, predict: which network will get the answer right?
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -116,6 +122,11 @@ def run(kind, T, steps=250, H=8, lr=0.03, seed=0):
 
 for kind in ["RNN", "LSTM"]:
     print(f"{kind:<4} on 50-step sequences: test accuracy {run(kind, 50):.3f}")
+```
+
+```output
+RNN  on 50-step sequences: test accuracy 0.474
+LSTM on 50-step sequences: test accuracy 0.988
 ```
 
 Both networks share one function: `kind` chooses between the plain tanh step and the LSTM step, whose four gates come out of a single matrix product (`z` has 4H columns, split into f, i, g and o). The backward pass is BPTT as in the last lesson, plus the cell state's own gradient `dc`. At each step, working from the local derivatives of the two equations:

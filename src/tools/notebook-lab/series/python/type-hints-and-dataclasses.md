@@ -8,7 +8,7 @@ This lesson covers Python's answers to both. **Type hints** let you write down w
 
 A **type hint** (or **annotation**) says what type a value is meant to be. For a parameter, it goes after the name and a colon; for the return value, after an arrow `->` at the end of the `def` line.
 
-```python
+```python type
 def describe(name: str, age: int, height_m: float = 1.7) -> str:
     return f"{name}, {age}, {height_m} m"
 
@@ -16,25 +16,40 @@ print(describe("Ada", 36))
 help(describe)
 ```
 
+```output
+Ada, 36, 1.7 m
+Help on function describe:
+
+describe(name: str, age: int, height_m: float = 1.7) -> str
+```
+
 Read it as: `name` should be a string, `age` an integer, `height_m` a float that defaults to 1.7, and the function returns a string. `help` shows the hints as part of the function's description, and so do code editors, which is one of their main benefits: when you type `describe(`, a good editor shows exactly what to pass.
 
 Variables can be annotated too, though it is only worth it when the type is not obvious from the value:
 
-```python
+```python type
 count: int = 0
 names: list[str] = []
 print(count, names)
+```
+
+```output
+0 []
 ```
 
 ## Hints are not enforced
 
 The single most important thing to know about type hints is that **Python itself ignores them when the program runs**. They are documentation that tools can read, not rules that Python checks. Predict what happens here.
 
-```python
+```python type
 def double(x: int) -> int:
     return x * 2
 
 print(double("ha"))
+```
+
+```output
+haha
 ```
 
 It prints `haha`. The hint says `x` should be an `int`, but Python happily multiplies a string by 2. To actually catch mistakes like this, programmers run a separate tool called a **type checker**, such as `mypy`, which reads the hints and reports calls that do not match, before the program ever runs. In a large program that catches a whole class of bugs early. There is no type checker in this notebook, but hints are still worth writing: they make code much easier to read, and every professional Python codebase uses them.
@@ -50,7 +65,7 @@ For collections, put the type of the contents in square brackets:
 
 A vertical bar means "either": `int | None` is an integer or `None`, which is the usual hint for something that might be missing. For "any type at all", use `Any` from the `typing` module.
 
-```python
+```python type
 def find_price(prices: dict[str, float], item: str) -> float | None:
     return prices.get(item)
 
@@ -62,13 +77,19 @@ print(midpoint((0, 0), (4, 2)))
 print(midpoint.__annotations__)
 ```
 
+```output
+None
+(2.0, 1.0)
+{'a': tuple[float, float], 'b': tuple[float, float], 'return': tuple[float, float]}
+```
+
 The hints are stored on the function in an attribute called `__annotations__`, which is how tools read them.
 
 ## The @ syntax for decorators
 
 In the last lesson you wrapped a function with `square = announce(square)`. Python has a shorthand for exactly this: write `@announce` on the line just above the `def`.
 
-```python
+```python type
 def announce(func):
     def wrapper(*args, **kwargs):
         print(f"calling {func.__name__}{args}")
@@ -82,13 +103,18 @@ def add(a, b):
 print(add(2, 3))
 ```
 
+```output
+calling add(2, 3)
+5
+```
+
 `@announce` above `def add` means precisely "define `add`, then replace it with `announce(add)`". The wrapper uses `*args, **kwargs` so it works for any function, whatever its arguments. This `@` form is how decorators are nearly always applied, and it is what you will see in the rest of this lesson.
 
 ## @property: attributes that are calculated
 
 Python has several built-in decorators for use inside classes. The most useful is `@property`, which lets a method be used as if it were an attribute, without parentheses. It is perfect for values calculated from other attributes. Predict what the second `print` shows, after the width changes.
 
-```python
+```python type
 class Rectangle:
     def __init__(self, width: float, height: float):
         self.width = width
@@ -104,11 +130,16 @@ r.width = 10
 print(r.area)
 ```
 
+```output
+12
+40
+```
+
 `r.area` looks like an attribute but runs the method each time, so it is always up to date after `width` changes. A plain attribute set in `__init__` would still say 12.
 
 A property can also control what happens when someone assigns to it, with a **setter**. This is how a class can check a value every time it changes, while other code still uses ordinary attribute syntax:
 
-```python
+```python type
 class Thermostat:
     def __init__(self, celsius: float):
         self.celsius = celsius
@@ -132,13 +163,18 @@ except ValueError as e:
     print("Refused:", e)
 ```
 
+```output
+23.5
+Refused: 400 is outside the range -50 to 50
+```
+
 The two methods are both called `celsius`, which looks like a mistake but is how the syntax works. `@property` turns the first `celsius` method into a property. Then `@celsius.setter` attaches the second method to **that same property**, as the code to run whenever something is assigned to it. Both must use the same name. The real value is kept in `self._celsius`, with the underscore marking it as internal (lesson 18). Every assignment to `t.celsius`, including the one in `__init__`, goes through the setter, which checks it.
 
 ## @classmethod: other ways to create an object
 
 A method decorated with `@classmethod` receives the **class** as its first argument, called `cls` by convention, instead of an instance. Its main use is to provide alternative ways of creating objects, often named `from_something`:
 
-```python
+```python type
 class Colour:
     def __init__(self, red: int, green: int, blue: int):
         self.red, self.green, self.blue = red, green, blue
@@ -155,13 +191,18 @@ print(Colour(255, 0, 0))
 print(Colour.from_hex("#1e90ff"))
 ```
 
+```output
+Colour(255, 0, 0)
+Colour(30, 144, 255)
+```
+
 `Colour.from_hex(...)` is called on the class, parses the text, and calls `cls(...)`, which is `Colour(...)`, to build the object. (`int(text, 16)` reads text as a hexadecimal, base-16, number.) The return hint `"Colour"` is in quotation marks because, inside its own class body, the name `Colour` does not exist yet; a hint written as a string is read later, once it does.
 
 ## Dataclasses
 
 Look at how much of a typical small class is repetition:
 
-```python
+```python type
 class PointOld:
     def __init__(self, x, y):
         self.x = x
@@ -176,9 +217,13 @@ class PointOld:
 print(PointOld(1, 2), PointOld(1, 2) == PointOld(1, 2))
 ```
 
+```output
+PointOld(x=1, y=2) True
+```
+
 Every name appears several times, and adding a third attribute means editing all three methods. The `dataclasses` module's `@dataclass` decorator writes these methods for you, from a list of annotated attributes:
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass
@@ -192,11 +237,17 @@ print(p == Point(1, 2))
 print(p.x + p.y)
 ```
 
+```output
+Point(x=1, y=2)
+True
+3
+```
+
 The class body just lists the attributes with type hints. `@dataclass` reads them and generates `__init__`, `__repr__` and `__eq__`. The result is a normal class: you can add your own methods to it as usual.
 
 Attributes can have defaults, written like default arguments. As with function parameters, attributes with defaults must come after those without.
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass
@@ -213,11 +264,16 @@ print(basket)
 print(sum(item.total() for item in basket))
 ```
 
+```output
+[Item(name='tea', price=2.5, quantity=2), Item(name='cake', price=3.0, quantity=1)]
+8.0
+```
+
 ## The mutable default trap, again
 
 Can a dataclass attribute default to an empty list? Not with `= []`: that would be one list shared by every object, the same trap as lesson 9's default argument and lesson 18's class attribute. `@dataclass` refuses it with a `ValueError` to protect you. Instead, use `field(default_factory=list)`, which calls `list()` to make a **new** list for each object. Predict: after adding to Ada's order, is Alan's list still empty?
 
-```python
+```python type
 from dataclasses import dataclass, field
 
 @dataclass
@@ -231,6 +287,10 @@ a.items.append("tea")
 print(a, b)
 ```
 
+```output
+Order(customer='Ada', items=['tea']) Order(customer='Alan', items=[])
+```
+
 Each order gets its own list, so adding to Ada's leaves Alan's empty.
 
 ## Frozen and ordered dataclasses
@@ -240,7 +300,7 @@ Two options change what `@dataclass` generates:
 - `@dataclass(frozen=True)` makes objects that cannot be changed after they are created, like tuples. Frozen objects are also hashable, so they can go in sets and be dictionary keys. (A plain dataclass is not: it defines `__eq__`, and lesson 19 showed that defining `__eq__` removes the default hash. Freezing is what makes a safe hash possible again.)
 - `@dataclass(order=True)` generates `<`, `<=`, `>` and `>=`, comparing the attributes in order, like tuples. Then `sorted` works on the objects.
 
-```python
+```python type
 from dataclasses import dataclass, FrozenInstanceError
 
 @dataclass(frozen=True, order=True)
@@ -258,11 +318,18 @@ except FrozenInstanceError as e:
     print("FrozenInstanceError -", e)
 ```
 
+```output
+[Version(major=1, minor=9), Version(major=2, minor=0), Version(major=2, minor=1)]
+Version(major=2, minor=1)
+{Version(major=1, minor=0)}
+FrozenInstanceError - cannot assign to field 'major'
+```
+
 Before running it, predict the sorted order. Versions sort by major number first, then minor, and duplicates collapse in a set. Trying to change a frozen object raises a `FrozenInstanceError`.
 
 A dataclass can also check its values after they are set, with a method called `__post_init__`, which the generated `__init__` calls at the end:
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass
@@ -278,6 +345,11 @@ try:
     Percentage(120)
 except ValueError as e:
     print("Refused:", e)
+```
+
+```output
+Percentage(value=42)
+Refused: 120 is not between 0 and 100
 ```
 
 Use a dataclass whenever a class is mainly a bundle of named data, which covers a large share of the classes you will write. Write the class by hand when its `__init__` needs to do real work.

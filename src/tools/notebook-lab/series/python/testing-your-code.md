@@ -8,7 +8,7 @@ Testing is not an optional extra for professionals. It is how they can change a 
 
 The simplest test is a function whose name starts with `test_` and which uses `assert` to check results:
 
-```python
+```python type
 def word_count(text):
     return len(text.split())
 
@@ -20,6 +20,10 @@ def test_word_count():
 
 test_word_count()
 print("test_word_count passed")
+```
+
+```output
+test_word_count passed
 ```
 
 If every assert holds, the test function returns quietly and the last line prints. If any fails, it raises an `AssertionError` and stops at that line. The test states, in runnable form, exactly what `word_count` is supposed to do, including the cases people forget: empty text and extra spaces.
@@ -58,7 +62,7 @@ Think of it as trying to break the code. Every bug you have met in this series (
 
 Some behaviour is "this should fail". To test it, call the code inside `try`, and fail the test if no exception happens. As you read the cell, ask: what would happen if `withdraw` returned normally instead of raising?
 
-```python
+```python type
 def withdraw(balance, amount):
     if amount > balance:
         raise ValueError("insufficient funds")
@@ -75,13 +79,17 @@ test_withdraw_refuses_overdraft()
 print("passed")
 ```
 
+```output
+passed
+```
+
 If `withdraw` raises `ValueError`, the `except` block returns and the test passes. If it returns normally instead, the code reaches the final line, and the test fails with a clear message. Any other kind of exception is not caught, and also makes the test fail, which is right.
 
 ## A tiny test runner
 
 Calling each test function by hand gets tedious once you have more than a few. A **test runner** finds all the test functions, runs each one, and reports what passed and what failed, without stopping at the first failure. You can build one from things you already know: functions are values, so the runner can take a dictionary of names and functions, pick out the ones whose names start with `test_`, and call each one. Predict which of the three tests fails, and whether the runner stops there.
 
-```python
+```python type
 def run_tests(namespace):
     passed, failed = 0, 0
     for name, obj in list(namespace.items()):
@@ -111,6 +119,13 @@ def test_deliberately_wrong():
 run_tests({"test_upper": test_upper, "test_split_on_comma": test_split_on_comma, "test_deliberately_wrong": test_deliberately_wrong})
 ```
 
+```output
+pass test_upper
+pass test_split_on_comma
+FAIL test_deliberately_wrong: floats are not exact
+2 passed, 1 failed
+```
+
 `callable(obj)` checks that a value can be called, which a function can. Each test runs inside its own `try`, so one failure does not stop the rest. A failed assertion is reported as a **failure** (the code gave the wrong answer), and any other exception as an **error** (the code crashed). Catching every kind of exception with `except Exception` is usually a bad idea (lesson 14), but a test runner is the exception to the rule: its whole job is to report any crash and carry on with the next test. This small function is, in essence, what professional test tools do.
 
 The built-in function `globals()` returns a dictionary of every name defined at the top level of the program, so `run_tests(globals())` would run every `test_` function in the notebook. Here the three tests are passed explicitly instead, because earlier cells in this lesson also defined test functions, one of them deliberately broken.
@@ -119,7 +134,7 @@ The built-in function `globals()` returns a dictionary of every name defined at 
 
 Sometimes the right answer is hard to work out by hand, but there is a slow, obviously correct way to compute it. Then you can test the clever version against the simple one on hundreds of random inputs. The simple version is called a **reference implementation** or **oracle**.
 
-```python
+```python type
 import random
 
 def count_pairs_simple(numbers, target):
@@ -146,6 +161,10 @@ for _ in range(500):
     slow = count_pairs_simple(numbers, target)
     assert fast == slow, f"Mismatch for {numbers}, {target}: fast {fast}, simple {slow}"
 print("500 random cases agree")
+```
+
+```output
+500 random cases agree
 ```
 
 The fast version is much quicker on big inputs (the Algorithms series explains why), but it is also much easier to get subtly wrong. Five hundred random cases, including empty lists, duplicates and negative numbers, give strong evidence that it is right. If they ever disagree, the assert prints the exact input that broke it, which is a ready-made small example for debugging.

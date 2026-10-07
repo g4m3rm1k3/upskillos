@@ -24,7 +24,7 @@ The F in F = ma is the **net** force: the sum of every force acting, with signs 
 
 Mass appears in the denominator: the same force accelerates a heavier object less. Units fit together: a newton is defined as the force giving 1 kg an acceleration of 1 m/s². Predict before running: how long does the cart take to reach walking pace, 1.5 m/s, empty and with 135 kg of bricks?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,6 +37,11 @@ for load in [0, 135]:
     m = 45 + load
     a = acceleration([push, rolling], m)
     print(f"mass {m:>3} kg: net force {push + rolling:.0f} N, acceleration {a:.3f} m/s², reaches 1.5 m/s after {1.5 / a:.2f} s")
+```
+
+```output
+mass  45 kg: net force 90 N, acceleration 2.000 m/s², reaches 1.5 m/s after 0.75 s
+mass 180 kg: net force 90 N, acceleration 0.500 m/s², reaches 1.5 m/s after 3.00 s
 ```
 
 The empty cart reaches walking pace in 0.75 s; four times the mass takes four times as long, 3.0 s. With a constant net force, the acceleration is constant and the motion lesson's equations apply directly.
@@ -53,7 +58,7 @@ In code: `x, v = x + v * dt, v + F / m * dt` inside `simulate_constant`
 
 To prepare for forces that are not constant, simulate the simple case and check it against the exact answer. The **state** of the cart is its position and velocity, (x, v). Their rates of change are dx/dt = v and dv/dt = F/m. Euler's method from the motion lesson steps the state: over a small Δt, x grows by v Δt and v grows by (F/m) Δt. Predict before running: after 4 s, how far off is the stepped position with Δt = 0.1 s?
 
-```python
+```python type
 def simulate_constant(F, m, dt, T):
     x, v = 0.0, 0.0
     for _ in range(round(T / dt)):
@@ -64,6 +69,11 @@ a = 90 / 45
 for dt in [0.1, 0.01]:
     x, v = simulate_constant(90, 45, dt, 4.0)
     print(f"dt = {dt}: x = {x:.4f} m, v = {v:.4f} m/s   exact x = {0.5 * a * 16:.4f} m, v = {a * 4:.4f} m/s")
+```
+
+```output
+dt = 0.1: x = 15.6000 m, v = 8.0000 m/s   exact x = 16.0000 m, v = 8.0000 m/s
+dt = 0.01: x = 15.9600 m, v = 8.0000 m/s   exact x = 16.0000 m, v = 8.0000 m/s
 ```
 
 Writing `x, v = x + v * dt, v + ...` updates both from the **old** values at once, which is plain Euler.
@@ -86,7 +96,7 @@ Real forces often depend on the motion itself. Air or fluid **drag** opposes vel
 
 As v grows, the drag grows until it cancels the push: then the net force is zero and the speed stops changing. That **terminal speed** is v_T = F/c, found without solving anything: just set the rate of change to zero. The exact solution, from the calculus block, is v(t) = v_T (1 − e^(−ct/m)), approaching v_T without ever reaching it. Predict before running: a 200 kg boat pushed by 400 N with c = 80 N·s/m. What is its terminal speed, and how long until it reaches 95% of it?
 
-```python
+```python type
 F, m, c = 400.0, 200.0, 80.0
 dt, T = 0.01, 15.0
 ts = np.arange(0, T + dt / 2, dt)
@@ -107,6 +117,11 @@ ax.legend()
 plt.show()
 ```
 
+```output
+terminal speed F/c = 5.0 m/s; after 15 s: simulated 4.9878, exact 4.9876
+time to 95%: simulated 7.48 s, exact 7.49 s
+```
+
 `np.argmax(vs >= 0.95 * F / c)` finds the first time step at which the speed reaches 95% of terminal.
 
 The boat approaches 5 m/s and reaches 95% of it after about 7.5 s; the simulation and the exact curve are indistinguishable on the plot. The time scale m/c = 2.5 s, the **time constant**, sets how quickly the speed settles: after three time constants it is at 95%, after five at over 99%. Heavier boats or less drag mean longer time constants.
@@ -123,7 +138,7 @@ In code: `cart(t, state)` is $\mathbf{f}$; `euler(deriv, state0, dt, T)` repeats
 
 Every simulation so far had the same structure: a state, a function giving the state's rate of change, and a loop. Writing that structure once gives a tool for any system. The state becomes a NumPy array, and the **derivative function** `deriv(t, state)` returns the array of rates. This is exactly the form that professional ODE solvers (such as SciPy's `solve_ivp`, later in the series) expect. Predict before running: with forward drive, rolling resistance and quadratic air drag, what top speed does an electric cart reach?
 
-```python
+```python type
 def euler(deriv, state0, dt, T):
     state = np.array(state0, dtype=float)
     ts, states = [0.0], [state.copy()]
@@ -143,6 +158,10 @@ v_top = math.sqrt((600 - 0.015 * 300 * 9.81) / 0.4)
 print(f"after 2 min: speed {states[-1, 1]:.3f} m/s (theory {v_top:.3f}), distance {states[-1, 0]:.0f} m")
 ```
 
+```output
+after 2 min: speed 37.277 m/s (theory 37.278), distance 3953 m
+```
+
 The air drag k v|v| always opposes the motion, whichever way the cart moves. Rolling resistance is the coefficient C_rr times the weight.
 
 The cart settles at about 37.3 m/s, where drive balances rolling resistance plus air drag: setting the rate of change to zero gives the terminal speed directly, matching the simulation. Changing the physics means changing only the derivative function; the stepper never changes.
@@ -159,7 +178,7 @@ In code: `energy(x, v)` measures the drift of each method over 20 periods
 
 A mass on a spring feels a force pulling it back towards rest, proportional to the stretch: F = −kx (Hooke's law). It oscillates, and with no friction its energy ½mv² + ½kx² should stay constant forever. Plain Euler fails this test: the energy grows every step, and the oscillation spirals outward. A tiny change fixes it: update the velocity first, then use the **new** velocity to update the position. This **semi-implicit Euler** method costs nothing extra and keeps the energy bounded, which is why game engines use it (molecular simulations use its second-order cousin, the Verlet method). Predict before running: after 20 periods, how much has each method's energy changed?
 
-```python
+```python type
 k_s, m_s, dt = 400.0, 1.0, 0.005
 period = 2 * math.pi * math.sqrt(m_s / k_s)
 steps = round(20 * period / dt)
@@ -177,6 +196,12 @@ E0 = energy(0.1, 0.0)
 print(f"period {period:.4f} s, {steps} steps")
 print(f"explicit Euler: energy multiplied by {energy(x1, v1) / E0:,.0f}")
 print(f"semi-implicit Euler: energy changed by {100 * (energy(x2, v2) / E0 - 1):+.3f}%")
+```
+
+```output
+period 0.3142 s, 1257 steps
+explicit Euler: energy multiplied by 270,375
+semi-implicit Euler: energy changed by -0.880%
 ```
 
 The two loops differ only in order: explicit Euler updates both from the old values; semi-implicit Euler updates v first and uses it immediately.

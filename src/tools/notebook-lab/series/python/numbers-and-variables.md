@@ -8,10 +8,15 @@ This lesson is about **variables**, which are how a program remembers things, an
 
 A **variable** is a name that refers to a value. You create one with an **assignment**: a name, an equals sign, and a value.
 
-```python
+```python type
 hours_per_day = 24
 print(hours_per_day)
 print(hours_per_day * 7)
+```
+
+```output
+24
+168
 ```
 
 The first line does not print anything. It tells Python: "from now on, the name `hours_per_day` refers to the number 24." After that, wherever the name appears, Python uses the value it refers to. That is why `hours_per_day * 7` prints `168`.
@@ -26,13 +31,18 @@ When Python runs an assignment, it first works out the value on the right of the
 
 Predict what this cell prints before you run it.
 
-```python
+```python type
 seconds_per_minute = 60
 minutes_per_hour = 60
 seconds_per_hour = seconds_per_minute * minutes_per_hour
 seconds_per_day = seconds_per_hour * 24
 print(seconds_per_hour)
 print(seconds_per_day)
+```
+
+```output
+3600
+86400
 ```
 
 It prints `3600` and `86400`. Each line builds on the ones above it, and every number now has a name that says what it means. Compare `seconds_per_hour * 24` with `60 * 60 * 24`: the first explains itself, while the second leaves the reader to work out what each 60 is for. Good names are one of the cheapest ways to make code easy to understand.
@@ -43,34 +53,48 @@ A variable can be given a new value at any time by assigning to it again. The na
 
 Predict both lines of output.
 
-```python
+```python type
 score = 10
 print(score)
 score = 25
 print(score)
 ```
 
+```output
+10
+25
+```
+
 The first `print` shows `10` and the second shows `25`. The program runs from the top down, so each `print` shows whatever the name refers to at that moment.
 
 Now a line that looks impossible if you read `=` as "equals":
 
-```python
+```python type
 score = 10
 score = score + 5
 print(score)
+```
+
+```output
+15
 ```
 
 In mathematics, `score = score + 5` has no solution. In Python it is completely ordinary, because the right-hand side is worked out first. Python looks up `score` (10), adds 5 to get 15, and then makes `score` refer to 15. The line means "increase score by 5".
 
 Updating a variable in terms of itself is so common that Python has a shorter way to write it. `score += 5` means exactly the same as `score = score + 5`. There are matching versions for the other operators: `-=`, `*=` and `/=`.
 
-```python
+```python type
 lives = 3
 lives -= 1
 print("Lives left:", lives)
 coins = 50
 coins *= 2
 print("Coins:", coins)
+```
+
+```output
+Lives left: 2
+Coins: 100
 ```
 
 ## Order matters
@@ -86,11 +110,15 @@ This is the same `NameError` you met in the last lesson, and the message reads t
 
 Here is a subtler version of the same idea. Predict what this prints: 30 or 20?
 
-```python
+```python type
 width = 10
 area = width * 2
 width = 15
 print(area)
+```
+
+```output
+20
 ```
 
 It prints `20`. When the second line ran, `width` was 10, so `area` was set to 20. Changing `width` later does not go back and recalculate `area`; `area` refers to the number 20, not to the calculation that produced it. A spreadsheet would update the cell automatically, but a Python variable is not a formula. It holds whatever value it was last given.
@@ -120,21 +148,34 @@ Python has two main kinds of number. An **integer**, or `int`, is a whole number
 
 Every value in Python has a **type**, and the built-in function `type` tells you what it is.
 
-```python
+```python type
 print(type(7))
 print(type(7.0))
 print(type(10 / 2))
 print(type(10 + 2))
 ```
 
+```output
+<class 'int'>
+<class 'float'>
+<class 'float'>
+<class 'int'>
+```
+
 Each line prints something like `<class 'int'>`. Read that as "the type is int"; the word "class" is Python's general name for a type, and you will learn what it really means much later. `7` and `7.0` are equal in value but different in type: one is an `int`, the other a `float`. This explains the mystery from the last lesson. Division with `/` always produces a float, even when the answer is whole, because in general dividing two whole numbers does not give a whole number. `10 / 2` is `5.0`, a float. Addition, subtraction and multiplication of two ints give an int.
 
 When an int and a float meet in one calculation, the result is a float. Python will not throw away the part after the decimal point unless you ask it to.
 
-```python
+```python type
 print(3 + 0.5)
 print(2 * 1.5)
 print(4 - 4.0)
+```
+
+```output
+3.5
+3.0
+0.0
 ```
 
 ## Whole-number division and remainders
@@ -146,11 +187,16 @@ Often you want division that stays in whole numbers: how many full boxes can I f
 
 Predict both results: 17 items packed into boxes of 5.
 
-```python
+```python type
 items = 17
 box_size = 5
 print("Full boxes:", items // box_size)
 print("Left over:", items % box_size)
+```
+
+```output
+Full boxes: 3
+Left over: 2
 ```
 
 `17 // 5` is `3`, because 5 fits into 17 three whole times, and `17 % 5` is `2`, because three boxes of 5 use 15 items and 2 remain. The two always fit together: `box_size * full_boxes + left_over` gets you back to 17.
@@ -161,20 +207,32 @@ This pair of operators turns up constantly. Converting a number of seconds into 
 
 Run this cell. What do you expect `0.1 + 0.2` to be?
 
-```python
+```python type
 print(0.1 + 0.2)
 print(0.1 + 0.2 - 0.3)
+```
+
+```output
+0.30000000000000004
+5.551115123125783e-17
 ```
 
 The answer is `0.30000000000000004`, not 0.3. The second line makes the gap visible: instead of 0, it prints a tiny number, about 0.00000000000000006, written in the scientific style `5.551115123125783e-17` ("times ten to the power minus 17"). This is not a bug in Python; every programming language that uses standard floating-point numbers does the same thing. A computer stores numbers in binary, in base 2, and in binary most decimal fractions cannot be written exactly. It is the same problem you have writing one third in decimal: 0.333333... never ends, so any finite version is slightly off. The number 0.1 is stored as the closest binary fraction the computer can hold, which is very slightly more than 0.1.
 
 The errors are tiny, around the 16th significant digit, so for most purposes they do not matter. They matter in two situations. First, never test whether two floats are exactly equal; check that they are close instead (you will learn how in a later lesson). Second, when you show a float to a person, round it. The built-in function `round` takes a number and how many decimal places to keep:
 
-```python
+```python type
 print(round(0.1 + 0.2, 2))
 print(round(3.14159, 3))
 print(round(2.5))
 print(round(3.5))
+```
+
+```output
+0.3
+3.142
+2
+4
 ```
 
 `round` with no second number rounds to a whole number. You may notice that `round(2.5)` gives `2`, not 3, while `round(3.5)` gives `4`. When a number is exactly halfway, Python rounds to the nearest even number. This avoids a small bias that always rounding halves up would cause when you add up many rounded numbers.
@@ -183,19 +241,30 @@ print(round(3.5))
 
 The functions `int` and `float` convert a value to that type.
 
-```python
+```python type
 print(float(7))
 print(int(7.9))
 print(int(-7.9))
 print(abs(-7.9))
 ```
 
+```output
+7.0
+7
+-7
+7.9
+```
+
 `float(7)` gives `7.0`. `int(7.9)` gives `7`: converting to an int simply cuts off everything after the decimal point, it does not round. With a negative number that means `int(-7.9)` is `-7`, cutting towards zero. If you want the nearest whole number, use `round`. Note that this is not quite the same as `//`, which always rounds **down**: `-7 // 2` is `-4` (down from -3.5), while `int(-7 / 2)` is `-3` (towards zero). For positive numbers the two agree. The last line shows one more useful built-in, `abs`, which gives the **absolute value**: the size of a number without its sign.
 
 Python's ints have no size limit. They grow as large as your computer's memory allows, which is not true in many other languages:
 
-```python
+```python type
 print(2 ** 100)
+```
+
+```output
+1267650600228229401496703205376
 ```
 
 ::: challenge The shopping bill [easy]

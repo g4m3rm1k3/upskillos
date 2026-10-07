@@ -24,7 +24,7 @@ Every combination of moving and resizing a graph without bending it fits the for
 
 Predict before running: a bump peaks at x = 0 with height 1. Where is the peak, and how tall and wide is it, after each move?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,6 +52,16 @@ describe("squeeze by 2, then shift 2", moved(bump, b=2, c=2))
 describe("bump(2x - 2)", lambda x: bump(2 * x - 2))
 ```
 
+```output
+bump                         peak at x = +0.00, height 1.00, width at half height 1.66
+shift right by 2             peak at x = +2.00, height 1.00, width at half height 1.66
+lift by 0.5                  peak at x = +0.00, height 1.50, width at half height 1.66
+stretch up by 3              peak at x = +0.00, height 3.00, width at half height 1.66
+squeeze by b = 2             peak at x = +0.00, height 1.00, width at half height 0.83
+squeeze by 2, then shift 2   peak at x = +2.00, height 1.00, width at half height 0.83
+bump(2x - 2)                 peak at x = +1.00, height 1.00, width at half height 0.83
+```
+
 The plain bump peaks at 0 with height 1 and width 1.66 at half height. Shifting by c = 2 moves the peak to +2, and lifting by 0.5 raises it to 1.5 without changing the width. Stretching by a = 3 triples the height. Squeezing by b = 2 halves the width to 0.83. With b = 2 and c = 2 the peak is at +2, but bump(2x − 2) peaks at +1: the shift inside the brackets is divided by b. Writing the form as b(x − c) keeps c meaning "the shift", which is why that is the standard way to write it.
 
 ## Reflections, even and odd
@@ -69,7 +79,7 @@ Any function splits into an even and an odd part, by averaging it with its mirro
 
 Predict before running: what are the even and odd parts of eˣ, and do they add back up?
 
-```python
+```python type
 even_part = lambda f: (lambda x: (f(x) + f(-x)) / 2)
 odd_part = lambda f: (lambda x: (f(x) - f(-x)) / 2)
 grid = np.linspace(-2, 2, 9)
@@ -77,6 +87,12 @@ E, O = even_part(np.exp)(grid), odd_part(np.exp)(grid)
 print("even part = cosh:", np.allclose(E, np.cosh(grid)), "  odd part = sinh:", np.allclose(O, np.sinh(grid)))
 print("parts add back to e^x:", np.allclose(E + O, np.exp(grid)))
 print("x³ - 2x is odd:", np.allclose(grid ** 3 - 2 * grid, -((-grid) ** 3 - 2 * (-grid))), "  cos is even:", np.allclose(np.cos(-grid), np.cos(grid)))
+```
+
+```output
+even part = cosh: True   odd part = sinh: True
+parts add back to e^x: True
+x³ - 2x is odd: True   cos is even: True
 ```
 
 The even part of eˣ is exactly cosh x and the odd part exactly sinh x, and they add back to eˣ. The checks confirm x³ − 2x is odd and cos is even.
@@ -96,7 +112,7 @@ The best whole-number lag is limited to one sample (1 ms here). Fitting a parabo
 
 Predict before running: the second sensor's trace is delayed by 37.4 ms, 2.5 times taller, offset by 0.8 and noisy. Does the correlation find the delay?
 
-```python
+```python type
 rng = np.random.default_rng(65)
 fs = 1000.0
 t = np.arange(0, 2.0, 1 / fs)
@@ -125,6 +141,10 @@ a2.set_xlabel("lag (ms)")
 plt.show()
 ```
 
+```output
+correlation peak at lag 37 samples = 37.0 ms; refined 37.45 ms (true 37.4 ms)
+```
+
 The correlation peaks at a lag of 37 samples, 37.0 ms. The parabolic refinement gives 37.45 ms against the true 37.4 ms, an error of about a twentieth of a sample, despite the noise, the gain and the offset. The same method locates leaks from the delay between two microphones on a pipe, measures flow speed from the delay between two sensors along it, and synchronises data loggers that were started at slightly different times.
 
 ## Recovering gain and offset
@@ -141,7 +161,7 @@ With the delay found, the vertical moves remain: y ≈ a·x(t − c) + d. That i
 
 Predict before running: how close are the fitted gain and offset to 2.5 and 0.8, using the rounded and the refined delay?
 
-```python
+```python type
 def fit_gain_offset(delay_s):
     shifted = np.interp(t - delay_s, t, x)
     keep = t >= delay_s
@@ -159,6 +179,13 @@ A = np.column_stack([clean[t >= delay], np.ones((t >= delay).sum())])
 print("fit against the noise-free shape instead:", np.linalg.lstsq(A, y[t >= delay], rcond=None)[0].round(4))
 ```
 
+```output
+rounded delay   37.00 ms: gain 2.2525, offset 0.8049
+refined delay   37.45 ms: gain 2.3692, offset 0.8005
+noise in sensor 1 dilutes the slope by var(signal)/(var(signal) + σ²) = 0.9072, predicting a gain of 2.2680
+fit against the noise-free shape instead: [2.5037 0.7983]
+```
+
 With the delay rounded to 37 ms the fitted gain is 2.25, 10% low; with the refined 37.45 ms it is 2.37, offset 0.80. Alignment is not the main cause: against a noise-free shape both delays give 2.50, because 0.4 ms is only a sixtieth of a 25 Hz period. The shortfall is **regression dilution**: sensor 1 is noisy, and noise in the **input** column of a least-squares fit pulls the slope towards zero by the factor var(signal)/(var(signal) + σ²). That is predicted here as 0.907, a gain of 2.27, matching the rounded fit. The refined fit looks better only because interpolating 45% of the way between samples averages two noise values and roughly halves the noise variance. Fitting against a noise-free shape (in practice an average of many repeated events) recovers 2.50. Least squares assumes the x values are exact; when both signals are noisy, methods that allow for errors in both variables (errors-in-variables regression) are needed.
 
 ## Time stretching
@@ -174,7 +201,7 @@ A horizontal stretch, y(t) = x(bt), arises when a logger's clock runs fast or sl
 
 Predict before running: a chirp (a tone whose frequency rises) is recorded by a logger whose clock makes everything appear 8% slower. What value of b brings the template into line with the recording?
 
-```python
+```python type
 tt = np.arange(0, 1.0, 1 / fs)
 chirp = lambda u: np.sin(2 * math.pi * 3 * u ** 2)
 recorded = chirp(tt / 1.08) + rng.normal(0, 0.05, tt.size)
@@ -182,6 +209,10 @@ bs = np.linspace(0.8, 1.2, 401)
 scores = np.array([np.corrcoef(chirp(b * tt), recorded)[0, 1] for b in bs])
 b_hat = bs[np.argmax(scores)]
 print(f"best stretch b = {b_hat:.3f} (exact 1/1.08 = {1 / 1.08:.4f}), correlation {scores.max():.4f}; with b = 1 the correlation is only {scores[np.argmin(np.abs(bs - 1))]:.3f}")
+```
+
+```output
+best stretch b = 0.926 (exact 1/1.08 = 0.9259), correlation 0.9972; with b = 1 the correlation is only 0.409
 ```
 
 The search finds b = 0.926, matching 1/1.08 = 0.9259 to the grid's resolution, with a correlation of almost 1. Without the stretch, b = 1, the correlation is much lower, because the template and the recording drift out of step as the chirp speeds up. Searching over a parameter and scoring the match is a general method. It works for stretches, rotations and any other transformation whose effect is too non-linear for a formula, at the cost of evaluating every candidate.

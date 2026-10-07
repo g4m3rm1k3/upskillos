@@ -14,7 +14,7 @@ Why keep the test set separate from validation? Because choosing the best of man
 
 You can see this optimism directly. Here, 100 "models" are simulated that are all equally useless: they guess at random. Pick the one with the best validation accuracy, then measure it on fresh test data. Predict: what will the winner score on the test set?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -32,13 +32,18 @@ print("best validation accuracy of 100 random guessers:", best_val)
 print("that model's accuracy on the test set:          ", (guesses_test == y_test).mean())
 ```
 
+```output
+best validation accuracy of 100 random guessers: 0.58
+that model's accuracy on the test set:           0.46
+```
+
 Every model is a coin-flipper with a true accuracy of 50%, yet the best of 100 scores well above that on validation, purely by luck. On the test set it drops straight back to about 50%. When you choose among many models, only an untouched test set tells the truth.
 
 ## One split is not enough
 
 Now the other question. How much does a validation score depend on which examples happened to land in the validation set? Guess how far apart ten random splits will be before running the cell.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -62,6 +67,11 @@ print(np.round(scores, 3))
 print(f"from {min(scores):.2f} to {max(scores):.2f}")
 ```
 
+```output
+[0.34  0.438 0.363 0.542 0.448 0.323 0.444 0.488 0.535 0.513]
+from 0.32 to 0.54
+```
+
 The same model, the same data, ten different random splits: the validation R² ranges widely, from about 0.32 to 0.54. With 92 validation patients, a single score is a noisy estimate, just as the estimation lesson predicted for any statistic from a small sample. Choices made by comparing two such scores can easily be wrong.
 
 ## k-fold cross-validation
@@ -74,7 +84,7 @@ The fix is to validate on **every** example, not just one slice. **k-fold cross-
 
 Every example is used for validation exactly once and for training `k − 1` times. The average of `k` scores is much steadier than any single one, and it uses all the data for both jobs. In the next cell, predict: will the five-fold means for different shuffles vary as much as the single splits did?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -106,6 +116,12 @@ print(f"mean R² {scores.mean():.3f}, standard deviation {scores.std():.3f}")
 print("means for five different shuffles:", [round(cross_validate(5, s).mean(), 3) for s in range(5)])
 ```
 
+```output
+fold scores: [0.501 0.503 0.533 0.557 0.343]
+mean R² 0.487, standard deviation 0.075
+means for five different shuffles: [np.float64(0.487), np.float64(0.48), np.float64(0.492), np.float64(0.489), np.float64(0.492)]
+```
+
 `np.array_split(order, k)` cuts the shuffled positions into `k` nearly equal pieces (it handles lengths that do not divide evenly). The individual fold scores still vary, which is honest information about how uncertain the estimate is. But the **means** over different shuffles agree far more closely than the single-split scores did. Notice that `fit_and_score` standardises using each training part's own statistics, so no information from the validation fold leaks into training.
 
 The price is computation: `k` fits instead of one. For small and medium datasets that is almost always worth it. For huge datasets, where a single validation split is already large and stable, one split is fine.
@@ -114,7 +130,7 @@ The price is computation: `k` fits instead of one. For small and medium datasets
 
 To choose λ for ridge, run cross-validation for each candidate and pick the one with the best mean score. The same folds should be used for every candidate, so they are compared on equal terms:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -145,6 +161,12 @@ print("cross-validated MSE by λ:", np.round(cv_mse, 3))
 print("best λ:", best)
 ```
 
+```output
+cross-validated MSE by λ: [0.081 0.079 0.075 0.072 0.07  0.069 0.068 0.068 0.068 0.066 0.071 0.086
+ 0.118 0.185 0.279 0.395 0.517]
+best λ: 0.03162277660168379
+```
+
 Look at the whole row of scores, not just the winner. The cross-validated error is almost flat over a wide range of small λ values, then climbs steeply once λ is large enough to flatten the curve. Many λ values are nearly as good as the best one, and a slightly different set of folds could easily pick a neighbour. What matters is staying on the flat part, well away from the cliff; the exact winner matters much less.
 
 ## The full protocol
@@ -162,7 +184,7 @@ If the test score is much worse than the cross-validation score, something went 
 
 scikit-learn has all of this built in. `KFold` makes the folds and `cross_val_score` runs the whole loop:
 
-```python
+```python type
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold, cross_val_score
@@ -171,6 +193,10 @@ data = load_diabetes()
 folds = KFold(n_splits=5, shuffle=True, random_state=0)
 scores = cross_val_score(LinearRegression(), data.data, data.target, cv=folds, scoring="r2")
 print(scores.round(3), scores.mean().round(3))
+```
+
+```output
+[0.332 0.46  0.537 0.522 0.595] 0.489
 ```
 
 (`load_diabetes()` without `scaled=False` gives the same data with its features already standardised, which makes no difference to plain linear regression; the mean R² of about 0.49 agrees with the hand-written version above.) The `scoring` argument names the measure. For errors, scikit-learn uses **negated** versions, such as `"neg_mean_squared_error"`, because it always treats a higher score as better.

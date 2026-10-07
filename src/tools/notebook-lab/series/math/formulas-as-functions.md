@@ -29,7 +29,7 @@ where F is the load, L the length, E the material's stiffness (Young's modulus, 
 
 As code, each letter becomes a parameter. Single letters match the handbook, so they are fine here as long as the docstring says what each one means and in which units. Working in SI base units throughout (N, m, Pa) means no conversion factors hide inside the formula. Predict before running: what is the tip deflection of a 20 × 40 mm steel bar, 0.5 m long, carrying 500 N?
 
-```python
+```python type
 def rect_I(b, h):
     """Second moment of area of a b-wide, h-tall rectangle (m^4), for bending about its width."""
     return b * h ** 3 / 12
@@ -42,6 +42,10 @@ STEEL_E = 200e9
 I = rect_I(0.020, 0.040)
 delta = cantilever_deflection(F=500, L=0.5, E=STEEL_E, I=I)
 print(f"I = {I:.4e} m^4, tip deflection = {delta * 1000:.3f} mm")
+```
+
+```output
+I = 1.0667e-07 m^4, tip deflection = 0.977 mm
 ```
 
 The tip moves just under 1 mm. Calling with keyword arguments (`F=500, L=0.5`) makes the call read like the formula and protects against swapping two numbers of similar size, a classic and silent mistake.
@@ -60,7 +64,7 @@ In code: `bar_deflection` calls `cantilever_deflection` with `rect_I(b, h)`: one
 
 Composition also makes the formula's structure easy to explore. Because I contains h³, doubling the bar's height should cut the deflection by 2³ = 8, while doubling its width only halves it. Predict before running: which orientation of the same 20 × 40 bar is stiffer, and by how much?
 
-```python
+```python type
 def bar_deflection(F, L, E, b, h):
     return cantilever_deflection(F, L, E, rect_I(b, h))
 
@@ -69,6 +73,12 @@ flat = bar_deflection(500, 0.5, STEEL_E, b=0.040, h=0.020)
 print(f"standing on edge: {tall * 1000:.3f} mm, lying flat: {flat * 1000:.3f} mm, ratio {flat / tall:.1f}")
 print("double the height ->", round(tall / bar_deflection(500, 0.5, STEEL_E, 0.020, 0.080), 6), "times stiffer")
 print("double the width  ->", round(tall / bar_deflection(500, 0.5, STEEL_E, 0.040, 0.040), 6), "times stiffer")
+```
+
+```output
+standing on edge: 0.977 mm, lying flat: 3.906 mm, ratio 4.0
+double the height -> 8.0 times stiffer
+double the width  -> 2.0 times stiffer
 ```
 
 The same steel deflects 4 times as much lying flat as standing on edge. That is why joists and beams are deep and narrow: depth is cubed, width is not.
@@ -89,7 +99,7 @@ The handbook formula gives deflection from the dimensions. A designer usually ne
 
 Each rearrangement is a new function. The algebra can go wrong, so check it with a **round trip**: feed the computed h back into the forward formula and confirm that it returns the δ you asked for. Predict before running: if the bar must deflect no more than 0.4 mm, how tall must it be, and how much heavier is it than the 40 mm bar?
 
-```python
+```python type
 def required_height(F, L, E, b, max_deflection):
     """Bar height (m) so that a b-wide cantilever deflects exactly max_deflection (m)."""
     return (4 * F * L ** 3 / (E * b * max_deflection)) ** (1 / 3)
@@ -98,6 +108,11 @@ h = required_height(500, 0.5, STEEL_E, b=0.020, max_deflection=0.0004)
 back = bar_deflection(500, 0.5, STEEL_E, 0.020, h)
 print(f"required height {h * 1000:.2f} mm, round trip gives {back * 1000:.6f} mm")
 print(f"mass ratio vs the 40 mm bar: {h / 0.040:.3f}")
+```
+
+```output
+required height 53.86 mm, round trip gives 0.400000 mm
+mass ratio vs the 40 mm bar: 1.347
 ```
 
 Cutting the deflection from 0.98 mm to 0.4 mm, by a factor of about 2.4, needs a bar only about 35% taller, and so about 35% heavier, because deflection depends on the cube of the height: 1.35³ ≈ 2.4. The round trip returns 0.4 mm to six decimal places, which confirms the algebra.
@@ -121,7 +136,7 @@ A wrong formula still returns a plausible number, so formulas need tests just li
 
 Bad inputs deserve an error rather than a nonsense answer: a negative length is a typo, not a design. Predict before running: which of these checks would catch a formula that had L² instead of L³?
 
-```python
+```python type
 def checked_deflection(F, L, E, I):
     if L <= 0 or E <= 0 or I <= 0:
         raise ValueError("length, modulus and second moment must be positive")
@@ -143,6 +158,15 @@ except ValueError as err:
     print("rejected:", err)
 ```
 
+```output
+zero load gives 0.0
+double F -> 2.0
+double L -> 8.0
+double E -> 0.5
+the L-squared typo: double L -> 4.0
+rejected: length, modulus and second moment must be positive
+```
+
 The scaling test catches the typo at once: doubling L gives 4 rather than 8. A single known-value test would also catch it here, but scaling tests need no reference answer at all, only knowledge of how the physics behaves.
 
 ## Formulas as values
@@ -157,13 +181,20 @@ In code: `formula(**{name: v}, **fixed)` evaluates the formula with one input ch
 
 In Python a function is a value like any other: it can be stored in a dictionary, passed to another function or returned from one. That makes it possible to write general tools that work for any formula, such as a sweep that evaluates a formula over a range of one input while holding the others fixed. Predict before running: in steps of 10 mm, what is the shortest standard bar height that meets the 0.4 mm limit?
 
-```python
+```python type
 def sweep(formula, name, values, **fixed):
     return [(v, formula(**{name: v}, **fixed)) for v in values]
 
 heights = [0.030, 0.040, 0.050, 0.060]
 for h_value, d in sweep(bar_deflection, "h", heights, F=500, L=0.5, E=STEEL_E, b=0.020):
     print(f"h = {h_value * 1000:.0f} mm -> {d * 1000:.3f} mm", "ok" if d <= 0.0004 else "too flexible")
+```
+
+```output
+h = 30 mm -> 2.315 mm too flexible
+h = 40 mm -> 0.977 mm too flexible
+h = 50 mm -> 0.500 mm too flexible
+h = 60 mm -> 0.289 mm ok
 ```
 
 `**fixed` gathers the held inputs into a dictionary, and `formula(**{name: v}, **fixed)` unpacks them back into keyword arguments together with the swept one.

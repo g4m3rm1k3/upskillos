@@ -15,7 +15,7 @@ This lesson covers:
 
 `copy.copy(x)` makes a **shallow** copy: a new outer object whose attributes refer to the **same** inner objects as the original. `copy.deepcopy(x)` makes a **deep** copy: it copies the inner objects too, all the way down. For an object holding only numbers and strings, which cannot be changed in place, the difference does not matter. For one holding lists or other mutable objects, it matters a great deal. Predict before running: after adding a hole to the shallow copy, how many holes does the original have?
 
-```python
+```python type
 import copy
 
 class Part:
@@ -40,6 +40,13 @@ print(deep)
 print("shallow shares the list:", shallow.holes is bracket.holes, "  deep does not:", deep.holes is bracket.holes)
 ```
 
+```output
+Part('bracket', 'steel', holes=[(10, 10), (40, 10), (25, 30)])
+Part('bracket-B', 'steel', holes=[(10, 10), (40, 10), (25, 30)])
+Part('bracket-C', 'steel', holes=[(10, 10), (40, 10), (25, 30), (5, 5)])
+shallow shares the list: True   deep does not: False
+```
+
 Setting `shallow.name` replaced the name on the copy only. But `shallow.holes.append` changed the one list both objects share.
 
 The original bracket now has three holes, though nobody touched it: the shallow copy's `append` changed the shared list. The deep copy got its own list, so its extra hole stayed on the copy. This is the classic prototype bug: a template quietly changed by a "copy". When a prototype contains mutable parts, clone it with `deepcopy` unless you deliberately want sharing.
@@ -48,7 +55,7 @@ The original bracket now has three holes, though nobody touched it: the shallow 
 
 A workshop keeps standard templates for common jobs. Each is a fully configured object stored in a dictionary under a name. A new job starts as a deep copy of a template, then gets its own adjustments. This replaces a tangle of constructor arguments and subclasses ("aluminium bracket", "thick bracket") with data. Predict before running: after making two customised brackets, is the template still the same?
 
-```python
+```python type
 from dataclasses import dataclass, field
 
 @dataclass
@@ -79,6 +86,12 @@ print(thick)
 print("template:", TEMPLATES["bracket"])
 ```
 
+```output
+Job(part='bracket', material='aluminium', thickness_mm=3, operations=['cut outline', 'drill 4 x 6 mm', 'deburr', 'anodise'])
+Job(part='bracket', material='steel', thickness_mm=6, operations=['preheat', 'cut outline', 'drill 4 x 6 mm', 'deburr'])
+template: Job(part='bracket', material='steel', thickness_mm=3, operations=['cut outline', 'drill 4 x 6 mm', 'deburr'])
+```
+
 `field(default_factory=list)` gives every `Job` created without operations its own new empty list. A plain `= []` default would be shared by all of them, which is the same aliasing trap, and dataclasses refuse it.
 
 The template is untouched: each job's operations list is its own copy. Adding a new standard job is adding a dictionary entry, which could even be loaded from a file. In Python, this registry-and-clone idea covers most of what the Gang of Four's Prototype describes. Languages without dynamic classes needed more machinery for it.
@@ -89,7 +102,7 @@ A deep copy copies **everything** reachable, and that is not always right. A job
 
 An object controls how it is copied by defining `__copy__` and `__deepcopy__`. `copy.deepcopy(obj)` calls `obj.__deepcopy__(memo)` if it exists. The `memo` dictionary records what has already been copied in this run, so passing it on in nested `deepcopy` calls keeps shared and repeated objects correct. Predict before running: does the clone have the same machine, the same operations list, and the same serial?
 
-```python
+```python type
 import itertools
 
 class Machine:
@@ -122,6 +135,12 @@ print("own steps:", clone.steps is not original.steps, original.steps, clone.ste
 print("serials:", original.serial, clone.serial)
 ```
 
+```output
+same machine: True
+own steps: True [['face', 1.0], ['turn', 3.5]] [['face', 1.0], ['turn', 4.0]]
+serials: 1001 1002
+```
+
 `Workorder.__new__(Workorder)` creates a bare object without running `__init__`, which would otherwise take a new serial and need arguments. `itertools.count(1001)` hands out 1001, 1002, ... one per `next`.
 
 The clone shares the lathe (there is only one real lathe), has its own nested steps, so changing its second step left the original's alone, and has a fresh serial number. `memo[id(self)] = clone` is entered **before** copying the parts. If some part refers back to this work order, `deepcopy` finds the clone in the memo and uses it, instead of copying the work order again forever.
@@ -130,7 +149,7 @@ The clone shares the lathe (there is only one real lathe), has its own nested st
 
 Objects that refer to each other form a **cycle**: a fixture holds its clamps, and each clamp records which fixture it belongs to. A naive recursive copy would loop forever: copy the fixture, which copies a clamp, which copies its fixture, and so on. `deepcopy`'s memo handles this automatically, and in the copy the cycle still closes on the **new** objects. Predict before running: in the copy, does a clamp point to the original fixture or to the copied one?
 
-```python
+```python type
 class Fixture:
     def __init__(self, name):
         self.name, self.clamps = name, []
@@ -148,6 +167,12 @@ vice_copy.name = "vice B"
 print("copied clamps point to the copy:", all(c.fixture is vice_copy for c in vice_copy.clamps))
 print("original clamps still point to the original:", all(c.fixture is vice for c in vice.clamps))
 print([c.position for c in vice_copy.clamps], vice.name, vice_copy.name)
+```
+
+```output
+copied clamps point to the copy: True
+original clamps still point to the original: True
+['left', 'right'] vice A vice B
 ```
 
 When `deepcopy` reaches a clamp's `fixture` attribute, the memo already holds the copy of `vice`, so the clamp is linked to that copy.

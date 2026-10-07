@@ -19,7 +19,7 @@ Both algorithms in this lesson are **greedy**: they repeatedly take the cheapest
 
 Sort the edges by weight. Go through them cheapest first, adding each edge **unless** its two ends are already connected by the edges chosen so far (adding it would close a loop). Each accepted edge is the cheapest edge crossing the cut between its endpoint's component and the rest, so it is safe. "Are these already connected?" is exactly the Union-Find question from the previous lesson, answered in near-constant time. Sorting dominates: O(E log E). Predict before running: what is the total length of the cheapest network, and how many of the twelve possible links does it use?
 
-```python
+```python type
 class UnionFind:
     def __init__(self, items):
         self.parent = {x: x for x in items}
@@ -67,6 +67,22 @@ tree, total = kruskal(villages, links, trace=True)
 print(f"{len(tree)} links, total {total} km")
 ```
 
+```output
+  take   Ash-Dale (5)
+  take   Cedar-Elm (5)
+  take   Dale-Fern (6)
+  take   Ash-Birch (7)
+  take   Birch-Elm (7)
+  skip   Birch-Cedar (8): would close a loop
+  skip   Elm-Fern (8): would close a loop
+  skip   Birch-Dale (9): would close a loop
+  take   Elm-Glen (9)
+  skip   Fern-Glen (11): would close a loop
+  skip   Ash-Glen (14): would close a loop
+  skip   Dale-Elm (15): would close a loop
+6 links, total 39 km
+```
+
 The edges are stored as `(weight, u, v)` so that `sorted` orders them by weight first.
 
 Kruskal takes the two 5 km links, then 6, then both 7s; both 8 km links (Birch-Cedar and Elm-Fern) would close loops, as would the 9 km Birch-Dale one; Elm-Glen (9) is taken, bringing Glen in, and the rest are skipped. Six links totalling 39 km connect all seven villages, from twelve candidates totalling 104 km. Notice that the algorithm never needed to look ahead: each decision was final the moment it was made.
@@ -75,7 +91,7 @@ Kruskal takes the two 5 km links, then 6, then both 7s; both 8 km links (Birch-C
 
 Prim's algorithm grows a single tree from any starting vertex. At each step, it adds the cheapest edge with exactly one end in the tree (the cut property again, with the tree as one side of the cut). A heap of candidate edges makes "the cheapest edge leaving the tree" fast: when a vertex joins, push its edges to vertices outside the tree; pop the cheapest; if its far end is already in the tree, it is stale, so skip it. That is O(E log V), like Dijkstra, which it closely resembles; the difference is that the heap is ordered by the **edge's** weight, not by total distance from the start. Predict before running: will Prim's tree have the same total as Kruskal's?
 
-```python
+```python type
 import heapq
 
 def prim(vertices, edges, start):
@@ -104,6 +120,11 @@ for start in ["Ash", "Glen"]:
     print(f"from {start}: total {total_p} km, links in the order added: {[(u, v) for u, v, _ in tree_p]}")
 ```
 
+```output
+from Ash: total 39 km, links in the order added: [('Ash', 'Dale'), ('Dale', 'Fern'), ('Ash', 'Birch'), ('Birch', 'Elm'), ('Elm', 'Cedar'), ('Elm', 'Glen')]
+from Glen: total 39 km, links in the order added: [('Glen', 'Elm'), ('Elm', 'Cedar'), ('Elm', 'Birch'), ('Birch', 'Ash'), ('Ash', 'Dale'), ('Dale', 'Fern')]
+```
+
 The loop stops once every vertex is in the tree; any remaining heap entries are left unused.
 
 Prim's tree has the same total, 39 km, whichever village it starts from, though it adds the links in a different order. Here the minimum spanning tree is even the same set of links, because no two edge choices tie in a way that matters; in general, when weights repeat, there can be several different minimum spanning trees with the same total. Which to use? Kruskal is simple with an edge list and sparse graphs; Prim suits dense graphs and adjacency lists, and with an array instead of a heap runs in O(V²), ideal when almost every pair of vertices is joined.
@@ -112,7 +133,7 @@ Prim's tree has the same total, 39 km, whichever village it starts from, though 
 
 Kruskal's algorithm merges components cheapest link first. **Stop it early**, when k components remain, and those components are a clustering of the vertices into k groups: points joined by short links end up together, and the groups are separated by the longest possible gaps. This is **single-linkage clustering**, and it finds clusters of any shape, following chains of nearby points. Predict before running: how will these twelve points split into 3 clusters?
 
-```python
+```python type
 import math
 import random
 
@@ -136,6 +157,12 @@ def clusters(points, edges, k):
 
 for group in clusters(points, edges, 3):
     print(sorted(group))
+```
+
+```output
+[(0.8, 2.8), (1.4, 2.1), (1.7, 2.2), (2.3, 1.0)]
+[(7.4, 2.4), (8.3, 2.2), (8.8, 2.9), (9.2, 2.9)]
+[(5.1, 8.6), (5.3, 8.9), (5.4, 7.0), (5.6, 8.2)]
 ```
 
 Every pair of points gets an edge weighted by its straight-line distance, so the graph is complete: 66 edges for 12 points.

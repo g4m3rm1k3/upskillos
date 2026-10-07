@@ -16,7 +16,7 @@ The usual distance is the ordinary straight-line (**Euclidean**) distance: for p
 
 For many new points at once, broadcasting computes every distance in one expression. If `X_new` has shape `(m, d)` and `X_train` has shape `(n, d)`, then `X_new[:, None, :] - X_train[None, :, :]` has shape `(m, n, d)`: every new point minus every training point. Squaring, summing over the last axis and taking the square root gives an `(m, n)` table of distances.
 
-```python
+```python type
 import numpy as np
 
 X_train = np.array([[1.0, 1.0], [2.0, 1.0], [6.0, 5.0], [7.0, 6.0], [6.5, 7.0]])
@@ -33,11 +33,21 @@ print("three nearest training examples:", nearest)
 print("their labels:", y_train[nearest])
 ```
 
+```output
+differences shape: (2, 5, 2)
+[[1.12 1.12 5.41 6.8  7.07]
+ [5.66 5.   1.   2.24 2.5 ]]
+three nearest training examples: [[0 1 2]
+ [2 3 4]]
+their labels: [[0 0 1]
+ [1 1 1]]
+```
+
 `np.argsort(dist, axis=1)` sorts each row's training-example numbers from closest to farthest, and `[:, :3]` keeps the three closest. `y_train[nearest]` looks up their labels. The first new point has labels `[0, 0, 1]` among its neighbours, so its vote is 0. The second has `[1, 1, 1]`, so it is 1.
 
 To count the votes, `np.bincount` counts how many times each whole number appears (`np.bincount([0, 0, 1])` is `[2, 1]`), and `argmax` picks the winner. Putting it together:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
@@ -81,7 +91,7 @@ Small `k` means a flexible, jumpy model; large `k`, a rigid, smooth one. As with
 
 kNN is even more sensitive to units than the weight-based models. There, a feature in large units could simply get a small weight (though, as the regularisation lesson showed, the penalty then treats it unfairly); here, raw differences go straight into the distance. The wine dataset (`load_wine`) has 178 wines made from three cultivars (grape varieties), each described by 13 chemical measurements. Alcohol ranges from about 11 to 15 (percent), while **proline** (an amino acid) ranges from 278 to 1680. A difference of 100 in proline is ordinary; a difference of 100 in alcohol is impossible. But the distance formula just adds squared differences, so proline dominates every distance, and the other twelve measurements barely count.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
@@ -104,6 +114,15 @@ scaled = (knn_predict(scaler.transform(X_train), y_train, scaler.transform(X_tes
 print(f"test accuracy, raw features: {raw:.2f}   standardised: {scaled:.2f}")
 ```
 
+```output
+feature ranges:
+  alcohol         11.03 to    14.83
+  malic_acid       0.74 to     5.80
+  ash              1.36 to     3.23
+  proline        278.00 to  1680.00
+test accuracy, raw features: 0.72   standardised: 1.00
+```
+
 Standardising (each feature minus its training mean, divided by its training standard deviation, as in the multiple regression lesson) puts every feature on the same footing, and accuracy jumps from 0.72 to 1.00 on this split. For any distance-based method, **scale the features first**. And as always, fit the scaler on the training data only.
 
 Whether equal footing is right is itself a choice. If you know one feature matters more, you can deliberately give it a larger scale. kNN has no weights to learn which features matter, so irrelevant features hurt it too: each one adds noise to every distance.
@@ -112,7 +131,7 @@ Whether equal footing is right is itself a choice. If you know one feature matte
 
 scikit-learn's `KNeighborsClassifier` does the same thing (with smarter search for large datasets). Combined with a scaler in a **pipeline**, which runs the steps in order and refits the scaler inside each fold, it can be cross-validated in one line:
 
-```python
+```python type
 from sklearn.datasets import load_wine
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
@@ -126,13 +145,23 @@ for k in [1, 3, 5, 9, 15, 25, 45]:
     print(f"k = {k:>2}: mean accuracy {scores.mean():.3f}")
 ```
 
+```output
+k =  1: mean accuracy 0.950
+k =  3: mean accuracy 0.944
+k =  5: mean accuracy 0.949
+k =  9: mean accuracy 0.966
+k = 15: mean accuracy 0.955
+k = 25: mean accuracy 0.961
+k = 45: mean accuracy 0.961
+```
+
 `make_pipeline(StandardScaler(), KNeighborsClassifier(...))` bundles the two into one model with `fit` and `predict`. Passing the pipeline to `cross_val_score` matters: each fold fits the scaler on that fold's training part only, so no information from the held-out part leaks in. Every `k` here scores between 0.94 and 0.97, with `k = 9` slightly ahead; the differences are only a wine or two, well within the noise you met in the cross-validation lesson. With only 178 wines, any of these is a reasonable choice.
 
 ## The curse of dimensionality
 
 kNN rests on an assumption: that nearby points have similar labels, and that a new point's nearest neighbours are genuinely **near**. In many dimensions, that second part quietly fails. Scatter 500 random points in a unit cube and measure their distances from another random point, in 2, 10, 100 and 1000 dimensions:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -141,6 +170,13 @@ for dim in [2, 10, 100, 1000]:
     query = rng.random(dim)
     dist = np.sqrt(((points - query) ** 2).sum(axis=1))
     print(f"{dim:>4} dimensions: nearest {dist.min():6.2f}, farthest {dist.max():6.2f}, ratio {dist.min() / dist.max():.2f}")
+```
+
+```output
+   2 dimensions: nearest   0.03, farthest   1.27, ratio 0.02
+  10 dimensions: nearest   0.34, farthest   1.91, ratio 0.18
+ 100 dimensions: nearest   3.39, farthest   4.60, ratio 0.74
+1000 dimensions: nearest  12.32, farthest  13.63, ratio 0.90
 ```
 
 In two dimensions the nearest point is 0.03 away and the farthest 1.27: "near" means something. In 1000 dimensions the nearest is 12.3 and the farthest 13.6: every point is roughly the same distance away, and the "nearest" neighbour is barely nearer than the farthest. Each extra dimension adds a little random difference to every distance, and with enough dimensions those additions swamp everything else. To keep neighbours close in high dimensions you would need astronomically more data.

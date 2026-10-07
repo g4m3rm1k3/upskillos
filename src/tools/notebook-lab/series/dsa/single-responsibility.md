@@ -15,7 +15,7 @@ This lesson covers:
 
 A garage keeps a `JobCard` for each repair. Over time it has grown: it records parts and labour, prices the job, writes the invoice text, and stores itself as text in a "database" (here a dictionary standing in for a file or table).
 
-```python
+```python type
 class JobCard:
     LABOUR_RATE = 55.0
 
@@ -66,6 +66,15 @@ print(JobCard.load(db, "J-104").invoice_text())
 print(db)
 ```
 
+```output
+Invoice J-104 for M. Okafor (Ford Transit)
+  brake pads      £  48.00
+  brake fluid     £   9.50
+  labour 1.5 h    £  82.50
+  TOTAL           £ 140.00
+{'J-104': 'M. Okafor|Ford Transit|1.5|brake pads=48.0;brake fluid=9.5'}
+```
+
 `@classmethod` makes `load` receive the class itself as `cls`, so `cls(...)` builds a new `JobCard`: a common way to write an alternative constructor.
 
 Now the change requests arrive, from different people:
@@ -80,7 +89,7 @@ Predict before reading on: how many of these requests require editing `JobCard`?
 
 All three do. A mechanical clue shows why. List, for each method, which of the class's attributes and methods it uses. Methods that serve the same responsibility tend to share data, and methods that share nothing with each other are often separate jobs that happen to live together. Python can produce this list itself. When a function is defined, Python compiles it, and `function.__code__.co_names` lists every name the compiled code looks up: attribute names after a dot, and global names. Keeping only the names that belong to the class (its methods and class attributes, and the attributes `__init__` sets) gives each method's list.
 
-```python
+```python type
 import types
 
 def names_used(function):
@@ -105,6 +114,16 @@ for method, attributes in attributes_used(JobCard).items():
     print(f"{method:<13} {attributes}")
 ```
 
+```output
+names looked up by total: ['LABOUR_RATE', 'labour_hours', 'parts', 'sum']
+add_part      ['parts']
+add_labour    ['labour_hours']
+total         ['LABOUR_RATE', 'labour_hours', 'parts']
+invoice_text  ['LABOUR_RATE', 'customer', 'job_id', 'labour_hours', 'parts', 'total', 'vehicle']
+save          ['customer', 'job_id', 'labour_hours', 'parts', 'vehicle']
+load          ['add_part', 'labour_hours']
+```
+
 `vars(cls)` is the class's own dictionary of methods and class attributes. A generator expression inside a method is compiled as a separate small code object, stored in `co_consts`, so `names_used` searches those too. `total` looks up `sum` (a built-in) as well as the class's names; intersecting with `own_names` keeps only the names that belong to the class.
 
 Read the table by responsibility. `add_part`, `add_labour` and `total` work on the job's contents: the **domain**, the garage's actual business. `invoice_text` reads almost everything, but only to lay it out: **presentation**. `save` reads all the data, and `load` rebuilds a card through its constructor and `add_part`, only to turn a card into text and back: **persistence**. The tool cannot decide responsibilities for you: every method shares something with the others, because they all touch the same data. What it does is make visible who touches what. Read with the change requests, it shows the shape: three groups of people, three kinds of method.
@@ -119,7 +138,7 @@ Give each responsibility its own home:
 
 The formatter and the store **use** a `JobCard`. The job card knows nothing about either. That direction matters: the domain is the part most worth protecting, so nothing in it should depend on output formats or storage. Predict before running: which class changes for the quarter-hour rule, and which for JSON?
 
-```python
+```python type
 import json, math
 
 class JobCard:
@@ -180,6 +199,17 @@ card.add_labour(1.4)
 store.save(card)
 print(InvoiceFormatter().text(store.load("J-104")))
 print(store.database)
+```
+
+```output
+Invoice J-104 for M. Okafor (Ford Transit)
+  brake pads      £  48.00
+  brake fluid     £   9.50
+  labour 1.5 h    £  82.50
+  VAT             £  28.00
+  TOTAL           £ 168.00
+Company no. 09876543
+{'J-104': '{"customer": "M. Okafor", "vehicle": "Ford Transit", "hours": 1.5, "parts": [["brake pads", 48.0], ["brake fluid", 9.5]]}'}
 ```
 
 `json.dumps` turns dictionaries and lists into JSON text and `json.loads` reads it back; JSON is a standard text format for structured data.

@@ -26,7 +26,7 @@ At each join, the important question is whether the pieces meet. A function is *
 
 Predict before running: with k₁ = 20 N/mm, k₂ = 400 N/mm and a 2 mm gap, what is the force at 1, 2, 2.5 and −3 mm, and is there a jump at the gap?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -48,6 +48,13 @@ slope_right = (stop_spring(gap + 1e-6) - stop_spring(gap)) / 1e-6
 print(f"stiffness just below the gap {slope_left:.1f} N/mm, just above {slope_right:.1f} N/mm")
 ```
 
+```output
+forces (N) at 1, 2, 2.5, -3 mm: [  20.   40.  250. -460.]
+at x = +2: from the left 40.000000, from the right 40.000000, jump 4.4e-07
+at x = -2: from the left -40.000000, from the right -40.000000, jump 4.4e-07
+stiffness just below the gap 20.0 N/mm, just above 420.0 N/mm
+```
+
 The force is 20 N at 1 mm and 40 N at 2 mm. At 2.5 mm it jumps to 250 N as the stop engages, and at −3 mm it is −460 N. Approaching the gap from either side gives the same 40 N: the function is continuous. Its slope is not: the stiffness changes abruptly from 20 to 420 N/mm. That kind of corner is what the next sections examine.
 
 ## The trapezoidal velocity profile
@@ -65,7 +72,7 @@ Position is the running integral of velocity (the accumulation lesson), so it is
 
 Predict before running: an axis may reach 0.5 m/s at 2 m/s². How long does a 400 mm move take? And a 50 mm move?
 
-```python
+```python type
 def trapezoid(D, vmax, a):
     if D >= vmax ** 2 / a:
         ta = vmax / a
@@ -100,6 +107,12 @@ for ax, data, title in zip(axes, [pos, vel, acc], ["position (m)", "velocity (m/
 plt.show()
 ```
 
+```output
+400 mm: accelerate 0.250 s, cruise 0.550 s, total 1.050 s, peak speed 0.500 m/s
+50 mm: accelerate 0.158 s, cruise 0.000 s, total 0.316 s, peak speed 0.316 m/s
+position at the end: 0.4 m; largest jump in position between samples: 0.0005
+```
+
 The 400 mm move accelerates for 0.25 s, cruises for 0.55 s and decelerates for 0.25 s: 1.05 s in total, with velocity reaching the 0.5 m/s limit. The 50 mm move is shorter than v_max²/a = 125 mm, so it never cruises. It accelerates for 0.158 s to a peak of 0.316 m/s and brakes at once, 0.316 s in total. The plots show a smooth S-shaped position, a trapezoidal velocity, and an acceleration that **jumps** between +2, 0 and −2 m/s².
 
 ## Smoothness, jerk and S-curves
@@ -117,7 +130,7 @@ Smoothness at the joins comes in orders. A function is **C⁰** if it is continu
 
 Predict before running: how big are the acceleration jumps in the trapezoidal profile, how long does an S-curve with 50 ms jerk ramps take, and what is its peak jerk?
 
-```python
+```python type
 dt = ts[1] - ts[0]
 jumps = np.abs(np.diff(acc))
 print(f"trapezoid: acceleration jumps of up to {jumps.max():.1f} m/s² between samples {dt * 1000:.0f} ms apart (jerk ~ {jumps.max() / dt:.0f} m/s³, growing as the sampling gets finer)")
@@ -135,6 +148,11 @@ print(f"S-curve with {tj * 1000:.0f} ms ramps: peak acceleration {acc_s.max():.2
       f"reaches 400 mm at {done:.3f} s, travel {pos_s[-1] * 1000:.2f} mm")
 ```
 
+```output
+trapezoid: acceleration jumps of up to 2.0 m/s² between samples 1 ms apart (jerk ~ 2000 m/s³, growing as the sampling gets finer)
+S-curve with 50 ms ramps: peak acceleration 2.00 m/s², peak jerk 40 m/s³ (= a / t_j = 40), reaches 400 mm at 1.095 s, travel 400.00 mm
+```
+
 The trapezoid's acceleration jumps by 2 m/s² between neighbouring samples, a "jerk" of about 2,000 m/s³ at 1 ms sampling that would grow without limit at finer sampling: it is really infinite. Averaging the velocity over a 50 ms window turns every acceleration step into a 50 ms ramp, which caps the jerk at a/t_j = 40 m/s³ and leaves the peak acceleration at 2 m/s². The move then reaches 400 mm at 1.095 s instead of 1.05 s, about t_j later, and covers exactly the same 400 mm, because averaging the velocity does not change its area. A moving average (the convolution of the polynomials lesson) is a simple way to build the S-curve, and motion controllers do essentially this. A 4% slower move that does not ring the machine usually finishes the part sooner.
 
 ## Lookup tables: piecewise-linear functions
@@ -150,7 +168,7 @@ Controllers store curves that are too complicated for a formula as **lookup tabl
 
 Predict before running: a motor's torque falls with speed as T(n) = 12 e^(−n/3000) N·m. How accurate is a table every 500 rpm, and every 250 rpm?
 
-```python
+```python type
 true_torque = lambda n: 12 * np.exp(-n / 3000)
 n_fine = np.linspace(0, 6000, 6001)
 for step in [500, 250]:
@@ -158,6 +176,11 @@ for step in [500, 250]:
     est = np.interp(n_fine, table_n, true_torque(table_n))
     bound = step ** 2 / 8 * 12 / 3000 ** 2
     print(f"table every {step} rpm ({table_n.size} points): largest error {np.abs(est - true_torque(n_fine)).max():.4f} N·m (bound h²|f''|/8 = {bound:.4f})")
+```
+
+```output
+table every 500 rpm (13 points): largest error 0.0384 N·m (bound h²|f''|/8 = 0.0417)
+table every 250 rpm (25 points): largest error 0.0100 N·m (bound h²|f''|/8 = 0.0104)
 ```
 
 A table every 500 rpm (13 points) is within 0.038 N·m of the true curve, about 0.3% of the 12 N·m peak, and halving the spacing cuts the error by a factor of about four, to 0.010 N·m. Both stay below the h²|f″|/8 bound, which is tightest where the curve bends most, at low speed. Lookup tables are piecewise-linear functions whose accuracy you choose with the spacing.
@@ -176,7 +199,7 @@ The polynomials lesson warned that one high-degree polynomial through many point
 
 Predict before running: through 11 points of Runge's function, how far does the degree-10 polynomial stray from the true curve, and how far does a natural cubic spline?
 
-```python
+```python type
 runge = lambda x: 1 / (1 + 25 * x ** 2)
 xp = np.linspace(-1, 1, 11)
 dense = np.linspace(-1, 1, 2001)
@@ -197,6 +220,14 @@ ax.plot(xp, runge(xp), "o")
 ax.set_ylim(-0.5, 2.0)
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+degree-10 polynomial: largest error 1.916
+natural cubic spline: largest error 0.0220
+spline value     jump at the joins: 5.6e-09
+spline slope     jump at the joins: 9.4e-08
+spline curvature jump at the joins: 2.5e-07
 ```
 
 The degree-10 polynomial passes through all 11 points but strays by about 1.92 near the ends, nearly twice the height of the whole function. The natural cubic spline through the same points stays within about 0.022. At every interior join its value, slope and curvature match to rounding level: a C² curve. This is why CAD systems, font outlines, robot paths and CNC toolpaths are built from splines, not from single polynomials.

@@ -13,7 +13,7 @@ This lesson covers:
 
 Define `prefix[0] = 0` and `prefix[i + 1] = prefix[i] + values[i]`, so `prefix[i]` is the sum of the first i values. Then the sum of `values[lo:hi]` (positions lo up to hi − 1, in Python's half-open style) is `prefix[hi] - prefix[lo]`: everything before hi, minus everything before lo. The extra 0 at the front means no special case is needed for ranges starting at 0. Predict before running: what is the total rainfall for days 10 to 19, and how does the prefix-sum answer compare with summing directly?
 
-```python
+```python type
 from itertools import accumulate
 import random
 
@@ -37,6 +37,13 @@ wettest = max(range(12), key=lambda m: range_total(month_starts[m], month_starts
 print("wettest month:", wettest + 1, f"with {range_total(month_starts[wettest], month_starts[wettest + 1]):.1f} mm")
 ```
 
+```output
+days 10-19: 27.4 mm  (direct sum 27.4)
+whole year: 974.7 mm
+accumulate gives the same running totals: True
+wettest month: 6 with 100.9 mm
+```
+
 `itertools.accumulate(values, initial=0)` builds the same running totals in one call. Note that prefix sums of the month lengths are the day each month starts: prefix sums turn up everywhere.
 
 The prefix-sum answer equals the direct sum (both rounded to one decimal place, since floating-point additions can differ in the last digits). Twelve month totals cost twelve subtractions. The catch, from the segment trees lesson, is updates: changing one day's rainfall changes every prefix after it, O(n). Prefix sums are for data that is fixed while it is being questioned.
@@ -45,7 +52,7 @@ The prefix-sum answer equals the direct sum (both rounded to one decimal place, 
 
 The same idea works on a grid: let `P[r][c]` be the sum of every cell above and to the left of (r, c), that is, rows 0 to r − 1 and columns 0 to c − 1. Building it uses **inclusion-exclusion**: `P[r + 1][c + 1] = grid[r][c] + P[r][c + 1] + P[r + 1][c] - P[r][c]`, because the top-left block is counted twice by the two neighbours. Any rectangle's sum is then four lookups: the whole block to its bottom-right corner, minus the block above it, minus the block to its left, plus the top-left block that was subtracted twice. This **summed-area table** is how image-processing code blurs and detects features quickly. Predict before running: which 3 × 3 region of this field has the most plants?
 
-```python
+```python type
 field = [
     [1, 0, 2, 0, 1, 3],
     [0, 4, 1, 0, 0, 2],
@@ -67,6 +74,11 @@ print("best 3 × 3 region: total", best[0], "with its top-left corner at row", b
 print("check by direct sum:", sum(field[r][c] for r in range(best[1], best[1] + 3) for c in range(best[2], best[2] + 3)))
 ```
 
+```output
+best 3 × 3 region: total 24 with its top-left corner at row 1 column 1
+check by direct sum: 24
+```
+
 `rectangle(r1, c1, r2, c2)` sums rows r1 to r2 − 1 and columns c1 to c2 − 1, half-open in both directions.
 
 The richest 3 × 3 region has 24 plants, with its corner at row 1, column 1, and the direct sum agrees. Every one of the 12 regions cost four lookups, however large the regions are.
@@ -75,7 +87,7 @@ The richest 3 × 3 region has 24 plants, with its corner at row 1, column 1, and
 
 How many contiguous stretches of a list add up to exactly k? With negative numbers allowed, the sliding window fails (a window can stop and start matching again as it grows). Prefix sums give a clean O(n) answer. A stretch from position i to j − 1 sums to k exactly when `prefix[j] - prefix[i] == k`, that is, `prefix[i] == prefix[j] - k`. So scan j from left to right, keeping a dictionary counting how many times each prefix sum has been seen so far; at each j, the number of stretches ending there with sum k is how many earlier prefix sums equal `prefix[j] - k`. Predict before running: how many stretches of `[3, 4, -7, 1, 3, 3, 1, -4]` sum to 7?
 
-```python
+```python type
 def count_sum_k(values, k):
     seen = {0: 1}
     running, count = 0, 0
@@ -91,6 +103,11 @@ print("prefix-sum count:", count_sum_k(values, 7))
 print("brute force finds", len(brute), "stretches:", [values[i:j] for i, j in brute])
 ```
 
+```output
+prefix-sum count: 4
+brute force finds 4 stretches: [[3, 4], [3, 4, -7, 1, 3, 3], [1, 3, 3], [3, 3, 1]]
+```
+
 `seen` starts with `{0: 1}`: the empty prefix, before any value, so that stretches starting at position 0 are counted.
 
 Four stretches sum to 7, including one that runs through the −7. The method is the same "remember what you have seen" pattern as the two-sum dictionary from the Big-O lesson, applied to running totals instead of values.
@@ -99,7 +116,7 @@ Four stretches sum to 7, including one that runs through the −7. The method is
 
 Now the reverse problem: many **updates** to whole ranges ("add 5 to every day from 30 to 60"), and then the final values. Doing each update directly costs the length of the range. A **difference array** stores, at each position, how much the value changes from the previous position. Adding x to the range lo to hi − 1 then changes just two entries: `diff[lo] += x` (the values jump up at lo) and `diff[hi] -= x` (and drop back at hi). After all the updates, a prefix sum of `diff` rebuilds the values. Predict before running: on a 10-seat train, if these bookings each reserve seats over a range of stops, which stretch is busiest?
 
-```python
+```python type
 stops = 8
 bookings = [(0, 3, 4), (1, 5, 2), (2, 6, 3), (4, 8, 5), (5, 7, 1)]
 diff = [0] * (stops + 1)
@@ -115,6 +132,12 @@ for first, last_exclusive, seats in bookings:
     for s in range(first, last_exclusive):
         direct[s] += seats
 print("direct calculation agrees:", direct == on_board)
+```
+
+```output
+passengers on board between each stop: [4, 6, 9, 5, 10, 9, 6, 5]
+busiest leg: 4 with 10 passengers
+direct calculation agrees: True
 ```
 
 Each booking `(first, last_exclusive, seats)` occupies seats from stop `first` up to, but not including, stop `last_exclusive`, where the passengers get off.

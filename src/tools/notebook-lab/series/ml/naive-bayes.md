@@ -55,7 +55,7 @@ where `V` is the number of different words in the vocabulary. (Adding `α·V` un
 
 **Underflow.** A real email has hundreds of words, each with a probability like 0.01, and the product of hundreds of small numbers is smaller than the smallest float:
 
-```python
+```python type
 import numpy as np
 
 probabilities = np.full(200, 0.01)
@@ -63,11 +63,16 @@ print("product:", np.prod(probabilities))
 print("sum of logs:", np.sum(np.log(probabilities)))
 ```
 
+```output
+product: 0.0
+sum of logs: -921.0340371976183
+```
+
 The product **underflows** to exactly 0.0, which makes every class tie. The fix is to work with logarithms: the log of a product is the sum of the logs, and sums of moderate negative numbers are no trouble. Since the logarithm only ever increases, the class with the largest log score is the class with the largest score.
 
 Now the filter. Six spam messages and eight normal ones (called **ham** in spam-filter jargon):
 
-```python
+```python type
 import numpy as np
 from collections import Counter
 
@@ -106,6 +111,14 @@ for message in ["free lunch tomorrow", "win free money", "free prize meeting"]:
     print(f"{message!r:<24} log scores spam {s['spam']:.2f}, ham {s['ham']:.2f}  ->  P(spam) = {p_spam:.3f}")
 ```
 
+```output
+vocabulary size: 30
+'free' in spam: 4  in ham: 1
+'free lunch tomorrow'    log scores spam -11.15, ham -9.76  ->  P(spam) = 0.200
+'win free money'         log scores spam -8.15, ham -12.25  ->  P(spam) = 0.984
+'free prize meeting'     log scores spam -10.05, ham -11.15  ->  P(spam) = 0.750
+```
+
 `Counter` (from the modules lesson) counts the words, and `counter.update(words)` adds a list of words to the counts. A word missing from a `Counter` counts as 0, so smoothing handles it. Words never seen in training at all are skipped: they carry no evidence either way.
 
 "win free money" is 98% spam. "free lunch tomorrow" is only 20% spam even though "free" appears 4 times in spam and once in ham, because "lunch" and "tomorrow" are strong ham evidence; without smoothing, "lunch" alone would have forced P(spam) to 0. "free prize meeting" mixes evidence and lands at 75%.
@@ -116,7 +129,7 @@ The last line turns two log scores back into a probability. The posterior is `e^
 
 scikit-learn splits this into two steps. `CountVectorizer` turns messages into a matrix of word counts, one row per message and one column per vocabulary word, and `MultinomialNB` is Naive Bayes for counts, with `alpha=1` smoothing by default:
 
-```python
+```python type
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -143,6 +156,13 @@ print("most spam-like:", list(words[order[-5:]]))
 print("most ham-like: ", list(words[order[:5]]))
 ```
 
+```output
+count matrix shape: (14, 30)
+P(spam): [0.2   0.984 0.75 ]
+most spam-like: ['prize', 'offer', 'now', 'money', 'win']
+most ham-like:  ['you', 'at', 'lunch', 'meeting', 'report']
+```
+
 The probabilities match the from-scratch filter. `token_pattern=r"\S+"` tells the vectorizer to treat every run of non-space characters as a word; its default ignores one-letter words such as "a". `feature_log_prob_` holds log P(word | class) for each class, so the difference between the two rows measures how strongly each word points to spam. The model is completely transparent: it is just a table of word frequencies.
 
 ## Numeric features: Gaussian Naive Bayes
@@ -155,7 +175,7 @@ p(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \, e^{-(x - \mu)^2 / (2\sigma^2)}
 
 where μ and σ² are that class's mean and variance for the feature. (This is the bell curve that `stats.norm.pdf` drew in the distributions lesson.) Since the classifier adds logs, what it actually uses is the log of the density, −½ ln(2πσ²) − (x − μ)²/(2σ²): a penalty for being far from the class mean, measured in units of that class's spread, plus a term that favours classes with tighter spreads. This is **Gaussian Naive Bayes**:
 
-```python
+```python type
 from sklearn.datasets import load_iris, load_wine, load_digits
 from sklearn.model_selection import cross_val_score
 from sklearn.naive_bayes import GaussianNB
@@ -166,13 +186,19 @@ for name, loader in [("iris", load_iris), ("wine", load_wine), ("digits", load_d
     print(f"{name:<7} {data.data.shape[1]:>2} features: mean accuracy {scores.mean():.3f}")
 ```
 
+```output
+iris     4 features: mean accuracy 0.953
+wine    13 features: mean accuracy 0.966
+digits  64 features: mean accuracy 0.807
+```
+
 On iris and wine, where each feature really is roughly bell-shaped within each class, it scores 95% and 97% with no tuning at all, and trains instantly. On the digits it drops to about 81%, well below softmax regression's 96%. Neighbouring pixels are strongly correlated, so the independence assumption is badly wrong: the model counts what is really one piece of evidence (a stroke covering several pixels) many times over. Pixel values are also far from bell-shaped: many are almost always 0.
 
 ## Why naive still works
 
 If the independence assumption is false, why does Naive Bayes work at all? Because classification only needs the **right class to come out on top**, not accurate probabilities. Double-counting correlated evidence pushes the probabilities towards the extremes, so Naive Bayes is often wildly overconfident, printing 0.9999 where 0.8 would be honest. Before running the next cell, guess: on the digits, how confident is Gaussian Naive Bayes on average, compared with how often it is right?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import cross_val_predict
@@ -185,6 +211,12 @@ correct = P.argmax(axis=1) == digits.target
 print(f"average confidence in its chosen digit:    {confidence.mean():.3f}")
 print(f"fraction actually correct:                 {correct.mean():.3f}")
 print(f"predictions claiming over 99.9% certainty: {(confidence > 0.999).mean():.2f}")
+```
+
+```output
+average confidence in its chosen digit:    0.988
+fraction actually correct:                 0.807
+predictions claiming over 99.9% certainty: 0.88
 ```
 
 `cross_val_predict` is the companion of `cross_val_score`: instead of a score per fold, it returns, for every example, the prediction made by the model that did **not** train on it, here the full row of class probabilities. Each row's largest probability is the model's confidence in its choice.

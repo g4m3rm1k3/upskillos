@@ -13,7 +13,7 @@ This lesson covers:
 
 Every memoised function has the shape "answer(state) = combine(answer(smaller states))". Tabulation asks: in what order can the states be visited so that smaller ones always come first? For Fibonacci, increasing n. So allocate a list, fill in the base cases, and loop. Then notice that `fib[i]` only needs the previous two entries, so the whole list can shrink to two variables. Predict before running: how long does each version take for n = 10,000, and does the memoised recursion survive at all?
 
-```python
+```python type
 import timeit
 from functools import cache
 
@@ -45,7 +45,7 @@ Both loops compute the 2,090-digit answer in milliseconds, with no recursion at 
 
 The memoisation lesson computed the fewest coins recursively. Bottom-up: `best[a]` is the fewest coins making amount a, and it depends only on smaller amounts, so fill it for a = 0, 1, 2, … in order. To recover **which** coins, also record, for each amount, the coin that achieved the best: then walk back from the target, subtracting that coin each time. Predict before running: which coins make 63 from 1, 3 and 4, and can the table handle 10,000?
 
-```python
+```python type
 def fewest_coins_table(amount, coins):
     INF = float("inf")
     best = [0] + [INF] * amount
@@ -69,6 +69,12 @@ count, used = fewest_coins_table(10_000, [1, 3, 4, 7, 23])
 print("10,000 from 1, 3, 4, 7, 23:", count, "coins; the coins used:", sorted(set(used)), "with", used.count(23), "of the 23s")
 ```
 
+```output
+(16, [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4])
+(None, [])
+10,000 from 1, 3, 4, 7, 23: 437 coins; the coins used: [4, 7, 23] with 434 of the 23s
+```
+
 `choice[a]` is the last coin added in a best solution for a; following it backwards rebuilds one optimal set of coins. This "store the decision, trace back afterwards" step is how every DP recovers its solution.
 
 63 is 15 fours and a three: 16 coins. 7 cannot be made from 2s and 4s. And 10,000 is no problem: 10,000 amounts times 5 coins is 50,000 steps, with no recursion depth at all.
@@ -77,7 +83,7 @@ print("10,000 from 1, 3, 4, 7, 23:", count, "coins; the coins used:", sorted(set
 
 How many **ways** can an amount be made from coins, if the order of the coins does not matter (1 + 2 and 2 + 1 are the same way)? Let `ways[a]` count the combinations making a. Process the coins **one at a time**, in the outer loop: after the outer loop has handled coin c, `ways[a]` counts the combinations using only the coins seen so far. Adding coin c, every combination for a − c extends to one for a. Swapping the loops (amounts outer, coins inner) counts **sequences** instead, where order matters, as in the climbing-stairs problem. Predict before running: how many ways to make 10 from coins 1, 2 and 5, counting combinations and counting sequences?
 
-```python
+```python type
 def combinations(amount, coins):
     ways = [1] + [0] * amount
     for c in coins:
@@ -98,6 +104,12 @@ print("10 from 1, 2, 5 as ordered sequences:", sequences(10, [1, 2, 5]))
 print("£1 (100p) from UK coins up to 50p:", combinations(100, [1, 2, 5, 10, 20, 50]))
 ```
 
+```output
+10 from 1, 2, 5 as combinations: 10
+10 from 1, 2, 5 as ordered sequences: 128
+£1 (100p) from UK coins up to 50p: 4562
+```
+
 `ways[0] = 1` counts the single way to make 0: use no coins.
 
 There are 10 combinations but 128 ordered sequences for the same amount and coins: the two loop orders answer genuinely different questions. A pound can be made from coins up to 50p in 4,562 ways. Getting the loop order right by thinking about what each table entry **means** after each step is the core skill of tabulation.
@@ -106,7 +118,7 @@ There are 10 combinations but 128 ordered sequences for the same amount and coin
 
 A **subsequence** keeps some items of a list in their original order, not necessarily next to each other. The **longest increasing subsequence** (LIS) of a sequence of prices, heights or scores measures its longest upward trend. Let `length[i]` be the length of the longest increasing subsequence **ending at position i**. It is 1 plus the largest `length[j]` over earlier positions j with a smaller value (or just 1 if there are none). Filling the table left to right takes O(n²), and storing each position's best predecessor lets the subsequence itself be traced back. Predict before running: how long is the longest increasing subsequence of these daily prices (the days need not be consecutive)?
 
-```python
+```python type
 def longest_increasing(values):
     n = len(values)
     if n == 0:
@@ -127,6 +139,10 @@ def longest_increasing(values):
 
 prices = [10, 9, 2, 5, 3, 7, 101, 18, 4, 19, 20]
 print(longest_increasing(prices))
+```
+
+```output
+[2, 5, 7, 18, 19, 20]
 ```
 
 `previous[i]` records which earlier position the best subsequence ending at i came from.

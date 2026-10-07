@@ -27,7 +27,7 @@ A signal that repeats every T seconds has **fundamental frequency** f = 1/T. Its
 
 odd harmonics only, with amplitudes falling as 1/n. Adding more terms makes the sum flatter on top and steeper at the edges. Predict before running: with more and more terms, does the overshoot just after each edge disappear?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,6 +53,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+  1 terms: peak 1.2732, overshoot 27.32%
+  3 terms: peak 1.1884, overshoot 18.84%
+ 10 terms: peak 1.1798, overshoot 17.98%
+ 50 terms: peak 1.1790, overshoot 17.90%
+```
+
 Term k is the (2k + 1)-th harmonic. The black line is the square wave itself.
 
 One term is a plain sine with peak 4/π ≈ 1.27. With more terms the sum hugs the square wave ever more closely, but the overshoot next to each jump does not go away: it settles at about 18% of the wave's height of 1, which is 9% of the full jump from −1 to +1. This persistent ripple is the **Gibbs phenomenon**: a finite sum of smooth sines can never jump, so near a jump it always overshoots. With more terms the overshoot gets narrower, squeezed ever closer to the jump, but it never drops below about 18%.
@@ -73,7 +80,7 @@ How did Fourier know the coefficients? The key fact is **orthogonality**: over o
 
 the coefficients are a₀ = mean of x, aₙ = 2 × mean of x cos(nωt), bₙ = 2 × mean of x sin(nωt), each over one period. This is projection, the dot product of the vectors lessons applied to functions. Predict before running: what are the first few bₙ of the square wave?
 
-```python
+```python type
 T = 1 / f
 ts = np.arange(0, T, T / 20000)
 sq = np.sign(np.sin(2 * math.pi * f * ts))
@@ -82,6 +89,17 @@ for n in range(1, 8):
     b = 2 * np.mean(sq * np.sin(2 * math.pi * n * f * ts))
     a = 2 * np.mean(sq * np.cos(2 * math.pi * n * f * ts))
     print(f"n = {n}: a_n = {a:+.4f}, b_n = {b:+.4f}, formula {4 / (math.pi * n) if n % 2 else 0:.4f}")
+```
+
+```output
+average of sin(3ωt) sin(5ωt): -0.0   of sin²(3ωt): 0.5
+n = 1: a_n = -0.0001, b_n = +1.2732, formula 1.2732
+n = 2: a_n = +0.0001, b_n = +0.0000, formula 0.0000
+n = 3: a_n = -0.0001, b_n = +0.4244, formula 0.4244
+n = 4: a_n = +0.0001, b_n = -0.0000, formula 0.0000
+n = 5: a_n = -0.0001, b_n = +0.2546, formula 0.2546
+n = 6: a_n = +0.0001, b_n = +0.0000, formula 0.0000
+n = 7: a_n = -0.0001, b_n = +0.1819, formula 0.1819
 ```
 
 The samples cover exactly one period (`np.arange` stops just short of T), which makes the averages exact up to sampling.
@@ -100,7 +118,7 @@ In code: `coeff_mag(x, n)` for the square, sawtooth and triangle
 
 A signal's shape decides how quickly its harmonics die away. A jump (square wave, sawtooth) gives amplitudes falling as 1/n. A corner without a jump (triangle wave) gives 1/n². A smooth signal gives faster still. This matters in practice: a fast-switching square wave contains strong high harmonics, which radiate electrical interference, so motor drives deliberately soften their edges. Predict before running: how much weaker is the 27th harmonic than the fundamental for each shape?
 
-```python
+```python type
 def coeff_mag(x, n):
     a = 2 * np.mean(x * np.cos(2 * math.pi * n * f * ts))
     b = 2 * np.mean(x * np.sin(2 * math.pi * n * f * ts))
@@ -123,6 +141,12 @@ ax.legend()
 plt.show()
 ```
 
+```output
+square    harmonic 1, 3, 9, 27: [1.2732 0.4244 0.1415 0.0472]   ratio 27/1: 0.0370
+sawtooth  harmonic 1, 3, 9, 27: [0.6366 0.2122 0.0707 0.0236]   ratio 27/1: 0.0370
+triangle  harmonic 1, 3, 9, 27: [0.8106 0.0901 0.01   0.0011]   ratio 27/1: 0.0014
+```
+
 The log–log axes from the plotting lesson make power laws straight: slope −1 for 1/n, −2 for 1/n².
 
 At the 27th harmonic the square wave and sawtooth still have about 1/27 of their fundamental (0.037), while the triangle has only 1/729 (0.0014). On log–log axes the square and sawtooth points lie on lines of slope −1, the triangle's on slope −2 (the even harmonics of the square and triangle are zero and drop off the bottom). A smoother signal can be described accurately with far fewer harmonics, which is also why smooth signals compress well.
@@ -139,7 +163,7 @@ In code: `math.sqrt(0.5 * (mags ** 2).sum())` against the direct RMS; `thd = mat
 
 Orthogonality has another consequence: the power of a signal splits cleanly among its harmonics. The mean square (RMS²) of a periodic signal equals a₀² + ½ Σ(aₙ² + bₙ²), **Parseval's theorem**: each harmonic contributes its own RMS², with no cross terms. Power quality is measured this way. The **total harmonic distortion** (THD) of a supply is the RMS of all the harmonics above the fundamental, as a fraction of the fundamental's RMS. Predict before running: mains voltage with a 5th harmonic of 4% and a 7th of 3% (typical near rectifier loads): what is the THD, and does Parseval hold?
 
-```python
+```python type
 v = 325 * (np.sin(2 * math.pi * f * ts) + 0.04 * np.sin(2 * math.pi * 5 * f * ts + 0.3) + 0.03 * np.sin(2 * math.pi * 7 * f * ts - 1.1))
 mags = np.array([coeff_mag(v, n) for n in range(1, 40)])
 rms_direct = math.sqrt(np.mean(v ** 2))
@@ -148,6 +172,12 @@ thd = math.sqrt((mags[1:] ** 2).sum()) / mags[0]
 print(f"harmonics found: {[(n + 1, round(float(m), 2)) for n, m in enumerate(mags) if m > 0.5]}")
 print(f"RMS from samples {rms_direct:.3f} V, from the harmonics {rms_parseval:.3f} V")
 print(f"THD = {100 * thd:.2f}%")
+```
+
+```output
+harmonics found: [(1, 325.0), (5, 13.0), (7, 9.75)]
+RMS from samples 230.097 V, from the harmonics 230.097 V
+THD = 5.00%
 ```
 
 The harmonic amplitudes are their peaks; dividing each squared peak by 2 gives its mean square.
@@ -166,7 +196,7 @@ In code: `gain, phase_lag = 1 / math.sqrt(1 + (w * RC) ** 2), -math.atan(w * RC)
 
 A system that is linear treats each harmonic separately: the output is the sum of each input harmonic, multiplied by the system's **gain** at that frequency and shifted by its **phase**. A resistor–capacitor (RC) low-pass filter has gain 1/√(1 + (ωRC)²) and phase −atan(ωRC): it passes low frequencies and suppresses high ones. Feed it a square wave and, once the start-up transient has died away, it removes the high harmonics that make the corners sharp, leaving a rounded wave. Predict before running: with a cutoff at the square wave's fundamental frequency, which harmonics survive?
 
-```python
+```python type
 RC = 1 / (2 * math.pi * f)
 t_out = np.linspace(0, 0.04, 4001)
 out = np.zeros_like(t_out)
@@ -185,6 +215,16 @@ ax.set_xlabel("time (ms)")
 ax.legend(fontsize=8)
 plt.show()
 print(f"output swings between {out.min():.3f} and {out.max():.3f}")
+```
+
+```output
+ n   gain    phase
+ 1  0.707   -45.0°
+ 3  0.316   -71.6°
+ 5  0.196   -78.7°
+ 7  0.141   -81.9°
+ 9  0.110   -83.7°
+output swings between -0.917 and 0.917
 ```
 
 With RC = 1/(2πf), the filter's cutoff equals the square wave's fundamental, so the fundamental passes at gain 1/√2 and each harmonic n at roughly 1/n.

@@ -22,7 +22,7 @@ The quantities-and-units lesson stored dimensions as exponent dictionaries and c
 
 Predict before running: which of these motion and energy formulas are dimensionally consistent: v² = u² + 2as, s = ut + at², E = mv, and E = mgh + ½mv²?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,6 +49,13 @@ for name, terms in formulas.items():
     print(f"{name:<16} term dimensions (M, L, T): {vectors}  ->  {'consistent' if len(set(vectors)) == 1 else 'INCONSISTENT'}")
 ```
 
+```output
+v² = u² + 2as    term dimensions (M, L, T): [(0, 2, -2), (0, 2, -2), (0, 2, -2)]  ->  consistent
+s = ut + at²     term dimensions (M, L, T): [(0, 1, 0), (0, 1, 0), (0, 1, 0)]  ->  consistent
+E = mv           term dimensions (M, L, T): [(1, 2, -2), (1, 1, -1)]  ->  INCONSISTENT
+E = mgh + ½mv²   term dimensions (M, L, T): [(1, 2, -2), (1, 2, -2), (1, 2, -2)]  ->  consistent
+```
+
 v² = u² + 2as and the energy equation pass: every term is L² T⁻², or M L² T⁻². E = mv fails: momentum, M L T⁻¹, is not energy. s = ut + at² **passes**, although the correct formula has ½at². A dimension check cannot see pure numbers like ½, 2π or 0.6; it catches wrong variables and wrong powers, not wrong constants. That limitation shows up again below, and experiments fix it.
 
 ## The pendulum's period from dimensions
@@ -66,7 +73,7 @@ The answer, a = 0, b = ½, c = −½, says the period cannot depend on the mass 
 
 Predict before running: for small swings, what is T/√(L/g), and how does it change for large swings?
 
-```python
+```python type
 A = np.array([[1, 0, 0], [0, 1, 1], [0, 0, -2.0]])
 print("exponents (a, b, c) of m, L, g:", np.linalg.solve(A, [0, 0, 1]))
 
@@ -88,6 +95,18 @@ for deg in [5, 30, 60, 90, 150]:
     print(f"swing ±{deg:>3}°: T / sqrt(L/g) = {ratio:.4f} = 2π × {ratio / (2 * math.pi):.4f}")
 ```
 
+```output
+exponents (a, b, c) of m, L, g: [ 0.   0.5 -0.5]
+L = 1.0 m, g = 9.81: period 2.0070 s, T / sqrt(L/g) = 6.2862
+L = 0.25 m, g = 9.81: period 1.0035 s, T / sqrt(L/g) = 6.2862
+L = 2.0 m, g = 1.62: period 6.9846 s, T / sqrt(L/g) = 6.2862
+swing ±  5°: T / sqrt(L/g) = 6.2862 = 2π × 1.0005
+swing ± 30°: T / sqrt(L/g) = 6.3926 = 2π × 1.0174
+swing ± 60°: T / sqrt(L/g) = 6.7430 = 2π × 1.0732
+swing ± 90°: T / sqrt(L/g) = 7.4163 = 2π × 1.1803
+swing ±150°: T / sqrt(L/g) = 11.0723 = 2π × 1.7622
+```
+
 Three very different pendulums, a metre on Earth, a quarter metre on Earth and two metres on the Moon, give the same ratio T/√(L/g) ≈ 6.286. That is 2π, slightly raised by the 5° swing, exactly as dimensional analysis says. The constant needs physics or experiment: the analysis said it would be a pure number, and the simulation measured it. The swing angle is a different matter: at ±30° the period is 1.7% longer, at ±90° 18% and at ±150° 76%. The small-angle formula 2π√(L/g) is a good approximation only for small swings, and dimensions alone could not have known that.
 
 ## Dimensionless groups: the Π theorem
@@ -106,7 +125,7 @@ Any basis of the nullspace works, so the choice is about convenience. The standa
 
 Predict before running: what basis does SymPy find, and is the Reynolds number of water at 1.5 m/s in a 50 mm pipe above or below about 2,300, below which pipe flow stays smooth (laminar)?
 
-```python
+```python type
 names = ["Δp", "ρ", "μ", "V", "D", "L"]
 Adim = sp.Matrix([[1, 1, 1, 0, 0, 0],
                 [-1, -3, -1, 1, 1, 1],
@@ -121,6 +140,18 @@ print("rank of the three familiar groups together:", sp.Matrix(list(familiar.val
 
 rho, mu, V, Dpipe = 998.0, 1.0e-3, 1.5, 0.05
 print(f"water at {V} m/s in a {Dpipe * 1000:.0f} mm pipe: Re = {rho * V * Dpipe / mu:,.0f}")
+```
+
+```output
+rank 3 -> 3 dimensionless groups
+  SymPy basis vector: Δp^-1/2 ρ^1/2 V^1
+  SymPy basis vector: Δp^1/2 ρ^1/2 μ^-1 D^1
+  SymPy basis vector: Δp^1/2 ρ^1/2 μ^-1 L^1
+  Euler Δp/(ρV²)   dimensions [0, 0, 0]
+  Reynolds ρVD/μ   dimensions [0, 0, 0]
+  L/D              dimensions [0, 0, 0]
+rank of the three familiar groups together: 3
+water at 1.5 m/s in a 50 mm pipe: Re = 74,850
 ```
 
 SymPy's basis is correct but unfamiliar: it mixes Δp into every group. The three standard groups each give the zero vector, so they are dimensionless. Their exponent vectors have rank 3, so they are independent and form an equally valid basis. For water at 1.5 m/s in a 50 mm pipe, Re ≈ 75,000, far above about 4,000, where pipe flow is turbulent. The Moody diagram, engineering's pipe-friction chart, is this reduced law in practice: it plots the friction factor f = 2(D/L)·Δp/(ρV²), the Euler number scaled by D/L because Δp grows in proportion to length, against the Reynolds number, with one extra group this analysis left out, the wall roughness relative to the diameter.
@@ -138,7 +169,7 @@ If the law depends only on the dimensionless groups, then a model with the same 
 
 Predict before running: a 4.5 m car at 30 m/s is tested as a 1/5-scale model. How fast must the model go in air, and in a water tunnel?
 
-```python
+```python type
 nu_air, nu_water = 1.5e-5, 1.0e-6
 V_full, L_full, scale = 30.0, 4.5, 5
 L_model = L_full / scale
@@ -146,6 +177,12 @@ print(f"full size: Re = {V_full * L_full / nu_air:.2e}")
 for fluid, nu_m in [("air", nu_air), ("water", nu_water)]:
     V_m = V_full * L_full / L_model * nu_m / nu_air
     print(f"1/{scale} model in {fluid:<5}: {V_m:6.1f} m/s, Re = {V_m * L_model / nu_m:.2e}")
+```
+
+```output
+full size: Re = 9.00e+06
+1/5 model in air  :  150.0 m/s, Re = 9.00e+06
+1/5 model in water:   10.0 m/s, Re = 9.00e+06
 ```
 
 In air the model would need 150 m/s, about half the speed of sound. At that speed air compresses, which adds a new dimensionless group, the Mach number, and the similarity breaks. In water, with a kinematic viscosity 15 times smaller, the same Reynolds number needs only 10 m/s. This is why many models are tested in water tunnels or towing tanks. When not every group can be matched at once (Reynolds and Froude for ships, for example), engineers match the most important one and correct for the rest. Every one of these choices starts from the exponent arithmetic above.

@@ -21,12 +21,14 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [x] **C++ terminal-game milestone and probability entry through A20 (2026-10-07):** focused ownership lessons, shared CMake builds, deterministic rules, whole-line parsing, seeded dice and a playable fixed-opponent match. Independent work includes hints and wrong-answer trials; compiled walkthroughs pass. Added exact-outcome probability exploration and independent C++ practice. Fixed Windows checks confusing a blank line with EOF. Q-learning updates/training, SDL, Vulkan and the newly drafted full-stack branch remain unfinished; see the [milestone audit](cpp-games-learning-path.md#playable-terminal-milestone--2026-10-07).
+
 - [x] Catalog-wide structural audit and initial repairs: audience/maturity labels, a recommended Forge entry path, honest check evidence, optional independent references, and Java/C++/C# opening repairs. See [verification and remaining work](project-studio-lesson-quality-todos.md) and the generated [per-lesson review queue](generated/project-studio-lesson-review.md).
 - [ ] Complete human review and task-specific repairs across every lesson under the [Project Studio standard](project-studio-lesson-standard.md). Structural signals and passing references do not certify teaching quality.
 
 ### Last verified baseline
 
-- [x] **C++ games entry chapter (2026-10-06):** implemented the game-first opening and initial C++ foundations for Python script writers. Includes a playable, explicitly rule-based preview, incremental file diffs, explanations, predictions, experiments and independent challenges. Real compiler walkthroughs and browser/C++ rule-parity tests pass. Later classes, project structure, SDL3 and Vulkan chapters remain planned in [the learning path](cpp-games-learning-path.md).
+- [x] **C++ games entry chapter (2026-10-06):** implemented the game-first opening and initial C++ foundations for Python script writers. Includes a playable, explicitly rule-based preview, incremental file diffs, explanations, predictions, experiments and independent challenges. Real compiler walkthroughs and browser/C++ rule-parity tests pass. The continuation now teaches classes and the first shared source files through A15; full project integration, SDL3 and Vulkan remain planned in [the learning path](cpp-games-learning-path.md).
 
 - [x] **Install and Studio baseline audit (2026-10-03):** regenerated missing lockfile peers with current npm and verified isolated Windows/Linux dependency selection; excluded learner walkthrough fixtures from the route scanner. Clean production build, grouped Studio unit tests, compiled C++ foundations and a live matplotlib probe were checked. Remaining findings and exact verification are in [the baseline audit](baseline-audit-2026-10-03.md).
 

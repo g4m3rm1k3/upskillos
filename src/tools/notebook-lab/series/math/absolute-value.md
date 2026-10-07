@@ -25,7 +25,7 @@ To solve |2x − 3| < 5, write it as −5 < 2x − 3 < 5 and solve both sides at
 
 Predict before running: do brute-force grids agree with these two answers?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,6 +39,15 @@ print(f"|x + 1| >= 4 holds up to {outside[outside < 0].max():.3f} and from {outs
 nominal, tol = 50.00, 0.05
 for reading in [49.96, 50.05, 50.07, 49.94]:
     print(f"reading {reading}: deviation {reading - nominal:+.2f}, |deviation| {abs(reading - nominal):.2f}, in band: {abs(reading - nominal) <= tol + 1e-12}")
+```
+
+```output
+|2x - 3| < 5 holds from -0.999 to 3.999  ->  -1 < x < 4
+|x + 1| >= 4 holds up to -5.000 and from 3.000  ->  x <= -5 or x >= 3
+reading 49.96: deviation -0.04, |deviation| 0.04, in band: True
+reading 50.05: deviation +0.05, |deviation| 0.05, in band: True
+reading 50.07: deviation +0.07, |deviation| 0.07, in band: False
+reading 49.94: deviation -0.06, |deviation| 0.06, in band: False
 ```
 
 The strict inequality |2x − 3| < 5 holds just inside −1 and 4 (the grid shows −0.999 and 3.999), and the other holds up to −5 and from 3, both ends included. Each reading's tolerance check is just "is the size of the deviation at most 0.05?". Note the small allowance added to the tolerance. Here 50.05 − 50.00 happens to round to 0.0499999999999972, just inside, but 1.10 − 1.00 comes out as 0.10000000000000009, just outside a 0.1 band. The floating-point lesson explains why, and it is the reason real inspection software compares with a tiny margin or in integer micrometres.
@@ -57,11 +66,16 @@ Adding numbers can only shrink their combined size through cancellation, never g
 
 Predict before running: six errors in micrometres of mixed sign. How do the actual total error, the worst-case bound and the root-sum-square compare?
 
-```python
+```python type
 e = np.array([8.0, -5.0, 11.0, -3.0, 6.0, -9.0])
 print(f"actual total {e.sum():+.1f} µm, |total| {abs(e.sum()):.1f}, worst-case bound sum |e| = {np.abs(e).sum():.1f}, root-sum-square {math.sqrt((e ** 2).sum()):.1f}")
 a, b = 7.3, -2.1
 print(f"|a + b| = {abs(a + b):.1f} <= |a| + |b| = {abs(a) + abs(b):.1f};  ||a| - |b|| = {abs(abs(a) - abs(b)):.1f} <= |a - b| = {abs(a - b):.1f}")
+```
+
+```output
+actual total +8.0 µm, |total| 8.0, worst-case bound sum |e| = 42.0, root-sum-square 18.3
+|a + b| = 5.2 <= |a| + |b| = 9.4;  ||a| - |b|| = 5.2 <= |a - b| = 9.4
 ```
 
 The six errors add to +8 µm, while the worst-case bound allows 42 µm and the root-sum-square suggests about 18.3 µm. Mixed signs cancel a lot here; the bound would only be reached if every error had the same sign. Both forms of the inequality hold for a = 7.3 and b = −2.1: 5.2 ≤ 9.4, and 5.2 ≤ 9.4 again (for these two numbers the reverse form happens to give the same pair).
@@ -85,7 +99,7 @@ They always come in this order: MAE ≤ RMS ≤ MAX. They are the 1-, 2- and ∞
 
 Predict before running: the log contains one 0.2 mm spike. Which of the three measures changes most when it is removed?
 
-```python
+```python type
 n = 400
 x = 50.0 + 0.02 * rng.standard_normal(n)
 x[150:158] += 0.07
@@ -102,6 +116,12 @@ ax.axhline(-0.05, color="red", linestyle="--")
 ax.set_xlabel("reading")
 ax.set_ylabel("deviation (mm)")
 plt.show()
+```
+
+```output
+with the spike : MAE 0.0170, RMS 0.0236, MAX 0.2029 mm
+spike removed  : MAE 0.0165, RMS 0.0214, MAX 0.0836 mm
+fraction within ±0.05 mm: 0.978
 ```
 
 With the spike, MAE is 0.0170 mm, RMS 0.0236 mm and MAX 0.203 mm. Removing that one reading barely moves MAE (to 0.0165) and changes RMS by 9% (to 0.0214). The maximum falls by a factor of 2.4, to 0.084 mm, now set by the shifted stretch of readings around 150. 97.8% of readings are inside the ±0.05 band. Which measure to report depends on the question. "How good is the process?" calls for MAE or RMS. "Will any part fail?" calls for MAX, or the fraction outside the band.
@@ -122,7 +142,7 @@ The same idea fits lines. Least squares minimises the sum of squared residuals; 
 
 Predict before running: six gauge readings, one of them a misread 15.8. Where do the two criteria put the "centre"? And how does an L1 line compare with least squares when one point is 3 units off?
 
-```python
+```python type
 readings = np.array([12.1, 12.3, 11.9, 12.0, 12.2, 15.8])
 cs = np.linspace(11, 16, 50001)
 abs_sum = np.array([np.abs(readings - c).sum() for c in cs])
@@ -145,6 +165,11 @@ ls_slope, ls_icept = np.polyfit(xl, yl, 1)
 print(f"true line: slope 0.5, intercept 2.0;  L1 line: slope {best[1]:.3f}, intercept {best[2]:.3f};  least squares: slope {ls_slope:.3f}, intercept {ls_icept:.3f}")
 ```
 
+```output
+sum |x - c| is smallest for c from 12.10 to 12.20 (median 12.15); sum (x - c)² at 12.7167 (mean 12.7167)
+true line: slope 0.5, intercept 2.0;  L1 line: slope 0.497, intercept 2.059;  least squares: slope 0.578, intercept 1.975
+```
+
 The absolute-deviation sum is flat between 12.1 and 12.2, the two middle readings, and the median is the middle of that flat bottom, 12.15. The misread 15.8 drags the mean up to 12.72, above every genuine reading. The L1 line recovers slope 0.497 and intercept 2.059, close to the true 0.5 and 2.0. Least squares is pulled to slope 0.578 and intercept 1.975 by the single bad point. LAD fitting is used when data contain occasional gross errors. Its price is that the solution can be non-unique and needs other algorithms (linear programming) for large problems.
 
 ## Dead bands and the corner at zero
@@ -162,7 +187,7 @@ Optimisers meet the corner in another form. |x| has no derivative at 0, so gradi
 
 Predict before running: a room drifts and is heated around 20 °C with sensor noise. How many times does the heater switch in 10 hours with no dead band, and with a ±0.3 °C band?
 
-```python
+```python type
 def thermostat(d, minutes=600, seed=1):
     gen = np.random.default_rng(seed)
     T, heating, switches = 19.5, True, 0
@@ -184,6 +209,14 @@ for d in [0.0, 0.1, 0.3]:
 grid = np.linspace(-1, 1, 2001)
 for eps in [0.1, 0.01]:
     print(f"sqrt(x² + {eps}²): largest gap from |x| is {np.max(np.sqrt(grid ** 2 + eps ** 2) - np.abs(grid)):.3f}")
+```
+
+```output
+dead band ±0.0 °C: 345 heater switchings in 10 hours
+dead band ±0.1 °C: 112 heater switchings in 10 hours
+dead band ±0.3 °C: 37 heater switchings in 10 hours
+sqrt(x² + 0.1²): largest gap from |x| is 0.100
+sqrt(x² + 0.01²): largest gap from |x| is 0.010
 ```
 
 Without a dead band the heater switches 345 times in 10 hours, about every 1.7 minutes, because sensor noise keeps crossing zero. A ±0.1 °C band cuts that to 112, and ±0.3 °C to 37, at the price of letting the temperature swing a little further. The smooth approximation is worst exactly at the corner, x = 0, where it equals ε. Smaller ε means closer to |x| but a sharper bend, so it is a trade-off between accuracy and how easily an optimiser can follow it.

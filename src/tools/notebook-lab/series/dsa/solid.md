@@ -16,7 +16,7 @@ The single responsibility lesson split a `JobCard` that priced repairs, wrote in
 
 Code is **closed for modification** when adding a feature does not require editing code that already works. It is **open for extension** when the new feature can still be added, by writing new code. Here is a checkout that violates this: every new promotion means another branch in the same function, retested from scratch each time. Predict before reading on: what has to change to add a "buy 3 rolls of tape, pay for 2" offer?
 
-```python
+```python type
 def checkout_total(basket, promotions):
     total = sum(price * qty for _, price, qty in basket)
     for promo in promotions:
@@ -32,11 +32,15 @@ basket = [("drill", 89.00, 1), ("gloves", 6.50, 1), ("tape", 2.40, 3)]
 print(checkout_total(basket, ["free gloves with a drill", "10% over £100"]))
 ```
 
+```output
+96.2
+```
+
 The new offer is another `elif` inside `checkout_total`. The function grows with every promotion the marketing team invents, and every edit risks the existing ones.
 
 The open/closed version makes each promotion an **object** with one method, `saving(basket, running_total)`, and the checkout applies whichever objects it is given. A new promotion is a new class. `checkout_total` is never edited again: it is closed for modification and open for extension. Predict before running: is the total the same as before, and what does adding the tape offer take?
 
-```python
+```python type
 class PercentOver:
     def __init__(self, percent, threshold):
         self.percent, self.threshold = percent, threshold
@@ -67,13 +71,18 @@ class ThreeForTwo:
 print(checkout_total(basket, [FreeWith("gloves", "drill"), ThreeForTwo("tape"), PercentOver(10, 100)]))
 ```
 
+```output
+96.2
+93.8
+```
+
 Same total, 96.20: once the gloves are free, the basket is below £100, so the 10% offer does not apply (promotions are applied in order, each to the running total). With the tape offer added, 3 rolls for the price of 2 saves another 2.40, giving 93.80, from a new class used by unchanged code. This is polymorphism (the previous lesson) put to a design purpose. "Closed" never means "frozen forever". It means that the **usual** kind of change, here a new promotion, does not touch existing code.
 
 ## L: Liskov substitution
 
 Barbara Liskov's principle says: wherever code uses a base class, any subclass must work in its place **without the code noticing**. A subclass may do more, but it must keep every promise the base class makes. The classic violation is a `Square` subclass of `Rectangle`. Geometrically, a square is a rectangle. But a `Rectangle` object promises that setting its width leaves its height alone, and a square cannot keep that promise. Predict before running: what area does `stretch` produce for each shape?
 
-```python
+```python type
 class Rectangle:
     def __init__(self, width, height):
         self.width, self.height = width, height
@@ -101,6 +110,11 @@ print("rectangle:", stretch(Rectangle(4, 4)))
 print("square:   ", stretch(Square(4)))
 ```
 
+```output
+rectangle: 20
+square:    4
+```
+
 `stretch` was written against `Rectangle`'s promise: after `set_width(10)` and `set_height(2)` the area is 20. The square answers 4. `stretch` is not buggy. The subclass broke the contract, so any code that accepts a `Rectangle` can now be broken by a `Square`.
 
 The usual rules for keeping substitutability:
@@ -115,7 +129,7 @@ The fix is usually not a cleverer subclass but a different design. Here, make sh
 
 An interface that bundles many operations forces every implementer to provide all of them. An office-machine base class with `print_doc`, `scan` and `fax` forces a simple printer to "implement" scanning and faxing, usually by raising `NotImplementedError`. Now any code holding an `OfficeMachine` cannot trust that `scan` works: the interface makes a promise its implementers break, a Liskov problem again. **Interface segregation** says: split it into small interfaces, so each class provides exactly what it can do, and each function asks for exactly what it needs.
 
-```python
+```python type
 from typing import Protocol, runtime_checkable
 
 @runtime_checkable
@@ -144,13 +158,19 @@ for device in [DeskPrinter(), OfficeMultifunction()]:
 print(print_all(DeskPrinter(), ["invoice", "manifest"]))
 ```
 
+```output
+DeskPrinter          printer: True   scanner: False
+OfficeMultifunction  printer: True   scanner: True
+["printed 'invoice'", "printed 'manifest'"]
+```
+
 `print_all` asks only for a `Printer`, so the desk printer qualifies without pretending to scan. A class that can do more simply satisfies more of the small interfaces. With protocols, no class even has to declare them: having the methods is enough. Remember that a runtime `isinstance` check against a protocol looks only at method names, not at their arguments or meaning.
 
 ## D: dependency inversion
 
 The last principle is about the direction of dependencies. **High-level** code expresses what the program is for: "send an alert when a machine overheats". **Low-level** code handles details: the email library, the SMS gateway, the database. If the high-level code creates and calls the low-level classes directly, it depends on them, and every change of detail (switch email provider, test without sending real messages) means editing the important code. **Dependency inversion** says both should depend on an **abstraction** that the high-level side defines, such as "something with `send(to, text)`". The concrete detail is then plugged in from outside.
 
-```python
+```python type
 from typing import Protocol
 
 class Sender(Protocol):
@@ -177,6 +197,10 @@ monitor = OverheatMonitor(outbox)
 monitor.check("press 2", 85)
 monitor.check("lathe 1", 97)
 print(outbox.sent)
+```
+
+```output
+[('maintenance', 'lathe 1 at 97 °C')]
 ```
 
 `OverheatMonitor` never imports an email library. It depends only on the `Sender` protocol, which is defined beside it, on the high-level side; the concrete senders are written to fit it. That is the inversion: the detail depends on the abstraction the important code owns, not the other way round. The monitor receives its sender from outside. In production that is an email or SMS sender. In a test it is `RecordingSender`, which just remembers the messages so the test can check them. Passing collaborators in like this is called **dependency injection**, and the next lesson is about it.

@@ -15,7 +15,7 @@ This lesson covers:
 
 A laser-cutting job has a material, a thickness, and many optional settings: power, speed, passes, gas, focus offset. In languages without keyword arguments, constructors like `CutJob("steel", 3, 80, 1200, 1, "N2", 0)` are unreadable, and builders were invented largely to avoid them. In Python, keyword arguments with defaults name every setting at the call site, and a dataclass writes the constructor for you. Predict before running: what does the second job's `repr` show for the settings it did not mention?
 
-```python
+```python type
 from dataclasses import dataclass, replace
 
 @dataclass(frozen=True)
@@ -44,16 +44,27 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+CutJob(material='plywood', thickness_mm=6, power_pct=80, speed_mm_min=1200, passes=1, gas='air', tags=())
+CutJob(material='stainless', thickness_mm=1.5, power_pct=95, speed_mm_min=600, passes=1, gas='N2', tags=())
+ValueError: power must be 1-100%, not 140
+```
+
 `__post_init__` runs right after the dataclass's generated `__init__`, which makes it the place to check settings. With `frozen=True` the object cannot be changed afterwards, so a job checked at creation stays valid.
 
 Every setting the call did not name took its default, and the `repr` lists them all, so a job's full configuration is visible at a glance. Invalid combinations are refused at creation. For "many optional settings", this is the whole solution in Python: no builder class needed.
 
 Variations are just as easy. `dataclasses.replace` copies a frozen object with some fields changed, which is often what a builder's "start from this and tweak it" step is for:
 
-```python
+```python type
 thick = replace(standard, thickness_mm=12, passes=2, tags=("test cut",))
 print(thick)
 print("original unchanged:", standard.thickness_mm, standard.passes)
+```
+
+```output
+CutJob(material='plywood', thickness_mm=12, power_pct=80, speed_mm_min=1200, passes=2, gas='air', tags=('test cut',))
+original unchanged: 6 1
 ```
 
 `replace` builds a new object, so `__post_init__` runs again and checks the new combination.
@@ -64,7 +75,7 @@ Now consider making a CNC **toolpath**: the list of moves a machine follows. It 
 
 A builder keeps the in-progress state (the moves so far, the current position, whether the spindle is on) and offers one method per step. Each step method returns the builder itself (`return self`), so steps can be chained one after another. This is a **fluent interface**. `build()` checks the whole program and returns the finished, immutable result. Predict before running: what does `build()` say about the second, careless program?
 
-```python
+```python type
 import math
 
 class ToolpathBuilder:
@@ -130,6 +141,19 @@ try:
     ToolpathBuilder().rapid_to(0, 0, 5).cut_to(0, 0, -1).build()
 except ValueError as error:
     print("ValueError:", error)
+```
+
+```output
+M3 S12000
+F800
+G0 X10 Y10 Z5
+G1 X10 Y10 Z-2
+G1 X60 Y10 Z-2
+G1 X60 Y40 Z-2
+G0 X60 Y40 Z5
+M5
+cutting length: 87.0 mm
+ValueError: cut to (0, 0, -1) with the spindle off; cut to (0, 0, -1) with no feed rate set; program ends with the tool below the safe height
 ```
 
 The chained calls are wrapped in brackets so they can span several lines. Each method returns the builder, so `.feed(800)` is called on whatever `.spindle_on(12000)` returned.

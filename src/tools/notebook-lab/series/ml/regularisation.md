@@ -8,7 +8,7 @@ The idea rests on an observation about what overfitting looks like inside a mode
 
 Here is a degree-12 polynomial, as in the last two lessons, fitted to 20 noisy points. Look at the size of its fitted weights compared with a degree-3 fit:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -18,6 +18,11 @@ y = np.sin(3 * x) + rng.normal(0, 0.3, 20)
 for degree in [3, 12]:
     weights = np.polyfit(x, y, degree)
     print(f"degree {degree:>2}: largest weight {np.abs(weights).max():,.0f}")
+```
+
+```output
+degree  3: largest weight 2
+degree 12: largest weight 492
 ```
 
 The degree-3 weights are small, a few units at most. The degree-12 weights run into the hundreds, large positive and negative terms fighting each other so that the curve can bend sharply enough to pass near every noisy point. A smooth curve does not need weights like that. So large weights are a symptom of overfitting, and discouraging them is a cure.
@@ -46,7 +51,7 @@ where `I'` is the identity matrix with its first diagonal entry (the bias's) set
 
 The next cell fits the degree-12 polynomial with four strengths of penalty. Predict before running: what will the curve look like with a tiny λ, and with a large one?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -80,7 +85,7 @@ With λ = 0 it swings wildly. A tiny penalty, λ = 0.001, already tames it, and 
 
 A plot of every weight against λ, called a **regularisation path**, shows the shrinking:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -111,7 +116,7 @@ plt.show()
 
 The multiple regression lesson found that `s1` and `s2` in the diabetes data, correlated at 0.9, got huge weights of opposite sign. Ridge calms them down, because two large opposing weights pay a large penalty, while two moderate ones that make almost the same predictions pay much less. Predict what happens to the `s1` and `s2` weights as λ grows, and to BMI's:
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -130,13 +135,19 @@ for lam in [0, 10, 100]:
     print(f"λ = {lam:>3}: s1 {w['s1']:7.1f}, s2 {w['s2']:6.1f}, bmi {w['bmi']:5.1f}")
 ```
 
+```output
+λ =   0: s1   -37.7, s2   22.7, bmi  24.7
+λ =  10: s1   -11.3, s2    1.8, bmi  24.6
+λ = 100: s1    -2.1, s2   -3.7, bmi  21.4
+```
+
 As λ grows, the opposing `s1` and `s2` weights move towards each other and towards modest values, while BMI's weight, which carries real information, changes only a little.
 
 ## Standardise first
 
 The penalty treats every weight equally, but a weight's size depends on its feature's units. A feature measured in millimetres needs a weight a thousand times smaller than the same feature in metres, and since the penalty squares the weight, it is penalised a **million** times less. The same information, in different units, gets a completely different amount of regularisation:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(4)
@@ -155,6 +166,11 @@ w = ridge(X_mixed, y, 20)[1:]
 print("second feature × 1000: ", w.round(5), "→ back in the original units:", (w * [1, 1000]).round(3))
 ```
 
+```output
+same units:             [1.411 1.388]
+second feature × 1000:  [1.44518 0.00194] → back in the original units: [1.445 1.937]
+```
+
 Both features matter equally. With the same units, ridge shrinks both weights by the same amount. When the second feature is measured in units a thousand times smaller, its weight becomes tiny, the penalty barely touches it, and in effect only the first feature is regularised. To make the penalty fair, **standardise the features** before fitting a regularised model, so every weight is on the same scale. (As before: compute the standardisation from the training set only.) The polynomial demos in this lesson skip this step only because every power of an `x` between −1 and 1 already stays between −1 and 1.
 
 ## Lasso: switching features off
@@ -167,7 +183,7 @@ L(\theta) = \sum_i (\hat{y}_i - y_i)^2 + \lambda \sum_j |w_j|
 
 The change looks small, but its effect is striking: lasso drives many weights to **exactly zero**, switching those features off completely. It performs **feature selection** automatically. There is no exact formula for lasso, because the absolute value has a corner at zero, so it is fitted by an iterative method; scikit-learn's `Lasso` does it. (Its `alpha` is scaled differently from ridge's, dividing the squared errors by `2n`, so the two are not directly comparable.)
 
-```python
+```python type
 import numpy as np
 from sklearn.linear_model import Lasso, Ridge
 
@@ -179,6 +195,11 @@ print("ridge:", Ridge(alpha=10).fit(X, y).coef_.round(2))
 print("lasso:", Lasso(alpha=0.3).fit(X, y).coef_.round(2))
 ```
 
+```output
+ridge: [ 3.65 -2.68  1.74  0.08  0.18 -0.02  0.01  0.17 -0.04  0.02]
+lasso: [ 3.73 -2.69  1.61  0.    0.   -0.   -0.    0.   -0.    0.  ]
+```
+
 Before looking at the output, predict how many of the ten weights each method will set to exactly zero. Only the first three features matter; the other seven are pure noise. Ridge shrinks all ten weights a little but keeps every one non-zero. Lasso sets all seven useless weights to exactly 0, leaving a simpler model that says clearly which features matter. When you suspect most features are irrelevant, lasso is the natural choice.
 
 Why the difference? Near zero, the squared penalty `w²` becomes tiny, so ridge has almost no reason to push a small weight the last bit of the way to zero. The absolute penalty `|w|` keeps pulling with the same strength all the way down, so lasso pushes a weakly useful weight right to zero. (A method called **elastic net** mixes both penalties.)
@@ -187,7 +208,7 @@ Why the difference? Near zero, the squared penalty `w²` becomes tiny, so ridge 
 
 λ is a hyperparameter, so it is chosen the same way as the polynomial degree: fit with several values on the training data, measure on a validation set, keep the best. Try values spread over several powers of ten.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -219,6 +240,10 @@ ax.set_ylabel("MSE")
 ax.legend()
 plt.show()
 print("best λ:", lams[int(np.argmin(val_err))].round(5))
+```
+
+```output
+best λ: 0.03257
 ```
 
 This is the complexity curve from the last lesson, mirrored: **small** λ means a flexible model (overfitting, on the left), **large** λ a constrained one (underfitting, on the right). Training error rises steadily with λ, since the penalty always costs some fit, while validation error falls to a minimum and rises again. Pick the λ at the minimum.

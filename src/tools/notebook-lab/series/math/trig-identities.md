@@ -25,7 +25,7 @@ In code: sample the residual across several turns and compare it with a delibera
 
 Predict before running: will `sin(theta) + cos(theta) == 1` hold everywhere? Will the correct squared identity produce exactly zero residual at every sampled angle?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,6 +37,13 @@ print("Largest residual of squared identity:", np.max(np.abs(residual)))
 print("Largest residual of false rule:", np.max(np.abs(wrong_residual)))
 print("Squared identity within 1e-12:", np.all(np.abs(residual) < 1e-12))
 print("At pi/4, sin + cos =", math.sin(math.pi / 4) + math.cos(math.pi / 4))
+```
+
+```output
+Largest residual of squared identity: 2.220446049250313e-16
+Largest residual of false rule: 2.414185647008135
+Squared identity within 1e-12: True
+At pi/4, sin + cos = 1.414213562373095
 ```
 
 The correct residual is around floating-point rounding size, while the false rule has errors of order one. At $\pi/4$, sine plus cosine is $\sqrt{2}$, already a counterexample. A **counterexample** is one allowed input where a claim fails; one is enough to disprove a universal claim.
@@ -57,7 +64,7 @@ In code: rotate an arm through two successive angles and compare with one rotati
 
 For a concrete hand calculation, $\cos(60°+30°)=(1/2)(\sqrt{3}/2)-(\sqrt{3}/2)(1/2)=0$. The vertical component is $1/4+3/4=1$. An arm of length 120 mm should therefore finish at $(0,120)$ mm. Predict before running: does the incorrect shortcut $\cos a+\cos b$ give that horizontal position?
 
-```python
+```python type
 a, b = np.deg2rad([60.0, 30.0])
 length = 120.0
 composed = length * np.array([
@@ -69,6 +76,13 @@ print("Successive rotations (mm):", np.round(composed, 10))
 print("One combined rotation (mm):", np.round(direct, 10))
 print("Incorrect horizontal shortcut (mm):", length * (np.cos(a) + np.cos(b)))
 print("Position discrepancy (mm):", np.linalg.norm(composed - direct))
+```
+
+```output
+Successive rotations (mm): [  0. 120.]
+One combined rotation (mm): [  0. 120.]
+Incorrect horizontal shortcut (mm): 163.92304845413267
+Position discrepancy (mm): 1.9297471796119635e-14
 ```
 
 Both correct constructions reach the same point to rounding accuracy. Adding the cosine values does not add angles: it adds two horizontal components of two different vectors. Notice also that we never needed `acos` to recover an intermediate angle. When a sensor already supplies sine and cosine components, the addition formulas let us work directly with those components and retain quadrant information.
@@ -109,7 +123,7 @@ In code: square a 3 mm oscillation and inspect its mean and doubled frequency ov
 
 Predict before running: is the mean squared displacement zero because the displacement has mean zero? How many peaks does the squared signal have per original period?
 
-```python
+```python type
 phase = np.linspace(0, 2 * np.pi, 800, endpoint=False)
 x = 3.0 * np.cos(phase)
 x_squared = x**2
@@ -125,6 +139,12 @@ ax.set(xlabel="Original cycles", ylabel="Squared displacement (mm²)", title="Sq
 ax.legend()
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Mean displacement (mm): 0.0
+Mean squared displacement (mm^2): 4.5
+Largest rewrite discrepancy: 3.552713678800501e-15
 ```
 
 The mean is $9/2=4.5$ mm². Squaring makes both the positive and negative extremes into positive peaks, so there are two peaks per original period. Uniform samples cover a full cycle without duplicating its endpoint; averaging a partial cycle would generally give a different result. This distinction matters when estimating vibration intensity from a short recording.
@@ -144,7 +164,7 @@ In code: compare the original vibration with its amplitude-phase form and mark i
 
 Predict before running: what is the amplitude for coefficients 3 and 4? At which phase does the maximum occur?
 
-```python
+```python type
 A, B = 3.0, 4.0
 R, phi = math.hypot(A, B), math.atan2(B, A)
 angle = np.linspace(0, 2 * np.pi, 500)
@@ -161,6 +181,12 @@ ax.set(xlabel="Phase θ (radians)", ylabel="Displacement (mm)", title="Two compo
 ax.legend()
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Amplitude: 5.000 mm; phase: 53.130 degrees
+Value at predicted peak (mm): 5.0
+Largest reconstruction error (mm): 8.881784197001252e-16
 ```
 
 The amplitude is 5 mm and the peak occurs at about 53.13°, plus whole turns. Using `atan(B/A)` would lose the quadrant when $A$ is negative and divide by zero when $A=0$. These contributions must share the same frequency for a single constant amplitude and phase to describe their sum. Different-frequency signals need a different model.
@@ -203,7 +229,7 @@ In code: multiply 12 Hz and 10 Hz signals, then reconstruct the product from 2 H
 
 Predict before running: does multiplying these signals produce 120 Hz, 22 Hz alone, or two frequencies?
 
-```python
+```python type
 t = np.linspace(0, 1, 2000, endpoint=False)
 product = np.cos(2 * np.pi * 12 * t) * np.cos(2 * np.pi * 10 * t)
 slow = 0.5 * np.cos(2 * np.pi * 2 * t)
@@ -224,6 +250,11 @@ fig.tight_layout()
 plt.show()
 ```
 
+```output
+Predicted output frequencies (Hz): 2 22
+Largest reconstruction error: 1.815214645262131e-14
+```
+
 The traces agree: both 2 Hz and 22 Hz are present. A later filtering stage could keep the slow component and suppress the fast one, but multiplication alone does not remove either. The identity tells us which frequencies to expect before we write a frequency-analysis program. As a quick consistency check, both inputs equal one at time zero, and the two half-amplitude outputs add to one there.
 
 ## 6. Equivalent algebra still needs a domain and a numerical strategy
@@ -241,13 +272,20 @@ In code: compare the direct subtraction with the half-angle rewrite as the rotat
 
 Predict before running: which expression will still return a positive value at $10^{-8}$ radians? The small-angle estimate $L\theta^2/2$ is a useful comparison, but remains an approximation rather than an identity.
 
-```python
+```python type
 L = 100.0
 for th in [1e-2, 1e-4, 1e-6, 1e-8]:
     direct = L * (1 - math.cos(th))
     stable = 2 * L * math.sin(th / 2)**2
     estimate = L * th**2 / 2
     print(f"theta={th:.0e}: direct={direct:.12e}, half-angle={stable:.12e}, estimate={estimate:.12e} mm")
+```
+
+```output
+theta=1e-02: direct=4.999958333474e-03, half-angle=4.999958333472e-03, estimate=5.000000000000e-03 mm
+theta=1e-04: direct=4.999999969613e-07, half-angle=4.999999995833e-07, estimate=5.000000000000e-07 mm
+theta=1e-06: direct=5.000444502912e-11, half-angle=5.000000000000e-11, estimate=5.000000000000e-11 mm
+theta=1e-08: direct=0.000000000000e+00, half-angle=5.000000000000e-15, estimate=5.000000000000e-15 mm
 ```
 
 At the smallest angle, direct subtraction typically returns zero while the rewrite retains the tiny positive setback. This is an arithmetic demonstration, not a claim that a real workshop instrument can resolve that displacement. The rewrite cannot create measurement precision; it avoids throwing away precision that was already available in the input model. For extremely small values, even the rewritten expression can underflow to zero, so it is not an unlimited-precision solution.

@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Implement a decision that distinguishes below, exactly at, and beyond a boundary.
+
+**Recall before looking at code:** At score four and pot eight, has the target twelve been reached?
+
 You can read a score. Now decide whether it has reached the target. A game that forgets equality can deny a legitimate win. You will test just below, exactly at and above a boundary, then combine conditions for a legal request.
 
 ## Choose one of two paths

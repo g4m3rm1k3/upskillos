@@ -10,7 +10,7 @@ The **population** is everything you want to know about: all voters, all patient
 
 Different samples give different estimates. Simulate a population, where the truth is known, and draw several samples from it:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -21,13 +21,22 @@ for i in range(5):
     print(f"sample {i + 1} mean: {sample.mean():.3f}")
 ```
 
+```output
+true population mean: 170.008
+sample 1 mean: 169.318
+sample 2 mean: 171.491
+sample 3 mean: 169.562
+sample 4 mean: 170.034
+sample 5 mean: 170.877
+```
+
 `rng.choice(population, size=50)` picks 50 people at random. (Strictly it can pick the same person twice, but from a population of a million that almost never happens, and it makes no practical difference.) Each sample mean lands near the true mean, but none exactly on it, and they all differ. Which value did your one real sample happen to give? You cannot know. What you **can** know is how far estimates like it typically stray from the truth.
 
 ## The sampling distribution and the standard error
 
 Imagine repeating the sampling thousands of times and collecting every sample mean. Their distribution is called the **sampling distribution** of the mean. Two things from the last lesson tell you what it looks like: the central limit theorem says it is approximately normal, and the σ/√n rule says its standard deviation is the population's standard deviation divided by the square root of the sample size.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -42,6 +51,10 @@ ax.set_xlabel("sample mean (samples of 50)")
 ax.legend()
 plt.show()
 print("spread of the sample means:", means.std().round(3), " formula σ/√n:", (8 / np.sqrt(50)).round(3))
+```
+
+```output
+spread of the sample means: 1.137  formula σ/√n: 1.131
 ```
 
 The standard deviation of an estimate's sampling distribution has its own name: the **standard error** (SE). It is the typical size of the estimate's error. For the mean:
@@ -62,7 +75,7 @@ A **confidence interval** turns the standard error into a range of plausible val
 
 is a **95% confidence interval** for the true mean, where `x̄` ("x bar") is the sample mean. The 1.96 is `stats.norm.ppf(0.975)`: the value with 2.5% of the normal distribution above it, leaving 95% between −1.96 and 1.96.
 
-```python
+```python type
 import numpy as np
 from scipy import stats
 
@@ -75,9 +88,14 @@ print(f"estimate {mean:.2f}, standard error {se:.2f}")
 print(f"95% confidence interval: {mean - z * se:.2f} to {mean + z * se:.2f}")
 ```
 
+```output
+estimate 170.18, standard error 1.12
+95% confidence interval: 167.98 to 172.37
+```
+
 What exactly does "95% confidence" mean? The true mean is a fixed number; it is either in this interval or not. The 95% describes the **procedure**: if you repeated the whole thing many times, taking a new sample and building a new interval each time, 95% of those intervals would contain the true mean. Predict: out of 100 intervals, how many will miss?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -115,13 +133,19 @@ where `p̂` ("p hat") is the sample proportion. The ± 1.96 SE that goes with it
 
 This is directly relevant to machine learning. Suppose a model gets 170 of 200 test examples right. Before running the cell, guess how wide the interval is if it had got 17 of 20 right instead:
 
-```python
+```python type
 import numpy as np
 
 for correct, total in [(17, 20), (170, 200), (1700, 2000)]:
     p = correct / total
     se = np.sqrt(p * (1 - p) / total)
     print(f"{correct}/{total}: accuracy {p:.3f} ± {1.96 * se:.3f}  ({p - 1.96 * se:.3f} to {p + 1.96 * se:.3f})")
+```
+
+```output
+17/20: accuracy 0.850 ± 0.156  (0.694 to 1.006)
+170/200: accuracy 0.850 ± 0.049  (0.801 to 0.899)
+1700/2000: accuracy 0.850 ± 0.016  (0.834 to 0.866)
 ```
 
 All three show 85% accuracy, but on 20 examples the true accuracy could plausibly be anywhere from about 69% to 100%, while on 2,000 it is pinned down to within about 1.6 percentage points. When someone reports that a new model beats an old one by one percentage point on a small test set, this calculation tells you whether to believe it. Notice the 17/20 interval runs to 1.006: an accuracy above 100% is impossible, which is the visible sign that this simple formula breaks down for small samples and proportions near 0 or 1. Better formulas exist for those cases, and the bootstrap below also works.
@@ -138,7 +162,7 @@ If the 95% interval for the difference excludes zero, the data gives good eviden
 
 The data below is simulated so that the advert really does raise average spending, by 2. Predict: will the interval exclude zero?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(4)
@@ -148,6 +172,11 @@ for n in [400, 1600]:
     diff = with_advert.mean() - control.mean()
     se = np.sqrt(control.var(ddof=1) / n + with_advert.var(ddof=1) / n)
     print(f"{n} per group: difference {diff:.2f}, 95% interval {diff - 1.96 * se:.2f} to {diff + 1.96 * se:.2f}")
+```
+
+```output
+400 per group: difference 1.18, 95% interval -0.51 to 2.87
+1600 per group: difference 2.04, 95% interval 1.22 to 2.87
 ```
 
 With 400 customers per group, the interval includes zero, even though the true effect is 2: the test is not yet big enough to detect it. That does not show the advert has no effect; **absence of evidence is not evidence of absence**. With 1,600 per group, the standard error halves (four times the data), the interval narrows, and it excludes zero.
@@ -160,7 +189,7 @@ The standard error formulas above work for means and proportions. What about the
 
 You cannot draw new samples from the population. But your sample is your best picture of the population, so draw new samples from **the sample itself**: pick `n` values from it at random **with replacement**, meaning the same value can be picked more than once. Each such **resample** is a slightly different version of your data. Compute the statistic on thousands of resamples, and their spread shows how much the statistic would vary from sample to sample.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(5)
@@ -173,6 +202,11 @@ resamples = incomes[indexes]
 medians = np.median(resamples, axis=1)
 low, high = np.percentile(medians, [2.5, 97.5])
 print(f"bootstrap 95% interval for the median: {low:.0f} to {high:.0f}")
+```
+
+```output
+sample median: 18004.0
+bootstrap 95% interval for the median: 13951 to 22601
 ```
 
 `rng.lognormal` produces skewed, income-like data, where the median is the right summary and has no simple standard error formula. `rng.integers(0, n, size=(n_boot, n))` makes 5,000 rows of random positions, with repeats allowed, and indexing the data with them builds all the resamples at once. The middle 95% of the resampled medians, from the 2.5th to the 97.5th percentile, is the **percentile bootstrap interval**.

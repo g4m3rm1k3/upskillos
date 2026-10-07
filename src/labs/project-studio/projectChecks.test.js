@@ -24,7 +24,15 @@ async function check(root, text) {
   return res.results;
 }
 
-afterAll(() => fs.rmSync(tmp, { recursive: true, force: true }));
+afterAll(async () => {
+  const resolved = path.resolve(tmp);
+  if (path.dirname(resolved) !== path.resolve(os.tmpdir()) || !path.basename(resolved).startsWith('ps-checks-')) {
+    throw new Error(`Unexpected test cleanup path: ${resolved}`);
+  }
+  // Let child-process close callbacks settle before retrying Windows directory removal.
+  // A persistent cleanup error still fails the suite.
+  await fs.promises.rm(resolved, { recursive: true, force: true, maxRetries: 25, retryDelay: 100 });
+}, 60000);
 
 describe('file checks', () => {
   const root = path.join(tmp, 'files');
@@ -88,8 +96,10 @@ describe('run checks', () => {
       'run "node echo.js" stdin="3 4\\n" stdout="\\"3 4\\\\n\\""',
       'run "node echo.js" stdin="café\\n" stdout="\\"café\\\\n\\""',
       'run "node echo.js" stdin="a\\nb\\n" stdout="\\"a\\\\nb\\\\n\\""',
+      'run "node echo.js" stdin="\\n" stdout="\\"\\\\n\\""',
+      'run "node echo.js" stdin="" stdout="\\"\\""',
     ].join('\n'));
-    expect(r.map((x) => x.detail ?? 'pass')).toEqual(['pass', 'pass', 'pass']);
+    expect(r.map((x) => x.detail ?? 'pass')).toEqual(['pass', 'pass', 'pass', 'pass', 'pass']);
   });
 
   it('checks the exit code and the output', async () => {

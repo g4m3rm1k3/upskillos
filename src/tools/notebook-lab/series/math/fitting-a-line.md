@@ -27,7 +27,7 @@ Fitting y ≈ c₀ + c₁x to n points gives n equations in 2 unknowns, one per 
 
 a small square system. Library routines such as `np.linalg.lstsq` solve the least-squares problem directly by more stable methods, covered in the linear algebra block. Predict before running: do the normal equations, `lstsq` and the two-sum formulas of the lines lesson give the same thermocouple calibration?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,6 +47,13 @@ print("two-sum formulas:", np.array([emf_mv.mean() - slope * temp_c.mean(), slop
 print(f"sensitivity {lstsq[1] * 1000:.2f} µV per °C")
 ```
 
+```output
+normal equations: [-0.06926667  0.040698  ]
+lstsq:            [-0.06926667  0.040698  ]
+two-sum formulas: [-0.06926667  0.040698  ]
+sensitivity 40.70 µV per °C
+```
+
 `np.linalg.lstsq` returns the coefficients plus diagnostic extras, which `*_` discards. `rcond=None` selects NumPy's current default for treating tiny singular values as zero.
 
 All three agree: an intercept of about −0.069 mV and a slope of 0.04070 mV per °C, a sensitivity of 40.7 µV/°C, close to a type K thermocouple's 41 µV/°C. The matrix form is the one to remember, because it generalises with no new algebra.
@@ -63,7 +70,7 @@ In code: `resid = emf_mv - A @ lstsq`, then `1 - sse / sst`
 
 A fitted line always exists, so the question is whether it **fits**. Two tools answer it. The **coefficient of determination** R² = 1 − SSE/SST compares the residual sum of squares SSE with the total variation SST = Σ(yᵢ − ȳ)²: R² = 1 means a perfect fit, 0 means the line explains nothing. A **residual plot** is far more informative: residuals scattered randomly about zero mean the model's shape is right; a curve or trend in them means it is wrong, however high R² is. Predict before running: R² will be extremely close to 1. Do the residuals look random?
 
-```python
+```python type
 pred = A @ lstsq
 resid = emf_mv - pred
 sse = (resid ** 2).sum()
@@ -80,6 +87,11 @@ ax.set_title("Straight-line fit residuals")
 plt.show()
 ```
 
+```output
+R² = 0.999928
+residuals (µV): [ 71.3  16.4 -17.5 -45.4 -49.3 -45.2 -18.1  17.   71.1]
+```
+
 R² is 0.9999, which sounds like a perfect line. The residuals tell a different story: about +71 µV at both ends and −49 µV in the middle, a smooth U shape, the signature of curvature the line cannot follow. Real thermocouples are slightly non-linear, and calibration tables use polynomials. R² alone would never have revealed it.
 
 ## Curves that are linear in their parameters
@@ -94,13 +106,19 @@ In code: `np.column_stack([np.ones_like(temp_c), temp_c, temp_c ** 2])`, then `l
 
 "Linear least squares" means linear in the **coefficients**, not in x. A quadratic c₀ + c₁x + c₂x² is linear in c₀, c₁, c₂: its design matrix simply gains a column of x². Any model of the form c₀f₀(x) + c₁f₁(x) + ... fits the same way, with one column per function: polynomials, sines and cosines, or 1/x terms. Predict before running: does adding an x² column remove the U-shaped residual pattern?
 
-```python
+```python type
 A2 = np.column_stack([np.ones_like(temp_c), temp_c, temp_c ** 2])
 coef2, *_ = np.linalg.lstsq(A2, emf_mv, rcond=None)
 resid2 = emf_mv - A2 @ coef2
 print("quadratic coefficients:", coef2)
 print("residuals (µV):", np.round(resid2 * 1000, 1))
 print(f"rms residual: line {np.sqrt((resid ** 2).mean()) * 1000:.1f} µV, quadratic {np.sqrt((resid2 ** 2).mean()) * 1000:.1f} µV")
+```
+
+```output
+quadratic coefficients: [1.76363636e-03 3.94803377e-02 3.04415584e-06]
+residuals (µV): [ 0.2 -1.4  2.8 -2.3  1.4 -2.1  2.2 -0.8  0. ]
+rms residual: line 44.6 µV, quadratic 1.7 µV
 ```
 
 The x² coefficient is small (about 3 × 10⁻⁶ mV/°C²), but it removes the systematic pattern: the quadratic's residuals are a few microvolts with no obvious shape, and the rms residual drops from about 45 µV to under 2 µV. The remaining scatter is the measurement noise, which no model should try to follow.
@@ -121,7 +139,7 @@ Fitted coefficients are estimates and deserve standard errors. For a straight li
 
 and confidence intervals use the t distribution with n − 2 degrees of freedom. SciPy's `stats.linregress` reports the same values. Predict before running: a load cell is calibrated at 8 loads. How precisely is its sensitivity known?
 
-```python
+```python type
 load_kg = np.array([0, 5, 10, 15, 20, 25, 30, 35], dtype=float)
 counts = np.array([412, 1235, 2061, 2880, 3711, 4527, 5362, 6181], dtype=float)
 n = len(load_kg)
@@ -135,6 +153,11 @@ t = stats.t.ppf(0.975, n - 2)
 print(f"slope {c1:.3f} ± {t * se_slope:.3f} counts/kg (95%), intercept {c0:.1f} ± {t * se_int:.1f}")
 r = stats.linregress(load_kg, counts)
 print(f"linregress: slope {r.slope:.3f}, SE {r.stderr:.4f} (ours {se_slope:.4f}), intercept SE {r.intercept_stderr:.3f} (ours {se_int:.3f})")
+```
+
+```output
+slope 164.874 ± 0.281 counts/kg (95%), intercept 410.8 ± 5.9
+linregress: slope 164.874, SE 0.1149 (ours 0.1149), intercept SE 2.403 (ours 2.403)
 ```
 
 The sensitivity is about 164.87 counts per kg, known to within about ±0.28 (95%), roughly 0.2%. The intercept, about 411 counts, is the zero-load reading, known to ±6 counts. Uncertainty in the slope shrinks with more points and with a wider spread of x: calibrating over the full range matters as much as taking many readings.
@@ -177,7 +200,7 @@ In code: `np.polyfit(x, y, degree)` for degrees 1 and 7, scored with `np.polyval
 
 A polynomial of degree n − 1 passes exactly through n points: zero residuals, R² = 1. That is not a better model, it is memorising the noise. Between the data points such a fit swings away from the truth, and its predictions are worse than a simple line's. This is **overfitting**, and the cure is to judge a model by how well it predicts data it was **not** fitted to. Predict before running: which predicts the held-back points better, a straight line or a degree-7 polynomial?
 
-```python
+```python type
 rng = np.random.default_rng(21)
 x = np.linspace(0, 10, 9)
 y = 2 + 0.5 * x + rng.normal(0, 0.3, x.size)
@@ -197,6 +220,11 @@ for degree in [1, 7]:
 ax.set_ylim(0, 9)
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+degree 1: rms error on the fitted points 0.299, on new points 0.216
+degree 7: rms error on the fitted points 0.113, on new points 0.685
 ```
 
 `np.polyfit(x, y, degree)` fits a polynomial by least squares (highest power first) and `np.polyval` evaluates it.

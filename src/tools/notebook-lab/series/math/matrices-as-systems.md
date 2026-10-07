@@ -29,7 +29,7 @@ is written as **A x = b**, where A is the m × n matrix of coefficients (row i h
 
 The left side, A x, is the **matrix–vector product**. Its i-th entry multiplies row i of A by x element by element and adds the products, exactly the left-hand side of equation i. NumPy writes the product as `A @ x`. Predict before running: does the hand-written product agree with `@`?
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2.0, 1, 3],
@@ -48,6 +48,12 @@ def matvec(A, x):
 print("row by row:", matvec(A, x), "  A @ x:", A @ x)
 print("as columns:", x[0] * A[:, 0] + x[1] * A[:, 1] + x[2] * A[:, 2])
 print("shape of A:", A.shape, " entry a_23 (row 2, column 3):", A[1, 2])
+```
+
+```output
+row by row: [85. 65. 80.]   A @ x: [85. 65. 80.]
+as columns: [85. 65. 80.]
+shape of A: (3, 3)  entry a_23 (row 2, column 3): 1.0
 ```
 
 NumPy counts rows and columns from 0, so the mathematical entry a₂₃ is `A[1, 2]`.
@@ -72,13 +78,19 @@ A workshop makes three products. Each unit needs time on three machines, in hour
 
 This week the lathe has 85 hours, the mill 65 and the grinder 80. How many of each product use every machine fully? Each machine gives one equation; the coefficients of the lathe equation are the lathe hours per unit, which form the first **row** of A. That is exactly the A above, with b = (85, 65, 80). Predict before running: is the answer the x used above?
 
-```python
+```python type
 b = np.array([85.0, 65, 80])
 plan = np.linalg.solve(A, b)
 print("units of each product:", plan)
 print("hours used per machine:", A @ plan, " available:", b)
 b2 = np.array([90.0, 65, 80])
 print("with 5 more lathe hours:", np.linalg.solve(A, b2).round(3))
+```
+
+```output
+units of each product: [10. 20. 15.]
+hours used per machine: [85. 65. 80.]  available: [85. 65. 80.]
+with 5 more lathe hours: [ 8.125 19.375 18.125]
 ```
 
 The plan is 10, 20 and 15 units, as expected, and it uses exactly the available hours. Five extra lathe hours change the answer to fractional units, including fewer of product 1. Real production planning also needs whole numbers and non-negative quantities; with more products than machines it becomes **optimisation**, which arrives in a later block. The linear system is still at its heart.
@@ -101,7 +113,7 @@ The algorithm behind `np.linalg.solve` is **Gaussian elimination**, the eliminat
 
 Row operations (swapping rows, subtracting a multiple of one row from another) do not change the solutions, because each one turns true equations into true equations and can be undone. Predict before running: what does the triangular matrix look like for the production system?
 
-```python
+```python type
 def gauss_solve(A, b, show=False):
     M = np.column_stack([np.array(A, dtype=float), np.array(b, dtype=float)])
     n = len(M)
@@ -118,6 +130,14 @@ def gauss_solve(A, b, show=False):
     return x
 
 print("solution:", gauss_solve(A, b, show=True))
+```
+
+```output
+upper triangular [U | c]:
+ [[ 3.      1.      2.     80.    ]
+ [ 0.      1.6667  0.3333 38.3333]
+ [ 0.      0.      1.6    24.    ]]
+solution: [10. 20. 15.]
 ```
 
 `M[[k, p]] = M[[p, k]]` swaps rows k and p. In back substitution, `M[i, i+1:n] @ x[i+1:]` adds up the terms of row i whose unknowns are already known.
@@ -141,7 +161,7 @@ When A's rows are not independent (one equation is a combination of the others),
 
 In floating point the determinant of a singular matrix usually comes out as a tiny number, not exactly zero, and its size depends on the scale of the entries, so the rank (computed with a tolerance) or the condition number is the reliable test. Predict before running: if product 3's machine times were the sum of products 1 and 2, what would the solver say?
 
-```python
+```python type
 S = A.copy()
 S[:, 2] = S[:, 0] + S[:, 1]
 print("columns:\n", S)
@@ -152,6 +172,16 @@ try:
 except np.linalg.LinAlgError as err:
     print("solve refused:", err)
 print("the original: det", round(np.linalg.det(A), 6), " rank", np.linalg.matrix_rank(A))
+```
+
+```output
+columns:
+ [[2. 1. 3.]
+ [1. 2. 3.]
+ [3. 1. 4.]]
+det: -5.551115123125802e-16   rank: 2   condition number: 8.9e+16
+solve returned [-2.16172782e+17 -2.16172782e+17  2.16172782e+17]  residual [43. 63. 48.]
+the original: det -8.0  rank 3
 ```
 
 If product 3 takes exactly the machine time of one product 1 plus one product 2, then any plan can swap one product 3 for one of each of the others and use the same hours. Hours alone cannot determine the plan. The determinant comes out as a rounding-sized number instead of exactly 0, the rank is 2, and the condition number is around 10¹⁶, the float precision limit. What `solve` does next depends on the build: some NumPy builds raise `LinAlgError`, while the one in this browser divides by a rounding-sized pivot and returns numbers around 10¹⁷ that do not even satisfy the equations: the residual is tens of hours. That is why a singularity check must not rely on the solver complaining. The original matrix has determinant −8 and rank 3.

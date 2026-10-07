@@ -8,7 +8,7 @@ Machine learning is arithmetic on a very large scale. A single photo is millions
 
 Suppose you have the prices of a million items and want to apply a 10% discount. With a list you need a loop, or a comprehension, which is a loop in disguise:
 
-```python
+```python type
 import time
 import numpy as np
 
@@ -36,13 +36,19 @@ The timing only measures the arithmetic. Converting a big list into an array tak
 
 `np.array` turns a list (or a list of lists) into an array:
 
-```python
+```python type
 import numpy as np
 
 scores = np.array([72, 88, 95, 61])
 print(scores)
 print(type(scores))
 print(scores.dtype, scores.shape, scores.ndim, scores.size)
+```
+
+```output
+[72 88 95 61]
+<class 'numpy.ndarray'>
+int32 (4,) 1 4
 ```
 
 An array has a few attributes you will use constantly:
@@ -53,7 +59,7 @@ An array has a few attributes you will use constantly:
 
 A list of lists becomes a two-dimensional array, a table of rows and columns:
 
-```python
+```python type
 import numpy as np
 
 table = np.array([[1, 2, 3],
@@ -62,11 +68,17 @@ print(table)
 print(table.shape, table.ndim, table.size)
 ```
 
+```output
+[[1 2 3]
+ [4 5 6]]
+(2, 3) 2 6
+```
+
 The shape `(2, 3)` means 2 rows and 3 columns. In machine learning, a dataset is usually a 2D array like this, with one **row per example** (one house, one patient, one image) and one **column per feature** (its size, age or brightness). You will see that layout in nearly every lesson from here on.
 
 NumPy also has functions for creating arrays directly:
 
-```python
+```python type
 import numpy as np
 
 print(np.zeros(5))
@@ -74,6 +86,15 @@ print(np.ones((2, 3)))
 print(np.full(3, 7.5))
 print(np.arange(0, 10, 2))
 print(np.linspace(0, 1, 5))
+```
+
+```output
+[0. 0. 0. 0. 0.]
+[[1. 1. 1.]
+ [1. 1. 1.]]
+[7.5 7.5 7.5]
+[0 2 4 6 8]
+[0.   0.25 0.5  0.75 1.  ]
 ```
 
 - `np.zeros` and `np.ones` fill an array of a given shape with 0 or 1. Pass a tuple for more than one dimension.
@@ -89,7 +110,7 @@ Arithmetic operators work **element by element**. An array combined with a singl
 
 Predict each result before running the cell.
 
-```python
+```python type
 import numpy as np
 
 a = np.array([1, 2, 3, 4])
@@ -101,9 +122,17 @@ print(a ** 2)
 print(b - a * 3)
 ```
 
+```output
+[2 4 6 8]
+[11 22 33 44]
+[10. 10. 10. 10.]
+[ 1  4  9 16]
+[ 7 14 21 28]
+```
+
 Compare that with lists, where the same operators mean something completely different. Predict which of these four lines print six numbers.
 
-```python
+```python type
 import numpy as np
 
 print([1, 2, 3] * 2)
@@ -112,11 +141,18 @@ print([1, 2] + [3, 4])
 print(np.array([1, 2]) + np.array([3, 4]))
 ```
 
+```output
+[1, 2, 3, 1, 2, 3]
+[2 4 6]
+[1, 2, 3, 4]
+[4 6]
+```
+
 For lists, `* 2` repeats and `+` joins, as in Python lesson 5. For arrays they are arithmetic. This is a classic source of bugs when a list sneaks in where an array was expected, so when a result looks strangely long, check whether you have a list.
 
 Comparisons also work element by element, and give an array of `True`/`False` values:
 
-```python
+```python type
 import numpy as np
 
 temps = np.array([14, 22, 31, 18, 27])
@@ -126,13 +162,19 @@ print(hot.sum(), "hot days")
 print(temps[hot])
 ```
 
+```output
+[False False  True False  True]
+2 hot days
+[31 27]
+```
+
 A boolean array can be added up, because `True` counts as 1 and `False` as 0, so `hot.sum()` counts the hot days. And `temps[hot]` uses the boolean array to **select** the elements where it is `True`. This is called **boolean masking**, and the next lesson covers it properly.
 
 ## Mathematical functions
 
 NumPy has versions of the standard mathematical functions that work on whole arrays at once. They are called **universal functions**, or **ufuncs**.
 
-```python
+```python type
 import numpy as np
 
 x = np.array([1.0, 4.0, 9.0, 16.0])
@@ -141,6 +183,14 @@ print(np.log(x))
 print(np.exp(np.array([0.0, 1.0, 2.0])))
 print(np.abs(np.array([-3, 5, -7])))
 print(np.round(np.array([1.234, 5.678]), 1))
+```
+
+```output
+[1. 2. 3. 4.]
+[0.         1.38629436 2.19722458 2.77258872]
+[1.         2.71828183 7.3890561 ]
+[3 5 7]
+[1.2 5.7]
 ```
 
 `np.log` is the natural logarithm and `np.exp` its inverse, raising e ≈ 2.718 to a power. Both appear constantly in machine learning, for example in the functions that turn a model's raw scores into probabilities.
@@ -158,7 +208,7 @@ print(math.sqrt(np.array([1.0, 4.0, 9.0])))
 
 Arrays have methods that reduce them to a single number:
 
-```python
+```python type
 import numpy as np
 
 heights = np.array([1.62, 1.75, 1.58, 1.81, 1.70])
@@ -168,11 +218,18 @@ print(heights.std())
 print(heights.argmax(), heights.argmin())
 ```
 
+```output
+8.459999999999999 1.6919999999999997
+1.58 1.81
+0.08376156636548768
+3 2
+```
+
 The sum prints as `8.459999999999999` rather than 8.46: float arithmetic is very slightly inexact, as you saw in Python lesson 2, so round results when you show them to people. `mean` is the average. `std` is the **standard deviation**, a measure of how spread out the values are around the mean; a later lesson explains exactly how it is calculated. `argmax` gives the **position** of the largest value rather than the value itself, which is often what you need: "which example scored highest?"
 
 For a 2D array, these methods take an **axis** argument that says which direction to summarise along. `axis=0` collapses the rows, giving one result per column; `axis=1` collapses the columns, giving one result per row.
 
-```python
+```python type
 import numpy as np
 
 marks = np.array([[70, 85, 90],
@@ -183,13 +240,19 @@ print(marks.mean(axis=1))
 print(marks.mean())
 ```
 
+```output
+[73.33333333 85.         85.        ]
+[81.66666667 71.66666667 90.        ]
+81.11111111111111
+```
+
 If each row is a student and each column a test, `axis=0` gives each test's average and `axis=1` each student's. With no axis, you get the mean of all nine numbers. A way to remember it: the axis you name is the one that disappears.
 
 ## Data types
 
 Every array has one `dtype`, and it matters. NumPy picks one from the values you give it, and converts between them when needed. Predict what `-1.9` becomes when converted to an integer.
 
-```python
+```python type
 import numpy as np
 
 counts = np.array([1, 2, 3])
@@ -200,11 +263,17 @@ as_ints = np.array([1.9, -1.9, 2.5]).astype(int)
 print(as_ints)
 ```
 
+```output
+int32 float64
+[1.  2.5 3. ] float64
+[ 1 -1  2]
+```
+
 Division produces floats, as in plain Python. A list mixing integers and floats becomes a float array, since every element must share one type. `astype(int)` converts to integers by cutting off the decimal part towards zero, like Python's `int()`, which is why `1.9` becomes 1 and `-1.9` becomes -1.
 
 Unlike Python's integers, which grow as large as needed, NumPy integers have a fixed size. A 32-bit integer can only hold values up to 2,147,483,647 (about 2.1 billion). Go past that, and the result silently **wraps around** to a large negative number, with no error:
 
-```python
+```python type
 import numpy as np
 
 big = np.array([2_147_483_647])
@@ -214,13 +283,20 @@ print(np.array([50_000], dtype=np.int64) ** 2)
 print(np.array([50_000.0]) ** 2)
 ```
 
+```output
+int32 [-2147483648]
+[-1794967296]
+[2500000000]
+[2.5e+09]
+```
+
 Squaring 50,000 should give 2.5 billion, but in `int32` it wraps to a negative number. Asking for a bigger type with `dtype=np.int64`, or using floats, gives the right answer. This silent wrap-around is a real trap when counting or multiplying large numbers, and it is one reason most numerical work uses floats.
 
 ## Random numbers
 
 Machine learning uses random numbers everywhere: to shuffle data, to split it into parts, to start a model's parameters at random values, and to simulate. NumPy's random numbers come from a **generator** object, created with a seed so results are repeatable, exactly like `random.seed` in Python lesson 16.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(42)
@@ -230,6 +306,13 @@ print(rng.normal(loc=170, scale=10, size=5).round(1))
 print(rng.choice(["red", "green", "blue"], size=4))
 ```
 
+```output
+[1 5 4 3 3 6 1 5 2 1]
+[0.97562235 0.7611397  0.78606431]
+[169.8 161.5 178.8 177.8 170.7]
+['green' 'blue' 'green' 'green']
+```
+
 - `rng.integers(low, high, size)` gives whole numbers from `low` up to but **not** including `high`, so `integers(1, 7)` simulates a die. (Python's `random.randint` included both ends; NumPy follows the usual Python rule of excluding the end.)
 - `rng.random(size)` gives floats between 0 and 1.
 - `rng.normal(loc, scale, size)` gives numbers from a **normal distribution**, the bell curve, centred on `loc` and spread out by `scale`. The probability lessons later in this series explain it.
@@ -237,13 +320,18 @@ print(rng.choice(["red", "green", "blue"], size=4))
 
 With a generator you can simulate thousands of experiments in one line. What fraction of 100,000 die rolls are sixes?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
 rolls = rng.integers(1, 7, size=100_000)
 print((rolls == 6).mean())
 print(1 / 6)
+```
+
+```output
+0.16536
+0.16666666666666666
 ```
 
 `rolls == 6` is a boolean array, and its mean is the fraction of `True` values. With enough rolls, the fraction comes out very close to the exact probability, one sixth.

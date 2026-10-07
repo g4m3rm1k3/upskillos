@@ -18,7 +18,7 @@ Divide and conquer has the first property without the second (merge sort's halve
 
 The recipe: write the recursive solution; then, at the start of the function, look up its arguments in a dictionary and return the stored answer if there is one; at the end, store the answer before returning it. The function's logic does not change at all. Predict before running: how many calls will the memoised version make for n = 30, and the plain one?
 
-```python
+```python type
 calls = 0
 
 def fib_plain(n):
@@ -41,6 +41,11 @@ for f in [fib_memo, fib_plain]:
     print(f"{f.__name__}(30) = {f(30):,} using {calls:,} calls")
 ```
 
+```output
+fib_memo(30) = 832,040 using 59 calls
+fib_plain(30) = 832,040 using 2,692,537 calls
+```
+
 `memo` lives outside the function so that it survives between calls; every call either finds its answer there or computes and stores it.
 
 The plain version makes 2,692,537 calls; the memoised one makes 59, because each n from 0 to 30 is computed once and every other call is a dictionary lookup. Exponential time has become linear: there are n distinct subproblems, each costing O(1) beyond its recursive calls. That is the general rule for memoised DP: **running time = number of distinct states × work per state**.
@@ -49,7 +54,7 @@ The plain version makes 2,692,537 calls; the memoised one makes 59, because each
 
 Python can add the table for you. Decorating a function with `@functools.cache` (or `@functools.lru_cache(maxsize=None)` in older Pythons) stores every result, keyed by the arguments, which must therefore be hashable: numbers, strings, tuples, not lists. `cache_info()` reports how often the table was used. Predict before running: how many "hits" (answers found in the table) and "misses" (answers computed) for n = 80?
 
-```python
+```python type
 from functools import cache
 
 @cache
@@ -59,6 +64,11 @@ def fib(n):
 print(f"fib(80) = {fib(80):,}")
 print(fib.cache_info())
 fib.cache_clear()
+```
+
+```output
+fib(80) = 23,416,728,348,467,685
+CacheInfo(hits=78, misses=81, maxsize=None, currsize=81)
 ```
 
 `cache_clear()` empties the table, so the demo can be run again from scratch.
@@ -71,7 +81,7 @@ The hard part of dynamic programming is not the table: it is deciding what a sub
 
 Example: how many routes are there through a city grid from the top-left corner to the bottom-right, moving only right or down, avoiding blocked squares? From any square, the routes to the goal are the routes from the square to its right plus the routes from the square below. So the state is just the current square, `(row, col)`: how you got there does not matter. Predict before running: how many routes through the 6 × 8 grid below?
 
-```python
+```python type
 from functools import cache
 
 city = [
@@ -97,6 +107,11 @@ print("distinct calls computed:", routes.cache_info().misses, "(squares reached,
 routes.cache_clear()
 ```
 
+```output
+routes: 59
+distinct calls computed: 60 (squares reached, blocked ones included, plus a few just off the grid)
+```
+
 Stepping off the grid or onto a blocked square is a base case with 0 routes; reaching the goal is the base case with 1.
 
 There are 59 routes, found by computing each square's count once. Without the cache, the recursion would follow every route separately, and on an open 16 × 16 grid that is over 150 million routes; with it, 256 states. The recursion depth is at most rows + cols, so it is safe even with the cache.
@@ -105,7 +120,7 @@ There are 59 routes, found by computing each square's count once. Without the ca
 
 The greedy lesson showed that "largest coin first" fails for coins 1, 3 and 4. Dynamic programming gets it right by trying **every** coin as the first and keeping the best: the fewest coins for amount a is 1 plus the fewest for a − c, minimised over every coin c that fits. The state is the remaining amount. Predict before running: what is the fewest number of coins for 6, and for 63?
 
-```python
+```python type
 from functools import cache
 
 def fewest_coins(amount, coins):
@@ -121,6 +136,12 @@ def fewest_coins(amount, coins):
 for amount in [6, 63]:
     print(f"{amount}: fewest coins from 1, 3, 4 = {fewest_coins(amount, (1, 3, 4))}")
 print("7 from coins 2 and 4:", fewest_coins(7, (2, 4)))
+```
+
+```output
+6: fewest coins from 1, 3, 4 = 2
+63: fewest coins from 1, 3, 4 = 16
+7 from coins 2 and 4: None
 ```
 
 `best` is defined inside `fewest_coins` so that it can see `coins`, and so each call to `fewest_coins` gets its own fresh cache. `None` marks an amount that cannot be made at all.

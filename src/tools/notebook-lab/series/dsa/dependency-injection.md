@@ -15,7 +15,7 @@ This lesson covers:
 
 A tool library lends equipment and emails members whose loans are overdue. Here is a first version. It looks fine, and it works.
 
-```python
+```python type
 from datetime import date, timedelta
 
 LOANS = [
@@ -40,6 +40,12 @@ def send_overdue_reminders():
 print("reminders sent:", send_overdue_reminders())
 ```
 
+```output
+(really emailing ana@example.com: tile cutter is 3 days overdue)
+(really emailing cy@example.com: FINAL NOTICE: pressure washer is 12 days overdue)
+reminders sent: 2
+```
+
 Now try to answer: does a loan exactly 7 days late get the final notice? To test that, you need a loan due exactly 7 days before **today**, in the global `LOANS` list, and you need to stop `send_email` from really sending, or capture what it prints. The function has three hidden dependencies: the clock (`date.today()`), the data (`LOANS`) and the messaging (`send_email`). None appears in its signature, so a reader cannot see them, and a test cannot replace them.
 
 ## Injecting collaborators
@@ -48,7 +54,7 @@ Make each dependency a parameter. `ReminderService` receives three collaborators
 
 Tests then pass stand-ins. `FixedClock` always returns the same date, so "today" is whatever the test says. `InMemoryLoans` holds a list. `RecordingSender` sends nothing and remembers every message, so the test can inspect them. Predict before running: which members get a final notice?
 
-```python
+```python type
 class ReminderService:
     def __init__(self, clock, loans, sender):
         self.clock, self.loans, self.sender = clock, loans, sender
@@ -92,6 +98,12 @@ for message in outbox.messages:
     print(message)
 ```
 
+```output
+sent: 2
+('ana', 'drill is 7 days overdue')
+('ben', 'FINAL NOTICE: saw is 8 days overdue')
+```
+
 `fixed_clock(day)` returns a function that ignores the real date and always returns `day`. A function is often the simplest injectable dependency.
 
 The question from before now has an exact answer. Ana's loan is exactly 7 days late and gets an ordinary reminder; Ben's, 8 days late, gets the final notice; Cy's is due today and gets nothing. The test controlled the date, the data and the messaging completely, ran instantly, and sent nothing. `ReminderService` itself contains no dates, no data and no email code. It is pure policy, which is exactly the part worth testing.
@@ -111,7 +123,7 @@ Because the service only depends on small interfaces, every double is a few line
 
 Injected dependencies do not have to be objects. A single operation is often best injected as a **function**: the clock above, a random-number source, a `sleep`. And a **default argument** can supply the real dependency, so ordinary callers do not have to pass it while tests still can. Here is a password generator whose randomness is injected. Predict before running: are the two test passwords identical?
 
-```python
+```python type
 import random, string
 
 def make_password(length=12, rng=random.SystemRandom()):
@@ -130,12 +142,16 @@ One caution about defaults: a default value is created **once**, when the functi
 
 Where do the real collaborators get created? In one place, at the program's entry point, often called the **composition root**: a `main()` that builds the real clock, repository and sender and hands them to the services. Everything below it receives what it needs and creates nothing. Python needs no dependency-injection framework for this: constructors and arguments are enough.
 
-```python
+```python type
 def main():
     service = ReminderService(clock=date.today, loans=InMemoryLoans(LOANS), sender=RecordingSender())
     return service.send_overdue_reminders()
 
 print("main sent", main(), "reminders using today's real date")
+```
+
+```output
+main sent 2 reminders using today's real date
 ```
 
 In a real program, `main` would pass a database-backed repository and an SMTP sender instead of the in-memory ones; nothing else would change.

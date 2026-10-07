@@ -8,7 +8,7 @@ The problem: a subscription company wants to predict which customers will cancel
 
 Before any modelling, find out what each row and column means, how the target is distributed and what is missing. Predict before running: what fraction of customers churn, and which contract type churns most?
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 
@@ -39,6 +39,19 @@ print("fraction missing per column:", customers.isna().mean().round(3)[lambda s:
 print("churn rate by contract:", customers.groupby("contract")["churned"].mean().round(3).to_dict())
 ```
 
+```output
+   contract  tenure_months  monthly_charge  support_calls payment   age  retention_offer  churned
+0  one_year           72.0           42.71              1  cheque  20.0                1        0
+1   monthly           63.0           79.65              1    card  48.0                0        0
+2   monthly           14.0           82.91              3  cheque  43.0                1        0
+3   monthly           72.0           67.54              1    card  44.0                0        0
+4  two_year           29.0           45.79              1    card  37.0                0        0
+
+churn rate: 0.183
+fraction missing per column: {'age': 0.114}
+churn rate by contract: {'monthly': 0.269, 'one_year': 0.096, 'two_year': 0.056}
+```
+
 `isna().mean()` gives the fraction missing in each column; the `[lambda s: s > 0]` filter keeps only columns with something missing.
 
 About 18% of customers churn, so the classes are imbalanced: a model that always says "stays" is 82% accurate and useless. That rules out accuracy as the measure. Since the company will rank customers and target the riskiest, **ROC AUC** (how well the model ranks churners above non-churners) and **average precision** (precision across the ranking, sensitive to the rare class) fit the job. Age is missing for about 11% of customers, so the pipeline needs an imputer. Monthly contracts churn about five times as often as two-year contracts, a first sign of what the model will find.
@@ -47,7 +60,7 @@ About 18% of customers churn, so the classes are imbalanced: a model that always
 
 Ask of every column: **would I know this at the moment I need to make the prediction?** The column `retention_offer` records whether the customer was given a retention offer. Look at how it relates to churn, and at what it does to a model's score.
 
-```python
+```python type
 import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -77,6 +90,11 @@ without = cross_val_score(logistic_pipeline(numeric), X_train, y_train, cv=cv, s
 print(f"cross-validated AUC with retention_offer: {with_leak.mean():.3f}; without it: {without.mean():.3f}")
 ```
 
+```output
+churn rate by retention_offer: {0: 0.059, 1: 0.8}
+cross-validated AUC with retention_offer: 0.924; without it: 0.773
+```
+
 The test set is split off here, before any model is compared, and it stays untouched until Step 4. All choices are made by cross-validation on the training set alone; `stratify=y` keeps the churn rate the same in both parts.
 
 Customers who got an offer churned far more often, and including the column lifts the AUC from about 0.77 to 0.92. That is too good to be true, and it is not true: the offer is made by the retention team **after** a customer phones to cancel, so it is a consequence of churning, not a predictor available in advance. A model using it would look superb in testing and be useless in deployment, where the column is always 0 for the customers who matter. This is the leakage lesson's warning in its most common form: a feature recorded after the outcome. It is dropped from here on; the hint that gave it away was a column whose single-handed predictive power was suspiciously high, which the first challenge turns into a screening tool.
@@ -85,7 +103,7 @@ Customers who got an offer churned far more often, and including the column lift
 
 Every model is compared against a baseline on the same cross-validation folds, with both measures and their spread across folds. Predict before running: will the flexible gradient-boosted model beat plain logistic regression here?
 
-```python
+```python type
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV, cross_validate
@@ -113,6 +131,13 @@ for name, model in candidates.items():
     print(f"{name:<22} AUC {auc.mean():.3f} ± {auc.std():.3f}   average precision {ap.mean():.3f} ± {ap.std():.3f}")
 ```
 
+```output
+always the base rate   AUC 0.500 ± 0.000   average precision 0.183 ± 0.000
+logistic regression    AUC 0.773 ± 0.011   average precision 0.446 ± 0.039
+gradient boosting      AUC 0.731 ± 0.023   average precision 0.385 ± 0.042
+boosting, tuned        AUC 0.762 ± 0.014   average precision 0.422 ± 0.037
+```
+
 Tuning inside `cross_validate` is **nested** cross-validation: the grid search runs again inside every outer training fold, so the tuned model's score is not flattered by having chosen its settings on the data it is scored on. Histogram gradient boosting handles the missing ages itself, so its pipeline needs no imputer, and trees need no scaling.
 
 The base rate scores AUC 0.5 and average precision equal to the churn rate, the floor any model must clear. Logistic regression reaches about 0.77 AUC. Default gradient boosting does **worse**, about 0.73, and tuning (which picks shallow trees) recovers only part of the gap. On a few thousand rows whose true relationships are mostly smooth and additive, the simple model is as good or better, and it is easier to explain, faster and more stable. The differences between the top models are about the size of their fold-to-fold spread, so the honest conclusion is that logistic regression is at least as good, and preferable for its simplicity. It is the choice.
@@ -121,7 +146,7 @@ The base rate scores AUC 0.5 and average precision equal to the churn rate, the 
 
 The chosen model is fitted to the whole training set and scored, once, on the test set. A single number hides its own uncertainty, so a **bootstrap** gives a range: resample the test set with replacement many times and recompute the score.
 
-```python
+```python type
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 final_model = logistic_pipeline(numeric).fit(X_train, y_train)
@@ -138,13 +163,18 @@ low, high = np.percentile(boot, [2.5, 97.5])
 print(f"95% bootstrap interval for the test AUC: {low:.3f} to {high:.3f}")
 ```
 
+```output
+test AUC 0.780, average precision 0.445
+95% bootstrap interval for the test AUC: 0.753 to 0.808
+```
+
 The test AUC, 0.78, lands close to the cross-validated 0.77, which is what a clean process should produce: nothing was tuned on the test set, so there was nothing for it to be optimistic about. The interval, roughly ±0.03, is the right way to report it: a claim of "0.78" with no range invites over-reading small differences.
 
 ## Step 5: from probabilities to a decision
 
 The business needs a yes or no per customer, so a threshold must be chosen, and the right one comes from the **costs**, not from 0.5. Suppose an offer costs 10, and a churner who receives it stays with probability 0.4, keeping 120 of future revenue. Sending an offer to a customer with churn probability p is then worth, on average, p × 0.4 × 120 − 10 = 48p − 10, positive when p exceeds about 0.21. If the probabilities are well calibrated, that is the threshold; checking it empirically uses out-of-fold predictions on the training set, never the test set.
 
-```python
+```python type
 from sklearn.model_selection import cross_val_predict
 
 def profit(y_true, p, threshold, value_saved=0.4 * 120, offer_cost=10):
@@ -161,6 +191,14 @@ for label, t in [("send to everyone", 0.0), ("threshold 0.5", 0.5), (f"threshold
     print(f"on the test customers, {label:<17}: profit {profit(y_test.to_numpy(), p_test, t):6.0f}, offers sent {(p_test >= t).sum()}")
 ```
 
+```output
+profit on training customers by threshold: {0.05: 2416, 0.1: 6912, 0.15: 8732, 0.2: 9022, 0.25: 8876, 0.3: 7662, 0.35: 6388, 0.4: 5328, 0.45: 4480, 0.5: 3522, 0.55: 2386, 0.6: 1522, 0.65: 794, 0.7: 474}
+chosen threshold 0.2; theory says about 0.21
+on the test customers, send to everyone : profit  -1556, offers sent 1250
+on the test customers, threshold 0.5    : profit   1328, offers sent 64
+on the test customers, threshold 0.2    : profit   3148, offers sent 458
+```
+
 The `profit` function counts, for every customer sent an offer, the expected value saved if they are a churner minus the cost of the offer.
 
 The empirical best threshold sits close to the calculated 0.21, a sign the model's probabilities are reasonably calibrated. On the test customers the chosen threshold earns clearly more than either extreme: sending to everyone wastes offers on the 82% who would have stayed, and the default 0.5 threshold is far too cautious, missing most churners worth saving. A good AUC is not the goal in itself; the decision built on the model is.
@@ -169,7 +207,7 @@ The empirical best threshold sits close to the calculated 0.21, a sign the model
 
 Before handing the model over, check what it relies on and whether it behaves sensibly across segments, using the tools of the previous lesson.
 
-```python
+```python type
 from sklearn.inspection import permutation_importance
 
 result = permutation_importance(final_model, X_test, y_test, scoring="roc_auc", n_repeats=10, random_state=0)
@@ -178,6 +216,21 @@ for i in np.argsort(result.importances_mean)[::-1]:
 
 segments = pd.DataFrame({"contract": X_test["contract"], "actual": y_test, "predicted": p_test})
 print(segments.groupby("contract")[["actual", "predicted"]].mean().round(3))
+```
+
+```output
+contract         AUC drop 0.121 ± 0.008
+tenure_months    AUC drop 0.087 ± 0.009
+support_calls    AUC drop 0.036 ± 0.005
+monthly_charge   AUC drop 0.019 ± 0.005
+payment          AUC drop 0.006 ± 0.003
+age              AUC drop 0.000 ± 0.000
+retention_offer  AUC drop 0.000 ± 0.000
+          actual  predicted
+contract
+monthly    0.263      0.278
+one_year   0.107      0.090
+two_year   0.055      0.054
 ```
 
 `permutation_importance` works on the whole pipeline, so it shuffles the raw columns (a whole categorical column at once) rather than the one-hot pieces; `retention_offer` is still in `X_test` but the pipeline never reads it, so its importance is exactly 0.

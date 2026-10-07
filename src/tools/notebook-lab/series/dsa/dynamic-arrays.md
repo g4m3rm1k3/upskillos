@@ -18,7 +18,7 @@ The class needs a block of memory with a fixed number of slots. Real arrays get 
 
 Two numbers describe the state: `_capacity`, the number of slots in the block, and `_size`, how many of them hold items. Items always occupy slots 0 to `_size - 1`. The leading underscore is the Python convention for "internal: don't touch from outside the class". Predict before running: after appending 0 to 9 into an array that starts with capacity 1, what will the capacity be, and how many slots will be empty?
 
-```python
+```python type
 class DynamicArray:
     def __init__(self):
         self._capacity = 1
@@ -52,6 +52,11 @@ print(a, "length", len(a))
 print("capacity", a._capacity, "block:", a._block)
 ```
 
+```output
+DynamicArray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) length 10
+capacity 16 block: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, None, None, None, None, None, None]
+```
+
 Reading `a._capacity` and `a._block` from outside the class breaks the underscore promise; it is done here only to look inside.
 
 Ten items in a block of 16 slots: six are empty, waiting for future appends. The block had to grow four times (to 2, 4, 8 and 16 slots), each time copying everything, and the doubling rule keeps those copies to an amortised constant per append. `_resize` is the only method that makes a new block, so the growth rule lives in one place.
@@ -60,7 +65,7 @@ Ten items in a block of 16 slots: six are empty, waiting for future appends. The
 
 Reading and writing items should look like a list's: `a[3]`, `a[-1]`, `a[0] = 5`. The special methods `__getitem__` and `__setitem__` make the square brackets work. Both must reject positions outside 0 to size − 1: the block may have spare slots beyond the size, and reading them would return stale `None`s, a silent bug. Negative indices count from the end, as in a list, so −1 means size − 1.
 
-```python
+```python type
 def _check_index(self, index):
     if index < 0:
         index += self._size
@@ -87,6 +92,12 @@ for bad in [10, -11]:
         print(f"a[{bad}] -> IndexError: {error}")
 ```
 
+```output
+100 3 9
+a[10] -> IndexError: index out of range for size 10
+a[-11] -> IndexError: index out of range for size 10
+```
+
 Assigning functions to the class after it is defined (`DynamicArray.__getitem__ = __getitem__`) adds them as methods, exactly as if they had been written inside the class. It lets this lesson grow the class one cell at a time; in a real program you would write them all inside the `class` block.
 
 Index 10 is rejected even though the block has a slot 10: it is beyond the size. Both operations are O(1): an arithmetic check and one slot access, whatever the size.
@@ -95,9 +106,14 @@ Index 10 is rejected even though the block has a slot 10: it is beyond the size.
 
 With `__len__` and `__getitem__` in place, Python can already loop over the array: a `for` loop over an object without `__iter__` calls `__getitem__` with 0, 1, 2, … until an `IndexError`. So the bounds check is doing double duty: it is what stops the loop. Predict before running: will `list(a)` and `sum(a)` work?
 
-```python
+```python type
 print(list(a))
 print(sum(a), max(a), 7 in a)
+```
+
+```output
+[100, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+145 100 True
 ```
 
 They do. `in` also falls back to looping, which is O(n), as for a list. An explicit `__iter__` would be slightly faster and clearer, and the iterator lesson later in this series shows how to write one.
@@ -108,7 +124,7 @@ They do. `in` also falls back to looping, which is O(n), as for a list. An expli
 
 `insert(index, value)` is different. To put a value at position i, every item from i onwards must first move one slot to the right, starting from the end so that nothing is overwritten. Inserting at the front of an array of n items moves all n. The version below counts its moves. Predict before running: how many moves will inserting at the front, the middle and the end of a 1,000-item array take?
 
-```python
+```python type
 def insert(self, index, value):
     if index < 0:
         index += self._size
@@ -133,6 +149,12 @@ for where in ["front", "middle", "end"]:
     print(f"insert at the {where:<6} (index {position:>4}): {big.insert(position, -1)} moves")
 ```
 
+```output
+insert at the front  (index    0): 1000 moves
+insert at the middle (index  500): 501 moves
+insert at the end    (index 1002): 0 moves
+```
+
 `range(self._size, index, -1)` counts down from the size to just above the index, so each item moves right before the slot to its left is copied into its old place. As with Python's `list.insert`, an index past the end is clamped to the end rather than raising an error.
 
 Inserting at the front moves all 1,000 items, the middle 501 (the array had grown by one), and the end none: insert is O(n − index), which is O(n) in the worst case. This is the cost behind `list.insert(0, x)` and `list.pop(0)`. (This `insert` returns the move count purely for the demonstration; `list.insert` returns `None`.)
@@ -141,7 +163,7 @@ Inserting at the front moves all 1,000 items, the middle 501 (the array had grow
 
 A data structure has many ways to go wrong: off-by-one errors at the edges, stale slots, resizing that loses an item. A powerful test applies the **same random sequence of operations** to your structure and to Python's list, and checks that they always agree. Python's list is the oracle, the obviously-correct version from the first lesson.
 
-```python
+```python type
 import random
 
 random.seed(0)
@@ -164,6 +186,10 @@ for step in range(5000):
         reference.insert(index, value)
     assert list(mine) == reference and len(mine) == len(reference), f"mismatch at step {step}"
 print(f"5000 random operations, always matching Python's list; final length {len(mine)}, capacity {mine._capacity}")
+```
+
+```output
+5000 random operations, always matching Python's list; final length 3516, capacity 4096
 ```
 
 The insert indices deliberately include positions beyond both ends, where list's clamping behaviour is easy to get wrong. After every operation the whole contents are compared, so a bug would be caught at the first step where it shows, with the step number to reproduce it.

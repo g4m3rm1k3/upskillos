@@ -24,7 +24,7 @@ A **coordinate system** fixes an origin and two perpendicular axes with a scale.
 
 In code a point is a tuple, and a set of points is naturally a 2-column NumPy array, one row per point, so `pts[:, 0]` is every x and `pts[:, 1]` every y. Predict before running: which hole is nearest the plate's top-right corner?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +44,10 @@ ax.set_title("Mounting plate")
 plt.show()
 corner = np.array([plate_w, plate_h])
 print("nearest hole to the top-right corner: H", np.argmin(np.hypot(*(holes - corner).T)), sep="")
+```
+
+```output
+nearest hole to the top-right corner: H2
 ```
 
 `ax.set_aspect("equal")` makes a millimetre the same length on both axes, so circles look round and distances look right. Without it, matplotlib stretches the plot to fill the figure.
@@ -66,7 +70,7 @@ Two points (x₁, y₁) and (x₂, y₂) are the ends of the hypotenuse of a rig
 
 The squares make the sign of each difference irrelevant, so the distance from A to B equals the distance from B to A. In three dimensions, the same argument applied twice adds a third term: d = √(Δx² + Δy² + Δz²). Python has it built in as `math.dist(p, q)` for any number of dimensions, and `np.hypot(dx, dy)` for arrays. Predict before running: how far does a robot gripper travel from (0, 0, 0) to (300, 400, 1200) mm?
 
-```python
+```python type
 def distance(p, q):
     return math.sqrt(sum((b - a) ** 2 for a, b in zip(p, q)))
 
@@ -74,6 +78,13 @@ print("H0 to H2:", distance(holes[0], holes[2]), "=", math.dist(holes[0], holes[
 print("a 3-4-5 triangle:", distance((0, 0), (3, 4)))
 print("gripper move:", distance((0, 0, 0), (300, 400, 1200)), "mm")
 print("symmetric:", distance(holes[1], holes[4]) == distance(holes[4], holes[1]))
+```
+
+```output
+H0 to H2: 94.33981132056604 = 94.33981132056604
+a 3-4-5 triangle: 5.0
+gripper move: 1300.0 mm
+symmetric: True
 ```
 
 `zip(p, q)` pairs the matching coordinates, so this one function works in any number of dimensions.
@@ -96,7 +107,7 @@ The **midpoint** of two points averages their coordinates: ((x₁ + x₂)/2, (y�
 
 which gives P at t = 0, Q at t = 1, the midpoint at t = 0.5, and points beyond the segment for t outside 0 to 1. This is **linear interpolation** again, now applied to positions; it is how a CNC controller generates the intermediate positions of a straight cut. Predict before running: where are the holes if five are spaced evenly from H0 to H1, including both ends?
 
-```python
+```python type
 def along(p, q, t):
     p, q = np.asarray(p, dtype=float), np.asarray(q, dtype=float)
     return p + t * (q - p)
@@ -106,6 +117,17 @@ print("five evenly spaced from H0 to H1:")
 for t in np.linspace(0, 1, 5):
     print("  t =", t, "->", along(holes[0], holes[1], t))
 print("pitch:", math.dist(along(holes[0], holes[1], 0), along(holes[0], holes[1], 0.25)), "mm")
+```
+
+```output
+midpoint of H0 and H2: [60. 40.]
+five evenly spaced from H0 to H1:
+  t = 0.0 -> [20. 15.]
+  t = 0.25 -> [40. 15.]
+  t = 0.5 -> [60. 15.]
+  t = 0.75 -> [80. 15.]
+  t = 1.0 -> [100.  15.]
+pitch: 20.0 mm
 ```
 
 `np.linspace(0, 1, 5)` gives the fractions 0, 0.25, 0.5, 0.75 and 1.
@@ -124,7 +146,7 @@ In code: `diff = pts[:, None, :] - pts[None, :, :]`, then `np.sqrt((diff ** 2).s
 
 Design rules often limit the spacing of features: holes closer than about two diameters weaken the plate between them. Checking every pair of n points means n(n − 1)/2 distances. NumPy computes them all with one subtraction: `pts[:, None, :] - pts[None, :, :]` subtracts every point from every other, producing an n × n × 2 array of differences (**broadcasting** in two dimensions), and the hypotenuse of each gives an n × n **distance matrix**. Predict before running: which pair of holes is closest, and does it break a 20 mm minimum spacing?
 
-```python
+```python type
 def distance_matrix(pts):
     diff = pts[:, None, :] - pts[None, :, :]
     return np.sqrt((diff ** 2).sum(axis=2))
@@ -134,6 +156,16 @@ print(np.round(D, 1))
 masked = D + np.diag([np.inf] * len(holes))
 i, j = np.unravel_index(np.argmin(masked), masked.shape)
 print(f"closest pair: H{i} and H{j}, {D[i, j]:.2f} mm apart ->", "too close" if D[i, j] < 20 else "ok")
+```
+
+```output
+[[ 0.  80.  94.3 50.  47.2 46.4]
+ [80.   0.  50.  94.3 47.2 63.8]
+ [94.3 50.   0.  80.  47.2 53.6]
+ [50.  94.3 80.   0.  47.2 30.9]
+ [47.2 47.2 47.2 47.2  0.  17. ]
+ [46.4 63.8 53.6 30.9 17.   0. ]]
+closest pair: H4 and H5, 16.97 mm apart -> too close
 ```
 
 The diagonal of the matrix is each hole's distance to itself, 0, so adding infinity there stops it being chosen as the minimum. `np.unravel_index` turns the position of the minimum in the flattened array back into a (row, column) pair.
@@ -152,7 +184,7 @@ In code: `math.dist`, `sum(abs(b - a) ...)` and `max(abs(b - a) ...)`
 
 The straight-line (Euclidean) distance is not always the one that matters. A machine whose axes move **one at a time** travels the **Manhattan distance** |Δx| + |Δy|, named after a grid of city streets. A machine whose axes move **simultaneously at the same top speed** arrives when the axis with the longer move does, so its travel time follows the **Chebyshev distance** max(|Δx|, |Δy|). All three are legitimate distances: each is zero only for the same point, symmetric, and obeys the **triangle inequality** (going via a third point is never shorter). Predict before running: for a move of 60 mm in x and 25 mm in y at 100 mm/s per axis, how long do the two kinds of machine take?
 
-```python
+```python type
 def manhattan(p, q):
     return sum(abs(b - a) for a, b in zip(p, q))
 
@@ -165,6 +197,14 @@ print("one axis at a time:", manhattan(p, q) / 100, "s   both axes together:", c
 r = (50, 70)
 for name, d in [("Euclidean", math.dist), ("Manhattan", manhattan), ("Chebyshev", chebyshev)]:
     print(f"{name:<10} direct {d(p, q):6.2f} <= via r {d(p, r) + d(r, q):6.2f}")
+```
+
+```output
+Euclidean 65.0  Manhattan 85  Chebyshev 60
+one axis at a time: 0.85 s   both axes together: 0.6 s
+Euclidean  direct  65.00 <= via r 105.08
+Manhattan  direct  85.00 <= via r 145.00
+Chebyshev  direct  60.00 <= via r  85.00
 ```
 
 The same move is 65 mm in a straight line, 85 mm of axis travel one at a time, and 0.6 s with both axes moving together, against 0.85 s one at a time. The Chebyshev time is set by the long x move; the y axis finishes early and waits. Which distance to use is a modelling decision, set by how the machine actually moves.

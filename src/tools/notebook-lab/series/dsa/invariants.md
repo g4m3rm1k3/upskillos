@@ -20,7 +20,7 @@ Take the loop that finds the largest value in a non-empty list. Its invariant: *
 
 This is the same reasoning as mathematical induction: a base case (initialisation), a step (maintenance), and a conclusion. While developing, an invariant can be written as an `assert` inside the loop, so that the program checks it on every iteration. Predict before running: will any assertion fail?
 
-```python
+```python type
 def largest(items):
     best = items[0]
     for i in range(1, len(items)):
@@ -38,6 +38,10 @@ for _ in range(1000):
 print("1000 random lists: the invariant held at every step")
 ```
 
+```output
+1000 random lists: the invariant held at every step
+```
+
 `max(items[:i])` recomputes the invariant the slow way, which makes the function O(n²) while the check is in place; such asserts are for development, then removed (or Python can be run with `-O`, which skips every `assert`).
 
 No assertion fails. The value of the invariant is not this check, though: it is that the three-step argument holds for **every** list, including ones no test tried.
@@ -48,7 +52,7 @@ Invariants become essential for loops that move data around in place, where an o
 
 The invariant: **everything before `left` and everything after `right` is already in its final, reversed position**, and the middle part is untouched. Initially both regions are empty (true). Each swap puts two more items in their final places and moves both indices inward (maintained). The loop stops when `left >= right`: the untouched middle has at most one item, which is its own reverse, so the whole list is reversed. Predict before running: for a list of 7 items, how many swaps will happen, and what about the middle item?
 
-```python
+```python type
 def reverse_in_place(items):
     original = list(items)
     n = len(items)
@@ -70,6 +74,11 @@ evens = list("ABCDEF")
 print(reverse_in_place(evens), "swaps:", "".join(evens))
 ```
 
+```output
+3 swaps: GFEDCBA
+3 swaps: FEDCBA
+```
+
 `original[::-1]` is the fully reversed copy, so `original[::-1][:left]` is what the first `left` positions should hold when the job is done.
 
 Seven items need 3 swaps; the middle item, D, never moves, because the loop stops when the indices meet on it. Six items also need 3 swaps, and the loop stops when the indices cross. The invariant explains why `while left < right` is exactly the right condition: with `<=`, an odd-length list would harmlessly swap its middle item with itself, but with `while left < right - 1` the loop would stop one pair early and the middle two items of an even-length list would never be swapped.
@@ -80,7 +89,7 @@ The three checks prove a loop gives the right answer **if it stops**. Proving it
 
 For the reversing loop, the variant is `right - left`: it drops by 2 each time. For **Euclid's algorithm**, which finds the greatest common divisor (gcd) of two numbers, the argument is more interesting. Euclid's insight: the gcd of a and b equals the gcd of b and a % b, since any number dividing both a and b also divides the remainder, and any number dividing b and the remainder also divides a, so the two pairs have exactly the same common divisors. Repeating that until the second number is 0 gives the answer. The invariant is "gcd(a, b) is the gcd of the original pair", and the variant is b, which strictly decreases because a % b is always smaller than b. Predict before running: how many steps for gcd(1071, 462), and for two consecutive Fibonacci numbers?
 
-```python
+```python type
 import math
 
 def gcd_traced(a, b):
@@ -99,6 +108,12 @@ print("gcd(832040, 514229) =", *gcd_traced(832040, 514229), "steps")
 print("gcd(10**12, 6) =", *gcd_traced(10**12, 6), "steps")
 ```
 
+```output
+gcd(1071, 462) = 21 3 steps
+gcd(832040, 514229) = 1 28 steps
+gcd(10**12, 6) = 2 3 steps
+```
+
 `*gcd_traced(…)` unpacks the returned pair into two separate arguments of `print`. Python's own `math.gcd` is used here only to check the invariant.
 
 gcd(1071, 462) takes 3 steps and gives 21. Consecutive Fibonacci numbers are Euclid's worst case: 832,040 and 514,229 need 28 steps. Even so, the number of steps grows only with the number of **digits**: the remainder at least halves every two steps, so Euclid's algorithm is O(log min(a, b)). The variant proved that it stops; a slightly sharper argument about how fast it decreases proved how quickly.
@@ -107,7 +122,7 @@ gcd(1071, 462) takes 3 steps and gives 21. Consecutive Fibonacci numbers are Euc
 
 Invariants are also a debugging tool. A broken invariant points at the exact iteration where things went wrong; an invariant that holds rules the loop out, and points at the code around it. Here is a function meant to move all the zeros in a list to the end, keeping the other values in order, with one subtle bug. Its intended invariant: **`items[:write]` holds the non-zero values seen so far, in order**. The check reads the global `original`, a copy of the input made before each call. Predict before running: will the invariant check fire? Which results come out wrong, and where must the bug be?
 
-```python
+```python type
 def move_zeros_buggy(items):
     write = 0
     for read in range(len(items)):
@@ -125,6 +140,12 @@ for test in [[0, 1, 0, 3, 12], [1, 2, 0], [4, 0, 5]]:
     original = list(test)
     move_zeros_buggy(test)
     print(original, "->", test, "correct" if test == [x for x in original if x] + [0] * original.count(0) else "WRONG")
+```
+
+```output
+[0, 1, 0, 3, 12] -> [1, 3, 12, 3, 0] WRONG
+[1, 2, 0] -> [1, 2, 0] correct
+[4, 0, 5] -> [4, 5, 5] WRONG
 ```
 
 The invariant is checked with an `if` instead of an `assert` here, so the cell can report the failure and carry on.

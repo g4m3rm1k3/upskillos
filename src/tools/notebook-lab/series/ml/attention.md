@@ -10,7 +10,7 @@ A Python dictionary looks a **key** up exactly and returns its **value**. Attent
 
 The comparison is a dot product: vectors pointing the same way score high. Here is one query against four keys:
 
-```python
+```python type
 import numpy as np
 
 def softmax(z):
@@ -24,6 +24,12 @@ for query in [np.array([3.0, 0.0]), np.array([0.0, 3.0]), np.array([2.0, 2.0])]:
     scores = keys @ query
     weights = softmax(scores)
     print(f"query {query}: scores {scores.round(2)}, weights {weights.round(3)}, result {(weights @ values)[0]:.2f}")
+```
+
+```output
+query [3. 0.]: scores [ 3.   0.   2.1 -3. ], weights [0.685 0.034 0.279 0.002], result 15.97
+query [0. 3.]: scores [0.  3.  2.1 0. ], weights [0.033 0.664 0.27  0.033], result 23.03
+query [2. 2.]: scores [ 2.   2.   2.8 -2. ], weights [0.236 0.236 0.524 0.004], result 22.97
 ```
 
 The first query points along the first key and gets mostly that key's value (10), with some of the third (30), whose key also points partly that way. The second favours the second key. The third, halfway between, splits its weight between the keys that point its way. Because every step is a smooth function (dot products, softmax, a weighted sum), the whole lookup can be trained by gradient descent: the model can learn what to ask for and how to label what it stores.
@@ -40,7 +46,7 @@ QKᵀ holds every query's score against every key; the softmax is taken along ea
 
 Why divide by √d_k? If the entries of a query and a key are independent with mean 0 and variance 1, their dot product is a sum of d_k terms and has variance d_k. With 64-dimensional keys, scores spread over a range like −20 to 20, and a softmax over such scores puts nearly all the weight on the single largest one. The softmax is then **saturated**: its gradient is almost zero, and learning stalls, just like a saturated sigmoid. Dividing by √d_k brings the scores back to variance 1. Before running, predict how the largest weight changes with d_k when the scores are not scaled:
 
-```python
+```python type
 import numpy as np
 
 def softmax(z):
@@ -52,6 +58,12 @@ for d in [4, 64, 512]:
     q, K = rng.normal(size=d), rng.normal(size=(10, d))
     raw = K @ q
     print(f"d_k = {d:>3}: score spread {raw.std():5.1f}; largest weight unscaled {softmax(raw).max():.3f}, scaled {softmax(raw / np.sqrt(d)).max():.3f}")
+```
+
+```output
+d_k =   4: score spread   0.6; largest weight unscaled 0.205, scaled 0.150
+d_k =  64: score spread   6.4; largest weight unscaled 0.951, scaled 0.248
+d_k = 512: score spread  22.6; largest weight unscaled 0.750, scaled 0.195
 ```
 
 Unscaled, the score spread grows like √d_k (0.6, 6.4, 22.6), and the softmax becomes dominated by one or two keys: the largest weight jumps from 0.21 at d_k = 4 to 0.95 at 64 and 0.75 at 512 (where two keys happen to share the top). Scaled, the largest weight stays between 0.15 and 0.25 whatever the dimension.
@@ -72,7 +84,7 @@ Self-attention has no idea of order: shuffle the positions and the outputs are s
 
 A language model predicts each next word from the words **before** it. If position `t` could attend to position t + 1, it could simply copy the answer. A **causal mask** prevents this: before the softmax, every score where the key's position is later than the query's is set to −∞, so its weight becomes exactly 0. The weight matrix becomes lower-triangular:
 
-```python
+```python type
 import numpy as np
 
 def attention(Q, K, V, causal=False):
@@ -93,6 +105,16 @@ print(weights.round(2))
 print("output shape:", out.shape)
 ```
 
+```output
+attention weights (row = query position, column = key position):
+[[1.   0.   0.   0.   0.  ]
+ [0.77 0.23 0.   0.   0.  ]
+ [0.35 0.22 0.44 0.   0.  ]
+ [0.01 0.16 0.42 0.4  0.  ]
+ [0.52 0.18 0.17 0.09 0.04]]
+output shape: (5, 4)
+```
+
 `np.triu(..., k=1)` marks the entries above the diagonal: key positions later than the query. `np.where` replaces their scores with −∞, and exp(−∞) = 0. The first position can only attend to itself (weight 1); the last can attend to all five. Each row still adds to 1.
 
 ## Training attention to look in the right place
@@ -103,7 +125,7 @@ A model that simply **averages** the items cannot see the marked item's value cl
 
 Its backward pass needs one new piece, the gradient through the softmax. Each weight aᵢ = e^(sᵢ) / Σₖ e^(sₖ) depends on **every** score: differentiating the quotient gives ∂aᵢ/∂sᵢ = aᵢ(1 − aᵢ) and ∂aᵢ/∂sⱼ = −aᵢaⱼ for j ≠ i, which together are aᵢ(δᵢⱼ − aⱼ), where δᵢⱼ is 1 when i = j and 0 otherwise. If the gradient arriving at the weights is da, the chain rule sums over all the weights each score affects: dsⱼ = Σᵢ daᵢ · aᵢ(δᵢⱼ − aⱼ) = aⱼ daⱼ − aⱼ Σᵢ aᵢ daᵢ. In vector form, ds = a ⊙ (da − Σ a ⊙ da): each score's gradient is its weight times how much its own value's gradient exceeds the weighted average. Everything else is the familiar "error times input" pattern. Before running, predict: what accuracy will the averaging model reach, and how much weight will the attention model put on the marked item?
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -159,6 +181,11 @@ def train(use_attention, steps=1500, lr=0.1, seed=0, d=4):
 for use_attention, label in [(False, "averaging (no attention)"), (True, "learned attention")]:
     accuracy, weight = train(use_attention)
     print(f"{label:<25} test accuracy {accuracy:.3f}, average weight on the marked item {weight:.3f}")
+```
+
+```output
+averaging (no attention)  test accuracy 0.602, average weight on the marked item 0.100
+learned attention         test accuracy 0.997, average weight on the marked item 0.977
 ```
 
 With the query and key weights fixed at zero, every score is 0 and the softmax gives every item weight 1/10: the averaging baseline. `np.einsum("nt,ntd->nd", a, V)` forms each sequence's weighted average of its value vectors.

@@ -25,7 +25,7 @@ w_i \leftarrow w_i \, e^{-\alpha \, y_i h(x_i)}
 
 Right answers are multiplied by e^(−α), shrinking them; wrong answers by e^(α), growing them. scikit-learn's trees accept example weights through `fit(X, y, sample_weight=w)`. Before running the next cell, predict: as rounds are added, will the test accuracy keep rising?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -53,6 +53,15 @@ for m in range(1, 201):
         print(f"round {m:>3}: stump error {error:.3f}, say {alpha:.3f}  |  train {train_acc:.3f}, test {test_acc:.3f}")
 ```
 
+```output
+round   1: stump error 0.200, say 0.693  |  train 0.800, test 0.753
+round   2: stump error 0.258, say 0.527  |  train 0.800, test 0.753
+round   3: stump error 0.261, say 0.521  |  train 0.880, test 0.833
+round   5: stump error 0.408, say 0.185  |  train 0.873, test 0.827
+round  20: stump error 0.458, say 0.084  |  train 0.873, test 0.827
+round 200: stump error 0.491, say 0.018  |  train 0.933, test 0.800
+```
+
 `2 * y - 1` turns labels 0/1 into −1/+1, and `np.sign` turns the weighted vote back into −1 or +1. Read the columns:
 
 - The first stump has error 0.20 and a large say (0.69). Alone, it scores 0.75 on the test set, like the single question in the decision trees lesson.
@@ -74,7 +83,7 @@ AdaBoost's weight update looks like a clever trick. **Gradient boosting** replac
 
 Each tree corrects some of what is left over. Here it is on noisy sine data, with trees of depth 2:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
@@ -106,6 +115,15 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+  1 trees: train MSE 0.4714, test MSE 0.5051
+  5 trees: train MSE 0.2520, test MSE 0.2802
+ 20 trees: train MSE 0.0625, test MSE 0.0895
+ 50 trees: train MSE 0.0327, test MSE 0.0718
+100 trees: train MSE 0.0218, test MSE 0.0755
+500 trees: train MSE 0.0018, test MSE 0.0956
+```
+
 After 5 trees the model is a rough staircase that has barely left the mean; by 50 it follows the sine well; by 500 it has started bending around individual noisy points. The printout shows the same story. Training error falls steadily towards zero (0.0018 by 500 trees). Test error falls to about 0.072 at 50 trees, close to the noise level itself (the noise has standard deviation 0.25, so variance 0.0625, which no model can beat), then rises again to 0.096. Too many rounds overfit.
 
 ## Why "gradient"?
@@ -122,7 +140,7 @@ The learning rate and the number of trees trade off against each other. A smalle
 
 scikit-learn has `GradientBoostingClassifier` and `GradientBoostingRegressor`, which work as above. It also has `HistGradientBoostingClassifier` and `HistGradientBoostingRegressor`, which first sort each feature's values into at most 256 bins so that finding splits is very fast. This is the same idea as LightGBM and XGBoost, and it is the version to use on real data. It also handles missing values directly.
 
-```python
+```python type
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import GradientBoostingClassifier, HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.model_selection import cross_val_score
@@ -133,6 +151,12 @@ for name, model in [("random forest", RandomForestClassifier(random_state=0)),
                     ("histogram gradient boosting", HistGradientBoostingClassifier(random_state=0))]:
     scores = cross_val_score(model, X, y, cv=5)
     print(f"{name:<28} mean accuracy {scores.mean():.3f}")
+```
+
+```output
+random forest                mean accuracy 0.963
+gradient boosting            mean accuracy 0.963
+histogram gradient boosting  mean accuracy 0.967
 ```
 
 On this small, clean dataset all three score about 96–97%: when data is this easy, the choice of strong model hardly matters. The advantages of boosting show up on larger, messier problems, where well-tuned boosted trees usually come out ahead. They also need more care, since the learning rate, the number of trees and the tree size all interact, which is why the hyperparameter search lesson later in this series matters.

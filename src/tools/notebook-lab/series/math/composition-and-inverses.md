@@ -25,7 +25,7 @@ In Python, functions are values. A function can take functions and return a new 
 
 Predict before running: for f(x) = 2x and g(x) = x + 3, what are g(f(5)) and f(g(5))? And what surface speed does 3,000 rpm give on a 40 mm cutter, built as a chain?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +50,12 @@ grouped = compose(compose(m_s_to_m_min, rad_s_to_surface), rpm_to_rad_s)
 print("grouped differently:", round(grouped(3000), 6) == round(cutting_speed(3000), 6))
 ```
 
+```output
+g(f(5)) = 13   f(g(5)) = 16
+3,000 rpm on a 40 mm cutter: 377.0 m/min
+grouped differently: True
+```
+
 g(f(5)) = 13 and f(g(5)) = 16: order matters. The cutting-speed chain turns 3,000 rpm into 314.2 rad/s, then into 6.28 m/s at the 20 mm radius, then into 377.0 m/min. Grouping the three steps differently gives the same answer, because composition is associative.
 
 ## Inverses, and undoing a chain
@@ -68,7 +74,7 @@ A chain is undone in **reverse** order: undo the last step first. A Kelvin readi
 
 Predict before running: does undoing the Kelvin → Celsius → Fahrenheit chain in reverse order return the original 300 K, and what does the wrong order give?
 
-```python
+```python type
 K_to_C = lambda k: k - 273.15
 C_to_F = lambda c: c * 9 / 5 + 32
 C_to_K = lambda c: c + 273.15
@@ -91,6 +97,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+300 K -> 80.33 °F
+undone in reverse order (°F -> °C -> K): 300.0
+undone in the wrong order (apply C_to_K first): 178.6
+```
+
 300 K is 80.33 °F, and the reverse chain returns 300.0 K exactly. The wrong order, adding 273.15 to a Fahrenheit number before converting, gives 178.6: meaningless. The plot shows x² on x ≥ 0 and its inverse √y mirrored in the dotted line y = x. Restricted to x ≥ 0, x² is one-to-one, which is why the mirror image is again a function.
 
 ## Inverting a calibration table
@@ -108,7 +120,7 @@ The transducer here produces mV = 2.0p + 0.015p² + 0.4 for pressure p in bar (s
 
 Predict before running: how accurate is the swapped-table inverse for readings between the calibration points?
 
-```python
+```python type
 rng = np.random.default_rng(64)
 true_mv = lambda p: 2.0 * p + 0.015 * p ** 2 + 0.4
 p_cal = np.linspace(0, 10, 11)
@@ -119,6 +131,12 @@ mv_test = true_mv(p_test)
 p_interp = np.interp(mv_test, mv_cal, p_cal)
 print(f"table inverse: largest error {np.abs(p_interp - p_test).max() * 1000:.1f} mbar over 0.3 to 9.7 bar")
 print("a reading beyond the table:", np.interp(30.0, mv_cal, p_cal), "bar  (np.interp silently clamps to the last point)")
+```
+
+```output
+calibration voltages strictly increasing? True
+table inverse: largest error 4.8 mbar over 0.3 to 9.7 bar
+a reading beyond the table: 10.0 bar  (np.interp silently clamps to the last point)
 ```
 
 The calibration voltages increase strictly, so the table can be read backwards. The swapped-table inverse is within about 4.8 mbar everywhere between 0.3 and 9.7 bar, set by the curvature between calibration points and the calibration noise. A reading of 30 mV, far beyond the 10 bar point, comes back as exactly 10 bar. `np.interp` clamps to the ends without any warning, the domain lesson's trap again. A real conversion function must check that the reading lies within the calibrated range.
@@ -136,7 +154,7 @@ A fitted curve smooths out calibration noise better than a table does, and a qua
 
 Predict before running: rank the swapped table, the direct inverse fit and Newton's method on the forward fit by their largest error.
 
-```python
+```python type
 fwd = np.polyfit(p_cal, mv_cal, 2)
 direct = np.polyfit(mv_cal, p_cal, 2)
 p_direct = np.polyval(direct, mv_test)
@@ -147,6 +165,13 @@ for _ in range(20):
 print("forward fit (c2, c1, c0):", fwd.round(5), " true (0.015, 2.0, 0.4)")
 for label, est in [("swapped table", p_interp), ("direct inverse fit", p_direct), ("Newton on the forward fit", p_newton)]:
     print(f"{label:<26} largest error {np.abs(est - p_test).max() * 1000:.2f} mbar")
+```
+
+```output
+forward fit (c2, c1, c0): [0.01486 2.00158 0.39701]  true (0.015, 2.0, 0.4)
+swapped table              largest error 4.79 mbar
+direct inverse fit         largest error 3.29 mbar
+Newton on the forward fit  largest error 1.26 mbar
 ```
 
 The forward fit recovers the transducer's coefficients closely (0.0149, 2.0016, 0.397). Newton's method on that fit is the most accurate inverse, at about 1.3 mbar worst case. The direct inverse fit gives 3.3 mbar, because a quadratic in mV cannot exactly represent the inverse of a quadratic in pressure. The swapped table gives 4.8 mbar. Inverting the right model beats fitting the wrong model to the inverse. Many instrument calibrations (thermocouple standards, for example) publish both forward and inverse polynomials for this reason, each fitted in its own direction.
@@ -166,7 +191,7 @@ An accelerometer used as a tilt sensor measures the component of gravity along i
 
 Predict before running: with 0.01 m/s² of noise, how uncertain is the angle at 10°, 60°, 85° and 89°?
 
-```python
+```python type
 g, noise = 9.81, 0.01
 for deg in [10, 60, 85, 89]:
     th = math.radians(deg)
@@ -174,6 +199,13 @@ for deg in [10, 60, 85, 89]:
     a = g * math.sin(th)
     simulated = math.degrees(np.std(np.arcsin(np.clip((a + rng.normal(0, noise, 200_000)) / g, -1, 1))))
     print(f"tilt {deg:>2}°: angle uncertainty {by_formula:.3f}° by 1/f′, {simulated:.3f}° simulated")
+```
+
+```output
+tilt 10°: angle uncertainty 0.059° by 1/f′, 0.059° simulated
+tilt 60°: angle uncertainty 0.117° by 1/f′, 0.117° simulated
+tilt 85°: angle uncertainty 0.670° by 1/f′, 0.697° simulated
+tilt 89°: angle uncertainty 3.347° by 1/f′, 1.292° simulated
 ```
 
 At 10° the 0.01 m/s² noise gives about 0.06° of angle uncertainty, and at 60° about 0.12°, as 1/cos θ grows. At 85° it is 0.67°, and at 89° the linear formula says 3.3°. There the simulation gives a smaller spread, because the arcsine saturates at 90° and the non-linearity of the propagation lesson takes over. Either way, the precision is gone. Every inverse has the same story: check the forward slope before trusting the recovered value.

@@ -68,6 +68,12 @@ function capture(command, args, { cwd, env, timeoutMs = 60000, input } = {}) {
 // `opts.input`: text typed into the program (a `stdin=` option on a run check).
 async function shellRun(cmd, opts = {}) {
   if (process.platform === 'win32' && opts.input != null) {
+    // Get-Content on an empty file emits no pipeline object. After removing a
+    // sole final newline below, that would turn a blank input line into EOF.
+    // An explicit empty string emits PowerShell's one terminating CRLF instead.
+    if (opts.input === '\n' || opts.input === '\r\n') {
+      return await shellRun(`'' | ${cmd}`, { ...opts, input: undefined })
+    }
     // A program started by `powershell -Command` doesn't reliably read PowerShell's own stdin,
     // so pipe the text in from a file, the way a learner would type `Get-Content in.txt | ./calc`.
     // Two Windows PowerShell 5.1 behaviours, measured 2026-10-04 with a program that echoes its

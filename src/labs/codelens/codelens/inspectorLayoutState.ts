@@ -1,4 +1,4 @@
-export const INSPECTOR_IDS = ['explain', 'events', 'picture', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'] as const
+export const INSPECTOR_IDS = ['explain', 'events', 'picture', 'stage', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'] as const
 export type InspectorId = typeof INSPECTOR_IDS[number]
 export interface InspectorPane { tabs: InspectorId[]; active: InspectorId | null }
 export interface InspectorWorkspace {
@@ -13,7 +13,7 @@ export function defaultWorkspace(): InspectorWorkspace {
   return {
     panes: [
       { tabs: ['explain', 'events'], active: 'explain' },
-      { tabs: ['picture', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'], active: 'picture' },
+      { tabs: ['picture', 'stage', 'output', 'variables', 'heap', 'calltree', 'scope', 'structure', 'tokens', 'ast', 'screen'], active: 'picture' },
     ],
     direction: 'row', sizes: [1, 1],
   }
@@ -40,6 +40,12 @@ export function restoreWorkspace(value: unknown): InspectorWorkspace {
     last.tabs.unshift('picture')
     last.active = 'picture'
     seen.add('picture')
+  }
+  // So did the Stage tab: it goes right after Picture.
+  if (!seen.has('stage')) {
+    const pane = panes.find(p => p.tabs.includes('picture'))!
+    pane.tabs.splice(pane.tabs.indexOf('picture') + 1, 0, 'stage')
+    seen.add('stage')
   }
   panes[0].tabs.push(...INSPECTOR_IDS.filter(id => !seen.has(id)))
   if (!panes[0].active) panes[0].active = panes[0].tabs[0] ?? null

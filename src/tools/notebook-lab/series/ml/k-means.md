@@ -19,7 +19,7 @@ Each step can only lower the inertia, or leave it unchanged. (One practical snag
 
 Four groups of points, generated with `make_blobs` (which scatters points around randomly placed centres):
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
@@ -55,7 +55,7 @@ At step 0, the random starting centres (black crosses) sit oddly, two of them in
 
 Lloyd's algorithm always stops, but not necessarily at the best answer. It finds a **local minimum**: a set of centres that no single assign-or-update step can improve, even though a completely different arrangement would be better. Run it from eight different random starts. Predict first: how many of the eight will find the four blobs?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_blobs
 
@@ -77,6 +77,17 @@ for seed in range(8):
     print(f"start {seed}: inertia {inertia:7.1f} after {iterations} rounds, cluster sizes {np.bincount(labels, minlength=4)}")
 ```
 
+```output
+start 0: inertia   462.8 after 3 rounds, cluster sizes [75 75 75 75]
+start 1: inertia  2359.7 after 7 rounds, cluster sizes [150  35  75  40]
+start 2: inertia  2360.2 after 8 rounds, cluster sizes [150  37  38  75]
+start 3: inertia  2360.6 after 6 rounds, cluster sizes [150  43  32  75]
+start 4: inertia  2359.7 after 5 rounds, cluster sizes [ 75 150  35  40]
+start 5: inertia  6952.8 after 11 rounds, cluster sizes [ 75  38  37 150]
+start 6: inertia   462.8 after 4 rounds, cluster sizes [75 75 75 75]
+start 7: inertia  6952.8 after 4 rounds, cluster sizes [ 38 150  75  37]
+```
+
 `np.allclose` checks whether the centres stopped moving. Only two of the eight starts reach the good solution, with inertia 463 and four clusters of 75. The others get stuck: a common failure is two centres sharing one blob while a single centre straddles two others, giving inertia around 2,360; the worst gets 6,953. From inside such a solution, every small move makes things worse, so the algorithm cannot escape.
 
 Two standard remedies, both on by default in scikit-learn:
@@ -91,7 +102,7 @@ k-means needs `k` in advance, and the data rarely announces it. The inertia cann
 - The **elbow method**: plot inertia against `k` and look for the point where adding centres stops helping much.
 - The **silhouette score**. For each example, let `a` be its mean distance to the other members of its own cluster, and `b` its mean distance to the members of the **nearest other** cluster. Its silhouette is (b − a) / max(a, b): near 1 when it sits snugly in its cluster far from the others, near 0 on a border, negative if it is closer to another cluster. The average over all examples scores the whole clustering, and unlike inertia it does not automatically improve with more clusters.
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
@@ -116,6 +127,17 @@ for ax in axes:
 plt.show()
 ```
 
+```output
+k = 1: inertia  22193.5, silhouette nan
+k = 2: inertia   8941.6, silhouette 0.599
+k = 3: inertia   2402.8, silhouette 0.776
+k = 4: inertia    462.8, silhouette 0.826
+k = 5: inertia    414.0, silhouette 0.721
+k = 6: inertia    370.8, silhouette 0.584
+k = 7: inertia    326.5, silhouette 0.456
+k = 8: inertia    282.6, silhouette 0.356
+```
+
 `KMeans(n_clusters=k, n_init=10)` runs 10 k-means++ starts and keeps the best; `inertia_` and `labels_` hold the result. The inertia drops steeply up to `k = 4` (from 22,194 to 463) and only slowly after (414, 371, …): a sharp elbow. The silhouette peaks at `k = 4` too, at 0.826. (The silhouette needs at least two clusters, hence the missing first value.)
 
 On real data the elbow is usually much less clear, and different measures disagree. Often the honest answer is that there is no single correct `k`: customers can be usefully split into 3 segments or into 8. Choose a `k` that is useful for the purpose, and check the clusters make sense by looking at them.
@@ -124,7 +146,7 @@ On real data the elbow is usually much less clear, and different measures disagr
 
 How much structure can k-means find on its own in real data? Cluster the 64-pixel digits into 10 groups, **ignoring the labels**, then look at the labels afterwards to see what each cluster contains:
 
-```python
+```python type
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_digits
@@ -138,6 +160,20 @@ for j in range(10):
 
 purity = sum(np.bincount(digits.target[model.labels_ == j]).max() for j in range(10)) / len(digits.target)
 print(f"purity: {purity:.3f}")
+```
+
+```output
+cluster 0: 178 images, mostly 0s (99%)
+cluster 1: 221 images, mostly 1s (45%)
+cluster 2: 212 images, mostly 7s (83%)
+cluster 3:  84 images, mostly 1s (64%)
+cluster 4: 177 images, mostly 3s (87%)
+cluster 5: 182 images, mostly 6s (97%)
+cluster 6: 169 images, mostly 4s (98%)
+cluster 7: 149 images, mostly 5s (91%)
+cluster 8: 250 images, mostly 9s (56%)
+cluster 9: 175 images, mostly 2s (85%)
+purity: 0.794
 ```
 
 Most clusters are dominated by one digit: one is almost entirely 0s, another 6s, another 4s. Overall, 79% of images sit in a cluster whose most common digit is their own (that fraction is called the **purity**). Some digits share: one cluster mixes 1s and 8s about evenly, and the 9s are split. Without ever being told what a digit is, k-means has rediscovered most of the categories. (Note that cluster numbers are arbitrary: cluster 0 is not "the zeros".)

@@ -8,7 +8,7 @@ The model is a network with 64 inputs (the pixels of an 8 × 8 digit), one hidde
 
 The parameters live in a dictionary, so every part of the code can loop over them by name. The forward pass is the one from the network lessons; the backward pass uses the batch formulas from the backpropagation lesson. For softmax with cross-entropy, as for sigmoid with log loss, the output error signal is simply P − Y, with Y the one-hot labels.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -49,6 +49,12 @@ print("parameters:", sum(p.size for p in params.values()))
 print("loss and accuracy before training: %.3f, %.3f" % loss_and_accuracy(params, X_val, y_val))
 ```
 
+```output
+training 1005, validation 252, test 540
+parameters: 4810
+loss and accuracy before training: 2.461, 0.063
+```
+
 The data is split three ways: **training** data to compute gradients on, **validation** data to watch during training and make decisions with, and **test** data, kept untouched until the very end. The weights start with He initialisation from the activation functions lesson (standard deviation √(2/n) for a layer with `n` inputs), and the biases at zero. The `+ 1e-12` inside the log guards against log(0).
 
 Before training, the loss is 2.46, close to ln 10 ≈ 2.30, and the accuracy is 6%, which is chance level for ten classes: the untrained network spreads its probability roughly evenly over the ten digits. That initial check is worth doing on every network: if the starting loss is far from ln(number of classes), something is already wrong.
@@ -65,7 +71,7 @@ One pass through all the training data is an **epoch**. With 1,005 training exam
 
 Compare batch sizes with the same learning rate: full batches and batches of 32 for 30 epochs each, and single examples for only 5 epochs, because they are slow. Predict first: which will be furthest along?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -121,6 +127,12 @@ for batch_size in [len(X_train), 32, 1]:
     print(f"batch size {batch_size:>4}, {epochs} epochs: validation loss {val_loss:.3f}, accuracy {val_accuracy:.3f}")
 ```
 
+```output
+batch size 1005, 30 epochs: validation loss 1.444, accuracy 0.746
+batch size   32, 30 epochs: validation loss 0.122, accuracy 0.968
+batch size    1, 5 epochs: validation loss 0.116, accuracy 0.964
+```
+
 `rng.permutation(n)` shuffles the row numbers, and `order[start:start + batch_size]` takes the next batch of them (the last batch may be smaller). The update loop runs over the parameter names, subtracting the learning rate times each gradient.
 
 After 30 epochs, full-batch gradient descent (30 steps in total) has only reached 75% validation accuracy. Mini-batches of 32 (about 950 steps) reach 97%. Batches of a single example get to 96% in only 5 epochs (about 5,000 steps), but each step is the least efficient: one example at a time cannot use NumPy's fast matrix operations. On real hardware, batches of 32 to 512 hit the best balance between noisy cheap steps and fast parallel arithmetic.
@@ -129,7 +141,7 @@ After 30 epochs, full-batch gradient descent (30 steps in total) has only reache
 
 The learning rate is the single most important setting. Watching the **loss curve**, the loss after every epoch, shows immediately whether it is right. Before running, predict which of these four rates will fail completely.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -192,6 +204,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+learning rate 0.01: validation accuracy after 30 epochs 0.925
+learning rate  0.1: validation accuracy after 30 epochs 0.968
+learning rate  1.0: validation accuracy after 30 epochs 0.984
+learning rate  3.0: validation accuracy after 30 epochs 0.119
+```
+
 The four curves show the three classic shapes:
 
 - **Too small** (0.01): the loss falls steadily but slowly; after 30 epochs, accuracy is only 0.925. More epochs would get there eventually.
@@ -204,7 +223,7 @@ The usual practical recipe: try rates spaced by factors of 3 or 10, pick the lar
 
 Train for longer and compare the training and validation loss, epoch by epoch, with learning rate 0.5 for 150 epochs. Predict before running: which of the two curves will eventually turn upward?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -265,6 +284,11 @@ ax.set_xlabel("epoch")
 ax.set_ylim(0, 0.4)
 ax.legend()
 plt.show()
+```
+
+```output
+test accuracy after 40 epochs: 0.969
+lowest validation loss 0.076 at epoch 25; after 150 epochs: validation 0.093, training 0.0012
 ```
 
 The training loss falls to almost nothing (0.001), while the validation loss reaches its lowest point at about epoch 25 (0.076, the dashed line) and then **creeps upwards**, to 0.093 by epoch 150. The network is starting to memorise the training digits. The gap between the two curves, and especially validation loss rising while training loss keeps falling, is the signature of overfitting on a loss curve.

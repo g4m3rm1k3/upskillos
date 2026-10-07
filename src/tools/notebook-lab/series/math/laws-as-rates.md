@@ -31,7 +31,7 @@ together with a starting value y(t₀) = y₀, an **initial value problem**. New
 
 The right-hand side is the whole law; solving is a separate job. Euler's method from the motion lesson is the simplest solver: step y by f(t, y) Δt. Predict before running: a 1 m² tank with a 10 cm² hole holds water 1 m deep. Does it empty at a steady rate?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,6 +56,14 @@ for t_check in [0, 100, 200, 300, 400]:
     print(f"t = {t_check:>3} s: depth {hs[t_check]:.3f} m, falling at {-tank_rate(0, hs[t_check]) * 1000:.2f} mm/s")
 ```
 
+```output
+t =   0 s: depth 1.000 m, falling at 4.43 mm/s
+t = 100 s: depth 0.606 m, falling at 3.45 mm/s
+t = 200 s: depth 0.310 m, falling at 2.46 mm/s
+t = 300 s: depth 0.112 m, falling at 1.48 mm/s
+t = 400 s: depth 0.012 m, falling at 0.49 mm/s
+```
+
 `max(h, 0.0)` stops the square root from failing if a step overshoots slightly below zero.
 
 The tank does not empty steadily. It drains fastest when full, about 4.4 mm/s, and ever more slowly as the depth falls, because the outflow speed depends on the depth. A rate law like this cannot be answered by "volume divided by flow rate", because the flow rate keeps changing.
@@ -72,7 +80,7 @@ In code: `slope = -k * (TT - 20)`, drawn with `ax.quiver`
 
 At every point (t, y), the ODE gives the slope of the solution passing through it. Drawing short line segments with those slopes over a grid gives a **direction field**: every solution is a curve that follows the segments, like a leaf floating on a stream. One picture shows the behaviour of all solutions at once, from every starting value. Predict before running: for the cooling law with T_room = 20 °C, what do solutions starting above and below 20 °C do?
 
-```python
+```python type
 k = 0.1
 tt, TT = np.meshgrid(np.linspace(0, 40, 21), np.linspace(0, 100, 21))
 slope = -k * (TT - 20)
@@ -87,6 +95,10 @@ ax.set_ylabel("temperature (°C)")
 ax.legend(fontsize=8)
 plt.show()
 print("slope at T = 95 °C:", -k * (95 - 20), "°C/min;  at 20 °C:", -k * (20 - 20), ";  at 5 °C:", -k * (5 - 20))
+```
+
+```output
+slope at T = 95 °C: -7.5 °C/min;  at 20 °C: -0.0 ;  at 5 °C: 1.5
 ```
 
 Each arrow has horizontal component 1 (one unit of time) and vertical component the slope, scaled to the same length so the field is readable.
@@ -107,7 +119,7 @@ A value y* where f(y*) = 0 is an **equilibrium**: a solution that starts there s
 
 A tank fed by a constant inflow Q while draining through the hole obeys dh/dt = (Q − a√(2gh))/A. Setting the rate to zero gives the level where inflow equals outflow, h* = (Q/a)²/(2g). Predict before running: with Q = 2 litres per second, what level does the tank settle at, whether it starts empty or overfull?
 
-```python
+```python type
 Q = 0.002
 
 def fed_tank(t, h):
@@ -120,6 +132,14 @@ for h0 in [0.0, 0.5, 1.0]:
     print(f"start {h0} m: after 10 min {hs[600]:.4f} m, after 50 min {hs[3000]:.4f} m")
 eps = 1e-6
 print(f"f'(h*) ≈ {(fed_tank(0, h_star + eps) - fed_tank(0, h_star - eps)) / (2 * eps):.6f} per second (negative: stable)")
+```
+
+```output
+equilibrium level h* = 0.2039 m
+start 0.0 m: after 10 min 0.1960 m, after 50 min 0.2039 m
+start 0.5 m: after 10 min 0.2246 m, after 50 min 0.2039 m
+start 1.0 m: after 10 min 0.2836 m, after 50 min 0.2039 m
+f'(h*) ≈ -0.004905 per second (negative: stable)
 ```
 
 The derivative of the rate function at the equilibrium is estimated with a central difference, as in the derivative lesson.
@@ -140,7 +160,7 @@ Euler's method is first order: its error shrinks only in proportion to the step.
 
 For the draining tank, the substitution u = √h turns Torricelli's law into du/dt = −(a/A)√(g/2), a constant, so √h falls linearly and the tank empties at exactly T = (A/a)√(2h₀/g). Predict before running: how close do Euler with 1-second steps and `solve_ivp` come to the exact emptying time?
 
-```python
+```python type
 def empty(t, h):
     return h[0] - 1e-9
 empty.terminal = True
@@ -154,6 +174,11 @@ t_check = 200.0
 exact_h = (math.sqrt(1.0) - (a_hole / A_tank) * math.sqrt(g / 2) * t_check) ** 2
 dense = solve_ivp(lambda t, h: [tank_rate(t, h[0])], (0, t_check), [1.0], rtol=1e-10, atol=1e-12)
 print(f"depth at 200 s: exact {exact_h:.6f} m, solve_ivp {dense.y[0, -1]:.6f} m")
+```
+
+```output
+exact 451.524 s, solve_ivp 451.509 s (159 steps), Euler (1 s steps) 448 s
+depth at 200 s: exact 0.310311 m, solve_ivp 0.310311 m
 ```
 
 The event function returns zero when the tank is empty (with a tiny offset so the solver meets it cleanly); `terminal = True` tells the solver to stop there. `sol.t_events[0]` lists the times the event occurred.
@@ -172,7 +197,7 @@ In code: `sp.dsolve(sp.Eq(T(t).diff(t), -k_s * (T(t) - Tr)), T(t), ics={T(0): T0
 
 Equations of the form dy/dt = g(t) h(y) are **separable**: divide by h(y), multiply by dt, and integrate both sides, ∫ dy/h(y) = ∫ g(t) dt. Cooling and Torricelli's law are both of this kind, which is why they have formulas. SymPy's `dsolve` carries out such steps symbolically. Predict before running: what does SymPy give for the cooling law, and for the draining tank?
 
-```python
+```python type
 t = sp.symbols("t", positive=True)
 T = sp.Function("T")
 k_s, Tr, T0 = sp.symbols("k T_r T_0", positive=True)
@@ -183,6 +208,11 @@ h = sp.Function("h")
 c = sp.symbols("c", positive=True)
 drain = sp.dsolve(sp.Eq(h(t).diff(t), -c * sp.sqrt(h(t))), h(t))
 print("draining (general solution):", drain)
+```
+
+```output
+cooling: Eq(T(t), T_r + (T_0 - T_r)*exp(-k*t))
+draining (general solution): Eq(h(t), C1**2/4 - C1*c*t/2 + c**2*t**2/4)
 ```
 
 `sp.Function("T")` declares an unknown function; `ics` supplies the initial condition so the constant of integration is fixed.

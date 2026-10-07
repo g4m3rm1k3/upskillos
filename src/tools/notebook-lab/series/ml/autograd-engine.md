@@ -8,7 +8,7 @@ In this lesson you build one, small but complete, in about 50 lines of Python, u
 
 A `Value` holds four things: its number (`data`); its gradient (`grad`), which starts at 0 and will hold ∂output/∂this-value; the values it was computed from (`parents`); and a small function, `backward_step`, that knows how to pass gradient from this value back to its parents. When two `Value`s are added, `__add__` creates the result **and** attaches to it a `backward_step` encoding the local rule for addition: each parent receives the result's gradient unchanged.
 
-```python
+```python type
 class Value:
     created = 0
 
@@ -47,6 +47,11 @@ print(c)
 print("c was made from:", c.parents)
 ```
 
+```output
+Value(data=4.0000, grad=0.0000)
+c was made from: (Value(data=-6.0000, grad=0.0000), Value(data=10.0000, grad=0.0000))
+```
+
 A few pieces need explaining:
 
 - `other if isinstance(other, Value) else Value(other)` lets you mix plain numbers in: `a * b + 10` wraps the 10 as a `Value`.
@@ -61,7 +66,7 @@ To backpropagate, each `backward_step` must run **after** the steps of every val
 
 `backward()` therefore: collects every value the output depends on (a stack-based search through `parents`, like the one in the DBSCAN challenge), sets the output's own gradient to 1, and runs every `backward_step` from newest to oldest.
 
-```python
+```python type
 import math
 
 class Value:
@@ -135,6 +140,12 @@ y.backward()
 print("d/dx of x² + 3x at x = 0.5:", x.grad)
 ```
 
+```output
+g = -8.0
+gradients: 6.0 -4.0 -2.0 4.0
+d/dx of x² + 3x at x = 0.5: 4.0
+```
+
 `seen` holds the `id` of every value already collected (`id(obj)` is a number unique to each object), so a value reached along several paths is collected once. `sorted(..., key=lambda n: n.order, reverse=True)` puts the newest value first. `__radd__` and `__rmul__` handle a plain number on the **left**, as in `3 * x`, exactly as `__rmul__` did for vectors in the special methods lesson. `tanh` shows how to add any function: compute the result, then attach a step that multiplies by the local derivative 1 − tanh².
 
 The gradients of the expression from the last lesson come out as 6, −4, −2 and 4, exactly as computed by hand, with no derivative written for this particular expression. And for y = x² + 3x, where `x` is used three times, the gradient is 2x + 3 = 4: the `+=` added up the contributions from every use.
@@ -143,7 +154,7 @@ The gradients of the expression from the last lesson come out as 6, −4, −2 a
 
 Now a neural network: 2 inputs, 8 tanh hidden units, 1 output, built entirely from `Value`s, trained on 40 points of the half-moons with labels −1 and +1 and a squared-error loss. The forward pass is written as plain arithmetic; the gradients come from `loss.backward()`. (This is far slower than NumPy, since every single number is a Python object, so the data is kept small; the cell takes a few seconds.)
 
-```python
+```python type
 import math
 import random
 from sklearn.datasets import make_moons
@@ -236,6 +247,14 @@ for epoch in range(1, 101):
         accuracy = sum((predict(x).data > 0) == (t > 0) for x, t in zip(X, targets)) / len(X)
         print(f"epoch {epoch:>3}: loss {loss.data:.4f}, accuracy {accuracy:.2f}")
 print(f"{len(params)} parameters; {Value.created:,} Values created in total")
+```
+
+```output
+epoch   1: loss 1.5821, accuracy 0.55
+epoch  10: loss 0.4947, accuracy 0.80
+epoch  50: loss 0.4095, accuracy 0.80
+epoch 100: loss 0.2446, accuracy 0.90
+33 parameters; 315,853 Values created in total
 ```
 
 `sum(generator, b2)` starts the sum at `b2` instead of 0, so the output is the weighted sum plus the bias. The error is written `predict(x) + (-t)` because this `Value` has no subtraction yet (the first challenge adds it).

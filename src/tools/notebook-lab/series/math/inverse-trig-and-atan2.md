@@ -24,7 +24,7 @@ Sine, cosine and tangent are not one-to-one: each value is taken twice per turn 
 
 Predict before running: which angles in [0°, 360°) have sine 0.5, cosine −0.5, tangent −1? Which one does each inverse function return?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,6 +47,14 @@ except ValueError as e:
     print("asin(1.0000001):", e)
 ```
 
+```output
+sin θ = +0.5: principal value   30.00°, all solutions in [0, 360): [30.0, 150.0]
+cos θ = -0.5: principal value  120.00°, all solutions in [0, 360): [120.0, 240.0]
+tan θ = -1.0: principal value  -45.00°, all solutions in [0, 360): [135.0, 315.0]
+sin θ = +1.0: principal value   90.00°, all solutions in [0, 360): [90.0]
+asin(1.0000001): math domain error
+```
+
 Sine 0.5 belongs to 30° and 150°, and arcsin returns 30°. Cosine −0.5 belongs to 120° and 240°, and arccos returns 120°. Tangent −1 belongs to 135° and 315°, and arctan returns −45° (which is 315°). Sine 1 has the single solution 90°, because the two candidates coincide. And arcsin of a value just above 1, which floating-point rounding can easily produce from a measured ratio, raises a "math domain error". Code that computes asin(a/b) from measurements should clip the ratio to [−1, 1] first.
 
 ## atan2: the arctangent that knows the quadrant
@@ -63,11 +71,19 @@ The tangent alone loses information. The point (1, 1) and the point (−1, −1)
 
 Predict before running: what do arctan(y/x) and atan2(y, x) give for (1, 1), (−1, 1), (−1, −1), (1, −1) and (0, 2)?
 
-```python
+```python type
 for x, y in [(1, 1), (-1, 1), (-1, -1), (1, -1), (0, 2)]:
     naive = math.degrees(math.atan(y / x)) if x != 0 else float("nan")
     full = math.degrees(math.atan2(y, x))
     print(f"({x:+d}, {y:+d}): arctan(y/x) {naive:7.1f}°   atan2 {full:7.1f}°   bearing from north {(90 - full) % 360:6.1f}°")
+```
+
+```output
+(+1, +1): arctan(y/x)    45.0°   atan2    45.0°   bearing from north   45.0°
+(-1, +1): arctan(y/x)   -45.0°   atan2   135.0°   bearing from north  315.0°
+(-1, -1): arctan(y/x)    45.0°   atan2  -135.0°   bearing from north  225.0°
+(+1, -1): arctan(y/x)   -45.0°   atan2   -45.0°   bearing from north  135.0°
+(+0, +2): arctan(y/x)     nan°   atan2    90.0°   bearing from north    0.0°
 ```
 
 arctan(y/x) gives 45° for both (1, 1) and (−1, −1), and −45° for both (−1, 1) and (1, −1): two of the four answers are 180° wrong. It fails outright at (0, 2). atan2 gives 45°, 135°, −135° and −45°, and 90° for (0, 2). The last column converts the mathematical angle (counter-clockwise from east) to a compass **bearing** (clockwise from north): bearing = 90° − θ, wrapped to [0°, 360°). Mixing the two conventions is a classic navigation bug.
@@ -85,7 +101,7 @@ Angles live on a circle, and arithmetic on them as plain numbers breaks at the s
 
 Predict before running: a compass reports 200 headings scattered by about 8° around true north. What do the naive mean and the circular mean give?
 
-```python
+```python type
 def wrap180(d):
     return (d + 180) % 360 - 180
 
@@ -99,6 +115,12 @@ circ_mean = math.degrees(math.atan2(S, C))
 R = math.hypot(C, S)
 print(f"naive mean {naive_mean:.1f}°, circular mean {circ_mean:+.2f}°, concentration R = {R:.4f}")
 print(f"spread from R: about {math.degrees(math.sqrt(-2 * math.log(R))):.1f}° (true scatter 8°)")
+```
+
+```output
+turn from 350° to 10°: plain difference -340°, wrapped 20°
+naive mean 150.7°, circular mean +1.33°, concentration R = 0.9911
+spread from R: about 7.7° (true scatter 8°)
 ```
 
 Wrapping turns −340° into the actual +20° turn. With headings scattered around north, half of them read near 0° and half near 360°, and the naive mean is about 180°: exactly the wrong direction. The circular mean is within a degree of north, and R ≈ 0.99 says the readings are tightly grouped. The circular standard deviation, √(−2 ln R), recovers the 8° scatter. Wind direction, vehicle heading, phase of a vibration and time of day (a circle of 24 hours) all need circular statistics.
@@ -116,7 +138,7 @@ An absolute encoder, or atan2 of a sine/cosine pair, reports the shaft angle wit
 
 Predict before running: a shaft accelerates uniformly from rest to 1,500 rpm in 2 s. Sampled at 1 kHz, how many revolutions does it make, and can the unwrapped angle recover them? What about at 100 Hz?
 
-```python
+```python type
 def shaft_angle(t):
     alpha = 1500 / 60 * 2 * math.pi / 2.0
     return 0.5 * alpha * t ** 2
@@ -138,6 +160,11 @@ ax.set_xlabel("time (s)"); ax.set_ylabel("angle (°)"); ax.legend(); ax.grid(alp
 plt.show()
 ```
 
+```output
+fs = 1000 Hz: true 25.00 rev, unwrapped 25.00 rev, final speed estimate  1499.6 rpm, max step 9°
+fs =  100 Hz: true 25.00 rev, unwrapped 25.00 rev, final speed estimate  1496.3 rpm, max step 90°
+```
+
 The shaft turns 25 revolutions in 2 s. At 1 kHz the largest step between samples is 9°, far below 180°, and unwrapping recovers all 25 revolutions and a final speed of about 1,500 rpm. At 100 Hz the shaft moves up to 900° between samples at the end, more than two full turns. Unwrapping cannot know how many turns it missed, so it reports far fewer revolutions and a meaningless speed. The rule is the Nyquist idea again: the sensor must be read at least twice per revolution, and in practice much faster.
 
 ## Tilt from an accelerometer
@@ -154,7 +181,7 @@ A phone's level app, a drone's attitude estimate and a crane's tilt alarm all re
 
 Predict before running: an accelerometer reads 2% high with noise of 0.01 g on each axis. At 10°, 60° and 85° pitch, how large are the errors of the two formulas?
 
-```python
+```python type
 g = 9.81
 rng = np.random.default_rng(780)
 for pitch in [10.0, 60.0, 85.0]:
@@ -165,6 +192,12 @@ for pitch in [10.0, 60.0, 85.0]:
     atan_est = np.degrees(np.arctan2(-reads[:, 0], np.hypot(reads[:, 1], reads[:, 2])))
     rms = lambda e: math.sqrt(np.mean((e - pitch) ** 2))
     print(f"pitch {pitch:4.0f}°: arcsin RMS error {rms(asin_est):5.2f}°   atan2 RMS error {rms(atan_est):5.2f}°")
+```
+
+```output
+pitch   10°: arcsin RMS error  0.60°   atan2 RMS error  0.55°
+pitch   60°: arcsin RMS error  2.42°   atan2 RMS error  0.57°
+pitch   85°: arcsin RMS error  4.89°   atan2 RMS error  0.56°
 ```
 
 At 10° the two formulas are close, but the arcsin version already carries a 0.2° bias from the 2% gain error. At 60° the arcsin error grows to about 2°, because the gain error is amplified by 1/cos(60°). At 85° the arcsin version is badly wrong: the readings exceed g, clipping pins them at 90°, and the error reaches several degrees. The atan2 version stays at roughly half a degree everywhere, set only by the noise. The same idea applies whenever a ratio of measured components gives an angle: give atan2 both components rather than dividing first.

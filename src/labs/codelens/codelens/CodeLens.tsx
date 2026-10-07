@@ -28,6 +28,7 @@ import InputPanel, { readsInput } from './InputPanel'
 import DataDock from './DataDock'
 import { HeapPreviewContext, referenceText } from './renderer/valuePreview'
 import ScreenPanel from './ScreenPanel'
+import StagePanel from './StagePanel'
 import PackagesDialog from './PackagesDialog'
 import ExpressionSteps from './ExpressionSteps'
 import { codelensPythonStatus, type CodeLensPythonStatus } from './interpreter/codelensPythonEnv'
@@ -1227,7 +1228,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
 
   const inspectorTabs = [
     { id: 'explain' as const, label: 'Explain' }, { id: 'events' as const, label: 'Events' },
-    { id: 'picture' as const, label: 'Picture' },
+    { id: 'picture' as const, label: 'Picture' }, { id: 'stage' as const, label: 'Stage' },
     { id: 'output' as const, label: 'Output' }, { id: 'variables' as const, label: 'Values' },
     { id: 'heap' as const, label: 'Structures' }, { id: 'calltree' as const, label: 'Calls' },
     { id: 'scope' as const, label: 'Scope' }, ...CODE_TABS,
@@ -1377,6 +1378,10 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
             {tabId === 'picture' && (
               <Picture events={execution?.events ?? []} step={step} snapshot={dockSnapshot}
                 source={lastRunSourceRef.current ?? source} lang={lang} />
+            )}
+            {tabId === 'stage' && (
+              <StagePanel event={currentEvent} snapshot={dockSnapshot} onStepKey={stepFromKey}
+                spec={loadedExample?.example.stage ?? null} specId={loadedExample?.example.id ?? null} />
             )}
       {tabId === 'structure' && (lang === 'py'
         ? <PyStructureView source={source} execution={execution} />

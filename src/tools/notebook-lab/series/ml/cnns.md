@@ -12,7 +12,7 @@ Two things are gained. The maps are four times smaller, so later layers need few
 
 With NumPy, 2 × 2 max pooling is a reshape and a max. A map of shape (8, 8) reshaped to (4, 2, 4, 2) groups each 2 × 2 block along axes 1 and 3:
 
-```python
+```python type
 import numpy as np
 
 feature_map = np.array([[1, 3, 0, 2],
@@ -21,6 +21,11 @@ feature_map = np.array([[1, 3, 0, 2],
                         [1, 2, 7, 0]], dtype=float)
 pooled = feature_map.reshape(2, 2, 2, 2).max(axis=(1, 3))
 print(pooled)
+```
+
+```output
+[[4. 2.]
+ [2. 7.]]
 ```
 
 The four 2 × 2 blocks have maxima 4, 2, 2 and 7.
@@ -46,7 +51,7 @@ Backpropagation goes through the layers in reverse; each layer receives the grad
 - **ReLU**: multiply by 1 where the score was positive, 0 elsewhere, as always.
 - **Convolution**: each output is Σ patch × filter, so, exactly like a dense layer's "error times input", each filter weight's gradient is the sum, over every image and every position, of the error signal at that position times the pixel that weight was multiplied by there. With all the patches from `sliding_window_view`, that is one `einsum`. (A deeper network would also need the gradient with respect to the convolution's **input**, to pass further back: each input pixel collects error × weight from every output position whose window covered it. This network's convolution is the first layer, so it is not needed here; the second challenge builds it.)
 
-```python
+```python type
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.datasets import load_digits
@@ -107,13 +112,19 @@ for name, index in [("K", (2, 1, 1)), ("bk", (5,)), ("W", (40, 3))]:
     print(f"{name}{list(index)}: backprop {grads[name][index]:.8f}, numerical {(loss(up) - loss(down)) / 2e-6:.8f}")
 ```
 
+```output
+K[2, 1, 1]: backprop -0.06405408, numerical -0.06405408
+bk[5]: backprop -0.25032839, numerical -0.25032839
+W[40, 3]: backprop 0.01483990, numerical 0.01483990
+```
+
 `load_digits().images` gives the digits as 8 × 8 grids. The `einsum` in `forward` is the multi-filter convolution from the last lesson (one input channel here); the one in `gradients` sums patch × error over images (`n`) and positions (`h`, `w`) for each filter weight. The gradient check agrees to about eight decimal places for a filter weight, a filter bias and a dense weight. One subtlety: the biases are nudged to 0.1 before checking. In the blank parts of a digit every pixel under the filter is 0, so with biases of exactly 0 the score is exactly 0, right on the corner of the ReLU, where nudging up and nudging down give different slopes and the numerical estimate is meaningless. Gradient checks should avoid such corners. (With biases of 0.1, those blank areas produce four equal values in a pooling block: exactly the tie case that `first_max_mask` handles.)
 
 ## Training it
 
 Same recipe as before: mini-batches of 32, momentum, 10 epochs. Before running, predict: will the CNN, with about half the parameters, beat the dense network's 97%?
 
-```python
+```python type
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.datasets import load_digits
@@ -187,6 +198,14 @@ for pixels in [1, 2]:
     print(f"test digits shifted {pixels} pixel(s) right: accuracy {accuracy(params, shift_right(X_test, pixels), y_test):.3f}")
 ```
 
+```output
+epoch  1: test accuracy 0.881
+epoch  5: test accuracy 0.970
+epoch 10: test accuracy 0.981
+test digits shifted 1 pixel(s) right: accuracy 0.557
+test digits shifted 2 pixel(s) right: accuracy 0.156
+```
+
 After 10 epochs the CNN reads about **98%** of the unseen digits, a little better than the dense network from the training lesson, with about half as many parameters. On images this small (8 × 8, already centred and scaled), there is little room for convolution to show its strength; on real photographs, hundreds of pixels across, the gap between convolutional and dense networks is enormous.
 
 The shift test is sobering, and honest. Shifting every test digit one pixel to the right drops the accuracy to about 0.56, and two pixels to about 0.16. A dense network trained on the same split does worse still (in a separate run with scikit-learn's `MLPClassifier`, about 0.41 to 0.47 for a one-pixel shift), but neither is truly shift-proof. The convolution itself is shift-equivariant, but the dense layer after pooling still learns "this feature at this position", and one 2 × 2 pooling only absorbs very small shifts. Real CNNs get much more robustness from **many** layers of convolution and pooling, from **global pooling** (averaging each feature map over all positions before the dense layer), and above all from **data augmentation** with shifted, scaled and rotated training images.
@@ -195,7 +214,7 @@ The shift test is sobering, and honest. Shifting every test digit one pixel to t
 
 Each of the 16 filters is a 3 × 3 grid of learned weights, and can be drawn as a tiny image:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.lib.stride_tricks import sliding_window_view
@@ -278,6 +297,10 @@ for ax in axes.ravel():
 for f in range(16):
     axes[f // 8, 1 + f % 8].imshow(maps[f], cmap="gray_r")
 plt.show()
+```
+
+```output
+average size of a filter weight at the start: 0.37; average change during training: 0.26
 ```
 
 The first figure shows the 16 filters before training (top two rows) and after (bottom two rows), red positive and blue negative; the second shows the input digit and what each learned filter produces from it, after ReLU.

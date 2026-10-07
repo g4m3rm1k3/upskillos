@@ -9,6 +9,7 @@
 // but prints with string.Join), so comparing them teaches the differences that matter.
 // C# and C++ run in the desktop app only.
 import type { Lang } from './types'
+import type { StageSpec } from './stageModel'
 import { SNIPPET_CATEGORIES } from './snippets'
 import { LEARNING_EXAMPLES } from './learningExamples'
 import { ALGORITHM_EXAMPLES } from './algorithmLibrary'
@@ -43,6 +44,8 @@ export interface LibraryExample {
   edgeCases?: string[]
   exercises: string[]
   variants: Partial<Record<Lang, LibraryVariant>>
+  /** What the Stage tab draws from the program's variables (stageModel.ts); the same for every language. */
+  stage?: StageSpec
 }
 
 export const LANGUAGE_LABELS: Record<Lang, string> = {

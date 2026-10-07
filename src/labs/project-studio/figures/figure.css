@@ -37,3 +37,7 @@
 }
 .ps-figure button:disabled { opacity: 0.45; cursor: default; }
 .ps-figure figcaption { font-size: 12px; color: var(--muted); }
+.ps-six-futures table { width: 100%; border-collapse: collapse; margin: 12px 0; font-variant-numeric: tabular-nums; }
+.ps-six-futures th, .ps-six-futures td { text-align: left; padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.ps-six-futures p { margin: 10px 0; line-height: 1.6; }
+.ps-six-futures output { display: block; margin: 12px 0; font-weight: 600; }

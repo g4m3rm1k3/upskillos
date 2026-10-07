@@ -14,7 +14,7 @@ One detail matters. If half the units are dropped during training, the next laye
 
 Both fit into the training loop in a few lines. Predict before running: with only 200 training images, which of these three will reach 100% training accuracy?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -67,6 +67,12 @@ for label, settings in [("no regularisation", {}), ("weight decay 0.001", {"weig
     print(f"{label:<20} training accuracy {train_acc:.3f} | validation loss {val_loss:.3f}, accuracy {val_acc:.3f}")
 ```
 
+```output
+no regularisation    training accuracy 1.000 | validation loss 0.252, accuracy 0.922
+weight decay 0.001   training accuracy 1.000 | validation loss 0.220, accuracy 0.929
+dropout 0.5          training accuracy 1.000 | validation loss 0.241, accuracy 0.935
+```
+
 The training uses momentum, from the optimisers lesson. `keep` is the dropout mask: 0 for dropped units and 1/(1 − p) for kept ones, applied to the hidden outputs in the forward pass and, since the dropped units contributed nothing, to their error signals in the backward pass too. `evaluate` uses all the units, with no mask.
 
 All three reach 100% training accuracy: 256 hidden units can memorise 200 images whatever you do. The difference is on unseen data. Unregularised, validation accuracy is 0.922 and validation loss 0.252. Weight decay lowers the validation loss to 0.220 (accuracy 0.929); dropout gives the best accuracy, 0.935. The gains here are a point or so, because the digits are an easy problem; in large networks trained on large, messy datasets, these techniques often make the difference between a model that generalises and one that does not.
@@ -77,7 +83,7 @@ The most effective regulariser is more data. When you cannot collect more, you c
 
 Here each training image is shifted one pixel left, right, up and down, giving 5 times as much training data. The training runs for 20 epochs instead of 100, so the number of updates is the same:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -138,6 +144,12 @@ for label, data, settings in [("augmented", (X_aug, y_aug), {}), ("augmented + d
     print(f"{label:<24} validation loss {val_loss:.3f}, accuracy {val_acc:.3f}")
 ```
 
+```output
+augmented training set: (1000, 64)
+augmented                validation loss 0.232, accuracy 0.928
+augmented + dropout 0.5  validation loss 0.188, accuracy 0.936
+```
+
 `shift` reshapes each 64-pixel row into an 8 × 8 image and copies it into a blank image displaced by `dx` columns and `dy` rows; pixels pushed off one edge are lost, and the opposite edge fills with blank pixels. The slices look fiddly, but they only say "copy this rectangle to that one" (a challenge builds the same thing another way, with `np.roll`). `np.tile(y_train, 5)` repeats the labels to match the five copies.
 
 Augmentation alone lowers the validation loss to 0.232; combined with dropout, to 0.188 with accuracy 0.936, the best of all the runs. Regularisers stack: each attacks overfitting in a different way. (Each comparison here is a single training run on about 720 validation images, so differences of a point of accuracy are within the noise of a different random seed; the validation losses are the steadier guide.)
@@ -156,7 +168,7 @@ The training lesson's challenge built **early stopping**: keep the parameters fr
 
 The effect is that every layer receives inputs with a steady, controlled spread, however the weights before it change during training. Recall from the activation functions lesson how badly scaled weights made signals explode through 20 layers. Batch norm resets the scale at every layer:
 
-```python
+```python type
 import numpy as np
 
 def batch_norm(Z, gamma=1.0, beta=0.0, eps=1e-5):
@@ -176,6 +188,11 @@ for use_batch_norm in [False, True]:
         spreads.append(a.std())
     label = "with batch norm" if use_batch_norm else "without"
     print(f"{label:<16} spread of activations after layers 1, 5, 10: {spreads[0]:.3g}, {spreads[4]:.3g}, {spreads[9]:.3g}")
+```
+
+```output
+without          spread of activations after layers 1, 5, 10: 5.84, 1.49e+04, 2.36e+08
+with batch norm  spread of activations after layers 1, 5, 10: 0.584, 0.586, 0.58
 ```
 
 These weights are deliberately badly scaled (standard deviation 1 instead of He's √(2/100) ≈ 0.14). Without batch norm, the activations grow about sevenfold per layer, to around 10⁸ after 10 layers. With it, every layer's activations have a spread of about 0.58 (a standardised score after ReLU), whatever the weights do.

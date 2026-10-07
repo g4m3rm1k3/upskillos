@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Put a calculation in a function and use its returned value in a caller.
+
+**Recall before looking at code:** Describe the remaining-points calculation in words before naming its inputs.
+
 A scoreboard needs remaining points for more than one player. Duplicating a calculation gives you several places to fix later. You will name the calculation, call it with different data, and distinguish returning an answer from printing a message.
 
 ## A function returns to its caller
@@ -189,7 +193,7 @@ shape: Return a comparison of the sum against target; call that function with ex
 
 With your code hidden, trace one call and explain the parameter values, returned value and caller's use of it. The behavioral check does not prove you organized your answer as a function; point to the definition and call yourself.
 
-**Chapter gate:** create a new program without a completed example, read input, handle extraction failure, compute a result in a function and test a boundary. Record one bug you found and why your test exposed it. Later chapters—references, classes, a structured project, the complete game and graphics—are still being authored; this is the end of the new foundations chapter, not the whole path.
+**Chapter gate:** create a new program without a completed example, read input, handle extraction failure, compute a result in a function and test a boundary. Record one bug you found and why your test exposed it. Continue to State and tests for references, collections and your first class, then Objects and files for construction and shared source files. The complete terminal game and graphics chapters are still being authored.
 
 A green check confirms these cases. Also explain how your program works with the reference hidden; the runner cannot grade that explanation.
 

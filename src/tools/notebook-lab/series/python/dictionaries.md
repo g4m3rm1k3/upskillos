@@ -8,11 +8,17 @@ A **dictionary** stores pairs: a **key**, which is what you look up, and a **val
 
 A dictionary is written in curly braces, as `key: value` pairs separated by commas.
 
-```python
+```python type
 prices = {"bread": 1.45, "milk": 0.95, "eggs": 2.30}
 print(prices)
 print(prices["milk"])
 print(len(prices))
+```
+
+```output
+{'bread': 1.45, 'milk': 0.95, 'eggs': 2.3}
+0.95
+3
 ```
 
 To look up a value, put the key in square brackets: `prices["milk"]` is `0.95`. It looks like indexing a list, but the thing in the brackets is a key, not a position. `len` gives the number of pairs. Python's name for the dictionary type is `dict`.
@@ -26,12 +32,19 @@ print(prices["butter"])
 
 A `KeyError`, naming the key that was missing. There are two ways to avoid it. You can check first with `in`, which asks whether a **key** (not a value) is in the dictionary. Or you can use the `get` method, which returns `None` for a missing key instead of failing, or a default value if you give one:
 
-```python
+```python type
 prices = {"bread": 1.45, "milk": 0.95, "eggs": 2.30}
 print("butter" in prices)
 print(prices.get("butter"))
 print(prices.get("butter", 0))
 print(prices.get("milk", 0))
+```
+
+```output
+False
+None
+0
+0.95
 ```
 
 `prices.get("butter", 0)` means "the price of butter, or 0 if there is none". You will use `get` with a default constantly.
@@ -40,7 +53,7 @@ print(prices.get("milk", 0))
 
 Dictionaries are mutable, like lists. Assigning to a key adds the pair if the key is new, or replaces the value if the key already exists.
 
-```python
+```python type
 stock = {"apples": 10, "pears": 4}
 stock["plums"] = 12
 stock["apples"] = 7
@@ -50,6 +63,12 @@ del stock["plums"]
 print(stock)
 sold_out = stock.pop("pears")
 print(sold_out, stock)
+```
+
+```output
+{'apples': 7, 'pears': 7, 'plums': 12}
+{'apples': 7, 'pears': 7}
+7 {'apples': 7}
 ```
 
 - `stock["plums"] = 12` adds a new pair.
@@ -68,11 +87,15 @@ locations[[51, 0]] = "London"
 
 The message says a list is **unhashable**. Python finds a key quickly by turning it into a number called a **hash**, and it can only do that for values that cannot change. A tuple works where a list does not:
 
-```python
+```python type
 locations = {}
 locations[(51.5, -0.1)] = "London"
 locations[(48.9, 2.4)] = "Paris"
 print(locations[(51.5, -0.1)])
+```
+
+```output
+London
 ```
 
 Values have no such restriction. A value can be anything: a number, a string, a list, even another dictionary.
@@ -81,21 +104,36 @@ Values have no such restriction. A value can be anything: a number, a string, a 
 
 A `for` loop over a dictionary gives you its **keys**, in the order they were added.
 
-```python
+```python type
 ages = {"Ada": 36, "Grace": 85, "Alan": 41}
 for name in ages:
     print(name, "is", ages[name])
 ```
 
+```output
+Ada is 36
+Grace is 85
+Alan is 41
+```
+
 Most of the time you want each key and its value together. The `items` method gives you (key, value) pairs as tuples, which you unpack in the `for` line, just like `enumerate` in the last lesson:
 
-```python
+```python type
 ages = {"Ada": 36, "Grace": 85, "Alan": 41}
 for name, age in ages.items():
     print(f"{name}: {age}")
 print(list(ages.keys()))
 print(list(ages.values()))
 print(sum(ages.values()))
+```
+
+```output
+Ada: 36
+Grace: 85
+Alan: 41
+['Ada', 'Grace', 'Alan']
+[36, 85, 41]
+162
 ```
 
 `keys()` gives just the keys and `values()` just the values; `sum(ages.values())` adds up all the ages. As with `range`, these methods do not build lists, which is why `list()` is used here to show what they contain.
@@ -106,7 +144,7 @@ The rule from lesson 6 applies here too: do not add or remove keys while looping
 
 Counting how often each thing occurs is one of the most common jobs in programming: words in a text, votes for each candidate, visits to each page. A dictionary is perfect for it. The keys are the things being counted, and the values are the counts.
 
-```python
+```python type
 votes = ["red", "blue", "red", "green", "red", "blue"]
 counts = {}
 for vote in votes:
@@ -114,11 +152,15 @@ for vote in votes:
 print(counts)
 ```
 
+```output
+{'red': 3, 'blue': 2, 'green': 1}
+```
+
 The key line is `counts[vote] = counts.get(vote, 0) + 1`. Read it as: "the count for this vote becomes its current count, or 0 if it has none yet, plus one." The first time `"red"` is seen, `get` returns 0, so its count becomes 1. The next time, `get` returns 1, and so on. Without `get`, the first lookup of each new colour would be a `KeyError`.
 
 To find the winner, use the "best so far" pattern from lesson 6, looping over the pairs:
 
-```python
+```python type
 counts = {"red": 3, "blue": 2, "green": 1}
 winner = None
 best = 0  # safe here: every count is at least 1
@@ -129,11 +171,15 @@ for colour, count in counts.items():
 print(winner, "wins with", best, "votes")
 ```
 
+```output
+red wins with 3 votes
+```
+
 ## The grouping pattern
 
 A close relative of counting is **grouping**: collecting items into lists according to some property. The keys are the groups, and each value is a list of the items in that group.
 
-```python
+```python type
 animals = ["cat", "cow", "dog", "duck", "crab"]
 by_letter = {}
 for animal in animals:
@@ -144,13 +190,17 @@ for animal in animals:
 print(by_letter)
 ```
 
+```output
+{'c': ['cat', 'cow', 'crab'], 'd': ['dog', 'duck']}
+```
+
 For each animal, if there is no group for its first letter yet, create an empty list for it; then add the animal to its group's list. `by_letter[first].append(animal)` works because `by_letter[first]` is a list, so you can call `append` on it directly.
 
 ## Dictionaries inside dictionaries
 
 Because values can be anything, a dictionary can describe a whole record, and a list of dictionaries makes a table of records. This is how a great deal of real-world data is shaped, including the JSON data that websites send each other.
 
-```python
+```python type
 people = [
     {"name": "Ada", "born": 1815, "field": "mathematics"},
     {"name": "Grace", "born": 1906, "field": "computing"},
@@ -161,18 +211,30 @@ for person in people:
 print(people[1]["name"])
 ```
 
+```output
+Ada (1815) worked in mathematics.
+Grace (1906) worked in computing.
+Alan (1912) worked in computing.
+Grace
+```
+
 `people[1]["name"]` reads from left to right, as with nested lists: take item 1 of the list (Grace's record), then look up `"name"` in it. Note the quotes in the f-string: the f-string itself uses double quotes, and the keys inside it use single quotes. Older versions of Python required the other kind of quote there, and it is still the usual style because it is easier to read.
 
 ## Building a dictionary from two lists
 
 If you have the keys in one list and the values in another, `zip` pairs them up and `dict` turns the pairs into a dictionary:
 
-```python
+```python type
 names = ["Ada", "Grace", "Alan"]
 scores = [91, 88, 79]
 results = dict(zip(names, scores))
 print(results)
 print(results["Grace"])
+```
+
+```output
+{'Ada': 91, 'Grace': 88, 'Alan': 79}
+88
 ```
 
 ::: challenge Basket total [easy]

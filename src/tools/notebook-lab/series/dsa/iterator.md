@@ -15,7 +15,7 @@ This lesson covers:
 
 A stores system keeps parts in bins on racks: a dict of racks, each a dict of bins, each a list of `(part, quantity)` pairs. Report code loops through that structure directly. Predict before reading on: what happens to these loops if the stores move to a flat database table keyed by bin code?
 
-```python
+```python type
 stores = {
     "A": {"A1": [("bolt M8", 120), ("nut M8", 300)], "A2": [("washer", 40)]},
     "B": {"B1": [("bolt M10", 8)], "B2": [], "B3": [("pin 4mm", 15), ("clip", 3)]},
@@ -37,13 +37,18 @@ for rack, bins in stores.items():
 print("low stock:", low)
 ```
 
+```output
+total items: 486
+low stock: [('B1', 'bolt M10', 8), ('B3', 'clip', 3)]
+```
+
 Both reports repeat three nested loops that encode the storage layout. Change the layout and every report breaks. The reports only ever wanted "each stocked item, with its bin", but they had to know how racks, bins and contents were nested to get it.
 
 ## Several traversals of one collection
 
 Hide the layout inside a class and offer **traversals** as methods. Each method is a generator yielding exactly what callers want. The class itself is iterable through `__iter__`, which gives the most common traversal. Callers loop over items; only the class knows about racks. Each call creates a **fresh** iterator, so the collection can be traversed any number of times. Predict before running: what goes wrong in the last two lines?
 
-```python
+```python type
 class Stores:
     def __init__(self, layout):
         self._layout = layout
@@ -72,6 +77,13 @@ low = s.low_stock()
 print("first pass:", len(list(low)), "items   second pass:", len(list(low)), "items")
 ```
 
+```output
+total items: 486
+low stock: [('B1', 'bolt M10', 8), ('B3', 'clip', 3)]
+empty bins: ['B2']
+first pass: 2 items   second pass: 0 items
+```
+
 `low_stock` returns a generator expression built on `self`, so it reuses the main traversal instead of repeating the nested loops.
 
 The `Stores` object can be looped over as often as you like, because `__iter__` starts a new generator each time. But `low_stock()` returns a **generator**, which is an iterator, not a re-iterable collection: once consumed, it is empty. So the second pass sees nothing, with no error. That is the most common iterator bug. Either keep the iterable (`s`) and call the traversal again, or turn the result into a list when it must be used twice. If the stores move to a database, only `Stores` changes: every report keeps working.
@@ -80,7 +92,7 @@ The `Stores` object can be looped over as often as you like, because `__iter__` 
 
 The composite lesson walked trees recursively. That is the natural way to write it, but each level of a tree uses a level of Python's call stack, so very deep trees hit the recursion limit (about 1,000). An iterator can instead keep an **explicit stack**, a list of nodes still to visit. Pop a node, yield it, push its children. That gives a depth-first walk with no recursion at all, and since it is a generator, the walk is lazy: it stops the moment the caller stops asking. Swapping the stack for a queue gives breadth-first order. Predict before running: does the walk survive a 3,000-level-deep tree?
 
-```python
+```python type
 from collections import deque
 
 class Node:
@@ -115,6 +127,13 @@ print("deepest:", sum(1 for _ in depth_first(deep)), "nodes walked")
 print("first match:", next(n.name for n in depth_first(deep) if n.name.endswith("42")))
 ```
 
+```output
+depth first:   ['plant', 'hall 1', 'line A', 'line B', 'hall 2', 'line C']
+breadth first: ['plant', 'hall 1', 'hall 2', 'line A', 'line B', 'line C']
+deepest: 3000 nodes walked
+first match: level 42
+```
+
 `reversed(node.children)` pushes the children so that the first child is popped first, keeping the same order a recursive walk would give.
 
 The 3,000-level tree walks without trouble, where a recursive walk would hit `RecursionError` at about 1,000. And finding the first node ending in 42 stops after 43 nodes, because `next` takes one match and the generator is never asked for more.
@@ -132,7 +151,7 @@ Because every iterator speaks the same two-method protocol, small iterator tools
 
 A sensor stream is a natural fit: it may be endless, and the pipeline processes one reading at a time. Predict before running: how many readings does this pipeline pull from the endless stream?
 
-```python
+```python type
 import itertools, math
 
 def sensor():
@@ -153,6 +172,12 @@ print("readings pulled from the sensor:", len(pulled))
 warm = [(t, v) for t, v in itertools.islice(sensor(), 40)]
 runs = [(hot, len(list(group))) for hot, group in itertools.groupby(warm, key=lambda tv: tv[1] > 22)]
 print("runs of warm (True) and cool (False) readings:", runs)
+```
+
+```output
+big jumps: [(11, 6.5), (14, -8.4)]
+readings pulled from the sensor: 15
+runs of warm (True) and cool (False) readings: [(False, 2), (True, 7), (False, 2), (True, 3), (False, 7), (True, 7), (False, 11), (True, 1)]
 ```
 
 `tapped` is a pass-through generator that records every reading it hands on, so we can count what the pipeline actually asked for.

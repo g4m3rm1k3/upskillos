@@ -21,7 +21,7 @@ The cache must support:
 
 A first attempt keeps the values in a dict and the recency order in a list, moving a key to the end of the list on each use. Predict before running: as the capacity grows, what happens to the time per operation?
 
-```python
+```python type
 import time, random
 
 class ListLRU:
@@ -66,7 +66,7 @@ The fix is to keep the recency order in a structure where moving an item is O(1)
 
 Two **sentinel** nodes, a fixed `head` and `tail` that hold no data, sit at the ends of the list. Every real node then always has a real predecessor and successor, so linking and unlinking need no special cases for "first" or "last" or "empty". The most recently used node lives just after `head`; the least recently used just before `tail`, ready to be evicted. Predict before running: in what order are the keys from most to least recent after these operations?
 
-```python
+```python type
 class Node:
     __slots__ = ("key", "value", "prev", "next")
     def __init__(self, key=None, value=None):
@@ -147,7 +147,7 @@ Reading `A` moved it to the front, so when `D` arrived and the cache overflowed,
 
 Pointer code is easy to get subtly wrong: a missed link, a node in the dict but not the list, a list that loops. A `_check` method states the invariants and verifies them: the forward and backward walks visit the same nodes in opposite orders, every node in the list is in the dict under its own key and vice versa, and the size never exceeds the capacity. Run it after every operation in tests. Predict before running: does a long random workload ever break an invariant?
 
-```python
+```python type
 def _check(self):
     forward, node = [], self._head.next
     while node is not self._tail:
@@ -177,6 +177,10 @@ for step in range(3000):
 print("3,000 random operations, invariants held; final order:", cache.keys_by_recency())
 ```
 
+```output
+3,000 random operations, invariants held; final order: [5, 1, 4, 2, 8]
+```
+
 Assigning a function to `LRUCache._check` adds it as a method to the existing class, a notebook convenience. In a real file it would sit inside the class.
 
 The invariants held through 3,000 random operations. If a pointer bug crept in later, `_check` would report it at the very operation that caused it.
@@ -185,7 +189,7 @@ The invariants held through 3,000 random operations. If a pointer bug crept in l
 
 Python's `collections.OrderedDict` remembers insertion order and can move a key to the end in O(1) with `move_to_end`, and remove the first with `popitem(last=False)`. That makes it an excellent **model** for a model-based test, as in the testing lesson: replay random operations on both and compare every answer. (Internally, `OrderedDict` is itself a dict plus a doubly linked list: the very design built above.) For memoising a **function**, the standard library's `functools.lru_cache` decorator does all of this, with statistics. Predict before running: does the cache ever disagree with the model?
 
-```python
+```python type
 from collections import OrderedDict
 from functools import lru_cache
 
@@ -220,6 +224,11 @@ def render_thumbnail(drawing):
 for d in ["A", "B", "A", "C", "A", "B"]:
     render_thumbnail(d)
 print(render_thumbnail.cache_info())
+```
+
+```output
+['agrees', 'agrees', 'agrees', 'agrees']
+CacheInfo(hits=3, misses=3, maxsize=128, currsize=3)
 ```
 
 `reversed(model)` lists the model from most to least recent, because `OrderedDict` keeps the most recently moved key at the end.

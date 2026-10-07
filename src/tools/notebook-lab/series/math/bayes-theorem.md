@@ -26,7 +26,7 @@ The **conditional probability** P(A | B), "A given B", is the probability of A a
 
 Predict before running: what fraction of all bearings is defective, and which machine made most of the defective ones?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +44,14 @@ rng = np.random.default_rng(45)
 which = rng.choice(3, size=1_000_000, p=share)
 bad = rng.random(1_000_000) < defect_rate[which]
 print("simulated P(D):", bad.mean(), "  simulated share of defectives by machine:", np.round(np.bincount(which[bad], minlength=3) / bad.sum(), 4))
+```
+
+```output
+overall defect rate P(D) = 0.0210
+of 10,000 bearings, 50 defective ones come from the new line
+of 10,000 bearings, 60 defective ones come from the old line
+of 10,000 bearings, 100 defective ones come from the worn machine
+simulated P(D): 0.021128   simulated share of defectives by machine: [0.2333 0.2887 0.478 ]
 ```
 
 `rng.choice(3, p=share)` picks a machine for each simulated bearing with the given probabilities, and each is then defective with its machine's rate.
@@ -66,7 +74,7 @@ The count above already did the reversal: P(worn | defective) = 100/210. In gene
 
 The **prior** P(Mᵢ) is the belief before the evidence (each machine's share); the **likelihood** P(D | Mᵢ) is how well each cause explains the evidence; the **posterior** P(Mᵢ | D) is the updated belief. The denominator just makes the posteriors sum to 1. Predict before running: a second inspection finds the bearing also has a surface flaw, which the worn machine produces on 30% of its defectives, the others on 5%. How do the odds shift?
 
-```python
+```python type
 def bayes(prior, likelihood):
     joint = np.asarray(prior) * np.asarray(likelihood)
     return joint / joint.sum()
@@ -77,6 +85,13 @@ for m, p in zip(machines, post):
 flaw = np.array([0.05, 0.05, 0.30])
 post2 = bayes(post, flaw)
 print("after also seeing the surface flaw:", {m: round(float(p), 3) for m, p in zip(machines, post2)})
+```
+
+```output
+P(new line | defective) = 0.238
+P(old line | defective) = 0.286
+P(worn machine | defective) = 0.476
+after also seeing the surface flaw: {'new line': 0.07, 'old line': 0.085, 'worn machine': 0.845}
 ```
 
 The posterior from the first piece of evidence becomes the prior for the second.
@@ -95,7 +110,7 @@ In code: `sens * prevalence / (sens * prevalence + (1 - spec) * (1 - prevalence)
 
 A vibration monitor detects a developing bearing fault with probability 99% (its **sensitivity**) and stays silent on a healthy bearing with probability 95% (its **specificity**). Only 0.5% of bearings are actually developing a fault. When the alarm sounds, how likely is a real fault? Intuition says about 95%. Bayes says otherwise, because the 5% false-alarm rate applies to the huge number of healthy bearings. **Natural frequencies** make it obvious: of 10,000 bearings, 50 are faulty and 49.5 of those trigger the alarm; 9,950 are healthy and 497.5 of those trigger it too. Predict before running: what fraction of alarms is real?
 
-```python
+```python type
 prevalence, sens, spec = 0.005, 0.99, 0.95
 p_fault_given_alarm = sens * prevalence / (sens * prevalence + (1 - spec) * (1 - prevalence))
 print(f"P(fault | alarm) = {p_fault_given_alarm:.3f}")
@@ -103,6 +118,15 @@ print(f"of 10,000 bearings: {10_000 * prevalence * sens:.1f} true alarms, {10_00
 for prev in [0.005, 0.05, 0.2, 0.5]:
     p = sens * prev / (sens * prev + (1 - spec) * (1 - prev))
     print(f"prevalence {prev:>5.1%}: an alarm means a real fault with probability {p:.1%}")
+```
+
+```output
+P(fault | alarm) = 0.090
+of 10,000 bearings: 49.5 true alarms, 497.5 false alarms
+prevalence  0.5%: an alarm means a real fault with probability 9.0%
+prevalence  5.0%: an alarm means a real fault with probability 51.0%
+prevalence 20.0%: an alarm means a real fault with probability 83.2%
+prevalence 50.0%: an alarm means a real fault with probability 95.2%
 ```
 
 The denominator is the total probability of an alarm: true alarms plus false ones.
@@ -121,7 +145,7 @@ In code: `odds *= lr` per alarm, then `odds / (1 + odds)`
 
 Repeated updates are simplest in **odds** form. The odds of an event are P/(1 − P). Bayes' theorem becomes: posterior odds = prior odds × **likelihood ratio**, where the likelihood ratio of the evidence is P(evidence | fault)/P(evidence | no fault). For the alarm it is 0.99/0.05 = 19.8. Independent pieces of evidence multiply their ratios, so their **logarithms add**: each alarm adds log₁₀ 19.8 ≈ 1.3 to the log-odds. Predict before running: how many independent alarms (from separate sensors) are needed before a fault is more likely than not?
 
-```python
+```python type
 lr = sens / (1 - spec)
 odds = prevalence / (1 - prevalence)
 print(f"prior odds {odds:.4f}, likelihood ratio of an alarm {lr:.1f} (log10 {math.log10(lr):.2f})")
@@ -130,6 +154,15 @@ for alarms in range(1, 5):
     print(f"after {alarms} alarm(s): odds {odds:8.3f}, probability {odds / (1 + odds):.3f}")
 quiet_lr = (1 - sens) / spec
 print(f"a silent sensor has likelihood ratio {quiet_lr:.4f}: it divides the odds by {1 / quiet_lr:.0f}")
+```
+
+```output
+prior odds 0.0050, likelihood ratio of an alarm 19.8 (log10 1.30)
+after 1 alarm(s): odds    0.099, probability 0.090
+after 2 alarm(s): odds    1.970, probability 0.663
+after 3 alarm(s): odds   39.007, probability 0.975
+after 4 alarm(s): odds  772.339, probability 0.999
+a silent sensor has likelihood ratio 0.0105: it divides the odds by 95
 ```
 
 A silent sensor is evidence too: its likelihood ratio, P(silent | fault)/P(silent | healthy), is tiny.
@@ -148,7 +181,7 @@ In code: `belief = prior * likelihood`, `belief /= belief.sum()`, `cdf = np.cums
 
 Bayes' theorem works just as well when the unknown is a number rather than a choice among causes. A new process has an unknown defect rate r. Before any data, every rate between 0 and 10% seems equally plausible. Inspection finds 3 defectives in 200 parts. The likelihood of that, for each candidate r, is binomial: C(200, 3) r³(1 − r)¹⁹⁷. On a **grid** of candidate rates, the posterior is prior × likelihood, renormalised, a whole curve of belief. From it come a best estimate and a **credible interval**: the range that contains the true rate with 95% probability given the data. Predict before running: is the rate likely to be below the 2.5% contract limit?
 
-```python
+```python type
 grid = np.linspace(0, 0.10, 2001)
 prior = np.ones_like(grid)
 likelihood = grid ** 3 * (1 - grid) ** 197
@@ -167,6 +200,12 @@ ax.set_xlabel("defect rate (%)")
 ax.set_ylabel("belief density (per %)")
 ax.legend()
 plt.show()
+```
+
+```output
+most probable rate 0.0150, mean 0.0198
+95% credible interval 0.0054 to 0.0430
+P(rate < 2.5%) = 0.741
 ```
 
 The constant C(200, 3) cancels in the normalisation, so it is left out. `np.searchsorted(cdf, 0.025)` finds where the cumulative belief reaches 2.5%.

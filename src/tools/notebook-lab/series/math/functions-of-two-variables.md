@@ -25,7 +25,7 @@ A function of two variables takes a point (x, y) and returns a number. To see it
 
 A 600 × 400 mm plate in a 20 °C room is heated at the point (300, 200) mm; its steady temperature is modelled as a bell-shaped hot spot. Predict before running: how hot is the plate's corner?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,6 +41,12 @@ print("grid shape (rows = y, columns = x):", T.shape)
 print(f"centre {T[40, 60]:.1f} °C, corner (0, 0) {T[0, 0]:.2f} °C, edge midpoint (600, 200) {T[40, -1]:.2f} °C")
 j, i = np.unravel_index(np.argmax(T), T.shape)
 print(f"hottest grid point: x = {xs[i]:.0f} mm, y = {ys[j]:.0f} mm, {T[j, i]:.1f} °C")
+```
+
+```output
+grid shape (rows = y, columns = x): (81, 121)
+centre 180.0 °C, corner (0, 0) 20.05 °C, edge midpoint (600, 200) 20.62 °C
+hottest grid point: x = 300 mm, y = 200 mm, 180.0 °C
 ```
 
 `np.unravel_index` converts the position of the maximum in the flattened array back to a (row, column) pair, as in the coordinates lesson.
@@ -65,7 +71,7 @@ Three standard pictures show a function of two variables, each with its strength
 
 Predict before running: where are the isotherms closest together?
 
-```python
+```python type
 fig = plt.figure(figsize=(13, 3.6))
 ax1 = fig.add_subplot(1, 3, 1)
 im = ax1.pcolormesh(X, Y, T, shading="auto", cmap="inferno")
@@ -87,6 +93,10 @@ r_at = {T_level: 90 * math.sqrt(2 * math.log(160 / (T_level - 20))) for T_level 
 print("radius of each isotherm (mm):", {k: round(v, 1) for k, v in r_at.items()})
 ```
 
+```output
+radius of each isotherm (mm): {150: 58.0, 120: 87.3, 90: 115.7, 60: 149.9, 30: 211.9}
+```
+
 `pcolormesh` draws the heat map, `contour` the labelled isotherms, and `projection="3d"` makes a 3D axes for `plot_surface`. Here each isotherm is a circle; solving 20 + 160 e^(−r²/(2·90²)) = T for r gives its radius.
 
 The isotherms are circles around the torch. Each 30 °C step moves the radius out by 29 mm (150 to 120 °C), 28 mm (120 to 90 °C), 34 mm (90 to 60 °C) and then 62 mm (60 to 30 °C): the contours are most crowded part-way out, around 90 to 115 mm from the centre, where the temperature falls fastest, and they spread out far away, where the surface levels off (and also very near the peak, which is flat-topped). Crowded contours mean steep change, the idea the next lesson makes precise with partial derivatives.
@@ -103,7 +113,7 @@ In code: `plate_temp(x_line, 200.0)` and `path = P + t[:, None] * (Q - P)`
 
 Fixing one variable turns a function of two variables into an ordinary function of one: a **slice** or cross-section. Fixing y = 200 gives the temperature along the plate's centre line, T(x, 200), a curve that can be plotted, differentiated or searched with every tool from earlier lessons. Slicing along any straight path works the same way: parametrise the path as P + t(Q − P) and evaluate along it. Predict before running: along the diagonal from corner to corner, where is the temperature highest?
 
-```python
+```python type
 x_line = np.linspace(0, 600, 601)
 centre_slice = plate_temp(x_line, 200.0)
 t = np.linspace(0, 1, 1001)
@@ -123,6 +133,11 @@ ax.legend()
 plt.show()
 ```
 
+```output
+centre line: max 180.0 °C at x = 300 mm
+diagonal: max 180.0 °C at (300, 200) mm, t = 0.500
+```
+
 `t[:, None] * (Q - P)` makes one row per point along the path, the vector form of interpolation from the coordinates lesson.
 
 The diagonal from (0, 0) to (600, 400) passes exactly through the torch point at its midpoint, so it peaks at 180 °C at t = 0.5, (300, 200). A slice along a line that misses the centre would peak lower. Slices are how engineers usually report 2D results: a temperature profile along a weld, a stress profile across a section.
@@ -139,7 +154,7 @@ In code: `bilinear(xs, ys, Z, x, y)`
 
 A model gives values everywhere; measurements give values only at sensor positions. With sensors on a regular grid, **bilinear interpolation** estimates values in between: inside a grid cell, interpolate linearly along x on the cell's bottom and top edges, then linearly along y between those two results. It reproduces the measurements exactly at the grid points and is continuous across cells. Predict before running: a 4 × 3 array of thermocouples on the plate. How close is the interpolated temperature at (250, 170) mm to the model's?
 
-```python
+```python type
 sx = np.array([0.0, 200, 400, 600])
 sy = np.array([0.0, 200, 400])
 SX, SY = np.meshgrid(sx, sy)
@@ -160,6 +175,14 @@ est = bilinear(sx, sy, readings, 250, 170)
 print(f"at (250, 170): interpolated {est:.1f} °C, model {plate_temp(250, 170):.1f} °C")
 ```
 
+```output
+sensor readings (rows = y):
+ [[ 20.1  27.3  27.3  20.1]
+ [ 20.6 106.3 106.3  20.6]
+ [ 20.1  27.3  27.3  20.1]]
+at (250, 170): interpolated 94.4 °C, model 149.7 °C
+```
+
 `np.searchsorted(xs, x)` finds where x would be inserted in the sorted array, so subtracting 1 gives the index of the grid line just below it; the clamps keep points on the outer edges inside the last cell.
 
 The interpolated value, about 94 °C, is far below the model's 150 °C. With sensors 200 mm apart and a hot spot only about 90 mm wide, straight-line interpolation cannot follow the peak: it flattens it. Interpolation is only as good as the sensor spacing relative to the features being measured, the same lesson as sampling in time, now in space.
@@ -176,7 +199,7 @@ In code: `(TT * cell).sum() / (600 * 400)` with `cell = dx * dy`, and `(TT > 45)
 
 Integrating over an area extends the Riemann sums of the accumulation lesson to two dimensions: split the region into small cells of area ΔA, evaluate the function at each cell's centre, multiply and add. This **double sum** approximates the **double integral** ∬ f dA, which the multivariable block develops. Averages over an area are the integral divided by the area; the area of a region where a condition holds is the sum of the cell areas where it holds. Predict before running: what is the plate's average temperature, and how much of it is too hot to touch (above 45 °C)?
 
-```python
+```python type
 n = 300
 dx, dy = 600 / n, 400 / n
 cx = (np.arange(n) + 0.5) * dx
@@ -189,6 +212,12 @@ hot_area = (TT > 45).sum() * cell
 print(f"area above 45 °C: {hot_area / 100:.0f} cm², which is {hot_area / (600 * 400):.1%} of the plate")
 exact_r = 90 * math.sqrt(2 * math.log(160 / 25))
 print(f"exact: a disc of radius {exact_r:.1f} mm, area {math.pi * exact_r ** 2 / 100:.0f} cm²")
+```
+
+```output
+average temperature: 53.01 °C
+area above 45 °C: 945 cm², which is 39.4% of the plate
+exact: a disc of radius 173.4 mm, area 945 cm²
 ```
 
 The cells are 2 × 1.33 mm, evaluated at their centres (the midpoint rule in two dimensions).

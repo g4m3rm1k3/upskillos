@@ -15,7 +15,7 @@ This lesson covers:
 
 A CAD program opens a project containing hundreds of drawings. Loading a drawing parses a large file and takes noticeable time, but a user opening the project usually looks at only one or two drawings. If the project loads every drawing up front, opening it is slow for no reason. A **virtual proxy** holds just what is needed to load the drawing later (here, a loader function and a name). It loads the real drawing the first time any method needs it, and reuses it after that. Predict before running: how many drawings are loaded to show the title list and render one drawing?
 
-```python
+```python type
 loads = []
 
 class Drawing:
@@ -49,6 +49,13 @@ print(project[41].render())
 print(project[41].entity_count(), "entities; loaded so far:", loads)
 ```
 
+```output
+titles: ['sheet-001', 'sheet-002', 'sheet-003'] ...
+loaded so far: 0
+sheet-042: 1000 entities drawn
+1000 entities; loaded so far: ['sheet-042']
+```
+
 `self.name` is kept on the proxy itself, so listing titles needs no loading at all. Only methods that need the drawing's contents go through `_drawing()`.
 
 Opening a 300-drawing project loaded nothing, and showing one drawing loaded one, once, even though it was used twice. The rest of the program cannot tell a `LazyDrawing` from a `Drawing`: it calls `render` and `entity_count` either way.
@@ -57,7 +64,7 @@ Opening a 300-drawing project loaded nothing, and showing one drawing loaded one
 
 A supplier's price service is slow (here, simulated with a counter of real requests), and prices change only occasionally. A **caching proxy** keeps each answer for a while and replies from memory. A cache must know when its answers go stale. A **time-to-live** (TTL) does that: an entry older than the TTL is fetched again. To make that testable, the clock is injected, as in the dependency injection lesson. Predict before running: how many real requests do these six lookups make?
 
-```python
+```python type
 class PriceService:
     def __init__(self):
         self.requests = 0
@@ -87,6 +94,10 @@ for t, sku in [(0, "bolt"), (5, "bolt"), (10, "nut"), (30, "bolt"), (61, "bolt")
 print("real requests:", service._service.requests)
 ```
 
+```output
+real requests: 3
+```
+
 `now` is a one-item list so the lambda always sees the latest time: the loop changes `now[0]`, and the clock reads it.
 
 Three real requests for six lookups: the bolt at 0 s, the nut at 10 s, and the bolt again at 61 s, when its cached price from 0 s had expired. The lookups at 5 and 30 s came from the cache, and so did the nut at 65 s: fetched at 10 s, it was only 55 s old. The TTL is a trade-off chosen per use: longer saves more requests but serves older prices.
@@ -95,7 +106,7 @@ Three real requests for six lookups: the bolt at 0 s, the nut at 10 s, and the b
 
 A machine controller offers `start`, `stop` and `set_feed_override`. Operators may start and stop, only engineers may change the feed override, and visitors may do neither. Putting those checks inside the controller mixes access rules into machine logic. A **protection proxy** wraps the controller, holds the user's role, and checks each call against a permission table before forwarding it. Predict before running: which of the four calls succeed?
 
-```python
+```python type
 class Controller:
     def __init__(self):
         self.running, self.override = False, 100
@@ -136,6 +147,14 @@ for action in [lambda: as_operator.start(), lambda: as_operator.set_feed_overrid
 print("machine state:", machine.running, machine.override)
 ```
 
+```output
+started
+PermissionError: role 'operator' may not call set_feed_override
+override 120%
+PermissionError: role 'visitor' may not call stop
+machine state: True 120
+```
+
 `__getattr__` runs for every attribute the proxy does not define itself, which here is every controller method. So the check happens in one place for all of them, including methods added to the controller later. Those are denied until someone adds them to the permission table: safe by default.
 
 The operator started the machine but was refused the override. The engineer changed it. The visitor could not even stop the machine. The controller contains no permission code at all, and the same controller object is reached through different proxies for different users.
@@ -148,7 +167,7 @@ Two standard tools cover common proxy needs with less code.
 
 **`__getattr__` forwarding**, as in the protection proxy, makes a proxy pass through every name it does not handle itself, so it does not need a method per method of the real object. (One caution: Python looks special methods such as `__len__` and `__iter__` up on the class, not through `__getattr__`. A proxy that must support `len()` or iteration has to define those methods explicitly.)
 
-```python
+```python type
 from functools import cached_property
 
 class Inspection:
@@ -163,6 +182,11 @@ class Inspection:
 
 report = Inspection([10.01, 9.99, 10.02, 10.00])
 print(report.statistics["mean"], report.statistics["spread"])
+```
+
+```output
+  (computing statistics)
+10.005 0.03
 ```
 
 The message prints once: the second access found the stored result. Note that `cached_property` never expires by itself. `del report.statistics` forces a recompute on the next access, but nothing does it automatically. For values that go stale over time, use a TTL cache like the one above.

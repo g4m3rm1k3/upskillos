@@ -16,7 +16,7 @@ Bit i of an integer stands for 2 to the power i, counting from 0 on the right. `
 
 The operators work bit by bit. `a & b` (and) keeps a 1 where **both** have one, `a | b` (or) where **either** has one, and `a ^ b` (exclusive or, **XOR**) where **exactly one** has one. `a << k` shifts every bit k places left, multiplying by 2ᵏ; `a >> k` shifts right, dividing by 2ᵏ and dropping the remainder. `~a` flips every bit. Because Python integers are unbounded, it is defined as −a − 1 rather than as a fixed-width pattern. Predict before running: what are `12 & 10`, `12 | 10` and `12 ^ 10`?
 
-```python
+```python type
 a, b = 12, 10
 print(f"a      = {a:>3}  {a:08b}")
 print(f"b      = {b:>3}  {b:08b}")
@@ -24,6 +24,18 @@ for name, value in [("a & b", a & b), ("a | b", a | b), ("a ^ b", a ^ b), ("a <<
     print(f"{name:<6} = {value:>3}  {value:08b}")
 print("~a =", ~a, " (that is -a - 1)")
 print("bits set in 2025:", bin(2025), "->", (2025).bit_count(), "ones;  int('11111101001', 2) =", int("11111101001", 2))
+```
+
+```output
+a      =  12  00001100
+b      =  10  00001010
+a & b  =   8  00001000
+a | b  =  14  00001110
+a ^ b  =   6  00000110
+a << 2 =  48  00110000
+a >> 2 =   3  00000011
+~a = -13  (that is -a - 1)
+bits set in 2025: 0b11111101001 -> 8 ones;  int('11111101001', 2) = 2025
 ```
 
 The format `{a:08b}` prints a number in binary, padded with zeros to 8 digits.
@@ -41,7 +53,7 @@ Unix file permissions are a famous use of bits. Each file has a read, write and 
 
 Masks combine with `|`, so `OWNER_READ | OWNER_WRITE` is one mask holding two flags. Predict before running: what does `rwxr-xr-x` look like as a number, and what is left after removing every write permission?
 
-```python
+```python type
 OWNER_READ, OWNER_WRITE, OWNER_EXEC = 0o400, 0o200, 0o100
 GROUP_READ, GROUP_WRITE, GROUP_EXEC = 0o040, 0o020, 0o010
 OTHER_READ, OTHER_WRITE, OTHER_EXEC = 0o004, 0o002, 0o001
@@ -59,6 +71,14 @@ print("let the group write:   ", show(mode | GROUP_WRITE), oct(mode | GROUP_WRIT
 print("toggle other exec:     ", show(mode ^ OTHER_EXEC), oct(mode ^ OTHER_EXEC))
 ```
 
+```output
+rwxr-xr-x 0o755 0b111101101
+can the group write? False
+read-only for everyone: r-xr-xr-x 0o555
+let the group write:    rwxrwxr-x 0o775
+toggle other exec:      rwxr-xr-- 0o754
+```
+
 `0o755` is an **octal** literal (base 8). Each octal digit is exactly three bits, which is why permissions are written in octal: one digit per owner, group and others.
 
 `rwxr-xr-x` is 0o755, the familiar `chmod 755`. Clearing all write bits leaves 0o555. Nine flags fit in one integer, and testing any of them is one `&`.
@@ -74,7 +94,7 @@ The Fenwick tree lesson used the partner trick: `x & -x` **isolates** the lowest
 
 The same idea steps through every **subset** of a mask. Starting from `sub = mask`, the line `sub = (sub - 1) & mask` produces the next smaller subset: subtracting 1 borrows from the lowest set bit, and `& mask` throws away any bits outside the mask. This visits all 2ᵏ subsets of a mask with k bits, and nothing else, which bitmask DP uses constantly. Predict before running: how many subsets does the mask `0b10110` have?
 
-```python
+```python type
 def is_power_of_two(x):
     return x > 0 and x & (x - 1) == 0
 
@@ -98,13 +118,19 @@ while True:
 print(len(subsets), "subsets of", f"{mask:05b}:", subsets)
 ```
 
+```output
+[1, 2, 4, 8, 16, 32, 64]
+ones in 2025: 8   lowest set bit of 2024: 8
+8 subsets of 10110: ['10110', '10100', '10010', '10000', '00110', '00100', '00010', '00000']
+```
+
 The mask has three set bits, so it has 2³ = 8 subsets, from itself down to 0, each produced in O(1). Looping over 0 to `mask` and testing each number instead would visit 23 numbers here, and far more for a wide, sparse mask.
 
 ## XOR cancels pairs
 
 XOR has two properties that make it unusually useful: `x ^ x == 0` and `x ^ 0 == x`, and the order of XORs does not matter. So XOR-ing a list of numbers cancels every value that appears an **even** number of times, and leaves the XOR of the values appearing an odd number of times. If every value appears twice except one, the XOR of the whole list **is** that one value. That takes one pass and one integer of memory, where counting would need a dictionary. Predict before running: which ticket number is missing its pair?
 
-```python
+```python type
 from functools import reduce
 import operator, random
 
@@ -123,6 +149,11 @@ for v in received:
 print("among", len(received), "numbers the unpaired one is", found, "->", found == missing)
 ```
 
+```output
+unpaired ticket: 9013
+among 99999 numbers the unpaired one is 171160 -> True
+```
+
 `reduce(operator.xor, tickets)` XORs the list together from left to right.
 
 9013 is the only ticket without a partner. The same cancellation is behind **parity** bits and the simple checksums used to detect a corrupted byte: XOR all the data together, and a single flipped bit changes the result.
@@ -133,7 +164,7 @@ Because Python integers can be any width, one integer can stand for a set of who
 
 The **subset-sum** question shows the payoff: which totals can be made by choosing some of these weights, each at most once? Keep a bitset `reachable` whose bit t is 1 when total t is possible. Start with only bit 0 (the empty choice). For each weight w, every reachable total t also makes t + w reachable. Shifting the whole bitset left by w moves every bit t to t + w in one operation, so `reachable |= reachable << w` handles one weight. Predict before running: how much faster is the bitset than the same idea with a Python set?
 
-```python
+```python type
 import time
 
 def reachable_with_set(weights, limit):

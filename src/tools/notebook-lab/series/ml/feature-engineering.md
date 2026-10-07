@@ -8,7 +8,7 @@ A model can only use what its features make visible. Give a linear model the hou
 
 A city bike-hire scheme records how many bikes are hired in each hour. (The data here is simulated, but shaped like real bike-hire data.) On working days there are two commuter peaks; at weekends there is one broad afternoon hump; warm weather brings more riders.
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,13 +36,22 @@ ax.legend()
 plt.show()
 ```
 
+```output
+   hour  weekday  temp  rides
+0    20        5  25.8   98.0
+1    15        0   7.7  119.0
+2    12        3  10.4   76.0
+3     6        5  10.2   71.0
+4     7        5  20.5  133.0
+```
+
 `weekday` runs from 0 (Monday) to 6 (Sunday). The plot shows the pattern a good model must capture: two sharp peaks on working days, one gentle hump at weekends.
 
 ## Raw features: a straight line through peaks
 
 Start with the obvious model: ridge regression on the three raw columns, scored by 5-fold cross-validation. `KFold(5, shuffle=True, random_state=0)` makes the folds random but repeatable, and every model below uses the same folds, so their scores are directly comparable.
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
@@ -73,6 +82,11 @@ circle = cross_val_score(make_pipeline(StandardScaler(), Ridge()), X_circle, y, 
 print(f"hour as a point on a clock face: R² {circle:.3f}")
 ```
 
+```output
+raw hour, weekday, temp: R² 0.209
+hour as a point on a clock face: R² 0.410
+```
+
 An R² of 0.21: the raw model explains very little, because the effect of the hour is nothing like a straight line.
 
 The second model represents the hour as a point on a **circle**. Hour 23 and hour 0 are one hour apart, but as numbers they are 23 apart, which tells the model they are as different as possible. Mapping each hour to an angle and taking its sine and cosine puts the 24 hours around a clock face, so 23 and 0 sit next to each other. This **cyclical encoding** is the standard treatment for anything that wraps around: hours, days of the week, months, compass directions. It nearly doubles R², to 0.41. But a sine and a cosine can only make one smooth bump per day, and the data has two sharp peaks.
@@ -81,7 +95,7 @@ The second model represents the hour as a point on a **circle**. Hour 23 and hou
 
 The most flexible option is to treat each hour as a **category**: one-hot encode it into 24 columns, so the model learns a separate level for each hour, with no assumption about shape at all. Predict before running: how much better than the clock face will this do?
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -119,6 +133,12 @@ print(f"one-hot (hour, workday) pair: {score(make_pipeline(combined, Ridge()), X
 print(f"boosted trees on raw columns: {score(HistGradientBoostingRegressor(random_state=0), X):.3f}")
 ```
 
+```output
+one-hot hour:                0.677
+one-hot (hour, workday) pair: 0.918
+boosted trees on raw columns: 0.902
+```
+
 `"passthrough"` in a `ColumnTransformer` passes those columns on unchanged. One-hot hours lift R² to 0.68. Yet that model still predicts the **same** daily shape every day, shifted up or down; it cannot know that 8 a.m. on a Tuesday and 8 a.m. on a Sunday are completely different.
 
 That is an **interaction**: the effect of one feature (hour) depends on another (working day or not). A linear model cannot discover interactions on its own; you have to build them as features. Here the interaction is built by combining the two columns into a single category, such as `"8_1"` (8 a.m. on a working day) or `"8_0"` (8 a.m. at the weekend), and one-hot encoding that: 48 columns, one per (hour, day type) pair. With it, plain ridge regression reaches **0.92**.
@@ -140,7 +160,7 @@ The last lesson filled missing values with the median. That hides something: **w
 
 The fix is to keep a **missing indicator**: a 0/1 column saying "this was missing", alongside the imputed value. `SimpleImputer(add_indicator=True)` adds those columns automatically. Guess before running: how much can one extra 0/1 column be worth?
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
@@ -167,6 +187,13 @@ for flag in [False, True]:
     model = make_pipeline(SimpleImputer(strategy="median", add_indicator=flag), StandardScaler(), LogisticRegression())
     accuracy = cross_val_score(model, loans, defaulted, cv=5).mean()
     print(f"add_indicator={flag}: accuracy {accuracy:.3f}")
+```
+
+```output
+income missing for 32% of applicants
+default rate when income is missing: 0.96, when reported: 0.27
+add_indicator=False: accuracy 0.686
+add_indicator=True: accuracy 0.864
 ```
 
 In this simulated data, applicants who went on to default often left their income blank: the default rate is 0.96 among the missing and 0.27 among the rest. Median imputation turns every blank into an ordinary-looking income, and the model scores 0.69. With the indicator, the model can use "left it blank" directly, and accuracy jumps to 0.86.

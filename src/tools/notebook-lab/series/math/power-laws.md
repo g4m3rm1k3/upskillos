@@ -24,7 +24,7 @@ Exponentials and power laws are easily confused, and they behave very differentl
 
 Predict before running: for y = 3x^0.75 and y = e^(0.5x), what is y(2x)/y(x) at x = 1, 10 and 100?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,6 +36,13 @@ expo = lambda x: np.exp(0.5 * x)
 for x in [1.0, 10.0, 100.0]:
     print(f"x = {x:>5}: power law y(2x)/y(x) = {power(2 * x) / power(x):.4f},  exponential y(2x)/y(x) = {expo(2 * x) / expo(x):.4g}")
 print("2^0.75 =", round(2 ** 0.75, 4))
+```
+
+```output
+x =   1.0: power law y(2x)/y(x) = 1.6818,  exponential y(2x)/y(x) = 1.649
+x =  10.0: power law y(2x)/y(x) = 1.6818,  exponential y(2x)/y(x) = 148.4
+x = 100.0: power law y(2x)/y(x) = 1.6818,  exponential y(2x)/y(x) = 5.185e+21
+2^0.75 = 1.6818
 ```
 
 The power law's ratio is always 2^0.75 = 1.6818, whatever the starting x. The exponential's ratio is 1.65 at x = 1, 148 at x = 10 and 5 × 10²¹ at x = 100: the bigger it is, the faster it grows. A ratio that stays fixed under scaling is the signature of a power law.
@@ -53,7 +60,7 @@ To measure an exponent, fit a straight line to the logarithms. The slope estimat
 
 Predict before running: 40 simulated species from 20 g to 4 tonnes. What exponent does the fit find, and how precisely?
 
-```python
+```python type
 rng = np.random.default_rng(70)
 survey = np.random.default_rng(72)
 mass = 10 ** survey.uniform(np.log10(0.02), np.log10(4000), 40)
@@ -73,6 +80,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+exponent 0.7477 ± 0.0120 (95%), prefactor 3.316 W/kg^p, R² 0.9976
+predicted rate for a 70 kg animal: 79 W
+```
+
 The fit gives an exponent of 0.748 with a 95% interval of ±0.012 from 40 points, covering the true 0.75. On this simulated data that rules out both 2/3 (surface-area scaling) and 1 (simple proportion). Real measurements are messier: estimates for mammals range from about 0.67 to 0.75 depending on the species and how body temperature and activity are controlled, and the debate continues. The predicted rate for a 70 kg animal is about 79 W, in line with a resting human. On log–log axes the data scatter evenly around a straight line, because the scatter here is multiplicative, the same percentage at every size.
 
 ## Multiplicative or additive noise?
@@ -88,7 +100,7 @@ Taking logarithms changes the noise as well as the curve. If measurement errors 
 
 Predict before running: data from y = 2x^1.5 with additive noise of fixed size. Which fit recovers the exponent better?
 
-```python
+```python type
 x_add = np.linspace(0.2, 10, 40)
 y_add = 2 * x_add ** 1.5 + rng.normal(0, 1.0, x_add.size)
 keep = y_add > 0
@@ -97,6 +109,12 @@ log_fit = stats.linregress(np.log10(x_add[keep]), np.log10(y_add[keep]))
 print(f"{(~keep).sum()} non-positive values had to be dropped for the log fit")
 print(f"log–log fit:        p = {log_fit.slope:.3f}, c = {10 ** log_fit.intercept:.3f}")
 print(f"direct (curve_fit): p = {p_nl:.3f} ± {1.96 * math.sqrt(cov[1, 1]):.3f}, c = {c_nl:.3f}   (true p = 1.5, c = 2)")
+```
+
+```output
+1 non-positive values had to be dropped for the log fit
+log–log fit:        p = 1.546, c = 1.871
+direct (curve_fit): p = 1.491 ± 0.035, c = 2.049   (true p = 1.5, c = 2)
 ```
 
 With additive noise of size 1 the smallest values are mostly noise; on the log scale they have outsized influence, and the log–log fit's exponent (1.55) and prefactor (1.87) are both pulled away from the truth. The direct fit recovers p close to 1.5, with an interval that covers it, and c close to 2. The lesson is to look at the residuals on the log scale before trusting a log–log fit. They should have the same spread everywhere, as Kleiber's data did. If they fan out at the small end, the noise is additive, and the direct fit is the right one.
@@ -114,7 +132,7 @@ In 1907 F. W. Taylor published the result of tens of thousands of cutting experi
 
 Predict before running: tests at 150, 200, 250 and 300 m/min give lives of 58, 18, 7.8 and 3.6 minutes. What are n and C, how long will the tool last at 180 m/min, and what speed gives a 30-minute life?
 
-```python
+```python type
 v_test = np.array([150.0, 200.0, 250.0, 300.0])
 T_test = np.array([58.0, 18.0, 7.8, 3.6])
 tf = stats.linregress(np.log10(T_test), np.log10(v_test))
@@ -124,6 +142,15 @@ print(f"tool life at 180 m/min: {(C_taylor / 180) ** (1 / n_taylor):.1f} min")
 print(f"speed for a 30-minute life: {C_taylor / 30 ** n_taylor:.0f} m/min")
 for v in [150, 180, 200]:
     print(f"  at {v} m/min: life {(C_taylor / v) ** (1 / n_taylor):5.1f} min")
+```
+
+```output
+Taylor exponent n = 0.251, C = 415 m/min (R² 0.9996)
+tool life at 180 m/min: 28.0 min
+speed for a 30-minute life: 177 m/min
+  at 150 m/min: life  57.8 min
+  at 180 m/min: life  28.0 min
+  at 200 m/min: life  18.4 min
 ```
 
 The fit gives n ≈ 0.25, typical of carbide, and C ≈ 415 m/min, the speed at which the edge would last a single minute. At 180 m/min the tool lasts about 28 minutes, and a 30-minute life needs about 177 m/min. The table shows the steepness: from 150 to 200 m/min, a third faster, the life falls from about 58 to 18 minutes. Economic cutting-speed calculations balance this falling life against the rising cutting rate, using exactly this power law.
@@ -145,7 +172,7 @@ The obvious method, a straight line through a histogram on log–log axes, is un
 
 Predict before running: 2,000 values drawn from a Pareto law with α = 1.5. How close is the Hill estimate, and what fraction of the total do the largest 1% of values make up?
 
-```python
+```python type
 alpha_true, xmin = 1.5, 1.0
 u = 1 - rng.random(2000)
 sample = xmin * u ** (-1 / alpha_true)
@@ -163,6 +190,12 @@ ax.loglog(xs_sorted, (xs_sorted / xmin) ** -alpha_hat, label=f"Hill fit, slope -
 ax.set_xlabel("x")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+Hill estimate α = 1.506 (true 1.5); standard error about 0.034
+largest value 459; the top 1% of values hold 25% of the total
+for comparison, normal data with the same mean: largest 48.4
 ```
 
 The Hill estimate comes out close to 1.5, with a standard error of about α/√n ≈ 0.03. The largest of 2,000 values is in the hundreds, and the top 1% of values hold about a quarter of the total. Normal data with the same mean and spread never stray more than a few standard deviations. On log–log axes the survival function is a straight line of slope −α over two orders of magnitude, getting ragged only at the extreme where there are a handful of points. Designing for "the largest event seen so far" is dangerous for heavy-tailed quantities: the next one may be much larger.

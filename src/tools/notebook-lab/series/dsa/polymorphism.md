@@ -16,7 +16,7 @@ This lesson covers:
 
 A shipping office prices letters, parcels and pallets. The first version keeps the items as plain classes holding data, and puts the logic in functions that check the type. Predict before reading on: what must change to add a fourth kind of item, say a tube for posters?
 
-```python
+```python type
 class Letter:
     def __init__(self, grams):
         self.grams = grams
@@ -51,13 +51,19 @@ for item in [Letter(80), Parcel(4, fragile=True), Pallet(600)]:
     print(f"{label(item):<22} £{postage(item):7.2f}")
 ```
 
+```output
+letter 80 g            £   0.85
+parcel 4 kg FRAGILE    £   9.30
+pallet 600 kg          £ 117.00
+```
+
 A tube needs a new branch in `postage`, a new branch in `label`, and in every other function that switches on the type: customs forms, insurance, tracking. Each is easy to forget, and a forgotten one only shows up when that function meets a tube and raises `TypeError`. Worse, the knowledge of what a parcel **is** gets scattered across every switch in the program. This pattern is a well-known warning sign, often called the **type switch** smell.
 
 ## Methods instead of switches
 
 Move each branch into the class it belongs to. Every item class gets a `postage()` and a `label()` method, and the functions shrink to calls that work for any item. Adding the tube is now a new class, and nothing else in the program is touched. Predict before running: do `total_postage` and `manifest` need to change for the tube?
 
-```python
+```python type
 class Letter:
     def __init__(self, grams):
         self.grams = grams
@@ -101,6 +107,14 @@ print(manifest(batch))
 print("total:", total_postage(batch))
 ```
 
+```output
+letter 80 g            £   0.85
+parcel 4 kg FRAGILE    £   9.30
+pallet 600 kg          £ 117.00
+tube 120 cm            £   6.80
+total: 133.95
+```
+
 `total_postage` and `manifest` were written before `Tube` existed and work with it unchanged. Each item knows its own rules, so everything about a tube lives in one place.
 
 The trade-off is real, though. Methods make **new types** cheap: one class, no edits elsewhere. They make **new operations** more expensive: adding `customs_value()` means editing every class. A switch is the reverse. In most programs the set of operations is more stable than the set of types, which is why methods usually win. When it is the other way round (a fixed set of node types in a compiler, and a growing list of operations on them), the visitor pattern later in this series exists for exactly that.
@@ -111,7 +125,7 @@ Python's built-in operations are polymorphic in the same way. `len(x)` calls `x.
 
 There is one trap worth knowing. `sum(items)` starts from the number 0 and adds each item to the running total, so its first step is `0 + item`. The integer 0 does not know how to add a `Money` object, so its `__add__` returns `NotImplemented`. Python then tries the **right-hand** version on the other object, `item.__radd__(0)`. If that does not exist either, `sum` fails. Predict before running: which of the two `sum` calls works?
 
-```python
+```python type
 class Money:
     def __init__(self, pence):
         self.pence = pence
@@ -139,6 +153,12 @@ costs = [Money(250), Money(1999), Money(75)]
 print("sum with __radd__:", sum(costs))
 ```
 
+```output
+pairwise: £23.24
+sum failed: unsupported operand type(s) for +: 'int' and 'Money'
+sum with __radd__: £23.24
+```
+
 Returning `NotImplemented` (a special built-in value, not an error) from `__add__` tells Python "I don't know how to do this", so it can try the other operand's `__radd__` before giving up with a `TypeError`.
 
 With `__radd__` handling the starting 0, `sum` works, along with every other piece of code that adds things up. Here `__radd__` hands anything other than 0 back to `__add__`, which is fine because adding money is commutative (a + b equals b + a); returning `NotImplemented` would work too. The second `class Money(Money)` is a quick way to extend the class in a notebook; in a real file you would add the method to the original class. Hooking into Python's protocols means your types work with the whole standard library, not just with the code you wrote for them.
@@ -147,7 +167,7 @@ With `__radd__` handling the starting 0, `sum` works, along with every other pie
 
 Sometimes the types are not yours. You cannot add a `to_json` method to `datetime`, `Decimal` or `set`. Converting them is exactly the case where a type switch would creep back in. `functools.singledispatch` gives a function a **separate implementation per type**, chosen by the type of its first argument. Each implementation is registered on its own, so a new type is one new registration, anywhere in the program, without editing the others. Predict before running: what does the set become, and what happens with a type nobody registered?
 
-```python
+```python type
 from functools import singledispatch
 from datetime import date
 from decimal import Decimal
@@ -182,6 +202,11 @@ except TypeError as error:
     print("TypeError:", error)
 ```
 
+```output
+{"due": "2026-11-03", "price": "19.99", "tags": ["fragile", "urgent"]}
+TypeError: no plain form for complex
+```
+
 `@to_plain.register` reads the type from the parameter's annotation (`value: date`); `@to_plain.register(int)` names it directly. The name `_` is a convention for "this function is only reached through the dispatcher".
 
 The date becomes `"2026-11-03"`, the decimal `"19.99"`, the set a sorted list. A complex number has no registered implementation, so the base function runs and raises a clear `TypeError`. `json.dumps` itself refuses dates and decimals, and `to_plain` is how a program teaches it, one type at a time.
@@ -190,7 +215,7 @@ The date becomes `"2026-11-03"`, the decimal `"19.99"`, the set a sorted list. A
 
 Duck typing has a matching habit for code that is unsure whether an object can do something. One style checks first: "look before you leap", or `if hasattr(obj, "write"): ...`. Python code usually prefers the other style: just try it, and handle the failure. This is "easier to ask forgiveness than permission", **EAFP**:
 
-```python
+```python type
 import io
 
 def save_report(lines, destination):
@@ -208,6 +233,11 @@ try:
     save_report(["x"], 42)
 except TypeError as error:
     print("TypeError:", error)
+```
+
+```output
+'pallet 600 kg\ntube 120 cm\n'
+TypeError: cannot write to int
 ```
 
 `raise ... from None` replaces the `AttributeError` with a clearer `TypeError` and hides the original from the traceback.

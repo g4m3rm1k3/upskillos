@@ -28,7 +28,7 @@ To compute, sample u at points spaced Δx apart. The **second difference** (u_{i
 
 Predict before running: halving Δx, by what factor does the second difference's error on sin 2x fall?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,6 +39,12 @@ for dx in [0.1, 0.05, 0.025]:
     second = (u[2:] - 2 * u[1:-1] + u[:-2]) / dx ** 2
     exact = -4 * np.sin(2 * xs[1:-1])
     print(f"Δx = {dx:<6} largest error {np.abs(second - exact).max():.6f}")
+```
+
+```output
+Δx = 0.1    largest error 0.013310
+Δx = 0.05   largest error 0.003331
+Δx = 0.025  largest error 0.000833
 ```
 
 Each halving of Δx divides the error by 4 (0.0133, 0.0033, 0.00083): second order, as promised. The same stencil, 1, −2, 1, appears in every finite-difference code for diffusion, vibration and electrostatics.
@@ -58,7 +64,7 @@ The natural time scale is L²/α. For a 0.5 m steel bar that is about 21,000 s, 
 
 Predict before running: the bar is 0.5 m long. After half an hour, is its middle above or below 60 °C, and where does the temperature profile end up?
 
-```python
+```python type
 alpha, Lbar = 1.2e-5, 0.5
 x = np.linspace(0, Lbar, 51)
 dx = x[1] - x[0]
@@ -91,6 +97,15 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+after  10 min: middle  26.70 °C, 0.1 m from the hot end  92.97 °C
+after  30 min: middle  61.21 °C, 0.1 m from the hot end 133.51 °C
+after  60 min: middle  89.20 °C, 0.1 m from the hot end 151.72 °C
+after 120 min: middle 106.22 °C, 0.1 m from the hot end 161.78 °C
+after 240 min: middle 109.88 °C, 0.1 m from the hot end 163.93 °C
+Δx = 10 mm, Δt = 3.33 s, r = 0.40; time scale L²/α = 5.8 h
+```
+
 After 30 minutes the middle has reached about 61 °C, and 0.1 m from the furnace it is already 134 °C. The profile then creeps towards the dashed straight line from 200 °C to 20 °C, the **steady state**, where the middle sits at 110 °C. After 4 hours it is at 109.9 °C, almost there. The steady state is straight because "nothing changes" means ∂²u/∂x² = 0, and a function with zero second derivative is a line.
 
 ## The stability limit
@@ -108,13 +123,19 @@ So the time step must satisfy Δt ≤ Δx²/(2α). This is the price of an expli
 
 Predict before running: what happens to the bar after 400 steps at r = 0.55, just over the limit?
 
-```python
+```python type
 for r_try in [0.25, 0.5, 0.55]:
     u = np.full(x.size, 20.0)
     u[0] = 200.0
     for _ in range(400):
         u = ftcs_step(u, r_try)
     print(f"r = {r_try}: temperatures between {u.min():.4g} and {u.max():.4g} °C")
+```
+
+```output
+r = 0.25: temperatures between 20 and 200 °C
+r = 0.5: temperatures between 20 and 200 °C
+r = 0.55: temperatures between -2.789e+30 and 2.784e+30 °C
 ```
 
 At r = 0.25 and 0.5 the temperatures stay between 20 and 200 °C, as the averaging argument guarantees. At r = 0.55 they reach ±2.8 × 10³⁰ °C: nonsense, from a step just 10% too large. An exploding simulation is almost always a stability limit, not a physics problem.
@@ -136,7 +157,7 @@ Replacing the second derivative by the second difference gives one linear equati
 
 Predict before running: a 20 mm steel shaft (k = 50 W/(m·K)) sticks out 0.3 m from a 120 °C housing into 20 °C air, with h = 10 W/(m²·K). How warm is its tip?
 
-```python
+```python type
 k_s, D, h, L_shaft, T_base, T_air = 50.0, 0.02, 10.0, 0.3, 120.0, 20.0
 m = math.sqrt(4 * h / (k_s * D))
 N = 60
@@ -169,6 +190,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+m = 6.325 per m, mL = 1.90
+tip: 49.335 °C (exact 49.333 °C); largest difference along the shaft 0.0022 °C
+heat leaving the housing through the shaft: 9.50 W
+```
+
 The tip settles at about 49.3 °C, and the 60-interval solution matches the exact cosh profile to within about 0.002 °C everywhere. The heat leaving through the shaft, −k A θ′(0) at the base, is about 9.5 W. With mL ≈ 1.9 the tip's excess over the air has fallen to about 29% of the base's, and the heat flow, proportional to tanh mL ≈ 0.96, is already 96% of what an infinitely long shaft would carry. That is why cooling fins are short: beyond about mL = 2 extra length adds almost nothing. Every unknown in the system touched only its two neighbours. Large heat-flow models in 2D and 3D give the same kind of sparse matrix, millions of unknowns with a handful of entries per row.
 
 ## Sine modes: why sharp detail fades first
@@ -186,7 +213,7 @@ Any starting profile is a sum of these sines: its Fourier sine series, with coef
 
 Predict before running: a welding torch leaves a hot spot of 100 °C, about 5 cm wide at half height, 0.15 m along the bar, with both ends at 20 °C. How many modes are needed to describe the profile at the start, and how many after 30 minutes?
 
-```python
+```python type
 spot = lambda xq: 20 + 80 * np.exp(-((xq - 0.15) / 0.03) ** 2)
 fine = np.linspace(0, Lbar, 2001)
 b = [2 / Lbar * np.trapezoid((spot(fine) - 20) * np.sin(n * math.pi * fine / Lbar), fine) for n in range(1, 81)]
@@ -214,6 +241,17 @@ ax.set_xlabel("position (m)")
 ax.set_ylabel("°C")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+mode  1: time constant  2110.9 s
+mode  2: time constant   527.7 s
+mode  5: time constant    84.4 s
+mode 10: time constant    21.1 s
+mode 20: time constant     5.3 s
+after 30 min: finite differences vs 80 modes differ by at most 0.0050 °C; peak 25.90 °C
+5 modes: error at the start  33.88 °C, after 30 min 3.4e-13 °C
+20 modes: error at the start   0.59 °C, after 30 min 0.0e+00 °C
 ```
 
 The first mode's time constant is about 35 minutes; the 10th mode's is 21 s and the 20th's about 5 s. At the start, five modes cannot draw a 3 cm spike: they miss by about 34 °C. After 30 minutes every mode above the fifth has decayed by a factor of more than e³⁰, so five modes describe the bar to within rounding. The spot has spread into a gentle hump peaking near 26 °C, and the finite-difference simulation agrees with the mode sum to within about 0.005 °C. The heat equation acts as a low-pass filter: it destroys high spatial frequencies fastest, so diffusion always smooths.

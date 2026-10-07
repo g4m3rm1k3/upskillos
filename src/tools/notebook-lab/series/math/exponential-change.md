@@ -24,7 +24,7 @@ If a quantity is multiplied by the same factor r every step, after n steps it is
 
 The striking thing about exponentials is how they compare with steady, linear change. Predict before running: £1,000 earning 5% a year, against £1,000 plus a fixed £100 a year. Which is ahead after 10 years, and after 40?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,6 +37,16 @@ for y in [10, 14, 15, 20, 40]:
 print(f"doubling time at 5%: exact {math.log(2) / math.log(1.05):.2f} years, rule of 70: {70 / 5:.0f} years")
 crossover = years[np.argmax(compound > linear)]
 print("compound first ahead in year", crossover)
+```
+
+```output
+year 10: compound £   1,629   linear £ 2,000
+year 14: compound £   1,980   linear £ 2,400
+year 15: compound £   2,079   linear £ 2,500
+year 20: compound £   2,653   linear £ 3,000
+year 40: compound £   7,040   linear £ 5,000
+doubling time at 5%: exact 14.21 years, rule of 70: 14 years
+compound first ahead in year 27
 ```
 
 The linear account is ahead for years: at 10 years it has £2,000 against £1,629. The compound account catches up only in year 27, and then pulls away: by year 40 it is £2,040 ahead. Exponential growth is slow at first and relentless later, which is why it is so often underestimated, in debt, in populations, and in the spread of faults through a network.
@@ -61,7 +71,7 @@ the same e that the derivative lesson found as the base whose exponential is its
 
 with k > 0 for growth and k < 0 for decay. Predict before running: how close does daily compounding get to the continuous limit?
 
-```python
+```python type
 k = 0.05
 for name, n in [("yearly", 1), ("monthly", 12), ("daily", 365), ("every second", 365 * 24 * 3600)]:
     print(f"{name:<13} factor per year {(1 + k / n) ** n:.10f}")
@@ -74,6 +84,15 @@ dt = t[1] - t[0]
 for i in range(1, len(t)):
     N[i] = N[i - 1] + 0.3 * N[i - 1] * dt
 print(f"Euler for dN/dt = 0.3 N to t = 10: {N[-1]:.1f}, exact 100 e^3 = {100 * math.exp(3):.1f}")
+```
+
+```output
+yearly        factor per year 1.0500000000
+monthly       factor per year 1.0511618979
+daily         factor per year 1.0512674965
+every second  factor per year 1.0512710936
+continuous    factor per year 1.0512710964
+Euler for dN/dt = 0.3 N to t = 10: 1921.9, exact 100 e^3 = 2008.6
 ```
 
 The Euler loop steps dN/dt = 0.3N with Δt = 0.1; each step multiplies N by 1.03, so the simulation is itself a compound-interest calculation.
@@ -94,7 +113,7 @@ For decay, N = N₀ e^(−t/τ), where τ (tau) is the **time constant**: after 
 
 A useful property: the fraction remaining after a time t depends only on t, not on when you start. A sample does not remember its age. Predict before running: a 100 µF capacitor charged to 24 V discharges through a 47 kΩ resistor. When is it below 1 V?
 
-```python
+```python type
 R, C, V0 = 47e3, 100e-6, 24.0
 tau = R * C
 print(f"time constant RC = {tau:.2f} s, half-life {tau * math.log(2):.2f} s")
@@ -103,6 +122,16 @@ for n_tau in [1, 2, 3, 5]:
 t_safe = tau * math.log(V0 / 1.0)
 print(f"below 1 V after {t_safe:.2f} s, which is {t_safe / tau:.2f} time constants")
 print("same fraction lost in any 2 s window:", round(math.exp(-2 / tau), 6), round(V0 * math.exp(-7 / tau) / (V0 * math.exp(-5 / tau)), 6))
+```
+
+```output
+time constant RC = 4.70 s, half-life 3.26 s
+after 1 τ ( 4.70 s):  8.829 V ( 36.8%)
+after 2 τ ( 9.40 s):  3.248 V ( 13.5%)
+after 3 τ (14.10 s):  1.195 V (  5.0%)
+after 5 τ (23.50 s):  0.162 V (  0.7%)
+below 1 V after 14.94 s, which is 3.18 time constants
+same fraction lost in any 2 s window: 0.653422 0.653422
 ```
 
 The time to fall from V₀ to V comes from solving V₀ e^(−t/τ) = V: t = τ ln(V₀/V).
@@ -123,7 +152,7 @@ Newton's law of cooling, plotted in an earlier lesson, says the **difference** b
 
 A heat-treated shaft is at 180 °C when it leaves the furnace and 132 °C four minutes later, in a 22 °C workshop. Predict before running: when will it be cool enough to handle, at 45 °C?
 
-```python
+```python type
 T_room, T0, T4 = 22.0, 180.0, 132.0
 k = math.log((T0 - T_room) / (T4 - T_room)) / 4
 t_handle = math.log((T0 - T_room) / (45 - T_room)) / k
@@ -140,6 +169,11 @@ ax.set_xlabel("time (min)")
 ax.set_ylabel("temperature (°C)")
 ax.legend()
 plt.show()
+```
+
+```output
+cooling rate k = 0.0905 per minute (time constant 11.0 min)
+safe to handle after 21.3 min
 ```
 
 The gap falls from 158 °C to 110 °C in 4 minutes, which fixes k. The same formula, solved for t, gives the waiting time.

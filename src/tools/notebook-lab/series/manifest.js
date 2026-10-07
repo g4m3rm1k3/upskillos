@@ -128,11 +128,13 @@ export const SERIES_MANIFEST = [
 
   series('rl', 'rl', 'rl', 'Reinforcement Learning: the Q-Maze and CartPole',
     'Two classic problems in depth: Q-learning on a maze and on CartPole, then the same agents with a neural network instead of a table (deep Q-learning).', [
-      ['q-maze-diy', 'Q-maze, typed by hand: from numpy to Q-learning, planning and a neural network'],
+      // A slug with a .ipynb file is a Jupyter notebook used as it is (series.js).
+      ['q-maze-explained', 'Q-maze, do it yourself: from numpy basics to Q-learning, planning and a neural network'],
+      ['cartpole-explained', 'CartPole, do it yourself: from Python and numpy basics to Q-learning and beyond'],
       ['q-maze', 'Q-learning on a maze'],
       ['cartpole', 'CartPole and Q-learning'],
-      ['deep-q-maze', 'Deep Q-learning on the maze'],
-      ['deep-q-cartpole', 'Deep Q-learning on CartPole'],
+      ['deep-q-maze', 'Treasure maze: how the game works, why training is slow, and how to make it fast'],
+      ['deep-q-cartpole', 'CartPole with a neural network (DQN): why it takes forever, and how to make it fast'],
     ]),
 
   series('dsa', 'dsa', 'dsa', 'Algorithms & Design Patterns',

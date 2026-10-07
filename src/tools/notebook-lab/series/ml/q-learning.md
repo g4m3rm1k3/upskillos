@@ -18,7 +18,7 @@ That max is the Bellman optimality equation from the MDP lesson, turned into a s
 
 Train both methods on the cliff world, with the same ε = 0.1, and compare two things: the route each learns (its greedy policy), and the reward it collects per episode **while learning**. Before running, predict: which method will earn more per episode during training?
 
-```python
+```python type
 import numpy as np
 
 ROWS, COLS = 4, 12
@@ -76,6 +76,19 @@ for method in ["SARSA", "Q-learning"]:
                              ("*" if (r, c) in route else ".") for c in range(COLS)))
 ```
 
+```output
+SARSA     : reward per episode while learning (last 100)  -37.7; greedy route 19 steps, highest row 0
+   ..***..*****
+   .**.****...*
+   **.........*
+   SCCCCCCCCCCG
+Q-learning: reward per episode while learning (last 100)  -44.5; greedy route 13 steps, highest row 2
+   ............
+   ............
+   ************
+   SCCCCCCCCCCG
+```
+
 The two methods share all their code except the `future` term: the best next value for Q-learning, the chosen next action's value for SARSA. (The next action is chosen in both cases, so that the random number sequences match and the comparison is fair.)
 
 Q-learning's greedy route runs straight along the cliff edge in 13 steps, the optimal route. SARSA's climbs away from the edge and takes 19. Yet **while learning**, Q-learning earns less per episode: about −44 against SARSA's −38. It learned the optimal route, but its behaviour still explores 10% of the time, and exploring on the cliff edge means occasionally stepping off it (−100). SARSA's values priced that risk in, so it chose a route where random steps are harmless. Neither is wrong: Q-learning answers "what is the best route?" and SARSA answers "what is the best route for an agent that keeps exploring?". If exploration stops after training, Q-learning's route is better; if the agent must keep exploring (or its actions are unreliable), SARSA's is safer.
@@ -84,7 +97,7 @@ Q-learning's greedy route runs straight along the cliff edge in 13 steps, the op
 
 On the slippery grid world, dynamic programming computed the optimal policy from the model. Q-learning should reach the same policy from experience alone:
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -132,6 +145,15 @@ for r in range(SIZE):
     print("  " + " ".join("G" if (r, c) == GOAL else "X" if (r, c) in PITS else ARROWS[learned[(r, c)]] for c in range(SIZE)))
 ```
 
+```output
+greedy action matches dynamic programming's optimal action in 13 of 13 squares
+learned value of the start: 0.92 (optimal: 0.83)
+  v > v <
+  v X v <
+  v v v X
+  > > > G
+```
+
 `optimal` again holds the actions computed by value iteration, for comparison only. Q-learning explored with ε = 0.2, yet its greedy policy matches the optimal one in every square, and its estimate of the start's value, 0.92, is close to the optimal 0.83 rather than the lower value of the exploring behaviour that Monte Carlo and SARSA estimate. That is off-policy learning at work. (It is even slightly too high: the constant step size leaves the estimates noisy, and the max in the target turns noise into overestimation, the subject of the next section.)
 
 ## Maximisation bias
@@ -140,7 +162,7 @@ Q-learning has a quiet flaw. Its target takes the **max** of several estimates, 
 
 A small example shows the damage. From the start state, action "right" ends the episode with reward 0. Action "left" leads to a state B with ten actions, each ending the episode with a random reward averaging −0.1. So "left" is truly worse. Watch how often Q-learning chooses it in each of the first 300 episodes, averaged over 300 runs (with ε = 0.1, the best possible rate is 5%, from random exploration):
 
-```python
+```python type
 import numpy as np
 
 def maximisation_bias(runs=300, episodes=300, actions_in_b=10, alpha=0.1, epsilon=0.1):
@@ -166,6 +188,15 @@ def maximisation_bias(runs=300, episodes=300, actions_in_b=10, alpha=0.1, epsilo
 left = maximisation_bias()
 for episode in [1, 10, 20, 50, 100, 300]:
     print(f"episode {episode:>3}: Q-learning chooses the worse action in {left[episode - 1]:.0%} of runs")
+```
+
+```output
+episode   1: Q-learning chooses the worse action in 50% of runs
+episode  10: Q-learning chooses the worse action in 88% of runs
+episode  20: Q-learning chooses the worse action in 95% of runs
+episode  50: Q-learning chooses the worse action in 88% of runs
+episode 100: Q-learning chooses the worse action in 45% of runs
+episode 300: Q-learning chooses the worse action in 11% of runs
 ```
 
 Action 0 is "left" and action 1 "right". Going left gives no reward at first; the start's value for "left" is updated towards the max of B's estimates, and B's own estimates are then updated with the random reward.

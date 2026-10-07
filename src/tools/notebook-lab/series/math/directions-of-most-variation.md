@@ -27,7 +27,7 @@ Two measurements that rise and fall together are **correlated**. The **covarianc
 
 positive when they move together, negative when one rises as the other falls, near zero when unrelated. The covariance of x with itself is its variance. Dividing by both standard deviations gives the **correlation coefficient** r, between −1 and 1. For several measurements, the covariances form the **covariance matrix** C: entry (i, j) is cov(xᵢ, xⱼ), so the diagonal holds the variances and the matrix is symmetric. With the data centred (each column's mean subtracted) in an n × p matrix X, C = XᵀX/(n − 1). Predict before running: for the lengths and widths of 300 stamped brackets, is the covariance positive or negative?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +44,14 @@ print("covariance matrix (mm²):\n", C.round(6))
 print("matches np.cov:", np.allclose(C, np.cov(X, rowvar=False)))
 r = C[0, 1] / math.sqrt(C[0, 0] * C[1, 1])
 print(f"correlation r = {r:.3f}")
+```
+
+```output
+covariance matrix (mm²):
+ [[0.006934 0.004104]
+ [0.004104 0.002939]]
+matches np.cov: True
+correlation r = 0.909
 ```
 
 The simulated brackets share a hidden "heat" factor that stretches both dimensions, plus independent measurement noise. `np.cov(X, rowvar=False)` treats each column as a variable.
@@ -66,7 +74,7 @@ Project the centred data onto a unit vector u: each part becomes the single numb
 
 a quadratic form in u. As u turns, this variance changes, and there is a direction where it is largest and a perpendicular one where it is smallest. Predict before running: scanning directions every degree, at what angle is the spread of the brackets largest?
 
-```python
+```python type
 angles = np.radians(np.arange(0, 180, 1))
 var_along = [np.array([math.cos(a), math.sin(a)]) @ C @ np.array([math.cos(a), math.sin(a)]) for a in angles]
 best = np.degrees(angles[int(np.argmax(var_along))])
@@ -85,6 +93,10 @@ ax2.set_ylabel("variance along it (mm²)")
 plt.show()
 ```
 
+```output
+largest spread 0.009501 mm² at 32°, smallest 0.000372 mm² at 122°
+```
+
 The red line on the scatter plot is the direction of largest spread.
 
 The spread is largest at about 32° and smallest at 122°, a right angle away. The largest variance is many times the smallest: the brackets scatter mainly along one tilted line, the direction in which length and width change together, and only thinly across it.
@@ -101,7 +113,7 @@ In code: `vals, vecs = np.linalg.eigh(C)`, sorted largest first; `scores = Xc @ 
 
 Maximising uᵀCu over unit vectors u is an eigenvalue problem: the maximum is the largest eigenvalue of C, reached at its eigenvector. Because C is symmetric, its eigenvalues are real and its eigenvectors perpendicular; and because each eigenvalue is a variance (uᵀCu for its eigenvector), none is negative. The eigenvectors, ordered by eigenvalue, are the **principal components** (PCs); each eigenvalue is the variance along its component; and the eigenvalues add up to the total variance (the trace of C). `np.linalg.eigh` handles symmetric matrices and returns eigenvalues in increasing order. Predict before running: what share of the brackets' variation lies along the first component?
 
-```python
+```python type
 vals, vecs = np.linalg.eigh(C)
 order = np.argsort(vals)[::-1]
 vals, vecs = vals[order], vecs[:, order]
@@ -111,6 +123,13 @@ pc1 = vecs[:, 0] * np.sign(vecs[0, 0])
 print(f"PC1 direction {pc1.round(4)}, angle {math.degrees(math.atan2(pc1[1], pc1[0])):.1f}°")
 scores = Xc @ vecs
 print("scores are uncorrelated:", np.round(np.cov(scores, rowvar=False), 8).tolist())
+```
+
+```output
+variances along the PCs: [0.009501 0.000372]  total 0.009873 = trace 0.009873
+explained: [96.23  3.77] %
+PC1 direction [0.8478 0.5303], angle 32.0°
+scores are uncorrelated: [[0.00950102, 0.0], [0.0, 0.00037192]]
 ```
 
 The **scores**, the data's coordinates along the components, are uncorrelated: rotating to the principal axes removes the correlation entirely.
@@ -129,7 +148,7 @@ In code: `np.cumsum(explained) >= 0.95` on `np.linalg.eigvalsh(Cc)`
 
 PCA earns its keep in higher dimensions. The castings have six measurements driven by two hidden factors, mould temperature and pattern wear, each affecting the six dimensions in its own proportions, plus independent noise. Looking at a 6 × 6 covariance matrix reveals little; its eigenvalues reveal the structure at once. A **scree plot** of the explained variance per component shows a sharp drop after the real factors. Predict before running: how many components are needed to explain 95% of the variation?
 
-```python
+```python type
 n = 500
 temperature = rng.normal(0, 1, n)
 wear = rng.normal(0, 1, n)
@@ -151,6 +170,12 @@ ax.set_ylabel("variance explained (%)")
 plt.show()
 ```
 
+```output
+explained variance per component (%): [81.65 17.78  0.16  0.15  0.14  0.13]
+cumulative (%): [ 81.65  99.43  99.59  99.74  99.87 100.  ]
+components for 95%: 2
+```
+
 `np.outer(temperature, effect_t)` gives each casting the temperature effect on every dimension: one row per part, one column per dimension.
 
 Two components explain over 99% of the variation, and the last four are pure noise at a fraction of a percent each: the scree plot drops off a cliff after component 2, revealing the two hidden factors without being told about them. Six measurements per part reduce to two scores with almost no loss. One caution: PCA finds directions of variation, not causes; the components are mixtures that may need engineering knowledge to interpret.
@@ -167,7 +192,7 @@ In code: `recon = Z @ top @ top.T`, then `np.sqrt(((Z - recon) ** 2).sum(axis=1)
 
 PCA uses variances, so it depends on units: measure one dimension in micrometres and it will dominate every component. When measurements have different units or very different scales, **standardise** first: divide each centred column by its standard deviation, which is PCA on the correlation matrix. Once the main components are known, PCA also flags unusual parts: project each part onto the top components and back, and measure the **reconstruction error**, what the components cannot explain. A part with an unusual combination of dimensions (a casting with a cracked wall, say, thin where it should be normal) has a large error even if each dimension alone is within limits. Predict before running: one casting has a wall 0.15 mm too thin, inside its tolerance. Does PCA notice?
 
-```python
+```python type
 odd = castings.copy()
 odd[123, 4] -= 0.15
 mu = odd.mean(axis=0)
@@ -178,6 +203,11 @@ recon = Z @ top @ top.T
 err = np.sqrt(((Z - recon) ** 2).sum(axis=1))
 print(f"wall thickness of part 123: {odd[123, 4]:.3f} mm (others range {np.delete(odd[:, 4], 123).min():.3f} to {np.delete(odd[:, 4], 123).max():.3f})")
 print(f"reconstruction error: part 123 {err[123]:.4f} mm, median part {np.median(err):.4f} mm, rank of part 123: {int((err > err[123]).sum()) + 1}")
+```
+
+```output
+wall thickness of part 123: 7.973 mm (others range 7.722 to 8.287)
+reconstruction error: part 123 0.1395 mm, median part 0.0368 mm, rank of part 123: 1
 ```
 
 Projecting onto the top two components and back, `Z @ top @ top.T`, keeps only the part of each row that the two main factors explain.

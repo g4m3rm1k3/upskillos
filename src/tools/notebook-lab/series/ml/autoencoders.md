@@ -10,7 +10,7 @@ The network used here is 64 → 32 → k → 32 → 64. The hidden layers use Re
 
 One thing changes in the backward pass compared with the classifiers. With a sigmoid output and squared error, the output error signal is not P − Y. Differentiating (p − x)² through the sigmoid gives 2(p − x) · p(1 − p), averaged over all the values.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
@@ -72,6 +72,11 @@ for code_size in [2, 8]:
     print(f"code of {code_size} numbers: autoencoder test error {ae_error:.4f}, PCA test error {pca_error:.4f}")
 ```
 
+```output
+code of 2 numbers: autoencoder test error 0.0420, PCA test error 0.0537
+code of 8 numbers: autoencoder test error 0.0181, PCA test error 0.0249
+```
+
 `forward` returns every layer's scores and activations, as the backward pass needs them. In the backward loop, each layer's weight gradient is (its input)ᵀ times its error signal; the signal then passes back through the weights and, except at the code layer (which has no activation), through the ReLU's derivative. The Adam update is the one from the optimisers lesson, applied to each layer's weights and biases.
 
 With a code of just 2 numbers, the autoencoder's test reconstruction error is 0.042 against PCA's 0.054; with 8 numbers, 0.018 against 0.025. In both cases the network's curved encoding keeps substantially more of each digit than PCA's best flat projection. (With no hidden layers and no activations, an autoencoder can do no better than PCA: the best linear encoder and decoder span exactly the PCA subspace, a known result; the last challenge shows gradient descent finding that subspace.)
@@ -80,7 +85,7 @@ With a code of just 2 numbers, the autoencoder's test reconstruction error is 0.
 
 With a code of 2 numbers, every digit becomes a point in the plane. Predict before running: will the digits form separate groups, even though the autoencoder never saw a label?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -154,7 +159,7 @@ plt.show()
 
 An autoencoder with a wide enough code could simply learn to copy its input. A powerful way to force it to learn real structure is to **corrupt** the input and ask for the **clean** version back: add noise, or blank out pixels, and train on (noisy input, clean target) pairs. A **denoising autoencoder** must learn what digits look like in order to know which pixels are noise. The lesson's `train_autoencoder` already supports it: with `noise` above 0, Gaussian noise is added to each input batch (and clipped back to 0 to 1), while the target stays clean. Train a plain autoencoder and a denoising one (code of 16 numbers each), then give both the same noisy test digits. Before running, predict: will the plain autoencoder, which has never been shown noise, clean it up too?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
@@ -225,6 +230,12 @@ ax.imshow(canvas, cmap="gray_r")
 ax.set_title("noisy input (top), denoised (middle), clean original (bottom)", fontsize=9)
 ax.axis("off")
 plt.show()
+```
+
+```output
+noisy input vs clean digit:        error 0.0251
+plain autoencoder      rebuilt vs clean: error 0.0264
+denoising autoencoder  rebuilt vs clean: error 0.0173
 ```
 
 `np.pad(image, 1)` adds a one-pixel blank border so the digits do not touch in the picture. The plain autoencoder does not help at all: its rebuilt digits are slightly further from the clean ones (0.026) than the noisy inputs were (0.025), because it learned to reproduce whatever it is given, speckle included. The denoiser, trained for exactly this, cuts the error to 0.017. The pictures show it removing the speckle while keeping each digit's strokes.

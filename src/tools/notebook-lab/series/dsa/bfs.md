@@ -17,7 +17,7 @@ Start with the source in a queue, marked as **visited** at distance 0. Repeatedl
 
 Marking a vertex visited **when it is discovered**, not when it is taken from the queue, matters: otherwise a vertex could be added many times by different neighbours before being processed. Predict before running: in the network below, how far is Ann from Hal, and which people are at distance 2?
 
-```python
+```python type
 from collections import deque
 
 friends = {
@@ -52,6 +52,15 @@ for d in sorted(layers):
 print("Ivy reachable?", "Ivy" in dist)
 ```
 
+```output
+distance 0: ['Ann']
+distance 1: ['Ben', 'Cara']
+distance 2: ['Dev', 'Eli']
+distance 3: ['Fay', 'Gus']
+distance 4: ['Hal']
+Ivy reachable? False
+```
+
 The `distance` dictionary doubles as the visited set: a vertex is visited exactly when it has a distance.
 
 The layers come out in rings: Ann; Ben and Cara; Dev and Eli; Fay and Gus; Hal at distance 4. The queue guarantees this order: every vertex at distance d is dequeued before any at distance d + 1, because they were all added earlier. So when a vertex is first discovered, it is discovered from a vertex in the nearest possible layer, and its distance is the shortest. Ivy has no connections, so she never appears: BFS also tells you what is **reachable** at all.
@@ -60,7 +69,7 @@ The layers come out in rings: Ann; Ben and Cara; Dev and Eli; Fay and Gus; Hal a
 
 Distances say how far; often you need the route itself. Record, for each discovered vertex, its **parent**: the vertex it was discovered from. Following parents back from the target to the source traces a shortest path in reverse. Predict before running: what is a shortest chain of introductions from Ann to Hal?
 
-```python
+```python type
 def bfs_path(graph, source, target):
     parent = {source: None}
     queue = deque([source])
@@ -85,6 +94,12 @@ print(bfs_path(friends, "Gus", "Dev"))
 print(bfs_path(friends, "Ann", "Ivy"))
 ```
 
+```output
+['Ann', 'Ben', 'Dev', 'Fay', 'Hal']
+['Gus', 'Eli', 'Ben', 'Dev']
+None
+```
+
 The search stops early once the target is taken from the queue: nothing later can improve on it. The `parent` dictionary again doubles as the visited set.
 
 Ann → Ben → Dev → Fay → Hal: four introductions. Gus to Dev has only one shortest path, through Eli and Ben; in a denser network there can be ties, and BFS returns whichever its neighbour order found first. No path gives `None`. The parent pointers form a **BFS tree**: every reachable vertex hangs from the source by its shortest path.
@@ -93,7 +108,7 @@ Ann → Ben → Dev → Fay → Hal: four introductions. Gus to Dev has only one
 
 On a grid, BFS finds the shortest route through a maze. The graph is implicit: the neighbours of a cell are the open cells next to it. Predict before running: how many steps from S to E, and how many cells does BFS explore to find out?
 
-```python
+```python type
 maze = [
     "##########",
     "#S...#...#",
@@ -137,6 +152,17 @@ print("\n".join("".join(row) for row in drawing))
 print(f"shortest route: {len(path) - 1} steps; cells explored: {len(parent)}")
 ```
 
+```output
+##########
+#S...#***#
+#*##.#*#*#
+#*#..#*#*#
+#*#.##*#*#
+#******#E#
+##########
+shortest route: 19 steps; cells explored: 27
+```
+
 The maze's outer wall means `open_neighbours` never steps outside the grid, so it needs no bounds check.
 
 The route, drawn with `*`, goes down the left side; a second way, through the middle, joins the bottom row two steps later, so BFS never uses it. BFS explored all 27 open cells to be sure nothing shorter exists. In a large open area BFS spreads out like a ripple in all directions, exploring many cells that lead away from the goal. The A* lesson later in the series uses a sense of direction to explore far fewer.
@@ -149,12 +175,17 @@ Sometimes the question is "how far is each cell from the **nearest** of several 
 
 BFS counts edges. If edges have different lengths (road distances, travel times), the path with the fewest edges need not be the shortest: two long roads can be worse than three short ones. Predict before running: what does BFS say is the best route from A to D, and what is actually shortest?
 
-```python
+```python type
 roads = {"A": {"B": 10, "C": 1}, "B": {"D": 1}, "C": {"E": 1}, "E": {"D": 1}, "D": {}}
 route = bfs_path({v: list(n) for v, n in roads.items()}, "A", "D")
 length = sum(roads[a][b] for a, b in zip(route, route[1:]))
 print("BFS route:", route, "total length", length)
 print("but A -> C -> E -> D has length", roads["A"]["C"] + roads["C"]["E"] + roads["E"]["D"])
+```
+
+```output
+BFS route: ['A', 'B', 'D'] total length 11
+but A -> C -> E -> D has length 3
 ```
 
 BFS picks A → B → D (2 edges, length 11) over A → C → E → D (3 edges, length 3). For weighted graphs, Dijkstra's algorithm replaces the queue with a priority queue ordered by distance, as a later lesson shows.

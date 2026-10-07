@@ -14,7 +14,7 @@ It is a binary tree with one rule, the **BST property**: for every node, all key
 
 To search for a key, start at the root. If the key equals the node's, found. If it is smaller, it can only be in the left subtree; if larger, only in the right. Repeat until found or until you fall off the tree at `None`, which means the key is absent. Insertion follows exactly the same path and attaches the new key where the search fell off. Predict before running: after inserting 50, 30, 70, 20, 40, 60, 80 in that order, what shape is the tree, and how many comparisons to find 60?
 
-```python
+```python type
 class BSTNode:
     def __init__(self, key):
         self.key = key
@@ -65,6 +65,17 @@ show(tree.root)
 print("search 60:", tree.search(60), "  search 65:", tree.search(65), "  size:", tree.size)
 ```
 
+```output
+          80
+     70
+          60
+50
+          40
+     30
+          20
+search 60: (True, 3)   search 65: (False, 3)   size: 7
+```
+
 `getattr(node, "left")` reads the attribute named by a string, and `setattr` assigns it, so one piece of code handles both sides. Inserting a key that is already present does nothing: this tree stores each key once, like a set.
 
 The tree is perfectly balanced, with 50 at the root, 30 and 70 below it, and the rest as leaves. Finding 60 takes 3 comparisons (50, 70, 60); searching for the absent 65 also takes 3, falling off below 60. Search and insertion each follow one path from the root, so they cost O(height). For a balanced tree of n keys, the height is about log₂ n.
@@ -73,7 +84,7 @@ The tree is perfectly balanced, with 50 at the root, 30 and 70 below it, and the
 
 An inorder traversal visits the left subtree, then the node, then the right subtree. By the BST property, everything in the left subtree is smaller than the node and everything in the right is larger, and the same holds inside each subtree. So inorder visits the keys **in increasing order**: a BST is a sorted list in disguise. Here the traversal is written as a **generator**, which yields keys one at a time and can be stopped early. Predict before running: what will the first three keys be?
 
-```python
+```python type
 def inorder_keys(node):
     if node is not None:
         yield from inorder_keys(node.left)
@@ -92,6 +103,12 @@ def minimum(node):
 print("smallest:", minimum(tree.root))
 ```
 
+```output
+[20, 30, 40, 50, 60, 70, 80]
+first three: [20, 30, 40]
+smallest: 20
+```
+
 `yield from` hands on every value yielded by another generator, which is what makes the recursive generator work.
 
 The keys come out sorted, and the generator stops after three without visiting the rest. The minimum needs no traversal at all: keep going left. That is O(height), as is the maximum (keep going right).
@@ -106,7 +123,7 @@ Deleting a key has three cases, depending on how many children its node has:
 
 The recursive version below returns the new root of each subtree, so the parent can relink to it. Predict before running: after deleting 50 (the root, with two children), what is the new root?
 
-```python
+```python type
 def delete(node, key):
     if node is None:
         return None
@@ -131,6 +148,16 @@ for k in [20, 70, 50]:
 show(tree.root)
 ```
 
+```output
+after deleting 20: inorder [30, 40, 50, 60, 70, 80], root 50
+after deleting 70: inorder [30, 40, 50, 60, 80], root 50
+after deleting 50: inorder [30, 40, 60, 80], root 60
+     80
+60
+          40
+     30
+```
+
 Deleting 20 (a leaf) removes it; 70 has two children, so its successor 80 takes its place; deleting the root 50 moves its successor, 60, up to the root. After every deletion the inorder list is still sorted, which is the quickest check that the BST property survived. This `delete` assumes the key is present; the size update would need a check otherwise.
 
 ## Ordered queries
@@ -141,7 +168,7 @@ What a BST offers over a hash table is **order**. The **floor** of x (the larges
 
 Every operation costs O(height). Inserting keys in random order gives a height around 2 to 3 times log₂ n: good. But inserting keys in **sorted** order makes every new key the largest so far, so it goes to the right of the previous one: the tree becomes a linked list of height n − 1, and every operation O(n). Predict before running: what heights for 1,000 keys inserted in random order and in sorted order?
 
-```python
+```python type
 import random
 from collections import deque
 
@@ -165,6 +192,11 @@ for name, order in [("random order", random.sample(range(n), n)), ("sorted order
         t.insert(k)
     found, comparisons = t.search(n - 1)
     print(f"{name}: height {height_iterative(t.root)}, searching for the largest key takes {comparisons} comparisons")
+```
+
+```output
+random order: height 20, searching for the largest key takes 5 comparisons
+sorted order: height 999, searching for the largest key takes 1000 comparisons
 ```
 
 The height is computed level by level, without recursion, because the sorted tree is 1,000 levels deep, beyond Python's recursion limit.

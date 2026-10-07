@@ -14,7 +14,7 @@ This lesson covers:
 
 `time.perf_counter()` around a block gives a quick timing, but a single run is noisy: other programs, caches and memory allocation all vary. `timeit` runs a statement many times and reports the total, and taking the **best** of several repeats filters out interference. Compare alternatives on the same input, in the same way. Predict before running: how much faster is checking membership in a set than in a list of 20,000 items?
 
-```python
+```python type
 import timeit, random
 
 rng = random.Random(1)
@@ -38,7 +38,7 @@ The set is thousands of times faster here: each list lookup scans up to 20,000 i
 
 Timing tells you **how long**. A **profiler** tells you **where**. `cProfile` records every function call while code runs: how many times each function was called, the time spent inside it (`tottime`), and the time including everything it called (`cumtime`). `pstats` sorts and prints the results. Here is a stock report that is slower than it should be. Predict before reading the profile: which function takes most of the time?
 
-```python
+```python type
 import cProfile, pstats, io
 
 suppliers = [{"id": f"S{i}", "name": f"Supplier {i}"} for i in range(400)]
@@ -75,7 +75,7 @@ The profile points straight at `supplier_name`: it is called 6,000 times, and ea
 
 The biggest wins come from doing less work, not from doing the same work faster. Build a dictionary once, so each supplier lookup is a single step. While here, also replace repeated `+=` on a string with collecting lines and joining once. Then measure again, and check that the output is unchanged: an optimisation that changes the answer is a bug. Predict before running: how much of the speed-up comes from each change?
 
-```python
+```python type
 def stock_report_fast(orders):
     names = {s["id"]: s["name"] for s in suppliers}
     lines = []
@@ -109,7 +109,7 @@ The dictionary does almost all of the work. Joining instead of `+=` makes little
 
 For numeric loops, the largest constant-factor win is to move the loop out of Python entirely: NumPy runs whole-array operations in compiled code. Distances between many points are a typical case. Predict before running: how much faster is the NumPy version for 600 points?
 
-```python
+```python type
 import numpy as np, math
 
 points = [(rng.uniform(0, 100), rng.uniform(0, 100)) for _ in range(600)]

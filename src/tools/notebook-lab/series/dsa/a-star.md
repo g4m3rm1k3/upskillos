@@ -16,7 +16,7 @@ For each vertex v, A* tracks g(v), the length of the best route found from the s
 
 On a grid where each move costs 1 and moves are up, down, left or right, the natural heuristic is the **Manhattan distance**, |r₁ − r₂| + |c₁ − c₂|: the number of moves needed if there were no walls. Walls can only make the real distance longer, so it never overestimates. The map has a cup-shaped wall open towards the start: a trap for anything that heads blindly towards the goal. Predict before running: how many cells will Dijkstra settle compared with A*, and will they find routes of the same length?
 
-```python
+```python type
 import heapq
 
 grid = [
@@ -84,6 +84,37 @@ for name, h in [("Dijkstra (h = 0)", lambda cell: 0), ("A* (Manhattan)", lambda 
     draw(path, settled)
 ```
 
+```output
+Dijkstra (h = 0): route of 38 steps, 367 cells settled
+------------------------------
+*****************************-
+*-------#######-------------*-
+*-------------#-------------*-
+*-------------#-------------*-
+*-------------#-------------*-
+S-------------#-------------G.
+--------------#--------------.
+--------------#---------------
+--------------#---------------
+--------#######---------------
+------------------------------
+------------------------------
+A* (Manhattan): route of 38 steps, 141 cells settled
+..............................
+.......**********************.
+-------*#######.............*.
+-------*------#.............*.
+-------*------#.............*.
+-------*------#.............*.
+S*******------#.............G.
+--------------#...............
+--------------#...............
+--------------#...............
+--------#######...............
+..............................
+..............................
+```
+
 Settled cells are drawn as `-` and the route as `*`. Heap entries are `(f, -g, cell)`: when two entries have the same f, the one with the **larger** g, further along its route, is popped first. Many cells tie on f, and preferring the ones nearest the goal stops A* settling all of them; any tie-breaking keeps the result correct, but this one saves a lot of work.
 
 Both find a route of the same, shortest, length: 38 steps. Dijkstra settles almost the whole grid, 367 cells, spreading out in every direction it can. A* settles 141: it ignores the far corners of the map, and although it does wander into the cup (the heuristic cannot see walls, so every cell inside looks promising), it gets out and round the wall with far less searching. The heuristic made the search **directed**.
@@ -96,7 +127,7 @@ The best admissible heuristic is the one closest to the truth: the closer h is t
 
 What if the heuristic **overestimates**? Then A* may pop the goal through a route that looks better than it is, and stop with a non-optimal path. Overweighting the heuristic on purpose (f = g + w·h with w > 1, "weighted A*") is sometimes done deliberately to trade optimality for speed. **Greedy best-first search** goes all the way, ordering by h alone and ignoring g. Predict before running: how do the route lengths and the work compare?
 
-```python
+```python type
 for name, h in [("A*, h exact Manhattan", lambda cell: manhattan(cell, goal)),
                 ("weighted A*, 3 × Manhattan", lambda cell: 3 * manhattan(cell, goal)),
                 ("greedy, h only", None)]:
@@ -122,6 +153,12 @@ for name, h in [("A*, h exact Manhattan", lambda cell: manhattan(cell, goal)),
     print(f"{name:<28} route {len(path) - 1:>2} steps, settled {len(settled):>3} cells")
 ```
 
+```output
+A*, h exact Manhattan        route 38 steps, settled 141 cells
+weighted A*, 3 × Manhattan   route 38 steps, settled 117 cells
+greedy, h only               route 50 steps, settled  97 cells
+```
+
 Greedy search keeps no record of g at all: it simply heads for whatever looks closest to the goal and remembers the first way it reached each cell.
 
 Weighted A* settles only 117 cells and here still finds a 38-step route, though it is no longer guaranteed to. Greedy search settles the fewest, 97, but returns a 50-step route: it charged into the cup, and the first way it found round the wall from there is 12 steps longer. Whether that matters depends on the application; a game character that walks a slightly odd route is fine, a delivery route that costs more fuel every day is not.
@@ -130,7 +167,7 @@ Weighted A* settles only 117 cells and here still finds a 38-step route, though 
 
 A* is not just for maps. In the **8-puzzle**, eight numbered tiles slide around a 3 × 3 frame with one gap; the goal is to arrange them in order. Each arrangement is a vertex and each slide an edge: an implicit graph of 181,440 reachable states. The heuristic is the sum of the Manhattan distances of every tile from its home square: every slide moves one tile by one square, so at least that many slides are needed, and it is admissible. Predict before running: how many states will A* examine to solve this scrambled puzzle, compared with BFS?
 
-```python
+```python type
 from collections import deque
 
 goal_state = (1, 2, 3, 4, 5, 6, 7, 8, 0)
@@ -182,6 +219,11 @@ def solve_bfs(state):
 scrambled = (8, 6, 7, 2, 5, 4, 3, 0, 1)
 print("A*:  moves, states examined =", solve_astar(scrambled))
 print("BFS: moves, states discovered =", solve_bfs(scrambled))
+```
+
+```output
+A*:  moves, states examined = (31, 21198)
+BFS: moves, states discovered = (31, 181440)
 ```
 
 States are tuples, so they can be dictionary keys; the gap is 0. `divmod(gap, 3)` gives the gap's row and column.

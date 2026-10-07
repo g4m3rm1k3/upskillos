@@ -10,12 +10,19 @@ A yes-or-no answer in Python is one of two special values, `True` or `False`. To
 
 You rarely type `True` or `False` directly. Usually they come from a **comparison**, which asks a question about two values:
 
-```python
+```python type
 age = 20
 print(age > 18)
 print(age < 18)
 print(age == 20)
 print(type(age > 18))
+```
+
+```output
+True
+False
+True
+<class 'bool'>
 ```
 
 The comparison operators are:
@@ -28,31 +35,49 @@ The most important one to get right is `==`. A single `=` is assignment, which y
 
 Comparisons work on strings too. `==` checks that two strings are exactly the same, character for character, and remember that capital letters count. `<` and `>` compare strings in alphabetical order, as long as the letters are the same case. Mix cases and you may be surprised: Python puts every capital letter before every lowercase letter, so `"Zebra" < "apple"` is `True`. To compare words alphabetically regardless of case, compare their `.lower()` versions.
 
-```python
+```python type
 print("apple" == "apple")
 print("Apple" == "apple")
 print("apple" < "banana")
 print("Zebra" < "apple")
 ```
 
+```output
+True
+False
+True
+True
+```
+
 The `in` operator asks whether one string appears inside another:
 
-```python
+```python type
 email = "ada@example.com"
 print("@" in email)
 print("gmail" in email)
+```
+
+```output
+True
+False
 ```
 
 ## The if statement
 
 An `if` statement runs a block of code only when a condition is `True`.
 
-```python
+```python type
 temperature = 31
 if temperature > 30:
     print("It's hot today.")
     print("Remember to drink water.")
 print("Have a nice day.")
+```
+
+```output
+It's hot today.
+Remember to drink water.
+Have a nice day.
 ```
 
 Read it like English: *if the temperature is greater than 30, print these two lines*. Then, whatever happened, print "Have a nice day." Change `temperature` to 20 and run it again: the first two lines are skipped, but the last one still prints.
@@ -87,7 +112,7 @@ Python refuses to run it. An assignment is not a question, so it cannot be a con
 
 Often you want one thing to happen if the condition is true and something different if it is false. That is what `else` is for.
 
-```python
+```python type
 balance = 40
 price = 55
 if balance >= price:
@@ -98,6 +123,11 @@ else:
 print("Balance:", balance)
 ```
 
+```output
+Not enough money.
+Balance: 40
+```
+
 Exactly one of the two blocks runs, never both and never neither. `else` has no condition of its own; it simply catches every case the `if` did not. Try setting `balance` to 100 and running the cell again.
 
 ## elif: choosing between several options
@@ -106,7 +136,7 @@ Some decisions have more than two outcomes. `elif`, short for "else if", adds mo
 
 Predict the output before running: which grade is 72?
 
-```python
+```python type
 mark = 72
 if mark >= 90:
     grade = "A"
@@ -121,11 +151,15 @@ else:
 print("Grade:", grade)
 ```
 
+```output
+Grade: C
+```
+
 72 is a C. Python checks the conditions **in order, from the top**, and runs the block of the **first** one that is true. Then it skips all the rest, including the `else`. A mark of 72 fails `>= 90` and `>= 80`, passes `>= 70`, and the remaining conditions are never even checked.
 
 That is why the order matters. 72 is also `>= 60`, so it would earn a D if that line came first. Checking from the highest mark down means each condition only has to handle what the ones above it did not catch. Here is what happens with the order reversed:
 
-```python
+```python type
 mark = 95
 if mark >= 60:
     grade = "D"
@@ -134,6 +168,10 @@ elif mark >= 90:
 else:
     grade = "F"
 print("Grade:", grade)
+```
+
+```output
+Grade: D
 ```
 
 A mark of 95 gets a D, because `mark >= 60` is the first true condition and wins. When conditions overlap, put the most specific one first.
@@ -146,7 +184,7 @@ Some questions have more than one part. Python has three words for combining con
 - `a or b` is true if **at least one** is true.
 - `not a` is true if `a` is false, and false if `a` is true.
 
-```python
+```python type
 age = 25
 has_ticket = True
 print(age >= 18 and has_ticket)
@@ -154,33 +192,52 @@ print(age < 12 or age >= 65)
 print(not has_ticket)
 ```
 
+```output
+True
+False
+False
+```
+
 When one condition mixes `and` and `or`, Python works out the `and` first, the way multiplication is worked out before addition. `a or b and c` means `a or (b and c)`. Rather than relying on that rule, add parentheses whenever you mix the two, so the meaning is obvious to anyone reading:
 
-```python
+```python type
 is_weekend = False
 is_holiday = True
 is_raining = False
 print((is_weekend or is_holiday) and not is_raining)
 ```
 
+```output
+True
+```
+
 A common use of `and` is checking that a number lies in a range. Python lets you write this the way a mathematician would, by chaining the comparisons:
 
-```python
+```python type
 level = 7
 print(level >= 1 and level <= 10)
 print(1 <= level <= 10)
+```
+
+```output
+True
+True
 ```
 
 Both lines ask the same question; the second is shorter and reads like maths.
 
 There is one trap with `or` that catches nearly everyone once. Suppose you want to know whether a word is either "yes" or "y". This looks right but is wrong. Predict what it prints for the word "no".
 
-```python
+```python type
 answer = "no"
 if answer == "yes" or "y":
     print("You said yes.")
 else:
     print("You said no.")
+```
+
+```output
+You said yes.
 ```
 
 It prints "You said yes.", even though the answer was "no". Python reads the condition as `(answer == "yes") or ("y")`: it does not repeat `answer ==` for you. The first part is false, so it looks at the second part, which is just the string `"y"`, and Python treats any non-empty string as true (more on that in the next section). Each side of an `or` must be a complete question: `answer == "yes" or answer == "y"`.
@@ -189,14 +246,19 @@ It prints "You said yes.", even though the answer was "no". Python reads the con
 
 Python lets you use any value as a condition, not only `True` and `False`. Values that count as false are the "empty" or "zero" ones: `0`, `0.0` and the empty string `""`. Almost everything else counts as true. This is called **truthiness**, and the function `bool()` shows how Python sees a value:
 
-```python
+```python type
 print(bool(0), bool(42), bool(-1))
 print(bool(""), bool("hello"), bool(" "))
 ```
 
+```output
+False True True
+False True True
+```
+
 Note that `" "`, a string containing a single space, is true: it is not empty. Truthiness gives a short way to check whether a string has anything in it:
 
-```python
+```python type
 name = ""
 if name:
     print(f"Hello, {name}!")
@@ -204,14 +266,22 @@ else:
     print("You didn't enter a name.")
 ```
 
+```output
+You didn't enter a name.
+```
+
 ## Choosing a value in one line
 
 When a decision only picks between two values, Python has a compact form called a **conditional expression**: `value_if_true if condition else value_if_false`.
 
-```python
+```python type
 count = 1
 label = "item" if count == 1 else "items"
 print(count, label)
+```
+
+```output
+1 item
 ```
 
 It is exactly equivalent to a four-line `if`/`else` that assigns `label`, but reads naturally when the choice is simple. For anything longer, use a normal `if` statement.
@@ -220,10 +290,15 @@ It is exactly equivalent to a four-line `if`/`else` that assigns `label`, but re
 
 In lesson 2 you saw that floats are stored slightly inexactly, so `0.1 + 0.2` is `0.30000000000000004`. Now you can see why that matters for decisions:
 
-```python
+```python type
 total = 0.1 + 0.2
 print(total == 0.3)
 print(abs(total - 0.3) < 1e-9)
+```
+
+```output
+False
+True
 ```
 
 `total == 0.3` is `False`. The safe way to compare two floats is to ask whether they are **close**: whether the size of their difference is smaller than some tiny amount. Here that amount is `1e-9`, which is scientific notation for 0.000000001. The difference is far smaller than that, so the second comparison is `True`.

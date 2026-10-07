@@ -12,7 +12,7 @@ Two versions differ in what counts when a state is visited more than once in an 
 
 The environment below is the slippery grid world, now offering only a `reset` and a `step`: the agent never looks inside the model, it only experiences outcomes.
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -66,6 +66,16 @@ for r in range(SIZE):
     print("  " + " ".join(f"{estimate[(r, c)]:6.1f}" if (r, c) in estimate and (r, c) not in terminal else "     ." for c in range(SIZE)))
 ```
 
+```output
+Monte Carlo estimate of the random policy's value at the start: -12.85 (from 3000 episodes)
+exact value with γ = 0.95, from the MDP lesson's Bellman-equation solver: -12.83
+estimated values (blank: never visited or terminal):
+   -12.8  -12.2  -12.7  -13.1
+   -12.0      .  -11.2  -11.8
+   -11.8  -10.2   -9.2      .
+   -11.4   -9.2   -4.2      .
+```
+
 The returns are computed backwards through the episode with G ← r + γG, exactly as in the returns-to-go challenge. Because the loop runs backwards, a state visited twice has its dictionary entry overwritten by the **earlier** visit's return, which is the first-visit return. Each state's returns are then averaged.
 
 From 3,000 episodes of random play, the estimate for the start square is −12.85, against the exact −12.83 that the MDP lesson's `evaluate` gives for this policy with γ = 0.95 (that lesson printed the γ = 1 value, −18.3). Monte Carlo got there without ever seeing a transition probability. The price is data: an estimate is only as good as the number of episodes that passed through the state, and its error shrinks like 1/√(number of visits).
@@ -82,7 +92,7 @@ Learning Q while acting creates the bandit lesson's dilemma in every state: if t
 
 This is **on-policy Monte Carlo control**. Before running, predict: after 10,000 episodes, will the greedy policy from the learned Q match the optimal policy computed by dynamic programming?
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -142,6 +152,17 @@ learned = {s: int(np.argmax(Q[s])) for s in optimal}
 print(f"learned greedy action matches the optimal one in {sum(learned[s] == optimal[s] for s in optimal)} of {len(optimal)} squares")
 for r in range(SIZE):
     print("  " + " ".join("G" if (r, c) == GOAL else "X" if (r, c) in PITS else ARROWS[learned[(r, c)]] for c in range(SIZE)))
+```
+
+```output
+after   100 episodes: best Q at the start -11.14
+after  1000 episodes: best Q at the start -2.69
+after 10000 episodes: best Q at the start -0.69
+learned greedy action matches the optimal one in 12 of 13 squares
+  v > v v
+  v X v <
+  v v v X
+  > > > G
 ```
 
 `optimal` holds the actions found by value iteration in the dynamic programming lesson for this world (slip 0.2, γ = 0.95), for comparison only: the learner never sees it. `rng.random(4) * 1e-9` breaks ties randomly, since every Q starts at 0.

@@ -5,7 +5,7 @@ import { expect, it, vi } from 'vitest';
 vi.mock('../../components/math/MarkdownProse.jsx', () => ({ default: ({ text }) => <p>{text}</p> }));
 import LessonPanel from './LessonPanel.jsx';
 import { TRACKS } from './trackLoader.js';
-import { EpsilonSplit, UpdateTrace, RateUncertainty } from './figures/dice.jsx';
+import { EpsilonSplit, UpdateTrace, RateUncertainty, SixFutures } from './figures/dice.jsx';
 
 async function inView(test) {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -14,6 +14,26 @@ async function inView(test) {
   try { await test(root, host); }
   finally { await act(async () => root.unmount()); host.remove(); delete globalThis.IS_REACT_ACT_ENVIRONMENT; }
 }
+
+it('enumerates independent futures and hides the answer again when the starting pot changes', async () => {
+  await inView(async (root, host) => {
+    await act(async () => root.render(<SixFutures />));
+    expect(host.querySelector('output')).toBeNull();
+    const pots = () => [...host.querySelectorAll('tbody tr')].map(row => row.children[1].textContent);
+    expect(pots()).toEqual(['0', '7', '8', '9', '10', '11']);
+    await act(async () => host.querySelector('button').click());
+    expect(host.querySelector('output').textContent).toContain('Expected pot: 7.5. Expected change: 2.5.');
+    const slider = host.querySelector('input');
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(slider, '2');
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(host.querySelector('output')).toBeNull();
+    expect(pots()).toEqual(['0', '4', '5', '6', '7', '8']);
+    await act(async () => host.querySelector('button').click());
+    expect(host.querySelector('output').textContent).toContain('Expected pot: 5. Expected change: 3.');
+  });
+});
 
 it('shows the actual file diff without opening an optional reference and updates as the learner types', async () => {
   await inView(async (root, host) => {

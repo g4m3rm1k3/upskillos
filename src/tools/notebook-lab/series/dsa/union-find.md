@@ -18,7 +18,7 @@ It is tiny (two lists and a dozen lines) and one of the best examples of how two
 
 Store each group as a tree, with one array: `parent[x]` is the item x points to, and the **root** of each tree points to itself. The root is the group's representative. `find(x)` follows parent pointers until it reaches a root. `union(x, y)` finds both roots and, if they differ, makes one point to the other. Predict before running: after the unions below, which items are in 0's group, and how deep is the tree?
 
-```python
+```python type
 class NaiveUnionFind:
     def __init__(self, n):
         self.parent = list(range(n))
@@ -45,6 +45,18 @@ for x in range(8):
     print(f"find({x}) = {root} after {steps} steps")
 ```
 
+```output
+parent: [1, 3, 3, 6, 5, 5, 6, 7]
+find(0) = 6 after 3 steps
+find(1) = 6 after 2 steps
+find(2) = 6 after 2 steps
+find(3) = 6 after 1 steps
+find(4) = 5 after 1 steps
+find(5) = 5 after 0 steps
+find(6) = 6 after 0 steps
+find(7) = 7 after 0 steps
+```
+
 `list(range(n))` starts every item as its own root: n groups of one.
 
 Items 0, 1, 2, 3 and 6 end up in one group with root 6, and 4 and 5 in another; 7 is alone. But the tree is already getting tall: finding 0 takes 3 steps, along 0 → 1 → 3 → 6. Unions that always hang one root under the other can build a chain of length n, making `find` O(n). Two tricks prevent that.
@@ -57,7 +69,7 @@ Items 0, 1, 2, 3 and 6 end up in one group with root 6, and 4 and 5 in another; 
 
 Together they make the trees almost flat. Predict before running: building one group from 2,000 items with unions that would form a long chain, how many steps does the slowest `find` take in each version?
 
-```python
+```python type
 import random
 
 class UnionFind:
@@ -108,6 +120,12 @@ for x in range(n):
 print("after random unions and one find on every item: deepest", max(depth(smart2.parent, x) for x in range(n)), "steps; groups:", smart2.groups)
 ```
 
+```output
+naive: deepest item 1999 steps
+union by size: deepest item 1 steps; groups left: 1
+after random unions and one find on every item: deepest 1 steps; groups: 6
+```
+
 `self.parent[x], x = root, self.parent[x]` points x at the root and moves on to x's old parent in one line: the right-hand side is evaluated first, so x's old parent is remembered before it is overwritten. `union` returns whether a merge happened, which the cycle-detection example below uses.
 
 The naive version builds a chain of depth 1,999. Union by size keeps every item within one step of its root, because each new item joins the big tree directly. After thousands of random unions and a pass of `find`, path compression has flattened everything to depth at most 1. The formal result is that a sequence of m operations takes O(m α(n)) time, where α is the **inverse Ackermann function**, a function that grows so slowly that α(n) ≤ 4 for any n that could ever be stored. In practice, each operation is constant time.
@@ -116,7 +134,7 @@ The naive version builds a chain of depth 1,999. Union by size keeps every item 
 
 Each successful union merges two groups into one, so the number of groups is n minus the number of successful unions, kept in `groups`. That answers questions like "after which connection did the network become fully connected?" in one pass over the connections. Predict before running: after which cable are all 6 computers connected?
 
-```python
+```python type
 cables = [(0, 1), (2, 3), (1, 2), (0, 3), (4, 5), (3, 5)]
 network = UnionFind(6)
 for step, (a, b) in enumerate(cables, start=1):
@@ -126,6 +144,16 @@ for step, (a, b) in enumerate(cables, start=1):
     if network.groups == 1:
         print("all connected after cable", step)
         break
+```
+
+```output
+cable 1 0-1: merged two groups; groups now 5
+cable 2 2-3: merged two groups; groups now 4
+cable 3 1-2: merged two groups; groups now 3
+cable 4 0-3: already connected: this cable makes a loop; groups now 3
+cable 5 4-5: merged two groups; groups now 2
+cable 6 3-5: merged two groups; groups now 1
+all connected after cable 6
 ```
 
 A union that finds both items already in the same group means the new edge closes a **cycle**: there was already a path between them.

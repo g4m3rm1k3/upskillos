@@ -15,7 +15,7 @@ This lesson covers:
 
 A machine controller has a `mode` string and methods for each button. Each method checks the mode. Predict before reading on: if a "fault" mode is added, how many methods change, and what stops someone forgetting one?
 
-```python
+```python type
 class Controller:
     def __init__(self):
         self.mode = "idle"
@@ -47,13 +47,18 @@ c.start()
 print("after a typo, start did nothing; mode =", c.mode)
 ```
 
+```output
+final mode: idle
+after a typo, start did nothing; mode = runing
+```
+
 Every method contains its own picture of all the modes, and they already disagree. Starting while running silently does nothing, while pausing while idle raises. A fault mode means editing all four methods. And the mode is a plain string: the typo `"runing"` makes the controller stuck in a mode no method knows, with no error at all. The rules about which moves are legal (the most important thing about the machine) are spread across every method and written down nowhere as a whole.
 
 ## States as data: a transition table
 
 Write the rules down in one place. A **finite-state machine** has a fixed set of states, a fixed set of events, and a table saying, for each `(state, event)` pair, which state comes next. Any pair missing from the table is an illegal move. The table **is** the specification: it can be printed, checked and tested on its own. Predict before running: which event in the sequence is rejected, and what state is the machine left in?
 
-```python
+```python type
 TRANSITIONS = {
     ("idle", "start"): "running",
     ("running", "pause"): "paused",
@@ -88,6 +93,12 @@ states = sorted({s for s, _ in TRANSITIONS} | set(TRANSITIONS.values()))
 print("states:", states, " events allowed when idle:", sorted(e for s, e in TRANSITIONS if s == "idle"))
 ```
 
+```output
+rejected: 'start' is not allowed when fault
+idle -> running -> paused -> running -> fault -> idle -> running
+states: ['fault', 'idle', 'paused', 'running']  events allowed when idle: ['fault', 'start']
+```
+
 Because the table is data, the program can answer questions about it: which states exist, and which events are allowed in a given state. That is how a user interface could grey out buttons that do nothing right now.
 
 `start` while in fault is rejected, and the machine stays in fault until `reset`. Adding the fault mode was four new lines in the table and no change to any code. When the states differ only in **which moves are legal**, a table is the whole solution, and it is usually the right one in Python.
@@ -96,7 +107,7 @@ Because the table is data, the program can answer questions about it: which stat
 
 Often each state also **behaves** differently, beyond deciding the next state. A label printer accepts jobs in every mode, but what happens to a job depends on the mode: an idle printer prints it at once, a busy one queues it, a jammed one holds it and reports the jam. Now each state needs its own code. The state pattern gives each state a class with a method per event. The context, the `Printer`, holds the current state object and passes each event to it, and the state does the work and switches the context to the next state. Predict before running: in what order are the three jobs printed?
 
-```python
+```python type
 class Idle:
     def submit(self, printer, job):
         printer.start(job)
@@ -156,6 +167,10 @@ p.clear(); p.finish(); p.finish(); p.finish()
 print("printed:", p.done, " state:", type(p.state).__name__, " messages:", p.messages)
 ```
 
+```output
+printed: ['label A', 'label B', 'label C']  state: Idle  messages: ['jammed: label C is waiting']
+```
+
 `Printer`'s methods contain no `if` on the mode at all: each just hands the event to its state. Everything a jammed printer does is in `Jammed`, and nowhere else.
 
 Label A prints first. B and C are queued (C while the printer was jammed, with a message), and after the jam is cleared they print in the order they arrived. The printer ends idle. A new state such as `OutOfLabels` would be one new class: every other state stays untouched.
@@ -164,7 +179,7 @@ Label A prints first. B and C are queued (C while the printer was jammed, with a
 
 Changing state often comes with work: starting a running state turns the spindle on, leaving it turns the spindle off, entering a fault state raises an alarm. If those actions are attached to **transitions** (to each event that can lead somewhere), they get copied: every route into the running state must remember to start the spindle. Attaching them to the **states** instead, as **entry** and **exit** actions, means each is written once. One `transition_to` method calls the old state's exit action, switches, then calls the new state's entry action, whatever event caused the change. Predict before running: how many times is the spindle switched on and off?
 
-```python
+```python type
 class State:
     name = "?"
     def enter(self, machine): pass
@@ -205,6 +220,10 @@ m = Machine()
 for event in ["start", "stop", "start", "fault", "reset"]:
     m.handle(event)
 print(m.log)
+```
+
+```output
+['idle -> running', 'spindle on', 'spindle off', 'running -> idle', 'idle -> running', 'spindle on', 'spindle off', 'running -> fault', 'ALARM', 'fault -> idle']
 ```
 
 This version combines both ideas: a table decides **which** state comes next, and state objects decide what happens on the way in and out.

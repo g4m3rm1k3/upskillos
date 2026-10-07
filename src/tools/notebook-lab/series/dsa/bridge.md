@@ -19,7 +19,7 @@ The composition lesson met this explosion with robots (tools × drives). Bridge 
 
 A canvas offers the primitives, `line(x1, y1, x2, y2)` and `circle(cx, cy, r)`, and a `result()` with the finished output. Three canvases produce three completely different outputs from the same calls. Predict before running: what does a pen plotter need that SVG does not?
 
-```python
+```python type
 import math
 
 class SvgCanvas:
@@ -62,6 +62,12 @@ for canvas in [SvgCanvas(), PlotterCanvas(), CountingCanvas()]:
     print(type(canvas).__name__, "->", canvas.result().replace("\n", " | "))
 ```
 
+```output
+SvgCanvas -> <svg><line x1="0" y1="0" x2="30" y2="0"/><circle cx="15" cy="10" r="5"/></svg>
+PlotterCanvas -> PU | G0 X0 Y0 | PD | G1 X30 Y0 | PU | G0 X20 Y10 | PD | G2 X20 Y10 I-5 J0 | PU
+CountingCanvas -> 61.4 mm of pen travel
+```
+
 `PU` and `PD` lift and lower the plotter's pen. `G2 ... I J` is a full circle drawn clockwise around a centre given relative to the start point.
 
 A plotter must lift the pen, travel to the start of each stroke, and put it down again: a detail SVG never needs. The `CountingCanvas` does not draw at all. It measures how much ink a drawing will use, which shows that an "implementation" can be anything that honours the primitive interface.
@@ -70,7 +76,7 @@ A plotter must lift the pen, travel to the start of each stroke, and put it down
 
 Each shape is constructed with the canvas it will draw on, the **bridge** between the two sides, and draws itself only through `line` and `circle`. A rectangle is four lines, a circle is one circle, and a gear outline is a circle with lines for teeth. No shape knows which canvas it has. Predict before running: how many classes would the same result need with one subclass per combination?
 
-```python
+```python type
 class Shape:
     def __init__(self, canvas):
         self.canvas = canvas
@@ -114,6 +120,13 @@ print(draw_part(SvgCanvas())[:120], "...")
 print(draw_part(PlotterCanvas()).splitlines()[:7], "...")
 print(draw_part(CountingCanvas()))
 print("classes with a bridge:", 3 + 3, "  with one subclass per combination:", 3 * 3)
+```
+
+```output
+<svg><line x1="0" y1="0" x2="40" y2="0"/><line x1="40" y1="0" x2="40" y2="20"/><line x1="40" y1="20" x2="0" y2="20"/><li ...
+['PU', 'G0 X0 Y0', 'PD', 'G1 X40 Y0', 'PU', 'G0 X40 Y0', 'PD'] ...
+182.6 mm of pen travel
+classes with a bridge: 6   with one subclass per combination: 9
 ```
 
 `Gear` refines `Circle` on the abstraction side: it is a circle plus teeth, drawn using the same two primitives. It works on every canvas without any canvas knowing gears exist.

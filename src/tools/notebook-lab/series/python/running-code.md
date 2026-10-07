@@ -18,8 +18,12 @@ Here is a complete Python program. It is one line long.
 
 Before you run it, predict: what will appear underneath? Will the quotation marks be part of it?
 
-```python
+```python type
 print("Hello, world!")
+```
+
+```output
+Hello, world!
 ```
 
 The output is `Hello, world!` without the quotation marks. Here is how Python read that line, piece by piece:
@@ -36,10 +40,16 @@ A program with several lines runs them one at a time, from the top down. Each `p
 
 Predict the output of this cell, in order, before you run it.
 
-```python
+```python type
 print("First, put on your socks.")
 print("Then put on your shoes.")
 print("Now go outside.")
+```
+
+```output
+First, put on your socks.
+Then put on your shoes.
+Now go outside.
 ```
 
 The lines appear in exactly the order they were written. This sounds too obvious to mention, but it is the first rule of reading any program: to know what a program does, read it from the top, one line at a time, and ask what each line does. Swap the first two lines and run the cell again: Python will happily tell you to put your shoes on before your socks. It follows the order you wrote, not the order that makes sense.
@@ -50,9 +60,14 @@ Python treats text and numbers differently, and this difference is behind a larg
 
 Predict: will both lines print the same thing?
 
-```python
+```python type
 print(2 + 3)
 print("2 + 3")
+```
+
+```output
+5
+2 + 3
 ```
 
 The first line prints `5`. Without quotation marks, `2 + 3` is an **expression**: something Python calculates. Python works out the value first, and then `print` shows the result. The second line prints `2 + 3` exactly as written, because the quotation marks turn it into text, and text is shown as it is, character for character. Python does not look inside a string to see whether it happens to contain arithmetic.
@@ -63,12 +78,20 @@ So quotation marks are not decoration. They change what the code means: with quo
 
 Python can do all the arithmetic you would do on a calculator. The symbols are close to the ones you already know, with two differences: multiplication is `*` (an asterisk, not the letter x), and division is `/`.
 
-```python
+```python type
 print(7 + 5)
 print(7 - 5)
 print(7 * 5)
 print(7 / 5)
 print(7 ** 2)
+```
+
+```output
+12
+2
+35
+1.4
+49
 ```
 
 The last line uses `**`, which means "to the power of": `7 ** 2` is 7 squared, 49. You may also notice that `7 / 5` gives `1.4`, a number with a decimal point. Division in Python always produces a decimal number, even when the answer is whole: `10 / 2` gives `5.0`, not `5`. The next lesson explains why Python keeps these two kinds of number apart.
@@ -77,9 +100,14 @@ Python follows the order of operations you learned in school: powers first, then
 
 Predict both results before you run this cell. Is the first one 20 or 14?
 
-```python
+```python type
 print(2 + 3 * 4)
 print((2 + 3) * 4)
+```
+
+```output
+14
+20
 ```
 
 The first is `14`, because the multiplication `3 * 4` happens before the addition. The second is `20`, because the parentheses make the addition happen first. When you are not sure what order Python will use, add parentheses. They cost nothing and make your intention obvious to anyone reading the code, including you a week from now.
@@ -88,10 +116,16 @@ The first is `14`, because the multiplication `3 * 4` happens before the additio
 
 You can hand `print` several things at once by separating them with commas. It prints them on one line with a single space between each. This is the easiest way to label a result, so that the output says what the number means.
 
-```python
+```python type
 print("Minutes in a day:", 24 * 60)
 print("Days in four weeks:", 4 * 7)
 print(1, 2, 3, "go!")
+```
+
+```output
+Minutes in a day: 1440
+Days in four weeks: 28
+1 2 3 go!
 ```
 
 Notice that the calculations still happen: `24 * 60` has no quotation marks, so Python works it out and prints `1440`. The labels are in quotation marks, so they are printed exactly as written. One `print` can mix text and numbers freely this way. The last line prints `1 2 3 go!`: the spaces between the items were not in your code. `print` puts one space between each thing you give it.
@@ -100,10 +134,14 @@ Notice that the calculations still happen: `24 * 60` has no quotation marks, so 
 
 Any text after a `#` on a line is a **comment**, and Python ignores it completely. (The one exception: a `#` inside quotation marks is just part of the text, so `print("Item #1")` prints `Item #1`.) Comments are for people: they explain what code is for, or why it is written the way it is.
 
-```python
+```python type
 # This whole line is a comment, so Python skips it.
 print("Comments are ignored.")  # A comment can also follow code on the same line.
 # print("This line is commented out, so it does not run.")
+```
+
+```output
+Comments are ignored.
 ```
 
 Only one line of output appears. The last line shows a trick you will use constantly: putting `#` in front of a line of code switches it off without deleting it. Remove that `#` and run the cell again to switch the line back on.
@@ -114,10 +152,14 @@ A notebook has one convenience that is worth knowing about now so that it does n
 
 Predict: this cell has three calculations and no `print`. How many results will you see?
 
-```python
+```python type
 2 + 2
 10 * 10
 3 * 3 * 3
+```
+
+```output
+27
 ```
 
 Only `27` appears: the value of the last line. The first two lines are calculated and then thrown away, because nothing asked for them to be shown. This is a convenience of notebooks. In a Python program saved as a file and run on its own, nothing appears unless you `print` it. So whenever you want to see a result, `print` it; that always works.

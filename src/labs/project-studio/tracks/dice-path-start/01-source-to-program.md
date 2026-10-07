@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Create, compile and run a C++ program, then explain why an old executable ignores a source edit.
+
+**Recall before looking at code:** What information did the game display? Choose one line your own program could print.
+
 In the preview, the game could print a score. Here you make the first piece yourself: an executable that prints the game's name. By the end you can explain why editing source does not change a program you already compiled. No C++ knowledge is assumed.
 
 ## Choose a project folder and find the terminal

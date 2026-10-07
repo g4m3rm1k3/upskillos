@@ -24,7 +24,7 @@ The **partial derivative** ∂f/∂x is the derivative of f with respect to x wi
 
 For the plate temperature T(x, y) = 20 + 160 e^(−r²/(2s²)) with r² = (x − 300)² + (y − 200)², the chain rule gives ∂T/∂x = −(x − 300)/s² × (T − 20). Predict before running: at the point (400, 250), is the plate getting hotter or colder as x increases, and which partial is larger in size?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +42,13 @@ px, py, h = 400.0, 250.0, 1e-4
 print(f"at (400, 250): T = {T(px, py):.2f} °C")
 print(f"∂T/∂x = {Tx_f(px, py):.4f} °C/mm (numerical {(T(px + h, py) - T(px - h, py)) / (2 * h):.4f})")
 print(f"∂T/∂y = {Ty_f(px, py):.4f} °C/mm (numerical {(T(px, py + h) - T(px, py - h)) / (2 * h):.4f})")
+```
+
+```output
+∂T/∂x = 8*(300 - x)*exp(-(x - 300)**2/16200 - (y - 200)**2/16200)/405
+at (400, 250): T = 93.96 °C
+∂T/∂x = -0.9131 °C/mm (numerical -0.9131)
+∂T/∂y = -0.4566 °C/mm (numerical -0.4566)
 ```
 
 `sp.diff(T_expr, x)` differentiates with respect to x, treating y as a constant.
@@ -65,7 +72,7 @@ The **gradient** ∇f = (∂f/∂x, ∂f/∂y) combines both partials into a vec
 
 On a map of the plate, arrows of ∇T point straight inwards across the isotherms, towards the hot spot, longest where the isotherms crowd together. Predict before running: in which direction is the plate getting hotter fastest at (400, 250), and how fast?
 
-```python
+```python type
 gx, gy = Tx_f(px, py), Ty_f(px, py)
 grad = np.array([gx, gy])
 print(f"gradient ({gx:.4f}, {gy:.4f}), steepest rise {np.linalg.norm(grad):.4f} °C/mm towards {math.degrees(math.atan2(gy, gx)):.1f}°")
@@ -86,6 +93,14 @@ ax.set_title("isotherms and the gradient field")
 plt.show()
 ```
 
+```output
+gradient (-0.9131, -0.4566), steepest rise 1.0209 °C/mm towards -153.4°
+direction to the hot spot: -153.4°
+directional derivative east: -0.9131 °C/mm
+directional derivative north: -0.4566 °C/mm
+directional derivative along the isotherm: +0.0000 °C/mm
+```
+
 `X[::8, ::8]` takes every eighth grid point so the arrows do not overlap.
 
 The steepest rise points at −153.4° (that is, 206.6°), exactly towards the hot spot, at about 1.02 °C/mm. East and north give the partials themselves (the components of the gradient), and along the isotherm the directional derivative is zero, as it must be. The arrow field shows the gradient everywhere: perpendicular to every isotherm, longest in the ring where they crowd, and tiny near the centre and far away.
@@ -104,7 +119,7 @@ A thermal camera gives temperatures on a grid of pixels, not a formula. `np.grad
 
 Heat flows from hot to cold, down the gradient. **Fourier's law** makes it quantitative: the heat flux (power per unit area through the material) is q = −k ∇T, where k is the thermal conductivity (about 50 W/(m·K) for steel). Predict before running: where on the plate is the heat flux largest, and how large?
 
-```python
+```python type
 dx_m, dy_m = (xs[1] - xs[0]) / 1000, (ys[1] - ys[0]) / 1000
 TT = T(X, Y)
 dT_dy, dT_dx = np.gradient(TT, dy_m, dx_m)
@@ -115,6 +130,11 @@ r_peak = math.hypot(xs[i] - 300, ys[j] - 200)
 print(f"largest heat flux {flux[j, i] / 1000:.1f} kW/m² at ({xs[i]:.0f}, {ys[j]:.0f}) mm, {r_peak:.0f} mm from the centre")
 exact = Tx_f(400.0, 250.0) * 1000
 print(f"∂T/∂x at (400, 250): np.gradient {dT_dx[50, 80]:.1f} K/m, exact {exact:.1f} K/m")
+```
+
+```output
+largest heat flux 53.9 kW/m² at (300, 110) mm, 90 mm from the centre
+∂T/∂x at (400, 250): np.gradient -912.3 K/m, exact -913.1 K/m
 ```
 
 Spacings are converted to metres so the gradient is in kelvin per metre and the flux in W/m². `dT_dx[50, 80]` is row 50 (y = 250) and column 80 (x = 400).
@@ -139,7 +159,7 @@ That sensitivity gives the standard rule for **propagating measurement uncertain
 
 Predict before running: the power in a heater is P = V²/R with V = 230 ± 2 V and R = 26.5 ± 0.3 Ω. Which input contributes more uncertainty?
 
-```python
+```python type
 V0, R0, sV, sR = 230.0, 26.5, 2.0, 0.3
 P = lambda v, r: v ** 2 / r
 dP_dV = 2 * V0 / R0
@@ -150,6 +170,11 @@ print(f"P = {P(V0, R0):.1f} W; from V: ±{abs(dP_dV * sV):.1f} W, from R: ±{abs
 rng = np.random.default_rng(33)
 samples = P(rng.normal(V0, sV, 200_000), rng.normal(R0, sR, 200_000))
 print(f"Monte Carlo: mean {samples.mean():.1f} W, sd {samples.std():.1f} W")
+```
+
+```output
+P = 1996.2 W; from V: ±34.7 W, from R: ±22.6 W, combined ±41.4 W
+Monte Carlo: mean 1996.5 W, sd 41.4 W
 ```
 
 The Monte Carlo check draws 200,000 random voltages and resistances, computes the power for each, and measures the spread directly, with no approximation.

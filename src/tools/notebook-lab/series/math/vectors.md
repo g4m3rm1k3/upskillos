@@ -24,7 +24,7 @@ Draw a vector as an arrow: its length is the **magnitude**, its orientation the 
 
 In a coordinate system a vector is given by its **components**, its extent along each axis: v = (3, 4) means 3 units in x and 4 in y. A NumPy array is the natural representation, because arithmetic on arrays is already component by component. Predict before running: how are the arrows for (3, 4), (−2, 1) and their sum related on the plot?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -48,6 +48,10 @@ plt.show()
 print("a + b =", s, "  b + a =", b + a)
 ```
 
+```output
+a + b = [1. 5.]   b + a = [1. 5.]
+```
+
 `ax.quiver(x, y, dx, dy, ...)` draws an arrow from (x, y) with components (dx, dy). The settings `angles="xy", scale_units="xy", scale=1` make the arrows use the axes' own units.
 
 To add vectors, place them **tip to tail**: draw b starting where a ends, and the sum runs from the start of a to the end of b. Doing it in the other order (the faded arrows) reaches the same point, so a + b = b + a: the two routes form the sides of a **parallelogram** whose diagonal is the sum. In components, addition is just adding matching components: (3, 4) + (−2, 1) = (1, 5).
@@ -66,12 +70,18 @@ Multiplying a vector by a number k, a **scalar**, scales its length by |k|; a ne
 
 Subtraction is adding the negative: a − b = a + (−b). Its most useful meaning is "the vector **from** B **to** A": if points P and Q have position vectors p and q (arrows from the origin), the displacement from P to Q is q − p. That is how the coordinates lesson computed Δx and Δy. Predict before running: a robot at (2, 1) must reach (7, 13). What displacement does it need, and where is it after 25% of the way?
 
-```python
+```python type
 p, q = np.array([2.0, 1.0]), np.array([7.0, 13.0])
 d = q - p
 print("displacement P -> Q:", d, "  length", np.linalg.norm(d))
 print("25% of the way:", p + 0.25 * d)
 print("2a =", 2 * a, "  -a =", -a, "  a - b =", a - b, " = a + (-b):", np.array_equal(a - b, a + (-b)))
+```
+
+```output
+displacement P -> Q: [ 5. 12.]   length 13.0
+25% of the way: [3.25 4.  ]
+2a = [6. 8.]   -a = [-3. -4.]   a - b = [5. 3.]  = a + (-b): True
 ```
 
 `np.linalg.norm(v)` is the length of a vector, √(v₁² + v₂² + ...).
@@ -96,7 +106,7 @@ Dividing a vector by its magnitude gives a **unit vector**, of length 1, pointin
 
 A zero vector has no direction, so it has no unit vector. Predict before running: what are the components of a 250 N force at 30° above the horizontal?
 
-```python
+```python type
 v = np.array([3.0, 4.0])
 mag = np.linalg.norm(v)
 u = v / mag
@@ -108,6 +118,11 @@ def from_polar(magnitude, angle_deg):
 
 F = from_polar(250, 30)
 print(f"250 N at 30°: components ({F[0]:.2f}, {F[1]:.2f}) N, back to magnitude {np.linalg.norm(F):.6f} N")
+```
+
+```output
+|v| = 5.0, direction 53.13°, unit vector [0.6 0.8], its length 1.0
+250 N at 30°: components (216.51, 125.00) N, back to magnitude 250.000000 N
 ```
 
 The unit vector along (3, 4) is (0.6, 0.8), of length 1. The 250 N force splits into 216.51 N horizontally and 125.00 N vertically: the vertical part is exactly half, since sin 30° = 0.5. Splitting forces into components like this is the subject of the next lesson.
@@ -128,7 +143,7 @@ Velocities are vectors and add like displacements. A drone flies through air; th
 
 So a drone pointed east does not go east in a crosswind: it drifts. Pilots, ships and drones all solve the same triangle, choosing a heading so that the sum points where they want to go. Predict before running: a drone flies at 12 m/s pointing due east (0°) in a 5 m/s wind from the south (blowing towards 90°). Where does it actually go, and how far off course is it after 2 km of eastward progress?
 
-```python
+```python type
 air = from_polar(12, 0)
 wind = from_polar(5, 90)
 ground = air + wind
@@ -141,6 +156,12 @@ print(f"after 2 km east ({t_east:.0f} s), it has drifted {ground[1] * t_east:.0f
 needed = -math.degrees(math.asin(5 / 12))
 air2 = from_polar(12, needed)
 print(f"heading {needed:.2f}° (south of east) cancels the drift: ground velocity {np.round(air2 + wind, 10)} m/s")
+```
+
+```output
+ground velocity [12.  5.] m/s: speed 13.00 m/s, track 22.62° (north of east)
+after 2 km east (167 s), it has drifted 833 m north
+heading -24.62° (south of east) cancels the drift: ground velocity [10.90871211  0.        ] m/s
 ```
 
 The final heading points the drone partly into the wind, so that its northward component, 12 sin(heading), exactly cancels the wind's 5 m/s; `np.round(..., 10)` hides a rounding residue of about 10⁻¹⁶.

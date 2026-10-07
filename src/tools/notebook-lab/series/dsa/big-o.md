@@ -15,12 +15,21 @@ Say an algorithm makes 3n² + 5n + 20 steps. For large n, the 3n² term dominate
 
 Precisely, a cost T(n) is **O(f(n))** if there are constants c and n₀ such that T(n) ≤ c·f(n) for every n ≥ n₀. In words: beyond some input size, the cost is at most a constant multiple of f(n). For 3n² + 5n + 20, the choice c = 4 and n₀ = 10 works, because n² ≥ 5n + 20 whenever n ≥ 10. Checking that claim numerically:
 
-```python
+```python type
 def cost(n):
     return 3 * n**2 + 5 * n + 20
 
 for n in [1, 5, 9, 10, 100, 10_000]:
     print(f"n = {n:>6}: cost {cost(n):>12,}   4n² = {4 * n**2:>12,}   cost ≤ 4n²? {cost(n) <= 4 * n**2}")
+```
+
+```output
+n =      1: cost           28   4n² =            4   cost ≤ 4n²? False
+n =      5: cost          120   4n² =          100   cost ≤ 4n²? False
+n =      9: cost          308   4n² =          324   cost ≤ 4n²? True
+n =     10: cost          370   4n² =          400   cost ≤ 4n²? True
+n =    100: cost       30,520   4n² =       40,000   cost ≤ 4n²? True
+n =  10000: cost  300,050,020   4n² =  400,000,000   cost ≤ 4n²? True
 ```
 
 For small n the bound fails, which is why the definition only demands it beyond n₀: Big-O describes behaviour for **large** inputs.
@@ -46,7 +55,7 @@ A few rules cover most code:
 
 The step counts below confirm each rule. Predict before running: when n goes from 1,000 to 2,000, by what factor will each count change?
 
-```python
+```python type
 def one_loop(n):
     steps = 0
     for i in range(n):
@@ -79,6 +88,13 @@ for f in [one_loop, nested_loops, triangle_loops, halving_loop]:
     print(f"{f.__name__:<15} n=1000: {a:>9,}   n=2000: {b:>9,}   ratio {b / a:.2f}")
 ```
 
+```output
+one_loop        n=1000:     1,000   n=2000:     2,000   ratio 2.00
+nested_loops    n=1000: 1,000,000   n=2000: 4,000,000   ratio 4.00
+triangle_loops  n=1000:   499,500   n=2000: 1,999,000   ratio 4.00
+halving_loop    n=1000:         9   n=2000:        10   ratio 1.11
+```
+
 `f.__name__` is the name a function was defined with, handy for labelling output.
 
 One loop doubles (O(n)). Both nested versions quadruple, including the triangle, where the inner loop runs only i times: its total n(n − 1)/2 is half of n², and halving is a constant factor, so it is still O(n²). The halving loop goes from 9 to 10 steps: doubling n adds just **one** step, the signature of O(log n). (`n //= 2` is integer division, so 1,000 halves to 500, 250, …, 1 in 9 steps.)
@@ -96,7 +112,7 @@ The same handful of growth rates appears again and again. From fastest to slowes
 
 The gaps between them are enormous. Predict before running: for n = 1,000,000, roughly how many steps is n log₂ n, and how does it compare with n²?
 
-```python
+```python type
 import math
 
 print(f"{'n':>10} {'log n':>7} {'n log n':>14} {'n²':>20} {'2ⁿ':>12}")
@@ -105,11 +121,19 @@ for n in [10, 100, 1_000, 1_000_000]:
     print(f"{n:>10,} {math.log2(n):>7.1f} {round(n * math.log2(n)):>14,} {n**2:>20,} {exponential:>12}")
 ```
 
+```output
+         n   log n        n log n                   n²           2ⁿ
+        10     3.3             33                  100        1,024
+       100     6.6            664               10,000       ~10^30
+     1,000    10.0          9,966            1,000,000      ~10^301
+ 1,000,000    19.9     19,931,569    1,000,000,000,000   ~10^301029
+```
+
 `f"{'n':>10}"` right-aligns a string in 10 characters, so the heading lines up with the numbers.
 
 At a million items, at a billion simple steps per second, n log n is about 20 million steps (a fiftieth of a second), n² is a trillion (about a quarter of an hour, and far longer in Python), and 2ⁿ is a number with 301,030 digits. A plot shows the shapes:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -130,7 +154,7 @@ Even at n = 40, 2ⁿ has shot off the top of the chart, and n² is pulling away 
 
 Big-O predicts how the time grows; measurement checks it. Python's `timeit` module runs a piece of code many times and reports the total time, which smooths out noise. The **doubling experiment** times the code at n and at 2n: a ratio near 2 suggests O(n), near 4 suggests O(n²), near 1 suggests O(1) or O(log n).
 
-```python
+```python type
 import timeit
 
 def sum_of_list(values):

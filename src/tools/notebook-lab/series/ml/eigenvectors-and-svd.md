@@ -16,7 +16,7 @@ The number λ (the Greek letter lambda) is the matching **eigenvalue**: the fact
 
 Here is a matrix applied to vectors pointing in many directions around a circle. Predict first: will the circle stay a circle?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,13 +45,17 @@ plt.show()
 print("eigenvalues:", values.round(3))
 ```
 
+```output
+eigenvalues: [3.618 1.382]
+```
+
 The circle becomes an ellipse. The grey arrow `(1, 0)` is knocked off its direction: its image, in black, points somewhere new. But each orange eigenvector's image, the red dashed arrow, lies along the **same line**, only longer: those are the eigenvector directions, and the eigenvalues say how much each is stretched, about 3.6 along one and 1.4 along the other. Notice that the two eigenvector directions are the long and short axes of the ellipse.
 
 `np.linalg.eig(A)` returns the eigenvalues and a matrix whose **columns** are the eigenvectors (that is why the loop uses `vectors.T`, to go through the columns). Each eigenvector is scaled to length 1, since any multiple of an eigenvector is also an eigenvector: only the direction matters.
 
 Check the definition directly:
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[3.0, 1.0],
@@ -62,13 +66,18 @@ print("A @ v      =", A @ v)
 print("lambda * v =", values[0] * v)
 ```
 
+```output
+A @ v      = [3.07768354 1.90211303]
+lambda * v = [3.07768354 1.90211303]
+```
+
 The two lines match: `A` acting on `v` is the same as multiplying `v` by the number λ.
 
 ## Why eigenvectors matter: repeated application
 
 The real importance of eigenvectors shows when a matrix is applied **over and over**, as happens whenever something evolves step by step. Take any starting vector and keep multiplying it by `A`, rescaling to length 1 each time so the numbers do not grow out of control:
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[3.0, 1.0],
@@ -82,11 +91,23 @@ values, vectors = np.linalg.eig(A)
 print("eigenvector with the largest eigenvalue:", vectors[:, np.argmax(values)].round(4))
 ```
 
+```output
+0 [ 0.8944 -0.4472]
+1 [1. 0.]
+2 [0.9487 0.3162]
+3 [0.8944 0.4472]
+4 [0.8682 0.4961]
+5 [0.8575 0.5145]
+6 [0.8533 0.5215]
+7 [0.8517 0.5241]
+eigenvector with the largest eigenvalue: [0.8507 0.5257]
+```
+
 Whatever direction you start from, repeated multiplication swings the vector round to the eigenvector with the **largest** eigenvalue. (There is one exception: a start pointing exactly along the other eigenvector never leaves it. With real numbers that essentially never happens.) The reason: any starting vector is a mix of the two eigenvectors, and each multiplication scales the first part by about 3.6 but the second part by only 1.4. After a few steps, the first part dominates completely. This procedure is called **power iteration**, and it is how the eigenvector of enormous matrices is found in practice. It is also the core of Google's original PageRank algorithm, which found the most important web pages as the dominant eigenvector of a matrix describing the links between billions of pages.
 
 A small example of the same idea. Suppose tomorrow's weather depends only on today's: after a sunny day there is a 90% chance of sun, after a rainy day a 50% chance. Where does the chance of sun settle in the long run?
 
-```python
+```python type
 import numpy as np
 
 # Column j: today's weather j -> tomorrow's probabilities (sun, rain).
@@ -102,6 +123,11 @@ steady = vectors[:, np.argmax(values)]
 print("eigenvalue:", values.max().round(4), " steady state:", (steady / steady.sum()).round(4))
 ```
 
+```output
+after 10 days: [0.8332 0.1668]
+eigenvalue: 1.0  steady state: [0.8333 0.1667]
+```
+
 Starting from a certainly rainy day, the probabilities settle at about 83% sun, 17% rain, and stay there. That long-run distribution is an eigenvector with eigenvalue exactly 1: applying `P` to it leaves it unchanged. (It is rescaled to add up to 1 so that it reads as probabilities.) A system like this, where the next state depends only on the current one, is called a **Markov chain**, and you will meet it again in reinforcement learning.
 
 ## Symmetric matrices are especially nice
@@ -110,7 +136,7 @@ Not every matrix has real eigenvectors. A rotation turns **every** direction, so
 
 A symmetric matrix always has real eigenvalues, and its eigenvectors are **orthogonal**: at right angles to each other, like the axes of the ellipse. For symmetric matrices, use `np.linalg.eigh`, which is faster and returns the eigenvalues sorted from smallest to largest:
 
-```python
+```python type
 import numpy as np
 
 S = np.array([[4.0, 2.0, 0.0],
@@ -119,6 +145,13 @@ S = np.array([[4.0, 2.0, 0.0],
 values, vectors = np.linalg.eigh(S)
 print(values.round(3))
 print((vectors.T @ vectors).round(10))
+```
+
+```output
+[0.855 2.476 5.669]
+[[ 1.  0. -0.]
+ [ 0.  1. -0.]
+ [-0. -0.  1.]]
 ```
 
 `vectors.T @ vectors` computes every eigenvector's dot product with every other. The result is the identity matrix: each has length 1, and every pair has dot product 0, so they are orthogonal. Symmetric matrices appear all over machine learning, because the table of how every pair of features varies together, which you will build in the statistics lessons, is always symmetric. Its eigenvectors are the directions in which the data is most spread out, which is the idea behind principal component analysis.
@@ -133,7 +166,7 @@ A = U \Sigma V^T
 
 Every matrix does three simple things in turn: a rotation (`Vᵀ`), then a stretch along perpendicular axes (`Σ`, a diagonal matrix of non-negative numbers called the **singular values**), then another rotation (`U`). Either rotation may also include a flip, a mirror image, which does not change the picture much: they still turn the plane without stretching it. In two dimensions this means **every** matrix turns the unit circle into an ellipse, and the singular values are the lengths of the ellipse's two half-axes.
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2.0, 1.0],
@@ -143,6 +176,19 @@ print("singular values:", s.round(4))
 print("U:\n", U.round(4))
 print("Vt:\n", Vt.round(4))
 print("rebuilt:\n", (U @ np.diag(s) @ Vt).round(10))
+```
+
+```output
+singular values: [2.5583 0.9772]
+U:
+ [[-0.8507 -0.5257]
+ [-0.5257  0.8507]]
+Vt:
+ [[-0.7678 -0.6407]
+ [-0.6407  0.7678]]
+rebuilt:
+ [[2.  1. ]
+ [0.5 1.5]]
 ```
 
 `np.linalg.svd` returns `U`, the singular values `s` as a 1D array (largest first), and `Vᵀ` directly. `np.diag(s)` turns them into the diagonal matrix `Σ`. The numbers inside `U` and `Vt` are not very meaningful to read by eye (their signs can even come out either way), but each has columns (or rows) of length 1 at right angles to each other, which is what makes it a rotation. The part to look at is the singular values, and the check that multiplying the three back together rebuilds `A` exactly.
@@ -159,7 +205,7 @@ A = s_1 u_1 v_1^T + s_2 u_2 v_2^T + \dots
 
 Each piece `uᵢ vᵢᵀ` is a column times a row, called an **outer product**: a whole matrix in which every entry is one number from the column times one number from the row. Every row of it is a multiple of the same row:
 
-```python
+```python type
 import numpy as np
 
 u = np.array([1, 2, 3])
@@ -167,11 +213,17 @@ v = np.array([10, 20])
 print(np.outer(u, v))
 ```
 
+```output
+[[10 20]
+ [20 40]
+ [30 60]]
+```
+
 The singular values say how much each piece contributes. Keeping only the first `k` pieces, the ones with the largest singular values, gives the best possible approximation of `A` built from `k` pieces, "best" meaning that the sum of the squared differences between the approximation and `A` is as small as it can be. This is called a **rank-k approximation**, because a sum of `k` such pieces has rank `k`.
 
 Here it is on a synthetic 60 by 60 greyscale image, made from smooth patterns plus some random speckle, as real photos have:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -195,13 +247,17 @@ kept = (s[:15] ** 2).sum() / (s ** 2).sum()
 print(f"the first 15 of 60 pieces keep {kept:.1%} of the image")
 ```
 
+```output
+the first 15 of 60 pieces keep 99.2% of the image
+```
+
 `np.mgrid` builds grids of row and column coordinates, used here to draw stripes, a diagonal wave and a disc. The random speckle makes the original full rank, 60. With rank 1 you see only a vague blur; by rank 15 the picture is clearly all there, with only some of the speckle lost, yet it is stored as 15 columns of `U`, 15 rows of `Vᵀ` and 15 numbers: 1,815 numbers instead of 3,600. (How much is "kept" is measured with **squared** singular values, the same measure the digits example below uses; the statistics lessons explain why squares are the natural choice.) Real photographs behave the same way: most of their structure is concentrated in the first few singular values.
 
 ## Compressing handwritten digits
 
 The same idea applies to a whole dataset. The 1,797 handwritten digit images from scikit-learn, each flattened into a row of 64 pixel values, form a 1,797 by 64 matrix. Its SVD finds the directions in "pixel space" along which the images vary most, and keeping only a few of them reconstructs every digit from a handful of numbers:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -220,6 +276,10 @@ for row, k in enumerate([2, 10, 64]):
 plt.show()
 kept = (s[:10] ** 2).sum() / (s ** 2).sum()
 print(f"10 of 64 directions keep {kept:.0%} of the variation")
+```
+
+```output
+10 of 64 directions keep 74% of the variation
 ```
 
 Subtracting the mean image first means the SVD describes how the digits **differ** from an average digit, which is what matters. `full_matrices=False` asks for the compact form of the SVD, without columns of `U` that would be multiplied by zero anyway. With 2 directions the digits are smudges; with 10, most are clearly readable; with all 64, the reconstruction is exact. (The share of variation uses squared singular values, for reasons the statistics lessons will explain.) Describing each image by 10 numbers instead of 64, while keeping most of what makes it distinctive, is **dimensionality reduction**, and this exact calculation is principal component analysis, which has its own lesson later.

@@ -24,7 +24,7 @@ An array holds many numbers of one type. Arithmetic on arrays works **element by
 
 `np.linspace(start, stop, n)` makes n evenly spaced values with both ends included, the array version of the previous lesson's `sample`. Predict before running: how much faster is NumPy than a Python loop over a million values?
 
-```python
+```python type
 import math
 import time
 import numpy as np
@@ -62,7 +62,7 @@ A sensor log is summarised by a few numbers: the **mean** (the average level), t
 
 To have realistic data, the demo simulates a bearing's temperature: a slow warm-up plus random sensor noise from a seeded random generator, so every run gives the same numbers. Predict before running: is the mean of the noisy log close to the mean of the smooth trend?
 
-```python
+```python type
 rng = np.random.default_rng(7)
 seconds = np.arange(0, 600)
 trend = 25 + 40 * (1 - np.exp(-seconds / 200))
@@ -71,6 +71,12 @@ log = trend + rng.normal(0, 0.8, size=seconds.size)
 print(f"{log.size} readings, mean {log.mean():.2f} °C (trend mean {trend.mean():.2f})")
 print(f"min {log.min():.2f} °C at {log.argmin()} s, max {log.max():.2f} °C at {log.argmax()} s")
 print(f"standard deviation of the noise: {(log - trend).std():.3f} °C")
+```
+
+```output
+600 readings, mean 52.19 °C (trend mean 52.30)
+min 24.88 °C at 3 s, max 64.21 °C at 581 s
+standard deviation of the noise: 0.737 °C
 ```
 
 `np.arange(0, 600)` is the integers 0 to 599, like `range`. `rng.normal(0, 0.8, size=n)` draws n random values centred on 0 with spread 0.8.
@@ -91,7 +97,7 @@ Comparing an array with a value gives an array of `True` and `False`, a **boolea
 
 Real logs have gaps: a sensor that drops out records `nan`, "not a number". Any arithmetic with `nan` gives `nan`, so a plain `mean()` of a log with one gap is `nan`. `np.isnan` builds a mask of the gaps, and `np.nanmean` and friends ignore them. Predict before running: for how many seconds was the bearing above 60 °C, and what is the mean after two dropouts?
 
-```python
+```python type
 hot = log > 60
 print("above 60 °C:", hot.sum(), "s, which is", f"{hot.mean():.1%}", "of the log; first at", np.argmax(hot), "s")
 print("readings between 40 and 41 °C:", log[(log >= 40) & (log < 41)].round(2))
@@ -99,6 +105,12 @@ print("readings between 40 and 41 °C:", log[(log >= 40) & (log < 41)].round(2))
 gappy = log.copy()
 gappy[[100, 350]] = np.nan
 print("plain mean:", gappy.mean(), "  nanmean:", round(np.nanmean(gappy), 2), "  gaps:", np.isnan(gappy).sum())
+```
+
+```output
+above 60 °C: 176 s, which is 29.3% of the log; first at 375 s
+readings between 40 and 41 °C: [40.17 40.16 40.72 40.59 40.65 40.5  40.14 40.55 40.84]
+plain mean: nan   nanmean: 52.2   gaps: 2
 ```
 
 Combine masks with `&` (and), `|` (or) and `~` (not), with parentheses around each comparison. `np.argmax` of a mask gives the first `True`. `log.copy()` makes an independent array: without it, `gappy = log` would be a second name for the same array, and writing `nan` into it would change `log` too.
@@ -119,7 +131,7 @@ Two operations connect a log to rates and totals, and they are the computational
 
 A conveyor's encoder logs its position every half second. Predict before running: what was the top speed, and how far did the belt travel?
 
-```python
+```python type
 times = np.arange(0, 6.5, 0.5)
 position = np.array([0.00, 0.05, 0.20, 0.45, 0.80, 1.20, 1.60, 2.00, 2.40, 2.75, 3.00, 3.15, 3.20])
 speed = np.diff(position) / np.diff(times)
@@ -130,6 +142,13 @@ power_kw = np.array([0.5, 2.0, 2.0, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.6, 1.2, 0.6,
 energy_kj = np.cumsum(power_kw * 0.5)
 print("energy used so far (kJ):", energy_kj)
 print("cumsum undoes diff:", np.allclose(position[0] + np.cumsum(np.diff(position)), position[1:]))
+```
+
+```output
+speed (m/s): [0.1 0.3 0.5 0.7 0.8 0.8 0.8 0.8 0.7 0.5 0.3 0.1]
+top speed 0.8 m/s, held from 2.0 s
+energy used so far (kJ): [0.25 1.25 2.25 3.15 4.05 4.95 5.85 6.75 7.65 8.45 9.05 9.35 9.35]
+cumsum undoes diff: True
 ```
 
 `np.arange(0, 6.5, 0.5)` gives 0, 0.5, ..., 6.0; the stop is excluded, so 6.5 ensures 6.0 is included. Each power sample lasts 0.5 s, so it contributes power × 0.5 kJ.
@@ -150,13 +169,19 @@ Several sensors logged together form a **two-dimensional array**: one row per ti
 
 Every array has a **dtype**, the type of all its elements. Integer dtypes have fixed sizes, and they **wrap around** silently when a result is too big: an 8-bit unsigned integer holds 0 to 255, so 200 + 100 is stored as 44. Image pixels are usually 8-bit, so brightening a photo with plain addition produces dark speckles. Predict before running: which sensor has the highest mean, and what is 200 + 100 in uint8?
 
-```python
+```python type
 three = np.column_stack([log, log - 5 + rng.normal(0, 0.5, log.size), 30 + 0.01 * seconds])
 print("shape:", three.shape, " means per sensor:", three.mean(axis=0).round(2))
 print("hottest sensor at t = 300 s:", three[300].argmax(), "  spread across sensors at t = 300 s:", round(np.ptp(three[300]), 2))
 
 pixels = np.array([200, 120, 250], dtype=np.uint8)
 print("uint8 + 100:", pixels + np.uint8(100), "  safe:", np.clip(pixels.astype(int) + 100, 0, 255))
+```
+
+```output
+shape: (600, 3)  means per sensor: [52.19 47.19 32.99]
+hottest sensor at t = 300 s: 0   spread across sensors at t = 300 s: 24.28
+uint8 + 100: [ 44 220  94]   safe: [255 220 255]
 ```
 
 `np.column_stack` places one-dimensional arrays side by side as columns. `np.ptp` is the range, max − min ("peak to peak"). `astype(int)` converts to a wide integer type before the arithmetic; `np.clip` then limits values to the valid range.

@@ -23,7 +23,7 @@ In code: choose horizontal positions, square them, divide by `4*p`, and compare 
 
 Predict before running: at x = 4 with p = 1, what is y, and what are the two distances? Increasing p spreads the curve outward at a fixed height.
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,6 +47,12 @@ fig.tight_layout()
 plt.show()
 ```
 
+```output
+(0, 0.0): focus distance=1.000000, line distance=1.000000
+(2, 1.0): focus distance=2.000000, line distance=2.000000
+(4, 4.0): focus distance=5.000000, line distance=5.000000
+```
+
 The point (4, 4) is five units from both the focus and the line. `math.hypot(x, y-p)` uses horizontal and vertical displacements from F. `abs(y+p)` is distance to the horizontal line, independent of x. In the plot, NumPy applies the same squaring and division to every entry of `x_values`; it is a shorter form of looping over x values and appending each computed y.
 
 ## 2. Use a parabola's dimensions to locate its focus
@@ -64,13 +70,18 @@ In code: compute half the width first, then `half_width**2 / (4*depth)` to keep 
 
 Predict before running: at fixed width, does doubling the depth move the focus nearer to or farther from the vertex?
 
-```python
+```python type
 width = 1.2
 for depth in [0.15, 0.30]:
     half_width = width / 2
     focal_distance = half_width**2 / (4 * depth)
     recovered_depth = half_width**2 / (4 * focal_distance)
     print(f"Depth {depth:.2f} m: focus {focal_distance:.3f} m from vertex; rim check {recovered_depth:.3f} m")
+```
+
+```output
+Depth 0.15 m: focus 0.600 m from vertex; rim check 0.150 m
+Depth 0.30 m: focus 0.300 m from vertex; rim check 0.300 m
 ```
 
 The deeper reflector has a nearer focus. Substituting the result back into the original equation is a useful check: it must recover the specified rim depth. This is more informative than trusting a formula solely because its output looks plausible.
@@ -125,7 +136,7 @@ In code: scale cosine and sine independently, then use `hypot` to measure the di
 
 Predict before running: as a approaches b, what happens to the two foci? What familiar curve remains when a equals b?
 
-```python
+```python type
 a, b = 5.0, 4.0
 c = math.sqrt(a * a - b * b)
 t = np.linspace(0, 2 * np.pi, 301)
@@ -142,6 +153,10 @@ ax.set_aspect("equal", adjustable="box")
 ax.legend()
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Largest error in distance sum: 1.7763568394002505e-15
 ```
 
 The residual is near rounding size. This numerical agreement checks our implementation; it does not replace the geometric definition. When a = b, c = 0 and both foci coincide: the ellipse becomes a circle. The parameterisation also explains why its area is pi times a times b: scaling a unit disk by a horizontally and b vertically multiplies every area by ab.
@@ -162,7 +177,7 @@ In code: choose y values, solve for positive x, then negate x for the second bra
 
 Predict before running: why can we not generate a point on this hyperbola with x = 0? Substituting zero into the equation would require a nonpositive number to equal one.
 
-```python
+```python type
 a, b = 3.0, 4.0
 c = math.hypot(a, b)
 y = np.linspace(-12, 12, 301)
@@ -183,6 +198,10 @@ fig.tight_layout()
 plt.show()
 ```
 
+```output
+Largest error in distance difference: 3.552713678800501e-15
+```
+
 Distance-difference measurements arise when a signal reaches two receivers at different times. If propagation speed is known, a time difference becomes a distance difference. One measurement then restricts a source to a hyperbola in a two-dimensional model; it does not uniquely locate the source. Additional receivers or other information are needed. This is a geometric interpretation, not a guarantee about noisy or reflected signals.
 
 ## 5. Eccentricity connects the families
@@ -200,11 +219,17 @@ In code: obtain c from the axes, divide by a, then subtract and add c to a.
 
 Predict before running: if both axes double, should eccentricity change? Should the near and far distances change?
 
-```python
+```python type
 for a, b in [(5.0, 4.0), (10.0, 8.0), (5.0, 5.0)]:
     c = math.sqrt((a - b) * (a + b))
     eccentricity = c / a
     print(f"a={a}, b={b}: e={eccentricity:.3f}, near={a-c:.3f}, far={a+c:.3f}")
+```
+
+```output
+a=5.0, b=4.0: e=0.600, near=2.000, far=8.000
+a=10.0, b=8.0: e=0.600, near=4.000, far=16.000
+a=5.0, b=5.0: e=0.000, near=5.000, far=5.000
 ```
 
 The similar ellipses share e = 0.6 while their distances scale. Factoring a² - b² as (a - b)(a + b) avoids subtracting two separately rounded squares when the axes are close. It does not eliminate every floating-point limitation, but it is a useful algebraic choice.

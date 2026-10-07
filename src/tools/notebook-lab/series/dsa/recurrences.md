@@ -20,7 +20,7 @@ Read the recurrence straight off the code: how many recursive calls, on what siz
 
 Each needs a **base case** too, such as T(1) = 1. A recurrence can be evaluated exactly by filling in a table of T values from the smallest n upwards, so that every value it refers to is already known. That gives exact step counts to check answers against. Predict before running: as n doubles from 1,024 to 2,048, how will each count change?
 
-```python
+```python type
 def evaluate(rule, n):
     T = {1: 1}
     for m in range(2, n + 1):
@@ -36,6 +36,13 @@ recurrences = {
 for name, rule in recurrences.items():
     a, b = evaluate(rule, 1024), evaluate(rule, 2048)
     print(f"T(n) = {name:<12} T(1024) = {a:>9,}   T(2048) = {b:>9,}   ratio {b / a:.2f}")
+```
+
+```output
+T(n) = T(n-1) + 1   T(1024) =     1,024   T(2048) =     2,048   ratio 2.00
+T(n) = T(n/2) + 1   T(1024) =        11   T(2048) =        12   ratio 1.09
+T(n) = T(n-1) + n   T(1024) =   524,800   T(2048) = 2,098,176   ratio 4.00
+T(n) = 2T(n/2) + n  T(1024) =    11,264   T(2048) =    24,576   ratio 2.18
 ```
 
 Each `rule` takes m and the table so far and returns T(m); `m // 2` is n/2 rounded down. Filling the table **bottom-up** like this, instead of with a recursive function, avoids thousands of nested calls: the dynamic programming lessons use exactly this idea. (Deep recursion is risky in this browser's Python in particular: a few hundred levels of a decorated recursive function can exhaust the browser's own stack before Python's limit is reached.)
@@ -60,7 +67,7 @@ Unrolling gets messy when a call makes several recursive calls. The **recursion 
 
 For merge sort's T(n) = 2T(n/2) + n: the top call does n work. Its two children each do n/2, which is n in total. The four grandchildren each do n/4, again n in total. Every level does n work, and halving reaches size 1 after log₂ n levels, so the total is n·log₂ n. The code below builds the tree's levels for n = 16 and prints the work per level. Predict before running: how many levels, and how much work on each?
 
-```python
+```python type
 def tree_levels(n, branches, shrink, work):
     sizes = [n]
     level = 0
@@ -73,6 +80,21 @@ print("merge sort, T(n) = 2T(n/2) + n:")
 tree_levels(16, branches=2, shrink=lambda s: s // 2, work=lambda s: s)
 print("binary search, T(n) = T(n/2) + 1:")
 tree_levels(16, branches=1, shrink=lambda s: s // 2, work=lambda s: 1)
+```
+
+```output
+merge sort, T(n) = 2T(n/2) + n:
+level 0:   1 calls of size  16, work on this level   16
+level 1:   2 calls of size   8, work on this level   16
+level 2:   4 calls of size   4, work on this level   16
+level 3:   8 calls of size   2, work on this level   16
+level 4:  16 calls of size   1, work on this level   16
+binary search, T(n) = T(n/2) + 1:
+level 0:   1 calls of size  16, work on this level    1
+level 1:   1 calls of size   8, work on this level    1
+level 2:   1 calls of size   4, work on this level    1
+level 3:   1 calls of size   2, work on this level    1
+level 4:   1 calls of size   1, work on this level    1
 ```
 
 `branches` is the number of recursive calls each call makes, `shrink` gives the size of each, and `work` the cost outside the recursive calls. Calls of size 1 are the base case and make no further calls.
@@ -93,7 +115,7 @@ The recursion tree for this shape has a geometric pattern. Level k has aᵏ call
 
 Checking it on known cases: binary search has a = 1, b = 2, d = 0, and log₂ 1 = 0 = d, so O(log n). Merge sort has a = 2, b = 2, d = 1, and log₂ 2 = 1 = d, so O(n log n). Predict before running: what does the theorem say for a = 3, b = 2, d = 1 (Karatsuba's multiplication algorithm, which splits numbers in half but needs only three half-size multiplications instead of four)? The cell compares the predicted exponent with one measured by doubling.
 
-```python
+```python type
 import math
 from functools import cache
 
@@ -118,6 +140,14 @@ def measured_exponent(a, b, d, n=2**16):
 for a, b, d, name in [(1, 2, 0, "binary search"), (2, 2, 1, "merge sort"), (3, 2, 1, "Karatsuba multiplication"),
                       (4, 2, 1, "schoolbook multiplication, split"), (2, 2, 2, "two halves, quadratic combine")]:
     print(f"{name:<34} a={a} b={b} d={d}: {master(a, b, d):<16} measured doubling exponent {measured_exponent(a, b, d):.3f}")
+```
+
+```output
+binary search                      a=1 b=2 d=0: O(log n)         measured doubling exponent 0.082
+merge sort                         a=2 b=2 d=1: O(n log n)       measured doubling exponent 1.082
+Karatsuba multiplication           a=3 b=2 d=1: O(n^1.585)       measured doubling exponent 1.585
+schoolbook multiplication, split   a=4 b=2 d=1: O(n^2)           measured doubling exponent 2.000
+two halves, quadratic combine      a=2 b=2 d=2: O(n^2)           measured doubling exponent 2.000
 ```
 
 `math.log(a, b)` is the logarithm of a to base b, and `power_of_n` just writes exponents tidily (n rather than n^1). The measured exponent is log₂(T(2n)/T(n)), as in the Big-O lesson's doubling experiment.

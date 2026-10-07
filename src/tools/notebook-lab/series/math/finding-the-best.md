@@ -26,7 +26,7 @@ A closed cylindrical can of radius r and height h holds V = πr²h and uses shee
 
 an objective in r alone. Small r means a tall thin can with a large side; large r means a flat can with huge ends; somewhere between lies the minimum. Predict before running: is the best 330 ml can taller than it is wide?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,6 +53,11 @@ ax.set_ylim(200, 500)
 plt.show()
 ```
 
+```output
+grid search: r = 3.745 cm, h = 7.490 cm, area 264.36 cm²
+a standard 330 ml can (r = 3.3 cm): h = 9.65 cm, area 268.42 cm²
+```
+
 Volumes in millilitres are cubic centimetres, so lengths come out in centimetres and areas in cm².
 
 The best can has r ≈ 3.74 cm and h ≈ 7.49 cm: its height equals its diameter. A real drinks can (r = 3.3 cm, h = 9.65 cm) uses about 1.5% more sheet. Real cans are taller for good reasons the model ignores: grip, stacking, thicker ends, and the cost of the seams. A model is only as good as its objective.
@@ -69,7 +74,7 @@ In code: `sp.solve(sp.diff(A_expr, r), r)`
 
 At a smooth interior minimum the graph is momentarily level, so the derivative is zero: the stationary points of the derivative lesson. For the can, A′(r) = 4πr − 2V/r² = 0 gives r³ = V/(2π), and then h = V/(πr²) = 2r exactly: height equals diameter, for any volume. The **second derivative** confirms a minimum: A″(r) = 4π + 4V/r³ > 0, so the curve bends upward (it is convex). SymPy does the algebra. Predict before running: does the formula match the grid search?
 
-```python
+```python type
 r, Vs = sp.symbols("r V", positive=True)
 A_expr = 2 * sp.pi * r ** 2 + 2 * Vs / r
 r_star = sp.solve(sp.diff(A_expr, r), r)
@@ -77,6 +82,12 @@ print("A'(r) =", sp.diff(A_expr, r), "  zero at r =", r_star)
 r_opt = float(r_star[0].subs(Vs, V))
 print(f"r* = {r_opt:.4f} cm, h* = {V / (math.pi * r_opt ** 2):.4f} cm (h/r = {V / (math.pi * r_opt ** 3):.4f}), area {area(r_opt):.3f} cm²")
 print("second derivative at r*:", float(sp.diff(A_expr, r, 2).subs({r: r_opt, Vs: V})), "> 0, so a minimum")
+```
+
+```output
+A'(r) = -2*V/r**2 + 4*pi*r   zero at r = [2**(2/3)*V**(1/3)/(2*pi**(1/3))]
+r* = 3.7449 cm, h* = 7.4899 cm (h/r = 2.0000), area 264.357 cm²
+second derivative at r*: 37.69911184307753 > 0, so a minimum
 ```
 
 `positive=True` tells SymPy that r and V are positive, so it discards complex and negative cube roots.
@@ -95,7 +106,7 @@ In code: `golden(f, a, b, tol)` loops `while b - a > tol`
 
 When the objective comes from a simulation rather than a formula, there is no derivative to solve, and a fine grid is expensive. If the function has a single minimum on an interval (it is **unimodal**), the interval can be shrunk systematically: evaluate two interior points; the minimum cannot lie beyond the higher one, so discard that part. **Golden-section search** places the two points at the golden-ratio fractions of the interval, 0.382 and 0.618, so that one old point is reused at every step: each step costs one new evaluation and shrinks the interval by a factor of 0.618. Predict before running: how many evaluations does golden section need to match the grid's precision?
 
-```python
+```python type
 def golden(f, a, b, tol=1e-6):
     g = (math.sqrt(5) - 1) / 2
     c, d = b - g * (b - a), a + g * (b - a)
@@ -118,6 +129,12 @@ for tol in [1e-3, 1e-6, 1e-9]:
     print(f"tolerance {tol:.0e}: r = {x:.10f} cm with {n} evaluations")
 ```
 
+```output
+tolerance 1e-03: r = 3.7449584745 cm with 21 evaluations
+tolerance 1e-06: r = 3.7449386893 cm with 35 evaluations
+tolerance 1e-09: r = 3.7449385465 cm with 49 evaluations
+```
+
 When f(c) < f(d) the minimum lies in [a, d], and the old c becomes the new d; otherwise it lies in [c, b], and the old d becomes the new c. Either way only one new point is evaluated.
 
 Golden section reaches the grid's precision (10⁻³ cm) with about 20 evaluations instead of 1,301, and shrinks the interval below 10⁻⁹ with 49. The true accuracy then is only about 10⁻⁸, though: near a minimum the function is so flat that nearly equal values cannot be told apart in floating point, which limits any comparison-based search to about the square root of machine precision. Each evaluation multiplies the interval by 0.618, so the cost grows only with the logarithm of the required precision, the bisection idea again. Its one requirement is unimodality: with several valleys it finds one of them, not necessarily the lowest.
@@ -136,12 +153,18 @@ Constraints often limit the variables to a range, and then the best point may be
 
 SciPy provides robust one-variable and many-variable optimisers. `optimize.minimize_scalar` with `method="bounded"` searches an interval. Predict before running: what radius does SciPy choose with and without the pallet limit?
 
-```python
+```python type
 free = optimize.minimize_scalar(area, bounds=(1.5, 8), method="bounded")
 limited = optimize.minimize_scalar(area, bounds=(1.5, 3.2), method="bounded")
 print(f"no limit: r = {free.x:.4f} cm, area {free.fun:.3f} cm², {free.nfev} evaluations")
 print(f"r ≤ 3.2 cm: r = {limited.x:.4f} cm, area {limited.fun:.3f} cm², derivative there {4 * math.pi * limited.x - 2 * V / limited.x ** 2:.2f} (not zero)")
 print(f"cost of the limit: {100 * (limited.fun / free.fun - 1):.2f}% more sheet")
+```
+
+```output
+no limit: r = 3.7449 cm, area 264.357 cm², 10 evaluations
+r ≤ 3.2 cm: r = 3.2000 cm, area 270.590 cm², derivative there -24.24 (not zero)
+cost of the limit: 2.36% more sheet
 ```
 
 `result.x` is the best point, `result.fun` the objective there and `result.nfev` the number of function evaluations used.

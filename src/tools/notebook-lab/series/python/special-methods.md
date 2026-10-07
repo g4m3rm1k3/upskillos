@@ -15,10 +15,16 @@ Every time you use an operator or a built-in function on an object, Python trans
 
 You can see this for yourself with a built-in type:
 
-```python
+```python type
 print(len("hello"), "hello".__len__())
 print(3 + 4, (3).__add__(4))
 print([10, 20, 30][1], [10, 20, 30].__getitem__(1))
+```
+
+```output
+5 5
+7 7
+20 20
 ```
 
 You would never write the long forms in real code, but they show the rule. The operators and functions are the public face, and the special methods are what they call. So to make `len` work on your class, you write a `__len__` method; to make `+` work, you write `__add__`. This set of agreed method names is called Python's **data model**.
@@ -27,7 +33,7 @@ You would never write the long forms in real code, but they show the rule. The o
 
 The most useful special method of all is `__repr__`. It returns a string describing the object, and Python uses it whenever it needs to show the object for a programmer: inside a printed list, in the debugger, in error messages, and when you print an object that has no friendlier description.
 
-```python
+```python type
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -42,11 +48,17 @@ print([Point(0, 0), Point(1, 2)])
 p
 ```
 
+```output
+Point(3, 4)
+[Point(0, 0), Point(1, 2)]
+Point(3, 4)
+```
+
 The convention is for `__repr__` to look like the Python code that would create the object, so `Point(3, 4)`. Then anyone reading the output knows exactly what the object is, and could even copy it back into code. Write a `__repr__` for every class you make; it costs one line and makes debugging far easier.
 
 There is a second method, `__str__`, for a friendlier description meant for end users. `print` and `str()` use `__str__` if the class has one, and fall back to `__repr__` if not. Most classes only need `__repr__`.
 
-```python
+```python type
 class Temperature:
     def __init__(self, celsius):
         self.celsius = celsius
@@ -64,13 +76,20 @@ print([t])
 print(f"Today: {t}, or as code: {t!r}")
 ```
 
+```output
+21.5°C
+Temperature(21.5)
+[Temperature(21.5)]
+Today: 21.5°C, or as code: Temperature(21.5)
+```
+
 `print(t)` uses `__str__`, but a list always shows its items with `__repr__`, which is why `[t]` shows `Temperature(21.5)`. In an f-string, `!r` asks for the repr.
 
 ## Comparing objects: __eq__
 
 By default, `==` on two objects of your class asks whether they are the **same object**, exactly like `is`. That is rarely what you want. Predict what this prints.
 
-```python
+```python type
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -79,9 +98,13 @@ class Point:
 print(Point(1, 2) == Point(1, 2))
 ```
 
+```output
+False
+```
+
 `False`: two separate objects, even though they hold the same values. Define `__eq__` to say what equality means for your class. It receives the other object and returns `True` or `False`:
 
-```python
+```python type
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -100,11 +123,17 @@ print(Point(1, 2) == Point(2, 1))
 print(Point(1, 2) == "not a point")
 ```
 
+```output
+True
+False
+False
+```
+
 Comparing the attributes as tuples is a neat way to compare several of them at once. The `isinstance` check handles comparison with something that is not a `Point` at all. Returning the special value `NotImplemented` tells Python "I don't know how to compare with that", and Python then falls back to its default, which says they are not equal.
 
 Defining `__eq__` has one side effect you need to know about. Sets and dictionaries rely on a rule: **objects that are equal must have equal hashes**. The default hash of an object is based on its identity, so two equal `Point`s would get different hashes and break the rule. To prevent that, Python removes the default hash when you define `__eq__`, which makes objects of your class **unhashable**: they can no longer go in a set or be a dictionary key. If your objects never change after they are created, you can make them hashable again by defining `__hash__` to hash the same values `__eq__` compares:
 
-```python
+```python type
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -125,13 +154,17 @@ visited = {Point(0, 0), Point(1, 2), Point(0, 0)}
 print(visited)
 ```
 
+```output
+{Point(0, 0), Point(1, 2)}
+```
+
 The duplicate `Point(0, 0)` disappears from the set, because the two are now equal and have equal hashes.
 
 ## Ordering: __lt__ and sorting
 
 `<` calls `__lt__` ("less than"). Define it, and `sorted`, `min` and `max` work on your objects too, since they only need `<` to compare items:
 
-```python
+```python type
 class Card:
     order = "23456789TJQKA"
 
@@ -149,13 +182,23 @@ print(sorted(hand))
 print(max(hand))
 ```
 
+```output
+[Card('3'), Card('T'), Card('K'), Card('A')]
+Card('A')
+```
+
 The rank order lives in a class attribute (a constant string, so sharing it is fine), and a card is "less than" another if its rank comes earlier in that string. The other comparison operators have their own methods: `__le__` for `<=`, `__gt__` for `>`, `__ge__` for `>=`.
 
 Python's own tuples already know how to compare, and the rule is worth knowing because it is so often useful for sorting: tuples compare **item by item**. The first items are compared first, and only if they are equal do the second items decide, and so on.
 
-```python
+```python type
 print(sorted([(2, "b"), (1, "z"), (2, "a")]))
 print((3, "x") < (3, "y"), (2, "z") < (3, "a"))
+```
+
+```output
+[(1, 'z'), (2, 'a'), (2, 'b')]
+True True
 ```
 
 `(1, 'z')` comes first because 1 is smallest, whatever comes after it. The two tuples starting with 2 tie on their first item, so their second items decide. Sorting a list of `(score, name)` tuples therefore sorts by score, and breaks ties by name.
@@ -164,7 +207,7 @@ print((3, "x") < (3, "y"), (2, "z") < (3, "a"))
 
 Operators like `+`, `-` and `*` call `__add__`, `__sub__` and `__mul__`. This is how you give arithmetic to a new kind of mathematical object. A vector, an arrow with a length and a direction, is added by adding its components, and it is the basic object of the Machine Learning series:
 
-```python
+```python type
 class Vector:
     def __init__(self, x, y):
         self.x = x
@@ -189,11 +232,17 @@ print(v * 2)
 print(abs(v))
 ```
 
+```output
+Vector(4, 3)
+Vector(6, 8)
+5.0
+```
+
 Each method returns a **new** `Vector` and leaves the originals unchanged, just as `3 + 4` does not change 3. `abs(v)` calls `__abs__`, used here for the vector's length.
 
 There is one gap. `v * 2` works, but try `2 * v`: Python first asks the integer 2 to multiply by a vector, and `int` has no idea how. When the left-hand object cannot do an operation, Python gives the right-hand object a chance through a "reflected" method, `__rmul__`. Adding one line fixes it:
 
-```python
+```python type
 class Vector:
     def __init__(self, x, y):
         self.x = x
@@ -211,13 +260,17 @@ class Vector:
 print(2 * Vector(3, 4))
 ```
 
+```output
+Vector(6, 8)
+```
+
 `__rmul__` simply reuses `__mul__`, since multiplying by a number works the same from either side.
 
 ## Behaving like a collection
 
 A class that holds a group of things can behave like one of Python's collections. `__len__` makes `len` work, and it also decides truthiness: an object with length 0 counts as false. `__getitem__` makes indexing work, and `__contains__` makes `in` work.
 
-```python
+```python type
 class Shelf:
     def __init__(self, titles):
         self._titles = list(titles)
@@ -240,6 +293,15 @@ print("emma" in shelf)
 for title in shelf:
     print("-", title)
 print(shelf[1:])
+```
+
+```output
+3 Dune Ulysses
+True
+- Dune
+- Emma
+- Ulysses
+['Emma', 'Ulysses']
 ```
 
 Notice the loop. You never wrote any code for `for`, but it works: if a class has `__getitem__` and no other way to loop, Python loops by asking for item 0, then 1, then 2, until an `IndexError` says there are no more. And because `__getitem__` hands the index straight on to a list, slices work too. `__contains__` gave `in` a custom meaning: finding a title regardless of capital letters. (Lesson 21 shows `__iter__`, the more general way to make an object loopable.)

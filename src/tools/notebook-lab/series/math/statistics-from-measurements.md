@@ -26,7 +26,7 @@ Ten readings x₁, ..., x_n of the same quantity estimate its true mean μ by th
 
 Why n − 1 rather than n? The deviations are measured from x̄, which is itself fitted to the same data, and the data are always closer to their own mean than to the true μ. Dividing by n therefore underestimates the variance on average; dividing by n − 1 (**Bessel's correction**) removes that bias exactly. NumPy's `np.std` divides by n unless told `ddof=1`. Predict before running: for samples of 5 from a distribution with variance 1, what is the average of each variance estimate?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +38,11 @@ print(f"mean {readings.mean():.5f} mm, sd (n-1) {readings.std(ddof=1):.5f} mm, s
 rng = np.random.default_rng(28)
 samples = rng.normal(0, 1, size=(200_000, 5))
 print(f"average variance estimate over 200,000 samples of 5: divide by n {samples.var(axis=1).mean():.4f}, divide by n-1 {samples.var(axis=1, ddof=1).mean():.4f}  (true 1)")
+```
+
+```output
+mean 25.00325 mm, sd (n-1) 0.00097 mm, sd (n) 0.00092 mm
+average variance estimate over 200,000 samples of 5: divide by n 0.7989, divide by n-1 0.9987  (true 1)
 ```
 
 `ddof=1` ("delta degrees of freedom") makes NumPy divide by n − 1.
@@ -60,12 +65,20 @@ Individual readings scatter with standard deviation σ, but their **mean** scatt
 
 shrinks like 1/√n, the same law as for simulated frequencies. Four times the readings halve the uncertainty. Predict before running: how many readings make the mean ten times more precise than a single reading?
 
-```python
+```python type
 sigma = 0.001
 for n in [1, 4, 10, 100]:
     means = rng.normal(25.0, sigma, size=(50_000, n)).mean(axis=1)
     print(f"n = {n:>3}: sd of the mean {means.std():.6f} mm, σ/√n = {sigma / math.sqrt(n):.6f} mm")
 print(f"standard error of the gauge readings: {readings.std(ddof=1) / math.sqrt(len(readings)):.6f} mm")
+```
+
+```output
+n =   1: sd of the mean 0.000993 mm, σ/√n = 0.001000 mm
+n =   4: sd of the mean 0.000502 mm, σ/√n = 0.000500 mm
+n =  10: sd of the mean 0.000316 mm, σ/√n = 0.000316 mm
+n = 100: sd of the mean 0.000100 mm, σ/√n = 0.000100 mm
+standard error of the gauge readings: 0.000308 mm
 ```
 
 Each row simulates 50,000 sets of n readings and measures how much their means scatter.
@@ -84,7 +97,7 @@ In code: `t_interval(x)` uses `stats.t.ppf(0.5 + level / 2, n - 1)`
 
 A **confidence interval** puts the standard error to work: an interval computed from the data that, over many repetitions of the measurement, contains the true mean a chosen fraction of the time (say 95%). For large samples it is x̄ ± 1.96 SE. For small samples, using s in place of the unknown σ adds uncertainty, and the multiplier comes from the **t distribution** with n − 1 degrees of freedom, which is wider than the normal: about 2.26 for n = 10, 2.78 for n = 5. Predict before running: do 95% intervals really contain the true value 95% of the time?
 
-```python
+```python type
 def t_interval(x, level=0.95):
     n = len(x)
     se = x.std(ddof=1) / math.sqrt(n)
@@ -105,6 +118,12 @@ for _ in range(20_000):
 print(f"samples of 5: t intervals cover the truth {hits / 20_000:.1%} of the time; ±1.96 SE covers it {z_hits / 20_000:.1%}")
 ```
 
+```output
+95% interval for the shaft: 25.00255 to 25.00395 mm
+t multipliers: n=5 2.776, n=10 2.262, n=100 1.984, normal 1.960
+samples of 5: t intervals cover the truth 95.0% of the time; ±1.96 SE covers it 88.0%
+```
+
 `stats.t.ppf(0.975, n - 1)` is the point below which 97.5% of the t distribution lies, leaving 2.5% in each tail for a 95% interval.
 
 The shaft's 95% interval is 25.00255 to 25.00395 mm. With samples of 5, the t interval covers the true value 95% of the time, as promised, while the normal multiplier 1.96 covers it only about 88%: too confident, because it ignores the uncertainty in s itself. With 100 readings the t multiplier is 1.98, almost the normal value.
@@ -121,7 +140,7 @@ In code: `mad = np.median(np.abs(bad - np.median(bad)))`, then `z = 0.6745 * (ba
 
 One mistyped reading can wreck a mean: 25.0035 typed as 25.035 shifts the average of ten readings by 0.003 mm, more than the whole spread. The **median**, the middle value of the sorted data, barely moves, and so is called **robust**. A robust spread measure is the **median absolute deviation** (MAD): the median of |xᵢ − median|. For normal data σ ≈ MAD/0.6745, so a reading whose **modified z-score**, 0.6745 (x − median)/MAD, exceeds about 3.5 in size is a likely outlier. Predict before running: with one typing error, how far off are the mean and the median?
 
-```python
+```python type
 bad = readings.copy()
 bad[3] = 25.037
 mad = np.median(np.abs(bad - np.median(bad)))
@@ -130,6 +149,13 @@ print(f"mean {bad.mean():.5f} (was {readings.mean():.5f}), median {np.median(bad
 print(f"sd {bad.std(ddof=1):.5f} (was {readings.std(ddof=1):.5f}), MAD-based sd {mad / 0.6745:.5f}")
 print("modified z-scores:", np.round(z, 1))
 print("flagged as outliers:", bad[np.abs(z) > 3.5])
+```
+
+```output
+mean 25.00658 (was 25.00325), median 25.00320 (was 25.00320)
+sd 0.01073 (was 0.00097), MAD-based sd 0.00133
+modified z-scores: [ 0.7 -0.1 -1.  25.3 -0.5  1.3 -0.2  0.1 -0.8  0.6]
+flagged as outliers: [25.037]
 ```
 
 The modified z-score is like a standard score, but built from the median and MAD, so the outlier cannot hide itself by inflating the spread it is judged against.
@@ -148,7 +174,7 @@ In code: `t_interval(block)`, then `lo <= 25.0 <= hi`
 
 To check a gauge for **bias**, measure a reference standard of known size several times. If the confidence interval for the mean reading excludes the reference value, the gauge is biased by more than chance would explain. Results are then reported as value ± uncertainty, with the uncertainty rounded to one or two significant figures and the value rounded to the same decimal place: more digits would claim precision the data do not have. Predict before running: a 25.0000 mm gauge block reads as below. Is the gauge biased?
 
-```python
+```python type
 block = np.array([25.0021, 25.0012, 25.0018, 25.0025, 25.0016, 25.0019, 25.0023, 25.0014])
 lo, hi = t_interval(block)
 bias = block.mean() - 25.0
@@ -158,6 +184,12 @@ print(f"bias {bias * 1000:+.2f} µm:", "significant (the interval excludes 25.00
 half = (hi - lo) / 2
 decimals = -int(math.floor(math.log10(half))) + 1
 print(f"report: {round(block.mean(), decimals):.{decimals}f} ± {round(half, decimals):.{decimals}f} mm (95%)")
+```
+
+```output
+mean reading 25.00185, 95% interval 25.00148 to 25.00222
+bias +1.85 µm: significant (the interval excludes 25.0000)
+report: 25.00185 ± 0.00037 mm (95%)
 ```
 
 The reported uncertainty is the interval's half-width rounded to two significant figures; `decimals` is the number of decimal places that keeps two significant figures of it.

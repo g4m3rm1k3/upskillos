@@ -15,7 +15,7 @@ This lesson covers:
 
 A job has a name, a duration and the names of the jobs it depends on. Before scheduling anything, check that the dependencies make sense: every dependency must be a real job, and there must be no **cycle** (A waits for B, which waits for A), or nothing could ever start. Kahn's algorithm from the topological sort lesson does both. Repeatedly take a job with no unfinished dependencies; if jobs remain that never become free, they form a cycle. Predict before running: is the shop's plan valid, and what does the broken plan report?
 
-```python
+```python type
 from dataclasses import dataclass, field
 from collections import deque
 import heapq
@@ -67,6 +67,12 @@ for broken in [[Job("a", 1, ("b",)), Job("b", 1, ("c",)), Job("c", 1, ("a",)), J
         print("ValueError:", error)
 ```
 
+```output
+order: ['cut plates', 'cut tubes', 'machine shaft', 'print manuals', 'drill brackets', 'weld frame', 'paint frame', 'fit shaft', 'assemble guard']
+ValueError: dependency cycle among ['a', 'b', 'c']
+ValueError: weld depends on unknown job(s) ['cut']
+```
+
 `set(j.after)` ignores a dependency listed twice. Starting from the sorted list of free jobs makes the order deterministic, which keeps results reproducible.
 
 The shop's plan is valid. The order lists every job after everything it depends on. The broken plans are rejected with useful messages: the three jobs in a cycle are named (job `d` is fine and is not blamed), and a dependency on a job that does not exist is reported before anything else runs.
@@ -80,7 +86,7 @@ The scheduler simulates the day as a sequence of **events**. It keeps two priori
 
 At each step it gives every free machine the most urgent ready job. Then it jumps the clock forward to the next finishing time, marks that job done, and releases any jobs that were waiting only for it. The urgency rule is a function, `key(job)`, where a smaller key means more urgent: the strategy pattern as a plain function. Predict before running: with two machines and "highest priority, then longest first", when does the last job finish?
 
-```python
+```python type
 def schedule(jobs, machines, key):
     topological_order(jobs)
     by_name = {j.name: j for j in jobs}
@@ -121,6 +127,19 @@ for name, machine, start, end in sorted(plan, key=lambda p: (p[1], p[2])):
 print("makespan:", makespan(plan), "hours")
 ```
 
+```output
+machine 0:  0.0- 0.5  print manuals
+machine 0:  0.5- 3.5  cut tubes
+machine 0:  3.5- 5.5  cut plates
+machine 0:  5.5- 7.0  drill brackets
+machine 0:  7.0-11.0  weld frame
+machine 0: 11.0-13.0  paint frame
+machine 0: 13.0-14.5  assemble guard
+machine 1:  0.0- 3.5  machine shaft
+machine 1: 11.0-12.0  fit shaft
+makespan: 14.5 hours
+```
+
 Heap entries are tuples, so ties in the key are broken by the job's name, and the result never depends on the order of the input list.
 
 Every job starts only after its dependencies finish, and a free machine never waits while a job is ready. Even so, the day takes 14.5 hours, and machine 1 sits idle from 3.5 to 11 hours with nothing ready for it. The rule started the manuals and the machine shaft first, then the long tube cut, so the 11-hour chain of plates, drill, weld, paint and assemble started late, and everything waited on it. Choosing a better rule is the subject of the next section. Each event costs O(log n) heap work, so even thousands of jobs schedule instantly.
@@ -131,7 +150,7 @@ Which urgency rule is best? A classic one for dependency graphs is the **critica
 
 Comparing rules needs a yardstick, and a **lower bound** provides one: no schedule can beat the longest chain, nor the total work divided among the machines. If a schedule meets the bound, it is optimal. Predict before running: which rule comes closest to the bound on a larger random workload?
 
-```python
+```python type
 import random
 
 def tail_lengths(jobs):
@@ -170,6 +189,15 @@ print(f"lower bound: {bound:.1f} h")
 for name, rule in rules.items():
     span = makespan(schedule(project, 4, rule))
     print(f"{name:<22} makespan {span:5.1f} h   {span / bound - 1:6.1%} above the bound")
+```
+
+```output
+lower bound: 36.8 h
+input order            makespan  38.5 h     4.8% above the bound
+shortest first         makespan  41.5 h    12.9% above the bound
+longest first          makespan  38.5 h     4.8% above the bound
+priority then longest  makespan  38.0 h     3.4% above the bound
+critical path          makespan  37.0 h     0.7% above the bound
 ```
 
 `rng.sample(range(i), ...)` picks dependencies only among earlier jobs, so random projects never contain cycles.

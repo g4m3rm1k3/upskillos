@@ -16,7 +16,7 @@ V^*(s) = \max_a \sum_{s'} P(s' \mid s, a)\,\big[R + \gamma V^*(s')\big]
 
 Once V* is known, an optimal policy simply takes, in each state, the action with the best one-step look-ahead: it is **greedy** with respect to V*.
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -74,6 +74,14 @@ print(f"no slipping: converged in {sweeps} sweeps; value of the start {V[(0, 0)]
 show_policy(model, V, 0.95)
 ```
 
+```output
+no slipping: converged in 7 sweeps; value of the start 3.21
+  v > v v
+  v X v <
+  v v v X
+  > > > G
+```
+
 `value_iteration` updates each state's value in place, so later states in the same sweep already use the new values of earlier ones (this speeds things up and still converges). `show_policy` prints the greedy action in every square as an arrow.
 
 In the deterministic world, value iteration converges in 7 sweeps. The arrows form a shortest route to the goal from every square, steering around the pits. From the start, the value is 3.21: five steps costing −1 and the +10, all discounted by γ = 0.95.
@@ -82,7 +90,7 @@ In the deterministic world, value iteration converges in 7 sweeps. The arrows fo
 
 Now the same computation at increasing slip probabilities. Before running, predict: as the world gets more random, will the optimal policy change much, and what will happen to the value of the start square?
 
-```python
+```python type
 import numpy as np
 
 SIZE, PITS, GOAL = 4, {(1, 1), (2, 3)}, (3, 3)
@@ -133,6 +141,29 @@ for slip in [0.0, 0.2, 0.4, 0.6]:
     for r in range(SIZE):
         print("   " + " ".join("G" if (r, c) == GOAL else "X" if (r, c) in PITS
                              else ARROWS[int(np.argmax(q_values(model, V, (r, c), 0.95)))] for c in range(SIZE)))
+```
+
+```output
+slip 0.0:  7 sweeps, value of the start   3.21
+   v > v v
+   v X v <
+   v v v X
+   > > > G
+slip 0.2: 20 sweeps, value of the start   0.83
+   v > v <
+   v X v <
+   v v v X
+   > > > G
+slip 0.4: 29 sweeps, value of the start  -2.53
+   v > v <
+   v X v <
+   v v v X
+   > > > G
+slip 0.6: 40 sweeps, value of the start  -6.76
+   v > v <
+   v X v <
+   v v v X
+   > > > G
 ```
 
 The value of the start falls steadily, from 3.21 with no slipping to 0.83 at slip 0.2, −2.53 at 0.4 and −6.76 at 0.6: every slip adds steps, and some send the agent into a pit. Value iteration also needs more sweeps as the world gets more random (7, 20, 29, 40), because values now depend on long, uncertain paths.

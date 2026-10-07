@@ -27,7 +27,7 @@ Every m × n matrix A can be factored as
 
 where U (m × m) and V (n × n) are **orthogonal** (their columns are perpendicular unit vectors, so they rotate or reflect without stretching) and Σ is diagonal with non-negative entries σ₁ ≥ σ₂ ≥ ..., the **singular values**. So any linear transformation is: a rotation (Vᵀ), a stretch along the axes (Σ), and another rotation (U). The unit circle therefore always maps to an ellipse, whose semi-axes have lengths σ₁ and σ₂ and point along U's columns. Predict before running: for the shear matrix [[1, 1], [0, 1]], how long are the ellipse's axes?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +50,12 @@ for k in range(2):
 ax.set_aspect("equal")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+singular values: [1.618 0.618]  U orthogonal: True  V orthogonal: True
+U Σ Vᵀ rebuilds A: True
+longest image of a unit vector 1.6180, shortest 0.6181
 ```
 
 `np.linalg.svd` returns U, the singular values as a 1-D array, and Vᵀ (not V). The red lines are σₖ times U's columns, the ellipse's semi-axes.
@@ -76,7 +82,7 @@ Each term uᵢvᵢᵀ is an **outer product**, a matrix whose rows are all multi
 
 where the **Frobenius norm** ‖·‖_F is the square root of the sum of all squared entries. Predict before running: a table of temperatures (rows: positions along a shaft; columns: times) produced by two decaying patterns (a slow one and a fast one) plus a little noise. How many singular values matter?
 
-```python
+```python type
 rng = np.random.default_rng(47)
 x = np.linspace(0, 1, 40)[:, None]
 t = np.linspace(0, 10, 60)[None, :]
@@ -87,6 +93,14 @@ for k in [1, 2, 3, 10]:
     Tk = (U[:, :k] * s[:k]) @ Vt[:k]
     err = np.linalg.norm(T - Tk)
     print(f"rank {k:>2}: error {err:7.3f}  (√Σ of the rest {math.sqrt((s[k:] ** 2).sum()):7.3f}), relative {err / np.linalg.norm(T):.4f}")
+```
+
+```output
+first six singular values: [1369.65   79.44    2.55    2.47    2.35    2.33]
+rank  1: error  79.983  (√Σ of the rest  79.983), relative 0.0583
+rank  2: error   9.291  (√Σ of the rest   9.291), relative 0.0068
+rank  3: error   8.934  (√Σ of the rest   8.934), relative 0.0065
+rank 10: error   6.729  (√Σ of the rest   6.729), relative 0.0049
 ```
 
 `full_matrices=False` returns only the columns of U and rows of Vᵀ that matter, the economical form. `(U[:, :k] * s[:k]) @ Vt[:k]` multiplies each kept column of U by its singular value and sums the outer products.
@@ -105,7 +119,7 @@ In code: `approx = (U[:, :k] * s[:k]) @ Vt[:k]` for several ranks `k`
 
 An image works the same way. Store a rank-k approximation as k columns of U, k singular values and k rows of Vᵀ: k(m + n + 1) numbers instead of mn. For a 300 × 400 image, rank 20 needs 14,020 numbers instead of 120,000, about 12%. Images with large smooth regions compress well; fine texture needs more terms. Predict before running: at what rank does a synthetic test image become hard to tell from the original?
 
-```python
+```python type
 yy, xx = np.mgrid[0:300, 0:400]
 img = (0.5 + 0.3 * np.sin(xx / 40) * np.cos(yy / 55)
        + 0.4 * (((xx - 250) ** 2 + (yy - 120) ** 2) < 60 ** 2)
@@ -126,6 +140,14 @@ energy = np.cumsum(s ** 2) / np.sum(s ** 2)
 print("rank needed for 99% of the energy (sum of σ²):", int(np.argmax(energy >= 0.99)) + 1)
 ```
 
+```output
+rank   1: storage   0.6%, relative error 35.09%
+rank   5: storage   2.9%, relative error 10.20%
+rank  20: storage  11.7%, relative error 8.60%
+rank 300: storage 175.2%, relative error 0.00%
+rank needed for 99% of the energy (sum of σ²): 6
+```
+
 `np.mgrid` builds the pixel coordinates. The image combines a smooth wave pattern, a bright disc, a dark rectangle and fine noise. The **energy** captured by k terms is the fraction of Σσ² they hold.
 
 Rank 1 already shows the overall brightness pattern; rank 5 shows the shapes, blurred; by rank 20 the image is hard to tell from the original at 12% of the storage, the remaining error being mostly the fine noise. The circle's curved edge needs more terms than the axis-aligned rectangle, because an axis-aligned rectangle on its own is exactly rank one (one row pattern times one column pattern). Real image formats (JPEG) use a related but cheaper idea: on small 8 × 8 blocks they use a fixed set of cosine patterns (the discrete cosine transform, a relative of the frequency analysis in the spectrum lessons) instead of computing a basis for each image.
@@ -143,7 +165,7 @@ In code: `np.linalg.svd(Xc, full_matrices=False)` against `np.linalg.eigvalsh(np
 
 The SVD of a centred data matrix is PCA in disguise: if X = UΣVᵀ, then XᵀX = VΣ²Vᵀ, so V's columns are the principal components and σᵢ²/(n − 1) are their variances. Computing PCA through the SVD avoids forming XᵀX, which squares the condition number and loses accuracy. The ratio σ_max/σ_min is the **condition number** met in the two-equation lesson: it measures how close the matrix is to losing rank. Predict before running: do the SVD route and the covariance route give the same PCA variances?
 
-```python
+```python type
 data = rng.normal(size=(200, 3)) @ np.array([[3.0, 1.0, 0.5], [0.0, 1.0, 0.3], [0.0, 0.0, 0.1]])
 Xc = data - data.mean(axis=0)
 _, sv, Vt_d = np.linalg.svd(Xc, full_matrices=False)
@@ -153,6 +175,12 @@ print("covariance eigenvalues:", np.round(cov_vals, 5).tolist())
 nearly = np.array([[1.0, 1.0], [1.0, 1.001]])
 sn = np.linalg.svd(nearly, compute_uv=False)
 print(f"nearly singular matrix: σ = {sn.round(6)}, condition number {sn[0] / sn[1]:.0f} (np.linalg.cond {np.linalg.cond(nearly):.0f})")
+```
+
+```output
+σ²/(n-1): [11.62857, 1.1354, 0.00815]
+covariance eigenvalues: [11.62857, 1.1354, 0.00815]
+nearly singular matrix: σ = [2.0005e+00 5.0000e-04], condition number 4002 (np.linalg.cond 4002)
 ```
 
 `compute_uv=False` returns only the singular values, which is all the condition number needs.

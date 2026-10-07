@@ -24,7 +24,7 @@ A polynomial is determined by its list of coefficients, so a computer stores it 
 
 Predict before running: does Horner's method agree with `np.polyval` for 2x³ − 3x² + 4x − 5 at x = 1.5? And what is (x² + 2x + 3)(x − 1)?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,6 +40,12 @@ p = [2, -3, 4, -5]
 print("Horner:", horner(p, 1.5), "  np.polyval:", np.polyval(p, 1.5))
 print("(x² + 2x + 3)(x - 1) coefficients:", np.convolve([1, 2, 3], [1, -1]), " np.polymul:", np.polymul([1, 2, 3], [1, -1]))
 print("check with SymPy:", sp.expand((sp.symbols("x") ** 2 + 2 * sp.symbols("x") + 3) * (sp.symbols("x") - 1)))
+```
+
+```output
+Horner: 1.0   np.polyval: 1.0
+(x² + 2x + 3)(x - 1) coefficients: [ 1  1  1 -3]  np.polymul: [ 1  1  1 -3]
+check with SymPy: x**3 + x**2 + x - 3
 ```
 
 Both evaluations give 1.0 (2 × 3.375 − 3 × 2.25 + 6 − 5). The product (x² + 2x + 3)(x − 1) has coefficients [1, 1, 1, −3], that is x³ + x² + x − 3, the convolution of [1, 2, 3] and [1, −1], as SymPy's expansion confirms. Numerical libraries evaluate the polynomial approximations behind sin, exp and log with Horner's method, so it runs billions of times a second on any computer.
@@ -60,7 +66,7 @@ Dividing by x − r leaves a remainder equal to p(r), so r is a root exactly whe
 
 Predict before running: x³ − 6x² + 11x − 6 has the root 1 (its coefficients add to zero). What is left after dividing out x − 1, and what are all the roots of x³ − x² + x − 1?
 
-```python
+```python type
 def synthetic(coeffs, r):
     out = [coeffs[0]]
     for a in coeffs[1:]:
@@ -75,6 +81,13 @@ print("roots of x³ - x² + x - 1:", np.round(np.roots(c), 6))
 companion = np.diag(np.ones(len(c) - 2), -1)
 companion[0, :] = -np.array(c[1:], dtype=float) / c[0]
 print("companion matrix eigenvalues:", np.round(np.sort_complex(np.linalg.eigvals(companion)), 6))
+```
+
+```output
+x³ - 6x² + 11x - 6 divided by (x - 1): quotient [1, -5, 6] remainder 0
+roots of the quotient: [3. 2.]
+roots of x³ - x² + x - 1: [ 1.+0.j -0.+1.j -0.-1.j]
+companion matrix eigenvalues: [-0.-1.j -0.+1.j  1.+0.j]
 ```
 
 Dividing x³ − 6x² + 11x − 6 by x − 1 leaves x² − 5x + 6 with remainder 0, whose roots are 3 and 2: the cubic is (x − 1)(x − 2)(x − 3). x³ − x² + x − 1 = (x − 1)(x² + 1) has one real root, 1, and the conjugate pair ±i. The companion matrix's eigenvalues are the same three numbers, which is how `np.roots` computes them.
@@ -94,7 +107,7 @@ Repeated roots are where numerical root finding struggles. Nudging (x − 1)⁴ 
 
 Predict before running: which derivatives of (x − 1)³(x + 2) vanish at x = 1, and how far do the roots of (x − 1)⁴ move when its constant term changes by 10⁻¹⁰?
 
-```python
+```python type
 X = sp.symbols("x")
 f = (X - 1) ** 3 * (X + 2)
 print("derivatives at x = 1:", [sp.diff(f, X, k).subs(X, 1) for k in range(5)])
@@ -116,6 +129,16 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+derivatives at x = 1: [0, 0, 0, 18, 24]
+(x - 1)⁴ coefficients: [ 1. -4.  6. -4.  1.]
+roots after changing the constant by 1e-10: [1.003162+0.j       1.      +0.003162j 1.      -0.003162j
+ 0.996838+0.j      ]
+predicted spread (1e-10)^(1/4): 0.003162
+even the unperturbed roots, computed: [1.000217+0.j       1.      +0.000217j 1.      -0.000217j
+ 0.999783+0.j      ]
+```
+
 At x = 1 the polynomial and its first two derivatives are 0 and the third is 18: multiplicity 3, as built. Lowering (x − 1)⁴ by 10⁻¹⁰ turns its root 1 into 1 ± 0.0032 and 1 ± 0.0032i, a spread of exactly (10⁻¹⁰)^(1/4) ≈ 0.0032, thirty million times the size of the change. Even the unperturbed coefficients, computed in floating point, come back with roots wobbling around 1 in the fourth or fifth decimal place. The plot shows the shapes: a simple root crosses, a double root touches and turns back, a triple root crosses with a flat shoulder.
 
 ## Beam deflection: boundary conditions as roots
@@ -132,7 +155,7 @@ Beam theory gives deflection curves as polynomials, and their roots are the phys
 
 Predict before running: a 4 m steel beam (EI = 1.6 × 10⁶ N·m²) carries 2 kN/m. Where is its largest deflection, and how big? A 2 m cantilever with the same EI carries 1 kN at its tip: how far does the tip drop?
 
-```python
+```python type
 x, w, L, EI, P = sp.symbols("x w L EI P", positive=True)
 simple = w * x * (L ** 3 - 2 * L * x ** 2 + x ** 3) / (24 * EI)
 cant = P * x ** 2 * (3 * L - x) / (6 * EI)
@@ -144,6 +167,13 @@ print(f"simply supported: slope zero at x = {[float(r) for r in crit]} m, deflec
       f"(5wL⁴/384EI = {5 * 2000 * 4 ** 4 / (384 * 1.6e6) * 1000:.3f} mm)")
 tip = float(cant.subs({P: 1000, L: 2, EI: 1.6e6, x: 2}))
 print(f"cantilever: tip deflection {tip * 1000:.3f} mm (PL³/3EI = {1000 * 8 / (3 * 1.6e6) * 1000:.3f} mm); slope at the wall: {sp.diff(cant, x).subs(x, 0)}")
+```
+
+```output
+simply supported, factored: w*x*(-L + x)*(-L**2 - L*x + x**2)/(24*EI)
+cantilever, factored:       -P*x**2*(-3*L + x)/(6*EI)   -> the x² is the clamped end's double root
+simply supported: slope zero at x = [2.0] m, deflection 4.167 mm (5wL⁴/384EI = 4.167 mm)
+cantilever: tip deflection 1.667 mm (PL³/3EI = 1.667 mm); slope at the wall: 0
 ```
 
 The simply supported curve factors as w x (x − L)(x² − Lx − L²)/(24EI): roots at both supports, plus two outside the beam with no physical meaning. The derivative vanishes at mid-span, x = 2 m, where the beam sags 4.167 mm, matching the textbook 5wL⁴/(384EI). The cantilever's factor x² is the clamped end: deflection and slope both zero at the wall. Its tip drops 1.667 mm, matching PL³/(3EI). Engineers check these formulas against exactly this kind of factorisation: a missing root means a boundary condition is violated.
@@ -162,7 +192,7 @@ Through two points there is one line; through three, one parabola. In general, t
 
 Predict before running: a cam's follower must be at lifts 0, 2, 7 and 9 mm at angles 0°, 60°, 120° and 180°. What cubic passes through these, and does `np.polyfit` agree?
 
-```python
+```python type
 xp = np.array([0.0, 60.0, 120.0, 180.0])
 yp = np.array([0.0, 2.0, 7.0, 9.0])
 poly = np.poly1d([0.0])
@@ -175,6 +205,12 @@ for i in range(len(xp)):
 print("Lagrange coefficients:", poly.coeffs)
 print("np.polyfit, degree 3: ", np.polyfit(xp, yp, 3))
 print("values at the points:", poly(xp).round(12), "  at 90°:", round(poly(90.0), 4), "mm")
+```
+
+```output
+Lagrange coefficients: [-4.62962963e-06  1.25000000e-03 -2.50000000e-02  0.00000000e+00]
+np.polyfit, degree 3:  [-4.62962963e-06  1.25000000e-03 -2.50000000e-02  0.00000000e+00]
+values at the points: [0. 2. 7. 9.]   at 90°: 4.5 mm
 ```
 
 The Lagrange construction and `np.polyfit` with degree 3 give the same coefficients, as uniqueness demands, and the cubic passes exactly through all four points. At 90° it predicts a lift of 4.5 mm. Between 0° and about 22° it dips below zero, to −0.13 mm near 11°, a lift the follower cannot have: one more reason cams use piecewise curves. Exact interpolation has a cost the fitting lesson showed: with many points or noisy data, high-degree polynomials swing wildly between the points. That is why cams and fonts use **piecewise** low-degree polynomials (splines) instead, the subject of the piecewise-functions lesson.

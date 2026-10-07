@@ -17,7 +17,7 @@ This lesson covers:
 
 A courier company's dispatcher assigns each new delivery job to a driver. Different depots want different rules: the nearest driver, the driver with the fewest jobs, or (for fairness) each driver in turn. The first version passes a mode string and switches on it. Predict before reading on: what has to change to add a fourth rule, "the driver with the most free space in the van"?
 
-```python
+```python type
 import math
 
 drivers = [
@@ -41,13 +41,17 @@ def assign(job_at, mode):
 print(assign((6, 6), "nearest"), assign((6, 6), "least busy"), assign((6, 6), "in turn"), assign((6, 6), "in turn"))
 ```
 
+```output
+Caz Ben Asha Ben
+```
+
 Every new rule is another branch in `assign`, and the state for the turn-taking rule (the `turn` counter) sits in a global, shared by everything. The selection rules are tangled into the dispatcher, and none of them can be tested or reused alone.
 
 ## The Strategy pattern
 
 Give each rule its own class with one method, `choose(drivers, job_at)`. The dispatcher (in pattern language, the **context**) holds a strategy object and calls it, knowing nothing about which rule it is. A new rule is a new class. The turn-taking rule keeps its counter inside its own object, so two dispatchers each taking turns do not interfere. Predict before running: which driver does the second dispatcher pick for its first job?
 
-```python
+```python type
 class Nearest:
     def choose(self, drivers, job_at):
         return min(drivers, key=lambda d: math.dist(d["at"], job_at))
@@ -82,6 +86,13 @@ print("north switches to least busy:", north.assign((0, 0)))
 print("jobs now:", {d["name"]: d["jobs"] for d in drivers})
 ```
 
+```output
+north: ['Asha', 'Ben', 'Caz', 'Asha']
+south: Asha
+north switches to least busy: Ben
+jobs now: {'Asha': 7, 'Ben': 3, 'Caz': 3}
+```
+
 `Dispatcher.assign` also records the new job, which every rule needs, so that logic stays in the context and the strategies only choose.
 
 The south dispatcher starts its own turn at Asha, because its `InTurn` object has its own counter. Swapping `north.strategy` changes the rule mid-run, with no new dispatcher. Each strategy can be tested alone with a hand-made list of drivers. The cost is a little ceremony: a class per rule, even when a rule is one line.
@@ -90,7 +101,7 @@ The south dispatcher starts its own turn at Asha, because its `InTurn` object ha
 
 In Python, functions are objects that can be passed around, so a strategy with one method and no state does not need a class at all. **The function is the strategy.** Python's own library is full of this: `sorted(items, key=...)`, `max(items, key=...)` and `re.sub(pattern, function, text)` all take a strategy as a function. Predict before running: is the function version shorter than the class version, and does it change anything about how the dispatcher is used?
 
-```python
+```python type
 def nearest(drivers, job_at):
     return min(drivers, key=lambda d: math.dist(d["at"], job_at))
 
@@ -109,6 +120,12 @@ for rule in [nearest, least_busy, busiest]:
     print(f"{rule.__name__:<17}", assign_job(drivers, (6, 6), rule))
 ```
 
+```output
+nearest           Caz
+least_busy        Ben
+busiest           Asha
+```
+
 Three rules, three plain functions, and `assign_job` just calls whatever it is given. Adding a rule is writing a function. This is the Strategy pattern with the boilerplate removed: the interface is "a function taking drivers and a job location and returning a driver".
 
 ## Strategies with state, and choosing by name
@@ -117,7 +134,7 @@ When a strategy needs to remember something between calls, like the turn-taking 
 
 Real programs often choose the strategy from configuration, such as a setting in a file saying `"rule": "least busy"`. A dictionary from names to strategy **factories** (functions that create a fresh strategy) turns the name into an object, and is the only place that needs updating when a rule is added. Predict before running: do the two turn-takers made from the configuration share a counter?
 
-```python
+```python type
 def in_turn():
     position = 0
     def choose(drivers, job_at):
@@ -146,6 +163,11 @@ try:
     rule_from_config({"rule": "random"})
 except ValueError as error:
     print("ValueError:", error)
+```
+
+```output
+['Asha', 'Ben', 'Caz'] Asha
+ValueError: unknown rule 'random'; choose from ['in turn', 'least busy', 'nearest']
 ```
 
 The stateless rules are wrapped in `lambda: nearest` so every entry is a factory that is called the same way. `in_turn` already is a factory: each call creates a new counter.

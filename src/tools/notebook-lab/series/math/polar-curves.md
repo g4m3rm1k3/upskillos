@@ -23,7 +23,7 @@ A **polar curve** gives the distance from a centre as a function of direction: r
 
 Predict before running: how many petals does r = cos(3θ) have, and r = cos(2θ)?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,6 +51,11 @@ for k in [3, 2]:
     print(f"cos {k}θ: {neg} stretches of positive r and {neg} of negative r over a full turn")
 ```
 
+```output
+cos 3θ: 3 stretches of positive r and 3 of negative r over a full turn
+cos 2θ: 2 stretches of positive r and 2 of negative r over a full turn
+```
+
 The plots show three petals for cos 3θ and four for cos 2θ. Over a full turn, cos 3θ has 3 stretches of positive r and 3 of negative r, and cos 2θ has 2 of each. A negative r plots the point on the opposite side of the centre. For odd k those points land exactly on the positive petals again, so only k petals appear. For even k they fill new directions, giving 2k. The cardioid has a cusp at the origin, and the Archimedean spiral's turns are evenly spaced.
 
 ## The Archimedean spiral
@@ -66,7 +71,7 @@ An **Archimedean spiral** grows its radius by the same amount for each radian, s
 
 Predict before running: clearing a pocket from 5 mm to 40 mm radius with a 4 mm stepover. How many turns, and how long is the path?
 
-```python
+```python type
 r0, r1, pitch = 5.0, 40.0, 4.0
 b = pitch / (2 * np.pi)
 turns = (r1 - r0) / pitch
@@ -78,6 +83,11 @@ length_chords = np.hypot(np.diff(r * np.cos(tt)), np.diff(r * np.sin(tt))).sum()
 estimate = np.pi * (r0 + r1) * turns
 print(f"{turns:.2f} turns; path length {length_formula:.2f} mm by the polar formula, {length_chords:.2f} mm by chords; average-circle estimate {estimate:.2f} mm")
 print(f"radius after exactly 3 turns: {r0 + b * 6 * np.pi:.1f} mm")
+```
+
+```output
+8.75 turns; path length 1237.66 mm by the polar formula, 1237.66 mm by chords; average-circle estimate 1237.00 mm
+radius after exactly 3 turns: 17.0 mm
 ```
 
 The spiral makes 8.75 turns and is about 1,237 mm long. The polar integral and the chord sum agree, and the average-circle estimate π(5 + 40) × 8.75 = 1,237 mm is within a fraction of a millimetre, because the √(r² + r′²) correction is tiny when the pitch is small compared with the radius. After exactly three turns the radius is 17 mm: 5 plus 3 pitches.
@@ -96,7 +106,7 @@ A **cam** turns rotation into a prescribed back-and-forth motion. A follower res
 
 Predict before running: a cam lifts 10 mm over 120°, dwells 60°, returns over 120° and dwells 60°, at 600 rpm. Which law has the larger peak acceleration, and how big are the jumps?
 
-```python
+```python type
 def lift(theta_deg, law, h=10.0, rise=120.0, dwell1=60.0, ret=120.0):
     t = np.mod(theta_deg, 360.0)
     def up(u):
@@ -125,6 +135,11 @@ ax.set_title("cycloidal cam on a 30 mm base circle", fontsize=9)
 plt.show()
 ```
 
+```output
+harmonic : peak velocity 0.471 m/s, peak acceleration 44 m/s², largest acceleration jump between samples 17 m/s²
+cycloidal: peak velocity 0.600 m/s, peak acceleration 57 m/s², largest acceleration jump between samples 0 m/s²
+```
+
 At 600 rpm the harmonic rise peaks at 0.47 m/s and 44 m/s². The cycloidal rise needs a higher peak velocity (0.60 m/s) and peak acceleration (57 m/s²) to cover the same lift. But the harmonic law's acceleration jumps from 0 to about 44 m/s² at each transition (the sampled derivative spreads the jump over a few samples, so neighbouring samples differ by up to 17 m/s²), while the cycloidal law's changes by well under 1 m/s² between samples. Higher but smooth acceleration is gentler on the follower spring and bearings than lower acceleration that jumps. That is why high-speed cams use cycloidal or polynomial laws.
 
 ## Areas from the centre
@@ -140,7 +155,7 @@ The area enclosed by a polar curve is swept out by thin wedges from the centre. 
 
 Predict before running: what are the areas of a unit circle, a cardioid with a = 1, the rose cos 3θ, and the cycloidal cam on its 30 mm base circle?
 
-```python
+```python type
 def polar_area(f, a, b, n=200001):
     tt = np.linspace(a, b, n)
     return 0.5 * np.trapezoid(f(tt) ** 2, tt)
@@ -150,6 +165,13 @@ print(f"cardioid a = 1: {polar_area(lambda t: 1 + np.cos(t), 0, 2 * np.pi):.6f} 
 print(f"rose cos 3θ over θ from 0 to π: {polar_area(lambda t: np.cos(3 * t), 0, np.pi):.6f} (π/4 = {np.pi / 4:.6f})")
 cam_area = polar_area(lambda t: 30 + lift(np.degrees(t), "cycloidal"), 0, 2 * np.pi)
 print(f"cam: {cam_area:.1f} mm² against the base circle's {np.pi * 30 ** 2:.1f} mm²; a 12 mm thick steel cam weighs {cam_area * 12 * 7.85e-3:.0f} g")
+```
+
+```output
+unit circle: 3.141593 (π = 3.141593)
+cardioid a = 1: 4.712389 (3π/2 = 4.712389)
+rose cos 3θ over θ from 0 to π: 0.785398 (π/4 = 0.785398)
+cam: 3905.3 mm² against the base circle's 2827.4 mm²; a 12 mm thick steel cam weighs 368 g
 ```
 
 The unit circle gives π, the cardioid 3π/2 and the three-petal rose π/4, all to six decimals. The rose needs care: integrating over the full 2π would trace each petal twice and double the area, so the range is θ from 0 to π. The cam encloses about 3,905 mm², about 38% more than its 2,827 mm² base circle. A 12 mm thick steel cam would weigh about 368 g.
@@ -168,7 +190,7 @@ The **logarithmic spiral** r = a e^(bθ) grows by the same **factor** per turn, 
 
 Predict before running: for r = e^(0.2θ), what is the angle between tangent and radius at several points? And for the Archimedean spiral r = 0.5θ?
 
-```python
+```python type
 def tangent_radius_angle(f, theta, h=1e-6):
     pts = lambda t: np.array([f(t) * math.cos(t), f(t) * math.sin(t)])
     velocity = (pts(theta + h) - pts(theta - h)) / (2 * h)
@@ -181,6 +203,14 @@ arch_sp = lambda t: 0.5 * t
 for th_ in [0.5, 3.0, 10.0, 30.0]:
     print(f"θ = {th_:>4}: logarithmic {tangent_radius_angle(log_sp, th_):.4f}°, Archimedean {tangent_radius_angle(arch_sp, th_):.4f}°")
 print(f"formula for the logarithmic spiral: atan(1/b) = {math.degrees(math.atan(1 / 0.2)):.4f}°; growth per turn e^(2πb) = {math.exp(2 * math.pi * 0.2):.3f}")
+```
+
+```output
+θ =  0.5: logarithmic 78.6901°, Archimedean 26.5651°
+θ =  3.0: logarithmic 78.6901°, Archimedean 71.5651°
+θ = 10.0: logarithmic 78.6901°, Archimedean 84.2894°
+θ = 30.0: logarithmic 78.6901°, Archimedean 88.0908°
+formula for the logarithmic spiral: atan(1/b) = 78.6901°; growth per turn e^(2πb) = 3.514
 ```
 
 The logarithmic spiral's tangent meets the radius at 78.69° at every point, exactly atan(1/0.2). The Archimedean spiral's angle grows from 45° at θ = 0.5 towards 90° as it winds out, approaching a circle locally. Each turn of the logarithmic spiral multiplies the radius by e^(2π × 0.2) ≈ 3.51. Constant angle and constant growth factor are the same fact, seen two ways.

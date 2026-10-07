@@ -13,7 +13,7 @@ Two algorithms from earlier in the series were greedy and provably correct: Dijk
 
 One room, many requested meetings, each with a start and an end time. Which meetings should be accepted to fit in the **most**, with no two overlapping? Three greedy rules sound reasonable: take the meeting that **starts** first, the **shortest** meeting, or the meeting that **ends** first, each time skipping any that clash with those already taken. Predict before running: which rules always achieve the maximum on random instances, compared with a brute force that tries every subset?
 
-```python
+```python type
 import itertools
 import random
 
@@ -48,6 +48,12 @@ for name, count in wins.items():
     print(f"{name:<15} optimal in {count} of {trials} random instances")
 ```
 
+```output
+earliest start  optimal in 193 of 300 random instances
+shortest        optimal in 288 of 300 random instances
+earliest end    optimal in 300 of 300 random instances
+```
+
 `greedy_schedule` takes meetings in the rule's order and keeps each one that clashes with none already chosen. `best_possible` tries subsets from the largest size down, so the first conflict-free one it finds is optimal: exponential, but fine for 8 meetings, and an independent check on the greedy rules.
 
 "Earliest start" fails often (one long early meeting can block many short ones), and "shortest" fails sometimes (a short meeting can straddle two that would both fit). "Earliest end" is optimal on every instance. Testing against brute force like this is the quickest way to kill a wrong greedy rule; it cannot prove a rule right, but the next section can.
@@ -64,7 +70,7 @@ With the rule proved, the efficient version needs only one scan after sorting by
 
 To give change in the fewest coins, the greedy rule is: use the largest coin that fits, repeatedly. For UK coins (1, 2, 5, 10, 20, 50, 100, 200 pence) it always gives the fewest coins. For other coin systems it can fail. Predict before running: with coins 1, 3 and 4, how many coins does greedy use for 6, and what is the true minimum?
 
-```python
+```python type
 def greedy_coins(amount, coins):
     used = []
     for c in sorted(coins, reverse=True):
@@ -89,6 +95,12 @@ odd_fails = [a for a in range(1, 500) if len(greedy_coins(a, odd)) != fewest_coi
 print("amounts below 500 where greedy is not optimal: UK", len(uk_fails), "; 1/3/4:", len(odd_fails), odd_fails[:6])
 ```
 
+```output
+UK, 289p: greedy [200, 50, 20, 10, 5, 2, 2] -> 7 coins; minimum 7
+1/3/4, 6: greedy [4, 1, 1] -> 3 coins; minimum 2
+amounts below 500 where greedy is not optimal: UK 0 ; 1/3/4: 124 [6, 10, 14, 18, 22, 26]
+```
+
 `fewest_coins` computes the true minimum for every amount up to the target, building each from smaller amounts: a first taste of the dynamic programming in the next lessons.
 
 For 6 with coins 1, 3 and 4, greedy takes 4 + 1 + 1 (three coins) while 3 + 3 needs two. Taking the 4 looked best but ruled out the better combination, and greedy never reconsiders. For UK coins, greedy is optimal for every amount: a property of that particular set of coins (called a "canonical" coin system), which the exchange argument can prove for it but which fails for 1, 3, 4. When greedy is not provably right, dynamic programming finds the true optimum.
@@ -99,7 +111,7 @@ Text is stored with a fixed number of bits per character, 8 for plain ASCII. But
 
 The greedy construction: put every character in a heap, weighted by its frequency. Repeatedly take the **two least frequent** items, merge them into one item whose frequency is their sum, and put it back. The merges form a binary tree; each character's code is its path from the root (0 for left, 1 for right). Merging the rarest items first pushes them deepest, giving them the longest codes. An exchange argument proves the result is optimal among prefix-free codes. Predict before running: how many bits will this sentence need, compared with 8 per character?
 
-```python
+```python type
 import heapq
 from collections import Counter
 
@@ -134,6 +146,17 @@ for bit in encoded:
         out.append(decode[current])
         current = ""
 print("decodes correctly:", "".join(out) == text)
+```
+
+```output
+' ': 111  (appears 12 times)
+'e': 010  (appears 7 times)
+'a': 1101  (appears 5 times)
+'f': 1001  (appears 4 times)
+'h': 0000  (appears 3 times)
+'i': 0001  (appears 3 times)
+64 characters: 512 bits at 8 per character, 249 bits with Huffman codes
+decodes correctly: True
 ```
 
 Each heap entry carries a dictionary of codes for the characters merged into it; merging prepends 0 to one side's codes and 1 to the other's. The middle number in each entry is a unique tie-breaker, so Python never compares two dictionaries.

@@ -16,7 +16,7 @@ A **min-heap** is a complete binary tree (every level full except the last, fill
 
 **Inserting**: put the new item at the end of the list (the next free spot in the bottom level), then **sift up**: while it is smaller than its parent, swap them. **Removing the minimum**: take the root; move the **last** item into the root's place, then **sift down**: while it is larger than its smaller child, swap with that child. Each touches one path, O(log n). Predict before running: after pushing 5, 3, 8, 1, 9, 2, what list will the heap be?
 
-```python
+```python type
 class MinHeap:
     def __init__(self):
         self.items = []
@@ -64,6 +64,16 @@ for v in [5, 3, 8, 1, 9, 2]:
 print("popping:", [heap.pop() for _ in range(len(heap))])
 ```
 
+```output
+push 5: [5]
+push 3: [3, 5]
+push 8: [3, 5, 8]
+push 1: [1, 3, 8, 5]
+push 9: [1, 3, 8, 5, 9]
+push 2: [1, 3, 2, 5, 9, 8]
+popping: [1, 2, 3, 5, 8, 9]
+```
+
 `_sift_down` compares with **both** children and swaps with the smaller, so that the new parent is no larger than either child.
 
 The list is not sorted (it ends as [1, 3, 2, 5, 9, 8]), but every parent is no larger than its children, and the minimum is always at index 0. Pushing 1 sifted it from the end all the way up to the root. Popping repeatedly returns 1, 2, 3, 5, 8, 9: a priority queue that hands out items in increasing order.
@@ -74,7 +84,7 @@ To turn a whole list into a heap, n pushes would cost O(n log n). There is a fas
 
 **Heapsort** then sorts in place: heapify into a **max**-heap, then repeatedly swap the maximum (the root) to the end of the list, shrink the heap by one, and sift the new root down. It is O(n log n) in the worst case with no extra memory, which is why introsort falls back on it when quicksort recurses too deeply. (It is not stable, and in practice slower than quicksort, because sifting jumps around the list.) Predict before running: how many swaps does heapify make on 100,000 items, compared with n?
 
-```python
+```python type
 import random
 
 def sift_down_max(a, i, size, counter):
@@ -107,6 +117,11 @@ print("sorted correctly:", data == sorted(data))
 print(f"heapify: {build_swaps:,} swaps for n = 100,000;  sorting phase: {sort_swaps:,} swaps (n log2 n is about 1,660,964)")
 ```
 
+```output
+sorted correctly: True
+heapify: 74,328 swaps for n = 100,000;  sorting phase: 1,400,430 swaps (n log2 n is about 1,660,964)
+```
+
 `range(n // 2 - 1, -1, -1)` runs over the non-leaf positions from the last one back to the root; positions from n // 2 onwards are leaves.
 
 Heapify needs fewer swaps than there are items, confirming O(n); the sorting phase needs about n log₂ n, because each of the n removals sifts down a path of length up to log₂ n.
@@ -115,7 +130,7 @@ Heapify needs fewer swaps than there are items, confirming O(n); the sorting pha
 
 Python's `heapq` module provides a min-heap on an ordinary list: `heapq.heappush(h, x)`, `heapq.heappop(h)`, `heapq.heapify(h)` (the O(n) build), and `h[0]` to peek at the minimum. There is no max-heap; the usual trick is to push negated priorities. To store records, push **tuples**: tuples compare by their first item, then the second, and so on. If two priorities can tie and the next item cannot be compared (dictionaries, custom objects), add a counter as a tie-breaker, which also makes ties come out in insertion order. Predict before running: in what order will the tasks come out?
 
-```python
+```python type
 import heapq
 import itertools
 
@@ -133,6 +148,16 @@ scores = [55, 91, 72, 38, 88, 64, 99, 47]
 print("three largest:", heapq.nlargest(3, scores), " two smallest:", heapq.nsmallest(2, scores))
 ```
 
+```output
+next up: fix outage
+1 fix outage
+1 call client
+2 write report
+2 review code
+3 tidy desk
+three largest: [99, 91, 88]  two smallest: [38, 47]
+```
+
 `itertools.count()` produces 0, 1, 2, … on successive calls to `next`, giving every entry a unique tie-breaker, so Python never needs to compare two dictionaries (which would raise `TypeError`).
 
 Priority 1 tasks come first, and between the two of them "fix outage" first, because it was added first. `heapq.nlargest(k, items)` and `nsmallest` use a heap internally, the subject of the first challenge.
@@ -141,7 +166,7 @@ Priority 1 tasks come first, and between the two of them "fix outage" first, bec
 
 The merge sort lesson merged k sorted lists in rounds. A heap does it in one pass: keep a heap holding the **front item of each list**; repeatedly pop the smallest, output it, and push the next item from the same list. The heap never holds more than k items, so each step is O(log k), and n items take O(n log k). `heapq.merge` does exactly this, lazily, so it works on streams far too large for memory, such as sorted log files from many servers. Predict before running: does `heapq.merge` need the lists to be the same length?
 
-```python
+```python type
 import heapq
 
 server_logs = [
@@ -151,6 +176,17 @@ server_logs = [
 ]
 for timestamp, message in heapq.merge(*server_logs):
     print(timestamp, message)
+```
+
+```output
+1 a: start
+2 b: start
+3 b: request
+4 b: request
+5 a: request
+6 c: start
+9 a: stop
+10 b: stop
 ```
 
 `*server_logs` passes each list as a separate argument. `heapq.merge` returns an iterator, producing merged items only as they are asked for.

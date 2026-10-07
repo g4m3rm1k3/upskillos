@@ -15,7 +15,7 @@ This lesson covers:
 
 A workshop inspects parts in several ways. Here are two inspections written separately. Predict before reading on: if the rule changes to "record every inspection with a timestamp", how many places change, and what happens if one is missed?
 
-```python
+```python type
 def inspect_diameter(part):
     measured = part["probe_mm"] * 2
     target, tolerance = part["nominal_d"], 0.02
@@ -33,13 +33,18 @@ print(inspect_diameter(shaft))
 print(inspect_length(shaft))
 ```
 
+```output
+S-12 diameter 9.996 mm: PASS
+S-12 length 120.040 mm: PASS
+```
+
 The two functions share their whole shape: measure, compare with a tolerance, format a result. Only the measuring and the numbers differ. Each new rule about **how** inspections are done (timestamps, rounding, logging failures to a quality database) must be added to every copy, and the copies will drift.
 
 ## A fixed skeleton with variable steps
 
 Move the shape into a base class method, `run`, and make each varying part a method of its own. Subclasses implement `measure(part)` and say what their target and tolerance are. They never override `run`, so every inspection follows the same order, and a new rule is written once, in `run`. Predict before running: how many inspections record a timestamp, and how many lines of code did that take?
 
-```python
+```python type
 class Inspection:
     feature = "?"
     tolerance = 0.0
@@ -75,6 +80,11 @@ for inspection in [DiameterInspection(), LengthInspection()]:
     print(inspection.run(shaft, "08:15"))
 ```
 
+```output
+[08:15] S-12 diameter 9.996 mm: PASS
+[08:15] S-12 length 120.040 mm: PASS
+```
+
 `run` is the template method: it calls `measure` and `target`, which the base class only declares. The tolerance and feature name are class attributes, which subclasses simply set.
 
 Both inspections gained timestamps from one line in `run`. The subclasses are now tiny: just the facts that differ. This style is sometimes called the **Hollywood principle**, "don't call us, we'll call you": the base class decides when each step runs and calls the subclass's code, instead of the subclass calling the base class.
@@ -83,7 +93,7 @@ Both inspections gained timestamps from one line in `run`. The subclasses are no
 
 Not every step must be overridden. A **hook** is a step with a sensible default, often doing nothing, that a subclass may override to join in at a particular point. A data importer might offer hooks to skip header lines, to clean each row before conversion, and to run something after saving. A subclass overrides just the hooks it needs. Predict before running: which hooks does each importer override, and what does the semicolon importer do with comment lines?
 
-```python
+```python type
 class Importer:
     def run(self, text):
         lines = text.strip().splitlines()
@@ -128,6 +138,12 @@ class SemicolonImporter(Importer):
 
 print(CsvImporter().run("part,qty\nbolt,40\nnut,25\n"))
 print(SemicolonImporter().run("# stock take 3 May\nbolt; 38\n\n# end of bay 1\nwasher; 120\n"))
+```
+
+```output
+[('bolt', 40), ('nut', 25)]
+  (imported 2 records from a legacy file)
+[('bolt', 38), ('washer', 120)]
 ```
 
 `convert` is required, so the base raises `NotImplementedError`. `header_lines`, `clean` and `after_import` are hooks with harmless defaults.

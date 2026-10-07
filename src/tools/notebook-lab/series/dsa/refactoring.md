@@ -15,7 +15,7 @@ This lesson covers:
 
 Here is a shipping-cost function from an online parts shop, after years of small changes. Nobody is sure exactly what it does in every case, which is precisely the problem.
 
-```python
+```python type
 def ship(w, d, c, m, e):
     if w > 0:
         if d == "UK":
@@ -45,9 +45,13 @@ def ship(w, d, c, m, e):
 print(ship(5, "UK", 40, False, False), ship(5, "UK", 200, True, True), ship(5, "EU", 40, True, False))
 ```
 
+```output
+5.9 6 15.3
+```
+
 Before changing a line, record what it does. A **characterisation test** (sometimes called a golden master) does not ask what the code **should** do. It records what it **does**, for many inputs, so any change in behaviour shows up at once. Run the function on a grid covering every branch, including errors, and keep the results.
 
-```python
+```python type
 import itertools
 
 def snapshot(function, inputs):
@@ -64,6 +68,12 @@ baseline = snapshot(ship, inputs)
 print(len(inputs), "input combinations recorded")
 print("example:", (11, "UK", 0, True, True), "->", baseline[(11, "UK", 0, True, True)])
 print("errors recorded:", sum(1 for r in baseline.values() if isinstance(r, tuple)))
+```
+
+```output
+384 input combinations recorded
+example: (11, 'UK', 0, True, True) -> 15.36
+errors recorded: 96
 ```
 
 The grid is chosen from the code itself: weights either side of every threshold in it (0, 2, 10), every destination, order values either side of 150, and both settings of each flag. 384 combinations cover every path through the function.
@@ -90,7 +100,7 @@ Other common smells include long parameter lists, the same `if` switch repeated 
 
 **Step 3: extract functions.** The base rate by destination becomes `base_rate(weight_kg, destination)`. The UK bands get their own function too. `ship` now reads like a summary of the pricing rules. After each step, the snapshot must still match. Predict before running: does every step keep all 384 results identical?
 
-```python
+```python type
 def ship_step1(weight_kg, destination, order_value, member, express):
     if weight_kg <= 0:
         raise ValueError("bad weight")
@@ -152,6 +162,11 @@ def ship_step3(weight_kg, destination, order_value, member, express):
 print("step 3 matches:", snapshot(ship_step3, inputs) == baseline)
 ```
 
+```output
+step 1 matches: True
+step 3 matches: True
+```
+
 Step 2 was done together with step 3 here to save space; in practice it is a step of its own, checked like the others.
 
 All 384 results are identical after every step. Yet the final version reads differently. The UK bands are one small function whose numbers have names. The free-shipping rule says exactly what it is. A change such as "free UK shipping from £120" is a one-word edit to one constant.
@@ -162,7 +177,7 @@ Notice one thing that did **not** happen: the confusing behaviour was kept. Expr
 
 `ship_step3(5, "UK", 40, False, True)` is still hard to read at the call site: which `False` is which? Five parameters that always travel together suggest a missing concept: a **shipment**. Grouping them into an object is called **introduce parameter object**, and a dataclass makes it cheap.
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -178,6 +193,11 @@ def shipping_cost(s):
 
 print(shipping_cost(Shipment(5, "UK", 40, express=True)))
 print("still matches:", all(shipping_cost(Shipment(*args)) == baseline[args] for args in inputs if not isinstance(baseline[args], tuple)))
+```
+
+```output
+11.9
+still matches: True
 ```
 
 `frozen=True` makes the dataclass immutable, so a shipment cannot be changed by the code that prices it.

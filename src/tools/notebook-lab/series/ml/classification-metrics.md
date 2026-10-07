@@ -6,7 +6,7 @@ This lesson takes classification results apart. It introduces the **confusion ma
 
 ## The problem with accuracy
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -15,6 +15,12 @@ always_no = np.zeros(10_000, dtype=bool)
 print("fraud cases:", is_fraud.sum())
 print("accuracy of always saying 'not fraud':", (always_no == is_fraud).mean())
 print("frauds caught:", (always_no & is_fraud).sum())
+```
+
+```output
+fraud cases: 89
+accuracy of always saying 'not fraud': 0.9911
+frauds caught: 0
 ```
 
 99% accuracy, zero frauds caught. When one class is rare, which is the usual situation for the class you care about (fraud, disease, defects, spam in a good inbox), accuracy is dominated by the common class and says almost nothing about the rare one. You need measures that look at each class separately.
@@ -30,7 +36,7 @@ In a two-class problem, call the class you are trying to detect the **positive**
 
 These four counts, arranged in a grid, are the **confusion matrix**. Using the same kind of model as the last lesson, logistic regression on the breast cancer data, now with **malignant** as the positive class since that is what screening is for:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
@@ -52,6 +58,12 @@ fn = int(((y_pred == 0) & (y_test == 1)).sum())
 print(f"TP {tp}  FN {fn}")
 print(f"FP {fp}  TN {tn}")
 print("accuracy:", round((tp + tn) / len(y_test), 3))
+```
+
+```output
+TP 77  FN 3
+FP 4  TN 144
+accuracy: 0.969
 ```
 
 In the dataset the label 0 means malignant, so `y = (target == 0)` makes malignant the positive class, 1. `predict_proba(...)[:, 1]` takes each tumour's probability of class 1. Look at the two kinds of error separately: a handful of malignant tumours were missed (false negatives), and a handful of benign ones were flagged (false positives). Accuracy lumps them together; the confusion matrix keeps them apart.
@@ -86,7 +98,7 @@ The harmonic mean is dragged down by whichever of the two is smaller. A model wi
 
 A model that outputs probabilities does not have to use 0.5 as its cut-off. Lower the threshold and it flags more cases: recall rises, precision usually falls. Raise it and the reverse happens. Predict the shape of the two curves before running:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_breast_cancer
@@ -128,7 +140,7 @@ To compare **models**, rather than thresholds, it helps to summarise a model's b
 
 A threshold of 1 flags nothing, the point (0, 0); a threshold of 0 flags everything, the point (1, 1). A perfect model reaches the top-left corner, catching every positive with no false alarms. A model that guesses at random runs along the diagonal.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_breast_cancer
@@ -165,7 +177,7 @@ One caution. When positives are very rare, the false positive rate stays tiny ev
 
 The right threshold comes from what mistakes cost. Suppose missing a cancer (a false negative) is judged 20 times as costly as a false alarm (a false positive). Then choose the threshold that minimises the total cost on validation data:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
@@ -191,13 +203,17 @@ best = thresholds[int(np.argmin(costs))]
 print(f"best threshold {best:.2f}, total cost {min(costs)} (at 0.5 the cost is {costs[49]})")
 ```
 
+```output
+best threshold 0.09, total cost 44 (at 0.5 the cost is 64)
+```
+
 (`~pred` flips the booleans: not predicted positive.) With false negatives this expensive, the best threshold is well below 0.5. There is also a neat theoretical answer: if the probabilities are trustworthy, the cost-minimising rule is to predict positive whenever `p > cost_fp / (cost_fp + cost_fn)`, here 1/21 ≈ 0.05. In practice, pick the threshold on validation data and report the final result on a separate test set; this demo uses the test set only to keep the code short.
 
 ## Can you trust the probabilities?
 
 A threshold rule like that relies on the probabilities meaning what they say: of all the tumours given a probability of 0.3, about 30% should really be malignant. A model whose probabilities behave like this is **calibrated**. Check it by grouping examples by predicted probability and comparing each group's average prediction with the fraction that were actually positive:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
@@ -216,6 +232,13 @@ for low, high in zip(edges[:-1], edges[1:]):
     in_bin = (p_test >= low) & (p_test < high) if high < 1 else (p_test >= low)
     if in_bin.sum():
         print(f"predicted {low:.1f}–{high:.1f}: {in_bin.sum():>3} tumours, mean prediction {p_test[in_bin].mean():.2f}, actually malignant {y_test[in_bin].mean():.2f}")
+```
+
+```output
+predicted 0.0–0.1: 127 tumours, mean prediction 0.01, actually malignant 0.02
+predicted 0.1–0.5:  20 tumours, mean prediction 0.21, actually malignant 0.05
+predicted 0.5–0.9:  12 tumours, mean prediction 0.67, actually malignant 0.67
+predicted 0.9–1.0:  69 tumours, mean prediction 0.99, actually malignant 1.00
 ```
 
 Logistic regression is usually reasonably calibrated, because its log loss rewards honest probabilities. Many other models (you will meet some) are not, and their probabilities need correcting before being used for decisions. Here the confident bins match almost perfectly. The 0.1–0.5 bin looks worse: its predictions average 0.21, so about 4 of its 20 tumours would be expected to be malignant, but only 1 is. Is that a sign of bad calibration, or bad luck? Simulating 20 tumours with these exact probabilities gives 1 or fewer malignant about 5% of the time: unusual, but not shocking with so few tumours. A bin of 20 cannot settle the question, which is the estimation lesson again; checking calibration properly needs hundreds of examples in each bin.

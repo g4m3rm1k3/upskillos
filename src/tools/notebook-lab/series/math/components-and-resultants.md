@@ -23,7 +23,7 @@ A force F at angle θ from the x axis has these components, the vector-from-pola
 
 The axes need not be horizontal and vertical. For an object on a slope inclined at α, the natural axes run **along** the slope and **perpendicular** to it. The weight W = mg points straight down, at angle α from the perpendicular axis, so it splits into W sin α pulling down the slope and W cos α pressing into it. Predict before running: for a 120 kg pallet on a 15° ramp, which component is larger?
 
-```python
+```python type
 import math
 import numpy as np
 
@@ -36,6 +36,18 @@ print(f"weight {W:.1f} N: down the slope {along:.1f} N, into the slope {normal:.
 print("components rebuild the weight:", math.isclose(math.hypot(along, normal), W))
 for a in [0, 5, 15, 30, 45, 60, 90]:
     print(f"{a:>3}° ramp: {math.sin(math.radians(a)):.3f} of the weight pulls down the slope")
+```
+
+```output
+weight 1177.2 N: down the slope 304.7 N, into the slope 1137.1 N
+components rebuild the weight: True
+  0° ramp: 0.000 of the weight pulls down the slope
+  5° ramp: 0.087 of the weight pulls down the slope
+ 15° ramp: 0.259 of the weight pulls down the slope
+ 30° ramp: 0.500 of the weight pulls down the slope
+ 45° ramp: 0.707 of the weight pulls down the slope
+ 60° ramp: 0.866 of the weight pulls down the slope
+ 90° ramp: 1.000 of the weight pulls down the slope
 ```
 
 On a 15° ramp only about a quarter of the weight, 304.7 N, pulls the pallet down the slope; the rest, 1137.1 N, presses it into the surface, and that normal force is what friction works with. The fraction down the slope is sin α, from 0 on the flat to the whole weight on a vertical face. At 45° the two components are equal.
@@ -54,7 +66,7 @@ In code: one row of `[Fx, Fy]` per force, then `comps.sum(axis=0)`
 
 A bracket bolted to a wall carries three forces: 400 N horizontally (0°) from a tie, 250 N at 120° from a strut, and 300 N at 225° from a hanging load's cable. Predict before running: is the resultant large or small compared with the individual forces?
 
-```python
+```python type
 forces = [(400, 0), (250, 120), (300, 225)]
 comps = np.array([[F * math.cos(math.radians(a)), F * math.sin(math.radians(a))] for F, a in forces])
 for (F, a), (fx, fy) in zip(forces, comps):
@@ -62,6 +74,14 @@ for (F, a), (fx, fy) in zip(forces, comps):
 R = comps.sum(axis=0)
 print(f"resultant: Rx = {R[0]:.2f}, Ry = {R[1]:.2f}  ->  {np.linalg.norm(R):.2f} N at {math.degrees(math.atan2(R[1], R[0])):.2f}°")
 print("equilibrant (the force that balances them):", np.round(-R, 2))
+```
+
+```output
+ 400 N at   0°: Fx =   400.00, Fy =     0.00
+ 250 N at 120°: Fx =  -125.00, Fy =   216.51
+ 300 N at 225°: Fx =  -212.13, Fy =  -212.13
+resultant: Rx = 62.87, Ry = 4.37  ->  63.02 N at 3.98°
+equilibrant (the force that balances them): [-62.87  -4.37]
 ```
 
 Each row of `comps` is one force's (Fx, Fy); summing down the columns (`axis=0`) adds the components.
@@ -82,7 +102,7 @@ An object at rest, or moving at constant velocity, has zero resultant force: by 
 
 The first equation gives T₁ in terms of T₂; substituting into the second leaves one unknown. A computer solves such systems directly: written as a matrix equation A t = b, `np.linalg.solve` finds t. The next block of lessons explains how. Predict before running: which cable carries more tension, the shallower one or the steeper one?
 
-```python
+```python type
 a1, a2, load = math.radians(40), math.radians(60), 2000
 A = np.array([[-math.cos(a1), math.cos(a2)],
               [ math.sin(a1), math.sin(a2)]])
@@ -94,6 +114,15 @@ for angle in [30, 15, 5, 1]:
     s = math.radians(angle)
     sym = load / (2 * math.sin(s))
     print(f"both cables at {angle:>2}° above horizontal: each carries {sym:9.1f} N")
+```
+
+```output
+T1 = 1015.4 N (at 40°), T2 = 1555.7 N (at 60°)
+check, sum of forces: [0. 0.]
+both cables at 30° above horizontal: each carries    2000.0 N
+both cables at 15° above horizontal: each carries    3863.7 N
+both cables at  5° above horizontal: each carries   11473.7 N
+both cables at  1° above horizontal: each carries   57298.7 N
 ```
 
 `A @ t` multiplies the matrix by the vector, recomputing the left-hand sides of both equations; a zero result confirms the solution.

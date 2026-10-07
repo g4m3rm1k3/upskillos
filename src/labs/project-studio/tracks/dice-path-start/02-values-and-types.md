@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Calculate remaining points and a fractional ratio using appropriate C++ types.
+
+**Recall before looking at code:** Which command must run after changing C++ source? Explain before compiling.
+
 A real game cannot store every possible scoreboard as a separate message. It stores values and calculates what to print. You will make that change, then investigate a calculation that behaves differently from Python.
 
 ## A name holds a value

@@ -25,7 +25,7 @@ In code: `a // d` is $q$, `a % d` is $r$, and `a / d` is a float approximation o
 
 Python's integers (`int`) have no size limit: they grow to as many digits as needed, and arithmetic on them is exact. That makes them right for anything you count: teeth on a gear, parts in a batch, steps in a simulation. Division is the one place to take care. `/` always gives a floating-point result, `//` gives the whole-number quotient (rounded down), and `%` gives the remainder. Predict before running: how many digits does 50! have, and how many full boxes of 48 do 1,000 bolts fill?
 
-```python
+```python type
 import math
 
 print("2 ** 100 =", 2 ** 100)
@@ -33,6 +33,13 @@ print("50! has", len(str(math.factorial(50))), "digits")
 bolts, per_box = 1000, 48
 print(f"{bolts} bolts: {bolts // per_box} full boxes, {bolts % per_box} left over, {bolts / per_box} boxes as a float")
 print("exact check:", (bolts // per_box) * per_box + bolts % per_box == bolts)
+```
+
+```output
+2 ** 100 = 1267650600228229401496703205376
+50! has 65 digits
+1000 bolts: 20 full boxes, 40 left over, 20.833333333333332 boxes as a float
+exact check: True
 ```
 
 `math.factorial(50)` is 50 × 49 × ... × 1. `str(...)` turns a number into its digits so `len` can count them.
@@ -52,7 +59,7 @@ In code: `math.isclose(a, b)` or `abs(a - b) <= tol` instead of `a == b`
 
 Measurements and most calculations use **floating-point** numbers (`float`), which store about 15–17 significant decimal digits in binary. Many simple decimal fractions, such as 0.1, have no exact binary form, just as 1/3 has no exact decimal form, so they are stored as the nearest binary fraction. The difference is tiny, but it is there, and it can surface in a comparison. Predict before running: is `0.1 + 0.2 == 0.3`, and does adding a 0.1 mm shim ten times give exactly 1.0 mm?
 
-```python
+```python type
 from decimal import Decimal
 
 print("0.1 + 0.2 =", 0.1 + 0.2, "| equal to 0.3?", 0.1 + 0.2 == 0.3)
@@ -63,6 +70,13 @@ for _ in range(10):
     stack += 0.1
 print("ten 0.1 mm shims:", stack, "| equal to 1.0?", stack == 1.0)
 print("close enough?", math.isclose(stack, 1.0), "| difference:", stack - 1.0)
+```
+
+```output
+0.1 + 0.2 = 0.30000000000000004 | equal to 0.3? False
+the float 0.1 is really 0.1000000000000000055511151231257827021181583404541015625
+ten 0.1 mm shims: 0.9999999999999999 | equal to 1.0? False
+close enough? True | difference: -1.1102230246251565e-16
 ```
 
 `Decimal(0.1)` shows the exact value of the float that Python stores for 0.1: the closest binary fraction, which is slightly more than one tenth.
@@ -86,7 +100,7 @@ When a number is exact by nature, store it exactly. Python's standard library ha
 
 Both are slower than floats, so use them where exactness matters, not everywhere. Predict before running: after three 37 : 12 gear stages, is the float result exactly the fraction's value?
 
-```python
+```python type
 from fractions import Fraction
 
 stage = Fraction(37, 12)
@@ -99,6 +113,13 @@ print("input 1450 rpm -> output", 1450 / total, "rpm =", float(1450 / total))
 prices = [Decimal("0.10"), Decimal("0.20")]
 float_total = 0.10 + 0.20
 print("decimal total:", sum(prices), "| float total:", float_total)
+```
+
+```output
+exact ratio: 50653/1728 = 29.313078703703702
+float ratio: 29.31307870370371 | same? False
+input 1450 rpm -> output 2505600/50653 rpm = 49.46597437466685
+decimal total: 0.30 | float total: 0.30000000000000004
 ```
 
 `Fraction(37, 12)` is exactly thirty-seven twelfths. Raising it to the third power multiplies numerators and denominators exactly. `Decimal("0.10")` must be made from a **string**: `Decimal(0.10)` would capture the float's binary error.
@@ -122,7 +143,7 @@ A result should be reported to the precision it deserves. A diameter measured wi
 
 Predict before running: how does `round` treat 0.125 and 0.375 to two places?
 
-```python
+```python type
 print("round(2.5) =", round(2.5), " round(3.5) =", round(3.5))
 print("round(0.125, 2) =", round(0.125, 2), " round(0.375, 2) =", round(0.375, 2))
 print("round(2.675, 2) =", round(2.675, 2), " because 2.675 is stored as", Decimal(2.675))
@@ -131,6 +152,15 @@ G = 6.67430e-11
 c = 299_792_458
 for name, value in [("gravitational constant", G), ("speed of light", c), ("shaft diameter", 24.98376)]:
     print(f"{name:<23} {value:.3g}   {value:.4e}   {value:,.2f}")
+```
+
+```output
+round(2.5) = 2  round(3.5) = 4
+round(0.125, 2) = 0.12  round(0.375, 2) = 0.38
+round(2.675, 2) = 2.67  because 2.675 is stored as 2.67499999999999982236431605997495353221893310546875
+gravitational constant  6.67e-11   6.6743e-11   0.00
+speed of light          3e+08   2.9979e+08   299,792,458.00
+shaft diameter          25   2.4984e+01   24.98
 ```
 
 Underscores in `299_792_458` are ignored by Python; they make long numbers readable. The last column shows why a fixed number of decimal places suits money but not science: the gravitational constant prints as 0.00. Use significant figures (`:.3g`) or scientific notation (`:.3e`) for quantities that may be very small or very large.
@@ -155,7 +185,7 @@ Floats have three limits worth knowing:
 
 Absorption matters when adding many values of different sizes, as in a load total or a long simulation. `math.fsum` adds floats while tracking the lost digits, giving the correctly rounded total. Predict before running: what does a simple running total make of a million 0.1 mm steps?
 
-```python
+```python type
 import sys
 
 print("epsilon:", sys.float_info.epsilon, " largest float:", sys.float_info.max)
@@ -167,6 +197,13 @@ running = 0.0
 for step in steps:
     running += step
 print("loop:", running, "  sum:", sum(steps), "  fsum:", math.fsum(steps))
+```
+
+```output
+epsilon: 2.220446049250313e-16  largest float: 1.7976931348623157e+308
+1e308 * 10 = inf   1e-320 / 1e10 = 0.0
+1e16 + 1 - 1e16 = 0.0
+loop: 100000.00000133288   sum: 100000.0   fsum: 100000.0
 ```
 
 `1e16 + 1` cannot be stored: floats near 10¹⁶ are 2 apart, so the 1 vanishes, and subtracting 10¹⁶ again gives 0.0.

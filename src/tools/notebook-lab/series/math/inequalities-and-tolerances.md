@@ -24,7 +24,7 @@ An inequality can be manipulated almost like an equation: add or subtract anythi
 
 Predict before running: solve 3 − 2x ≤ 7 and −1 < 4 − x ≤ 2 by hand, then check the answers against a brute-force grid.
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,6 +36,13 @@ second = xs[(-1 < 4 - xs) & (4 - xs <= 2)]
 print(f"-1 < 4 - x <= 2 holds from {second.min()} to {second.max():.2f}  ->  2 <= x < 5, the interval [2, 5)")
 print("check the ends: x = 2 ->", -1 < 4 - 2 <= 2, "  x = 5 ->", -1 < 4 - 5 <= 2)
 print("reciprocals flip too: 2 < 4 but 1/2 > 1/4:", 1 / 2 > 1 / 4)
+```
+
+```output
+3 - 2x <= 7 holds on the grid from -2.0 to 10.0  ->  x >= -2
+-1 < 4 - x <= 2 holds from 2.0 to 4.99  ->  2 <= x < 5, the interval [2, 5)
+check the ends: x = 2 -> True   x = 5 -> False
+reciprocals flip too: 2 < 4 but 1/2 > 1/4: True
 ```
 
 The grid confirms x ≥ −2 for the first inequality. For the double inequality, subtracting 4 gives −5 < −x ≤ −2, and multiplying by −1 flips both signs: 2 ≤ x < 5. The grid's largest point, 4.99, sits just inside the excluded end at 5. Checking the end points directly shows which ends belong to the interval.
@@ -56,7 +63,7 @@ ISO 286 standardises these intervals as letter–number codes. **H7** is the com
 
 Predict before running: which of the three shafts gives a clearance fit in an H7 hole, and what is the largest gap?
 
-```python
+```python type
 def fit_report(hole, shaft):
     c_min = hole[0] - shaft[1]
     c_max = hole[1] - shaft[0]
@@ -67,6 +74,12 @@ hole_H7 = (25.000, 25.021)
 for code, shaft in [("g6", (24.980, 24.993)), ("k6", (25.002, 25.015)), ("p6", (25.022, 25.035))]:
     c_min, c_max, kind = fit_report(hole_H7, shaft)
     print(f"H7/{code}: clearance from {c_min * 1000:+.0f} to {c_max * 1000:+.0f} µm  ->  {kind} fit")
+```
+
+```output
+H7/g6: clearance from +7 to +41 µm  ->  clearance fit
+H7/k6: clearance from -15 to +19 µm  ->  transition fit
+H7/p6: clearance from -35 to -1 µm  ->  interference fit
 ```
 
 H7/g6 gives clearances of 7 to 41 µm, a sliding fit, for parts that must move and turn freely yet locate accurately, such as a sliding gear or a pivot pin. H7/p6 gives −35 to −1 µm: every pair interferes, so the parts are pressed together, a light press fit that locates rigidly. Fits that must carry torque by friction alone use tighter shafts, such as s6. H7/k6 runs from −15 to +19 µm: depending on the actual parts, they slide or press, which suits bearings and locating pins that must be positioned accurately but can still be taken apart. Designers choose fits from these intervals, never from the nominal 25 mm.
@@ -86,7 +99,7 @@ Interval arithmetic is guaranteed, but it can be very pessimistic. If a variable
 
 Predict before running: a plate is 200 ± 0.5 by 100 ± 0.3 mm. What range of areas is possible? And what does interval arithmetic say about x − x for x in [9.9, 10.1]?
 
-```python
+```python type
 def add_iv(p, q):
     return (p[0] + q[0], p[1] + q[1])
 
@@ -108,6 +121,13 @@ print("z * (1 - z) for z in [0.4, 0.6], evaluated as written:", tuple(round(v, 3
       " true range: (0.24, 0.25)")
 ```
 
+```output
+area between 19890.15 and 20110.15 mm² (nominal 20,000)
+perimeter: (598.4, 601.6)
+x - x by interval arithmetic: (-0.2, 0.2)  but x - x is exactly 0 for every x
+z * (1 - z) for z in [0.4, 0.6], evaluated as written: (0.16, 0.36)  true range: (0.24, 0.25)
+```
+
 The plate's area lies between 19,890.15 and 20,110.15 mm², and its perimeter between 598.4 and 601.6 mm. But x − x, which is exactly zero, comes out as [−0.2, 0.2]. For z(1 − z) with z in [0.4, 0.6] the interval answer is [0.16, 0.36], while the true values only run from 0.24 to 0.25: z appears twice, and each occurrence is allowed to take a different value. The cure is to rewrite formulas so each uncertain variable appears once (z(1 − z) = ¼ − (z − ½)², evaluated with a tight square, gives exactly [0.24, 0.25]), or to split the input interval into small pieces and combine the results. Interval arithmetic is used where guarantees matter more than tightness: verified computing, collision checks, and worst-case tolerance stacks.
 
 ## Quadratic inequalities: the highest safe speed
@@ -124,7 +144,7 @@ The stopping distance from the motion lesson, s = v t_r + v²/(2a), must not exc
 
 Predict before running: with a 1.5 s reaction time, 6 m/s² braking and 50 m of visibility (fog, or a blind bend), what is the highest safe speed?
 
-```python
+```python type
 tr, a, D = 1.5, 6.0, 50.0
 roots = np.roots([1, 2 * a * tr, -2 * a * D])
 v_max = roots.max()
@@ -132,6 +152,14 @@ print(f"roots {np.sort(roots).round(3)} m/s; allowed: 0 <= v <= {v_max:.2f} m/s 
 for v in [v_max - 0.5, v_max, v_max + 0.5]:
     print(f"  at {v * 3.6:5.1f} km/h the car needs {v * tr + v ** 2 / (2 * a):.2f} m")
 print(f"with 100 m of visibility: {(-a * tr + math.sqrt((a * tr) ** 2 + 2 * a * 100)) * 3.6:.1f} km/h")
+```
+
+```output
+roots [-35.096  17.096] m/s; allowed: 0 <= v <= 17.10 m/s = 61.5 km/h
+  at  59.7 km/h the car needs 47.85 m
+  at  61.5 km/h the car needs 50.00 m
+  at  63.3 km/h the car needs 52.20 m
+with 100 m of visibility: 96.4 km/h
 ```
 
 The roots are −35.10 and 17.10 m/s. The highest safe speed is 17.10 m/s, about 61.5 km/h: just below it the car stops within 50 m, just above it does not. Doubling the visibility to 100 m allows only about 96.4 km/h, not twice the speed, because braking distance grows with v². This is the reasoning behind fog speed limits, and behind the "stop within the distance you can see" rule of driving.
@@ -151,7 +179,7 @@ The profit is a linear function, so its contour lines are parallel straight line
 
 Predict before running: is the best plan to make only X, only Y, or a mix?
 
-```python
+```python type
 from scipy.optimize import linprog
 
 A = np.array([[2.0, 1.0], [1.0, 3.0], [-1.0, 0.0], [0.0, -1.0]])
@@ -183,6 +211,14 @@ ax.set_xlabel("parts X")
 ax.set_ylabel("parts Y")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+vertex (  0.0,   0.0): profit      0
+vertex (  0.0,  30.0): profit   1200
+vertex ( 50.0,   0.0): profit   1500
+vertex ( 42.0,  16.0): profit   1900
+linprog: [42. 16.] profit 1900.0
 ```
 
 The feasible region has four corners: (0, 0), (50, 0), (0, 30) and (42, 16). Making only X earns 1,500 and only Y 1,200. The mix of 42 X and 16 Y, where both machines are fully booked, earns 1,900, and `linprog` finds the same plan. The best plan uses every lathe hour and every mill hour, which is typical: at the optimum, the binding constraints are the bottlenecks, and they show which machine to buy more time on.

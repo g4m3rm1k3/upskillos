@@ -28,7 +28,7 @@ Note also the difference between **percent** and **percentage points**. An inter
 
 Predict before running: a machine's output changes by +12%, −8%, +5%, −15% and +20% over five years. The changes add up to +14%. What is the real overall change?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,6 +39,13 @@ factor = np.prod([1 + c for c in changes])
 print(f"sum of the changes {sum(changes):+.1%}, actual overall change {factor - 1:+.2%}")
 print(f"average change: arithmetic {np.mean(changes):+.2%} per year, geometric {factor ** (1 / len(changes)) - 1:+.2%} per year")
 print(f"check: (1 + geometric rate)^5 = {(factor ** (1 / 5)) ** 5:.6f} = overall factor {factor:.6f}")
+```
+
+```output
+100 -> +25% -> -20%: 100.0    +10% then -10%: 0.99    +50% then -50%: 0.75
+sum of the changes +14.0%, actual overall change +10.36%
+average change: arithmetic +2.80% per year, geometric +1.99% per year
+check: (1 + geometric rate)^5 = 1.103558 = overall factor 1.103558
 ```
 
 The overall change is +10.36%, not +14%. The geometric mean rate is 1.99% a year; the arithmetic mean of the rates, 2.80%, overstates it. Five years at a steady 1.99% reproduce the overall factor exactly, which is what an "average growth rate" should mean. The gap between the two averages grows with the volatility of the changes: up-and-down sequences lose ground compared with steady ones.
@@ -56,11 +63,19 @@ The logarithms lesson turned products into sums. Applied to changes, it gives th
 
 Predict before running: what are the log changes for 100 → 125 and 125 → 100, and how far is the log change from the relative change for 100 → 200?
 
-```python
+```python type
 for a, b in [(100, 125), (125, 100), (100, 101), (100, 200)]:
     print(f"{a:>3} -> {b:>3}: relative change {(b - a) / a:+.4f}, log change {math.log(b / a):+.4f}")
 logs = [math.log(1 + c) for c in changes]
 print(f"sum of the five log changes {sum(logs):.6f} = log of the overall factor {math.log(factor):.6f}")
+```
+
+```output
+100 -> 125: relative change +0.2500, log change +0.2231
+125 -> 100: relative change -0.2000, log change -0.2231
+100 -> 101: relative change +0.0100, log change +0.0100
+100 -> 200: relative change +1.0000, log change +0.6931
+sum of the five log changes 0.098540 = log of the overall factor 0.098540
 ```
 
 100 → 125 and 125 → 100 give log changes of +0.2231 and −0.2231: perfectly symmetric. At 1% they differ by only 0.00005; at a doubling they differ a lot (1.0 against 0.693). The five yearly log changes add up to the log of the overall factor exactly. Log changes are the natural unit whenever changes compound: growth, decay, returns, inflation.
@@ -79,7 +94,7 @@ A **price index** tracks the cost of a fixed basket of goods, set to 100 in a ba
 
 Predict before running: an index rises at the yearly rates below from 2015 to 2024, and a salary goes from 28,000 to 37,400. Did its buying power rise over the decade?
 
-```python
+```python type
 years = np.arange(2015, 2025)
 inflation = [0.000, 0.007, 0.027, 0.025, 0.018, 0.009, 0.026, 0.091, 0.073, 0.025]
 cpi = 100 * np.cumprod([1 + r for r in inflation])
@@ -99,6 +114,14 @@ ax.set_ylabel("salary")
 plt.show()
 ```
 
+```output
+price index: [100.  100.7 103.4 106.  107.9 108.9 111.7 121.9 130.8 134. ]
+real wage in 2015 money: [28000. 28401. 28331. 28301. 28634. 28930. 28823. 27568. 27375. 27901.]
+over the decade: nominal +33.6%, prices +34.0%, real -0.36%
+CAGR: nominal 3.27% a year, prices 3.31% a year
+2022: raise +4.35%, inflation 9.1%, real change -4.36%
+```
+
 The salary rose 33.6% in money terms, while prices rose 34.0%. In real terms it fell slightly, by 0.36%: a decade of raises bought nothing. The compound annual growth rates, 3.27% for the salary and 3.31% for prices, tell the same story in one pair of numbers. In 2022 alone, a 4.35% raise met 9.1% inflation, a real cut of 4.36%. The plot shows the real wage drifting up gently until the inflation spike knocks it back below its starting level.
 
 ## Absolute and relative error
@@ -114,7 +137,7 @@ An error of 0.05 mm means nothing on its own. On a 1 m shaft it is 0.005%, far b
 
 Predict before running: a 0.05 error on parts of nominal size 10, 1000 and 0.5. What are the relative errors?
 
-```python
+```python type
 from fractions import Fraction
 
 for true, measured in [(10.0, 10.05), (1000.0, 1000.05), (0.5, 0.55)]:
@@ -123,6 +146,13 @@ eps = np.finfo(float).eps
 stored = Fraction(0.1)
 print(f"machine epsilon {eps:.3e}; 0.1 is stored as {stored.numerator}/2^{stored.denominator.bit_length() - 1}, "
       f"a relative error of {float(abs(stored - Fraction(1, 10)) / Fraction(1, 10)):.1e}")
+```
+
+```output
+true    10.0: measured    10.05, absolute error 0.05000000000000071, relative error 0.5000%
+true  1000.0: measured  1000.05, absolute error 0.049999999999954525, relative error 0.0050%
+true     0.5: measured     0.55, absolute error 0.050000000000000044, relative error 10.0000%
+machine epsilon 2.220e-16; 0.1 is stored as 3602879701896397/2^55, a relative error of 5.6e-17
 ```
 
 The same 0.05 is a relative error of 0.5%, 0.005% and 10%. The printed absolute errors also show floating point at work: 0.05 on 1000 comes out as 0.049999999999954525, because 1000.05 is stored with a relative error of about 4.5 × 10⁻¹⁷, which on a number of size 1000 is an absolute error of about 4.5 × 10⁻¹⁴. `Fraction(0.1)` reveals the exact binary value behind 0.1, about 5.6 × 10⁻¹⁷ away from a tenth in relative terms. Rounding error is relative, so it is largest in absolute terms for large numbers, and subtracting two large numbers exposes it.
@@ -140,7 +170,7 @@ Instrument specifications state accuracy in two ways. A "% of reading" term scal
 
 Predict before running: three gauges, ranges 10, 25 and 100 bar, each 0.25% of reading plus 0.25% FS, with resolutions 0.01, 0.01 and 0.1 bar. What is the relative uncertainty of a 1 bar reading on each?
 
-```python
+```python type
 def gauge_uncertainty(reading, rng, pct_reading, pct_fs, resolution):
     return pct_reading / 100 * abs(reading) + pct_fs / 100 * rng + resolution / 2
 
@@ -150,6 +180,12 @@ for rng, res in [(10, 0.01), (25, 0.01), (100, 0.1)]:
         u = gauge_uncertainty(reading, rng, 0.25, 0.25, res)
         row.append(f"{reading:>4} bar ± {u:.4f} ({100 * u / reading:5.2f}%)")
     print(f"{rng:>3} bar gauge: " + ";  ".join(row))
+```
+
+```output
+ 10 bar gauge:  1.0 bar ± 0.0325 ( 3.25%);   5.0 bar ± 0.0425 ( 0.85%);   9.0 bar ± 0.0525 ( 0.58%)
+ 25 bar gauge:  1.0 bar ± 0.0700 ( 7.00%);   5.0 bar ± 0.0800 ( 1.60%);   9.0 bar ± 0.0900 ( 1.00%)
+100 bar gauge:  1.0 bar ± 0.3025 (30.25%);   5.0 bar ± 0.3125 ( 6.25%);   9.0 bar ± 0.3225 ( 3.58%)
 ```
 
 On the 10 bar gauge, 1 bar is known to ±0.0325 bar (3.25%), while 9 bar is known to ±0.58%. The 100 bar gauge gives the same 1 bar reading ±0.30 bar, 30%. The fixed FS term and the coarser resolution swamp a small reading. The practical rules follow directly: choose the smallest range that covers the expected values (with margin for overloads), and treat readings in the bottom tenth of a range with suspicion. Stating an uncertainty as "± so much" or "± so many percent" only means something when you also say "of what".

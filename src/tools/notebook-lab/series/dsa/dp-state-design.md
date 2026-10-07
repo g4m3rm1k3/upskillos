@@ -15,7 +15,7 @@ Climb a staircase of n steps, one or two at a time. The last lesson counted the 
 
 So put the missing fact into the state. Let `end1[n]` count the climbs of n steps ending with a 1-step, and `end2[n]` those ending with a 2-step. A 1-step can follow anything: `end1[n] = end1[n-1] + end2[n-1]`. A 2-step can only follow a 1-step (or start the climb): `end2[n] = end1[n-2]`, with `end2[2] = 1` for the climb that is a single 2-step. A brute-force count over every sequence of steps checks the recurrence. Predict before running: how many climbs of 10 steps are there without the rule, and with it?
 
-```python
+```python type
 import itertools
 
 def climbs_no_double_two(n):
@@ -43,6 +43,13 @@ print("all agree up to 15:", all(climbs_no_double_two(n) == brute(n, False) for 
 print("100 steps:", climbs_no_double_two(100))
 ```
 
+```output
+10 steps, any climb:         89
+10 steps, no two 2s in a row: 41 by brute force, 41 by DP
+all agree up to 15: True
+100 steps: 35734758952996318
+```
+
 The `zip(steps, steps[1:])` pairs each step with the next one, so `(2, 2) in ...` spots a double two.
 
 Without the rule there are 89 climbs of 10 steps, the Fibonacci number from the last lesson. With it there are 41. The two-part state doubles the table but keeps every entry's meaning exact. This is the most common state-design move: when the recurrence needs to know something about the past, add exactly that something to the state.
@@ -53,7 +60,7 @@ Multiplying a p × q matrix by a q × r matrix takes p·q·r multiplications of 
 
 For a chain of n matrices, how should the brackets go? The last multiplication done joins some prefix `A_i..A_k` to the suffix `A_{k+1}..A_j`, and each side should itself be bracketed as cheaply as possible. So the state is an **interval**: `cost[i][j]` is the cheapest way to multiply matrices i through j. It depends on shorter intervals inside it, so the table is filled by **increasing interval length**: all intervals of length 1 (cost 0), then 2, then 3, up to the whole chain. Matrix i has shape `dims[i] × dims[i+1]`. Predict before running: how much cheaper is the best bracketing of this six-matrix chain than multiplying left to right?
 
-```python
+```python type
 def chain_order(dims, names):
     n = len(dims) - 1
     cost = [[0] * n for _ in range(n)]
@@ -84,11 +91,16 @@ dims = [30, 35, 15, 5, 10, 20, 25]
 print(chain_order(dims, "ABCDEF"), "versus left to right:", left_to_right(dims))
 ```
 
+```output
+(4500, '((AB)C)')
+(15125, '((A(BC))((DE)F))') versus left to right: 40500
+```
+
 There are n² / 2 intervals and each tries up to n split points: O(n³) time. The number of possible bracketings grows like the Catalan numbers (42 for six matrices, over 1.7 billion for twenty), so trying them all is hopeless beyond a handful.
 
 The first chain confirms `(AB)C` at 4,500. For six matrices the best bracketing costs 15,125 multiplications against 40,500 left to right. Does that matter for real arrays? NumPy multiplies matrices with exactly these p·q·r products. Predict before running: how much faster is the cheap order here?
 
-```python
+```python type
 import numpy as np, time
 
 rng = np.random.default_rng(0)
@@ -119,7 +131,7 @@ The last kind of state is a **subset**: "which of these items have been used". A
 
 Every subset of n items is then one of the integers 0 to 2ⁿ − 1, so a table indexed by subsets is just a list of length 2ⁿ. Predict before running: which items does mask 13 hold?
 
-```python
+```python type
 items = ["drill", "saw", "clamp", "level"]
 
 def members(mask):
@@ -130,13 +142,19 @@ print("13 with the saw added:", members(13 | (1 << 1)))
 print("every subset of 4 items is a number from 0 to", (1 << len(items)) - 1)
 ```
 
+```output
+13 in binary: 0b1101 -> ['drill', 'clamp', 'level']
+13 with the saw added: ['drill', 'saw', 'clamp', 'level']
+every subset of 4 items is a number from 0 to 15
+```
+
 13 is `0b1101`: bits 0, 2 and 3, so drill, clamp and level. Adding bit 1 gives 15, all four.
 
 ## Bitmask DP: the travelling salesman
 
 A delivery driver must visit n stops and return to the depot (stop 0) by the shortest route. Trying every order means (n − 1)! routes: 39,916,800 for twelve stops. The **Held–Karp** algorithm notices that the cost of finishing a route depends only on **which stops have been visited** and **where the driver is now**, not on the order the visited ones came in. So the state is `(visited set, current stop)`: `best[mask][last]` is the shortest path that starts at the depot, visits exactly the stops in `mask`, and ends at `last`. Extend it by one unvisited stop at a time. Masks only grow, so filling them in increasing numeric order has every smaller subset ready. That gives 2ⁿ × n states with n choices each: O(2ⁿ n²). Predict before running: does Held–Karp agree with brute force on nine stops, and how long does it take for thirteen?
 
-```python
+```python type
 import itertools, math, random, time
 
 def random_stops(n, seed):

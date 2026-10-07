@@ -24,7 +24,7 @@ A constant force F that moves its point of application a distance d in the direc
 
 In vector form this is the **dot product** of force and displacement, F · d = F_x d_x + F_y d_y, which equals |F||d| cos θ, the projection idea from the vectors lessons. Lifting a mass m through a height h against gravity takes W = m g h. Predict before running: pulling a 60 kg crate 12 m along the floor with a 150 N force on a rope angled 30° above horizontal, how much work does the rope do, and how much would it do pulling horizontally?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,6 +37,14 @@ for angle in [0, 30, 60, 90]:
     disp_vec = np.array([d, 0.0])
     print(f"rope at {angle:>2}°: work F·d = {force_vec @ disp_vec:8.1f} J  (F d cos θ = {F * d * math.cos(th):8.1f} J)")
 print(f"lifting 60 kg onto a 1.5 m shelf: m g h = {60 * g * 1.5:.0f} J")
+```
+
+```output
+rope at  0°: work F·d =   1800.0 J  (F d cos θ =   1800.0 J)
+rope at 30°: work F·d =   1558.8 J  (F d cos θ =   1558.8 J)
+rope at 60°: work F·d =    900.0 J  (F d cos θ =    900.0 J)
+rope at 90°: work F·d =      0.0 J  (F d cos θ =      0.0 J)
+lifting 60 kg onto a 1.5 m shelf: m g h = 883 J
 ```
 
 `force_vec @ disp_vec` is the dot product of two NumPy vectors.
@@ -61,7 +69,7 @@ the area under the force–displacement graph. A spring obeying Hooke's law need
 
 Real springs, rubber mounts and gas struts are rarely perfectly linear, so engineers measure the force at several displacements and integrate the data. Predict before running: for this measured die spring, how does the work to compress it 20 mm compare with the linear formula using the stiffness at the start?
 
-```python
+```python type
 x_mm = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20], dtype=float)
 force_n = np.array([0, 212, 430, 655, 890, 1138, 1402, 1686, 1993, 2330, 2702], dtype=float)
 x_m = x_mm / 1000
@@ -78,6 +86,11 @@ ax.set_xlabel("compression (mm)")
 ax.set_ylabel("force (N)")
 ax.legend()
 plt.show()
+```
+
+```output
+work from the measured curve: 24.17 J
+linear spring with the initial stiffness 106 N/mm: ½kx² = 21.20 J
 ```
 
 The displacements are converted to metres so that newtons times metres gives joules.
@@ -100,12 +113,17 @@ A mass m moving at speed v carries **kinetic energy** ½mv². The **work–energ
 
 It follows from F = ma: integrating m (dv/dt) along the path, with dx = v dt, gives ∫ m v dv = ½m(v₂² − v₁²). Braking is negative work: a constant braking force F_b over a distance s removes F_b s of kinetic energy, so the stopping distance is s = ½mv²/F_b, the v²/(2d) of the motion lesson rediscovered without any time variable. Predict before running: a 1,500 kg car at 50 km/h and at 100 km/h, with 9 kN of braking force: how far to stop, and how much heat goes into the brakes?
 
-```python
+```python type
 m_car, F_brake = 1500.0, 9000.0
 for kmh in [50, 100]:
     v = kmh / 3.6
     ke = 0.5 * m_car * v ** 2
     print(f"{kmh:>3} km/h: kinetic energy {ke / 1000:6.1f} kJ, stops in {ke / F_brake:5.1f} m, brakes absorb {ke / 1000:.1f} kJ")
+```
+
+```output
+ 50 km/h: kinetic energy  144.7 kJ, stops in  16.1 m, brakes absorb 144.7 kJ
+100 km/h: kinetic energy  578.7 kJ, stops in  64.3 m, brakes absorb 578.7 kJ
 ```
 
 Twice the speed means four times the kinetic energy: 145 kJ at 50 km/h against 579 kJ at 100 km/h, so four times the stopping distance (16.1 m against 64.3 m, ignoring reaction time) and four times the heat in the brakes. Kinetic energy, not speed, is what the brakes have to destroy.
@@ -124,7 +142,7 @@ For forces like gravity and springs, the work depends only on where the object s
 
 Conservation answers questions that would otherwise need a simulation. A part sliding down a frictionless chute from height h reaches the bottom with ½mv² = mgh, so v = √(2gh), whatever the shape of the chute. Predict before running: does a simulation of a part on a curved chute agree?
 
-```python
+```python type
 def chute_height(x):
     return 2.0 * (1 - x / 3) ** 2
 
@@ -139,6 +157,11 @@ def slide(dt=1e-4):
 
 print(f"simulated speed at the bottom: {slide():.3f} m/s")
 print(f"energy conservation √(2gh): {math.sqrt(2 * g * 2.0):.3f} m/s")
+```
+
+```output
+simulated speed at the bottom: 6.264 m/s
+energy conservation √(2gh): 6.264 m/s
 ```
 
 The simulation follows the part along the curved chute: the component of gravity along the surface, g sin(angle), speeds it up, and the horizontal progress is the speed times cos(angle).
@@ -157,13 +180,19 @@ In code: `useful_power = m_load * g * height / seconds`, then `useful_power / ef
 
 **Power** is the rate of doing work, P = dW/dt, in watts (1 W = 1 J/s). For a constant force moving at speed v, P = F v. Real machines lose some energy to friction and heat, so the **efficiency** η = useful power out / power in is below 1, and the input power must be larger: P_in = P_out / η. Predict before running: a hoist lifts 500 kg by 8 m in 20 s through a gearbox and motor with a combined efficiency of 72%. What motor power is needed?
 
-```python
+```python type
 m_load, height, seconds, efficiency = 500.0, 8.0, 20.0, 0.72
 useful_energy = m_load * g * height
 useful_power = useful_energy / seconds
 print(f"useful work {useful_energy / 1000:.1f} kJ, useful power {useful_power / 1000:.2f} kW")
 print(f"input power needed {useful_power / efficiency / 1000:.2f} kW; lost as heat {(useful_power / efficiency - useful_power) / 1000:.2f} kW")
 print(f"lifting speed {height / seconds} m/s, so P = F v = {m_load * g * height / seconds / 1000:.2f} kW")
+```
+
+```output
+useful work 39.2 kJ, useful power 1.96 kW
+input power needed 2.73 kW; lost as heat 0.76 kW
+lifting speed 0.4 m/s, so P = F v = 1.96 kW
 ```
 
 The hoist does 39.2 kJ of useful work in 20 s, 1.96 kW of useful power, and the motor must supply 2.73 kW, of which 0.76 kW warms the gearbox and motor. A real design would pick the next standard motor size up (3 kW) and allow for acceleration at the start of the lift.

@@ -6,12 +6,19 @@ The `while` loop handles exactly this. It keeps repeating a block **for as long 
 
 ## The while loop
 
-```python
+```python type
 count = 3
 while count > 0:
     print("Countdown:", count)
     count -= 1
 print("Lift off!")
+```
+
+```output
+Countdown: 3
+Countdown: 2
+Countdown: 1
+Lift off!
 ```
 
 A `while` loop works like an `if` that repeats. Python checks the condition. If it is true, it runs the indented block, then goes back to the top and checks the condition again. As soon as the condition is false, it skips the block and carries on after the loop.
@@ -28,13 +35,17 @@ A `for` loop cannot run forever, because a list runs out of items. A `while` loo
 
 In this notebook an infinite loop is more than an annoyance: Python runs inside the browser tab, so the tab freezes and you will have to reload the page (your code is saved each time you run a cell, so nothing is lost). While you are learning, a simple safety net is a counter that stops the loop after a generous number of steps, as in this cell, which would otherwise never finish:
 
-```python
+```python type
 x = 10
 steps = 0
 while x != 0 and steps < 1000:
     x -= 3
     steps += 1
 print("Stopped after", steps, "steps, with x =", x)
+```
+
+```output
+Stopped after 1000 steps, with x = -2990
 ```
 
 Subtracting 3 from 10 gives 7, 4, 1, -2 and so on, jumping straight past 0, so `x != 0` alone would never become false. The extra condition `steps < 1000` guarantees the loop ends. The output shows it ran all 1000 steps, which tells you something is wrong with the main condition. A condition like `x > 0` is safer than `x != 0` for exactly this reason: it cannot be jumped over.
@@ -46,7 +57,7 @@ Subtracting 3 from 10 gives 7, 4, 1, -2 and so on, jumping straight past 0, so `
 
 Here is a typical `while` problem. Money in a savings account earns 5% interest a year. How many years until 1000 grows to at least 2000?
 
-```python
+```python type
 balance = 1000
 years = 0
 while balance < 2000:
@@ -55,13 +66,17 @@ while balance < 2000:
 print(f"After {years} years the balance is {balance:.2f}")
 ```
 
+```output
+After 15 years the balance is 2078.93
+```
+
 The loop body does one year's work: add the interest and count the year. It repeats while the goal has not been reached. When the loop ends, the condition is false, so you know for certain that `balance` is at least 2000. That guarantee after the loop is a useful way to think about any `while`: **when the loop ends, its condition is false**.
 
 ## Taking a number apart
 
 `while` loops pair naturally with the `//` and `%` operators from lesson 2. For any whole number, `n % 10` is its last digit, and `n // 10` is the number with the last digit removed. Repeating these until nothing is left visits every digit:
 
-```python
+```python type
 n = 4096
 digit_total = 0
 while n > 0:
@@ -71,13 +86,17 @@ while n > 0:
 print("Sum of the digits:", digit_total)
 ```
 
+```output
+Sum of the digits: 19
+```
+
 Trace it: 4096 gives digit 6 and leaves 409; then 9 and 40; then 0 and 4; then 4 and 0. The loop stops when `n` reaches 0, and the digits 6 + 9 + 0 + 4 add up to 19. You do not need to know in advance how many digits the number has, which is exactly why this is a `while` loop and not a `for` loop.
 
 ## Leaving a loop early: break
 
 Sometimes you discover partway through a loop that there is no point continuing: you were searching and you have found it. The `break` statement ends the loop immediately, and Python carries on from the first line after the loop.
 
-```python
+```python type
 readings = [12, 15, 14, 98, 13, 99]
 position = 0
 for value in readings:
@@ -88,11 +107,16 @@ for value in readings:
 print("Finished checking.")
 ```
 
+```output
+Alarm! Reading 98 at position 3
+Finished checking.
+```
+
 The loop stops at the first reading above 90. The later reading of 99 is never examined, because once the alarm is found the loop has done its job. `break` works in `for` loops and `while` loops alike.
 
 `break` also makes a common `while` pattern possible: a loop whose condition is simply `True`, so it would run forever, with a `break` inside that decides when to stop. This is useful when the stopping decision is easiest to make in the middle of the block rather than at the top.
 
-```python
+```python type
 n = 27
 steps = 0
 while True:
@@ -106,6 +130,10 @@ while True:
 print("Reached 1 after", steps, "steps")
 ```
 
+```output
+Reached 1 after 111 steps
+```
+
 This follows a famous rule: if a number is even, halve it; if it is odd, multiply it by 3 and add 1. Starting from 27 the numbers climb as high as 9232 before falling back to 1, in 111 steps. Mathematicians have checked that every starting number they have ever tried eventually reaches 1, but nobody has been able to prove it always happens. This is the Collatz conjecture, one of the most famous unsolved problems in mathematics, and you just ran it.
 
 A `while True` loop must always contain a `break` that is guaranteed to be reached, or it really will run forever.
@@ -114,12 +142,18 @@ A `while True` loop must always contain a `break` that is guaranteed to be reach
 
 `continue` is the gentler relative of `break`. Instead of leaving the loop, it skips the rest of the **current** iteration and jumps straight back to the top for the next one.
 
-```python
+```python type
 lines = ["name,score", "", "Ada,91", "# a comment", "Alan,78"]
 for line in lines:
     if line == "" or line[0] == "#":
         continue
     print("Processing:", line)
+```
+
+```output
+Processing: name,score
+Processing: Ada,91
+Processing: Alan,78
 ```
 
 Blank lines and lines starting with `#` are skipped; everything else is processed. You could write the same thing with the processing inside an `if`, but `continue` keeps the main code at one level of indentation, which reads better when the processing is long. (Why check `line == ""` first? Because `line[0]` on an empty string would be an `IndexError`, and `or` stops as soon as the first part is true, so the index is never reached.)
@@ -130,12 +164,16 @@ In a `while` loop, be careful that `continue` does not jump over the line that m
 
 A `while` loop can walk through a list by keeping an index yourself. It is longer than a `for` loop, so you would not normally do this for the whole list. It is useful when the loop needs to stop partway for a reason that depends on the position, or needs to move through the list in steps of different sizes.
 
-```python
+```python type
 temperatures = [3, 5, 8, 12, 15, 11, 7]
 i = 0
 while i < len(temperatures) and temperatures[i] < 10:
     i += 1
 print("First day at 10 or above is day", i + 1)
+```
+
+```output
+First day at 10 or above is day 4
 ```
 
 The loop moves forward while the current day is still below 10. The first part of the condition, `i < len(temperatures)`, stops the loop from running off the end of the list if no day ever reaches 10. Because `and` stops as soon as the first part is false, `temperatures[i]` is never looked at when `i` is past the end.

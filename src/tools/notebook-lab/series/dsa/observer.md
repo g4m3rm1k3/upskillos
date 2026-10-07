@@ -15,7 +15,7 @@ This lesson covers:
 
 A temperature sensor class records readings. Over time, more and more code wants to know about new readings, and each time someone adds a call inside `record`. Predict before reading on: what must change to add an SMS alert, and what does testing `record` alone require?
 
-```python
+```python type
 class Dashboard:
     def show(self, value):
         print(f"  dashboard: {value} °C")
@@ -44,13 +44,19 @@ sensor.record(72)
 sensor.record(85)
 ```
 
+```output
+  dashboard: 72 °C
+  dashboard: 85 °C
+  ALARM: 85 °C
+```
+
 The sensor's job is to record readings, yet it depends on three unrelated classes and knows how to talk to each. An SMS alert means editing the sensor and its constructor. A test of `record` needs a dashboard, a logger and an alarm, or stand-ins for all three. The dependency points the wrong way: the general-purpose sensor depends on the specific uses of its data.
 
 ## Subscribe, unsubscribe, notify
 
 The subject keeps a list of observers. In Python an observer is usually just a **callable**: a function, a lambda or a bound method that takes the event's data. `subscribe` adds one, `unsubscribe` removes it, and the subject calls every subscriber when something happens. The sensor now knows nothing about dashboards or alarms. Predict before running: after the alarm unsubscribes, what does the second reading trigger?
 
-```python
+```python type
 class Sensor:
     def __init__(self, name):
         self.name = name
@@ -88,6 +94,15 @@ oven.record(91)
 print(log_lines)
 ```
 
+```output
+  dashboard: oven 85 °C
+  ALARM: oven at 85 °C
+  dashboard: oven 90 °C
+  dashboard: oven 91 °C
+  sms to on-call: oven 91
+['oven reading 85', 'oven reading 90', 'oven reading 91']
+```
+
 The SMS alert was added as a lambda, without touching `Sensor`. A bound method such as `logger.log` works as an observer too, since it is a callable that remembers its object.
 
 After unsubscribing, the alarm stays quiet at 90 °C, and the SMS observer, added later, fires at 91 °C. A test of `Sensor` now needs one fake observer that records what it receives. The sensor defines the shape of its events, `(name, value)`, and anyone can listen.
@@ -104,7 +119,7 @@ The naive version above has three problems that real observer systems must solve
 
 Predict before running: in the naive sensor, which observers hear about the reading when the first one fails, and which hear about it in the robust version?
 
-```python
+```python type
 class RobustSensor(Sensor):
     def subscribe(self, observer):
         self._observers.append(observer)
@@ -145,6 +160,12 @@ robust.record(61)
 print("heard:", heard)
 ```
 
+```output
+naive: the exception stopped notification; heard = []
+robust errors: [('broken_dashboard', ConnectionError('display offline'))]
+heard: [('once', 60), ('log', 60), ('log', 61)]
+```
+
 `subscribe` now returns a function that undoes the subscription, so the caller needs nothing else to clean up later.
 
 The naive sensor's logger never heard the reading. The robust sensor reports the dashboard's failure and still notifies the rest. The `once` observer unsubscribed itself during the first notification without making the loop skip the logger, so it heard only reading 60, while the logger heard both.
@@ -153,7 +174,7 @@ The naive sensor's logger never heard the reading. The robust sensor reports the
 
 As a system grows, many subjects and many observers end up connected. An **event bus** puts one object in the middle. Publishers send events to a **topic** name, such as `"oven.temperature"` or `"job.finished"`, and subscribers register interest in topics. Neither side knows the other exists: they only agree on topic names and on the shape of each event's data. This is publish/subscribe, the form observer takes in larger systems and between separate programs (message brokers such as MQTT, common in factories, work this way). Predict before running: who hears the press-shop event?
 
-```python
+```python type
 from collections import defaultdict
 
 class EventBus:
@@ -174,6 +195,10 @@ bus.publish("job.finished", job="J-2207", cell="press shop")
 bus.publish("oven.temperature", celsius=182)
 bus.publish("door.opened", door="north")
 print(received)
+```
+
+```output
+['MES records job J-2207', 'label printer prints J-2207', 'oven chart plots 182']
 ```
 
 `defaultdict(list)` creates an empty list the first time a topic is used, so publishing to a topic nobody subscribed to just notifies no one.

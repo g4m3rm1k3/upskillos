@@ -19,7 +19,7 @@ A fair shuffle makes all n! orderings equally likely. The **Fisher–Yates** shu
 
 A common mistake swaps each position with a random position from the **whole** list. That gives nⁿ equally likely paths. For n ≥ 3, nⁿ is not a multiple of n!, because n − 1 divides n! but shares no factor with nⁿ (for n = 3, 27 paths cannot split evenly over 6 orderings). So some orderings must come up more often than others. Predict before running: in 60,000 naive shuffles of `ABC`, how far from 10,000 does the most common ordering get?
 
-```python
+```python type
 import random
 from collections import Counter
 
@@ -43,6 +43,11 @@ for shuffle in [fisher_yates, naive_shuffle]:
     print(f"{shuffle.__name__:<13}", dict(sorted(counts.items())))
 ```
 
+```output
+fisher_yates  {'ABC': 9879, 'ACB': 9998, 'BAC': 9952, 'BCA': 9984, 'CAB': 10029, 'CBA': 10158}
+naive_shuffle {'ABC': 8926, 'ACB': 11085, 'BAC': 11119, 'BCA': 11082, 'CAB': 8857, 'CBA': 8931}
+```
+
 `rng.randint(0, i)` includes both ends; `rng.randrange(n)` gives 0 to n − 1.
 
 Fisher–Yates puts every ordering within about 150 of 10,000, the ordinary wobble of 60,000 random trials. The naive shuffle gives three orderings about 11,100 each (5 of the 27 paths) and the other three about 8,900 (4 of 27): a bias of over 10 percent, built into the method and never fading with more trials. A card game or a randomised experiment using it is unfair. Python's `random.shuffle` uses Fisher–Yates.
@@ -53,7 +58,7 @@ A server writes millions of log lines a day, and an engineer wants 5 lines chose
 
 Why is this fair? Suppose that after i − 1 items, each has probability k / (i − 1) of being in the reservoir. The new item gets in with probability k / i. An item already there survives this step unless the new item is kept **and** lands on its slot: probability (k / i) × (1 / k) = 1 / i. So it remains with probability k / (i − 1) × (1 − 1/i) = k / i. Every item seen so far is in the reservoir with probability k / i, the same for all, and by induction this holds at every step. The memory is k items, however long the stream. Predict before running: in 30,000 samples of 2 from a stream of 5 items, how often should each item be chosen?
 
-```python
+```python type
 def reservoir_sample(stream, k, rng):
     reservoir = []
     for i, item in enumerate(stream, start=1):
@@ -76,6 +81,11 @@ for _ in range(30_000):
 print(dict(sorted(counts.items())))
 ```
 
+```output
+['request 970443: GET /parts/282', 'request 315316: GET /parts/722', 'request 235635: GET /parts/178', 'request 305393: GET /parts/569', 'request 924166: GET /parts/901']
+{'V': 11874, 'W': 12049, 'X': 12110, 'Y': 12045, 'Z': 11922}
+```
+
 `log_lines` is a generator, so the million lines are produced one at a time and never stored: the sample is chosen from a stream that never exists all at once.
 
 Each of the five items should be in 2 / 5 of the samples: 12,000 of 30,000. The counts land within a couple of hundred of that. Fixing k in advance and reading once is exactly the constraint of streams, network monitors and very large files, and reservoir sampling meets it with O(k) memory.
@@ -86,7 +96,7 @@ The hash tables lesson warned that a bad hash function collapses a table to O(n)
 
 The cure is a **random** hash function, chosen when the table is created, from a family where any two different keys collide with probability about 1 / m. A classic family uses a large prime p and random numbers a and b, with h(x) = ((a·x + b) mod p) mod m. An attacker who does not know a and b cannot pick keys that are likely to collide. Python does the same for strings: their hashes are randomised per process, so the same string gets a different `hash` in each run. Predict before running: how full is the fullest slot under each hash?
 
-```python
+```python type
 P = (1 << 61) - 1
 
 def make_random_hash(m, rng):
@@ -103,6 +113,12 @@ print("random hash: slots used", len(randomised), " fullest slot", max(randomise
 print("average keys per slot:", len(keys) / m)
 ```
 
+```output
+fixed hash:  slots used 1  fullest slot 5000
+random hash: slots used 1000  fullest slot 6
+average keys per slot: 5.0
+```
+
 With `key % 1000`, all 5,000 keys share one slot, and every lookup is a search through 5,000 items. The random hash uses all 1,000 slots, with at most 6 keys in any one. That is even better than truly random placement would manage (which leaves a few slots empty and puts a dozen or so in the fullest), because these keys are evenly spaced and the hash spreads an evenly spaced sequence evenly. Most importantly, the attacker's carefully chosen keys are now ordinary keys.
 
 ## Monte Carlo: checking a matrix product
@@ -111,7 +127,7 @@ Someone claims that C = A × B for three n × n matrices. Recomputing A × B cos
 
 This is the Monte Carlo trade: an answer of "correct" might be wrong with a probability you choose, but an answer of "wrong" is always right. Predict before running: does a single wrong entry among 360,000 get caught?
 
-```python
+```python type
 import numpy as np, time
 
 def freivalds(A, B, C, trials, rng):

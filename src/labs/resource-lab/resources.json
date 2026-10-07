@@ -28,6 +28,17 @@
       "AI"
     ]
   },
+    {
+    "title": "Open AI Spinning Up in Deep RL",
+    "url": "https://spinningup.openai.com/en/latest/user/introduction.html",
+    "description": "This is an educational resource produced by OpenAI that makes it easier to learn about deep reinforcement learning (deep RL)",
+    "tags": [
+      "Machine Learning",
+      "Deep Learning",
+      "Reinforcement Learning",
+      "Learning"
+    ]
+  },
   {
     "title": "FreeCodeCamp",
     "url": "https://www.freecodecamp.org/",

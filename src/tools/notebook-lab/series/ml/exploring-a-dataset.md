@@ -12,7 +12,7 @@ Exploration goes best with a question to guide it. The dataset here comes from a
 
 The dataset comes with scikit-learn, so it needs no download. `as_frame=True` returns it as pandas objects, and `scaled=False` keeps the original units rather than a pre-standardised version.
 
-```python
+```python type
 import pandas as pd
 from sklearn.datasets import load_diabetes
 
@@ -22,16 +22,61 @@ print(df.shape)
 df.head()
 ```
 
+```output
+(442, 11)
+    age  sex   bmi     bp     s1     s2    s3   s4      s5    s6  target
+0  59.0  2.0  32.1  101.0  157.0   93.2  38.0  4.0  4.8598  87.0   151.0
+1  48.0  1.0  21.6   87.0  183.0  103.2  70.0  3.0  3.8918  69.0    75.0
+2  72.0  2.0  30.5   93.0  156.0   93.6  41.0  4.0  4.6728  85.0   141.0
+3  24.0  1.0  25.3   84.0  198.0  131.4  40.0  5.0  4.8903  89.0   206.0
+4  50.0  1.0  23.0  101.0  192.0  125.4  52.0  4.0  4.2905  80.0   135.0
+```
+
 442 patients and 11 columns: ten measurements and the `target`. Every dataset should come with a description of its columns; this one's is in `data.DESCR`. The columns are age (years), sex (recorded as 1 or 2), bmi (body mass index), bp (average blood pressure), six blood measurements, and the target: a measure of disease progression after one year, where higher means worse. The blood measurements are `s1` total cholesterol, `s2` LDL ("bad") cholesterol, `s3` HDL ("good") cholesterol, `s4` total cholesterol divided by HDL, `s5` a measure of blood fats (the logarithm of the triglyceride level), and `s6` blood sugar.
 
-```python
+```python type
 df.info()
+```
+
+```output
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 442 entries, 0 to 441
+Data columns (total 11 columns):
+ #   Column  Non-Null Count  Dtype
+---  ------  --------------  -----
+ 0   age     442 non-null    float64
+ 1   sex     442 non-null    float64
+ 2   bmi     442 non-null    float64
+ 3   bp      442 non-null    float64
+ 4   s1      442 non-null    float64
+ 5   s2      442 non-null    float64
+ 6   s3      442 non-null    float64
+ 7   s4      442 non-null    float64
+ 8   s5      442 non-null    float64
+ 9   s6      442 non-null    float64
+ 10  target  442 non-null    float64
+dtypes: float64(11)
+memory usage: 38.1 KB
 ```
 
 Every column is numeric and there are no missing values, which is unusually tidy for real data. Next, the summary statistics:
 
-```python
+```python type
 df.describe().round(1)
+```
+
+```output
+         age    sex    bmi     bp     s1  ...     s3     s4     s5     s6  target
+count  442.0  442.0  442.0  442.0  442.0  ...  442.0  442.0  442.0  442.0   442.0
+mean    48.5    1.5   26.4   94.6  189.1  ...   49.8    4.1    4.6   91.3   152.1
+std     13.1    0.5    4.4   13.8   34.6  ...   12.9    1.3    0.5   11.5    77.1
+min     19.0    1.0   18.0   62.0   97.0  ...   22.0    2.0    3.3   58.0    25.0
+25%     38.2    1.0   23.2   84.0  164.2  ...   40.2    3.0    4.3   83.2    87.0
+50%     50.0    1.0   25.7   93.0  186.0  ...   48.0    4.0    4.6   91.0   140.5
+75%     59.0    2.0   29.3  105.0  209.8  ...   57.8    5.0    5.0   98.0   211.5
+max     79.0    2.0   42.2  133.0  301.0  ...   99.0    9.1    6.1  124.0   346.0
+
+[8 rows x 11 columns]
 ```
 
 Read this table column by column, looking for anything surprising. Ages run from 19 to 79, a plausible adult range. BMI runs from about 18 to 42. Sex takes only the values 1 and 2, so it is really a **category** stored as a number, and its mean (1.5) means little on its own. The target runs from 25 to 346, with a median of 140.5, a little below its mean of 152, which hints that it is skewed towards high values. No column has an impossible minimum or maximum, such as a negative blood pressure.
@@ -40,7 +85,7 @@ Read this table column by column, looking for anything surprising. Ages run from
 
 Next, look at the distribution of each variable, starting with the one you want to predict:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -58,8 +103,15 @@ The target is **right-skewed**: many patients with moderate progression, and a t
 
 For a category like sex, count instead of plotting a histogram:
 
-```python
+```python type
 print(df["sex"].value_counts())
+```
+
+```output
+sex
+1.0    235
+2.0    207
+Name: count, dtype: int64
 ```
 
 Two groups of similar size, so comparisons between them will be reasonably balanced.
@@ -68,16 +120,30 @@ Two groups of similar size, so comparisons between them will be reasonably balan
 
 Now the question itself: which measurements move with the target? Start with the correlation of every column with the target, sorted by strength. Before running it, predict which measurement you expect to be most strongly related to how diabetes progresses.
 
-```python
+```python type
 correlations = df.corr()["target"].drop("target")
 print(correlations.sort_values(key=abs, ascending=False).round(2))
+```
+
+```output
+bmi    0.59
+s5     0.57
+bp     0.44
+s4     0.43
+s3    -0.39
+s6     0.38
+s1     0.21
+age    0.19
+s2     0.17
+sex    0.04
+Name: target, dtype: float64
 ```
 
 `df.corr()` computes the correlation of every pair of columns, and `["target"]` takes the column of correlations with the target. `sort_values(key=abs)` sorts by the size of the correlation, ignoring its sign, since a strong negative relationship is as informative as a strong positive one.
 
 BMI has the strongest relationship with progression (about 0.59), followed by `s5` and blood pressure. `s3`, HDL or "good" cholesterol, is negatively correlated: higher values go with **less** progression, which fits its reputation. Age and sex are only weakly related to the target on their own. Remember from the expectation lesson that correlation only measures straight-line relationships, so look at the strongest ones directly:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
 
@@ -99,7 +165,7 @@ The plots confirm the correlations and add what numbers cannot show. The BMI rel
 
 Features related to **each other** matter too. Two strongly correlated features carry much the same information, which can make some models unstable (the collinearity problem from the linear systems lesson). A heatmap of the correlation matrix shows every pair at once:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
 
@@ -115,13 +181,17 @@ plt.show()
 print("strongest pair: s1 and s2, r =", round(corr.loc["s1", "s2"], 2))
 ```
 
+```output
+strongest pair: s1 and s2, r = 0.9
+```
+
 `imshow` draws the matrix as coloured squares, from `ax.imshow` in the plotting lesson. The colour map `"RdBu_r"` shows positive correlations in red and negative in blue, with `vmin` and `vmax` fixing the scale so that white means zero. `fig.colorbar` adds the key. The diagonal is always dark red: each feature correlates perfectly with itself. The standout is `s1` and `s2` (total and LDL cholesterol), correlated at about 0.9: they largely measure the same thing. The second is `s3` and `s4`, strongly negative (about −0.74), unsurprisingly, since `s4` is a ratio with HDL on the bottom. Pairs like these are worth noting before modelling.
 
 ## Comparing groups
 
 Correlation handles numeric features. To see how the target varies across **ranges** of a feature, split it into bands and compare the groups. `pd.cut` divides a numeric column into intervals:
 
-```python
+```python type
 import pandas as pd
 from sklearn.datasets import load_diabetes
 
@@ -129,6 +199,19 @@ df = load_diabetes(as_frame=True, scaled=False).frame
 bands = pd.cut(df["bmi"], bins=[0, 25, 30, 35, 50], labels=["under 25", "25-30", "30-35", "35+"])
 print(df.groupby(bands, observed=True)["target"].agg(["count", "mean", "median"]).round(1))
 print(df.groupby("sex")["target"].mean().round(1))
+```
+
+```output
+          count   mean  median
+bmi
+under 25    190  109.3    96.0
+25-30       157  167.0   172.0
+30-35        79  199.7   198.0
+35+          16  280.4   272.0
+sex
+1.0    149.0
+2.0    155.7
+Name: target, dtype: float64
 ```
 
 `pd.cut` returns a Series of band labels, one per patient, and `groupby` accepts that Series directly, grouping the rows by it without adding it to the DataFrame as a column. (`observed=True` tells pandas to show only bands that actually contain patients.)
@@ -139,7 +222,7 @@ The average progression rises steadily across the BMI bands, from about 110 for 
 
 Finally, look for values far from the rest. They may be data-entry errors, or genuine but rare cases, and either way you should know about them before modelling. A simple check is the z-score from the distributions lesson: how many standard deviations each value lies from its column's mean. Before running the cell, use the 68–95–99.7 rule to predict: if the data were normal, about how many of the 4,420 values (442 patients × 10 features) would lie more than 3 standard deviations out?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -149,6 +232,16 @@ z = (features - features.mean()) / features.std()
 extreme = (z.abs() > 3)
 print(extreme.sum()[extreme.sum() > 0])
 print("patients with any extreme value:", extreme.any(axis=1).sum())
+```
+
+```output
+bmi    2
+s1     2
+s2     2
+s3     5
+s4     4
+dtype: int64
+patients with any extreme value: 12
 ```
 
 A handful of patients have a measurement more than 3 standard deviations from the mean, mostly in the serum measurements. For normally distributed data you would expect about 3 in 1,000 values beyond 3 standard deviations, and with 442 patients and 10 features there are 4,420 values, so a dozen or so is not suspicious in itself. The next step would be to look at those rows individually and decide whether any are errors. Do not delete unusual values just because they are unusual: they are often real, and a model needs to see them.

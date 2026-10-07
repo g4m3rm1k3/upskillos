@@ -8,13 +8,26 @@ Trees are popular because they are easy to read: you can print one and follow it
 
 Here is a small tree for the wine data, trained by scikit-learn and printed as text:
 
-```python
+```python type
 from sklearn.datasets import load_wine
 from sklearn.tree import DecisionTreeClassifier, export_text
 
 wine = load_wine()
 tree = DecisionTreeClassifier(max_depth=2, random_state=0).fit(wine.data, wine.target)
 print(export_text(tree, feature_names=list(wine.feature_names)))
+```
+
+```output
+|--- proline <= 755.00
+|   |--- od280/od315_of_diluted_wines <= 2.11
+|   |   |--- class: 2
+|   |--- od280/od315_of_diluted_wines >  2.11
+|   |   |--- class: 1
+|--- proline >  755.00
+|   |--- flavanoids <= 2.17
+|   |   |--- class: 2
+|   |--- flavanoids >  2.17
+|   |   |--- class: 0
 ```
 
 Each line with a `<=` or `>` is a question, called a **split**, and the indentation shows which answer leads where. The lines ending in `class: ...` are **leaves**, where a prediction is made. The first question, at the top, is the **root**. `max_depth=2` limits the tree to two questions on any path. To classify a wine, start at the root and follow the answers down to a leaf.
@@ -31,7 +44,7 @@ G = 1 - \sum_k p_k^2
 
 A pure group (all one class) has G = 0. A 50/50 mix of two classes has G = 1 − (0.25 + 0.25) = 0.5. An even mix of three classes has 1 − 3 × (1/9) ≈ 0.667. Gini impurity has a concrete meaning: it is the chance that two examples drawn at random from the group (with replacement) have different classes.
 
-```python
+```python type
 import numpy as np
 
 def gini(y):
@@ -42,6 +55,13 @@ print(gini(np.array([0, 0, 0, 0])))
 print(gini(np.array([0, 0, 1, 1])))
 print(gini(np.array([0, 1, 2])))
 print(gini(np.array([0, 0, 0, 1])))
+```
+
+```output
+0.0
+0.5
+0.6666666666666667
+0.375
 ```
 
 A split divides a group into a left part and a right part. Its quality is the **weighted average** of the two parts' impurities, weighted by how many examples each part gets:
@@ -58,7 +78,7 @@ The weighting matters: a split that peels off one example into a perfectly pure 
 
 Which thresholds are worth trying? For one feature, only the places **between** neighbouring values matter: any threshold between 2.1 and 2.4 splits the examples identically. So sort the distinct values and try each midpoint. Do that for every feature and keep the best:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -85,6 +105,11 @@ feature, threshold, score = best_split(X_train, y_train)
 print(f"best first question: is feature {feature} <= {threshold:.3f}?  impurity after: {score:.3f}")
 ```
 
+```output
+impurity before splitting: 0.5
+best first question: is feature 1 <= 0.170?  impurity after: 0.320
+```
+
 `np.unique` returns the sorted distinct values, and `(values[:-1] + values[1:]) / 2` gives the midpoints between neighbours (each value plus the next, halved). The search starts with `best_score` set to the impurity of not splitting at all, so a split is only accepted if it actually improves things. If the group is already pure, nothing beats a score of 0 and `best_split` returns `None`.
 
 For the noisy half-moons, the best single question is about feature 1 (the vertical position), and it lowers the impurity from 0.50 to 0.32: a real improvement, though each side is still far from pure.
@@ -93,7 +118,7 @@ For the noisy half-moons, the best single question is about feature 1 (the verti
 
 Now apply the same idea to each part, and again to each of their parts, until the parts are pure or a depth limit is reached. A function that solves a problem by calling **itself** on smaller pieces of the same problem is called **recursive**, and a tree is the natural example: the left branch of a tree is itself a tree.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -138,6 +163,11 @@ print(small)
 print("depth-1 test accuracy:", (predict(small, X_test) == y_test).mean().round(3))
 ```
 
+```output
+{'feature': 1, 'threshold': 0.17038331949653762, 'left': {'leaf': 1}, 'right': {'leaf': 0}}
+depth-1 test accuracy: 0.753
+```
+
 The tree is stored as nested dictionaries. A leaf is `{"leaf": class}`; a split is a dictionary holding the feature, the threshold, and two more trees under `"left"` and `"right"`.
 
 Follow `build` carefully, because recursion can feel like magic the first time. It finds the best split of the examples it was given. If there is no useful split, or the depth limit is reached, it **stops**: it returns a leaf predicting the majority class. Otherwise it divides the examples and, to make the two branches, calls `build` again on each part, with `depth + 1`. Those calls do the same thing on their smaller groups, and so on. Every call works on fewer examples or a greater depth, so the process always reaches leaves and stops. The rule "stop when there is nothing left to split" is called the **base case**, and every recursive function needs one, or it would call itself forever.
@@ -148,7 +178,7 @@ The depth-1 tree printed above is a single question, a "decision stump", and it 
 
 To watch the recursion happen, here is the same `build` with one `print` added at the start of each call, indented by the call's depth, and allowed two levels. Before running it, predict: how many times will `build` be called, and how many leaves can a depth-2 tree have at most?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -187,13 +217,31 @@ tree = build(X_train, y_train, max_depth=2)
 print(tree)
 ```
 
+```output
+build at depth 0: 150 examples, class counts [77 73]
+  -> split on feature 1 <= 0.17
+    build at depth 1: 69 examples, class counts [13 56]
+      -> split on feature 0 <= -0.48
+        build at depth 2: 9 examples, class counts [8 1]
+          -> leaf predicting 0
+        build at depth 2: 60 examples, class counts [ 5 55]
+          -> leaf predicting 1
+    build at depth 1: 81 examples, class counts [64 17]
+      -> split on feature 0 <= 1.63
+        build at depth 2: 76 examples, class counts [64 12]
+          -> leaf predicting 0
+        build at depth 2: 5 examples, class counts [0 5]
+          -> leaf predicting 1
+{'feature': 1, 'threshold': 0.17038331949653762, 'left': {'feature': 0, 'threshold': -0.4832984626212422, 'left': {'leaf': 0}, 'right': {'leaf': 1}}, 'right': {'feature': 0, 'threshold': 1.6330133085908283, 'left': {'leaf': 0}, 'right': {'leaf': 1}}}
+```
+
 Read the trace from the top. The first call, at depth 0, gets all 150 examples and splits them. Before it can return, it has to build its left branch, so the second call (indented once) runs to completion, including **its** two calls at depth 2, which are leaves because the depth limit is reached. Only then does the right branch start. Seven calls in all: one root, two at depth 1, four leaves at depth 2. Each call's dictionary is assembled from the dictionaries its two inner calls returned, which is why the printed tree is nested exactly like the trace.
 
 ## Depth and overfitting
 
 Without a depth limit, `build` usually keeps splitting until every leaf is pure, which means every training example is classified correctly, however noisy. (Usually, because it only accepts a split that improves the impurity right now. On XOR-shaped data, from the perceptron limits lesson, no single split helps on its own, so this greedy search stops at the root, even though two splits together would be perfect. Practical tree libraries share this greedy limitation.) Watch training and test accuracy as the limit grows:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
@@ -252,6 +300,14 @@ for max_depth in [1, 2, 3, 6, None]:
 plt.show()
 ```
 
+```output
+max_depth    1: train 0.800, test 0.753
+max_depth    2: train 0.880, test 0.840
+max_depth    3: train 0.887, test 0.840
+max_depth    6: train 0.913, test 0.813
+max_depth None: train 1.000, test 0.767
+```
+
 The pattern is the overfitting lesson once more. A single question underfits (test 0.75). Depth 2 or 3 does best on unseen data (0.84). With no limit, the tree grows until it gets every training point right (train 1.000) and the test accuracy falls back to about 0.77: the right-hand plot is full of thin slivers built around single noisy points.
 
 Notice the shape of the regions: every boundary is made of horizontal and vertical lines, because every question compares one feature with a threshold. A tree draws boundaries like a staircase.
@@ -262,7 +318,7 @@ Trees have several ways to limit their growth, all available in scikit-learn's `
 
 A fitted tree records how much each feature reduced impurity, summed over all the splits that used it and scaled to add up to 1. These are its **feature importances**:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.model_selection import cross_val_score
@@ -279,13 +335,25 @@ for i in order[:4]:
     print(f"{wine.feature_names[i]:<30} {tree.feature_importances_[i]:.2f}")
 ```
 
+```output
+max_depth    1: mean accuracy 0.646
+max_depth    2: mean accuracy 0.821
+max_depth    3: mean accuracy 0.893
+max_depth    4: mean accuracy 0.916
+max_depth None: mean accuracy 0.888
+proline                        0.41
+od280/od315_of_diluted_wines   0.33
+flavanoids                     0.13
+hue                            0.06
+```
+
 On the wine data a depth-4 tree scores about 92% in cross-validation, below Gaussian Naive Bayes (97%) and scaled kNN (95–97%) from earlier lessons. The importances show it relies mostly on proline and the light-absorption measurement. (`[::-1]` reverses the `argsort` order, so the most important features come first.) Importances are a useful summary, but they share the weakness you have seen before: when two features carry the same information, the tree may use one and give the other no credit at all.
 
 ## Weaknesses: staircases and instability
 
 Because every split is horizontal or vertical, a tree struggles with boundaries that run diagonally:
 
-```python
+```python type
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -301,11 +369,16 @@ print(f"tree: test accuracy {tree.score(X_test, y_test):.2f} using {tree.get_n_l
 print(f"logistic regression: test accuracy {LogisticRegression().fit(X_train, y_train).score(X_test, y_test):.2f}")
 ```
 
+```output
+tree: test accuracy 0.93 using 18 leaves
+logistic regression: test accuracy 0.99
+```
+
 The true boundary is the diagonal line x₁ + x₂ = 0, which logistic regression learns almost perfectly (0.99). The tree needs 18 leaves to build a staircase approximating it, and still gets only 0.93.
 
 The second weakness is **instability**. The best split depends on exactly which examples are present, and the choice at the root changes everything below it. Train trees on four random samples of 160 of the 178 wines and look at their first question:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.tree import DecisionTreeClassifier
@@ -316,6 +389,13 @@ for seed in range(4):
     tree = DecisionTreeClassifier(max_depth=2, random_state=0).fit(wine.data[rows], wine.target[rows])
     root_feature = wine.feature_names[tree.tree_.feature[0]]
     print(f"sample {seed}: first question is about {root_feature}, threshold {tree.tree_.threshold[0]:.2f}")
+```
+
+```output
+sample 0: first question is about proline, threshold 755.00
+sample 1: first question is about color_intensity, threshold 3.46
+sample 2: first question is about color_intensity, threshold 3.82
+sample 3: first question is about color_intensity, threshold 3.46
 ```
 
 (`tree.tree_.feature[0]` and `tree.tree_.threshold[0]` are the root's feature and threshold, in scikit-learn's internal storage.) Leaving out 18 different wines changes the very first question from proline to colour intensity, and with it the whole tree. A model that changes this much with small changes in the data has **high variance**. That sounds like bad news, but it is exactly the property that the next lesson exploits: average many different trees, and the variance cancels out.

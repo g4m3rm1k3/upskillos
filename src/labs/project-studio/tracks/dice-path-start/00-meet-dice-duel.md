@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Explain the roll, bank, bust and win rules after trying the preview.
+
+**Recall before looking at code:** No C++ knowledge is required. Choose whether you would keep five points or risk another roll.
+
 You can write a Python script. You do not need to know C++, classes, tests, graphics or machine learning. Start by playing the game: the reason for every compiler command and class later is to build something you can understand, change and run yourself.
 
 ## A decision worth building a game around

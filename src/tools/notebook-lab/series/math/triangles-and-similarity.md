@@ -23,7 +23,7 @@ Three lengths form a triangle only if each is shorter than the other two togethe
 
 Predict before running: which of these side triples are triangles, and of what kinds: (3, 4, 5), (2, 2, 3), (5, 5, 5), (1, 2, 3), (4, 5, 8)?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +50,14 @@ for tri in [(3, 4, 5), (2, 2, 3), (5, 5, 5), (1, 2, 3), (4, 5, 8)]:
     print(f"{tri}: {kind[0]}{', ' + kind[1] if kind[1] else ''}{extra}")
 ```
 
+```output
+(3, 4, 5): scalene, right  angles 36.87°, 53.13°, 90.00° (sum 180°)
+(2, 2, 3): isosceles, obtuse  angles 41.41°, 41.41°, 97.18° (sum 180°)
+(5, 5, 5): equilateral, acute  angles 60.00°, 60.00°, 60.00° (sum 180°)
+(1, 2, 3): not a triangle
+(4, 5, 8): scalene, obtuse  angles 24.15°, 30.75°, 125.10° (sum 180°)
+```
+
 (3, 4, 5) is the classic right triangle: 9 + 16 = 25, with angles 36.87°, 53.13° and 90°. (2, 2, 3) is isosceles and obtuse, since 9 > 4 + 4, so its largest angle is 97.2°. (5, 5, 5) has three 60° angles. (1, 2, 3) is not a triangle: 1 + 2 is not more than 3, so the "triangle" lies flat. (4, 5, 8) is scalene and obtuse, its largest angle 125.1°. Builders still check a right angle with a tape measure and the 3-4-5 rule.
 
 ## Similar triangles
@@ -66,7 +74,7 @@ Two triangles are **similar** when they have the same shape: equal angles and pr
 
 Predict before running: are the triangles (3, 4, 5) and (7.5, 10, 12.5) similar? A triangular gusset plate has sides 300, 400 and 500 mm. What is the area of its 1:50 model, compared with the full-size plate?
 
-```python
+```python type
 def similar(t1, t2, tol=1e-9):
     r = np.array(sorted(t2), dtype=float) / np.array(sorted(t1), dtype=float)
     return bool(np.allclose(r, r[0], rtol=tol)), float(r[0])
@@ -79,6 +87,12 @@ print("(3, 4, 5) and (7.5, 10, 12.5):", similar((3, 4, 5), (7.5, 10, 12.5)))
 print("(3, 4, 5) and (6, 8, 11):", similar((3, 4, 5), (6, 8, 11)))
 full, model = (300, 400, 500), tuple(v / 50 for v in (300, 400, 500))
 print(f"plate area {heron_simple(*full):,.0f} mm²; model {heron_simple(*model):.1f} mm²; ratio {heron_simple(*full) / heron_simple(*model):,.0f} = 50²")
+```
+
+```output
+(3, 4, 5) and (7.5, 10, 12.5): (True, 2.5)
+(3, 4, 5) and (6, 8, 11): (False, 2.0)
+plate area 60,000 mm²; model 24.0 mm²; ratio 2,500 = 50²
 ```
 
 (3, 4, 5) and (7.5, 10, 12.5) are similar with scale factor 2.5; (6, 8, 11) is not, since 11/5 differs from 8/4. The plate has an area of 60,000 mm². Its 1:50 model, with sides 6, 8 and 10 mm, has 24 mm², a ratio of 2,500 = 50². A wind-tunnel or water-tunnel model (the dimensional-analysis lesson) has every area, and so every force from pressure, scaled by k².
@@ -98,7 +112,7 @@ Here is the river setup. You stand on the near bank at A, directly opposite a tr
 
 Predict before running: a 2 m pole casts a 1.6 m shadow while a building casts 18.4 m. How tall is the building? And with b = 20 m, p = 10 m and q = 30 m, how wide is the river?
 
-```python
+```python type
 h_pole, s_pole, s_building = 2.0, 1.6, 18.4
 print(f"building height {s_building * h_pole / s_pole:.1f} m")
 b_base, p_back, q_side = 20.0, 10.0, 30.0
@@ -107,6 +121,14 @@ print(f"river width {W:.1f} m")
 print(f"check the similar triangles: W / b = {W / b_base:.3f}, (W + p) / q = {(W + p_back) / q_side:.3f}")
 for q_err in [29.5, 30.5]:
     print(f"  if q were {q_err} m: width {b_base * p_back / (q_err - b_base):.2f} m")
+```
+
+```output
+building height 23.0 m
+river width 20.0 m
+check the similar triangles: W / b = 1.000, (W + p) / q = 1.000
+  if q were 29.5 m: width 21.05 m
+  if q were 30.5 m: width 19.05 m
 ```
 
 The building is 23 m tall. The river is 20 m wide, and the two triangles' ratios agree at 1.000. The sensitivity is worth noticing: measuring the sideways walk as 29.5 or 30.5 m instead of 30 gives widths of 21.05 or 19.05 m. A 0.5 m error in one paced distance moves the answer by about 1 m, because the formula divides by the small difference q − b. Good survey geometry keeps such differences large, the conditioning lesson in surveying form.
@@ -125,7 +147,7 @@ Every triangle has several special points, each answering a practical question. 
 
 Predict before running: for the triangle (0, 0), (8, 0), (2, 6), where are the three points, and is the circumcentre inside the triangle?
 
-```python
+```python type
 A, B, C = np.array([0.0, 0.0]), np.array([8.0, 0.0]), np.array([2.0, 6.0])
 G = (A + B + C) / 3
 M = 2 * np.array([B - A, C - A])
@@ -151,6 +173,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+centroid [3.3333 2.    ]; circumcentre [4. 2.], radius 4.4721 (to each vertex: [4.4721, 4.4721, 4.4721])
+incentre [2.9196 2.1044], inscribed radius 2.1044; area 24.0
+```
+
 The centroid is at (3.333, 2), the circumcentre at (4, 2) with radius 4.472 (the same distance to all three corners), and the incentre at about (2.92, 2.10) with an inscribed radius of about 2.10. The triangle's largest angle, at (0, 0), is about 71.6°: acute. So the circumcentre lies inside. For a right triangle it would sit at the middle of the hypotenuse, and for an obtuse one outside the triangle altogether: an access point "equidistant from three machines" may need to be outside the building.
 
 ## Heron's formula, computed carefully
@@ -167,7 +194,7 @@ Heron of Alexandria's formula gives a triangle's area from its three sides, no a
 
 Predict before running: for a needle triangle with sides 1, 1 and 10⁻⁷, how many correct digits does each formula give?
 
-```python
+```python type
 from fractions import Fraction
 
 def heron_naive(a, b, c):
@@ -186,6 +213,13 @@ def heron_exact(a, b, c):
 for tri in [(3.0, 4.0, 5.0), (1.0, 1.0, 1e-7), (1e6, 1e6, 1e-3), (10.0, 5.000001, 5.000001)]:
     ex = heron_exact(*tri)
     print(f"{tri}: naive rel. error {abs(heron_naive(*tri) - ex) / ex:.1e}, Kahan rel. error {abs(heron_kahan(*tri) - ex) / ex:.1e}")
+```
+
+```output
+(3.0, 4.0, 5.0): naive rel. error 0.0e+00, Kahan rel. error 0.0e+00
+(1.0, 1.0, 1e-07): naive rel. error 1.6e-09, Kahan rel. error 1.3e-16
+(1000000.0, 1000000.0, 0.001): naive rel. error 6.9e-08, Kahan rel. error 0.0e+00
+(10.0, 5.000001, 5.000001): naive rel. error 4.4e-10, Kahan rel. error 0.0e+00
 ```
 
 For the 3-4-5 triangle both formulas are exact. For the needle triangle (1, 1, 10⁻⁷) the naive formula's relative error is around 10⁻⁹: about seven of the sixteen digits are gone. Kahan's version is correct to rounding. The (10⁶, 10⁶, 10⁻³) needle is worse for the naive formula, and the nearly flat (10, 5.000001, 5.000001), whose tiny area comes from a small height, loses digits as well. Thin triangles are common in real meshes, so geometry codes use the stable form.

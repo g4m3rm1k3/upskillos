@@ -16,7 +16,7 @@ Keep a tentative distance for each vertex: 0 for the source, infinity for the re
 
 Why is the popped distance final? Every other route to that vertex must leave the settled region through some unsettled vertex, which is at least as far away as the popped one (it was not popped first), and then continue along edges that are never negative, so it cannot end up shorter. Predict before running: what is the shortest distance from A to F, and which vertices are settled in which order?
 
-```python
+```python type
 import heapq
 
 roads = {
@@ -60,6 +60,17 @@ print("distances:", distance)
 print("route to E:", route(parent, "E"), "length", distance["E"])
 ```
 
+```output
+  settle A at distance 0
+  settle B at distance 7
+  settle C at distance 9
+  settle F at distance 11
+  settle D at distance 20
+  settle E at distance 20
+distances: {'A': 0, 'B': 7, 'C': 9, 'F': 11, 'D': 20, 'E': 20}
+route to E: ['A', 'C', 'F', 'E'] length 20
+```
+
 A vertex can be pushed several times if its distance improves more than once; the stale entries stay in the heap and are skipped when popped, because the vertex is already settled. This "lazy deletion" is simpler than updating entries inside the heap, which `heapq` cannot do.
 
 The settling order is A (0), B (7), C (9), F (11), D (20), E (20): exactly the vertices in increasing order of distance. The direct road from A to F (14) loses to A → C → F (11), and E is reached as A → C → F → E with length 20, shorter than the route through D. Each vertex is settled once and each edge relaxed at most once per direction, with heap operations costing O(log V): O((V + E) log V) overall.
@@ -68,7 +79,7 @@ The settling order is A (0), B (7), C (9), F (11), D (20), E (20): exactly the v
 
 When only one destination matters, the search can stop as soon as that vertex is settled, since its distance is then final. On a large network, that can skip most of the work. Predict before running: on a random road network of 2,000 towns, roughly what fraction of the towns does Dijkstra settle to find a route between two of them?
 
-```python
+```python type
 import math
 import random
 
@@ -102,6 +113,12 @@ for target in [17, 512, 1999]:
     print(f"town 0 -> town {target:>4}: road distance {d:7.2f} (straight line {straight:6.2f}), settled {settled_count:>4} of 2,000 towns")
 ```
 
+```output
+town 0 -> town   17: road distance   96.29 (straight line  84.04), settled 1498 of 2,000 towns
+town 0 -> town  512: road distance   70.24 (straight line  59.14), settled  881 of 2,000 towns
+town 0 -> town 1999: road distance  116.79 (straight line  94.49), settled 1846 of 2,000 towns
+```
+
 Each town is joined to its four nearest neighbours, a rough model of a road network. `math.dist` is the straight-line distance between two points.
 
 How much of the network is settled depends on how far away the target is: Dijkstra grows a "circle" of settled towns outward from the source, so the nearest of these targets needed 881 towns settled and the farthest 1,846, almost the whole network. The road distance is always somewhat longer than the straight line. The circle grows in every direction, including away from the target; A* search, later in this part of the series, adds a sense of direction to settle far fewer.
@@ -110,7 +127,7 @@ How much of the network is settled depends on how far away the target is: Dijkst
 
 On a game map, moving into different terrain costs different amounts: road 1, grass 2, forest 5, swamp 10. The grid is an implicit weighted graph, where an edge's weight is the cost of the cell it enters. Predict before running: will the cheapest route go through the forest, or around it?
 
-```python
+```python type
 terrain = [
     "S..ff....",
     ".f.ff.~~.",
@@ -148,6 +165,15 @@ print("\n".join("".join(row) for row in drawing))
 print("cost:", total, " steps:", len(path) - 1)
 ```
 
+```output
+S**ff....
+.f*ff.~~.
+.f*ff.~~.
+.f****~~.
+...ff***G
+cost: 16  steps: 12
+```
+
 The same `route` function rebuilds the path from the parent pointers; only the neighbours and weights changed.
 
 The route skirts the forest block and the swamp, crossing a single forest cell where every way round costs more: 12 steps for a total cost of 16. BFS, counting only steps, treats every 12-step route as equally good, including ones through far more forest or swamp.
@@ -156,11 +182,16 @@ The route skirts the forest block and the swamp, crossing a single forest cell w
 
 The proof that a settled distance is final relied on edges never being negative: going further can never make a route shorter. With a negative edge (a refund, an energy gain, a currency exchange that profits), it can. Predict before running: what does Dijkstra report as the distance from S to C, and what is the truth?
 
-```python
+```python type
 tricky = {"S": {"A": 2, "B": 5}, "A": {"C": 2}, "B": {"A": -4}, "C": {}}
 dist, _ = dijkstra(tricky, "S")
 print("Dijkstra says S -> C costs", dist["C"])
 print("but S -> B -> A -> C costs", 5 - 4 + 2)
+```
+
+```output
+Dijkstra says S -> C costs 4
+but S -> B -> A -> C costs 3
 ```
 
 Dijkstra settles A at distance 2 before discovering that the route through B reaches A at distance 1, and by then C has been computed from the wrong value. For graphs with negative edges, the Bellman-Ford algorithm of the next lesson is needed; it is slower, but correct, and it can even detect negative cycles, where a route could get cheaper for ever.

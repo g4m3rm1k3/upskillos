@@ -1,6 +1,6 @@
 # Worked lesson specification — Why a class protects a score
 
-**Status: authoring specimen for A10, not a published lesson or executable walkthrough.** Read the [course contract](../../cpp-games-learning-path.md) and [terminal map](01-terminal.md). This example fixes the expected depth before the full lessons are authored.
+**Status: authoring specimen implemented by A10 in `dice-path-state`.** The live lesson follows the Score sequence and ends with a bounded RoundCounter transfer challenge; compiler walkthroughs exercise both. Read the [course contract](../../cpp-games-learning-path.md) and [terminal map](01-terminal.md). This example fixes the expected depth before the full lessons are authored.
 
 ## The learner's starting point
 

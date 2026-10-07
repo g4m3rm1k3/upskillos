@@ -16,7 +16,7 @@ and predicts the class from the **sign** of the score: `+1` if `s > 0`, and `−
 
 The vectors lesson explains the geometry. The score `w · x` measures how far `x` lies in the direction of `w`, so the weight vector `w` points **across** the boundary, at right angles to it, towards the `+1` side. The bias `b` slides the boundary back and forth without turning it.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -69,7 +69,7 @@ which is the old score plus a positive amount: the example has been pushed towar
 
 Here is a single update, before and after. Predict which way the boundary will turn:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -92,13 +92,18 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+score before: -1.0 → predicted -1 (true label +1)
+score after:  5.0
+```
+
 The point was on the wrong side of the dashed boundary. One update turns the boundary so the point ends up on the correct side.
 
 ## Training from scratch
 
 Now the full algorithm on a dataset with two separated groups, shuffled into a random order. Predict before running: how many passes will it need, and how will the number of mistakes change from pass to pass?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -134,6 +139,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+epoch 1: mistakes 7
+epoch 2: mistakes 3
+epoch 3: mistakes 1
+epoch 4: mistakes 0
+```
+
 `np.vstack` stacks the two groups of rows into one array, and `rng.permutation` shuffles the examples, so the classes arrive mixed up, as in real data. The number of mistakes falls from pass to pass (7, then 3, then 1) until a pass makes none, and the loop stops: the boundary separates every training example correctly. The perceptron found it with nothing but additions and subtractions. Unlike gradient descent, there is no learning rate: starting from zero, scaling every update by the same number would scale `w` and `b` together, which changes nothing about where the boundary is.
 
 ## Many boundaries, one answer
@@ -144,7 +156,7 @@ Look closely at the learned boundary: it separates the groups, but it may pass q
 
 The **iris** dataset, collected in the 1930s and used in a famous 1936 paper by the statistician Ronald Fisher, records four measurements (sepal length and width, petal length and width, in centimetres) for 150 iris flowers of three species. It is one of the most used datasets in machine learning, and it comes with scikit-learn. Take two species, *setosa* and *versicolor*, and two features, the petal measurements. Predict: will those two measurements be enough to separate the species perfectly?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
@@ -180,11 +192,17 @@ ax.legend()
 plt.show()
 ```
 
+```output
+(100, 2) flowers; ['petal length (cm)', 'petal width (cm)']
+stopped after 3 epochs; weights [-0.5 -0.8], bias 2.0
+training accuracy: 1.0
+```
+
 Setosa flowers have much smaller petals, so the two species are cleanly separable, and the perceptron separates every flower within a few epochs. (Here it is judged only on its training data; the classes are so far apart that any separating line would do nearly as well on new flowers.)
 
 scikit-learn has a perceptron too, following the usual `fit`, `predict`, `score` pattern:
 
-```python
+```python type
 from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
 
@@ -192,6 +210,10 @@ iris = load_iris()
 keep = iris.target < 2
 model = Perceptron().fit(iris.data[keep], iris.target[keep])
 print("accuracy with all four features:", model.score(iris.data[keep], iris.target[keep]))
+```
+
+```output
+accuracy with all four features: 1.0
 ```
 
 It accepts labels as 0 and 1 and handles the conversion itself.

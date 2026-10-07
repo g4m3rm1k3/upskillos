@@ -10,7 +10,7 @@ How to use it: run the cells in order, because later cells use names defined in 
 
 `math` provides `sin`, `cos` and `pi`, which the physics needs. `random` provides random numbers: the starting wobble, random exploring, and tie-breaking. `numpy` (nicknamed `np`) provides arrays, which will hold the Q-table.
 
-```python
+```python type
 import math
 import random
 import numpy as np
@@ -32,11 +32,17 @@ print(POLE_MASS_LEN)
 print(THETA_LIMIT)
 ```
 
+```output
+1.1
+0.05
+0.20943951023931953
+```
+
 Each line creates a name holding one number that never changes (capital letters are the convention for that). `GRAVITY` is 9.8 metres per second squared, the acceleration pulling the pole down. The cart weighs 1.0 kg and the pole 0.1 kg. `TOTAL_MASS` adds them (1.1), because when you push the cart you also move the pole. `HALF_POLE` is 0.5 m: physics uses the distance from the hinge to the pole's centre of mass, which is half the pole's length. `POLE_MASS_LEN` multiplies pole mass by that distance (0.1 x 0.5 = 0.05), a combination that shows up in several equations later, so it is computed once. `FORCE` is the size of each push in newtons. `TAU` is how much time passes per tick, 0.02 seconds, so there are 50 ticks per simulated second. `X_LIMIT` is the track edge. `THETA_LIMIT` converts 12 degrees to **radians**, the angle unit `math.sin` and `math.cos` expect. A full circle is 360 degrees or 2π radians, so multiply by π/180. The printed 0.2094 is 12 degrees in radians. `MAX_STEPS` is the 500-tick win condition.
 
 ## Cell 3: the state
 
-```python
+```python type
 state = [0.0, 0.0, 0.05, 0.0]
 x, x_dot, theta, theta_dot = state
 print("position  ", x)
@@ -45,13 +51,20 @@ print("angle     ", theta)
 print("ang. speed", theta_dot)
 ```
 
+```output
+position   0.0
+velocity   0.0
+angle      0.05
+ang. speed 0.0
+```
+
 The **state** is everything you need to know to predict what happens next. For CartPole it is exactly four numbers in a list. `x` is where the cart is (0 is the centre, positive is right). `x_dot` is how fast the cart is moving (the dot means "rate of change", so it is the rate of change of `x`). `theta` is the pole's angle in radians (0 is straight up, positive is leaning right). `theta_dot` is how fast the angle is changing, the pole's spin. The second line is *unpacking*: it takes the four list entries in order and puts them into four separate names. This state is a cart at rest in the centre with the pole leaning slightly right (0.05 rad is about 3 degrees).
 
 Compare this with the maze in the previous lesson, where a state was one of 25 cells. Here a state is a point in four-dimensional space, and the numbers are *continuous* (any decimal is possible). That difference is what makes this problem harder, and Cell 11 deals with it.
 
 ## Cell 4: starting a new episode
 
-```python
+```python type
 def reset():
     return [random.uniform(-0.05, 0.05) for _ in range(4)]
 
@@ -60,13 +73,18 @@ print(reset())
 print(reset())
 ```
 
+```output
+[-0.03656357558875988, 0.03474337369372327, 0.02637746189766141, -0.024493097426057833]
+[-0.0004564912908059035, -0.005050893521126185, 0.0151592972722763, 0.02887233511355132]
+```
+
 `def reset():` defines a function that needs no input. `random.uniform(-0.05, 0.05)` gives a random decimal anywhere between those two bounds with equal chance. The `[... for _ in range(4)]` part is a list comprehension: it repeats the expression four times and collects the results in a list (the `_` is a throwaway loop variable, since we do not need the counter). So `reset()` returns a list of four small random numbers: a nearly balanced pole and a nearly still cart. An **episode** is one attempt from `reset()` until failure or 500 ticks. `random.seed(1)` fixes the random sequence so everyone gets the same two states. Each call gives a different state, because the random generator advances.
 
 ## Cell 5: the physics, one piece at a time
 
 This is the heart of the environment. We do it once by hand before wrapping it in a function.
 
-```python
+```python type
 state = [0.0, 0.0, 0.05, 0.0]
 action = 1
 
@@ -94,6 +112,15 @@ new_state = [x + TAU * x_dot,
 print(new_state)
 ```
 
+```output
+force 10.0
+sin, cos 0.04997916927067833 0.9987502603949663
+temp 9.09090909090909
+theta_acc -13.824878764357754
+x_acc 9.71852733026505
+[0.0, 0.194370546605301, 0.05, -0.2764975752871551]
+```
+
 Line by line:
 
 `action = 1` means push right (0 means push left). Those are the only two actions, so the Q-table will have two columns.
@@ -112,7 +139,7 @@ The last block is **Euler integration**, and it is the one idea you need for all
 
 ## Cell 6: wrap it in a function and test both actions
 
-```python
+```python type
 def step(state, action):
     x, x_dot, theta, theta_dot = state
     force = FORCE if action == 1 else -FORCE
@@ -132,17 +159,35 @@ print("push left :", step(start, 0))
 print("push right:", step(start, 1))
 ```
 
+```output
+push left : [0.0, -0.1951219512195122, 0.0, 0.2926829268292683]
+push right: [0.0, 0.1951219512195122, 0.0, -0.2926829268292683]
+```
+
 The function is Cell 5 with the printing removed. It takes a state and an action and returns the next state. This is the **environment's transition function**, the same job `step` did in the maze. Starting perfectly upright and still, push left: the cart picks up velocity -0.195 (moving left) and the pole picks up spin +0.293 (starting to lean right). Push right and everything flips sign. The mirror-image results are a good sanity check: the physics is symmetric. And notice the pole always tips *opposite* to the push. To catch a pole that is falling right, you must push right so the cart goes under it. That is the strategy a good policy must discover.
 
 ## Cell 7: watching the pole fall
 
 Predict: if you push left ten times in a row from perfectly upright, which way does the pole lean, and does it lean at a steady rate?
 
-```python
+```python type
 state = [0.0, 0.0, 0.0, 0.0]
 for tick in range(1, 11):
     state = step(state, 0)
     print(tick, "x =", round(state[0], 4), " theta =", round(state[2], 4))
+```
+
+```output
+1 x = 0.0  theta = 0.0
+2 x = -0.0039  theta = 0.0059
+3 x = -0.0117  theta = 0.0176
+4 x = -0.0234  theta = 0.0352
+5 x = -0.039  theta = 0.0587
+6 x = -0.0586  theta = 0.0884
+7 x = -0.082  theta = 0.1242
+8 x = -0.1094  theta = 0.1664
+9 x = -0.1407  theta = 0.2152
+10 x = -0.1759  theta = 0.2707
 ```
 
 Pushing left ten times in a row, feeding each new state into the next `step`. `range(1, 11)` counts 1 through 10. `round(value, 4)` trims to four decimals. At tick 1 nothing seems to have moved, because position and angle only change by velocity and spin, which started at 0 (they change from tick 2). The angle growth is not steady: 0.0059, 0.0176, 0.0352, 0.0587... the increases get bigger every tick. A leaning pole falls faster the further it leans. At tick 9 the angle is 0.2152, past the limit 0.2094, so a real episode would have ended there. A pole left alone falls in under a fifth of a second of simulated time, so the controller must react constantly.
@@ -151,7 +196,7 @@ Pushing left ten times in a row, feeding each new state into the next `step`. `r
 
 Numbers are hard to picture. This cell draws the cart and pole from a state: the grey line is the track, the blue box the cart, the orange line the pole. It then draws the ten pushes from Cell 7 as a strip of frames, like a comic.
 
-```python
+```python type
 import matplotlib.pyplot as plt
 
 POLE_LEN = 2 * HALF_POLE
@@ -192,7 +237,7 @@ Now you can see the strange physics from Cell 6: the pole tips *right*, faster a
 
 ## Cell 8: when does the episode end?
 
-```python
+```python type
 def is_done(state):
     return abs(state[0]) > X_LIMIT or abs(state[2]) > THETA_LIMIT
 
@@ -201,11 +246,17 @@ print(is_done([0.0, 0.0, 0.25, 0.0]))
 print(is_done([2.5, 0.0, 0.0, 0.0]))
 ```
 
+```output
+False
+True
+True
+```
+
 `state[0]` is `x` and `state[2]` is `theta` (lists count from 0). `abs` removes the sign, so the limit applies to both sides. The function returns True if the cart is past the track edge *or* the pole is past 12 degrees. The three tests: upright centre is fine (False), angle 0.25 rad is past the limit (True), and x = 2.5 is off the track (True). The 500-tick win is handled separately by `MAX_STEPS`.
 
 ## Cell 9: a full episode with a random policy
 
-```python
+```python type
 def run_episode(policy):
     state = reset()
     steps = 0
@@ -224,11 +275,16 @@ print(scores)
 print(sum(scores) / len(scores))
 ```
 
+```output
+[11, 62, 37, 55, 12, 22, 22, 11, 47, 23]
+30.2
+```
+
 A **policy** is any function that takes a state and returns an action. This is the key vocabulary word of reinforcement learning. `run_episode` takes a policy as an input (functions can be passed around like any value). It starts from `reset()`, then repeats: ask the policy for an action, apply `step`, count one more tick. The `while` condition says keep going as long as we have not failed *and* have not reached 500. It returns the tick count. Since reward is +1 per tick, **the number of ticks is the total reward**, and that is our score. `random.randrange(2)` returns 0 or 1 with equal chance: a policy that ignores the state completely. Ten random episodes survive about 30 ticks on average (0.6 seconds). That is our baseline. Learning has succeeded if we beat it.
 
 ## Cell 10: a hand-written policy to compare
 
-```python
+```python type
 def rule_policy(state):
     return 1 if state[3] > 0 else 0
 
@@ -236,6 +292,11 @@ random.seed(0)
 scores = [run_episode(rule_policy) for _ in range(10)]
 print(scores)
 print(sum(scores) / len(scores))
+```
+
+```output
+[265, 173, 178, 258, 170, 165, 288, 253, 264, 183]
+219.7
 ```
 
 `state[3]` is `theta_dot`, the pole's spin. The rule: if the pole is rotating rightward, push right; otherwise push left. That moves the cart under the falling pole. This single if-statement beats random by 7x (about 220 vs 30). It is not perfect since it ignores the angle and the cart's position, so it eventually drifts off the track or lets the pole lean too far. (The third challenge asks you to write a better rule.)
@@ -246,7 +307,7 @@ Why this matters: a human wrote that rule using physics insight. **Reinforcement
 
 A Q-table needs a row for every state. The maze had 25. Here the state is four *continuous* numbers, so there are infinitely many possible states, and a table cannot hold infinitely many rows. The fix is **discretization**: chop each number's range into a few buckets (bins) and say two states in the same buckets count as the same state.
 
-```python
+```python type
 LOW  = np.array([-X_LIMIT, -3.0, -THETA_LIMIT, -3.5])
 HIGH = np.array([ X_LIMIT,  3.0,  THETA_LIMIT,  3.5])
 BINS = np.array([3, 3, 6, 6])
@@ -261,6 +322,13 @@ print(discretize([0.0, 0.0, 0.0, 0.0]))
 print(discretize([-2.0, 0.0, 0.0, 0.0]))
 print(discretize([0.0, 0.0, 0.1, -1.0]))
 print(discretize([0.0, 0.0, 5.0, 0.0]))
+```
+
+```output
+(1, 1, 3, 3)
+(0, 1, 3, 3)
+(1, 1, 4, 2)
+(1, 1, 5, 3)
 ```
 
 `LOW` and `HIGH` are the smallest and largest value we care about for each of the four numbers, in order (position, velocity, angle, spin). Position and angle use the failure limits. For velocity and spin, ±3.0 and ±3.5 cover almost everything that happens before failure. `BINS` says how many buckets each number gets: 3 for position, 3 for velocity, 6 for angle, 6 for spin. More buckets on angle and spin because they matter most for balancing. Total distinct states: 3 x 3 x 6 x 6 = 324.
@@ -278,18 +346,24 @@ Reading the tests: a perfectly still, upright, centred cart lands in the middle 
 
 ## Cell 12: seeing the arithmetic inside discretize
 
-```python
+```python type
 ratio = (np.array([0.0, 0.0, 0.1, -1.0]) - LOW) / (HIGH - LOW)
 print(ratio)
 print(ratio * BINS)
 print((ratio * BINS).astype(int))
 ```
 
+```output
+[0.5        0.5        0.73873241 0.35714286]
+[1.5        1.5        4.43239449 2.14285714]
+[1 1 4 2]
+```
+
 The same steps, printed. Check the third number by hand. Angle is 0.1, `LOW` is -0.2094 and `HIGH` is +0.2094. So (0.1 - (-0.2094)) / (0.2094 - (-0.2094)) = 0.3094 / 0.4189 = 0.7387, matching the output. Times 6 bins is 4.43, and cutting off the decimals gives bucket 4. Position 0.0 sits at ratio 0.5, the exact middle, times 3 gives 1.5, which becomes bucket 1 (the middle of three buckets 0, 1, 2).
 
 ## Cell 13: the Q-table itself
 
-```python
+```python type
 Q = np.zeros(tuple(BINS) + (2,))
 print(Q.shape)
 print(Q.size)
@@ -301,13 +375,21 @@ print(Q[s])
 print(Q[s].max(), Q[s].argmax())
 ```
 
+```output
+(3, 3, 6, 6, 2)
+648
+[0. 0.]
+[0. 5.]
+5.0 1
+```
+
 `tuple(BINS)` is `(3, 3, 6, 6)`, and `+ (2,)` appends one more dimension of size 2 (one slot per action). `np.zeros` builds an array of that shape filled with 0.0. It is a 5-dimensional block: four dimensions pick the state, the last picks the action. It holds 3 x 3 x 6 x 6 x 2 = 648 numbers, the printed `Q.size`. In the maze the table was a flat 25 x 4 sheet. This is the same idea with four "row coordinates" instead of one row number.
 
 `Q[s]` with `s = (1, 1, 4, 2)` selects four of the five coordinates and leaves the action coordinate open, so you get the 2-number row for that state: `[0. 0.]` (value of push-left, value of push-right). `s + (1,)` extends the state address with action 1, addressing a single box, and we set that box to 5.0. Now the row reads `[0. 5.]`. `.max()` is the best value in the row (5.0) and `.argmax()` is the *position* of the best value (1, push right). These are the same two operations as in the maze: max answers "how good is this situation?", argmax answers "which action is best?"
 
 ## Cell 14: choosing actions (exploration vs exploitation)
 
-```python
+```python type
 def choose_action(Q, s, epsilon):
     if random.random() < epsilon:
         return random.randrange(2)
@@ -325,13 +407,19 @@ print([choose_action(Q, s, 0.0) for _ in range(10)])
 print([choose_action(Q, s, 0.5) for _ in range(10)])
 ```
 
+```output
+[1, 1, 1, 1, 0, 1, 0, 1, 0, 0]
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 0]
+```
+
 This is **epsilon-greedy**. `random.random()` gives a decimal in [0, 1). If it is below `epsilon`, we ignore the table and act randomly, which is **exploring**: it lets the agent try actions it currently thinks are bad, in case it is wrong. Otherwise we **exploit** by taking the best-known action, `argmax` of the row. The tie check handles an untrained row `[0, 0]`: `argmax` would always return the first index, so the agent would always push left on untrained states, which is a hidden bias. Breaking ties randomly is fairer.
 
 The three tests: with an all-zero table and epsilon 0 the choices are a random mix (a tie every time). After setting push-right to 5.0, epsilon 0 gives ten 1s (always exploit). With epsilon 0.5, about half the choices are random, so occasional 0s sneak in (two of ten here).
 
 ## Cell 15: one Q-learning update, by hand
 
-```python
+```python type
 ALPHA = 0.2
 GAMMA = 0.99
 
@@ -354,13 +442,18 @@ Q[s + (a,)] = new
 print(Q[s])
 ```
 
+```output
+0.0 20.0 20.8 4.16
+[0.   4.16]
+```
+
 This is the entire learning algorithm, the same three lines as in the maze. We stage a situation: the state we will land in already has known values 10 and 20. We are in state `s`, took action 1, got reward 1 (one tick survived).
 
 `old` is the current box value (0.0, we know nothing yet). `best_next` is the best number in the row of the state we landed in (20.0): "if I play well from there, I expect about 20 more". `target = reward + GAMMA * best_next` = 1 + 0.99 x 20 = 20.8: what this action *should* be worth, given what we just saw. **Gamma (the discount factor)** is how much future reward is worth compared to immediate reward. At 0.99 a reward one step ahead counts for 99% of its face value, and rewards far ahead fade slowly. `new = old + ALPHA * (target - old)` moves the old guess 20% of the way toward the target: 0 + 0.2 x (20.8 - 0) = 4.16. **Alpha (the learning rate)** is that fraction. Small alpha learns slowly but smoothly, large alpha learns fast but jumps around. Only one box changed: the row went from `[0, 0]` to `[0, 4.16]`.
 
 ## Cell 16: the training loop
 
-```python
+```python type
 def train(episodes, alpha=0.2, gamma=0.99, eps_start=1.0, eps_min=0.01, eps_decay=0.999):
     Q = np.zeros(tuple(BINS) + (2,))
     epsilon = eps_start
@@ -394,6 +487,11 @@ print(history[:10])
 print(sum(history[:100]) / 100, sum(history[200:300]) / 100)
 ```
 
+```output
+[16, 16, 21, 11, 15, 24, 21, 25, 36, 36]
+23.62 26.18
+```
+
 The function's inputs have default values (`alpha=0.2`, etc.), so you can call `train(300)` and override any of them by name. Setup: a fresh all-zero table, `epsilon` starting at 1.0 (always explore at first, since the table knows nothing), and an empty list `history` to record how long each episode lasted.
 
 Outer loop, once per episode: `reset()` gives a start state, and `discretize` turns it into the table address `s`. Inner loop, once per tick:
@@ -413,12 +511,24 @@ The output: 300 episodes is too few to see much. Early episodes last 11 to 36 ti
 
 This cell runs 4000 episodes and takes 10 to 25 seconds. The notebook can't do anything else while it runs, so wait for the output.
 
-```python
+```python type
 random.seed(0)
 Q, history = train(4000)
 for i in range(0, 4000, 500):
     print("episodes", i, "to", i + 499, ": average", round(sum(history[i:i+500]) / 500, 1))
 print("table entries changed:", np.count_nonzero(Q), "of", Q.size)
+```
+
+```output
+episodes 0 to 499 : average 29.1
+episodes 500 to 999 : average 53.4
+episodes 1000 to 1499 : average 77.3
+episodes 1500 to 1999 : average 92.5
+episodes 2000 to 2499 : average 119.1
+episodes 2500 to 2999 : average 187.6
+episodes 3000 to 3499 : average 253.5
+episodes 3500 to 3999 : average 339.4
+table entries changed: 373 of 648
 ```
 
 `range(0, 4000, 500)` counts 0, 500, 1000, ... 3500 (the third number is the step size). `history[i:i+500]` is a slice: the 500 entries from position `i` up to but not including `i+500`. We average each block of 500 episodes. **This is the learning curve**: survival climbs from 29 ticks (random level) to 339, more than 11 times longer, using only reward feedback and a 648-number table. Nobody told it the physics or the rule from Cell 10.
@@ -429,7 +539,7 @@ Why does it take longer to run as it improves? Each tick is one call to `step`, 
 
 ## Cell 18: test the learned policy with no exploration
 
-```python
+```python type
 def greedy_policy(state):
     return int(np.argmax(Q[discretize(state)]))
 
@@ -437,6 +547,11 @@ random.seed(5)
 scores = [run_episode(greedy_policy) for _ in range(20)]
 print(scores)
 print(sum(scores) / len(scores))
+```
+
+```output
+[108, 96, 83, 93, 91, 86, 95, 90, 84, 145, 125, 100, 94, 86, 81, 146, 94, 82, 124, 88]
+99.55
 ```
 
 The learned policy is just the table in use: discretize the current state, look up its row, take the best action (`argmax`, no randomness at all). It is a policy function like `random_policy` and `rule_policy`, so `run_episode` accepts it unchanged.
@@ -447,7 +562,7 @@ Twenty test episodes average about 100 ticks: more than three times the random b
 
 Here is what the three policies actually do over one episode each: the pole's angle and the cart's position at every tick, with the failure limits as dashed lines.
 
-```python
+```python type
 def record_episode(policy):
     state = reset()
     states = [state]
@@ -482,7 +597,7 @@ plt.show()
 
 Read the picture, not just the tick counts. The random policy lets the pole fall within 13 ticks. The rule holds the angle steady, a few degrees left of upright; the learned table keeps it inside ±12 degrees too, but wobbles back and forth as it corrects. Neither falls. Now look at the bottom plot: in both, the cart **drifts** steadily toward one edge, and reaching the edge is what ends both episodes, at about 175 ticks. Neither the rule (which looks only at the spin) nor this table (with only 3 coarse position buckets) does anything about the drift. Now look at the learned episode as frames:
 
-```python
+```python type
 learned = runs["learned"]
 filmstrip(learned, [round(i * (len(learned) - 1) / 5) for i in range(6)])
 ```
@@ -491,7 +606,7 @@ Six frames spread evenly over the episode: `round(i * (len(learned) - 1) / 5)` f
 
 ## Cell 19: the learning curve
 
-```python
+```python type
 window = 100
 smooth = [sum(history[i:i+window]) / window for i in range(0, len(history) - window)]
 plt.figure(figsize=(8, 3))
@@ -515,7 +630,7 @@ There's a trap first. Cell 18 showed that one training run can be misleading. He
 
 So the helper below trains **three times**, with seeds 0, 1 and 2, tests each table greedily on the same 30 episodes, and prints all three scores and their mean. To keep each cell to between 3 and 30 seconds, it trains for 2000 episodes rather than 4000. Trust a difference only when it's bigger than the spread between seeds.
 
-```python
+```python type
 def experiment(label, bins=(3, 3, 6, 6), episodes=2000, seeds=(0, 1, 2), **settings):
     global BINS
     saved_bins = BINS
@@ -539,6 +654,10 @@ def experiment(label, bins=(3, 3, 6, 6), episodes=2000, seeds=(0, 1, 2), **setti
 experiment("baseline")
 ```
 
+```output
+baseline             greedy test per seed [265, 33, 63]   mean 120
+```
+
 How the helper works. It takes a `label` (text to print) and settings with default values: the number of buckets for each state number, how many episodes to train, and which seeds to use. `**settings` is a catch-all: any *extra* named inputs you pass, such as `alpha=0.02` or `gamma=0.5`, are collected into a dictionary called `settings`, and `train(episodes, **settings)` unpacks that dictionary back into named inputs, so the helper passes them straight through to `train` without needing to know what they are.
 
 `discretize` and `train` both read the global name `BINS`. To try a different bucket layout we must change that global, and `global BINS` is what permits a function to reassign a name that lives outside it. `saved_bins = BINS` remembers the original. The `try: ... finally:` block guarantees that the line under `finally` runs *even if something inside crashes*, so `BINS` is always restored and a failed experiment cannot silently corrupt the next one.
@@ -551,10 +670,16 @@ The baseline prints `[265, 33, 63]`, mean 120. Keep that spread in mind for ever
 
 Predict first: what happens if the agent *never* explores (`epsilon = 0`)? What if it keeps exploring 30% of the time forever? And what if epsilon shrinks twice as fast (`eps_decay=0.998`)?
 
-```python
+```python type
 experiment("no exploring", eps_start=0.0, eps_min=0.0)
 experiment("eps_min=0.3", eps_min=0.3)
 experiment("eps_decay=0.998", eps_decay=0.998)
+```
+
+```output
+no exploring         greedy test per seed [12, 14, 9]   mean 12
+eps_min=0.3          greedy test per seed [162, 139, 128]   mean 143
+eps_decay=0.998      greedy test per seed [291, 324, 107]   mean 241
 ```
 
 The results, which you'll see too: no exploring scores `[12, 14, 9]`; `eps_min=0.3` scores `[162, 139, 128]`; `eps_decay=0.998` scores `[291, 324, 107]`, mean 241. This cell takes about 50 seconds.
@@ -569,9 +694,14 @@ The results, which you'll see too: no exploring scores `[12, 14, 9]`; `eps_min=0
 
 Predict first: `alpha = 0.02` (ten times smaller than 0.2) and `alpha = 1.0` (replace the old value completely each time). Which learns more slowly? Which is unstable?
 
-```python
+```python type
 experiment("alpha=0.02", alpha=0.02)
 experiment("alpha=1.0", alpha=1.0)
+```
+
+```output
+alpha=0.02           greedy test per seed [92, 167, 153]   mean 137
+alpha=1.0            greedy test per seed [15, 16, 28]   mean 20
 ```
 
 `alpha=0.02` scores `[92, 167, 153]`, mean 137; `alpha=1.0` scores `[15, 16, 28]`, mean 20. About 35 seconds.
@@ -584,9 +714,14 @@ experiment("alpha=1.0", alpha=1.0)
 
 Predict first: gamma controls how much future reward counts. Try `0.5` and `0.9`. (Work out `0.5 ** 10` and `0.9 ** 10`: that is how much a reward 10 ticks ahead is worth to each.)
 
-```python
+```python type
 experiment("gamma=0.5", gamma=0.5)
 experiment("gamma=0.9", gamma=0.9)
+```
+
+```output
+gamma=0.5            greedy test per seed [154, 91, 163]   mean 136
+gamma=0.9            greedy test per seed [125, 26, 291]   mean 147
 ```
 
 `gamma=0.5` scores `[154, 91, 163]`, mean 136; `gamma=0.9` scores `[125, 26, 291]`, mean 147. About 30 seconds.
@@ -597,10 +732,16 @@ Both are within the baseline's spread, which is a surprise worth thinking about.
 
 Predict first: `bins=(1, 1, 1, 1)` means one bucket per number, so the table has a single row. `bins=(1, 1, 6, 1)` shows only the pole angle. `bins=(1, 1, 6, 12)` ignores position and velocity but sees the spin finely. Which will be best?
 
-```python
+```python type
 experiment("one bucket (blind)", bins=(1, 1, 1, 1))
 experiment("angle only", bins=(1, 1, 6, 1))
 experiment("angle + spin only", bins=(1, 1, 6, 12))
+```
+
+```output
+one bucket (blind)   greedy test per seed [9, 9, 9]   mean 9
+angle only           greedy test per seed [35, 18, 22]   mean 25
+angle + spin only    greedy test per seed [173, 186, 31]   mean 130
 ```
 
 Blind scores `[9, 9, 9]`; angle only `[35, 18, 22]`; angle + spin `[173, 186, 31]`, mean 130. About 35 seconds.

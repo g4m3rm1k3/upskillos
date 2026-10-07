@@ -10,8 +10,8 @@ describe('script-writer entry into C++ games', () => {
   it('opens on the game before setup and does not silently jump into unfinished chapters', () => {
     expect(lessons[0].steps[0].figures[0].name).toBe('dice-start/DiceDuelPreview');
     const series = studioSeries(TRACKS, TRACK_KEYS, trackTitle).find(s => s.key === 'dice-learning');
-    expect(series.chapters.map(c => c.key)).toEqual(['dice-path-start']);
-    expect(nextSeriesLesson(series, TRACKS, 'dice-path-start', lessons.at(-1).id)).toBeNull();
+    expect(series.chapters.map(c => c.key)).toEqual(['dice-path-start', 'dice-path-state', 'dice-path-objects', 'dice-path-project', 'dice-path-learning']);
+    expect(nextSeriesLesson(series, TRACKS, 'dice-path-start', lessons.at(-1).id)).toEqual({ trackKey: 'dice-path-state', lesson: TRACKS['dice-path-state'][0] });
     expect(series.planned).toContain('Upcoming chapters');
   });
   it('keeps small visible diffs and leaves each programming challenge independent', () => {

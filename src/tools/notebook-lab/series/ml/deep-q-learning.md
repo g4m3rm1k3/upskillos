@@ -8,7 +8,7 @@ The answer is to **approximate** Q with a function that **generalises**: a neura
 
 A pole is hinged on top of a cart that can move along a track. Each step, the agent pushes the cart left or right. The pole starts nearly upright and falls unless the pushes keep it balanced. The episode ends when the pole tilts more than about 12° or the cart leaves the track; the reward is +1 for every step survived, up to a maximum of 200. The state is four real numbers: the cart's position and velocity, and the pole's angle and angular velocity.
 
-```python
+```python type
 import numpy as np
 
 class CartPole:
@@ -45,6 +45,10 @@ for episode in range(200):
 print(f"random pushes keep the pole up for {np.mean(lengths):.1f} steps on average")
 ```
 
+```output
+random pushes keep the pole up for 22.9 steps on average
+```
+
 The `step` method is the standard physics of a cart and pole (masses 1 kg and 0.1 kg, pole half-length 0.5 m, 0.02 seconds per step), integrated one small time step at a time; you do not need to follow the formulas. It returns the new state, the reward, whether the episode is over, and whether the pole actually **fell** (as opposed to the episode simply reaching its 200-step limit), which matters for the learning target.
 
 Pushing at random keeps the pole up for only about 23 steps. There is no table to fill: the four numbers are continuous.
@@ -73,7 +77,7 @@ DQN's two fixes:
 
 The agent acts ε-greedily on the main network, with ε decaying from 1 (pure exploration) to 0.05 over the first 3,000 steps. The inputs are scaled by typical magnitudes so they are all of similar size, as the networks lessons recommended. Training stops when the last 20 episodes average at least 195 steps. Before running, predict: roughly how many episodes will it take? (The cell takes several seconds.)
 
-```python
+```python type
 import numpy as np
 
 class CartPole:
@@ -161,6 +165,11 @@ for _ in range(20):
             break
     test_lengths.append(t)
 print(f"greedy policy on 20 new episodes: average {np.mean(test_lengths):.1f} steps (maximum 200)")
+```
+
+```output
+solved after 135 episodes (6669 steps); average length of the first 20 episodes 21.6, of the last 20 199.9
+greedy policy on 20 new episodes: average 199.5 steps (maximum 200)
 ```
 
 `zip(*batch)` turns a list of transitions into columns (all states, all actions, …), which `np.array` stacks into arrays. The target uses `F`, "the pole fell": only a real failure has no future value. When an episode merely hits the 200-step limit, the pole was still up and its future was still worth something, so that transition keeps its bootstrapped target. The backward pass is the regression one from the networks lessons, applied only to the output of the action taken, and the update is Adam. Every 500 steps the target network is refreshed with a copy of the online network.

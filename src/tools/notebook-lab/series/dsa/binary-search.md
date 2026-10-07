@@ -13,7 +13,7 @@ The idea is simple; the code is famously easy to get wrong. When Jon Bentley ask
 
 Keep two indices, `lo` and `hi`, with the invariant: **if the target is in the list at all, it is at a position from `lo` to `hi`** (both included). Initially that is the whole list. Look at the middle position `mid`. If the item there is the target, done. If it is smaller, the target can only be to its right, so `lo = mid + 1`; if larger, `hi = mid - 1`. Both moves keep the invariant and shrink the range. When `lo > hi` the range is empty, and by the invariant the target is not there. Predict before running: how many steps to search a million sorted numbers, for a number that is present and for one that is not?
 
-```python
+```python type
 def binary_search(items, target):
     lo, hi = 0, len(items) - 1
     steps = 0
@@ -33,6 +33,14 @@ for target in [0, 777_776, 1_999_998, 777_777, -5]:
     print(f"target {target:>9,}: position {binary_search(numbers, target)[0]:>7,} after {binary_search(numbers, target)[1]} steps")
 ```
 
+```output
+target         0: position       0 after 19 steps
+target   777,776: position 388,888 after 19 steps
+target 1,999,998: position 999,999 after 20 steps
+target   777,777: position      -1 after 20 steps
+target        -5: position      -1 after 19 steps
+```
+
 The list holds the even numbers below two million: a million items. An odd target is never present.
 
 Every search takes at most 20 steps, because 2²⁰ is just over a million: each step halves the range, and a range of a million is down to nothing after 20 halvings. Searching linearly would take up to a million steps. The `+ 1` and `- 1` matter: `mid` itself has been checked, so it is excluded from the new range. Writing `lo = mid` instead can loop for ever, because when `hi = lo + 1`, `mid` equals `lo` and the range never shrinks.
@@ -43,7 +51,7 @@ The classic version answers "is it here?" Real questions are more often about **
 
 All of these are one problem in disguise. For a sorted list and a condition that is false for a while and then true for the rest (like `x >= 50`), find the **first position where it becomes true**. The clean way to write it uses a **half-open** range `[lo, hi)`, which includes `lo` but not `hi`, with the invariant: **the condition is false everywhere before `lo`, true everywhere from `hi` on, and the boundary lies in `[lo, hi]`**. Start with `lo = 0`, `hi = n`; stop when `lo == hi`, which is the answer. Predict before running: in `[1, 3, 3, 3, 5, 8]`, what is the first position whose value is at least 3, and at least 4, and at least 9?
 
-```python
+```python type
 def first_true(n, condition):
     lo, hi = 0, n
     while lo < hi:
@@ -61,6 +69,13 @@ for t in [3, 4, 9, 0]:
     print(f"t = {t}: first position >= t is {at_least}, first position > t is {above}, so t occurs {above - at_least} times")
 ```
 
+```output
+t = 3: first position >= t is 1, first position > t is 4, so t occurs 3 times
+t = 4: first position >= t is 4, first position > t is 4, so t occurs 0 times
+t = 9: first position >= t is 6, first position > t is 6, so t occurs 0 times
+t = 0: first position >= t is 0, first position > t is 0, so t occurs 0 times
+```
+
 `condition` is a function of a position, so `first_true` works for any condition that switches from false to true once; it never looks at the list directly.
 
 The first value of at least 3 is at position 1; the first value above 3 is at position 4; the difference, 3, counts the 3s. For t = 4 both give position 4 (the count is 0), and that is also exactly where 4 would be inserted. For t = 9 the answer is 6, the length of the list, meaning "nowhere": the half-open range allows that answer naturally. Notice `hi = mid` (not `mid - 1`): position `mid` satisfies the condition, so it may be the answer and must stay in range. The loop still always shrinks the range, because `mid` is strictly less than `hi`.
@@ -69,7 +84,7 @@ The first value of at least 3 is at position 1; the first value above 3 is at po
 
 These two boundary searches are in the standard library: `bisect.bisect_left(a, x)` is the first position with value ≥ x, and `bisect.bisect_right(a, x)` the first with value > x. `bisect.insort(a, x)` inserts x in sorted position (finding the place in O(log n), though the insertion itself still shifts items, O(n)). Predict before running: how many scores fall in the range 70 to 79?
 
-```python
+```python type
 import bisect
 import random
 
@@ -85,6 +100,12 @@ def grade(score, boundaries=[50, 60, 70, 80], letters="FDCBA"):
 print([grade(s) for s in [33, 50, 59, 60, 79, 80, 100]])
 ```
 
+```output
+[0, 1, 2, 3, 3, 3, 8, 12, 13, 15, 17, 26, 27, 29, 32, 34, 40, 48, 48, 49, 55, 57, 57, 60, 62, 63, 69, 72, 75, 77, 83, 83, 87, 89, 92, 97, 97, 97, 98, 100]
+scores from 70 to 79: 3   check: 3
+['F', 'D', 'D', 'C', 'B', 'A', 'A']
+```
+
 The grading function is a classic use: `bisect_right(boundaries, score)` counts how many boundaries the score has reached, which picks the letter.
 
 Counting values in a range is two boundary searches, O(log n), however many values there are; the check by scanning agrees. A score of exactly 80 gets an A, because `bisect_right` counts the boundary 80 as reached. With `bisect_left` it would count only boundaries strictly below the score, and 80 would get a B: choosing between left and right is choosing how ties are treated.
@@ -95,7 +116,7 @@ Binary search does not need a list at all. It needs only a condition that is fal
 
 Example: a list of jobs, each taking some number of minutes, must be done in order by one machine over a number of days. What is the shortest working day (in minutes) that finishes everything in time? Given a day length, checking it is easy: fill each day greedily until the next job does not fit. A longer day never needs more days, so the condition "finishes within the limit" switches from false to true once. Predict before running: for the jobs below and 5 days, will the answer be closer to the total divided by 5, or to the largest job?
 
-```python
+```python type
 def days_needed(jobs, day_length):
     days, used = 1, 0
     for job in jobs:
@@ -122,6 +143,12 @@ answer, tested = shortest_day(jobs, 5)
 print(f"total {sum(jobs)} minutes, average {sum(jobs) / 5:.0f} per day, largest job {max(jobs)}")
 print(f"shortest workable day: {answer} minutes, found by testing {tested} candidate lengths")
 print("check:", days_needed(jobs, answer), "days at", answer, "and", days_needed(jobs, answer - 1), "days at", answer - 1)
+```
+
+```output
+total 1365 minutes, average 273 per day, largest job 300
+shortest workable day: 355 minutes, found by testing 10 candidate lengths
+check: 5 days at 355 and 6 days at 354
 ```
 
 The search range starts at the largest job (no shorter day can fit it) and ends at the total (one day for everything), so the answer is certainly inside.

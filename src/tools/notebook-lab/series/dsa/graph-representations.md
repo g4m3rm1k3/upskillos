@@ -25,7 +25,7 @@ An **adjacency matrix** is a V × V table where entry [u][v] is 1 (or the weight
 
 An **adjacency list** maps each vertex to the list (or set) of its neighbours. It takes O(V + E) space, lists v's neighbours in O(degree), and checks an edge in O(degree), or O(1) on average with sets. Since most real graphs are sparse and most algorithms work by visiting neighbours, the adjacency list is the default. Predict before running: in the small network below, what are Cara's neighbours, and what is her degree?
 
-```python
+```python type
 edges = [("Ann", "Ben"), ("Ann", "Cara"), ("Ben", "Cara"), ("Cara", "Dev"), ("Dev", "Eli"), ("Fay", "Gus")]
 
 graph = {}
@@ -47,6 +47,26 @@ for name, row in zip(names, matrix):
 print("are Ben and Dev connected directly?", "Dev" in graph["Ben"], "/", bool(matrix[index["Ben"]][index["Dev"]]))
 ```
 
+```output
+Ann   degree 2: ['Ben', 'Cara']
+Ben   degree 2: ['Ann', 'Cara']
+Cara  degree 3: ['Ann', 'Ben', 'Dev']
+Dev   degree 2: ['Cara', 'Eli']
+Eli   degree 1: ['Dev']
+Fay   degree 1: ['Gus']
+Gus   degree 1: ['Fay']
+
+      A B C D E F G
+Ann   0 1 1 0 0 0 0
+Ben   1 0 1 0 0 0 0
+Cara  1 1 0 1 0 0 0
+Dev   0 0 1 0 1 0 0
+Eli   0 0 0 1 0 0 0
+Fay   0 0 0 0 0 0 1
+Gus   0 0 0 0 0 1 0
+are Ben and Dev connected directly? False / False
+```
+
 `setdefault(u, set())` returns the set for u, creating an empty one the first time; each undirected edge is added in both directions. The matrix needs the vertices numbered, so `index` maps each name to a row number.
 
 Cara has degree 3 (Ann, Ben and Dev). Fay and Gus are connected to each other but not to anyone else: the graph has two separate pieces, which the depth-first search lesson will find automatically. The matrix of an undirected graph is symmetric, and it is mostly zeros: 12 of its 49 entries are ones. That waste is the matrix's problem on sparse graphs.
@@ -55,7 +75,7 @@ Cara has degree 3 (Ann, Ben and Dev). Fay and Gus are connected to each other bu
 
 How much the representation matters depends on the graph's size and density. Predict before running: for a social-network-like graph of 10,000 people with about 10 friends each, how many entries would an adjacency matrix have, compared with the adjacency list?
 
-```python
+```python type
 import random
 
 random.seed(0)
@@ -75,6 +95,13 @@ print(f"adjacency list entries (2 per edge): {2 * E:>8,}")
 print(f"fraction of the matrix that would be ones: {2 * E / (V * V):.4%}")
 ```
 
+```output
+V = 10,000, E = 50,000 undirected edges
+adjacency matrix entries:         100,000,000
+adjacency list entries (2 per edge):  100,000
+fraction of the matrix that would be ones: 0.1000%
+```
+
 `E` counts the friendships as they are added, skipping repeats. Each undirected edge appears twice in the adjacency list, once in each endpoint's set.
 
 The matrix would have 100 million entries, of which a tenth of one per cent are ones; the adjacency list stores 100,000. For sparse graphs, adjacency lists win by orders of magnitude. Matrices make sense for small or dense graphs, or when an algorithm checks "is there an edge from u to v?" constantly (the Floyd-Warshall algorithm in a later lesson works on a matrix).
@@ -85,7 +112,7 @@ In Python, the adjacency list is usually a **dictionary from vertex to a list or
 
 In a directed graph each edge is stored once, under the vertex it leaves. Two derived quantities come up constantly: the in-degree of each vertex (how many edges arrive), and the **reverse** (or transpose) graph, with every edge flipped, which answers "who links **to** this page?". Predict before running: which course has the most prerequisites, and which is a prerequisite for the most others?
 
-```python
+```python type
 prerequisites = {
     "Python basics": ["Data structures", "Web development", "Statistics"],
     "Data structures": ["Algorithms", "Databases"],
@@ -105,6 +132,16 @@ for course in prerequisites:
     print(f"{course:<17} unlocks {len(prerequisites[course])}, needs {in_degree[course]}")
 ```
 
+```output
+Python basics     unlocks 3, needs 0
+Data structures   unlocks 2, needs 1
+Statistics        unlocks 1, needs 1
+Algorithms        unlocks 1, needs 1
+Databases         unlocks 1, needs 1
+Web development   unlocks 0, needs 2
+Machine learning  unlocks 0, needs 2
+```
+
 Here an edge from A to B means "A must be taken before B". The in-degree of B counts its prerequisites.
 
 Machine learning and Web development each need 2 courses, and Python basics unlocks the most (3). Python basics is the only course with in-degree 0: nothing needs to be taken before it, so it is where a study plan must start. The topological sort lesson turns this observation into an algorithm for ordering every course.
@@ -113,7 +150,7 @@ Machine learning and Web development each need 2 courses, and Python basics unlo
 
 Some graphs are too large, or too regular, to store. Instead, write a function that **computes** a vertex's neighbours when asked. A **grid** is the commonest example: the cells of a maze or a game board are vertices, and each open cell's neighbours are the open cells up, down, left and right. A word puzzle is another: the vertices are words, with an edge between two words that differ in one letter (cold → cord → card → ward → warm). Predict before running: how many open neighbours does the cell at row 1, column 1 have?
 
-```python
+```python type
 maze = [
     "#########",
     "#..#....#",
@@ -134,6 +171,12 @@ print("neighbours of (3, 4):", list(grid_neighbours((3, 4))))
 open_cells = [(r, c) for r in range(len(maze)) for c in range(len(maze[0])) if maze[r][c] == "."]
 edge_count = sum(len(list(grid_neighbours(cell))) for cell in open_cells) // 2
 print(f"{len(open_cells)} open cells, {edge_count} edges, none of them stored")
+```
+
+```output
+neighbours of (1, 1): [(2, 1), (1, 2)]
+neighbours of (3, 4): [(2, 4), (3, 3)]
+15 open cells, 14 edges, none of them stored
 ```
 
 `grid_neighbours` is a generator: it produces the neighbouring open cells one at a time, checking that each step stays inside the grid and lands on a "." cell.

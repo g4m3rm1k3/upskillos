@@ -22,7 +22,7 @@ In code: `apparent(f, fs)` computes `f - fs * math.floor(f / fs + 0.5)`
 
 Sampling at rate f_s cannot distinguish a frequency f from f + f_s, f + 2f_s and so on: their samples are identical. For rotation, direction matters, so it is natural to fold f into the interval (−f_s/2, f_s/2]: the **apparent frequency** is f minus the nearest whole multiple of f_s. A negative apparent frequency means apparent rotation **backwards**. This is the signed version of the spectrum lesson's folding. Predict before running: a point on a disc spins at 23 revolutions per second and is photographed at 24 frames per second. Which way does it appear to turn, and how fast?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +42,18 @@ angles = (360 * 23 * frames / fs) % 360
 print("angle in successive frames:", np.round(angles).astype(int), "degrees")
 ```
 
+```output
+true  5 rev/s at 24 frames/s -> appears +5 rev/s (forwards)
+true 11 rev/s at 24 frames/s -> appears +11 rev/s (forwards)
+true 12 rev/s at 24 frames/s -> appears +12 rev/s (forwards)
+true 13 rev/s at 24 frames/s -> appears -11 rev/s (backwards)
+true 23 rev/s at 24 frames/s -> appears -1 rev/s (backwards)
+true 24 rev/s at 24 frames/s -> appears +0 rev/s (frozen)
+true 25 rev/s at 24 frames/s -> appears +1 rev/s (forwards)
+true 47 rev/s at 24 frames/s -> appears -1 rev/s (backwards)
+angle in successive frames: [  0 345 330 315 300 285 270 255 240 225 210 195] degrees
+```
+
 Each frame catches the point 345° further round, which looks exactly like 15° backwards.
 
 At 23 rev/s the disc appears to turn backwards at 1 rev/s: each frame it has gone almost a full turn, so it looks as if it moved a little the wrong way. At exactly 24 rev/s it appears frozen, at 25 it creeps forwards at 1 rev/s, and 47 rev/s looks the same as −1. At 12 rev/s, exactly half the frame rate, the direction is ambiguous; the convention here calls it forwards.
@@ -58,7 +70,7 @@ In code: `wheel_apparent_rev_per_s(speed_kmh)` with `rev = speed_kmh / 3.6 / cir
 
 A wheel with S identical spokes looks the same after 1/S of a turn, so what the camera samples is the **spoke-passing frequency**, S times the rotation rate, not the rotation itself. That is why film wheels misbehave at modest speeds. The same trick is useful: a **stroboscope** flashing at exactly the spoke-passing frequency (or the rotation frequency, for a single mark) freezes the image, and the flash rate then gives the speed. Predict before running: a 12-spoke wheel on a film at 24 frames per second. At what road speeds does it look frozen, and how does it look at 50 km/h?
 
-```python
+```python type
 spokes, fps, wheel_diameter = 12, 24.0, 0.7
 circ = math.pi * wheel_diameter
 
@@ -71,6 +83,16 @@ for kmh in [10, 15, 20, 30, 50, 63.33]:
     print(f"{kmh:>6} km/h: true {rev:5.2f} rev/s, appears {wheel_apparent_rev_per_s(kmh):+.3f} rev/s")
 frozen = [round(n * fps / spokes * circ * 3.6, 2) for n in range(1, 5)]
 print("looks frozen at", frozen, "km/h")
+```
+
+```output
+    10 km/h: true  1.26 rev/s, appears -0.737 rev/s
+    15 km/h: true  1.89 rev/s, appears -0.105 rev/s
+    20 km/h: true  2.53 rev/s, appears +0.526 rev/s
+    30 km/h: true  3.79 rev/s, appears -0.211 rev/s
+    50 km/h: true  6.32 rev/s, appears +0.316 rev/s
+ 63.33 km/h: true  8.00 rev/s, appears -0.001 rev/s
+looks frozen at [15.83, 31.67, 47.5, 63.33] km/h
 ```
 
 The apparent spoke frequency, divided by the number of spokes, is the apparent rotation rate.
@@ -93,7 +115,7 @@ Aliasing sounds like a disaster, but the **sampling theorem** (Nyquist, Shannon)
 
 Each sinc is 1 at its own sample time and 0 at every other one, so the sum passes through every sample, and between samples it fills in the unique band-limited curve. NumPy's `np.sinc` is exactly this normalised sinc. Predict before running: from 40 samples per second of a signal containing 3 Hz and 11 Hz, how accurately can the value between samples be rebuilt?
 
-```python
+```python type
 fs = 40.0
 n = np.arange(400)
 t_s = n / fs
@@ -119,6 +141,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+largest error between samples (middle of the record): 0.0007
+straight-line interpolation error: 0.2005
+```
+
 The broadcast builds one row per output time and one column per sample, multiplies by the samples and sums. The record is 10 s long and the check uses the middle 2 s, because the formula assumes samples continue forever.
 
 Away from the ends of the record, sinc reconstruction rebuilds the signal between samples with an error of under 0.001, set by the finite length of the record, while straight-line interpolation is off by about 0.2: at 11 Hz there are fewer than four samples per cycle, and joining them with straight lines cuts the peaks. The samples really did contain everything, because both frequencies are below 20 Hz, half the sampling rate.
@@ -135,7 +162,7 @@ In code: `x[::factor]` against `x[: len(x) // factor * factor].reshape(-1, facto
 
 Data systems often sample fast and then reduce the rate to save storage: **downsampling** or **decimation**. Keeping every 10th sample of a 1 kHz signal gives 100 Hz, but anything between 50 and 500 Hz in the original then aliases into the new 0–50 Hz band. The fix is to **low-pass filter first**: even simply averaging each block of 10 samples, rather than picking one, reduces the high frequencies before they can fold down. Block averaging is only a weak low-pass filter, though: it removes some frequencies almost completely (multiples of 100 Hz here) but still passes about half the amplitude just above the new Nyquist frequency, which is why real decimators use proper filters. Predict before running: a 2 Hz temperature trend with 470 Hz electrical interference, logged at 1 kHz and reduced to 100 Hz. Where does the interference end up?
 
-```python
+```python type
 fs, factor = 1000, 10
 t = np.arange(0, 2, 1 / fs)
 trend = np.sin(2 * math.pi * 2 * t)
@@ -150,6 +177,12 @@ print(f"error against the trend: naive {np.abs(naive - np.sin(2 * math.pi * 2 * 
 amps = 2 * np.abs(np.fft.rfft(naive)) / len(naive)
 freqs = np.fft.rfftfreq(len(naive), 1 / 100)
 print("peaks in the naive record (Hz, amplitude):", [(float(freqs[k]), round(float(amps[k]), 3)) for k in range(1, len(amps)) if amps[k] > 0.1])
+```
+
+```output
+470 Hz aliases at 100 Hz sampling to 30 Hz
+error against the trend: naive 0.476, block-averaged 0.040
+peaks in the naive record (Hz, amplitude): [(2.0, 1.0), (30.0, 0.5)]
 ```
 
 `reshape(-1, factor).mean(axis=1)` averages each block of 10 consecutive samples; the time of each block is its centre.
@@ -168,7 +201,7 @@ In code: `quantise(x, bits, full_scale)` returns `np.round(x / step) * step`
 
 Sampling discretises time; an analogue-to-digital converter (ADC) also discretises each **value**, rounding it to one of 2ᴺ levels for an N-bit converter. Over a full-scale range R the step is Δ = R/2ᴺ. The rounding error is spread evenly over ±Δ/2, so it behaves like added noise with RMS Δ/√12 (the uniform distribution's standard deviation). For a full-scale sine wave, the ratio of signal power to quantisation noise is about 6.02N + 1.76 dB: each extra bit buys 6 dB, a factor of 2 in amplitude. Predict before running: how many bits does a 10 V sensor input need to resolve 1 mV?
 
-```python
+```python type
 def quantise(x, bits, full_scale):
     step = full_scale / 2 ** bits
     return np.round(x / step) * step
@@ -181,6 +214,13 @@ for bits in [8, 12, 16]:
     sqnr = 10 * math.log10(np.mean(sine ** 2) / np.mean(err ** 2))
     print(f"{bits:>2} bits: step {10 / 2 ** bits * 1000:7.3f} mV, error RMS {np.sqrt(np.mean(err ** 2)) * 1000:7.4f} mV (Δ/√12 = {10 / 2 ** bits / math.sqrt(12) * 1000:7.4f}), SQNR {sqnr:5.1f} dB (theory {6.02 * bits + 1.76:5.1f})")
 print("bits for a 1 mV step over 10 V:", math.ceil(math.log2(10 / 0.001)))
+```
+
+```output
+ 8 bits: step  39.062 mV, error RMS 11.1560 mV (Δ/√12 = 11.2764), SQNR  50.0 dB (theory  49.9)
+12 bits: step   2.441 mV, error RMS  0.7118 mV (Δ/√12 =  0.7048), SQNR  73.9 dB (theory  74.0)
+16 bits: step   0.153 mV, error RMS  0.0439 mV (Δ/√12 =  0.0440), SQNR  98.1 dB (theory  98.1)
+bits for a 1 mV step over 10 V: 14
 ```
 
 The input range is ±5 V, 10 V in total, so the sine fills it exactly.

@@ -19,7 +19,7 @@ The **Lomuto partition** uses the last item of a range as the pivot and one scan
 
 When `a[j]` is less than the pivot, it is swapped to the boundary and the boundary moves right. At the end, the pivot is swapped into the boundary position, between the two groups, where it belongs. Predict before running: after partitioning `[7, 2, 9, 4, 1, 8, 5]` around its last item, where will 5 end up?
 
-```python
+```python type
 def partition(a, lo, hi):
     pivot = a[hi]
     boundary = lo
@@ -36,6 +36,11 @@ print(data, "-> pivot 5 is now at position", position)
 print("left of it:", data[:position], " right of it:", data[position + 1:])
 ```
 
+```output
+[2, 4, 1, 5, 9, 8, 7] -> pivot 5 is now at position 3
+left of it: [2, 4, 1]  right of it: [9, 8, 7]
+```
+
 `partition` returns the pivot's final position, which the sorting step needs to know where the two sides begin.
 
 The pivot 5 lands at position 3, with 2, 4 and 1 before it and 9, 8 and 7 after. Neither side is sorted, but 5 is exactly where it will be in the sorted list, since three items are smaller than it. Partitioning makes one pass: n − 1 comparisons for a range of n items.
@@ -44,7 +49,7 @@ The pivot 5 lands at position 3, with 2, 4 and 1 before it and 9, 8 and 7 after.
 
 Quicksort partitions the range, then sorts the two sides by the same method. A range of 0 or 1 items is already sorted. Predict before running: how many comparisons for 1,000 random items, and for 800 items that are **already sorted**?
 
-```python
+```python type
 import math
 import random
 
@@ -67,6 +72,11 @@ for name, data in [("random, n = 1000", random.sample(range(1000), 1000)), ("sor
     print(f"{name}: {counter[0]:>7,} comparisons   (n log2 n = {round(n * math.log2(n)):,};  n²/2 = {n * n // 2:,})")
 ```
 
+```output
+random, n = 1000:  10,252 comparisons   (n log2 n = 9,966;  n²/2 = 500,000)
+sorted, n = 800: 319,600 comparisons   (n log2 n = 7,715;  n²/2 = 320,000)
+```
+
 `counter` is a one-item list so that every recursive call can add to the same count. A partition of a range from lo to hi makes hi − lo comparisons.
 
 On random data quicksort makes close to n log₂ n comparisons (for very large n the average approaches 1.39 n log₂ n). On sorted data it makes n²/2: the worst case. With the last item as pivot, a sorted list's pivot is always the **largest** item, so every partition splits off nothing at all on one side and n − 1 items on the other. The recursion goes n levels deep instead of log n (this run used 800 items so as to stay inside Python's recursion limit), and the work is n + (n − 1) + … = O(n²), the recurrence T(n) = T(n − 1) + n. Sorted and nearly sorted inputs are common in practice, so this is a real problem, not a curiosity.
@@ -75,7 +85,7 @@ On random data quicksort makes close to n log₂ n comparisons (for very large n
 
 The fix is to choose the pivot **at random** from the range (swapping it to the end, then partitioning as before). Now no particular input is bad: for any input, a random pivot usually lands somewhere in the middle half, giving a reasonably balanced split. The analysis shows the **expected** number of comparisons is O(n log n) on every input (about 1.39 n log₂ n for large n), and the chance of anything near n² is astronomically small. Predict before running: how will the comparison counts for random, sorted and all-equal inputs compare now?
 
-```python
+```python type
 import random
 
 def randomized_quicksort(a, lo=0, hi=None, counter=None):
@@ -98,6 +108,13 @@ for name, data in [("random", random.sample(range(n), n)), ("sorted", list(range
     print(f"{name:<10} {counter[0]:>7,} comparisons")
 ```
 
+```output
+random       7,931 comparisons
+sorted       8,530 comparisons
+reversed     8,114 comparisons
+all equal  319,600 comparisons
+```
+
 Sorted and reversed inputs now cost the same as random ones. But the all-equal list is still quadratic. With every item equal to the pivot, `a[j] < pivot` is never true, so each partition puts the pivot at the start and everything else on one side, whatever pivot is chosen. Lists with many duplicates are common (sorting people by age, say), and the cure is the **three-way partition** from the invariants lesson: group the items equal to the pivot in the middle and recurse only on the strictly smaller and strictly larger parts. The third challenge builds it.
 
 In practice, quicksort beats merge sort on arrays because partitioning works in place and scans memory in order, which modern hardware rewards. Its weaknesses are that it is not stable and that its O(n log n) is expected, not guaranteed. Many standard libraries use **introsort**: quicksort that switches to heapsort (a later lesson) if the recursion gets suspiciously deep, guaranteeing O(n log n).
@@ -106,7 +123,7 @@ In practice, quicksort beats merge sort on arrays because partitioning works in 
 
 Sometimes you need only **one** position of the sorted order: the median, the 90th percentile, the 10th largest. Sorting first costs O(n log n). **Quickselect** does better: partition once; the pivot lands at its final position p. If p is the position you want, done. Otherwise the wanted item is on one side only, so continue on **that side alone**. If every pivot halved the range, the work would be n + n/2 + n/4 + … ≈ 2n; random pivots split less evenly, so finding the median takes about 3.4n comparisons on average, but that is still O(n). Predict before running: roughly how many comparisons to find the median of 100,000 numbers?
 
-```python
+```python type
 import random
 import statistics
 
@@ -132,6 +149,11 @@ counter = [0]
 median = quickselect(list(data), len(data) // 2, counter)
 print(f"median {median:.6f} (statistics.median gives {statistics.median(data):.6f}) after {counter[0]:,} comparisons")
 print(f"that is {counter[0] / len(data):.2f} comparisons per item; sorting needs about {math.log2(len(data)):.0f} per item")
+```
+
+```output
+median 0.500791 (statistics.median gives 0.500791) after 431,489 comparisons
+that is 4.31 comparisons per item; sorting needs about 17 per item
 ```
 
 Quickselect is written as a loop rather than recursion, since it only ever continues on one side. `k` is a position in the sorted order counting from 0, so the median of 100,001 items is position 50,000.

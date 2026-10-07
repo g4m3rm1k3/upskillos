@@ -21,7 +21,7 @@ A binary tree is built from nodes, like a linked list, except each node has **tw
 
 Below is a small tree describing the expression (3 + 4) × (10 − 6). Predict before running: how many nodes, how many leaves, and what height?
 
-```python
+```python type
 class TreeNode:
     def __init__(self, value, left=None, right=None):
         self.value = value
@@ -59,6 +59,17 @@ show(expression)
 print("size", size(expression), " height", height(expression), " leaves", leaves(expression))
 ```
 
+```output
+            6
+      -
+            10
+*
+            4
+      +
+            3
+size 7  height 2  leaves [3, 4, 10, 6]
+```
+
 `show` prints the tree on its side, root on the left, with the right subtree above and the left below, so tilting your head left shows the usual picture.
 
 Seven nodes, four leaves (the numbers), height 2. Every one of these functions has the same shape: handle the empty tree (`None`) as the base case, then combine the answers for the left and right **subtrees**. A subtree is itself a binary tree, so the recursion fits the data exactly. Each visits every node once: O(n).
@@ -73,7 +84,7 @@ A **traversal** visits every node once, in some order. For a binary tree there a
 
 On the expression tree, each order is meaningful. Predict before running: which traversal gives the expression as you would write it, and which gives the order a calculator must work in?
 
-```python
+```python type
 def preorder(node):
     if node is None:
         return []
@@ -102,6 +113,13 @@ def evaluate(node):
 print("value:", evaluate(expression))
 ```
 
+```output
+preorder:  ['*', '+', 3, 4, '-', 10, 6]
+inorder:   [3, '+', 4, '*', 10, '-', 6]
+postorder: [3, 4, '+', 10, 6, '-', '*']
+value: 28
+```
+
 Building lists with `+` copies them, which makes these versions O(n²) in the worst case; they are written this way for clarity. A version that appends to one shared list is O(n).
 
 Inorder gives 3 + 4 * 10 − 6, the expression as written (minus the brackets that a printer would add from the tree's shape). Postorder gives 3 4 + 10 6 − *, which is the **postfix** form the stacks lesson evaluated: a calculator must finish both operands before applying the operator. Preorder gives * + 3 4 − 10 6, the prefix form, natural for copying a tree (create the node before its children). And `evaluate` is itself a postorder traversal: it computes both subtrees before combining them, giving 28.
@@ -110,7 +128,7 @@ Inorder gives 3 + 4 * 10 − 6, the expression as written (minus the brackets th
 
 The fourth standard traversal goes **level by level**, top to bottom, left to right. Recursion goes deep before wide, so it doesn't fit; instead, keep a **queue** of nodes waiting to be visited: take one from the front, visit it, and add its children to the back. The queue lesson promised this: it is breadth-first search on a tree. Predict before running: in what order will the nodes of this taller tree be visited?
 
-```python
+```python type
 from collections import deque
 
 def level_order(root):
@@ -136,6 +154,22 @@ for depth, level in enumerate(level_order(family)):
     print(f"depth {depth}: {level}")
 ```
 
+```output
+                  J
+            F
+                  I
+      C
+A
+            E
+                  H
+      B
+            D
+depth 0: ['A']
+depth 1: ['B', 'C']
+depth 2: ['D', 'E', 'F']
+depth 3: ['H', 'I', 'J']
+```
+
 Each queue entry carries the node's depth, so the output can be grouped into levels.
 
 The nodes come out level by level: A; B, C; D, E, F; H, I, J. Level order is the natural way to print a tree as people draw it, to find the shallowest node with some property, or to measure how wide each level is.
@@ -144,7 +178,7 @@ The nodes come out level by level: A; B, C; D, E, F; H, I, J. Level order is the
 
 Recursive traversals use the call stack. For a very tall tree (one long chain of nodes, which unbalanced trees can become) that hits Python's recursion limit. Any traversal can instead keep its own stack. Inorder is the trickiest: walk left as far as possible, pushing each node; when you can go no further, pop a node, visit it, and then do the same from its right child. Predict before running: will this give the same order as the recursive inorder?
 
-```python
+```python type
 def inorder_iterative(root):
     result, stack, node = [], [], root
     while stack or node is not None:
@@ -169,6 +203,13 @@ except RecursionError:
     print("recursively: RecursionError")
 ```
 
+```output
+['D', 'B', 'H', 'E', 'A', 'C', 'I', 'F', 'J']
+['D', 'B', 'H', 'E', 'A', 'C', 'I', 'F', 'J']
+a 2,000-node left chain, iteratively: 2000 nodes visited
+recursively: RecursionError
+```
+
 The stack holds exactly the nodes whose left subtrees are being explored and that have not yet been visited themselves: the same nodes the recursive version would have paused on the call stack.
 
 Both give D, B, H, E, A, C, I, F, J. On a chain 2,000 nodes tall the iterative version is unaffected, while the recursive one exceeds the recursion limit. Height matters for more than recursion: most tree operations take time proportional to the height, which is why the balanced trees lesson works so hard to keep it small.
@@ -177,12 +218,23 @@ Both give D, B, H, E, A, C, I, F, J. On a chain 2,000 nodes tall the iterative v
 
 A **complete** binary tree has every level full except possibly the last, which is filled from the left. Such a tree can be stored in a plain list with **no links**: put the root at index 0, and the children of the node at index i at indices 2i + 1 and 2i + 2. The parent of index i is then at (i − 1) // 2. Level order is simply the list order. This layout is exactly how heaps are stored, in a later lesson. Predict before running: what are the children of the node at index 2, and the parent of index 6?
 
-```python
+```python type
 values = ["A", "B", "C", "D", "E", "F", "G", "H"]
 for i, v in enumerate(values):
     kids = [values[c] for c in (2 * i + 1, 2 * i + 2) if c < len(values)]
     parent = values[(i - 1) // 2] if i > 0 else None
     print(f"index {i} ({v}): parent {parent}, children {kids}")
+```
+
+```output
+index 0 (A): parent None, children ['B', 'C']
+index 1 (B): parent A, children ['D', 'E']
+index 2 (C): parent A, children ['F', 'G']
+index 3 (D): parent B, children ['H']
+index 4 (E): parent B, children []
+index 5 (F): parent C, children []
+index 6 (G): parent C, children []
+index 7 (H): parent D, children []
 ```
 
 Index 2 (C) has children F and G at indices 5 and 6, and index 6's parent is (6 − 1) // 2 = 2. Moving around the tree is arithmetic, and the whole tree sits in one compact list. The layout wastes space on trees that are not complete, which is why general trees use linked nodes.

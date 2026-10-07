@@ -29,7 +29,7 @@ with **amplitude** A (the peak value), **frequency** f in hertz (cycles per seco
 
 To work with a signal on a computer it is **sampled**: evaluated at evenly spaced instants, here 10,000 times a second. Predict before running: the mains has a peak of 325 V at 50 Hz. How many samples does one cycle contain, and when does the voltage first cross zero going down?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,6 +49,11 @@ ax.set_xlabel("time (ms)")
 ax.set_ylabel("voltage (V)")
 ax.legend()
 plt.show()
+```
+
+```output
+period 20.0 ms = 200 samples; ω = 314.2 rad/s
+first downward zero crossing at 10.1 ms; peak 325.0 V at 5.0 ms
 ```
 
 `fs` is the **sampling rate**, samples per second; `np.arange(0, 0.06, 1 / fs)` gives 60 ms of sample times, three cycles.
@@ -71,7 +76,7 @@ What makes 325 V peak "230 V"? A heater's power is V²/R, which keeps changing a
 
 For a sinusoid, sin² averages to ½ over a whole cycle (because sin² + cos² = 1 and the two average equally), so V_rms = A/√2: 325/√2 ≈ 230 V. The RMS of other waveforms differs: a square wave's RMS equals its peak. Predict before running: what are the RMS values of a sine, a square and a triangle wave, all with a 1 V peak?
 
-```python
+```python type
 def rms(x):
     return math.sqrt(np.mean(np.asarray(x) ** 2))
 
@@ -85,6 +90,14 @@ for name, w in waves.items():
     print(f"{name:<9} peak {np.abs(w).max():.3f}, RMS {rms(w):.4f}, peak/RMS {np.abs(w).max() / rms(w):.3f}")
 print(f"mains RMS from samples: {rms(v):.2f} V (A/√2 = {A / math.sqrt(2):.2f} V)")
 print(f"a 26.45 Ω heater: average power {np.mean(v ** 2 / 26.45):.0f} W = V_rms²/R = {rms(v) ** 2 / 26.45:.0f} W")
+```
+
+```output
+sine      peak 1.000, RMS 0.7071, peak/RMS 1.414
+square    peak 1.000, RMS 0.9992, peak/RMS 1.001
+triangle  peak 1.000, RMS 0.5774, peak/RMS 1.732
+mains RMS from samples: 229.81 V (A/√2 = 229.81 V)
+a 26.45 Ω heater: average power 1997 W = V_rms²/R = 1997 W
 ```
 
 `(f * t) % 1` is the fraction of the cycle completed, which builds the triangle wave; `np.sign(sin)` makes the square wave. The ratio of peak to RMS is the **crest factor**.
@@ -107,7 +120,7 @@ Two sinusoids of the same frequency can be shifted relative to each other. A pha
 
 and cos Δφ is the **power factor**. With current lagging by 90° no average power flows at all, though large currents circulate and heat the cables. Predict before running: a motor draws 10 A RMS lagging the voltage by 37°. What power does it take, and what does the time shift look like?
 
-```python
+```python type
 I_rms, lag_deg = 10.0, 37.0
 i = I_rms * math.sqrt(2) * np.sin(2 * math.pi * f * t - math.radians(lag_deg))
 shift_ms = lag_deg / 360 / f * 1000
@@ -122,6 +135,12 @@ ax.set_xlim(0, 40)
 ax.set_xlabel("time (ms)")
 ax.legend()
 plt.show()
+```
+
+```output
+phase lag 37.0° = 2.06 ms behind the voltage
+average power from samples: 1835 W; formula V_rms I_rms cos φ = 1837 W
+apparent power V_rms I_rms = 2298 VA, power factor 0.799
 ```
 
 The current is scaled by 20 on the plot only so the two waves are easy to compare.
@@ -140,7 +159,7 @@ In code: `total_vec = sum(a * np.array([cos, sin]) ...)`, then `np.hypot` and `m
 
 Adding two sinusoids of the **same** frequency always gives another sinusoid of that frequency, with a new amplitude and phase. Finding them by trigonometric identities is painful; the rotation picture makes it easy. Each sinusoid A sin(ωt + φ) is the shadow of a rotating arrow of length A at angle φ, a **phasor**; all rotate together at ω, so their sum is the shadow of the **vector sum** of the arrows, from the vectors lesson. Two vibration sources of equal strength can reinforce each other or cancel completely, depending on their phases. Predict before running: two 3 mm/s vibrations 120° apart, plus a 2 mm/s one at 240°: what is the total?
 
-```python
+```python type
 components = [(3.0, 0.0), (3.0, 120.0), (2.0, 240.0)]
 total_vec = sum(a * np.array([math.cos(math.radians(p)), math.sin(math.radians(p))]) for a, p in components)
 amp, ph = np.hypot(*total_vec), math.degrees(math.atan2(total_vec[1], total_vec[0]))
@@ -151,6 +170,14 @@ print("largest difference between the summed signal and the predicted sinusoid:"
 for p2 in [0, 90, 180]:
     two = 3 * np.sin(2 * math.pi * f * t) + 3 * np.sin(2 * math.pi * f * t + math.radians(p2))
     print(f"two 3 mm/s waves {p2:>3}° apart: amplitude {np.abs(two).max():.3f}")
+```
+
+```output
+phasor sum: amplitude 1.0000, phase 60.00°
+largest difference between the summed signal and the predicted sinusoid: 6.9e-15
+two 3 mm/s waves   0° apart: amplitude 6.000
+two 3 mm/s waves  90° apart: amplitude 4.243
+two 3 mm/s waves 180° apart: amplitude 0.000
 ```
 
 Each phasor is a 2D vector of length A at angle φ; their sum's length and angle are the amplitude and phase of the summed wave.
@@ -169,7 +196,7 @@ In code: `envelope = 2 * np.abs(np.cos(math.pi * (f2 - f1) * tb))`
 
 Waves of slightly **different** frequencies do not settle into one sinusoid. They drift in and out of phase, so their sum swells and fades: **beats**, at a rate equal to the difference of the frequencies. Two machines nominally at the same speed but actually 50.0 Hz and 51.5 Hz make the floor throb 1.5 times a second, a common clue in vibration troubleshooting. Mathematically, sin a + sin b = 2 sin((a + b)/2) cos((a − b)/2): a fast wave at the average frequency, inside a slow envelope. Predict before running: how far apart are the loud moments?
 
-```python
+```python type
 tb = np.arange(0, 2.0, 1 / fs)
 f1, f2 = 50.0, 51.5
 beat = np.sin(2 * math.pi * f1 * tb) + np.sin(2 * math.pi * f2 * tb)
@@ -181,6 +208,10 @@ ax.plot(tb, beat, linewidth=0.5)
 ax.plot(tb, envelope, "r--")
 ax.set_xlabel("time (s)")
 plt.show()
+```
+
+```output
+envelope maxima at [0.    0.667 1.333] s -> spacing 0.6667 s = 1/1.5 Hz
 ```
 
 The envelope 2|cos(π(f₂ − f₁)t)| is the slow factor of the identity; its maxima are the loud moments.
@@ -199,7 +230,7 @@ In code: `X = np.column_stack([np.ones_like(ts), sin, cos])`, then `np.linalg.ls
 
 Given noisy samples of a signal at a known frequency, what are its amplitude and phase? Expanding A sin(ωt + φ) = (A cos φ) sin ωt + (A sin φ) cos ωt shows it is a combination of sin ωt and cos ωt with coefficients a = A cos φ and b = A sin φ. That is **linear** in a and b, so least squares fits them directly with a design matrix of columns [1, sin ωt, cos ωt] (the 1 for any offset), as in the line-fitting lesson; then A = √(a² + b²) and φ = atan2(b, a). Predict before running: from 300 noisy samples of the motor current, how close are the estimates to 14.14 A and −37°?
 
-```python
+```python type
 rng = np.random.default_rng(38)
 ts = np.sort(rng.uniform(0, 0.04, 300))
 true = 14.142 * np.sin(2 * math.pi * 50 * ts - math.radians(37)) + 0.3
@@ -207,6 +238,10 @@ noisy = true + rng.normal(0, 1.0, ts.size)
 X = np.column_stack([np.ones_like(ts), np.sin(2 * math.pi * 50 * ts), np.cos(2 * math.pi * 50 * ts)])
 (offset, a, b), *_ = np.linalg.lstsq(X, noisy, rcond=None)
 print(f"offset {offset:.3f} A, amplitude {math.hypot(a, b):.3f} A, phase {math.degrees(math.atan2(b, a)):.2f}°")
+```
+
+```output
+offset 0.298 A, amplitude 14.023 A, phase -36.42°
 ```
 
 The samples are taken at random times, as from an unsynchronised logger; least squares does not need them evenly spaced.

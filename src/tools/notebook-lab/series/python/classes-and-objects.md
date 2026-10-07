@@ -10,7 +10,7 @@ This lesson shows how to write your own classes. It is how you create new kinds 
 
 Suppose you are keeping track of bank accounts. You could use a dictionary for each account and separate functions to work on them:
 
-```python
+```python type
 account = {"owner": "Ada", "balance": 100}
 
 def deposit(account, amount):
@@ -20,13 +20,17 @@ deposit(account, 50)
 print(account["balance"])
 ```
 
+```output
+150
+```
+
 That works, but nothing ties the data to the functions that are allowed to change it. Any code anywhere could write `account["balance"] = -1000000`, or misspell a key as `"balence"` and silently create a new one. As a program grows, keeping track of which functions go with which data gets harder and harder.
 
 A class puts the data and the functions that work on it in one place, and gives the combination a name. That makes the program easier to understand, because related things live together, and easier to keep correct, because the class controls how its data can change.
 
 ## Your first class
 
-```python
+```python type
 class Dog:
     def __init__(self, name, age):
         self.name = name
@@ -39,6 +43,11 @@ rex = Dog("Rex", 3)
 fido = Dog("Fido", 7)
 print(rex.describe())
 print(fido.name)
+```
+
+```output
+Rex is 3 years old.
+Fido
 ```
 
 There is a lot here, so take it one piece at a time.
@@ -57,7 +66,7 @@ When you write `rex = Dog("Rex", 3)`, Python creates a new, empty `Dog` object, 
 
 When you call `rex.describe()`, Python calls the `describe` method with `rex` as `self`, so `self.name` means `rex.name`. The same method called as `fido.describe()` gets `fido` as `self`. That is how one method, written once, works for every object of the class. In fact `rex.describe()` is shorthand for this:
 
-```python
+```python type
 class Dog:
     def __init__(self, name, age):
         self.name = name
@@ -71,6 +80,11 @@ print(Dog.describe(rex))
 print(rex.describe())
 ```
 
+```output
+Rex is 3 years old.
+Rex is 3 years old.
+```
+
 Both lines do the same thing. The dot form is what everyone writes, but the long form shows what really happens: `self` is simply the object before the dot. You never pass `self` yourself; Python fills it in.
 
 Forgetting `self` is the most common mistake with classes. Inside a method, a plain `name` is a local variable that disappears when the method returns; `self.name` is an attribute that stays on the object.
@@ -79,7 +93,7 @@ Forgetting `self` is the most common mistake with classes. Inside a method, a pl
 
 Every instance has its own set of attributes. Changing one object's attribute does not affect any other object.
 
-```python
+```python type
 class Counter:
     def __init__(self):
         self.count = 0
@@ -96,13 +110,17 @@ visits.increment()
 print("clicks:", clicks.count, "visits:", visits.count)
 ```
 
+```output
+clicks: 2 visits: 1
+```
+
 The two counters count separately, because each has its own `count` attribute. A method like `increment` that changes an object's attributes is how an object's **state** (the current values of its attributes) changes over time.
 
 ## A class that protects its data
 
 Here is the bank account again, as a class. The methods are the intended ways to change the balance, and they refuse to do anything that would break the rules:
 
-```python
+```python type
 class BankAccount:
     def __init__(self, owner, balance=0):
         self.owner = owner
@@ -129,6 +147,12 @@ except ValueError as e:
 print(account.balance)
 ```
 
+```output
+Ada 120
+Refused: insufficient funds
+120
+```
+
 The refused withdrawal left the balance unchanged at 120. Code that uses the class calls `deposit` and `withdraw` and never needs to know how the balance is stored.
 
 Python does not actually stop anyone from writing `account.balance = -5` directly. Instead it relies on a convention: an attribute whose name starts with an underscore is meant to be used only by the class's own methods. Had this class named its attribute `self._balance`, that would tell other programmers to leave it alone and use the methods. Other code should leave it alone. This idea, hiding an object's details behind its methods, is called **encapsulation**, and the design lessons later in the series lean on it heavily.
@@ -137,7 +161,7 @@ Python does not actually stop anyone from writing `account.balance = -5` directl
 
 A variable assigned directly inside the class body, outside any method, is a **class attribute**. It belongs to the class itself and is shared by every instance, which suits values that are the same for all of them.
 
-```python
+```python type
 class Circle:
     pi = 3.14159
 
@@ -153,11 +177,16 @@ print(small.area(), big.area())
 print(small.pi, Circle.pi)
 ```
 
+```output
+3.14159 314.159
+3.14159 3.14159
+```
+
 Looking up `small.pi` finds no `pi` attribute on the object, so Python looks on the class and finds it there.
 
 Lesson 12 should make you suspicious of anything shared. A class attribute holding a **list** is shared by every instance, so appending to it from one object changes it for all of them. Predict what this prints.
 
-```python
+```python type
 class Student:
     grades = []
 
@@ -173,13 +202,17 @@ ada.add_grade(90)
 print(alan.grades)
 ```
 
+```output
+[90]
+```
+
 Alan has Ada's grade: there is one `grades` list, on the class. It is the same bug as the shared default list from lesson 9. The fix is to create the list in `__init__`, as `self.grades = []`, so every student gets their own. The rule: per-object data goes in `__init__` on `self`; only true constants go directly in the class body.
 
 ## Printing an object
 
 What happens if you print an object of your own class?
 
-```python
+```python type
 class Dog:
     def __init__(self, name):
         self.name = name
@@ -193,7 +226,7 @@ Something like `<__main__.Dog object at 0x10a2b3c40>`: the class name and a memo
 
 An object's attributes can be any values, including lists of other objects. This is how programs model the real world: a library has books, an order has items, a playlist has songs.
 
-```python
+```python type
 class Book:
     def __init__(self, title, pages):
         self.title = title
@@ -219,13 +252,22 @@ print(library.titles())
 print(library.total_pages())
 ```
 
+```output
+['Dune', 'Emma']
+886
+```
+
 Each class has one clear job. `Book` knows about a single book; `Library` knows about the collection and asks each book for its pages. A useful rule of thumb when designing classes: the **nouns** in a description of the problem ("a library has books") often become classes, and the **verbs** ("add a book", "count the pages") become methods.
 
 Finally, `isinstance(value, SomeClass)` checks whether a value is an instance of a class:
 
-```python
+```python type
 book = Book("Dune", 412)
 print(isinstance(book, Book), isinstance(book, Library), isinstance("hi", str))
+```
+
+```output
+True False True
 ```
 
 ::: challenge Rectangle [easy]

@@ -31,7 +31,7 @@ This is a **second-order** ODE. Solvers handle first-order systems, so introduce
 
 the **natural frequency** (the frequency of undamped oscillation, the Newton's-law lesson's spring) and the **damping ratio** ζ (zeta). Predict before running: a 120 kg pump on mounts of total stiffness 4.7 × 10⁵ N/m and damping 1,500 N·s/m, nudged 2 mm and released. Does it oscillate?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,6 +58,11 @@ plt.show()
 print(f"after 0.1 s the swing is down to {np.abs(sol.y[0][(sol.t > 0.08) & (sol.t < 0.12)]).max() * 1000:.2f} mm")
 ```
 
+```output
+natural frequency 62.6 rad/s = 9.96 Hz, damping ratio 0.100
+after 0.1 s the swing is down to 1.06 mm
+```
+
 `args=(m, c, k)` passes the extra parameters through to `rhs`. The dashed envelope e^(−ζωₙt) bounds the decaying oscillation.
 
 The pump rocks at about 10 Hz with a damping ratio of 0.1, so it oscillates, each swing smaller than the last, inside the exponential envelope: after 0.1 s the swing is down to about 1 mm, half the start. A damping ratio of 0.1 is typical of rubber mounts; steel structures are nearer 0.01, and car suspensions about 0.3.
@@ -80,7 +85,7 @@ The damping ratio sorts all behaviour into three cases:
 
 Instruments, door closers and suspension systems are designed near critical damping: fast but without wobble. Predict before running: which of these settles within 1% of rest soonest?
 
-```python
+```python type
 fig, ax = plt.subplots(figsize=(7, 3))
 t_eval = np.linspace(0, 0.3, 3001)
 for z in [0.1, 0.5, 0.7, 1.0, 2.0]:
@@ -96,6 +101,14 @@ ax.set_xlabel("time (s)")
 ax.set_ylabel("displacement (mm)")
 ax.legend()
 plt.show()
+```
+
+```output
+ζ = 0.1: settles within 1% not within 0.3 s, lowest point -1.458 mm
+ζ = 0.5: settles within 1% after 140 ms, lowest point -0.326 mm
+ζ = 0.7: settles within 1% after 105 ms, lowest point -0.092 mm
+ζ = 1.0: settles within 1% after 106 ms, lowest point +0.000 mm
+ζ = 2.0: settles within 1% after 279 ms, lowest point +0.014 mm
 ```
 
 The settling time is the last moment the displacement is more than 1% of the initial 2 mm, as in the tank lesson.
@@ -118,7 +131,7 @@ Mass and stiffness can be measured statically, but damping is hard to predict: i
 
 Averaging δ over several cycles reduces the effect of noise. Predict before running: from a noisy recording of the pump, how close does the estimate come to the true ζ = 0.1?
 
-```python
+```python type
 rng = np.random.default_rng(37)
 t_rec = np.linspace(0, 0.4, 4001)
 rec = solve_ivp(rhs, (0, 0.4), [0.002, 0.0], args=(m, c, k), t_eval=t_rec, rtol=1e-9, atol=1e-12).y[0]
@@ -131,6 +144,12 @@ delta = deltas.mean()
 print("peak heights (mm):", np.round(peak_vals * 1000, 3))
 print(f"mean log decrement {delta:.4f} -> ζ = {delta / math.sqrt(4 * math.pi ** 2 + delta ** 2):.4f}")
 print(f"period between peaks {np.diff(t_rec[peaks]).mean() * 1000:.2f} ms -> damped frequency {1 / np.diff(t_rec[peaks]).mean():.2f} Hz")
+```
+
+```output
+peak heights (mm): [1.066 0.57  0.305]
+mean log decrement 0.6257 -> ζ = 0.0991
+period between peaks 102.25 ms -> damped frequency 9.78 Hz
 ```
 
 A peak is a sample that is the largest within 250 samples (25 ms) on either side, a quarter of a cycle, so that noise wiggles on the slopes are not mistaken for peaks; the threshold ignores the noise once the vibration has died away.
@@ -153,7 +172,7 @@ A pump with a slightly unbalanced rotor pushes on its mounts with a force F₀ s
 
 F₀/k is how far the force would push the spring statically. Near r = 1, **resonance**, the amplitude can be many times larger, limited only by damping: about 1/(2ζ) times. Predict before running: for ζ = 0.1, how large is the amplification at resonance, and what happens far above it?
 
-```python
+```python type
 def amplification(r, z):
     return 1 / np.sqrt((1 - r ** 2) ** 2 + (2 * z * r) ** 2)
 
@@ -173,6 +192,12 @@ ax.set_ylabel("amplitude / static deflection")
 ax.set_ylim(0, 11)
 ax.legend()
 plt.show()
+```
+
+```output
+forcing at  5.0 Hz (r = 0.50): simulated amplitude   563.8 µm, formula   563.8 µm
+forcing at  9.9 Hz (r = 0.99): simulated amplitude  2139.5 µm, formula  2139.5 µm
+forcing at 20.0 Hz (r = 2.01): simulated amplitude   139.1 µm, formula   139.1 µm
 ```
 
 The simulation runs for 3 s and measures the amplitude only after 2 s, when the start-up transient has decayed.
@@ -195,7 +220,7 @@ What reaches the floor is the force through the mounts, spring plus damper. Its 
 
 T is greater than 1 (the mounts make things worse) for r < √2, and less than 1 only above r = √2. So isolation requires **soft** mounts: the natural frequency must be well below the running frequency. Damping, oddly, makes isolation slightly worse above √2, although it limits the resonance the machine passes through when starting. Predict before running: the pump runs at 1,450 rpm. With the current mounts, is the floor protected?
 
-```python
+```python type
 def transmissibility(r, z):
     return np.sqrt((1 + (2 * z * r) ** 2) / ((1 - r ** 2) ** 2 + (2 * z * r) ** 2))
 
@@ -212,6 +237,12 @@ for target in [0.2, 0.1]:
             r_hi = r_mid
     k_need = m * (2 * math.pi * run_hz / r_hi) ** 2
     print(f"to transmit {target:.0%}: need r ≥ {r_hi:.2f}, mount stiffness ≤ {k_need / 1000:.0f} kN/m (static sag {m * 9.81 / k_need * 1000:.1f} mm)")
+```
+
+```output
+running at 24.17 Hz, natural 9.96 Hz, r = 2.43, transmissibility 0.226
+to transmit 20%: need r ≥ 2.57, mount stiffness ≤ 419 kN/m (static sag 2.8 mm)
+to transmit 10%: need r ≥ 3.66, mount stiffness ≤ 207 kN/m (static sag 5.7 mm)
 ```
 
 Transmissibility falls steadily with r above √2, so bisection finds the r where it equals the target; the stiffness then follows from ωₙ = ω/r and k = mωₙ².

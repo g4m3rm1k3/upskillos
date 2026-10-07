@@ -18,7 +18,7 @@ One attention computes one set of weights: each position decides on a single pat
 
 The total cost is about the same as one full-width attention, but the model gets h different patterns of looking. In practice, after training, different heads often specialise: one tracks the previous token, another matches brackets, another links pronouns to nouns.
 
-```python
+```python type
 import numpy as np
 
 def softmax_rows(scores):
@@ -48,6 +48,12 @@ print("head 0's weights for the last position:", weights[0, -1].round(2))
 print("head 1's weights for the last position:", weights[1, -1].round(2))
 ```
 
+```output
+output (6, 16)   weights (4, 6, 6) (one T × T pattern per head)
+head 0's weights for the last position: [0.17 0.15 0.19 0.13 0.2  0.17]
+head 1's weights for the last position: [0.15 0.2  0.04 0.14 0.42 0.04]
+```
+
 The reshape and transpose split each of Q, K and V into `heads` slices of width d/h and move the head number to the front, so `Q @ K.transpose(0, 2, 1)` computes every head's T × T scores at once (matrix multiplication works on the last two axes and repeats over the first). After the weighted averages, the reverse transpose and reshape glue the heads back side by side, and W_O mixes them. Even with random weights, each head has its own pattern of attention.
 
 ## Positional encoding
@@ -56,7 +62,7 @@ Attention has no sense of order: shuffle the tokens and every output is shuffled
 
 The original transformer used fixed **sinusoidal** encodings. Position `p` gets a d-dimensional vector whose entries are sines and cosines of `p` at many frequencies: pairs of entries (2i, 2i + 1) hold sin(p / 10000^(2i/d)) and cos(p / 10000^(2i/d)). Low dimensions oscillate quickly, high ones slowly, like the hands of a clock running at many speeds. Nearby positions get similar vectors, and the similarity falls with distance. Predict before running: how will the dot product between position 10's vector and position 10 + k's change as k grows?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -77,6 +83,11 @@ ax.imshow(P.T, cmap="RdBu_r", aspect="auto")
 ax.set_xlabel("position")
 ax.set_ylabel("dimension")
 plt.show()
+```
+
+```output
+dot product of position 10 with position 10 + k:
+{0: 32.0, 1: 30.9, 2: 28.3, 5: 23.5, 10: 21.1, 20: 18.9, 39: 15.3}
 ```
 
 `P[:, 0::2]` is every even column and `P[:, 1::2]` every odd one. The dot product falls steadily with distance, from 32 (a vector with itself) to about 31 at distance 1, 24 at distance 5 and 15 at distance 39, so position information gives attention something to tell near from far with. (The differences between neighbours are small, and in a real model the vectors pass through W_Q and W_K first, which can amplify the ones that matter.) The image shows the clock-hand pattern: fast stripes in the low dimensions, slow ones higher up. Many modern models instead **learn** a position embedding (one vector per position, like a word embedding), or use **rotary** encodings that rotate queries and keys by an angle depending on position; the purpose is the same.
@@ -101,7 +112,7 @@ x \leftarrow x + \text{Attention}(\text{LN}(x)), \qquad x \leftarrow x + \text{F
 
 Here is a stack of 12 blocks with random weights, with and without the residual additions. Before running, predict: without residuals, what happens to the differences between the 10 token vectors?
 
-```python
+```python type
 import numpy as np
 
 def layer_norm(x):
@@ -135,6 +146,11 @@ for residual in [False, True]:
     print(f"{label}: similarity between different tokens {mean_pairwise_similarity(x):.3f}, similarity of each token to its input {kept:.3f}")
 ```
 
+```output
+without residuals: similarity between different tokens 1.000, similarity of each token to its input 0.033
+with residuals   : similarity between different tokens 0.698, similarity of each token to its input 0.281
+```
+
 `mean_pairwise_similarity` averages the cosine similarity over all pairs of different tokens: 1 means they have all become the same vector. Without residuals, after 12 blocks the tokens are identical (1.000) and have nothing left in common with their inputs (0.03): every position now carries the same information, which is useless. With residuals the tokens remain distinct (0.70), and each still carries a recognisable trace of its input (0.28) after twelve random blocks. With trained weights, each block learns to add useful updates to the stream rather than random ones.
 
 ## A tiny GPT
@@ -147,7 +163,7 @@ Put it together. A GPT-style model (a "decoder-only" transformer, like the GPT f
 
 Here is a complete one with random weights: a character vocabulary, width 32, 4 heads and 2 blocks. Before running, predict two things: roughly what its average next-character loss will be before any training, and whether changing the **last** character of the input can change the predictions at earlier positions.
 
-```python
+```python type
 import numpy as np
 
 text = "the cat sat on the mat. the dog sat on the log."
@@ -192,6 +208,11 @@ changed = ids.copy()
 changed[-1] = (changed[-1] + 1) % V
 difference = np.abs(gpt(changed)[:-1] - logits[:-1]).max()
 print(f"largest change in the predictions at earlier positions after editing the last character: {difference:.1e}")
+```
+
+```output
+vocabulary 14, logits (47, 14); untrained next-character loss 2.692, ln(14) = 2.639
+largest change in the predictions at earlier positions after editing the last character: 0.0e+00
 ```
 
 `token_embedding[ids]` looks up each character's vector and `position_embedding[:len(ids)]` adds one vector per position (learned embeddings, started small with standard deviation 0.02, as in GPT-2). The output layer reuses the token embedding matrix, transposed ("tied" weights). The logits at position t are the scores for character t + 1, so the loss compares `logits[:-1]` with `ids[1:]`, the input shifted by one.

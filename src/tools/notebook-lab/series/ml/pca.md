@@ -8,7 +8,7 @@ You have already met the machinery. The eigenvectors and SVD lesson ended with t
 
 Start in two dimensions, where everything can be seen. People's heights and arm spans are strongly related: tall people have long arms. Two numbers per person, but the points lie close to a line.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,6 +35,13 @@ ax.set_aspect("equal")
 plt.show()
 ```
 
+```output
+principal directions (rows):
+[[-0.677 -0.736]
+ [-0.736  0.677]]
+variance along each: [154.5   8.2]
+```
+
 PCA always works on **centred** data, each column minus its mean, so the cloud sits around the origin. The SVD of the centred data, `U Σ Vᵀ`, gives the answer in its rows of `Vᵀ`: these are the **principal directions** (or **principal components**), unit vectors at right angles to each other. The first (red) points along the cloud, about equal parts height and arm span; the second (green) points across it. (The SVD may return either sign for each direction; −v is the same line as v.)
 
 The squared singular values divided by n − 1 give the **variance** of the data along each direction: 154.5 along the first and only 8.2 along the second. The first direction carries 95% of the total variation. Describing each person by one number, their position along the red line, loses only 5% of the variation between people.
@@ -45,7 +52,7 @@ Why the SVD? The principal directions are the directions of greatest variance: t
 
 The new coordinates of each example, its **scores**, come from projecting onto the directions: `centred @ Vt.T` (equivalently `U * S`). Keeping only the first `k` columns gives a `k`-dimensional version of the data. You can map back again: multiply the `k` scores by the first `k` directions and add the mean. This **reconstruction** is the closest you can get to the original using only `k` directions, the best rank-`k` approximation from the SVD lesson.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -72,13 +79,18 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+first person: [171.1 168.5] -> score [0.29] -> reconstructed [169.9 169.6]
+average squared error per value: 4.08
+```
+
 `Vt[:1]` keeps just the first direction (as a 1 × 2 array), so `scores` has one column. The reconstructed points all lie on the red line; the grey segments show what was thrown away, each one perpendicular to the line. PCA's line is the one that makes these perpendicular gaps as small as possible, which is different from least squares regression, which minimises the vertical gaps (and treats one variable as the thing to predict, whereas PCA treats both alike).
 
 ## Digits: 64 dimensions down to a few
 
 Now real high-dimensional data. scikit-learn's `PCA` does the centring and the SVD. Its `explained_variance_ratio_` gives the fraction of total variance along each direction, and the cumulative sum shows how much is kept with the first `k`. Before running the cell, guess: how many of the 64 directions are needed to keep 90% of the variance of the digit images?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -102,13 +114,24 @@ axes[1].set_title("every digit, described by 2 numbers", fontsize=9)
 plt.show()
 ```
 
+```output
+ 1 components keep 14.9% of the variance
+ 2 components keep 28.5% of the variance
+ 5 components keep 54.5% of the variance
+10 components keep 73.8% of the variance
+20 components keep 89.4% of the variance
+30 components keep 95.9% of the variance
+40 components keep 98.8% of the variance
+components needed for 90%: 21  for 95%: 29
+```
+
 `np.argmax(kept >= 0.90)` finds the first position where the cumulative fraction reaches 90%. The answer is 21 of the 64 directions for 90%, and 29 for 95%. The first two alone keep 28.5%, and the right-hand plot shows every digit placed by just those two numbers, coloured by its true label (which PCA never saw). Some digits already form clear groups, 0s in one region and 4s in another, while others overlap heavily: two numbers are not enough to separate them all, but they reveal real structure.
 
 ## What the components look like
 
 Each principal direction has 64 entries, one per pixel, so it can be drawn as an image. And reconstructing a digit from its first `k` scores shows what those `k` numbers capture:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -150,7 +173,7 @@ Three more cautions:
 
 Because it is a transformer (`fit` learns the mean and directions, `transform` projects), PCA fits straight into a pipeline, and is refitted on each training fold like any other learned step:
 
-```python
+```python type
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
@@ -162,6 +185,14 @@ X, y = digits.data / 16, digits.target
 for k in [2, 5, 10, 20, 64]:
     model = make_pipeline(PCA(n_components=k), LogisticRegression(max_iter=3000))
     print(f"{k:>2} components: accuracy {cross_val_score(model, X, y, cv=5).mean():.3f}")
+```
+
+```output
+ 2 components: accuracy 0.579
+ 5 components: accuracy 0.825
+10 components: accuracy 0.891
+20 components: accuracy 0.921
+64 components: accuracy 0.928
 ```
 
 Two components give 0.58, already far above the 0.10 of guessing; 10 give 0.89, and 20 give 0.92, nearly the 0.93 of all 64 pixels, with less than a third of the features. Whether that trade is worth it depends on the model: it matters for slow or distance-based models in high dimensions, and little for a fast linear model like this one.

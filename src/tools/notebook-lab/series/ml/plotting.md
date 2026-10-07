@@ -10,7 +10,7 @@ Every matplotlib plot has two main objects. The **figure** is the whole image. A
 
 The clearest way to work is to create both explicitly with `plt.subplots()`, then call methods on the axes:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -33,7 +33,7 @@ You will also see code that calls `plt.plot(...)` and `plt.xlabel(...)` directly
 
 Use a line plot when the x-axis is ordered, such as time, or an input to a function, and you want to see how something changes along it. Several lines can share one axes, and a **legend** says which is which. Before running the next cell, look at the two formulas and predict: what will the validation error do as the rounds go on?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -61,7 +61,7 @@ Notice the title. "Training and validation error" merely names the plot; "Valida
 
 Use a scatter plot to see the relationship between two measurements. Each example becomes one dot, placed by its two values. `rng.uniform(low, high, size)` gives floats spread evenly between `low` and `high`. Predict which way the dots will slope.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -81,7 +81,7 @@ The data is simulated: each score is 40, plus 5 points per hour studied, plus so
 
 Colour can add a third piece of information. When examples belong to different categories, plot each category separately with its own label:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -104,7 +104,7 @@ plt.show()
 
 A histogram shows the **distribution** of a single measurement: which values are common and which are rare. It divides the range of values into equal-width intervals called **bins**, counts how many values fall in each, and draws a bar for each count.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -123,7 +123,7 @@ The bars form the familiar bell shape of the normal distribution: most heights n
 
 The number of bins changes what you see. Before running the next cell, sketch what you expect the same data to look like with 5 bins and with 200.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -146,7 +146,7 @@ Too few bins hide the shape in a few wide bars; too many make every bar a small,
 
 A bar chart compares a number across a few named categories:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 
 models = ["baseline", "linear", "tree", "forest"]
@@ -168,7 +168,7 @@ plt.show()
 
 `ax.imshow` draws a 2D array as an image, with each number shown as the colour of one square. scikit-learn comes with a small dataset of handwritten digits, each an 8 by 8 grid of brightness values, which is perfect for this:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 
@@ -181,6 +181,10 @@ for ax, image, label in zip(axes, digits.images, digits.target):
     ax.set_title(str(label))
     ax.axis("off")
 plt.show()
+```
+
+```output
+(1797, 8, 8)
 ```
 
 `digits.images` has shape `(1797, 8, 8)`: 1797 images, each 8 by 8. `digits.target` holds the correct digit for each image. `cmap="gray_r"` chooses a reversed grey colour scale, so higher numbers are darker, like ink. `ax.axis("off")` hides the axes, which mean nothing for an image. The `zip` pairs the 6 axes with the images and their labels, and stops after 6, because `zip` stops when its shortest input runs out. You will train a model to recognise these digits later in the series. The same `imshow` also draws **heatmaps**, such as a table showing which pairs of features are related.

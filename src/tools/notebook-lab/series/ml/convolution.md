@@ -8,7 +8,7 @@ Every network so far has treated an image as a flat list of numbers. The digit n
 
 Start with a one-dimensional signal, a list of numbers, and a filter of three weights. Place the filter over the first three numbers, multiply matching pairs and add them up: that is the first output. Slide one step right and repeat. A signal of length `n` and a filter of length `k` give `n − k + 1` outputs: the number of positions where the filter fits entirely.
 
-```python
+```python type
 import numpy as np
 
 def slide(signal, kernel):
@@ -25,6 +25,13 @@ print("difference: ", slide(signal, difference))
 print("NumPy agrees:", np.allclose(slide(signal, difference), np.correlate(signal, difference, mode="valid")))
 ```
 
+```output
+signal:      [0. 0. 1. 1. 1. 1. 0. 0. 3. 0.]
+averaged:    [0.33 0.67 1.   1.   0.67 0.33 1.   1.  ]
+difference:  [ 1.  1.  0.  0. -1. -1.  3.  0.]
+NumPy agrees: True
+```
+
 The two filters do very different jobs:
 
 - The **averaging** filter (three weights of ⅓) smooths the signal: each output is the mean of three neighbours, so the isolated spike of 3 is spread out and reduced to 1.
@@ -38,7 +45,7 @@ For images, the filter is a small square, typically 3 × 3, sliding across rows 
 
 Classic hand-designed filters show what this can do. The **Sobel** filters estimate how fast brightness changes horizontally or vertically, so they light up at edges; a box filter blurs. Before running, predict: for a handwritten 0, where will the vertical-edge filter respond most strongly?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -85,7 +92,7 @@ A convolutional layer is just a layer whose weights are a set of filters. It dif
 
 You can check the last property directly: shift the digit one pixel right, and the feature map is the old one shifted one pixel right too (except at the border, where pixels fall off the edge):
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 
@@ -101,6 +108,10 @@ sobel = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
 original_map, shifted_map = conv2d(digit, sobel), conv2d(shifted, sobel)
 print("shifted map equals the original map moved right (ignoring the first column):",
       np.allclose(shifted_map[:, 1:], original_map[:, :-1]))
+```
+
+```output
+shifted map equals the original map moved right (ignoring the first column): True
 ```
 
 The comparison skips the first column of the new map, where the blank column that slid in sits under the filter.
@@ -130,7 +141,7 @@ A colour image has three **channels** (red, green and blue), each its own grid. 
 
 Writing it with loops over positions is slow. NumPy's `sliding_window_view` builds every k × k patch as a view of the image without copying it, after which the whole convolution is one `einsum`, a NumPy function that multiplies and sums arrays along named axes:
 
-```python
+```python type
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 
@@ -147,6 +158,12 @@ maps = conv_layer(images, filters, biases)
 print("5 colour images", images.shape, "->", maps.shape)
 print("weights in this layer:", filters.size + biases.size)
 print("a dense layer from 3 × 32 × 32 inputs to an output this size would need", f"{3 * 32 * 32 * 16 * 30 * 30:,}", "weights")
+```
+
+```output
+5 colour images (5, 3, 32, 32) -> (5, 16, 30, 30)
+weights in this layer: 448
+a dense layer from 3 × 32 × 32 inputs to an output this size would need 44,236,800 weights
 ```
 
 `sliding_window_view(images, (k, k), axis=(2, 3))` has shape (n, channels, rows, cols, k, k): every patch of every channel of every image. The `einsum` string names each axis with a letter: `n` image, `c` channel, `h` and `w` position, `i` and `j` within the patch, `f` filter. It multiplies patches and filters, sums over the letters that do not appear after the arrow (`c`, `i`, `j`) and returns the rest. The result: 16 feature maps of 30 × 30 for each of the 5 images, from just 448 weights; a dense layer producing the same number of outputs from the same inputs would need over 44 million.

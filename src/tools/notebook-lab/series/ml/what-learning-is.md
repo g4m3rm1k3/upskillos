@@ -32,7 +32,7 @@ The prediction `ŷ` depends on the feature `x` and two parameters: the slope `w`
 
 Here is some data, and three lines with different parameters. Which fits best?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -63,7 +63,7 @@ L(w, b) = \frac{1}{n} \sum_{i=1}^{n} (w x_i + b - y_i)^2
 
 Lower is better, and a perfect fit would score 0. The loss turns "which line fits best?" into "which `w` and `b` make `L` smallest?":
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -77,13 +77,19 @@ for w, b in [(1, 15), (3, 5), (5, -3)]:
     print(f"w = {w}, b = {b}: loss {mse(w, b):.1f}")
 ```
 
+```output
+w = 1, b = 15: loss 50.1
+w = 3, b = 5: loss 8.6
+w = 5, b = -3: loss 51.8
+```
+
 The middle line has by far the lowest loss, matching what your eye said.
 
 ## Training is minimising the loss
 
 **Training** a model means searching for the parameters that make the loss on the training examples as small as possible. You have already met two ways to do this: solving directly for the least squares answer (the linear systems lesson), and walking downhill with gradient descent (the gradients lesson). Here is gradient descent finding the best line for this data:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -99,6 +105,14 @@ for step in range(5001):
         print(f"step {step:>4}: w = {w:.3f}, b = {b:.3f}, loss = {np.mean((w * x + b - y) ** 2):.2f}")
 ```
 
+```output
+step    0: w = 2.937, b = 0.437, loss = 40.74
+step   10: w = 3.697, b = 0.814, loss = 14.53
+step  100: w = 3.437, b = 2.678, loss = 10.54
+step 1000: w = 2.997, b = 5.835, loss = 7.89
+step 5000: w = 2.993, b = 5.866, loss = 7.89
+```
+
 The loss falls as the parameters move close to `w = 3` and `b = 5`, the values used to generate the data. (Not exactly to them: with only 30 noisy points, the line that fits **these** examples best is slightly different from the true one, here with an intercept nearer 5.9.) The algorithm was never told those values; it found them from the examples alone. That is learning, in its simplest form, and every method in this series follows the same recipe:
 
 1. choose a **model family** with parameters,
@@ -111,7 +125,7 @@ Methods differ in which model family they use (lines, trees, neural networks) an
 
 Is a loss of 9 good? On its own, a loss means nothing: it depends on the units and how spread out the labels are. So always compare a model with a **baseline**: the simplest possible predictor, which ignores the features entirely. For regression, the obvious baseline predicts the **mean** of the training labels for every example.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -124,13 +138,18 @@ print(f"baseline (always predict the mean): {baseline_loss:.1f}")
 print(f"the line:                           {model_loss:.1f}")
 ```
 
+```output
+baseline (always predict the mean): 97.8
+the line:                           8.6
+```
+
 The line's loss is a small fraction of the baseline's, so it has learned something real. A model that cannot beat the baseline has learned nothing useful, however sophisticated it is, and it happens more often than you would think. For classification, the equivalent baseline always predicts the most common class.
 
 ## Memorising is not learning
 
 Here is a model that gets every training example exactly right: it simply remembers them. Given an `x` it has seen before, it returns the `y` it saw with it; given one it has not seen, it can only guess, so it returns the average label.
 
-```python
+```python type
 import numpy as np
 
 class Memoriser:
@@ -153,6 +172,11 @@ print("loss on the training examples:", np.mean((model.predict(x_train) - y_trai
 print("loss on new examples:         ", np.mean((model.predict(x_new) - y_new) ** 2).round(2))
 ```
 
+```output
+loss on the training examples: 0.0
+loss on new examples:          85.84
+```
+
 Predict both numbers before running it. On its training examples, its loss is 0: perfect. On new examples, from exactly the same source, it is no better than the baseline, because it learned nothing about the **relationship** between `x` and `y`. It only stored the answers.
 
 This is the central idea of machine learning. The point is never to do well on the examples you trained on: you already know their answers. The point is to do well on **new** examples. The ability to do that is called **generalisation**, and it is what separates learning from memorising.
@@ -169,7 +193,7 @@ A straight line is a fairly rigid model. A much more flexible family is **polyno
 
 Here is data that follows a gentle curve, split into training and test sets, fitted with polynomials of increasing degree. Predict which degree will do best on the test set.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 

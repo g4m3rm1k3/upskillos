@@ -13,7 +13,7 @@ That sounds like a restriction, and it is one, deliberately. Many problems have 
 
 The end of a Python list is a perfect stack top: `append` pushes and `pop()` pops, both O(1) (amortised, from the earlier lessons). The front would be a poor choice: `insert(0, …)` and `pop(0)` are O(n). A small class gives the operations their stack names and hides the list, so code using it can only do stack things. Predict before running: what will the three pops print?
 
-```python
+```python type
 class Stack:
     def __init__(self):
         self._items = []
@@ -49,6 +49,13 @@ except IndexError as error:
     print("IndexError:", error)
 ```
 
+```output
+top: blue size: 3
+blue green red
+empty now? True
+IndexError: pop from an empty stack
+```
+
 `__bool__` decides what `if s:` and `not s` mean for a stack: true when it has items, as for a list.
 
 The pops come out blue, green, red: the reverse of the pushes. That reversal is the essence of a stack, and it is why pushing a sequence and popping it all back reverses it. The empty-stack error says what went wrong in stack terms, rather than the list's "pop from empty list". In everyday Python, many programmers just use a list directly as a stack; the class makes the intent explicit and prevents accidental use of the middle.
@@ -57,7 +64,7 @@ The pops come out blue, green, red: the reverse of the pushes. That reversal is 
 
 An editor's undo history is a stack: each action is pushed as it happens, and undo pops the most recent. Redo needs a second stack: undoing an action pushes it onto the redo stack, so redo can pop it back. Any **new** action clears the redo stack, because the redone future no longer follows from the present. Predict before running: what will the text be after the last line?
 
-```python
+```python type
 class Editor:
     def __init__(self):
         self.text = ""
@@ -94,6 +101,12 @@ editor.redo()
 print(repr(editor.text))
 ```
 
+```output
+'Hello, world'
+'Hello, world'
+'Hello there'
+```
+
 Each stack entry here stores the whole previous text, which is simple but wasteful for long documents; the Command and Memento pattern lessons, and the text editor project, store just the change instead.
 
 After the first undo the text is "Hello, world"; undo then redo returns to the same place; and after the final undo and new typing, the text is "Hello there", where redo does nothing, because typing cleared the redo stack. Two stacks give the full undo/redo behaviour of any editor in a dozen lines.
@@ -104,7 +117,7 @@ Every running Python program uses a stack you never see: the **call stack**. Whe
 
 Recursion leans on the call stack, and Python limits its depth (to about 1,000 frames by default) so that runaway recursion stops with an error instead of exhausting memory. Any recursive algorithm can be rewritten with an **explicit stack** of work to do, which has no such limit. Here both versions add up all the numbers in a nested list. Predict before running: which version will handle a list nested 5,000 levels deep?
 
-```python
+```python type
 import sys
 
 def nested_sum_recursive(item):
@@ -138,6 +151,12 @@ except RecursionError:
     print(f"recursive: RecursionError (the call stack limit is {sys.getrecursionlimit()})")
 ```
 
+```output
+21 21
+explicit stack: 5001
+recursive: RecursionError (the call stack limit is 1000)
+```
+
 `isinstance(item, list)` checks whether the item is a list (to look inside) or a number (to add).
 
 Both give 21 on the small example. On the deep one, the explicit stack happily returns 5,001, while the recursive version runs out of call stack. The rewrite is mechanical: where the recursion would call itself on each part, the loop pushes the parts as work still to do. This is exactly how depth-first search is implemented in the graphs part of the series.
@@ -146,7 +165,7 @@ Both give 21 on the small example. On the deep one, the explicit stack happily r
 
 In ordinary **infix** notation, an operator sits between its operands, and brackets and precedence rules decide the order: (3 + 4) × 2. In **postfix** notation (also called reverse Polish notation), each operator comes after its operands: `3 4 + 2 *`. Postfix needs no brackets and no precedence rules at all, and a stack evaluates it in one left-to-right pass: push numbers; on an operator, pop two operands, apply it, and push the result. Old calculators and the Java and Python virtual machines work this way. Predict before running: what does `5 1 2 + 4 * + 3 -` evaluate to?
 
-```python
+```python type
 def eval_postfix(expression, trace=False):
     operations = {"+": lambda a, b: a + b, "-": lambda a, b: a - b,
                   "*": lambda a, b: a * b, "/": lambda a, b: a / b}
@@ -166,6 +185,19 @@ def eval_postfix(expression, trace=False):
     return result
 
 print(eval_postfix("5 1 2 + 4 * + 3 -", trace=True))
+```
+
+```output
+  after  '5': [5.0]
+  after  '1': [5.0, 1.0]
+  after  '2': [5.0, 1.0, 2.0]
+  after  '+': [5.0, 3.0]
+  after  '4': [5.0, 3.0, 4.0]
+  after  '*': [5.0, 12.0]
+  after  '+': [17.0]
+  after  '3': [17.0, 3.0]
+  after  '-': [14.0]
+14.0
 ```
 
 The order of the two pops matters: the first pop is the **right** operand. For `-` and `/`, swapping them would give the wrong answer.

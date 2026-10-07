@@ -24,7 +24,7 @@ Choose a line, an origin on it and a positive direction. **Position** x is a sig
 
 A transfer shuttle logs its position every second as it moves parts between stations. Predict before running: what are its displacement and distance travelled over the log?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,6 +45,12 @@ ax.grid(True)
 plt.show()
 ```
 
+```output
+displacement: 0.8 m
+distance travelled: 5.2 m
+furthest from the start: 3.0 m at t = 6 s
+```
+
 The shuttle ends 0.8 m from where it started, but it travelled 5.2 m: 3.0 m out to the far station and 2.2 m back. Distance travelled sums the sizes of the steps (`np.abs`); displacement only cares about the ends. Wear on a mechanism follows distance travelled, not displacement.
 
 ## Velocity
@@ -61,7 +67,7 @@ In code: `np.diff(x) / np.diff(t)` and `(t[:-1] + t[1:]) / 2`
 
 Plotting velocity against time shows the motion from a different angle. Each average velocity belongs to an interval, so it is natural to place it at the interval's midpoint. Predict before running: when is the shuttle moving fastest, and when does it reverse?
 
-```python
+```python type
 v = np.diff(x) / np.diff(t)
 t_mid = (t[:-1] + t[1:]) / 2
 for tm, vel in zip(t_mid, v):
@@ -73,6 +79,21 @@ ax.axhline(0, color="grey")
 ax.set_xlabel("time (s)")
 ax.set_ylabel("velocity (m/s)")
 plt.show()
+```
+
+```output
+t =  0.5 s   v = +0.2 m/s
+t =  1.5 s   v = +0.6 m/s
+t =  2.5 s   v = +0.8 m/s
+t =  3.5 s   v = +0.8 m/s
+t =  4.5 s   v = +0.5 m/s
+t =  5.5 s   v = +0.1 m/s
+t =  6.5 s   v = -0.2 m/s
+t =  7.5 s   v = -0.6 m/s
+t =  8.5 s   v = -0.7 m/s
+t =  9.5 s   v = -0.5 m/s
+t = 10.5 s   v = -0.2 m/s
+t = 11.5 s   v = +0.0 m/s
 ```
 
 `ax.step` draws each value as a flat segment, matching the idea of a constant average over each interval.
@@ -101,12 +122,17 @@ The ½at² term comes from the average velocity over the interval, which is (v�
 
 These are the **equations of constant acceleration**. Predict before running: a lift accelerates at 1.2 m/s² from rest. How far has it risen when it reaches its rated 2.5 m/s, and how long did that take?
 
-```python
+```python type
 a, v_target = 1.2, 2.5
 t_accel = v_target / a
 x_accel = 0.5 * a * t_accel ** 2
 print(f"time to reach {v_target} m/s: {t_accel:.3f} s, distance {x_accel:.3f} m")
 print(f"check with v² = 2 a x: x = {v_target ** 2 / (2 * a):.3f} m")
+```
+
+```output
+time to reach 2.5 m/s: 2.083 s, distance 2.604 m
+check with v² = 2 a x: x = 2.604 m
 ```
 
 The lift needs about 2.08 s and 2.60 m to reach full speed. Both routes give the same distance, a useful cross-check: when two independent formulas agree, the algebra is probably right.
@@ -127,7 +153,7 @@ A vehicle's stopping distance has two parts. During the **reaction time**, befor
 
 The braking term grows with the **square** of speed. Predict before running: a forklift with reaction time 1.0 s braking at 2.5 m/s² stops from 10 km/h in some distance. What happens at 20 km/h?
 
-```python
+```python type
 def stopping_distance(speed_kmh, reaction_s, decel):
     v = speed_kmh / 3.6
     return v * reaction_s + v ** 2 / (2 * decel)
@@ -135,6 +161,13 @@ def stopping_distance(speed_kmh, reaction_s, decel):
 for kmh in [5, 10, 20, 30]:
     v = kmh / 3.6
     print(f"{kmh:>3} km/h: reaction {v * 1.0:5.2f} m + braking {v ** 2 / 5:5.2f} m = {stopping_distance(kmh, 1.0, 2.5):5.2f} m")
+```
+
+```output
+  5 km/h: reaction  1.39 m + braking  0.39 m =  1.77 m
+ 10 km/h: reaction  2.78 m + braking  1.54 m =  4.32 m
+ 20 km/h: reaction  5.56 m + braking  6.17 m = 11.73 m
+ 30 km/h: reaction  8.33 m + braking 13.89 m = 22.22 m
 ```
 
 Dividing km/h by 3.6 converts to m/s, since 1 km/h is 1000 m per 3600 s.
@@ -155,7 +188,7 @@ The equations above need constant acceleration. Real motion rarely has it, but a
 
 Suppose a smoother lift drive eases its acceleration in and out: a(t) = 1.2 cos(t/2) m/s², starting from rest. No constant-acceleration formula applies, but calculus (later in the series) gives the exact height, 4.8(1 − cos(t/2)) metres, to compare against. Predict before running: how close does the stepped height after 6 s come to the exact value, and what happens to the error when Δt is ten times smaller?
 
-```python
+```python type
 import math
 
 def smooth_accel(time):
@@ -173,6 +206,13 @@ print(f"exact height after 6 s: {exact:.4f} m")
 for dt in [0.1, 0.01, 0.001]:
     pos, vel = simulate(smooth_accel, dt, 6.0)
     print(f"dt = {dt:<6} stepped height {pos:.4f} m, error {pos - exact:+.4f} m")
+```
+
+```output
+exact height after 6 s: 9.5520 m
+dt = 0.1    stepped height 9.8682 m, error +0.3162 m
+dt = 0.01   stepped height 9.5845 m, error +0.0325 m
+dt = 0.001  stepped height 9.5552 m, error +0.0033 m
 ```
 
 Each step updates the position with the old velocity, then the velocity with the acceleration at the start of the step.

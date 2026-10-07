@@ -1,6 +1,6 @@
 # From Python Scripts to C++ Games and Vulkan
 
-Status: **implementation started; the full path remains a curriculum draft**. Drafted 2026-10-05 at the learner's request. On 2026-10-06 the opening and first foundations chapter (A00–A05) were implemented in Project Studio. Later chapters remain planned. The existing Dice Duel track stays separate while the script-writer foundations are expanded.
+Status: **implemented through A20, including a playable terminal match and the first probability lesson; the full path is not complete**. Drafted 2026-10-05 and extended 2026-10-07 at the learner's request. C++ foundations, objects/files, shared builds, deterministic rules, command parsing, seeded dice and the terminal match are implemented in Project Studio. The opponent currently follows a fixed rule. Q-learning updates and training, graphical sequels and the full-stack application branch remain planned in this beginner path. The existing faster Dice Duel track stays separate.
 
 ## The learner and the destination
 
@@ -10,6 +10,8 @@ The destination is a learner-owned C++ project: a terminal dice game, a trained 
 
 The curriculum teaches software development through those projects: designing interfaces, protecting state, locating bugs, testing behavior, using libraries, documenting a build and explaining tradeoffs. It does not promise mastery of every C++ feature or production engine development.
 
+The expanded destination also includes a complete application with a C++ backend, a database and a browser interface. HTML, CSS, JavaScript, networking, authentication and deployment must be taught explicitly. This is a separate branch after the terminal/learning foundations; Vulkan is not a web-development prerequisite. Independent game and application capstones establish transfer beyond guided examples.
+
 ## Read the draft in this order
 
 | Part | Detailed lesson map | Project and prerequisite |
@@ -18,8 +20,9 @@ The curriculum teaches software development through those projects: designing in
 | B | [SDL3 and a graphical game](curricula/cpp-games/02-sdl3.md) | Uses the tested terminal game. Builds windows, input, presentation, animation, audio and a packaged application. |
 | C | [Graphics foundations and SDL GPU](curricula/cpp-games/03-gpu.md) | Uses B's resource ownership and event loop. Builds pixels and transformations on the CPU before programming shaders. |
 | D | [Vulkan and an explicit renderer](curricula/cpp-games/04-vulkan.md) | Uses C's graphics model. Makes resource allocation, command execution and synchronization explicit. |
+| E | [Full-stack application and independent capstones](curricula/cpp-games/05-full-stack.md) | Branches after A. Teaches the browser, C++ service, database, accounts, deployment and recovery. |
 
-[The worked lesson specification](curricula/cpp-games/lesson-specimen.md) demonstrates the required depth for teaching a first class. It is an authoring specimen, not a finished Project Studio lesson.
+[The worked lesson specification](curricula/cpp-games/lesson-specimen.md) demonstrates the required depth for teaching a first class. A10 now implements that sequence with an independent bounded-counter challenge to require transfer to a different problem.
 
 The [vocabulary introduction map](curricula/cpp-games/vocabulary.md) gives plain definitions and the first lesson responsible for teaching each major term. It is an authoring check, not prerequisite reading for the learner.
 
@@ -28,6 +31,8 @@ The [vocabulary introduction map](curricula/cpp-games/vocabulary.md) gives plain
 Lesson codes such as A07 and D14 are draft curriculum references, not application progress IDs. They do not change any existing lesson IDs or URLs. A row describes a lesson-sized objective; split it during authoring if the actual explanations and practice expose more than one new abstraction at once. Do not compress lessons to fit this draft's numbering.
 
 ## The teaching contract
+
+Use the [authoring gates](curricula/cpp-games/authoring-gates.md) before writing each section. Published lessons have executable authoring contracts for outcomes, prerequisite order, recall and transfer; human review still judges conceptual load and comprehension.
 
 Follow [Applied Machine Learning's standard](applied-ml-series-plan.md#the-lesson-standard), with the following concrete application to C++.
 
@@ -143,10 +148,11 @@ Preserve existing progress identities. Add foundational tracks or new bridge les
 | Entire-path goals, lesson maps, vocabulary, classes and mastery gates | Drafted here | Editorial review and internal links |
 | Project showcases before the first code lesson | A00 has an interactive rule preview; later showcases remain storyboards | A00's browser rules are checked against the completed C++ game; it explicitly uses a fixed opponent, not a trained model |
 | Existing Dice Duel implementation | Implemented previously; needs baseline expansion | Existing compiler walkthrough, not a substitute for curriculum audit |
-| Part A foundations and migration | A00–A05 implemented; subsequent foundations and migration not authored | Small-step lessons, independent tasks and real compiler walkthrough |
+| Part A foundations and terminal game | A00–A20 implemented, including the terminal match and exact probability exploration; Q-learning updates and training remain unauthored | Small-step lessons, independent tasks, wrong-answer trials and real compiler walkthrough |
 | Part B SDL3 | Not authored | Pinned dependency setup, game tests, bounded smoke runs and visual checks |
 | Part C SDL GPU | Not authored | Shader compilation, CPU references, GPU observations and backend reporting |
 | Part D Vulkan | Not authored | Feature checks, validation runs, lifetime/resize checks and presentation review |
+| Part E full-stack application | Drafted, not authored | Browser and C++ service integration, persistent data, authorization checks, deployment and restore, independent capstone |
 
 Implement in prerequisite order, one chapter at a time, after review of this complete draft. For each chapter, author the independent task and reviewer tests first, then derive the small explanations needed to solve it. Try plausible wrong implementations. Walk the whole chapter in a fresh folder and inspect the actual lesson in Project Studio. Follow [repository verification guidance](../AGENTS.md) and regenerate catalog facts if discovered content is added. Do not mark a chapter complete while compiler or hardware checks are skipped.
 
@@ -154,7 +160,39 @@ Curriculum review must ask: could a Python script writer explain every new token
 
 ## Implemented entry chapter — 2026-10-06
 
-Open Project Studio and select **C++ Games — From Python Scripts to Vulkan**, then **Start here · Meet the game and write C++**. A00 opens on a playable rule preview before installation. A01–A05 teach compilation, output, values/types, extraction failure, decisions and functions. They include visible file comparisons, predictions, purposeful mistakes and independent practice. The chapter ends with a mastery task and a clear notice that subsequent chapters are being authored; it does not silently continue into the faster legacy track.
+### Continuation audit — state/tests and objects/files
+
+The next implemented sections are **State and tests · References, collections and classes** (A06–A10) and **Objects and files · Construction, ownership and interfaces** (A11–A15). Both are C++ lessons. Basic Python scripting describes entry experience, not the language being taught. Use the same learner project folder across chapters. Repository navigation ordering and the newer prerequisite profiles were preserved.
+
+Authoring sources: [state/tests](../scripts/author-dice-state.mjs), [objects/files](../scripts/author-dice-objects.mjs), and [shared authoring helpers](../scripts/dice-path-authoring.mjs). Run the two authoring sources with Node to regenerate their Markdown and author-side walkthrough answers. No answer files are supplied to the learner.
+
+| Section | Audit finding | Adjustment and evidence |
+|---|---|---|
+| A06–A10 | Copies, aliases and post-bust iteration are easy to confuse; an output-only test can accept printing all examples. | Separate runnable experiments and trace tables; wrong-answer trials reject copy-only transfer, aliased player snapshots, continue-after-bust, missing reset, replacement banking, always-passing tests, counter boundary mistakes and printing all examples. |
+| A06–A10 | Assertions can disappear in a release build; a rejected mutation can still corrupt state. | Teach the failing exit-status test before assert, include an NDEBUG experiment, use explicit comparisons in independent test work, and check state after rejection. A10 transfers the design to a different bounded-counter task. |
+| A11–A15 | The draft required rejected construction before teaching exception handling. | Move the minimum throw/try/catch explanation into A11; A13 compares result codes, internal exceptions and legal busts. Update the vocabulary map rather than leaving an undeclared prerequisite. |
+| A11–A15 | Resource cleanup and snapshots can become unexplained terms; header-only work cannot yet run. | Trace nested destruction, show a live borrowed pointer, forbid owner copying, inspect snapshot independence, and explicitly label the header/source compilation milestones before linking the caller. No dangling pointer is executed. |
+| A11–A15 | Echoing input can masquerade as saving; a test that does nothing exits successfully. | Add a real saved-file check and an echo-only mutant. The shared-class task checks both executables and rejects a test with no shared API calls. Its replacement mutant must fail the learner-written test. Behavioral checks remain explicitly distinct from explanation/design review. |
+
+Verification: `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceState.desktop.test.js src/labs/project-studio/diceObjects.desktop.test.js src/labs/project-studio/diceState.test.js src/labs/project-studio/diceStart.test.js src/labs/project-studio/series.test.js` printed **Test Files 5 passed (5)** and **Tests 27 passed (27)**. Both new walkthroughs compiled and ran in fresh temporary learner folders with g++; none were skipped. Structural checks enforce at most 18 nonblank additions per guided diff, predictions, experiments, independent tasks, hint ladders and wrong-answer cases.
+
+Browser inspection confirmed both chapters appear in the series, A06 displays a normal file comparison, its independent challenge contains requirements and staged hints without a solution, and A15 renders the shared header with explanations and a live comparison. The browser has no learner filesystem, so it compares against an empty file; incremental edits against saved files are covered by the target-diff tests and desktop walkthrough. No production build or non-Windows execution is claimed. The runs emitted existing Vite/esbuild deprecation warnings. Catalog regeneration still reports the existing 14 content problems.
+
+The subsequent learning-quality pass split A14 into focused lessons and added A16–A19c. A20 now opens the learning chapter with probability and expectation. Remaining terminal-series work begins with agent/environment transitions at A21. This playable fixed-opponent milestone does not mark the full terminal/Q-learning series or any graphical sequel complete.
+
+### Playable terminal milestone — 2026-10-07
+
+A18 now teaches deterministic transitions; A19, A19b and A19c separately teach whole-line parsing, seeded generation and application integration. Each introduces its terms, uses normal live file comparisons, includes a prediction and an experiment, and ends with independent work and progressive hints. The learner keeps the same project and builds `dice_terminal` with CMake. The opponent banks at four; it is explicitly not trained.
+
+The authoring entry is [author-dice-project.mjs](../scripts/author-dice-project.mjs), with focused [rules](../scripts/dice-game-lessons.mjs), [commands](../scripts/dice-command-lessons.mjs), [randomness](../scripts/dice-random-lessons.mjs) and [terminal integration](../scripts/dice-terminal-lessons.mjs) modules. Run it after the objects generator. Fixtures reconstruct earlier learner work only in author tests; the app never supplies those answers.
+
+Audit adjustments: observe the pot immediately after banking so a later bust cannot mask a missing reset; distinguish a blank input line from EOF in the Windows checker; keep random distribution names visible in Markdown; keep long integration-input descriptions readable. The parser rejects trailing text and case differences, generation tests reject a constant die, and terminal tasks reject counting quit or forgetting illegal banking. Reproducibility is limited to the same build/library and sequence of calls. Statistical fairness is not claimed from a short sample.
+
+Verification before final editorial changes: `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceProject.desktop.test.js src/labs/project-studio/diceLearningContract.test.js src/labs/project-studio/diceState.test.js src/labs/project-studio/projectChecks.test.js` printed **Test Files 4 passed (4)** and **Tests 29 passed (29)**. This compiled and ran the growing project, independent answers, wrong variants and blank-line regression on Windows. Browser inspection confirmed the new lesson navigation, visible header/template names and the terminal task's requirement table and hint ladder without a solution. Browser preview cannot execute learner files; the desktop walkthrough supplies that evidence.
+
+### Original entry-section verification
+
+Open Project Studio and select **C++ Games — From Python Scripts to Vulkan**, then **Start here · Meet the game and write C++**. A00 opens on a playable rule preview before installation. A01–A05 teach compilation, output, values/types, extraction failure, decisions and functions. They include visible file comparisons, predictions, purposeful mistakes and independent practice. The chapter now continues into state/tests and objects/files; it does not silently continue into the faster legacy track.
 
 The showcase uses repeatable teaching dice and a fixed bank-at-four opponent. Its bank/bust/win branches and legal state transitions are tested against the actual completed C++ rules. It does not claim to demonstrate a trained policy or a completed graphical sequel.
 
@@ -180,3 +218,15 @@ git diff --check
 ```
 
 Each documentation command printed `Contributor docs checked: 9 file(s), links, paths and commands all exist.` The whitespace check reported no errors; Git emitted an LF-to-CRLF working-copy warning for the roadmap. These checks validate documentation references, not learner code, teaching effectiveness or GPU behavior. No application build, compiler walkthrough or graphics execution was needed or claimed for this documentation-only draft. Existing unrelated workspace changes were left intact.
+
+### First probability lesson — 2026-10-07
+
+A20 begins **Learn from decisions · Probability and action values** with an interactive enumeration of six alternative rolls. The learner predicts and reveals an expected pot, changes the initial pot, then writes the same enumeration in C++. Independent practice counts immediate winning faces and rejects completed positions. The lesson explicitly separates an immediate quantity from a long-term action value. [The authoring source](../scripts/author-dice-learning.mjs) generates the lesson and author-only answers.
+
+`node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceLearning.desktop.test.js src/labs/project-studio/diceState.test.js src/labs/project-studio/diceLearningContract.test.js src/labs/project-studio/diceStart.test.js` printed **Test Files 4 passed (4)** and **Tests 14 passed (14)**. The required full non-desktop run, `node node_modules/vitest/vitest.mjs run src/labs/project-studio --exclude "**/*.desktop.test.js"`, printed **Test Files 35 passed (35)** and **Tests 170 passed | 1 skipped (171)**. The skip is the existing Python-dependent process-stop test; the C++ walkthrough ran. The figure test verifies that changing the pot recalculates independent alternatives and hides the prior answer until revealed again.
+
+Catalog regeneration completed and still reports the existing 14 content problems. `node scripts/check-docs.mjs` printed **Contributor docs checked: 9 file(s), links, paths and commands all exist.** No production build or non-Windows verification is claimed.
+
+Browser verification opened A20, revealed expected pot 7.5 and expected change 2.5, then changed the starting pot with the keyboard and confirmed the answer hid while all alternatives updated. The first screenshot exposed cramped table headings; scoped figure styling repaired them, and a second screenshot confirmed separated columns. `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceCppPanel.test.jsx src/labs/project-studio/figures.test.jsx` then printed **Test Files 2 passed (2)** and **Tests 13 passed (13)**. Catalog currentness checks passed; the focused curriculum-doc check passed for six files; `git diff --check` reported no whitespace errors. The temporary browser tab was closed and the development server stopped.
+
+During catalog regeneration, development hot reload produced transient Auth/Tour context errors outside the lesson components before the page recovered; this audit does not claim those app-wide development reload errors are fixed. Existing Vite deprecation, Browserslist-age and broad Tailwind-glob warnings also remain.

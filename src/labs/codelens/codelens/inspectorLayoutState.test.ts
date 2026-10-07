@@ -28,9 +28,15 @@ describe('inspector layout', () => {
   it('puts the Picture tab at the front of the last pane of a layout saved before it existed', () => {
     const saved = { panes: [{ tabs: ['explain', 'events'], active: 'explain' }, { tabs: ['output', 'heap'], active: 'heap' }], direction: 'row', sizes: [1, 1] }
     const restored = restoreWorkspace(saved)
-    expect(restored.panes[1].tabs.slice(0, 3)).toEqual(['picture', 'output', 'heap'])
+    expect(restored.panes[1].tabs.slice(0, 4)).toEqual(['picture', 'stage', 'output', 'heap'])
     expect(restored.panes[1].active).toBe('picture')
     expect(restored.panes.flatMap(p => p.tabs).filter(t => t === 'picture')).toHaveLength(1)
+  })
+  it('puts the Stage tab right after Picture in a layout saved before it existed', () => {
+    const saved = { panes: [{ tabs: ['explain', 'picture', 'events'], active: 'explain' }, { tabs: ['output'], active: 'output' }], direction: 'row', sizes: [1, 1] }
+    const restored = restoreWorkspace(saved)
+    expect(restored.panes[0].tabs.slice(0, 4)).toEqual(['explain', 'picture', 'stage', 'events'])
+    expect(restored.panes.flatMap(p => p.tabs).filter(t => t === 'stage')).toHaveLength(1)
   })
 })
 

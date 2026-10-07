@@ -21,7 +21,7 @@ In code: store perimeter points in order and append the first point only when pl
 
 Predict before running: does reversing the order change the plate's physical shape? Does shuffling the same points necessarily preserve it?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,6 +43,10 @@ plt.show()
 print("Area from rectangle subtraction:", 6 * 5 - 4 * 3, "cm^2")
 ```
 
+```output
+Area from rectangle subtraction: 18 cm^2
+```
+
 `plate[0]` selects the first point because Python indexes lists from zero. `plate + [plate[0]]` makes a new list ending where it started; it leaves `plate` unchanged. The comprehensions collect the first and second coordinate of each point for plotting. `enumerate` supplies each point's index for its label. None of these operations sorts the points: sorting by x would destroy the boundary order.
 
 ## 2. One edge contributes an oriented triangle
@@ -60,7 +64,7 @@ In code: unpack each point into its two coordinates, multiply crosswise, subtrac
 
 Predict before running: what happens if both points lie on the same line through the origin? There is no enclosed triangle, so the two products cancel.
 
-```python
+```python type
 def triangle_contribution(p, q):
     px, py = p
     qx, qy = q
@@ -69,6 +73,12 @@ def triangle_contribution(p, q):
 print("O-P-Q:", triangle_contribution((4, 1), (1, 3)))
 print("O-Q-P:", triangle_contribution((1, 3), (4, 1)))
 print("Collinear points:", triangle_contribution((2, 1), (6, 3)))
+```
+
+```output
+O-P-Q: 5.5
+O-Q-P: -5.5
+Collinear points: 0.0
 ```
 
 The outputs are 5.5, -5.5 and zero. When this signed contribution is accumulated around a simple polygon, triangles outside the desired region cancel and triangles inside remain. An internal edge traversed in opposite directions contributes opposite signs. This cancellation is what lets the method work for a concave shape without manually choosing a triangulation.
@@ -90,7 +100,7 @@ In code: `for i in range(n)` visits those indices; `% n` wraps `i + 1` back to z
 
 Predict before running: will the signs of all contributions reverse if you reverse the boundary? Should the magnitude of the final area change?
 
-```python
+```python type
 def signed_area(points):
     if len(points) < 3:
         raise ValueError("An area boundary needs at least three points")
@@ -112,6 +122,12 @@ print("Forward area:", signed_area(plate), "cm^2")
 print("Reversed area:", signed_area(list(reversed(plate))), "cm^2")
 moved = [(x + 1000, y - 700) for x, y in plate]
 print("Translated area:", signed_area(moved), "cm^2")
+```
+
+```output
+Forward area: 18.0 cm^2
+Reversed area: -18.0 cm^2
+Translated area: 18.0 cm^2
 ```
 
 The results are 18, -18 and 18. `range(n)` stops before n, so it visits precisely 0 through n - 1, matching the inclusive bounds of the sigma. Python's `% n` gives the remainder after division by n: when `i + 1` reaches n, that remainder is zero.
@@ -172,7 +188,7 @@ In code: start with the outer loop's area, then subtract `abs(signed_area(hole))
 
 Predict before running: will reversing only the hole change the amount of material? What happens to the result if every coordinate is changed from centimetres to millimetres?
 
-```python
+```python type
 outer = [(0, 0), (10, 0), (10, 8), (0, 8)]
 hole = [(2, 2), (4, 2), (4, 5), (2, 5)]
 material = abs(signed_area(outer)) - abs(signed_area(hole))
@@ -182,6 +198,12 @@ hole_mm = [(10 * x, 10 * y) for x, y in hole]
 print("Material area (cm^2):", material)
 print("After reversing hole:", reversed_hole)
 print("Material area (mm^2):", abs(signed_area(outer_mm)) - abs(signed_area(hole_mm)))
+```
+
+```output
+Material area (cm^2): 74.0
+After reversing hole: 74.0
+Material area (mm^2): 7400.0
 ```
 
 The material remains 74 cm², which is 7400 mm². Length conversion multiplies each coordinate by ten; area conversion multiplies by one hundred. Keeping the units in the output label makes this otherwise plausible factor-of-ten error easier to catch.
@@ -225,7 +247,7 @@ In code: compare a correctly ordered square with a crossed ordering of the same 
 
 Predict before running: can an area of zero alone tell you whether the input was a line, a crossed outline, or a real shape too small for its coordinate precision?
 
-```python
+```python type
 square = [(0, 0), (4, 0), (4, 4), (0, 4)]
 bowtie = [(0, 0), (4, 4), (0, 4), (4, 0)]
 print("Square signed area:", signed_area(square))
@@ -238,6 +260,11 @@ for ax, points, title in [(axes[0], square, "Simple boundary"), (axes[1], bowtie
     ax.set_aspect("equal", adjustable="box")
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Square signed area: 16.0
+Crossed ordering signed area: 0.0
 ```
 
 The square gives 16 and the bow-tie gives zero. A production geometry pipeline must validate its boundary before attaching physical meaning to the area. Likewise, our coordinates describe a flat two-dimensional shape. A three-dimensional surface cannot generally be measured by discarding its height coordinate; that computes a projection.

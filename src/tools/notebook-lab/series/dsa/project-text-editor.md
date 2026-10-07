@@ -17,7 +17,7 @@ Typing inserts characters at the cursor. If the text is a Python string, every k
 
 Editors exploit the fact that typing happens in one place at a time. A **gap buffer** keeps the text in one list with a block of empty slots, the **gap**, at the cursor. Typing fills the gap from its left end: O(1). Deleting backwards just widens the gap: O(1). Moving the cursor moves the gap, copying the characters between the old and new positions: the cost is the distance moved, which is small for ordinary editing. When the gap fills up, the buffer grows it, as the dynamic arrays lesson grew its array. Emacs has used this structure for decades. Predict before running: how many characters move when typing 2,000 characters at the start of a 100,000-character document, list against gap buffer?
 
-```python
+```python type
 class GapBuffer:
     def __init__(self, text="", gap=16):
         self._buf = list(text) + [None] * gap
@@ -82,6 +82,12 @@ print(f"plain list: characters shifted while typing: {shifts:,}")
 print("same text:", gb.text() == "".join(lst))
 ```
 
+```output
+gap buffer: characters moved while typing: 100000
+plain list: characters shifted while typing: 200,000,000
+same text: True
+```
+
 The gap buffer counts the characters it copies in `moved`. Moving the cursor to the start of the document moved all 100,000 characters once, which is why `before` is recorded after that move.
 
 Typing 2,000 characters at the start of the document moved 100,000 characters exactly once: when the small starting gap filled, the buffer grew it, shifting the text after it a single time, and the new gap was big enough for everything typed after. The list shifted the whole remaining document for every keystroke: 200 million character moves. The gap pays once to move to where you are typing (and occasionally to grow), and then typing there is cheap.
@@ -90,7 +96,7 @@ Typing 2,000 characters at the start of the document moved 100,000 characters ex
 
 Every change to the document goes through a command object with `execute` and `undo`, as in the command lesson. Each command records what it needs to reverse itself: an insertion remembers where it went and what it inserted; a backspace remembers what it removed. The editor holds a gap buffer and a history with undo and redo stacks. Predict before running: after typing, deleting and two undos, what is the text?
 
-```python
+```python type
 class Insert:
     def __init__(self, text):
         self.text = text
@@ -150,6 +156,12 @@ ed.redo()
 print(repr(ed.text()))
 ```
 
+```output
+'Spindle speed: 12000 rpm'
+'Spindle speed 12000 rpm'
+'Spindle 12000 rpm'
+```
+
 Moving the cursor is not a command here: it changes no text, so undo skips over it. Each command remembers the cursor position it acted at, so undo works wherever the cursor has moved since.
 
 Undoing twice reverses the insertion and then the backspace, restoring `'Spindle speed 12000 rpm'`. Redo re-applies the backspace. Because each command captured exactly where it acted and what it changed, undo works however the cursor moved in between, and redo first moves back to where the command originally acted.
@@ -158,7 +170,7 @@ Undoing twice reverses the insertion and then the backspace, restoring `'Spindle
 
 An editor must know whether the document has unsaved changes, to put a dot on the tab or ask before closing. Comparing the whole text with the saved copy works but costs O(n) each time. A cheaper and more robust way is a **memento of the history position**: on save, record which command was the latest done (its identity), and the document is "clean" exactly when the latest done command is that one again, whether you got there by undoing or redoing. Predict before running: is the document clean after an undo followed by a redo?
 
-```python
+```python type
 class SavingEditor(Editor):
     def __init__(self, text=""):
         super().__init__(text)
@@ -184,6 +196,14 @@ ed.redo()
 print("after redo:", ed.modified)
 ```
 
+```output
+new: False
+after typing: True
+after save: False
+after undo: True
+after redo: False
+```
+
 The memento is just a reference to a command object: a tiny token standing for "the state the document was in when saved", with no copy of the text at all.
 
 Undoing past the save point marks the document modified, and redoing back to it marks it clean again, with no text comparison. Typing something new after an undo clears the redo stack, so the saved position can then never be reached again, which correctly leaves the document modified until the next save.
@@ -192,7 +212,7 @@ Undoing past the save point marks the document modified, and redoing back to it 
 
 Undoing one character at a time is tedious. Editors **merge** consecutive typing into one undo step, usually until a space or newline, or until the cursor moves elsewhere. The history can do this: when a new `Insert` directly continues the previous one (it starts where the last one ended, and the last one did not end a word), extend the previous command instead of recording a new one. Predict before running: how many undo steps does typing "feed rate 250" one character at a time produce?
 
-```python
+```python type
 class Insert(Insert):
     def can_merge(self, other):
         return isinstance(other, Insert) and other.at == self.at + len(self.text) and not self.text.endswith((" ", "\n"))
@@ -217,6 +237,12 @@ ed.undo()
 print(repr(ed.text()))
 ed.undo()
 print(repr(ed.text()))
+```
+
+```output
+undo steps: 3 ['feed ', 'rate ', '250']
+'feed rate '
+'feed '
 ```
 
 The redefined `Insert` adds the merging methods to the earlier class; `Editor.type` looks `Insert` up when it runs, so it picks up the new version. Merging never extends a command that is the current save point, so save points stay exact.

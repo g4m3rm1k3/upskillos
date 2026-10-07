@@ -29,7 +29,7 @@ The **derivative** of f at x is the limit of the difference quotient as the step
 
 For f(x) = x² the limit can be found exactly. Expand: (x + h)² − x² = 2xh + h², so the quotient is 2x + h, which approaches 2x as h → 0. So the derivative of x² is 2x. Predict before running: at x = 3, how do the quotients approach 6, and how far off is each?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,6 +41,15 @@ square = lambda x: x ** 2
 for h in [1, 0.1, 0.01, 0.001, -0.001, -0.1]:
     q = quotient(square, 3, h)
     print(f"h = {h:>7}: quotient {q:.6f}, minus 2x + h = {q - (6 + h):+.1e}")
+```
+
+```output
+h =       1: quotient 7.000000, minus 2x + h = +0.0e+00
+h =     0.1: quotient 6.100000, minus 2x + h = +1.2e-14
+h =    0.01: quotient 6.010000, minus 2x + h = -1.5e-13
+h =   0.001: quotient 6.001000, minus 2x + h = -5.2e-13
+h =  -0.001: quotient 5.999000, minus 2x + h = -8.0e-13
+h =    -0.1: quotient 5.900000, minus 2x + h = -1.8e-15
 ```
 
 The last column checks the algebra: each quotient equals 2x + h exactly, up to rounding.
@@ -63,7 +72,7 @@ The same expansion works for any whole power. (x + h)³ = x³ + 3x²h + 3xh² + 
 
 It holds for negative and fractional powers too, as the calculus block proves. The derivative of a sum is the sum of the derivatives, and constants come out front, so polynomials can be differentiated term by term. Predict before running: does a numerical derivative of x³ match 3x² across a whole range?
 
-```python
+```python type
 def central(f, x, h=1e-5):
     return (f(x + h) - f(x - h)) / (2 * h)
 
@@ -84,6 +93,15 @@ ax.legend()
 plt.show()
 ```
 
+```output
+largest gap between numeric slope and 3x²: 2.156195222369206e-10
+x^2: numeric slope at 1.7 = 3.400000, power rule n x^(n-1) = 3.400000
+x^3: numeric slope at 1.7 = 8.670000, power rule n x^(n-1) = 8.670000
+x^5: numeric slope at 1.7 = 41.760500, power rule n x^(n-1) = 41.760500
+x^-1: numeric slope at 1.7 = -0.346021, power rule n x^(n-1) = -0.346021
+x^0.5: numeric slope at 1.7 = 0.383482, power rule n x^(n-1) = 0.383482
+```
+
 `central` works on a whole NumPy array at once, because the formula uses only arithmetic.
 
 The numeric slope matches 3x² to about 10⁻¹⁰ everywhere, and the power rule agrees for a negative and a fractional power as well. The plot shows the derivative as a **function** in its own right: where x³ is steep (large |x|) its derivative is large; at x = 0, where the curve flattens momentarily, the derivative touches zero.
@@ -102,13 +120,19 @@ The sign of f′ says which way f is going: positive means increasing, negative 
 
 The derivative of sine shows this well. Predict before running: what familiar function is the slope of sin x?
 
-```python
+```python type
 xs = np.linspace(0, 2 * np.pi, 400)
 slope = central(np.sin, xs)
 print("slope of sin matches cos:", np.allclose(slope, np.cos(xs), atol=1e-8))
 print("slope of cos matches -sin:", np.allclose(central(np.cos, xs), -np.sin(xs), atol=1e-8))
 sign_changes = xs[1:][np.diff(np.sign(slope)) != 0]
 print("sin is level near x =", np.round(sign_changes, 3), " (π/2 =", round(np.pi / 2, 3), ", 3π/2 =", round(3 * np.pi / 2, 3), ")")
+```
+
+```output
+slope of sin matches cos: True
+slope of cos matches -sin: True
+sin is level near x = [1.575 4.724]  (π/2 = 1.571 , 3π/2 = 4.712 )
 ```
 
 The derivative of sin is cos, and the derivative of cos is −sin: with x in radians, and only in radians, these come out without any conversion factor, another reason radians are the natural unit. Sine is level at π/2 (its peak) and 3π/2 (its valley), exactly where cos crosses zero; the grid locates them to within one step.
@@ -125,7 +149,7 @@ In code: `slope_at_zero(a)`, then 50 halvings of `low, high`
 
 Exponentials aⁿ grow in proportion to their own size, so their derivatives should be proportional to the function: the quotient (aˣ⁺ʰ − aˣ)/h = aˣ (aʰ − 1)/h, so d/dx aˣ = aˣ × (the slope of aˣ at 0). That constant depends on the base a. For a = 2 it is about 0.693, for a = 3 about 1.099. Somewhere between 2 and 3 there is a base for which it is exactly 1, so the function is its **own derivative**. That base is **e** ≈ 2.71828, and eˣ, written `exp(x)`, is the exponential the rest of mathematics uses. Predict before running: how close does a search get to e?
 
-```python
+```python type
 def slope_at_zero(a, h=1e-6):
     return (a ** h - a ** -h) / (2 * h)
 
@@ -140,6 +164,16 @@ for _ in range(50):
         high = mid
 print(f"base whose slope at 0 is 1: {mid:.8f}   math.e = {math.e:.8f}")
 print("and the slope at 0 for base a is ln(a):", round(math.log(2), 6), round(math.log(3), 6))
+```
+
+```output
+base 2: slope of a^x at 0 is 0.693147
+base 2.5: slope of a^x at 0 is 0.916291
+base 2.7: slope of a^x at 0 is 0.993252
+base 2.718: slope of a^x at 0 is 0.999896
+base 3: slope of a^x at 0 is 1.098612
+base whose slope at 0 is 1: 2.71828183   math.e = 2.71828183
+and the slope at 0 for base a is ln(a): 0.693147 1.098612
 ```
 
 The search is the bisection of the formulas lesson: the slope at zero increases with the base, so halving the interval keeps the base where it crosses 1.
@@ -158,7 +192,7 @@ In code: `sp.diff(expr, var)` differentiates the formula
 
 Numerical derivatives give numbers. **Symbolic** differentiation gives formulas, by applying the rules (power rule, sums, products, the chain rule) automatically. SymPy, a computer algebra library, does this in Python: declare a symbol, build an expression, call `diff`. Predict before running: what is the derivative of a cooling curve 20 + 70e^(−0.05t)?
 
-```python
+```python type
 import sympy as sp
 
 x, t = sp.symbols("x t")
@@ -170,6 +204,14 @@ f_expr = sp.sin(x) * x ** 2
 f_prime = sp.lambdify(x, sp.diff(f_expr, x))
 f_num = sp.lambdify(x, f_expr)
 print("symbolic and numeric slopes at x = 1.3:", f_prime(1.3), central(f_num, 1.3))
+```
+
+```output
+d/dx [x**3 - 4*x + 1] = 3*x**2 - 4
+d/dx [x**2*sin(x)] = x**2*cos(x) + 2*x*sin(x)
+d/dx [exp(-x**2)] = -2*x*exp(-x**2)
+d/dt [20 + 70*exp(-t/20)] = -7*exp(-t/20)/2
+symbolic and numeric slopes at x = 1.3: 2.9573243024602545 2.957324302377273
 ```
 
 `sp.Rational(1, 20)` keeps 0.05 as the exact fraction 1/20. `sp.lambdify` turns a SymPy formula into an ordinary Python function for fast numerical evaluation.
@@ -188,7 +230,7 @@ In code: `v_t = sp.diff(x_t, time)`, then `a_t = sp.diff(v_t, time)`
 
 For a position x(t), the derivative is the velocity, v = dx/dt, and the derivative of velocity is the acceleration, a = dv/dt = d²x/dt², the **second derivative**. The crank–slider piston from the sine and cosine lesson has a position formula, so SymPy can produce exact velocity and acceleration formulas. Predict before running: at what crank angle is the piston's acceleration largest in size?
 
-```python
+```python type
 r, l, w = 0.040, 0.120, 3000 * 2 * math.pi / 60
 time = sp.symbols("t")
 theta = w * time
@@ -201,6 +243,11 @@ v_vals, a_vals = v_f(ts), a_f(ts)
 i_v, i_a = np.argmax(np.abs(v_vals[:1801])), np.argmax(np.abs(a_vals))
 print(f"max speed {abs(v_vals[i_v]):.3f} m/s at crank {np.degrees(w * ts[i_v]):.1f}°")
 print(f"max |acceleration| {abs(a_vals[i_a]):.0f} m/s² at crank {np.degrees(w * ts[i_a]):.1f}° (that is {abs(a_vals[i_a]) / 9.81:.0f} g)")
+```
+
+```output
+max speed 13.253 m/s at crank 73.2°
+max |acceleration| 5264 m/s² at crank 0.0° (that is 537 g)
 ```
 
 The time grid covers one revolution in 3,600 steps (0.1° each); the speed search uses the first half turn, as in the earlier challenge.

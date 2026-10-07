@@ -26,7 +26,7 @@ A machine of mass m₁ = 2 kg sits on a mount of stiffness k₁ = 400 N/m; on to
 
 In matrix form, **M x″ = −K x**, with the mass matrix M = diag(m₁, m₂) and the stiffness matrix K = [[k₁ + k₂, −k₂], [−k₂, k₂]]. The motion can be simulated with the semi-implicit Euler method from the Newton's-law lesson, now with vectors. Predict before running: if the lower mass is displaced 10 mm and released, does the motion look like a simple oscillation?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,6 +58,12 @@ plt.show()
 print("A = M⁻¹K =\n", A)
 ```
 
+```output
+A = M⁻¹K =
+ [[ 300. -100.]
+ [-200.  200.]]
+```
+
 `A = np.linalg.solve(M, K)` computes M⁻¹K, so the equations become x″ = −A x, and each step updates the velocity vector by −A x Δt.
 
 The motion is not a single sine wave: each mass traces a lumpy, uneven shape with big and small swings mixed together (here the shape happens to repeat every 0.63 s, for a reason the modes will explain). The matrix A = M⁻¹K, [[300, −100], [−200, 200]], couples the two masses: each one's acceleration depends on both positions.
@@ -78,12 +84,18 @@ Try different starting shapes. Most give the same kind of mess, but two special 
 
 The matrix A, applied to v, gives back v itself, only scaled. Predict before running: do the starting shapes (1, 2) and (1, −1) behave differently from (1, 0)?
 
-```python
+```python type
 for shape in [(1, 0), (1, 2), (1, -1)]:
     v = np.array(shape, dtype=float)
     t, xs = simulate(0.005 * v / np.abs(v).max())
     ratio = xs[:, 1] / np.where(np.abs(xs[:, 0]) > 1e-4, xs[:, 0], np.nan)
     print(f"start {shape}: A v = {A @ v}, ratio x2/x1 over time ranges from {np.nanmin(ratio):.3f} to {np.nanmax(ratio):.3f}")
+```
+
+```output
+start (1, 0): A v = [ 300. -200.], ratio x2/x1 over time ranges from -43.514 to 40.479
+start (1, 2): A v = [100. 200.], ratio x2/x1 over time ranges from 2.000 to 2.000
+start (1, -1): A v = [ 400. -400.], ratio x2/x1 over time ranges from -1.000 to -1.000
 ```
 
 The ratio x₂/x₁ is computed only where x₁ is not near zero, to avoid dividing by tiny numbers.
@@ -104,7 +116,7 @@ A non-zero vector v with A v = λ v is an **eigenvector** of A, and the number �
 
 For the vibration problem λ = ω², so each eigenvalue gives a **natural frequency** ω = √λ and each eigenvector a **mode shape**. `np.linalg.eig` returns the eigenvalues and a matrix whose columns are unit eigenvectors. Predict before running: what are the two natural frequencies in hertz?
 
-```python
+```python type
 eigvals, eigvecs = np.linalg.eig(A)
 order = np.argsort(eigvals)
 eigvals, eigvecs = eigvals[order], eigvecs[:, order]
@@ -112,6 +124,12 @@ for lam, vec in zip(eigvals, eigvecs.T):
     omega = math.sqrt(lam)
     print(f"λ = {lam:.1f}: ω = {omega:.2f} rad/s = {omega / (2 * math.pi):.3f} Hz, shape {np.round(vec / vec[0], 4)}, check |Av - λv| = {np.linalg.norm(A @ vec - lam * vec):.1e}")
 print("roots of det(A - λI) = λ² - 500λ + 40000:", np.roots([1, -500, 40000]))
+```
+
+```output
+λ = 100.0: ω = 10.00 rad/s = 1.592 Hz, shape [1. 2.], check |Av - λv| = 1.4e-14
+λ = 400.0: ω = 20.00 rad/s = 3.183 Hz, shape [ 1. -1.], check |Av - λv| = 0.0e+00
+roots of det(A - λI) = λ² - 500λ + 40000: [400. 100.]
 ```
 
 `np.argsort` orders the modes from the lowest frequency up, the usual convention. Dividing each eigenvector by its first component gives the shape relative to the lower mass.
@@ -160,7 +178,7 @@ The modes do more than describe special starts. Because the equation x″ = −A
 
 where the amounts c₁, c₂ come from writing the starting displacement as a combination of the mode shapes: V c = x₀, a linear system. This turns a coupled problem into independent single-frequency oscillations. Predict before running: does the modal formula reproduce the messy simulation from the first section?
 
-```python
+```python type
 x0 = np.array([0.010, 0.0])
 V = eigvecs
 c = np.linalg.solve(V, x0)
@@ -177,6 +195,11 @@ ax.set_xlabel("time (s)")
 ax.set_ylabel("mm")
 ax.legend()
 plt.show()
+```
+
+```output
+mode amounts c: [0.007454 0.009428]  -> shapes: [array([3.333, 6.667]), array([ 6.667, -6.667])] mm
+largest difference between modal formula and simulation: 0.0092 mm
 ```
 
 The broadcasting expression evaluates c_i v_i cos(ω_i t) for every mode and time and sums over the modes; `np.outer(t, omegas)` makes a table of ω_i t.

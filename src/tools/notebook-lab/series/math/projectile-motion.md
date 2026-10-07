@@ -26,7 +26,7 @@ A projectile launched at speed v and angle θ above the horizontal starts with v
 
 where h is the launch height. The two are linked only by the shared time t. Eliminating t gives y as a quadratic in x, so the path is a **parabola**. Predict before running: launched at 20 m/s, which angle goes farthest, and which goes highest?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -69,7 +69,7 @@ The plotted results have formulas. On level ground (h = 0):
 
 The range uses the double-angle identity 2 sin θ cos θ = sin 2θ, which explains both observations: sin 2θ is largest when 2θ = 90°, so θ = 45°, and sin 2θ = sin(180° − 2θ), so θ and 90° − θ give the same range. The maximum height comes from v² = v₀² + 2a(y − y₀) with the vertical speed reaching zero at the top. Predict before running: if the launch speed doubles, what happens to the range?
 
-```python
+```python type
 def level_flight(v, deg, g=9.81):
     th = math.radians(deg)
     T = 2 * v * math.sin(th) / g
@@ -81,6 +81,13 @@ for speed in [10, 20, 40]:
     T, R, H = level_flight(speed, 45)
     print(f"v = {speed:>2} m/s at 45°: flight {T:.2f} s, range {R:6.2f} m, peak {H:5.2f} m")
 print("sin(2 × 30°) = sin(2 × 60°):", math.isclose(math.sin(math.radians(60)), math.sin(math.radians(120))))
+```
+
+```output
+v = 10 m/s at 45°: flight 1.44 s, range  10.19 m, peak  2.55 m
+v = 20 m/s at 45°: flight 2.88 s, range  40.77 m, peak 10.19 m
+v = 40 m/s at 45°: flight 5.77 s, range 163.10 m, peak 40.77 m
+sin(2 × 30°) = sin(2 × 60°): True
 ```
 
 Doubling the speed quadruples the range and the height (they grow with v²) and doubles the flight time. This square law is the reason grinding sparks or flung debris can travel surprisingly far: a fragment leaving a wheel at 40 m/s could, in a vacuum, land 163 m away. Air resistance shortens that a lot, as the last section shows.
@@ -101,7 +108,7 @@ From a height h the landing time solves h + v sin θ t − ½ g t² = 0, a quadr
 
 The extra height buys extra flight time, and it changes the best angle: a flatter launch keeps more horizontal speed, and the drop gives it time to fly. The best angle from height h turns out to be below 45°. Predict before running: material leaves the end of a conveyor 3 m up at 6 m/s. Which discharge angle throws it farthest?
 
-```python
+```python type
 def landing_distance(v, deg, h, g=9.81):
     th = math.radians(deg)
     vy = v * math.sin(th)
@@ -113,6 +120,11 @@ dists = np.array([landing_distance(6, a, 3) for a in angles])
 best = angles[dists.argmax()]
 print(f"from 3 m at 6 m/s: best angle {best:.1f}°, landing {dists.max():.3f} m (at 45°: {landing_distance(6, 45, 3):.3f} m, horizontal: {landing_distance(6, 0, 3):.3f} m)")
 print(f"formula atan(v / sqrt(v² + 2gh)): {math.degrees(math.atan(6 / math.sqrt(36 + 2 * 9.81 * 3))):.1f}°")
+```
+
+```output
+from 3 m at 6 m/s: best angle 31.6°, landing 5.957 m (at 45°: 5.626 m, horizontal: 4.692 m)
+formula atan(v / sqrt(v² + 2gh)): 31.6°
 ```
 
 The search tries every angle in steps of 0.1° and keeps the best, a brute-force method that needs no algebra; calculus later finds the formula printed on the second line.
@@ -135,7 +147,7 @@ To hit a point (X, Y), substitute t = X/(v cos θ) into the y equation. Using 1/
 
 A quadratic has two, one or no real roots, depending on its **discriminant**: two angles (a flat shot and a lob) when the target is within reach, exactly one at the edge of reach, none beyond it. Predict before running: from 25 m/s, can a target 40 m away and 10 m up be hit, and at what angles?
 
-```python
+```python type
 def angles_to_hit(v, X, Y, g=9.81):
     a = g * X ** 2 / (2 * v ** 2)
     b = -X
@@ -154,6 +166,13 @@ t_hit = 40 / (25 * math.cos(th))
 print("check the flat shot: height at x = 40 is", round(25 * math.sin(th) * t_hit - 0.5 * 9.81 * t_hit ** 2, 9), "m")
 ```
 
+```output
+target (40, 10) at 25 m/s: ['36.21°', '67.82°']
+target (60, 0) at 25 m/s: ['35.17°', '54.83°']
+target (60, 10) at 25 m/s: out of reach
+check the flat shot: height at x = 40 is 10.0 m
+```
+
 The target at (40, 10) can be hit with a flat shot at about 36.2° or a lob at about 67.8°. (60, 0) is just inside the 63.7 m level range, so two angles again, one either side of 45°. (60, 10) is out of reach at 25 m/s. Substituting the flat-shot angle back into the equations confirms the projectile passes through the target.
 
 ## Air resistance
@@ -170,7 +189,7 @@ Real projectiles feel **drag**, a force opposing the velocity whose size grows r
 
 Predict before running: a 45 g ball (about a golf ball) launched at 40 m/s. How much range does drag cost, and is 45° still the best angle?
 
-```python
+```python type
 def flight_with_drag(v, deg, k, dt=0.001, g=9.81):
     th = math.radians(deg)
     pos = np.array([0.0, 0.0])
@@ -189,6 +208,15 @@ k = 0.5 * rho * cd * area / mass
 print(f"drag constant k = {k:.5f} per metre")
 for deg in [25, 30, 35, 40, 45]:
     print(f"{deg}°: vacuum {level_flight(40, deg)[1]:6.1f} m, with drag {flight_with_drag(40, deg, k):6.1f} m")
+```
+
+```output
+drag constant k = 0.00581 per metre
+25°: vacuum  124.9 m, with drag   85.6 m
+30°: vacuum  141.2 m, with drag   92.6 m
+35°: vacuum  153.3 m, with drag   96.9 m
+40°: vacuum  160.6 m, with drag   98.7 m
+45°: vacuum  163.1 m, with drag   98.0 m
 ```
 
 The drag acceleration is −k |v| v: proportional to the speed squared, pointing against the velocity. On the last step the landing point is found by linear interpolation between the positions above and below the ground.

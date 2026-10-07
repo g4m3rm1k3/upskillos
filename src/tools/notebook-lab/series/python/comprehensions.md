@@ -8,7 +8,7 @@ Comprehensions are everywhere in real Python code, so you need to be able to rea
 
 Here is the familiar pattern, and the comprehension that does the same job:
 
-```python
+```python type
 numbers = [1, 2, 3, 4, 5]
 
 squares = []
@@ -20,6 +20,11 @@ squares = [n * n for n in numbers]
 print(squares)
 ```
 
+```output
+[1, 4, 9, 16, 25]
+[1, 4, 9, 16, 25]
+```
+
 Both produce `[1, 4, 9, 16, 25]`. The comprehension packs the loop into the brackets of the list it builds. Compare the two versions piece by piece:
 
 - `n * n`, the value that was appended, comes **first**.
@@ -28,18 +33,24 @@ Both produce `[1, 4, 9, 16, 25]`. The comprehension packs the loop into the brac
 
 Read `[n * n for n in numbers]` as "a list of n times n, for each n in numbers". The expression at the front can be anything, including a method call or a function call:
 
-```python
+```python type
 names = ["ada", "grace", "alan"]
 print([name.title() for name in names])
 print([len(name) for name in names])
 print([f"Hello, {name}" for name in names])
 ```
 
+```output
+['Ada', 'Grace', 'Alan']
+[3, 5, 4]
+['Hello, ada', 'Hello, grace', 'Hello, alan']
+```
+
 ## Filtering with if
 
 A comprehension can end with an `if`, which keeps only the items for which the condition is true. It corresponds to an `if` inside the loop:
 
-```python
+```python type
 temperatures = [14, 22, 31, 18, 27, 33]
 
 hot = []
@@ -52,6 +63,11 @@ hot = [t for t in temperatures if t > 25]
 print(hot)
 ```
 
+```output
+[31, 27, 33]
+[31, 27, 33]
+```
+
 To translate any comprehension back into a loop, take the parts in this order: the `for`, then the `if`, and only then the expression at the front, which becomes the `append`. The expression is written first but runs last.
 
 The filter and the expression can be combined: `[t * 9 / 5 + 32 for t in temperatures if t > 25]` converts only the hot days to Fahrenheit.
@@ -60,10 +76,15 @@ The filter and the expression can be combined: `[t * 9 / 5 + 32 for t in tempera
 
 There is a second way to use `if` in a comprehension, and it is easy to confuse with the first. Predict both results before you run the cell.
 
-```python
+```python type
 numbers = [3, -1, 4, -5, 9]
 print([n for n in numbers if n > 0])
 print([n if n > 0 else 0 for n in numbers])
+```
+
+```output
+[3, 4, 9]
+[3, 0, 4, 0, 9]
 ```
 
 The first keeps only the positive numbers, so the result is shorter: `[3, 4, 9]`. The second has an `if ... else` at the **front**. That is the conditional expression from lesson 4, choosing which value to produce, and it keeps every item: negative numbers become 0, giving `[3, 0, 4, 0, 9]`. The rule:
@@ -75,7 +96,7 @@ The first keeps only the positive numbers, so the result is shorter: `[3, 4, 9]`
 
 The same idea works for dictionaries and sets. A **dictionary comprehension** uses curly braces and a `key: value` pair at the front:
 
-```python
+```python type
 names = ["ada", "grace", "alan"]
 lengths = {name: len(name) for name in names}
 print(lengths)
@@ -85,14 +106,23 @@ cheap = {item: price for item, price in prices.items() if price < 2}
 print(cheap)
 ```
 
+```output
+{'ada': 3, 'grace': 5, 'alan': 4}
+{'bread': 1.45, 'milk': 0.95}
+```
+
 Unpacking works in the `for` part exactly as in a normal loop, so `for item, price in prices.items()` gives each pair.
 
 A **set comprehension** is curly braces with a single value at the front, and like any set it drops duplicates:
 
-```python
+```python type
 words = ["apple", "avocado", "banana", "blueberry", "cherry"]
 first_letters = {word[0] for word in words}
 print(sorted(first_letters))
+```
+
+```output
+['a', 'b', 'c']
 ```
 
 (There is no "tuple comprehension". Round brackets make something different, which you will meet in a moment; to get a tuple, pass that to `tuple()`, as in `tuple(x * 2 for x in items)`.)
@@ -101,7 +131,7 @@ print(sorted(first_letters))
 
 A comprehension can contain more than one `for`. They run in the order they are written, outermost first, exactly like nested loops. This flattens a grid into one list:
 
-```python
+```python type
 grid = [[1, 2, 3], [4, 5, 6]]
 
 flat = []
@@ -114,21 +144,34 @@ flat = [cell for row in grid for cell in row]
 print(flat)
 ```
 
+```output
+[1, 2, 3, 4, 5, 6]
+[1, 2, 3, 4, 5, 6]
+```
+
 The two `for` clauses are in the same order as the two nested `for` lines, and the result is one flat list.
 
 A comprehension can also be the **expression at the front** of another comprehension. Then the inner comprehension builds a whole row on each pass of the outer loop, and the result is a list of lists:
 
-```python
+```python type
 table = [[r * c for c in range(1, 4)] for r in range(1, 3)]
 print(table)
 ```
 
+```output
+[[1, 2, 3], [2, 4, 6]]
+```
+
 That prints `[[1, 2, 3], [2, 4, 6]]`: for each `r`, the inner comprehension makes the row `[r * 1, r * 2, r * 3]`. Keep the two forms apart: two `for` clauses inside **one** pair of brackets give a flat list, while brackets **inside** brackets give a list of lists. The same idea gives a one-line answer to the grid trap from the last lesson:
 
-```python
+```python type
 grid = [[0] * 3 for _ in range(2)]
 grid[0][0] = 1
 print(grid)
+```
+
+```output
+[[1, 0, 0], [0, 0, 0]]
 ```
 
 The inner `[0] * 3` is evaluated again on every pass of the loop, so each row is a new, separate list. This is the standard way to build a grid in Python.
@@ -137,10 +180,15 @@ The inner `[0] * 3` is evaluated again on every pass of the loop, so each row is
 
 If you only need to feed the values into a function like `sum`, `max` or `min`, you do not need to build a list at all. Write the comprehension with round brackets instead, and it becomes a **generator expression**, which produces its values one at a time as the function asks for them. When a generator expression is the only argument to a function, you can even leave out its own brackets:
 
-```python
+```python type
 numbers = [3, 7, 2, 8]
 print(sum(n * n for n in numbers))
 print(max(len(word) for word in ["fig", "banana", "kiwi"]))
+```
+
+```output
+126
+6
 ```
 
 This uses less memory than building a list first, which matters when there are millions of values. Lesson 21 explains how generators work.
@@ -150,11 +198,17 @@ Two built-in functions are designed to work with generator expressions:
 - `any(...)` is `True` if **at least one** value is true.
 - `all(...)` is `True` if **every** value is true.
 
-```python
+```python type
 scores = [72, 88, 45, 91]
 print(any(s < 50 for s in scores))
 print(all(s >= 40 for s in scores))
 print(all(s >= 50 for s in scores))
+```
+
+```output
+True
+True
+False
 ```
 
 "Did anyone fail?" and "did everyone pass?" each become one readable line. Both stop as soon as they know the answer: `any` stops at the first true value, and `all` at the first false one.
@@ -163,11 +217,16 @@ print(all(s >= 50 for s in scores))
 
 The loop variable of a comprehension exists only inside the comprehension. Unlike a `for` loop, it does not remain afterwards:
 
-```python
+```python type
 n = "unchanged"
 squares = [n * n for n in range(4)]
 print(squares)
 print(n)
+```
+
+```output
+[0, 1, 4, 9]
+unchanged
 ```
 
 The comprehension's `n` is separate from the `n` outside it, so the outer `n` is untouched. This is another reason comprehensions are tidy: they cannot accidentally overwrite a variable of yours.

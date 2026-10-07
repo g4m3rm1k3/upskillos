@@ -15,7 +15,7 @@ Two versions of a file, two DNA strands, two users' viewing histories: how much 
 
 Let `L[i][j]` be the LCS length of the first `i` items of `a` and the first `j` items of `b`. Look at the last item of each prefix. If `a[i-1] == b[j-1]`, that item can end a common subsequence, so `L[i][j] = L[i-1][j-1] + 1`. If they differ, at least one of the two last items is not used, so `L[i][j] = max(L[i-1][j], L[i][j-1])`. Row 0 and column 0 are empty prefixes, with LCS 0. Each entry needs the entries above, to the left and diagonally up-left, so filling row by row, left to right, always has them ready. Predict before running: how long is the LCS of `ABCBDAB` and `BDCABA`?
 
-```python
+```python type
 def lcs_table(a, b):
     L = [[0] * (len(b) + 1) for _ in range(len(a) + 1)]
     for i in range(1, len(a) + 1):
@@ -47,6 +47,18 @@ for i, row in enumerate(L[1:], start=1):
 print("LCS:", lcs(a, b), "length", L[len(a)][len(b)])
 ```
 
+```output
+     B  D  C  A  B  A
+A   0  0  0  1  1  1
+B   1  1  1  1  2  2
+C   1  1  2  2  2  2
+B   1  1  2  2  3  3
+D   1  2  2  2  3  3
+A   1  2  2  3  3  4
+B   1  2  2  3  4  4
+LCS: BCBA length 4
+```
+
 The `[[0] * (len(b) + 1) for _ in range(...)]` builds a separate list for each row. Writing `[[0] * m] * n` instead would make every row the **same** list, the aliasing trap from Python from Zero.
 
 The bottom-right entry is the answer: 4. The traceback starts there and walks back: on a match it takes the diagonal step and keeps the item; otherwise it steps towards whichever neighbour holds the larger value. This one found `BCBA`; `BDAB` and `BCAB` are also length 4, and a different tie rule would find one of those. The grid has (7 + 1) × (6 + 1) entries, each filled in constant time: O(nm) time and memory.
@@ -63,7 +75,7 @@ Let `D[i][j]` be the edit distance from the first `i` characters of `s` to the f
 
 The same three neighbours as the LCS, so the same fill order. Predict before running: how many edits turn `kitten` into `sitting`, and which ones? And which dictionary word is closest to `recieve`?
 
-```python
+```python type
 def edit_table(s, t):
     D = [[0] * (len(t) + 1) for _ in range(len(s) + 1)]
     for i in range(len(s) + 1):
@@ -104,6 +116,12 @@ ranked = sorted(words, key=lambda w: edit_table(typo, w)[len(typo)][len(w)])
 print([(w, edit_table(typo, w)[len(typo)][len(w)]) for w in ranked])
 ```
 
+```output
+(3, ["substitute 'k' -> 's' at 0", "substitute 'e' -> 'i' at 4", "insert 'g' at 6"])
+5
+[('relieve', 1), ('receive', 2), ('recipe', 2), ('deceive', 3), ('review', 3), ('reverse', 4)]
+```
+
 `kitten` to `sitting` takes 3 edits: substitute k with s, substitute e with i, insert g at the end. The positions in the steps are positions in the string as it is at that moment, read left to right.
 
 `intention` to `execution` takes 5. The typo is the surprise: `relieve` wins at distance 1 (one substitution, c to l), while `receive`, the word the typist meant, is at distance 2. Swapping two neighbouring letters, the commonest typing slip, costs two substitutions here. The **Damerau** variant adds a fourth edit, "transpose two neighbours", by also looking at `D[i-2][j-2]`, and with it `receive` is at distance 1 too. The distance you choose encodes which mistakes you consider likely.
@@ -114,7 +132,7 @@ A hiker can carry 10 kg. Each piece of kit has a weight and a value (how much it
 
 Let `K[i][w]` be the best value using only the first `i` items with capacity `w`. Item `i` is either left behind, giving `K[i-1][w]`, or taken if it fits, giving its value plus `K[i-1][w - weight]`, the best for the rest of the space using the earlier items. Row `i` depends only on row `i-1`, so fill row by row. To recover the kit, walk back up the rows: if `K[i][w] != K[i-1][w]`, item `i` was taken, so subtract its weight. Predict before running: what is the best value for 10 kg, and does packing the densest items first ever do worse?
 
-```python
+```python type
 kit = [("tent", 5, 60), ("stove", 3, 50), ("food", 4, 70), ("water", 2, 30),
        ("camera", 1, 20), ("book", 1, 10), ("chair", 4, 25)]
 
@@ -152,6 +170,19 @@ losses = [(c, greedy_by_density(kit, c), knapsack(kit, c)[0]) for c in range(1, 
 print("capacities where greedy loses (capacity, greedy, best):", losses)
 ```
 
+```output
+tent    5 kg  value  60  value per kg  12.0
+stove   3 kg  value  50  value per kg  16.7
+food    4 kg  value  70  value per kg  17.5
+water   2 kg  value  30  value per kg  15.0
+camera  1 kg  value  20  value per kg  20.0
+book    1 kg  value  10  value per kg  10.0
+chair   4 kg  value  25  value per kg   6.2
+best for 10 kg: (170, ['stove', 'food', 'water', 'camera'])
+best for 15 kg: (230, ['tent', 'stove', 'food', 'water', 'camera'])
+capacities where greedy loses (capacity, greedy, best): [(13, 180, 200), (14, 180, 210), (19, 240, 255)]
+```
+
 The best 10 kg pack is worth 170: stove, food, water and camera, exactly 10 kg. The tent, the most valuable single item, is left out. At 10 kg greedy happens to find the same pack, but not at every capacity. At 13 kg greedy fills 11 kg with the four densest items and the book, for 180, and no longer has room for the tent. The table instead takes tent, food, stove and camera, exactly 13 kg, for 200. Greedy also loses at 14 and 19 kg. Greedy is only sometimes right; the table is always right.
 
 The table has (items + 1) × (capacity + 1) entries, so the time is O(n × W), where W is the capacity. That looks polynomial, but W is a **number**, not a length: a capacity written with 30 digits would need a table with 10³⁰ columns. Knapsack is believed to have no truly polynomial algorithm. This table is fast only while the capacity is a modest whole number.
@@ -160,7 +191,7 @@ The table has (items + 1) × (capacity + 1) entries, so the time is O(n × W), w
 
 Each row of the knapsack table reads only the row above, so one list can hold both: overwrite it in place, row after row. But the inner loop must then run over capacities **downwards**. Reading `best[w - weight]` must see the value from **before** this item was considered. Running downwards, `w - weight` is smaller than `w`, so it has not been overwritten yet in this pass. Running upwards, it already includes this item, so the item could be taken again and again. That is a different problem, the **unbounded** knapsack, where each item has unlimited copies. Predict before running: with capacity 10, how do the two loop directions answer?
 
-```python
+```python type
 def knapsack_one_row(items, capacity, downward=True):
     best = [0] * (capacity + 1)
     for name, weight, value in items:
@@ -172,6 +203,12 @@ def knapsack_one_row(items, capacity, downward=True):
 print("downward (each item once):     ", knapsack_one_row(kit, 10, downward=True))
 print("upward (unlimited copies):     ", knapsack_one_row(kit, 10, downward=False))
 print("matches the full table:        ", knapsack_one_row(kit, 10) == knapsack(kit, 10)[0])
+```
+
+```output
+downward (each item once):      170
+upward (unlimited copies):      200
+matches the full table:         True
 ```
 
 Downward reproduces 170. Upward gives 200: ten cameras, 20 each. That is right for unlimited copies, and wrong for this hiker. The coin-combinations count from the last lesson ran its amounts upwards for exactly this reason: each coin could be used any number of times. One row saves memory (O(W) instead of O(nW)), but it loses the information the traceback needs. When you need the chosen items, keep the full table.

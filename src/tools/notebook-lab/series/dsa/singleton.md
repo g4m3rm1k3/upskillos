@@ -15,7 +15,7 @@ This lesson covers:
 
 A class controls creation through `__new__`, the method Python calls to make a new object before `__init__` sets it up. A Singleton's `__new__` creates the instance the first time and hands back the same one every time after. Predict before running: after `b` changes the units, what does `a` say?
 
-```python
+```python type
 class Settings:
     _instance = None
 
@@ -33,6 +33,11 @@ b.units = "inch"
 print("a.units is now", a.units)
 ```
 
+```output
+same object: True
+a.units is now inch
+```
+
 `super().__new__(cls)` makes a plain new object of the class. The setup happens inside the `if`, not in `__init__`, because `__init__` would run again on every `Settings()` call and reset the values.
 
 `a` and `b` are the same object, so `a` now says `"inch"`. That is the pattern working as designed: every `Settings()` anywhere in the program returns the one shared instance.
@@ -41,7 +46,7 @@ print("a.units is now", a.units)
 
 That sharing is exactly the problem. Here are two "tests" of code that reads the settings. The imperial test changes the units for its own purpose and forgets to put them back. Predict before running: does the metric test pass when run alone, and when run after the imperial test?
 
-```python
+```python type
 def format_length(value):
     s = Settings()
     return f"{value:.2f} {s.units}"
@@ -66,6 +71,11 @@ except AssertionError as error:
     print("metric test after imperial FAILS, got", error)
 ```
 
+```output
+metric test alone: pass
+metric test after imperial FAILS, got 12.50 inch
+```
+
 `Settings._instance = None` is a reset that real code rarely has; without it the earlier cell's `"inch"` would still be in place.
 
 Run alone, the metric test passes. Run after the imperial test, it fails, though nothing about it changed. Tests that pass or fail depending on what ran before them are among the worst bugs a test suite can have. Three costs are visible here:
@@ -82,7 +92,7 @@ Run alone, the metric test passes. Run after the imperial test, it fails, though
 
 **Best of all: create one and pass it in.** The program's composition root (from the dependency injection lesson) makes one `Settings` object and hands it to whatever needs it. There is still exactly one in the running program, but by arrangement, not by force. Tests make their own, and the dependency is visible in every signature. Predict before running: do the three labels affect each other now?
 
-```python
+```python type
 import sys, math
 from functools import cache
 from dataclasses import dataclass
@@ -111,6 +121,15 @@ imperial = MachineSettings(units="inch")
 print(label(0.5, imperial), "|", label(12.5, MachineSettings()), "|", label(12.5, MachineSettings()))
 ```
 
+```output
+a module is created once: True
+  (loading settings)
+True
+  (loading settings)
+True
+0.50 inch | 12.50 mm | 12.50 mm
+```
+
 The cached factory printed "(loading settings)" once per cache: once, then once more after `cache_clear`.
 
 With the settings passed in, the imperial "test" uses its own object, and the metric ones get fresh defaults. Nothing leaks, because nothing is shared unless the code says so. Two machines with different units are simply two `MachineSettings` objects.
@@ -123,7 +142,7 @@ Some single objects are genuinely good design.
 
 **One instance per name.** `logging.getLogger("pumps")` returns the same logger object every time it is asked for `"pumps"`, and a different one for `"valves"`. This is a **registry**, a dictionary of instances keyed by name. Code in different places can share a logger by agreeing on a name, without passing the object around. Loggers are still shared, mutable, global state (their levels and handlers can be changed from anywhere), which is why the hard challenge builds a registry you create and pass in instead. Predict before running: which of these are the same object?
 
-```python
+```python type
 import logging
 
 print(logging.getLogger("pumps") is logging.getLogger("pumps"))
@@ -144,6 +163,13 @@ try:
     setting(options, "speed")
 except KeyError as error:
     print("KeyError:", error)
+```
+
+```output
+True
+False
+None None
+KeyError: "no setting 'speed' and no default given"
 ```
 
 `setting(options, "coolant")` returns `None` because the setting **exists** with the value `None`. `setting(options, "speed", default=None)` returns the caller's chosen default, `None`. Only with no default at all does a missing name raise. A plain `default=None` could not tell "no default" from "default of None"; the sentinel can.

@@ -20,7 +20,7 @@ As `n` grows, the second part shrinks towards zero, but the first part, ρσ², 
 
 To get different trees from one dataset, train each on a **bootstrap sample**, the resampling you used in the estimation lesson to measure uncertainty: draw `n` examples from the `n` training examples **with replacement**, so some examples appear several times and others not at all. There it produced many versions of a statistic; here it produces many versions of the training set.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -33,13 +33,19 @@ fractions = [len(np.unique(rng.integers(0, 1000, 1000))) / 1000 for _ in range(2
 print("average fraction of distinct examples in a sample of 1000:", round(np.mean(fractions), 3))
 ```
 
+```output
+bootstrap sample of rows: [0 0 0 1 2 3 5 6 8 8]
+left out: [4, 7, 9]
+average fraction of distinct examples in a sample of 1000: 0.633
+```
+
 `rng.integers(0, n, n)` draws `n` row numbers, each from 0 to n − 1, independently, so repeats are allowed. On average a bootstrap sample contains about **63%** of the distinct examples. The reason: each draw misses a given example with probability 1 − 1/n, so all `n` draws miss it with probability (1 − 1/n)ⁿ, which for large `n` is about 1/e ≈ 0.368. Each sample therefore leaves out about 37% of the examples, which will turn out to be useful.
 
 ## Bagging from scratch
 
 **Bagging** (short for **b**ootstrap **agg**regat**ing**) trains one model per bootstrap sample and combines their predictions by voting (classification) or averaging (regression). Here it is with scikit-learn's `DecisionTreeClassifier` as the tree, grown with no depth limit, on the noisy half-moons from the last lesson. Predict first: will the vote of 200 trees beat the average single tree? Will it beat the best one?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
@@ -77,6 +83,14 @@ for ax, regions, title in [(axes[0], single.predict(grid), "one tree"), (axes[1]
 plt.show()
 ```
 
+```output
+  1 trees: test accuracy of the vote 0.787
+ 10 trees: test accuracy of the vote 0.827
+ 50 trees: test accuracy of the vote 0.813
+200 trees: test accuracy of the vote 0.807
+single trees on their own: average 0.766, range 0.69 to 0.84
+```
+
 With two classes labelled 0 and 1, adding up the predictions counts the votes for class 1, and `votes / b > 0.5` is the majority. The individual trees average 0.77 on the test set, ranging from 0.69 to 0.84 depending on their bootstrap sample. Their vote reaches about 0.81 to 0.83: well above the typical tree. The luckiest tree did a little better still, but there is no way to know in advance which tree that will be; picking it by its test score would be using the test set to choose the model. The vote gets most of the way there reliably, without anyone choosing which tree to trust. The boundary of the vote is smoother than a single tree's: the slivers built around individual noisy points differ from tree to tree, so they are outvoted.
 
 Notice that the accuracy wobbles a little between 10 and 200 trees (0.83, then 0.81). That is a difference of 3 test points out of 150, well within the test set's own noise from the estimation lesson. What the formula explains is why it stops climbing: adding trees reduces the randomness of the vote, but cannot remove the trees' shared mistakes, the ρσ² term.
@@ -87,7 +101,7 @@ Bagged trees are still quite similar. If one feature is very informative, almost
 
 On the 64-pixel digits, compare bagging (every split may use all 64 features, `max_features=None`) with a random forest (`max_features="sqrt"`, 8 features per split):
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.ensemble import RandomForestClassifier
@@ -106,6 +120,12 @@ for max_features in [None, "sqrt"]:
     print(f"max_features={str(max_features):<5}: average tree {tree_accuracy:.3f}, trees agree {agreement:.3f}, forest {forest.score(X_test, y_test):.3f}")
 ```
 
+```output
+one tree: 0.857
+max_features=None : average tree 0.806, trees agree 0.728, forest 0.956
+max_features=sqrt : average tree 0.748, trees agree 0.615, forest 0.978
+```
+
 `forest.estimators_` is the list of fitted trees inside the forest. (Each tree reports class positions rather than the labels themselves, hence `forest.classes_[...]`.) The numbers tell the whole story:
 
 - With all features available, the average tree scores about 0.81, any two trees agree on 73% of the test digits, and the vote scores 0.956.
@@ -117,7 +137,7 @@ Weaker but more varied voters make a better committee. That is the ρ in the for
 
 Each tree's bootstrap sample leaves out about 37% of the training examples. For each training example, about 37 of every 100 trees never saw it (some 74 of the 200 trees used below). Let only those trees vote on it, and you get an honest prediction for every training example, without a separate validation set. The resulting accuracy is the **out-of-bag** (OOB) score:
 
-```python
+```python type
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -131,6 +151,16 @@ print(f"test accuracy:       {forest.score(X_test, y_test):.3f}")
 for n_trees in [1, 5, 20, 100, 300]:
     model = RandomForestClassifier(n_estimators=n_trees, random_state=0).fit(X_train, y_train)
     print(f"{n_trees:>3} trees: test accuracy {model.score(X_test, y_test):.3f}")
+```
+
+```output
+out-of-bag accuracy: 0.957
+test accuracy:       0.959
+  1 trees: test accuracy 0.918
+  5 trees: test accuracy 0.953
+ 20 trees: test accuracy 0.959
+100 trees: test accuracy 0.959
+300 trees: test accuracy 0.959
 ```
 
 The OOB estimate, 0.957, is close to the true test accuracy, 0.959, and it came free with training. The second part shows the effect of the number of trees: accuracy climbs quickly (0.918 with 1 tree, 0.953 with 5) and then levels off by about 20 trees. More trees never cause overfitting; they just cost time. The usual advice is to use as many as you can afford and stop when the OOB score stops improving.

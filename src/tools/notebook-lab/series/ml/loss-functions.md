@@ -18,7 +18,7 @@ For a single prediction, the **error** (or residual) is `e = ŷ − y`. A loss t
 
 (The halves are there so the two pieces join smoothly at `δ`.) The threshold `δ` is in the same units as the labels, and it marks what counts as a normal-sized error: set it around the typical size of the noise, so ordinary errors are squared and only unusually large ones are treated leniently. Plotting the three penalties against the error shows their personalities. Predict first: for an error of 5, which penalty is largest?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -38,13 +38,17 @@ plt.show()
 print("penalty for an error of 5:", 5 ** 2, abs(5), huber(np.array(5.0)).item())
 ```
 
+```output
+penalty for an error of 5: 25 5 4.5
+```
+
 Squared error grows faster and faster: an error of 5 costs 25, twenty-five times the cost of an error of 1. Absolute error grows steadily: an error of 5 costs exactly 5 times an error of 1. Huber follows the squared curve near zero and the straight line beyond `δ`. (`.item()` turns a one-element array into a plain number for printing.)
 
 ## What each loss thinks "best" means
 
 The simplest possible model predicts the same number `c` for every example, as the baseline did. Which `c` is best? That depends entirely on the loss. Try every candidate and see where each loss is smallest:
 
-```python
+```python type
 import numpy as np
 
 y = np.array([2.0, 3.0, 3.0, 4.0, 5.0, 6.0, 30.0])
@@ -55,6 +59,11 @@ print("best constant for squared error: ", candidates[np.argmin(mse)].round(2), 
 print("best constant for absolute error:", candidates[np.argmin(mae)].round(2), "  median:", np.median(y))
 ```
 
+```output
+best constant for squared error:  7.57   mean: 7.57
+best constant for absolute error: 4.0   median: 4.0
+```
+
 The squared-error answer is the **mean**, and the absolute-error answer is the **median**. This is always true (with an even number of values, any number between the two middle ones ties for best absolute error, and the median is the one halfway between them), and it explains everything about how the two losses behave. The mean of these values, about 7.6, is pulled far up by the single 30; the median, 4, ignores it. Six of the seven values are between 2 and 6, and the median describes them; the mean describes none of them.
 
 Why? Moving `c` up by a small amount changes the absolute loss of each point by the same small amount, whether the point is near or far. So the best `c` balances the **number** of points above and below it, which is the median. For squared loss, far points pull harder in proportion to their distance, so they drag `c` towards themselves until the pulls balance at the mean.
@@ -63,7 +72,7 @@ Why? Moving `c` up by a small amount changes the absolute loss of each point by 
 
 The same thing happens when fitting a line. Here is data with a few badly wrong points, fitted by minimising each loss in turn. To minimise a loss that has no neat formula, this uses `scipy.optimize.minimize`, a general-purpose function that finds the lowest point of any function you give it. By default it uses gradients, much like gradient descent; the `Nelder-Mead` method chosen below instead compares the loss at a few trial points and moves them downhill, needing no derivatives at all. You give it the function and a starting guess, and it returns the best parameters in `.x`.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
@@ -92,6 +101,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+ squared: w = 1.23, b = 7.93
+absolute: w = 2.01, b = 1.39
+   Huber: w = 2.04, b = 1.22
+```
+
 `y[:4] += 25` corrupts four of the forty points, pushing them far above the line. (`method="Nelder-Mead"` chooses a search method that does not need derivatives, which suits the absolute loss with its sharp corner at zero.) The true line is `2x + 1`. The squared-error fit is lifted and tilted towards the four bad points, with a slope near 1.2 instead of 2; the absolute and Huber fits stay close to the true line, because to them a far-away point is just one more point, not a disaster to be avoided at all costs. Losses that are not thrown off by a few extreme values are called **robust**.
 
 ## So why is squared error so common?
@@ -116,7 +131,7 @@ The **pinball loss** (also called the **quantile loss**) builds this in. For a c
 
 With `q = 0.5` it is just half the absolute error, whose best constant is the median. With other `q`, the best constant is the `q`-th **quantile**: the value with a fraction `q` of the data below it (the percentiles of the distributions lesson, written as fractions). Predict the best constant for `q = 0.9`:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -129,6 +144,11 @@ candidates = np.arange(60, 141)
 for q in [0.5, 0.9]:
     best = candidates[np.argmin([pinball(c, demand, q) for c in candidates])]
     print(f"q = {q}: best forecast {best}, the {q:.0%} quantile of demand is {np.quantile(demand, q)}")
+```
+
+```output
+q = 0.5: best forecast 100, the 50% quantile of demand is 100.0
+q = 0.9: best forecast 112, the 90% quantile of demand is 112.0
 ```
 
 With `q = 0.9`, under-predicting costs nine times as much as over-predicting, and the best forecast becomes the 90th percentile of demand: bake enough to meet demand on 9 days out of 10. Choosing `q` is a business decision about the relative costs, and the loss turns that decision into the model's target. Models trained with the pinball loss, called **quantile regression**, are how forecasts come with ranges ("between 85 and 118 on 80% of days").

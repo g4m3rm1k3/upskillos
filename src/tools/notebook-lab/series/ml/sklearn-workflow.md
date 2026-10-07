@@ -14,7 +14,7 @@ Everything in scikit-learn that learns from data is an **estimator**, with three
 
 Estimators then come in two main kinds. **Predictors** (models) add `predict(X)` and `score(X, y)`. **Transformers** (preprocessing steps) add `transform(X)`, which returns a changed version of the data, and `fit_transform(X)`, which fits and transforms in one call.
 
-```python
+```python type
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
@@ -30,13 +30,21 @@ print("new data, transformed with the TRAINING statistics:", scaler.transform(X_
 print("hyperparameters:", scaler.get_params())
 ```
 
+```output
+learned anything yet? False
+means learned from the training data: [  2. 200.]
+standard deviations: [ 0.82 81.65]
+new data, transformed with the TRAINING statistics: [[2.45 2.45]]
+hyperparameters: {'copy': True, 'with_mean': True, 'with_std': True}
+```
+
 The scaler learns `mean_` and `scale_` (the standard deviations) from the training data, and `transform` applies **those** to any data, including new data. This split, fit on training data and transform everything with what was learned there, is exactly what keeps test data from influencing the model. `get_params()` lists the hyperparameters; every estimator has it, along with `set_params(...)` to change them.
 
 ## Leakage through preprocessing
 
 Here is a mistake that is easy to make and dramatic in its effect. Take 60 examples with 10,000 features of **pure random noise**, and random labels. There is nothing to learn: any honest method should score about 50%. Now do something that sounds sensible: first keep the 20 features most related to the label (`SelectKBest` scores each feature against the labels and keeps the best `k`), then cross-validate a model on them. What accuracy do you expect it to report?
 
-```python
+```python type
 import numpy as np
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
@@ -56,6 +64,11 @@ honest = cross_val_score(pipeline, X, y, cv=5).mean()
 print(f"selection inside a pipeline:                {honest:.2f}")
 ```
 
+```output
+select on all the data, then cross-validate: 0.93
+selection inside a pipeline:                0.57
+```
+
 The first approach reports 93% accuracy on noise. What went wrong? With 10,000 random features, some will match the labels well **by chance**, and the selection step found them using **all 60 labels**, including those of the examples that later serve as test folds. The test folds were used to choose the features, so they are no longer unseen. Information from the test data **leaked** into training.
 
 The second approach puts the selection **inside** the model as a pipeline. Now cross-validation refits the whole pipeline on each training fold: the features are chosen using only that fold's labels, and the held-out fold is truly unseen. The score drops to 0.57, about what guessing gives, which is the truth. (With only 12 examples per test fold, "about 50%" can easily come out as 57%.)
@@ -66,7 +79,7 @@ The rule: **every step that learns anything from data (scaling, imputing, select
 
 A **pipeline** chains transformers and ends with a model. Fitting it fits each step in turn on the output of the previous one; predicting passes new data through the same fitted steps. The whole thing is itself an estimator, so it works with `cross_val_score` and anything else that takes a model.
 
-```python
+```python type
 from sklearn.datasets import load_wine
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
@@ -88,13 +101,20 @@ print("steps:", list(model.named_steps))
 print("the fitted scaler's first three means:", model.named_steps["scale"].mean_[:3].round(2))
 ```
 
+```output
+cross-validated accuracy: 0.949
+with 15 neighbours: 0.955
+steps: ['scale', 'knn']
+the fitted scaler's first three means: [13.    2.34  2.37]
+```
+
 `Pipeline` takes a list of `(name, step)` pairs. `make_pipeline(...)`, used in earlier lessons, does the same but names the steps automatically after their classes, in lower case (`standardscaler`, `kneighborsclassifier`). A step's hyperparameters are reached with **the step's name, two underscores, and the parameter**: `knn__n_neighbors`. That double-underscore naming is how the hyperparameter search lesson will tune settings anywhere inside a pipeline. Fitted steps are available through `named_steps` (or by position: `model[0]` is the first step, `model[-1]` the last, `model[:-1]` everything but the model).
 
 ## Real tables: numbers, categories and gaps
 
 Real data rarely arrives as a clean NumPy array. Here is a table of 400 flats for sale (made up, but realistic), as a pandas DataFrame: floor area, number of rooms, district, whether there is a balcony, and the price in thousands:
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 
@@ -113,6 +133,16 @@ print(flats.head())
 print("missing values per column:", flats.isna().sum().to_dict())
 ```
 
+```output
+   area  rooms   district balcony  price
+0  66.0    4.0  riverside      no  203.8
+1  36.0    1.0    suburbs     yes   46.2
+2  74.0    2.0     centre      no  232.3
+3  75.0    2.0    suburbs     yes  133.6
+4  53.0    3.0      north      no  148.7
+missing values per column: {'area': 30, 'rooms': 0, 'district': 0, 'balcony': 0, 'price': 0}
+```
+
 Two problems. Most models need numbers, but `district` and `balcony` are text, and **categories** cannot simply be numbered 0, 1, 2, 3, because that would claim "riverside" is between "north" and "suburbs". And 30 flats have no recorded area: most models refuse missing values outright.
 
 The standard answers:
@@ -122,7 +152,7 @@ The standard answers:
 
 Different columns need different treatment, and a `ColumnTransformer` routes each group of columns to its own transformer and puts the results side by side:
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -160,6 +190,19 @@ new_flat = pd.DataFrame({"area": [80], "rooms": [3], "district": ["harbour"], "b
 print("predicted price for a flat in a district never seen in training:", model.predict(new_flat).round(1))
 ```
 
+```output
+cross-validated R²: 0.888
+  numbers__area                       28.3
+  numbers__rooms                      13.2
+  categories__district_centre         59.8
+  categories__district_north         -20.1
+  categories__district_riverside      20.0
+  categories__district_suburbs       -59.8
+  categories__balcony_no              -6.4
+  categories__balcony_yes              6.4
+predicted price for a flat in a district never seen in training: [225.3]
+```
+
 Each entry in the `ColumnTransformer` is `(name, transformer, columns)`. The numeric columns go through a small pipeline of their own (impute, then scale), and the category columns through the encoder. The whole model takes the DataFrame as it is and cross-validates to an R² of 0.89. (Try it with only the numeric part of the transformer: the district matters so much that R² falls to about 0.36.)
 
 `get_feature_names_out()` lists the columns the model actually sees, prefixed with the transformer's name. The weights read sensibly. The four district columns always add up to exactly 1 (each flat is in one district), so the penalty settles their weights around zero, and each district's weight is measured from the average of the four. The true district bonuses used to make the data were 120, 40, 80 and 0, which average 60; so the centre comes out at about +60 and the suburbs at about −60. Finally, `handle_unknown="ignore"` means a category never seen in training, such as the "harbour" district, becomes all zeros instead of an error. Without it, the model would crash on the first unusual flat it met in use.
@@ -168,7 +211,7 @@ Each entry in the `ColumnTransformer` is `(name, transformer, columns)`. The num
 
 Any class with `fit` and `transform` methods can be a pipeline step. Inheriting from `BaseEstimator` and `TransformerMixin` adds `get_params`, `set_params` and `fit_transform` for free (the classes lesson covered inheritance). Following the conventions, settings are stored unchanged in `__init__`, learned values get a trailing underscore, and `fit` returns `self`:
 
-```python
+```python type
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -192,13 +235,19 @@ print(AddLog(columns=[1]).fit_transform(data).round(3))
 print(AddLog().get_params())
 ```
 
+```output
+[[   1.      10.       2.398]
+ [   3.    1000.       6.909]]
+{'columns': None}
+```
+
 `np.log1p(x)` computes log(1 + x), which is safe at zero. `fit` learns nothing much here (it just settles which columns to use), but it must exist so the pipeline can call it. For a transformation with nothing to learn at all, `FunctionTransformer(np.log1p)` wraps a plain function as a transformer in one line.
 
 ## Saving a trained model
 
 A fitted pipeline is an ordinary Python object, so the standard `pickle` module can turn it into bytes, to be written to a file and loaded later, with every fitted step inside:
 
-```python
+```python type
 import pickle
 import numpy as np
 from sklearn.datasets import load_wine
@@ -213,6 +262,11 @@ saved = pickle.dumps(model)
 print(f"the whole fitted pipeline is {len(saved):,} bytes")
 restored = pickle.loads(saved)
 print("same predictions after loading:", (restored.predict(X) == model.predict(X)).all())
+```
+
+```output
+the whole fitted pipeline is 23,445 bytes
+same predictions after loading: True
 ```
 
 `pickle.dumps` gives the bytes and `pickle.loads` rebuilds the object; with files, use `pickle.dump(model, f)` and `pickle.load(f)` on a file opened in binary mode (`"wb"` and `"rb"`). Two cautions: load pickles only from sources you trust, since loading one can run arbitrary code; and load them with the same scikit-learn version that saved them.

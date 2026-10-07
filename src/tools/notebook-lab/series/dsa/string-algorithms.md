@@ -13,7 +13,7 @@ This lesson covers:
 
 The naive search lines the pattern up at each position of the text and compares character by character until a mismatch. Usually a mismatch comes at once and the search is fast. But a text of many `a`s and a pattern of `a`s ending in `b` match almost all the way at **every** position before failing. That makes n × m comparisons for a text of length n and a pattern of length m. Predict before running: how many comparisons for a 10,000-character text and a 100-character pattern?
 
-```python
+```python type
 def naive_search(text, pattern):
     comparisons, found = 0, []
     for start in range(len(text) - len(pattern) + 1):
@@ -33,6 +33,11 @@ print("worst case:", naive_search(text, pattern)[1], "comparisons, matches:", na
 print("ordinary English:", naive_search("the cat sat on the mat with the hat " * 300, "the hat")[1], "comparisons")
 ```
 
+```output
+worst case: 990100 comparisons, matches: []
+ordinary English: 16793 comparisons
+```
+
 On ordinary text the comparisons are a small multiple of the text's length: about 1.5 per character here. On the bad input there are 990,100: every one of the 9,901 starting positions compares all 100 pattern characters. The waste is plain to see. After matching 99 `a`s at one position, the search **knows** the next 98 text characters are `a`s, yet it moves on one place and compares them all again.
 
 ## How a pattern overlaps itself
@@ -43,7 +48,7 @@ Why it helps: if the search has matched `ababa` and the next character fails, th
 
 Computing π uses the same idea on the pattern itself. Keep `k`, the length of the current overlap. When the next character extends the overlap, `k` grows by 1. When it does not, fall back to the next shorter overlap, `pi[k - 1]`, and try again. Predict before running: what is the prefix function of `aabaaab`?
 
-```python
+```python type
 def prefix_function(pattern):
     pi = [0] * len(pattern)
     k = 0
@@ -59,6 +64,13 @@ for p in ["ababaca", "aabaaab", "abcd", "aaaa"]:
     print(f"{p:<8}", prefix_function(p))
 ```
 
+```output
+ababaca  [0, 0, 1, 2, 3, 0, 1]
+aabaaab  [0, 1, 0, 1, 2, 2, 3]
+abcd     [0, 0, 0, 0]
+aaaa     [0, 1, 2, 3]
+```
+
 For `aabaaab` it is `[0, 1, 0, 1, 2, 2, 3]`. The prefix `aabaa` ends with `aa`, its first two characters, so π is 2 there. The whole pattern ends with `aab`, its first three, so π is 3. A pattern with no repeats, like `abcd`, is all zeros; `aaaa` overlaps itself as much as possible.
 
 Each pass of the loop raises `k` by at most 1, and every fall-back lowers it by at least 1. So the fall-backs can never outnumber the raises, and the whole computation is O(m).
@@ -67,7 +79,7 @@ Each pass of the loop raises `k` by at most 1, and every fall-back lowers it by 
 
 The search runs the same loop over the text. `k` counts how many pattern characters are matched so far. On a match, `k` grows; at a mismatch, `k` falls back through π until the next character fits or `k` reaches 0. When `k` reaches the pattern's length there is a match, ending at the current position. Then `k` falls back once more, to `pi[m - 1]`, so that overlapping matches are found too. The text index never moves backward. A character may be compared again while `k` falls back, but the total stays under 2n, as the argument below shows. Predict before running: how many comparisons on the same worst case?
 
-```python
+```python type
 def kmp_search(text, pattern):
     pi = prefix_function(pattern)
     found, k, comparisons = [], 0, 0
@@ -89,6 +101,12 @@ readings = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 9, 2, 6, 5, 3, 5]
 print("[5, 9, 2, 6] in a list of readings:", kmp_search(readings, [5, 9, 2, 6])[0])
 ```
 
+```output
+worst case: 19901 comparisons
+overlapping matches of 'aa' in 'aaaa': [0, 1, 2]
+[5, 9, 2, 6] in a list of readings: [4, 10]
+```
+
 The worst case drops from 990,100 comparisons to 19,901, under 2n. The same function works on a list of numbers, because it only ever compares items with `!=`: KMP works on any sequence. The bound comes from the same argument as for π. Each text character raises `k` at most once, and each fall-back lowers it, so there are at most 2n comparisons for the search, plus O(m) to build π.
 
 ## Rolling hashes
@@ -97,7 +115,7 @@ A different idea: compare a **fingerprint** of each window of the text with the 
 
 Two windows with the same characters always have the same hash. Different windows can collide, but with a prime around 2⁶¹ and a randomly chosen base, the chance is tiny, and checking the characters on every hash match removes the risk entirely. Rolling hashes shine when looking for **many** windows at once: put the hashes of a set of patterns of the same length in a dictionary and scan the text once. Predict before running: in a random DNA string of 200,000 letters, how many windows of length 12 occur more than once?
 
-```python
+```python type
 import random, time
 
 M = (1 << 61) - 1

@@ -21,7 +21,7 @@ In code: subtract the two known angles from 180; use matching uppercase and lowe
 
 Predict before running: which unknown side should be longer, a opposite 50° or b opposite 70°? The larger angle faces the longer side.
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,6 +33,12 @@ c = 40.0
 print("Angles A, B, C (degrees):", A_deg, B_deg, C_deg)
 print("Known side c = AB (metres):", c)
 print("Longer unknown side predicted: b, opposite angle B")
+```
+
+```output
+Angles A, B, C (degrees): 50.0 70.0 60.0
+Known side c = AB (metres): 40.0
+Longer unknown side predicted: b, opposite angle B
 ```
 
 The `_deg` suffix records that these variables contain degrees. Python's `math.sin`, `math.cos` and inverse functions use radians, so every angle passed to them must be converted. `math.radians(50)` converts the number 50 from degrees to radians; it does not change the physical angle. Conversion belongs at the boundary of the calculation, where we can see it.
@@ -51,7 +57,7 @@ In code: find `scale = c / sin(C)` once, then multiply it by `sin(A)` and `sin(B
 
 The law of sines is useful when you know a side and its opposite angle, plus another angle or side. Here the two measured angles supply C, so the known pair is c and C. Predict before running: will either unknown distance exceed the 40 m baseline?
 
-```python
+```python type
 A = math.radians(A_deg)
 B = math.radians(B_deg)
 C = math.radians(C_deg)
@@ -72,6 +78,12 @@ ax.set_aspect("equal", adjustable="box")
 ax.margins(0.2)
 fig.tight_layout()
 plt.show()
+```
+
+```output
+BC = a = 35.382 m; AC = b = 43.403 m
+Marker position from A: 27.899 m along, 33.248 m across
+Height calculated from B: 33.24827688644248
 ```
 
 Side a is about 35.38 m and side b about 43.40 m, consistent with their opposite angles. The height is about 33.25 m. In code, `horizontal` and `height` are the horizontal and vertical components of side b. The plotted point lists follow the perimeter A, B, C, A; the final repeated A closes the drawing. Equal axis scaling keeps a metre equally long in both directions, so the plotted angles are meaningful.
@@ -125,7 +137,7 @@ In code: form the sum of squared lengths, subtract the cosine correction, then t
 
 Predict before running: how does c change as the hinge opens from 60° to 90° to 120°? At 90° the cosine correction is zero, recovering Pythagoras.
 
-```python
+```python type
 def opposite_side(a, b, C_deg):
     C = math.radians(C_deg)
     correction = 2 * a * b * math.cos(C)
@@ -134,6 +146,12 @@ def opposite_side(a, b, C_deg):
 
 for angle_deg in [60, 90, 120]:
     print(f"Hinge {angle_deg}°: endpoint separation {opposite_side(3, 4, angle_deg):.6f} m")
+```
+
+```output
+Hinge 60°: endpoint separation 3.605551 m
+Hinge 90°: endpoint separation 5.000000 m
+Hinge 120°: endpoint separation 6.082763 m
 ```
 
 The distances are about 3.606 m, 5 m and 6.083 m. An acute hinge has positive cosine, reducing the squared distance below a² + b². An obtuse hinge has negative cosine, so subtracting the correction increases it. The intermediate variable names mirror those two operations and make a sign mistake easier to locate.
@@ -188,7 +206,7 @@ In code: generate candidates, loop over them, reject invalid angle sums, and cal
 
 Predict before running: how many triangles survive for a = 4, 5, 7 and 12, while b = 10 and A = 30° stay fixed?
 
-```python
+```python type
 def possible_triangles(a, b, A_deg):
     if a <= 0 or b <= 0 or not 0 < A_deg < 180:
         raise ValueError("Need positive sides and an interior angle")
@@ -216,6 +234,18 @@ for known_a in [4, 5, 7, 12]:
         print(f"  B={B_deg:.3f}°, C={C_deg:.3f}°, c={c:.3f} m")
 ```
 
+```output
+a=4: 0 triangle(s)
+a=5: 2 triangle(s)
+  B=90.000°, C=60.000°, c=8.660 m
+  B=90.000°, C=60.000°, c=8.660 m
+a=7: 2 triangle(s)
+  B=45.585°, C=104.415°, c=13.559 m
+  B=134.415°, C=15.585°, c=3.761 m
+a=12: 1 triangle(s)
+  B=24.624°, C=125.376°, c=19.569 m
+```
+
 The counts are zero, one, two and one. `candidates` is a list of possible B angles. The `for` loop applies the same angle-sum check to each possibility; `append` retains only the valid ones. Returning a list makes ambiguity explicit instead of silently choosing whichever answer `asin` happens to return. The tiny tolerances handle arithmetic at the right-angle boundary; they are not a model of survey measurement uncertainty and are unsuitable for distinguishing almost-flat triangles at those scales.
 
 ## 5. A valid answer can still be poorly determined
@@ -231,7 +261,7 @@ In code: perturb both measured angles by 0.1° and compare an ordinary survey wi
 
 Predict before running: will the same 0.1° change matter more for 50°/70° or 89°/89°? This is a sensitivity experiment, not a probability model for the instrument.
 
-```python
+```python type
 def distance_from_angles(c, A_deg, B_deg):
     C_deg = 180 - A_deg - B_deg
     return c * math.sin(math.radians(A_deg)) / math.sin(math.radians(C_deg))
@@ -241,6 +271,11 @@ for first, second in [(50.0, 70.0), (89.0, 89.0)]:
     changed = distance_from_angles(40, first + 0.1, second + 0.1)
     percent_change = 100 * (changed - original) / original
     print(f"Angles {first}°/{second}°: {original:.3f} -> {changed:.3f} m ({percent_change:+.2f}%)")
+```
+
+```output
+Angles 50.0°/70.0°: 35.382 -> 35.506 m (+0.35%)
+Angles 89.0°/89.0°: 1145.974 -> 1273.292 m (+11.11%)
 ```
 
 The nearly flat setup changes by about eleven percent. A better baseline or a different station location can improve the information; printing extra decimal places cannot. This is why a geometry model should include a sketch and an input-sensitivity check, not just a final number.

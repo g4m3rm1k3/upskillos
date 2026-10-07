@@ -15,7 +15,7 @@ This lesson covers:
 
 A machine's tool-offset table records a length and radius correction for each tool. Before an operator edits it, the panel wants a way back. The quick approach copies the table's internal data from outside. Predict before reading on: what happens to the panel's code when the table class adds a timestamp of the last change, or switches its storage to two arrays?
 
-```python
+```python type
 class OffsetTable:
     def __init__(self):
         self.offsets = {"T1": (120.05, 3.00), "T2": (95.40, 4.98)}
@@ -33,13 +33,17 @@ table.offsets = backup
 print(table.offsets)
 ```
 
+```output
+{'T1': (120.05, 3.0), 'T2': (95.4, 4.98)}
+```
+
 The panel reached into `offsets`, copied it and later assigned it back. It works today, but the panel now depends on the table's internal layout. If the table adds a last-changed time, the panel's restore silently fails to restore it. If the table changes its storage, the panel breaks. And assigning `table.offsets = ...` from outside bypasses the class's own checks.
 
 ## The memento
 
 Let the table save and restore itself. `save()` returns a **memento**: an object holding a snapshot of everything needed to restore, which outside code treats as a sealed package. `restore(memento)` puts the table back. The caretaker, here the panel's history, keeps mementos in a list and never looks inside them. Making the snapshot immutable (a frozen dataclass holding a tuple) means a stored snapshot cannot be changed later by accident. Predict before running: after editing twice and restoring the first snapshot, is the change time restored too?
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -80,6 +84,12 @@ table.restore(checkpoints[0])
 print("restore 0:", table.describe())
 ```
 
+```output
+now:       {'T1': (121.1, 3.02), 'T2': (95.4, 4.98), 'T3': (60.0, 2.5)} (changed 09:20)
+restore 1: {'T1': (121.1, 3.02), 'T2': (95.4, 4.98)} (changed 09:14)
+restore 0: {'T1': (120.05, 3.0), 'T2': (95.4, 4.98)} (changed never)
+```
+
 The snapshot's fields start with an underscore: a signal that only `OffsetTable` should read them. The caretaker (`checkpoints`) only stores and returns snapshots.
 
 Each restore brings back everything, including the change time, which the panel never needed to know about. If the table adds more internal state, only `save` and `restore` change, and every caretaker keeps working. The snapshot holds a **tuple** of items, not the live dictionary, so later edits to the table can never alter a saved snapshot. Sharing the live dictionary would be the shallow-copy bug from the prototype lesson.
@@ -93,7 +103,7 @@ Both give undo. Which is better depends on the size of the state and the nature 
 
 A common combination: snapshots now and then, with commands in between. To control memory, a caretaker can keep only the most recent snapshots, using a `deque` with a maximum length. Predict before running: after nine edits with room for three snapshots, how far back can the table be restored?
 
-```python
+```python type
 from collections import deque
 
 table = OffsetTable()
@@ -106,6 +116,11 @@ table.restore(recent[0])
 print("oldest state available:", table.describe())
 ```
 
+```output
+snapshots kept: 3
+oldest state available: {'T1': (120.5, 3.0), 'T2': (95.4, 4.98)} (changed 10:05)
+```
+
 `deque(maxlen=3)` drops its oldest item whenever a fourth is appended, so the caretaker never holds more than three snapshots.
 
 Only the last three snapshots survive, so the oldest available state is from just before the seventh edit, at 10:05. Older states are gone for good. The limit is a trade between memory and how far back undo can reach.
@@ -114,7 +129,7 @@ Only the last three snapshots survive, so the oldest available state is from jus
 
 Long simulations save checkpoints so that they can resume after a crash, or rewind to examine an interesting moment. The memento must capture **everything** that affects the future, and the easiest piece to forget is the **random number generator**. A simulation using random noise will not repeat after a restore unless the generator's state is saved and restored too. `random.Random` provides `getstate()` and `setstate()` for exactly this. Predict before running: after restoring the checkpoint, do the next three readings repeat exactly, with and without the random state?
 
-```python
+```python type
 import random
 
 class VibrationSim:
@@ -147,6 +162,12 @@ careless = [sim.step() for _ in range(3)]
 print("after step 50:", first_run)
 print("full restore: ", replay, replay == first_run)
 print("no rng state: ", careless, careless == first_run)
+```
+
+```output
+after step 50: [0.6645, 0.6166, 0.6086]
+full restore:  [0.6645, 0.6166, 0.6086] True
+no rng state:  [0.6355, 0.5925, 0.5942] False
 ```
 
 `getstate()` returns the generator's complete internal state, and `setstate()` puts it back, so the generator continues exactly where it was.

@@ -26,7 +26,7 @@ A **graph** has a set of vertices and a set of edges, each edge joining two vert
 
 the **handshake lemma**. A consequence: the number of vertices with odd degree is always even. Predict before running: a packing hall has 7 stations joined by 8 conveyors. How many stations have an odd number of conveyors?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +42,18 @@ for name, d in zip(stations, deg):
     print(f"{name:<5} degree {d}")
 print("sum of degrees", sum(deg), "= 2 ×", len(conveyors), "edges")
 print("odd-degree stations:", [stations[i] for i in range(n) if deg[i] % 2])
+```
+
+```output
+In    degree 1
+Sort  degree 4
+Wash  degree 2
+Dry   degree 4
+Pack  degree 2
+QC    degree 2
+Out   degree 1
+sum of degrees 16 = 2 × 8 edges
+odd-degree stations: ['In', 'Out']
 ```
 
 Each conveyor adds 1 to the degree of both its ends.
@@ -62,7 +74,7 @@ A graph on n vertices is captured completely by its **adjacency matrix** A: an n
 
 Matrix multiplication then does something remarkable. The entry (A²)_ij = Σ_k A_ik A_kj counts the vertices k adjacent to both i and j, that is, the walks of length 2 from i to j. By the same argument, (Aᵏ)_ij counts the **walks** of length k (routes along k edges, allowed to revisit). Predict before running: how many 3-conveyor routes lead from Sort to Pack?
 
-```python
+```python type
 A = np.zeros((n, n), dtype=int)
 for a, b in conveyors:
     A[a, b] = A[b, a] = 1
@@ -77,6 +89,13 @@ def walks(i, j, k):
 
 print("brute-force count:", walks(1, 4, 3))
 print("walks of length 2 from each station back to itself:", np.diag(np.linalg.matrix_power(A, 2)))
+```
+
+```output
+row sums = degrees: [1 4 2 4 2 2 1]
+walks of length 3 from Sort to Pack: 6
+brute-force count: 6
+walks of length 2 from each station back to itself: [1 4 2 4 2 2 1]
 ```
 
 `np.linalg.matrix_power(A, 3)` computes A·A·A. The brute-force count follows every edge out of i and counts the walks of length k − 1 from there to j.
@@ -95,7 +114,7 @@ In code: `np.linalg.eigvalsh(laplacian(n, edges))`, compared with `components_bf
 
 A graph is **connected** if every vertex can reach every other. When it is not, it splits into **components**. Breadth-first search finds them, as in the DSA series. Linear algebra gives a second, striking method through the **Laplacian matrix** L = D − A, where D is the diagonal matrix of degrees. L always has eigenvalue 0 (each row sums to zero, so the all-ones vector satisfies L1 = 0), and the number of zero eigenvalues equals the number of connected components. Predict before running: if the Dry–QC conveyor is removed, how many separate groups remain, and what does L say?
 
-```python
+```python type
 def laplacian(n, edges):
     L = np.zeros((n, n))
     for a, b in edges:
@@ -134,6 +153,11 @@ for name, edges in [("full layout", conveyors), ("Dry–QC removed", cut)]:
     print(f"{name}: smallest eigenvalues {np.round(eig[:3], 4)}, zero eigenvalues {zeros}, components {groups}")
 ```
 
+```output
+full layout: smallest eigenvalues [-0.      0.4221  1.0738], zero eigenvalues 1, components [['In', 'Sort', 'Wash', 'Dry', 'Pack', 'QC', 'Out']]
+Dry–QC removed: smallest eigenvalues [0. 0. 1.], zero eigenvalues 2, components [['In', 'Sort', 'Wash', 'Dry', 'Pack'], ['QC', 'Out']]
+```
+
 `np.linalg.eigvalsh` computes the eigenvalues of a symmetric matrix, in increasing order.
 
 The full layout has exactly one zero eigenvalue: it is connected. With the Dry–QC conveyor removed, two eigenvalues are zero and the stations split into two groups: In, Sort, Wash, Dry and Pack on one side, QC and Out on the other. The second-smallest eigenvalue of the connected layout, about 0.42, is called the **algebraic connectivity**: it measures how well connected the network is, and is small when the network nearly falls apart, a quantity used in designing robust communication and power networks.
@@ -150,7 +174,7 @@ In code: `euler_trail(n, edges)` (Hierholzer's algorithm)
 
 Can a maintenance engineer walk every conveyor exactly once, without retracing any? Leonhard Euler solved this in 1736 for the bridges of Königsberg, founding graph theory. Each time a route passes through a vertex it uses two of its edges, one in and one out, so every vertex except the start and the end must have **even** degree. Euler's theorem: a connected graph has an **Euler trail** (using every edge once) exactly when it has 0 or 2 odd-degree vertices; with 0 the trail can return to its start (an **Euler circuit**), with 2 it must start at one odd vertex and end at the other. **Hierholzer's algorithm** finds one: walk until stuck, then splice in detours from vertices on the route that still have unused edges. Predict before running: does the packing hall have an Euler trail, and where must it start?
 
-```python
+```python type
 def euler_trail(n, edges):
     adj = {v: [] for v in range(n)}
     for idx, (a, b) in enumerate(edges):
@@ -181,6 +205,12 @@ extra = conveyors + [(0, 6)]
 print("with an extra In–Out conveyor, odd stations:", [stations[v] for v in range(n) if sum(v in e for e in extra) % 2], "-> circuit:", euler_trail(n, extra)[0] == euler_trail(n, extra)[-1])
 ```
 
+```output
+Euler trail: In → Sort → Dry → Pack → Sort → Wash → Dry → QC → Out
+edges used: 8 of 8
+with an extra In–Out conveyor, odd stations: [] -> circuit: True
+```
+
 The stack holds the current walk; when a vertex has no unused edges left it is moved to the trail, which builds the route backwards. The final check that every edge was used catches disconnected graphs.
 
 The hall has exactly two odd stations, In and Out, so an Euler trail exists, starting at In and ending at Out, and the algorithm finds one using all 8 conveyors once each. Adding a conveyor from In to Out makes every degree even, and the trail becomes a circuit that returns to its start. Snow-ploughing, street sweeping and meter-reading routes are planned this way, adding the fewest repeated edges when odd vertices make a perfect trail impossible.
@@ -197,7 +227,7 @@ In code: `sorted(cables)`, keeping an edge when `find(a) != find(b)`
 
 A connected graph with no cycles is a **tree**. Trees are the cheapest way to connect n points: every tree on n vertices has exactly n − 1 edges, removing any edge disconnects it, and adding any edge creates a cycle. A **spanning tree** of a network keeps all its vertices connected using only n − 1 of its links, and when links have costs, a **minimum spanning tree** is the cheapest such network: the least cable that still connects every machine. **Kruskal's algorithm** finds it greedily: consider links from cheapest up, and keep each one unless it would close a cycle. Predict before running: the 7 stations' possible cable runs have costs; how many runs does the cheapest connecting network use?
 
-```python
+```python type
 cables = [(4, 0, 1), (2, 1, 2), (5, 1, 4), (3, 2, 3), (6, 3, 4), (2, 4, 5), (1, 5, 6), (4, 3, 5), (7, 1, 3), (9, 0, 6), (3, 2, 4)]
 parent = list(range(n))
 
@@ -215,6 +245,11 @@ for cost, a, b in sorted(cables):
         chosen.append((cost, a, b))
 print("cables chosen:", [(stations[a], stations[b], c) for c, a, b in chosen])
 print(f"{len(chosen)} cables (n - 1 = {n - 1}), total cost {sum(c for c, _, _ in chosen)}, against {sum(c for c, _, _ in cables)} for all {len(cables)} runs")
+```
+
+```output
+cables chosen: [('QC', 'Out', 1), ('Sort', 'Wash', 2), ('Pack', 'QC', 2), ('Wash', 'Dry', 3), ('Wash', 'Pack', 3), ('In', 'Sort', 4)]
+6 cables (n - 1 = 6), total cost 15, against 46 for all 11 runs
 ```
 
 Each cable is (cost, end, end). The `find` function tracks which group each station has joined, the union–find structure of the DSA series; two stations already in one group would form a cycle.

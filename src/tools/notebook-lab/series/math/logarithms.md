@@ -29,7 +29,7 @@ The logarithm answers the question "what power?": log_b(x) is the exponent y suc
 
 Logarithms are only defined for positive x, and log_b(1) = 0 for every base. Any base converts to any other by the **change of base** rule: log_b(x) = ln(x)/ln(b). Predict before running: how many times must a 1-metre bar be halved to get below 1 millimetre?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +42,14 @@ try:
     math.log(0)
 except ValueError as err:
     print("log(0):", err)
+```
+
+```output
+log10(1000) = 3.0   log2(8) = 3.0   ln(e) = 1.0
+change of base: log2(1000) = 9.965784284662087 = ln(1000)/ln(2) = 9.965784284662087
+halvings from 1 m to under 1 mm: 10
+10 ** log10(x) gives back x: 37.5   exp(ln(x)): 37.5
+log(0): math domain error
 ```
 
 `math.ceil` rounds up to the next whole number, since a whole number of halvings is needed.
@@ -64,7 +72,7 @@ Because exponents add when powers multiply (bᵐ bⁿ = bᵐ⁺ⁿ), logarithms 
 
 Before electronic calculators this was how engineers multiplied: look up the logarithms in a table (or slide two log scales along each other on a slide rule), add, and convert back. The same property makes logarithms indispensable in computation today: multiplying a thousand probabilities underflows to 0, but adding their logarithms does not. Predict before running: what happens to the product of 400 probabilities of 0.1?
 
-```python
+```python type
 x, y = 3.7, 52.0
 print("log(xy) = log x + log y:", math.isclose(math.log10(x * y), math.log10(x) + math.log10(y)))
 print("log(x^5) = 5 log x:", math.isclose(math.log(x ** 5), 5 * math.log(x)))
@@ -75,6 +83,13 @@ for p in probs:
     product *= p
 print("product of 400 probabilities of 0.1:", product)
 print("sum of their log10:", sum(math.log10(p) for p in probs), "-> the product is 10 to that power")
+```
+
+```output
+log(xy) = log x + log y: True
+log(x^5) = 5 log x: True
+product of 400 probabilities of 0.1: 0.0
+sum of their log10: -400.0 -> the product is 10 to that power
 ```
 
 Floats cannot represent numbers below about 10⁻³⁰⁸ (about 10⁻³²⁴ with reduced precision), so the product **underflows** to exactly 0.0, losing all information. The logarithm, −400, is perfectly representable: the product is 10⁻⁴⁰⁰. Statistics and machine learning work with log-probabilities for exactly this reason.
@@ -93,7 +108,7 @@ The **decibel** (dB) expresses a ratio of powers as 10 log₁₀(P/P₀). Every 
 
 Because decibels are logarithms, gains in a chain of amplifiers or losses along a cable simply add. Levels from separate noise sources do **not** add, however: their powers add, so convert back from dB, add, and take the logarithm again. Predict before running: two machines each produce 80 dB at the operator's position. What is the combined level, and what about ten machines?
 
-```python
+```python type
 def level_from_pressure(p_pa):
     return 20 * math.log10(p_pa / 20e-6)
 
@@ -104,6 +119,13 @@ print(f"1 Pa (a loud machine): {level_from_pressure(1.0):.1f} dB;  20 µPa: {lev
 print(f"two 80 dB machines: {combine([80, 80]):.2f} dB;  ten: {combine([80] * 10):.2f} dB")
 print(f"80 dB plus a 70 dB machine: {combine([80, 70]):.2f} dB")
 print(f"gain chain +20 dB, -6 dB, +14 dB = {20 - 6 + 14} dB = power factor {10 ** (28 / 10):.0f}")
+```
+
+```output
+1 Pa (a loud machine): 94.0 dB;  20 µPa: 0.0 dB
+two 80 dB machines: 83.01 dB;  ten: 90.00 dB
+80 dB plus a 70 dB machine: 80.41 dB
+gain chain +20 dB, -6 dB, +14 dB = 28 dB = power factor 631
 ```
 
 Two equal sources give +3 dB, not double the decibels: 83.01 dB. Ten give +10 dB, 90 dB. A source 10 dB quieter adds only 0.41 dB, which is why removing the quieter of two machines barely helps, while removing the louder helps a lot. The ear perceives roughly a 10 dB increase as "twice as loud", itself a logarithmic response.
@@ -122,7 +144,7 @@ In code: `-math.log10(h_conc)` and `10 ** (1.5 * (m2 - m1))`
 
 The **moment magnitude** of an earthquake is designed so that each unit is a factor of about 31.6 (10^1.5) in released energy: E ∝ 10^(1.5 M). Two units is a factor of 1000. Predict before running: how much more energy does a magnitude 9.0 earthquake release than a magnitude 7.0?
 
-```python
+```python type
 def ph(h_conc):
     return -math.log10(h_conc)
 
@@ -132,6 +154,16 @@ print("diluting 0.01 mol/L acid tenfold: pH", ph(0.01), "->", ph(0.001))
 
 for m1, m2 in [(7.0, 9.0), (6.0, 6.3), (5.0, 8.0)]:
     print(f"magnitude {m2} vs {m1}: {10 ** (1.5 * (m2 - m1)):,.1f} times the energy")
+```
+
+```output
+lemon juice          [H+] = 1.00e-02 mol/L, pH 2.0
+coolant concentrate  [H+] = 2.51e-09 mol/L, pH 8.6
+pure water           [H+] = 1.00e-07 mol/L, pH 7.0
+diluting 0.01 mol/L acid tenfold: pH 2.0 -> 3.0
+magnitude 9.0 vs 7.0: 1,000.0 times the energy
+magnitude 6.3 vs 6.0: 2.8 times the energy
+magnitude 8.0 vs 5.0: 31,622.8 times the energy
 ```
 
 Magnitude 9.0 releases 1,000 times the energy of 7.0. Even 0.3 units, a difference that sounds small, is a factor of 2.8. Log scales compress huge ranges into small numbers, but each step on them is a large multiplicative jump, which is easy to forget when reading the news.
@@ -148,7 +180,7 @@ In code: `ax.set_yscale("log")` (and `ax.set_xscale("log")` for log–log)
 
 The plotting lesson used log–log axes to turn a power law into a straight line. A **semi-log** plot, with only the y axis logarithmic, does the same for exponentials: log y = log N₀ + k t log e is linear in t. On semi-log axes an exponential is a straight line, its slope set by the growth rate, so exponential behaviour in data is spotted at a glance. Predict before running: on semi-log axes, which of the three curves is straight?
 
-```python
+```python type
 t = np.linspace(0.5, 10, 100)
 curves = {"exponential 5·1.6^t": 5 * 1.6 ** t, "power 3·t^3": 3 * t ** 3, "linear 40t": 40 * t}
 fig, axes = plt.subplots(1, 3, figsize=(12, 3.2))
@@ -172,6 +204,12 @@ for name, ys in curves.items():
     print(f"{name:<20} straight on semi-log: {straightness(t, np.log10(ys)):.3f}   on log-log: {straightness(np.log10(t), np.log10(ys)):.3f}")
 ```
 
+```output
+exponential 5·1.6^t  straight on semi-log: 1.000   on log-log: 0.055
+power 3·t^3          straight on semi-log: 0.055   on log-log: 1.000
+linear 40t           straight on semi-log: 0.055   on log-log: 1.000
+```
+
 `straightness` compares the smallest and largest slope between neighbouring points: 1.000 means a perfectly straight line.
 
 The exponential is straight on semi-log axes (straightness 1.000) and the power law on log-log axes (1.000). The linear function is curved on semi-log axes but straight on log-log, since t¹ is a power law with exponent 1. Choosing axes so that the expected model becomes a straight line is one of the most useful habits in data analysis.
@@ -188,13 +226,20 @@ In code: `math.log1p(delta)` and `math.expm1(x)` against `math.log(1 + delta)`
 
 For x very close to 1, ln(x) is a tiny number computed from a number whose information is in its last few digits. Writing x = 1 + δ and computing `math.log(1 + delta)` loses accuracy once δ approaches the float precision: forming 1 + δ already rounds δ. The functions `math.log1p(δ)`, which computes ln(1 + δ), and `math.expm1(x)`, which computes eˣ − 1, avoid forming the rounded sum at all. They matter in finance (tiny daily interest rates), in statistics and in physics. Predict before running: for δ = 10⁻¹⁰, how many correct digits does `log(1 + δ)` give?
 
-```python
+```python type
 for delta in [1e-4, 1e-10, 1e-15]:
     naive = math.log(1 + delta)
     careful = math.log1p(delta)
     print(f"δ = {delta:.0e}: log(1+δ) = {naive:.15e}   log1p(δ) = {careful:.15e}   relative error of naive: {abs(naive / careful - 1):.1e}")
 daily = 0.035 / 365
 print(f"daily rate {daily:.3e}: one year of daily compounding grows by {math.expm1(365 * math.log1p(daily)):.10f}")
+```
+
+```output
+δ = 1e-04: log(1+δ) = 9.999500033329732e-05   log1p(δ) = 9.999500033330834e-05   relative error of naive: 1.1e-13
+δ = 1e-10: log(1+δ) = 1.000000082690371e-10   log1p(δ) = 9.999999999500001e-11   relative error of naive: 8.3e-08
+δ = 1e-15: log(1+δ) = 1.110223024625156e-15   log1p(δ) = 9.999999999999995e-16   relative error of naive: 1.1e-01
+daily rate 9.589e-05: one year of daily compounding grows by 0.0356179711
 ```
 
 ln(1 + δ) is very close to δ itself for small δ, so `log1p(δ)` is essentially δ here.

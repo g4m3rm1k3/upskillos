@@ -12,12 +12,16 @@ On your own computer, Python reads and writes files on the hard drive. This note
 
 To use a file you first **open** it with the built-in `open` function. It takes the file's name (its **path**) and a **mode** saying what you want to do: `"w"` to write, `"r"` to read, `"a"` to append.
 
-```python
+```python type
 with open("notes.txt", "w", encoding="utf-8") as f:
     f.write("First line\n")
     f.write("Second line\n")
     f.write("Third line\n")
 print("Written.")
+```
+
+```output
+Written.
 ```
 
 `open` returns a **file object**, here named `f`, and its `write` method adds text to the file. Note that `write` does not add a new line at the end the way `print` does; you have to include `\n` yourself.
@@ -36,22 +40,33 @@ The important part is that `with` closes the file even if an exception happens i
 
 Open the file in `"r"` mode, which is also the default. The simplest way to read it is `read()`, which gives you the whole file as one string:
 
-```python
+```python type
 with open("notes.txt", encoding="utf-8") as f:
     content = f.read()
 print(repr(content))
 print(content.splitlines())
 ```
 
+```output
+'First line\nSecond line\nThird line\n'
+['First line', 'Second line', 'Third line']
+```
+
 `repr` shows the `\n` characters that separate the lines. `splitlines()` splits the text into a list of lines, without the new-line characters.
 
 For larger files, loop over the file object itself. It gives you one line at a time, so even a file far bigger than your computer's memory can be processed:
 
-```python
+```python type
 with open("notes.txt", encoding="utf-8") as f:
     for number, line in enumerate(f, start=1):
         line = line.rstrip("\n")
         print(number, line)
+```
+
+```output
+1 First line
+2 Second line
+3 Third line
 ```
 
 Each line comes with its `\n` still on the end, so almost every line-reading loop starts by removing it. `rstrip("\n")` removes it from the right-hand end only; plain `strip()` would also remove spaces at both ends, which is usually what you want for data but not always.
@@ -67,7 +82,7 @@ with open("missing.txt", encoding="utf-8") as f:
 
 The message includes the path Python looked for, which is often the fastest way to spot a typo in a file name. When a missing file is a normal situation, such as a settings file that has not been created yet, catch the exception:
 
-```python
+```python type
 try:
     with open("settings.txt", encoding="utf-8") as f:
         settings = f.read()
@@ -76,11 +91,15 @@ except FileNotFoundError:
 print(settings)
 ```
 
+```output
+defaults
+```
+
 ## Adding to a file
 
 Mode `"a"` (append) opens a file for writing **without** erasing it: new text goes on the end. This is how log files are written.
 
-```python
+```python type
 with open("log.txt", "w", encoding="utf-8") as f:
     f.write("started\n")
 for event in ["loaded data", "trained model", "finished"]:
@@ -90,13 +109,20 @@ with open("log.txt", encoding="utf-8") as f:
     print(f.read())
 ```
 
+```output
+started
+loaded data
+trained model
+finished
+```
+
 `print` can also write to a file, which saves adding `\n` yourself: `print("text", file=f)`.
 
 ## Tables as text: CSV
 
 The most common format for tables of data is **CSV**, "comma-separated values". Each line is one row, and the values in a row are separated by commas. The first line usually holds the column names, called the **header**.
 
-```python
+```python type
 with open("scores.csv", "w", encoding="utf-8") as f:
     f.write("name,subject,score\n")
     f.write("Ada,maths,91\n")
@@ -105,11 +131,18 @@ with open("scores.csv", "w", encoding="utf-8") as f:
 print(open("scores.csv", encoding="utf-8").read())
 ```
 
+```output
+name,subject,score
+Ada,maths,91
+Alan,maths,78
+Ada,physics,85
+```
+
 (That last line opens the file without `with`, which is fine for a quick look in a notebook, but in a real program use `with` so the file is closed.)
 
 You can read a simple CSV file with what you already know: split each line at the commas, and convert the numbers. Everything read from a file is text, so `"91"` must become `int("91")` before you can do arithmetic with it.
 
-```python
+```python type
 totals = {}
 with open("scores.csv", encoding="utf-8") as f:
     header = f.readline()
@@ -119,11 +152,15 @@ with open("scores.csv", encoding="utf-8") as f:
 print(totals)
 ```
 
+```output
+{'Ada': 176, 'Alan': 78}
+```
+
 `f.readline()` reads just one line, which here takes the header out of the way before the loop starts; the loop then continues from the second line.
 
 Splitting at commas breaks as soon as a value itself contains a comma, like the name `"Lovelace, Ada"`. The CSV format handles that by putting such values in quotation marks, and the `csv` module in the standard library understands all the rules. Its `DictReader` also uses the header, giving each row as a dictionary keyed by column name:
 
-```python
+```python type
 import csv
 
 with open("people.csv", "w", encoding="utf-8", newline="") as f:
@@ -137,13 +174,18 @@ with open("people.csv", encoding="utf-8", newline="") as f:
         print(row["name"], "lives in", row["city"])
 ```
 
+```output
+Lovelace, Ada lives in London
+Hopper, Grace lives in New York
+```
+
 `csv.writer` added the quotation marks around the names automatically, and `DictReader` removed them again. (The `newline=""` argument is what the `csv` module's documentation asks for when opening CSV files; it lets the module handle line endings itself.) For any real CSV file, use the `csv` module rather than splitting by hand. In the Machine Learning series you will use `pandas`, which reads a CSV file into a table in one line.
 
 ## Nested data as text: JSON
 
 CSV suits flat tables, but a lot of data is nested: a record containing a list, containing more records. **JSON** ("JavaScript Object Notation") is the standard text format for this, used by nearly every web service. It looks almost exactly like Python's dictionaries and lists, and the `json` module converts between the two.
 
-```python
+```python type
 import json
 
 settings = {"theme": "dark", "volume": 7, "recent": ["intro.txt", "notes.txt"], "fullscreen": False}
@@ -157,13 +199,19 @@ print(loaded == settings)
 print(json.dumps(settings))
 ```
 
+```output
+intro.txt
+True
+{"theme": "dark", "volume": 7, "recent": ["intro.txt", "notes.txt"], "fullscreen": false}
+```
+
 `json.dump` writes a Python value to a file as JSON, and `json.load` reads it back into dictionaries and lists. The loaded data is equal to the original. `indent=2` spreads the file over several lines so a person can read it. `json.dumps` (with an `s`, for "string") gives the JSON as a string instead of writing a file. The last line shows the small differences from Python: JSON writes `false` where Python writes `False`, always uses double quotes, and has no tuples or sets.
 
 ## Paths and the pathlib module
 
 The `pathlib` module gives you `Path` objects, which make common file jobs short:
 
-```python
+```python type
 from pathlib import Path
 
 p = Path("notes.txt")
@@ -171,6 +219,12 @@ print(p.exists(), p.suffix, p.stem)
 print(p.read_text(encoding="utf-8").splitlines()[0])
 Path("hello.txt").write_text("hi there\n", encoding="utf-8")
 print(sorted(path.name for path in Path(".").glob("*.txt")))
+```
+
+```output
+True .txt notes
+First line
+['hello.txt', 'log.txt', 'notes.txt']
 ```
 
 `read_text` and `write_text` open, read or write, and close a file in a single call. `exists()` checks whether a file is there. `glob("*.txt")` finds every file whose name matches a pattern, where `*` stands for "any characters", so the list shows the text files the cells above have created (it depends on which cells you have run). `Path(".")` means the current folder.

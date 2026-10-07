@@ -16,7 +16,7 @@ With many queries **and** many updates, both are O(n) per operation somewhere. T
 
 **Prefix sums** store, at position i, the sum of the first i values; then the sum of values from position lo up to (not including) hi is `prefix[hi] - prefix[lo]`. Predict before running: if 1 operation in 10 is an update, which approach wins on 2,000 values and 2,000 operations?
 
-```python
+```python type
 import random
 import timeit
 
@@ -71,7 +71,7 @@ A segment tree is a complete binary tree whose **leaves** are the values and who
 
 Predict before running: how many tree nodes does a query over almost the whole array of 1,024 values add up?
 
-```python
+```python type
 class SegmentTree:
     def __init__(self, values):
         size = 1
@@ -113,6 +113,14 @@ st.update(0, 1000)
 print("after setting position 0 to 1000, total:", st.query(0, 1024)[0])
 ```
 
+```output
+sum of [0, 1024): 524,800 (check 524,800) from 1 tree nodes
+sum of [1, 1023): 523,775 (check 523,775) from 18 tree nodes
+sum of [100, 900): 400,400 (check 400,400) from 8 tree nodes
+sum of [500, 501):     501 (check     501) from 1 tree nodes
+after setting position 0 to 1000, total: 525799
+```
+
 Building the tree fills the leaves, then computes every internal node from the bottom up, O(n). `update` here **sets** a value; adding to a value is `update(p, current + delta)`.
 
 The whole array is the root alone: 1 node. Dropping one value from each end needs 18 nodes, two per level at most, because the range no longer lines up with big blocks. A single position is 1 leaf. Every answer matches `sum`, and every operation touches O(log n) nodes: for a million values, about 20 for an update and at most about 40 for a query.
@@ -130,7 +138,7 @@ For sums specifically, a **Fenwick tree** (or binary indexed tree) does the same
 
 The bit trick `i & -i` works because, in binary, −i is formed by flipping every bit of i and adding 1, which leaves exactly the lowest set bit in common. Predict before running: which positions does a prefix sum up to 13 visit, and which does an update at 5 visit, for n = 16?
 
-```python
+```python type
 class Fenwick:
     def __init__(self, n):
         self.n = n
@@ -163,6 +171,18 @@ for pos in range(1, 17):
 print("sum of 1..13 =", f.prefix_sum(13, trace=True))
 f.add(5, 100, trace=True)
 print("after adding 100 at position 5, sum of 1..13 =", f.prefix_sum(13))
+```
+
+```output
+i = 12 = 01100 in binary: lowest set bit 4, so position 12 covers 9..12
+i =  7 = 00111 in binary: lowest set bit 1, so position 7 covers 7..7
+i = 13 = 01101 in binary: lowest set bit 1, so position 13 covers 13..13
+i =  5 = 00101 in binary: lowest set bit 1, so position 5 covers 5..5
+i = 16 = 10000 in binary: lowest set bit 16, so position 16 covers 1..16
+  prefix sum visits [13, 12, 8]
+sum of 1..13 = 91
+  update visits [5, 6, 8, 16]
+after adding 100 at position 5, sum of 1..13 = 191
 ```
 
 `f"{i:05b}"` formats a number in binary, padded to 5 digits.

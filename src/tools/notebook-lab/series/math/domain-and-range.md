@@ -25,7 +25,7 @@ Python reports a violation in two different ways. The `math` module raises an ex
 
 Predict before running: what happens to √(x − 2)/(x − 5) at x = 1, 5 and 6 in `math` and in NumPy?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,6 +46,13 @@ with np.errstate(all="ignore"):
     print("ln(9 - x²) on", xs, "->", np.round(np.log(9 - xs ** 2), 3))
 ```
 
+```output
+x = 1.0: in domain False;  math gives ValueError: math domain error;  NumPy gives nan
+x = 5.0: in domain False;  math gives ZeroDivisionError: float division by zero;  NumPy gives inf
+x = 6.0: in domain True;  math gives 2.0;  NumPy gives 2.0
+ln(9 - x²) on [-4. -3. -2. -1.  0.  1.  2.  3.  4.] -> [  nan  -inf 1.609 2.079 2.197 2.079 1.609  -inf   nan]
+```
+
 At x = 1 `math` raises "math domain error" while NumPy returns `nan`. At x = 5 `math` raises a `ZeroDivisionError` while NumPy returns `inf`. At x = 6 both give 2.0. For ln(9 − x²), NumPy fills the inputs outside (−3, 3) with `nan` and gives −∞ at exactly ±3. The safe habit is to check the domain explicitly at the boundary of your code, where data come in, and reject or flag bad inputs there. Don't let `nan`s spread silently.
 
 ## The range over an interval
@@ -64,7 +71,7 @@ Sensors are specified this way. A 10 kΩ NTC thermistor's resistance follows the
 
 Predict before running: what range of resistances does the thermistor produce from −40 °C to 125 °C?
 
-```python
+```python type
 xs = np.linspace(-1, 3, 4001)
 print(f"x² on [-1, 3]: range [{(xs ** 2).min()}, {(xs ** 2).max()}]")
 
@@ -77,6 +84,12 @@ temps = np.linspace(-40, 125, 1651)
 Rs = thermistor_R(temps)
 print(f"thermistor over -40..125 °C: R from {Rs.min():,.0f} Ω (at {temps[np.argmin(Rs)]:.0f} °C) to {Rs.max():,.0f} Ω (at {temps[np.argmax(Rs)]:.0f} °C)")
 print(f"ratio of largest to smallest: {Rs.max() / Rs.min():,.0f}")
+```
+
+```output
+x² on [-1, 3]: range [0.0, 9.0]
+thermistor over -40..125 °C: R from 359 Ω (at 125 °C) to 401,860 Ω (at -40 °C)
+ratio of largest to smallest: 1,120
 ```
 
 x² on [−1, 3] has range [0, 9], with 0 coming from inside the interval. The thermistor's resistance falls from about 401,900 Ω at −40 °C to 359 Ω at 125 °C, a range of more than 1,000 to 1. The extremes are at the ends because the function is monotonic. An input circuit and ADC must turn that huge range into useful counts, which the last section designs.
@@ -99,7 +112,7 @@ The preimage answers questions like "which fault codes point to the hydraulics?"
 
 Predict before running: what is the image of the codes {E1, E2, E5}, and which codes point to the spindle?
 
-```python
+```python type
 faults = {"E1": "spindle", "E2": "coolant", "E3": "spindle", "E4": "axes", "E5": "coolant", "E6": "hydraulics", "E7": "spindle"}
 subsystems = {"spindle", "coolant", "axes", "hydraulics", "electrical"}
 
@@ -113,6 +126,13 @@ print("image of {E1, E2, E5}:", sorted(image_of(faults, {"E1", "E2", "E5"})))
 print("preimage of {spindle}:", sorted(preimage_of(faults, {"spindle"})))
 print("range of the whole table:", sorted(image_of(faults, faults)), " codomain:", sorted(subsystems))
 print("preimage of {electrical}:", preimage_of(faults, {"electrical"}), " (empty: no code points there)")
+```
+
+```output
+image of {E1, E2, E5}: ['coolant', 'spindle']
+preimage of {spindle}: ['E1', 'E3', 'E7']
+range of the whole table: ['axes', 'coolant', 'hydraulics', 'spindle']  codomain: ['axes', 'coolant', 'electrical', 'hydraulics', 'spindle']
+preimage of {electrical}: set()  (empty: no code points there)
 ```
 
 The image of {E1, E2, E5} is {coolant, spindle}: three inputs, two outputs, because E2 and E5 share one. The spindle's preimage is {E1, E3, E7}. The range of the whole table misses "electrical", which is in the codomain but is never produced. The difference between range and codomain is real: here it might mean the table is missing codes for electrical faults.
@@ -133,7 +153,7 @@ For functions of a real variable, a quick sufficient test is **strict monotonici
 
 Predict before running: which of the fault table, the thermistor curve, |v| and a 12-bit ADC can be inverted?
 
-```python
+```python type
 def is_injective(f):
     return len(set(f.values())) == len(f)
 
@@ -144,6 +164,13 @@ print("|v| strictly monotone?", bool(np.all(np.diff(np.abs(v)) > 0) or np.all(np
 volts = np.linspace(0, 3.3, 1_000_001)
 counts = np.round(volts / 3.3 * 4095).astype(int)
 print(f"ADC: {volts.size:,} different voltages give only {np.unique(counts).size} different counts; one count covers about {3.3 / 4095 * 1000:.2f} mV")
+```
+
+```output
+fault table injective? False   onto the subsystems? False
+thermistor strictly decreasing? True
+|v| strictly monotone? False   |3| = |-3|: True
+ADC: 1,000,001 different voltages give only 4096 different counts; one count covers about 0.81 mV
 ```
 
 The fault table has neither property: the fault table repeats subsystems (not injective) and never produces "electrical" (not onto). The thermistor's resistance is strictly decreasing, so it can be inverted, the basis of every thermistor thermometer. |v| is not monotone and loses the sign. The ADC maps a million voltages onto 4,096 counts, each covering about 0.81 mV: a deliberate, bounded loss of information called **quantisation**. Its "inverse" can only return the centre of each count's voltage band.
@@ -163,7 +190,7 @@ The fix is to design the domain of the conversion function deliberately. Allow o
 
 Predict before running: which counts do −40 °C and 125 °C produce, what does the raw formula say for counts of 1 and 4094, and where is the input most precise?
 
-```python
+```python type
 Rf = 10e3
 
 def adc_count(t_c):
@@ -181,6 +208,20 @@ for n in [1, 50, lo, 2048, hi, 4094]:
     print(f"count {n:>4}: formula says {adc_temperature(n):8.2f} °C  -> {status}")
 for n in [lo, 2048, 3700, hi]:
     print(f"near {adc_temperature(n):6.1f} °C one count is {adc_temperature(n + 1) - adc_temperature(n):.3f} °C")
+```
+
+```output
+valid count window: 99 (-40 °C) to 3953 (125 °C)
+count    1: formula says   -89.99 °C  -> FAULT
+count   50: formula says   -49.25 °C  -> FAULT
+count   99: formula says   -40.06 °C  -> valid
+count 2048: formula says    25.01 °C  -> valid
+count 3953: formula says   124.96 °C  -> valid
+count 4094: formula says   527.89 °C  -> FAULT
+near  -40.1 °C one count is 0.142 °C
+near   25.0 °C one count is 0.022 °C
+near   85.6 °C one count is 0.091 °C
+near  125.0 °C one count is 0.294 °C
 ```
 
 −40 °C gives a count of 99 and 125 °C gives 3953. A count of 1 would read −90 °C and 4094 would read +528 °C, both impossible for this sensor, so they are flagged as faults. Even 50 counts, −49 °C, lies outside the rated range. Inside the window the precision varies more than tenfold: about 0.022 °C per count at 25 °C, 0.09 °C at 85 °C and 0.29 °C at 125 °C (and 0.14 °C at the cold end). Industrial current loops use the same idea with their "live zero": under NAMUR NE43 a 4–20 mA signal saturates at 3.8 and 20.5 mA, and a current at or below 3.6 mA or at or above 21 mA signals a fault, not a measurement.

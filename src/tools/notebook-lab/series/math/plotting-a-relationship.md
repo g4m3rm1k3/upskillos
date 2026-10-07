@@ -28,7 +28,7 @@ A hot part left to cool in a workshop follows **Newton's law of cooling**: its t
 
 where T₀ is the starting temperature and k a cooling rate that depends on the part's size and the air flow. The exponential gets its own lesson later; here it is simply a formula to draw. Every axis gets a label with its quantity and unit, written "quantity (unit)": an unlabelled graph is a picture, not information. Predict before running: does the part cool at a steady rate, or faster at the start?
 
-```python
+```python type
 import math
 import matplotlib.pyplot as plt
 
@@ -54,6 +54,10 @@ plt.show()
 print(f"drop in the first 10 min: {temps[0] - temps[20]:.1f} °C, in the last 10 min: {temps[100] - temps[120]:.1f} °C")
 ```
 
+```output
+drop in the first 10 min: 27.5 °C, in the last 10 min: 2.3 °C
+```
+
 `sample` returns n evenly spaced inputs from `start` to `stop`, both included, and the function's value at each. With 121 points over 60 minutes the step is half a minute.
 
 The curve is steep at the start and flattens as it nears the dashed room line, which it never quite reaches. The part loses 27.5 °C in the first ten minutes but only 2.3 °C in the last ten: cooling is fastest when the temperature difference is largest. The shape alone, without any numbers, already says what kind of process this is.
@@ -76,7 +80,7 @@ With data rather than a formula, there is no equation to solve. The usual method
 
 Here the exact answer is available for comparison, because the formula can be solved: e^(−kt) = (60 − 20)/(90 − 20), so t = ln(70/40) / k. Predict before running: if the temperature is logged only every 5 minutes, will interpolation be early or late?
 
-```python
+```python type
 exact = math.log(70 / 40) / 0.05
 log_t = list(range(0, 31, 5))
 log_T = [part_temperature(t) for t in log_t]
@@ -86,6 +90,17 @@ i = next(i for i, T in enumerate(log_T) if T <= 60)
 t1, t2, y1, y2 = log_t[i - 1], log_t[i], log_T[i - 1], log_T[i]
 estimate = t1 + (60 - y1) / (y2 - y1) * (t2 - t1)
 print(f"interpolated {estimate:.2f} min, exact {exact:.2f} min")
+```
+
+```output
+  0 min   90.0 °C
+  5 min   74.5 °C
+ 10 min   62.5 °C
+ 15 min   53.1 °C
+ 20 min   45.8 °C
+ 25 min   40.1 °C
+ 30 min   35.6 °C
+interpolated 11.31 min, exact 11.19 min
 ```
 
 `next(...)` returns the first index whose temperature is at or below 60 °C; the crossing lies between that sample and the one before it.
@@ -104,7 +119,7 @@ In code: `sample(vibration, 0, 0.1, 6)` samples 0.1 s at 50 per second
 
 Joining samples with straight lines assumes nothing interesting happens between them. If the step is too large, a plot can show a completely wrong shape. A motor shaft carries a vibration at 50 cycles per second (50 Hz): its displacement is y = sin(2π · 50 t). Predict before running: what does a data logger sampling exactly 50 times a second record?
 
-```python
+```python type
 vibration = lambda t: math.sin(2 * math.pi * 50 * t)
 fine_t, fine_y = sample(vibration, 0, 0.1, 1001)
 coarse_t, coarse_y = sample(vibration, 0, 0.1, 6)
@@ -120,6 +135,11 @@ ax.legend(loc="upper right")
 plt.show()
 print("50 Hz samples:", [round(y, 6) + 0.0 for y in coarse_y])
 print("40 Hz samples:", [round(y, 3) + 0.0 for y in odd_y])
+```
+
+```output
+50 Hz samples: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+40 Hz samples: [0.0, 1.0, 0.0, -1.0, 0.0]
 ```
 
 Adding `0.0` to a rounded value turns a `-0.0` into `0.0`, which keeps the printed list tidy.
@@ -140,7 +160,7 @@ Different relationships have characteristic shapes. A straight line (y = ax + b)
 
 On ordinary axes, a power law y = c xᵖ is a curve. Take logarithms of both sides: log y = log c + p log x. So on **log–log axes**, where both scales are logarithmic, it becomes a straight line whose slope is the exponent p. This is one of the most useful tricks in experimental science: plot measured data on log–log axes, and a straight line reveals a power law and its exponent. Predict before running: on log–log axes, what does the exponential look like?
 
-```python
+```python type
 xs, _ = sample(lambda x: x, 1, 20, 200)
 families = {
     "linear 2x": [2 * x for x in xs],
@@ -166,6 +186,13 @@ def log_slope(x1, y1, x2, y2):
 
 for name, ys in families.items():
     print(f"{name:<16} log-log slope at the start {log_slope(xs[0], ys[0], xs[1], ys[1]):5.2f}, at the end {log_slope(xs[-2], ys[-2], xs[-1], ys[-1]):5.2f}")
+```
+
+```output
+linear 2x        log-log slope at the start  1.00, at the end  1.00
+square x²        log-log slope at the start  2.00, at the end  2.00
+root 10√x        log-log slope at the start  0.50, at the end  0.50
+exponential 2^x  log-log slope at the start  0.73, at the end 13.83
 ```
 
 `loglog` plots with both axes logarithmic. `log_slope` measures the slope between two points in log–log space, which is the exponent if the relationship is a power law.

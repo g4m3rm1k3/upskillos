@@ -15,7 +15,7 @@ This lesson covers:
 
 A cold-store monitor checks every sensor against an alarm limit. It was written for the store's own sensors, which offer `read_celsius()` and `sensor_id`. The new supplier's sensors offer `get_temp()`, which returns a string of tenths of a degree Fahrenheit, and `serial`. Predict before running: what happens when the monitor meets the new sensor?
 
-```python
+```python type
 class StoreSensor:
     def __init__(self, sensor_id, celsius):
         self.sensor_id, self._c = sensor_id, celsius
@@ -39,13 +39,18 @@ except AttributeError as error:
     print("AttributeError:", error)
 ```
 
+```output
+['bay-2']
+AttributeError: 'AcmeProbe' object has no attribute 'read_celsius'
+```
+
 The monitor fails on the first call it makes to the new sensor. The tempting fix is to teach `alarms` about Acme probes with an `isinstance` check and a conversion. But then every other function that reads sensors (logging, charts, reports) needs the same special case, and the next supplier adds another. That is the type-switch smell from the polymorphism lesson, spreading.
 
 ## An object adapter
 
 Instead, write one class that **wraps** an `AcmeProbe` and offers exactly the `StoreSensor` interface. Each call is translated: the serial becomes `sensor_id`, and the string of tenths of °F becomes a float in °C. All the knowledge about Acme's quirks lives in one place, and every existing function works unchanged. Predict before running: what temperature does the adapted probe report?
 
-```python
+```python type
 class AcmeAdapter:
     def __init__(self, probe):
         self._probe = probe
@@ -64,6 +69,11 @@ print(adapted.sensor_id, adapted.read_celsius())
 print(alarms([StoreSensor("bay-1", -18.5), adapted, StoreSensor("bay-2", -12.0)], -15))
 ```
 
+```output
+AC-7 -12.0
+['AC-7', 'bay-2']
+```
+
 `sensor_id` is a property, so the adapter reads the probe's current serial whenever asked, rather than copying it once.
 
 104 tenths is 10.4 °F, which is −12 °C, above the −15 °C limit, so the probe raises an alarm with the others. The monitor has no idea it is talking to an Acme device. This is an **object adapter**: it holds the adaptee and delegates to it. (A **class adapter** would instead subclass `AcmeProbe` and add the methods. That works, but it couples the adapter to the supplier's internals, and the composition lesson explained why holding is usually better than inheriting.)
@@ -74,7 +84,7 @@ Not every mismatch needs a class. When code expects a **function** with one sign
 
 Sometimes an adapter should translate a few methods and pass **everything else** straight through to the wrapped object. Writing a forwarding method for each is tedious. Python calls `__getattr__(self, name)` only when normal attribute lookup fails, so an adapter can define the methods it translates and send all other names to the adaptee. Predict before running: which calls go through the adapter's own code?
 
-```python
+```python type
 from functools import partial
 
 def log_reading(writer, sensor_id, celsius):
@@ -101,6 +111,11 @@ p2 = PassThroughAcme(AcmeProbeV2("AC-9", 50))
 print(p2.read_celsius(), p2.battery_pct(), p2.serial)
 ```
 
+```output
+['bay-1: -18.5 °C', '[coldstore/INFO] AC-7: -12.0 °C']
+-15.0 81 AC-9
+```
+
 `partial(legacy_logger, "INFO", channel="coldstore")` makes a new function that calls `legacy_logger("INFO", message, channel="coldstore")` with whatever single argument it is given: exactly the one-argument "writer" that `log_reading` expects.
 
 `read_celsius` is the adapter's own translated method. `battery_pct` and `serial` are not defined on the adapter, so normal lookup fails and `__getattr__` forwards them to the probe. A pass-through adapter stays tiny however large the adaptee's interface is. The cost is that the adapter's real interface is less obvious to a reader. Use it when "the same, plus translations" really is the intent.
@@ -109,7 +124,7 @@ print(p2.read_celsius(), p2.battery_pct(), p2.serial)
 
 Adapters can bridge whole ways of working, not just method names. A supplier's web service returns parts one **page** at a time: `fetch_page(n)` returns a list of items and a flag saying whether more pages exist. Your code wants to just loop: `for part in catalogue:`. A generator is a natural adapter here. It fetches a page, yields its items one by one, and fetches the next page only when the loop asks for more. Predict before running: how many pages are fetched to find the first part over £50?
 
-```python
+```python type
 PRICES = [4.5, 12.0, 8.25, 3.1, 61.0, 7.0, 99.0, 2.5, 15.0, 33.0, 71.0]
 
 calls = []
@@ -131,6 +146,11 @@ first_expensive = next(part for part in all_parts(fetch_page) if part["price"] >
 print(first_expensive, "after fetching pages", calls)
 calls.clear()
 print(len(list(all_parts(fetch_page))), "parts in", len(calls), "pages")
+```
+
+```output
+{'sku': 'P4', 'price': 61.0} after fetching pages [0, 1]
+11 parts in 4 pages
 ```
 
 `yield from items` yields each item of the page in turn, as a loop with `yield` would.

@@ -28,7 +28,7 @@ Two kinds of proportion behave differently:
 
 Predict before running: how long does the batch take on 3 machines, and on 5?
 
-```python
+```python type
 from fractions import Fraction
 
 driver, driven = 48, 16
@@ -41,6 +41,15 @@ for machines in [1, 2, 3, 5]:
 target_litres, percent = 12, 5
 concentrate = target_litres * percent / 100
 print(f"{target_litres} L of {percent}% coolant: {concentrate} L concentrate + {target_litres - concentrate} L water")
+```
+
+```output
+gear ratio 3 -> the small gear turns 3.0 times per turn of the large one
+1 machine(s): 30.0 h
+2 machine(s): 15.0 h
+3 machine(s): 10.0 h
+5 machine(s): 6.0 h
+12 L of 5% coolant: 0.6 L concentrate + 11.4 L water
 ```
 
 `Fraction(48, 16)` reduces the ratio to lowest terms, 3.
@@ -61,7 +70,7 @@ A **rate** is a ratio of quantities of **different** kinds, usually per unit tim
 
 The same trap appears with average speeds. Driving 60 km at 60 km/h and back at 40 km/h does not average 50 km/h. The average speed is total distance over total time, which is the **harmonic mean** of the speeds when the distances are equal. Predict before running: how long do the two pumps take together, and what is the true average speed?
 
-```python
+```python type
 tank = 600
 pump_rates = [12, 8]
 times_alone = [tank / r for r in pump_rates]
@@ -75,6 +84,12 @@ def harmonic_mean(values):
 out_speed, back_speed, distance = 60, 40, 60
 true_average = 2 * distance / (distance / out_speed + distance / back_speed)
 print("average speed:", true_average, "km/h  harmonic mean:", round(harmonic_mean([60, 40]), 9), "  arithmetic mean:", (60 + 40) / 2)
+```
+
+```output
+alone: [50.0, 75.0] min; together: 30.0 min
+wrong guesses: sum 125.0  average 62.5
+average speed: 48.0 km/h  harmonic mean: 48.0   arithmetic mean: 50.0
 ```
 
 The harmonic mean is n divided by the sum of reciprocals. It is the right average for rates over equal amounts of work or distance.
@@ -95,7 +110,7 @@ Scale a part by a factor k in every direction. Every **length** (edges, hole spa
 
 This is the **square–cube law**, and it has consequences. A beam's strength depends on its cross-section (k²), but its weight grows with its volume (k³), so the stress from its own weight grows like k³ / k² = k. Scale a working bracket up 10 times and the stress from its own weight is 10 times larger. Heat is generated through a volume and lost through a surface, which is why large motors need forced cooling that small ones do not. Predict before running: if a half-scale prototype works, how much heavier and how much more stressed by its own weight is the full-size part?
 
-```python
+```python type
 def scale_report(k, length=40.0, area=120.0, volume=900.0):
     return {"length": length * k, "area": area * k ** 2, "volume": volume * k ** 3, "self-weight stress factor": k}
 
@@ -106,6 +121,14 @@ for k in [0.5, 1, 2, 10]:
 prototype_mass_g = 85
 full_size_mass = prototype_mass_g * 2 ** 3
 print(f"half-scale prototype {prototype_mass_g} g -> full size {full_size_mass} g, self-weight stress x2")
+```
+
+```output
+k =  0.5: length    20.0 mm  area      30.0 mm^2  volume       112.5 mm^3  stress x0.5
+k =    1: length    40.0 mm  area     120.0 mm^2  volume       900.0 mm^3  stress x1
+k =    2: length    80.0 mm  area     480.0 mm^2  volume      7200.0 mm^3  stress x2
+k =   10: length   400.0 mm  area   12000.0 mm^2  volume    900000.0 mm^3  stress x10
+half-scale prototype 85 g -> full size 680 g, self-weight stress x2
 ```
 
 The prototype is half scale, so going to full size is k = 2: 8 times the mass, 4 times the cross-section, twice the stress.
@@ -130,7 +153,7 @@ Comparing quantities of different sizes or units often starts by putting them on
 
 Predict before running: which line has the lowest scrap rate, though it scraps the most parts?
 
-```python
+```python type
 lines = {"line A": (12_000, 84), "line B": (3_500, 41), "line C": (40_000, 220)}
 for name, (made, scrapped) in lines.items():
     print(f"{name}: {scrapped:>3} scrapped of {made:>6,} = {1000 * scrapped / made:.1f} per 1000")
@@ -141,6 +164,14 @@ shares = [round(e / total, 3) for e in energy]
 lo, hi = min(energy), max(energy)
 print("shares:", shares, "sum", round(sum(shares), 3))
 print("min-max scaled:", [round((e - lo) / (hi - lo), 3) for e in energy])
+```
+
+```output
+line A:  84 scrapped of 12,000 = 7.0 per 1000
+line B:  41 scrapped of  3,500 = 11.7 per 1000
+line C: 220 scrapped of 40,000 = 5.5 per 1000
+shares: [0.217, 0.195, 0.317, 0.271] sum 1.0
+min-max scaled: [0.183, 0.0, 1.0, 0.629]
 ```
 
 Shares add to 1 (up to rounding). Min–max scaling sends the smallest value to 0 and the largest to 1.

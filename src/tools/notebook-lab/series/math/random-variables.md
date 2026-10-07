@@ -27,7 +27,7 @@ The number of defective parts K in a box of n, each independently defective with
 
 the **binomial distribution**. Predict before running: in boxes of 50 at a 2% defect rate, which count is most likely, 0 or 1?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,6 +52,15 @@ ax.legend()
 plt.show()
 ```
 
+```output
+k = 0: formula 0.3642, simulated 0.3626
+k = 1: formula 0.3716, simulated 0.3710
+k = 2: formula 0.1858, simulated 0.1868
+k = 3: formula 0.0607, simulated 0.0615
+k = 4: formula 0.0145, simulated 0.0148
+k = 5: formula 0.0027, simulated 0.0028
+```
+
 `rng.binomial(n, p, size=...)` simulates many boxes at once, returning the number of defectives in each.
 
 Counts of 0 and 1 are almost equally likely (0.364 and 0.372), with 1 just ahead; 2 defectives happen in about 19% of boxes, and 5 or more are rare. Simulation and formula agree to about three decimal places, as the 1/√n rule predicts for 100,000 boxes.
@@ -70,7 +79,7 @@ The **expected value** (mean) of a random variable is the probability-weighted a
 
 For the binomial, E[K] = np and Var(K) = np(1 − p). These follow from a powerful rule: **expected values add**, always, E[X + Y] = E[X] + E[Y], and **variances add for independent variables**. K is a sum of n independent 0/1 variables, each with mean p and variance p(1 − p). Predict before running: what are the mean and standard deviation of the defective count?
 
-```python
+```python type
 def mean_and_sd(values, probs):
     values, probs = np.asarray(values, dtype=float), np.asarray(probs, dtype=float)
     mu = (values * probs).sum()
@@ -82,6 +91,12 @@ mu, sd = mean_and_sd(ks, [binom_pmf(k, n, p) for k in ks])
 print(f"from the distribution: mean {mu:.4f}, sd {sd:.4f}")
 print(f"formulas: np = {n * p}, sqrt(np(1-p)) = {math.sqrt(n * p * (1 - p)):.4f}")
 print(f"simulated: mean {counts.mean():.4f}, sd {counts.std():.4f}")
+```
+
+```output
+from the distribution: mean 1.0000, sd 0.9899
+formulas: np = 1.0, sqrt(np(1-p)) = 0.9899
+simulated: mean 1.0050, sd 0.9924
 ```
 
 The distribution, the formulas and the simulation all give a mean of 1 defective per box and a standard deviation of about 0.99. A standard deviation as large as the mean is typical of rare counts, and it means the count in a single box says little about the defect rate.
@@ -104,7 +119,7 @@ The most important density is the **normal** (Gaussian) distribution with mean �
 
 the bell curve. About 68% of its area lies within 1σ of the mean, 95% within 2σ and 99.7% within 3σ. Its cumulative probability uses the **error function**: P(X < x) = ½(1 + erf((x − μ)/(σ√2))), available as `math.erf`. Predict before running: micrometer readings of a 25.000 mm shaft have σ = 0.004 mm. What fraction of readings fall outside ±0.010 mm?
 
-```python
+```python type
 mu, sigma = 25.000, 0.004
 readings = rng.normal(mu, sigma, size=200_000)
 
@@ -130,6 +145,13 @@ ax.legend()
 plt.show()
 ```
 
+```output
+within 1σ: formula 0.6827, simulated 0.6830
+within 2σ: formula 0.9545, simulated 0.9540
+within 3σ: formula 0.9973, simulated 0.9973
+outside ±0.010 mm: formula 1.2419%, simulated 1.2610%
+```
+
 `density=True` scales the histogram so that bar areas, not heights, are probabilities, making it comparable with the density curve. The density's units are "per mm": it is probability per unit of length.
 
 The 68–95–99.7 pattern appears in both the formula and the simulation. ±0.010 mm is 2.5σ, so about 1.24% of readings fall outside it. The histogram follows the bell curve closely; the density's peak of about 100 per mm is not a probability, only area is.
@@ -146,7 +168,7 @@ In code: `rng.uniform(-0.5, 0.5, size=(200_000, 12)).sum(axis=1)`
 
 Why should measurement errors be normal at all? Because an error is usually the **sum** of many small independent effects: temperature, vibration, the operator's grip, electrical noise. The **central limit theorem**, proved in the statistics block, says that a sum of many independent random variables of finite variance, none of which dominates the total, is approximately normal, whatever their individual distributions. Predict before running: each of 12 small error sources is uniform on [−0.5, 0.5] µm, as flat as a distribution can be. What does their total look like?
 
-```python
+```python type
 sources = rng.uniform(-0.5, 0.5, size=(200_000, 12))
 total = sources.sum(axis=1)
 print(f"total error: mean {total.mean():+.4f} µm, sd {total.std():.4f} µm (theory: sqrt(12 × 1/12) = 1)")
@@ -160,6 +182,11 @@ xs = np.linspace(-4, 4, 200)
 axes[1].plot(xs, normal_pdf(xs, 0, 1))
 axes[1].set_title("sum of 12: nearly normal")
 plt.show()
+```
+
+```output
+total error: mean -0.0005 µm, sd 0.9992 µm (theory: sqrt(12 × 1/12) = 1)
+within 1σ: 0.6779, within 2σ: 0.9557, within 3σ: 0.9981
 ```
 
 A uniform distribution on an interval of width 1 has variance 1/12, so twelve independent ones have variance 1 and standard deviation 1 µm: variances add.
@@ -180,7 +207,7 @@ An assembly of several parts has a total length that is the sum of the parts' le
 
 Five spacers, each nominally 10 mm with a process standard deviation of 0.02 mm, are stacked. Predict before running: with tolerance taken as ±3σ per part, what is the worst-case stack, the statistical stack, and how often does a real stack exceed ±0.15 mm?
 
-```python
+```python type
 sigmas = np.array([0.02] * 5)
 worst = (3 * sigmas).sum()
 rss = 3 * math.sqrt((sigmas ** 2).sum())
@@ -188,6 +215,12 @@ stacks = rng.normal(10.0, 0.02, size=(200_000, 5)).sum(axis=1)
 print(f"worst-case ±{worst:.3f} mm, statistical (3σ) ±{rss:.3f} mm")
 print(f"simulated stack sd {stacks.std():.4f} mm (theory {math.sqrt((sigmas ** 2).sum()):.4f})")
 print(f"stacks outside ±0.15 mm: {(abs(stacks - 50) > 0.15).mean():.4%}")
+```
+
+```output
+worst-case ±0.300 mm, statistical (3σ) ±0.134 mm
+simulated stack sd 0.0448 mm (theory 0.0447)
+stacks outside ±0.15 mm: 0.0730%
 ```
 
 The worst-case stack is ±0.30 mm, but the statistical stack, at the same 3σ confidence, is only ±0.134 mm, less than half. The simulation confirms the stack's standard deviation of 0.0447 mm, and only about 0.07% of stacks exceed ±0.15 mm (the exact normal value is 0.080%; a simulation of this size counts rare events only roughly). The assumption that matters is independence: parts from one batch, cut by one worn tool, can all be long together, and then the worst case is closer to the truth.

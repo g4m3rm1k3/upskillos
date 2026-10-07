@@ -15,7 +15,7 @@ This lesson covers:
 
 A workshop's bill of materials (BOM) has parts and assemblies. Without a shared interface, every calculation must check which it has. Predict before reading on: how many functions need the same `if` when "weight" and "lead time" are added next to "cost"?
 
-```python
+```python type
 part_prices = {"bolt": 0.4, "bearing": 6.5, "gear": 14.0, "shaft": 22.0, "housing": 85.0}
 gear_set = {"name": "gear set", "labour": 12.0, "items": [("gear", 2), ("bearing", 4)]}
 gearbox = {"name": "gearbox", "labour": 40.0, "items": [("housing", 1), ("shaft", 2), (gear_set, 1), ("bolt", 12)]}
@@ -28,13 +28,17 @@ def cost(item):
 print(cost(gearbox))
 ```
 
+```output
+239.8
+```
+
 `cost` has to know both shapes of data: a part is a string looked up in a price table, an assembly is a dict with items. Every new calculation (weight, lead time, a parts list) repeats the same branch, and a third kind of item, such as a bought-in sub-assembly with a fixed price, means editing all of them.
 
 ## One interface for parts and assemblies
 
 Give both kinds the same methods. A `Part` (a leaf) answers from its own data. An `Assembly` (a composite) holds children with quantities, and answers by asking each child and combining the answers. The calling code just calls `cost()` or `weight()` on whatever it holds. Predict before running: what does the gear set cost on its own, and is it any different to ask the whole gearbox?
 
-```python
+```python type
 class Part:
     def __init__(self, name, price, kg):
         self.name, self.price, self.kg = name, price, kg
@@ -65,6 +69,12 @@ for item in [bolt, gear_set, gearbox]:
     print(f"{item.name:<9} cost £{item.cost():7.2f}   weight {item.weight():5.2f} kg")
 ```
 
+```output
+bolt      cost £   0.40   weight  0.02 kg
+gear set  cost £  66.00   weight  3.40 kg
+gearbox   cost £ 239.80   weight 17.94 kg
+```
+
 `add` returns `self`, so assemblies can be built with chained calls, as in the builder lesson.
 
 The gear set costs £66.00 by itself (12 + 2 × 14 + 4 × 6.5), and the gearbox's £239.80 includes it, through exactly the same call. Neither `cost` nor `weight` contains a type check. The recursion ends at the parts, because a part answers without asking anyone. A bought-in sub-assembly would be one new class with `cost` and `weight` methods, and every existing assembly and calculation would accept it.
@@ -73,7 +83,7 @@ The gear set costs £66.00 by itself (12 + 2 × 14 + 4 × 6.5), and the gearbox'
 
 Many questions need more than a single number: "list every part, with the total quantity needed to build one gearbox", for ordering. This is a **traversal**. Each node passes the request down, and quantities multiply along the way: one gearbox needs 1 gear set, which needs 2 gears, so 2 gears per gearbox. A generator method that yields `(part, quantity)` pairs keeps the walking in one place, and every flattening question can reuse it. Predict before running: how many bearings does an order of 5 gearboxes need?
 
-```python
+```python type
 from collections import Counter
 
 def walk(component, multiplier=1):
@@ -98,6 +108,12 @@ def depth(component):
     return 1 + max((depth(child) for child, _ in component.children), default=0)
 
 print("levels of assembly:", depth(gearbox))
+```
+
+```output
+{'bearing': 4, 'bolt': 12, 'gear': 2, 'housing': 1, 'shaft': 2}
+for 5 gearboxes: {'bearing': 20, 'bolt': 60, 'gear': 10, 'housing': 5, 'shaft': 10}
+levels of assembly: 2
 ```
 
 `walk` checks the type once, in one place: the boundary between leaves and composites. Putting `walk` as a method on both classes would remove even that check. Sometimes one well-placed check in a traversal helper is the simpler choice.

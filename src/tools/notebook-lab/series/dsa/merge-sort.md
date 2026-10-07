@@ -14,7 +14,7 @@ This lesson covers:
 
 Given two lists that are each already sorted, the smallest item overall must be at the front of one of them. So compare the two front items, take the smaller, and repeat; when one list runs out, the rest of the other is already in order and can be copied across. Every step places one item, so merging lists of total length n takes at most n − 1 comparisons. Predict before running: in what order will the items be taken?
 
-```python
+```python type
 def merge(left, right, trace=False):
     result = []
     i = j = 0
@@ -34,6 +34,16 @@ def merge(left, right, trace=False):
 print(merge([1, 4, 7, 9], [2, 3, 8], trace=True))
 ```
 
+```output
+  took 1: result so far [1]
+  took 2: result so far [1, 2]
+  took 3: result so far [1, 2, 3]
+  took 4: result so far [1, 2, 3, 4]
+  took 7: result so far [1, 2, 3, 4, 7]
+  took 8: result so far [1, 2, 3, 4, 7, 8]
+[1, 2, 3, 4, 7, 8, 9]
+```
+
 `i` and `j` mark the front of each list; slicing off the leftovers at the end copies whatever remains of the list that did not run out.
 
 The items come out 1, 2, 3, 4, 7, 8, and then the 9 left over in the first list is copied across. The comparison is `<=`, not `<`: when the two front items are equal, the one from the **left** list is taken first. That one character makes merge sort **stable**, since items from the left half were earlier in the original list.
@@ -42,7 +52,7 @@ The items come out 1, 2, 3, 4, 7, 8, and then the 9 left over in the first list 
 
 Merge sort is now three lines of thinking: a list of 0 or 1 items is already sorted (the base case); otherwise sort the left half, sort the right half, and merge them. The trace below indents each call by its depth. Predict before running: how many levels deep does it go for 8 items?
 
-```python
+```python type
 def merge_sort(items, depth=0, trace=False):
     if trace:
         print("    " * depth + f"sort {items}")
@@ -59,6 +69,32 @@ def merge_sort(items, depth=0, trace=False):
 merge_sort([5, 2, 8, 1, 9, 3, 7, 4], trace=True)
 ```
 
+```output
+sort [5, 2, 8, 1, 9, 3, 7, 4]
+    sort [5, 2, 8, 1]
+        sort [5, 2]
+            sort [5]
+            sort [2]
+        merged -> [2, 5]
+        sort [8, 1]
+            sort [8]
+            sort [1]
+        merged -> [1, 8]
+    merged -> [1, 2, 5, 8]
+    sort [9, 3, 7, 4]
+        sort [9, 3]
+            sort [9]
+            sort [3]
+        merged -> [3, 9]
+        sort [7, 4]
+            sort [7]
+            sort [4]
+        merged -> [4, 7]
+    merged -> [3, 4, 7, 9]
+merged -> [1, 2, 3, 4, 5, 7, 8, 9]
+[1, 2, 3, 4, 5, 7, 8, 9]
+```
+
 The slices `items[:middle]` and `items[middle:]` copy each half; that copying is part of why merge sort needs extra memory.
 
 The list is split into halves, quarters and single items: 3 levels of splitting below the top, because 8 = 2³. Then the merges come back up: pairs of single items merge into sorted pairs, pairs into fours, and the fours into the final eight. Nothing is "sorted" in the usual sense anywhere: all the work is done by merging. By trusting the recursive calls, the code is as short as the description.
@@ -67,7 +103,7 @@ The list is split into halves, quarters and single items: 3 levels of splitting 
 
 From the recurrences lesson: merge sort's cost is T(n) = 2T(n/2) + O(n), the balanced case of the master theorem, so O(n log n). Every level of the recursion tree merges n items in total, and there are about log₂ n levels. Counting actual comparisons confirms it. Predict before running: for 100,000 items, roughly how many comparisons, compared with insertion sort's expected n²/4?
 
-```python
+```python type
 import math
 import random
 
@@ -95,6 +131,12 @@ for n in [1_000, 10_000, 100_000]:
     print(f"n = {n:>7,}: {comparisons:>10,} comparisons;  n log2 n = {round(n * math.log2(n)):>10,};  insertion sort ~ n²/4 = {n * n // 4:>14,}")
 ```
 
+```output
+n =   1,000:      8,721 comparisons;  n log2 n =      9,966;  insertion sort ~ n²/4 =        250,000
+n =  10,000:    120,388 comparisons;  n log2 n =    132,877;  insertion sort ~ n²/4 =     25,000,000
+n = 100,000:  1,536,207 comparisons;  n log2 n =  1,660,964;  insertion sort ~ n²/4 =  2,500,000,000
+```
+
 Writing two statements on one line with `;` keeps the counted merge compact; it is the same merge as before, with a counter.
 
 Merge sort's count sits just below n log₂ n: about 1.5 million comparisons for 100,000 items, against 2.5 **billion** for insertion sort on random data, over 1,500 times more. And merge sort's count stays within a factor of 2 on every input (sorted input needs about half as many): unlike insertion sort, it has no bad cases. Its recursion is only log₂ n deep (17 levels for 100,000 items), so Python's recursion limit is never a problem.
@@ -105,7 +147,7 @@ The price is memory. Merging needs somewhere to put the result, so merge sort us
 
 Counting comparisons ignores the overheads of Python code: function calls, slicing, list appends. Timing shows whether the better growth rate wins anyway. Predict before running: at what size does merge sort overtake insertion sort, and how does it compare with Python's built-in `sorted`?
 
-```python
+```python type
 import random
 import timeit
 

@@ -27,7 +27,7 @@ What does each item cost? Call the unknown prices `x₁`, `x₂` and `x₃`. Eac
 
 The row reading of matrix multiplication from the last lesson is exactly this: the first row times `x` is `2x₁ + x₂ + x₃`, the first receipt's total. `np.linalg.solve` finds `x`:
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2, 1, 1],
@@ -39,6 +39,11 @@ print(prices.round(2))
 print(A @ prices)
 ```
 
+```output
+[1.1 2.  1.4]
+[5.6 5.1 6.2]
+```
+
 Apples cost 1.10, bread 2.00 and milk 1.40. The second line checks the answer the best way: multiply back, and see that it reproduces the receipts. Always check a solution like this; it costs one line.
 
 ## What solving means, geometrically
@@ -47,7 +52,7 @@ The column reading gives another way to see the same problem. `A @ x` is a weigh
 
 In two dimensions you can draw it. The columns of `A` are two arrows, and `b` is a target point. Solving means finding how far to walk along each arrow to reach the target:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -71,6 +76,10 @@ ax.set_title(f"{x[0]:.0f} × column 1 + {x[1]:.0f} × column 2 = b")
 plt.show()
 ```
 
+```output
+x = [2. 3.]
+```
+
 Two steps of the first column (red) and three of the second (green) land exactly on `b`. (`ax.plot(*b, "ko")` unpacks `b` into its x and y and draws a black dot.)
 
 ## The inverse: undoing a transformation
@@ -83,7 +92,7 @@ A^{-1} A = I
 
 Then solving is one multiplication. Multiply both sides of `A x = b` by `A⁻¹`: the left side becomes `A⁻¹ A x = I x = x`, since the identity changes nothing, so `x = A⁻¹ b`.
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2.0, 1.0],
@@ -94,6 +103,14 @@ print((A_inv @ A).round(10))
 print(A_inv @ np.array([7.0, 11.0]))
 ```
 
+```output
+[[ 0.6 -0.2]
+ [-0.2  0.4]]
+[[ 1. -0.]
+ [ 0.  1.]]
+[2. 3.]
+```
+
 (A `-0.` in the output is just zero with a minus sign left over from rounding; it equals 0.) It is useful to know the inverse exists and what it means. In practice, though, prefer `np.linalg.solve(A, b)` to `np.linalg.inv(A) @ b`. `solve` goes straight to the answer without building the whole inverse, so it is faster, and it makes smaller rounding errors, which matters for large or delicate problems.
 
 ## When there is no unique answer
@@ -102,7 +119,7 @@ Not every matrix can be undone. Recall the projection from the last lesson, whic
 
 Here is the receipts problem with a flaw: the third customer bought exactly twice what the first did, so their receipt gives no new information.
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2, 1, 1],
@@ -112,11 +129,15 @@ b = np.array([5.60, 5.10, 11.20])
 print(np.linalg.solve(A, b))
 ```
 
+```output
+[nan nan nan]
+```
+
 There is no **single** answer to give: the matrix is **singular**, the word for a square matrix that cannot be inverted. With only two genuinely different receipts for three unknown prices, there are infinitely many sets of prices that fit.
 
 The third receipt could also **contradict** the first. If it said 11.00 instead of 11.20, no prices at all could fit, because a customer buying exactly twice as much must pay exactly twice as much:
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[2, 1, 1],
@@ -125,19 +146,28 @@ A = np.array([[2, 1, 1],
 print(np.linalg.solve(A, np.array([5.60, 5.10, 11.00])))
 ```
 
+```output
+[nan nan nan]
+```
+
 Same singular matrix, and this time there is no solution at all. Either way, a singular matrix means `A x = b` has no unique answer: infinitely many, or none, depending on `b`.
 
 How this shows up depends on where NumPy is running. In this notebook, `solve` returns `nan` ("not a number") for every component. On a normal computer, NumPy raises an error instead, `LinAlgError: Singular matrix`. And with real, messy numbers, rounding can leave a singular matrix very slightly non-singular, so that `solve` returns huge, meaningless numbers with no warning at all. In every case the lesson is the same: do not trust a solution without checking it, and check whether the matrix can be inverted in the first place.
 
 How can you tell in advance? A square matrix can be inverted exactly when its **determinant is not zero**. The last lesson defined the determinant for 2 by 2 matrices as the factor by which areas change; for a 3 by 3 matrix it is the factor by which **volumes** change, and `np.linalg.det` computes it for any square matrix. Either way, a determinant of zero means the matrix flattens space. A more informative measure is the **rank**: the number of genuinely independent directions among the columns (or, equivalently, the rows). The rows (or columns) are **linearly dependent** when one can be built from the others, as the third row here is twice the first.
 
-```python
+```python type
 import numpy as np
 
 good = np.array([[2, 1, 1], [1, 2, 0], [0, 1, 3]], dtype=float)
 bad = np.array([[2, 1, 1], [1, 2, 0], [4, 2, 2]], dtype=float)
 for name, M in [("good", good), ("bad", bad)]:
     print(name, "rank", np.linalg.matrix_rank(M), " det", round(np.linalg.det(M), 6))
+```
+
+```output
+good rank 3  det 10.0
+bad rank 2  det 0.0
 ```
 
 A 3 by 3 matrix of rank 3 is **full rank**: its three columns point in three genuinely different directions, it can be inverted, and every `A x = b` has exactly one answer. Rank 2 means everything is squashed into a plane: one direction's worth of information is lost.
@@ -148,7 +178,7 @@ In machine learning, the same thing happens when two features carry the same inf
 
 Between "invertible" and "singular" lies a dangerous middle ground. A matrix can be invertible in principle, but so close to singular that tiny changes in `b`, like rounding or measurement errors, cause huge changes in the answer. Predict how much the answer moves when `b` changes by 0.001.
 
-```python
+```python type
 import numpy as np
 
 A = np.array([[1.0, 1.0],
@@ -158,6 +188,12 @@ x2 = np.linalg.solve(A, np.array([2.0, 2.001]))
 print(x1)
 print(x2)
 print("condition number:", round(np.linalg.cond(A)))
+```
+
+```output
+[2. 0.]
+[1. 1.]
+condition number: 4002
 ```
 
 Changing one number in `b` by 0.001 swings the solution from `(2, 0)` to `(1, 1)`. The two rows of `A` are almost the same equation, so the answer is very poorly determined. The **condition number** measures this sensitivity: roughly, it is how many times small relative errors in `b` can be magnified in `x`. Around 1 is excellent; here it is about 4000; in the millions, answers computed with floats may be meaningless. Nearly duplicate features in a dataset produce exactly this situation.
@@ -177,7 +213,7 @@ With ten measurements there are ten equations and only two unknowns, and because
 
 The standard answer is the **least squares** solution: choose `m` and `c` to make the sum of the squared errors, the gaps between each predicted and measured length, as small as possible. The errors are squared so that positive and negative gaps cannot cancel each other out, and so that one big miss counts for much more than several small ones; a later lesson on loss functions looks at other choices. `np.linalg.lstsq` finds it:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -196,6 +232,10 @@ ax.set_xlabel("weight (kg)")
 ax.set_ylabel("length (cm)")
 ax.legend()
 plt.show()
+```
+
+```output
+best line: length = 2.91 × weight + 10.30
 ```
 
 The data was simulated from the line `3 × weight + 10` plus random noise, and least squares recovers numbers close to 3 and 10 from the noisy measurements alone. The column of ones in `A` is what lets the line have an intercept `c`: each row says `m × w + c × 1`. (`lstsq` returns four things; `(m, c), *_ = ...` unpacks the first, the solution, and collects the rest, which this lesson does not need, into `_`.)

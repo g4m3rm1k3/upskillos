@@ -20,7 +20,7 @@ A strategy's performance is judged over many independent bandit problems, since 
 
 The **greedy** strategy always pulls the arm with the highest estimate. Its flaw: an arm that has a couple of unlucky early pulls gets a low estimate and may never be tried again, even if it is the best. **ε-greedy** fixes this crudely: with a small probability ε, pull a **random** arm instead; otherwise act greedily. Every arm keeps being sampled occasionally, so every estimate eventually becomes accurate. Before running, predict: in what fraction of the 2,000 problems will pure greedy end up pulling the best arm, and will ε-greedy do much better?
 
-```python
+```python type
 import numpy as np
 
 def run_bandits(method, runs=2000, steps=1000, k=10, epsilon=0.1, c=2.0, initial=0.0, seed=0):
@@ -52,6 +52,12 @@ for name, settings in [("greedy", dict(method="greedy")), ("epsilon-greedy 0.1",
     print(f"{name:<20} last 100 pulls: average reward {rewards[-100:].mean():.2f}, best arm chosen {optimal[-100:].mean():.0%}; total regret {regret:.0f}")
 ```
 
+```output
+greedy               last 100 pulls: average reward 1.04, best arm chosen 36%; total regret 501
+epsilon-greedy 0.1   last 100 pulls: average reward 1.37, best arm chosen 80%; total regret 234
+epsilon-greedy 0.01  last 100 pulls: average reward 1.29, best arm chosen 58%; total regret 351
+```
+
 Each row of `Q` and `N` belongs to one bandit problem, so `Q[rows, action]` picks, in every row at once, the estimate of the arm chosen there. The tiny random amount added before `argmax` breaks ties at random (all estimates start equal, and plain `argmax` would always pick arm 0). **Regret** is the total reward lost compared with always pulling the best arm: the cost of not knowing.
 
 The greedy strategy settles on the best arm in only about 36% of problems: it locks onto whichever arm looked good early. ε-greedy with ε = 0.1 finds the best arm about 80% of the time, earning more per pull and losing less than half as much in total regret. With ε = 0.01 it explores ten times less: it learns more slowly (about 58% best arm by the end), but in the very long run it would waste less, since it pulls random arms only 1% of the time once its estimates are good. How much to explore depends on how long you will be playing.
@@ -69,7 +75,7 @@ a = \arg\max_a \left( Q(a) + c\sqrt{\frac{\ln t}{N(a)}} \right)
 
 An arm pulled rarely (small N) has a large bonus and gets tried; one pulled often has a small bonus and is judged mostly on its average. The ln t term slowly raises everyone's bonus over time, so no arm is abandoned for ever. Arms never pulled get an infinite bonus and are tried first. UCB embodies "optimism in the face of uncertainty": prefer actions that **might** be best. Before running, predict which of these two will do best.
 
-```python
+```python type
 import numpy as np
 
 def run_bandits(method, runs=2000, steps=1000, k=10, epsilon=0.1, c=2.0, initial=0.0, seed=0):
@@ -100,6 +106,12 @@ for name, settings in [("epsilon-greedy 0.1", dict(method="epsilon", epsilon=0.1
                        ("UCB, c = 2", dict(method="ucb", c=2.0))]:
     rewards, optimal, regret = run_bandits(**settings)
     print(f"{name:<26} last 100 pulls: average reward {rewards[-100:].mean():.2f}, best arm chosen {optimal[-100:].mean():.0%}; total regret {regret:.0f}")
+```
+
+```output
+epsilon-greedy 0.1         last 100 pulls: average reward 1.37, best arm chosen 80%; total regret 234
+optimistic, Q starts at 5  last 100 pulls: average reward 1.42, best arm chosen 70%; total regret 136
+UCB, c = 2                 last 100 pulls: average reward 1.49, best arm chosen 86%; total regret 148
 ```
 
 In UCB, `np.maximum(N, 1e-12)` avoids dividing by zero for unpulled arms, whose scores `np.where` then replaces with infinity.

@@ -25,16 +25,16 @@
 | Constructor / destructor | Operations that establish an object's initial state / run when its lifetime ends | A11 / A14: valid construction and scope cleanup |
 | Const query | An operation promising not to modify ordinary members through that object | A10, expanded A12: inspect a score or game |
 | Composition | Building an object from other member objects | A12: a game contains its state |
-| Exception | A failure signal that transfers control to a matching handler | A13: an invalid internal rule request |
-| Pointer / null pointer | A value referring to an object or function / a pointer value referring to no object or function | A14: a valid borrowed object address, then absent data |
-| Ownership / borrowing | Responsibility for a resource's lifetime / temporary access without that responsibility | A14: a stream owns its open file |
-| RAII | Tying resource management to object initialization and destruction | A14: scope exit closes a stream; B applies it to SDL resources |
+| Exception | A failure signal that transfers control to a matching handler | A07 names an out-of-range failure; A11 teaches throw and handling for construction; A13 compares conventions |
+| Pointer / null pointer | A value referring to an object or function / a pointer value referring to no object or function | A14c: a valid borrowed object address, then absent data |
+| Ownership / borrowing | Responsibility for a resource's lifetime / temporary access without that responsibility | A14b: a stream owns its open file; A14c isolates borrowing |
+| RAII | Tying resource management to object initialization and destruction | A14b: scope exit closes a stream; B applies it to SDL resources |
 | Declaration / definition | A statement of what a name means / the implementation or object it denotes | A15: method signature versus method body |
 | Namespace | A named scope used to organize names and avoid collisions | A15: qualify the game's types |
 | Translation unit | One source file after preprocessing, compiled as a unit | A15: a source file with its included declarations |
-| Linker | The tool that resolves compiled references to definitions and joins program parts | A16: omitted implementation causes an unresolved reference |
+| Linker | The tool that resolves compiled references to definitions and joins program parts | A15: omitted implementation causes an unresolved reference; A16 expands the build |
 | Build target / dependency | A named thing to build / another thing it needs | A17: terminal and tests depend on the rules library |
-| Template | A definition parameterized by types or values | Concrete container use in A22; a tiny authored example before B18's custom owner |
+| Template | A definition parameterized by types or values | Concrete array/vector arguments in A07, expanded in A22; a tiny authored example before B18's custom owner |
 | Move / moved-from | Transferring an object's state or resources into another object / the source afterward, with validity governed by its type's contract | B18: transfer a texture owner without double release |
 | Lambda | A function expression that may retain access to selected surrounding values | B18: teach a tiny example before any custom-deleter use; explain capture lifetime |
 | Polymorphism / override | Calling a common interface with implementation-dependent behavior / supplying that behavior in a derived class | C22: choose between two real renderers |
@@ -53,7 +53,10 @@
 | API / SDK / ABI | A programming interface / development tools and supporting files / conventions compiled binary components must agree on | B01: obtain a compatible SDL build |
 | Event loop | Repeatedly processing events while updating and presenting the application | B04: close remains responsive |
 | Model / view / controller | Application state and behavior / presentation / coordination between input and behavior | A12 and B08–B13: one rules model, several interfaces |
-| Input adapter / command | Translation from platform events / an intent requested of the game | B11: key and button both request Bank |
+| Input adapter / command | Translation from external input / an interpreted request | A19: exact text becomes a Command; B11 adds graphical events |
+| String / parsing | An owned character sequence / interpreting text according to a stated grammar | A19: whole-line commands and strict matching |
+| Pseudorandom engine / seed / distribution | A stateful sequence generator / its starting configuration / mapping to a probability model | A19b: reproducible die faces and constant-die failure |
+| Orchestration | Connecting components in an application while keeping their rules separate | A19c: parser, die, game and fixed policy |
 | Frame / timestep | One presented/rendered image's work / a duration used to advance a simulation | B05 / B22: drawing rate need not equal movement rate |
 | Replay | A recorded sequence sufficient to reconstruct selected application behavior | B19: record accepted actions and actual rolls |
 | Test double / smoke test | A substitute used to isolate behavior / a short basic integration run | B20 and C22: bounded app launch versus recorded draw requests |
@@ -67,7 +70,7 @@
 | Agent / environment | The decision-making component / the system it acts within | A21: learner selects, game and opponent respond |
 | State / action / reward | Information describing the modeled situation / a choice / feedback defining the objective | A21: agent's decision state, Roll, terminal loss -1 |
 | Episode / terminal | One run of interaction / a state ending that run | A21: one completed match |
-| Policy | A rule or procedure for selecting actions from available information | Fixed policy A19, named and compared A21–A23 |
+| Policy | A rule or procedure for selecting actions from available information | Fixed policy A19c, compared with learned choices A21–A23 |
 | Q-value | An estimate of return associated with a state-action pair under the learning formulation | A22: separate estimates for Roll and Bank |
 | Exploration / exploitation | Gathering experience with choices / selecting according to current estimates | A23: epsilon-greedy selection |
 | Learning rate / prediction error | How much a correction is applied / target minus current estimate | A24: move halfway from 0.2 toward -1 |

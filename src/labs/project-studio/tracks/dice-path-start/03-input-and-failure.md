@@ -6,6 +6,10 @@ runtime: cpp
 console: true
 ---
 
+**Outcome:** Read terminal input and handle failed extraction before using a value.
+
+**Recall before looking at code:** Give a value that belongs in an int, then an input that cannot be read as an int.
+
 The scoreboard can calculate, but only for numbers written into its source. Now read a number while the program runs. The player can also type a word or close input, so a successful read must be checked before the number is used.
 
 ## Read a number during execution

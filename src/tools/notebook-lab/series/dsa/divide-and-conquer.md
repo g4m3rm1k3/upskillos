@@ -15,7 +15,7 @@ An **inversion** is a pair of positions i < j with `a[i] > a[j]`: a pair out of 
 
 Divide and conquer: split the list in half. The inversions are those entirely in the left half, those entirely in the right half (both counted recursively), and the **crossing** ones, with i in the left half and j in the right. Counting crossing pairs one by one would still be O(n²). The trick: if both halves are **sorted**, the crossing count falls out of the merge step. When an item from the right half is placed before items still waiting in the left half, it is smaller than every one of them, so it forms an inversion with each: add the number of left items remaining. So: sort and count at the same time, exactly merge sort plus one line. Predict before running: how will the times compare for 2,000 and 4,000 items?
 
-```python
+```python type
 import random
 import timeit
 
@@ -64,7 +64,7 @@ Given n points in the plane, which two are closest together? Collision detection
 
 So the combine step is O(n log n) here (sorting the strip; a refined version keeps the points pre-sorted by y to make it O(n)), and the whole is O(n log² n) as written. Predict before running: for 3,000 random points, how many distance calculations will each method make?
 
-```python
+```python type
 import math
 import random
 
@@ -109,6 +109,11 @@ print(f"divide and conquer: {fast:.4f} after {fast_checks:,} distance checks")
 print(f"every pair:         {slow:.4f} after {slow_checks:,} distance checks")
 ```
 
+```output
+divide and conquer: 0.3338 after 4,180 distance checks
+every pair:         0.3338 after 4,498,500 distance checks
+```
+
 `sorted(points)` sorts by x (and by y for equal x). The inner loop over the strip stops early once points are d or more apart vertically, since everything further up is too.
 
 Both find the same distance, but divide and conquer computes about 4,200 distances against about 4.5 million. The cleverness is entirely in the combine step: without the "at most 7 neighbours in the strip" argument, the strip could need O(n²) comparisons and the recursion would gain nothing.
@@ -117,7 +122,7 @@ Both find the same distance, but divide and conquer computes about 4,200 distanc
 
 Multiplying two n-digit numbers the school way takes about n² single-digit multiplications. Split each number into a high and a low half: x = a·B + b and y = c·B + d, where B is a power of 10. Then xy = ac·B² + (ad + bc)·B + bd, which needs four half-size products: T(n) = 4T(n/2) + O(n), still O(n²) by the master theorem. In 1960, Anatoly Karatsuba noticed that **three** suffice: compute ac, bd and (a + b)(c + d); then ad + bc = (a + b)(c + d) − ac − bd. With T(n) = 3T(n/2) + O(n), the master theorem gives O(n^log₂3) ≈ O(n^1.585). Predict before running: how many single-digit multiplications for two 64-digit numbers, with four half-products and with three?
 
-```python
+```python type
 def multiply(x, y, three_products, count):
     if x < 10 and y < 10:
         count[0] += 1
@@ -142,6 +147,12 @@ for digits in [16, 64, 256]:
     four, three = [0], [0]
     assert multiply(x, y, False, four) == x * y == multiply(x, y, True, three)
     print(f"{digits:>3} digits: four products {four[0]:>7,} digit multiplications, Karatsuba {three[0]:>6,}")
+```
+
+```output
+ 16 digits: four products     256 digit multiplications, Karatsuba    157
+ 64 digits: four products   4,048 digit multiplications, Karatsuba  1,375
+256 digits: four products  64,924 digit multiplications, Karatsuba 12,835
 ```
 
 `divmod(x, B)` splits x into its high part (the quotient) and its low part (the remainder). Each call measures its numbers' length with `len(str(...))`, because a + b can have one more digit than a; the recursion stops when both numbers are single digits.

@@ -13,7 +13,7 @@ Bellman-Ford does something very simple: **relax every edge**, over and over. Re
 
 And if after V − 1 rounds some edge can **still** be relaxed, there must be a negative cycle reachable from the source, because no genuine shortest path needs more edges. Predict before running: what does Bellman-Ford find for the graph that fooled Dijkstra in the last lesson, and how many rounds does it need?
 
-```python
+```python type
 def bellman_ford(vertices, edges, source):
     distance = {v: float("inf") for v in vertices}
     parent = {v: None for v in vertices}
@@ -49,6 +49,12 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+{'S': 0, 'A': 1, 'B': 5, 'C': 3} after 3 rounds
+route to C: ['S', 'B', 'A', 'C']
+ValueError: negative cycle reachable from the source
+```
+
 The graph is given as an **edge list** of `(u, v, weight)` triples, the natural format here, since every round loops over all edges. The final loop is the V-th round, used only to test for changes.
 
 Bellman-Ford finds the true distance to C, 3, along S → B → A → C, which Dijkstra missed. Here a third round was needed only to confirm that nothing more changed. In the second graph the loop A → B → C → A has total weight 2 − 6 + 2 = −2: going round it again and again makes the distances fall without limit, so "shortest path" has no meaning, and the algorithm reports it rather than returning nonsense.
@@ -57,7 +63,7 @@ Bellman-Ford finds the true distance to C, 3, along S → B → A → C, which D
 
 Exchange rates multiply along a route: pounds to euros to dollars to pounds multiplies the three rates. An arbitrage exists if some loop's product is **greater than 1**. Taking logarithms turns products into sums, since log(a × b) = log a + log b. Using the weight **−log(rate)** for each conversion, a loop whose rates multiply to more than 1 has weights summing to **less than 0**: a negative cycle. So Bellman-Ford detects arbitrage. Predict before running: is there a profitable loop in these rates?
 
-```python
+```python type
 import math
 
 rates = {
@@ -79,6 +85,13 @@ for loop in [["GBP", "EUR", "USD", "GBP"], ["GBP", "USD", "JPY", "GBP"], ["GBP",
     print(" -> ".join(loop), f": 1 pound becomes {product:.4f}")
 ```
 
+```output
+arbitrage exists
+GBP -> EUR -> USD -> GBP : 1 pound becomes 1.0075
+GBP -> USD -> JPY -> GBP : 1 pound becomes 1.0274
+GBP -> EUR -> USD -> JPY -> GBP : 1 pound becomes 1.0399
+```
+
 `math.prod` multiplies all the numbers it is given.
 
 There is an arbitrage, in fact several: even pounds to euros to dollars and back gains 0.75%, the loop through yen turns 1 pound into about 1.027, and going through euros, dollars and yen into about 1.040. Bellman-Ford spots this without trying every loop, which would be hopeless with many currencies. Real markets close such gaps within moments, which is why trading systems watch for them continuously.
@@ -89,7 +102,7 @@ To get shortest distances between **every** pair of vertices, one could run Dijk
 
 Number the vertices 0 to V − 1, and keep a table `dist[i][j]`. Initially it holds the direct edge weights (0 on the diagonal, infinity where there is no edge). Then consider each vertex k in turn as a possible **stepping stone**: for every pair i, j, check whether going i → k → j beats the best route found so far. After vertex k has been considered, `dist[i][j]` is the shortest path from i to j using only vertices 0 to k as stepping stones. After all V of them, it is the true shortest distance. Three nested loops: O(V³). Predict before running: what is the shortest distance from York to Hull, which have no direct road?
 
-```python
+```python type
 INF = float("inf")
 cities = ["York", "Leeds", "Hull", "Sheffield", "Lincoln"]
 road_list = [("York", "Leeds", 40), ("York", "Sheffield", 90), ("Leeds", "Sheffield", 55), ("Leeds", "Hull", 95),
@@ -109,6 +122,15 @@ for k in range(n):
 print(" " * 10 + "".join(f"{c[:6]:>8}" for c in cities))
 for c, row in zip(cities, dist):
     print(f"{c:<10}" + "".join(f"{d:>8}" for d in row))
+```
+
+```output
+              York   Leeds    Hull  Sheffi  Lincol
+York             0      40     135      90     130
+Leeds           40       0      95      55     130
+Hull           135      95       0     150      80
+Sheffield       90      55     150       0      75
+Lincoln        130     130      80      75       0
 ```
 
 The loop over k must be the **outermost**: the table must be complete for stepping stones 0 to k − 1 before k is tried. Swapping the loop order is a classic bug that gives wrong answers on some graphs.

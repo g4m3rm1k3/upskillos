@@ -25,7 +25,7 @@ A string fixed at both ends can only hold shapes that fit between the ends: sin(
 
 Predict before running: the low E string of a guitar is 648 mm long, with 6.2 g of mass per metre, and must sound 82.41 Hz. What tension is needed, and what are its first harmonics?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,6 +36,12 @@ c = math.sqrt(T / mu)
 print(f"tension {T:.1f} N (about {T / 9.81:.1f} kg weight), wave speed {c:.1f} m/s")
 print("harmonics (Hz):", [round(n * c / (2 * L), 2) for n in range(1, 7)])
 print(f"tuning: 1% more tension raises the pitch by {100 * (math.sqrt(1.01) - 1):.2f}%")
+```
+
+```output
+tension 70.7 N (about 7.2 kg weight), wave speed 106.8 m/s
+harmonics (Hz): [82.41, 164.82, 247.23, 329.64, 412.05, 494.46]
+tuning: 1% more tension raises the pitch by 0.50%
 ```
 
 The string needs about 70.7 N, the weight of a 7.2 kg mass, and waves run along it at about 107 m/s. Its harmonics are 82.41, 164.82, 247.23 Hz and so on, exact multiples. Since f ∝ √T, 1% more tension raises the pitch by about 0.5%. Tuning pegs adjust tension; frets shorten L; heavier strings have larger μ and lower notes.
@@ -57,7 +63,7 @@ Stability takes a new form. A wave travels c Δt in one step, and the scheme onl
 
 Predict before running: the string is plucked 1/5 of the way along and released. After exactly one period, 2L/c, it should be back where it started. How close does the simulation come with C = 1, C = 0.9 and C = 1.02?
 
-```python
+```python type
 def pluck_shape(xq, p, height=0.003):
     return np.where(xq <= p, height * xq / p, height * (L - xq) / (L - p))
 
@@ -94,6 +100,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+C = 1.0: 400 steps of 30.34 µs, largest |y| 0.003 m, after one period off by 3.9e-18 m
+C = 0.9: 444 steps of 27.30 µs, largest |y| 0.003 m, after one period off by 5.7e-05 m
+C = 1.02: 392 steps of 30.94 µs, largest |y| 1.38e+61 m, after one period off by 1.4e+61 m
+```
+
 With C = 1 the string returns to its starting shape to within 10⁻¹⁷ m, exact up to rounding. For the 1D wave equation, C = 1 is a special "magic" step at which the scheme is exact, for a reason the next section makes clear. With C = 0.9 it is off by about 6 × 10⁻⁵ m, 2% of the 3 mm pluck: the scheme makes high harmonics travel slightly too slowly (**numerical dispersion**), and the sharp corner smears. With C = 1.02, just 2% over the limit, the displacement reaches about 10⁶¹ m. The snapshots show the plucked corner splitting into two corners that run apart. At half a period the shape is the original turned upside down and mirrored.
 
 ## Travelling waves and a cable's tension
@@ -111,7 +123,7 @@ This gives a practical way to measure tension in a guy wire or a stay cable with
 
 Predict before running: a 30 m guy wire weighs 1.2 kg per metre and the ripple returns after 0.4 s. What is the tension? And where are the two halves of a bump struck 5 m from one end, a quarter and a half of the round trip later?
 
-```python
+```python type
 L_cable, mu_cable, t_round = 30.0, 1.2, 0.4
 c_cable = 2 * L_cable / t_round
 print(f"wave speed {c_cable:.0f} m/s, tension {mu_cable * c_cable ** 2 / 1000:.1f} kN")
@@ -124,6 +136,15 @@ for frac in [0.0, 0.25, 0.5, 1.0]:
     row = trip[round(frac * steps)]
     print(f"{frac:4.2f} of the round trip: highest {row.max():+.3f} m at {xc[np.argmax(row)]:5.2f} m, lowest {row.min():+.3f} m at {xc[np.argmin(row)]:5.2f} m")
 print(f"after the full round trip the shape differs from the start by {np.abs(trip[-1] - pulse).max():.1e} m")
+```
+
+```output
+wave speed 150 m/s, tension 27.0 kN
+0.00 of the round trip: highest +0.050 m at  5.00 m, lowest +0.000 m at 18.65 m
+0.25 of the round trip: highest +0.025 m at 20.00 m, lowest -0.025 m at 10.00 m
+0.50 of the round trip: highest +0.000 m at  0.00 m, lowest -0.050 m at 25.00 m
+1.00 of the round trip: highest +0.050 m at  5.00 m, lowest +0.000 m at  0.00 m
+after the full round trip the shape differs from the start by 3.5e-17 m
 ```
 
 The ripple travels at 150 m/s, so the tension is 1.2 × 150² = 27 kN. A quarter of the round trip later (0.1 s, 15 m of travel) the right-going half, +0.025 m, is at 20 m. The left-going half has hit the near end and come back inverted, −0.025 m at 10 m. At half the round trip both halves arrive at 25 m, both inverted, and add up to −0.05 m. After the full round trip the bump is back at 5 m, upright, having been flipped twice. In practice the timing is read from an accelerometer on the cable, and the tension follows from one division and one square.
@@ -144,7 +165,7 @@ The factor sin(nπp/L) is the interesting part. A mode that has a stationary poi
 
 Predict before running: which harmonics vanish when the string is plucked at 1/5 of its length? And does the mode sum agree with the simulation?
 
-```python
+```python type
 def b_coef(n, p, height=0.003):
     return 2 * height * L ** 2 / (n ** 2 * math.pi ** 2 * p * (L - p)) * math.sin(n * math.pi * p / L)
 
@@ -158,6 +179,13 @@ k = round(period / 3 / dt)
 sim = leapfrog(y0, C, k)[-1]
 modes = sum(b_coef(n, L / 5) * np.sin(n * math.pi * x / L) * math.cos(n * math.pi * c / L * k * dt) for n in range(1, 400))
 print(f"at a third of a period: largest |y| {np.abs(modes).max() * 1000:.3f} mm, simulation differs from the mode sum by {np.abs(sim - modes).max() * 1000:.4f} mm")
+```
+
+```output
+middle (L/2)           1.000 0.000 0.111 0.000 0.040 0.000 0.020 0.000 0.012 0.000 0.008 0.000
+L/5                    1.000 0.405 0.180 0.063 0.000 0.028 0.033 0.025 0.012 0.000 0.008 0.011
+near the bridge (L/10) 1.000 0.476 0.291 0.192 0.129 0.085 0.053 0.030 0.012 0.000 0.008 0.013
+at a third of a period: largest |y| 1.744 mm, simulation differs from the mode sum by 0.0174 mm
 ```
 
 The rows give each harmonic's amplitude relative to the fundamental. Plucked in the middle, every even harmonic is exactly zero. At L/5 the 5th and 10th vanish. Near the bridge the amplitudes fall away slowly (0.48, 0.29, 0.19, ...), a bright sound. Even this pluck silences the 10th harmonic, which has a node at L/10. The simulation with C = 0.9 matches the 400-mode sum to about 0.017 mm, 1% of the 1.744 mm peak: two completely different methods telling the same story.
@@ -175,7 +203,7 @@ An electric guitar's pickup senses the string's motion at one point. Recording t
 
 Predict before running: with the pickup at 0.09 m from the end, are the 5th and 10th harmonics present in the spectrum?
 
-```python
+```python type
 C = 1.0
 dt = C * dx / c
 steps = round(0.5 / dt)
@@ -205,6 +233,21 @@ ax.set_ylim(1e-5, 10)
 ax.set_xlabel("frequency (Hz)")
 ax.set_ylabel("amplitude (mm)")
 plt.show()
+```
+
+```output
+pickup at 0.091 m, sampling rate 32964 Hz, 16483 samples
+harmonic  1 near   82.4 Hz: amplitude 0.9248 mm
+harmonic  2 near  164.8 Hz: amplitude 0.6222 mm
+harmonic  3 near  247.2 Hz: amplitude 0.3545 mm
+harmonic  4 near  329.6 Hz: amplitude 0.1346 mm
+harmonic  5 near  412.0 Hz: amplitude 0.0000 mm
+harmonic  6 near  494.5 Hz: amplitude 0.0288 mm
+harmonic  7 near  576.9 Hz: amplitude 0.0041 mm
+harmonic  8 near  659.3 Hz: amplitude 0.0193 mm
+harmonic  9 near  741.7 Hz: amplitude 0.0199 mm
+harmonic 10 near  824.1 Hz: amplitude 0.0000 mm
+harmonic 11 near  906.5 Hz: amplitude 0.0174 mm
 ```
 
 The spectrum shows peaks at multiples of 82.4 Hz (each within one 2 Hz frequency bin). The 5th and 10th are missing: they show as 0.0000 mm, in fact below 10⁻⁶ mm, tens of thousands of times weaker than their neighbours. The other harmonics are scaled by how much each mode moves at the pickup. A pickup near the bridge moves little in the low modes, so it hears relatively more of the high ones: another way guitar makers shape tone. Real strings also lose energy and are slightly stiff, which bends the harmonics a little sharp. Adding those effects is a matter of extra terms in the same equation.

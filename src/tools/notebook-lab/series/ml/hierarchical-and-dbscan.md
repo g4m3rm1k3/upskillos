@@ -15,7 +15,7 @@ The common form of hierarchical clustering is **agglomerative** ("gathering toge
 
 Here is single linkage by hand, on six numbers on a line:
 
-```python
+```python type
 points = [1, 2, 4, 8, 9, 15]
 clusters = [[p] for p in points]
 
@@ -35,18 +35,34 @@ while len(clusters) > 1:
     del clusters[j]
 ```
 
+```output
+merge [1] and [2] at distance 1
+merge [8] and [9] at distance 1
+merge [1, 2] and [4] at distance 2
+merge [1, 2, 4] and [8, 9] at distance 4
+merge [1, 2, 4, 8, 9] and [15] at distance 6
+```
+
 The two loops compare every pair of current clusters and remember the closest pair; then that pair is merged into one list and the other entry deleted. First 1 and 2 merge (distance 1), then 8 and 9 (also 1), then 4 joins {1, 2} (its nearest member, 2, is 2 away), then {1, 2, 4} and {8, 9} merge at distance 4, and finally 15 joins at distance 6.
 
 The **merge heights** are the useful part. Reading the record backwards: cut just below height 6 and you get 2 clusters, {1, 2, 4, 8, 9} and {15}; cut below height 4 and you get 3 clusters. Every possible number of clusters is available from one run.
 
 SciPy computes the same record, efficiently, with `linkage`:
 
-```python
+```python type
 import numpy as np
 from scipy.cluster.hierarchy import linkage
 
 points = np.array([1.0, 2.0, 4.0, 8.0, 9.0, 15.0]).reshape(-1, 1)
 print(linkage(points, method="single"))
+```
+
+```output
+[[0. 1. 1. 2.]
+ [3. 4. 1. 2.]
+ [2. 6. 2. 3.]
+ [7. 8. 4. 5.]
+ [5. 9. 6. 6.]]
 ```
 
 Each row is one merge: the two clusters merged, the distance, and the size of the new cluster. The original points are numbered 0 to 5, and each new cluster gets the next number, so cluster 6 is {1, 2} (points 0 and 1), cluster 7 is {8, 9}, and so on. The heights 1, 1, 2, 4, 6 are exactly the ones found by hand.
@@ -55,7 +71,7 @@ Each row is one merge: the two clusters merged, the distance, and the size of th
 
 The merge record is usually drawn as a **dendrogram**: each merge is a horseshoe joining two branches at the height where they merged. Here it is with Ward's method for 30 points from three groups:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 from sklearn.datasets import make_blobs
@@ -74,6 +90,11 @@ print("clusters found by cutting at height 10:", labels)
 print("the true groups:                       ", true_groups + 1)
 ```
 
+```output
+clusters found by cutting at height 10: [2 1 1 2 3 2 2 1 1 3 3 2 3 3 1 1 2 2 3 1 1 3 2 2 1 1 2 3 2 3]
+the true groups:                        [1 3 3 1 2 1 1 3 3 2 2 1 2 2 3 3 2 1 2 3 3 2 1 1 3 3 1 2 1 2]
+```
+
 Every point starts at the bottom; branches join as you move up. Three groups join each other only at large heights, so the tall vertical lines near the top are the gaps between natural clusters. A horizontal cut through those tall lines (the dashed line at height 10) crosses three branches: three clusters. `fcluster(merges, t=10, criterion="distance")` performs the cut and returns a cluster number (from 1) for each point. Compare the two printed rows, remembering that cluster numbers are arbitrary: the cut's cluster 2 is the true group 1, its cluster 1 is group 3, and its cluster 3 is group 2. With that translation, all but one of the 30 points (the 17th) land in their true group.
 
 The dendrogram shows at a glance how many clusters are plausible: look for a range of heights where cutting gives the same answer, that is, long vertical lines with nothing joining. It works well for up to a few hundred points; beyond that it becomes unreadable, and agglomerative clustering itself becomes slow, since each merge compares pairs of clusters.
@@ -82,7 +103,7 @@ The dendrogram shows at a glance how many clusters are plausible: look for a ran
 
 The linkage choice decides which shapes the method can find. Before running the next cell, predict: which linkage will get the two moons right? To compare clusterings with the true groups, this lesson uses the **adjusted Rand index** (ARI, `adjusted_rand_score`): it measures how consistently two labellings put pairs of points together, ignoring the arbitrary cluster numbers. It is 1 for a perfect match and about 0 for a labelling no better than random.
 
-```python
+```python type
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.datasets import make_blobs, make_circles, make_moons
@@ -102,6 +123,12 @@ for name, (X, y) in datasets.items():
     print(f"{name:<13}", "  ".join(f"{method} {score:.2f}" for method, score in scores.items()))
 ```
 
+```output
+moons         k-means 0.23  single 1.00  complete 0.20  average 0.43  ward 0.30
+circles       k-means -0.00  single 1.00  complete 0.00  average 0.00  ward -0.00
+uneven blobs  k-means 0.94  single 0.55  complete 0.97  average 0.97  ward 0.97
+```
+
 scikit-learn's `AgglomerativeClustering` builds the tree and cuts it at `n_clusters`. The pattern is striking:
 
 - **Single linkage** gets the moons and the circles **perfectly** (1.00), where every other method fails (k-means 0.23 on the moons, 0.00 on the circles). Joining clusters through their closest points lets it follow a curved chain of points of any shape.
@@ -119,7 +146,7 @@ Single linkage has a worse weakness still: **outliers**. A handful of stray poin
 
 Clusters are then formed by connecting core points that are within `eps` of each other, like joining up overlapping circles, and attaching each border point to a neighbouring core point's cluster. Noise points get the label −1. The number of clusters is whatever the density structure gives.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
@@ -144,6 +171,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+clusters found: 2
+outliers marked as noise: 12 of 15
+moon points marked as noise: 0
+ARI on the moon points: 1.0
+```
+
 DBSCAN finds exactly the two moons, perfectly (ARI 1.0), and marks 12 of the 15 outliers as noise (black crosses). The other 3 happened to land close enough to a moon to count as part of it, which is reasonable: they are not outliers by any local measure. `model.core_sample_indices_` lists the core points, if you want to see them.
 
 ## Choosing eps
@@ -152,7 +186,7 @@ DBSCAN's results depend heavily on `eps`. Too small, and the dense regions break
 
 A useful guide is the **k-distance plot**: for each point, find the distance to its `min_samples`-th nearest neighbour (counting itself), sort these distances, and plot them. Points inside clusters have small k-distances, and noise points large ones; a good `eps` sits around the bend where the curve shoots up:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
@@ -170,6 +204,10 @@ ax.set_xlabel("points, sorted")
 ax.set_ylabel("distance to 5th nearest neighbour")
 plt.show()
 print("median k-distance:", np.median(k_distance).round(3), " largest:", k_distance[-5:].round(2))
+```
+
+```output
+median k-distance: 0.08  largest: [1.14 1.17 1.27 1.54 1.84]
 ```
 
 `NearestNeighbors(n_neighbors=5).kneighbors(X)` returns, for each point, the distances to its 5 nearest points, the first being the point itself at distance 0. The curve is flat and low for most points (median about 0.08) and rises sharply over the last few: the outliers. An `eps` around 0.15 to 0.2 sits just past the flat part.

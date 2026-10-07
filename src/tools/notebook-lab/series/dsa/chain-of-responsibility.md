@@ -15,7 +15,7 @@ This lesson covers:
 
 An approval routine checks the amount against every level in turn. Predict before reading on: what has to change to add a "senior manager" level between manager and director, or to let the finance team handle anything marked "capital"?
 
-```python
+```python type
 def approve(amount, kind="consumables"):
     if amount <= 500:
         return "team leader"
@@ -30,13 +30,20 @@ for amount in [120, 3200, 18000, 250000]:
     print(amount, "->", approve(amount))
 ```
 
+```output
+120 -> team leader
+3200 -> manager
+18000 -> director
+250000 -> board
+```
+
 Every rule lives in one function, so each new level or special case means editing it, and the special cases ("capital items go to finance first") tangle with the thresholds. The approval levels cannot be configured per site, tested separately, or reordered without rewriting the function.
 
 ## A chain of handlers
 
 Make each level a **handler**: a small function that either returns a result (it handled the request) or returns `None` (not mine, pass it on). The chain is an ordered list of handlers, and dispatching tries each in turn until one answers. Adding a level is inserting a handler, and different sites can use different chains. Predict before running: who approves the £8,000 capital purchase, and who approves it if the finance handler is left out?
 
-```python
+```python type
 def up_to(limit, approver):
     def handler(request):
         return approver if request["amount"] <= limit else None
@@ -64,6 +71,13 @@ except LookupError as error:
     print("LookupError:", error)
 ```
 
+```output
+{'amount': 120} -> team leader | without finance: team leader
+{'amount': 8000, 'kind': 'capital'} -> finance | without finance: director
+{'amount': 250000} -> board | without finance: board
+LookupError: nobody could handle {'amount': 900}
+```
+
 `up_to` is a small factory that builds a threshold handler, so each level is one line. The final `float("inf")` level catches everything left, so no request falls off the end of the standard chain.
 
 The capital purchase goes to finance when that handler is first in the chain, and to the director when it is not. The chain decides by **order**: the first handler able to answer wins. A request that no handler takes raises an error rather than vanishing. Whether a chain should fail loudly or have a catch-all at the end is a design decision, and it is worth making on purpose.
@@ -72,7 +86,7 @@ The capital purchase goes to finance when that handler is first in the chain, an
 
 The classic form links handler objects: each holds a reference to the **next** handler and calls it when it cannot deal with a request itself. This form suits handlers that keep state or configuration, and it lets a handler do something **and** pass the request on (log it, count it), not just one or the other. Predict before running: which handlers see the vibration alarm, and who resolves it?
 
-```python
+```python type
 class Handler:
     def __init__(self):
         self.next = None
@@ -117,6 +131,13 @@ for alarm in [{"code": "E101", "severity": 1, "category": "process"},
 print("recorder saw:", recorder.seen)
 ```
 
+```output
+controller auto-cleared E101
+supervisor acknowledged V230
+maintenance ticket for S001
+recorder saw: ['E101', 'V230', 'S001']
+```
+
 `then` returns the handler it was given, so `a.then(b).then(c)` links a to b, then b to c.
 
 Every alarm passes the recorder, which acts and passes it on. The controller clears severity 1. The supervisor takes the vibration alarm, but not the safety alarm of the same severity, which goes on to maintenance. Each handler's rule is in its own class, and the chain is assembled in one place, where it can be rearranged or extended without touching any handler.
@@ -125,7 +146,7 @@ Every alarm passes the recorder, which acts and passes it on. The controller cle
 
 A powerful variant gives each link a reference to "the rest of the chain" as a function, `next_step`. The link can act **before** calling it, act **after** it returns, change the request or the response, or not call it at all (to short-circuit). This is **middleware**, the structure behind web frameworks, where each request passes through layers for logging, authentication, caching and error handling on its way to the code that answers it. Each layer is independent, and the order of layers matters. Predict before running: which request never reaches the core handler, and what does the timing layer report for it?
 
-```python
+```python type
 import time
 
 def timing(request, next_step):

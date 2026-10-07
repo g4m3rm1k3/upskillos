@@ -18,7 +18,7 @@ How to use it: run the cells in order, because later cells use names from earlie
 
 `random` provides random numbers (exploring, tie-breaking). `numpy`, nicknamed `np`, provides arrays for the maze and the Q-table. `deque` is a list that is efficient to take items off the front of; Cell 5 needs it. `matplotlib.pyplot` draws pictures of the table.
 
-```python
+```python type
 import random
 import numpy as np
 from collections import deque
@@ -53,6 +53,15 @@ print(walls)
 print("start", START, "goal", GOAL, "size", ROWS, "x", COLS)
 ```
 
+```output
+[[0 0 0 0 0]
+ [1 1 0 1 0]
+ [0 0 0 0 0]
+ [0 1 1 1 1]
+ [0 0 0 0 0]]
+start (0, 0) goal (4, 4) size 5 x 5
+```
+
 `SMALL` is a list of five strings, and each string is one row of the maze. Reading it like a picture: `S` is the start, `G` is the goal, `#` is a wall, and `.` is an open cell. The maze is built so the obvious route is blocked. The goal is straight down from the start, but walls force a long detour.
 
 `load_maze(text)` converts the picture into data. `global MAZE_TEXT, ROWS, ...` says that the names listed live outside the function and we want to *assign* them (without `global`, Python would create separate local names that vanish when the function ends). It records the picture, counts the rows (`len(text)`) and columns (`len(text[0])`, the length of the first row), and creates `walls`, a grid of zeros the same size. The double loop visits every `(r, c)` position, reads the character `ch` at row `r` and column `c` (`text[r][c]`: first pick the row string, then the character in it), and does one of three things: a `#` puts a 1 in `walls`; an `S` records `START = (r, c)`; a `G` records `GOAL = (r, c)`.
@@ -63,7 +72,7 @@ The maze has exactly two routes to the goal. A short one goes through the gap at
 
 ## Cell 3: giving every cell one number
 
-```python
+```python type
 def state_of(cell):
     return cell[0] * COLS + cell[1]
 
@@ -76,11 +85,17 @@ n_states = ROWS * COLS
 print(n_states)
 ```
 
+```output
+0 7 24
+(1, 2) (4, 4)
+25
+```
+
 The Q-table needs one row per cell, so each `(row, col)` pair must become a single whole number. `state_of` computes `row * COLS + col`: count the cells left to right and top to bottom, like reading a page. Cell `(1, 2)` is `1 * 5 + 2 = 7`. `cell_of` reverses it with `divmod(state, COLS)`, which returns the quotient and remainder of dividing by 5, and these are the row and the column. The outputs confirm it: `(0, 0)` is state 0, `(1, 2)` is state 7, the goal `(4, 4)` is state 24, and `cell_of(7)` gives back `(1, 2)`. `n_states` is the number of cells (5 x 5 = 25), including wall cells, whose rows will simply never be used.
 
 ## Cell 4: the environment: what happens when the agent moves
 
-```python
+```python type
 ACTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 NAMES = ["up", "down", "left", "right"]
 
@@ -104,6 +119,13 @@ print(step((0, 1), 1))
 print(step((4, 3), 3))
 ```
 
+```output
+((0, 1), -1, False)
+((0, 0), -5, False)
+((0, 1), -5, False)
+((4, 4), 10, True)
+```
+
 The four actions are numbered 0 to 3 in this order: up, down, left, right. Each `ACTIONS` entry is `(row change, column change)`. Moving "up" is `-1` in the row because row 0 is at the top. `NAMES` is for printing.
 
 The three constants are the **rewards**, and choosing them is how *you* tell the agent what you want. Each ordinary move costs 1 point, so wandering is penalised and short routes are preferred. Bumping into a wall or the outer boundary costs 5 points, so the agent learns not to try impossible moves. Reaching the goal gives +10.
@@ -116,7 +138,7 @@ The four test lines: `step((0, 0), 3)` is "right" from the start, giving `((0, 1
 
 The learning agent can never see the maze. But *we* can compute the true answer, so that later we can tell whether the agent found the best route.
 
-```python
+```python type
 def bfs():
     dist = {START: 0}
     queue = deque([START])
@@ -134,6 +156,10 @@ def bfs():
 print(bfs())
 ```
 
+```output
+12
+```
+
 This is **breadth-first search** (BFS): explore outward from the start one "ring" of cells at a time, so the first time we reach the goal, it is by a shortest route.
 
 `dist` is a dictionary mapping each cell reached so far to the number of steps it took to get there, starting with the start at 0. `queue` is a waiting line of cells still to explore. The `while queue:` loop continues while the line is non-empty. `queue.popleft()` takes the cell at the front. If it is the goal, return its distance. Otherwise try all four actions with `step`, which also correctly handles walls (a blocked move returns the same cell, which is already in `dist`, so nothing happens). For each *new* neighbour (`nxt not in dist`) we record its distance as one more than the current cell's and add it to the back of the line. Output: **12**. The shortest route is 12 steps. Remember this number. The straight-line "Manhattan" distance from `(0, 0)` to `(4, 4)` is only 8, which is why walls make this problem interesting.
@@ -142,7 +168,7 @@ This is **breadth-first search** (BFS): explore outward from the start one "ring
 
 ## Cell 6: the table, and its two key operations
 
-```python
+```python type
 Q = np.zeros((n_states, 4))
 print(Q.shape)
 print(Q[state_of((0, 0))])
@@ -151,13 +177,20 @@ print(Q[state_of((0, 0))])
 print(Q[state_of((0, 0))].max(), Q[state_of((0, 0))].argmax())
 ```
 
+```output
+(25, 4)
+[0. 0. 0. 0.]
+[ 0.   0.   0.  -2.5]
+0.0 0
+```
+
 `np.zeros((n_states, 4))` builds a table of 25 rows and 4 columns, all zeros: `Q.shape` prints `(25, 4)`. Row = which cell you are in; column = which action. Zero means "I know nothing yet", not "this is neutral". `Q[state_of((0, 0))]` is row 0, the four numbers for the start cell. The next lines write `-2.5` into the box for "right" (column 3) of the start cell and print the row again: `[0, 0, 0, -2.5]`.
 
 The last line shows the two operations that everything else uses. `.max()` is the **largest number in the row**, which answers "how good is this cell, if I act well from here?" Here it is `0.0`, since the other three are 0 and larger than -2.5. `.argmax()` is the **position of that largest number**, which answers "which action is best?" It prints `0`, the first of the zeros, meaning "up". On an untrained row `argmax` is meaningless: the first tied entry wins.
 
 ## Cell 7: two helpers to look at the table
 
-```python
+```python type
 def show_values(Q):
     values = Q.max(axis=1)
     for r in range(ROWS):
@@ -192,6 +225,19 @@ show_values(Q)
 show_policy(Q)
 ```
 
+```output
+   0.0    0.0    0.0    0.0    0.0
+  ###    ###     0.0   ###     0.0
+   0.0    0.0    0.0    0.0    0.0
+   0.0   ###    ###    ###    ###
+   0.0    0.0    0.0    0.0    0.0
+? ? ? ? ?
+# # ? # ?
+? ? ? ? ?
+? # # # #
+? ? ? ? G
+```
+
 These functions only *display* things, but you will use them constantly, because looking at the table is how you understand it. `show_values(Q)` takes the best number in every row (`Q.max(axis=1)`: `axis=1` means "collapse across the columns, once per row", giving 25 numbers) and prints them as a 5 x 5 grid. Walls print as `###`. `f"{value:6.1f} "` formats a number to one decimal place in a field 6 characters wide, so columns line up.
 
 `show_policy(Q)` draws, for every cell, the arrow of the best action: `ARROWS[np.argmax(Q[s])]`, with `#` for walls and `G` for the goal. `elif not Q[s].any()` is true when a row is entirely zero (`.any()` is True if any entry is non-zero), and we print `?` there so we do not draw a meaningless arrow for a cell the agent has never learned about.
@@ -200,7 +246,7 @@ On the fresh all-zero table: every value is `0.0` and every cell shows `?`. That
 
 ## Cell 8: choosing an action (explore or exploit)
 
-```python
+```python type
 def choose_action(Q, s, epsilon):
     if random.random() < epsilon:
         return random.randrange(4)
@@ -217,6 +263,12 @@ print([choose_action(Q, s, 0.0) for _ in range(8)])
 print([choose_action(Q, s, 1.0) for _ in range(8)])
 ```
 
+```output
+[3, 3, 2, 2, 1, 2, 0, 2]
+[3, 3, 3, 3, 3, 3, 3, 3]
+[0, 3, 0, 2, 2, 0, 1, 1]
+```
+
 This is **epsilon-greedy** selection. With probability `epsilon`, ignore the table and pick a random action: **exploring**, which lets the agent discover things it does not yet believe in. Otherwise pick the best action in the row: **exploiting** what it has learned.
 
 `random.random()` returns a number between 0 and 1, so `< epsilon` is true with probability `epsilon`. For the exploit branch, `row == row.max()` produces four True/False values marking which entries equal the maximum, and `np.flatnonzero(...)` turns that into their positions. If several actions tie, `random.choice(best)` picks one of them at random. This matters: plain `argmax` would always pick action 0 (up) on a fresh row, building a bias into the whole run.
@@ -227,7 +279,7 @@ Reading the three test lines. With an all-zero row and `epsilon = 0` the choices
 
 ## Cell 9: one update, printed, near the goal
 
-```python
+```python type
 ALPHA = 0.5
 GAMMA = 0.95
 
@@ -249,6 +301,22 @@ trace_step(Q, (4, 2), 3)
 trace_step(Q, (4, 1), 3)
 trace_step(Q, (4, 3), 3)
 show_values(Q)
+```
+
+```output
+at (4, 3) (row 23) action right -> lands (4, 4) (row 24), reward 10
+   old 0.000 | best_next 0.000 | target 10 + 0.95 * 0.000 = 10.000 | new 5.000
+at (4, 2) (row 22) action right -> lands (4, 3) (row 23), reward -1
+   old 0.000 | best_next 5.000 | target -1 + 0.95 * 5.000 = 3.750 | new 1.875
+at (4, 1) (row 21) action right -> lands (4, 2) (row 22), reward -1
+   old 0.000 | best_next 1.875 | target -1 + 0.95 * 1.875 = 0.781 | new 0.391
+at (4, 3) (row 23) action right -> lands (4, 4) (row 24), reward 10
+   old 5.000 | best_next 0.000 | target 10 + 0.95 * 0.000 = 10.000 | new 7.500
+   0.0    0.0    0.0    0.0    0.0
+  ###    ###     0.0   ###     0.0
+   0.0    0.0    0.0    0.0    0.0
+   0.0   ###    ###    ###    ###
+   0.0    0.4    1.9    7.5    0.0
 ```
 
 `ALPHA` (the learning rate) is the fraction of the way we move toward a new estimate: 0.5 means halfway. `GAMMA` (the discount factor) says how much a reward one step further away is worth: 0.95 means 95% of its face value.
@@ -274,12 +342,21 @@ The value map at the end shows the bottom row `0.0, 0.4, 1.9, 7.5, 0.0`. **That 
 
 ## Cell 10: how the table learns that walls are bad
 
-```python
+```python type
 Q = np.zeros((n_states, 4))
 trace_step(Q, (2, 2), 1)
 print(Q[state_of((2, 2))])
 trace_step(Q, (2, 2), 1)
 print(Q[state_of((2, 2))])
+```
+
+```output
+at (2, 2) (row 12) action down -> lands (2, 2) (row 12), reward -5
+   old 0.000 | best_next 0.000 | target -5 + 0.95 * 0.000 = -5.000 | new -2.500
+[ 0.  -2.5  0.   0. ]
+at (2, 2) (row 12) action down -> lands (2, 2) (row 12), reward -5
+   old -2.500 | best_next 0.000 | target -5 + 0.95 * 0.000 = -5.000 | new -3.750
+[ 0.   -3.75  0.    0.  ]
 ```
 
 Here the agent is at `(2, 2)` and presses "down" twice. Below `(2, 2)` is a wall, so `step` returns the same cell with reward -5. First press: old 0, `best_next` is 0 (the row of `(2, 2)` is all zeros, since we landed where we started), target `-5 + 0 = -5`, new = `0.5 x -5` = **-2.5**. The row printed is `[0, -2.5, 0, 0]`: only the "down" box changed. Second press: old -2.5, target is again -5, new = `-2.5 + 0.5 x (-5 - (-2.5))` = **-3.75**, moving closer to -5.
@@ -290,7 +367,7 @@ Why this teaches the agent to avoid walls: the other three boxes in that row are
 
 ## Cell 11: the full training loop
 
-```python
+```python type
 def train(episodes, alpha=0.5, gamma=0.95, eps_start=1.0, eps_min=0.05,
           eps_decay=0.99, max_steps=200):
     Q = np.zeros((ROWS * COLS, 4))
@@ -322,6 +399,16 @@ for i in range(0, 300, 50):
     print("episodes", i, "to", i + 49, ": average steps", round(sum(history[i:i + 50]) / 50, 1))
 ```
 
+```output
+[200, 103, 200, 200, 121, 123, 80, 122, 100, 48, 63, 38]
+episodes 0 to 49 : average steps 71.2
+episodes 50 to 99 : average steps 23.5
+episodes 100 to 149 : average steps 17.7
+episodes 150 to 199 : average steps 15.2
+episodes 200 to 249 : average steps 13.9
+episodes 250 to 299 : average steps 13.0
+```
+
 An **episode** is one attempt from the start until reaching the goal or running out of steps. `train` runs many of them. Setup: a fresh zero table, `epsilon` starting at 1.0 (always explore, because we know nothing), and an empty `history` that will record how many steps each episode took.
 
 Outer loop (`for episode in range(episodes)`): each episode begins at `START`. Inner loop (`for t in range(max_steps)`): at most 200 steps, so an agent that wanders aimlessly cannot run forever. Each step does what Cells 8 and 9 did, without the printing: find the row `s`, choose an action with epsilon-greedy, ask `step` what happens, compute `best_next` (0 if finished), compute `target`, and apply the update with `Q[s, a] += alpha * (target - Q[s, a])`. Then `cell = next_cell` moves the agent, and `if done: break` leaves the inner loop when the goal is reached.
@@ -332,10 +419,24 @@ The output: the first twelve episodes took `[200, 103, 200, 200, 121, 123, 80, .
 
 ## Cell 12: reading the learned table
 
-```python
+```python type
 show_values(Q)
 print()
 show_policy(Q)
+```
+
+```output
+  -2.9   -2.0   -1.1   -2.0   -2.9
+  ###    ###    -0.1   ###    -2.1
+   3.2    2.1    1.0   -0.1   -1.1
+   4.4   ###    ###    ###    ###
+   5.7    7.1    8.5   10.0    0.0
+
+> > v < <
+# # v # v
+v < < < <
+v # # # #
+> > > > G
 ```
 
 Two views of the same table. The value map (best number per cell) rises steadily along the route to the goal: from the start `-2.9, -2.0, -1.1, -0.1`, then down through `1.0`, left along the third row `2.1, 3.2`, down to `4.4, 5.7`, and along the bottom `7.1, 8.5, 10.0`. The goal's neighbour holds 10.0, which is exactly the goal reward.
@@ -346,7 +447,7 @@ The arrow map is the **policy**. From the top-left it goes right, right, then do
 
 ## Cell 13: following the policy and comparing with the true shortest path
 
-```python
+```python type
 def greedy_path(Q, max_len=50):
     cell = START
     path = [cell]
@@ -382,13 +483,23 @@ print("learned path length:", len(path) - 1, " shortest possible:", bfs())
 show_path(path)
 ```
 
+```output
+[(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (2, 1), (2, 0), (3, 0), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
+learned path length: 12  shortest possible: 12
+S * * . .
+# # * # .
+* * * . .
+* # # # #
+* * * * G
+```
+
 `greedy_path` starts at `START` and repeatedly takes the best action in the current cell (`np.argmax`, no randomness at all), recording each cell visited, until the goal is reached. `max_len=50` is a safety limit: a badly trained table can loop forever (for example two cells pointing at each other), and in that case the function returns `None` instead of hanging. `show_path` prints the maze with `*` marking the route.
 
 The output: the path is 13 cells, so **12 steps**, exactly equal to the BFS answer from Cell 5. The learned route uses the shortcut through `(1, 2)` rather than the long way around.
 
 ## Cell 14: extending train, and watching the ripple spread
 
-```python
+```python type
 def train(episodes, alpha=0.5, gamma=0.95, eps_start=1.0, eps_min=0.05,
           eps_decay=0.99, max_steps=200, Q=None, bonus=None, stop_when_optimal=False):
     if Q is None:
@@ -431,6 +542,36 @@ for total in (1, 5, 20, 100):
     print()
 ```
 
+```output
+after another 1 episodes
+  -2.2   -2.1   -2.0   -2.0   -1.8
+  ###    ###    -1.9   ###    -1.2
+  -1.6   -1.8   -1.8   -1.8   -1.6
+  -1.2   ###    ###    ###    ###
+  -0.9   -0.8    0.0    5.0    0.0
+
+after another 5 episodes
+  -5.2   -5.0   -4.7   -4.5   -4.4
+  ###    ###    -4.3   ###    -4.4
+  -3.2   -3.5   -3.9   -4.1   -3.8
+  -1.9   ###    ###    ###    ###
+   0.4    4.1    7.8    9.8    0.0
+
+after another 20 episodes
+  -4.1   -2.6   -1.3   -4.1   -5.9
+  ###    ###    -0.2   ###    -5.7
+   3.2    2.0    0.9   -2.7   -5.6
+   4.4   ###    ###    ###    ###
+   5.7    7.1    8.5   10.0    0.0
+
+after another 100 episodes
+  -2.9   -2.0   -1.1   -2.0   -5.9
+  ###    ###    -0.1   ###    -5.7
+   3.2    2.1    1.0   -0.1   -5.6
+   4.4   ###    ###    ###    ###
+   5.7    7.1    8.5   10.0    0.0
+```
+
 First, we rewrite `train` with three optional extras. Each has a default that reproduces the old behaviour, so nothing you did before changes. `Q=None` means "start with a fresh table" as before, but if you pass an existing table, training *continues* it. `bonus=None` is a hook for an extra reward added on each step (used in the experiments). `stop_when_optimal=False` can be switched on to stop as soon as the table's greedy path equals the true shortest path (from `bfs()`), which lets us measure *how fast* different settings learn. We also replaced `n_states` with `ROWS * COLS` so `train` works on any maze, not just the first.
 
 The loop then trains the *same* table in stages, printing the value map after 1, 5, 20 and 100 more episodes (`epsilon` is held at 0.3 by `eps_decay=1.0`). Since `Q` is modified in place, each call continues from the previous one. Reading the four maps:
@@ -444,7 +585,7 @@ The loop then trains the *same* table in stages, printing the value map after 1,
 
 The same four stages, as colour maps: brighter means a higher value. Watch the bright region grow backward from the goal.
 
-```python
+```python type
 Q_wave = np.zeros((n_states, 4))
 fig, axes = plt.subplots(1, 4, figsize=(12, 3.2))
 for ax, total in zip(axes, (1, 5, 20, 100)):
@@ -466,7 +607,7 @@ The main lesson: learning is a wave that moves backward from the goal, and the t
 
 ## Cell 15: saving the table
 
-```python
+```python type
 random.seed(0)
 Q, history = train(300)
 print(Q.shape)
@@ -476,13 +617,19 @@ print(loaded.shape, (loaded == Q).all())
 print(loaded[state_of((0, 0))])
 ```
 
+```output
+(25, 4)
+(25, 4) True
+[-7.78919737 -7.78919737 -7.78919739 -2.93599723]
+```
+
 We retrain with the same seed as Cell 11 (so `Q` is the learned table again) and save it. `np.save("q_maze.npy", Q)` writes the array to a file, and `np.load` reads it back. `(loaded == Q).all()` compares every entry and is `True`, so nothing was lost. (In this browser notebook the file lives in temporary memory and disappears when you close the page. In Jupyter on your computer it's a real file next to the notebook, which the pygame track's table viewer can load to draw the learned colours and arrows.) Wall cells' rows were never updated, so they are all zeros, and `argmax` of zeros is 0: a viewer that draws every row's arrow will draw an "up" arrow inside the walls. That is harmless.
 
 The last line prints the start cell's row. Up, down and left from `(0, 0)` all hit boundaries or a wall, so all three read about `-7.79`, and "right" reads `-2.94`. Check the first: a bump gives -5 and leaves you in the same cell, so its value should be about `-5 + 0.95 x (best number in that cell's row)` = `-5 + 0.95 x (-2.94)` = -7.79. The table obeys the rule exactly, also for the bad moves.
 
 ## Cell 16: a picture of the learned table
 
-```python
+```python type
 def plot_policy(Q):
     values = Q.max(axis=1).reshape(ROWS, COLS)
     shown = np.ma.masked_where(walls == 1, values)
@@ -513,7 +660,7 @@ plot_policy(Q)
 
 ## Cell 17: SARSA, Q-learning with one line changed
 
-```python
+```python type
 def train_sarsa(episodes, alpha=0.5, gamma=0.95, eps_start=1.0, eps_min=0.05,
                 eps_decay=0.99, max_steps=200, Q=None, bonus=None, stop_when_optimal=False):
     if Q is None:
@@ -553,6 +700,15 @@ show_policy(Q_sarsa)
 print("learned path length:", len(greedy_path(Q_sarsa)) - 1)
 ```
 
+```output
+> > v < <
+# # v # v
+v < < < <
+v # # # #
+> > > > G
+learned path length: 12
+```
+
 The function looks almost identical to `train`; the difference is when and how the next action is chosen. Q-learning's target uses the **best** value in the next row (`Q[s_next].max()`), whatever the agent will actually do there. SARSA picks the *actual* next action first (`a_next = choose_action(...)`), and its target uses that action's value (`Q[s_next, a_next]`). Then it carries that same action into the next step (`cell, s, a = next_cell, s_next, a_next`) so the action it evaluated is the action it takes. The name comes from the sequence it uses: State, Action, Reward, State, Action.
 
 This makes the two methods answer different questions. Q-learning is **off-policy**: it learns the value of the *best possible* play even while exploring. SARSA is **on-policy**: it learns the value of the policy it is *actually following*, random exploring moves included. Where exploring is dangerous (the classic example is walking along a cliff edge) SARSA learns a safer, longer path, and Q-learning learns the shortest, riskiest one. In this maze there is no cliff, and the learned policy is the same: the output shows the same arrows and a path length of **12**.
@@ -563,7 +719,7 @@ Now we break and tune things on purpose. The rule is: **change one thing, predic
 
 ## Cell 18: a helper that measures how fast a setting learns, and the baseline
 
-```python
+```python type
 def experiment(label, trainer=None, seeds=range(5), episodes=2000,
                rewards=None, maze=None, **settings):
     global STEP_REWARD, WALL_REWARD, GOAL_REWARD
@@ -596,6 +752,10 @@ def experiment(label, trainer=None, seeds=range(5), episodes=2000,
 experiment("baseline")
 ```
 
+```output
+baseline                 episodes to find shortest path: [5, 6, 8, 7, 7]  mean 6.6  avg total steps 1128
+```
+
 `experiment` trains the agent from scratch five times (seeds 0 to 4) with whatever settings you give it, and reports two measurements. **Episodes to find the shortest path:** after every episode the trainer checks whether the table's greedy path is already the true shortest (that is what `stop_when_optimal=True` does) and stops as soon as it is; the number of episodes it took is recorded, or `None` if the episodes ran out first. **Avg total steps:** the total number of moves made during learning, a measure of how *costly* the learning was. Lower is better on both.
 
 The inputs: `label` is text to print; `trainer` is which learning function to use (`train` by default, or `train_sarsa`), and functions can be passed around like any other value. `rewards` temporarily overrides the three reward constants, and `maze` temporarily loads a different maze. `**settings` collects any other named settings (such as `alpha=0.1`) and passes them straight on to the trainer. The `global` line permits changing the reward constants, and the `try ... finally` block guarantees they and the maze are restored afterwards even if something crashes, so one experiment can never contaminate the next. `f"{label:24s}"` pads the label to 24 characters so the rows line up.
@@ -606,7 +766,7 @@ The baseline: the shortest path is found after `[5, 6, 8, 7, 7]` episodes (mean 
 
 ## Cell 19: a bigger maze, and two "distance hint" bonuses
 
-```python
+```python type
 BIG = [
     "S.......",
     "#######.",
@@ -639,14 +799,23 @@ load_maze(SMALL)
 print(ROWS, COLS, bfs())
 ```
 
+```output
+8 8 28
+5 5 12
+```
+
 `BIG` is an 8 x 8 snake-shaped maze whose shortest route is 28 steps (the output `8 8 28`; the second line `5 5 12` confirms we switched back to the small maze). `manhattan(a, b)` is the grid distance `|row difference| + |column difference|`, ignoring walls. The two functions are **reward shaping**: extra reward added on top of the environment's reward to hint at progress, which can help when reward only arrives at the goal. `naive_bonus` gives +1 for a move that gets closer to the goal in Manhattan distance, -1 for one that gets farther, 0 otherwise. `potential_bonus` is the more careful version: it gives `0.95 x phi(next) - phi(cell)`, where `phi` is "minus the distance to the goal". The `GAMMA` (0.95) appears in it deliberately. A known result in reinforcement learning (Ng, Harada and Russell, 1999) says that this particular form of bonus **cannot change which policy is best**, it only changes how fast it's found, whereas the naive version has no such guarantee.
 
 ## Experiment A: no exploring
 
 Predict first: with `epsilon = 0`, the agent always takes the best-looking action. Will it ever find the goal?
 
-```python
+```python type
 experiment("no exploring", eps_start=0.0, eps_min=0.0)
+```
+
+```output
+no exploring             episodes to find shortest path: [10, 13, 10, 12, 14]  mean 11.8  avg total steps 489
 ```
 
 The result: `[10, 13, 10, 12, 14]`, mean 11.8, avg total steps 489.
@@ -657,10 +826,16 @@ It works. It needs more episodes (11.8 versus 6.6), but its total cost is much l
 
 Predict first: `alpha = 0.01` and `alpha = 1.0` (replace the old value completely). Which is slower? Is 1.0 unstable?
 
-```python
+```python type
 experiment("alpha=0.01", alpha=0.01)
 experiment("alpha=0.1", alpha=0.1)
 experiment("alpha=1.0", alpha=1.0)
+```
+
+```output
+alpha=0.01               episodes to find shortest path: [142, 213, 7, 105, 226]  mean 138.6  avg total steps 11611
+alpha=0.1                episodes to find shortest path: [18, 8, 7, 19, 17]  mean 13.8  avg total steps 2086
+alpha=1.0                episodes to find shortest path: [8, 6, 11, 7, 7]  mean 7.8  avg total steps 1298
 ```
 
 The results: `alpha=0.01` `[142, 213, 7, 105, 226]`, mean 138.6, 11611 steps; `alpha=0.1` `[18, 8, 7, 19, 17]`, mean 13.8, 2086 steps; `alpha=1.0` `[8, 6, 11, 7, 7]`, mean 7.8, 1298 steps.
@@ -671,11 +846,18 @@ A tiny alpha is about 20 times slower than the baseline's 0.5 (138.6 versus 6.6 
 
 Predict first: `gamma = 0` means only the immediate reward counts. Try 0, 0.1, 0.5 and 0.99. (`gamma = 0` can't solve the maze, so it gets only 300 episodes per seed, to save time.)
 
-```python
+```python type
 experiment("gamma=0.0", gamma=0.0, episodes=300)
 experiment("gamma=0.1", gamma=0.1)
 experiment("gamma=0.5", gamma=0.5)
 experiment("gamma=0.99", gamma=0.99)
+```
+
+```output
+gamma=0.0                episodes to find shortest path: [None, None, None, None, None]  mean None  avg total steps 44045
+gamma=0.1                episodes to find shortest path: [11, 8, 12, 7, 14]  mean 10.4  avg total steps 1690
+gamma=0.5                episodes to find shortest path: [8, 7, 8, 7, 8]  mean 7.6  avg total steps 1309
+gamma=0.99               episodes to find shortest path: [5, 6, 8, 7, 7]  mean 6.6  avg total steps 1128
 ```
 
 The results: `gamma=0.0` `[None, None, None, None, None]`, 44045 steps; `gamma=0.1` mean 10.4; `gamma=0.5` mean 7.6; `gamma=0.99` mean 6.6.
@@ -686,11 +868,18 @@ With `gamma = 0` the update target is `reward + 0 x best_next`, which is just th
 
 Predict first: (1) a wall bump costs 0 instead of -5; (2) a wall bump costs only -1 (same as a normal step); (3) normal steps cost 0; (4) the goal pays 100 instead of 10.
 
-```python
+```python type
 experiment("wall bump costs 0", rewards=(-1, 0, 10), episodes=300)
 experiment("wall bump costs -1", rewards=(-1, -1, 10))
 experiment("steps cost 0", rewards=(0, -5, 10))
 experiment("goal pays 100", rewards=(-1, -5, 100))
+```
+
+```output
+wall bump costs 0        episodes to find shortest path: [None, None, None, None, None]  mean None  avg total steps 47410
+wall bump costs -1       episodes to find shortest path: [9, 9, 10, 7, 9]  mean 8.8  avg total steps 1492
+steps cost 0             episodes to find shortest path: [14, 20, 7, 12, 9]  mean 12.4  avg total steps 2088
+goal pays 100            episodes to find shortest path: [5, 6, 8, 7, 7]  mean 6.6  avg total steps 1128
 ```
 
 The results: bump costs 0 `[None, None, None, None, None]`, 47410 steps; bump costs -1 `[9, 9, 10, 7, 9]`, mean 8.8; steps cost 0 `[14, 20, 7, 12, 9]`, mean 12.4; goal pays 100 `[5, 6, 8, 7, 7]`, mean 6.6, the same as the baseline.
@@ -701,12 +890,20 @@ The tuple is `(step, wall, goal)`, the three reward constants, temporarily repla
 
 Predict first: does adding a Manhattan-distance bonus help? On the small maze? On the big one? Could the naive version mislead the agent in the big maze, where the correct route sometimes moves *away* from the goal?
 
-```python
+```python type
 experiment("naive bonus", bonus=naive_bonus)
 experiment("potential bonus", bonus=potential_bonus)
 experiment("BIG maze", maze=BIG)
 experiment("BIG, naive bonus", maze=BIG, bonus=naive_bonus)
 experiment("BIG, potential bonus", maze=BIG, bonus=potential_bonus)
+```
+
+```output
+naive bonus              episodes to find shortest path: [7, 6, 7, 8, 7]  mean 7.0  avg total steps 1187
+potential bonus          episodes to find shortest path: [7, 5, 6, 8, 7]  mean 6.6  avg total steps 1147
+BIG maze                 episodes to find shortest path: [27, 22, 29, 21, 22]  mean 24.2  avg total steps 4350
+BIG, naive bonus         episodes to find shortest path: [18, 18, 17, 19, 19]  mean 18.2  avg total steps 3500
+BIG, potential bonus     episodes to find shortest path: [21, 17, 15, 17, 20]  mean 18.0  avg total steps 3404
 ```
 
 The results: on the small maze, naive bonus mean 7.0 and potential bonus mean 6.6, no different from the baseline. On the big maze: no bonus `[27, 22, 29, 21, 22]`, mean 24.2, 4350 steps; naive `[18, 18, 17, 19, 19]`, mean 18.2, 3500 steps; potential `[21, 17, 15, 17, 20]`, mean 18.0, 3404 steps.
@@ -717,9 +914,14 @@ The small maze is already learned in about seven episodes, so there is nothing t
 
 Predict first: which learns the shortest path faster?
 
-```python
+```python type
 experiment("SARSA", trainer=train_sarsa)
 experiment("BIG, SARSA", maze=BIG, trainer=train_sarsa)
+```
+
+```output
+SARSA                    episodes to find shortest path: [23, 8, 11, 8, 12]  mean 12.4  avg total steps 1964
+BIG, SARSA               episodes to find shortest path: [30, 29, 36, 41, 36]  mean 34.4  avg total steps 6193
 ```
 
 The results: SARSA `[23, 8, 11, 8, 12]`, mean 12.4; BIG with SARSA `[30, 29, 36, 41, 36]`, mean 34.4, 6193 steps.
@@ -730,9 +932,14 @@ SARSA is slower in both mazes (12.4 versus 6.6 episodes on the small one, 34.4 v
 
 Predict first: on the big maze, what if the agent never explores, or explores for much longer (`eps_decay=0.999`, which shrinks epsilon ten times more slowly)?
 
-```python
+```python type
 experiment("BIG, no exploring", maze=BIG, eps_start=0.0, eps_min=0.0)
 experiment("BIG, slower decay", maze=BIG, eps_decay=0.999)
+```
+
+```output
+BIG, no exploring        episodes to find shortest path: [29, 32, 35, 37, 34]  mean 33.4  avg total steps 2005
+BIG, slower decay        episodes to find shortest path: [79, 59, 45, 46, 52]  mean 56.2  avg total steps 11139
 ```
 
 The results: no exploring `[29, 32, 35, 37, 34]`, mean 33.4, 2005 steps; slower decay `[79, 59, 45, 46, 52]`, mean 56.2, 11139 steps.

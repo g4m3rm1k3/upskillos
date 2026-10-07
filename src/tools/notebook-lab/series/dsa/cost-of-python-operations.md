@@ -22,7 +22,7 @@ A Python list stores its items in one contiguous block of memory: slot 0, slot 1
 
 Predict before running: when the list grows from 10,000 to 40,000 items, how will the time for 1,000 `pop()` calls change, and the time for 1,000 `pop(0)` calls?
 
-```python
+```python type
 import timeit
 
 for n in [10_000, 20_000, 40_000]:
@@ -41,7 +41,7 @@ A dictionary or set does not search. It computes a number from the key, its **ha
 
 The difference from a list's `in` is dramatic. Predict before running: how will the time to check 1,000 values grow for the list and for the set as the collection grows tenfold each time?
 
-```python
+```python type
 import timeit
 
 for n in [1_000, 10_000, 100_000]:
@@ -63,7 +63,7 @@ Strings and tuples are **immutable**: once created, they never change. Every ope
 
 That makes the pattern "build a result by adding a piece at a time" a trap. Each addition copies everything built so far: 1 + 2 + … + n pieces copied, O(n²) in total. Lists have the same trap with `a = a + [x]`, which builds a whole new list every time, unlike `a.append(x)`. Predict before running: how will each method's time change as n doubles?
 
-```python
+```python type
 import timeit
 
 def build_by_concatenation(n):
@@ -92,7 +92,7 @@ You may notice that `text += piece` in a loop is often fast in CPython: the inte
 
 The costly patterns combine into a classic mistake: an O(n) operation inside a loop that runs n times. Each line looks harmless; the whole is O(n²). Here is a function that keeps the first occurrence of each value, written two ways. Predict before running: which grows quadratically, and why?
 
-```python
+```python type
 import random
 import timeit
 

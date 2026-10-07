@@ -8,7 +8,7 @@ Treating functions as values is one of the most useful ideas in programming. It 
 
 Without the parentheses, a function's name refers to the function itself rather than calling it. Predict what the first two lines print, and whether the last line is `True` or `False`:
 
-```python
+```python type
 def shout(text):
     return text.upper() + "!"
 
@@ -23,7 +23,7 @@ Printing a function shows what it is, not a result: `<function shout at 0x...>` 
 
 Functions can be stored in collections like any other value:
 
-```python
+```python type
 def double(x):
     return x * 2
 
@@ -34,13 +34,19 @@ for operation in [double, square, abs]:
     print(operation.__name__, operation(-3))
 ```
 
+```output
+double -6
+square 9
+abs 3
+```
+
 Every function knows its own name, in the attribute `__name__`.
 
 ## Passing a function to a function
 
 A function that takes another function as an argument can leave part of its job to the caller. Here, `apply_to_all` does the looping and the caller decides what happens to each item:
 
-```python
+```python type
 def apply_to_all(func, items):
     return [func(item) for item in items]
 
@@ -48,20 +54,30 @@ print(apply_to_all(len, ["fig", "banana", "kiwi"]))
 print(apply_to_all(str.upper, ["fig", "banana", "kiwi"]))
 ```
 
+```output
+[3, 6, 4]
+['FIG', 'BANANA', 'KIWI']
+```
+
 `str.upper` is the `upper` method of the string class, used as an ordinary function: `str.upper("fig")` is the same as `"fig".upper()`, just as `Dog.describe(rex)` was the same as `rex.describe()` in lesson 18.
 
 A function that takes or returns functions is called a **higher-order function**. Python's built-in `map` and `filter` are two of them: `map(func, items)` applies a function to every item, and `filter(func, items)` keeps the items for which a function returns true. Both return iterators. Comprehensions usually do the same job more readably, so most Python code uses those instead, but you will see `map` and `filter` in other people's code.
 
-```python
+```python type
 print(list(map(len, ["fig", "banana"])))
 print(list(filter(str.isupper, ["A", "b", "C"])))
+```
+
+```output
+[3, 6]
+['A', 'C']
 ```
 
 ## Sorting with a key
 
 The most common place to pass a function is the `key` argument of `sorted`, `min`, `max` and `list.sort`. The key is a function that is called on each item to get the value to sort by. The items themselves are left unchanged; only their order is decided by the keys. Before running this cell, predict where "Cherry" ends up in the plain sort.
 
-```python
+```python type
 words = ["banana", "Fig", "apple", "Cherry"]
 print(sorted(words))
 print(sorted(words, key=len))
@@ -69,41 +85,65 @@ print(sorted(words, key=str.lower))
 print(max(words, key=len))
 ```
 
+```output
+['Cherry', 'Fig', 'apple', 'banana']
+['Fig', 'apple', 'banana', 'Cherry']
+['apple', 'banana', 'Cherry', 'Fig']
+banana
+```
+
 Plain `sorted` puts every capitalised word first, as lesson 4 explained. `key=len` sorts by length. `key=str.lower` sorts by the lowercase form of each word, which is alphabetical order ignoring case; the words keep their original capitals in the result. `max(words, key=len)` finds the longest word, which replaces the "best so far" loop you wrote in lesson 6. (When keys tie, `sorted` keeps the items in their original order, which is why "banana" comes before "Cherry" in the length sort.)
 
 To sort a dictionary's keys by their values, pass the dictionary's `get` method as the key: for each key, it returns the value.
 
-```python
+```python type
 scores = {"Ada": 91, "Alan": 78, "Grace": 88}
 print(sorted(scores, key=scores.get, reverse=True))
+```
+
+```output
+['Ada', 'Grace', 'Alan']
 ```
 
 ## lambda: small functions without a name
 
 Often the key you need is a tiny calculation that is not worth a full `def`. Sort people by age, where each person is a tuple `(name, age)`: you need a function that returns item 1 of a tuple. A **lambda** creates a small function right where it is needed:
 
-```python
+```python type
 people = [("Ada", 36), ("Alan", 41), ("Grace", 29)]
 print(sorted(people, key=lambda person: person[1]))
 print(min(people, key=lambda person: person[1])[0])
 ```
 
+```output
+[('Grace', 29), ('Ada', 36), ('Alan', 41)]
+Grace
+```
+
 `lambda person: person[1]` means exactly the same as:
 
-```python
+```python type
 def get_age(person):
     return person[1]
 
 print(sorted(people, key=get_age))
 ```
 
+```output
+[('Grace', 29), ('Ada', 36), ('Alan', 41)]
+```
+
 After the word `lambda` come the parameters, then a colon, then a **single expression**, which is automatically returned. There is no `def`, no name and no `return`. A lambda can only contain one expression, never statements such as `if` blocks, loops or assignments, so it is only for small things. (The one-line `a if condition else b` from lesson 4 is an expression, so it is allowed.)
 
 Because a key function can return anything that compares, it can return a **tuple**, and tuples compare item by item (lesson 19). That sorts by one thing and breaks ties with another:
 
-```python
+```python type
 people = [("Ada", 36), ("Alan", 41), ("Bea", 29), ("Abe", 36)]
 print(sorted(people, key=lambda person: (person[1], person[0])))
+```
+
+```output
+[('Bea', 29), ('Abe', 36), ('Ada', 36), ('Alan', 41)]
 ```
 
 The key is `(age, name)`, so the people are sorted by age, and the two 36-year-olds are put in alphabetical order.
@@ -114,7 +154,7 @@ Use a lambda where a short function is passed straight into another function, as
 
 Because functions are values, a dictionary can map names to behaviours. This replaces a long `if`/`elif` chain with a lookup, and makes adding a new option a one-line change.
 
-```python
+```python type
 def add(a, b):
     return a + b
 
@@ -134,13 +174,20 @@ for expression in ["6 + 3", "6 - 3", "6 * 3", "6 / 3"]:
     print(expression, "=", result)
 ```
 
+```output
+6 + 3 = 9
+6 - 3 = 3
+6 * 3 = 18
+6 / 3 = 2.0
+```
+
 `operations[symbol]` looks up a function, and the `(...)` after it calls that function. This is called a **dispatch table**, and it is a small version of the Strategy pattern you will meet in the Algorithms & Design Patterns series.
 
 ## Functions that make functions
 
 A function can define another function inside itself and return it. The inner function remembers the variables of the function that created it, even after that function has finished:
 
-```python
+```python type
 def make_multiplier(factor):
     def multiply(x):
         return x * factor
@@ -151,11 +198,15 @@ triple = make_multiplier(3)
 print(double(10), triple(10))
 ```
 
+```output
+20 30
+```
+
 Each call to `make_multiplier` creates a new `multiply` function that remembers its own `factor`: 2 for `double`, 3 for `triple`. A function that remembers variables from the place it was created is called a **closure**.
 
 A closure can also change a variable it remembers, which gives it a private, persistent state. Predict the four numbers the next cell prints. Assigning to that variable needs the `nonlocal` keyword, for the same reason as the `UnboundLocalError` in lesson 9: without it, assignment would create a new local variable inside the inner function.
 
-```python
+```python type
 def make_counter():
     count = 0
     def counter():
@@ -170,13 +221,18 @@ other = make_counter()
 print(other())
 ```
 
+```output
+1 2 3
+1
+```
+
 `clicks` keeps its own count between calls, and `other` has a completely separate one. This is the same kind of separate state that objects gave you in lesson 18, built from a function instead of a class.
 
 ## Wrapping a function
 
 A function that takes a function and returns a new function can **wrap** it: add behaviour before or after it, without changing the original.
 
-```python
+```python type
 def announce(func):
     def wrapper(x):
         print(f"calling {func.__name__}({x!r})")
@@ -192,13 +248,19 @@ square = announce(square)
 square(7)
 ```
 
+```output
+calling square(7)
+square returned 49
+49
+```
+
 The two lines of output come from the wrapper, and the `49` after them is the value of `square(7)` itself, shown because it is the cell's last line. `announce(square)` returns `wrapper`, which calls the original `square` in the middle. Assigning it back to `square` means every later call goes through the wrapper. A function that wraps another like this is called a **decorator**, and it is used for logging, timing, checking permissions and caching. Python has a special `@` syntax for applying decorators, which you will meet in the next lesson.
 
 ## Any number of arguments: *args and **kwargs
 
 `print` accepts any number of arguments, and `max` works with two numbers or twenty. Your own functions can too. A parameter written with one star, `*args`, collects all extra positional arguments into a tuple. One written with two stars, `**kwargs`, collects all extra keyword arguments into a dictionary. (The names `args` and `kwargs` are only a convention; the stars do the work.)
 
-```python
+```python type
 def total(*numbers):
     return sum(numbers)
 
@@ -212,9 +274,15 @@ def describe(name, **details):
 print(describe("Ada", born=1815, field="maths"))
 ```
 
+```output
+6
+0
+Ada (born=1815, field=maths)
+```
+
 The stars also work the other way round, in a call: `*` spreads a list or tuple out into separate positional arguments, and `**` spreads a dictionary into keyword arguments.
 
-```python
+```python type
 def point(x, y, z):
     return f"({x}, {y}, {z})"
 
@@ -222,6 +290,11 @@ coords = [1, 2, 3]
 print(point(*coords))
 options = {"z": 9, "x": 7, "y": 8}
 print(point(**options))
+```
+
+```output
+(1, 2, 3)
+(7, 8, 9)
 ```
 
 Together, these let a wrapper pass along whatever arguments it was given without knowing what they are: `def wrapper(*args, **kwargs): return func(*args, **kwargs)`. That is how real decorators are written, so that they work on any function.

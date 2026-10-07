@@ -6,7 +6,7 @@ Nearly every model has settings that training does not learn: the `C` and `gamma
 
 The simplest method: list some values for each hyperparameter, try **every combination**, score each by cross-validation, and keep the best. scikit-learn's `GridSearchCV` does exactly that. It takes a model (often a pipeline), a dictionary of values to try, using the `step__parameter` names from the workflow lesson, and the cross-validation to use:
 
-```python
+```python type
 import pandas as pd
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -29,6 +29,19 @@ table = pd.DataFrame(search.cv_results_).pivot_table(index="param_svc__C", colum
 print(table.round(3))
 ```
 
+```output
+best settings: {'svc__C': 100, 'svc__gamma': 0.001}
+best cross-validated accuracy: 0.9883
+accuracy on the untouched test set: 0.9580
+param_svc__gamma  0.0001  0.0010  0.0100  0.1000  1.0000
+param_svc__C
+0.01               0.627   0.627   0.627   0.627   0.627
+0.10               0.627   0.709   0.941   0.946   0.627
+1.00               0.723   0.944   0.967   0.970   0.627
+10.00              0.944   0.974   0.981   0.967   0.629
+100.00             0.974   0.988   0.967   0.967   0.629
+```
+
 Twenty-five combinations, each cross-validated 5 times: 125 fits. Afterwards:
 
 - `best_params_` and `best_score_` give the winning combination and its mean cross-validated score.
@@ -45,7 +58,7 @@ Grid search's cost multiplies: 5 values each of 4 hyperparameters is 625 combina
 
 **Random search** draws each combination at random from ranges you specify. Nine random points give 9 different values of **every** setting:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -69,7 +82,7 @@ The red ticks along the bottom show which values of the important setting each m
 
 `RandomizedSearchCV` takes **distributions** instead of lists. For settings that span orders of magnitude, `loguniform(a, b)` from `scipy.stats` draws values whose logarithms are evenly spread between `a` and `b`, so 0.01 to 0.1 gets as many tries as 10 to 100:
 
-```python
+```python type
 from scipy.stats import loguniform
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
@@ -89,6 +102,11 @@ print("best settings:", {name: round(float(value), 4) for name, value in search.
 print(f"best cross-validated accuracy: {search.best_score_:.4f}, test accuracy: {search.score(X_test, y_test):.4f}")
 ```
 
+```output
+best settings: {'svc__C': 2.8079, 'svc__gamma': 0.0294}
+best cross-validated accuracy: 0.9859, test accuracy: 0.9580
+```
+
 With the same budget of 25 combinations, it finds settings (C ≈ 2.8, gamma ≈ 0.03) that are not on the grid, scoring 0.986 in cross-validation and the same 0.958 on the test set. `n_iter` sets the budget, and `random_state` makes the draws repeatable.
 
 More advanced methods (Bayesian optimisation, as in the Optuna library, and successive halving, `HalvingRandomSearchCV`, which gives many candidates a small budget and the promising ones more) search more cleverly still, but random search with a sensible budget is a strong, simple default.
@@ -99,7 +117,7 @@ Here is the trap. Each cross-validated score is an **estimate**, with noise from
 
 See it on data where the truth is known. The features below are pure noise and the labels random, so every possible model has a true accuracy of 50%. What best score do you expect the search to report?
 
-```python
+```python type
 import numpy as np
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
@@ -117,6 +135,12 @@ print(f"the search reports a best score of {search.best_score_:.2f} for {search.
 nested = cross_val_score(GridSearchCV(DecisionTreeClassifier(random_state=0), grid, cv=5), X, y,
                          cv=KFold(5, shuffle=True, random_state=0))
 print(f"nested cross-validation: {nested.round(2)}, mean {nested.mean():.2f}")
+```
+
+```output
+35 settings scored between 0.45 and 0.60
+the search reports a best score of 0.60 for {'max_depth': 1, 'min_samples_leaf': 16}
+nested cross-validation: [0.5  0.42 0.5  0.58 0.33], mean 0.47
 ```
 
 The search proudly reports 0.60 for its best tree, on data where nothing can be learned. Nothing about any single score is wrong; picking the maximum of 35 of them is what inflates it.

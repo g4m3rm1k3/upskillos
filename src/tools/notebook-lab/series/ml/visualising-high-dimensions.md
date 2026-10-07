@@ -20,7 +20,7 @@ That loss is lopsided, and it explains most of t-SNE's behaviour. If two points 
 
 Compare PCA and t-SNE on 600 digits. (t-SNE is slow, since every step involves all pairs of points; this cell takes several seconds.) Before running it, picture what you expect: will t-SNE separate all ten digits?
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
@@ -43,6 +43,10 @@ plt.show()
 print(f"trustworthiness: PCA {trustworthiness(X, flat, n_neighbors=10):.3f}, t-SNE {trustworthiness(X, embedded, n_neighbors=10):.3f}")
 ```
 
+```output
+trustworthiness: PCA 0.837, t-SNE 0.992
+```
+
 `TSNE(n_components=2, perplexity=30)` sets the output dimension and the effective number of neighbours; `fit_transform` returns the 2-D positions. The digits' labels are used only to colour the points: t-SNE, like PCA, never sees them.
 
 The t-SNE picture separates the ten digits into ten distinct islands, with only a few points in the wrong place, where PCA's picture was a jumble. **Trustworthiness**, a score from 0 to 1, measures how far the picture can be trusted locally: it penalises points that appear among a point's 10 nearest neighbours in the picture but were not near it in the original data. PCA scores 0.837; t-SNE 0.992. For showing who is near whom, t-SNE is far better.
@@ -53,7 +57,7 @@ The few stray points are often the most interesting: a 1 sitting among the 7s ma
 
 Make two clusters in 10 dimensions, one tight (standard deviation 0.3) and one ten times wider (standard deviation 3), and look at how big they appear:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
@@ -72,13 +76,18 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+spread in 10-D:  tight 0.3  wide 3.0
+spread in t-SNE: tight [3.53 3.5 ]  wide [3.49 3.57]
+```
+
 In the picture the two clusters are the **same size**: spreads of about 3.5 for both. This is the per-point bell-curve width at work: each point's neighbourhood is scaled to contain about `perplexity` neighbours, whatever the local density, so dense and sparse clusters are both expanded or shrunk to a similar size. In a t-SNE picture, a big cluster is not a spread-out one.
 
 ## Experiment 2: distances between clusters mean little
 
 Now three clusters in 10 dimensions: A and B are 6 units apart, while C is 60 units from A, ten times farther:
 
-```python
+```python type
 import numpy as np
 from sklearn.manifold import TSNE
 
@@ -94,13 +103,18 @@ print(f"distances in the t-SNE picture:             A–B {np.linalg.norm(centre
       f"A–C {np.linalg.norm(centres[0] - centres[2]):.1f}, B–C {np.linalg.norm(centres[1] - centres[2]):.1f}")
 ```
 
+```output
+distances between cluster centres in 10-D:  A–B 6, A–C 60, B–C 54
+distances in the t-SNE picture:             A–B 24.6, A–C 36.5, B–C 61.0
+```
+
 In the original space, C is ten times farther from A than B is. In the picture the ratio is about 1.5: A–B 24.6 and A–C 36.5. The order happens to survive here, but the proportions do not, and on real data even the order often fails. Since the loss barely cares where unrelated points go, the gaps between islands carry little information. "These two clusters are close in the t-SNE plot, so they must be similar" is a conclusion t-SNE cannot support.
 
 ## Experiment 3: perplexity changes the picture, even for noise
 
 Perplexity sets how many neighbours each point pays attention to. Here is pure random noise, 300 points from a single 10-D bell curve, drawn at four perplexities. There are no clusters in this data at all. Before running, guess: will any of the four pictures show clusters anyway?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE

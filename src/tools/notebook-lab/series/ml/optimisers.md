@@ -10,7 +10,7 @@ The function f(x, y) = ½(x² + 25y²) is a bowl 25 times steeper in the y direc
 
 For a bowl like this, plain gradient descent becomes unstable once the learning rate exceeds 2 divided by the steepest curvature (the second derivative, which is 25 in the y direction), here 2/25 = 0.08: across the valley, every step overshoots by more than it corrects, and the zigzag grows. Predict before running: what happens at a rate of 0.081?
 
-```python
+```python type
 import numpy as np
 
 def loss(p):
@@ -31,6 +31,13 @@ for learning_rate in [0.01, 0.03, 0.079, 0.081]:
     steps, final = plain_descent(learning_rate)
     reached = f"reached loss 0.001 after {steps} steps" if steps else f"after 300 steps the loss is {final:.3g}"
     print(f"learning rate {learning_rate}: {reached}")
+```
+
+```output
+learning rate 0.01: after 300 steps the loss is 0.12
+learning rate 0.03: reached loss 0.001 after 178 steps
+learning rate 0.079: reached loss 0.001 after 214 steps
+learning rate 0.081: after 300 steps the loss is 1.36e+08
 ```
 
 With 0.01, the steps along x are so small that 300 are not enough. With 0.03 it takes 178 steps. With 0.079, just under the limit, the zigzag across the valley barely dies down and it takes even longer, 214 steps; and at 0.081 the zigzag grows until the loss is in the hundreds of millions. The step size is held hostage by the steepest direction.
@@ -70,7 +77,7 @@ with defaults β₁ = 0.9, β₂ = 0.999, ε = 10⁻⁸, and `t` the step number
 
 Now all four on the valley, with the path each one takes:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -124,7 +131,7 @@ The plots show the first 60 steps of each path over the contour lines of the val
 
 Valleys in two dimensions are a cartoon. Here are the optimisers on the digits network from the last lesson for 10 epochs. To be fair to plain SGD, it gets its own best rate (0.5) as well as 0.1; remember that momentum at rate 0.1 takes steady steps of up to 0.1/(1 − 0.9) = 1.0. Before running, guess: will Adam's famous default learning rate of 0.001 do well here?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -190,6 +197,14 @@ def train(method, learning_rate, epochs=10, seed=0):
 for method, rate in [("SGD", 0.1), ("SGD", 0.5), ("momentum", 0.1), ("Adam", 0.001), ("Adam", 0.01)]:
     losses = train(method, rate)
     print(f"{method:<8} rate {rate:<5}: validation loss after epochs 1, 3, 10: {losses[0]:.3f}, {losses[2]:.3f}, {losses[-1]:.3f}")
+```
+
+```output
+SGD      rate 0.1  : validation loss after epochs 1, 3, 10: 1.417, 0.569, 0.208
+SGD      rate 0.5  : validation loss after epochs 1, 3, 10: 0.392, 0.336, 0.111
+momentum rate 0.1  : validation loss after epochs 1, 3, 10: 0.305, 0.156, 0.077
+Adam     rate 0.001: validation loss after epochs 1, 3, 10: 1.912, 1.090, 0.298
+Adam     rate 0.01 : validation loss after epochs 1, 3, 10: 0.331, 0.156, 0.094
 ```
 
 Each parameter needs its own running averages, so `first` and `second` are dictionaries of arrays shaped like the parameters, and `t` counts update steps (not epochs) for Adam's bias correction.

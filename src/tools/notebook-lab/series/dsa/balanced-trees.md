@@ -14,7 +14,7 @@ The tool that makes this possible is the **rotation**: a small local rearrangeme
 
 Suppose node y has a left child x. A **right rotation** at y makes x the root of this subtree, with y as its right child. The subtree that was between them (x's right subtree, holding keys between x and y) moves across to become y's left subtree. A **left rotation** is the mirror image. Sorted order is untouched: an inorder traversal reads x's left subtree, x, the middle subtree, y, y's right subtree, both before and after. Only the shape changes: one side gets one level shorter and the other one level taller. Predict before running: after rotating right at 30 in the chain 30 → 20 → 10, what will the root be, and the height?
 
-```python
+```python type
 class AVLNode:
     def __init__(self, key):
         self.key = key
@@ -55,6 +55,18 @@ show(root)
 print("inorder", inorder(root))
 ```
 
+```output
+30 (h2)
+     20 (h1)
+          10 (h0)
+inorder [10, 20, 30]
+after rotating right at 30:
+     30 (h0)
+20 (h1)
+     10 (h0)
+inorder [10, 20, 30]
+```
+
 Each node stores its own height, so balance can be checked in O(1); `update` recomputes a node's height from its children's, and must run for y before x, because y is now x's child.
 
 The chain of height 2 becomes a balanced tree of height 1 with 20 at the root, and the inorder list is still 10, 20, 30. A rotation changes three links and two heights: O(1) work.
@@ -70,7 +82,7 @@ An AVL tree keeps, at **every** node, a **balance factor** (left height minus ri
 
 Predict before running: inserting 1, 2, 3, …, 15 in sorted order, which would make a plain BST a 15-node chain, what height will the AVL tree have?
 
-```python
+```python type
 def rotate_left(x):
     y = x.right
     x.right = y.left
@@ -116,6 +128,25 @@ show(root)
 print("height", root.height, "after", rotations[0], "rotations; inorder still sorted:", inorder(root) == list(range(1, 16)))
 ```
 
+```output
+               15 (h0)
+          14 (h1)
+               13 (h0)
+     12 (h2)
+               11 (h0)
+          10 (h1)
+               9 (h0)
+8 (h3)
+               7 (h0)
+          6 (h1)
+               5 (h0)
+     4 (h2)
+               3 (h0)
+          2 (h1)
+               1 (h0)
+height 3 after 11 rotations; inorder still sorted: True
+```
+
 `avl_insert` returns the (possibly new) root of each subtree, so a rotation anywhere is relinked by its parent; `rebalance` runs at every node on the way back up.
 
 The result is a **perfect** tree of height 3, with 8 at the root: the best any binary tree of 15 nodes can do. Sorted input, the plain BST's worst case, triggered 11 single rotations, each a few link changes. Insertion now costs O(log n): one path down, and at most one or two rotations' worth of repair on the way up.
@@ -124,7 +155,7 @@ The result is a **perfect** tree of height 3, with 8 at the root: the best any b
 
 How tall can an AVL tree with n nodes be? Turn the question round: what is the **fewest** nodes an AVL tree of height h can have? The sparsest such tree has a root, one subtree of height h − 1 and the other of height h − 2 (the most lopsided the rule allows), each as sparse as possible. So the minimum count N(h) satisfies N(h) = N(h − 1) + N(h − 2) + 1: a Fibonacci-like recurrence, which grows exponentially, by a factor of about 1.618 per level. Since the node count grows exponentially with height, the height grows only logarithmically with the node count: about 1.44 log₂ n at most. The third challenge computes this. In practice, the measured heights are within a few levels of log₂ n (sorted input even gives the smallest height possible). Predict before running: what height for 50,000 keys inserted in sorted order?
 
-```python
+```python type
 import math
 import random
 
@@ -135,6 +166,15 @@ for n in [1_000, 10_000, 50_000]:
         for k in keys:
             r = avl_insert(r, k)
         print(f"n = {n:>6,} {name:<7} AVL height {r.height:>2}   (log2 n = {math.log2(n):.1f}; a plain BST on sorted keys: {n - 1:,})")
+```
+
+```output
+n =  1,000 sorted  AVL height  9   (log2 n = 10.0; a plain BST on sorted keys: 999)
+n =  1,000 random  AVL height 11   (log2 n = 10.0; a plain BST on sorted keys: 999)
+n = 10,000 sorted  AVL height 13   (log2 n = 13.3; a plain BST on sorted keys: 9,999)
+n = 10,000 random  AVL height 15   (log2 n = 13.3; a plain BST on sorted keys: 9,999)
+n = 50,000 sorted  AVL height 15   (log2 n = 15.6; a plain BST on sorted keys: 49,999)
+n = 50,000 random  AVL height 18   (log2 n = 15.6; a plain BST on sorted keys: 49,999)
 ```
 
 Even 50,000 keys inserted in sorted order give a height of 15, against 49,999 for a plain BST: a search makes at most 16 comparisons instead of 50,000.

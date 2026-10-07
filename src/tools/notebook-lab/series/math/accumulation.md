@@ -26,7 +26,7 @@ If a car travels at a constant 20 m/s for 30 s, it covers 20 × 30 = 600 m: the 
 
 The integral sign is a stretched S, for sum, and dt recalls the width Δt of the rectangles. Predict before running: a car accelerating as v(t) = 0.3t² m/s for 10 s. Do left rectangles over- or underestimate the distance?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,6 +54,12 @@ ax.legend()
 plt.show()
 ```
 
+```output
+    left with 10 rectangles:   85.50 m   (exact 100 m)
+   right with 10 rectangles:  115.50 m   (exact 100 m)
+midpoint with 10 rectangles:   99.75 m   (exact 100 m)
+```
+
 The exact distance, 100 m, comes from reversing the power rule, as shown later in the lesson.
 
 The car speeds up throughout, so each left rectangle uses the slowest speed in its interval and the left sum underestimates (85.5 m); the right sum overestimates (115.5 m). The midpoint rule, which samples each interval in its centre, gives 99.75 m, far closer than either for the same ten function evaluations.
@@ -72,7 +78,7 @@ Averaging the left and right sums gives the **trapezoid rule**: join neighbourin
 
 How fast do the methods converge? Left and right sums have errors proportional to h, like forward differences. The midpoint and trapezoid rules have errors proportional to h², so doubling the number of strips quarters their error. Predict before running: integrating sin x from 0 to π (exactly 2), how many strips does each rule need for an error below 10⁻⁶?
 
-```python
+```python type
 def trapezoid(f, a, b, n):
     xs = np.linspace(a, b, n + 1)
     ys = f(xs)
@@ -82,6 +88,16 @@ print(f"{'n':>6} {'left error':>12} {'midpoint error':>15} {'trapezoid error':>1
 for n in [10, 20, 40, 80, 1000]:
     print(f"{n:>6} {riemann(np.sin, 0, math.pi, n, 'left') - 2:>12.2e} {riemann(np.sin, 0, math.pi, n, 'midpoint') - 2:>15.2e} {trapezoid(np.sin, 0, math.pi, n) - 2:>16.2e}")
 print("np.trapezoid agrees:", math.isclose(np.trapezoid(np.sin(np.linspace(0, math.pi, 81)), np.linspace(0, math.pi, 81)), trapezoid(np.sin, 0, math.pi, 80)))
+```
+
+```output
+     n   left error  midpoint error  trapezoid error
+    10    -1.65e-02        8.25e-03        -1.65e-02
+    20    -4.11e-03        2.06e-03        -4.11e-03
+    40    -1.03e-03        5.14e-04        -1.03e-03
+    80    -2.57e-04        1.29e-04        -2.57e-04
+  1000    -1.64e-06        8.22e-07        -1.64e-06
+np.trapezoid agrees: True
 ```
 
 The trapezoid formula adds every sample with full weight and then removes half of each end sample, since the ends belong to only one strip.
@@ -102,7 +118,7 @@ Often the whole history matters, not just the final total: position at every mom
 
 A delivery van's GPS fails, but its speedometer logs every 2 seconds. Predict before running: how far does it travel in 3 minutes, and where was it after 1 minute?
 
-```python
+```python type
 rng = np.random.default_rng(51)
 t_log = np.arange(0, 181, 2.0)
 speed_log = np.clip(12 + 6 * np.sin(t_log / 25) - 4 * (t_log > 120) * (t_log - 120) / 30, 0, None) + rng.normal(0, 0.3, t_log.size)
@@ -112,6 +128,12 @@ position = np.concatenate(([0.0], np.cumsum(strips)))
 print(f"distance after 3 min: {position[-1]:.0f} m  (np.trapezoid: {np.trapezoid(speed_log, t_log):.0f} m)")
 print(f"position after 1 min: {position[t_log == 60][0]:.0f} m")
 print("differencing the positions recovers the strip-average speeds:", np.allclose(np.diff(position) / np.diff(t_log), (speed_log[:-1] + speed_log[1:]) / 2))
+```
+
+```output
+distance after 3 min: 1976 m  (np.trapezoid: 1976 m)
+position after 1 min: 981 m
+differencing the positions recovers the strip-average speeds: True
 ```
 
 The speed log is simulated: a varying cruise, slowing from 2 minutes onward, plus sensor noise. `np.clip(..., 0, None)` stops the model speed from going negative.
@@ -134,7 +156,7 @@ Exact areas come from running the derivative backwards. A function F whose deriv
 
 Reversing the power rule, an antiderivative of tⁿ is tⁿ⁺¹/(n + 1) for n ≠ −1. For the car, an antiderivative of 0.3t² is 0.1t³, so the distance over 10 s is 0.1 × 10³ − 0 = 100 m, the exact value used above. SymPy finds antiderivatives symbolically with `integrate`. Predict before running: what are the exact integrals of sin x from 0 to π and of e^(−t/20) from 0 to 60?
 
-```python
+```python type
 import sympy as sp
 
 t, x = sp.symbols("t x")
@@ -144,6 +166,14 @@ print("∫ sin x dx from 0 to π =", sp.integrate(sp.sin(x), (x, 0, sp.pi)))
 cooling = sp.integrate(sp.exp(-t / 20), (t, 0, 60))
 print("∫ e^(-t/20) dt from 0 to 60 =", cooling, "≈", float(cooling))
 print("trapezoid with 600 strips:", trapezoid(lambda s: np.exp(-s / 20), 0, 60, 600))
+```
+
+```output
+antiderivative of 0.3t²: t**3/10
+∫ 0.3t² dt from 0 to 10 = 100
+∫ sin x dx from 0 to π = 2
+∫ e^(-t/20) dt from 0 to 60 = 20 - 20*exp(-3) ≈ 19.00425863264272
+trapezoid with 600 strips: 19.004298224831707
 ```
 
 `sp.integrate(expr, t)` returns an antiderivative; `sp.integrate(expr, (t, a, b))` returns the definite integral from a to b.

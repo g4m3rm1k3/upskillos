@@ -14,7 +14,7 @@ It covers:
 
 A **hash function** turns a key into an integer, its **hash**. Python's built-in `hash()` does this for every immutable built-in type. The table then takes the hash modulo the number of slots (its **capacity**) to get a slot index. A good hash function spreads keys evenly over the slots. Predict before running: with six keys and eight slots, will any two keys share a slot?
 
-```python
+```python type
 for key in ["cat", "cab", 42, 43, (1, 2), 3.5]:
     print(f"{key!r:>8}: hash {hash(key):>22}   slot in a table of 8: {hash(key) % 8}")
 ```
@@ -25,7 +25,7 @@ Even six keys in eight slots produce at least one collision: 43 and 3.5 always s
 
 With more possible keys than slots, two keys will sometimes land in the same slot: a **collision**. Collisions are unavoidable; the question is how to handle them. **Separate chaining** makes each slot a small list (a **bucket**) of (key, value) pairs. To look a key up, go to its bucket and search just that bucket. As long as buckets stay short, that is O(1). Predict before running: Ann is put twice below, so what will the size be?
 
-```python
+```python type
 class ChainedHashMap:
     def __init__(self, capacity=8):
         self._buckets = [[] for _ in range(capacity)]
@@ -75,7 +75,7 @@ Putting "Ann" a second time replaces her value rather than adding a duplicate, s
 
 The **load factor** is the number of keys divided by the number of buckets: the average bucket length. If the table never grew, adding n keys to 8 buckets would make buckets about n/8 long, and lookups O(n). So the table **resizes** when the load factor passes a threshold (0.75 here), doubling the buckets and re-inserting every key, because each key's slot depends on the capacity. By the amortised analysis lesson's argument, doubling keeps the cost O(1) per insertion on average. Predict before running: after inserting 100,000 keys, how long will the longest bucket be?
 
-```python
+```python type
 import random
 
 table = ChainedHashMap()
@@ -90,6 +90,12 @@ print(f"average non-empty bucket {sum(lengths) / sum(1 for n in lengths if n):.2
 print("how many buckets have each length:", {n: lengths.count(n) for n in sorted(set(lengths))})
 ```
 
+```output
+100,000 keys in 262,144 buckets: load factor 0.38
+average non-empty bucket 1.20, longest 6
+how many buckets have each length: {0: 178975, 1: 68380, 2: 12957, 3: 1636, 4: 183, 5: 12, 6: 1}
+```
+
 `random.sample(range(10**9), 100_000)` picks 100,000 different numbers without building the huge range.
 
 The load factor stays below 0.75, and even with 100,000 keys the longest bucket holds only a handful. Most buckets have 0, 1 or 2 keys: the counts follow a well-known pattern (a Poisson distribution) for keys spread at random. So a lookup checks one or two pairs, whatever the table's size: O(1) on average.
@@ -100,7 +106,7 @@ Python's own `dict` uses a different collision strategy, **open addressing**: in
 
 The O(1) promise depends entirely on the hash function spreading keys out. A bad hash function sends many keys to the same bucket, and the table degrades into a list. Here a class with a deliberately terrible `__hash__` (every object hashes to 1) is compared with one that hashes properly. Predict before running: how will inserting 2,000 of each compare?
 
-```python
+```python type
 import timeit
 
 class BadKey:
@@ -131,7 +137,7 @@ Two rules follow from how hash tables work, and Python's dictionaries depend on 
 1. **Equal keys must have equal hashes.** If `a == b`, then `hash(a) == hash(b)`. Otherwise two equal keys could land in different buckets and a lookup would miss. That is why `hash(1) == hash(1.0) == hash(True)`: they are equal, so they must hash alike, and they count as the same dictionary key. (Unequal keys may share a hash; that is just a collision.)
 2. **A key's hash must not change while it is in the table.** The key was filed under its hash; if the hash changed, the key would be in the wrong bucket and could never be found. That is why lists, sets and dictionaries, which can change, are **unhashable**, while strings, numbers and tuples of them are fine.
 
-```python
+```python type
 d = {1: "one"}
 d[1.0] = "one point zero"
 d[True] = "true"
@@ -142,6 +148,12 @@ try:
 except TypeError as error:
     print("TypeError:", error)
 print({(1, 2): "a tuple works"})
+```
+
+```output
+{1: 'true'}
+TypeError: unhashable type: 'list'
+{(1, 2): 'a tuple works'}
 ```
 
 The first dictionary ends up with a single key, still the original `1`, whose value was overwritten twice: 1, 1.0 and True are equal. A list key is refused with `TypeError: unhashable type: 'list'`; a tuple of the same values works. When you define `__eq__` in your own class, Python sets `__hash__` to `None` (making instances unhashable) unless you also define a `__hash__` consistent with it, which the third challenge practises.

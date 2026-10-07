@@ -15,7 +15,7 @@ This lesson covers:
 
 Here is the naive model: every bolt object holds a full dict describing its type. `tracemalloc` measures the memory allocated while building 50,000 of them. Predict before running: how many distinct bolt types are there among the 50,000, and how many copies of each type's description are stored?
 
-```python
+```python type
 import random, tracemalloc
 
 TYPES = [
@@ -49,7 +49,7 @@ There are only 6 types, yet 50,000 separate spec dictionaries, each with six ent
 
 Split the bolt in two. `BoltType` holds the intrinsic state and is immutable: a frozen dataclass. A **flyweight factory** hands out the types and guarantees one object per distinct type: it keeps a dictionary keyed by the type's defining values and returns the existing object if there is one. `Bolt` keeps the extrinsic state (its position) and a reference to its shared type. Predict before running: how many `BoltType` objects exist now, and how much memory is saved?
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ The 50,000 bolts now share 6 type objects, and the model uses a fraction of the 
 
 Once the intrinsic state is shared, the remaining cost is the per-object part, and in Python an ordinary object has overhead: each instance reserves room for a per-instance attribute dictionary, `__dict__` (modern Python creates the dictionary itself only when something asks for it, which is why the gap below is moderate). `__slots__ = ("kind", "x", "y", "z")`, used on `Bolt` above, tells Python the attributes in advance, so instances store them in fixed slots with no per-instance dictionary. That saves memory, and it also makes assigning any other attribute an error. Predict before running: how big is the difference between a plain object and a slotted one?
 
-```python
+```python type
 class PlainBolt:
     def __init__(self, kind, x, y, z):
         self.kind, self.x, self.y, self.z = kind, x, y, z
@@ -127,7 +127,7 @@ The slotted bolt needs noticeably fewer bytes per object, and with tens of thous
 
 Python uses flyweights internally. In CPython (the standard implementation, and the one Pyodide uses), small integers from −5 to 256 are created once and shared, so every `7` computed at run time is the same object. That is an implementation detail, not a language rule, so never rely on `is` to compare numbers. Strings can be **interned** with `sys.intern`, which returns one shared copy of equal strings: useful when millions of records repeat the same few labels. `None`, `True` and `False` are single shared objects too. Every one of these is immutable, and that is no coincidence. Predict before running: what happens to the other bolts when one shared type is changed?
 
-```python
+```python type
 import sys
 
 print("small ints shared:", int("7") is int("7"), "  larger ints shared:", int("1000") is int("1000"))
@@ -139,6 +139,12 @@ try:
     shared[0].kind.length_mm = 35
 except Exception as error:
     print(type(error).__name__, "-", error)
+```
+
+```output
+small ints shared: True   larger ints shared: False
+interned strings shared: True
+FrozenInstanceError - cannot assign to field 'length_mm'
 ```
 
 `"".join(...)` builds the string at run time, so without `sys.intern` the two equal strings could be separate objects.

@@ -14,7 +14,7 @@ Linear regression fits `ŷ = w · x + b`: a weighted sum of the features. Nothin
 
 a curve in `x`, while still being **linear in the parameters**: the weights still just multiply features and add up, so the normal equation and gradient descent work exactly as before. Creating new features from old ones like this is called **feature engineering**, and powers of a feature are called **polynomial features**.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -36,13 +36,17 @@ ax.plot(grid, np.column_stack([np.ones(200), poly_features(grid, 3)]) @ theta, c
 plt.show()
 ```
 
+```output
+fitted bias and weights: [ 0.07 -1.81 -0.02  0.49]
+```
+
 The data was made from `0.5x³ − 2x` plus noise, and the fitted weights come out close to 0, −2, 0 and 0.5. (`np.polyfit(x, y, 3)` does exactly this fit; building the features yourself shows what it does inside.) The degree of the polynomial is now a dial controlling how flexible the model is. (With high degrees, powers like `x¹²` become enormous and cause numerical trouble; standardising `x` first, or keeping it near the range −1 to 1, avoids that.)
 
 ## The complexity curve
 
 Turn the dial from simple to complex and measure the error on training data and on held-out validation data at every setting. Predict before running: at degree 15, where will the training error be, and where the validation error?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -70,6 +74,10 @@ plt.show()
 print("best degree by validation error:", list(degrees)[int(np.argmin(val_err))])
 ```
 
+```output
+best degree by validation error: 3
+```
+
 This is the picture to carry in your head:
 
 - **Training error** falls steadily as complexity rises. A more flexible model can always fit its own training data at least as well. On its own, training error cannot tell you when to stop.
@@ -87,7 +95,7 @@ Why does validation error make a U shape? Imagine collecting a fresh training se
 
 Simulation shows both directly. Draw 30 training sets, fit a simple and a complex model to each, and overlay all the fitted curves:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -121,7 +129,7 @@ This is not just a picture; it is exact. At any input `x₀`, the expected squar
 
 where **bias** is the gap between the average prediction and the true value, **variance** is how much the predictions spread around their own average, and **noise** is the variance of the random noise in the labels, which no model can remove. You can estimate the first two by simulation. Predict which degree will have the smallest total before running it:
 
-```python
+```python type
 import numpy as np
 
 def true_function(x):
@@ -141,13 +149,20 @@ for degree in [1, 3, 6, 12]:
     print(f"degree {degree:>2}: bias² {bias_sq:.4f}   variance {variance:.4f}   sum {bias_sq + variance:.4f}")
 ```
 
+```output
+degree  1: bias² 0.2224   variance 0.0178   sum 0.2402
+degree  3: bias² 0.0001   variance 0.0121   sum 0.0122
+degree  6: bias² 0.0001   variance 0.0235   sum 0.0236
+degree 12: bias² 0.1753   variance 91.3955   sum 91.5707
+```
+
 Degree 1 is dominated by bias: it is wrong in the same way every time. By degree 3, bias has all but vanished while variance is still small, giving the smallest total. Beyond that, variance grows, and at degree 12 it explodes; a few wildly swinging fits even drag the average prediction off, so its bias² rises too. The smallest sum, in the middle, is the bottom of the U. The **bias–variance trade-off** is the name for this tension, and it shapes every choice about model complexity.
 
 ## Learning curves: would more data help?
 
 Variance comes from fitting the particular noise of a small sample, so more data reduces it; bias comes from the model family, so more data cannot fix it. A **learning curve** plots training and validation error against the size of the training set, and tells you which situation you are in. Predict: for which model will the gap between the two curves close as data grows?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 

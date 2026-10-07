@@ -24,7 +24,7 @@ The probability of an event is the fraction of times it happens in a long run of
 
 How close does the frequency get to the true probability? Simulation's error shrinks like 1/√n: a hundred times as many trials buys only ten times the accuracy. Predict before running: with 100 rolls the frequency of sixes can easily be off by 0.03. How far off with a million?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,6 +47,12 @@ ax.legend()
 plt.show()
 ```
 
+```output
+      100 rolls: frequency of six 0.14000, error -0.02667, typical error 1/√n scale 0.03727
+    10000 rolls: frequency of six 0.17010, error +0.00343, typical error 1/√n scale 0.00373
+  1000000 rolls: frequency of six 0.16648, error -0.00018, typical error 1/√n scale 0.00037
+```
+
 `rng.integers(1, 7, size=n)` draws n whole numbers from 1 to 6 (the upper limit is excluded). `(rolls == 6).mean()` is the fraction of sixes, since `True` counts as 1. The typical error, √(p(1 − p)/n), is the **standard error** of a frequency, explained in the statistics lessons.
 
 The frequency wanders widely at first and settles towards 1/6; with a million rolls it is within about 0.0004. The error column tracks the 1/√n scale. That slow convergence is the price of simulation: getting one more correct decimal place takes a hundred times as many trials.
@@ -67,7 +73,7 @@ Parts come off a machine with a 2% chance of each being defective, independently
 
 The **complement rule**, P(A) = 1 − P(not A), turns many hard problems into easy ones. Predict before running: is the chance of at least one bad part in 50 closer to 10%, 35% or 65%?
 
-```python
+```python type
 p, box = 0.02, 50
 exact = 1 - (1 - p) ** box
 boxes = rng.random((100_000, box)) < p
@@ -76,6 +82,15 @@ print(f"P(at least one defective in {box}): exact {exact:.4f}, simulated {simula
 print(f"average defectives per box: simulated {boxes.sum(axis=1).mean():.3f}, expected n·p = {box * p}")
 for n in [10, 50, 100, 200]:
     print(f"box of {n:>3}: {1 - (1 - p) ** n:.1%}")
+```
+
+```output
+P(at least one defective in 50): exact 0.6358, simulated 0.6365
+average defectives per box: simulated 0.999, expected n·p = 1.0
+box of  10: 18.3%
+box of  50: 63.6%
+box of 100: 86.7%
+box of 200: 98.2%
 ```
 
 `rng.random((100_000, 50))` fills a table with uniform numbers in [0, 1); each entry below 0.02 marks a defective part, one row per box. `any(axis=1)` asks, for each row, whether any part is defective.
@@ -98,7 +113,7 @@ An inspector draws 5 parts from a batch of 100, of which 4 are defective, and re
 
 Predict before running: does sampling 5 catch the problem more or less than half the time? How large a sample gives a 90% chance?
 
-```python
+```python type
 N, D = 100, 4
 
 def detect_exact(N, D, n):
@@ -119,6 +134,12 @@ n90 = next(n for n in range(1, N + 1) if detect_exact(N, D, n) >= 0.9)
 print(f"smallest sample with a 90% chance of detection: {n90}")
 ```
 
+```output
+sample of 5: exact 0.1881, simulated 0.1875
+if draws were independent (with replacement): 0.1846
+smallest sample with a 90% chance of detection: 44
+```
+
 `rng.choice(batch, size=n, replace=False)` draws n different items, like taking parts out of a box without putting them back.
 
 A sample of 5 catches the bad batch only about 19% of the time; inspection by small samples is weak against low defect rates. Treating the draws as independent gives nearly the same answer here (18.5%), because removing 5 parts barely changes a batch of 100. To reach 90% detection the inspector must check 44 parts, almost half the batch. Exact counting and simulation agree, which is the point: either one checks the other.
@@ -137,7 +158,7 @@ Two events are **independent** when one happening does not change the chance of 
 
 A pumping station needs its controller **and** at least one of two pumps. The controller is 99% reliable over a year and each pump 90%. Predict before running: is the station more or less reliable than a single pump?
 
-```python
+```python type
 R_ctrl, R_pump = 0.99, 0.90
 exact = R_ctrl * (1 - (1 - R_pump) ** 2)
 trials = 200_000
@@ -147,6 +168,12 @@ works = ctrl_ok & pumps_ok.any(axis=1)
 print(f"station reliability: exact {exact:.4f}, simulated {works.mean():.4f}")
 print(f"single pump with the controller: {R_ctrl * R_pump:.4f}")
 print(f"three pumps in parallel: {R_ctrl * (1 - (1 - R_pump) ** 3):.4f}  (the controller limits it to at most {R_ctrl})")
+```
+
+```output
+station reliability: exact 0.9801, simulated 0.9800
+single pump with the controller: 0.8910
+three pumps in parallel: 0.9890  (the controller limits it to at most 0.99)
 ```
 
 Each row of `pumps_ok` is one simulated year for the two pumps; the station works when the controller works and either pump does.

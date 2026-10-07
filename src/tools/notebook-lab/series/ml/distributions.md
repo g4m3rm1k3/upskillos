@@ -8,7 +8,7 @@ A handful of distributions turn up again and again, because they describe common
 
 Roll two dice and add them. The total is a random variable: its value is uncertain, but some values are more likely than others. Its distribution lists each possible value with its probability. Simulate it and compare with the exact counts:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -43,7 +43,7 @@ P(k) = \binom{n}{k} p^k (1-p)^{n-k}
 
 Read it piece by piece. `pᵏ (1 − p)ⁿ⁻ᵏ` is the probability of one **particular** sequence with `k` successes and `n − k` failures, such as "click, no click, click, ...", multiplying because the trials are independent. The binomial coefficient, written `(n k)` stacked in brackets and read "n choose k", counts **how many** such sequences there are: the number of ways to choose which `k` of the `n` trials are the successes. Python's `math.comb(n, k)` computes it.
 
-```python
+```python type
 import math
 import numpy as np
 from scipy import stats
@@ -58,6 +58,16 @@ for k in range(6):
 print("average number of clicks:", clicks.mean(), " n × p =", n * p)
 ```
 
+```output
+k=0: simulated 0.0280  formula 0.0282  scipy 0.0282
+k=1: simulated 0.1213  formula 0.1211  scipy 0.1211
+k=2: simulated 0.2351  formula 0.2335  scipy 0.2335
+k=3: simulated 0.2646  formula 0.2668  scipy 0.2668
+k=4: simulated 0.1999  formula 0.2001  scipy 0.2001
+k=5: simulated 0.1046  formula 0.1029  scipy 0.1029
+average number of clicks: 2.99872  n × p = 3.0
+```
+
 `rng.binomial(n, p, size)` simulates the whole experiment directly. `scipy.stats` has an object for each common distribution; `stats.binom.pmf(k, n, p)` gives the probability mass function. The most likely count is 3, and the average number of clicks is `n × p = 3`, as you would hope.
 
 ## Continuous distributions and densities
@@ -66,7 +76,7 @@ Some quantities can take any value in a range, not just whole numbers: a height,
 
 Instead, a continuous distribution has a **probability density function** (pdf): a curve whose **area** over an interval is the probability of landing in that interval. The total area under the whole curve is 1. The simplest is the **uniform** distribution, equally likely anywhere between two limits, whose density is flat. For values spread evenly from 0 to 4, predict the probability of landing between 1 and 2 before running the cell:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -83,6 +93,10 @@ plt.show()
 print("P(1 < X < 2): simulated", ((samples > 1) & (samples < 2)).mean(), " area = width × height =", 1 * 0.25)
 ```
 
+```output
+P(1 < X < 2): simulated 0.24968  area = width × height = 0.25
+```
+
 `density=True` scales the histogram so that the total area of its bars is 1, which makes it directly comparable with a density curve. The density is 0.25 across the range from 0 to 4, so that the rectangle has area 4 × 0.25 = 1. The probability of landing between 1 and 2 is the area of that slice: width 1 × height 0.25 = 0.25. Note that a density is not a probability, and it can even be larger than 1 when the range is narrow; only areas under it are probabilities.
 
 ## The normal distribution
@@ -97,7 +111,7 @@ You will not need to use that formula directly, but notice its shape: the expone
 
 Heights of adults are close to normally distributed. Suppose they have mean 170 cm and standard deviation 8 cm:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -120,7 +134,7 @@ plt.show()
 
 `stats.norm.pdf(x, mu, sigma)` evaluates the density curve. The dotted lines mark one and two standard deviations either side of the mean. Before running the next cell, predict roughly what fraction of heights lies within one standard deviation of the mean (between 162 and 178 cm).
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(3)
@@ -128,6 +142,12 @@ heights = rng.normal(170, 8, size=100_000)
 for k in [1, 2, 3]:
     inside = np.abs(heights - 170) < k * 8
     print(f"within {k} standard deviation(s): {inside.mean():.3f}")
+```
+
+```output
+within 1 standard deviation(s): 0.681
+within 2 standard deviation(s): 0.955
+within 3 standard deviation(s): 0.997
 ```
 
 About 68%, 95% and 99.7%. This **68–95–99.7 rule** holds for every normal distribution, whatever its mean and standard deviation, and it gives a quick sense of scale: in normally distributed data, a value more than 2 standard deviations from the mean happens only about 1 time in 20, and more than 3 only about 3 times in 1,000.
@@ -146,13 +166,19 @@ A person 186 cm tall has z = (186 − 170) / 8 = 2: two standard deviations abov
 
 The probability that a value is **at most** `x` is given by the **cumulative distribution function** (cdf): the area under the density to the left of `x`. It rises from 0 to 1. For a probability between two values, subtract two cdf values:
 
-```python
+```python type
 from scipy import stats
 
 mu, sigma = 170, 8
 print("P(height ≤ 186):      ", stats.norm.cdf(186, mu, sigma).round(4))
 print("P(160 < height < 180):", (stats.norm.cdf(180, mu, sigma) - stats.norm.cdf(160, mu, sigma)).round(4))
 print("height above which the tallest 5% lie:", stats.norm.ppf(0.95, mu, sigma).round(1))
+```
+
+```output
+P(height ≤ 186):       0.9772
+P(160 < height < 180): 0.7887
+height above which the tallest 5% lie: 183.2
 ```
 
 The last line runs the question the other way round: which height has 95% of people below it? That is the 95th **percentile**, found with `ppf`, the "percent point function", the inverse of the cdf. For data rather than a formula, `np.percentile(data, 95)` finds the same thing by sorting. The 50th percentile is the **median**, the middle value.
@@ -164,7 +190,7 @@ A few other distributions describe common situations:
 - The **Poisson** distribution counts events in a fixed interval when they happen independently at a steady average rate: emails per hour, typing errors per page, customers arriving per minute. Its single parameter is the average count, λ.
 - The **exponential** distribution describes the **waiting time** until the next such event. Short waits are common and long waits rare.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(4)
@@ -176,6 +202,14 @@ waits = rng.exponential(scale=10, size=100_000)
 print("average wait between emails (minutes):", waits.mean().round(2))
 print("P(wait more than 30 minutes):", (waits > 30).mean().round(4))
 print("P(wait more than 60 minutes):", (waits > 60).mean().round(4))
+```
+
+```output
+average emails per hour: 6.001
+P(no emails in an hour): 0.0025
+average wait between emails (minutes): 10.0
+P(wait more than 30 minutes): 0.0488
+P(wait more than 60 minutes): 0.0023
 ```
 
 With 6 emails an hour on average, the average wait between them is 60 / 6 = 10 minutes, which is the `scale` of the exponential. The two are two views of the same random process, and the last line shows it: "no emails in an hour" and "waiting more than 60 minutes for the next one" are the same event, and the two simulations give it the same probability, about 0.0025.

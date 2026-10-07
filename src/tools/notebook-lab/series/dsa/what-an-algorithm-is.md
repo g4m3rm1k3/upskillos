@@ -20,7 +20,7 @@ Take "find the largest number in a list". Questions a precise statement must ans
 
 Now an algorithm: remember the first value as the best so far, look at each remaining value in turn, and replace the best whenever a value is larger. Predict before running: what will each of the four calls print?
 
-```python
+```python type
 def largest(numbers):
     if not numbers:
         return None
@@ -36,13 +36,20 @@ print(largest([7]))
 print(largest([]))
 ```
 
+```output
+9
+-2
+7
+None
+```
+
 The prints are 9, −2, 7 and `None`. The negative list is a classic trap: an algorithm that started from `best = 0` instead of the first value would wrongly answer 0. The one-element and empty lists are the other two cases worth always trying. Python has `max`, of course; the point is that even this tiny algorithm had decisions in it that only a precise statement settles (`max([])` raises an error instead of returning `None`: a different, equally valid, specification).
 
 ## Checking against a simple, obviously correct version
 
 How do you know an algorithm is correct? Later lessons prove correctness with **invariants**. A quick practical check works now: compare the algorithm, on many random inputs, with a **brute-force** version so simple it is obviously right, even if it is slow. Here the obvious version is "the value that no other value is larger than".
 
-```python
+```python type
 import random
 
 def largest_brute_force(numbers):
@@ -59,6 +66,10 @@ for trial in range(1000):
 print("largest agrees with the brute-force version on 1000 random lists, including empty ones")
 ```
 
+```output
+largest agrees with the brute-force version on 1000 random lists, including empty ones
+```
+
 `assert condition, message` stops with an error showing `message` (here the failing list) if the condition is false. Random lists of length 0 to 8 cover the empty list, single elements, negatives and repeats many times over. If there were a bug, the failing input would be printed, small enough to trace by hand. This habit, a **brute-force oracle**, comes back throughout the series.
 
 ## Counting steps
@@ -67,7 +78,7 @@ Is an algorithm fast? Timing it with a stopwatch depends on the computer, on wha
 
 For searching an unsorted list, the basic step is a comparison. Here is a search that counts its comparisons. Before running, predict the count when the target is first, last and absent in a list of 1,000 items.
 
-```python
+```python type
 def linear_search_counted(items, target):
     comparisons = 0
     for index, item in enumerate(items):
@@ -82,6 +93,12 @@ for target in [0, 999, -1]:
     print(f"target {target:>4}: found at index {index:>4} after {comparisons} comparisons")
 ```
 
+```output
+target    0: found at index    0 after 1 comparisons
+target  999: found at index  999 after 1000 comparisons
+target   -1: found at index   -1 after 1000 comparisons
+```
+
 The **best case** is 1 comparison (the target is first), the **worst case** is n comparisons (the target is last or missing). The worst case is usually what matters: it is a guarantee. Doubling the list doubles the worst case, so linear search does work **proportional to n**. The next lesson gives this a name, O(n), and a precise meaning.
 
 ## Two correct algorithms, very different costs
@@ -94,7 +111,7 @@ Different algorithms for the same problem can differ wildly in cost, and the dif
 
 Predict before running: for a list of 2,000 distinct values (the worst case, since no early exit happens), how many comparisons will the pairwise method make?
 
-```python
+```python type
 def has_duplicate_pairs(values):
     comparisons = 0
     for i in range(len(values)):
@@ -119,13 +136,19 @@ for n in [500, 1000, 2000]:
     print(f"n = {n:>4}: pairs {has_duplicate_pairs(values)[1]:>9,} comparisons;  set {has_duplicate_set(values)[1]:>5,} lookups")
 ```
 
+```output
+n =  500: pairs   124,750 comparisons;  set   500 lookups
+n = 1000: pairs   499,500 comparisons;  set 1,000 lookups
+n = 2000: pairs 1,999,000 comparisons;  set 2,000 lookups
+```
+
 The `:>9,` format right-aligns the number in 9 characters and adds thousands separators.
 
 The pairwise method makes n(n − 1)/2 comparisons: 1,999,000 for 2,000 values. Doubling n multiplies its work by about **four**, while the set method's work only doubles. At a million values, the pairwise method would need about 500 billion comparisons, hours of work, while the set method needs a million lookups, well under a second. This is the central fact of the subject: for large inputs, the **growth rate** of an algorithm's cost matters far more than the speed of the computer or small tweaks to the code.
 
 Counting a set lookup as one step hides some detail (it is fast on average, for reasons covered in the hash tables lesson), and sorting has its own cost. Measuring real running time confirms the picture:
 
-```python
+```python type
 import time
 
 values = list(range(2000))

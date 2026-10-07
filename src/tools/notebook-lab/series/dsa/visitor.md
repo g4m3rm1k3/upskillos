@@ -15,7 +15,7 @@ This lesson covers:
 
 A part is a list of features. The machining-time estimate was added as a method on each feature class, then the G-code generator, then the design-rule check. Predict before reading on: what does adding a "list the tools needed" operation touch?
 
-```python
+```python type
 class Hole:
     def __init__(self, x, y, diameter, depth):
         self.x, self.y, self.diameter, self.depth = x, y, diameter, depth
@@ -40,13 +40,17 @@ part = [Hole(10, 10, 6, 12), Pocket(30, 5, 20, 15, 4), Hole(60, 10, 1.5, 3)]
 print(sum(f.machining_seconds() for f in part), [line for f in part for line in f.gcode()], [e for f in part for e in f.check()])
 ```
 
+```output
+44.0 ['G81 X10 Y10 Z-12', '(pocket 20x15 at 30,5)', 'G1 Z-4', 'G81 X60 Y10 Z-3'] ['hole at (60, 10) is too small to drill']
+```
+
 Every operation lives scattered across every feature class: the G-code generator's knowledge is spread over `Hole.gcode`, `Pocket.gcode` and so on, and none of it can be read in one place. A tool-list operation means editing every class again. The feature classes, which should just describe geometry, depend on timing tables, machine dialects and design rules.
 
 ## The classic visitor: double dispatch
 
 Strip the operations out of the features. Each feature keeps only its data and one method, `accept(visitor)`, which calls the visitor method for its own type: a hole calls `visitor.visit_hole(self)`. Each operation becomes a visitor class with one method per feature type. This two-step call, first on the node and then on the visitor, is called **double dispatch**: which code runs depends on **both** the node's type and the visitor's type. Predict before running: how many classes must change to add the tool list?
 
-```python
+```python type
 class Hole:
     def __init__(self, x, y, diameter, depth):
         self.x, self.y, self.diameter, self.depth = x, y, diameter, depth
@@ -76,6 +80,11 @@ print("seconds:", sum(f.accept(MachiningTime()) for f in part))
 print("tools:", sorted(set().union(*(f.accept(ToolList()) for f in part))))
 ```
 
+```output
+seconds: 44.0
+tools: ['drill 6 mm', 'end mill 6 mm']
+```
+
 `set().union(*sets)` merges a sequence of sets into one.
 
 The tool list was one new class and no change to `Hole` or `Pocket`. Each operation is now readable in one place: everything about machining time is in `MachiningTime`. The cost of the pattern is also visible: a new **feature type** (say, a `Chamfer`) needs a new method in **every** visitor. Visitor makes the trade the opposite way round from ordinary methods, so use it where the node types are stable and the operations keep growing.
@@ -84,7 +93,7 @@ The tool list was one new class and no change to `Hole` or `Pocket`. Each operat
 
 Python can find the right method by name, so the nodes do not need `accept` methods at all. A small base class looks up `"visit_" + type(node).__name__` with `getattr`, and falls back to a `generic_visit` method if there is no specific one. The lookup is exactly how Python's own `ast.NodeVisitor` works (its `generic_visit` walks the children instead of raising). The fallback is where tree structures get handled. For a composite node, `generic_visit` can visit the children, so a visitor only needs methods for the node types it actually cares about. Predict before running: what does the counting visitor report for the nested assembly?
 
-```python
+```python type
 class Visitor:
     def visit(self, node):
         method = getattr(self, "visit_" + type(node).__name__, self.generic_visit)
@@ -124,6 +133,12 @@ except TypeError as error:
     print("TypeError:", error)
 ```
 
+```output
+time: 35.6 s
+holes: 3
+TypeError: Time cannot visit str
+```
+
 `CountHoles` defines only `visit_Hole`. For a `Group` or a `Pocket`, `visit` finds no specific method and calls `generic_visit`, which walks into any children.
 
 The time visitor handles three node types explicitly. The hole counter handles one and lets `generic_visit` walk everything else, finding all 3 holes, including the one inside the nested group. Visiting an unknown type gives a clear error naming the visitor and the type.
@@ -132,7 +147,7 @@ The time visitor handles three node types explicitly. The hole counter handles o
 
 Python's `ast` module parses source code into a tree of nodes (`FunctionDef`, `Call`, `Name`, `BinOp` and dozens more), and `ast.NodeVisitor` visits them with exactly the name-based dispatch above. Its `generic_visit` visits all children, so a visitor overrides only the node types it cares about, and must call `self.generic_visit(node)` itself to keep descending past them. Linters, code formatters and test tools are built from such visitors. Predict before running: which functions does this little program define, and which does it call?
 
-```python
+```python type
 import ast
 
 source = """
@@ -160,6 +175,11 @@ overview = Overview()
 overview.visit(ast.parse(source))
 print("defined:", overview.defined)
 print("called:", overview.called)
+```
+
+```output
+defined: ['clamp(x, low, high)', 'scaled(values, factor)']
+called: ['max', 'min', 'clamp', 'print', 'scaled']
 ```
 
 `ast.parse(text)` returns the tree without running the code. Inside `visit_Call`, `node.func` is the expression being called: a `Name` for a plain function.

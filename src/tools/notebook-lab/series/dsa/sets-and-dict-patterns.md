@@ -14,7 +14,7 @@ The patterns:
 
 Counting occurrences is the most common dictionary job. The plain version uses `get` with a default of 0. Python's `collections.Counter` packages the same idea with extras, such as `most_common`. Predict before running: which word is most common, and what does `Counter` give for a word that never appears?
 
-```python
+```python type
 from collections import Counter
 
 text = "the cat sat on the mat and the dog sat on the log"
@@ -30,13 +30,19 @@ print(word_counts.most_common(3))
 print("count of 'bird':", word_counts["bird"])
 ```
 
+```output
+{'the': 4, 'cat': 1, 'sat': 2, 'on': 2, 'mat': 1, 'and': 1, 'dog': 1, 'log': 1}
+[('the', 4), ('sat', 2), ('on', 2)]
+count of 'bird': 0
+```
+
 `counts.get(word, 0)` returns the current count, or 0 the first time a word is seen, so one line handles both cases without an `if`.
 
 "the" appears 4 times, "sat" and "on" twice. A `Counter` returns 0 for missing keys instead of raising `KeyError`, which makes it convenient for questions like "how many times was this seen?". The whole count is one pass, O(n) for n words, with each update O(1). The slow alternative, calling `words.count(w)` for each distinct word, is O(n) per word and O(n²) overall: the hidden-loop trap from the costs lesson.
 
 Counters also compare and combine. Two strings are **anagrams** (the same letters in a different order) exactly when their letter counts are equal, which is O(n) to check, against O(n log n) for sorting both:
 
-```python
+```python type
 from collections import Counter
 
 print(Counter("listen") == Counter("silent"), Counter("listen") == Counter("tinsel"), Counter("apple") == Counter("pale"))
@@ -45,13 +51,18 @@ order = Counter(apples=3, pears=4)
 print("left after the order:", stock - order, "  shortfall:", order - stock)
 ```
 
+```output
+True True False
+left after the order: Counter({'apples': 2})   shortfall: Counter({'pears': 2})
+```
+
 Subtracting Counters keeps only positive counts, so `stock - order` is what remains and `order - stock` is what is missing.
 
 ## Grouping
 
 Grouping means collecting items into lists by some key: words by their first letter, files by extension, transactions by customer. The plain version must create each list the first time its key appears. `collections.defaultdict(list)` does that automatically: looking up a missing key creates an empty list for it. Predict before running: what will the group for the letter "s" contain?
 
-```python
+```python type
 from collections import defaultdict
 
 words = ["sun", "moon", "star", "sky", "mars", "venus", "saturn", "mercury"]
@@ -70,6 +81,12 @@ print(dict(grouped))
 print("group for 'z':", grouped["z"], "- and now 'z' is a key:", "z" in grouped)
 ```
 
+```output
+{'s': ['sun', 'star', 'sky', 'saturn'], 'm': ['moon', 'mars', 'mercury'], 'v': ['venus']}
+{'s': ['sun', 'star', 'sky', 'saturn'], 'm': ['moon', 'mars', 'mercury'], 'v': ['venus']}
+group for 'z': [] - and now 'z' is a key: True
+```
+
 `defaultdict(list)` calls `list()` to make the default value; `defaultdict(int)` would start counts at 0 and `defaultdict(set)` would collect unique items.
 
 Both versions group in one O(n) pass; the `defaultdict` version just drops the bookkeeping. Note the side effect in the last line: merely **reading** a missing key from a `defaultdict` inserts it. To check for a key without creating it, use `in`, or `get`.
@@ -78,7 +95,7 @@ Both versions group in one O(n) pass; the `defaultdict` version just drops the b
 
 When the same kind of question will be asked many times, build an **index** once, so each question is a dictionary lookup instead of a search. Suppose a program repeatedly needs a user's record by their email. Searching the list each time is O(n) per question; a dictionary keyed by email answers in O(1) after an O(n) build. Predict before running: how much faster will 2,000 lookups be with the index?
 
-```python
+```python type
 import random
 import timeit
 
@@ -115,7 +132,7 @@ Sets answer "which items are in both?", "in either?", "in one but not the other?
 
 Each costs roughly O(len(a) + len(b)), because membership in the other set is O(1). Predict before running: which students take maths but not physics?
 
-```python
+```python type
 maths = {"Ann", "Ben", "Cat", "Dan", "Eve"}
 physics = {"Cat", "Dan", "Fay", "Gus"}
 
@@ -126,6 +143,14 @@ print("exactly one:     ", sorted(maths ^ physics))
 print("is {'Cat'} within physics?", {"Cat"} <= physics, "  no overlap with {'Zed'}?", maths.isdisjoint({"Zed"}))
 ```
 
+```output
+either subject:   ['Ann', 'Ben', 'Cat', 'Dan', 'Eve', 'Fay', 'Gus']
+both subjects:    ['Cat', 'Dan']
+maths only:       ['Ann', 'Ben', 'Eve']
+exactly one:      ['Ann', 'Ben', 'Eve', 'Fay', 'Gus']
+is {'Cat'} within physics? True   no overlap with {'Zed'}? True
+```
+
 `sorted` turns each result into a sorted list, because a set's printing order is arbitrary. `<=` tests whether one set is a subset of another.
 
 Ann, Ben and Eve take maths only. The same operations power everyday tasks: which files changed between two directory listings (symmetric difference), which permissions a user lacks (difference), which tags two articles share (intersection). Written as nested loops over lists, each would be O(n × m).
@@ -134,7 +159,7 @@ Ann, Ben and Eve take maths only. The same operations power everyday tasks: whic
 
 A dictionary can also remember the results of a function, so repeated calls with the same arguments are answered instantly. This is called **memoisation**, and it turns some exponential-time recursive algorithms into fast ones; the dynamic programming lessons are built on it. Here it is on the classic example, the number of ways to climb n stairs taking 1 or 2 steps at a time (the Fibonacci numbers in disguise). Predict before running: how many calls will the plain version make for n = 25, and the memoised one?
 
-```python
+```python type
 calls = 0
 
 def ways_plain(n):
@@ -157,6 +182,11 @@ def ways_memo(n):
 for f in [ways_plain, ways_memo]:
     calls = 0
     print(f"{f.__name__}(25) = {f(25):,} using {calls:,} calls")
+```
+
+```output
+ways_plain(25) = 121,393 using 242,785 calls
+ways_memo(25) = 121,393 using 49 calls
 ```
 
 `global calls` lets the functions update the counter defined outside them.

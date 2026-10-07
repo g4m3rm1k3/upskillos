@@ -8,7 +8,7 @@ You do not need any previous calculus. This lesson builds the derivative from th
 
 A cyclist's distance from home, in kilometres, after `t` hours, is given by a function:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -26,6 +26,11 @@ print("average speed over the first 2 hours:", (distance(2) - distance(0)) / 2, 
 print("average speed from hour 2 to 3:", (distance(3) - distance(2)) / 1, "km/h")
 ```
 
+```output
+average speed over the first 2 hours: 18.0 km/h
+average speed from hour 2 to 3: 27.0 km/h
+```
+
 Average speed is distance travelled divided by time taken. Over any interval from `a` to `b`, that is the **average rate of change** of the function:
 
 \[
@@ -40,13 +45,21 @@ What is the cyclist's speed at exactly 2 hours? A speedometer shows a single num
 
 The way round it is to take shorter and shorter intervals starting at 2 hours, and watch what the average speed does. Predict: as the interval shrinks, what number will it settle towards?
 
-```python
+```python type
 def distance(t):
     return 12 * t + 3 * t ** 2
 
 for h in [1, 0.1, 0.01, 0.001, 0.0001]:
     rate = (distance(2 + h) - distance(2)) / h
     print(f"interval {h:<7} average speed {rate:.5f}")
+```
+
+```output
+interval 1       average speed 27.00000
+interval 0.1     average speed 24.30000
+interval 0.01    average speed 24.03000
+interval 0.001   average speed 24.00300
+interval 0.0001  average speed 24.00030
 ```
 
 The averages close in on 24. That limiting value, the average rate of change over an interval that shrinks towards zero, is the **derivative** of the function at that point. For the cyclist it is the exact speed at 2 hours: 24 km/h. The derivative of `f` at `x` is written `f′(x)`:
@@ -61,7 +74,7 @@ f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}
 
 Geometrically, as the interval shrinks, the line through the two points swings round until it just touches the curve at a single point, running in the same direction as the curve there. That line is the **tangent line**, and the derivative is its slope.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -89,7 +102,7 @@ The limit definition suggests a way to compute a derivative with a computer: pic
 - the **forward difference**, `(f(x + h) − f(x)) / h`, straight from the definition;
 - the **central difference**, `(f(x + h) − f(x − h)) / (2h)`, which looks equally far on both sides.
 
-```python
+```python type
 import numpy as np
 
 def f(x):
@@ -104,11 +117,17 @@ print("forward:", forward, " error", abs(forward - exact))
 print("central:", central, " error", abs(central - exact))
 ```
 
+```output
+exact:   12.0
+forward: 12.006000999997823  error 0.006000999997823442
+central: 12.000000999998317  error 9.999983170416726e-07
+```
+
 The central difference is far more accurate for the same `h`. The forward difference measures the slope of a line leaning slightly to one side, while the central difference's errors on the two sides largely cancel out.
 
 You might think the smaller the `h`, the better. Predict what happens to the error as `h` gets extremely small:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -128,13 +147,17 @@ plt.show()
 print("best h:", hs[errors.argmin()])
 ```
 
+```output
+best h: 1e-05
+```
+
 The error falls as `h` shrinks, until around `h = 10⁻⁵` or `10⁻⁶`, and then **rises** again. For tiny `h`, `f(x + h)` and `f(x − h)` agree in almost all of their digits, and subtracting two nearly equal floats leaves mostly rounding error (lesson 2 of Python from Zero showed how floats are slightly inexact), which is then divided by a tiny number and magnified. `ax.loglog` uses logarithmic scales on both axes, so that each factor of ten takes the same space, which is the right way to plot quantities spanning many orders of magnitude. (`np.cos` is the derivative of `np.sin`, which is how the exact value is known.) A step of around `1e-5` with the central difference is a good default.
 
 ## Patterns in derivatives
 
 Numerical derivatives work for any function, but for common functions the derivative follows simple patterns. Here is the most important, checked numerically. For `f(x) = xⁿ`, the derivative is `n xⁿ⁻¹`: bring the power down in front and reduce it by one.
 
-```python
+```python type
 import numpy as np
 
 def numerical_derivative(f, x, h=1e-5):
@@ -145,6 +168,15 @@ for n in [1, 2, 3, 4]:
     print(f"x^{n}: numerical {numerical_derivative(lambda t: t ** n, x):.5f}, rule {n * x ** (n - 1):.5f}")
 print(f"exp: numerical {numerical_derivative(np.exp, x):.5f}, rule exp(x) = {np.exp(x):.5f}")
 print(f"log: numerical {numerical_derivative(np.log, x):.5f}, rule 1/x = {1 / x:.5f}")
+```
+
+```output
+x^1: numerical 1.00000, rule 1.00000
+x^2: numerical 3.40000, rule 3.40000
+x^3: numerical 8.67000, rule 8.67000
+x^4: numerical 19.65200, rule 19.65200
+exp: numerical 5.47395, rule exp(x) = 5.47395
+log: numerical 0.58824, rule 1/x = 0.58824
 ```
 
 So `x²` has derivative `2x`, which is why the tangent to `x²` at 1.5 had slope 3, and `x³` has derivative `3x²`. The cyclist's `12t + 3t²` has derivative `12 + 6t`, which at `t = 2` is 24, matching the limit found above. The other patterns you will need:
@@ -161,7 +193,7 @@ You will rarely need to work derivatives out by hand in this series, but knowing
 
 The derivative has a value at every point, so it is itself a function. Plotting a function and its derivative together shows how they relate:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -188,7 +220,7 @@ Training a model means finding the parameter values that make its error as small
 
 Here is that idea finding the minimum of `f(x) = (x − 3)² + 1` from a starting guess of `x = 0`. Each step moves `x` by a small multiple of the negative derivative. Predict: as the dots approach the bottom, will the steps get bigger or smaller?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -212,6 +244,10 @@ ax.plot(grid, f(grid))
 ax.plot(path, [f(p) for p in path], "o-", color="tab:red", markersize=4)
 ax.set_title("Each step moves downhill")
 plt.show()
+```
+
+```output
+ended at x = 2.9887 with f(x) = 1.0001
 ```
 
 The red dots walk down the curve and settle near the bottom: after 25 steps `x` is about 2.99, within 0.01 of the true minimum at 3, and more steps would get closer still. The steps are big where the curve is steep and shrink as it flattens out near the minimum, because the derivative itself shrinks there. This procedure is **gradient descent**, and it is how neural networks with billions of parameters are trained. Its full treatment, including what happens when the step size is too big, comes later in the series. Before that, the next lesson extends derivatives to functions of many numbers at once, which is what a model with many parameters needs.

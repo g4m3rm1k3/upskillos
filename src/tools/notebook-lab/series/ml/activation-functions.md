@@ -17,7 +17,7 @@ Training needs their **derivatives**, since gradients pass through each activati
 - tanh′(z) = 1 − tanh(z)², at most 1, at z = 0.
 - ReLU′(z) = 1 for z > 0 and 0 for z < 0 (at exactly 0 either value is used, by convention 0).
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -47,9 +47,16 @@ Look at the right-hand plot. The sigmoid's derivative never exceeds 0.25, and bo
 
 By the chain rule, the gradient that reaches an early layer is a **product** with one factor per layer above it, and each factor includes the activation's derivative. Multiply many numbers below 1 and the product shrinks exponentially. Predict before running: if each of 20 layers contributes the sigmoid's best-case factor of 0.25, how big is the product?
 
-```python
+```python type
 for layers in [1, 5, 10, 20]:
     print(f"{layers:>2} layers: 0.25 ** {layers} = {0.25 ** layers:.1e}")
+```
+
+```output
+ 1 layers: 0.25 ** 1 = 2.5e-01
+ 5 layers: 0.25 ** 5 = 9.8e-04
+10 layers: 0.25 ** 10 = 9.5e-07
+20 layers: 0.25 ** 20 = 9.1e-13
 ```
 
 After 20 layers, even in the best case, the factor is about 10⁻¹². The gradient for the first layers is a trillion times smaller than for the last: those layers barely learn at all. This is the **vanishing gradient problem**, and for years it made networks deeper than a few layers nearly impossible to train.
@@ -58,7 +65,7 @@ After 20 layers, even in the best case, the factor is about 10⁻¹². The gradi
 
 Real networks also multiply by weight matrices on the way back, which can enlarge or shrink the gradient, so the full story depends on the weights too. Here is a 20-layer network with 100 units per layer. The weights start random, and the cell runs 500 random inputs forward, then sends a gradient backwards (the gradient of the sum of the outputs with respect to each layer's input) and measures its average size when it reaches the network's input:
 
-```python
+```python type
 import numpy as np
 
 def sigmoid(z):
@@ -90,6 +97,13 @@ for name, scale, label in [("sigmoid", np.sqrt(1 / 100), "scaled 1/√n"), ("tan
                            ("ReLU", np.sqrt(2 / 100), "scaled √(2/n)"), ("ReLU", 1.0, "standard deviation 1")]:
     spread, gradient = run(name, scale)
     print(f"{name:<8} weights {label:<21} last layer's spread {spread:9.3g}, gradient reaching the input {gradient:9.3g}")
+```
+
+```output
+sigmoid  weights scaled 1/√n           last layer's spread     0.109, gradient reaching the input  1.83e-13
+tanh     weights scaled 1/√n           last layer's spread     0.151, gradient reaching the input     0.135
+ReLU     weights scaled √(2/n)         last layer's spread      1.21, gradient reaching the input      3.19
+ReLU     weights standard deviation 1  last layer's spread  1.19e+17, gradient reaching the input  3.12e+17
 ```
 
 Going backwards, `gradient * df(z)` multiplies by the activation's derivative, and `@ W.T` carries the gradient back through the weights; the next lesson derives both steps. The weights are drawn with a standard deviation that shrinks with the layer's width `n` (100 here), for a reason explained below.

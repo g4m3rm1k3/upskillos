@@ -21,7 +21,7 @@ A tokenizer turns the text into tokens: numbers (including decimals and exponent
 
 The parser uses **precedence climbing**. Each binary operator has a precedence (`+ -` 1, `* /` 2, `^` 3) and an associativity. `parse_expression(min_prec)` first parses a **primary** (a number, a variable, a call, a bracketed expression or a unary minus). Then, while the next token is an operator with precedence at least `min_prec`, it consumes the operator and parses its right-hand side with a higher minimum: precedence + 1 for left-associative operators, but the **same** precedence for right-associative `^`. That one difference is what makes `2 ^ 3 ^ 2` group to the right. Unary minus binds looser than `^` (so `-x ^ 2` is `-(x ^ 2)`, as in mathematics) but tighter than `*`. Predict before running: what trees do `10 - 3 - 2` and `2 ^ 3 ^ 2` produce, and what values?
 
-```python
+```python type
 import re, math
 
 class Num:
@@ -113,6 +113,14 @@ for text in ["10 - 3 - 2", "2 ^ 3 ^ 2", "-x ^ 2", "a + b * c - d / e", "sqrt(3 ^
     print(f"{text:<30} -> {shape(parse(text))}")
 ```
 
+```output
+10 - 3 - 2                     -> [[10 - 3] - 2]
+2 ^ 3 ^ 2                      -> [2 ^ [3 ^ 2]]
+-x ^ 2                         -> neg([x ^ 2])
+a + b * c - d / e              -> [[a + [b * c]] - [d / e]]
+sqrt(3 ^ 2 + 4 ^ 2) * 2.5e-1   -> [sqrt([[3 ^ 2] + [4 ^ 2]]) * 0.25]
+```
+
 `shape` is a quick throwaway printer with every grouping shown in square brackets, to see what the parser built. A proper printing visitor comes next. `m.lastgroup` is the name of the group that matched, which tells the tokenizer what kind of token it found.
 
 `10 - 3 - 2` groups to the left, `[[10 - 3] - 2]`, which is 5; `2 ^ 3 ^ 2` groups to the right, `[2 ^ [3 ^ 2]]`, which is 512. `-x ^ 2` is `neg([x ^ 2])`, and the mixed formula respects precedence everywhere. All of that comes from about a dozen lines in `expression`, because each precedence level is a number rather than a separate function.
@@ -121,7 +129,7 @@ for text in ["10 - 3 - 2", "2 ^ 3 ^ 2", "-x ^ 2", "a + b * c - d / e", "sqrt(3 ^
 
 Two visitors do the main work. `Evaluate(env)` computes a value, looking variables up in a dictionary, with a small set of safe functions (`sqrt`, `sin`, `cos`, `abs`, `min`, `max`) and the constant `pi`. Unknown names and wrong argument counts give clear errors. `Show()` prints the tree back as text with **as few brackets as possible**: a child needs brackets only when its precedence is lower than its parent's, or equal on the side where associativity would regroup it. Printing and re-parsing must give the same tree, which is a round-trip property the testing lesson would approve of. Predict before running: how does `Show` print `(a - b) - c` and `a - (b - c)`?
 
-```python
+```python type
 FUNCTIONS = {"sqrt": (math.sqrt, 1), "sin": (math.sin, 1), "cos": (math.cos, 1), "abs": (abs, 1), "min": (min, 2), "max": (max, 2)}
 CONSTANTS = {"pi": math.pi}
 
@@ -193,6 +201,19 @@ for formula in ["rpm * teeth * chip", "2 * pi * rpm * torque / 60000", "sqrt(tee
     print(f"{formula:<32} = {Evaluate(env).visit(parse(formula)):.4g}")
 ```
 
+```output
+(a - b) - c          -> a - b - c        round trip same tree: True
+a - (b - c)          -> a - (b - c)      round trip same tree: True
+(2 ^ 3) ^ 2          -> (2 ^ 3) ^ 2      round trip same tree: True
+2 ^ (3 ^ 2)          -> 2 ^ 3 ^ 2        round trip same tree: True
+(a + b) * (c - d)    -> (a + b) * (c - d) round trip same tree: True
+-(x ^ 2)             -> -x ^ 2           round trip same tree: True
+(-x) ^ 2             -> (-x) ^ 2         round trip same tree: True
+rpm * teeth * chip               = 480
+2 * pi * rpm * torque / 60000    = 3.142
+sqrt(teeth ^ 2 + 9)              = 5
+```
+
 For a left-associative operator such as `-`, a right child of equal precedence needs brackets (`a - (b - c)`) and a left child does not. For right-associative `^` it is the other way round. `_needs_brackets` encodes exactly that with its `strict` flag.
 
 Redundant brackets disappear (`(a - b) - c` prints as `a - b - c`) while necessary ones stay (`a - (b - c)`), and every printed form parses back to the same tree. The calculator gives a feed of 480 mm/min and 3.14 kW (2π × 2400 rpm × 12.5 N·m / 60,000) from the formulas, with `pi` supplied as a constant.
@@ -201,7 +222,7 @@ Redundant brackets disappear (`(a - b) - c` prints as `a - b - c`) while necessa
 
 A user-facing tool must turn every failure into a message a person can act on, without a traceback. The pieces already raise specific exceptions: `SyntaxError` with a position from the parser, `NameError` for unknown variables or functions, `TypeError` for wrong argument counts, and `ZeroDivisionError` from evaluation. A thin facade catches them and reports. Predict before running: which formulas fail, and how?
 
-```python
+```python type
 def calculate(formula, env):
     try:
         value = Evaluate(env).visit(parse(formula))
@@ -222,6 +243,17 @@ def calculate(formula, env):
 env = {"F": 500.0, "L": 0.4, "E": 2.1e11, "I": 8.3e-8}
 for formula in ["F * L^3 / (3 * E * I)", "F * L^3 / (3 * E * J)", "F * (L + ", "sqrt(F, L)", "F / (L - 0.4)", "max(F, 2) $ 3", "sqrt(L - 1)", "(-8) ^ 0.5"]:
     print(f"{formula:<24} -> {calculate(formula, env)}")
+```
+
+```output
+F * L^3 / (3 * E * I)    -> 0.000611972
+F * L^3 / (3 * E * J)    -> unknown name: no value for 'J'
+F * (L +                 -> syntax error: unexpected 'end of formula' at position 8
+sqrt(F, L)               -> wrong arguments: sqrt takes 1 argument(s), got 2
+F / (L - 0.4)            -> division by zero
+max(F, 2) $ 3            -> syntax error: unexpected '$' at position 10
+sqrt(L - 1)              -> math error: math domain error
+(-8) ^ 0.5               -> math error: the result is not a real number
 ```
 
 `calculate` is a facade, as in the facade lesson: callers get a string either way, and the parser and visitors stay ignorant of how errors are presented.

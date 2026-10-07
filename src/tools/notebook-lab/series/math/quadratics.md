@@ -24,7 +24,7 @@ The same quadratic can be written three ways. The **standard form** ax² + bx + 
 
 Predict before running: for y = 2x² − 8x + 6, where are the vertex and the roots, and is the vertex halfway between the roots?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,6 +49,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+standard: 2*x**2 - 8*x + 6    factored: 2*(x - 3)*(x - 1)
+vertex form: 2(x - 2)² + (-2)   expands back to: 2*x**2 - 8*x + 6
+roots: [1, 3]   midpoint of the roots: 2 = h
+```
+
 y = 2x² − 8x + 6 factors as 2(x − 1)(x − 3), so the roots are 1 and 3. The vertex form is 2(x − 2)² − 2: the minimum is −2 at x = 2, exactly halfway between the roots. Expanding the vertex form returns the standard form, the check that nothing was lost.
 
 ## Completing the square and the discriminant
@@ -64,13 +70,20 @@ The vertex form comes from **completing the square**. x² + px is almost a perfe
 
 Predict before running: how many real roots do x² − 4x + 3, x² − 4x + 4 and x² − 4x + 5 have?
 
-```python
+```python type
 A, B, C = sp.symbols("a b c", nonzero=True)
 print("general solution:", sp.solve(A * x ** 2 + B * x + C, x))
 for cc in [3, 4, 5]:
     disc = (-4) ** 2 - 4 * 1 * cc
     kind = "two real roots" if disc > 0 else "one repeated root" if disc == 0 else "no real roots"
     print(f"x² - 4x + {cc}: discriminant {disc:>2} -> {kind}: {sp.solve(x ** 2 - 4 * x + cc, x)}")
+```
+
+```output
+general solution: [(-b - sqrt(-4*a*c + b**2))/(2*a), (-b + sqrt(-4*a*c + b**2))/(2*a)]
+x² - 4x + 3: discriminant  4 -> two real roots: [1, 3]
+x² - 4x + 4: discriminant  0 -> one repeated root: [2]
+x² - 4x + 5: discriminant -4 -> no real roots: [2 - I, 2 + I]
 ```
 
 SymPy's general solution is the quadratic formula. The three examples have the same vertex x-position, 2, and only the height changes. With discriminant 4 there are two roots (1 and 3). With 0 the vertex touches the axis, a single repeated root 2. With −4 the parabola floats above the axis and the roots are the complex pair 2 ± i, which the complex-numbers block will make sense of.
@@ -88,7 +101,7 @@ Expanding the factored form and matching coefficients shows that the roots' sum 
 
 Predict before running: for x² − 10⁸x + 1 = 0, what does the plain formula give for the small root, and what does Vieta's product give?
 
-```python
+```python type
 rng = np.random.default_rng(66)
 for _ in range(3):
     r1, r2 = rng.uniform(-5, 5, 2).round(2)
@@ -99,6 +112,13 @@ bb, cc = -1e8, 1.0
 d = math.sqrt(bb * bb - 4 * cc)
 big = (-bb + d) / 2
 print(f"x² - 1e8 x + 1: plain formula small root {(-bb - d) / 2:.6e}; Vieta c / (a × big root) = {cc / big:.6e}")
+```
+
+```output
+roots +4.24, +1.93: sum +6.1700, product +8.1832
+roots +1.24, -0.27: sum +0.9700, product -0.3348
+roots +3.49, -3.97: sum -0.4800, product -13.8553
+x² - 1e8 x + 1: plain formula small root 7.450581e-09; Vieta c / (a × big root) = 1.000000e-08
 ```
 
 Each pair's sum and product come back exactly from −b/a and c/a. For x² − 10⁸x + 1 the plain formula subtracts two nearly equal numbers and gives 7.45 × 10⁻⁹ for the small root, 25% wrong. Vieta's product gives 1.000000 × 10⁻⁸, correct, because the large root, 10⁸, involves no cancellation, and the product of the roots must be 1.
@@ -118,7 +138,7 @@ Structural engineering supplies a second case. A beam resting on two supports an
 
 Predict before running: from test-track data at speeds from 30 to 130 km/h, what reaction time and deceleration does the fit find? And where is a 6 m beam carrying 4 kN/m most heavily loaded?
 
-```python
+```python type
 v_kmh = np.arange(30, 131, 10, dtype=float)
 v = v_kmh / 3.6
 s_meas = 0.9 * v + v ** 2 / (2 * 7.5) + rng.normal(0, 1.5, v.size)
@@ -132,6 +152,12 @@ xb = sp.symbols("x")
 M = w * xb * (L - xb) / 2
 x_star = sp.solve(sp.diff(M, xb), xb)[0]
 print(f"beam: moment {sp.expand(M)} kN·m, largest at x = {x_star} m: {M.subs(xb, x_star)} kN·m = wL²/8 = {w * L ** 2 / 8}")
+```
+
+```output
+fitted reaction time 1.01 s (true 0.9), deceleration 7.97 m/s² (true 7.5)
+predicted stopping distance at 100 km/h: 76.5 m
+beam: moment -2*x**2 + 12*x kN·m, largest at x = 3 m: 18 kN·m = wL²/8 = 18.0
 ```
 
 From eleven noisy runs (1.5 m of scatter each) the fit gives a reaction time of 1.01 s and a deceleration of 7.97 m/s², against the true 0.9 s and 7.5 m/s²: the right size, with the uncertainty that eleven scattered points allow. The two coefficients trade off against each other, a longer reaction time with a harder stop fitting almost as well, so more runs, or runs at very different speeds, sharpen them. It predicts 76.5 m to stop from 100 km/h, more than a third of it covered before the brakes even act. The beam's moment, 12x − 2x², peaks at the mid-span x = 3 m at 18 kN·m, exactly wL²/8. Its vertex is where to check the beam's strength, and the factored form w x (L − x)/2 shows why the moment vanishes at the supports.
@@ -149,7 +175,7 @@ Some equations are quadratics in disguise. x⁴ − 5x² + 4 = 0 involves only x
 
 Predict before running: solve √(x + 2) = x. Squaring gives x² − x − 2 = 0 with roots 2 and −1. Are both solutions?
 
-```python
+```python type
 u = sp.symbols("u")
 u_roots = sp.solve(u ** 2 - 5 * u + 4, u)
 x_roots = sorted(r for ur in u_roots if ur >= 0 for r in (sp.sqrt(ur), -sp.sqrt(ur)))
@@ -158,6 +184,12 @@ candidates = sp.solve(xb ** 2 - xb - 2, xb)
 for cand in candidates:
     lhs, rhs = sp.sqrt(cand + 2), cand
     print(f"x = {cand}: sqrt(x + 2) = {lhs}, x = {rhs}  ->  {'solution' if lhs == rhs else 'EXTRANEOUS'}")
+```
+
+```output
+x⁴ - 5x² + 4 = 0: u = [1, 4] -> x = [-2, -1, 1, 2]   check: [0, 0, 0, 0]
+x = -1: sqrt(x + 2) = 1, x = -1  ->  EXTRANEOUS
+x = 2: sqrt(x + 2) = 2, x = 2  ->  solution
 ```
 
 The biquadratic has four real roots, −2, −1, 1 and 2, and all of them check. For √(x + 2) = x, the candidate 2 works (√4 = 2). The candidate −1 does not: √1 = 1, not −1. It solves √(x + 2) = −x instead, which is what squaring smuggled in. A square root returns only non-negative values, so any candidate making the other side negative is automatically extraneous. Checking by substitution, as in the rearranging lesson, is not optional after squaring.

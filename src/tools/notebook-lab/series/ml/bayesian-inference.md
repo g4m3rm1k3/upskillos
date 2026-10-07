@@ -19,7 +19,7 @@ p(\theta \mid D) = \frac{p(D \mid \theta)\, p(\theta)}{p(D)} \quad \propto \quad
 
 For one parameter, this can be done literally: lay down a fine **grid** of θ values, multiply, normalise. A coin gives 7 heads in 10 flips. What is its probability θ of heads? The likelihood of 7 heads and 3 tails is θ⁷(1 − θ)³. Compare a flat prior (every θ equally plausible) with a sceptical one that believes coins are usually close to fair. Before running, predict: where will each posterior's mean be?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta
@@ -43,6 +43,11 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+flat prior       posterior mean 0.667, most probable value 0.700, 95% interval 0.390 to 0.891
+sceptical prior  posterior mean 0.540, most probable value 0.542, 95% interval 0.402 to 0.675
+```
+
 `beta.pdf(theta, 20, 20)` is a **Beta distribution**, a standard family of distributions on 0 to 1; Beta(20, 20) is centred on 0.5 and fairly narrow, like the belief of someone who has seen many coins. `np.searchsorted(cumulative, 0.025)` finds where the cumulative probability passes 2.5%, so the two ends enclose the middle 95% of the posterior: a **credible interval**. Unlike a confidence interval, it means exactly what it says: given the prior and the data, θ lies in it with probability 0.95.
 
 With the flat prior, the most probable value is 0.7, the maximum likelihood answer, and the mean 0.667; the 95% interval is wide, 0.39 to 0.89, because 10 flips is not much. The sceptical prior pulls the estimate to 0.54, with a narrower interval of 0.40 to 0.68: seven heads in ten is not enough to overturn a strong belief in fairness. Neither is "right": the posterior honestly combines what you assumed with what you saw, and says how much each contributed.
@@ -53,7 +58,7 @@ For some pairs of likelihood and prior, the posterior has the same form as the p
 
 It also makes clear how belief sharpens. Here a coin with true θ = 0.7 is flipped repeatedly, starting from a flat prior:
 
-```python
+```python type
 import numpy as np
 from scipy.stats import beta
 
@@ -64,6 +69,14 @@ for n in [0, 1, 10, 100, 1000]:
     posterior = beta(1 + heads, 1 + n - heads)
     low, high = posterior.interval(0.95)
     print(f"after {n:>4} flips ({heads:>3} heads): mean {posterior.mean():.3f}, 95% interval {low:.3f} to {high:.3f}")
+```
+
+```output
+after    0 flips (  0 heads): mean 0.500, 95% interval 0.025 to 0.975
+after    1 flips (  1 heads): mean 0.667, 95% interval 0.158 to 0.987
+after   10 flips (  6 heads): mean 0.583, 95% interval 0.308 to 0.833
+after  100 flips ( 63 heads): mean 0.627, 95% interval 0.532 to 0.718
+after 1000 flips (678 heads): mean 0.678, 95% interval 0.648 to 0.706
 ```
 
 `beta(a, b)` creates the distribution, with `.mean()` and `.interval(0.95)` for the central 95%. After one head, the mean jumps to 0.667 but the interval spans almost everything; after 10 flips it covers 0.31 to 0.83; after 1,000, 0.65 to 0.71, with the truth inside. The width shrinks roughly like 1/√n, as the standard error did in the estimation lesson. With enough data, any reasonable prior is overwhelmed and the posterior concentrates near the truth.
@@ -88,7 +101,7 @@ With a normal prior on the weights and normal noise, the full posterior over the
 
 m is the posterior mean, which is also the MAP and the ridge solution, and Σ the posterior covariance, which says how uncertain each weight is and how the uncertainties are linked. The prediction at a new point a = [1, x] is then a normal distribution too, with mean a · m and variance a Σ aᵀ + σ²: uncertainty about the line, plus the noise around it. Predict before running: will the uncertainty about the line be the same everywhere?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Ridge
@@ -121,6 +134,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+posterior mean (intercept, slope): [0.691 0.886]  standard deviations: [0.264 0.106]
+ridge with alpha = noise_var / prior_var: [0.691 0.886]
+at x = 2.0: prediction 2.46, uncertainty about the line ±0.14
+at x = 8.0: prediction 7.78, uncertainty about the line ±0.64
+```
+
 `np.einsum("ij,jk,ik->i", G, cov, G)` computes aΣaᵀ for every row a of the grid at once. (The prior here covers the intercept as well as the slope, which is why the ridge comparison uses `fit_intercept=False` with the column of ones inside A.) `rng.multivariate_normal(mean, cov, 5)` draws five plausible (intercept, slope) pairs from the posterior; the grey lines are those five possible lines.
 
 The posterior mean equals ridge's answer to the last digit, confirming the MAP connection. And the uncertainty is not the same everywhere: within the data (x = 2) the line is pinned down to about ±0.14, but out at x = 8, twice the largest x in the data, it is ±0.64, more than four times as much, and the shaded band flares out. The sampled lines agree closely where there is data and fan out where there is none. A single fitted line, used as a point forecast, gives no hint of this (classical statistics can also produce widening prediction intervals, but they have to be asked for); the Bayesian answer carries its uncertainty with it, and says plainly that at x = 8 it is largely guessing.
@@ -138,7 +158,7 @@ The simplest is the **Metropolis algorithm**. It needs only the posterior up to 
 
 (This rule assumes the proposal is symmetric: moving from θ to θ' is as likely as moving back, as it is for normal noise.) The occasional downhill moves are essential: they make the chain wander through the posterior in proportion to its probability, instead of climbing to the peak and stopping. The early samples, before the chain has found the high-probability region, are discarded as **burn-in**.
 
-```python
+```python type
 import numpy as np
 from scipy.stats import beta
 
@@ -160,6 +180,12 @@ print(f"MCMC:  mean {samples.mean():.3f}, sd {samples.std():.3f}, P(θ > 0.5) = 
 exact = beta(8, 4)
 print(f"exact: mean {exact.mean():.3f}, sd {exact.std():.3f}, P(θ > 0.5) = {1 - exact.cdf(0.5):.3f}")
 print(f"fraction of proposals accepted: {accepted / 20000:.2f}")
+```
+
+```output
+MCMC:  mean 0.662, sd 0.133, P(θ > 0.5) = 0.880
+exact: mean 0.667, sd 0.131, P(θ > 0.5) = 0.887
+fraction of proposals accepted: 0.78
 ```
 
 Working with logs avoids underflow, as in Naive Bayes; "move with probability p(θ')/p(θ)" becomes comparing log(random number) with the difference of log posteriors, and a proposal outside (0, 1) gets log probability −∞ and is always rejected. With a flat prior, the posterior is exactly Beta(8, 4), so the samples can be checked: their mean (0.662) and spread (0.133) match the exact 0.667 and 0.131, and the probability that the coin favours heads comes out the same both ways. Modern tools (Stan, PyMC) use cleverer proposals (Hamiltonian Monte Carlo, which follows the gradient of the log posterior), but the principle is this loop.

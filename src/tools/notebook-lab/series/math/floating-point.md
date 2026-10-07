@@ -24,7 +24,7 @@ In decimal, the digits after the point are worth tenths, hundredths and so on. I
 
 Predict before running: which of 0.5, 0.1, 0.375, 0.2 and 0.75 are stored exactly?
 
-```python
+```python type
 import math
 import struct
 from fractions import Fraction
@@ -44,6 +44,15 @@ for x, (p, q) in [(0.5, (1, 2)), (0.1, (1, 10)), (0.375, (3, 8)), (0.2, (1, 5)),
     print(f"{x}: stored exactly? {Fraction(x) == Fraction(p, q)}   the float is {Decimal(x)}")
 ```
 
+```output
+0.1 in binary: 0.00011001100110011001100110011001...
+0.5: stored exactly? True   the float is 0.5
+0.1: stored exactly? False   the float is 0.1000000000000000055511151231257827021181583404541015625
+0.375: stored exactly? True   the float is 0.375
+0.2: stored exactly? False   the float is 0.200000000000000011102230246251565404236316680908203125
+0.75: stored exactly? True   the float is 0.75
+```
+
 0.5, 0.375 and 0.75 have denominators 2, 8 and 4 and are stored exactly. 0.1 and 0.2 are not: the stored 0.1 is 0.1000000000000000055511..., slightly more than a tenth, and 0.2 likewise. `Fraction(x)` and `Decimal(x)` both reveal the exact value of the float, because every float is itself an exact binary fraction; it just may not be the number you typed.
 
 ## The 64 bits of a double
@@ -59,7 +68,7 @@ Python's `float` is the IEEE 754 **double precision** format, the same in essent
 
 Predict before running: what exponent does 0.1 have, and what is special about the bits of 2⁵³?
 
-```python
+```python type
 def fields(x):
     b = struct.unpack(">Q", struct.pack(">d", x))[0]
     return b >> 63, (b >> 52) & 0x7FF, b & ((1 << 52) - 1)
@@ -72,6 +81,14 @@ for x in [1.0, 0.1, -2.5, 2.0 ** 53, 1e-310]:
     else:
         note = "exponent field 0: a subnormal number"
     print(f"{x!r:>22}: sign {s}, exponent field {e:>4}, fraction 0x{f:013x}  ({note})")
+```
+
+```output
+                   1.0: sign 0, exponent field 1023, fraction 0x0000000000000  (exponent    0, rebuilt exactly: True)
+                   0.1: sign 0, exponent field 1019, fraction 0x999999999999a  (exponent   -4, rebuilt exactly: True)
+                  -2.5: sign 1, exponent field 1024, fraction 0x4000000000000  (exponent    1, rebuilt exactly: True)
+    9007199254740992.0: sign 0, exponent field 1076, fraction 0x0000000000000  (exponent   53, rebuilt exactly: True)
+                1e-310: sign 0, exponent field    0, fraction 0x012688b70e62b  (exponent field 0: a subnormal number)
 ```
 
 1.0 is (1 + 0) × 2⁰, with an exponent field of 1023 (the bias) and an empty fraction. 0.1 is 1.6 × 2⁻⁴: its fraction is the hexadecimal pattern 999...9a, the repeating binary 1001 cut off and rounded up at the end. −2.5 is −1.25 × 2¹: its fraction holds the single bit for .25, and it differs from 1.25 only in the sign bit and an exponent one higher. 2⁵³ has an empty fraction, as every power of two does. Rebuilding each value from its three fields with exact fractions gives the float back exactly. The tiny 10⁻³¹⁰ is below the smallest normal number, about 2.2 × 10⁻³⁰⁸. It is stored as a subnormal, with exponent field 0 and no implied leading 1, which lets numbers fade gradually towards zero instead of falling off a cliff.
@@ -90,12 +107,24 @@ Floats are not spread evenly. Between 1 and 2 there are 2⁵² of them, spaced 2
 
 Predict before running: how big is the gap between neighbouring floats near 1000, near 10¹⁶ and near 10³⁰⁰?
 
-```python
+```python type
 for x in [1e-5, 1.0, 1000.0, 1e16, 2.0 ** 53, 1e300]:
     print(f"x = {x!r:<22} ulp = {math.ulp(x):.6g}   relative {math.ulp(x) / x:.2e}")
 print("next float after 1.0:", math.nextafter(1.0, 2.0), "  before:", math.nextafter(1.0, 0.0))
 print("2**53 + 1 as a float:", int(float(2 ** 53 + 1)), "  2**53:", 2 ** 53)
 print("smallest normal:", np.finfo(float).tiny, "  smallest subnormal:", 5e-324, "  half of it:", 5e-324 / 2)
+```
+
+```output
+x = 1e-05                  ulp = 1.69407e-21   relative 1.69e-16
+x = 1.0                    ulp = 2.22045e-16   relative 2.22e-16
+x = 1000.0                 ulp = 1.13687e-13   relative 1.14e-16
+x = 1e+16                  ulp = 2   relative 2.00e-16
+x = 9007199254740992.0     ulp = 2   relative 2.22e-16
+x = 1e+300                 ulp = 1.48702e+284   relative 1.49e-16
+next float after 1.0: 1.0000000000000002   before: 0.9999999999999999
+2**53 + 1 as a float: 9007199254740992   2**53: 9007199254740992
+smallest normal: 2.2250738585072014e-308   smallest subnormal: 5e-324   half of it: 0.0
 ```
 
 The gap near 1000 is about 1.1 × 10⁻¹³, near 10¹⁶ it is exactly 2, and near 10³⁰⁰ it is about 1.5 × 10²⁸⁴. The relative spacing stays between 1.1 and 2.2 × 10⁻¹⁶ throughout. Below 1.0 the floats are twice as dense as above it, so the step down is half the step up. 2⁵³ + 1 rounds to 2⁵³. The smallest subnormal, 5 × 10⁻³²⁴, has nothing below it except zero: halving it underflows to 0.0.
@@ -115,7 +144,7 @@ The first lesson showed the symptoms: round(2.5) is 2, and round(2.675, 2) is 2.
 
 Predict before running: is the exact sum of the stored 0.1 and stored 0.2 closer to 0.3's float or to the float just above it?
 
-```python
+```python type
 exact_sum = Fraction(0.1) + Fraction(0.2)
 below, above = Fraction(0.3), Fraction(math.nextafter(0.3, 1.0))
 print("distance from the exact sum to 0.3's float:", exact_sum - below, "  to the next float up:", above - exact_sum)
@@ -124,6 +153,15 @@ for a, b in [(1.0, 3.0), (2.0, 7.0), (0.7, 0.1), (1e10, 3.0)]:
     exact = Fraction(a) / Fraction(b)
     q = a / b
     print(f"{a} / {b}: within half an ulp of the exact quotient? {abs(Fraction(q) - exact) <= Fraction(math.ulp(q)) / 2}")
+```
+
+```output
+distance from the exact sum to 0.3's float: 1/36028797018963968   to the next float up: 1/36028797018963968
+last fraction bit: 0.3's float 1   next float up 0   result: 0.30000000000000004
+1.0 / 3.0: within half an ulp of the exact quotient? True
+2.0 / 7.0: within half an ulp of the exact quotient? True
+0.7 / 0.1: within half an ulp of the exact quotient? True
+10000000000.0 / 3.0: within half an ulp of the exact quotient? True
 ```
 
 The exact sum of the stored 0.1 and 0.2 lies exactly halfway between 0.3's float and the next float up, 2⁻⁵⁵ from each. It is a tie, and round-half-to-even picks the neighbour whose last bit is 0, the one above, so 0.1 + 0.2 gives 0.30000000000000004. Nothing went wrong in the addition; the surprise was already in the inputs, and the tie rule decided the rest. Each division, checked against the exact quotient of its stored inputs, lands within half an ulp: correctly rounded, as the standard promises.
@@ -141,7 +179,7 @@ Graphics cards, sensors, embedded controllers and machine-learning models often 
 
 Predict before running: a controller adds 0.1 s to a float32 clock every tick for 10 hours (360,000 ticks). How far off is it?
 
-```python
+```python type
 for dtype in [np.float32, np.float64]:
     clock = dtype(0)
     tick = dtype(0.1)
@@ -150,6 +188,13 @@ for dtype in [np.float32, np.float64]:
     print(f"{dtype.__name__}: clock reads {float(clock):.6f} s after 36,000 s, error {float(clock) - 36000:+.6g} s")
 print("float32 spacing near 36,000:", np.spacing(np.float32(36000)), " epsilon:", np.finfo(np.float32).eps)
 print("counting ticks as an integer instead:", 360_000 * Fraction(1, 10), "s exactly")
+```
+
+```output
+float32: clock reads 35958.347656 s after 36,000 s, error -41.6523 s
+float64: clock reads 36000.000000 s after 36,000 s, error -2.43374e-07 s
+float32 spacing near 36,000: 0.00390625  epsilon: 1.1920929e-07
+counting ticks as an integer instead: 36000 s exactly
 ```
 
 The float32 clock reads 35,958.35 s: it has lost 41.65 seconds in 10 hours. Near 36,000 the gap between float32 values is about 0.004 s, so each 0.1 s tick is rounded to a multiple of that gap, and the rounding always goes the same way over long stretches. The float64 clock is off by only 2.4 × 10⁻⁷ s. The robust fix is not more bits but a better design: count ticks as an integer, and keep the tick length exact too (as `Fraction(1, 10)`, or by counting in whole milliseconds), converting to seconds only when a time is needed.

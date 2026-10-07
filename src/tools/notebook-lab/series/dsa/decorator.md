@@ -19,7 +19,7 @@ A data logger reads values from a sensor. Different installations want different
 
 Every sensor has a method `read()` that returns the next value, or `None` when there are no more. A decorator is a class that **holds** a sensor and **is** a sensor: its `read()` calls the wrapped sensor's `read()` and adjusts the result. Since a decorated sensor is a sensor, it can be decorated again. Predict before running: what does the fully decorated sensor return for the raw readings?
 
-```python
+```python type
 class ListSensor:
     def __init__(self, values):
         self._values = iter(values)
@@ -62,6 +62,12 @@ print("calibrated: ", read_all(Calibrated(ListSensor(raw), offset=-0.5)))
 print("all three:  ", read_all(Smoothed(Clamped(Calibrated(ListSensor(raw), offset=-0.5), -40, 60), window=3)))
 ```
 
+```output
+raw:         [20.0, 21.0, 95.0, 22.0, 23.0]
+calibrated:  [19.5, 20.5, 94.5, 21.5, 22.5]
+all three:   [19.5, 20.0, 33.33, 34.0, 34.67]
+```
+
 `while (value := sensor.read()) is not None:` uses the **walrus operator** `:=`, which assigns and tests in one expression: read a value, store it in `value`, and loop while it is not `None`.
 
 The 95 is a glitch. Calibration subtracts 0.5, clamping caps the glitch at 60, and smoothing averages each reading with up to two before it. Three classes cover all 8 combinations, and `read_all` cannot tell a decorated sensor from a plain one. Each extra is written, and tested, once.
@@ -70,11 +76,16 @@ The 95 is a glitch. Calibration subtracts 0.5, clamping caps the glitch at 60, a
 
 Decorators are applied from the inside out: the innermost wraps the real sensor and runs first on each value. Changing the order changes the result, sometimes importantly. Predict before running: is the glitch still capped if smoothing happens **before** clamping?
 
-```python
+```python type
 clamp_then_smooth = Smoothed(Clamped(ListSensor(raw), -40, 60), window=3)
 smooth_then_clamp = Clamped(Smoothed(ListSensor(raw), window=3), -40, 60)
 print("clamp, then smooth:", read_all(clamp_then_smooth))
 print("smooth, then clamp:", read_all(smooth_then_clamp))
+```
+
+```output
+clamp, then smooth: [20.0, 20.5, 33.67, 34.33, 35.0]
+smooth, then clamp: [20.0, 20.5, 45.33, 46.0, 46.67]
 ```
 
 Clamping first caps the glitch at 60 before it is averaged, so the three averages it touches peak at 35. Smoothing first averages in the full 95, giving 45 to 47. Each of those is inside the −40 to 60 range, so clamping afterwards does nothing, and the glitch inflates three outputs by more than 11 degrees each. When you stack decorators, decide the order deliberately. It is part of the design, not an accident of how the code was typed.
@@ -87,7 +98,7 @@ Python's `@decorator` applies the same idea to functions: `@timed` above `def f`
 
 **Decorators with arguments.** `@retry(times=3)` first **calls** `retry(times=3)`, which must return the actual decorator. So a decorator that takes arguments is a function that returns a decorator: three levels of nested functions. Predict before running: what name does each decorated function report, and how many times does the flaky reader run?
 
-```python
+```python type
 import functools, time
 
 def timed(func):

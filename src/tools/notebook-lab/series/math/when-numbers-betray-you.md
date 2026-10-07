@@ -23,7 +23,7 @@ In code: `1 - math.cos(x)` against `2 * math.sin(x / 2) ** 2`
 
 Subtracting two nearly equal numbers keeps only the digits where they differ. If each is accurate to 16 digits and they agree in the first 12, the difference has only 4 meaningful digits: the rest are rounding noise, now promoted to the leading positions. This is **catastrophic cancellation**. It hides in innocent formulas. 1 − cos x for small x subtracts two numbers near 1; the identity 1 − cos x = 2 sin²(x/2) computes the same quantity without any subtraction. Predict before running: for x = 10⁻⁸, how many correct digits does each version give?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,6 +35,13 @@ for x in [1e-2, 1e-5, 1e-8]:
 
 big, step = 1e8, 1.0
 print("(1e8 + 1) - 1e8 =", (big + step) - big, "   (1e16 + 1) - 1e16 =", (1e16 + 1.0) - 1e16)
+```
+
+```output
+x = 1e-02: 1 - cos x = 4.999958333474e-05, 2 sin²(x/2) = 4.999958333472e-05
+x = 1e-05: 1 - cos x = 5.000000413702e-11, 2 sin²(x/2) = 4.999999999958e-11
+x = 1e-08: 1 - cos x = 0.000000000000e+00, 2 sin²(x/2) = 5.000000000000e-17
+(1e8 + 1) - 1e8 = 1.0    (1e16 + 1) - 1e16 = 0.0
 ```
 
 The rearranged formula involves no subtraction, so it serves as the accurate reference.
@@ -53,7 +60,7 @@ In code: `textbook(a, b, c)` against `stable(a, b, c)` with `q = -0.5 * (b + mat
 
 The roots of ax² + bx + c = 0 are (−b ± √(b² − 4ac))/(2a). When b² is much larger than 4ac, √(b² − 4ac) is very close to |b|, and one of the two roots subtracts nearly equal numbers. The cure uses the fact that the product of the roots is c/a: compute the large root safely (adding numbers of the same sign), then the small one as c/(a × large root). Predict before running: for x² + 10⁸x + 1 = 0, whose small root is very close to −10⁻⁸, what does the textbook formula give?
 
-```python
+```python type
 def textbook(a, b, c):
     d = math.sqrt(b * b - 4 * a * c)
     return (-b + d) / (2 * a), (-b - d) / (2 * a)
@@ -68,6 +75,12 @@ for b in [10.0, 1e4, 1e8]:
     s_small, s_large = stable(1.0, b, 1.0)
     check = s_small ** 2 + b * s_small + 1
     print(f"b = {b:.0e}: textbook small root {t_small:.10e}, stable {s_small:.10e} (residual {check:.1e})")
+```
+
+```output
+b = 1e+01: textbook small root -1.0102051443e-01, stable -1.0102051443e-01 (residual -2.2e-16)
+b = 1e+04: textbook small root -1.0000000111e-04, stable -1.0000000100e-04 (residual 0.0e+00)
+b = 1e+08: textbook small root -7.4505805969e-09, stable -1.0000000000e-08 (residual 1.1e-16)
 ```
 
 `math.copysign(d, b)` gives d the sign of b, so that b and the square root are added, never subtracted, when forming q.
@@ -86,7 +99,7 @@ In code: `naive_var(xs)` against `welford(xs)`: `mean += delta / k`, `m2 += delt
 
 The variance is the mean of the squares minus the square of the mean: var = E[x²] − (E[x])². On paper that is fine. On a computer, for data with a large mean and a small spread, such as gauge readings around 25.000 mm or timestamps around 1.7 × 10⁹ s, both terms are huge and nearly equal, and their difference is cancellation noise; it can even come out negative. Subtracting the mean first (the two-pass method) avoids it. **Welford's algorithm** does it in a single pass, updating a running mean and a running sum of squared deviations, which suits streaming sensor data. Predict before running: for 10,000 readings of 10⁹ + small noise, what does the one-pass textbook formula give?
 
-```python
+```python type
 rng = np.random.default_rng(50)
 data = 1e9 + rng.normal(0, 0.01, 10_000)
 
@@ -112,6 +125,13 @@ print(f"Welford:                   {welford(data)[1]:.6e}")
 print(f"two-pass (np.var):         {np.var(data, ddof=1):.6e}")
 ```
 
+```output
+true variance about 1.00e-04
+textbook one-pass formula: 8.179711e+03
+Welford:                   9.984747e-05
+two-pass (np.var):         9.984734e-05
+```
+
 Welford updates the mean with each new value, and accumulates the product of the deviation from the old mean and from the new one; no large numbers are ever subtracted.
 
 The true variance is about 10⁻⁴. The textbook formula subtracts two numbers near 10²² and returns rubbish, here a value many orders of magnitude wrong (possibly negative, which no variance can be). Welford and the two-pass method agree with each other and with the truth. Any running statistic on a sensor stream should use Welford's update.
@@ -128,7 +148,7 @@ In code: `np.exp(x - np.max(x))` in `softmax`, and `logsumexp(x)`
 
 Floating point covers about 10⁻³⁰⁸ to 10³⁰⁸, and e^x overflows to infinity once x exceeds about 709. Probability calculations meet this constantly: the **softmax** pᵢ = e^(xᵢ)/Σⱼ e^(xⱼ), which turns scores into probabilities in classification models, and the sigmoid of the chain-rule lesson. The cure is to shift before exponentiating: softmax is unchanged by subtracting the same constant from every score, so subtract the largest; then the biggest exponential is e⁰ = 1 and nothing overflows. The same idea gives the **log-sum-exp** trick, log Σ e^(xᵢ) = m + log Σ e^(xᵢ − m) with m = max xᵢ. Predict before running: what does the naive softmax of the scores (1000, 1001, 1002) give?
 
-```python
+```python type
 scores = np.array([1000.0, 1001.0, 1002.0])
 
 def naive_softmax(x):
@@ -151,6 +171,12 @@ with np.errstate(over="ignore"):
     print(np.log(np.sum(np.exp(scores))))
 ```
 
+```output
+naive softmax: [nan nan nan]
+shifted softmax: [0.090031 0.244728 0.665241]  same as for (0, 1, 2): [0.090031 0.244728 0.665241]
+log-sum-exp: 1002.4076059644444   naive: inf
+```
+
 In desktop Python the deliberately naive versions would print overflow warnings, which `np.errstate` silences; in the browser no warnings appear anyway.
 
 The naive softmax overflows to infinity and returns `nan` for every probability. The shifted version gives (0.090, 0.245, 0.665), exactly the softmax of (0, 1, 2), as it must be. Log-sum-exp returns 1002.41 where the naive form returns infinity. Every machine-learning library computes these the shifted way; the probability lessons' log-probabilities rely on the same idea.
@@ -167,13 +193,19 @@ In code: `np.linalg.solve(H, H @ x_true)` and `np.linalg.cond(H)` for $n$ = 4, 8
 
 The traps so far were **unstable algorithms**: a better formula fixed them. Some problems are different: they are **ill-conditioned**, meaning a tiny change in the input changes the exact answer enormously, so no algorithm can recover accuracy that the data do not contain. The condition number from the linear-algebra lessons measures it: roughly, you lose log₁₀(κ) of your 16 digits. The **Hilbert matrix**, Hᵢⱼ = 1/(i + j − 1), is the classic example; it appears when fitting high-degree polynomials. Predict before running: solving H x = H·(1, 1, ..., 1) should give all ones. How many correct digits survive for a 12 × 12 Hilbert matrix?
 
-```python
+```python type
 for n in [4, 8, 12]:
     H = 1 / (np.arange(1, n + 1)[:, None] + np.arange(1, n + 1)[None, :] - 1)
     x_true = np.ones(n)
     x = np.linalg.solve(H, H @ x_true)
     err = np.abs(x - x_true).max()
     print(f"n = {n:>2}: condition number {np.linalg.cond(H):.1e}, worst error {err:.1e}, correct digits about {max(0, -math.log10(err)):.0f}")
+```
+
+```output
+n =  4: condition number 1.6e+04, worst error 6.1e-13, correct digits about 12
+n =  8: condition number 1.5e+10, worst error 4.4e-07, correct digits about 6
+n = 12: condition number 1.8e+16, worst error 3.9e-01, correct digits about 0
 ```
 
 The right-hand side is built from the known answer, so the error can be measured exactly.
@@ -192,7 +224,7 @@ In code: `math.isclose(a, b, rel_tol=1e-9, abs_tol=...)`, and `math.fsum` for ac
 
 Since results carry rounding error, `==` between computed floats is almost always wrong: 0.1 + 0.2 == 0.3 is False. Compare with a **tolerance**: a relative tolerance for numbers of ordinary size (are they equal to 9 significant digits?), plus an absolute tolerance for numbers near zero, where relative comparisons break down. `math.isclose` and `np.isclose` do this. Predict before running: which of these comparisons succeed?
 
-```python
+```python type
 print("0.1 + 0.2 == 0.3:", 0.1 + 0.2 == 0.3, "  isclose:", math.isclose(0.1 + 0.2, 0.3))
 print("1e-20 vs 0 (relative only):", math.isclose(1e-20, 0.0), "  with abs_tol=1e-12:", math.isclose(1e-20, 0.0, abs_tol=1e-12))
 total = 0.0
@@ -200,6 +232,13 @@ for _ in range(10):
     total += 0.1
 print("loop adding ten 0.1s == 1:", total == 1.0, f"({total!r});  sum():", sum([0.1] * 10) == 1.0, "  math.fsum:", math.fsum([0.1] * 10) == 1.0)
 print("1e15 + 0.3 vs 1e15:", math.isclose(1e15 + 0.3, 1e15), "(relatively equal: they differ by 3 parts in 10¹⁶)")
+```
+
+```output
+0.1 + 0.2 == 0.3: False   isclose: True
+1e-20 vs 0 (relative only): False   with abs_tol=1e-12: True
+loop adding ten 0.1s == 1: False (0.9999999999999999);  sum(): True   math.fsum: True
+1e15 + 0.3 vs 1e15: True (relatively equal: they differ by 3 parts in 10¹⁶)
 ```
 
 `math.isclose(a, b)` uses a relative tolerance of 10⁻⁹ by default and no absolute tolerance, so comparisons with exactly zero need `abs_tol`.

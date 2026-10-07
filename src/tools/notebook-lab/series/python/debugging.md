@@ -12,7 +12,7 @@ The harder kind produces **no error at all**. The program runs to the end and pr
 
 Here is a function with a quiet bug. It is supposed to return the average of a list of numbers.
 
-```python
+```python type
 def average(numbers):
     total = 0
     for i in range(1, len(numbers)):
@@ -20,6 +20,10 @@ def average(numbers):
     return total / len(numbers)
 
 print(average([10, 20, 30]))
+```
+
+```output
+16.666666666666668
 ```
 
 It prints `16.666666666666668` instead of 20. No crash, just a wrong number. Before reading on, see if you can spot the bug. The rest of this lesson shows how to find it without having to spot it.
@@ -30,7 +34,7 @@ You cannot fix a bug you cannot make happen on purpose. So first find an input t
 
 Small inputs also make the right answer easy to know. You can work out the average of `[10, 20, 30]` in your head, which is exactly what you need to spot where the program goes wrong. Try even smaller inputs, and look for a pattern:
 
-```python
+```python type
 def average(numbers):
     total = 0
     for i in range(1, len(numbers)):
@@ -42,13 +46,19 @@ print(average([10, 20]))
 print(average([0, 20]))
 ```
 
+```output
+0.0
+10.0
+10.0
+```
+
 With one number, 10, the average comes out as `0.0`. With `[10, 20]` it is `10.0` instead of 15. But with `[0, 20]` it gives the right answer, `10.0`. That is a strong clue: the answers are wrong exactly when the **first** number is not zero. Something is wrong with how the first number is handled.
 
 ## Step 2: look inside
 
 Guessing is slow. Look at what the program is actually doing, by printing the values of variables at the point you suspect. Python has a handy f-string form for this: putting `=` after an expression in braces prints both the expression and its value.
 
-```python
+```python type
 def average(numbers):
     total = 0
     for i in range(1, len(numbers)):
@@ -58,6 +68,13 @@ def average(numbers):
     return total / len(numbers)
 
 average([10, 20, 30])
+```
+
+```output
+i=1 numbers[i]=20 total=0
+i=2 numbers[i]=30 total=20
+total=50 len(numbers)=3
+16.666666666666668
 ```
 
 The output shows the loop running with `i=1` and `i=2`, and never with `i=0`. So `numbers[0]`, the 10, is never added. The bug is `range(1, len(numbers))`, which should be `range(len(numbers))`. The printed values turned a mystery into an obvious fix. Once it is fixed, remove the debugging prints.
@@ -93,7 +110,7 @@ print(average([]))
 
 Asserts are also the simplest way to **test** a function: call it with inputs whose answers you know, and assert the results.
 
-```python
+```python type
 def average(numbers):
     return sum(numbers) / len(numbers)
 
@@ -101,6 +118,10 @@ assert average([10, 20, 30]) == 20
 assert average([5]) == 5
 assert average([-4, 4]) == 0
 print("All checks passed.")
+```
+
+```output
+All checks passed.
 ```
 
 If every assert passes, nothing happens and the final line prints. If one fails, you find out immediately which case broke. After fixing a bug, add an assert for the case that exposed it, so that if the bug ever comes back you will know at once. Lesson 24 builds this idea into proper tests.

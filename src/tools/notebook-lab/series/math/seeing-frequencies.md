@@ -23,7 +23,7 @@ In code: `2 * np.abs(np.fft.rfft(x)) / len(x)` and `np.fft.rfftfreq(len(x), 1 / 
 
 The previous lesson multiplied a signal by sin and cos of one harmonic and averaged. The **discrete Fourier transform** (DFT) does this for N equally spaced frequencies at once: for N samples taken at rate f_s, it measures the content at frequencies k f_s / N for k = 0, 1, ..., N − 1. Computed directly that is N² multiplications; the **fast Fourier transform** reorganises the arithmetic to take about N log₂ N, which for a million samples is the difference between hours and a fraction of a second. For real signals, `np.fft.rfft` returns the frequencies from 0 up to f_s/2, with matching frequencies from `np.fft.rfftfreq`. Each result is a complex number whose size measures the amplitude: for a sinusoid of amplitude A that fits a whole number of cycles in the record, |X_k| = A N/2. Predict before running: does the FFT find the two tones at their true amplitudes?
 
-```python
+```python type
 import math
 import time
 import numpy as np
@@ -65,7 +65,7 @@ In code: `f0 = 1450 / 60`, then the peaks of the amplitude spectrum divided by `
 
 Every rotating machine has characteristic frequencies. A shaft turning at f₀ revolutions per second produces vibration at f₀ (**1×**, usually from imbalance), 2× (misalignment), and gear mesh frequency (teeth × f₀). Rolling bearings with damage produce their own defect frequencies, and electrical machines hum at the supply frequency and twice it. A spectrum turns a vibration recording into a list of these. Predict before running: a shaft at 1,450 rpm (24.17 Hz) drives a 23-tooth pinion. Which peaks will the spectrum show, and which one is not a multiple of the shaft speed?
 
-```python
+```python type
 rng = np.random.default_rng(40)
 fs, duration = 5000, 4.0
 t = np.arange(0, duration, 1 / fs)
@@ -92,6 +92,15 @@ plt.show()
 print(f"the raw signal's RMS is {math.sqrt(np.mean(signal ** 2)):.2f}; the noise alone has RMS 1.0")
 ```
 
+```output
+   24.25 Hz  amplitude 0.994  =   1.00 × shaft speed
+   48.25 Hz  amplitude 0.329  =   2.00 × shaft speed
+   87.25 Hz  amplitude 0.255  =   3.61 × shaft speed
+  100.00 Hz  amplitude 0.303  =   4.14 × shaft speed
+  555.75 Hz  amplitude 0.648  =  23.00 × shaft speed
+the raw signal's RMS is 1.49; the noise alone has RMS 1.0
+```
+
 A peak is a local maximum above a threshold, as in the spring–mass lesson. Dividing each peak's frequency by the shaft speed gives its **order**.
 
 The raw signal is dominated by noise, but the spectrum separates five peaks cleanly: 1× at 24.25 Hz (the nearest 0.25 Hz bin to 24.17 Hz; imbalance), 2× (some misalignment), 23× at 555.8 Hz (gear mesh), 100 Hz (twice the 50 Hz supply, electrical), and 87.3 Hz, an order of 3.61, which is not a whole multiple of anything rotating at shaft speed: the signature of a bearing defect, whose frequency depends on the bearing's geometry. The noise spreads over all frequencies thinly, so a long record lifts every real tone well above it.
@@ -108,7 +117,7 @@ In code: the 50 Hz and 50.6 Hz tones with `duration` 1.0 and 5.0
 
 The DFT's frequencies are spaced Δf = f_s / N = 1 / duration apart: a 1-second record resolves 1 Hz, a 10-second record 0.1 Hz. Two tones closer than about Δf merge into one peak. Sampling faster does **not** help; only recording longer does. Predict before running: can a 1-second record separate tones at 50 Hz and 50.6 Hz? Can a 5-second one?
 
-```python
+```python type
 fs = 1000
 for duration in [1.0, 5.0]:
     t = np.arange(0, duration, 1 / fs)
@@ -118,6 +127,11 @@ for duration in [1.0, 5.0]:
     band = (freqs > 45) & (freqs < 56)
     local = [freqs[k] for k in np.flatnonzero(band) if amps[k] > 0.2 and amps[k] >= amps[k - 1] and amps[k] >= amps[k + 1]]
     print(f"{duration:.0f} s record: Δf = {freqs[1]:.2f} Hz, peaks in 45-56 Hz at {np.round(local, 2)} Hz")
+```
+
+```output
+1 s record: Δf = 1.00 Hz, peaks in 45-56 Hz at [50.] Hz
+5 s record: Δf = 0.20 Hz, peaks in 45-56 Hz at [50.  50.6] Hz
 ```
 
 The two tones are 0.6 Hz apart, less than the 1 Hz resolution of a 1-second record and more than the 0.2 Hz of a 5-second one.
@@ -136,7 +150,7 @@ In code: `w = np.hanning(N)`, then `np.fft.rfft(x * w)` divided by `N * w.mean()
 
 The DFT treats the record as if it repeated forever. When a tone does not complete a whole number of cycles in the record, the repetition has a jump at the join, and the tone's energy **leaks** into neighbouring frequencies: the peak is lower and spread out, with skirts that can hide small nearby peaks. Multiplying the record by a **window** that tapers smoothly to zero at both ends, such as the **Hann window** ½(1 − cos(2πn/(N − 1))) for n = 0, ..., N − 1 (the form `np.hanning` uses), removes the jump. The peak becomes a little wider but the skirts fall away dramatically. The window also lowers amplitudes, by its average value (very nearly 0.5 for Hann), which is corrected by dividing by it. Predict before running: a 3.0 tone at 50.5 Hz (not a whole number of cycles in 1 s) next to a 0.02 tone at 70 Hz. Is the small tone visible?
 
-```python
+```python type
 fs, N = 1000, 1000
 t = np.arange(N) / fs
 x = 3.0 * np.sin(2 * math.pi * 50.5 * t) + 0.02 * np.sin(2 * math.pi * 70 * t)
@@ -157,6 +171,11 @@ ax.legend()
 plt.show()
 ```
 
+```output
+no window   : highest peak 1.919, level at 70 Hz 0.0459, level at 65 Hz 0.0579
+Hann window : highest peak 2.547, level at 70 Hz 0.0200, level at 65 Hz 0.0003
+```
+
 A logarithmic amplitude axis shows small peaks next to large ones. `np.hanning(N)` builds the Hann window; dividing by its mean restores the amplitude scale.
 
 Without a window, the 50.5 Hz tone falls between bins, its peak reads only about 1.9 instead of 3, and its leakage at 65–70 Hz is around 0.06: the 0.02 tone at 70 Hz is buried. With the Hann window the main peak reads about 2.5 (closer, though a tone between bins is still underestimated), the skirt at 65 Hz falls to well below 0.001, and the 70 Hz tone stands clear at about 0.02. Vibration analysers apply a Hann window by default for this reason.
@@ -173,7 +192,7 @@ In code: the largest peak of `np.fft.rfft(np.sin(2 * math.pi * f_true * t))` for
 
 A sampled signal cannot represent frequencies above half the sampling rate, the **Nyquist frequency** f_s/2. A higher frequency does not disappear: it shows up at a false, lower frequency, **aliased** by folding about multiples of f_s/2. This is the plotting lesson's still-looking shaft, made quantitative. The only cure is to remove high frequencies **before** sampling, with an analogue anti-aliasing filter, which is why every data acquisition card has one. Predict before running: sampled at 1 kHz, where do tones at 700 Hz and 1,050 Hz appear?
 
-```python
+```python type
 fs = 1000
 t = np.arange(0, 1, 1 / fs)
 freqs = np.fft.rfftfreq(len(t), 1 / fs)
@@ -182,6 +201,13 @@ for f_true in [300, 700, 1050, 1900]:
     amps = 2 * np.abs(np.fft.rfft(x)) / len(t)
     folded = abs(f_true - fs * round(f_true / fs))
     print(f"a {f_true} Hz tone appears at {freqs[np.argmax(amps)]:.0f} Hz (folding predicts {folded} Hz)")
+```
+
+```output
+a 300 Hz tone appears at 300 Hz (folding predicts 300 Hz)
+a 700 Hz tone appears at 300 Hz (folding predicts 300 Hz)
+a 1050 Hz tone appears at 50 Hz (folding predicts 50 Hz)
+a 1900 Hz tone appears at 100 Hz (folding predicts 100 Hz)
 ```
 
 The folded frequency is the distance from the true frequency to the nearest whole multiple of the sampling rate.

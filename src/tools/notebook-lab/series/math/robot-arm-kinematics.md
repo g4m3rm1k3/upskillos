@@ -25,7 +25,7 @@ The angles are relative: each one is measured from the direction of the previous
 
 Predict before running: the arm has links of 0.4, 0.3 and 0.15 m, with joint angles 30°, 45° and −60°. In which direction does the gripper point?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,6 +60,19 @@ ax.set_title("pose (30°, 45°, −60°)")
 plt.show()
 ```
 
+```output
+base, joints and tip (m):
+ [[0.     0.    ]
+ [0.3464 0.2   ]
+ [0.4241 0.4898]
+ [0.5689 0.5286]]
+tip frame T:
+ [[ 0.9659 -0.2588  0.5689]
+ [ 0.2588  0.9659  0.5286]
+ [ 0.      0.      1.    ]]
+gripper angle from T: 15.0   sum of joint angles: 15
+```
+
 The gripper points at 15°, the sum 30 + 45 − 60, and the rotation block of T, with cos 15° ≈ 0.9659 and sin 15° ≈ 0.2588, says the same. The tip is at (0.5689, 0.5286). Industrial robots work exactly this way in 3D: each joint contributes a 4 × 4 matrix, and the controller multiplies them hundreds of times a second.
 
 ## Exact inverse kinematics for two links
@@ -79,7 +92,7 @@ The arccosine has two answers, ±θ₂, so there are two mirror-image ways to re
 
 Predict before running: with links of 0.4 m and 0.3 m, which joint angles reach (0.5, 0.2)?
 
-```python
+```python type
 def ik2(x, y, l1, l2, elbow=1):
     c2 = (x * x + y * y - l1 * l1 - l2 * l2) / (2 * l1 * l2)
     if abs(c2) > 1:
@@ -99,6 +112,12 @@ except ValueError as err:
     print("(0.8, 0):", err)
 ```
 
+```output
+elbow +1: θ1 = -11.517°, θ2 =  80.406°, forward kinematics puts the tip at [0.5 0.2]
+elbow -1: θ1 =  55.120°, θ2 = -80.406°, forward kinematics puts the tip at [0.5 0.2]
+(0.8, 0): out of reach
+```
+
 The two solutions are (−11.517°, 80.406°) and (55.120°, −80.406°). Each puts the tip exactly on (0.5, 0.2): run the forward kinematics on the answer, and check it, as always. The point (0.8, 0) is beyond the 0.7 m reach, and the cosine test catches it before any arithmetic fails.
 
 ## A wrist, and many ways to reach
@@ -116,7 +135,7 @@ If the gripper direction does not matter, the three joints have only two coordin
 
 Predict before running: from the pose (60°, −30°, −20°), which way of reaching (0.5, 0.1) moves the joints least, and is it the gripper-down pose?
 
-```python
+```python type
 def pick(x, y, phi, lengths, elbow=1):
     l1, l2, l3 = lengths
     wx = x - l3 * math.cos(math.radians(phi))
@@ -153,6 +172,12 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+gripper pointing down: [  -4.642   74.905 -160.263]  tip [0.5 0.1]
+720 of the 720 (φ, elbow) choices reach the target
+least movement: φ = -71°, elbow -1, angles [ 64.02 -87.13 -47.89], total change 63.7°
+```
+
 All 720 combinations reach: the wrist circle of radius 0.15 m around (0.5, 0.1) lies entirely inside the two-link ring, which runs from 0.1 m to 0.7 m from the base. The gripper-down pose needs the last joint at about −160°. The pose that moves least points the gripper at −71° with the elbow bent the other way from the gripper-down pose (θ₂ negative), a total change of about 63.7° (the root of the sum of the squared joint changes). A real controller would add other costs: joint limits, distance from obstacles, distance from singular poses. Choosing among redundant solutions is an optimisation problem.
 
 ## Reaching as optimisation
@@ -175,7 +200,7 @@ Two update rules use it:
 
 Predict before running: from the pose (60°, −30°, −20°), how many steps does each method need to reach (0.5, 0.1)? And what happens with a target 1 m away, beyond the arm's 0.85 m reach?
 
-```python
+```python type
 def jac(angles, lengths):
     pts = frames(angles, lengths)[0]
     tip = pts[-1]
@@ -219,6 +244,19 @@ for lam in [0.0, 0.05, 0.2]:
 print("λ = 0.2 on the reachable target:", reach((0.5, 0.1), current, L, "dls", lam=0.2)[1], "steps")
 ```
 
+```output
+largest difference from a numerical Jacobian: 4.473044157293771e-11
+transpose, rate 1      139 steps, error 9.9e-07 m, angles [ 63.44 -85.84 -50.63]
+transpose, rate 8      300 steps, error 1.6e-01 m, angles [  12.31  -91.98 -197.07]
+damped least squares     6 steps, error 3.3e-07 m, angles [ 65.63 -91.03 -39.37]
+
+target (1, 0): starting error 0.653 m; the best possible is 1 − 0.85 = 0.15 m
+λ = 0.0: over the last 100 of 300 steps the error ranges from 0.152 to 1.708 m
+λ = 0.05: over the last 100 of 300 steps the error ranges from 0.150 to 0.308 m
+λ = 0.2: over the last 100 of 300 steps the error ranges from 0.150 to 0.150 m
+λ = 0.2 on the reachable target: 10 steps
+```
+
 The analytic Jacobian matches the numerical one to about 10⁻¹⁰. Damped least squares reaches the target in 6 steps, against 139 for the transpose method at rate 1. At rate 8 the transpose method overshoots, and is still about 0.16 m from the target after 300 steps. Both converging methods end within about 9° per joint of (64°, −87°, −48°), the least-movement pose found by the search above. Starting from the current pose and taking small corrections naturally finds a nearby solution.
 
 The unreachable target shows why the damping matters, and that its size is a trade-off. The best the arm can do is to stretch straight towards the target, 0.15 m short, but that straight pose is singular. Undamped (λ = 0), the steps explode near it and the arm thrashes: the error never settles. A little damping (λ = 0.05) keeps the steps bounded, but the arm still jitters around the stretched pose. With λ = 0.2 the steps are small enough near the singularity that the arm settles exactly on the best possible 0.15 m. The price is speed on ordinary targets: 10 steps instead of 6. Industrial controllers therefore adjust λ as they go, small far from singular poses and larger near them. A controller would rather get a steady "as close as possible" than wild motion.
@@ -239,7 +277,7 @@ The 2D cross product (b − a) × (q − a) = (b − a)ₓ(q − a)ᵧ − (b �
 
 Predict before running: moving the tip from (0.6, −0.1) to (0.2, 0.5), how far does a joint move stray from the straight line?
 
-```python
+```python type
 A, B = np.array([0.6, -0.1]), np.array([0.2, 0.5])
 thA = reach(A, current, L, "dls")[0]
 thB = reach(B, thA, L, "dls")[0]
@@ -274,6 +312,12 @@ for angles in [thA, thB]:
 ax.set_aspect("equal")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+joint move: tip strays up to 129 mm from the line
+linear move: tip within 0.0009 mm; largest joint change between neighbouring points 1.07°
+final angles, joint move: [ 121.24 -109.71   29.28]   linear move: [ 122.46 -106.85   17.43]
 ```
 
 The joint move swings the tip about 129 mm away from the straight line: enough to hit a fixture. The linear move stays within a thousandth of a millimetre, and no joint changes by more than about 1.1° between neighbouring points, so the motion is smooth. The two moves even end in slightly different poses, about 12° apart at the wrist. The arm is redundant, and the path taken decides which of the many end poses it arrives in. Planning a real path adds speed limits for each joint and checks for collisions, but at its core is this loop: interpolate in the space where the task is defined, and solve the kinematics at every step.

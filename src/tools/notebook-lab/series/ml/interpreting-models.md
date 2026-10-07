@@ -15,7 +15,7 @@ To measure how much a model relies on a feature, break that feature and see how 
 
 The decision trees lesson warned that a tree's built-in **impurity importances** have a bias. Here is a demonstration: the diabetes data (10 measurements predicting disease progression a year later) plus one extra column of **pure random noise**. Before running, predict where the noise column will rank by each measure.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 from sklearn.ensemble import RandomForestRegressor
@@ -38,6 +38,15 @@ for i in np.argsort(test_result.importances_mean)[::-1][:4]:
 print(f"NOISE: permutation importance on test data {test_result.importances_mean[-1]:.3f} ± {test_result.importances_std[-1]:.3f}, on training data {train_result.importances_mean[-1]:.3f}")
 ```
 
+```output
+impurity importance, top 5: ['bmi', 's5', 'bp', 'NOISE', 'age']
+  permutation on test data: bmi    0.192 ± 0.054
+  permutation on test data: s5     0.130 ± 0.044
+  permutation on test data: bp     0.011 ± 0.023
+  permutation on test data: s2     0.010 ± 0.007
+NOISE: permutation importance on test data 0.003 ± 0.012, on training data 0.056
+```
+
 `permutation_importance` reports, for each feature, the mean and standard deviation of the drop in the model's score (R² here) over the repeated shuffles.
 
 By impurity importance, the noise column ranks fourth, above most real measurements: random forests split on it often, because a continuous column with many distinct values offers many split points that happen to fit the training data. On the test data, permutation importance gives it about 0.003 ± 0.012, indistinguishable from zero: shuffling it costs nothing on new data, because it never carried real information. On the **training** data, though, its permutation importance is clearly positive: the forest memorised the noise there. So compute permutation importance on held-out data.
@@ -48,7 +57,7 @@ Two cautions about any importance measure. When two features are strongly correl
 
 Importance says **how much** a feature matters; it does not say **how**. **Partial dependence** shows the shape: set a feature to a value for **every** row of the data, average the model's predictions, and repeat over a range of values. The resulting curve is the model's average prediction as that feature varies, with the other features left as they really are.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
@@ -75,13 +84,17 @@ ax.set_ylabel("average predicted progression")
 plt.show()
 ```
 
+```output
+average prediction at the lowest, middle and highest BMI: 111 190 194
+```
+
 The dataset's features are already centred and scaled, so BMI appears as small numbers around 0. The curve rises with BMI: higher body mass index, worse predicted progression, with a forest's typical staircase shape, flat at the extremes, where there were few training examples. Partial dependence is an average, so it can hide interactions: if a feature raises predictions for some people and lowers them for others, the average may look flat. scikit-learn's `PartialDependenceDisplay` draws these curves, and with `kind="individual"` also the per-row curves, which reveal such interactions.
 
 ## When the data moves
 
 A model is only reliable on data like its training data. When a model is deployed somewhere new, or the world changes over time, the input distribution **shifts**. Here a model is trained only on patients with below-median BMI and then used on patients with above-median BMI. Predict before running: how much worse will it do on the new patients?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -108,6 +121,13 @@ detector.fit(combined, is_new)
 print("feature that gives the shift away:", data.feature_names[int(np.argmax(detector.feature_importances_))])
 ```
 
+```output
+error on unseen patients like the training ones: MAE 42.7
+error on the new, higher-BMI patients:           MAE 64.9
+can a classifier tell old from new data? AUC 1.00
+feature that gives the shift away: bmi
+```
+
 The error rises by about half, from 42.7 to 64.9: the forest has never seen high-BMI patients, and trees cannot extrapolate beyond their training range.
 
 The second part is a practical trick for **detecting** shift before the error shows up (often you do not yet have labels for the new data): **adversarial validation**. Label the old data 0 and the new data 1, and train a classifier to tell them apart. If it cannot (AUC near 0.5), the distributions look the same. If it can, they differ, and its feature importances say where. Here the AUC is 1.00 and BMI is the feature that gives it away, exactly the shift that was built in. In real systems, monitoring the inputs this way, and the model's error once labels arrive, is how models are kept honest after deployment.
@@ -122,7 +142,7 @@ When a model makes decisions about people, overall accuracy can hide very differ
 
 A simulated lending example. Two groups have the same distribution of underlying ability to repay, but group 1 has, on average, lower recorded income, for reasons unrelated to repayment, and lives in different postcodes. The model is **never shown the group**, only income and postcode. Predict before running: will its decisions differ between the groups?
 
-```python
+```python type
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import train_test_split
@@ -145,6 +165,11 @@ for g in [0, 1]:
     would_repay = in_group & (y_test == 1)
     print(f"group {g}: actually repay {y_test[in_group].mean():.2f}, approved {approved[in_group].mean():.2f}, "
           f"approved among those who would repay {approved[would_repay].mean():.2f}, accuracy {(approved[in_group] == y_test[in_group]).mean():.2f}")
+```
+
+```output
+group 0: actually repay 0.49, approved 0.54, approved among those who would repay 0.76, accuracy 0.71
+group 1: actually repay 0.50, approved 0.46, approved among those who would repay 0.70, accuracy 0.74
 ```
 
 `train_test_split` can split several arrays at once, keeping them aligned, so the group labels stay matched to their rows without the model ever using them.

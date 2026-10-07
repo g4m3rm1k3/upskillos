@@ -20,7 +20,7 @@ E[X] = 1 \cdot \tfrac16 + 2 \cdot \tfrac16 + \dots + 6 \cdot \tfrac16 = 3.5
 
 The expected value need not be a value the variable can actually take: no die ever shows 3.5. It is the long-run average, and simulation agrees:
 
-```python
+```python type
 import numpy as np
 
 values = np.arange(1, 7)
@@ -28,6 +28,11 @@ probs = np.full(6, 1 / 6)
 print("formula:  ", (values * probs).sum())
 rolls = np.random.default_rng(0).integers(1, 7, size=1_000_000)
 print("simulated:", rolls.mean())
+```
+
+```output
+formula:   3.5
+simulated: 3.502232
 ```
 
 The expected value is how you judge whether a gamble, or a decision, is worth it. A game costs 1 to play; you roll a die and win 5 if it shows a six, otherwise nothing. Your expected winnings are 5 × 1/6 = 0.83, less than the cost of 1, so on average you lose about 0.17 per game. A casino is built on exactly this arithmetic, and so is every decision a model makes about which action has the best expected outcome.
@@ -38,7 +43,7 @@ Expectation has one very convenient property: it adds up. The expected value of 
 
 Two variables can have the same mean but behave very differently. Both of these have mean 50:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -46,6 +51,11 @@ steady = rng.normal(50, 2, size=10_000)
 wild = rng.normal(50, 20, size=10_000)
 print("means:", steady.mean().round(2), wild.mean().round(2))
 print("typical distance from the mean:", np.abs(steady - 50).mean().round(2), np.abs(wild - 50).mean().round(2))
+```
+
+```output
+means: 49.98 49.77
+typical distance from the mean: 1.6 15.82
 ```
 
 The **variance** measures spread: it is the expected **squared** distance from the mean.
@@ -62,7 +72,7 @@ Squaring makes every distance positive, so distances above and below the mean ca
 
 For the die, each face is some distance from 3.5, and averaging the squared distances gives the variance:
 
-```python
+```python type
 import numpy as np
 
 values = np.arange(1, 7)
@@ -72,6 +82,11 @@ variance = ((values - mean) ** 2 * probs).sum()
 print("variance:", variance, " standard deviation:", np.sqrt(variance).round(4))
 rolls = np.random.default_rng(0).integers(1, 7, size=1_000_000)
 print("simulated:", rolls.var().round(4), rolls.std().round(4))
+```
+
+```output
+variance: 2.9166666666666665  standard deviation: 1.7078
+simulated: 2.9175 1.7081
 ```
 
 The variance of a die is 35/12 ≈ 2.92, and its standard deviation about 1.71.
@@ -86,7 +101,7 @@ Variance does not add up as simply as expectation, and the rules are worth knowi
 
 A quick check of all three with dice, where one die's variance is 35/12 ≈ 2.92:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(7)
@@ -96,6 +111,13 @@ print("Var(X + 10):", (X + 10).var().round(3), "  Var(X):", X.var().round(3))
 print("Var(2X):    ", (2 * X).var().round(3), "  4 Var(X):", (4 * X.var()).round(3))
 print("Var(X + Y): ", (X + Y).var().round(3), "  Var(X) + Var(Y):", (X.var() + Y.var()).round(3))
 print("Var(X + X): ", (X + X).var().round(3), "  (not independent!)")
+```
+
+```output
+Var(X + 10): 2.918   Var(X): 2.918
+Var(2X):     11.674   4 Var(X): 11.674
+Var(X + Y):  5.834   Var(X) + Var(Y): 5.823
+Var(X + X):  11.674   (not independent!)
 ```
 
 Two separate dice add their variances. But `X + X` is not two independent dice: it is the same die counted twice, which is `2X`, with four times the variance, not two. Independence is what makes the adding rule work.
@@ -108,13 +130,20 @@ The last rule has a remarkable consequence for averages. Average `n` independent
 
 Predict what happens to the spread of an average when you use 4 times as many values:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(2)
 for n in [1, 4, 16, 64]:
     averages = rng.integers(1, 7, size=(20_000, n)).mean(axis=1)
     print(f"average of {n:>2} dice: standard deviation {averages.std():.3f}   formula {1.708 / np.sqrt(n):.3f}")
+```
+
+```output
+average of  1 dice: standard deviation 1.718   formula 1.708
+average of  4 dice: standard deviation 0.860   formula 0.854
+average of 16 dice: standard deviation 0.426   formula 0.427
+average of 64 dice: standard deviation 0.212   formula 0.213
 ```
 
 Averaging 4 times as many values halves the spread. This is why averages of many measurements are so much more reliable than single measurements, and why more data makes estimates more precise, but with diminishing returns: to halve your uncertainty, you need four times the data.
@@ -125,13 +154,18 @@ Everything so far describes a variable whose distribution you know. With real da
 
 The fix is to divide by `n − 1` instead of `n`, which is called the **sample variance**. NumPy's `var` and `std` divide by `n` by default; pass `ddof=1` ("delta degrees of freedom") to divide by `n − 1`. You can see the difference by drawing many small samples from a distribution whose variance is known to be 1. Predict: will dividing by `n` come out too big or too small on average?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(3)
 samples = rng.normal(0, 1, size=(100_000, 5))
 print("dividing by n,     average estimate:", samples.var(axis=1).mean().round(4))
 print("dividing by n - 1, average estimate:", samples.var(axis=1, ddof=1).mean().round(4))
+```
+
+```output
+dividing by n,     average estimate: 0.8008
+dividing by n - 1, average estimate: 1.0009
 ```
 
 With samples of 5, dividing by `n` gives about 0.8 on average instead of the true 1; dividing by `n − 1` gives about 1. For large samples the difference is negligible. Statistics tools (and pandas) use `n − 1` by default; NumPy uses `n`; standardising data for machine learning, as in the indexing lesson, conventionally uses NumPy's default. Know which one you are using when you compare numbers.
@@ -154,7 +188,7 @@ r = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}
 
 A correlation of 1 means the points lie exactly on a rising straight line, −1 exactly on a falling one, and 0 means no straight-line relationship at all. Predict the correlation of each of these four datasets before you run the cell:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -180,7 +214,7 @@ The last panel is an important warning: `y` depends **completely** on `x`, yet t
 
 With many variables, the covariances of every pair form the **covariance matrix**, computed by `np.cov`. It is symmetric (Cov(X, Y) = Cov(Y, X)), so from lesson 7 its eigenvectors are at right angles to each other; they point along the directions in which the data is most spread out, which is exactly what principal component analysis finds.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(5)
@@ -190,13 +224,19 @@ print(np.cov(heights, weights).round(1))
 print("correlation:", np.corrcoef(heights, weights)[0, 1].round(3))
 ```
 
+```output
+[[59.  53.7]
+ [53.7 87. ]]
+correlation: 0.75
+```
+
 The diagonal holds each variable's variance (`np.cov` divides by `n − 1`), and the off-diagonal entries the covariance.
 
 ## The central limit theorem
 
 The last lesson claimed that sums of many independent random effects tend towards a normal distribution. Here it is happening. Waiting times are exponentially distributed, which is very skewed. Take averages of `n` waiting times at a time, for larger and larger `n`, and plot the averages. Predict what the histogram of averages of 50 will look like:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 

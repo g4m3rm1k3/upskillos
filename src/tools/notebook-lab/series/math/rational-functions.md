@@ -24,7 +24,7 @@ A rational function p(x)/q(x) is defined wherever q(x) ≠ 0. At a root a of q t
 
 Predict before running: r(x) = (x² − 1)/(x² − 3x + 2). Where are its poles, and where are its holes?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +44,14 @@ for a in [1.999, 2.001]:
     print(f"r({a}) = {float(r.subs(x, a)):.1f}")
 ```
 
+```output
+factored: (x - 1)*(x + 1) / (x - 2)*(x - 1)
+after cancelling: (x + 1)/(x - 2)
+denominator zeros: [1, 2]  poles: [2]  holes: [(1, -2)]
+r(1.999) = -2999.0
+r(2.001) = 3001.0
+```
+
 The numerator is (x − 1)(x + 1) and the denominator (x − 1)(x − 2). The shared x − 1 cancels to (x + 1)/(x − 2). So x = 2 is a pole: r jumps from −2999 just below 2 to +3001 just above, a simple pole's sign change. x = 1 is a hole: the simplified formula gives −2 there, but the original is undefined. The graph is a smooth curve through the place where (1, −2) should be, with that single point missing.
 
 ## Asymptotes from the degrees
@@ -59,7 +67,7 @@ Far from the poles, a rational function behaves like a polynomial. Dividing p by
 
 Predict before running: what are the asymptotes of 3x/(x² + 1), (2x² + 1)/(x² − 4) and (x² + 3x + 1)/(x − 1)?
 
-```python
+```python type
 cases = {
     "3x / (x² + 1)": ([3, 0], [1, 0, 1]),
     "(2x² + 1) / (x² - 4)": ([2, 0, 1], [1, 0, -4]),
@@ -70,6 +78,12 @@ for label, (pn, qd) in cases.items():
     far = 1e4
     gap = np.polyval(pn, far) / np.polyval(qd, far) - np.polyval(quotient, far)
     print(f"{label:<26} quotient {np.round(quotient, 6)}, remainder {np.round(remainder, 6)}; at x = 10⁴ the gap to the asymptote is {gap:.2e}")
+```
+
+```output
+3x / (x² + 1)              quotient [0.], remainder [3. 0.]; at x = 10⁴ the gap to the asymptote is 3.00e-04
+(2x² + 1) / (x² - 4)       quotient [2.], remainder [9.]; at x = 10⁴ the gap to the asymptote is 9.00e-08
+(x² + 3x + 1) / (x - 1)    quotient [1. 4.], remainder [5.]; at x = 10⁴ the gap to the asymptote is 5.00e-04
 ```
 
 3x/(x² + 1) has quotient 0, so y = 0 is its asymptote. (2x² + 1)/(x² − 4) has quotient 2: it levels off at y = 2. (x² + 3x + 1)/(x − 1) has quotient x + 4, so far out it runs alongside the slanted line y = x + 4, the remainder 5/(x − 1) dying away. At x = 10⁴ the gaps are 3 × 10⁻⁴, 9 × 10⁻⁸ and 5 × 10⁻⁴. The leftover ρ/q shrinks like 1/x when ρ has degree one less than q, and like 1/x² for the middle function, whose remainder is two degrees lower.
@@ -88,7 +102,7 @@ A thin lens of focal length f forms an image at distance v of an object at dista
 
 Predict before running: a 50 mm lens. Where is the image of objects at 10 m, 1 m, 0.1 m, 0.06 m and 0.04 m, and how large?
 
-```python
+```python type
 def image_distance(u, f):
     return u * f / (u - f)
 
@@ -111,6 +125,15 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+object at 10000.0 mm: image at     50.25 mm, magnification -0.005
+object at  1000.0 mm: image at     52.63 mm, magnification -0.053
+object at   100.0 mm: image at    100.00 mm, magnification -1.000
+object at    60.0 mm: image at    300.00 mm, magnification -5.000
+object at    51.0 mm: image at   2550.00 mm, magnification -50.000
+object at    40.0 mm: image at   -200.00 mm, magnification +5.000
+```
+
 At 10 m the image is at 50.25 mm, nearly at f, and tiny and inverted (magnification −0.005). At 0.1 m it is at 100 mm and life-size. At 60 mm, just outside the focal length, it is 300 mm away and five times enlarged: the projector arrangement. At 51 mm it is 2.55 m away, nearly at the pole. At 40 mm, inside the focal length, v is −200 mm: a virtual image enlarged five times and upright, the magnifying glass. The plot shows the two branches either side of the pole and the asymptote at v = f.
 
 ## Second-order responses: poles and resonance
@@ -128,13 +151,19 @@ Filters, vibration mounts and tuned circuits are described by **transfer functio
 
 Predict before running: for Q = 0.5, 2 and 10 with ω₀ = 1, where are the poles, and how tall is the resonance peak?
 
-```python
+```python type
 w = np.linspace(0.01, 3, 30000)
 for Q in [0.5, 2.0, 10.0]:
     poles = np.roots([1.0, 1.0 / Q, 1.0])
     gain = 1 / np.sqrt((1 - w ** 2) ** 2 + (w / Q) ** 2)
     print(f"Q = {Q:>4}: poles {np.round(poles, 4)}, distance to the imaginary axis {abs(poles[0].real):.3f}; "
           f"peak gain {gain.max():.3f} at ω = {w[np.argmax(gain)]:.3f}")
+```
+
+```output
+Q =  0.5: poles [-1. -1.], distance to the imaginary axis 1.000; peak gain 1.000 at ω = 0.010
+Q =  2.0: poles [-0.25+0.9682j -0.25-0.9682j], distance to the imaginary axis 0.250; peak gain 2.066 at ω = 0.935
+Q = 10.0: poles [-0.05+0.9987j -0.05-0.9987j], distance to the imaginary axis 0.050; peak gain 10.013 at ω = 0.998
 ```
 
 With Q = 0.5 (critical damping) the poles coincide at −1 on the real axis, and there is no peak: the gain is largest at low frequency, 1. At Q = 2 the poles move to −0.25 ± 0.968i, a distance 0.25 from the axis, and the gain peaks at about 2.07 near ω = 0.94. At Q = 10 they sit just 0.05 from the axis, and the peak reaches about 10.0 at ω ≈ 1.0. Closer poles mean a taller, narrower resonance. Engineers design filters and vibration isolators by placing poles, and the stability rule "all poles in the left half-plane" is the control block's starting point.
@@ -152,7 +181,7 @@ A rational function whose denominator factors can be split into a sum of simpler
 
 Predict before running: what are the partial fractions of (3x + 5)/((x + 1)(x + 2)), and what is Σ 1/(k(k + 1)) for k up to 99?
 
-```python
+```python type
 from fractions import Fraction
 
 print("(3x + 5)/((x + 1)(x + 2)) =", sp.apart((3 * x + 5) / ((x + 1) * (x + 2)), x))
@@ -160,6 +189,13 @@ print("1/(x(x + 1)) =", sp.apart(1 / (x * (x + 1)), x))
 print("1/((x - 1)²(x + 1)) =", sp.apart(1 / ((x - 1) ** 2 * (x + 1)), x))
 total = sum(Fraction(1, k * (k + 1)) for k in range(1, 100))
 print("sum up to 99:", total, " = 1 - 1/100:", total == 1 - Fraction(1, 100))
+```
+
+```output
+(3x + 5)/((x + 1)(x + 2)) = 1/(x + 2) + 2/(x + 1)
+1/(x(x + 1)) = -1/(x + 1) + 1/x
+1/((x - 1)²(x + 1)) = 1/(4*(x + 1)) - 1/(4*(x - 1)) + 1/(2*(x - 1)**2)
+sum up to 99: 99/100  = 1 - 1/100: True
 ```
 
 (3x + 5)/((x + 1)(x + 2)) splits into 2/(x + 1) + 1/(x + 2), one term per pole, and 1/(x(x + 1)) into 1/x − 1/(x + 1). A repeated pole needs one term per power: 1/((x − 1)²(x + 1)) has terms in 1/(x − 1)², 1/(x − 1) and 1/(x + 1). Ninety-nine terms of 1/(k(k + 1)) add up to exactly 99/100: the telescoping leaves 1 − 1/100, and the sum tends to 1 as more terms are added.

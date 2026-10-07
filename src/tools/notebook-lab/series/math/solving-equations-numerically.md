@@ -28,7 +28,7 @@ An open belt around pulleys of radii R and r with shaft centres C apart leaves e
 
 Given a stock belt of length L, finding C means solving L(C) − L_belt = 0 for C, and the arcsine makes that impossible by algebra. The equation f(C) = L(C) − L_belt has a root, and the job is to find it. Predict before running: with pulleys of radius 120 mm and 45 mm and a 1,500 mm belt, is the centre distance more or less than half the belt length?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,6 +53,10 @@ plt.show()
 print(f"f(200) = {f(200):.1f} mm, f(700) = {f(700):.1f} mm: the root lies between")
 ```
 
+```output
+f(200) = -553.2 mm, f(700) = 426.4 mm: the root lies between
+```
+
 f is defined only for C > R − r, where the arcsine exists; the plot starts just above that.
 
 The curve rises steadily and crosses zero between 200 and 700 mm, a single clean root. The centre distance is less than half the belt length, because part of the belt wraps the pulleys: about π(R + r) = 518 mm of it.
@@ -69,7 +73,7 @@ In code: `bisect(f, a, b, tol=1e-9)`
 
 **Bisection** needs only a bracket [a, b] where f changes sign. Halve it, keep the half that still changes sign, repeat. The bracket width halves each step, so the error shrinks by a factor of 2: one more correct **bit** per iteration, about one decimal digit every 3.3 steps. It cannot fail once a sign change is found, which makes it the safe fallback. Predict before running: how many bisection steps does it take to pin the centre distance to 10⁻⁹ mm?
 
-```python
+```python type
 def bisect(f, a, b, tol=1e-9):
     fa = f(a)
     steps = 0
@@ -86,6 +90,11 @@ def bisect(f, a, b, tol=1e-9):
 C_bis, n_bis = bisect(f, 200, 700)
 print(f"bisection: C = {C_bis:.9f} mm after {n_bis} steps (predicted log2(500 / 1e-9) = {math.log2(500 / 1e-9):.1f})")
 print(f"check: belt length at that C = {belt_length(C_bis):.9f} mm")
+```
+
+```output
+bisection: C = 485.008094547 mm after 39 steps (predicted log2(500 / 1e-9) = 38.9)
+check: belt length at that C = 1500.000000001 mm
 ```
 
 The number of steps to shrink a bracket of width W below a tolerance ε is log₂(W/ε), whatever the function.
@@ -109,7 +118,7 @@ In code: `step = f(C) / fprime(C)`, then `C -= step`
 
 the one-variable version of the Jacobian lesson's Newton steps. Near a simple root its error is roughly squared each step, **quadratic convergence**: the number of correct digits about doubles every iteration. The price is a derivative, and a reasonable starting guess. The derivative of the belt length can be found by hand or numerically. Predict before running: from a starting guess of 500 mm, how many Newton steps reach full precision? And on a more curved equation, a cam's angle θ from its follower position, θ − 0.8 sin θ = 1, how does the error shrink step by step?
 
-```python
+```python type
 def fprime(C, h=1e-6):
     return (f(C + h) - f(C - h)) / (2 * h)
 
@@ -130,6 +139,18 @@ for k in range(1, 7):
     print(f"cam, step {k}: θ = {th:.15f}, error {abs(th - exact):.2e}")
 ```
 
+```output
+belt, step 1: C = 485.013429182350, step size 1.50e+01
+belt, step 2: C = 485.008094546980, step size 5.33e-03
+belt, step 3: C = 485.008094546471, step size 5.09e-10
+cam, step 1: θ = 2.185675241395885, error 4.03e-01
+cam, step 2: θ = 1.821525340241446, error 3.93e-02
+cam, step 3: θ = 1.782693170109221, error 5.02e-04
+cam, step 4: θ = 1.782191413241851, error 8.43e-08
+cam, step 5: θ = 1.782191328937903, error 2.89e-15
+cam, step 6: θ = 1.782191328937901, error 4.44e-16
+```
+
 The belt's derivative here is a central difference; the cam's is exact. Its reference root comes from `brentq`, introduced below, at full precision.
 
 On the belt, Newton lands within about 0.005 mm (0.0053) in one step and is essentially exact after two (the third step only confirms it): near the root the belt length is almost a straight line in C, and Newton is exact for straight lines. The curved cam equation shows the general pattern: errors of about 0.4, 0.04, 5 × 10⁻⁴, 8 × 10⁻⁸ and 3 × 10⁻¹⁵ (the limit of floating point), the exponent roughly doubling each step, the signature of **quadratic convergence**. Either way Newton needs a handful of steps against bisection's 39.
@@ -148,7 +169,7 @@ When the derivative is unavailable, the **secant method** uses the line through 
 
 **Fixed-point iteration** rewrites the equation as x = g(x) and repeats x ← g(x). It converges to a fixed point x* when |g′(x*)| < 1, with error multiplied by roughly |g′(x*)| each step, so the smaller that number the faster. For the belt, the length equation rearranges to C = (L_belt − π(R + r) − 2φ(R − r))/(2 cos φ), with φ depending on C. Predict before running: rank the three methods by steps to 10⁻¹² accuracy.
 
-```python
+```python type
 def secant(f, x0, x1, tol=1e-12, max_iter=50):
     for k in range(1, max_iter + 1):
         f0, f1 = f(x0), f(x1)
@@ -176,6 +197,12 @@ print(f"fixed point: C = {nxt:.10f} in {n_fp} steps, |g'(C*)| = {abs(gp):.4f}")
 print(f"bisection:   {n_bis} steps;  scipy brentq: {optimize.brentq(f, 200, 700, xtol=1e-12):.10f}")
 ```
 
+```output
+secant:      C = 485.0080945465 in 5 steps
+fixed point: C = 485.0080945465 in 4 steps, |g'(C*)| = 0.0000
+bisection:   39 steps;  scipy brentq: 485.0080945465
+```
+
 `optimize.brentq` is **Brent's method**: it keeps a bracket like bisection for safety but takes secant and parabola steps when they behave, the standard robust root-finder.
 
 The secant method needs 5 steps, with no derivative. Fixed-point iteration converges in only 4, because here g′(C*) is exactly zero (at the root C sin φ = R − r, which makes the rearranged formula's slope vanish), so the iteration converges as fast as Newton. That is a lucky property of this rearrangement; with |g′| near 1 fixed-point iteration crawls, and above 1 it diverges. Brent's method agrees to all digits shown. In practice, `brentq` with a bracket is the default for one-variable equations: it is as safe as bisection and nearly as fast as Newton.
@@ -192,7 +219,7 @@ In code: `newton(f, df, x, steps)` returns the whole path of guesses
 
 Fast methods have conditions. Newton can overshoot wildly where f′ is small, cycle between two points, or jump outside the region where f is defined; fixed-point iteration diverges if |g′| > 1; secant can divide by a near-zero difference. Multiple roots slow everything down: at a double root, Newton converges only linearly. Bisection never fails once bracketed, which is why hybrid methods keep a bracket as a safety net. Predict before running: what happens to Newton on x³ − 2x + 2 from x = 0, and on (x − 1)² from x = 2?
 
-```python
+```python type
 def newton(f, df, x, steps):
     path = [x]
     for _ in range(steps):
@@ -204,6 +231,13 @@ print("x³ - 2x + 2 from 0:", np.round(newton(lambda x: x ** 3 - 2 * x + 2, lamb
 dbl = newton(lambda x: (x - 1) ** 2, lambda x: 2 * (x - 1), 2.0, 8)
 print("(x - 1)² from 2:", np.round(dbl, 6), "-> error halves each step")
 print("brentq on x³ - 2x + 2 with the bracket [-3, 0]:", round(optimize.brentq(lambda x: x ** 3 - 2 * x + 2, -3, 0), 6))
+```
+
+```output
+x³ - 2x + 2 from 0: [0. 1. 0. 1. 0. 1. 0.]
+(x - 1)² from 2: [2.       1.5      1.25     1.125    1.0625   1.03125  1.015625 1.007812
+ 1.003906] -> error halves each step
+brentq on x³ - 2x + 2 with the bracket [-3, 0]: -1.769292
 ```
 
 The double-root case shows the error dividing by 2 each step: linear convergence, as slow as bisection.

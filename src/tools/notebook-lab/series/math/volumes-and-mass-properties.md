@@ -21,7 +21,7 @@ In code: convert millimetres by dividing by 1000, then multiply the converted di
 
 Predict before running: if every length doubles, does volume double, quadruple or increase eightfold?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,6 +35,12 @@ scaled_volume = (2 * length) * (2 * width) * (2 * thickness)
 print("Plate area (m^2):", area)
 print("Plate volume (m^3):", volume)
 print("Volume ratio after doubling all lengths:", scaled_volume / volume)
+```
+
+```output
+Plate area (m^2): 0.020000000000000004
+Plate volume (m^3): 0.00020000000000000004
+Volume ratio after doubling all lengths: 8.0
 ```
 
 The ratio is eight because there are three factors of two. Converting cubic millimetres to cubic metres similarly involves three factors of 1000: divide by a billion. Converting each input length first is often easier to audit than converting the final cubic quantity.
@@ -56,7 +62,7 @@ In code: compute each midpoint in a loop, calculate its disk area, multiply by `
 
 Predict before running: will this estimate get closer to the known sphere volume as the number of slices increases? The exact comparison value is four thirds of pi times R cubed.
 
-```python
+```python type
 def sphere_by_slices(radius, slices):
     dz = 2 * radius / slices
     total = 0.0
@@ -73,6 +79,13 @@ for slices in [4, 10, 40, 100]:
     estimate = sphere_by_slices(radius, slices)
     error_percent = 100 * (estimate - exact_volume) / exact_volume
     print(f"{slices:3d} slices: {estimate:.9f} m^3, error {error_percent:+.4f}%")
+```
+
+```output
+  4 slices: 0.000539961 m^3, error +3.1250%
+ 10 slices: 0.000526217 m^3, error +0.5000%
+ 40 slices: 0.000523762 m^3, error +0.0313%
+100 slices: 0.000523625 m^3, error +0.0050%
 ```
 
 `i + 0.5` selects the middle of slice i rather than its lower edge. The loop starts at the bottom, z = -R, and advances by dz. `total += slice_volume` is precisely the finite summation in the formula. The estimates approach the exact volume from above for this particular midpoint construction. That direction of error is not a promise for arbitrary shapes.
@@ -132,7 +145,7 @@ In code: multiply material volume by density; subtract a bore's cylinder volume 
 
 Predict before running: if a 20 mm diameter through-hole is drilled through our plate, what fraction of the original mass is removed? Diameter is twice radius, so convert diameter to radius before squaring.
 
-```python
+```python type
 density = 2700.0
 hole_radius = (20 / 1000) / 2
 hole_volume = math.pi * hole_radius**2 * thickness
@@ -142,6 +155,12 @@ remaining_mass = density * remaining_volume
 print(f"Solid plate: {solid_mass:.6f} kg")
 print(f"Drilled plate: {remaining_mass:.6f} kg")
 print(f"Removed fraction: {100 * hole_volume / volume:.3f}%")
+```
+
+```output
+Solid plate: 0.540000 kg
+Drilled plate: 0.531518 kg
+Removed fraction: 1.571%
 ```
 
 The removed fraction is about 1.571%, assuming the circular bore lies fully inside the plate. `hole_volume / volume` is dimensionless because both quantities have the same unit. We use a nominal example density rather than claiming a precise value for every alloy or temperature.
@@ -162,7 +181,7 @@ In code: keep one running total for mass and another for mass times position, th
 
 Predict before running: drilling a hole on the right side of a uniform plate should move its balance point left or right?
 
-```python
+```python type
 plate_centre_x = length / 2
 hole_centre_x = 0.15
 removed_mass = density * hole_volume
@@ -187,6 +206,12 @@ ax.set_aspect("equal", adjustable="box")
 ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
 fig.tight_layout()
 plt.show()
+```
+
+```output
+Original centre x (m): 0.1
+Drilled centre x (m): 0.0992020679492592
+Centre shift (mm): -0.7979320507408016
 ```
 
 The centre moves left by about 0.798 mm. The markers nearly overlap at the part's true scale: the printed displacement resolves the small shift. `plt.Circle` draws the removed cross-section; its centre is halfway up the plate, so only the horizontal balance changes. A negative component is bookkeeping for removed positive material; it is not a claim that negative physical mass exists. Its position must be the centre of the removed region. The volume subtraction and moment subtraction must describe the same hole.
@@ -244,7 +269,7 @@ In code: multiply each mass by `x*x + y*y`, then add the contributions in a loop
 
 Predict before running: after doubling each radius, will inertia double or quadruple?
 
-```python
+```python type
 def inertia_about_z(point_masses):
     total = 0.0
     for mass, (x, y, z) in point_masses:
@@ -257,6 +282,12 @@ far = [(1, (-0.2, 0, 0)), (1, (0.2, 0, 0))]
 print("Near-axis inertia (kg m^2):", inertia_about_z(near))
 print("Farther-out inertia (kg m^2):", inertia_about_z(far))
 print("Ratio:", inertia_about_z(far) / inertia_about_z(near))
+```
+
+```output
+Near-axis inertia (kg m^2): 0.020000000000000004
+Farther-out inertia (kg m^2): 0.08000000000000002
+Ratio: 4.0
 ```
 
 The inertias are 0.02 and 0.08 kg m². A finite solid cannot generally be replaced by one point at its centre when calculating inertia: that loses the solid's internal spread. Divide it into small masses or use a derived solid-body formula. The centre-of-mass calculation, in contrast, can combine whole components at their individual centres. Knowing which property preserves which information prevents a convincing but wrong shortcut.

@@ -8,7 +8,7 @@ This lesson opens up that agreement, the **iterator protocol**, and then shows t
 
 Two built-in functions do the work. `iter(x)` asks `x` for an **iterator**: an object that hands out `x`'s items one at a time. `next(iterator)` asks the iterator for its next item. When there are no items left, `next` raises a `StopIteration` exception.
 
-```python
+```python type
 colours = ["red", "green", "blue"]
 it = iter(colours)
 print(next(it))
@@ -16,9 +16,15 @@ print(next(it))
 print(next(it))
 ```
 
+```output
+red
+green
+blue
+```
+
 Asking once more, when there is nothing left, raises `StopIteration`. (This cell catches it, and prints what happened.)
 
-```python
+```python type
 it = iter(["only item"])
 print(next(it))
 try:
@@ -27,16 +33,27 @@ except StopIteration:
     print("StopIteration: nothing left")
 ```
 
+```output
+only item
+StopIteration: nothing left
+```
+
 That is the whole protocol. So this loop:
 
-```python
+```python type
 for colour in ["red", "green", "blue"]:
     print(colour)
 ```
 
+```output
+red
+green
+blue
+```
+
 is carried out by Python as if you had written:
 
-```python
+```python type
 it = iter(["red", "green", "blue"])
 while True:
     try:
@@ -46,16 +63,27 @@ while True:
     print(colour)
 ```
 
+```output
+red
+green
+blue
+```
+
 Anything that `iter()` accepts is called **iterable**, and anything iterable works in a `for` loop, a comprehension, `sum`, `sorted`, `list`, `zip`, and everywhere else Python expects a sequence of values.
 
 ## Iterators get used up
 
 An iterable, like a list, can be looped over as many times as you like, because each `for` loop calls `iter()` and gets a fresh iterator starting from the beginning. But an **iterator** itself remembers where it has got to, and once it has handed out its last item it is **exhausted**. Looping over it again gives nothing. Predict what the second `print` shows.
 
-```python
+```python type
 pairs = zip(["a", "b", "c"], [1, 2, 3])
 print(list(pairs))
 print(list(pairs))
+```
+
+```output
+[('a', 1), ('b', 2), ('c', 3)]
+[]
 ```
 
 The second list is empty. `zip` returns an iterator, not a list, and the first `list(pairs)` used it up. The same is true of `enumerate`, file objects and generators. This is a common source of puzzling bugs: a loop that mysteriously runs zero times because the iterator it uses was already consumed. If you need the values more than once, store them in a list first.
@@ -64,7 +92,7 @@ The second list is empty. `zip` returns an iterator, not a list, and the first `
 
 A class becomes iterable by defining `__iter__`, which `iter()` calls. It must return an iterator: an object with a `__next__` method, which `next()` calls. Here is a countdown written the long way, with a class that is its own iterator:
 
-```python
+```python type
 class Countdown:
     def __init__(self, start):
         self.current = start
@@ -83,6 +111,12 @@ for n in Countdown(3):
     print(n)
 ```
 
+```output
+3
+2
+1
+```
+
 `raise StopIteration` raises the exception class on its own, without brackets or a message, which Python allows when there is nothing to say. `__iter__` returns `self` because the object is its own iterator: it keeps its position in `self.current`. The consequence is the one from the previous section: a `Countdown` can only be looped over **once**. Loop over the same `Countdown(3)` object twice, and the second loop finds `current` already at 0 and does nothing.
 
 It works, but it is a lot of machinery for "count down from 3": the state has to be kept in attributes, and `__next__` has to work out where it left off each time. There is a much easier way.
@@ -91,7 +125,7 @@ It works, but it is a lot of machinery for "count down from 3": the state has to
 
 A **generator function** looks like an ordinary function, but it uses `yield` instead of `return`. Calling it does not run its body. Instead, it gives back a **generator**: an iterator that runs the function's body a piece at a time. Each `next()` runs the body until it reaches a `yield`, hands out the yielded value, and **pauses** there, with every local variable intact. The next `next()` carries on from exactly where it paused.
 
-```python
+```python type
 def countdown(start):
     current = start
     while current > 0:
@@ -102,9 +136,15 @@ for n in countdown(3):
     print(n)
 ```
 
+```output
+3
+2
+1
+```
+
 That is the whole `Countdown` class in five lines. When the function body finishes, the generator raises `StopIteration` for you, so the loop ends. The next cell makes the pausing visible. Predict the order of every line of output before you run it.
 
-```python
+```python type
 def chatty():
     print("  starting")
     yield 1
@@ -121,13 +161,23 @@ for value in gen:
 print("Done")
 ```
 
+```output
+Generator created; nothing has run yet.
+  starting
+Got 1
+  resumed after 1
+Got 2
+  resumed after 2, finishing
+Done
+```
+
 Follow the output line by line. Creating the generator ran nothing. The first `next` ran up to the first `yield`. The second `next` resumed and ran to the second `yield`. The `for` loop asked for another value, which resumed the function once more; it printed its last message, reached the end, and stopped the loop without producing anything.
 
 ## Lazy sequences
 
 A generator is **lazy**: it computes each value only when it is asked for. Compare building a list of a million squares with generating them:
 
-```python
+```python type
 def squares_list(n):
     result = []
     for i in range(n):
@@ -142,6 +192,11 @@ print(sum(squares_list(1_000_000)))
 print(sum(squares_gen(1_000_000)))
 ```
 
+```output
+333332833333500000
+333332833333500000
+```
+
 Both give the same total, but the list version first builds a million-item list in memory and then adds it up, while the generator version hands `sum` one square at a time and keeps nothing. For a million numbers the list takes tens of megabytes; for data too big to fit in memory, like a huge log file, the lazy version is the only one that works.
 
 You have already used this: a generator expression, `(i * i for i in range(n))`, from lesson 13, is a quick way to write a generator without a `def`. And `range` itself is lazy, which is why `range(10**12)` costs nothing until you loop over it.
@@ -150,7 +205,7 @@ You have already used this: a generator expression, `(i * i for i in range(n))`,
 
 Because a generator only computes values on demand, it can describe a sequence that never ends. The consumer decides how many to take. In the Fibonacci sequence each number is the sum of the two before it. What is the last number this cell prints?
 
-```python
+```python type
 def fibonacci():
     a, b = 0, 1
     while True:
@@ -163,12 +218,20 @@ for number in fibonacci():
     print(number, end=" ")
 ```
 
+```output
+0 1 1 2 3 5 8 13 21 34 55 89
+```
+
 `while True` would be an infinite loop in an ordinary function, but in a generator it just means "there is always another value". The `for` loop takes values until it decides to `break`. The `itertools` module has a function for taking a fixed number of items from any iterable, `islice`:
 
-```python
+```python type
 from itertools import islice
 
 print(list(islice(fibonacci(), 10)))
+```
+
+```output
+[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 ```
 
 (Never call `list()` on an endless generator without something like `islice` in front of it: `list` would keep asking for values forever.)
@@ -177,7 +240,7 @@ print(list(islice(fibonacci(), 10)))
 
 Generators can feed each other, each doing one small job, like stations on an assembly line. Nothing happens until the last one is asked for a value, and then each item flows through the whole chain before the next one starts.
 
-```python
+```python type
 lines = ["# settings", "width=10", "", "height = 4", "# end", "depth=2"]
 
 def non_blank(lines):
@@ -199,13 +262,17 @@ settings = dict(parse(not_comments(non_blank(lines))))
 print(settings)
 ```
 
+```output
+{'width': 10, 'height': 4, 'depth': 2}
+```
+
 Each function is short, easy to test on its own, and knows nothing about the others. If `lines` were a file with a billion lines, this code would still use almost no memory apart from the settings it collects, because only one line is ever being processed at a time.
 
 ## Iterating your own classes with yield
 
 The easiest way to give a class an `__iter__` is to make `__iter__` itself a generator. Python calls it to get an iterator, and a generator is one.
 
-```python
+```python type
 class Team:
     def __init__(self, members):
         self.members = list(members)
@@ -216,6 +283,12 @@ class Team:
 
 for name in Team(["ada", "alan", "grace"]):
     print(name)
+```
+
+```output
+ADA
+ALAN
+GRACE
 ```
 
 Each `for` loop calls `__iter__` again and gets a brand-new generator, so unlike an iterator, a `Team` can be looped over any number of times.

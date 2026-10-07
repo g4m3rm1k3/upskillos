@@ -32,7 +32,7 @@ So a dimension is just a set of **exponents**, and the rules for combining quant
 
 A dictionary from base dimension to exponent represents this well. Predict before running: what are the exponents of power, energy per second?
 
-```python
+```python type
 def combine(a, b, sign=1):
     result = dict(a)
     for base, power in b.items():
@@ -47,6 +47,14 @@ energy = combine(force, LENGTH)
 power = combine(energy, TIME, -1)
 for name, dims in [("speed", speed), ("acceleration", acceleration), ("force", force), ("energy", energy), ("power", power)]:
     print(f"{name:<13} {dims}")
+```
+
+```output
+speed         {'L': 1, 'T': -1}
+acceleration  {'L': 1, 'T': -2}
+force         {'M': 1, 'L': 1, 'T': -2}
+energy        {'M': 1, 'L': 2, 'T': -2}
+power         {'M': 1, 'L': 2, 'T': -3}
 ```
 
 `combine(a, b, -1)` subtracts b's exponents, which is division; the final comprehension drops exponents that cancel to zero.
@@ -65,7 +73,7 @@ In code: `__mul__` multiplies values and combines dimensions; `__add__` raises a
 
 A `Quantity` holds a value in SI base units (metres, kilograms, seconds) and its dimension. Its special methods make it behave like a number that respects physics: `*` and `/` combine dimensions, and `+` and `-` refuse mismatched ones, raising an error instead of silently producing nonsense. Predict before running: which of the last three lines fails?
 
-```python
+```python type
 class Quantity:
     def __init__(self, value, dims):
         self.value, self.dims = value, {b: p for b, p in dims.items() if p != 0}
@@ -106,6 +114,13 @@ except TypeError as error:
     print("TypeError:", error)
 ```
 
+```output
+speed: 15 [L T^-1]
+force on 2 kg at 3 m/s^2: 6 [L M T^-2]
+distance + distance: 150 [L]
+TypeError: cannot add {'L': 1} and {'T': 1}
+```
+
 `__rmul__ = __mul__` lets a plain number appear on the left (`120 * m`), as the polymorphism lesson in the design series explained.
 
 `120 * m` reads like physics and builds a length. Dividing by a time gives a speed, and mass times acceleration gives a force, with dimensions worked out automatically. Adding a length to a time raises an error at the exact line where the mistake is made. That is the whole point: a units bug becomes a loud error instead of a silently wrong answer.
@@ -124,7 +139,7 @@ People do not work in SI base units. A machinist works in millimetres, minutes a
 
 Converting a value means multiplying by the "from" unit's factor (to reach SI) and dividing by the "to" unit's factor. It is only allowed between units of the same dimension. Revolutions count as dimensionless (a revolution is a pure number of turns), so rpm is just T⁻¹. Predict before running: what cutting speed does a 50 mm cutter at 1,200 rpm give, in metres per minute?
 
-```python
+```python type
 import math
 
 UNITS = {
@@ -155,6 +170,12 @@ except ValueError as error:
     print("ValueError:", error)
 ```
 
+```output
+cutting speed: 188.5 m/min  = 188,496 mm/min
+0.5 inch = 12.7 mm,  2.2 lb = 0.998 kg
+ValueError: cannot express {'T': -1} in mm
+```
+
 The cutting speed of a rotating tool is its circumference times its rotation rate, π × D × n. Multiplying a length by a rate (T⁻¹) gives a speed automatically.
 
 The cutter's edge moves at 188.5 m/min, which `to` can also express in mm/min. Conversions between same-dimension units just work, and asking for a rotation rate in millimetres is refused. Real libraries such as `pint` (not in the browser here) do exactly this, with thousands of units. The idea is small, as this lesson shows; the payoff is large.
@@ -171,7 +192,7 @@ In code: a square root halves every exponent: `{b: p / 2 for b, p in dims.items(
 
 Dimensions also check **formulas** before any numbers are involved. A formula is dimensionally consistent only if both sides have the same exponents, and every term added together has the same exponents. This catches typos and misremembered formulas. Is a pendulum's period √(L/g) or √(g/L)? Only one is a time. Predict before running: which candidate formula for a pendulum's period has the dimension of time?
 
-```python
+```python type
 g = Quantity(9.81, acceleration)
 L = q(0.75, "m")
 for name, expr in [("sqrt(L / g)", (L / g)), ("sqrt(g / L)", (g / L)), ("L * g", L * g)]:
@@ -179,6 +200,13 @@ for name, expr in [("sqrt(L / g)", (L / g)), ("sqrt(g / L)", (g / L)), ("L * g",
     verdict = "is a time" if root.dims == TIME else "is not a time"
     print(f"{name:<12} -> {root}  {verdict}")
 print("period of a 0.75 m pendulum: 2π sqrt(L/g) =", round(2 * math.pi * math.sqrt(L.value / g.value), 3), "s")
+```
+
+```output
+sqrt(L / g)  -> 0.276501 [T]  is a time
+sqrt(g / L)  -> 3.61663 [T^-1]  is not a time
+L * g        -> 7.3575 [L^2 T^-2]  is not a time
+period of a 0.75 m pendulum: 2π sqrt(L/g) = 1.737 s
 ```
 
 A square root halves every exponent, which is why the comprehension divides each power by 2.

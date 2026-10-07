@@ -29,7 +29,7 @@ That is the definition: cos θ is the x coordinate and sin θ the y coordinate o
 
 Because the point is on the unit circle, Pythagoras gives cos²θ + sin²θ = 1 for every θ. Predict before running: which angles have a negative cosine and a positive sine?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +38,18 @@ for deg in [0, 30, 45, 90, 135, 180, 270, -60, 420]:
     th = math.radians(deg)
     c, s = math.cos(th), math.sin(th)
     print(f"{deg:>5}°: cos {c:+.4f}  sin {s:+.4f}   cos² + sin² = {c * c + s * s:.12f}")
+```
+
+```output
+    0°: cos +1.0000  sin +0.0000   cos² + sin² = 1.000000000000
+   30°: cos +0.8660  sin +0.5000   cos² + sin² = 1.000000000000
+   45°: cos +0.7071  sin +0.7071   cos² + sin² = 1.000000000000
+   90°: cos +0.0000  sin +1.0000   cos² + sin² = 1.000000000000
+  135°: cos -0.7071  sin +0.7071   cos² + sin² = 1.000000000000
+  180°: cos -1.0000  sin +0.0000   cos² + sin² = 1.000000000000
+  270°: cos -0.0000  sin -1.0000   cos² + sin² = 1.000000000000
+  -60°: cos +0.5000  sin -0.8660   cos² + sin² = 1.000000000000
+  420°: cos +0.5000  sin +0.8660   cos² + sin² = 1.000000000000
 ```
 
 At 135° the point is up and to the left: cosine negative, sine positive. Signs follow the quadrant. 420° is 60° plus a full turn, so it gives the same point as 60°. The identity cos² + sin² = 1 holds at every angle, up to rounding in the last digit.
@@ -58,7 +70,7 @@ Rotate at a steady angular speed ω and the angle is θ = ωt. The height of the
 
 with **amplitude** A (the radius of the circle), angular frequency ω, and **phase** φ (the starting angle). Cosine is sine shifted by a quarter turn: cos θ = sin(θ + 90°). Predict before running: at a point where the sine wave crosses zero going up, what is the cosine doing?
 
-```python
+```python type
 theta = np.linspace(0, 4 * np.pi, 400)
 fig, (circ, wave) = plt.subplots(1, 2, figsize=(10, 3.5), gridspec_kw={"width_ratios": [1, 2.5]})
 circ.plot(np.cos(theta), np.sin(theta), color="grey")
@@ -77,6 +89,10 @@ wave.set_xlabel("angle θ (rad)")
 wave.legend(loc="upper right")
 plt.show()
 print("cos θ = sin(θ + π/2) everywhere:", np.allclose(np.cos(theta), np.sin(theta + np.pi / 2)))
+```
+
+```output
+cos θ = sin(θ + π/2) everywhere: True
 ```
 
 `gridspec_kw` sets the relative widths of the two panels, and `set_xticks` with `set_xticklabels` labels the axis in multiples of π/2.
@@ -101,13 +117,22 @@ The **inverse functions** go from a ratio back to an angle: `math.asin`, `math.a
 
 That is a problem for finding the direction of a point (x, y): atan(y/x) cannot tell (1, 1) from (−1, −1), which have the same ratio but opposite directions, and it fails when x = 0. `math.atan2(y, x)` takes the two coordinates separately, so it knows the quadrant, and returns the angle in (−180°, 180°]. Predict before running: what do `atan` and `atan2` say about the point (−1, −1)?
 
-```python
+```python type
 for x, y in [(1, 1), (-1, -1), (-1, 1), (0, 2), (-3, 0)]:
     naive = math.degrees(math.atan(y / x)) if x != 0 else float("nan")
     print(f"({x:>2}, {y:>2}): atan(y/x) = {naive:7.1f}°   atan2(y, x) = {math.degrees(math.atan2(y, x)):7.1f}°")
 
 ramp_rise, ramp_length = 1.2, 8.0
 print(f"a ramp rising {ramp_rise} m over a {ramp_length} m slope is inclined at {math.degrees(math.asin(ramp_rise / ramp_length)):.2f}°")
+```
+
+```output
+( 1,  1): atan(y/x) =    45.0°   atan2(y, x) =    45.0°
+(-1, -1): atan(y/x) =    45.0°   atan2(y, x) =  -135.0°
+(-1,  1): atan(y/x) =   -45.0°   atan2(y, x) =   135.0°
+( 0,  2): atan(y/x) =     nan°   atan2(y, x) =    90.0°
+(-3,  0): atan(y/x) =    -0.0°   atan2(y, x) =   180.0°
+a ramp rising 1.2 m over a 8.0 m slope is inclined at 8.63°
 ```
 
 `math.atan(y / x)` gives 45° for both (1, 1) and (−1, −1), pointing the wrong way for the second, and cannot handle x = 0 at all. `atan2` gives −135° for (−1, −1), 90° for (0, 2) and 180° for (−3, 0). For a point's direction, always use `atan2`. The ramp's 1.2 m rise along an 8 m slope is the opposite side over the hypotenuse, an incline of about 8.6°.
@@ -126,7 +151,7 @@ A point can be described by its distance from the origin and its direction: **po
 
 Flanges, wheel hubs and pipe joints carry holes equally spaced on a **bolt circle** (its diameter is called the pitch circle diameter, PCD). The hole positions are polar coordinates converted to x and y for the CNC program. Predict before running: on a 100 mm PCD with six holes, how far apart are neighbouring holes in a straight line?
 
-```python
+```python type
 pcd, n = 100, 6
 holes = [(pcd / 2 * math.cos(2 * math.pi * k / n), pcd / 2 * math.sin(2 * math.pi * k / n)) for k in range(n)]
 for k, (x, y) in enumerate(holes):
@@ -134,6 +159,17 @@ for k, (x, y) in enumerate(holes):
     print(f"hole {k}: x = {x:8.3f}, y = {y:8.3f}   back to polar: r = {r:.1f}, θ = {th:6.1f}°")
 print("neighbour spacing:", round(math.dist(holes[0], holes[1]), 3), "mm  (chord formula", round(pcd * math.sin(math.pi / n), 3), "mm)")
 print("hole 3 unrounded:", holes[3])
+```
+
+```output
+hole 0: x =   50.000, y =    0.000   back to polar: r = 50.0, θ =    0.0°
+hole 1: x =   25.000, y =   43.301   back to polar: r = 50.0, θ =   60.0°
+hole 2: x =  -25.000, y =   43.301   back to polar: r = 50.0, θ =  120.0°
+hole 3: x =  -50.000, y =    0.000   back to polar: r = 50.0, θ =  180.0°
+hole 4: x =  -25.000, y =  -43.301   back to polar: r = 50.0, θ = -120.0°
+hole 5: x =   25.000, y =  -43.301   back to polar: r = 50.0, θ =  -60.0°
+neighbour spacing: 50.0 mm  (chord formula 50.0 mm)
+hole 3 unrounded: (-50.0, 6.123233995736766e-15)
 ```
 
 The straight-line distance between neighbouring holes is a **chord** of the circle. Bisecting the angle 2π/n between two holes splits it into two right triangles, giving chord = PCD × sin(π/n).
@@ -156,7 +192,7 @@ A **crank–slider** turns rotation into back-and-forth motion: a crank of radiu
 
 from the shaft, by Pythagoras on the rod. The stroke is 2r. If the rod were infinitely long the motion would be a pure cosine. With a real rod it is not quite: the piston spends longer near the bottom of its stroke than near the top. Predict before running: with r = 40 mm and l = 120 mm, is the piston at mid-stroke when the crank is at 90°?
 
-```python
+```python type
 def piston(theta, r, l):
     return r * np.cos(theta) + np.sqrt(l ** 2 - (r * np.sin(theta)) ** 2)
 
@@ -175,6 +211,12 @@ ax.set_xlabel("crank angle (degrees)")
 ax.set_ylabel("displacement from mid-stroke (mm)")
 ax.legend()
 plt.show()
+```
+
+```output
+stroke 80.0 mm, from 80.0 to 160.0 mm from the shaft
+at 90°: 113.14 mm, mid-stroke is 120.00 mm
+crank angle at mid-stroke: 80.5°
 ```
 
 `x[:361]` restricts the search to the first half turn (0° to 180°), where the piston goes from top to bottom once.

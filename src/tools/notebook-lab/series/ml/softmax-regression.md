@@ -24,7 +24,7 @@ p_j = \frac{e^{z_j}}{\sum_{i=1}^{k} e^{z_i}}
 
 Exponentiating makes everything positive, and dividing by the sum makes the results add to 1. Because the exponential grows so fast, the class with the highest score gets the largest share, and big score differences become very confident probabilities. The name comes from this: it is a "soft" version of picking the maximum.
 
-```python
+```python type
 import numpy as np
 
 scores = np.array([2.0, 1.0, 0.1])
@@ -36,13 +36,18 @@ shifted = scores + 100
 print("shifted by 100:", (np.exp(shifted) / np.exp(shifted).sum()).round(3))
 ```
 
+```output
+probabilities: [0.659 0.242 0.099] sum: 1.0
+shifted by 100: [0.659 0.242 0.099]
+```
+
 A score of 2 against 1 and 0.1 gives about 66%, 24% and 10%. The second line shows an important property: **adding the same number to every score does not change the probabilities**, because the common factor `e^100` cancels between top and bottom. Only the differences between scores matter.
 
 That property solves a practical problem. `np.exp(1000)` is too large for a float and becomes `inf`, and `inf / inf` is `nan`, so softmax on large scores would break. Since shifting doesn't matter, first **subtract the largest score** from every score. Then the largest becomes 0, every exponential is at most 1, and nothing overflows. Every real softmax implementation does this.
 
 For a whole matrix of scores, one row per example, apply it row by row with `axis=1`:
 
-```python
+```python type
 import numpy as np
 
 def softmax(Z):
@@ -58,6 +63,13 @@ print(P.round(4))
 print("row sums:", P.sum(axis=1))
 ```
 
+```output
+[[0.659  0.2424 0.0986]
+ [0.5    0.5    0.    ]
+ [0.     0.0067 0.9933]]
+row sums: [1. 1. 1.]
+```
+
 `keepdims=True` keeps the maxima and sums as a column (shape `(3, 1)` instead of `(3,)`), so broadcasting subtracts and divides each row by its own value. The second row, with scores near 1000, works fine.
 
 With two classes, softmax is the old sigmoid in disguise. For scores `z0` and `z1`, dividing top and bottom by `e^(z1)` gives the probability of class 1 as 1/(1 + e^(−(z1 − z0))), which is the sigmoid of the score difference. So softmax regression with two classes **is** logistic regression.
@@ -66,7 +78,7 @@ With two classes, softmax is the old sigmoid in disguise. For scores `z0` and `z
 
 The labels are now class numbers, 0 to `k − 1`. For the loss it is convenient to write each label as a **one-hot** vector: `k` entries, all 0 except a 1 at the true class. With three classes, label 2 becomes `[0, 0, 1]`. The identity matrix has these vectors as its rows, so `np.eye(k)[y]` converts a whole array of labels at once:
 
-```python
+```python type
 import numpy as np
 
 y = np.array([2, 0, 1, 2])
@@ -82,6 +94,15 @@ print("probability given to the true class:", p_correct)
 print("cross-entropy:", round(-np.mean(np.log(p_correct)), 4))
 ```
 
+```output
+[[0. 0. 1.]
+ [1. 0. 0.]
+ [0. 1. 0.]
+ [0. 0. 1.]]
+probability given to the true class: [0.7 0.8 0.4 0.1]
+cross-entropy: 0.9497
+```
+
 The loss is the same idea as log loss: **minus the log of the probability the model gave to the correct class**, averaged over examples. This is the **cross-entropy** loss. `P[np.arange(len(y)), y]` is fancy indexing: from row 0 it takes column `y[0]`, from row 1 column `y[1]`, and so on, which picks out exactly the probability given to each true class. The last example is the costly one: its true class is 2, and the model gave that only 0.1, so it adds −ln 0.1 ≈ 2.3, while the first example, with 0.7 on the right answer, adds only 0.36. With two classes, this loss is exactly the log loss from the logistic regression lesson.
 
 ## The gradient, and training
@@ -94,7 +115,7 @@ The gradient of the cross-entropy with respect to the weight matrix has the same
 
 `P − Y` is the matrix of errors: predicted probabilities minus one-hot labels. For each example it is positive for the wrong classes (too much probability) and negative for the true class (too little). Multiplying by `Aᵀ` turns those errors into weight changes, just as before. The derivation takes a page of calculus; instead of trusting it, check it numerically, as you did in the gradients lesson, by nudging each weight a little and watching the loss:
 
-```python
+```python type
 import numpy as np
 
 def softmax(Z):
@@ -123,9 +144,13 @@ for i in range(3):
 print("largest difference:", np.abs(formula - numeric).max())
 ```
 
+```output
+largest difference: 2.5530220298941586e-10
+```
+
 The formula and the nudging agree to about ten decimal places. Like logistic regression's, this loss is convex, so any minimum gradient descent settles into is the best one, with the same caveat: on separable data the weights grow without limit unless a penalty stops them. One more quirk follows from the shifting property: adding the same vector to every column of `W` adds the same amount to every class's score, which changes no probability. So the best weights are never unique; a ridge penalty (as scikit-learn applies by default) picks one. Now train on three groups of points in the plane:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -158,13 +183,17 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+training accuracy: 0.9733333333333334
+```
+
 The prediction is the class with the highest probability, `argmax(axis=1)`. Since softmax preserves order, that is simply the class with the highest score. The plot colours every point of the plane by its predicted class. The boundaries between regions are straight lines: between classes `i` and `j`, the boundary is where their scores are equal, `w_i · x + b_i = w_j · x + b_j`, a linear equation. Softmax regression is still a **linear** classifier; it just carves the space into `k` regions instead of two.
 
 ## Reading handwritten digits
 
 scikit-learn's `load_digits` has 1,797 handwritten digits, each an 8×8 image of grey levels from 0 to 16, flattened into 64 numbers. Here are a few:
 
-```python
+```python type
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 
@@ -178,9 +207,13 @@ for ax, image, label in zip(axes, digits.images, digits.target):
 plt.show()
 ```
 
+```output
+(1797, 64)
+```
+
 `digits.images` holds the 8×8 grids and `digits.data` the same pixels as rows of 64, and `imshow` draws a grid as an image. Each pixel is a feature, so the model has 64 inputs (65 with the bias) and 10 classes: a 65 × 10 weight matrix. Train it from scratch, dividing the pixels by 16 so they run from 0 to 1. Before running it, guess: a model that only weighs up pixels, with no idea what a digit is, what fraction of unseen digits will it read correctly?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -212,6 +245,24 @@ np.add.at(confusion, (y_test, pred), 1)
 print(confusion)
 ```
 
+```output
+step   1: training loss 2.303
+step  10: training loss 1.150
+step 100: training loss 0.266
+step 500: training loss 0.116
+test accuracy: 0.959
+[[45  0  0  0  0  0  0  0  0  0]
+ [ 0 48  0  0  0  1  1  0  1  1]
+ [ 0  2 50  0  0  0  0  1  0  0]
+ [ 0  0  0 51  0  0  0  0  2  1]
+ [ 0  0  0  0 47  0  0  1  0  0]
+ [ 0  0  0  0  0 54  1  0  0  2]
+ [ 0  1  0  0  0  0 59  0  0  0]
+ [ 0  0  0  0  0  0  0 53  0  0]
+ [ 0  3  1  0  0  1  0  0 56  0]
+ [ 0  0  0  0  0  2  0  0  0 55]]
+```
+
 The first loss is 2.303, which is ln 10: with all weights zero, every digit gets probability 1/10. By step 500 the loss is about 0.12, and the model reads about **96%** of the unseen test digits correctly: a model with no idea what a "digit" is, just a weighted vote over pixels.
 
 The confusion matrix works as in the last lesson, now 10 × 10: row = true digit, column = predicted digit, so correct answers lie on the diagonal. `np.add.at(confusion, (y_test, pred), 1)` adds 1 at position (true, predicted) for every test example (a plain `confusion[y_test, pred] += 1` would count repeated positions only once). The off-diagonal entries show which mistakes happen. The largest is 3 eights read as ones; several other pairs have 2. With counts this small the ranking could easily be chance, so look for patterns across several splits before reading much into a single confusion matrix.
@@ -222,7 +273,7 @@ For comparison, scikit-learn's `LogisticRegression` fits softmax regression auto
 
 Each class's weights are 64 numbers, one per pixel, so they can be drawn as an 8×8 image. Red pixels push the score for that digit up when they are inked; blue pixels push it down:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits

@@ -13,7 +13,7 @@ This lesson covers:
 
 Think of a comparison sort as a game of yes-or-no questions: each comparison "is a[i] < a[j]?" has two possible answers. The algorithm must end up knowing which of the n! possible orderings of the input it was given, since each ordering needs a different rearrangement to sort it. With k questions, at most 2ᵏ different answer sequences are possible, so to tell n! orderings apart it needs 2ᵏ ≥ n!, that is k ≥ log₂(n!). And log₂(n!) is about n log₂ n − 1.44n. So **every** comparison sort makes at least about n log₂ n comparisons on some input: merge sort is essentially optimal. Predict before running: how close does merge sort come to the bound?
 
-```python
+```python type
 import math
 import random
 
@@ -39,6 +39,12 @@ for n in [10, 1_000, 100_000]:
     print(f"n = {n:>7,}: lower bound log2(n!) = {bound:>12,.0f}   merge sort used {worst:>10,}   ratio {worst / bound:.3f}")
 ```
 
+```output
+n =      10: lower bound log2(n!) =           22   merge sort used         25   ratio 1.147
+n =   1,000: lower bound log2(n!) =        8,529   merge sort used      8,714   ratio 1.022
+n = 100,000: lower bound log2(n!) =    1,516,704   merge sort used  1,536,188   ratio 1.013
+```
+
 `math.lgamma(n + 1)` computes the natural logarithm of n! without building the enormous number itself; dividing by ln 2 converts it to log₂.
 
 For large n, merge sort uses only 1 to 2 per cent more comparisons than the theoretical minimum. No comparison sort, however clever, can beat merge sort by more than that sliver. To go faster, an algorithm must stop comparing.
@@ -47,7 +53,7 @@ For large n, merge sort uses only 1 to 2 per cent more comparisons than the theo
 
 Suppose the values are integers from 0 to k, say exam marks out of 100. Then sorting needs no comparisons: count how many times each value occurs (one pass, using the value as an index into a list of counts), then write each value out as many times as it was counted, in order. That is O(n + k): linear when k is not much larger than n. Predict before running: how will counting sort's time compare with `sorted` on a million marks?
 
-```python
+```python type
 import random
 import timeit
 
@@ -76,7 +82,7 @@ Counting sort, written in plain Python, is in the same league as `sorted`, which
 
 The version above writes out bare values, so it cannot sort **records** by an integer key (orders by priority, students by year). For that, the counts must say **where** each key's records go. The trick is a **prefix sum**: if there are 3 records with key 0 and 2 with key 1, then key-0 records occupy positions 0–2 and key-1 records start at position 3. Turning counts into starting positions is one pass, and then each record is placed at its key's next free position. Going through the records in their original order makes the sort **stable**. Predict before running: in what order will the two priority-1 orders come out?
 
-```python
+```python type
 def counting_sort_by(records, key, max_key):
     counts = [0] * (max_key + 1)
     for r in records:
@@ -95,6 +101,10 @@ orders = [("tea", 2), ("bread", 0), ("milk", 1), ("jam", 2), ("eggs", 1), ("salt
 print(counting_sort_by(orders, key=lambda o: o[1], max_key=2))
 ```
 
+```output
+[('bread', 0), ('salt', 0), ('milk', 1), ('eggs', 1), ('tea', 2), ('jam', 2)]
+```
+
 `starts[k]` begins as the first position for key k and moves forward as each record with that key is placed.
 
 The orders come out grouped by priority, and within each priority in their original order: milk before eggs, tea before jam. Stability is not a nicety here: it is the property that makes the next algorithm work.
@@ -103,7 +113,7 @@ The orders come out grouped by priority, and within each priority in their origi
 
 To sort large integers without a huge counts list, sort them **one digit at a time**, starting with the **least significant** digit, using a stable counting sort on that digit alone (a key from 0 to 9). After sorting by the last digit, then stably by the tens digit, numbers with the same tens digit stay ordered by their last digit, and so on. After the final, most significant digit, the whole list is sorted. With d digits and base b, that is d passes of O(n + b): linear in n for numbers of fixed size. Predict before running: what does the list look like after the first pass?
 
-```python
+```python type
 def radix_sort(values, base=10, trace=False):
     result = list(values)
     largest = max(result, default=0)
@@ -116,6 +126,13 @@ def radix_sort(values, base=10, trace=False):
     return result
 
 print(radix_sort([170, 45, 75, 90, 802, 24, 2, 66], trace=True))
+```
+
+```output
+  after sorting by the digit worth   1: [170, 90, 802, 2, 24, 45, 75, 66]
+  after sorting by the digit worth  10: [802, 2, 24, 45, 66, 170, 75, 90]
+  after sorting by the digit worth 100: [2, 24, 45, 66, 75, 90, 170, 802]
+[2, 24, 45, 66, 75, 90, 170, 802]
 ```
 
 `(v // place) % base` extracts one digit: with `place = 10`, it is the tens digit.

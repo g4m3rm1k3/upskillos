@@ -30,7 +30,7 @@ For CartPole, the simplest policy is linear: scores z = sW + b for the two actio
 
 The raw returns are all positive in CartPole (+1 per step), so every action gets its probability pushed up, just some more than others. The gradient estimate is correct on average but extremely noisy. Subtracting a **baseline** b from the return, (Gₜ − b), leaves the expected gradient unchanged (because E[∇log π] = 0: the probabilities always sum to 1) but can greatly reduce its variance: now actions that did better than usual are pushed up and those that did worse are pushed down. A simple baseline is the average return. The code uses a common practical shortcut instead: it standardises each episode's returns using that episode's own mean and standard deviation. That only approximates the theory (a baseline computed from the same episode depends slightly on its actions, and dividing by the standard deviation rescales the gradient), but it works well and is widely used; the variance challenge below shows the clean, constant baseline. Here both versions divide by the returns' standard deviation (to keep the step sizes comparable); the baseline version also subtracts their mean. Before running, predict which will learn faster.
 
-```python
+```python type
 import numpy as np
 
 class CartPole:
@@ -95,6 +95,11 @@ for use_baseline in [False, True]:
     lengths = reinforce(use_baseline)
     blocks = [round(lengths[i:i + 100].mean()) for i in range(0, 400, 100)]
     print(f"{'with baseline' if use_baseline else 'no baseline':<14} average episode length per 100 episodes: {blocks}")
+```
+
+```output
+no baseline    average episode length per 100 episodes: [16, 33, 95, 113]
+with baseline  average episode length per 100 episodes: [30, 111, 165, 175]
 ```
 
 `direction` is onehot(a) − π(· | s): start from minus the probabilities and add 1 for the action taken. Multiplied by the state (for W) and by the episode's weight for that step, then summed over the episode, it is the REINFORCE gradient estimate. The update **adds** it (gradient ascent), since the aim is to increase the expected return. Note the plus sign: `W += lr * grad_W`.

@@ -15,7 +15,7 @@ This lesson covers:
 
 A simulated machine has several parts, each with its own interface. Here is the code to run one job, written out in full. Predict before reading on: how many calls into the subsystem does one job take, and what happens if three different screens of the operator software each copy this sequence?
 
-```python
+```python type
 class Door:
     def __init__(self):
         self.closed = True
@@ -65,13 +65,17 @@ log.append(spindle.stop())
 print(log)
 ```
 
+```output
+['axes homed', 'tool T4 loaded', 'spindle at 9000 rpm', 'ran 3 lines', 'spindle stopped']
+```
+
 Five calls and two checks across five parts, in a fixed order, and with no protection if the program fails while the spindle is turning. Copied into three places, the copies drift: one forgets to home, another forgets to stop the spindle. The rules of the machine have leaked into every caller.
 
 ## A facade
 
 `Machine` holds the parts and offers one method for the common case, `run_job(tool, rpm, program)`. The sequence and its checks are written once. Callers now need to know one method instead of five classes. The parts are still there as attributes for the rare caller, such as a maintenance screen, that needs fine control. Predict before running: does the second job home the axes again?
 
-```python
+```python type
 class Machine:
     def __init__(self, door, axes, changer, spindle, controller):
         self.door, self.axes, self.changer = door, axes, changer
@@ -95,6 +99,12 @@ print(machine.run_job("T1", 12000, ["G0 X0", "G1 Y10"]))
 print("maintenance can still reach a part:", machine.spindle.rpm)
 ```
 
+```output
+['axes homed', 'tool T4 loaded', 'spindle at 9000 rpm', 'ran 3 lines', 'spindle stopped']
+['tool T1 loaded', 'spindle at 12000 rpm', 'ran 2 lines', 'spindle stopped']
+maintenance can still reach a part: 0
+```
+
 The facade's constructor receives the parts, as in the dependency injection lesson, so a test can hand it fakes.
 
 The second job skips homing, because the facade checks first. Every caller gets that behaviour for free, and a future rule, such as "check coolant before starting", is added in one place. The facade adds no new capability: everything it does, a caller could do with the parts. Its value is that the common path is short and correct by default.
@@ -109,7 +119,7 @@ Two signs of a healthy facade: each of its methods is short and reads like a rec
 
 A facade is also the natural place to make a sequence **safe**. If the program fails while the spindle is running, the spindle must still be stopped. `try` ... `finally` guarantees it: the `finally` block runs whether the steps succeed or raise, and the error still reaches the caller afterwards. Predict before running: after the failed job, is the spindle turning, and does the caller see the error?
 
-```python
+```python type
 class FaultyController:
     def run(self, program):
         if any("G99" in line for line in program):
@@ -137,6 +147,11 @@ try:
 except ValueError as error:
     print("job failed:", error)
 print("spindle rpm after the failure:", safe.spindle.rpm)
+```
+
+```output
+job failed: unsupported code G99
+spindle rpm after the failure: 0
 ```
 
 The controller raised, the `finally` block stopped the spindle anyway, and the error still reached the caller, who can report it. Written once in the facade, this safety applies to every job started through it. Scattered copies of the sequence would each have needed it, and some would have forgotten.

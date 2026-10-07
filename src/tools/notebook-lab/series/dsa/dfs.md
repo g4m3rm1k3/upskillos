@@ -13,7 +13,7 @@ Where BFS uses a queue, DFS uses a stack, either the call stack (recursion) or a
 
 Recursively, DFS is very short: mark the vertex visited, then for each unvisited neighbour, run DFS from it. The call stack remembers where to come back to. Predict before running: in what order does DFS from A visit the vertices of the graph below, and how does that differ from BFS?
 
-```python
+```python type
 from collections import deque
 
 graph = {
@@ -65,6 +65,12 @@ print("DFS, iterative:", dfs_iterative(graph, "A"))
 print("BFS:           ", bfs_order(graph, "A"))
 ```
 
+```output
+DFS, recursive: ['A', 'B', 'D', 'E', 'F', 'C']
+DFS, iterative: ['A', 'B', 'D', 'E', 'F', 'C']
+BFS:            ['A', 'B', 'C', 'D', 'E', 'F']
+```
+
 The iterative version pushes neighbours in **reverse** so that the first neighbour is popped first, matching the recursive order. Unlike BFS, it marks a vertex visited when it is **popped**, since a vertex may be pushed several times before its turn; the `if vertex in visited: continue` skips the extra copies.
 
 DFS goes A, B, D (dead end), back to B, then E, F, and finally C, whose only neighbour F is already visited. BFS visits A, B, C before going deeper. Both visit every reachable vertex once and look at every edge once: O(V + E). The recursive version is the clearest, but on a graph with long paths it can exceed Python's recursion limit of about 1,000; the iterative version has no such limit.
@@ -73,7 +79,7 @@ DFS goes A, B, D (dead end), back to B, then E, F, and finally C, whose only nei
 
 An undirected graph may fall into separate pieces, its **connected components**: within a component every vertex can reach every other, and there are no edges between components. To find them all, loop over the vertices; each time you meet one not yet visited, it starts a new component, and a DFS from it marks everything in that component. Every vertex and edge is still handled once: O(V + E). Predict before running: how many components does this friendship network have?
 
-```python
+```python type
 people = {
     "Ann": ["Ben"], "Ben": ["Ann", "Cara"], "Cara": ["Ben"],
     "Dev": ["Eli"], "Eli": ["Dev"],
@@ -102,6 +108,13 @@ for i, group in enumerate(components(people), start=1):
     print(f"component {i}: {group}")
 ```
 
+```output
+component 1: ['Ann', 'Ben', 'Cara']
+component 2: ['Dev', 'Eli']
+component 3: ['Fay']
+component 4: ['Gus', 'Hal', 'Ivy']
+```
+
 This version marks vertices when they are pushed, which is fine here because only membership matters, not the exact DFS order.
 
 There are four components, including Fay alone. Component counting answers questions like "is this network connected?", "how many separate islands are on this map?" (the first challenge) and "which pixels belong to the same region?", which is the **flood fill** behind a paint program's bucket tool.
@@ -110,7 +123,7 @@ There are four components, including Fay alone. Component counting answers quest
 
 A cycle is a path that returns to where it started. In an undirected graph, DFS finds one when it meets an already-visited vertex that is **not** the vertex it just came from (the parent: every undirected edge leads straight back to it, and that is not a cycle). Detecting cycles answers "is this network a tree?", since a connected graph with no cycles is a tree. Predict before running: which of the two graphs has a cycle?
 
-```python
+```python type
 def has_cycle_undirected(graph):
     visited = set()
     for start in graph:
@@ -135,6 +148,11 @@ print("tree_like has a cycle:", has_cycle_undirected(tree_like))
 print("with_loop has a cycle:", has_cycle_undirected(with_loop))
 ```
 
+```output
+tree_like has a cycle: False
+with_loop has a cycle: True
+```
+
 Each stack entry carries the vertex it was reached from, so the edge back to the parent can be skipped. (This simple version assumes no two edges join the same pair of vertices.)
 
 The first graph is a tree; the second has the loop 1–2–4–3–1, found when the search, having come 1 → 3 → 4, sees 4's neighbour 2, already visited and not 4's parent.
@@ -149,7 +167,7 @@ In a directed graph, meeting a visited vertex is not enough evidence: in A → B
 
 An edge to a grey vertex closes a cycle; an edge to a black one does not. Cycle detection in directed graphs is exactly the check that a set of dependencies is possible: a course that is, through a chain, its own prerequisite can never be taken. Predict before running: which of the two dependency graphs contains a cycle, and what does the finishing order look like?
 
-```python
+```python type
 WHITE, GREY, BLACK = 0, 1, 2
 
 def find_cycle_directed(graph):
@@ -176,6 +194,11 @@ ok = {"shop": ["cook"], "cook": ["eat"], "eat": ["wash up"], "wash up": [], "inv
 loop = {"a": ["b"], "b": ["c"], "c": ["a"], "d": ["a"]}
 print("ok:  ", find_cycle_directed(ok))
 print("loop:", find_cycle_directed(loop))
+```
+
+```output
+ok:   (False, ['wash up', 'eat', 'cook', 'shop', 'invite'])
+loop: (True, [])
 ```
 
 `visit` is a function defined inside another function, so it can use `colour` and `finished` directly; it returns True as soon as a cycle is found, which passes straight back up through the recursive calls.

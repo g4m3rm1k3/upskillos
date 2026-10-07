@@ -18,7 +18,7 @@ where ∇L is the gradient of the loss and η (eta) is the **learning rate**, th
 
 The simplest possible loss shows what the learning rate does: `L(θ) = θ²`, whose gradient is `2θ` and whose minimum is at 0. Predict what happens with each of these four learning rates before running the cell:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -53,7 +53,7 @@ Here the arithmetic shows exactly why. Each step multiplies θ by `(1 − 2η)`.
 
 The most important habit in training is to plot the loss after every step, called the **training curve**. It tells you at a glance which situation you are in: too slow, healthy, or diverging.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -87,7 +87,7 @@ The loss is on a logarithmic scale, the usual choice for training curves because
 
 Gradient descent struggles when features are on very different scales. Suppose one feature is measured in thousands (a house's area in square feet, say) and the loss is very steep in that parameter's direction but shallow in another. The loss surface is then a long, narrow valley: the gradient points mostly across the valley rather than along it, so the steps zigzag from wall to wall while making slow progress along the floor. And the learning rate must be small enough for the steep direction, which makes it far too small for the shallow one.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -107,6 +107,11 @@ print(f"raw feature, lr 2e-7:        w = {w:.4f}, b = {b:.3f}, loss = {loss:.1f}
 z = (area - area.mean()) / area.std()
 w, b, loss = train(z, price, 0.1, 1000)
 print(f"standardised feature, lr 0.1: w = {w:.4f}, b = {b:.3f}, loss = {loss:.1f}")
+```
+
+```output
+raw feature, lr 2e-7:        w = 0.1239, b = 0.003, loss = 417.8
+standardised feature, lr 0.1: w = 69.3687, b = 226.146, loss = 80.7
 ```
 
 With the raw feature, the learning rate must be tiny (about 2e-7) to avoid diverging along the steep `w` direction, and after 1,000 steps the intercept `b` has barely moved, so the loss is still large. With the feature standardised (mean 0, standard deviation 1, as in the indexing lesson), both directions have similar steepness, a learning rate of 0.1 is safe, and training converges in far fewer steps. The fitted `w` is different because the feature's units changed, but the predictions are just as good. This is why features are standardised before gradient-based training almost as a rule.
@@ -131,7 +136,7 @@ Each step so far computed the gradient using **every** training example. With a 
 
 One pass through the whole dataset is called an **epoch**. At the start of each epoch the data is shuffled, then cut into batches, and one step is taken per batch.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -171,7 +176,7 @@ The x-axis counts epochs, so all three runs are compared for the same amount of 
 
 For linear regression the loss is a single smooth bowl, so gradient descent reaches the same bottom from any starting point. A loss shaped like a single bowl, with no other dips, is called **convex**. Many models, including neural networks, have losses that are not convex: they have several valleys, and gradient descent finds whichever one it happens to roll into.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 

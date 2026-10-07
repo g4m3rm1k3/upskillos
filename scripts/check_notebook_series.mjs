@@ -26,7 +26,7 @@
 import { existsSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
-import { loadPyodide } from 'pyodide'
+import { createNotebookRunner } from './lib/notebookPyodide.mjs'
 import { SERIES_MANIFEST } from '../src/tools/notebook-lab/series/manifest.js'
 import { parseLesson } from '../src/tools/notebook-lab/lessonFormat.js'
 import { compareOutput } from '../src/components/notebooks/compareOutput.js'
@@ -105,48 +105,9 @@ if (!lessons.length) {
   process.exit(0)
 }
 
-const py = await loadPyodide()
-// Same capture as PythonNotebook: raw writes, flushed after every run, so
-// output without a trailing new line (print(x, end=" ")) is not lost.
-let captured = ''
-const decoder = new TextDecoder()
-const capture = { write: buf => { captured += decoder.decode(buf, { stream: true }); return buf.length } }
-py.setStdout(capture)
-py.setStderr(capture)
-const flushOutput = () => py.runPythonAsync("__import__('sys').stdout.flush(); __import__('sys').stderr.flush()")
-// Same packages PythonNotebook preloads (so code that relies on one without
-// importing it, like sklearn's as_frame=True needing pandas, behaves the
-// same), and the same matplotlib setup: Agg backend, plt.show() a no-op (the
-// notebook captures open figures itself after each cell).
-await py.loadPackage(['numpy', 'pandas', 'matplotlib', 'scikit-learn', 'scipy', 'statsmodels', 'sqlite3', 'sympy'], { messageCallback: () => {} })
-await py.runPythonAsync(`
-import warnings
-# scikit-learn's threadpoolctl calls a Pyodide API deprecated in 0.29; the
-# RuntimeWarning it prints on first use (e.g. KMeans) means nothing to learners.
-warnings.filterwarnings('ignore', message='JsProxy.as_object_map', category=RuntimeWarning)
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-plt.show = lambda *_a, **_k: None
-`)
+const { py, run, figuresOpen } = await createNotebookRunner()
 await py.runPythonAsync(PYTHON_FEATURE_LESSONS)
 const featuresUsed = py.globals.get('_features_used')
-
-async function run(code, ns) {
-  await py.loadPackagesFromImports(code, { messageCallback: () => {} })
-  captured = ''
-  let result
-  try {
-    result = await py.runPythonAsync(code, { globals: ns })
-  } finally {
-    await flushOutput()
-  }
-  const shown = result !== undefined && result !== null
-  // What the notebook shows: printed text, then the last expression's value.
-  const output = [captured.trimEnd(), shown ? String(result) : ''].filter(Boolean).join('\n')
-  if (result?.destroy) result.destroy()
-  return { stdout: captured, shown, output }
-}
 
 // OpenMAT cells run in the app's OpenMAT engine. The app imports its
 // TypeScript source through a Vite alias; here it is bundled once with esbuild
@@ -160,17 +121,6 @@ async function runOpenMat(code) {
     openMat = await import(pathToFileURL(out).href)
   }
   return openMat.runOpenMatScript(code)
-}
-
-async function figuresOpen(ns) {
-  return py.runPythonAsync(`
-import sys as _sys
-_n = 0
-if 'matplotlib.pyplot' in _sys.modules:
-    _plt = _sys.modules['matplotlib.pyplot']
-    _n = len(_plt.get_fignums())
-    _plt.close('all')
-_n`, { globals: ns })
 }
 
 async function runTest(cell, code, ns) {
@@ -209,10 +159,6 @@ for (const { series, lesson, file } of lessons) {
     const n = words(prose)
     if (n < MIN_PROSE_WORDS) problems.push(`only ${n} words of prose (minimum ${MIN_PROSE_WORDS}): teach, don't summarise`)
     if (prose.some(p => p.includes('$$'))) problems.push('uses $$…$$ math, which does not render; use \\[…\\]')
-    for (const p of prose) {
-      if (/^#{3,6}\s/.test(p)) problems.push(`"${p.slice(0, 40)}": only "## " headings render; "###" shows as plain text`)
-      if (!p.startsWith('```') && /^\s*\|.*\|\s*$/m.test(p)) problems.push(`"${p.slice(0, 40)}": Markdown tables do not render in the notebook; use a list`)
-    }
 
     // A type-along lesson checks every cell against its expected output, so
     // its practice is the typing itself; it needs no separate challenges.
@@ -270,9 +216,9 @@ for (const { series, lesson, file } of lessons) {
           const { stdout, shown, output } = await run(cell.solution, ns)
           const figures = await figuresOpen(ns)
           if (!stdout.trim() && !shown && !figures) problems.push(`${where}: runs but shows nothing`)
-          if (cell.expectedOutput == null) {
-            if (stdout.trim() || shown) problems.push(`${where}: prints output but has no "output" block to compare with`)
-          } else {
+          // No expected output is allowed: make_type_along.mjs leaves it out
+          // when the output changes from run to run.
+          if (cell.expectedOutput != null) {
             const diff = compareOutput(output, cell.expectedOutput)
             if (!diff.matches) problems.push(`${where}: expected output differs at line ${diff.line}: printed ${JSON.stringify(diff.yours)}, expected ${JSON.stringify(diff.expected)}`)
           }

@@ -27,7 +27,7 @@ Given two points (x₁, y₁) and (x₂, y₂), the slope is (y₂ − y₁)/(x�
 
 The industrial standard for sensor signals is the **4–20 mA current loop**: a pressure transmitter ranged 0 to 10 bar outputs 4 mA at 0 bar and 20 mA at 10 bar. The 4 mA "live zero" means a broken wire, reading 0 mA, cannot be mistaken for zero pressure. Predict before running: what pressure does 12 mA represent?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -40,6 +40,16 @@ m, b = line_through((4, 0), (20, 10))
 print(f"pressure = {m} × current + ({b})   [bar, with current in mA]")
 for current in [4, 8, 12, 16, 20, 2]:
     print(f"{current:>3} mA -> {m * current + b:6.3f} bar")
+```
+
+```output
+pressure = 0.625 × current + (-2.5)   [bar, with current in mA]
+  4 mA ->  0.000 bar
+  8 mA ->  2.500 bar
+ 12 mA ->  5.000 bar
+ 16 mA ->  7.500 bar
+ 20 mA -> 10.000 bar
+  2 mA -> -1.250 bar
 ```
 
 The slope is 0.625 bar per mA, since 16 mA of span covers 10 bar, and the intercept is −2.5 bar. 12 mA, halfway through the current span, is 5 bar, halfway through the pressure range. 2 mA gives −1.25 bar, an impossible reading for this sensor. A real controller treats anything well below 4 mA as a fault rather than a pressure, which is exactly why the zero is "live".
@@ -58,7 +68,7 @@ The ideal 4–20 mA line assumes a perfect transmitter. A real one is slightly o
 
 Calibration needs a line in each direction. The sensor maps pressure to current; the conversion maps current back to pressure. The two are **inverse functions**: if c = m p + b then p = (c − b)/m, whose slope is 1/m. Predict before running: how big is the error at 12 mA if the ideal line is used on this transmitter?
 
-```python
+```python type
 cal_m, cal_b = line_through((4.08, 0), (19.92, 10))
 ideal = lambda c: 0.625 * c - 2.5
 calibrated = lambda c: cal_m * c + cal_b
@@ -68,6 +78,14 @@ for current in [4.08, 12.0, 19.92]:
 sensor_m, sensor_b = 1 / cal_m, -cal_b / cal_m
 print(f"sensor model: current = {sensor_m:.4f} × pressure + {sensor_b:.4f}")
 print("round trip 7.3 bar ->", round(calibrated(sensor_m * 7.3 + sensor_b), 12), "bar")
+```
+
+```output
+  4.08 mA: ideal  0.0500 bar, calibrated  0.0000 bar, error +0.0500 bar
+ 12.00 mA: ideal  5.0000 bar, calibrated  5.0000 bar, error +0.0000 bar
+ 19.92 mA: ideal  9.9500 bar, calibrated 10.0000 bar, error -0.0500 bar
+sensor model: current = 1.5840 × pressure + 4.0800
+round trip 7.3 bar -> 7.3 bar
 ```
 
 At 12 mA the two lines agree, because this transmitter's errors are symmetric about mid-scale; at the ends the ideal line is off by 0.05 bar, 0.5% of full scale. The sensor model, the inverse line, has slope 1.584 mA per bar instead of the ideal 1.6. The round trip through both lines returns 7.3 bar.
@@ -84,7 +102,7 @@ In code: `residual = calibrated(read_mA) - true_bar`, then `np.abs(residual).max
 
 Two-point calibration assumes the sensor really is a straight line between the reference points. Checking that assumption takes more points: apply several known pressures, convert the readings with the calibrated line, and look at the **residuals**, the differences between the line's prediction and the true value. Instrument datasheets quote the largest residual as the **non-linearity**, as a percentage of full scale. Predict before running: is this transmitter better than 0.25% non-linearity?
 
-```python
+```python type
 true_bar = np.array([0, 2, 4, 6, 8, 10], dtype=float)
 read_mA = np.array([4.08, 7.26, 10.43, 13.60, 16.76, 19.92])
 predicted = calibrated(read_mA)
@@ -99,6 +117,11 @@ ax.set_xlabel("applied pressure (bar)")
 ax.set_ylabel("residual (mbar)")
 ax.set_title("Calibration residuals")
 plt.show()
+```
+
+```output
+residuals (bar): [0.     0.0076 0.0088 0.0101 0.0051 0.    ]
+non-linearity: 0.101% of full scale
 ```
 
 `np.abs(residual).max() / 10` divides the worst error by the 10 bar full scale; the `:.3%` format multiplies by 100 and adds a percent sign.
@@ -121,7 +144,7 @@ With many noisy points there is no single line through all of them. The standard
 
 where x̄ and ȳ are the means. The line always passes through the point of means (x̄, ȳ). NumPy computes it with `np.polyfit(x, y, 1)`. Predict before running: does the least-squares line have a smaller sum of squared residuals than the line through the first and last points?
 
-```python
+```python type
 rng = np.random.default_rng(11)
 load_kg = np.linspace(0, 50, 11)
 counts = 812 + 163.4 * load_kg + rng.normal(0, 40, load_kg.size)
@@ -133,6 +156,11 @@ print(f"least squares: {ls_m:.3f} counts/kg, intercept {ls_b:.1f};  polyfit: {np
 tp_m, tp_b = line_through((load_kg[0], counts[0]), (load_kg[-1], counts[-1]))
 sse = lambda m, b: ((counts - (m * load_kg + b)) ** 2).sum()
 print(f"sum of squared residuals: least squares {sse(ls_m, ls_b):,.0f}, two-point {sse(tp_m, tp_b):,.0f}")
+```
+
+```output
+least squares: 163.049 counts/kg, intercept 829.0;  polyfit: [163.049 828.999]
+sum of squared residuals: least squares 16,084, two-point 29,145
 ```
 
 The data come from a simulated load cell whose true line is 163.4 counts per kg with an intercept of 812, plus noise.
@@ -153,7 +181,7 @@ Two non-parallel lines cross at exactly one point, found by setting their y valu
 
 A classic use is **break-even**. Machine A costs £2,000 to set up and £3.50 per part; machine B costs £500 to set up and £5.00 per part. Each total cost is a line in the number of parts, and the crossing is the batch size where they cost the same. Predict before running: above what batch size is machine A cheaper?
 
-```python
+```python type
 def intersect(m1, b1, m2, b2):
     if m1 == m2:
         return None
@@ -165,6 +193,13 @@ print(f"break-even at {x:.0f} parts, where both cost £{cost:,.2f}")
 for parts in [500, 1000, 1500]:
     a, b_cost = 2000 + 3.5 * parts, 500 + 5 * parts
     print(f"{parts:>5} parts: A £{a:,.0f}  B £{b_cost:,.0f}  ->", "A" if a < b_cost else "B" if b_cost < a else "either")
+```
+
+```output
+break-even at 1000 parts, where both cost £5,500.00
+  500 parts: A £3,750  B £3,000  -> B
+ 1000 parts: A £5,500  B £5,500  -> either
+ 1500 parts: A £7,250  B £8,000  -> A
 ```
 
 The lines cross at 1,000 parts, where both cost £5,500. Below that the cheaper setup wins; above it the cheaper parts do. The intersection formula divides by m₁ − m₂, which is why parallel lines need a special case.

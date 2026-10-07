@@ -26,7 +26,7 @@ Compared with Monte Carlo, TD's target uses only one random reward instead of a 
 
 Five states in a row, A to E, with an exit at each end. Every episode starts in the middle, C, and moves left or right with equal probability until it exits. Exiting on the right gives reward 1; every other step gives 0; γ = 1. The value of each state is then the probability of exiting on the right, which is exactly 1/6, 2/6, 3/6, 4/6 and 5/6 for A to E. Start every estimate at 0.5 and compare how fast TD and Monte Carlo approach the truth, averaging the error over 100 independent runs. Before running, predict: which will be closer after 50 episodes?
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -71,6 +71,13 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+TD α = 0.05 : error after 10 episodes 0.175, after 50 0.053, after 100 0.036
+TD α = 0.1  : error after 10 episodes 0.129, after 50 0.050, after 100 0.057
+MC α = 0.01 : error after 10 episodes 0.213, after 50 0.142, after 100 0.097
+MC α = 0.03 : error after 10 episodes 0.190, after 50 0.097, after 100 0.096
+```
+
 States A to E are numbered 0 to 4, and positions −1 and 5 are the exits. Each step is stored as (state, reward, next state). For TD, each step's target uses the next state's current estimate. For Monte Carlo, with γ = 1 and a single reward at the very end, every state visited in the episode has the same return, the final reward. (This MC version updates on every visit, a constant-α variant.)
 
 TD's error falls faster: after 50 episodes it is about 0.05, against about 0.10 for Monte Carlo at its best step size. Monte Carlo must see whole episodes play out, and a single lucky or unlucky episode moves all its estimates a lot; TD spreads information through the chain one link at a time, each step adding a little real evidence. Notice also that the larger TD step size (0.1) learns faster at first but levels off at a higher error than 0.05: big steps keep jittering around the answer, the constant-step-size trade-off from the bandit lesson.
@@ -89,7 +96,7 @@ The name comes from the five things each update uses: **S**tate, **A**ction, **R
 
 The **cliff walking** world makes that last point matter. On a 4 × 12 grid, the agent starts at the bottom-left and must reach the bottom-right. The squares between them along the bottom row are a cliff: stepping onto one costs −100 and sends the agent back to the start. Every other step costs −1. The shortest route runs along the cliff edge, 13 steps; a safer route climbs to the top and back down, a few steps longer.
 
-```python
+```python type
 import numpy as np
 
 ROWS, COLS = 4, 12
@@ -142,6 +149,15 @@ print(f"greedy route: {len(route) - 1} steps, highest row reached {min(r for r, 
 for r in range(ROWS):
     print("  " + "".join("S" if (r, c) == START else "G" if (r, c) == GOAL else "C" if r == 3 else
                          ("*" if (r, c) in route else ".") for c in range(COLS)))
+```
+
+```output
+average reward per episode over the last 100 episodes: -37.7
+greedy route: 19 steps, highest row reached 0
+  ..***..*****
+  .**.****...*
+  **.........*
+  SCCCCCCCCCCG
 ```
 
 `Q` is a 4 × 12 × 4 array, one value per square and action, and `Q[state]` (with state a (row, column) tuple) gives a square's four action values. γ = 1 here (the cliff task is episodic and the −1 per step already rewards speed). After training, the cell follows the greedy policy and marks its route with stars; C marks the cliff.

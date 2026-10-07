@@ -426,6 +426,50 @@ function ReferenceCodeBlock({ code, C }) {
 }
 
 // ── Prose code block ──────────────────────────────────────────────────────
+// A Markdown table ("| a | b |" rows, then a "|---|---|" separator) as an HTML
+// table. A "|" inside `code` or escaped as "\|" does not split a cell.
+export function splitTableRow(row) {
+  const cells = [];
+  let cell = "", inCode = false;
+  const s = row.trim().replace(/^\|/, "").replace(/\|$/, "");
+  for (let k = 0; k < s.length; k++) {
+    const ch = s[k];
+    if (ch === "\\" && s[k + 1] === "|") { cell += "|"; k++; continue; }
+    if (ch === "`") inCode = !inCode;
+    if (ch === "|" && !inCode) { cells.push(cell.trim()); cell = ""; continue; }
+    cell += ch;
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+function ProseTable({ text, C, first }) {
+  const rows = text.split("\n").map(splitTableRow);
+  const isSeparator = (r) => r.every((c) => /^:?-{2,}:?$/.test(c));
+  const hasHead = rows.length > 1 && isSeparator(rows[1]);
+  const head = hasHead ? rows[0] : null;
+  const body = rows.filter((r, k) => !isSeparator(r) && !(hasHead && k === 0));
+  const cellStyle = { padding: "7px 12px", borderBottom: `1px solid ${C.border}`, textAlign: "left", verticalAlign: "top" };
+  return (
+    <div style={{ margin: first ? 0 : "14px 0 0", overflowX: "auto" }}>
+      <table style={{ borderCollapse: "collapse", fontSize: 14, color: C.text, lineHeight: 1.6, minWidth: "60%" }}>
+        {head && (
+          <thead>
+            <tr style={{ background: C.surface2 }}>
+              {head.map((c, k) => <th key={k} style={{ ...cellStyle, fontWeight: 650 }}>{parseProse(c)}</th>)}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {body.map((r, k) => (
+            <tr key={k}>{r.map((c, j) => <td key={j} style={cellStyle}>{parseProse(c)}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function ProseCodeBlock({ lang, code, C, index }) {
   const html = useMemo(() => {
     try {
@@ -676,8 +720,21 @@ const CellComponent = React.memo(
                     if (typeof p === "string" && p.startsWith("::: math")) {
                       return <MathBox key={i} text={p} C={C} first={i === 0} />;
                     }
-                    // ## Header line
-                    if (typeof p === "string" && p.startsWith("## ")) {
+                    // ### (and deeper) header: a smaller heading inside a section
+                    if (typeof p === "string" && /^#{3,6}\s/.test(p)) {
+                      return (
+                        <h4 key={i} style={{ margin: i === 0 ? "2px 0 8px" : "22px 0 8px", fontSize: 16, fontWeight: 650, color: C.text, lineHeight: 1.4 }}>
+                          {parseProse(p.replace(/^#+\s+/, ""))}
+                        </h4>
+                      );
+                    }
+                    // | table | rows |
+                    if (typeof p === "string" && p.startsWith("|")) {
+                      return <ProseTable key={i} text={p} C={C} first={i === 0} />;
+                    }
+                    // # and ## header line (a notebook's "# Part A" is a section too)
+                    if (typeof p === "string" && /^#{1,2}\s/.test(p)) {
+                      p = "## " + p.replace(/^#+\s+/, "");
                       return (
                         (() => {
                           const learned = /^what you learned/i.test(p.slice(3));

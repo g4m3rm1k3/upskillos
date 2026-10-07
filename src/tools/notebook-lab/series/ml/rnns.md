@@ -22,7 +22,7 @@ A **language model** predicts what comes next. A character-level model reads tex
 
 Characters are fed in as one-hot vectors. Multiplying a one-hot vector by W_x simply picks out one row of W_x, so the code uses `Wx[character]` directly. The training text here is tiny, so that the network can learn it in a few seconds:
 
-```python
+```python type
 import numpy as np
 
 text = "the cat sat on the mat. the dog sat on the log. the cat saw the dog. the dog saw the cat. "
@@ -51,6 +51,11 @@ def generate(h, first, length, seed=1):
 print("untrained:", repr(generate(np.zeros(H), "t", 60)))
 ```
 
+```output
+90 characters of text, 15 distinct characters: ' .acdeghlmnostw'
+untrained: 'thwawdgsgl ohdodgagcdodhwwoldawh.momt hg mslcshhoasnoaoa.tstg'
+```
+
 `r.choice(V, p=probs)` picks a character at random according to the predicted probabilities, so generation is a little different each run. Untrained, with random weights, the network produces gibberish.
 
 ## Backpropagation through time
@@ -61,7 +66,7 @@ For long texts, the sequence is cut into chunks of, say, 20 characters (**trunca
 
 Two practical additions. Gradients through many steps can occasionally explode, so each one is **clipped** to the range −5 to 5. And the update uses **Adagrad**, a simple ancestor of RMSProp: each parameter's step is divided by the square root of the sum of all its past squared gradients.
 
-```python
+```python type
 import numpy as np
 
 text = "the cat sat on the mat. the dog sat on the log. the cat saw the dog. the dog saw the cat. "
@@ -125,6 +130,13 @@ for step in range(1, 1001):
         print(f"step {step:>4}: loss {loss:.3f}  sample: {generate(np.zeros(H), 't', 60)!r}")
 ```
 
+```output
+step    1: loss 2.684  sample: 'thw wahogh nheleaacadmdawtol.awg.lsht ma.htaemhelammm.o  sota'
+step  100: loss 0.147  sample: 'the log. the dog sat on the lot. the cat she the cnt. the dog'
+step  500: loss 0.010  sample: 'the cat sat on the log. the cat saw the dog. the dog saw the '
+step 1000: loss 0.003  sample: 'the cat sat on the log. the cat saw the dog. the dog saw the '
+```
+
 The targets are the inputs shifted by one character: at every position the network is asked for the next character. In the backward loop, `dh` adds the two sources of gradient for hₜ: from this step's prediction (`d_scores @ Wy.T`) and from the following step (`dh_from_later`). `d_pre` passes it through the tanh, then it is split three ways: into W_x (only the row for this step's character), into W_h (with the previous hidden state as the input) and into the bias, and finally `d_pre @ Wh.T` becomes the gradient for the previous step. The `+=` everywhere implements the sum over steps for shared weights.
 
 Read the samples as training goes on. After 100 steps the network already produces words and the rhythm of the sentences, with mistakes: "the cat she the cnt". By step 500 the samples are made of correct sentences from the text. But look closely: "the cat sat on the log". In the training text it is the **dog** that sat on the log. To get this right, the network must connect "log" with the "dog" about fifteen characters earlier. Here that is impossible for a reason worth knowing: training cuts the text into 20-character chunks, and "dog" and "log" fall in different chunks, so truncated backpropagation never passes any gradient from the one to the other. The network has no way to learn that the animal matters, and indeed it ignores it, predicting "m" or "l" with roughly equal odds after either animal. By step 1,000 the printed loss is tiny (it is the loss on the last chunk only, not the whole text), yet the mix-up is still there. Truncation caps how far back a network can learn; the next section shows that even without truncation, plain RNNs struggle to reach far back.
@@ -135,7 +147,7 @@ Why is long-range memory hard? Backpropagating from step T to step 0 multiplies 
 
 Measure it directly on a small RNN: how much does a tiny change in the first hidden state still affect the hidden state `T` steps later? Before running, predict how the effect changes as T grows from 1 to 40.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -150,6 +162,14 @@ for t in range(1, 41):
     jacobian = jacobian @ (Wh * (1 - h ** 2))
     if t in (1, 5, 10, 20, 40):
         print(f"after {t:>2} steps, sensitivity to the starting state: {np.linalg.norm(jacobian):.2e}")
+```
+
+```output
+after  1 steps, sensitivity to the starting state: 3.23e+00
+after  5 steps, sensitivity to the starting state: 3.61e-01
+after 10 steps, sensitivity to the starting state: 2.16e-02
+after 20 steps, sensitivity to the starting state: 4.78e-05
+after 40 steps, sensitivity to the starting state: 1.38e-10
 ```
 
 `jacobian` holds, for every pair of units, how much a change in the starting state's unit `i` changes the current state's unit `j`: each step multiplies it by W_h, with each column scaled by that step's tanh derivative 1 − h². (`np.linalg.norm` of a matrix is the square root of the sum of its squared entries, a measure of overall size.) The sensitivity roughly halves with every step: after 10 steps it is about 0.02, after 20 about 5 × 10⁻⁵, and after 40 around 10⁻¹⁰. To gradient descent, an event 40 steps back is all but invisible, so the network can hardly learn to use it.

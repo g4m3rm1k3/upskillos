@@ -8,7 +8,7 @@ This lesson works through a realistic simulated sales series: its components (tr
 
 Two years of daily sales, simulated from three parts: a slow upward **trend**, a **weekly pattern** (quiet on Monday and Tuesday, busy on Friday and Saturday), and **noise** that is itself correlated: a busy-for-no-reason day tends to be followed by another (each day's noise is 0.6 times yesterday's plus a fresh random amount).
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,6 +32,13 @@ axes[1].set_title("the first eight weeks", fontsize=9)
 plt.show()
 ```
 
+```output
+correlation between each day and the day  1 before: 0.79
+correlation between each day and the day  2 before: 0.48
+correlation between each day and the day  7 before: 0.88
+correlation between each day and the day 14 before: 0.88
+```
+
 `weekly[day % 7]` picks the weekly effect for each day: `day % 7` cycles through 0 to 6. The correlation between a series and itself shifted by k steps is its **autocorrelation** at lag k. Here it is 0.79 at lag 1 (yesterday says a lot about today), drops to 0.48 at lag 2, and jumps back to 0.88 at lags 7 and 14: the same weekday last week is the best single clue. Looking at autocorrelations is the first thing to do with any series; they say which past values a model should use.
 
 ## Split by time, and set baselines
@@ -46,7 +53,7 @@ Before any model, compute **baselines**. They are often embarrassingly hard to b
 
 The error measure used here is the **mean absolute error** (MAE), the average size of the miss in units of sales, which is easy to explain to the people using a forecast. The naive baselines below use the **actual** previous values, so each is a one-step-ahead forecast. Predict before running: which baseline will win?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -67,6 +74,12 @@ print(f"naive (yesterday's value):          MAE {mae(sales[639:729], test):.2f}"
 print(f"seasonal naive (same day last week): MAE {mae(sales[633:723], test):.2f}")
 ```
 
+```output
+mean of the training data:          MAE 18.86
+naive (yesterday's value):          MAE 7.68
+seasonal naive (same day last week): MAE 5.14
+```
+
 `sales[639:729]` is the series shifted by one day, lined up with the test days; `sales[633:723]` is shifted by seven. The training mean misses by about 19 on average: it ignores the trend (sales have grown since the start of training) and the weekly pattern. Yesterday's value does much better (7.7), and the same day last week is best (5.1), because it captures the weekly pattern. Any model worth deploying must beat 5.1.
 
 ## Autoregressive models
@@ -79,7 +92,7 @@ An **autoregressive** model predicts the next value from the previous ones, with
 
 Turning a series into a regression problem just means building a table: one row per day, with that day's previous values as the features and the day's value as the target. Other features can join the lags: the day of the week, one-hot encoded, and the day number, for the trend. Then any regression model can be used.
 
-```python
+```python type
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
@@ -105,6 +118,11 @@ print(f"one-step-ahead MAE on the last 90 days: {np.mean(np.abs(forecast - targe
 print("weights on the previous 1, 2 and 3 days:", model.coef_[:3].round(2))
 ```
 
+```output
+one-step-ahead MAE on the last 90 days: 3.13
+weights on the previous 1, 2 and 3 days: [ 0.6  -0.   -0.02]
+```
+
 Column `k` of `lagged` holds the value from `k + 1` days earlier: for target day `t`, the features are days t − 1, t − 2, …, t − 14. `np.eye(7)[days % 7]` one-hot encodes the weekday. Because the first 14 days have no complete history, the table starts at day 14, so the train/test split moves back by 14 rows to keep the same 90 test days.
 
 The model's error is 3.13, well below the seasonal naive 5.14. Its weights recover the structure of the noise: about 0.6 on yesterday (the simulation's 0.6) and nearly 0 on the days before, since the weekday features already handle the weekly pattern. And 3.13 is about as good as it can get: the fresh noise each day has standard deviation 4, and the average absolute size of normal noise with standard deviation σ is σ√(2/π) ≈ 0.8σ, here about 3.2. What is left is unpredictable by any model.
@@ -113,7 +131,7 @@ The model's error is 3.13, well below the seasonal naive 5.14. Its weights recov
 
 To tune or compare models, use cross-validation whose folds respect time. scikit-learn's `TimeSeriesSplit` makes folds that always train on an earlier stretch and test on the stretch right after it, with an expanding training window. Compare it with ordinary shuffled folds on the same lag table, for a gradient-boosted tree model and the linear model. Before running, predict: which kind of fold will make the trees look better?
 
-```python
+```python type
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
@@ -137,6 +155,13 @@ for name, model in [("boosted trees", HistGradientBoostingRegressor(random_state
     for fold_name, folds in [("shuffled folds", KFold(5, shuffle=True, random_state=0)), ("time-ordered folds", TimeSeriesSplit(5))]:
         error = -cross_val_score(model, features, target, cv=folds, scoring="neg_mean_absolute_error").mean()
         print(f"{name:<14} {fold_name:<19} MAE {error:.2f}")
+```
+
+```output
+boosted trees  shuffled folds      MAE 3.86
+boosted trees  time-ordered folds  MAE 4.78
+linear AR      shuffled folds      MAE 3.23
+linear AR      time-ordered folds  MAE 3.29
 ```
 
 `scoring="neg_mean_absolute_error"` reports the MAE as a negative number (scikit-learn always maximises scores), hence the minus sign.

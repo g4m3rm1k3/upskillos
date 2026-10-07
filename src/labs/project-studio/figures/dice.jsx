@@ -26,6 +26,24 @@ export function EpsilonSplit() {
   </section>;
 }
 
+export function SixFutures() {
+  const [pot, setPot] = useState(5);
+  const [revealed, setRevealed] = useState(false);
+  const rows = [1, 2, 3, 4, 5, 6].map(face => ({ face, after: face === 1 ? 0 : pot + face }));
+  const average = rows.reduce((sum, row) => sum + row.after, 0) / 6;
+  return <section className="ps-six-futures" aria-label="Six possible futures">
+    <p>Score stays zero. Each row is an alternative next face, starting with the same pot. Each face has probability 1/6 under the fair-die assumption.</p>
+    <Slider label="Starting pot" value={pot} min={0} max={5} step={1} set={value => { setPot(value); setRevealed(false); }} />
+    <table><thead><tr><th>Face</th><th>Pot after roll</th><th>Change</th></tr></thead><tbody>
+      {rows.map(row => <tr key={row.face}><td>{row.face}</td><td>{row.after}</td><td>{row.after - pot}</td></tr>)}
+    </tbody></table>
+    <p>Add the six possible resulting pots and divide by six. Predict the result before revealing it.</p>
+    <button type="button" onClick={() => setRevealed(true)}>Reveal expected pot</button>
+    {revealed && <output aria-live="polite">Expected pot: {number(average)}. Expected change: {number(average - pot)}.</output>}
+    <p>This is exact enumeration, not six sequential rolls. It does not calculate the probability of winning the match.</p>
+  </section>;
+}
+
 export function UpdateTrace() {
   const [alpha, setAlpha] = useState(0.5);
   const [done, setDone] = useState(false);

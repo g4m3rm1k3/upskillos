@@ -23,7 +23,7 @@ A **parametric curve** gives each coordinate as a function of a parameter t: r(t
 
 Predict before running: do (cos t, sin t), (cos t², sin t²) suitably scaled, and (cos(−t), sin(−t)) trace the same set of points? Which one moves at a steady pace?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -48,6 +48,12 @@ for ax, (name, (px, py)) in zip(axes, paths.items()):
 plt.show()
 ```
 
+```output
+steady (cos t, sin t)          all on the unit circle: True; step lengths from 0.518 to 0.518
+accelerating t²/2π             all on the unit circle: True; step lengths from 0.044 to 0.962
+backwards (cos(-t), sin(-t))   all on the unit circle: True; step lengths from 0.518 to 0.518
+```
+
 All three lie exactly on the unit circle. The steady one moves in equal steps of 0.518. The accelerating one starts with tiny steps (0.044) and ends with large ones (0.962). The backwards one has equal steps but goes clockwise: the red square, the second point, is on the other side. Same curve, three different motions.
 
 ## Velocity, speed and arc length
@@ -64,7 +70,7 @@ Differentiating each coordinate gives the **velocity vector** r′(t), which poi
 
 Predict before running: how many chords does it take to get an ellipse with semi-axes 50 and 30 mm right to 0.01 mm?
 
-```python
+```python type
 a_ax, b_ax = 50.0, 30.0
 ramanujan = math.pi * (3 * (a_ax + b_ax) - math.sqrt((3 * a_ax + b_ax) * (a_ax + 3 * b_ax)))
 def chord_length(n):
@@ -76,6 +82,15 @@ for n in [10, 100, 1000, 10000]:
     print(f"{n:>6} chords: perimeter {chord_length(n):.6f} mm (error {chord_length(n) - reference:+.2e})")
 print(f"a million chords: {reference:.6f} mm; Ramanujan's formula: {ramanujan:.6f} mm (off by {ramanujan - reference:+.1e})")
 print(f"a circle of the same 'average radius' 40 mm: {2 * math.pi * 40:.3f} mm")
+```
+
+```output
+    10 chords: perimeter 251.104523 mm (error -4.17e+00)
+   100 chords: perimeter 255.228000 mm (error -4.20e-02)
+  1000 chords: perimeter 255.269569 mm (error -4.20e-04)
+ 10000 chords: perimeter 255.269984 mm (error -4.20e-06)
+a million chords: 255.269989 mm; Ramanujan's formula: 255.269864 mm (off by -1.2e-04)
+a circle of the same 'average radius' 40 mm: 251.327 mm
 ```
 
 With 10 chords the length is about 4.2 mm short. With 100 it is within 0.04 mm, and with 1,000 within 0.0004 mm of the million-chord value, 255.26999 mm. The error shrinks by a factor of 100 for every factor of 10 in the number of chords: second-order convergence again. Ramanujan's formula, 255.26986 mm, is off by only about 0.0001 mm, a remarkable formula but not exact. A circle of radius 40 mm, the average of the semi-axes, would be 251.3 mm: a 1.6% underestimate, the kind of shortcut that makes a toolpath's cycle-time estimate wrong.
@@ -94,7 +109,7 @@ Rolling motion produces some of the most useful parametric curves. A point on th
 
 Predict before running: how long is one arch of a cycloid with R = 10 mm? And how much farther does the cutter travel on a trochoidal path than along a 100 mm straight slot?
 
-```python
+```python type
 R = 10.0
 tc = np.linspace(0, 2 * np.pi, 20001)
 arch = np.hypot(np.diff(R * (tc - np.sin(tc))), np.diff(R * (1 - np.cos(tc)))).sum()
@@ -120,6 +135,11 @@ a2.set_title("trochoidal milling path (first 6 loops)")
 plt.show()
 ```
 
+```output
+one cycloid arch: 80.0000 mm (8R = 80.0 mm)
+trochoidal path: 100 loops of radius 4.0 mm advancing 1.0 mm each: 2514 mm of travel for a 100 mm slot (25.1×)
+```
+
 The arch measures 80.0000 mm, exactly 8R, a result Christopher Wren proved in 1658 without calculus. The trochoidal path makes 100 loops of 4 mm radius to cut a 100 mm slot and travels about 2,514 mm, 25 times the straight distance. It is still often faster overall: the light cuts allow much higher feed rates and depths, and the tool survives far longer.
 
 ## Curvature and the speed limit in a corner
@@ -136,7 +156,7 @@ How sharply a path bends is its **curvature** κ. It is the reciprocal of the ra
 
 Predict before running: an elliptical pocket with semi-axes 50 and 30 mm, an axis acceleration limit of 2 m/s² and a programmed feed of 0.5 m/s. Where must the tool slow down, and to what speed?
 
-```python
+```python type
 n = 4000
 tt = np.linspace(0, 2 * np.pi, n, endpoint=False)
 ex, ey = 0.050 * np.cos(tt), 0.030 * np.sin(tt)
@@ -150,6 +170,13 @@ print(f"curvature at the end of the short axis {kappa[n // 4]:.2f} 1/m (radius {
 v_limit = np.minimum(0.5, np.sqrt(2.0 / kappa[1:-1]))
 print(f"feed limit: {v_limit.min():.3f} m/s at the sharp ends, {v_limit.max():.3f} m/s on the flat sides (programmed 0.5)")
 print(f"fraction of the path below the programmed feed: {np.mean(v_limit < 0.5):.0%}")
+```
+
+```output
+curvature at the end of the long axis 55.56 1/m (radius 18.0 mm; exact a/b² = 55.56)
+curvature at the end of the short axis 12.00 1/m (radius 83.3 mm; exact b/a² = 12.00)
+feed limit: 0.190 m/s at the sharp ends, 0.408 m/s on the flat sides (programmed 0.5)
+fraction of the path below the programmed feed: 100%
 ```
 
 At the sharp ends of the long axis the curvature is 55.6 per metre, a radius of only 18 mm (exactly a/b²). At the flat sides it is 12 per metre, a radius of 83.3 mm. With a 2 m/s² axis the tool must slow to 0.19 m/s at the sharp ends, and even on the flats √(2/12) = 0.41 m/s is the limit: the whole pocket runs below the programmed 0.5 m/s. That is why real cycle times exceed "length divided by feed". (The first and last samples are left out: there `np.gradient` can only use one-sided differences, which are much less accurate.)
@@ -168,7 +195,7 @@ Every CAD system, font and vector-drawing program describes smooth shapes with *
 
 Predict before running: a cubic with control points (0, 0), (20, 40), (60, 40) and (80, 0) mm. Where is the curve at t = 0.5, and in which directions does it leave the start and arrive at the end?
 
-```python
+```python type
 from math import comb
 
 def casteljau(points, t):
@@ -195,6 +222,12 @@ ax.plot(curve[:, 0], curve[:, 1], label="cubic Bézier")
 ax.set_aspect("equal")
 ax.legend(fontsize=8)
 plt.show()
+```
+
+```output
+B(0.5) by de Casteljau: [40. 30.]   by the Bernstein formula: [40. 30.]
+start tangent: [ 60. 120.] = 3(P1 - P0): [ 60 120]
+end tangent: [  60. -120.] = 3(P3 - P2): [  60 -120]
 ```
 
 Both methods put the curve at (40, 30) at t = 0.5, below the control polygon's top edge at 40 mm: the curve is pulled towards the inner control points, not through them. It leaves (0, 0) heading towards (20, 40), with tangent 3(P₁ − P₀) = (60, 120), and arrives at (80, 0) from the direction of (60, 40). Matching these tangents is how CAD joins Bézier pieces smoothly, the parametric version of the spline lesson's matched slopes.

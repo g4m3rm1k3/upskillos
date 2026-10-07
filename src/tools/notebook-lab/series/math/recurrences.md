@@ -24,7 +24,7 @@ A first-order **recurrence** gives each term from the one before. A loan is the 
 
 Predict before running: a 150,000 machine is financed over 5 years at 6% a year, paid monthly. What is the monthly payment, and how much interest is paid in total?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,6 +40,12 @@ closed = [(1 + i) ** n * B0 - P * ((1 + i) ** n - 1) / i for n in range(N + 1)]
 print(f"balance after 12 payments: iterated {balance[12]:,.2f}, closed form {closed[12]:,.2f}; after 60: {balance[-1]:.6f}")
 first_interest, last_interest = i * balance[0], i * balance[N - 1]
 print(f"interest share of the first payment {first_interest / P:.1%}, of the last {last_interest / P:.1%}")
+```
+
+```output
+monthly payment 2,899.92; total paid 173,995.21; interest 23,995.21
+balance after 12 payments: iterated 123,479.52, closed form 123,479.52; after 60: -0.000000
+interest share of the first payment 25.9%, of the last 0.5%
 ```
 
 The payment is 2,899.92 a month: 173,995 in total, of which 23,995 is interest. Iterating the recurrence and using the closed form agree, and after 60 payments the balance is zero to rounding. Early payments carry the most interest (26% of the first one) and late ones are almost all principal (0.5% interest in the last). That is why the balance falls slowly at first.
@@ -60,7 +66,7 @@ The ancient **Heron's method** for square roots, x ↦ ½(x + a/x), is Newton's 
 
 Predict before running: how many steps does Heron's iteration need for √2 from x = 1, and how does the error behave for x ↦ cos x?
 
-```python
+```python type
 x = 1.0
 for step in range(1, 6):
     x = 0.5 * (x + 2 / x)
@@ -89,6 +95,15 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+Heron step 1: 1.500000000000000, error 8.6e-02
+Heron step 2: 1.416666666666667, error 2.5e-03
+Heron step 3: 1.414215686274510, error 2.1e-06
+Heron step 4: 1.414213562374690, error 1.6e-12
+Heron step 5: 1.414213562373095, error 2.2e-16
+cos iteration: error ratio settles at 0.6736; |f'(x*)| = |sin x*| = 0.6736
+```
+
 Heron's method is within 2 × 10⁻¹² of √2 after four steps and exact to the last digit after five, the error roughly squaring each time, because the iteration's slope at √2 is zero. The cosine iteration converges to 0.739085 more slowly: its error ratio settles at 0.6736, exactly |f′(x*)| = sin(0.739). The cobweb shows the path spiralling inwards: the slope is negative, so the iterates alternate sides of the fixed point while closing in.
 
 ## The exponential moving average
@@ -105,7 +120,7 @@ The **exponential moving average** (EMA) is the simplest digital filter. Each sm
 
 Predict before running: a temperature reading with noise of σ = 0.5 °C jumps from 20 to 25 °C. With α = 0.1 and α = 0.02, how much noise is left, and how many samples until the output reaches 95% of the step?
 
-```python
+```python type
 def ema(values, alpha):
     out, y = [], values[0]
     for v in values:
@@ -124,6 +139,11 @@ for alpha in [0.1, 0.02]:
           f"(formula {math.ceil(math.log(0.05) / math.log(1 - alpha))})")
 ```
 
+```output
+α = 0.1: noise 0.138 °C (theory 0.115); 95% of the step after 27 samples (formula 29)
+α = 0.02: noise 0.064 °C (theory 0.050); 95% of the step after 145 samples (formula 149)
+```
+
 With α = 0.1 the noise drops from 0.5 to about 0.14 °C (the theory, 0.5√(α/(2 − α)) = 0.115, is for a long record; 100 correlated samples give only a rough estimate), and the output reaches 95% of the step after 27 samples, the noise helping it across slightly before the formula's 29. With α = 0.02 the noise falls to about 0.06 °C (theory 0.05), but the response takes 145 samples (formula 149). Roughly twice as smooth costs five times slower. Choosing α is choosing that trade-off, the same one every sensor filter faces.
 
 ## The logistic map: from order to chaos
@@ -140,7 +160,7 @@ Replace the loan's linear rule with a slightly non-linear one and something rema
 
 Predict before running: after a long transient, how many distinct values does the iteration visit for r = 2.8, 3.2, 3.5 and 3.9?
 
-```python
+```python type
 def long_run(r, x0=0.2, transient=1000, keep=64):
     x = x0
     for _ in range(transient):
@@ -174,6 +194,17 @@ ax.set_ylabel("long-run x")
 plt.show()
 ```
 
+```output
+r = 2.8: [0.642857]
+r = 3.2: [0.513045, 0.799455]
+r = 3.5: [0.38282, 0.500884, 0.826941, 0.874997]
+r = 3.9: 64 different values
+step 10: difference between the two runs 5.7e-09
+step 30: difference between the two runs 1.3e-03
+step 45: difference between the two runs 3.7e-01
+step 60: difference between the two runs 7.4e-01
+```
+
 At r = 2.8 the population settles at the fixed point 0.642857 = 1 − 1/2.8. At 3.2 it alternates between two values, 0.513 and 0.799, and at 3.5 between four. At 3.9 the 64 recorded values are all different: chaos. Two runs starting 10⁻¹⁰ apart are still close after 10 steps, but by step 45 or so the difference is as large as the values themselves. The bifurcation diagram shows the whole story: a single branch splitting into 2, 4, 8, ... and dissolving into a band of chaos, with occasional windows of order inside it.
 
 ## Second-order linear recurrences
@@ -190,7 +221,7 @@ A second-order recurrence uses two previous terms. The method mirrors the polyno
 
 Predict before running: does Binet's formula reproduce the 30th Fibonacci number exactly? And for the discretised oscillator, are its roots inside the unit circle?
 
-```python
+```python type
 fib = [0, 1]
 for _ in range(29):
     fib.append(fib[-1] + fib[-2])
@@ -205,6 +236,13 @@ c2 = 2 * zeta * wn * dt - 1
 roots = np.roots([1, -c1, -c2])
 print(f"oscillator x_(n+1) = {c1:.4f} x_n + ({c2:.4f}) x_(n-1): roots {np.round(roots, 4)}, size {abs(roots[0]):.4f}")
 print(f"angle per step {abs(np.angle(roots[0])):.4f} rad -> period {2 * math.pi / abs(np.angle(roots[0])) * dt:.3f} s (true 1 s)")
+```
+
+```output
+F_30 = 832040, Binet gives 832040; F_30 / F_29 = 1.618033988748, φ = 1.618033988750
+characteristic roots of λ² = λ + 1: [ 1.61803399 -0.61803399]
+oscillator x_(n+1) = 1.9716 x_n + (-0.9874) x_(n-1): roots [0.9858+0.1249j 0.9858-0.1249j], size 0.9937
+angle per step 0.1260 rad -> period 0.997 s (true 1 s)
 ```
 
 Binet's formula gives 832,040, exactly F₃₀, and the ratio F₃₀/F₂₉ matches φ to 11 decimals. The stepped oscillator's characteristic roots are a complex pair of size 0.9937, just inside the unit circle. So the simulated motion decays, as a damped spring should. Each step rotates the pair by an angle that gives a period close to the true 1 s. If the time step were too large, the roots would move outside the unit circle and the simulation would blow up: a stability limit like the heat-flow lesson's, seen through characteristic roots.

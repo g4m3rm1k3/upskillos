@@ -15,7 +15,7 @@ This lesson covers:
 
 A factory runs robots that differ in their **tool** (welder, painter) and in how they **move** (fixed in place, on wheels, on tracks). With inheritance, each combination is a class. Predict before running: how many classes does each design need for 4 tools and 3 kinds of movement?
 
-```python
+```python type
 class Robot:
     def move_to(self, x):
         return "stays at the station"
@@ -53,6 +53,13 @@ for tools, drives in [(2, 3), (4, 3), (6, 4)]:
     print(f"{tools} tools, {drives} drives: {tools * drives} combination classes with inheritance, {tools + drives} part classes with composition")
 ```
 
+```output
+crawls to bay 3 on tracks and paints a panel
+2 tools, 3 drives: 6 combination classes with inheritance, 5 part classes with composition
+4 tools, 3 drives: 12 combination classes with inheritance, 7 part classes with composition
+6 tools, 4 drives: 24 combination classes with inheritance, 10 part classes with composition
+```
+
 Already the wheels code is written twice (in `WheeledWelder` and `WheeledPainter`), and so are the tracks. A bug fix to wheeled movement must be made in every wheeled class.
 
 Inheritance can only share code **down one line**. Every combination of tool and drive must be its own class, and the movement code is copied into each tool's branch. The counts grow as a product: 4 tools and 3 drives need 12 combination classes, 6 and 4 need 24. A third kind of variation (say, a power source) multiplies again. Composition needs one class per **part**: 4 + 3 = 7, then 6 + 4 = 10.
@@ -61,7 +68,7 @@ Inheritance can only share code **down one line**. Every combination of tool and
 
 With composition, a `Robot` holds a `tool` object and a `drive` object, and passes work to them, which is called **delegation**. Each tool and each drive is written once. Any tool works with any drive, and since the parts are just attributes, a robot can even change its tool while running. Predict before running: what does the robot report after its tool is swapped?
 
-```python
+```python type
 class WeldingTool:
     def work(self):
         return "welds a seam"
@@ -100,6 +107,12 @@ print(r2.do_job("bay 4"))
 print(Robot("W1", WeldingTool(), Fixed()).do_job("bay 1"))
 ```
 
+```output
+R2 crawls to bay 3 on tracks and paints a panel
+R2 crawls to bay 4 on tracks and moves a part
+W1 stays at the station and welds a seam
+```
+
 `Robot.do_job` does not know or care which tool or drive it has. It only relies on each having a `work` or `move_to` method: the duck typing, or protocol, from the last lesson.
 
 The swapped robot now "moves a part": the same object took on a new behaviour without a new class. With inheritance, in ordinary code an object's class is fixed when it is created, so a welder can never become a painter. Each part can also be tested alone (a `Wheels` object needs no tool to test), and adding a fourth drive means writing one class that works with every existing tool.
@@ -108,7 +121,7 @@ The swapped robot now "moves a part": the same object took on a new behaviour wi
 
 The second problem with inheritance is subtler. A subclass that overrides some methods depends on **how** the base class uses its own methods, which is an implementation detail the base class never promised. A classic example: count how many items are ever added to a list by subclassing `list` and overriding `append`. Predict before running: what count does it report after one `append` and an `extend` of three items?
 
-```python
+```python type
 class CountingList(list):
     def __init__(self):
         super().__init__()
@@ -125,11 +138,15 @@ parts += ["clip"]
 print("items:", len(parts), "  counted as added:", parts.added)
 ```
 
+```output
+items: 5   counted as added: 1
+```
+
 It reports 1, though five items were added. `list.extend` and `+=` are written in C, and they add items directly, without calling `append`. The subclass assumed `extend` would go through `append`; that was never promised, and for `list` it is false. The opposite surprise happens too: if a base class's `add_all` **does** call `add`, a subclass that counts in both methods counts everything twice. Either way, the subclass's correctness depends on internal details of its base class, which is exactly the tight coupling the design lessons warn about. Worse, a later version of the base class could change those details and break the subclass without either class's code changing.
 
 Composition removes the dependency. A wrapper **holds** a list and exposes only the operations it supports, each written to count correctly:
 
-```python
+```python type
 class CountingBag:
     def __init__(self):
         self._items = []
@@ -154,6 +171,11 @@ bag.add("bolt")
 bag.add_all(["nut", "washer", "pin"])
 print("items:", len(bag), "  counted as added:", bag.added, "  contents:", list(bag))
 print("has list's extend?", hasattr(bag, "extend"))
+```
+
+```output
+items: 4   counted as added: 4   contents: ['bolt', 'nut', 'washer', 'pin']
+has list's extend? False
 ```
 
 `CountingBag` decides exactly which operations exist, and each one counts. It has no `extend`, `insert` or `+=` waiting to bypass the count, because it inherits nothing it did not ask for. The cost is writing the operations it needs, here four short methods, and that is usually a price worth paying.

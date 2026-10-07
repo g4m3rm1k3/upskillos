@@ -10,7 +10,7 @@ A random **experiment** is anything with an uncertain result: flipping a coin, r
 
 One useful way to understand probability: it is the fraction of times the event happens if you repeat the experiment a very large number of times. Here is the running fraction of heads as a coin is flipped 5,000 times. Predict what the curve will do.
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -34,7 +34,7 @@ plt.show()
 
 With arrays, you can run a hundred thousand experiments in one line and count the ones where an event happened, using boolean masks. What is the probability that two dice add up to 7? Make a guess before running the cell.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -44,6 +44,11 @@ die2 = rng.integers(1, 7, size=n)
 total = die1 + die2
 print("simulated P(total = 7):", (total == 7).mean())
 print("exact:                 ", 6 / 36)
+```
+
+```output
+simulated P(total = 7): 0.16797
+exact:                  0.16666666666666666
 ```
 
 The exact answer comes from counting. There are 6 × 6 = 36 equally likely pairs of faces, and 6 of them add to 7: (1, 6), (2, 5), (3, 4), (4, 3), (5, 2), (6, 1). When all outcomes are equally likely, the probability of an event is simply
@@ -60,7 +65,7 @@ Three rules cover most probability calculations. Each is easy to see by simulati
 
 **Not.** The probability that an event does **not** happen is one minus the probability that it does: P(not A) = 1 − P(A). This is surprisingly useful, because "at least one" questions are usually much easier to answer the other way round. What is the chance of at least one six in four rolls of a die?
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -68,6 +73,11 @@ rolls = rng.integers(1, 7, size=(100_000, 4))
 at_least_one_six = (rolls == 6).any(axis=1)
 print("simulated:", at_least_one_six.mean())
 print("exact:    ", 1 - (5 / 6) ** 4)
+```
+
+```output
+simulated: 0.51533
+exact:     0.5177469135802468
 ```
 
 Each row is one experiment of four rolls, and `.any(axis=1)` asks whether each row contains a six. The exact answer uses "not": the chance of no six in one roll is 5/6, so the chance of no six in four rolls is (5/6)⁴, and at least one six is 1 minus that, about 0.518. (Why can the chances be multiplied? That is the "and" rule, just below.)
@@ -84,7 +94,7 @@ P(A \text{ or } B) = P(A) + P(B) - P(A \text{ and } B)
 P(A \text{ and } B) = P(A) \times P(B)
 \]
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(2)
@@ -95,6 +105,11 @@ A = d1 == 6
 B = d2 % 2 == 0
 print("P(A and B):", (A & B).mean(), " P(A) × P(B):", A.mean() * B.mean())
 print("P(A or B): ", (A | B).mean(), " exact: 1/6 + 1/2 − 1/12 =", round(1 / 6 + 1 / 2 - 1 / 12, 4))
+```
+
+```output
+P(A and B): 0.083615  P(A) × P(B): 0.08370875
+P(A or B):  0.584635  exact: 1/6 + 1/2 − 1/12 = 0.5833
 ```
 
 Here `A` is "the first die is a six" (probability 1/6) and `B` is "the second die is even" (probability 1/2). They are independent, so P(A and B) = 1/6 × 1/2 = 1/12, and the "or" rule gives the exact value on the last line.
@@ -111,7 +126,7 @@ P(A \mid B) = \frac{P(A \text{ and } B)}{P(B)}
 
 The idea: restrict attention to the experiments where `B` happened, and ask how often `A` happened among those. With simulation that is literally what you do: filter with a mask, then take a fraction.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(4)
@@ -126,6 +141,12 @@ print("P(total ≥ 10 | first is 5): ", (total[given] >= 10).mean())
 print("using the formula:          ", ((total >= 10) & given).mean() / given.mean())
 ```
 
+```output
+P(total ≥ 10):               0.167715
+P(total ≥ 10 | first is 5):  0.333113099885879
+using the formula:           0.33311309988587906
+```
+
 Without any information, a total of 10 or more has probability 6/36 ≈ 0.167. Knowing the first die is a 5, you only need a 5 or 6 on the second, so the probability rises to 2/6 ≈ 0.333. `total[given]` keeps only the experiments where the condition held. The last line computes the formula instead, P(A and B) divided by P(B), and gets the same number: filtering and then taking a fraction **is** the formula.
 
 In machine learning, almost every prediction is a conditional probability: the probability that an email is spam **given** its words, that a patient has a disease **given** their test results, that the next word is "cat" **given** the words so far.
@@ -136,7 +157,7 @@ A disease affects 1 in 100 people. A test for it is 95% accurate in both directi
 
 Most people answer 95%. Simulate a population and count instead:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(5)
@@ -147,6 +168,12 @@ test_positive = np.where(has_disease, rng.random(n) < 0.95, rng.random(n) < 0.05
 print("people who test positive:", test_positive.sum())
 print("of those, actually ill:  ", (has_disease & test_positive).sum())
 print("P(disease | positive):   ", has_disease[test_positive].mean().round(3))
+```
+
+```output
+people who test positive: 58782
+of those, actually ill:   9505
+P(disease | positive):    0.162
 ```
 
 `rng.random(n) < 0.01` makes each person ill with probability 1%. For each person, `np.where` then chooses which test result to draw: positive with probability 0.95 if they are ill, and with probability 0.05 (a false alarm) if they are not.
@@ -165,7 +192,7 @@ The bottom line, the overall chance of a positive test, adds up both ways of get
 
 Simulation is especially valuable when intuition fails. In a room of 23 people, what is the chance that at least two share a birthday? (Assume 365 equally likely birthdays and ignore leap years.) Write your guess down before running the cell.
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(6)
@@ -175,6 +202,13 @@ for people in [10, 23, 40, 60]:
     sorted_days = np.sort(birthdays, axis=1)
     has_shared = (np.diff(sorted_days, axis=1) == 0).any(axis=1)
     print(f"{people} people: {has_shared.mean():.3f}")
+```
+
+```output
+10 people: 0.118
+23 people: 0.509
+40 people: 0.896
+60 people: 0.993
 ```
 
 With just 23 people it is already about 50%, and with 60 it is nearly certain. The trick for spotting a shared birthday: sort each row, and a repeat shows up as two equal neighbours, which `np.diff` (the difference between each element and the next) turns into a zero. Intuition goes wrong because it thinks about one person matching you, but there are 253 different **pairs** of people in a room of 23 (each of the 23 people pairs with 22 others, which counts every pair twice, so 23 × 22 / 2), and any of them could match.

@@ -22,7 +22,7 @@ One trick makes this even tidier: add a column of ones to `X`. Then the bias bec
 
 where `X̃` ("X tilde") is `X` with an extra column of ones, and θ (theta) holds all `d + 1` parameters, the bias included. You used exactly this trick in the linear systems lesson, when a column of ones let the line have an intercept.
 
-```python
+```python type
 import numpy as np
 
 X = np.array([[120.0, 3], [80, 2], [150, 4]])
@@ -30,6 +30,13 @@ X_tilde = np.column_stack([np.ones(len(X)), X])
 theta = np.array([50_000.0, 2_000, 10_000])
 print(X_tilde)
 print(X_tilde @ theta)
+```
+
+```output
+[[  1. 120.   3.]
+ [  1.  80.   2.]
+ [  1. 150.   4.]]
+[320000. 230000. 390000.]
 ```
 
 `theta[0]` is the bias (here 50,000) and the others are the weights for area and bedrooms. One matrix product scores every house.
@@ -50,7 +57,7 @@ Its gradient, one partial derivative per parameter, comes from the chain rule ju
 
 Row `j` of `X̃ᵀ` is feature `j` for every example, so its dot product with the error vector adds up "error times feature `j`" over all examples, which is exactly the sum the chain rule asked for. One line of NumPy computes the whole gradient. As always, check a gradient formula numerically:
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(0)
@@ -68,6 +75,11 @@ print(formula.round(6))
 print(numerical.round(6))
 ```
 
+```output
+[-0.590479 -2.790824 -0.94501  -0.813496]
+[-0.590479 -2.790824 -0.94501  -0.813496]
+```
+
 `np.eye(4)` supplies the four unit vectors, so each one nudges a single parameter. The formula matches.
 
 ## The exact solution: the normal equation
@@ -80,7 +92,7 @@ Setting the gradient to zero, as in the least squares lesson, gives the bottom o
 
 This is called the **normal equation**. It is an ordinary square system of `d + 1` equations in `d + 1` unknowns, `A θ = b` with `A = X̃ᵀX̃`, which `np.linalg.solve` handles. It is what `np.linalg.lstsq` and scikit-learn's `LinearRegression` solve (they use more careful methods internally, which matter when features are nearly collinear, but get the same answer).
 
-```python
+```python type
 import numpy as np
 
 rng = np.random.default_rng(1)
@@ -94,6 +106,11 @@ print("normal equation:", theta.round(3))
 print("lstsq:          ", np.linalg.lstsq(X_tilde, y)[0].round(3))
 ```
 
+```output
+normal equation: [ 3.951  2.007 -1.004  0.474]
+lstsq:           [ 3.951  2.007 -1.004  0.474]
+```
+
 Both recover a bias near 4 and weights near 2, −1 and 0.5, the values used to make the data. The normal equation needs `X̃ᵀX̃` to be invertible: if two features are exactly collinear (one a multiple of another), its rank drops and there is no unique solution, exactly as in the linear systems lesson.
 
 ## Many features on real data
@@ -102,7 +119,7 @@ Now fit all ten diabetes measurements. The workflow from the "what learning is" 
 
 One habit matters a great deal. Features are standardised before fitting, so their weights are comparable and gradient descent behaves. The mean and standard deviation used for standardising must be computed from the **training set only**, and then applied to both sets, because they are part of what the model learns. For plain least squares it happens to make no difference to the predictions: shifting and rescaling the features only changes the weights to compensate. But for gradient descent with a fixed number of steps, for the regularised models of the next lessons, and for methods based on distances, standardising with statistics that include the test set lets information about it **leak** into training and flatters the test score. So the habit is kept everywhere.
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -129,13 +146,18 @@ print("train R²:", round(r_squared(y[train], A @ theta), 3))
 print("test R²: ", round(r_squared(y[test], with_ones(Z_test) @ theta), 3))
 ```
 
+```output
+train R²: 0.523
+test R²:  0.488
+```
+
 Predict before running: will the test R² be higher or lower than the training R²?
 
 On the training patients, the ten features explain about 52% of the variation; on the 92 test patients, about 49%, well above BMI's 34% alone. The training score is a little higher, as it always tends to be: the weights were chosen to fit those very patients, noise included. The gap is small because ten weights are few compared with 350 patients. But a test set of 92 patients is small, so its R² is itself uncertain, as the estimation lesson would predict: other random splits of this data give test scores anywhere from about 0.32 to 0.54. The validation lesson shows how to average over many splits to get a steadier estimate. Either way, the honest number to report is the test one.
 
 Gradient descent reaches the same answer. With standardised features it converges quickly, and the vectorised gradient makes each step a single line:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import load_diabetes
 
@@ -154,13 +176,18 @@ print("gradient descent:", theta.round(1))
 print("exact:           ", exact.round(1))
 ```
 
+```output
+gradient descent: [152.1  -0.5 -11.4  24.7  15.4 -37.5  22.5   4.7   8.4  35.7   3.2]
+exact:            [152.1  -0.5 -11.4  24.7  15.4 -37.7  22.7   4.8   8.4  35.7   3.2]
+```
+
 (This cell standardises with the whole dataset only to compare the two methods; it is not evaluating anything.) Most weights agree to the printed precision. A few differ a little, because one pair of features is so strongly correlated that the bowl is very flat along one direction, and gradient descent creeps along it slowly. That flatness is the next section's subject.
 
 ## Reading the weights, carefully
 
 With standardised features, each weight is "the change in the prediction for a one standard deviation increase in that feature, **holding all the other features fixed**". Their sizes can then be compared directly. Predict which feature will have the largest weight before running the cell:
 
-```python
+```python type
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -174,6 +201,20 @@ weights = pd.Series(theta[1:], index=features.columns)
 print(weights.sort_values(key=abs, ascending=False).round(1))
 ```
 
+```output
+s1    -37.7
+s5     35.7
+bmi    24.7
+s2     22.7
+bp     15.4
+sex   -11.4
+s4      8.4
+s3      4.8
+s6      3.2
+age    -0.5
+dtype: float64
+```
+
 BMI and `s5` have large positive weights, as the exploration predicted. But look at `s1` and `s2`: huge weights of **opposite** sign. The exploration found that these two features are correlated at 0.9, carrying almost the same information. The model can raise one weight and lower the other by almost the same amount with hardly any change to its predictions, so the individual values are poorly determined. This is the flat direction of the loss bowl mentioned above: moving along it barely changes the loss, which is also why gradient descent crept along it so slowly. Taken alone, a large negative weight on total cholesterol might look like a medical finding, but it is really an accident of collinearity. This is the most important caution about reading regression weights: **correlated features make individual weights unreliable**, even when the predictions are fine. The regularisation lesson shows a way to calm them down.
 
 Two more cautions:
@@ -183,7 +224,7 @@ Two more cautions:
 
 ## The same in scikit-learn
 
-```python
+```python type
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 
@@ -192,6 +233,11 @@ X = df.drop(columns="target")
 model = LinearRegression().fit(X, df["target"])
 print(model.intercept_.round(1))
 print(dict(zip(X.columns, model.coef_.round(2))))
+```
+
+```output
+-334.6
+{'age': np.float64(-0.04), 'sex': np.float64(-22.86), 'bmi': np.float64(5.6), 'bp': np.float64(1.12), 's1': np.float64(-1.09), 's2': np.float64(0.75), 's3': np.float64(0.37), 's4': np.float64(6.53), 's5': np.float64(68.48), 's6': np.float64(0.28)}
 ```
 
 (`fit` returns the model itself, so the two lines can be chained.) These weights are in the original units, since the features were not standardised, so they cannot be compared with each other directly: a weight per year of age and a weight per unit of blood fat measure different things.

@@ -23,7 +23,7 @@ A sequence is a function of a whole number n: a₀, a₁, a₂, .... The two sim
 
 Predict before running: three logs from a workshop. Which is arithmetic, which geometric, and which neither?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +38,12 @@ for name, seq in logs.items():
     diffs, ratios = np.diff(seq), seq[1:] / seq[:-1]
     kind = "arithmetic" if np.allclose(diffs, diffs[0]) else "geometric" if np.allclose(ratios, ratios[0]) else "neither"
     print(f"{name:<26} differences {np.round(diffs, 4)}  ratios {np.round(ratios, 4)}  -> {kind}")
+```
+
+```output
+regrind diameter (mm)      differences [-0.4 -0.4 -0.4 -0.4 -0.4]  ratios [0.984  0.9837 0.9835 0.9832 0.9829]  -> arithmetic
+vibration amplitude (µm)   differences [-20.     -15.     -11.25    -8.4375  -6.3281]  ratios [0.75 0.75 0.75 0.75 0.75]  -> geometric
+spare parts on hand        differences [-6. -5. -4. -3. -2.]  ratios [0.85   0.8529 0.8621 0.88   0.9091]  -> neither
 ```
 
 The regrind diameters fall by a constant 0.4 mm, so they are arithmetic. The vibration amplitudes keep a constant ratio of 0.75, so they are geometric. The spare-parts count has neither constant differences (−6, −5, −4, −3, −2) nor constant ratios. Its differences themselves form an arithmetic sequence, which makes the parts count a quadratic in n. Checking differences and ratios is the first step in modelling any stepwise data.
@@ -56,7 +62,7 @@ Adding up the terms of a sequence gives a **series**. Both basic kinds have clos
 
 Predict before running: the sum 1 + 2 + ... + 100, the sum of 20 terms 80 × 0.75ᵏ, and the partial sums of ½ + ¼ + ⅛ + ...?
 
-```python
+```python type
 n = 100
 print("1 + 2 + ... + 100:", sum(range(1, n + 1)), " formula n(first + last)/2:", n * (1 + n) // 2)
 a0, r, terms = 80.0, 0.75, 20
@@ -64,6 +70,12 @@ direct = sum(a0 * r ** k for k in range(terms))
 print(f"geometric, 20 terms: {direct:.6f}  formula {a0 * (1 - r ** terms) / (1 - r):.6f}  infinite sum {a0 / (1 - r):.1f}")
 partial = np.cumsum([Fraction(1, 2 ** k) for k in range(1, 11)])
 print("partial sums of 1/2 + 1/4 + ...:", [str(p) for p in partial[:5]], "...", partial[-1], "=", float(partial[-1]))
+```
+
+```output
+1 + 2 + ... + 100: 5050  formula n(first + last)/2: 5050
+geometric, 20 terms: 318.985212  formula 318.985212  infinite sum 320.0
+partial sums of 1/2 + 1/4 + ...: ['1/2', '3/4', '7/8', '15/16', '31/32'] ... 1023/1024 = 0.9990234375
 ```
 
 1 + 2 + ... + 100 = 5050, the story told about the young Gauss. Twenty terms of the vibration amplitudes add to 318.99, already close to the infinite sum of 320. The partial sums of ½ + ¼ + ... are 1/2, 3/4, 7/8, 15/16, ..., each 1 − 1/2ⁿ, reaching 1023/1024 after ten terms and approaching 1 without ever exceeding it.
@@ -81,7 +93,7 @@ Accountants spread a machine's cost over its useful life by depreciating its **b
 
 Predict before running: a 120,000 machine, 10-year life, 15,000 salvage. After 3 years, what is it worth on each schedule, and when does the declining balance stop falling?
 
-```python
+```python type
 C, S, L = 120_000.0, 15_000.0, 10
 years = np.arange(L + 1)
 straight = C - years * (C - S) / L
@@ -100,6 +112,15 @@ ax.legend(fontsize=8)
 plt.show()
 ```
 
+```output
+year  1: straight line   109,500   double declining    96,000
+year  3: straight line    88,500   double declining    61,440
+year  5: straight line    67,500   double declining    39,322
+year  8: straight line    36,000   double declining    20,133
+year 10: straight line    15,000   double declining    15,000
+declining balance reaches the salvage floor in year 10; first-year write-off 24,000 vs 10,500
+```
+
 After 3 years the machine is worth 88,500 on the straight-line schedule but 61,440 on double declining balance, which writes off 24,000 in the first year against 10,500. The declining balance hits the 15,000 floor in year 10, as 120,000 × 0.8¹⁰ ≈ 12,885 would fall below salvage. The plot shows a straight line against a curve that drops steeply and then flattens: arithmetic against geometric.
 
 ## Regrinding and decaying vibration
@@ -115,7 +136,7 @@ Sequences answer "how many steps until..." questions. A carbide drill starts at 
 
 Predict before running: how many regrinds does the drill allow? And a vibration starting at 80 µm with decrement 0.2877 (amplitude ratio 0.75 per cycle): after how many cycles is it below 1 µm?
 
-```python
+```python type
 D0, delta, Dmin = 25.0, 0.4, 22.0
 k_max = math.floor((D0 - Dmin) / delta + 1e-9)
 print(f"regrinds allowed: {k_max}, final diameter {D0 - k_max * delta:.1f} mm (one more would give {D0 - (k_max + 1) * delta:.1f} mm)")
@@ -124,6 +145,12 @@ dlog = -math.log(q)
 k_small = math.ceil(math.log(A0 / A_lim) / dlog)
 print(f"logarithmic decrement {dlog:.4f}; below {A_lim} µm after {k_small} cycles: {A0 * q ** (k_small - 1):.3f} -> {A0 * q ** k_small:.3f} µm")
 print(f"at 25 Hz that is {k_small / 25:.2f} s of ringing")
+```
+
+```output
+regrinds allowed: 7, final diameter 22.2 mm (one more would give 21.8 mm)
+logarithmic decrement 0.2877; below 1.0 µm after 16 cycles: 1.069 -> 0.802 µm
+at 25 Hz that is 0.64 s of ringing
 ```
 
 The drill allows 7 regrinds, ending at 22.2 mm; an eighth would take it to 21.8 mm, below the limit. The 1e-9 added before rounding down guards against a quotient that should be a whole number coming out just below it: with a 21.8 mm limit, (25 − 21.8)/0.4 evaluates to 7.999999999999998, which would round down to 7 instead of 8. The vibration needs 16 cycles to fall below 1 µm: after 15 it is still 1.069 µm, after 16 it is 0.802 µm. At 25 Hz the machine rings for about two thirds of a second after each knock.
@@ -142,7 +169,7 @@ A sequence **converges** to a limit L if its terms eventually get, and stay, as 
 
 Predict before running: how many terms of the harmonic series are needed for the sum to pass 10? And how close is ln n + 0.5772 to the partial sums?
 
-```python
+```python type
 for rr in [0.5, 0.9, 1.0, 1.1, -0.9]:
     print(f"r = {rr:>4}: r^10 = {rr ** 10:9.4f}, r^100 = {rr ** 100:.3e}")
 H = np.cumsum(1 / np.arange(1, 1_000_001))
@@ -150,6 +177,18 @@ for nn in [10, 1000, 1_000_000]:
     print(f"H_{nn} = {H[nn - 1]:.6f}, ln n + 0.5772 = {math.log(nn) + 0.5772156649:.6f}")
 passes_10 = int(np.argmax(H > 10)) + 1
 print(f"the partial sums first exceed 10 at n = {passes_10:,}; passing 50 would need about e^(50 - 0.5772) ≈ {math.exp(50 - 0.5772):.1e} terms")
+```
+
+```output
+r =  0.5: r^10 =    0.0010, r^100 = 7.889e-31
+r =  0.9: r^10 =    0.3487, r^100 = 2.656e-05
+r =  1.0: r^10 =    1.0000, r^100 = 1.000e+00
+r =  1.1: r^10 =    2.5937, r^100 = 1.378e+04
+r = -0.9: r^10 =    0.3487, r^100 = 2.656e-05
+H_10 = 2.928968, ln n + 0.5772 = 2.879801
+H_1000 = 7.485471, ln n + 0.5772 = 7.484971
+H_1000000 = 14.392727, ln n + 0.5772 = 14.392726
+the partial sums first exceed 10 at n = 12,367; passing 50 would need about e^(50 - 0.5772) ≈ 2.9e+21 terms
 ```
 
 0.5¹⁰⁰ and 0.9¹⁰⁰ are tiny, 1¹⁰⁰ is 1 and 1.1¹⁰⁰ is about 13,781. −0.9 alternates in sign while shrinking (its odd powers are negative). The harmonic partial sums track ln n + 0.5772 (the Euler–Mascheroni constant) closely: within 0.05 at n = 10 and within 10⁻⁶ at a million. The sum first exceeds 10 after 12,367 terms, and reaching 50 would take about 3 × 10²¹ terms. Divergence can be extraordinarily slow, so no finite computation can show a series converges. That needs the reasoning the calculus block develops.

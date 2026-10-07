@@ -15,7 +15,7 @@ This lesson covers:
 
 Here is a sensor-smoothing choice written in the classic Strategy shape: an abstract base class, one subclass per algorithm, and a context holding an instance. Below it, the same design in plain Python: the strategies are functions, and the context takes one as an argument. Predict before running: do they compute the same results, and how many classes does each need?
 
-```python
+```python type
 from abc import ABC, abstractmethod
 
 class Smoother(ABC):
@@ -56,6 +56,11 @@ print("classes:  ", SensorChannel(MovingAverage(3)).process(readings), SensorCha
 print("functions:", process(readings), process(readings, median3))
 ```
 
+```output
+classes:   [20.1, 20.2, 25.13, 25.17, 25.2, 20.4] [20.3, 20.3, 20.3, 20.4, 20.4, 20.6]
+functions: [20.1, 20.2, 25.13, 25.17, 25.2, 20.4] [20.3, 20.3, 20.3, 20.4, 20.4, 20.6]
+```
+
 Both produce identical results. The class version needs four classes, one of them an abstract base, to say "a smoother is something that smooths". The function version needs none, because "a callable taking a list and returning a list" **is** the interface. A function with a default argument is also easier to call: `process(readings)` uses the default without building anything.
 
 ## A catalogue of lighter forms
@@ -82,7 +87,7 @@ The patterns that keep their full shape best are those about **structure**: adap
 
 Python 3.10 added the `match` statement. It compares a value against a series of **patterns** that describe its shape: a literal, a sequence of a given length, a dict with certain keys, or an instance of a class with certain attributes. It **binds** parts of the value to names as it goes. For processing small tree structures or messages of several kinds, a `match` can replace a type switch, or a visitor class, with something closer to a description of the data. Predict before running: which case handles each message, and what happens to the last one?
 
-```python
+```python type
 from dataclasses import dataclass
 
 @dataclass
@@ -116,6 +121,17 @@ def handle(message):
 for message in [Move(0, 0), Move(40, 12.5), Spindle(0), Spindle(18000), Spindle(30000),
                 ("coolant", "on"), {"alarm": "E17", "axis": "Z", "load": 140}, ("coolant", "mist")]:
     print(f"{message!r:<42} -> {handle(message)}")
+```
+
+```output
+Move(x=0, y=0)                             -> return to origin
+Move(x=40, y=12.5)                         -> move to 40, 12.5
+Spindle(rpm=0)                             -> spindle stop
+Spindle(rpm=18000)                         -> spindle 18000 rpm
+Spindle(rpm=30000)                         -> refused: 30000 rpm is over the limit
+('coolant', 'on')                          -> coolant on
+{'alarm': 'E17', 'axis': 'Z', 'load': 140} -> alarm E17 with ['axis', 'load']
+('coolant', 'mist')                        -> unknown message ('coolant', 'mist')
 ```
 
 In a class pattern such as `Move(x=x, y=y)`, `x=x` means "match the attribute `x` and bind it to the name `x`". Sequence patterns like `("coolant", state)` match lists as well as tuples, but never strings. `"on" | "off" as state` accepts either string and names it. `if rpm <= 24000` is a **guard**, an extra condition. `case _` matches anything.

@@ -15,7 +15,7 @@ This lesson covers:
 
 Here the components call each other directly. Predict before reading on: to add a second press that alternates with the first, which classes must change?
 
-```python
+```python type
 class Conveyor:
     def __init__(self):
         self.robot, self.log = None, []
@@ -57,13 +57,17 @@ conveyor.part_arrives("P1")
 print(conveyor.log)
 ```
 
+```output
+['conveyor: P1 arrived', 'robot: P1 -> press', 'press: pressed P1', 'robot: P1 -> camera', 'camera: P1 OK', 'conveyor: P1 out']
+```
+
 Five wiring assignments for four machines, and every class names others. The cell's sequence (load, press, unload, inspect, take away) exists only as a chain of calls hidden in four classes. A second press touches the robot (which press to load?) and the press (which robot unloads it?), and changing the order of operations means editing several machines. None can be tested alone without stand-ins for its neighbours.
 
 ## A mediator
 
 Give the machines one contact: the cell controller. Each machine does its own job and **reports** to the controller (`controller.notify(self, event, part)`). The controller decides what happens next and gives orders. The machines no longer know each other, and the sequence lives in one method. Predict before running: what happens to the failed part, and which class decided that?
 
-```python
+```python type
 class Machine:
     def __init__(self, name, controller):
         self.name, self.controller = name, controller
@@ -108,6 +112,23 @@ print("\n".join(cell.log))
 print("done:", cell.done, " rejects:", cell.rejects)
 ```
 
+```output
+robot: P1 -> press
+press: pressed P1
+robot: P1 -> camera
+camera: P1 OK
+robot: P2x -> press
+press: pressed P2x
+robot: P2x -> camera
+camera: P2x FAIL
+robot: P2x -> reject bin
+robot: P3 -> press
+press: pressed P3
+robot: P3 -> camera
+camera: P3 OK
+done: ['P1', 'P3']  rejects: ['P2x']
+```
+
 The press and the camera each know only `self.controller`. Neither knows the other exists, or that a robot exists.
 
 The failed part goes to the reject bin, and that decision is in `CellController.notify`, which now reads as the cell's whole process from arrival to finish. A second press, or a different routing for failed parts, is a change to that one method. Each machine can be tested with a stand-in controller that has a `log` list and just records its reports.
@@ -131,7 +152,7 @@ All the coordination flows into the mediator, so it can grow into exactly the go
 
 Here the cell controller's routing becomes a table from event to action, so adding a step is adding a row. Predict before running: how many lines change to add a "label" step after a part passes?
 
-```python
+```python type
 class TableCell(CellController):
     def __init__(self):
         super().__init__()
@@ -149,6 +170,10 @@ cell = TableCell()
 for part in ["Q1", "Q2", "Q3x"]:
     cell.notify(None, "arrived", part)
 print("labelled:", cell.labelled, " done:", cell.done, " rejects:", cell.rejects)
+```
+
+```output
+labelled: ['Q1', 'Q2']  done: ['Q1', 'Q2']  rejects: ['Q3x']
 ```
 
 Each route is a small function. A tuple of calls inside a lambda runs both calls in order: a compact trick for short actions, though a named method is clearer for anything longer.

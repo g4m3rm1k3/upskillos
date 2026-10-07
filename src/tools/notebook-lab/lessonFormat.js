@@ -7,7 +7,8 @@
 //   # Lesson title
 //
 //   Prose. Paragraphs are separated by blank lines. `## Heading` starts a
-//   section. Lists use "- " or "1. ". Math: $inline$ and \[display\].
+//   section (`### Subheading` and deeper are smaller). Lists use "- " or "1. ".
+//   Tables use "| a | b |" rows. Math: $inline$ and \[display\].
 //
 //   ```python
 //   demo code: becomes a runnable cell, with the prose above it
@@ -66,10 +67,23 @@ const LIST_ITEM = /^(\s*[-*]\s|\s*\d+\.\s)/
 export function proseItems(lines) {
   const items = []
   let para = []
+  // A paragraph may run straight into a list with no blank line between
+  // (common in Jupyter Markdown), so text lines and list lines are split
+  // into separate items. Indented lines continue whatever came before.
   const flush = () => {
-    if (!para.length) return
-    const isList = para.every(l => LIST_ITEM.test(l) || /^\s{2,}\S/.test(l))
-    items.push(isList ? para.join('\n') : para.map(l => l.trim()).join(' '))
+    let run = []
+    let runIsList = false
+    const end = () => {
+      if (run.length) items.push(runIsList ? run.join('\n') : run.map(l => l.trim()).join(' '))
+      run = []
+    }
+    for (const l of para) {
+      const isList = LIST_ITEM.test(l) || (runIsList && /^\s{2,}\S/.test(l))
+      if (run.length && isList !== runIsList) end()
+      runIsList = isList
+      run.push(l)
+    }
+    end()
     para = []
   }
   for (let i = 0; i < lines.length; i++) {
@@ -95,7 +109,18 @@ export function proseItems(lines) {
       continue
     }
     if (!line.trim()) { flush(); continue }
-    if (line.startsWith('## ')) { flush(); items.push(line.trim()); continue }
+    // A table: consecutive "| ... |" rows stay one item, one row per line.
+    if (line.trimStart().startsWith('|')) {
+      flush()
+      const rows = []
+      while (i < lines.length && lines[i].trimStart().startsWith('|')) rows.push(lines[i++].trim())
+      i--
+      items.push(rows.join('\n'))
+      continue
+    }
+    // A horizontal rule (---, ***) only separates; the heading after it does that already.
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { flush(); continue }
+    if (/^#{1,6}\s/.test(line)) { flush(); items.push(line.trim()); continue }
     para.push(line)
   }
   flush()
@@ -236,4 +261,44 @@ export function parseLesson(source) {
   if (prose.some(l => l.trim())) push({ prose: proseItems(prose), code: '', proseOnly: true })
 
   return { title, cells }
+}
+
+// A series lesson can also be a Jupyter notebook (.ipynb), used as it is.
+// A Markdown cell followed directly by a code cell becomes that cell's
+// explanation, as when a notebook is imported. A code cell that is empty or
+// holds only comments (a "type the code from the cell above" placeholder)
+// becomes an empty editor to type the code into; real code stays, with any
+// output saved in the file. Markdown with no code cell after it is text only.
+const sourceText = source => (Array.isArray(source) ? source.join('') : (source ?? '')).replace(/\r\n?/g, '\n')
+
+export function isPlaceholderCode(code) {
+  return code.split('\n').every(l => !l.trim() || l.trim().startsWith('#'))
+}
+
+export function parseIpynbLesson(text) {
+  const ipynb = typeof text === 'string' ? JSON.parse(text) : text
+  const cells = []
+  let prose = null // Markdown waiting for the code cell after it
+  const flushProse = () => {
+    if (prose) cells.push({ prose, code: '', proseOnly: true })
+    prose = null
+  }
+  for (const cell of ipynb.cells ?? []) {
+    const src = sourceText(cell.source)
+    if (cell.cell_type === 'markdown') {
+      flushProse()
+      if (src.trim()) prose = proseItems(src.split('\n'))
+    } else if (cell.cell_type === 'code') {
+      const output = (cell.outputs ?? [])
+        .map(o => sourceText(o.text ?? o.data?.['text/plain'] ?? (o.ename ? `${o.ename}: ${o.evalue}` : '')))
+        .join('')
+        .trimEnd()
+      const code = isPlaceholderCode(src) ? '' : src.trimEnd()
+      cells.push({ prose: prose ?? [], code, cellTitle: '', output: code ? output : '' })
+      prose = null
+    }
+  }
+  flushProse()
+  const title = (sourceText(ipynb.cells?.[0]?.source).match(/^#\s+(.+)/m) ?? [])[1]?.trim() ?? ''
+  return { title, cells: cells.map((cell, i) => ({ id: i + 1, status: 'idle', ...cell, output: cell.output ?? '' })) }
 }

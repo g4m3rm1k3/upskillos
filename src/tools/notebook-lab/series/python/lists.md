@@ -8,13 +8,19 @@ A **list** holds any number of values, in order, under a single name. Lists are 
 
 You write a list as values separated by commas, inside square brackets.
 
-```python
+```python type
 scores = [72, 88, 95, 61]
 names = ["Ada", "Grace", "Alan"]
 empty = []
 print(scores)
 print(names)
 print(len(names), len(empty))
+```
+
+```output
+[72, 88, 95, 61]
+['Ada', 'Grace', 'Alan']
+3 0
 ```
 
 Each value in a list is called an **element** or **item**. `len` works on lists just as it did on strings, giving the number of items. A list can hold values of different types, like `[3, "three", 3.0]`, though in practice most lists hold one kind of thing.
@@ -25,12 +31,19 @@ A list is a sequence, like a string, so everything you learned about positions c
 
 Predict each line before you run the cell.
 
-```python
+```python type
 planets = ["Mercury", "Venus", "Earth", "Mars", "Jupiter"]
 print(planets[0])
 print(planets[-1])
 print(planets[1:3])
 print(planets[:2])
+```
+
+```output
+Mercury
+Jupiter
+['Venus', 'Earth']
+['Mercury', 'Venus']
 ```
 
 `planets[0]` is `Mercury` and `planets[-1]` is `Jupiter`. A single index gives one item. A slice always gives a **list**, even when it contains one item or none: `planets[1:3]` is the list `['Venus', 'Earth']`, stopping just before index 3 as always. Asking for an index that is not there is the same `IndexError` as with strings.
@@ -39,10 +52,14 @@ print(planets[:2])
 
 Here is the big difference from strings. A string is immutable: you cannot change a character in place. A list is **mutable**: you can replace, add and remove items, and the list itself changes.
 
-```python
+```python type
 colours = ["red", "green", "blue"]
 colours[1] = "yellow"
 print(colours)
+```
+
+```output
+['red', 'yellow', 'blue']
 ```
 
 Assigning to `colours[1]` replaces the item at that position. The same line on a string would be a `TypeError`, as you saw in lesson 3.
@@ -51,7 +68,7 @@ Assigning to `colours[1]` replaces the item at that position. The same line on a
 
 There are three common ways to add to a list:
 
-```python
+```python type
 queue = ["Ada", "Grace"]
 queue.append("Alan")
 print(queue)
@@ -59,6 +76,12 @@ queue.insert(0, "Linus")
 print(queue)
 queue.extend(["Margaret", "Tim"])
 print(queue)
+```
+
+```output
+['Ada', 'Grace', 'Alan']
+['Linus', 'Ada', 'Grace', 'Alan']
+['Linus', 'Ada', 'Grace', 'Alan', 'Margaret', 'Tim']
 ```
 
 - `append(item)` adds one item to the **end**. This is by far the most used.
@@ -71,7 +94,7 @@ You can also join two lists with `+`, which makes a new list and leaves both ori
 
 ## Removing items
 
-```python
+```python type
 queue = ["Ada", "Grace", "Alan", "Grace", "Tim"]
 last = queue.pop()
 print("Popped:", last, "->", queue)
@@ -79,6 +102,12 @@ first = queue.pop(0)
 print("Popped:", first, "->", queue)
 queue.remove("Grace")
 print("Removed Grace ->", queue)
+```
+
+```output
+Popped: Tim -> ['Ada', 'Grace', 'Alan', 'Grace']
+Popped: Ada -> ['Grace', 'Alan', 'Grace']
+Removed Grace -> ['Alan', 'Grace']
 ```
 
 - `pop()` removes the **last** item and gives it back, so you can store it. `pop(index)` removes the item at that position instead.
@@ -96,7 +125,7 @@ A `ValueError` means a value was the right type but not acceptable: `list.remove
 
 ## Finding things in a list
 
-```python
+```python type
 letters = ["a", "b", "c", "b"]
 print("b" in letters)
 print("z" in letters)
@@ -104,16 +133,30 @@ print(letters.index("b"))
 print(letters.count("b"))
 ```
 
+```output
+True
+False
+1
+2
+```
+
 `in` gives `True` or `False`, which makes it perfect as a condition: `if "z" in letters:`. `index(value)` gives the position of the first match (it raises a `ValueError` if the value is missing). `count(value)` counts the matches.
 
 For lists of numbers, three built-in functions do the most common calculations:
 
-```python
+```python type
 temperatures = [18.5, 21.0, 19.2, 24.8, 22.1]
 print(min(temperatures), max(temperatures))
 print(sum(temperatures))
 print(sum(temperatures) / len(temperatures))
 print(round(sum(temperatures) / len(temperatures), 1))
+```
+
+```output
+18.5 24.8
+105.6
+21.119999999999997
+21.1
 ```
 
 `min` and `max` give the smallest and largest items, and `sum` adds them all. There is no built-in "average", but sum divided by length is the average, so you do not need one. The average prints as `21.119999999999997`: float arithmetic is slightly inexact, as you saw in lesson 2, so round the result when you show it to a person, as the last line does.
@@ -122,7 +165,7 @@ print(round(sum(temperatures) / len(temperatures), 1))
 
 Lists have a `sort` method that puts the items in order, smallest first (or alphabetical order for strings). Like `append`, it changes the list in place.
 
-```python
+```python type
 numbers = [42, 7, 19, 3]
 numbers.sort()
 print(numbers)
@@ -130,25 +173,39 @@ numbers.sort(reverse=True)
 print(numbers)
 ```
 
+```output
+[3, 7, 19, 42]
+[42, 19, 7, 3]
+```
+
 `sort(reverse=True)` sorts from largest to smallest. The `reverse=True` inside the parentheses is an extra instruction given by name; you will learn how these work when you write your own functions.
 
 Because `sort` changes the list and returns nothing, this very common mistake loses the whole list. Predict what it prints.
 
-```python
+```python type
 numbers = [42, 7, 19, 3]
 numbers = numbers.sort()
 print(numbers)
+```
+
+```output
+None
 ```
 
 It prints `None`. `None` is Python's special value for "nothing", and it is what a function gives back when it has nothing to return. The list was sorted, but then `numbers` was made to refer to what `sort()` returned, which was `None`, and the sorted list was lost.
 
 When you want a sorted copy and want to keep the original as it is, use the built-in function `sorted` instead. It returns a new list:
 
-```python
+```python type
 numbers = [42, 7, 19, 3]
 in_order = sorted(numbers)
 print(in_order)
 print(numbers)
+```
+
+```output
+[3, 7, 19, 42]
+[42, 7, 19, 3]
 ```
 
 The rule of thumb: methods that change a list (`append`, `insert`, `extend`, `remove`, `sort`) return `None`, with one exception: `pop` gives back the item it removed. Functions like `sorted`, and operators like `+`, leave the original alone and give you a new list.
@@ -157,7 +214,7 @@ The rule of thumb: methods that change a list (`append`, `insert`, `extend`, `re
 
 Two string methods connect strings and lists, and you will use them constantly. `split` breaks a string into a list of pieces, and `join` glues a list of strings together into one string.
 
-```python
+```python type
 sentence = "the quick brown fox"
 words = sentence.split()
 print(words)
@@ -166,15 +223,27 @@ csv_line = "Ada,36,London"
 print(csv_line.split(","))
 ```
 
+```output
+['the', 'quick', 'brown', 'fox']
+4 words
+['Ada', '36', 'London']
+```
+
 With no argument, `split()` splits wherever there is a run of spaces, which gives you the words. With an argument, like `split(",")`, it splits at that exact piece of text, which is how you pull apart a line of comma-separated data.
 
 `join` goes the other way. It is a method of the **separator** string, and it takes the list to glue together:
 
-```python
+```python type
 words = ["the", "quick", "brown", "fox"]
 print(" ".join(words))
 print("-".join(words))
 print(" ".join(words[::-1]))
+```
+
+```output
+the quick brown fox
+the-quick-brown-fox
+fox brown quick the
 ```
 
 `" ".join(words)` puts one space between each word. The last line reverses the list with a slice before joining it, which reverses the order of the words. (`join` only accepts strings; joining a list of numbers raises a `TypeError`.)
@@ -183,7 +252,7 @@ print(" ".join(words[::-1]))
 
 An item in a list can itself be a list. This is a natural way to represent a grid, like a small spreadsheet or a game board: a list of rows, where each row is a list.
 
-```python
+```python type
 grid = [
     [1, 2, 3],
     [4, 5, 6],
@@ -193,6 +262,12 @@ print(grid[1])
 print(grid[1][2])
 grid[0][0] = 100
 print(grid)
+```
+
+```output
+[4, 5, 6]
+6
+[[100, 2, 3], [4, 5, 6], [7, 8, 9]]
 ```
 
 `grid[1]` is the second row, `[4, 5, 6]`, and `grid[1][2]` takes item 2 of that row, `6`. Read two indexes from left to right: first choose the row, then the position within it. (Python lets a list written over several lines end with a comma after the last item, which keeps every line looking the same.)

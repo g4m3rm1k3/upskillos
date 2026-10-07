@@ -15,7 +15,7 @@ A coach must pick a team of 3 from 5 players. Backtracking keeps **one** list, `
 
 One trap: when a complete team is found, the code must record a **copy**, `chosen[:]`. Recording `chosen` itself stores a reference to the one shared list, which the pops later empty. Predict before running: what does the buggy version return?
 
-```python
+```python type
 players = ["Ada", "Ben", "Cy", "Di", "Eve"]
 
 def teams(size, record_copy=True):
@@ -35,6 +35,11 @@ print(len(teams(3)), "teams:", teams(3)[:4], "...")
 print("without copying:", teams(3, record_copy=False)[:4], "...")
 ```
 
+```output
+10 teams: [['Ada', 'Ben', 'Cy'], ['Ada', 'Ben', 'Di'], ['Ada', 'Ben', 'Eve'], ['Ada', 'Cy', 'Di']] ...
+without copying: [[], [], [], []] ...
+```
+
 All ten entries of the buggy list are the **same** list object, emptied by the final pops. This is the aliasing lesson from Python from Zero in a new disguise, and it is the commonest backtracking bug.
 
 The template has three parts, and every backtracking search in this lesson follows it: a **base case** that records a complete solution, a loop over the **choices** available next, and a matched pair of **choose** and **un-choose** around the recursive call. Because the partial solution is shared and restored, the memory used is only the depth of the search, not the number of possibilities.
@@ -43,7 +48,7 @@ The template has three parts, and every backtracking search in this lesson follo
 
 A workshop has £100 to spend and a price list. Which sets of items cost exactly £100? Without pruning, the search builds every subset: 2ⁿ of them. But if the items are sorted by price and the running total already exceeds the budget, adding more items can only make it worse, so the whole branch can be abandoned. And once one item is too expensive for the remaining money, every later (more expensive) item is too, so the loop can stop. Count the calls to `explore` to see the difference. Predict before running: how many calls does each version make for these 20 prices?
 
-```python
+```python type
 prices = [3, 5, 7, 8, 9, 12, 14, 15, 18, 20, 22, 25, 27, 30, 33, 35, 40, 45, 50, 60]
 
 def exact_spends(prices, budget, prune):
@@ -71,6 +76,12 @@ for prune in [False, True]:
 print("for example:", found[:3])
 ```
 
+```output
+prune=False: 627 ways, 1,048,576 calls
+prune=True : 627 ways, 14,006 calls
+for example: [[3, 5, 7, 8, 9, 12, 14, 15, 27], [3, 5, 7, 8, 9, 12, 14, 20, 22], [3, 5, 7, 8, 9, 15, 18, 35]]
+```
+
 `nonlocal calls` lets the inner function update the counter in the enclosing function, as in the closures lesson.
 
 Both versions find the same 627 ways. The unpruned one visits all 2²⁰ = 1,048,576 subsets, the pruned one 14,006, about one seventy-fifth of the work. Pruning never changes the answer, only the work. The test that cuts a branch must be **safe**: it may only reject partial solutions that genuinely cannot be completed. The test here is safe because prices are positive and sorted. With negative prices it would be wrong.
@@ -79,7 +90,7 @@ Both versions find the same 627 ways. The unpruned one visits all 2²⁰ = 1,048
 
 Place n queens on an n × n chessboard so that no two attack each other: no two in the same row, column or diagonal. There is exactly one queen per row, so place them row by row, choosing a column for each. A column is ruled out if a queen above uses it, or shares one of its diagonals. On the diagonals running down to the right, `row - col` is constant; on the others, `row + col` is. Three sets record the columns and diagonals already used, so each check is O(1). Predict before running: how many solutions does the classic 8 × 8 board have, and how many partial placements does the search try?
 
-```python
+```python type
 def queens(n):
     solutions, cols, down, up, placed = [], set(), set(), set(), []
     tried = 0
@@ -106,13 +117,28 @@ for n in [4, 6, 10]:
     print(n, "queens:", len(queens(n)[0]), "solutions")
 ```
 
+```output
+92 solutions on 8 x 8; squares tried: 15720 versus 8^8 = 16777216 full placements
+Q . . . . . . .
+. . . . Q . . .
+. . . . . . . Q
+. . . . . Q . .
+. . Q . . . . .
+. . . . . . Q .
+. Q . . . . . .
+. . . Q . . . .
+4 queens: 2 solutions
+6 queens: 4 solutions
+10 queens: 724 solutions
+```
+
 The 8 × 8 board has 92 solutions. The search tries 15,720 squares; placing one queen per row without pruning would mean 8⁸ = 16,777,216 complete boards to check. Each queen placed rules out squares in **every** later row, so most branches die within a few rows. 4 queens have 2 solutions, 6 have 4 and 10 have 724.
 
 ## Sudoku, and choosing what to choose
 
 A Sudoku grid is 9 × 9; each row, column and 3 × 3 box must hold the digits 1 to 9 once each. A backtracking solver picks an empty cell, tries each digit that does not clash with its row, column and box, and recurses. **Which** empty cell to fill next is a choice the template leaves open, and it matters enormously. Filling cells in reading order often guesses in a cell with seven options. The **most-constrained** rule picks the empty cell with the **fewest** legal digits. If a cell has one option there is no guess at all, and if a cell has none, the branch is dead immediately, long before the grid fills up. Predict before running: how many digits does each strategy place on this puzzle?
 
-```python
+```python type
 puzzle = """
 4 . . | . . . | 8 . 5
 . 3 . | . . . | . . .

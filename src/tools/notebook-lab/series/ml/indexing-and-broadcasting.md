@@ -8,7 +8,7 @@ This lesson covers the tools for both. Indexing and slicing pick out parts of an
 
 A one-dimensional array is indexed and sliced exactly like a list: positions start at 0, negative indexes count from the end, and a slice stops just before its end index.
 
-```python
+```python type
 import numpy as np
 
 a = np.arange(10, 20)
@@ -19,13 +19,21 @@ print(a[::3])
 print(a[::-1])
 ```
 
+```output
+[10 11 12 13 14 15 16 17 18 19]
+10 19
+[12 13 14]
+[10 13 16 19]
+[19 18 17 16 15 14 13 12 11 10]
+```
+
 `np.arange(10, 20)` gives the numbers 10 to 19. `a[2:5]` takes positions 2, 3 and 4, and `a[::3]` every third element.
 
 ## Two dimensions: rows and columns
 
 A 2D array takes **two** indexes inside one pair of square brackets, separated by a comma: first the row, then the column.
 
-```python
+```python type
 import numpy as np
 
 grid = np.array([[ 1,  2,  3,  4],
@@ -36,6 +44,15 @@ print(grid[0])
 print(grid[:, 1])
 print(grid[1:, 2:])
 print(grid[-1, ::2])
+```
+
+```output
+7
+[1 2 3 4]
+[ 2  6 10]
+[[ 7  8]
+ [11 12]]
+[ 9 11]
 ```
 
 Predict each line before you run it, reading every index as `[rows, columns]`:
@@ -52,7 +69,7 @@ In a dataset with one row per example and one column per feature, `X[:, j]` is f
 
 Here is an important difference from lists. Slicing a list makes a new list (Python lesson 12). Slicing a NumPy array does **not** copy the data: it gives a **view**, a new way of looking at the **same** numbers in memory. Change the view, and the original changes too. Predict the last line.
 
-```python
+```python type
 import numpy as np
 
 data = np.array([10, 20, 30, 40, 50])
@@ -62,9 +79,14 @@ print(middle)
 print(data)
 ```
 
+```output
+[999  30  40]
+[ 10 999  30  40  50]
+```
+
 `data` now contains 999, because `middle` was a view onto part of it. NumPy does this deliberately: arrays can be enormous, and copying every slice would waste memory and time. When you do need an independent copy, ask for one with `.copy()`:
 
-```python
+```python type
 import numpy as np
 
 data = np.array([10, 20, 30, 40, 50])
@@ -73,13 +95,17 @@ middle[0] = 999
 print(data)
 ```
 
+```output
+[10 20 30 40 50]
+```
+
 A slice being a view is the source of some very confusing bugs, where a function that "only looked at part of the data" quietly changed it. If you modify a slice and do not intend to change the original, copy it first.
 
 ## Boolean masks
 
 You met boolean masks at the end of the last lesson. A comparison gives an array of `True`/`False` values of the same shape, and using it as an index keeps only the elements where it is `True`.
 
-```python
+```python type
 import numpy as np
 
 ages = np.array([23, 17, 45, 12, 67, 34])
@@ -89,17 +115,29 @@ print(ages[adults])
 print(ages[ages < 18])
 ```
 
+```output
+[ True False  True False  True  True]
+[23 45 67 34]
+[17 12]
+```
+
 The condition can go straight inside the brackets, as in `ages[ages < 18]`, which reads almost like English: "the ages where age is under 18".
 
 To combine conditions, use `&` for "and", `|` for "or" and `~` for "not", and put **parentheses around each comparison**. Python's `and`, `or` and `not` do not work on arrays, because they need a single `True` or `False`, and an array of many values is neither.
 
-```python
+```python type
 import numpy as np
 
 ages = np.array([23, 17, 45, 12, 67, 34])
 print(ages[(ages >= 18) & (ages < 65)])
 print(ages[(ages < 18) | (ages >= 65)])
 print(ages[~(ages > 30)])
+```
+
+```output
+[23 45 34]
+[17 12 67]
+[23 17 12]
 ```
 
 The parentheses matter because `&` and `|` are worked out before `<` and `>=`. Leave them out and Python first computes `18 & ages`, and the comparisons then go wrong in a confusing way. This is the error you will meet:
@@ -115,7 +153,7 @@ print(ages[ages >= 18 & ages < 65])
 
 A mask can also be the target of an assignment, which changes only the selected elements. This is how you clean data in one line:
 
-```python
+```python type
 import numpy as np
 
 readings = np.array([12.5, -999.0, 13.1, 12.9, -999.0, 14.2])
@@ -124,11 +162,16 @@ print(readings)
 print(np.nanmean(readings))
 ```
 
+```output
+[12.5  nan 13.1 12.9  nan 14.2]
+13.175
+```
+
 Sensors and spreadsheets often use a special value like -999 to mean "missing". `np.nan` ("not a number") is the standard floating-point value for a missing or undefined number. Ordinary `mean` would return `nan` if any value is `nan`, so NumPy provides `nanmean`, `nanmax` and friends, which ignore the missing values.
 
 `np.where(condition, a, b)` builds a new array, taking elements from `a` where the condition is true and from `b` where it is false. It is the array version of the conditional expression `a if condition else b`:
 
-```python
+```python type
 import numpy as np
 
 scores = np.array([45, 72, 38, 90, 61])
@@ -136,11 +179,16 @@ print(np.where(scores >= 50, "pass", "fail"))
 print(np.where(scores > 60, scores, 0))
 ```
 
+```output
+['fail' 'pass' 'fail' 'pass' 'pass']
+[ 0 72  0 90 61]
+```
+
 ## Selecting with a list of positions
 
 Instead of a slice or a mask, you can index with a list or array of positions. This is called **fancy indexing**, and it picks those elements in that order, repeats included:
 
-```python
+```python type
 import numpy as np
 
 letters = np.array(["a", "b", "c", "d", "e"])
@@ -152,6 +200,12 @@ order = rng.permutation(5)
 print(order, letters[order])
 ```
 
+```output
+['a' 'c' 'e']
+['e' 'a' 'a']
+[4 0 1 2 3] ['e' 'a' 'b' 'c' 'd']
+```
+
 `rng.permutation(5)` is the numbers 0 to 4 in a random order. Indexing with it **shuffles** the array. This exact trick is how datasets are shuffled before being split into training and test parts: make one random order, and use it to index both the features and the labels, so each example stays matched with its label.
 
 Unlike slicing, **reading** with fancy indexing or a boolean mask always produces a **copy**, not a view. Assigning **through** one, as in `readings[readings == -999.0] = np.nan` above, writes into the original array.
@@ -160,7 +214,7 @@ Unlike slicing, **reading** with fancy indexing or a boolean mask always produce
 
 `reshape` arranges the same elements into a different shape, as long as the total number of elements stays the same. The elements are read and written row by row.
 
-```python
+```python type
 import numpy as np
 
 numbers = np.arange(12)
@@ -170,11 +224,27 @@ print(numbers.reshape(2, -1))
 print(numbers.reshape(3, 4).T)
 ```
 
+```output
+[[ 0  1  2  3]
+ [ 4  5  6  7]
+ [ 8  9 10 11]]
+[[ 0  1  2]
+ [ 3  4  5]
+ [ 6  7  8]
+ [ 9 10 11]]
+[[ 0  1  2  3  4  5]
+ [ 6  7  8  9 10 11]]
+[[ 0  4  8]
+ [ 1  5  9]
+ [ 2  6 10]
+ [ 3  7 11]]
+```
+
 `reshape(3, 4)` gives 3 rows of 4. A `-1` means "work this dimension out for me": 12 elements in 2 rows must mean 6 columns. `.T` gives the **transpose**, swapping rows and columns, so a 3 by 4 array becomes 4 by 3.
 
 Two shapes cause endless small confusions in machine learning: a 1D array of shape `(n,)`, and a 2D array with one column, shape `(n, 1)`. They hold the same numbers, but they are different arrays and behave differently, as the next section shows. Libraries such as scikit-learn often insist on the 2D form for their input. `reshape(-1, 1)` turns a 1D array into a single column, and `ravel()` flattens anything back to 1D:
 
-```python
+```python type
 import numpy as np
 
 v = np.array([1, 2, 3])
@@ -184,9 +254,17 @@ print(column)
 print(column.ravel())
 ```
 
+```output
+(3,) (3, 1)
+[[1]
+ [2]
+ [3]]
+[1 2 3]
+```
+
 To join arrays, `np.concatenate` puts them end to end along an existing axis, and `np.column_stack` puts 1D arrays side by side as the columns of a table:
 
-```python
+```python type
 import numpy as np
 
 heights = np.array([1.62, 1.75, 1.80])
@@ -196,13 +274,20 @@ print(table)
 print(np.concatenate([heights, np.array([1.55])]))
 ```
 
+```output
+[[ 1.62 58.  ]
+ [ 1.75 72.  ]
+ [ 1.8  80.  ]]
+[1.62 1.75 1.8  1.55]
+```
+
 ## Broadcasting
 
 What happens when you add arrays of different shapes? In the last lesson, `array * 2` multiplied every element by a single number. That was the simplest case of a general rule called **broadcasting**: NumPy stretches the smaller array, without actually copying it, so that the shapes match.
 
 The most common use: subtract each column's mean from every row, so that every feature is centred on zero.
 
-```python
+```python type
 import numpy as np
 
 X = np.array([[1.0, 200.0],
@@ -211,6 +296,13 @@ X = np.array([[1.0, 200.0],
 column_means = X.mean(axis=0)
 print(column_means, column_means.shape)
 print(X - column_means)
+```
+
+```output
+[  3. 400.] (2,)
+[[  -2. -200.]
+ [   0.    0.]
+ [   2.  200.]]
 ```
 
 `X` has shape `(3, 2)` and `column_means` has shape `(2,)`. NumPy lines the shapes up from the **right**, and treats the `(2,)` array as a row that is repeated for every one of the 3 rows. So each row has `[3, 400]` subtracted from it, and each column of the result is centred on zero.
@@ -223,7 +315,7 @@ The rule, comparing the shapes from the rightmost dimension leftwards:
 
 Now the difference between `(n,)` and `(n, 1)`. Predict the shape of each result.
 
-```python
+```python type
 import numpy as np
 
 row = np.array([10, 20, 30])
@@ -231,6 +323,14 @@ col = np.array([[1], [2], [3]])
 print((row + row).shape)
 print(row + col)
 print((row + col).shape)
+```
+
+```output
+(3,)
+[[11 21 31]
+ [12 22 32]
+ [13 23 33]]
+(3, 3)
 ```
 
 `row + row` is `(3,)`, as you would expect. But `row` is shape `(3,)` and `col` is `(3, 1)`: lining them up from the right gives `(1, 3)` against `(3, 1)`, and every 1 stretches, so the result is a full `(3, 3)` table in which every row value has been added to every column value. This is powerful when you want it, such as building a table of every combination. When you do not, it is a silent bug: you expected 3 numbers and got 9. Printing `.shape` whenever you are unsure is the cure.

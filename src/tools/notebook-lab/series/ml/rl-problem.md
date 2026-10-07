@@ -21,7 +21,7 @@ Many tasks have a natural end, such as winning or losing a game, or reaching a g
 
 Here is the environment for the next several lessons: a 4 × 4 grid. The agent starts in the top-left corner and wants to reach the goal in the bottom-right corner, which ends the episode with a reward of +10. Two squares are **pits**, which end the episode with −10. Every other move costs −1, so dawdling is penalised and shorter routes are better. The four actions move up, down, left or right; moving into a wall leaves the agent where it is.
 
-```python
+```python type
 import numpy as np
 
 class GridWorld:
@@ -65,6 +65,20 @@ for action in [3, 3, 1, 1, 1, 3]:
         break
 ```
 
+```output
+A . . .
+. X . .
+. . . X
+. . . G
+
+right -> state (0, 1), reward -1, finished False
+right -> state (0, 2), reward -1, finished False
+ down -> state (1, 2), reward -1, finished False
+ down -> state (2, 2), reward -1, finished False
+ down -> state (3, 2), reward -1, finished False
+right -> state (3, 3), reward +10, finished True
+```
+
 `step` returns the three things an RL agent receives: the new state, the reward, and whether the episode has ended. `min(max(..., 0), size - 1)` keeps the position inside the grid, so walking into a wall does nothing (but still costs −1). The `slip` setting will make the world **random** later: with probability `slip`, the agent's chosen action is replaced by a random one, like a robot on an icy floor. In the grid printout, A is the agent, X a pit and G the goal.
 
 This route, right, right, down, down, down, right, takes 6 steps: five ordinary moves (−1 each) and the final step into the goal (+10), a total of +5. It is one of the shortest safe routes.
@@ -75,7 +89,7 @@ An agent's behaviour is a **policy**: a rule saying which action to take in each
 
 Compare two policies by running many episodes with each and averaging the total reward: one that picks actions completely at random, and a hand-written one that follows the route above: right until column 2, then down to the bottom row, then right. Before running, predict: what will the random policy's average total reward be, positive or negative?
 
-```python
+```python type
 import numpy as np
 
 class GridWorld:
@@ -126,6 +140,13 @@ for slip in [0.0, 0.2]:
         print(f"slip {slip}: {name:<16} average total reward {np.mean(totals):6.2f}")
 ```
 
+```output
+slip 0.0: random           average total reward -18.61
+slip 0.0: planned route    average total reward   5.00
+slip 0.2: random           average total reward -18.20
+slip 0.2: planned route    average total reward  -0.83
+```
+
 A policy here is a function from a state (and a random generator, for policies that need one) to an action. The planned route goes right while the column is below 2, then down while the row is below 3, then right. `max_steps` stops an episode that wanders forever.
 
 The random policy does badly: it stumbles into pits and wanders, averaging about −18.6. The planned route earns +5 every time in the deterministic world, the best possible here. With 20% slipping, the same route, which passes right beside both pits, sometimes slides into one, and its average drops to about −1: a plan that ignores the risk is no longer good. A better policy for the slippery world keeps away from the pits even at the cost of a longer route. Finding such policies automatically is what the coming lessons do.
@@ -140,13 +161,20 @@ G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots
 
 With γ = 0.9, a reward of 10 three steps away is worth 10 × 0.9² = 8.1 now (the first reward counts in full). With γ close to 1, the agent is far-sighted; with γ = 0, it only cares about the immediate reward. Discounting also keeps the return finite when an episode could go on forever. The return satisfies a simple recursion, Gₜ = rₜ₊₁ + γ Gₜ₊₁, which every method in the following lessons relies on.
 
-```python
+```python type
 import numpy as np
 
 rewards = [-1, -1, -1, -1, -1, 10]
 for gamma in [1.0, 0.9, 0.5, 0.0]:
     G = sum(gamma ** k * r for k, r in enumerate(rewards))
     print(f"gamma {gamma}: return from the start of the 6-step route = {G:.2f}")
+```
+
+```output
+gamma 1.0: return from the start of the 6-step route = 5.00
+gamma 0.9: return from the start of the 6-step route = 1.81
+gamma 0.5: return from the start of the 6-step route = -1.62
+gamma 0.0: return from the start of the 6-step route = -1.00
 ```
 
 For the 6-step route with five −1s then +10, the undiscounted return is +5. With γ = 0.9 it is about 1.8: the +10 at the end is shrunk to 5.9 by five steps of discounting. With γ = 0.5 the distant goal hardly matters, and the return is negative; with γ = 0, only the first −1 counts. The discount factor is part of the problem's definition: it decides what the agent should care about.

@@ -22,7 +22,7 @@ In code: `sse(c0, c1)`; the grid `Z` of SSE values is drawn with `ax.contour(C0,
 
 Fitting a line y ≈ c₀ + c₁x means choosing two numbers to minimise the sum of squared errors, SSE(c₀, c₁). For every pair (c₀, c₁) there is one SSE value, so SSE is a **function of two variables**, a surface over the (c₀, c₁) plane. A **contour plot** draws it like a map: each curve joins points of equal SSE, and the minimum sits in the middle of the innermost ring. Predict before running: for the load-cell calibration, what shape are the contours?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,6 +46,10 @@ ax.set_ylabel("slope c1")
 plt.show()
 ```
 
+```output
+least-squares answer: c0 = 0.4117, c1 = 0.16483, SSE = 0.000058
+```
+
 `np.meshgrid` builds every (c₀, c₁) pair on a 200 × 200 grid; the broadcast sum evaluates SSE at all of them at once. `np.geomspace` spaces the contour levels evenly on a log scale, so both the deep valley and the high slopes show.
 
 The contours are long, thin ellipses, tilted, with the least-squares answer (c₀ ≈ 0.412, c₁ ≈ 0.1648) at their centre. The landscape is a long narrow valley: changing the slope a little changes SSE enormously (every x up to 35 multiplies it), while the intercept can drift much further for the same cost. That shape will matter shortly.
@@ -66,7 +70,7 @@ On a surface f(x₁, x₂, ...), the **partial derivative** ∂f/∂xᵢ is the 
 
 which points in the direction of steepest **increase**, with a length equal to that steepest slope. So −∇f points straight downhill, and at a minimum ∇f = 0. For SSE, the chain rule gives ∂SSE/∂c₀ = −2Σrᵢ and ∂SSE/∂c₁ = −2Σxᵢrᵢ, where rᵢ = yᵢ − c₀ − c₁xᵢ are the residuals. Predict before running: do the formula and central differences agree, and what is the gradient at the least-squares answer?
 
-```python
+```python type
 def grad_sse(c):
     r = y - c[0] - c[1] * x
     return np.array([-2 * r.sum(), -2 * (x * r).sum()])
@@ -85,6 +89,12 @@ print("numerical:", numeric_grad(lambda c: sse(*c), point))
 print("at the least-squares answer:", np.round(grad_sse(best), 10))
 ```
 
+```output
+formula:   [  -3.14 -149.1 ]
+numerical: [  -3.14 -149.1 ]
+at the least-squares answer: [0. 0.]
+```
+
 The numerical gradient nudges one variable at a time, exactly as the definition of a partial derivative says.
 
 The two agree to many digits: at (1.0, 0.12) the gradient is about (−3.1, −149), far steeper in the slope direction, matching the thin contours. At the least-squares answer the gradient is zero to rounding, as it must be at a minimum. Setting the gradient to zero by algebra gives the normal equations of the line-fitting lesson; gradient descent reaches the same point without solving anything.
@@ -101,7 +111,7 @@ In code: `descend(grad, start, lr, steps)` repeats `c = c - lr * grad(c)`
 
 The algorithm: start somewhere, then repeat x ← x − η ∇f(x). The **learning rate** (step size) η decides everything. Too small, and progress is glacial. Too large, and each step overshoots the valley floor and lands higher up the opposite wall, so the iteration **diverges**. Between the two the method converges, but on a narrow valley the safe step is set by the steep direction, which makes progress along the gentle direction painfully slow. Predict before running: which of four learning rates reaches the answer within 2,000 steps?
 
-```python
+```python type
 def descend(grad, start, lr, steps):
     c = np.array(start, dtype=float)
     path = [c.copy()]
@@ -115,6 +125,13 @@ def descend(grad, start, lr, steps):
 for lr in [1e-5, 1e-4, 2.5e-4, 3e-4]:
     c, path = descend(grad_sse, [1.0, 0.12], lr, 2000)
     print(f"lr = {lr:.1e}: after {len(path) - 1} steps c = {np.round(c, 4)}, SSE {sse(*c):.4g}")
+```
+
+```output
+lr = 1.0e-05: after 2000 steps c = [0.947  0.1434], SSE 0.6879
+lr = 1.0e-04: after 2000 steps c = [0.6376 0.1558], SSE 0.1225
+lr = 2.5e-04: after 2000 steps c = [0.4652 0.1627], SSE 0.006948
+lr = 3.0e-04: after 180 steps c = [  -41588.1241 -1039012.8025], SSE 3.791e+15
 ```
 
 The loop stops early if the values blow up, which is what divergence looks like in practice.
@@ -133,7 +150,7 @@ In code: `z = (x - x.mean()) / x.std()`, then `descend(grad_z, [0.0, 0.0], 0.05,
 
 The valley is narrow because x runs from 0 to 35: the slope coefficient multiplies large numbers, the intercept multiplies 1. **Standardising** the input, z = (x − x̄)/s_x, puts both on the same scale and centres x, which also makes the two coefficients independent (the valley's tilt disappears). The contours become nearly circular, one learning rate suits every direction, and descent heads straight for the bottom. The fitted line is the same; only its parameterisation changes, and the original coefficients are recovered afterwards. Predict before running: how many steps does descent need after standardising?
 
-```python
+```python type
 z = (x - x.mean()) / x.std()
 
 def grad_z(c):
@@ -146,6 +163,11 @@ c1 = c[1] / x.std()
 c0 = c[0] - c1 * x.mean()
 print(f"standardised: gradient below 1e-8 after {steps_needed} steps")
 print(f"back in the original units: c0 = {c0:.4f}, c1 = {c1:.5f}  (least squares {best[0]:.4f}, {best[1]:.5f})")
+```
+
+```output
+standardised: gradient below 1e-8 after 14 steps
+back in the original units: c0 = 0.4117, c1 = 0.16483  (least squares 0.4117, 0.16483)
 ```
 
 Undoing the standardisation: y ≈ a + b z with z = (x − x̄)/s_x means y ≈ (a − b x̄/s_x) + (b/s_x) x.
@@ -164,7 +186,7 @@ In code: `v = beta * v - lr * grad(c)` then `c = c + v`, in `descend_momentum`
 
 When rescaling is not possible, **momentum** helps. Instead of stepping along the current gradient alone, keep a running velocity that accumulates past gradients: v ← βv − η∇f, then x ← x + v, with β around 0.9 to 0.95. In a narrow valley the gradient keeps pointing the same way along the gentle direction, so v builds up speed there, like a ball rolling down a gutter; and when the step is large enough to make plain descent zigzag across the valley, the alternating cross-valley components cancel out in v. It costs nothing extra per step. Predict before running: on the original, unscaled problem, how much does momentum help?
 
-```python
+```python type
 def descend_momentum(grad, start, lr, beta, steps, tol=1e-6):
     c = np.array(start, dtype=float)
     v = np.zeros_like(c)
@@ -186,6 +208,10 @@ def descend_plain(grad, start, lr, steps, tol=1e-6):
 _, plain_steps = descend_plain(grad_sse, [1.0, 0.12], 1e-4, 200_000)
 _, mom_steps = descend_momentum(grad_sse, [1.0, 0.12], 1e-4, 0.95, 200_000)
 print(f"steps to get within 1e-6 of the answer: plain {plain_steps}, momentum {mom_steps}")
+```
+
+```output
+steps to get within 1e-6 of the answer: plain 27718, momentum 1073
 ```
 
 Both runs use the same learning rate; momentum adds a single parameter β.

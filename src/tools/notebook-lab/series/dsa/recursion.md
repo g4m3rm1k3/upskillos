@@ -19,7 +19,7 @@ The factorial of n, written n!, is 1 × 2 × … × n, so 5! = 120. It can also 
 
 To see what happens, this version prints each call indented by its depth. Predict before running: in what order will the "returns" lines appear?
 
-```python
+```python type
 def factorial(n, depth=0):
     indent = "    " * depth
     print(f"{indent}factorial({n}) called")
@@ -33,6 +33,20 @@ def factorial(n, depth=0):
 factorial(4)
 ```
 
+```output
+factorial(4) called
+    factorial(3) called
+        factorial(2) called
+            factorial(1) called
+                factorial(0) called
+                factorial(0) returns 1
+            factorial(1) returns 1
+        factorial(2) returns 2
+    factorial(3) returns 6
+factorial(4) returns 24
+24
+```
+
 `depth` is an extra argument used only for the indentation; each call passes `depth + 1` to the next.
 
 The calls go **down** to the base case, factorial(0), and only then do the returns come back **up**, innermost first: 1, 1, 2, 6, 24. While factorial(0) runs, the four calls above it are all paused, each waiting for its inner call to return so it can do its multiplication. Each paused call is a **frame** on the call stack (from the stacks lesson), holding its own n. That is how four different values of n can exist at once without interfering.
@@ -43,7 +57,7 @@ Tracing every call is useful once, to see the mechanism. To **write** recursive 
 
 For example, to sum a list: the sum of an empty list is 0 (base case), and the sum of any other list is its first item plus the sum of the rest (trusting the recursive call to get the rest right). To reverse a string: an empty string reverses to itself; otherwise, reverse everything after the first character, then put the first character at the end. Predict before running: what will `power(2, 10)` print, and how many calls does it make?
 
-```python
+```python type
 def total(items):
     if not items:
         return 0
@@ -69,6 +83,12 @@ calls = 0
 print(power(3, 1000) % 1000, "(last three digits of 3^1000) using", calls, "calls")
 ```
 
+```output
+14 desserts
+1024 using 5 calls
+1 (last three digits of 3^1000) using 11 calls
+```
+
 `total` and `reverse` slice their inputs, which copies (O(n) each time), so they are O(n²); they are here to show the thinking, and the costs lesson's warning about slicing still applies.
 
 `power` is the interesting one. It does not reduce n by one each time: it uses x^n = (x^(n/2))², with an extra factor of x when n is odd. Halving n each call means only about log₂ n calls: 5 calls for n = 10 and 11 for n = 1,000, against 1,000 multiplications done one at a time. This is **fast exponentiation**, and the "solve half, then combine" shape returns in binary search, merge sort and divide and conquer.
@@ -77,7 +97,7 @@ print(power(3, 1000) % 1000, "(last three digits of 3^1000) using", calls, "call
 
 Recursion fits naturally when the **data** is recursive: a folder contains folders, a comment thread contains replies with their own replies, a JSON document contains lists of objects containing lists. The shape of the code follows the shape of the data. Here a folder tree is nested dictionaries (a folder is a dictionary; a file is a number of bytes). Predict before running: what is the total size, and how deep is the deepest file?
 
-```python
+```python type
 tree = {
     "readme.txt": 120,
     "src": {"main.py": 2_000, "utils": {"text.py": 800, "maths.py": 650}},
@@ -110,6 +130,21 @@ show(tree)
 print("total size:", f"{folder_size(tree):,}", "bytes; deepest file at level", deepest(tree))
 ```
 
+```output
+readme.txt (120 bytes)
+src/
+    main.py (2,000 bytes)
+    utils/
+        text.py (800 bytes)
+        maths.py (650 bytes)
+data/
+    raw/
+        big.csv (50,000 bytes)
+    clean.csv (12,000 bytes)
+empty/
+total size: 65,570 bytes; deepest file at level 3
+```
+
 `max(depths, default=0)` gives 0 for an empty folder, which has no files at any depth.
 
 The total is 65,570 bytes, and the deepest files sit three levels down (in src/utils and data/raw). None of these functions knows how deep the tree is; each handles one level and trusts the recursive call with the rest. A loop-based version would need an explicit stack, as the stacks lesson showed.
@@ -118,7 +153,7 @@ The total is 65,570 bytes, and the deepest files sit three levels down (in src/u
 
 When a function calls itself **more than once**, the calls form a tree, and the function can explore many possibilities. To list every ordering (**permutation**) of some items: for each choice of first item, list every ordering of the remaining items and put the choice in front. Predict before running: how many orderings do 4 items have, and how many for 10?
 
-```python
+```python type
 def permutations(items):
     if len(items) <= 1:
         return [list(items)]
@@ -137,6 +172,12 @@ import math
 print("10 items:", f"{math.factorial(10):,}", "orderings; 20 items:", f"{math.factorial(20):,}")
 ```
 
+```output
+6 ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']
+4 items: 24 orderings
+10 items: 3,628,800 orderings; 20 items: 2,432,902,008,176,640,000
+```
+
 `items[:i] + items[i + 1:]` is the list without item i.
 
 Three items give 3! = 6 orderings and four give 24. The counts grow as n!, faster even than 2ⁿ: 10 items have 3,628,800 orderings, and 20 have about 2.4 × 10¹⁸, beyond any computer. Branching recursion is the tool for searching through possibilities, and the backtracking lesson shows how to **prune** branches that cannot succeed so the search stays feasible.
@@ -149,7 +190,7 @@ Three things go wrong with recursion, and each has a clear symptom:
 2. **Too deep for Python, even when correct.** A correct recursion on a list of 10,000 items, one call per item, also hits the limit. Python does not optimise "tail calls" the way some languages do, so in Python, recursion that goes one level per item is for small inputs; use a loop or an explicit stack for long ones. Recursion that halves the problem (depth log n) is always fine.
 3. **Repeated work.** Branching recursion can solve the same subproblem many times, as the plain stair-climbing function did in the previous lesson (about 250,000 calls for n = 25). A memo table fixes it.
 
-```python
+```python type
 import sys
 
 def countdown(n):
@@ -163,6 +204,12 @@ for bad in [-1, 5_000]:
         countdown(bad)
     except RecursionError:
         print(f"countdown({bad}): RecursionError after about {sys.getrecursionlimit()} levels")
+```
+
+```output
+liftoff
+countdown(-1): RecursionError after about 1000 levels
+countdown(5000): RecursionError after about 1000 levels
 ```
 
 countdown(−1) never reaches 0; countdown(5,000) would, but needs 5,001 nested calls. `sys.setrecursionlimit` can raise the limit, but each frame uses real memory and a very deep recursion can crash the interpreter outright, so rewriting as a loop is the better fix.

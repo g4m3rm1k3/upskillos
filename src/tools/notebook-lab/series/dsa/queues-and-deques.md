@@ -17,7 +17,7 @@ A list's `append` is a fine way to join the back, but leaving from the front wit
 
 Picture the array's slots arranged in a ring. Keep an index `_front` pointing at the first item and a count `_size`. Dequeuing reads the slot at `_front` and moves `_front` one step on; nothing shifts. Enqueuing writes at position `(_front + _size) % capacity`: the `%` (remainder) makes positions wrap round from the last slot to slot 0, reusing the space freed at the start. When the ring is full, it grows like a dynamic array: copy the items, in queue order, into a block twice the size. Predict before running: after the operations below, which slot will hold "f"?
 
-```python
+```python type
 class ArrayQueue:
     def __init__(self, capacity=4):
         self._block = [None] * capacity
@@ -62,6 +62,13 @@ print("after growing:", q._block, " front index:", q._front)
 print("in order:", [q.dequeue() for _ in range(len(q))])
 ```
 
+```output
+dequeued: a b
+block: ['e', 'f', 'c', 'd']  front index: 2  size: 4
+after growing: ['c', 'd', 'e', 'f', 'g', None, None, None]  front index: 0
+in order: ['c', 'd', 'e', 'f', 'g']
+```
+
 `_grow` copies the items starting from `_front` and wrapping round, so in the new block they sit in queue order from slot 0.
 
 After two dequeues, slots 0 and 1 are free and the front is at slot 2. "e" and "f" wrap round into slots 0 and 1, so the block reads e, f, c, d while the queue order is c, d, e, f. Adding "g" fills the ring, so it grows to 8 slots and unwraps. Every operation is O(1), amortised for the occasional growth. This is how the ring buffers inside operating systems and network cards work, and many queue libraries; hardware versions usually have a fixed size and either refuse or overwrite when full. `collections.deque` takes a different route to the same O(1) ends: it links fixed-size blocks of items together.
@@ -70,7 +77,7 @@ After two dequeues, slots 0 and 1 are free and the front is at slot 2. "e" and "
 
 In real code, use `collections.deque`. It supports `append` and `pop` at the right end, `appendleft` and `popleft` at the left, all O(1), plus `len`, iteration and `in`. As a queue, use `append` to join and `popleft` to leave. Predict before running: how will the time to process 50,000 items compare between `list.pop(0)` and `deque.popleft()`?
 
-```python
+```python type
 from collections import deque
 import timeit
 
@@ -96,7 +103,7 @@ The deque's time grows in proportion to n (O(1) per item), while the list's grow
 
 Two features make deques especially handy. With `maxlen`, a deque keeps only the most recent items: appending to a full deque silently drops an item from the other end. That is exactly a "last N events" buffer. And `rotate(k)` moves the last k items to the front (or, with negative k, the first items to the back), which models taking turns. Predict before running: what will `recent` hold after the loop, and what does rotating by −2 do?
 
-```python
+```python type
 from collections import deque
 
 recent = deque(maxlen=3)
@@ -111,13 +118,19 @@ players.rotate(1)
 print("after rotate(1): ", list(players))
 ```
 
+```output
+last three events: ['click', 'click', 'logout']
+after rotate(-2): ['Cat', 'Dan', 'Ann', 'Ben']
+after rotate(1):  ['Ben', 'Cat', 'Dan', 'Ann']
+```
+
 `rotate(-2)` takes two players from the front and puts them at the back: Cat, Dan, Ann, Ben. `rotate(1)` moves the last one to the front: Ben, Cat, Dan, Ann. Rotation costs O(k), not O(n).
 
 ## A queue simulation
 
 Queues are also a way of **modelling** systems: customers at a counter, requests at a server. A small simulation can answer questions that are hard to work out on paper, such as how long people wait when the server is nearly as busy as it can be. Here customers arrive at random (on average one every `mean_gap` minutes), one server takes 4 minutes per customer, and the queue holds each customer's arrival time. Predict before running: if customers arrive on average every 5 minutes, so the server is busy 80% of the time, will the average wait be about a minute, or much more?
 
-```python
+```python type
 import random
 from collections import deque
 
@@ -141,6 +154,13 @@ def average_wait(mean_gap, service_time=4.0, customers=20_000, seed=0):
 
 for gap in [10, 6, 5, 4.5]:
     print(f"a customer every {gap:>4} minutes on average (server busy {4 / gap:.0%}): average wait {average_wait(gap):6.1f} minutes")
+```
+
+```output
+a customer every   10 minutes on average (server busy 40%): average wait    1.3 minutes
+a customer every    6 minutes on average (server busy 67%): average wait    3.8 minutes
+a customer every    5 minutes on average (server busy 80%): average wait    7.6 minutes
+a customer every  4.5 minutes on average (server busy 89%): average wait   16.0 minutes
 ```
 
 `rng.expovariate(1 / mean_gap)` draws a random gap from the exponential distribution, the standard model for independent arrivals. The loop handles whichever event comes first: the next arrival joining the back, or the server taking the customer at the front.

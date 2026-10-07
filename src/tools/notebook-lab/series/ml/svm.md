@@ -32,7 +32,7 @@ It is 0 for points safely outside the corridor on the correct side (`y · f ≥ 
 
 The first term wants a wide margin (a short `w`); the second wants few and small violations. λ sets the balance, exactly as in ridge regression: the penalty term **is** a ridge penalty. Compare the hinge with the losses you have met, all as functions of `y · f`:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -54,7 +54,7 @@ The 0/1 loss, which is what accuracy measures, has no useful slope. The perceptr
 
 The hinge loss has a corner at `y · f = 1`, but gradient descent still works if you use the slope from either side there (this is called a **subgradient**). For points with `y · f < 1`, the hinge term's slope with respect to `w` is `−y · x` and with respect to `b` is `−y`; for the other points it is 0. Adding the penalty's gradient `λ w`:
 
-```python
+```python type
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -90,6 +90,11 @@ for ax, lam in zip(axes, [0.01, 1.0]):
 plt.show()
 ```
 
+```output
+lambda 0.01: w = [0.577 1.431], b = -0.028, margin width 1.30, points on or inside the margin: 2, training accuracy 1.00
+lambda 1.0: w = [0.362 0.372], b = -0.348, margin width 3.86, points on or inside the margin: 18, training accuracy 0.98
+```
+
 `y[violating, None] * X[violating]` multiplies each violating row by its label (the `None` makes the labels a column, so they broadcast across the row), and the sum adds up their gradients. The plots show the line (solid), the edges of the margin where the score is ±1 (dashed), and circles around the points on or inside the margin.
 
 With a small penalty (λ = 0.01), the SVM insists on a clean separation: the margin is 1.30 wide and exactly 2 points lie on its edges, with none inside. With a large penalty (λ = 1), a short `w` matters more than violations, so the margin widens to 3.86 and 18 points are allowed inside it; one is even misclassified. Which is better depends on how noisy the data is, so λ is chosen by cross-validation.
@@ -106,7 +111,7 @@ scikit-learn's `SVC` (support vector classifier) uses a parameter `C` instead of
 
 Some classes cannot be separated by any line. Points inside a ring and points around it, for example: in two dimensions every line fails. But add a third feature, the squared distance from the centre, `x₁² + x₂²`, and the inner points are low and the outer points high, so a flat plane separates them perfectly:
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_circles
 from sklearn.model_selection import cross_val_score
@@ -117,6 +122,12 @@ lifted = np.column_stack([X, (X ** 2).sum(axis=1)])
 print("linear SVM on the original 2 features:", cross_val_score(SVC(kernel="linear"), X, y, cv=5).mean().round(3))
 print("linear SVM with x1² + x2² added:       ", cross_val_score(SVC(kernel="linear"), lifted, y, cv=5).mean().round(3))
 print("RBF-kernel SVM on the original features:", cross_val_score(SVC(kernel="rbf"), X, y, cv=5).mean().round(3))
+```
+
+```output
+linear SVM on the original 2 features: 0.55
+linear SVM with x1² + x2² added:        0.995
+RBF-kernel SVM on the original features: 1.0
 ```
 
 The linear SVM manages 0.55 (no better than guessing) on the original features and 0.995 with the extra feature. Adding features by hand is the "lifting" idea from the lesson on what a perceptron cannot learn, where an extra product feature made XOR separable. The problem is that useful lifts can need enormous numbers of features: all the products of pairs, triples and so on.
@@ -139,7 +150,7 @@ It is 1 when the points coincide and fades towards 0 as they move apart, so it m
 
 γ controls how far each support vector's influence reaches. Small γ: wide, smooth influence and a gentle boundary. Large γ: each support vector only affects its immediate neighbourhood, so the boundary can wrap around individual points. Predict before running: which gamma will score best on the test set, and what happens to training accuracy as gamma grows?
 
-```python
+```python type
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
@@ -150,6 +161,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 for gamma in [0.1, 1, 10, 100]:
     model = SVC(kernel="rbf", gamma=gamma, C=1).fit(X_train, y_train)
     print(f"gamma {gamma:>5}: train {model.score(X_train, y_train):.3f}, test {model.score(X_test, y_test):.3f}, support vectors {len(model.support_)}")
+```
+
+```output
+gamma   0.1: train 0.800, test 0.880, support vectors 84
+gamma     1: train 0.927, test 0.953, support vectors 60
+gamma    10: train 0.947, test 0.933, support vectors 85
+gamma   100: train 0.993, test 0.747, support vectors 144
 ```
 
 γ = 0.1 underfits (test 0.88): the boundary is nearly straight. γ = 1 does best (0.953). γ = 100 overfits badly: training accuracy 0.993 and test 0.747, using 144 of the 150 training points as support vectors, effectively memorising them. As always, choose γ and `C` together by cross-validation, usually over a grid of values spaced by factors of 10.

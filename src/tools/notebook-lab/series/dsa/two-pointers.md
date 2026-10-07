@@ -14,7 +14,7 @@ The skill is not memorising problems but seeing **why** moving one pointer is sa
 
 Is there a pair in a sorted list adding up to a target? Checking every pair is O(n²). Instead, put one pointer at each end. If the two values sum to more than the target, the right value is too big to pair with **anything** remaining (its smallest possible partner, the left value, already overshoots), so move the right pointer in. If the sum is too small, the left value is too small to pair with anything remaining (its largest possible partner already falls short), so move the left pointer in. Each step discards one value for good, so the scan takes at most n − 1 steps. Predict before running: how many steps to search 1,000,000 numbers?
 
-```python
+```python type
 def pair_with_sum(values, target):
     left, right = 0, len(values) - 1
     steps = 0
@@ -38,6 +38,13 @@ print(pair_with_sum(big, 1_999_996))
 print(pair_with_sum(big, 7))
 ```
 
+```output
+((8, 40), 2)
+(None, 7)
+((0, 1999996), 2)
+(None, 999999)
+```
+
 The list `big` holds the even numbers below two million, so an odd target can never be reached.
 
 8 + 40 = 48 is found in two steps, and 100 is correctly reported impossible. On a million values, the worst case is the full sweep: just under a million steps, where checking every pair would need about 500 billion. The method needs the list to be **sorted**; for an unsorted list, sorting first (O(n log n)) or the dictionary method from the Big-O lesson (O(n), with extra memory) are the options.
@@ -50,7 +57,7 @@ It is worth stating the argument as an invariant, because it is the template for
 
 The same idea counts pairs, not just finds one. How many pairs have a sum **at most** some limit, say the number of pairs of items that fit together under a weight limit? If `values[left] + values[right]` fits, then `values[left]` fits with **every** value from `left + 1` to `right`, since those are all no bigger than `values[right]`: that is `right - left` pairs counted at once, and left moves on. Otherwise right moves in. Predict before running: how many pairs of these 1,000 random weights fit under the limit, and does the brute-force count agree?
 
-```python
+```python type
 import random
 
 def pairs_at_most(values, limit):
@@ -71,6 +78,10 @@ slow = sum(1 for i in range(len(weights)) for j in range(i + 1, len(weights)) if
 print(f"two pointers: {fast:,}  brute force: {slow:,}")
 ```
 
+```output
+two pointers: 167,693  brute force: 167,693
+```
+
 The brute-force count checks all 499,500 pairs; the two-pointer count takes at most 999 steps after sorting.
 
 Both give the same count. Counting a whole block of pairs in one step is what makes this fast: the answer can be close to n² pairs, but the work is O(n log n) for the sort plus O(n) for the scan.
@@ -79,7 +90,7 @@ Both give the same count. Counting a whole block of pairs in one step is what ma
 
 Two pointers can also move in the **same** direction. To filter a list in place (remove items, compact it, de-duplicate it), a **read** pointer looks at every item, and a **write** pointer marks where the next kept item goes. The invariant: everything before `write` is the kept items seen so far, in order. The invariants lesson used this to move zeros to the end. Here it removes duplicates from a sorted list in place. Predict before running: what will the first `length` items be?
 
-```python
+```python type
 def dedupe_sorted(values):
     if not values:
         return 0
@@ -95,6 +106,10 @@ length = dedupe_sorted(data)
 print(length, data[:length], "(the rest is leftover:", data[length:], ")")
 ```
 
+```output
+6 [1, 2, 3, 4, 7, 9] (the rest is leftover: [4, 7, 7, 9] )
+```
+
 Each new value is compared with the last value **kept**, `values[write - 1]`, not with its neighbour in the original list.
 
 The first six items are 1, 2, 3, 4, 7, 9. Nothing is shifted, so it is O(n), against O(n²) for repeatedly calling `remove` or `pop(i)`. The leftover tail can be cut off with `del data[length:]`.
@@ -103,7 +118,7 @@ The first six items are 1, 2, 3, 4, 7, 9. Nothing is shifted, so it is O(n), aga
 
 Pointers moving at **different speeds** answer questions about a sequence's shape. The linked lists lesson used a slow pointer (one step) and a fast pointer (two steps) to detect a cycle. The same pair finds the **middle** of a linked sequence in one pass: when the fast pointer reaches the end, the slow one is halfway. It also detects cycles in sequences defined by a function, x → f(x), without storing the values seen, which is how Floyd's algorithm finds loops in random number generators. Here it finds the cycle in "repeatedly replace a number by the sum of the squares of its digits". Predict before running: starting from 4, does the sequence reach 1, or loop forever?
 
-```python
+```python type
 def digit_square_sum(n):
     return sum(int(d) ** 2 for d in str(n))
 
@@ -120,6 +135,11 @@ for _ in range(9):
     sequence.append(x)
 print("from 4:", sequence)
 print("numbers below 50 that reach 1:", [n for n in range(1, 50) if reaches_one(n)])
+```
+
+```output
+from 4: [4, 16, 37, 58, 89, 145, 42, 20, 4, 16]
+numbers below 50 that reach 1: [1, 7, 10, 13, 19, 23, 28, 31, 32, 44, 49]
 ```
 
 `str(n)` turns the number into its digits, which are squared and added. The slow pointer applies the function once per step, the fast one twice.

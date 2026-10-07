@@ -26,7 +26,7 @@ A planar arm has an upper link of length l₁ from the shoulder at the origin, a
 
 This is a function from two inputs to two outputs, a **vector-valued** function. The set of all reachable positions is the arm's **workspace**: a ring between radii |l₁ − l₂| and l₁ + l₂. Predict before running: with l₁ = 0.4 m and l₂ = 0.3 m, where is the gripper at θ₁ = 30°, θ₂ = 60°?
 
-```python
+```python type
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,6 +52,10 @@ ax.set_title("workspace and one pose")
 plt.show()
 ```
 
+```output
+elbow at (0.3464, 0.2000) m, gripper at (0.3464, 0.5000) m, reach 0.6083 m
+```
+
 Evaluating `forward` on a grid of both angles fills in the workspace: every reachable point appears as a grey dot.
 
 The gripper is at (0.3464, 0.5000) m, 0.6083 m from the shoulder. With the elbow bent at 60°, the reach is less than the full 0.7 m. The grey ring shows the workspace: nothing closer than 0.1 m or farther than 0.7 m can be reached.
@@ -72,7 +76,7 @@ For a function from n inputs to m outputs, the **Jacobian** J is the m × n matr
 
 Each column is a velocity: the second column, for example, is how the tip moves per radian of elbow rotation. Numerically, nudge one input at a time and take central differences of the whole output vector: that gives one column per input. Predict before running: does the numerical Jacobian match the formula, and which joint moves the tip more per degree in this pose?
 
-```python
+```python type
 def jacobian(t1, t2, l1=L1, l2=L2):
     s1, c1 = math.sin(t1), math.cos(t1)
     s12, c12 = math.sin(t1 + t2), math.cos(t1 + t2)
@@ -95,6 +99,16 @@ per_degree = np.linalg.norm(J, axis=0) * math.pi / 180
 print(f"tip movement per degree: shoulder {per_degree[0] * 1000:.2f} mm, elbow {per_degree[1] * 1000:.2f} mm")
 ```
 
+```output
+analytic J:
+ [[-0.5     -0.3    ]
+ [ 0.34641  0.     ]]
+numerical J:
+ [[-0.5     -0.3    ]
+ [ 0.34641  0.     ]]
+tip movement per degree: shoulder 10.62 mm, elbow 5.24 mm
+```
+
 `np.linalg.norm(J, axis=0)` takes the length of each column: the speed of the tip per radian of that joint.
 
 The two Jacobians agree. One degree at the shoulder moves the tip 10.6 mm, while one degree at the elbow moves it 5.2 mm: the shoulder swings the whole arm, a lever 0.61 m long, while the elbow swings only the 0.3 m forearm. That is why shoulder joints of real robots need the most precise encoders.
@@ -115,7 +129,7 @@ Near a pose, the Jacobian is the best linear approximation of the map: a small c
 
 the multi-output version of the tangent line. It turns joint errors into tip errors. If each joint's encoder has an independent error with standard deviation σ, the tip error in x has variance σ²(J₁₁² + J₁₂²), and similarly for y, the uncertainty propagation of the previous lesson applied row by row. Predict before running: with 0.05° encoders, how big is the tip error, and does the linear prediction match a simulation?
 
-```python
+```python type
 sigma = math.radians(0.05)
 pred_sd = sigma * np.sqrt((J ** 2).sum(axis=1))
 rng = np.random.default_rng(34)
@@ -125,6 +139,12 @@ print(f"predicted tip sd: x {pred_sd[0] * 1000:.3f} mm, y {pred_sd[1] * 1000:.3f
 print(f"simulated tip sd: x {tips[:, 0].std() * 1000:.3f} mm, y {tips[:, 1].std() * 1000:.3f} mm")
 small = np.radians([0.1, -0.2])
 print("J Δθ:", (J @ small * 1000).round(4), "mm   true change:", ((forward(t1 + small[0], t2 + small[1]) - tip) * 1000).round(4), "mm")
+```
+
+```output
+predicted tip sd: x 0.509 mm, y 0.302 mm
+simulated tip sd: x 0.509 mm, y 0.302 mm
+J Δθ: [0.1745 0.6046] mm   true change: [0.174  0.6038] mm
 ```
 
 `(J ** 2).sum(axis=1)` adds the squared entries of each row: the sum over the inputs that contribute to that output.
@@ -143,7 +163,7 @@ In code: `np.linalg.solve(Jp, outward)` for elbow angles approaching 0
 
 The determinant of J measures how a small square of joint changes maps to an area of tip movement, the area-scale factor of the transformations lesson. Here det J = l₁l₂ sin θ₂. When the elbow is straight (θ₂ = 0) or folded back (θ₂ = 180°), det J = 0 and J is **singular**: its columns are parallel, so both joints move the tip in the same direction, and no combination of joint speeds can move it along the arm. At the edge of the workspace, the arm cannot move outwards, which makes sense: it is already fully stretched. Near such poses, moving the tip slowly in the weak direction would need huge joint speeds. Predict before running: as the elbow straightens, what happens to the joint speeds needed to move the tip outward at 10 mm/s?
 
-```python
+```python type
 for deg in [90, 30, 10, 2, 0.5]:
     th2 = math.radians(deg)
     Jp = jacobian(t1, th2)
@@ -151,6 +171,14 @@ for deg in [90, 30, 10, 2, 0.5]:
     outward = tip_p / np.linalg.norm(tip_p) * 0.010
     speeds = np.linalg.solve(Jp, outward)
     print(f"elbow {deg:>4}°: det J = {np.linalg.det(Jp):.5f}, joint speeds {np.degrees(np.abs(speeds)).round(2)} °/s")
+```
+
+```output
+elbow   90°: det J = 0.12000, joint speeds [0.86 2.39] °/s
+elbow   30°: det J = 0.06000, joint speeds [2.74 6.46] °/s
+elbow   10°: det J = 0.02084, joint speeds [ 8.21 19.18] °/s
+elbow    2°: det J = 0.00419, joint speeds [41.04 95.75] °/s
+elbow  0.5°: det J = 0.00105, joint speeds [164.14 383.  ] °/s
 ```
 
 `np.linalg.solve(Jp, outward)` finds the joint speeds whose tip velocity, J times them, equals the wanted outward velocity.
@@ -169,7 +197,7 @@ In code: `error = target - forward(*theta)`, then `theta = theta + np.linalg.sol
 
 The useful question is usually the reverse: which joint angles put the gripper at a target? That is solving two non-linear equations, f(θ) = target. **Newton's method** solves it with the Jacobian: at the current guess, the linearisation says f(θ + Δθ) ≈ f(θ) + JΔθ, so choose Δθ to make this equal the target, J Δθ = target − f(θ), solve, update θ, and repeat. Near a solution each step roughly doubles the number of correct digits. Predict before running: from a rough guess, how many Newton steps reach the target to within a micrometre?
 
-```python
+```python type
 target = np.array([0.25, 0.45])
 theta = np.radians([60.0, 30.0])
 for step in range(1, 9):
@@ -179,6 +207,16 @@ for step in range(1, 9):
         break
     theta = theta + np.linalg.solve(jacobian(*theta), error)
 print(f"joint angles {np.degrees(theta).round(4)}°")
+```
+
+```output
+step 0: tip error 202.674497 mm
+step 1: tip error 271.922450 mm
+step 2: tip error 49.594671 mm
+step 3: tip error 2.970125 mm
+step 4: tip error 0.014742 mm
+step 5: tip error 0.000000 mm
+joint angles [25.38   86.4167]°
 ```
 
 Each step solves the 2 × 2 linear system J Δθ = error for the correction Δθ.
