@@ -869,6 +869,22 @@ const L74 = 'forge-records/07-04-play-sessions';
 const SESSIONS_SQL = '.venv\\Scripts\\python -m sqlite3 sessions.db';
 const BEFORE_FORGET = "\n\ndef forget(db: sqlite3.Connection, level: str) -> int:";
 const sessionsReportIs = (fn) => ({ editFiles: { 'breakout/report.py': [[BEFORE_FORGET, '\n\n' + fn + BEFORE_FORGET]] } });
+const L75 = 'forge-records/07-05-one-fact-in-one-place';
+const NORMAL_SQL = '.venv\\Scripts\\python -m sqlite3 normal.db';
+const KEYS_SQL = '.venv\\Scripts\\python -m sqlite3 keys.db';
+const MIGRATION_4_INDEX = "    CREATE UNIQUE INDEX sessions_id_player";
+const MIGRATION_4_COPY = "    DROP TABLE scores;";
+const cleanupIs = (sql, before = MIGRATION_4_INDEX) => ({ editFiles: { 'breakout/scores.py': [[before, sql + before]] } });
+const L76 = 'forge-records/07-06-finding-rows-fast';
+const BIG_SQL = '.venv\\Scripts\\python -m sqlite3 scratch/big.db';
+const MIGRATION_5_END = "    CREATE INDEX scores_player ON scores (player_id);\n    \"\"\",\n]";
+const migration6Is = (end) => ({ editFiles: { 'breakout/scores.py': [[MIGRATION_5_END, end]] } });
+const L77 = 'forge-records/07-07-two-writes-at-once';
+const OPEN_SCORES_FK = "    db.execute(\"PRAGMA foreign_keys = ON\")\n";
+const walIs = (line) => ({ editFiles: { 'breakout/scores.py': [[OPEN_SCORES_FK, OPEN_SCORES_FK + line]] } });
+const L78 = 'forge-records/07-08-shipping-0-1';
+const RETRO = "# Retrospective: 0.1.0\n\nWhat went well\n--------------\n\n- Writing the failing test first for every Your turn: I knew when I was done.\n- Migrations tested against old designs caught a migration that would have broken real files.\n\nWhat didn't\n-----------\n\n- I edited a migration that had already run on my own scores.db.\n- BACKLOG.md went stale for three chapters.\n\nWhat we'll change\n-----------------\n\n- Before editing a migration, check whether it has run anywhere: if it has, add a new one.\n- At the end of every chapter, review the backlog.\n";
+const RETRO_BACKLOG = { 'BACKLOG.md': [["# Technical debt\n\n", "# Technical debt\n\n- The backlog is only reviewed when a lesson says so: review it at the end of every chapter (retrospective 0.1).\n"]] };
 const L72 = 'forge-records/07-02-a-database-thats-already-out-there';
 const LOAD_NO_WON = "    rows = db.execute(\n        \"\"\"\n        SELECT players.name, scores.level, scores.points, scores.played_at\n        FROM scores JOIN players ON players.id = scores.player_id\n        ORDER BY scores.id\n        \"\"\"\n    )\n    return [Score(name, level, points, datetime.fromisoformat(played_at)) for name, level, points, played_at in rows]";
 const LOAD_WON = "    rows = db.execute(\n        \"\"\"\n        SELECT players.name, scores.level, scores.points, scores.played_at, scores.won\n        FROM scores JOIN players ON players.id = scores.player_id\n        ORDER BY scores.id\n        \"\"\"\n    )\n    return [\n        Score(name, level, points, datetime.fromisoformat(played_at), None if won is None else bool(won))\n        for name, level, points, played_at, won in rows\n    ]";
@@ -1755,6 +1771,86 @@ export const WALKTHROUGH = {
       { name: 'COUNT(*): an empty session claims one game', ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(*)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), run: ['git add .', 'git commit -m "session"'], fails: [0, 1] },
       { name: "every player's sessions, not just this one's", ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\"\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), run: ['git add .', 'git commit -m "session"'], fails: [0, 1] },
       { name: 'not committed', ...sessionsReportIs("def sessions_report(db: sqlite3.Connection, player: str) -> list[str]:\n    rows = db.execute(\n        \"\"\"\n        SELECT sessions.started_at,\n               (unixepoch(sessions.ended_at) - unixepoch(sessions.started_at)) / 60,\n               COUNT(scores.id)\n        FROM sessions\n        JOIN players ON players.id = sessions.player_id\n        LEFT JOIN scores ON scores.session_id = sessions.id\n        WHERE players.name = ?\n        GROUP BY sessions.id\n        ORDER BY sessions.started_at\n        \"\"\",\n        (player,),\n    )\n    return [\n        f\"{started}: {'still going' if minutes is None else f'{minutes} minutes'}, {games} played\"\n        for started, minutes, games in rows\n    ]\n"), fails: [5, 6] },
+    ],
+  },
+  [`${L75}#A fact in many rows`]: { run: ["CREATE TABLE plays (id INTEGER PRIMARY KEY, player TEXT NOT NULL, level TEXT NOT NULL, designer TEXT NOT NULL, points INTEGER NOT NULL) STRICT", "INSERT INTO plays (player, level, designer, points) VALUES ('Mia', 'Classic', 'Ana', 560), ('Sam', 'Classic', 'Ana', 70), ('Mia', 'Castle', 'Bob', 260), ('Sam', 'Castle', 'Bob', 300)", "UPDATE plays SET designer = 'Cy' WHERE level = 'Castle' AND player = 'Mia'", "DELETE FROM plays WHERE level = 'Classic'"].map((sql) => `${NORMAL_SQL} "${sql}"`) },
+  [`${L75}#One table per kind of thing`]: { run: ["CREATE TABLE levels (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, designer TEXT NOT NULL) STRICT", "CREATE TABLE games (id INTEGER PRIMARY KEY, player TEXT NOT NULL, level_id INTEGER NOT NULL REFERENCES levels (id), points INTEGER NOT NULL) STRICT", "INSERT INTO levels (name, designer) VALUES ('Classic', 'Ana'), ('Castle', 'Bob'), ('Tiny', 'Ana')", "INSERT INTO games (player, level_id, points) VALUES ('Mia', 1, 560), ('Sam', 1, 70), ('Mia', 2, 260), ('Sam', 2, 300)", "UPDATE levels SET designer = 'Cy' WHERE name = 'Castle'", "DELETE FROM games WHERE level_id = 1"].map((sql) => `${NORMAL_SQL} "${sql}"`) },
+  [`${L75}#Two places that must agree`]: { run: ["CREATE TABLE sessions (id INTEGER PRIMARY KEY, player TEXT NOT NULL) STRICT", "CREATE UNIQUE INDEX sessions_id_player ON sessions (id, player)", "CREATE TABLE scores (id INTEGER PRIMARY KEY, player TEXT NOT NULL, session_id INTEGER, points INTEGER NOT NULL, FOREIGN KEY (session_id, player) REFERENCES sessions (id, player)) STRICT", "INSERT INTO sessions (player) VALUES ('Mia')", "INSERT INTO scores (player, session_id, points) VALUES ('Mia', 1, 400)", "INSERT INTO scores (player, session_id, points) VALUES ('Sam', NULL, 150)"].map((sql) => `${KEYS_SQL} "${sql}"`) },
+  [`${L75}#Your turn: a file that already disagrees`]: {
+    ...cleanupIs("    UPDATE scores SET session_id = NULL\n    WHERE session_id IS NOT NULL\n      AND player_id <> (SELECT player_id FROM sessions WHERE sessions.id = scores.session_id);\n"),
+    run: ['git add .', 'git commit -m "Migration 4 unlinks scores from another player\'s session"'],
+    wrong: [
+      { name: 'the mismatched score deleted, not unlinked', ...cleanupIs("    DELETE FROM scores\n    WHERE session_id IS NOT NULL\n      AND player_id <> (SELECT player_id FROM sessions WHERE sessions.id = scores.session_id);\n"), run: ['git add .', 'git commit -m "migration"'], fails: [0, 1] },
+      { name: 'the clean-up after the copy: too late', ...cleanupIs("    UPDATE scores SET session_id = NULL\n    WHERE session_id IS NOT NULL\n      AND player_id <> (SELECT player_id FROM sessions WHERE sessions.id = scores.session_id);\n", MIGRATION_4_COPY), run: ['git add .', 'git commit -m "migration"'], fails: [0, 1] },
+      { name: 'every score unlinked from its session', ...cleanupIs("    UPDATE scores SET session_id = NULL;\n"), run: ['git add .', 'git commit -m "migration"'], fails: [0, 1] },
+      { name: 'not committed', ...cleanupIs("    UPDATE scores SET session_id = NULL\n    WHERE session_id IS NOT NULL\n      AND player_id <> (SELECT player_id FROM sessions WHERE sessions.id = scores.session_id);\n"), fails: [5, 6] },
+    ],
+  },
+  [`${L76}#A million scores`]: {
+    files: { 'scratch/big.py': "\"\"\"A practice database with a million scores in it: big enough to measure. Not part of the game.\"\"\"\n\nimport random\nimport sqlite3\nimport time\nfrom pathlib import Path\n\npath = Path(\"scratch/big.db\")\npath.unlink(missing_ok=True)\ndb = sqlite3.connect(path)\ndb.execute(\"CREATE TABLE scores (id INTEGER PRIMARY KEY, player TEXT, level TEXT, points INTEGER) STRICT\")\nrng = random.Random(0)\nrows = [(f\"player {rng.randrange(1000)}\", f\"level {rng.randrange(100)}\", rng.randrange(1000)) for _ in range(1_000_000)]\nstart = time.perf_counter()\nwith db:\n    db.executemany(\"INSERT INTO scores (player, level, points) VALUES (?, ?, ?)\", rows)\nprint(f\"{len(rows):,} scores saved in {time.perf_counter() - start:.2f} s; the file is {path.stat().st_size:,} bytes\")\ndb.close()\n" },
+    run: ['.venv\\Scripts\\python scratch\\big.py'],
+  },
+  [`${L76}#How long does one question take?`]: { files: { 'scratch/ask.py': "\"\"\"Ask the million-score database some questions, and time each one.\"\"\"\n\nimport sqlite3\nimport time\n\nQUESTIONS = [\n    (\"SELECT COUNT(*), MAX(points) FROM scores WHERE level = ?\", (\"level 7\",)),\n]\n\ndb = sqlite3.connect(\"scratch/big.db\")\nfor sql, values in QUESTIONS:\n    plan = [step for _, _, _, step in db.execute(\"EXPLAIN QUERY PLAN \" + sql, values)]\n    start = time.perf_counter()\n    for _ in range(10):\n        answer = db.execute(sql, values).fetchone()\n    milliseconds = (time.perf_counter() - start) / 10 * 1000\n    print(f\"{sql}\\n    answer {answer}, {milliseconds:.2f} ms, plan {plan}\")\ndb.close()\n" } },
+  [`${L76}#An index`]: { run: [`${BIG_SQL} "CREATE INDEX scores_level ON scores (level)"`] },
+  [`${L76}#An index that answers by itself`]: {
+    files: { 'scratch/ask.py': "\"\"\"Ask the million-score database some questions, and time each one.\"\"\"\n\nimport sqlite3\nimport time\n\nQUESTIONS = [\n    (\"SELECT COUNT(*), MAX(points) FROM scores WHERE level = ?\", (\"level 7\",)),\n    (\"SELECT MAX(points) FROM scores WHERE level = ?\", (\"level 7\",)),\n    (\"SELECT COUNT(*) FROM scores WHERE points > ?\", (990,)),\n    (\"SELECT COUNT(*) FROM scores WHERE level LIKE ?\", (\"%7\",)),\n    (\"SELECT COUNT(*) FROM scores WHERE lower(level) = ?\", (\"level 7\",)),\n]\n\ndb = sqlite3.connect(\"scratch/big.db\")\nfor sql, values in QUESTIONS:\n    plan = [step for _, _, _, step in db.execute(\"EXPLAIN QUERY PLAN \" + sql, values)]\n    start = time.perf_counter()\n    for _ in range(10):\n        answer = db.execute(sql, values).fetchone()\n    milliseconds = (time.perf_counter() - start) / 10 * 1000\n    print(f\"{sql}\\n    answer {answer}, {milliseconds:.2f} ms, plan {plan}\")\ndb.close()\n" },
+    run: [`${BIG_SQL} "CREATE INDEX scores_level_points ON scores (level, points)"`],
+  },
+  [`${L76}#What an index costs`]: {
+    files: { 'scratch/add.py': "\"\"\"Add 100,000 more scores to the million-score database, and time it.\"\"\"\n\nimport random\nimport sqlite3\nimport time\n\ndb = sqlite3.connect(\"scratch/big.db\")\nrng = random.Random(1)\nrows = [(f\"player {rng.randrange(1000)}\", f\"level {rng.randrange(100)}\", rng.randrange(1000)) for _ in range(100_000)]\nstart = time.perf_counter()\nwith db:\n    db.executemany(\"INSERT INTO scores (player, level, points) VALUES (?, ?, ?)\", rows)\n(indexes,) = db.execute(\"SELECT COUNT(*) FROM sqlite_schema WHERE type = 'index'\").fetchone()\nprint(f\"{indexes} indexes: {len(rows):,} scores added in {time.perf_counter() - start:.2f} s\")\ndb.close()\n" },
+    run: [
+      '.venv\\Scripts\\python scratch\\add.py',
+      `${BIG_SQL} "DROP INDEX scores_level"`,
+      `${BIG_SQL} "DROP INDEX scores_level_points"`,
+      '.venv\\Scripts\\python scratch\\add.py',
+    ],
+  },
+  [`${L76}#Your turn: a player's sessions, without a scan`]: {
+    ...migration6Is("    CREATE INDEX scores_player ON scores (player_id);\n    \"\"\",\n    # 6: indexes for a player's sessions and each session's scores (lesson 7.6's Your turn).\n    \"\"\"\n    CREATE INDEX sessions_player ON sessions (player_id);\n    CREATE INDEX scores_session ON scores (session_id);\n    \"\"\",\n]"),
+    run: ['git add .', 'git commit -m "Add indexes for a player\'s sessions and each session\'s scores"'],
+    wrong: [
+      { name: 'migration 5 edited instead of a migration 6', editFiles: { 'breakout/scores.py': [["    CREATE INDEX scores_player ON scores (player_id);\n", "    CREATE INDEX scores_player ON scores (player_id);\n    CREATE INDEX sessions_player ON sessions (player_id);\n    CREATE INDEX scores_session ON scores (session_id);\n"]] }, run: ['git add .', 'git commit -m "index"'], fails: [2] },
+      { name: 'only the sessions index', ...migration6Is("    CREATE INDEX scores_player ON scores (player_id);\n    \"\"\",\n    # 6: indexes for a player's sessions and each session's scores (lesson 7.6's Your turn).\n    \"\"\"\n    CREATE INDEX sessions_player ON sessions (player_id);\n    \"\"\",\n]"), run: ['git add .', 'git commit -m "index"'], fails: [0, 1] },
+      { name: 'only the scores index', ...migration6Is("    CREATE INDEX scores_player ON scores (player_id);\n    \"\"\",\n    # 6: indexes for a player's sessions and each session's scores (lesson 7.6's Your turn).\n    \"\"\"\n    CREATE INDEX scores_session ON scores (session_id);\n    \"\"\",\n]"), run: ['git add .', 'git commit -m "index"'], fails: [0, 1] },
+      { name: 'not committed', ...migration6Is("    CREATE INDEX scores_player ON scores (player_id);\n    \"\"\",\n    # 6: indexes for a player's sessions and each session's scores (lesson 7.6's Your turn).\n    \"\"\"\n    CREATE INDEX sessions_player ON sessions (player_id);\n    CREATE INDEX scores_session ON scores (session_id);\n    \"\"\",\n]"), fails: [6, 7] },
+    ],
+  },
+  [`${L77}#A log written ahead`]: { run: [".venv\\Scripts\\python -c \"import sqlite3; db = sqlite3.connect('scratch/locks.db'); db.execute('CREATE TABLE t (x INTEGER)'); db.executemany('INSERT INTO t VALUES (?)', [(1,), (3,), (4,)]); db.commit(); db.execute('PRAGMA journal_mode = WAL'); db.close()\""] },
+  [`${L77}#Two games, one old file`]: { files: { 'scratch/race.py': "\"\"\"Two copies of the game open the same old file at the same moment, stepped through by hand.\"\"\"\n\nimport sqlite3\nfrom pathlib import Path\n\nfrom breakout.scores import MIGRATIONS\n\npath = Path(\"scratch/race.db\")\npath.unlink(missing_ok=True)\nold = sqlite3.connect(path)\nfor number in range(1, 4):\n    old.executescript(f\"BEGIN; {MIGRATIONS[number - 1]} PRAGMA user_version = {number}; COMMIT;\")\nold.close()\n\na = sqlite3.connect(path)\nb = sqlite3.connect(path)\n(a_version,) = a.execute(\"PRAGMA user_version\").fetchone()\n(b_version,) = b.execute(\"PRAGMA user_version\").fetchone()\nprint(f\"A reads version {a_version}, B reads version {b_version}\")\na.executescript(f\"BEGIN; {MIGRATIONS[3]} PRAGMA user_version = 4; COMMIT;\")\nprint(\"A runs migration 4\")\nb.executescript(f\"BEGIN; {MIGRATIONS[3]} PRAGMA user_version = 4; COMMIT;\")\nprint(\"B runs migration 4\")\n" } },
+  [`${L77}#Take the lock, then look`]: { files: { 'scratch/wait.py': "\"\"\"Copy A holds the write lock, as if in the middle of a migration; copy B opens the same file.\"\"\"\n\nimport sqlite3\nfrom pathlib import Path\n\nfrom breakout.scores import migrate\n\npath = Path(\"scratch/race.db\")\na = sqlite3.connect(path, autocommit=True)\na.execute(\"BEGIN IMMEDIATE\")\nprint(\"A takes the write lock\")\nb = sqlite3.connect(path, timeout=1)\ntry:\n    migrate(b)\nexcept sqlite3.OperationalError as error:\n    print(f\"B, while A holds it: {error}\")\na.execute(\"COMMIT\")\nprint(\"A commits\")\nmigrate(b)\nprint(f\"B, once A is done: version {b.execute('PRAGMA user_version').fetchone()[0]}\")\n" } },
+  [`${L77}#Your turn: saving while someone reads`]: {
+    ...walIs("    db.execute(\"PRAGMA journal_mode = WAL\")\n"),
+    run: ['git add .', 'git commit -m "Keep a write-ahead log, so a reader never blocks a save"'],
+    wrong: [
+      {
+        name: 'WAL turned on in a migration: refused inside a transaction',
+        editFiles: { 'breakout/scores.py': [["    CREATE INDEX scores_session ON scores (session_id);\n", "    CREATE INDEX scores_session ON scores (session_id);\n    PRAGMA journal_mode = WAL;\n"]] },
+        run: ['git add .', 'git commit -m "WAL"'],
+        fails: [0, 1, 2],
+      },
+      {
+        name: "WAL only in the tests' fixture",
+        editFiles: { 'tests/conftest.py': [["    connection = open_scores(tmp_path / \"scores.db\")\n", "    connection = open_scores(tmp_path / \"scores.db\")\n    connection.execute(\"PRAGMA journal_mode = WAL\")\n"]] },
+        run: ['git add .', 'git commit -m "WAL"'],
+        fails: [0, 1, 2],
+      },
+      { name: 'not committed', ...walIs("    db.execute(\"PRAGMA journal_mode = WAL\")\n"), fails: [6, 7] },
+    ],
+  },
+  [`${L78}#A changelog`]: {
+    run: ['git add BACKLOG.md CHANGELOG.md', 'git commit -m "Sprint review: bring the backlog up to date, and a changelog for 0.1.0"'],
+  },
+  [`${L78}#The release, tagged`]: {
+    run: ['git tag -a v0.1.0 -m "Breakout 0.1.0: levels, settings, scores, players and sessions"'],
+  },
+  [`${L78}#Your turn: the retrospective`]: {
+    files: { 'docs/retrospective-0.1.md': RETRO },
+    editFiles: RETRO_BACKLOG,
+    run: ['git add .', 'git commit -m "The retrospective for 0.1.0, and its first action in the backlog"'],
+    wrong: [
+      { name: "no What didn't section", files: { 'docs/retrospective-0.1.md': "# Retrospective: 0.1.0\n\nWhat went well\n--------------\n\n- Writing the failing test first for every Your turn: I knew when I was done.\n- Migrations tested against old designs caught a migration that would have broken real files.\n\nWhat we'll change\n-----------------\n\n- Before editing a migration, check whether it has run anywhere: if it has, add a new one.\n- At the end of every chapter, review the backlog.\n" }, run: ['git add .', 'git commit -m "retrospective"'], fails: [1] },
+      { name: 'a message that never says retrospective', files: { 'docs/retrospective-0.1.md': RETRO }, run: ['git add .', 'git commit -m "Notes on 0.1.0"'], fails: [3] },
+      { name: 'not committed', files: { 'docs/retrospective-0.1.md': RETRO }, fails: [3, 4] },
     ],
   },
 };

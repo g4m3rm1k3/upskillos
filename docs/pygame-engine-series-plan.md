@@ -1,6 +1,6 @@
 # Forge: learn software engineering by building a game engine, editor and service in Python — series plan
 
-Status (2026-10-06): **Chapters 0–6 and lessons 7.1–7.4 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5, 7.1–7.4).** The beginner audit (below) is applied to all of them (2026-10-06): scratch examples, corrections, and challenges listed in each chapter's zoom-out. Every lesson was reviewed against "Teaching, not describing" by reviewer agents and rewritten in small steps (2026-10-05); the walkthrough passes 0.1–7.1 with every wrong answer. The user opened 0.1 in the
+Status (2026-10-07): **Chapters 0–7 written (lessons 0.1–0.3, 1.1–1.6, 2.1–2.6, 3.1–3.6, 4.1–4.7, 5.1–5.6, 6.1–6.5, 7.1–7.8); Breakout 0.1.0 ships at the end of Chapter 7. Chapter 8 is next.** **Handoff (2026-10-07):** a walkthrough of 0.1–7.8 (wrong answers from 7.5) was started with FORGE_KEEP; its log is `scratchpad/run07.txt` in the session folder `C:/Users/g4m3r/AppData/Local/Temp/claude/c--Users-g4m3r-Documents-open-calc/bd29ab4d-d1f0-412e-a0c3-2ab5b43c9e8f/`, and it keeps the finished project at `C:/Users/g4m3r/fg75/end78`. Next session: check that run passed (fix any failure), then start Chapter 8 from `end78` (not the older copies in `fg75/ch7`, which predate the audit), following the Chapter 8 outline below and the build workflow in `fg75/ch7` (buildNN.py, lessonNN.py, runsteps.py, walkNN.py). Chapter 7 is not committed yet: the user commits after the walkthrough passes. The beginner audit (below) is applied to all of them (2026-10-06): scratch examples, corrections, and challenges listed in each chapter's zoom-out. Every lesson was reviewed against "Teaching, not describing" by reviewer agents and rewritten in small steps (2026-10-05); the walkthrough passes 0.1–7.1 with every wrong answer. The user opened 0.1 in the
 app and approved it as the bar; they review the rest by doing the lessons, so writing continues in plan order
 without pausing.
 
@@ -67,10 +67,30 @@ without pausing.
   `MIGRATIONS` list, each migration in a transaction, migration tests with `monkeypatch`; Your turn: `won`
   read back as `True`/`False`/`None`; 121 tests); 7.3 how is each level going (`GROUP BY`, aggregates skipping
   `NULL`, `COALESCE`, `HAVING`; the report tool's level table; Your turn: `min_played` with `HAVING`; 126 tests);
-  7.4 play sessions (a sessions table by migration, `LEFT JOIN`, durations); 7.5 one fact in one place
-  (normalisation, felt first, fixed by a migration); 7.6 indexes measured (`EXPLAIN QUERY PLAN`, a million rows);
-  7.7 two writes at once (locking, busy timeout, `BEGIN IMMEDIATE`, WAL); 7.8 shipping v0.1 (sprint review,
-  retrospective, changelog, tag).
+  7.4 play sessions (a sessions table by migration, `LEFT JOIN`, durations; 133 tests); 7.5 one fact in one place
+  (the three anomalies felt in a practice table, then split into tables; the player stored twice for a score in a
+  session, guarded by a two-column foreign key; migration 4 rebuilds `scores`; Your turn: unlink scores already in
+  another player's session, with a correlated subquery; 138 tests); 7.6 indexes measured (a seeded million-score scratch
+  database, `executemany`, `EXPLAIN QUERY PLAN`, SCAN vs SEARCH, covering indexes, the leftmost column rule, what an
+  index costs to write; migration 5 indexes the game's questions; plan tests through `set_trace_callback`; Your turn:
+  migration 6 removes an automatic index from `sessions_report`; 142 tests);
+  7.7 two writes at once (two connections in one REPL: the write lock, isolation, the busy timeout; a reader
+  blocking a commit; WAL; `.gitignore` for SQLite's side files; the migration race stepped through by hand and
+  fixed with `BEGIN IMMEDIATE` under `autocommit = True`; tests of statement order via the trace callback; Your
+  turn: WAL in `open_scores`; 146 tests); 7.8 shipping 0.1 (a sprint review rewriting the stale backlog, a
+  changelog with setext version headings because lesson steps split on `## `, Semantic Versioning, a clean-clone
+  install, an annotated tag; Your turn: the retrospective; the Chapter 7 zoom-out and challenge list).
+- Chapter 8 outline (`forge-second-game/`, written next; game: an arena shooter like Game Studio's Zombie Arena,
+  made by copying the `breakout` package to `shooter`): 8.1 a copy to start from (copying a package, a second
+  entry point, what in the copy is really Breakout); 8.2 moving in two dimensions (eight-way movement and the
+  diagonal that's faster, found by a test and fixed by normalising; aiming at the mouse with angles); 8.3 things
+  that come and go (bullets made while running, removed when spent; the bug of removing from a list while looping
+  over it); 8.4 enemies that chase (zombies spawned on a seeded timer, steering towards the player, bullet-zombie
+  and zombie-player collisions, a moment of safety after a hit); 8.5 the copies drift (one bug fixed twice, then
+  missed once; a screen-size change that breaks five things; state shared through a module); 8.6 measuring
+  coupling (an import graph drawn by a script that reads the code with `ast`; a teammate's badly designed `hud.py`
+  read and its coupling found); 8.7 asking why (which code is a game and which is any game; the zoom-out that
+  sets up Chapter 9). Every lesson keeps the audit standard: scratch examples first, challenges, a bug hunt.
 - Project Studio change: Run on a package's `__main__.py` runs `python -m <package>` from the project folder
   (`desktop/app/runtimes/python.cjs`, tested in `pythonVenv.test.js`), so later lessons use
   `run: breakout/__main__.py`.

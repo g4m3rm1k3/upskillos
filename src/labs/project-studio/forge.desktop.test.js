@@ -35,10 +35,18 @@ const wrongFromIndex = process.env.FORGE_WRONG_FROM
 const untilIndex = process.env.FORGE_UNTIL
   ? lessons.findIndex((l) => l.id.startsWith(process.env.FORGE_UNTIL))
   : lessons.length - 1;
+// FORGE_START=<folder> with FORGE_FROM=<lesson id prefix> starts from a project FORGE_KEEP kept (one
+// that went through every lesson before FORGE_FROM), so a new chapter can be walked without walking
+// all the chapters before it again. The lessons before FORGE_FROM are skipped.
+const fromIndex = process.env.FORGE_START && process.env.FORGE_FROM
+  ? lessons.findIndex((l) => l.id.startsWith(process.env.FORGE_FROM))
+  : 0;
 const stepsByKey =new Map(lessons.flatMap((l) => l.steps.map((s) => [keyOf(l, s), s])));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-walk-'));
 const project = path.join(tmp, 'forge');
 fs.mkdirSync(project);
+if (fromIndex > 0) fs.cpSync(process.env.FORGE_START, project, { recursive: true });
+let started = fromIndex === 0;
 
 afterAll(() => {
   // FORGE_KEEP=<folder> keeps a copy of the finished project (its .venv and git history included),
@@ -184,7 +192,18 @@ describe.skipIf(!isWindows)('Forge walkthrough', () => {
   });
 
   for (const lesson of lessons) {
-    it.skipIf(lessons.indexOf(lesson) > untilIndex)(`${lesson.id}: ${lesson.title}`, async () => {
+    const index = lessons.indexOf(lesson);
+    it.skipIf(index > untilIndex || index < fromIndex)(`${lesson.id}: ${lesson.title}`, async () => {
+      if (!started) {
+        // The kept project's virtual environment was installed at another path: reinstall the
+        // project so its commands find it here, and give Git the identity lesson 1.2 set.
+        started = true;
+        await runCommands(project, [
+          'git config --global user.name "Ada Lovelace"',
+          'git config --global user.email "ada@example.com"',
+          '.venv\\Scripts\\python -m pip install -q -e .',
+        ], {});
+      }
       for (const step of lesson.steps) {
         const action = WALKTHROUGH[keyOf(lesson, step)] ?? {};
         const checks = step.checks;
