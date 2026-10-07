@@ -31,16 +31,21 @@ export const configure = (dir) => (process.platform === 'win32'
 // configure their own.
 const isBuildDir = (src) => /^build(-cmake)?$/.test(path.basename(src)) && fs.statSync(src).isDirectory();
 
-export async function walkCppTrack({ trackKey, title, walkthrough, lessonIds, needsCMake = () => false }) {
+// Other tracks use it too: toolCheck is the command that says the track's toolchain is installed (a C++ compiler by
+// default; `node --version` for a Node track), and linkDirs are folders a wrong answer's copy links to instead of
+// copying (node_modules: hundreds of megabytes, and never what a wrong answer changes). evalInPage runs `page` checks
+// (in the app a hidden Electron window does; a walkthrough passes Playwright's Chromium).
+export async function walkCppTrack({ trackKey, title, walkthrough, lessonIds, needsCMake = () => false, toolCheck = 'g++ --version', linkDirs = [], extraEnv = {}, evalInPage } = {}) {
   const lessons = TRACKS[trackKey] ?? [];
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `${trackKey}-walk-`));
+  // The real path: on macOS the temp folder is reached through a link (/var → /private/var), and Git reports the real one.
+  const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), `${trackKey}-walk-`)));
   const project = path.join(tmp, trackKey);
   fs.mkdirSync(project);
   afterAll(() => { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {} });
 
-  const env = await shellEnv({ extraPath: [process.env.CPP_TOOLCHAIN_BIN] });
+  const env = { ...(await shellEnv({ extraPath: [process.env.CPP_TOOLCHAIN_BIN] })), ...extraEnv };
   const has = async (cmd) => (await shellRun(cmd, { cwd: tmp, env, timeoutMs: 30000 })).code === 0;
-  const hasCompiler = await has('g++ --version');
+  const hasCompiler = await has(toolCheck);
   const hasCMake = await has('cmake --version');
 
   async function perform(dir, step, action = {}) {
@@ -107,10 +112,11 @@ export async function walkCppTrack({ trackKey, title, walkthrough, lessonIds, ne
 
           for (const wrong of action.wrong ?? []) {
             const copy = path.join(tmp, `wrong-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`);
-            fs.cpSync(project, copy, { recursive: true, filter: (src) => !isBuildDir(src) });
+            fs.cpSync(project, copy, { recursive: true, filter: (src) => !isBuildDir(src) && !(linkDirs.includes(path.basename(src)) && path.dirname(src) === project) });
+            for (const name of linkDirs) if (fs.existsSync(path.join(project, name))) fs.symlinkSync(path.join(project, name), path.join(copy, name), 'junction');
             try {
               await perform(copy, step, { typeFile: false, ...wrong, allowFailure: true });
-              const res = await runChecks(copy, step.checks, { env });
+              const res = await runChecks(copy, step.checks, { env, evalInPage });
               const failed = res.results.map((r, i) => (r.pass ? null : i)).filter((i) => i != null);
               for (const i of wrong.fails) {
                 expect(failed, `${lesson.title} / ${step.title}: wrong answer "${wrong.name}" should fail check "${step.checks[i]?.label}"\n${describeResults(step.checks, res.results)}`).toContain(i);
@@ -122,7 +128,7 @@ export async function walkCppTrack({ trackKey, title, walkthrough, lessonIds, ne
 
           await perform(project, step, action);
           if (step.checks.length) {
-            const res = await runChecks(project, step.checks, { env });
+            const res = await runChecks(project, step.checks, { env, evalInPage });
             expect(res.results.every((r) => r.pass), `${lesson.title} / ${step.title}\n${describeResults(step.checks, res.results)}`).toBe(true);
           }
         }
