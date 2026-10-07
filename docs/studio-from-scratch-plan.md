@@ -171,10 +171,60 @@ contract it must meet. This is why UpSkillOS exists.
     switched to snapshot commands (memento, atomic rollback); 3.5 each command's line of code (`lit`, log derived from
     the done stack); 3.6 the `scene` facade, `runCode` with `new Function`, a replay test; 3.7 the console in the app,
     the first CSS, rebuild-from-data, rollback of changes the engine refuses, two new e2e tests; 3.8 review, v0.4.0, ADR 4.
+- **Sprint 4, lessons 4.1 to 4.8: written and replayed on macOS (2026-10-07), not yet reviewed by the user.**
+  - 4.1 React and JSX, a `Title` component tested with `renderToStaticMarkup` (no jsdom or Testing Library: clicks are
+    tested end to end), `main.ts` renamed to `main.tsx`; 4.2 `EditorStore` (change, undo, redo, problem, selection,
+    listeners), which also closes a gap in 3.7's `change` (a line that fails part way left its earlier change unbuilt);
+    4.3 `useStore` (`useSyncExternalStore` with a version number), the console as a component with `useState`;
+    4.4 `GameView` (`useRef`, `useEffect` and its cleanup), `App`, a CSS grid layout, one React root, window 1400×900;
+    4.5 the scene tree (a recursive component, `data-path`, keys by name); 4.6 a registry of node types (`propsOf`
+    with overrides, `??`, `registryProblems` holding the registry to the engine, `PLAYER_TYPE`); 4.7 the inspector
+    (drafts committed on Enter or blur, `key={value}` resets a draft, hex colours, `store.setProp`); 4.8 review,
+    v0.5.0, ADR 5 (one store; React draws it).
+  - Exact versions added: React and React DOM 19.3.0, `@types/react` and `@types/react-dom` 19.3.0,
+    `@vitejs/plugin-react` 6.1.2.
 - **Explanation audit (user, 2026-10-07: "no unexplained code… even the css"; level: basic coding skills).** Every
   construct is explained at first use. A script lists keywords, operators, built-ins and `.method()` calls used before
   the prose names them; HTML, JSON and CSS are checked by hand. Fixed 16 gaps in Sprints 0–2.
 - Exact tool versions: TypeScript 7.0.2, Vitest 5.0.3, Vite 8.3.3, Electron 44.6.0, Playwright 1.63.0, Phaser 4.2.1;
   Node 22+. Phaser's `.d.ts` has two errors under TypeScript 7, so lesson 1.9 teaches `skipLibCheck`.
-- The replay (`studioBuild.desktop.test.js`) passes 35/35 on macOS. Windows still to be run.
-- Next: Sprint 4, the editor: React, panels around the game view, a scene tree, an inspector (stories in 3.8's backlog).
+- The replay (`studioBuild.desktop.test.js`) passes 43/43 on macOS (3 structure tests and 40 lessons). Windows still to be run.
+- Next: Sprint 5, the viewport: click to select in the game view, drag to move, rotation and scale (new to the engine),
+  snapping to a grid (stories in 4.8's backlog). The retrospective asks for each mouse interaction's end-to-end test first.
+
+## How to resume (read this first in a new session)
+
+The user's order (2026-10-07): write **every** lesson of this course, through the Kart Circuit final project, before
+going back to the Game Studio starter demos and then MeshLab. The user isn't taking the lessons yet; they want them
+ready. Keep writing sprint after sprint without stopping to ask.
+
+**Making one lesson** (`src/labs/project-studio/tracks/studio-build/NN-NN-slug.md`):
+
+1. Prototype first when a lesson uses something new (a library, the running app). Assemble the project as it stands
+   after a lesson with `python3 scripts/studio-build/materialize.py <empty folder> <NN-NN>` (it writes the last file
+   block of every file up to that lesson; delete `src/oops.ts`, `hello.js` and `src/greet.js`, which later lessons
+   remove), then `npm install` there. Work it out in that folder, in the session's scratchpad.
+   Sprint 4 did this as a git repository with one commit per lesson, tagged `l41`, `l42`, …, then wrote each lesson
+   as a draft whose file blocks are tokens (`@@l42:src/editor/store.ts@@`), filled in with
+   `python3 scripts/studio-build/fill.py <prototype> <draft> <lesson>`. Every file block is then code that ran.
+2. Write the lesson: frontmatter (title, track, runtime: none, concepts, problem); `## ` steps; each step changes one
+   file through a ```` ```lang file=path ```` block holding the **whole** file; exactly one ```` ```check ```` fence;
+   `predict` and `hints` fences where useful; `###` (never `## `) inside file contents. Tests first: a red step
+   (check `exit=1 stderr="…"`), then a green step.
+3. Explanations are bullet lists, at the level of basic coding skills: every keyword, operator, built-in, HTML tag,
+   JSON key and CSS rule is explained at its first use, what it does to which data first, analogies last. Quote
+   output (```` ```text ````) only after seeing it in a real run.
+4. Add the lesson id to `lessonIds` in `src/labs/project-studio/studioBuild.desktop.test.js`, and its commands
+   (`run`, `editFiles` for backlog ticks, `wrong` answers) to `tracks/studio-build.walkthrough.js`. A wrong answer
+   runs on a copy from *before* the step, without the step's file; to test a new test file against broken code, put
+   both in the wrong answer's `files`. `tsc` prints its errors on stdout, Vitest's failures go to stderr.
+5. Run the replay: `npx vitest run src/labs/project-studio/studioBuild.desktop.test.js` (unset `ELECTRON_RUN_AS_NODE`
+   in a VS Code shell). Every lesson so far must still pass.
+6. At the end of each sprint: `python3 scripts/studio-build/audit.py` (lists constructs used before the prose
+   explains them; methods a test calls one step before they're written are expected), check HTML, JSON and CSS by
+   hand, then `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` (two failures,
+   `projectChecks` and `projectIsolation`, were there before this course), and update the Status section above.
+
+Each sprint ends with a review lesson: version bump, an ADR, `docs/sprints/sprint-N.md`, the next sprint's stories
+in `BACKLOG.md` (shown whole), and a tag. The app's own Game Studio (`src/labs/game-studio/`) is the model for the
+studio's design; simplify, don't copy.
