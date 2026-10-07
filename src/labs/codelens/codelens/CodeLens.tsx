@@ -1390,7 +1390,7 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
                 source={lastRunSourceRef.current ?? source} lang={lang} />
             )}
             {tabId === 'stage' && (
-              <StagePanel event={currentEvent} snapshot={dockSnapshot} onStepKey={stepFromKey}
+              <StagePanel event={currentEvent} snapshot={dockSnapshot} onStepKey={stepFromKey} lang={lang}
                 spec={loadedExample?.example.stage ?? null} specId={loadedExample?.example.id ?? null} />
             )}
       {tabId === 'structure' && (lang === 'py'

@@ -76,6 +76,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["C B D A E F"],
       },
     },
+    stage: {"grid": {"rows": 1, "cols": "cards"}, "text": {"var": "cards"}, "markers": [{"at": "i", "label": "i"}, {"at": "j", "label": "j"}], "caption": ["i", "j"]},
   },
   {
     id: "algo-insertion-sort",
@@ -141,6 +142,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["1 2 5 6 9"],
       },
     },
+    stage: {"grid": {"rows": 1, "cols": "nums"}, "heat": {"var": "nums"}, "markers": [{"at": "i", "label": "i"}, {"at": "j", "label": "j"}], "caption": ["key", "i", "j"]},
   },
   {
     id: "algo-selection-sort",
@@ -428,6 +430,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["0 0 1 1 2 2"],
       },
     },
+    stage: {"grid": {"rows": 1, "cols": "colors"}, "heat": {"var": "colors", "palette": {"0": "#ef4444", "1": "#e2e8f0", "2": "#3b82f6"}}, "markers": [{"at": "lo", "label": "lo"}, {"at": "mid", "label": "mid"}, {"at": "hi", "label": "hi"}], "caption": ["lo", "mid", "hi"]},
   },
   {
     id: "algo-two-sum-sorted",
@@ -488,6 +491,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["2 3 4 6"],
       },
     },
+    stage: {"grid": {"rows": 1, "cols": "nums"}, "text": {"var": "nums"}, "markers": [{"at": "lo", "label": "lo"}, {"at": "hi", "label": "hi"}], "caption": ["total", "target"]},
   },
   {
     id: "algo-sliding-window",
@@ -546,6 +550,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["9"],
       },
     },
+    stage: {"grid": {"rows": 1, "cols": "nums"}, "text": {"var": "nums"}, "markers": [{"at": "left", "label": "L"}, {"at": "right", "label": "R"}], "caption": ["window", "best"]},
   },
   {
     id: "algo-binary-heap",
@@ -1104,6 +1109,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["10"],
       },
     },
+    stage: {"grid": {"rows": "rows", "cols": "cols"}, "heat": {"var": "paths"}, "agent": {"at": ["r", "c"]}, "caption": ["r", "c"]},
   },
   {
     id: "algo-bfs-grid",
@@ -1187,6 +1193,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["6"],
       },
     },
+    stage: {"grid": {"rows": "rows", "cols": "cols"}, "walls": {"var": "grid"}, "heat": {"var": "dist", "empty": [-1]}, "agent": {"at": ["r", "c"]}, "markers": [{"at": ["nr", "nc"], "label": "nb"}], "caption": ["queue"]},
   },
   {
     id: "algo-flood-fill",
@@ -1263,6 +1270,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["2 2 2 0", "2 2 0 0", "2 0 1 1"],
       },
     },
+    stage: {"grid": {"rows": 3, "cols": 4}, "heat": {"var": "image", "palette": {"0": "#334155", "1": "#22c55e", "2": "#3b82f6"}}, "agent": {"at": ["r", "c"]}},
   },
   {
     id: "algo-dijkstra",
@@ -1760,6 +1768,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["2 1 3 0 2"],
       },
     },
+    stage: {"grid": {"rows": "n", "cols": "n"}, "text": {"var": "board", "empty": ["."]}, "agent": {"at": ["row", "col"]}, "caption": ["solutions"]},
   },
   {
     id: "algo-permutations",
@@ -1921,6 +1930,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: [".....", ".....", ".###.", ".....", "....."],
       },
     },
+    stage: {"grid": {"rows": "rows", "cols": "cols"}, "heat": {"var": "grid", "palette": {"1": "#22c55e"}, "label": false}, "agent": {"at": ["r", "c"]}, "caption": ["alive"]},
   },
   {
     id: "algo-minimax",
@@ -2328,6 +2338,7 @@ export const ALGORITHM_EXAMPLES: LibraryExample[] = [
         output: ["0.90 1.00 0.00", "0.81 0.90 1.00", "0.73 0.81 0.90"],
       },
     },
+    stage: {"grid": {"rows": "ROWS", "cols": "COLS"}, "heat": {"var": "V"}, "markers": [{"at": "GOAL", "label": "goal"}, {"at": ["GOAL_R", "GOAL_C"], "label": "goal"}], "agent": {"at": ["r", "c"]}, "caption": ["sweep", "best"]},
   },
   {
     id: "algo-q-learning",

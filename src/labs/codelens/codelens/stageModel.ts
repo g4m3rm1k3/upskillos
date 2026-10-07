@@ -7,20 +7,35 @@
 import type { HeapSnapshot, TraceEvent } from './types'
 import { refId, visibleVariables } from './tableModel'
 
-/** A number in the spec, or the name of a variable holding one. */
+/** A number in the spec, or the name of a variable holding one (a variable holding a list
+ *  gives that list's length: "cols": "cards"). */
 export type NumberRef = number | string
-/** A cell: an index (row by row), a [row, column] pair, or a variable holding either. */
-export type CellRef = number | [number, number] | string
+/** A cell: an index (row by row), a [row, column] pair of numbers or variable names, or a
+ *  variable holding either. */
+export type CellRef = number | string | [NumberRef, NumberRef]
 
 export interface StageSpec {
   /** The grid's size. */
   grid: { rows: NumberRef; cols: NumberRef }
-  /** Colours each cell by a number: a variable holding one number (or one list to reduce) per
-   *  cell, as a flat list (row by row) or a list of rows. */
-  heat?: { var: string; reduce?: 'max' | 'min' | 'sum' | 'first'; label?: boolean }
+  /** Colours each cell from a variable holding one value per cell, as a flat list (row by row)
+   *  or a list of rows. Numbers are shaded (green above zero, red below); a list per cell is
+   *  reduced to one number. With a palette, each exact value gets its own colour instead. */
+  heat?: {
+    var: string
+    reduce?: 'max' | 'min' | 'sum' | 'first'
+    /** Write the number in the cell (default true). */
+    label?: boolean
+    /** A colour for each value, e.g. { "0": "#ef4444", "1": "#f5f5f5" }. */
+    palette?: Record<string, string>
+    /** Values that mean "nothing here yet" (BFS's -1): left blank. */
+    empty?: (number | string)[]
+  }
+  /** Writes each cell's value, whatever it is ("A", "Q"), from a variable shaped like heat's. */
+  text?: { var: string; empty?: (number | string)[] }
   /** Cells drawn as walls where this variable (flat or rows) holds a truthy value. */
   walls?: { var: string }
-  /** Fixed things: a goal, a start. */
+  /** Goals and pointers: an index variable like i, lo or hi is drawn where it points, and
+   *  simply not drawn while it doesn't exist or points off the grid (j = -1). */
   markers?: { at: CellRef; color?: string; label?: string }[]
   /** The moving thing: drawn on top, and slides from cell to cell as the step changes. */
   agent?: { at: CellRef; color?: string; label?: string }
@@ -28,8 +43,16 @@ export interface StageSpec {
   caption?: string[]
 }
 
-export interface StageCell { row: number; col: number; heat: number | null; wall: boolean; text: string | null }
-export interface StageMark { key: string; row: number; col: number; color: string; label: string | null }
+export interface StageCell {
+  row: number
+  col: number
+  heat: number | null
+  /** A palette colour, when the heat has a palette. */
+  color: string | null
+  wall: boolean
+  text: string | null
+}
+export interface StageMark { key: string; row: number; col: number; color: string; label: string | null; index: number }
 export interface Stage {
   rows: number
   cols: number
@@ -73,15 +96,24 @@ export function stageVariables(event: TraceEvent | null, snapshot: HeapSnapshot 
 
 function num(ref: NumberRef, vars: Record<string, unknown>): number | null {
   const v = typeof ref === 'string' ? vars[ref] : ref
+  if (Array.isArray(v)) return v.length   // "cols": "cards" — as many columns as cards has items
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 }
 
 function cell(ref: CellRef, vars: Record<string, unknown>, cols: number): [number, number] | null {
+  // A pair of variable names (or numbers): ["r", "c"].
+  if (Array.isArray(ref)) {
+    const r = num(ref[0], vars)
+    const c = num(ref[1], vars)
+    return r != null && c != null && Number.isInteger(r) && Number.isInteger(c) ? [r, c] : null
+  }
   const v = typeof ref === 'string' ? vars[ref] : ref
-  if (typeof v === 'number' && Number.isInteger(v)) return [Math.floor(v / cols), v % cols]
+  if (typeof v === 'number' && Number.isInteger(v)) return v < 0 ? null : [Math.floor(v / cols), v % cols]
   if (Array.isArray(v) && v.length === 2 && v.every(n => typeof n === 'number')) return [v[0] as number, v[1] as number]
   return null
 }
+
+const refText = (ref: CellRef) => (typeof ref === 'string' ? ref : JSON.stringify(ref))
 
 function reduce(v: unknown, how: NonNullable<StageSpec['heat']>['reduce']): number | null {
   if (typeof v === 'number') return v
@@ -121,6 +153,16 @@ function display(v: unknown): string {
   return text.length > 40 ? text.slice(0, 39) + '…' : text
 }
 
+const isEmpty = (v: unknown, empty?: (number | string)[]) => v === undefined || v === null || (empty ?? []).some(e => e === v)
+
+/** A cell's own value as text: numbers short, strings as they are. */
+function cellText(v: unknown): string {
+  if (typeof v === 'number') return shortNumber(v)
+  if (typeof v === 'string') return v
+  if (typeof v === 'boolean') return v ? 'T' : 'F'
+  return display(v)
+}
+
 export function buildStage(spec: StageSpec, vars: Record<string, unknown>): Stage {
   const problems: string[] = []
   const rows = num(spec.grid.rows, vars)
@@ -135,41 +177,65 @@ export function buildStage(spec: StageSpec, vars: Record<string, unknown>): Stag
     return empty
   }
 
-  const heatValue = spec.heat ? vars[spec.heat.var] : undefined
-  if (spec.heat && heatValue === undefined) problems.push(`${spec.heat.var} has no value yet.`)
-  const heatLayout = rowsOf(heatValue, rows, cols)
-  const wallValue = spec.walls ? vars[spec.walls.var] : undefined
-  if (spec.walls && wallValue === undefined) problems.push(`${spec.walls.var} has no value yet.`)
-  const wallLayout = rowsOf(wallValue, rows, cols)
+  const source = (part?: { var: string }) => {
+    const value = part ? vars[part.var] : undefined
+    if (part && value === undefined) problems.push(`${part.var} has no value yet.`)
+    return { value, layout: rowsOf(value, rows, cols) }
+  }
+  const heatSrc = source(spec.heat)
+  const textSrc = source(spec.text)
+  const wallSrc = source(spec.walls)
 
   const cells: StageCell[] = []
   let lo = Infinity
   let hi = -Infinity
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const heat = spec.heat ? reduce(valueAt(heatValue, heatLayout, r, c, cols), spec.heat.reduce) : null
-      if (heat != null) { lo = Math.min(lo, heat); hi = Math.max(hi, heat) }
-      const wall = !!valueAt(wallValue, wallLayout, r, c, cols)
-      cells.push({ row: r, col: c, heat, wall, text: heat != null && spec.heat?.label !== false ? shortNumber(heat) : null })
+      let heat: number | null = null
+      let color: string | null = null
+      let text: string | null = null
+      if (spec.heat) {
+        const raw = valueAt(heatSrc.value, heatSrc.layout, r, c, cols)
+        if (!isEmpty(raw, spec.heat.empty)) {
+          if (spec.heat.palette) color = spec.heat.palette[String(raw)] ?? null
+          else {
+            heat = reduce(raw, spec.heat.reduce)
+            if (heat != null) { lo = Math.min(lo, heat); hi = Math.max(hi, heat) }
+          }
+          if (spec.heat.label !== false && !spec.text) text = heat != null ? shortNumber(heat) : raw === undefined ? null : cellText(raw)
+        }
+      }
+      if (spec.text) {
+        const raw = valueAt(textSrc.value, textSrc.layout, r, c, cols)
+        text = isEmpty(raw, spec.text.empty) ? null : cellText(raw)
+      }
+      const wall = !!valueAt(wallSrc.value, wallSrc.layout, r, c, cols)
+      cells.push({ row: r, col: c, heat, color, wall, text })
     }
   }
 
-  const place = (key: string, ref: CellRef, color: string, label: string | undefined): StageMark | null => {
-    const p = cell(ref, vars, cols)
-    if (!p) { problems.push(`${typeof ref === 'string' ? ref : JSON.stringify(ref)} is not a cell yet.`); return null }
-    const [row, col] = p
-    if (row < 0 || row >= rows || col < 0 || col >= cols) { problems.push(`${typeof ref === 'string' ? ref : JSON.stringify(ref)} = (${row}, ${col}) is off the grid.`); return null }
-    return { key, row, col, color, label: label ?? null }
-  }
+  const onGrid = (p: [number, number] | null) => p && p[0] >= 0 && p[0] < rows && p[1] >= 0 && p[1] < cols ? p : null
+  // Markers are pointers as often as goals: one whose variable doesn't exist yet, or points off
+  // the grid (j = -1), is simply not drawn.
   const markers = (spec.markers ?? []).flatMap((m, i) => {
-    const mark = place(`marker-${i}`, m.at, m.color ?? '#f5b301', m.label)
-    return mark ? [mark] : []
+    const p = onGrid(cell(m.at, vars, cols))
+    return p ? [{ key: `marker-${i}`, row: p[0], col: p[1], color: m.color ?? MARKER_COLORS[i % MARKER_COLORS.length], label: m.label ?? null, index: i }] : []
   })
-  const agent = spec.agent ? place('agent', spec.agent.at, spec.agent.color ?? '#38bdf8', spec.agent.label) : null
+  let agent: StageMark | null = null
+  if (spec.agent) {
+    const raw = cell(spec.agent.at, vars, cols)
+    const p = onGrid(raw)
+    if (!raw) problems.push(`${refText(spec.agent.at)} is not a cell yet.`)
+    else if (!p) problems.push(`${refText(spec.agent.at)} = (${raw[0]}, ${raw[1]}) is off the grid.`)
+    else agent = { key: 'agent', row: p[0], col: p[1], color: spec.agent.color ?? '#38bdf8', label: spec.agent.label ?? null, index: 0 }
+  }
   const caption = (spec.caption ?? []).filter(name => vars[name] !== undefined).map(name => `${name} = ${display(vars[name])}`).join('   ')
 
   return { rows, cols, cells, range: lo <= hi ? [lo, hi] : null, markers, agent, caption, problems }
 }
+
+/** Marker colours when the spec gives none: distinct, so i and j are told apart. */
+export const MARKER_COLORS = ['#f5b301', '#f472b6', '#a78bfa', '#38bdf8', '#34d399']
 
 /** A heat value as a colour: red below zero, green above, fading to the background at zero. */
 export function heatColor(value: number, range: [number, number]): { color: number; alpha: number } {

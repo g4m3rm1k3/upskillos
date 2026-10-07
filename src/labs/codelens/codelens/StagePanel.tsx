@@ -8,12 +8,14 @@
 // re-coloured, and the agent slides from its old cell to its new one. Phaser is imported only
 // when a stage is shown, so nothing else pays for it.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { BookOpen, ExternalLink } from 'lucide-react'
 import type * as PhaserNS from 'phaser'
 import { useCodeLensTheme } from './ThemeContext'
 import { ScreenPopOut } from './ScreenPanel'
 import type { HeapSnapshot, TraceEvent } from './types'
 import { buildStage, heatColor, parseStageSpec, stageVariables, type Stage, type StageSpec } from './stageModel'
+import { STAGE_GUIDE } from './stageGuide'
+import type { Lang } from './types'
 
 const CELL = 64
 const PAD = 10
@@ -32,15 +34,18 @@ interface StagePanelProps {
   /** Changes when a different example is loaded, which resets the spec being edited. */
   specId?: string | null
   onStepKey?: (e: KeyboardEvent) => void
+  /** The editor's language: the guide shows its programs in Python for Python, JavaScript otherwise. */
+  lang?: Lang
 }
 
-export default function StagePanel({ event, snapshot, spec, specId, onStepKey }: StagePanelProps) {
+export default function StagePanel({ event, snapshot, spec, specId, onStepKey, lang }: StagePanelProps) {
   const { theme: { ui } } = useCodeLensTheme()
   const initial = JSON.stringify(spec ?? STARTER, null, 2)
   const [text, setText] = useState(initial)
   const [editing, setEditing] = useState(!spec)
   const [poppedOut, setPoppedOut] = useState(false)
   const [blocked, setBlocked] = useState(false)
+  const [guideStep, setGuideStep] = useState<number | null>(null)
   useEffect(() => { setText(initial); setEditing(!spec) }, [specId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const parsed = useMemo(() => parseStageSpec(text), [text])
@@ -61,11 +66,18 @@ export default function StagePanel({ event, snapshot, spec, specId, onStepKey }:
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: ui.textMuted, flexWrap: 'wrap' }}>
         <span style={{ color: ui.text, fontWeight: 600 }}>Stage</span>
         <span>{spec ? 'drawn by this example\'s stage spec' : 'drawn by a stage spec you write'}</span>
-        <button onClick={() => setEditing(e => !e)} style={{ ...button, marginLeft: 'auto' }}>{editing ? 'Hide spec' : 'Edit spec'}</button>
+        <button onClick={() => setGuideStep(s => (s === null ? 0 : null))} title="Learn to write a stage spec for your own program, step by step" style={{ ...button, marginLeft: 'auto' }}>
+          <BookOpen size={12} /> {guideStep === null ? 'Build a stage yourself' : 'Hide the guide'}
+        </button>
+        <button onClick={() => setEditing(e => !e)} style={button}>{editing ? 'Hide spec' : 'Edit spec'}</button>
         <button onClick={() => { setBlocked(false); setPoppedOut(true) }} title="Open the stage in its own window, which follows the step you are on" style={button}>
           <ExternalLink size={12} /> Pop out
         </button>
       </div>
+      {guideStep !== null && (
+        <StageGuide step={guideStep} onStep={setGuideStep} lang={lang}
+          onUse={s => { setText(JSON.stringify(s, null, 2)); setEditing(true) }} />
+      )}
       {blocked && <div style={{ fontSize: 11, color: ui.amberSoft }}>The browser blocked the new window. Allow pop-ups for this site and try again.</div>}
 
       {poppedOut ? (
@@ -87,13 +99,40 @@ export default function StagePanel({ event, snapshot, spec, specId, onStepKey }:
             style={{ minHeight: 180, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, background: ui.panelBg, color: ui.text, border: `1px solid ${parsed.error ? ui.redSoft : ui.border}`, borderRadius: 6, padding: 8, resize: 'vertical' }} />
           {parsed.error && <div style={{ fontSize: 11, color: ui.redSoft }}>{parsed.error}</div>}
           <div style={{ fontSize: 11, color: ui.textMuted, lineHeight: 1.6 }}>
-            Every name is a variable in your program. <code>grid</code>: rows and cols (numbers or variables).{' '}
-            <code>heat</code>: a variable with one number per cell (or a list per cell, reduced by max, min, sum or first), as a flat list or a list of rows.{' '}
-            <code>walls</code>: a variable whose truthy cells are walls. <code>markers</code> and <code>agent</code>: <code>at</code> is a cell index, a [row, col] pair, or a variable holding one; the agent slides from cell to cell.{' '}
-            <code>caption</code>: variables to show under the stage.
+            Every name is a variable in your program. <code>grid</code>: rows and cols (numbers, or variables; a list gives its length).{' '}
+            <code>heat</code>: colours each cell from a variable with one value per cell, as a flat list or a list of rows (a list per cell is reduced by max, min, sum or first); <code>palette</code> gives exact values their own colour, <code>empty</code> lists values to leave blank.{' '}
+            <code>text</code>: writes each cell's value. <code>walls</code>: cells whose value is true are walls.{' '}
+            <code>markers</code> (goals and pointers like i, lo, hi) and <code>agent</code> (slides as you step): <code>at</code> is a cell index, a [row, col] pair of numbers or variable names, or a variable holding one.{' '}
+            <code>caption</code>: variables to show under the stage. New to this? Press "Build a stage yourself".
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StageGuide({ step, onStep, onUse, lang }: { step: number; onStep: (n: number) => void; onUse: (spec: StageSpec) => void; lang?: Lang }) {
+  const { theme: { ui } } = useCodeLensTheme()
+  const g = STAGE_GUIDE[step]
+  const python = lang === 'py'
+  const pre = { margin: 0, padding: 8, borderRadius: 6, background: ui.panelBg, border: `1px solid ${ui.border}`, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: ui.text, whiteSpace: 'pre-wrap' as const, overflowX: 'auto' as const }
+  const button = { fontSize: 11, padding: '3px 10px', borderRadius: 5, border: `1px solid ${ui.border}`, background: 'transparent', color: ui.text, cursor: 'pointer' } as const
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10, borderRadius: 8, border: `1px solid ${ui.accent}55`, background: ui.bg }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+        <strong style={{ color: ui.text }}>{g.title}</strong>
+        <span style={{ color: ui.textMuted, fontSize: 11 }}>step {step + 1} of {STAGE_GUIDE.length}</span>
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+          <button onClick={() => onStep(step - 1)} disabled={step === 0} style={button} aria-label="Previous guide step">‹</button>
+          <button onClick={() => onStep(step + 1)} disabled={step === STAGE_GUIDE.length - 1} style={button} aria-label="Next guide step">›</button>
+        </span>
+      </div>
+      <div style={{ fontSize: 12, color: ui.text, lineHeight: 1.6 }}>{g.explain}</div>
+      <div style={{ fontSize: 11, color: ui.textMuted }}>Type this {python ? 'Python' : 'JavaScript'} into the editor (replacing what is there), then Run:</div>
+      <pre style={pre}>{python ? g.py : g.js}</pre>
+      <div style={{ fontSize: 11, color: ui.textMuted }}>Its stage spec. Read how each name matches a variable above, then use it and step through the program:</div>
+      <pre style={pre}>{JSON.stringify(g.spec, null, 2)}</pre>
+      <div><button onClick={() => onUse(g.spec)} style={{ ...button, borderColor: ui.accent, color: ui.accent }}>Use this spec</button></div>
     </div>
   )
 }
@@ -166,20 +205,26 @@ function draw(P: Phaser, state: Live, stage: Stage) {
   for (const c of stage.cells) {
     const { x, y } = center(c.row, c.col)
     const rect = get(`cell-${c.row}-${c.col}`, () => scene.add.rectangle(x, y, CELL - 4, CELL - 4, 0x334155, 0.25).setStrokeStyle(1, 0x64748b, 0.6))
-    if (c.wall) rect.setFillStyle(0x1e293b, 1)
+    // Walls are solid light blocks: empty cells are dark, so a dark wall would hide among them.
+    if (c.wall) rect.setFillStyle(0x94a3b8, 0.9)
+    else if (c.color) rect.setFillStyle(P.Display.Color.HexStringToColor(c.color).color, 0.85)
     else if (c.heat != null && stage.range) { const h = heatColor(c.heat, stage.range); rect.setFillStyle(h.color, h.alpha) }
     else rect.setFillStyle(0x334155, 0.25)
-    const label = get(`text-${c.row}-${c.col}`, () => scene.add.text(x, y + CELL / 2 - 11, '', { fontFamily: 'monospace', fontSize: '12px', color: '#e2e8f0' }).setOrigin(0.5))
+    const label = get(`text-${c.row}-${c.col}`, () => scene.add.text(x, y + CELL / 2 - 13, '', { fontFamily: 'monospace', fontSize: '14px', color: '#e2e8f0', stroke: '#0f172a', strokeThickness: 3 }).setOrigin(0.5))
     label.setText(c.text ?? '')
   }
 
+  // Markers can share a cell (lo and mid, i and j): each is a ring a little inside the last,
+  // with its label at the top, side by side.
   for (const m of stage.markers) {
     const { x, y } = center(m.row, m.col)
     const color = P.Display.Color.HexStringToColor(m.color).color
-    const ring = get(m.key, () => scene.add.rectangle(x, y, CELL - 10, CELL - 10).setFillStyle(0, 0))
-    ring.setPosition(x, y).setStrokeStyle(3, color, 1)
-    const label = get(`${m.key}-label`, () => scene.add.text(x, y - CELL / 2 + 12, '', { fontFamily: 'sans-serif', fontSize: '11px', color: m.color }).setOrigin(0.5))
-    label.setPosition(x, y - CELL / 2 + 12).setText(m.label ?? '')
+    const size = CELL - 8 - 7 * (m.index % 4)
+    const ring = get(m.key, () => scene.add.rectangle(x, y, size, size).setFillStyle(0, 0).setDepth(5))
+    ring.setPosition(x, y).setSize(size, size).setStrokeStyle(3, color, 1)
+    const lx = x - CELL / 2 + 7 + 17 * (m.index % 3)
+    const label = get(`${m.key}-label`, () => scene.add.text(lx, y - CELL / 2 + 11, '', { fontFamily: 'sans-serif', fontSize: '11px', fontStyle: 'bold', color: m.color, stroke: '#0f172a', strokeThickness: 3 }).setOrigin(0, 0.5).setDepth(6))
+    label.setPosition(lx, y - CELL / 2 + 11).setText(m.label ?? '')
   }
 
   if (stage.agent) {
