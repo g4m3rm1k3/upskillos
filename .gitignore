@@ -44,3 +44,7 @@ src/labs/game-studio/runtime/dist/
 
 # Pyodide package wheels, checksum-verified (scripts/fetch-pyodide-packages.mjs)
 .cache/
+
+# Python bytecode caches: Python rebuilds them whenever it runs a file.
+__pycache__/
+*.pyc
