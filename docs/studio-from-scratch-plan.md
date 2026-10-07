@@ -100,7 +100,15 @@ course-specific parts. Everything it does have is taught in full.
 | 13 | Exporting a game; packaging the studio as an installer | Builds, releases | Shipping a game people can play | ~3 |
 | 14 | Machine learning: an agent API, tabular Q-learning, linear Q, a trainer in a worker thread, the Train dialog, brains | MDPs, the Q update, function approximation, threads | Game AI that learns: states, actions, rewards | ~9 |
 | 15 | Tool scripts, and an API reference generated from the registry | Extensibility, documentation from code | Extending your own tools | ~2 |
+| 16 *(proposed)* | Studio Online, part 1: a server with an HTTP API for leaderboards, a database (SQL), tests against a real server | HTTP, REST APIs, SQL and schema migrations, validation on the server, integration tests | Leaderboards and replays shared between players | ~6 |
+| 17 *(proposed)* | Studio Online, part 2: accounts and sign-in, publishing a game to a web gallery, deploying the server to the cloud | Authentication (password hashing, sessions or tokens), security, deployment, CI that deploys, monitoring | Sharing finished games; cheating and trust | ~6 |
 | — | Final project: Kart Circuit (a top-down racer with Q-learning drivers as competitors), built in your own studio, working with a coding agent | Directing an agent: briefs, backlogs, reviewing its code, tests as the contract | Designing a racer: laps, ghosts, difficulty | ~6 |
+
+**Full stack (the user asked, 2026-10-07: "will this teach me full stack engineering?").** Sprints 0 to 15 teach the
+front end, application design and desktop engineering, but no back end: no server, database, API, accounts or
+deployment. Sprints 16 and 17 are proposed to add them through a real need: Kart Circuit's leaderboards and ghost
+replays shared online, and a gallery to publish games to. They come before the final project, so Kart Circuit can use
+them. Not yet agreed.
 
 About **85 to 100 lessons, each 5 to 10 runnable steps: 600 to 900 steps.**
 
@@ -157,7 +165,16 @@ contract it must meet. This is why UpSkillOS exists.
     errors with paths; 2.4 parseScene: `unknown`, type guards, validation at the border; 2.5 the game starts from
     `scenes/main.json` (Vite `?raw`, `vite-env.d.ts`), a broken file shows its problem; 2.6 review, v0.3.0, ADR 3.
   - Sprint 1's Sprint 2 stories were reworded to match the plan's order (saving from the app waits for Sprints 4 and 6).
+- **Sprint 3, lessons 3.1 to 3.8: written and replayed on macOS (2026-10-07), not yet reviewed by the user.**
+  - 3.1 the Scene API (findNode, setProp) on data; 3.2 addNode (structuredClone, aliasing), deleteNode, renameNode,
+    sibling-name invariant; 3.3 History with two stacks and classic commands (the delete-order bug); 3.4 the same tests,
+    switched to snapshot commands (memento, atomic rollback); 3.5 each command's line of code (`lit`, log derived from
+    the done stack); 3.6 the `scene` facade, `runCode` with `new Function`, a replay test; 3.7 the console in the app,
+    the first CSS, rebuild-from-data, rollback of changes the engine refuses, two new e2e tests; 3.8 review, v0.4.0, ADR 4.
+- **Explanation audit (user, 2026-10-07: "no unexplained code… even the css"; level: basic coding skills).** Every
+  construct is explained at first use. A script lists keywords, operators, built-ins and `.method()` calls used before
+  the prose names them; HTML, JSON and CSS are checked by hand. Fixed 16 gaps in Sprints 0–2.
 - Exact tool versions: TypeScript 7.0.2, Vitest 5.0.3, Vite 8.3.3, Electron 44.6.0, Playwright 1.63.0, Phaser 4.2.1;
   Node 22+. Phaser's `.d.ts` has two errors under TypeScript 7, so lesson 1.9 teaches `skipLibCheck`.
-- The replay (`studioBuild.desktop.test.js`) passes 27/27 on macOS. Windows still to be run.
-- Next: Sprint 3, commands with undo and redo, and each change as a line of code (stories already in 2.6's backlog).
+- The replay (`studioBuild.desktop.test.js`) passes 35/35 on macOS. Windows still to be run.
+- Next: Sprint 4, the editor: React, panels around the game view, a scene tree, an inspector (stories in 3.8's backlog).

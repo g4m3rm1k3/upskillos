@@ -84,6 +84,7 @@ export class Input {
 - `this.actions.set(name, keys)` stores a pair, replacing any earlier one with that name. `this.actions.get(action)` returns the value, or `undefined` if there's no pair with that name.
 - A **`Set`** stores values with no repeats and no order, and answers *is this in it?* very quickly. `held` is the set of key codes that are down right now.
 - `add` puts a value in (adding one that's already there does nothing), `delete` takes it out, `has` asks whether it's in.
+- `down: boolean` is a parameter of type **`boolean`**, the type whose only two values are `true` and `false`. `isPressed` returns one too: `: boolean`.
 - `if (down) … else …`: `else` gives the statement to run when the condition is false.
 - `keysOf(action).some(fn)` calls `fn` on each code in the list and returns `true` as soon as one call returns `true`; `false` if none does. So an action is pressed if *any* of its keys is held.
 - Why a Set and not an array for `held`? `has` on a Set takes the same tiny time however many values it holds. Finding a value in an array means looking at every item until it turns up. It's also impossible for a Set to hold `'Space'` twice, which an array allows by mistake.

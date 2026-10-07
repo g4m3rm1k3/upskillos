@@ -67,6 +67,7 @@ Create `tsconfig.json`:
 }
 ```
 
+- The file is one JSON object with two keys. `"compilerOptions"` holds an object of settings for how the code is checked; `"include"` says which files to check.
 - `"include": ["src"]`: check every TypeScript file in the `src` folder.
 - `"strict": true` turns on all of TypeScript's strict checks. The most important: a variable that might be `undefined` or `null` must be checked before it's used.
 - `"noEmit": true`: only *check*. Turning TypeScript into JavaScript is done by the tools in the next lessons (Vitest and Vite), so `tsc` writes no files.

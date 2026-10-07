@@ -50,6 +50,9 @@ Hello from Node v24.11.0
 - `console` is an object Node gives every program; its `log` method writes a line of text to the terminal.
 - `process` is another object Node gives every program: it describes the running program. `process.version` is a string, the version of Node running it.
 - `+` with a string on either side joins strings: `'Hello from Node ' + 'v24.11.0'` is one string.
+- `'Hello from Node '` is a **string**: text, written between quotes. JavaScript accepts `'single'` or `"double"` quotes; this series uses single quotes in code. `process.version` has no quotes because it's a name the program looks up, not text.
+- The dots in `console.log` and `process.version` read a **property** of an object: `console.log` is the `log` that belongs to `console`. The brackets in `log(…)` **call** it, handing it what's between them.
+- The `;` at the end marks the end of a **statement**, one instruction. Each statement in this series ends with one.
 
 ```check
 run "node hello.js" stdout="Hello from Node v" -- Create hello.js, save it, then run node hello.js.

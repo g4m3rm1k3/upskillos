@@ -57,7 +57,8 @@ Create `index.html` in the project's top folder:
 </html>
 ```
 
-- HTML is made of **elements**: a start tag like `<h1>`, content, and an end tag `</h1>`. Elements nest inside each other: `<html>` holds `<head>` and `<body>`.
+- `<!doctype html>` is the first line of every web page. It tells the browser the file is modern HTML, so it uses today's rules for drawing it rather than old ones kept for very old pages.
+- HTML is made of **elements**: a start tag like `<h1>`, content, and an end tag `</h1>`. Elements nest inside each other: `<html>` holds the whole page, which is `<head>` and `<body>`.
 - `<head>` holds information about the page: `<meta charset="utf-8" />` says how its text is encoded (UTF-8, which can store every character), and `<title>` is the text the window's title bar shows.
 - `<body>` holds what's shown. `<h1>` is a top-level heading, empty for now; `id="title"` is an **attribute** giving it a name that code can find it by. An id must be unique in the page.
 - `<script type="module" src="/src/main.ts">` loads and runs a file as an ES module. A browser can't run `.ts`; Vite turns it into JavaScript as the browser asks for it.
@@ -79,6 +80,7 @@ if (title) title.textContent = greet('Studio');
 ```
 
 - The browser turns the HTML into a tree of objects in memory, the **DOM** (Document Object Model): one object per element, each holding its children. `document` is the root of that tree.
+- `const title = …` makes a **variable**, a name for a value, here whatever `querySelector` returns. `const` means the name can't be given a different value later. (`let`, met in lesson 1.2, can.) Use `const` unless the value must change.
 - `document.querySelector('#title')` searches the tree for the first element matching the **selector** `#title` (`#` means "id is"). Its type is `Element | null`: an element, or `null` if nothing matched. The `|` makes a **union type**, one of either.
 - `if (title)` checks it's not `null`. Inside the `if`, TypeScript knows `title` is an `Element` (it **narrows** the type), so setting `title.textContent` type-checks. Without the `if`, `npx tsc` reports *'title' is possibly 'null'*: strict mode at work.
 - `textContent` is the element's text. Setting it replaces whatever was there with the string `greet` returns.
@@ -181,6 +183,10 @@ Add the two commands as scripts:
   }
 }
 ```
+
+- `"dev": "vite"`: `npm run dev` starts the dev server, the same as `npx vite`. Inside a script, npm finds `vite` in `node_modules` by itself (lesson 0.3).
+- `"build": "vite build"`: `npm run build` builds the page into `dist`.
+- The scripts are listed in the order you use them: work (`dev`), build, then check (`typecheck`, `test`).
 
 ```powershell
 git add .

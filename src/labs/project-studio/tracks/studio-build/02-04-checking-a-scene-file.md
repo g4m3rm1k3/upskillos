@@ -89,6 +89,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 - The `catch` throws a new error whose message starts by saying what's wrong in a game maker's terms, then keeps JavaScript's message, which says where. `(error as Error).message`: a `catch` gets its error as `unknown`, because JavaScript can throw any value. `JSON.parse` always throws an `Error`.
 - `function isObject(value: unknown): value is Record<string, unknown>` is a **type guard**. The return type `value is …` means "when this returns true, `value` has this type". After `if (!isObject(raw)) throw …`, TypeScript treats `raw` as an object whose fields are `unknown`, so `raw.formatVersion` is allowed.
 - `isObject` checks three things, because JavaScript's `typeof` says `'object'` for three different kinds of value: real objects, arrays, and (a famous mistake in the language) `null`. Only a real object passes.
+- `value !== null`: `!==` means **not equal**, the opposite of `===`. `Array.isArray(value)` is `true` only for an array, so `!Array.isArray(value)` rules arrays out.
 - `raw.formatVersion !== FORMAT_VERSION` refuses every version but this one. `String(…)` turns any value into text for the message, even `undefined`.
 - `raw.root as NodeData` is an assertion: it *tells* TypeScript the root is a node, without checking. The tests pass, but this is the gap the next step shows.
 

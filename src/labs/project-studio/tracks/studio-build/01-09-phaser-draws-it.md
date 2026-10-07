@@ -287,6 +287,7 @@ test('holding the right arrow moves the player right', async () => {
 - The first `expect.poll` waits until the readout shows `400`: Phaser has started and drawn at least one frame.
 - `page.keyboard.down('ArrowRight')` makes the window receive a real `keydown` event, as if a key were pressed. `waitForTimeout(500)` holds it for half a second; `keyboard.up` lets go.
 - `Number(text)` turns the readout's string into a number.
+- `toBeGreaterThan(450)` passes if the value is more than 450; `toBeLessThan(600)` if it's less than 600. Together they check the value is in a range.
 - At 200 pixels a second, half a second is 100 pixels, so x should be near 500. The test allows 450 to 600, not exactly 500. A real key held for "half a second" by a test is never exactly half a second, so an exact check would fail now and then for no real reason. A test that fails randomly is called **flaky**, and a flaky test is soon ignored. The range still catches the real failures: no movement at all, or moving at the wrong speed.
 
 ```check

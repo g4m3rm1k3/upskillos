@@ -400,6 +400,7 @@ export class Node {
 - `for (const name of array) { … }` is a **for…of loop**: it runs the block once for each item, with `name` set to that item.
 - `let node: Node = this` starts at this node. `let` (unlike `const`) can be given a new value later, and it is: each pass moves `node` one level down.
 - `node.children.find((c) => c.name === name)` calls the arrow function on each child in turn and returns the first child it returns `true` for, or `undefined` if none did. So `child` has the type `Node | undefined`.
+- `!` means **not**: it turns a truthy value into `false` and a falsy one into `true`. `undefined` is falsy, so `!child` is `true` when nothing was found.
 - `if (!child) throw …`: no child of that name, so the path is wrong. The message names the whole path, so the mistake is easy to find.
 - Trace `car.get('body/driver')`: `node` starts as `car`; the first pass finds `body` in `car.children` and moves to it; the second finds `driver` in `body.children`; the loop ends and returns `driver`.
 

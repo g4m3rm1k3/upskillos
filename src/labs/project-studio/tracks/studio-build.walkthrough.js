@@ -118,4 +118,27 @@ export const WALKTHROUGH = {
   '02-06-sprint-2-review#Commit, and tag 0.3.0': {
     run: ['git add .', 'git commit -m "Sprint 2 review: version 0.3.0, ADR 3, retrospective, Sprint 3 stories"', 'git tag -a v0.3.0 -m "Sprint 2: scenes as data"'],
   },
+  '03-01-the-scene-api#Commit': { run: ['git add .', 'git commit -m "The Scene API begins: findNode and setProp, on scene data"'] },
+  '03-02-add-delete-rename#addNode': {
+    wrong: [{ name: 'stores the caller\'s object', files: { 'src/editor/scene-api.ts': "import type { NodeData, PropValue, SceneData } from '../engine/scene';\n\nexport function findNode(scene: SceneData, path: string): NodeData {\n  const [rootName, ...names] = path.split('/');\n  if (rootName !== scene.root.name) throw new Error(`There is no node at \"${path}\"`);\n  let node = scene.root;\n  for (const name of names) {\n    const child = node.children.find((c) => c.name === name);\n    if (!child) throw new Error(`There is no node at \"${path}\"`);\n    node = child;\n  }\n  return node;\n}\n\nexport function setProp(scene: SceneData, path: string, key: string, value: PropValue): void {\n  findNode(scene, path).props[key] = value;\n}\n\nexport function addNode(scene: SceneData, parentPath: string, node: NodeData): void {\n  const parent = findNode(scene, parentPath);\n  if (parent.children.some((c) => c.name === node.name)) {\n    throw new Error(`\"${parentPath}\" already has a child called \"${node.name}\"`);\n  }\n  parent.children.push(node);\n}\n" }, fails: [0] }],
+  },
+  '03-02-add-delete-rename#Commit': { run: ['git add .', 'git commit -m "Scene API: addNode, deleteNode and renameNode, keeping sibling names unique"'] },
+  '03-03-undo-with-commands#Commit': { run: ['git add .', 'git commit -m "History with undo and redo stacks; commands for setProp and deleteNode"'] },
+  '03-04-undo-with-snapshots#Snapshots': {
+    wrong: [{ name: 'no rollback when an edit fails', files: { 'src/editor/commands.ts': "import type { PropValue, SceneData } from '../engine/scene';\nimport type { Command } from './history';\nimport { deleteNode, renameNode, setProp } from './scene-api';\n\nexport function snapshotCommand(scene: SceneData, label: string, edit: (scene: SceneData) => void): Command {\n  let before = '';\n  let after = '';\n  return {\n    label,\n    run: () => {\n      if (after !== '') {\n        scene.root = JSON.parse(after);\n        return;\n      }\n      before = JSON.stringify(scene.root);\n      edit(scene);\n      after = JSON.stringify(scene.root);\n    },\n    undo: () => {\n      scene.root = JSON.parse(before);\n    },\n  };\n}\n\nexport function setPropCommand(scene: SceneData, path: string, key: string, value: PropValue): Command {\n  return snapshotCommand(scene, `Set ${key} of ${path}`, (s) => setProp(s, path, key, value));\n}\n\nexport function deleteNodeCommand(scene: SceneData, path: string): Command {\n  return snapshotCommand(scene, `Delete ${path}`, (s) => deleteNode(s, path));\n}\n\nexport function renameNodeCommand(scene: SceneData, path: string, newName: string): Command {\n  return snapshotCommand(scene, `Rename ${path} to ${newName}`, (s) => renameNode(s, path, newName));\n}\n" }, fails: [0] }],
+  },
+  '03-04-undo-with-snapshots#Commit': { run: ['git add .', 'git commit -m "Undo by snapshots: one undo for every command, and failed changes roll back"'] },
+  '03-05-each-change-as-code#Commit': { run: ['git add .', 'git commit -m "Each command carries its line of code; the history\'s log follows undo and redo"'] },
+  '03-06-running-the-code#Commit': { run: ['git add .', 'git commit -m "Scripts: a scene facade over the commands, runCode, and a replay test for the log"'] },
+  '03-07-a-console-in-the-app#Commit, and tick the stories': {
+    editFiles: { 'BACKLOG.md': [
+      ['- [ ] As a game maker, I want to undo any change to my scene', '- [x] As a game maker, I want to undo any change to my scene'],
+      ['- [ ] As a game maker, I want to redo what I undid', '- [x] As a game maker, I want to redo what I undid'],
+      ['- [ ] As a game maker, I want to see each change I make as a line of code', '- [x] As a game maker, I want to see each change I make as a line of code']
+    ] },
+    run: ['git add .', 'git commit -m "A console in the app: Scene API lines, a code log, undo and redo"'],
+  },
+  '03-08-sprint-3-review#Commit, and tag 0.4.0': {
+    run: ['git add .', 'git commit -m "Sprint 3 review: version 0.4.0, ADR 4, retrospective, Sprint 4 stories"', 'git tag -a v0.4.0 -m "Sprint 3: changes that can be undone"'],
+  },
 };

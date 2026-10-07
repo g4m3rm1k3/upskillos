@@ -74,6 +74,7 @@ test('the app opens a window that greets the studio', async () => {
 - `page.textContent('#title')` finds the element by the same selector as `main.ts` and gives back a promise of its text.
 - `expect.poll(fn)` calls `fn` repeatedly, every 50 milliseconds, until the value passes `.toBe(…)` or a second has gone by. The window shows the HTML before `main.ts` has run, so reading the heading only once could catch it still empty.
 - `page.title()` is the text of `<title>`, the window's title bar.
+- `app.close()` closes the app's windows and stops Electron. It returns a promise, so `await` waits until the app has really stopped before the test ends.
 - `try { … } finally { … }`: the `finally` block runs however the `try` block ends, even when an `expect` throws. So the app is closed every time, and a failed test never leaves a window open.
 - `30000` is the test's **timeout** in milliseconds. Vitest's default is 5 seconds, and starting Electron can take longer the first time.
 

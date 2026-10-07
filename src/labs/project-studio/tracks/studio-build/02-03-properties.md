@@ -135,6 +135,7 @@ function applyProps(node: Node, props: Record<string, PropValue>): void {
 - `for (const [key, value] of …)` loops over the pairs and **destructures** each one: the pair's first item goes into `key`, the second into `value`.
 - `node as unknown as Record<string, unknown>` tells TypeScript to treat the node as a table of fields that can be looked up by any string. TypeScript only allows fields it knows by name (`node.position`), and here the name is in a variable. Going through `unknown` is required, because TypeScript won't turn a `Node` into an unrelated type directly. This throws away type checking for the next lines, which is exactly why the next step adds checks of its own.
 - `fields[key] = …` sets the field whose name is in `key`. Square brackets with a string do what `.position` does with a fixed name.
+- `typeof value` gives the kind of a value as a string: `'number'`, `'string'`, `'boolean'`, `'object'`, `'function'` or `'undefined'`. So `typeof value === 'number'` asks "is it a number?", and TypeScript narrows `value` to `number` when it is.
 - `typeof value === 'number' ? value : new Vec2(value.x, value.y)`: a number is copied as it is; anything else is a `Vec2Data`, and becomes a real `Vec2`.
 
 ```check
@@ -298,6 +299,7 @@ function applyProps(node: Node, data: NodeData, path: string): void {
 
 - The rule: a prop may set a field only if the node already has that field **as its own**, holding a `Vec2` or a number. That's what a setting looks like in this engine: `position`, `size`, `color`, all made by field initialisers like `color = 0xffffff`.
 - `Object.hasOwn(node, key)` is true if the field is stored on this object itself. Fields made by initialisers are; methods (`update`) and getters (`globalPosition`) are not. They belong to the class and are shared by every instance, which is why the object finds them without holding its own copy. So `hasOwn` rules out every method and getter in one check. Setting a getter-only property would also throw a confusing error of JavaScript's own: `Cannot set property globalPosition of #<Node2D> which has only a getter`.
+- `||` means **or**: true if either side is true. (It's the partner of `&&`, *and*, from lesson 1.3.)
 - `current instanceof Vec2 || typeof current === 'number'` rules out the own fields that aren't settings: `name` (a string), `parent` and `children`. The field's current value, the default, says what kind of value it takes.
 - A list of what *is* allowed, with everything else refused, is called an **allow list**. It's safer than a list of what's forbidden: a new field that isn't a number or vector can never be set from a file by accident.
 - The error says *a Box*, from `data.type`. It doesn't use the class's own name, because `vite build` **minifies** code (lesson 0.5), renaming classes to single letters. A message built from the class name would say *a e* in the finished app.

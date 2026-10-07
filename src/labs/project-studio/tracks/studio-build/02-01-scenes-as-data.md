@@ -49,6 +49,7 @@ explain: stringify writes the car, then its children, so the wheel, then the whe
 - These tests don't test your code. They pin down how JavaScript itself behaves, the facts the next lessons rely on. Tests like these are called **learning tests**: if a future JavaScript changed this behaviour, they'd say so.
 - The full error names the loop: *starting at object with constructor 'Node' → property 'children' → index 0 → property 'parent' closes the circle*. The two links that make the tree easy to walk (lesson 1.2) make a loop.
 - The second test shows what JSON keeps: only **data**, the fields and their values. `{"x":3,"y":4}` says nothing about `Vec2`. `JSON.parse` gives back a plain object, `{ x: 3, y: 4 }`, with no `length` method: `back.length` is `undefined`.
+- `expect(back).not.toBeInstanceOf(Vec2)`: `.not` turns any check into its opposite, so this passes only if `back` is *not* a `Vec2`.
 - JSON has strings, numbers, `true` and `false`, `null`, arrays and objects, and nothing else. No functions, no classes, no `undefined` (a field holding it is left out), and no `NaN` or `Infinity`, which are written as `null`.
 
 Run `npm test`: `34 passed`. The tests pass at once, because they describe JavaScript, not new code.
@@ -111,6 +112,7 @@ test('a scene written as data survives the trip through JSON unchanged', () => {
 - Each node is `{ type, name, props, children }`. `type` is the class's name as a string, `'Box'`, because a string can go in a file and a class can't.
 - `props` holds the node's settings by name: a position, a colour. A position is written as `{ x, y }`, the plain-object form JSON gives anyway.
 - `children` is an array of more nodes in the same shape. The children are *inside* their parent, so the nesting itself says who belongs to whom. No `parent` field is needed.
+- `expect(text).toContain('"name": "wheel"')` passes if the string `text` has that piece of text anywhere in it.
 - `JSON.stringify(level, null, 2)`: the third argument **pretty-prints**, putting each value on its own line, indented by 2 spaces, so people can read the file and Git can show which lines changed. (The second argument, `null`, is for a filter this code doesn't need.)
 
 ```check

@@ -88,6 +88,7 @@ export class FixedLoop {
 - `readonly step: number` can be set in the constructor and never again. A step size that changed while the game ran would break determinism, so TypeScript is told to forbid it: `loop.step = 0.1` elsewhere is an error from `npx tsc`.
 - `private leftover = 0` is the accumulator, in seconds. `private` means only the class's own methods can use it: `loop.leftover` anywhere else is a type error. Other code can't put the loop into a wrong state, because it can't touch the state at all. (`private` is checked by TypeScript only; the field is still an ordinary property when the program runs.)
 - `this.leftover += seconds` is short for `this.leftover = this.leftover + seconds`: the frame's time goes into the accumulator.
+- `this.leftover >= this.step` is `true` when the leftover is **greater than or equal to** one step. (`<=` is less than or equal; `>` and `<` are strictly greater and less.) With `>=`, a leftover of exactly one step is taken as a step.
 - The `while` loop takes one step out at a time (`-= this.step`) and counts it (`steps++`) for as long as a whole step is left.
 - It returns the count. The caller runs that many updates, each with `dt` equal to `loop.step`.
 
