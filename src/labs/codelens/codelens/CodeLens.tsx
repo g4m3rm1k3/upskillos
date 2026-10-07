@@ -3,6 +3,8 @@ import Editor, { useMonaco } from '@monaco-editor/react'
 import { buildProgramModel } from '../../../engines/js/parser/jsParser.js'
 import { startPythonExecution } from './interpreter/pythonExecutionClient'
 import { explainTraceEvent, eventLabel } from './explainTrace'
+import { heldValueText, nameObjects, objectNames } from './objectNames'
+import { refId } from './tableModel'
 import { startNativeExecution, nativeToolchains, type NativeLang } from './interpreter/nativeExecutionClient'
 import { checkBackendTools } from './interpreter/nativeTracer'
 import { runNative } from './interpreter/nativeTracer'
@@ -26,7 +28,7 @@ import WatchWindow from './renderer/WatchWindow'
 import LibraryBrowser from './LibraryBrowser'
 import InputPanel, { readsInput } from './InputPanel'
 import DataDock from './DataDock'
-import { HeapPreviewContext, referenceText } from './renderer/valuePreview'
+import { HeapPreviewContext, objectPreview, referenceText } from './renderer/valuePreview'
 import ScreenPanel from './ScreenPanel'
 import StagePanel from './StagePanel'
 import PackagesDialog from './PackagesDialog'
@@ -431,14 +433,16 @@ const CONCEPT_MAP = CONCEPT_GLOSSARY as Record<string, ConceptEntry>
 
 interface Explanation { summary: string; why?: string; concept?: string }
 const EXPLAIN_MAP = EXPLAIN as Record<string, ((event: TraceEvent) => Explanation) | undefined>
-function explainEvent(event: TraceEvent): Explanation {
+function explainEvent(event: TraceEvent, snapshot?: HeapSnapshot | null): Explanation {
   // Python and the desktop languages tag their events with `language`; their
   // explanations come from explainTrace.ts. The JavaScript interpreter's don't, and use
   // its own JavaScript-specific explanations.
-  if (event.language || ((event.type === 'statement_enter' || event.type === 'statement_exit') && event.statement)) {
-    return explainTraceEvent(event)
-  }
-  return EXPLAIN_MAP[event.type]?.(event) ?? { summary: event.type, why: '', concept: '' }
+  const explain = event.language || ((event.type === 'statement_enter' || event.type === 'statement_exit') && event.statement)
+    ? explainTraceEvent(event)
+    : EXPLAIN_MAP[event.type]?.(event) ?? { summary: event.type, why: '', concept: '' }
+  // Objects are called by the variable (or path, with a snapshot) that reaches them, not "#3".
+  const names = objectNames(event, snapshot)
+  return { ...explain, summary: nameObjects(explain.summary, names), why: explain.why && nameObjects(explain.why, names) }
 }
 
 function ConceptBadge({ concept, style: extraStyle }: { concept?: string; style?: CSSProperties }) {
@@ -762,8 +766,14 @@ function EventCard({ event, active }: { event: TraceEvent; active: boolean }) {
 // ── Stack frame display ───────────────────────────────────────────────────────
 
 // A variable's value as the Call Stack shows it: an object with what it holds,
-// "[0, 0, -0.5, 0] (ndarray #39)", and Python's own spelling of None, True and strings.
-function localText(value: unknown, snapshot: HeapSnapshot | null, language: string | undefined, maxChars = 48): string {
+// "[0, 0, -0.5, 0]", plus any other variable that refers to the same object (the variable's
+// own name is right beside it, so no id), and Python's own spelling of None, True and strings.
+function localText(value: unknown, snapshot: HeapSnapshot | null, language: string | undefined, maxChars = 48, rowName?: string): string {
+  const id = refId(value)
+  const obj = id != null ? snapshot?.objects.get(id) : undefined
+  if (rowName && obj && id != null) {
+    return heldValueText(objectPreview(id, snapshot, maxChars, language) ?? undefined, obj.type, id, rowName, objectNames(null, snapshot))
+  }
   const reference = referenceText(value, snapshot, maxChars, language)
   if (reference) return reference
   if (language === 'py') {
@@ -808,8 +818,8 @@ function StackFrame({ frame, depth }: { frame: StackFrame; depth: number }) {
               fontFamily: 'JetBrains Mono, monospace', marginBottom: 2,
             }}>
               <span style={{ color: ui.cyan, minWidth: 80 }}>{name}</span>
-              <span style={{ color: ui.green, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={localText(value, heap.snapshot, heap.language, 400)}>
-                {localText(value, heap.snapshot, heap.language)}
+              <span style={{ color: ui.green, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={localText(value, heap.snapshot, heap.language, 400, name)}>
+                {localText(value, heap.snapshot, heap.language, 48, name)}
               </span>
             </div>
           ))}
@@ -1242,9 +1252,9 @@ function CodeLensInner({ onBack, initialCode, initialLang, backLabel }: CodeLens
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {currentEvent
                   ? <>
-                      <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} />
+                      <ExplainHero event={currentEvent} prevEvent={prevEvent} step={step} total={totalSteps} snapshot={dockSnapshot} />
                       {expressionSteps.length > 0 && execution?.expressions && (
-                        <ExpressionSteps spans={execution.expressions} steps={expressionSteps} selected={expressionPart} onSelect={setExpressionPart} />
+                        <ExpressionSteps spans={execution.expressions} steps={expressionSteps} selected={expressionPart} onSelect={setExpressionPart} names={objectNames(currentEvent, dockSnapshot)} />
                       )}
                     </>
                   : <IdleHero />
@@ -2003,9 +2013,9 @@ function eventColor(type: string, ui: CodeLensUiPalette): string {
   return ui.textDim
 }
 
-function ExplainHero({ event, prevEvent, step, total }: { event: TraceEvent; prevEvent: TraceEvent | null; step: number; total: number }) {
+function ExplainHero({ event, prevEvent, step, total, snapshot }: { event: TraceEvent; prevEvent: TraceEvent | null; step: number; total: number; snapshot?: HeapSnapshot | null }) {
   const { theme: { ui } } = useCodeLensTheme()
-  const explain = explainEvent(event)
+  const explain = explainEvent(event, snapshot)
   const color   = eventColor(event.type, ui)
   const loc     = event.sourceLocation
   const narration = buildNarration(event, prevEvent)
@@ -3316,6 +3326,7 @@ function ScopeChainView({ event }: { event: TraceEvent | null }) {
   const frames   = event.stackSnapshot ?? []
   // Frames are ordered innermost-first; reverse so top = current
   const ordered  = [...frames].reverse()
+  const names    = objectNames(event)
   const hasFrames = ordered.length > 0
 
   return (
@@ -3347,7 +3358,7 @@ function ScopeChainView({ event }: { event: TraceEvent | null }) {
 
       {/* Stack frames as scope levels */}
       {ordered.map((frame, i) => (
-        <ScopeFrame key={i} frame={frame} isCurrent={i === 0} />
+        <ScopeFrame key={i} frame={frame} isCurrent={i === 0} names={names} />
       ))}
 
       {/* Global scope always at the bottom */}
@@ -3364,7 +3375,7 @@ function ScopeChainView({ event }: { event: TraceEvent | null }) {
   )
 }
 
-function ScopeFrame({ frame, isCurrent }: { frame: StackFrame; isCurrent: boolean }) {
+function ScopeFrame({ frame, isCurrent, names }: { frame: StackFrame; isCurrent: boolean; names: Map<number, string[]> }) {
   const { theme: { ui } } = useCodeLensTheme()
   const [open, setOpen] = useState(isCurrent)
   const locals = Object.entries(frame.locals ?? {})
@@ -3437,7 +3448,7 @@ function ScopeFrame({ frame, isCurrent }: { frame: StackFrame; isCurrent: boolea
                 <span style={{ color: ui.cyan, minWidth: 80, flexShrink: 0 }}>{name}</span>
                 <span style={{ color: ui.borderStrong, flexShrink: 0 }}>=</span>
                 <span style={{ color: valueColor(val, ui), wordBreak: 'break-all' }}>
-                  {formatValue(val)}
+                  {formatValue(val, name, names)}
                 </span>
               </div>
             ))}
@@ -3449,6 +3460,7 @@ function ScopeFrame({ frame, isCurrent }: { frame: StackFrame; isCurrent: boolea
 }
 
 function GlobalScope({ event }: { event: TraceEvent }) {
+  const names = objectNames(event)
   const { theme: { ui } } = useCodeLensTheme()
   const [open, setOpen] = useState(false)
   // Collect globals from the first (oldest) stack frame if available
@@ -3491,7 +3503,7 @@ function GlobalScope({ event }: { event: TraceEvent }) {
             }}>
               <span style={{ color: ui.textMuted, minWidth: 80 }}>{name}</span>
               <span style={{ color: ui.borderStrong }}>=</span>
-              <span style={{ color: valueColor(val, ui) }}>{formatValue(val)}</span>
+              <span style={{ color: valueColor(val, ui) }}>{formatValue(val, name, names)}</span>
             </div>
           ))}
         </div>
@@ -3510,13 +3522,20 @@ function valueColor(v: unknown, ui: CodeLensUiPalette): string {
   return ui.textDim
 }
 
-function formatValue(v: unknown): string {
+// In the Scope panel a value sits beside its variable (rowName): a reference there shows what
+// it holds and any other names for the same object (objectNames.ts), not an id.
+function formatValue(v: unknown, rowName?: string, names?: Map<number, string[]>): string {
   if (v === null)      return 'null'
   if (v === undefined) return 'undefined'
   if (typeof v === 'function') return '[Function]'
   if (isDisplayedReference(v)) {
     // Python's tracer adds what the object holds, e.g. "(0, 1)" for a returned tuple.
     const preview = (v as { preview?: string }).preview
+    const id = referenceId(v)
+    if (rowName && names && id !== '?') {
+      const shown = preview && preview.length > 28 ? preview.slice(0, 27) + '…' : preview
+      return heldValueText(shown, (v as { objectType?: string }).objectType, id, rowName, names)
+    }
     return preview ? `${preview.length > 28 ? preview.slice(0, 27) + '…' : preview} #${referenceId(v)}` : `Object #${referenceId(v)}`
   }
   if (typeof v === 'object' && v !== null && (v as { type?: string }).type === 'function') return `[Function ${(v as { name?: string }).name ?? ''}]`

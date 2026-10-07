@@ -7,7 +7,8 @@ import { useCodeLensTheme } from './ThemeContext'
 import type { ExpressionSpan } from './types'
 
 /** A value as Python shows it: None, True, 'text', or an object by its number. */
-export function pythonValue(value: unknown): string {
+/** A value as Python would show it. An object a name reaches is called by that name (objectNames.ts). */
+export function pythonValue(value: unknown, names?: Map<number, string[]>): string {
   if (value === null || value === undefined) return 'None'
   if (value === true) return 'True'
   if (value === false) return 'False'
@@ -17,6 +18,8 @@ export function pythonValue(value: unknown): string {
   }
   if (typeof value === 'object' && '$ref' in (value as object)) {
     const ref = value as { $ref: number; preview?: string }
+    const named = names?.get(ref.$ref)?.map(n => `\`${n}\``).join(' = ')
+    if (named) return ref.preview ? `${ref.preview} (${named})` : named
     return ref.preview ? `${ref.preview} (#${ref.$ref})` : `object #${ref.$ref}`
   }
   return String(value)
@@ -28,9 +31,11 @@ interface ExpressionStepsProps {
   /** The step whose part of the line is highlighted, or null. */
   selected: number | null
   onSelect: (index: number | null) => void
+  /** Names for objects at this step (objectNames.ts). */
+  names?: Map<number, string[]>
 }
 
-export default function ExpressionSteps({ spans, steps, selected, onSelect }: ExpressionStepsProps) {
+export default function ExpressionSteps({ spans, steps, selected, onSelect, names }: ExpressionStepsProps) {
   const { theme: { ui } } = useCodeLensTheme()
   const go = (index: number) => onSelect(Math.max(0, Math.min(steps.length - 1, index)))
 
@@ -65,7 +70,7 @@ export default function ExpressionSteps({ spans, steps, selected, onSelect }: Ex
                 <span style={{ color: ui.textFaint, minWidth: 18 }}>{index + 1}.</span>
                 <span style={{ color: ui.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0, maxWidth: '55%' }}>{span.code}</span>
                 <span style={{ color: ui.textFaint }}>→</span>
-                <span style={{ color: ui.green, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }} title={pythonValue(value)}>{pythonValue(value)}</span>
+                <span style={{ color: ui.green, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }} title={pythonValue(value, names)}>{pythonValue(value, names)}</span>
               </button>
             </li>
           )
