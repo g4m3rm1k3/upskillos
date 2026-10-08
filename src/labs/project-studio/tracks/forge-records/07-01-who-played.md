@@ -1186,24 +1186,24 @@ def open_scores(path: Path) -> sqlite3.Connection:
 ~~~
 
 Putting it in `open_scores` means every connection the program makes gets it, because there's only one way to open the scores database. That's a reason to have exactly one function that opens it. Other databases (PostgreSQL, MySQL with InnoDB, SQL Server) enforce foreign keys by default; SQLite's default is a historical leftover that every SQLite program has to deal with, and now you know to look for it. A rule the database declares but doesn't check is worse than no rule: everyone reading the schema believes it.
-```
 
-**What a pragma is.** A **pragma** is an SQLite-specific command that changes how SQLite behaves, or reports on it, rather than working on your tables: `PRAGMA foreign_keys` alone shows the setting, and `PRAGMA foreign_keys = ON` changes it. This one belongs to the **connection**, not the file: it's forgotten when the connection closes, which is why it must be run every time the database is opened. See it work, in the shell on `players.db` (one shell session, so one connection):
+See the pragma work, in the shell on `players.db` (one shell session, so one connection):
 
-```sql
+~~~sql
 PRAGMA foreign_keys;
 PRAGMA foreign_keys = ON;
 INSERT INTO scores (player_id, level, points, played_at) VALUES (99, 'x', 1, 'x');
 DELETE FROM players WHERE name = 'Mia';
-```
+~~~
 
-```text
+~~~text
 (0,)
 IntegrityError (SQLITE_CONSTRAINT_FOREIGNKEY): FOREIGN KEY constraint failed
 IntegrityError (SQLITE_CONSTRAINT_FOREIGNKEY): FOREIGN KEY constraint failed
-```
+~~~
 
-Off at first; then both rules kept. Quit the shell, open it again, and `PRAGMA foreign_keys;` says `(0,)` again: a new connection.
+Off at first; then both rules kept. Quit the shell, open it again, and `PRAGMA foreign_keys;` says `(0,)` again: the setting belongs to the connection, not the file.
+```
 
 One more thing a real schema adds: an **index** on `scores.player_id` (lesson 7.6), so finding a player's scores, for a join or for the check before deleting a player, doesn't mean reading every score.
 

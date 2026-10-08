@@ -228,7 +228,7 @@ choice: 310
 choice: 300
 choice: An error
 answer: An error
-explain: `UnboundLocalError: cannot access local variable 'speed' where it is not associated with a value`. Before a function runs, Python looks at its whole body. Any name that's **assigned** anywhere in the function is **local** to it, for the whole function. `speed = speed + 10` assigns to `speed`, so inside `faster`, `speed` always means the local one, even on the right-hand side, which is evaluated first, when the local `speed` doesn't have a value yet. The global `speed` is never even looked at.
+explain: `UnboundLocalError: cannot access local variable 'speed' where it is not associated with a value`. Before a function runs, Python looks at its whole body. Any name that's **assigned** anywhere in the function is **local** to it, for the whole function. `speed = speed + 10` assigns to `speed`, so inside `faster_broken`, `speed` always means the local one, even on the right-hand side, which is evaluated first, when the local `speed` doesn't have a value yet. The global `speed` is never even looked at.
 ```
 
 **Understand: scope.** When Python meets a name inside a function, it looks it up in this order, and uses the first place that has it:

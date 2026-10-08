@@ -206,7 +206,7 @@ commit 46a93d46ecda7a3604097199735d5392becb4157
 Author: Your Name <you@example.com>
 Date:   Sun Oct 4 09:51:21 2026 -0400
 
-    Start Breakout: a window and a game loop
+    Start the project: Chapter 0's practice files and a Breakout window
 ```
 
 If git's output is longer than the terminal, git shows it one screen at a time, with a `:` at the bottom: Space shows the next screen, and **q** quits back to the prompt. `git log --oneline` prints one short line per commit, which is usually all you need.
@@ -223,7 +223,7 @@ tree e7d0e40b434562acf5549375fd4a41116a161f6e
 author Your Name <you@example.com> 1791121881 -0400
 committer Your Name <you@example.com> 1791121881 -0400
 
-Start Breakout: a window and a game loop
+Start the project: Chapter 0's practice files and a Breakout window
 
 100644 blob a230a78aea291ec7c0c35eefbc89b3898612a118	.gitignore
 100644 blob b80e3222ab264bd7cafb376749bd18814fd66776	breakout.py

@@ -221,7 +221,7 @@ reveal_type(d)
 0 errors, 0 warnings, 3 informations
 ```
 
-`items = []` gave pyright nothing to go on (it doesn't learn from the later `append`), so the list is a list of `Unknown`; everything taken out of it is `Unknown` too, and nothing done with `x` will ever be checked. No errors: in this mode, that silence is the problem. In `make_bricks`: In `make_bricks`:
+`items = []` gave pyright nothing to go on (it doesn't learn from the later `append`), so the list is a list of `Unknown`; everything taken out of it is `Unknown` too, and nothing done with `x` will ever be checked. No errors: in this mode, that silence is the problem. In `make_bricks`:
 
 ```text
 bricks = []              an empty list: a list of what? Nothing says.  →  list[Unknown]
@@ -432,7 +432,7 @@ The only change is in `make_bricks`:
 
 Two more kinds of hint belong here. **`Final`**, from `typing`, marks a name that must never be given a new value: `WIDTH: Final = 640`. pyright then refuses `WIDTH = 800` anywhere, with `"WIDTH" is declared as Final and cannot be reassigned`. And **`Literal`**, also from `typing`, makes a type of exact values: `Literal["none", "left", "right", "auto"]` allows only those four strings. Lesson 3.4's `Hold` enum does the same job better, since its members can't be mistyped as plain strings. A challenge below makes the game's constants `Final`.
 
-Finally, the **escape hatches**, which you'll meet in other people's code: the type **`Any`** (anything goes, nothing checked), **`cast(T, value)`** ("trust me, this is a `T`"), and a comment **`# pyright: ignore[rule]`** on a line (lesson 4.5 has one, for a good reason). Each switches checking off in one place. None of them is wrong, but a reviewer should ask why each one is there, and strict mode reports an ignore that no longer ignores anything. With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
+Finally, the **escape hatches**, which you'll meet in other people's code: the type **`Any`** (anything goes, nothing checked), **`cast(T, value)`** ("trust me, this is a `T`"), and a comment **`# pyright: ignore[rule]`** on a line (lesson 4.5 finds one in a colleague's code, as a warning sign). Each switches checking off in one place. None of them is wrong, but a reviewer should ask why each one is there, and an ignore that no longer ignores anything stays silent unless you turn on one more rule, `reportUnnecessaryTypeIgnoreComment` (a challenge below). With the annotation, `bricks.append(...)` checks that what's appended is a `Brick`, and `make_bricks` returns a `list[Brick]`, as its own `-> list[Brick]` already promised.
 
 ```powershell
 .venv\Scripts\python -m pyright breakout

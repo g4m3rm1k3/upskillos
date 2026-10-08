@@ -535,7 +535,7 @@ frames=600
 
 The **Run** button still runs it normally, with a window: no arguments means no test run.
 
-> **Engineer:** a program that only a person can operate can only be checked by a person, slowly and inconsistently. Designing a program so that other programs can drive it is called designing for **testability**, and it's one of the most important habits in this series. This test-run mode is a first, clumsy version: it can only run the *whole* game and look at the end. In Chapter 2 you'll test individual pieces directly, which is far more precise, and this mode will become unnecessary.
+> **Engineer:** a program that only a person can operate can only be checked by a person, slowly and inconsistently. Designing a program so that other programs can drive it is called designing for **testability**, and it's one of the most important habits in this series. This test-run mode is a first, clumsy version: it can only run the *whole* game and look at the end. In Chapter 2 you'll test individual pieces directly, which is far more precise; this mode stays for the checks that need the whole game running.
 
 ```check
 run ".venv/Scripts/python breakout.py --test-run 600" stdout="frames=600" timeout=8 label="a test run doesn't wait between frames" -- In a test run, skip clock.tick(60): 600 frames at 60 a second would take 10 seconds.

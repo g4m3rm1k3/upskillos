@@ -185,6 +185,32 @@ describe.skipIf(!isWindows)('Forge walkthrough', () => {
     }
   });
 
+  // git-message searches the whole history, ignoring case, as a substring, so a keyword that's already in an
+  // earlier commit message passes before the learner commits anything ("WAL" matched "wall" in 7.7). This
+  // replays the walkthrough's commits in order, without running anything, and finds every such keyword.
+  it('asks git-message for words no earlier commit already says', () => {
+    const messages = [];
+    const problems = [];
+    const commitsIn = (commands = []) => commands.flatMap((cmd) => {
+      const commit = cmd.match(/git commit\b.*?-m "([^"]*)"/);
+      if (commit) return [commit[1]];
+      const merge = cmd.match(/git merge\s+(?:--no-ff\s+)?([\w./-]+)/);
+      return merge ? [`Merge branch '${merge[1]}'`] : [];
+    });
+    for (const lesson of lessons) {
+      for (const step of lesson.steps) {
+        for (const check of step.checks.filter((c) => c.kind === 'git-message')) {
+          const word = check.args[0].toLowerCase();
+          const earlier = messages.find((m) => m.toLowerCase().includes(word));
+          if (earlier) problems.push(`${keyOf(lesson, step)}: "${check.args[0]}" is already in "${earlier}"`);
+        }
+        const action = WALKTHROUGH[keyOf(lesson, step)] ?? {};
+        messages.push(...commitsIn(action.before), ...commitsIn(action.run));
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
   it('changes one file per step', () => {
     for (const lesson of lessons) {
       for (const step of lesson.steps) expect(step.extraTargets ?? [], `${lesson.title} / ${step.title}`).toEqual([]);

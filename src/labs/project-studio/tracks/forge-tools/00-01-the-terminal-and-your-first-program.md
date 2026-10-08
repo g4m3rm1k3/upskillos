@@ -171,7 +171,7 @@ It prints nothing when it works. (Its alias is `rm`.) Check with `ls`, or look a
 
 Two habits that save a lot of typing: **↑** brings back the previous command, and **Tab** finishes a file or folder name you've started typing. PowerShell writes the finished name its own way, `.\scratch\` for `scratch`: `.` means "this folder", and the `\` at the end marks a folder, so it's the same path.
 
-> **Engineer:** commands that can't be undone deserve a pause. Later in this chapter git will give you an undo for your files, and that's a large part of why engineers use it.
+> **Engineer:** commands that can't be undone deserve a pause. In Chapter 1, git will give you an undo for your files, and that's a large part of why engineers use it.
 
 ```check
 missing scratch -- Type Remove-Item scratch in the terminal and press Enter.

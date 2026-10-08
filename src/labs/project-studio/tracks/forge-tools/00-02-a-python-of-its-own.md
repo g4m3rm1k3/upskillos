@@ -23,7 +23,7 @@ python -m pip --version
 pip 25.3 from C:\Python314\Lib\site-packages\pip (python 3.14)
 ```
 
-`-m pip` means "run the module named `pip`" with this `python`. A **module** is one `.py` file you can import (lesson 0.1); a **package** is a folder of modules imported under one name. pip is itself a package, and it lives in a folder named **`site-packages`**. That's where every package installed into this Python goes.
+`-m pip` means "run the module named `pip`" with this `python`. A **module** is one `.py` file you can import (lesson 0.1). The word *package* has two meanings that usually go together: the thing published on PyPI and installed by pip (the definition above), and, inside Python, a folder of modules imported under one name. An installed package is usually such a folder. pip is itself a package, and it lives in a folder named **`site-packages`**. That's where every package installed into this Python goes.
 
 Now ask Python where `import` looks:
 

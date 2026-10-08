@@ -194,7 +194,7 @@ Your time will differ; the size won't. Read it piece by piece:
 - **`time.perf_counter()`** reads a clock made for measuring: subtract two readings and you have the seconds between them.
 - `f"{len(rows):,}"`: the `,` after the colon writes the number with commas between the thousands. `path.stat().st_size` is the file's size in bytes (lesson 6.2).
 
-`scratch/` is ignored by Git (lesson 1.1), so the 30 MB file never goes near a commit.
+`scratch/` is ignored by Git (lesson 1.2), so the 30 MB file never goes near a commit.
 
 ```check
 run ".venv/Scripts/python -m sqlite3 scratch/big.db \"SELECT COUNT(*) FROM scores\"" stdout="(1000000,)" label="scratch/big.db holds a million scores"

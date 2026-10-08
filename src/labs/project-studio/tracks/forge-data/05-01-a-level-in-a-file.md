@@ -436,7 +436,7 @@ class Game:
             self.state = GameState.WON
 ```
 
-**Understand.** `Game.__init__(self, rng, bricks)` now receives its wall from whoever creates it, the same way it already received its random generator in lesson 2.6. The game doesn't know or care whether the bricks came from a file, a test, or a level editor (Chapter 21). Giving an object what it needs, instead of letting it build what it needs itself, is called **dependency injection**, and it's what makes the object usable in situations its author didn't think of. Picture the alternative: `Game.__init__` calling `load_level` itself. Every test would then need the level file on disk, and a test that wanted a wall of one brick, to check what happens when it breaks, would have to write a level file first. Chapter 9 makes it a habit.
+**Understand.** `Game.__init__(self, rng, bricks)` now receives its wall from whoever creates it, the same way it already received its random generator in lesson 2.6. The game doesn't know or care whether the bricks came from a file, a test, or, one day, the Forge editor (Part 3, from Chapter 21). Giving an object what it needs, instead of letting it build what it needs itself, is called **dependency injection**, and it's what makes the object usable in situations its author didn't think of. Picture the alternative: `Game.__init__` calling `load_level` itself. Every test would then need the level file on disk, and a test that wanted a wall of one brick, to check what happens when it breaks, would have to write a level file first. Chapter 9 makes it a habit.
 
 `make_bricks` is deleted: the wall's layout now lives in exactly one place, `classic.txt`. Nothing works yet: the app and every test still create `Game(rng)` without a wall. The next steps fix each.
 

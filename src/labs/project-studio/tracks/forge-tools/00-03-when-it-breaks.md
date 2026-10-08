@@ -196,7 +196,7 @@ explain: `+` means different things for different **types**: it adds numbers and
 | Exception | What it means | Usually caused by |
 |---|---|---|
 | `NameError: name 'scroe' is not defined. Did you mean: 'score'?` | no variable or function with that name exists here | a typo, or using a variable before assigning it |
-| `TypeError: can only concatenate str (not "int") to str` | an operation got a value of a type it can't work with | mixing text and numbers, or a value being `None` (Python's "nothing here" value, met properly two steps on) when you expected something else |
+| `TypeError: can only concatenate str (not "int") to str` | an operation got a value of a type it can't work with | mixing text and numbers, or a value being `None` (Python's "nothing here" value, met properly in the next step) when you expected something else |
 | `IndexError: list index out of range` | a list position that doesn't exist | counting from 1 instead of 0: a 3-item list has indexes 0, 1, 2 |
 | `KeyError: 'score'` | a dictionary has no such key | a typo, or a key that was never added |
 | `AttributeError: 'str' object has no attribute 'uppper'. Did you mean: 'upper'?` | that kind of value has no method or attribute with that name | a typo, or the value isn't the type you think it is |
@@ -359,7 +359,7 @@ def main():
     print(f"{name} is ranked {rank(name)} of {len(SCORES)}")
 ~~~
 
-`name.lower()` is used only for comparing: the printed name stays the way it was typed, as the table asks. The missing-player check is in `main` because it's about talking to the person: `find_score` reports "nobody" by returning `None`, and `main` decides what that means for the user (a message) and for other programs (exit code 1, lesson 0.1). `rank` can now assume it's given a real player, which is what its code already assumed. One cost remains: `find_score(name)` now runs twice, once in `main` and again inside `rank`. With three players that's nothing; Chapter 2 fixes the shape properly, by looking the score up once and passing it in.
+`name.lower()` is used only for comparing: the printed name stays the way it was typed, as the table asks. The missing-player check is in `main` because it's about talking to the person: `find_score` reports "nobody" by returning `None`, and `main` decides what that means for the user (a message) and for other programs (exit code 1, lesson 0.1). `rank` can now assume it's given a real player, which is what its code already assumed. One cost remains: `find_score(name)` now runs twice, once in `main` and again inside `rank`. With three players that's nothing. The cleaner shape looks the score up once in `main` and passes it to `rank` as a second argument, so `rank` never searches at all: try it if you like.
 ```
 
 ```check
@@ -390,7 +390,7 @@ run "python leaderboard.py Ada" without="DEBUG" label="the debugging line is gon
 - **The debugging method**: observe, reproduce, hypothesise, inspect, isolate, fix, and check it can't come back. It turns guessing into evidence, and it works the same in every language.
 - **`None` travels.** A function that silently returns `None` passes the problem along until something far away tries to use it. Making "nobody found" explicit, and handling it where it's decided, is a habit you'll use in every chapter.
 
-In C# and Java the same report is called a **stack trace**, and it's printed the other way up: the **most recent call first**, at the top, with the error message above it. The idea is identical; only the reading direction changes. `NullReferenceException` (C#) and `NullPointerException` (Java) are those languages' versions of using a `None` where a real value was expected, and they're the most common crash in both. Chapter 4's type checker will start catching this one before your program even runs.
+In C# and Java the same report is called a **stack trace**, and it's printed the other way up: the **most recent call first**, at the top, with the error message above it. The idea is identical; only the reading direction changes. `NullReferenceException` (C#) and `NullPointerException` (Java) are those languages' versions of using a `None` where a real value was expected, and they're the most common crash in both. From lesson 2.5, a type checker will catch this one before your program even runs.
 
 **Chapter 0's challenges**, to come back to: an exit code you choose ★, find a program the way the shell does ★★, greet everyone ★★ (lesson 0.1); two Pythons, explained ★★, check every pinned package ★★★ (lesson 0.2); the best game too ★, ties ★★, a bug of your own ★★ (this lesson).
 
