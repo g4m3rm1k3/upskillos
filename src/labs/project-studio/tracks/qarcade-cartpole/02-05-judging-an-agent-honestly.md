@@ -44,6 +44,16 @@ def test_evaluate_is_repeatable():
     assert np.array_equal(evaluate(agent, env, episodes=5), evaluate(agent, env, episodes=5))
 
 
+def test_evaluate_ignores_the_agents_own_exploring():
+    from cartpole_table import train_cartpole
+    from judge import evaluate
+    agent, env, _ = train_cartpole(30, seed=0)
+    agent.epsilon = 1.0
+    judged = evaluate(agent, env, episodes=5)
+    agent.epsilon = 0.0
+    assert np.array_equal(judged, evaluate(agent, env, episodes=5)), "an agent set to explore is judged exactly as a greedy one"
+
+
 def test_standard_error_of_a_few_numbers():
     from judge import standard_error
     assert standard_error([1, 2, 3, 4, 5]) == approx(np.std([1, 2, 3, 4, 5], ddof=1) / np.sqrt(5))

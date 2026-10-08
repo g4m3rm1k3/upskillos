@@ -241,5 +241,312 @@ export const WALKTHROUGH = {
   },
   "21b-decision-boundaries#Keep environment behavior in the repeatable build": {
     "wrong": []
+  },
+  "22-observation-addresses#Choose what the agent observes": {
+    "wrong": []
+  },
+  "22-observation-addresses#Name the three coordinates": {
+    "wrong": []
+  },
+  "22-observation-addresses#Enforce the decision boundary before extracting values": {
+    "wrong": []
+  },
+  "22-observation-addresses#Reach a real position through the game rules": {
+    "wrong": []
+  },
+  "22-observation-addresses#Count slots before writing a formula": {
+    "wrong": []
+  },
+  "22-observation-addresses#Declare checked addressing": {
+    "wrong": []
+  },
+  "22-observation-addresses#Validate before computing an address": {
+    "wrong": []
+  },
+  "22-observation-addresses#Observe the address of the real position": {
+    "wrong": []
+  },
+  "22-observation-addresses#Observe failures without reading outside a container": {
+    "wrong": []
+  },
+  "22-observation-addresses#Try it — Separate a boundary failure from a coordinate failure": {
+    "wrong": []
+  },
+  "22-observation-addresses#Count complete groups and what remains": {
+    "wrong": []
+  },
+  "22-observation-addresses#Undo a small two-coordinate address": {
+    "wrong": []
+  },
+  "22-observation-addresses#Practice — Transfer the inverse to lockers": {
+    "wrong": [
+      {
+        "name": "uses the guided width instead of the requirement",
+        "files": {
+          "practice/locker_address.cpp": "#include <iostream>\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 20) return 1;\n    std::cout << \"rack=\" << address / 3 << \" slot=\" << address % 3 << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "accepts first address outside the cabinet",
+        "files": {
+          "practice/locker_address.cpp": "#include <iostream>\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address > 20) return 1;\n    std::cout << \"rack=\" << address / 5 << \" slot=\" << address % 5 << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          3
+        ]
+      }
+    ],
+    "files": {
+      "practice/locker_address.cpp": "#include <iostream>\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 20) return 1;\n    std::cout << \"rack=\" << address / 5 << \" slot=\" << address % 5 << '\\n';\n    return 0;\n}"
+    }
+  },
+  "22-observation-addresses#Trace a nested loop before checking every observation": {
+    "wrong": [
+      {
+        "name": "addition collides across rows",
+        "files": {
+          "explore/round_trip.cpp": "#include <iostream>\nint main() {\n    int checked = 0;\n    for (int row = 0; row < 2; ++row) {\n        for (int column = 0; column < 3; ++column) {\n            int address = row + column;\n            if (address / 3 != row || address % 3 != column) return 1;\n            ++checked;\n        }\n    }\n    std::cout << \"checked=\" << checked << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "22-observation-addresses#Your turn — Recover coordinates and rule out collisions": {
+    "wrong": [
+      {
+        "name": "swaps decoded players",
+        "files": {
+          "practice/decode_observation.cpp": "#include <iostream>\n#include \"learning/Observation.hpp\"\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 1728) return 1;\n    learning::Observation found{(address / 12) % 12, address / 144, address % 12};\n    if (found.own + found.pot >= 12) return 1;\n    if (learning::rowIndex(found) != address) return 2;\n    std::cout << \"own=\" << found.own << \" other=\" << found.other << \" pot=\" << found.pot << '\\n';\n    for (int own = 0; own < 12; ++own) {\n        for (int other = 0; other < 12; ++other) {\n            for (int pot = 0; pot < 12 - own; ++pot) {\n                int row = learning::rowIndex({own, other, pot});\n                if (row / 144 != own || (row / 12) % 12 != other || row % 12 != pot) return 3;\n            }\n        }\n    }\n    return 0;\n}"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "admits reserved winning rows",
+        "files": {
+          "practice/decode_observation.cpp": "#include <iostream>\n#include \"learning/Observation.hpp\"\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 1728) return 1;\n    learning::Observation found{address / 144, (address / 12) % 12, address % 12};\n\n\n    std::cout << \"own=\" << found.own << \" other=\" << found.other << \" pot=\" << found.pot << '\\n';\n    for (int own = 0; own < 12; ++own) {\n        for (int other = 0; other < 12; ++other) {\n            for (int pot = 0; pot < 12 - own; ++pot) {\n                int row = learning::rowIndex({own, other, pot});\n                if (row / 144 != own || (row / 12) % 12 != other || row % 12 != pot) return 3;\n            }\n        }\n    }\n    return 0;\n}"
+        },
+        "fails": [
+          8
+        ]
+      },
+      {
+        "name": "colliding encoder caught by exhaustive inverse",
+        "files": {
+          "practice/decode_observation.cpp": "#include <iostream>\n#include \"learning/Observation.hpp\"\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 1728) return 1;\n    learning::Observation found{address / 144, (address / 12) % 12, address % 12};\n    if (found.own + found.pot >= 12) return 1;\n    if (learning::rowIndex(found) != address) return 2;\n    std::cout << \"own=\" << found.own << \" other=\" << found.other << \" pot=\" << found.pot << '\\n';\n    for (int own = 0; own < 12; ++own) {\n        for (int other = 0; other < 12; ++other) {\n            for (int pot = 0; pot < 12 - own; ++pot) {\n                int row = learning::rowIndex({own, other, pot});\n                if (row / 144 != own || (row / 12) % 12 != other || row % 12 != pot) return 3;\n            }\n        }\n    }\n    return 0;\n}",
+          "src/learning/Observation.cpp": "#include \"learning/Observation.hpp\"\n#include <stdexcept>\nlearning::Observation learning::observe(const dice::Game& game) {\n    dice::GameSnapshot view = game.snapshot();\n    if (game.finished() || view.turn != 0)\n        throw std::invalid_argument(\"expected an unfinished seat-zero decision\");\n    return {view.scores.at(0), view.scores.at(1), view.pot};\n}\nint learning::rowIndex(const Observation& seen) {\n    if (seen.own < 0 || seen.own >= dice::target ||\n        seen.other < 0 || seen.other >= dice::target ||\n        seen.pot < 0 || seen.pot >= dice::target ||\n        seen.own + seen.pot >= dice::target)\n        throw std::invalid_argument(\"invalid decision observation\");\n    return (seen.own * dice::target + 0) * dice::target + seen.pot;\n}\n"
+        },
+        "fails": [
+          2
+        ]
+      },
+      {
+        "name": "prints all examples",
+        "files": {
+          "practice/decode_observation.cpp": "#include <iostream>\nint main() { std::cout << \"own=2 other=3 pot=4\\nown=0 other=0 pot=0\\n\"; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ],
+    "files": {
+      "practice/decode_observation.cpp": "#include <iostream>\n#include \"learning/Observation.hpp\"\nint main() {\n    int address = 0;\n    if (!(std::cin >> address) || address < 0 || address >= 1728) return 1;\n    learning::Observation found{address / 144, (address / 12) % 12, address % 12};\n    if (found.own + found.pot >= 12) return 1;\n    if (learning::rowIndex(found) != address) return 2;\n    std::cout << \"own=\" << found.own << \" other=\" << found.other << \" pot=\" << found.pot << '\\n';\n    for (int own = 0; own < 12; ++own) {\n        for (int other = 0; other < 12; ++other) {\n            for (int pot = 0; pot < 12 - own; ++pot) {\n                int row = learning::rowIndex({own, other, pot});\n                if (row / 144 != own || (row / 12) % 12 != other || row % 12 != pot) return 3;\n            }\n        }\n    }\n    return 0;\n}"
+    }
+  },
+  "22b-action-value-storage#Give the two numbers a meaning": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Name a concrete row type and copy it": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Use a reference when the stored row must change": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Measure a search before choosing storage": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Compare an address lookup with a scan": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Defend a representation and its boundary": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Build three rows before building the game table": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Translate actions independently of table storage": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Keep a representation helper inside its source file": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Give the table one owner": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Initialize all rows and read one checked cell": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Combine the already-tested row and column selections": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Observe initial estimates": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Declare a deliberate storage operation": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Write the actual row instead of a temporary copy": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Observe separate actions and a preserved neighbor": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Ask for the best legal estimate": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Start from a legal candidate, even if it is negative": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Make an illegal cell tempting on purpose": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Try it — Find the copied-row and invented-zero bugs": {
+    "wrong": []
+  },
+  "22b-action-value-storage#Your turn — Audit storage through its public interface": {
+    "wrong": [
+      {
+        "name": "updates a copy of the row",
+        "files": {
+          "tests/q_storage.cpp": "#include <iostream>\n#include <stdexcept>\n#include \"learning/QAgent.hpp\"\nint main() {\n    learning::QAgent agent;\n    for (int own = 0; own < 12; ++own)\n        for (int other = 0; other < 12; ++other)\n            for (int pot = 0; pot < 12 - own; ++pot)\n                for (dice::Action action : {dice::Action::Roll, dice::Action::Bank})\n                    if (agent.value({own, other, pot}, action) != 0.0) return 1;\n    learning::Observation first{3, 5, 2};\n    agent.store(first, dice::Action::Roll, -0.5);\n    agent.store(first, dice::Action::Bank, 0.25);\n    if (agent.value(first, dice::Action::Roll) != -0.5 || agent.value(first, dice::Action::Bank) != 0.25) return 2;\n    if (agent.value({3, 5, 3}, dice::Action::Roll) != 0.0 || agent.value({3, 6, 2}, dice::Action::Bank) != 0.0) return 3;\n    learning::QAgent copy = agent;\n    copy.store(first, dice::Action::Roll, 0.75);\n    if (agent.value(first, dice::Action::Roll) != -0.5) return 4;\n    dice::Game game;\n    agent.store({0, 0, 0}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 0}, dice::Action::Bank, 0.75);\n    if (agent.bestValue(game) != -0.5) return 5;\n    game.apply(dice::Action::Roll, 2);\n    agent.store({0, 0, 2}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 2}, dice::Action::Bank, -0.25);\n    if (agent.bestValue(game) != -0.25) return 6;\n    agent.store({0, 0, 2}, dice::Action::Roll, 0.5);\n    if (agent.bestValue(game) != 0.5) return 7;\n    bool rejected = false;\n    try { agent.store({12, 0, 0}, dice::Action::Roll, 0.25); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected || agent.value(first, dice::Action::Roll) != -0.5) return 8;\n    game.apply(dice::Action::Bank, 0);\n    rejected = false;\n    try { agent.bestValue(game); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 9;\n    dice::Game won;\n    won.apply(dice::Action::Roll, 6);\n    won.apply(dice::Action::Roll, 6);\n    rejected = false;\n    try { agent.bestValue(won); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 10;\n    std::cout << \"storage passed\\n\";\n    return 0;\n}",
+          "src/learning/QAgent.cpp": "#include \"learning/QAgent.hpp\"\n#include <stdexcept>\nnamespace {\nint column(dice::Action action) {\n    if (action == dice::Action::Roll) return 0;\n    if (action == dice::Action::Bank) return 1;\n    throw std::invalid_argument(\"unknown action\");\n}\n}\nlearning::QAgent::QAgent() : rows_(dice::target * dice::target * dice::target, QRow{0.0, 0.0}) {}\ndouble learning::QAgent::value(const Observation& seen, dice::Action action) const {\n    return rows_.at(rowIndex(seen)).at(column(action));\n}\nvoid learning::QAgent::store(const Observation& seen, dice::Action action, double estimate) {\n    QRow row = rows_.at(rowIndex(seen));\n    row.at(column(action)) = estimate;\n}\ndouble learning::QAgent::bestValue(const dice::Game& game) const {\n    Observation seen = observe(game);\n    double best = value(seen, dice::Action::Roll);\n    if (game.legal(dice::Action::Bank)) {\n        double bank = value(seen, dice::Action::Bank);\n        if (bank > best) best = bank;\n    }\n    return best;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "maximum includes illegal Bank",
+        "files": {
+          "tests/q_storage.cpp": "#include <iostream>\n#include <stdexcept>\n#include \"learning/QAgent.hpp\"\nint main() {\n    learning::QAgent agent;\n    for (int own = 0; own < 12; ++own)\n        for (int other = 0; other < 12; ++other)\n            for (int pot = 0; pot < 12 - own; ++pot)\n                for (dice::Action action : {dice::Action::Roll, dice::Action::Bank})\n                    if (agent.value({own, other, pot}, action) != 0.0) return 1;\n    learning::Observation first{3, 5, 2};\n    agent.store(first, dice::Action::Roll, -0.5);\n    agent.store(first, dice::Action::Bank, 0.25);\n    if (agent.value(first, dice::Action::Roll) != -0.5 || agent.value(first, dice::Action::Bank) != 0.25) return 2;\n    if (agent.value({3, 5, 3}, dice::Action::Roll) != 0.0 || agent.value({3, 6, 2}, dice::Action::Bank) != 0.0) return 3;\n    learning::QAgent copy = agent;\n    copy.store(first, dice::Action::Roll, 0.75);\n    if (agent.value(first, dice::Action::Roll) != -0.5) return 4;\n    dice::Game game;\n    agent.store({0, 0, 0}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 0}, dice::Action::Bank, 0.75);\n    if (agent.bestValue(game) != -0.5) return 5;\n    game.apply(dice::Action::Roll, 2);\n    agent.store({0, 0, 2}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 2}, dice::Action::Bank, -0.25);\n    if (agent.bestValue(game) != -0.25) return 6;\n    agent.store({0, 0, 2}, dice::Action::Roll, 0.5);\n    if (agent.bestValue(game) != 0.5) return 7;\n    bool rejected = false;\n    try { agent.store({12, 0, 0}, dice::Action::Roll, 0.25); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected || agent.value(first, dice::Action::Roll) != -0.5) return 8;\n    game.apply(dice::Action::Bank, 0);\n    rejected = false;\n    try { agent.bestValue(game); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 9;\n    dice::Game won;\n    won.apply(dice::Action::Roll, 6);\n    won.apply(dice::Action::Roll, 6);\n    rejected = false;\n    try { agent.bestValue(won); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 10;\n    std::cout << \"storage passed\\n\";\n    return 0;\n}",
+          "src/learning/QAgent.cpp": "#include \"learning/QAgent.hpp\"\n#include <stdexcept>\nnamespace {\nint column(dice::Action action) {\n    if (action == dice::Action::Roll) return 0;\n    if (action == dice::Action::Bank) return 1;\n    throw std::invalid_argument(\"unknown action\");\n}\n}\nlearning::QAgent::QAgent() : rows_(dice::target * dice::target * dice::target, QRow{0.0, 0.0}) {}\ndouble learning::QAgent::value(const Observation& seen, dice::Action action) const {\n    return rows_.at(rowIndex(seen)).at(column(action));\n}\nvoid learning::QAgent::store(const Observation& seen, dice::Action action, double estimate) {\n    QRow& row = rows_.at(rowIndex(seen));\n    row.at(column(action)) = estimate;\n}\ndouble learning::QAgent::bestValue(const dice::Game& game) const {\n    Observation seen = observe(game);\n    double best = value(seen, dice::Action::Roll);\n    if (true) {\n        double bank = value(seen, dice::Action::Bank);\n        if (bank > best) best = bank;\n    }\n    return best;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "maximum invents zero",
+        "files": {
+          "tests/q_storage.cpp": "#include <iostream>\n#include <stdexcept>\n#include \"learning/QAgent.hpp\"\nint main() {\n    learning::QAgent agent;\n    for (int own = 0; own < 12; ++own)\n        for (int other = 0; other < 12; ++other)\n            for (int pot = 0; pot < 12 - own; ++pot)\n                for (dice::Action action : {dice::Action::Roll, dice::Action::Bank})\n                    if (agent.value({own, other, pot}, action) != 0.0) return 1;\n    learning::Observation first{3, 5, 2};\n    agent.store(first, dice::Action::Roll, -0.5);\n    agent.store(first, dice::Action::Bank, 0.25);\n    if (agent.value(first, dice::Action::Roll) != -0.5 || agent.value(first, dice::Action::Bank) != 0.25) return 2;\n    if (agent.value({3, 5, 3}, dice::Action::Roll) != 0.0 || agent.value({3, 6, 2}, dice::Action::Bank) != 0.0) return 3;\n    learning::QAgent copy = agent;\n    copy.store(first, dice::Action::Roll, 0.75);\n    if (agent.value(first, dice::Action::Roll) != -0.5) return 4;\n    dice::Game game;\n    agent.store({0, 0, 0}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 0}, dice::Action::Bank, 0.75);\n    if (agent.bestValue(game) != -0.5) return 5;\n    game.apply(dice::Action::Roll, 2);\n    agent.store({0, 0, 2}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 2}, dice::Action::Bank, -0.25);\n    if (agent.bestValue(game) != -0.25) return 6;\n    agent.store({0, 0, 2}, dice::Action::Roll, 0.5);\n    if (agent.bestValue(game) != 0.5) return 7;\n    bool rejected = false;\n    try { agent.store({12, 0, 0}, dice::Action::Roll, 0.25); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected || agent.value(first, dice::Action::Roll) != -0.5) return 8;\n    game.apply(dice::Action::Bank, 0);\n    rejected = false;\n    try { agent.bestValue(game); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 9;\n    dice::Game won;\n    won.apply(dice::Action::Roll, 6);\n    won.apply(dice::Action::Roll, 6);\n    rejected = false;\n    try { agent.bestValue(won); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 10;\n    std::cout << \"storage passed\\n\";\n    return 0;\n}",
+          "src/learning/QAgent.cpp": "#include \"learning/QAgent.hpp\"\n#include <stdexcept>\nnamespace {\nint column(dice::Action action) {\n    if (action == dice::Action::Roll) return 0;\n    if (action == dice::Action::Bank) return 1;\n    throw std::invalid_argument(\"unknown action\");\n}\n}\nlearning::QAgent::QAgent() : rows_(dice::target * dice::target * dice::target, QRow{0.0, 0.0}) {}\ndouble learning::QAgent::value(const Observation& seen, dice::Action action) const {\n    return rows_.at(rowIndex(seen)).at(column(action));\n}\nvoid learning::QAgent::store(const Observation& seen, dice::Action action, double estimate) {\n    QRow& row = rows_.at(rowIndex(seen));\n    row.at(column(action)) = estimate;\n}\ndouble learning::QAgent::bestValue(const dice::Game& game) const {\n    Observation seen = observe(game);\n    double best = 0.0;\n    if (game.legal(dice::Action::Bank)) {\n        double bank = value(seen, dice::Action::Bank);\n        if (bank > best) best = bank;\n    }\n    return best;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "always-success test",
+        "files": {
+          "tests/q_storage.cpp": "#include <iostream>\nint main() { std::cout << \"storage passed\\n\"; }"
+        },
+        "fails": [
+          2
+        ]
+      }
+    ],
+    "files": {
+      "tests/q_storage.cpp": "#include <iostream>\n#include <stdexcept>\n#include \"learning/QAgent.hpp\"\nint main() {\n    learning::QAgent agent;\n    for (int own = 0; own < 12; ++own)\n        for (int other = 0; other < 12; ++other)\n            for (int pot = 0; pot < 12 - own; ++pot)\n                for (dice::Action action : {dice::Action::Roll, dice::Action::Bank})\n                    if (agent.value({own, other, pot}, action) != 0.0) return 1;\n    learning::Observation first{3, 5, 2};\n    agent.store(first, dice::Action::Roll, -0.5);\n    agent.store(first, dice::Action::Bank, 0.25);\n    if (agent.value(first, dice::Action::Roll) != -0.5 || agent.value(first, dice::Action::Bank) != 0.25) return 2;\n    if (agent.value({3, 5, 3}, dice::Action::Roll) != 0.0 || agent.value({3, 6, 2}, dice::Action::Bank) != 0.0) return 3;\n    learning::QAgent copy = agent;\n    copy.store(first, dice::Action::Roll, 0.75);\n    if (agent.value(first, dice::Action::Roll) != -0.5) return 4;\n    dice::Game game;\n    agent.store({0, 0, 0}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 0}, dice::Action::Bank, 0.75);\n    if (agent.bestValue(game) != -0.5) return 5;\n    game.apply(dice::Action::Roll, 2);\n    agent.store({0, 0, 2}, dice::Action::Roll, -0.5);\n    agent.store({0, 0, 2}, dice::Action::Bank, -0.25);\n    if (agent.bestValue(game) != -0.25) return 6;\n    agent.store({0, 0, 2}, dice::Action::Roll, 0.5);\n    if (agent.bestValue(game) != 0.5) return 7;\n    bool rejected = false;\n    try { agent.store({12, 0, 0}, dice::Action::Roll, 0.25); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected || agent.value(first, dice::Action::Roll) != -0.5) return 8;\n    game.apply(dice::Action::Bank, 0);\n    rejected = false;\n    try { agent.bestValue(game); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 9;\n    dice::Game won;\n    won.apply(dice::Action::Roll, 6);\n    won.apply(dice::Action::Roll, 6);\n    rejected = false;\n    try { agent.bestValue(won); }\n    catch (const std::invalid_argument&) { rejected = true; }\n    if (!rejected) return 10;\n    std::cout << \"storage passed\\n\";\n    return 0;\n}"
+    }
+  },
+  "22b-action-value-storage#Build the storage milestone with the existing project": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Turn a request into observable acceptance criteria": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Plan one small delivery and choose a design": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Your turn — Implement the agreed behavior": {
+    "wrong": [
+      {
+        "name": "returns the last free locker",
+        "files": {
+          "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; }\n    }\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "reports zero when all lockers are full",
+        "files": {
+          "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int chosen = 0;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          3
+        ]
+      },
+      {
+        "name": "ignores invalid occupancy",
+        "files": {
+          "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value)) return 1;\n        occupied.push_back(value);\n    }\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          7
+        ]
+      }
+    ],
+    "files": {
+      "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+    }
+  },
+  "22c-deliver-a-small-change#Try it — Respond to feedback without losing old behavior": {
+    "wrong": [
+      {
+        "name": "ignores feedback and always returns lowest",
+        "files": {
+          "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "selects an occupied preference",
+        "files": {
+          "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int preferred = 0;\n    if (!(std::cin >> preferred) || preferred < 0 || preferred >= count) return 1;\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    chosen = preferred;\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          2
+        ]
+      }
+    ],
+    "files": {
+      "practice/locker_choice.cpp": "#include <iostream>\n#include <vector>\nint main() {\n    int count = 0;\n    if (!(std::cin >> count) || count < 1 || count > 20) return 1;\n    std::vector<int> occupied;\n    for (int i = 0; i < count; ++i) {\n        int value = 0;\n        if (!(std::cin >> value) || (value != 0 && value != 1)) return 1;\n        occupied.push_back(value);\n    }\n    int preferred = 0;\n    if (!(std::cin >> preferred) || preferred < 0 || preferred >= count) return 1;\n    int chosen = -1;\n    for (int i = 0; i < count; ++i) {\n        if (occupied.at(i) == 0) { chosen = i; break; }\n    }\n    if (occupied.at(preferred) == 0) chosen = preferred;\n    std::cout << \"locker=\" << chosen << '\\n';\n    return 0;\n}"
+    }
+  },
+  "22c-deliver-a-small-change#Set up a disposable Git recovery exercise": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Inspect what is selected for the next snapshot": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Compare an unstaged edit with the staged checkpoint": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Recover only the deliberate unstaged mistake": {
+    "wrong": []
+  },
+  "22c-deliver-a-small-change#Review the delivery and choose the next improvement": {
+    "wrong": []
   }
 };

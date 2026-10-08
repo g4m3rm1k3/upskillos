@@ -186,4 +186,29 @@ Still to measure:
 
 - **The series name:** Q-Arcade, confirmed by the owner.
 - **Does the course hand in Jupyter notebooks?** If so, Chapters 2 and 3 can each end with a step that turns the project into a submission notebook.
-- **The chart helper:** teach it at once, or supply it and teach it later (see the table above).
+- **The chart helper:** settled. No chart helper was needed; learning curves are printed as tables (lessons 1.4, 2.4), and the corridor watcher draws values in the cells.
+
+## Progress
+
+Lessons live in `src/labs/project-studio/tracks/qarcade-*/`, Your turn answers in each chapter's `answers/`, prediction verify scripts in its `verify/`, and every step's walkthrough entry (with wrong answers) in `tracks/qarcade.walkthrough.js`. `src/labs/project-studio/qArcade.desktop.test.js` walks the series like a learner; besides running every check and wrong answer, it fails if a `pytest -k` word also selects another step's tests (or matches the test file's name), if a wrong answer names a check the step doesn't have, or if a Your turn step shows code or has no hints.
+
+| Chapter | Lessons | Walkthrough |
+|---|---|---|
+| 0 · Setup | 0.1, 0.2 | passes (2026-10-08) |
+| 1 · The corridor | 1.1–1.5 | passes (2026-10-08) |
+| 2 · CartPole with a table | 2.1–2.6 | passes (2026-10-08) |
+| 3 · QMaze with a table | 3.1–3.5 | passes (2026-10-08) |
+| 4 · From a table to a network | 4.1–4.5 | passes (2026-10-08) |
+| 5 · Deep Q-learning on QMaze | 5.1–5.5 | passes (2026-10-08) |
+| 6–9 | | not written |
+
+Changes from the chapter tables above, made while writing: 2.2 became "Simple Rules, Measured" (four baselines, including `θ + θ̇ > 0`, which averages 484.8); 2.3's table ignores the cart (72 rows), because it learns in 500 episodes and lesson 2.6 measures the alternatives; 3.4 uses the classic maze transposed as the new maze; 3.5 types the tutorial's environment as published and fixes its two slips in a subclass; 4.5 ends by distilling the Chapter 3 table into the tutorial's network (74 of 74 starts). Chapter 5 trains on a 7 × 7 maze (33 starts) because one DQN run on the 10 × 10 maze took 8 to 26 minutes and failed for 3 of 5 settings; 5.5 returns to the 10 × 10 maze with a target network. The target network moved from Chapter 6 to 5.5, where it was measured to matter.
+
+Measured while writing (Windows 11, Python 3.13.14):
+
+- Tabular CartPole, 72 rows, 500 episodes, 10 seeds: step 0.1 → 469.2 ± 30.8; step 0.5 → 135.0 ± 47.0; step 0.2 shrinking to 0.02 → 499.9 ± 0.1. The agents near 190 steps balance but drive the cart off the track.
+- Tabular QMaze, 500 episodes, ε = 0.1, α = 0.1, γ = 0.9: 74 of 74 starts for 10 of 10 seeds; 10 extra moves over the shortest routes for seed 0. Without the wall penalty the rat stands still against walls (19–31 starts solved); without the revisit penalty it steps back and forth (53–66).
+- The tutorial's code gives −0.25 for every invalid move (never −0.75); training with −0.25 still solves 74 of 74 for 10 seeds.
+- `torch==2.14.1` from PyPI on Windows is the CPU build (`2.14.1+cpu`, 124 MB wheel); with `keras==3.15.1` the full `.venv` is 811 MB. Keras 3 prints NumPy 2 `DeprecationWarning`s from inside `keras/src`; the 4.5 tests filter those only.
+- DQN on the 7 × 7 maze (PyTorch, replay of 1,000, batches of 32, 4 updates per move, γ 0.95, ε 0.1): every start solved by episode 80 to 180 for 5 seeds, 17 to 46 s. Without replay (one update on the latest step): 0 to 3 of 33 starts after 400 episodes, 3 seeds. The tutorial's Keras method (fit after every move, 1 epoch): episodes 170 to 230. The trained network solves 0 of 33 starts on the same maze transposed (a table: 9).
+- DQN on the 10 × 10 maze, up to 600 episodes: without a target network 15 of 74 starts (811 s); with one refreshed every 500 moves, solved at episodes 320 and 400 (seeds 0, 1; 512 s and 452 s while sharing the CPU).

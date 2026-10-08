@@ -31,6 +31,9 @@ function answerWith(track, name, pairs) {
 const S = 'qarcade-setup';
 const C = 'qarcade-corridor';
 const K = 'qarcade-cartpole';
+const Q = 'qarcade-qmaze';
+const N = 'qarcade-networks';
+const D = 'qarcade-qmaze-dqn';
 
 export const WALKTHROUGH = {
   // ── 0.1 ──────────────────────────────────────────────────────────────────
@@ -365,5 +368,327 @@ export const WALKTHROUGH = {
   },
   [`${K}/02-06-where-tables-break#Two ways to fail`]: {
     wrong: [{ name: 'calls every ending a fall', edit: [['counts["cart left the track" if abs(env.obs[0]) > 2.4 else "pole fell"] += 1', 'counts["pole fell"] += 1']], fails: [0, 1] }],
+  },
+
+  // ── 3.1 ──────────────────────────────────────────────────────────────────
+  [`${Q}/03-01-the-maze-game#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${Q}/03-01-the-maze-game#The maze as an array`]: {
+    wrong: [
+      { name: "counts the cheese's cell as a start", edit: [['and (r, c) != self.target]', ']']], fails: [0] },
+      { name: 'numbers the cells down the columns', edit: [['return row * self.cols + col', 'return col * self.rows + row']], fails: [0] },
+    ],
+  },
+  [`${Q}/03-01-the-maze-game#Moving`]: {
+    wrong: [
+      { name: 'walks through walls', edit: [['        if self.is_free(row + d_row, col + d_col):', '        if True:']], fails: [1] },
+      { name: 'forgets the edges', edit: [['0 <= row < self.rows and 0 <= col < self.cols and self.maze[row, col] == FREE', 'self.maze[row, col] == FREE']], fails: [1] },
+      { name: 'bumps cost no more than moves', edit: [['reward = self.rewards["wall"]', 'reward = self.rewards["move"]']], fails: [1] },
+    ],
+  },
+  [`${Q}/03-01-the-maze-game#Your turn: no coming back`]: {
+    files: { 'qmaze.py': answer(Q, 'qmaze_revisit.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'never records where the rat has been', files: { 'qmaze.py': answerWith(Q, 'qmaze_revisit.py', [['        self.visited.add(self.cell)\n', '']]) }, fails: [0] },
+    ],
+  },
+  [`${Q}/03-01-the-maze-game#Giving up`]: {
+    wrong: [
+      { name: 'calls a loss an ending', edit: [['        truncated = not terminated and self.total < self.min_reward', '        truncated = False\n        terminated = terminated or self.total < self.min_reward']], fails: [0] },
+      { name: 'gives up at -100 instead of -50', edit: [['-0.5 * self.maze.size', '-1.0 * self.maze.size']], fails: [0] },
+    ],
+  },
+  [`${Q}/03-01-the-maze-game#Drawing the maze`]: {
+    wrong: [{ name: 'rows across and columns down', edit: [['pygame.Rect(MARGIN + col * CELL, TOP + row * CELL', 'pygame.Rect(MARGIN + row * CELL, TOP + col * CELL']], fails: [0] }],
+  },
+  [`${Q}/03-01-the-maze-game#Play it yourself`]: {
+    wrong: [{ name: 'swapped up and down', edit: [['pygame.K_UP: UP, pygame.K_RIGHT: RIGHT, pygame.K_DOWN: DOWN', 'pygame.K_UP: DOWN, pygame.K_RIGHT: RIGHT, pygame.K_DOWN: UP']], fails: [0, 1] }],
+  },
+
+  // ── 3.2 ──────────────────────────────────────────────────────────────────
+  [`${Q}/03-02-rewards-that-shape-behaviour#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${Q}/03-02-rewards-that-shape-behaviour#Following the agent's choices`]: {
+    wrong: [
+      { name: 'leaves out the start', edit: [['    path = [env.cell]', '    path = []']], fails: [0] },
+      { name: 'leaves the agent greedy afterwards', edit: [['    agent.epsilon = saved\n', '']], fails: [0] },
+    ],
+  },
+  [`${Q}/03-02-rewards-that-shape-behaviour#Your turn: how did it end?`]: {
+    files: { 'rewards.py': answer(Q, 'rewards_ending.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'looks at the whole path', files: { 'rewards.py': answerWith(Q, 'rewards_ending.py', [['set(path[-20:])', 'set(path)']]) }, fails: [0] },
+    ],
+  },
+  [`${Q}/03-02-rewards-that-shape-behaviour#Starting anywhere`]: {
+    wrong: [
+      { name: 'reseeds every episode', edit: [['        if seed is not None:\n            self.rng = np.random.default_rng(seed)', '        self.rng = np.random.default_rng(seed or 0)']], fails: [0] },
+      { name: 'starts at random even when not asked', edit: [['        if self.random_start:', '        if True:']], fails: [0] },
+    ],
+  },
+  [`${Q}/03-02-rewards-that-shape-behaviour#Four sets of rewards`]: {
+    wrong: [{ name: 'made every move cost as much as a wall', edit: [['    "no wall penalty": {**REWARDS, "wall": REWARDS["move"]},', '    "no wall penalty": {**REWARDS, "move": REWARDS["wall"]},']], fails: [0, 1] }],
+  },
+
+  // ── 3.3 ──────────────────────────────────────────────────────────────────
+  [`${Q}/03-03-solving-the-maze#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${Q}/03-03-solving-the-maze#The shortest path, by search`]: {
+    wrong: [{ name: 'takes from the back of the queue (depth-first)', edit: [['queue.popleft()', 'queue.pop()']], fails: [0] }],
+  },
+  [`${Q}/03-03-solving-the-maze#Your turn: how many extra moves?`]: {
+    files: { 'maze_tools.py': answer(Q, 'maze_tools.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'counts cells instead of moves', files: { 'maze_tools.py': answerWith(Q, 'maze_tools.py', [['len(path) - 1 - shortest_path_length', 'len(path) - shortest_path_length']]) }, fails: [0] },
+    ],
+  },
+  [`${Q}/03-03-solving-the-maze#Arrows`]: {
+    wrong: [{ name: 'the left arrow points right', edit: [['        return [(cx - s, cy), (cx + s, cy - s), (cx + s, cy + s)]', '        return [(cx + s, cy), (cx - s, cy - s), (cx - s, cy + s)]']], fails: [0] }],
+  },
+
+  // ── 3.4 ──────────────────────────────────────────────────────────────────
+  [`${Q}/03-04-a-new-maze#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${Q}/03-04-a-new-maze#The same maze, flipped`]: {
+    wrong: [{ name: 'flipped left to right instead', edit: [['FLIPPED = MAZE.T.copy()', 'FLIPPED = MAZE[:, ::-1].copy()']], fails: [0] }],
+  },
+  [`${Q}/03-04-a-new-maze#Your turn: what the tutorial's agent sees`]: {
+    files: { 'new_maze.py': answer(Q, 'new_maze.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'draws the rat on the maze itself', files: { 'new_maze.py': answerWith(Q, 'new_maze.py', [['    canvas = env.maze.copy()', '    canvas = env.maze']]) }, fails: [0] },
+      { name: 'marks the rat with 1', files: { 'new_maze.py': answerWith(Q, 'new_maze.py', [['    canvas[env.cell] = 0.5', '    canvas[env.cell] = 1.0']]) }, fails: [0] },
+    ],
+  },
+
+  // ── 3.5 ──────────────────────────────────────────────────────────────────
+  [`${Q}/03-05-reading-the-tutorials-code#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${Q}/03-05-reading-the-tutorials-code#The tutorial's rules, as published`]: {
+    wrong: [{ name: 'fixed slip 1 while copying', edit: [["        else:\n            mode = 'invalid'", "        else:\n            nmode = 'invalid'"]], fails: [0] }],
+  },
+  [`${Q}/03-05-reading-the-tutorials-code#Your turn: fix it`]: {
+    files: { 'classic.py': answer(Q, 'classic.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'fixed only the variable, not the order', files: { 'classic.py': answerWith(Q, 'classic.py', [["        if mode == 'invalid':\n            return -0.75\n        if (rat_row, rat_col) in self.visited:\n            return -0.25\n        if mode == 'valid':", "        if (rat_row, rat_col) in self.visited:\n            return -0.25\n        if mode == 'invalid':\n            return -0.75\n        if mode == 'valid':"]]) }, fails: [0] },
+      { name: 'fixed the published class itself', files: { 'classic.py': answerWith(Q, 'classic.py', [["            mode = 'invalid'", "            nmode = 'invalid'"]]) }, fails: [1] },
+    ],
+  },
+  [`${Q}/03-05-reading-the-tutorials-code#Does the bug matter?`]: {
+    wrong: [{ name: 'used the intended penalty', edit: [['"wall": -0.25', '"wall": -0.75']], fails: [0, 1] }],
+  },
+
+  // ── 4.1 ──────────────────────────────────────────────────────────────────
+  [`${N}/04-01-a-function-with-knobs#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${N}/04-01-a-function-with-knobs#Points that follow a rule`]: {
+    wrong: [
+      { name: 'different points every time', edit: [['rng = np.random.default_rng(seed)', 'rng = np.random.default_rng()']], fails: [0] },
+      { name: 'the wrong rule', edit: [['2.0 * x + 1.0', '1.0 * x + 2.0']], fails: [0] },
+    ],
+  },
+  [`${N}/04-01-a-function-with-knobs#A straight line`]: {
+    wrong: [{ name: 'swapped the slope and the input', edit: [['return w * x + b', 'return w + x * b']], fails: [0] }],
+  },
+  [`${N}/04-01-a-function-with-knobs#Your turn: how wrong is it?`]: {
+    files: { 'line.py': answer(N, 'line_mse.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'forgets to square', files: { 'line.py': answerWith(N, 'line_mse.py', [['np.mean((predictions - targets) ** 2)', 'np.mean(predictions - targets)']]) }, fails: [0] },
+      { name: 'adds up instead of averaging', files: { 'line.py': answerWith(N, 'line_mse.py', [['np.mean((predictions', 'np.sum((predictions']]) }, fails: [0] },
+    ],
+  },
+  [`${N}/04-01-a-function-with-knobs#Learning by trying everything`]: {
+    wrong: [{ name: 'keeps the worst setting', edit: [['loss < best[0]', 'loss > best[0]']], fails: [0, 1] }],
+  },
+
+  // ── 4.2 ──────────────────────────────────────────────────────────────────
+  [`${N}/04-02-downhill#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${N}/04-02-downhill#Which way is downhill?`]: {
+    wrong: [{ name: 'forgets to divide by the nudge', edit: [['    dw = (mse(predict(w + h, b, x), y) - loss) / h', '    dw = mse(predict(w + h, b, x), y) - loss']], fails: [0] }],
+  },
+  [`${N}/04-02-downhill#Your turn: the slope by formula`]: {
+    files: { 'downhill.py': answer(N, 'downhill_gradient.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'forgets the 2', files: { 'downhill.py': answerWith(N, 'downhill_gradient.py', [['float(np.mean(2 * error * x)), float(np.mean(2 * error))', 'float(np.mean(error * x)), float(np.mean(error))']]) }, fails: [0] },
+      { name: "forgets w's x", files: { 'downhill.py': answerWith(N, 'downhill_gradient.py', [['np.mean(2 * error * x)', 'np.mean(2 * error)']]) }, fails: [0] },
+    ],
+  },
+  [`${N}/04-02-downhill#Going downhill`]: {
+    wrong: [{ name: 'goes uphill', edit: [['        w -= rate * dw\n        b -= rate * db', '        w += rate * dw\n        b += rate * db']], fails: [0, 1] }],
+  },
+
+  // ── 4.3 ──────────────────────────────────────────────────────────────────
+  [`${N}/04-03-a-hidden-layer#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${N}/04-03-a-hidden-layer#A curve, and a bend`]: {
+    wrong: [
+      { name: 'the bend keeps negatives (as positives)', edit: [['np.maximum(z, 0.0)', 'np.abs(z)']], fails: [0] },
+      { name: 'W1 the wrong way round', edit: [['"W1": rng.normal(0.0, 1.0, (1, hidden))', '"W1": rng.normal(0.0, 1.0, (hidden, 1))']], fails: [1] },
+    ],
+  },
+  [`${N}/04-03-a-hidden-layer#Your turn: the forward pass`]: {
+    files: { 'tiny_net.py': answer(N, 'tiny_net_forward.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'leaves out the bend', files: { 'tiny_net.py': answerWith(N, 'tiny_net_forward.py', [['    h = relu(z)', '    h = z']]) }, fails: [0] },
+      { name: 'returns the outputs as a column', files: { 'tiny_net.py': answerWith(N, 'tiny_net_forward.py', [['return out[:, 0], (X, z, h)', 'return out, (X, z, h)']]) }, fails: [0] },
+    ],
+  },
+  [`${N}/04-03-a-hidden-layer#Backpropagation`]: {
+    wrong: [
+      { name: 'forgets the bend on the way back', edit: [['    d_z = d_h * (z > 0)', '    d_z = d_h']], fails: [0, 1] },
+      { name: 'forgets to average over the examples', edit: [['(2 * (out - y) / len(x))', '(2 * (out - y))']], fails: [0, 1] },
+    ],
+  },
+
+  // ── 4.4 ──────────────────────────────────────────────────────────────────
+  [`${N}/04-04-pytorch#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${N}/04-04-pytorch#Install PyTorch`]: {
+    run: ['.venv\\Scripts\\python -m pip install -q -r requirements.txt'],
+    wrong: [{ name: 'did not install it', fails: [0] }],
+  },
+  [`${N}/04-04-pytorch#Gradients for free`]: {
+    wrong: [{ name: 'leaves out the bend', edit: [['    h = torch.relu(X @ tensors["W1"] + tensors["b1"])', '    h = X @ tensors["W1"] + tensors["b1"]']], fails: [0] }],
+  },
+  [`${N}/04-04-pytorch#Your turn: the network as layers`]: {
+    files: { 'torch_net.py': answer(N, 'torch_net_module.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'leaves out the bend', files: { 'torch_net.py': answerWith(N, 'torch_net_module.py', [['nn.Linear(1, hidden), nn.ReLU(), nn.Linear(hidden, 1)', 'nn.Linear(1, hidden), nn.Linear(hidden, 1)']]) }, fails: [0] },
+    ],
+  },
+  [`${N}/04-04-pytorch#The training loop`]: {
+    wrong: [{ name: 'never takes a step', edit: [['        optimiser.step()\n', '']], fails: [0, 1] }],
+  },
+
+  // ── 4.5 ──────────────────────────────────────────────────────────────────
+  [`${N}/04-05-keras#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${N}/04-05-keras#Install Keras`]: {
+    run: ['.venv\\Scripts\\python -m pip install -q -r requirements.txt'],
+    wrong: [{ name: 'did not install it', fails: [0] }],
+  },
+  [`${N}/04-05-keras#The same network, in Keras`]: {
+    wrong: [
+      { name: 'imports Keras before choosing the backend', edit: [['import os\n\nos.environ.setdefault("KERAS_BACKEND", "torch")\n\nimport keras\n', 'import keras\nimport os\n\nos.environ.setdefault("KERAS_BACKEND", "torch")\n']], fails: [0, 1, 2] },
+      { name: 'leaves out the bend', edit: [['keras.layers.Dense(hidden, activation="relu")', 'keras.layers.Dense(hidden)']], fails: [2] },
+    ],
+  },
+  [`${N}/04-05-keras#Your turn: the tutorial's network`]: {
+    files: { 'maze_net.py': answer(N, 'maze_net_model.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'only one hidden layer', files: { 'maze_net.py': answerWith(N, 'maze_net_model.py', [['        keras.layers.Dense(size),\n        keras.layers.PReLU(),\n        keras.layers.Dense(actions),', '        keras.layers.Dense(actions),']]) }, fails: [0] },
+    ],
+  },
+  [`${N}/04-05-keras#A network that knows the maze`]: {
+    wrong: [{ name: "copies cell (0, 0)'s values for every cell", edit: [['        targets.append(agent.Q[env.state()])', '        targets.append(agent.Q[0])']], fails: [0, 2] }],
+  },
+
+  // ── 5.1 ──────────────────────────────────────────────────────────────────
+  [`${D}/05-01-a-network-that-sees-the-maze#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-01-a-network-that-sees-the-maze#The maze, seen`]: {
+    wrong: [{ name: 'hands out the cell number', edit: [['        super().reset(seed)\n        return observe(self), {}', '        return super().reset(seed)']], fails: [0] }],
+  },
+  [`${D}/05-01-a-network-that-sees-the-maze#A network agent`]: {
+    wrong: [{ name: 'one output instead of four', edit: [['nn.Linear(size, actions))', 'nn.Linear(size, 1))']], fails: [0] }],
+  },
+  [`${D}/05-01-a-network-that-sees-the-maze#Your turn: choosing an action`]: {
+    files: { 'dqn.py': answer(D, 'dqn_act.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'always explores', files: { 'dqn.py': answerWith(D, 'dqn_act.py', [['if self.rng.random() < self.epsilon:', 'if True:']]) }, fails: [0] },
+      { name: 'returns NumPy integers when exploring', files: { 'dqn.py': answerWith(D, 'dqn_act.py', [['return int(self.rng.integers(4))', 'return self.rng.integers(4)']]) }, fails: [0] },
+    ],
+  },
+  [`${D}/05-01-a-network-that-sees-the-maze#Learning from one step`]: {
+    wrong: [{ name: 'adds a next value after an ending', edit: [['(1 - ended) * ', '']], fails: [0] }],
+  },
+
+  // ── 5.2 ──────────────────────────────────────────────────────────────────
+  [`${D}/05-02-experience-replay#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-02-experience-replay#A memory`]: {
+    wrong: [{ name: 'keeps everything for ever', edit: [['deque(maxlen=capacity)', 'deque()']], fails: [0] }],
+  },
+  [`${D}/05-02-experience-replay#Your turn: a random handful`]: {
+    files: { 'replay.py': answer(D, 'replay.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'can pick the same memory twice', files: { 'replay.py': answerWith(D, 'replay.py', [['replace=False', 'replace=True']]) }, fails: [0] },
+      { name: 'always takes the newest', files: { 'replay.py': answerWith(D, 'replay.py', [['        chosen = self.rng.choice(len(self.items), n, replace=False)\n        return [self.items[i] for i in chosen]', '        return list(self.items)[-n:]']]) }, fails: [0] },
+    ],
+  },
+  [`${D}/05-02-experience-replay#Learning from memories`]: {
+    wrong: [{ name: 'starts learning before a batch is ready', edit: [['        if len(self.memory) >= self.batch:', '        if len(self.memory) >= 1:']], fails: [0, 1] }],
+  },
+
+  // ── 5.3 ──────────────────────────────────────────────────────────────────
+  [`${D}/05-03-saving-judging-watching#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-03-saving-judging-watching#Saving what it learned`]: {
+    run: ['.venv\\Scripts\\python trained.py'],
+    wrong: [{ name: 'did not write or run trained.py', fails: [0, 1] }],
+  },
+  [`${D}/05-03-saving-judging-watching#Your turn: loading it back`]: {
+    files: { 'trained.py': answer(D, 'trained.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'leaves exploring on', files: { 'trained.py': answerWith(D, 'trained.py', [['DQNAgent(maze.size, epsilon=0.0)', 'DQNAgent(maze.size)']]) }, fails: [0] },
+      { name: 'never loads the numbers', files: { 'trained.py': answerWith(D, 'trained.py', [['    agent.net.load_state_dict(torch.load(path))\n', '']]) }, fails: [0] },
+    ],
+  },
+
+  // ── 5.4 ──────────────────────────────────────────────────────────────────
+  [`${D}/05-04-the-tutorials-way-in-keras#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-04-the-tutorials-way-in-keras#The tutorial's memory`]: {
+    wrong: [{ name: 'never forgets', edit: [['        if len(self.memory) > self.max_memory:\n            del self.memory[0]\n', '']], fails: [0] }],
+  },
+  [`${D}/05-04-the-tutorials-way-in-keras#Your turn: the tutorial's targets`]: {
+    files: { 'tutorial_keras.py': answer(D, 'tutorial_keras.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'zeros for the other actions', files: { 'tutorial_keras.py': answerWith(D, 'tutorial_keras.py', [['        targets = keras.ops.convert_to_numpy(self.model(inputs))', '        targets = np.zeros((len(chosen), 4))']]) }, fails: [0] },
+      { name: 'adds a next value after the game ended', files: { 'tutorial_keras.py': answerWith(D, 'tutorial_keras.py', [['reward if game_over else reward + self.discount * best_next[i]', 'reward + self.discount * best_next[i]']]) }, fails: [0] },
+    ],
+  },
+
+  // ── 5.5 ──────────────────────────────────────────────────────────────────
+  [`${D}/05-05-the-full-maze#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-05-the-full-maze#A target that keeps moving`]: {
+    wrong: [{ name: 'the copy keeps its own random numbers', edit: [['        self.target = make_net(size)\n        self.target.load_state_dict(self.net.state_dict())\n', '        self.target = make_net(size)\n']], fails: [0] }],
+  },
+  [`${D}/05-05-the-full-maze#Your turn: refreshing the copy`]: {
+    files: { 'dqn.py': answer(D, 'dqn_target.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'refreshes every move', files: { 'dqn.py': answerWith(D, 'dqn_target.py', [['if self.sync and self.steps % self.sync == 0:', 'if self.sync:']]) }, fails: [0] },
+    ],
   },
 };

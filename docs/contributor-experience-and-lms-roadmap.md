@@ -21,6 +21,10 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [ ] **C++ teaching repairs before A23 (2026-10-08):** educational review captured; inverse arithmetic, table construction, representation reasoning and A22c independent delivery/Git recovery are implemented. Compiler, structural, progress-identity and non-desktop checks pass. Browser review is pending after browser tools stopped, so the gate stays open; broader DSA and collaborative Git remain explicit unfinished strands in the [repair log](curricula/cpp-games/teaching-review.md).
+
+- [x] **C++ observations and Q-value storage through A22b (2026-10-08):** split observation boundaries/reversible indexing from table ownership and legal maxima. Independent decoding and storage challenges have progressive hints and compiled wrong-answer trials. Browser review checked both lessons, comparisons and hints. Action selection, updates and training remain next; see the [section audit](cpp-games-learning-path.md#observations-and-q-value-storage--2026-10-08).
+
 - [x] **C++ learning transitions through A21b (2026-10-07):** split reward perspective from complete agent-decision transitions; teach both through small diffs, traces, experiments and independent tests. Real C++ walkthroughs reject incomplete opponent responses and wrong-perspective rewards. Added an explicit SDL GPU readiness gate before Vulkan; OpenGL remains optional. See the [section audit](cpp-games-learning-path.md#reward-and-decision-boundary-section--2026-10-07).
 
 - [x] **C++ terminal-game milestone and probability entry through A20 (2026-10-07):** focused ownership lessons, shared CMake builds, deterministic rules, whole-line parsing, seeded dice and a playable fixed-opponent match. Independent work includes hints and wrong-answer trials; compiled walkthroughs pass. Added exact-outcome probability exploration and independent C++ practice. Fixed Windows checks confusing a blank line with EOF. Q-learning updates/training, SDL, Vulkan and the newly drafted full-stack branch remain unfinished; see the [milestone audit](cpp-games-learning-path.md#playable-terminal-milestone--2026-10-07).

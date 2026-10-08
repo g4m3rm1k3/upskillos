@@ -142,6 +142,21 @@ export const CONTRACTS = {
     prerequisites: ['21-reward-perspective'], recall: 'After the agent banks, whose turn is it, and can that opponent win before the agent chooses again?',
     transfer: 'Test retained turns, opponent banks and busts, both winners, incomplete scripts and input preservation.', concepts: ['decision boundary', 'transition result', 'copy before simulation'],
   },
+  '22-observation-addresses': {
+    outcome: 'Extract an agent-decision observation and encode it into a checked, reversible table address.',
+    prerequisites: ['21b-decision-boundaries', '07-players-and-collections'], recall: 'Why must an unfinished successor belong to seat zero before the agent chooses again?',
+    transfer: 'Decode an unfamiliar address, reject unused positions, and check every admitted observation for collisions.', concepts: ['observation boundary', 'index encoding', 'inverse and collision'],
+  },
+  '22b-action-value-storage': {
+    outcome: 'Store separate action estimates, preserve neighboring cells, and query only legal choices without exposing mutable storage.',
+    prerequisites: ['22-observation-addresses', '06-copies-and-references', '10-score-class'], recall: 'Which three numbers identify a row, and why is an empty-pot Bank not a choice?',
+    transfer: 'Write independent storage tests that reject copied-row writes and maxima containing illegal actions.', concepts: ['action value', 'table ownership', 'legal maximum'],
+  },
+  '22c-deliver-a-small-change': {
+    outcome: 'Turn a small request into an independently designed, tested change, then review feedback and recover an unstaged Git edit.',
+    prerequisites: ['22b-action-value-storage', '16-two-executables'], recall: 'What can a passing example fail to tell you? Why might direct addressing be wasteful?',
+    transfer: 'Choose storage and an algorithm for a locker selector, derive cases, adapt to feedback and demonstrate staged-versus-working recovery.', concepts: ['acceptance and iteration', 'independent design and tests', 'Git inspection and recovery'],
+  },
 };
 
 export function learningIntro(id, intro) {

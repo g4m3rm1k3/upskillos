@@ -32,6 +32,14 @@ Preserve lesson identities. When splitting an existing lesson, retain its entry 
 
 Passing automated checks is technical evidence. A learner walkthrough remains necessary to establish pacing, comprehension and whether hint levels are well calibrated.
 
+## Review teaching, not only the contract
+
+Use the [teaching review and repair log](teaching-review.md). Identify an actual point where a novice must make an unexplained inference. Record the missing prerequisite, the experiment that prepares it, and a different task that requires transfer. A small line count is not evidence of a small conceptual step. New arithmetic or syntax must not debut inside a task presented as independent assessment.
+
+Each chapter must include a small development cycle: clarify a request, derive examples, choose an algorithm and representation, test, implement, inspect the change and respond to feedback. Gradually stop naming the functions, files and test cases for the learner. Separate author fixture success from learner-produced tests and design explanations. A later recall task should revisit the idea after intervening work.
+
+Teach DSA and architecture through alternatives with observable costs, not through a prescribed folder tree. Teach Git through inspection and recovery, then collaboration when prerequisites exist. Teach iterative delivery through feedback that actually changes a plan, not by labelling a fixed tutorial sequence agile. Record missing strands explicitly rather than claiming the whole software-development outcome from a working project.
+
 ## Vulkan: readiness before publication
 
 Use [Khronos's development-environment guidance](https://docs.vulkan.org/tutorial/latest/02_Development_environment.html) to distinguish driver, loader, headers, shader compiler and validation layers. Run `node scripts/vulkan-course-readiness.mjs` before authoring an executable setup milestone. Its zero exit means ready to attempt setup, not a verified renderer. Exit two identifies missing preflight evidence; it installs nothing and changes no system settings.

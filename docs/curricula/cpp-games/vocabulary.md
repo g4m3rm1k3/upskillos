@@ -35,6 +35,11 @@
 | Linker | The tool that resolves compiled references to definitions and joins program parts | A15: omitted implementation causes an unresolved reference; A16 expands the build |
 | Build target / dependency | A named thing to build / another thing it needs | A17: terminal and tests depend on the rules library |
 | Template | A definition parameterized by types or values | Concrete array/vector arguments in A07, expanded in A22; a tiny authored example before B18's custom owner |
+| Type alias | Another name for an existing type, without creating an object or a distinct type | A22b: `using QRow = std::array<double, 2>` |
+| Index encoding / inverse / collision | Converting coordinates to one address / recovering coordinates / two different inputs sharing an address | A22: row 328 decodes to 2,3,4; exhaustive inverse checks |
+| Quotient / remainder / nested loop | Complete groups / what remains / a loop that runs inside each iteration of another | A22: counters in groups, a locker inverse, then a traced two-coordinate round trip |
+| Linear search / direct addressing | Inspect entries in sequence / use a validated key to select its position | A22b: count comparisons, then compare a direct lookup with a compact visited-ID list |
+| Time / space complexity | How computational work / storage grows as the input grows | A22b: O(n) scan versus O(1) lookup; constructing n rows still costs O(n) |
 | Move / moved-from | Transferring an object's state or resources into another object / the source afterward, with validity governed by its type's contract | B18: transfer a texture owner without double release |
 | Lambda | A function expression that may retain access to selected surrounding values | B18: teach a tiny example before any custom-deleter use; explain capture lifetime |
 | Polymorphism / override | Calling a common interface with implementation-dependent behavior / supplying that behavior in a derived class | C22: choose between two real renderers |
@@ -47,6 +52,9 @@
 | Unit test / regression | A focused behavior check / a previously fixed behavior breaking again | A09: a test detects the return of the replacement bug |
 | Boundary case | An input at or near where a rule changes | A04, tested A09: exactly the winning target |
 | Git diff / commit | A view of changes / a recorded project snapshot with history | A16: record the working split project locally |
+| Index / working-tree recovery | Git's selected content for a future commit / replacing a deliberate unstaged edit from that content | A22c: a disposable file and two different comparisons; no commit required |
+| Acceptance criterion / backlog / work in progress | Observable completion condition / ordered possible work / started but unfinished work | A22c: agree on locker behavior, defer display polish, finish one usable change |
+| Iteration / retrospective | Deliver, obtain feedback and adjust / examine how the work was done and select an improvement | A22c: preferred-locker feedback changes the plan; review the process as well as the code |
 | State machine / transition | A model of states and permitted changes / one such change | A18: roll, bank, bust and win |
 | Seed / deterministic | Initial input to a pseudo-random generator / repeatable under the stated inputs and implementation | A19: replay rolls with a documented build |
 | Serialization / schema | Converting data to a stored representation / the rules describing that representation | A28: versioned model file |
@@ -72,7 +80,8 @@
 | Episode / terminal | One run of interaction / a state ending that run | A21: one completed match |
 | Decision boundary | A position where the agent can choose again, or a finished episode | A21b: include the opponent response after a bank or bust |
 | Policy | A rule or procedure for selecting actions from available information | Fixed policy A19c, compared with learned choices A21–A23 |
-| Q-value | An estimate of return associated with a state-action pair under the learning formulation | A22: separate estimates for Roll and Bank |
+| Observation | Information presented to the agent at a decision boundary | A22: own score, other score and pot at unfinished seat-zero decisions |
+| Return / Q-value | Accumulated future reward / an estimate of that return associated with an observation and first action under the learning formulation | A22b: separate estimates for Roll and Bank; zero initialization is not evidence |
 | Exploration / exploitation | Gathering experience with choices / selecting according to current estimates | A23: epsilon-greedy selection |
 | Learning rate / prediction error | How much a correction is applied / target minus current estimate | A24: move halfway from 0.2 toward -1 |
 | Discount / bootstrapping | Weighting future reward / using another estimate inside an update target | A25: nonterminal Q-learning target |

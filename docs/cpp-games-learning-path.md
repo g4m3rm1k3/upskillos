@@ -1,6 +1,6 @@
 # From Python Scripts to C++ Games and Vulkan
 
-Status: **implemented through A21b, including probability, rewards and complete agent-decision transitions; the full path is not complete**. Drafted 2026-10-05 and extended 2026-10-07 at the learner's request. C++ foundations, objects/files, shared builds, deterministic rules, command parsing, seeded dice and the terminal match are implemented in Project Studio. The opponent currently follows a fixed rule. Q-learning updates and training, graphical sequels and the full-stack application branch remain planned in this beginner path. The existing faster Dice Duel track stays separate.
+Status: **implemented through A22b; teaching repairs and A22c consolidation are compiler-verified but await browser review; the full path is not complete**. Drafted 2026-10-05 and extended 2026-10-08 at the learner's request. C++ foundations, objects/files, shared builds, deterministic rules, command parsing, seeded dice and the terminal match are implemented in Project Studio. The opponent currently follows a fixed rule. Action selection, Q-learning updates and training, graphical sequels and the full-stack application branch remain planned in this beginner path. The existing faster Dice Duel track stays separate. The [teaching review and repair log](curricula/cpp-games/teaching-review.md) records conceptual gaps separately from technical verification. Do not continue A23 until the repaired section passes its pending visual review.
 
 ## The learner and the destination
 
@@ -148,7 +148,7 @@ Preserve existing progress identities. Add foundational tracks or new bridge les
 | Entire-path goals, lesson maps, vocabulary, classes and mastery gates | Drafted here | Editorial review and internal links |
 | Project showcases before the first code lesson | A00 has an interactive rule preview; later showcases remain storyboards | A00's browser rules are checked against the completed C++ game; it explicitly uses a fixed opponent, not a trained model |
 | Existing Dice Duel implementation | Implemented previously; needs baseline expansion | Existing compiler walkthrough, not a substitute for curriculum audit |
-| Part A foundations and terminal game | A00–A21b implemented, including the terminal match, probability, reward perspective and deterministic agent transitions; Q-learning updates and training remain unauthored | Small-step lessons, independent tasks, wrong-answer trials and real compiler walkthrough |
+| Part A foundations and terminal game | A00–A22b implemented, including the terminal match, probability, reward perspective, deterministic agent transitions, observations and Q-value storage; action selection, Q-learning updates and training remain unauthored | Small-step lessons, independent tasks, wrong-answer trials and real compiler walkthrough |
 | Part B SDL3 | Not authored | Pinned dependency setup, game tests, bounded smoke runs and visual checks |
 | Part C SDL GPU | Not authored | Shader compilation, CPU references, GPU observations and backend reporting |
 | Part D Vulkan | Not authored | Feature checks, validation runs, lifetime/resize checks and presentation review |
@@ -178,7 +178,7 @@ Verification: `node node_modules/vitest/vitest.mjs run src/labs/project-studio/d
 
 Browser inspection confirmed both chapters appear in the series, A06 displays a normal file comparison, its independent challenge contains requirements and staged hints without a solution, and A15 renders the shared header with explanations and a live comparison. The browser has no learner filesystem, so it compares against an empty file; incremental edits against saved files are covered by the target-diff tests and desktop walkthrough. No production build or non-Windows execution is claimed. The runs emitted existing Vite/esbuild deprecation warnings. Catalog regeneration still reports the existing 14 content problems.
 
-The subsequent learning-quality pass split A14 into focused lessons and added A16–A19c. A20 now opens the learning chapter with probability and expectation. A21 and A21b now teach reward perspective and agent-decision boundaries. Remaining work begins with observations and action-value storage at A22. This playable fixed-opponent milestone does not mark the full terminal/Q-learning series or any graphical sequel complete.
+The subsequent learning-quality pass split A14 into focused lessons and added A16–A19c. A20 opens the learning chapter with probability and expectation. A21 and A21b teach reward perspective and agent-decision boundaries. A22 and A22b now teach observations, reversible addressing and action-value storage. The A22c development-cycle consolidation now precedes action selection at A23; its repaired sequence still needs browser verification. This playable fixed-opponent milestone does not mark the full terminal/Q-learning series or any graphical sequel complete.
 
 ### Playable terminal milestone — 2026-10-07
 
@@ -246,3 +246,28 @@ The required non-desktop check, `node node_modules/vitest/vitest.mjs run src/lab
 Browser review confirmed A21’s reward table and ordinary visible file comparison, and A21b’s transition trace, independent case table and incremental hint reveal without a supplied solution. A screenshot confirmed the independent exercise layout. The audit moved the explicit transition-result explanation after its prediction. The browser preview cannot run learner code; the compiled desktop walkthrough above provides that evidence.
 
 After the prediction edit, the full non-desktop suite again printed Test Files 35 passed (35) and Tests 170 passed | 1 skipped (171). Final contributor-doc and focused curriculum checks passed, as did the whitespace check. The temporary browser tab was closed and the development server stopped.
+
+### Observations and Q-value storage — 2026-10-08
+
+A22 separates observation/addressing from A22b's table ownership. [The authoring module](../scripts/dice-observation-lessons.mjs), invoked by `node scripts/author-dice-learning.mjs`, generates both lessons and author-only answers. Existing lessons and step identities are unchanged. The learner continues the same project from A21b; the terminal opponent remains fixed. Next is A23 action selection, followed by updates and training.
+
+| Section | Teaching and audit evidence |
+|---|---|
+| A22 observations | Extract only unfinished seat-zero decisions; explain omitted turn/winner fields and the fixed rules/opponent assumptions. Trace row 328 from 2,3,4 before introducing the general encoding. Validate coordinates before arithmetic and distinguish reserved rows from admitted positions. |
+| A22 independent work | Decode different addresses, reject already-winning coordinates, and exhaustively invert every admitted triple. Wrong-answer trials reject swapped scores, accepting unused rows, colliding encodings and printing example strings. The learner must explain why an inverse excludes collisions; output checks alone do not grade that explanation. |
+| A22b storage | Begin with a runnable array-copy/reference experiment. Explain type aliases, concrete template arguments, vector initialization, ownership and checked row/column access. Store demonstration estimates explicitly; zero initialization is not evidence and Q-values are not win probabilities. |
+| A22b independent work | Test initialization, separate columns, unchanged neighbors, independent agent copies, invalid coordinates and decision boundaries. Negative-value cases reject copied-row writes, an illegal Bank maximum and an invented zero candidate. Fault fixtures include the complete independent test answer, so these defects are exercised against compiled tests. |
+
+Compiler verification:
+
+```text
+node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceLearning.desktop.test.js src/labs/project-studio/diceLearningContract.test.js src/labs/project-studio/diceState.test.js
+```
+
+Printed **Test Files 3 passed (3)** and **Tests 14 passed (14)**. After strengthening the wrong-answer fixtures, `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceLearning.desktop.test.js` printed **Test Files 1 passed (1)** and **Tests 8 passed (8)**. The real compiler walked all guided commands and independent answers in a fresh temporary learner folder with earlier taught prerequisites reconstructed. No C++ checks were skipped. The final CMake build and CTest include the existing project tests and the new storage test.
+
+`node node_modules/vitest/vitest.mjs run src/labs/project-studio --exclude "**/*.desktop.test.js"` printed **Test Files 35 passed (35)** and **Tests 175 passed | 1 skipped (176)**. The skip is the existing Python-dependent process-stop test. Structural checks enforce the small-diff ceiling, ordered prerequisites, predictions, experiments, independent tasks and three-stage hints. Existing Vite/esbuild deprecation and Browserslist-age warnings remain; the browser server also reported the broad Tailwind content-pattern warning. No production build or non-Windows execution is claimed.
+
+Browser review traversed both lessons in Project Studio. It confirmed the new navigation entries, A22's visible header comparison and address trace table, A22b's rendered template names and C++ comparisons, both independent requirement tables, and one-at-a-time hint reveals without supplied solutions. Continuation from A22 reaches A22b, whose final step states that selection and training remain later work. Screenshots confirmed readable comparison and hint layouts. The browser has no learner filesystem and compares targets with an empty file; incremental sizes are checked against preceding targets by the structural test, and actual source execution is covered by the compiler walkthrough. Regeneration refreshed the app and closed its preview window; reopening Project Studio recovered it.
+
+`npm run facts` could not run because `npm` was not on the shell PATH. Its exact constituent commands succeeded: `node src/scripts/build-lesson-titles.js`, `node scripts/build-lesson-ids.mjs`, and `node scripts/generate-project-facts.mjs`. All three also passed with `--check`; the inventory still reports the existing 14 content problems. `node scripts/check-docs.mjs` passed for nine contributor documents. The final focused command, `node scripts/check-docs.mjs docs/cpp-games-learning-path.md docs/curricula/cpp-games/01-terminal.md docs/curricula/cpp-games/vocabulary.md docs/contributor-experience-and-lms-roadmap.md`, printed **Contributor docs checked: 4 file(s), links, paths and commands all exist.** `git diff --check` reported no whitespace errors, with Git's LF-to-CRLF warnings. A diff against the original A20, A21 and A21b files was empty. Unrelated CartPole edits and concurrently added Q-Maze files were preserved. The temporary lesson tab was closed and development server stopped. Nothing was committed or pushed.

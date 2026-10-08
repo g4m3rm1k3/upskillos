@@ -1,5 +1,7 @@
 import { author } from './dice-path-authoring.mjs';
 import { environmentLessons } from './dice-environment-lessons.mjs';
+import { observationLessons } from './dice-observation-lessons.mjs';
+import { deliveryLesson } from './dice-delivery-lesson.mjs';
 const {lesson,step,guided,practice,predict,end,finish}=author({key:'dice-path-learning',title:'C++ Games — Learn from Decisions',order:4.4,fixture:'dice-learning',test:'diceLearning'});
 lesson('20-six-possible-futures','A20 — Count the futures before learning from them',
   'You can now play against a fixed policy. Before teaching an opponent from experience, ask what one decision can lead to. This chapter will build toward action values and Q-learning; its first lesson enumerates six outcomes exactly, without simulation or training. We will distinguish gaining points on the next roll from winning the whole match. Keep the same project folder; these small experiments belong in explore and practice.');
@@ -34,4 +36,6 @@ practice('Count immediate winning faces',
   ],'**Ready to move on:** explain why four winning faces means probability 4/6 only under the fair-die model, why that does not guarantee four wins in six trials, and why we have not yet computed a long-term action value. Change to another unfinished score/pot and check your answer by listing faces before running.');
 end();
 environmentLessons({lesson,step,predict,end});
+observationLessons({lesson,step,predict,end});
+deliveryLesson({lesson,step,predict,end});
 finish();

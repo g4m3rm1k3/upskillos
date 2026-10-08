@@ -24,8 +24,9 @@ def test_visited_counts_rows_that_were_ever_changed():
     from tables import visited
     Q = np.zeros((6, 2))
     Q[1, 0] = 0.5
+    Q[3, 0] = 1.0
     Q[4] = [-1.0, 2.0]
-    assert visited(Q) == 2
+    assert visited(Q) == 3
 
 
 def test_visited_on_an_empty_table_is_zero():
@@ -90,7 +91,7 @@ import numpy as np
 def visited(Q):
     return int(np.count_nonzero(Q.any(axis=1)))
 ~~~
-For the test's table, rows 1 and 4 hold non-zero values, so `Q.any(axis=1)` is [False, True, False, False, True, False] and the count is 2.
+For the test's table, rows 1, 3 and 4 hold non-zero values, so `Q.any(axis=1)` is [False, True, False, True, True, False] and the count is 3. Asked per column instead (`axis=0`), the answer would be 2, one per column, which is why the test uses three rows.
 ```
 
 ```check
@@ -161,14 +162,22 @@ verify: script biggest_visited.py
 What it printed on the machine this series was written on:
 
 ```text
-TABLES_OUTPUT
+bins              states  episodes  greedy scores     visited  seconds per run
+(1, 1, 6, 12)        72       500  [499, 500, 500]      59%     4.7
+(1, 1, 6, 12)        72      2000  [447, 500, 500]      70%    22.7
+(3, 3, 6, 6)        324       500  [222, 172, 199]      34%     3.2
+(3, 3, 6, 6)        324      2000  [187, 189, 191]      45%    12.4
+(6, 6, 12, 12)     5184       500  [30, 90, 20]          6%     1.0
+(6, 6, 12, 12)     5184      2000  [491, 500, 500]      15%    22.9
+(10, 10, 20, 20)  40000       500  [55, 69, 65]          3%     0.4
+(10, 10, 20, 20)  40000      2000  [390, 174, 478]       5%     6.3
 ```
 
 Three things to read in it:
 
 1. **More rows learn more slowly.** At 500 episodes, the order is the reverse of the size: 72 rows best, 40,000 worst. 5,184 rows needed 2,000 episodes to catch up, and 40,000 rows still hadn't.
 2. **Bigger tables use less of themselves.** The visited fraction falls from about 60% to 5%. This is the **curse of dimensionality**: each extra number with slots *multiplies* the number of rows. Four numbers with 20 slots each would be 20⁴ = 160,000 rows. A game screen, with thousands of numbers, would need more rows than there are atoms in the universe.
-3. **The 324-row table never learns, at any length.** It differs from the 72-row table in two ways at once: it adds cart slots, and it halves the spin's slots from 12 to 6. Measured separately with 5 agents each, neither change alone breaks learning. (1, 1, 6, 6) reached 500 with all five agents after 2,000 episodes, and (3, 3, 6, 12) with four of five after 500. The two together do. That's a lesson about experiments as much as about tables: when two things change at once, a result can't tell you which one mattered.
+3. **The 324-row table barely learns, at either length:** about 190 steps, every time. It differs from the 72-row table in two ways at once: it adds cart slots, and it halves the spin's slots from 12 to 6. Measured separately with 5 agents each, neither change alone breaks learning. (1, 1, 6, 6) reached 500 with all five agents after 2,000 episodes, and (3, 3, 6, 12) with four of five after 500. The two together do. That's a lesson about experiments as much as about tables: when two things change at once, a result can't tell you which one mattered.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_tables.py -k sizes" label="try_size trains, judges and measures one table layout" -- For each seed: train with counts=counts, score it with evaluate, and record visited(agent.Q) / env.n_states; return the scores, the mean visited fraction and the seconds per run.
