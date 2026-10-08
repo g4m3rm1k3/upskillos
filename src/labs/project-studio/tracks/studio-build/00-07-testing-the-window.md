@@ -6,7 +6,14 @@ concepts: e2e-testing, playwright, async-await, try-finally
 problem: Vitest tests greet, but not whether the app starts, whether the page's script loads, or whether the heading shows the greeting. Lesson 0.6 showed all three can fail with no error anywhere. How do you test the whole program, the way a person would use it?
 ---
 
-The tests so far are **unit tests**: each one calls one function and checks what it returns. An **end-to-end test** starts the whole app, as a user would, and checks what's on screen. It's slower (a second or two instead of a millisecond), so a project has many unit tests and a few end-to-end ones, for the things only the whole app can show.
+The tests so far are **unit tests**: each one calls one function and checks what it returns. An **end-to-end test** starts the whole app, as a user would, and checks what's on screen. The two kinds are good at different things:
+
+- A unit test takes a millisecond, and when it fails it points at one function. But it can't see whether the pieces are joined up: whether the app starts, or the page loads its script.
+- An end-to-end test sees exactly what a user would, so it catches what unit tests can't. But it takes a second or two, and when it fails it only says what's wrong on screen, not which line caused it.
+
+So a project has many unit tests and a few end-to-end ones, only for what the whole app alone can show. Drawn as a picture, with the many fast tests as a wide base and the few slow ones on top, it's called the **test pyramid**. A project that turns it upside down, mostly end-to-end tests, ends up with a test run that takes an hour and failures nobody can place.
+
+This lesson's test is written after the app it tests, because there's no app to start until lesson 0.6 has made one. A test written after the code has never been seen to fail, so the lesson breaks the app on purpose to watch it fail, and then puts it back.
 
 **Playwright** is a library that drives a browser from a program: it opens pages, clicks, types and reads what's shown. It can also drive an Electron app. Vitest runs the test; Playwright works the app.
 
@@ -152,7 +159,7 @@ run "npm run e2e" stdout="1 passed"
 
 ## Red, on purpose
 
-Lesson 0.5 showed that a misspelled selector empties the heading without any error. Now there's a test that should catch it. Misspell it in `src/main.ts`:
+Lesson 0.5 showed that a misspelled selector empties the heading without any error. Now there's a test that should catch it, but it has only ever passed: until you've seen it fail, you don't know it can. Breaking the code on purpose is how you check a test written after the code. Misspell the selector in `src/main.ts`:
 
 ```ts file=src/main.ts
 import { greet } from './greet';

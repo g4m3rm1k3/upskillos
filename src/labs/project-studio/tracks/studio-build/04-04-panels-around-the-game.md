@@ -15,6 +15,47 @@ This lesson finishes moving the page into React and lays the editor out the way 
 
 One component, `App`, describes the whole page. `main.tsx` is left with one job: make the game and the store, and hand them to `App`.
 
+Sprint 4's first story says what's wanted: *the editor laid out in panels around the game view*. A user story comes with **acceptance criteria**, the things that must be true for it to count as done: here, the game drawn in the centre, a Scene panel on the left, an Inspector panel on the right. Written as an end-to-end test, that's an **acceptance test**.
+
+So this lesson starts with that test, and it fails. Then the parts get built, each with its own small steps, and the acceptance test passes last, when the story is done. Working this way is called **outside in**: from what the user sees, inwards to the parts. It's two loops of red and green, one inside the other: the outer loop, the acceptance test, stays red for the whole lesson; the inner loops, the unit tests and type checks of each part, go round many times. This is how the rest of the course builds every story.
+
+## The story's acceptance test
+
+Create `e2e/editor.test.ts`:
+
+```ts file=e2e/editor.test.ts
+import { expect, test } from 'vitest';
+import { _electron as electron } from 'playwright';
+
+test('the editor shows its panels, with the game drawn in the centre one', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
+    expect(await page.textContent('.left h2')).toBe('Scene');
+    expect(await page.textContent('.right h2')).toBe('Inspector');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+```
+
+- `page.locator('.centre #game canvas')` finds elements matching a CSS selector, without waiting for one. A space between selectors means "inside": a `<canvas>` inside `#game` inside `.centre`. `.count()` is how many there are.
+- Exactly one canvas: Phaser started, drew into the element React made, and only once. If the effect ran before the element existed, Phaser would put its canvas at the end of the page instead, outside `.centre`, and the count would be 0.
+- The two headings show the side panels are there.
+
+- The test says nothing about how the panels are made: no React, no components, no grid. It only checks what a user would see. So it stays true however the inside is built, and it can be written before any of it exists.
+
+```check
+run "npm run e2e" exit=1 stderr="expected +0 to be 1" label="the acceptance test fails: there are no panels yet"
+```
+
+```text
+AssertionError: expected +0 to be 1 // Object.is equality
+```
+
+There's no `.centre` on the page, so there's no canvas inside one: `0`, not `1`. (Vitest writes zero as `+0`, because JavaScript also has a `-0`, and `Object.is` tells them apart.) The rest of the lesson makes it pass.
+
 ## A bigger window
 
 Three columns need more room than the 1000 pixels the window has had since lesson 0.6. Change `electron/main.js`:
@@ -362,36 +403,7 @@ Run `npm start`. The title is across the top, the scene panel on the left, the g
 
 ```check
 run "npx tsc"
-run "npm run e2e" stdout="4 passed" label="the game, the keys and the console still work"
-```
-
-## A test for the layout
-
-Create `e2e/editor.test.ts`:
-
-```ts file=e2e/editor.test.ts
-import { expect, test } from 'vitest';
-import { _electron as electron } from 'playwright';
-
-test('the editor shows its panels, with the game drawn in the centre one', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
-    expect(await page.textContent('.left h2')).toBe('Scene');
-    expect(await page.textContent('.right h2')).toBe('Inspector');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-```
-
-- `page.locator('.centre #game canvas')` finds elements matching a CSS selector, without waiting for one. A space between selectors means "inside": a `<canvas>` inside `#game` inside `.centre`. `.count()` is how many there are.
-- Exactly one canvas: Phaser started, drew into the element React made, and only once. If the effect ran before the element existed, Phaser would put its canvas at the end of the page instead, outside `.centre`, and the count would be 0.
-- The two headings show the side panels are there.
-
-```check
-run "npm run e2e" stdout="5 passed" label="the editor's panels are there, with the game in the centre"
+run "npm run e2e" stdout="5 passed" label="the acceptance test passes, and the game, the keys and the console still work"
 ```
 
 ## Commit, and tick the first story

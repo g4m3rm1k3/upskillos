@@ -84,7 +84,12 @@ test('every box is drawn at its global position, centred, parents first', () => 
 });
 ```
 
-- `RecordingPainter` is a **test double**: an object that stands in for a real one (here, Phaser's Graphics) so the code under test can run without it. Because this one records what it's asked to do, it's often called a **spy**.
+- `RecordingPainter` is a **test double**: an object that stands in for a real one (here, Phaser's Graphics) so the code under test can run without it. The name comes from films, where a stunt double stands in for the actor. Test doubles come in a few kinds, and you'll meet each in this course:
+  - a **stub** gives fixed answers and does nothing else (a stand-in clock that always says it's noon);
+  - a **fake** really works, but in a simpler way than the real thing (a list in memory standing in for a database);
+  - a **spy** records how it was used, so the test can check the calls afterwards.
+- This one records what it's asked to draw, so it's a spy. The test's assertion is about the calls: the right colours and rectangles, in the right order.
+- Why not test with Phaser itself: Phaser needs a browser and a graphics card, and its drawing ends up as pixels, which are hard to check. The spy turns "what was drawn" into a list of strings a test can compare.
 - `implements Painter` promises it has every method the `Painter` type lists, with the right types. `npx tsc` checks the promise. `Painter` will be defined in the next step.
 - `import { drawTree, type Painter }`: `type` marks an import used only as a type. It's erased when the code runs, because a type isn't a value.
 - `color.toString(16)` writes a number in base 16: `0xff0000` becomes `'ff0000'`, so the list reads like the code.

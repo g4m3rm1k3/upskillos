@@ -79,6 +79,8 @@ run "npx tsc"
 
 ## Moving: tests for add and scale
 
+How big should one red–green round be? Small enough that when the test fails, you already know why, and when you write the code, you can see it's right. Here that's two very small methods at once, `add` and `scale`, each one line. When a step goes wrong in a way you don't understand, the cure is a smaller step: one test, then the code for that test alone.
+
 Each frame, a moving object's new position is its old position plus the distance moved. The distance is its velocity multiplied by the time that passed, in seconds. In vector terms:
 
 - **add**: `(100, 50) + (2, 0) = (102, 50)`. Add the x's, add the y's.
@@ -249,7 +251,7 @@ run "npx vitest run src" stdout="7 passed"
 
 ## The zero vector
 
-A standing-still object has velocity `(0, 0)`. Its direction should be `(0, 0)` too: no direction at all. Add the test at the end of the file:
+A standing-still object has velocity `(0, 0)`. Its direction should be `(0, 0)` too: no direction at all. The zero vector is an edge case (lesson 0.4): the one vector with no length, and the one the division in `normalized` can't handle. Add the test at the end of the file:
 
 ```ts file=src/engine/vec2.test.ts
 import { expect, test } from 'vitest';

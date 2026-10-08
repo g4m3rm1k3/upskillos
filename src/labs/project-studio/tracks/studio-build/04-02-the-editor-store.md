@@ -14,9 +14,499 @@ The store is a plain TypeScript class, with no React in it, so it's tested like 
 
 The real Game Studio has the same thing, `editor/store.ts`. It grew to over 1,200 lines because every feature added its state there. This course keeps the same shape and adds to it one sprint at a time.
 
-## The store's tests
+## The store: a first test
 
-Create `src/editor/store.test.ts`:
+The store will be built one behaviour at a time, starting with the simplest: a line of code changes the scene. Create `src/editor/store.test.ts`:
+
+```ts file=src/editor/store.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+import { EditorStore } from './store';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [] },
+      ],
+    },
+  };
+}
+
+function refuseColor2(data: SceneData): void {
+  if (findNode(data, 'level/wall').props.color === 2) throw new Error('2 is not a colour');
+}
+
+test('a line of code changes the scene and is logged', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+});
+```
+
+- `new EditorStore(scene(), refuseColor2)`: a store is made from a scene and a **check**: a function the store calls on the scene after every change, which throws if the scene is no good. In the app, the check will be "rebuild the live nodes" (lesson 3.7), which throws when the engine refuses a scene.
+- Tests can't start Phaser, so they pass a check of their own. `refuseColor2` throws if the wall's colour is 2. It's a stand-in for the engine with one easy-to-trigger rule.
+- `store.run(code)` runs a line of console code; `store.problem` is the message the page will show, `''` when there's none.
+- `refuseColor2` is a **fake** (lesson 1.8): a stand-in that really does the job of a check, in the simplest way that can say no.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './store'"
+```
+
+## The store
+
+Create `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  run(code: string): void {
+    runCode(code, this.script);
+  }
+}
+```
+
+- `export type Check = (scene: SceneData) => void` gives a name to a **function type**: any function that takes a `SceneData` and returns nothing. `type` makes a name for a type, as `interface` does for object shapes (lesson 2.1). Here `void` says the result isn't used: the check reports a problem by throwing.
+- `readonly history = new History()` is a **field with a starting value**: each new store gets its own `History`. `readonly` (lesson 1.5) means the field can't be pointed at another history later, though the history itself still changes.
+- `readonly script: SceneScript` is declared here and given its value in the constructor. TypeScript checks that the constructor does give it one.
+- `constructor(readonly scene: SceneData, private readonly check: Check)` uses **parameter properties** (the same shorthand as `Vec2`'s `public x` in lesson 1.1): each parameter with `readonly`, `private` or `public` in front becomes a field with that name, set to the argument. `scene` is public, so panels can read it; `check` is `private`, so only the store can call it.
+- `this.script = sceneScript(scene, this.history)` makes the `scene` facade (lesson 3.6) once, for this scene and this history.
+- `run(code)` runs a console line through the facade, and so through the history.
+- The store keeps `check`, but doesn't call it yet: no test needs it. The third test will.
+
+```check
+run "npx vitest run src" stdout="79 passed"
+run "npx tsc"
+```
+
+## A line that fails: a test
+
+Add a test to `src/editor/store.test.ts`:
+
+```ts file=src/editor/store.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+import { EditorStore } from './store';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [] },
+      ],
+    },
+  };
+}
+
+function refuseColor2(data: SceneData): void {
+  if (findNode(data, 'level/wall').props.color === 2) throw new Error('2 is not a colour');
+}
+
+test('a line of code changes the scene and is logged', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+});
+
+test('a line that fails changes nothing, and the problem says why', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/truck", "color", 1);');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual([]);
+});
+```
+
+- `level/truck` doesn't exist, so the line fails. The store must not let the error escape: the page has to go on working, and show what went wrong. `store.problem` is the message the page will show, `''` when there's none.
+
+```check
+run "npx vitest run src" exit=1 stderr="There is no node at \"level/truck\""
+```
+
+The error comes straight out of `store.run` and stops the test, before any `expect` runs. A thrown error is a failed test too, and Vitest shows its message.
+
+## The problem
+
+Change `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+  problem = '';
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  run(code: string): void {
+    this.problem = '';
+    try {
+      runCode(code, this.script);
+    } catch (error) {
+      this.problem = (error as Error).message;
+    }
+  }
+}
+```
+
+- `problem = ''` starts with no problem. Its type, `string`, is inferred from `''`.
+- `run` clears the problem, then runs the code inside `try`. If it throws, the `catch` keeps the error's message in `problem` instead of letting it escape.
+
+```check
+run "npx vitest run src" stdout="80 passed"
+run "npx tsc"
+```
+
+## A change the check refuses: a test
+
+Add a test to `src/editor/store.test.ts`:
+
+```ts file=src/editor/store.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+import { EditorStore } from './store';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [] },
+      ],
+    },
+  };
+}
+
+function refuseColor2(data: SceneData): void {
+  if (findNode(data, 'level/wall').props.color === 2) throw new Error('2 is not a colour');
+}
+
+test('a line of code changes the scene and is logged', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+});
+
+test('a line that fails changes nothing, and the problem says why', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/truck", "color", 1);');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual([]);
+});
+
+test('a change the check refuses is undone, with the reason', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 2);');
+  expect(store.problem).toBe('That change was undone: 2 is not a colour');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(9807270);
+  expect(store.history.code).toEqual([]);
+});
+```
+
+- Colour `2` is valid data, so the line runs, but the check refuses the scene. The store must undo the change and say why.
+
+```check
+run "npx vitest run src" exit=1 stderr="a change the check refuses is undone, with the reason"
+```
+
+## Checking after each change
+
+This is lesson 3.7's `change`, moved into the store as it was. Change `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+  problem = '';
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  run(code: string): void {
+    this.problem = '';
+    try {
+      runCode(code, this.script);
+    } catch (error) {
+      this.problem = (error as Error).message;
+      return;
+    }
+    this.checkOrUndo();
+  }
+
+  private checkOrUndo(): void {
+    try {
+      this.check(this.scene);
+    } catch (error) {
+      this.history.undo();
+      this.check(this.scene);
+      this.problem = `That change was undone: ${(error as Error).message}`;
+    }
+  }
+}
+```
+
+- After the code runs, `checkOrUndo()` calls the check. If the check throws, the last change is undone, the check is run again on the restored scene (to rebuild the old nodes), and the problem says why.
+- The second call to `this.check` isn't inside a `try`. The scene after an undo is one that has passed the check before, so it can't throw.
+- If the code throws, the `catch` keeps the message and `return`s: there's nothing to check. That's what lesson 3.7 did.
+
+```check
+run "npx vitest run src" stdout="81 passed"
+run "npx tsc"
+```
+
+## Lesson 3.7's bug: a regression test
+
+That `return` has a bug, and lesson 3.7's app has it too. A console line can hold two calls. If the first works and the second throws, the first change has been made and recorded in the history, but `change` stopped at the error and never rebuilt.
+
+```predict
+question: In lesson 3.7's app, you type scene.setProp("level/wall", "color", 16766720); scene.deleteNode("level/truck"); and press Enter. What does the window show?
+choice: The error, and nothing has changed, in the data or on screen
+choice: The error; the wall still grey and the log still empty, though the data now says gold
+choice: The error, a gold wall, and the setProp line in the log
+answer: The error; the wall still grey and the log still empty, though the data now says gold
+explain: The first call ran as a command, so the data changed and the history recorded it. The second threw, so change() showed the error and returned before rebuild(), which is what rebuilds the nodes and redraws the log. The data and the window disagree until the next change.
+```
+
+When you find a bug, the first thing to write is a test that shows it, before fixing anything. The test fails because of the bug, the fix makes it pass, and from then on it stops the bug ever coming back. A test like this is called a **regression test**, after the regression it guards against. Add it to `src/editor/store.test.ts`:
+
+```ts file=src/editor/store.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+import { EditorStore } from './store';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [] },
+      ],
+    },
+  };
+}
+
+function refuseColor2(data: SceneData): void {
+  if (findNode(data, 'level/wall').props.color === 2) throw new Error('2 is not a colour');
+}
+
+test('a line of code changes the scene and is logged', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+});
+
+test('a line that fails changes nothing, and the problem says why', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/truck", "color", 1);');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual([]);
+});
+
+test('a change the check refuses is undone, with the reason', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 2);');
+  expect(store.problem).toBe('That change was undone: 2 is not a colour');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(9807270);
+  expect(store.history.code).toEqual([]);
+});
+
+test('a line that fails part way keeps its earlier changes, and they are checked too', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1); scene.deleteNode("level/truck");');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+  store.run('scene.setProp("level/wall", "color", 2); scene.deleteNode("level/truck");');
+  expect(store.problem).toBe('That change was undone: 2 is not a colour');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+});
+```
+
+- The first line runs two calls: the colour change works, the delete fails. The problem must be the delete's message, and the colour change must be in the log.
+- The second line does the same with colour `2`, which the check refuses. Because the store checks the scene even after an error, the refused colour is undone, and the wall stays `1`.
+
+```check
+run "npx vitest run src" exit=1 stderr="a line that fails part way keeps its earlier changes, and they are checked too"
+```
+
+```text
+AssertionError: expected 'There is no node at "level/truck"' to be 'That change was undone: 2 is not a co…'
+```
+
+The bug, caught by a test. On the second line, the problem is still the delete's message: the store stopped at the error and never checked the scene, so the refused colour `2` stays.
+
+## Always check
+
+Change `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+  problem = '';
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  run(code: string): void {
+    this.problem = '';
+    try {
+      runCode(code, this.script);
+    } catch (error) {
+      this.problem = (error as Error).message;
+    }
+    this.checkOrUndo();
+  }
+
+  private checkOrUndo(): void {
+    try {
+      this.check(this.scene);
+    } catch (error) {
+      this.history.undo();
+      this.check(this.scene);
+      this.problem = `That change was undone: ${(error as Error).message}`;
+    }
+  }
+}
+```
+
+- The `return` is gone. Run the action; if it throws, keep its message, but don't stop; **always** check the scene, because the action may have made changes before it threw.
+- A message from the check replaces any message from the action, because it says more: the change was taken back.
+
+```check
+run "npx vitest run src" stdout="82 passed"
+run "npx tsc"
+```
+
+## Refactor: make the change easy
+
+Next come undo and redo, and they need exactly what `run` does: clear the problem, act, keep any error, check. Before adding them, change the shape of the code so that adding them is easy. Kent Beck, who made test-driven development widely known, put it as: first make the change easy, then make the easy change. Change `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+  problem = '';
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  run(code: string): void {
+    this.change(() => runCode(code, this.script));
+  }
+
+  private change(action: () => void): void {
+    this.problem = '';
+    try {
+      action();
+    } catch (error) {
+      this.problem = (error as Error).message;
+    }
+    this.checkOrUndo();
+  }
+
+  private checkOrUndo(): void {
+    try {
+      this.check(this.scene);
+    } catch (error) {
+      this.history.undo();
+      this.check(this.scene);
+      this.problem = `That change was undone: ${(error as Error).message}`;
+    }
+  }
+}
+```
+
+- `change(action)` is `run`'s old body with the code replaced by a parameter: any function. `run` passes it `() => runCode(code, this.script)`.
+- `change` is `private`: only the store's own methods call it.
+- Nothing the store does has changed, and the tests say so: still 82 passing.
+
+```check
+run "npx vitest run src" stdout="82 passed" label="the same tests pass: a refactor, not a change"
+```
+
+## Undo and redo: a test
+
+Add a test to `src/editor/store.test.ts`:
 
 ```ts file=src/editor/store.test.ts
 import { expect, test } from 'vitest';
@@ -88,27 +578,15 @@ test('undo and redo, and a message when there is nothing to do', () => {
 });
 ```
 
-- `new EditorStore(scene(), refuseColor2)`: a store is made from a scene and a **check**: a function the store calls on the scene after every change, which throws if the scene is no good. In the app, the check will be "rebuild the live nodes" (lesson 3.7), which throws when the engine refuses a scene.
-- Tests can't start Phaser, so they pass a check of their own. `refuseColor2` throws if the wall's colour is 2. It's a stand-in for the engine with one easy-to-trigger rule.
-- `store.run(code)` runs a line of console code; `store.problem` is the message the page will show, `''` when there's none.
-- The fourth test is a case lesson 3.7's `change` got wrong. A console line can hold two calls. If the first works and the second throws, the first change has been made and recorded in the history, but 3.7's `change` stopped at the error and never rebuilt, so the window kept showing the old scene and the old log. The store must check the scene whether or not the action threw.
-
-```predict
-question: In lesson 3.7's app, you type scene.setProp("level/wall", "color", 16766720); scene.deleteNode("level/truck"); and press Enter. What does the window show?
-choice: The error, and nothing has changed, in the data or on screen
-choice: The error; the wall still grey and the log still empty, though the data now says gold
-choice: The error, a gold wall, and the setProp line in the log
-answer: The error; the wall still grey and the log still empty, though the data now says gold
-explain: The first call ran as a command, so the data changed and the history recorded it. The second threw, so change() showed the error and returned before rebuild(), which is what rebuilds the nodes and redraws the log. The data and the window disagree until the next change.
-```
+- With nothing done, undo must say `Nothing to undo`. After a change, undo and redo must take it back and bring it back, and clear the problem.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './store'"
+run "npx vitest run src" exit=1 stderr="store.undo is not a function"
 ```
 
-## The store
+## undo and redo
 
-Create `src/editor/store.ts`:
+Change `src/editor/store.ts`:
 
 ```ts file=src/editor/store.ts
 import type { SceneData } from '../engine/scene';
@@ -167,23 +645,11 @@ export class EditorStore {
 }
 ```
 
-- `export type Check = (scene: SceneData) => void` gives a name to a **function type**: any function that takes a `SceneData` and returns nothing. `type` makes a name for a type, as `interface` does for object shapes (lesson 2.1). Here `void` says the result isn't used: the check reports a problem by throwing.
-- `readonly history = new History()` is a **field with a starting value**: each new store gets its own `History`. `readonly` (lesson 1.5) means the field can't be pointed at another history later, though the history itself still changes.
-- `readonly script: SceneScript` is declared here and given its value in the constructor. TypeScript checks that the constructor does give it one.
-- `problem = ''` starts with no problem. Its type, `string`, is inferred from `''`.
-- `constructor(readonly scene: SceneData, private readonly check: Check)` uses **parameter properties** (the same shorthand as `Vec2`'s `public x` in lesson 1.1): each parameter with `readonly`, `private` or `public` in front becomes a field with that name, set to the argument. `scene` is public, so panels can read it; `check` is `private`, so only the store can call it.
-- `this.script = sceneScript(scene, this.history)` makes the `scene` facade (lesson 3.6) once, for this scene and this history.
-- `run(code)` runs a console line through `change`. `undo` and `redo` are lesson 3.7's, with the message put in `this.problem` instead of on the page.
-- `change(action)` is `private`: only the store's own methods call it. It's lesson 3.7's `change`, with the gap closed:
-  - clear the problem;
-  - run the action; if it throws, keep its message, but don't stop;
-  - **always** check the scene, because the action may have made changes before it threw.
-- `checkOrUndo()` calls the check. If the check throws, the last change is undone, the check is run again on the restored scene (to rebuild the old nodes), and the problem says why. A message from the check replaces any message from the action, because it says more: the change was taken back.
-- The second call to `this.check` isn't inside a `try`. The scene after an undo is one that has passed the check before, so it can't throw.
+- `undo` and `redo` are lesson 3.7's, with the message put in `this.problem` instead of on the page. Each is one call to `change`, which the refactor made possible.
 - The store never touches the page. Its methods change data and set `problem`; what to draw is up to the panels.
 
 ```check
-run "npx vitest run src" stdout="77 passed"
+run "npx vitest run src" stdout="83 passed"
 run "npx tsc"
 ```
 
@@ -192,6 +658,201 @@ run "npx tsc"
 The page must redraw when the store changes. The store can't call the panels itself: it doesn't know they exist, and the tests have none. Instead, anything that wants to know can give the store a function to call, a **listener**, and the store calls every listener after each change. This is the **observer pattern**: the store is observed, and doesn't need to know who's watching.
 
 The store also gains the **selection**: the path of the node selected in the tree, or `null` when there's none. Change `src/editor/store.test.ts`:
+
+```ts file=src/editor/store.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+import { EditorStore } from './store';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [] },
+      ],
+    },
+  };
+}
+
+function refuseColor2(data: SceneData): void {
+  if (findNode(data, 'level/wall').props.color === 2) throw new Error('2 is not a colour');
+}
+
+test('a line of code changes the scene, is logged, and tells every listener', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  let calls = 0;
+  store.subscribe(() => calls++);
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+  expect(calls).toBe(1);
+});
+
+test('a line that fails changes nothing, and the problem says why', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/truck", "color", 1);');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual([]);
+});
+
+test('a change the check refuses is undone, with the reason', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 2);');
+  expect(store.problem).toBe('That change was undone: 2 is not a colour');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(9807270);
+  expect(store.history.code).toEqual([]);
+});
+
+test('a line that fails part way keeps its earlier changes, and they are checked too', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.run('scene.setProp("level/wall", "color", 1); scene.deleteNode("level/truck");');
+  expect(store.problem).toBe('There is no node at "level/truck"');
+  expect(store.history.code).toEqual(['scene.setProp("level/wall", "color", 1);']);
+  store.run('scene.setProp("level/wall", "color", 2); scene.deleteNode("level/truck");');
+  expect(store.problem).toBe('That change was undone: 2 is not a colour');
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+});
+
+test('undo and redo, and a message when there is nothing to do', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  store.undo();
+  expect(store.problem).toBe('Nothing to undo');
+  store.run('scene.setProp("level/wall", "color", 1);');
+  expect(store.problem).toBe('');
+  store.undo();
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(9807270);
+  store.redo();
+  expect(findNode(store.scene, 'level/wall').props.color).toBe(1);
+});
+
+test('selecting a node tells listeners; a listener that unsubscribes hears nothing more', () => {
+  const store = new EditorStore(scene(), refuseColor2);
+  let calls = 0;
+  const unsubscribe = store.subscribe(() => calls++);
+  store.select('level/car');
+  expect(store.selected).toBe('level/car');
+  unsubscribe();
+  store.select(null);
+  expect(calls).toBe(1);
+});
+```
+
+- The first test now also counts calls: `store.subscribe(() => calls++)` gives the store a listener that adds one to `calls`. After one change, it must have been called exactly once.
+- `subscribe` returns a function. Calling it, `unsubscribe()`, takes the listener off: after that, `select(null)` must not reach it, so `calls` stays 1.
+- `select(path)` sets `selected` and tells listeners: selecting is a change to the editor's state, even though the scene doesn't change, and the tree and the inspector must redraw for it.
+- Two tests in one step, because they're one behaviour: listeners hear about every change, whether it's to the scene or to the selection.
+
+```check
+run "npx vitest run src" exit=1 stderr="store.subscribe is not a function"
+```
+
+## Listeners and the selection
+
+Change `src/editor/store.ts`:
+
+```ts file=src/editor/store.ts
+import type { SceneData } from '../engine/scene';
+import { History } from './history';
+import { runCode, sceneScript, type SceneScript } from './script';
+
+export type Check = (scene: SceneData) => void;
+
+export class EditorStore {
+  readonly history = new History();
+  readonly script: SceneScript;
+  problem = '';
+  selected: string | null = null;
+  private version = 0;
+  private readonly listeners = new Set<() => void>();
+
+  constructor(
+    readonly scene: SceneData,
+    private readonly check: Check,
+  ) {
+    this.script = sceneScript(scene, this.history);
+  }
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  getVersion = (): number => this.version;
+
+  run(code: string): void {
+    this.change(() => runCode(code, this.script));
+  }
+
+  undo(): void {
+    this.change(() => {
+      if (!this.history.undo()) this.problem = 'Nothing to undo';
+    });
+  }
+
+  redo(): void {
+    this.change(() => {
+      if (!this.history.redo()) this.problem = 'Nothing to redo';
+    });
+  }
+
+  select(path: string | null): void {
+    this.selected = path;
+    this.changed();
+  }
+
+  private change(action: () => void): void {
+    this.problem = '';
+    try {
+      action();
+    } catch (error) {
+      this.problem = (error as Error).message;
+    }
+    this.checkOrUndo();
+    this.changed();
+  }
+
+  private checkOrUndo(): void {
+    try {
+      this.check(this.scene);
+    } catch (error) {
+      this.history.undo();
+      this.check(this.scene);
+      this.problem = `That change was undone: ${(error as Error).message}`;
+    }
+  }
+
+  private changed(): void {
+    this.version++;
+    for (const listener of this.listeners) listener();
+  }
+}
+```
+
+- `selected: string | null = null` is a **union type** (lesson 0.5): a path, or `null` for nothing selected.
+- `private readonly listeners = new Set<() => void>()`: a `Set` (lesson 1.6) of functions that take nothing and return nothing. A `Set` and not an array, because the same function added twice is still one listener, and removing one is a single `delete`.
+- `private version = 0` counts changes. Lesson 4.3 explains what React needs it for.
+- `subscribe = (listener) => { … }` is a field holding an **arrow function**, not a method. The difference is `this`:
+- `subscribe` adds the listener and returns `() => this.listeners.delete(listener)`: a closure (lesson 2.2) that remembers which listener to remove.
+- `getVersion` returns the current count.
+- `select(path)` sets the selection and calls `changed()`.
+- `changed()` adds one to the version and calls every listener. `for (const listener of this.listeners)` walks a `Set` the same way as an array.
+- `change` now ends with `changed()`, so every change tells the listeners.
+- No test checks `version` or `getVersion`. They're for React (lesson 4.3), and only the end-to-end tests will show they work. Code no test checks is a risk worth noticing; here it's two short lines.
+
+```check
+run "npx vitest run src" stdout="84 passed"
+run "npx tsc"
+```
+
+## A selection that stops existing: a test
+
+Add a test to `src/editor/store.test.ts`:
 
 ```ts file=src/editor/store.test.ts
 import { expect, test } from 'vitest';
@@ -286,16 +947,13 @@ test('a selected node that stops existing is no longer selected', () => {
 });
 ```
 
-- The first test now also counts calls: `store.subscribe(() => calls++)` gives the store a listener that adds one to `calls`. After one change, it must have been called exactly once.
-- `subscribe` returns a function. Calling it, `unsubscribe()`, takes the listener off: after that, `select(null)` must not reach it, so `calls` stays 1.
-- `select(path)` sets `selected` and tells listeners: selecting is a change to the editor's state, even though the scene doesn't change, and the tree and the inspector must redraw for it.
-- The last test: a deleted node can't stay selected, or the inspector would try to show a node that isn't there. Undo brings the car back, but not the selection. Selection isn't part of the scene, so it isn't part of the history.
+- A deleted node can't stay selected, or the inspector would try to show a node that isn't there. Undo brings the car back, but not the selection. Selection isn't part of the scene, so it isn't part of the history.
 
 ```check
-run "npx vitest run src" exit=1 stderr="store.subscribe is not a function"
+run "npx vitest run src" exit=1 stderr="expected 'level/car' to be null"
 ```
 
-## Listeners and the selection
+## Forgetting a deleted selection
 
 Change `src/editor/store.ts`:
 
@@ -388,22 +1046,11 @@ export class EditorStore {
 }
 ```
 
-- `selected: string | null = null` is a **union type** (lesson 0.5): a path, or `null` for nothing selected.
-- `private readonly listeners = new Set<() => void>()`: a `Set` (lesson 1.6) of functions that take nothing and return nothing. A `Set` and not an array, because the same function added twice is still one listener, and removing one is a single `delete`.
-- `private version = 0` counts changes. Lesson 4.3 explains what React needs it for.
-- `subscribe = (listener) => { … }` is a field holding an **arrow function**, not a method. The difference is `this`:
-  - In a method, `this` is whatever object the method was called *on*. `store.subscribe(f)` is fine, but `const s = store.subscribe; s(f)` calls it on nothing, and `this.listeners` fails: `this` is `undefined`.
-  - An arrow function has no `this` of its own: it uses the `this` of where it was written, here the store being built. So it works however it's called.
-  - Lesson 4.3 hands `subscribe` and `getVersion` to React on their own, without the store, so they must be arrow functions.
-- `subscribe` adds the listener and returns `() => this.listeners.delete(listener)`: a closure (lesson 2.2) that remembers which listener to remove.
-- `getVersion` returns the current count.
-- `select(path)` sets the selection and calls `changed()`.
-- `change` now ends with two more lines: if the selected node no longer exists, select nothing; then `changed()`.
+- `change` has one more line before `changed()`: if the selected node no longer exists, select nothing.
 - `exists(path)` asks `findNode` and turns its error into `false`. `catch {` with no `(error)`: the error itself isn't needed, so it isn't named.
-- `changed()` adds one to the version and calls every listener. `for (const listener of this.listeners)` walks a `Set` the same way as an array.
 
 ```check
-run "npx vitest run src" stdout="79 passed"
+run "npx vitest run src" stdout="85 passed"
 run "npx tsc"
 ```
 

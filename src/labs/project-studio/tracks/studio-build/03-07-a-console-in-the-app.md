@@ -393,6 +393,8 @@ run "npx vite build" stdout="built in"
 
 ## Testing the console end to end
 
+This test comes **after** the code, unlike the unit tests. Until this lesson there was no console on the page to test, and building the page needed trying things by hand, a piece at a time. (From Sprint 4 on, each new feature's end-to-end test is written first.) A test written after the code has never been seen to fail, so the next step checks that it can.
+
 Create `e2e/console.test.ts`:
 
 ```ts file=e2e/console.test.ts
@@ -439,6 +441,64 @@ test('a change that would break the scene is undone, with the reason', async () 
 
 ```check
 run "npm run e2e" stdout="4 passed" label="all four end-to-end tests pass"
+```
+
+## A test that couldn't fail
+
+Lesson 0.7's rule for a test written after the code: break the code on purpose and watch the test fail. Try it. In `change` in `src/main.ts`, delete the two lines `history.undo();` and `rebuild();` from the second `catch`, so a change the engine refuses is no longer taken back. Run `npm run e2e`.
+
+All four tests still pass.
+
+- The refused change is still in the history: the data is wrong. But the screen doesn't show it. The log is drawn by `rebuild`, after the nodes are built, and this `rebuild` threw before it got there, so the page still shows the log from before: empty.
+- So the second test checked the screen, and the screen happened to look right for the wrong reason. A test that can't fail when the code is wrong gives you confidence you haven't earned, which is worse than no test.
+- What would show the bug? What's in the history, not what's drawn. If the refused change was really taken back, there's nothing to undo; if it wasn't, Undo finds it.
+
+Change `e2e/console.test.ts`:
+
+```ts file=e2e/console.test.ts
+import { expect, test } from 'vitest';
+import { _electron as electron } from 'playwright';
+
+test('a line typed in the console changes the scene, is logged, and can be undone', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.textContent('#player-x')).toBe('400');
+    await page.fill('#code', 'scene.setProp("level/player", "position", { x: 100, y: 225 });');
+    await page.press('#code', 'Enter');
+    await expect.poll(() => page.textContent('#player-x')).toBe('100');
+    expect(await page.textContent('#log')).toBe('scene.setProp("level/player", "position", { x: 100, y: 225 });');
+    await page.click('#undo');
+    await expect.poll(() => page.textContent('#player-x')).toBe('400');
+    expect(await page.textContent('#log')).toBe('');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+
+test('a change that would break the scene is undone, with the reason', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.textContent('#player-x')).toBe('400');
+    await page.fill('#code', 'scene.setProp("level/wall", "colour", 1);');
+    await page.press('#code', 'Enter');
+    await expect.poll(() => page.textContent('#problem')).toBe('That change was undone: level/wall: a Box has no property "colour"');
+    expect(await page.textContent('#log')).toBe('');
+    await page.click('#undo');
+    await expect.poll(() => page.textContent('#problem')).toBe('Nothing to undo');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+```
+
+- The second test now ends by clicking Undo: with nothing to undo, the problem must say `Nothing to undo`.
+- Run `npm run e2e` with the two lines still deleted: the second test fails, `expected '' to be 'Nothing to undo'`. Undo found the refused change and took it back, quietly.
+- Put the two lines back. All four pass, and now they'd tell you if those lines went missing.
+
+```check
+run "npm run e2e" stdout="4 passed" label="the four end-to-end tests pass, and the second can now fail"
 ```
 
 ## Commit, and tick the stories

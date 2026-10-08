@@ -14,9 +14,80 @@ Sprint 3 builds the machinery every change in the editor will go through. Before
 
 The editor's code goes in a new folder, `src/editor`, next to `src/engine`. The engine runs games; the editor changes their data.
 
-## Finding a node in the data: tests
+## Finding a node in the data: a test
 
 Every API function starts by finding the node to change, by its path. The data has no `get` method (it's plain data, not `Node` objects), so the API needs a function for it. Create `src/editor/scene-api.test.ts` (make the `editor` folder first):
+
+```ts file=src/editor/scene-api.test.ts
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { findNode } from './scene-api';
+
+function scene(): SceneData {
+  return {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [
+        { type: 'Box', name: 'wall', props: { color: 9807270 }, children: [] },
+        { type: 'Box', name: 'car', props: {}, children: [{ type: 'Box', name: 'wheel', props: {}, children: [] }] },
+      ],
+    },
+  };
+}
+
+test('findNode finds the data of a node by its path, starting from the root', () => {
+  const data = scene();
+  expect(findNode(data, 'level')).toBe(data.root);
+  expect(findNode(data, 'level/car/wheel').name).toBe('wheel');
+});
+
+```
+
+- `scene()` is a fixture (lesson 2.3) that returns a **new** scene each time it's called, as Sprint 2's retrospective promised. Every test in this sprint changes its scene, so each must have its own copy: no test can then be affected by what another changed.
+- Paths start with the root's name, `level/car/wheel`, the same form as the error messages in lesson 2.3. Then a path in an error can be pasted straight into a call.
+- `toBe(data.root)`: `findNode` must return the node's data object itself, not a copy. A copy would be useless for changing the scene: the change would land on the copy.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './scene-api'"
+```
+
+## findNode
+
+Create `src/editor/scene-api.ts`:
+
+```ts file=src/editor/scene-api.ts
+import type { NodeData, SceneData } from '../engine/scene';
+
+export function findNode(scene: SceneData, path: string): NodeData {
+  const [, ...names] = path.split('/');
+  let node = scene.root;
+  for (const name of names) {
+    const child = node.children.find((c) => c.name === name);
+    if (!child) throw new Error(`There is no node at "${path}"`);
+    node = child;
+  }
+  return node;
+}
+```
+
+- `'../engine/scene'`: from `src/editor`, `..` is `src`, so this reaches `src/engine/scene.ts`. The editor uses the engine's data model; the engine never imports the editor.
+- `const [, ...names] = path.split('/')` **destructures an array**: it takes the array's items apart into variables, in order. The comma with nothing before it skips the first item, the root's name. `...names` (a **rest element**) collects everything after it into a new array. For `'level/car/wheel'`, `names` is `['car', 'wheel']`. For `'level'`, `names` is `[]`, so the loop doesn't run and the root is returned.
+- The loop is `Node.get`'s from lesson 1.2, walking `children` arrays instead of `Node` objects: find the child with the next name, move down to it, repeat.
+- `let node = scene.root`: TypeScript **infers** `node`'s type, `NodeData`, from its starting value.
+- `if (!child) throw …`: no test asked for this yet. The type checker did: `find` gives `undefined` when nothing matches, and `node = child` would put `undefined` where a `NodeData` must be. So TypeScript makes the code decide now what a wrong name means.
+- The root's name is skipped, not checked. That's the least code for this test, and the next test shows what it misses.
+
+```check
+run "npx vitest run src" stdout="54 passed"
+run "npx tsc"
+```
+
+## A path that leads nowhere: a test
+
+Change `src/editor/scene-api.test.ts`:
 
 ```ts file=src/editor/scene-api.test.ts
 import { expect, test } from 'vitest';
@@ -50,17 +121,24 @@ test('a path that leads nowhere is an error', () => {
 });
 ```
 
-- `scene()` is a helper that returns a **new** scene each time it's called, as Sprint 2's retrospective promised. Every test changes its own copy, so no test can be affected by what another changed.
-- Paths start with the root's name, `level/car/wheel`, the same form as the error messages in lesson 2.3. Then a path in an error can be pasted straight into a call.
-- `toBe(data.root)`: `findNode` must return the node's data object itself, not a copy. A copy would be useless for changing the scene: the change would land on the copy.
+- `level/truck`: there's no truck under `level`. `world/car`: the scene's root isn't called `world`. Both are paths to nothing, one behaviour, so they share a test.
 
-```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './scene-api'"
+```predict
+question: With findNode as it is, which of the two expectations fails?
+choice: Both: findNode has no error for either yet
+choice: Only level/truck
+choice: Only world/car
+answer: Only world/car
+explain: The loop already throws when a child isn't found, so level/truck is refused. But the first name is skipped, not checked: world/car walks from the root to its child car and finds it, though the scene has no world. The test fails on its second expectation.
 ```
 
-## findNode
+```check
+run "npx vitest run src" exit=1 stderr="a path that leads nowhere is an error"
+```
 
-Create `src/editor/scene-api.ts`:
+## The root's name too
+
+Change `src/editor/scene-api.ts`:
 
 ```ts file=src/editor/scene-api.ts
 import type { NodeData, SceneData } from '../engine/scene';
@@ -78,14 +156,11 @@ export function findNode(scene: SceneData, path: string): NodeData {
 }
 ```
 
-- `'../engine/scene'`: from `src/editor`, `..` is `src`, so this reaches `src/engine/scene.ts`. The editor uses the engine's data model; the engine never imports the editor.
-- `const [rootName, ...names] = path.split('/')` **destructures an array**: the first item goes into `rootName`, and `...names` (a **rest element**) collects everything after it into a new array. For `'level/car/wheel'`: `rootName` is `'level'`, `names` is `['car', 'wheel']`. For `'level'`: `names` is `[]`, so the loop doesn't run and the root is returned.
-- The first name must be the root's; otherwise the path is wrong from the start.
-- The loop is `Node.get`'s from lesson 1.2, walking `children` arrays instead of `Node` objects: find the child with the next name, move down to it, repeat.
-- `let node = scene.root`: TypeScript **infers** `node`'s type, `NodeData`, from its starting value.
+- `const [rootName, ...names]`: the first item now has a name, `rootName`, instead of being skipped.
+- If it isn't the root's name, the path is wrong from the start: the same error as for a missing child.
 
 ```check
-run "npx vitest run src" stdout="50 passed"
+run "npx vitest run src" stdout="55 passed"
 run "npx tsc"
 ```
 
@@ -170,7 +245,7 @@ export function setProp(scene: SceneData, path: string, key: string, value: Prop
 - Nothing checks that a `Box` *has* a `color`. `setProp(data, 'level/wall', 'colour', 1)` would put a wrong prop in the data, and `buildNode` would refuse the scene the next time it's built. Lesson 3.4 uses exactly that refusal to reject bad changes.
 
 ```check
-run "npx vitest run src" stdout="51 passed"
+run "npx vitest run src" stdout="56 passed"
 run "npx tsc"
 ```
 

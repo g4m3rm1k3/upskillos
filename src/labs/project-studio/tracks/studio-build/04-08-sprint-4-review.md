@@ -101,11 +101,12 @@ Goal: the studio's window is an editor: the scene's tree, the game view and an i
 
 - Goal met: all three stories are done.
 - The window is laid out in panels; clicking a node in the tree selects it; the inspector shows its properties and changes them, each change a command that's logged as code and can be undone.
-- npm run check: 93 unit tests and 7 end-to-end tests pass.
+- npm run check: 99 unit tests and 7 end-to-end tests pass.
 
 ### Retrospective
 
-- Went well: the store was tested on its own, with a stand-in check, and a gap in lesson 3.7's change was found and closed by a test.
+- Went well: the store was tested on its own, with a fake check, and a gap in lesson 3.7's change was found and closed by a regression test.
+- Went well: each story's acceptance test was written first, and failed until the story was done.
 - Went well: the registry's test caught the player's colour default before the inspector showed it wrong.
 - Went badly: the inspector's key={value} bug can't be seen by a unit test, which only draws once; only the end-to-end test caught it.
 - Change next sprint: write the end-to-end test for each new kind of mouse work first, since the viewport is almost all clicking and dragging.

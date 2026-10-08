@@ -150,7 +150,7 @@ export function Console({ store }: { store: EditorStore }) {
 - The ids are the old ones, `problem`, `console`, `code`, `log`, `undo`, `redo`, so the CSS from lesson 3.7 and the end-to-end tests still find them.
 
 ```check
-run "npx vitest run src" stdout="81 passed"
+run "npx vitest run src" stdout="87 passed"
 run "npx tsc"
 ```
 

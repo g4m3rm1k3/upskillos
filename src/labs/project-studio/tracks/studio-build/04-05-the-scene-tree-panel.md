@@ -10,6 +10,51 @@ Every game engine's editor has a **scene tree** panel: the scene's nodes listed 
 
 The store already holds the selection (lesson 4.2). This lesson draws the tree and sets the selection when you click.
 
+## The story's acceptance test
+
+Sprint 4's second story: *see my scene's tree and click a node to select it*. Outside in, as in lesson 4.4: the acceptance test first. Change `e2e/editor.test.ts`:
+
+```ts file=e2e/editor.test.ts
+import { expect, test } from 'vitest';
+import { _electron as electron } from 'playwright';
+
+test('the editor shows its panels, with the game drawn in the centre one', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
+    expect(await page.textContent('.left h2')).toBe('Scene');
+    expect(await page.textContent('.right h2')).toBe('Inspector');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+
+test('clicking a node in the scene tree selects it', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.locator('[data-path="level/player"]').count()).toBe(1);
+    await page.click('[data-path="level/player"]');
+    await expect.poll(() => page.getAttribute('[data-path="level/player"]', 'class')).toBe('selected');
+    expect(await page.getAttribute('[data-path="level/wall"]', 'class')).toBe('');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+```
+
+- `[data-path="level/player"]` is an **attribute selector**: square brackets select elements whose attribute has that value. This one finds the player's button.
+- `expect.poll(() => page.locator(…).count()).toBe(1)` waits until the player's button is on the page. It's there for the red: without it, `page.click` would wait the test's whole 30 seconds for a button that doesn't exist, and fail with *Test timed out*, which says nothing about why. A red should fail fast, on an assertion that names what's missing. With this line, it fails in a second: there's no player button.
+- `page.click` clicks it, the way you would.
+- `page.getAttribute(selector, 'class')` reads one attribute of the element found. The player's button must become `selected`, and the wall's must stay `''`.
+- `expect.poll` waits for the class to change: React draws the change a moment after the click.
+
+
+```check
+run "npm run e2e" exit=1 stderr="expected +0 to be 1" label="the acceptance test fails: there is no tree to click"
+```
+
 ## The tree's test
 
 Create `src/ui/SceneTree.test.tsx`:
@@ -123,7 +168,7 @@ function TreeItem({ node, path, store }: { node: NodeData; path: string; store: 
 - `key={child.name}`: each child's name is a good key, because sibling names are unique (lesson 3.2 made sure). Better than the position: if the first child is deleted, the others keep their keys, and React knows they're the same items as before.
 
 ```check
-run "npx vitest run src" stdout="83 passed"
+run "npx vitest run src" stdout="89 passed"
 run "npx tsc"
 ```
 
@@ -276,53 +321,12 @@ h2 {
 - `.tree button.selected`: two selectors written together, with no space, mean "both": a button that also has the class `selected`. Its background is light blue, `#cfe3ff`.
 - `.tree small` makes the type names grey, `#777`, so the names stand out.
 
-```check
-contains src/style.css ".tree button.selected {"
-contains src/style.css "list-style: none;"
-```
-
-## Clicking in the tree, end to end
-
-Change `e2e/editor.test.ts`:
-
-```ts file=e2e/editor.test.ts
-import { expect, test } from 'vitest';
-import { _electron as electron } from 'playwright';
-
-test('the editor shows its panels, with the game drawn in the centre one', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
-    expect(await page.textContent('.left h2')).toBe('Scene');
-    expect(await page.textContent('.right h2')).toBe('Inspector');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-
-test('clicking a node in the scene tree selects it', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await page.click('[data-path="level/player"]');
-    await expect.poll(() => page.getAttribute('[data-path="level/player"]', 'class')).toBe('selected');
-    expect(await page.getAttribute('[data-path="level/wall"]', 'class')).toBe('');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-```
-
-- `[data-path="level/player"]` is an **attribute selector**: square brackets select elements whose attribute has that value. This one finds the player's button.
-- `page.click` clicks it, the way you would.
-- `page.getAttribute(selector, 'class')` reads one attribute of the element found. The player's button must become `selected`, and the wall's must stay `''`.
-- `expect.poll` waits for the class to change: React draws the change a moment after the click.
-
 Run `npm start` and click the nodes: the light blue mark follows your clicks.
 
 ```check
-run "npm run e2e" stdout="6 passed" label="clicking a node in the tree selects it"
+contains src/style.css ".tree button.selected {"
+contains src/style.css "list-style: none;"
+run "npm run e2e" stdout="6 passed" label="the acceptance test passes: clicking a node in the tree selects it"
 ```
 
 ## Commit, and tick the second story

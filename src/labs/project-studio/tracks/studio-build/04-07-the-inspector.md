@@ -10,9 +10,145 @@ The **inspector** is the panel that shows the selected node's properties and let
 
 Every change the inspector makes goes through the store, as a command (Sprint 3). So an inspector edit can be undone, and appears in the log as the line of code that does the same thing: `scene.setProp("level/player", "position", { x: 100, y: 225 });`. The editor teaches its own API as you click.
 
-## Colours as text: tests
+## The story's acceptance test
+
+Sprint 4's third story: *see and change the selected node's properties*. Its acceptance test first, as in lessons 4.4 and 4.5. Change `e2e/editor.test.ts`:
+
+```ts file=e2e/editor.test.ts
+import { expect, test } from 'vitest';
+import { _electron as electron } from 'playwright';
+
+test('the editor shows its panels, with the game drawn in the centre one', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
+    expect(await page.textContent('.left h2')).toBe('Scene');
+    expect(await page.textContent('.right h2')).toBe('Inspector');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+
+test('clicking a node in the scene tree selects it', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await expect.poll(() => page.locator('[data-path="level/player"]').count()).toBe(1);
+    await page.click('[data-path="level/player"]');
+    await expect.poll(() => page.getAttribute('[data-path="level/player"]', 'class')).toBe('selected');
+    expect(await page.getAttribute('[data-path="level/wall"]', 'class')).toBe('');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+
+test('changing a property in the inspector changes the game, is logged as code, and can be undone', async () => {
+  const app = await electron.launch({ args: ['.'] });
+  try {
+    const page = await app.firstWindow();
+    await page.click('[data-path="level/player"]');
+    await expect.poll(() => page.locator('#prop-position-x').count()).toBe(1);
+    await page.fill('#prop-position-x', '100');
+    await page.press('#prop-position-x', 'Enter');
+    await expect.poll(() => page.textContent('#player-x')).toBe('100');
+    expect(await page.inputValue('#prop-position-x')).toBe('100');
+    expect(await page.textContent('#log')).toBe('scene.setProp("level/player", "position", { x: 100, y: 225 });');
+    await page.click('#undo');
+    await expect.poll(() => page.textContent('#player-x')).toBe('400');
+    expect(await page.inputValue('#prop-position-x')).toBe('400');
+  } finally {
+    await app.close();
+  }
+}, 30000);
+```
+
+- The new test is the whole story in one go: select the player in the tree, type 100 in the x box, press Enter.
+- `expect.poll(…count()).toBe(1)` before typing: as in lesson 4.5, the test first checks the box is there, so that it fails at once, and says why, while there's no inspector.
+- Then the player's x in the game must become 100, the box must show 100, and the log must hold the line of code. `page.inputValue` reads what an input holds.
+- Then Undo: the player goes back to 400, and so does the box.
+
+```check
+run "npm run e2e" exit=1 stderr="expected +0 to be 1" label="the acceptance test fails: there is no inspector yet"
+```
+
+## Colours as text: a test
 
 A colour picker, `<input type="color">`, gives and takes colours as text: `#ffd700`, the **hex** form CSS uses (lesson 3.7). The scene stores a colour as a number, `16766720`. The inspector needs to turn one into the other, both ways. Create `src/editor/color.test.ts`:
+
+```ts file=src/editor/color.test.ts
+import { expect, test } from 'vitest';
+import { toHex } from './color';
+
+test('a colour number is written as #rrggbb, with every digit', () => {
+  expect(toHex(0x4fc3f7)).toBe('#4fc3f7');
+});
+```
+
+- `toHex(0x4fc3f7)` must give `'#4fc3f7'`: `#`, then two hex digits each for red, green and blue.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './color'"
+```
+
+## toHex
+
+Create `src/editor/color.ts`:
+
+```ts file=src/editor/color.ts
+export function toHex(color: number): string {
+  return '#' + color.toString(16);
+}
+```
+
+- `color.toString(16)` writes a number in **base 16** (hexadecimal) instead of base 10: `(255).toString(16)` is `'ff'`.
+- `'#' + …` puts the `#` in front.
+- That's all the test asks for, and it passes. But is it right? One example can't tell you.
+
+```check
+run "npx vitest run src" stdout="95 passed"
+```
+
+## A second example
+
+Add a second example to the same test in `src/editor/color.test.ts`:
+
+```ts file=src/editor/color.test.ts
+import { expect, test } from 'vitest';
+import { toHex } from './color';
+
+test('a colour number is written as #rrggbb, with every digit', () => {
+  expect(toHex(0x4fc3f7)).toBe('#4fc3f7');
+  expect(toHex(255)).toBe('#0000ff');
+});
+```
+
+- `toHex(255)` is pure blue: red and green are zero. It must still be six digits, `'#0000ff'`; the colour picker rejects `'#ff'`.
+- Choosing a second example that the simple code would get wrong, to force the general code, is called **triangulation**: as a surveyor fixes a point from two directions. A colour with a zero at the front is also an edge case: `toString` writes no leading zeros.
+
+```check
+run "npx vitest run src" exit=1 stderr="expected '#ff' to be '#0000ff'"
+```
+
+## Six digits, always
+
+Change `src/editor/color.ts`:
+
+```ts file=src/editor/color.ts
+export function toHex(color: number): string {
+  return '#' + color.toString(16).padStart(6, '0');
+}
+```
+
+- `.padStart(6, '0')` adds `'0'`s at the start of a string until it's 6 characters long: `'ff'` becomes `'0000ff'`. A string that's already 6 long is left as it is, so the first example still passes.
+
+```check
+run "npx vitest run src" stdout="95 passed"
+```
+
+## Reading a colour back: a test
+
+Add a test to `src/editor/color.test.ts`:
 
 ```ts file=src/editor/color.test.ts
 import { expect, test } from 'vitest';
@@ -29,17 +165,16 @@ test('#rrggbb is read back as the same number', () => {
 });
 ```
 
-- `toHex(0x4fc3f7)` must give `'#4fc3f7'`: `#`, then two hex digits each for red, green and blue.
-- `toHex(255)` is pure blue: red and green are zero. It must still be six digits, `'#0000ff'`; the colour picker rejects `'#ff'`.
-- `fromHex` goes back. The last line is a **round trip**: a number turned into text and back must be the same number.
+- `fromHex` goes back, from text to a number.
+- The last line is a **round trip**: a number turned into text and back must be the same number. A round trip tests two functions against each other, without working out the answer by hand.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './color'"
+run "npx vitest run src" exit=1 stderr="fromHex is not a function"
 ```
 
-## toHex and fromHex
+## fromHex
 
-Create `src/editor/color.ts`:
+Change `src/editor/color.ts`:
 
 ```ts file=src/editor/color.ts
 export function toHex(color: number): string {
@@ -51,14 +186,11 @@ export function fromHex(hex: string): number {
 }
 ```
 
-- `color.toString(16)` writes a number in **base 16** (hexadecimal) instead of base 10: `(255).toString(16)` is `'ff'`. It writes no leading zeros, so `255` gives `'ff'`, not `'0000ff'`.
-- `.padStart(6, '0')` adds `'0'`s at the start of a string until it's 6 characters long: `'ff'` becomes `'0000ff'`. A string that's already 6 long is left as it is.
-- `'#' + …` puts the `#` in front.
 - `hex.slice(1)` is the text from position 1 to the end, without the `#` (`slice`, lesson 3.2).
 - `parseInt(text, 16)` reads text as a whole number in base 16: `parseInt('ffd700', 16)` is `16766720`. The second argument is the base; without it, `parseInt` reads base 10.
 
 ```check
-run "npx vitest run src" stdout="90 passed"
+run "npx vitest run src" stdout="96 passed"
 ```
 
 ## setProp in the store: a test
@@ -276,13 +408,74 @@ export class EditorStore {
 - `PropValue` is now imported, for `value`'s type.
 
 ```check
-run "npx vitest run src" stdout="91 passed"
+run "npx vitest run src" stdout="97 passed"
 run "npx tsc"
 ```
 
 ## The inspector's test
 
 Create `src/ui/Inspector.test.tsx`:
+
+```tsx file=src/ui/Inspector.test.tsx
+import { renderToStaticMarkup } from 'react-dom/server';
+import { expect, test } from 'vitest';
+import type { SceneData } from '../engine/scene';
+import { ENGINE_TYPES } from '../engine/registry';
+import { EditorStore } from '../editor/store';
+import { Inspector } from './Inspector';
+
+function store(): EditorStore {
+  const scene: SceneData = {
+    formatVersion: 1,
+    root: {
+      type: 'Node',
+      name: 'level',
+      props: {},
+      children: [{ type: 'Box', name: 'wall', props: { position: { x: 400, y: 60 }, color: 9807270 }, children: [] }],
+    },
+  };
+  return new EditorStore(scene, () => {});
+}
+
+test('with nothing selected, the inspector says what to do', () => {
+  expect(renderToStaticMarkup(<Inspector store={store()} types={ENGINE_TYPES} />)).toBe(
+    '<p>Select a node in the scene tree.</p>',
+  );
+});
+```
+
+- `types={ENGINE_TYPES}`: the inspector is given the registry as a prop, so a test can give it the engine's alone, and the app the engine's and the game's.
+- With nothing selected, it says what to do.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './Inspector'"
+```
+
+## An empty inspector
+
+Create `src/ui/Inspector.tsx`:
+
+```tsx file=src/ui/Inspector.tsx
+import type { EditorStore } from '../editor/store';
+import type { TypeDef } from '../engine/registry';
+import { useStore } from './useStore';
+
+export function Inspector({ store, types }: { store: EditorStore; types: ReadonlyMap<string, TypeDef> }) {
+  useStore(store);
+  return <p>Select a node in the scene tree.</p>;
+}
+```
+
+- `Inspector` takes the store and the registry (`types`), reads the store with `useStore`, and, for now, always says what to do. `types` isn't used yet; the test passes it because the next test needs it.
+
+```check
+run "npx vitest run src" stdout="98 passed"
+run "npx tsc"
+```
+
+## The selected node's properties: a test
+
+Add a test to `src/ui/Inspector.test.tsx`:
 
 ```tsx file=src/ui/Inspector.test.tsx
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -323,20 +516,19 @@ test("the selected node's properties are shown, from the scene or else the defau
 });
 ```
 
-- `types={ENGINE_TYPES}`: the inspector is given the registry as a prop, so a test can give it the engine's alone, and the app the engine's and the game's.
-- With nothing selected, it says what to do.
 - With the wall selected: its name and type, then a field for each property of a `Box`, in `propsOf`'s order. A vector is two number boxes, `-x` and `-y`; a colour is a colour picker.
 - `position` and `color` are the file's values. `size` isn't in the file, so its fields show the default, 32.
 - `value="#95a5a6"` is the wall's colour, `9807270`, in hex.
 - `<input … />`: React writes an element that can't have contents, like `<input>`, as one tag ending in `/>`.
+- Each check uses `toContain` for one field, not the whole HTML (lesson 4.1): the test says which fields must be there with which values, and leaves the rest of the markup free to change.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './Inspector'"
+run "npx vitest run src" exit=1 stderr="the selected node's properties are shown"
 ```
 
 ## The Inspector component
 
-Create `src/ui/Inspector.tsx`:
+Change `src/ui/Inspector.tsx`:
 
 ```tsx file=src/ui/Inspector.tsx
 import { useState } from 'react';
@@ -434,7 +626,7 @@ There are four components here, from the outside in.
 
 **`Inspector`** draws the whole panel:
 
-- With no selection, it returns the message. A component can return different JSX in different cases, like any function.
+- With no selection, it still returns the message. Otherwise it draws the node. A component can return different JSX in different cases, like any function.
 - `findNode(store.scene, path)` gets the selected node's data. The store makes sure a selected node exists (lesson 4.2).
 - `propsOf(types, node.type).map(…)` makes one `PropField` per property, with the value from `propValue`: the file's value or the default.
 - Each field's `key` is the node's path and the property's name, so selecting another node gives every field a new key. That matters for drafts, below.
@@ -473,7 +665,7 @@ explain: commit() passes 100 on, then sets the draft back to text, which in that
 ```
 
 ```check
-run "npx vitest run src" stdout="93 passed"
+run "npx vitest run src" stdout="99 passed"
 run "npx tsc"
 ```
 
@@ -735,70 +927,12 @@ h2 {
 - `.field label, .field span` gives every property name the same width, 64 pixels, so the boxes line up in a column.
 - `.field input[type='number']` is an attribute selector (lesson 4.5) for number inputs only: they're 72 pixels wide, enough for a coordinate. The colour picker keeps its own size.
 
-```check
-contains src/style.css "display: flex;"
-contains src/style.css ".field input[type='number'] {"
-```
-
-## Editing end to end
-
-Change `e2e/editor.test.ts`:
-
-```ts file=e2e/editor.test.ts
-import { expect, test } from 'vitest';
-import { _electron as electron } from 'playwright';
-
-test('the editor shows its panels, with the game drawn in the centre one', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await expect.poll(() => page.locator('.centre #game canvas').count()).toBe(1);
-    expect(await page.textContent('.left h2')).toBe('Scene');
-    expect(await page.textContent('.right h2')).toBe('Inspector');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-
-test('clicking a node in the scene tree selects it', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await page.click('[data-path="level/player"]');
-    await expect.poll(() => page.getAttribute('[data-path="level/player"]', 'class')).toBe('selected');
-    expect(await page.getAttribute('[data-path="level/wall"]', 'class')).toBe('');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-
-test('changing a property in the inspector changes the game, is logged as code, and can be undone', async () => {
-  const app = await electron.launch({ args: ['.'] });
-  try {
-    const page = await app.firstWindow();
-    await page.click('[data-path="level/player"]');
-    await page.fill('#prop-position-x', '100');
-    await page.press('#prop-position-x', 'Enter');
-    await expect.poll(() => page.textContent('#player-x')).toBe('100');
-    expect(await page.inputValue('#prop-position-x')).toBe('100');
-    expect(await page.textContent('#log')).toBe('scene.setProp("level/player", "position", { x: 100, y: 225 });');
-    await page.click('#undo');
-    await expect.poll(() => page.textContent('#player-x')).toBe('400');
-    expect(await page.inputValue('#prop-position-x')).toBe('400');
-  } finally {
-    await app.close();
-  }
-}, 30000);
-```
-
-- The new test is the whole story in one go: select the player in the tree, type 100 in the x box, press Enter.
-- Then the player's x in the game must become 100, the box must show 100, and the log must hold the line of code. `page.inputValue` reads what an input holds.
-- Then Undo: the player goes back to 400, and so does the box.
-
 Run `npm start`. Select the wall, make it 300 wide, and change its colour; select the player and move it. Watch the log write the code for each change, and take them back with Ctrl+Z (click somewhere outside a box first).
 
 ```check
-run "npm run e2e" stdout="7 passed" label="an inspector edit changes the game, is logged, and can be undone"
+contains src/style.css "display: flex;"
+contains src/style.css ".field input[type='number'] {"
+run "npm run e2e" stdout="7 passed" label="the acceptance test passes: an inspector edit changes the game, is logged, and can be undone"
 ```
 
 ## Commit, and tick the third story

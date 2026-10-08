@@ -13,9 +13,131 @@ problem: TypeScript checks the scenes you write in code. A scene file is just te
 
 The rule for anything from outside the program (files, the network, what a user types): **check it at the border**, once, as it comes in. After the check, the rest of the code can trust its types. Checking the shape of incoming data is called **validation**.
 
-## Parsing a file: tests
+## A good file: a test
 
-Create `src/engine/parse.test.ts`:
+The happy path first. Create `src/engine/parse.test.ts`:
+
+```ts file=src/engine/parse.test.ts
+import { expect, test } from 'vitest';
+import { parseScene } from './parse';
+
+const good = `{
+  "formatVersion": 1,
+  "root": {
+    "type": "Node",
+    "name": "level",
+    "props": {},
+    "children": [
+      { "type": "Box", "name": "car", "props": { "position": { "x": 100, "y": 50 } }, "children": [] }
+    ]
+  }
+}`;
+
+test('a good scene file becomes scene data', () => {
+  const scene = parseScene(good);
+  expect(scene.root.name).toBe('level');
+  expect(scene.root.children[0].props.position).toEqual({ x: 100, y: 50 });
+});
+```
+
+- `` `…` `` is a template literal (lesson 0.3) used for text over several lines. `good` is a whole scene file as one string, exactly what reading the file would give.
+- `children[0]` is the first child (lesson 1.2's indexes).
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './parse'"
+```
+
+## parseScene, trusting everything
+
+Create `src/engine/parse.ts`:
+
+```ts file=src/engine/parse.ts
+import type { SceneData } from './scene';
+
+export function parseScene(text: string): SceneData {
+  return JSON.parse(text);
+}
+```
+
+- `JSON.parse(text)` turns the text into data, as in lesson 2.1.
+- Its return type is **`any`**: TypeScript's word for "don't check this at all". An `any` can be used as anything, so returning it as a `SceneData` type-checks, though nothing has looked at what's inside.
+- The test passes, because the file is good. The next two tests are files that aren't.
+
+```check
+run "npx vitest run src" stdout="45 passed"
+run "npx tsc"
+```
+
+## Text that isn't JSON: a test
+
+Add a test to `src/engine/parse.test.ts`:
+
+```ts file=src/engine/parse.test.ts
+import { expect, test } from 'vitest';
+import { parseScene } from './parse';
+
+const good = `{
+  "formatVersion": 1,
+  "root": {
+    "type": "Node",
+    "name": "level",
+    "props": {},
+    "children": [
+      { "type": "Box", "name": "car", "props": { "position": { "x": 100, "y": 50 } }, "children": [] }
+    ]
+  }
+}`;
+
+test('a good scene file becomes scene data', () => {
+  const scene = parseScene(good);
+  expect(scene.root.name).toBe('level');
+  expect(scene.root.children[0].props.position).toEqual({ x: 100, y: 50 });
+});
+
+test('text that is not JSON is an error that says so', () => {
+  expect(() => parseScene('{ "formatVersion": 1, }')).toThrow('This is not valid JSON');
+});
+```
+
+- `'{ "formatVersion": 1, }'` has a comma before the `}`, which JavaScript allows in code but JSON doesn't. Hand-edited JSON files often have this mistake.
+- The error must start by saying, in a game maker's words, what's wrong.
+
+```check
+run "npx vitest run src" exit=1 stderr="to throw error including 'This is not valid JSON' but got 'Expected double-quoted property name"
+```
+
+```text
+AssertionError: expected [Function] to throw error including 'This is not valid JSON' but got 'Expected double-quoted property name …'
+```
+
+`JSON.parse` already throws, but its message is about JSON's grammar (in full: *Expected double-quoted property name in JSON at position 22 (line 1 column 23)*), and doesn't say that the problem is the whole file.
+
+## Not JSON
+
+Change `src/engine/parse.ts`:
+
+```ts file=src/engine/parse.ts
+import type { SceneData } from './scene';
+
+export function parseScene(text: string): SceneData {
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`This is not valid JSON: ${(error as Error).message}`);
+  }
+}
+```
+
+- `try { … } catch (error) { … }`: if anything in the `try` block throws, the `catch` block runs with the thrown error, instead of the error stopping the program. `JSON.parse` throws a `SyntaxError` for bad text.
+- The `catch` throws a new error whose message starts by saying what's wrong in a game maker's terms, then keeps JavaScript's message, which says where. `(error as Error).message`: a `catch` gets its error as `unknown`, because JavaScript can throw any value. `JSON.parse` always throws an `Error`.
+
+```check
+run "npx vitest run src" stdout="46 passed"
+```
+
+## Another version: a test
+
+Add a test to `src/engine/parse.test.ts`:
 
 ```ts file=src/engine/parse.test.ts
 import { expect, test } from 'vitest';
@@ -49,18 +171,16 @@ test('a file from another version of the format is refused', () => {
 });
 ```
 
-- `` `…` `` is a template literal (lesson 0.3) used for text over several lines. `good` is a whole scene file as one string, exactly what reading the file would give.
-- `children[0]` is the first child (lesson 1.2's indexes).
-- `'{ "formatVersion": 1, }'` has a comma before the `}`, which JavaScript allows in code but JSON doesn't. Hand-edited JSON files often have this mistake.
-- `'[1, 2, 3]'` is valid JSON, but a list, not a scene.
+- A file saved by a future studio, version 2, must be refused, not half-read.
+- `'[1, 2, 3]'` is valid JSON, but a list, not a scene. Both are files this studio can't read as a scene, which is one behaviour, so they share a test.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './parse'"
+run "npx vitest run src" exit=1 stderr="a file from another version of the format is refused"
 ```
 
-## parseScene, trusting the nodes
+## parseScene checks the outside
 
-Create `src/engine/parse.ts`:
+Change `src/engine/parse.ts`:
 
 ```ts file=src/engine/parse.ts
 import { FORMAT_VERSION, type NodeData, type SceneData } from './scene';
@@ -85,16 +205,16 @@ function isObject(value: unknown): value is Record<string, unknown> {
 ```
 
 - `let raw: unknown` stores the parsed value as **`unknown`**, not `any`. `unknown` is the honest type for "could be anything": TypeScript lets you do nothing with it (no `.root`, no `for…of`) until a check has proved what it is. `any` lets you do everything, and checks nothing.
-- `try { … } catch (error) { … }`: if anything in the `try` block throws, the `catch` block runs with the thrown error, instead of the error stopping the program. `JSON.parse` throws a `SyntaxError` for bad text, with a message like *Expected double-quoted property name in JSON at position 22 (line 1 column 23)*.
-- The `catch` throws a new error whose message starts by saying what's wrong in a game maker's terms, then keeps JavaScript's message, which says where. `(error as Error).message`: a `catch` gets its error as `unknown`, because JavaScript can throw any value. `JSON.parse` always throws an `Error`.
+- The `try` now only wraps `JSON.parse`, and puts its result in `raw`. The checks come after it, outside the `try`, so their own errors aren't caught and renamed "not valid JSON".
 - `function isObject(value: unknown): value is Record<string, unknown>` is a **type guard**. The return type `value is …` means "when this returns true, `value` has this type". After `if (!isObject(raw)) throw …`, TypeScript treats `raw` as an object whose fields are `unknown`, so `raw.formatVersion` is allowed.
 - `isObject` checks three things, because JavaScript's `typeof` says `'object'` for three different kinds of value: real objects, arrays, and (a famous mistake in the language) `null`. Only a real object passes.
 - `value !== null`: `!==` means **not equal**, the opposite of `===`. `Array.isArray(value)` is `true` only for an array, so `!Array.isArray(value)` rules arrays out.
 - `raw.formatVersion !== FORMAT_VERSION` refuses every version but this one. `String(…)` turns any value into text for the message, even `undefined`.
 - `raw.root as NodeData` is an assertion: it *tells* TypeScript the root is a node, without checking. The tests pass, but this is the gap the next step shows.
+- Refactor: `any` has gone. The step before returned `JSON.parse`'s `any` and trusted it; now the parsed value is `unknown`, and only checked parts leave the function. The tests didn't ask for that, but they're what makes it safe to change: still three passing.
 
 ```check
-run "npx vitest run src" stdout="45 passed"
+run "npx vitest run src" stdout="47 passed"
 run "npx tsc"
 ```
 
@@ -137,17 +257,20 @@ function withCar(car: string): string {
   return `{ "formatVersion": 1, "root": { "type": "Node", "name": "level", "props": {}, "children": [${car}] } }`;
 }
 
-test('every node is checked, and errors give the path to it', () => {
-  expect(() => parseScene(withCar('{ "type": "Box", "name": "car", "props": {} }'))).toThrow('level/car: "children" must be a list');
-  expect(() => parseScene(withCar('{ "type": "Box", "name": "car", "props": { "color": "red" }, "children": [] }'))).toThrow(
-    'level/car: "color" must be a number or a vector',
-  );
-  expect(() => parseScene(withCar('{ "type": "Box", "props": {}, "children": [] }'))).toThrow('level/(child 1): "name" must be some text');
-  expect(() => parseScene(withCar('5'))).toThrow('level/(child 1): a node must be an object');
+test.each([
+  ['a node with no list of children', '{ "type": "Box", "name": "car", "props": {} }', 'level/car: "children" must be a list'],
+  ['a prop that is text', '{ "type": "Box", "name": "car", "props": { "color": "red" }, "children": [] }', 'level/car: "color" must be a number or a vector'],
+  ['a node with no name', '{ "type": "Box", "props": {}, "children": [] }', 'level/(child 1): "name" must be some text'],
+  ['a node that is not an object', '5', 'level/(child 1): a node must be an object'],
+])('%s is refused, with the path to it', (_what, node, message) => {
+  expect(() => parseScene(withCar(node))).toThrow(message);
 });
 ```
 
-- `withCar` builds a file around one child of `level`, so each line of the test shows only the part that's wrong.
+- `withCar` is a fixture (lesson 2.3): it builds a file around one child of `level`, so each case shows only the part that's wrong.
+- The four cases are one rule, *a node must have the shape of a node*, broken four ways, so they're a table (lesson 2.3's `test.each`). Each row is an array of three: what's wrong (for the test's name), the bad node, and the message it must give.
+- The test body gets a row's three items as its three parameters. The first, the description, is only for the name, so the body doesn't use it: `_what` starts with `_`, the usual sign of a parameter that's there only to make room for the next ones (as in lesson 1.4's `_dt`).
+- `%s` takes the row's first item, so the report says `a node with no name is refused, with the path to it`.
 - A node with no name can't be called by its name, so its path uses its place among its parent's children: `(child 1)`. Counting from 1 here, because the message is for people, not code.
 
 ```predict
@@ -160,10 +283,12 @@ explain: raw.root as NodeData checks nothing. The data comes back typed as a Nod
 ```
 
 ```check
-run "npx vitest run src" exit=1 stderr="every node is checked, and errors give the path to it" label="the new test fails: nodes aren't checked yet"
+run "npx vitest run src" exit=1 stdout="4 failed | 47 passed" label="all four rows fail: nodes aren't checked yet"
 ```
 
 ## Checking every node
+
+All four rows turn green in one step here, unlike lesson 2.3's one cycle per mistake. They're four ways of breaking one rule, and the code that keeps the rule is one function that checks a node's shape, field by field. Written a row at a time, it would be the same function four times over. Change `src/engine/parse.ts`:
 
 ```ts file=src/engine/parse.ts
 import { FORMAT_VERSION, type NodeData, type PropValue, type SceneData, type Vec2Data } from './scene';
@@ -224,7 +349,7 @@ function checkNode(value: unknown, path: string): NodeData {
 - Why check everything here when `buildNode` checks types and props too? They check different things. `parseScene` knows nothing about node types; it proves the file has the *shape* of a scene. `buildNode` proves the scene makes sense *for this game*: its types exist, its props are real settings. Each check lives where the knowledge it needs is.
 
 ```check
-run "npx vitest run src" stdout="46 passed"
+run "npx vitest run src" stdout="51 passed"
 run "npx tsc"
 ```
 

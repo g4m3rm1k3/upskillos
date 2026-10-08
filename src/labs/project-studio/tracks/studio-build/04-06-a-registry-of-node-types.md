@@ -16,9 +16,121 @@ The scene data can't tell it: data only holds what the file sets. The engine's c
 
 The real Game Studio has one, `core/registry.ts`, with about twenty node types. Everything is made from it there: the inspector, the API reference, checks on saved files. The course's version starts with the four types this studio has. Sprint 15 makes the API reference from it too.
 
-## The registry's tests
+## A type's properties: a test
 
 The registry describes the engine's types, so it lives in the engine folder. Create `src/engine/registry.test.ts`:
+
+```ts file=src/engine/registry.test.ts
+import { expect, test } from 'vitest';
+import { ENGINE_TYPES, propsOf } from './registry';
+
+test("a type's properties are its base's, then its own", () => {
+  expect(propsOf(ENGINE_TYPES, 'Node').map((p) => p.name)).toEqual([]);
+  expect(propsOf(ENGINE_TYPES, 'Box').map((p) => p.name)).toEqual(['position', 'size', 'color']);
+});
+```
+
+- `propsOf(ENGINE_TYPES, 'Box')` lists a type's properties. `.map((p) => p.name)` keeps only the names, to compare.
+- A `Box` is a `Node2D`, which is a `Node` (lesson 1.3), so it has the properties of all three, the base types' first: `position` comes from `Node2D`.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './registry'"
+```
+
+## Types and their properties
+
+Create `src/engine/registry.ts`:
+
+```ts file=src/engine/registry.ts
+import type { PropValue } from './scene';
+
+export type PropKind = 'number' | 'vec2' | 'color';
+
+export interface PropDef {
+  name: string;
+  kind: PropKind;
+  default: PropValue;
+}
+
+export interface TypeDef {
+  base: string | null;
+  props: PropDef[];
+}
+
+export const ENGINE_TYPES: ReadonlyMap<string, TypeDef> = new Map<string, TypeDef>([
+  ['Node', { base: null, props: [] }],
+  ['Node2D', { base: 'Node', props: [{ name: 'position', kind: 'vec2', default: { x: 0, y: 0 } }] }],
+  [
+    'Box',
+    {
+      base: 'Node2D',
+      props: [
+        { name: 'size', kind: 'vec2', default: { x: 32, y: 32 } },
+        { name: 'color', kind: 'color', default: 0xffffff },
+      ],
+    },
+  ],
+]);
+
+export function propsOf(types: ReadonlyMap<string, TypeDef>, type: string): PropDef[] {
+  const def = types.get(type);
+  if (!def) throw new Error(`There is no node type "${type}"`);
+  const props = def.base === null ? [] : propsOf(types, def.base);
+  for (const prop of def.props) {
+    const index = props.findIndex((p) => p.name === prop.name);
+    if (index === -1) props.push(prop);
+    else props[index] = prop;
+  }
+  return props;
+}
+```
+
+- `type PropKind = 'number' | 'vec2' | 'color'` is a union of three **string literal types**: a `PropKind` can only be one of those three strings. `kind: 'colour'` is a type error.
+- `PropDef` describes one property: its name, its kind, its default. `default` holds a `PropValue` (lesson 2.1), the same type as the values in scene files.
+- `TypeDef` describes one node type: its **base**, the type it extends (or `null` for `Node`, which extends nothing), and the properties it adds.
+- `ENGINE_TYPES` is a `ReadonlyMap` from type names to definitions, built the same way as `ENGINE_MAKERS` (lesson 2.2): a `Map` made from an array of `[key, value]` pairs. A game adds its own types to a copy, as it adds makers.
+- `0xffffff` is white, the `Box` class's default colour, written the way `box.ts` writes it (lesson 1.8).
+- `propsOf(types, type)` works out all of a type's properties:
+  - find the type's definition, or throw. No test asked for the `throw` yet: `types.get` may give `undefined`, so the type checker makes the code say what then;
+  - start with the base type's properties, by calling `propsOf` for the base (**recursion** again, one call per level), or `[]` for a type with no base;
+  - then go through the type's own properties. If one has the same name as a base property, it **replaces** it, in the same place (`findIndex`, lesson 3.2, finds where; `props[index] = prop` replaces it). Otherwise it's added at the end.
+  - Replacing is how a type changes a base property's default, as a class can **override** a method (lesson 1.4). The player will need it.
+  - `propsOf` builds a new array each time, so changing its result can't change the registry.
+
+```check
+run "npx vitest run src" stdout="90 passed"
+run "npx tsc"
+```
+
+## A type that isn't there: a test
+
+Add a test to `src/engine/registry.test.ts`:
+
+```ts file=src/engine/registry.test.ts
+import { expect, test } from 'vitest';
+import { ENGINE_TYPES, propsOf } from './registry';
+
+test("a type's properties are its base's, then its own", () => {
+  expect(propsOf(ENGINE_TYPES, 'Node').map((p) => p.name)).toEqual([]);
+  expect(propsOf(ENGINE_TYPES, 'Box').map((p) => p.name)).toEqual(['position', 'size', 'color']);
+});
+
+test('a type that is not registered is an error', () => {
+  expect(() => propsOf(ENGINE_TYPES, 'Car')).toThrow('There is no node type "Car"');
+});
+```
+
+- A type the registry doesn't know, like `Car`, must be an error that names it.
+
+```check
+run "npx vitest run src" stdout="91 passed" label="it passes at once: the type checker already made propsOf throw"
+```
+
+This one passes as soon as it's written. The type checker made `propsOf` handle a missing type in the last step, and the message was written then. The test still earns its place: it pins the message down, and it says, in the list of tests, that an unknown type is refused, for anyone reading them to learn what `propsOf` does.
+
+## A property's value: a test
+
+Add a test to `src/engine/registry.test.ts`:
 
 ```ts file=src/engine/registry.test.ts
 import { expect, test } from 'vitest';
@@ -38,21 +150,22 @@ test("a property's value is the scene's, or else its default", () => {
   const wall = { type: 'Box', name: 'wall', props: { color: 1 }, children: [] };
   expect(propValue(wall, color)).toBe(1);
   expect(propValue(wall, size)).toEqual({ x: 32, y: 32 });
+  const black = { type: 'Box', name: 'black', props: { color: 0 }, children: [] };
+  expect(propValue(black, color)).toBe(0);
 });
 ```
 
-- `propsOf(ENGINE_TYPES, 'Box')` lists a type's properties. `.map((p) => p.name)` keeps only the names, to compare.
-- A `Box` is a `Node2D`, which is a `Node` (lesson 1.3), so it has the properties of all three, the base types' first: `position` comes from `Node2D`.
 - `const [, size, color] = …`: the comma with nothing before it skips the first item in array destructuring. `size` is the second property, `color` the third.
 - `propValue(wall, color)` is the value the inspector shows: the scene's own value if the file sets one (`color: 1`), or else the default (`size` isn't set, so `{ x: 32, y: 32 }`).
+- The black box is an edge case: its colour is `0`, which is a real value, not a missing one. It must show as black, `0`, not as the default white.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './registry'"
+run "npx vitest run src" exit=1 stderr="propValue is not a function"
 ```
 
-## Types and their properties
+## propValue
 
-Create `src/engine/registry.ts`:
+Change `src/engine/registry.ts`:
 
 ```ts file=src/engine/registry.ts
 import type { NodeData, PropValue } from './scene';
@@ -102,23 +215,13 @@ export function propValue(node: NodeData, prop: PropDef): PropValue {
 }
 ```
 
-- `type PropKind = 'number' | 'vec2' | 'color'` is a union of three **string literal types**: a `PropKind` can only be one of those three strings. `kind: 'colour'` is a type error.
-- `PropDef` describes one property: its name, its kind, its default. `default` holds a `PropValue` (lesson 2.1), the same type as the values in scene files.
-- `TypeDef` describes one node type: its **base**, the type it extends (or `null` for `Node`, which extends nothing), and the properties it adds.
-- `ENGINE_TYPES` is a `ReadonlyMap` from type names to definitions, built the same way as `ENGINE_MAKERS` (lesson 2.2): a `Map` made from an array of `[key, value]` pairs. A game adds its own types to a copy, as it adds makers.
-- `0xffffff` is white, the `Box` class's default colour, written the way `box.ts` writes it (lesson 1.8).
-- `propsOf(types, type)` works out all of a type's properties:
-  - find the type's definition, or throw;
-  - start with the base type's properties, by calling `propsOf` for the base (**recursion** again, one call per level), or `[]` for a type with no base;
-  - then go through the type's own properties. If one has the same name as a base property, it **replaces** it, in the same place (`findIndex`, lesson 3.2, finds where; `props[index] = prop` replaces it). Otherwise it's added at the end.
-  - Replacing is how a type changes a base property's default, as a class can **override** a method (lesson 1.4). The player will need it.
-  - `propsOf` builds a new array each time, so changing its result can't change the registry.
 - `propValue(node, prop)` returns `node.props[prop.name] ?? prop.default`:
   - `a ?? b`, the **nullish coalescing** operator, gives `a`, unless `a` is `null` or `undefined`; then it gives `b`. A property the file doesn't set is `undefined`, so its default is used.
   - Why not `a || b` (lesson 2.3)? `||` also skips `0`. A black box, `color: 0`, would show as white, its default. `??` only skips values that are really missing.
+- The black box in the test is what catches `||`: with it, `propValue(black, color)` would be `0xffffff`.
 
 ```check
-run "npx vitest run src" stdout="86 passed"
+run "npx vitest run src" stdout="92 passed"
 run "npx tsc"
 ```
 
@@ -147,6 +250,8 @@ test("a property's value is the scene's, or else its default", () => {
   const wall = { type: 'Box', name: 'wall', props: { color: 1 }, children: [] };
   expect(propValue(wall, color)).toBe(1);
   expect(propValue(wall, size)).toEqual({ x: 32, y: 32 });
+  const black = { type: 'Box', name: 'black', props: { color: 0 }, children: [] };
+  expect(propValue(black, color)).toBe(0);
 });
 
 test('the registry lists exactly the settings the engine has, with the same defaults', () => {
@@ -247,7 +352,7 @@ export function registryProblems(types: ReadonlyMap<string, TypeDef>, makers: Re
 - `registryProblems` is in the engine, not in the test file, so a game's own tests can check its own types (next step).
 
 ```check
-run "npx vitest run src" stdout="87 passed"
+run "npx vitest run src" stdout="93 passed"
 run "npx tsc"
 ```
 
@@ -354,7 +459,7 @@ export class Player extends Box {
 - `: TypeDef` on the constant checks the shape: a misspelled `kind` or a missing `base` is a type error here, not a strange inspector later.
 
 ```check
-run "npx vitest run src" stdout="88 passed"
+run "npx vitest run src" stdout="94 passed"
 run "npx tsc"
 ```
 

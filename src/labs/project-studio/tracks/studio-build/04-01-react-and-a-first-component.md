@@ -148,6 +148,8 @@ test('the title greets the studio by name', () => {
 
 Why not a browser in unit tests? Many React projects test components inside **jsdom**, a pretend browser written in JavaScript, with the **Testing Library** package to click and type. That's two more packages and their rules. This studio already has real clicks and typing, in the real app, through Playwright (lesson 0.7). So unit tests check what a component draws for some data, and the end-to-end tests check that clicking works.
 
+What's worth testing in a user interface? What it **shows** for some data, and what it **does** when used: the text, the values in the boxes, which item is marked, what a click changes. Not how it looks (colours, sizes and layout are checked by your eyes, in the running app), and not how React does its work inside. A test that checks details nobody cares about breaks every time someone changes one of them, and a test that breaks on harmless changes is called **brittle**: people learn to ignore it. This first test compares the whole HTML, which is fine for one tag; bigger components' tests look only for the parts that matter, with `toContain`.
+
 ```check
 run "npx vitest run src" exit=1 stderr="Cannot find module './Title'"
 ```
@@ -171,7 +173,7 @@ export function Title({ name }: { name: string }) {
 - `greet` is lesson 0.4's function, reused unchanged. The component decides where the greeting goes; `greet` decides what it says.
 
 ```check
-run "npx vitest run src" stdout="72 passed"
+run "npx vitest run src" stdout="78 passed"
 run "npx tsc"
 ```
 

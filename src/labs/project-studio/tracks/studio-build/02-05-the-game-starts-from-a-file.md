@@ -64,9 +64,11 @@ export function loadScene(text: string, makers: ReadonlyMap<string, Maker>): Nod
 
 - One line: check the text, then build the root. Errors from either pass straight through to the caller, with their messages.
 - A small function that puts two steps in the right order is worth having. The order is decided once, and the name says what it does in a game maker's words.
+- Both tests pass with this one line, so the second never had its own red. That's honest here: it doesn't drive new code, it guards a promise, that errors from either step reach the caller with their messages. If someone later wraps `loadScene` in a `try` that swallows errors, it fails.
+- These tests run `parseScene` and `buildNode` for real, through `loadScene`. A test of several real parts working together is called an **integration test**. It catches mistakes in how the parts are joined, which neither part's own unit tests can see; but when it fails, the cause could be in any of the parts. So the parts keep their own unit tests (lessons 2.2 to 2.4), and the integration test only checks the joining.
 
 ```check
-run "npx vitest run src" stdout="48 passed"
+run "npx vitest run src" stdout="53 passed"
 run "npx tsc"
 ```
 

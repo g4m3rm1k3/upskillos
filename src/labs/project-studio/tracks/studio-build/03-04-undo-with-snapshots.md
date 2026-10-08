@@ -164,7 +164,7 @@ explain: Undo replaces scene.root with JSON.parse(before), a whole new tree. Any
 ```
 
 ```check
-run "npx vitest run src" stdout="64 passed" label="all the tests pass: lesson 3.3's two, unchanged, and the two new ones"
+run "npx vitest run src" stdout="70 passed" label="all the tests pass: lesson 3.3's two, unchanged, and the two new ones"
 run "npx tsc"
 ```
 

@@ -90,7 +90,7 @@ Goal: every change to a scene is a command that can be undone, redone, and writt
 - Goal met: all three stories are done.
 - The console runs Scene API lines; each change appears in the log as code, and Undo, Redo, Ctrl+Z and Ctrl+Shift+Z work.
 - A change the engine refuses is undone automatically, with the reason shown.
-- npm run check: 71 unit tests and 4 end-to-end tests pass.
+- npm run check: 77 unit tests and 4 end-to-end tests pass.
 
 ### Retrospective
 

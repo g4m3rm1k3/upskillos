@@ -14,9 +14,180 @@ Undo works backwards through what was done: the most recent change first. Redo w
 
 What goes on the stacks? Each change as an object that knows how to make itself and how to take itself back. This is the **command pattern**: a change is wrapped in a **command** object with a `run` method and an `undo` method, so a history can run and undo changes without knowing what they are.
 
-## The history: tests
+## The history: a test
 
 Create `src/editor/history.test.ts`:
+
+```ts file=src/editor/history.test.ts
+import { expect, test } from 'vitest';
+import { History, type Command } from './history';
+
+function logged(log: string[], name: string): Command {
+  return {
+    label: name,
+    run: () => log.push(`run ${name}`),
+    undo: () => log.push(`undo ${name}`),
+  };
+}
+
+test('undo takes back the newest change first; redo makes it again', () => {
+  const log: string[] = [];
+  const history = new History();
+  history.run(logged(log, 'a'));
+  history.run(logged(log, 'b'));
+  history.undo();
+  history.undo();
+  history.redo();
+  expect(log).toEqual(['run a', 'run b', 'undo b', 'undo a', 'run a']);
+});
+```
+
+- `logged(log, name)` makes a stand-in command, a test double (lesson 1.8), that writes what happens to it into `log`. The history's tests don't care what a command changes, only in what order it's run and undone.
+- The command is an object literal with three properties: a `label` (a name for menus: *Undo Move wall*) and two functions.
+- Trace the first test: run a, run b (done: a, b). Undo pops b and undoes it (done: a; undone: b). Undo pops a (done: empty; undone: b, a). Redo pops a, the newest undone, and runs it again.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './history'"
+```
+
+## Two stacks
+
+Create `src/editor/history.ts`:
+
+```ts file=src/editor/history.ts
+export interface Command {
+  label: string;
+  run(): void;
+  undo(): void;
+}
+
+export class History {
+  private readonly done: Command[] = [];
+  private readonly undone: Command[] = [];
+
+  run(command: Command): void {
+    command.run();
+    this.done.push(command);
+  }
+
+  undo(): void {
+    const command = this.done.pop();
+    if (!command) return;
+    command.undo();
+    this.undone.push(command);
+  }
+
+  redo(): void {
+    const command = this.undone.pop();
+    if (!command) return;
+    command.run();
+    this.done.push(command);
+  }
+}
+```
+
+- `interface Command` is the shape every command has. `run(): void;` inside an interface declares a method: a function property taking nothing and returning nothing.
+- An array is a stack when you only use its end: `push` adds to the end (the top), and `pop` removes the last item and returns it, or returns `undefined` if the array is empty.
+- `run` makes the change first, then records it. If `command.run()` throws, the next lines never run, so a failed change is never recorded.
+- `History` never looks inside a command. It works for any change anyone will ever write: open for extension again (lesson 2.2).
+- `undo` pops the newest command from `done`, takes it back, and pushes it onto `undone`. `redo` is its mirror image.
+- `if (!command) return;`: `pop` gives `undefined` from an empty array, and TypeScript won't let `command.undo()` run on something that might be `undefined`. So an empty stack means: do nothing.
+
+```check
+run "npx vitest run src" stdout="64 passed"
+run "npx tsc"
+```
+
+## Nothing to undo: a test
+
+The editor will need to say *Nothing to undo* when there's nothing to undo, so the history must say so. Add a test to `src/editor/history.test.ts`:
+
+```ts file=src/editor/history.test.ts
+import { expect, test } from 'vitest';
+import { History, type Command } from './history';
+
+function logged(log: string[], name: string): Command {
+  return {
+    label: name,
+    run: () => log.push(`run ${name}`),
+    undo: () => log.push(`undo ${name}`),
+  };
+}
+
+test('undo takes back the newest change first; redo makes it again', () => {
+  const log: string[] = [];
+  const history = new History();
+  history.run(logged(log, 'a'));
+  history.run(logged(log, 'b'));
+  history.undo();
+  history.undo();
+  history.redo();
+  expect(log).toEqual(['run a', 'run b', 'undo b', 'undo a', 'run a']);
+});
+
+test('undo and redo with nothing to do report false', () => {
+  const history = new History();
+  expect(history.undo()).toBe(false);
+  expect(history.redo()).toBe(false);
+});
+```
+
+- With nothing done, `undo` and `redo` must both report `false`: "there was nothing to do".
+
+```check
+run "npx vitest run src" exit=1 stderr="expected undefined to be false"
+```
+
+A function that returns nothing gives `undefined` to whoever asks.
+
+## undo and redo report back
+
+Change `src/editor/history.ts`:
+
+```ts file=src/editor/history.ts
+export interface Command {
+  label: string;
+  run(): void;
+  undo(): void;
+}
+
+export class History {
+  private readonly done: Command[] = [];
+  private readonly undone: Command[] = [];
+
+  run(command: Command): void {
+    command.run();
+    this.done.push(command);
+  }
+
+  undo(): boolean {
+    const command = this.done.pop();
+    if (!command) return false;
+    command.undo();
+    this.undone.push(command);
+    return true;
+  }
+
+  redo(): boolean {
+    const command = this.undone.pop();
+    if (!command) return false;
+    command.run();
+    this.done.push(command);
+    return true;
+  }
+}
+```
+
+- `undo(): boolean` and `redo(): boolean`: both now return whether there was anything to do, `false` from an empty stack and `true` after acting, so the editor can tell the user.
+
+```check
+run "npx vitest run src" stdout="65 passed"
+run "npx tsc"
+```
+
+## A new change after an undo: a test
+
+Add a test to `src/editor/history.test.ts`:
 
 ```ts file=src/editor/history.test.ts
 import { expect, test } from 'vitest';
@@ -57,17 +228,17 @@ test('a new change after an undo throws away what could have been redone', () =>
 });
 ```
 
-- `logged(log, name)` makes a stand-in command, a test double (lesson 1.8), that writes what happens to it into `log`. The history's tests don't care what a command changes, only in what order it's run and undone.
-- The command is an object literal with three properties: a `label` (a name for menus: *Undo Move wall*) and two functions.
-- Trace the first test: run a, run b (done: a, b). Undo pops b and undoes it (done: a; undone: b). Undo pops a (done: empty; undone: b, a). Redo pops a, the newest undone, and runs it again.
+- Run a, undo it, then run b. Redo must now have nothing to do: a was taken back, and then you went a different way, so there's no longer a sensible place to put it back.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './history'"
+run "npx vitest run src" exit=1 stderr="expected true to be false"
 ```
 
-## Two stacks
+Redo brings back a, on top of b: a change made for a scene that no longer exists.
 
-Create `src/editor/history.ts`:
+## Forgetting what can't be redone
+
+Change `src/editor/history.ts`:
 
 ```ts file=src/editor/history.ts
 export interface Command {
@@ -104,15 +275,11 @@ export class History {
 }
 ```
 
-- `interface Command` is the shape every command has. `run(): void;` inside an interface declares a method: a function property taking nothing and returning nothing.
-- An array is a stack when you only use its end: `push` adds to the end (the top), and `pop` removes the last item and returns it, or returns `undefined` if the array is empty.
-- `run` makes the change first, then records it. If `command.run()` throws, the next lines never run, so a failed change is never recorded.
 - `this.undone.length = 0` empties the array in place: setting an array's `length` to 0 removes every item. (`undone` is `readonly`, so it can't be replaced with a new `[]`, but its contents can change.)
-- `undo` and `redo` mirror each other: pop from one stack, act, push onto the other. Each returns whether there was anything to do, so the editor can tell the user *Nothing to undo*.
-- `History` never looks inside a command. It works for any change anyone will ever write: open for extension again (lesson 2.2).
+- It's in `run`, which every new change goes through. `redo` pushes onto `done` itself, so redoing doesn't empty `undone`.
 
 ```check
-run "npx vitest run src" stdout="60 passed"
+run "npx vitest run src" stdout="66 passed"
 run "npx tsc"
 ```
 
@@ -341,7 +508,7 @@ export function deleteNodeCommand(scene: SceneData, path: string): Command {
 - `splice(index, 0, removed)` **inserts**: at `index`, remove 0 items, and put `removed` there. The items from `index` on move one place along. The wall goes back to index 0, before the car.
 
 ```check
-run "npx vitest run src" stdout="62 passed"
+run "npx vitest run src" stdout="68 passed"
 run "npx tsc"
 ```
 

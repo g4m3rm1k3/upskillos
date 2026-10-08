@@ -98,6 +98,11 @@ test('addChild links the child and its parent both ways', () => {
 ```
 
 - `expect(wheel.parent).toBe(car)`: `toBe` asks whether they're the **same object**, not two equal ones. The wheel's parent must be the car itself.
+- The new test has three parts, in order, and most tests you'll write have the same three:
+  - **Arrange**: make what the test needs. Here, two nodes.
+  - **Act**: do the one thing being tested. Here, `car.addChild(wheel)`.
+  - **Assert**: check what should now be true. Here, both links.
+- This shape is called **arrange, act, assert**. Keeping the act to one thing is what keeps a test about one behaviour: if a test does three things and then fails, you don't know which of the three went wrong.
 
 ```check
 run "npx vitest run src" exit=1 stderr="car.addChild is not a function"
@@ -173,6 +178,7 @@ answer: It's in both lists, but its parent is only the truck
 explain: addChild overwrites wheel.parent with the truck and pushes the wheel onto the truck's children, but nothing removes it from the car's array. The car still lists it as a child, while the wheel says its parent is the truck. The two links disagree, and the tree is broken without any error.
 ```
 
+- This test is about something that must **not** work. Tests for what the code should refuse matter as much as tests for what it should do: a tree where a wheel can have two parents would break in ways that are very hard to find later.
 - `expect(() => truck.addChild(wheel)).toThrow(…)`: the code that should fail is wrapped in an arrow function, so `expect` can call it and catch what it **throws**. Calling `truck.addChild(wheel)` directly would stop the test before `expect` could look.
 
 ```check

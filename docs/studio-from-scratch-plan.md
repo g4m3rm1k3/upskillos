@@ -1,6 +1,6 @@
 # Build a Game Studio from Scratch: course plan
 
-Status (2026-10-06): **agreed in outline; no lessons are written yet.** The user chose to do this course **before**
+Status (2026-10-07): **agreed in outline; Sprints 0 to 5 are written** (see Status below). The user chose to do this course **before**
 the remaining Game Studio starters: Kart Circuit becomes its final project, built in the user's own studio together
 with an agent (below).
 
@@ -54,6 +54,73 @@ export class Vec2 {
 - Why a new object: a position can then be shared between nodes without one node moving another by accident. The
   alternative, changing `this.x` in place, is faster but makes that bug possible.
 - Run `npx vitest`: `new Vec2(1, 2).add(new Vec2(3, 4))` is `{ x: 4, y: 6 }`.
+
+## Testing is taught, not just used (the user, 2026-10-08)
+
+The learner is becoming a software engineer, starting from a Python script and a little JavaScript. Testing is one
+of the skills the course exists to teach, as much as the code, Agile and design patterns. So:
+
+1. **One behaviour per cycle.** A test step adds one test, which fails for the reason the lesson names; the next step
+   writes the least code that makes it pass; the next test makes the code more general. Several tests in one step only
+   when they check one behaviour from several sides, or pin down code that already works, and the lesson says which.
+2. **Red, green, refactor, all three.** After green, the lesson looks at the code and the tests and tidies what needs
+   it, with the tests run again to show nothing changed. When there's nothing to tidy, it says so in a line.
+3. **A red test fails on an assertion that names the missing behaviour.** "Cannot find module" is a fair first red for
+   a new file, once, and is named as such. A timeout is never a red: the test is changed to fail fast and say why.
+4. **Every testing idea is named and explained at its first use**, like a language feature: what it is, why it
+   exists, what goes wrong without it. The thread below says where each one starts.
+5. **A test written after the code says so, and why** (a characterisation test, a learning test, or an end-to-end
+   test that can only run once the app does).
+6. **Outside in, from Sprint 4.** A user story's acceptance criteria become an end-to-end test written first; it fails;
+   unit test cycles build the parts; the acceptance test passes last. The two loops are named.
+
+### The testing thread
+
+Where each idea is named and explained (after the 2026-10-08 rework):
+
+| Idea | Starts in |
+|---|---|
+| What a test is, why (regressions, a description you can run), assertions, a test name as a sentence about behaviour | 0.4 |
+| Red, green, refactor, all three done; edge cases; a test written after the code, and why | 0.4 |
+| Unit and end-to-end tests, the test pyramid; breaking code on purpose to see a test written after it fail | 0.7 |
+| How big a step should be | 1.1 |
+| Tolerances for floating point (`toBeCloseTo`) | 1.1 |
+| Arrange, act, assert; testing what must be refused (`toThrow`) | 1.2 |
+| A test that passes at once, and why keep it | 1.4 |
+| Test doubles: stubs, fakes and spies | 1.8 |
+| Flaky tests, and testing with ranges | 1.9 |
+| Learning tests | 2.1 |
+| Happy path and unhappy path; a weak red ("Cannot find module") and a real one; the type checker forcing an error path | 2.2 |
+| Fixtures, test isolation; table-driven tests (`test.each`) | 2.3 |
+| Integration tests | 2.5 |
+| A test that couldn't fail, and how to fix it | 3.7 |
+| Refactoring under tests | 3.4, 3.5 |
+| What to test in a user interface; brittle tests | 4.1 |
+| Regression tests; "make the change easy, then make the easy change" | 4.2 |
+| Acceptance tests from user stories; outside in, the double loop | 4.4 |
+| A red that fails fast instead of timing out | 4.5 |
+| Triangulation | 4.7 |
+| Organising a growing test file (`describe`); refactoring tests | 5.8 |
+
+### The audit (2026-10-08) that led to this, and what changed
+
+- Sprint 1 already works in small cycles: one or two tests, then the code. Sprints 2 to 5 drift into batches: three to
+  five tests in one step, then the whole implementation (`store.test.ts` 5 at once in 4.2, `transform.test.ts` 5 in
+  5.2, `viewport.test.ts` 4 in 5.4).
+- The refactor beat is named in 0.4 and practised once, as a whole lesson (3.4). No lesson tidies up after a green.
+- Named well: test-driven development (0.4), unit and end-to-end tests (0.7), test doubles and spies (1.8), a range
+  instead of an exact value (1.9), refactoring under tests (3.4), stand-ins (4.2).
+- Used but never named: fixtures (`scene()`, `store()`, `level()`), arrange-act-assert, edge cases, test isolation,
+  regression tests (4.2's test for 3.7's bug is one), integration tests (the store's tests run real commands),
+  acceptance tests (every end-to-end test is one story's criteria).
+- End-to-end tests written after the code, without saying why: 3.7, 4.4, 4.5, 4.7.
+- Weak reds: 5.6, 5.7 and 5.8's end-to-end tests fail by timing out, not on an assertion.
+- **Reworked the same day:** 0.4 (a refactor step, named ideas), 0.7, 1.1, 1.2, 1.8 (named ideas); 2.2–2.5, 3.1–3.3,
+  3.5, 3.6, 4.2, 4.6, 4.7, 5.2, 5.4–5.8 split into one-behaviour cycles; refactor steps in 0.4, 3.5, 4.2, 5.8; table
+  tests in 2.3 and 2.4; acceptance tests moved first in 4.4, 4.5 and 4.7; fail-fast reds in 4.5, 4.7, 5.6–5.8; 3.7's
+  console test was found unable to fail for a real bug, and the lesson now shows that and fixes it; tests added for
+  behaviour the prose described but nothing checked (3.2 renaming to its own name, 4.6 a black box's colour 0).
+  `scripts/studio-build/stepcheck.mjs` checks one lesson's steps in seconds (see How to resume).
 
 ## Who it's for (the user, 2026-10-07)
 
@@ -183,14 +250,29 @@ contract it must meet. This is why UpSkillOS exists.
     v0.5.0, ADR 5 (one store; React draws it).
   - Exact versions added: React and React DOM 19.3.0, `@types/react` and `@types/react-dom` 19.3.0,
     `@vitejs/plugin-react` 6.1.2.
+- **Sprint 5, lessons 5.1 to 5.9: written and replayed on macOS (2026-10-07), not yet reviewed by the user.**
+  - 5.1 edit and play (the game runs only while playing; Stop builds it again from the scene; a toolbar);
+    5.2 `Transform` (x step, y step, origin; `then`, `toLocal` by cross products), `Node2D` gets `rotation` (degrees)
+    and `scale`, and the registry's test makes the registry follow; 5.3 boxes drawn from four corners
+    (`Painter.fillPoints`, a `Point` interface Phaser's `Graphics` fits); 5.4 click to select (`pick`, top first;
+    `pathOf`; a selection outline); 5.5 drag to move (the engine node is the draft, one command on pointer up;
+    `dragPosition` in the parent's coordinates; pointer capture); 5.6 the editor's camera (a view transform, `panBy`,
+    `zoomAt` about the pointer, wheel and right-drag; everything about the scene in world positions); 5.7 move, rotate
+    and scale tools (`atan2`, distance ratios); 5.8 snapping (16 pixel grid, 15°, scale in quarters because 0.1 isn't
+    exact in binary; the grid drawn while snap is on); 5.9 review, v0.6.0, ADR 6, Sprint 6 stories (real files).
+  - Every mouse interaction's end-to-end test is written first, as Sprint 4's retrospective asked. Sprint 5's
+    retrospective asks for the game view's pointer handling (152 lines, only tested end to end) to move into a
+    unit-tested class before the game view grows again.
+  - No new packages.
 - **Explanation audit (user, 2026-10-07: "no unexplained code… even the css"; level: basic coding skills).** Every
   construct is explained at first use. A script lists keywords, operators, built-ins and `.method()` calls used before
   the prose names them; HTML, JSON and CSS are checked by hand. Fixed 16 gaps in Sprints 0–2.
 - Exact tool versions: TypeScript 7.0.2, Vitest 5.0.3, Vite 8.3.3, Electron 44.6.0, Playwright 1.63.0, Phaser 4.2.1;
   Node 22+. Phaser's `.d.ts` has two errors under TypeScript 7, so lesson 1.9 teaches `skipLibCheck`.
-- The replay (`studioBuild.desktop.test.js`) passes 43/43 on macOS (3 structure tests and 40 lessons). Windows still to be run.
-- Next: Sprint 5, the viewport: click to select in the game view, drag to move, rotation and scale (new to the engine),
-  snapping to a grid (stories in 4.8's backlog). The retrospective asks for each mouse interaction's end-to-end test first.
+- The replay (`studioBuild.desktop.test.js`) passes 52/52 on macOS (3 structure tests and 49 lessons). Windows still to be run.
+- Next: Sprint 6, real files: save the scene, open a project folder, export a zip (stories in 5.9's backlog). It
+  brings Electron's main and preload processes and IPC. Start with the retrospective's refactor: the game view's
+  pointer handling into a unit-tested class (5.9's challenge describes it), as its own lesson.
 
 ## How to resume (read this first in a new session)
 
@@ -204,10 +286,14 @@ ready. Keep writing sprint after sprint without stopping to ask.
    after a lesson with `python3 scripts/studio-build/materialize.py <empty folder> <NN-NN>` (it writes the last file
    block of every file up to that lesson; delete `src/oops.ts`, `hello.js` and `src/greet.js`, which later lessons
    remove), then `npm install` there. Work it out in that folder, in the session's scratchpad.
-   Sprint 4 did this as a git repository with one commit per lesson, tagged `l41`, `l42`, …, then wrote each lesson
-   as a draft whose file blocks are tokens (`@@l42:src/editor/store.ts@@`), filled in with
+   Sprints 4 and 5 did this as a git repository with one commit per lesson, tagged `l41`, `l42`, …, then wrote each
+   lesson as a draft whose file blocks are tokens on a line of their own (`@@l42:src/editor/store.ts@@`; `fill.py`
+   adds the ```` ```lang file=… ```` fence round a bare token), filled in with
    `python3 scripts/studio-build/fill.py <prototype> <draft> <lesson>`. Every file block is then code that ran.
-2. Write the lesson: frontmatter (title, track, runtime: none, concepts, problem); `## ` steps; each step changes one
+   For a red step's quoted output, make a `git worktree` of the previous lesson's tag, copy in the files the lesson
+   has changed so far (`git show lNN:path`), symlink the prototype's `node_modules`, and run the check's command.
+2. Write the lesson to the testing standard ("Testing is taught, not just used", above): frontmatter (title, track,
+   runtime: none, concepts, problem); `## ` steps; each step changes one
    file through a ```` ```lang file=path ```` block holding the **whole** file; exactly one ```` ```check ```` fence;
    `predict` and `hints` fences where useful; `###` (never `## `) inside file contents. Tests first: a red step
    (check `exit=1 stderr="…"`), then a green step.
@@ -218,9 +304,15 @@ ready. Keep writing sprint after sprint without stopping to ask.
    (`run`, `editFiles` for backlog ticks, `wrong` answers) to `tracks/studio-build.walkthrough.js`. A wrong answer
    runs on a copy from *before* the step, without the step's file; to test a new test file against broken code, put
    both in the wrong answer's `files`. `tsc` prints its errors on stdout, Vitest's failures go to stderr.
-5. Run the replay: `npx vitest run src/labs/project-studio/studioBuild.desktop.test.js` (unset `ELECTRON_RUN_AS_NODE`
+5. While writing, check one lesson in seconds: `node scripts/studio-build/stepcheck.mjs <NN-NN> <node_modules folder>`
+   assembles the project from the earlier lessons, writes each step's files, applies the walkthrough's hand edits,
+   runs the `run` and `contains` checks and tries each wrong answer. `--e2e` adds the end-to-end checks, `--show`
+   prints each command's key output lines (to quote a red exactly), and `--upto N --keep DIR` leaves the project as
+   it stands after step N, to run commands in it by hand. The node_modules folder is any project's that has every
+   package the course installs (a prototype's, after `npm install`).
+6. Run the replay: `npx vitest run src/labs/project-studio/studioBuild.desktop.test.js` (unset `ELECTRON_RUN_AS_NODE`
    in a VS Code shell). Every lesson so far must still pass.
-6. At the end of each sprint: `python3 scripts/studio-build/audit.py` (lists constructs used before the prose
+7. At the end of each sprint: `python3 scripts/studio-build/audit.py` (lists constructs used before the prose
    explains them; methods a test calls one step before they're written are expected), check HTML, JSON and CSS by
    hand, then `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` (two failures,
    `projectChecks` and `projectIsolation`, were there before this course), and update the Status section above.

@@ -10,9 +10,53 @@ In UpSkillOS's Game Studio, every change you make with the mouse shows up as a l
 
 To get there, each command needs one more property: `code`, the line that makes its change. And the log must follow undo and redo: undo a change and its line disappears; redo it and the line comes back.
 
-## Values written as code: tests
+## Numbers and vectors as code: a test
 
 A line of code needs each value written the way you'd type it: a string in quotes, a number as digits, a vector as `{ x: 1, y: 2 }`. Turning a value into source code that produces it is called writing a **literal** (lesson 2.1's object literals were values written in code). Create `src/editor/code.test.ts`:
+
+```ts file=src/editor/code.test.ts
+import { expect, test } from 'vitest';
+import { lit } from './code';
+
+test('lit writes values as code that produces exactly the same value', () => {
+  expect(lit(16766720)).toBe('16766720');
+  expect(lit(-2.5)).toBe('-2.5');
+  expect(lit(0.1 + 0.2)).toBe('0.30000000000000004');
+  expect(lit({ x: 1, y: -2.5 })).toBe('{ x: 1, y: -2.5 }');
+});
+```
+
+- `0.1 + 0.2` is `0.30000000000000004` (lesson 1.1). A log that wrote `0.3` would replay to a *different* number. Each value must be written with every digit it needs to read back exactly.
+
+```check
+run "npx vitest run src" exit=1 stderr="Cannot find module './code'"
+```
+
+## lit
+
+Create `src/editor/code.ts`:
+
+```ts file=src/editor/code.ts
+import type { PropValue } from '../engine/scene';
+
+export function lit(value: PropValue | string): string {
+  if (typeof value === 'object') return `{ x: ${lit(value.x)}, y: ${lit(value.y)} }`;
+  return String(value);
+}
+```
+
+- `PropValue | string`: a value the Scene API takes, either a prop's value (a number or a vector) or a string (a path, a key, a name). The test only asks about numbers and vectors yet, but the type says what's coming.
+- A vector is the one object kind, so `typeof value === 'object'` picks it out, and TypeScript narrows `value` to `Vec2Data`. It's written as an object literal, with each part written by `lit` itself, recursively.
+- `String(value)` turns a number into text: the shortest digits that read back as exactly the same number, so `0.30000000000000004` keeps every digit.
+
+```check
+run "npx vitest run src" stdout="71 passed"
+run "npx tsc"
+```
+
+## Strings as code: a test
+
+Paths and names are strings, and a string written as code needs quotes. Add a test to `src/editor/code.test.ts`:
 
 ```ts file=src/editor/code.test.ts
 import { expect, test } from 'vitest';
@@ -31,16 +75,38 @@ test('strings are quoted, and quotes inside them are escaped', () => {
 });
 ```
 
-- `0.1 + 0.2` is `0.30000000000000004` (lesson 1.1). A log that wrote `0.3` would replay to a *different* number. Each value must be written with every digit it needs to read back exactly.
 - `'"say \\"hi\\""'` in the test: inside a TypeScript string, `\\` is one backslash. So the expected text is `"say \"hi\""`: a quoted string in which each inner quote is escaped (lesson 3.2). Without the escapes, the string would end at the first inner quote and the line wouldn't run.
 
 ```check
-run "npx vitest run src" exit=1 stderr="Cannot find module './code'"
+run "npx vitest run src" exit=1 stderr="expected 'level/wall' to be '\"level/wall\"'"
 ```
 
-## lit
+`String` gives the text itself, with no quotes: as code, `level/wall` is `level` divided by `wall`.
 
-Create `src/editor/code.ts`:
+## Quotes
+
+Change `src/editor/code.ts`:
+
+```ts file=src/editor/code.ts
+import type { PropValue } from '../engine/scene';
+
+export function lit(value: PropValue | string): string {
+  if (typeof value === 'object') return `{ x: ${lit(value.x)}, y: ${lit(value.y)} }`;
+  if (typeof value === 'string') return JSON.stringify(value);
+  return String(value);
+}
+```
+
+- `JSON.stringify` of a string gives it in double quotes, with every special character inside escaped: `"say \"hi\""`. JSON was designed as a subset of JavaScript's literal syntax, so JSON text for a string is also valid code.
+
+```check
+run "npx vitest run src" stdout="72 passed"
+run "npx tsc"
+```
+
+## Refactor: one way to write a literal
+
+Green, so look at the code. Strings go through `JSON.stringify`, numbers through `String`. What does `JSON.stringify` do to a number? Exactly what `String` does: the shortest digits that read back as the same number. So the two lines can be one. Change `src/editor/code.ts`:
 
 ```ts file=src/editor/code.ts
 import type { PropValue } from '../engine/scene';
@@ -51,12 +117,11 @@ export function lit(value: PropValue | string): string {
 }
 ```
 
-- `PropValue | string`: a value the Scene API takes, either a prop's value (a number or a vector) or a string (a path, a key, a name).
-- A vector is the one object kind, so `typeof value === 'object'` picks it out, and TypeScript narrows `value` to `Vec2Data`. It's written as an object literal, with each part written by `lit` itself, recursively.
-- Everything else (numbers and strings) is exactly what `JSON.stringify` already produces: numbers in the shortest form that reads back as exactly the same number, and strings in double quotes with special characters escaped. JSON was designed as a subset of JavaScript's literal syntax, so JSON text for a number or string is also valid code.
+- Numbers and strings both go through `JSON.stringify` now. One rule instead of two: anything that isn't a vector is written as JSON writes it.
+- Is it really the same for every number? The tests say so for the cases that matter: a big whole number, a negative fraction, and a fraction with every digit. That's what the tests are for: a change like this is safe to make because they'd fail if it weren't.
 
 ```check
-run "npx vitest run src" stdout="66 passed"
+run "npx vitest run src" stdout="72 passed" label="the same tests pass with one rule for literals"
 run "npx tsc"
 ```
 
@@ -168,7 +233,7 @@ export class History {
 - The log isn't stored anywhere. It's **derived** from the stack, so it can't disagree with it: undo pops a command off `done`, and its line is gone from the next read of `code`. A separately stored log would need its own undo and redo handling, and one day someone would forget it.
 
 ```check
-run "npx vitest run src" stdout="67 passed"
+run "npx vitest run src" stdout="73 passed"
 run "npx tsc" exit=1 stdout="Property 'code' is missing" label="tsc points at every command that has no code yet"
 ```
 
@@ -339,7 +404,7 @@ export function renameNodeCommand(scene: SceneData, path: string, newName: strin
 - `npx tsc` is clean again: every `Command` has its `code`.
 
 ```check
-run "npx vitest run src" stdout="68 passed"
+run "npx vitest run src" stdout="74 passed"
 run "npx tsc" label="every command has its code now"
 ```
 

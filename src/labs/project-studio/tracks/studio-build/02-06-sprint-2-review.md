@@ -89,7 +89,7 @@ Goal: the scene lives in a file the game starts from, checked when it's loaded.
 - Goal met: all three stories are done.
 - scenes/main.json holds a wall and the player. Changing it changes the game, with no change to the code.
 - A broken scene file shows "The scene didn't load." and the path to the problem, in the window.
-- npm run check: 48 unit tests and 2 end-to-end tests pass.
+- npm run check: 53 unit tests and 2 end-to-end tests pass.
 
 ### Retrospective
 
