@@ -2,7 +2,7 @@
 title: Model a race without drawing it
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -38,6 +38,26 @@ public readonly record struct Specs(float Speed, float Turn, float DamageScale)
 public readonly record struct Control(float Throttle, float Steer,
     bool Brake = false, Tactic Action = Tactic.Race, bool Recover = false);
 ```
+
+## Keep a type-and-unit ledger {#type-unit-ledger}
+
+Before combining fields, write down both the C# type and its meaning. The compiler checks the first; our contracts and tests must protect the second.
+
+| Quantity | Representation | Meaning and boundary |
+| --- | --- | --- |
+| Rockets | int | Whole available shots; cannot become negative after an accepted action |
+| Energy | float | Fractional regeneration over time; capped at 100 |
+| Speed | float | Metres per second; not the formatted kilometres-per-hour label |
+| Yaw | float | Radians; not camera field-of-view degrees |
+| Cooldown | float | Seconds remaining; zero means ready |
+| Finish | float? | Elapsed seconds when finished; null means no finish yet |
+| Id | int | Roster index in this program; not a display rank |
+
+The earlier EnergyStore experiment spent whole units only, so int was sufficient there. The full game regenerates energy by a rate multiplied by fractional seconds, which is why its Energy field is float. The domain requirement changed; we did not choose a new type just to silence a diagnostic.
+
+`float? Finish` does not imply fractional indexing, and converting speed to int for display must not replace the simulation's speed. Two values sharing int storage, such as rank and Id, are not interchangeable just because assignment compiles. Trace the quantity across an API boundary before deciding on a cast.
+
+Use this ledger during debugging: inspect type, unit, valid range, owner, and mutation point. Later failures involving radians/degrees, indices/metres, or sample counts/reward are the same reasoning problem in different contexts.
 
 ## Give each racer an identity and lifecycle
 

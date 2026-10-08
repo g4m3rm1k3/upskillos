@@ -2,7 +2,7 @@
 title: One simulation step with a defined order
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -17,9 +17,13 @@ Tick is the simulation's entry point. Paused and Finished return before any time
 
 All production callers use the default fixed Step. The dt parameter exists for focused experiments, not permission to mix arbitrary display intervals with reward shaping. The race ends when the player finishes or the time limit is reached. Opponents still unfinished are ranked by progress. That is the product rule, not an accidental consequence of stopping the window.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Tick.cs`. Start this new part of the Race class; append the following fragments to this same file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Tick.cs mode=replace
+using System.Numerics;
+namespace CircuitClash;
+public sealed partial class Race
+{
     public Kart[] Ranking() => Karts.OrderBy(k => k.Finish ?? float.PositiveInfinity)
         .ThenByDescending(k => k.Progress).ThenBy(k => k.Id).ToArray();
     public void Tick(Control[] controls, float dt = Step)
@@ -41,7 +45,7 @@ Type this fragment in `Core/Race.cs`. Append it after the previous fragment in t
 
 ## Build the complete rules
 
-Run `dotnet build Core`. The Race declaration is now complete. If compilation fails, first inspect braces at fragment boundaries, then referenced names. Do not remove a behavior merely to silence a diagnostic.
+Run `dotnet build Core`. The sequencing part of Race is now complete, joining the already-buildable equipment, driving, and combat parts. If compilation fails, first inspect braces at fragment boundaries, then referenced names. Do not remove a behavior merely to silence a diagnostic.
 
 Trace a racing tick and a paused tick on paper. In the paused case, no countdown, effect, pickup, projectile, or race clock changes. In the racing case, requests are supplied before rules run. We will keep that order in both the human game and headless training, avoiding a second inconsistent implementation of the rules.
 

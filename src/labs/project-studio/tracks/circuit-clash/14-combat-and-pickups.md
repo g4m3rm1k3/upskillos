@@ -2,7 +2,7 @@
 title: Combat, collision, and shared resources
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -17,9 +17,13 @@ The target's suffered count and penalty update separately from the owner's hit c
 
 Notice the reward incentive: hitting an opponent earns eight while progress earns smaller increments. That may produce an aggressive policy that wins positions but takes longer. This is a design choice to investigate, not a claim that the reward precisely represents fun or fair competition.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Combat.cs`. Start this new part of the Race class; append the following fragments to this same file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Combat.cs mode=replace
+using System.Numerics;
+namespace CircuitClash;
+public sealed partial class Race
+{
     public void Hit(Kart target, int owner)
     {
         if (target.Shield > 0) { target.Reward += 2; Message(target.Name + " blocked a hit"); return; }
@@ -39,9 +43,9 @@ Every hazard loses lifetime first. A mine stays in place. A rocket with an unfin
 
 The nested kart loop excludes owner and finished racers, checks remaining life, and compares horizontal distance with 2.5. A hit sets Life to zero, so subsequent candidates cannot also be hit by that same hazard. RemoveAll runs after enumeration, preventing structural mutation during foreach. This is discrete collision detection: our fixed step and speeds bound movement enough for the chosen radii, but high-speed thin objects would need swept tests.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Combat.cs`. Append it after the previous fragment in this file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Combat.cs mode=append
     public void Combat(float dt)
     {
         foreach (Hazard hazard in Hazards)
@@ -76,9 +80,9 @@ Flatten delta.Y to zero because contact is horizontal. If centers differ, dividi
 
 This is a positional correction with a small speed penalty, not a physically accurate impulse solver. It intentionally avoids mass, friction, and restitution. A rendering mesh may have square corners while the contact footprint is circular; explain that approximation rather than assuming visual geometry defines collision automatically.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Combat.cs`. Append it after the previous fragment in this file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Combat.cs mode=append
     public void Contacts()
     {
         for (int i = 0; i < Karts.Length; i++)
@@ -103,9 +107,9 @@ The inner loop wraps through the whole roster. Finished or distant karts are ski
 
 Distinguish three boundaries: an unavailable pickup does nothing; a kart exactly five units away is excluded by `>= 5`; resource caps prevent unlimited stockpiling. Those are useful test cases because an apparently correct animation could hide each corresponding logic bug.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Combat.cs`. Append it after the previous fragment in this file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Combat.cs mode=append
     public void Collect(float dt)
     {
         foreach (Pickup pickup in Pickups)
@@ -122,5 +126,10 @@ Type this fragment in `Core/Race.cs`. Append it after the previous fragment in t
             }
         }
     }
+}
 ```
 
+
+## Build this completed feature {#feature-build}
+
+Run `dotnet build Core`. This part of Race is now closed and can compile with the previously completed parts. Keep the file in Core so the SDK includes it automatically. Do not copy these methods back into Race.cs as well; duplicate member declarations are a compiler error. Inspect the diff and preserve a working checkpoint before continuing.

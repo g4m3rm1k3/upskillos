@@ -2,7 +2,7 @@
 title: Train against snapshots and evaluate on held-out seeds
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

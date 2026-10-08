@@ -2,7 +2,7 @@
 title: Tests that protect rules rather than appearances
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

@@ -2,7 +2,7 @@
 title: Build boundaries, dependencies, and Git
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

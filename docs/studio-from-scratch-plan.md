@@ -1,6 +1,6 @@
 # Build a Game Studio from Scratch: course plan
 
-Status (2026-10-07): **agreed in outline; Sprints 0 to 5 are written** (see Status below). The user chose to do this course **before**
+Status (2026-10-08): **agreed in outline; Sprints 0 to 6 are written** (see Status below). The user chose to do this course **before**
 the remaining Game Studio starters: Kart Circuit becomes its final project, built in the user's own studio together
 with an agent (below).
 
@@ -101,6 +101,13 @@ Where each idea is named and explained (after the 2026-10-08 rework):
 | A red that fails fast instead of timing out | 4.5 |
 | Triangulation | 4.7 |
 | Organising a growing test file (`describe`); refactoring tests | 5.8 |
+| The safety net; characterisation tests (guess, run, pin what it does); seams; extract class; humble object; two hats (don't fix while refactoring) | 6.1 |
+| A port (an interface for the outside world); fakes; `.resolves` | 6.3 |
+| Failure injection (a fake made to fail); contract tests (`describe.each` over the real thing and the fake); test hooks (`afterAll`) | 6.5 |
+| A spy and a stub passed as parameters; round-trip tests; validation at the border between processes | 6.6 |
+| Stubbing part of the running app in an end-to-end test, and what that leaves untested | 6.7 |
+| Test oracles (`tar` judges the zip); a second example for a file format (triangulation) | 6.8 |
+| A contract test catching a real difference between the fake and the disk | 6.9 |
 
 ### The audit (2026-10-08) that led to this, and what changed
 
@@ -220,6 +227,8 @@ contract it must meet. This is why UpSkillOS exists.
     package.json and modules; 0.3 TypeScript; 0.4 tests first, with Vitest; 0.5 a page, with Vite; 0.6 a window, with
     Electron; 0.7 an end-to-end test with Playwright; 0.8 sprint review, retrospective, an ADR and the v0.1.0 tag.
   - CI is a Sprint 0 challenge, not a step: it needs a GitHub account, and the replay can't check it.
+  - Changed after that approval, in the 2026-10-08 testing rework: 0.4 (a real refactor step; regressions, assertions,
+    edge cases named) and 0.7 (the test pyramid; breaking code on purpose).
 - **Sprint 1, lessons 1.1 to 1.10: written and replayed on macOS (2026-10-07), not yet reviewed by the user.**
   - 1.1 Vec2; 1.2 the scene tree (Node); 1.3 local and global positions (Node2D); 1.4 update and delta time;
     1.5 the fixed-step game loop; 1.6 input actions; 1.7 Game, one frame; 1.8 drawTree through a Painter, and a Player;
@@ -264,15 +273,37 @@ contract it must meet. This is why UpSkillOS exists.
     retrospective asks for the game view's pointer handling (152 lines, only tested end to end) to move into a
     unit-tested class before the game view grows again.
   - No new packages.
+- **Sprint 6, lessons 6.1 to 6.10: written and step-checked on macOS (2026-10-08), not yet reviewed by the user.**
+  - 6.1 the pointer code moved into `ViewportInput` under characterisation tests (the retrospective's change); a pinned
+    oddity (a drag back to its start made an empty command) fixed after the move; 6.2 two processes, Git branches (one
+    per story, `git branch -m main` first), `example/` project, `e2e/project.ts` temp folders, `@types/node` 24.19.1,
+    `main.js` → `main.ts` run by Electron's Node with types stripped (`electron/tsconfig.json`: `erasableSyntaxOnly`,
+    `allowImportingTsExtensions`); 6.3 the `Files` port, `MemoryFiles` fake, `loadProject` (problem, not error);
+    6.4 preload (`preload.cjs`, CommonJS, sandbox), `contextBridge`, `ipcMain.handle`, `window.studio`, top-level await,
+    first merge; 6.5 `saveScene` write-then-rename, `DiskFillsUp` failure injection, contract tests for `Files`;
+    6.6 `formatScene`, `store.save(write)`, `'scene:save'` validated with `unknown`, Save button, Ctrl+S, merge;
+    6.7 Open: dialog stubbed with `app.evaluate`, `store.report`, the main process reloads the page; 6.8 the zip format by
+    hand (`DataView`, little-endian, `zlib.crc32`, DOS date), `tar` as the test oracle; 6.9 `Files` grows mkdir, bytes and
+    `list`, `exportProject` (hidden files out, returns the names), Export button; 6.10 review, v0.7.0, ADR 7.
+  - Unit tests 128 → 166, end-to-end 12 → 16. New package: `@types/node` only.
+  - `stepcheck.mjs` has a `MOVED` list for files a lesson moves with `git mv` (6.2 moves `scenes/` and `main.js`), and
+    doesn't run `npm install`, so 6.2's `@types/node` check fails there by design; the full replay runs it.
+- **Testing rework (user, 2026-10-08: "testing is really important to learn… this is to become a software engineer").**
+  All 49 lessons audited against the new testing standard (section "Testing is taught, not just used" above, with the
+  audit and the list of changes). Batched tests split into one-behaviour cycles from 2.2 to 5.8; refactor steps; every
+  testing idea named at first use (table there); acceptance tests first from 4.4; reds fail fast on named checks.
+  Replayed 52/52 on macOS after the rework. Unit-test counts in lessons after 2.3 shifted (+6 in all: new table rows
+  and tests); a lesson's counts are best checked with `stepcheck.mjs`, not edited by hand.
 - **Explanation audit (user, 2026-10-07: "no unexplained code… even the css"; level: basic coding skills).** Every
   construct is explained at first use. A script lists keywords, operators, built-ins and `.method()` calls used before
   the prose names them; HTML, JSON and CSS are checked by hand. Fixed 16 gaps in Sprints 0–2.
 - Exact tool versions: TypeScript 7.0.2, Vitest 5.0.3, Vite 8.3.3, Electron 44.6.0, Playwright 1.63.0, Phaser 4.2.1;
   Node 22+. Phaser's `.d.ts` has two errors under TypeScript 7, so lesson 1.9 teaches `skipLibCheck`.
 - The replay (`studioBuild.desktop.test.js`) passes 52/52 on macOS (3 structure tests and 49 lessons). Windows still to be run.
-- Next: Sprint 6, real files: save the scene, open a project folder, export a zip (stories in 5.9's backlog). It
-  brings Electron's main and preload processes and IPC. Start with the retrospective's refactor: the game view's
-  pointer handling into a unit-tested class (5.9's challenge describes it), as its own lesson.
+- Next: Sprint 7, scripts (stories in 6.10's backlog): a node gets a script, scripts are edited in the studio
+  (Monaco), errors say where they are, and a game's scripts run sandboxed away from the studio and the files (a frame,
+  messages between frames). Sprint 6's retrospective asks: when a main-process handler needs a decision, it goes into
+  a unit-tested function in `electron/` first. Keep the branch-per-story habit from 6.2.
 
 ## How to resume (read this first in a new session)
 
@@ -311,7 +342,9 @@ ready. Keep writing sprint after sprint without stopping to ask.
    it stands after step N, to run commands in it by hand. The node_modules folder is any project's that has every
    package the course installs (a prototype's, after `npm install`).
 6. Run the replay: `npx vitest run src/labs/project-studio/studioBuild.desktop.test.js` (unset `ELECTRON_RUN_AS_NODE`
-   in a VS Code shell). Every lesson so far must still pass.
+   in a VS Code shell). Every lesson so far must still pass. The machine has little memory: run end-to-end checks
+   sparingly (the replay once per sprint), and after each, check `ps` for Electron processes left behind and stop them.
+   Electron can't start inside Claude Code's command sandbox, so e2e commands need it turned off.
 7. At the end of each sprint: `python3 scripts/studio-build/audit.py` (lists constructs used before the prose
    explains them; methods a test calls one step before they're written are expected), check HTML, JSON and CSS by
    hand, then `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` (two failures,

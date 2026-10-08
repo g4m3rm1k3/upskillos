@@ -2,7 +2,7 @@
 title: Regression checks for saves, learning, and complete races
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

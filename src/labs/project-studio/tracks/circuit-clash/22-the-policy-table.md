@@ -2,7 +2,7 @@
 title: A policy table, exploration, and independent snapshots
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

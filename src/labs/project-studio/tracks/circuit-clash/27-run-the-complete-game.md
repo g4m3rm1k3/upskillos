@@ -2,7 +2,7 @@
 title: Launch the game and expose reproducible experiments
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

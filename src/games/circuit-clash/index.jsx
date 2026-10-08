@@ -139,8 +139,8 @@ export default function CircuitClash() {
         <label className="cc-select">Rival tactics <select value={mode} onChange={e => setMode(e.target.value)}><option value="learned">Trained Q-learning policy</option><option value="scripted">Scripted comparison</option></select></label>
         <button className="cc-primary" onClick={start} disabled={!!error}>Start race <span>→</span></button>
         <button className="cc-link" onClick={() => start(true)} disabled={!!error}>Watch a demo race</button>
-        <button className="cc-link" onClick={() => openLab('project-studio', '?track=circuit-clash')}>Open Project Studio · Circuit Clash introduction ↗</button>
-        <p className="cc-note">Playable browser reference. The standalone C# course is in development; its introduction is available now.</p>
+        <button className="cc-link" onClick={() => openLab('project-studio', '?track=circuit-clash')}>Open Project Studio · Build Circuit Clash ↗</button>
+        <p className="cc-note">Playable browser reference. Build your own native C# version in the standalone Project Studio course, including its low-poly rendering.</p>
       </section>}
       {screen === 'garage' && <section className="cc-panel cc-garage">
         <p className="cc-eyebrow">BUILD FOR YOUR DRIVING STYLE</p><h1>The garage.</h1>

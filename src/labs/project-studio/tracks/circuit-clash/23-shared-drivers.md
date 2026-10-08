@@ -2,7 +2,7 @@
 title: Program steering and compare tactical strategies
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

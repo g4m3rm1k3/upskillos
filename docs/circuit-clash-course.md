@@ -2,9 +2,9 @@
 
 ## Status
 
-The browser reference and Project Studio opening lesson are implemented. The C# implementation course is **not complete**; do not market the introduction as a finished series. No C# engine has been locked in by adding this browser reference. The reference uses existing React/Three.js dependencies and is intentionally labeled as a separate implementation of the target behavior.
+The browser reference and complete guided C# implementation are authored. The learner types the native game from small explained fragments, starting with execution and values and ending with tests, training/evaluation, and packaging. The engine choice is **.NET 10 + Raylib-cs 8.1.0**. The browser reference remains a separate React/Three.js implementation of comparable behavior.
 
-Play `#/game/circuit-clash`. In Project Studio choose **Circuit Clash — C# Software Engineering (course in development)**, then **Play Circuit Clash — the game you will learn to build**. The first step launches the game without setup, a prerequisite course, a completed challenge or supplied learner source files.
+Play `#/game/circuit-clash`. In Project Studio choose **Circuit Clash — C# Software Engineering**. The first step launches the sample before setup. The course does not require the Java/Python series, generated solutions, or successful optional challenges. The catalog marks it **Review pending**: executable reconstruction and Apple silicon verification are complete; beginner pacing and other desktop platforms still require learner testing.
 
 ## Reference scope
 
@@ -37,12 +37,31 @@ The build proceeds through terminal/Git and C# foundations; testable models; a f
 
 Core behavior in the reference must be implemented in the guided path. Optional challenges cannot hide required features or prerequisites, must not gate navigation, and should preserve a working guided project when deferred. Software development with coding agents belongs in a later course; RL opponents belong here.
 
-## Remaining work
+## Guided implementation and verification workflow
 
-- Choose and verify the C# engine/toolchain and supported learner platforms with a minimal built-and-packaged project.
-- Author and execute the standalone foundations and complete guided build, including code-level explanations comparable to the Pygame/PySide reference lessons.
-- Establish executable behavioral parity between learner implementation and browser reference without requiring identical source architecture.
-- Audit pacing, accessibility, controls and driving feel with learner feedback. Do not call automated simulation a substitute for playtesting.
+The sequence lives in [the discovered Project Studio track](../src/labs/project-studio/tracks/circuit-clash/00-play-the-game.md). Its required edit fragments create Scratch experiments, a graphics-independent Core library, a native Game executable, and a Checks executable. No support bundle or hidden insertion supplies learner implementation code. The renderer teaches local/world coordinates, transforms, indexed triangles, winding, normals, flat diffuse lighting, a chase camera, road ribbons, wheels, and scenery.
+
+Run `node scripts/check-circuit-clash-course.mjs --dotnet /path/to/dotnet --keep` to reconstruct the published fragments into a new temporary author workspace and execute the taught milestones. Omit `--dotnet` to use the SDK on PATH and `--keep` to remove the workspace afterward. The checker executes both intended red assertions, their green implementations, intermediate builds, and the final regression runner. This is author verification only; it is not wired to fill a learner's editor.
+
+The native course deliberately differs from the browser sample in presentation: Raylib receives CPU-shaded generated triangles; input is desktop keyboard driving and pointer/keyboard menus; held-out evaluation is printed as CSV. Steering is scripted in both versions. Q-learning chooses legal equipment actions, and policies do not update during human races. The course explicitly documents arcade height attachment, discrete collisions, a fixed desktop layout, and local persistence. It does not claim a browser export, rigid-body vehicle physics, general optimal learning, or identical numerical outcomes across implementations.
+
+## Remaining review
+
+- Audit pacing and comprehension with learners starting from minimal experience; automated reconstruction cannot establish teaching quality.
+- Test native setup, graphics, controls and published artifacts on Windows, Linux, and Intel macOS. Only Apple silicon macOS has been exercised here.
+- Review accessibility and human driving feel. The native UI supports keyboard menu navigation but does not claim screen-reader integration or a responsive layout.
+
+## Course verification — 2026-10-08
+
+- `DOTNET_CLI_HOME=/tmp/circuit-clash-cli NUGET_PACKAGES=/tmp/circuit-clash-nuget node scripts/check-circuit-clash-course.mjs --dotnet /tmp/circuit-clash-dotnet/dotnet --keep`: printed **PASS reconstructed course** after every executed milestone. The published fragments compiled at their designated boundaries. Negative-index and Q-arithmetic stubs failed with the intended assertion messages, not compiler errors; their replacements passed. The final Checks executable printed **ALL CHECKS PASSED**.
+- `npx vitest run src/games/circuit-clash src/labs/project-studio/StudioNavigation.test.jsx src/labs/project-studio/circuitClash.test.js src/routes.test.js`: **5 test files passed; 25 tests passed**. Covers browser gameplay, course discovery/navigation, small typed fragments, optional-work independence, progress-key uniqueness, and author reconstruction boundaries.
+- `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"`: **2 failed, 172 passed** across **2 failed and 33 passed test files**. Remaining failures are the existing Git repository detection assertion in `projectChecks.test.js` and child-process termination assertion in `projectIsolation.test.js`. Course, catalog-profile, and navigation checks passed. This is not a green full-folder run.
+- `npm run docs:check`: printed **Contributor docs checked: 9 file(s), links, paths and commands all exist**. `git diff --check` printed no whitespace errors. No full SPA production build was run for this content change; the native learner artifact was built and published separately.
+- From the reconstructed workspace, `dotnet publish Game/Game.csproj -c Release -r osx-arm64 --self-contained true -o artifacts/osx-arm64 -p:UseSharedCompilation=false`: restored the official runtime packages and emitted the self-contained Game output. The first sandboxed restore could not resolve NuGet; the authorized network-enabled retry succeeded.
+- `artifacts/osx-arm64/Game --train --data=play-data`: printed progress through **Trained 600/600**. `artifacts/osx-arm64/Game --evaluate --data=play-data` emitted held-out CSV results. All evaluated players finished. Scripted mean time/place were **31.88 seconds / 1.92**; learned means were **34.02 seconds / 1.00**. These measurements illustrate the aggressive reward tradeoff, not a universal advantage.
+- `artifacts/osx-arm64/Game --capture --data=play-data`: opened Raylib/OpenGL on Apple M4, rendered the generated track, kart and landscape, saved `native-race.png`, and closed automatically. The published-window capture showed the focus-loss pause screen over the rendered world. This is a rendering/focus smoke check, not a complete manual-controls or driving-feel review.
+- Browser verification opened the discovered course and inspected the transform and face-normal lessons, including the explanatory prose and typed C# blocks. No source was injected into the learner editor.
+- `npm run facts` and `npm run catalog:check`: regenerated metadata and reported current inventory, with the existing **14 content problems** recorded in the generated inventory.
 
 ## Verification record — completed 2026-10-06
 
@@ -54,6 +73,6 @@ Core behavior in the reference must be implemented in the guided path. Optional 
 - `npx vitest run src/labs/project-studio`: **20 failed, 218 passed, 204 skipped** across the full folder. Failures included existing Forge lessons with multiple `file=` blocks, native C++ walkthrough/environment checks, Git-root expectations, process termination and a desktop mock unable to resolve `process-tree.cjs`. The new sample and its navigation checks passed separately; this result must not be described as a green full-suite run.
 - Browser verification: observed a complete third-person demonstration race, combat/block feedback and the finish screen; purchased a turbo package; ran the training worker to completion and inspected its comparison table; opened the Circuit Clash introduction from the game; and followed the introduction's launch link back to the playable game. The lesson remained available in its own window. Manual keyboard acceleration and focus pause were additionally exercised in the component tests; automated driving is not a human driving-feel review.
 
-The sample's introductory promise is implemented. The remaining course work above is still open.
+The record above describes the earlier browser-sample verification. The later native-course verification and remaining review are recorded separately above.
 
 Primary rendering reference for the browser sample: [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html). The native course uses .NET 10 and Raylib-cs 8.1.0, as its first lesson sets up; only macOS on Apple silicon has been verified so far. Engine selection had to account for export targets; [Godot's C# web-export limitation](https://docs.godotengine.org/en/4.4/tutorials/export/exporting_for_web.html) is one reason not to label this browser implementation a Godot C# export.

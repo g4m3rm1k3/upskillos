@@ -2,7 +2,7 @@
 title: A winding track from functions and vectors
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

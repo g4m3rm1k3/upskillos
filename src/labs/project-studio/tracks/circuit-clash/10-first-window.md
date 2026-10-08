@@ -2,7 +2,7 @@
 title: Your first 3D frame and the rendering pipeline
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

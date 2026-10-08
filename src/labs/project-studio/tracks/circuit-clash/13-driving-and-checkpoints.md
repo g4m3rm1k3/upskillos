@@ -2,7 +2,7 @@
 title: Driving, recovery, and honest lap counting
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -19,9 +19,13 @@ Move begins by loading upgrade specifications and decreasing active timers towar
 
 This fragment opens a declaration that continues in the following step. Save it, but wait for the stated build checkpoint before compiling.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Driving.cs`. Start this new part of the Race class; append the following fragments to this same file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Driving.cs mode=replace
+using System.Numerics;
+namespace CircuitClash;
+public sealed partial class Race
+{
     public void Recover(Kart kart)
     {
         kart.Place((kart.NextGate - 1) * 90 + 4, 0);
@@ -46,9 +50,9 @@ Boost adds further acceleration while respecting the cap. Stun multiplies speed 
 
 Position advances along the new heading, using speed times seconds. Nearest updates the local track hint; Y attaches the kart to the centerline's sampled height. This is not suspension, gravity, or tire-force simulation. Lateral distance beyond HalfWidth slows the kart; beyond 18 triggers recovery. Checkpoint runs only after those motion rules. Predict the order difference if collision or checkpoint logic ran on the previous position instead.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Driving.cs`. Append it after the previous fragment in this file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Driving.cs mode=append
         float cap = specs.Speed + (kart.Boost > 0 ? 14 : 0);
         float acceleration = control.Throttle * 15 - (control.Brake ? 26 : 0) - 2 - kart.Speed * 0.12f;
         kart.Speed = Math.Clamp(kart.Speed + acceleration * dt, 0, cap);
@@ -73,9 +77,9 @@ After acceptance, Gates increments. Crossing gate zero completes a lap; the seco
 
 For ranking unfinished racers, we compute progress relative to the previous gate. Wrapping and subtracting 180 creates a signed local offset across the seam. Clamp limits it to a small backward allowance and one segment forward. Reward uses bounded progress change plus a small per-tick time penalty. Progress is measured in track samples, not exact metres, so this shaping is heuristic. We will evaluate outcomes rather than equating a higher training reward with a universally better driver.
 
-Type this fragment in `Core/Race.cs`. Append it after the previous fragment in this file.
+Type this fragment in `Core/Race.Driving.cs`. Append it after the previous fragment in this file.
 
-```csharp edit=Core/Race.cs mode=append
+```csharp edit=Core/Race.Driving.cs mode=append
     public void Checkpoint(Kart kart)
     {
         int gate = kart.NextGate * 90;
@@ -96,6 +100,7 @@ Type this fragment in `Core/Race.cs`. Append it after the previous fragment in t
         kart.Reward += Math.Clamp(progress - kart.Progress, -1, 2) * 0.04f - Step * 0.02f;
         kart.Progress = progress;
     }
+}
 ```
 
 ## Challenge — return to this later
@@ -104,3 +109,7 @@ This is optional. You can continue without completing it; no later guided step d
 
 Design a swept crossing test for a checkpoint plane. Explain which failure in the current proximity rule it would prevent. You can defer the implementation; the guided game uses the documented arcade rule.
 
+
+## Build this completed feature {#feature-build}
+
+Run `dotnet build Core`. This part of Race is now closed and can compile with the previously completed parts. Keep the file in Core so the SDK includes it automatically. Do not copy these methods back into Race.cs as well; duplicate member declarations are a compiler error. Inspect the diff and preserve a working checkpoint before continuing.

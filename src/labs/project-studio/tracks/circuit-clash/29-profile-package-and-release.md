@@ -2,7 +2,7 @@
 title: Profile, package, and investigate a release
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

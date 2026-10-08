@@ -2,7 +2,7 @@
 title: Low-poly geometry — transforms, normals, and light
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -38,9 +38,9 @@ public static class Geometry
 
 Take triangle corners a=(0,0,0), b=(0,0,1), c=(1,0,0). Subtracting a produces two edge vectors. Their cross product is (0,1,0), perpendicular to the face and pointing up. Reversing b and c produces (0,-1,0). Vertex order therefore determines which side is the front. Graphics back-face culling can discard a triangle whose winding faces away from the camera.
 
-Cross product components are `(uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx)`. You can expand the simple example to verify the result. Its length also depends on face area; Normalize divides by length to leave a direction of length one. For coincident or collinear corners that length is zero. We test LengthSquared before normalizing to avoid dividing by zero and producing invalid coordinates.
+Call the edge vectors `u = b - a` and `v = c - a`; `ux`, `uy`, and `uz` mean the X, Y, and Z components of u, and similarly for v. Cross product components are `(uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx)`. You can expand the simple example to verify the result. Its length also depends on face area; Normalize divides by length to leave a direction of length one. For coincident or collinear corners that length is zero. We test LengthSquared before normalizing to avoid dividing by zero and producing invalid coordinates.
 
-A dot product multiplies matching components and adds them. For unit directions it measures alignment: 1 faces the same way, 0 is perpendicular, -1 faces away. The sunlight direction (-1,2,1) is normalized too. Max(0,dot) prevents negative light. Ambient 0.35 keeps unlit faces visible; the remaining 0.65 scales direct light. For an upward face the dot is 2/sqrt(6), about 0.816, so brightness is about 0.881.
+A dot product multiplies matching components and adds them. For unit directions it measures alignment: 1 faces the same way, 0 is perpendicular, -1 faces away. The sunlight direction (-1,2,1) is normalized too. Max(0,dot) prevents negative light. Ambient 0.35 keeps unlit faces visible; the remaining 0.65 scales direct light. For an upward face the dot is 2/sqrt(6), where sqrt(6) is the square root of six, about 0.816, so brightness is about 0.881.
 
 Every triangle gets one brightness, which creates flat shading. Smooth shading interpolates vertex normals and hides many hard edges; we deliberately preserve them. This is a simple Lambert-style diffuse model with an artistic ambient term. It does not cast shadows, reflect light between surfaces, or model physical exposure.
 

@@ -2,7 +2,7 @@
 title: Decisions, loops, and legal actions
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

@@ -16,7 +16,7 @@ describe('lesson entry and assessment contracts', () => {
       expect(['in-development','review-required']).toContain(profile.maturity);
     }
     expect(series.find(s=>s.key==='forge').recommended).toBe(true);
-    expect(series.find(s=>s.key==='circuit-clash').maturity).toBe('in-development');
+    expect(series.find(s=>s.key==='circuit-clash').maturity).toBe('review-required');
   });
   it('does not give a new chapter its family profile unreviewed', () => {
     expect(learningProfile('forge-ml-ppo').level).toBe('unclassified');

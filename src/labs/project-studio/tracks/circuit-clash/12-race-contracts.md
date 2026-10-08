@@ -2,12 +2,20 @@
 title: Race contracts — state, observations, and equipment
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
 
-Before implementation, specify these cases in your notes: an empty rocket inventory cannot create a projectile; energy 34 cannot activate a shield; energy 35 can; a second action during cooldown cannot spend resources. Each case names initial state, request, and result. We are now assembling Race across several small lessons; it will compile at the final tick step.
+Before implementation, specify these cases in your notes: an empty rocket inventory cannot create a projectile; energy 34 cannot activate a shield; energy 35 can; a second action during cooldown cannot spend resources. Each case names initial state, request, and result. We will compile the rules after each feature lesson, so a mistake stays close to the fragment that introduced it.
+
+## Keep the build working between features {#buildable-features}
+
+Race has several related operations. C# permits one class declaration to be split across source files with the `partial` modifier. All parts use the same namespace and class name; the compiler combines them into one type. This does not create multiple Race objects, inheritance, or separate runtime components.
+
+We use Race.cs for initial state and equipment, Race.Driving.cs for movement/checkpoints, Race.Combat.cs for interactions, and Race.Tick.cs for sequencing. Each lesson finishes its part and builds Core. The boundary is source organization, not encapsulation: all parts still share the same fields. If responsibilities later need independent ownership, extracting collaborating classes is a different design change.
+
+If you already completed an earlier edition with one Race.cs, keep a committed checkpoint before revisiting these steps. Do not append duplicate methods to that completed class. Starting this lesson replaces Race.cs with the first part; later lessons create the remaining parts. The final behavior and public type remain the same.
 
 ## Own the state and seed the experiment
 
@@ -25,7 +33,7 @@ Type this fragment in `Core/Race.cs`. Start or replace this file.
 using System.Numerics;
 namespace CircuitClash;
 
-public sealed class Race
+public sealed partial class Race
 {
     public const float Step = 1f / 60;
     public readonly Kart[] Karts;
@@ -132,5 +140,10 @@ Type this fragment in `Core/Race.cs`. Append it after the previous fragment in t
             Position = kart.Position + Track.Forward(kart.Yaw) * (mine ? -3 : 3) + Vector3.UnitY,
             Yaw = kart.Yaw, Life = mine ? 18 : 3, Target = target?.Id });
     }
+}
 ```
 
+
+## Build the equipment boundary {#equipment-build}
+
+Run `dotnet build Core`. The file now closes the first part of Race, and every referenced type already exists. No driving method is called yet. A compiler failure here is local to state/equipment and its earlier dependencies; do not proceed with unresolved diagnostics.

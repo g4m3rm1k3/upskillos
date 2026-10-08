@@ -1,12 +1,12 @@
 ---
 title: Play Circuit Clash — the game you will learn to build
-track: Circuit Clash — C# Software Engineering (course in development)
+track: Circuit Clash — C# Software Engineering
 trackOrder: 31
 runtime: none
 pedagogy: typed
 ---
 
-This standalone series is being built around **Circuit Clash**, a third-person kart combat racer. The playable browser reference is available now. Draft C# implementation lessons are available after this introduction, starting with a one-line console experiment. The complete course has not finished its learning-quality or cross-platform review. This introduction is a preview of the learning destination, not a claim that the complete course is ready.
+This standalone series teaches software engineering by building **Circuit Clash**, a third-person kart combat racer. Play the browser reference first, then build your own native desktop implementation with C#, .NET 10, and Raylib-cs. The guided path includes low-poly geometry and lighting, driving, combat, menus, persistent upgrades, tactical Q-learning, tests, and packaging. The native build is verified on Apple silicon macOS; other desktop platforms and beginner pacing still need learner testing.
 
 You do not need to have taken the Java, Python or game-engine series. The guided path begins with execution, values, types and logic before combining them into classes, collections and game systems. You will type and understand your own implementation. Playing this sample does not copy source files into your project.
 
@@ -23,6 +23,16 @@ Start by concentrating on driving. You can also select **Watch a demo race** to 
 You begin with a rally chassis and enough credits to unlock one other package. In the Garage, compare turbo speed with its slower steering, and impact protection with its lower top speed. Finishing races earns additional credits. Purchases and your equipped package are saved locally on this device when browser storage is available. Race position itself is not a saved game.
 
 You can close the game and continue this introduction at any time. Winning, finishing a race, or passing a challenge never unlocks the teaching material.
+
+## Choose a starting point and a working method {#learning-contract}
+
+This course is for Python scripters who can make programs run but want stronger control over types, structure, and failure. You need no prior C#, graphics, machine-learning, or Java course. If names such as “invariant” or “vector” are unfamiliar, follow the guided foundations; they are teaching material, not entrance requirements.
+
+The order is deliberate: computer execution → numeric types and conversion → logic and calls → objects and contracts → data structures and algorithms → repositories → vectors and geometry → rendering and race systems → probability and reinforcement learning → evaluation and concurrency → application integration and release. Small independent Scratch experiments precede the larger uses. The browser sample is available throughout as a concrete destination.
+
+For each fragment: predict a value or failure, type it yourself, run the stated experiment, explain what changed, and review the result. A green output is evidence about a requirement only if the experiment would reject a plausible wrong implementation. Use the return-later challenges for independent practice; they never unlock later lessons. Struggling with a challenge means you have a useful topic to revisit, not that you lose access to the course.
+
+This is an applied foundation in software engineering, graphics, and tabular reinforcement learning. It is not every topic in a computer-science degree, every kind of game engine, or every machine-learning method. Later domains still require new study; the aim here is transferable reasoning and a substantial program you can explain, test, and change.
 
 ## Notice behavior before naming the code
 
@@ -50,11 +60,11 @@ Evaluation runs against scripted opponents on seeds unused by training. The disp
 
 ## Connect the game to transferable engineering
 
-The reference uses the browser renderer already available inside UpSkillOS. It is a behavior reference for the planned C# course, not a hidden JavaScript prerequisite or a C# executable. Engine selection and packaging for the learner's C# project remain part of the course implementation work.
+The reference uses the browser renderer already available inside UpSkillOS. Your C# build uses Raylib-cs and opens a native desktop window. The implementations share gameplay requirements, not identical source or rendering. You need a local .NET SDK and graphics-capable desktop for execution; browser-only Project Studio can display the lessons but cannot run the native game. The setup lesson explains the tools from the beginning.
 
-The course must teach the underlying ideas before relying on them:
+The course teaches the underlying ideas before relying on them:
 
-| Behavior you just tried | Concepts the guided build will teach |
+| Behavior you just tried | Concepts in the guided build |
 | --- | --- |
 | A kart accelerates and turns | Values, types, expressions, branching, functions, units and vectors |
 | Four karts have separate ammunition | Classes, object identity, instance state and invariants |

@@ -2,7 +2,7 @@
 title: Understand Q-learning before implementing a table
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

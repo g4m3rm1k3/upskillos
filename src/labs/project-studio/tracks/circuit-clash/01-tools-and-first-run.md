@@ -2,7 +2,7 @@
 title: A terminal, a compiler, and your first execution
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---

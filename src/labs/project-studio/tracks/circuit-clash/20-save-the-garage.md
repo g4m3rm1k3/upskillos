@@ -2,7 +2,7 @@
 title: Transactions, validation, and persistent upgrades
 track: Circuit Clash — C# Software Engineering
 trackOrder: 31
-runtime: csharp
+runtime: dotnet
 pedagogy: typed
 console: true
 ---
@@ -49,7 +49,9 @@ Syntactically valid JSON can still describe impossible game state. Valid require
 
 Load starts with an empty warning. A missing file means a first-time player and returns defaults without error. An existing file is read and deserialized into a nullable Garage. Only a non-null, valid result is accepted. Version is part of the schema contract: a future incompatible version must be migrated explicitly rather than guessed.
 
-The catch filter handles expected file, permission, and JSON problems. It does not swallow every programming error. Returning a temporary garage keeps the session usable, while warning tells the application not to overwrite the original automatically. Error handling has two responsibilities here: explain the failure and protect existing data.
+`Owned.All(p => Enum.IsDefined(p))` requires every ownership entry to satisfy the predicate; All on an empty sequence is true, which is why the separate starting-package requirement is necessary.
+
+`catch (Exception error) when (...)` binds a thrown exception to error and handles it only if the filter is true. The pattern `error is IOException or JsonException or UnauthorizedAccessException` accepts any of those named exception types. The catch filter handles expected file, permission, and JSON problems. It does not swallow every programming error. Returning a temporary garage keeps the session usable, while warning tells the application not to overwrite the original automatically. Error handling has two responsibilities here: explain the failure and protect existing data.
 
 Type this fragment in `Core/Garage.cs`. Append it after the previous fragment in this file.
 
@@ -95,9 +97,23 @@ Type this fragment in `Core/Garage.cs`. Append it after the previous fragment in
 }
 ```
 
+## Define the saved table shape before using it {#policy-data-contract}
+
+The policy file stores a dictionary from observation text to numeric rows. We need that data shape before a serializer can read or write it. This first Policy declaration contains only the shape; learning methods come after the probability and Q-update lessons. Data representation is a separate concern from how estimates are learned.
+
+Type this small class in `Core/Policy.cs`. Its public property allows JSON serialization; a newly constructed Policy gets an empty dictionary. Dictionary values are float arrays, so their ownership still needs the explicit row-copy operation taught later. The policy-table lesson will **replace** this file with the complete implementation, not append a second class definition.
+
+```csharp edit=Core/Policy.cs mode=replace
+namespace CircuitClash;
+public sealed class Policy
+{
+    public Dictionary<string, float[]> Values { get; set; } = new();
+}
+```
+
 ## Validate learned data at its input boundary
 
-A Policy will hold Dictionary<string,float[]> Values; its implementation is the next lesson, so Core cannot compile this reference until then. PolicyFile serializes that data and rejects a missing object, missing dictionary, missing row, a row with the wrong action count, or non-finite numbers. NaN and infinity can poison action comparisons even when a file parses.
+The Policy data contract now holds Dictionary<string,float[]> Values, so this persistence boundary can compile before learning behavior is added. PolicyFile serializes that data and rejects a missing object, missing dictionary, missing row, a row with the wrong action count, or non-finite numbers. NaN and infinity can poison action comparisons even when a file parses.
 
 Any with a predicate asks whether one invalid entry exists. Nested Any checks each numeric value. The explicit InvalidDataException says the file's meaning is wrong, distinct from malformed JSON syntax. Game can catch the error and fall back to scripted rivals.
 
@@ -123,5 +139,5 @@ public static class PolicyFile
 
 ## Verify and explain the boundary
 
-Review the failure paths before continuing: missing file, malformed JSON, unsupported garage version, invalid selected package, and denied write permission. Explain which return defaults, which preserve an existing file, and which throw to the caller. The next lesson supplies Policy, then Core and its earlier checks can build again.
+Review the failure paths before continuing: missing file, malformed JSON, unsupported garage version, invalid selected package, and denied write permission. Explain which return defaults, which preserve an existing file, and which throw to the caller. Run `dotnet build Core` and `dotnet run --project Checks` now. Both should succeed before continuing to probability and learning.
 

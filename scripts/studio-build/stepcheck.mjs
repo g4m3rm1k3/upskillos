@@ -34,6 +34,11 @@ const REMOVED = [
   ['00-03-typescript#A script for the checker, and goodbye to hello.js', 'hello.js'],
   ['04-01-react-and-a-first-component#main.ts becomes main.tsx', 'src/main.ts'],
 ];
+// Files a lesson moves with `git mv`: [lesson step key, from, to].
+const MOVED = [
+  ['06-02-the-main-process-in-typescript#The example project', 'scenes/main.json', 'example/scenes/main.json'],
+  ['06-02-the-main-process-in-typescript#main.js becomes main.ts', 'electron/main.js', 'electron/main.ts'],
+];
 
 function steps(file) {
   const body = fs.readFileSync(path.join(track, file), 'utf8').split('---').slice(2).join('---');
@@ -58,6 +63,11 @@ function edit(dir, step) {
 }
 
 function apply(dir, step) {
+  for (const [key, from, to] of MOVED) {
+    if (key !== step.key || !fs.existsSync(path.join(dir, from))) continue;
+    fs.mkdirSync(path.dirname(path.join(dir, to)), { recursive: true });
+    fs.renameSync(path.join(dir, from), path.join(dir, to));
+  }
   edit(dir, step);
   for (const [p, body] of step.files) {
     fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true });
