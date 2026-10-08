@@ -21,6 +21,8 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [x] **C++ learning transitions through A21b (2026-10-07):** split reward perspective from complete agent-decision transitions; teach both through small diffs, traces, experiments and independent tests. Real C++ walkthroughs reject incomplete opponent responses and wrong-perspective rewards. Added an explicit SDL GPU readiness gate before Vulkan; OpenGL remains optional. See the [section audit](cpp-games-learning-path.md#reward-and-decision-boundary-section--2026-10-07).
+
 - [x] **C++ terminal-game milestone and probability entry through A20 (2026-10-07):** focused ownership lessons, shared CMake builds, deterministic rules, whole-line parsing, seeded dice and a playable fixed-opponent match. Independent work includes hints and wrong-answer trials; compiled walkthroughs pass. Added exact-outcome probability exploration and independent C++ practice. Fixed Windows checks confusing a blank line with EOF. Q-learning updates/training, SDL, Vulkan and the newly drafted full-stack branch remain unfinished; see the [milestone audit](cpp-games-learning-path.md#playable-terminal-milestone--2026-10-07).
 
 - [x] Catalog-wide structural audit and initial repairs: audience/maturity labels, a recommended Forge entry path, honest check evidence, optional independent references, and Java/C++/C# opening repairs. See [verification and remaining work](project-studio-lesson-quality-todos.md) and the generated [per-lesson review queue](generated/project-studio-lesson-review.md).

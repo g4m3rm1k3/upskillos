@@ -125,6 +125,11 @@ function ExpectedOutput({ cell, C }) {
 }
 
 // ── CellOutput ────────────────────────────────────────────────────────────────
+// A cell that has run and finished without an error.
+function ranWithoutError(cell) {
+  return cell.status === "idle" && cell.executionCount != null;
+}
+
 function CellOutput({ cell, C }) {
   const hasMatplotlib = cell.matplotlibImages && cell.matplotlibImages.length > 0;
   const { submit: submitReport, submitting: reportSubmitting, canSubmit: canReport } = useReportBug();
@@ -150,17 +155,17 @@ function CellOutput({ cell, C }) {
   };
 
   return (
-    <div style={{ borderTop: `0.5px solid ${C.border}` }}>
+    <div style={{ borderTop: `0.5px solid ${ranWithoutError(cell) ? C.greenBd : C.border}`, background: ranWithoutError(cell) ? C.greenBg : undefined }}>
       <div
         style={{
           fontSize: 10,
-          color: C.hint,
+          color: ranWithoutError(cell) ? C.green : C.hint,
           padding: "6px 14px 2px",
           fontFamily: "monospace",
           fontWeight: 500,
         }}
       >
-        Out [{cell.id}]
+        Out [{cell.id}]{ranWithoutError(cell) ? " · ran" : ""}
       </div>
 
       {/* opencalc Figure canvas */}
@@ -542,6 +547,9 @@ const CellComponent = React.memo(
     onUpdate,
     isExecuting,
     isOnlyCell,
+    typingHelp,
+    registerEditor,
+    focusAfter,
   }) => {
     const [copied, setCopied] = useState(false);
     const [hintOpen, setHintOpen] = useState(false);
@@ -549,8 +557,43 @@ const CellComponent = React.memo(
     // notebook as it is now (Python loaded, the code just typed), so it calls through a ref.
     const runRef = useRef((code) => onRun(cell.id, code));
     runRef.current = (code) => onRun(cell.id, code);
+    useEffect(() => () => registerEditor(cell.id, null), [cell.id, registerEditor]);
+    const editorOptions = useMemo(() => ({
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 13,
+      lineNumbers: "on",
+      padding: { top: 10, bottom: 10 },
+      automaticLayout: true,
+      // Enter must always insert a newline, never silently accept a
+      // suggestion — confirmed live: typing a fresh multi-line
+      // function (typeIt cells) hit the word-based suggestion widget
+      // mid-line, and it ate an Enter meant as a newline, dropping a
+      // line without any visible error. Tab still accepts suggestions.
+      acceptSuggestionOnEnter: "off",
+      // "Autocomplete" in the toolbar, off by default: a learner typing code out wants exactly
+      // the keys they press. Off means no suggestion list, no parameter hints and no
+      // automatically added closing brackets or quotes. Both states are spelled out:
+      // Monaco's updateOptions merges, so a key left out keeps its previous value.
+      quickSuggestions: typingHelp,
+      suggestOnTriggerCharacters: typingHelp,
+      wordBasedSuggestions: typingHelp ? "matchingDocuments" : "off",
+      parameterHints: { enabled: typingHelp },
+      acceptSuggestionOnCommitCharacter: typingHelp,
+      snippetSuggestions: typingHelp ? "inline" : "none",
+      autoClosingBrackets: typingHelp ? "languageDefined" : "never",
+      autoClosingQuotes: typingHelp ? "languageDefined" : "never",
+      autoSurround: typingHelp ? "languageDefined" : "never",
+      scrollbar: {
+        vertical: "hidden",
+        alwaysConsumeMouseWheel: false,
+      },
+    }), [typingHelp]);
 
     const isChallenge = !!cell.challengeType;
+    // Ran without an error: drawn green, so after Run all the first cell that isn't green is
+    // where the learner left off.
+    const ranOk = ranWithoutError(cell);
     const isFillIn = cell.challengeType === "fill-in";
     const dc = difficultyStyle(cell.difficulty, C);
 
@@ -569,7 +612,7 @@ const CellComponent = React.memo(
       <div
         style={{
           background: `${withAlpha(C.surface, "dd")}`,
-          border: `1.5px solid ${cell.status === "error" ? C.redBd : cell.status === "running" ? C.tealBd : isChallenge ? C.purpleBd : withAlpha(C.blueBd, "55")}`,
+          border: `1.5px solid ${cell.status === "error" ? C.redBd : cell.status === "running" ? C.tealBd : ranOk ? C.greenBd : isChallenge ? C.purpleBd : withAlpha(C.blueBd, "55")}`,
           borderRadius: 12,
           overflow: "hidden",
           transition: "border-color .2s, box-shadow .2s",
@@ -578,7 +621,9 @@ const CellComponent = React.memo(
               ? `0 6px 28px ${withAlpha(C.redBd, "33")}, 0 2px 8px ${withAlpha(C.redBd, "18")}`
               : cell.status === "running"
                 ? `0 6px 28px ${withAlpha(C.tealBd, "33")}, 0 2px 8px ${withAlpha(C.tealBd, "18")}`
-                : isChallenge
+                : ranOk
+                  ? `0 6px 24px ${withAlpha(C.greenBd, "28")}, 0 2px 6px #0003`
+                  : isChallenge
                   ? `0 6px 28px ${withAlpha(C.purpleBd, "28")}, 0 2px 8px ${withAlpha(C.purpleBd, "14")}, 0 1px 3px #0004`
                   : `0 6px 24px ${withAlpha(C.blueBd, "18")}, 0 2px 6px #0003`,
         }}
@@ -1082,27 +1127,17 @@ const CellComponent = React.memo(
           beforeMount={setupOpenCalcMonaco}
           defaultLanguage="python"
           theme={monacoTheme || (C.dark ? "open-calc-dark" : "open-calc-light")}
-          value={cell.code}
+          // The editor owns its text: defaultValue, not value. With value={cell.code}, a
+          // re-render that lands a keystroke behind makes @monaco-editor/react replace the
+          // whole text with the older copy, which drops the letters typed since and moves
+          // the cursor to the end ("print" became "prit"; measured in a 17-cell lesson
+          // typing 10 ms per key). Nothing else changes a mounted cell's code: resetting or
+          // opening another lesson remounts the notebook.
+          defaultValue={cell.code}
           onChange={(val) => onUpdate(cell.id, val || "")}
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            fontSize: 13,
-            lineNumbers: "on",
-            padding: { top: 10, bottom: 10 },
-            automaticLayout: true,
-            // Enter must always insert a newline, never silently accept a
-            // suggestion — confirmed live: typing a fresh multi-line
-            // function (typeIt cells) hit the word-based suggestion widget
-            // mid-line, and it ate an Enter meant as a newline, dropping a
-            // line without any visible error. Tab still accepts suggestions.
-            acceptSuggestionOnEnter: "off",
-            scrollbar: {
-              vertical: "hidden",
-              alwaysConsumeMouseWheel: false,
-            },
-          }}
+          options={editorOptions}
           onMount={(editor, monacoInstance) => {
+            registerEditor(cell.id, editor);
             // Shift+Enter runs this cell. Not editor.addCommand: Monaco keeps those in one
             // registry for every editor on the page, so the last cell mounted would win; and
             // its handler would keep the onRun from mount time, from before Python loaded.
@@ -1114,7 +1149,19 @@ const CellComponent = React.memo(
                 // keystroke or two behind when Shift+Enter follows the typing at once.
                 const code = editor.getValue();
                 onUpdate(cell.id, code);
-                runRef.current(code);
+                const run = runRef.current(code);
+                // As in Jupyter: run, then carry on typing in the next cell. It's scrolled to the
+                // bottom of the screen, so the output just made stays in view above it; again once
+                // the run finishes, because that output pushes the next cell down.
+                const next = focusAfter(cell.id);
+                const reveal = () => {
+                  const node = next?.getDomNode();
+                  if (!node) return;
+                  node.style.scrollMarginBottom = "24px";
+                  node.scrollIntoView({ block: "end" });
+                };
+                reveal();
+                Promise.resolve(run).finally(() => requestAnimationFrame(reveal));
               }
             });
             // Re-apply after mount — see applyPythonIndentRules's comment for
@@ -1359,6 +1406,15 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
       setupEnvironment();
     }
   }, [runLocal, kernelInfo, setupEnvironment]);
+  // Autocomplete (suggestions, parameter hints, closing brackets and quotes): off unless the
+  // learner turns it on. The choice is remembered.
+  const [typingHelp, setTypingHelp] = useState(() => {
+    try { return localStorage.getItem("notebook-autocomplete") === "1"; } catch { return false; }
+  });
+  const chooseTypingHelp = (on) => {
+    setTypingHelp(on);
+    try { localStorage.setItem("notebook-autocomplete", on ? "1" : "0"); } catch { /* private window */ }
+  };
   const chooseRunLocal = (local) => {
     setRunLocal(local);
     try { localStorage.setItem("notebook-run-local", local ? "1" : "0"); } catch { /* private window */ }
@@ -1705,8 +1761,9 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
     ]);
   };
 
-  const updateCode = (id, code) =>
-    setCells((prev) => prev.map((c) => (c.id === id ? { ...c, code } : c)));
+  // Stable, so React.memo can skip every cell except the one being typed in.
+  const updateCode = useCallback((id, code) =>
+    setCells((prev) => prev.map((c) => (c.id === id ? { ...c, code } : c))), []);
 
   const addCellWithCode = (code) => {
     const newId = cells.length > 0 ? Math.max(...cells.map((c) => c.id)) + 1 : 1;
@@ -1764,16 +1821,41 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
     }
   };
 
-  const removeCell = (id) => {
-    if (cells.length > 1) setCells((prev) => prev.filter((c) => c.id !== id));
-  };
+  const removeCell = useCallback((id) => {
+    setCells((prev) => (prev.length > 1 ? prev.filter((c) => c.id !== id) : prev));
+  }, []);
 
-  const clearOutput = (id) =>
+  const clearOutput = useCallback((id) =>
     setCells((prev) =>
       prev.map((c) =>
         c.id === id ? { ...c, output: "", figureJson: null, matplotlibImages: [] } : c,
       ),
-    );
+    ), []);
+
+  // runCell changes whenever the cells do; cells call it through this stable wrapper.
+  const runCellRef = useRef(runCell);
+  runCellRef.current = runCell;
+  const runCellStable = useCallback((...args) => runCellRef.current(...args), []);
+
+  // Shift+Enter moves to the next cell that has an editor, as Jupyter does.
+  const editorsRef = useRef(new Map());
+  const cellsRef = useRef(cells);
+  cellsRef.current = cells;
+  const registerEditor = useCallback((id, editor) => {
+    if (editor) editorsRef.current.set(id, editor);
+    else editorsRef.current.delete(id);
+  }, []);
+  const focusAfter = useCallback((id) => {
+    const list = cellsRef.current;
+    for (let i = list.findIndex((c) => c.id === id) + 1; i > 0 && i < list.length; i++) {
+      const next = editorsRef.current.get(list[i].id);
+      if (next) {
+        next.focus();
+        return next;
+      }
+    }
+    return null;
+  }, []);
 
   // ── Loading screen ─────────────────────────────────────────────────────────
   if (isLoading) {
@@ -1921,6 +2003,13 @@ export default function PythonNotebook({ params, onParamChange, onCellsChange })
               ▶ Run all
             </button>
           )}
+          <label
+            title="Suggestions while you type, parameter hints, and closing brackets and quotes added for you"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: C.muted, cursor: "pointer" }}
+          >
+            <input type="checkbox" checked={typingHelp} onChange={(e) => chooseTypingHelp(e.target.checked)} />
+            Autocomplete
+          </label>
           {desktopKernel && runLocal && (setupBusy || setupError || (kernelInfo?.env && !kernelInfo.env.ready && !kernelInfo.python?.chosen)) && (
             <div style={{ flexBasis: "100%", order: 99, marginTop: 4, padding: "8px 10px", borderRadius: 8, border: `0.5px solid ${setupError ? C.amberBd : C.border}`, background: C.surface2, fontSize: 12, color: C.text, lineHeight: 1.5 }}>
               <div>
@@ -2235,12 +2324,15 @@ fig.show()`}
             cell={cell}
             C={C}
             monacoTheme={monacoTheme}
-            onRun={runCell}
+            onRun={runCellStable}
             onClear={clearOutput}
             onRemove={removeCell}
             onUpdate={updateCode}
             isExecuting={isExecuting}
             isOnlyCell={cells.length <= 1}
+            typingHelp={typingHelp}
+            registerEditor={registerEditor}
+            focusAfter={focusAfter}
           />
         ))}
       </div>

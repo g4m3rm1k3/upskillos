@@ -70,6 +70,7 @@
 | Agent / environment | The decision-making component / the system it acts within | A21: learner selects, game and opponent respond |
 | State / action / reward | Information describing the modeled situation / a choice / feedback defining the objective | A21: agent's decision state, Roll, terminal loss -1 |
 | Episode / terminal | One run of interaction / a state ending that run | A21: one completed match |
+| Decision boundary | A position where the agent can choose again, or a finished episode | A21b: include the opponent response after a bank or bust |
 | Policy | A rule or procedure for selecting actions from available information | Fixed policy A19c, compared with learned choices A21–A23 |
 | Q-value | An estimate of return associated with a state-action pair under the learning formulation | A22: separate estimates for Roll and Bank |
 | Exploration / exploitation | Gathering experience with choices / selecting according to current estimates | A23: epsilon-greedy selection |

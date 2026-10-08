@@ -14,7 +14,7 @@ Our learner controls seat zero. If it rolls a four and keeps the turn, the next 
 
 ## Trace a decision across the opponent’s turn
 
-A **decision boundary** is a position where the agent can choose its next action, or a finished match where no next choice exists. Consider both banked scores at eight and agent pot two. The agent banks; its score becomes ten. The opponent then rolls four and wins immediately. The agent’s result is a terminal loss, not an unfinished position with the opponent about to act.
+A **decision boundary** is a position where the agent can choose its next action, or a finished match where no next choice exists. Consider both banked scores at eight and agent pot two. The agent banks; its score becomes ten. The opponent then rolls four and wins immediately.
 
 ```predict
 question: Where should this agent transition stop?
@@ -24,6 +24,8 @@ answer: After the opponent wins
 explain: The next result must be either another seat-zero decision or a finished episode.
 ```
 
+
+The result is a terminal loss for the agent. Trace the intervening positions below.
 
 | Event | Scores | Pot | Turn | Winner |
 |---|---|---|---|---|
@@ -273,6 +275,7 @@ Create tests/decisions.cpp without a supplied body. Use the public Game and adva
 | New game, Roll 4, no responses | next pot 4, seat zero, reward 0, done false; original still zero |
 | Then Bank with {2, 2} | both scores 4, pot zero, seat zero, unfinished |
 | Bank from pot 4 with {1, 7} | bust returns control; trailing 7 ignored |
+| Agent busts from pot 4 with responses {2, 2} | agent scores zero, opponent banks four, agent chooses again |
 | Agent rolls 6 then 6; trailing response {7} | agent wins, reward +1, done true; unused face ignored |
 | Both scores 8, agent pot 2; Bank with {4} | opponent wins, reward -1, done true |
 | Bank from pot 4 with {2}, then separately {7} | each rejected; input pot and score preserved |
@@ -330,7 +333,8 @@ add_executable(dice_tests tests/dice.cpp)
 target_link_libraries(dice_tests PRIVATE dice_rules)
 add_test(NAME dice_tests COMMAND dice_tests)
 add_executable(dice_terminal apps/dice_terminal.cpp)
-target_link_libraries(dice_terminal PRIVATE dice_rules)add_library(learning_rules STATIC src/learning/Reward.cpp src/learning/Decision.cpp)
+target_link_libraries(dice_terminal PRIVATE dice_rules)
+add_library(learning_rules STATIC src/learning/Reward.cpp src/learning/Decision.cpp)
 target_link_libraries(learning_rules PUBLIC dice_rules)
 add_executable(reward_tests tests/rewards.cpp)
 target_link_libraries(reward_tests PRIVATE learning_rules)

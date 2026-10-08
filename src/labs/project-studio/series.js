@@ -100,6 +100,25 @@ const SERIES = [
     planned: 'Applied Machine Learning is being written chapter by chapter, from Python basics up. The full map is in docs/applied-ml-series-plan.md.',
   },
   {
+    // Plan, chapter map and status: docs/q-arcade-series-plan.md.
+    key: 'qarcade',
+    label: 'Q-Arcade — Q-learning by Building Games in pygame',
+    prefix: 'qarcade-',
+    chapters: [
+      ['qarcade-setup', '00 · Setup'],
+      ['qarcade-corridor', '01 · Q-learning in Five Cells'],
+      ['qarcade-cartpole', '02 · CartPole with a Table'],
+      ['qarcade-qmaze', '03 · QMaze with a Table'],
+      ['qarcade-networks', '04 · From a Table to a Network'],
+      ['qarcade-qmaze-dqn', '05 · Deep Q-learning on QMaze'],
+      ['qarcade-cartpole-dqn', '06 · Deep Q-learning on CartPole'],
+      ['qarcade-pacman', '07 · Pac-Man, Built in Stages'],
+      ['qarcade-pixels', '08 · Learning from What It Sees'],
+      ['qarcade-capstone', '09 · Capstone'],
+    ],
+    planned: 'Q-Arcade is being written chapter by chapter: neural networks in PyTorch and Keras, deep Q-learning, then a Pac-Man clone with generated mazes. The full map is in docs/q-arcade-series-plan.md.',
+  },
+  {
     // Plan, chapter map and status: docs/pygame-engine-series-plan.md.
     key: 'forge',
     label: 'Forge — Learn Software Engineering by Building a Game Engine in Python',

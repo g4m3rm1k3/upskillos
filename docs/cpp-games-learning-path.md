@@ -1,6 +1,6 @@
 # From Python Scripts to C++ Games and Vulkan
 
-Status: **implemented through A20, including a playable terminal match and the first probability lesson; the full path is not complete**. Drafted 2026-10-05 and extended 2026-10-07 at the learner's request. C++ foundations, objects/files, shared builds, deterministic rules, command parsing, seeded dice and the terminal match are implemented in Project Studio. The opponent currently follows a fixed rule. Q-learning updates and training, graphical sequels and the full-stack application branch remain planned in this beginner path. The existing faster Dice Duel track stays separate.
+Status: **implemented through A21b, including probability, rewards and complete agent-decision transitions; the full path is not complete**. Drafted 2026-10-05 and extended 2026-10-07 at the learner's request. C++ foundations, objects/files, shared builds, deterministic rules, command parsing, seeded dice and the terminal match are implemented in Project Studio. The opponent currently follows a fixed rule. Q-learning updates and training, graphical sequels and the full-stack application branch remain planned in this beginner path. The existing faster Dice Duel track stays separate.
 
 ## The learner and the destination
 
@@ -148,7 +148,7 @@ Preserve existing progress identities. Add foundational tracks or new bridge les
 | Entire-path goals, lesson maps, vocabulary, classes and mastery gates | Drafted here | Editorial review and internal links |
 | Project showcases before the first code lesson | A00 has an interactive rule preview; later showcases remain storyboards | A00's browser rules are checked against the completed C++ game; it explicitly uses a fixed opponent, not a trained model |
 | Existing Dice Duel implementation | Implemented previously; needs baseline expansion | Existing compiler walkthrough, not a substitute for curriculum audit |
-| Part A foundations and terminal game | A00–A20 implemented, including the terminal match and exact probability exploration; Q-learning updates and training remain unauthored | Small-step lessons, independent tasks, wrong-answer trials and real compiler walkthrough |
+| Part A foundations and terminal game | A00–A21b implemented, including the terminal match, probability, reward perspective and deterministic agent transitions; Q-learning updates and training remain unauthored | Small-step lessons, independent tasks, wrong-answer trials and real compiler walkthrough |
 | Part B SDL3 | Not authored | Pinned dependency setup, game tests, bounded smoke runs and visual checks |
 | Part C SDL GPU | Not authored | Shader compilation, CPU references, GPU observations and backend reporting |
 | Part D Vulkan | Not authored | Feature checks, validation runs, lifetime/resize checks and presentation review |
@@ -178,7 +178,7 @@ Verification: `node node_modules/vitest/vitest.mjs run src/labs/project-studio/d
 
 Browser inspection confirmed both chapters appear in the series, A06 displays a normal file comparison, its independent challenge contains requirements and staged hints without a solution, and A15 renders the shared header with explanations and a live comparison. The browser has no learner filesystem, so it compares against an empty file; incremental edits against saved files are covered by the target-diff tests and desktop walkthrough. No production build or non-Windows execution is claimed. The runs emitted existing Vite/esbuild deprecation warnings. Catalog regeneration still reports the existing 14 content problems.
 
-The subsequent learning-quality pass split A14 into focused lessons and added A16–A19c. A20 now opens the learning chapter with probability and expectation. Remaining terminal-series work begins with agent/environment transitions at A21. This playable fixed-opponent milestone does not mark the full terminal/Q-learning series or any graphical sequel complete.
+The subsequent learning-quality pass split A14 into focused lessons and added A16–A19c. A20 now opens the learning chapter with probability and expectation. A21 and A21b now teach reward perspective and agent-decision boundaries. Remaining work begins with observations and action-value storage at A22. This playable fixed-opponent milestone does not mark the full terminal/Q-learning series or any graphical sequel complete.
 
 ### Playable terminal milestone — 2026-10-07
 
@@ -230,3 +230,19 @@ Catalog regeneration completed and still reports the existing 14 content problem
 Browser verification opened A20, revealed expected pot 7.5 and expected change 2.5, then changed the starting pot with the keyboard and confirmed the answer hid while all alternatives updated. The first screenshot exposed cramped table headings; scoped figure styling repaired them, and a second screenshot confirmed separated columns. `node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceCppPanel.test.jsx src/labs/project-studio/figures.test.jsx` then printed **Test Files 2 passed (2)** and **Tests 13 passed (13)**. Catalog currentness checks passed; the focused curriculum-doc check passed for six files; `git diff --check` reported no whitespace errors. The temporary browser tab was closed and the development server stopped.
 
 During catalog regeneration, development hot reload produced transient Auth/Tour context errors outside the lesson components before the page recovered; this audit does not claim those app-wide development reload errors are fixed. Existing Vite deprecation, Browserslist-age and broad Tailwind-glob warnings also remain.
+
+### Reward and decision-boundary section — 2026-10-07
+
+A21 introduces agent, environment, episode and reward with a separately tested reward function. A21b advances one seat-zero action through the fixed bank-at-four opponent’s response, ending at the next agent decision or a terminal result. It uses supplied die faces for deterministic checks, copies the input game, and rejects incomplete scripts without fabricating a loss or changing the original. Random environment integration and Q-value learning remain later work.
+
+The broad A21 draft was split to avoid introducing feedback and transition timing together. [The environment authoring module](../scripts/dice-environment-lessons.mjs) teaches each mechanism through small file comparisons, runnable probes, trace tables, predictions and experiments. Independent challenges write tests without a supplied body. Wrong-answer trials reject perspective reversal, rewarding unfinished games, returning before the opponent responds, accepting incomplete replies, and empty success tests. All compiler walkthrough prerequisites are reconstructed from earlier taught targets and author answers; no implementation is supplied to learner files.
+
+`node node_modules/vitest/vitest.mjs run src/labs/project-studio/diceLearning.desktop.test.js src/labs/project-studio/diceLearningContract.test.js src/labs/project-studio/diceState.test.js` printed **Test Files 3 passed (3)** and **Tests 12 passed (12)**. The first run caught a missing newline where the new CMake library followed the old project target; the generator was repaired before the successful rerun. No C++ checks were skipped.
+
+The graphics route retains SDL GPU as the bridge rather than adding mandatory OpenGL. The [Part C handoff](curricula/cpp-games/03-gpu.md#api-and-toolchain-decisions) now requires independent C++ graphics work, shader/binding debugging, a clean build and an ownership explanation before Vulkan. The learner’s basic Python entry background is not silently treated as Vulkan readiness.
+
+The required non-desktop check, `node node_modules/vitest/vitest.mjs run src/labs/project-studio --exclude "**/*.desktop.test.js"`, printed **Test Files 35 passed (35)** and **Tests 170 passed | 1 skipped (171)**. The skip remains the Python-dependent process-stop test. Contributor docs passed for nine files, and the focused path/terminal/GPU/Vulkan document check passed for four files after learner paths were explicitly prefixed with dice-lab. Catalog regeneration and currentness checks passed with the existing 14 catalog content problems. No production build or non-Windows execution is claimed.
+
+Browser review confirmed A21’s reward table and ordinary visible file comparison, and A21b’s transition trace, independent case table and incremental hint reveal without a supplied solution. A screenshot confirmed the independent exercise layout. The audit moved the explicit transition-result explanation after its prediction. The browser preview cannot run learner code; the compiled desktop walkthrough above provides that evidence.
+
+After the prediction edit, the full non-desktop suite again printed Test Files 35 passed (35) and Tests 170 passed | 1 skipped (171). Final contributor-doc and focused curriculum checks passed, as did the whitespace check. The temporary browser tab was closed and the development server stopped.

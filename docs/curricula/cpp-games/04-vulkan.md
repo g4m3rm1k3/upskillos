@@ -1,5 +1,7 @@
 # D — Build and explain a Vulkan renderer
 
+**Readiness before D00:** complete the independent [SDL GPU handoff tasks](03-gpu.md#api-and-toolchain-decisions). The learner must already understand and debug shaders, transformations, buffers, textures and resource ownership in a C++ application. OpenGL is not required: [Khronos's introduction](https://docs.vulkan.org/tutorial/latest/00_Introduction.html) likewise requires graphics fundamentals without assuming OpenGL or Direct3D knowledge. This course must teach those foundations in earlier parts rather than silently require professional software-development experience from the original Python-script audience.
+
 **Status: curriculum draft; native renderer not implemented or validated.** Follow the [authoring and Vulkan readiness gates](authoring-gates.md) before publishing executable lessons. Prerequisite: [C's graphics and SDL GPU renderer](03-gpu.md), including shaders, coordinate spaces, buffer layouts, ownership and submitted work. Return to the [whole path](../../cpp-games-learning-path.md).
 
 This part rebuilds the graphics backend while preserving the game and scene-description contract. It is deliberately a graphics/software-engineering series. It does not introduce a new game, new ML algorithm and new graphics API at the same time.
