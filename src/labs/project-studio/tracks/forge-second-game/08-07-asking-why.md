@@ -85,7 +85,7 @@ run ".venv/Scripts/python coupling.py breakout" stdout="imports 0, imported by 3
 
 **Build:** nothing in the project. Measure how much of each shooter module is still Breakout's.
 
-Python's standard library can compare texts: **`difflib`**, the same idea `git diff` is built on. `SequenceMatcher(None, a, b)` takes two sequences (here, two lists of lines) and finds the longest runs they share; `get_matching_blocks()` lists those runs, each with a `size`, the number of lines in it. Make `scratch/alike.py`:
+Python's standard library can compare texts: **`difflib`**, the same kind of comparison `git diff` makes, by a different method. `SequenceMatcher(None, a, b)` takes two sequences (here, two lists of lines; the `None` says no line is to be ignored as junk) and finds the longest runs they share; `get_matching_blocks()` lists those runs, each with a `size`, the number of lines in it. Make `scratch/alike.py`:
 
 ```python
 """How much of each shooter module is still Breakout's, line for line."""
@@ -223,16 +223,16 @@ Write down, in your own words, what belongs to any game and what belongs to each
 
 | File | Holds |
 |---|---|
-| `docs/any-game.md` | three sections, headed `## Any game`, `## Only Breakout` and `## Only the shooter`, each with at least three points, one per line, starting `- ` |
+| `docs/any-game.md` | three sections, headed `### Any game`, `### Only Breakout` and `### Only the shooter` (level-3 headings: lesson steps like this one are split at `##`), each with at least three points, one per line, starting `- ` |
 
 Be specific. "Input" is too vague to build; "keys a player can choose in a settings file, checked, with a clear message for a key that's wrong or used twice" is a piece someone can make. Where a piece is a mixture, like the summary of a test run, say which part is which.
 
-When the checks are clean, commit everything, the backlog and the document, with a message that mentions **any game**.
+When the checks are clean, commit everything, the backlog and the document, in one commit.
 
 ```hints
 nudge: Go down the table in "A game, or any game?" and rewrite each row as a point under one of the three headings. Then open each module of both games and look for anything the table missed.
 concept: The test for each piece is: if a third game, say Pong, were made tomorrow, would it need this exactly as it is? The loop, yes. Saving scores, yes. Bricks, no. The game states, yes, all except `WON`, which Pong doesn't have but a puzzle game would: so "states" are any game's, and **which** states a game has is the game's own. That last kind of answer, "the mechanism is shared, the details are each game's", is the most useful thing the document can say, because it's where the engine will need a way for a game to tell it its details.
-shape: A title, a sentence saying what the document is for, then the three `##` sections with five to ten points each under "Any game", and three to six under each game.
+shape: A title, a sentence saying what the document is for, then the three `###` sections with five to ten points each under "Any game", and three to six under each game.
 answer: Yours will differ, and should. An example:
 
 ~~~markdown
@@ -240,7 +240,7 @@ answer: Yours will differ, and should. An example:
 
 What every Forge game needs, and what belongs to one game, from the two copies (lesson 8.7). Chapter 9 builds the first section as an engine.
 
-## Any game
+### Any game
 
 - The loop: events, update, draw, flip, and frame timing with dt; a slow frame never breaks it.
 - A test run: a fixed number of frames of 1/60 s, a seed, no window, and a summary line; what the summary says is each game's.
@@ -252,14 +252,14 @@ What every Forge game needs, and what belongs to one game, from the two copies (
 - Timers counted down by dt: periodic (keeps the leftover) and cooldowns (throws it away).
 - A status line and a centred message.
 
-## Only Breakout
+### Only Breakout
 
 - The ball, its serve and its bounces.
 - The paddle and the autopilot that steers it.
 - Bricks, tough bricks, and walls of them loaded from level files.
 - Winning by clearing the wall.
 
-## Only the shooter
+### Only the shooter
 
 - Eight-way movement and aiming at the mouse.
 - Bullets and the gun's cooldown.
@@ -269,12 +269,12 @@ What every Forge game needs, and what belongs to one game, from the two copies (
 ```
 
 ```check
-contains docs/any-game.md "## Any game"
-contains docs/any-game.md "## Only Breakout"
-contains docs/any-game.md "## Only the shooter"
-run ".venv/Scripts/python -c \"import re, pathlib; text = pathlib.Path('docs/any-game.md').read_text(encoding='utf-8'); sections = re.split('^## ', text, flags=re.M)[1:]; print('three or more in every section:', min(sum(line.startswith('- ') for line in s.splitlines()) for s in sections) >= 3)\"" stdout="three or more in every section: True" label="each section has at least three points" -- Each of the three sections needs at least three points, one per line, starting with "- ".
+contains docs/any-game.md "### Any game"
+contains docs/any-game.md "### Only Breakout"
+contains docs/any-game.md "### Only the shooter"
+run ".venv/Scripts/python -c \"import re, pathlib; text = pathlib.Path('docs/any-game.md').read_text(encoding='utf-8'); sections = re.split('^### ', text, flags=re.M)[1:]; print('three or more in every section:', min(sum(line.startswith('- ') for line in s.splitlines()) for s in sections) >= 3)\"" stdout="three or more in every section: True" label="each section has at least three points" -- Each of the three sections needs at least three points, one per line, starting with "- ".
 run ".venv/Scripts/python -m pytest -q" stdout="176 passed"
-git-message "any game"
+git-tracked docs/any-game.md -- Commit the document: git add . then git commit.
 git-clean
 ```
 

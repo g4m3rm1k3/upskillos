@@ -343,7 +343,7 @@ if __name__ == "__main__":
     main(sys.argv[1:])
 ```
 
-- **`type Graph = dict[str, set[str]]`** is a **type alias** (Python 3.12's `type` statement): a short name for a long type, used in three places.
+- **`type Graph = dict[str, set[str]]`** is a **type alias** (Python 3.12's `type` statement): a short name for a long type, used wherever a graph is.
 - **`module_name`** turns a path into the name Python would use: `breakout/model.py` is `breakout.model`, and `breakout/__init__.py`, the package itself, is `breakout`.
 - **`files.keys()`** is the set of module names that really exist in these packages. `imports_in(...) & files.keys()` is a set **intersection**: `&` between two sets keeps only what's in both (a dictionary's `keys()` behaves as a set for this). Of all the maybe-modules a file imports, it keeps only the real modules of these packages. That drops `pygame` and `sys` (outside the project), and every "maybe" that was really a name, like `shooter.model.Game`.
 
@@ -545,7 +545,7 @@ Here is the review a careful reviewer would write. A good review names each prob
 
 1. **It imports `shooter.app`**, the module at the top of the program, for one constant. Once `app` uses the HUD, the two import each other. `ARENA` belongs lower down (the model knows it's the arena), or the HUD should be given it.
 2. **It opens the database itself, every frame**, with its own path. That ignores `--scores` (a test run, which should keep no scores, would read the player's real file), skips `open_scores` (no foreign keys, no migrations, so an old file gives wrong answers or an error, lesson 7.2), and makes 60 connections a second. The app already knows the best score: pass it in.
-3. **It reads the command line again**, `settings.parse_args(sys.argv[1:])`, inside a drawing function. Its output depends on something no caller can see, and in a test, `sys.argv` is pytest's own arguments: `argparse` doesn't recognise them and **exits the test run**. Pass the player's name in.
+3. **It reads the command line again**, `settings.parse_args(sys.argv[1:])`, inside a drawing function. Its output depends on something no caller can see, and in a test, `sys.argv` holds pytest's own arguments (`-q`, a file name), which `argparse` doesn't recognise: it prints `error: unrecognized arguments` and raises `SystemExit`, and the test fails without testing anything. Pass the player's name in.
 4. **It keeps state in module-level variables**, `font` and `warnings`, changed with `global`. That's lesson 8.5's global state: shared by every game and every test in the process, and `warnings` is counted and never read. A font can be made once by the app and passed in.
 5. **It repeats `draw`**: the status line, the colours as numbers, and a position worked out from `model.WIDTH` by hand. Two places drawing the score is two places to change.
 

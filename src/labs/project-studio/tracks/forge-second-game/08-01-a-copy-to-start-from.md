@@ -303,7 +303,7 @@ When `Select-String -Path shooter\*.py -Pattern "breakout"` finds no line that a
 ```hints
 nudge: Go down the `Select-String` list from the "Imports that point home" step, skipping the imports you've already changed and `report.py`, which is gone. Each remaining line is one change. For the scores, read lines 42 to 44 of `shooter/app.py`: which folder does `get_pref_path` return, and what file is in it?
 concept: `pygame.system.get_pref_path("forge", "breakout")` (lesson 6.1) returns the folder the operating system keeps for the application named `breakout` by the organisation `forge`: the same folder for any program that asks with those two names. Left as it is, both games would open the same `scores.db`. Both have levels called Classic, so a shooter score on Classic would count as Breakout's best on Classic. The two programs would share **state through the file system**, with nothing in either program's code to show it.
-shape: Six changes in four files: the `prog` and `description` in `shooter/settings.py`; three error messages, the `get_pref_path` call and the window title in `shooter/app.py`; the title message in `shooter/draw.py`; the docstring in `shooter/__init__.py`. Then `git add .` and one commit.
+shape: Eight changes in four files: the `prog` and `description` in `shooter/settings.py`; three error messages, the `get_pref_path` call and the window title in `shooter/app.py`; the title message in `shooter/draw.py`; the docstring in `shooter/__init__.py`. Then `git add .` and one commit.
 answer: In `shooter/settings.py`:
 
 ~~~python

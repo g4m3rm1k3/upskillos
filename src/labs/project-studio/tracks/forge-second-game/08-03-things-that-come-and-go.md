@@ -685,7 +685,7 @@ Lesson 0.3's method: **reproduce** it as small as possible, **inspect** what the
 31 [640, 640, 630, 620]
 ```
 
-Bullets fired one frame apart should be 10 pixels apart (600 pixels a second, for a sixtieth of a second). The newer three are. The two oldest are both at 640: one of them has fallen behind, and the oldest is at 640, exactly on the edge, where `inside` still says yes. Try for ten minutes before the hints: why would a bullet skip a move?
+Bullets fired one frame apart should be 10 pixels apart (600 pixels a second, for a sixtieth of a second), and the newer ones are: 640, 630, 620. But the oldest is at 640 too. It should be 10 pixels further on, at 650, past the edge and gone. It missed a move, and because it missed one, it's still inside. Try for ten minutes before the hints: why would a bullet skip a move?
 
 ```hints
 nudge: Make it smaller still. In a scratch file, make a list of numbers, `[5, -1, -2, 7]`, loop over it with `for`, and `remove` every negative number inside the loop. Print the list afterwards. Is it what you expected?
