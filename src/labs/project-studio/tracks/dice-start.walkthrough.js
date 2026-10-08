@@ -273,5 +273,80 @@ export const WALKTHROUGH = {
     "files": {
       "practice/can_roll.cpp": "#include <iostream>\nbool can_roll(int score, int pot, int target) {\n    return score + pot < target;\n}\nint main() {\n    int score = 0, pot = 0, target = 0;\n    if (!(std::cin >> score >> pot >> target)) return 1;\n    std::cout << \"result=\" << can_roll(score, pot, target) << '\\n';\n    return 0;\n}"
     }
+  },
+  "05-functions-and-results#Turn a request into cases": {
+    "wrong": []
+  },
+  "05-functions-and-results#Your turn — Deliver a booking calculator": {
+    "wrong": [
+      {
+        "name": "misses the first discounted booking",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors) {\n    int price = visitors * 4;\n    if (visitors > 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0;\n    if (!(std::cin >> visitors) || visitors < 1 || visitors > 6) return 1;\n    std::cout << \"price=\" << booking_price(visitors) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          3
+        ]
+      },
+      {
+        "name": "discounts every visitor",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors) {\n    int price = visitors * 4;\n    if (visitors >= 3) price = price - visitors * 2;\n    return price;\n}\nint main() {\n    int visitors = 0;\n    if (!(std::cin >> visitors) || visitors < 1 || visitors > 6) return 1;\n    std::cout << \"price=\" << booking_price(visitors) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          3,
+          4
+        ]
+      },
+      {
+        "name": "accepts an empty booking",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors) {\n    int price = visitors * 4;\n    if (visitors >= 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0;\n    if (!(std::cin >> visitors) || visitors < 0 || visitors > 6) return 1;\n    std::cout << \"price=\" << booking_price(visitors) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          6
+        ]
+      }
+    ],
+    "files": {
+      "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors) {\n    int price = visitors * 4;\n    if (visitors >= 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0;\n    if (!(std::cin >> visitors) || visitors < 1 || visitors > 6) return 1;\n    std::cout << \"price=\" << booking_price(visitors) << '\\n';\n    return 0;\n}"
+    }
+  },
+  "05-functions-and-results#Your turn — Respond to a changed request": {
+    "wrong": [
+      {
+        "name": "ignores the new rate",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors, int rate) {\n    int price = visitors * 4;\n    if (visitors >= 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0, rate = 0;\n    if (!(std::cin >> visitors >> rate) || visitors < 1 || visitors > 6 || rate < 1 || rate > 10) return 1;\n    std::cout << \"price=\" << booking_price(visitors, rate) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          3,
+          4
+        ]
+      },
+      {
+        "name": "removes the old discount",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors, int rate) {\n    int price = visitors * rate;\n    if (visitors >= 3) price = price - 0;\n    return price;\n}\nint main() {\n    int visitors = 0, rate = 0;\n    if (!(std::cin >> visitors >> rate) || visitors < 1 || visitors > 6 || rate < 1 || rate > 10) return 1;\n    std::cout << \"price=\" << booking_price(visitors, rate) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          2,
+          3
+        ]
+      },
+      {
+        "name": "accepts an invalid rate",
+        "files": {
+          "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors, int rate) {\n    int price = visitors * rate;\n    if (visitors >= 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0, rate = 0;\n    if (!(std::cin >> visitors >> rate) || visitors < 1 || visitors > 6) return 1;\n    std::cout << \"price=\" << booking_price(visitors, rate) << '\\n';\n    return 0;\n}"
+        },
+        "fails": [
+          6,
+          7
+        ]
+      }
+    ],
+    "files": {
+      "practice/booking.cpp": "#include <iostream>\nint booking_price(int visitors, int rate) {\n    int price = visitors * rate;\n    if (visitors >= 3) price = price - 2;\n    return price;\n}\nint main() {\n    int visitors = 0, rate = 0;\n    if (!(std::cin >> visitors >> rate) || visitors < 1 || visitors > 6 || rate < 1 || rate > 10) return 1;\n    std::cout << \"price=\" << booking_price(visitors, rate) << '\\n';\n    return 0;\n}"
+    }
   }
 };

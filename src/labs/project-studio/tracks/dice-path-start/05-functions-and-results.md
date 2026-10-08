@@ -205,3 +205,109 @@ run "./lesson" stdin="5 8 12\n" stdout="result=0\n"
 run "./lesson" stdin="1 2 4\n" stdout="result=1\n"
 ```
 
+## Turn a request into cases {#transfer-plan}
+
+A club needs a booking calculator: each visitor pays 4 credits; a group of at least 3 visitors receives 2 credits off the whole booking. Bookings contain 1 through 6 visitors. Invalid input must fail without quoting a price.
+
+Before writing C++, make an input/expected-result table. Include the smallest booking, both sides of the discount boundary, the largest booking, an out-of-range number and a word. Calculate answers by hand: expectations come from the request, not whatever your program prints.
+
+For 3 visitors the price is 3 × 4 − 2 = 10. The discount is not 2 per visitor. Predict the prices for 2 and 4 visitors before opening the next step.
+
+Write three small jobs: read and validate, calculate, display. Finish one working calculation before adding decorations. This is a tiny backlog: an ordered list of work. Every C++ operation needed has already been taught; no loops or classes are required.
+
+
+
+## Your turn — Deliver a booking calculator {#transfer-build}
+
+**No solution is shown.** Create `practice/booking.cpp` yourself. Implement the club request from your table. Put the calculation in a function that returns an integer and does not print. Choose its name and parameters yourself. main reads one integer, rejects values outside 1 through 6 with exit 1 and no price line, otherwise prints price= followed by the result and returns 0. Token extraction is sufficient; whole-line validation comes later. Compare these examples with your predictions before running.
+
+| Input | Required output |
+|---|---|
+| 1 | price=4 |
+| 2 | price=8 |
+| 3 | price=10 |
+| 4 | price=14 |
+| 6 | price=22 |
+| 0 | exit=1 without="price=" |
+| 7 | exit=1 without="price=" |
+| word | exit=1 without="price=" |
+
+Build and run using the commands below. For an interactive run, type one example input and press Enter.
+
+```text
+g++ -std=c++20 -Wall -Wextra -pedantic practice/booking.cpp -o lesson
+./lesson
+```
+
+```hints
+nudge: Separate invalid requests from valid requests that receive no discount.
+concept: Start with visitors times four; only the threshold branch changes that price.
+shape: Return the calculated price from your function; perform input and output in main.
+```
+
+
+Hide the examples and add your own valid case. Trace input through validation, the call, the returned number and output. Deliberately change >= to > in your discount condition. Which case exposes it? Restore the rule. Compiler acceptance does not establish that the price is correct.
+
+A green check confirms these cases. Also explain how your program works with the reference hidden; the runner cannot grade that explanation.
+
+```check
+run "g++ -std=c++20 -Wall -Wextra -pedantic practice/booking.cpp -o lesson"
+run "./lesson" stdin="1\n" stdout="price=4\n"
+run "./lesson" stdin="2\n" stdout="price=8\n"
+run "./lesson" stdin="3\n" stdout="price=10\n"
+run "./lesson" stdin="4\n" stdout="price=14\n"
+run "./lesson" stdin="6\n" stdout="price=22\n"
+run "./lesson" stdin="0\n" exit=1 without="price="
+run "./lesson" stdin="7\n" exit=1 without="price="
+run "./lesson" stdin="word\n" exit=1 without="price="
+```
+
+## Your turn — Respond to a changed request {#transfer-change}
+
+**No solution is shown.** Create `practice/booking.cpp` yourself. The club now supplies the per-visitor rate as a second integer, from 1 through 10. The visitor range and one 2-credit group discount stay the same. Update your existing booking.cpp, keeping calculation separate from input/output. A missing or invalid rate must return 1 without printing a price. Before editing, record which requirement changed, one new case and one old behavior that must survive. Old one-number input is intentionally replaced by two-number input; rate 4 must preserve the old prices.
+
+| Input | Required output |
+|---|---|
+| 2 4 | price=8 |
+| 3 4 | price=10 |
+| 4 5 | price=18 |
+| 3 1 | price=1 |
+| 6 10 | price=58 |
+| 2 0 | exit=1 without="price=" |
+| 2 11 | exit=1 without="price=" |
+| 2 | exit=1 without="price=" |
+| 2 word | exit=1 without="price=" |
+| 0 4 | exit=1 without="price=" |
+
+Build and run using the commands below. For an interactive run, type one example input and press Enter.
+
+```text
+g++ -std=c++20 -Wall -Wextra -pedantic practice/booking.cpp -o lesson
+./lesson
+```
+
+```hints
+nudge: Identify the fixed value that became input, and the unchanged rules.
+concept: The calculation needs the new rate; validation must succeed for both inputs.
+shape: Pass the rate into the function instead of keeping four inside its multiplication.
+```
+
+
+Review only your changed lines. Explain why both the function definition and its call changed. Rechecking rate 4 is a regression check: it protects behavior that should survive a change. Write three sentences: what you delivered, a mistake a case caught, and what you would do differently next time. After a break, explain the boundary and call without reopening the example. If stuck, revisit A04 decisions or A05 returned values, then retry. This is practice, not a verdict on your ability.
+
+A green check confirms these cases. Also explain how your program works with the reference hidden; the runner cannot grade that explanation.
+
+```check
+run "g++ -std=c++20 -Wall -Wextra -pedantic practice/booking.cpp -o lesson"
+run "./lesson" stdin="2 4\n" stdout="price=8\n"
+run "./lesson" stdin="3 4\n" stdout="price=10\n"
+run "./lesson" stdin="4 5\n" stdout="price=18\n"
+run "./lesson" stdin="3 1\n" stdout="price=1\n"
+run "./lesson" stdin="6 10\n" stdout="price=58\n"
+run "./lesson" stdin="2 0\n" exit=1 without="price="
+run "./lesson" stdin="2 11\n" exit=1 without="price="
+run "./lesson" stdin="2\n" exit=1 without="price="
+run "./lesson" stdin="2 word\n" exit=1 without="price="
+run "./lesson" stdin="0 4\n" exit=1 without="price="
+```
+

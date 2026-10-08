@@ -212,3 +212,53 @@ Measured while writing (Windows 11, Python 3.13.14):
 - `torch==2.14.1` from PyPI on Windows is the CPU build (`2.14.1+cpu`, 124 MB wheel); with `keras==3.15.1` the full `.venv` is 811 MB. Keras 3 prints NumPy 2 `DeprecationWarning`s from inside `keras/src`; the 4.5 tests filter those only.
 - DQN on the 7 × 7 maze (PyTorch, replay of 1,000, batches of 32, 4 updates per move, γ 0.95, ε 0.1): every start solved by episode 80 to 180 for 5 seeds, 17 to 46 s. Without replay (one update on the latest step): 0 to 3 of 33 starts after 400 episodes, 3 seeds. The tutorial's Keras method (fit after every move, 1 epoch): episodes 170 to 230. The trained network solves 0 of 33 starts on the same maze transposed (a table: 9).
 - DQN on the 10 × 10 maze, up to 600 episodes: without a target network 15 of 74 starts (811 s); with one refreshed every 500 moves, solved at episodes 320 and 400 (seeds 0, 1; 512 s and 452 s while sharing the CPU).
+
+## Handoff (2026-10-08, end of session)
+
+**Done and verified:** Chapters 0–5, 28 lessons. Each chapter's walkthrough passed: every step typed, every check, every wrong answer, every prediction's `verify:`. Committed in `5ed0a5a8 Q-Arcade`.
+
+**How to verify a chapter without replaying the whole series** (a full walk installs PyTorch and Keras and takes a long time):
+
+```sh
+# whole series:
+npx vitest run src/labs/project-studio/qArcade.desktop.test.js
+# static checks only (fast): walkthrough keys, -k selection, Your turn rules, one file per step
+npx vitest run src/labs/project-studio/qArcade.desktop.test.js -t "walkthrough entry|verify command|Your turn step|pytest -k|one file per step"
+# one chapter, from a project kept after the chapter before it (QARCADE_KEEP saves one):
+QARCADE_START=<kept folder copy> QARCADE_FROM=qarcade-<chapter>/<NN-NN> QARCADE_KEEP=<new folder> npx vitest run src/labs/project-studio/qArcade.desktop.test.js
+```
+
+Kept projects from this session, in `%LOCALAPPDATA%\Temp\`, are disposable and may be gone: `qarcade-after-ch5` is the state after Chapter 5. Copy it before using it as a start (the test writes into it), and delete from the copy any files the chapter you're re-walking creates, or its "did not create the tests" wrong answers will pass.
+
+**How a chapter was built** (repeat this for Chapter 6 onwards):
+
+1. Prototype the final code in a scratch project and measure everything a lesson will quote. Run heavy jobs **two at a time, with `torch.set_num_threads(1)`**: six default-threaded runs froze the owner's PC.
+2. Write the test files. Each step's `pytest -k <word>` must select only that step's tests, and the word must not appear in the test file's name. `docs/q-arcade-prototypes/klint.py <test file> <words...>` checks this before writing lessons.
+3. Derive each step's intermediate file from the final code with a script, not by hand, and assemble lessons from templates that paste in the tested files.
+4. Put Your turn answers in `tracks/<chapter>/answers/` and verify scripts in `tracks/<chapter>/verify/`. Append walkthrough entries with `docs/q-arcade-prototypes/append_walk.py <entries file> "const X = 'qarcade-…';"`.
+5. Run the static checks, then the chapter walkthrough. It catches weak tests (a wrong answer that passes) and wrong check indexes. Fix them, then rerun.
+
+**Chapter 6 (`qarcade-cartpole-dqn`), planned with the owner on 2026-10-08:**
+
+- 6.1 No more bins: the four numbers straight into a network; Huber loss; target network.
+- 6.2 **Many runs without freezing your computer** (the owner asked for this): threads measured on this exact case (one CartPole DQN run of 300 episodes: 20 threads, PyTorch's default, took 51.3 s wall and 360.2 s of CPU, about 7 cores; 1 thread took 36.7 s wall and 36.1 s CPU, with identical results); a capped worker pool for seeds (2 workers, 1 thread each, kept the machine at about 7 of 28 cores with other programs running); per-process CPU checks; stopping a runaway; when a GPU helps (not for networks this small: measure it in Chapter 8).
+- 6.3 Both frameworks, many seeds: the Keras version; collapse after success; keeping the best network.
+- 6.4 Table or network? An honest comparison with Chapter 2 (the table reached 499.9 ± 0.1).
+
+**Chapter 6 measurements so far** (`docs/q-arcade-prototypes/cart_proto.py`, 400 episodes, 3 seeds each, ε falling over 200 episodes): plain DQN is unstable. Of 18 runs over 6 settings, only one (sync 100, learning rate 5e-4, seed 1) reached 500 and stayed. The others peaked between 180 and 500 and fell back (final scores 17 to 488). Without a target network it doesn't learn at all (9–10 steps). `docs/q-arcade-prototypes/cart_proto2.py` adds the standard stabilisers (Double DQN, soft target updates with τ = 0.005, gradient clipping, ε falling over 15,000 steps, 60,000 steps per run). Its 4-setting × 3-seed grid was running when the session ended, and its results were lost with the session. **Rerun it first** (two at a time):
+
+```sh
+python docs/q-arcade-prototypes/cart_proto2.py "{}" 3
+python docs/q-arcade-prototypes/cart_proto2.py "{\"double\": false}" 3
+```
+
+Run them from a scratch copy of the Chapter 5 project, because they import nothing from it but need `gymnasium` and `torch`. If no setting is reliable, teach that honestly in 6.3 and keep the best network found during training (evaluate every N steps, save when the score improves).
+
+**After Chapter 6:** Chapters 7–9 as planned above (Pac-Man in stages with generated mazes, learning from what it sees, the capstone). Pac-Man DQN training times must be measured before writing, and probably need the GPU (Chapter 8): measure the CUDA build of PyTorch for the RTX 5060 then.
+
+**Other work from this session, also committed:** Notebook Lab (`src/components/notebooks/PythonNotebook.jsx`):
+
+- typing no longer drops letters: the editor owns its text, using `defaultValue`;
+- an **Autocomplete** checkbox in the toolbar, off by default;
+- Shift+Enter moves to the next cell and scrolls it to the bottom of the screen;
+- a cell that ran without an error has a green border and a green output area.
