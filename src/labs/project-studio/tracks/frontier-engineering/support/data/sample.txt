@@ -1,0 +1,11 @@
+The machine reads the text one word at a time.
+It counts every word, and it counts every letter.
+A word that appears often tells you what the text is about;
+a word that appears once tells you almost nothing.
+
+The first programs that learned language did little more than this.
+They counted which word came after which, and they used the counts
+to guess the next word. The guesses were poor, but they were not random.
+
+Later machines learned to read whole sentences at a time.
+They still began where this script begins: with the text, and the counts.

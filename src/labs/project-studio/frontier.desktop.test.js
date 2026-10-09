@@ -44,7 +44,14 @@ const fromIndex = process.env.FRONTIER_START && process.env.FRONTIER_FROM
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'frontier-walk-'));
 const project = path.join(tmp, 'frontier');
 fs.mkdirSync(project);
-if (fromIndex > 0) fs.cpSync(process.env.FRONTIER_START, project, { recursive: true });
+if (fromIndex > 0) {
+  fs.cpSync(process.env.FRONTIER_START, project, { recursive: true });
+  // The kept .venv's editable install names the kept project's old src folder: point it here.
+  const site = path.join(project, '.venv', 'Lib', 'site-packages');
+  for (const name of fs.readdirSync(site).filter((n) => /^__editable__.*\.pth$/.test(n))) {
+    fs.writeFileSync(path.join(site, name), path.join(project, 'src') + '\n');
+  }
+}
 
 afterAll(() => {
   if (process.env.FRONTIER_KEEP) {

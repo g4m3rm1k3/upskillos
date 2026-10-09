@@ -15,6 +15,7 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (key === 'games3d' || key === 'games3d-foundations') return { level: 'bridge', maturity: 'in-development', audience: 'For learners with introductory variables, conditions, loops and functions in any language. C#, terminal use, scene data, tests and 3D coordinates are taught here. Requires a local .NET SDK with .NET 8 targeting/runtime support and a graphics display. Begin with Foundations; saving, play mode and later game genres are not yet implemented.' };
   if (/^(forge|aml|cpp|ml)-/.test(key) && !REVIEWED_CHAPTERS.has(key) && !SERIES_KEYS.has(key)) {
     return { level: 'unclassified', maturity: 'in-development', audience: "This chapter's prerequisites haven't been reviewed yet. It builds on the chapters before it in this series; start there." };
   }

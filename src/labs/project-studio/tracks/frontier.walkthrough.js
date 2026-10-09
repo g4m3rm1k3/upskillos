@@ -31,6 +31,9 @@ function answerWith(track, name, pairs) {
 
 const S = 'frontier-setup';
 const PIP = '.venv\\Scripts\\python -m pip install -q';
+const E = 'frontier-engineering';
+// Git runs only in the walkthrough's temporary project, never in this repository.
+const COMMIT = (message) => ['git add .', `git commit -q -m "${message}"`];
 
 export const WALKTHROUGH = {
   // ── 0.1 ──────────────────────────────────────────────────────────────────
@@ -118,5 +121,129 @@ export const WALKTHROUGH = {
         fails: [0],
       },
     ],
+  },
+
+  // ── 1.1 ──────────────────────────────────────────────────────────────────
+  [`${E}/01-01-pin-the-old-behaviour#The script you inherited`]: {
+    wrong: [{ name: 'did not create the files', fails: [0, 1] }],
+  },
+  [`${E}/01-01-pin-the-old-behaviour#A save point, with Git`]: {
+    run: ['git init -b main', 'git add .', 'git commit -q -m "Add textstats.py as it was given to me"'],
+    wrong: [
+      { name: 'did nothing', fails: [2, 3, 4] },
+      { name: 'made the repository but did not commit', run: ['git init -b main'], fails: [3, 4] },
+    ],
+  },
+  [`${E}/01-01-pin-the-old-behaviour#Save what it prints today`]: {
+    run: ['.venv\\Scripts\\python tools/save_golden.py'],
+    wrong: [{ name: 'did nothing', fails: [0, 1] }],
+  },
+  [`${E}/01-01-pin-the-old-behaviour#Your turn: a test that pins the report`]: {
+    files: { 'tests/test_legacy_output.py': answer(E, 'test_legacy_output.py') },
+    run: COMMIT('Pin the report with a characterisation test'),
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2, 3] },
+      {
+        name: 'only checks that the script ran',
+        files: { 'tests/test_legacy_output.py': answerWith(E, 'test_legacy_output.py', [['assert result.stdout == expected', 'assert result.returncode == 0']]) },
+        run: COMMIT('Test'),
+        fails: [1],
+      },
+      { name: 'wrote the test but did not commit', files: { 'tests/test_legacy_output.py': answer(E, 'test_legacy_output.py') }, fails: [2, 3] },
+    ],
+  },
+  [`${E}/01-01-pin-the-old-behaviour#Watch it catch a change`]: {
+    wrong: [{ name: 'left the change in', editFiles: { 'textstats.py': [['round(s / total, 2)', 'round(s / total, 1)']] }, fails: [0, 1] }],
+  },
+
+  // ── 1.2 ──────────────────────────────────────────────────────────────────
+  [`${E}/01-02-small-functions-with-names#A branch for the work`]: {
+    run: ['git switch -c functions'],
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-02-small-functions-with-names#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${E}/01-02-small-functions-with-names#Safe to import`]: {
+    wrong: [{ name: 'left the last lines as they were', fails: [0] }],
+  },
+  [`${E}/01-02-small-functions-with-names#Words and lines`]: {
+    wrong: [{ name: 'did not strip punctuation', edit: [['word = word.strip(PUNCTUATION).lower()', 'word = word.lower()']], fails: [1, 2] }],
+  },
+  [`${E}/01-02-small-functions-with-names#Count anything`]: {
+    wrong: [
+      { name: 'kept the globals and the two loops', fails: [0, 1, 2] },
+      { name: 'did not lower-case the letters', edit: [['[c for c in text.lower() if c.isalpha()]', '[c for c in text if c.isalpha()]']], fails: [1, 3] },
+    ],
+  },
+  [`${E}/01-02-small-functions-with-names#Names that say what`]: {
+    wrong: [{ name: 'did not rename go', fails: [0] }],
+  },
+  [`${E}/01-02-small-functions-with-names#Your turn: one function for both tables`]: {
+    files: { 'textstats.py': answer(E, 'textstats-1.2.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 2, 3, 4] },
+      { name: 'sorted smallest first', files: { 'textstats.py': answerWith(E, 'textstats-1.2.py', [[', reverse=True)[:n]', ')[:n]']]) }, fails: [0, 1] },
+      {
+        name: 'kept the magic number',
+        files: { 'textstats.py': answerWith(E, 'textstats-1.2.py', [['TOP_WORDS = 10\n', ''], ['counts, TOP_WORDS)', 'counts, 10)']]) },
+        fails: [2],
+      },
+    ],
+  },
+  [`${E}/01-02-small-functions-with-names#Bring it into \`main\``]: {
+    run: [...COMMIT('Split go into small functions'), 'git switch main', 'git merge -q functions', 'git branch -d functions'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 3] },
+      { name: 'merged but kept the branch', run: [...COMMIT('Split go into small functions'), 'git switch main', 'git merge -q functions'], fails: [1] },
+    ],
+  },
+
+  // ── 1.3 ──────────────────────────────────────────────────────────────────
+  [`${E}/01-03-a-module-with-types#A branch for the move`]: {
+    run: ['git switch -c package'],
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-03-a-module-with-types#A module for the counting`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-03-a-module-with-types#The script imports them`]: {
+    // Replace All: each pair replaces the next "from textstats import".
+    editFiles: { 'tests/test_pieces.py': Array(8).fill(['from textstats import', 'from frontier.text import']) },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'did not update the tests', typeFile: true, fails: [1] },
+      { name: 'deleted the functions but did not import them', edit: [['from frontier.text import count_lines, letters, split_words, tally, top\n', '']], fails: [3] },
+    ],
+  },
+  [`${E}/01-03-a-module-with-types#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${E}/01-03-a-module-with-types#Type hints`]: {
+    editFiles: {
+      'requirements.txt': [['numpy==2.5.3', 'mypy==2.4.0\nnumpy==2.5.3']],
+      '.gitignore': [['*.egg-info/\n', '*.egg-info/\n.mypy_cache/\n']],
+    },
+    run: [`${PIP} -r requirements.txt`],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2, 3] },
+      { name: 'said split_words returns a list of anything', edit: [['def split_words(text: str) -> list[str]:', 'def split_words(text: str) -> list:']], fails: [1] },
+    ],
+  },
+  [`${E}/01-03-a-module-with-types#Your turn: no errors from mypy`]: {
+    files: { 'src/frontier/text.py': answer(E, 'text-1.3.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2, 3] },
+      { name: 'left the counts variable without a hint', files: { 'src/frontier/text.py': answerWith(E, 'text-1.3.py', [['counts: dict[str, int] = {}', 'counts = {}']]) }, fails: [0] },
+      {
+        name: 'asked tally for a list',
+        files: { 'src/frontier/text.py': answerWith(E, 'text-1.3.py', [['from collections.abc import Iterable\n', ''], ['items: Iterable[str]', 'items: list[str]']]) },
+        fails: [2],
+      },
+    ],
+  },
+  [`${E}/01-03-a-module-with-types#Bring it into \`main\``]: {
+    run: [...COMMIT('Move the counting functions into frontier.text'), 'git switch main', 'git merge -q package', 'git branch -d package'],
+    wrong: [{ name: 'did nothing', fails: [0, 1, 3] }],
   },
 };

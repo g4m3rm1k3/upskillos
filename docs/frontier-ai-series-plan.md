@@ -319,7 +319,8 @@ Lessons live in `src/labs/project-studio/tracks/frontier-*/`, Your turn answers 
 | Chapter | Lessons | Walkthrough |
 |---|---|---|
 | 0 · A Real Project | 0.1–0.3 | passes (2026-10-08, 465 s, peak 788 MB) |
-| 1–67 | | not written |
+| 1 · From Script to Software | 1.1–1.3 written; 1.4–1.5 to come | 1.1–1.3 pass (2026-10-09, walked from a kept Chapter 0 project) |
+| 2–67 | | not written |
 
 Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful.
 
@@ -327,4 +328,5 @@ Measured while writing (Windows 11, Python 3.14.3, the walkthrough's CPU-only en
 
 - PyPI has Windows wheels for Python 3.12–3.14 for `torch==2.14.1` and `numpy==2.5.3`; the Windows `torch` from PyPI is `2.14.1+cpu`.
 - An editable install (`pip install -e .`, setuptools) writes `__editable__.frontier-0.1.0.pth` holding one line, the path to `src`.
+- `mypy==2.4.0 --strict` accepts `words = []` followed by `words.append(word)`, but rejects `counts = {}` followed by `counts.get(...)` (`var-annotated`): lesson 1.3 teaches the variable hint because of it.
 - `matmul_difference(64, 0)` = 1.07e-14 and `matmul_difference(512, 0)` = 2.13e-13 (NumPy vs PyTorch CPU, float64).

@@ -1,14 +1,14 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 359,
-    "tracks": 48,
+    "lessons": 505,
+    "tracks": 63,
     "errors": {},
     "signals": {
-      "authored check limits not detected": 324,
-      "prediction not detected": 76,
-      "task lacks parsed hint ladder": 84,
-      "independent task heading not detected": 238
+      "authored check limits not detected": 453,
+      "prediction not detected": 104,
+      "task lacks parsed hint ladder": 107,
+      "independent task heading not detected": 239
     }
   },
   "lessons": [
@@ -188,12 +188,11 @@
       "id": "circuit-clash/00-play-the-game",
       "track": "circuit-clash",
       "title": "Play Circuit Clash — the game you will learn to build",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Play the destination first",
       "firstIndependentTask": "Challenge — write a behavior report",
       "signals": [
-        "prediction not detected",
         "task lacks parsed hint ladder"
       ],
       "errors": []
@@ -202,21 +201,50 @@
       "id": "circuit-clash/01-tools-and-first-run",
       "track": "circuit-clash",
       "title": "A terminal, a compiler, and your first execution",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Choose a folder you own",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [],
       "errors": []
     },
     {
+      "id": "circuit-clash/01a-program-and-machine",
+      "track": "circuit-clash",
+      "title": "What the computer executes and stores",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Follow source through a process",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "circuit-clash/02-values-and-units",
       "track": "circuit-clash",
       "title": "Values, types, and the units behind motion",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Distinguish whole counts from fractional quantities",
       "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/02a-know-the-type",
+      "track": "circuit-clash",
+      "title": "Know the type before changing the value",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Separate a name, its declared type, and its value",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
       "signals": [
         "task lacks parsed hint ladder",
         "authored check limits not detected"
@@ -227,8 +255,8 @@
       "id": "circuit-clash/03-decisions-and-repetition",
       "track": "circuit-clash",
       "title": "Decisions, loops, and legal actions",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Guard a purchase before changing state",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -238,13 +266,43 @@
       "errors": []
     },
     {
+      "id": "circuit-clash/03a-logic-and-invariants",
+      "track": "circuit-clash",
+      "title": "Boolean logic, invariants, and state transitions",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Derive equipment permission from a truth table",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "circuit-clash/04-functions-and-red-green",
       "track": "circuit-clash",
       "title": "Functions and tests that can really fail",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Write an executable expectation first",
       "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/04a-debugging-and-scope",
+      "track": "circuit-clash",
+      "title": "Debug from evidence — scope, calls, and exceptions",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Trace argument values through a call",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
       "signals": [
         "prediction not detected",
         "task lacks parsed hint ladder",
@@ -256,10 +314,52 @@
       "id": "circuit-clash/05-objects-and-collections",
       "track": "circuit-clash",
       "title": "Objects, collections, and ownership",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Create two objects with independent state",
       "firstIndependentTask": "Challenge — return to this later",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/05a-contracts-and-data",
+      "track": "circuit-clash",
+      "title": "Objects with contracts and validated data",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "State the contract before implementing the operation",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/05b-search-and-cost",
+      "track": "circuit-clash",
+      "title": "Data structures and algorithms — count the work",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Find a minimum in one pass",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/05c-graphs-and-queries",
+      "track": "circuit-clash",
+      "title": "Graphs, paths, and the loops behind queries",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Represent neighbors and initialize a frontier",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
       "signals": [
         "task lacks parsed hint ladder",
         "authored check limits not detected"
@@ -270,8 +370,8 @@
       "id": "circuit-clash/06-project-boundaries",
       "track": "circuit-clash",
       "title": "Build boundaries, dependencies, and Git",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Make the rules a library",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -284,8 +384,8 @@
       "id": "circuit-clash/07-track-math",
       "track": "circuit-clash",
       "title": "A winding track from functions and vectors",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Define coordinates and a closed curve",
       "firstIndependentTask": null,
       "signals": [
@@ -295,11 +395,26 @@
       "errors": []
     },
     {
+      "id": "circuit-clash/07a-vector-reasoning",
+      "track": "circuit-clash",
+      "title": "Vectors and angles — calculate before drawing",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Separate a point, a displacement, and a unit direction",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "circuit-clash/08-karts-and-state",
       "track": "circuit-clash",
       "title": "Model a race without drawing it",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Name the finite choices and immutable inputs",
       "firstIndependentTask": null,
       "signals": [
@@ -313,8 +428,8 @@
       "id": "circuit-clash/09-triangles-and-light",
       "track": "circuit-clash",
       "title": "Low-poly geometry — transforms, normals, and light",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Rotate locally, then translate into the world",
       "firstIndependentTask": null,
       "signals": [
@@ -324,11 +439,26 @@
       "errors": []
     },
     {
+      "id": "circuit-clash/09a-from-mesh-to-pixels",
+      "track": "circuit-clash",
+      "title": "From triangles to pixels — the graphics pipeline",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Apply transforms in a named order",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "circuit-clash/10-first-window",
       "track": "circuit-clash",
       "title": "Your first 3D frame and the rendering pipeline",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Open the window and describe a camera",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -341,8 +471,8 @@
       "id": "circuit-clash/11-build-the-kart",
       "track": "circuit-clash",
       "title": "Build the low-poly kart from reusable geometry",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Shade one triangle at the graphics boundary",
       "firstIndependentTask": null,
       "signals": [
@@ -356,9 +486,9 @@
       "id": "circuit-clash/12-race-contracts",
       "track": "circuit-clash",
       "title": "Race contracts — state, observations, and equipment",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Own the state and seed the experiment",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Keep the build working between features",
       "firstIndependentTask": null,
       "signals": [
         "prediction not detected",
@@ -371,8 +501,8 @@
       "id": "circuit-clash/13-driving-and-checkpoints",
       "track": "circuit-clash",
       "title": "Driving, recovery, and honest lap counting",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Recover to a validated checkpoint",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -385,8 +515,8 @@
       "id": "circuit-clash/14-combat-and-pickups",
       "track": "circuit-clash",
       "title": "Combat, collision, and shared resources",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Resolve defense before damage",
       "firstIndependentTask": null,
       "signals": [
@@ -399,8 +529,8 @@
       "id": "circuit-clash/15-tick-and-order",
       "track": "circuit-clash",
       "title": "One simulation step with a defined order",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Order results and establish the simulation transaction",
       "firstIndependentTask": null,
       "signals": [
@@ -413,8 +543,8 @@
       "id": "circuit-clash/16-test-the-race",
       "track": "circuit-clash",
       "title": "Tests that protect rules rather than appearances",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Create an assertion with a process-level failure",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -426,8 +556,8 @@
       "id": "circuit-clash/17-camera-and-world",
       "track": "circuit-clash",
       "title": "A chase camera, track mesh, and low-poly scenery",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Follow the kart with a stable chase camera",
       "firstIndependentTask": null,
       "signals": [
@@ -441,8 +571,8 @@
       "id": "circuit-clash/18-human-controls",
       "track": "circuit-clash",
       "title": "Translate devices into simulation inputs",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Introduce a contract because callers need substitution",
       "firstIndependentTask": null,
       "signals": [
@@ -456,8 +586,8 @@
       "id": "circuit-clash/19-menu-primitives",
       "track": "circuit-clash",
       "title": "Immediate-mode menus and keyboard focus",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Track focus across a frame",
       "firstIndependentTask": null,
       "signals": [
@@ -470,12 +600,26 @@
       "id": "circuit-clash/20-save-the-garage",
       "track": "circuit-clash",
       "title": "Transactions, validation, and persistent upgrades",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Make purchasing and equipping different operations",
       "firstIndependentTask": null,
       "signals": [
-        "independent task heading not detected",
+        "independent task heading not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/20a-learning-and-probability",
+      "track": "circuit-clash",
+      "title": "Learning problems, probability, and delayed reward",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Name the learning problem before choosing an algorithm",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "prediction not detected",
+        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -484,8 +628,8 @@
       "id": "circuit-clash/21-q-update-experiment",
       "track": "circuit-clash",
       "title": "Understand Q-learning before implementing a table",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Turn experience into a numerical target",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -499,8 +643,8 @@
       "id": "circuit-clash/22-the-policy-table",
       "track": "circuit-clash",
       "title": "A policy table, exploration, and independent snapshots",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Allocate rows only when a state is encountered",
       "firstIndependentTask": null,
       "signals": [
@@ -514,8 +658,8 @@
       "id": "circuit-clash/23-shared-drivers",
       "track": "circuit-clash",
       "title": "Program steering and compare tactical strategies",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Steer toward a point ahead of the kart",
       "firstIndependentTask": null,
       "signals": [
@@ -529,8 +673,8 @@
       "id": "circuit-clash/24-training-and-evaluation",
       "track": "circuit-clash",
       "title": "Train against snapshots and evaluate on held-out seeds",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Create an episode with controlled variation",
       "firstIndependentTask": null,
       "signals": [
@@ -540,11 +684,40 @@
       "errors": []
     },
     {
+      "id": "circuit-clash/24a-measure-learning",
+      "track": "circuit-clash",
+      "title": "Evaluate a policy without fooling yourself",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Compare paired differences rather than one favorite race",
+      "firstIndependentTask": "Challenge — revisit without blocking the course",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "circuit-clash/24b-work-and-ownership",
+      "track": "circuit-clash",
+      "title": "Threads, tasks, and keeping the window responsive",
+      "level": "beginner",
+      "maturity": "review-required",
+      "firstStep": "Wait for a result without sharing its construction",
+      "firstIndependentTask": null,
+      "signals": [
+        "prediction not detected",
+        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "circuit-clash/25-application-lifecycle",
       "track": "circuit-clash",
       "title": "Application state, focus pause, and fixed-step execution",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Own the application lifecycle explicitly",
       "firstIndependentTask": null,
       "signals": [
@@ -558,8 +731,8 @@
       "id": "circuit-clash/26-complete-menus",
       "track": "circuit-clash",
       "title": "Complete the menus, garage, training screen, and HUD",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Offer explicit entry points and honest policy selection",
       "firstIndependentTask": null,
       "signals": [
@@ -573,8 +746,8 @@
       "id": "circuit-clash/27-run-the-complete-game",
       "track": "circuit-clash",
       "title": "Launch the game and expose reproducible experiments",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Resolve a data directory and an offline training mode",
       "firstIndependentTask": null,
       "signals": [
@@ -588,8 +761,8 @@
       "id": "circuit-clash/28-regression-and-evidence",
       "track": "circuit-clash",
       "title": "Regression checks for saves, learning, and complete races",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Test purchasing through its public operation",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -602,8 +775,8 @@
       "id": "circuit-clash/29-profile-package-and-release",
       "track": "circuit-clash",
       "title": "Profile, package, and investigate a release",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Measure before changing architecture",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -617,8 +790,8 @@
       "id": "circuit-clash/30-transfer-and-design-review",
       "track": "circuit-clash",
       "title": "Transfer the engineering beyond this game",
-      "level": "bridge",
-      "maturity": "in-development",
+      "level": "beginner",
+      "maturity": "review-required",
       "firstStep": "Explain the system without reading method bodies",
       "firstIndependentTask": "Challenge — return to this later",
       "signals": [
@@ -820,7 +993,6 @@
       "firstStep": "Step 1 — The interface",
       "firstIndependentTask": "Step 8 — Challenge: the minidb program",
       "signals": [
-        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -1805,6 +1977,254 @@
       "errors": []
     },
     {
+      "id": "dice-path-learning/20-six-possible-futures",
+      "track": "dice-path-learning",
+      "title": "A20 — Count the futures before learning from them",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Explore six alternatives, not six consecutive rolls",
+      "firstIndependentTask": "Your turn — Count immediate winning faces",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-learning/21-reward-perspective",
+      "track": "dice-path-learning",
+      "title": "A21 — Decide whose success the reward describes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Name the learner and the world it acts in",
+      "firstIndependentTask": "Your turn — Test both perspectives",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-learning/21b-decision-boundaries",
+      "track": "dice-path-learning",
+      "title": "A21b — Wait until the agent can choose again",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Trace a decision across the opponent’s turn",
+      "firstIndependentTask": "Your turn — Test the complete decision boundary",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-learning/22-observation-addresses",
+      "track": "dice-path-learning",
+      "title": "A22 — Give each observation its own address",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose what the agent observes",
+      "firstIndependentTask": "Your turn — Recover coordinates and rule out collisions",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-learning/22b-action-value-storage",
+      "track": "dice-path-learning",
+      "title": "A22b — Store separate estimates for Roll and Bank",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the two numbers a meaning",
+      "firstIndependentTask": "Your turn — Audit storage through its public interface",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-learning/22c-deliver-a-small-change",
+      "track": "dice-path-learning",
+      "title": "A22c — Take a small request through design, tests and feedback",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn a request into observable acceptance criteria",
+      "firstIndependentTask": "Your turn — Implement the agreed behavior",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/11-valid-construction",
+      "track": "dice-path-objects",
+      "title": "A11 — Begin with a valid object",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Initialize before the object is used",
+      "firstIndependentTask": "Your turn — Construct a rule configuration",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/12-snapshots",
+      "track": "dice-path-objects",
+      "title": "A12 — Inspect the game without rewriting it",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Compose state from values",
+      "firstIndependentTask": "Your turn — A match summary with an independent view",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/13-rejection-and-exceptions",
+      "track": "dice-path-objects",
+      "title": "A13 — A bad request is not a bust",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A result for an expected rejected request",
+      "firstIndependentTask": "Your turn — Validate a candidate before changing the pot",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/14-lifetimes-and-ownership",
+      "track": "dice-path-objects",
+      "title": "A14 — Trace when an object stops existing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Observe the end of a lifetime",
+      "firstIndependentTask": "Your turn — Trace a helper returning to its caller",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/14b-file-persistence",
+      "track": "dice-path-objects",
+      "title": "A14b — Save now, read in a later run",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Open, write, close and check",
+      "firstIndependentTask": "Your turn — Separate saving from loading",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/14c-borrowed-pointers",
+      "track": "dice-path-objects",
+      "title": "A14c — Borrow an object that is still alive",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "An address names a live object",
+      "firstIndependentTask": "Your turn — Award only a selected player",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/14d-noncopyable-owners",
+      "track": "dice-path-objects",
+      "title": "A14d — One owner, one release",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Observe one acquisition and release",
+      "firstIndependentTask": "Your turn — A visit releases on both return paths",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-objects/15-headers-and-sources",
+      "track": "dice-path-objects",
+      "title": "A15 — One interface, separate source files",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Write the interface first",
+      "firstIndependentTask": "Your turn — Test the shared implementation",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/16-two-executables",
+      "track": "dice-path-project",
+      "title": "A16 — One rule, two programs",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Resume the working project",
+      "firstIndependentTask": "Your turn — Test overshoot and preservation",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/17-build-dependencies",
+      "track": "dice-path-project",
+      "title": "A17 — Teach the build which files depend on which",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Check the build tools",
+      "firstIndependentTask": "Your turn — Add and run the second test",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/18-deterministic-game",
+      "track": "dice-path-project",
+      "title": "A18 — Make the rules independent of the screen",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Describe one position",
+      "firstIndependentTask": "Your turn — Specify the game with tests",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/19-command-lines",
+      "track": "dice-path-project",
+      "title": "A19 — Turn a whole line into a command",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Keep all the text the player typed",
+      "firstIndependentTask": "Your turn — Specify the accepted language",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/19b-repeatable-dice",
+      "track": "dice-path-project",
+      "title": "A19b — Roll dice you can reproduce",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Watch an engine advance",
+      "firstIndependentTask": "Your turn — Reject a constant die",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-project/19c-terminal-match",
+      "track": "dice-path-project",
+      "title": "A19c — Play the terminal match",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create the application entry point",
+      "firstIndependentTask": "Your turn — Count rejected human requests",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "dice-path-start/00-meet-dice-duel",
       "track": "dice-path-start",
       "title": "A00 — Play the game you will build",
@@ -1877,6 +2297,69 @@
       "maturity": "in-development",
       "firstStep": "A function returns to its caller",
       "firstIndependentTask": "Your turn — Answer a different rule question",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "dice-path-state/06-copies-and-references",
+      "track": "dice-path-state",
+      "title": "A06 — Which score did you change?",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A parameter gets its own value",
+      "firstIndependentTask": "Your turn — Bank for only the second player",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-state/07-players-and-collections",
+      "track": "dice-path-state",
+      "title": "A07 — Two players, two objects",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Name a record",
+      "firstIndependentTask": "Your turn — Keep an independent snapshot",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-state/08-actions-and-loops",
+      "track": "dice-path-state",
+      "title": "A08 — A turn has named choices",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Name the choices",
+      "firstIndependentTask": "Your turn — Stop a recorded turn",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-state/09-tests-that-fail",
+      "track": "dice-path-state",
+      "title": "A09 — Make the mistake visible",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Start with a failing test",
+      "firstIndependentTask": "Your turn — Write a test that can reject a result",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "dice-path-state/10-score-class",
+      "track": "dice-path-state",
+      "title": "A10 — Let the score protect its rule",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "An integer type cannot express the whole rule",
+      "firstIndependentTask": "Your turn — Design a bounded round counter",
       "signals": [],
       "errors": []
     },
@@ -2235,7 +2718,7 @@
       "firstStep": "The test fixtures so far",
       "firstIndependentTask": "Your turn: bug hunt — the reference nobody checks",
       "signals": [
-        "prediction not detected",
+        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -2249,6 +2732,7 @@
       "firstStep": "The scores module so far",
       "firstIndependentTask": "Your turn: wins, recorded and read back",
       "signals": [
+        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -2262,6 +2746,7 @@
       "firstStep": "The scores module so far",
       "firstIndependentTask": "Your turn: only the levels played often enough",
       "signals": [
+        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -2275,6 +2760,63 @@
       "firstStep": "The report so far",
       "firstIndependentTask": "Your turn: how long did I play?",
       "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-05-one-fact-in-one-place",
+      "track": "forge-records",
+      "title": "7.5 — One Fact in One Place",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The report so far",
+      "firstIndependentTask": "Your turn: a file that already disagrees",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-06-finding-rows-fast",
+      "track": "forge-records",
+      "title": "7.6 — Finding Rows Fast",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: a player's sessions, without a scan",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-07-two-writes-at-once",
+      "track": "forge-records",
+      "title": "7.7 — Two Writes at Once",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: saving while someone reads",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-records/07-08-shipping-0-1",
+      "track": "forge-records",
+      "title": "7.8 — Shipping 0.1",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The scores module so far",
+      "firstIndependentTask": "Your turn: the retrospective",
+      "signals": [
+        "prediction not detected",
         "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
@@ -2436,6 +2978,103 @@
       "errors": []
     },
     {
+      "id": "forge-second-game/08-01-a-copy-to-start-from",
+      "track": "forge-second-game",
+      "title": "8.1 — A Copy to Start From",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "Where Breakout stands",
+      "firstIndependentTask": "Your turn: a copy with its own name",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-02-moving-in-two-dimensions",
+      "track": "forge-second-game",
+      "title": "8.2 — Moving in Two Dimensions",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The shooter so far",
+      "firstIndependentTask": "Your turn: toward",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-03-things-that-come-and-go",
+      "track": "forge-second-game",
+      "title": "8.3 — Things That Come and Go",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The model so far",
+      "firstIndependentTask": "Your turn: one shot at a time",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-04-enemies-that-chase",
+      "track": "forge-second-game",
+      "title": "8.4 — Enemies That Chase",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The model so far",
+      "firstIndependentTask": "Your turn: an autopilot",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-05-the-copies-drift",
+      "track": "forge-second-game",
+      "title": "8.5 — The Copies Drift",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The app so far",
+      "firstIndependentTask": "Your turn: a fix that reached one copy",
+      "signals": [
+        "task lacks parsed hint ladder"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-06-measuring-coupling",
+      "track": "forge-second-game",
+      "title": "8.6 — Measuring Coupling",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The app so far",
+      "firstIndependentTask": "Your turn: imported by",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "forge-second-game/08-07-asking-why",
+      "track": "forge-second-game",
+      "title": "8.7 — Asking Why",
+      "level": "unclassified",
+      "maturity": "in-development",
+      "firstStep": "The coupling tool so far",
+      "firstIndependentTask": "Your turn: any game, or one game",
+      "signals": [
+        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "forge-tools/00-01-the-terminal-and-your-first-program",
       "track": "forge-tools",
       "title": "0.1 — The Terminal and Your First Program",
@@ -2474,6 +3113,142 @@
       "signals": [
         "task lacks parsed hint ladder"
       ],
+      "errors": []
+    },
+    {
+      "id": "frontier-engineering/01-01-pin-the-old-behaviour",
+      "track": "frontier-engineering",
+      "title": "1.1 — Pin the Old Behaviour",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The script you inherited",
+      "firstIndependentTask": "Your turn: a test that pins the report",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-engineering/01-02-small-functions-with-names",
+      "track": "frontier-engineering",
+      "title": "1.2 — Small Functions With Names",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the work",
+      "firstIndependentTask": "Your turn: one function for both tables",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-engineering/01-03-a-module-with-types",
+      "track": "frontier-engineering",
+      "title": "1.3 — A Module, With Types",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the move",
+      "firstIndependentTask": "Your turn: no errors from mypy",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-setup/00-01-a-project-with-its-own-python",
+      "track": "frontier-setup",
+      "title": "0.1 — A Project With Its Own Python",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose the project folder",
+      "firstIndependentTask": "Your turn: keep the environment out of Git",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-setup/00-02-a-package-you-can-import",
+      "track": "frontier-setup",
+      "title": "0.2 — A Package You Can Import",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A package is a folder",
+      "firstIndependentTask": "Your turn: a `frontier-info` command",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-setup/00-03-pytorch-checked-against-numpy",
+      "track": "frontier-setup",
+      "title": "0.3 — PyTorch, Checked Against NumPy",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install PyTorch",
+      "firstIndependentTask": "Your turn: does PyTorch agree with NumPy?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/00-your-studio",
+      "track": "games3d-foundations",
+      "title": "A 3D studio you build, then use to make games",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Describe what the first app must do",
+      "firstIndependentTask": "Independent task: define an editing requirement",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/01-first-program",
+      "track": "games3d-foundations",
+      "title": "Run C# before opening a graphics window",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Find the SDK and choose the working folder",
+      "firstIndependentTask": "Independent task: move another axis",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/02-scene-data",
+      "track": "games3d-foundations",
+      "title": "Scene objects, identity and testable editing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the data its own build boundary",
+      "firstIndependentTask": "Independent task: strengthen the input boundary",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/03-first-viewport",
+      "track": "games3d-foundations",
+      "title": "Draw the scene through a real 3D camera",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Add the native window dependency",
+      "firstIndependentTask": "Independent task: a third object, two views",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/04-select-and-edit",
+      "track": "games3d-foundations",
+      "title": "Select an object and edit its position",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Separate selection from authored scene data",
+      "firstIndependentTask": "Independent task: add a reversible editing action",
+      "signals": [],
       "errors": []
     },
     {
@@ -3158,9 +3933,8 @@
       "level": "advanced",
       "maturity": "review-required",
       "firstStep": "Install pandas",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: the best value per square foot",
       "signals": [
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -3983,11 +4757,376 @@
       "track": "pyside6-engine",
       "title": "1 — A Window That Stays Open",
       "level": "advanced",
-      "maturity": "review-required",
+      "maturity": "in-development",
       "firstStep": "Step 1 — Make a window exist",
       "firstIndependentTask": null,
       "signals": [
         "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-01-the-cart-and-the-pole",
+      "track": "qarcade-cartpole",
+      "title": "2.1 — The Cart and the Pole",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the tip of the pole",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-02-simple-rules-measured",
+      "track": "qarcade-cartpole",
+      "title": "2.2 — Simple Rules, Measured",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: push towards the lean",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-03-four-numbers-into-one-cell",
+      "track": "qarcade-cartpole",
+      "title": "2.3 — Four Numbers into One Cell",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: four slots, one row number",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-04-the-corridor-agent-on-cartpole",
+      "track": "qarcade-cartpole",
+      "title": "2.4 — The Corridor Agent on CartPole",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a schedule",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-05-judging-an-agent-honestly",
+      "track": "qarcade-cartpole",
+      "title": "2.5 — Judging an Agent Honestly",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how much to trust an average",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-cartpole/02-06-where-tables-break",
+      "track": "qarcade-cartpole",
+      "title": "2.6 — Where Tables Break",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: count the rows it used",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-corridor/01-01-a-corridor-you-can-play",
+      "track": "qarcade-corridor",
+      "title": "1.1 — A Corridor You Can Play",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: running out of time",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-corridor/01-02-the-q-table",
+      "track": "qarcade-corridor",
+      "title": "1.2 — The Q-table",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: break ties at random",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-corridor/01-03-the-update-by-hand",
+      "track": "qarcade-corridor",
+      "title": "1.3 — The Update, by Hand",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: one update",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-corridor/01-04-explore-or-exploit",
+      "track": "qarcade-corridor",
+      "title": "1.4 — Explore or Exploit",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: explore sometimes",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-corridor/01-05-watch-it-learn",
+      "track": "qarcade-corridor",
+      "title": "1.5 — Watch It Learn",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how far ahead to look",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-networks/04-01-a-function-with-knobs",
+      "track": "qarcade-networks",
+      "title": "4.1 — A Function with Knobs",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how wrong is it?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-networks/04-02-downhill",
+      "track": "qarcade-networks",
+      "title": "4.2 — Downhill",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the slope by formula",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-networks/04-03-a-hidden-layer",
+      "track": "qarcade-networks",
+      "title": "4.3 — A Hidden Layer",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the forward pass",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-networks/04-04-pytorch",
+      "track": "qarcade-networks",
+      "title": "4.4 — PyTorch",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the network as layers",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-networks/04-05-keras",
+      "track": "qarcade-networks",
+      "title": "4.5 — Keras, and a Network That Knows the Maze",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the tutorial's network",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze/03-01-the-maze-game",
+      "track": "qarcade-qmaze",
+      "title": "3.1 — The Maze Game",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: no coming back",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze/03-02-rewards-that-shape-behaviour",
+      "track": "qarcade-qmaze",
+      "title": "3.2 — Rewards That Shape Behaviour",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how did it end?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze/03-03-solving-the-maze",
+      "track": "qarcade-qmaze",
+      "title": "3.3 — Solving the Maze, and Checking It",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how many extra moves?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze/03-04-a-new-maze",
+      "track": "qarcade-qmaze",
+      "title": "3.4 — A New Maze",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: what the tutorial's agent sees",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze/03-05-reading-the-tutorials-code",
+      "track": "qarcade-qmaze",
+      "title": "3.5 — Reading the Tutorial's Code",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: fix it",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze-dqn/05-01-a-network-that-sees-the-maze",
+      "track": "qarcade-qmaze-dqn",
+      "title": "5.1 — A Network That Sees the Maze",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: choosing an action",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze-dqn/05-02-experience-replay",
+      "track": "qarcade-qmaze-dqn",
+      "title": "5.2 — Experience Replay",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a random handful",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze-dqn/05-03-saving-judging-watching",
+      "track": "qarcade-qmaze-dqn",
+      "title": "5.3 — Saving, Judging and Watching a Network",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: loading it back",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze-dqn/05-04-the-tutorials-way-in-keras",
+      "track": "qarcade-qmaze-dqn",
+      "title": "5.4 — The Tutorial's Way, in Keras",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the tutorial's targets",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-qmaze-dqn/05-05-the-full-maze",
+      "track": "qarcade-qmaze-dqn",
+      "title": "5.5 — The Full Maze, and a Frozen Copy",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: refreshing the copy",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-setup/00-01-a-project-with-its-own-python",
+      "track": "qarcade-setup",
+      "title": "0.1 — A Project With Its Own Python",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose the project folder",
+      "firstIndependentTask": "Your turn: keep the environment out of Git",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-setup/00-02-a-window-and-a-loop",
+      "track": "qarcade-setup",
+      "title": "0.2 — A Window and a Loop",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: stop at the edges",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -5031,6 +6170,786 @@
       "signals": [
         "prediction not detected",
         "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-01-the-plan-and-a-repository",
+      "track": "studio-build",
+      "title": "0.1 — The Plan, the Backlog and a Repository",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make the project's folder",
+      "firstIndependentTask": "Challenge: a story of your own",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-02-node-and-package-json",
+      "track": "studio-build",
+      "title": "0.2 — Node, package.json and Modules",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Is Node installed?",
+      "firstIndependentTask": "Challenge: a second export",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-03-typescript",
+      "track": "studio-build",
+      "title": "0.3 — TypeScript: Types Checked Before the Program Runs",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Installing a tool",
+      "firstIndependentTask": "Challenge: make the checker catch something",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-04-tests-first",
+      "track": "studio-build",
+      "title": "0.4 — Tests First, with Vitest",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install Vitest",
+      "firstIndependentTask": "Challenge: red, green, refactor for a name with spaces",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-05-a-page-with-vite",
+      "track": "studio-build",
+      "title": "0.5 — A Page, with Vite",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install Vite",
+      "firstIndependentTask": "Challenge: a second line on the page",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-06-an-electron-window",
+      "track": "studio-build",
+      "title": "0.6 — A Window of Its Own, with Electron",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install Electron",
+      "firstIndependentTask": "Challenge: a window that fits",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-07-testing-the-window",
+      "track": "studio-build",
+      "title": "0.7 — Testing the Window, End to End",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install Playwright",
+      "firstIndependentTask": "Challenge: test the window's size",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/00-08-sprint-review",
+      "track": "studio-build",
+      "title": "0.8 — Sprint Review, Retrospective and a Release Tag",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "One command for \"done\"",
+      "firstIndependentTask": "Challenge: checks on every push",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-01-vectors",
+      "track": "studio-build",
+      "title": "1.1 — Vectors: Where Things Are, and Where They're Going",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Where things are on a screen",
+      "firstIndependentTask": "Challenge: subtract and distance",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-02-the-scene-tree",
+      "track": "studio-build",
+      "title": "1.2 — The Scene Tree",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A node: tests",
+      "firstIndependentTask": "Challenge: no node inside itself",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-03-positions-in-the-tree",
+      "track": "studio-build",
+      "title": "1.3 — Positions in the Tree: Local and Global",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A node with a position: a test",
+      "firstIndependentTask": "Challenge: placing a node at a global position",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-04-update-and-delta-time",
+      "track": "studio-build",
+      "title": "1.4 — Making Things Move: update and Delta Time",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Every node, every frame: a test",
+      "firstIndependentTask": "Challenge: a ball that bounces",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-05-the-game-loop",
+      "track": "studio-build",
+      "title": "1.5 — The Game Loop: Fixed Time Steps",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A loop that counts steps: tests",
+      "firstIndependentTask": "Challenge: smooth drawing between steps",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-06-input",
+      "track": "studio-build",
+      "title": "1.6 — Input: Keys, Actions and the Moment of a Press",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Held keys: tests",
+      "firstIndependentTask": "Challenge: just released",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-07-the-game",
+      "track": "studio-build",
+      "title": "1.7 — The Game: One Object That Runs a Frame",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "One frame: a test",
+      "firstIndependentTask": "Challenge: pausing",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-08-drawing-the-tree",
+      "track": "studio-build",
+      "title": "1.8 — Drawing the Tree, and a Player",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A box",
+      "firstIndependentTask": "Challenge: drawing in layers",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-09-phaser-draws-it",
+      "track": "studio-build",
+      "title": "1.9 — Phaser Draws It, in the Window",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install Phaser",
+      "firstIndependentTask": "Challenge: keys that stick",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/01-10-sprint-1-review",
+      "track": "studio-build",
+      "title": "1.10 — Sprint 1 Review: Version 0.2.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A new version number",
+      "firstIndependentTask": "Challenge: two players",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-01-scenes-as-data",
+      "track": "studio-build",
+      "title": "2.1 — Scenes as Data: JSON and a Data Model",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "What JSON can't hold: tests",
+      "firstIndependentTask": "Challenge: the shape checker at work",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-02-building-nodes-from-data",
+      "track": "studio-build",
+      "title": "2.2 — Building Nodes from Data",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Building a tree: a test",
+      "firstIndependentTask": "Challenge: names a path can find",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-03-properties",
+      "track": "studio-build",
+      "title": "2.3 — Properties: From the File onto the Node",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Paths in errors: a test",
+      "firstIndependentTask": "Challenge: every mistake at once",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-04-checking-a-scene-file",
+      "track": "studio-build",
+      "title": "2.4 — Checking a Scene File Before Trusting It",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A good file: a test",
+      "firstIndependentTask": "Challenge: names that make good paths",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-05-the-game-starts-from-a-file",
+      "track": "studio-build",
+      "title": "2.5 — The Game Starts from a Scene File",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "One call to load a scene: tests",
+      "firstIndependentTask": "Challenge: a room",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/02-06-sprint-2-review",
+      "track": "studio-build",
+      "title": "2.6 — Sprint 2 Review: Version 0.3.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Version 0.3.0",
+      "firstIndependentTask": "Challenge: a scene's changes in Git",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-01-the-scene-api",
+      "track": "studio-build",
+      "title": "3.1 — The Scene API: Changing Scene Data",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Finding a node in the data: a test",
+      "firstIndependentTask": "Challenge: getProp",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-02-add-delete-rename",
+      "track": "studio-build",
+      "title": "3.2 — Adding, Deleting and Renaming Nodes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Adding a node: a test",
+      "firstIndependentTask": "Challenge: moving a node",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-03-undo-with-commands",
+      "track": "studio-build",
+      "title": "3.3 — Undo, the Classic Way: Commands and Two Stacks",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The history: a test",
+      "firstIndependentTask": "Challenge: an addNode command",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-04-undo-with-snapshots",
+      "track": "studio-build",
+      "title": "3.4 — Undo by Snapshots: One Undo for Every Command",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Rename, and a change that fails half way: tests",
+      "firstIndependentTask": "Challenge: a limit on history",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-05-each-change-as-code",
+      "track": "studio-build",
+      "title": "3.5 — Each Change as a Line of Code",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Numbers and vectors as code: a test",
+      "firstIndependentTask": "Challenge: a label from the code",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-06-running-the-code",
+      "track": "studio-build",
+      "title": "3.6 — Running the Code: Scripts and Replay",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Code changes the scene: a test",
+      "firstIndependentTask": "Challenge: addNode in scripts",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-07-a-console-in-the-app",
+      "track": "studio-build",
+      "title": "3.7 — A Console in the App: Code, Log, Undo",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A style sheet",
+      "firstIndependentTask": "Challenge: buttons that know",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/03-08-sprint-3-review",
+      "track": "studio-build",
+      "title": "3.8 — Sprint 3 Review: Version 0.4.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Version 0.4.0",
+      "firstIndependentTask": "Challenge: your own script",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-01-react-and-a-first-component",
+      "track": "studio-build",
+      "title": "4.1 — React: A First Component",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install React",
+      "firstIndependentTask": "Challenge: a second prop",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-02-the-editor-store",
+      "track": "studio-build",
+      "title": "4.2 — The Editor's Store",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The store: a first test",
+      "firstIndependentTask": "Challenge: listeners that throw",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-03-the-console-as-a-component",
+      "track": "studio-build",
+      "title": "4.3 — The Console as a Component",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Joining React to the store",
+      "firstIndependentTask": "Challenge: Run only when there's code",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-04-panels-around-the-game",
+      "track": "studio-build",
+      "title": "4.4 — Panels Around the Game",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The story's acceptance test",
+      "firstIndependentTask": "Challenge: a status bar",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-05-the-scene-tree-panel",
+      "track": "studio-build",
+      "title": "4.5 — The Scene Tree Panel",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The story's acceptance test",
+      "firstIndependentTask": "Challenge: folding",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-06-a-registry-of-node-types",
+      "track": "studio-build",
+      "title": "4.6 — A Registry of Node Types",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A type's properties: a test",
+      "firstIndependentTask": "Challenge: help text",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-07-the-inspector",
+      "track": "studio-build",
+      "title": "4.7 — The Inspector",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The story's acceptance test",
+      "firstIndependentTask": "Challenge: dragging a number",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "studio-build/04-08-sprint-4-review",
+      "track": "studio-build",
+      "title": "4.8 — Sprint 4 Review: Version 0.5.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Version 0.5.0",
+      "firstIndependentTask": "Challenge: a renamed node stays selected",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-01-edit-and-play",
+      "track": "studio-build",
+      "title": "5.1 — Edit and Play",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A test for the two modes",
+      "firstIndependentTask": "Challenge: Play with the keyboard",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-02-turning-and-stretching",
+      "track": "studio-build",
+      "title": "5.2 — Turning and Stretching",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "subtract: a test",
+      "firstIndependentTask": "Challenge: the angle the other way",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-03-drawing-turned-boxes",
+      "track": "studio-build",
+      "title": "5.3 — Drawing Turned Boxes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The drawing tests",
+      "firstIndependentTask": "Challenge: circles",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-04-click-to-select",
+      "track": "studio-build",
+      "title": "5.4 — Click to Select",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The test first",
+      "firstIndependentTask": "Challenge: click again to go deeper",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-05-drag-to-move",
+      "track": "studio-build",
+      "title": "5.5 — Drag to Move",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The test first",
+      "firstIndependentTask": "Challenge: Escape cancels a drag",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-06-pan-and-zoom",
+      "track": "studio-build",
+      "title": "5.6 — Pan and Zoom",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The test first",
+      "firstIndependentTask": "Challenge: frame the selection",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-07-rotate-and-scale-tools",
+      "track": "studio-build",
+      "title": "5.7 — Rotate and Scale Tools",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The test first",
+      "firstIndependentTask": "Challenge: a rotation handle",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-08-snapping-to-a-grid",
+      "track": "studio-build",
+      "title": "5.8 — Snapping to a Grid",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The test first",
+      "firstIndependentTask": "Challenge: a grid size in the toolbar",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/05-09-sprint-5-review",
+      "track": "studio-build",
+      "title": "5.9 — Sprint 5 Review: Version 0.6.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Version 0.6.0",
+      "firstIndependentTask": "Challenge: the pointer code, unit tested",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-01-the-pointer-code-unit-tested",
+      "track": "studio-build",
+      "title": "6.1 — The Pointer Code, Unit Tested",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The safety net",
+      "firstIndependentTask": "Challenge: a drag cancelled with Escape",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-02-the-main-process-in-typescript",
+      "track": "studio-build",
+      "title": "6.2 — The Main Process, in TypeScript",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Two processes",
+      "firstIndependentTask": "Challenge: a branch you throw away",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-03-a-fake-file-system",
+      "track": "studio-build",
+      "title": "6.3 — A Fake File System",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The shape of a project",
+      "firstIndependentTask": "Challenge: missing, or not allowed?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-04-the-preload-bridge",
+      "track": "studio-build",
+      "title": "6.4 — The Preload Bridge",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The API the page will see",
+      "firstIndependentTask": "Challenge: the folder in the title",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-05-saving-safely",
+      "track": "studio-build",
+      "title": "6.5 — Saving, Safely",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the story",
+      "firstIndependentTask": "Challenge: no stray files",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-06-the-save-button",
+      "track": "studio-build",
+      "title": "6.6 — The Save Button",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Scene to text: a test",
+      "firstIndependentTask": "Challenge: an unsaved marker",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-07-open-a-project-folder",
+      "track": "studio-build",
+      "title": "6.7 — Open a Project Folder",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the story",
+      "firstIndependentTask": "Challenge: recent projects",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-08-the-zip-format",
+      "track": "studio-build",
+      "title": "6.8 — The Zip Format",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the story",
+      "firstIndependentTask": "Challenge: compressed",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-09-export",
+      "track": "studio-build",
+      "title": "6.9 — Export",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A folder that isn't there yet: a contract test",
+      "firstIndependentTask": "Challenge: exporting into the project",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "studio-build/06-10-sprint-6-review",
+      "track": "studio-build",
+      "title": "6.10 — Sprint 6 Review: Version 0.7.0",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Version 0.7.0",
+      "firstIndependentTask": "Challenge: a warning before losing changes",
+      "signals": [
+        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []

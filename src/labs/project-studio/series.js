@@ -8,6 +8,14 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'games3d',
+    label: 'Build a 3D Game Studio — Then Make Games',
+    prefix: 'games3d-',
+    sharedProject: true,
+    chapters: [['games3d-foundations', '01 · Scene Data, a 3D Viewport and Editing']],
+    planned: 'The first scene editor lessons are available. Saving, undo, Play/Stop, export and genre projects are planned in docs/3d-games-project-studio-curriculum.md. Circuit Clash remains a separate reference course.',
+  },
+  {
     key: 'cpp-mastery',
     label: 'C++ — From Zero to Mastery',
     prefix: 'cpp-',

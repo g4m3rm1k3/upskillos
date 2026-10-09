@@ -21,6 +21,8 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [ ] **Build a 3D game studio and its games (2026-10-09, in progress):** implemented the opening Foundations lessons through a native 3D viewport, object selection and position editing, with headless scene/session assertions and an author reconstruction checker. Saving, undo, isolated play, export and game-driven studio extensions remain planned. See [the curriculum](3d-games-project-studio-curriculum.md) and [implementation evidence and remaining review](3d-studio-opening-verification.md).
+
 - [ ] **C++ teaching repairs before A23 (2026-10-08):** educational review captured; inverse arithmetic, table construction, representation reasoning and A22c independent delivery/Git recovery are implemented. Compiler, structural, progress-identity and non-desktop checks pass. Browser review is pending after browser tools stopped, so the gate stays open; broader DSA and collaborative Git remain explicit unfinished strands in the [repair log](curricula/cpp-games/teaching-review.md).
 
 - [x] **C++ observations and Q-value storage through A22b (2026-10-08):** split observation boundaries/reversible indexing from table ownership and legal maxima. Independent decoding and storage challenges have progressive hints and compiled wrong-answer trials. Browser review checked both lessons, comparisons and hints. Action selection, updates and training remain next; see the [section audit](cpp-games-learning-path.md#observations-and-q-value-storage--2026-10-08).

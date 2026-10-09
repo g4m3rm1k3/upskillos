@@ -36,7 +36,11 @@ At the end of a session, update this file (state, next steps, anything learned) 
   node scripts/frontier-safe-run.mjs --timeout 590 --mem 4096 -- npx vitest run src/labs/project-studio/frontier.desktop.test.js
   ```
 
-  The tool call's limit is 10 minutes, so as chapters are added, use `FRONTIER_KEEP=<scratch folder>` once, then `FRONTIER_START=<that folder> FRONTIER_FROM=<new lesson prefix>` to walk only the new lessons.
+  The tool call's limit is 10 minutes, so as chapters are added, use `FRONTIER_KEEP=<scratch folder>` once, then `FRONTIER_START=<that folder> FRONTIER_FROM=<new lesson prefix>` to walk only the new lessons. The prefix is the lesson id with its track, for example `FRONTIER_FROM=frontier-engineering/01-04`. The test re-points the kept `.venv`'s `__editable__*.pth` at the new copy's `src`, since the kept one names a folder that no longer exists.
+- Kept projects live in the session's scratchpad, so each session rebuilds one. Measured on 2026-10-09: Chapter 0 alone takes about 435 s (`FRONTIER_UNTIL=frontier-setup/00-03` with `FRONTIER_KEEP`), lessons 1.1–1.2 about 235 s and 1.3 about 240 s. So: one run for Chapter 0 with `FRONTIER_KEEP`, a second from it for 1.1–1.3 (`FRONTIER_UNTIL=frontier-engineering/01-03`) with another `FRONTIER_KEEP`, then walk only the new lessons from that.
+- Git runs in the walkthrough's temporary project (Chapter 1 on), with the owner's global `user.name` and `user.email`. The walkthrough never runs `git config --global`, and the agent never runs git in this repository.
+- A wrong answer can type the step's file after all with `typeFile: true` (lesson 1.3: "did not update the tests" types the script but leaves the tests alone).
+- `projectChecks.test.js` (its stdin test) can time out at 5 s when the whole non-desktop suite runs at once. It passes on its own. It isn't a Frontier failure.
 - Non-desktop Project Studio tests (format and registration, about 30 s):
 
   ```powershell
@@ -45,40 +49,52 @@ At the end of a session, update this file (state, next steps, anything learned) 
 
 ## State of the project (what a learner has after the last written lesson)
 
-After Chapter 0 (lessons 0.1–0.3, walkthrough passing on 2026-10-08):
+After lesson 1.3 (walkthrough passing on 2026-10-09). Chapter 0's files are unchanged except as noted.
 
 ```text
-frontier/
-  .gitignore              .venv/, __pycache__/, .pytest_cache/, *.egg-info/
-  pyproject.toml          setuptools; name frontier; dependencies numpy>=2, torch>=2.6;
-                          [project.scripts] frontier-info = "frontier.info:main"; src layout
-  requirements.txt        numpy==2.5.3, pytest==9.1.1, torch==2.14.1
-  experiments/first_tensors.py
+frontier/                 a Git repository on branch main, clean; 1.1 made two commits, 1.2 and 1.3 one each (merged branches)
+  .gitignore              .venv/, __pycache__/, .pytest_cache/, *.egg-info/, .mypy_cache/
+  requirements.txt        mypy==2.4.0, numpy==2.5.3, pytest==9.1.1, torch==2.14.1
+  textstats.py            the program: TOP_WORDS = 10, TOP_LETTERS = 5, print_top(title, counts, n),
+                          print_report(path) (still a bare except: + sys.exit(), still prints as it
+                          computes), main() under if __name__ == "__main__"
+  data/sample.txt         the supplied text (100 words, 9 non-blank lines)
+  tools/save_golden.py    runs textstats.py, writes tests/golden/sample.txt
+  tools/check_test_catches.py   supplied; used only by lesson 1.1's check
   src/frontier/
-    __init__.py           __version__ = "0.1.0"
-    info.py               device(), environment() (python, system, numpy, torch, device), report(), main()
-    selfcheck.py          matmul_difference(n, seed)
+    __init__.py, info.py, selfcheck.py   (Chapter 0)
+    text.py               PUNCTUATION, count_lines, split_words, letters, tally(items: Iterable[str]),
+                          top(counts, n), all type-hinted; mypy --strict passes
   tests/
     conftest.py           2 threads
-    test_info.py          -k environment, report
-    test_torch_info.py    -k device, versions, agreement
+    test_info.py, test_torch_info.py     (Chapter 0)
+    golden/sample.txt     the report as given
+    test_legacy_output.py learner-written: runs textstats.py on data/sample.txt, compares with the golden file
+    test_pieces.py        -k lines, split, letters, tally, top (imports frontier.text)
+    test_annotations.py   -k count, split, letters, tally, top (get_type_hints)
 ```
 
-Taught so far: virtual environments and `sys.prefix`; `PATH`; `python -m pip`; pins vs ranges; wheels; `.gitignore`; packages, `__init__.py`, `sys.path`, the src layout; `pyproject.toml`; editable installs and `.pth` files; console-script entry points; reading pytest tests; threads; the CPU and CUDA builds of PyTorch; devices; tensors (`from_numpy`, `dtype`, `.to`, `@`, `.cpu().numpy()`); float32 vs float64; comparing against a reference with a tolerance.
+Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `commit -m`, `log --oneline`, `diff`, `restore`, `switch -c`, `branch`, `merge` and fast-forwards, `branch -d`); characterisation tests and golden files; seeing a test fail before trusting it; `subprocess.run` (`cwd`, `capture_output`, `text`, `check`); `pathlib.Path` (`__file__`, `resolve`, `parent`, `/`, `mkdir`, `read_text`, `write_text`, encoding); `__name__ == "__main__"`; constants; truthiness of strings; generator expressions and list comprehensions; `dict.get`; dictionary order; `max(key=)` and its tie rule; stable `sorted`; slicing `[:n]`; docstrings; editor rename (F2) and Replace All; type hints (`list[str]`, `dict[str, int]`, `tuple[str, int]`, `Iterable[str]` from `collections.abc`, variable hints); hints aren't enforced at run time; mypy `--strict`.
 
-Not yet taught (don't use without teaching): git, dataclasses, `argparse`, exceptions as design, type hints, the debugger, profiling, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
+Not yet taught (don't use without teaching): dataclasses, `with open(...)`, exceptions as design (`raise`, narrow `except`, exit codes, stderr), `argparse`, GitHub and remotes, the debugger, profiling, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
 
-## Next: Chapter 1 · From Script to Software (`frontier-engineering`, `trackOrder: 15.01`)
+## Next: lessons 1.4 and 1.5 (Chapter 1 · From Script to Software, `frontier-engineering`)
 
-Plan row: a supplied hacked-together text-statistics script (one long file, globals, copy-paste) refactored step by step into functions, modules, a dataclass and a command-line tool, without changing its output. Taught: naming and function design, type hints, dataclasses, exceptions on purpose, `argparse`, tests with `pytest` written first to pin the old behaviour, git (commits, branches, GitHub).
+Lessons 1.1–1.3 are written: `01-01-pin-the-old-behaviour`, `01-02-small-functions-with-names`, `01-03-a-module-with-types`. Each lesson since 1.2 works on a branch and merges it into `main` at the end. Keep that habit, more briefly each time. Every step ends with `tests/test_legacy_output.py` passing: the report must not change.
 
-Design notes for it:
+**1.4 · A dataclass, and computing apart from printing** (planned):
 
-- The supplied script should be a believable hack, about 60–80 lines: it reads a text file, counts words and characters, finds the most common words, and prints a report. Give it real smells (globals, a copy-pasted block, magic numbers, one 50-line function, a bare `except`). Text statistics lead into the language-modelling chapters, so the code isn't throwaway: Chapter 26 counts characters the same way.
-- The first lesson pins its current output with a **characterisation test** (run the script on a supplied text and compare with saved output), before changing anything.
-- The package goes under `src/frontier/text/` (or `textstats.py`). Keep it inside the `frontier` package.
-- Git: the learner runs git in their own project. The checks can use the existing `git-commits <min>` check kind and the "everything is pushed" check (`desktop/app/project-checks.cjs`). The agent still never runs git on this repo.
-- About 4–5 lessons.
+- A `@dataclass` `TextStats` in `frontier/text.py`: lines, words, unique_words, longest_word, average_word_length, top_words and top_letters (`list[tuple[str, int]]`). Teach what the decorator writes for you (`__init__`, `__repr__`, `__eq__`), and that equality makes it easy to test.
+- `analyse(text: str, top_words: int = 10, top_letters: int = 5) -> TextStats` prints nothing. `format_report(stats: TextStats) -> str` returns the exact report text. `print_report` becomes reading the file plus `print(format_report(analyse(text)))`. `print` adds the final newline, so `format_report` returns the text without it.
+- `with open(path) as f:` replaces open/read/close. Keep the bare `except:` and the default encoding until 1.5, so the output really is unchanged.
+- Tests: a provided test file comparing `analyse("...")` with a whole `TextStats(...)`. Mind the `-k` rule: a test name's leading word must not appear in the file's name. Your turn: `format_report`, checked by the characterisation test and a unit test.
+
+**1.5 · Errors on purpose, and a real command** (planned):
+
+- Replace the bare `except:` with narrow exceptions. Decide the behaviour on bad input on purpose, and say so in the lesson, because this *does* change it (never on the sample): a missing file prints `textstats: can't read <path>: <reason>` to **stderr** and exits with code 1. Empty text: `analyse` raises `ValueError("no words to count")` instead of crashing in `max` or with `ZeroDivisionError`. Read with `encoding="utf-8"`, and say why (the Windows default isn't UTF-8).
+- `argparse` in a module such as `frontier/textstats_cli.py`: `frontier-textstats PATH [--top N] [--letters N]`, a `[project.scripts]` entry, then install again. argparse exits with code 2 on a usage error, which makes a good prediction.
+- The characterisation test switches to running the command, `textstats.py` is deleted (`git rm`), and `tools/save_golden.py` runs the command too.
+- GitHub: create an empty repository (on the website or with `gh repo create`), then `git remote add origin` and `git push -u origin main`. Checks: `git-remote origin` and `git-pushed`. In the walkthrough, `origin` is a bare repository in the temporary folder (`git init --bare`), so nothing reaches GitHub.
 
 ## After that: Chapter 2 needs figures
 
