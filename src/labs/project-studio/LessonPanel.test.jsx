@@ -104,3 +104,12 @@ it('describes passed checks as evidence and never treats a skipped check as pass
   expect(host.textContent).not.toContain('Listed checks passed');
   expect(host.textContent).toContain('not checked on this computer');
 });
+
+it('labels a browser diff as a lesson preview rather than a check of the learner file', async () => {
+  const step = { id: 'preview', title: 'Append a rule', file: 'Core/Rule.cs', target: 'source', prose: 'Explain the rule.', checks: [] };
+  const lesson = { id: 'preview', title: 'Rules', steps: [step] };
+  await act(async () => root.render(<LessonPanel C={C} lesson={lesson} lessons={[lesson]} step={step}
+    stepIndex={0} currentContent="previous source" referencePreview />));
+  expect(host.textContent).toContain('Lesson changes preview: compared with the previous guided code.');
+  expect(host.textContent).toContain('compare with your own file');
+});

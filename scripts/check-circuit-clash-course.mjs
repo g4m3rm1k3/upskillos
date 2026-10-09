@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { checkCircuitMutations } from '../src/labs/project-studio/circuitClash.mutations.js';
 import { circuitLessons, typeCircuitStep } from '../src/labs/project-studio/circuitClash.walkthrough.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -96,6 +97,10 @@ try {
     if (name === '16-test-the-race') run(['run', '--project', 'Checks', '-p:UseSharedCompilation=false'], 'FOUNDATION CHECKS PASSED');
     if (name === '28-regression-and-evidence') run(['run', '--project', 'Checks', '-p:UseSharedCompilation=false'], 'ALL CHECKS PASSED');
   }
+  const mutations = checkCircuitMutations(root, dotnet);
+  run(['build', 'Checks', '--no-incremental', '-p:UseSharedCompilation=false'], 'Build succeeded.');
+  run(['run', '--project', 'Checks', '--no-build'], 'ALL CHECKS PASSED');
+  console.log(`PASS ${mutations} deliberate mutations detected; restored source passes`);
   console.log(`PASS reconstructed course: ${lessons.length} lessons; ${runs} executed milestones`);
   if (keep) console.log(`Reconstructed project: ${root}`);
 } finally {

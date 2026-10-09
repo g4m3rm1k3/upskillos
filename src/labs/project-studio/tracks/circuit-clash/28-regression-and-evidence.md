@@ -48,9 +48,39 @@ try
 finally { Directory.Delete(folder,true); }
 ```
 
+## Reject well-formed but invalid saved data {#invalid-saved-data}
+
+Malformed JSON is only one failure mode. A file can parse correctly and still claim an unsupported version or an unowned selected package. Each case below uses a fresh temporary directory. `rejected` starts false for each policy, and becomes true only when the expected InvalidDataException is caught. An unrelated exception still fails the runner. A test that catches every exception would accidentally accept a broken file path as evidence of policy validation.
+
+The C# strings use `\"` to place a quotation mark inside the string; the backslash is C# syntax and is not written to the JSON file. The first policy has no visited states; the second has only one action value instead of five. Save bytes are compared after rejection to establish preservation. Keep these tests even when the ordinary round trip passes: the two tests answer different questions.
+
+```csharp edit=Checks/Program.cs mode=append
+folder = Path.Combine(Path.GetTempPath(), "circuit-invalid-" + Guid.NewGuid());
+Directory.CreateDirectory(folder);
+try
+{
+    string path = Path.Combine(folder,"garage.json");
+    foreach (Garage invalid in new[] { new Garage { Version = 2 }, new Garage { Selected = Package.Engine } })
+    {
+        invalid.Save(path); string original = File.ReadAllText(path);
+        Garage fallback = Garage.Load(path,out string warning);
+        Require(warning.Length > 0 && fallback.Valid() && File.ReadAllText(path) == original, "invalid garage is preserved");
+    }
+    foreach (string json in new[] { "{\"Values\":{}}", "{\"Values\":{\"s\":[1]}}" })
+    {
+        string policyPath = Path.Combine(folder,"policy.json");
+        File.WriteAllText(policyPath,json); bool rejected = false;
+        try { PolicyFile.Load(policyPath); }
+        catch (InvalidDataException) { rejected = true; }
+        Require(rejected && File.ReadAllText(policyPath) == json, "invalid policy is rejected without rewriting");
+    }
+}
+finally { Directory.Delete(folder,true); }
+```
+
 ## Test the actual Q-table and ownership boundary
 
-Set the real Policy's row values to the hand-calculated example. Supplying alpha and gamma overrides their training defaults so the expected 4.3 is easy to verify independently. The terminal update uses alpha one, so the estimate becomes exactly the immediate reward regardless of next-state value.
+Set the real Policy's row values to the hand-calculated example. Give an illegal Boost action an estimate of 999, much larger than the legal Race estimate of four. Neither greedy selection nor the update may use that illegal value. This distinguishes a legality-aware implementation from one that simply maximizes the entire row. Supplying alpha and gamma overrides their training defaults so the expected 4.3 is easy to verify independently. The terminal update uses alpha one, so the estimate becomes exactly the immediate reward regardless of next-state value.
 
 Copy the policy, mutate the original row, and assert the snapshot stayed at three. A dictionary-only copy would fail this test because the row arrays would still be shared. This establishes independent estimates, not merely different Policy object identities.
 
@@ -61,6 +91,8 @@ Type this fragment in `Checks/Program.cs`. Append it after the previous fragment
 ```csharp edit=Checks/Program.cs mode=append
 Policy policy = new();
 policy.Row("s")[0] = 2; policy.Row("next")[0] = 4;
+policy.Row("next")[(int)Tactic.Boost] = 999;
+Require(policy.Choose("next",new() {Tactic.Race},new Random(1)) == Tactic.Race, "selection ignores illegal actions");
 policy.Update("s",Tactic.Race,3,"next",new() {Tactic.Race},false,0.5f,0.9f);
 Require(Near(policy.Row("s")[0],4.3f), "Q update uses legal future reward");
 policy.Update("s",Tactic.Race,3,"next",new() {Tactic.Race},true,1,0.9f);
@@ -92,6 +124,24 @@ race.Collect(Race.Step);
 Require(player.Rockets == 1 && player.Mines == 1 && race.Pickups[0].Wait == 7, "pickup replenishes once");
 race.Collect(Race.Step);
 Require(player.Rockets == 1, "pickup waits before respawning");
+```
+
+## Observe hazards across pause and impact {#hazard-lifecycle}
+
+A paused countdown is useful evidence, but a future refactor could freeze only the clock and still advance projectiles. Arrange a mine and a pickup timer, invoke the ordinary Tick entry point, and require both timers to stay unchanged. This observes the systems the pause rule promises to freeze.
+
+Next, put two unshielded targets at the same mine. Combat is called directly to isolate hazard resolution from the contact-separation system. The sum of their suffered hits must be one, and the expired hazard must be removed. Checking only the owner's hit counter would miss an invisible expired object left in memory. The test does not care which target wins the tie; it establishes the one-impact contract.
+
+```csharp edit=Checks/Program.cs mode=append
+race = new(42,Package.Handling); race.Phase = Phase.Paused;
+Hazard mine = new() { Owner = 0, IsMine = true, Position = Vector3.Zero, Life = 5 };
+race.Hazards.Add(mine); race.Pickups[0].Wait = 3;
+race.Tick(new Control[4]);
+Require(mine.Life == 5 && race.Pickups[0].Wait == 3, "pause freezes hazards and pickups");
+foreach (Kart kart in race.Karts) kart.Position = new Vector3(1000,0,1000);
+race.Karts[1].Position = race.Karts[2].Position = Vector3.Zero;
+race.Combat(Race.Step);
+Require(race.Karts[1].Suffered + race.Karts[2].Suffered == 1 && race.Hazards.Count == 0, "one hazard has one impact and expires");
 ```
 
 ## Run complete seeded races and repeat training
@@ -129,5 +179,5 @@ run "dotnet run --project Checks" exit=0 stdout="ALL CHECKS PASSED" timeout=120
 
 This is optional. You can continue without completing it; no later guided step depends on your solution. Keep your attempt and revisit it.
 
-Add a regression for an invalid policy row and another for a garage with an unsupported version. State the expected behavior first. Then revisit the earlier failed challenge without looking at its previous attempt and compare your reasoning.
+Add a regression for a null policy row and another for negative garage credits. State the expected behavior first, and explain which part of the validation expression each case exercises. Then revisit the earlier failed challenge without looking at its previous attempt and compare your reasoning.
 

@@ -117,7 +117,7 @@ The Policy data contract now holds Dictionary<string,float[]> Values, so this pe
 
 Any with a predicate asks whether one invalid entry exists. Nested Any checks each numeric value. The explicit InvalidDataException says the file's meaning is wrong, distinct from malformed JSON syntax. Game can catch the error and fall back to scripted rivals.
 
-This compact policy format has no migration envelope and assumes the declared Tactic order. Changing the state encoding or action order requires discarding/retraining this artifact or adding a versioned migration. Garage saves have stronger preservation requirements than disposable learned policies; we keep that difference explicit. Never load an arbitrary policy and infer competence from the word learned.
+This compact policy format has no migration envelope and assumes the declared Tactic order. Changing the state encoding or action order requires discarding/retraining this artifact or adding a versioned migration. Garage saves have stronger preservation requirements than disposable learned policies; we keep that difference explicit. An empty table is useful when starting training, but is not a trained artifact: reject it when loading a saved policy. A nonempty table still does not prove competence; evaluation provides that evidence.
 
 Type this fragment in `Core/Garage.cs`. Append it after the previous fragment in this file.
 
@@ -129,9 +129,9 @@ public static class PolicyFile
     public static Policy Load(string path)
     {
         Policy? policy = JsonSerializer.Deserialize<Policy>(File.ReadAllText(path));
-        if (policy == null || policy.Values == null || policy.Values.Any(p =>
+        if (policy == null || policy.Values == null || policy.Values.Count == 0 || policy.Values.Any(p =>
             p.Value == null || p.Value.Length != 5 || p.Value.Any(v => !float.IsFinite(v))))
-            throw new InvalidDataException("Policy must contain five finite values per state.");
+            throw new InvalidDataException("Policy must contain at least one state and five finite values per state.");
         return policy;
     }
 }

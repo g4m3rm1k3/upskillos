@@ -305,6 +305,23 @@ contract it must meet. This is why UpSkillOS exists.
   messages between frames). Sprint 6's retrospective asks: when a main-process handler needs a decision, it goes into
   a unit-tested function in `electron/` first. Keep the branch-per-story habit from 6.2.
 
+## Where we stopped (2026-10-08, paused for a few days)
+
+- Sprint 6 (6.1–6.10) is written. Every lesson passes `stepcheck.mjs`, except 6.2's `@types/node` check, which only
+  the replay can run (stepcheck doesn't run `npm install`; the version exists on npm). The studio assembled after 6.10
+  passes both type checks, 166 unit tests and 16 end-to-end tests (run with `--no-file-parallelism`).
+- The full replay has **not** passed since Sprint 6 was added. Two runs failed on end-to-end runs that timed out while
+  the machine was short of memory (6.1's safety-net step, and 4.4 once), and the failures then cascaded. Fixed since,
+  not yet replayed: 6.2 now runs `mkdir example` before `git mv scenes example/scenes`; every Sprint 6 `npm run e2e`
+  check has `timeout=180` (the checker's default is 60 s, too short for 14–16 Electron tests). A third replay was
+  stopped by the user before it finished.
+- First thing next session: ask before running the full replay (it launches hundreds of Electron windows on a machine
+  with little memory). If the user agrees, run it once. If it fails only on a timeout in an end-to-end step, consider
+  making the course's `e2e` script run test files one at a time (`vitest run e2e --no-file-parallelism`) from the
+  lesson that adds it, rather than raising timeouts again.
+- Nothing is committed by me; the user commits. Two untracked circuit-clash files in the repo aren't this course's.
+- Then: Sprint 7 (scripts), as in "Next" above.
+
 ## How to resume (read this first in a new session)
 
 The user's order (2026-10-07): write **every** lesson of this course, through the Kart Circuit final project, before

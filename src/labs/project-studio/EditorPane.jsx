@@ -14,7 +14,7 @@ import { addedLineNumbers, matchesTarget } from './lineDiff.js';
 const LANG_BY_EXT = {
   py: 'python', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
   json: 'json', md: 'markdown', css: 'css', html: 'html', lisp: 'scheme', java: 'java', cs: 'csharp',
-  cpp: 'cpp', c: 'c', h: 'cpp', toml: 'ini', ini: 'ini', txt: 'plaintext',
+  cpp: 'cpp', c: 'c', h: 'cpp', toml: 'ini', ini: 'ini', txt: 'plaintext', xml: 'xml', csproj: 'xml',
 };
 
 function languageFor(rel) {
@@ -75,7 +75,9 @@ export default function EditorPane({
         >
           {done
             ? '✓ This file matches the step — run it.'
-            : `${missing} line${missing === 1 ? '' : 's'} still to add (marked green in the step, right).`}
+            : missing > 0
+              ? `${missing} line${missing === 1 ? '' : 's'} still to add (marked green in the step, right).`
+              : 'Your file differs from this step. Review the highlighted changes in the lesson.'}
         </div>
       )}
 

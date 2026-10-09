@@ -44,7 +44,7 @@ public sealed class App
 
 ## Load state at the boundary and start clean races
 
-The constructor creates the chosen data directory and combines paths using the platform path API. Garage.Load returns both usable session state and a warning. A nonempty warning disables automatic replacement of the original file. Policy loading is independent: a missing or invalid policy leaves scripted rivals available.
+The constructor creates the chosen data directory and combines paths using the platform path API. Garage.Load returns both usable session state and a warning. A nonempty warning disables automatic replacement of the original file. Policy loading is independent: a missing, invalid, or unreadable policy leaves scripted rivals available. UnauthorizedAccessException covers a denied read permission; catching only malformed JSON and I/O errors would leave this expected failure unhandled.
 
 Start creates a new Race rather than trying to reset every field of the previous one manually. It resets reward bookkeeping, accumulated time, and pending input together. Environment.TickCount supplies varying seeds for ordinary play; reproducible experiments use explicit seeds through Training instead.
 
@@ -60,7 +60,7 @@ Type this fragment in `Game/App.cs`. Append it after the previous fragment in th
         garage = Garage.Load(garagePath,out notice); canSave = notice.Length == 0;
         race = new Race(1,garage.Selected);
         try { if (File.Exists(policyPath)) { policy = PolicyFile.Load(policyPath); scripted = false; } }
-        catch (Exception e) when (e is IOException or System.Text.Json.JsonException)
+        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or UnauthorizedAccessException)
         { notice = "Policy unavailable; using scripted rivals."; }
     }
     public void Start(bool watch = false)

@@ -26,7 +26,7 @@ const COMPACT_PROSE =
   '[&_pre]:text-[11.5px] [&_pre_code]:text-[11.5px] [&_pre]:my-3 [&_pre]:p-3 [&_pre]:leading-[1.45]';
 
 export default function LessonPanel({
-  lesson, lessons, stepIndex, step, currentContent,
+  lesson, lessons, stepIndex, step, currentContent, referencePreview = false,
   onPrev, onNext, onSelectLesson, C,
   checkState, onCheck, canCheck, isStepDone, isLessonDone,
   onCreateProvided, providedError,
@@ -131,6 +131,7 @@ export default function LessonPanel({
 
         {step.target != null && (
           <>
+            {referencePreview && <p style={{ fontSize: 12, color: C.hint }}>Lesson changes preview: compared with the previous guided code. Open a project in the desktop app to compare with your own file.</p>}
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: C.muted, marginTop: 12 }}>
               {step.file}
             </div>

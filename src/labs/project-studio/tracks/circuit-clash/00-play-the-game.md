@@ -4,11 +4,14 @@ track: Circuit Clash — C# Software Engineering
 trackOrder: 31
 runtime: none
 pedagogy: typed
+typedDiff: true
 ---
 
 This standalone series teaches software engineering by building **Circuit Clash**, a third-person kart combat racer. Play the browser reference first, then build your own native desktop implementation with C#, .NET 10, and Raylib-cs. The guided path includes low-poly geometry and lighting, driving, combat, menus, persistent upgrades, tactical Q-learning, tests, and packaging. The native build is verified on Apple silicon macOS; other desktop platforms and beginner pacing still need learner testing.
 
 You do not need to have taken the Java, Python or game-engine series. The guided path begins with execution, values, types and logic before combining them into classes, collections and game systems. You will type and understand your own implementation. Playing this sample does not copy source files into your project.
+
+The code panels use the same live diff as the other Project Studio series: green lines need adding, red lines need removing, and amber lines need indentation changes. They compare your file with the code built up through the current step. You still type every line yourself. A matching file confirms transcription; run the lesson’s tests to check behavior. Neither comparison nor a failed challenge blocks moving forward.
 
 ## Play the destination first
 

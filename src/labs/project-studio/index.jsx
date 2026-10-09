@@ -25,6 +25,7 @@ import StudioPanes from './StudioPanes.jsx';
 import { studioSeries, nextSeriesLesson } from './series.js';
 import EditorPane from './EditorPane.jsx';
 import LessonPanel from './LessonPanel.jsx';
+import { withTypedDiffTargets } from './typedDiffTargets.js';
 import OutputPanel from './OutputPanel.jsx';
 import TerminalPanel from './TerminalPanel.jsx';
 import CppProjectRuntime from './CppProjectRuntime.jsx';
@@ -48,7 +49,7 @@ export default function ProjectStudio() {
     ? progress.position.trackKey
     : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
   const fs = useProjectFs(trackKey);
-  const lessons = useMemo(() => (trackKey ? TRACKS[trackKey] ?? [] : []), [trackKey]);
+  const lessons = useMemo(() => withTypedDiffTargets(trackKey ? TRACKS[trackKey] ?? [] : []), [trackKey]);
   const [lessonId, setLessonId] = useState(() => progress.position.lessonId ?? lessons[0]?.id ?? null);
   const lesson = useMemo(() => lessons.find((l) => l.id === lessonId) ?? lessons[0], [lessons, lessonId]);
   const [stepIndex, setStepIndex] = useState(() => Math.max(0, progress.position.stepIndex ?? 0));
@@ -506,13 +507,15 @@ export default function ProjectStudio() {
     </div>
   );
 
+  const referencePreview = step?.diffBefore != null && (!fs.available || !fs.root);
   const lessonPanel = lesson && step && (
     <LessonPanel
       lesson={lesson}
       lessons={lessons}
       stepIndex={lesson.steps.indexOf(step)}
       step={step}
-      currentContent={step.file ? (buffers[step.file] ?? '') : ''}
+      currentContent={referencePreview ? step.diffBefore : step.file ? (buffers[step.file] ?? '') : ''}
+      referencePreview={referencePreview}
       onCreateProvided={createProvided}
       providedError={providedError}
       onSelectStep={(id, index) => { setLessonId(id); setStepIndex(index); }}
