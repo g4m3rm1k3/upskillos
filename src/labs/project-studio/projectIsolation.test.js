@@ -114,3 +114,17 @@ describe('Project Studio track folder isolation', () => {
     expect((await fat.readFile(app, 'taken.cpp', 'cpp-game')).content).toBe('existing work');
   });
 });
+
+describe('a series whose chapters build one project', () => {
+  it('shares one folder between the series and its own chapters, and nobody else', async () => {
+    const arcade = path.join(tmp, 'q-arcade'); fs.mkdirSync(arcade);
+    // Chosen before the series shared its folder, under a chapter's own key.
+    selected = arcade; expect((await project.pickFolder(app, null, 'qarcade-setup')).ok).toBe(true);
+    // The series key takes that folder over, so the learner needn't choose again…
+    expect((await project.getProject(app, 'qarcade')).root).toBe(arcade);
+    // …and choosing it again under the series key is allowed.
+    expect((await project.pickFolder(app, null, 'qarcade')).ok).toBe(true);
+    // An unrelated track still may not use it.
+    expect((await project.pickFolder(app, null, 'cpp-game')).ok).toBe(false);
+  });
+});

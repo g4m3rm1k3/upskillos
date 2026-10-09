@@ -63,7 +63,16 @@ function resolveInRoot(root, relPath) {
 async function getProject(app, scope) {
   const cfg = await loadConfig(app)
   if (scope != null && !/^[a-zA-Z0-9_-]+$/.test(scope)) throw new Error('Invalid project key')
-  const root = (scope == null ? cfg.projectRoot : cfg.projects?.[scope]) || null
+  let root = (scope == null ? cfg.projectRoot : cfg.projects?.[scope]) || null
+  // A series that shares one folder (key "qarcade") takes over the folder one of its chapters
+  // ("qarcade-setup", …) was given before the series shared it, so the learner needn't pick again.
+  if (!root && scope != null) {
+    const chapter = Object.entries(cfg.projects || {}).find(([key]) => key.startsWith(`${scope}-`))
+    if (chapter) {
+      root = chapter[1]
+      await saveConfig(app, { ...cfg, projects: { ...cfg.projects, [scope]: root } })
+    }
+  }
   if (!root) return { root: null, scope }
   // A remembered folder can be deleted or on a disconnected drive between
   // sessions — report that rather than handing back a dead path.
@@ -83,7 +92,9 @@ async function pickFolder(app, mainWindow, scope) {
   const cfg = await loadConfig(app)
   if (scope != null) {
     const samePath = value => path.resolve(value).toLowerCase() === path.resolve(root).toLowerCase()
-    if (Object.entries(cfg.projects || {}).some(([key, value]) => key !== scope && samePath(value))) {
+    // A folder may be shared only between a series and its own chapters ("qarcade" and "qarcade-…").
+    const related = key => key === scope || key.startsWith(`${scope}-`) || scope.startsWith(`${key}-`)
+    if (Object.entries(cfg.projects || {}).some(([key, value]) => !related(key) && samePath(value))) {
       return { ok: false, reason: 'That folder belongs to another Project Studio track. Choose a separate folder for this project.' }
     }
     await saveConfig(app, { ...cfg, projects: { ...cfg.projects, [scope]: root } })

@@ -48,7 +48,9 @@ export default function ProjectStudio() {
   const [trackKey, setTrackKey] = useState(() => (TRACKS[progress.position.trackKey]
     ? progress.position.trackKey
     : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
-  const fs = useProjectFs(trackKey);
+  // A series whose chapters build one project shares one folder; other tracks keep their own.
+  const projectKey = SERIES.find(item => item.sharedProject && item.chapters.some(chapter => chapter.key === trackKey))?.key ?? trackKey;
+  const fs = useProjectFs(projectKey);
   const lessons = useMemo(() => withTypedDiffTargets(trackKey ? TRACKS[trackKey] ?? [] : []), [trackKey]);
   const [lessonId, setLessonId] = useState(() => progress.position.lessonId ?? lessons[0]?.id ?? null);
   const lesson = useMemo(() => lessons.find((l) => l.id === lessonId) ?? lessons[0], [lessons, lessonId]);
@@ -702,7 +704,7 @@ export default function ProjectStudio() {
               ))}
             </div>
             <div style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden', background: C.canvasSurface || (C.dark ? '#1e293b' : '#ffffff') }}>
-              <TerminalPanel root={fs.root} projectKey={trackKey} visible={bottomTab === 'terminal'} C={C} />
+              <TerminalPanel root={fs.root} projectKey={projectKey} visible={bottomTab === 'terminal'} C={C} />
               {bottomTab === 'output' && (
                 <OutputPanel lines={output} running={running} onClear={() => setOutput([])} C={C} fill />
               )}

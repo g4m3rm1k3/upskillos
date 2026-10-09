@@ -6,7 +6,7 @@ runtime: python
 run: play_corridor.py
 ---
 
-**Starting a new chapter:** if the file tree is empty, click **Choose folder…** and select your `q-arcade` folder again. Each chapter remembers its folder separately.
+**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
 Reinforcement learning has a small vocabulary, and every word in it names something you'll build in this lesson:
 

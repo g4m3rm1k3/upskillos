@@ -6,7 +6,7 @@ runtime: python
 run: dqn.py
 ---
 
-**Starting a new chapter:** if the file tree is empty, click **Choose folder…** and select your `q-arcade` folder again.
+**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
 This is **deep Q-learning**: Q-learning (Chapter 1) with a neural network (Chapter 4) in place of the table. Nothing about the learning rule changes. After each step the target is still r + γ · max Q(next), or just r after an ending. What changes is where the values live and how they're nudged. A table stores four numbers per cell and nudges one of them. A network **computes** four numbers from the whole maze, and is nudged by a gradient step that makes its output for that situation a little closer to the target.
 

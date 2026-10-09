@@ -6,7 +6,7 @@ runtime: python
 run: line.py
 ---
 
-**Starting a new chapter:** if the file tree is empty, click **Choose folder…** and select your `q-arcade` folder again.
+**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
 Chapters 2 and 3 ended at the same wall: a table looks up a separate row for every state, so it can't generalise, to the CartPole row next door or to a new maze. What's needed instead is a **function**: something that takes the numbers describing a state and *computes* a value from them, so that similar inputs give similar outputs.
 

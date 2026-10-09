@@ -104,6 +104,8 @@ const SERIES = [
     key: 'qarcade',
     label: 'Q-Arcade — Q-learning by Building Games in pygame',
     prefix: 'qarcade-',
+    // Every chapter builds the same q-arcade project, so they share one folder (key 'qarcade').
+    sharedProject: true,
     chapters: [
       ['qarcade-setup', '00 · Setup'],
       ['qarcade-corridor', '01 · Q-learning in Five Cells'],
@@ -272,7 +274,7 @@ function buildSeries(def, tracks, keys, title) {
   const additional = keys.filter(key => key.startsWith(def.prefix) && !known.has(key)).map(key => ({ key, label: title(key), ...learningProfile(key) }));
   const at = def.insertBefore ? chapters.findIndex(chapter => chapter.key === def.insertBefore) : -1;
   chapters.splice(at < 0 ? chapters.length : at, 0, ...additional);
-  return { key: def.key, label: def.label, chapters, planned: def.planned, ...learningProfile(def.key) };
+  return { key: def.key, label: def.label, chapters, planned: def.planned, sharedProject: !!def.sharedProject, ...learningProfile(def.key) };
 }
 
 export function studioSeries(tracks, keys, title) {

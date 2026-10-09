@@ -6,7 +6,7 @@ runtime: python
 run: cartpole_view.py
 ---
 
-**Starting a new chapter:** if the file tree is empty, click **Choose folder…** and select your `q-arcade` folder again.
+**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
 **CartPole** is the first school problem, and probably the most famous problem in reinforcement learning. A pole stands on a hinge on top of a cart that runs along a track. Every 0.02 seconds you must push the cart either left or right, with the same force. If the pole tilts more than 12° from upright, or the cart runs off either end of the track, the episode is over. Every step survived earns 1 point, and an episode that reaches 500 steps (10 seconds) is stopped there.
 

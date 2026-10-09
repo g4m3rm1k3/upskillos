@@ -6,7 +6,7 @@ runtime: python
 run: play_qmaze.py
 ---
 
-**Starting a new chapter:** if the file tree is empty, click **Choose folder…** and select your `q-arcade` folder again.
+**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
 **QMaze** is the second school problem: a rat in a 10 × 10 maze has to find the cheese in the bottom-right corner. Most courses teach it from one public tutorial, Samy Zafrany's *Deep Reinforcement Learning for Maze Solving* (samyzaf.com/ML/rl/qmaze.html). This chapter builds the same maze, with the same rules and the same reward numbers, so that its code will look familiar when you meet your course's version. Lesson 3.5 then reads the tutorial's own code side by side with yours, including a bug in it.
 
