@@ -8,7 +8,12 @@
 // macOS, which load in this Electron without compiling (measured 2026-10-02 on Electron
 // 35.7.5). It is required lazily so a missing or broken binary only disables the terminal,
 // not the whole app.
+//
+// On macOS, node-pty starts each shell through a small program of its own, spawn-helper. npm
+// often installs it without permission to run, and every shell then fails with "posix_spawnp
+// failed" (seen 2026-10-09). So the permission is set before the first shell starts.
 const { execFile } = require('node:child_process')
+const fs = require('node:fs')
 const path = require('node:path')
 
 let pty = null
@@ -17,10 +22,19 @@ function loadPty() {
   if (pty || loadError) return pty
   try {
     pty = require('node-pty')
+    if (process.platform === 'darwin') makeSpawnHelperRunnable()
   } catch (e) {
     loadError = e
   }
   return pty
+}
+
+function makeSpawnHelperRunnable() {
+  const prebuilds = path.join(path.dirname(require.resolve('node-pty/package.json')), 'prebuilds')
+  for (const arch of ['darwin-arm64', 'darwin-x64']) {
+    const helper = path.join(prebuilds, arch, 'spawn-helper').replace('app.asar', 'app.asar.unpacked')
+    try { fs.chmodSync(helper, 0o755) } catch {}
+  }
 }
 
 const terminals = new Map()

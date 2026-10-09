@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildHtmlBody, elementsToCss, generateExportHtml } from './htmlSync';
 import type { LabElement, BodyStyles } from './types';
 import type { CdnTag } from './cdnLibraries';
@@ -15,6 +15,7 @@ function previewBridge(channel: string) {
   let overlay: HTMLDivElement | null = null;
   const describe = (value: unknown) => {
     if (typeof value === 'string') return value;
+    if (value instanceof Error) return value.stack || value.message;
     try { return JSON.stringify(value) ?? String(value); } catch { return String(value); }
   };
   for (const level of ['log', 'info', 'warn', 'error'] as const) {
@@ -30,7 +31,8 @@ function previewBridge(channel: string) {
     if (!inspect || !target) return;
     const rect = target.getBoundingClientRect();
     Object.assign(overlay.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, background: boxModel ? '#38bdf822' : 'transparent' });
-    overlay.textContent = labels ? `<${target.tagName.toLowerCase()}>` : '';
+    const computed = getComputedStyle(target);
+    overlay.textContent = boxModel ? `${Math.round(rect.width)} × ${Math.round(rect.height)} · padding ${computed.padding} · margin ${computed.margin}` : labels ? `<${target.tagName.toLowerCase()}>` : '';
   }
   addEventListener('message', event => {
     if (event.source !== parent || event.data?.channel !== channel) return;
@@ -46,6 +48,9 @@ function previewBridge(channel: string) {
     selected = target?.getAttribute('data-lab-id') || null;
     send({ type: 'select', id: selected }); draw();
   }, true);
+  for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'dblclick']) {
+    document.addEventListener(type, event => { if (inspect) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
+  }
   document.addEventListener('submit', event => { if (inspect) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
   addEventListener('DOMContentLoaded', () => {
     // Outside body: it cannot become a flex/grid item or match body > * rules.
@@ -86,6 +91,7 @@ interface Props {
 interface Log { level: string; text: string }
 export default function LivePreview({ elements, bodyStyles, customCss, javascript, error, cdnTags = [], pageTitle = '', faviconUrl = '', inspect, selectedId, showLabels = true, showOverlay = false, onSelect }: Props) {
   const iframe = useRef<HTMLIFrameElement>(null);
+  const appliedStyles = useRef<Record<string, Record<string, string>>>({});
   const channel = useRef(`html-lab-${Math.random().toString(36).slice(2)}`).current;
   const [autoRun, setAutoRun] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
@@ -97,8 +103,9 @@ export default function LivePreview({ elements, bodyStyles, customCss, javascrip
   const makeRun = () => ({ documentKey, javascript, html: previewDocument(generateExportHtml(elements, bodyStyles, customCss, error ? '' : javascript, cdnTags, pageTitle, faviconUrl), channel) });
   const [run, setRun] = useState(makeRun);
   const [revision, setRevision] = useState(0);
-  const latest = useRef({ css, inspect, selectedId, showLabels, showOverlay, onSelect });
-  latest.current = { css, inspect, selectedId, showLabels, showOverlay, onSelect };
+  const elementStyles = useMemo(() => Object.fromEntries(elements.map(el => [el.id, el.styles])), [elements]);
+  const latest = useRef({ css, elementStyles, inspect, selectedId, showLabels, showOverlay, onSelect });
+  latest.current = { css, elementStyles, inspect, selectedId, showLabels, showOverlay, onSelect };
   const pending = run.javascript !== javascript;
   function sync() {
     const frame = iframe.current;
@@ -107,6 +114,23 @@ export default function LivePreview({ elements, bodyStyles, customCss, javascrip
     try {
       const style = frame?.contentDocument?.querySelector('[data-html-lab-css]');
       if (style && style.textContent !== latest.current.css) style.textContent = latest.current.css;
+      // Property edits are inline overrides, just like imported style attributes.
+      // Patch only authored properties that changed; keep unrelated runtime styles.
+      if (style) {
+        for (const el of frame!.contentDocument!.querySelectorAll<HTMLElement>('[data-lab-id]')) {
+          const id = el.dataset.labId!;
+          const next = latest.current.elementStyles[id];
+          if (!next) continue;
+          const previous = appliedStyles.current[id] || {};
+          for (const key of new Set([...Object.keys(previous), ...Object.keys(next)])) {
+            if (previous[key] === next[key]) continue;
+            const prop = key.startsWith('--') ? key : key.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
+            if (!next[key]) el.style.removeProperty(prop);
+            else el.style.setProperty(prop, next[key].replace(/\s*!important\s*$/, ''), /!important\s*$/.test(next[key]) ? 'important' : '');
+          }
+        }
+        appliedStyles.current = latest.current.elementStyles;
+      }
     } catch { /* Cross-origin navigation: Run returns to the learner document. */ }
     frame?.contentWindow?.postMessage({ channel, type: 'inspect', inspect: latest.current.inspect, selected: latest.current.selectedId, labels: latest.current.showLabels, boxModel: latest.current.showOverlay }, '*');
   }
@@ -123,7 +147,7 @@ export default function LivePreview({ elements, bodyStyles, customCss, javascrip
     addEventListener('message', receive);
     return () => removeEventListener('message', receive);
   }, [channel]);
-  useEffect(sync, [css, inspect, selectedId, showLabels, showOverlay]);
+  useEffect(sync, [css, elementStyles, inspect, selectedId, showLabels, showOverlay]);
   useEffect(() => {
     if (error) return;
     if (run.documentKey !== documentKey || (autoRun && pending)) {

@@ -19,6 +19,11 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### HTML Lab rendering and editing (2026-10-09)
+
+- [x] Share a live renderer between Inspect and Interact; patch CSS without restarting JavaScript, preserve mixed HTML text and conditional CSS, add execution controls and a runtime console, and prevent Visual JS imports/file switches from overwriting source. See [implementation, verification and remaining work](html-lab-rendering.md).
+- [ ] Extend document preservation to arbitrary head resources/comments, add module resolution and per-file runtime source mapping, and investigate state-preserving structural HTML edits.
+
 ### Project Studio learning quality (2026-10-06)
 
 - [ ] **Build a 3D game studio and its games (2026-10-09, in progress):** implemented Foundations through a native 3D viewport, object editing, creation/deletion, keyboard selection, snapshot-based undo/redo, versioned save/open and an early native Q-learning bot, with behavioral assertions and an author reconstruction checker. Isolated play, export and game-driven studio extensions remain planned. See [the curriculum](3d-games-project-studio-curriculum.md) and [implementation evidence and remaining review](3d-studio-opening-verification.md).

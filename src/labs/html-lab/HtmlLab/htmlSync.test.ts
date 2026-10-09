@@ -332,3 +332,64 @@ describe("elementsToCss — real incident: a hand-typed :root block got silently
     expect(finalGenerated).toContain("--accent");
   });
 });
+
+describe('source fidelity', () => {
+  it('preserves inline text, spaces, entities, and nested tails through repeated edits', () => {
+    const original = '<p>Hello <strong>world <em>&amp; friends</em>!</strong> again. <code>&lt;div&gt;</code> done.</p>';
+    let elements = htmlToElements(original)!;
+    for (let i = 0; i < 3; i++) elements = htmlToElements(elementsToHtml(elements).replace(/<link[^>]*>/g, ""), elements)!;
+    const output = generateExportHtml(elements, {}, '', '');
+    const doc = new DOMParser().parseFromString(output, 'text/html');
+    expect(doc.querySelector('p')?.textContent).toBe('Hello world & friends! again. <div> done.');
+    expect(doc.querySelector('code div')).toBeNull();
+  });
+  it('removes attributes actually removed in source', () => {
+    const elements = htmlToElements('<p data-lab-id="p" class="hidden">hello</p>')!;
+    expect(htmlToElements('<p data-lab-id="p">hello</p>', elements)![0].attrs.class).toBeFalsy();
+  });
+  it('keeps conditional CSS, custom properties, and quoted semicolons intact', () => {
+    const elements = htmlToElements('<div class="card">A</div>')!;
+    const css = '@media (max-width: 600px) { .card { color: red; } } @supports (display:grid) { .card { display:grid; } } .card::after { content:"a;b"; }';
+    const result = applyCssToElements(css, elements);
+    expect(result.customCss).toBe(css);
+    expect(result.elements[0].styles).toEqual({});
+  });
+  it('does not bake imported rules or change their order and specificity', () => {
+    const css = '.card { color: red; } #card { color: blue; } @media (max-width:600px) { .card { padding:10px; } }';
+    const result = parseHtmlDocument(`<style>${css}</style><div class="card" id="card">A</div>`);
+    expect(result.css).toBe(css);
+    expect(result.elements[0].styles).toEqual({});
+  });
+});
+
+it('keeps the page body stable when the editor flushes unchanged source', () => {
+  const imported = htmlToElements('<p>Hello <strong>world</strong> again.</p><button>Count</button>\n')!;
+  const once = elementsToHtml(imported).replace(/<link[^>]*>/g, '');
+  const twice = elementsToHtml(htmlToElements(once, imported)!).replace(/<link[^>]*>/g, '');
+  expect(twice).toBe(once);
+});
+
+it('does not hoist a conditional :root rule out of its media query', () => {
+  const css = '@media (max-width:600px) { :root { --accent:red; } }';
+  expect(elementsToCss([], css, {})).toContain(css);
+});
+
+it('exports property overrides as inline styles so an ID rule cannot defeat a visual edit', () => {
+  const elements = htmlToElements('<div id="card">A</div>')!;
+  elements[0].styles.color = 'green';
+  const doc = new DOMParser().parseFromString(generateExportHtml(elements, {}, '#card { color:red; }', ''), 'text/html');
+  expect(doc.getElementById('card')?.getAttribute('style')).toContain('color: green');
+});
+
+it('round-trips managed responsive styles without duplicating or flattening them', () => {
+  let elements = htmlToElements('<div>A</div>')!;
+  elements[0].mediaQueries = [{breakpoint:'768px',prop:'display',value:'grid'}];
+  let css = '';
+  for (let i=0; i<5; i++) {
+    const result = applyCssToElements(elementsToCss(elements, css, {}), elements);
+    elements = result.elements; css = result.customCss;
+  }
+  expect(elements[0].styles.display).toBeUndefined();
+  expect(elements[0].mediaQueries).toEqual([{breakpoint:'768px',prop:'display',value:'grid'}]);
+  expect(elementsToCss(elements, css, {}).match(/@media/g)).toHaveLength(1);
+});

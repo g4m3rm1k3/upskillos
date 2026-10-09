@@ -12,12 +12,7 @@ export function elementsToHtml(elements: LabElement[]): string {
     `  <link rel="stylesheet" href="styles.css" />`,
     `  <script src="script.js" defer></script>`,
     `</head>`,
-    `<body>`,
-    ``,
-    buildHtmlBody(elements),
-    ``,
-    `</body>`,
-    `</html>`,
+    `<body>${buildHtmlBody(elements)}</body></html>`,
   ].join("\n");
 }
 
@@ -49,13 +44,15 @@ input, button, textarea, select {
 // fix. Only :root is hoisted; every other custom rule keeps acting as an
 // override, applied after the generated rules it may be overriding.
 function extractRootBlock(customCss: string): { rootBlock: string | null; rest: string } {
-  const rootBlockPattern = /:root\s*\{[^}]*\}/i;
-  const match = customCss.match(rootBlockPattern);
-  if (!match) return { rootBlock: null, rest: customCss };
-  return {
-    rootBlock: match[0],
-    rest: (customCss.slice(0, match.index) + customCss.slice((match.index ?? 0) + match[0].length)).trim(),
-  };
+  try {
+    const root = parseCss(customCss);
+    const first = root.nodes.find(node => node.type === 'rule' && node.selector === ':root');
+    if (!first) return { rootBlock: null, rest: customCss };
+    const rootBlock = first.toString();
+    first.remove();
+    return { rootBlock, rest: root.toString().trim() };
+  } catch { return { rootBlock: null, rest: customCss }; }
+
 }
 
 export function elementsToCss(
@@ -254,18 +251,19 @@ export function extractJavascriptRefs(javascript = ""): { labIds: Set<string>; h
 }
 
 // ─── Shared element renderer ──────────────────────────────────────────────────
-export function buildHtmlBody(elements: LabElement[]): string {
+export function buildHtmlBody(elements: LabElement[], inlineStyles = false): string {
   const voidTags = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
   const text = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   function render(el: LabElement): string {
-    const attrs = `${renderAttrs(el.attrs)} data-lab-id="${escapeAttr(el.id)}"`;
+    const inline = inlineStyles && Object.keys(el.styles).length ? ` style="${escapeAttr(stylesToString(el.styles, ""))}"` : "";
+    const attrs = `${renderAttrs(el.attrs)} data-lab-id="${escapeAttr(el.id)}"${inline}`;
     const tail = text(el.trailingText || "");
     if (voidTags.has(el.tag)) return `<${el.tag}${attrs} />${tail}`;
     const children = elements.filter(c => c.parentId === el.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const content = el.preserveText ? text(el.content || "") : el.content || "";
     return `<${el.tag}${attrs}>${content}${children.map(render).join("")}</${el.tag}>${tail}`;
   }
-  return elements.filter(e => !e.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(render).join("\n");
+  return elements.filter(e => !e.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(render).join("");
 }
 
 // ─── Export: standalone HTML ──────────────────────────────────────────────────
@@ -278,7 +276,7 @@ export function generateExportHtml(
   pageTitle = "My Page",
   faviconUrl = "",
 ): string {
-  const htmlBody = buildHtmlBody(elements);
+  const htmlBody = buildHtmlBody(elements, true);
   const css = elementsToCss(elements, customCss, bodyStyles);
 
   const cdnHeadTags = cdnTags.map(({ url, type }) =>
@@ -317,7 +315,7 @@ export function generateExportHtml(
 // see HtmlLab.tsx's exportSplit). Defaults to a single "script.js" for any
 // caller that hasn't been updated to pass real names.
 export function generateLinkedHtml(elements: LabElement[], cdnTags: CdnTag[] = [], jsFileNames: string[] = ["script.js"], pageTitle = "My Page", faviconUrl = ""): string {
-  const htmlBody = buildHtmlBody(elements);
+  const htmlBody = buildHtmlBody(elements, true);
   const cdnHeadTags = cdnTags.map(({ url, type }) =>
     type === "stylesheet"
       ? `  <link rel="stylesheet" href="${url}" />`
@@ -356,6 +354,7 @@ export function applyCssToElements(
   // selectors, at-rules and their order remain CSS for the browser to apply.
   const styleById = new Map<string, Record<string, string>>();
   let bodyStyles: Record<string, string> | undefined;
+  const mediaById = new Map<string, LabElement["mediaQueries"]>();
   const resetBlock = /\/\*\s*Reset\s*\*\/\s*\*,\s*\*::before,\s*\*::after\s*\{[^}]*\}\s*img,\s*video,\s*svg\s*\{[^}]*\}\s*input,\s*button,\s*textarea,\s*select\s*\{[^}]*\}/gi;
   const cleaned = css.replace(resetBlock, "").replace(/\/\*\s*Custom CSS\s*\*\//gi, "");
   try {
@@ -372,11 +371,29 @@ export function applyCssToElements(
         }
       });
       if (managed) styleById.set(managed[1] || managed[2], values);
-      else bodyStyles = values;
+      else bodyStyles = { ...bodyStyles, ...values };
       node.remove();
     }
+    // Responsive rules created by Properties have a precise representable shape.
+    // Re-import those instead of accumulating another copy on every keystroke.
+    for (const node of [...root.nodes]) {
+      if (node.type !== 'atrule' || node.name !== 'media') continue;
+      const breakpoint = node.params.match(/^\(min-width:\s*([^()]+)\)$/)?.[1];
+      if (!breakpoint) continue;
+      for (const child of [...(node.nodes || [])]) {
+        if (child.type !== 'rule') continue;
+        const id = child.selector.match(/^\[data-lab-id="([^"]+)"\]$/)?.[1];
+        if (!id || !elements.some(el => el.id === id)) continue;
+        const entries = mediaById.get(id) || [];
+        child.nodes.forEach(decl => {
+          if (decl.type === 'decl') entries.push({ breakpoint: breakpoint.trim(), prop: decl.prop.startsWith('--') ? decl.prop : decl.prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()), value: decl.value + (decl.important ? ' !important' : '') });
+        });
+        mediaById.set(id, entries); child.remove();
+      }
+      if (!node.nodes?.length) node.remove();
+    }
     return {
-      elements: elements.map(el => styleById.has(el.id) ? { ...el, styles: styleById.get(el.id)! } : el),
+      elements: elements.map(el => ({ ...el, styles: styleById.get(el.id) ?? {}, mediaQueries: mediaById.get(el.id) ?? [] })),
       customCss: root.toString().trim(),
       ...(bodyStyles !== undefined ? { bodyStyles } : {}),
     };

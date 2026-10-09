@@ -1,10 +1,10 @@
-import { parse } from 'acorn';
+import { parse, type Comment } from 'acorn';
 import { parseJsToBlocks } from '../../visual-code/jsToBlocks';
 import { createBlock } from '../../visual-code/blocks';
 import { normalizeProject, transpileProject } from '../../visual-code/transpiler';
 
 function tree(code: string) {
-  const comments: unknown[] = [];
+  const comments: Comment[] = [];
   const ast = parse(code, { ecmaVersion: 'latest', sourceType: 'module', onComment: comments });
   return { comments, normalized: JSON.stringify(ast, (key, value) => ['start', 'end', 'raw'].includes(key) ? undefined : value) };
 }

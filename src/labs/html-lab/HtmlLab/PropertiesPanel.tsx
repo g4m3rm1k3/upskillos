@@ -590,6 +590,7 @@ function PropRow({ row, element, onChange, onContentChange, onTagChange, onAttrC
         <label className={styles.propLabel}>{row.label}</label>
         <input
           className={styles.propInput}
+          aria-label={row.label}
           value={element.attrs?.[attrName] || ""}
           placeholder={row.placeholder || ""}
           onChange={(e) => onAttrChange(attrName, e.target.value)}
@@ -602,7 +603,7 @@ function PropRow({ row, element, onChange, onContentChange, onTagChange, onAttrC
     return (
       <div className={styles.propRow}>
         <label className={styles.propLabel}>{row.label}</label>
-        <select className={styles.propSelect} value={val} onChange={(e) => onChange(row.prop, e.target.value)}>
+        <select className={styles.propSelect} aria-label={row.label} value={val} onChange={(e) => onChange(row.prop, e.target.value)}>
           {(row.opts || []).map((o) => <option key={o} value={o}>{o || "—"}</option>)}
         </select>
       </div>
@@ -613,8 +614,8 @@ function PropRow({ row, element, onChange, onContentChange, onTagChange, onAttrC
     return (
       <div className={styles.propRow}>
         <label className={styles.propLabel}>{row.label}</label>
-        <input type="color" className={styles.propColor} value={toHex(val)} onChange={(e) => onChange(row.prop, e.target.value)} />
-        <input className={styles.propInput} value={val} placeholder="#000000" onChange={(e) => onChange(row.prop, e.target.value)} />
+        <input type="color" className={styles.propColor} aria-label={`${row.label} color picker`} value={toHex(val)} onChange={(e) => onChange(row.prop, e.target.value)} />
+        <input className={styles.propInput} aria-label={row.label} value={val} placeholder="#000000" onChange={(e) => onChange(row.prop, e.target.value)} />
         {pickerBtn}
       </div>
     );
@@ -625,6 +626,7 @@ function PropRow({ row, element, onChange, onContentChange, onTagChange, onAttrC
       <label className={styles.propLabel}>{row.label}</label>
       <input
         className={styles.propInput}
+        aria-label={row.label}
         value={val}
         placeholder={row.placeholder || "e.g. 8px"}
         onChange={(e) => onChange(row.prop, e.target.value)}

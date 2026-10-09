@@ -212,7 +212,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
   return (
     <div className={styles.root}>
       <div className={styles.guide}>Visual JS · {file?.name}<br />Choose a block, fill its fields, then Run in the page preview. Changes update this file.</div>
-      {preservedSource && <p className={styles.guide}>This syntax is kept as an editable code block to preserve its behavior and comments.</p>}
+      {preservedSource && blocks.length > 0 && <p className={styles.guide}>This syntax is kept as an editable code block to preserve its behavior and comments.</p>}
       <div className={styles.twoPane}>
 
         {/* ── Left: Block palette ── */}
@@ -228,6 +228,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
         {/* ── Right: Program ── */}
         <div className={styles.program}>
           <BlockProgram
+            emptyMessage="Choose a block from the palette above to begin."
             blocks={blocks}
             selectedBlockId={selectedBlockId}
             onSelect={id => setSelectedBlockId(prev => prev === id ? null : id)}

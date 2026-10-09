@@ -1058,7 +1058,7 @@ export default function CodePanel({
     if (debounceRef.current !== null) clearTimeout(debounceRef.current);
     if (!NON_EDITOR_TABS.has(activeTab)) {
       const editor = editorRef.current;
-      if (editor) handlers[activeTab]?.(editor.getValue());
+      if (editor && editor.getValue() !== sources[activeTab]) handlers[activeTab]?.(editor.getValue());
     }
     isFocused.current = false;
     setActiveTab(tab);
@@ -1086,6 +1086,7 @@ export default function CodePanel({
   };
 
   const handleChange = (val: string | undefined): void => {
+    if ((val ?? "") === activeSource) return;
     if (debounceRef.current !== null) clearTimeout(debounceRef.current);
     const tab = activeTab;
     debounceRef.current = setTimeout(() => {

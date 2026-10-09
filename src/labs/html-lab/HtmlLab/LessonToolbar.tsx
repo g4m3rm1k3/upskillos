@@ -112,9 +112,9 @@ export default function LessonToolbar({
           className={`${styles.tbBtn} ${previewMode ? styles.tbBtnGoEdit : styles.tbBtnGoPreview}`}
           onClick={onTogglePreview}
           disabled={isPlaying}
-          title={previewMode ? "Back to editor" : "Preview with live JavaScript"}
+          title={previewMode ? "Inspect elements" : "Interact with the live page"}
         >
-          {previewMode ? "✎ Edit" : "▶ Preview"}
+          {previewMode ? "✎ Inspect" : "▶ Interact"}
         </button>
 
         <PageSettingsControl pageTitle={pageTitle} faviconUrl={faviconUrl} onChange={onChangePageMeta} />
