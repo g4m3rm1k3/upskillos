@@ -3,7 +3,7 @@ import { createBlock } from '../../visual-code/blocks.ts'
 import {
   normalizeProject, insertBlock, removeBlock, moveBlock, updateBlock, transpileProject
 } from '../../visual-code/transpiler.ts'
-import { parseJsToBlocks } from '../../visual-code/jsToBlocks.ts'
+import { importVisualJs } from './visualJsImport'
 import {
   BlockPalette, BlockProgram, computeDomHints, computeClassHints, computeVariableHints,
   type BlockEditorClassNames,
@@ -78,11 +78,12 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
   const [query, setQuery] = useState('')
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [importFlash, setImportFlash] = useState(false)
+  const [preservedSource, setPreservedSource] = useState(false)
   // Per file: the JS text last imported into (or generated for) it, so each
   // file independently knows whether its code has changed since it was last
   // in sync with its blocks.
   const lastImportedCodeRef = useRef<Map<string, string>>(new Map())
-  const importingRef = useRef(false)
+  const dirtyFileRef = useRef<string | null>(null)
 
   const file = project.files.find(f => f.id === project.activeFileId) ?? project.files[0]
   const blocks = file?.blocks ?? []
@@ -104,16 +105,10 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
   const onCodeChangeRef = useRef(onCodeChange)
   useEffect(() => { onCodeChangeRef.current = onCodeChange })
   useEffect(() => {
-    // Guard 1: import is read-only (JS → blocks). When the import sets blocks,
-    // skip the write-back so the original JS file is never overwritten by the
-    // transpiler's partial reconstruction.
-    if (importingRef.current) {
-      importingRef.current = false
-      return
-    }
-    // Guard 2: never write empty code. The project starts with no blocks and
-    // generated.code = "" on mount — writing that would wipe the active JS file.
-    if (!generated.code) return
+    // Only an explicit block edit writes source. Mounting, importing and
+    // switching files are read-only; deleting the final block writes "".
+    if (dirtyFileRef.current !== project.activeFileId) return;
+    dirtyFileRef.current = null;
     const fileId = project.activeFileId
     onCodeChangeRef.current(fileId, generated.code)
     // Track the outgoing code so the jsFiles-driven sync effect below sees
@@ -124,6 +119,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
   }, [generated])
 
   function commit(updater: (bs: Block[]) => Block[]) {
+    dirtyFileRef.current = project.activeFileId;
     setProject(p => normalizeProject({
       ...p,
       files: p.files.map(f => f.id === p.activeFileId ? { ...f, blocks: updater(f.blocks) } : f),
@@ -158,12 +154,14 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
   }
 
   const importFromJs = useCallback((code: string, fileId: string) => {
-    const imported = parseJsToBlocks(code)
+    const result = importVisualJs(code)
+    const imported = result.blocks
+    setPreservedSource(result.preserved)
     if (!imported.length) return
     // Flag the generated effect to skip onCodeChange for this render cycle.
     // The original code is already stored in lastImportedCodeRef so the next
     // sync can correctly detect whether the JS changed externally.
-    importingRef.current = true
+    dirtyFileRef.current = null
     lastImportedCodeRef.current.set(fileId, code)
     setProject(p => normalizeProject({
       ...p,
@@ -213,6 +211,8 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
 
   return (
     <div className={styles.root}>
+      <div className={styles.guide}>Visual JS · {file?.name}<br />Choose a block, fill its fields, then Run in the page preview. Changes update this file.</div>
+      {preservedSource && <p className={styles.guide}>This syntax is kept as an editable code block to preserve its behavior and comments.</p>}
       <div className={styles.twoPane}>
 
         {/* ── Left: Block palette ── */}
@@ -254,6 +254,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
         </div>
 
       </div>
+      <details className={styles.sourcePreview}><summary>See generated JavaScript</summary><pre>{generated.code || '// No blocks in this file.'}</pre></details>
     </div>
   )
 }

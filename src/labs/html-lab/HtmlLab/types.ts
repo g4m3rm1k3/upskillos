@@ -25,6 +25,9 @@ export interface LabElement {
   styles: Record<string, string>;
   attrs: Record<string, string>;
   content: string;
+  /** Parsed text stays literal and keeps whitespace around inline children. */
+  preserveText?: boolean;
+  trailingText?: string;
   mediaQueries: MediaQuery[];
 }
 

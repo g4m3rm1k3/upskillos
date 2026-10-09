@@ -78,7 +78,7 @@ describe("mixed content (leading text before a child element)", () => {
     const fragment = `<p data-lab-id="warning">Fair warning: <strong data-lab-id="warning-strong">spoilers ahead.</strong></p>`;
     const parsed = htmlToElements(fragment, els());
     const warning = parsed?.find((e) => e.id === "warning");
-    expect(warning?.content).toBe("Fair warning:");
+    expect(warning?.content).toBe("Fair warning: ");
   });
 });
 
@@ -214,19 +214,20 @@ describe("applyCssToElements — real incident: pasted class/id/tag CSS never re
     ];
   }
 
-  it("bakes a plain .class selector's styles into the matching element", () => {
-    const { elements: updated } = applyCssToElements(".card { padding: 16px; }", elements());
-    expect(updated.find((e) => e.id === "e1")?.styles.padding).toBe("16px");
+  it("preserves a plain class selector for future and runtime-created elements", () => {
+    const { elements: updated, customCss } = applyCssToElements(".card { padding: 16px; }", elements());
+    expect(customCss).toContain(".card { padding: 16px; }");
+    expect(updated.find((e) => e.id === "e1")?.styles.padding).toBeUndefined();
   });
 
-  it("bakes a plain #id selector's styles into the matching element", () => {
+  it("preserves an ID selector in the stylesheet", () => {
     const { elements: updated } = applyCssToElements("#header { border: 1px solid black; }", elements());
-    expect(updated.find((e) => e.id === "e1")?.styles.border).toBe("1px solid black");
+    expect(updated.find((e) => e.id === "e1")?.styles.border).toBeUndefined();
   });
 
-  it("bakes a bare tag selector's styles into every matching element", () => {
+  it("preserves a tag selector in the stylesheet", () => {
     const { elements: updated } = applyCssToElements("p { margin: 0; }", elements());
-    expect(updated.find((e) => e.id === "e2")?.styles.margin).toBe("0");
+    expect(updated.find((e) => e.id === "e2")?.styles.margin).toBeUndefined();
   });
 
   it("leaves a compound selector (.card.featured) as live customCss, not baked", () => {
@@ -248,7 +249,7 @@ describe("applyCssToElements — real incident: pasted class/id/tag CSS never re
     expect(updated.find((e) => e.id === "e1")?.styles.padding).toBe("32px");
   });
 
-  it("survives a full edit round-trip without duplicating the baked rule as leftover text", () => {
+  it("preserves one live class rule across repeated edits", () => {
     const els = elements();
     let customCss = ".card { padding: 16px; }";
     let currentElements = els;
@@ -258,8 +259,8 @@ describe("applyCssToElements — real incident: pasted class/id/tag CSS never re
       customCss = applied.customCss;
       currentElements = applied.elements;
     }
-    expect(customCss).not.toContain(".card");
-    expect(currentElements.find((e) => e.id === "e1")?.styles.padding).toBe("16px");
+    expect(customCss.match(/\.card/g)).toHaveLength(1);
+    expect(currentElements.find((e) => e.id === "e1")?.styles.padding).toBeUndefined();
   });
 
   it("real incident: a .hidden class defined before any JS references it stays live, not baked, so a toggle added later still works", () => {
@@ -280,13 +281,13 @@ describe("applyCssToElements — real incident: pasted class/id/tag CSS never re
     expect(afterBoth.find((e) => e.id === "panel")?.styles.display).toBeUndefined();
   });
 
-  it("still bakes a plain class rule that is not a visibility toggle (padding, color, etc.)", () => {
+  it("keeps plain class rules live regardless of the current JavaScript", () => {
     const els = [
       { id: "e1", tag: "div", parentId: null, order: 0, content: "", attrs: { id: "", class: "card" }, styles: {}, mediaQueries: [] },
     ];
     const { elements: updated } = applyCssToElements(".card { padding: 16px; color: red; }", els);
-    expect(updated.find((e) => e.id === "e1")?.styles.padding).toBe("16px");
-    expect(updated.find((e) => e.id === "e1")?.styles.color).toBe("red");
+    expect(updated.find((e) => e.id === "e1")?.styles.padding).toBeUndefined();
+    expect(updated.find((e) => e.id === "e1")?.styles.color).toBeUndefined();
   });
 });
 

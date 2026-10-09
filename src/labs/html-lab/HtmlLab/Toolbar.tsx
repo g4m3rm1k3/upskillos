@@ -61,9 +61,9 @@ export default function Toolbar({
       <button
         className={`${styles.tbBtn} ${previewMode ? styles.tbBtnGoEdit : styles.tbBtnGoPreview}`}
         onClick={onTogglePreview}
-        title={previewMode ? "Back to editor (Esc)" : "Preview with live JavaScript"}
+        title={previewMode ? "Inspect elements (Esc)" : "Interact with the live page"}
       >
-        {previewMode ? "✎ Edit" : "▶ Preview"}
+        {previewMode ? "✎ Inspect" : "▶ Interact"}
       </button>
 
       <button

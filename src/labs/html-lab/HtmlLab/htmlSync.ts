@@ -1,32 +1,9 @@
+import { parse as parseCss } from "postcss";
 import type { LabElement, BodyStyles } from "./types";
 import type { CdnTag } from "./cdnLibraries";
 
 // ─── elements → editable source parts ─────────────────────────────────────────
 export function elementsToHtml(elements: LabElement[]): string {
-  const VOID_TAGS = new Set(["img", "br", "hr", "input", "meta", "link"]);
-
-  function renderEl(el: LabElement, depth = 1): string {
-    const indent = "  ".repeat(depth);
-    const children = elements
-      .filter((c) => c.parentId === el.id)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const attrs = `${renderAttrs(el.attrs)} data-lab-id="${escapeAttr(el.id)}"`;
-
-    if (VOID_TAGS.has(el.tag)) return `${indent}<${el.tag}${attrs} />`;
-    if (children.length > 0) {
-      const childLines = children.map((c) => renderEl(c, depth + 1)).join("\n");
-      const inner = el.content
-        ? `\n${indent}  ${el.content}\n${childLines}\n${indent}`
-        : `\n${childLines}\n${indent}`;
-      return `${indent}<${el.tag}${attrs}>${inner}</${el.tag}>`;
-    }
-    return `${indent}<${el.tag}${attrs}>${el.content || ""}</${el.tag}>`;
-  }
-
-  const roots = elements
-    .filter((el) => !el.parentId)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
   return [
     `<!DOCTYPE html>`,
     `<html lang="en">`,
@@ -37,7 +14,7 @@ export function elementsToHtml(elements: LabElement[]): string {
     `</head>`,
     `<body>`,
     ``,
-    ...roots.map((el) => renderEl(el)),
+    buildHtmlBody(elements),
     ``,
     `</body>`,
     `</html>`,
@@ -210,29 +187,21 @@ export function htmlToElements(
         ? inlineStyles
         : { ...(existing?.styles || {}) };
       const attrs: Record<string, string> = {
-        ...(existing?.attrs || {}),
         ...attrsFromNode(node),
       };
 
       const childEls = Array.from(node.children).filter(
         (c) => !SKIP.has(c.tagName.toLowerCase()),
       );
-      // Mixed content (leading text before an inline child, e.g. <p>Fair
-      // warning: <strong>...</strong></p>) needs its own path — `textContent`
-      // on a node with children pulls in the children's text too, and
-      // elementsToHtml/generateExportHtml only ever render `content` BEFORE
-      // children, never interleaved with them, so only the text nodes up to
-      // the first child element round-trip correctly.
-      let content: string;
-      if (childEls.length === 0) {
-        content = (node.textContent || "").trim();
-      } else {
-        let leading = "";
-        for (const child of Array.from(node.childNodes)) {
-          if (child.nodeType !== Node.TEXT_NODE) break;
-          leading += child.textContent || "";
-        }
-        content = leading.trim();
+      // Text before and between child elements belongs to the document too.
+      let content = "";
+      for (const child of Array.from(node.childNodes)) {
+        if (child.nodeType === Node.ELEMENT_NODE) break;
+        if (child.nodeType === Node.TEXT_NODE) content += child.textContent || "";
+      }
+      let trailingText = "";
+      for (let sibling = node.nextSibling; sibling && sibling.nodeType !== Node.ELEMENT_NODE; sibling = sibling.nextSibling) {
+        if (sibling.nodeType === Node.TEXT_NODE) trailingText += sibling.textContent || "";
       }
 
       const el: LabElement = {
@@ -241,6 +210,8 @@ export function htmlToElements(
         attrs,
         styles,
         content,
+        preserveText: true,
+        trailingText,
         parentId: parentId || null,
         order,
         mediaQueries: existing?.mediaQueries || [],
@@ -283,33 +254,18 @@ export function extractJavascriptRefs(javascript = ""): { labIds: Set<string>; h
 }
 
 // ─── Shared element renderer ──────────────────────────────────────────────────
-function buildHtmlBody(elements: LabElement[]): string {
-  const VOID_TAGS = new Set(["img", "br", "hr", "input", "meta", "link"]);
-  function renderEl(el: LabElement, depth = 1): string {
-    const indent = "  ".repeat(depth);
-    const children = elements
-      .filter(c => c.parentId === el.id)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const userAttrs = Object.entries(el.attrs || {})
-      .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== "")
-      .map(([k, v]) => ` ${k}="${String(v).replace(/"/g, "&quot;")}"`)
-      .join("");
-    const attrStr = ` data-lab-id="${el.id}"${userAttrs}`;
-    if (VOID_TAGS.has(el.tag)) return `${indent}<${el.tag}${attrStr} />`;
-    if (children.length > 0) {
-      const childLines = children.map(c => renderEl(c, depth + 1)).join("\n");
-      const inner = el.content
-        ? `\n${indent}  ${el.content}\n${childLines}\n${indent}`
-        : `\n${childLines}\n${indent}`;
-      return `${indent}<${el.tag}${attrStr}>${inner}</${el.tag}>`;
-    }
-    return `${indent}<${el.tag}${attrStr}>${el.content || ""}</${el.tag}>`;
+export function buildHtmlBody(elements: LabElement[]): string {
+  const voidTags = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
+  const text = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function render(el: LabElement): string {
+    const attrs = `${renderAttrs(el.attrs)} data-lab-id="${escapeAttr(el.id)}"`;
+    const tail = text(el.trailingText || "");
+    if (voidTags.has(el.tag)) return `<${el.tag}${attrs} />${tail}`;
+    const children = elements.filter(c => c.parentId === el.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const content = el.preserveText ? text(el.content || "") : el.content || "";
+    return `<${el.tag}${attrs}>${content}${children.map(render).join("")}</${el.tag}>${tail}`;
   }
-  return elements
-    .filter(e => !e.parentId)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .map(el => renderEl(el))
-    .join("\n");
+  return elements.filter(e => !e.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(render).join("\n");
 }
 
 // ─── Export: standalone HTML ──────────────────────────────────────────────────
@@ -396,96 +352,41 @@ export function applyCssToElements(
   elements: LabElement[],
   javascript = "",
 ): { elements: LabElement[]; customCss: string; bodyStyles?: BodyStyles } {
+  // Only the lab's own top-level rules are editable element styles. User
+  // selectors, at-rules and their order remain CSS for the browser to apply.
   const styleById = new Map<string, Record<string, string>>();
-  let bodyStyles: Record<string, string> | null = null;
-
-  // Matched by structure (comment + the 3 known selector groups), not by the
-  // exact property values inside — elementsToCss always re-emits this block
-  // verbatim, so failing to strip it here means every editor keystroke
-  // round-trips a fresh copy back into customCss, which then gets echoed
-  // back in by elementsToCss on top of *another* fresh copy: an unbounded
-  // duplicate pileup on every edit. Structural (not literal-text) matching
-  // also means it still strips — and self-heals — a copy someone hand-edited.
+  let bodyStyles: Record<string, string> | undefined;
   const resetBlock = /\/\*\s*Reset\s*\*\/\s*\*,\s*\*::before,\s*\*::after\s*\{[^}]*\}\s*img,\s*video,\s*svg\s*\{[^}]*\}\s*input,\s*button,\s*textarea,\s*select\s*\{[^}]*\}/gi;
-  const managedBlock = /\[data-lab-id=(?:"([^"]+)"|'([^']+)')\]\s*\{([^}]*)\}/g;
-  let customCss = css
-    .replace(/\/\*\s*Custom CSS\s*\*\//gi, "")
-    .replace(resetBlock, "")
-    .replace(managedBlock, (_, id1: string, id2: string, body: string) => {
-      const id = id1 || id2;
-      styleById.set(id, parseStyleString(body));
-      return "";
-    });
-
-  // A hand-typed or pasted rule using a plain tag/.class/#id selector — e.g.
-  // ".card { padding: 16px; }" — previously stayed as opaque text forever:
-  // this function only ever recognized the [data-lab-id] shape its own
-  // elementsToCss emits, so such a rule never reached any element's `styles`,
-  // meaning the canvas never reflected it and the Properties Panel had
-  // nothing to show or let you change for it. This mirrors what
-  // applyImportedCssToDoc already does for a freshly-imported HTML document
-  // (matching a real, parsed DOM) — here against this app's own LabElement[]
-  // model instead, no DOM involved. Compound/stateful selectors (".toast.show",
-  // a class also toggled by this project's own JS) are deliberately left
-  // alone, for the identical reason the import path leaves them alone: baking
-  // a toggle-driven class's rule into a frozen inline style would permanently
-  // block that class from ever visually turning on or off again.
-  const stateClasses = extractDynamicClassNames(javascript);
-  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
-  customCss = customCss.replace(ruleRe, (fullMatch, selectorGroup: string, declarations: string) => {
-    const trimmedSelectorGroup = selectorGroup.trim();
-    const trimmedDeclarations = declarations.trim();
-    if (!trimmedSelectorGroup || !trimmedDeclarations || /^body$/i.test(trimmedSelectorGroup)) return fullMatch;
-
-    const parsedStyles = parseStyleString(trimmedDeclarations);
-
-    const selectors = trimmedSelectorGroup.split(",").map((s) => s.trim()).filter(Boolean);
-    const isSimple = selectors.every((sel) => {
-      if (/[:>+~]/.test(sel) || sel === "*" || sel.startsWith("*") || isCompoundSelector(sel)) return false;
-      return !classesOf(sel).some((c) => stateClasses.has(c));
-    });
-    // A class currently unmentioned by any JS is still routinely the *plan*
-    // for one written moments later — "define what hidden looks like, then
-    // wire up a button to toggle it" is a completely normal order to build
-    // in, and stateClasses can only ever see JS that already exists. Baking
-    // a visibility-style property into a frozen per-element rule the first
-    // time would make that imminent toggle permanently inert (the class
-    // stops mattering once the property lives outside it entirely) — so a
-    // class-based rule that looks like a show/hide switch stays live CSS
-    // regardless, on the assumption that baking it was never really the
-    // point of writing a reusable class for it in the first place.
-    const isVisibilityToggle = isSimple && selectors.some((sel) => sel.startsWith(".")) && looksLikeVisibilityToggle(parsedStyles);
-    if (!isSimple || isVisibilityToggle) return fullMatch;
-
-    const matchedElements = elements.filter((el) => selectors.some((sel) => elementMatchesSimpleSelector(el, sel)));
-    if (matchedElements.length === 0) return fullMatch;
-
-    for (const el of matchedElements) {
-      // The exact [data-lab-id] block already extracted above reflects the
-      // most recent Properties Panel edit for this one element specifically —
-      // it wins over a same-named property from a broader class/tag rule.
-      styleById.set(el.id, { ...parsedStyles, ...(styleById.get(el.id) ?? {}) });
+  const cleaned = css.replace(resetBlock, "").replace(/\/\*\s*Custom CSS\s*\*\//gi, "");
+  try {
+    const root = parseCss(cleaned);
+    for (const node of [...root.nodes]) {
+      if (node.type !== "rule") continue;
+      const managed = node.selector.match(/^\[data-lab-id=(?:"([^"]+)"|'([^']+)')\]$/);
+      if (!managed && node.selector !== "body") continue;
+      const values: Record<string, string> = {};
+      node.nodes.forEach(decl => {
+        if (decl.type === "decl") {
+          const key = decl.prop.startsWith("--") ? decl.prop : decl.prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+          values[key] = decl.value + (decl.important ? " !important" : "");
+        }
+      });
+      if (managed) styleById.set(managed[1] || managed[2], values);
+      else bodyStyles = values;
+      node.remove();
     }
-    return "";
-  });
-
-  customCss = customCss
-    .replace(/body\s*\{([^}]*)\}/gi, (_, body: string) => {
-      bodyStyles = parseStyleString(body);
-      return "";
-    })
-    .trim();
-
-  return {
-    elements: elements.map((el) =>
-      styleById.has(el.id) ? { ...el, styles: styleById.get(el.id)! } : el,
-    ),
-    customCss,
-    ...(bodyStyles !== null ? { bodyStyles } : {}),
-  };
+    return {
+      elements: elements.map(el => styleById.has(el.id) ? { ...el, styles: styleById.get(el.id)! } : el),
+      customCss: root.toString().trim(),
+      ...(bodyStyles !== undefined ? { bodyStyles } : {}),
+    };
+  } catch {
+    // Incomplete CSS is normal while typing; never flatten a half-written rule.
+    return { elements, customCss: cleaned };
+  }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 export function stylesToString(styles: Record<string, string>, linePrefix = ""): string {
   return Object.entries(styles)
     .map(([k, v]) => {
@@ -538,10 +439,10 @@ export function parseHtmlDocument(htmlString: string): {
     const scriptEls = Array.from(doc.querySelectorAll("script"));
     const javascript = scriptEls.map((s) => s.textContent).filter(Boolean).join("\n\n");
 
-    const { bodyStylesFromCss, customCss } = applyImportedCssToDoc(doc, rawCss, javascript);
+    const customCss = rawCss;
 
     const bodyStyleStr = doc.body?.getAttribute("style") || "";
-    const bodyStyles: BodyStyles = { ...bodyStylesFromCss, ...parseStyleString(bodyStyleStr) };
+    const bodyStyles: BodyStyles = parseStyleString(bodyStyleStr);
 
     const elements = htmlToElements(doc.body?.innerHTML || "", [], javascript) || [];
 
@@ -552,172 +453,17 @@ export function parseHtmlDocument(htmlString: string): {
   }
 }
 
-// Classes the imported page's own JS assigns dynamically — via
-// `el.className = "..."` / `el.classList.add/toggle/remove("...")` — need the
-// same protection as a compound-selector-referenced class (see stateClasses
-// below), for a second, distinct reason: some of these classes aren't
-// toggled on an existing element at all, they're stamped onto elements the
-// script *creates* at runtime (`document.createElement` + `className =`).
-// Real incident: a page whose JS rebuilds a nav list on load with
-// `nav.className = "navBtn"` — baking `.navBtn`'s styles into one-time
-// per-element `[data-lab-id]` rules (the default for a plain single-class
-// selector) meant every button the script (re)created after that had zero
-// styling, since a data-lab-id attribute only exists on elements that were
-// in the original static markup, not ones freshly created in the browser.
-// Keeping `.navBtn` as a live, real class rule — like the original page had
-// — means newly-created elements are styled correctly too, the same way a
-// real browser would render this page.
-// A selector like "body.dark" or ".toast.show" — a tag/class immediately
-// followed by one or more further classes with no combinator — is a
-// toggleable "modifier" state (dark mode, a "show" state, a BEM modifier).
-// Shared between applyImportedCssToDoc (matches against a real, parsed
-// Document) and applyCssToElements (matches against this app's own
-// LabElement[] model, no DOM involved) — both need to agree on exactly the
-// same "simple enough to bake into one element's styles" boundary.
-function isCompoundSelector(sel: string): boolean {
-  const classCount = (sel.match(/\.[\w-]+/g) || []).length;
-  return classCount >= 2 || (classCount >= 1 && /^[a-zA-Z]/.test(sel));
-}
-function classesOf(sel: string): string[] {
-  return (sel.match(/\.[\w-]+/g) || []).map((c) => c.slice(1));
-}
-
-// Matches a *simple* selector — a bare tag name, a single ".class", or a
-// single "#id" — against one LabElement, without needing a real DOM at all.
-// Anything more elaborate (compound, combinators, pseudo-classes, "*") is
-// already routed to customCss before this is ever called; it never has to
-// recognize those, only decide the three plain cases directly.
-function elementMatchesSimpleSelector(el: LabElement, selector: string): boolean {
-  const trimmed = selector.trim();
-  if (trimmed.startsWith(".")) {
-    return (el.attrs?.class || "").split(/\s+/).includes(trimmed.slice(1));
-  }
-  if (trimmed.startsWith("#")) {
-    return el.attrs?.id === trimmed.slice(1);
-  }
-  return el.tag.toLowerCase() === trimmed.toLowerCase();
-}
-
-// Real incident: writing ".hidden { display: none; }" and only afterward
-// adding a button whose click handler does classList.toggle("hidden") —
-// baked this class's rule into the element's own frozen [data-lab-id] style
-// the moment the CSS was typed, since nothing referencing "hidden" existed
-// in the JS yet. The toggle, added a moment later, still runs — the class
-// really does get added and removed — but display:none no longer depends
-// on the class at all once it lives in its own separate, unconditional
-// rule, so nothing visible ever changes again. A class-based rule that sets
-// one of these three properties to a value that would hide something is
-// exactly the shape a show/hide toggle takes; kept live rather than baked,
-// regardless of whether the JS side has been written yet.
-function looksLikeVisibilityToggle(styles: Record<string, string>): boolean {
-  const display = styles.display?.trim().toLowerCase();
-  const visibility = styles.visibility?.trim().toLowerCase();
-  const opacity = styles.opacity?.trim();
-  return display === "none" || visibility === "hidden" || opacity === "0";
-}
-
-function extractDynamicClassNames(javascript: string): Set<string> {
-  const names = new Set<string>();
-  const classNameAssignRe = /\.className\s*=\s*(["'`])((?:(?!\1).)*)\1/g;
-  const classListRe = /\.classList\.(?:add|toggle|remove)\(\s*(["'`])((?:(?!\1).)*)\1/g;
-  let cm: RegExpExecArray | null;
-  while ((cm = classNameAssignRe.exec(javascript)) !== null) {
-    cm[2].split(/\s+/).filter(Boolean).forEach((c) => names.add(c));
-  }
-  while ((cm = classListRe.exec(javascript)) !== null) {
-    names.add(cm[2]);
-  }
-  return names;
-}
-
-function applyImportedCssToDoc(
-  doc: Document,
-  css: string,
-  javascript = "",
-): { bodyStylesFromCss: Record<string, string>; customCss: string } {
-  const bodyStylesFromCss: Record<string, string> = {};
-  const appliedRules: { selector: string; styles: Record<string, string> }[] = [];
-  const customChunks: string[] = [];
-
-  let remaining = css.replace(/@[^{]+\{(?:[^{}]*|\{[^{}]*\})*\}/g, (m) => {
-    customChunks.push(m.trim());
-    return "";
-  });
-
-  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
-  const parsedRules: { selectors: string[]; declarations: string; styles: Record<string, string> }[] = [];
-  // Any class referenced by a compound/stateful selector must never be baked into a
-  // one-time inline-style snapshot — not even via its own plain single-class rule —
-  // or the frozen inline value would permanently block whatever a classList.toggle()
-  // at runtime is trying to show/hide (inline styles beat stylesheet rules regardless
-  // of specificity). So every rule touching such a class is preserved as live CSS instead.
-  const stateClasses = extractDynamicClassNames(javascript);
-  let m: RegExpExecArray | null;
-  while ((m = ruleRe.exec(remaining)) !== null) {
-    const selectorGroup = m[1].trim();
-    const declarations = m[2].trim();
-    if (!selectorGroup || !declarations) continue;
-    const styles = parseStyleString(declarations);
-    const selectors = selectorGroup.split(",").map((s) => s.trim()).filter(Boolean);
-    parsedRules.push({ selectors, declarations, styles });
-    for (const sel of selectors) {
-      if (isCompoundSelector(sel)) classesOf(sel).forEach((c) => stateClasses.add(c));
-    }
-  }
-
-  for (const rule of parsedRules) {
-    const simple: string[] = [];
-    const complex: string[] = [];
-    for (const sel of rule.selectors) {
-      const referencesStateClass = classesOf(sel).some((c) => stateClasses.has(c));
-      if (/^html$|^body$/.test(sel) && !referencesStateClass) {
-        Object.assign(bodyStylesFromCss, rule.styles);
-      } else if (/[:>+~]/.test(sel) || sel === "*" || sel.startsWith("*") || isCompoundSelector(sel) || referencesStateClass) {
-        complex.push(sel);
-      } else {
-        simple.push(sel);
-      }
-    }
-
-    if (simple.length) simple.forEach((sel) => appliedRules.push({ selector: sel, styles: rule.styles }));
-    if (complex.length) customChunks.push(`${complex.join(", ")} {\n  ${rule.declarations}\n}`);
-  }
-
-  function applyToEl(el: Element): void {
-    const computed: Record<string, string> = {};
-    for (const rule of appliedRules) {
-      try {
-        if (el.matches(rule.selector)) Object.assign(computed, rule.styles);
-      } catch { /* invalid selector — skip */ }
-    }
-    if (Object.keys(computed).length) {
-      const existing = parseStyleString(el.getAttribute("style") || "");
-      const merged = { ...computed, ...existing };
-      el.setAttribute(
-        "style",
-        Object.entries(merged)
-          .map(([k, v]) => `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${v}`)
-          .join("; "),
-      );
-    }
-    Array.from(el.children).forEach(applyToEl);
-  }
-  Array.from(doc.body?.children ?? []).forEach(applyToEl);
-
-  return { bodyStylesFromCss, customCss: customChunks.join("\n\n") };
-}
-
 export function parseStyleString(str: string): Record<string, string> {
   const result: Record<string, string> = {};
   if (!str) return result;
-  str.split(";").forEach((part) => {
-    const colonIdx = part.indexOf(":");
-    if (colonIdx === -1) return;
-    const key = part.slice(0, colonIdx).trim();
-    const val = part.slice(colonIdx + 1).trim();
-    if (!key || !val) return;
-    const camel = key.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
-    result[camel] = val;
-  });
+  try {
+    const rule = parseCss(`a { ${str} }`).first;
+    if (rule?.type !== 'rule') return result;
+    rule.nodes.forEach(node => {
+      if (node.type !== 'decl') return;
+      const key = node.prop.startsWith('--') ? node.prop : node.prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+      result[key] = node.value + (node.important ? ' !important' : '');
+    });
+  } catch { /* An incomplete declaration is retained in the source editor. */ }
   return result;
 }

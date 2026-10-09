@@ -1,0 +1,14 @@
+.root { display:flex; flex:1; flex-direction:column; min-width:0; min-height:0; overflow:hidden; color:var(--hl-text); background:var(--hl-surface); }
+.toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px; border-bottom:1px solid var(--hl-border); font-size:12px; }
+.toolbar strong { margin-right:auto; }
+.toolbar button, .toolbar select, .console button { border:1px solid var(--hl-border); background:var(--hl-surface); color:inherit; border-radius:5px; padding:6px 9px; cursor:pointer; }
+.toolbar button:disabled { opacity:.5; cursor:default; }
+.toolbar label { display:flex; align-items:center; gap:5px; }
+.hint { font-size:11px; color:var(--hl-muted); padding:6px 10px; margin:0; }
+.notice { margin:0; padding:8px 10px; font-size:12px; border-bottom:1px solid var(--hl-border); white-space:pre-wrap; max-height:110px; overflow:auto; }
+.stage { flex:1; min-height:100px; min-width:0; overflow:auto; display:flex; align-items:stretch; background:var(--hl-bg); }
+.stage iframe { flex-shrink:0; height:100%; min-height:100%; border:0; margin:0 auto; background:white; }
+.console { max-height:180px; overflow:auto; border-top:1px solid var(--hl-border); padding:8px; font-size:12px; }
+.console pre { margin:4px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.console pre[data-level=error] { color:#dc2626; }
+.console pre[data-level=warn] { color:#b45309; }

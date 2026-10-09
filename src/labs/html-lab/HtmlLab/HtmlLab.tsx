@@ -1,6 +1,6 @@
 import { useState, useReducer, useCallback, useRef, useMemo, useEffect } from "react";
 import Toolbar from "./Toolbar";
-import CanvasPanel from "./CanvasPanel";
+import LivePreview from "./LivePreview";
 import CodePanel from "./CodePanel";
 import PropertiesPanel from "./PropertiesPanel";
 import ConfirmDialog, { shouldSkip } from "./ConfirmDialog";
@@ -503,75 +503,15 @@ export default function HtmlLab({ onBack }: HtmlLabProps) {
 
         <div className={styles.divider} onMouseDown={handleDividerMouseDown} />
 
-        {previewMode ? (
-          transpiledJs.error ? (
-            <div className={styles.previewFrame} style={{ padding: 16, color: "#ef4444", fontFamily: "monospace", whiteSpace: "pre-wrap", overflow: "auto" }}>
-              Compile error — fix it in the JavaScript tab to see the preview:{"\n\n"}{transpiledJs.error}
-            </div>
-          ) : (
-            <iframe
-              key="preview-frame"
-              className={styles.previewFrame}
-              srcDoc={generateExportHtml(state.elements, state.bodyStyles, state.customCss, transpiledJs.code, previewCdnTags, state.pageTitle, state.faviconUrl)}
-              title="Preview"
-              // allow-forms: without it, a <form>'s submit event never fires
-              // in a sandboxed iframe at all (not even to let preventDefault
-              // cancel it) — the browser blocks the submission algorithm
-              // before dispatching the event.
-              // allow-downloads: without it, a Blob + <a download> click runs
-              // with no error at all — the click handler fires, the object
-              // URL is created, .click() executes — but the browser silently
-              // drops the actual file save.
-              // allow-same-origin: without it, embedded third-party players
-              // (e.g. YouTube's iframe embed / IFrame Player API) fail to
-              // initialize at all — their own bootstrap script needs Cache
-              // Storage access, unavailable to a sandboxed srcDoc frame's
-              // opaque origin. Deliberate tradeoff, not an oversight: a
-              // srcDoc iframe with allow-same-origin inherits the embedding
-              // page's origin, so scripts run here (student-typed code
-              // included) can reach this real app's DOM/localStorage, not
-              // just the sandboxed preview — accepted because this is an
-              // open-source, no-secrets frontend with nothing sensitive for
-              // that code to reach. Still no allow-top-navigation, so a
-              // preview can't navigate the real page away.
-              // allow-modals: without it, alert()/confirm()/prompt() are
-              // silently ignored — "Ignored call to 'alert()'. The document
-              // is sandboxed..." in the console, no error thrown, the call
-              // just does nothing. This isn't an edge case: prompt() is a
-              // real, common way student code asks for input with zero
-              // extra UI to build (used throughout this app's own lesson
-              // content, e.g. Video Notes' "Add Note" flow).
-              sandbox="allow-scripts allow-forms allow-downloads allow-same-origin allow-modals"
-            />
-          )
-        ) : (
-          <>
-            <CanvasPanel
-              elements={state.elements}
-              selectedId={state.selectedId}
-              showOverlay={state.showOverlay}
-              showLabels={state.showLabels}
-              bodyStyles={state.bodyStyles}
-              onSelect={(id) => {
-                dispatch({ type: "SELECT", payload: id });
-                setMultiSelectedIds([]);
-              }}
-              onDeselect={() => {
-                dispatch({ type: "SELECT", payload: null });
-                setMultiSelectedIds([]);
-              }}
-              onDelete={(id) => dispatch({ type: "DELETE_ELEMENT", payload: id })}
-              onNest={(childId, parentId, order) =>
-                dispatch({ type: "NEST_ELEMENT", payload: { childId, parentId, order } })
-              }
-              onMoveToRoot={(id, order) =>
-                dispatch({ type: "MOVE_TO_ROOT", payload: { id, order } })
-              }
-              onReorder={(id, parentId, order) =>
-                dispatch({ type: "REORDER_ELEMENT", payload: { id, parentId, order } })
-              }
-            />
-
+        <LivePreview
+          elements={state.elements} bodyStyles={state.bodyStyles} customCss={state.customCss}
+          javascript={transpiledJs.code} error={transpiledJs.error} cdnTags={previewCdnTags}
+          pageTitle={state.pageTitle} faviconUrl={state.faviconUrl}
+          inspect={!previewMode} selectedId={state.selectedId}
+          showLabels={state.showLabels} showOverlay={state.showOverlay}
+          onSelect={(id) => { dispatch({ type: "SELECT", payload: id }); setMultiSelectedIds([]); }}
+        />
+        {!previewMode && (<>
             <div className={styles.propsDivider} onMouseDown={handlePropsDividerMouseDown} />
             <PropertiesPanel
               style={{ width: propsPanelWidth, flexShrink: 0 }}

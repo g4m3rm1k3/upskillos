@@ -1,3 +1,4 @@
+import { parse } from "acorn";
 import * as Babel from "@babel/standalone";
 import type { JsFile } from "./types";
 
@@ -29,7 +30,15 @@ function needsTranspile(jsFiles: JsFile[]): boolean {
 // iframe. Plain `.js`-only projects skip this entirely (no jsFiles need
 // transpiling, no Babel cost paid).
 export function transpileBundle(bundle: string, jsFiles: JsFile[]): TranspileResult {
-  if (!needsTranspile(jsFiles) || !bundle.trim()) return { code: bundle, error: null };
+  if (!bundle.trim()) return { code: bundle, error: null };
+  if (!needsTranspile(jsFiles)) {
+    try {
+      parse(bundle, { ecmaVersion: 'latest', sourceType: 'script' });
+      return { code: bundle, error: null };
+    } catch (e) {
+      return { code: bundle, error: e instanceof Error ? e.message : String(e) };
+    }
+  }
 
   const includesJsx = hasJsx(jsFiles);
   const presets: Array<string | [string, Record<string, unknown>]> = [];

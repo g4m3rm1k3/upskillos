@@ -1,6 +1,9 @@
 import { useState, useReducer, useCallback, useRef, useMemo, useEffect } from "react";
 import LessonToolbar from "./LessonToolbar";
-import CanvasPanel from "./CanvasPanel";
+import LivePreview from "./LivePreview";
+import { transpileBundle, hasJsx } from "./jsxTranspile";
+import { buildJsBundle } from "./labReducer";
+import { resolveCdnTags, reactCdnTags } from "./cdnLibraries";
 import CodePanel from "./CodePanel";
 import PropertiesPanel from "./PropertiesPanel";
 import ConfirmDialog, { shouldSkip } from "./ConfirmDialog";
@@ -132,6 +135,8 @@ export default function HtmlLabLesson({ lesson, onBack }: Props) {
     ...(initialPlayback ? initialPlayback.frames[0].state : computeStateAtStep(lesson, initialStepIndex)),
   }));
   const [playback, setPlayback] = useState<PlaybackState | null>(initialPlayback);
+  const transpiledJs = useMemo(() => transpileBundle(buildJsBundle(state.jsFiles), state.jsFiles), [state.jsFiles]);
+  const previewCdnTags = useMemo(() => [...resolveCdnTags(state.cdnLinks), ...(hasJsx(state.jsFiles) ? reactCdnTags() : [])], [state.jsFiles, state.cdnLinks]);
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
   // See HtmlLab.tsx's identical field for why this starts undefined, not 0.
@@ -492,48 +497,15 @@ export default function HtmlLabLesson({ lesson, onBack }: Props) {
 
         <div className={styles.divider} onMouseDown={handleDividerMouseDown} />
 
-        {previewMode ? (
-          <iframe
-            key="preview-frame"
-            className={styles.previewFrame}
-            srcDoc={generateExportHtml(state.elements, state.bodyStyles, state.customCss, mainJsCode(state.jsFiles), [], state.pageTitle, state.faviconUrl)}
-            title="Preview"
-            // See HtmlLab.tsx's preview iframe for why allow-same-origin and
-            // allow-modals are included: third-party embeds (e.g. YouTube)
-            // need allow-same-origin to initialize at all, and alert()/
-            // confirm()/prompt() are silently ignored without allow-modals —
-            // both tradeoffs accepted project-wide.
-            sandbox="allow-scripts allow-forms allow-downloads allow-same-origin allow-modals"
-          />
-        ) : (
-          <>
-            <CanvasPanel
-              elements={state.elements}
-              selectedId={state.selectedId}
-              showOverlay={state.showOverlay}
-              showLabels={state.showLabels}
-              bodyStyles={state.bodyStyles}
-              revealedIds={revealedIds}
-              onSelect={(id) => {
-                dispatch({ type: "SELECT", payload: id });
-                setMultiSelectedIds([]);
-              }}
-              onDeselect={() => {
-                dispatch({ type: "SELECT", payload: null });
-                setMultiSelectedIds([]);
-              }}
-              onDelete={(id) => dispatch({ type: "DELETE_ELEMENT", payload: id })}
-              onNest={(childId, parentId, order) =>
-                dispatch({ type: "NEST_ELEMENT", payload: { childId, parentId, order } })
-              }
-              onMoveToRoot={(id, order) =>
-                dispatch({ type: "MOVE_TO_ROOT", payload: { id, order } })
-              }
-              onReorder={(id, parentId, order) =>
-                dispatch({ type: "REORDER_ELEMENT", payload: { id, parentId, order } })
-              }
-            />
-
+        <LivePreview
+          elements={state.elements} bodyStyles={state.bodyStyles} customCss={state.customCss}
+          javascript={transpiledJs.code} error={transpiledJs.error} cdnTags={previewCdnTags}
+          pageTitle={state.pageTitle} faviconUrl={state.faviconUrl}
+          inspect={!previewMode} selectedId={state.selectedId}
+          showLabels={state.showLabels} showOverlay={state.showOverlay}
+          onSelect={(id) => { dispatch({ type: "SELECT", payload: id }); setMultiSelectedIds([]); }}
+        />
+        {!previewMode && (<>
             <div className={styles.propsDivider} onMouseDown={handlePropsDividerMouseDown} />
             <PropertiesPanel
               style={{ width: propsPanelWidth, flexShrink: 0 }}
