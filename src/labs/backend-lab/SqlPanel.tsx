@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { getSharedDatabase, execSql } from "./sqlDatabase";
+import { withDatabase, persistDatabase, execSql } from "./sqlDatabase";
 import type { UiTheme } from "./types";
 
 interface SqlPanelProps {
   ui: UiTheme;
   accentHex: string;
+  disabled?: boolean;
 }
 
 // A real SQL console, querying the exact same database instance the
@@ -12,7 +13,7 @@ interface SqlPanelProps {
 // (sqlDatabase.ts holds the one shared instance) — a student can insert a
 // user through their own JS code, then run `SELECT * FROM users` here and
 // see the identical, real row, with nothing simulated in between.
-export default function SqlPanel({ ui, accentHex }: SqlPanelProps) {
+export default function SqlPanel({ ui, accentHex, disabled }: SqlPanelProps) {
   const [sql, setSql] = useState("SELECT * FROM users;");
   const [result, setResult] = useState<
     | { kind: "idle" }
@@ -22,23 +23,30 @@ export default function SqlPanel({ ui, accentHex }: SqlPanelProps) {
   const [running, setRunning] = useState(false);
 
   const handleRun = async () => {
+    if (running || disabled) return;
     setRunning(true);
     try {
-      const db = await getSharedDatabase();
-      const outcome = execSql(db, sql);
+      const outcome = await withDatabase(async db => {
+        const outcome = execSql(db, sql);
+        // A batch can write successfully before a later statement fails.
+        await persistDatabase(db);
+        return outcome;
+      });
       if (outcome.ok) {
         setResult({ kind: "ok", results: outcome.results });
       } else {
         setResult({ kind: "error", message: outcome.error });
       }
+    } catch (error) {
+      setResult({ kind: "error", message: error instanceof Error ? error.message : String(error) });
     } finally {
       setRunning(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className={`p-2.5 border-b ${ui.border}`}>
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className={`p-2.5 border-b shrink-0 ${ui.border}`}>
         <textarea
           value={sql}
           onChange={(e) => setSql(e.target.value)}
@@ -48,7 +56,7 @@ export default function SqlPanel({ ui, accentHex }: SqlPanelProps) {
         />
         <button
           onClick={handleRun}
-          disabled={running}
+          disabled={running || disabled}
           className="mt-2 px-4 py-1.5 rounded-md text-white font-semibold text-[13px] disabled:opacity-50"
           style={{ background: accentHex }}
         >

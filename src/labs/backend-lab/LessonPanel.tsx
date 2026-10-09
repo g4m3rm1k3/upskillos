@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   PROSE_REMARK_PLUGINS,
@@ -13,6 +13,8 @@ interface LessonPanelProps {
   title: string;
   content: string;
   checklist: string[];
+  checked: string[];
+  onToggleCheck: (item: string) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   ui: UiTheme;
@@ -48,10 +50,12 @@ function withoutChecklistSection(markdown: string): string {
   return markdown.replace(/^## Definition of Done[ \t]*\n[\s\S]*?(?=^---|^#{1,2} |(?![\s\S]))/m, '')
 }
 
-export default function LessonPanel({
+function LessonPanel({
   title,
   content,
   checklist,
+  checked,
+  onToggleCheck,
   collapsed,
   onToggleCollapsed,
   ui,
@@ -61,7 +65,6 @@ export default function LessonPanel({
   hasPrevLesson,
   hasNextLesson,
 }: LessonPanelProps) {
-  const [checked, setChecked] = useState<boolean[]>(() => checklist.map(() => false));
 
   if (collapsed) {
     return (
@@ -96,12 +99,12 @@ export default function LessonPanel({
             <label key={i} className={`flex gap-2 items-start mb-2 text-[13px] cursor-pointer ${ui.txt1}`}>
               <input
                 type="checkbox"
-                checked={checked[i]}
-                onChange={() => setChecked((prev) => prev.map((c, idx) => (idx === i ? !c : c)))}
+                checked={checked.includes(item)}
+                onChange={() => onToggleCheck(item)}
                 className="mt-0.5"
                 style={{ accentColor: accentHex }}
               />
-              <span className={checked[i] ? `line-through ${ui.txt2}` : ui.txt1}>{item}</span>
+              <span className={checked.includes(item) ? `line-through ${ui.txt2}` : ui.txt1}>{item}</span>
             </label>
           ))}
         </div>
@@ -133,3 +136,5 @@ export default function LessonPanel({
     </div>
   );
 }
+
+export default memo(LessonPanel);

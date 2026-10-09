@@ -87,8 +87,7 @@ var usersRepository = {
 is an object whose only job is translating between "get me data matching
 these criteria" / "store this new thing" and whatever the actual storage
 mechanism happens to be underneath. `usersRepository` doesn't know or
-care whether `db` is a plain array, a `Map`, or — starting next lesson —
-real SQL; it just exposes a small, storage-agnostic vocabulary
+care whether storage uses an array in a test, a `Map`, or real SQL; it just exposes a small, storage-agnostic vocabulary
 (`findAll`, `insert`, and later `findById`, `update`, `delete`) that
 never needs to change no matter what's actually behind it.
 

@@ -1,7 +1,7 @@
 import { run } from "../../engines/js/interpreter/interpreter.js";
 import { heapUnwrap } from "./heapUnwrap";
 import { heapWrap } from "./heapWrap";
-import { getSharedDatabase } from "./sqlDatabase";
+import { withDatabase, persistDatabase } from "./sqlDatabase";
 import { sha256Hex } from "./sha256";
 import type { BackendFile, HttpRequest, HttpResponseResult } from "./types";
 
@@ -24,6 +24,7 @@ function generateToken(): string {
 }
 
 export interface RunOutcome {
+  warning?: string;
   response: HttpResponseResult | null;
   logs: string[];
   error: { message: string; type?: string } | null;
@@ -46,8 +47,8 @@ function makeDbBridge(sqlDb: any) {
       fn: (_thisVal: unknown, _args: unknown[], interp: any) => {
         const stmt = sqlDb.prepare("SELECT id, name FROM users ORDER BY id");
         const rows: { id: number; name: string }[] = [];
-        while (stmt.step()) rows.push(stmt.getAsObject() as { id: number; name: string });
-        stmt.free();
+        try { while (stmt.step()) rows.push(stmt.getAsObject() as { id: number; name: string }); }
+        finally { stmt.free(); }
         return heapWrap(rows, interp.heap);
       },
     },
@@ -74,10 +75,11 @@ function makeDbBridge(sqlDb: any) {
         const sql = args[0] as string;
         const params = args[1] !== undefined ? (heapUnwrap(args[1], interp.heap) as unknown[]) : [];
         const stmt = sqlDb.prepare(sql);
-        if (Array.isArray(params) && params.length > 0) stmt.bind(params);
         const rows: Record<string, unknown>[] = [];
-        while (stmt.step()) rows.push(stmt.getAsObject());
-        stmt.free();
+        try {
+          if (Array.isArray(params) && params.length > 0) stmt.bind(params);
+          while (stmt.step()) rows.push(stmt.getAsObject());
+        } finally { stmt.free(); }
         return heapWrap(rows, interp.heap);
       },
     },
@@ -89,13 +91,10 @@ function makeDbBridge(sqlDb: any) {
 // server's networking layer does before framework code ever runs.
 // Router pattern-matching (lessons 2-3) only ever sees the clean path.
 function parseRequestPath(raw: HttpRequest): HttpRequest & { query: Record<string, string> } {
-  const [path, queryString = ""] = raw.path.split("?");
-  const query: Record<string, string> = {};
-  for (const pair of queryString.split("&")) {
-    if (!pair) continue;
-    const [key, value = ""] = pair.split("=");
-    if (key) query[decodeURIComponent(key)] = decodeURIComponent(value);
-  }
+  const separator = raw.path.indexOf("?");
+  const path = separator < 0 ? raw.path : raw.path.slice(0, separator);
+  const queryString = separator < 0 ? "" : raw.path.slice(separator + 1);
+  const query = Object.fromEntries(new URLSearchParams(queryString));
   return { ...raw, path, query };
 }
 
@@ -111,42 +110,51 @@ function parseRequestPath(raw: HttpRequest): HttpRequest & { query: Record<strin
 // reached through an extraGlobals bridge function — the same mechanism
 // `__sendResponse` below already uses.
 //
-// runRequest itself is async purely to let the SQL database finish loading
-// (a one-time WASM fetch) before the interpreter runs — once getSharedDatabase()
-// resolves, every actual query the interpreter's native calls make is
-// ordinary, synchronous sql.js work, same as any other native function here.
+// Requests wait for SQLite initialization and the previous database save.
+// Native SQL calls remain synchronous inside the interpreter; the resulting
+// snapshot is saved before another request or SQL-console operation starts.
 export async function runRequest(files: BackendFile[], request: HttpRequest): Promise<RunOutcome> {
-  const sqlDb = await getSharedDatabase();
+  try {
+    return await withDatabase(async (sqlDb): Promise<RunOutcome> => {
 
-  const combinedSource = files.map((f) => f.code).join("\n\n");
-  const requestLiteral = JSON.stringify(parseRequestPath(request));
-  const fullSource = `${combinedSource}\n\n__sendResponse(handleRequest(${requestLiteral}));\n`;
+      const combinedSource = files.map((f) => f.code).join("\n\n");
+      const requestLiteral = JSON.stringify(parseRequestPath(request));
+      const fullSource = `${combinedSource}\n\n__sendResponse(handleRequest(${requestLiteral}));\n`;
 
-  let capturedResponse: HttpResponseResult | null = null;
+      let capturedResponse: HttpResponseResult | null = null;
 
-  const outcome = run(fullSource, {
-    extraGlobals: {
-      __sendResponse: (_thisVal: unknown, args: unknown[], interp: any) => {
-        capturedResponse = heapUnwrap(args[0], interp.heap) as HttpResponseResult;
-        return undefined;
-      },
-      db: makeDbBridge(sqlDb),
-      hashPassword: {
-        __kind: "native",
-        name: "hashPassword",
-        fn: (_thisVal: unknown, args: unknown[]) => hashPassword(args[0] as string),
-      },
-      generateToken: {
-        __kind: "native",
-        name: "generateToken",
-        fn: () => generateToken(),
-      },
-    },
-  });
+      const outcome = run(fullSource, {
+        limits: { maxRuntimeMs: 1500, maxSteps: 30000, maxEvents: 30000,
+          maxTraceChars: 4000000, maxOutputLines: 200, maxOutputChars: 20000,
+          maxRecursionDepth: 100, maxHeapObjects: 10000, maxHeapProperties: 50000,
+          maxSnapshotItems: 100, maxSnapshotChars: 10000 },
+        extraGlobals: {
+          __sendResponse: (_thisVal: unknown, args: unknown[], interp: any) => {
+            capturedResponse = heapUnwrap(args[0], interp.heap) as HttpResponseResult;
+            return undefined;
+          },
+          db: makeDbBridge(sqlDb),
+          hashPassword: {
+            __kind: "native",
+            name: "hashPassword",
+            fn: (_thisVal: unknown, args: unknown[]) => hashPassword(args[0] as string),
+          },
+          generateToken: {
+            __kind: "native",
+            name: "generateToken",
+            fn: () => generateToken(),
+          },
+        },
+      });
 
-  return {
-    response: capturedResponse,
-    logs: outcome.output ?? [],
-    error: outcome.error ?? null,
-  };
+      return {
+        warning: await persistDatabase(sqlDb),
+        response: capturedResponse,
+        logs: outcome.output ?? [],
+        error: outcome.error ?? null,
+      };
+    });
+  } catch (error) {
+    return { response: null, logs: [], error: { type: "Request failed", message: error instanceof Error ? error.message : String(error) } };
+  }
 }

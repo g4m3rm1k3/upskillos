@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { setupOpenCalcMonaco } from "../../utils/monacoThemes.js";
 import type { BackendFile, UiTheme } from "./types";
@@ -25,15 +25,10 @@ export default function IdePanel({
   monacoTheme,
 }: IdePanelProps) {
   const activeFile = files.find((f) => f.id === activeFileId) ?? files[0];
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Debounced, same shape as HTML Lab's CodePanel.tsx: batch keystrokes into
-  // state updates every 400ms rather than on every character.
+  // Keep runnable code current: Send and file switching must never race a timer.
   const handleChange = useCallback(
     (value: string | undefined) => {
-      if (debounceRef.current !== null) clearTimeout(debounceRef.current);
-      const id = activeFile.id;
-      debounceRef.current = setTimeout(() => onChangeCode(id, value ?? ""), 400);
+      if (activeFile) onChangeCode(activeFile.id, value ?? "");
     },
     [activeFile?.id, onChangeCode]
   );

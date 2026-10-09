@@ -93,29 +93,31 @@ project's code stops being pure computation and starts being a real
 program that changes the world around it, which is what a backend
 building anything real eventually has to do.
 
-**Honest limitation — durable across requests, not across a real
-restart.** This project's `db` is a plain, in-memory store — real enough
-to survive between simulated requests, for as long as this browser tab
-stays open, but it would vanish on an actual page reload, the same way
-data held only in a running program's memory (not saved to disk) always
-vanishes if that program stops. Real backends draw exactly this same
-distinction, formally: **volatile** storage (memory — fast, but gone on
-restart) versus **durable** storage (disk, a real database — slower, but
-survives a crash or a reboot). This lesson's `db` sits in between where
-this project started (nothing survives even one request) and where
-lesson 13 eventually goes (a real, disk-backed database) — a real,
-deliberate step, not the final one.
+**Persistence in this browser.** The lab runs a real SQLite database in
+memory and saves its contents to **IndexedDB**, the browser's local database
+storage, after requests and SQL commands. No account is required. A successful
+save survives a page reload in the same browser profile and on the same site.
+If saving fails, the lab shows a warning; the current session still holds the
+changes. An unfinished SQL transaction must be committed or rolled back before
+it can be saved.
 
-**CS lens — object lifetime, applied to more than one thing at once,
-compared side by side.** Every value this project has created so far
-has had a **lifetime** — how long it exists before it's gone. A `var`
-declared inside a function lives for one call. `usersDb` (this lab's
-name for `db`'s contents) lives for as long as the browser tab stays
-open — many, many requests. A real disk-backed database (lesson 13)
-would live even longer — across the server process being fully
-restarted. Three genuinely different lifetimes, all real, all worth
-telling apart precisely rather than treating "it persists" as one single
-idea.
+This is local storage, not a remote server or an automatic backup. Clearing
+site data, browser eviction, or ending a private-browsing session can remove it.
+Use **Export backup** to download your code, requests, progress and database;
+**Import backup** restores them in another browser. Use practice credentials
+in authentication exercises, since those tables are included in the backup.
+
+**CS lens — object lifetime.** A variable inside `handleRequest` exists for
+that execution; all project variables are recreated on the next simulated
+request. The live SQLite database spans requests. Its saved IndexedDB copy
+spans page reloads. Memory is **volatile**: closing the page loses it. Saving
+creates a longer-lived copy, but that copy still needs a backup. These are
+different lifetimes, not one single promise that "it persists forever."
+
+**Try it.** Create a user, then reload the page and request the user list.
+Predict which survives: the database row or a variable in your handler.
+Inspect the SQL tab to check your explanation. Lesson 13 will teach you to
+write SQL against this same database directly; today, `db` hides that detail.
 
 **CS lens — read operations versus write operations, a distinction this
 lesson makes concrete for the first time.** `db.getAllUsers()` **reads**
@@ -227,7 +229,7 @@ reading the code in isolation.
 **CS lens — `db` is already hiding *how* storage works, an abstraction
 worth noticing before lesson 11 names it.** `usersService` calls
 `db.getAllUsers()` and `db.insertUser(name)` without knowing, or caring,
-whether `db` is backed by a plain array (what it actually is right now),
+whether `db` is backed by an array in a test,
 a `Map`, or — starting in lesson 13 — a real SQL database. Hiding the
 real implementation of storage behind a small, stable set of operations
 is a real, valuable abstraction, already at work here even before it
@@ -297,7 +299,7 @@ behavior, not a bug, but easy to find surprising the first time.
 - [ ] `POST /users` followed by `GET /users` shows the created user, in the same response list
 - [ ] Two separate `POST /users` calls produce two different, auto-incrementing ids
 - [ ] You can explain why `db` is a convention this lab provides, not a JavaScript language feature
-- [ ] You can explain what makes `db`'s storage durable across requests but not across a real restart
+- [ ] You can explain what survives requests and reloads, and why browser storage still needs a backup
 - [ ] You can explain the difference between volatile and durable storage
 - [ ] You can explain why `usersController` never needed to change in this lesson, even though storage completely did
 - [ ] You can explain what would happen, and what wouldn't be caught, if a handler called `db.insertUser` directly instead of going through `usersService`

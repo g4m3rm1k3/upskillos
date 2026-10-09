@@ -1,5 +1,7 @@
-import type { BackendFile, HttpRequest, SavedRequest } from "./types";
+import type { BackendFile, HttpRequest, SavedRequest, ResponseChecks, PostmanTab } from "./types";
 import type { RunOutcome } from "./runRequest";
+import { normalizeChecks } from "./requestChecks";
+import { HISTORY_LIMIT, type RequestRun } from "./requestHistory";
 import { LESSONS } from "./lessons/index";
 
 export interface HeaderRow {
@@ -13,16 +15,25 @@ export interface BackendLabState {
   request: HttpRequest;
   headerRows: HeaderRow[];
   lastOutcome: RunOutcome | null;
-  postmanTab: "response" | "logs" | "saved" | "sql";
+  lastRun: RequestRun | null;
+  history: RequestRun[];
+  checks: ResponseChecks;
+  postmanTab: PostmanTab;
   lessonCollapsed: boolean;
   activeLessonId: string;
   savedRequests: SavedRequest[];
   editingSavedRequestId: string | null;
   lessonWidth: number;
   postmanWidth: number;
+  lessonChecks: Record<string, string[]>;
 }
 
 export type BackendLabAction =
+  | { type: "SET_CHECK"; field: keyof ResponseChecks; value: string }
+  | { type: "RECORD_REQUEST"; run: RequestRun }
+  | { type: "LOAD_HISTORY"; id: string }
+  | { type: "CLEAR_HISTORY" }
+  | { type: "TOGGLE_CHECK"; lessonId: string; item: string }
   | { type: "SET_FILE_CODE"; id: string; code: string }
   | { type: "ADD_FILE"; name: string }
   | { type: "SET_ACTIVE_FILE"; id: string }
@@ -31,7 +42,7 @@ export type BackendLabAction =
   | { type: "SET_HEADER_ROW"; index: number; field: "key" | "value"; value: string }
   | { type: "REMOVE_HEADER_ROW"; index: number }
   | { type: "SET_OUTCOME"; outcome: RunOutcome }
-  | { type: "SET_POSTMAN_TAB"; tab: "response" | "logs" | "saved" | "sql" }
+  | { type: "SET_POSTMAN_TAB"; tab: PostmanTab }
   | { type: "TOGGLE_LESSON_COLLAPSED" }
   | { type: "SET_LESSON"; id: string }
   | { type: "SAVE_REQUEST"; name?: string }
@@ -46,7 +57,7 @@ const DEFAULT_REQUEST: HttpRequest = { method: "GET", path: "/users", headers: {
 
 // The only part of Backend Lab's state worth surviving a refresh or
 // following a signed-in user to another device — a student's own code and
-// saved API requests. Everything else (which panel tab is open, panel
+// saved API requests and lesson progress. Everything else (which panel tab is open, panel
 // widths, the in-progress request draft, the last response) is session UI
 // state, not real work, and stays in-memory only, the same "keep the sync
 // list small" discipline AuthContext.jsx's own SYNC_KEYS already documents.
@@ -56,6 +67,29 @@ export interface PersistedBackendLabData {
   files: BackendFile[];
   savedRequests: SavedRequest[];
   activeLessonId: string;
+  lessonChecks: Record<string, string[]>;
+}
+
+// Old anonymous saves predate saved requests and checklists. Validate at the
+// boundary, including cloud writes and imported backups, before rendering them.
+export function normalizePersistedData(value: unknown): PersistedBackendLabData | null {
+  const data = value as Partial<PersistedBackendLabData> | null;
+  if (!data || !Array.isArray(data.files) || !data.files.length) return null;
+  if (!data.files.every(f => f && typeof f.id === "string" && typeof f.name === "string" && typeof f.code === "string")) return null;
+  if (new Set(data.files.map(f => f.id)).size !== data.files.length) return null;
+  const savedRequests = Array.isArray(data.savedRequests) ? data.savedRequests.filter(r =>
+    r && typeof r.id === "string" && typeof r.name === "string" && r.request &&
+    typeof r.request.method === "string" && typeof r.request.path === "string" &&
+    typeof r.request.body === "string" && r.request.headers && typeof r.request.headers === "object" &&
+    !Array.isArray(r.request.headers) && Object.values(r.request.headers).every(v => typeof v === "string")
+  ).map(r => ({ ...r, checks: normalizeChecks(r.checks) })) : [];
+  const lessonChecks: Record<string, string[]> = {};
+  for (const lesson of LESSONS) {
+    const checked = data.lessonChecks?.[lesson.id];
+    if (Array.isArray(checked)) lessonChecks[lesson.id] = lesson.checklist.filter(item => checked.includes(item));
+  }
+  return { files: data.files, savedRequests, lessonChecks,
+    activeLessonId: LESSONS.some(l => l.id === data.activeLessonId) ? data.activeLessonId! : LESSONS[0].id };
 }
 
 function readPersistedData(): PersistedBackendLabData | null {
@@ -63,8 +97,7 @@ function readPersistedData(): PersistedBackendLabData | null {
     const raw = window.localStorage.getItem(BACKEND_LAB_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.files) || parsed.files.length === 0) return null;
-    return parsed as PersistedBackendLabData;
+    return normalizePersistedData(parsed);
   } catch {
     return null;
   }
@@ -94,12 +127,16 @@ export function createInitialState(): BackendLabState {
       files: persisted.files,
       activeFileId: persisted.files[0].id,
       request: { ...DEFAULT_REQUEST },
+      checks: normalizeChecks(null),
       headerRows: [],
       lastOutcome: null,
+      lastRun: null,
       postmanTab: "response",
+      history: [],
       lessonCollapsed: false,
       activeLessonId: LESSONS.some((l) => l.id === persisted.activeLessonId) ? persisted.activeLessonId : LESSONS[0].id,
       savedRequests: persisted.savedRequests,
+      lessonChecks: persisted.lessonChecks,
       editingSavedRequestId: null,
       lessonWidth: 380,
       postmanWidth: 420,
@@ -110,12 +147,16 @@ export function createInitialState(): BackendLabState {
     files: [{ id: fileId, name: "server.js", code: "" }],
     activeFileId: fileId,
     request: { ...DEFAULT_REQUEST },
+    checks: normalizeChecks(null),
     headerRows: [],
     lastOutcome: null,
+    lastRun: null,
     postmanTab: "response",
+    history: [],
     lessonCollapsed: false,
     activeLessonId: LESSONS[0].id,
     savedRequests: [],
+    lessonChecks: {},
     editingSavedRequestId: null,
     lessonWidth: 380,
     postmanWidth: 420,
@@ -127,6 +168,25 @@ export function backendLabReducer(
   action: BackendLabAction
 ): BackendLabState {
   switch (action.type) {
+    case "SET_CHECK":
+      return { ...state, checks: { ...state.checks, [action.field]: action.value } };
+    case "RECORD_REQUEST":
+      return { ...state, lastRun: action.run, lastOutcome: action.run.outcome,
+        history: [action.run, ...state.history].slice(0, HISTORY_LIMIT), postmanTab: "response" };
+    case "LOAD_HISTORY": {
+      const run = state.history.find(entry => entry.id === action.id);
+      if (!run) return state;
+      return { ...state, request: { ...run.request, headers: { ...run.request.headers } },
+        headerRows: headersToRows(run.request.headers), checks: { ...run.checks },
+        lastRun: run, lastOutcome: run.outcome, editingSavedRequestId: null, postmanTab: "response" };
+    }
+    case "CLEAR_HISTORY":
+      return { ...state, history: [], lastRun: null, lastOutcome: null };
+    case "TOGGLE_CHECK": {
+      const checked = state.lessonChecks[action.lessonId] ?? [];
+      return { ...state, lessonChecks: { ...state.lessonChecks,
+        [action.lessonId]: checked.includes(action.item) ? checked.filter(item => item !== action.item) : [...checked, action.item] } };
+    }
     case "SET_FILE_CODE":
       return {
         ...state,
@@ -134,7 +194,7 @@ export function backendLabReducer(
       };
 
     case "ADD_FILE": {
-      const id = `file-${Date.now()}`;
+      const id = `file-${crypto.randomUUID()}`;
       return {
         ...state,
         files: [...state.files, { id, name: action.name, code: "" }],
@@ -183,6 +243,7 @@ export function backendLabReducer(
       return {
         ...state,
         lastOutcome: action.outcome,
+        lastRun: null,
         postmanTab: "response",
       };
 
@@ -203,16 +264,16 @@ export function backendLabReducer(
         return {
           ...state,
           savedRequests: state.savedRequests.map((r) =>
-            r.id === state.editingSavedRequestId ? { ...r, request: { ...state.request } } : r
+            r.id === state.editingSavedRequestId ? { ...r, request: { ...state.request, headers: { ...state.request.headers } }, checks: { ...state.checks } } : r
           ),
         };
       }
       const name = action.name?.trim();
       if (!name) return state;
-      const id = `req-${Date.now()}`;
+      const id = `req-${crypto.randomUUID()}`;
       return {
         ...state,
-        savedRequests: [...state.savedRequests, { id, name, request: { ...state.request } }],
+        savedRequests: [...state.savedRequests, { id, name, request: { ...state.request, headers: { ...state.request.headers } }, checks: { ...state.checks } }],
         editingSavedRequestId: id,
       };
     }
@@ -222,11 +283,13 @@ export function backendLabReducer(
       if (!saved) return state;
       return {
         ...state,
-        request: { ...saved.request },
+        request: { ...saved.request, headers: { ...saved.request.headers } },
+        checks: normalizeChecks(saved.checks),
         headerRows: headersToRows(saved.request.headers),
         editingSavedRequestId: saved.id,
         postmanTab: "response",
         lastOutcome: null,
+        lastRun: null,
       };
     }
 
@@ -241,9 +304,11 @@ export function backendLabReducer(
       return {
         ...state,
         request: { ...DEFAULT_REQUEST },
+        checks: normalizeChecks(null),
         headerRows: [],
         editingSavedRequestId: null,
         lastOutcome: null,
+        lastRun: null,
       };
 
     case "SET_LESSON_WIDTH":
@@ -266,6 +331,13 @@ export function backendLabReducer(
           ? state.activeFileId
           : action.data.files[0].id,
         savedRequests: action.data.savedRequests,
+        history: [],
+        checks: normalizeChecks(null),
+        activeLessonId: action.data.activeLessonId,
+        lessonChecks: action.data.lessonChecks,
+        editingSavedRequestId: null,
+        lastOutcome: null,
+        lastRun: null,
       };
     }
 

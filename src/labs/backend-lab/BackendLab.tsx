@@ -1,19 +1,24 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useGlobalTheme } from "../../context/ThemeContext.jsx";
 import { useThemeColors } from "../../hooks/useThemeColors";
 import { EXTERNAL_WRITE_EVENT } from "../../hooks/useLocalStorage.js";
 import { STUDIO_THEMES } from "../../utils/studioThemes";
-import { backendLabReducer, createInitialState, BACKEND_LAB_STORAGE_KEY } from "./backendLabReducer";
-import { runRequest } from "./runRequest";
-import type { HttpRequest } from "./types";
+import { backendLabReducer, createInitialState, BACKEND_LAB_STORAGE_KEY, normalizePersistedData } from "./backendLabReducer";
+import { runRequest, type RunOutcome } from "./runRequest";
+import { checkConfigurationError, evaluateResponseChecks } from "./requestChecks";
+import type { HttpRequest, ResponseChecks, PostmanTab } from "./types";
 import LessonPanel from "./LessonPanel";
 import IdePanel from "./IdePanel";
 import PostmanPanel from "./PostmanPanel";
+import BackupControls from "./BackupControls";
+import { DATABASE_SAVE_EVENT } from "./sqlDatabase";
 import { LESSONS } from "./lessons/index";
 
 interface BackendLabProps {
   onBack?: () => void;
 }
+
+const EMPTY_CHECKS: string[] = [];
 
 // Same drag-to-resize technique already proven in ts-lab/TsLab.jsx — an
 // invisible full-screen overlay captures mouse movement for the duration of
@@ -55,13 +60,27 @@ export default function BackendLab({ onBack }: BackendLabProps) {
   const status = useThemeColors();
 
   const [state, dispatch] = useReducer(backendLabReducer, undefined, createInitialState);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
+  const [saveError, setSaveError] = useState("");
+  const [databaseWarning, setDatabaseWarning] = useState("");
+  const [mobilePane, setMobilePane] = useState("lesson");
+  const [compact, setCompact] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setCompact(entry.contentRect.width < 1150));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const lessonWidthRef = useRef(state.lessonWidth);
   const postmanWidthRef = useRef(state.postmanWidth);
   lessonWidthRef.current = state.lessonWidth;
   postmanWidthRef.current = state.postmanWidth;
 
-  // Persist a student's code and saved requests — the only part of this
-  // lab's state worth surviving a refresh — every time either changes.
+  // Save code, requests and lesson progress without requiring an account.
   // AuthContext.jsx's SYNC_KEYS list (oc-backend-lab) then carries this to
   // Firestore for any signed-in user, the same mechanism every other synced
   // feature in this app already uses; nothing Backend Lab-specific needed
@@ -75,12 +94,19 @@ export default function BackendLab({ onBack }: BackendLabProps) {
     try {
       window.localStorage.setItem(
         BACKEND_LAB_STORAGE_KEY,
-        JSON.stringify({ files: state.files, savedRequests: state.savedRequests, activeLessonId: state.activeLessonId })
+        JSON.stringify({ files: state.files, savedRequests: state.savedRequests, activeLessonId: state.activeLessonId, lessonChecks: state.lessonChecks })
       );
+      setSaveError("");
     } catch {
-      // localStorage unavailable/full — the student's session still works, just unsaved
+      setSaveError("Your work could not be saved in this browser. Export a backup before closing.");
     }
-  }, [state.files, state.savedRequests, state.activeLessonId]);
+  }, [state.files, state.savedRequests, state.activeLessonId, state.lessonChecks]);
+
+  useEffect(() => {
+    const onSave = (event: Event) => setDatabaseWarning((event as CustomEvent<string>).detail);
+    window.addEventListener(DATABASE_SAVE_EVENT, onSave);
+    return () => window.removeEventListener(DATABASE_SAVE_EVENT, onSave);
+  }, []);
 
   // Picks up a Firestore-merged value written to localStorage after this
   // component already mounted (sign-in resolving async, or another tab's
@@ -93,8 +119,8 @@ export default function BackendLab({ onBack }: BackendLabProps) {
       try {
         const raw = window.localStorage.getItem(BACKEND_LAB_STORAGE_KEY);
         if (!raw) return;
-        const data = JSON.parse(raw);
-        if (Array.isArray(data?.files) && data.files.length > 0) {
+        const data = normalizePersistedData(JSON.parse(raw));
+        if (data) {
           dispatch({ type: "LOAD_PERSISTED_DATA", data });
         }
       } catch {
@@ -126,17 +152,42 @@ export default function BackendLab({ onBack }: BackendLabProps) {
   // side-effecting function from inside one would silently double-insert
   // every write. The reducer only ever stores an already-computed result.
   const handleSend = useCallback(async () => {
-    const outcome = await runRequest(state.files, state.request);
-    dispatch({ type: "SET_OUTCOME", outcome });
-  }, [state.files, state.request]);
+    if (sendingRef.current || backupBusy) return;
+    const request = { ...state.request, headers: { ...state.request.headers } };
+    const checks = { ...state.checks };
+    const configurationError = checkConfigurationError(checks);
+    if (configurationError) {
+      dispatch({ type: "SET_OUTCOME", outcome: { response: null, logs: [], error: { type: "Check configuration", message: configurationError } } });
+      return;
+    }
+    sendingRef.current = true;
+    setSending(true);
+    const started = performance.now();
+    try {
+      let outcome: RunOutcome;
+      try { outcome = await runRequest(state.files, request); }
+      catch (error) {
+        outcome = { response: null, logs: [], error: { message: error instanceof Error ? error.message : String(error) } };
+      }
+      dispatch({ type: "RECORD_REQUEST", run: {
+        id: crypto.randomUUID(), request, checks, outcome,
+        results: evaluateResponseChecks(checks, outcome),
+        elapsedMs: Math.max(0, Math.round(performance.now() - started)), completedAt: Date.now(),
+      } });
+    } finally { sendingRef.current = false; setSending(false); }
+  }, [state.files, state.request, state.checks, backupBusy]);
+  const handleCheckChange = useCallback((field: keyof ResponseChecks, value: string) => dispatch({ type: "SET_CHECK", field, value }), []);
+  const handleLoadHistory = useCallback((id: string) => dispatch({ type: "LOAD_HISTORY", id }), []);
+  const handleClearHistory = useCallback(() => dispatch({ type: "CLEAR_HISTORY" }), []);
   const handleTabChange = useCallback(
-    (tab: "response" | "logs" | "saved" | "sql") => dispatch({ type: "SET_POSTMAN_TAB", tab }),
+    (tab: PostmanTab) => dispatch({ type: "SET_POSTMAN_TAB", tab }),
     []
   );
   const handleToggleLesson = useCallback(() => dispatch({ type: "TOGGLE_LESSON_COLLAPSED" }), []);
 
   const activeLessonIndex = LESSONS.findIndex((l) => l.id === state.activeLessonId);
   const activeLesson = LESSONS[activeLessonIndex] ?? LESSONS[0];
+  const handleToggleCheck = useCallback((item: string) => dispatch({ type: "TOGGLE_CHECK", lessonId: activeLesson.id, item }), [activeLesson.id]);
   const handlePrevLesson = useCallback(() => {
     const prev = LESSONS[activeLessonIndex - 1];
     if (prev) dispatch({ type: "SET_LESSON", id: prev.id });
@@ -172,24 +223,33 @@ export default function BackendLab({ onBack }: BackendLabProps) {
   const startPostmanResize = useColumnResize(setPostmanWidth);
 
   return (
-    <div className={`w-full h-screen overflow-hidden flex flex-col ${ui.bg0} ${ui.txt1}`}>
-      <div className={`flex items-center gap-2.5 px-3.5 py-2 border-b ${ui.border} shrink-0`}>
+    <div ref={containerRef} className={`w-full h-full min-h-0 overflow-hidden flex flex-col ${ui.bg0} ${ui.txt1}`}>
+      <div className={`flex flex-wrap items-center gap-2.5 px-3.5 py-2 border-b ${ui.border} shrink-0`}>
         {onBack && (
           <button onClick={onBack} className={`text-[13px] ${ui.txt2} ${ui.hoverTx} transition-colors`}>
             ← Back
           </button>
         )}
         <strong className={`text-sm ${ui.txt1}`}>Backend Lab</strong>
+        <span className={`text-xs ${ui.txt2}`}>Browser simulation · No account needed</span>
+        <BackupControls project={{ files: state.files, savedRequests: state.savedRequests, activeLessonId: state.activeLessonId, lessonChecks: state.lessonChecks }} disabled={sending} onBusyChange={setBackupBusy} onRestore={data => dispatch({ type: "LOAD_PERSISTED_DATA", data })} />
       </div>
 
-      <div className="flex-1 flex min-h-0">
-        {!state.lessonCollapsed && (
-          <div style={{ width: state.lessonWidth }} className="shrink-0">
+      {(saveError || databaseWarning) && <div role="alert" className="px-3 py-2 text-sm text-amber-500">{saveError || databaseWarning}</div>}
+      <div className={`px-3 py-1 text-xs ${ui.txt2}`}>Work saves in this browser. Export a backup to move devices or protect against cleared browser data.</div>
+      <nav aria-label="Lab panels" className={`${compact ? "flex" : "hidden"} border-b`}>
+        {["lesson", "code", "requests"].map(pane => <button key={pane} aria-pressed={mobilePane === pane} onClick={() => setMobilePane(pane)} className={`flex-1 px-3 py-2 capitalize border-b-2 ${mobilePane === pane ? ui.primary : ui.txt2}`} style={{ borderBottomColor: mobilePane === pane ? accentHex : "transparent" }}>{pane}</button>)}
+      </nav>
+      <div className="flex-1 flex min-h-0 min-w-0">
+        {((compact && mobilePane === "lesson") || (!compact && !state.lessonCollapsed)) && (
+          <div style={{ width: compact ? "100%" : state.lessonWidth }} className="shrink-0 min-h-0">
             <LessonPanel
               key={activeLesson.id}
               title={activeLesson.title}
               content={activeLesson.content}
               checklist={activeLesson.checklist}
+              checked={state.lessonChecks[activeLesson.id] ?? EMPTY_CHECKS}
+              onToggleCheck={handleToggleCheck}
               collapsed={false}
               onToggleCollapsed={handleToggleLesson}
               ui={ui}
@@ -201,27 +261,29 @@ export default function BackendLab({ onBack }: BackendLabProps) {
             />
           </div>
         )}
-        {state.lessonCollapsed && (
-          <LessonPanel
+        {!compact && state.lessonCollapsed && (
+          <div><LessonPanel
             key={activeLesson.id}
             title={activeLesson.title}
             content={activeLesson.content}
             checklist={activeLesson.checklist}
+            checked={state.lessonChecks[activeLesson.id] ?? EMPTY_CHECKS}
+            onToggleCheck={handleToggleCheck}
             collapsed
             onToggleCollapsed={handleToggleLesson}
             ui={ui}
             accentHex={accentHex}
-          />
+          /></div>
         )}
-        {!state.lessonCollapsed && (
+        {!compact && !state.lessonCollapsed && (
           <div
             onMouseDown={startLessonResize(() => lessonWidthRef.current, 260, 640)}
-            className={`w-1 shrink-0 cursor-col-resize border-l ${ui.border} hover:border-l-2 transition-all`}
+            className={`${compact ? "hidden" : "block"} w-1 shrink-0 cursor-col-resize border-l ${ui.border} hover:border-l-2 transition-all`}
             style={{ borderLeftColor: accentHex, opacity: 0.35 }}
           />
         )}
 
-        <div className={`flex-1 min-w-0 border-r ${ui.border}`}>
+        <div className={`${!compact || mobilePane === "code" ? "flex" : "hidden"} flex-col flex-1 min-w-0 border-r ${ui.border}`}>
           <IdePanel
             files={state.files}
             activeFileId={state.activeFileId}
@@ -236,10 +298,10 @@ export default function BackendLab({ onBack }: BackendLabProps) {
 
         <div
           onMouseDown={startPostmanResize(() => postmanWidthRef.current, 320, 720, -1)}
-          className={`w-1 shrink-0 cursor-col-resize border-l ${ui.border} hover:border-l-2 transition-all`}
+          className={`${compact ? "hidden" : "block"} w-1 shrink-0 cursor-col-resize border-l ${ui.border} hover:border-l-2 transition-all`}
           style={{ borderLeftColor: accentHex, opacity: 0.35 }}
         />
-        <div style={{ width: state.postmanWidth }} className="shrink-0">
+        <div style={{ width: compact ? "100%" : state.postmanWidth }} className={`${!compact || mobilePane === "requests" ? "block" : "hidden"} shrink-0 min-h-0`}>
           <PostmanPanel
             request={state.request}
             headerRows={state.headerRows}
@@ -250,6 +312,14 @@ export default function BackendLab({ onBack }: BackendLabProps) {
             onSetHeaderRow={handleSetHeaderRow}
             onRemoveHeaderRow={handleRemoveHeaderRow}
             onSend={handleSend}
+            sending={sending}
+            disabled={backupBusy}
+            checks={state.checks}
+            onCheckChange={handleCheckChange}
+            history={state.history}
+            lastRun={state.lastRun}
+            onLoadHistory={handleLoadHistory}
+            onClearHistory={handleClearHistory}
             onTabChange={handleTabChange}
             ui={ui}
             accentHex={accentHex}

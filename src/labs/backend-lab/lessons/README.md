@@ -45,8 +45,8 @@ only knows how to fetch and store data — it has never heard of a
 business rule. `db` is the only thing that knows SQL exists at all.
 
 This isn't a rule imposed for tidiness — it's what makes lesson 13
-possible at all: swapping an in-memory array for a real, disk-backed
-SQLite database (compiled to WebAssembly) touches exactly one file,
+possible at all: replacing convenience database calls with student-written SQL
+against the same SQLite database (compiled to WebAssembly) touches exactly one file,
 `usersRepository`, and nothing above it. Every layer in this project
 was built for a reason lesson 1 through lesson 12 each made you feel
 first, not handed to you as architecture up front.
@@ -61,8 +61,8 @@ first, not handed to you as architecture up front.
   Postman-style panel calls directly into a real, hand-written
   JavaScript interpreter running your code, in the same page.
 - **Real persistence, for real.** Starting lesson 9, data survives
-  across simulated requests. Starting lesson 13, it's backed by an
-  actual SQLite database (via [sql.js](https://sql.js.org/)), queryable
+  across simulated requests and, after a successful local save, page
+  reloads in the same browser. It uses an actual SQLite database (via [sql.js](https://sql.js.org/)), queryable
   directly through a real SQL console — not a simulation of a database,
   a real one.
 

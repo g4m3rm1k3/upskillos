@@ -213,8 +213,8 @@ noticed until the exact method that needed it finally runs.
 
 ---
 
-*Next: `usersRepository` still talks to `db`, a small, in-memory,
-made-up store. Lesson 13 makes it real: swapping in an actual SQL
-database, and building a real SQL IDE panel to work with it directly —
+*Next: `usersRepository` still uses the small convenience API exposed by
+`db`. Lesson 13 replaces those calls with SQL you write against the same
+SQLite database, using the SQL console to inspect it directly —
 while `usersService`, thanks to this lesson's loose coupling, won't need
 to change at all.*

@@ -196,7 +196,7 @@ export const LESSONS: LessonMeta[] = [
       "POST /users followed by GET /users shows the created user, in the same response list",
       "Two separate POST /users calls produce two different, auto-incrementing ids",
       "You can explain why db is a convention this lab provides, not a JavaScript language feature",
-      "You can explain what makes db's storage durable across requests but not across a real restart",
+      "You can explain what survives requests and reloads, and why browser storage still needs a backup",
       "You can explain the difference between volatile and durable storage",
       "You can explain why usersController never needed to change in this lesson, even though storage completely did",
       "You can explain what would happen, and what wouldn't be caught, if a handler called db.insertUser directly instead of going through usersService",

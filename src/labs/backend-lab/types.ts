@@ -55,4 +55,12 @@ export interface SavedRequest {
   id: string;
   name: string;
   request: HttpRequest;
+  checks?: ResponseChecks;
 }
+
+export interface ResponseChecks {
+  status: string;
+  body: string;
+}
+
+export type PostmanTab = "response" | "logs" | "saved" | "sql" | "history" | "checks";
