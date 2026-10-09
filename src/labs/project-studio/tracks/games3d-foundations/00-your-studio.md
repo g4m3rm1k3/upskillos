@@ -10,7 +10,7 @@ console: true
 
 You will build a desktop app for making 3D games. First it becomes a small scene editor: an object list, a 3D view and controls for changing positions. Later you add saving, undo, Play/Stop and export. You then make games with it, adding features when those games need them: a track editor for racing, collision tools for platforming, navigation for strategy and databases for an RPG.
 
-The opening lessons build the scene model, tests, a native 3D window and a selectable position inspector. They do not yet provide saving, undo, game simulation or export. The series is in development; the complete destination is not an available app. The earlier Circuit Clash C# course remains a separate reference and keeps its existing progress.
+The Foundations lessons build scene data, tests, a native 3D window, position editing, creation/deletion, undo/redo and versioned save/open. An early Q-learning playground lets you train and inspect a beacon bot before building the full game runtime. It is a separate prototype, not yet a game made with the editor. Play/Stop isolation, editor-authored games and export come later. The series is in development. The earlier Circuit Clash C# course remains a separate reference and keeps its existing progress.
 
 ## Describe what the first app must do
 

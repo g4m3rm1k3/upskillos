@@ -24,6 +24,7 @@ Open the address it prints (http://localhost:5173). Edit a file under `src/` and
 | Fix a mistake in a lesson | Find the lesson file (the tour explains how), edit it, and check it as in [the lesson checks](#checks) below |
 | Write a new lesson | Add a file to a course folder, as in [docs/catalog-discovery.md](docs/catalog-discovery.md); write it to [docs/lesson-writing-standard.md](docs/lesson-writing-standard.md) |
 | Create a course from a guided template | Copy the [commented YAML course template](docs/templates/course-template.yaml), then follow [Create a course from YAML](docs/contributing/course-from-yaml.md) |
+| Write a Project Studio series (build-a-real-project lessons) | Copy the [series template](docs/templates/project-studio-series/README.md), then follow [Write a Project Studio series](docs/contributing/project-studio-series.md) |
 | Add a lab or a game | [docs/catalog-discovery.md](docs/catalog-discovery.md) |
 | Add a standalone intuition experience | [docs/contributing/intuition-lessons.md](docs/contributing/intuition-lessons.md) |
 | Report a bug or a content error | [Open an issue](https://github.com/g4m3rm1k3/upskillos/issues/new/choose) |

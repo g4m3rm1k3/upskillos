@@ -1,6 +1,6 @@
 # Build a 3D Game Studio — Learn Engineering Through Games
 
-Status: opening studio lessons implemented, 2026-10-09; broader curriculum remains proposed. Circuit Clash exists separately. The new Foundations track builds scene data, behavioral checks, a native 3D viewport, selection and a position inspector. Saving, undo, play mode, export and the additional genre projects remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
+Status: Foundations now includes scene editing, undo/redo, versioned save/open and an early native Q-learning playground, 2026-10-09. Circuit Clash exists separately. Play/Stop isolation, editor-authored games, export and further genres remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
 
 ## Audience and destination
 
@@ -31,6 +31,7 @@ Each row is a project arc made of short lessons, not one lesson or a giant code 
 | Arc | Playable destination | New problems and concepts | Independent evidence |
 | --- | --- | --- | --- |
 | Studio foundations | A desktop app that creates, edits, saves and plays a small 3D scene | C# bridge, window and input, coordinates, scene data, selection, inspector, commands, undo/redo, persistence, separate edit/play state and standalone runner | Create a new scene, save/reopen it, undo an edit, play/stop without changing authored data and run it outside the editor |
+| Early learning experiment: Beacon Bot | Step a trained bot through a tiny native 3D playground | Explicit environment rules, state/action encoding, enums, value records, tabular Q-learning, exploration, seeded experiments and frozen-policy evaluation | Hand-check updates, compare an untrained policy and evaluate multiple seeds; explain why this fixed grid is not yet a general game runtime |
 | Foundation: Beacon Island | Explore a small 3D island, collect beacons and reach an exit | C# bridge, execution, values and units, conditions, functions, arrays, state, coordinates, camera, input, frame time, simple collision, debugging and first tests | Add a new collectible rule; explain and fix a frame-rate-dependent movement bug |
 | Racing: Circuit Clash in the studio | Third-person kart combat race with garage and opponents | Reuse the existing game's rules as a reference; add track editing, ordered gate validation, reusable kart definitions, materials, chase-camera settings and shared driver contracts | Author a second track in the studio and run it without changing the editor; preserve existing course IDs and verify migrated rules |
 | Platforming: Skybound Courier | Jump between platforms and moving lifts, deliver parcels, restart at checkpoints | Velocity and acceleration, grounded state, collision normals, swept tests, jump buffering, camera occlusion, animation, interpolation and accessibility | Prevent tunneling through a thin platform; design cases for landing, walking off an edge and jumping on a moving lift |
@@ -78,7 +79,7 @@ Visual scripting, a plugin system, multiplayer, collaborative editing and hot re
 
 ## Build the studio in runnable milestones
 
-The studio comes before Beacon Island. Each milestone must remain runnable before another is added. Introduce a tiny playground scene during studio development; making a polished genre game waits until the editor can author, save and play it.
+The studio comes before Beacon Island. Each milestone must remain runnable before another is added. An early Beacon Bot experiment follows editor history, before persistence: train on a tiny fixed world and step its frozen policy in a native 3D runner. It reuses Core and the graphics toolchain but is not yet editor-authored or Play mode. Later connect the environment to validated scene markers after play-state isolation and triggers exist. Making a polished genre game waits until the editor can author, save and play it.
 
 1. Observe the destination studio: add a shape, change its position, save, play and stop. Explain editor, runtime and game project using those actions. Write one observable acceptance case.
 2. Run and change a console program. Teach files, directories, terminal commands, compile versus run, compiler diagnostics, and reading the first useful error.
@@ -166,4 +167,24 @@ Before releasing each arc:
 5. Data and production: RPG database arc, single-player action arena and simulation. Publish networking as a clearly optional extension after the local game works.
 6. Capstone and optional branches: independent release, web implementation and engine comparisons after the core prerequisite chain is stable.
 
-The opening lessons now implement the scene-data, viewport and first selection/position-editing milestones. Next author creation/deletion, reversible commands and validated saving before introducing independent Play state. Additional games, database integration and network services remain planned. Subsequent implementation follows the runnable studio milestones before the genre projects.
+The Foundations lessons now implement scene data, the viewport, selection/position editing, creation/deletion and snapshot-based undo/redo. The continuation teaches stable identities, ownership, stacks, failed operations and branching history, then connects them to keyboard and pointer controls with a paged object list. History is in memory and unbounded; immutable records make the introductory snapshots safe, while future mutable components require a deeper copying policy. Versioned JSON save/open and an early Q-learning prototype are now authored. Next introduce independent Play state and connect a validated beacon scene to the bot environment. Additional games, database integration and network services remain planned.
+
+## C# depth through concrete engineering needs
+
+Every abstraction lesson must show its benefit, cost and an alternative. More indirection is not automatically better. Teach a concrete version first, give it a requirement that exposes a limitation, then compare the revised design with behavioral evidence.
+
+| Need | C# concept and current example | Benefit and cost to explain |
+| --- | --- | --- |
+| Inspect scene objects without arbitrary external edits | IReadOnlyList, immutable records, private ownership | Smaller mutation surface; a read-only view is not a frozen collection and mutable nested data still needs care |
+| Describe discrete learning feedback | Enum and readonly record struct | Named actions and value equality; casts still permit invalid enum values and value/reference semantics must be understood |
+| Store estimates and detect duplicate IDs | Rectangular generic-free numeric arrays, List<T>, HashSet<Guid> | Choose a structure for access/order/membership needs; explain bounds, complexity and memory |
+| Replace storage without rewriting editing | ISceneStore, two implementations, constructor injection | Substitution and controlled failures; the interface adds another contract and cannot enforce semantics alone |
+| Close file handles even on failure | IDisposable and using declarations | Deterministic resource cleanup; distinguish disposal from garbage collection and namespace imports |
+| Recover from expected failures | Specific exceptions, try/catch/finally | Preserve valid work and report outcomes; broad catches can conceal bugs and inheritance determines matching |
+| Find and transform data | Upcoming IEnumerable<T>, foreach protocol, LINQ and iterators | Compare loops with lazy queries, repeated enumeration and allocation when scene queries become awkward |
+| Decouple live editor updates | Upcoming delegates, events and subscription lifetime | Introduce with a concrete panel update requirement; test teardown and avoid dangling subscriptions |
+| Load substantial assets while remaining responsive | Upcoming Task, async/await, CancellationToken and synchronization | Introduce after measuring a blocked UI; keep graphics ownership on its required thread and bound cancellation |
+
+Early learning sequence: explicit transitions → numeric update experiment → exploration and bounded training → frozen evaluation across seeds → visible 3D decision stepping. Report failures as well as wins. A fixed learning rate and finite episodes do not establish convergence or transfer to unseen maps. Larger games revisit representation, reward design, evaluation leakage, baselines, reproducibility and policy persistence before introducing deep learning.
+
+Quality review still needs introductory learners: ask them to predict, explain an observed failure and make an independent tested change. Author reconstruction, mutation checks and screenshots establish selected technical contracts; they do not establish pacing, accessibility or learner mastery. Keep the series in-development until that review has evidence.

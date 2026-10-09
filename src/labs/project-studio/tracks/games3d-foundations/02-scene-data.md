@@ -38,6 +38,14 @@ public sealed record SceneObject(Guid Id, string Name, Vector3 Position);
 
 The scene will eventually allow names and order to change. An ID lets a selection still refer to the same object. sealed prevents subclassing; we have no need for alternative SceneObject subclasses yet. These objects initially describe unit cubes only: shape, rotation, scale and behaviors come later.
 
+## Read a C# collection contract before using it {#collection-contract}
+
+Suppose Studio needs to display two objects but must not clear the scene's list behind the editor's back. A public `List<SceneObject>` would expose Clear and Remove as well as reading. `IReadOnlyList<SceneObject>` instead exposes Count, index access and enumeration. The angle brackets supply a type argument: this collection contains SceneObject values, not arbitrary objects. The I prefix convention identifies an interface, which describes operations a caller can use. It is not a separate copy of the data.
+
+There are three different protections to explain: private controls access to the owning field, readonly prevents replacing that field's list reference, and the read-only wrapper restricts edits through the returned collection. None means the scene stops changing. The next code keeps mutation in Add and TryMove, while a reader observes their results. Records protect each object's properties against ordinary reassignment; a future mutable nested component would require additional ownership rules.
+
+Before continuing, explain what would happen to a previously obtained Objects view after the scene adds another object: its Count increases because it observes the same backing list. Explain why a stored SceneObject record does not itself acquire a new position after TryMove replaces that list entry. If these predictions are unclear, draw the list, its wrapper and two records separately. Later snapshots and save/load rely on this distinction.
+
 ## Own the list and validate additions
 
 A List can grow. A private field is accessible only inside this class; public methods expose deliberate operations. IReadOnlyList exposes reading and counting, not list editing. AsReadOnly wraps the underlying list instead of returning a mutable List disguised as a read-only interface. The scene owns changes; clients read the latest state.

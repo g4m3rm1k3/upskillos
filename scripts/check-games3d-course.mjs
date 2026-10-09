@@ -13,6 +13,7 @@ const directory = path.join(repo, 'src/labs/project-studio/tracks/games3d-founda
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'games3d-course-'));
 const keep = process.argv.includes('--keep');
 const coreOnly = process.argv.includes('--core-only');
+const finalOnly = process.argv.includes('--final-only');
 const index = process.argv.indexOf('--dotnet');
 const dotnet = index < 0 ? 'dotnet' : process.argv[index + 1];
 if (!dotnet || dotnet.startsWith('--')) throw new Error('--dotnet needs an executable path');
@@ -55,13 +56,19 @@ try {
         } else fs.writeFileSync(destination, step.edit.code);
       }
       for (const check of step.checks) {
+        if (finalOnly) continue;
         if (check.kind !== 'run') throw new Error(`Unsupported walkthrough check: ${check.kind}`);
         const words = check.args[0].split(' ');
         if (words.shift() !== 'dotnet') throw new Error('Only explicit dotnet commands are supported');
-        if (coreOnly && words.includes('Studio')) continue;
+        if (coreOnly && (words.includes('Studio') || words.includes('Bot'))) continue;
         run(words, check.opts.stdout || '');
       }
     }
+  }
+
+  if (finalOnly) {
+    run(['run', '--project', 'Checks'], 'STORE CHECKS PASSED');
+    if (!coreOnly) { run(['build', 'Studio']); run(['build', 'Bot']); }
   }
 
   const checks = path.join(root, 'Checks/Program.cs');
@@ -84,6 +91,22 @@ try {
   original = replaceChecked(session, '        return false;\n    }', '        SelectedId = Guid.Empty;\n        return false;\n    }');
   try { run(['run', '--project', 'Checks'], 'Failed selection lost previous selection', true); }
   finally { fs.writeFileSync(session, original); }
+  const historyMutations = [
+    ['Core/SceneEditing.cs', 'objects.RemoveAt(i);', 'objects.RemoveAt(0);', 'Delete transition is wrong'],
+    ['Core/EditorHistory.cs', 'redo.Clear();', '// redo.Clear();', 'New edit kept obsolete redo'],
+    ['Core/EditorHistory.cs', 'Restore(undo.Pop());', 'undo.Pop();', 'Basic undo lost original position'],
+    ['Core/EditorHistory.cs', 'SelectedId = snapshot.SelectedId;', '// SelectedId = snapshot.SelectedId;', 'Undo did not restore deleted selection'],
+    ['Core/QAgent.cs', 'result.Terminal ? 0 : Value(result.State, Greedy(result.State))', 'Value(result.State, Greedy(result.State))', 'Terminal update bootstrapped'],
+    ['Core/SceneCodec.cs', 'data.Version != 1', 'false', 'Future version accepted'],
+    ['Core/SceneCodec.cs', '!ids.Add(item.Id)', 'false', 'Duplicate IDs accepted'],
+    ['Core/EditorLoading.cs', 'redo.Clear();', '// redo.Clear();', 'Open kept stale history'],
+  ];
+  for (const [relative, before, after, expected] of historyMutations) {
+    const file = path.join(root, relative);
+    original = replaceChecked(file, before, after);
+    try { run(['run', '--project', 'Checks'], expected, true); }
+    finally { fs.writeFileSync(file, original); }
+  }
   run(['run', '--project', 'Checks'], 'EDITOR CHECKS PASSED');
 
   if (process.argv.includes('--graphics-smoke') && !coreOnly) {
@@ -94,19 +117,50 @@ try {
     const source = fs.readFileSync(program, 'utf8');
     const screenshot = path.join(root, 'studio-smoke.png');
     const bounded = source
-      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
+      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\neditor.TryAdd("Cube", new Vector3(4, 0.5f, 0));\neditor.TryDeleteSelected();\neditor.TryUndo();\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
       .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 5) Raylib.TakeScreenshot("studio-smoke.png");');
     if (bounded === source || !bounded.includes('smokeFrames++')) throw new Error('Graphics smoke anchor missing');
-    fs.writeFileSync(program, bounded);
+    const fileChecks = `
+if (!files.TrySave()) throw new Exception("UI save failed");
+string goodFile = File.ReadAllText(scenePath);
+Guid keptId = editor.SelectedId;
+var keptPosition = editor.Selected!.Position;
+int keptUndo = editor.UndoCount;
+File.WriteAllText(scenePath, goodFile.Replace("\\\"Version\\\": 1", "\\\"Version\\\": 2"));
+if (files.TryOpen() || !files.Status.StartsWith("File operation failed") || editor.SelectedId != keptId || editor.UndoCount != keptUndo)
+    throw new Exception("UI invalid open changed editor");
+File.WriteAllText(scenePath, goodFile);
+editor.TryMoveSelected(Vector3.UnitY);
+if (!files.TryOpen() || scene.Objects[^1].Position != keptPosition || editor.UndoCount != 0 || editor.RedoCount != 0)
+    throw new Exception("UI open did not restore saved state");
+Console.WriteLine("FILE CONTROLS CHECKS PASSED");
+`;
+    fs.writeFileSync(program, bounded.replace('try\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)', fileChecks + '\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)'));
     try {
-      run(['run', '--project', 'Studio']);
+      run(['run', '--project', 'Studio'], 'FILE CONTROLS CHECKS PASSED');
       if (!fs.existsSync(screenshot) || fs.statSync(screenshot).size < 1000) throw new Error('No useful graphics screenshot produced');
       console.log(`GRAPHICS SCREENSHOT ${screenshot}`);
     } finally { fs.writeFileSync(program, source); }
     run(['build', 'Studio']);
+    const bot = path.join(root, 'Bot/Program.cs');
+    const botSource = fs.readFileSync(bot, 'utf8');
+    const botBounded = botSource
+      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
+      .replace('!ended && Raylib.IsKeyPressed(KeyboardKey.Space)', '!ended && smokeFrames <= 4')
+      .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 5) Raylib.TakeScreenshot("bot-smoke.png");');
+    if (!botBounded.includes('smokeFrames++')) throw new Error('Bot smoke anchor missing');
+    fs.writeFileSync(bot, botBounded);
+    try {
+      const output = run(['run', '--project', 'Bot'], 'Won = True, Steps = 4, Reward = 7');
+      if (!output.includes('Won = False, Steps = 20, Reward = -20')) throw new Error('Missing untrained bot baseline');
+      const botScreenshot = path.join(root, 'bot-smoke.png');
+      if (!fs.existsSync(botScreenshot) || fs.statSync(botScreenshot).size < 1000) throw new Error('No bot screenshot');
+      console.log(`BOT SCREENSHOT ${botScreenshot}`);
+    } finally { fs.writeFileSync(bot, botSource); }
+    run(['build', 'Bot']);
   }
-  console.log(`PASS ${milestones} executed milestones; deliberate assertion failure and 4 rule mutations detected; restored checks pass`);
-  console.log(coreOnly ? 'PASS reconstructed core course (graphics build skipped)' : 'PASS reconstructed 3D studio opening course');
+  console.log(`PASS ${milestones} executed milestones; deliberate assertion failure and ${mutations.length + 1 + historyMutations.length} rule mutations detected; restored checks pass`);
+  console.log(finalOnly ? 'PASS reconstructed final source (intermediate milestone checks skipped)' : coreOnly ? 'PASS reconstructed core course (graphics build skipped)' : 'PASS reconstructed 3D studio opening course');
 } finally {
   if (keep) console.log(`AUTHOR WORKSPACE ${root}`);
   else {

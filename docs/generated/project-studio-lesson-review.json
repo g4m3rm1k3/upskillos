@@ -1,11 +1,11 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 505,
+    "lessons": 515,
     "tracks": 63,
     "errors": {},
     "signals": {
-      "authored check limits not detected": 453,
+      "authored check limits not detected": 457,
       "prediction not detected": 104,
       "task lacks parsed hint ladder": 107,
       "independent task heading not detected": 239
@@ -3248,6 +3248,124 @@
       "maturity": "in-development",
       "firstStep": "Separate selection from authored scene data",
       "firstIndependentTask": "Independent task: add a reversible editing action",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/05-create-and-delete",
+      "track": "games3d-foundations",
+      "title": "Create and delete scene objects without losing selection",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Specify creation, deletion and an empty scene",
+      "firstIndependentTask": "Independent task: delete a middle object",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/05a-scene-controls",
+      "track": "games3d-foundations",
+      "title": "Give scene editing visible controls and keyboard selection",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Show controls and keep the selected row visible",
+      "firstIndependentTask": "Independent task: test the visible page boundary",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/06-history-model",
+      "track": "games3d-foundations",
+      "title": "Own snapshots and model undo with two stacks",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Trace history before choosing a representation",
+      "firstIndependentTask": "Independent task: trace two moves and selection",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/06a-history-controls",
+      "track": "games3d-foundations",
+      "title": "Verify history branches and add undo and redo controls",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Check order, identities and restoration",
+      "firstIndependentTask": "Independent task: prove history preserves ownership",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/07-beacon-world",
+      "track": "games3d-foundations",
+      "title": "Give a learning bot a tiny world with explicit rules",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Specify state, actions and feedback before learning",
+      "firstIndependentTask": "Independent task: specify a different hazard",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/07a-q-learning",
+      "track": "games3d-foundations",
+      "title": "Learn action values and evaluate a beacon bot",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work one update by hand",
+      "firstIndependentTask": "Independent task: measure exploration instead of guessing",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/07b-watch-the-bot",
+      "track": "games3d-foundations",
+      "title": "Watch a trained bot make decisions in a 3D playground",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the experiment its own executable",
+      "firstIndependentTask": "Independent task: explain and compare a losing bot",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/08-scene-format",
+      "track": "games3d-foundations",
+      "title": "Serialize a versioned scene and validate before accepting it",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Define the compatibility and identity contract",
+      "firstIndependentTask": "Independent task: reject a late invalid object",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/08a-storage-contract",
+      "track": "games3d-foundations",
+      "title": "Use a C# interface to separate storage from editing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "State a small contract before implementing it",
+      "firstIndependentTask": "Independent task: make unavailable storage observable",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/08b-open-and-save",
+      "track": "games3d-foundations",
+      "title": "Save and reopen your editor scene without hiding failures",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Report file outcomes at the UI boundary",
+      "firstIndependentTask": "Independent task: distinguish failure from unsaved work",
       "signals": [],
       "errors": []
     },

@@ -52,6 +52,11 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     run:    (runtime, relPath, scope) => ipcRenderer.invoke('project:run', runtime, relPath, scope),
     check:  (checks, scope) => ipcRenderer.invoke('project:check', checks, scope),
   },
+  // Draft lessons from a folder on this computer. See desktop/app/drafts.cjs.
+  drafts: {
+    list: () => ipcRenderer.invoke('drafts:list'),
+    open: () => ipcRenderer.invoke('drafts:open'),
+  },
 
   // The notebooks' Python kernel on the learner's own Python, keeping variables between
   // cells. See desktop/app/runtimes/notebook-kernel.cjs.

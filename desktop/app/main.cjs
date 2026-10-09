@@ -24,6 +24,7 @@ const notebookKernel = require('./runtimes/notebook-kernel.cjs')
 const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
+const drafts = require('./drafts.cjs')
 const { evalInPage } = require('./page-eval.cjs')
 
 // Keyed dispatch table for the generic runtime IPC handlers below — adding
@@ -343,6 +344,10 @@ ipcMain.handle('project:check', async (_event, checks, scope) => {
   const { root } = await projectFs.getProject(app, scope)
   return projectChecks.runChecks(root, checks, { env: await terminal.shellEnv({ extraPath: await learnerToolPaths() }), evalInPage })
 })
+
+// Draft lessons from Documents\UpSkillOS Drafts (drafts.cjs).
+ipcMain.handle('drafts:list', async () => drafts.list(app))
+ipcMain.handle('drafts:open', async () => drafts.open(app))
 
 // A real terminal in the project folder (terminal.cjs).
 const terminalOwners = new Set()

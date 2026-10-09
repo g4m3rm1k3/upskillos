@@ -12,7 +12,8 @@ describe('3D studio opening path', () => {
     const studio = series.find(item => item.key === 'games3d');
     expect(studio.sharedProject).toBe(true);
     expect(studio.chapters.map(item => item.key)).toEqual(['games3d-foundations']);
-    expect(studio.planned).toContain('Saving, undo, Play/Stop');
+    expect(studio.planned).toContain('versioned save/open');
+    expect(studio.planned).toContain('Q-learning playground');
     expect(series.find(item => item.key === 'circuit-clash')).toBeDefined();
     expect(series.flatMap(item => item.chapters.map(chapter => chapter.key)).sort()).toEqual([...TRACK_KEYS].sort());
     expect(learningProfile('games3d-foundations').maturity).toBe('in-development');

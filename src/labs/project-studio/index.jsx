@@ -23,6 +23,7 @@ import { createProvidedFiles } from './providedFiles.js';
 import FileTree from './FileTree.jsx';
 import StudioPanes from './StudioPanes.jsx';
 import { studioSeries, nextSeriesLesson } from './series.js';
+import { useDrafts, draftSupportFiles } from './drafts.js';
 import EditorPane from './EditorPane.jsx';
 import LessonPanel from './LessonPanel.jsx';
 import { withTypedDiffTargets } from './typedDiffTargets.js';
@@ -42,6 +43,14 @@ export default function ProjectStudio() {
   const { themeStyles } = useGlobalTheme();
   const monacoTheme = themeStyles?.monaco || (C.dark ? 'open-calc-dark' : 'open-calc-light');
   const progress = useProgress();
+  // Lessons from the drafts folder on this computer (drafts.js) join the built-in ones.
+  const drafts = useDrafts();
+  const tracks = useMemo(() => ({ ...TRACKS, ...drafts.tracks }), [drafts.tracks]);
+  const allSeries = useMemo(() => (drafts.series ? [...SERIES, drafts.series] : SERIES), [drafts.series]);
+  const supportFiles = useCallback((track, names) => (drafts.tracks[track] ? draftSupportFiles(drafts, track, names) : getSupportFiles(track, names)), [drafts]);
+  // The position saved last time, before this visit starts saving over it: drafts load a moment
+  // after the page, and a saved draft lesson is reopened once they have.
+  const savedPosition = useRef(progress.position);
 
   // With no saved position, open the recommended series' first chapter rather than whichever
   // track happens to sort first.
@@ -49,9 +58,9 @@ export default function ProjectStudio() {
     ? progress.position.trackKey
     : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
   // A series whose chapters build one project shares one folder; other tracks keep their own.
-  const projectKey = SERIES.find(item => item.sharedProject && item.chapters.some(chapter => chapter.key === trackKey))?.key ?? trackKey;
+  const projectKey = allSeries.find(item => item.sharedProject && item.chapters.some(chapter => chapter.key === trackKey))?.key ?? trackKey;
   const fs = useProjectFs(projectKey);
-  const lessons = useMemo(() => withTypedDiffTargets(trackKey ? TRACKS[trackKey] ?? [] : []), [trackKey]);
+  const lessons = useMemo(() => withTypedDiffTargets(trackKey ? tracks[trackKey] ?? [] : []), [trackKey, tracks]);
   const [lessonId, setLessonId] = useState(() => progress.position.lessonId ?? lessons[0]?.id ?? null);
   const lesson = useMemo(() => lessons.find((l) => l.id === lessonId) ?? lessons[0], [lessons, lessonId]);
   const [stepIndex, setStepIndex] = useState(() => Math.max(0, progress.position.stepIndex ?? 0));
@@ -202,7 +211,7 @@ export default function ProjectStudio() {
     try {
       if (!(await flushActive())) throw new Error('Resolve the open file conflict before creating the provided file.');
       await createProvidedFiles(fs.api, [
-        ...getSupportFiles(trackKey, lesson.meta.support),
+        ...supportFiles(trackKey, lesson.meta.support),
         { file: step.file, content: step.target, preserveExisting: Boolean(lesson.meta.support) },
       ]);
       await reloadFromDisk(step.file);
@@ -210,7 +219,7 @@ export default function ProjectStudio() {
     } catch (error) {
       setProvidedError(error.message);
     }
-  }, [step, fs, flushActive, reloadFromDisk, trackKey, lesson]);
+  }, [step, fs, flushActive, reloadFromDisk, trackKey, lesson, supportFiles]);
 
   useEffect(() => { setProvidedError(null); }, [step?.id, fs.root]);
 
@@ -298,7 +307,7 @@ export default function ProjectStudio() {
     stopRequestedRef.current = false;
     if (lesson.meta.support) {
       try {
-        await createProvidedFiles(fs.api, getSupportFiles(trackKey, lesson.meta.support));
+        await createProvidedFiles(fs.api, supportFiles(trackKey, lesson.meta.support));
         await fs.refresh();
       } catch (error) {
         setOutput([{ stream: 'stderr', text: error.message }]);
@@ -458,12 +467,29 @@ export default function ProjectStudio() {
   const selectTrack = useCallback(async (key) => {
     if (!(await flushProject())) return;
     if (running) { await stopProject(); if (startingRunRef.current) return; }
-    setTrackKey(key); setLessonId(TRACKS[key][0]?.id); setStepIndex(0);
-  }, [flushProject, running, stopProject]);
+    setTrackKey(key); setLessonId(tracks[key][0]?.id); setStepIndex(0);
+  }, [flushProject, running, stopProject, tracks]);
+  // Reopen a saved draft lesson once the drafts have loaded, and leave a draft chapter whose
+  // files have gone from the folder.
+  const restoredDraft = useRef(false);
+  useEffect(() => {
+    const saved = savedPosition.current;
+    if (!restoredDraft.current && drafts.series) {
+      restoredDraft.current = true;
+      if (saved.trackKey && drafts.tracks[saved.trackKey] && saved.trackKey !== trackKey) {
+        setTrackKey(saved.trackKey); setLessonId(saved.lessonId); setStepIndex(Math.max(0, saved.stepIndex ?? 0));
+        return;
+      }
+    }
+    if (trackKey && !tracks[trackKey]) {
+      const fallback = SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null;
+      setTrackKey(fallback); setLessonId(fallback ? TRACKS[fallback][0]?.id : null); setStepIndex(0);
+    }
+  }, [drafts, tracks, trackKey]);
   useEntryLink('project-studio', search => {
     const requested = new URLSearchParams(search).get('track');
     // Use the normal switch path so unsaved files and running processes stay protected.
-    if (requested && Object.hasOwn(TRACKS, requested)) void selectTrack(requested);
+    if (requested && Object.hasOwn(tracks, requested)) void selectTrack(requested);
   });
   const pickProject = useCallback(async () => {
     if (!(await flushProject())) return;
@@ -476,8 +502,8 @@ export default function ProjectStudio() {
     setStepIndex(i => Math.min((lesson?.steps.length ?? 1) - 1, i + 1));
   }, [lesson, step, progress.markCovered]);
 
-  const series = SERIES.find(item => item.chapters.some(chapter => chapter.key === trackKey)) ?? SERIES[0];
-  const continuation = lesson && series ? nextSeriesLesson(series, TRACKS, trackKey, lesson.id) : null;
+  const series = allSeries.find(item => item.chapters.some(chapter => chapter.key === trackKey)) ?? allSeries[0];
+  const continuation = lesson && series ? nextSeriesLesson(series, tracks, trackKey, lesson.id) : null;
   const continueSeries = async () => {
     if (!continuation || !(await flushProject())) return;
     if (step && !step.optional) progress.markCovered?.(step.id);
@@ -492,8 +518,8 @@ export default function ProjectStudio() {
   const trackPicker = series && (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
       <label style={{ fontSize: 11 }}>Series <select aria-label="Series" value={series.key} style={pickerStyle}
-        onChange={event => selectTrack(SERIES.find(item => item.key === event.target.value).chapters[0].key)}>
-        {SERIES.map(item => <option key={item.key} value={item.key}>{item.label} · {item.level}{item.recommended ? ' · Recommended start' : ''}{item.maturity === 'in-development' ? ' · In development' : ' · Review pending'}</option>)}
+        onChange={event => selectTrack(allSeries.find(item => item.key === event.target.value).chapters[0].key)}>
+        {allSeries.map(item => <option key={item.key} value={item.key}>{item.label} · {item.level}{item.recommended ? ' · Recommended start' : ''}{item.maturity === 'in-development' ? ' · In development' : ' · Review pending'}</option>)}
       </select></label>
       {series.chapters.length > 1 && <label style={{ fontSize: 11 }}>Chapter <select aria-label="Chapter"
       value={trackKey}
@@ -502,6 +528,12 @@ export default function ProjectStudio() {
     >
       {series.chapters.map((chapter, index) => <option key={chapter.key} value={chapter.key}>{index + 1}. {chapter.label}</option>)}
     </select></label>}
+      {drafts.available && <button onClick={drafts.open} style={{ ...pickerStyle, cursor: 'pointer' }}
+        title={drafts.folder ? `Lessons in ${drafts.folder} appear under Drafts. Saved changes show up when you switch back to UpSkillOS.` : 'Open the folder for draft lessons'}>
+        Open drafts folder
+      </button>}
+      {series.key === 'drafts' && <button onClick={drafts.reload} style={{ ...pickerStyle, cursor: 'pointer' }}>Reload drafts</button>}
+      {drafts.error && <span role="alert" style={{ fontSize: 11, color: C.amber }}>{drafts.error}</span>}
       <p style={{ flexBasis: '100%', margin: '4px 0', fontSize: 12, color: C.text }}>
         {series.audience}
         {series.chapters.length > 1 && <span> Chapter: {series.chapters.find(chapter => chapter.key === trackKey)?.audience}</span>}
@@ -531,7 +563,7 @@ export default function ProjectStudio() {
       continuationLabel={continuation ? `${continuation.trackKey === trackKey ? 'Continue to lesson' : 'Continue to chapter'}: ${continuation.trackKey === trackKey ? continuation.lesson.title : series.chapters.find(chapter => chapter.key === continuation.trackKey).label}` : null}
       onContinue={continueSeries}
       seriesNote={series?.planned}
-      seriesLessons={series ? series.chapters.flatMap(chapter => TRACKS[chapter.key] ?? []) : lessons}
+      seriesLessons={series ? series.chapters.flatMap(chapter => tracks[chapter.key] ?? []) : lessons}
       checkState={checkStates[step.id]}
       onCheck={runChecks}
       canCheck={fs.available && !!fs.root}
