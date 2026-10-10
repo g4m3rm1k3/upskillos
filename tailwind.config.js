@@ -3,7 +3,11 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    // Tutorial projects may have their own installed dependencies.
+    "!./src/**/node_modules/**",
   ],
+  // Python slicing in lesson prose is not a Tailwind arbitrary CSS property.
+  blocklist: ["[-3:-1]"],
   darkMode: 'class',
   theme: {
     extend: {

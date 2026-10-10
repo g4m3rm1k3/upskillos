@@ -19,10 +19,11 @@ const MIGRATION_FLAG = '_oc_progress_migrated_v2'
 // Separate flag: learners who already ran the migration above still need the split copy.
 const SPLIT_FLAG = '_oc_progress_split_v1'
 
+/** @type {import('react').Context<ReturnType<typeof useProgressValue> | null>} */
 export const ProgressContext = createContext(null)
 
-export function ProgressProvider({ children }) {
-  const [progress, setProgress] = useLocalStorage('oc-progress', {})
+function useProgressValue() {
+  const [progress, setProgress] = useLocalStorage('oc-progress', /** @type {import('./progressMigration').ProgressMap} */ ({}))
   const { pushNow } = useAuth() ?? {}
 
   // One-time progress migrations, run once on mount, in order, on one value, saved once:
@@ -239,6 +240,11 @@ export function ProgressProvider({ children }) {
     resetCourseProgress, resetLessonProgress
   ])
 
+  return value
+}
+
+export function ProgressProvider({ children }) {
+  const value = useProgressValue()
   return (
     <ProgressContext.Provider value={value}>
       {children}

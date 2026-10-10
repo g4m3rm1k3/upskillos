@@ -62,7 +62,7 @@ Run what matches your change, and report exactly what you ran and what it printe
 | `npm run catalog:check` | The generated inventory matches the content |
 | `npm run docs:check` | Links, repository paths and `npm run` commands in the contributor docs exist |
 | `npm run build` | Production build. Needs several GB of memory and a few minutes |
-| `npm run typecheck` | TypeScript. It currently reports existing errors in unrelated files, so compare against the errors before your change |
+| `npm run typecheck` | TypeScript. Must finish without diagnostics; the previous baseline errors were repaired on 2026-10-10 |
 
 Don't start a dev server and leave it running. If you need one for a browser check, stop it when you're done.
 

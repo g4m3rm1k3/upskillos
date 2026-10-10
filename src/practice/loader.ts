@@ -58,11 +58,10 @@ for (const meta of PRACTICE_MANIFEST) MANIFEST_BY_ID[meta.id] = meta
 
 // Lazy loaders — each resolves to the module's exports only when actually
 // called, so opening one practice topic doesn't force every topic to load.
-const RAW_MODULE_LOADERS = import.meta.glob('./*.ts') as Record<string, () => Promise<{ default: PracticeChallenge[]; title?: string }>>
+const RAW_MODULE_LOADERS = import.meta.glob(['./*.ts', '!./loader.ts', '!./manifest.ts']) as Record<string, () => Promise<{ default: PracticeChallenge[]; title?: string }>>
 
 const PATH_BY_ID: Record<string, string> = {}
 for (const path of Object.keys(RAW_MODULE_LOADERS)) {
-  if (path.endsWith('/loader.ts') || path.endsWith('/manifest.ts')) continue
   const id = path.replace(/^\.\//, '').replace(/\.ts$/, '')
   PATH_BY_ID[id] = path
 }

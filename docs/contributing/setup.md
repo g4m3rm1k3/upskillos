@@ -64,7 +64,7 @@ Undo that edit when you're done, or use it as your first change: see [first-chan
 | `npm run facts` | Regenerates the project inventory after adding or removing content |
 | `npm run catalog:check` | Checks the committed inventory is up to date |
 | `npm run docs:check` | Checks links and commands in the contributor docs |
-| `npm run typecheck` | TypeScript check. It currently reports existing errors in unrelated files |
+| `npm run typecheck` | TypeScript check. Must finish without diagnostics |
 
 ## Troubleshooting
 

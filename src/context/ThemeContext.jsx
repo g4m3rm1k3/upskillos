@@ -6,9 +6,18 @@ const ThemeContext = createContext({
   pageEffect: 'none',
   setPageEffect: () => {},
   studioTheme: 'default',
-  setStudioTheme: () => {},
+  setStudioTheme: (/** @type {string} */ _theme) => {},
   isDarkGlobal: true, // We'll assume true since it's mainly for dark mode
-  themeStyles: {},
+  themeStyles: {
+    ui: STUDIO_THEMES.default.uiDark,
+    md: STUDIO_THEMES.default.mdDark,
+    monaco: STUDIO_THEMES.default.monacoDark,
+    isDark: true,
+  },
+  typography: {
+    font: 'sans', fontSize: 'base', textAlign: 'left', width: 'wide',
+    lineHeight: 'relaxed', basicWebpage: false,
+  },
   taskbarStyle: 'win11',
   setTaskbarStyle: () => {},
   macAnimation: 'flat',

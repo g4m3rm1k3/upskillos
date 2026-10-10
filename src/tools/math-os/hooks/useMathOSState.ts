@@ -22,7 +22,7 @@ import {
 } from '../storage'
 import type {
   AngleMode, SectionId, ResultTab, ExplainLevel, ScriptLang, MLStatus, PyodideStatus,
-  Matrix, ComputeResult,
+  Matrix, ComputeResult, WorkspaceEntry,
 } from '../types'
 
 export function useMathOSState() {
@@ -95,7 +95,7 @@ export function useMathOSState() {
     '% OpenMAT — MATLAB-like engine (runs in browser)\nA = [-3 1; 5 2];\nM = [1 1; 1 0];\nB = inv(M) * A * M;\ndisp(\'A =\'); disp(A)\ndisp(\'M =\'); disp(M)\ndisp(\'B = inv(M)*A*M =\'); disp(B)'
   )
   const [mlOutput, setMlOutput]         = useState('')
-  const [mlWorkspace, setMlWorkspace]   = useState<{ name: string; size: string; class: string; value: string }[]>([])
+  const [mlWorkspace, setMlWorkspace]   = useState<WorkspaceEntry[]>([])
   const [mlStatus, setMlStatus]         = useState<MLStatus>('idle')
   const [scriptOutput, setScriptOutput] = useState('')
   const [scriptName, setScriptName]     = useState('')
@@ -632,8 +632,10 @@ export function useMathOSState() {
       const w = (result.workspace || []).find((v: { name: string }) => v.name === '_result')
       if (w) {
         const val = w.value
-        if (Array.isArray(val) && Array.isArray(val[0])) {
-          const strMat = val.map((r: number[]) => r.map((x: number) => String(+x.toFixed(6))))
+        if (Array.isArray(val) && val.length > 0 && val.every(
+          (row): row is number[] => Array.isArray(row) && row.every(x => typeof x === 'number')
+        )) {
+          const strMat = val.map(r => r.map(x => String(+x.toFixed(6))))
           setMatA(strMat)
           setMatExprResult({ mat: val, preview: w.preview, expr } as unknown as ComputeResult)
         } else {

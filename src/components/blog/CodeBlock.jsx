@@ -104,6 +104,11 @@ function OutputBody({ output, isError, isDarkGlobal }) {
   )
 }
 
+/**
+ * @param {{ language?: string, code: string, cellIndex?: number,
+ * getPriorContext?: (index: number | undefined, language: string, code: string) => string,
+ * onCodeChange?: (index: number | undefined, language: string, code: string) => void }} props
+ */
 export default function CodeBlock({ language = '', code, cellIndex, getPriorContext, onCodeChange }) {
   const { isDarkGlobal, themeStyles, codeTypography } = useGlobalTheme()
   const [settingsOpen, setSettingsOpen] = useState(false)

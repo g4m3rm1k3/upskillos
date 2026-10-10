@@ -77,7 +77,7 @@ describe('migrateOldProgressKeys', () => {
       completedCheckpoints: ['read-intuition'],
       readingProgress: 60,
     })
-    expect(Object.hasOwn(merged?.lesson1 ?? {}, 'quiz')).toBe(false)
+    expect(Object.prototype.hasOwnProperty.call(merged?.lesson1 ?? {}, 'quiz')).toBe(false)
   })
 
   it('leaves an unresolvable old-format entry untouched rather than dropping it', () => {

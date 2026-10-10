@@ -56,7 +56,7 @@ export default function BackendLab({ onBack }: BackendLabProps) {
   const { studioTheme, themeStyles } = useGlobalTheme();
   const ui = themeStyles.ui;
   const monacoTheme = themeStyles.monaco;
-  const accentHex = (STUDIO_THEMES[studioTheme] ?? STUDIO_THEMES.default).accentHex;
+  const accentHex = (STUDIO_THEMES[studioTheme as keyof typeof STUDIO_THEMES] ?? STUDIO_THEMES.default).accentHex;
   const status = useThemeColors();
 
   const [state, dispatch] = useReducer(backendLabReducer, undefined, createInitialState);

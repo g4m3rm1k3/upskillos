@@ -78,12 +78,8 @@ export interface MachinistFormula {
   latex?: string
 }
 
-export interface WorkspaceEntry {
-  name: string
-  size: string
-  class: string
-  value: string
-}
+export type { WorkspaceEntry } from '@opencalc/openmat'
+import type { WorkspaceEntry } from '@opencalc/openmat'
 
 // ─── State slices ─────────────────────────────────────────────────────────────
 

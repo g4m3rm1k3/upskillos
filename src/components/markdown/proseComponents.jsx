@@ -10,7 +10,9 @@ import 'katex/dist/katex.min.css'
 // Callers still supply their own `code`/`pre` overrides, since what a code
 // block should DO (run via a language runner vs. render a live HTML preview)
 // is caller-specific.
+/** @type {import('unified').PluggableList} */
 export const PROSE_REMARK_PLUGINS = [remarkGfm, remarkMath]
+/** @type {import('unified').PluggableList} */
 export const PROSE_REHYPE_PLUGINS = [rehypeRaw, [rehypeKatex, { throwOnError: false, errorColor: '#ef4444' }]]
 
 // Post markdown references images by bare filename (e.g. `![alt](chart.png)`)
@@ -54,6 +56,7 @@ export function InlineCode({ children }) {
   )
 }
 
+/** @type {import('react-markdown').Components} */
 export const proseComponents = {
   h1: ({ children }) => <Heading level={1}>{children}</Heading>,
   h2: ({ children }) => <Heading level={2}>{children}</Heading>,
