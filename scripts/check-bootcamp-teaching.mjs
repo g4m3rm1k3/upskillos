@@ -13,6 +13,10 @@
 //   - explanation per line: words of prose in the step for each line it adds. Under 6 is thin.
 //   - each lesson has a prediction, an experiment (a playground file, or a step that breaks
 //     something on purpose) and a Your turn.
+//   - explaining, not describing (the plan's Q-Arcade standard): each lesson after the first has
+//     "The story so far" and "What this lesson builds" (challenges have their brief instead); every
+//     supplied test file is followed by what its tests protect; every step that adds a function
+//     has an inputs-and-returns table for it (a `| returns |` row per new function).
 //   - the concept ledger: a lesson may declare `teaches:` and `uses:` in its front matter (comma
 //     lists). Every concept a lesson uses must have been taught by an earlier lesson or itself.
 //
@@ -44,6 +48,8 @@ const wtPath = path.join(studio, 'tracks', `${track}.walkthrough.js`);
 if (fs.existsSync(wtPath)) walkthrough = (await import(pathToFileURL(wtPath).href)).WALKTHROUGH ?? {};
 
 const state = new Map();
+// The file as it stood before each step, for spotting the functions a step adds.
+const lessonStart = new Map();
 const taught = new Set();
 const lessons = [];
 const list = (v) => String(v ?? '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
@@ -52,7 +58,10 @@ const words = (text) => (String(text).replace(/```[\s\S]*?```/g, ' ').replace(/@
 for (const name of files) {
   const id = name.replace(/\.md$/, '');
   const lesson = parseLesson(fs.readFileSync(path.join(dir, name), 'utf8'), `${track}/${id}`);
-  const report = { id, title: lesson.title, steps: [], predictions: 0, yourTurn: false, experiment: false, missing: [] };
+  const raw = fs.readFileSync(path.join(dir, name), 'utf8');
+  const report = { id, title: lesson.title, steps: [], predictions: 0, yourTurn: false, experiment: false, missing: [], explain: [] };
+  if (lessons.length && !/^#{2,3} The story so far/m.test(raw)) report.explain.push('no story so far');
+  if (!/Challenge:/.test(lesson.title) && !/^#{2,3} What this lesson builds/m.test(raw)) report.explain.push('no what-it-builds');
 
   // Front matter can name steps (semicolon-separated titles): `experiments:` marks experiments the
   // title doesn't reveal; `justified:` marks big steps that are big on purpose (say why in the text).
@@ -94,7 +103,20 @@ for (const name of files) {
       state.set(rel, content);
     }
     const prose = words(step.prose) + words(step.explain);
-    const verdict = added > WARN && justified.has(step.title) ? '' : added > DUMP ? 'DUMP' : added > WARN ? 'big' : added > 0 && prose / added < THIN ? 'thin' : '';
+    const text = `${step.prose ?? ''}
+${step.explain ?? ''}`;
+    if (step.provided && /(\.test\.|\.check\.|(^|\/)test_)/.test(step.file ?? '') && !/protect/i.test(text)) report.explain.push(`tests not explained (what they protect): ${step.title}`);
+    let tableless = false;
+    if (step.file && step.target != null && !step.provided) {
+      const before = (lessonStart.get(step.file) ?? '');
+      const fnNames = (src) => new Set([...src.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)|^\s*def\s+(\w+)/gm)].map((m) => m[1] ?? m[2]));
+      const had = fnNames(before);
+      const fresh = [...fnNames(step.target)].filter((f) => !had.has(f));
+      const rows = (text.match(/^\|\s*returns?\b/gim) ?? []).length;
+      if (fresh.length > rows) tableless = true;
+      lessonStart.set(step.file, step.target);
+    }
+    const verdict = added > WARN && justified.has(step.title) ? '' : added > DUMP ? 'DUMP' : added > WARN ? 'big' : added > 0 && prose / added < THIN ? 'thin' : tableless ? 'table' : '';
     report.steps.push({ title: step.title, file: step.file, added, prose, verdict });
   }
   lessons.push(report);
@@ -104,18 +126,21 @@ const fromIdx = from ? lessons.findIndex((l) => l.id.startsWith(from)) : 0;
 const untilIdx = until ? lessons.findIndex((l) => l.id.startsWith(until)) : lessons.length - 1;
 const shown = lessons.slice(fromIdx, untilIdx + 1);
 
+let tables = 0, explainGaps = 0;
 let dumps = 0, bigs = 0, thins = 0, noPredict = 0, noTurn = 0, noExperiment = 0, ledger = 0, missingConcepts = 0;
 for (const l of shown) {
   const flagged = l.steps.filter((s) => s.verdict);
   dumps += flagged.filter((s) => s.verdict === 'DUMP').length;
   bigs += flagged.filter((s) => s.verdict === 'big').length;
   thins += flagged.filter((s) => s.verdict === 'thin').length;
+  tables += flagged.filter((s) => s.verdict === 'table').length;
+  explainGaps += l.explain.length;
   const challenge = /Challenge:/.test(l.title);
   if (!l.predictions && !challenge) noPredict++;
   if (!l.yourTurn) noTurn++;
   if (!l.experiment && !challenge) noExperiment++;
   if (l.missing.length) missingConcepts += l.missing.length;
-  const lessonFlags = [!l.predictions && !challenge && 'no prediction', !l.yourTurn && 'no Your turn', !l.experiment && !challenge && 'no experiment', l.missing.length && `uses untaught: ${l.missing.join(', ')}`].filter(Boolean);
+  const lessonFlags = [!l.predictions && !challenge && 'no prediction', !l.yourTurn && 'no Your turn', !l.experiment && !challenge && 'no experiment', l.missing.length && `uses untaught: ${l.missing.join(', ')}`, ...l.explain].filter(Boolean);
   if (!flagged.length && !lessonFlags.length && !showAll) continue;
   console.log(`\n${l.id} — ${l.title}${lessonFlags.length ? `   [${lessonFlags.join('; ')}]` : ''}`);
   for (const s of showAll ? l.steps : flagged) {
@@ -126,5 +151,6 @@ for (const l of shown) {
 for (const l of lessons) if (Object.keys(l).length && (l.missing.length || false)) ledger++;
 const declared = shown.filter((l) => l.steps && fs.readFileSync(path.join(dir, `${l.id}.md`), 'utf8').match(/^teaches:/m)).length;
 console.log(`\n${shown.length} lessons: ${dumps} dump steps (>${DUMP} lines), ${bigs} big steps (>${WARN}), ${thins} thinly explained (<${THIN} words a line);`);
+console.log(`${tables} steps adding a function without an inputs-and-returns table; ${explainGaps} missing explanation parts (story so far, what it builds, what tests protect);`);
 console.log(`${noPredict} without a prediction, ${noTurn} without a Your turn, ${noExperiment} without an experiment; concept ledger declared in ${declared}, ${missingConcepts} concepts used before taught.`);
 process.exitCode = dumps || missingConcepts ? 1 : 0;

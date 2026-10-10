@@ -71,7 +71,7 @@ choice: Pass: they're the same
 choice: Fail: they're two different objects
 answer: Fail: they're two different objects
 explain: `toBe` asks whether both sides are the very same object, and `{ … }` makes a new object each time it runs, so two separately written objects never are. `toEqual` compares what's inside them, which is what a test about addresses means.
-verify: node -e "console.log(Object.is({ column: 1, row: 2 }, { column: 1, row: 2 }) ? 'Pass: they''re the same' : 'Fail: they''re two different objects')"
+verify: node -e "console.log(Object.is({ column: 1, row: 2 }, { column: 1, row: 2 }) ? 'Pass: they\u0027re the same' : 'Fail: they\u0027re two different objects')"
 ```
 
 Run the tests: `address.test.ts` fails with *Cannot find module './address.ts'*. Red.
@@ -112,7 +112,7 @@ An **interface** names the shape of an object: an `Address` is any object with a
 Run just the `formatAddress` tests: `-t` (for *test name*) picks the tests whose names contain the text.
 
 ```check
-run "npx vitest run address -t formatAddress" stdout="1 passed" label="the formatAddress test passes"
+run "npx vitest run address -t \"counted from 1\"" stdout="1 passed" label="the formatAddress test passes"
 ```
 
 ## Reading an address {#parse}

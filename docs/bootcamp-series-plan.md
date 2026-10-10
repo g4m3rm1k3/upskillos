@@ -160,6 +160,16 @@ A bootcamp that covers everything and teaches none of it well is worthless, and 
 
 **The shape of a step.** A problem the learner can see, first. Then a prediction. Then a change of **3 to 15 lines**, explained before it's typed and traced after, line by line, with each new name or idea explained where it first appears. Then the learner runs it, and an experiment changes or breaks something on purpose. A bigger step is split, not justified.
 
+**Explaining, not describing.** Small steps are necessary but not enough: a step can be twelve lines and still only *name* what it does. The bar is the Q-Arcade series after its explanation rework (`tracks/qarcade-corridor/01-02-the-q-table.md` is the example). Every lesson has:
+
+- **The story so far**, in plain words: what the earlier lessons built and the few terms this one relies on, without a jargon recap table.
+- **What this lesson builds**, with a picture (a diagram, a table of the finished result, or the output it will print), so the learner knows where each step is heading.
+- **What each test protects**, for every supplied test file: which bug each group of tests would catch, and why that bug matters later.
+- **An inputs-and-returns table** for every function the learner writes: each input, what it is, an example value; what it returns, with an example.
+- **The mechanism, not the name**, for every new call or idea: what it actually does, traced with real values (a trace, a worked example, or a REPL session whose output was checked by running it), and why the obvious alternative fails.
+
+The teaching check looks for each of these, and the read-through (gate 4) judges whether they explain.
+
 **The shape of a lesson.** At least one prediction, at least one experiment, and a Your turn that needs a decision, not a copy. Everything the Your turn needs was taught earlier in the lesson or before it.
 
 **Five gates, before a sprint counts as done:**
