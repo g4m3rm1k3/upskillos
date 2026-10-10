@@ -4,6 +4,12 @@ runtime: python
 run: dqn.py
 ---
 
+### The story so far
+
+Lesson 5.1 built `DQNAgent` (`dqn.py`): Chapter 1's Q-learning with a network in place of the table. Each move is a **transition**, five things: `(obs, action, reward, next_obs, terminated)`, what the rat saw, what it did, what it got, what it saw next, and whether the game ended. `update(batch)` takes a list of transitions and does one gradient step moving each chosen value towards its target. `learn` called it straight away, with a list of just the move that had happened.
+
+### What this lesson asks
+
 Last lesson's network learned from each step once, the moment it happened, and got nowhere: 0 to 3 of 33 starts after 400 episodes. The fix is the idea behind the tutorial's `Experience` class, and behind DeepMind's Atari agent: **don't learn from the step you just took. Keep a memory of recent steps, and learn from a random handful of them.**
 
 That one change does three things at once:
@@ -11,6 +17,19 @@ That one change does three things at once:
 1. **It breaks the chains.** A random handful of memories comes from all over the maze and from many different episodes, so one gradient step pushes in many directions at once, instead of ten steps in a row all pushing the same corner.
 2. **Every experience is used many times.** A step stays in memory for the next thousand steps and can be drawn into many batches. Rare experiences, like reaching the cheese, aren't seen once and forgotten.
 3. **The batch is an average.** Its loss is a mean over many transitions, so each gradient step is less noisy than one built from a single transition.
+
+### How the pieces fit
+
+```text
+before (5.1):   move ──> learn ──> update([this move])
+
+after (5.2):    move ──> learn ──> memory.add(this move)                    the last 1,000 moves
+                                       │
+                                       └─ once it holds 32: 4 times, update(memory.sample(32))
+                                                                   32 random moves from anywhere in memory
+```
+
+`update` itself doesn't change: it already took a list.
 
 ## Read the tests first
 
@@ -85,6 +104,14 @@ def torch_equal(a, b):
     return torch.equal(a, b)
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `memory` | the memory keeps only the newest items once it's full | a memory that grew for ever, until the PC ran out of RAM |
+| `sample` | a batch has no repeats, reaches old memories as well as new, and is repeatable with a seed | sampling only the newest items, which brings back exactly the problem replay is meant to fix |
+| `batches` | nothing is learned until there's a full batch, and every move is stored | trying to sample 32 from a memory of 5, which crashes |
+
 `test_batches_wait_until_there_are_enough` checks that nothing is learned until the memory holds a full batch. It copies every weight tensor first (`p.detach().clone()`: a copy cut off from the computation graph) and compares afterwards with `torch.equal`, which is true only when two tensors are identical.
 
 ```check
@@ -112,6 +139,25 @@ class ReplayMemory:
 
 ```
 
+See a full memory drop its oldest, with a capacity of 3, in a scratch file:
+
+```python
+from collections import deque
+
+memory = deque(maxlen=3)
+for step in range(5):
+    memory.append(step)
+    print(f"after adding {step}: {list(memory)}")
+```
+
+```text
+after adding 0: [0]
+after adding 1: [0, 1]
+after adding 2: [0, 1, 2]
+after adding 3: [1, 2, 3]
+after adding 4: [2, 3, 4]
+```
+
 - **`deque(maxlen=capacity)`**: a `deque` (lesson 3.3) with a maximum length. When it's full, adding an item at one end silently drops the oldest from the other. So the memory always holds the newest `capacity` steps: old experience, from when the agent knew less, ages out by itself. The tutorial does the same with a list and `del self.memory[0]`.
 - **`__len__`** is the method Python calls for `len(memory)`. Defining it makes the memory work with `len`, like a list does.
 
@@ -124,6 +170,18 @@ run ".venv/Scripts/python -m pytest -q tests/test_replay.py -k memory" label="th
 **Build, on your own:** `sample(self, n)` in `ReplayMemory`.
 
 Return a list of `n` items from the memory, chosen at random, with **no item twice** in the same batch. Use the memory's own generator, `self.rng`.
+
+Try `choice` first, in a scratch file:
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(0)
+print(rng.choice(10, 4, replace=False))
+print(rng.choice(10, 4, replace=False))
+```
+
+Each line is 4 different positions from 0 to 9 (`[2 4 5 7]`, then `[0 7 1 6]`): different between calls, but never a repeat within one.
 
 `self.rng.choice(how_many_there_are, n, replace=False)` picks `n` different positions from 0 up to `how_many_there_are − 1`. `replace=False` means "without putting each choice back", so no position comes up twice. Then turn the positions into items.
 
@@ -250,6 +308,24 @@ if __name__ == "__main__":
 ```
 
 The changes from last lesson are all in `__init__` and `learn`. `update` is unchanged: it already took a list of transitions, and now it gets 32 of them.
+
+**`DQNAgent`'s three new inputs:**
+
+| input | what it is | why it's an input | default |
+|---|---|---|---|
+| `memory` | how many moves to remember | too few and the batches are all recent moves again; too many and very old moves, from when the agent knew less, keep being learned from | 1,000 |
+| `batch` | moves per gradient step | the size of the random handful | 32 |
+| `updates` | gradient steps per move | how hard each move's experience is worked | 4 |
+
+**How often is each memory used?** A move stays in memory for the next 1,000 moves. Each move, the agent draws 4 batches of 32 from 1,000 memories, so any one memory has a 32 in 1,000 chance of being in each batch:
+
+```text
+chance of being in one batch:        32 / 1,000           = 0.032
+batches per move:                    4                    -> 4 × 0.032 = 0.128 draws per move
+moves it stays in memory:            1,000                -> 1,000 × 0.128 = 128 draws
+```
+
+So every experience, including the rare ones that reach the cheese, is learned from about 128 times before it's forgotten. Without replay, it was learned from once.
 
 - **`memory=1000`**, the tutorial's `max_memory`: the last thousand steps.
 - **`batch=32`**: transitions per gradient step.

@@ -6,6 +6,22 @@ run: watch_cartpole.py
 
 This is the payoff of giving the corridor Gymnasium's shape in lesson 1.1. Chapter 1's `QAgent` and `run_episode` were written for five cells; in this lesson they balance a pole **without one line of them changing**. All that's needed is a thin layer in between that turns CartPole's four decimals into a row number, and a way to explore a lot at first and less later.
 
+### The story so far
+
+- From Chapter 1: `QAgent(n_states, n_actions, ...)` (`agent.py`) is an agent with a table of `n_states` rows; `agent.act(state)` picks a move, and `agent.learn(...)` updates one score. `run_episode(env, agent)` (`train.py`) plays one game in any world that has `reset` and `step`, and returns its total reward.
+- From lesson 2.3: `state_index(obs, edges, counts)` (`bins.py`) turns CartPole's four numbers into one row number from 0 to 71.
+
+### How the pieces fit
+
+```text
+QAgent                  TableCartPole (this lesson)                 Gymnasium's CartPole
+  act(29) -> 1   ──>    step(1)   ── passes the push on ──>          step(1)
+                        state 31 <── state_index turns four   <──   obs [0.01, 0.2, -0.04, -0.3]
+  learn(29, 1, 1.0, 31)            numbers into one row number
+```
+
+The agent only ever sees row numbers, as in the corridor. CartPole only ever sees pushes. The wrapper translates between them.
+
 ## Read the tests first
 
 **This step: create the supplied test file and read it. No code yet.**
@@ -208,10 +224,42 @@ if __name__ == "__main__":
         print(f"episodes {start + 1:3}-{start + len(block):3}: average {np.mean(block):5.1f} steps")
 ```
 
+**`train_cartpole`'s inputs, and what it gives back:**
+
+| input | what it sets | default |
+|---|---|---|
+| `episodes` | how many games to train for | 500 |
+| `seed` | makes the run repeatable | 0 |
+| `alpha` | the step size (lesson 1.3), at the start | 0.1 |
+| `alpha_end` | if given, α shrinks in a straight line to this by the last game; if `None`, α stays fixed | `None` |
+| `gamma` | the discount (lesson 1.3) | 0.99 |
+| `counts` | slots per number (lesson 2.3) | `COUNTS` |
+| returns | three things: the trained agent, the wrapped CartPole, and a list of every game's length | |
+
 - **`QAgent(env.n_states, env.n_actions, ...)`** is Chapter 1's agent, unchanged, with a 72-row table. **`run_episode`** is lesson 1.4's loop, unchanged. Neither knows it's playing CartPole.
-- **ε falls from 1.0 to 0.01** over the first 80% of the episodes (`episode / (0.8 * episodes)` reaches 1 at episode 400 of 500), then stays at 0.01 for the last 100. At the start every action is random, because the table knows nothing worth exploiting.
+- **ε falls from 1.0 to 0.01** over the first 80% of the episodes (`episode / (0.8 * episodes)` reaches 1 at episode 400 of 500), then stays at 0.01 for the last 100. At the start every action is random, because the table knows nothing worth exploiting. Worked through with `linear(1.0, 0.01, progress)` and 500 episodes:
+
+  | episode | progress = episode / 400 | ε = 1.0 + (0.01 − 1.0) × min(progress, 1) |
+  |---|---|---|
+  | 0 | 0 | 1.0 (always random) |
+  | 100 | 0.25 | 1.0 − 0.99 × 0.25 = 0.7525 |
+  | 200 | 0.5 | 0.505 |
+  | 400 | 1.0 | 0.01 |
+  | 499 | 1.25, capped at 1 | 0.01 |
 - **`alpha_end`** is for next lesson: if it's given, α also falls in a straight line. Left as `None`, α stays fixed (0.1 here).
-- **γ = 0.99**, not 0.9. Every step pays 1, so the value of a state is roughly "how many more steps can I survive from here", discounted. With γ = 0.9, a reward 50 steps away is worth 0.9⁵⁰ = 0.005 of a reward now: the agent couldn't tell a state that survives 50 more steps from one that survives 500. With 0.99, it's 0.99⁵⁰ = 0.6, so far-off survival still counts.
+- **γ = 0.99**, not 0.9. Every step pays 1, so the value of a state is "how many more steps can I survive from here", with each later step discounted. If the pole survives k more steps, that's a sum, a **geometric series** (each term γ times the one before):
+
+  ```text
+  value = 1 + γ + γ² + γ³ + … + γ^(k−1)  =  (1 − γ^k) / (1 − γ)
+  ```
+
+  For a pole that survives forever, γ^k shrinks to 0, and the value approaches 1 / (1 − γ). With γ = 0.9 that's 10: the agent can't tell surviving 50 more steps (value 9.95) from surviving 500 (value 10.0), so it has no reason to prefer the long survival. With γ = 0.99 the limit is 100, and 50 more steps is worth 39.5 while 500 is worth 99.3: a big difference it can learn from. Check it with a loop:
+
+  ```python
+  for gamma in (0.9, 0.99):
+      for k in (10, 50, 500):
+          print(gamma, k, round((1 - gamma ** k) / (1 - gamma), 1))
+  ```
 - **The total reward of an episode is its length**, since every step pays 1, so `run_episode`'s return value can be used directly as the episode's length.
 
 Run it in the terminal: `.venv\Scripts\python cartpole_table.py`. It takes about two seconds.

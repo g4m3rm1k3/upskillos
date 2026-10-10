@@ -7,6 +7,21 @@ Chapter 1's agent keeps a table with one row per state, and it finds a row with 
 
 The fix is to stop asking "exactly which state?" and ask "roughly which state?" Cut each number's range into a few **bins** (slots), such as "angle between 0 and 4° to the right", and treat every state in the same combination of slots as the same row. This is called **discretising** the state. This lesson builds it in three small functions: where the cuts go, which slot a number falls in, and how four slot numbers become one row number.
 
+### How the pieces fit
+
+```text
+CartPole's observation:   [ 0.014, -0.023,  -0.046,  -0.048 ]     four decimals (from reset(seed=0))
+                              │       │        │        │
+make_edges, once:          cuts for each of the four numbers
+bin_index, for each:          0       0        2        5          four slot numbers
+                              └───────┴────┬───┴────────┘
+state_index:                               29                      one row number
+                                           │
+the Q-table (lesson 1.2):              Q[29]  ->  [score left, score right]
+```
+
+After this lesson, a CartPole observation becomes a row number exactly like a corridor square, and Chapter 1's agent can use it unchanged (lesson 2.4).
+
 ## Read the tests first
 
 **This step: create the supplied test file and read it. No code yet.**
@@ -101,6 +116,14 @@ def make_edges(count, limit):
     return np.linspace(-limit, limit, count + 1)[1:-1]
 ```
 
+**`make_edges`' inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `count` | how many slots to cut one number's range into | `6` |
+| input `limit` | the range is from −limit to +limit | `3.0`, so −3 to 3 |
+| returns | the **inner** cuts between the slots, as a NumPy array: always one fewer than the slots | `[-2, -1, 0, 1, 2]` |
+
 **`np.linspace(start, stop, n)`** returns `n` evenly spaced numbers from `start` to `stop`, both included. For 6 slots between −3 and 3:
 
 ```text
@@ -154,6 +177,8 @@ def bin_index(value, edges):
     return int(np.digitize(value, edges))
 ```
 
+**`bin_index`' inputs, and what it gives back:** one number (`value`, such as the pole's angle) and that number's cuts (`edges`, from `make_edges`). It returns which slot the number falls in: 0 for the first slot, up to `len(edges)` for the last, as a plain `int`.
+
 **`np.digitize(value, edges)`** counts how many edges are at or below the value. That count *is* the slot number:
 
 ```text
@@ -178,6 +203,15 @@ run ".venv/Scripts/python -m pytest -q tests/test_bins.py -k slot" label="bin_in
 
 Now each of the four numbers has a slot: say position slot 0 (of 1), velocity slot 0 (of 1), angle slot 4 (of 6) and spin slot 5 (of 12). The table needs **one** row number for that combination, different from every other combination's.
 
+**`state_index`' inputs, and what it gives back:**
+
+| | what it is | for CartPole |
+|---|---|---|
+| input `obs` | the numbers to combine, in order | the four numbers from `env.step` |
+| input `edges` | one set of cuts per number, from `make_edges` | a list of four arrays |
+| input `counts` | how many slots each number has | `COUNTS`, `(1, 1, 6, 12)` |
+| returns | one row number for that combination of slots | from 0 to 71 |
+
 Numbers already do this every day. Write the slots side by side, like the digits of a number:
 
 ```text
@@ -196,6 +230,29 @@ velocity (1):    0 × 1  + 0  =  0
 angle (6):       0 × 6  + 4  =  4
 spin (12):       4 × 12 + 5  =  53     → row 53
 ```
+
+This way of numbering is called **mixed-radix** numbering. *Radix* means base, as in base 10, and *mixed* means each position can have a different base: 10, 60, 6 or 12. The rule is a recurrence relation again: index(next) = index × count + slot, starting from index = 0. Here it is printing every combination for two numbers with 2 and 3 slots, so you can see each combination get its own row. Put it in a scratch file:
+
+```python
+index_of = {}
+for a in range(2):          # first number: slot 0 or 1 (2 slots)
+    for b in range(3):      # second number: slot 0, 1 or 2 (3 slots)
+        index = 0
+        index = index * 2 + a
+        index = index * 3 + b
+        print(f"slots ({a}, {b}) -> row {index}")
+```
+
+```text
+slots (0, 0) -> row 0
+slots (0, 1) -> row 1
+slots (0, 2) -> row 2
+slots (1, 0) -> row 3
+slots (1, 1) -> row 4
+slots (1, 2) -> row 5
+```
+
+Six combinations, rows 0 to 5, no gaps and no repeats: that's exactly what `test_index_gives_every_combination_its_own_number` checks.
 
 Write `state_index` so it does this for any number of values: `obs`, `edges` and `counts` are three lists of the same length, one entry per number. `zip(obs, edges, counts)` walks through all three together, giving one `(value, value_edges, count)` at a time. Use `bin_index` for each slot.
 

@@ -4,9 +4,28 @@ runtime: python
 run: watch_qmaze.py
 ---
 
+### The story so far
+
+The maze (`qmaze.py`, lesson 3.1) numbers each cell `row * 10 + col`, and that number is the agent's **state**. Lesson 3.2 trained Chapter 1's agent on it with `train_maze()` (`rewards.py`), which returns a `QAgent` whose table `agent.Q` has 100 rows (one per cell) and 4 columns (LEFT, UP, RIGHT, DOWN). `greedy_path(agent, maze, start)` (`maze_tools.py`) plays one game with exploration switched off and returns `(path, reached)`: the list of cells the rat stood on, and whether it got to the cheese. `completion(agent)` counts the starts that reach it.
+
+### What this lesson asks
+
 Last lesson's agent reaches the cheese from all 74 starts. That's what the tutorial's completion check asks, and it's a weak question: a rat that wanders for 150 moves before finding the cheese passes it. The strong question is **does it take the shortest route?** To answer it you need to know the shortest route from every cell, independently of the agent.
 
 This lesson writes the classic algorithm that finds shortest routes, **breadth-first search**, uses it to grade the agent move by move, and then draws everything the agent has learned as an arrow in every cell, so you can see its whole policy at once.
+
+### How the pieces fit
+
+```text
+                          the agent's route                    the true shortest route
+for each free cell:   greedy_path(agent, maze, cell)      shortest_path_length(maze, cell, cheese)
+                              │  len(path) - 1                        │  (no agent involved)
+                              └──────────────── subtract ─────────────┘
+                                                  │
+extra_steps(agent)  ─────────────────>  one number per start: 0 means the agent's route is a shortest one
+
+watch_qmaze.py:  best_actions(agent, env) reads the table's best column for every cell  ──>  arrows on the maze
+```
 
 ## Read the tests first
 
@@ -111,6 +130,15 @@ def test_watch_window_opens_and_closes():
     assert run(max_frames=2, episodes=5) == 2
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `shortest` | the search finds the fewest moves in small mazes you can check by eye, goes round walls, answers `None` when there's no route, and gets 40 for the classic maze | a search that returned the *first* route it found rather than the shortest |
+| `extra` | a perfect agent scores all zeros, an agent that never arrives is left out rather than counted, and the trained agent is within 1 extra move per start on average | counting the start cell as a move, which would make every route look 1 move too long |
+| `arrows` | each arrow points the way its action goes, and a mouse click finds the right cell | UP and DOWN arrows swapped, because screen y grows downwards |
+| `watch` | the policy has an arrow for every free cell and nowhere else, and the window opens and closes | arrows drawn on walls |
+
 The small mazes in the `shortest_path` tests are drawn as rows of numbers. Read the first one as a picture: a free top row, a middle row that's free only on the right, and a free bottom row, so from the top-left to the bottom-right is 2 moves right and 2 down, 4 in all. In `test_extra_steps_are_zero_for_a_perfect_agent`, the stub agent `Perfect` knows that tiny maze: right while in the top row (states 0 and 1), down otherwise.
 
 ```check
@@ -166,6 +194,13 @@ def completion(agent, maze=MAZE):
     return wins, len(env.free_cells)
 ```
 
+**`shortest_path_length`'s inputs, and what it gives back:** a `maze` (the grid of 1s and 0s), a `start` cell and a `target` cell, both as (row, column). It returns a whole number, the fewest moves from start to target, or `None` if walls cut them off. It never looks at an agent: it uses only the maze.
+
+**The two containers it uses:**
+
+- **`distance`** is a dictionary from a cell to how many moves it is from the start: `{(0, 0): 0, (0, 1): 1, …}`. It does two jobs: it holds the answers, and `cell not in distance` tells the search whether a cell has been reached already.
+- **`queue`** holds cells that have been reached but whose neighbours haven't been looked at yet.
+
 **How breadth-first search works.** It explores outwards from the start in rings, like a ripple:
 
 1. The start is 0 moves away. `distance` records that, and `queue` holds the cells waiting to be explored: just the start.
@@ -200,6 +235,10 @@ run ".venv/Scripts/python -m pytest -q tests/test_solve.py -k shortest" label="s
 For each free cell, play the agent's greedy route (`greedy_path`) and, **if it reaches the cheese**, work out how many moves longer it was than the shortest route (`shortest_path_length`). Return the list of those numbers, one per start that reached the cheese, in the order of `env.free_cells`. A perfect agent gets a list of zeros.
 
 The route's number of **moves** is one less than the number of cells in its path, because the path includes the start: `len(path) - 1`.
+
+**Worked through**: say the shortest route from some start is 3 moves, and the agent's greedy path from it has 6 cells. The agent's route is `len(path) - 1` = 5 moves, so it's 5 − 3 = **2** extra moves. A start whose path ends without reaching the cheese adds nothing to the list, because "how much longer than the shortest" has no answer for a route that never arrives.
+
+**`extra_steps`'s inputs, and what it gives back:** an `agent` and a `maze` (the classic one by default). It returns a list of whole numbers, one per start that reached the cheese. Its length says how many starts succeeded, and its sum says how many moves were wasted in all.
 
 ```hints
 nudge: You need a loop over `QMaze(maze).free_cells`, and two numbers per start that reaches the cheese.
@@ -367,6 +406,24 @@ def run(max_frames=None, episodes=500, maze=MAZE):
 
 if __name__ == "__main__":
     run()
+```
+
+**`best_actions`, piece by piece**, for the cell (2, 3):
+
+```text
+env.cols * cell[0] + cell[1]     10 * 2 + 3 = 23             the cell's state number, as in qmaze.py
+agent.Q[23]                      [-0.31, -0.42, -0.18, -0.27]  row 23 of the table: one score per action (example numbers)
+.argmax()                        2                            the POSITION of the biggest score, not the score itself
+int(...)                         2                            a plain Python number instead of a NumPy one
+```
+
+Position 2 is RIGHT, because the columns are in action order: LEFT, UP, RIGHT, DOWN. `argmax` gives a position, and a position in the row **is** an action. Try it in a scratch file:
+
+```python
+import numpy as np
+
+row = np.array([-0.31, -0.42, -0.18, -0.27])
+print(row.max(), row.argmax())        # the best score, and which column it's in
 ```
 
 - **`best_actions`** builds a dictionary from each free cell to the action with the biggest value in its row: the whole policy. `agent.Q[...].argmax()` is used directly, not `greedy`, so a tie always draws the same arrow instead of a random one each time.

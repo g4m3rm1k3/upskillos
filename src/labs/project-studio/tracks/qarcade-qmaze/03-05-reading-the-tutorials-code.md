@@ -4,9 +4,27 @@ runtime: python
 run: bug_matters.py
 ---
 
+### The story so far
+
+Your `QMaze` (`qmaze.py`, lesson 3.1) charges −0.04 for a move, −0.25 for moving back onto a cell visited this game, −0.75 for walking into a wall, and pays +1 for the cheese. Lesson 3.2 found out why the wall penalty matters: with a step cost and no wall penalty, the rat learns to stand still against a wall instead of walking to the cheese. `train_maze(rewards, seed=…)` (`rewards.py`) trains an agent with any rewards you choose, and `completion(agent)` (`maze_tools.py`) counts how many of the 74 starts it solves.
+
+### What this lesson asks
+
 You've built QMaze your own way. Your course almost certainly uses the tutorial's code, or something descended from it, and the most useful skill this chapter can end with is **reading** that code: knowing which part does what, where it differs from yours, and whether its differences matter.
 
 This lesson types in the tutorial's environment exactly as published (Samy Zafrany, *Deep Reinforcement Learning for Maze Solving*, samyzaf.com/ML/rl/qmaze.html; the training code that goes with it is Chapter 5's subject). You'll find that one of its rewards can never happen, work out why from two small slips, fix them, and then measure whether fixing them changes anything.
+
+### How the pieces fit
+
+```text
+classic.py
+  Qmaze            the tutorial's code, exactly as published (the "published" tests record what it really does)
+    └── FixedQmaze   a subclass: inherits everything, replaces update_state and get_reward ("fixed" tests)
+
+bug_matters.py     trains YOUR QMaze twice: walls at -0.75 (intended) and -0.25 (what the tutorial really charges)
+```
+
+The tutorial's class is only read and tested here. The measuring uses your own `QMaze`, with the tutorial's real wall cost plugged into its `rewards` dictionary, because your agent already knows how to train on it.
 
 ## Read the tests first
 
@@ -87,6 +105,32 @@ def test_measured_with_the_tutorials_real_wall_cost():
     from qmaze import REWARDS
     assert AS_PUBLISHED == {**REWARDS, "wall": -0.25}
 ```
+
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `published` | your copy of the tutorial's class behaves exactly as the tutorial's does, slips included: a bump costs −0.25, the mode never becomes 'invalid', the game is lost on the 201st bump, and the observation is the maze with the rat as 0.5 | "tidying" the copy while typing it, so it no longer shows what your course's code does |
+| `fixed` | the subclass charges −0.75 for a bump, from the start and after moving, still charges −0.25 for a revisit, and inherits everything else from `Qmaze` | fixing one slip but not the other (the next steps show why either alone isn't enough) |
+| `measured` | the experiment uses the wall cost the tutorial really gives, −0.25 | measuring the wrong thing: −0.75 against −0.75 |
+
+**The losing test, worked out.** A published bump costs −0.25 and the limit is −50, so 200 bumps total exactly −50.0, which is not *below* −50, and the 201st makes it −50.25:
+
+```python
+total = 0
+for bump in range(1, 202):
+    total += -0.25
+    if bump >= 199:
+        print(bump, total, "lose" if total < -50 else "not_over")
+```
+
+```text
+199 -49.75 not_over
+200 -50.0 not_over
+201 -50.25 lose
+```
+
+(Your `QMaze`'s bumps cost −0.75, so it loses after 67, lesson 3.1's test.)
 
 Look at the message on `test_published_bump_costs_only_a_quarter`: *"not the −0.75 the code seems to say"*. The tests for the **published** code describe what it really does, which isn't always what it looks like it does. The `fixed` tests describe what it was meant to do.
 
@@ -238,6 +282,16 @@ How it maps onto your `QMaze`:
 | `valid_actions()` | nothing | the tutorial's training explores only valid moves; your agent may try any, and pays for walls |
 | `self.maze` with the rat marked 0.5 | `self.maze` unchanged | the tutorial writes the rat into its maze copy; `draw_env` cleans it up for the observation |
 
+**What each method is for**, in the order `act` uses them:
+
+| method | its job | gives back |
+|---|---|---|
+| `update_state(action)` | moves the rat if the move is allowed, and records how it went in the **mode** | nothing; it changes `self.state` |
+| `get_reward()` | looks at the new state and decides the reward | one number |
+| `game_status()` | 'win', 'lose' or 'not_over' | a string |
+| `observe()` | the maze as 100 numbers, rat as 0.5, in a batch of one | an array of shape `(1, 100)` |
+| `valid_actions(cell)` | which of the four actions don't hit a wall or the edge | a list, e.g. `[3]` at (0, 0): only DOWN |
+
 `get_reward` checks the rules **in order** and returns at the first that applies: the cheese, a blocked rat (no valid moves at all, which can't happen in this maze), a visited cell, an invalid move, and finally an ordinary valid move.
 
 Before running the tests, predict:
@@ -266,6 +320,23 @@ Trace `act(UP)` from (0, 0) at the start of an episode. `self.state` is `(0, 0, 
 2. The rat's cell is free (1.0 > 0.0), so (0, 0) is **added to `visited`**, before any move happens.
 3. `valid_actions()` is `[3]`: only DOWN. UP isn't in it, so the code reaches `else: mode = 'invalid'`.
 4. **Slip 1:** that sets `mode`, the **old** state's name, which nothing reads after this line. The new state is built from `nmode`, still `'start'`. So `self.state` becomes `(0, 0, 'start')`: nothing records that the move was invalid.
+
+   See slip 1 on its own, in a scratch file:
+
+   ```python
+   state = (0, 0, 'start')
+   nrow, ncol, nmode = rat_row, rat_col, mode = state
+   mode = 'invalid'
+   print("old:", rat_row, rat_col, mode)
+   print("new:", (nrow, ncol, nmode))
+   ```
+
+   ```text
+   old: 0 0 invalid
+   new: (0, 0, 'start')
+   ```
+
+   After the chained assignment, `mode` and `nmode` are two separate names. Changing one doesn't change the other, and only the "new" one is saved.
 
 **In `get_reward`:** the rat is at (0, 0), and the mode is 'start'.
 
@@ -384,9 +455,16 @@ run ".venv/Scripts/python -m pytest -q tests/test_classic.py" label="all lesson 
 
 One more difference, and this one isn't a slip in the environment, but a choice in the tutorial's training code, which you'll write in Chapter 5. When `act` returns the status 'lose', the training loop sets `game_over = True`, exactly as for 'win', and the learning target for that last step becomes **just the reward**, with no future value added.
 
+In numbers, with γ = 0.9: the rat bumps a wall (reward −0.75) and that bump takes the total below −50. Say the best score in its cell's row is −0.3.
+
+```text
+the tutorial (treats 'lose' as an ending):   target = -0.75                       = -0.75
+yours (truncated, so the future counts):     target = -0.75 + 0.9 × (-0.3)        = -1.02
+```
+
 That treats running out of reward as the maze **ending**, like reaching the cheese. It isn't: the rat was simply cut off. This is lesson 1.1's distinction between terminated and truncated, and lesson 1.3's reason for keeping them apart: after a true ending nothing more can come, but after a cut-off the future still had value. Your `QMaze` reports a loss as `truncated`, and your agent's update keeps the next cell's value.
 
-In practice, for QMaze, treating a loss as an ending mostly teaches the agent that the cells where it tends to give up are slightly worse than they are, which is harmless. In other problems it isn't. CartPole's 500-step limit is the classic case: an agent that treats "reached 500 steps" as "fell" learns that balancing perfectly leads to failure.
+In practice, for QMaze, treating a loss as an ending mostly gives the cells where the rat tends to give up slightly wrong values: in the example above, −0.75 instead of −1.02, a little better than they really are, because the costs still to come are left out. For QMaze that's harmless. In other problems it isn't. CartPole's 500-step limit is the classic case: an agent that treats "reached 500 steps" as "fell" learns that balancing perfectly leads to failure.
 
 ### What you've learned in this chapter
 

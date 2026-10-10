@@ -4,9 +4,29 @@ runtime: python
 run: big_maze.py
 ---
 
+### The story so far
+
+Your `DQNAgent` (`dqn.py`) learns from random batches of remembered moves (lesson 5.2). For every move in a batch, `update` works out a **target**, what the value of that move should be: the reward, plus γ times the best value the network predicts for the next view (unless the game ended). Then one gradient step moves the network's value for that move towards the target. It solved the 7 × 7 maze from every start in under 200 episodes. Lesson 5.3 showed how to copy a network's numbers: `state_dict()` reads them, `load_state_dict(...)` pours them into another network of the same shape.
+
+### What this lesson asks
+
 Back to the tutorial's 10 × 10 maze: 74 starts, 100 inputs and 20,804 knobs. The agent that solved the small maze in under a minute struggles badly here. While this series was being written, five different settings were each given 600 episodes on this maze, and three of them never solved it.
 
 The fix that worked is the second idea in DeepMind's Atari agent, after experience replay: a **target network**. This lesson explains the problem it solves, builds it, and then sets the big maze training, which takes ten minutes or more. Start it and read the explanation while it runs.
+
+### How the pieces fit
+
+```text
+                    trained every move                 never trained; refreshed every 500 moves
+                    ┌──────────────┐   copy numbers    ┌──────────────┐
+                    │   self.net   │ ────────────────> │ self.target  │
+                    └──────────────┘   (500, 1000…)    └──────────────┘
+                           │                                  │
+update:   chosen = net(obs)[action]          targets = reward + γ × target(next_obs).max()
+                           └─────────── loss: move chosen towards targets ──────────┘
+```
+
+The network being corrected and the network giving the labels are different networks. Between copies, the labels stand still.
 
 ## Read the tests first
 
@@ -69,6 +89,13 @@ def test_big_maze_script_uses_the_tutorials_maze():
     assert np.array_equal(big_maze.MAZE, MAZE) and big_maze.SETTINGS["sync"] > 0
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `frozen_copy` | the copy starts equal to the network but separate from it, doesn't change between refreshes while the network learns, catches up exactly every `sync` moves, and never when `sync=0` | `self.target = self.net`, which makes two names for **one** network, so it was never frozen at all |
+| `big` | the big-maze script uses the tutorial's maze and switches the frozen copy on | training the big maze without the fix this lesson is about |
+
 `fill(agent, steps)` feeds the agent `steps` made-up transitions, each in a different cell, so the memory fills and learning starts. The tests then compare the two networks' numbers to see when the copy is refreshed.
 
 ```check
@@ -86,6 +113,15 @@ target = reward + γ × (the best value the NETWORK predicts for the next view)
 The target is computed **by the network being trained**. Every gradient step changes the network, so it changes the targets too, including the targets of the very next update. It's like trying to hit a mark that moves every time you adjust your aim, and moves because you adjusted it. In the table this hardly mattered: an update changed one number, and a target read a different one. A network's update changes its values everywhere at once, the next state's included. Errors can feed on themselves: a value that's too high makes the targets that use it too high, which pushes other values up, which raises the first value's own target.
 
 The fix is to compute targets with a **frozen copy** of the network, the **target network**, and to refresh the copy only every so often, here every 500 moves. Between refreshes the targets stand still, so each stretch of training is ordinary supervised learning against fixed labels, the problem Chapter 4 showed networks are good at. Every 500 moves the copy catches up, and the next stretch aims at better labels.
+
+A timeline, with `sync=500`:
+
+```text
+moves 1-500:      targets come from the copy made at the start     the network learns towards fixed labels
+move 500:         copy the network into the frozen copy            the labels jump to the network's better values
+moves 501-1000:   targets come from that copy                      fixed again
+move 1000:        copy again …
+```
 
 Make `dqn.py` this:
 
@@ -210,6 +246,27 @@ run ".venv/Scripts/python -m pytest -q tests/test_target.py -k frozen_copy_start
 
 **Build, on your own:** the refresh, in `learn`.
 
+**`%` and `if self.sync`, tried first.** `%` is the remainder after dividing: `1000 % 500` is 0, `1001 % 500` is 1. And a number used as a condition counts as false only when it's 0. In a scratch file:
+
+```python
+sync = 500
+for steps in range(1, 1601):
+    if sync and steps % sync == 0:
+        print("move", steps, ": copy the network into the frozen copy")
+for sync in (0, 500):
+    print(sync, "->", bool(sync))
+```
+
+```text
+move 500 : copy the network into the frozen copy
+move 1000 : copy the network into the frozen copy
+move 1500 : copy the network into the frozen copy
+0 -> False
+500 -> True
+```
+
+So `if self.sync and self.steps % self.sync == 0` is true every 500th move, and never when `sync` is 0. Python checks `self.sync` first and stops there if it's 0, which also avoids `% 0`, a division by zero.
+
 At the end of `learn`, after the updates, count the move: `self.steps += 1`. Then, if `self.sync` is not 0 and `self.steps` is a multiple of `self.sync`, copy the network's numbers into the target network, the same way `__init__` did. `self.steps % self.sync == 0` is true exactly every `self.sync` moves.
 
 ```hints
@@ -250,6 +307,8 @@ if __name__ == "__main__":
     save_agent(agent, "big_maze_dqn.pt")
     print("solved every start at episode", solved_at)
 ```
+
+**`SETTINGS`** is a dictionary of keyword arguments, and `**SETTINGS` unpacks it into the call (lesson 3.2's `**`), so `train_dqn(MAZE, ..., **SETTINGS)` is `train_dqn(MAZE, ..., sync=500, updates=4)`. `train_dqn` passes them on to `DQNAgent` through its own `**settings`. Keeping them in one named dictionary lets the test check them, and lets you change them in one place.
 
 It trains on the tutorial's maze with a frozen copy refreshed every 500 moves, checks completion every 20 episodes, gives up after 600, and saves the network to `big_maze_dqn.pt`. Start it in the terminal and leave it running:
 

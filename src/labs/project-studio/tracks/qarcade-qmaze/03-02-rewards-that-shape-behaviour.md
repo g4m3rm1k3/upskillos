@@ -4,9 +4,31 @@ runtime: python
 run: rewards.py
 ---
 
+### The story so far
+
+Lesson 3.1 built `QMaze` (`qmaze.py`): a 10 × 10 maze where the rat's **state** is its cell number, `row * 10 + col`, and `step(action)` moves it LEFT, UP, RIGHT or DOWN (actions 0 to 3) and returns `(state, reward, terminated, truncated, info)`. Reaching the cheese at (9, 9) is `terminated`; losing more than 50 points in total is `truncated`.
+
+From Chapter 1: `QAgent(n_states, n_actions, alpha, gamma, epsilon, seed)` (`agent.py`) keeps a table `agent.Q` with one row per state and one column per action. `agent.act(state)` picks the column with the highest score, except that with probability `epsilon` (ε) it picks at random, to explore. `train(env, agent, episodes, seed)` (`train.py`) plays that many games, updating the table after every move.
+
+### What this lesson asks
+
 The corridor paid only at its ends. QMaze pays something on **every** step: −0.04 for a move, −0.25 for going back, −0.75 for a wall. Rewards like these, given along the way to steer behaviour, are called **reward shaping**, and they're one of the most powerful and most dangerous tools in reinforcement learning. An agent maximises exactly what it's paid for, not what you meant.
 
 This lesson trains Chapter 1's agent on the maze, then changes the rewards one at a time and watches what each rule is really for. The answer isn't what the rule names suggest.
+
+### How the pieces fit
+
+```text
+rewards.py
+  train_maze(rewards)  ──>  QMaze(rewards=…, random_start=True)  +  QAgent  ──>  train(...)  ──>  a trained agent
+                                                                                                      │
+maze_tools.py                                                                                         v
+  completion(agent)    ──>  greedy_path(agent, maze, cell) for each of the 74 starts  ──>  how many reached the cheese
+rewards.py
+  endings(agent)       ──>  how_it_ends(path, reached) for each start  ──>  a count of each kind of ending
+```
+
+Training uses whichever rewards you're testing. Judging always uses the classic rules, so the four agents are compared fairly.
 
 ## Read the tests first
 
@@ -111,6 +133,15 @@ def test_variants_train_an_agent_on_the_maze():
     assert agent.Q.shape == (100, 4) and agent.Q.any()
 ```
 
+The test names are grouped by their first word. What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `path` | `greedy_path` records every cell, including the start, stops at the cheese or the limit, and leaves the agent's ε as it found it; `completion` counts only the starts that win | a judged agent that kept ε = 0 afterwards, so it stopped exploring when training resumed |
+| `ending` | `how_it_ends` names the four ways a game can finish, and looks only at the end of the path | calling a rat that wandered first and then got stuck a "wanderer" |
+| `anywhere` | random starts land only on free cells, the same seed gives the same starts, and random starts are off unless asked for | the play window suddenly starting the rat in a random place |
+| `variants` | each reward variant changes exactly one thing from the classic rules | a variant that changed two rewards, so you couldn't tell which one caused the result |
+
 Two things to notice:
 
 - **The tests use stand-ins.** `corridor_maze()` builds a tiny 3 × 3 maze where the answers are easy to work out by hand: the bottom row is free, and so is the left column. `RightAgent` is a fake agent that always steps right. With a known maze and a known agent, `greedy_path` and `completion` have exactly one correct answer each. A fake object that stands in for a real one in a test is often called a **stub**. It only needs the parts the code under test uses: here, `epsilon` and `act`.
@@ -152,6 +183,19 @@ def completion(agent, maze=MAZE):
     wins = sum(greedy_path(agent, maze, cell)[1] for cell in env.free_cells)
     return wins, len(env.free_cells)
 ```
+
+**`greedy_path`'s inputs, and what it gives back:**
+
+| | what it is | why it's needed |
+|---|---|---|
+| input `agent` | any object with `epsilon` and `act(state)` | the agent being judged; the tests pass `RightAgent` |
+| input `maze` | the grid to play on | lesson 3.4 judges on a different maze |
+| input `start` | the (row, column) to start from | `completion` calls it once for each of the 74 starts |
+| input `limit` | the most steps to play | stops an agent that never ends its game (200) |
+| returns `path` | a list of (row, column) cells, start first | to see where the rat went, and how it failed |
+| returns `reached` | `True` if it reached the cheese | what `completion` counts |
+
+**Why ε is set to 0 and then put back.** `act` explores at random with probability ε. Judging should show what the agent has *learned*, so exploration is switched off. But the agent might be trained more afterwards, and training needs ε, so `saved` remembers it and the last line before `return` restores it. That's what the `path` test with `agent.epsilon = 0.3` checks.
 
 - **`greedy_path`** plays one greedy episode from a chosen start and records every cell the rat stands on, including the start. It stops at the cheese, at the losing limit, or after `limit` steps (200, five times the longest route needed: no free cell is more than 40 moves from the cheese), whichever comes first. The step limit protects against an agent that loops forever without losing: on a free cell, stepping back and forth costs −0.25 a step, so it does lose eventually, but there's no need to wait.
 - It uses a **fresh** `QMaze` with the default rewards, whatever the agent was trained with, so every agent is judged by the same rules.
@@ -337,6 +381,8 @@ if __name__ == "__main__":
         print(f"{'':20} seed 0's endings: {dict(endings(train_maze(rewards)))}")
 ```
 
+**`train_maze`'s inputs:** `rewards`, the reward dictionary to train with (the one thing each experiment changes); `episodes` (500); `seed`, so a run can be repeated exactly and ten different seeds give ten independent agents; and `maze`, for lesson 3.4. It returns the trained agent.
+
 - **`train_maze`** is the whole recipe: a maze with random starts, Chapter 1's agent (α = 0.1, γ = 0.9, ε = 0.1, the tutorial's ε), and 500 episodes. With 100 states it takes about a fifth of a second.
 - **Each variant changes one thing** compared with `classic`. "No wall penalty" makes a bump cost the same as a move, −0.04. "No revisit penalty" makes going back cost the same as a move. "Only the cheese" removes every penalty.
 - **`Counter`** counts how many times each value appears: `Counter(["a", "b", "a"])` is `{"a": 2, "b": 1}`. `endings` counts how each of the 74 starts ends, and `how_it_ends(*greedy_path(...))` unpacks the `(path, reached)` pair into its two arguments.
@@ -349,7 +395,7 @@ choice: Very few: without penalties it has no reason to hurry
 choice: About half
 choice: All 74, for every seed
 answer: All 74, for every seed
-explain: All 74, for all 10 seeds, and the routes are nearly as short as the classic agent's (0.32 moves longer than the shortest possible, on average, against 0.28). The penalties aren't needed to find the cheese, because γ already makes the agent hurry: the cheese is worth γ^k when it's k steps away, so a shorter route is always worth more (0.9⁴⁰ is 0.015, while 0.9⁴² is 0.012). Discounting alone is a pressure to be quick.
+explain: All 74, for all 10 seeds, and the routes are nearly as short as the classic agent's (0.32 moves longer than the shortest possible, on average, against 0.28). The penalties aren't needed to find the cheese, because γ already makes the agent hurry: the cheese is worth γ^k when it's k steps away, so a shorter route is always worth more (0.9⁴⁰ is 0.0148, while 0.9⁴² is 0.0120). Discounting alone is a pressure to be quick. Try it: `for k in (38, 40, 42): print(k, round(0.9 ** k, 4))`.
 verify: .venv/Scripts/python -c "from maze_tools import completion; from rewards import VARIANTS, train_maze; w = [completion(train_maze(VARIANTS['only the cheese'], seed=s))[0] for s in range(10)]; print('All 74, for every seed' if w == [74] * 10 else w)"
 ```
 
@@ -386,6 +432,31 @@ walk to the cheese:     39 moves at -0.04, then +1 at move 40
 bump a wall forever:    -0.04 every step, for ever
                         -0.04 x (1 + 0.9 + 0.9^2 + ...)  =  -0.04 / (1 - 0.9)  =  -0.400
 ```
+
+Both lines are **geometric series**, from lesson 2.4: each term is γ times the one before. Bumping forever is the endless kind, whose sum is first term ÷ (1 − γ), so −0.04 ÷ 0.1 = −0.4. Walking stops after 39 costs, so its costs add up to a little less than −0.4, and then the cheese adds its discounted +1.
+
+See how the gap depends on the distance with a loop, in a scratch file:
+
+```python
+gamma = 0.9
+bump = -0.04 / (1 - gamma)
+for k in (1, 5, 10, 20, 30, 40):
+    walk = sum(-0.04 * gamma ** t for t in range(k - 1)) + gamma ** (k - 1) * 1.0
+    print(f"{k:3} moves away: walk {walk:+.3f}   bump forever {bump:+.3f}   difference {walk - bump:.3f}")
+```
+
+`range(k - 1)` gives the k − 1 paid moves (t = 0, 1, … k − 2), and the cheese arrives on move k, discounted k − 1 times. The output:
+
+```text
+  1 moves away: walk +1.000   bump forever -0.400   difference 1.400
+  5 moves away: walk +0.519   bump forever -0.400   difference 0.919
+ 10 moves away: walk +0.142   bump forever -0.400   difference 0.542
+ 20 moves away: walk -0.211   bump forever -0.400   difference 0.189
+ 30 moves away: walk -0.334   bump forever -0.400   difference 0.066
+ 40 moves away: walk -0.377   bump forever -0.400   difference 0.023
+```
+
+Next to the cheese, walking wins by a mile. Far away, the difference almost vanishes. So the agent stalls at the cells **farthest** from the cheese, and that's what happens: seed 0's "no wall penalty" agent reaches the cheese from every start within 15 moves of it, and stalls from every start more than 19 moves away.
 
 Two things make these so close. The cheese's +1 arrives 40 steps from now, so it's discounted to 0.016. And the endless costs of bumping are discounted too: a cost far in the future counts for almost nothing, so even paying −0.04 forever adds up to only −0.4. The difference between succeeding and giving up is 0.023, smaller than the noise in values that are still being learned. So some cells settle on "bump this wall", and once a bump is the greedy choice there, the rat never leaves.
 

@@ -10,7 +10,26 @@ run: play_qmaze.py
 
 **QMaze** is the second school problem: a rat in a 10 × 10 maze has to find the cheese in the bottom-right corner. Most courses teach it from one public tutorial, Samy Zafrany's *Deep Reinforcement Learning for Maze Solving* (samyzaf.com/ML/rl/qmaze.html). This chapter builds the same maze, with the same rules and the same reward numbers, so that its code will look familiar when you meet your course's version. Lesson 3.5 then reads the tutorial's own code side by side with yours, including a bug in it.
 
-Two things are new compared with the corridor: the world is two-dimensional, and the rewards are designed to push the rat towards good behaviour on the way, not just at the end. This lesson builds the maze and lets you play it.
+### The story so far
+
+Chapter 1 built a Q-learning agent on a five-square corridor. The corridor told the agent which square it was on as one whole number (its **state**), the agent kept a **table** of scores with one row per state and one column per move, and after every move it nudged one score towards a better guess. Chapter 2 put the same agent on CartPole, where the state was four decimals, and had to squash them into one row number first.
+
+The agent never cared what the world looked like. It only needed the world to have two methods, copied from Gymnasium: `reset()`, which starts a game and returns the first state, and `step(action)`, which makes one move and returns five values, `(state, reward, terminated, truncated, info)`. Any world with those two methods, and states numbered 0, 1, 2…, can be learned by the same agent.
+
+### What's new here
+
+Two things are new compared with the corridor: the world is two-dimensional, and the rewards are designed to push the rat towards good behaviour on the way, not just at the end. This lesson builds the maze, with the same `reset` and `step` as before, and lets you play it.
+
+### How the pieces fit
+
+```text
+qmaze.py          the rules: where the walls are, what each move does, what it pays
+   │                (QMaze, with reset() and step(action), just like the corridor)
+   ├── maze_view.py    draws a QMaze: walls, floor, cheese, rat
+   └── play_qmaze.py   a window: your arrow keys call env.step, maze_view draws the result
+```
+
+Next lesson, the agent takes your place: instead of arrow keys choosing the actions, `agent.act(state)` will.
 
 ## Read the tests first
 
@@ -121,6 +140,17 @@ def test_play_window_opens_and_closes():
     assert run(max_frames=2) == 2
 ```
 
+The test names are grouped by their first word, and each step below checks its own group with `pytest -k <word>`. What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `layout` | the maze is 10 × 10, the cheese is at (9, 9), there are 74 places to start, and a cell's state number is `row * 10 + col` | counting columns first, so (2, 3) became 32 and the agent's table rows pointed at the wrong cells |
+| `moves` | each action goes the way its name says, an ordinary move costs −0.04, and stepping onto the cheese pays +1 and ends the game | UP and DOWN swapped, because rows count downwards |
+| `walls` | walking into a wall, or off the edge, leaves the rat where it was and costs −0.75 | the rat walking off the top and appearing at the bottom (see `is_free` below) |
+| `revisit` | moving back onto a cell already visited costs −0.25, and a new game forgets the old one's path | a `visited` set that was never emptied, so game 2 was charged for game 1's path |
+| `limit` | a game that has lost more than 50 points is stopped, and it's reported as `truncated`, not `terminated` | the agent treating "gave up" as "the maze ended", which lesson 3.5 shows changes what it learns |
+| `view`, `play` | cells are drawn in the right place, the arrow keys map to the right actions, and the window opens and closes | the maze drawn flipped over its diagonal |
+
 Cells are named **(row, column)**, counting from 0 at the top-left: (0, 0) is the top-left corner, (9, 9) the bottom-right, and (1, 0) is one row down from (0, 0). Rows first is how NumPy indexes a 2D array (`maze[row, col]`), so it's used everywhere in this chapter. It's the opposite order from screen coordinates `(x, y)`, where the column (across) comes first.
 
 The rewards in the tests are the tutorial's, and the reason for each one is next lesson's subject: +1 for the cheese, −0.04 for an ordinary move, −0.25 for moving back onto a cell already visited, −0.75 for walking into a wall, and the episode is lost once the total falls below −50.
@@ -182,10 +212,31 @@ class QMaze:
 - **The maze is numbers**: 1 is a free cell, 0 is a wall. That's the tutorial's convention, and it will matter in lesson 3.4, when the maze itself becomes the agent's input. `dtype=float` stores them as decimals (1.0, 0.0), as the tutorial does.
 - **The four actions are 0 to 3**, in the tutorial's order: LEFT, UP, RIGHT, DOWN. **`MOVES`** turns each into a change of (row, column). UP is (−1, 0) because row numbers grow **downwards**, as on the screen: going up means a smaller row.
 - **`REWARDS`** keeps every reward number in one dictionary, so next lesson can change them without touching the code that uses them.
+**`QMaze`'s inputs**, each with a default so `QMaze()` gives the tutorial's game:
+
+| input | what it is | why it's an input | default |
+|---|---|---|---|
+| `maze` | the grid of 1s and 0s | lesson 3.4 trains on a different maze; nothing else changes | `MAZE` |
+| `start` | the (row, column) the rat starts on | the tests start the rat next to the cheese to check winning in one move; lesson 3.2 starts it anywhere | `(0, 0)` |
+| `rewards` | the dictionary of reward numbers | lesson 3.2 breaks them on purpose to see what each one is for | `REWARDS` |
+
+**What the object remembers** (its attributes, set in `__init__` and `reset`): `maze`, `rows` and `cols` (10 and 10), `n_states` (100), `target` (the cheese's cell), `free_cells` (the starting places), `cell` (where the rat is now, as a (row, column) tuple), and `total` (the rewards so far this game).
+
 - **`np.array(maze, dtype=float)`** makes the environment its own copy of the maze. Arrays are shared, not copied, when passed around (lesson 1.2), so without this, anything that changed `env.maze` would change `MAZE` for everybody.
 - **`self.maze.shape`** is `(10, 10)`, unpacked into `rows` and `cols`.
 - **`free_cells`** is a **list comprehension** with two `for`s and an `if`: every (row, column) whose value is FREE, except the cheese's. It's the list of places the rat can start. The tutorial calls it the same.
 - **The state is the cell's number.** Chapter 1's agent needs one whole number per state, and a grid has an easy one: count cells along the rows, so (row, col) is `row * cols + col`. (2, 3) is 23; (9, 9) is 99. It's lesson 2.3's mixed-radix idea again, with 10 columns. `n_states` is 100: one table row per cell, walls included (the agent just never visits those rows).
+
+  The cell number works like reading a two-digit number: the row is the tens digit and the column is the units digit, because each row holds exactly 10 cells. Going back the other way uses whole-number division: `divmod(23, 10)` gives `(2, 3)`, the row and the remainder. See both directions with a loop in a scratch file:
+
+  ```python
+  cols = 10
+  for row, col in [(0, 0), (0, 9), (1, 0), (2, 3), (9, 9)]:
+      state = row * cols + col
+      print((row, col), "->", state, "->", divmod(state, cols))
+  ```
+
+  (0, 9) is 9 and (1, 0) is 10: the last cell of one row and the first of the next are neighbours in the numbering, although they're at opposite ends of the maze. The agent doesn't mind. To it, a state number is just which table row to use.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py -k layout" label="QMaze knows the maze's size, cheese and free cells, and numbers its states" -- free_cells: every (r, c) with maze[r, c] == FREE except the target; state() returns row * cols + col.
@@ -264,6 +315,19 @@ class QMaze:
 - **Walking into a wall or the edge doesn't move the rat.** It stays where it is and pays the wall penalty. There's no separate "do nothing" action, but a bump has the same effect, at a price.
 - **`self.total`** adds up the episode's rewards. The game uses it for the losing rule, two steps from now.
 - **Reaching the cheese** is `terminated`: the maze has ended.
+
+**`step` worked through**, for the first test: the rat is on (0, 0) and the action is DOWN (3).
+
+```text
+row, col     = (0, 0)
+d_row, d_col = MOVES[3]                 = (1, 0)
+is_free(0 + 1, 0 + 0) = is_free(1, 0)   -> 0 <= 1 < 10, 0 <= 0 < 10, MAZE[1, 0] is 1.0 -> True
+self.cell    = (1, 0), not the target   -> reward = -0.04
+self.total   = 0.0 + -0.04              = -0.04
+returns        (1 * 10 + 0, -0.04, False, False, {})  =  (10, -0.04, False, False, {})
+```
+
+Then RIGHT (2) from (0, 0) instead: `MOVES[2]` is (0, 1), `is_free(0, 1)` finds `MAZE[0, 1]` is 0.0, a wall, so the cell stays (0, 0) and the reward is −0.75.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py -k moves" label="step moves the rat, charges a move, and the cheese wins" -- Add MOVES[action] to the cell if is_free says the new cell is free; the reward is cheese on the target, otherwise move.
@@ -388,7 +452,17 @@ class QMaze:
 
 **Truncated, not terminated.** The tutorial calls this ending "lose" and stops the game. But the maze didn't end: the rat could have carried on and found the cheese. The episode was cut short because it was going badly, which is exactly the corridor's time limit from lesson 1.1. So it's reported as `truncated`, and the agent's update will still count the value of where the rat was. (The tutorial treats it as a true ending; lesson 3.5 looks at what that changes.)
 
-`self.maze.size` is the number of cells, 100. Bumping a wall costs 0.75, so 66 bumps total −49.5 and the 67th makes it −50.25, below the limit: that's the test.
+`self.maze.size` is the number of cells, 100. Bumping a wall costs 0.75, so 66 bumps total −49.5 and the 67th makes it −50.25, below the limit: that's the test. See it with a loop:
+
+```python
+total = 0.0
+for bump in range(1, 69):
+    total += -0.75
+    if bump >= 65:
+        print(bump, total, "lost" if total < -50 else "still playing")
+```
+
+**Why a limit at all?** The rat can't lose any other way. Without it, an agent that hadn't learned anything could wander for millions of steps, and in a game like this one, where every move costs, the total would just keep falling. The limit is half a point per cell: generous enough for a lot of wandering, tight enough that a hopeless game ends.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py -k limit" label="an episode is truncated once its total falls below -50" -- In __init__: self.min_reward = -0.5 * self.maze.size. In step: truncated = not terminated and self.total < self.min_reward.

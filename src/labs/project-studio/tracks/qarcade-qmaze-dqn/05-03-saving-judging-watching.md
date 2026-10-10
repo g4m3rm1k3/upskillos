@@ -4,9 +4,25 @@ runtime: python
 run: watch_dqn.py
 ---
 
+### The story so far
+
+Lesson 5.2's `train_dqn()` (`dqn.py`) trains a `DQNAgent` on the 7 × 7 maze until its greedy policy reaches the cheese from all 33 starts, and returns `(agent, solved_at)`. The agent's knowledge is `agent.net`, a PyTorch network with 5,102 knobs. `ByCell(agent, maze)` lets Chapter 3's tools, which hand out cell numbers, use it: `greedy_path`, `completion` and `extra_steps` (`maze_tools.py`).
+
+### What this lesson asks
+
 Training the network takes most of a minute, and everything it learned lives in memory until the program ends. Real agents are trained once and used many times, so this lesson saves the trained network to a file, loads it back, judges it with Chapter 3's tools, and draws its policy as arrows, exactly as you did for the table.
 
 Then it asks the question networks were brought in to answer: does this one cope with a maze it hasn't seen?
+
+### How the pieces fit
+
+```text
+trained.py      run once:  train_dqn() ──> save_agent(agent) ──> small_maze_dqn.pt   (the 5,102 numbers)
+                any time:  load_agent() ──> a fresh DQNAgent with those numbers poured in
+watch_dqn.py    load_agent() ──> network_arrows() ──> arrows on the maze, and a rat that follows them
+```
+
+Training happens once. Watching and judging load the file, so they start instantly and always show the same network.
 
 ## Read the tests first
 
@@ -75,6 +91,14 @@ def test_arrows_window_opens_and_closes(tmp_path):
     assert run(max_frames=2, path=path) == 2
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `saved` | a file is written, big enough to hold the numbers | saving the agent's settings but not its network |
+| `loaded` | the loaded agent gives exactly the same values, doesn't explore, and is a separate network | loading the numbers into the wrong agent, or handing back the original instead of a real copy from the file |
+| `arrows` | every free cell gets an arrow from the network, and the window opens and closes | arrows for walls, or missing cells |
+
 **`tmp_path`** is new: when a test function has a parameter with this name, pytest creates a fresh, empty folder for that test and passes its path in. Each test can write files there without cluttering your project or interfering with another test, and pytest cleans the folders up afterwards. `tmp_path / "net.pt"` builds a path inside it: `/` joins paths for **`pathlib.Path`** objects, which is what `tmp_path` is.
 
 ```check
@@ -105,6 +129,32 @@ if __name__ == "__main__":
 ```
 
 - **`agent.net.state_dict()`** is the network's knowledge as a dictionary: one entry per tensor of knobs (`"0.weight"`, `"0.bias"`, `"1.weight"` for the first PReLU's slope, and so on), named by position in the `Sequential`. It holds numbers only, not the code that uses them.
+
+  Look inside one, in a scratch file in your project folder, after `trained.py` has saved it:
+
+  ```python
+  import torch
+
+  saved = torch.load("small_maze_dqn.pt")
+  for name, tensor in saved.items():
+      print(f"{name:10} shape {str(tuple(tensor.shape)):10} {tensor.numel():5} numbers")
+  print("total:", sum(t.numel() for t in saved.values()))
+  ```
+
+  ```text
+  0.weight   shape (49, 49)    2401 numbers
+  0.bias     shape (49,)         49 numbers
+  1.weight   shape (1,)           1 numbers
+  2.weight   shape (49, 49)    2401 numbers
+  2.bias     shape (49,)         49 numbers
+  3.weight   shape (1,)           1 numbers
+  4.weight   shape (4, 49)      196 numbers
+  4.bias     shape (4,)           4 numbers
+  total: 5102
+  ```
+
+  The number before the dot is the layer's position in the `Sequential`: 0 is the first `Linear`, 1 its `PReLU` (one learned slope), and so on. `.numel()` counts a tensor's numbers. The total is lesson 5.1's 5,102.
+
 - **`torch.save(…, path)`** writes it to a file. `.pt` is the usual ending for PyTorch files. 5,102 numbers at 4 bytes each are 20,408 bytes; the file measured 23,983, the rest being the tensors' names, shapes and a little bookkeeping.
 - **Saving only the numbers** is deliberate: the file doesn't depend on how `DQNAgent` is written, so you can change the agent's code and still load an old network into it, as long as the layers' shapes match.
 
@@ -128,6 +178,8 @@ file small_maze_dqn.pt -- Run .venv\Scripts\python trained.py once: it trains th
 ## Your turn: loading it back
 
 **Build, on your own:** `load_agent(path=PATH, maze=SMALL_MAZE)` in `trained.py`.
+
+**`load_agent`'s inputs:** `path`, the file to read; and `maze`, only for its size, because the network's first layer must have one input per cell (49 here) or the saved numbers won't fit. It returns a `DQNAgent` ready to use.
 
 Make a new `DQNAgent` for a maze of this size (`maze.size` inputs) with `epsilon=0.0`, because a loaded agent is for using, not exploring. Then pour the saved numbers into its network: `torch.load(path)` reads the dictionary back, and a network's **`load_state_dict(dictionary)`** copies each tensor in, matched by name. Return the agent.
 

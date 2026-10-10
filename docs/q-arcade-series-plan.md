@@ -217,6 +217,8 @@ Measured while writing (Windows 11, Python 3.13.14):
 
 **Done and verified:** Chapters 0–5, 28 lessons. Each chapter's walkthrough passed: every step typed, every check, every wrong answer, every prediction's `verify:`. Committed in `5ed0a5a8 Q-Arcade`.
 
+**Explanation rework (2026-10-10):** every lesson, 0.1 to 5.5, was rewritten to the owner's explanation standard. Each now has a plain-words "story so far" (no jargon recap tables), a "how the pieces fit" diagram, a table of what each test group protects and the bug it would catch, inputs-and-returns tables for each function, and maths that is named, worked through with real numbers, and given a small loop whose printed output was checked by running it. Code, tests and checks are unchanged. After the rework, the walkthroughs pass for Chapters 0–3 together (23 passed), Chapter 4 (10) and Chapter 5 (10), and `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` passes (200 tests). Write Chapter 6 onwards to the same standard from the start.
+
 **How to verify a chapter without replaying the whole series** (a full walk installs PyTorch and Keras and takes a long time):
 
 ```sh

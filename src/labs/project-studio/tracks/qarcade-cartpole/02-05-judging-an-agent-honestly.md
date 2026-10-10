@@ -12,6 +12,10 @@ Last lesson's agent ended its training averaging 469 steps. Is that a good agent
 
 This lesson builds the three tools that answer those questions, and uses them to settle one: which step size α should a table agent use on CartPole?
 
+### The story so far
+
+`train_cartpole(episodes, seed, alpha=…, alpha_end=…)` (lesson 2.4, `cartpole_table.py`) trains Chapter 1's agent on CartPole and returns `(agent, env, lengths)`: the trained agent, the wrapped CartPole it played, and how long each training game lasted. `run_episode(env, agent, learn=…, seed=…)` (lesson 1.4) plays one game and returns its total reward, which in CartPole is the number of steps survived.
+
 ## Read the tests first
 
 **This step: create the supplied test file and read it. No code yet.**
@@ -100,6 +104,8 @@ def evaluate(agent, env, episodes=20, seed=1000):
     return np.array(lengths)
 ```
 
+**`evaluate`'s inputs, and what it gives back:** an `agent` and the `env` to play in; `episodes`, how many games to judge it on (20); and `seed`, which set of starting positions to use (1000, deliberately different from training's). It returns a NumPy array of the 20 game lengths. Its `.mean()` is the agent's **score**.
+
 `evaluate` measures what the agent has **learned**, with nothing else mixed in:
 
 - **`epsilon = 0.0`** and **`learn=False`**: no random pushes, and no changes to the table while it's being judged. That's its **greedy policy**, as in lesson 1.4's `greedy_finds_treasure`. `saved` puts ε back afterwards, so judging an agent doesn't change it.
@@ -119,9 +125,51 @@ Say you train 10 agents with different seeds and judge each one. You get 10 scor
 
 It's built from the **standard deviation**, which measures how spread out the scores are. Roughly, it's the typical distance of a score from their mean. For the scores 2 and 4, the mean is 3 and each score is 1 away, so the standard deviation is about 1. NumPy computes it as `values.std(ddof=1)`.
 
+**The standard deviation, step by step.** For values x₁, x₂, … xₙ with mean m:
+
+```text
+1. the mean:                  m = (x₁ + x₂ + … + xₙ) / n
+2. each value's distance:     x₁ − m,  x₂ − m, …                 (some negative, some positive)
+3. square each distance:      (x₁ − m)²,  (x₂ − m)², …          (squaring makes them all positive)
+4. add them, divide by n − 1: v = sum of the squares / (n − 1)  (the "variance")
+5. take the square root:      sd = √v                            (back in the values' own units)
+```
+
+For the scores 2 and 4:
+
+```text
+1. m  = (2 + 4) / 2                  = 3
+2. distances: 2 − 3 = −1,  4 − 3 = 1
+3. squared:   1, 1
+4. v  = (1 + 1) / (2 − 1)            = 2
+5. sd = √2                           = 1.414
+```
+
+Why square in step 3 and take the root in step 5? Without squaring, the distances −1 and +1 would cancel to 0, as if there were no spread at all. Squaring stops the cancelling, and the root afterwards undoes the squaring, so the answer is in points, not points squared.
+
 Then: **standard error = standard deviation ÷ √(number of values)**. Dividing by √n is how averaging tames spread. One score could be anywhere in the spread, but in an average of n scores, the high and low ones partly cancel, and the more there are, the more they cancel. With 4 times as many runs, the standard error halves, because √4 = 2.
 
 `ddof=1` means "divide by n − 1 instead of n" inside the standard deviation. The scores are a sample, and their own mean sits closer to them than the true mean does, so dividing by n would understate the spread slightly; n − 1 corrects that. For the test's `[2.0, 4.0]`: squared distances from the mean 3 are 1 and 1; divided by n − 1 = 1 that's 2; √2 = 1.414 is the standard deviation; ÷ √2 gives a standard error of **1.0**.
+
+See the shrinking with a loop. The same spread of scores, 0 and 10, repeated more and more times, in a scratch file:
+
+```python
+import numpy as np
+
+for repeats in (1, 4, 16, 64):
+    values = np.array([0.0, 10.0] * repeats)
+    sd = values.std(ddof=1)
+    print(f"{len(values):4} values: mean {values.mean():.1f}, sd {sd:.2f}, standard error {sd / np.sqrt(len(values)):.2f}")
+```
+
+```text
+   2 values: mean 5.0, sd 7.07, standard error 5.00
+   8 values: mean 5.0, sd 5.35, standard error 1.89
+  32 values: mean 5.0, sd 5.08, standard error 0.90
+ 128 values: mean 5.0, sd 5.02, standard error 0.44
+```
+
+The mean stays at 5. The spread settles near 5: with only 2 values it's larger, 7.07, because step 4 divides by n − 1 = 1. The standard error keeps shrinking, and once the spread has settled it roughly halves with every fourfold increase in the number of values (0.90, then 0.44). That's the √n at work: 4 times the values, √4 = 2 times smaller.
 
 Write `standard_error(values)`. It should accept a list as well as an array, so start by converting: `np.asarray(values, dtype=float)`.
 

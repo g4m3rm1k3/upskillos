@@ -7,6 +7,23 @@ support: tests/conftest.py
 
 Every game is one loop that runs many times a second: **read the input, update the world, draw it, wait**. Every reinforcement-learning agent runs the same loop with different words: **observe, choose an action, let the world respond**. This lesson builds the game version in pygame, so that when the agent's loop arrives in Chapter 1 you already know the shape.
 
+### The big picture
+
+A game on a screen is a series of still pictures, called **frames**, shown quickly one after another, like the pages of a flip book. Between two pictures, the program does four things, in this order, and then repeats:
+
+```text
+        ┌──────────────────────────────────────────────────────────────┐
+        │ 1. INPUT   collect what happened: keys pressed, window closed │
+        │ 2. UPDATE  change the world: move the dot                     │
+        │ 3. DRAW    paint the new picture                              │
+        │ 4. WAIT    pause, so this happens 60 times a second, not more │
+        └───────────────────────────── repeat ─────────────────────────┘
+```
+
+Each step of this lesson adds one of those to a file called `window.py`. By the end, a yellow dot moves when you press the arrow keys, and stops at the edges.
+
+**How this connects to learning.** In Chapter 1, step 1 becomes "the agent looks at where it is", step 2 becomes "it chooses a move and the world responds", and the same loop shape carries on. The game loop *is* the loop agents learn in.
+
 ## Read the tests first
 
 **This step: create the supplied files and read them. No code yet.**
@@ -110,6 +127,16 @@ if __name__ == "__main__":
 Press **Run**. A dark window opens and stays open until you close it.
 
 Line by line, and what happens underneath:
+
+First the plain Python, which every later file in this series repeats:
+
+- **`WIDTH, HEIGHT = 640, 240`** sets two names at once. Names written in **CAPITALS** are a convention for *constants*: values set once at the top and never changed while the program runs. Putting them at the top means there's one place to change the window size.
+- **`def run(max_frames=None):`** defines the function that runs the game. `max_frames=None` is a parameter with a **default value**: if you call `run()` with nothing, `max_frames` is `None`, Python's special value for "nothing" or "no value given". If you call `run(max_frames=3)`, it's 3. You'll call `run()` (no limit), and the tests call `run(max_frames=3)`, so the same function can be played forever or stopped after a few frames.
+- **`frames = 0`** counts frames shown so far. **`running = True`** is a **flag**: a True/False variable whose job is to say whether to keep going.
+- **`while running:`** repeats its block for as long as `running` is `True`. Setting `running = False` anywhere inside doesn't stop the loop at once: the block finishes, and the next check of `while running` fails, so the loop ends.
+- **`if max_frames is not None and frames >= max_frames:`** stops the loop after `max_frames` frames, but only when a limit was given. `is not None` asks "was a number passed?", and `and` only checks the count if so. With `run()`, `max_frames` is `None`, so this never triggers and the game runs until the window is closed.
+
+Then the pygame calls, and what happens underneath:
 
 - **`pygame.init()`** starts pygame's parts: the display, the clock, fonts, sound. **`set_mode((640, 240))`** opens a window 640 pixels wide and 240 tall, and returns `screen`, a **Surface**: a block of memory holding one colour for every pixel, 640 × 240 = 153,600 of them.
 - **`while running:`** is the game loop. Each time round is one **frame**.
@@ -229,7 +256,16 @@ Run it and press the arrow keys.
 
 - **Screen coordinates.** `(0, 0)` is the **top-left** corner of the window. `x` grows to the right and `y` grows **downwards**, the opposite of a maths graph. That's because a screen is drawn row by row from the top, and pixel memory is laid out the same way. So `(x, HEIGHT // 2)` is `x` pixels from the left, halfway down. `//` divides and drops the remainder: `240 // 2` is `120`.
 - **`pygame.KEYDOWN`** is the event the queue receives once when a key goes down. `event.key` says which key: `pygame.K_LEFT` and `pygame.K_RIGHT` are just numbers that name the arrow keys. Holding a key down doesn't send more `KEYDOWN` events, so each press moves the dot one step.
-- **`move` is separate from the loop on purpose.** It takes a position and a key and returns the new position. It doesn't touch the window, so a test can call it directly with any key it likes, which is exactly what `test_keys_step_left_and_right` does.
+- **`move(x, key)`** takes two inputs and gives back one:
+
+  | | what it is | example |
+  |---|---|---|
+  | input `x` | the dot's current position across the window, in pixels from the left edge | `320`, the middle |
+  | input `key` | which key was pressed: one of pygame's key numbers | `pygame.K_RIGHT` |
+  | returns | the dot's new position | `360`, one `STEP` (40 pixels) to the right |
+
+  It doesn't change anything itself: it works out a number and **returns** it, and the loop stores it with `x = move(x, event.key)`. That's on purpose. A function that only takes values and returns a value can be tested by calling it directly with any key, with no window at all, which is exactly what `test_keys_step_left_and_right` does.
+- **`x = WIDTH // 2`**, before the loop, is where the dot starts: 640 // 2 = 320, the middle. It's set **before** `while`, so it survives from frame to frame. If it were set inside the loop, the dot would jump back to the middle every frame.
 - **`pygame.draw.circle(screen, colour, centre, radius)`** sets the pixels of a filled circle in `screen`'s memory. It appears at the next `flip`.
 
 Notice the order in each frame: **input** (the events), **update** (`x` changes), **draw**, **wait**. Every game in this series keeps that order. In Chapter 1 it becomes: the agent **observes** where it is, **chooses** an action, and the world **responds**.

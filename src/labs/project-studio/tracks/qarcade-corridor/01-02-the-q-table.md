@@ -3,6 +3,20 @@ title: 1.2 — The Q-table
 runtime: python
 ---
 
+### The story so far
+
+Lesson 1.1 built the corridor: five squares numbered 0 to 4, a start on square 1, a coin worth 0.1 on square 0 and a treasure worth 1 on square 4.
+
+```text
+ square:    0       1       2       3       4
+           coin   start                  treasure
+           +0.1                            +1
+```
+
+Three words from that lesson are used throughout this one. The **state** is which square the player is on: a number from 0 to 4. An **action** is a move: 0 means step left, 1 means step right. A **reward** is what one move pays. The corridor's code is the class `Corridor` in `corridor.py`, but this lesson doesn't use it yet. It builds the thing the agent will remember its experience in.
+
+### What this lesson builds
+
 When you played the corridor, you decided each move by thinking ahead: "the treasure is three steps right, the coin is one step left, the treasure is worth more". An agent can't think ahead like that at first. It has never seen the corridor. Instead, it keeps a **score** for every choice it could make, and improves those scores from experience.
 
 The score has a precise meaning. **Q(s, a)** (the *quality* of action `a` in state `s`) is:
@@ -11,7 +25,23 @@ The score has a precise meaning. **Q(s, a)** (the *quality* of action `a` in sta
 
 In the corridor, standing in cell 3 and stepping right reaches the treasure, so Q(3, right) should end up close to 1. Standing in cell 1 and stepping left takes the coin, so Q(1, left) should end up 0.1. Q-learning is a way of discovering all of these numbers without being told them.
 
-There are 5 states and 2 actions, so there are 10 numbers to keep: a **table** with one row per state and one column per action. This lesson builds that table, and the rule for reading the best action out of it.
+There are 5 states and 2 actions, so there are 10 numbers to keep: a **table** with one row per state and one column per action. When it's finished learning, it should look roughly like this:
+
+```text
+                 step left (action 0)   step right (action 1)
+square 0                  -                      -             the coin: the game ends here, never chosen from
+square 1                 0.1                    0.81           from the start, right is worth more
+square 2                 0.73                   0.9
+square 3                 0.81                   1.0            right reaches the treasure
+square 4                  -                      -             the treasure: the game ends here
+```
+
+(Lesson 1.3 works out exactly where those numbers come from.) Then choosing well needs no thinking ahead at all: on each square, read the row and take the bigger number.
+
+This lesson builds two things in a new file, `qtable.py`:
+
+1. **`make_table`**, a function that makes the table, with every score starting at 0, because a new agent knows nothing;
+2. **`greedy`**, a function that reads one row and returns the action with the bigger score.
 
 ## Read the tests first
 
@@ -65,10 +95,13 @@ def test_greedy_ties_only_among_the_best():
     assert picks == {0, 2}
 ```
 
-Two new things here, both from **NumPy**, the package for arrays of numbers you installed in lesson 0.1:
+Three new things here:
 
-- `np.array([0.1, 0.8])` makes a NumPy array from a list. `(Q == 0).all()` compares every number in `Q` with 0 at once and asks whether all of the answers were `True`.
+- **`Q = make_table(5, 2)`**: the tests call your function and give its result the name `Q`. That's where the name `Q` comes from. Your function makes the table, and the code that calls it chooses what to call it. `Q` is the name Q-learning always uses for this table: the *Q* in Q-learning.
+- **NumPy**, the package for arrays of numbers you installed in lesson 0.1. `np.array([0.1, 0.8])` makes a NumPy array, a row of numbers, from a list. `(Q == 0).all()` compares every number in `Q` with 0 at once and asks whether all of the answers were `True`.
 - `np.random.default_rng(0)` makes a **random number generator**, explained in the last step.
+
+**What each group protects.** The `shape` tests make sure the table has exactly one row per state and one column per action, and that one score can be changed without touching the others. Get the rows and columns the wrong way round, and every later lesson reads the wrong numbers. The `greedy` tests make sure it returns the **position** of the best action (an action number), never the score itself; that it gives an ordinary Python number; and that it doesn't always pick the same one when scores tie. The next steps explain why each of those matters.
 
 `test_greedy_breaks_ties_at_random` is a test about randomness. It can't demand an exact answer, so it asks for a range: in 200 picks between two tied actions, action 0 should come up between 61 and 139 times. A fair choice lands outside that range far less often than once in a million runs, so a correct `greedy` passes every time, and one that always picks the same action fails every time.
 
@@ -99,11 +132,39 @@ def make_table(n_states, n_actions):
     return np.zeros((n_states, n_actions))
 ```
 
-- **`np.zeros((5, 2))`** makes an **array** of 5 rows and 2 columns, every value 0.0. The argument is a tuple, `(rows, columns)`, called the array's **shape**. `Q.shape` gives it back.
+**`make_table`'s inputs, and what it gives back:**
+
+| | what it is | for the corridor |
+|---|---|---|
+| input `n_states` | how many states the world has: the number of **rows** | 5 squares |
+| input `n_actions` | how many actions there are: the number of **columns** | 2 moves |
+| returns | a new table of that size, every score 0.0 | 5 rows × 2 columns of zeros |
+
+The *n_* in the names is short for "number of". The function doesn't name the table it makes: whoever calls it does, as in the tests' `Q = make_table(5, 2)`. From here on, `Q` means that table.
+
+- **`np.zeros((5, 2))`** makes an **array** of 5 rows and 2 columns, every value 0.0. The pair `(5, 2)` is the array's **shape**, always written (rows, columns). After `Q = make_table(5, 2)`, typing `Q.shape` gives back `(5, 2)`.
 - **How a NumPy array is stored.** Unlike the list of lists, it's one solid block of memory holding the ten numbers side by side, row after row, each as a raw 8-byte floating-point number (`dtype` `float64`). To find `Q[3, 1]`, NumPy doesn't follow any references: it computes the position, row 3 × 2 columns + column 1 = position 7, and reads 8 bytes from there. That's why array operations are fast, and why every number in one array has the same type.
 - **`Q[3, 1]`** is row 3, column 1: one number. **`Q[3]`** is all of row 3: a smaller array of 2 numbers. It's a **view**, not a copy: it points into the same memory, so `Q[3][1] = 0.5` and `Q[3, 1] = 0.5` change the same number.
 
-In the agent's table, row `s` holds the scores of every action in state `s`, so **`Q[state]` is "everything the agent believes about this state"**, and `Q[state, action]` is one belief.
+**How many numbers are in the square brackets decides what comes back.** One number picks a **row**, so you get both of that row's scores. Two numbers pick a row **and then** a column, which is one cell, so you get one score, like a spreadsheet reference such as "D4". In the agent's table, row `s` holds the scores of every action in state `s`, so **`Q[state]` is "everything the agent believes about this square"**, and **`Q[state, action]` is one belief**, a single number.
+
+**The action number does two jobs.** To the corridor, 0 means "step towards square 0" and 1 means "step towards square 4": fixed directions on the map, not relative to anything. To the table, the same number is simply which column to look in. That's why moves are numbered rather than named: the number works directly as a column number.
+
+Try it in the terminal: `.venv\Scripts\python`, then:
+
+```python
+>>> from qtable import make_table
+>>> Q = make_table(5, 2)        # 5 rows (squares) x 2 columns (moves), all 0.0
+>>> Q.shape
+(5, 2)
+>>> Q[3, 1] = 0.5               # two numbers: row 3, column 1, one cell
+>>> Q[3, 1]                     # two numbers in: one value out
+np.float64(0.5)
+>>> Q[3]                        # one number in: the whole row out
+array([0. , 0.5])
+```
+
+(`np.float64(0.5)` is how NumPy shows one of its numbers: it's 0.5. Type `exit()` to leave Python.)
 
 ```predict
 question: After `Q = make_table(5, 2)` and `Q[3, 1] = 0.5`, what is `Q[3]`?
@@ -134,6 +195,16 @@ def make_table(n_states, n_actions):
 def greedy(row, rng):
     return int(np.argmax(row))
 ```
+
+**`greedy`'s inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `row` | one row of the table: the scores of both actions on one square, `Q[state]` | `Q[1]`, perhaps `[0.1, 0.8]` |
+| input `rng` | a random number generator, for breaking ties: the Your turn below uses it | `np.random.default_rng(0)` |
+| returns | the **action number** with the biggest score: 0 (left) or 1 (right) | `1` |
+
+It takes just the one row, not the whole table, because choosing a move on a square only needs that square's scores. Lesson 1.4's agent calls it as `greedy(self.Q[state], self.rng)`.
 
 - **`np.argmax(row)`** returns the **position** of the biggest value, not the value itself. For `[0.1, 0.8]` the biggest is 0.8, at position 1, so it returns 1: RIGHT. "Arg" is short for argument: the input that gives the maximum.
 - **`int(...)`**: `np.argmax` returns a NumPy integer type, `np.int64`. It behaves like a number, but the rest of the series passes actions to code that expects ordinary Python numbers, so `greedy` converts it. `test_greedy_returns_a_plain_int` checks this.

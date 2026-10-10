@@ -4,9 +4,30 @@ runtime: python
 run: maze_net.py
 ---
 
+### The story so far
+
+Lessons 4.1 to 4.3 built a neural network by hand in NumPy: knobs, a loss, slopes by the chain rule, a hidden layer of bent lines (ReLU), and gradient descent to train it. Lesson 4.4 rebuilt it in **PyTorch** (`torch_net.py`): `nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))` for the network, and a loop that repeats four lines, `zero_grad`, compute the loss, `backward`, `step`.
+
+From Chapter 3: `observe(env)` (`new_maze.py`) turns the maze into 100 numbers with the rat as 0.5, and `train_maze()` (`rewards.py`) returns an agent whose table `agent.Q` has a row of four Q-values for every cell.
+
+### What this lesson asks
+
 **Keras** is the other library you'll meet in courses and tutorials, and the one the QMaze tutorial uses. Where PyTorch hands you the training loop to write yourself, Keras hides it inside one call, `fit`. That's convenient, and it's also why Keras code can be hard to understand if you've never seen the loop it hides. You have, so this lesson can show exactly what `fit` does.
 
 Keras 3 runs on top of another library, its **backend**: TensorFlow, JAX or PyTorch. Here it runs on the PyTorch you installed last lesson, so there's nothing big to add. The lesson ends with the first network in this series that has to do with Q-learning: the tutorial's own QMaze network, trained to reproduce the table your agent learned in Chapter 3.
+
+### How the pieces fit
+
+```text
+keras_net.py    the curve network again, in Keras: make_model + fit, to compare with PyTorch's loop
+
+maze_net.py
+  build_model()          the tutorial's network: 100 numbers in, 4 Q-values out
+  table_examples(agent)  74 examples: (the maze seen from cell c,  the table's 4 values for cell c)
+  model.fit(...)         learns to give the table's values from the picture
+  NetworkAgent(model)    act(state): picture of that cell -> model -> biggest of the 4 -> an action
+     └── judged by lesson 3.2's completion(), exactly like the table agent
+```
 
 ## Read the tests first
 
@@ -66,6 +87,17 @@ def test_agent_acts_from_a_state_number():
     action = NetworkAgent(build_model()).act(0)
     assert type(action) is int and 0 <= action < 4
 ```
+
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `backend` | Keras is running on PyTorch | Keras trying to load TensorFlow, which isn't installed |
+| `layers` | Keras stores weights as (inputs, outputs) | copying weights from PyTorch without transposing them |
+| `fit` | `fit` trains the curve as well as your own loops did | a model compiled with the wrong loss |
+| `examples` | there are 74 examples, each observation has the rat on its own cell, and each target is that cell's row of the table | inputs and targets out of step, so the network learned cell 12's values from cell 13's picture |
+| `tutorial` | the network has the tutorial's three weight matrices | a missing hidden layer |
+| `agent` | `NetworkAgent.act` returns a plain whole number from 0 to 3 | returning a NumPy number or a tensor, which `QMaze.step`'s `MOVES[action]` lookup can trip over |
 
 **`pytestmark = pytest.mark.filterwarnings(...)`** is new. While this series was being written, every Keras test printed hundreds of copies of a `DeprecationWarning` like this:
 
@@ -161,6 +193,22 @@ for each of `epochs` passes over the data:
     record the loss in history
 ```
 
+**Epochs and batches, counted.** The maze network below has 74 examples and `batch_size=16`. One epoch splits them into batches, and each batch is one step downhill:
+
+```python
+examples, batch = 74, 16
+sizes = [min(batch, examples - start) for start in range(0, examples, batch)]
+print("batches in one epoch:", sizes)
+print("steps in 800 epochs:", 800 * len(sizes))
+```
+
+```text
+batches in one epoch: [16, 16, 16, 16, 10]
+steps in 800 epochs: 4000
+```
+
+`range(0, 74, 16)` gives the start of each batch, 0, 16, 32, 48, 64, and the last batch holds the 10 left over.
+
 An **epoch** is one pass through all the examples. With `batch_size=len(x)` each epoch is exactly one step of the loop you wrote, so `epochs=3000` is 3,000 steps, as before. With smaller batches, each epoch takes several smaller steps, each using only some of the examples: that's what the "stochastic" in stochastic gradient descent really means, and the QMaze network below uses batches of 16. `fit` returns a **History** whose `.history["loss"]` lists the loss after each epoch.
 
 Notice the shapes test: Keras stores a `Dense` layer's weights as **(inputs, outputs)**, the same way round as your NumPy `W1`, and the opposite of PyTorch's `nn.Linear`. That's the reason weights can't simply be copied from one library to the other.
@@ -204,6 +252,33 @@ Reading it:
 - **`PReLU`** is a ReLU whose slope on the negative side is a **learned** knob, one per unit, instead of always 0. A unit's output is never flat, so it can never get stuck at zero with no slope to learn from.
 - **`'adam'`** is the **Adam** optimiser: it keeps a running average of each knob's recent slopes and their sizes, and scales each knob's step by them. Knobs with consistently large slopes take moderate steps, and ones with small, steady slopes take larger ones. It usually learns far faster than plain SGD and needs less tuning of the learning rate.
 - Note that `lr=0.001` is passed in and then never used: `optimizer='adam'` uses Adam's default rate, which happens to be 0.001 too. That's another small slip in the tutorial, a harmless one this time.
+
+**Where 20,804 knobs comes from.** A `Dense` layer has one weight for every (input, output) pair, plus one bias per output. A `PReLU` has one learned slope per unit:
+
+```python
+inputs, hidden, actions = 100, 100, 4
+layers = [
+    ("Dense 100 -> 100", inputs * hidden + hidden),
+    ("PReLU",            hidden),
+    ("Dense 100 -> 100", hidden * hidden + hidden),
+    ("PReLU",            hidden),
+    ("Dense 100 -> 4",   hidden * actions + actions),
+]
+for name, knobs in layers:
+    print(f"{name:18} {knobs:6,} knobs")
+print(f"{'total':18} {sum(k for _, k in layers):6,}")
+```
+
+```text
+Dense 100 -> 100   10,100 knobs
+PReLU                 100 knobs
+Dense 100 -> 100   10,100 knobs
+PReLU                 100 knobs
+Dense 100 -> 4        404 knobs
+total              20,804
+```
+
+Almost all of them are in the two big weight matrices, 100 × 100 each. `model.summary()` prints the same counts.
 
 Write it in Keras 3 style, as in `keras_net.py`: set `KERAS_BACKEND` before `import keras`, use `keras.Sequential([...])` with a list of layers, and declare the input with `keras.Input((size,))` instead of the old `input_shape=` argument. The layers are `keras.layers.Dense` and `keras.layers.PReLU`. Use `size` and `actions` instead of `maze.size` and `num_actions`. The test checks the three weight matrices are (100, 100), (100, 100) and (100, 4).
 
@@ -300,6 +375,29 @@ if __name__ == "__main__":
     history = model.fit(inputs, targets, epochs=800, batch_size=16, verbose=0)
     print("loss after 800 epochs:", round(history.history["loss"][-1], 6))
     print("the network's own greedy policy:", completion(NetworkAgent(model)))
+```
+
+**One example, worked through**, for the first free cell, (0, 0):
+
+```text
+env.cell = (0, 0)
+observe(env)          100 numbers: the maze, with position 0 set to 0.5     -> inputs[0]
+env.state()           0 * 10 + 0 = 0
+agent.Q[0]            row 0 of the table: the 4 values the agent learned at (0, 0)   -> targets[0]
+```
+
+So `inputs` ends up shape (74, 100), one picture per row, and `targets` (74, 4), one row of the table per row. Row i of each is about the same cell: that's what the `examples` test checks.
+
+**`NetworkAgent.act(state)`, step by step**, for state 23:
+
+```text
+divmod(23, 10)                    (2, 3)               the cell, back from its number (lesson 3.1)
+observe(self.env)                 100 numbers          the maze with the rat at (2, 3)
+.reshape(1, -1)                   shape (1, 100)       a batch of one picture
+self.model(...)                   shape (1, 4)         4 Q-values for that one picture
+convert_to_numpy(...)[0]          shape (4,)           the first (only) row, as NumPy
+np.argmax(...)                    e.g. 3               the position of the biggest: DOWN
+int(...)                          3                    a plain Python number
 ```
 
 - **`table_examples`** builds the 74 examples. It moves a single environment's rat to each free cell in turn (`env.cell = cell`) and records `observe(env)` and the table's row for that cell.

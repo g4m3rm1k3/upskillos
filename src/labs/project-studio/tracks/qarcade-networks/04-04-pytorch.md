@@ -4,9 +4,26 @@ runtime: python
 run: torch_net.py
 ---
 
+### The story so far
+
+Lesson 4.3 (`tiny_net.py`) built a neural network in NumPy. Its knobs are four arrays in a dictionary, `params`: `W1` and `b1` for the hidden layer, `W2` and `b2` for the output. `forward(params, x)` computes the guesses: straight lines, bent by `relu`, then added up with weights. `backward(params, x, y)` computes every knob's slope by the chain rule, working back from the loss. `train` repeats: slopes, then every knob steps a little downhill. It fitted the U-shaped curve with a loss of 0.0043.
+
+### What this lesson asks
+
 Your NumPy network works, and every line of it is yours. It also has two problems that get worse with size. Every new kind of layer needs its own hand-derived `backward`, and one slip in it trains the network silently wrong (which is why you checked it against nudging). And everything runs on the CPU, one NumPy call at a time.
 
 **PyTorch** solves both. It records every calculation you do on its arrays, and can then work out the slope of the result with respect to every input, automatically, by applying the chain rule to the record: that's **autograd**. And the same code can run on a graphics card. This lesson installs it, checks that its gradients equal yours to the last decimal, and rebuilds your network and training loop the PyTorch way.
+
+### How the pieces fit
+
+```text
+autograd_gradients(params, x, y)   your forward pass, written with torch; loss.backward() finds the slopes
+         └── the test compares these with YOUR backward(): they must be identical
+make_net(hidden)                   the same network, built from ready-made layers
+train_torch(x, y)                  the standard loop: zero_grad, loss, backward, step
+```
+
+First you prove PyTorch computes what you computed. Then you let it.
 
 ## Read the tests first
 
@@ -69,6 +86,15 @@ def test_train_is_repeatable_with_a_seed():
     assert train_torch(x, y, steps=50)[1] == approx(train_torch(x, y, steps=50)[1])
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `installed` | the version you pinned is the one Python imports | an old `torch` installed somewhere else on the machine being picked up instead |
+| `autograd` | PyTorch's slopes equal yours for every knob, and your NumPy arrays aren't changed | a forward pass in torch that differs from yours by one operation |
+| `module` | the layers are Linear, ReLU, Linear with the right shapes | ReLU left out: a straight line again |
+| `train` | the loop fits the curve, and the same seed gives the same result | `zero_grad` forgotten, so the slopes piled up (see below) |
+
 `test_autograd_gives_the_gradients_you_derived` demands agreement within 10⁻¹⁰, much tighter than the nudging check's 10⁻⁴. Nudging was always slightly off; autograd and your `backward` both compute the exact chain rule, so they should agree to the limits of floating-point arithmetic.
 
 ```check
@@ -120,6 +146,19 @@ def autograd_gradients(params, x, y):
     loss.backward()
     return {name: tensor.grad.numpy() for name, tensor in tensors.items()}
 ```
+
+**Autograd on the smallest example there is.** In a scratch file in your project folder:
+
+```python
+import torch
+
+x = torch.tensor(3.0, requires_grad=True)
+y = x ** 2
+y.backward()
+print("slope of x squared at 3:", x.grad)
+```
+
+It prints `tensor(6.)`: the slope of x² at 3 is 2 × 3, lesson 4.2's "a square changes at twice the size of what's being squared". You didn't write that rule anywhere. PyTorch recorded that `y` came from `x` by squaring, and it knows the slope rule for squaring.
 
 Compare the middle three lines with your `forward` and `loss`: they're the same calculation, almost character for character. What's different is what PyTorch does while it runs them.
 
@@ -217,6 +256,8 @@ if __name__ == "__main__":
     print(f"PyTorch, one hidden layer of 16: loss {final:.4f}")
 ```
 
+**`train_torch`'s inputs, and what it gives back:** the examples `x` and `y` (NumPy arrays), `hidden` (16 units), `rate` (0.05), `steps` (3,000) and `seed`. It returns the trained network and the final loss as a plain float.
+
 This loop is the shape of every PyTorch training loop you'll ever read, so here it is line by line against your `train`:
 
 | PyTorch | your NumPy `train` |
@@ -230,8 +271,20 @@ This loop is the shape of every PyTorch training loop you'll ever read, so here 
 | `optimiser.zero_grad()` | (nothing: you made a fresh `grads` each time) |
 
 - **The optimiser** does the update for you. **SGD** (stochastic gradient descent) is exactly yours: every knob moves `lr` times its slope downhill. Chapter 5 uses **Adam**, which adapts the step size for each knob separately.
-- **`zero_grad()` must come first.** `backward` *adds* to `.grad` rather than replacing it. That's what you want when a slope has several contributions, but it means last step's slopes are still there. Forgetting `zero_grad` makes every step use the sum of all slopes so far, which is one of the most common PyTorch bugs.
-- **`dtype=torch.float32`**: layers use 32-bit floats, about 7 significant digits instead of 64-bit's 16. They're half the memory and much faster on graphics cards, and plenty precise for learning. The data must match the layers' type.
+- **`zero_grad()` must come first.** `backward` *adds* to `.grad` rather than replacing it. That's what you want when a slope has several contributions, but it means last step's slopes are still there. Forgetting `zero_grad` makes every step use the sum of all slopes so far, which is one of the most common PyTorch bugs. See it pile up:
+
+  ```python
+  import torch
+
+  w = torch.tensor(1.0, requires_grad=True)
+  for call in range(1, 4):
+      loss = (w * 2.0 - 5.0) ** 2
+      loss.backward()
+      print(f"after backward call {call}: w.grad = {w.grad.item()}")
+  ```
+
+  The slope is the same each time, −12 (the miss is 2 − 5 = −3, and 2 × −3 × 2 = −12, lesson 4.2's 2e·x), but `w.grad` reads −12, then −24, then −36. A training step would move `w` three times too far on the third step, and further every step after.
+- **`dtype=torch.float32`**: layers use 32-bit floats, about 7 significant digits instead of 64-bit's 16 (`torch.tensor(1 / 3, dtype=torch.float32).item()` prints 0.3333333432674408: right for 7 digits, then noise). They're half the memory and much faster on graphics cards, and plenty precise for learning. The data must match the layers' type.
 - **`loss.item()`** turns a one-number tensor into a plain Python float.
 
 Run it:

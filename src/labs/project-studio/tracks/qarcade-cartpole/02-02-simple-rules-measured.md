@@ -6,6 +6,21 @@ run: baselines.py
 
 Before training an agent, find out what "good" means. This lesson measures four simple rules for playing CartPole, each over 100 episodes. Two are deliberately bad. One is the common-sense rule from last lesson's prediction. The last one is a single line of code, and it's very good.
 
+### The story so far
+
+Lesson 2.1 met CartPole. `env = gym.make("CartPole-v1")` makes it; `obs, info = env.reset(seed=0)` starts a game; `obs, reward, terminated, truncated, info = env.step(action)` pushes the cart, left (0) or right (1). Every step survived pays 1, so a game's total reward is how many steps it lasted. A game ends when the pole tips past 12° or the cart leaves the track, or is cut off at 500 steps.
+
+**`obs`, the observation**, is a NumPy array of four numbers. Each has a position in the array, and this lesson reads them by position:
+
+| position | name | meaning |
+|---|---|---|
+| `obs[0]` | position | where the cart is on the track (metres; 0 is the middle) |
+| `obs[1]` | velocity | how fast the cart moves (positive is rightwards) |
+| `obs[2]` | angle | the pole's tilt (radians; 0 is upright, positive leans right) |
+| `obs[3]` | spin | how fast the angle is changing (positive is tipping rightwards) |
+
+### Why measure simple rules first
+
 These are **baselines**: results that any learned agent must be compared with. If Q-learning can't beat a random agent, it hasn't learned anything; if a one-line rule beats it, it hasn't learned much. Without baselines, a number like "it lasted 150 steps" means nothing.
 
 ## Read the tests first
@@ -113,6 +128,17 @@ if __name__ == "__main__":
         print(f"{policy.__name__:14} mean {lengths.mean():6.1f}  shortest {lengths.min()}  longest {lengths.max()}")
 ```
 
+**`play`'s inputs, and what it gives back:**
+
+| | what it is |
+|---|---|
+| input `policy` | the rule to measure: a function that takes `(obs, rng)` and returns 0 or 1 |
+| input `episodes` | how many games to play (100 by default) |
+| input `seed` | makes the 100 starting positions, and any random choices, the same every run |
+| returns | a NumPy array of the games' lengths, one number per game: how many steps each lasted |
+
+From that array, `.mean()` is the average length, `.min()` the shortest game and `.max()` the longest. Looking at all three matters: an average alone hides whether every game was similar or some were great and others terrible.
+
 - **Functions are values.** `play(random_policy)` passes the function itself, without calling it (no brackets after its name), and `play` calls it each step as `policy(obs, rng)`. `policy.__name__` is the name it was defined with, used to label the output.
 - **Seeding once.** The first `reset` gets the seed and every later one doesn't, as in lesson 1.4's `train`. The environment's own generator then continues from where it was, so the 100 starting positions are all different, and the same 100 every time you run it. `test_play_is_repeatable_with_a_seed` checks exactly that.
 - **`np.array(lengths)`** turns the list into an array, so `.mean()`, `.min()` and `.max()` work on it directly.
@@ -219,7 +245,7 @@ if __name__ == "__main__":
         print(f"{policy.__name__:14} {lengths.mean():6.1f}  {lengths.min():8}  {lengths.max():7}  {int((lengths == 500).sum()):11}")
 ```
 
-`obs[2] + obs[3]` is roughly "where the angle will be soon". If the angle is +0.05 (leaning right) and the spin is −0.2 (swinging left at 0.2 radians a second), the sum is −0.15, so the rule pushes left, getting under the pole on the side it's heading to. `(lengths == 500).sum()` compares every length with 500 and counts the `True`s: how many episodes reached the limit.
+`obs[2] + obs[3]` is roughly "where the angle will be soon". It's lesson 2.1's Euler rule, new angle = angle + time × spin, used to look ahead by **one second**: angle + 1 × spin. A guess that far ahead isn't accurate, because the spin itself keeps changing, but its **sign** says which side the pole is heading for, and that's all the rule needs. If the angle is +0.05 (leaning right) and the spin is −0.2 (swinging left at 0.2 radians a second), the sum is −0.15, so the rule pushes left, getting under the pole on the side it's heading to. `(lengths == 500).sum()` compares every length with 500 and counts the `True`s: how many episodes reached the limit.
 
 ```predict
 question: Out of 100 episodes, how many will `lean_and_spin` keep going all the way to the 500-step limit?

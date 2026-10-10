@@ -8,6 +8,10 @@ run: line.py
 
 **Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
+### The story so far
+
+Everything so far has kept its knowledge in a **table**: one row per state, one score per action. To decide what to do, the agent finds its state's row and picks the biggest score. To learn, it nudges one score after each move. That worked for the corridor (5 rows), CartPole squashed into 72 rows, and QMaze (100 rows).
+
 Chapters 2 and 3 ended at the same wall: a table looks up a separate row for every state, so it can't generalise, to the CartPole row next door or to a new maze. What's needed instead is a **function**: something that takes the numbers describing a state and *computes* a value from them, so that similar inputs give similar outputs.
 
 A neural network is such a function, and this chapter builds one from nothing. Not by starting with a network, but with the simplest function there is, a straight line, and the two ideas that every network is trained with:
@@ -16,6 +20,27 @@ A neural network is such a function, and this chapter builds one from nothing. N
 2. **A single number saying how wrong it is**, the *loss*. Setting the knobs well means making the loss small.
 
 This lesson builds both, and finds the right knob settings the slowest possible way, by trying them all, to make the problem the next lesson solves obvious.
+
+### A table and a function, side by side
+
+```text
+a table (Chapters 1-3)                     a function (Chapters 4-5)
+  input: a row number, 23                    input: numbers describing the state, e.g. QMaze's 100
+  looks up row 23                            computes, using its knobs
+  output: the 4 scores stored there          output: 4 scores, worked out fresh
+  learns by changing row 23 only             learns by turning knobs, which changes the output for EVERY input a little
+```
+
+That last line is the point. Turning a knob to fix one example also moves the answers for similar examples, which is generalising. This chapter starts with the smallest function with knobs there is, one input and one output, so every number can be checked by hand.
+
+### How the pieces fit
+
+```text
+make_points()              50 examples (x, y): the inputs, and the answers the function should give
+predict(w, b, x)           the function: the knobs w and b turn each x into a guess
+mse(guesses, answers)      one number: how wrong those guesses are
+best_on_a_grid(x, y)       tries 3,721 settings of (w, b) and keeps the one with the smallest mse
+```
 
 ## Read the tests first
 
@@ -64,6 +89,15 @@ def test_grid_finds_the_rule_behind_the_data():
     loss, w, b = best_on_a_grid(*make_points())
     assert (w, b) == approx((2.0, 1.0)) and loss < 0.02
 ```
+
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `points` | there are 50 examples, close to the rule y = 2x + 1, and the same 50 every time | data that changed on every run, so no result could be repeated |
+| `predict` | the function really is w × x + b, worked on a whole array at once | `w + x * b`: the knobs swapped |
+| `mse` | the loss is the average of the squared misses, a plain `float`, and 0 only when every guess is right | forgetting to square, so a miss of +2 and a miss of −2 cancelled to a perfect 0 |
+| `grid` | trying every setting finds w = 2, b = 1, the rule the data was made from | a search that kept the *last* setting tried instead of the best |
 
 `best_on_a_grid(*make_points())`: `make_points()` returns two arrays, `x` and `y`, and the `*` hands them to `best_on_a_grid` as its first two arguments.
 
@@ -116,6 +150,34 @@ def make_points(n=50, seed=0):
 def predict(w, b, x):
     return w * x + b
 ```
+
+**`predict`'s inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `w` | the **weight**, a knob: how steep the line is | `2.0` |
+| input `b` | the **bias**, a knob: where the line crosses x = 0 | `1.0` |
+| input `x` | the inputs, a NumPy array of any length | `np.array([0.0, 1.0, -1.5])` |
+| returns | one guess for each input, an array the same length as `x` | `[1.0, 3.0, -2.0]` |
+
+See what the knobs do with a loop, in a scratch file:
+
+```python
+import numpy as np
+
+x = np.array([-1.0, 0.0, 1.0, 2.0])
+for w, b in [(1.0, 0.0), (2.0, 0.0), (2.0, 1.0), (-1.0, 3.0)]:
+    print(f"w = {w:+}, b = {b:+}:", w * x + b)
+```
+
+```text
+w = +1.0, b = +0.0: [-1.  0.  1.  2.]
+w = +2.0, b = +0.0: [-2.  0.  2.  4.]
+w = +2.0, b = +1.0: [-1.  1.  3.  5.]
+w = -1.0, b = +3.0: [4. 3. 2. 1.]
+```
+
+Doubling `w` doubles every step between neighbouring outputs. Adding 1 to `b` lifts every output by 1. A negative `w` makes the line go downhill. Same code, four different functions: the knobs are the only difference.
 
 `predict(w, b, x)` is a straight line. `w` (the **weight**) sets how steep it is: how much the output changes when the input grows by 1. `b` (the **bias**) sets where it crosses x = 0. The two knobs are the line's **parameters**. Every setting of them is a different function, and learning will mean choosing the setting whose predictions match the examples.
 
@@ -198,6 +260,8 @@ if __name__ == "__main__":
     print(f"best of 3,721 tries: w = {w:.1f}, b = {b:.1f}, loss {loss:.4f}")
 ```
 
+**`best_on_a_grid`'s inputs, and what it gives back:** the examples `x` and `y`, and `values`, the settings to try for each knob. It returns a tuple of three numbers, `(loss, w, b)`: the smallest loss found and the knob settings that gave it. The loss comes first so that the line `loss < best[0]` reads naturally: `best[0]` is the best loss so far.
+
 `np.linspace(-3.0, 3.0, 61)` is the 61 values −3.0, −2.9, … 3.0, so the two loops try 61 × 61 = **3,721** settings and keep the one with the smallest loss. `best is None` is true only on the first try, when there's nothing to compare with yet.
 
 Predict, then press **Run**:
@@ -222,7 +286,21 @@ best of 3,721 tries: w = 2.0, b = 1.0, loss 0.0102
 
 Trying everything found the rule. **That is learning**, stripped to its definition: search for the parameters that make the loss smallest on the examples.
 
-But count the cost. Two knobs at 61 settings each was 3,721 tries. Three knobs would be 61³ = 226,981. The QMaze network's 20,804 knobs would be 61 to the power 20,804: a number with over 37,000 digits. Trying everything is hopeless for any real function. The next lesson finds the best knobs in about 100 steps, by asking, at each setting, **which way is downhill**.
+But count the cost. Each knob's 61 settings must be tried with **every** setting of every other knob, so the counts multiply: 61 × 61 for two knobs, 61 × 61 × 61 for three. It's lesson 2.6's multiplying again:
+
+```python
+for knobs in (1, 2, 3, 10):
+    print(f"{knobs:2} knobs: {61 ** knobs:,} settings to try")
+```
+
+```text
+ 1 knobs: 61 settings to try
+ 2 knobs: 3,721 settings to try
+ 3 knobs: 226,981 settings to try
+10 knobs: 713,342,911,662,882,601 settings to try
+```
+
+Ten knobs is already about 713 quadrillion tries: 713 followed by 15 zeros. The QMaze network's 20,804 knobs would be 61 to the power 20,804: a number with 37,143 digits. Trying everything is hopeless for any real function. The next lesson finds the best knobs in about 100 steps, by asking, at each setting, **which way is downhill**.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_line.py -k grid" label="the grid search finds w = 2 and b = 1"

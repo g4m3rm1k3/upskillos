@@ -4,7 +4,23 @@ runtime: python
 run: tutorial_keras.py
 ---
 
+### The story so far
+
+Your PyTorch agent (`dqn.py`, lessons 5.1 and 5.2) keeps the last 1,000 transitions in a `ReplayMemory`, and after every move does gradient steps on random batches of them. Each step computes a Q-learning **target** for every transition (the reward, plus γ times the best next value unless the game ended), picks out the value of the action actually taken with `gather`, and moves it towards the target. Lesson 4.5 built the tutorial's network in Keras, `build_model(size)` in `maze_net.py`, and `NetworkAgent`, which lets `completion` judge a Keras model.
+
+### What this lesson asks
+
 Your PyTorch agent and the tutorial's Keras one learn the same way: Q-learning targets, a network and a replay memory. They differ in how they turn a batch of memories into a gradient step. This lesson builds the tutorial's version, its `Experience` class and its `qtrain` loop, so that your course's code will hold no surprises, and so you can see that two quite different-looking programs compute nearly the same thing.
+
+### Yours and the tutorial's, side by side
+
+| job | your PyTorch agent | the tutorial's Keras code |
+|---|---|---|
+| remember a transition | `ReplayMemory.add` (a `deque` with `maxlen`) | `Experience.remember` (a list, and `del memory[0]`) |
+| the network's values for one view | `DQNAgent.values(obs)` | `Experience.predict(envstate)` |
+| a random batch, with targets | `memory.sample(32)`, then targets inside `update` | `Experience.get_data(32)` returns inputs **and full target rows** |
+| the gradient step | `gather` the taken action's value, loss, `backward`, `step` | `model.fit(inputs, targets)` |
+| the loop | `train_dqn` | `qtrain` |
 
 ## Read the tests first
 
@@ -79,6 +95,15 @@ def test_qtrain_runs_and_reports():
     model, solved_at = qtrain(episodes=2, check_every=1)
     assert solved_at is None or solved_at <= 2
 ```
+
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `remember` | the memory keeps the newest transitions | deleting from the wrong end, so the memory kept only the oldest |
+| `predicts` | one view gives four values | forgetting the batch-of-one reshape |
+| `targets` | only the taken action's target changes, it's the reward after an ending and reward + discount × best next otherwise, and a batch is never bigger than the memory | changing all four targets, which would push every action towards one action's value |
+| `qtrain` | the loop runs and reports | |
 
 `test_targets_change_only_the_action_taken` is the key one. `np.delete(targets[0], 2)` is the target row with position 2 removed, so it compares the **other three** targets with what the network itself predicts. They must be equal: the tutorial's targets leave every action but the one taken exactly where the network already is.
 
@@ -167,7 +192,29 @@ answer: Add to `Experience`:
 `enumerate(chosen)` gives `i`, the row in this batch, alongside `j`, the position in the memory.
 ```
 
-**One real difference from `gather`.** Keras's `"mse"` averages the squared error over **all four** outputs of each row, three of which are zero. So the loss, and every slope, is a quarter of what your PyTorch `update` computes for the same batch, which works like a learning rate four times smaller. The direction of every step is the same.
+**`get_data`'s inputs, and what it gives back:** `data_size`, how many memories to use (fewer if the memory doesn't hold that many yet). It returns two arrays: `inputs`, one view per row, shape (n, 49); and `targets`, four values per row, shape (n, 4), ready for `fit`.
+
+**One real difference from `gather`.** Keras's `"mse"` averages the squared error over **all four** outputs of each row, three of which are zero. With the example row above:
+
+```python
+import numpy as np
+
+prediction = np.array([0.31, 0.12, 0.40, -0.05])
+target = prediction.copy()
+target[2] = 0.73
+errors = target - prediction
+print("errors:", errors)
+print("Keras mse over 4 outputs:", round(np.mean(errors ** 2), 4))
+print("PyTorch mse on the chosen value:", round(errors[2] ** 2, 4))
+```
+
+```text
+errors: [0.   0.   0.33 0.  ]
+Keras mse over 4 outputs: 0.0272
+PyTorch mse on the chosen value: 0.1089
+```
+
+0.33² = 0.1089, and divided among four outputs it's 0.0272, exactly a quarter. So the loss, and every slope, is a quarter of what your PyTorch `update` computes for the same batch, which works like a learning rate four times smaller. The direction of every step is the same.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_tutorial_keras.py -k targets" label="get_data builds target rows that change only the action taken" -- Start from the model's own predictions for the chosen views, then set targets[i, action] to the reward, plus discount times the best next value unless the game ended.

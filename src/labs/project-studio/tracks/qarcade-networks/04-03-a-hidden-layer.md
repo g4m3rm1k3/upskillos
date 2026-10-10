@@ -4,9 +4,30 @@ runtime: python
 run: tiny_net.py
 ---
 
+### The story so far
+
+Lesson 4.1 made a function with two knobs, the straight line `w * x + b`, and a loss, `mse`, saying how wrong its guesses are. Lesson 4.2 found the knobs by **gradient descent**: work out each knob's slope (how fast the loss changes when the knob turns), step every knob a little against its slope, repeat. The slopes came from the **chain rule**: for a calculation done in stages, multiply the rates of each stage. And a **gradient check** confirmed the formula by comparing it with nudging each knob and measuring.
+
+### What this lesson asks
+
 A straight line can only ever be a straight line. Q-values aren't straight lines: in QMaze, the value of a cell rises steeply near the cheese, falls off behind walls, and changes direction with every turn of the route. This lesson gives the function the ability to **bend**.
 
 The trick is surprisingly small. Take many straight lines, **bend each one** at a point (clip it so it can't go below zero), and add them up with weights. The result can follow almost any curve. Those bent lines are a network's **hidden layer**, and adding them up is its **output layer**. You'll build both in NumPy, work out the slopes for every knob with the chain rule (that's **backpropagation**), check them against nudging, and train it.
+
+### How the pieces fit
+
+```text
+forward (left to right): compute the guess
+   x  ──W1, b1──>  z  ──relu──>  h  ──W2, b2──>  out  ──compare with y──>  loss
+   inputs          each unit's   each unit's     the weighted sum
+                   straight line  bent line       of the bent lines
+
+backward (right to left): compute every knob's slope, one stage at a time
+   W1, b1  <──  d_z  <──through relu──  d_h  <──  d_out  <──  loss
+                                         W2, b2 <──┘
+```
+
+`train` repeats forward, backward, step, 3,000 times: lesson 4.2's `descend`, for four groups of knobs.
 
 ## Read the tests first
 
@@ -71,6 +92,15 @@ def test_backprop_trains_a_curve_a_line_cannot_fit():
     assert line_losses[-1] > 1.0 and losses[-1] < 0.02
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `relu` | negative numbers become 0 and the rest pass unchanged | `np.max` instead of `np.maximum`: one number for the whole array instead of one per element |
+| `shapes` | the four knob arrays have the shapes the matrix multiplications need | `W1` made (hidden, 1) instead of (1, hidden), which fails with a confusing error later |
+| `forward` | a tiny network with hand-chosen weights gives the answers you can work out in your head, and every input gets one output | forgetting the bend, so the network was a straight line again |
+| `backprop` | every single knob's slope matches nudging, and training fits the U shape that a straight line can't | a slope with a missing transpose: the shapes might still work out, and only the check would show it |
+
 `test_forward_with_weights_set_by_hand` uses a network of two hidden units with weights chosen so you can do it in your head; its message is the arithmetic. `test_backprop_matches_nudging` is last lesson's gradient check, done for every single weight of a 4-unit network: `np.ndindex(shape)` loops over every position in an array of that shape, `(0, 0)`, `(0, 1)` and so on.
 
 ```check
@@ -107,7 +137,22 @@ def init(hidden=16, seed=0):
 ```
 
 - **The data** is now y = x², a parabola, a U shape. The best straight line through a U is flat, and misses badly at both ends and the middle: lesson 4.2's `descend` on this data ends with a loss of 1.514.
-- **`relu(z)`**, the *rectified linear unit*, is the bend: `np.maximum(z, 0.0)` keeps positive numbers and turns negative ones into 0, element by element. Applied to a straight line `w·x + b`, it gives a line that's flat at 0 on one side of a point and rises on the other: a hockey stick.
+- **`relu(z)`**, the *rectified linear unit*, is the bend: `np.maximum(z, 0.0)` keeps positive numbers and turns negative ones into 0, element by element. Applied to a straight line `w·x + b`, it gives a line that's flat at 0 on one side of a point and rises on the other: a hockey stick. Try it, and see how two bends make a shape no straight line can:
+
+  ```python
+  import numpy as np
+
+  x = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
+  print("relu(x - 1):           ", np.maximum(x - 1, 0.0))
+  print("relu(x) + relu(-x):    ", np.maximum(x, 0.0) + np.maximum(-x, 0.0))
+  ```
+
+  ```text
+  relu(x - 1):            [0. 0. 0. 0. 1.]
+  relu(x) + relu(-x):     [2. 1. 0. 1. 2.]
+  ```
+
+  The first is a hockey stick: flat at 0 until x = 1, then rising. The second adds a hockey stick rising to the right and one rising to the left, and gets a V: down, then up. That's already the start of a U. More units, bending at different points with different weights, smooth the V into a curve.
 - **`init`** makes the knobs. Now there are four groups of them, stored by name in a dictionary:
 
 | name | shape | what it is |
@@ -136,6 +181,25 @@ z   = X @ W1 + b1                          shape (n, hidden)    every unit's str
 h   = relu(z)                              shape (n, hidden)    bent
 out = h @ W2 + b2                          shape (n, 1)         the weighted sum of the bent lines
 ```
+
+**See `@` on the hand test's numbers**: two inputs, 1 and −2, and two units with weights 1 and −1:
+
+```python
+import numpy as np
+
+X = np.array([[1.0], [-2.0]])          # shape (2, 1): two inputs, as a column
+W1 = np.array([[1.0, -1.0]])           # shape (1, 2): one weight per unit
+print((X @ W1).shape)
+print(X @ W1)
+```
+
+```text
+(2, 2)
+[[ 1. -1.]
+ [-2.  2.]]
+```
+
+Row 0 is input 1 times each unit's weight; row 1 is input −2 times each. One row per input, one column per unit.
 
 - **`@`** is matrix multiplication. For `X @ W1`, an (n, 1) array times a (1, hidden) one, each entry of the result is x times one unit's weight: row i, column j is `x[i] * W1[0, j]`. For `h @ W2`, an (n, hidden) times a (hidden, 1), each row's result is the sum over all units of `h[i, j] * W2[j, 0]`: one weighted sum per input. The rule: the inner sizes must match (1 and 1, hidden and hidden), and the result has the outer sizes.
 - **`+ b1`** adds a (hidden,) array to an (n, hidden) one. NumPy **broadcasts**: it adds the same row of biases to every one of the n rows.
@@ -248,7 +312,31 @@ if __name__ == "__main__":
 4. **`d_z`, through the bend**: relu passes a change straight through where z > 0 (slope 1) and blocks it where z ≤ 0 (the flat part, slope 0). `(z > 0)` is an array of True/False, which multiplies as 1/0.
 5. **`W1` and `b1`**: `z = X @ W1 + b1`, the same shape of calculation as step 2, so the same pattern: `X.T @ d_z`, and the sum of d_z for the biases.
 
-Every line is "how fast the outside changes, times how fast the inside changes", the chain rule, applied once per step of the forward pass. A network of a hundred layers is this, a hundred times. `train` is lesson 4.2's `descend`, for four groups of knobs.
+**Worked through on the hand test's network**, with one example, x = 1 and the answer y = 2. The forward pass gave z = [1, −1], h = [1, 0], out = 2.5:
+
+```text
+d_out = 2 × (2.5 − 2) / 1          = 1.0         the guess is 0.5 too high
+W2:   h.T @ d_out                  = [1.0, 0.0]  unit 0 (h = 1) gets the blame; unit 1 (h = 0) contributed nothing
+b2:   sum of d_out                 = 1.0
+d_h = d_out @ W2.T  = 1.0 × [2, 3] = [2.0, 3.0]  how much each unit's output would move the loss
+d_z = d_h × (z > 0) = [2, 3] × [1, 0] = [2.0, 0.0]  unit 1 is on relu's flat part: changes there do nothing
+W1:   X.T @ d_z     = 1 × [2, 0]   = [2.0, 0.0]
+b1:   sum of d_z                   = [2.0, 0.0]
+```
+
+All positive, so gradient descent turns every one of those knobs **down**, making the guess smaller, towards 2. Unit 1 gets slope 0 everywhere: it was switched off for this input, so it can't be blamed. Check it in a scratch file in your project folder:
+
+```python
+import numpy as np
+from tiny_net import backward
+
+params = {"W1": np.array([[1.0, -1.0]]), "b1": np.array([0.0, 0.0]),
+          "W2": np.array([[2.0], [3.0]]), "b2": np.array([0.5])}
+for name, slope in backward(params, np.array([1.0]), np.array([2.0])).items():
+    print(name, slope.tolist())
+```
+
+Every line is "how fast the outside changes, times how fast the inside changes", the chain rule, applied once per step of the forward pass. A network of a hundred layers is this, a hundred times. `train` is lesson 4.2's `descend`, for four groups of knobs. Its inputs: the examples `x` and `y`, `hidden` (how many units, 16), `rate` (0.05), `steps` (3,000) and `seed` (which random starting weights). It returns the trained knobs and the list of losses.
 
 The gradient check runs as part of the tests: for each of this 4-unit network's 13 knobs, your formulas against nudging. Measured on the 16-unit network, the largest difference over all 49 knobs was 0.000004, which is nudging's own error, since `h` isn't zero.
 

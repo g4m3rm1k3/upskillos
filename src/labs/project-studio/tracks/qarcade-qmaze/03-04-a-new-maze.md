@@ -4,9 +4,25 @@ runtime: python
 run: new_maze.py
 ---
 
+### The story so far
+
+The agent's table, `agent.Q`, has one row per cell of the maze: row 23 is cell (2, 3), because the state number is `row * 10 + col` (lesson 3.1). Each row holds four scores, one per action, and the agent moves in the direction of the biggest. Lesson 3.3 checked that, trained with `train_maze()`, it reaches the cheese from all 74 starts, almost always by a shortest route. `completion(agent, maze)` (`maze_tools.py`) counts the starts it solves on any maze you give it.
+
+### What this lesson asks
+
 The agent from lesson 3.3 knows its maze perfectly. Now give it a different one: the **same** maze, flipped over its diagonal, so every row becomes a column. Same number of free cells, same start corner, same cheese corner, and a route of exactly the same length. A person who had solved the first maze would find the second one easy, because they learned *how mazes work*.
 
 The table learned something else entirely. This lesson measures what, and then looks at what the tutorial gives its agent to see instead of a cell number: the whole maze. That observation is what Chapter 5's network will read.
+
+### Two ways to tell the agent where it is
+
+```text
+the state (lessons 3.1-3.3)          the observation (this lesson)
+  one number: 23                       100 numbers: the whole maze, with the rat marked
+  "you are in cell 23"                 [1, 0, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 1, 0, 1, 1, 1, 1,  1, 1, 1, 0.5, 1, 0, ...]
+  says nothing about the walls         the walls are right there, around the 0.5
+  -> a table row                       -> too many possibilities for a table; needs a function (Chapter 4)
+```
 
 ## Read the tests first
 
@@ -67,6 +83,13 @@ def test_observe_leaves_the_maze_itself_alone():
     assert np.array_equal(env.maze, MAZE)
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `flipped` | the new maze really is the old one turned over its diagonal, with the same 74 free cells, and the old maze's table fails on it | a "new" maze that was secretly the same one, so the table looked as if it generalised |
+| `observe` | the observation is 100 numbers of only three kinds, the rat appears exactly once and in its own cell's position, and making it doesn't change the maze | marking the rat on the maze itself instead of a copy, so after a few steps the maze was covered in 0.5s |
+
 `np.unique(view)` lists each distinct value once, so the second test says the observation contains walls (0), free cells (1) and the rat (0.5), and nothing else.
 
 ```check
@@ -91,6 +114,25 @@ if __name__ == "__main__":
     print("trained on MAZE,    judged on FLIPPED:", completion(agent, FLIPPED))
     print("trained on FLIPPED, judged on FLIPPED:", completion(train_maze(maze=FLIPPED), FLIPPED))
 ```
+
+**Transposing, on a 3 × 3 grid you can check by eye.** In a scratch file:
+
+```python
+import numpy as np
+
+small = np.array([[1, 0, 1],
+                  [1, 1, 0],
+                  [0, 1, 1]], dtype=float)
+print(small.T)
+```
+
+```text
+[[1. 1. 0.]
+ [0. 1. 1.]
+ [1. 0. 1.]]
+```
+
+The first **row** of `small` (1, 0, 1) has become the first **column** of `small.T`. The diagonal, top-left to bottom-right, stays put.
 
 **`MAZE.T`** is the **transpose**: the array with rows and columns swapped, so `MAZE.T[r, c]` is `MAZE[c, r]`. NumPy doesn't move any numbers to make it. It returns a view of the same memory that reads it in the other order, which is why `.copy()` makes a real, separate array. (0, 0) and (9, 9) are on the diagonal, so they stay where they are, and every route in the old maze becomes a route of the same length in the new one, with every LEFT turned into UP and every RIGHT into DOWN.
 
@@ -124,6 +166,24 @@ run ".venv/Scripts/python -m pytest -q tests/test_new_maze.py -k flipped" label=
 
 The tutorial's agent doesn't get a cell number. It gets a picture of the whole maze, as numbers: a copy of the maze (1 for free, 0 for wall) with the rat's cell set to **0.5**, flattened into one long list of 100 numbers. The tutorial calls it the `envstate`. With the whole maze in view, an agent at least *could* notice where the walls are, in any maze.
 
+**Worked through on the 3 × 3 grid**, with the rat at (1, 0):
+
+```python
+canvas = small.copy()
+canvas[1, 0] = 0.5
+print(canvas)
+print(canvas.reshape(-1))
+```
+
+```text
+[[1.  0.  1. ]
+ [0.5 1.  0. ]
+ [0.  1.  1. ]]
+[1.  0.  1.  0.5 1.  0.  0.  1.  1. ]
+```
+
+`reshape(-1)` lays the rows end to end: row 0, then row 1, then row 2. So the rat's 0.5 lands at position 1 × 3 + 0 = 3, which is exactly its state number with 3 columns. The observation still contains the state number, hidden in *where* the 0.5 is, plus everything about the walls.
+
 Write `observe(env)` returning that: a NumPy array of shape `(100,)` for the 10 × 10 maze. It must not change `env.maze` itself, so work on a copy (`env.maze.copy()`). Setting one cell of a 2D array by a (row, col) pair works directly: `canvas[env.cell] = 0.5`. And `array.reshape(-1)` lays a 2D array out as one row, row after row; `-1` means "however long it needs to be".
 
 ```hints
@@ -146,7 +206,14 @@ run ".venv/Scripts/python -m pytest -q tests/test_new_maze.py" label="all lesson
 
 ## Too many rows
 
-Could a **table** use this observation as its state? Count the rows it would need. For one maze, one row per place the rat can be, so 75 rows: no problem, and no better than cell numbers, because it's the same information. The point of the observation is to handle **many mazes**. A 10 × 10 maze with fixed corners has 98 cells that could each be wall or free: 2⁹⁸ possible mazes, about 3 × 10²⁹ (a 3 followed by 29 zeros). A table with a row for each would need more memory than every computer ever made, and it would still learn each maze separately, because its rows are still separate boxes.
+Could a **table** use this observation as its state? Count the rows it would need. For one maze, one row per place the rat can be, so 75 rows: no problem, and no better than cell numbers, because it's the same information. The point of the observation is to handle **many mazes**. A 10 × 10 maze with fixed corners has 98 cells that could each be wall or free. One such cell gives 2 possible mazes; two cells give 2 × 2 = 4 (wall-wall, wall-free, free-wall, free-free); each extra cell **doubles** the count, so 98 cells give 2⁹⁸. This is the same multiplying as lesson 2.6's slot counts. See it:
+
+```python
+for cells in (1, 2, 3, 10, 98):
+    print(f"{cells:3} cells that can be wall or free: {2 ** cells:,} mazes")
+```
+
+The last line is 316,912,650,057,057,350,374,175,801,344: about 3 × 10²⁹, a 3 followed by 29 zeros. A table with a row for each would need more memory than every computer ever made, and it would still learn each maze separately, because its rows are still separate boxes.
 
 What's needed is the thing lesson 2.6 ended on: not a table that **looks up** a row, but a **function** that **computes** the four action values from the 100 numbers. Two mazes that look alike then give similar values, because the same calculation runs on similar inputs. "A wall directly to my right" would produce the same effect wherever it appears, in any maze. And the function's size doesn't depend on how many mazes exist, only on how much calculation it does.
 

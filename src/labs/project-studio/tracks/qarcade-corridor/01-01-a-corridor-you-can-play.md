@@ -125,12 +125,21 @@ def test_play_window_opens_and_closes():
     assert run(max_frames=2) == 2
 ```
 
-Two things to notice before writing any code:
+Three things to notice before writing any code:
 
+- **`env = Corridor()`** makes one corridor and names it `env`, short for *environment*, the usual name for the world an agent acts in. `Corridor` is a **class**, which you'll write in the next step; the step explains what that means. `env.reset()` and `env.step(RIGHT)` then ask that corridor to start a game and to make a move.
 - `env.step(RIGHT)[0]` and `env.step(LEFT)[:3]`: `step` returns several values at once (a **tuple**), and the tests pick out the ones they need. `[0]` is the first, the new state; `[:3]` is the first three, `(state, reward, terminated)`.
 - `terminated` and `truncated` are two different ways for an episode to end. The last two `timeout` tests are about the difference, which this lesson explains when you build it.
 
-The test names are grouped by their first word (`reset`, `moves`, `ends`, `timeout`, `play`), and each step below checks its own group with `pytest -k <word>`.
+The test names are grouped by their first word, and each step below checks its own group with `pytest -k <word>`. What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `reset` | a new game starts on the start square, with the step count at 0 | a second game starting where the last one ended |
+| `moves` | RIGHT goes up a square, LEFT goes down, and a plain square pays nothing | left and right swapped |
+| `ends` | the coin pays 0.1, the treasure 1, and both end the game | an end square that doesn't stop the game |
+| `timeout` | a game that runs too long is cut off, and reported differently from reaching an end | a time-out that looks like reaching the coin |
+| `play` | the window turns key presses into moves and lays out the squares | the left arrow moving right |
 
 ```check
 file tests/test_corridor.py -- Click "Create provided tests/test_corridor.py" above.
@@ -159,6 +168,19 @@ class Corridor:
         self.steps = 0
         return self.cell, {}
 ```
+
+**What a class is.** So far you've written functions: code that takes values and returns a result, and remembers nothing between calls. A corridor needs to **remember** things between moves: where the player is now, and how many steps it has taken. A **class** bundles that memory together with the functions that use it.
+
+- `class Corridor:` describes what every corridor has and can do. It's a blueprint: no corridor exists yet.
+- `env = Corridor()` builds one corridor from the blueprint. That's called an **object** (or **instance**) of the class. You could build several, and each would remember its own position.
+- Values stored on the object, written `self.something`, are its **attributes**: here `self.max_steps`, `self.cell` and `self.steps`. They stay there between calls.
+- Functions written inside the class are its **methods**: here `__init__` and `reset`. You call them on an object, as `env.reset()`.
+- **`self`** is the object a method was called on. When you write `env.reset()`, Python runs `reset` with `self` set to `env`, so `self.cell = START` means "set **this** corridor's cell". Every method has `self` as its first parameter, and you never pass it yourself: Python fills it in.
+- **`__init__`** (two underscores each side) is the method Python runs automatically when an object is built. `Corridor()` runs `__init__(self, max_steps=20)`, which sets up the attributes. `Corridor(max_steps=4)`, which one of the tests uses, passes 4 instead of the default 20.
+
+So after `env = Corridor()` and `env.reset()`, the object `env` holds `cell = 1` and `steps = 0`, and every later `env.step(...)` reads and changes those same two numbers.
+
+Now, why the corridor is written the way it is:
 
 - **Actions and cells are numbers.** `LEFT` is 0 and `RIGHT` is 1; the cells are 0 to 4. The names are only there for people reading the code. The numbers matter because, next lesson, the agent stores what it learns in a table with one **row per state** and one **column per action**, and a number is exactly what you need to pick a row or a column.
 - **`n_states` and `n_actions`** are written inside the class but outside any method, so they belong to the class itself: `Corridor.n_states` is 5 without making a corridor first. The agent will read them to know how big its table must be.
@@ -203,6 +225,14 @@ class Corridor:
         truncated = False
         return self.cell, reward, terminated, truncated, {}
 ```
+
+**How `step` works, line by line.** Its one input, `action`, is the move to make: `RIGHT` (1) or `LEFT` (0).
+
+- `if action == RIGHT: self.cell += 1` moves the player one square right. `+= 1` is short for `self.cell = self.cell + 1`: on square 1, it becomes square 2.
+- `else: self.cell -= 1` moves left. It uses `else` rather than `elif action == LEFT`, because there are only two actions, so anything that isn't RIGHT is LEFT.
+- `self.steps += 1` counts the move, for the time limit you'll add in the Your turn.
+- `reward = 0.0`, `terminated = False` and `truncated = False` are what every ordinary move reports. The next step adds the exceptions: the two end squares.
+- `return self.cell, reward, terminated, truncated, {}` hands back five values at once. Python packs them into a **tuple**, an unchangeable sequence, and the caller can unpack them into five names in one line: `state, reward, terminated, truncated, info = env.step(RIGHT)`.
 
 `step` returns **five** values, again in Gymnasium's order:
 

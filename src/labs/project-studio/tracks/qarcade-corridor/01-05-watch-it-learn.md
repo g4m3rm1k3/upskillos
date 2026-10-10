@@ -8,6 +8,12 @@ Numbers in a printed table are one way to see learning. This lesson adds the oth
 
 Then you'll use it to answer a question about γ, the discount, with a prediction you can work out exactly beforehand.
 
+### The story so far
+
+You have the corridor (`Corridor`, lesson 1.1), the table and greedy choice (`make_table` and `greedy`, lesson 1.2), the update (`q_update`, lesson 1.3), and a complete agent and training loop (`QAgent` and `run_episode`, lesson 1.4). An agent's whole knowledge is its table, `agent.Q`: five rows (squares) of two scores (left, right).
+
+This lesson draws that table **inside the corridor**: each square shows its two scores, the left move's in the top-left corner and the right move's in the bottom-right. So you can watch `q_update` change one number at a time, as it happens.
+
 ## Read the tests first
 
 **This step: create the supplied test file and read it. No code yet.**
@@ -107,6 +113,16 @@ class Watcher:
             self.total = 0.0
             self.state, _ = self.env.reset()
 ```
+
+**`Watcher`'s attributes, and what each remembers between calls:**
+
+| attribute | what it holds |
+|---|---|
+| `self.env` | the corridor being played |
+| `self.agent` | the agent playing it |
+| `self.state` | the square the agent is on right now, carried from one `advance` to the next |
+| `self.total` | the reward collected so far in the current game |
+| `self.totals` | a list of the totals of every finished game, newest last |
 
 Line for line, `advance` is one time round `run_episode`'s `while` loop: act, step, learn, add up, move on. The variables `run_episode` kept while it ran (`state`, `total`) are now **attributes**, `self.state` and `self.total`, because they must survive between calls. And instead of returning when the episode ends, it records the total and starts the next episode itself, so the caller never has to think about episode boundaries: it just keeps calling `advance`.
 
@@ -249,6 +265,34 @@ Work it out first, from what the values settle to. In cell 1:
 
 - **LEFT** reaches the coin at once: worth **0.1**.
 - **RIGHT** gets nothing for two steps and then the treasure, 1, discounted once per step after the first: worth **γ × γ × 1 = γ²**.
+
+Where γ² comes from, one square at a time, working back from the treasure. Each score settles where it equals its own target, reward + γ × (best score on the next square) (lesson 1.3):
+
+```text
+Q(3, right) = 1 + (nothing after: the game ends)   = 1
+Q(2, right) = 0 + γ × Q(3, right) = γ × 1          = γ
+Q(1, right) = 0 + γ × Q(2, right) = γ × γ          = γ²
+Q(1, left)  = 0.1 + (nothing after)                = 0.1
+```
+
+Each square further from the treasure multiplies by γ once more. The agent prefers RIGHT on square 1 when γ² is bigger than 0.1. A loop shows where the switch happens. Put it in a scratch file and run it:
+
+```python
+for gamma in (0.9, 0.5, 0.35, 0.32, 0.31, 0.3, 0.1):
+    right = gamma * gamma
+    choice = "treasure" if right > 0.1 else "coin"
+    print(f"gamma {gamma}: right is worth {right:.4f}, left 0.1, so it goes for the {choice}")
+```
+
+```text
+gamma 0.9: right is worth 0.8100, left 0.1, so it goes for the treasure
+gamma 0.5: right is worth 0.2500, left 0.1, so it goes for the treasure
+gamma 0.35: right is worth 0.1225, left 0.1, so it goes for the treasure
+gamma 0.32: right is worth 0.1024, left 0.1, so it goes for the treasure
+gamma 0.31: right is worth 0.0961, left 0.1, so it goes for the coin
+gamma 0.3: right is worth 0.0900, left 0.1, so it goes for the coin
+gamma 0.1: right is worth 0.0100, left 0.1, so it goes for the coin
+```
 
 ```predict
 question: Below which γ will a trained agent choose the coin? (Two decimal places.)

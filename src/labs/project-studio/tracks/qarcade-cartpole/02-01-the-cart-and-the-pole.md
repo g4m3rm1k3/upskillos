@@ -10,6 +10,14 @@ run: cartpole_view.py
 
 **CartPole** is the first school problem, and probably the most famous problem in reinforcement learning. A pole stands on a hinge on top of a cart that runs along a track. Every 0.02 seconds you must push the cart either left or right, with the same force. If the pole tilts more than 12° from upright, or the cart runs off either end of the track, the episode is over. Every step survived earns 1 point, and an episode that reaches 500 steps (10 seconds) is stopped there.
 
+### The story so far
+
+Chapter 1 built a complete Q-learning agent on a five-square corridor. The corridor gave the agent its **state** as one whole number (which square), the agent kept a **table** of scores with one row per state, and it learned by nudging one score after each move. The corridor's interface was copied from **Gymnasium**, the standard library of reinforcement-learning worlds: `reset()` starts a game and `step(action)` returns five values, `(state, reward, terminated, truncated, info)`.
+
+CartPole is one of Gymnasium's own worlds, so it has exactly that interface. What's new is its **state**: not one whole number, but four decimal numbers that describe the cart and pole. This chapter is about what that changes.
+
+### What this lesson does
+
 Before any learning, this lesson makes CartPole as transparent as the corridor was. You'll read its four numbers, rebuild one tick of its physics yourself and check it matches Gymnasium's to the last digit, draw it in pygame, and try to balance it with the arrow keys.
 
 ## Read the tests first
@@ -107,6 +115,8 @@ def test_view_window_opens_and_closes():
     assert run(max_frames=2) == 2
 ```
 
+**What each group protects.** The `meet` tests check you're reading CartPole's outputs correctly: four starting numbers, a reward of 1 per step, and the pole falling the way physics says it should. The `tick` tests check your physics against Gymnasium's own. The `pixels` and `tip` tests check that metres become the right pixels, including that screen y points **down**, which is easy to get backwards. The `view` tests check the keyboard and the window.
+
 `test_tick_matches_gymnasium` is the unusual one. It reaches inside Gymnasium's CartPole (`env.unwrapped.state` is the environment's own copy of the four numbers), and for 200 steps checks that **your** physics, given the same state and action, produces the same next state to within 10⁻¹² (`abs=1e-12`): a millionth of a millionth. That's how you'll know you've understood CartPole completely: you can compute it yourself.
 
 ```check
@@ -139,6 +149,16 @@ if __name__ == "__main__":
         x, x_dot, theta, theta_dot = obs
         print(f"{step:4}  {x:+8.3f}  {x_dot:+8.3f}  {theta:+8.3f}  {theta_dot:+8.3f}  {reward:6.1f}  {terminated}")
 ```
+
+**`first_steps`' inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `actions` | a list of moves to make, in order: 0 = push left, 1 = push right | `[1] * 20`, which is twenty 1s: push right every step |
+| input `seed` | which random starting position to use | `0` |
+| returns `rows` | a list with one entry per step, starting with the position before any move. Each entry is a tuple of four things: `(obs, reward, terminated, truncated)` | `rows[0]` is the start; `rows[-1]` is the last step |
+
+It stops early if the pole falls, so `rows` can be shorter than the list of actions.
 
 - **`gym.make("CartPole-v1")`** builds the environment from its registered name; `v1` is the version with the 500-step limit. It has exactly the interface your corridor has: `reset(seed=...)` returns `(obs, info)` and `step(action)` returns five values. Action **0 pushes left**, **1 pushes right**.
 - **`reset(seed=seed)`** starts the pole almost, but not quite, upright: each of the four numbers is drawn at random between −0.05 and 0.05, and the seed makes the draw repeatable.
@@ -214,6 +234,8 @@ def tick(state, action):
     return (x + TAU * x_dot, x_dot + TAU * x_acc, theta + TAU * theta_dot, theta_dot + TAU * theta_acc)
 ```
 
+**`tick`'s inputs, and what it gives back.** Its input `state` is a tuple of the four numbers `(x, x_dot, theta, theta_dot)`, and `action` is 0 or 1. It returns the four numbers 0.02 seconds later, as a new tuple. The constants at the top are CartPole's fixed physical settings: gravity, the two masses, half the pole's length, the size of a push (`FORCE`, 10 newtons) and the time per tick (`TAU`, 0.02 seconds).
+
 It works in two stages.
 
 **Stage 1: how fast are things speeding up right now?** The three middle lines compute the cart's **acceleration** `x_acc` and the pole's angular acceleration `theta_acc` from Newton's laws for a pole hinged on a cart. (They come from Barto, Sutton and Anderson's 1983 paper, which introduced this problem. You don't need to derive them; you do need to see what each part does.) Traced for the first step above, starting from the `reset(seed=0)` state and pushing right:
@@ -223,7 +245,16 @@ It works in two stages.
 - `theta_acc`'s top line has two parts. `GRAVITY * sin` = 9.8 × sin(−0.046) = **−0.450**: gravity pulls a leaning pole further the way it already leans (here, left, so negative). `- cos * temp` = −0.999 × 9.091 = **−9.081**: accelerating the cart right tips the pole left, as you just saw. The bottom line, 0.621, is how hard the pole is to rotate (its inertia about the hinge). Together: (−0.450 − 9.081) / 0.621 = **−15.34** radians per second, per second.
 - `x_acc` is the cart's acceleration from the push, slightly reduced by the pole swinging the other way: **9.787** metres per second, per second.
 
-**Stage 2: move forward 0.02 seconds.** The return line is **Euler's method**, the simplest way to step a simulation through time: *new position = position + time × velocity*, and *new velocity = velocity + time × acceleration*, each assuming nothing changes during the 0.02 s. So the spin becomes −0.048 + 0.02 × −15.34 = **−0.355**, which is exactly the spin printed in step 1 above. The position uses the **old** velocity: 0.0137 + 0.02 × −0.023 = 0.013, which is why the cart moved slightly left in step 1 despite being pushed right: the push changes the velocity first, and the position only follows on the next tick.
+**Stage 2: move forward 0.02 seconds.** The return line is **Euler's method**, the simplest way to step a simulation through time. It's a **recurrence relation**, like lesson 1.3's nudge: each tick's numbers are computed from the tick before. Writing the tick number as n and τ (tau) for 0.02 seconds:
+
+```text
+x(n+1)         = x(n)         + τ × x_dot(n)          new position = old position + time × old velocity
+x_dot(n+1)     = x_dot(n)     + τ × x_acc(n)          new velocity = old velocity + time × acceleration
+theta(n+1)     = theta(n)     + τ × theta_dot(n)      the same two rules for the angle and its spin
+theta_dot(n+1) = theta_dot(n) + τ × theta_acc(n)
+```
+
+Each assumes nothing changes during the 0.02 s. So the spin becomes −0.048 + 0.02 × −15.34 = **−0.355**, which is exactly the spin printed in step 1 above. The position uses the **old** velocity: 0.0137 + 0.02 × −0.023 = 0.013, which is why the cart moved slightly left in step 1 despite being pushed right: the push changes the velocity first, and the position only follows on the next tick.
 
 Notice something in stage 1: `GRAVITY * sin` grows as the pole leans. The further it leans, the faster it falls. An upright pole is **unstable**: left alone, any tiny lean grows. That's why CartPole needs constant correction, every 0.02 seconds.
 
@@ -272,6 +303,8 @@ Draw it on paper first. A pole of length `L` leaning by angle θ:
       base ---- 
           L·sin θ          (how far across)
 ```
+
+**What sin and cos do here.** For a pole leaning by angle θ, `sin θ` is how far across the tip is, as a fraction of the pole's length, and `cos θ` is how far up it is. At θ = 0 (upright): sin 0 = 0 (no distance across) and cos 0 = 1 (fully up). At θ = 90° (π/2 radians, lying flat): sin = 1 and cos = 0. Multiplying by the length `L` turns those fractions into pixels.
 
 - Across: `L · sin θ` to the **right** when θ is positive. sin 0 = 0, so an upright pole's tip is straight above its base.
 - Up: `L · cos θ`. cos 0 = 1, so an upright pole reaches its full length up.

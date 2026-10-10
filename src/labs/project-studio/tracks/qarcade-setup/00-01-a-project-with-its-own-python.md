@@ -11,6 +11,28 @@ You need basic Python: variables, functions, lists, loops and `if`. Everything e
 
 This lesson sets up the project: a folder, a Python environment that belongs only to that folder, and the exact packages the series uses. It's the same setup the later lessons rely on, so it's worth getting right once.
 
+### The big picture
+
+Your programs in this series will start with lines like `import numpy` and `import pygame`. Those names aren't part of Python itself. They're **packages**: code that other people wrote and published, which you download and install so your programs can use it. NumPy does fast arithmetic on grids of numbers, pygame opens windows and reads the keyboard, and so on.
+
+Installing a package means copying its files into a folder that Python searches whenever it meets an `import`. The setup in this lesson decides *which* folder that is:
+
+```text
+your code:   import numpy
+                 │
+                 ▼  Python looks for "numpy" in its package folder
+q-arcade/.venv/Lib/site-packages/        <- this project's own package folder
+    numpy/   pygame/   gymnasium/   pytest/    (installed in step 4)
+```
+
+By the end of the lesson you'll have:
+
+1. a project folder, `q-arcade`;
+2. a **virtual environment** inside it, `.venv`: a private Python setup whose package folder belongs to this project alone (step 2 explains why that matters);
+3. a list of exactly which package versions the project needs, `requirements.txt`;
+4. those packages installed into `.venv`;
+5. a `.gitignore`, which tells Git not to save the environment's files.
+
 ## Choose the project folder
 
 1. Click **Choose folder…** in the middle of this window.
@@ -38,7 +60,9 @@ run "python -c \"import sys; assert sys.version_info >= (3, 12), sys.version\"" 
 
 ## Make a virtual environment
 
-When you `pip install` a package, it goes into one Python installation's `site-packages` folder, which every program using that Python shares. Two projects that need different versions of the same package would then break each other. A **virtual environment** solves this: it's a folder that acts as a Python of its own, with its own empty `site-packages`.
+Two words first. **pip** is the program that downloads and installs packages; it comes with Python. **`site-packages`** is the folder where a Python installation keeps the packages installed into it.
+
+Normally there's one Python on your computer, with one `site-packages`, and every program you run shares it. That causes a real problem. Suppose an old project needs NumPy 1.26, and this one needs NumPy 2.5. There's only one `numpy` folder in `site-packages`, so installing one version replaces the other, and one of the projects breaks. A **virtual environment** solves this: it's a folder that acts as a Python of its own, with its own, initially empty, `site-packages`. Each project gets one, and nothing installed for one project can affect another.
 
 Type:
 
@@ -46,7 +70,15 @@ Type:
 python -m venv .venv
 ```
 
-`-m venv` means "run the module named `venv`", which comes with Python. `.venv` is the folder it creates; the leading dot is a convention that editors such as VS Code recognise. It takes a few seconds and prints nothing.
+The command, piece by piece:
+
+| piece | meaning |
+|---|---|
+| `python` | start Python |
+| `-m venv` | instead of running a file of yours, run the **module** named `venv`. A module is a file of Python code, and `venv` is one that comes with Python, whose job is to create environments |
+| `.venv` | the name of the folder to create. The leading dot is a convention that editors such as VS Code recognise |
+
+It takes a few seconds and prints nothing. The folder `.venv` appears in the file tree.
 
 ### How a folder becomes a separate Python
 
@@ -64,7 +96,9 @@ When any Python starts, one of the first things it does is look for a `pyvenv.cf
 2. It sets `sys.prefix` ("where am I installed?") to the `.venv` folder. The real location is kept in `sys.base_prefix`.
 3. Its list of folders to import packages from, `sys.path`, gets `.venv\Lib\site-packages` and **not** the real installation's `site-packages`. That's what `include-system-site-packages = false` means.
 
-So `.venv\Scripts\python` finds only this project's packages, and your system Python, which finds no `pyvenv.cfg`, keeps its own. The second check below tests exactly that: inside the environment, `sys.prefix` differs from `sys.base_prefix`.
+So `.venv\Scripts\python` finds only this project's packages, and your system Python, which finds no `pyvenv.cfg`, keeps its own.
+
+**What the two checks prove.** The first only checks that `.venv\pyvenv.cfg` exists, so the command ran. The second asks the environment's own Python a question: is `sys.prefix` (where it thinks it's installed) different from `sys.base_prefix` (where the real Python is)? They differ only when step 1 above really happened, so this proves that `.venv` works as an environment, not just that a folder exists.
 
 ```check
 file .venv/pyvenv.cfg -- Type python -m venv .venv in the terminal, inside the q-arcade folder.
@@ -95,7 +129,7 @@ gymnasium==1.3.0
 pytest==9.1.1
 ```
 
-`==` **pins** an exact version. Without pins, `pip` installs whatever is newest on the day you run it, so a project that works today could break in a month with no change to your code. These four versions were tested together for this series.
+Each line is one package: its name, `==`, and an exact version number. `==` **pins** that version. Without a pin, `pip` installs whatever is newest on the day you run it. Then a project that works today could break in a month, when a new NumPy changes something, with no change to your code, and two people installing the same project on different days would get different packages. With pins, everyone gets exactly these versions, which were tested together for this series. `requirements.txt` is just the conventional name for this list; pip reads it in the next step.
 
 Notice what's *not* written: `gymnasium[classic-control]`. Gymnasium's documentation suggests that form to get CartPole's drawing code, but the extra installs the original `pygame`, which would overwrite `pygame-ce` (both install a folder called `pygame`). You'll draw CartPole yourself in Chapter 2, so you don't need it.
 
@@ -113,7 +147,15 @@ lacks requirements.txt "classic-control" label="requirements.txt doesn't ask for
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-`-r requirements.txt` means "install everything listed in this file". `python -m pip` runs pip **inside that particular Python**, so it installs into that Python's `site-packages`: here, `.venv\Lib\site-packages`. A bare `pip` command is whichever `pip.exe` the `PATH` search finds first, which may belong to a different Python. That mismatch is one of the most common setup bugs: the install says it worked, and then your program can't find the package.
+The command, piece by piece:
+
+| piece | meaning |
+|---|---|
+| `.venv\Scripts\python` | the environment's own Python, by its exact path |
+| `-m pip` | run the module `pip`, the installer, **inside that Python**. pip installs into the `site-packages` of whichever Python is running it, so here it installs into `.venv\Lib\site-packages` |
+| `install -r requirements.txt` | install everything listed in that file (`-r` is short for "requirements") |
+
+**Why not just type `pip install …`?** A bare `pip` command is whichever `pip.exe` the `PATH` search finds first, and every `pip.exe` belongs to one particular Python, which may not be this project's. That mismatch is one of the most common setup bugs: the install says it worked, and then your program can't find the package, because it went into a different `site-packages`.
 
 What pip does, in order:
 
@@ -122,6 +164,8 @@ What pip does, in order:
 3. It downloads each as a **wheel**, a zip of ready-to-use files whose name says which Python and operating system it was built for (`numpy-2.5.3-cp313-cp313-win_amd64.whl` is for CPython 3.13 on 64-bit Windows), and unzips it into `site-packages`.
 
 When it finishes, the last line starts with `Successfully installed`.
+
+**What the two checks prove.** The first runs `import numpy, pygame, gymnasium, pytest` in the environment's Python. If any package is missing, or went into a different Python's `site-packages`, the import fails. The second checks you got **pygame-ce** and not the original pygame. Both import as `pygame`, so the only way to tell them apart is `pygame.IS_CE`, a flag that only pygame-ce has.
 
 ```check
 run ".venv/Scripts/python -c \"import numpy, pygame, gymnasium, pytest\"" label="the four packages import in the project's Python" -- Run .venv\Scripts\python -m pip install -r requirements.txt and wait for "Successfully installed".

@@ -8,9 +8,37 @@ run: dqn.py
 
 **Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
+### The story so far
+
+- **Chapter 1** built the learning: an agent with a table `Q`, one row per state and one score per action. After every move it computes a **target**, the reward plus γ (gamma, the discount) times the best score of the next state, or just the reward if the game **ended**, and nudges the move's score towards it. It picks moves **ε-greedily**: usually the best score, sometimes at random.
+- **Chapter 3** built QMaze, and lesson 3.4 found that a table can't carry what it learned to a new maze. `observe(env)` turns the maze into 100 numbers with the rat as 0.5: a picture of the situation instead of a cell number.
+- **Chapter 4** built networks: functions with knobs that compute outputs from inputs, trained by gradient steps. In PyTorch, a step is `zero_grad`, compute the loss, `backward`, `step`.
+
+### What this lesson asks
+
 This is **deep Q-learning**: Q-learning (Chapter 1) with a neural network (Chapter 4) in place of the table. Nothing about the learning rule changes. After each step the target is still r + γ · max Q(next), or just r after an ending. What changes is where the values live and how they're nudged. A table stores four numbers per cell and nudges one of them. A network **computes** four numbers from the whole maze, and is nudged by a gradient step that makes its output for that situation a little closer to the target.
 
 This chapter trains on a **7 × 7 maze** first, with 33 starting cells. The 10 × 10 maze from Chapter 3 works too, but a single training run of it took 10 to 26 minutes on the machine this series was written on, and failed outright with some settings. The small maze trains in under a minute, which is short enough to change things and see what happens. Lesson 5.5 goes back to the big one.
+
+### The table agent and the network agent, side by side
+
+| job | `QAgent` (Chapter 1) | `DQNAgent` (this lesson) |
+|---|---|---|
+| what it's told about the situation | a state number, e.g. 23 | an observation: 49 numbers, the whole maze |
+| where its knowledge lives | `self.Q`, a table | `self.net`, a network |
+| "what's each action worth here?" | `self.Q[state]`, a row | `self.values(obs)`, the network's 4 outputs |
+| choosing a move | ε-greedy over the row | ε-greedy over the outputs (same rule) |
+| learning from one move | nudge one number towards the target | one gradient step moving one output towards the target |
+
+### How the pieces fit
+
+```text
+seen_maze.py   SeenMaze: a QMaze whose reset/step hand out observe(self) instead of the cell number
+dqn.py
+  DQNAgent       values(obs) -> act(obs) -> learn(...) -> update(batch): the Q-learning target, one gradient step
+  ByCell         lets lesson 3.2's completion() judge a network agent (it hands out cell numbers)
+  train_dqn()    play episodes on SeenMaze, learning after every step; check completion every 10 episodes
+```
 
 ## Read the tests first
 
@@ -103,10 +131,31 @@ def test_train_returns_an_agent_and_when_it_solved():
     assert hasattr(agent, "net") and (solved_at is None or solved_at <= 2)
 ```
 
+What each group protects:
+
+| group | it makes sure that… | a bug it would catch |
+|---|---|---|
+| `seen` | the agent gets the whole small maze with the rat marked, and the rules are QMaze's | handing out the cell number instead, so the network had nothing to see |
+| `values` | asking for values gives 4 plain numbers and leaves no slopes behind | recording a graph on every move, slowly eating memory |
+| `act` | ε = 0 always picks the best, ε = 1 tries all four, and the answer is a plain `int` | exploration that never happened, or a tensor where QMaze expects a number |
+| `update` | a value moves to its target, and the target includes the next value except after an ending | forgetting `1 - ended`, so the cheese looked like it had a future after the game was over |
+| `train` | training runs and reports when (or whether) the maze was solved | |
+
 Two of these test **learning** by its fixed point: where the network's value must end up if the update is right.
 
 - `test_update_moves_the_chosen_value_towards_its_target` repeats one transition that **ends** with reward 1, so the target is always exactly 1, and the value must arrive there.
 - `test_update_target_includes_the_next_value_unless_ended` repeats a transition from a state back to **itself**, with reward 1, never ending, and γ = 0.5. If the value is V, the target is 1 + 0.5 V. The two agree only when V = 1 + 0.5 V, which is V = 2. A wrong target, such as one that ignores the next value, would settle somewhere else.
+
+  Finding V by repeating the update is a **recurrence relation** (lesson 1.3), and V = 2 is its **fixed point**: the value where one more update changes nothing. Watch it get there, in a scratch file:
+
+  ```python
+  V = 0.0
+  for step in range(1, 9):
+      V = 1 + 0.5 * V
+      print(step, V)
+  ```
+
+  It goes 1.0, 1.5, 1.75, 1.875, … halving the distance to 2 each time. A network doesn't jump straight to its target, so it takes the test 300 updates instead of 8, but it heads for the same place.
 
 `agent.net[-1].bias[:] = …` in `test_act_is_greedy_without_exploring` reaches into the network's last layer and sets its biases by hand, so that action 2's value is far above the others whatever the input. That makes the greedy choice known in advance. `torch.no_grad()` around it tells PyTorch not to record the change in a computation graph.
 
@@ -181,6 +230,19 @@ class DQNAgent:
 ```
 
 - **`make_net(size)`** is the tutorial's network (lesson 4.5), in PyTorch: `size` inputs (49 for the small maze), two hidden layers of `size` units with PReLU bends, and 4 outputs, one value per action. `nn.PReLU()` is PyTorch's PReLU, with one difference from Keras's: written like this, it learns **one** negative-side slope shared by the whole layer, where Keras learns one per unit. (`nn.PReLU(size)` would learn one per unit.) It makes little difference here, and it's the kind of detail to check whenever code moves between libraries. With 49 inputs the network has 5,102 knobs.
+
+  Counting them as lesson 4.5 did: each `Linear(49, 49)` has 49 × 49 + 49 = 2,450 knobs, each `PReLU()` has 1, and `Linear(49, 4)` has 49 × 4 + 4 = 200, so 2,450 + 1 + 2,450 + 1 + 200 = 5,102.
+
+**`DQNAgent`'s inputs:**
+
+| input | what it is | why it's an input | default |
+|---|---|---|---|
+| `size` | how many numbers in an observation | the network's first layer must match it: 49 for the small maze, 100 for the big one | (required) |
+| `gamma` | the discount γ | how much the future counts, as in Chapter 1 | 0.95 |
+| `epsilon` | the chance of a random move | exploration, as in Chapter 1 | 0.1 |
+| `rate` | Adam's learning rate | how big each gradient step is (lesson 4.2) | 0.001 |
+| `seed` | the random seed | makes the starting knobs and the exploration repeatable | 0 |
+
 - **The agent's knowledge is `self.net`**, where Chapter 1's agent had `self.Q`. **Adam** (lesson 4.5) will do the nudging.
 - **`values(obs)`** is the network's answer to "what is each action worth here?", the row `Q[state]` of a table. The observation becomes a batch of one (`reshape(1, -1)`), `[0]` takes the one result back out, and `.numpy()` turns it into an ordinary array. **`torch.no_grad()`** switches off autograd's recording inside the `with` block. Choosing an action never needs slopes, and recording a graph every step would only waste time and memory.
 
@@ -270,6 +332,48 @@ class DQNAgent:
 - **Why `no_grad` around the targets?** A target is meant to be a fixed label, "this is what the value should be", like y in Chapter 4. If autograd recorded it, `backward` would also push the **next** state's value towards the current one, chasing the target as well as the value. Computing it without a graph makes it a constant.
 - **`chosen`**: the network gives four values per observation, but the transition only says something about the action actually taken. `.gather(1, actions…)` picks, from each row, the value at that row's action. For a batch of one with action 2, it's the third value.
 - **The loss** is the mean squared difference between the chosen values and their targets, and the last three lines are lesson 4.4's: zero the slopes, `backward`, `step`.
+
+**`update` worked through on a batch of two**, with made-up numbers small enough to follow. `zip(*batch)` first:
+
+```python
+batch = [
+    ("obs A", 2, -0.04, "next A", False),
+    ("obs B", 0, 1.0, "next B", True),
+]
+for column in zip(*batch):
+    print(column)
+```
+
+```text
+('obs A', 'obs B')
+(2, 0)
+(-0.04, 1.0)
+('next A', 'next B')
+(False, True)
+```
+
+The `*` hands each transition to `zip` as a separate argument, and `zip` takes the first item of each, then the second, and so on: rows become columns. Then, with the network's outputs replaced by numbers you can read:
+
+```python
+import torch
+
+values = torch.tensor([[0.1, 0.2, 0.3, 0.4],      # the network's 4 values for obs A
+                       [0.5, 0.6, 0.7, 0.8]])     # and for obs B
+actions = torch.tensor([2, 0])
+print(values.gather(1, actions.reshape(-1, 1))[:, 0])
+
+rewards = torch.tensor([-0.04, 1.0])
+ended = torch.tensor([0.0, 1.0])
+best_next = torch.tensor([0.5, 0.9])              # the biggest of the 4 values for each next obs
+print(rewards + 0.95 * (1 - ended) * best_next)
+```
+
+```text
+tensor([0.3000, 0.5000])
+tensor([0.4350, 1.0000])
+```
+
+`gather` took position 2 from row A (0.3) and position 0 from row B (0.5): the values of the actions actually taken. The targets: A didn't end, so −0.04 + 0.95 × 1 × 0.5 = 0.435. B ended, so `1 - ended` is 0, the next value is wiped out, and the target is just the reward, 1.0. The loss is then the average of (0.3 − 0.435)² and (0.5 − 1.0)², and the gradient step moves both chosen values towards their targets.
 
 Compare it with the table's `q_update`: `Q[state, action] = nudge(Q[state, action], target, alpha)`. The table moves one number a fraction α of the way to the target. The network takes a gradient step that moves its output **for this observation and this action** towards the target. Because all its knobs are shared, the step also moves its outputs for **similar** observations. That's the generalisation the table couldn't do. It's also, as you're about to see, a problem.
 

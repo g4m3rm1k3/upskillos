@@ -4,6 +4,12 @@ runtime: python
 run: tables.py
 ---
 
+### The story so far
+
+Lesson 2.3 cut each of CartPole's four numbers into slots: `COUNTS = (1, 1, 6, 12)` means 1 slot for the cart's position, 1 for its velocity, 6 for the pole's angle and 12 for its spin. The table needs one row per **combination** of slots, so its number of rows is the four counts multiplied: 1 × 1 × 6 × 12 = 72. Lesson 2.5 found the best way to train it (`alpha=0.2, alpha_end=0.02`) and judged agents with `evaluate`, which returns 20 greedy game lengths.
+
+### What this lesson asks
+
 The 72-row table balances CartPole reliably, but it does it by **ignoring the cart**: position and velocity each have one slot, so the agent can't tell the middle of the track from the edge. This lesson asks the natural question: what if the table could see more? Give the cart slots, give the angle and spin finer slots, and measure what happens.
 
 The answer is surprising, and it's the reason the rest of this series exists. A bigger table, which in principle can represent a better policy, learns **worse**. You'll measure why, find out exactly how the "almost good" agents fail, and end with what a table fundamentally can't do.
@@ -136,6 +142,17 @@ if __name__ == "__main__":
             print(f"{str(counts):16} {int(np.prod(counts)):6}  {episodes:8}  {str(np.round(scores).astype(int).tolist()):17} {seen:6.0%}  {seconds:6.1f}")
 ```
 
+**How big each table is.** The rows are the slot counts multiplied together, because every combination needs its own row:
+
+```text
+(1, 1, 6, 12)     1 × 1 × 6 × 12     =     72 rows
+(3, 3, 6, 6)      3 × 3 × 6 × 6      =    324 rows
+(6, 6, 12, 12)    6 × 6 × 12 × 12    =  5,184 rows
+(10, 10, 20, 20)  10 × 10 × 20 × 20  = 40,000 rows
+```
+
+**`try_size`'s inputs, and what it gives back:** `counts`, the slot layout to try; `episodes`, how long to train each agent; and `seeds`, how many agents (3). It returns three things: the agents' scores (an array), the average fraction of the table they used (0 to 1), and the seconds each one took.
+
 For each of four slot layouts, from 72 rows to 40,000, it trains 3 agents with lesson 2.5's best schedule, for 500 episodes and again for 2,000, and reports their greedy scores, the fraction of the table they used, and the time per agent. `time.perf_counter()` reads a clock in seconds, so the difference between two readings is how long something took. `{seen:6.0%}` shows a fraction as a percentage.
 
 Run it with `.venv\Scripts\python tables.py`. It takes about five minutes. Predict while it runs:
@@ -176,7 +193,14 @@ bins              states  episodes  greedy scores     visited  seconds per run
 Three things to read in it:
 
 1. **More rows learn more slowly.** At 500 episodes, the order is the reverse of the size: 72 rows best, 40,000 worst. 5,184 rows needed 2,000 episodes to catch up, and 40,000 rows still hadn't.
-2. **Bigger tables use less of themselves.** The visited fraction falls from about 60% to 5%. This is the **curse of dimensionality**: each extra number with slots *multiplies* the number of rows. Four numbers with 20 slots each would be 20⁴ = 160,000 rows. A game screen, with thousands of numbers, would need more rows than there are atoms in the universe.
+2. **Bigger tables use less of themselves.** The visited fraction falls from about 60% to 5%. This is the **curse of dimensionality**: each extra number with slots *multiplies* the number of rows. See how fast with a loop, for four numbers with more and more slots each:
+
+   ```python
+   for slots in (2, 5, 10, 20):
+       print(f"{slots} slots for each of 4 numbers: {slots ** 4:,} rows")
+   ```
+
+   Going from 10 to 20 slots doubles the precision of each number, but multiplies the rows by 2 × 2 × 2 × 2 = 16, from 10,000 to 160,000. A game screen, with thousands of numbers, would need more rows than there are atoms in the universe.
 3. **The 324-row table barely learns, at either length:** about 190 steps, every time. It differs from the 72-row table in two ways at once: it adds cart slots, and it halves the spin's slots from 12 to 6. Measured separately with 5 agents each, neither change alone breaks learning. (1, 1, 6, 6) reached 500 with all five agents after 2,000 episodes, and (3, 3, 6, 12) with four of five after 500. The two together do. That's a lesson about experiments as much as about tables: when two things change at once, a result can't tell you which one mattered.
 
 ```check
