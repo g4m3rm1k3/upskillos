@@ -19,6 +19,10 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### Backend Lab first-visit reliability (2026-10-10)
+
+- [x] **Backend Lab first request (2026-10-10):** start with an editable handler so anonymous `GET /users` succeeds before any editing; upgrade untouched legacy blank projects, preserve authored work, and teach the missing-handler failure as a deliberate rename experiment. Real-runtime regression covers the actual initial project, edits, 404 and renamed handlers; 31 Backend Lab tests pass.
+
 ### HTML Lab rendering and editing (2026-10-09)
 
 - [x] Repair Visual JS module resolution, import supported statements independently, show import completion, and expose selected-element deletion above the preview (2026-10-10). Add cleanup for cancelled Tree drags. Follow-up adds expression recognition and synchronized controls, in-page delete/move handles, keyboard deletion and drag cancellation with Undo.

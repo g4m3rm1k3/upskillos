@@ -23,6 +23,7 @@ vi.mock("sql.js", async () => {
 });
 
 beforeEach(() => {
+  localStorage.clear();
   vi.resetModules();
   disk.bytes = undefined;
   disk.revision = null;
@@ -30,6 +31,20 @@ beforeEach(() => {
 });
 const request = { method: "GET", path: "/users", body: "", headers: {} };
 const files = (code: string) => [{ id: "server", name: "server.js", code }];
+
+it("runs the actual first-visit project before editing and executes subsequent edits", async () => {
+  const { createInitialState } = await import("./backendLabReducer");
+  const { runRequest } = await import("./runRequest");
+  const state = createInitialState();
+  expect(await runRequest(state.files, state.request)).toMatchObject({
+    error: null, response: { status: 200, body: [{ id: 1, name: "Ada" }] },
+  });
+  expect((await runRequest(state.files, { ...state.request, path: "/missing" })).response?.status).toBe(404);
+  const edited = state.files.map(file => ({ ...file, code: file.code.replace('"Ada"', '"Grace"') }));
+  expect((await runRequest(edited, state.request)).response?.body).toEqual([{ id: 1, name: "Grace" }]);
+  const broken = state.files.map(file => ({ ...file, code: file.code.replace('handleRequest', 'myHandler') }));
+  expect((await runRequest(broken, state.request)).error?.message).toContain("handleRequest is not defined");
+});
 
 it("persists request writes and SQL console writes across a fresh module session", async () => {
   const { runRequest } = await import("./runRequest");

@@ -2,10 +2,10 @@
 
 ## What You Will Build
 
-A single working endpoint. Click **Send** on the request already sitting in
-the panel to the right, watch it fail honestly, then write the smallest
-possible amount of code that makes it succeed — a real 200 response, with a
-real body, that you wrote yourself.
+A single working endpoint. Click **Send** on the waiting `GET /users` request
+to run the starter in `server.js`: a real 200 response with a user named Ada.
+Then deliberately break the handler, understand the error, and rebuild it
+yourself. The starter is editable code, not a response supplied by the simulator.
 
 ---
 
@@ -51,12 +51,21 @@ mental shift: nothing here can select an element or listen for a click.
 
 ---
 
-## Step 1 — See It Fail, Honestly
+## Step 1 — Run It, Then Investigate a Failure
 
 The **Postman panel** on the right already has a request waiting:
 `GET /users`. Click **Send**.
 
-You'll see a real error: `handleRequest is not defined`.
+On a new project, you'll see **200** and `[{ "id": 1, "name": "Ada" }]`.
+Open **Code** to see the `handleRequest` function that produced it. Change Ada
+to your own name and send again: the response should reflect your edit.
+Try `/missing` and observe the starter's **404**, then restore `/users`.
+
+Now deliberately rename the function from `handleRequest` to `myHandler`
+and click **Send**. You'll see `ReferenceError: handleRequest is not defined`.
+Rename it back and send again to recover. Keep this deliberate experiment in
+mind through the explanations below. Existing projects retain their saved code;
+if yours is empty, a minimal working handler appears in Step 3.
 
 **CS lens — the client-server model, named precisely, since this is the
 first backend concept on this entire platform.** Every program you've
@@ -90,10 +99,9 @@ later), and a **path** (which specific thing is being asked for — `/users`
 here). A response is equally concrete: a **status** (a number stating
 what happened) and usually a **body** (the actual data, if any). This
 lab's Postman panel builds a real request object from what you typed into
-it and hands that object to whatever code you've written; right now,
-that's nothing at all, which is exactly why the error you just saw is
-real, not staged. Nothing in this lab pretends a server exists until you
-actually write the code that makes one exist.
+it and hands that object to the handler in your editor. The starter works
+because it defines that handler. Renaming it breaks the agreement, producing
+a real interpreter error rather than a staged failure.
 
 **CS lens — message passing: the client and server never share memory,
 only messages.** Nothing about the client "reaches into" the server, and
@@ -117,8 +125,8 @@ write yourself: something equivalent to `handleRequest(theRequestYouBuilt)`,
 handing whatever that call returns back to the Response tab. This is the
 entire mechanism, named honestly rather than left mysterious — one small,
 fixed bridge connecting the Postman panel's "Send" button to whatever
-function you've written. Right now, `handleRequest` doesn't exist
-anywhere in your project yet, so that one hidden line fails immediately,
+function in the editor. When you rename it to `myHandler`, `handleRequest`
+no longer exists in your project, so that one hidden line fails immediately,
 the same way calling any name that was never defined fails in any
 JavaScript program, in any environment, for any reason — this lab isn't
 doing anything special or hiding a softer failure from you.
@@ -459,7 +467,8 @@ long as your program keeps a reference to it.
 
 ## Step 3 — Write the Smallest Possible `handleRequest`
 
-In the editor, write:
+Replace the contents of `server.js` with this smaller version (do not append a
+second handler below the starter):
 
 ```javascript
 function handleRequest(request) {
@@ -699,7 +708,7 @@ until you tried a different path.
 
 ## Definition of Done
 
-- [ ] You've seen the honest `handleRequest is not defined` error before writing any code
+- [ ] You've run the starter successfully, changed its response, and deliberately renamed then restored the handler to understand a missing-function error
 - [ ] `handleRequest` returns a real `{ status: 200, body: ... }` response for `/users`
 - [ ] A path other than `/users` correctly returns a `404`
 - [ ] You can explain what a function parameter is and what `return` does, in your own words

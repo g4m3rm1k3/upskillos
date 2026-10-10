@@ -70,7 +70,7 @@ first, not handed to you as architecture up front.
 
 | # | Title | What Breaks First | What You Build |
 |---|---|---|---|
-| 01 | Your First Endpoint | `handleRequest is not defined` | Functions, objects, arrays, and a real `{status, body}` response, from zero |
+| 01 | Your First Endpoint | Working starter; deliberately rename the handler to investigate a missing-function error | Functions, objects, arrays, and a real `{status, body}` response, from zero |
 | 02 | A Router, Built By Hand | An `if`/`else` chain that can't scale | A dispatch table — first-class functions, indirection, the open/closed principle |
 | 03 | Path Parameters | `/users/1` and `/users/2` need one route, not two | Hand-written pattern matching — `/users/:id` |
 | 04 | Query Parameters | `?limit=1` has nowhere to live | A predicate-driven filter, read from `request.query` |

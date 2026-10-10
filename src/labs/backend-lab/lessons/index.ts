@@ -40,7 +40,7 @@ export const LESSONS: LessonMeta[] = [
     title: "Lesson 1 — Your First Endpoint",
     content: lesson01,
     checklist: [
-      "You've seen the honest \"handleRequest is not defined\" error before writing any code",
+      "You've run the starter successfully, changed its response, and deliberately renamed then restored the handler to understand a missing-function error",
       "handleRequest returns a real { status: 200, body: ... } response for /users",
       "A path other than /users correctly returns a 404",
       "You can explain what a function parameter is and what return does, in your own words",

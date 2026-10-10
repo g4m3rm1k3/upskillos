@@ -2,10 +2,22 @@
 import { beforeEach, expect, it } from "vitest";
 import { backendLabReducer, createInitialState, normalizePersistedData, BACKEND_LAB_STORAGE_KEY } from "./backendLabReducer";
 import { LESSONS } from "./lessons";
+import { FIRST_ENDPOINT_STARTER } from "./starter";
 import { parseBackup } from "./backup";
 import { HISTORY_LIMIT } from "./requestHistory";
 
 beforeEach(() => localStorage.clear());
+
+it("upgrades only an untouched old blank project", () => {
+  const initial = createInitialState();
+  const blank = { ...initial, files: [{ id: "file-1", name: "server.js", code: "" }] };
+  localStorage.setItem(BACKEND_LAB_STORAGE_KEY, JSON.stringify(blank));
+  expect(createInitialState().files[0].code).toBe(FIRST_ENDPOINT_STARTER);
+  localStorage.setItem(BACKEND_LAB_STORAGE_KEY, JSON.stringify({ ...blank, lessonChecks: { "01": [LESSONS[0].checklist[1]] } }));
+  expect(createInitialState().files[0].code).toBe("");
+  localStorage.setItem(BACKEND_LAB_STORAGE_KEY, JSON.stringify({ ...blank, files: [{ ...blank.files[0], code: "// My work" }] }));
+  expect(createInitialState().files[0].code).toBe("// My work");
+});
 
 it("restores anonymous checklist progress after lesson switching and reload", () => {
   let state = createInitialState();

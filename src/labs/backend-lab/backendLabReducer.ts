@@ -3,6 +3,7 @@ import type { RunOutcome } from "./runRequest";
 import { normalizeChecks } from "./requestChecks";
 import { HISTORY_LIMIT, type RequestRun } from "./requestHistory";
 import { LESSONS } from "./lessons/index";
+import { FIRST_ENDPOINT_STARTER } from "./starter";
 
 export interface HeaderRow {
   key: string;
@@ -123,8 +124,14 @@ function headersToRows(headers: Record<string, string>): HeaderRow[] {
 export function createInitialState(): BackendLabState {
   const persisted = readPersistedData();
   if (persisted) {
+    // Upgrade only the untouched blank project created by the old first visit.
+    // Keep authored files and projects with recorded learning work unchanged.
+    const untouched = persisted.files.length === 1 && persisted.files[0].name === "server.js"
+      && persisted.files[0].code === "" && persisted.activeLessonId === LESSONS[0].id
+      && persisted.savedRequests.length === 0
+      && Object.values(persisted.lessonChecks).every(checks => checks.length === 0);
     return {
-      files: persisted.files,
+      files: untouched ? [{ ...persisted.files[0], code: FIRST_ENDPOINT_STARTER }] : persisted.files,
       activeFileId: persisted.files[0].id,
       request: { ...DEFAULT_REQUEST },
       checks: normalizeChecks(null),
@@ -144,7 +151,7 @@ export function createInitialState(): BackendLabState {
   }
   const fileId = "file-1";
   return {
-    files: [{ id: fileId, name: "server.js", code: "" }],
+    files: [{ id: fileId, name: "server.js", code: FIRST_ENDPOINT_STARTER }],
     activeFileId: fileId,
     request: { ...DEFAULT_REQUEST },
     checks: normalizeChecks(null),

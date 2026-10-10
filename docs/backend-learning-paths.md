@@ -87,6 +87,22 @@ desktop runtime requirements to Backend Lab.
 
 ## Verification for this browser change
 
+First-request correction (2026-10-10): Lesson 1 previously created an empty file
+and instructed the learner to trigger a missing-handler error. New projects now
+contain an editable starter returning 200 for `GET /users` and 404 for other
+paths. Only untouched legacy blank projects are upgraded. The lesson makes
+renaming/restoring the handler a deliberate experiment after a successful request.
+The browser walkthrough now presses Send before editing; previously it inserted
+a handler first and therefore missed the first-visit experience.
+`node node_modules/vitest/vitest.mjs run src/labs/backend-lab` reports **4 files,
+31 tests passed**; `node node_modules/typescript/bin/tsc --noEmit` exits 0 without
+diagnostics. No executable lesson examples were changed; this is lab Markdown,
+not a course-object lesson subject to the course schema checker.
+The expanded walkthrough against `http://127.0.0.1:5187` passed, including the
+first Send, edited requests, reloads, backups, mobile controls and database tab
+conflicts, with no uncaught page errors or SQLite CDN requests. The development
+server was stopped afterwards.
+
 Latest database-conflict pass: **29 tests passed**, production build **passed in
 3m 42s**, and the expanded production browser walkthrough **passed**, including
 three tabs sharing IndexedDB, protection of the winning save and export from the
