@@ -1,6 +1,9 @@
 ---
 title: 6.6 — Tidy Up: a src Folder
 runtime: none
+experiments: Remove the practice files
+teaches: project layout, src folders, git rm, readme files
+uses: git mv, tsconfig, markdown
 ---
 
 List the project folder (`ls`) and look at the mix: the spreadsheet's source files and their tests, configuration files (`package.json`, `tsconfig.json`, `.gitignore`), generated folders (`node_modules`, `dist`), and four practice files from sprint 0 that have nothing to do with the spreadsheet. It's getting hard to see what the app actually is.
@@ -21,7 +24,16 @@ rm 'hello.js'
 rm 'hello.py'
 ```
 
-**`git rm`** deletes files and stages the deletion in one step. They're gone from your folder, but not from history: any earlier commit still has them. (Try `git show HEAD:hello.py` now: Git prints the file from the last commit. Deleting a file never deletes its past.)
+**`git rm`** deletes files and stages the deletion in one step. They're gone from your folder, but not from history: any earlier commit still has them. Predict, then try it:
+
+```predict
+question: You've just run `git rm hello.py`. What does `git show HEAD:hello.py` print?
+choice: An error: the file is gone
+choice: The file's old content
+answer: The file's old content
+explain: `HEAD:hello.py` means "hello.py as it was in the last commit", and the last commit still has it. Deleting a file never deletes its past: every commit that had it still does, which is also why a secret, once committed, has to be treated as leaked.
+verify: if (git show HEAD:hello.py) { 'The file''s old content' }
+```
 
 ```check
 missing hello.py
@@ -161,3 +173,31 @@ Look at what you have:
 - Everything is in Git, on GitHub, organised the way most real projects are.
 
 That's the foundation the rest is built on. Sprint 7 starts the part that makes a spreadsheet a spreadsheet: type `=B2*C2` into a cell, and see `7`.
+
+## Your turn: a README for the project
+
+Every real project opens with a `README.md` at the top: what it is, and how to work on it. Someone cloning yours should be able to start from it alone. Write one, in Markdown (lesson 1.2), with:
+
+- a heading with the project's name, and a sentence saying what it is;
+- how to **install** what it needs, **run** it while developing, **test** it and **build** it: the exact commands, each in a code block (three backticks on the line before and after the commands);
+- what's in `src`, in a sentence or two.
+
+Then look at it on GitHub after pushing: GitHub shows a repository's README on its front page.
+
+```check
+matches README.md "^# \\S" label="it has a heading" -- Start with # and the project's name.
+contains README.md "npm install" label="it says how to install" -- Someone cloning the project needs npm install first.
+contains README.md "npm run dev" label="it says how to run it"
+contains README.md "npm test" label="it says how to test it"
+contains README.md "npm run build" label="it says how to build it"
+git-tracked README.md -- Commit it: git add README.md, then git commit.
+git-pushed -- Push it: git push
+```
+
+The checks look for the commands. Whether a newcomer could follow it is the real test: read it as if you'd never seen the project.
+
+```hints
+nudge: Write down the commands you've typed in sprints 4 to 6, in the order a newcomer would need them.
+concept: A Markdown code block is three backticks on a line, the commands, then three backticks again. GitHub shows it in a box, ready to copy.
+shape: `# Spreadsheet`, a sentence, `## Getting started` with a code block of `npm install`, `npm run dev`; `## Testing and building` with `npm test`, `npm run check`, `npm run build`; `## The code`, a sentence about `src`.
+```

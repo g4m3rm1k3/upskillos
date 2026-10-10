@@ -1,6 +1,8 @@
 ---
 title: 1.1 — Install Git and Introduce Yourself
 runtime: none
+teaches: git, git config, git alias, config files
+uses: terminal, path variable
 ---
 
 Your project folder has four small files in it. Soon it will have dozens, and you'll change them every day. Some changes will break things, and you'll want to know exactly what changed and to get back to the last version that worked.
@@ -72,6 +74,34 @@ run "git config --global init.defaultBranch" stdout="main" label="new repositori
 ```
 
 Git is installed and knows who you are. Next lesson, your project becomes a Git repository.
+
+## An experiment: where settings live {#where-settings-live}
+
+`git config --global` stored your name somewhere. Before you look, predict:
+
+```predict
+question: Where does Git keep the settings you just made?
+choice: A plain text file in your home folder
+choice: A database inside Git's installation
+choice: The Windows registry
+answer: A plain text file in your home folder
+explain: Git's global settings are a short text file called `.gitconfig`, in your user folder. Most developer tools keep their settings in plain text like this, so they can be read, edited, copied to a new computer, and even kept in Git themselves.
+verify: if ((git config --global --list --show-origin | Select-Object -First 1) -match '^file:') { 'A plain text file in your home folder' }
+```
+
+Ask Git where it read each setting from:
+
+```powershell
+git config --global --list --show-origin
+```
+
+```text
+file:C:/Users/you/.gitconfig    user.name=Ada Lovelace
+file:C:/Users/you/.gitconfig    user.email=ada@example.com
+file:C:/Users/you/.gitconfig    init.defaultbranch=main
+```
+
+`--show-origin` puts the file each setting came from in front of it. Open that file in Notepad (`notepad $HOME\.gitconfig`) and you'll see your settings as plain text, in sections like `[user]`. Close it without changing anything: `git config` is the safe way to edit it, because it can't leave a typo that breaks every Git command.
 
 ## Your turn: a shortcut of your own
 

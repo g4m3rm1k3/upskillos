@@ -1,6 +1,9 @@
 ---
 title: 1.5 — What Not to Commit, and Line Endings
 runtime: none
+experiments: .gitignore
+teaches: gitignore, secrets, line endings, wildcards
+uses: environment variables, git commit
 ---
 
 Some files must never go into the history. The most important kind is a **secret**: a password, or a key that proves your server is your server. Anything committed stays in the history even after you delete the file, and once it's pushed to GitHub, anyone who can see the repository can find it.
@@ -47,7 +50,19 @@ A file called **`.gitignore`** lists names Git should pretend aren't there. This
 .env
 ```
 
-Each line is a name or pattern to ignore. Run `git status` again:
+Each line is a name or pattern to ignore.
+
+```predict
+question: `.env` is still in the folder. With `.env` written in `.gitignore`, what does `git status` say about `.env` now?
+choice: It's listed under Untracked files, as before
+choice: Nothing: Git acts as if it isn't there
+choice: That it's ignored
+answer: Nothing: Git acts as if it isn't there
+explain: An ignored file disappears from `git status` and from `git add .`. The file is still on disk; Git just never offers it. To find out whether, and why, a file is ignored, you have to ask (`git check-ignore`, below).
+verify: if (-not (git status --porcelain --untracked-files=all | Select-String '\.env$')) { 'Nothing: Git acts as if it isn''t there' }
+```
+
+Run `git status` again:
 
 ```text
 PS C:\Users\you\Documents\spreadsheet> git status

@@ -1,6 +1,8 @@
 ---
 title: Styling 3 — Boxes and Space
 runtime: none
+teaches: box model, box-sizing, custom properties, rem, spacing scale, max-width
+uses: css
 ---
 
 Ask a designer what separates a page that looks professional from one that looks hacked together, and the most common answer is **space**: consistent gaps, generous margins, text that never touches an edge. This lesson is about where space comes from in CSS, and how to keep it consistent.

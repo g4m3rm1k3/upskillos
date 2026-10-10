@@ -1,6 +1,9 @@
 ---
 title: 6.1 — The First Test
 runtime: none
+experiments: A test should be able to fail
+teaches: tests, vitest, describe, it, expect, npm test
+uses: typescript, functions, git restore
 ---
 
 In sprint 3 you checked `columnName` by typing `columnName(26)` into the Console and reading the answer. That worked once. But code changes: next month you'll touch `columnName` for some other reason, and nobody will remember to type those checks again. Sprint 5 showed that the type checker won't notice if it starts returning `"BA"`.
@@ -53,6 +56,30 @@ describe("columnName", () => {
     expect(columnName(0)).toBe("A");
     expect(columnName(25)).toBe("Z");
   });
+});
+```
+
+### Reading a test
+
+- **`it("…", () => { … })`** is one test: a sentence saying what should be true, and a function that checks it. Read it aloud: *it names the first 26 columns A to Z*.
+- **`expect(columnName(0)).toBe("A")`**: run `columnName(0)` and check the result is `"A"`. If it isn't, this test fails, and Vitest reports what it got instead.
+- **`describe("columnName", …)`** groups the tests about one thing, so the report reads *columnName > goes on to AA after Z*.
+
+ (Python's equivalent is `pytest`: functions named `test_…` containing `assert` statements.)
+
+## Two more tests {#more-tests}
+
+Add two more tests inside the `describe`, for the two-letter and three-letter names:
+
+```typescript file=columns.test.ts
+import { describe, expect, it } from "vitest";
+import { columnName } from "./columns.ts";
+
+describe("columnName", () => {
+  it("names the first 26 columns A to Z", () => {
+    expect(columnName(0)).toBe("A");
+    expect(columnName(25)).toBe("Z");
+  });
 
   it("goes on to AA after Z", () => {
     expect(columnName(26)).toBe("AA");
@@ -66,13 +93,7 @@ describe("columnName", () => {
 });
 ```
 
-### Reading a test
-
-- **`it("…", () => { … })`** is one test: a sentence saying what should be true, and a function that checks it. Read it aloud: *it names the first 26 columns A to Z*.
-- **`expect(columnName(0)).toBe("A")`**: run `columnName(0)` and check the result is `"A"`. If it isn't, this test fails, and Vitest reports what it got instead.
-- **`describe("columnName", …)`** groups the tests about one thing, so the report reads *columnName > goes on to AA after Z*.
-
-Those are your lesson 3.6 checks, written down once and kept. (Python's equivalent is `pytest`: functions named `test_…` containing `assert` statements.)
+Those are your lesson 3.6 checks, written down once and kept. Each test covers one idea, and its sentence says which: when a test fails, its name tells you what broke before you read a line of code.
 
 ## Run it
 
@@ -135,6 +156,15 @@ Received: "BA"
 
 Read it like any error: **which test** (*goes on to AA after Z*), **what was expected and what was received** (`"AA"`, got `"BA"`), and **where** (line 11, with the code). The first test still passes, which narrows down the problem: single letters are fine, two letters aren't.
 
+Before you run the tests, predict:
+
+```predict
+question: You dropped the "subtract one more" from `columnName`. How many of the three tests fail?
+answer: 2
+explain: Single letters still come out right: for 0 to 25 the loop runs once, and the subtraction never mattered. From 26 on, every name is off, so the AA test and the ZZ/AAA test both fail. A test that still passes after a deliberate break is a test of something else.
+verify: node -e "const n = (i) => { let s = ''; do { s = String.fromCharCode(65 + (i % 26)) + s; i = Math.floor(i / 26); } while (i > 0); return s; }; const t = [[[0, 'A'], [25, 'Z']], [[26, 'AA'], [27, 'AB']], [[701, 'ZZ'], [702, 'AAA']]]; console.log(t.filter((c) => c.some(([i, x]) => n(i) !== x)).length)"
+```
+
 Now run `npx tsc`: no errors. The types are all fine; the answers are wrong. That's sprint 5's lesson, shown by the tools themselves.
 
 Put `columns.ts` back the way it was (`git restore columns.ts` does it in one command, lesson 1.6), and run the tests again: 3 passed.
@@ -185,4 +215,54 @@ git commit -am "Test columnName"
 ```check
 git-tracked columns.test.ts
 git-clean
+```
+
+## Your turn: tests for your own module
+
+In lesson 4.1 you wrote `playground/js/stats.mjs`, with `sum` and `average`. Test it, in `playground/js/stats.check.mjs`, with **Node's own test runner**: tests don't need a tool like Vitest, they're just code that checks code. The shape:
+
+```javascript
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { sum } from "./stats.mjs";
+
+test("adds the numbers", () => {
+  assert.equal(sum([1, 2]), 3);
+});
+```
+
+`assert.equal(actual, expected)` is Vitest's `expect(actual).toBe(expected)`. Write tests for: the sum of `[1, 2, 3]`; the sum of an **empty** array, which should be `0`; and the average of `[2, 4]`. Run them with `node --test playground/js/stats.check.mjs`. (The file is named `.check.mjs`, not `.test.mjs`, so that Vitest, which runs every `.test.` file in the project, leaves your playground alone.)
+
+Then do what this lesson did: break `stats.mjs` on purpose, see your tests fail, and put it back. Commit.
+
+```check
+run "node --test playground/js/stats.check.mjs" label="your tests pass" -- Run node --test playground/js/stats.check.mjs and read what failed.
+run "$d = Join-Path $env:TEMP ('m' + (Get-Random)); New-Item -ItemType Directory $d | Out-Null; Copy-Item playground/js/stats.check.mjs $d; Set-Content (Join-Path $d 'stats.mjs') 'export function sum(n) { return 0; } export function average(n) { return 0; }'; node --test (Join-Path $d 'stats.check.mjs')" exit=1 label="your tests fail when sum and average are wrong" -- A test must be able to fail: check the actual numbers, not just that the functions exist.
+run "$d = Join-Path $env:TEMP ('m' + (Get-Random)); New-Item -ItemType Directory $d | Out-Null; Copy-Item playground/js/stats.check.mjs $d; Set-Content (Join-Path $d 'stats.mjs') 'export function sum(n) { let t = 0; for (let i = 0; i < n.length; i++) { t = t + n[i]; } return n.length ? t : NaN; } export function average(n) { return sum(n) / n.length; }'; node --test (Join-Path $d 'stats.check.mjs')" exit=1 label="your tests notice when an empty array doesn't sum to 0" -- Test the empty array: sum([]) should be 0.
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+The second and third checks copy your test file next to a deliberately wrong `stats.mjs`, and pass only if your tests **fail** there. That's how to test tests.
+
+```hints
+nudge: Three `test(...)` calls, each with one `assert.equal`.
+concept: Import `average` as well as `sum`. The empty array is the edge case: what should the total of no numbers be?
+shape: `test("sums 1, 2 and 3", () => { assert.equal(sum([1, 2, 3]), 6); });` and two more like it.
+answer: ~~~javascript
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { average, sum } from "./stats.mjs";
+
+test("sums 1, 2 and 3", () => {
+  assert.equal(sum([1, 2, 3]), 6);
+});
+
+test("sums an empty array to 0", () => {
+  assert.equal(sum([]), 0);
+});
+
+test("averages 2 and 4", () => {
+  assert.equal(average([2, 4]), 3);
+});
+~~~
 ```

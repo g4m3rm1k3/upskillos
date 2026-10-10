@@ -1,6 +1,9 @@
 ---
 title: 6.2 — Test First: Red, Green, Refactor
 runtime: none
+experiments: Red: a test for code that doesn't exist; Red again: two letters
+teaches: test-driven development, red green refactor, for of loops, round-trip tests
+uses: tests, vitest, functions
 ---
 
 The spreadsheet will soon need the opposite of `columnName`: given the letters `"AA"`, which column number is it? Formulas will contain addresses like `B3`, and the program must turn `B` back into column 1.
@@ -89,7 +92,14 @@ export function columnIndex(name: string): number {
 }
 ```
 
-`"A".charCodeAt(0)` is 65 (lesson 3.2), so `A` gives 0 and `Z` gives 25. It's obviously not finished: `"AA"` would give 0. That's deliberate. The tests haven't asked for more yet, and code nobody asked for is code nobody checked.
+`"A".charCodeAt(0)` is 65 (lesson 3.2), so `A` gives 0 and `Z` gives 25.
+
+```predict
+question: What does this simple `columnIndex` give for `"AA"`?
+answer: 0
+explain: It only looks at the first letter, and `A` is 0. That's why the next test is about two letters: it will fail on exactly this.
+verify: node -e "console.log('AA'.charCodeAt(0) - 65)"
+``` It's obviously not finished: `"AA"` would give 0. That's deliberate. The tests haven't asked for more yet, and code nobody asked for is code nobody checked.
 
 ```text
  Test Files  1 passed (1)
@@ -246,4 +256,39 @@ git commit -am "Add columnIndex, test first"
 
 ```check
 git-clean
+```
+
+## Your turn: test first, on your own
+
+Use red, green, refactor to write `wordCount(text)`, which counts the words in a piece of text. Words are separated by one or more spaces, and spaces at either end don't count. So:
+
+| Text | Words |
+|---|---|
+| `"one"` | 1 |
+| `"one two three"` | 3 |
+| `"  spaced   out  "` | 2 |
+| `""` | 0 |
+
+In the playground, with Node's test runner (lesson 6.1's Your turn): write one test in `playground/js/words.check.mjs`, watch it fail, make it pass in `playground/js/words.mjs` (exporting `wordCount`), and repeat, a case at a time. The empty text is the case most first versions get wrong.
+
+```check
+run "node --test playground/js/words.check.mjs" label="your tests pass"
+run "node -e \"import('./playground/js/words.mjs').then((m) => console.log(JSON.stringify(['one', 'one two three', '  spaced   out  ', ''].map(m.wordCount))))\"" stdout="[1,3,2,0]" label="wordCount is right for all four cases" -- Check the empty text, and text with spaces at the ends.
+run "$d = Join-Path $env:TEMP ('m' + (Get-Random)); New-Item -ItemType Directory $d | Out-Null; Copy-Item playground/js/words.check.mjs $d; Set-Content (Join-Path $d 'words.mjs') 'export function wordCount(text) { return text.split(String.fromCharCode(32)).length; }'; node --test (Join-Path $d 'words.check.mjs')" exit=1 label="your tests catch a version that splits on single spaces" -- Test text with several spaces between words, and at the ends.
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+```hints
+nudge: Start with the one-word case, then the case with extra spaces, then the empty text.
+concept: `text.trim()` removes the spaces at the ends. `text.split(" ")` splits at every single space, so two spaces in a row leave an empty word between them; `split(/ +/)` splits at runs of spaces instead (a regular expression, as in lesson 6.3's preview). After trimming, empty text needs a case of its own: `"".split(/ +/)` is `[""]`, one empty word.
+shape: Trim; if what's left is empty, return 0; otherwise split on runs of spaces and return the length.
+answer: ~~~javascript
+export function wordCount(text) {
+  const trimmed = text.trim();
+  if (trimmed === "") {
+    return 0;
+  }
+  return trimmed.split(/ +/).length;
+}
+~~~
 ```

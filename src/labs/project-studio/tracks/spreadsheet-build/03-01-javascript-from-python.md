@@ -1,6 +1,9 @@
 ---
 title: 3.1 — JavaScript, Seen from Python
 runtime: none
+experiments: Where JavaScript and Python differ; When the script has an error
+teaches: javascript, let, const, strict equality, undefined, arrays, script element, browser console
+uses: node, repl, html
 ---
 
 The grid is typed by hand, and it can't do anything. A browser runs one programming language, **JavaScript**, and this sprint uses it to build the grid and make it respond to clicks and typing.
@@ -19,7 +22,39 @@ git-branch js-grid -- Run git switch -c js-grid
 
 ## Where JavaScript and Python differ
 
-Open Node's interactive prompt (lesson 0.3) and try these, one line at a time:
+Open Node's interactive prompt (lesson 0.3). Before you type anything, predict three of the answers:
+
+```predict
+question: What does `"1" + 1` give?
+choice: 2
+choice: The text 11
+choice: An error
+answer: The text 11
+explain: If either side of `+` is a string, JavaScript turns the other side into a string and joins them. Python refuses with a `TypeError`.
+verify: node -e "console.log(('1' + 1) === '11' ? 'The text 11' : 'Something else')"
+```
+
+```predict
+question: What does `1 == "1"` give?
+choice: true
+choice: false
+choice: An error
+answer: true
+explain: `==` converts its two sides to the same type before comparing, so the string `"1"` becomes the number 1. `===` doesn't convert, and a number is never `===` a string.
+verify: node -p "1 == '1'"
+```
+
+```predict
+question: What does `["A", "B", "C"][5]` give?
+choice: undefined
+choice: An error
+choice: The text C
+answer: undefined
+explain: Reading past the end of an array gives `undefined`, JavaScript's "nothing there". Python raises `IndexError`.
+verify: node -p "['A', 'B', 'C'][5]"
+```
+
+Now type all of these, one line at a time, and check your predictions:
 
 ```text
 PS C:\Users\you\Documents\spreadsheet> node
@@ -200,4 +235,33 @@ git commit -am "Run a first script on the page"
 ```check
 git-tracked grid.js
 git-clean
+```
+
+## Your turn: the last sheet
+
+Create `playground/js/sheets.js`. Its first line is exactly:
+
+```javascript
+const sheets = ["Sheet1", "Sheet2", "Sheet3"];
+```
+
+Then make it print `3 sheets; the last is Sheet3`, **worked out from the array**: the count from its length, and the name from its last item. If someone adds a fourth sheet to the array, the message must still be right without any other change.
+
+Run it with `node playground/js/sheets.js`, then commit it.
+
+```check
+file playground/js/sheets.js -- Create sheets.js inside a js folder in the playground.
+run "node playground/js/sheets.js" stdout="3 sheets; the last is Sheet3" label="it prints 3 sheets; the last is Sheet3"
+run "node -e \"eval(require('fs').readFileSync('playground/js/sheets.js', 'utf8').replace(/Sheet3(.)\]/, (m, q) => 'Sheet3' + q + ', ' + q + 'Totals' + q + ']'))\"" stdout="4 sheets; the last is Totals" label="with a fourth sheet added, the message follows" -- Work the count and the name out from the array, not by writing them in.
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+```hints
+nudge: Two things to work out from `sheets`: how many there are, and which one is last.
+concept: `.length` is the number of items. Items are numbered from 0, so the last one is at `length - 1`, not at `length`. `+` joins a number and text into text (`3 + " sheets"` is `"3 sheets"`), as the first prediction showed.
+shape: One `console.log` with one argument: the length, joined with `" sheets; the last is "`, joined with the item at the last position.
+answer: ~~~javascript
+const sheets = ["Sheet1", "Sheet2", "Sheet3"];
+console.log(sheets.length + " sheets; the last is " + sheets[sheets.length - 1]);
+~~~
 ```

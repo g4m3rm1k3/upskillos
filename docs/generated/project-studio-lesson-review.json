@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 529,
+    "lessons": 532,
     "tracks": 63,
     "errors": {},
     "signals": {
@@ -3400,6 +3400,39 @@
       "maturity": "in-development",
       "firstStep": "Specify the two supported versions",
       "firstIndependentTask": "Independent task: reject a late corrupt shape",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/10-ui-layout",
+      "track": "games3d-foundations",
+      "title": "Make the studio readable with layout and visual hierarchy",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Sketch a hierarchy before choosing colors",
+      "firstIndependentTask": "Independent task: defend a visual design choice",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/10a-ui-interactions",
+      "track": "games3d-foundations",
+      "title": "Make polished controls explain what they will do",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict an unavailable command",
+      "firstIndependentTask": "Independent task: extend a control coherently",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/10b-ui-themes",
+      "track": "games3d-foundations",
+      "title": "Make the whole studio comfortable in dark and light mode",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict which state belongs to the game",
+      "firstIndependentTask": "Independent task: audit and improve a palette",
       "signals": [],
       "errors": []
     },

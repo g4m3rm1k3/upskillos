@@ -1,13 +1,181 @@
 ---
 title: Styling 5 — Layout in a Line: Flexbox
 runtime: none
+teaches: flexbox, gap, flex-wrap
+uses: css, box model
 ---
 
 So far everything on the portfolio sits in one column, each block under the last: that's the browser's **normal flow**. Layout is the art of breaking out of it on purpose: a name on the left and the menu on the right, buttons side by side, cards in rows. CSS has two layout systems built for this. **Flexbox**, this lesson, arranges things in **one line**, a row or a column. **Grid**, the next lesson, arranges them in rows and columns at once.
 
 ## The header in a row
 
-The header should have your name on the left and the nav on the right, on one line, and the three nav links side by side. Make the header and the nav's list **flex containers**:
+The header should have your name on the left and the nav on the right, on one line. Make the header a **flex container**, and make your name look like a logo rather than a link:
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-bg: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-border: #e4e7eb;
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-on-accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.name {
+  color: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+  background: var(--color-surface);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+
+footer {
+  padding: var(--space-4) var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-accent);
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+}
+
+.button.secondary {
+  background: transparent;
+  color: var(--color-accent);
+}
+
+.button.secondary:hover {
+  background: var(--color-surface);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #e4e7eb;
+    --color-muted: #9aa5b1;
+    --color-bg: #111827;
+    --color-surface: #1f2937;
+    --color-border: #374151;
+    --color-accent: #60a5fa;
+    --color-accent-strong: #93c5fd;
+    --color-on-accent: #111827;
+  }
+}
+```
+
+- **`display: flex`** on an element makes it a **flex container**, and its children (here the name and the nav) **flex items**. The items line up along the container's **main axis**, which is a row by default.
+- **`justify-content`** spreads the items along the main axis. `space-between` pushes the first to the start and the last to the end, with the spare space between them: name left, nav right. Other values: `flex-start` (all at the start, the default), `center`, `flex-end`, `space-around`.
+- **`align-items`** places the items along the **cross axis**, at right angles to the main one: here, up and down. `center` lines up the name's middle with the nav's middle, though they're different heights. (The default, `stretch`, makes them all as tall as the tallest.)
+- **`.name`**: inherited colour, bigger and bolder, no underline.
+
+In DevTools' Elements tab, a small **flex** badge now sits next to `<header>`. Click it: the page outlines the container and its items, and hatches the space between them.
+
+```check
+page playground/site/index.html "getComputedStyle(document.querySelector('header')).display" flex label="the header is a flex container"
+page playground/site/index.html "(() => { const h = document.querySelector('header').getBoundingClientRect(); const n = document.querySelector('header nav').getBoundingClientRect(); return h.right - n.right < 20 && n.left > h.left + 100; })()" true label="the nav is at the right of the header"
+```
+
+## The nav's links in a row
+
+The nav's three links are still stacked, with bullets. Its list can be a flex container too:
 
 ```css file=playground/site/style.css
 *,
@@ -167,13 +335,6 @@ footer {
 }
 ```
 
-- **`display: flex`** on an element makes it a **flex container**, and its children **flex items**. The items line up along the container's **main axis**, which is a row by default.
-- **`justify-content`** spreads the items along the main axis. `space-between` pushes the first to the start and the last to the end, with the spare space between them: name left, nav right. Other values: `flex-start` (all at the start, the default), `center`, `flex-end`, `space-around`.
-- **`align-items`** places the items along the **cross axis**, at right angles to the main one: here, up and down. `center` lines up the name's middle with the nav's middle, though they're different heights. (The default, `stretch`, makes them all as tall as the tallest.)
-- **`nav ul`** is a flex container too, so its `li`s sit in a row. **`gap`** puts space *between* items only, never before the first or after the last, which is exactly what you want and what margins can't easily do.
-- **`list-style: none`, `margin: 0`, `padding: 0`** remove the bullets and the indent the browser gives every list. It's still a list for screen readers, which is why it stays a `<ul>`.
-- **`.name`** makes your name look like a logo rather than a link.
-
 Before you refresh, predict:
 
 ```predict
@@ -186,20 +347,19 @@ explain: A flex container's main axis is a row unless you say otherwise (`flex-d
 verify: page playground/site/index.html "(() => { const tops = [...document.querySelectorAll('nav li')].map((li) => Math.round(li.getBoundingClientRect().top)); return tops.every((t) => t === tops[0]) ? 'Side by side in a row' : 'Still one under another'; })()"
 ```
 
-In DevTools' Elements tab, a small **flex** badge now sits next to `<header>` and `<ul>`. Click it: the page shows the container and its items outlined, and the space between them hatched.
+- **`gap`** puts space *between* items only, never before the first or after the last, which is exactly what you want and what margins can't easily do.
+- **`list-style: none`, `margin: 0`, `padding: 0`** remove the bullets and the indent the browser gives every list. It's still a list for screen readers, which is why it stays a `<ul>`.
 
 ```check
-page playground/site/index.html "getComputedStyle(document.querySelector('header')).display" flex label="the header is a flex container"
 page playground/site/index.html "(() => { const tops = [...document.querySelectorAll('nav li')].map((li) => Math.round(li.getBoundingClientRect().top)); return tops.every((t) => t === tops[0]); })()" true label="the nav links sit in one row"
-page playground/site/index.html "(() => { const h = document.querySelector('header').getBoundingClientRect(); const n = document.querySelector('header nav').getBoundingClientRect(); return h.right - n.right < 20 && n.left > h.left + 100; })()" true label="the nav is at the right of the header"
 page playground/site/index.html "getComputedStyle(document.querySelector('nav ul')).listStyleType" none label="the nav list has no bullets"
 ```
 
 ## An experiment: the flex lab
 
-The best way to learn flexbox is to change one property at a time and watch. This step opens a lab page, `playground/css/flex-lab.html`:
+The best way to learn flexbox is to change one property at a time and watch. The lab page is supplied, so your time goes on the experiments: click **Create provided playground/css/flex-lab.html** and read it.
 
-```html file=playground/css/flex-lab.html
+```html file=playground/css/flex-lab.html provided
 <!DOCTYPE html>
 <html lang="en">
   <head>

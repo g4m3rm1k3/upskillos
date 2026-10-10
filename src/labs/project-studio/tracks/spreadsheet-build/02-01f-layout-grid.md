@@ -1,6 +1,8 @@
 ---
 title: Styling 6 — Rows and Columns: Grid
 runtime: none
+teaches: css grid, fr, auto-fit, minmax, grid placement
+uses: gap
 ---
 
 Flexbox lines things up in one direction. **Grid** lays them out in two at once: columns *and* rows, where everything in a column lines up with everything above and below it. Card galleries, page layouts with a sidebar, and forms with labels in one column and inputs in the next are grid's job.
@@ -405,9 +407,9 @@ page playground/site/index.html "(async () => { const f = document.createElement
 
 ## An experiment: the grid lab
 
-Grid items don't have to take one cell each. This step opens `playground/css/grid-lab.html`:
+Grid items don't have to take one cell each. The lab page is supplied: click **Create provided playground/css/grid-lab.html** and read it.
 
-```html file=playground/css/grid-lab.html
+```html file=playground/css/grid-lab.html provided
 <!DOCTYPE html>
 <html lang="en">
   <head>

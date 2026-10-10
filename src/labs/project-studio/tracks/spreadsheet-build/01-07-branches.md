@@ -1,6 +1,9 @@
 ---
 title: 1.7 — Branches: Trying Something on the Side
 runtime: none
+experiments: Switch back and forth
+teaches: branches, git switch, git merge, fast-forward
+uses: git commit, git alias
 ---
 
 So far every commit went in a line, one after another, on `main`. Real work doesn't go in a line. You start a feature, and halfway through you need to fix something urgent in the version that works. Or you want to try an idea without risking the code that runs.
@@ -73,6 +76,15 @@ git-clean
 ```
 
 ## Switch back and forth
+
+```predict
+question: You switch to `main` and run `node hello.js`. What's the last line it prints?
+choice: Goodbye for now.
+choice: It will have 2600 cells to start with.
+answer: It will have 2600 cells to start with.
+explain: The goodbye line was committed on `say-goodbye` only. `git switch main` rewrites your files to match `main`'s latest commit, which never had it.
+verify: if ((git show main:hello.js) -notmatch 'Goodbye') { 'It will have 2600 cells to start with.' }
+```
 
 ```powershell
 git switch main

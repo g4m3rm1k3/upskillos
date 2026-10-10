@@ -35,7 +35,7 @@ describe('3D studio opening path', () => {
 
 
   it('places visible shape exploration before contracts, object ownership and format migration', () => {
-    const order = ['08b-open-and-save', '08c-shape-preview', '09-box-recipes', '09a-box-editing', '09b-box-storage'];
+    const order = ['08b-open-and-save', '08c-shape-preview', '09-box-recipes', '09a-box-editing', '09b-box-storage', '10-ui-layout', '10a-ui-interactions', '10b-ui-themes'];
     const positions = order.map(slug => lessons.findIndex(lesson => lesson.id === 'games3d-foundations/' + slug));
     expect(positions.every(index => index >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));

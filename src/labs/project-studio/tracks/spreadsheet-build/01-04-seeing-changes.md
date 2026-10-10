@@ -1,6 +1,9 @@
 ---
 title: 1.4 — Seeing What Changed
 runtime: none
+experiments: Stage it, and see the diff move
+teaches: git diff, working tree
+uses: git commit, staging area
 ---
 
 The point of history is comparing: what's different now from the last snapshot? This lesson changes a file and has Git show you the change, line by line, before you commit it.
@@ -82,6 +85,18 @@ This format is called a **diff**, and you'll read thousands of them: it's how co
 git add hello.js
 git diff
 git diff --staged
+```
+
+Before you run the last two lines, predict:
+
+```predict
+question: You've just staged the change with `git add`. What does plain `git diff` print now?
+choice: The same two + lines as before
+choice: Nothing
+choice: An error, because there's nothing unstaged
+answer: Nothing
+explain: `git diff` compares your files with the staging area, and the staging area now holds exactly what's in the file. To see what's staged compared with the last commit, ask for `git diff --staged`.
+verify: if (-not (git diff)) { 'Nothing' }
 ```
 
 After `git add`, plain `git diff` prints **nothing**. That surprises everyone once. `git diff` compares your files with the **staging area**, and you just put the change there. To see what's staged, compared with the last commit, use `git diff --staged`; it shows the same two `+` lines.

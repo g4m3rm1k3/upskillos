@@ -1,6 +1,10 @@
 ---
 title: 2.2 — A Table: the First Grid
 runtime: none
+experiments: The table
+justified: The table
+teaches: tables
+uses: html, semantic html
 ---
 
 Back to the spreadsheet, and the second half of this sprint: putting the styling section to work on a real interface. First the page needs something to style.
@@ -9,7 +13,7 @@ A spreadsheet is a grid: columns lettered A, B, C across the top, rows numbered 
 
 ## The table
 
-Replace the paragraph in `index.html` with a table. It's long; type it carefully, and notice how often you repeat yourself.
+Replace the paragraph in `index.html` with a table. This is the one long step in the sprint, **on purpose**: type all of it, and notice how often you repeat yourself. That feeling is what this lesson is about, and sprint 3 makes it go away.
 
 ```html file=index.html
 <!DOCTYPE html>

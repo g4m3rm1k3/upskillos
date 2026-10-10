@@ -1,6 +1,10 @@
 ---
 title: 7.3 — Formulas, Part 3: The Parser Builds the Tree
 runtime: none
+experiments: Cells, and the end of the formula; Terms: * and /
+justified: Parsing one number
+teaches: parsers, grammars, recursive descent, operator precedence, associativity, try catch, instanceof
+uses: lexers, tokens, trees, recursion, base cases, closures, discriminated unions, custom errors, error positions, tests, vitest, playground
 ---
 
 You can cut text into tokens (7.1) and work out a tree (7.2). The missing piece turns tokens into the tree. That's the **parser**, and its whole job is to get the structure right: `*` before `+`, brackets first, and `10-2-3` meaning `(10-2)-3`.
@@ -33,9 +37,9 @@ Brackets work because `factor` (the deepest rule) can be `( expression )`: the t
 
 ## The tests
 
-This step opens `src/parser.test.ts`:
+The tests are supplied: click **Create provided src/parser.test.ts** and read them:
 
-```typescript file=src/parser.test.ts
+```typescript file=src/parser.test.ts provided
 import { describe, expect, it } from "vitest";
 import { evaluate } from "./evaluate.ts";
 import { FormulaError } from "./lexer.ts";
@@ -110,9 +114,291 @@ file src/parser.test.ts
 run "npx vitest run parser" exit=1 stderr="parser.ts" label="the parser tests fail: parser.ts doesn't exist yet (red)"
 ```
 
-## The parser
+## Parsing one number {#one-number}
 
-Each grammar rule becomes one function, with the same name. This way of writing a parser is called **recursive descent**: the functions call each other going down the rules, and back up to `expression` for brackets. This step opens `src/parser.ts`:
+Each grammar rule will become one function, with the same name. This way of writing a parser is called **recursive descent**: the functions call each other going down the rules, and back up to `expression` for brackets. It starts at the bottom, with the smallest formula there is: one number.
+
+This step is bigger than usual, because a parser needs all four of these pieces before it can parse anything at all. Each is explained below the code. It opens `src/parser.ts`:
+
+```typescript file=src/parser.ts
+import type { Expression } from "./expression.ts";
+import { FormulaError, tokenize, type Token } from "./lexer.ts";
+
+export function parse(text: string): Expression {
+  const tokens = tokenize(text);
+  let index = 0;
+
+  function peek(): Token {
+    const token = tokens[index];
+    if (token === undefined) {
+      throw new FormulaError("The formula ends too early", text.length);
+    }
+    return token;
+  }
+
+  function advance(): Token {
+    const token = peek();
+    index++;
+    return token;
+  }
+
+  function factor(): Expression {
+    const token = advance();
+    if (token.kind === "number") {
+      return { kind: "number", value: token.value };
+    }
+    throw new FormulaError("Expected a number, a cell or (", token.start);
+  }
+
+  return factor();
+}
+```
+
+`index` is the position of the next token to use. **`peek()`** looks at that token without using it up, and **`advance()`** uses it up (moves `index` on) and returns it. The parser decides what to do by peeking, and only advances once it has decided a token belongs where it is.
+
+`peek`, `advance`, `expression`, `term` and `factor` are written **inside** `parse`, so they all share `tokens` and `index`: closures again (lesson 3.4). Each call of `parse` gets its own `index`, so two formulas being parsed can't disturb each other.
+
+### factor: the bottom rule
+
+`factor` uses up one token and decides what it is. A number becomes a leaf of the tree directly: a **base case**, as in 7.2's evaluator. Anything else is an error, for now, with the position of the token it was looking at.
+
+```check
+run "npx vitest run parser -t \"single number\"" stdout="1 passed" label="42 parses to a number node"
+run "node -e \"import('./src/parser.ts').then(({ parse }) => { const at = (t) => { try { parse(t); return 'ok'; } catch (e) { return e.message + '@' + e.position; } }; console.log(at('+')); })\"" stdout="Expected a number, a cell or (@0" label="a + where a number should be is an error at position 0" -- factor throws a FormulaError with the token's start.
+```
+
+## Cells, and the end of the formula {#cells}
+
+A cell is a leaf too. And two ways a formula can go wrong get their own messages: running out of formula, and text left over after it. This step adds them:
+
+```typescript file=src/parser.ts
+import type { Expression } from "./expression.ts";
+import { FormulaError, tokenize, type Token } from "./lexer.ts";
+
+export function parse(text: string): Expression {
+  const tokens = tokenize(text);
+  let index = 0;
+
+  function peek(): Token {
+    const token = tokens[index];
+    if (token === undefined) {
+      throw new FormulaError("The formula ends too early", text.length);
+    }
+    return token;
+  }
+
+  function advance(): Token {
+    const token = peek();
+    index++;
+    return token;
+  }
+
+  function factor(): Expression {
+    const token = advance();
+    if (token.kind === "number") {
+      return { kind: "number", value: token.value };
+    }
+    if (token.kind === "cell") {
+      return { kind: "cell", address: token.address };
+    }
+    if (token.kind === "end") {
+      throw new FormulaError("The formula ends too early", token.start);
+    }
+    throw new FormulaError("Expected a number, a cell or (", token.start);
+  }
+
+  const result = factor();
+  const extra = peek();
+  if (extra.kind !== "end") {
+    throw new FormulaError("Unexpected text after the end of the formula", extra.start);
+  }
+  return result;
+}
+```
+
+- **`token.kind === "end"`** where a factor should be means the formula stopped too early, as in `2+` (once `+` exists).
+- **`const result = factor();`** reads the formula, and then `peek()` looks at what's left.
+
+### The last check
+
+After `factor()` returns (`expression()`, by the end of the lesson), the parser has read one complete formula. If anything is left over except `end`, like the `3` in `2 3`, the formula is broken, even though its beginning made sense. Without this check, `2 3` would quietly be treated as `2`.
+
+Try it: comment out the `if (extra.kind !== "end")` check, and run `node -e "import('./src/parser.ts').then(({ parse }) => console.log(parse('2 3')))"`. You get a tree for `2`, and the `3` is silently lost. Put the check back.
+
+```check
+run "node -e \"import('./src/parser.ts').then(({ parse }) => { const at = (t) => { try { parse(t); return 'ok'; } catch (e) { return e.message + '@' + e.position; } }; console.log(JSON.stringify(parse('B2'))); })\"" stdout="{\"kind\":\"cell\",\"address\":{\"column\":1,\"row\":1}}" label="B2 parses to a cell node" -- A cell token becomes { kind: 'cell', address }.
+run "node -e \"import('./src/parser.ts').then(({ parse }) => { const at = (t) => { try { parse(t); return 'ok'; } catch (e) { return e.message + '@' + e.position; } }; console.log([at('2 3'), at('')].join(' | ')); })\"" stdout="Unexpected text after the end of the formula@2 | The formula ends too early@0" label="leftover text and an empty formula are both errors, at the right positions" -- Peek after the formula: anything but end is an error at its start; end where a factor should be is 'The formula ends too early'.
+```
+
+## Terms: * and / {#term}
+
+The second rule: `term = factor { ("*" | "/") factor }`, a factor followed by any number of `* factor` or `/ factor`. This step adds `term`, and `parse` now reads a term:
+
+```typescript file=src/parser.ts
+import type { Expression } from "./expression.ts";
+import { FormulaError, tokenize, type Token } from "./lexer.ts";
+
+export function parse(text: string): Expression {
+  const tokens = tokenize(text);
+  let index = 0;
+
+  function peek(): Token {
+    const token = tokens[index];
+    if (token === undefined) {
+      throw new FormulaError("The formula ends too early", text.length);
+    }
+    return token;
+  }
+
+  function advance(): Token {
+    const token = peek();
+    index++;
+    return token;
+  }
+
+  function term(): Expression {
+    let left = factor();
+    let token = peek();
+    while (token.kind === "operator" && (token.op === "*" || token.op === "/")) {
+      advance();
+      left = { kind: "binary", op: token.op, left, right: factor() };
+      token = peek();
+    }
+    return left;
+  }
+
+  function factor(): Expression {
+    const token = advance();
+    if (token.kind === "number") {
+      return { kind: "number", value: token.value };
+    }
+    if (token.kind === "cell") {
+      return { kind: "cell", address: token.address };
+    }
+    if (token.kind === "end") {
+      throw new FormulaError("The formula ends too early", token.start);
+    }
+    throw new FormulaError("Expected a number, a cell or (", token.start);
+  }
+
+  const result = term();
+  const extra = peek();
+  if (extra.kind !== "end") {
+    throw new FormulaError("Unexpected text after the end of the formula", extra.start);
+  }
+  return result;
+}
+```
+
+Before you run it, predict:
+
+```predict
+question: What does `8/2/2` work out to with this parser?
+choice: 2
+choice: 8
+answer: 2
+explain: The loop builds `(8/2)/2`: each new node goes around the tree built so far. `8/(2/2)` would be 8.
+verify: node -e "Promise.all([import('./src/parser.ts'), import('./src/evaluate.ts')]).then(([{ parse }, { evaluate }]) => { const calc = (t) => evaluate(parse(t), () => ''); console.log(calc('8/2/2')); })"
+```
+
+### Why the while loop works left to right
+
+Follow `term` on `8/2/2`:
+
+1. `left = factor()` → `8`.
+2. The next token is `/`: use it up, and `left` becomes `8 / factor()` → `8/2`.
+3. The next token is another `/`: `left` becomes **`(8/2) / factor()`** → `(8/2)/2`.
+4. The next token is `end`, not `*` or `/`: stop, return `left`.
+
+Each time round, the tree built so far becomes the **left** side of the new node. So the earlier operator ends up deeper in the tree, and is worked out first. That's left-to-right grouping, and it comes from building the new node *around* `left` instead of recursing on the right.
+
+Try the other way: in `term`, change `right: factor()` to `right: term()`, and run the same `node -e` as the prediction's check. Now `8/2/2` gives 8, because the rest of the formula is parsed first and becomes the right side. Put `factor()` back.
+
+```check
+run "node -e \"Promise.all([import('./src/parser.ts'), import('./src/evaluate.ts')]).then(([{ parse }, { evaluate }]) => { const calc = (t) => evaluate(parse(t), () => ''); console.log([calc('2*3*4'), calc('8/2/2'), calc('A1*3')].join(',')); })\"" stdout="24,2,0" label="* and / work left to right" -- In the loop: advance past the operator, then left = a binary node with left and factor() as its sides.
+```
+
+## Expressions: + and - {#expression}
+
+The top rule, `expression = term { ("+" | "-") term }`, has the same shape as `term`, one level up. This step adds it, and `parse` now starts from the top:
+
+```typescript file=src/parser.ts
+import type { Expression } from "./expression.ts";
+import { FormulaError, tokenize, type Token } from "./lexer.ts";
+
+export function parse(text: string): Expression {
+  const tokens = tokenize(text);
+  let index = 0;
+
+  function peek(): Token {
+    const token = tokens[index];
+    if (token === undefined) {
+      throw new FormulaError("The formula ends too early", text.length);
+    }
+    return token;
+  }
+
+  function advance(): Token {
+    const token = peek();
+    index++;
+    return token;
+  }
+
+  function expression(): Expression {
+    let left = term();
+    let token = peek();
+    while (token.kind === "operator" && (token.op === "+" || token.op === "-")) {
+      advance();
+      left = { kind: "binary", op: token.op, left, right: term() };
+      token = peek();
+    }
+    return left;
+  }
+
+  function term(): Expression {
+    let left = factor();
+    let token = peek();
+    while (token.kind === "operator" && (token.op === "*" || token.op === "/")) {
+      advance();
+      left = { kind: "binary", op: token.op, left, right: factor() };
+      token = peek();
+    }
+    return left;
+  }
+
+  function factor(): Expression {
+    const token = advance();
+    if (token.kind === "number") {
+      return { kind: "number", value: token.value };
+    }
+    if (token.kind === "cell") {
+      return { kind: "cell", address: token.address };
+    }
+    if (token.kind === "end") {
+      throw new FormulaError("The formula ends too early", token.start);
+    }
+    throw new FormulaError("Expected a number, a cell or (", token.start);
+  }
+
+  const result = expression();
+  const extra = peek();
+  if (extra.kind !== "end") {
+    throw new FormulaError("Unexpected text after the end of the formula", extra.start);
+  }
+  return result;
+}
+```
+
+Read `expression` and `term` side by side: the only differences are the operators and the rule they call. That's the grammar's layering (above, *Why this grammar gets the order right*) turned into code. `+` only ever joins whole terms, so `2+3*4` reads `3*4` as one term before the `+` sees it.
+
+```check
+run "npx vitest run parser" exit=1 stdout="3 passed" label="three of the five parser tests pass: precedence and left-to-right grouping" -- expression has the same loop as term, with + and -, calling term().
+run "node -e \"Promise.all([import('./src/parser.ts'), import('./src/evaluate.ts')]).then(([{ parse }, { evaluate }]) => { const calc = (t) => evaluate(parse(t), () => ''); console.log([calc('2+3*4'), calc('2*3+4'), calc('10-2-3')].join(',')); })\"" stdout="14,10,5" label="2+3*4 is 14, 2*3+4 is 10, and 10-2-3 is 5"
+```
+
+## Brackets {#brackets}
+
+Last, the third choice for a factor: `"(" expression ")"`. This step adds it, and puts the grammar at the top of the file, now that the code follows it line for line:
 
 ```typescript file=src/parser.ts
 import type { Expression } from "./expression.ts";
@@ -193,32 +479,9 @@ export function parse(text: string): Expression {
 }
 ```
 
-### Reading through the tokens
+An `(` means "a whole expression is coming": `factor` calls `expression()` to read it, then insists the next token is `)`. That call back up to the top rule is the recursion that allows brackets inside brackets. It always ends, because each `(` uses up a token, and there are only so many tokens.
 
-`index` is the position of the next token to use. **`peek()`** looks at that token without using it up, and **`advance()`** uses it up (moves `index` on) and returns it. The parser decides what to do by peeking, and only advances once it has decided a token belongs where it is.
-
-`peek`, `advance`, `expression`, `term` and `factor` are written **inside** `parse`, so they all share `tokens` and `index`: closures again (lesson 3.4). Each call of `parse` gets its own `index`, so two formulas being parsed can't disturb each other.
-
-### Why the while loop works left to right
-
-Follow `term` on `8/2/2`:
-
-1. `left = factor()` → `8`.
-2. The next token is `/`: use it up, and `left` becomes `8 / factor()` → `8/2`.
-3. The next token is another `/`: `left` becomes **`(8/2) / factor()`** → `(8/2)/2`.
-4. The next token is `end`, not `*` or `/`: stop, return `left`.
-
-Each time round, the tree built so far becomes the **left** side of the new node. So the earlier operator ends up deeper in the tree, and is worked out first. That's left-to-right grouping, and it comes from building the new node *around* `left` instead of recursing on the right.
-
-### factor, and the base of the recursion
-
-`factor` is where the descent ends. A number or a cell becomes a leaf directly: the base cases. An `(` means "a whole expression is coming": `factor` calls `expression()` to read it, then insists the next token is `)`. That call back up to the top rule is the recursion that allows brackets inside brackets. It always ends, because each `(` uses up a token, and there are only so many tokens.
-
-Anything else where a factor should be is an error: `)` with nothing before it, a second operator (`2+*3`), or running out (`2+` reaches `end`). Each error gives the position of the token it was looking at.
-
-### The last check
-
-After `expression()` returns, the parser has read one complete formula. If anything is left over except `end`, like the `3` in `2 3`, the formula is broken, even though its beginning made sense. Without this check, `2 3` would quietly be treated as `2`.
+Anything else where a factor should be is an error: `)` with nothing before it, a second operator (`2+*3`), or running out (`2+` reaches `end`).
 
 ```check
 run "npx vitest run parser" stdout="5 passed" label="the 5 parser tests pass"
@@ -237,4 +500,90 @@ git commit -m "Add the formula parser"
 ```check
 git-tracked src/parser.ts
 git-clean
+```
+
+## Your turn: a parser for nested lists
+
+A settings file lets people write lists of numbers, with lists inside lists: `[1, [2, 3], [], [[4]]]`. Here's the grammar:
+
+```text
+list = "[" [ item { "," item } ] "]"
+item = number | list
+```
+
+`[ … ]` in the grammar means "optional": a list can be empty. Write `playground/js/list.mjs`, exporting `parseList(text)`, which gives JavaScript arrays: `parseList("[1, [2, 3], []]")` is `[1, [2, 3], []]`. Numbers are whole numbers; spaces can go anywhere between the pieces. Anything else, including a list that's never closed and text after the last `]`, throws an `Error` that says where.
+
+Work straight on the characters this time, with no separate lexer: an index `i`, and a `skipSpaces()` helper. Test it in `playground/js/list.check.mjs`, including broken lists. Commit.
+
+```hints
+nudge: One function per grammar rule, as in `parse`: `list()` and `item()`, sharing an index `i`.
+concept: `item` looks at the next character: a `[` means a list is coming, so it calls `list()` (the recursion); digits mean a number. `list` uses up the `[`, reads items separated by `,`, then insists on a `]`. After the top list, anything left over is an error, like the parser's last check.
+shape: `export function parseList(text) { let i = 0; function skipSpaces() { … } function item() { … } function list() { … } skipSpaces(); … const result = list(); skipSpaces(); if (i < text.length) throw …; return result; }`
+answer: ~~~javascript
+export function parseList(text) {
+  let i = 0;
+
+  function skipSpaces() {
+    while (text.charAt(i) === " ") {
+      i++;
+    }
+  }
+
+  function item() {
+    skipSpaces();
+    if (text.charAt(i) === "[") {
+      return list();
+    }
+    const start = i;
+    while (text.charAt(i) >= "0" && text.charAt(i) <= "9") {
+      i++;
+    }
+    if (i === start) {
+      throw new Error(`Expected a number or [ at position ${i}`);
+    }
+    return Number(text.slice(start, i));
+  }
+
+  function list() {
+    i++;
+    const items = [];
+    skipSpaces();
+    if (text.charAt(i) === "]") {
+      i++;
+      return items;
+    }
+    items.push(item());
+    skipSpaces();
+    while (text.charAt(i) === ",") {
+      i++;
+      items.push(item());
+      skipSpaces();
+    }
+    if (text.charAt(i) !== "]") {
+      throw new Error(`Expected , or ] at position ${i}`);
+    }
+    i++;
+    return items;
+  }
+
+  skipSpaces();
+  if (text.charAt(i) !== "[") {
+    throw new Error(`Expected [ at position ${i}`);
+  }
+  const result = list();
+  skipSpaces();
+  if (i < text.length) {
+    throw new Error(`Unexpected text at position ${i}`);
+  }
+  return result;
+}
+~~~
+```
+
+```check
+run "node --test playground/js/list.check.mjs" label="your tests pass"
+run "node -e \"import('./playground/js/list.mjs').then(({ parseList }) => console.log(JSON.stringify([parseList('[1, [2, 3], [], [[4]]]'), parseList(' [ 10 , 20 ] '), parseList('[]')])))\"" stdout="[[1,[2,3],[],[[4]]],[10,20],[]]" label="nested, spaced and empty lists parse to arrays" -- item calls list() when it sees [; list reads items separated by commas.
+run "node -e \"import('./playground/js/list.mjs').then(({ parseList }) => console.log(['[1, 2', '[1 2]', '[1,]', '[1] x', '1'].map((t) => { try { parseList(t); return 'ok'; } catch (e) { return 'error'; } }).join(',')))\"" stdout="error,error,error,error,error" label="broken lists are all rejected" -- Check for the closing ], for a number after each comma, and for leftover text.
+run "$d = Join-Path $env:TEMP ('m' + (Get-Random)); New-Item -ItemType Directory $d | Out-Null; Copy-Item playground/js/list.check.mjs $d; Set-Content (Join-Path $d 'list.mjs') 'export function parseList(t) { return JSON.parse(t.trim().endsWith(`]`) ? t : t + `]`); }'; node --test (Join-Path $d 'list.check.mjs')" exit=1 label="your tests catch a parser that quietly closes an unclosed list" -- Test that a list with no closing ] throws.
+git-clean -- Commit it: git add playground, then git commit.
 ```

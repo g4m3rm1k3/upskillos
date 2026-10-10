@@ -201,7 +201,7 @@ The cell must come off the list **whenever** its calculation ends: when it retur
 Without the `delete`, `A1` would stay marked after its first use, and `=A1+A1` would wrongly report a cycle. That's the second test. Try it: comment out the `delete` line and run the tests to watch exactly that test fail, then put it back.
 
 ```check
-run "npx vitest run" stdout="39 passed" label="all 39 tests pass"
+run "npx vitest run" stdout="44 passed" label="all 44 tests pass"
 run "npx tsc" label="the project type-checks"
 page index.html "(async () => { const { Sheet } = await import('/src/sheet.ts'); const { cellValue, display } = await import('/src/compute.ts'); const s = new Sheet(); const put = (column, row, text) => s.set({ column, row }, text); put(0, 0, '=B1+C1'); put(1, 0, '=C1*2'); put(2, 0, '=4'); put(0, 1, '=B2'); put(1, 1, '=C2'); put(2, 1, '=A2'); put(3, 1, '=A2+1'); return [[0, 0], [0, 1], [1, 1], [2, 1], [3, 1]].map(([column, row]) => display(cellValue(s, { column, row }))).join(','); })()" "12,#CYCLE!,#CYCLE!,#CYCLE!,#CYCLE!" server=vite label="a cell used twice is fine (A1 = 12); a three-cell circle and a formula using it show #CYCLE!"
 page index.html "(() => { const rows = document.querySelectorAll('tbody tr'); const bar = document.querySelector('#formula-bar'); rows[0].querySelectorAll('td')[0].click(); bar.value = '=A1+1'; bar.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); return rows[0].querySelectorAll('td')[0].textContent + ' ' + document.querySelector('#name-box').textContent; })()" "#CYCLE! A2" server=vite errors=none label="on the page, =A1+1 in A1 shows #CYCLE! and the selection moves on"

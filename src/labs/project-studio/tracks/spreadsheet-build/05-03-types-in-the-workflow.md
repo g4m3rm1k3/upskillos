@@ -1,6 +1,9 @@
 ---
 title: 5.3 — Types in the Workflow, and Their Limits
 runtime: none
+experiments: What it catches; What it doesn't catch
+teaches: type checking in the build, limits of types
+uses: npm scripts, typescript
 ---
 
 A checker you have to remember to run gets forgotten. This lesson makes type checking part of the project's commands, so a build can't happen with type errors, and then looks honestly at what types can't catch.
@@ -100,7 +103,15 @@ run "npm run check" label="the project type-checks" -- Fix the typo (rws → row
 
 ## What it doesn't catch
 
-Now swap the arguments again, as in lesson 3.4: change the click listener to `() => select(r, c)`, and run `npm run check`.
+Now swap the arguments again, as in lesson 3.4: change the click listener to `() => select(r, c)`, and run `npm run check`. Predict first:
+
+```predict
+question: The click listener now calls `select(r, c)`, row and column swapped. Does `npm run check` report an error?
+choice: Yes: the arguments are in the wrong order
+choice: No: both are numbers, which is what select asks for
+answer: No: both are numbers, which is what select asks for
+explain: TypeScript checks the *kinds* of values, not what they mean. `select` takes two numbers and gets two numbers, so as far as types go, nothing is wrong.
+```
 
 It passes. No errors.
 
@@ -139,3 +150,41 @@ git-clean
 ```
 
 Sprint 5 is done. The code says what kinds of values it works with, and the build refuses code that doesn't fit. Next sprint: tests, so wrong answers are caught as reliably as wrong types.
+
+## Your turn: make the swap impossible to miss
+
+Click **Create provided playground/ts/swap.ts**: the swapped-arguments bug, in a few lines. It prints `C2`, though it means column B, row 3:
+
+```typescript file=playground/ts/swap.ts provided
+function cellName(column: number, row: number): string {
+  return String.fromCharCode(65 + column) + (row + 1);
+}
+
+const row = 2;
+const column = 1;
+console.log(cellName(row, column));
+```
+
+Change `cellName` so that it takes **one object**, `{ column, row }`, instead of two numbers, and update the call. Then a swap would have to be written out as `{ column: row, row: column }`, where anyone reading it would see it. The program should print `B3`, and pass `npx tsc --noEmit --strict --ignoreConfig playground/ts/swap.ts`. Commit it.
+
+```check
+run "node playground/ts/swap.ts" stdout="B3" label="it prints B3"
+run "npx tsc --noEmit --strict --ignoreConfig playground/ts/swap.ts" label="it type-checks with --strict"
+matches playground/ts/swap.ts "cellName\\(\\s*\\{" label="cellName is called with an object" -- Call it as cellName({ column: ..., row: ... }).
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+```hints
+nudge: An object's parts have names; a list of arguments only has positions.
+concept: A parameter can be an object with a type written inline: `(cell: { column: number; row: number })`. Inside, `cell.column` and `cell.row` read its parts. At the call, `{ column: 1, row: 2 }` names each value, and since `column` and `row` are already variables here, `{ column, row }` is short for `{ column: column, row: row }`.
+shape: `function cellName(cell: { column: number; row: number }): string`, using `cell.column` and `cell.row`; the call becomes `cellName({ column, row })`.
+answer: ~~~typescript
+function cellName(cell: { column: number; row: number }): string {
+  return String.fromCharCode(65 + cell.column) + (cell.row + 1);
+}
+
+const row = 2;
+const column = 1;
+console.log(cellName({ column, row }));
+~~~
+```

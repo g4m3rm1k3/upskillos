@@ -1,6 +1,9 @@
 ---
 title: 1.3 — The First Commit
 runtime: none
+experiments: Stage hello.js
+teaches: staging area, git add, git commit, commit messages, git log
+uses: repository, git status
 ---
 
 A **commit** is a snapshot of your project that Git keeps forever, with your name, the time, and a message saying what changed. Making one is a two-step move, and the two steps are the most important idea in Git.
@@ -53,7 +56,19 @@ Untracked files:
         playground/
 ```
 
-`hello.js` moved from *Untracked* to **Changes to be committed**: it's in the box. Nothing else is.
+`hello.js` moved from *Untracked* to **Changes to be committed**: it's in the box.
+
+The box holds the file **as it was when you ran `git add`**, not a link to the file. Predict what that means:
+
+```predict
+question: You stage a file, then change it again in the editor before committing. What goes into the commit?
+choice: The version you staged
+choice: The version in the file now
+choice: Both versions
+answer: The version you staged
+explain: `git add` copies the file's content into the staging area at that moment. Later edits stay in your folder, unstaged, until you `git add` again: `git status` would list the file twice, once under *Changes to be committed* and once under *Changes not staged*. It's how you commit part of your work and keep going.
+verify: $d = Join-Path $env:TEMP ('box' + (Get-Random)); git init -q $d; Set-Content "$d/f.txt" 'first'; git -C $d add f.txt; Set-Content "$d/f.txt" 'second'; git -C $d -c user.name=x -c user.email=x@example.com commit -qm t; if ((git -C $d show HEAD:f.txt) -eq 'first') { 'The version you staged' } else { 'The version in the file now' }; Remove-Item -Recurse -Force $d
+``` Nothing else is.
 
 ## Commit
 

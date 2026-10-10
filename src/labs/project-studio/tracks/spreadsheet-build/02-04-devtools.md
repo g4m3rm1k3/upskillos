@@ -1,6 +1,9 @@
 ---
 title: 2.4 — The Browser's Developer Tools
 runtime: none
+experiments: Change a style live
+teaches: devtools
+uses: css, selectors
 ---
 
 Every browser has a set of tools built in for people who build web pages: the **developer tools**, usually called **DevTools**. They show the page as the browser understands it, let you change styles and see the result instantly, and show the errors a page produces. You'll have them open for the rest of the series.
@@ -22,6 +25,17 @@ Scroll the Styles pane to the bottom: a diagram of nested boxes shows the cell's
 ## Change a style live
 
 In the Styles pane, click the value `#d0d7de` in the `th, td` rule and type `red`. Every grid line turns red. Click `13px` and press the **↑** key a few times: the text grows as you press.
+
+Before you refresh, predict:
+
+```predict
+question: You've changed the grid lines to red in DevTools. What happens when you refresh the page?
+choice: They stay red
+choice: They go back to grey
+choice: DevTools asks whether to save the change
+answer: They go back to grey
+explain: DevTools changed the page in the browser's memory, never your files. A refresh reads `style.css` from disk again, and it still says `#d0d7de`.
+```
 
 Now refresh the page. Everything is back as it was.
 

@@ -160,11 +160,15 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
   let browser;
   async function evalInPage(target, expr, { timeoutMs = 15000 } = {}) {
     if (!browser) browser = await require('playwright').chromium.launch();
-    const page = await browser.newPage();
+    // A context of its own, as the app gives each check a window of its own: a page stuck in a
+    // loop can't hold up the next check's page.
+    const context = await browser.newContext();
+    const page = await context.newPage();
     const errors = [];
     const logs = [];
     page.on('console', (m) => { logs.push(m.text()); if (m.type() === 'error') errors.push(m.text()); });
     page.on('pageerror', (e) => { logs.push(String(e.message)); errors.push(String(e.message)); });
+    let timer;
     try {
       const url = /^https?:\/\//.test(target) ? target : pathToFileURL(target).href;
       try {
@@ -173,14 +177,21 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
         return { ok: false, reason: `The page didn't load: ${e.message}`, errors, logs };
       }
       await page.waitForTimeout(50);
+      // Like the app's page-eval.cjs, the expression gets a time limit: a page stuck in a loop that
+      // never ends must fail its check, not hang the walkthrough.
       try {
-        const value = await page.evaluate(`(async () => (${expr}))()`);
+        const value = await Promise.race([
+          page.evaluate(`(async () => (${expr}))()`),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`Evaluating the check took longer than ${Math.round(timeoutMs / 1000)} seconds`)), timeoutMs); }),
+        ]);
         return { ok: true, value: value === undefined ? null : value, errors, logs };
       } catch (e) {
         return { ok: false, reason: `Checking \`${expr}\` on the page failed: ${String(e.message).split('\n')[0]}`, errors, logs };
       }
     } finally {
-      await page.close();
+      clearTimeout(timer);
+      // A page stuck in a loop may not close politely: don't wait more than a few seconds.
+      await Promise.race([context.close().catch(() => {}), new Promise((done) => setTimeout(done, 3000))]);
     }
   }
   afterAll(async () => { await browser?.close(); });

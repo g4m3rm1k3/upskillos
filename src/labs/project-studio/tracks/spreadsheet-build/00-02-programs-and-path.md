@@ -1,6 +1,9 @@
 ---
 title: 0.2 — How the Shell Finds Programs
 runtime: none
+experiments: Set a variable, then run the script
+teaches: path variable, environment variables, os.environ
+uses: terminal, paths
 ---
 
 When you typed `python`, the shell found Python. When you typed `pyhton`, it didn't. This lesson is about how that search works, because "command not found" is one of the most common problems in a developer's day, and every tool you install in this series (Node, Git, .NET) depends on it.

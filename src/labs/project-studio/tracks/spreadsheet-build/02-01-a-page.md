@@ -1,6 +1,9 @@
 ---
 title: 2.1 — A Page in the Browser
 runtime: none
+experiments: Change it and refresh
+teaches: html, elements, attributes, doctype, character encoding
+uses: branches
 ---
 
 The spreadsheet will be a web page: the kind of document your browser displays. This sprint puts one on the screen: a grid of cells you can see, written by hand. It won't do anything yet. Making it respond is sprint 3.

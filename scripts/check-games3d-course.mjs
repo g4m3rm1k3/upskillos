@@ -14,6 +14,10 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'games3d-course-'));
 const keep = process.argv.includes('--keep');
 const coreOnly = process.argv.includes('--core-only');
 const finalOnly = process.argv.includes('--final-only');
+const fromIndex = process.argv.indexOf('--from-lesson');
+const fromLesson = fromIndex < 0 ? null : process.argv[fromIndex + 1];
+if (fromIndex >= 0 && (!fromLesson || !fs.existsSync(path.join(directory, fromLesson + '.md'))))
+  throw new Error('--from-lesson needs an existing lesson filename without .md');
 const index = process.argv.indexOf('--dotnet');
 const dotnet = index < 0 ? 'dotnet' : process.argv[index + 1];
 if (!dotnet || dotnet.startsWith('--')) throw new Error('--dotnet needs an executable path');
@@ -56,7 +60,7 @@ try {
         } else fs.writeFileSync(destination, step.edit.code);
       }
       for (const check of step.checks) {
-        if (finalOnly) continue;
+        if (finalOnly || (fromLesson && name < fromLesson + '.md')) continue;
         if (check.kind !== 'run') throw new Error(`Unsupported walkthrough check: ${check.kind}`);
         const words = check.args[0].split(' ');
         if (words.shift() !== 'dotnet') throw new Error('Only explicit dotnet commands are supported');
@@ -125,8 +129,8 @@ try {
     const source = fs.readFileSync(program, 'utf8');
     const screenshot = path.join(root, 'studio-smoke.png');
     const bounded = source
-      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\neditor.TryAdd("Cube", new Vector3(4, 0.5f, 0));\neditor.TryDeleteSelected();\neditor.TryUndo();\neditor.TrySelect(scene.Objects[0].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.25f, 2)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, -0.375f, 0));\neditor.TrySelect(scene.Objects[1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(0.5f, 2, 0.5f)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, 0.5f, 0));\neditor.TrySelect(scene.Objects[^1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.5f, 1)));\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
-      .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 5) Raylib.TakeScreenshot("studio-smoke.png");');
+      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\neditor.TryAdd("Cube", new Vector3(4, 0.5f, 0));\neditor.TryDeleteSelected();\neditor.TryUndo();\neditor.TrySelect(scene.Objects[0].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.25f, 2)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, -0.375f, 0));\neditor.TrySelect(scene.Objects[1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(0.5f, 2, 0.5f)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, 0.5f, 0));\neditor.TrySelect(scene.Objects[^1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.5f, 1)));\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 120)')
+      .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 25) Raylib.TakeScreenshot("studio-dark.png");\n        if (smokeFrames == 35) UiTheme.Toggle();\n        if (smokeFrames == 55) Raylib.TakeScreenshot("studio-smoke.png");\n        if (smokeFrames == 75) { UiTheme.Toggle(); editor.ReplaceScene(new Scene()); }\n        if (smokeFrames == 95) Raylib.TakeScreenshot("studio-empty.png");');
     if (bounded === source || !bounded.includes('smokeFrames++')) throw new Error('Graphics smoke anchor missing');
     const fileChecks = `
 if (!files.TrySave()) throw new Exception("UI save failed");
@@ -136,25 +140,110 @@ var keptPosition = editor.Selected!.Position;
 var keptBox = editor.Selected!.Box;
 int keptUndo = editor.UndoCount;
 File.WriteAllText(scenePath, goodFile.Replace("\\\"Version\\\": 2", "\\\"Version\\\": 3"));
-if (files.TryOpen() || !files.Status.StartsWith("File operation failed") || editor.SelectedId != keptId || editor.UndoCount != keptUndo)
+if (files.TryOpen() || !files.Failed || !files.Status.StartsWith("File operation failed") || editor.SelectedId != keptId || editor.UndoCount != keptUndo)
     throw new Exception("UI invalid open changed editor");
 File.WriteAllText(scenePath, goodFile);
 editor.TryMoveSelected(Vector3.UnitY);
-if (!files.TryOpen() || scene.Objects[^1].Position != keptPosition || scene.Objects[^1].Box != keptBox || editor.UndoCount != 0 || editor.RedoCount != 0)
+if (!files.TryOpen() || files.Failed || scene.Objects[^1].Position != keptPosition || scene.Objects[^1].Box != keptBox || editor.UndoCount != 0 || editor.RedoCount != 0)
     throw new Exception("UI open did not restore saved state");
 Console.WriteLine("FILE CONTROLS CHECKS PASSED");
+var beforeUi = scene.Objects.ToArray();
+var savedSelection = editor.SelectedId;
+int beforeUndo = editor.UndoCount;
+editor.TrySelect(scene.Objects[0].Id);
+var trunkButton = EditorPanels.TrunkButton;
+var trunkPoint = new System.Numerics.Vector2(trunkButton.X + trunkButton.Width / 2, trunkButton.Y + trunkButton.Height / 2);
+if (!shapes.TryClickPreset(trunkPoint) || editor.Selected!.Box.Size != new System.Numerics.Vector3(0.5f, 2, 0.5f))
+    throw new Exception("Preset click did not use shared region");
+int afterClick = editor.UndoCount;
+if (!shapes.TryClickPreset(trunkPoint) || editor.UndoCount != afterClick)
+    throw new Exception("Preset no-op changed history");
+if (shapes.TryClickPreset(new System.Numerics.Vector2(-1, -1))) throw new Exception("Preset swallowed outside click");
+if (!editor.TryUndo() || !scene.Objects.SequenceEqual(beforeUi) || editor.UndoCount != beforeUndo)
+    throw new Exception("Preset undo changed other data");
+if (!files.TryOpen()) throw new Exception("Preset test could not restore saved scene");
+Scene emptyScene = new();
+EditorSession emptyEditor = new(emptyScene);
+ShapeControls emptyShapes = new(emptyEditor);
+if (!emptyShapes.TryClickPreset(trunkPoint) || !emptyShapes.Rejected || emptyEditor.UndoCount != 0 || emptyScene.Objects.Count != 0)
+    throw new Exception("Unavailable preset changed empty scene");
+string fitted = UiTheme.FitText("A very long object label", 60, 16);
+if (Raylib.MeasureText(fitted, 16) > 60 || !fitted.EndsWith("...") || UiTheme.FitText("Box", 200, 16) != "Box")
+    throw new Exception("UI text fitting failed");
+Console.WriteLine("UI DESIGN CHECKS PASSED");
+
+var themeObjects = scene.Objects.ToArray();
+var themeSelection = editor.SelectedId;
+editor.TryMoveSelected(Vector3.UnitX);
+editor.TryUndo();
+int themeUndo = editor.UndoCount;
+int themeRedo = editor.RedoCount;
+string themeJson = SceneCodec.Encode(scene);
+if (UiTheme.Mode != ThemeMode.Dark) throw new Exception("Studio should start dark");
+var darkPalette = UiTheme.Current;
+var themeButton = ThemeControls.Button;
+var themePoint = new System.Numerics.Vector2(themeButton.X + themeButton.Width / 2, themeButton.Y + themeButton.Height / 2);
+if (!ThemeControls.TryClick(themePoint) || UiTheme.Mode != ThemeMode.Light || ThemeControls.Label != "Dark [F6]")
+    throw new Exception("Theme click did not switch mode");
+if (UiTheme.Canvas.Equals(darkPalette.Canvas) || UiTheme.Grid.Equals(darkPalette.Grid) || UiTheme.ObjectWire.Equals(darkPalette.ObjectWire))
+    throw new Exception("Viewport colors stayed on old palette");
+if (!scene.Objects.SequenceEqual(themeObjects) || editor.SelectedId != themeSelection || editor.UndoCount != themeUndo || editor.RedoCount != themeRedo || SceneCodec.Encode(scene) != themeJson)
+    throw new Exception("Theme switch changed scene or history");
+if (ThemeControls.TryClick(new System.Numerics.Vector2(-1, -1)) || UiTheme.Mode != ThemeMode.Light)
+    throw new Exception("Theme swallowed outside click");
+if (!files.TrySave() || !files.TryOpen() || UiTheme.Mode != ThemeMode.Light)
+    throw new Exception("Scene storage changed theme");
+UiTheme.Toggle();
+if (UiTheme.Mode != ThemeMode.Dark || ThemeControls.Label != "Light [F6]")
+    throw new Exception("Shared theme operation did not restore dark");
+
+double Linear(byte channel)
+{
+    double value = channel / 255.0;
+    return value <= 0.04045 ? value / 12.92 : Math.Pow((value + 0.055) / 1.055, 2.4);
+}
+double Luminance(Color color) => 0.2126 * Linear(color.R) + 0.7152 * Linear(color.G) + 0.0722 * Linear(color.B);
+double Contrast(Color a, Color b)
+{
+    double x = Luminance(a), y = Luminance(b);
+    return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05);
+}
+for (int mode = 0; mode < 2; mode++)
+{
+    var p = UiTheme.Current;
+    var pairs = new (Color foreground, Color background)[] {
+        (p.TextColor, p.Panel), (p.TextColor, p.Raised), (p.TextColor, p.Border),
+        (p.Muted, p.Panel), (p.Muted, p.Raised), (p.Muted, p.Selected),
+        (p.Accent, p.Selected), (p.Accent, p.Panel), (p.Danger, p.Panel)
+    };
+    foreach (var pair in pairs)
+        if (Contrast(pair.foreground, pair.background) < 4.5) throw new Exception("Theme text contrast below 4.5");
+    Console.WriteLine($"THEME CONTRAST {UiTheme.Mode}: minimum {pairs.Min(pair => Contrast(pair.foreground, pair.background)):F2}:1");
+    UiTheme.Toggle();
+}
+Console.WriteLine("THEME CHECKS PASSED");
+
 `;
-    fs.writeFileSync(program, bounded.replace('try\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)', fileChecks + '\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)'));
+    fs.writeFileSync(program, bounded.replace('try\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 120)', fileChecks + '\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 120)'));
     try {
-      run(['run', '--project', 'Studio'], 'FILE CONTROLS CHECKS PASSED');
+      const output = run(['run', '--project', 'Studio'], 'UI DESIGN CHECKS PASSED');
+      if (!output.includes('THEME CHECKS PASSED')) throw new Error('Missing theme evidence');
+      const darkScreenshot = path.join(root, 'studio-dark.png');
+      if (!fs.existsSync(darkScreenshot) || fs.statSync(darkScreenshot).size < 1000) throw new Error('No dark-mode screenshot');
+      console.log('DARK UI SCREENSHOT ' + darkScreenshot);
+      if (!output.includes('FILE CONTROLS CHECKS PASSED')) throw new Error('Missing file controls evidence');
       if (!fs.existsSync(screenshot) || fs.statSync(screenshot).size < 1000) throw new Error('No useful graphics screenshot produced');
+      if (fs.readFileSync(screenshot).equals(fs.readFileSync(darkScreenshot))) throw new Error('Mode screenshots are identical');
       console.log(`GRAPHICS SCREENSHOT ${screenshot}`);
+      const emptyScreenshot = path.join(root, 'studio-empty.png');
+      if (!fs.existsSync(emptyScreenshot) || fs.statSync(emptyScreenshot).size < 1000) throw new Error('No empty-state screenshot');
+      console.log(`EMPTY UI SCREENSHOT ${emptyScreenshot}`);
     } finally { fs.writeFileSync(program, source); }
     run(['build', 'Studio']);
     const bot = path.join(root, 'Bot/Program.cs');
     const botSource = fs.readFileSync(bot, 'utf8');
     const botBounded = botSource
-      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
+      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 120)')
       .replace('!ended && Raylib.IsKeyPressed(KeyboardKey.Space)', '!ended && smokeFrames <= 4')
       .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 5) Raylib.TakeScreenshot("bot-smoke.png");');
     if (!botBounded.includes('smokeFrames++')) throw new Error('Bot smoke anchor missing');
@@ -169,7 +258,7 @@ Console.WriteLine("FILE CONTROLS CHECKS PASSED");
     run(['build', 'Bot']);
   }
   console.log(`PASS ${milestones} executed milestones; deliberate assertion failure and ${mutations.length + 2 + historyMutations.length} rule mutations detected; restored checks pass`);
-  console.log(finalOnly ? 'PASS reconstructed final source (intermediate milestone checks skipped)' : coreOnly ? 'PASS reconstructed core course (graphics build skipped)' : 'PASS reconstructed 3D studio opening course');
+  console.log(finalOnly ? 'PASS reconstructed final source (intermediate milestone checks skipped)' : fromLesson ? `PASS reconstructed source (milestone checks from ${fromLesson})` : coreOnly ? 'PASS reconstructed core course (graphics build skipped)' : 'PASS reconstructed 3D studio opening course');
 } finally {
   if (keep) console.log(`AUTHOR WORKSPACE ${root}`);
   else {

@@ -1,6 +1,8 @@
 ---
 title: Styling 1 — Pages with Meaning
 runtime: none
+teaches: semantic html, landmarks, heading levels, lists, links, classes, ids, viewport
+uses: html
 ---
 
 The next seven lessons are a **styling section**: how to make any web page look good, not only a spreadsheet. Layout, spacing, type, colour, and pages that work on a phone as well as a monitor. You'll learn it all on a page of your own in the playground, a one-page **portfolio site** about you as a developer, and every step is an experiment you can push further. After the section, lessons 2.2 to 2.4 apply it to the spreadsheet, and the sprint ends with a challenge: build a page from a designer's spec.
@@ -30,9 +32,278 @@ Meaning matters for three readers:
 
 Headings matter in the same way. There's one `<h1>`, the page's title. Each section starts with an `<h2>`, and things inside sections use `<h3>`. Never pick a heading level for its size: size is CSS's job. Screen-reader users move through a page by its headings, like a table of contents.
 
-## The portfolio's HTML
+## A new page
 
-This step opens a new file, `playground/site/index.html`. Type it, with your own name instead of *Sam Rivera* if you like:
+This step opens a new file, `playground/site/index.html`. Start with the page you wrote from memory in lesson 2.1, plus one new line in `<head>`. Use your own name instead of *Sam Rivera* if you like:
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+  </body>
+</html>
+```
+
+The new line is **`<meta name="viewport" …>`**. It tells phones to draw the page at their real width instead of drawing a desktop-sized page and shrinking it to fit. Every page you make should have it; Styling 7 shows what goes wrong without it.
+
+```check
+page playground/site/index.html "document.querySelector('meta[name=viewport]')?.content" "width=device-width, initial-scale=1" label="the page has a viewport line"
+page playground/site/index.html "document.title.length > 0" true label="the page has a title"
+```
+
+## Landmarks
+
+Now the page's three big parts. Inside `<body>`:
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+    <header>
+      <a class="name" href="#intro">Sam Rivera</a>
+    </header>
+    <main>
+    </main>
+    <footer>
+      <p>Made by Sam Rivera, 2026.</p>
+    </footer>
+  </body>
+</html>
+```
+
+- **`<header>`** is the top of the page: the site's name, and soon the navigation.
+- **`<main>`** is the page's own content. There's one per page; it's empty for now.
+- **`<footer>`** is the bottom: who made it, small print.
+- **`class="name"`** is a label you put on an element so CSS can pick it out (Styling 2 shows how). An element can have several classes, separated by spaces.
+- **`href="#intro"`** links to the element whose `id` is `intro` on this same page. It doesn't exist yet: the next steps add it.
+
+Open the page (`start playground/site/index.html`). Only a link and a sentence: landmarks don't look like anything. They're for the three readers above.
+
+```check
+page playground/site/index.html "document.querySelectorAll('body > header, body > main, body > footer').length" 3 label="the page has a header, a main and a footer"
+```
+
+## A nav that's a list
+
+The main links around the site go in a `<nav>`, inside the header:
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+    <header>
+      <a class="name" href="#intro">Sam Rivera</a>
+      <nav>
+        <ul>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+    </main>
+    <footer>
+      <p>Made by Sam Rivera, 2026.</p>
+    </footer>
+  </body>
+</html>
+```
+
+The links are a **list** (`<ul>`, an *unordered list*, with an `<li>` per item), because that's what they are. A screen reader announces "navigation, list, 3 items", which tells the listener what's coming and how long it is. Styling 5 lays them out in a row; the list stays a list.
+
+```check
+page playground/site/index.html "document.querySelectorAll('header nav ul li a[href^=\"#\"]').length" 3 label="the nav is a list of three links to the page's sections"
+```
+
+## The opening section
+
+The first thing in `main` is a section that says who you are:
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+    <header>
+      <a class="name" href="#intro">Sam Rivera</a>
+      <nav>
+        <ul>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <section id="intro">
+        <h1>I build software people enjoy using.</h1>
+        <p>I'm a developer learning to build full-stack web applications, one real project at a time.</p>
+        <p class="actions">
+          <a class="button" href="#projects">See my projects</a>
+          <a class="button secondary" href="#about">About me</a>
+        </p>
+      </section>
+    </main>
+    <footer>
+      <p>Made by Sam Rivera, 2026.</p>
+    </footer>
+  </body>
+</html>
+```
+
+- **`<section id="intro">`**: a part of the content with its own heading. Its `id` is what the header's `#intro` link finds.
+- **`<h1>`**: the page's title, and its **only** `h1`. Each later section starts with an `h2`, and anything inside a section uses `h3`. Never pick a level for its size: size is CSS's job, and screen-reader users move through a page by its headings, like a table of contents.
+- **`class="button secondary"`**: two classes on one link. Both are links (they go somewhere); Styling 4 makes them look like buttons.
+
+```check
+page playground/site/index.html "document.querySelectorAll('h1').length" 1 label="exactly one h1"
+page playground/site/index.html "document.querySelector('main > section#intro h1') !== null" true label="the h1 is in the intro section"
+```
+
+## Projects as articles
+
+A section for your projects, starting with one:
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+    <header>
+      <a class="name" href="#intro">Sam Rivera</a>
+      <nav>
+        <ul>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <section id="intro">
+        <h1>I build software people enjoy using.</h1>
+        <p>I'm a developer learning to build full-stack web applications, one real project at a time.</p>
+        <p class="actions">
+          <a class="button" href="#projects">See my projects</a>
+          <a class="button secondary" href="#about">About me</a>
+        </p>
+      </section>
+      <section id="projects">
+        <h2>Projects</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Spreadsheet</h3>
+            <p>A spreadsheet in the browser, with a formula language I wrote myself.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>Made by Sam Rivera, 2026.</p>
+    </footer>
+  </body>
+</html>
+```
+
+- **`<article>`** is something that stands on its own: a project, a post, a product. Each project is one.
+- **`<h3>`**: inside a section headed by an `h2`, the next level down.
+- **`<div class="cards">`** is the one meaningless box on the page. It's there purely to group the projects for layout (Styling 6). That's what `<div>` is for: grouping when no meaningful element fits.
+
+```check
+page playground/site/index.html "document.querySelectorAll('#projects .cards > article.card').length >= 1" true label="the projects section has an article inside its cards box"
+```
+
+## Two more projects
+
+Add two more articles inside `<div class="cards">`, after the first. Try typing them without looking back at the first one: same elements, different words.
+
+Why an article each, rather than one list of projects? Because each project could be lifted out and shown somewhere else (a search result, a feed of your work) and still make sense on its own, with its own heading. That's the test for `<article>`: would it stand alone? A nav link wouldn't, which is why the nav is a list.
+
+```html file=playground/site/index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sam Rivera — Software Developer</title>
+  </head>
+  <body>
+    <header>
+      <a class="name" href="#intro">Sam Rivera</a>
+      <nav>
+        <ul>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <section id="intro">
+        <h1>I build software people enjoy using.</h1>
+        <p>I'm a developer learning to build full-stack web applications, one real project at a time.</p>
+        <p class="actions">
+          <a class="button" href="#projects">See my projects</a>
+          <a class="button secondary" href="#about">About me</a>
+        </p>
+      </section>
+      <section id="projects">
+        <h2>Projects</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Spreadsheet</h3>
+            <p>A spreadsheet in the browser, with a formula language I wrote myself.</p>
+          </article>
+          <article class="card">
+            <h3>Command-line tools</h3>
+            <p>Small scripts that save me time every day, now with tests.</p>
+          </article>
+          <article class="card">
+            <h3>This site</h3>
+            <p>Semantic HTML and hand-written CSS: no framework, no template.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>Made by Sam Rivera, 2026.</p>
+    </footer>
+  </body>
+</html>
+```
+
+```check
+page playground/site/index.html "document.querySelectorAll('article.card').length" 3 label="three project cards"
+page playground/site/index.html "[...document.querySelectorAll('article.card')].every((a) => a.querySelector('h3') && a.querySelector('p'))" true label="each card has an h3 and a paragraph"
+```
+
+## About
+
+The last section, for now:
 
 ```html file=playground/site/index.html
 <!DOCTYPE html>
@@ -91,23 +362,11 @@ This step opens a new file, `playground/site/index.html`. Type it, with your own
 </html>
 ```
 
-### What's new
-
-- **`<meta name="viewport" …>`** tells phones to show the page at its real size instead of shrinking a desktop-sized page to fit. Every page you make should have it. Lesson Styling 7 shows what goes wrong without it.
-- **The navigation is a list** (`<ul>`, *unordered list*, with an `<li>` per item), because it *is* a list of links. Screen readers announce "list, 3 items", which tells the listener what's coming.
-- **`<a href="#projects">`** is a link to the element whose `id` is `projects` on the same page. Click it and the browser scrolls there.
-- **`class="card"`** is a label you put on elements so CSS can pick them out (Styling 2 shows how). An element can have several, separated by spaces: `class="button secondary"`.
-- **`<div class="cards">`** is the one meaningless box on the page. It's there purely to group the three projects for layout (Styling 6). That's what `<div>` is for: grouping when no meaningful element fits.
-
-Open it in your browser: `start playground/site/index.html`. It's plain: black text on white, blue underlined links, bullet points. That's the browser's own built-in styling, the starting point for everything that follows.
+The page is complete: header, three sections, footer. Look at it in the browser: black text on white, blue underlined links, bullet points. That's the browser's own built-in styling, the starting point for everything that follows.
 
 ```check
-page playground/site/index.html "document.querySelectorAll('body > header, header nav, body > main, body > footer').length" 4 label="the page has a header with a nav, a main and a footer"
-page playground/site/index.html "document.querySelectorAll('h1').length" 1 label="exactly one h1"
 page playground/site/index.html "[...document.querySelectorAll('h1, h2, h3')].map((h) => h.tagName).join(',')" "H1,H2,H3,H3,H3,H2" label="the headings go h1, then an h2 per section, h3 inside"
 page playground/site/index.html "document.querySelectorAll('main > section').length" 3 label="main has three sections"
-page playground/site/index.html "document.querySelectorAll('article.card').length" 3 label="three project cards"
-page playground/site/index.html "document.querySelectorAll('nav ul li a[href^=\"#\"]').length" 3 label="the nav is a list of three links to the page's sections"
 ```
 
 ## A section versus a div

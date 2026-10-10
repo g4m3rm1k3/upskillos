@@ -1,6 +1,9 @@
 ---
 title: 5.1 — TypeScript: Checking the Code Before It Runs
 runtime: none
+experiments: Run the compiler
+teaches: typescript, tsconfig, strict mode, tsc, npx, git mv
+uses: modules, npm, vite
 ---
 
 Remember sprint 3's bugs: a typo that only showed up as a red line in the Console after a refresh; `select(r, c)` quietly outlining the wrong cell; the last row crashing when Enter tried to move below it. JavaScript finds out about mistakes **while the program runs**, and only if that line happens to run.
@@ -197,6 +200,17 @@ Browsers don't understand TypeScript. Vite does: when the page asks for `grid.ts
 
 (If you forget this change, the page still works: when asked for a `grid.js` that doesn't exist, Vite tries `grid.ts`. Relying on that makes the page say one thing and do another, so name the file you mean.)
 
+In the next step `tsc` will report 24 type errors in this code. Predict:
+
+```predict
+question: With 24 type errors in `grid.ts`, does the page still work through Vite?
+choice: Yes: Vite strips the types without checking them
+choice: No: Vite refuses to serve code with type errors
+answer: Yes: Vite strips the types without checking them
+explain: Vite removes the type annotations and sends plain JavaScript, as fast as it can; it never checks them. Checking is a separate job, done by `tsc`, and a separate command you choose when to run. The next lesson makes the build run it for you.
+verify: page index.html "document.querySelectorAll('tbody td').length === 2600 ? 'Yes: Vite strips the types without checking them' : 'No: Vite refuses to serve code with type errors'" server=vite
+```
+
 ```check
 contains index.html "src=\"grid.ts\"" -- Change the script's src to grid.ts.
 page index.html "document.querySelectorAll('tbody td').length" 2600 server=vite errors=none label="the page still works through Vite"
@@ -263,4 +277,31 @@ git-tracked tsconfig.json
 git-tracked grid.ts
 git-untracked grid.js label="grid.js is gone from the last commit (renamed)"
 git-clean
+```
+
+## Your turn: types in the playground
+
+Write `playground/ts/area.ts` with a function `area(width, height)` that returns width times height, **with types**: both parameters numbers, and the result a number. At the end, print `area(3, 4)`.
+
+Then make a mistake on purpose: add a line `area("3", 4);`, run `npx tsc --noEmit --strict --ignoreConfig playground/ts/area.ts`, and read the error. (Giving `tsc` a file's name checks just that file. `--ignoreConfig` tells it to leave the project's `tsconfig.json` out: without it, TypeScript stops with error TS5112 rather than guess which settings you meant. So `--strict` is written on the command line.) Delete the mistake, check again, and run the file: Node runs a `.ts` file by removing its types, as Vite does. Commit when it's clean.
+
+```check
+run "node playground/ts/area.ts" stdout="12" label="area(3, 4) prints 12"
+run "npx tsc --noEmit --strict --ignoreConfig playground/ts/area.ts" label="it type-checks with --strict" -- Annotate both parameters and the return type, and remove the mistake.
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+The type check fails if the parameters have no types at all: `--strict` refuses to guess them as `any`.
+
+```hints
+nudge: It's `columnName`'s shape from lesson 5.2: types after the parameters' names, and after the brackets for the result.
+concept: `width: number` annotates a parameter; `): number {` annotates what the function returns. With `--strict`, a parameter without a type is an error, *implicitly has an 'any' type*.
+shape: `function area(width: number, height: number): number { return …; }` and `console.log(area(3, 4));`.
+answer: ~~~typescript
+function area(width: number, height: number): number {
+  return width * height;
+}
+
+console.log(area(3, 4));
+~~~
 ```

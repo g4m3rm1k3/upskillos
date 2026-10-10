@@ -1,13 +1,190 @@
 ---
 title: Styling 4 — Type and Colour
 runtime: none
+teaches: type scale, line length, colour palette, contrast, design tokens, pseudo-classes, focus, prefers-color-scheme
+uses: custom properties, specificity, rem
 ---
 
 Most of a web page is text, so most of how a page looks is how its text looks: sizes that make the structure obvious at a glance, lines short enough to read, and colours that are calm, consistent and readable by everyone. This lesson gives the portfolio a type scale and a colour palette, and buttons that respond to the mouse and the keyboard.
 
-## Sizes in rem, and a type scale
+## Text that's comfortable to read
 
-Headings should look like what they are: the `h1` biggest, each level smaller, body text comfortable. A **type scale** is a short set of sizes, each a fixed step bigger than the last, chosen once like the spacing scale. Change `playground/site/style.css` to this (the new rules are under `body`):
+Start with the body text, and what all headings share. Change `playground/site/style.css` to this (the new lines are in `body`, and the new `h1, h2, h3` rule under it):
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #1f2933;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+a {
+  color: #2563eb;
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid #e4e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+}
+
+header {
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+```
+
+(Your rules from the last Your turn may sit somewhere else in your file, or be written a little differently. Keep yours if they pass.)
+
+- **`font-size: 1rem`** on the body: the reader's own default size, whatever they've chosen. The next step explains why that matters.
+- **`line-height: 1.6`** puts space between lines of body text: long text set tight is tiring to read. A `line-height` without a unit means "times this element's font size".
+- **`h1, h2, h3`**: headings are short and big, so they get a tighter `1.2`.
+- **Margins only below.** Browsers give headings margins above *and* below, in sizes that vary by element. `margin: 0 0 var(--space-3)` (top, sides, bottom) makes the flow of text regular, and keeps space on the scale.
+
+```check
+page playground/site/index.html "getComputedStyle(document.body).lineHeight" 25.6px label="body text has a line height of 1.6"
+page playground/site/index.html "getComputedStyle(document.querySelector('h2')).marginTop + ' ' + getComputedStyle(document.querySelector('h2')).marginBottom" "0px 16px" label="headings have space below only, from the scale"
+```
+
+## A type scale
+
+Headings should look like what they are: the `h1` biggest, each level smaller. A **type scale** is a short set of sizes, each a fixed step bigger than the last, chosen once like the spacing scale:
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #1f2933;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+a {
+  color: #2563eb;
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid #e4e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+}
+
+header {
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+```
+
+The scale goes 1, 1.25, 1.75, 2.5: each step about 1.4 times the last. A clear, regular jump is what makes a heading look like a heading.
+
+The sizes are in **`rem`**, not `px`. People who find small text hard to read set a bigger default font size in their browser; sizes in `rem` grow with that setting, and sizes in `px` ignore it. An experiment shows what that buys:
+
+```predict
+question: `h1` is `2.5rem`. A reader has set their browser's default text size to 20px instead of 16px. How big is the `h1`, in pixels?
+answer: 50
+explain: `rem` is relative to the root element's font size, which follows the reader's setting: 2.5 × 20 = 50. Written as `40px`, it would stay 40 whatever the reader needed.
+verify: page playground/site/index.html "(() => { document.documentElement.style.fontSize = '20px'; return parseFloat(getComputedStyle(document.querySelector('h1')).fontSize); })()"
+```
+
+Try it: in your browser's settings, find the default font size, make it bigger, and watch the page grow with it. Then put it back.
+
+```check
+page playground/site/index.html "getComputedStyle(document.querySelector('h1')).fontSize" 40px label="the h1 is 2.5rem (40px)"
+page playground/site/index.html "getComputedStyle(document.querySelector('h2')).fontSize" 28px label="h2s are 1.75rem (28px)"
+page playground/site/index.html "(() => { document.documentElement.style.fontSize = '20px'; return getComputedStyle(document.querySelector('h1')).fontSize; })()" 50px label="the h1 grows with the reader's text size (rem, not px)" -- Write the sizes in rem.
+```
+
+## Line length
+
+On a wide screen, a paragraph runs the whole width of the 60rem column: over 130 characters a line. Long lines are hard to read, because the eye loses its place going back to the start of the next one. Give paragraphs a maximum width, and the same margins as headings:
 
 ```css file=playground/site/style.css
 *,
@@ -88,34 +265,134 @@ main section {
 }
 ```
 
-(Your rules from the last Your turn may sit somewhere else in your file, or be written a little differently. Keep yours if they pass.)
-
-- **Sizes in `rem`.** People who find small text hard to read set a bigger default font size in their browser. Sizes in `rem` grow with that setting; sizes in `px` ignore it. So: `rem` for anything to do with text.
-- **The scale** goes 1, 1.25, 1.75, 2.5: each step about 1.4 times the last. A clear, regular jump is what makes a heading look like a heading.
-- **`line-height: 1.6`** puts space between lines of body text; long text set tight is tiring to read. Headings are short and big, so they get a tighter `1.2`. A `line-height` without a unit means "times this element's font size".
-- **Margins only below.** Browsers give headings and paragraphs margins above *and* below, in sizes that vary by element. Setting every one to `0 0 var(--space-3)` makes the flow of text regular, and keeps space on the scale.
-- **`max-width: 65ch`** keeps lines to about 65 characters. `ch` is the width of the character `0` in the current font. 45 to 75 characters is the range typographers have recommended for centuries.
-
-Now an experiment on what `rem` buys you:
-
-```predict
-question: `h1` is `2.5rem`. A reader has set their browser's default text size to 20px instead of 16px. How big is the `h1`, in pixels?
-answer: 50
-explain: `rem` is relative to the root element's font size, which follows the reader's setting: 2.5 × 20 = 50. Written as `40px`, it would stay 40 whatever the reader needed.
-verify: page playground/site/index.html "(() => { document.documentElement.style.fontSize = '20px'; return parseFloat(getComputedStyle(document.querySelector('h1')).fontSize); })()"
-```
+**`max-width: 65ch`** keeps lines to about 65 characters. `ch` is the width of the character `0` in the current font. Between 45 and 75 characters is the range typographers have recommended for centuries.
 
 ```check
-page playground/site/index.html "getComputedStyle(document.querySelector('h1')).fontSize" 40px label="the h1 is 2.5rem (40px)"
-page playground/site/index.html "getComputedStyle(document.querySelector('h2')).fontSize" 28px label="h2s are 1.75rem (28px)"
-page playground/site/index.html "getComputedStyle(document.body).lineHeight" 25.6px label="body text has a line height of 1.6"
 page playground/site/index.html "getComputedStyle(document.querySelector('#about p')).maxWidth !== 'none'" true label="paragraphs have a maximum width"
-page playground/site/index.html "(() => { document.documentElement.style.fontSize = '20px'; return getComputedStyle(document.querySelector('h1')).fontSize; })()" 50px label="the h1 grows with the reader's text size (rem, not px)" -- Write the sizes in rem.
+page playground/site/index.html "getComputedStyle(document.querySelector('#about p')).marginTop" 0px label="paragraphs have no space above, only below"
 ```
 
 ## A palette, as tokens
 
-A good palette is small: a few **neutrals** (the page's background, a slightly different surface for cards, a border, the text, and a quieter text for less important things) and **one accent** colour for links and buttons. Every colour on the page comes from that list. Name them on `:root`, like the spacing:
+A good palette is small: a few **neutrals** (the page's background, a slightly different surface for cards, a border, the text, and a quieter text for less important things) and **one accent** colour for links and buttons. Every colour on the page comes from that list. Name them on `:root`, like the spacing, and use them for the body and links:
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-bg: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-border: #e4e7eb;
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-on-accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid #e4e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+}
+
+header {
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+```
+
+- **`--color-text`** and **`--color-bg`** are the page's main pair, now set on `body`.
+- **The accent** has a stronger version for hover, and a colour for text placed *on* it (the next steps use both).
+- **`a`** reads `--color-accent` instead of naming a colour. Nothing should name a colour any more except `:root`, so changing the whole palette, or adding a dark one in this lesson's Your turn, means changing `:root` only.
+
+```check
+page playground/site/index.html "getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim()" "#2563eb" label="the accent is a token on :root"
+page playground/site/index.html "getComputedStyle(document.querySelector('#contact a')).color" "rgb(37, 99, 235)" label="links use the accent"
+page playground/site/index.html "getComputedStyle(document.body).backgroundColor" "rgb(255, 255, 255)" label="the body's background comes from --color-bg"
+```
+
+## Readable for everyone
+
+Light grey text on white looks elegant in a design tool and is unreadable for many people: older eyes, a bright room, a cheap screen. The Web Content Accessibility Guidelines (**WCAG**) put a number on it: the **contrast ratio** between text and its background, from 1 : 1 (the same colour) to 21 : 1 (black on white). Body text needs at least **4.5 : 1**; large headings at least 3 : 1.
+
+```predict
+question: The light grey `#9aa5b1` on white looks fine on many screens. Is it enough for body text, at 4.5 : 1 or more?
+choice: Yes, easily
+choice: No, about 2.5 : 1
+answer: No, about 2.5 : 1
+explain: It's 2.50 : 1, well under the 4.5 : 1 that body text needs. This palette's muted grey, `#52606d`, is 6.46 : 1, and the main text colour is 14.76 : 1. The accent blue on white is 5.17 : 1, so links pass too.
+verify: node -e "const l = (h) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)).reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0); const r = (l('ffffff') + 0.05) / (l('9aa5b1') + 0.05); console.log(r >= 4.5 ? 'Yes, easily' : 'No, about 2.5 : 1')"
+```
+
+You don't calculate this by hand: in DevTools, click any colour swatch in the Styles pane, and the colour picker shows the contrast ratio against the background, with a tick or a cross. Try it now on the link colour: `5.17`, and a tick.
+
+## Surfaces and a footer
+
+Two more uses of the palette: cards on a surface colour, and a footer that recedes:
 
 ```css file=playground/site/style.css
 *,
@@ -214,36 +491,285 @@ footer {
 }
 ```
 
-- **`--color-text`** and **`--color-bg`** are the page's main pair. **`--color-surface`** is a shade off the background, for cards: just enough to separate them without a heavy border. **`--color-muted`** is for text that matters less, like the footer.
-- **The accent** gets a stronger version for hover (next step) and a colour for text placed *on* it.
-- **`footer`** now has its own rule: a thin top border, centred muted text. `text-align: center` centres the text inside the box.
-- Nothing else names a colour any more: every rule reads a token. Changing the whole palette (or adding a dark one, in this lesson's Your turn) means changing `:root` only.
-
-### Readable for everyone
-
-Light grey text on white looks elegant in a design tool and is unreadable for many people: older eyes, a bright room, a cheap screen. The Web Content Accessibility Guidelines (**WCAG**) put a number on it: the **contrast ratio** between text and its background, from 1 : 1 (the same colour) to 21 : 1 (black on white). Body text needs at least **4.5 : 1**; large headings at least 3 : 1.
-
-```predict
-question: The light grey `#9aa5b1` on white looks fine on many screens. Is it enough for body text, at 4.5 : 1 or more?
-choice: Yes, easily
-choice: No, about 2.5 : 1
-answer: No, about 2.5 : 1
-explain: It's 2.50 : 1, well under the 4.5 : 1 that body text needs. This palette's muted grey, `#52606d`, is 6.46 : 1, and the main text colour is 14.76 : 1. The accent blue on white is 5.17 : 1, so links pass too.
-verify: node -e "const l = (h) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)).reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0); const r = (l('ffffff') + 0.05) / (l('9aa5b1') + 0.05); console.log(r >= 4.5 ? 'Yes, easily' : 'No, about 2.5 : 1')"
-```
-
-You don't calculate this by hand: in DevTools, click any colour swatch in the Styles pane, and the colour picker shows the contrast ratio against the background, with a tick or a cross.
+- **`.card`** gets `--color-surface`, a shade off the background: just enough to separate the cards without a heavy border. Its border now reads `--color-border`.
+- **`footer`** has its own rule: a thin top border, padding from the scale, muted text (6.46 : 1, so still readable), centred with `text-align: center`.
 
 ```check
 page playground/site/index.html "getComputedStyle(document.querySelector('.card')).backgroundColor" "rgb(245, 247, 250)" label="cards use the surface colour"
 page playground/site/index.html "getComputedStyle(document.querySelector('footer')).color" "rgb(82, 96, 109)" label="the footer's text is muted"
-page playground/site/index.html "getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim()" "#2563eb" label="the accent is a token on :root"
-page playground/site/index.html "getComputedStyle(document.querySelector('#contact a')).color" "rgb(37, 99, 235)" label="links use the accent"
+page playground/site/index.html "getComputedStyle(document.querySelector('footer')).textAlign" center label="the footer is centred"
 ```
 
-## Buttons, hover and focus
+## Links that look like buttons
 
-The two links at the top, *See my projects* and *About me*, are the actions you most want a visitor to take. They have the class `button`, so give them a button's shape. Add these rules to the end of the file:
+The two links at the top, *See my projects* and *About me*, are the actions you most want a visitor to take. They have the class `button`, so give them a button's shape:
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-bg: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-border: #e4e7eb;
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-on-accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+  background: var(--color-surface);
+}
+
+header {
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+
+footer {
+  padding: var(--space-4) var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-accent);
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+```
+
+- **`display: inline-block`.** A link is an *inline* element: it flows inside a line of text, and padding above and below it doesn't push other things away. `inline-block` keeps it in the line but makes it a proper box, so its padding works.
+- **The colours** are the accent and the text-on-accent token: white on `#2563eb` is 5.17 : 1.
+- **`text-decoration: none`** removes the underline; the shape says "clickable" instead.
+
+```check
+page playground/site/index.html "getComputedStyle(document.querySelector('.button')).backgroundColor" "rgb(37, 99, 235)" label="the main button is filled with the accent"
+page playground/site/index.html "getComputedStyle(document.querySelector('.button')).color" "rgb(255, 255, 255)" label="its text is white"
+page playground/site/index.html "getComputedStyle(document.querySelector('.button')).display" inline-block label="buttons are inline blocks"
+```
+
+## States and variants
+
+A button should respond when the mouse is over it, and the second action should look less important than the first:
+
+```css file=playground/site/style.css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 3rem;
+
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-bg: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-border: #e4e7eb;
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-on-accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  margin-bottom: var(--space-3);
+  background: var(--color-surface);
+}
+
+header {
+  padding: var(--space-3);
+}
+
+main section {
+  padding: var(--space-5) 0;
+}
+
+footer {
+  padding: var(--space-4) var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-accent);
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+}
+
+.button.secondary {
+  background: transparent;
+  color: var(--color-accent);
+}
+
+.button.secondary:hover {
+  background: var(--color-surface);
+}
+```
+
+- **`:hover`** is a **pseudo-class**: it matches an element only while something is true, here while the mouse is over it. A small change on hover tells people "this is clickable".
+- **`.button.secondary`**, two classes with **no space**, means one element with both classes. (With a space, it would mean a `.secondary` *inside* a `.button`.) Its specificity is (0, 2, 0), so it beats `.button`.
+
+```predict
+question: The second button has both classes, `button` and `secondary`. Both rules set `background`. Which background does it get?
+choice: The accent blue, from .button
+choice: Transparent, from .button.secondary
+answer: Transparent, from .button.secondary
+explain: `.button.secondary` is (0, 2, 0) and `.button` is (0, 1, 0): the more specific rule wins, wherever it's written. So the secondary button is blue text and a blue border on no background: an outline.
+verify: page playground/site/index.html "getComputedStyle(document.querySelector('.button.secondary')).backgroundColor === 'rgba(0, 0, 0, 0)' ? 'Transparent, from .button.secondary' : 'The accent blue, from .button'"
+```
+
+Hover over both buttons to see the states.
+
+```check
+page playground/site/index.html "getComputedStyle(document.querySelector('.button.secondary')).backgroundColor" "rgba(0, 0, 0, 0)" label="the secondary button has no fill"
+page playground/site/index.html "getComputedStyle(document.querySelector('.button.secondary')).color" "rgb(37, 99, 235)" label="its text is the accent"
+```
+
+## Keyboard focus
+
+Press **Tab** on the page a few times. Something is highlighted as you go, by the browser's default: often faint, and different in every browser. People who can't use a mouse move through a page with Tab; without a clear focus, they're lost. Give focus a style of your own:
 
 ```css file=playground/site/style.css
 *,
@@ -372,26 +898,10 @@ footer {
 }
 ```
 
-- **`display: inline-block`.** A link is an *inline* element: it flows inside a line of text, and padding above and below it doesn't push other things away. `inline-block` keeps it in the line but makes it a proper box, so its padding works.
-- **`:hover`** is a **pseudo-class**: it matches an element only while something is true, here while the mouse is over it. A small change on hover tells people "this is clickable".
-- **`.button.secondary`**, two classes with **no space**, means one element with both classes. (With a space, it would mean a `.secondary` *inside* a `.button`.) Its specificity is (0, 2, 0), so it beats `.button` and turns the second button into an outline.
-- **`:focus-visible`** matches the element that has the keyboard's focus, when the browser judges a visible marker is needed (when you move with the **Tab** key, not when you click). People who can't use a mouse move through a page with Tab; without a visible focus, they're lost. Never remove the focus outline without replacing it. Press **Tab** a few times on the page to see it move.
-
-```predict
-question: The second button has both classes, `button` and `secondary`. Both rules set `background`. Which background does it get?
-choice: The accent blue, from .button
-choice: Transparent, from .button.secondary
-answer: Transparent, from .button.secondary
-explain: `.button.secondary` is (0, 2, 0) and `.button` is (0, 1, 0): the more specific rule wins, wherever it's written. So the secondary button is blue text and a blue border on no background, which is exactly what the `color` and inherited `border` give it.
-verify: page playground/site/index.html "getComputedStyle(document.querySelector('.button.secondary')).backgroundColor === 'rgba(0, 0, 0, 0)' ? 'Transparent, from .button.secondary' : 'The accent blue, from .button'"
-```
+**`:focus-visible`** matches the element that has the keyboard's focus, when the browser judges a visible marker is needed: when you move with **Tab**, not when you click. `outline` draws a line outside the border that takes up no space, so nothing moves; `outline-offset` leaves a small gap. Never remove the focus outline without replacing it.
 
 ```check
-page playground/site/index.html "getComputedStyle(document.querySelector('.button')).backgroundColor" "rgb(37, 99, 235)" label="the main button is filled with the accent"
-page playground/site/index.html "getComputedStyle(document.querySelector('.button')).color" "rgb(255, 255, 255)" label="its text is white"
-page playground/site/index.html "getComputedStyle(document.querySelector('.button')).display" inline-block label="buttons are inline blocks"
-page playground/site/index.html "getComputedStyle(document.querySelector('.button.secondary')).backgroundColor" "rgba(0, 0, 0, 0)" label="the secondary button has no fill"
-page playground/site/index.html "(() => { const b = document.querySelector('.button'); b.focus(); return getComputedStyle(b).outlineStyle; })()" solid label="a focused button shows an outline"
+page playground/site/index.html "(() => { const b = document.querySelector('.button'); b.focus(); return getComputedStyle(b).outlineStyle + ' ' + getComputedStyle(b).outlineWidth; })()" "solid 3px" label="a focused button shows your 3px outline"
 ```
 
 ## Commit

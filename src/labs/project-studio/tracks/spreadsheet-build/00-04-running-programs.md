@@ -1,6 +1,9 @@
 ---
 title: 0.4 — Running Programs: Output, Errors and Exit Codes
 runtime: none
+experiments: When a program fails; The same failure in JavaScript; Stopping a program that doesn't end
+teaches: running programs, exit codes, tracebacks, stack traces, ctrl+c, console.log, const
+uses: node
 ---
 
 You'll run thousands of programs from the terminal over this series: your own code, tests, build tools, servers. This lesson is about what happens when you do: what a program gives back besides its printed output, how to read it when it fails, and how to stop one that doesn't end.

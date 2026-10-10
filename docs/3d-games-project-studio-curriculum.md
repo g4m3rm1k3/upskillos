@@ -1,6 +1,6 @@
 # Build a 3D Game Studio — Learn Engineering Through Games
 
-Status: Foundations includes scene editing, undo/redo, versioned save/open, a visible box experiment followed by per-object asset recipes and saved dimensions, and an early native Q-learning playground, 2026-10-10. Circuit Clash exists separately. Play/Stop isolation, editor-authored games, export and further genres remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
+Status: Foundations includes scene editing, undo/redo, versioned save/open, a visible box experiment followed by per-object asset recipes and saved dimensions, native UI layout, interaction and coherent dark/light theme lessons, and an early native Q-learning playground, 2026-10-10. Circuit Clash exists separately. Play/Stop isolation, editor-authored games, export and further genres remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
 
 The [completion roadmap](3d-studio-completion-roadmap.md) maps current gaps to full 3D authoring/runtime capability, recurring Q-learning projects, deeper C# and the immediate author-play-export sequence. Planned features remain distinct from implemented lessons.
 
@@ -41,7 +41,9 @@ The asset continuation follows a visible-to-durable sequence:
 | [Per-object box editing](../src/labs/project-studio/tracks/games3d-foundations/09a-box-editing.md) | Keep a tile and trunk independent and undo a resize | Preserve IDs and centers, restore dimensions and preserve redo on rejection |
 | [Saved dimensions and migration](../src/labs/project-studio/tracks/games3d-foundations/09b-box-storage.md) | Keep the authored shapes across restart without discarding earlier scenes | Round-trip sizes, migrate unit cubes and reject a late corrupt shape without losing active data |
 
-After this connected box workflow, extend primitives/materials for a small authored room. Build play isolation, time and collision for the first playable game. Introduce compound props when repeated construction needs reuse, mesh geometry when a ramp or track needs custom triangles, and importing after asset identity, dependencies and resource ownership are taught. A suggestion for a future capability belongs in those arcs rather than interrupting the current prerequisite chain. Return to Q-learning through the playable game rules once those rules exist.
+After the connected box workflow, [layout and interaction lessons](3d-studio-ui-plan.md) address its scattered controls through a task-based redesign, then extend primitives/materials for a small authored room. Build play isolation, time and collision for the first playable game. Introduce compound props when repeated construction needs reuse, mesh geometry when a ramp or track needs custom triangles, and importing after asset identity, dependencies and resource ownership are taught. A suggestion for a future capability belongs in those arcs rather than interrupting the current prerequisite chain. Return to Q-learning through the playable game rules once those rules exist.
+
+UI design returns as the editor adds numeric entry, fonts and resizable views, then through HUDs, menus, asset browsing and Q-learning inspection. The [UI teaching strand](3d-studio-ui-plan.md) places these topics at their concrete needs and separates authored lessons from planned capabilities.
 
 ## Project sequence
 

@@ -1,6 +1,8 @@
 ---
 title: Styling 7 — Every Screen Size
 runtime: none
+teaches: responsive design, device toolbar, media queries, mobile first, clamp
+uses: css grid, flexbox, viewport
 ---
 
 More than half the visits to most websites come from phones. A page that only works on a wide monitor is broken for most of its readers. **Responsive design** means one page that adapts to any screen: the cards already do, by themselves. This lesson makes the rest adapt too, and makes testing on small screens a habit.

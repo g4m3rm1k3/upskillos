@@ -4,7 +4,7 @@ Status: scoped implementation roadmap, 2026-10-10. This document separates imple
 
 ## Where we are
 
-The taught C#/.NET app renders individually sized native 3D boxes and supports a scene list, selection, position edits, creation/deletion, paged selection, snapshot undo/redo and versioned JSON save/open, including box dimensions and migration of earlier unit-cube scenes. Rule and storage checks execute independently of graphics. The early tabular Q-learning experiment defines a fixed grid, trains a bot, evaluates a frozen policy and renders its decisions in a separate native runner.
+The taught C#/.NET app renders individually sized native 3D boxes and supports a scene list, selection, position edits, creation/deletion, paged selection, snapshot undo/redo and versioned JSON save/open, including box dimensions and migration of earlier unit-cube scenes. Native UI lessons now group inspector readouts, apply a consistent palette/spacing system with coherent dark/light panels and viewport, share mouse/keyboard preset commands and show contextual availability/failure feedback. Rule and storage checks execute independently of graphics. The early tabular Q-learning experiment defines a fixed grid, trains a bot, evaluates a frozen policy and renders its decisions in a separate native runner.
 
 The editor does not yet author a playable game. Scene objects have validated box recipes but no general rotation/scale transform, hierarchy, collider, behavior or reusable compound asset definition. The bot does not yet load an editor-authored world. The current navigation experiment uses X/Z tiles at fixed height; that is a controlled early learning problem, not unrestricted 3D navigation.
 
@@ -34,6 +34,8 @@ Build a small released game before expanding every subsystem. Each later genre s
 Rendering and physics dependencies need tested authoring spikes when their integration becomes necessary. Teach a small mechanism first, then compare a production library's responsibilities and costs. Do not imply the graphics binding supplies an entire game engine. Do not promise platform support from a successful Windows build.
 
 The [asset workflow plan](3d-studio-assets-plan.md) makes built-in low-poly construction and imported models core paths through the same scene/project system. Introduce a small primitive palette early so the first game can be built with original in-studio assets; extend compound props and imports through the genre projects.
+
+The [UI teaching strand](3d-studio-ui-plan.md) continues from the current fixed-size editor design into property entry, fonts/scaling, correctly proportioned views, game HUDs and observed usability. These later capabilities remain planned.
 
 ## Immediate playable sequence
 

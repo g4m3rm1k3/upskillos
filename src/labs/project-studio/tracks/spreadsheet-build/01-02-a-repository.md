@@ -1,6 +1,9 @@
 ---
 title: 1.2 — Make the Folder a Repository
 runtime: none
+experiments: Before: not a repository
+teaches: repository, git init, git status, hidden files, markdown
+uses: git
 ---
 
 Git doesn't watch every folder on your computer. It keeps history only for folders you turn into **repositories** (often shortened to *repo*). This lesson turns your project folder into one, and shows where Git keeps the history.
@@ -29,6 +32,16 @@ git init
 ```text
 PS C:\Users\you\Documents\spreadsheet> git init
 Initialized empty Git repository in C:/Users/you/Documents/spreadsheet/.git/
+```
+
+```predict
+question: You just ran `git init`. What does `ls` show now?
+choice: Nothing new: the .git folder is hidden
+choice: A new folder called .git
+choice: A new folder called repository
+answer: Nothing new: the .git folder is hidden
+explain: `git init` made a folder called `.git`, but it's marked **hidden**, so `ls` and the file tree don't show it. The next step shows how to see it.
+verify: if (-not (ls | Where-Object Name -eq '.git')) { 'Nothing new: the .git folder is hidden' }
 ```
 
 `init` means "initialize": start a new, empty repository here. Your files haven't changed and nothing is recorded yet. Git has only made its `.git` folder. (Git prints the path with `/` even on Windows; Git came from Linux, and Windows accepts both.)

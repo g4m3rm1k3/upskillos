@@ -3,6 +3,8 @@ title: 0.1 — Your Project Folder and the Terminal
 track: Bootcamp 1 · Professional Foundations
 trackOrder: 1
 runtime: none
+experiments: Move around; When the shell doesn't know a command
+teaches: terminal, current directory, paths, relative paths, mkdir, cd, ls, remove-item, playground
 ---
 
 This is the first lesson of a bootcamp: the road from writing scripts that work to working as a professional full-stack software engineer. You'll learn the everyday tools, TypeScript and later C#, testing, databases, security, how software is shipped and run, how teams work from a client's requirements, and finally how to get through the interviews.

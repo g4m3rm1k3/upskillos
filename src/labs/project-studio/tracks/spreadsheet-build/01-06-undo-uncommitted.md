@@ -1,6 +1,8 @@
 ---
 title: 1.6 — Undoing Changes You Haven't Committed
 runtime: none
+teaches: git restore
+uses: git diff, staging area
 ---
 
 You'll often try something, make a mess, and want the last good version back. With Git, "the last good version" is the last commit, and getting back to it takes one command.
@@ -74,6 +76,14 @@ Changes to be committed:
 ```
 
 `git status` told you the command itself, in the hint in brackets. After `git restore --staged hello.js`, the change is no longer staged (*Changes not staged for commit*), but it's still in your file.
+
+```predict
+question: After `git restore --staged hello.js`, is the new line still in `hello.js`?
+choice: Yes: only the staging was undone
+choice: No: the file went back to the last commit
+answer: Yes: only the staging was undone
+explain: `--staged` acts on the staging area only: the change comes out of the box and stays in your file, listed as *not staged*. Without `--staged`, `git restore` acts on the file itself and throws the change away.
+```
 
 So: **`git restore --staged`** takes a file out of the staging area and keeps your edit. **`git restore`** throws your edit away.
 

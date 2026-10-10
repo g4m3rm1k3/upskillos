@@ -1,6 +1,9 @@
 ---
 title: 1.8 — Put the Project on GitHub
 runtime: none
+experiments: Ahead and behind
+teaches: github, remotes, git push, upstream
+uses: branches
 ---
 
 Your history lives in the `.git` folder on one computer. If the disk fails, it's gone. **GitHub** is a website that keeps a copy of Git repositories online. You **push** your commits to it, and you can get them back on any computer. It's also where other people can see your work and where, later in this series, a robot will test every push.
@@ -80,6 +83,15 @@ On branch main
 Your branch is up to date with 'origin/main'.
 
 nothing to commit, working tree clean
+```
+
+```predict
+question: You make one more commit and don't push it. What does `git status` say about GitHub?
+choice: Your branch is up to date with 'origin/main'
+choice: Your branch is ahead of 'origin/main' by 1 commit
+choice: Nothing about GitHub at all
+answer: Your branch is ahead of 'origin/main' by 1 commit
+explain: Git compares your `main` with its memory of GitHub's, `origin/main`. Your new commit is on one and not the other, so your branch is one commit ahead, and `git push` would send it.
 ```
 
 Make one more commit and run `git status` before pushing: it says *Your branch is ahead of 'origin/main' by 1 commit*. `git push` uploads it. That rhythm (commit, commit, push) is your everyday workflow from here on.

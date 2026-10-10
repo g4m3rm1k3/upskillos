@@ -1,6 +1,9 @@
 ---
 title: 5.2 — Fixing the Type Errors
 runtime: none
+experiments: A missing element: the find helper
+teaches: type annotations, any, null checks, type arguments, generics, union types, narrowing, optional chaining, throw
+uses: typescript, tsconfig
 ---
 
 Twenty-four errors, in a handful of kinds. Each kind is a question TypeScript is asking about your code, and answering it makes the code clearer and safer.
@@ -35,9 +38,286 @@ contains columns.ts "index: number" -- Annotate the parameter: (index: number)
 contains columns.ts "): string" -- Annotate the return type: ): string
 ```
 
-## Fix grid.ts
+## A missing element: the find helper
 
-Replace `grid.ts` with this version. The sections below go through each change and the error it answers.
+Five of the errors say *'table' is possibly 'null'*, or something like it. `document.querySelector("#grid")` gives the element, or **`null`** if no element matches, for example if the `id` were misspelled. JavaScript would carry on until `table.appendChild` failed with *Cannot read properties of null*. TypeScript makes you decide what should happen instead.
+
+The answer here is a small function, `find`, used for all three lookups:
+
+```typescript file=grid.ts
+import { columnName } from "./columns.ts";
+
+const columns = 26;
+const rows = 100;
+
+function find<T extends Element>(selector: string): T {
+  const element = document.querySelector<T>(selector);
+  if (element === null) {
+    throw new Error("The page has no element matching " + selector);
+  }
+  return element;
+}
+
+const table = find<HTMLTableElement>("#grid");
+
+const head = document.createElement("thead");
+const headerRow = document.createElement("tr");
+headerRow.appendChild(document.createElement("th"));
+for (let c = 0; c < columns; c++) {
+  const th = document.createElement("th");
+  th.textContent = columnName(c);
+  headerRow.appendChild(th);
+}
+head.appendChild(headerRow);
+table.appendChild(head);
+
+const body = document.createElement("tbody");
+for (let r = 0; r < rows; r++) {
+  const tr = document.createElement("tr");
+  const rowHeader = document.createElement("th");
+  rowHeader.textContent = r + 1;
+  tr.appendChild(rowHeader);
+  for (let c = 0; c < columns; c++) {
+    const td = document.createElement("td");
+    td.addEventListener("click", () => select(c, r));
+    tr.appendChild(td);
+  }
+  body.appendChild(tr);
+}
+table.appendChild(body);
+
+const nameBox = find<HTMLDivElement>("#name-box");
+const formulaBar = find<HTMLInputElement>("#formula-bar");
+
+let selected = null;
+let selectedColumn = 0;
+let selectedRow = 0;
+
+function cellAt(column, row) {
+  return body.rows[row].cells[column + 1];
+}
+
+function select(column, row) {
+  if (selected !== null) {
+    selected.classList.remove("selected");
+  }
+  selected = cellAt(column, row);
+  selectedColumn = column;
+  selectedRow = row;
+  selected.classList.add("selected");
+  nameBox.textContent = columnName(column) + (row + 1);
+  formulaBar.value = selected.textContent;
+  formulaBar.focus();
+}
+
+formulaBar.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    selected.textContent = formulaBar.value;
+    if (selectedRow + 1 < rows) {
+      select(selectedColumn, selectedRow + 1);
+    }
+  }
+});
+
+select(0, 0);
+```
+
+- **`throw new Error(...)`** is JavaScript's `raise`: it stops the program with an error, and the message says exactly what's missing. After that `if`, the function can only reach `return element` with a real element, so its result is never `null`, and every use of `table`, `nameBox` and `formulaBar` is safe.
+- **`find<HTMLTableElement>("#grid")`**: the part in `< >` is a **type argument**. `querySelector` can't know what kind of element `#grid` will be, so you tell it. That's what fixes *Property 'value' does not exist on type 'Element'*: an `Element` could be anything, but an `HTMLInputElement` has a `value`.
+- **`<T extends Element>`** in the definition makes `find` work for any kind of element: `T` stands for whichever kind the caller names. (Python's type hints have the same idea: `list[str]`.)
+
+Run `npx tsc` again. Before you do, predict:
+
+```predict
+question: The find helper fixes the "possibly null" errors. Does the error *Property 'key' does not exist on type 'Event'* go away too?
+choice: Yes
+choice: No, it needs a fix of its own
+answer: Yes
+explain: Now that TypeScript knows `formulaBar` is an input, it knows that a `"keydown"` listener on it receives a keyboard event, and keyboard events have a `key`. One precise type fixed an error several lines away.
+verify: if (-not (npx tsc --pretty false | Select-String "Property 'key'")) { 'Yes' } else { 'No' }; exit 0
+```
+
+## Text, not a number {#text-not-numbers}
+
+The next error: *Type 'number' is not assignable to type 'string'*. `textContent` holds text, and `rowHeader.textContent = r + 1` gave it a number, which the browser converted for you. TypeScript wants that conversion written down:
+
+```typescript file=grid.ts
+import { columnName } from "./columns.ts";
+
+const columns = 26;
+const rows = 100;
+
+function find<T extends Element>(selector: string): T {
+  const element = document.querySelector<T>(selector);
+  if (element === null) {
+    throw new Error("The page has no element matching " + selector);
+  }
+  return element;
+}
+
+const table = find<HTMLTableElement>("#grid");
+
+const head = document.createElement("thead");
+const headerRow = document.createElement("tr");
+headerRow.appendChild(document.createElement("th"));
+for (let c = 0; c < columns; c++) {
+  const th = document.createElement("th");
+  th.textContent = columnName(c);
+  headerRow.appendChild(th);
+}
+head.appendChild(headerRow);
+table.appendChild(head);
+
+const body = document.createElement("tbody");
+for (let r = 0; r < rows; r++) {
+  const tr = document.createElement("tr");
+  const rowHeader = document.createElement("th");
+  rowHeader.textContent = String(r + 1);
+  tr.appendChild(rowHeader);
+  for (let c = 0; c < columns; c++) {
+    const td = document.createElement("td");
+    td.addEventListener("click", () => select(c, r));
+    tr.appendChild(td);
+  }
+  body.appendChild(tr);
+}
+table.appendChild(body);
+
+const nameBox = find<HTMLDivElement>("#name-box");
+const formulaBar = find<HTMLInputElement>("#formula-bar");
+
+let selected = null;
+let selectedColumn = 0;
+let selectedRow = 0;
+
+function cellAt(column, row) {
+  return body.rows[row].cells[column + 1];
+}
+
+function select(column, row) {
+  if (selected !== null) {
+    selected.classList.remove("selected");
+  }
+  selected = cellAt(column, row);
+  selectedColumn = column;
+  selectedRow = row;
+  selected.classList.add("selected");
+  nameBox.textContent = columnName(column) + (row + 1);
+  formulaBar.value = selected.textContent;
+  formulaBar.focus();
+}
+
+formulaBar.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    selected.textContent = formulaBar.value;
+    if (selectedRow + 1 < rows) {
+      select(selectedColumn, selectedRow + 1);
+    }
+  }
+});
+
+select(0, 0);
+```
+
+**`String(r + 1)`** turns the number into text, on purpose. Small, but it's exactly the kind of mix-up behind `"B" + 2 + 1` in lesson 3.4: text and numbers combining in ways nobody meant. Run `npx tsc`: one kind of error fewer.
+
+## A value that might be missing {#maybe-null}
+
+*Variable 'selected' implicitly has type 'any'*: TypeScript can't tell what `selected` will hold. Say so:
+
+```typescript file=grid.ts
+import { columnName } from "./columns.ts";
+
+const columns = 26;
+const rows = 100;
+
+function find<T extends Element>(selector: string): T {
+  const element = document.querySelector<T>(selector);
+  if (element === null) {
+    throw new Error("The page has no element matching " + selector);
+  }
+  return element;
+}
+
+const table = find<HTMLTableElement>("#grid");
+
+const head = document.createElement("thead");
+const headerRow = document.createElement("tr");
+headerRow.appendChild(document.createElement("th"));
+for (let c = 0; c < columns; c++) {
+  const th = document.createElement("th");
+  th.textContent = columnName(c);
+  headerRow.appendChild(th);
+}
+head.appendChild(headerRow);
+table.appendChild(head);
+
+const body = document.createElement("tbody");
+for (let r = 0; r < rows; r++) {
+  const tr = document.createElement("tr");
+  const rowHeader = document.createElement("th");
+  rowHeader.textContent = String(r + 1);
+  tr.appendChild(rowHeader);
+  for (let c = 0; c < columns; c++) {
+    const td = document.createElement("td");
+    td.addEventListener("click", () => select(c, r));
+    tr.appendChild(td);
+  }
+  body.appendChild(tr);
+}
+table.appendChild(body);
+
+const nameBox = find<HTMLDivElement>("#name-box");
+const formulaBar = find<HTMLInputElement>("#formula-bar");
+
+let selected: HTMLTableCellElement | null = null;
+let selectedColumn = 0;
+let selectedRow = 0;
+
+function cellAt(column, row) {
+  return body.rows[row].cells[column + 1];
+}
+
+function select(column, row) {
+  if (selected !== null) {
+    selected.classList.remove("selected");
+  }
+  selected = cellAt(column, row);
+  selectedColumn = column;
+  selectedRow = row;
+  selected.classList.add("selected");
+  nameBox.textContent = columnName(column) + (row + 1);
+  formulaBar.value = selected.textContent;
+  formulaBar.focus();
+}
+
+formulaBar.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && selected !== null) {
+    selected.textContent = formulaBar.value;
+    if (selectedRow + 1 < rows) {
+      select(selectedColumn, selectedRow + 1);
+    }
+  }
+});
+
+select(0, 0);
+```
+
+`selected` starts as `null` and later holds a cell, so its type is "a table cell **or** null". The **`|`** builds a **union type**: one of several types. TypeScript then insists that any code using `selected` first checks which one it has. That's why the Enter listener now says `&& selected !== null`: before the check, `selected` might be `null`; after it, TypeScript knows it's a cell. Checking narrows the type, and that's called **narrowing**.
+
+## Off the edge of the grid {#off-the-edge}
+
+The last errors say *Object is possibly 'undefined'*, and they're the bug from lesson 3.5. Predict first:
+
+```predict
+question: The grid has 100 rows, numbered 0 to 99 in the code. What is `body.rows[100]`?
+choice: undefined
+choice: An error
+choice: The last row
+answer: undefined
+explain: Reading past the end gives `undefined` (lesson 3.1), and the next `.cells` on it would crash. `noUncheckedIndexedAccess` in `tsconfig.json` makes TypeScript point out every place that could happen.
+verify: page index.html "document.querySelector('tbody').rows[100] === undefined ? 'undefined' : 'The last row'" server=vite
+```
 
 ```typescript file=grid.ts
 import { columnName } from "./columns.ts";
@@ -121,32 +401,6 @@ formulaBar.addEventListener("keydown", (event) => {
 select(0, 0);
 ```
 
-### "'table' is possibly 'null'": the find helper
-
-`document.querySelector("#grid")` gives the element, or **`null`** if no element matches, for example if the `id` were misspelled. JavaScript would carry on until `table.appendChild` failed with *Cannot read properties of null*. TypeScript makes you decide what should happen instead.
-
-The answer here is `find`: look the element up, and if it isn't there, stop immediately with a clear message. **`throw new Error(...)`** is JavaScript's `raise`: it stops the program with an error, and the message says exactly what's missing. After that `if`, the function can only reach `return element` with a real element, so its result is never `null`, and every use of `table`, `nameBox` and `formulaBar` is safe.
-
-**`find<HTMLTableElement>("#grid")`**: the part in `< >` is a **type argument**. `querySelector` can't know what kind of element `#grid` will be, so you tell it. That's what fixes *Property 'value' does not exist on type 'Element'*: an `Element` could be anything, but an `HTMLInputElement` has a `value`. In the definition, `<T extends Element>` makes `find` work for any kind of element: `T` stands for whichever kind the caller names. (Lists in Python work the same way in type hints: `list[str]`.)
-
-The *Property 'key' does not exist on type 'Event'* error disappears too. Now that TypeScript knows `formulaBar` is an input, it knows a `"keydown"` listener receives a keyboard event, which has a `key`.
-
-### "Type 'number' is not assignable to type 'string'"
-
-`textContent` holds text. `rowHeader.textContent = r + 1` gave it a number, which the browser converted for you, and TypeScript wants that conversion written down: **`String(r + 1)`**. Small, but it's exactly the kind of mix-up behind `"B" + 2 + 1` in lesson 3.4.
-
-### "Variable 'selected' implicitly has type 'any'"
-
-```typescript
-let selected: HTMLTableCellElement | null = null;
-```
-
-`selected` starts as `null` and later holds a cell, so its type is "a table cell **or** null". The **`|`** builds a **union type**: one of several types. TypeScript then insists that any code using `selected` first checks which one it has. That's why the Enter listener now says `&& selected !== null`: before the check, `selected` might be `null`; after it, TypeScript knows it's a cell. Checking narrows the type, and that's called **narrowing**.
-
-### "Object is possibly 'undefined'"
-
-This one is the bug from lesson 3.5. `body.rows[row]` is `undefined` when there's no such row: row 101, say. `noUncheckedIndexedAccess` makes TypeScript say so.
-
 - **`body.rows[row]?.cells[column + 1]`**: **`?.`** means "if what's on the left is `undefined` or `null`, stop and give `undefined`; otherwise carry on". So `cellAt` returns a cell, or `undefined` for a position off the grid, and its return type says exactly that: `HTMLTableCellElement | undefined`.
 - **`select`** checks for `undefined` first and does nothing for a position that doesn't exist, instead of crashing. Selecting off the edge of the grid is now harmless, wherever it comes from.
 - **`: void`** says `select` returns nothing.
@@ -179,4 +433,36 @@ git commit -am "Fix the type errors"
 
 ```check
 git-clean
+```
+
+## Your turn: a parser that can say "no"
+
+Write `playground/ts/parse.ts` with a function `parseNumber(text: string): number | null`: it gives the number the text means, or `null` when the text isn't a number. Watch out for one case: **empty text** (and text that's only spaces) isn't a number, though JavaScript's `Number("")` is `0`. Try `Number("")` in the Console to see.
+
+At the end of the file, print `JSON.stringify([parseNumber("3.5"), parseNumber("abc"), parseNumber(""), parseNumber(" 7 ")])`. Run it with `node playground/ts/parse.ts` (Node runs TypeScript files by removing their types), check it with `npx tsc --noEmit --strict --ignoreConfig playground/ts/parse.ts`, and commit.
+
+```check
+run "node playground/ts/parse.ts" stdout="[3.5,null,null,7]" label="3.5 is 3.5, abc and empty text are null, and \" 7 \" is 7" -- Number("") is 0: check for blank text first.
+run "npx tsc --noEmit --strict --ignoreConfig playground/ts/parse.ts" label="it type-checks with --strict" -- Annotate the parameter and the return type.
+git-clean -- Commit it: git add playground, then git commit.
+```
+
+```hints
+nudge: Two kinds of "not a number" need catching: text that `Number` can't read, and text that `Number` reads as 0 though it's blank.
+concept: `Number(text)` gives `NaN` for text it can't read; `Number.isNaN(x)` tests for that (`NaN === NaN` is false, so `===` can't). `text.trim()` removes spaces from both ends, so blank text trims to `""`. A union return type, `number | null`, lets the function say "no" without throwing.
+shape: If the trimmed text is empty, return `null`. Otherwise convert it; if that's `NaN`, return `null`; otherwise return the number.
+answer: ~~~typescript
+function parseNumber(text: string): number | null {
+  if (text.trim() === "") {
+    return null;
+  }
+  const value = Number(text);
+  if (Number.isNaN(value)) {
+    return null;
+  }
+  return value;
+}
+
+console.log(JSON.stringify([parseNumber("3.5"), parseNumber("abc"), parseNumber(""), parseNumber(" 7 ")]));
+~~~
 ```

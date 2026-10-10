@@ -1,6 +1,9 @@
 ---
 title: 4.1 — Modules: One File Becomes Two
 runtime: none
+experiments: The wall
+teaches: modules, export, import, module scope, cors on file urls
+uses: functions, script element, relative paths
 ---
 
 `grid.js` does everything: it names columns, builds the table, tracks the selection and handles typing. Every feature you add makes it longer. Worse, its pieces can't be used on their own: to try `columnName` you have to load the whole page.
@@ -19,7 +22,7 @@ git-branch modules-and-vite -- Run git switch -c modules-and-vite
 
 ## columns.js
 
-This step opens a new file, `columns.js`. **Move** your `columnName` function into it: cut it out of `grid.js` and paste it here, then put `export` in front of `function`. The one below is one correct answer to lesson 3.6's challenge; if yours is different and passed, keep yours.
+This step opens a new file, `columns.js`. **Move** your `columnName` function into it: cut it out of `grid.js` and paste it here, then put `export` in front of `function`. The one below is lesson 3.7's solution; if yours is different and passed, keep yours.
 
 ```javascript file=columns.js
 export function columnName(index) {
@@ -145,6 +148,17 @@ A file that uses `import` must be loaded as a module. Add `type="module"` to the
 </html>
 ```
 
+Now open the page the way you have since sprint 2, as a file. Before you look, predict:
+
+```predict
+question: You open `index.html` as a file (`file:///...`), with the script now loaded as a module. What do you see?
+choice: The grid, as before
+choice: An empty page under the toolbar
+answer: An empty page under the toolbar
+explain: Browsers refuse to load modules from `file://` pages, for safety (the next step explains why). The script never runs, so the grid is never built. Nothing on the page says so: only the Console does.
+verify: page index.html "document.querySelectorAll('tbody td').length === 0 ? 'An empty page under the toolbar' : 'The grid, as before'"
+```
+
 ```check
 contains index.html "<script type=\"module\" src=\"grid.js\"></script>" -- Add type="module" to the script tag.
 ```
@@ -187,4 +201,49 @@ Committing a page that doesn't open as a file is fine **on a branch**: `main` st
 ```check
 git-tracked columns.js
 git-clean
+```
+
+## Your turn: a module of your own
+
+Practise modules in the playground, with Node, which needs no web server. Node treats a file ending in **`.mjs`** as a module, so it understands `import` and `export` in it.
+
+- `playground/js/stats.mjs` **exports** two functions: `sum(numbers)`, the total of an array of numbers, and `average(numbers)`, the total divided by how many there are. It prints nothing itself.
+- `playground/js/report.mjs` **imports** them from `./stats.mjs` and prints `sum 10, average 2.5` for the numbers `[1, 2, 3, 4]`.
+
+Run `node playground/js/report.mjs`, then commit both files.
+
+```check
+run "node playground/js/report.mjs" stdout="sum 10, average 2.5" label="report.mjs prints sum 10, average 2.5"
+run "node -e \"import('./playground/js/stats.mjs').then((m) => console.log(m.sum([1, 2]) + ' ' + m.average([2, 4])))\"" stdout="3 3" label="stats.mjs exports sum and average that work on other numbers too" -- Put export in front of both functions.
+contains playground/js/report.mjs "./stats.mjs" label="report.mjs imports from stats.mjs" -- The import names the file with its path: "./stats.mjs".
+git-clean -- Commit both: git add playground, then git commit.
+```
+
+The second check imports your module from another program, as a real user of it would. A module's exports are its promise to other code.
+
+```hints
+nudge: `columns.js` and `grid.js` are the pattern: `export` in front of the functions in one file, `import { … } from "./…"` in the other.
+concept: `average` can call `sum`: functions in the same module can use each other, exported or not. A loop adds up the array (lesson 3.2), and `.length` says how many items there are.
+shape: stats.mjs: `export function sum(numbers) { … }` with a loop and a total, and `export function average(numbers) { return sum(numbers) / numbers.length; }`. report.mjs: one import line, an array, one `console.log`.
+answer: ~~~javascript
+// stats.mjs
+export function sum(numbers) {
+  let total = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    total = total + numbers[i];
+  }
+  return total;
+}
+
+export function average(numbers) {
+  return sum(numbers) / numbers.length;
+}
+~~~
+~~~javascript
+// report.mjs
+import { average, sum } from "./stats.mjs";
+
+const numbers = [1, 2, 3, 4];
+console.log("sum " + sum(numbers) + ", average " + average(numbers));
+~~~
 ```

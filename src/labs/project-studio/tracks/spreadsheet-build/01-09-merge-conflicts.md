@@ -1,6 +1,9 @@
 ---
 title: 1.9 — Merge Conflicts
 runtime: none
+experiments: The merge stops; Resolve it
+teaches: merge conflicts, merge commits
+uses: branches, git merge, git push
 ---
 
 In lesson 1.7, `main` hadn't moved while you worked on your branch, so merging was a fast-forward: Git just moved the name `main` along. On a team that almost never happens. While you work on your branch, other people merge theirs, and `main` moves on.

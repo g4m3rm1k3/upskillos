@@ -122,7 +122,7 @@ Start the dev server and type, in the column-letter order you'd read them:
 - A3: `=2*(` shows `#ERROR!`.
 
 ```check
-run "npm test" stdout="36 passed" label="all 36 tests pass"
+run "npm test" stdout="41 passed" label="all 41 tests pass"
 page index.html "(() => { const rows = document.querySelectorAll('tbody tr'); const bar = document.querySelector('#formula-bar'); const type = (r, c, text) => { rows[r].querySelectorAll('td')[c].click(); bar.value = text; bar.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); }; type(1, 1, '3.50'); type(1, 2, '2'); type(1, 3, '=B2*C2'); const before = rows[1].querySelectorAll('td')[3].textContent; type(1, 2, '4'); return before + ' ' + rows[1].querySelectorAll('td')[3].textContent; })()" "7 14" server=vite errors=none label="D2 =B2*C2 shows 7, then 14 when C2 changes to 4"
 page index.html "(() => { const rows = document.querySelectorAll('tbody tr'); const bar = document.querySelector('#formula-bar'); rows[0].querySelectorAll('td')[0].click(); bar.value = '=1/0'; bar.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); rows[0].querySelectorAll('td')[0].click(); return rows[0].querySelectorAll('td')[0].textContent + ' | ' + bar.value; })()" "#DIV/0! | =1/0" server=vite label="A1 shows the value #DIV/0!, while the formula bar shows =1/0"
 ```

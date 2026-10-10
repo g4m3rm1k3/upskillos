@@ -1,6 +1,8 @@
 ---
 title: Styling 2 — Which Rule Wins
 runtime: none
+teaches: css, selectors, cascade, specificity, inheritance
+uses: classes, ids
 ---
 
 CSS (Cascading Style Sheets) is a list of rules, and on any real page several rules want to style the same element. The browser settles every disagreement the same way, with a few simple laws. Once you know them, CSS stops feeling random: you can say in advance which rule will win, and when a style "doesn't work", you can say why.
@@ -74,9 +76,9 @@ page playground/site/index.html "getComputedStyle(document.querySelector('nav a'
 
 ## An experiment: four rules, three paragraphs
 
-Now the laws themselves, in a lab page with nothing else on it. This step opens `playground/css/which-wins.html`:
+Now the laws themselves, in a lab page with nothing else on it. It's supplied, because the point is to experiment with it, not to type it: click **Create provided playground/css/which-wins.html**, then read it.
 
-```html file=playground/css/which-wins.html
+```html file=playground/css/which-wins.html provided
 <!DOCTYPE html>
 <html lang="en">
   <head>

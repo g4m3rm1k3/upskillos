@@ -130,6 +130,44 @@ The strongest sprint: grammar before code, recursion explained through base case
 
 **Playground:** a tiny calculator for `+` and `*` only, *before* 7.1, where "just split the text" is tried and breaks. The lesson already argues this in words; the playground lets the learner feel it.
 
+## The teaching check, first run (2026-10-10)
+
+`node scripts/check-bootcamp-teaching.mjs --until 02-06`, after Sprints 0–2 were upgraded. Every step's real size is measured against the file as the learner has it at that point.
+
+**Steps that are too big** (over 30 lines is a dump, over 15 is big):
+
+| Lesson | Step | Lines | Verdict |
+|---|---|---|---|
+| 2.6 Solution | The HTML | 65 | dump: split into header and nav; intro; one plan; the other two; footer |
+| Styling 1 | The portfolio's HTML | 54 | dump: split into skeleton and header; the intro section; projects; about and footer |
+| 2.6 Solution | Tokens and base styles | 48 | dump: split into reset and tokens; base text; links and focus |
+| 2.2 | The table | 41 | big **on purpose**: typing the repetition is the lesson ("count the cost"). Keep, and say so in the text |
+| 2.6 Solution | Plans that line up | 34 | dump: split into the plan card; the flex column; featured and badge; price |
+| Styling 5 | An experiment: the flex lab | 31 | dump: make the lab a supplied file (`provided`): it's for experimenting, not typing |
+| Styling 6 | An experiment: the grid lab | 30 | big: supplied file, as above |
+| 2.6 Solution | The header; Buttons and the footer; The plans | 21–27 | big: split, and the explanations need to grow (42–57 words for 25 lines is too little) |
+| Styling 4 | Sizes; Palette; Buttons | 19–25 | big: split each into two steps |
+| 2.3 | The stylesheet | 24 | big: split into the grid's lines; the headers; sticky |
+| Styling 2 | The lab page | 18 | big: supplied file |
+| Styling 5 | The header in a row | 16 | borderline: split into the header row; the nav list |
+
+**Lessons missing a part:**
+
+- **No prediction (10):** 1.1–1.5 and 1.7–1.8 (the Sprint 1 upgrade added Your turns but not predictions: a miss), 2.4, 2.5. 2.5 is a challenge, where a prediction doesn't fit; the rest need one.
+- **No experiment (15):** most of Sprints 0 and 1, and 2.1–2.5. Some are experiments the check can't see (0.4's broken programs, 1.6's breaking), so the check's rule should accept a step marked as an experiment; the rest need one.
+- **The concept ledger** isn't declared in any lesson yet.
+
+**Before Sprint 3:** fix these in Sprints 0–2 (split the dumps, make the labs supplied files, add the missing predictions and experiments, declare the ledger), then write Sprint 3 with the check clean from the start.
+
+## Security in Module 1 (added 2026-10-10)
+
+The owner made security a thread through every module (the plan's *Security in every module*, and its checklist for every language construct). For the sprints still to upgrade, that means:
+
+- **Sprint 3 — XSS.** A playground experiment: put `<img src=x onerror="alert('hacked')">` into an element with `innerHTML`, watch it run, then with `textContent`, watch it show as text. Then point out that 3.5 already writes cells with `textContent`, and add a check that typing that text into a cell shows it as text. The habit: anything a user typed is never HTML.
+- **Sprint 4 — the supply chain.** What `npm install` really trusts; the lockfile as a security record; `npm audit` and what to do (and not do) about its output; why `npx some-package` from a tutorial deserves a look first.
+- **Sprint 7 — the formula language is code users run.** Apply the checklist to it: no `eval` anywhere (already true; say why); cycles already caught (7.6); **deep nesting**: `=((((…1…))))` with enough brackets should overflow the parser's recursion with a `RangeError` (measure how many when writing the lesson), which `cellValue` re-throws, so a single cell can crash the page. A new step or Your turn adds a nesting limit that gives `#ERROR!`, with a test. The 7.8 solution lesson should also check that the negation rule from 7.7 can't be nested past the limit.
+- **Each sprint challenge** gets at least one security requirement in its acceptance tests.
+
 ## The test runner
 
 The spreadsheet track still uses its own walkthrough runner, `spreadsheetBuild.desktop.test.js`, written before the shared `walkSeries.js`. The shared one does things the old one doesn't:

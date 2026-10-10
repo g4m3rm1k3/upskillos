@@ -1,6 +1,9 @@
 ---
 title: 0.3 — Install Node.js
 runtime: none
+experiments: A number that surprises everyone; Your turn: experiment in the REPL
+teaches: node, npm, repl, floating point
+uses: path variable
 ---
 
 The spreadsheet will run in a web browser, and browsers run one programming language: **JavaScript**. You'll learn JavaScript from Python starting in sprint 3. Before that, you need a way to run JavaScript outside a browser, the way `python` runs Python files. That program is **Node.js** (usually just called Node).
