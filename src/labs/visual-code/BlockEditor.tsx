@@ -8,7 +8,7 @@
 // class names are now injected per host (the two hosts use genuinely
 // different, independent theming systems — see BlockEditorClassNames below).
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   BLOCK_GROUPS, BLOCK_LIBRARY, blockDefinition, canContainChildren, childOptionsFor, summarizeBlock,
 } from './blocks.ts'
@@ -185,6 +185,7 @@ export interface BlockPaletteProps {
    *  HTML Lab's Visual JS is always JS, so it omits this; Visual Code Studio
    *  passes `project.target === 'typescript'`. */
   allowTsOnly?: boolean
+  groupOrder?: string[]
   /** If provided, called for each block definition; return false to hide the block from the palette. */
   filterBlock?: (b: BlockDefinition) => boolean
 }
@@ -202,8 +203,12 @@ export function filterPaletteBlocks(query: string, allowTsOnly = false, filterBl
   })
 }
 
-export function BlockPalette({ query, onQueryChange, onAddBlock, classNames: cls, allowTsOnly = false, filterBlock }: BlockPaletteProps) {
+export function BlockPalette({ query, onQueryChange, onAddBlock, classNames: cls, allowTsOnly = false, filterBlock, groupOrder }: BlockPaletteProps) {
   const visible = filterPaletteBlocks(query, allowTsOnly, filterBlock)
+  const groups = groupOrder ? [...BLOCK_GROUPS].sort((a, b) => {
+    const rank = (id: string) => { const index = groupOrder.indexOf(id); return index < 0 ? groupOrder.length : index }
+    return rank(a.id) - rank(b.id)
+  }) : BLOCK_GROUPS
 
   return (
     <>
@@ -213,6 +218,7 @@ export function BlockPalette({ query, onQueryChange, onAddBlock, classNames: cls
           value={query}
           onChange={e => onQueryChange(e.target.value)}
           placeholder="Search blocks…"
+          aria-label="Search blocks"
         />
       </div>
       <div className={cls.paletteScroll}>
@@ -225,7 +231,7 @@ export function BlockPalette({ query, onQueryChange, onAddBlock, classNames: cls
             a separate "find element" block.
           </div>
         )}
-        {BLOCK_GROUPS.map(group => {
+        {groups.map(group => {
           const groupBlocks = visible.filter(b => b.category === group.id)
           if (!groupBlocks.length) return null
           return (
@@ -344,11 +350,13 @@ function BlockRow({ block, selectedBlockId, onSelect, onDelete, onMove, onAddChi
       <div
         className={`${cls.blockRow ?? ''} ${isSelected ? cls.blockRowActive ?? '' : ''}`}
         data-category={block.category}
+        data-block-id={block.id}
+        data-block-type={block.type}
         onClick={e => { e.stopPropagation(); onSelect(block.id) }}
       >
         <div className={cls.blockTopLine}>
           <span className={cls.blockDot} style={{ background: CATEGORY_COLORS[block.category] ?? '#94a3b8' }} />
-          <span className={cls.blockName} style={{ color: CATEGORY_COLORS[block.category] ?? 'inherit' }}>{def?.label ?? block.type}</span>
+          <button type="button" className={cls.blockName} aria-expanded={isSelected} title={`Edit ${def?.label ?? block.type} block`} style={{ color: CATEGORY_COLORS[block.category] ?? 'inherit', background: 'none', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); onSelect(block.id) }}>{def?.label ?? block.type}</button>
           <div className={cls.blockActions}>
             <button type="button" className={cls.iconBtn} title="Move up" onClick={e => { e.stopPropagation(); onMove(block.id, 'up') }}>▲</button>
             <button type="button" className={cls.iconBtn} title="Move down" onClick={e => { e.stopPropagation(); onMove(block.id, 'down') }}>▼</button>
@@ -442,6 +450,9 @@ interface FieldInputProps {
 function FieldInput({ field, block, onChange, onChangeMulti, domHints, classHints, variableHints, classNames: cls }: FieldInputProps) {
   const value = block.fields?.[field.name] ?? ''
 
+  if (block.type === 'call' && field.name === 'expression' && /[\n;]/.test(value)) {
+    return <label className={cls.propRow}><span className={cls.propLabel}>JavaScript</span><textarea className={cls.fieldCode} aria-label="JavaScript source" value={value} onChange={e => onChange(field.name, e.target.value)} spellCheck={false} /></label>
+  }
   if (field.name === 'selector') {
     return <TargetField block={block} domHints={domHints} variableHints={variableHints} onChange={onChangeMulti} classNames={cls} />
   }
@@ -550,7 +561,7 @@ function TargetField({ block, domHints, variableHints, onChange, classNames: cls
               {variableHints.map(v => <option key={v} value={`__var__:${v}`}>{v}</option>)}
             </optgroup>
           )}
-          <option value="__custom__">✏ type manually…</option>
+          <option value="__custom__">Custom value…</option>
         </select>
       )}
       {(custom || !hasOptions) && (
@@ -596,6 +607,18 @@ function ExpressionField({ label, value, domHints, variableHints, onChange, nest
   // this needs (a fresh import always mounts a fresh block/field anyway).
   const [templateId, setTemplateId] = useState<string | null>(() => detectTemplate(value)?.id ?? null)
   const [paramValues, setParamValues] = useState<Record<string, string>>(() => detectTemplate(value)?.params ?? {})
+  const lastValue = useRef(value)
+  // A parent expression can change an existing nested field without remounting
+  // it. Refresh those controls, but retain a pattern the user just chose here.
+  useEffect(() => {
+    if (lastValue.current === value) return
+    lastValue.current = value
+    const detected = detectTemplate(value)
+    setTemplateId(detected?.id ?? null)
+    setParamValues(detected?.params ?? {})
+  }, [value])
+  const emitChange = (next: string) => { lastValue.current = next; onChange(next) }
+
   const template = templateId ? EXPRESSION_LIBRARY.find(t => t.id === templateId) ?? null : null
   const depthClass = cls.depthClass ?? NO_DEPTH_CLASS
 
@@ -607,13 +630,13 @@ function ExpressionField({ label, value, domHints, variableHints, onChange, nest
     for (const param of t.params) initial[param.name] = param.default ?? ''
     setTemplateId(id)
     setParamValues(initial)
-    onChange(t.build(initial))
+    emitChange(t.build(initial))
   }
 
   const handleParamChange = (name: string, v: string) => {
     const next = { ...paramValues, [name]: v }
     setParamValues(next)
-    if (template) onChange(template.build(next))
+    if (template) emitChange(template.build(next))
   }
 
   const body = (
@@ -626,7 +649,7 @@ function ExpressionField({ label, value, domHints, variableHints, onChange, nest
           value={templateId ?? '__manual__'}
           onChange={e => handleSelectTemplate(e.target.value)}
         >
-          <option value="__manual__">✏ type manually</option>
+          <option value="__manual__">Custom JavaScript</option>
           {EXPRESSION_GROUPS.map(group => {
             const items = EXPRESSION_LIBRARY.filter(t => t.group === group.id)
             if (!items.length) return null
@@ -640,7 +663,7 @@ function ExpressionField({ label, value, domHints, variableHints, onChange, nest
       </label>
       {template?.params.map(param => (
         <ExpressionParamInput
-          key={param.name}
+          key={`${template.id}:${param.name}`}
           param={param}
           value={paramValues[param.name] ?? ''}
           domHints={domHints}
@@ -651,8 +674,13 @@ function ExpressionField({ label, value, domHints, variableHints, onChange, nest
         />
       ))}
       <label className={cls.propRow}>
-        <span className={cls.propLabel}>{label}</span>
-        <input className={cls.propInput} value={value} onChange={e => onChange(e.target.value)} />
+        <span className={cls.propLabel}>{template ? 'Code' : label}</span>
+        <input className={cls.propInput} aria-label={`${label} code`} value={value} spellCheck={false} onChange={e => {
+          const next = detectTemplate(e.target.value)
+          setTemplateId(next?.id ?? null)
+          setParamValues(next?.params ?? {})
+          emitChange(e.target.value)
+        }} />
       </label>
     </>
   )
@@ -673,6 +701,9 @@ function ExpressionParamInput({ param, value, domHints, variableHints, onChange,
   // own nested pattern-picker, not a plain text box — this is what lets
   // "call a method whose argument is a comparison" build (or decompose)
   // one explicit piece at a time instead of bottoming out at raw text.
+  if (param.kind === 'boolean') {
+    return <label className={cls.propRow}><span className={cls.propLabel}>{param.label}</span><select className={cls.propInput} value={value || 'true'} onChange={e => onChange(e.target.value)}><option value="true">true</option><option value="false">false</option></select></label>
+  }
   if (param.kind === 'expression') {
     return (
       <ExpressionField
@@ -720,7 +751,7 @@ function ExpressionParamInput({ param, value, domHints, variableHints, onChange,
       <select className={cls.propInput} value={custom ? '__custom__' : (value || '__empty__')} onChange={e => handleSelect(e.target.value)}>
         <option value="__empty__" disabled>— pick —</option>
         {hints.map(h => <option key={h} value={h}>{h}</option>)}
-        <option value="__custom__">✏ type manually…</option>
+        <option value="__custom__">Custom value…</option>
       </select>
       {custom && (
         <input className={cls.propInput} value={value} onChange={e => onChange(e.target.value)} placeholder={param.placeholder} autoFocus />
@@ -749,7 +780,7 @@ function DomPropertyParamInput({ label, value, onChange, classNames: cls }: { la
           </optgroup>
         ))}
         {!inGroups && value && <option value={value}>{value}</option>}
-        <option value="__custom__">✏ type manually…</option>
+        <option value="__custom__">Custom value…</option>
       </select>
       {custom && (
         <input className={cls.propInput} value={value} onChange={e => onChange(e.target.value)} placeholder="e.g. dataset.count" autoFocus />
@@ -800,7 +831,7 @@ function ClassNameField({ value, classHints, onChange, classNames: cls }: { valu
         >
           <option value="__empty__" disabled>— pick a class —</option>
           {classHints.map(c => <option key={c} value={c}>{c}</option>)}
-          <option value="__custom__">✏ type manually…</option>
+          <option value="__custom__">Custom value…</option>
         </select>
       )}
       {(custom || classHints.length === 0) && (
@@ -838,7 +869,7 @@ function ListVariableField({ value, variableHints, onChange, classNames: cls }: 
         <select className={cls.propInput} aria-label="List variable" value={custom ? '__custom__' : (value || '__empty__')} onChange={e => handleSelect(e.target.value)}>
           <option value="__empty__" disabled>— pick a variable —</option>
           {variableHints.map(v => <option key={v} value={v}>{v}</option>)}
-          <option value="__custom__">✏ type manually…</option>
+          <option value="__custom__">Custom value…</option>
         </select>
       )}
       {(custom || variableHints.length === 0) && (
@@ -875,7 +906,7 @@ function CssPropertyField({ value, onChange, classNames: cls }: { value: string;
           </optgroup>
         ))}
         {!inGroups && value && <option value={value}>{value}</option>}
-        <option value="__custom__">✏ type manually…</option>
+        <option value="__custom__">Custom value…</option>
       </select>
       {custom && (
         <input
@@ -928,7 +959,7 @@ function CssValueField({ value, property, onChange, classNames: cls }: { value: 
       >
         {knownValues.map(v => <option key={v} value={v}>{v}</option>)}
         {!inList && value && <option value={value}>{value}</option>}
-        <option value="__custom__">✏ type manually…</option>
+        <option value="__custom__">Custom value…</option>
       </select>
       {custom && (
         <input

@@ -24,6 +24,7 @@ import FileTree from './FileTree.jsx';
 import StudioPanes from './StudioPanes.jsx';
 import { studioSeries, nextSeriesLesson } from './series.js';
 import { useDrafts, draftSupportFiles } from './drafts.js';
+import { SCRAP, scrapSupportFiles } from './scrapLoader.js';
 import EditorPane from './EditorPane.jsx';
 import LessonPanel from './LessonPanel.jsx';
 import { withTypedDiffTargets } from './typedDiffTargets.js';
@@ -37,6 +38,9 @@ import { useEntryLink } from '../../utils/entryLinks.js';
 
 const SAVE_DEBOUNCE_MS = 400;
 const SERIES = studioSeries(TRACKS, TRACK_KEYS, trackTitle);
+// Lessons pasted into scrap/ (scrapLoader.js) come after the built-in series, kept apart from them.
+const BASE_TRACKS = { ...TRACKS, ...SCRAP.tracks };
+const BASE_SERIES = [...SERIES, ...SCRAP.series];
 
 export default function ProjectStudio() {
   const C = useThemeColors();
@@ -45,16 +49,16 @@ export default function ProjectStudio() {
   const progress = useProgress();
   // Lessons from the drafts folder on this computer (drafts.js) join the built-in ones.
   const drafts = useDrafts();
-  const tracks = useMemo(() => ({ ...TRACKS, ...drafts.tracks }), [drafts.tracks]);
-  const allSeries = useMemo(() => (drafts.series ? [...SERIES, drafts.series] : SERIES), [drafts.series]);
-  const supportFiles = useCallback((track, names) => (drafts.tracks[track] ? draftSupportFiles(drafts, track, names) : getSupportFiles(track, names)), [drafts]);
+  const tracks = useMemo(() => ({ ...BASE_TRACKS, ...drafts.tracks }), [drafts.tracks]);
+  const allSeries = useMemo(() => (drafts.series ? [...BASE_SERIES, drafts.series] : BASE_SERIES), [drafts.series]);
+  const supportFiles = useCallback((track, names) => (drafts.tracks[track] ? draftSupportFiles(drafts, track, names) : SCRAP.tracks[track] ? scrapSupportFiles(track, names) : getSupportFiles(track, names)), [drafts]);
   // The position saved last time, before this visit starts saving over it: drafts load a moment
   // after the page, and a saved draft lesson is reopened once they have.
   const savedPosition = useRef(progress.position);
 
   // With no saved position, open the recommended series' first chapter rather than whichever
   // track happens to sort first.
-  const [trackKey, setTrackKey] = useState(() => (TRACKS[progress.position.trackKey]
+  const [trackKey, setTrackKey] = useState(() => (BASE_TRACKS[progress.position.trackKey]
     ? progress.position.trackKey
     : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
   // A series whose chapters build one project shares one folder; other tracks keep their own.

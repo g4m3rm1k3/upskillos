@@ -31,7 +31,7 @@ const BLOCK_EDITOR_CLASSNAMES: BlockEditorClassNames = {
   searchInput: styles.searchInput,
   paletteScroll: styles.paletteScroll,
   emptyState: styles.emptyState,
-  paletteGroup: undefined,
+  paletteGroup: styles.paletteGroup,
   groupLabel: styles.groupLabel,
   paletteBtn: styles.paletteBtn,
   programHeader: styles.programHeader,
@@ -157,7 +157,6 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
     const result = importVisualJs(code)
     const imported = result.blocks
     setPreservedSource(result.preserved)
-    if (!imported.length) return
     // Flag the generated effect to skip onCodeChange for this render cycle.
     // The original code is already stored in lastImportedCodeRef so the next
     // sync can correctly detect whether the JS changed externally.
@@ -218,6 +217,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
         {/* ── Left: Block palette ── */}
         <div className={styles.palette}>
           <BlockPalette
+            groupOrder={['html', 'output', 'state', 'flow', 'oop', 'types']}
             query={query}
             onQueryChange={setQuery}
             onAddBlock={addBlock}
@@ -228,7 +228,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
         {/* ── Right: Program ── */}
         <div className={styles.program}>
           <BlockProgram
-            emptyMessage="Choose a block from the palette above to begin."
+            emptyMessage="Choose a block from the palette to begin."
             blocks={blocks}
             selectedBlockId={selectedBlockId}
             onSelect={id => setSelectedBlockId(prev => prev === id ? null : id)}
@@ -248,7 +248,7 @@ export default function VisualJsPanel({ elements, html, css = '', jsFiles, activ
                 title="Convert the JavaScript file to visual blocks (replaces current blocks)"
                 onClick={() => importFromJs(activeJsCode, activeJsFileId)}
               >
-                ← Import from JS
+                {importFlash ? '✓ Imported from JS' : '← Import from JS'}
               </button>
             ) : undefined}
           />

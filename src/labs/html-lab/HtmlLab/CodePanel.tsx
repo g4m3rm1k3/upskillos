@@ -378,6 +378,23 @@ function flattenTreeOrder(elements: LabElement[]): string[] {
 function ElementTree({ elements, selectedId, onSelect, onDelete, multiSelectedIds, onToggleMultiSelect, onSelectRange, onReorder, onNest, onMoveToRoot, onDuplicate }: ElementTreeProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTargetInfo | null>(null);
+  // Drops outside the tree (including onto the preview iframe), cancellation,
+  // and source-row removal must all release the tree's drag state.
+  useEffect(() => {
+    const clear = () => { setDraggingId(null); setDropTarget(null); };
+    const key = (event: KeyboardEvent) => { if (event.key === 'Escape') clear(); };
+    window.addEventListener('dragend', clear, true);
+    window.addEventListener('drop', clear, true);
+    window.addEventListener('blur', clear);
+    window.addEventListener('keydown', key);
+    return () => {
+      window.removeEventListener('dragend', clear, true);
+      window.removeEventListener('drop', clear, true);
+      window.removeEventListener('blur', clear);
+      window.removeEventListener('keydown', key);
+    };
+  }, []);
+
   // Purely a view concern — not part of undo history or export, so plain
   // local state is enough. Keyed by element id, not depth, so collapsing one
   // branch doesn't affect siblings at the same level.

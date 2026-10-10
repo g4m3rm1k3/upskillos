@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  container-type: inline-size;
   font-size: 12px;
   font-family: Inter, ui-sans-serif, sans-serif;
 }
@@ -412,11 +413,35 @@ select.propInput optgroup {
 /* Keep nested programs readable in the resizable code pane. */
 .program { min-width:0; }
 .guide { padding:10px; font-size:12px; line-height:1.5; color:var(--hl-muted); border-bottom:1px solid var(--hl-border); }
-.twoPane { flex-direction:column; }
-.palette { width:100%; max-height:190px; border-right:0; border-bottom:1px solid var(--hl-border); }
+.program { min-height:0; }
+@container (max-width: 380px) {
+  .twoPane { flex-direction:column; }
+  .palette { width:100%; max-height:140px; border-right:0; border-bottom:1px solid var(--hl-border); }
+}
 .paletteBtn { min-height:32px; text-align:left; font-size:12px; }
 .programHeader { min-height:36px; font-size:11px; }
 .importBtn { min-height:30px; font-size:11px; }
 .sourcePreview { flex-shrink:0; max-height:180px; overflow:auto; border-top:1px solid var(--hl-border); padding:8px; }
 .sourcePreview summary { cursor:pointer; font-size:12px; }
 .sourcePreview pre { white-space:pre; overflow:auto; font:12px/1.6 monospace; }
+
+/* Editing stays legible in narrow panes and long imported programs. */
+.blockRow:hover { transform:none; }
+.iconBtn { min-width:28px; min-height:28px; font-size:12px; }
+.blockSummary { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.5; }
+.propRow { flex-wrap:wrap; gap:6px; }
+.propLabel { min-width:56px; }
+.propInput { min-height:32px; font-size:12px; }
+.fieldCode { min-height:120px; line-height:1.5; font-size:12px; }
+.blockName { font:inherit; font-weight:700; }
+@container (max-width: 380px) {
+  .propRow { flex-direction:column; align-items:stretch; }
+  .propInput, .fieldCode { width:100%; }
+}
+
+@container (max-width: 380px) {
+  .palette { max-height:180px; }
+  .paletteGroup { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+  .groupLabel { grid-column:1 / -1; text-align:left; }
+  .paletteBtn { margin:0; padding:5px 7px; }
+}

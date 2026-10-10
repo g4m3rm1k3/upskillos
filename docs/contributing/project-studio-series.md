@@ -25,6 +25,10 @@ In the desktop app, Project Studio has an **Open drafts folder** button. It open
 
 Drafts are for trying a lesson out. When it works, move it into the repository with the steps below.
 
+## Paste lessons from somewhere else, in the scrap folder
+
+Lessons written outside the repository, by an agent in the browser for example, can be pasted into `src/labs/project-studio/scrap/`. A top-level folder there is a series in the **Series** drop-down, and a folder inside it is a chapter in the **Chapter** drop-down. Scrap lessons are loaded apart from `tracks/`, so they never change a built-in lesson or its tests, and they work in the browser build as well as the desktop app. [scrap/_AGENT-PROMPT.md](../../src/labs/project-studio/scrap/_AGENT-PROMPT.md) is a prompt to give the agent, with the whole lesson format in it, and [scrap/README.md](../../src/labs/project-studio/scrap/README.md) says where each file goes.
+
 ## Make a series in six steps
 
 1. **Copy the template.** Copy `docs/templates/project-studio-series/myseries-basics/` to `src/labs/project-studio/tracks/<your-series>-basics/` and `myseries.walkthrough.js` to `src/labs/project-studio/tracks/<your-series>.walkthrough.js`. Replace `myseries` everywhere in the copies with your series key, a short lowercase word such as `chess`.

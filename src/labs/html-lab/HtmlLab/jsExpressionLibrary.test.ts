@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { EXPRESSION_LIBRARY } from "./jsExpressionLibrary";
+import { parse } from "acorn";
+import { detectTemplate, EXPRESSION_LIBRARY } from "./jsExpressionLibrary";
 
 describe("getElementProperty", () => {
   const template = EXPRESSION_LIBRARY.find((t) => t.id === "getElementProperty")!;
@@ -25,5 +26,28 @@ describe("getElementProperty", () => {
   it("has a domProperty-kind property param, not plain text — the whole point is a picker, not typing", () => {
     const propertyParam = template.params.find((p) => p.name === "property");
     expect(propertyParam?.kind).toBe("domProperty");
+  });
+});
+
+describe('imported expression recognition', () => {
+  const cases = [
+    ['"hello"', 'textValue'], ["'it\\'s fine'", 'textValue'], ['-12.5', 'numberValue'],
+    ['true', 'booleanValue'], ['count', 'variableValue'],
+    ["document.querySelector('#count')", 'querySelector'],
+    ["document.getElementById('count')", 'getElementById'],
+    ['count > 2', 'cmpGreater'], ['a && (b || c)', 'logicAnd'],
+    ['!(a && b)', 'logicNot'], ['Math.round(price)', 'mathRound'],
+    ['player.score', 'getProperty'], ['(first || second).name', 'getProperty'], ['load(count, "text")', 'callFn'],
+  ];
+  for (const [code, id] of cases) it(`recognizes ${code} without changing its meaning`, () => {
+    const detected = detectTemplate(code)!;
+    expect(detected?.id).toBe(id);
+    const regenerated = EXPRESSION_LIBRARY.find(t => t.id === id)!.build(detected.params);
+    const ast = (input: string) => JSON.stringify(parse(`(${input})`, {ecmaVersion:'latest'}), (key, value) => ['start','end','raw'].includes(key) ? undefined : value);
+    expect(ast(regenerated)).toBe(ast(code));
+  });
+  it('leaves unsupported and unfinished syntax as code', () => {
+    expect(detectTemplate('count +')).toBeNull();
+    expect(detectTemplate('items?.[0]')).toBeNull();
   });
 });

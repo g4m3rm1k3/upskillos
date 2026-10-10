@@ -21,6 +21,8 @@ Status markers:
 
 ### HTML Lab rendering and editing (2026-10-09)
 
+- [x] Repair Visual JS module resolution, import supported statements independently, show import completion, and expose selected-element deletion above the preview (2026-10-10). Add cleanup for cancelled Tree drags. Follow-up adds expression recognition and synchronized controls, in-page delete/move handles, keyboard deletion and drag cancellation with Undo.
+
 - [x] Share a live renderer between Inspect and Interact; patch CSS without restarting JavaScript, preserve mixed HTML text and conditional CSS, add execution controls and a runtime console, and prevent Visual JS imports/file switches from overwriting source. See [implementation, verification and remaining work](html-lab-rendering.md).
 - [ ] Extend document preservation to arbitrary head resources/comments, add module resolution and per-file runtime source mapping, and investigate state-preserving structural HTML edits.
 

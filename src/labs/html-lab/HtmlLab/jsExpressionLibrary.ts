@@ -1,3 +1,5 @@
+import { parse } from 'acorn'
+
 // A curated library of common JS expressions, grouped and parameterized —
 // the same idea as CSS_PROP_GROUPS/CSS_PROP_VALUES in VisualJsPanel.tsx, just
 // for JS instead of CSS. Doesn't try to cover the whole language (that's
@@ -15,7 +17,7 @@
 // of bottoming out at "type the rest by hand" the moment there's more than
 // one operator in play.
 
-export type ExpressionParamKind = 'selector' | 'variable' | 'expression' | 'text' | 'domProperty'
+export type ExpressionParamKind = 'selector' | 'variable' | 'expression' | 'text' | 'domProperty' | 'boolean'
 
 export interface ExpressionParam {
   name: string
@@ -35,6 +37,7 @@ export interface ExpressionTemplate {
 }
 
 export const EXPRESSION_GROUPS: { id: string; label: string }[] = [
+  { id: 'values', label: 'Values' },
   { id: 'dom', label: 'Find on the page' },
   { id: 'calls', label: 'Calls & properties' },
   { id: 'logic', label: 'Logic (and / or / not)' },
@@ -51,6 +54,12 @@ const p = (name: string, label: string, kind: ExpressionParamKind = 'text', def?
   ({ name, label, kind, default: def })
 
 export const EXPRESSION_LIBRARY: ExpressionTemplate[] = [
+  { id: 'textValue', group: 'values', label: 'Text', description: 'Text in quotes. Quotes and special characters are added for you.', params: [p('text', 'Text')], build: v => JSON.stringify(v.text ?? '') },
+  { id: 'numberValue', group: 'values', label: 'Number', description: 'A numeric value.', params: [p('value', 'Number', 'text', '0')], build: v => v.value || '0' },
+  { id: 'booleanValue', group: 'values', label: 'True or false', description: 'A boolean value.', params: [p('value', 'Boolean', 'boolean', 'true')], build: v => v.value === 'false' ? 'false' : 'true' },
+  { id: 'variableValue', group: 'values', label: 'Use a variable', description: 'Read a value stored under this name.', params: [p('value', 'Variable', 'variable')], build: v => v.value || 'value' },
+  { id: 'getElementById', group: 'dom', label: 'Find element by ID', description: 'document.getElementById(id)', params: [p('id', 'Element ID')], build: v => `document.getElementById(${JSON.stringify(v.id || '')})` },
+
   // ── DOM ──────────────────────────────────────────────────────────────────
   {
     id: 'querySelector', group: 'dom', label: 'Find one element',
@@ -374,46 +383,6 @@ export const EXPRESSION_LIBRARY: ExpressionTemplate[] = [
 ]
 
 // ── Reverse detection ─────────────────────────────────────────────────────
-// Run once, at mount, against whatever text a field already holds (e.g. code
-// just parsed in from the JS file) — so already-written a && b / a || b /
-// !a / name(args) shows up pre-decomposed into real, explicit blocks instead
-// of always defaulting to "type manually" just because it wasn't built
-// through this UI in the first place. Deliberately narrow: these are the
-// few shapes with syntax simple and unambiguous enough to detect reliably
-// without a real JS parser. Anything else still falls back to manual entry,
-// same as always.
-
-function findTopLevel(s: string, op: string): number {
-  let depth = 0
-  let inStr = false
-  let strCh = ''
-  for (let i = 0; i <= s.length - op.length; i++) {
-    const ch = s[i]
-    if (inStr) { if (ch === strCh && s[i - 1] !== '\\') inStr = false; continue }
-    if (ch === '"' || ch === "'" || ch === '`') { inStr = true; strCh = ch; continue }
-    if ('([{'.includes(ch)) depth++
-    else if (')]}'.includes(ch)) depth--
-    if (depth === 0 && s.slice(i, i + op.length) === op) return i
-  }
-  return -1
-}
-
-function splitArgs(s: string): string[] {
-  const args: string[] = []
-  let depth = 0, inStr = false, strCh = '', start = 0
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i]
-    if (inStr) { if (ch === strCh && s[i - 1] !== '\\') inStr = false; continue }
-    if (ch === '"' || ch === "'" || ch === '`') { inStr = true; strCh = ch; continue }
-    if ('([{'.includes(ch)) depth++
-    else if (')]}'.includes(ch)) depth--
-    if (depth === 0 && ch === ',') { args.push(s.slice(start, i).trim()); start = i + 1 }
-  }
-  const last = s.slice(start).trim()
-  if (last) args.push(last)
-  return args
-}
-
 export interface DetectedTemplate {
   id: string
   params: Record<string, string>
@@ -422,25 +391,47 @@ export interface DetectedTemplate {
 export function detectTemplate(value: string): DetectedTemplate | null {
   const v = value.trim()
   if (!v) return null
-
-  const andAt = findTopLevel(v, '&&')
-  if (andAt !== -1) return { id: 'logicAnd', params: { a: v.slice(0, andAt).trim(), b: v.slice(andAt + 2).trim() } }
-
-  const orAt = findTopLevel(v, '||')
-  if (orAt !== -1) return { id: 'logicOr', params: { a: v.slice(0, orAt).trim(), b: v.slice(orAt + 2).trim() } }
-
-  if (v.startsWith('!') && v[1] !== '=') return { id: 'logicNot', params: { value: v.slice(1).trim() } }
-
-  // name(args) or a.b.c(args) — the whole string, not just a piece of it
-  const callM = v.match(/^([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\((.*)\)$/)
-  if (callM) {
-    const args = splitArgs(callM[2])
-    if (args.length <= 3) {
-      const params: Record<string, string> = { fn: callM[1] }
-      args.forEach((a, i) => { params[`arg${i + 1}`] = a })
-      return { id: 'callFn', params }
+  try {
+    const statement = parse(`(${v}\n)`, { ecmaVersion: 'latest' }).body[0]
+    if (statement.type !== 'ExpressionStatement') return null
+    const node = statement.expression
+    const source = (part: { start: number; end: number }) => v.slice(part.start - 1, part.end - 1)
+    if (node.type === 'Literal') {
+      if (typeof node.value === 'string') return { id: 'textValue', params: { text: node.value } }
+      if (typeof node.value === 'number') return { id: 'numberValue', params: { value: source(node) } }
+      if (typeof node.value === 'boolean') return { id: 'booleanValue', params: { value: String(node.value) } }
     }
-  }
-
+    if (node.type === 'Identifier') return { id: 'variableValue', params: { value: node.name } }
+    if (node.type === 'UnaryExpression') {
+      if (node.operator === '!' ) return { id: 'logicNot', params: { value: `(${source(node.argument)})` } }
+      if (['-', '+'].includes(node.operator) && node.argument.type === 'Literal' && typeof node.argument.value === 'number') return { id: 'numberValue', params: { value: source(node) } }
+    }
+    if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
+      const ids: Record<string, string> = { '&&': 'logicAnd', '||': 'logicOr', '===': 'cmpEquals', '!==': 'cmpNotEquals', '>': 'cmpGreater', '<': 'cmpLess' }
+      const id = ids[node.operator]
+      if (id) return { id, params: { a: `(${source(node.left)})`, b: `(${source(node.right)})` } }
+    }
+    if (node.type === 'MemberExpression' && !node.computed && !node.optional && node.property.type === 'Identifier') {
+      return { id: 'getProperty', params: { object: ['Identifier', 'MemberExpression', 'CallExpression', 'ThisExpression'].includes(node.object.type) ? source(node.object) : `(${source(node.object)})`, property: node.property.name } }
+    }
+    if (node.type === 'CallExpression' && !node.optional && node.arguments.every(arg => arg.type !== 'SpreadElement')) {
+      const fn = source(node.callee)
+      const args = node.arguments
+      const fixed: Record<string, [string, string[]]> = {
+        'Math.random': ['mathRandom', []], 'Date.now': ['dateNow', []],
+        'Math.round': ['mathRound', ['value']], 'Math.floor': ['mathFloor', ['value']],
+        'Math.max': ['mathMax', ['a','b']], 'Math.min': ['mathMin', ['a','b']],
+        'Number': ['toNumber', ['value']], 'String': ['toText', ['value']],
+        'parseInt': ['parseWholeNumber', ['value']], 'parseFloat': ['parseDecimal', ['value']],
+        'JSON.stringify': ['jsonStringify', ['value']], 'JSON.parse': ['jsonParse', ['value']],
+      }
+      const known = fixed[fn]
+      if (known && args.length === known[1].length) return { id: known[0], params: Object.fromEntries(args.map((arg, i) => [known[1][i], source(arg)])) }
+      const dom: Record<string, [string, string]> = { 'document.querySelector': ['querySelector', 'selector'], 'document.querySelectorAll': ['querySelectorAll', 'selector'], 'document.getElementById': ['getElementById', 'id'], 'document.createElement': ['createElement', 'tag'] }
+      const domCall = dom[fn]
+      if (domCall && args.length === 1 && args[0].type === 'Literal' && typeof args[0].value === 'string') return { id: domCall[0], params: { [domCall[1]]: args[0].value } }
+      if (args.length <= 3 && /^(?:[A-Za-z_$][\w$]*)(?:\.[A-Za-z_$][\w$]*)*$/.test(fn)) return { id: 'callFn', params: { fn, ...Object.fromEntries(args.map((arg, i) => [`arg${i + 1}`, source(arg)])) } }
+    }
+  } catch { /* Incomplete or unsupported expressions stay editable as code. */ }
   return null
 }

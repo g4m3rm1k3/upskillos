@@ -501,6 +501,8 @@ export default function HtmlLabLesson({ lesson, onBack }: Props) {
           elements={state.elements} bodyStyles={state.bodyStyles} customCss={state.customCss}
           javascript={transpiledJs.code} error={transpiledJs.error} cdnTags={previewCdnTags}
           pageTitle={state.pageTitle} faviconUrl={state.faviconUrl}
+          onDelete={(id) => dispatch({ type: "DELETE_ELEMENT", payload: id })}
+          onMove={(id, parentId, order) => dispatch(parentId ? { type: "NEST_ELEMENT", payload: { childId: id, parentId, order } } : { type: "MOVE_TO_ROOT", payload: { id, order } })}
           inspect={!previewMode} selectedId={state.selectedId}
           showLabels={state.showLabels} showOverlay={state.showOverlay}
           onSelect={(id) => { dispatch({ type: "SELECT", payload: id }); setMultiSelectedIds([]); }}

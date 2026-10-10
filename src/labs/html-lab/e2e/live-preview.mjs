@@ -80,6 +80,15 @@ try {
  await replaceCode('console.log("final block");');
  await page.getByText('JavaScript changed.',{exact:false}).waitFor();
  await page.getByRole('button',{name:'Visual JS',exact:true}).click();
+ await page.getByRole('button',{name:/Import from JS|Imported from JS/}).click();
+ await page.getByRole('button',{name:'✓ Imported from JS',exact:true}).waitFor();
+ assert.equal(await page.locator('button[title="Delete"]').count(),1);
+ await page.getByTitle('Edit Log block',{exact:true}).click();
+ assert.equal(await page.getByLabel('Expression pattern',{exact:true}).inputValue(),'textValue');
+ await page.getByLabel('Text',{exact:true}).fill('edited through blocks');
+ await page.getByRole('button',{name:'↻ Run / Restart',exact:true}).click();
+ await page.getByLabel('Preview console').getByText('log: edited through blocks',{exact:true}).waitFor();
+ await page.screenshot({path:'/tmp/html-lab-visual-js.png'});
  await page.locator('button[title="Delete"]').click();
  await page.getByText('See generated JavaScript',{exact:true}).click();
  await page.getByText('// No blocks in this file.',{exact:true}).waitFor();
@@ -87,7 +96,50 @@ try {
  await page.getByLabel('Preview console').getByText('No output yet.',{exact:false}).waitFor();
  await frame.getByText('Hello world again.',{exact:true}).waitFor();
  assert.equal(await frame.locator('#count').innerText(),'Count: 0');
+ await page.getByRole('button',{name:'✎ Inspect',exact:true}).click();
+ await frame.locator('#draft').click();
+ await frame.getByRole('button',{name:'Delete selected element',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('iframe[title="Live HTML preview"]').contentDocument.querySelector('#draft'));
+ await page.getByTitle('Undo last action',{exact:true}).click();
+ await frame.locator('#draft').waitFor();
+ await frame.locator('#draft').click();
+ await page.keyboard.press('Delete');
+ await page.waitForFunction(()=>!document.querySelector('iframe[title="Live HTML preview"]').contentDocument.querySelector('#draft'));
+ // Move directly from the selected page element into a container.
+ await frame.locator('#count').click();
+ const moveHandle = frame.getByRole('button',{name:'Move selected element',exact:true});
+ const moveBox = await moveHandle.boundingBox();
+ const destination = await frame.locator('.card').first().boundingBox();
+ await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height / 2);
+ await page.mouse.down();
+ await page.mouse.move(destination.x + destination.width / 2, destination.y + destination.height / 2,{steps:12});
+ await frame.getByRole('status').getByText('Inside <div>',{exact:true}).waitFor();
+ await page.mouse.up();
+ await page.waitForFunction(()=>document.querySelector('iframe[title="Live HTML preview"]').contentDocument.querySelector('.card #count'));
+ await page.getByTitle('Undo last action',{exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('iframe[title="Live HTML preview"]').contentDocument.querySelector('body > #count'));
+ // Cancel a second page drag; the DOM must stay unchanged.
+ await frame.locator('#count').click();
+ const cancelBox = await moveHandle.boundingBox();
+ await page.mouse.move(cancelBox.x + cancelBox.width / 2, cancelBox.y + cancelBox.height / 2);
+ await page.mouse.down();
+ await page.mouse.move(destination.x + destination.width / 2,destination.y + destination.height / 2,{steps:8});
+ await page.keyboard.press('Escape');
+ await page.mouse.up();
+ assert.equal(await frame.locator('body > #count').count(),1);
+ await page.screenshot({path:'/tmp/html-lab-selection.png'});
+ await page.getByRole('button',{name:'Tree',exact:true}).click();
+ const countRow = page.locator('button[draggable="true"]').filter({hasText:'Count: 0'});
+ const cardRow = page.getByTitle(/^<div> "A"/);
+ await countRow.dragTo(cardRow);
+ await page.waitForFunction(()=>document.querySelector('iframe[title="Live HTML preview"]').contentDocument.querySelector('.card #count'));
+ // Cancelling a drag must remove the active drag styling and allow another move.
+ const dataTransfer = await page.evaluateHandle(()=>new DataTransfer());
+ await countRow.dispatchEvent('dragstart',{dataTransfer});
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('[class*="treeItemDragging"]').count(),0);
+ await dataTransfer.dispose();
  assert.deepEqual(pageErrors,['visible failure']);
  await page.screenshot({path:'/tmp/html-lab-live.png'});
- console.log('PASS: mixed text, real grid layout, inspect/interact state, live CSS preserving counter/input, property overrides, responsive viewport, manual JS run, syntax-error recovery, runtime console, Visual JS final-block deletion.');
+ console.log('PASS: mixed text, real grid layout, inspect/interact state, live CSS preserving counter/input, property overrides, responsive viewport, manual JS run, syntax-error recovery, runtime console, Visual JS import and final-block deletion, selection X, Undo, keyboard deletion, structured text editing, page drag with Undo/cancellation, Tree drag and cancellation.');
 } catch(error) { if(page) await page.screenshot({path:'/tmp/html-lab-failure.png',timeout:5000}).catch(()=>{}); throw error; } finally { await browser.close(); }

@@ -10,7 +10,7 @@ const EMPTY = { tracks: {}, support: {}, series: null, folder: null };
 
 // A draft that can't be parsed still shows up, as a lesson that says what's wrong with it, so one
 // typo in one file never hides the rest.
-function unreadableLesson(id, name, error) {
+export function unreadableLesson(id, name, error) {
   const prose = `This draft couldn't be read:\n\n> ${error.message}\n\nFix the file, save it, and switch back to UpSkillOS.`;
   return {
     id, title: `${name} (can't be read)`, runtime: 'none', run: null, meta: {}, intro: '',
