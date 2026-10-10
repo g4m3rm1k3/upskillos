@@ -4,6 +4,7 @@ import { setupOpenCalcMonaco } from '../../utils/monacoThemes'
 import type { MathOSState } from './hooks/useMathOSState'
 import VarStrip from './components/VarStrip'
 import SectionTabs from './components/SectionTabs'
+import DatasetPanel from './components/DatasetPanel'
 import KatexStep from './components/KatexStep'
 import KatexInline from './components/KatexInline'
 import CanvasGraph from './components/CanvasGraph'
@@ -114,7 +115,7 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
   const currentOp: Partial<Op> = s.OPERATIONS.find((o: Op) => o.id === s.matOp) ?? {}
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 min-w-0">
 
       <VarStrip
         vars={s.vars}
@@ -132,18 +133,23 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
         {/* ══ COMPUTE ══ */}
         {s.section === 'compute' && (
           <div className="p-5">
-            <div className="flex gap-3 mb-4">
+            <label htmlFor="mathos-expression" className={`block text-sm font-semibold mb-2 ${ui.txt1}`}>What would you like to calculate?</label>
+            <p className={`text-xs mb-3 ${ui.txt2}`}>Enter an expression or choose an example. Use Enter to calculate and the arrow keys to revisit your history.</p>
+            <div className="flex flex-wrap gap-3 mb-4">
               <input
+                id="mathos-expression"
                 ref={s.inputRef}
                 value={s.input}
                 onChange={e => s.setInput(e.target.value)}
                 onKeyDown={s.onKeyDown}
                 placeholder='Type any STEM problem: "integrate x^2 from 0 to 1", "derivative of x^3 at x=2", "2^10", "STO→ A 42"...'
-                className={`flex-1 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`}
+                className={`flex-1 min-w-0 basis-64 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`}
               />
               <button onClick={s.compute} className="px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white rounded-xl font-bold text-sm shrink-0 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95">Compute</button>
             </div>
-            <div className="flex flex-wrap gap-1 mb-4">
+            <details className="mb-4">
+              <summary className={`cursor-pointer text-xs font-semibold mb-2 ${ui.txt2}`}>Try an example</summary>
+            <div className="flex flex-wrap gap-1">
               {[
                 '2^10','sin(pi/4)','sqrt(2)','x = 42','ans * 2',
                 'integrate x^2 from 0 to 1','derivative of sin(x) at x=0',
@@ -155,16 +161,17 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
                 </button>
               ))}
             </div>
+            </details>
 
             {s.result && (
               <>
-                <div className="flex items-center gap-4 bg-brand-500/5 dark:bg-black/20 border border-slate-200/40 dark:border-white/5 rounded-xl px-5 py-3 mb-4 shadow-inner">
+                <div role="status" aria-label="Calculation result" className="flex flex-wrap items-center gap-4 bg-brand-500/5 dark:bg-black/20 border border-slate-200/40 dark:border-white/5 rounded-xl px-5 py-3 mb-4 shadow-inner">
                   <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Answer</span>
-                  <span className="text-2xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 flex-1">{s.result.numerical}</span>
+                  <span className="text-2xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 flex-1 min-w-0 break-all">{s.result.numerical}</span>
                   <button onClick={() => navigator.clipboard?.writeText(s.result!.numerical)} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors px-2 py-1 rounded hover:bg-white/5">copy</button>
                   <button onClick={() => { const name = prompt('Store as variable:'); if (name) s.setVars({...s.vars,[name]:parseFloat(s.result!.numerical)||s.result!.numerical}) }} className="text-[11px] font-semibold uppercase tracking-wider text-brand-400 hover:text-brand-300 transition-colors px-2 py-1 rounded hover:bg-white/5">STO→</button>
                 </div>
-                <div className="flex gap-2 border-b border-slate-200/40 dark:border-white/5 mb-4 pb-1">
+                <div className="flex flex-wrap gap-2 border-b border-slate-200/40 dark:border-white/5 mb-4 pb-1">
                   {[['symbolic','∑ Steps'],['visual','◉ Visual'],['code','</> Code'],['explain','💡 Explain'],['connections','🔗 Connects']].map(([id,label]) => (
                     <button key={id} onClick={() => s.setTab(id as typeof s.tab)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${s.tab===id?'bg-brand-500/10 text-brand-400 border border-brand-500/20':'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'}`}>
@@ -325,8 +332,8 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
         {/* ══ POLY ══ */}
         {s.section === 'poly' && (
           <div className="p-5">
-            <div className="flex gap-3 mb-4">
-              <input value={s.polyExpr} onChange={e=>s.setPolyExpr(e.target.value)} placeholder="e.g. x^2 - 5*x + 6, x^3 - 6x^2 + 11x - 6" className={`flex-1 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`} />
+            <div className="flex flex-wrap gap-3 mb-4">
+              <input value={s.polyExpr} onChange={e=>s.setPolyExpr(e.target.value)} placeholder="e.g. x^2 - 5*x + 6, x^3 - 6x^2 + 11x - 6" className={`flex-1 min-w-0 basis-64 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`} />
               <button onClick={s.computePoly} className="px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white rounded-xl font-bold text-sm shrink-0 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95">Solve</button>
             </div>
             <div className="flex gap-2 flex-wrap mb-5">{['x^2 - 4','x^2 - 5*x + 6','x^3 - 6*x^2 + 11*x - 6','x^2 + 1','2*x^2 - 4*x - 6','x^3 - 2*x^2 - x + 2'].map(p=><button key={p} onClick={()=>s.setPolyExpr(p)} className="text-[11px] px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-300 font-mono font-medium transition-colors border border-transparent hover:border-white/10">{p}</button>)}</div>
@@ -344,10 +351,11 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
         )}
 
         {/* ══ STATS ══ */}
+        {s.section === 'data' && <DatasetPanel s={s} />}
         {s.section === 'stats' && (
           <div className="p-5">
-            <div className="flex gap-3 mb-4">
-              <input value={s.statsData} onChange={e=>s.setStatsData(e.target.value)} placeholder="Enter numbers separated by commas: 1, 2, 3, 4, 5" className={`flex-1 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`} />
+            <div className="flex flex-wrap gap-3 mb-4">
+              <input value={s.statsData} onChange={e=>s.setStatsData(e.target.value)} placeholder="Enter numbers separated by commas: 1, 2, 3, 4, 5" className={`flex-1 min-w-0 basis-64 ${ui.bg2} border ${ui.border} rounded-xl px-4 py-3 text-[15px] font-mono ${ui.txt1} placeholder-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 focus:outline-none transition-all shadow-inner`} />
               <button onClick={s.computeStats} className="px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white rounded-xl font-bold text-sm shrink-0 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95">Analyze</button>
             </div>
             {s.result?.type === 'stats' && (
@@ -515,7 +523,7 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
             </div>
             <div className="flex flex-wrap gap-4 mb-5 items-end text-xs text-slate-400">
               {([['xMin',s.graphXMin,s.setGraphXMin],['xMax',s.graphXMax,s.setGraphXMax],['yMin',s.graphYMin,s.setGraphYMin],['yMax',s.graphYMax,s.setGraphYMax]] as const).map(([label,val,set]) => (
-                <div key={label} className="flex flex-col gap-1"><div className="text-[10px] font-bold uppercase tracking-wider">{label}</div><input type="number" value={val} onChange={e=>set(parseFloat(e.target.value)||0)} className="w-20 text-center text-sm bg-brand-500/5 dark:bg-black/20 border border-slate-200/60 dark:border-white/10 rounded-lg py-1.5 text-slate-800 dark:text-slate-100 font-mono focus:border-brand-400 focus:outline-none shadow-inner transition-colors" /></div>
+                <div key={label} className="flex flex-col gap-1"><div className="text-[10px] font-bold uppercase tracking-wider">{label}</div><input aria-label={label} type="number" value={val} onChange={e=>set(parseFloat(e.target.value)||0)} className="w-20 text-center text-sm bg-brand-500/5 dark:bg-black/20 border border-slate-200/60 dark:border-white/10 rounded-lg py-1.5 text-slate-800 dark:text-slate-100 font-mono focus:border-brand-400 focus:outline-none shadow-inner transition-colors" /></div>
               ))}
               <button onClick={()=>{ s.setGraphXMin(-10); s.setGraphXMax(10); s.setGraphYMin(-10); s.setGraphYMax(10) }} className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 self-end font-medium transition-colors border border-transparent hover:border-white/10">reset bounds</button>
             </div>
@@ -528,7 +536,7 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
         {/* ══ SCRIPT ══ */}
         {s.section === 'script' && (
           <div className="p-5">
-            <div className="flex items-center gap-2 mb-4 p-2 bg-brand-500/5 dark:bg-black/20 rounded-xl border border-slate-200/40 dark:border-white/5 shadow-inner">
+            <div className="flex flex-wrap items-center gap-2 mb-4 p-2 bg-brand-500/5 dark:bg-black/20 rounded-xl border border-slate-200/40 dark:border-white/5 shadow-inner">
               {[['js','JavaScript','#f59e0b'],['python','Python (Pyodide)','#60a5fa'],['matlab','OpenMAT','#f97316']].map(([id,label,col])=>(
                 <button key={id} onClick={()=>{ s.setScriptLang(id as typeof s.scriptLang); s.setScriptOutput(''); s.setMlOutput(''); s.setMlWorkspace([]) }}
                   className={`px-4 py-2 text-xs rounded-lg font-bold transition-all shadow-sm ${s.scriptLang===id?'text-white shadow-md':'bg-white/5 text-slate-400 hover:bg-white/10 border border-transparent'}`}
@@ -538,7 +546,7 @@ export default function MathOSCenter({ s }: { s: MathOSState }) {
               ))}
               {s.scriptLang === 'python' && <span className={`text-[11px] font-bold uppercase tracking-wider ml-3 ${s.pyodideStatus==='ready'?'text-emerald-400':s.pyodideStatus==='loading'?'text-amber-400':s.pyodideStatus==='error'?'text-red-400':'text-slate-500'}`}>{s.pyodideStatus==='ready'?'● Runtime ready':s.pyodideStatus==='loading'?'⏳ Loading...':s.pyodideStatus==='error'?'✗ Load failed':'○ First run loads runtime'}</span>}
               {s.scriptLang === 'matlab' && <span className={`text-[11px] font-bold uppercase tracking-wider ml-3 ${s.mlStatus==='done'?'text-emerald-400':s.mlStatus==='running'?'text-amber-400':s.mlStatus==='error'?'text-red-400':'text-slate-500'}`}>{s.mlStatus==='done'?'● Done':s.mlStatus==='running'?'⏳ Running...':s.mlStatus==='error'?'✗ Error':'○ Browser engine'}</span>}
-              <div className="ml-auto flex items-center gap-3 pr-1">
+              <div className="ml-auto flex flex-wrap items-center gap-3 pr-1">
                 {s.scriptLang !== 'matlab' && (
                   <div className="flex items-center gap-2 bg-brand-500/5 dark:bg-black/40 rounded-lg p-1 border border-slate-200/40 dark:border-white/5">
                     <input value={s.scriptName} onChange={e=>s.setScriptName(e.target.value)} placeholder="name to save..." className="w-32 text-xs bg-transparent border-none rounded px-2 py-1 text-slate-800 dark:text-slate-100 font-mono focus:outline-none placeholder-slate-600" />

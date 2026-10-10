@@ -1,4 +1,27 @@
 import type { Matrix } from './types'
+import type { MathOSProject } from './project'
+import { isDataset, type Dataset } from './dataset'
+const LS_DATASET = 'oc_math_os_dataset'
+export function loadDataset(): Dataset | null {
+  const value = safeGet(LS_DATASET, null)
+  return isDataset(value) ? value : null
+}
+export const saveDataset = (value: Dataset | null) => safeSet(LS_DATASET, value)
+
+// Save every persistent project collection before changing the live workspace.
+export function saveProjectMemory(project: MathOSProject): void {
+  const entries = [[LS_VARS, project.variables], [LS_FORMULAS, project.formulas],
+    [LS_SCRIPTS, project.savedScripts], [LS_MAT_VARS, project.matrices], [LS_DATASET, project.dataset ?? null]] as const
+  const previous = entries.map(([key]) => [key, localStorage.getItem(key)] as const)
+  try { for (const [key, value] of entries) localStorage.setItem(key, JSON.stringify(value)) }
+  catch (error) {
+    for (const [key, value] of previous) {
+      if (value === null) localStorage.removeItem(key)
+      else localStorage.setItem(key, value)
+    }
+    throw error
+  }
+}
 
 const LS_VARS     = 'oc_memory'
 const LS_FORMULAS = 'oc_formulas'

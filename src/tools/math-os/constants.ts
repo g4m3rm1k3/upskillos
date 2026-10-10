@@ -6,6 +6,7 @@ export interface SectionDef {
 }
 
 export const SECTIONS: SectionDef[] = [
+  { id: 'data', label: 'Data & models' },
   { id: 'compute',   label: '∑ Compute' },
   { id: 'matrix',    label: '⊞ Matrix' },
   { id: 'sigma',     label: 'Σ Sigma' },

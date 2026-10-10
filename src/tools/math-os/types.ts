@@ -2,7 +2,7 @@
 
 export type AngleMode = 'RAD' | 'DEG'
 export type SectionId =
-  | 'compute' | 'matrix' | 'sigma' | 'poly' | 'stats'
+  | 'compute' | 'matrix' | 'sigma' | 'poly' | 'stats' | 'data'
   | 'physics' | 'machinist' | 'triangle' | 'graph' | 'script' | 'formulas'
 export type ResultTab = 'symbolic' | 'visual' | 'code' | 'explain' | 'connections'
 export type ExplainLevel = 'eli5' | 'student' | 'college' | 'advanced'

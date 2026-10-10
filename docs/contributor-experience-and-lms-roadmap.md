@@ -19,6 +19,12 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### MathOS scientific workspace (2026-10-10)
+
+- [x] Browser-filling and responsive workspace, visible calculation history, validated project file/clipboard exchange, programming entry points, an executable ML example and bounded graph rendering. See [scope, verification and remaining work](mathos-scientific-workspace.md).
+- [x] Shared browser dataset workflow: CSV/TSV preview, editable tables, column statistics, scatter plots, held-out linear regression, predictions/model exports, local persistence and project backups.
+- [ ] Extend units/uncertainty, reproducible programs and ML workflows; complete session persistence and publication exports. Follow the priorities in the [scientific workspace plan](mathos-scientific-workspace.md).
+
 ### Backend Lab first-visit reliability (2026-10-10)
 
 - [x] **Backend Lab first request (2026-10-10):** start with an editable handler so anonymous `GET /users` succeeds before any editing; upgrade untouched legacy blank projects, preserve authored work, and teach the missing-handler failure as a deliberate rename experiment. Real-runtime regression covers the actual initial project, edits, 404 and renamed handlers; 31 Backend Lab tests pass.

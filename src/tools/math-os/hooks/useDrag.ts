@@ -28,5 +28,5 @@ export function useDrag(initial: Pos) {
     }
   }, [])
 
-  return { pos, dragging, onMouseDown }
+  return { pos, setPos, dragging, onMouseDown }
 }

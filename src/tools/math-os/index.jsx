@@ -1,4 +1,4 @@
-import MathOS from './MathOS.tsx'
+import MathOS from './MathOSWorkspace.tsx'
 
 export const meta = {
   label: 'MathOS',

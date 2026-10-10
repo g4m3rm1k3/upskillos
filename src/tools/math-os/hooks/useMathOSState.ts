@@ -18,14 +18,22 @@ import { createPyodide as createBundledPyodide } from '../../../utils/pyodideRun
 import {
   loadVars, saveVars, loadFormulas, saveFormulas,
   loadScripts, saveScripts, loadHistory, saveHistory,
-  loadMatVars, saveMatVars,
+  loadMatVars, saveMatVars, saveProjectMemory,
 } from '../storage'
+import type { MathOSProject } from '../project'
+import type { Dataset } from '../dataset'
+import { loadDataset, saveDataset } from '../storage'
 import type {
   AngleMode, SectionId, ResultTab, ExplainLevel, ScriptLang, MLStatus, PyodideStatus,
   Matrix, ComputeResult, WorkspaceEntry,
 } from '../types'
 
 export function useMathOSState() {
+  const [dataset, setDatasetState] = useState<Dataset | null>(loadDataset)
+  function setDataset(value: Dataset) {
+    saveDataset(value)
+    setDatasetState(value)
+  }
   // ─── CORE ────────────────────────────────────────────────────────────────────
   const [input, setInput]           = useState('')
   const [result, setResult]         = useState<ComputeResult | null>(null)
@@ -331,7 +339,7 @@ export function useMathOSState() {
 
     setResult(res)
     setTab('symbolic')
-    const newHistory = [...history, { input, result: res }]
+    const newHistory = [...history, { input, result: res }].slice(-100)
     setHistory(newHistory); saveHistory(newHistory)
     setHistIdx(-1)
   }
@@ -822,7 +830,23 @@ plt.show = _patched_show
     { id:'similarity', label:'A ~ B (Similar?)', needsB:true },
   ]
 
+  function importProject(project: MathOSProject) {
+    saveProjectMemory(project)
+    setVarsState(project.variables); setFormulasState(project.formulas)
+    setScriptsState(project.savedScripts); setMatVarsState(project.matrices)
+    setScript(project.programs.javascript); setPyScript(project.programs.python); setMlScript(project.programs.openmat)
+    setDatasetState(project.dataset ?? null)
+    setStatsData(project.statsData); setMatA(project.matrixA); setMatB(project.matrixB)
+    setGraphFns(project.graph.functions)
+    const [xmin, xmax, ymin, ymax] = project.graph.bounds
+    setGraphXMin(xmin); setGraphXMax(xmax); setGraphYMin(ymin); setGraphYMax(ymax)
+    setAngleMode(project.angleMode); setInput(project.input); setResult(null)
+    setScriptOutput(''); setMlOutput(''); setMlWorkspace([]); setPyImages([])
+    setSection('compute')
+  }
+
   return {
+    importProject, dataset, setDataset,
     // core
     input, setInput, result, setResult, activeView, setActiveView,
     explainLevel, setExplainLevel, angleMode, setAngleMode,

@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { useThemeColors } from '../../../hooks/useThemeColors'
+import { graphTicks, validGraphBounds } from './graphBounds'
 
 const GRAPH_COLORS = ['#60a5fa','#34d399','#f472b6','#fb923c']
 
@@ -26,10 +27,12 @@ export default function CanvasGraph({ fns = [], xMin = -10, xMax = 10, yMin = -1
   const ref = useRef<HTMLCanvasElement>(null)
   const [trace, setTrace] = useState<Trace | null>(null)
   const C = useThemeColors()
+  const valid = validGraphBounds(xMin, xMax) && validGraphBounds(yMin, yMax)
 
   const toCanvasY = useCallback((y: number) => height - ((y - yMin) / (yMax - yMin)) * height, [yMin, yMax, height])
 
   useEffect(() => {
+    if (!valid) return
     const canvas = ref.current; if (!canvas) return
     const ctx = canvas.getContext('2d'); if (!ctx) return
     const W = canvas.width, H = canvas.height
@@ -40,20 +43,20 @@ export default function CanvasGraph({ fns = [], xMin = -10, xMax = 10, yMin = -1
 
     ctx.strokeStyle = C.canvasBorder; ctx.lineWidth = 1
     const stepX = (xMax - xMin) / 10
-    for (let x = Math.ceil(xMin/stepX)*stepX; x <= xMax + stepX*0.01; x += stepX) { ctx.beginPath(); ctx.moveTo(toX(x),0); ctx.lineTo(toX(x),H); ctx.stroke() }
+    for (const x of graphTicks(xMin, xMax)) { ctx.beginPath(); ctx.moveTo(toX(x),0); ctx.lineTo(toX(x),H); ctx.stroke() }
     const stepY = (yMax - yMin) / 10
-    for (let y = Math.ceil(yMin/stepY)*stepY; y <= yMax + stepY*0.01; y += stepY) { ctx.beginPath(); ctx.moveTo(0,toY(y)); ctx.lineTo(W,toY(y)); ctx.stroke() }
+    for (const y of graphTicks(yMin, yMax)) { ctx.beginPath(); ctx.moveTo(0,toY(y)); ctx.lineTo(W,toY(y)); ctx.stroke() }
 
     ctx.strokeStyle = C.canvasMuted; ctx.lineWidth = 1.5
     ctx.beginPath(); ctx.moveTo(toX(0),0); ctx.lineTo(toX(0),H); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(0,toY(0)); ctx.lineTo(W,toY(0)); ctx.stroke()
 
     ctx.fillStyle = C.canvasMuted; ctx.font = '10px monospace'; ctx.textAlign = 'center'
-    for (let x = Math.ceil(xMin/stepX)*stepX; x <= xMax + stepX*0.01; x += stepX) {
+    for (const x of graphTicks(xMin, xMax)) {
       if (Math.abs(x) > stepX*0.1) ctx.fillText(String(parseFloat(x.toPrecision(3))), toX(x), toY(0)+12)
     }
     ctx.textAlign = 'right'
-    for (let y = Math.ceil(yMin/stepY)*stepY; y <= yMax + stepY*0.01; y += stepY) {
+    for (const y of graphTicks(yMin, yMax)) {
       if (Math.abs(y) > stepY*0.1) ctx.fillText(String(parseFloat(y.toPrecision(3))), toX(0)-4, toY(y)+4)
     }
 
@@ -85,7 +88,7 @@ export default function CanvasGraph({ fns = [], xMin = -10, xMax = 10, yMin = -1
         ctx.beginPath(); ctx.arc(trace.px, py, 4, 0, 2*Math.PI); ctx.fill()
       })
     }
-  }, [fns, xMin, xMax, yMin, yMax, highlightRoots, trace, toCanvasY, width, height, C])
+  }, [fns, xMin, xMax, yMin, yMax, highlightRoots, trace, toCanvasY, width, height, C, valid])
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = ref.current; if (!canvas) return
@@ -105,6 +108,8 @@ export default function CanvasGraph({ fns = [], xMin = -10, xMax = 10, yMin = -1
   const traceLabel = trace
     ? `x=${trace.x.toFixed(4)}  ${trace.fnYs.map((py,i) => py!==null ? `y${fns.length>1?i+1:''}=${(yMin + (1 - py/height) * (yMax-yMin)).toFixed(4)}` : '').filter(Boolean).join('  ')}`
     : ''
+
+  if (!valid) return <p role="alert" className="p-4 text-sm text-amber-500">Graph bounds must be finite, with each minimum smaller than its maximum. Use reset bounds to recover.</p>
 
   return (
     <div className="relative select-none">

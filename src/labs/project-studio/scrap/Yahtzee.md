@@ -4115,4 +4115,1192 @@ TEST(Game, StopsWhenTheInputEnds) {
 }
 ```
 
-CONTINUE FROM: Yahtzee in C++/05 Cleaner C++/01-named-categories.md
+Yes, two chapters remain. Chapter 05 is *Cleaner C++* and chapter 06 is *Players*. I'm adjusting chapter 05 first. `main` is already about 30 lines, so "splitting main" no longer teaches anything. It becomes four lessons: named categories, a table of rules, copies and moves, and compiling in pieces. I'm compiling the new code before writing it up.Chapter 05 is below. Everything in it compiled with `-Wall -Wextra -Wpedantic` and without warnings. The tests pass, and the finished game still plays a full round with `--fast`.
+
+`Yahtzee in C++/05 Cleaner C++/01-named-categories.md`
+````markdown
+---
+title: 5.1 — Named Categories
+track: Cleaner C++
+runtime: none
+support: tests/test_category_ids.cpp, tests/test_upper_section.cpp
+---
+
+The scorecard works, but it is held together by numbers. Box 12 is Chance because a list of names and a `switch` were written in the same order, and nothing checks that they stay in step. In this lesson each category gets a name the compiler understands, and the compiler warns you when you forget one.
+
+Press this lesson's support button first. It creates two test files.
+
+## Give each category a name
+
+Words first:
+
+- **Enumeration**: a type whose values are a fixed list of named constants. Each name is an **enumerator**.
+- **Scoped enumeration** (`enum class`): an enumeration whose enumerators live inside the type's name and never convert to a number or from one by accident.
+- **Underlying type**: the integer type an enumeration is stored as. You can choose it with `: type` after the name.
+
+Replace `Scorecard.h` with this.
+
+```cpp file=Scorecard.h
+#ifndef SCORECARD_H
+#define SCORECARD_H
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+#include "Scoring.h"
+
+enum class CategoryId : std::size_t {
+    Ones,
+    Twos,
+    Threes,
+    Fours,
+    Fives,
+    Sixes,
+    ThreeOfAKind,
+    FourOfAKind,
+    FullHouse,
+    SmallStraight,
+    LargeStraight,
+    Yahtzee,
+    Chance,
+    Count
+};
+
+struct Category {
+    std::string name;
+    int score;
+};
+
+class Scorecard {
+public:
+    static constexpr int UNSCORED = -1;
+    static constexpr std::size_t CATEGORY_COUNT = static_cast<std::size_t>(CategoryId::Count);
+    static constexpr int UPPER_BONUS_THRESHOLD = 63;
+    static constexpr int UPPER_BONUS_POINTS = 35;
+
+    Scorecard();
+
+    std::size_t size() const;
+    const std::string& name(std::size_t i) const;
+    const std::string& name(CategoryId id) const;
+    bool isScored(std::size_t i) const;
+    bool isScored(CategoryId id) const;
+    int score(std::size_t i) const;
+    int score(CategoryId id) const;
+    bool record(std::size_t i, const Counts& counts);
+    bool record(CategoryId id, const Counts& counts);
+    bool allScored() const;
+    int total() const;
+    int upperBonus() const;
+    std::vector<Category> preview(const Counts& counts) const;
+
+private:
+    std::vector<Category> categories;
+};
+
+#endif
+```
+
+New lines:
+
+- `enum class CategoryId : std::size_t {`: a new type named `CategoryId`. Each enumerator gets the next whole number, starting at 0. `Ones` is 0, `Twos` is 1, and `Chance` is 12. `: std::size_t` makes the underlying type `std::size_t`, the same type the vector uses for positions.
+- Scoped means the enumerators are written `CategoryId::Chance`, and a bare `Chance` does not exist. A plain `enum` would put `Ones` and `Chance` into the surrounding scope, where they could collide with other names.
+- There is no automatic conversion in either direction. `int x = CategoryId::Ones;` does not compile, and neither does `CategoryId id = 3;`. A box can no longer be mixed up with an arbitrary number by accident.
+- `Count`: a last enumerator that is not a category. Because the numbering starts at 0, its value is the number of real categories, which is 13. This is a common habit, and it means the count updates itself when a category is added above it.
+- `static_cast<std::size_t>(CategoryId::Count)`: the explicit way to turn an enumerator into its number. `CATEGORY_COUNT` is still `constexpr`, so it can be used wherever the compiler needs a constant, such as `static_assert`.
+- `const std::string& name(CategoryId id) const;`: a second function with the same name as `name(std::size_t i)`. The compiler picks by argument type. A plain number such as `0` cannot convert to `CategoryId`, so `scorecard.name(0)` still calls the index version. The menu loop needs the index versions because it walks through positions.
+- The same pairing is added for `isScored`, `score` and `record`.
+
+## Use the names inside
+
+Words first:
+
+- **`switch` over an enumeration**: when every enumerator has its own `case` and there is no `default`, the compiler can tell you if one is missing.
+
+Replace `Scorecard.cpp` with this.
+
+```cpp file=Scorecard.cpp
+#include "Scorecard.h"
+
+static std::size_t indexOf(CategoryId id) {
+    return static_cast<std::size_t>(id);
+}
+
+static int potentialFor(CategoryId id, const Counts& counts) {
+    switch (id) {
+        case CategoryId::Ones: return scoreUpper(counts, 1);
+        case CategoryId::Twos: return scoreUpper(counts, 2);
+        case CategoryId::Threes: return scoreUpper(counts, 3);
+        case CategoryId::Fours: return scoreUpper(counts, 4);
+        case CategoryId::Fives: return scoreUpper(counts, 5);
+        case CategoryId::Sixes: return scoreUpper(counts, 6);
+        case CategoryId::ThreeOfAKind: return scoreOfAKind(counts, 3);
+        case CategoryId::FourOfAKind: return scoreOfAKind(counts, 4);
+        case CategoryId::FullHouse: return scoreFullHouse(counts);
+        case CategoryId::SmallStraight: return scoreSmallStraight(counts);
+        case CategoryId::LargeStraight: return scoreLargeStraight(counts);
+        case CategoryId::Yahtzee: return scoreYahtzee(counts);
+        case CategoryId::Chance: return scoreChance(counts);
+        case CategoryId::Count: return 0;
+    }
+    return 0;
+}
+
+Scorecard::Scorecard() {
+    const char* const names[] = {
+        "Ones", "Twos", "Threes", "Fours", "Fives", "Sixes",
+        "Three of a kind", "Four of a kind", "Full house",
+        "Small straight", "Large straight", "Yahtzee", "Chance",
+    };
+    static_assert(sizeof(names) / sizeof(names[0]) == CATEGORY_COUNT,
+                  "one name is needed for every category");
+
+    categories.reserve(CATEGORY_COUNT);
+    for (std::size_t i = 0; i < CATEGORY_COUNT; i++) {
+        categories.push_back(Category{names[i], UNSCORED});
+    }
+}
+
+std::size_t Scorecard::size() const {
+    return categories.size();
+}
+
+const std::string& Scorecard::name(std::size_t i) const {
+    return categories[i].name;
+}
+
+const std::string& Scorecard::name(CategoryId id) const {
+    return name(indexOf(id));
+}
+
+bool Scorecard::isScored(std::size_t i) const {
+    return categories[i].score != UNSCORED;
+}
+
+bool Scorecard::isScored(CategoryId id) const {
+    return isScored(indexOf(id));
+}
+
+int Scorecard::score(std::size_t i) const {
+    return categories[i].score;
+}
+
+int Scorecard::score(CategoryId id) const {
+    return score(indexOf(id));
+}
+
+bool Scorecard::record(std::size_t i, const Counts& counts) {
+    if (i >= categories.size() || categories[i].score != UNSCORED) {
+        return false;
+    }
+    categories[i].score = potentialFor(static_cast<CategoryId>(i), counts);
+    return true;
+}
+
+bool Scorecard::record(CategoryId id, const Counts& counts) {
+    return record(indexOf(id), counts);
+}
+
+bool Scorecard::allScored() const {
+    for (const Category& c : categories) {
+        if (c.score == UNSCORED) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int Scorecard::total() const {
+    int sum = 0;
+    for (const Category& c : categories) {
+        if (c.score != UNSCORED) {
+            sum += c.score;
+        }
+    }
+    return sum;
+}
+
+int Scorecard::upperBonus() const {
+    int upper = 0;
+    for (std::size_t i = 0; i < 6; i++) {
+        if (categories[i].score != UNSCORED) {
+            upper += categories[i].score;
+        }
+    }
+    return upper >= UPPER_BONUS_THRESHOLD ? UPPER_BONUS_POINTS : 0;
+}
+
+std::vector<Category> Scorecard::preview(const Counts& counts) const {
+    std::vector<Category> shown = categories;
+    for (std::size_t i = 0; i < shown.size(); i++) {
+        if (shown[i].score == UNSCORED) {
+            shown[i].score = potentialFor(static_cast<CategoryId>(i), counts);
+        }
+    }
+    return shown;
+}
+```
+
+Line by line, only the new parts:
+
+- `static std::size_t indexOf(CategoryId id)`: the one place that turns a `CategoryId` into a position. `static` keeps it private to this file.
+- `static int potentialFor(CategoryId id, ...)`: now takes the enumeration, not a number.
+- `switch (id) {` with one `case` per enumerator and **no `default`**: this is on purpose. When you build with `-Wall`, the compiler warns `enumeration value 'Threes' not handled in switch` if someone adds a category and forgets its `case`. Writing a `default:` would silence that warning, so it is left out.
+- `case CategoryId::Count: return 0;`: `Count` is not a real category, but it is an enumerator, so the switch is complete only if it is listed.
+- `return 0;` after the switch: an enumeration with a fixed underlying type can hold any value of that type, such as `static_cast<CategoryId>(99)`. If that ever arrives, execution leaves the switch, and this line gives a defined result.
+- `potentialFor(static_cast<CategoryId>(i), counts)`: turns a position into an enumerator. The conversion from number to enumeration is always explicit. In `record`, the bounds check above it has already guaranteed that `i` is a real position.
+- `bool Scorecard::record(CategoryId id, ...) { return record(indexOf(id), counts); }`: the new overloads only convert and hand over to the index version. The logic stays in one place. `CategoryId::Count` becomes 13, which `record` rejects because it is not below `categories.size()`.
+
+```predict
+question: You add a 14th enumerator `Bonus` before Count, but forget to add its case in potentialFor. You build with -Wall. What happens?
+choice: A compile error stops the build
+choice: A warning names the enumerator that is not handled
+choice: Nothing at all, the compiler stays silent
+answer: A warning names the enumerator that is not handled
+explain: A switch over an enumeration without a default is checked by -Wswitch, which -Wall switches on. It reports every enumerator without a case. It is a warning, not an error, so read the build output.
+```
+
+```predict
+question: Existing code calls `card.record(3, counts)` with a plain number. Which function runs now that a CategoryId overload exists?
+choice: record(CategoryId, ...), because 3 means Fours
+choice: record(std::size_t, ...), because a number does not convert to CategoryId
+choice: Neither: the call is ambiguous and does not compile
+answer: record(std::size_t, ...), because a number does not convert to CategoryId
+explain: An enum class never converts from an int by itself. Only the size_t overload can accept the 3, so the compiler picks it. This is why the old calls and the old tests kept working.
+```
+
+## Check that the game still plays
+
+Build with warnings switched on:
+
+```bash
+g++ -std=c++17 -Wall -Wextra main.cpp Game.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game
+```
+
+- `-Wall`: turns on the compiler's common warnings. The name is a little misleading, because it is not all of them.
+- `-Wextra`: turns on a few more. A clean build prints nothing.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra main.cpp Game.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the game builds with warnings on" -- Read the first message. It names the file and the line.
+run "./game --fast" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" stdout="Game over." label="the game still plays to the end" -- The index versions of record, name and score are unchanged.
+run "g++ -std=c++17 tests/test_category_ids.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_category_ids" label="the category tests build" -- Press the lesson's support button if tests/test_category_ids.cpp is missing.
+tests "./test_category_ids" require="CategoryIds.NamesMatchTheIds" label="every id has the right name" -- The names must be listed in the same order as the enumerators.
+tests "./test_category_ids" require="CategoryIds.CountIsNotACategory" label="Count is refused" -- record(CategoryId::Count, ...) must return false and change nothing.
+```
+
+## Your turn: which boxes are upper?
+
+`upperBonus` still contains the loop `i < 6`, a number that only works because the upper boxes happen to come first. Fix that.
+
+Add a free function `bool isUpperSection(CategoryId id)` to `Scorecard`. Declare it in `Scorecard.h` after the enumeration, and define it in `Scorecard.cpp`. It returns `true` for the six upper categories and `false` for every other enumerator, including `Count`. Write it as a `switch` that lists **every** enumerator and has no `default`. Then change `upperBonus` to loop over all boxes and use `isUpperSection(static_cast<CategoryId>(i))` instead of the number 6. The test file `tests/test_upper_section.cpp` is already in your project.
+
+```check
+matches Scorecard.h "bool[ ]+isUpperSection[ ]*[(][ ]*CategoryId" label="Scorecard.h declares isUpperSection" -- Take a CategoryId and return bool.
+lacks Scorecard.cpp "i < 6" label="the magic number 6 is gone from upperBonus" -- Loop up to categories.size() and ask isUpperSection about each position.
+run "g++ -std=c++17 -Wall -Wextra tests/test_upper_section.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_upper_section" label="the upper-section tests build" -- A free function declared in the header needs a definition in Scorecard.cpp.
+tests "./test_upper_section" require="UpperSection.TheRestAreNot" label="the lower boxes are not upper" -- Return false for the seven other enumerators, Count included.
+tests "./test_upper_section" require="UpperSection.BonusStillCountsOnlyTheUpperBoxes" label="the bonus still works" -- upperBonus must add only boxes for which isUpperSection is true.
+```
+
+```hints
+nudge: Which question does the bonus ask about each box, and who should answer it?
+concept: A switch that lists every enumerator can group several cases onto one return. Cases that share a body are written one under another with no code between them.
+shape: In isUpperSection write six case labels (Ones to Sixes) followed by `return true;`, then the other seven (ThreeOfAKind to Count) followed by `return false;`, then `return false;` after the switch. In upperBonus loop `i` over every box and add its score when the box is upper and scored.
+answer: One way to write it:
+~~~cpp
+// Scorecard.h — after the enum class
+bool isUpperSection(CategoryId id);
+
+// Scorecard.cpp
+bool isUpperSection(CategoryId id) {
+    switch (id) {
+        case CategoryId::Ones:
+        case CategoryId::Twos:
+        case CategoryId::Threes:
+        case CategoryId::Fours:
+        case CategoryId::Fives:
+        case CategoryId::Sixes:
+            return true;
+        case CategoryId::ThreeOfAKind:
+        case CategoryId::FourOfAKind:
+        case CategoryId::FullHouse:
+        case CategoryId::SmallStraight:
+        case CategoryId::LargeStraight:
+        case CategoryId::Yahtzee:
+        case CategoryId::Chance:
+        case CategoryId::Count:
+            return false;
+    }
+    return false;
+}
+
+// Scorecard.cpp — the loop inside upperBonus
+for (std::size_t i = 0; i < categories.size(); i++) {
+    if (isUpperSection(static_cast<CategoryId>(i)) && categories[i].score != UNSCORED) {
+        upper += categories[i].score;
+    }
+}
+~~~
+```
+````
+
+`Yahtzee in C++/05 Cleaner C++/02-a-table-of-rules.md`
+````markdown
+---
+title: 5.2 — A Table of Rules
+runtime: none
+support: tests/test_rule_table.cpp, tests/test_best_choice.cpp
+---
+
+Early in this series you tried to keep the scoring functions in a list and loop over them, and it did not work: the functions took different arguments, and a C++ list needs one signature. Lambdas fix that. In this lesson the names and the rules move into one table, and the `switch` and the separate list of names disappear.
+
+Press this lesson's support button first. It creates two test files.
+
+## One table, one place
+
+Words first:
+
+- **Lambda**: a small function written in the middle of other code, with no name: `[](int x) { return x * 2; }`.
+- **Capture list**: the square brackets at the start of a lambda. They list the outside variables the lambda may use. `[]` means none.
+- **`std::function<R(Args)>`**: a standard type that can hold any callable thing (a function, a lambda) that takes `Args` and returns `R`. You call it like a function.
+- **Anonymous namespace**: `namespace { ... }` makes everything inside visible only to the current `.cpp` file.
+
+Replace `Scorecard.cpp` with this. It includes the `isUpperSection` function you wrote in the last lesson.
+
+```cpp file=Scorecard.cpp
+#include <functional>
+
+#include "Scorecard.h"
+
+namespace {
+
+struct Rule {
+    const char* name;
+    std::function<int(const Counts&)> score;
+};
+
+const Rule& ruleAt(std::size_t index) {
+    static const Rule table[] = {
+        {"Ones", [](const Counts& c) { return scoreUpper(c, 1); }},
+        {"Twos", [](const Counts& c) { return scoreUpper(c, 2); }},
+        {"Threes", [](const Counts& c) { return scoreUpper(c, 3); }},
+        {"Fours", [](const Counts& c) { return scoreUpper(c, 4); }},
+        {"Fives", [](const Counts& c) { return scoreUpper(c, 5); }},
+        {"Sixes", [](const Counts& c) { return scoreUpper(c, 6); }},
+        {"Three of a kind", [](const Counts& c) { return scoreOfAKind(c, 3); }},
+        {"Four of a kind", [](const Counts& c) { return scoreOfAKind(c, 4); }},
+        {"Full house", scoreFullHouse},
+        {"Small straight", scoreSmallStraight},
+        {"Large straight", scoreLargeStraight},
+        {"Yahtzee", scoreYahtzee},
+        {"Chance", scoreChance},
+    };
+    static_assert(sizeof(table) / sizeof(table[0]) == Scorecard::CATEGORY_COUNT,
+                  "one rule is needed for every category");
+    return table[index];
+}
+
+std::size_t indexOf(CategoryId id) {
+    return static_cast<std::size_t>(id);
+}
+
+}  // namespace
+
+bool isUpperSection(CategoryId id) {
+    switch (id) {
+        case CategoryId::Ones:
+        case CategoryId::Twos:
+        case CategoryId::Threes:
+        case CategoryId::Fours:
+        case CategoryId::Fives:
+        case CategoryId::Sixes:
+            return true;
+        case CategoryId::ThreeOfAKind:
+        case CategoryId::FourOfAKind:
+        case CategoryId::FullHouse:
+        case CategoryId::SmallStraight:
+        case CategoryId::LargeStraight:
+        case CategoryId::Yahtzee:
+        case CategoryId::Chance:
+        case CategoryId::Count:
+            return false;
+    }
+    return false;
+}
+
+Scorecard::Scorecard() {
+    categories.reserve(CATEGORY_COUNT);
+    for (std::size_t i = 0; i < CATEGORY_COUNT; i++) {
+        categories.push_back(Category{ruleAt(i).name, UNSCORED});
+    }
+}
+
+std::size_t Scorecard::size() const {
+    return categories.size();
+}
+
+const std::string& Scorecard::name(std::size_t i) const {
+    return categories[i].name;
+}
+
+const std::string& Scorecard::name(CategoryId id) const {
+    return name(indexOf(id));
+}
+
+bool Scorecard::isScored(std::size_t i) const {
+    return categories[i].score != UNSCORED;
+}
+
+bool Scorecard::isScored(CategoryId id) const {
+    return isScored(indexOf(id));
+}
+
+int Scorecard::score(std::size_t i) const {
+    return categories[i].score;
+}
+
+int Scorecard::score(CategoryId id) const {
+    return score(indexOf(id));
+}
+
+bool Scorecard::record(std::size_t i, const Counts& counts) {
+    if (i >= categories.size() || categories[i].score != UNSCORED) {
+        return false;
+    }
+    categories[i].score = ruleAt(i).score(counts);
+    return true;
+}
+
+bool Scorecard::record(CategoryId id, const Counts& counts) {
+    return record(indexOf(id), counts);
+}
+
+bool Scorecard::allScored() const {
+    for (const Category& c : categories) {
+        if (c.score == UNSCORED) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int Scorecard::total() const {
+    int sum = 0;
+    for (const Category& c : categories) {
+        if (c.score != UNSCORED) {
+            sum += c.score;
+        }
+    }
+    return sum;
+}
+
+int Scorecard::upperBonus() const {
+    int upper = 0;
+    for (std::size_t i = 0; i < categories.size(); i++) {
+        if (isUpperSection(static_cast<CategoryId>(i)) && categories[i].score != UNSCORED) {
+            upper += categories[i].score;
+        }
+    }
+    return upper >= UPPER_BONUS_THRESHOLD ? UPPER_BONUS_POINTS : 0;
+}
+
+std::vector<Category> Scorecard::preview(const Counts& counts) const {
+    std::vector<Category> shown = categories;
+    for (std::size_t i = 0; i < shown.size(); i++) {
+        if (shown[i].score == UNSCORED) {
+            shown[i].score = ruleAt(i).score(counts);
+        }
+    }
+    return shown;
+}
+```
+
+Line by line, only the new parts:
+
+- `#include <functional>`: declares `std::function`.
+- `namespace { ... }`: an anonymous namespace. Everything inside is private to this file, and that includes **types**. The keyword `static` cannot be put on a `struct`. If two `.cpp` files each defined a different `struct Rule`, the program would break in a way the compiler does not report. An anonymous namespace rules that out. `indexOf` moved inside it, so it no longer needs `static`.
+- `struct Rule { const char* name; std::function<int(const Counts&)> score; };`: one row of the table. `name` points at the category's text. `score` holds anything that can be called with a `const Counts&` and returns an `int`. You call it like a function: `rule.score(counts)`. A `std::function` stores its callable behind a layer that hides the exact type, which costs a little time per call. Here the cost does not matter.
+- `static const Rule table[] = { ... };` inside `ruleAt`: a variable inside a function that is marked `static` is built **once**, the first time the function runs, and then lives until the program ends. A table at file level would be built when the program starts, in an order across files that C++ does not fix. A `Scorecard` made in another file before the table existed would read garbage. Building on first use avoids that. Since C++11 this build is also safe if two threads arrive at once.
+- `[](const Counts& c) { return scoreUpper(c, 1); }`: a lambda. `[]` is the capture list, empty here because the lambda uses nothing from outside. `(const Counts& c)` is its parameter list. `{ return ...; }` is its body. The return type is worked out from the `return`, which is `int`. This lambda is the fix for the problem from lesson 3.1: `scoreUpper` needs two arguments but every row of the table must take one, so the lambda fills in the face and presents one argument to the table.
+- `{"Full house", scoreFullHouse}`: no lambda is needed here. `scoreFullHouse` already takes one `const Counts&` and returns an `int`, so the function name converts to a `std::function` directly.
+- `static_assert(...)`: the same compile-time guard as before, now covering names and rules together. A missing row stops the build.
+- `return table[index];`: not checked. It is only reached with an index below 13, because the constructor's loop, `record` and `preview` all guarantee that.
+- `Category{ruleAt(i).name, UNSCORED}`: the constructor reads the name from the table. There is no second list of names to keep in step.
+- `ruleAt(i).score(counts)`: finds row `i` and calls its function. This replaces the whole `potentialFor` switch. Name and rule for one category now sit on the same line.
+
+The order of the rows still has to match the order of the enumerators in `CategoryId`. The tests below check that.
+
+## What a lambda remembers
+
+Words first:
+
+- **Capture by value**: `[x]` copies `x` into the lambda at the moment the lambda is created.
+- **Capture by reference**: `[&x]` lets the lambda use the original `x`. It is only safe while that original still exists.
+
+```cpp
+int bonus = 10;
+auto addBonus = [bonus](int x) { return x + bonus; };
+bonus = 99;
+std::cout << addBonus(1) << "\n";
+```
+
+- `auto addBonus = ...`: every lambda has its own unnamed type, so `auto` is the way to hold one in a variable.
+- `[bonus]` copies the 10 into the lambda when it is created. Changing `bonus` afterwards does not change the copy.
+
+```predict
+question: What does the code above print?
+choice: 11
+choice: 100
+choice: It does not compile
+answer: 11
+explain: The capture [bonus] copied 10 when addBonus was created, so addBonus(1) is 1 + 10. With [&bonus] the lambda would use the original variable and print 100. A reference capture is dangerous if the lambda is kept after the variable is gone.
+```
+
+## Read the tests
+
+The support button created `tests/test_rule_table.cpp`. Its job is to catch a row in the wrong place:
+
+```cpp
+static void checkHand(const Counts& c) {
+    Scorecard s;
+    std::vector<Category> shown = s.preview(c);
+    for (std::size_t i = 0; i < Scorecard::CATEGORY_COUNT; i++) {
+        EXPECT_EQ(shown[i].score, expectedFor(static_cast<CategoryId>(i), c));
+    }
+}
+```
+
+- `expectedFor` is a helper inside the test file. It calls the scoring functions directly, using a `switch` over `CategoryId`.
+- For several hands, every row of the table must give the same number as the direct call. If the rows for Fours and Fives were swapped, a hand with different counts of those faces would fail.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra main.cpp Game.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the game builds with warnings on" -- The struct Rule and ruleAt must be inside the anonymous namespace.
+run "./game --fast" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" stdout="Game over." label="the game still plays to the end" -- record and preview must call ruleAt(i).score(counts).
+run "g++ -std=c++17 -Wall -Wextra tests/test_rule_table.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_rule_table" label="the rule table tests build" -- Press the lesson's support button if tests/test_rule_table.cpp is missing.
+tests "./test_rule_table" require="RuleTable.PreviewMatchesTheRulesForAFullHouse" label="the rows are in the right order" -- Every row must sit at the position of its CategoryId.
+tests "./test_rule_table" require="RuleTable.RecordWritesTheSameScoreThatPreviewShowed" label="record agrees with preview" -- Both must call the same row of the table.
+lacks Scorecard.cpp "potentialFor" label="the old switch is gone" -- Replace every call to potentialFor with ruleAt(i).score(counts).
+```
+
+## Your turn: the best box
+
+Add `CategoryId bestChoice(const Counts& counts) const` to `Scorecard`. It returns the unscored box that would score the most points for these counts. If several boxes tie, it returns the one with the lowest position. If every box is already scored, it returns `CategoryId::Count`. Declare it in `Scorecard.h` and define it in `Scorecard.cpp`. The test file `tests/test_best_choice.cpp` is already in your project. Use `preview`. You do not need to call any rule directly.
+
+```check
+matches Scorecard.h "CategoryId[ ]+bestChoice[ ]*[(][ ]*const[ ]+Counts[ ]*&[^)]*[)][ ]*const" label="Scorecard.h declares bestChoice as const" -- It changes nothing, so it ends with const.
+run "g++ -std=c++17 -Wall -Wextra tests/test_best_choice.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_best_choice" label="the best-choice tests build" -- Declare the function in Scorecard.h and define it in Scorecard.cpp.
+tests "./test_best_choice" require="BestChoice.SkipsBoxesThatAreAlreadyScored" label="scored boxes are skipped" -- Preview shows real scores for scored boxes. Check isScored before comparing.
+tests "./test_best_choice" require="BestChoice.TiesGoToTheLowestBox" label="ties go to the lowest box" -- Replace the best only when a score is strictly larger.
+tests "./test_best_choice" require="BestChoice.EvenZeroPointsPicksALegalBox" label="a box worth zero is still a legal choice" -- Start the best score below zero so that a score of 0 still counts.
+tests "./test_best_choice" require="BestChoice.FullCardGivesCount" label="a full card gives Count" -- Start with best set to CategoryId::Count and never change it if nothing qualifies.
+```
+
+```hints
+nudge: What do you need to remember while you walk through the 13 boxes one after another?
+concept: Keep two variables: the best category so far and its score. Start the score at -1, which is below any real score, and start the category at `CategoryId::Count` as the "nothing yet" answer. Use `>` and not `>=` so that an earlier box wins a tie.
+shape: Call `preview(counts)`. Loop over every position. Skip it if `isScored(i)`. Otherwise, if its previewed score is bigger than the best so far, remember that score and `static_cast<CategoryId>(i)`. Return the best category.
+answer: One way to write it:
+~~~cpp
+// Scorecard.h — inside the public: section
+CategoryId bestChoice(const Counts& counts) const;
+
+// Scorecard.cpp
+CategoryId Scorecard::bestChoice(const Counts& counts) const {
+    std::vector<Category> shown = preview(counts);
+    CategoryId best = CategoryId::Count;
+    int bestScore = -1;
+    for (std::size_t i = 0; i < shown.size(); i++) {
+        if (!isScored(i) && shown[i].score > bestScore) {
+            bestScore = shown[i].score;
+            best = static_cast<CategoryId>(i);
+        }
+    }
+    return best;
+}
+~~~
+```
+````
+
+`Yahtzee in C++/05 Cleaner C++/03-copies-and-moves.md`
+````markdown
+---
+title: 5.3 — Copies and Moves
+runtime: none
+---
+
+Every C++ program makes copies, and most of the time they are harmless. Sometimes a copy is a wasted effort, and C++ lets you replace it with a **move**. In this lesson you build a small scratch program that counts every copy and move, and you run experiments until you can predict them. This is a scratch file, separate from the game.
+
+## A class that counts
+
+Words first:
+
+- **Copy constructor**: runs when a new object is made as a copy of an existing one. Its parameter is `const T&`.
+- **Move constructor**: runs when a new object is made by taking the contents of an object that is about to be thrown away. Its parameter is `T&&`.
+- **`T&&` (rvalue reference)**: a reference that binds to a temporary value, or to something you marked with `std::move`.
+- **`std::move(x)`**: does not move anything. It only says "treat `x` as something that may be taken from". The move happens in whichever constructor or function then receives it.
+- **Moved-from object**: an object whose contents were taken. It is still alive and may be destroyed or assigned to, but its value is no longer meaningful.
+- **Copy elision**: the compiler builds an object directly where it is needed instead of copying it. Since C++17 this is **guaranteed** when a function returns a temporary.
+
+Create `copies.cpp` in a new folder `scratch/`, next to your project.
+
+```cpp file=scratch/copies.cpp
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+class Noisy {
+public:
+    inline static int constructs = 0;
+    inline static int copies = 0;
+    inline static int moves = 0;
+
+    explicit Noisy(int v) : value(v) {
+        constructs++;
+    }
+
+    Noisy(const Noisy& other) : value(other.value) {
+        copies++;
+    }
+
+    Noisy(Noisy&& other) noexcept : value(other.value) {
+        moves++;
+        other.value = -1;
+    }
+
+    Noisy& operator=(const Noisy& other) {
+        value = other.value;
+        copies++;
+        return *this;
+    }
+
+    Noisy& operator=(Noisy&& other) noexcept {
+        value = other.value;
+        other.value = -1;
+        moves++;
+        return *this;
+    }
+
+    int get() const {
+        return value;
+    }
+
+    static void reset() {
+        constructs = 0;
+        copies = 0;
+        moves = 0;
+    }
+
+private:
+    int value;
+};
+
+static void report(const std::string& label) {
+    std::cout << label << ": constructs=" << Noisy::constructs
+              << " copies=" << Noisy::copies
+              << " moves=" << Noisy::moves << "\n";
+    Noisy::reset();
+}
+
+static int takeByValue(Noisy n) {
+    return n.get();
+}
+
+static int takeByConstRef(const Noisy& n) {
+    return n.get();
+}
+
+static Noisy makeNoisy(int v) {
+    return Noisy(v);
+}
+
+int main() {
+    Noisy a(1);
+    Noisy b(2);
+    report("setup");
+
+    takeByValue(a);
+    report("by value, from a variable");
+
+    takeByConstRef(a);
+    report("by const reference");
+
+    takeByValue(std::move(b));
+    report("by value, with std::move");
+    std::cout << "b now holds " << b.get() << "\n";
+
+    Noisy c = makeNoisy(3);
+    report("returned from a function");
+
+    Noisy d = a;
+    report("copy construction");
+
+    Noisy e = std::move(d);
+    report("move construction");
+    std::cout << "e holds " << e.get() << "\n";
+
+    Noisy x(10);
+    Noisy y(20);
+    Noisy::reset();
+    y = x;
+    report("copy assignment");
+    y = std::move(x);
+    report("move assignment");
+
+    std::vector<Noisy> v;
+    v.reserve(3);
+    v.push_back(a);
+    report("push_back of a variable");
+    v.push_back(std::move(c));
+    report("push_back with std::move");
+    v.emplace_back(9);
+    report("emplace_back");
+
+    return 0;
+}
+```
+
+The class:
+
+- `inline static int constructs = 0;`: three counters that belong to the class, not to any object. `inline` lets a `static` data member be defined right here in the class. Without it (before C++17) each one needed a separate definition in a `.cpp` file.
+- `explicit Noisy(int v) : value(v) { constructs++; }`: an ordinary constructor. It counts itself.
+- `Noisy(const Noisy& other)`: the copy constructor. It copies the value and adds 1 to `copies`.
+- `Noisy(Noisy&& other) noexcept`: the move constructor. `Noisy&&` binds only to a temporary or to something wrapped in `std::move`. It takes the value, counts a move, and sets `other.value` to -1 to show that `other` has been emptied. `noexcept` promises it will never throw. That promise matters for containers such as `std::vector`, which only move their elements when moving cannot fail.
+- `operator=` in two forms: the same two ideas for assigning to an object that already exists. `return *this;` returns the object itself so that assignments can chain. `this` is a pointer to the object, and `*this` is the object.
+- `static void reset()`: a static member function. It can be called as `Noisy::reset()` with no object.
+- `report(...)` prints the counts and then zeroes them, so every experiment starts from zero.
+- A real class that owns nothing special, like your `Scorecard`, should define **none** of these functions. The compiler writes correct ones. This is called the **rule of zero**. `Noisy` writes them only so that it can count.
+
+The experiments in `main`:
+
+- `takeByValue(Noisy n)` has no `&`. The argument is copied into `n`, or moved into it if you pass `std::move(...)`.
+- `takeByConstRef(const Noisy& n)` makes no copy of any kind. This is why the project passes `const Counts&` and `const Scorecard&` everywhere.
+- `Noisy c = makeNoisy(3);`: the function returns a temporary, and C++17 builds it directly in `c`. There is one construction and no copy and no move.
+- `v.reserve(3);` makes room for three elements up front, so the vector never has to move its elements to a bigger block while the experiment runs.
+- `v.push_back(a)` copies `a` into the vector. `v.push_back(std::move(c))` moves `c` in. `v.emplace_back(9)` passes `9` to the `Noisy` constructor and builds the element **inside** the vector, with no copy and no move.
+
+```bash
+g++ -std=c++17 -Wall -Wextra scratch/copies.cpp -o copies
+./copies
+```
+
+```predict
+question: takeByValue(a) is called with an ordinary variable. What does the report line say?
+choice: copies=0 moves=0
+choice: copies=1 moves=0
+choice: copies=0 moves=1
+answer: copies=1 moves=0
+explain: The parameter n is a new object, and a variable on the right of the call is an lvalue, which cannot be taken from. So n is built by the copy constructor.
+```
+
+```predict
+question: takeByValue(std::move(b)) is called. What does the report line say?
+choice: copies=1 moves=0
+choice: copies=0 moves=1
+choice: copies=0 moves=0
+answer: copies=0 moves=1
+explain: std::move(b) makes b available to be taken from. The parameter n is built by the move constructor, which counts a move. Afterwards b holds -1.
+```
+
+```check
+file scratch/copies.cpp
+run "g++ -std=c++17 -Wall -Wextra scratch/copies.cpp -o copies" label="the experiment program builds" -- Check the move constructor takes Noisy&& and the copy constructor takes const Noisy&.
+run "./copies" stdout="by value, from a variable: constructs=0 copies=1 moves=0" label="passing by value copies" -- A parameter without & is a new object.
+run "./copies" stdout="by const reference: constructs=0 copies=0 moves=0" label="passing by const reference copies nothing" -- A reference is a second name for an existing object.
+run "./copies" stdout="by value, with std::move: constructs=0 copies=0 moves=1" label="std::move turns the copy into a move" -- The move constructor runs when the argument is std::move(b).
+run "./copies" stdout="returned from a function: constructs=1 copies=0 moves=0" label="returning a temporary builds it in place" -- C++17 guarantees there is no copy or move here.
+run "./copies" stdout="emplace_back: constructs=1 copies=0 moves=0" label="emplace_back builds inside the vector" -- emplace_back passes its arguments to the constructor.
+```
+
+## Your turn: a vector with no copies and no moves
+
+At the end of `main`, before `return 0;`, build a `std::vector<Noisy>` named `three` that holds `Noisy` objects with the values 1, 2 and 3. Reserve room for three first. Then call `report("three emplaced");`. The report must show `constructs=3 copies=0 moves=0`. Note that `v.push_back(Noisy(1))` does not meet that goal, because the temporary has to be moved into the vector.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/copies.cpp -o copies" label="the experiment program builds" -- Read the first error. It names the line.
+run "./copies" stdout="three emplaced: constructs=3 copies=0 moves=0" label="three elements, no copies and no moves" -- Use reserve(3) and then emplace_back with the value. push_back(Noisy(1)) would show moves=3.
+contains scratch/copies.cpp "emplace_back" label="emplace_back is used" -- It builds each element in place.
+```
+
+```hints
+nudge: Which call builds an element inside the vector instead of building it elsewhere first?
+concept: push_back takes an object that already exists, so a temporary must be moved in. emplace_back takes the constructor's arguments and builds the object in the vector's own memory. reserve stops the vector from having to move its elements into a bigger block.
+shape: Declare `std::vector<Noisy> three;`, call `three.reserve(3);`, then `three.emplace_back(1);`, 2 and 3 on separate lines. Finish with the report line.
+answer: One way to write it:
+~~~cpp
+std::vector<Noisy> three;
+three.reserve(3);
+three.emplace_back(1);
+three.emplace_back(2);
+three.emplace_back(3);
+report("three emplaced");
+~~~
+```
+````
+
+`Yahtzee in C++/05 Cleaner C++/04-compiling-in-pieces.md`
+````markdown
+---
+title: 5.4 — Compiling in Pieces
+runtime: none
+---
+
+You have typed a nine-file `g++` command many times. This lesson looks at what that command does, so you can build faster and read the errors. You turn each `.cpp` file into an object file by itself, then link them. You also put the file list in a file so you never retype it.
+
+## The stages
+
+Words first:
+
+- **Preprocessing**: the text step. `#include` pastes the named file in, and `#define` and `#ifdef` act on the text.
+- **Compiling**: translating one preprocessed `.cpp` file into machine code. The result is an **object file**.
+- **Object file**: machine code for one `.cpp` file. Calls to functions in other files are left as blank holes.
+- **Linking**: joining object files into one program, filling each hole with the address of a definition.
+
+The preprocessor's output can be seen. Run this and count the lines:
+
+```bash
+g++ -std=c++17 -E Die.cpp -o Die.i
+```
+
+- `-E`: stop after preprocessing and write the text out.
+- `Die.cpp` is about 60 lines, but `Die.i` is around 25,000. Almost all of that is the standard library headers that `<string>` and `<cstdlib>` paste in. The compiler reads all of it for every `.cpp` file.
+
+## Compile each file alone
+
+Make a folder for the object files, then compile one file:
+
+```bash
+mkdir obj
+g++ -std=c++17 -Wall -Wextra -c Die.cpp -o obj/Die.o
+```
+
+- `mkdir obj`: creates the folder. The command is the same on Windows, macOS and Linux.
+- `-c`: compile only. Do not link. The result is an object file.
+- `-o obj/Die.o`: the name of the output. The `.o` extension is a convention.
+
+Compile the other eight the same way, then link all nine:
+
+```bash
+g++ obj/main.o obj/Game.o obj/Turn.o obj/Input.o obj/Scorecard.o obj/Scoring.o obj/Dice.o obj/Die.o obj/Terminal.o -o game_obj
+```
+
+- With only `.o` files on the line, `g++` does no compiling. It runs the linker and nothing else.
+- Leave one object file out, such as `obj/Terminal.o`, and the link fails. You see lines like `undefined reference to 'clearScreen()'`. The compiler was happy with every file, and the hole could not be filled.
+
+```predict
+question: You change one line inside Die.cpp. How many of the nine object files must be rebuilt, before you link again?
+choice: All nine
+choice: Only Die.o
+choice: None, linking is enough
+answer: Only Die.o
+explain: Each .cpp file compiles on its own. Die.o is the only object built from Die.cpp, so it is the only one that goes out of date. The other eight object files are still correct. This is the reason to build in pieces on a large project. (If you change a header, every .cpp file that includes it, directly or through other headers, has to be rebuilt.)
+```
+
+## One file for the list
+
+Typing nine names is a chore, and a typo gives an error. `g++` can read options and file names from a text file when you write `@` in front of its name. Create `sources.txt`.
+
+```text file=sources.txt
+main.cpp
+Game.cpp
+Turn.cpp
+Input.cpp
+Scorecard.cpp
+Scoring.cpp
+Dice.cpp
+Die.cpp
+Terminal.cpp
+```
+
+Line by line:
+
+- One file name per line. `g++` treats the lines as if you had typed them on the command line. This works the same way on every system.
+- It is called a response file.
+
+Build with it:
+
+```bash
+g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game
+./game
+```
+
+- `-Wpedantic`: warns about anything that is not standard C++, such as an extension only some compilers accept. A clean build prints nothing.
+- When you add a tenth `.cpp` file, add one line to `sources.txt` and nothing else changes.
+
+```check
+file sources.txt
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game" label="the game builds from sources.txt" -- Every line of sources.txt must name a file that exists in this folder.
+run "./game --fast" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" stdout="Game over." label="the game still plays to the end" -- Nothing in the game changed. Only the build did.
+```
+
+## Your turn: build from object files
+
+Build the game from object files, without using `sources.txt`:
+
+1. Make a folder named `obj`.
+2. Compile each of the nine `.cpp` files with `-c` into `obj/`, one object file per source file, named after it (`obj/Game.o` and so on).
+3. Link the nine object files into a program named `game_obj`.
+
+```check
+dir obj label="the obj folder exists" -- mkdir obj
+file obj/main.o label="main.o exists" -- g++ -std=c++17 -c main.cpp -o obj/main.o
+file obj/Game.o label="Game.o exists" -- g++ -std=c++17 -c Game.cpp -o obj/Game.o
+file obj/Turn.o label="Turn.o exists" -- g++ -std=c++17 -c Turn.cpp -o obj/Turn.o
+file obj/Input.o label="Input.o exists" -- g++ -std=c++17 -c Input.cpp -o obj/Input.o
+file obj/Scorecard.o label="Scorecard.o exists" -- g++ -std=c++17 -c Scorecard.cpp -o obj/Scorecard.o
+file obj/Scoring.o label="Scoring.o exists" -- g++ -std=c++17 -c Scoring.cpp -o obj/Scoring.o
+file obj/Dice.o label="Dice.o exists" -- g++ -std=c++17 -c Dice.cpp -o obj/Dice.o
+file obj/Die.o label="Die.o exists" -- g++ -std=c++17 -c Die.cpp -o obj/Die.o
+file obj/Terminal.o label="Terminal.o exists" -- g++ -std=c++17 -c Terminal.cpp -o obj/Terminal.o
+run "./game_obj --fast" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" stdout="Game over." label="game_obj plays to the end" -- Link with: g++ obj/main.o obj/Game.o obj/Turn.o obj/Input.o obj/Scorecard.o obj/Scoring.o obj/Dice.o obj/Die.o obj/Terminal.o -o game_obj
+```
+
+```hints
+nudge: Which flag stops g++ before it links, and what does it need to be told about the output name?
+concept: `-c` compiles one source file into one object file, and `-o` names the result. A command that lists only .o files links them into a program.
+shape: Run nine commands of the form `g++ -std=c++17 -c NAME.cpp -o obj/NAME.o`, one for each source file. Then run one command that lists the nine .o files and ends with `-o game_obj`.
+answer: The commands:
+~~~bash
+mkdir obj
+g++ -std=c++17 -c main.cpp -o obj/main.o
+g++ -std=c++17 -c Game.cpp -o obj/Game.o
+g++ -std=c++17 -c Turn.cpp -o obj/Turn.o
+g++ -std=c++17 -c Input.cpp -o obj/Input.o
+g++ -std=c++17 -c Scorecard.cpp -o obj/Scorecard.o
+g++ -std=c++17 -c Scoring.cpp -o obj/Scoring.o
+g++ -std=c++17 -c Dice.cpp -o obj/Dice.o
+g++ -std=c++17 -c Die.cpp -o obj/Die.o
+g++ -std=c++17 -c Terminal.cpp -o obj/Terminal.o
+g++ obj/main.o obj/Game.o obj/Turn.o obj/Input.o obj/Scorecard.o obj/Scoring.o obj/Dice.o obj/Die.o obj/Terminal.o -o game_obj
+~~~
+```
+````
+
+`Yahtzee in C++/05 Cleaner C++/support/tests/test_category_ids.cpp`
+````cpp
+#include "minitest.h"
+#include "../Scorecard.h"
+
+#include <vector>
+
+static Counts hand(int a, int b, int c, int d, int e) {
+    return countFaces(std::vector<int>{a, b, c, d, e});
+}
+
+TEST(CategoryIds, CountMatchesTheCard) {
+    Scorecard s;
+    EXPECT_EQ(static_cast<std::size_t>(CategoryId::Count), 13u);
+    EXPECT_EQ(Scorecard::CATEGORY_COUNT, 13u);
+    EXPECT_EQ(s.size(), static_cast<std::size_t>(CategoryId::Count));
+}
+
+TEST(CategoryIds, NamesMatchTheIds) {
+    Scorecard s;
+    EXPECT_EQ(s.name(CategoryId::Ones), "Ones");
+    EXPECT_EQ(s.name(CategoryId::Sixes), "Sixes");
+    EXPECT_EQ(s.name(CategoryId::ThreeOfAKind), "Three of a kind");
+    EXPECT_EQ(s.name(CategoryId::FourOfAKind), "Four of a kind");
+    EXPECT_EQ(s.name(CategoryId::FullHouse), "Full house");
+    EXPECT_EQ(s.name(CategoryId::SmallStraight), "Small straight");
+    EXPECT_EQ(s.name(CategoryId::LargeStraight), "Large straight");
+    EXPECT_EQ(s.name(CategoryId::Yahtzee), "Yahtzee");
+    EXPECT_EQ(s.name(CategoryId::Chance), "Chance");
+}
+
+TEST(CategoryIds, RecordByIdAndByIndexAgree) {
+    Scorecard s;
+    EXPECT_EQ(s.record(CategoryId::Chance, hand(1, 2, 3, 4, 6)), true);
+    EXPECT_EQ(s.score(12), 16);
+    EXPECT_EQ(s.score(CategoryId::Chance), 16);
+    EXPECT_EQ(s.isScored(CategoryId::Chance), true);
+    EXPECT_EQ(s.isScored(CategoryId::Yahtzee), false);
+}
+
+TEST(CategoryIds, CountIsNotACategory) {
+    Scorecard s;
+    EXPECT_EQ(s.record(CategoryId::Count, hand(1, 2, 3, 4, 5)), false);
+    EXPECT_EQ(s.total(), 0);
+}
+
+TEST(CategoryIds, EachIdScoresItsOwnRule) {
+    Scorecard s;
+    Counts sixes = hand(6, 6, 6, 6, 6);
+    s.record(CategoryId::Yahtzee, sixes);
+    s.record(CategoryId::Sixes, sixes);
+    s.record(CategoryId::Ones, sixes);
+    EXPECT_EQ(s.score(CategoryId::Yahtzee), 50);
+    EXPECT_EQ(s.score(CategoryId::Sixes), 30);
+    EXPECT_EQ(s.score(CategoryId::Ones), 0);
+}
+````
+
+`Yahtzee in C++/05 Cleaner C++/support/tests/test_upper_section.cpp`
+````cpp
+#include "minitest.h"
+#include "../Scorecard.h"
+
+TEST(UpperSection, TheFirstSixAreUpper) {
+    EXPECT_EQ(isUpperSection(CategoryId::Ones), true);
+    EXPECT_EQ(isUpperSection(CategoryId::Twos), true);
+    EXPECT_EQ(isUpperSection(CategoryId::Threes), true);
+    EXPECT_EQ(isUpperSection(CategoryId::Fours), true);
+    EXPECT_EQ(isUpperSection(CategoryId::Fives), true);
+    EXPECT_EQ(isUpperSection(CategoryId::Sixes), true);
+}
+
+TEST(UpperSection, TheRestAreNot) {
+    EXPECT_EQ(isUpperSection(CategoryId::ThreeOfAKind), false);
+    EXPECT_EQ(isUpperSection(CategoryId::FourOfAKind), false);
+    EXPECT_EQ(isUpperSection(CategoryId::FullHouse), false);
+    EXPECT_EQ(isUpperSection(CategoryId::SmallStraight), false);
+    EXPECT_EQ(isUpperSection(CategoryId::LargeStraight), false);
+    EXPECT_EQ(isUpperSection(CategoryId::Yahtzee), false);
+    EXPECT_EQ(isUpperSection(CategoryId::Chance), false);
+    EXPECT_EQ(isUpperSection(CategoryId::Count), false);
+}
+
+TEST(UpperSection, BonusStillCountsOnlyTheUpperBoxes) {
+    Scorecard s;
+    Counts threes{};
+    for (int face = 1; face <= 6; face++) {
+        threes.fill(0);
+        threes[face] = 3;
+        s.record(static_cast<std::size_t>(face - 1), threes);
+    }
+    EXPECT_EQ(s.upperBonus(), 35);
+
+    Scorecard t;
+    Counts five{};
+    five[6] = 5;
+    t.record(CategoryId::Yahtzee, five);
+    t.record(CategoryId::Chance, five);
+    EXPECT_EQ(t.upperBonus(), 0);
+}
+````
+
+`Yahtzee in C++/05 Cleaner C++/support/tests/test_rule_table.cpp`
+````cpp
+#include "minitest.h"
+#include "../Scorecard.h"
+
+#include <vector>
+
+static Counts hand(int a, int b, int c, int d, int e) {
+    return countFaces(std::vector<int>{a, b, c, d, e});
+}
+
+static int expectedFor(CategoryId id, const Counts& c) {
+    switch (id) {
+        case CategoryId::Ones: return scoreUpper(c, 1);
+        case CategoryId::Twos: return scoreUpper(c, 2);
+        case CategoryId::Threes: return scoreUpper(c, 3);
+        case CategoryId::Fours: return scoreUpper(c, 4);
+        case CategoryId::Fives: return scoreUpper(c, 5);
+        case CategoryId::Sixes: return scoreUpper(c, 6);
+        case CategoryId::ThreeOfAKind: return scoreOfAKind(c, 3);
+        case CategoryId::FourOfAKind: return scoreOfAKind(c, 4);
+        case CategoryId::FullHouse: return scoreFullHouse(c);
+        case CategoryId::SmallStraight: return scoreSmallStraight(c);
+        case CategoryId::LargeStraight: return scoreLargeStraight(c);
+        case CategoryId::Yahtzee: return scoreYahtzee(c);
+        case CategoryId::Chance: return scoreChance(c);
+        case CategoryId::Count: return -999;
+    }
+    return -999;
+}
+
+static void checkHand(const Counts& c) {
+    Scorecard s;
+    std::vector<Category> shown = s.preview(c);
+    for (std::size_t i = 0; i < Scorecard::CATEGORY_COUNT; i++) {
+        EXPECT_EQ(shown[i].score, expectedFor(static_cast<CategoryId>(i), c));
+    }
+}
+
+TEST(RuleTable, PreviewMatchesTheRulesForAFullHouse) {
+    checkHand(hand(2, 2, 3, 3, 3));
+}
+
+TEST(RuleTable, PreviewMatchesTheRulesForAStraight) {
+    checkHand(hand(1, 2, 3, 4, 5));
+    checkHand(hand(2, 3, 4, 5, 6));
+}
+
+TEST(RuleTable, PreviewMatchesTheRulesForYahtzee) {
+    checkHand(hand(4, 4, 4, 4, 4));
+}
+
+TEST(RuleTable, PreviewMatchesTheRulesForNothingSpecial) {
+    checkHand(hand(1, 1, 2, 5, 6));
+}
+
+TEST(RuleTable, RecordWritesTheSameScoreThatPreviewShowed) {
+    Scorecard s;
+    Counts c = hand(5, 5, 5, 2, 2);
+    std::vector<Category> shown = s.preview(c);
+    for (std::size_t i = 0; i < s.size(); i++) {
+        EXPECT_EQ(s.record(i, c), true);
+        EXPECT_EQ(s.score(i), shown[i].score);
+    }
+}
+````
+
+`Yahtzee in C++/05 Cleaner C++/support/tests/test_best_choice.cpp`
+````cpp
+#include "minitest.h"
+#include "../Scorecard.h"
+
+#include <vector>
+
+static Counts hand(int a, int b, int c, int d, int e) {
+    return countFaces(std::vector<int>{a, b, c, d, e});
+}
+
+TEST(BestChoice, FiveOfAKindPicksYahtzee) {
+    Scorecard s;
+    EXPECT_EQ(s.bestChoice(hand(6, 6, 6, 6, 6)) == CategoryId::Yahtzee, true);
+}
+
+TEST(BestChoice, SkipsBoxesThatAreAlreadyScored) {
+    Scorecard s;
+    Counts sixes = hand(6, 6, 6, 6, 6);
+    s.record(CategoryId::Yahtzee, sixes);
+    EXPECT_EQ(s.bestChoice(sixes) == CategoryId::Sixes, true);
+}
+
+TEST(BestChoice, TiesGoToTheLowestBox) {
+    Scorecard s;
+    Counts sixes = hand(6, 6, 6, 6, 6);
+    s.record(CategoryId::Yahtzee, sixes);
+    CategoryId best = s.bestChoice(sixes);
+    EXPECT_EQ(static_cast<std::size_t>(best), 5u);
+}
+
+TEST(BestChoice, AStraightPicksTheLargeStraight) {
+    Scorecard s;
+    EXPECT_EQ(s.bestChoice(hand(1, 2, 3, 4, 5)) == CategoryId::LargeStraight, true);
+}
+
+TEST(BestChoice, EvenZeroPointsPicksALegalBox) {
+    Scorecard s;
+    Counts any = hand(1, 2, 3, 4, 5);
+    for (std::size_t i = 0; i < s.size(); i++) {
+        if (i != 10 && i != 11) {
+            s.record(i, any);
+        }
+    }
+    EXPECT_EQ(s.bestChoice(hand(1, 1, 2, 2, 3)) == CategoryId::LargeStraight, true);
+}
+
+TEST(BestChoice, FullCardGivesCount) {
+    Scorecard s;
+    Counts any = hand(1, 2, 3, 4, 5);
+    for (std::size_t i = 0; i < s.size(); i++) {
+        s.record(i, any);
+    }
+    EXPECT_EQ(s.bestChoice(any) == CategoryId::Count, true);
+}
+````
+
+CONTINUE FROM: Yahtzee in C++/06 Players/01-the-player-class.md
