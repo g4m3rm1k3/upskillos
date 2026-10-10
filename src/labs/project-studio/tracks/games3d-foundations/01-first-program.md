@@ -8,6 +8,9 @@ console: true
 
 A scene editor still begins with a program you can run and change. You will identify what compiles your text, what executes it and which saved file produced the output.
 
+
+By the end, you should be able to: Run your own C# coordinate experiment and distinguish a compile failure from a wrong numeric result.
+
 ## Find the SDK and choose the working folder
 
 Select your empty Studio3DLearning folder in Project Studio and open its terminal. A terminal shows text input and output. The shell reads a command and launches a program. The working folder is the base for relative paths like Scratch/Program.cs.
@@ -92,3 +95,9 @@ nudge: Write the starting position and the displacement separately. Which coordi
 concept: A signed velocity permits movement in either direction. The formula is the old coordinate plus velocity times elapsed time.
 shape: Copy the tiny project description into Practice, declare the three coordinates, update only z and print them. Repeat with zero time and negative velocity, comparing each result with your handwritten calculation.
 ```
+
+### Explain and transfer
+
+Choose a new starting Z, a signed speed and a time you have not used above. Predict all coordinates, run your practice program and explain any mismatch. Show one zero-time case and one reversed direction. Explain why changing a variable to float does not repair integer division that already happened.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

@@ -1,14 +1,14 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 515,
+    "lessons": 529,
     "tracks": 63,
     "errors": {},
     "signals": {
-      "authored check limits not detected": 457,
-      "prediction not detected": 104,
-      "task lacks parsed hint ladder": 107,
-      "independent task heading not detected": 239
+      "authored check limits not detected": 460,
+      "prediction not detected": 98,
+      "task lacks parsed hint ladder": 105,
+      "independent task heading not detected": 225
     }
   },
   "lessons": [
@@ -3235,9 +3235,7 @@
       "maturity": "in-development",
       "firstStep": "Add the native window dependency",
       "firstIndependentTask": "Independent task: a third object, two views",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3270,9 +3268,7 @@
       "maturity": "in-development",
       "firstStep": "Show controls and keep the selected row visible",
       "firstIndependentTask": "Independent task: test the visible page boundary",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3305,9 +3301,7 @@
       "maturity": "in-development",
       "firstStep": "Specify state, actions and feedback before learning",
       "firstIndependentTask": "Independent task: specify a different hazard",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3329,9 +3323,7 @@
       "maturity": "in-development",
       "firstStep": "Give the experiment its own executable",
       "firstIndependentTask": "Independent task: explain and compare a losing bot",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3353,9 +3345,7 @@
       "maturity": "in-development",
       "firstStep": "State a small contract before implementing it",
       "firstIndependentTask": "Independent task: make unavailable storage observable",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3366,6 +3356,50 @@
       "maturity": "in-development",
       "firstStep": "Report file outcomes at the UI boundary",
       "firstIndependentTask": "Independent task: distinguish failure from unsaved work",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/08c-shape-preview",
+      "track": "games3d-foundations",
+      "title": "See box dimensions change before designing assets",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict a taller box",
+      "firstIndependentTask": "Independent task: preview a bridge support",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/09-box-recipes",
+      "track": "games3d-foundations",
+      "title": "Turn your shape experiment into a validated asset recipe",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict what a recipe owns",
+      "firstIndependentTask": "Independent task: define a level's scale",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/09a-box-editing",
+      "track": "games3d-foundations",
+      "title": "Give each box its own dimensions and undoable edits",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict where dimensions belong",
+      "firstIndependentTask": "Independent task: protect a third object's recipe",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "games3d-foundations/09b-box-storage",
+      "track": "games3d-foundations",
+      "title": "Save box dimensions and migrate the first scene format",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Specify the two supported versions",
+      "firstIndependentTask": "Independent task: reject a late corrupt shape",
       "signals": [],
       "errors": []
     },
@@ -5675,10 +5709,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Make the project's folder",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: find your way with relative paths",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5690,10 +5722,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Where is python?",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a script configured from outside",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5705,11 +5735,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Is Node already installed?",
-      "firstIndependentTask": null,
-      "signals": [
-        "independent task heading not detected",
-        "authored check limits not detected"
-      ],
+      "firstIndependentTask": "Your turn: experiment in the REPL",
+      "signals": [],
       "errors": []
     },
     {
@@ -5719,10 +5746,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "hello.py",
-      "firstIndependentTask": "Challenge: choose your own exit code",
+      "firstIndependentTask": "Your turn: choose your own exit code",
       "signals": [
-        "prediction not detected",
-        "task lacks parsed hint ladder",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5734,10 +5759,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Is Git installed?",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a shortcut of your own",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5749,10 +5773,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Before: not a repository",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a README for your playground",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5764,10 +5786,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Two steps: stage, then commit",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: commit one file on its own",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5779,10 +5800,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Change hello.js",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a change, read before it's committed",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5794,10 +5814,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A file with a secret",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: ignore a whole kind of file",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5809,10 +5828,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Make a mess",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: break it, then get it back",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5824,10 +5842,9 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Make a branch",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a branch of your own",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5839,10 +5856,22 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A GitHub account and an empty repository",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: the everyday rhythm",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/01-09-merge-conflicts",
+      "track": "spreadsheet-build",
+      "title": "1.9 — Merge Conflicts",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A line to disagree about",
+      "firstIndependentTask": "Your turn: a conflict of your own",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -5854,10 +5883,97 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Start a branch for the sprint",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a page from memory",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01a-pages-with-meaning",
+      "track": "spreadsheet-build",
+      "title": "Styling 1 — Pages with Meaning",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Elements that say what things are",
+      "firstIndependentTask": "Your turn: a contact section",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01b-which-rule-wins",
+      "track": "spreadsheet-build",
+      "title": "Styling 2 — Which Rule Wins",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A stylesheet for the portfolio",
+      "firstIndependentTask": "Your turn: make Second blue",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01c-boxes-and-space",
+      "track": "spreadsheet-build",
+      "title": "Styling 3 — Boxes and Space",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Four boxes inside each other",
+      "firstIndependentTask": "Your turn: room to breathe",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01d-type-and-colour",
+      "track": "spreadsheet-build",
+      "title": "Styling 4 — Type and Colour",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Sizes in rem, and a type scale",
+      "firstIndependentTask": "Your turn: a dark theme",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01e-layout-flexbox",
+      "track": "spreadsheet-build",
+      "title": "Styling 5 — Layout in a Line: Flexbox",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The header in a row",
+      "firstIndependentTask": "Your turn: contact links in a row",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01f-layout-grid",
+      "track": "spreadsheet-build",
+      "title": "Styling 6 — Rows and Columns: Grid",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Cards in a grid",
+      "firstIndependentTask": "Your turn: a grid of skills",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-01g-every-screen-size",
+      "track": "spreadsheet-build",
+      "title": "Styling 7 — Every Screen Size",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "See it on a phone-sized screen",
+      "firstIndependentTask": "Your turn: stack the split on small screens",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -5869,10 +5985,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The table",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: Tea, and a spare row",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5884,10 +5998,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Link a stylesheet",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: the sheet's colours as tokens",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5899,10 +6011,36 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Open DevTools",
-      "firstIndependentTask": "Challenge: right-align the row numbers",
+      "firstIndependentTask": "Your turn: right-align the row numbers",
       "signals": [
         "prediction not detected",
-        "task lacks parsed hint ladder",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-05-challenge-a-page-from-a-design",
+      "track": "spreadsheet-build",
+      "title": "2.5 — Challenge: A Page from a Design",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: build it to the brief",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/02-06-solution-a-page-from-a-design",
+      "track": "spreadsheet-build",
+      "title": "2.6 — Solution: A Page from a Design",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The HTML",
+      "firstIndependentTask": "Your turn: buttons that line up, on your page",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []

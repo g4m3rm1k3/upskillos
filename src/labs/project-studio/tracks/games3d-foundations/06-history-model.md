@@ -8,6 +8,9 @@ console: true
 
 Deleting an object is now possible, but a mistaken delete loses work. Recovery becomes a product requirement. This lesson adds undo and redo for successful creation, deletion and movement. Follow the creation/deletion and controls lessons first. Selection by itself is not an edit; restarting still loses everything because persistent saving comes later.
 
+
+By the end, you should be able to: Trace and test undo/redo states without aliasing the active scene collection.
+
 ## Trace history before choosing a representation
 
 Start with an object at X=0. Move to X=1, then X=2. Undo must restore X=1; another Undo restores X=0. Redo then restores X=1 and X=2 in that order. A stack stores the latest item on top: Push adds an item, Pop removes and returns the top. Count tells us whether Pop would be valid. Two stacks represent undoable past states and redoable future states.
@@ -305,3 +308,9 @@ nudge: Remember captures the selection before the edit. Selection-only navigatio
 concept: The undo stack contains past states, most recent first. Redo captures the state that Undo is about to replace.
 shape: Arrange two IDs, select the second, move it twice, then compare two Undo and two Redo transitions with a handwritten table. After another move select the first before Undo; require restoration of the second's pre-edit selection and position.
 ```
+
+### Explain and transfer
+
+Draw both stacks through your two-move practice trace, including a selection change. Explain which collection is copied and why immutable records make that copy sufficient here. Choose an undo state not checked in HistoryBasics and test its position and selection.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

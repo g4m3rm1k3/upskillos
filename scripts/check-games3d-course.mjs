@@ -67,9 +67,14 @@ try {
   }
 
   if (finalOnly) {
-    run(['run', '--project', 'Checks'], 'STORE CHECKS PASSED');
+    run(['run', '--project', 'Checks'], 'BOX STORAGE CHECKS PASSED');
     if (!coreOnly) { run(['build', 'Studio']); run(['build', 'Bot']); }
   }
+
+  const recipe = path.join(root, 'Core/BoxRecipe.cs');
+  const recipeSource = replaceChecked(recipe, 'size.X <= 0', 'false');
+  try { run(['run', '--project', 'Checks'], 'Invalid box dimensions accepted', true); }
+  finally { fs.writeFileSync(recipe, recipeSource); }
 
   const checks = path.join(root, 'Checks/Program.cs');
   let original = replaceChecked(checks, 'new Vector3(2.25f, 0.5f, 0)', 'new Vector3(2.5f, 0.5f, 0)');
@@ -100,6 +105,9 @@ try {
     ['Core/SceneCodec.cs', 'data.Version != 1', 'false', 'Future version accepted'],
     ['Core/SceneCodec.cs', '!ids.Add(item.Id)', 'false', 'Duplicate IDs accepted'],
     ['Core/EditorLoading.cs', 'redo.Clear();', '// redo.Clear();', 'Open kept stale history'],
+    ['Core/EditorBoxes.cs', 'Remember(before);', '// Remember(before);', 'Box edit did not record history'],
+    ['Core/SceneBoxes.cs', 'objects[i] = objects[i] with { Box = box };', 'objects[0] = objects[0] with { Box = box };', 'Resize targeted wrong ID'],
+    ['Core/SceneCodec.cs', 'BoxRecipe box = new(Vector3.One);', 'BoxRecipe box = new(new Vector3(2));', 'Legacy cube migration lost identity or unit dimensions'],
   ];
   for (const [relative, before, after, expected] of historyMutations) {
     const file = path.join(root, relative);
@@ -117,7 +125,7 @@ try {
     const source = fs.readFileSync(program, 'utf8');
     const screenshot = path.join(root, 'studio-smoke.png');
     const bounded = source
-      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\neditor.TryAdd("Cube", new Vector3(4, 0.5f, 0));\neditor.TryDeleteSelected();\neditor.TryUndo();\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
+      .replace('try\n{\n    while (!Raylib.WindowShouldClose())', 'int smokeFrames = 0;\neditor.TrySelect(scene.Objects[1].Id);\neditor.TryMoveSelected(new Vector3(0.25f, 0, 0));\neditor.TryAdd("Cube", new Vector3(4, 0.5f, 0));\neditor.TryDeleteSelected();\neditor.TryUndo();\neditor.TrySelect(scene.Objects[0].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.25f, 2)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, -0.375f, 0));\neditor.TrySelect(scene.Objects[1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(0.5f, 2, 0.5f)));\neditor.TryMoveSelected(new System.Numerics.Vector3(0, 0.5f, 0));\neditor.TrySelect(scene.Objects[^1].Id);\neditor.TrySetSelectedBox(new BoxRecipe(new System.Numerics.Vector3(2, 0.5f, 1)));\ntry\n{\n    while (!Raylib.WindowShouldClose() && smokeFrames++ < 10)')
       .replace('        Raylib.EndDrawing();', '        Raylib.EndDrawing();\n        if (smokeFrames == 5) Raylib.TakeScreenshot("studio-smoke.png");');
     if (bounded === source || !bounded.includes('smokeFrames++')) throw new Error('Graphics smoke anchor missing');
     const fileChecks = `
@@ -125,13 +133,14 @@ if (!files.TrySave()) throw new Exception("UI save failed");
 string goodFile = File.ReadAllText(scenePath);
 Guid keptId = editor.SelectedId;
 var keptPosition = editor.Selected!.Position;
+var keptBox = editor.Selected!.Box;
 int keptUndo = editor.UndoCount;
-File.WriteAllText(scenePath, goodFile.Replace("\\\"Version\\\": 1", "\\\"Version\\\": 2"));
+File.WriteAllText(scenePath, goodFile.Replace("\\\"Version\\\": 2", "\\\"Version\\\": 3"));
 if (files.TryOpen() || !files.Status.StartsWith("File operation failed") || editor.SelectedId != keptId || editor.UndoCount != keptUndo)
     throw new Exception("UI invalid open changed editor");
 File.WriteAllText(scenePath, goodFile);
 editor.TryMoveSelected(Vector3.UnitY);
-if (!files.TryOpen() || scene.Objects[^1].Position != keptPosition || editor.UndoCount != 0 || editor.RedoCount != 0)
+if (!files.TryOpen() || scene.Objects[^1].Position != keptPosition || scene.Objects[^1].Box != keptBox || editor.UndoCount != 0 || editor.RedoCount != 0)
     throw new Exception("UI open did not restore saved state");
 Console.WriteLine("FILE CONTROLS CHECKS PASSED");
 `;
@@ -159,7 +168,7 @@ Console.WriteLine("FILE CONTROLS CHECKS PASSED");
     } finally { fs.writeFileSync(bot, botSource); }
     run(['build', 'Bot']);
   }
-  console.log(`PASS ${milestones} executed milestones; deliberate assertion failure and ${mutations.length + 1 + historyMutations.length} rule mutations detected; restored checks pass`);
+  console.log(`PASS ${milestones} executed milestones; deliberate assertion failure and ${mutations.length + 2 + historyMutations.length} rule mutations detected; restored checks pass`);
   console.log(finalOnly ? 'PASS reconstructed final source (intermediate milestone checks skipped)' : coreOnly ? 'PASS reconstructed core course (graphics build skipped)' : 'PASS reconstructed 3D studio opening course');
 } finally {
   if (keep) console.log(`AUTHOR WORKSPACE ${root}`);

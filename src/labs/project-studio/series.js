@@ -13,7 +13,7 @@ const SERIES = [
     prefix: 'games3d-',
     sharedProject: true,
     chapters: [['games3d-foundations', '01 · Scene Data, a 3D Viewport and Editing']],
-    planned: 'Scene editing, undo/redo, versioned save/open and an early native Q-learning playground are available. Play/Stop, export and genre projects are planned in docs/3d-games-project-studio-curriculum.md. Circuit Clash remains a separate reference course.',
+    planned: 'Scene editing, undo/redo, versioned save/open, visible box sizing and saved per-object dimensions, and an early native Q-learning playground are available. Play/Stop, export and genre projects are planned in docs/3d-games-project-studio-curriculum.md. Circuit Clash remains a separate reference course.',
   },
   {
     key: 'cpp-mastery',

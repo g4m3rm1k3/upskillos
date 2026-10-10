@@ -8,6 +8,9 @@ console: true
 
 The world now has trustworthy rules. Teach a bot estimates of how useful each action is, then compare its behavior with an untrained baseline. This is tabular Q-learning: one number per state/action pair. It is not a neural network and requires no ML package.
 
+
+By the end, you should be able to: Calculate one Q-update and compare frozen policies using a controlled exploration experiment.
+
 ## Work one update by hand
 
 Start an action estimate at zero. A goal gives reward 10. Move halfway toward that observation: the estimate becomes 5. For a previous ordinary step, reward is -1 and the best estimate at its next tile is 5. Discount that future estimate by 0.9: the target is -1 + 0.9*5 = 3.5. Moving halfway from zero toward 3.5 gives 1.75. Repeated experience propagates useful estimates backward.
@@ -163,10 +166,24 @@ Checks establish arithmetic and these tested policies, not statistical reliabili
 
 ## Independent task: measure exploration instead of guessing
 
-In a separate practice copy compare epsilon=0 and epsilon=0.2 over ten seeds. Keep map, episode budget and evaluation fixed. Report greedy wins and steps separately from training returns. Explain the tie-breaking effect and add a test proving evaluation leaves a table entry unchanged. Do not use the evaluation result to keep training that same run.
+In a separate practice copy compare epsilon=0 and epsilon=0.2 over ten seeds. Keep map, episode budget and evaluation fixed. Report greedy wins, steps and evaluation reward for every run. If you also record training returns, label them separately; Train currently returns no training statistics, so collecting them requires an additional practice change. Explain the tie-breaking effect and add a test proving evaluation leaves a table entry unchanged. Do not use the evaluation result to keep training that same run.
+
+### Run a fair exploration comparison
+
+Before running, write a hypothesis that could be wrong. Zero exploration does not necessarily mean no discovery: failed actions receive negative values, so deterministic greedy choices can switch to other initially zero-valued actions. Do not assume epsilon=0.2 always wins or hide a result where both settings succeed.
+
+Choose the same ten seeds in advance for both configurations. Use a fresh agent for every seed/configuration and hold episode budget, alpha, gamma, map and evaluation cap fixed. Set epsilon in a practice training method; do not change evaluation to Choose. For each run keep a row containing seed, epsilon, episode budget, win/loss, evaluation steps and evaluation reward. Include timeouts and losses. A cap of 20 steps is not a 20-step winning route.
+
+Count wins out of all attempted runs. If reporting steps among wins, also give the number of wins; excluding failures can make a poor policy look fast. These seeds vary training experience on the same deterministic map, not unseen game worlds. Keep the evaluation observation fixed; if you tune settings afterward, describe the next experiment separately rather than relabeling the tuned results as an untouched evaluation.
 
 ```hints
 nudge: Make fresh agents for each configuration and seed. Reusing a trained table contaminates the comparison.
 concept: Exploration produces experience; evaluation measures the fixed policy. A controlled comparison changes one factor and includes failures, not only the best run.
 shape: Parameterize epsilon in a practice version of Train, record an Evaluation per seed/configuration, then count wins and report steps only with their win status. Save a Value before evaluation and compare it afterward.
 ```
+
+### Explain and transfer
+
+Calculate a new nonterminal update using numbers you choose, then verify it in your practice checks. Report every seed in your exploration comparison, including losses. Explain what the experiments support and why they do not establish success on unseen maps. Show evidence that evaluation leaves learning unchanged.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

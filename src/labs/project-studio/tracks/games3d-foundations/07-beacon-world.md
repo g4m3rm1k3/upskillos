@@ -8,6 +8,9 @@ console: true
 
 A bot is interesting before the studio has a full runtime. Build a tiny beacon playground in the same Core library, with its own runner later. This is a discrete navigation prototype, not yet Play mode or a game authored in the editor. Its tiles and bot will be rendered as real 3D geometry; movement decisions use X/Z and a fixed Y height. Follow the history lessons first.
 
+
+By the end, you should be able to: Define and test a changed environment before trying to train an agent in it.
+
 ## Specify state, actions and feedback before learning
 
 Imagine nine floor tiles in a three-by-three square. A state is the tile the bot occupies: state = z * 3 + x. State 0 is (0,0); state 8 is (2,2). An action moves one tile right, forward, left or back. A wall keeps the bot in place. The center tile, state 4, is hazardous. Reaching state 8 earns 10 and ends the episode; entering state 4 earns -8 and ends it; every other step earns -1. An episode is one attempt from start until an ending. A short safe route is better than wandering.
@@ -113,3 +116,9 @@ nudge: Draw the nine indices on paper and trace each action.
 concept: Training cannot repair an incorrectly specified reward or ending. Tests of environment rules and tests of learning arithmetic have different responsibilities.
 shape: Start at 0, move Right twice, then Forward twice for a safe route; separately take Forward from 0 to enter state 3. Verify exact Transition values rather than only the final index.
 ```
+
+### Explain and transfer
+
+Show the new hazard rule, a safe route and an ending transition you chose. Explain why state needs enough information to determine rewards and transitions. Describe a game change that would make tile index alone insufficient, without implementing it yet.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

@@ -1,6 +1,8 @@
 # Build a 3D Game Studio — Learn Engineering Through Games
 
-Status: Foundations now includes scene editing, undo/redo, versioned save/open and an early native Q-learning playground, 2026-10-09. Circuit Clash exists separately. Play/Stop isolation, editor-authored games, export and further genres remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
+Status: Foundations includes scene editing, undo/redo, versioned save/open, a visible box experiment followed by per-object asset recipes and saved dimensions, and an early native Q-learning playground, 2026-10-10. Circuit Clash exists separately. Play/Stop isolation, editor-authored games, export and further genres remain planned. See [opening implementation and verification](3d-studio-opening-verification.md).
+
+The [completion roadmap](3d-studio-completion-roadmap.md) maps current gaps to full 3D authoring/runtime capability, recurring Q-learning projects, deeper C# and the immediate author-play-export sequence. Planned features remain distinct from implemented lessons.
 
 ## Audience and destination
 
@@ -23,6 +25,23 @@ Each future reference must represent the taught destination, including its genre
 An optional web implementation branch comes after native foundations. Explicitly teach JavaScript/TypeScript, modules, asynchronous browser APIs and rendering lifecycle there; do not silently switch languages midway through the required path. An optional engine branch can later rebuild a finished game in an established engine and compare it with the learner's studio.
 
 The existing [Build Your Own Game Studio plan](studio-from-scratch-plan.md) is a separate TypeScript/Electron path with a 2D-oriented runtime. Reuse its teaching patterns where useful, but do not silently replace its published lessons or imply that it already implements this C# 3D studio. The C# direction here is a proposed continuation of Circuit Clash's language; UI libraries and packaging choices still need a tested authoring spike.
+
+## Teaching order and prerequisite gates
+
+Feature suggestions describe destinations; they do not determine the next lesson. Place each feature where the learner has the required concepts and where a game or editor task supplies a concrete reason to use it. The author owns this ordering; an introductory learner should not have to audit the prerequisites.
+
+The current foundation order is setup and C# values, scene data, viewport, selection/editing, creation/deletion, history, the bounded Beacon Bot experiment, then scene persistence. The bot is an early motivational branch built on its own explicit rules; it does not assume a finished editor runtime.
+
+The asset continuation follows a visible-to-durable sequence:
+
+| Lesson | Concrete reason to learn it | Required evidence before advancing |
+| --- | --- | --- |
+| [See box dimensions change](../src/labs/project-studio/tracks/games3d-foundations/08c-shape-preview.md) | Make tile and trunk proportions visible; observe a preview that follows selection | Predict bottom height, diagnose mismatched wires and explain the ownership failure |
+| [Validated asset recipe](../src/labs/project-studio/tracks/games3d-foundations/09-box-recipes.md) | Give observed dimensions an explicit valid representation | Reject invalid dimensions, explain record/value semantics and test an independent scale policy |
+| [Per-object box editing](../src/labs/project-studio/tracks/games3d-foundations/09a-box-editing.md) | Keep a tile and trunk independent and undo a resize | Preserve IDs and centers, restore dimensions and preserve redo on rejection |
+| [Saved dimensions and migration](../src/labs/project-studio/tracks/games3d-foundations/09b-box-storage.md) | Keep the authored shapes across restart without discarding earlier scenes | Round-trip sizes, migrate unit cubes and reject a late corrupt shape without losing active data |
+
+After this connected box workflow, extend primitives/materials for a small authored room. Build play isolation, time and collision for the first playable game. Introduce compound props when repeated construction needs reuse, mesh geometry when a ramp or track needs custom triangles, and importing after asset identity, dependencies and resource ownership are taught. A suggestion for a future capability belongs in those arcs rather than interrupting the current prerequisite chain. Return to Q-learning through the playable game rules once those rules exist.
 
 ## Project sequence
 
@@ -49,6 +68,8 @@ Circuit Clash's published files and progress keys remain stable. Its [readiness 
 The first release has a 3D viewport, an object list, an inspector, new/open/save, undo/redo and play/stop. The learner can add cubes and a ground plane, select and name them, edit position/rotation/scale and color, and save a scene. A simple player behavior can be attached through an explicit C# registration table; arbitrary user-script compilation and live reload are later features.
 
 Start the inspector with ordinary numeric fields and selection from the object list. Introduce clicking objects in the viewport only after teaching rays and intersections; transform gizmos can wait for platformer level authoring. Use built-in shapes before an asset importer. A tiny playable room proves the editor can make a game before the first genre arc.
+
+Built-in primitives and low-poly asset construction are part of the core studio, alongside mesh/model import. The [asset plan](3d-studio-assets-plan.md) specifies the shape palette, procedural geometry lessons, reusable compound props, tested import subsets, resource ownership and relocation/export checks. The first game must be buildable without downloading external art; later imported visuals use the same object, behavior and collision workflows.
 
 The first architecture has four responsibilities, introduced incrementally rather than scaffolded as unexplained abstractions:
 

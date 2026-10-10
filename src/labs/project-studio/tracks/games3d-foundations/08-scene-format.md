@@ -8,6 +8,9 @@ console: true
 
 A mistaken edit can be undone, but restarting still loses the scene. Design an explicit file format before adding Open and Save. Follow the earlier scene/history lessons; the bot experiment can remain a separate executable.
 
+
+By the end, you should be able to: Reject a document containing a late invalid object without losing valid active data.
+
 ## Define the compatibility and identity contract
 
 Version 1 stores an ordered list of object IDs, names and X/Y/Z coordinates. It does not store selection, undo history or a learned Q-table. Those have different lifetimes and compatibility needs. Preserve IDs on load: calling Add for every loaded object would generate new identities. Reject unknown versions rather than guessing. Empty scenes are valid; missing lists, duplicate/empty IDs, blank/long names and nonfinite coordinates are invalid.
@@ -137,3 +140,9 @@ nudge: Start from Encode output, then alter just the second object's name.
 concept: Validating a candidate separately makes failure leave current state intact. Round-trip tests alone exercise valid input and cannot establish rejection.
 shape: Pass the changed text to Decode, catch only the documented validation exceptions, and assert that your original Scene still has both original records. Add an independently chosen boundary case.
 ```
+
+### Explain and transfer
+
+Show a valid round trip and a rejected document you designed, identifying the field and validation responsible. Explain why preserving IDs differs from preserving the same in-memory collection. What failure would a successful round trip alone fail to reveal?
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

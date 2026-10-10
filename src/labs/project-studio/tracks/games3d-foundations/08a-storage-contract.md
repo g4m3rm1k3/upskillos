@@ -8,6 +8,9 @@ console: true
 
 Our codec works without a disk. The editor needs Save and Load, while tests need controlled documents and fast failures. This is a concrete reason for an interface: one caller can work with different implementations of the same required operations.
 
+
+By the end, you should be able to: Substitute a failing store and prove that failed loading preserves scene, selection and history.
+
 ## State a small contract before implementing it
 
 Create Core/ISceneStore.cs. The I prefix is a C# naming convention, not special syntax. The interface declares members but stores no scene and writes no files. Save succeeds or throws; Load returns a fresh, validated scene or throws. Callers must apply the returned scene only after success. An interface cannot enforce those promises by itself; tests and implementations must honor them.
@@ -188,3 +191,9 @@ nudge: Capture the expected scene and selection before calling Load.
 concept: Substitution is useful when the fake obeys the same contract, including failures. Tests of a double do not replace integration tests against real disk.
 shape: Define a private sealed UnavailableStore implementing both members, throw IOException from Load, then catch that exception around editor.ReplaceScene(store.Load()) and assert the original state.
 ```
+
+### Explain and transfer
+
+Show the unavailable-store failure and your exact unchanged-state assertions. Explain what ISceneStore enables the caller to substitute, what the interface cannot guarantee, and why a real disk test is still needed. Name the resource released by using and what could go wrong without timely disposal.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

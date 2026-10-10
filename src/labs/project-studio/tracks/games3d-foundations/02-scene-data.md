@@ -8,6 +8,9 @@ console: true
 
 Before drawing a cube, represent the object a cube depicts. If editing rules require a window, every test must open one. We will store scene data in Core and call it from a small Checks executable. Studio will call the same code later.
 
+
+By the end, you should be able to: Test that moving one object by ID preserves another object and rejects an invalid result.
+
 ## Give the data its own build boundary
 
 Create Core and Checks folders alongside Scratch. A library is compiled code used by another program; omit OutputType Exe because Core has no entry point. Dependency direction means which project can use which other project. Core will know nothing about the graphics library or editor widgets.
@@ -205,3 +208,9 @@ nudge: Start with a scene you know and capture its state before trying the quest
 concept: A finite negative number is a valid coordinate or displacement. NaN and infinity are representation failures, independent of sign.
 shape: Use try/catch for Add's exception contract and the Boolean result for TryMove. Assert the result and unchanged state separately; include a finite negative delta that must succeed.
 ```
+
+### Explain and transfer
+
+Design a move case not present in the guided checks. State the exact expected IDs and positions before running it. Explain why a list index or shared name cannot replace identity. Point to the validation that protects unchanged state, and distinguish the live read-only view from a frozen snapshot.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

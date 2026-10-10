@@ -12,6 +12,9 @@ You will build a desktop app for making 3D games. First it becomes a small scene
 
 The Foundations lessons build scene data, tests, a native 3D window, position editing, creation/deletion, undo/redo and versioned save/open. An early Q-learning playground lets you train and inspect a beacon bot before building the full game runtime. It is a separate prototype, not yet a game made with the editor. Play/Stop isolation, editor-authored games and export come later. The series is in development. The earlier Circuit Clash C# course remains a separate reference and keeps its existing progress.
 
+
+By the end, you should be able to: Write a testable editor requirement, including failure and unchanged state, without choosing classes first.
+
 ## Describe what the first app must do
 
 An **editor** changes authored content: where a platform starts, what it is called and which behavior it has. A **runtime** reads that content and executes a game. A **game project** supplies that game's scenes, assets and rules. Project Studio is the learning workspace where you write these programs; the 3D studio is the app you are building inside your own project folder.
@@ -51,3 +54,9 @@ shape: For renaming, give a selected object and a proposed name, describe succes
 ```
 
 This lesson has no executable check: the evidence is your written cases and explanation. Later automated checks establish specific behaviors, not that the whole studio is complete or that the lessons have been tested with beginners.
+
+### Explain and transfer
+
+Give your requirement to someone else, or read it as if you had not written it. Could they distinguish success from failure using only the observable result? Revise one vague phrase. Explain why choosing a class name is not evidence that the requirement works.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

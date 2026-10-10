@@ -8,6 +8,9 @@ console: true
 
 The scene/session operations now create and remove objects. Connect them to the studio without duplicating their rules. First complete Create and delete scene objects: this lesson uses its operations in the same project.
 
+
+By the end, you should be able to: Verify that keyboard selection and pointer rows refer to the same IDs across a page boundary.
+
 ## Show controls and keep the selected row visible
 
 Replace Studio/EditorPanels.cs. VisibleRows limits a page to ten rows. VisibleStart locates the selected object and uses integer division to choose the page containing it: index 12 is on the page starting at 10. This is intentional whole-number division, unlike dividing elapsed time in the earlier motion experiment.
@@ -187,3 +190,9 @@ nudge: Compute the first index on each page, then subtract it from the selected 
 concept: A viewport row is a temporary representation, not an object identity. Rendering and hit testing must use the same index mapping.
 shape: For indices 9, 10 and 11, expect page starts 0, 10 and 10 and local rows 9, 0 and 1. Use the shared VisibleStart and ObjectRow helpers; select the second-page rows and compare the highlighted ID and inspector values.
 ```
+
+### Explain and transfer
+
+Choose a list size or boundary different from the hinted example, then record selected IDs, page starts and local rows around that boundary. Select a visible row on the second page and compare the highlighted name with the inspector. Explain why the local row number is not a persistent identity. Label human observations separately from automated checks.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

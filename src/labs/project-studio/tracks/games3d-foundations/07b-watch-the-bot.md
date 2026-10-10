@@ -8,6 +8,9 @@ console: true
 
 Turn the tested learning experiment into something you can observe. The renderer reads tile coordinates and the trained table; it does not update learning. This runner is an early motivation project inside our continuing workspace. It does not yet import editor scenes or provide Play/Stop isolation.
 
+
+By the end, you should be able to: Use visible state and headless evaluation to explain a losing bot rather than judging its animation alone.
+
 ## Give the experiment its own executable
 
 Create Bot/Bot.csproj. The editor and bot both depend on Core, but neither depends on the other's executable. This boundary keeps graphics out of rule tests and avoids a circular reference. Use the same pinned graphics package and target as Studio.
@@ -121,3 +124,9 @@ nudge: A fresh agent is a usable baseline. Its tie rule predicts the first actio
 concept: A reproducible comparison uses the same world and evaluation cap while changing only the policy. Rendering should describe rather than conceal failures.
 shape: Construct a separate fresh QAgent, evaluate and display it with the same Step loop. Label the untrained policy and compare its 20-step timeout with the trained four-step win.
 ```
+
+### Explain and transfer
+
+Show one decision where your untrained and trained policies differ, with the state, estimates, chosen action and resulting tile. Explain why replay keeps learning while a fresh agent does not. If the rendered route contradicts evaluation, identify which boundary you would inspect first.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

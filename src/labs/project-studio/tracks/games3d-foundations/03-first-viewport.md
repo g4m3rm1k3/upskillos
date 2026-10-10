@@ -8,6 +8,9 @@ console: true
 
 The scene model works without graphics. Now Studio reads the same objects and draws unit cubes at their positions. Rendering does not decide how editing works.
 
+
+By the end, you should be able to: Change a 3D view while proving that the underlying object data stays unchanged.
+
 ## Add the native window dependency
 
 Create a Studio folder. ProjectReference links the scene library. PackageReference pins [Raylib-cs 8.1.0](https://www.nuget.org/packages/Raylib-cs/8.1.0), which supplies the C# binding and platform-specific native library. A binding translates calls to another library; it is not our editor implementation. This package supports the net8.0 target used here.
@@ -127,3 +130,9 @@ nudge: The scene's Add operation already accepts a position. Which coordinate ex
 concept: World coordinates describe objects independently of the camera. The camera changes projection, not object identity or position.
 shape: Add a new object with Y=2, then change only Camera3D.Position for the second observation. Restore the camera and assert the original scene coordinates separately from inspecting the picture.
 ```
+
+### Explain and transfer
+
+Record two views of your independently placed object and the data check that stayed the same. Explain which coordinate you changed and which camera value changed the picture. A screenshot establishes appearance; what evidence establishes unchanged scene data?
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

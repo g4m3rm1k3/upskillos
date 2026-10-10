@@ -8,6 +8,9 @@ console: true
 
 Connect the storage contract to the editor. F5 saves to scene.json in the command's current directory; F9 opens that file and replaces current unsaved edits. This simple fixed-path workflow arrives before dialogs, recent files, dirty-state tracking and backups.
 
+
+By the end, you should be able to: Distinguish a rejected open, a valid empty scene and unsaved changes in the editor.
+
 ## Report file outcomes at the UI boundary
 
 Create Studio/FileControls.cs. The constructor receives ISceneStore; the UI need not know whether it is backed by disk. Private readonly fields hold its collaborators. Handle gives file commands priority over movement. TrySave and TryOpen expose the same operations without reading input, so other controls and author checks can exercise them. Status exposes the last outcome without letting a caller rewrite it. Save wins if both keys arrive in the same frame. A failed open never calls ReplaceScene, preserving current objects and history.
@@ -211,3 +214,9 @@ nudge: An empty scene is valid data. Missing or invalid data is a failure, not a
 concept: The last operation status and the current scene's relationship to saved data are separate state. History length is not a file identity or content comparison.
 shape: Compare valid saved content with current content, or track a saved revision alongside history. For the practice observations assert invalid opens preserve the previous state while a valid empty open clears objects and history.
 ```
+
+### Explain and transfer
+
+Record the actual scene and history for your three open cases. Explain why an empty scene is success rather than an error, and why a successful save message does not mean later edits are saved. Give one counterexample to using UndoCount as a dirty flag.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

@@ -8,6 +8,9 @@ console: true
 
 Our editor can move objects but cannot make a level of its own yet. Add creation and deletion, while keeping selection meaningful even when the scene becomes empty. Follow the earlier Foundations lessons first: this extends the same Core, Checks and Studio projects.
 
+
+By the end, you should be able to: Delete a chosen middle object while preserving survivor identities, order and meaningful selection.
+
 ## Specify creation, deletion and an empty scene
 
 A successful creation adds exactly one object with a new ID and selects it. A failed creation changes neither scene nor selection. Deletion removes only the selected ID, then selects the first remaining object; deleting the final object leaves no selection. Empty-scene actions must fail cleanly, not use an index that no longer exists.
@@ -224,3 +227,9 @@ nudge: Record each ID when you create it. Check the survivors by ID, not by the 
 concept: List deletion changes indices but not surviving objects. Selection follows the specified first-remaining policy and must be absent when nothing remains.
 shape: Arrange three IDs, select the second, delete it, then assert the list holds first and third in that order with unchanged coordinates. Assert selection points to first and repeat on an empty editor without indexing its list.
 ```
+
+### Explain and transfer
+
+Show the three IDs before deletion and the two survivor IDs afterward. Explain why a count-only test could pass after deleting the wrong object. Add your own empty-scene or missing-ID case and state exactly what must remain unchanged.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

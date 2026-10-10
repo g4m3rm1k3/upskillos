@@ -8,6 +8,9 @@ console: true
 
 Owned snapshots and two stacks now restore a basic move. Follow Own snapshots and model undo first. In this lesson challenge the contracts with creation, deletion, branching and failed edits, then connect Undo and Redo to visible controls.
 
+
+By the end, you should be able to: Verify that a new successful edit removes obsolete redo while rejected actions preserve it.
+
 ## Check order, identities and restoration
 
 ```predict
@@ -253,3 +256,9 @@ nudge: Write the expected list of IDs before writing the test. Keep a saved expe
 concept: Independent collections prevent list mutation from changing a stored snapshot. Immutable records preserve the values inside those collections; a mutable nested object would need more work.
 shape: Arrange three IDs, delete the second, undo and compare all three IDs in order. Move the first, undo/redo that movement and compare the third's ID and position each time. After another Undo, attempt an invalid Add and assert the redo count and restored outcome remain unchanged.
 ```
+
+### Explain and transfer
+
+Show a branch case you designed: Undo, a rejected edit, then a different successful edit. Record both stack counts and the exact restored objects. Explain why selection and a rejected edit should not be treated as a new history branch.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.

@@ -33,6 +33,21 @@ describe('3D studio opening path', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+
+  it('places visible shape exploration before contracts, object ownership and format migration', () => {
+    const order = ['08b-open-and-save', '08c-shape-preview', '09-box-recipes', '09a-box-editing', '09b-box-storage'];
+    const positions = order.map(slug => lessons.findIndex(lesson => lesson.id === 'games3d-foundations/' + slug));
+    expect(positions.every(index => index >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    const references = withTypedDiffTargets(lessons);
+    const objectEdit = references.find(lesson => lesson.id.endsWith('/09a-box-editing')).steps.find(step => step.file === 'Core/SceneObject.cs');
+    expect(objectEdit.diffBefore).not.toContain('BoxRecipe');
+    expect(objectEdit.target).toContain('BoxRecipe');
+    const migration = references.find(lesson => lesson.id.endsWith('/09b-box-storage')).steps.find(step => step.file === 'Core/SceneCodec.cs');
+    expect(migration.diffBefore).toContain('SceneFile(1,');
+    expect(migration.target).toContain('SceneFile(2,');
+  });
+
   it('derives accumulated references without supplying code to learner files', () => {
     const referenced = withTypedDiffTargets(lessons);
     const invocation = referenced.flatMap(lesson => lesson.steps).find(step => step.title === 'Invoke the additional checks');

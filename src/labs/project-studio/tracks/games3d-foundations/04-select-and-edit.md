@@ -8,6 +8,9 @@ console: true
 
 The picture becomes an editor when an intentional action changes the correct object's data. We will click names in an object list, inspect a position and move the selected object in quarter-unit steps. This is a first position inspector; text entry, transform gizmos, saving and undo are still future lessons.
 
+
+By the end, you should be able to: Implement a selected-object reset through the editor session and verify its identity and repeated-use behavior.
+
 ## Separate selection from authored scene data
 
 Selection belongs to the editor, not to the game scene. EditorSession stores the selected object's ID and delegates movement to Scene's validated operation. It retains the Scene reference; it does not make an independent copy. Later Play/Stop needs a real copy precisely because shared references would leak game changes into editing.
@@ -231,3 +234,9 @@ nudge: Which displacement would take a current coordinate back to zero?
 concept: Negating a position gives the displacement to the origin. Doing it twice is harmless because the second displacement is zero. Undo instead restores the previous action's state.
 shape: Read the selected object's current position, negate it and call TryMoveSelected. Guard the empty-selection case. Test selection isolation, identity and a second invocation, then connect the action to Home in the input block.
 ```
+
+### Explain and transfer
+
+Choose two nonzero starting positions for your Home action and predict the required displacements. Demonstrate it on each selection, compare the untouched object, then invoke it twice. Explain why a reset is not Undo and why putting a second movement implementation in drawing code would weaken this evidence.
+
+Keep a brief record of your prediction, actual result, explanation and independently chosen change. Try the explanation with the reference closed; reopen it or use hints when needed, then retry the part you could not explain. A green guided check establishes its named behavior, not independent understanding.
