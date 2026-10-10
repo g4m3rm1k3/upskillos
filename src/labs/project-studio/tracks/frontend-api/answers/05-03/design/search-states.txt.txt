@@ -1,0 +1,6 @@
+Idle: Explain search; enter a title; initial page.
+Loading: Searching; submit a replacement; delayed promise.
+Empty: Suggest fewer words; retry; docs empty.
+Error: Explain recovery; retry; offline fixture.
+Success: Show count; read titles; one fixture book.
+Race: latest query wins; submit B after A; resolve A last.

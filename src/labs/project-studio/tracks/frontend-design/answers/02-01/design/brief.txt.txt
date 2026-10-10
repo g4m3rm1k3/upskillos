@@ -1,0 +1,7 @@
+Audience: People choosing a quiet lunch spot.
+Task: Find prices and opening hours before travelling.
+Constraint: One hand on a small screen in sunlight.
+Success: Find opening hours and a meal price without help.
+Flow: Arrive > scan menu > check hours > visit.
+Test: Ask someone to find opening hours without hints.
+Risk: One participant may not represent people using screen readers.

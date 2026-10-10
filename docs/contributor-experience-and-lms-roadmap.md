@@ -38,6 +38,8 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [ ] **Frontend Developer Bootcamp (2026-10-10, in development):** authored the beginner-to-portfolio path through semantic HTML, UI/UX, handmade CSS and themes, JavaScript apps, APIs, Bootstrap, React, Tailwind, TypeScript, testing and release work. Includes independent exercises, diagnostic experiments, an author reconstruction runner and a capstone review rubric. Editorial pacing, learner sessions and cross-platform desktop review remain open. See [curriculum and verification](frontend-bootcamp-curriculum.md).
+
 - [ ] **Build a 3D game studio and its games (2026-10-09, in progress):** implemented Foundations through a native 3D viewport, object editing, creation/deletion, keyboard selection, snapshot-based undo/redo, versioned save/open and an early native Q-learning bot, with behavioral assertions and an author reconstruction checker. Isolated play, export and game-driven studio extensions remain planned. See [the curriculum](3d-games-project-studio-curriculum.md) and [implementation evidence and remaining review](3d-studio-opening-verification.md).
 
 - [ ] **C++ teaching repairs before A23 (2026-10-08):** educational review captured; inverse arithmetic, table construction, representation reasoning and A22c independent delivery/Git recovery are implemented. Compiler, structural, progress-identity and non-desktop checks pass. Browser review is pending after browser tools stopped, so the gate stays open; broader DSA and collaborative Git remain explicit unfinished strands in the [repair log](curricula/cpp-games/teaching-review.md).

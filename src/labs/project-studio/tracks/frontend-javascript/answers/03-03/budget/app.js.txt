@@ -1,0 +1,14 @@
+import { remaining } from './model.mjs';
+const form = document.querySelector('#budget');
+const result = document.querySelector('#result');
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  try {
+    const income = form.elements.income.valueAsNumber;
+    const expenses = form.elements.expenses.valueAsNumber;
+    const balance = remaining(income, expenses);
+    result.textContent = balance < 0 ? `Over budget: $${Math.abs(balance).toFixed(2)}` : `Remaining: $${balance.toFixed(2)}`;
+  } catch (error) {
+    result.textContent = error.message;
+  }
+});

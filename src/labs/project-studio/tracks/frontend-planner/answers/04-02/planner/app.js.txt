@@ -1,0 +1,36 @@
+import { addTask, toggleTask, removeTask, visibleTasks } from './model.mjs';
+let tasks = [];
+const form = document.querySelector('#add');
+const list = document.querySelector('#tasks');
+const filter = document.querySelector('#filter');
+const message = document.querySelector('#message');
+function render() {
+  list.replaceChildren();
+  const visible = visibleTasks(tasks, filter.value);
+  message.textContent = visible.length ? `${visible.length} tasks shown` : 'No matching tasks. Add one or change the filter.';
+  for (const task of visible) {
+    const item = document.createElement('li');
+    const toggle = document.createElement('button');
+    toggle.textContent = task.title;
+    toggle.setAttribute('aria-pressed', String(task.done));
+    toggle.addEventListener('click', () => {
+      tasks = toggleTask(tasks, task.id);
+      render();
+      (document.querySelector(`[data-id="${task.id}"]`) ?? filter).focus();
+    });
+    toggle.dataset.id = task.id;
+    item.append(toggle);
+    list.append(item);
+  }
+}
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  try {
+    tasks = addTask(tasks, form.elements.task.value, crypto.randomUUID());
+    render();
+    form.reset();
+    form.elements.task.focus();
+  } catch (error) { message.textContent = error.message; }
+});
+filter.addEventListener('change', render);
+render();

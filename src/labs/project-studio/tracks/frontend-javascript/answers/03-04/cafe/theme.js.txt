@@ -1,0 +1,17 @@
+const button = document.querySelector('#theme');
+const preference = window.matchMedia('(prefers-color-scheme: dark)');
+let chosen = null;
+try { chosen = localStorage.getItem('juniper-theme'); } catch { /* Storage may be unavailable. */ }
+function apply(theme) {
+  document.documentElement.dataset.theme = theme;
+  button.setAttribute('aria-pressed', String(theme === 'dark'));
+}
+apply(chosen === 'light' || chosen === 'dark' ? chosen : preference.matches ? 'dark' : 'light');
+button.addEventListener('click', () => {
+  chosen = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  apply(chosen);
+  try { localStorage.setItem('juniper-theme', chosen); } catch { /* The toggle still works. */ }
+});
+preference.addEventListener('change', (event) => {
+  if (chosen !== 'light' && chosen !== 'dark') apply(event.matches ? 'dark' : 'light');
+});

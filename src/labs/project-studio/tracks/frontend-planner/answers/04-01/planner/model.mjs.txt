@@ -1,0 +1,14 @@
+export function addTask(tasks, text, id) {
+  const title = text.trim();
+  if (!title) throw new Error('Write a task first');
+  return [...tasks, { id, title, done: false }];
+}
+export function toggleTask(tasks, id) {
+  return tasks.map(task => task.id === id ? { ...task, done: !task.done } : task);
+}
+export function visibleTasks(tasks, filter) {
+  return tasks.filter(task => filter === 'all' || (filter === 'done' ? task.done : !task.done));
+}
+export function removeTask(tasks, id) {
+  return tasks.filter(task => task.id !== id);
+}

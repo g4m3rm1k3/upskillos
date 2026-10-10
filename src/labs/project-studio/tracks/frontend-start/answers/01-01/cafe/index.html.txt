@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Juniper Café</title>
+</head>
+<body>
+  <h1>Juniper Café</h1>
+  <p>Good coffee. A quiet place to pause.</p>
+  <p>Open daily, 8am–4pm.</p>
+</body>
+</html>

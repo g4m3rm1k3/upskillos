@@ -1,0 +1,33 @@
+/* Tokens name design decisions so one change can update the whole site. */
+:root {
+  --surface: #ffffff;
+  --ink: #172b24;
+  --accent: #176341;
+  --space: 1.5rem;
+  --radius: 0.75rem;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--surface);
+  line-height: 1.6;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+header, main, footer { max-width: 68rem; margin-inline: auto; padding: var(--space); }
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; max-width: 18ch; }
+h2 { line-height: 1.25; }
+p { max-width: 65ch; }
+a { color: var(--accent); text-underline-offset: 0.2em; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+section { border: 1px solid currentColor; border-radius: var(--radius); padding: var(--space); margin-block: var(--space); }
+nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+main { display: grid; gap: 1rem; }
+main > h1, main > p { grid-column: 1 / -1; }
+section { margin: 0; min-width: 0; }
+@media (min-width: 48rem) {
+  main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+img { max-width: 100%; height: auto; display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  a { transition: color 150ms ease; }
+}
+section { overflow-wrap: anywhere; }

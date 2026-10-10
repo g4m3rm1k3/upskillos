@@ -1,14 +1,16 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 532,
-    "tracks": 63,
-    "errors": {},
+    "lessons": 571,
+    "tracks": 73,
+    "errors": {
+      "independent task exposes full target": 3
+    },
     "signals": {
-      "authored check limits not detected": 460,
-      "prediction not detected": 98,
+      "authored check limits not detected": 491,
+      "prediction not detected": 76,
       "task lacks parsed hint ladder": 105,
-      "independent task heading not detected": 225
+      "independent task heading not detected": 203
     }
   },
   "lessons": [
@@ -3116,6 +3118,408 @@
       "errors": []
     },
     {
+      "id": "frontend-api/05-01-http",
+      "track": "frontend-api",
+      "title": "5.1 — HTTP, JSON, promises and an API boundary",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Convert a network response into app data",
+      "firstIndependentTask": "Your turn: reject the wrong response shape",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-api/05-02-async-ui",
+      "track": "frontend-api",
+      "title": "5.2 — Design loading, empty, failure and success states",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create the search screen",
+      "firstIndependentTask": "Your turn: make empty results actionable",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-api/05-03-race",
+      "track": "frontend-api",
+      "title": "5.3 — Prove that old requests cannot overwrite new ones",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Walk the timeline",
+      "firstIndependentTask": "Your turn: document an honest state matrix",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-bootstrap/06-01-bootstrap",
+      "track": "frontend-bootstrap",
+      "title": "6.1 — Use Bootstrap after understanding the CSS",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install a dependency deliberately",
+      "firstIndependentTask": "Your turn: use spacing consistently",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-bootstrap/06-02-components",
+      "track": "frontend-bootstrap",
+      "title": "6.2 — Component behavior and accessibility contracts",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Wire the button to its panel",
+      "firstIndependentTask": "Your turn: switch the library theme",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-design/02-01-brief",
+      "track": "frontend-design",
+      "title": "2.1 — Design starts with a person and a task",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Write assumptions you can test",
+      "firstIndependentTask": "Your turn: define a usability observation",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-design/02-02-css",
+      "track": "frontend-design",
+      "title": "2.2 — CSS by hand: cascade, boxes and design tokens",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Connect a stylesheet",
+      "firstIndependentTask": "Your turn: change the rhythm consistently",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-design/02-03-responsive",
+      "track": "frontend-design",
+      "title": "2.3 — Responsive layout, typography and images",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Let content determine the layout",
+      "firstIndependentTask": "Your turn: give long addresses somewhere to break",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-design/02-04-color",
+      "track": "frontend-design",
+      "title": "2.4 — Color, contrast and two intentional themes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Define a second token set",
+      "firstIndependentTask": "Your turn: give cards their own role",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-javascript/03-01-values",
+      "track": "frontend-javascript",
+      "title": "3.1 — JavaScript values, names and decisions",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Calculate an order",
+      "firstIndependentTask": "Your turn: test the boundary",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-javascript/03-02-functions",
+      "track": "frontend-javascript",
+      "title": "3.2 — Functions, validation and your first tests",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Keep the rule independent of the browser",
+      "firstIndependentTask": "Your turn: reject an infinite expense",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-javascript/03-03-forms",
+      "track": "frontend-javascript",
+      "title": "3.3 — A calculator with accessible forms and DOM events",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Label every input",
+      "firstIndependentTask": "Your turn: make deficits understandable",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-javascript/03-04-theme",
+      "track": "frontend-javascript",
+      "title": "3.4 — A theme toggle that remembers your choice",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Add an honest toggle",
+      "firstIndependentTask": "Your turn: follow the system until the user chooses",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-planner/04-01-collections",
+      "track": "frontend-planner",
+      "title": "4.1 — Arrays, objects and immutable task data",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Transform data without changing the original",
+      "firstIndependentTask": "Your turn: remove by identity",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-planner/04-02-render",
+      "track": "frontend-planner",
+      "title": "4.2 — Render state, handle events and show empty states",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Describe the controls",
+      "firstIndependentTask": "Your turn: keep focus when a task disappears",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-planner/04-03-persistence",
+      "track": "frontend-planner",
+      "title": "4.3 — Persist safely and recover from bad saved data",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Isolate storage behind functions",
+      "firstIndependentTask": "Your turn: test corrupted storage without deleting real work",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-quality/09-01-typescript",
+      "track": "frontend-quality",
+      "title": "9.1 — TypeScript: prevent impossible states",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Add the compiler",
+      "firstIndependentTask": "Your turn: add an empty state deliberately",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-quality/09-02-tests",
+      "track": "frontend-quality",
+      "title": "9.2 — Testing behavior at the right boundary",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Collect meaningful regressions",
+      "firstIndependentTask": "Your turn: protect whitespace validation",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-quality/09-03-audit",
+      "track": "frontend-quality",
+      "title": "9.3 — Accessibility, performance and security as design work",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make the review reproducible",
+      "firstIndependentTask": "Your turn: record a measured fix",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-react/07-01-components",
+      "track": "frontend-react",
+      "title": "7.1 — React: components, JSX, props and identity",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Add React to the portfolio tools",
+      "firstIndependentTask": "Your turn: add a distinct reading choice",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-react/07-02-state",
+      "track": "frontend-react",
+      "title": "7.2 — State, controlled inputs and one-way data flow",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Lift shared data to its owner",
+      "firstIndependentTask": "Your turn: derive a useful shelf summary",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-react/07-03-effects",
+      "track": "frontend-react",
+      "title": "7.3 — Effects synchronize with things outside React",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Initialize once and save after changes",
+      "firstIndependentTask": "Your turn: record why this is an effect",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-react/07-04-react-api",
+      "track": "frontend-react",
+      "title": "7.4 — Combine React with the API boundary",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Clean up obsolete work",
+      "firstIndependentTask": "Your turn: explain an empty catalog result",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-ship/10-01-build",
+      "track": "frontend-ship",
+      "title": "10.1 — Build and preview the whole portfolio",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the portfolio a front door",
+      "firstIndependentTask": "Your turn: make the portfolio discoverable",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-ship/10-02-release",
+      "track": "frontend-ship",
+      "title": "10.2 — Git review, deployment and an honest case study",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Prepare a release checklist",
+      "firstIndependentTask": "Your turn: write a case study that explains the work",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-ship/10-03-capstone",
+      "track": "frontend-ship",
+      "title": "10.3 — Independent capstone: build, test and defend your design",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Choose a bounded product brief",
+      "firstIndependentTask": "Your turn: deliver a reviewed release",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-start/01-01-first-page",
+      "track": "frontend-start",
+      "title": "1.1 — Your first page, from an empty folder",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Give the browser a document",
+      "firstIndependentTask": "Your turn: add a useful opening time",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-start/01-02-meaning",
+      "track": "frontend-start",
+      "title": "1.2 — HTML that means something",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Organize by visitor tasks",
+      "firstIndependentTask": "Your turn: add a real destination",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-start/01-03-tools",
+      "track": "frontend-start",
+      "title": "1.3 — Terminal, local server and Git",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Describe your development tools",
+      "firstIndependentTask": "Your turn: make a useful project note",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-tailwind/08-01-tailwind",
+      "track": "frontend-tailwind",
+      "title": "8.1 — Tailwind CSS v4: utilities and a real build",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install the v4 integration",
+      "firstIndependentTask": "Your turn: give search its own visual grouping",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-tailwind/08-02-system",
+      "track": "frontend-tailwind",
+      "title": "8.2 — Build a small design system with component contracts",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make safe defaults explicit",
+      "firstIndependentTask": "Your turn: document when to use each variant",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontend-tailwind/08-03-theme-system",
+      "track": "frontend-tailwind",
+      "title": "8.3 — Carry theme and accessibility through the system",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Synchronize the root attribute",
+      "firstIndependentTask": "Your turn: protect long book titles",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "frontier-engineering/01-01-pin-the-old-behaviour",
       "track": "frontier-engineering",
       "title": "1.1 — Pin the Old Behaviour",
@@ -5298,8 +5702,7 @@
       "firstStep": "Choose the project folder",
       "firstIndependentTask": "Your turn: keep the environment out of Git",
       "signals": [
-        "prediction not detected",
-        "authored check limits not detected"
+        "prediction not detected"
       ],
       "errors": []
     },
@@ -5794,7 +6197,6 @@
       "firstStep": "Is Git installed?",
       "firstIndependentTask": "Your turn: a shortcut of your own",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5821,7 +6223,6 @@
       "firstStep": "Two steps: stage, then commit",
       "firstIndependentTask": "Your turn: commit one file on its own",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5835,7 +6236,6 @@
       "firstStep": "Change hello.js",
       "firstIndependentTask": "Your turn: a change, read before it's committed",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5849,7 +6249,6 @@
       "firstStep": "A file with a secret",
       "firstIndependentTask": "Your turn: ignore a whole kind of file",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5863,7 +6262,6 @@
       "firstStep": "Make a mess",
       "firstIndependentTask": "Your turn: break it, then get it back",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5877,7 +6275,6 @@
       "firstStep": "Make a branch",
       "firstIndependentTask": "Your turn: a branch of your own",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5891,7 +6288,6 @@
       "firstStep": "A GitHub account and an empty repository",
       "firstIndependentTask": "Your turn: the everyday rhythm",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -5967,7 +6363,7 @@
       "title": "Styling 4 — Type and Colour",
       "level": "bridge",
       "maturity": "review-required",
-      "firstStep": "Sizes in rem, and a type scale",
+      "firstStep": "Text that's comfortable to read",
       "firstIndependentTask": "Your turn: a dark theme",
       "signals": [],
       "errors": []
@@ -6046,7 +6442,6 @@
       "firstStep": "Open DevTools",
       "firstIndependentTask": "Your turn: right-align the row numbers",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6071,7 +6466,7 @@
       "title": "2.6 — Solution: A Page from a Design",
       "level": "bridge",
       "maturity": "review-required",
-      "firstStep": "The HTML",
+      "firstStep": "A page to fill",
       "firstIndependentTask": "Your turn: buttons that line up, on your page",
       "signals": [
         "authored check limits not detected"
@@ -6085,9 +6480,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A branch for the sprint",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: the last sheet",
       "signals": [
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6099,10 +6493,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A function",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: range",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6114,10 +6506,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "An empty table in the page",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a times table",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6129,10 +6519,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The name box",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a counter",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6144,10 +6532,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The input",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a live preview, safely",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6159,9 +6545,21 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "See the bug on the page",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: columns past Z",
       "signals": [
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/03-07-solution-columns-past-z",
+      "track": "spreadsheet-build",
+      "title": "3.7 — Solution: Columns Past Z",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Why it isn't quite base 26",
+      "firstIndependentTask": "Your turn: the first four-letter column",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -6173,10 +6571,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A branch",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a module of your own",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6188,10 +6584,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "package.json",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a package of your own choosing to install",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6203,10 +6597,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Start Vite",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: your portfolio, served",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6218,9 +6610,35 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Build",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a build that works in a subfolder",
       "signals": [
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-05-challenge-publish-it",
+      "track": "spreadsheet-build",
+      "title": "4.5 — Challenge: Publish It",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: publish it",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/04-06-solution-publish-it",
+      "track": "spreadsheet-build",
+      "title": "4.6 — Solution: Publish It",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The two commands",
+      "firstIndependentTask": "Your turn: publish a change",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -6232,10 +6650,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A branch",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: types in the playground",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6247,10 +6663,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Say what columnName takes and gives",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a parser that can say \"no\"",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6262,12 +6676,42 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A check script, and a build that checks first",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: make the swap impossible to miss",
       "signals": [
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "independent task exposes full target"
+      ]
+    },
+    {
+      "id": "spreadsheet-build/05-04-challenge-types-for-a-colleagues-code",
+      "track": "spreadsheet-build",
+      "title": "5.4 — Challenge: Types for a Colleague's Code",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The code",
+      "firstIndependentTask": "Your turn: make it right",
+      "signals": [
+        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
+    },
+    {
+      "id": "spreadsheet-build/05-05-solution-types-for-a-colleagues-code",
+      "track": "spreadsheet-build",
+      "title": "5.5 — Solution: Types for a Colleague's Code",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Types first",
+      "firstIndependentTask": "Your turn: an optional discount",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "independent task exposes full target"
+      ]
     },
     {
       "id": "spreadsheet-build/06-01-first-test",
@@ -6276,10 +6720,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A branch",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: tests for your own module",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6291,10 +6733,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Red: a test for code that doesn't exist",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: test first, on your own",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6306,10 +6746,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The tests",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a pattern of your own",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6321,10 +6759,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Classes, from Python",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a class of your own",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6335,13 +6771,14 @@
       "title": "6.5 — Wire the Grid to the Sheet, and Use a Debugger",
       "level": "bridge",
       "maturity": "review-required",
-      "firstStep": "The new grid.ts",
-      "firstIndependentTask": null,
+      "firstStep": "Positions as addresses",
+      "firstIndependentTask": "Your turn: find it with the debugger",
       "signals": [
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
-      "errors": []
+      "errors": [
+        "independent task exposes full target"
+      ]
     },
     {
       "id": "spreadsheet-build/06-06-tidy-into-src",
@@ -6350,10 +6787,35 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Remove the practice files",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a README for the project",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-07-challenge-how-much-is-used",
+      "track": "spreadsheet-build",
+      "title": "6.7 — Challenge: How Much of the Sheet Is Used?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The spec",
+      "firstIndependentTask": "Your turn: build it to the tests",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/06-08-solution-how-much-is-used",
+      "track": "spreadsheet-build",
+      "title": "6.8 — Solution: How Much of the Sheet Is Used?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "How it works",
+      "firstIndependentTask": "Your turn: a bounding box for anything",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -6365,10 +6827,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "A branch",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a lexer for durations",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6380,10 +6840,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Values: what a cell can hold",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: rules for a feature flag",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6395,10 +6853,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The rules, written down first",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a parser for nested lists",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []

@@ -1,0 +1,18 @@
+export type Book = { id: string; title: string; author: string };
+export type SearchState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'empty' }
+  | { status: 'error'; message: string }
+  | { status: 'success'; books: Book[] };
+export function describe(state: SearchState): string {
+  switch (state.status) {
+    case 'idle': return 'Search for a book';
+    case 'empty': return 'Try a broader search';
+    case 'loading': return 'Searching';
+    case 'error': return state.message;
+    case 'success': return `${state.books.length} results`;
+  }
+}
+const example: SearchState = { status: 'success', books: [] };
+console.log(describe(example));

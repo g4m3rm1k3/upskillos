@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frontend Portfolio</title>
+  <link rel="stylesheet" href="./cafe/styles.css">
+  <meta name="description" content="Practical frontend projects in design, JavaScript and React.">
+</head>
+<body>
+  <main>
+    <h1>Frontend Portfolio</h1>
+    <p>Apps built from semantic HTML through React. Each solves a specific user task.</p>
+    <ul>
+      <li><a href="./cafe/index.html">Juniper Café — plan a visit</a></li>
+      <li><a href="./budget/index.html">Pocket Budget — understand a balance</a></li>
+      <li><a href="./planner/index.html">Focus Planner — remember next actions</a></li>
+      <li><a href="./books/index.html">Shelf Search — find books through an API</a></li>
+      <li><a href="./dashboard/index.html">Service Desk — Bootstrap overview</a></li>
+      <li><a href="./react/index.html">Reading Room — React and Tailwind</a></li>
+    </ul>
+  </main>
+</body>
+</html>

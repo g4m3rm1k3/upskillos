@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Juniper Café</title>
+</head>
+<body>
+  <a href="#main">Skip to content</a>
+  <header>
+    <p>Juniper Café</p>
+    <nav aria-label="Main"><a href="#menu">Menu</a> <a href="#visit">Visit</a> <a href="#access">Accessibility</a></nav>
+  </header>
+  <main id="main">
+    <h1>Good coffee. Room to pause.</h1>
+    <p>Fresh lunch and step-free entry in the town centre.</p>
+    <section id="menu" aria-labelledby="menu-title">
+      <h2 id="menu-title">Today's menu</h2>
+      <ul><li>Filter coffee — $3</li><li>Tomato toast — $7</li></ul>
+    </section>
+    <section id="visit" aria-labelledby="visit-title">
+      <h2 id="visit-title">Plan your visit</h2>
+      <p>Open daily, 8am–4pm. 14 Garden Street.</p>
+      <a href="mailto:hello@example.com">Email the café</a>
+    </section>
+    <section id="access"><h2>Accessibility</h2><p>Step-free entry and space for mobility aids.</p></section>
+  </main>
+  <footer><small>A fictional practice business.</small></footer>
+</body>
+</html>

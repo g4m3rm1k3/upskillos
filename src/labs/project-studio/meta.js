@@ -6,7 +6,7 @@ export default {
   subject: 'Software Engineering',
   desc: 'Build a real multi-file project step by step — real files on disk, real interpreter, diffs that show exactly what each step adds. Desktop app only.',
   path: '/lab/project-studio',
-  tags: ['pyside6', 'pygame', 'python', 'cpp', 'game-development', 'ide', 'project', 'desktop'],
+  tags: ['pyside6', 'pygame', 'python', 'cpp', 'game-development', 'frontend', 'html', 'css', 'javascript', 'react', 'ui-ux', 'ide', 'project', 'desktop'],
   cover: {
     grad: 'linear-gradient(135deg, #0f766e 0%, #1e293b 100%)',
     mark: '🛠️',

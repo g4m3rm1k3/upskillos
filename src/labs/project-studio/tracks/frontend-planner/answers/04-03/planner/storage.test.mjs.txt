@@ -1,0 +1,5 @@
+import assert from 'node:assert/strict';
+import { loadTasks, saveTasks } from './storage.mjs';
+assert.deepEqual(loadTasks({ getItem: () => '{broken' }), []);
+assert.equal(saveTasks({ setItem: () => { throw new Error('Full'); } }, []), false);
+console.log('storage recovery passed');

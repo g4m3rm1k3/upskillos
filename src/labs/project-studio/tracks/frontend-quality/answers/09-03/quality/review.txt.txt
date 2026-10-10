@@ -1,0 +1,12 @@
+Task: Save one catalog book and find it after reload.
+Keyboard: Tab, Shift+Tab, Enter and Space reach and activate every control.
+Zoom: At 200 percent, no content or actions disappear.
+Contrast: Measure text, controls and focus in both themes.
+Screen reader: Headings, labels, status and button names describe the task.
+Network: Offline, delayed, empty and failed responses explain recovery.
+Performance: Measure a production build on a throttled mobile profile.
+Security: Untrusted text is never inserted as HTML; no secrets in the bundle.
+Finding: Long unbroken titles could exceed a narrow card.
+Change: Added break-words to the card.
+Retest: At 320 CSS pixels the long title wraps in both themes.
+Remaining: Screen-reader testing on a second browser is still needed.

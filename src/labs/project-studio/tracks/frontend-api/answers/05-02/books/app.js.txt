@@ -1,0 +1,30 @@
+import { searchBooks } from './api.mjs';
+const form = document.querySelector('#search');
+const status = document.querySelector('#status');
+const list = document.querySelector('#results');
+let controller;
+let sequence = 0;
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  controller?.abort();
+  controller = new AbortController();
+  const ticket = ++sequence;
+  status.textContent = 'Searching…';
+  list.setAttribute('aria-busy', 'true');
+  list.replaceChildren();
+  try {
+    const books = await searchBooks(form.elements.query.value, fetch, controller.signal);
+    if (ticket !== sequence) return;
+    for (const book of books) {
+      const item = document.createElement('li');
+      item.textContent = `${book.title} — ${book.author}`;
+      list.append(item);
+    }
+    status.textContent = books.length ? `${books.length} books found.` : 'No books found. Try an author name or fewer words.';
+  } catch (error) {
+    if (ticket !== sequence) return;
+    status.textContent = error.name === 'AbortError' ? 'Search cancelled.' : 'Could not load books. Check your connection and search again.';
+  } finally {
+    if (ticket === sequence) list.setAttribute('aria-busy', 'false');
+  }
+});

@@ -1,0 +1,8 @@
+import React from 'react';
+function BookCard({ book }) {
+  return <article><h2>{book.title}</h2><p>{book.author}</p></article>;
+}
+export function App() {
+  const books = [{ id: 'a', title: 'A Room to Read', author: 'A. Reader' }, { id: 'b', title: 'Small Steps', author: 'B. Builder' }, { id: 'c', title: 'Designing with Care', author: 'C. Maker' }];
+  return <main><h1>Reading Room</h1><p>A considered reading list.</p>{books.map(book => <BookCard key={book.id} book={book} />)}</main>;
+}

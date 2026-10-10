@@ -8,6 +8,25 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'frontend',
+    label: 'Frontend Developer Bootcamp — From Zero to Portfolio',
+    prefix: 'frontend-',
+    sharedProject: true,
+    chapters: [
+      ['frontend-start', '01 · First Page and Developer Tools'],
+      ['frontend-design', '02 · Design a Responsive Café Site'],
+      ['frontend-javascript', '03 · JavaScript and a Budget Calculator'],
+      ['frontend-planner', '04 · A Task Planner That Remembers'],
+      ['frontend-api', '05 · Book Finder and HTTP APIs'],
+      ['frontend-bootstrap', '06 · Bootstrap Service Dashboard'],
+      ['frontend-react', '07 · React Reading List'],
+      ['frontend-tailwind', '08 · Tailwind and a Component System'],
+      ['frontend-quality', '09 · TypeScript, Testing and Accessibility'],
+      ['frontend-ship', '10 · Portfolio, Deployment and Capstone'],
+    ],
+    planned: 'Start with no coding experience and build a portfolio through HTML, handmade CSS, UI/UX, JavaScript, APIs, Bootstrap, React and Tailwind. Includes TypeScript foundations, testing, release guidance and an independent capstone. Editorial and learner review remain required; advanced routing, server rendering and authentication are follow-on topics. See docs/frontend-bootcamp-curriculum.md.',
+  },
+  {
     key: 'games3d',
     label: 'Build a 3D Game Studio — Then Make Games',
     prefix: 'games3d-',

@@ -1,0 +1,4 @@
+Source: books
+Derived: books.length
+External: localStorage
+Filtering computes display data during rendering; it does not synchronize an external system.

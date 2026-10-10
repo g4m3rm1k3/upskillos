@@ -1,0 +1,5 @@
+const price = 7;
+const quantity = 2;
+const subtotal = price * quantity;
+const delivery = subtotal >= 20 ? 0 : 4;
+console.log(subtotal + delivery);

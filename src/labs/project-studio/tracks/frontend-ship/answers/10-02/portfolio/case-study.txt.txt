@@ -1,0 +1,6 @@
+Problem: A visitor needs hours and prices quickly.
+Audience: Mobile café visitors, including keyboard users.
+Alternatives: Image menu versus semantic text.
+Decision: Semantic headings and lists remain readable and searchable.
+Evidence: At 200 percent zoom the menu reflows without hiding prices.
+Next: Test with more visitors and a screen reader.

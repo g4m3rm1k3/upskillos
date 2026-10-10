@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Service Desk</title>
+</head>
+<body>
+  <main class="container py-4">
+    <h1>Service Desk</h1>
+    <p class="lead">A calm overview of this week's support work.</p>
+    <div class="row g-4">
+      <section class="col-12 col-md-6" aria-labelledby="open-title"><div class="card h-100"><div class="card-body"><h2 id="open-title" class="h4">Open tickets</h2><p class="display-6">12</p><p>Needs a response from our team.</p></div></div></section>
+      <section class="col-12 col-md-6" aria-labelledby="closed-title"><div class="card h-100"><div class="card-body"><h2 id="closed-title" class="h4">Resolved tickets</h2><p class="display-6">28</p><p>Confirmed resolved by the customer.</p></div></div></section>
+    </div>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

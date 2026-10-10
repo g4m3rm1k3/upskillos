@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';
+import { remaining } from './model.mjs';
+assert.equal(remaining(100, 25), 75);
+assert.equal(remaining(0, 0), 0);
+assert.equal(remaining(20, 30), -10);
+assert.throws(() => remaining(-1, 0));
+assert.throws(() => remaining(NaN, 0));
+assert.throws(() => remaining(10, Infinity));
+console.log('budget cases passed');

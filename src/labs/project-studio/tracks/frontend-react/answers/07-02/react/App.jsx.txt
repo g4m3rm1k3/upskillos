@@ -1,0 +1,24 @@
+import React, { useState } from 'react';
+function BookCard({ book, onRemove }) {
+  return <article><h2>{book.title}</h2><p>{book.author}</p><button onClick={() => onRemove(book.id)}>Remove {book.title}</button></article>;
+}
+export function App() {
+  const [books, setBooks] = useState([]);
+  const [title, setTitle] = useState('');
+  const [error, setError] = useState('');
+  function add(event) {
+    event.preventDefault();
+    if (!title.trim()) { setError('Write a title first.'); return; }
+    setBooks(previous => [...previous, { id: crypto.randomUUID(), title: title.trim(), author: 'Your selection' }]);
+    setTitle('');
+    setError('');
+  }
+  function remove(id) { setBooks(previous => previous.filter(book => book.id !== id)); }
+  return <main>
+    <h1>Reading Room</h1>
+    <form onSubmit={add}><label htmlFor="title">Book title</label><input id="title" value={title} onChange={event => setTitle(event.target.value)} /><button>Add book</button></form>
+    <p role="status">{error || `${books.length} ${books.length === 1 ? 'book' : 'books'} saved`}</p>
+    {books.length === 0 && <p>Your shelf is empty. Add a book you want to read.</p>}
+    {books.map(book => <BookCard key={book.id} book={book} onRemove={remove} />)}
+  </main>;
+}

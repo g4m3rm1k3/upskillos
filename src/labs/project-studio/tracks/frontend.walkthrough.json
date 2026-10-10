@@ -1,0 +1,1195 @@
+{
+  "frontend-start/01-01-first-page#Give the browser a document": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-start/01-01-first-page#Your turn: add a useful opening time": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/index.html": "frontend-start/answers/01-01/cafe/index.html.txt"
+    }
+  },
+  "frontend-start/01-02-meaning#Organize by visitor tasks": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-start/01-02-meaning#Your turn: add a real destination": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/index.html": "frontend-start/answers/01-02/cafe/index.html.txt"
+    }
+  },
+  "frontend-start/01-03-tools#Describe your development tools": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-start/01-03-tools#Serve, inspect and stop": {
+    "run": [
+      "npm install"
+    ],
+    "wrong": []
+  },
+  "frontend-start/01-03-tools#Keep generated files out of history": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          ".gitignore": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-start/01-03-tools#Your turn: make a useful project note": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "README.txt": "frontend-start/answers/01-03/README.txt.txt"
+    }
+  },
+  "frontend-design/02-01-brief#Write assumptions you can test": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "design/brief.txt": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-01-brief#Your turn: define a usability observation": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "design/brief.txt": "frontend-design/answers/02-01/design/brief.txt.txt"
+    }
+  },
+  "frontend-design/02-02-css#Connect a stylesheet": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-02-css#Name the visual decisions": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/styles.css": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-02-css#Your turn: change the rhythm consistently": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/styles.css": "frontend-design/answers/02-02/cafe/styles.css.txt"
+    }
+  },
+  "frontend-design/02-03-responsive#Let content determine the layout": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/styles.css": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-03-responsive#Your turn: give long addresses somewhere to break": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/styles.css": "frontend-design/answers/02-03/cafe/styles.css.txt"
+    }
+  },
+  "frontend-design/02-04-color#Define a second token set": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/styles.css": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-04-color#Your turn: give cards their own role": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/styles.css": "frontend-design/answers/02-04/cafe/styles.css.txt"
+    }
+  },
+  "frontend-javascript/03-01-values#Calculate an order": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "budget/values.mjs": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-01-values#Your turn: test the boundary": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "budget/values.mjs": "frontend-javascript/answers/03-01/budget/values.mjs.txt"
+    }
+  },
+  "frontend-javascript/03-02-functions#Keep the rule independent of the browser": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "budget/model.mjs": "this is invalid syntax !"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-02-functions#Make expected behavior executable": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "budget/model.test.mjs": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-02-functions#Your turn: reject an infinite expense": {
+    "wrong": [
+      {
+        "name": "no new boundary case",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "budget/model.test.mjs": "frontend-javascript/answers/03-02/budget/model.test.mjs.txt"
+    }
+  },
+  "frontend-javascript/03-03-forms#Label every input": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "budget/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-03-forms#Connect submit to the calculation": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "budget/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-03-forms#Your turn: make deficits understandable": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "budget/app.js": "frontend-javascript/answers/03-03/budget/app.js.txt"
+    }
+  },
+  "frontend-javascript/03-04-theme#Add an honest toggle": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-04-theme#Select, apply and store a theme": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "cafe/theme.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-javascript/03-04-theme#Your turn: follow the system until the user chooses": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "cafe/theme.js": "frontend-javascript/answers/03-04/cafe/theme.js.txt"
+    }
+  },
+  "frontend-planner/04-01-collections#Transform data without changing the original": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/model.mjs": "this is invalid syntax !"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-01-collections#Prove the previous list survives": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/model.test.mjs": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-01-collections#Your turn: remove by identity": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "planner/model.mjs": "frontend-planner/answers/04-01/planner/model.mjs.txt"
+    }
+  },
+  "frontend-planner/04-02-render#Describe the controls": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-02-render#Render from one state array": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-02-render#Your turn: keep focus when a task disappears": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "planner/app.js": "frontend-planner/answers/04-02/planner/app.js.txt"
+    }
+  },
+  "frontend-planner/04-03-persistence#Isolate storage behind functions": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/storage.mjs": "this is invalid syntax !"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-03-persistence#Restore and save with visible failure": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "planner/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-planner/04-03-persistence#Your turn: test corrupted storage without deleting real work": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "planner/storage.test.mjs": "frontend-planner/answers/04-03/planner/storage.test.mjs.txt"
+    }
+  },
+  "frontend-api/05-01-http#Convert a network response into app data": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "books/api.mjs": "this is invalid syntax !"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-api/05-01-http#Test without depending on the internet": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "books/api.test.mjs": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-api/05-01-http#Your turn: reject the wrong response shape": {
+    "wrong": [
+      {
+        "name": "no malformed response case",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "books/api.test.mjs": "frontend-api/answers/05-01/books/api.test.mjs.txt"
+    }
+  },
+  "frontend-api/05-02-async-ui#Create the search screen": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "books/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-api/05-02-async-ui#Render the request lifecycle": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "books/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-api/05-02-async-ui#Your turn: make empty results actionable": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "books/app.js": "frontend-api/answers/05-02/books/app.js.txt"
+    }
+  },
+  "frontend-api/05-03-race#Walk the timeline": {
+    "wrong": [
+      {
+        "name": "a stale response is allowed to win",
+        "files": {
+          "books/app.js": "import { searchBooks } from './api.mjs';\nconst form = document.querySelector('#search');\nconst status = document.querySelector('#status');\nconst list = document.querySelector('#results');\nlet controller;\nlet sequence = 0;\nform.addEventListener('submit', async event => {\n  event.preventDefault();\n  controller?.abort();\n  controller = new AbortController();\n  const ticket = ++sequence;\n  status.textContent = 'Searching\u2026';\n  list.setAttribute('aria-busy', 'true');\n  list.replaceChildren();\n  try {\n    const books = await searchBooks(form.elements.query.value, fetch, controller.signal);\n    \n    for (const book of books) {\n      const item = document.createElement('li');\n      item.textContent = `${book.title} \u2014 ${book.author}`;\n      list.append(item);\n    }\n    status.textContent = books.length ? `${books.length} books found.` : 'No books found. Try an author name or fewer words.';\n  } catch (error) {\n    \n    status.textContent = error.name === 'AbortError' ? 'Search cancelled.' : 'Could not load books. Check your connection and search again.';\n  } finally {\n    if (ticket === sequence) list.setAttribute('aria-busy', 'false');\n  }\n});\n"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-api/05-03-race#Your turn: document an honest state matrix": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "design/search-states.txt": "frontend-api/answers/05-03/design/search-states.txt.txt"
+    }
+  },
+  "frontend-bootstrap/06-01-bootstrap#Install a dependency deliberately": {
+    "run": [
+      "npm install"
+    ],
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-bootstrap/06-01-bootstrap#Build the dashboard structure": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "dashboard/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-bootstrap/06-01-bootstrap#Load library CSS through the bundler": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "dashboard/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-bootstrap/06-01-bootstrap#Your turn: use spacing consistently": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "dashboard/index.html": "frontend-bootstrap/answers/06-01/dashboard/index.html.txt"
+    }
+  },
+  "frontend-bootstrap/06-02-components#Wire the button to its panel": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "dashboard/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-bootstrap/06-02-components#Import only the needed behavior": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "dashboard/app.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-bootstrap/06-02-components#Your turn: switch the library theme": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "dashboard/index.html": "frontend-bootstrap/answers/06-02/dashboard/index.html.txt"
+    }
+  },
+  "frontend-react/07-01-components#Add React to the portfolio tools": {
+    "run": [
+      "npm install"
+    ],
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-01-components#Create the React host page": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-01-components#Start the root": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/main.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-01-components#Pass a book as data": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-01-components#Your turn: add a distinct reading choice": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "react/App.jsx": "frontend-react/answers/07-01/react/App.jsx.txt"
+    }
+  },
+  "frontend-react/07-02-state#Lift shared data to its owner": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-02-state#Your turn: derive a useful shelf summary": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "react/App.jsx": "frontend-react/answers/07-02/react/App.jsx.txt"
+    }
+  },
+  "frontend-react/07-03-effects#Initialize once and save after changes": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-03-effects#Your turn: record why this is an effect": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "design/react-state.txt": "frontend-react/answers/07-03/design/react-state.txt.txt"
+    }
+  },
+  "frontend-react/07-04-react-api#Clean up obsolete work": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/BookSearch.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-04-react-api#Save by stable API identity": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-react/07-04-react-api#Your turn: explain an empty catalog result": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "react/BookSearch.jsx": "frontend-react/answers/07-04/react/BookSearch.jsx.txt"
+    }
+  },
+  "frontend-tailwind/08-01-tailwind#Install the v4 integration": {
+    "run": [
+      "npm install"
+    ],
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-01-tailwind#Enable the Vite plugin": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "vite.config.js": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-01-tailwind#Define tokens and readable defaults": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/styles.css": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-01-tailwind#Load the app\u2019s own stylesheet": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/main.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-01-tailwind#Your turn: give search its own visual grouping": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "react/BookSearch.jsx": "frontend-tailwind/answers/08-01/react/BookSearch.jsx.txt"
+    }
+  },
+  "frontend-tailwind/08-02-system#Make safe defaults explicit": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/Button.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-02-system#Use the quieter action variant": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-02-system#Your turn: document when to use each variant": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "design/components.txt": "frontend-tailwind/answers/08-02/design/components.txt.txt"
+    }
+  },
+  "frontend-tailwind/08-03-theme-system#Synchronize the root attribute": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "react/App.jsx": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-tailwind/08-03-theme-system#Your turn: protect long book titles": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "react/App.jsx": "frontend-tailwind/answers/08-03/react/App.jsx.txt"
+    }
+  },
+  "frontend-quality/09-01-typescript#Add the compiler": {
+    "run": [
+      "npm install"
+    ],
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-01-typescript#Choose a strict boundary": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "tsconfig.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-01-typescript#Model states as distinct alternatives": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "quality/search.ts": "this is invalid syntax !"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-01-typescript#Your turn: add an empty state deliberately": {
+    "wrong": [
+      {
+        "name": "unhandled empty state",
+        "files": {
+          "quality/search.ts": "export type Book = { id: string; title: string; author: string };\nexport type SearchState =\n  | { status: 'idle' }\n  | { status: 'loading' }\n  | { status: 'empty' }\n  | { status: 'error'; message: string }\n  | { status: 'success'; books: Book[] };\nexport function describe(state: SearchState): string {\n  switch (state.status) {\n    case 'idle': return 'Search for a book';\n    case 'loading': return 'Searching';\n    case 'error': return state.message;\n    case 'success': return `${state.books.length} results`;\n  }\n}\nconst example: SearchState = { status: 'success', books: [] };\nconsole.log(describe(example));\n"
+        },
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ],
+    "answerFiles": {
+      "quality/search.ts": "frontend-quality/answers/09-01/quality/search.ts.txt"
+    }
+  },
+  "frontend-quality/09-02-tests#Collect meaningful regressions": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "quality/contracts.test.mjs": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-02-tests#Give the suite one command": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "package.json": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-02-tests#Your turn: protect whitespace validation": {
+    "wrong": [
+      {
+        "name": "missing whitespace case",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "quality/contracts.test.mjs": "frontend-quality/answers/09-02/quality/contracts.test.mjs.txt"
+    }
+  },
+  "frontend-quality/09-03-audit#Make the review reproducible": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "quality/review.txt": ""
+        },
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "frontend-quality/09-03-audit#Your turn: record a measured fix": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "answerFiles": {
+      "quality/review.txt": "frontend-quality/answers/09-03/quality/review.txt.txt"
+    }
+  },
+  "frontend-ship/10-01-build#Give the portfolio a front door": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "index.html": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-ship/10-01-build#Declare every production entry": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "vite.config.js": ""
+        },
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "frontend-ship/10-01-build#Your turn: make the portfolio discoverable": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ],
+    "answerFiles": {
+      "index.html": "frontend-ship/answers/10-01/index.html.txt"
+    }
+  },
+  "frontend-ship/10-02-release#Prepare a release checklist": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "release/checklist.txt": ""
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-ship/10-02-release#Your turn: write a case study that explains the work": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "answerFiles": {
+      "portfolio/case-study.txt": "frontend-ship/answers/10-02/portfolio/case-study.txt.txt"
+    }
+  },
+  "frontend-ship/10-03-capstone#Choose a bounded product brief": {
+    "wrong": [
+      {
+        "name": "missing evidence",
+        "files": {
+          "capstone/brief.txt": ""
+        },
+        "fails": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "frontend-ship/10-03-capstone#Your turn: deliver a reviewed release": {
+    "wrong": [
+      {
+        "name": "leave the task unfinished",
+        "fails": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "answerFiles": {
+      "capstone/evidence.txt": "frontend-ship/answers/10-03/capstone/evidence.txt.txt"
+    }
+  }
+}

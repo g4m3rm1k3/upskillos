@@ -1,0 +1,4 @@
+Primary: One clear primary action per task region.
+Secondary: Supporting actions remain readable.
+Focus: A visible ring must survive both themes.
+Disabled: Explain what must change before the action is available.

@@ -15,6 +15,13 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (['frontend', 'frontend-start', 'frontend-design', 'frontend-javascript', 'frontend-planner', 'frontend-api', 'frontend-bootstrap', 'frontend-react', 'frontend-tailwind', 'frontend-quality', 'frontend-ship'].includes(key)) return {
+    level: key === 'frontend' || key === 'frontend-start' ? 'beginner' : 'bridge',
+    maturity: 'in-development',
+    audience: key === 'frontend' || key === 'frontend-start'
+      ? 'No programming experience required. Learn through real frontend apps, beginning with files and semantic HTML. Requires a desktop editor, modern browser, Node.js and Git; setup is taught. Use the desktop app for file and browser checks. Follow the chapters in order in one portfolio folder.'
+      : 'Continue after the preceding Frontend Developer Bootcamp chapters in the same portfolio folder. Earlier HTML, CSS and JavaScript work supplies the prerequisites; library tooling and new concepts are introduced when needed. Independent design and accessibility review accompany automated checks.',
+  };
   if (key === 'games3d' || key === 'games3d-foundations') return { level: 'bridge', maturity: 'in-development', audience: 'For learners with introductory variables, conditions, loops and functions in any language. C#, terminal use, scene data, tests and 3D coordinates are taught here. Requires a local .NET SDK with .NET 8 targeting/runtime support and a graphics display. Begin with Foundations: scene editing, save/open, visible box sizing followed by validated recipes and durable object edits, UI layout, feedback and dark/light themes, and a small Q-learning bot are taught here. Play mode and later game genres remain planned.' };
   if (/^(forge|aml|cpp|ml)-/.test(key) && !REVIEWED_CHAPTERS.has(key) && !SERIES_KEYS.has(key)) {
     return { level: 'unclassified', maturity: 'in-development', audience: "This chapter's prerequisites haven't been reviewed yet. It builds on the chapters before it in this series; start there." };

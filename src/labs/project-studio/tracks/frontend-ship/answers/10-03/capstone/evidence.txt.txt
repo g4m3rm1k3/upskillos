@@ -1,0 +1,6 @@
+Observed: Reference review example only; replace with your own demonstration.
+Explanation: Tag state needs validation and a stable book id.
+Independent change: Add a tag form and derived tag filter.
+Test: Provide actual results for empty, duplicate and persisted tag cases.
+Review: Have a peer review keyboard, theme and usability evidence.
+Release: Record an actual preview or verified deployment and remaining limitations.

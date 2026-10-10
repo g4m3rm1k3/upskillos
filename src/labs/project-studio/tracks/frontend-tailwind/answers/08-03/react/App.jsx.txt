@@ -1,0 +1,49 @@
+import React, { useState, useEffect } from 'react';
+import { BookSearch } from './BookSearch.jsx';
+import { Button } from './Button.jsx';
+function BookCard({ book, onRemove }) {
+  return <article className="break-words"><h2>{book.title}</h2><p>{book.author}</p><Button variant="secondary" onClick={() => onRemove(book.id)}>Remove {book.title}</Button></article>;
+}
+function loadShelf() {
+  try {
+    const value = JSON.parse(localStorage.getItem('reading-room-v1') ?? '[]');
+    if (!Array.isArray(value) || !value.every(book => book && typeof book.id === 'string' && typeof book.title === 'string' && typeof book.author === 'string')) return [];
+    return new Set(value.map(book => book.id)).size === value.length ? value : [];
+  } catch { return []; }
+}
+export function App() {
+  const [books, setBooks] = useState(loadShelf);
+  const [title, setTitle] = useState('');
+  const [theme, setTheme] = useState(() => {
+    try { const saved = localStorage.getItem('reading-theme'); if (saved === 'dark' || saved === 'light') return saved; } catch {}
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('reading-theme', theme); } catch {}
+  }, [theme]);
+  const [error, setError] = useState('');
+  const [storageError, setStorageError] = useState('');
+  useEffect(() => {
+    try { localStorage.setItem('reading-room-v1', JSON.stringify(books)); setStorageError(''); }
+    catch { setStorageError('Storage unavailable; changes will not survive reload.'); }
+  }, [books]);
+  function add(event) {
+    event.preventDefault();
+    if (!title.trim()) { setError('Write a title first.'); return; }
+    setBooks(previous => [...previous, { id: crypto.randomUUID(), title: title.trim(), author: 'Your selection' }]);
+    setTitle('');
+    setError('');
+  }
+  function remove(id) { setBooks(previous => previous.filter(book => book.id !== id)); }
+  return <main>
+    <h1>Reading Room</h1>
+    <Button aria-pressed={theme === 'dark'} onClick={() => setTheme(previous => previous === 'dark' ? 'light' : 'dark')}>Dark theme</Button>
+    <BookSearch onSave={book => setBooks(previous => previous.some(item => item.id === book.id) ? previous : [...previous, book])} />
+    {storageError && <p role="alert">{storageError}</p>}
+    <form onSubmit={add}><label htmlFor="title">Book title</label><input id="title" value={title} onChange={event => setTitle(event.target.value)} /><button>Add book</button></form>
+    <p role="status">{error || `${books.length} ${books.length === 1 ? 'book' : 'books'} saved`}</p>
+    {books.length === 0 && <p>Your shelf is empty. Add a book you want to read.</p>}
+    {books.map(book => <BookCard key={book.id} book={book} onRemove={remove} />)}
+  </main>;
+}

@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { remaining } from '../budget/model.mjs';
+import { addTask, removeTask } from '../planner/model.mjs';
+import { searchBooks } from '../books/api.mjs';
+test('deficits remain visible', () => assert.equal(remaining(10, 30), -20));
+test('deleting one id keeps a duplicate title', () => {
+  const first = addTask([], 'Read', 'a');
+  const both = addTask(first, 'Read', 'b');
+  assert.equal(removeTask(both, 'a')[0].id, 'b');
+  assert.equal(both.length, 2);
+});
+test('network failure is a rejected request', async () => {
+  await assert.rejects(searchBooks('Design', async () => { throw new Error('Offline'); }), /Offline/);
+});
+test('blank tasks are rejected', () => {
+  assert.throws(() => addTask([], '   ', 'blank'));
+});

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { searchBooks } from './api.mjs';
+let seen;
+const fake = async url => {
+  seen = url;
+  return { ok: true, json: async () => ({ docs: [{ key: '/works/1', title: 'A Book' }] }) };
+};
+assert.deepEqual(await searchBooks(' A&B ', fake), [{ id: '/works/1', title: 'A Book', author: 'Unknown author' }]);
+assert.equal(seen.searchParams.get('q'), 'A&B');
+assert.deepEqual(await searchBooks(' ', fake), []);
+await assert.rejects(searchBooks('x', async () => ({ ok: false, status: 429 })), /429/);
+await assert.rejects(searchBooks('x', async () => ({ ok: true, json: async () => ({ docs: null }) })), /Unexpected search response/);
+console.log('API contract passed');

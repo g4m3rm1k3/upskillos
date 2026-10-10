@@ -1,0 +1,28 @@
+import React, { useEffect, useState } from 'react';
+import { searchBooks } from '../books/api.mjs';
+export function BookSearch({ onSave }) {
+  const [text, setText] = useState('');
+  const [query, setQuery] = useState(null);
+  const [result, setResult] = useState({ state: 'idle', books: [] });
+  useEffect(() => {
+    if (!query) return;
+    const controller = new AbortController();
+    let active = true;
+    setResult({ state: 'loading', books: [] });
+    searchBooks(query.text, fetch, controller.signal).then(books => {
+      if (active) setResult({ state: 'success', books });
+    }).catch(error => {
+      if (active && error.name !== 'AbortError') setResult({ state: 'error', books: [] });
+    });
+    return () => { active = false; controller.abort(); };
+  }, [query]);
+  return <section className="my-8 rounded-xl border border-slate-400 p-4" aria-labelledby="search-title">
+    <h2 id="search-title">Find your next book</h2>
+    <form onSubmit={event => { event.preventDefault(); setQuery({ text: text.trim() }); }}>
+      <label htmlFor="book-query">Title or author</label><input id="book-query" required value={text} onChange={event => setText(event.target.value)} /><button>Search catalog</button>
+    </form>
+    <p role="status">{result.state === 'loading' ? 'Searching…' : result.state === 'error' ? 'Search failed. Submit again to retry.' : result.state === 'success' ? `${result.books.length} results` : 'Search Open Library.'}</p>
+    {result.state === 'success' && result.books.length === 0 && <p>No matches. Try fewer words.</p>}
+    <ul>{result.books.map(book => <li key={book.id}>{book.title} — {book.author} <button onClick={() => onSave(book)}>Save {book.title}</button></li>)}</ul>
+  </section>;
+}
