@@ -39,6 +39,12 @@ contains index.html "<div id=\"name-box\"></div>" -- Add <div id="name-box"></di
 Add two rules to the end of `style.css`:
 
 ```css file=style.css
+:root {
+  --grid-line: #d0d7de;
+  --header-bg: #f3f4f6;
+  --header-text: #57606a;
+}
+
 body {
   font-family: system-ui, sans-serif;
   margin: 24px;
@@ -50,7 +56,7 @@ table {
 
 th,
 td {
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--grid-line);
   padding: 4px 8px;
   min-width: 80px;
   height: 24px;
@@ -58,8 +64,8 @@ td {
 }
 
 th {
-  background: #f3f4f6;
-  color: #57606a;
+  background: var(--header-bg);
+  color: var(--header-text);
   font-weight: 600;
 }
 
@@ -77,7 +83,7 @@ tbody th {
   min-width: 60px;
   margin-bottom: 8px;
   padding: 4px 8px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--grid-line);
   font-size: 13px;
 }
 
@@ -90,7 +96,7 @@ td.selected {
 - **`#name-box`** selects by `id`, as in `querySelector`. `display: inline-block` makes the box only as wide as it needs (a `div` normally stretches across the whole page).
 - **`td.selected`** selects `td` elements that have the **class** `selected`. A class is a label you can put on any number of elements, and add or remove from code. The script will move the `selected` class from cell to cell; this rule makes whichever cell has it look selected. (An `outline` is like a border but takes no space, so the grid doesn't shift; `outline-offset: -2px` draws it just inside the cell.)
 
-The `tbody th` rule is your challenge answer from lesson 2.4; if you wrote it differently and it passed, keep yours.
+The `tbody th` rule is your answer from lesson 2.4's Your turn; if you wrote it differently and it passed, keep yours.
 
 ```check
 contains style.css "td.selected" -- Add the td.selected rule.

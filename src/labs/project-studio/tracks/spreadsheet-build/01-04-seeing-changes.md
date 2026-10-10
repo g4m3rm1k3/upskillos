@@ -43,6 +43,7 @@ Untracked files:
         exit-code.js
         greet.py
         hello.py
+        playground/
 
 no changes added to commit (use "git add" and/or "git commit -a")
 ```
@@ -98,17 +99,17 @@ PS C:\Users\you\Documents\spreadsheet> git commit -m "Say how many cells the she
 ```
 
 ```check
-git-commits 2 -- Stage hello.js and commit it.
+run "git show HEAD:hello.js" stdout="cells to start with" label="the last commit has the new hello.js" -- Stage hello.js and commit it.
 git-message "cells" label="a commit message mentions the cells" -- Commit with a message that says what changed, e.g. "Say how many cells the sheet starts with".
 ```
 
 ## Commit the rest
 
-The other three files from sprint 0 belong in the history too. `git add` accepts several names:
+The other three files from sprint 0 belong in the history too, and so does your playground: experiments are worth keeping, and their history shows what you tried. `git add` accepts several names, and a folder's name adds every file inside it:
 
 ```powershell
-git add hello.py greet.py exit-code.js
-git commit -m "Add the Python and exit-code examples from sprint 0"
+git add hello.py greet.py exit-code.js playground
+git commit -m "Add the sprint 0 examples and the playground"
 git log --oneline
 ```
 
@@ -116,8 +117,9 @@ git log --oneline
 
 ```text
 PS C:\Users\you\Documents\spreadsheet> git log --oneline
-0410cec (HEAD -> main) Add the Python and exit-code examples from sprint 0
+0410cec (HEAD -> main) Add the sprint 0 examples and the playground
 52f1fec Say how many cells the sheet starts with
+a91c2e4 Add a README that explains the playground
 dee5d6d Add hello.js, a first JavaScript program
 ```
 
@@ -127,6 +129,7 @@ dee5d6d Add hello.js, a first JavaScript program
 git-tracked hello.py
 git-tracked greet.py
 git-tracked exit-code.js
+git-tracked playground/shout.py label="the playground is committed" -- Add the playground folder too: git add playground
 git-clean -- Commit everything; git status should say "nothing to commit, working tree clean".
 ```
 
@@ -138,3 +141,32 @@ nothing to commit, working tree clean
 ```
 
 **Working tree** is Git's name for your project folder as it is on disk. *Clean* means it matches the last commit exactly. That's a good state to be in before starting something new.
+
+## Your turn: a change, read before it's committed
+
+Change `playground/shout.py` so the shout ends with an exclamation mark: `HELLO!` instead of `HELLO`, and `NOTHING TO SHOUT!` when the variable isn't set.
+
+Before committing, look at your change with `git diff` and check that it shows exactly what you meant, nothing more. Then commit it.
+
+```check
+run "$env:SHOUT_TEXT = 'hi'; python playground/shout.py" stdout="HI!" os=windows label="with SHOUT_TEXT=hi it prints HI!"
+run "SHOUT_TEXT=hi python3 playground/shout.py" stdout="HI!" os=mac label="with SHOUT_TEXT=hi it prints HI!"
+run "SHOUT_TEXT=hi python3 playground/shout.py" stdout="HI!" os=linux label="with SHOUT_TEXT=hi it prints HI!"
+git-clean -- Commit the change: git commit -am "your message"
+```
+
+```hints
+nudge: The change is to the line that prints.
+concept: `+` joins two strings in Python, as in JavaScript. `git diff` shows your edited line as one `-` line (before) and one `+` line (after).
+shape: Print the capitals with `"!"` joined on the end, then `git diff`, then `git commit -am` with a message.
+answer: ~~~python
+import os
+
+text = os.environ.get("SHOUT_TEXT", "nothing to shout")
+print(text.upper() + "!")
+~~~
+~~~powershell
+git diff
+git commit -am "End every shout with an exclamation mark"
+~~~
+```

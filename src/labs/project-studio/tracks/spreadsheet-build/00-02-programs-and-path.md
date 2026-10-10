@@ -105,7 +105,19 @@ Hello, Ada
 
 The script didn't change, but its output did, because Python received a different environment. (On macOS: `export GREETING_NAME="Ada"`, then `python3 greet.py`.)
 
-A variable set this way lasts only as long as this terminal. Press **Restart** above the terminal and run `python greet.py` again: it's back to `Hello, stranger`. Each new shell starts with a fresh copy of the environment.
+A variable set this way lives in this terminal's shell. Before you press **Restart** above the terminal, which starts a new shell, predict:
+
+```predict
+question: You set `GREETING_NAME` to `Ada` in this terminal. After **Restart**, what does `python greet.py` print?
+choice: Hello, Ada
+choice: Hello, stranger
+choice: An error, because the variable was deleted
+answer: Hello, stranger
+explain: Each new shell starts with a fresh copy of the environment it was given when it started. `$env:GREETING_NAME = "Ada"` changed only the old shell's copy, which ended with it. The script's `.get(..., "stranger")` then supplies the default, so there's no error.
+verify: python greet.py
+```
+
+Press **Restart** and run `python greet.py` again: it's back to `Hello, stranger`.
 
 That's also why, after you install a new tool, an old terminal can't find it: it's still using the PATH it was given when it started. Opening a new terminal (here: **Restart**) fixes it. You'll need that in the next lesson.
 
@@ -120,3 +132,33 @@ run "GREETING_NAME=Ada python3 greet.py" stdout="Hello, Ada" os=linux label="gre
 Later in this series your server will need a secret: a key for signing links that only the server should know. You'll never write that secret into a source file, because source files get shared and pushed to GitHub. The server will read it from an environment variable, set on the computer it runs on.
 
 The same script, configured from outside without editing it: that's what environment variables are for.
+
+## Your turn: a script configured from outside
+
+Write `playground/shout.py`. It reads an environment variable called `SHOUT_TEXT` and prints it in capital letters. When `SHOUT_TEXT` isn't set, it prints `NOTHING TO SHOUT`.
+
+Try it both ways in the terminal: once as it is, and once after setting `$env:SHOUT_TEXT = "hello"`.
+
+```check
+file playground/shout.py -- Create shout.py inside the playground folder (+ button above the file tree, or type the path).
+run "python playground/shout.py" stdout="NOTHING TO SHOUT" os=windows label="with SHOUT_TEXT unset, it prints NOTHING TO SHOUT"
+run "python3 playground/shout.py" stdout="NOTHING TO SHOUT" os=mac label="with SHOUT_TEXT unset, it prints NOTHING TO SHOUT"
+run "python3 playground/shout.py" stdout="NOTHING TO SHOUT" os=linux label="with SHOUT_TEXT unset, it prints NOTHING TO SHOUT"
+run "$env:SHOUT_TEXT = 'hello'; python playground/shout.py" stdout="HELLO" os=windows label="with SHOUT_TEXT=hello, it prints HELLO"
+run "SHOUT_TEXT=hello python3 playground/shout.py" stdout="HELLO" os=mac label="with SHOUT_TEXT=hello, it prints HELLO"
+run "SHOUT_TEXT=hello python3 playground/shout.py" stdout="HELLO" os=linux label="with SHOUT_TEXT=hello, it prints HELLO"
+```
+
+The checks try one word. Try a sentence of your own too: `$env:SHOUT_TEXT = "build it, then break it"`.
+
+```hints
+nudge: `greet.py` already reads a variable with a default. Start from what it does.
+concept: Python strings have `.upper()`, which gives a capital-letter copy: `"hello".upper()` is `"HELLO"`. The default in `.get(name, default)` is used exactly when the variable isn't set.
+shape: One line reads the variable, giving the default text when it's missing. One line prints that value in capitals. (If the default is already in capitals, `.upper()` leaves it alone.)
+answer: ~~~python
+import os
+
+text = os.environ.get("SHOUT_TEXT", "nothing to shout")
+print(text.upper())
+~~~
+```

@@ -27,23 +27,31 @@ Now refresh the page. Everything is back as it was.
 
 DevTools changes the page **in the browser's memory**, not your files. It's a place to experiment: try values until it looks right, then copy the value you settled on into `style.css`. Forgetting to copy it back, and losing your perfect value on the next refresh, happens to everyone once.
 
-## Challenge: right-align the row numbers
+## Your turn: right-align the row numbers
 
 Numbers in a spreadsheet are right-aligned, and the row numbers should be too. The browser centres `th` text by default.
 
 Write a rule in `style.css` that right-aligns the row numbers (the `th` cells in the body), **without** changing the column letters (which stay centred).
 
-You need two things you haven't seen:
+Everything you need is from the styling section: a selector for "`th` inside `tbody`", and the property **`text-align`** (the footer used `center`; the values include `left`, `center` and `right`).
 
-- the property **`text-align`**, whose values include `left`, `center` and `right`
-- a selector for "`th` inside `tbody`". You've seen the pattern in lesson 2.3, with `thead th`.
-
-Try values in DevTools first if you like, then put the rule in `style.css` and refresh.
+Try values in DevTools first, then put the rule in `style.css` and refresh.
 
 ```check
 page index.html "getComputedStyle(document.querySelector('tbody th')).textAlign" right label="row numbers are right-aligned" -- Add a rule for th elements inside tbody, with text-align: right;
 page index.html "getComputedStyle(document.querySelector('thead th:nth-child(2)')).textAlign" center label="column letters are still centred" -- Your rule should only select the th cells inside tbody.
 page index.html "getComputedStyle(document.querySelector('td')).textAlign" start label="data cells are unchanged" -- Don't change the alignment of the td cells.
+```
+
+```hints
+nudge: Find the row numbers in the Elements tab. What are they, and what are they inside?
+concept: A space in a selector means "inside" (Styling 2): `thead th` selects the column letters, so `tbody th` selects the row numbers. Data cells are `td`s, so a rule for `tbody th` can't touch them.
+shape: One new rule, at the end of `style.css`, with one declaration.
+answer: ~~~css
+tbody th {
+  text-align: right;
+}
+~~~
 ```
 
 ## Merge the sprint and push

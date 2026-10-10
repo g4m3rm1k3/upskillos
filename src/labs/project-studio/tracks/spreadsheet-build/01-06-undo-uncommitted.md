@@ -87,3 +87,27 @@ git restore hello.js
 lacks hello.js "staged, then unstaged" -- Run git restore hello.js to throw the extra line away.
 git-clean
 ```
+
+## Your turn: break it, then get it back
+
+Break `playground/shout.py` on purpose, any way you like: misspell a name, delete a bracket, delete everything. Run it and read the error. Then look at the damage with `git diff`, and get the committed version back with one command.
+
+```check
+run "$env:SHOUT_TEXT = 'hi'; python playground/shout.py" stdout="HI!" os=windows label="shout.py works again"
+run "SHOUT_TEXT=hi python3 playground/shout.py" stdout="HI!" os=mac label="shout.py works again"
+run "SHOUT_TEXT=hi python3 playground/shout.py" stdout="HI!" os=linux label="shout.py works again"
+git-clean -- Get the committed version back with git restore.
+```
+
+The checks can only see the end: a working file and nothing uncommitted. The useful part is reading the error and the diff on the way.
+
+```hints
+nudge: The command that throws your changes away is in this lesson.
+concept: `git restore <file>` replaces the file with its last committed version. Your broken edit was never committed, so this is safe exactly because you don't want it.
+shape: Break, run, `git diff`, `git restore` with the file's path.
+answer: ~~~powershell
+python playground/shout.py
+git diff
+git restore playground/shout.py
+~~~
+```

@@ -18,7 +18,7 @@ What each Project Studio track needs on the learner's computer, and what has act
 | ml-* (19 tracks) | Python 3.12+, venv, pytest, scikit-learn, NumPy; FastAPI for web/database/studio/capstone; PyTorch for ml-pytorch | `mlProduction.desktop.test.js` | not recorded |
 | rl-pygame | Python 3.12+, venv, NumPy, pygame, Gymnasium, pytest | `rlPygame.desktop.test.js` | not recorded |
 | pyside6-engine | Python, PySide6 (one lesson, no checks yet) | none | not recorded |
-| spreadsheet-build | Python, Node.js and npm, Git; some checks are Windows/macOS pairs | `spreadsheetBuild.desktop.test.js` | not recorded |
+| spreadsheet-build | Python, Node.js and npm, Git; some checks are Windows/macOS pairs | `spreadsheetBuild.desktop.test.js` (on `walkSeries.js`) | Sprints 0–2 pass on Windows (2026-10-10, 496 s) |
 | dice-path-start, dice-cpp | A C++20 compiler (`g++`) | `diceStart.desktop.test.js`, `diceCpp.desktop.test.js` | not recorded |
 | cpp-foundations … cpp-networking, cpp-graphics, cpp-engines | C++20 compiler, CMake; Git for cpp-engineering | one `cpp*.desktop.test.js` per track | not recorded |
 | cpp-systems | as above; process checks have Linux and macOS variants only | `cppSystems.desktop.test.js` | not recorded |

@@ -40,6 +40,12 @@ contains index.html "<input id=\"formula-bar\"" -- Add the <input id="formula-ba
 Add the toolbar's styles to `style.css`, and remove `margin-bottom` from `#name-box` (the toolbar has the margin now):
 
 ```css file=style.css
+:root {
+  --grid-line: #d0d7de;
+  --header-bg: #f3f4f6;
+  --header-text: #57606a;
+}
+
 body {
   font-family: system-ui, sans-serif;
   margin: 24px;
@@ -51,7 +57,7 @@ table {
 
 th,
 td {
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--grid-line);
   padding: 4px 8px;
   min-width: 80px;
   height: 24px;
@@ -59,8 +65,8 @@ td {
 }
 
 th {
-  background: #f3f4f6;
-  color: #57606a;
+  background: var(--header-bg);
+  color: var(--header-text);
   font-weight: 600;
 }
 
@@ -83,14 +89,14 @@ tbody th {
   display: inline-block;
   min-width: 60px;
   padding: 4px 8px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--grid-line);
   font-size: 13px;
 }
 
 #formula-bar {
   width: 360px;
   padding: 4px 8px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--grid-line);
   font: inherit;
   font-size: 13px;
 }

@@ -95,6 +95,15 @@ print(1 / 0)
 print("never printed")
 ```
 
+Before running it, predict:
+
+```predict
+question: What exit code will `python broken.py` end with?
+answer: 1
+explain: Any uncaught error ends a Python program with exit code 1. The `starting` line has already been printed by then, so output and failure can both happen in one run: the exit code, not the output, says whether it worked.
+verify: node -e "console.log(require('child_process').spawnSync('python', ['broken.py']).status)"
+```
+
 Run it, then ask for the exit code:
 
 ```powershell
@@ -212,7 +221,7 @@ While a program runs, the shell is busy and there's no prompt. If you ever type 
 file ticker.js
 ```
 
-## Challenge: choose your own exit code
+## Your turn: choose your own exit code
 
 Write a program `exit-code.js` that prints `checking the spreadsheet...` and then ends with exit code **3**.
 
@@ -223,6 +232,16 @@ Run it, and confirm with `$LASTEXITCODE` that the shell got 3.
 ```check
 file exit-code.js -- Create a file named exit-code.js (use the + button above the file tree).
 run "node exit-code.js" exit=3 stdout="checking the spreadsheet..." label="`node exit-code.js` prints the message and exits with code 3"
+```
+
+```hints
+nudge: Two lines: one from `hello.js`, one from the sentence above.
+concept: `process.exit` ends the program **immediately**: nothing after it runs. So the order of the two lines matters.
+shape: Print first, then exit.
+answer: ~~~javascript
+console.log("checking the spreadsheet...");
+process.exit(3);
+~~~
 ```
 
 ## Clean up

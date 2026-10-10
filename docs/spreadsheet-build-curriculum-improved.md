@@ -1,6 +1,6 @@
 # Build a Spreadsheet — Curriculum Plan
 
-**Status:** proposed — 2026-10-02  
+**Status:** proposed — 2026-10-02. **Extended 2026-10-09 into the full-stack bootcamp:** the full sprint order, the clients, and everything added are in [bootcamp-series-plan.md](bootcamp-series-plan.md). This document still holds the teaching rules, the detail of the sprints it lists, and the owner decisions (§23, updated the same day).  
 **Series ID:** `spreadsheet-build`
 
 This series teaches the transition from **Python scripting to professional software development** by building one substantial application from an empty folder.
@@ -1658,6 +1658,7 @@ The following are deliberate design decisions, not implementation details to be 
 - Security is taught from assets, threats, and trust boundaries.
 - Offline synchronization is introduced only after the online version works.
 - The final architecture is discovered through the build rather than handed to the learner.
+- (2026-10-09) The series is the full-stack bootcamp (`docs/bootcamp-series-plan.md`). The server stays C# / ASP.NET Core. The matrix language and Pyodide stay. The .NET MAUI desktop app (Sprint 18) is an optional elective that nothing later depends on.
 
 ---
 

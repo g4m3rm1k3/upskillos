@@ -3,7 +3,9 @@ title: 2.2 — A Table: the First Grid
 runtime: none
 ---
 
-A spreadsheet is a grid: columns lettered A, B, C across the top, rows numbered down the side, and cells where they meet. HTML has an element made for grids: the **table**.
+Back to the spreadsheet, and the second half of this sprint: putting the styling section to work on a real interface. First the page needs something to style.
+
+A spreadsheet is a grid: columns lettered A, B, C across the top, rows numbered down the side, and cells where they meet. HTML has an element made for grids: the **table**. It's also the right *semantic* choice (Styling 1): a spreadsheet's cells are tabular data, related across rows and down columns, and a screen reader can announce each cell with its row and column headers.
 
 ## The table
 
@@ -72,6 +74,15 @@ Replace the paragraph in `index.html` with a table. It's long; type it carefully
 - **`<thead>`** and **`<tbody>`** split the rows into the header row and the body rows. The next lesson styles the two parts differently.
 - The first `<th>` in the header row is empty: it's the corner above the row numbers.
 
+Before you refresh, count:
+
+```predict
+question: How many `<td>` cells (not counting the `<th>` headers) does the table have?
+answer: 16
+explain: Four body rows, each with four data cells (Item, Price, Qty, Total). The column letters and the row numbers are `<th>` elements, so they don't count.
+verify: page index.html "document.querySelectorAll('td').length"
+```
+
 Refresh the browser (**F5**): a grid of text, without lines yet.
 
 The empty **Total** cells are on purpose. In sprint 7, `D2` will hold a formula, `=B2*C2`, and show `7` by working it out.
@@ -99,5 +110,41 @@ git commit -am "Draw a 4 by 4 grid as a table"
 
 ```check
 git-clean -- Commit the table: git commit -am "your message"
-git-message "grid" label="a commit message mentions the grid"
+run "git log -1 --format=%s" stdout="grid" label="the last commit's message mentions the grid"
+```
+
+## Your turn: Tea, and a spare row
+
+Row 4 is empty. Put a third item in it: **Tea**, price **2.75**, quantity **1**, with an empty Total like the others. Then add a **row 5**, empty, so there's always a blank row at the bottom of the sheet, as in a real spreadsheet.
+
+Refresh to check the grid, then commit.
+
+```check
+page index.html "[...document.querySelectorAll('tbody tr')].map((tr) => tr.querySelector('th')?.textContent.trim()).join('|')" "1|2|3|4|5" label="the rows are numbered 1 to 5" -- Each row starts with a <th> holding its number.
+page index.html "[...document.querySelectorAll('tbody tr')[3].querySelectorAll('td')].map((td) => td.textContent.trim()).join('|')" "Tea|2.75|1|" label="row 4 holds Tea, 2.75, 1 and an empty Total"
+page index.html "[...document.querySelectorAll('tbody tr')[4].querySelectorAll('td')].map((td) => td.textContent.trim()).join('|')" "|||" label="row 5 has four empty cells"
+page index.html "document.querySelectorAll('tbody td').length" 20 label="20 data cells in all"
+git-clean -- Commit it: git commit -am "Add tea, and a spare row"
+```
+
+```hints
+nudge: Rows 2 and 3 show what a full row looks like; row 4, as it is now, shows an empty one.
+concept: Each `<tr>` is one row: a `<th>` with its number, then four `<td>`s. A new row goes after the last `</tr>`, still inside `<tbody>`.
+shape: Fill row 4's first three `<td>`s, then copy the whole empty `<tr>…</tr>` below it and change its number.
+answer: ~~~html
+        <tr>
+          <th>4</th>
+          <td>Tea</td>
+          <td>2.75</td>
+          <td>1</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>5</th>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+~~~
 ```

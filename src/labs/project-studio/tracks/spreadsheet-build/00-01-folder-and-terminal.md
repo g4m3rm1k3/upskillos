@@ -1,13 +1,15 @@
 ---
 title: 0.1 — Your Project Folder and the Terminal
-track: Build a Spreadsheet
+track: Bootcamp 1 · Professional Foundations
 trackOrder: 1
 runtime: none
 ---
 
-Over this series you'll build a spreadsheet, the kind of program Excel is. It starts as an empty folder and ends as a real app: formulas, a matrix language you write yourself, Python running inside the sheet, a server, and a desktop app. Every piece arrives when the spreadsheet needs it, and you'll know why it's there.
+This is the first lesson of a bootcamp: the road from writing scripts that work to working as a professional full-stack software engineer. You'll learn the everyday tools, TypeScript and later C#, testing, databases, security, how software is shipped and run, how teams work from a client's requirements, and finally how to get through the interviews.
 
-You know how to write Python scripts. That's all this series assumes. Everything else, starting with the terminal in this lesson, is explained when it first appears.
+Every subject goes the same way. You **learn** it. You **experiment** with it in a playground folder, where breaking things is the point. Then you see **how it's used in the real world**, on one project that grows through the whole bootcamp: a spreadsheet, the kind of program Excel is. A spreadsheet is a good place to practise because it needs nearly everything professionals build: an interface people use, a programming language inside it (formulas), and later a server, a database, accounts and live collaboration. Later still, clients arrive with requests of their own for it.
+
+You know how to write Python scripts. That's all this bootcamp assumes. Everything else, starting with the terminal in this lesson, is explained when it first appears. If you've hacked around in a terminal before, this first sprint goes quickly: the checks are the same either way.
 
 This window has four parts. The **lesson** is on the right (you're reading it). The **file tree** on the left lists the files in your project folder. The **editor** in the middle is where you type code. The **terminal** at the bottom is where you run programs. Only this lesson exists until you choose a folder.
 
@@ -107,6 +109,18 @@ dir scratch -- Type mkdir scratch in the terminal and press Enter.
 
 ## Move around
 
+`cd` means "change directory": it moves the shell into another folder. Before you try it, a prediction:
+
+```predict
+question: You're about to type `cd scratch`, then `cd ..`. Which folder will `cd ..` take you to?
+choice: spreadsheet
+choice: Documents
+choice: scratch
+answer: spreadsheet
+explain: `..` always means the parent: the folder the current one is inside. After `cd scratch` you're in `spreadsheet\scratch`, whose parent is `spreadsheet`. (A single `.` means "this folder" itself.)
+verify: (Get-Item scratch).Parent.Name
+```
+
 Type these three commands one at a time, pressing Enter after each:
 
 ```powershell
@@ -115,7 +129,7 @@ pwd
 cd ..
 ```
 
-`cd` means "change directory". After `cd scratch`, the prompt changes, because the current directory changed:
+After `cd scratch`, the prompt changes, because the current directory changed:
 
 ```text
 PS C:\Users\you\Documents\spreadsheet> cd scratch
@@ -198,3 +212,48 @@ missing scratch -- Type Remove-Item scratch in the terminal and press Enter.
 ```
 
 Two habits that save a lot of typing: press **↑** to bring back the previous command, and press **Tab** while typing a file or folder name to have the shell finish it for you.
+
+## Your playground
+
+`scratch` was for one lesson. Now make a folder you'll keep for the whole bootcamp:
+
+```powershell
+mkdir playground
+```
+
+`playground` is where you **experiment**. Each new subject starts there, with small files you change, run, predict and break on purpose, away from the real project. Once a subject makes sense in the playground, the lessons apply it to the spreadsheet itself, the way it's done in real work.
+
+Nothing in `playground` has to be tidy or finished. It's yours.
+
+```check
+dir playground -- Type mkdir playground in the terminal and press Enter.
+```
+
+## Your turn: find your way with relative paths
+
+Using only `mkdir` and `cd`, make this folder inside your playground:
+
+```text
+playground\terminal\deep\deeper
+```
+
+Then `cd` into `deeper`, and come back to the project folder with **one** `cd` command. Run `pwd` to see that you're home.
+
+```check
+dir playground/terminal/deep/deeper -- Make the folders inside playground.
+missing terminal label="nothing was made outside playground" -- A terminal folder is sitting at the top of the project. Remove it (Remove-Item terminal -Recurse) and make it inside playground instead.
+```
+
+The checks see the folders, but they can't see where your terminal is. For the second half, `pwd` is your check.
+
+```hints
+nudge: `cd` can take a whole path, not only one folder's name. So can `mkdir`.
+concept: In PowerShell, `mkdir` makes every missing folder in a path at once: `mkdir a\b\c` makes all three. (On macOS that needs `mkdir -p a/b/c`.) And `..` can be chained in a path: `..\..` means two folders up.
+shape: The path from the project folder down to `deeper` has four folder names in it, so the way back up has four `..` in it.
+answer: ~~~powershell
+mkdir playground\terminal\deep\deeper
+cd playground\terminal\deep\deeper
+cd ..\..\..\..
+pwd
+~~~
+```

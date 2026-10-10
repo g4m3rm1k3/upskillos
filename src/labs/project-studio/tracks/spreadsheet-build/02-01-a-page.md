@@ -78,6 +78,17 @@ The browser shows a big heading, *Spreadsheet*, and the sentence below it. Look 
 
 ## Change it and refresh
 
+Before you try it, predict:
+
+```predict
+question: You change the paragraph's text in the editor, and the editor saves it. What does the browser show?
+choice: The new text, straight away
+choice: The old text, until you refresh
+choice: An error, because the file changed
+answer: The old text, until you refresh
+explain: The browser read the file once, when it opened it, and drew the page from what it read. It isn't watching the file. Pressing F5 makes it read the file again.
+```
+
 Change the paragraph's text in the editor, to anything you like. Look at the browser: nothing changed.
 
 The browser read the file once, when it opened it. It doesn't watch for changes. Press **F5** (or click the refresh button) and your change appears.
@@ -94,4 +105,46 @@ git commit -m "Add a page for the spreadsheet"
 ```check
 git-tracked index.html -- git add index.html, then git commit.
 git-branch grid-page
+```
+
+## Your turn: a page from memory
+
+Without copying from `index.html`, write a complete page of your own: `playground/hello.html`. It needs:
+
+- the first line that every modern page starts with;
+- the page's language set to English;
+- the character encoding set to UTF-8;
+- a tab title of exactly `Hello`;
+- a heading and a paragraph that people can see.
+
+Open it in the browser to check it, then commit it.
+
+```check
+page playground/hello.html "document.title" Hello label="the tab says Hello" -- The title goes in <title>, inside <head>.
+page playground/hello.html "document.documentElement.lang" en label="the page's language is en" -- Set lang="en" on the <html> element.
+page playground/hello.html "document.characterSet" UTF-8 label="the page is read as UTF-8" -- <meta charset="utf-8"> goes inside <head>.
+page playground/hello.html "document.compatMode" CSS1Compat label="the browser reads it as a modern page" -- The very first line is <!DOCTYPE html>.
+page playground/hello.html "!!document.querySelector('body h1') && !!document.querySelector('body p')" true label="the body has a heading and a paragraph"
+git-clean -- Commit it: git add playground/hello.html, then git commit.
+```
+
+`document.compatMode` is how a page can tell whether the browser treated it as modern: without the first line, browsers fall back to imitating very old ones (*quirks mode*), which changes how CSS behaves.
+
+```hints
+nudge: Write it top to bottom: the first line, then `<html>`, then the two parts inside it.
+concept: Information *about* the page (encoding, title) goes in `<head>`; what's drawn goes in `<body>`. Both are inside `<html>`, which carries `lang`.
+shape: `<!DOCTYPE html>`, `<html lang>`, `<head>` with `<meta charset>` and `<title>`, then `<body>` with `<h1>` and `<p>`.
+answer: ~~~html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hello</title>
+  </head>
+  <body>
+    <h1>Hello</h1>
+    <p>A page written from memory.</p>
+  </body>
+</html>
+~~~
 ```

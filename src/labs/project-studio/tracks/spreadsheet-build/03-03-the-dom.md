@@ -27,7 +27,7 @@ Replace the hand-typed table in `index.html` with an empty one. It gets an **`id
 </html>
 ```
 
-The *Coffee* and *Bagel* rows go away with the hand-typed table. Data comes back in sprint 6, kept somewhere better than the page.
+The *Coffee*, *Bagel* and *Tea* rows go away with the hand-typed table. Data comes back in sprint 6, kept somewhere better than the page.
 
 ```check
 contains index.html "<table id=\"grid\"></table>" -- Replace the whole <table>...</table> with <table id="grid"></table>

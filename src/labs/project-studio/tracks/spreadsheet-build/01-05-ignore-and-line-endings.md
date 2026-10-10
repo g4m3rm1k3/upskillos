@@ -115,3 +115,29 @@ git-tracked .gitattributes -- Commit .gitattributes.
 contains .gitattributes "eol=lf"
 git-clean -- Commit everything except .env (which is ignored); git status should say the working tree is clean.
 ```
+
+## Your turn: ignore a whole kind of file
+
+Programs often write **log files**, records of what they did while running, with names like `debug.log` or `server.log`. They change on every run and belong to your computer, not to the project's history.
+
+Make Git ignore **every** file whose name ends in `.log`, in any folder of the project. Prove it: create `playground/debug.log` (anything in it), and check that `git status` doesn't list it. Ask Git why with `git check-ignore -v`. Then commit your change to `.gitignore`.
+
+```check
+git-ignored playground/debug.log -- Add a pattern to .gitignore that matches every name ending in .log.
+git-ignored server.log label="a .log file at the top of the project is ignored too" -- Your pattern should match any .log file, not just debug.log.
+git-ignored .env label=".env is still ignored" -- Keep the .env line in .gitignore.
+git-clean -- Commit .gitignore.
+```
+
+```hints
+nudge: You don't want a line per file name. You want one line that matches them all.
+concept: In `.gitignore`, `*` matches any run of characters in a name: `*.tmp` matches `a.tmp`, `notes.tmp` and so on. A pattern without a `/` in it matches in every folder.
+shape: One new line in `.gitignore`, under `.env`, then a commit.
+answer: ~~~text
+.env
+*.log
+~~~
+~~~powershell
+git commit -am "Never commit log files"
+~~~
+```

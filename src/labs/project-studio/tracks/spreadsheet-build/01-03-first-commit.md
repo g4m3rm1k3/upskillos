@@ -50,9 +50,10 @@ Untracked files:
         exit-code.js
         greet.py
         hello.py
+        playground/
 ```
 
-`hello.js` moved from *Untracked* to **Changes to be committed**: it's in the box. The other three files aren't.
+`hello.js` moved from *Untracked* to **Changes to be committed**: it's in the box. Nothing else is.
 
 ## Commit
 
@@ -104,3 +105,28 @@ The full hash is 40 characters; the 7 Git showed earlier are its start, and that
 If the log is longer than the terminal, Git shows one screen at a time: press **Space** for more and **q** to quit.
 
 Run `git status` once more. `hello.js` isn't listed at all now, because it's committed and hasn't changed since. Git only lists files that differ from the last commit.
+
+## Your turn: commit one file on its own
+
+Commit `playground/README.md`, and **only** that file, in a commit of its own. Write a message that finishes the sentence "This commit will…".
+
+Then try your alias from lesson 1.1: `git lg`.
+
+```check
+git-tracked playground/README.md -- Stage the README (git add playground/README.md), then commit.
+git-untracked playground/shout.py label="nothing else from the playground is committed yet" -- Stage just the README, not the whole playground folder.
+git-untracked hello.py label="hello.py is still waiting for the next lesson"
+```
+
+The checks see which files are in the last commit. They can't judge your message: read it in `git lg` and ask whether it would make sense to someone else in six months.
+
+```hints
+nudge: The same two steps as `hello.js`: stage, then commit.
+concept: `git add` takes a path, and a path can go inside a folder: `git add playground/README.md` stages that one file. `git add playground` would stage the whole folder.
+shape: `git add` with the README's path, then `git commit -m` with your message.
+answer: ~~~powershell
+git add playground/README.md
+git commit -m "Add a README that explains the playground"
+git lg
+~~~
+```

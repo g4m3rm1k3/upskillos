@@ -123,6 +123,13 @@ JavaScript reaches a web page through a **`<script>`** element. Add one to the e
         </tr>
         <tr>
           <th>4</th>
+          <td>Tea</td>
+          <td>2.75</td>
+          <td>1</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>5</th>
           <td></td>
           <td></td>
           <td></td>

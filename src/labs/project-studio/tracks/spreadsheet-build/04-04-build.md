@@ -65,6 +65,7 @@ PS C:\Users\you\Documents\spreadsheet> npm run preview
 
 ```text file=.gitignore
 .env
+*.log
 node_modules
 dist
 ```

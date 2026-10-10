@@ -86,6 +86,27 @@ Make one more commit and run `git status` before pushing: it says *Your branch i
 
 Be careful with one detail: `origin/main` is your Git's **memory** of GitHub's `main` as of the last time it talked to GitHub. `git status` doesn't go online to check, so *up to date* means "up to date with what I last saw".
 
-## Sprint 1 is done
+## Sprint 1, almost done
 
-Your project has a history, ignores its secrets, has settled line endings, and is backed up on GitHub. You've used a branch and merged it. You'll use all of it every day from here on, starting with sprint 2: putting a spreadsheet on the screen.
+Your project has a history, ignores its secrets, has settled line endings, and is backed up on GitHub. You've used a branch and merged it. One thing is left before the sprint is finished: what happens when two branches change the same line. That's lesson 1.9. First, the rhythm you'll use every day from here on.
+
+## Your turn: the everyday rhythm
+
+Add a line to `playground/README.md` saying what you've used the playground for so far. Commit it, check `git status` says you're *ahead* by one commit, push it, and refresh your repository's page on GitHub to see the README with your new line.
+
+```check
+git-clean -- Commit the README change.
+git-pushed -- Push it: git push
+run "git log -1 --name-only --format=" stdout="playground/README.md" label="the last commit changed the playground README" -- Edit playground/README.md, then commit it.
+```
+
+```hints
+nudge: Edit, commit, push: three moves you've made before, in a row.
+concept: `git commit -am` stages tracked files that changed and commits them. The README is tracked since lesson 1.3. Plain `git push` works because `-u` connected `main` to `origin/main` earlier in this lesson.
+shape: Edit the file, `git commit -am "..."`, `git status`, `git push`.
+answer: ~~~powershell
+git commit -am "Say what the playground has been used for"
+git status
+git push
+~~~
+```

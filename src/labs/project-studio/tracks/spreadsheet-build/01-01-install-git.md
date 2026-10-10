@@ -72,3 +72,35 @@ run "git config --global init.defaultBranch" stdout="main" label="new repositori
 ```
 
 Git is installed and knows who you are. Next lesson, your project becomes a Git repository.
+
+## Your turn: a shortcut of your own
+
+`git log` (lesson 1.3) shows the history. You'll look at it constantly, and two options make it far more useful:
+
+- `--oneline` shows one line per commit;
+- `--graph` draws lines showing how branches split and join (lesson 1.7).
+
+Git lets you name a shortcut for any Git command. It's called an **alias**, and it's a setting like the others:
+
+```text
+git config --global alias.<shortcut> "<the rest of a git command>"
+```
+
+After that, `git <shortcut>` runs `git <the rest of a git command>`.
+
+Make `git lg` show the log with both options. It won't have any commits to show until lesson 1.3; try it then.
+
+```check
+run "git config --global alias.lg" stdout="log" label="git lg is an alias for git log" -- Set alias.lg with git config --global.
+run "git config --global alias.lg" stdout="--oneline" label="it uses --oneline"
+run "git config --global alias.lg" stdout="--graph" label="it uses --graph"
+```
+
+```hints
+nudge: The command after the shortcut's name is everything you'd type after `git`.
+concept: An alias's value is a Git command without the word `git`, in quotes because it has spaces in it. Options can go in any order.
+shape: `git config --global alias.lg "..."`, with `log` and the two options inside the quotes.
+answer: ~~~powershell
+git config --global alias.lg "log --oneline --graph"
+~~~
+```
