@@ -158,7 +158,11 @@ async function sessionCommand(app, absFile) {
   const practice = await practiceScript(app)
   return {
     file: nvim.exe,
-    args: ['--listen', address, ...(practice ? ['--cmd', `lua dofile(${luaString(practice)})`] : []), ...(absFile ? [absFile] : [])],
+    // -n: no swap file. The app closes sessions by ending the process (Restart, switching to
+    // Monaco, leaving the lab), which leaves a swap file behind, and the next session then opens
+    // on an "ATTENTION: swap file found" prompt that also blocks every --remote-expr (seen on
+    // Windows, 2026-10-11). Work is saved to disk often (before every run and check) instead.
+    args: ['-n', '--listen', address, ...(practice ? ['--cmd', `lua dofile(${luaString(practice)})`] : []), ...(absFile ? [absFile] : [])],
     address,
     exe: nvim.exe,
   }
@@ -185,7 +189,9 @@ const luaString = (s) => `[==[${s}]==]`
 const vimString = (s) => `'${String(s).replace(/'/g, "''")}'`
 
 // Evaluates one Vim script expression in a running session. The session may still be starting,
-// so a refused connection is retried for a moment.
+// so a refused connection is retried for a moment. A request that timed out reached a session
+// that is busy (a prompt on screen), and isn't retried: each retry is another nvim process
+// waiting on the same prompt.
 async function remoteExpr(exe, address, expr) {
   let lastError
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -194,6 +200,7 @@ async function remoteExpr(exe, address, expr) {
       return { ok: true }
     } catch (e) {
       lastError = e
+      if (e?.killed) break
       await new Promise((r) => setTimeout(r, 200))
     }
   }

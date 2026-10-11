@@ -3,6 +3,9 @@
 // with xterm.js. Several can be open at once, as tabs: a dev server keeps one terminal busy,
 // and Git commands need another. Each shell is restarted whenever the project folder
 // changes, so its starting directory is always the project.
+//
+// On Windows each tab can be PowerShell or a Linux shell in a WSL distro (desktop/app/
+// runtimes/wsl.cjs). A new tab opens the shell last chosen for this project.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -10,17 +13,41 @@ import '@xterm/xterm/css/xterm.css';
 
 const api = () => (typeof window !== 'undefined' ? window.openCalcDesktop?.terminal : null);
 
+// The shell last chosen for a project, kept in this browser only. 'powershell' (or nothing) is
+// the platform's own shell.
+const shellKey = (projectKey) => `project-studio:terminal-shell:${projectKey ?? ''}`;
+function savedShell(projectKey) {
+  try { return localStorage.getItem(shellKey(projectKey)) || null; } catch { return null; }
+}
+function saveShell(projectKey, id) {
+  try { localStorage.setItem(shellKey(projectKey), id); } catch {}
+}
+
 let nextKey = 1;
 
 export default function TerminalPanel({ root, projectKey, visible, C }) {
-  const [tabs, setTabs] = useState(() => [{ key: nextKey++, label: 'Terminal 1', status: 'starting' }]);
+  const [tabs, setTabs] = useState(() => [{ key: nextKey++, label: 'Terminal 1', status: 'starting', shellId: savedShell(projectKey) }]);
   const [active, setActive] = useState(tabs[0].key);
+  // { shells: [{ id, label }], wsl }: what this computer can open (empty off Windows).
+  const [choices, setChoices] = useState({ shells: [], wsl: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    api()?.shells?.().then((res) => { if (!cancelled && res) setChoices(res); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const addTab = useCallback(() => {
     const key = nextKey++;
-    setTabs((prev) => [...prev, { key, label: `Terminal ${prev.length + 1}`, status: 'starting' }]);
+    setTabs((prev) => [...prev, { key, label: `Terminal ${prev.length + 1}`, status: 'starting', shellId: savedShell(projectKey) }]);
     setActive(key);
-  }, []);
+  }, [projectKey]);
+
+  // Switching the shell restarts that tab's terminal with the new one.
+  const chooseShell = useCallback((key, shellId) => {
+    saveShell(projectKey, shellId);
+    setTabs((prev) => prev.map((t) => (t.key === key ? { ...t, shellId } : t)));
+  }, [projectKey]);
 
   const closeTab = useCallback((key) => {
     setTabs((prev) => {
@@ -65,6 +92,26 @@ export default function TerminalPanel({ root, projectKey, visible, C }) {
         ))}
         <button onClick={addTab} style={smallBtn(C)} title="Open another terminal in the project folder" aria-label="New terminal">+</button>
         <div style={{ flex: 1 }} />
+        {choices.shells.length > 1 && (
+          <select
+            aria-label="Shell"
+            title="The shell this terminal runs. Changing it restarts this terminal."
+            value={activeTab?.shellId && choices.shells.some((s) => s.id === activeTab.shellId) ? activeTab.shellId : 'powershell'}
+            onChange={(e) => chooseShell(activeTab.key, e.target.value)}
+            style={{ ...smallBtn(C), background: C.surface }}
+          >
+            {choices.shells.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        )}
+        {choices.wsl && !choices.wsl.installed && (
+          <button
+            onClick={() => window.openCalcDesktop?.openExternal?.(choices.wsl.installUrl)}
+            style={smallBtn(C)}
+            title="WSL runs Linux inside Windows, for lessons written for bash. Opens Microsoft's install instructions."
+          >
+            Linux (WSL): not installed
+          </button>
+        )}
         <span style={{ marginRight: 6 }}>{statusText(activeTab)}</span>
       </div>
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
@@ -73,6 +120,7 @@ export default function TerminalPanel({ root, projectKey, visible, C }) {
             key={t.key}
             root={root} projectKey={projectKey}
             visible={visible && t.key === active}
+            startOpts={t.shellId?.startsWith('wsl:') ? { shell: t.shellId } : undefined}
             onStatus={(status, shell) => setStatus(t.key, status, shell)}
             C={C}
           />
@@ -181,7 +229,8 @@ export function TerminalSession({ root, projectKey, visible, onStatus, startOpts
       idRef.current = null;
       onSessionRef.current?.(null);
     };
-  }, [root, projectKey, generation]);
+    // A change of shell (the Shell selector) restarts the session, like a change of folder.
+  }, [root, projectKey, generation, startOpts?.shell]);
 
   useEffect(() => {
     if (!hostRef.current) return undefined;

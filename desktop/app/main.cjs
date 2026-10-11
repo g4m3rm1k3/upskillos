@@ -22,6 +22,7 @@ const codelensRuntime = require('./runtimes/codelens.cjs')
 const codelensPythonRuntime = require('./runtimes/codelens-python.cjs')
 const notebookKernel = require('./runtimes/notebook-kernel.cjs')
 const neovimRuntime = require('./runtimes/neovim.cjs')
+const wslRuntime = require('./runtimes/wsl.cjs')
 const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
@@ -377,8 +378,20 @@ ipcMain.handle('terminal:start', async (event, opts) => {
     if (!sender.isDestroyed()) sender.send(channel, payload)
   }
   // opts.editor === 'nvim': the Neovim editor pane, opening opts.file (runtimes/neovim.cjs).
+  // opts.shell === 'wsl:<distro>': a Linux shell in that WSL distro, started in the project
+  // folder (runtimes/wsl.cjs); otherwise the platform's own shell (terminal.cjs).
   let command = null
   let session = null
+  let shellLabel = null
+  if (typeof opts?.shell === 'string' && opts.shell.startsWith('wsl:') && !opts?.editor) {
+    const distro = opts.shell.slice(4)
+    const wsl = await wslRuntime.getStatus()
+    if (!wsl.distros.some((d) => d.name === distro && d.version === 2)) {
+      return { ok: false, reason: `There is no WSL 2 distro named ${distro} on this computer. Choose PowerShell, or install it: ${wslRuntime.INSTALL_URL}` }
+    }
+    command = { file: 'wsl.exe', args: ['-d', distro, '--cd', root] }
+    shellLabel = `${distro} (WSL)`
+  }
   if (opts?.editor === 'nvim') {
     let file = null
     try { if (opts.file) file = projectFs.resolveInRoot(root, opts.file) } catch {}
@@ -388,7 +401,17 @@ ipcMain.handle('terminal:start', async (event, opts) => {
   }
   const result = await terminal.start({ cwd: root, cols: opts?.cols, rows: opts?.rows, owner, extraPath: await learnerToolPaths(), command }, send)
   if (result.ok && session) nvimSessions.set(result.id, { exe: session.exe, address: session.address, root })
+  if (result.ok && shellLabel) result.shell = shellLabel
   return result
+})
+// The shells the Terminal tab can open: on Windows, PowerShell and each WSL 2 distro. Empty
+// elsewhere, where the login shell is the only choice. `wsl` is the WSL status, so the tab can
+// say when WSL isn't installed.
+ipcMain.handle('terminal:shells', async () => {
+  if (process.platform !== 'win32') return { shells: [], wsl: null }
+  const wsl = await wslRuntime.getStatus()
+  const linux = wsl.distros.filter((d) => d.version === 2).map((d) => ({ id: `wsl:${d.name}`, label: `${d.name} (WSL)` }))
+  return { shells: [{ id: 'powershell', label: 'PowerShell' }, ...linux], wsl }
 })
 ipcMain.on('terminal:write', (_event, id, data) => terminal.write(id, data))
 ipcMain.on('terminal:resize', (_event, id, cols, rows) => terminal.resize(id, cols, rows))
