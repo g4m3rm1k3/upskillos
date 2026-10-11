@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 60,
+    "labs": 61,
     "games": 16
   },
   "courses": [
@@ -386,6 +386,12 @@
       "label": "A-Arcade Guided",
       "kind": "lab",
       "path": "/lab/a-arcade-guided"
+    },
+    {
+      "id": "a-arcade-python",
+      "label": "A-Arcade Python",
+      "kind": "lab",
+      "path": "/lab/a-arcade-python"
     },
     {
       "id": "a-arcade-trace",

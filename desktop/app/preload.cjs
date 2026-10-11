@@ -77,6 +77,20 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     },
   },
 
+  // A-Arcade Python: runs a learner's real Python program one line at a time, in the lab's own
+  // environment (NumPy, Gymnasium, PyTorch CPU). See desktop/app/runtimes/aarcade-python.cjs.
+  aarcade: {
+    status:  () => ipcRenderer.invoke('aarcade:status'),
+    setup:   () => ipcRenderer.invoke('aarcade:setup'),
+    send:    (command) => ipcRenderer.invoke('aarcade:send', command),
+    restart: () => ipcRenderer.invoke('aarcade:restart'),
+    onOutput: (cb) => {
+      const handler = (_event, payload) => cb(payload)
+      ipcRenderer.on('aarcade:output', handler)
+      return () => ipcRenderer.off('aarcade:output', handler)
+    },
+  },
+
   // A real shell in the project folder. See desktop/app/terminal.cjs.
   terminal: {
     start:  (opts)               => ipcRenderer.invoke('terminal:start', opts),

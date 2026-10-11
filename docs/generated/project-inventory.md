@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 60 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 61 labs · 16 games
 
 ## How things are counted
 
@@ -68,6 +68,7 @@
 | A-Arcade | `a-arcade` | lab | `/lab/a-arcade` |
 | A-Arcade Breakdown | `a-arcade-breakdown` | lab | `/lab/a-arcade-breakdown` |
 | A-Arcade Guided | `a-arcade-guided` | lab | `/lab/a-arcade-guided` |
+| A-Arcade Python | `a-arcade-python` | lab | `/lab/a-arcade-python` |
 | A-Arcade Trace | `a-arcade-trace` | lab | `/lab/a-arcade-trace` |
 | Abstraction Visualizer | `abstraction-viz` | visualizer | `/lab/abstraction-viz` |
 | Backend Lab | `backend-lab` | lesson | `/lab/backend-lab` |

@@ -21,6 +21,7 @@ const dotnetRuntime = require('./runtimes/dotnet.cjs')
 const codelensRuntime = require('./runtimes/codelens.cjs')
 const codelensPythonRuntime = require('./runtimes/codelens-python.cjs')
 const notebookKernel = require('./runtimes/notebook-kernel.cjs')
+const aarcadePython = require('./runtimes/aarcade-python.cjs')
 const neovimRuntime = require('./runtimes/neovim.cjs')
 const wslRuntime = require('./runtimes/wsl.cjs')
 const projectFs = require('./project-fs.cjs')
@@ -97,6 +98,7 @@ app.on('before-quit', () => {
   projectFs.killAllProjectRuns()
   terminal.killAll()
   notebookKernel.stop()
+  aarcadePython.stop()
 })
 
 app.on('activate', () => {
@@ -277,6 +279,14 @@ ipcMain.handle('kernel:choose-folder', () => notebookKernel.chooseFolder(app, di
 ipcMain.handle('kernel:choose-python', () => notebookKernel.choosePython(app, dialog, mainWindow, kernelEmit))
 ipcMain.handle('kernel:use-system-python', () => notebookKernel.useSystemPython(app, kernelEmit))
 ipcMain.handle('kernel:setup-environment', () => notebookKernel.setupEnvironment(app, kernelEmit))
+
+// A-Arcade Python: the learner's real Python program, paused between commands
+// (runtimes/aarcade-python.cjs). Setup progress streams as aarcade:output.
+const aarcadeEmit = (payload) => mainWindow?.webContents.send('aarcade:output', payload)
+ipcMain.handle('aarcade:status', () => aarcadePython.status(app))
+ipcMain.handle('aarcade:setup', () => aarcadePython.setup(app, aarcadeEmit))
+ipcMain.handle('aarcade:send', (_event, command) => aarcadePython.send(app, command))
+ipcMain.handle('aarcade:restart', () => aarcadePython.restart())
 
 ipcMain.handle('desktop:run-python-script', async (_event, code) => {
   const emit = (payload) => mainWindow?.webContents.send('desktop:script-output', payload)
