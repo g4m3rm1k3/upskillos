@@ -251,7 +251,7 @@ Lessons live in `src/labs/project-studio/tracks/qarcade-*/`, Your turn answers i
 | 1 · The corridor | 1.1–1.5 | passes (2026-10-11) |
 | 2 · CartPole with a table | 2.1–2.6 | passes (2026-10-11) |
 | 3 · From a table to a network (`qarcade-networks`) | 3.1–3.5 | passes (2026-10-11) |
-| 4 · Actor-critic on CartPole (`qarcade-actor-critic`) | 4.1–4.7 | written 2026-10-11; walkthrough: see below |
+| 4 · Actor-critic on CartPole (`qarcade-actor-critic`) | 4.1–4.7 | written 2026-10-11; passes (2026-10-11, see Handoff) |
 | 5 · QMaze with a table (`qarcade-qmaze`) | 5.1–5.5 | passes (2026-10-11) |
 | 6 · Deep Q-learning on QMaze (`qarcade-qmaze-dqn`) | 6.1–6.6 | passes (2026-10-11) |
 | 7–10 | | not written |
@@ -277,21 +277,21 @@ Measured while writing (Windows 11, Python 3.13.14):
 2. **Chapter 4, `qarcade-actor-critic/`, 7 lessons:** 4.1 REINFORCE, 4.2 baseline measured, 4.3 actor and critic, 4.4 A2C, 4.5 A3C (and not freezing the PC), 4.6 A2C in Keras, 4.7 an experiment you can write up (ablations, mean ± SE, `results.csv`, `results.png` with matplotlib 3.11.2, a write-up checklist and standard sources). Answers in `answers/`, verify scripts in `verify/`, walkthrough entries at the end of `tracks/qarcade.walkthrough.js` (`const A`). Measurements: *Chapter 4 measurements* below. **Verified:** reference code's 47 tests pass; static checks pass (`… -t "walkthrough entry|verify command|Your turn step|pytest -k|one file per step"`: 5 passed); Project Studio non-desktop tests pass except two pre-existing `electron-basics` failures (another agent's work: steps with several `file=` blocks, and `answers/escape.test.cjs` collected as a test).
 3. **Build kit:** `docs/q-arcade-prototypes/actor-critic/` (reference code and tests, `build_4N.py` lesson builders, `measured.json`, the measurement scripts). Regenerate a lesson by editing `reference/` and rerunning its builder (update `PROJ`/`TRACK` in `build_common.py`).
 
-**Not yet confirmed: the Chapter 4 walkthrough** (types every step, runs every check, wrong answer and verify script) was still running at the end of the session. Rerun it, from a copy of a project that has finished Chapter 3 (or the whole series) with Chapter 4's files removed:
+**Chapter 4 walkthrough (end of session):** run from a copy of a finished project with Chapter 4's files removed. The first run found one weak wrong answer in 4.4 ("forgets to clear the old slopes": without `zero_grad` A2C still learns by 120,000 steps), now removed; its abort made 4.5–4.7 fail as a knock-on. The second run: **4.1–4.5 and 4.7 pass**; 4.6's Your turn check failed because `test_keras_a2c.py`'s update test ran `import keras` before anything set `KERAS_BACKEND` (Keras then defaults to TensorFlow, which isn't installed). Fixed by importing `keras_a2c` first; the test now passes with no backend variable set. A third run of 4.6–4.7 (from a project with 4.1–4.5's files) passed. **So every Chapter 4 lesson has passed its walkthrough**: 4.1–4.5 and 4.7 in the second run, 4.6 and 4.7 in the third.
+
+To rerun any part: copy a finished project, remove the files the lessons create from the chosen lesson onwards, then
 
 ```sh
-cp -r <kept project> <copy>; rm <copy>/{policy,noise,actor_critic,a2c,a3c,keras_a2c,experiment}.py
-QARCADE_START=<copy> QARCADE_FROM=qarcade-actor-critic/04-01 QARCADE_UNTIL=qarcade-actor-critic/04-07   npx vitest run src/labs/project-studio/qArcade.desktop.test.js
+QARCADE_START=<copy> QARCADE_FROM=qarcade-actor-critic/04-0N QARCADE_UNTIL=qarcade-actor-critic/04-07   npx vitest run src/labs/project-studio/qArcade.desktop.test.js
 ```
 
-Wrong answers most likely to need attention if it fails: 4.4 "forgets to clear the old slopes" (must make the 120,000-step learning test fail), 4.7 "did not install it" (matplotlib; modelled on 3.5's Keras install wrong answer), and the verify scripts that train (`a2c_seed0.py` ~26 s, `keras_a2c_score.py` ~72 s, `a3c_time.py` ~80 s, `reinforce_seed0.py` ~30 s, `noise_ratio.py` ~12 s).
+Verify scripts that train: `a2c_seed0.py` ~26 s, `keras_a2c_score.py` ~72 s, `a3c_time.py` ~80 s, `reinforce_seed0.py` ~30 s, `noise_ratio.py` ~12 s. A full Chapter 4 walk takes about 15 minutes.
 
 **Next, in order:**
 
-1. Confirm the Chapter 4 walkthrough (above); fix anything it finds.
-2. Commit (the owner asked to commit only when they say so; pulls conflict with other agents' `series.js` edits until this is committed).
-3. Chapter 7, deep Q-learning on CartPole (`qarcade-cartpole-dqn`): the plan below headed "Chapter 6" (written before the reorder), minus its lesson 6.2 (not freezing the PC is now in 4.5). Rerun `cart_proto2.py` first, two at a time. Its 7.3 compares table, A2C and DQN.
-4. Later: Pac-Man (8), pixels (9), capstone (10); the queued Markdown Studio triage script.
+1. Commit (the owner asked to commit only when they say so; pulls conflict with other agents' `series.js` edits until this is committed).
+2. Chapter 7, deep Q-learning on CartPole (`qarcade-cartpole-dqn`): the plan below headed "Chapter 6" (written before the reorder), minus its lesson 6.2 (not freezing the PC is now in 4.5). Rerun `cart_proto2.py` first, two at a time. Its 7.3 compares table, A2C and DQN.
+3. Later: Pac-Man (8), pixels (9), capstone (10); the queued Markdown Studio triage script.
 
 **Working rules learned:** at most 2 heavy jobs at once, `torch.set_num_threads(1)` (6 parallel runs froze the PC); the scratchpad's long path breaks `pip install torch` (Windows 260-character limit), so use a short path or the walkthrough's `%TEMP%\qarcade-walk-*` projects; heredocs with quotes in Git Bash get mangled, so write scripts to files.
 

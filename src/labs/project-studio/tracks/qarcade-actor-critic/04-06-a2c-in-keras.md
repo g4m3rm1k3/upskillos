@@ -72,8 +72,8 @@ def test_adapter_lets_train_a2c_train_a_keras_network():
 
 
 def test_update_with_the_keras_optimiser_lowers_the_loss():
-    import keras
     from keras_a2c import keras_update, make_keras_actor_critic
+    import keras
     keras.utils.set_random_seed(0)
     model = make_keras_actor_critic()
     optimiser = keras.optimizers.Adam(learning_rate=0.01)
