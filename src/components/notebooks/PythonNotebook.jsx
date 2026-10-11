@@ -553,6 +553,7 @@ const CellComponent = React.memo(
   }) => {
     const [copied, setCopied] = useState(false);
     const [hintOpen, setHintOpen] = useState(false);
+    const [contentHeight, setContentHeight] = useState(null);
     // Shift+Enter is wired up once, when the editor mounts, but must run the cell with the
     // notebook as it is now (Python loaded, the code just typed), so it calls through a ref.
     const runRef = useRef((code) => onRun(cell.id, code));
@@ -604,9 +605,11 @@ const CellComponent = React.memo(
       });
     };
 
-    // Compute Monaco height from line count
+    // The editor is as tall as its code, with no cap, so a cell never scrolls inside itself (its
+    // vertical scrollbar is hidden). Until Monaco reports its real content height, which counts
+    // wrapped lines too, an estimate from the line count stands in.
     const lineCount = (cell.code || "").split("\n").length;
-    const editorHeight = `${Math.min(320, Math.max(80, lineCount * 21 + 24))}px`;
+    const editorHeight = `${Math.max(80, contentHeight ?? lineCount * 19 + 20)}px`;
 
     return (
       <div
@@ -1138,6 +1141,10 @@ const CellComponent = React.memo(
           options={editorOptions}
           onMount={(editor, monacoInstance) => {
             registerEditor(cell.id, editor);
+            setContentHeight(editor.getContentHeight());
+            editor.onDidContentSizeChange((e) => {
+              if (e.contentHeightChanged) setContentHeight(e.contentHeight);
+            });
             // Shift+Enter runs this cell. Not editor.addCommand: Monaco keeps those in one
             // registry for every editor on the page, so the last cell mounted would win; and
             // its handler would keep the onRun from mount time, from before Python loaded.
