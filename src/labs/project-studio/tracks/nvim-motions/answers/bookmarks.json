@@ -1,0 +1,126 @@
+[
+  {
+    "title": "Neovim",
+    "url": "https://neovim.io"
+  },
+  {
+    "title": "Vim",
+    "url": "https://www.vim.org"
+  },
+  {
+    "title": "Node.js",
+    "url": "https://nodejs.org"
+  },
+  {
+    "title": "MDN Web Docs",
+    "url": "https://developer.mozilla.org"
+  },
+  {
+    "title": "npm",
+    "url": "https://www.npmjs.com"
+  },
+  {
+    "title": "EditorConfig",
+    "url": "https://editorconfig.org"
+  },
+  {
+    "title": "JSON",
+    "url": "https://www.json.org"
+  },
+  {
+    "title": "HTTP status codes",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  {
+    "title": "Git",
+    "url": "https://git-scm.com"
+  },
+  {
+    "title": "GitHub",
+    "url": "https://github.com"
+  },
+  {
+    "title": "Stack Overflow",
+    "url": "https://stackoverflow.com"
+  },
+  {
+    "title": "Can I use",
+    "url": "https://caniuse.com"
+  },
+  {
+    "title": "web.dev",
+    "url": "https://web.dev"
+  },
+  {
+    "title": "CSS-Tricks",
+    "url": "https://css-tricks.com"
+  },
+  {
+    "title": "The Modern JavaScript Tutorial",
+    "url": "https://javascript.info"
+  },
+  {
+    "title": "Node.js API reference",
+    "url": "https://nodejs.org/api/"
+  },
+  {
+    "title": "ECMAScript specification",
+    "url": "https://tc39.es/ecma262/"
+  },
+  {
+    "title": "Vim Adventures",
+    "url": "https://vim-adventures.com"
+  },
+  {
+    "title": "Neovim documentation",
+    "url": "https://neovim.io/doc/"
+  },
+  {
+    "title": "Lua",
+    "url": "https://www.lua.org"
+  },
+  {
+    "title": "curl",
+    "url": "https://curl.se"
+  },
+  {
+    "title": "The Twelve-Factor App",
+    "url": "https://12factor.net"
+  },
+  {
+    "title": "Hacker News",
+    "url": "https://news.ycombinator.com"
+  },
+  {
+    "title": "regex101",
+    "url": "https://regex101.com"
+  },
+  {
+    "title": "Mozilla",
+    "url": "https://www.mozilla.org"
+  },
+  {
+    "title": "Wikipedia",
+    "url": "https://www.wikipedia.org"
+  },
+  {
+    "title": "Python",
+    "url": "https://www.python.org"
+  },
+  {
+    "title": "Rust",
+    "url": "https://www.rust-lang.org"
+  },
+  {
+    "title": "Deno",
+    "url": "https://deno.com"
+  },
+  {
+    "title": "Learn X in Y minutes",
+    "url": "https://learnxinyminutes.com"
+  },
+  {
+    "title": "MDN: HTTP headers",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers"
+  }
+]

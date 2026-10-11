@@ -16,9 +16,9 @@ Written 2026-10-11 at the end of a long session. Read this first, then the plan 
 | Series | Key / prefix | Plan and "Where we stopped" | Written | Walkthrough |
 |---|---|---|---|---|
 | The Terminal — zsh from Zero | `term` / `term-` | docs/terminal-series-plan.md | ch1 `term-basics` (5 lessons) | `npx vitest run src/labs/project-studio/term.desktop.test.js` |
-| Neovim — From First Keystroke to Fluency | `nvim` / `nvim-` | docs/neovim-series-plan.md | ch1 `nvim-start` (4 lessons, 10 drills and reviews) | `npx vitest run src/labs/project-studio/nvim.desktop.test.js` |
+| Neovim — From First Keystroke to Fluency | `nvim` / `nvim-` | docs/neovim-series-plan.md | ch1 `nvim-start` (4 lessons), ch2 `nvim-motions` (5 lessons), ch3 `nvim-operators` (5 lessons) | `npx vitest run src/labs/project-studio/nvim.desktop.test.js` |
 
-Both walk on macOS/Linux via `walkSeries({ unix: true })` (19 tests, all passing at handoff).
+Both walk on macOS/Linux via `walkSeries({ unix: true })` (the Neovim walk is 19 tests, all passing after chapter 3; about 8 minutes).
 
 **Neovim practice system** (the user's core requirement: force repetition, a VS Code user must reach fluency)
 - Drills: practice files with a **par** (keystroke target). `keys <file> par=N` check (`checks.js`, `desktop/app/project-checks.cjs`) reads `.practice/keystrokes.jsonl`, written by the Lua recorder on each save; fails over par, or on any arrow key or mouse use. `:w` keys aren't counted. The cursor is reset to the start of a practice file when it's loaded or reloaded.
@@ -28,8 +28,8 @@ Both walk on macOS/Linux via `walkSeries({ unix: true })` (19 tests, all passing
 
 ## Next work, in order
 
-1. **Neovim chapter 2, `nvim-motions`** (see the chapter map and the "Rules for writing drills" in docs/neovim-series-plan.md). Register it in `series.js`, add its keys to `keys/neovim.js`, include review drills on chapter 1 keys, and prove every par with `drill()`.
-2. Continue Neovim chapters 3–14; the "daily practice" generator is planned after chapter 4.
+1. **Neovim chapter 4, `nvim-textobjects`** (chapters 1–3 are done; see "Where we stopped" and the "Rules for writing drills" in docs/neovim-series-plan.md). Register it in `series.js`, add its keys to `keys/neovim.js`, include review drills, and prove every par with `drill()`.
+2. Continue Neovim chapters 5–14; the "daily practice" generator is planned after chapter 4.
 3. Terminal chapter 2, `term-text` (pipes and text tools), when the user asks for it.
 
 ## Rules the user has set (also in memory)

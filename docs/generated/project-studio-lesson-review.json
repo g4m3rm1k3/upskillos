@@ -1,15 +1,15 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 640,
-    "tracks": 86,
+    "lessons": 666,
+    "tracks": 89,
     "errors": {
       "multiple target files in one step": 4,
       "independent task exposes full target": 4
     },
     "signals": {
-      "authored check limits not detected": 516,
-      "prediction not detected": 76,
+      "authored check limits not detected": 532,
+      "prediction not detected": 77,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 199
     }
@@ -5739,6 +5739,116 @@
       "errors": []
     },
     {
+      "id": "nvim-motions/02-01-words-w-b-e",
+      "track": "nvim-motions",
+      "title": "2.1 — Move by Words: w, b, e and ge",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Words: w, b, e and ge",
+      "firstIndependentTask": "Your turn: don't keep a stale copy",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-motions/02-02-words-and-line-ends",
+      "track": "nvim-motions",
+      "title": "2.2 — WORDs and the Ends of a Line: W, B, E, 0, ^ and $",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "WORDs: W, B and E",
+      "firstIndependentTask": "Your turn: a second path for health",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-motions/02-03-find-in-a-line",
+      "track": "nvim-motions",
+      "title": "2.3 — Jump to a Character: f, t, F, T, ; and ,",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Find a character: f and t",
+      "firstIndependentTask": "Your turn: say what was asked for",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-motions/02-04-jump-through-a-file",
+      "track": "nvim-motions",
+      "title": "2.4 — Jump Through a File: gg, G, Counts, { } and %",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Top and bottom: gg and G",
+      "firstIndependentTask": "Your turn: say when there's nothing",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-motions/02-05-scroll-and-the-screen",
+      "track": "nvim-motions",
+      "title": "2.5 — Scroll and Place the Screen: Ctrl+D, Ctrl+U, H, M, L, zz, zt and zb",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Scroll by half a screen: Ctrl+D and Ctrl+U",
+      "firstIndependentTask": "Your turn: a bookmark of your own",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-operators/03-01-delete-with-a-motion",
+      "track": "nvim-operators",
+      "title": "3.1 — Delete with a Motion: d, dd and D",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The delete operator: d and a motion",
+      "firstIndependentTask": "Your turn: count with sendJson",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-operators/03-02-change-with-a-motion",
+      "track": "nvim-operators",
+      "title": "3.2 — Change with a Motion: c, cc and C",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "The change operator: c and a motion",
+      "firstIndependentTask": "Your turn: an answer for /",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-operators/03-03-yank-and-put",
+      "track": "nvim-operators",
+      "title": "3.3 — Copy and Paste: y, yy, p and P",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Yank: y and a motion",
+      "firstIndependentTask": "Your turn: a second path for home",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-operators/03-04-repeat-with-dot",
+      "track": "nvim-operators",
+      "title": "3.4 — Repeat the Last Change: the Dot",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "What dot repeats",
+      "firstIndependentTask": "Your turn: say which method wasn't found",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-operators/03-05-join-indent-and-case",
+      "track": "nvim-operators",
+      "title": "3.5 — Join, Indent and Case: J, >>, <<, ~, gu and gU",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Join lines: J",
+      "firstIndependentTask": "Your turn: a JSON 500",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "nvim-start/01-01-modes-insert-save-quit",
       "track": "nvim-start",
       "title": "1.1 — Neovim: Modes, Insert, Save and Quit",
@@ -5792,6 +5902,97 @@
       "firstIndependentTask": null,
       "signals": [
         "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-01-learning-the-acting-directly",
+      "track": "qarcade-actor-critic",
+      "title": "4.1 — Learning the Acting Directly",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: what each move led to",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-02-a-baseline-measured",
+      "track": "qarcade-actor-critic",
+      "title": "4.2 — A Baseline, Measured",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: centre and scale",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-03-actor-and-critic",
+      "track": "qarcade-actor-critic",
+      "title": "4.3 — Actor and Critic",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how unsure is a choice?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-04-a2c-eight-cartpoles-in-step",
+      "track": "qarcade-actor-critic",
+      "title": "4.4 — A2C: Eight CartPoles in Step",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: targets that look 5 steps ahead",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-05-a3c-workers-that-dont-wait",
+      "track": "qarcade-actor-critic",
+      "title": "4.5 — A3C: Workers That Don't Wait",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Before you start processes: don't freeze your computer",
+      "firstIndependentTask": "Your turn: handing over the slopes",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-06-a2c-in-keras",
+      "track": "qarcade-actor-critic",
+      "title": "4.6 — A2C in Keras",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: an update with Keras's optimiser",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "qarcade-actor-critic/04-07-an-experiment-you-can-write-up",
+      "track": "qarcade-actor-critic",
+      "title": "4.7 — An Experiment You Can Write Up",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the mean and its error bar",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -5942,7 +6143,7 @@
     {
       "id": "qarcade-networks/04-01-a-function-with-knobs",
       "track": "qarcade-networks",
-      "title": "4.1 — A Function with Knobs",
+      "title": "3.1 — A Function with Knobs",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -5955,7 +6156,7 @@
     {
       "id": "qarcade-networks/04-02-downhill",
       "track": "qarcade-networks",
-      "title": "4.2 — Downhill",
+      "title": "3.2 — Downhill",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -5968,7 +6169,7 @@
     {
       "id": "qarcade-networks/04-03-a-hidden-layer",
       "track": "qarcade-networks",
-      "title": "4.3 — A Hidden Layer",
+      "title": "3.3 — A Hidden Layer",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -5981,7 +6182,7 @@
     {
       "id": "qarcade-networks/04-04-pytorch",
       "track": "qarcade-networks",
-      "title": "4.4 — PyTorch",
+      "title": "3.4 — PyTorch",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -5994,7 +6195,7 @@
     {
       "id": "qarcade-networks/04-05-keras",
       "track": "qarcade-networks",
-      "title": "4.5 — Keras, and a Network That Knows the Maze",
+      "title": "3.5 — Keras",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6007,7 +6208,7 @@
     {
       "id": "qarcade-qmaze/03-01-the-maze-game",
       "track": "qarcade-qmaze",
-      "title": "3.1 — The Maze Game",
+      "title": "5.1 — The Maze Game",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6020,7 +6221,7 @@
     {
       "id": "qarcade-qmaze/03-02-rewards-that-shape-behaviour",
       "track": "qarcade-qmaze",
-      "title": "3.2 — Rewards That Shape Behaviour",
+      "title": "5.2 — Rewards That Shape Behaviour",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6033,7 +6234,7 @@
     {
       "id": "qarcade-qmaze/03-03-solving-the-maze",
       "track": "qarcade-qmaze",
-      "title": "3.3 — Solving the Maze, and Checking It",
+      "title": "5.3 — Solving the Maze, and Checking It",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6046,7 +6247,7 @@
     {
       "id": "qarcade-qmaze/03-04-a-new-maze",
       "track": "qarcade-qmaze",
-      "title": "3.4 — A New Maze",
+      "title": "5.4 — A New Maze",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6059,7 +6260,7 @@
     {
       "id": "qarcade-qmaze/03-05-reading-the-tutorials-code",
       "track": "qarcade-qmaze",
-      "title": "3.5 — Reading the Tutorial's Code",
+      "title": "5.5 — Reading the Tutorial's Code",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6070,9 +6271,22 @@
       "errors": []
     },
     {
+      "id": "qarcade-qmaze-dqn/05-00-a-network-that-knows-the-maze",
+      "track": "qarcade-qmaze-dqn",
+      "title": "6.1 — A Network That Knows the Maze",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: an agent made of a network",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "qarcade-qmaze-dqn/05-01-a-network-that-sees-the-maze",
       "track": "qarcade-qmaze-dqn",
-      "title": "5.1 — A Network That Sees the Maze",
+      "title": "6.2 — A Network That Sees the Maze",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6085,7 +6299,7 @@
     {
       "id": "qarcade-qmaze-dqn/05-02-experience-replay",
       "track": "qarcade-qmaze-dqn",
-      "title": "5.2 — Experience Replay",
+      "title": "6.3 — Experience Replay",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6098,7 +6312,7 @@
     {
       "id": "qarcade-qmaze-dqn/05-03-saving-judging-watching",
       "track": "qarcade-qmaze-dqn",
-      "title": "5.3 — Saving, Judging and Watching a Network",
+      "title": "6.4 — Saving, Judging and Watching a Network",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6111,7 +6325,7 @@
     {
       "id": "qarcade-qmaze-dqn/05-04-the-tutorials-way-in-keras",
       "track": "qarcade-qmaze-dqn",
-      "title": "5.4 — The Tutorial's Way, in Keras",
+      "title": "6.5 — The Tutorial's Way, in Keras",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -6124,7 +6338,7 @@
     {
       "id": "qarcade-qmaze-dqn/05-05-the-full-maze",
       "track": "qarcade-qmaze-dqn",
-      "title": "5.5 — The Full Maze, and a Frozen Copy",
+      "title": "6.6 — The Full Maze, and a Frozen Copy",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the tests first",
@@ -7675,6 +7889,111 @@
       "maturity": "review-required",
       "firstStep": "Why 15 digits?",
       "firstIndependentTask": "Your turn: amounts, the way people read them",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-01-keeping-in-step",
+      "track": "spreadsheet-build",
+      "title": "11.1 — Keeping the Page in Step",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "What grid.ts does by hand",
+      "firstIndependentTask": "Your turn: one render()",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-02-describing-the-page",
+      "track": "spreadsheet-build",
+      "title": "11.2 — React: Describing the Page",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch for the sprint",
+      "firstIndependentTask": "Your turn: a recipe card",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-03-state-and-events",
+      "track": "spreadsheet-build",
+      "title": "11.3 — State and Events",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "State, and why a variable won't do",
+      "firstIndependentTask": "Your turn: Clear",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-04-inputs-and-state",
+      "track": "spreadsheet-build",
+      "title": "11.4 — Inputs, and Where State Lives",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A controlled input",
+      "firstIndependentTask": "Your turn: nothing empty, nothing twice",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-05-the-sheet-in-react",
+      "track": "spreadsheet-build",
+      "title": "11.5 — The Sheet in React",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The table's header",
+      "firstIndependentTask": "Your turn: the row being looked at",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-06-editing-tested",
+      "track": "spreadsheet-build",
+      "title": "11.6 — Editing, Tested",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Tools for testing components",
+      "firstIndependentTask": "Your turn: 1 cell, not 1 cells",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-07-challenge-keyboard",
+      "track": "spreadsheet-build",
+      "title": "11.7 — Challenge: Moving Like Excel",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: build it to the brief",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/11-08-solution-keyboard",
+      "track": "spreadsheet-build",
+      "title": "11.8 — Solution: Moving Like Excel",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "From a key to a move",
+      "firstIndependentTask": "Your turn: an order list that survives a reload",
       "signals": [
         "authored check limits not detected"
       ],

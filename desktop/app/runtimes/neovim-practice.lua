@@ -39,17 +39,23 @@ local function count(st, typed)
   if #st.seq < 500 then table.insert(st.seq, t) end
 end
 
+local function flush(st)
+  for _, typed in ipairs(st.pending or {}) do count(st, typed) end
+  st.pending = nil
+end
+
 vim.on_key(function(_, typed)
   if typed == nil or typed == '' then return end
   local st = get(vim.api.nvim_get_current_buf())
   local mode = vim.api.nvim_get_mode().mode
   -- A ':' command is held back until it runs, so a write command can be left out of the count.
-  if typed == ':' and mode:match('^[nvV\22]') then
-    st.pending = { typed }
-  elseif st.pending and mode:sub(1, 1) == 'c' then
+  if st.pending and mode:sub(1, 1) == 'c' then
     table.insert(st.pending, typed)
   else
-    count(st, typed)
+    -- A ':' that didn't open the command line (the character after f, t or r, as in f:) is an
+    -- ordinary key: the next key, typed outside the command line, shows that.
+    flush(st)
+    if typed == ':' and mode:match('^[nvV\22]') then st.pending = { typed } else count(st, typed) end
   end
 end)
 

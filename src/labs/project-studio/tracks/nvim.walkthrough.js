@@ -12,6 +12,8 @@ export function answer(track, name) {
 }
 
 const E = 'nvim-start';
+const M = 'nvim-motions';
+const O = 'nvim-operators';
 
 // A Your turn answer with one change: how its wrong answers are made.
 function answerWith(track, name, pairs) {
@@ -36,6 +38,10 @@ export function drill(file, keys) {
 
 // The maze line 1.2 asks the learner to take the * out of.
 const MAZE_LINE = '### # * # ###';
+
+// The bookmark in 2.5's sample data with no comma after it, and the fix.
+const MISSING_COMMA = '"url": "https://vim-adventures.com"\n  }\n';
+const FIXED_COMMA = '"url": "https://vim-adventures.com"\n  },\n';
 
 export const WALKTHROUGH = {
   // ── 1.1 ──────────────────────────────────────────────────────────────────
@@ -246,6 +252,617 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'forgot the comment', typeFile: true, run: [drill('practice/review/01-04.txt', 'jA;<Esc>:w<CR>')], fails: [1] },
       { name: 'arrow keys', typeFile: true, run: [drill('practice/review/01-04.txt', '<Down>A;<Esc>I// <Esc>:w<CR>')], fails: [4] },
+    ],
+  },
+  // ── 2.1 ──────────────────────────────────────────────────────────────────
+  [`${M}/02-01-words-w-b-e#A routes file for Shelf`]: {
+    wrong: [
+      { name: 'a path from the current folder', typeFile: true, edit: [["'../data/bookmarks.json'", "'data/bookmarks.json'"]], fails: [0, 1] },
+      { name: 'plain text', typeFile: true, edit: [["'application/json'", "'text/plain'"]], fails: [1] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Route /api/bookmarks to it`]: {
+    wrong: [
+      { name: 'no import', typeFile: true, edit: [["import { listBookmarks } from './routes.js';\n", '']], fails: [0] },
+      { name: 'a single = in the if', typeFile: true, edit: [["request.url === '/api/bookmarks'", "request.url = '/api/bookmarks'"]], fails: [1] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#What return is for`]: {
+    wrong: [
+      { name: 'still commented out', editFiles: { 'server/server.js': [['    return;', '    // return;']] }, fails: [0, 1] },
+      { name: 'deleted return instead', editFiles: { 'server/server.js': [['    return;\n', '']] }, fails: [0] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Apply: rewrite the README by words`]: {
+    wrong: [
+      { name: 'no comma after backend', typeFile: true, edit: [['backend, a JSON API', 'backend a JSON API']], fails: [0] },
+      { name: 'typed into the heading', typeFile: true, edit: [['# Shelf', '# Shelfw']], fails: [1] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Drill: forward by words`]: {
+    run: [drill('practice/drills/08-words.txt', 'wwwiown <Esc>:w<CR>')],
+    wrong: [
+      { name: 'walked with l', typeFile: true, run: [drill('practice/drills/08-words.txt', 'lllllllllllllllllown <Esc>:w<CR>')], fails: [2] },
+      { name: 'arrow keys', typeFile: true, run: [drill('practice/drills/08-words.txt', 'ww<Right>wiown <Esc>:w<CR>')], fails: [2] },
+      { name: 'one word too far', typeFile: true, run: [drill('practice/drills/08-words.txt', 'wwwwiown <Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Drill: to the end of a word`]: {
+    run: [drill('practice/drills/09-end.txt', 'eeeas<Esc>:w<CR>')],
+    wrong: [
+      { name: 'w and then back', typeFile: true, run: [drill('practice/drills/09-end.txt', 'wwwhis<Esc>:w<CR>')], fails: [2] },
+      { name: 'the wrong word', typeFile: true, run: [drill('practice/drills/09-end.txt', 'eeas<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Drill: back by words`]: {
+    run: [drill('practice/drills/10-back.txt', "A';<Esc>bbi'<Esc>:w<CR>")],
+    wrong: [
+      { name: 'the front first', typeFile: true, run: [drill('practice/drills/10-back.txt', "wwwi'<Esc>A';<Esc>:w<CR>")], fails: [2] },
+      { name: 'one b', typeFile: true, run: [drill('practice/drills/10-back.txt', "A';<Esc>bi'<Esc>:w<CR>")], fails: [0] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Review: a line above, a wrong letter`]: {
+    run: [drill('practice/review/02-01.txt', 'Oone<Esc>jjllre:w<CR>')],
+    wrong: [
+      { name: 'arrow keys', typeFile: true, run: [drill('practice/review/02-01.txt', 'Oone<Esc><Down><Down>llre:w<CR>')], fails: [4] },
+      { name: 'opened below', typeFile: true, run: [drill('practice/review/02-01.txt', 'oone<Esc>jllre:w<CR>')], fails: [0, 1] },
+    ],
+  },
+  [`${M}/02-01-words-w-b-e#Your turn: don't keep a stale copy`]: {
+    files: { 'server/routes.js': answer(M, 'routes-cache.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'lowercase header name', files: { 'server/routes.js': answerWith(M, 'routes-cache.js', [["'Cache-Control'", "'cache-control'"]]) }, fails: [0] },
+      { name: 'replaced the Content-Type line', files: { 'server/routes.js': answerWith(M, 'routes-cache.js', [["  response.setHeader('Content-Type', 'application/json');\n", '']]) }, fails: [1] },
+      { name: 'ended without the text', files: { 'server/routes.js': answerWith(M, 'routes-cache.js', [['response.end(text);', 'response.end();']]) }, fails: [2] },
+    ],
+  },
+
+  // ── 2.2 ──────────────────────────────────────────────────────────────────
+  [`${M}/02-02-words-and-line-ends#Apply: a charset, from the end of a line`]: {
+    wrong: [
+      { name: 'no charset', typeFile: true, edit: [["'application/json; charset=utf-8'", "'application/json'"]], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#A health handler`]: {
+    wrong: [
+      { name: 'sent the object itself', typeFile: true, edit: [['response.end(JSON.stringify({ ok: true }));', 'response.end({ ok: true });']], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Apply: fix the import with W and E`]: {
+    wrong: [
+      { name: 'import still missing', typeFile: true, edit: [['{ listBookmarks, health }', '{ listBookmarks }']], fails: [0] },
+      { name: 'replaced listBookmarks', typeFile: true, edit: [['{ listBookmarks, health }', '{ health }']], fails: [1] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Apply: name the service with W, E and a`]: {
+    wrong: [
+      { name: 'no name', typeFile: true, edit: [["{ ok: true, name: 'shelf' }", '{ ok: true }']], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Drill: across WORDs`]: {
+    run: [drill('practice/drills/11-word.txt', 'WWi-i <Esc>:w<CR>')],
+    wrong: [
+      { name: 'small words', typeFile: true, run: [drill('practice/drills/11-word.txt', 'wwwi-i <Esc>:w<CR>')], fails: [2] },
+      { name: 'after curl', typeFile: true, run: [drill('practice/drills/11-word.txt', 'Ea -i<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Drill: just before the end`]: {
+    run: [drill('practice/drills/12-before-end.txt', '$hi, 3002<Esc>:w<CR>')],
+    wrong: [
+      { name: 'End key', typeFile: true, run: [drill('practice/drills/12-before-end.txt', '<End>hi, 3002<Esc>:w<CR>')], fails: [2] },
+      { name: 'after the bracket', typeFile: true, run: [drill('practice/drills/12-before-end.txt', '$i, 3002<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Drill: the first character, from the end`]: {
+    run: [drill('practice/drills/13-first.txt', 'A;<Esc>ja;<Esc>^rc:w<CR>')],
+    wrong: [
+      { name: 'line 2 first, then back up', typeFile: true, run: [drill('practice/drills/13-first.txt', 'jA;<Esc>^rckA;<Esc>:w<CR>')], fails: [3] },
+      { name: '0 instead of ^', typeFile: true, run: [drill('practice/drills/13-first.txt', 'A;<Esc>ja;<Esc>0rc:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Review: a word in the middle, and the end`]: {
+    run: [drill('practice/review/02-02.txt', 'wwwihttp.<Esc>A;<Esc>:w<CR>')],
+    wrong: [
+      { name: 'walked with l', typeFile: true, run: [drill('practice/review/02-02.txt', 'lllllllllllllllihttp.<Esc>A;<Esc>:w<CR>')], fails: [2] },
+      { name: 'no semicolon', typeFile: true, run: [drill('practice/review/02-02.txt', 'wwwihttp.<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-02-words-and-line-ends#Your turn: a second path for health`]: {
+    files: { 'server/server.js': answer(M, 'server-health.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'changed the path instead', files: { 'server/server.js': answerWith(M, 'server-health.js', [["request.url === '/api/health' || request.url === '/health'", "request.url === '/health'"]]) }, fails: [1] },
+      { name: 'half a comparison', files: { 'server/server.js': answerWith(M, 'server-health.js', [["|| request.url === '/health'", "|| '/health'"]]) }, fails: [2] },
+    ],
+  },
+
+  // ── 2.3 ──────────────────────────────────────────────────────────────────
+  [`${M}/02-03-find-in-a-line#Apply: timestamps in the log, with f( and a`]: {
+    wrong: [
+      { name: 'no timestamp', typeFile: true, edit: [['new Date().toISOString(), ', '']], fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Apply: uptime, with t} and i`]: {
+    wrong: [
+      { name: 'no uptime', typeFile: true, edit: [[', uptime: process.uptime()', '']], fails: [0] },
+      { name: 'uptime first, with f{ and a', typeFile: true, edit: [["{ ok: true, name: 'shelf', uptime: process.uptime() }", "{ uptime: process.uptime(), ok: true, name: 'shelf' }"]], fails: [1] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#A method that isn't called`]: {
+    wrong: [
+      { name: 'parentheses not restored', editFiles: { 'server/routes.js': [['process.uptime()', 'process.uptime']] }, fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Drill: find a character`]: {
+    run: [drill('practice/drills/14-find.txt', 'f/i:<Esc>:w<CR>')],
+    wrong: [
+      { name: 'words instead', typeFile: true, run: [drill('practice/drills/14-find.txt', 'wwwwea:<Esc>:w<CR>')], fails: [2] },
+      { name: 'after the slash', typeFile: true, run: [drill('practice/drills/14-find.txt', 'f/a:<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Drill: find, and find again`]: {
+    run: [drill('practice/drills/15-again.txt', 'f;r,;r,:w<CR>')],
+    wrong: [
+      { name: 'a second find instead of ;', typeFile: true, run: [drill('practice/drills/15-again.txt', 'f;r,f;r,:w<CR>')], fails: [2] },
+      { name: 'only the first', typeFile: true, run: [drill('practice/drills/15-again.txt', 'f;r,:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Drill: just before a character`]: {
+    run: [drill('practice/drills/16-till.txt', 't,x:w<CR>')],
+    wrong: [
+      { name: 'find and step back', typeFile: true, run: [drill('practice/drills/16-till.txt', 'f,hx:w<CR>')], fails: [2] },
+      { name: 'deleted the comma', typeFile: true, run: [drill('practice/drills/16-till.txt', 'f,x:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Drill: find backwards`]: {
+    run: [drill('practice/drills/17-back.txt', 'A;<Esc>ja;<Esc>F/x:w<CR>')],
+    wrong: [
+      { name: 'line 2 first, then back up', typeFile: true, run: [drill('practice/drills/17-back.txt', 'jA;<Esc>F/xkA;<Esc>:w<CR>')], fails: [3] },
+      { name: 'the first slash', typeFile: true, run: [drill('practice/drills/17-back.txt', 'A;<Esc>ja;<Esc>0f/x:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Review: a line by number, both ends`]: {
+    run: [drill('practice/review/02-03.txt', ':12<CR>^rp$r;:w<CR>')],
+    wrong: [
+      { name: 'walked down with j', typeFile: true, run: [drill('practice/review/02-03.txt', 'jjjjjjjjjjj^rp$r;:w<CR>')], fails: [3] },
+      { name: 'r in the first column', typeFile: true, run: [drill('practice/review/02-03.txt', ':12<CR>rp$r;:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-03-find-in-a-line#Your turn: say what was asked for`]: {
+    files: { 'server/server.js': answer(M, 'server-asked.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'typed /hello in', files: { 'server/server.js': answerWith(M, 'server-asked.js', [['You asked for ${request.url}', 'You asked for /hello']]) }, fails: [1] },
+      {
+        name: 'answered before the routes',
+        files: { 'server/server.js': answerWith(M, 'server-asked.js', [
+          ['  response.end(`Shelf is running on port ${port}. You asked for ${request.url}\\n`);\n', ''],
+          ['request.method, request.url);\n', 'request.method, request.url);\n  response.end(`Shelf is running on port ${port}. You asked for ${request.url}\\n`);\n'],
+        ]) },
+        fails: [2],
+      },
+    ],
+  },
+
+  // ── 2.4 ──────────────────────────────────────────────────────────────────
+  [`${M}/02-04-jump-through-a-file#A header comment, with gg`]: {
+    wrong: [
+      { name: 'no comment', typeFile: true, edit: [["// Shelf's request handlers: one exported function for each route.\n", '']], fails: [0] },
+      { name: 'Enter in the middle of the comment', typeFile: true, edit: [['request handlers: one exported', 'request handlers:\none exported']], fails: [1] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Count the bookmarks, with G`]: {
+    wrong: [
+      { name: 'counted the characters', typeFile: true, edit: [["JSON.parse(fs.readFileSync(DATA, 'utf8'))", "fs.readFileSync(DATA, 'utf8')"]], fails: [0] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Route it, with % and t`]: {
+    wrong: [
+      { name: 'not imported', typeFile: true, edit: [[', countBookmarks }', ' }']], fails: [0] },
+      { name: 'typed over listBookmarks in the import', typeFile: true, edit: [['{ listBookmarks, health, countBookmarks }', '{ health, countBookmarks }']], fails: [1] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#A missing brace, found with %`]: {
+    wrong: [
+      { name: 'brace still missing', editFiles: { 'server/server.js': [["    return;\n  }\n  if (request.url === '/api/bookmarks/count')", "    return;\n  \n  if (request.url === '/api/bookmarks/count')"]] }, fails: [0] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Drill: counts`]: {
+    run: [drill('practice/drills/18-count.txt', '5j2wae<Esc>:w<CR>')],
+    wrong: [
+      { name: 'no count', typeFile: true, run: [drill('practice/drills/18-count.txt', 'jjjjjwwae<Esc>:w<CR>')], fails: [2] },
+      { name: 'the wrong line', typeFile: true, run: [drill('practice/drills/18-count.txt', '4j2wae<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Drill: to the matching brace`]: {
+    run: [drill('practice/drills/19-match.txt', '$%a // start<Esc>:w<CR>')],
+    wrong: [
+      { name: 'a count instead', typeFile: true, run: [drill('practice/drills/19-match.txt', '11jA // start<Esc>:w<CR>')], fails: [2] },
+      { name: 'labelled the opening brace', typeFile: true, run: [drill('practice/drills/19-match.txt', 'A // start<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Drill: by blocks`]: {
+    run: [drill('practice/drills/20-blocks.txt', '}}OPUT /api/bookmarks<Esc>:w<CR>')],
+    wrong: [
+      { name: 'a line number', typeFile: true, run: [drill('practice/drills/20-blocks.txt', '10GoPUT /api/bookmarks<Esc>:w<CR>')], fails: [4] },
+      { name: 'below the blank line', typeFile: true, run: [drill('practice/drills/20-blocks.txt', '}}oPUT /api/bookmarks<Esc>:w<CR>')], fails: [0, 2] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Review: two finds on one line`]: {
+    run: [drill('practice/review/02-04.txt', "f i,<Esc>f'aShelf <Esc>:w<CR>")],
+    wrong: [
+      { name: 'words to port', typeFile: true, run: [drill('practice/review/02-04.txt', "eeeeea,<Esc>f'aShelf <Esc>:w<CR>")], fails: [2] },
+      { name: 'after ready', typeFile: true, run: [drill('practice/review/02-04.txt', "f i,<Esc>f';a Shelf<Esc>:w<CR>")], fails: [0, 2] },
+    ],
+  },
+  [`${M}/02-04-jump-through-a-file#Your turn: say when there's nothing`]: {
+    files: { 'server/routes.js': answer(M, 'routes-empty.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'wrote false in', files: { 'server/routes.js': answerWith(M, 'routes-empty.js', [['empty: bookmarks.length === 0', 'empty: false']]) }, fails: [1] },
+      { name: 'the wrong comparison', files: { 'server/routes.js': answerWith(M, 'routes-empty.js', [['empty: bookmarks.length === 0', 'empty: bookmarks.length < 5']]) }, fails: [0] },
+    ],
+  },
+
+  // ── 2.5 ──────────────────────────────────────────────────────────────────
+  [`${M}/02-05-scroll-and-the-screen#Sample data, too long for one screen`]: {
+    run: [drill('data/sample-bookmarks.json', '36G^fpas<Esc>68G^fpas<Esc>100G^fpas<Esc>:w<CR>')],
+    wrong: [
+      { name: 'Page Down', typeFile: true, run: [drill('data/sample-bookmarks.json', '<PageDown>36G^fpas<Esc>68G^fpas<Esc>100G^fpas<Esc>:w<CR>')], fails: [2] },
+      { name: 'missed one', typeFile: true, run: [drill('data/sample-bookmarks.json', '36G^fpas<Esc>68G^fpas<Esc>:w<CR>')], fails: [0, 1] },
+      { name: 'damaged an address', typeFile: true, editFiles: { 'data/sample-bookmarks.json': [['"url": "https://www.lua.org"', '"url": "www.lua.org"']] }, run: [drill('data/sample-bookmarks.json', '36G^fpas<Esc>68G^fpas<Esc>100G^fpas<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${M}/02-05-scroll-and-the-screen#Give Shelf the sample data`]: {
+    before: ['cp data/sample-bookmarks.json data/bookmarks.json'],
+    editFiles: { 'data/bookmarks.json': [[MISSING_COMMA, FIXED_COMMA]] },
+    wrong: [
+      { name: 'comma not fixed', before: ['cp data/sample-bookmarks.json data/bookmarks.json'], fails: [0, 1] },
+      { name: 'never copied', fails: [1] },
+      {
+        name: 'copied before fixing the addresses',
+        before: ['cp data/sample-bookmarks.json data/bookmarks.json'],
+        editFiles: { 'data/bookmarks.json': [[MISSING_COMMA, FIXED_COMMA], ['https://git-scm.com', 'http://git-scm.com'], ['https://tc39.es', 'http://tc39.es'], ['https://www.mozilla.org', 'http://www.mozilla.org']] },
+        fails: [2],
+      },
+    ],
+  },
+  [`${M}/02-05-scroll-and-the-screen#Review: the end of the last line`]: {
+    run: [drill('practice/review/02-05.txt', 'G$xodone<Esc>:w<CR>')],
+    wrong: [
+      { name: 'walked down with j', typeFile: true, run: [drill('practice/review/02-05.txt', 'jjjjjjjjjjj$xodone<Esc>:w<CR>')], fails: [4] },
+      { name: 'the comma on the wrong line', typeFile: true, run: [drill('practice/review/02-05.txt', 'Gk$xjodone<Esc>:w<CR>')], fails: [0, 2, 4] },
+    ],
+  },
+  [`${M}/02-05-scroll-and-the-screen#Your turn: a bookmark of your own`]: {
+    files: { 'data/bookmarks.json': answer(M, 'bookmarks.json') },
+    wrong: [
+      { name: 'did nothing', fails: [1] },
+      { name: 'no comma before the new one', files: { 'data/bookmarks.json': answerWith(M, 'bookmarks.json', [['learnxinyminutes.com"\n  },', 'learnxinyminutes.com"\n  }']]) }, fails: [0, 1, 2] },
+      { name: 'an http address', files: { 'data/bookmarks.json': answerWith(M, 'bookmarks.json', [['https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers', 'http://developer.mozilla.org/en-US/docs/Web/HTTP/Headers']]) }, fails: [2] },
+    ],
+  },
+
+  // ── 3.1 ──────────────────────────────────────────────────────────────────
+  [`${O}/03-01-delete-with-a-motion#Apply: an old comment, with dd`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left the blank line', typeFile: true, edit: [['import { listBookmarks, health, countBookmarks } from \'./routes.js\';\n', 'import { listBookmarks, health, countBookmarks } from \'./routes.js\';\n\n']], fails: [1] },
+      { name: 'deleted the port line instead of the blank one', typeFile: true, edit: [["const port = process.env.PORT || 3000; // 3000 unless PORT is set\n", '\n']], fails: [2] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#A helper for JSON answers`]: {
+    wrong: [
+      { name: 'no closing brace', typeFile: true, edit: [['  response.end(JSON.stringify(value));\n}\n', '  response.end(JSON.stringify(value));\n']], fails: [0] },
+      { name: 'misspelt the name', typeFile: true, edit: [['function sendJson(', 'function sendJSON(']], fails: [1] },
+      { name: 'values for value', typeFile: true, edit: [['JSON.stringify(value)', 'JSON.stringify(values)']], fails: [2] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Apply: health with sendJson, d and a count`]: {
+    wrong: [
+      { name: 'a count too few', typeFile: true, edit: [["sendJson(response, { ok: true, name: 'shelf', uptime: process.uptime() });", "sendJson(response, JSON.stringify({ ok: true, name: 'shelf', uptime: process.uptime() }));"]], fails: [0] },
+      { name: 'sendJson lost its header', typeFile: true, edit: [["function sendJson(response, value) {\n  response.setHeader('Content-Type', 'application/json; charset=utf-8');\n", 'function sendJson(response, value) {\n']], fails: [1] },
+      { name: 'did nothing', fails: [2] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#A count too few`]: {
+    wrong: [
+      { name: 'left JSON.stringify in', editFiles: { 'server/routes.js': [["sendJson(response, { ok: true, name: 'shelf', uptime: process.uptime() });", "sendJson(response, JSON.stringify({ ok: true, name: 'shelf', uptime: process.uptime() }));"]] }, fails: [0] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Drill: delete words`]: {
+    run: [drill('practice/drills/21-delete-words.txt', 'Wd2w:w<CR>')],
+    wrong: [
+      { name: 'one word at a time with x', typeFile: true, run: [drill('practice/drills/21-delete-words.txt', 'Wxxxxxx:w<CR>')], fails: [2] },
+      { name: 'deleted all three', typeFile: true, run: [drill('practice/drills/21-delete-words.txt', 'Wd3w:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Drill: delete to the end of the line`]: {
+    run: [drill('practice/drills/22-delete-to-end.txt', 't/D:w<CR>')],
+    wrong: [
+      { name: 'found the semicolon and stepped on', typeFile: true, run: [drill('practice/drills/22-delete-to-end.txt', 'f;lD:w<CR>')], fails: [2] },
+      { name: 'kept the space', typeFile: true, run: [drill('practice/drills/22-delete-to-end.txt', 'f/D:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Drill: delete lines`]: {
+    run: [drill('practice/drills/23-delete-lines.txt', 'j3dd:w<CR>')],
+    wrong: [
+      { name: 'one line at a time', typeFile: true, run: [drill('practice/drills/23-delete-lines.txt', 'jdddddd:w<CR>')], fails: [3] },
+      { name: 'started on line 1', typeFile: true, run: [drill('practice/drills/23-delete-lines.txt', '3dd:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Drill: delete to the end of the file`]: {
+    run: [drill('practice/drills/24-delete-to-the-end.txt', 'jjdG:w<CR>')],
+    wrong: [
+      { name: 'line by line', typeFile: true, run: [drill('practice/drills/24-delete-to-the-end.txt', 'jjdddddddddddddd:w<CR>')], fails: [2] },
+      { name: 'one line too early', typeFile: true, run: [drill('practice/drills/24-delete-to-the-end.txt', 'jdG:w<CR>')], fails: [0, 1] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Review: two lines, fixed by finding`]: {
+    run: [drill('practice/review/03-01.txt', 'j$rhGF\\r/;r/:w<CR>')],
+    wrong: [
+      { name: 'walked with l', typeFile: true, run: [drill('practice/review/03-01.txt', 'j$rhG0llllr/llllr/:w<CR>')], fails: [3] },
+      { name: 'only one slash', typeFile: true, run: [drill('practice/review/03-01.txt', 'j$rhGF\\r/:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${O}/03-01-delete-with-a-motion#Your turn: count with sendJson`]: {
+    files: { 'server/routes.js': answer(O, 'routes-sendjson.js') },
+    wrong: [
+      { name: 'did nothing', fails: [1] },
+      { name: 'stringified twice', files: { 'server/routes.js': answerWith(O, 'routes-sendjson.js', [['sendJson(response, { count: bookmarks.length, empty: bookmarks.length === 0 });', 'sendJson(response, JSON.stringify({ count: bookmarks.length, empty: bookmarks.length === 0 }));']]) }, fails: [0] },
+      { name: 'deleted the header but kept response.end', files: { 'server/routes.js': answerWith(O, 'routes-sendjson.js', [['sendJson(response, { count: bookmarks.length, empty: bookmarks.length === 0 });', 'response.end(JSON.stringify({ count: bookmarks.length, empty: bookmarks.length === 0 }));']]) }, fails: [2] },
+    ],
+  },
+
+  // ── 3.2 ──────────────────────────────────────────────────────────────────
+  [`${O}/03-02-change-with-a-motion#Apply: not found, with c and a count`]: {
+    wrong: [
+      { name: 'no status code', typeFile: true, edit: [['  response.statusCode = 404;\n', '']], fails: [0] },
+      { name: 'changed up to the first $', typeFile: true, edit: [['`Not found: ${request.url}\\n`', '`Not found: ${port}. You asked for ${request.url}\\n`']], fails: [1] },
+      { name: 'status set before the routes', typeFile: true, edit: [['  response.statusCode = 404;\n', ''], ['request.method, request.url);\n', 'request.method, request.url);\n  response.statusCode = 404;\n']], fails: [2] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#A change from the middle of a word`]: {
+    wrong: [
+      { name: 'left listlistBookmarks', editFiles: { 'server/server.js': [['{ listBookmarks,', '{ listlistBookmarks,']] }, fails: [0] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Drill: change a word`]: {
+    run: [drill('practice/drills/25-change-word.txt', 'fpcw3000<Esc>:w<CR>')],
+    wrong: [
+      { name: 'deleted letter by letter, then inserted', typeFile: true, run: [drill('practice/drills/25-change-word.txt', 'fpxxxxi3000<Esc>:w<CR>')], fails: [2] },
+      { name: 'dw then insert: the comma moved', typeFile: true, run: [drill('practice/drills/25-change-word.txt', 'fpdWi3000<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Drill: change to the end of the line`]: {
+    run: [drill('practice/drills/26-change-to-end.txt', '3wC8080;<Esc>:w<CR>')],
+    wrong: [
+      { name: 'walked with w', typeFile: true, run: [drill('practice/drills/26-change-to-end.txt', 'wwwC8080;<Esc>:w<CR>')], fails: [2] },
+      { name: 'found the p of port', typeFile: true, run: [drill('practice/drills/26-change-to-end.txt', 'fpC8080;<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Drill: change a whole line`]: {
+    run: [drill('practice/drills/27-change-line.txt', 'jcclisten();<Esc>:w<CR>')],
+    wrong: [
+      { name: 'cleared it with x', typeFile: true, run: [drill('practice/drills/27-change-line.txt', 'j^xxxxxxxxxxxxxxxxxxxxxxxilisten();<Esc>:w<CR>')], fails: [2] },
+      { name: 'lost the indentation', typeFile: true, run: [drill('practice/drills/27-change-line.txt', 'j0Clisten();<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Drill: change up to a character`]: {
+    run: [drill('practice/drills/28-change-till.txt', "fSct'Not found<Esc>:w<CR>")],
+    wrong: [
+      { name: 'changed to the end and retyped', typeFile: true, run: [drill('practice/drills/28-change-till.txt', "fSCNot found');<Esc>:w<CR>")], fails: [2] },
+      { name: 'took the quote too', typeFile: true, run: [drill('practice/drills/28-change-till.txt', "fScf'Not found<Esc>:w<CR>")], fails: [0] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Review: a duplicate call and a wrong number`]: {
+    run: [drill('practice/review/03-02.txt', 'Gdd3Gf2r3:w<CR>')],
+    wrong: [
+      { name: 'from the top with j', typeFile: true, run: [drill('practice/review/03-02.txt', 'Gddggjjf2r3:w<CR>')], fails: [3] },
+      { name: 'deleted the function call and the brace', typeFile: true, run: [drill('practice/review/03-02.txt', 'Gdkdd3Gf2r3:w<CR>')], fails: [1, 2] },
+    ],
+  },
+  [`${O}/03-02-change-with-a-motion#Your turn: an answer for /`]: {
+    files: { 'server/server.js': answer(O, 'server-home.js') },
+    wrong: [
+      { name: 'another text for /', files: { 'server/server.js': answerWith(O, 'server-home.js', [['response.end(`Shelf is running on port ${port}\\n`);', "response.end('ok\\n');"]]) }, fails: [1] },
+      { name: 'the / block after the status line', files: { 'server/server.js': answerWith(O, 'server-home.js', [['  response.statusCode = 404;\n', ''], ["  if (request.url === '/') {\n", "  response.statusCode = 404;\n  if (request.url === '/') {\n"]]) }, fails: [0] },
+      { name: 'took out the 404', files: { 'server/server.js': answerWith(O, 'server-home.js', [['  response.statusCode = 404;\n', '']]) }, fails: [2] },
+    ],
+  },
+
+  // ── 3.3 ──────────────────────────────────────────────────────────────────
+  [`${O}/03-03-yank-and-put#Two handlers, from copies of health`]: {
+    wrong: [
+      { name: 'no status code', typeFile: true, edit: [['  response.statusCode = 404;\n  sendJson', '  sendJson']], fails: [0] },
+      { name: 'home still called health', typeFile: true, edit: [['export function home(', 'export function health(']], fails: [1, 2] },
+      { name: 'home not exported', typeFile: true, edit: [['export function home(', 'function home(']], fails: [1] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#What p puts after a change`]: {
+    wrong: [
+      { name: 'saved the stray put', editFiles: { 'server/routes.js': [['  response.statusCode = 404;\n', "  response.statusCode = 404;ok: true, name: 'shelf', uptime: process.uptime() \n"]] }, fails: [0] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#The table`]: {
+    wrong: [
+      { name: 'no /health line', typeFile: true, edit: [["  '/health': health,\n", '']], fails: [0] },
+      { name: 'called the handler in the table', typeFile: true, edit: [["  '/health': health,\n", "  '/health': health(),\n"]], fails: [0, 1] },
+      { name: '/health pointed at home', typeFile: true, edit: [["  '/health': health,\n", "  '/health': home,\n"]], fails: [1] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Switch the server to the table`]: {
+    wrong: [
+      { name: 'did nothing', fails: [2, 3, 5] },
+      { name: 'import not changed', typeFile: true, edit: [['import { routes, notFound }', 'import { listBookmarks, health, countBookmarks }']], fails: [0, 1, 2, 3, 4] },
+      { name: 'no fallback', typeFile: true, edit: [['routes[request.url] || notFound;', 'routes[request.url];']], fails: [3, 4] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Drill: duplicate a line`]: {
+    run: [drill('practice/drills/29-duplicate.txt', 'jyypf/dt/:w<CR>')],
+    wrong: [
+      { name: 'typed the line', typeFile: true, run: [drill('practice/drills/29-duplicate.txt', "jo'/health': health,<Esc>:w<CR>")], fails: [3] },
+      { name: 'deleted through the second slash', typeFile: true, run: [drill('practice/drills/29-duplicate.txt', 'jyypf/df/:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Drill: two swaps`]: {
+    run: [drill('practice/drills/30-swap.txt', 'ddpklxp:w<CR>')],
+    wrong: [
+      { name: 'retyped the letters', typeFile: true, run: [drill('practice/drills/30-swap.txt', 'ddpklcwET<Esc>:w<CR>')], fails: [3] },
+      { name: 'swapped only the lines', typeFile: true, run: [drill('practice/drills/30-swap.txt', 'ddp:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Drill: copy the end of a line`]: {
+    run: [drill('practice/drills/31-copy-end.txt', 'f Yjp:w<CR>')],
+    wrong: [
+      { name: 'typed it', typeFile: true, run: [drill('practice/drills/31-copy-end.txt', 'jA application/json; charset=utf-8<Esc>:w<CR>')], fails: [3] },
+      { name: 'yanked from the a, without the space', typeFile: true, run: [drill('practice/drills/31-copy-end.txt', 'faYjp:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Review: a number and an argument`]: {
+    run: [drill('practice/review/03-03.txt', '3wcw8080<Esc>Gea, host<Esc>:w<CR>')],
+    wrong: [
+      { name: 'the last line first, then up', typeFile: true, run: [drill('practice/review/03-03.txt', 'Gf)i, host<Esc>gg3wcw8080<Esc>:w<CR>')], fails: [3] },
+      { name: 'host before port', typeFile: true, run: [drill('practice/review/03-03.txt', '3wcw8080<Esc>Gbihost, <Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${O}/03-03-yank-and-put#Your turn: a second path for home`]: {
+    files: { 'server/routes.js': answer(O, 'routes-api.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: '/api to health', files: { 'server/routes.js': answerWith(O, 'routes-api.js', [["'/api': home,", "'/api': health,"]]) }, fails: [0] },
+      {
+        name: 'an if in the server instead',
+        files: { 'server/server.js': `import http from 'node:http';\nimport { routes, notFound, home } from './routes.js';\n\nconst port = process.env.PORT || 3000;\n\nconst server = http.createServer((request, response) => {\n  if (request.url === '/api') {\n    home(request, response);\n    return;\n  }\n  const handler = routes[request.url] || notFound;\n  handler(request, response);\n});\n\nserver.listen(port);\n` },
+        fails: [1],
+      },
+      { name: 'home for anything unknown', files: { 'server/routes.js': answer(O, 'routes-api.js') }, editFiles: { 'server/server.js': [['|| notFound;', '|| routes[\'/\'];']] }, fails: [2] },
+    ],
+  },
+
+  // ── 3.4 ──────────────────────────────────────────────────────────────────
+  [`${O}/03-04-repeat-with-dot#Apply: GET in every key, with dot`]: {
+    wrong: [
+      { name: 'missed a line', typeFile: true, edit: [["'GET /health': health,", "'/health': health,"]], fails: [0] },
+      { name: 'no space after GET', typeFile: true, edit: [["'GET /api': home,", "'GET/api': home,"]], fails: [0] },
+      { name: 'a handler changed too', typeFile: true, edit: [["'GET /health': health,", "'GET /health': home,"]], fails: [1] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Look up the method and the path`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 2] },
+      { name: 'GET written in', typeFile: true, edit: [['routes[`${request.method} ${request.url}`]', 'routes[`GET ${request.url}`]']], fails: [1] },
+      { name: 'two spaces', typeFile: true, edit: [['routes[`${request.method} ${request.url}`]', 'routes[`${request.method}  ${request.url}`]']], fails: [0, 2] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Dot after undo`]: {
+    wrong: [
+      { name: 'left the bad dot', editFiles: { 'server/routes.js': [["'GET /api/bookmarks/count'", "'/GET api/bookmarks/count'"]] }, fails: [0] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Drill: the end of every line`]: {
+    run: [drill('practice/drills/32-dot-lines.txt', 'A;<Esc>j.j.j.:w<CR>')],
+    wrong: [
+      { name: 'A on every line', typeFile: true, run: [drill('practice/drills/32-dot-lines.txt', 'A;<Esc>jA;<Esc>jA;<Esc>jA;<Esc>:w<CR>')], fails: [3] },
+      { name: 'stopped one short', typeFile: true, run: [drill('practice/drills/32-dot-lines.txt', 'A;<Esc>j.j.:w<CR>')], fails: [1, 2] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Drill: find, then dot`]: {
+    run: [drill('practice/drills/33-dot-find.txt', 'f,a <Esc>;.:w<CR>')],
+    wrong: [
+      { name: 'typed the second space', typeFile: true, run: [drill('practice/drills/33-dot-find.txt', 'f,a <Esc>;a <Esc>:w<CR>')], fails: [2] },
+      { name: 'space before the comma', typeFile: true, run: [drill('practice/drills/33-dot-find.txt', 'f,i <Esc>l;.:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Drill: every other line`]: {
+    run: [drill('practice/drills/34-dot-delete.txt', 'jddj.j.:w<CR>')],
+    wrong: [
+      { name: 'dd every time', typeFile: true, run: [drill('practice/drills/34-dot-delete.txt', 'jddjddjdd:w<CR>')], fails: [3] },
+      { name: 'deleted the line after', typeFile: true, run: [drill('practice/drills/34-dot-delete.txt', 'jddj.j.j.:w<CR>')], fails: [2] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Drill: change a word twice`]: {
+    run: [drill('practice/drills/35-dot-change.txt', 'wcwtotal<Esc>ww.:w<CR>')],
+    wrong: [
+      { name: 'typed it twice', typeFile: true, run: [drill('practice/drills/35-dot-change.txt', 'wcwtotal<Esc>wwcwtotal<Esc>:w<CR>')], fails: [2] },
+      { name: 'only the first', typeFile: true, run: [drill('practice/drills/35-dot-change.txt', 'wcwtotal<Esc>:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Review: cut a comment, copy a line`]: {
+    run: [drill('practice/review/03-04.txt', 'jEElDyyp:w<CR>')],
+    wrong: [
+      { name: 'd$ instead of D', typeFile: true, run: [drill('practice/review/03-04.txt', 'jEEld$yyp:w<CR>')], fails: [3] },
+      { name: 'copied before cutting', typeFile: true, run: [drill('practice/review/03-04.txt', 'jyypEElD:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-04-repeat-with-dot#Your turn: say which method wasn't found`]: {
+    files: { 'server/routes.js': answer(O, 'routes-method.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'method after the path', files: { 'server/routes.js': answerWith(O, 'routes-method.js', [["{ error: 'not found', method: request.method, path: request.url }", "{ error: 'not found', path: request.url, method: request.method }"]]) }, fails: [0] },
+      { name: 'lost the status', files: { 'server/routes.js': answerWith(O, 'routes-method.js', [['  response.statusCode = 404;\n', '']]) }, fails: [1] },
+      { name: 'count route lost', files: { 'server/routes.js': answerWith(O, 'routes-method.js', [["  'GET /api/bookmarks/count': countBookmarks,\n", '']]) }, fails: [2] },
+    ],
+  },
+
+  // ── 3.5 ──────────────────────────────────────────────────────────────────
+  [`${O}/03-05-join-indent-and-case#Catch the error`]: {
+    wrong: [
+      { name: 'did nothing', fails: [1, 2, 3] },
+      { name: 'no status code', typeFile: true, edit: [['    response.statusCode = 500;\n', '']], fails: [1] },
+      { name: 'another message', typeFile: true, edit: [["response.end('Something went wrong\\n');", "response.end('Oops\\n');"]], fails: [2] },
+      { name: 'threw it again', typeFile: true, edit: [["    response.end('Something went wrong\\n');\n", "    response.end('Something went wrong\\n');\n    throw error;\n"]], fails: [3] },
+      { name: 'called the handler without arguments', typeFile: true, edit: [['    handler(request, response);', '    handler();']], fails: [0] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Break the data on purpose`]: {
+    wrong: [
+      { name: 'comma still missing', editFiles: { 'data/bookmarks.json': [['"url": "https://neovim.io"\n  },', '"url": "https://neovim.io"\n  }']] }, fails: [0, 1] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Drill: join lines`]: {
+    run: [drill('practice/drills/36-join.txt', 'Jj4J:w<CR>')],
+    wrong: [
+      { name: 'J four times', typeFile: true, run: [drill('practice/drills/36-join.txt', 'JjJJJ:w<CR>')], fails: [3] },
+      { name: 'one J too few', typeFile: true, run: [drill('practice/drills/36-join.txt', 'Jj3J:w<CR>')], fails: [1, 2] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Drill: fix the indentation`]: {
+    run: [drill('practice/drills/37-indent.txt', 'j>>j<<.:w<CR>')],
+    wrong: [
+      { name: 'deleted the spaces', typeFile: true, run: [drill('practice/drills/37-indent.txt', 'j>>jxxxx:w<CR>')], fails: [3] },
+      { name: 'only one outdent', typeFile: true, run: [drill('practice/drills/37-indent.txt', 'j>>j<<:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Drill: switch case`]: {
+    run: [drill('practice/drills/38-case.txt', '3~jWgu$:w<CR>')],
+    wrong: [
+      { name: 'one ~ at a time', typeFile: true, run: [drill('practice/drills/38-case.txt', '~~~jWgu$:w<CR>')], fails: [3] },
+      { name: 'lowercased POST too', typeFile: true, run: [drill('practice/drills/38-case.txt', '3~jguu:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Drill: capital constants, with dot`]: {
+    run: [drill('practice/drills/39-constants.txt', 'wgUej.:w<CR>')],
+    wrong: [
+      { name: 'gUe twice', typeFile: true, run: [drill('practice/drills/39-constants.txt', 'wgUejgUe:w<CR>')], fails: [3] },
+      { name: 'the whole line', typeFile: true, run: [drill('practice/drills/39-constants.txt', 'gUUj.:w<CR>')], fails: [0, 1] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Review: three switches`]: {
+    run: [drill('practice/review/03-05.txt', 'wwcwon<Esc>WW.WW.:w<CR>')],
+    wrong: [
+      { name: 'cw each time', typeFile: true, run: [drill('practice/review/03-05.txt', 'wwcwon<Esc>WWcwon<Esc>WWcwon<Esc>:w<CR>')], fails: [2] },
+      { name: 'missed the last', typeFile: true, run: [drill('practice/review/03-05.txt', 'wwcwon<Esc>WW.:w<CR>')], fails: [0] },
+    ],
+  },
+  [`${O}/03-05-join-indent-and-case#Your turn: a JSON 500`]: {
+    files: { 'server/routes.js': answer(O, 'routes-servererror.js'), 'server/server.js': answer(O, 'server-servererror.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 2] },
+      { name: 'no status code', files: { 'server/routes.js': answerWith(O, 'routes-servererror.js', [['  response.statusCode = 500;\n', '']]), 'server/server.js': answer(O, 'server-servererror.js') }, fails: [1] },
+      { name: 'JSON without the header', files: { 'server/server.js': answerWith(O, 'server-servererror.js', [['    serverError(request, response);\n', "    response.statusCode = 500;\n    response.end(JSON.stringify({ error: 'server error' }));\n"]]) }, fails: [2] },
+      { name: 'stopped logging', files: { 'server/routes.js': answer(O, 'routes-servererror.js'), 'server/server.js': answerWith(O, 'server-servererror.js', [['    console.error(error);\n', '']]) }, fails: [3] },
     ],
   },
 };
