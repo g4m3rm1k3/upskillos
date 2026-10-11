@@ -4824,7 +4824,19 @@ export default function MarkdownHub() {
                 <div
                   className={`md-splitter hidden md:block${splitterDragging ? " dragging" : ""}`}
                   onMouseDown={handleSplitterDrag}
-                  title="Drag to resize"
+                  role="separator"
+                  aria-label="Resize tutorial and code workspace"
+                  aria-orientation="vertical"
+                  aria-valuemin={300}
+                  aria-valuemax={Math.max(300, window.innerWidth - 350)}
+                  aria-valuenow={codeAlongPx}
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+                    event.preventDefault();
+                    setCodeAlongPx(width => Math.max(300, Math.min(width + (event.key === "ArrowLeft" ? 40 : -40), window.innerWidth - 350)));
+                  }}
+                  title="Drag or use arrow keys to resize"
                 />
                 <div
                   className="hidden md:flex flex-col shrink-0 overflow-hidden"

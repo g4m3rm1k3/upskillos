@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EXAMPLE_PROJECT } from '../../utils/exampleProject.js'
 import Editor from '@monaco-editor/react'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Columns2, Download, ExternalLink, FilePlus, FolderPlus, Maximize2, Minimize2, Play, RotateCcw, Upload, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, ExternalLink, FilePlus, FolderPlus, Play, RotateCcw, Upload, X } from 'lucide-react'
 import { setupOpenCalcMonaco } from '../../utils/monacoThemes.js'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
 import WorkspaceTerminal from './WorkspaceTerminal.jsx'
 import { useIsDark } from '../../utils/useIsDark.js'
 import { useGlobalTheme } from '../../context/ThemeContext.jsx'
 import { getCodeFontFamily, getCodeFontSize } from '../ui/CodeSettingsModal.jsx'
+import DesktopDocsWorkspace from './DesktopDocsWorkspace.jsx'
+import WorkspaceOutputDialog from './WorkspaceOutputDialog.jsx'
+import { isDesktop } from '../../labs/project-studio/useProjectFs.js'
 
 
 
@@ -144,19 +147,31 @@ function openInOpenMat(code, fileName) {
 }
 
 const _DEFAULT_FILE = makeFile('script.js', '// Welcome to Code Along!\nconsole.log("Hello!");\n')
-const _SAVED = loadSavedWorkspace()
 
 const LS_WELCOME = 'oc-studio-welcome-seen'
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = null, onCodeChange = null, accentColor = '#0ea5e9', monacoTheme = null, themeUi = null }) {
-  const [items, setItems] = useState(() => _SAVED?.items ?? [_DEFAULT_FILE])
-  const [activeId, setActiveId] = useState(() => _SAVED?.activeId ?? _DEFAULT_FILE.id)
+export default function DocsCodeWorkspace(props) {
+  const desktop = isDesktop()
+  const [scratchpad, setScratchpad] = useState(!desktop)
+  return <div className="flex flex-col h-full min-h-0">
+    <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs border-b border-slate-500/20">
+      <span>{scratchpad ? 'Browser scratchpad · limited runtimes' : 'Desktop project · real files & shell'}</span>
+      {desktop && <button className="underline" onClick={() => setScratchpad(v => !v)}>{scratchpad ? 'Open desktop project' : 'Open scratchpad'}</button>}
+    </div>
+    <div className={`${scratchpad ? 'flex' : 'hidden'} flex-col flex-1 min-h-0`}><BrowserDocsWorkspace {...props} pendingRun={scratchpad ? props.pendingRun : null} onCodeChange={scratchpad ? props.onCodeChange : null} /></div>
+    {desktop && <div className={`${scratchpad ? 'hidden' : 'flex'} flex-col flex-1 min-h-0`}><DesktopDocsWorkspace {...props} pendingRun={scratchpad ? null : props.pendingRun} onCodeChange={scratchpad ? null : props.onCodeChange} /></div>}
+  </div>
+}
+
+function BrowserDocsWorkspace({ activeTitle = 'Docs', pendingRun = null, onCodeChange = null, accentColor = '#0ea5e9', monacoTheme = null, themeUi = null }) {
+  const [saved] = useState(loadSavedWorkspace)
+  const [items, setItems] = useState(() => saved?.items ?? [_DEFAULT_FILE])
+  const [activeId, setActiveId] = useState(() => saved?.activeId ?? _DEFAULT_FILE.id)
 
   // Show welcome banner when workspace has only the default file and user hasn't dismissed it
   const [showWelcome, setShowWelcome] = useState(() => {
     if (localStorage.getItem(LS_WELCOME)) return false
-    const saved = _SAVED
     if (!saved) return true   // brand new workspace
     const files = saved.items?.filter(i => i.type === 'file') ?? []
     return files.length === 1 && !files[0].content?.trim().replace('//', '').trim()
@@ -166,10 +181,8 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
   const [addingName, setAddingName] = useState('')
   const [pendingReplace, setPendingReplace] = useState(null)
   const [previewDoc, setPreviewDoc] = useState('')
-  const [previewFullscreen, setPreviewFullscreen] = useState(false)
   const [bottomTab, setBottomTab] = useState('terminal')  // 'terminal' | 'preview'
-  const [outputMode, setOutputMode] = useState('split')
-  const [bottomCollapsed, setBottomCollapsed] = useState(false)
+  const [outputOpen, setOutputOpen] = useState(false)
   const addInputRef = useRef(null)
   const terminalRef = useRef(null)
   const importFileRef = useRef(null)
@@ -314,6 +327,7 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
     const af = files.find(f => f.id === activeId) ?? files[0]
     if (!af) return
     setBottomTab('terminal')
+    setOutputOpen(true)
     terminalRef.current?.run(af, files)
   }, [files, activeId])
 
@@ -321,6 +335,7 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
   const handlePreview = useCallback((doc) => {
     setPreviewDoc(doc)
     setBottomTab('preview')
+    setOutputOpen(true)
   }, [])
 
   const clearOutput = useCallback(() => {
@@ -365,7 +380,6 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
     URL.revokeObjectURL(url)
   }, [files])
 
-  const outputIsFull = outputMode === 'full'
 
   // ── Recursive tree renderer ────────────────────────────────────────────────
   function renderTree(parentId = null, depth = 0) {
@@ -518,8 +532,8 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
         <button onClick={clearOutput} className={`h-7 w-7 flex items-center justify-center rounded border ${btnBorder} ${txt2} ${hoverBg} ${hoverTx} transition-colors`} title="Clear terminal">
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
-        <button onClick={() => setOutputMode(m => m === 'split' ? 'full' : 'split')} className={`h-7 w-7 flex items-center justify-center rounded border ${btnBorder} ${txt2} ${hoverBg} ${hoverTx} transition-colors`} title={outputIsFull ? 'Restore editor' : 'Expand output'}>
-          {outputIsFull ? <Columns2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        <button onClick={() => setOutputOpen(true)} className={`h-7 px-2 flex items-center justify-center rounded border ${btnBorder} ${txt2} ${hoverBg} ${hoverTx} transition-colors`} title="Open terminal and output">
+          Output
         </button>
       </header>
 
@@ -631,10 +645,10 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
             ))}
           </div>
 
-          <div className={`${outputIsFull ? 'hidden' : 'flex-[3]'} min-h-0`}>
+          <div className="flex-1 min-h-0">
             <Editor
-              key={activeId}
-              defaultValue={activeFile?.content ?? ''}
+              path={`mdhub-scratchpad://${activeId}`}
+              value={activeFile?.content ?? ''}
               language={activeFile?.language === 'openmat' ? 'plaintext' : (activeFile?.language ?? 'plaintext')}
               theme={monacoTheme ?? (isDark ? 'open-calc-dark' : 'open-calc-light')}
               beforeMount={setupOpenCalcMonaco}
@@ -658,13 +672,14 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
           </div>
 
           {/* ── Bottom pane: Terminal | Preview ── */}
-          <div className={`${outputIsFull ? 'flex-1' : bottomCollapsed ? 'shrink-0' : 'flex-[2]'} min-h-0 border-t ${border} flex flex-col`}>
+          <WorkspaceOutputDialog open={outputOpen} onClose={() => setOutputOpen(false)} title="Scratchpad output">
+          <div className={`flex-1 min-h-0 border-t ${border} flex flex-col`}>
             {/* Tab bar */}
             <div className={`h-7 shrink-0 flex items-center border-b ${border} ${bg2} px-1 gap-0.5`}>
               {['terminal', 'preview'].map(tab => (
                 <button
                   key={tab}
-                  onClick={() => { setBottomTab(tab); if (bottomCollapsed) setBottomCollapsed(false) }}
+                  onClick={() => setBottomTab(tab)}
                   className={`px-3 h-6 text-[10px] font-bold rounded transition-colors capitalize ${
                     bottomTab === tab
                       ? D ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-900'
@@ -674,24 +689,10 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
                   {tab === 'terminal' ? '⌨ Terminal' : '🖼 Preview'}
                 </button>
               ))}
-              {/* Collapse / expand toggle */}
-              <button
-                onClick={() => setBottomCollapsed(c => !c)}
-                className={`w-5 h-5 flex items-center justify-center rounded ${txt2} ${hoverTx} ${hoverBg}`}
-                title={bottomCollapsed ? 'Expand terminal' : 'Collapse terminal'}
-              >
-                {bottomCollapsed ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-              <button
-                onClick={() => setOutputMode(m => m === 'split' ? 'full' : 'split')}
-                className={`ml-auto w-5 h-5 flex items-center justify-center rounded ${txt2} ${hoverTx} ${hoverBg}`}
-              >
-                {outputIsFull ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
-              </button>
             </div>
 
             {/* Terminal */}
-            <div className={`flex-1 min-h-0 ${!bottomCollapsed && bottomTab === 'terminal' ? 'flex flex-col' : 'hidden'}`}>
+            <div className={`flex-1 min-h-0 ${bottomTab === 'terminal' ? 'flex flex-col' : 'hidden'}`}>
               <WorkspaceTerminal
                 ref={terminalRef}
                 files={files}
@@ -703,7 +704,7 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
             </div>
 
             {/* Preview */}
-            <div className={`flex-1 min-h-0 ${!bottomCollapsed && bottomTab === 'preview' ? 'flex flex-col' : 'hidden'}`}>
+            <div className={`flex-1 min-h-0 ${bottomTab === 'preview' ? 'flex flex-col' : 'hidden'}`}>
               {previewDoc
                 ? <iframe title="preview" srcDoc={previewDoc} sandbox="allow-scripts allow-same-origin" className="flex-1 w-full bg-white" />
                 : <div className={`flex-1 flex items-center justify-center text-xs ${txt2}`}>
@@ -713,6 +714,7 @@ export default function DocsCodeWorkspace({ activeTitle = 'Docs', pendingRun = n
             </div>
 
           </div>
+          </WorkspaceOutputDialog>
         </div>
       </div>
     </section>

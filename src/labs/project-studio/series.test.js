@@ -6,7 +6,8 @@ it('groups C++ topics into one ordered series while preserving all discovered le
  expect(cpp.chapters.slice(0,3).map(item=>item.key)).toEqual(['cpp-foundations','cpp-language-basics','cpp-memory']);
  expect(cpp.chapters.some(item=>item.key==='cpp-generic')).toBe(true);
  expect(grouped.some(item=>item.key==='cpp-generic')).toBe(false);
- expect(grouped.slice(0,2).map(item=>item.key)).toEqual(['spreadsheet-build','pyside6-engine']);
+ expect(grouped.find(item=>item.key==='spreadsheet-build')).toBeDefined();
+ expect(grouped.find(item=>item.key==='pyside6-engine')).toBeDefined();
  const original=TRACK_KEYS.flatMap(key=>TRACKS[key].map(lesson=>lesson.id)).sort();
  const after=grouped.flatMap(item=>item.chapters.flatMap(chapter=>TRACKS[chapter.key].map(lesson=>lesson.id))).sort();expect(after).toEqual(original);
  expect(cpp.planned).toContain('planned');

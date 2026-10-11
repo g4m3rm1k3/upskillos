@@ -308,6 +308,18 @@ const SERIES = [
     ],
     planned: 'Frontier is being written chapter by chapter, from a real project setup to your own GPT, reinforcement learning for language models and AlphaZero-style search. The full map is in docs/frontier-ai-series-plan.md.',
   },
+  {
+    key: 'electron-basics',
+    label: 'Electron Basics — Architecture and Fundamentals',
+    prefix: 'electron-basics-',
+    sharedProject: true,
+    chapters: [
+      ['electron-basics-window', '01 · An Electron Window'],
+      ['electron-basics-filesystem', '02 · Filesystem Access'],
+      ['electron-basics-terminal', '03 · Spawning a Terminal'],
+    ],
+    planned: 'A short series covering the architecture of an Electron app as used in open-calc, covering main/renderer processes, IPC, filesystem access, and terminal spawning.',
+  },
 ];
 
 function buildSeries(def, tracks, keys, title) {

@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>MiniDesk</title>
+    <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header><strong id="title">MiniDesk</strong> <span id="info"></span>
+      <button id="open">Open folder</button> <button id="save" disabled>Save</button> <span id="status"></span></header>
+    <main>
+      <ul id="tree"></ul>
+      <textarea id="editor" spellcheck="false" disabled></textarea>
+    </main>
+    <div id="terminal"></div>
+    <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

@@ -55,5 +55,6 @@ export function learningProfile(key) {
     'circuit-clash': { level: 'beginner', maturity: 'review-required', audience: 'For Python scripters building stronger type, debugging and design skills. Standalone C# foundations lead through algorithms, graphics, racing, probability and Q-learning, with return-later challenges. Requires a local .NET 10 SDK and graphics display. The executable path is verified on Apple silicon macOS; learner pacing and other platforms still need review.' },
     'pyside6-engine': { level: 'advanced', maturity: 'in-development', audience: 'For learners already comfortable with Python classes, modules and debugging. Review Forge functions, objects and packaging first if GUI event handling and engine structure are unfamiliar. Only the first lesson, a window prototype, is written so far.' },
   };
+  if (key === 'electron-basics' || key.startsWith('electron-basics-')) return { level: 'bridge', maturity: 'in-development', audience: 'For learners who want to understand the basics of Electron, including creating a window, accessing the filesystem securely via preload scripts, and working with a terminal.' };
   return profiles[key] || { level: 'unclassified', maturity: 'review-required', audience: 'Prerequisites have not been reviewed. Inspect the first lesson before choosing this track.' };
 }

@@ -1,0 +1,39 @@
+{
+  "name": "minidesk",
+  "productName": "MiniDesk",
+  "version": "0.1.0",
+  "description": "A tiny editor with a terminal, built with Electron",
+  "author": "You",
+  "license": "MIT",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.cjs\"",
+    "e2e": "node --test \"e2e/*.test.cjs\"",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish never"
+  },
+  "dependencies": {
+    "@xterm/xterm": "6.0.0",
+    "node-pty": "1.1.0"
+  },
+  "devDependencies": {
+    "electron": "35.7.5",
+    "electron-builder": "26.0.12",
+    "playwright-core": "1.61.0"
+  },
+  "build": {
+    "appId": "dev.example.minidesk",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.cjs", "preload.cjs", "index.html", "renderer.js", "styles.css", "lib/**/*",
+      "node_modules/@xterm/xterm/css/xterm.css", "node_modules/@xterm/xterm/lib/xterm.js"
+    ],
+    "npmRebuild": false,
+    "asarUnpack": ["node_modules/node-pty/**/*"],
+    "win": { "target": [{ "target": "portable", "arch": ["x64"] }], "artifactName": "${productName}-${version}-win-x64.${ext}" },
+    "mac": { "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }], "artifactName": "${productName}-${version}-mac-${arch}.${ext}" },
+    "linux": { "target": [{ "target": "AppImage", "arch": ["x64"] }], "artifactName": "${productName}-${version}-linux-x64.${ext}" }
+  }
+}
