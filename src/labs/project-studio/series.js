@@ -8,6 +8,20 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'backend',
+    label: 'Backend Developer Bootcamp — APIs, Data and Architecture',
+    prefix: 'backend-',
+    // Each framework builds a different application in its own remembered folder.
+    sharedProject: false,
+    chapters: [
+      ['backend-fastapi', '01 · FastAPI — Equipment Booking'],
+      ['backend-django', '02 · Django — Service Desk'],
+      ['backend-aspnet', '03 · ASP.NET Core — Stock Reservations'],
+      ['backend-nestjs', '04 · NestJS — Webhook Inbox'],
+    ],
+    planned: 'Standalone framework projects progress through command-line setup, data boundaries, authorization, transactions, testing and operational handoffs. Guided local reference applications and Desktop checks are verified on macOS, with independent advanced extensions assigned; learner review and production deployment validation remain open. Full-stack integration is a separate follow-on series. See docs/backend-bootcamp-curriculum.md.',
+  },
+  {
     key: 'frontend',
     label: 'Frontend Developer Bootcamp — From Zero to Portfolio',
     prefix: 'frontend-',

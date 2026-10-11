@@ -15,6 +15,17 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (['backend', 'backend-fastapi', 'backend-django', 'backend-aspnet', 'backend-nestjs'].includes(key)) return {
+    level: 'bridge',
+    maturity: 'in-development',
+    audience: key === 'backend'
+      ? 'For learners who know variables, functions and basic control flow. Build separate backend apps with FastAPI, Django, ASP.NET Core and NestJS, in that recommended order or independently. Each framework repeats its setup and states its language prerequisites. Requires Project Studio Desktop and local Python, .NET or Node tools. Full-stack client integration follows in a separate series.'
+      : key === 'backend-nestjs'
+        ? 'Standalone project in a new parcel-inbox folder. Assumes JavaScript functions, promises and introductory TypeScript; requires Node 22.14+ in the Node 22/24 lines and npm. Framework setup, signed requests, durable inboxes, workers and testing are taught here. The Node 22 SQLite API is experimental; production migration is an explicit extension.'
+        : key === 'backend-aspnet'
+          ? 'Standalone project in a new stockroom folder. Assumes variables, functions and conditionals in any language. Requires the .NET 10 SDK; the C# constructs used here, controllers, dependency injection, authentication, transactions and tests are introduced in this section.'
+          : 'Standalone project in a new folder. Assumes basic Python functions, dictionaries and exceptions; requires Python 3.12 or 3.13. Virtual environments, framework setup, data boundaries, authorization, persistence and tests are taught here. Complete the section in order; no files from another backend section are required.',
+  };
   if (['frontend', 'frontend-start', 'frontend-design', 'frontend-javascript', 'frontend-planner', 'frontend-api', 'frontend-bootstrap', 'frontend-react', 'frontend-tailwind', 'frontend-quality', 'frontend-production', 'frontend-ship'].includes(key)) return {
     level: key === 'frontend' || key === 'frontend-start' ? 'beginner' : 'bridge',
     maturity: 'in-development',
