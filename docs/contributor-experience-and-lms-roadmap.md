@@ -19,6 +19,11 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### A-Arcade standalone reinforcement-learning explorer (2026-10-11)
+
+- [x] Working CartPole Q-learning and A2C examples, component explanations and removal/rebuild controls, live memory and source inspection, recorded experience replay, frozen evaluation, and QMaze transfer. Existing labs remain unchanged. See [scope and verification](a-arcade-workbench.md).
+- [ ] Editable-code reconstruction, native Python/pygame execution, larger neural models and additional environments. These are follow-up scope, not capabilities claimed by the first workbench.
+
 ### MathOS scientific workspace (2026-10-10)
 
 - [x] Browser-filling and responsive workspace, visible calculation history, validated project file/clipboard exchange, programming entry points, an executable ML example and bounded graph rendering. See [scope, verification and remaining work](mathos-scientific-workspace.md).

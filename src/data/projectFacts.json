@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 55,
+    "labs": 56,
     "games": 16
   },
   "courses": [
@@ -369,6 +369,12 @@
     }
   ],
   "labs": [
+    {
+      "id": "a-arcade",
+      "label": "A-Arcade",
+      "kind": "lab",
+      "path": "/lab/a-arcade"
+    },
     {
       "id": "abstraction-viz",
       "label": "Abstraction Visualizer",
