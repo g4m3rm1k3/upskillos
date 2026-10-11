@@ -6,8 +6,8 @@ Start every bootcamp session here. The plan is [bootcamp-series-plan.md](bootcam
 
 | Sprints | State |
 |---|---|
-| 0–10 | written, at the explanation standard, walked (84 lessons) |
-| 11–79 | not written |
+| 0–11 | written, at the explanation standard, walked (92 lessons) |
+| 12–79 | not written |
 
 Update this table, and the plan's *Progress* table, at the end of every sprint.
 
@@ -56,3 +56,20 @@ The finished code is in the scratchpad's `s10dev` (a copy of the walked Sprint 9
 - 10.8 its solution; Your turn in the playground: whole packs to order (`packs(amount, size)`, with the 15-digit clean-up).
 
 Sprint 10's walked project is `scratchpad/sheet-s108` (on `main`, pushed; 104 tests and 4 todos). Its supplied docs use `### ` headings, because the lesson parser splits steps on every line starting `## `, even inside fences. Sprint 11 is React (plan: "the sheet's interface moved to React, with the engine kept separate"), and should pick up S4 or S5 from the backlog as its client work.
+
+## Sprint 11: React (done, walked)
+
+Finished code in the scratchpad's `s11dev`: `src/main.tsx`, `src/ui/App.tsx` (selection, save with a move, clamped to the sheet, status), `src/ui/FormulaBar.tsx` (its own draft; Enter, Tab, arrows, Escape; keyed by the cell's name so its state resets), `src/ui/Grid.tsx`; `src/grid.ts` removed; `src/ui/App.test.tsx` (5) and `src/ui/keyboard.test.tsx` (5), Testing Library with `// @vitest-environment jsdom`. Installed: react and react-dom 19.3, `@vitejs/plugin-react` 6, `@types/react(-dom)` 19, `@testing-library/react` 16 and `/dom` 10, and **jsdom 29**: jsdom 30 needs Node 24.15. Whole project: 114 passed, 4 todo. Bundle: 12.8 kB by hand, 232 kB (72.7 kB gzipped) with React. In-between states are in `scratchpad/stages11/`; `scratchpad/pagecheck.cjs` measures page experiments (starts Vite, Playwright, always stops both).
+
+- 11.1 keeping the page in step, by hand (playground order list: removing an item leaves "3 items"); Your turn: one `render()`.
+- 11.2 branch `react`, install, config; React elements are plain objects; the order list as components with props; Your turn: a `RecipeCard`.
+- 11.3 state and events (renders counted in the title: 3 after two removals); Your turn: Clear.
+- 11.4 a controlled input; where state lives (typing "flour": 6 renders of the list with the draft in it, 1 with it in `AddItem`); duplicate keys warn; Your turn: focus with `useRef` and `useEffect`.
+- 11.5 the sheet in React: `index.html`, `main.tsx`, `Grid` (one justified step), `App`, selection.
+- 11.6 editing, tested: `App.test.tsx` supplied; `FormulaBar` (Enter only); without `key` the "shows its text" test fails; Your turn: the "1 cell" test.
+- 11.7 challenge, Priya's keyboard request: `keyboard.test.tsx` supplied (Tab, arrows, Escape, clamping, HTML as text); merge `react` into `main`, push, delete.
+- 11.8 solution; Your turn: a custom hook, `useStoredState`, in the playground.
+
+Page checks that type into a React input must use the native value setter and a bubbling `input` event; a plain `input.value = …` doesn't reach React's state, and a non-bubbling `keydown` doesn't reach React's listener.
+
+Sprint 11's walked project is `scratchpad/sheet-s118` (on `main`, pushed; 114 tests and 4 todos). A step with no file of its own (prose and a check) has no target for a wrong answer's `edit`: use `editFiles: {"path": [[old, new]]}`. `npx tsc` with errors exits 1 here, not 2. Vitest 5's JSON reporter writes a file (`.vitest/json/output.json`) unless given `--outputFile`; point it into `node_modules` so the learner's tree stays clean. Sprint 12 is front-end architecture (routing, TanStack Query, code splitting): it needs some server to fetch from, which the plan's server module comes after, so decide that first.
