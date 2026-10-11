@@ -48,8 +48,6 @@ const wtPath = path.join(studio, 'tracks', `${track}.walkthrough.js`);
 if (fs.existsSync(wtPath)) walkthrough = (await import(pathToFileURL(wtPath).href)).WALKTHROUGH ?? {};
 
 const state = new Map();
-// The file as it stood before each step, for spotting the functions a step adds.
-const lessonStart = new Map();
 const taught = new Set();
 const lessons = [];
 const list = (v) => String(v ?? '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
@@ -77,6 +75,7 @@ for (const name of files) {
     if ((step.file ?? '').startsWith('playground/') || /experiment|break it|\blab\b/i.test(step.title) || marked.has(step.title)) report.experiment = true;
 
     let added = 0;
+    let fileBefore = '';
     if (step.file && step.target != null) {
       let before = state.get(step.file);
       // A file that appears under a new name nearly unchanged was renamed or moved (`git mv`),
@@ -90,6 +89,7 @@ for (const name of files) {
         }
         before = best && best.n < lines / 2 ? best.content : '';
       }
+      fileBefore = before;
       const after = step.target + '\n';
       if (!step.provided) added = diffLines(before, after).filter((op) => op.type === 'add' && op.line.trim() !== '').length;
       state.set(step.file, after);
@@ -108,13 +108,18 @@ ${step.explain ?? ''}`;
     if (step.provided && /(\.test\.|\.check\.|(^|\/)test_)/.test(step.file ?? '') && !/protect/i.test(text)) report.explain.push(`tests not explained (what they protect): ${step.title}`);
     let tableless = false;
     if (step.file && step.target != null && !step.provided) {
-      const before = (lessonStart.get(step.file) ?? '');
-      const fnNames = (src) => new Set([...src.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)|^\s*def\s+(\w+)/gm)].map((m) => m[1] ?? m[2]));
-      const had = fnNames(before);
+      const fnNames = (src) => new Set([...src.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*[(<]|^\s*def\s+(\w+)/gm)].map((m) => m[1] ?? m[2]));
+      const had = fnNames(fileBefore);
       const fresh = [...fnNames(step.target)].filter((f) => !had.has(f));
-      const rows = (text.match(/^\|\s*returns?\b/gim) ?? []).length;
+      // A table per function (a `| returns |` row), or one table with a row per function and a
+      // `returns` column.
+      let rows = (text.match(/^\|\s*returns?\b/gim) ?? []).length;
+      const lines = text.split('\n');
+      for (let k = 0; k < lines.length; k++) {
+        if (!/^\|.*\|\s*returns\s*\|/i.test(lines[k]) || /^\|\s*returns?\b/i.test(lines[k])) continue;
+        for (let m = k + 2; m < lines.length && lines[m].startsWith('|'); m++) rows++;
+      }
       if (fresh.length > rows) tableless = true;
-      lessonStart.set(step.file, step.target);
     }
     const verdict = added > WARN && justified.has(step.title) ? '' : added > DUMP ? 'DUMP' : added > WARN ? 'big' : added > 0 && prose / added < THIN ? 'thin' : tableless ? 'table' : '';
     report.steps.push({ title: step.title, file: step.file, added, prose, verdict });

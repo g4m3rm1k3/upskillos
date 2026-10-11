@@ -6,6 +6,20 @@ teaches: dom, queryselector, createelement, appendchild, textcontent, nested loo
 uses: functions, for loops, selectors, ids
 ---
 
+### The story so far
+
+`grid.js` has a function, `columnName(index)`, that turns a column's position into its letter with `String.fromCharCode(65 + index)`, and a `for` loop that calls it for 0 to 25 (3.2). It prints `A B … Z` to the Console. The page itself still shows the table you typed by hand in sprint 2.
+
+### What this lesson builds
+
+The whole grid, built by the script instead of typed: a header row of the corner and 26 letters, then 100 rows of a number and 26 empty cells. The HTML file shrinks to one empty element, and the page shows 2,626 cells:
+
+| | typed by hand (sprint 2) | built by `grid.js` (this lesson) |
+|---|---|---|
+| in `index.html` | every `<tr>`, `<th>` and `<td>` | `<table id="grid"></table>` |
+| columns × rows | 4 × 4 | 26 × 100 |
+| to make it 200 rows | type 100 more rows | change `rows = 100` to `200` |
+
 When the browser reads `index.html`, it doesn't keep the text. It builds a tree of **objects**, one per element, and draws the page from that tree. The tree is called the **DOM** (Document Object Model), and JavaScript can change it: add elements, remove them, change their text. The browser redraws to match.
 
 So instead of typing 2,600 cells, the script can create them.
@@ -73,6 +87,16 @@ Refresh: a row of letters, A to Z, styled exactly as the typed headers were, bec
 - **`parent.appendChild(child)`** puts `child` inside `parent`, as its last child. The nesting you typed by hand in sprint 2 is now built by calls.
 - **`th.textContent = columnName(c)`** sets the text inside an element.
 - **The header row** starts with one empty `th`, the corner, then one `th` per column, made in a loop.
+
+Here are the calls in order, and the tree they build. Nothing is on the screen until the last one:
+
+| call | what exists afterwards |
+|---|---|
+| `createElement("thead")`, `createElement("tr")` | two loose elements, in memory only |
+| `headerRow.appendChild(createElement("th"))` | `tr` holding the empty corner `th` |
+| the loop, 26 times: `createElement("th")`, set its text, `appendChild` | `tr` holding the corner, then `A` … `Z` |
+| `head.appendChild(headerRow)` | `thead` holding that `tr` |
+| `table.appendChild(head)` | the table on the page holds it all, and the browser draws it |
 
 ```check
 page index.html "document.querySelectorAll('thead th').length" 27 label="the header row has the corner plus 26 columns"

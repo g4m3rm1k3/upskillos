@@ -5,6 +5,21 @@ teaches: git restore
 uses: git diff, staging area
 ---
 
+### The story so far
+
+The project is fully committed, secrets are ignored, and line endings are settled (1.5). You've seen that Git keeps three versions of each file: the **last commit**, the **staging area**, and the file in your folder (the **working tree**). `git diff` compares your folder with the staging area, and `git diff --staged` compares the staging area with the last commit (1.4).
+
+### What this lesson builds
+
+The way back. You'll break `hello.js` on purpose, then undo it, and stage a change and then unstage it, with two forms of one command:
+
+| command | the last commit | the staging area | your file |
+|---|---|---|---|
+| `git restore hello.js` | unchanged | unchanged | **replaced** with the staged copy, which (with nothing staged) is the committed one: your edits are gone |
+| `git restore --staged hello.js` | unchanged | **replaced** with the committed copy: the change is unstaged | unchanged: your edit stays |
+
+Neither touches the history. That's why both are safe for commits, and why the first is dangerous for your uncommitted work.
+
 You'll often try something, make a mess, and want the last good version back. With Git, "the last good version" is the last commit, and getting back to it takes one command.
 
 ## Make a mess

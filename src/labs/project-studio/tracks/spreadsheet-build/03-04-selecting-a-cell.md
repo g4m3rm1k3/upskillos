@@ -5,6 +5,27 @@ teaches: events, event listeners, arrow functions, callbacks, closures, classlis
 uses: dom, classes, functions
 ---
 
+### The story so far
+
+`grid.js` builds the whole grid in the DOM (3.3): a header row of the corner and the letters A to Z, then 100 rows, each a numbered `th` and 26 empty `td`s, all made with `createElement` and `appendChild` and added to `<table id="grid">`. `columnName(index)` turns a column's position into its letter. Nothing on the page responds to the mouse yet.
+
+### What this lesson builds
+
+A selection. One cell is outlined, a **name box** above the grid shows its address, and clicking any cell moves both:
+
+```text
+┌──────┐
+│ B3   │                       ← the name box
+└──────┘
+     A      B      C
+ 1
+ 2
+ 3        ┏━━━━━━┓             ← the selected cell, outlined
+          ┗━━━━━━┛
+```
+
+On the way: functions that run *later*, when something happens (events), and how each of 2,600 cells remembers which one it is (closures).
+
 A spreadsheet always has one **selected cell**, outlined, with its address (like `B3`) shown in a box above the grid. Click another cell and the selection moves. Making that happen means responding to clicks, and that's a new way of programming: this lesson builds the selection first, then wires it to the mouse.
 
 ## The name box
@@ -161,6 +182,23 @@ select(0, 0);
 ```
 
 Refresh: `A1` is outlined, and the box says `A1`.
+
+**The two functions, their inputs, and what they give back:**
+
+| function | inputs | returns | example |
+|---|---|---|---|
+| `cellAt` | `column` and `row`, both counted from 0 | the `td` element at that position | `cellAt(1, 2)` is the cell B3 |
+| `select` | `column` and `row` | nothing: it changes the page, moving the outline and the name box's text | `select(1, 2)` outlines B3 and shows `B3` |
+
+Here is `select(1, 2)`, run when A1 was selected, one line at a time:
+
+| line | what happens | afterwards |
+|---|---|---|
+| `if (selected !== null)` | `selected` is A1's `td`, not `null` | |
+| `selected.classList.remove("selected")` | A1 loses the class | A1's outline is gone |
+| `selected = cellAt(1, 2)` | `body.rows[2].cells[2]`: row 3, and cell 2 because cell 0 is the row number | `selected` is B3's `td` |
+| `selected.classList.add("selected")` | B3 gets the class | the CSS outlines B3 |
+| `nameBox.textContent = columnName(1) + (2 + 1)` | `"B" + 3` | the box says `B3` |
 
 - **`let selected = null`**: no cell is selected yet. `null` is JavaScript's `None`.
 - **`body.rows[row].cells[column + 1]`**: every table element has a `rows` list, and every row a `cells` list. `cells` includes the row-number `th` at index 0, so column 0 (`A`) is at index 1. That `+ 1` is easy to forget; `cellAt` exists so it's written once.

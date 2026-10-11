@@ -6,6 +6,32 @@ teaches: trees, recursion, base cases, call stack, recursive types, dependency i
 uses: discriminated unions, union types, narrowing, type-only imports, tests, vitest, playground, stack traces
 ---
 
+### The story so far
+
+Lesson 7.1 built the **lexer**: `tokenize("A1+B1*2")` cuts formula text into a list of tokens, each an object with a `kind` (`cell`, `operator`, `number`, …) and a `start` position. When the text can't be part of a formula, it throws a `FormulaError` that says what and where. That's the first of the three stages:
+
+```text
+ text  ──lexer (7.1, done)──▶  tokens  ──parser (7.3)──▶  a tree  ──evaluator (this lesson)──▶  a value
+```
+
+This lesson does the third stage before the second, and the reason is just below.
+
+### What this lesson builds
+
+A **tree** that stands for a formula, and **`evaluate`**, the function that works one out. Here's the tree for `10/4 - 2*A1`, with the value `evaluate` finds at each node when A1 holds 0.25. The lesson's last check works out exactly this:
+
+```text
+                 (-)  = 2.5 - 0.5 = 2
+               /     \
+   (/) = 10/4 = 2.5   (*) = 2 × 0.25 = 0.5
+     /   \             /   \
+   10     4           2     A1 = 0.25, asked for
+```
+
+Each node's value comes from the values of the nodes below it, so the work starts at the bottom and moves up. The lesson builds it in `src/values.ts` (what a cell's value can be), `src/expression.ts` (the tree's type) and `src/evaluate.ts`, one rule at a time: the arithmetic, then the leaves, then the branches, then the rules for text and empty cells.
+
+### Why a tree
+
 Tokens are a flat list: `A1`, `+`, `B1`, `*`, `2`. A formula isn't flat. In `A1+B1*2`, the `*` joins `B1` and `2`, and the `+` joins `A1` and **the result of that multiplication**. A structure where things contain other things is a **tree**:
 
 ```text
@@ -36,7 +62,16 @@ export type Value = number | string | ErrorValue;
 
 - **`ErrorCode`** is the list of errors a cell can show, the same names Excel uses: `#DIV/0!` for division by zero, `#VALUE!` for arithmetic on text (`="Coffee"*2`). `#ERROR!` (Google Sheets' name) is for a formula that can't be read at all.
 - **An error is a value**, an object like `{ error: "#DIV/0!" }`, not an exception. That's a design decision, and it's the key one in this lesson. In a spreadsheet, an error in one cell must not stop the others: D2 can show `#DIV/0!` while D3 shows `7`, and a formula that uses D2 should show D2's error too. Values flow from cell to cell; exceptions jump out of the whole calculation. So errors travel as values.
-- **`Value = number | string | ErrorValue`** is a union of three types. Code tells them apart with `typeof`: `typeof value === "number"`, `"string"`, and for the error object, `"object"`.
+- **`Value = number | string | ErrorValue`** is a union of three types. Code tells them apart with JavaScript's `typeof` operator, which gives the name of a value's type as text:
+
+| a cell holding | its `Value` | `typeof` it |
+|---|---|---|
+| `3.50` | `3.5` | `"number"` |
+| `Coffee` | `"Coffee"` | `"string"` |
+| nothing | `""`, empty text | `"string"` |
+| `=1/0` | `{ error: "#DIV/0!" }` | `"object"` |
+
+So after `if (typeof value === "number")` and `if (typeof value === "string")` have both been false, the only thing left is an `ErrorValue`, and TypeScript knows it: narrowing again, this time with `typeof`.
 
 ```check
 file src/values.ts
@@ -60,9 +95,22 @@ export type Expression =
 
 An `Expression` is one node of the tree, and there are three kinds:
 
-- **`number`**: a constant, like the `2`. It has no children; it's a **leaf**.
-- **`cell`**: a reference to a cell, like `B1`. Also a leaf.
-- **`binary`**: an operator with two sides, its children. ("Binary" means "with two parts".)
+| kind | what it is | children | an example node |
+|---|---|---|---|
+| `number` | a constant | none: a **leaf** | `{ kind: "number", value: 2 }` |
+| `cell` | a reference to a cell | none: a leaf | `{ kind: "cell", address: { column: 0, row: 0 } }`, A1 |
+| `binary` | an operator with two sides ("binary" means "with two parts") | `left` and `right` | `{ kind: "binary", op: "*", left: …, right: … }` |
+
+Written out in full, the `2*A1` branch of the tree at the top of the lesson is one `binary` node holding two leaves:
+
+```typescript
+{
+  kind: "binary",
+  op: "*",
+  left: { kind: "number", value: 2 },
+  right: { kind: "cell", address: { column: 0, row: 0 } },
+}
+```
 
 Look at `left: Expression; right: Expression`. The type **refers to itself**: a binary expression contains two expressions, each of which may be another binary expression, containing two more, and so on. That's how one type describes a tree of any size. A type defined in terms of itself is a **recursive type**.
 
@@ -148,6 +196,18 @@ Why? Because then the evaluator works with any source of cell values. In the tes
 
 The other decisions are in the test names: an empty cell counts as 0 (as in Excel), text in arithmetic is `#VALUE!`, and an error **passes on** to every formula that uses it.
 
+### What each test protects
+
+| test | protects | the bug it would catch |
+|---|---|---|
+| gives a number its own value | the simplest tree, one leaf | an evaluator that only handles operators, so `=7` breaks |
+| works out the branches before the operator that joins them | branches are worked out first, at any depth | `2+3*4` giving 20, by calculating in reading order instead of by the tree's shape |
+| asks valueAt for the value of a cell | cells are looked up, and the right one | every cell read as 0, or B2 and C2 mixed up (the test gives them different values, 3.5 and 2, so a mix-up shows) |
+| counts an empty cell as 0, and text as an error | the spreadsheet rules for text | `=1+A1` with A1 empty giving `#VALUE!` (users add up columns with gaps all the time), or `="Coffee"*2` quietly giving 0 |
+| gives #DIV/0! for division by zero, and passes errors on | errors reach the cell, and don't get lost on the way | a cell showing `Infinity`, or `=1/0+1` giving a number, so one broken cell silently poisons every total that uses it |
+
+The last one is the one users meet. A total that shows `#DIV/0!` sends someone looking for the problem; a total that shows a wrong number doesn't.
+
 ```check
 file src/evaluate.test.ts
 run "npx vitest run evaluate" exit=1 stderr="evaluate.ts" label="the evaluate tests fail: evaluate.ts doesn't exist yet (red)"
@@ -187,7 +247,17 @@ function calculate(op: Operator, left: number, right: number): Value {
 }
 ```
 
-- **`calculate`** does the actual arithmetic, including the one rule arithmetic itself adds: dividing by zero gives `#DIV/0!`. (Without that check, JavaScript would give `Infinity`, and a spreadsheet showing `Infinity` would be hiding a mistake.)
+**`calculate`'s inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `op` | which of the four operators | `"/"` |
+| input `left` | the number on the operator's left: always a number, never text or an error | `10` |
+| input `right` | the number on its right | `4` |
+| returns | the answer, or `{ error: "#DIV/0!" }` when dividing by zero | `2.5`; for `10 / 0`, `{ error: "#DIV/0!" }` |
+
+It does the actual arithmetic, and adds the one rule arithmetic itself needs: dividing by zero gives `#DIV/0!` instead of JavaScript's `Infinity`. `right === 0 ? … : …` is the conditional operator (Python's `… if … else …`): when `right` is 0, the error; otherwise, the division.
+
 - **`switch (op)`** picks the case that matches `op`, like an `if`/`else if` chain on one value. Each `case` returns, so no case runs into the next.
 - **There's no `return` after the `switch`**, and TypeScript doesn't complain, because `op` is an `Operator` and the four cases cover all four. Delete one case and run the check: TypeScript reports *Function lacks ending return statement*. Put it back.
 
@@ -230,8 +300,18 @@ function calculate(op: Operator, left: number, right: number): Value {
 }
 ```
 
+**`evaluate`'s inputs, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `expression` | the tree, or any part of it: a node | the `2*A1` branch |
+| input `valueAt` | a function that gives a cell's value from its address | `() => 0.25`: every cell is 0.25 |
+| returns | the node's value: a number, text, or an error | `0.5` |
+
+- **`valueAt: (address: Address) => Value`** is the type of a *function*: one that takes an address and gives a value. The evaluator calls it and trusts the answer.
 - **`switch (expression.kind)`** picks the case for this kind of node, like an `if`/`else if` chain on one value. Inside `case "number":`, TypeScript knows the node has a `value`, and inside `case "cell":` an `address` (the discriminated union again).
-- **`valueAt: (address: Address) => Value`** is the type of a function: it takes an address and gives a value. The evaluator calls it and trusts the answer.
+
+For the two leaves of the `2*A1` branch: `evaluate({ kind: "number", value: 2 }, valueAt)` takes the `number` case and returns `2`, the value stored in the node. `evaluate({ kind: "cell", address: { column: 0, row: 0 } }, valueAt)` takes the `cell` case and calls `valueAt({ column: 0, row: 0 })`, which gives `0.25`. Neither calls `evaluate` again: a leaf's value is known straight away.
 
 The project's `npx tsc` now complains that `evaluate` doesn't always return: `binary` isn't handled yet. That's the next step, and it's TypeScript checking that every kind is covered.
 
@@ -306,13 +386,30 @@ evaluate(+)                     → needs its left and right
                                   calculate("+", 2, 12) = 14
 ```
 
-While `evaluate(4)` runs, the calls for `*` and `+` are both still waiting for their answers. The computer keeps a list of the calls that are waiting, called the **call stack**: each new call goes on top, and each return takes the top one off. It's the same stack you saw in Node's error messages in lesson 0.4 (the `at …` lines) and in the debugger's *Call Stack* pane in lesson 6.5.
+While `evaluate(4)` runs, the calls for `*` and `+` are both still waiting for their answers. The computer keeps a list of the calls that are waiting, called the **call stack**: each new call goes on top, and each return takes the top one off. At that moment it holds three calls:
+
+```text
+  top ▶  evaluate(4)     running: a leaf, about to return 4
+         evaluate(*)     waiting: has its left (3), needs its right
+         evaluate(+)     waiting: has its left (2), needs its right
+```
+
+`evaluate(4)` returns 4 and comes off the top. `evaluate(*)` now has both sides, returns 12, and comes off. `evaluate(+)` has both sides, returns 14, and the stack is empty again. Each waiting call keeps its own `left` and `right`: three calls to the same function, three separate sets of variables. It's the same stack you saw in Node's error messages in lesson 0.4 (the `at …` lines) and in the debugger's *Call Stack* pane in lesson 6.5.
 
 (Python works the same way, so you could write this evaluator in Python with the same shape. Recursion isn't a JavaScript feature; it's a way of solving a problem that contains smaller copies of itself.)
 
 ### Errors pass on
 
-- **Errors pass on** because the `binary` case checks after each side: if the left side isn't a number, it's an error, and that error is returned as the answer, without even working out the right side. The first error found is the one the cell shows, the way Excel does it.
+The `binary` case checks after each side: if the left side's value isn't a number, it's returned as the answer straight away, without even working out the right side. Here's `1/0 + 1`, the last test's tree:
+
+| call | what happens | returns |
+|---|---|---|
+| `evaluate(+)` | works out its left side first | (waits) |
+| `evaluate(/)` | left is 1, right is 0: `calculate("/", 1, 0)` | `{ error: "#DIV/0!" }` |
+| `evaluate(+)` | its left is an object, not a number, so it returns it; the `1` on the right is never looked at | `{ error: "#DIV/0!" }` |
+
+So the error climbs the tree untouched, and the cell shows `#DIV/0!`, the first error found, the way Excel does it.
+
 - **The `{ }` after `case "binary":`** give that case its own block, so its `const` variables don't clash with other cases.
 
 To watch the recursion happen, add `console.log("evaluate", expression.kind);` as the first line of `evaluate`, and run `npx vitest run evaluate -t "branches"`. The order of the lines is the trace above. Then take the line out.
@@ -331,7 +428,7 @@ verify: node -e "import('./src/evaluate.ts').then(({ evaluate }) => { const n = 
 
 ```check
 run "npx vitest run evaluate" exit=1 stdout="4 passed" label="four of the five evaluate tests pass" -- Work out the left, return it if it isn't a number; the same for the right; then calculate.
-run "node -e \"import('./src/evaluate.ts').then(({ evaluate }) => { const n = (value) => ({ kind: 'number', value }); const b = (op, left, right) => ({ kind: 'binary', op, left, right }); const a1 = { kind: 'cell', address: { column: 0, row: 0 } }; console.log(evaluate(b('-', n(10), n(4)), () => 0)); })\"" stdout="6" label="10 - 4 gives 6: left and right in the right order" -- calculate(expression.op, left, right): left first.
+run "node -e \"import('./src/evaluate.ts').then(({ evaluate }) => { const n = (value) => ({ kind: 'number', value }); const b = (op, left, right) => ({ kind: 'binary', op, left, right }); const a1 = { kind: 'cell', address: { column: 0, row: 0 } }; console.log('[' + evaluate(b('-', n(10), n(4)), () => 0) + ']'); })\"" stdout="[6]" label="10 - 4 gives 6: left and right in the right order" -- calculate(expression.op, left, right): left first.
 ```
 
 ## Text and empty cells: toNumber {#to-number}
@@ -387,7 +484,24 @@ function calculate(op: Operator, left: number, right: number): Value {
 }
 ```
 
-- **`toNumber`** is where the value rules live: a number stays a number; empty text becomes 0; other text becomes `#VALUE!`; an error stays the same error. Its return type, `number | ErrorValue`, says that arithmetic only ever continues with a number or an error.
+**`toNumber`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `value` | any value: what one side of an operator worked out to | `""` |
+| returns | a number to calculate with, or an error to pass on | `0` |
+
+It's where the spreadsheet's rules for values live, all four of them:
+
+| value in | out | why |
+|---|---|---|
+| `3.5` | `3.5` | a number is already a number |
+| `""` | `0` | an empty cell counts as 0, so `=A1+A2+A3` works with gaps |
+| `"Coffee"` | `{ error: "#VALUE!" }` | text can't be calculated with |
+| `{ error: "#DIV/0!" }` | `{ error: "#DIV/0!" }` | an error passes through unchanged |
+
+Its return type, `number | ErrorValue`, says what the `binary` case can rely on: after `toNumber`, a side is either a number or an error, never text. So the `typeof … !== "number"` checks that follow catch exactly the errors.
+
 - **`ErrorValue`** joins the import, because `toNumber`'s return type names it.
 
 ```check

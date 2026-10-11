@@ -5,6 +5,10 @@ teaches: working from acceptance tests, performance as a requirement
 uses: classes, maps, sparse storage, addresses, tests, branches, test-driven development
 ---
 
+### The story so far
+
+Sprint 6 gave the spreadsheet its foundation: tested functions for column names and addresses, a `Sheet` class that stores only the cells that hold something, in a map from `"B3"`-style keys to text (6.4), a page drawn from that sheet (6.5), and a tidy `src` folder (6.6). `npm test` runs every test in under a second. The sprint is merged into `main` and pushed.
+
 Saving a sheet, printing it and scrolling to its end all need one question answered: **which part of the sheet has anything in it?** The answer is the smallest rectangle holding every non-empty cell, from its top-left corner to its bottom-right. This challenge adds it to the `Sheet`, from a spec and a set of acceptance tests, with no code shown.
 
 ## The spec
@@ -59,6 +63,16 @@ describe("Sheet.used", () => {
   });
 });
 ```
+
+### What each test protects
+
+| test | protects | the bug it would catch |
+|---|---|---|
+| is null for an empty sheet | the "nothing there" case has its own answer | a rectangle from `undefined` to `undefined`, or a crash on an empty map |
+| is a single cell when only one cell has something in it | the smallest real case | a rectangle that always starts at A1, because the corners started at 0 instead of at the first cell |
+| is the smallest rectangle holding every non-empty cell | both corners, from cells that aren't in a line | taking the first and last cell typed instead of the smallest and largest column and row |
+| shrinks when the outermost cell is emptied | emptied cells don't count | a rectangle that remembers every cell ever typed in |
+| answers at once for cells very far apart | **performance as a requirement**: under 50 ms | a loop over every position on the sheet, 18 billion checks, which passes on small sheets and freezes on big ones |
 
 Work on a branch, `used-range`; merge it and push when every check passes.
 

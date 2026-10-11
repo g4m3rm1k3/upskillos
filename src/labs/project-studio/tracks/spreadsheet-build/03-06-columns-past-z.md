@@ -5,6 +5,10 @@ title: 3.6 — Challenge: Columns Past Z
 runtime: none
 ---
 
+### The story so far
+
+Sprint 3 brought the grid to life with JavaScript. `grid.js` builds the grid in the DOM (3.3), one cell is always selected and clicks move the selection (3.4), and a formula bar puts typed text into the selected cell with Enter, always with `textContent`, so typed text can never run as code (3.5). One bug has been waiting since 3.2: `columnName(26)` gives `[`, not `AA`.
+
 Lesson 3.2 left a bug in `columnName`: the 27th column comes out as `[` instead of `AA`. Real spreadsheets go on for thousands of columns: after `Z` comes `AA`, `AB`, … `AZ`, then `BA` … `ZZ`, then `AAA`. This lesson's challenge is to make `columnName` give the right name for **any** column number.
 
 ## See the bug on the page
@@ -84,7 +88,7 @@ git-clean
 
 ## What you've built, and what's wrong with it
 
-Sprint 3 is done. The grid builds itself, cells can be selected and filled, and the column names are right as far as anyone will scroll.
+The sprint's work is done (the next lesson goes through one solution to the challenge). The grid builds itself, cells can be selected and filled, and the column names are right as far as anyone will scroll.
 
 The code has problems too, and you'll feel them soon. Everything is in one file of over 70 lines, and it will only grow. Nothing protects `columnName` from someone breaking it later: you checked it by hand in the Console, and next month you won't. And bugs like `select(r, c)` and `"B" + 2 + 1` are only found by clicking around.
 

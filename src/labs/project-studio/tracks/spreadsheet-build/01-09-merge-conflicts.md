@@ -6,6 +6,27 @@ teaches: merge conflicts, merge commits
 uses: branches, git merge, git push
 ---
 
+### The story so far
+
+The project is on GitHub (1.8), and your everyday rhythm is commit, commit, push. You've made a branch, committed on it and merged it into `main` (1.7). That merge was a **fast-forward**: Git just moved the name `main` along to the branch's commit.
+
+### What this lesson builds
+
+A merge that can't be a fast-forward, because both branches changed the same line, and the way to finish it. The history ends up shaped like this:
+
+```text
+                 ┌── "then test it"  (careful) ──┐
+ "break it" ─────┤                               ├── merge commit: "test it, then ship it"
+                 └── "then ship it"  (main)  ────┘
+```
+
+| step | `playground/motto.txt` on `main` |
+|---|---|
+| start | `Build it, then break it.` |
+| `careful` changes it, then `main` changes it | `Build it, then ship it.` |
+| `git merge careful` stops | both versions, between `<<<<<<<`, `=======` and `>>>>>>>` markers |
+| you resolve it and commit | `Build it, test it, then ship it.` |
+
 In lesson 1.7, `main` hadn't moved while you worked on your branch, so merging was a fast-forward: Git just moved the name `main` along. On a team that almost never happens. While you work on your branch, other people merge theirs, and `main` moves on.
 
 When two branches change **different** lines, Git combines them by itself, in a new commit called a **merge commit**. When both change the **same** line, Git can't know which version you want, so it stops and asks. That's a **merge conflict**. It isn't an error and nothing is broken: it's Git refusing to guess.

@@ -6,6 +6,22 @@ teaches: optional properties, nullish coalescing
 uses: typing existing code, type aliases, union types
 ---
 
+### The story so far
+
+The challenge (5.4) handed you `invoice.ts`, a colleague's untyped module that "works", and a check program showing what the rest of the code expects from it. The brief asked you to type it under `--strict`, so that the check program prints what it should.
+
+### What this lesson builds
+
+Nothing new in the project: one solution, and the bugs adding types uncovered on the way. Each bug was invisible in JavaScript and shows up in the check program's output:
+
+| the check program printed | it should print | the bug |
+|---|---|---|
+| `undefined x Coffee at 3.5` | `2 x Coffee at 3.5` | `describe` reads `line.qty`, a property no line has |
+| `5.75` | `13.75` | `invoiceTotal` adds the prices and forgets the quantities |
+| `[2,0,-3,2.5,null,0]` | `[2,null,null,null,null,null]` | `parseQuantity` accepts 0, negatives, fractions and blank text (and `abc` only fails by accident: `NaN` prints as `null`) |
+
+Types found the first bug by themselves. The other two type-check perfectly, which is the sprint's point: they needed the check program, and the brief's rules.
+
 This lesson goes through one solution to the invoice challenge, one bug at a time. **If yours passed every check, keep it**, and compare. The finished module is:
 
 ```typescript

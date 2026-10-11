@@ -6,6 +6,22 @@ teaches: classes, this, private fields, maps, sparse storage, nullish coalescing
 uses: objects, interfaces, tests
 ---
 
+### The story so far
+
+`address.ts` gives a cell's position a type, `Address` (`{ column, row }`), with `formatAddress` (`{ column: 1, row: 2 }` → `"B3"`) and `parseAddress` (back again, or `null`), all tested first (6.3). The grid on the page still passes positions as two numbers, and keeps what you type nowhere but in the `<td>` elements.
+
+### What this lesson builds
+
+A home for the data: a **`Sheet`** class in `sheet.ts`, which stores each cell's text under its address and has nothing to do with drawing. Inside, it's a map from address text to cell text. After `set` calls for B3 and C2, it holds:
+
+```text
+cells (a Map)
+  "B3" → "Coffee"
+  "C2" → "3.50"
+```
+
+Only typed cells are stored, so a sheet with two values holds two entries, however far apart they are. Five supplied tests say what it must do.
+
 Where does the spreadsheet keep what you type? Right now, in the page: the text is in the `<td>` elements, and nowhere else. That's why sprint 3's data vanished on refresh, and it's also why nothing could test it: there's no data without a browser page.
 
 This lesson gives the data a home of its own: a **`Sheet`**, an object that knows what's in every cell and has nothing to do with drawing. The page will draw *from* it (next lesson), and the tests can use it with no page at all.
@@ -105,6 +121,16 @@ describe("Sheet", () => {
 });
 ```
 
+### What each test protects
+
+| test | protects | the bug it would catch |
+|---|---|---|
+| starts empty | a new sheet has no cells, and an empty cell reads as `""` | `undefined` leaking out of `get`, which the rest of the program would then have to check for everywhere |
+| gives back what was put in a cell | storing and reading work at all | `set` writing under one key and `get` reading under another |
+| keeps each cell separate | B3 and C2, the swapped pair, are different cells | a key that mixes up columns and rows, so typing in B3 overwrites C2 |
+| replaces a cell's text | setting a cell twice keeps one value | a sheet that counts a cell twice after it's edited |
+| forgets a cell set to empty text | clearing a cell removes it | empty strings piling up in the map, so `count` (and lesson 6.7's used range) include cells that look empty |
+
 Each test makes its own `new Sheet()`, so no test can be affected by another's leftovers. The *keeps each cell separate* test uses B3 and C2: the swapped pair, so a sheet that confused columns and rows would fail it.
 
 Run only this file's tests, by giving Vitest part of its name:
@@ -148,6 +174,14 @@ export class Sheet {
   }
 }
 ```
+
+**The class's methods, their inputs, and what they give back:**
+
+| method | inputs | returns | example |
+|---|---|---|---|
+| `get` | an `Address` | the cell's text, or `""` if nothing's there | `get({ column: 1, row: 2 })` is `"Coffee"` |
+| `set` | an `Address` and the text | nothing; stores the text under the address's name (from the next step, removes it if the text is `""`) | `set({ column: 1, row: 2 }, "Coffee")` stores `"B3" → "Coffee"` |
+| `count` | none | how many cells hold something | `2` |
 
 - **`import { formatAddress, type Address }`**: `type` marks `Address` as a type-only import. Types vanish when TypeScript becomes JavaScript, and `type` says so, so no tool tries to import an `Address` that doesn't exist at run time.
 - **`this.cells.get(...) ?? ""`**: **`??`** gives the right-hand side when the left is `null` or `undefined`. A cell nobody has typed in comes back as `""`, so the rest of the program never meets `undefined` from a sheet. (Python's dictionary `.get(key, "")` does the same in one call.)

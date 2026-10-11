@@ -6,6 +6,25 @@ teaches: html, elements, attributes, doctype, character encoding
 uses: branches
 ---
 
+### The story so far
+
+Sprint 1 put the project under Git and on GitHub. The everyday rhythm is: make a branch, commit on it, merge it into `main`, push. The project holds small programs from sprint 0 and a `playground` folder of experiments, all committed, with `.env` ignored.
+
+### What this lesson builds
+
+The spreadsheet's first web page, `index.html`, opened in your browser:
+
+```text
+┌─ Spreadsheet ─────────────────────── (the browser tab) ─┐
+│                                                         │
+│  Spreadsheet                          (a big heading)   │
+│  A grid of cells will go here.        (a paragraph)     │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+That's all it shows. What you learn on the way is how every web page is written, and your Your turn writes one from memory.
+
 The spreadsheet will be a web page: the kind of document your browser displays. This sprint puts one on the screen: a grid of cells you can see, written by hand. It won't do anything yet. Making it respond is sprint 3.
 
 Web pages are written in **HTML**, a language for describing what's on a page: a heading here, a paragraph there, a table. HTML isn't a programming language: it has no variables, loops or `if`. It describes; the browser draws.
@@ -54,12 +73,26 @@ Elements go inside other elements, which is called **nesting**. The indentation 
 
 Some elements have no content and no closing tag, like `<meta charset="utf-8">`. The `charset="utf-8"` part is an **attribute**: a setting written inside the opening tag, as `name="value"`.
 
+When the browser reads the file, it turns the nesting into a **tree** of elements, each inside its parent. For `index.html`:
+
+```text
+html  (lang="en")
+├── head
+│   ├── meta  (charset="utf-8")
+│   └── title ─ "Spreadsheet"
+└── body
+    ├── h1 ─ "Spreadsheet"
+    └── p ─ "A grid of cells will go here."
+```
+
+The browser draws from that tree, not from your text. Sprint 3's JavaScript changes the page by changing the tree.
+
 ### Line by line
 
 - **`<!DOCTYPE html>`** says "this is a modern HTML page". It isn't an element; it's always the first line.
 - **`<html lang="en">`** contains the whole page. `lang="en"` says it's in English, which screen readers use to pronounce it.
 - **`<head>`** holds information *about* the page, which isn't drawn on it:
-  - **`<meta charset="utf-8">`** says how the file's characters are encoded, so `é` or `€` show up correctly.
+  - **`<meta charset="utf-8">`** says how the file's characters are encoded, so `é` or `€` show up correctly. A file is bytes, and the editor saves `é` as two of them, `C3 A9`: that's the UTF-8 encoding. A browser that guessed an older Windows encoding instead would read each byte as a character on its own, `C3` as `Ã` and `A9` as `©`, and show `cafÃ©` where you wrote `café`. The `meta` line removes the guess.
   - **`<title>`** is the text on the browser tab.
 - **`<body>`** holds what's drawn on the page: here a heading and a **`<p>`** (paragraph).
 

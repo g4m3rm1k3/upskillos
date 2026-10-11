@@ -6,6 +6,21 @@ teaches: bijective numeration, tracing, debugger stepping, loop invariants
 uses: while loops, remainder, devtools
 ---
 
+### The story so far
+
+The challenge (3.6) asked for a `columnName(index)` that names any column: `AA` after `Z`, `ZZ` at 701, `AAA` at 702, and an empty name, not an endless loop, for `-1`. The sprint was then merged into `main` and pushed.
+
+### What this lesson builds
+
+Understanding, more than code. One solution, a few lines long, and four steps to understanding it:
+
+| way | what it shows |
+|---|---|
+| a prediction about plain base 26 | why the obvious idea gives the wrong answer |
+| a trace of `columnName(27)`, by hand | every variable at every pass of the loop |
+| the debugger, stepping through `columnName(28)` | the same trace, done by the browser |
+| a loop invariant | why the loop finishes for **every** input, without trying them all |
+
 This lesson explains one solution to the columns challenge, why it works, and why it always finishes. **If yours passed, keep it**: read this to compare, not to replace. If yours didn't pass, this is how to see where it went another way.
 
 ## Why it isn't quite base 26

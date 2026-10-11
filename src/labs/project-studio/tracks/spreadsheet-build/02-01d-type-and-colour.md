@@ -5,6 +5,24 @@ teaches: type scale, line length, colour palette, contrast, design tokens, pseud
 uses: custom properties, specificity, rem
 ---
 
+### The story so far
+
+The portfolio page has semantic HTML (Styling 1) and a stylesheet (Styling 2) that decides which rule wins by specificity, then order. Styling 3 added space: `box-sizing: border-box` on everything, a spacing scale of five **custom properties** on `:root` (`--space-1` to `--space-5`), cards with padding and rounded corners, and `main` held to a centred column. Your Your turn gave the sections and the header room to breathe.
+
+### What this lesson builds
+
+The text and colour of the page, as decisions written down once:
+
+| decision | how it's written |
+|---|---|
+| a **type scale**: h1 40px, h2 28px, h3 20px, body 16px | `rem` sizes, so they grow with the reader's own text-size setting |
+| comfortable reading | `line-height: 1.6`, and paragraphs at most 65 characters wide |
+| a **palette** of eight colours | tokens on `:root`, `--color-text` to `--color-on-accent`; nothing else names a colour |
+| text everyone can read | every pair of text and background at 4.5 : 1 contrast or more |
+| buttons that respond | `.button`, a hover state, a quieter `.secondary` variant, and a visible keyboard focus |
+
+Your Your turn adds a dark theme, by setting the same eight tokens again.
+
 Most of a web page is text, so most of how a page looks is how its text looks: sizes that make the structure obvious at a glance, lines short enough to read, and colours that are calm, consistent and readable by everyone. This lesson gives the portfolio a type scale and a colour palette, and buttons that respond to the mouse and the keyboard.
 
 ## Text that's comfortable to read
@@ -388,7 +406,18 @@ explain: It's 2.50 : 1, well under the 4.5 : 1 that body text needs. This palett
 verify: node -e "const l = (h) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)).reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0); const r = (l('ffffff') + 0.05) / (l('9aa5b1') + 0.05); console.log(r >= 4.5 ? 'Yes, easily' : 'No, about 2.5 : 1')"
 ```
 
-You don't calculate this by hand: in DevTools, click any colour swatch in the Styles pane, and the colour picker shows the contrast ratio against the background, with a tick or a cross. Try it now on the link colour: `5.17`, and a tick.
+**Where the ratio comes from.** Each colour gets a **relative luminance**: how bright it looks, from 0 (black) to 1 (white). The red, green and blue parts are each turned into a brightness, then added in the proportions eyes are sensitive to: green counts most (0.7152), red less (0.2126), blue least (0.0722). For the accent `#2563eb`:
+
+| part | hex | out of 255 | brightness | × weight |
+|---|---|---|---|---|
+| red | `25` | 37 | 0.0185 | 0.0039 |
+| green | `63` | 99 | 0.1248 | 0.0892 |
+| blue | `eb` | 235 | 0.8308 | 0.0600 |
+| | | | **luminance** | **0.1532** |
+
+White's luminance is 1. The ratio is (brighter + 0.05) ÷ (darker + 0.05) = 1.05 ÷ 0.2032 = **5.17**. (The brightness column isn't simply the value ÷ 255: screens store colour on a curve, and the formula undoes it. The checks in this section do the whole calculation in code.)
+
+You don't calculate this by hand in practice: in DevTools, click any colour swatch in the Styles pane, and the colour picker shows the contrast ratio against the background, with a tick or a cross. Try it now on the link colour: `5.17`, and a tick.
 
 ## Surfaces and a footer
 

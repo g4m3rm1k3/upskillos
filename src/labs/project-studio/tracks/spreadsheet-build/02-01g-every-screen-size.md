@@ -5,6 +5,23 @@ teaches: responsive design, device toolbar, media queries, mobile first, clamp
 uses: css grid, flexbox, viewport
 ---
 
+### The story so far
+
+The portfolio page is designed (Styling 1–6): semantic HTML, predictable rules, a spacing scale, a type scale, a palette with a dark theme, a header and buttons in rows with **flexbox**, and cards in a **grid** whose `auto-fit` columns already adapt to the screen: three on a monitor, one on a phone. The About section is a two-column split, with your skill tags in the second column.
+
+### What this lesson builds
+
+The rest of the page, adapting to any screen:
+
+| part | on a phone (400px) | on a monitor (1,280px) |
+|---|---|---|
+| header | the name above the nav | the name left, the nav right |
+| `h1` | 34px, growing smoothly with the window | 48px, its maximum |
+| About (your turn) | heading, text and skills in one column | two columns |
+| the whole page | never wider than the screen | centred column |
+
+And a habit: checking every page at 320px, 400px and 768px wide, in the browser's device toolbar.
+
 More than half the visits to most websites come from phones. A page that only works on a wide monitor is broken for most of its readers. **Responsive design** means one page that adapts to any screen: the cards already do, by themselves. This lesson makes the rest adapt too, and makes testing on small screens a habit.
 
 ## See it on a phone-sized screen
@@ -491,6 +508,17 @@ answer: 48
 explain: The preferred size is 1.5rem + 2.5vw = 24px + 2.5% of 1280px = 24 + 32 = 56px. That's above the maximum, so `clamp` gives 3rem: 48px. Below about 960px the preferred value takes over and the heading shrinks with the window.
 verify: page playground/site/index.html "(async () => { const f = document.createElement('iframe'); f.style.cssText = 'width: 1280px; height: 600px; border: 0'; f.src = location.href; document.body.append(f); await new Promise((done) => (f.onload = done)); return parseFloat(f.contentWindow.getComputedStyle(f.contentDocument.querySelector('h1')).fontSize); })()" server=static
 ```
+
+Here is the same sum at four widths, 1rem being 16px:
+
+| window | 1.5rem + 2.5vw | between 32px and 48px? | the `h1` |
+|---|---|---|---|
+| 320px | 24 + 8 = 32px | yes, just | 32px |
+| 640px | 24 + 16 = 40px | yes | 40px |
+| 960px | 24 + 24 = 48px | yes, just | 48px |
+| 1,280px | 24 + 32 = 56px | no, too big | 48px, the maximum |
+
+No breakpoints, and no jump: between 320px and 960px the heading grows a little with every pixel of window.
 
 ```check
 page playground/site/index.html "(async () => { const f = document.createElement('iframe'); f.style.cssText = 'width: 1280px; height: 600px; border: 0'; f.src = location.href; document.body.append(f); await new Promise((done) => (f.onload = done)); return f.contentWindow.getComputedStyle(f.contentDocument.querySelector('h1')).fontSize; })()" 48px server=static label="at 1280px the h1 is its maximum, 48px"

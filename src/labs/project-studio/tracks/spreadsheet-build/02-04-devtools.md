@@ -6,6 +6,21 @@ teaches: devtools
 uses: css, selectors
 ---
 
+### The story so far
+
+The spreadsheet's page has a table (2.2): column letters in a `<thead>`, numbered rows in a `<tbody>`, and a few cells of data. Lesson 2.3 styled it with `style.css`: collapsed borders in a quiet grid colour, shaded header cells, sticky column letters, and the three colours as tokens on `:root`. The styling section showed DevTools' Styles pane in passing; this lesson tours it properly.
+
+### What this lesson builds
+
+One rule in `style.css`, and the habit of finding it in the browser first:
+
+| | before | after |
+|---|---|---|
+| column letters (`thead th`) | centred | centred |
+| row numbers (`tbody th`) | centred | right-aligned, like numbers in every spreadsheet |
+
+On the way: the Elements tab (the page's tree, live), the Styles pane (every rule that applies, and which one won), and changing styles in the browser to try them before typing them into the file.
+
 Every browser has a set of tools built in for people who build web pages: the **developer tools**, usually called **DevTools**. They show the page as the browser understands it, let you change styles and see the result instantly, and show the errors a page produces. You'll have them open for the rest of the series.
 
 ## Open DevTools
@@ -20,7 +35,7 @@ The **Elements** tab shows your HTML as a tree you can fold and unfold, the same
 
 On the right (or below), the **Styles** pane lists every CSS rule that applies to that cell, with the file and line each came from: your `th, td` rule from `style.css`, and above it any rules from the browser's own default styles. A rule that lost to a later one is shown crossed out. When a style doesn't do what you expect, this is where you find out why.
 
-Scroll the Styles pane to the bottom: a diagram of nested boxes shows the cell's **content**, **padding**, **border** and **margin** sizes (the box model from lesson 2.3).
+Scroll the Styles pane to the bottom: a diagram of nested boxes shows the cell's **content**, **padding**, **border** and **margin** sizes (the box model from Styling 3).
 
 ## Change a style live
 
@@ -70,7 +85,7 @@ tbody th {
 
 ## Merge the sprint and push
 
-The page looks like a spreadsheet. Commit the challenge, bring the branch into `main` (lesson 1.7), and back it up on GitHub (lesson 1.8):
+The page looks like a spreadsheet. Commit your Your turn, bring the branch into `main` (lesson 1.7), and back it up on GitHub (lesson 1.8):
 
 ```powershell
 git commit -am "Right-align row numbers"
@@ -90,4 +105,4 @@ git-pushed -- git push
 git-clean
 ```
 
-Sprint 2 is done. Next sprint the grid stops being typed by hand: JavaScript builds it, and it starts responding when you click.
+The spreadsheet's part of sprint 2 is done. The sprint ends with a challenge (2.5): a page built from a designer's brief, using everything in the styling section. After that, sprint 3: the grid stops being typed by hand, JavaScript builds it, and it starts responding when you click.

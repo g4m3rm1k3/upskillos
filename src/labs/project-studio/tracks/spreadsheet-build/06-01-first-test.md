@@ -6,6 +6,29 @@ teaches: tests, vitest, describe, it, expect, npm test
 uses: typescript, functions, git restore
 ---
 
+### The story so far
+
+The spreadsheet is TypeScript, checked by `npm run check` and refused by `npm run build` when it has a type error (sprint 5). Sprint 5 also showed what types can't catch: a wrong *answer*. `columnName(26)` returning `"BA"` instead of `"AA"` would type-check perfectly. So far you've checked answers by hand, in the Console.
+
+### What this lesson builds
+
+The project's first **tests**: three sentences about `columnName`, each with the answers that prove it:
+
+| test | checks |
+|---|---|
+| *names the first 26 columns A to Z* | `columnName(0)` is `"A"`, `columnName(25)` is `"Z"` |
+| *goes on to AA after Z* | the two-letter names |
+| *reaches three letters after ZZ* | the three-letter names |
+
+**Vitest** runs all three in about half a second, and reports:
+
+```text
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+```
+
+And then the same tests failing on purpose, because a test you've never seen fail proves nothing.
+
 In sprint 3 you checked `columnName` by typing `columnName(26)` into the Console and reading the answer. That worked once. But code changes: next month you'll touch `columnName` for some other reason, and nobody will remember to type those checks again. Sprint 5 showed that the type checker won't notice if it starts returning `"BA"`.
 
 A **test** is a small program that runs your code with known inputs and checks the outputs, and it can be run again at any time, in a second. This sprint writes tests, then uses them to build the spreadsheet's first real model of its data.

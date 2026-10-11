@@ -5,6 +5,22 @@ teaches: css, selectors, cascade, specificity, inheritance
 uses: classes, ids
 ---
 
+### The story so far
+
+Styling 1 wrote the HTML of a portfolio page, `playground/site/index.html`: a header with a nav, a `main` with three sections (intro, projects, about) and a contact section from your Your turn, and a footer. The elements say what each part *is*; nothing says how it looks yet. Some elements carry **classes** (`class="card"`) and **ids** (`id="projects"`), labels for picking them out.
+
+### What this lesson builds
+
+The portfolio's stylesheet, `playground/site/style.css`, with its first three rules, and a lab page where four rules fight over three paragraphs:
+
+| element | after this lesson |
+|---|---|
+| all text | the system's own font, in a softened black, `#1f2933` |
+| links in the page | blue, `#2563eb` |
+| links in the nav | dark like the text, no underline, semi-bold |
+
+And the four laws that decide, for any element, which rule's value it gets. Once you know them, CSS stops feeling random: you can say in advance which rule will win, and when a style "doesn't work", you can say why.
+
 CSS (Cascading Style Sheets) is a list of rules, and on any real page several rules want to style the same element. The browser settles every disagreement the same way, with a few simple laws. Once you know them, CSS stops feeling random: you can say in advance which rule will win, and when a style "doesn't work", you can say why.
 
 This lesson starts the portfolio's stylesheet, then runs an experiment on the laws themselves.
@@ -144,6 +160,18 @@ Open the page (`start playground/css/which-wins.html`) and see how you did. Then
 2. **Order breaks ties.** Between equally specific rules, the one that comes later wins.
 3. **Your rules beat the browser's.** Its built-in stylesheet loses to yours whenever both set something.
 4. **Inheritance comes last.** A value inherited from a parent loses to any rule that targets the element itself.
+
+Here are the laws deciding **First**'s colour. Every rule that matches it is a candidate:
+
+| rule | specificity (ids, classes, names) | written | result |
+|---|---|---|---|
+| `p { color: green }` | (0, 0, 1) | 1st | loses: less specific |
+| `.note { color: orange }` | (0, 1, 0) | 2nd | loses: less specific |
+| `#first { color: purple }` | **(1, 0, 0)** | 3rd | **wins**: the most ids |
+| `p { color: red }` | (0, 0, 1) | 4th | loses: written last, but order only breaks ties |
+| the body's colour, inherited | (none) | | loses: law 4 |
+
+For **Third**, only the two `p` rules match. Both are (0, 0, 1), a tie, so law 2 decides: the later one, red.
 
 Two escape hatches exist, and professionals avoid both: a `style="…"` attribute written on an element beats every rule, and `!important` after a value beats everything that isn't also `!important`. They win by skipping the laws, so the next person can't predict the page any more.
 

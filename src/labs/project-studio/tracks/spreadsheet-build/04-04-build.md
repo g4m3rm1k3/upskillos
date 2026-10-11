@@ -6,6 +6,22 @@ teaches: building, bundling, minifying, content hashes, vite config, base paths
 uses: npm scripts, web servers, relative paths
 ---
 
+### The story so far
+
+The project is an npm project with Vite installed (4.2). `npm run dev` starts Vite's development server at `http://localhost:5173`, which serves the project's files, follows each `import`, and updates the browser as you save (4.3). A second terminal runs Git while the server runs in the first.
+
+### What this lesson builds
+
+The version of the spreadsheet a real website would serve. `npm run build` makes a `dist` folder from your source:
+
+| your source | in `dist` |
+|---|---|
+| `index.html` | `index.html`, pointing at the built files |
+| `grid.js` and `columns.js`, two readable modules | one JavaScript file, minified, named by its content: `assets/index-….js` |
+| `style.css` | `assets/index-….css`, minified |
+
+Then a preview server to check it, `.gitignore` keeping `dist` out of the history, and your Your turn: a setting that makes the build work in a subfolder of a website, which the next lesson needs.
+
 The dev server is for you, while you work. When the spreadsheet is put on a real website, there won't be a Vite dev server running: the website just hands out files. **Building** turns your project into those files, ready to publish.
 
 ## Build

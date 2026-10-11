@@ -6,6 +6,22 @@ teaches: addresses, objects, interfaces, regular expressions, destructuring, toe
 uses: tests, typescript, test-driven development
 ---
 
+### The story so far
+
+`columns.ts` has two functions that undo each other, `columnName` (0 → `"A"`) and `columnIndex` (`"A"` → 0), written test first (6.2): red, green, refactor. Their tests run with `npm test`, including a round trip over 20,000 columns. The grid still passes a cell's position around as two loose numbers, `select(column, row)`, which sprint 3 showed are easy to swap.
+
+### What this lesson builds
+
+A type for a cell's position, and the two conversions every spreadsheet needs, in a new module, `address.ts`:
+
+| | from | to |
+|---|---|---|
+| `formatAddress` | `{ column: 1, row: 2 }` | `"B3"` |
+| `parseAddress` | `"B3"`, or `"b3"` | `{ column: 1, row: 2 }` |
+| `parseAddress` | `"B0"`, `"3B"`, `"B3 "`, `""` | `null`: not an address |
+
+Formulas in sprint 7 are full of addresses like `B3`, and `parseAddress` is how the program will read them.
+
 A cell's position has been two loose numbers, `column` and `row`, passed around separately, and lesson 3.4 showed how easily two numbers get swapped. This lesson gives a position a type of its own, **`Address`**, and two functions: one that writes an address as text (`B3`), and one that reads text back into an address.
 
 Tests first again.
@@ -63,7 +79,17 @@ describe("parseAddress", () => {
 - The rejects test is where the decisions are written down: `B0` isn't an address (rows start at 1), and neither is `B3 ` with a space. Tests are a precise description of what the code should do.
 - **`{ column, row }`** in the last test is short for `{ column: column, row: row }`.
 
-One of those bullets is worth testing yourself. Predict:
+### What each test protects
+
+| test | protects | the bug it would catch |
+|---|---|---|
+| writes the column letters, then the row counted from 1 | the text people see | `B2` for the cell that's really B3, by forgetting rows count from 1 on screen |
+| reads an address | text back into numbers, including two letters | `AA100` read as column 0, by looking at only the first letter |
+| accepts lower-case letters | `b3` means B3, as in every spreadsheet | a user's formula failing for no visible reason |
+| rejects text that isn't an address | every malformed case gives `null`, not a guess | `B0` accepted as a cell above row 1, or `B3 ` with a space read as B3 when a formula meant something else |
+| undoes formatAddress | the two functions agree, over a thousand addresses | a change to one function that the other doesn't match |
+
+One of the bullets under *New in these tests* is worth testing yourself. Predict:
 
 ```predict
 question: In a test, `expect({ column: 1, row: 2 }).toBe({ column: 1, row: 2 })`: pass or fail?
@@ -106,6 +132,13 @@ export interface Address {
   row: number;
 }
 ```
+
+**`formatAddress`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `address` | an `Address`: a column and a row, both counted from 0 | `{ column: 26, row: 99 }` |
+| returns | the address as people write it | `"AA100"`: `columnName(26)` is `"AA"`, and row 99 is the 100th |
 
 An **interface** names the shape of an object: an `Address` is any object with a `column` and a `row`, both numbers. It exists only for TypeScript and disappears from the JavaScript the browser runs. From now on, a function can take one `Address` instead of two numbers, and every place that builds one has to say `column:` and `row:` out loud. `select({ column: r, row: c })` is much harder to write by accident than `select(r, c)`.
 
@@ -156,6 +189,26 @@ is a **regular expression**: a pattern for text. Python has the same thing in it
 - **`[A-Z]+`**: one or more (`+`) capital letters.
 - **`[1-9][0-9]*`**: a digit from 1 to 9, then any number (`*` means zero or more) of digits. That's what rules out `B0` and `B03`.
 - **`( )`**: capture what matched inside, so the letters and the digits can be used separately.
+
+**`parseAddress`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `text` | text that might be an address | `"b3"` |
+| returns | the `Address` it names, or `null` if it isn't one | `{ column: 1, row: 2 }` |
+
+Here is `parseAddress("b3")`, a line at a time:
+
+| line | value |
+|---|---|
+| `text.toUpperCase()` | `"B3"` |
+| `.exec(...)` | a match: item 0 is `"B3"`, item 1 (the letters) `"B"`, item 2 (the digits) `"3"` |
+| `const [, letters, digits] = match` | `letters` is `"B"`, `digits` is `"3"` |
+| `columnIndex(letters)` | `1` |
+| `Number(digits) - 1` | `2`: rows count from 0 inside the program |
+| returns | `{ column: 1, row: 2 }` |
+
+For `"B0"`, `.exec` returns `null` at the second line, because `[1-9]` can't match `0`, and `parseAddress` returns `null` straight away.
 
 **`.exec(text)`** tries the pattern: it returns `null` if the text doesn't match, otherwise a list whose item 0 is the whole match and items 1 and 2 are the two captured parts. `text.toUpperCase()` first, so `b3` matches too.
 

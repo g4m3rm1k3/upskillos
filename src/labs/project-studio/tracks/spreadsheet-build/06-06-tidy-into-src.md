@@ -6,6 +6,39 @@ teaches: project layout, src folders, git rm, readme files
 uses: git mv, tsconfig, markdown
 ---
 
+### The story so far
+
+The page is wired to the model (6.5): `grid.ts` keeps its data in a `Sheet`, passes positions as `Address` objects, and draws each cell from the sheet. Everything is tested (`npm test`) and type-checked (`npm run check`). The project folder has grown file by file since sprint 0, and it shows.
+
+### What this lesson builds
+
+A project laid out the way most real ones are:
+
+```text
+before                              after
+──────                              ─────
+address.test.ts                     src/
+address.ts                            address.test.ts
+columns.test.ts                       address.ts
+columns.ts                            columns.test.ts
+exit-code.js       (practice)         columns.ts
+greet.py           (practice)         grid.ts
+grid.ts                               sheet.test.ts
+hello.js           (practice)         sheet.ts
+hello.py           (practice)         style.css
+index.html                          index.html
+package-lock.json                   package-lock.json
+package.json                        package.json
+sheet.test.ts                       README.md      (your turn)
+sheet.ts                            tsconfig.json
+style.css                           vite.config.js
+tsconfig.json                       playground/
+vite.config.js
+playground/
+```
+
+The top level keeps only what describes the project as a whole; the code is in `src`.
+
 List the project folder (`ls`) and look at the mix: the spreadsheet's source files and their tests, configuration files (`package.json`, `tsconfig.json`, `.gitignore`), generated folders (`node_modules`, `dist`), and four practice files from sprint 0 that have nothing to do with the spreadsheet. It's getting hard to see what the app actually is.
 
 Projects settle this the same way almost everywhere: the source code goes in a folder called **`src`** (*source*), and the top level keeps only the files that describe the project as a whole. Now is the moment, because the problem is real, not because a template said so.
@@ -163,7 +196,7 @@ git-pushed
 git-clean
 ```
 
-## Sprint 6 is done, and so is phase 1's groundwork
+## The groundwork is done
 
 Look at what you have:
 
@@ -172,7 +205,7 @@ Look at what you have:
 - `npm test` checks sixteen behaviours in a fraction of a second; `npm run check` checks the types; `npm run build` refuses to build with type errors.
 - Everything is in Git, on GitHub, organised the way most real projects are.
 
-That's the foundation the rest is built on. Sprint 7 starts the part that makes a spreadsheet a spreadsheet: type `=B2*C2` into a cell, and see `7`.
+That's the foundation the rest is built on. The sprint ends with a challenge on it (6.7), and then sprint 7 starts the part that makes a spreadsheet a spreadsheet: type `=B2*C2` into a cell, and see `7`.
 
 ## Your turn: a README for the project
 

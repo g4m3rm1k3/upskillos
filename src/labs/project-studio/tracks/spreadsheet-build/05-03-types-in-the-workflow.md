@@ -6,6 +6,24 @@ teaches: type checking in the build, limits of types
 uses: npm scripts, typescript
 ---
 
+### The story so far
+
+The spreadsheet is TypeScript, and `npx tsc` reports zero errors (5.2). Getting there answered every question TypeScript asked: type annotations on `columnName`, a `find` helper that throws instead of returning `null`, `String(r + 1)` for text, a union type for `selected`, and `?.` so a position off the grid can't crash `select`.
+
+### What this lesson builds
+
+Type checking as part of the project's commands, and an honest look at what it can't do:
+
+| command | before | after |
+|---|---|---|
+| `npm run check` | (didn't exist) | runs `tsc` |
+| `npm run build` | `vite build` | `tsc && vite build`: no build if there's a type error |
+
+| mistake | does `npm run check` catch it? |
+|---|---|
+| the typo `rws` for `rows` | yes, with a suggested fix |
+| `select(r, c)` instead of `select(c, r)` | **no**: both are numbers |
+
 A checker you have to remember to run gets forgotten. This lesson makes type checking part of the project's commands, so a build can't happen with type errors, and then looks honestly at what types can't catch.
 
 ## A check script, and a build that checks first
@@ -149,7 +167,7 @@ git-pushed
 git-clean
 ```
 
-Sprint 5 is done. The code says what kinds of values it works with, and the build refuses code that doesn't fit. Next sprint: tests, so wrong answers are caught as reliably as wrong types.
+The sprint's work on the spreadsheet is done. The code says what kinds of values it works with, and the build refuses code that doesn't fit. The sprint ends with a challenge (5.4): adding types to a colleague's untyped code. Then sprint 6: tests, so wrong answers are caught as reliably as wrong types.
 
 ## Your turn: make the swap impossible to miss
 

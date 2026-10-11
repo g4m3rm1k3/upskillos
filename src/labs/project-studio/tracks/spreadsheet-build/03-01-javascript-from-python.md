@@ -6,6 +6,21 @@ teaches: javascript, let, const, strict equality, undefined, arrays, script elem
 uses: node, repl, html
 ---
 
+### The story so far
+
+Sprint 2 put the spreadsheet on a page: `index.html` holds a hand-typed HTML table (column letters A to D, rows 1 to 4), and `style.css` makes it look like a spreadsheet, with grid lines, shaded headers and column letters that stay put. The styling section taught CSS on a portfolio in the playground, and the sprint finished with a page built from a designer's brief. Everything is merged into `main` and pushed.
+
+### What this lesson builds
+
+JavaScript, running in the page. A new file, `grid.js`, is loaded by `index.html`, and its first output appears in the browser's Console:
+
+```text
+grid.js is running
+The grid will have 2600 cells.
+```
+
+It doesn't change the page yet. Before it does, this lesson shows the handful of places where JavaScript behaves differently from Python, because those are where your Python habits will cause bugs.
+
 The grid is typed by hand, and it can't do anything. A browser runs one programming language, **JavaScript**, and this sprint uses it to build the grid and make it respond to clicks and typing.
 
 You already know how to program: variables, `if`, loops, functions, lists, dictionaries. JavaScript has all of them. This sprint shows each one next to the Python you know, and pays most attention to the places where JavaScript behaves differently, because those are where Python habits cause bugs.
@@ -105,6 +120,17 @@ The pattern: **where Python stops with an error, JavaScript often carries on wit
 - **`"1" + 1` is `'11'`.** If either side of `+` is a string, JavaScript turns the other side into a string and joins them. Python refuses. Other operators go the other way: `"3" * 2` turns `"3"` into a number and gives `6`.
 - **`==` converts too.** `1 == "1"` is `true`. **`===`** compares without converting: a number is never `===` a string. This series always uses `===` (and `!==` for "not equal"), and so should you.
 - **Nothing there is `undefined`, not an error.** A variable that was never given a value is `undefined`. Reading past the end of an array gives `undefined` too, where Python raises `IndexError`. (JavaScript also has `null`, which means "deliberately empty", like Python's `None`. You'll use `null` yourself and meet `undefined` in bugs.)
+Here is what happens inside the first two, one step at a time:
+
+| you type | JavaScript sees | it converts | then | result |
+|---|---|---|---|---|
+| `"1" + 1` | a string and a number, joined by `+` | `+` with a string means joining text, so the number becomes `"1"` | `"1" + "1"` | `'11'` |
+| `"3" * 2` | a string and a number, with `*` | `*` only means arithmetic, so the string becomes the number `3` | `3 * 2` | `6` |
+| `1 == "1"` | a number and a string, with `==` | `==` converts the string to a number | `1 == 1` | `true` |
+| `1 === "1"` | a number and a string, with `===` | nothing: different types are never `===` | | `false` |
+
+The same `"1"` was text in one line and a number in the next. JavaScript decided from the operator, without asking.
+
 - **`let` and `const`** create variables. `let` makes one you can change later; `const` makes one you can't reassign. Use `const` unless you know the value will change.
 - **Arrays** are JavaScript's lists: `["A", "B", "C"]`, indexed from 0. `.length` is the length, like Python's `len()`.
 

@@ -6,9 +6,20 @@ teaches: path variable, environment variables, os.environ
 uses: terminal, paths
 ---
 
-When you typed `python`, the shell found Python. When you typed `pyhton`, it didn't. This lesson is about how that search works, because "command not found" is one of the most common problems in a developer's day, and every tool you install in this series (Node, Git, .NET) depends on it.
+### The story so far
 
-You'll also meet **environment variables**: settings that every program you start can read. Your Python scripts can read them too, and later in the series your server will read its secrets from them.
+Lesson 0.1 made the project folder, `spreadsheet`, with a `playground` folder inside it for experiments. The **terminal** at the bottom of the window runs a **shell** (PowerShell), which runs programs when you type their names. You moved around with `cd`, using **relative paths**, which start from the shell's current folder. And you saw the shell fail: `pyhton --version` gave *the term 'pyhton' is not recognized*, while `python --version` worked.
+
+### What this lesson builds
+
+The answer to "how did the shell know where Python was?", and a way to configure a program without editing it. Two small scripts come out of it:
+
+| script | what it prints | what changes its output |
+|---|---|---|
+| `greet.py` | `Hello, stranger`, or `Hello, Ada` | the environment variable `GREETING_NAME` |
+| `playground/shout.py` (your turn) | `NOTHING TO SHOUT`, or `HELLO` | the environment variable `SHOUT_TEXT` |
+
+"Command not found" is one of the most common problems in a developer's day, and every tool you install in this bootcamp (Node, Git, .NET) depends on the search this lesson explains. **Environment variables**, settings every program you start can read, are how your server will read its secrets later.
 
 ## Where is python?
 
@@ -47,6 +58,19 @@ C:\Users\you\AppData\Local\Microsoft\WindowsApps
 ```
 
 Find the folder from the previous step (the one holding `python.exe`). It's in the list, which is why `python` works. `pyhton` failed because no folder in the list has a `pyhton.exe`.
+
+**The search, one folder at a time.** When you type `python`, the shell goes down the list in order, and in each folder asks "is there a program called `python` here?" (On Windows, a program file ends in `.exe`, so it's looking for `python.exe`.) With the list above:
+
+| folder | has `python.exe`? | so |
+|---|---|---|
+| `C:\Windows\system32` | no | try the next |
+| `C:\Windows` | no | try the next |
+| `C:\Windows\System32\WindowsPowerShell\v1.0` | no | try the next |
+| `C:\Program Files\Git\cmd` | no | try the next |
+| `C:\Program Files\dotnet` | no | try the next |
+| `C:\Users\you\AppData\Local\Microsoft\WindowsApps` | **yes** | run it, and stop looking |
+
+For `pyhton`, every row says no, the list runs out, and the shell gives up with *not recognized*. Two consequences you'll meet: **the order matters** (if two folders both had a `python.exe`, the earlier one wins, which is how you can end up running a different Python from the one you just installed), and **a folder that isn't in the list is never searched**, however many programs it holds.
 
 This is what *installing a command-line tool* means: the installer copies the program somewhere and adds that folder to PATH. When a tutorial says a tool "isn't on your PATH", it means the program exists but its folder isn't in this list.
 

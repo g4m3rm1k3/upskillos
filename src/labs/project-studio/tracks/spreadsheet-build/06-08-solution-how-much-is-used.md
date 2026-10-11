@@ -6,6 +6,21 @@ teaches: bounding boxes, iterating maps
 uses: classes, maps, sparse storage, addresses, tests
 ---
 
+### The story so far
+
+The challenge (6.7) asked for `Sheet.used()`: the smallest rectangle holding every non-empty cell, as `{ from, to }`, or `null` for an empty sheet. Five supplied tests checked it, the last one demanding an answer in under 50 ms for two cells 18,277 columns and a million rows apart. The sheet stores only non-empty cells, as keys like `"B3"` in a map (6.4).
+
+### What this lesson builds
+
+Nothing new in the project: one solution, about twenty lines, and why it's fast. Its input and output:
+
+| | what it is | example |
+|---|---|---|
+| input | none: it reads the sheet's own cells | cells typed in C5, B2 and E3 |
+| returns | `{ from, to }`, the top-left and bottom-right corners; or `null` | `{ from: B2, to: E5 }`, as addresses |
+
+Then your Your turn uses the same idea outside the sheet.
+
 One solution to the challenge, and why it's fast. **If yours passed, keep it**: compare as you read. In `src/sheet.ts`, the import gains `parseAddress`, and the class gains one method:
 
 ```typescript
@@ -43,6 +58,16 @@ import { formatAddress, parseAddress, type Address } from "./address.ts";
 - **The first cell is the whole rectangle**: `from` and `to` are both that cell.
 - **Every later cell stretches it**: `from` takes the smaller column and the smaller row, `to` the larger of each. `Math.min` and `Math.max` give the smaller and larger of two numbers.
 - **After the loop**, an empty sheet still has `from === null`, so the answer is `null`; otherwise `{ from, to }`.
+
+Here it is on a sheet with cells typed in C5, B2 and E3, in that order (a map gives its keys back in the order they were added). Columns and rows are counted from 0:
+
+| key | its address | `from` afterwards | `to` afterwards |
+|---|---|---|---|
+| `"C5"` | column 2, row 4 | (2, 4): the first cell is the whole rectangle | (2, 4) |
+| `"B2"` | column 1, row 1 | (min(2, 1), min(4, 1)) = (1, 1) | (max(2, 1), max(4, 1)) = (2, 4) |
+| `"E3"` | column 4, row 2 | (min(1, 4), min(1, 2)) = (1, 1) | (max(2, 4), max(4, 2)) = (4, 4) |
+
+The answer is (1, 1) to (4, 4): B2 to E5. Three passes for three cells, wherever they are.
 
 The "shrinks" test passes with no extra code: `set` deletes an emptied cell from the map (lesson 6.4), so the loop never sees it.
 

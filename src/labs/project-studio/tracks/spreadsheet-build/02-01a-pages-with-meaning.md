@@ -5,6 +5,33 @@ teaches: semantic html, landmarks, heading levels, lists, links, classes, ids, v
 uses: html
 ---
 
+### The story so far
+
+Lesson 2.1 wrote the spreadsheet's first page, `index.html`, by hand, on the `grid-page` branch. HTML is **elements**, written as tags around content, nested inside each other, with **attributes** like `lang="en"` in the opening tag. `<head>` holds information about the page; `<body>` holds what's drawn. The browser turns the nesting into a tree, and draws from it. Your Your turn wrote a whole page from memory: `playground/hello.html`.
+
+### What this lesson builds
+
+The HTML of a one-page portfolio site, `playground/site/index.html`, with no styling at all. What matters about it is its structure, which screen readers and search engines read as an outline:
+
+```text
+banner (header)
+  link "Sam Rivera"
+  navigation: list, 3 items: Projects, About, Contact
+main
+  heading 1  "I build software people enjoy using."
+  heading 2  "Projects"
+    article: heading 3 "Spreadsheet"
+    article: heading 3 "Command-line tools"
+    article: heading 3 "This site"
+  heading 2  "About"
+  heading 2  "Contact"          (your turn)
+content info (footer)
+```
+
+The next six lessons style this exact page, so every later change has the same HTML to work on.
+
+### A styling section
+
 The next seven lessons are a **styling section**: how to make any web page look good, not only a spreadsheet. Layout, spacing, type, colour, and pages that work on a phone as well as a monitor. You'll learn it all on a page of your own in the playground, a one-page **portfolio site** about you as a developer, and every step is an experiment you can push further. After the section, lessons 2.2 to 2.4 apply it to the spreadsheet, and the sprint ends with a challenge: build a page from a designer's spec.
 
 Good styling starts with good HTML. Not much of it, but the right elements. This lesson builds the portfolio's HTML, with no styling at all.

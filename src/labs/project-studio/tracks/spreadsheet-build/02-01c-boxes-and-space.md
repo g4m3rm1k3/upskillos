@@ -5,6 +5,21 @@ teaches: box model, box-sizing, custom properties, rem, spacing scale, max-width
 uses: css
 ---
 
+### The story so far
+
+The portfolio page has its HTML (Styling 1) and a stylesheet, `playground/site/style.css` (Styling 2): the system font, a softened black, blue links, and dark, semi-bold nav links. Styling 2 also gave you the laws for which rule wins: specificity first, then order, and inheritance last.
+
+### What this lesson builds
+
+Space, on purpose. By the end, the portfolio's stylesheet has:
+
+| what | where it comes from |
+|---|---|
+| boxes that are exactly as wide as you say | `box-sizing: border-box` on every element |
+| five named sizes, used for every gap on the page | a **spacing scale** of custom properties: `--space-1` (4px) to `--space-5` (48px) |
+| project cards with padding, a thin border and round corners | `.card`, using the scale |
+| text held to a centred column, at most 960px wide | `main` with `max-width` and `auto` margins |
+
 Ask a designer what separates a page that looks professional from one that looks hacked together, and the most common answer is **space**: consistent gaps, generous margins, text that never touches an edge. This lesson is about where space comes from in CSS, and how to keep it consistent.
 
 ## Four boxes inside each other
@@ -226,7 +241,7 @@ main {
 ```
 
 - **`max-width: 60rem`**, not `width`: on a wide screen `main` is 960px, and on a narrow one it simply fills the screen. `width` would force 960px on a phone and make the page scroll sideways.
-- **`margin: 0 auto`**: 0 top and bottom, `auto` left and right. A block with a limited width and `auto` side margins is centred: the browser shares the leftover space equally.
+- **`margin: 0 auto`**: 0 top and bottom, `auto` left and right. A block with a limited width and `auto` side margins is centred: the browser shares the leftover space equally. In a window 1,280px wide, `main` takes 960px, which leaves 320px over, so each `auto` margin becomes 160px. In a window 1,000px wide, the margins become 20px each. In one 800px wide, `max-width` doesn't apply (main fills the 800px), nothing is left over, and the margins are 0.
 - **`padding: 0 var(--space-3)`** keeps the text off the screen's edges when the window is narrower than 60rem.
 
 Make the window narrow and wide, and watch the column.

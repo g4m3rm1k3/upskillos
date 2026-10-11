@@ -5,6 +5,26 @@ teaches: flexbox, gap, flex-wrap
 uses: css, box model
 ---
 
+### The story so far
+
+The portfolio page has semantic HTML (Styling 1), a stylesheet whose rules you can predict (Styling 2), space from a scale and a centred column (Styling 3), and a type scale, a palette of colour tokens, and buttons with hover and focus states (Styling 4). Your Your turn added a dark theme. Every part of the page still sits in one column, one block under the next.
+
+### What this lesson builds
+
+The first layout. Four things on the page go side by side instead of stacking:
+
+```text
+before                                  after
+──────                                  ─────
+Sam Rivera                              Sam Rivera              Projects  About  Contact
+• Projects
+• About                                 [See my projects] [About me]
+• Contact
+[See my projects] [About me]            (and the contact links in a row: your turn)
+```
+
+All of it is **flexbox**: one property, `display: flex`, on the parent, and a few more that say how to share the space.
+
 So far everything on the portfolio sits in one column, each block under the last: that's the browser's **normal flow**. Layout is the art of breaking out of it on purpose: a name on the left and the menu on the right, buttons side by side, cards in rows. CSS has two layout systems built for this. **Flexbox**, this lesson, arranges things in **one line**, a row or a column. **Grid**, the next lesson, arranges them in rows and columns at once.
 
 ## The header in a row
@@ -163,6 +183,16 @@ footer {
 
 - **`display: flex`** on an element makes it a **flex container**, and its children (here the name and the nav) **flex items**. The items line up along the container's **main axis**, which is a row by default.
 - **`justify-content`** spreads the items along the main axis. `space-between` pushes the first to the start and the last to the end, with the spare space between them: name left, nav right. Other values: `flex-start` (all at the start, the default), `center`, `flex-end`, `space-around`.
+  Here's the arithmetic, with round numbers. Say the header's content is 960px wide, your name 150px and the nav 250px. The items use 400px, so 560px is **spare**. Each value of `justify-content` is a rule for where the spare space goes:
+
+  | value | before the name | between them | after the nav |
+  |---|---|---|---|
+  | `flex-start` | 0 | 0 | 560 |
+  | `center` | 280 | 0 | 280 |
+  | `space-between` | 0 | 560 | 0 |
+  | `space-around` | 140 | 280 | 140 |
+
+  Make the window narrower and the spare space shrinks, but `space-between` still puts all of it in the middle, so the name stays left and the nav right at any width.
 - **`align-items`** places the items along the **cross axis**, at right angles to the main one: here, up and down. `center` lines up the name's middle with the nav's middle, though they're different heights. (The default, `stretch`, makes them all as tall as the tallest.)
 - **`.name`**: inherited colour, bigger and bolder, no underline.
 

@@ -15,6 +15,29 @@ You know how to write Python scripts. That's all this bootcamp assumes. Everythi
 
 This window has four parts. The **lesson** is on the right (you're reading it). The **file tree** on the left lists the files in your project folder. The **editor** in the middle is where you type code. The **terminal** at the bottom is where you run programs. Only this lesson exists until you choose a folder.
 
+### What this lesson builds
+
+The project's folder, and a place inside it to experiment. By the end, your Documents folder holds this:
+
+```text
+Documents
+└── spreadsheet                    the project: everything in the bootcamp lives here
+    └── playground                 where you try things out
+        └── terminal
+            └── deep
+                └── deeper         made in the Your turn, by typing, not clicking
+```
+
+And you'll have used the five commands every later lesson takes for granted:
+
+| command | what it does | Python's version |
+|---|---|---|
+| `pwd` | shows which folder the shell is in | `os.getcwd()` |
+| `ls` | lists what's in it | `os.listdir()` |
+| `mkdir name` | makes a folder | `os.mkdir("name")` |
+| `cd name` | moves into a folder (`cd ..` moves out) | `os.chdir("name")` |
+| `Remove-Item name` | deletes, with no Recycle Bin | `os.remove`, `shutil.rmtree` |
+
 ## Make the project's folder
 
 A program you build is a folder of files. Everything in this series lives in one folder, which you're about to make.
@@ -149,6 +172,16 @@ PS C:\Users\you\Documents\spreadsheet>
 `..` always means "the folder this one is inside" (its *parent*), so `cd ..` takes you back up to `spreadsheet`.
 
 `scratch` here is a **relative path**: it's looked up starting from the current directory. `C:\Users\you\Documents\spreadsheet\scratch` is an **absolute path**: it starts from the top of the drive, so it means the same folder wherever you are.
+
+**How the shell turns a relative path into a real one.** It starts at the current directory, then follows the path one name at a time: a folder name goes in, `..` comes out. With the shell in `spreadsheet`:
+
+| you type | start | after each part | ends up in |
+|---|---|---|---|
+| `cd scratch` | `…\spreadsheet` | `scratch`: go in | `…\spreadsheet\scratch` |
+| `cd ..` | `…\spreadsheet` | `..`: come out | `…\Documents` |
+| `cd ..\spreadsheet\scratch` | `…\spreadsheet` | out to `Documents`, in to `spreadsheet`, in to `scratch` | `…\spreadsheet\scratch` |
+
+The same relative path can mean different folders: `cd ..` from `scratch` lands in `spreadsheet`, and from `spreadsheet` in `Documents`. An absolute path never changes meaning.
 
 This explains a Python mystery you may have met already. `open("data.csv")` uses a relative path, so Python looks for `data.csv` in the current directory: the folder the terminal was in when you ran the script, *not* the folder the script is in. Run the same script from a different folder and it "can't find" a file that's sitting right next to it.
 

@@ -6,9 +6,23 @@ teaches: running programs, exit codes, tracebacks, stack traces, ctrl+c, console
 uses: node
 ---
 
-You'll run thousands of programs from the terminal over this series: your own code, tests, build tools, servers. This lesson is about what happens when you do: what a program gives back besides its printed output, how to read it when it fails, and how to stop one that doesn't end.
+### The story so far
 
-You'll write the same small program in Python and in JavaScript, side by side.
+The shell finds programs through PATH (0.2), and Node is now installed and on it (0.3). You've typed JavaScript into Node's interactive prompt, one line at a time, and seen that it looks a lot like Python, with surprises like `0.1 + 0.2`. Programs so far have been typed straight into a prompt; this lesson puts them in files.
+
+### What this lesson builds
+
+The same small program in Python and in JavaScript, side by side, and then programs that fail on purpose, so you can read what failure looks like. Every program hands the shell a number when it ends, its **exit code**, and by the end you'll have seen all of these:
+
+| you run | it prints | exit code | meaning |
+|---|---|---|---|
+| `python hello.py` | a greeting | `0` | it worked |
+| `python broken.py` | `starting`, then a traceback | `1` | an error stopped it |
+| `node broken.js` | `starting`, then a stack trace | `1` | an error stopped it |
+| `node ticker.js`, stopped with Ctrl+C | a line a second | `-1073741510` | stopped from outside |
+| `node exit-code.js` (your turn) | a message | `3` | a code the program chose |
+
+You'll run thousands of programs from the terminal over this bootcamp: your own code, tests, build tools, servers. Reading what they give back, and stopping the ones that don't end, is everyday work.
 
 ## hello.py
 

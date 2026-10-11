@@ -7,6 +7,23 @@ teaches: tables
 uses: html, semantic html
 ---
 
+### The story so far
+
+Lesson 2.1 gave the spreadsheet a page, `index.html`, with a heading and a paragraph, on the `grid-page` branch. Then the styling section (Styling 1–7) taught how to make any page look designed, on a portfolio in the playground: semantic HTML, the cascade, the box model, type and colour, flexbox, grid and responsive design.
+
+### What this lesson builds
+
+The spreadsheet's grid, typed by hand as an HTML table, so the next lessons have something to style:
+
+| | A | B | C | D |
+|---|---|---|---|---|
+| **1** | Item | Price | Qty | Total |
+| **2** | Coffee | 3.50 | 2 | |
+| **3** | Bagel | 2.25 | 3 | |
+| **4** | | | | |
+
+The letters across the top and the numbers down the side are header cells; the rest is data. The empty Totals are for sprint 7, when `D2` will hold a formula.
+
 Back to the spreadsheet, and the second half of this sprint: putting the styling section to work on a real interface. First the page needs something to style.
 
 A spreadsheet is a grid: columns lettered A, B, C across the top, rows numbered down the side, and cells where they meet. HTML has an element made for grids: the **table**. It's also the right *semantic* choice (Styling 1): a spreadsheet's cells are tabular data, related across rows and down columns, and a screen reader can announce each cell with its row and column headers.

@@ -6,7 +6,20 @@ teaches: repository, git init, git status, hidden files, markdown
 uses: git
 ---
 
-Git doesn't watch every folder on your computer. It keeps history only for folders you turn into **repositories** (often shortened to *repo*). This lesson turns your project folder into one, and shows where Git keeps the history.
+### The story so far
+
+Lesson 1.1 installed **Git**, the tool that records snapshots of a project, and told it your name and email. Those settings live in a plain text file, `.gitconfig`, in your user folder. Git hasn't recorded anything yet: it doesn't know about the project folder.
+
+### What this lesson builds
+
+The project folder, turned into a **repository**: a folder whose history Git keeps. Nothing visible changes. One hidden folder appears, and `git status` stops saying *fatal* and starts reporting:
+
+| | before `git init` | after |
+|---|---|---|
+| `ls -Force` | your four files and `playground` | the same, plus a hidden `.git` folder |
+| `git status` | `fatal: not a git repository` | `On branch main`, `No commits yet`, and your files listed as **untracked** |
+
+Git doesn't watch every folder on your computer. It keeps history only for folders you turn into **repositories** (often shortened to *repo*), and all of that history lives inside `.git`.
 
 ## Before: not a repository
 

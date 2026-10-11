@@ -6,6 +6,28 @@ teaches: branches, git switch, git merge, fast-forward
 uses: git commit, git alias
 ---
 
+### The story so far
+
+The history holds the whole project, one commit after another (1.3–1.5), and you can throw away changes you haven't committed with `git restore` (1.6). Every commit so far went on one line of history, called `main`, which Git created when the repository started (1.1 named it).
+
+### What this lesson builds
+
+A second line of history, a **branch** called `say-goodbye`, with one commit on it that `main` doesn't have, and then that commit brought into `main`:
+
+```text
+ while you work:   … ── 5b0e7d1 ── 363fc14
+                         ▲           ▲
+                        main    say-goodbye (HEAD)
+
+ after the merge:  … ── 5b0e7d1 ── 363fc14
+                                     ▲
+                                main (HEAD), say-goodbye
+```
+
+A branch is just a name pointing at a commit. The merge moved the name `main` forward along the line; no files were copied and no new commit was made. Then the name `say-goodbye` is deleted, and the commit stays, on `main`.
+
+### Why branches
+
 So far every commit went in a line, one after another, on `main`. Real work doesn't go in a line. You start a feature, and halfway through you need to fix something urgent in the version that works. Or you want to try an idea without risking the code that runs.
 
 A **branch** is a separate line of commits. You make one, work on it, and `main` doesn't change until you decide to bring the work in. Every feature in this series will be built on its own branch.

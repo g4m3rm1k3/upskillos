@@ -6,6 +6,20 @@ teaches: functions, for loops, camelcase, character codes, join
 uses: javascript, arrays
 ---
 
+### The story so far
+
+The page loads a script, `grid.js` (3.1), which prints to the browser's Console. Lesson 3.1 also showed where JavaScript and Python differ: `+` with a string joins text, `===` compares without converting, a missing value is `undefined` rather than an error, and `let` and `const` make variables.
+
+### What this lesson builds
+
+A function that turns a column's position into its letter, used 26 times in a loop. The Console shows:
+
+```text
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+```
+
+Then you'll find where it goes wrong: the 27th column, which a spreadsheet calls `AA`.
+
 Before the script can build a grid, it needs the column names: A, B, C, all the way to Z. That's a function (turn a column's position into its letter) and a loop (do it 26 times). Both work like Python's, with different punctuation.
 
 ## A function
@@ -32,6 +46,25 @@ Refresh the page and look at the Console:
 ```text
 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 ```
+
+**`columnName`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `index` | a column's position, counted from 0 | `2` |
+| returns | that column's letter | `"C"` |
+
+**How it finds the letter.** Every character has a number, its **character code**, and the capital letters are numbered in order, `A` to `Z`, from 65 to 90:
+
+| `index` | `65 + index` | `String.fromCharCode(…)` |
+|---|---|---|
+| 0 | 65 | `"A"` |
+| 1 | 66 | `"B"` |
+| 2 | 67 | `"C"` |
+| 25 | 90 | `"Z"` |
+| 26 | 91 | `"["`: not a letter at all |
+
+The last row is this lesson's prediction, below.
 
 ### The function, next to Python
 
@@ -67,7 +100,15 @@ is Python's `for i in range(columns): names.append(column_name(i))`. The round b
 2. **`i < columns`**: before each pass, check this. When it's false, the loop ends.
 3. **`i++`**: after each pass, add 1 to `i`. (`i++` is short for `i = i + 1`.)
 
-So `i` goes 0, 1, …, 25, the same numbers `range(26)` gives.
+So `i` goes 0, 1, …, 25, the same numbers `range(26)` gives. The first passes and the last, with `names` after each:
+
+| pass | `i` | `i < columns`? | `columnName(i)` | `names` afterwards |
+|---|---|---|---|---|
+| 1 | 0 | yes | `"A"` | `["A"]` |
+| 2 | 1 | yes | `"B"` | `["A", "B"]` |
+| … | | | | |
+| 26 | 25 | yes | `"Z"` | `["A", …, "Z"]`, 26 items |
+| (stop) | 26 | **no** | | the loop ends |
 
 - **`names.push(...)`** adds to the end of an array, like Python's `.append(...)`.
 - **`names.join(" ")`** joins the array's items into one string with a space between them: Python's `" ".join(names)`, written the other way round.

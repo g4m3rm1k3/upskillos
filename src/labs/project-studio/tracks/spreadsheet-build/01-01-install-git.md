@@ -5,6 +5,28 @@ teaches: git, git config, git alias, config files
 uses: terminal, path variable
 ---
 
+### The story so far
+
+Sprint 0 set up the workbench. The project folder, `spreadsheet`, holds four small programs (`hello.py`, `hello.js`, `greet.py` and `exit-code.js`) and a `playground` folder for experiments. You run programs from the terminal, the shell finds them through **PATH**, and every program ends with an **exit code**: `0` for success, anything else for failure. Node is installed, so you can run JavaScript as well as Python.
+
+### What this lesson builds
+
+Git, installed, and told who you are. What you type in this lesson ends up as a small text file of settings, which by the end will hold exactly this (with your own name and email):
+
+```text
+[user]
+	name = Ada Lovelace
+	email = ada@example.com
+[init]
+	defaultBranch = main
+[alias]
+	lg = …
+```
+
+The last section is your Your turn: a shortcut, `git lg`, that you'll work out yourself and use for the rest of the bootcamp.
+
+### Why Git
+
 Your project folder has four small files in it. Soon it will have dozens, and you'll change them every day. Some changes will break things, and you'll want to know exactly what changed and to get back to the last version that worked.
 
 **Git** does that. It records snapshots of your project, called **commits**, each with a note saying what changed and why. You can compare any two snapshots, go back to an old one, and try an idea on the side without disturbing the version that works. Almost every software team uses it.

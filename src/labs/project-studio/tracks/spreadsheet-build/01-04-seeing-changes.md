@@ -6,7 +6,22 @@ teaches: git diff, working tree
 uses: git commit, staging area
 ---
 
-The point of history is comparing: what's different now from the last snapshot? This lesson changes a file and has Git show you the change, line by line, before you commit it.
+### The story so far
+
+The history has two commits (1.3): `hello.js`, and your playground README. Making one is two steps: `git add` copies a file's current content into the **staging area**, and `git commit` turns everything staged into a snapshot, with a message. `git log` lists the snapshots, and `git status` lists files that differ from the last one. The other sprint 0 files are still untracked.
+
+### What this lesson builds
+
+A change to `hello.js`, seen line by line before it's committed, then everything else committed too, so the history holds the whole project:
+
+```text
+0410cec (HEAD -> main) Add the sprint 0 examples and the playground
+52f1fec Say how many cells the sheet starts with
+a91c2e4 Add a README that explains the playground
+dee5d6d Add hello.js, a first JavaScript program
+```
+
+The point of history is comparing: what's different now from the last snapshot? The tool for that is `git diff`, and its output format is how code changes are read and reviewed on every team.
 
 ## Change hello.js
 
@@ -101,7 +116,15 @@ verify: if (-not (git diff)) { 'Nothing' }
 
 After `git add`, plain `git diff` prints **nothing**. That surprises everyone once. `git diff` compares your files with the **staging area**, and you just put the change there. To see what's staged, compared with the last commit, use `git diff --staged`; it shows the same two `+` lines.
 
-So there are three versions of a file to keep in mind: the last commit, the staging area, and the file in your folder. `git diff` compares the last two; `git diff --staged` compares the first two.
+So there are three versions of a file to keep in mind: the last commit, the staging area, and the file in your folder. `git diff` compares the last two; `git diff --staged` compares the first two. Here's what each shows for `hello.js` as you go:
+
+| moment | last commit | staging area | your file | `git diff` | `git diff --staged` |
+|---|---|---|---|---|---|
+| after you typed the two lines | 2 lines | 2 lines (staging starts as a copy of the commit) | 4 lines | the two `+` lines | nothing |
+| after `git add hello.js` | 2 lines | 4 lines | 4 lines | nothing | the two `+` lines |
+| after `git commit` | 4 lines | 4 lines | 4 lines | nothing | nothing |
+
+Each command answers one question. `git diff`: "what have I changed that isn't staged yet?" `git diff --staged`: "what will the next commit change?"
 
 ```powershell
 git commit -m "Say how many cells the sheet starts with"

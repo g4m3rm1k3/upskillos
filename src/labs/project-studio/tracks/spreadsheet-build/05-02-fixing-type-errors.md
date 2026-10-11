@@ -6,6 +6,24 @@ teaches: type annotations, any, null checks, type arguments, generics, union typ
 uses: typescript, tsconfig
 ---
 
+### The story so far
+
+The project is TypeScript now (5.1): `grid.ts` and `columns.ts`, a strict `tsconfig.json`, and `npx tsc`, which reads the code without running it. Its first report: 24 errors, in code that works in the browser, because Vite strips the types without checking them.
+
+### What this lesson builds
+
+Zero errors, by answering each kind of question TypeScript asked:
+
+| TypeScript asked | the answer, in the step |
+|---|---|
+| what does `columnName` take and give? | type annotations: *Say what columnName takes and gives* |
+| what if `querySelector` finds nothing? | a `find` helper that fails loudly: *A missing element* |
+| a number where text belongs? | `String(r + 1)`: *Text, not a number* |
+| what will `selected` hold? | a union type, `HTMLTableCellElement \| null`: *A value that might be missing* |
+| what if a row doesn't exist? | `?.` and a check in `select`: *Off the edge of the grid* |
+
+The last one fixes a real bug: Enter on row 100 used to crash.
+
 Twenty-four errors, in a handful of kinds. Each kind is a question TypeScript is asking about your code, and answering it makes the code clearer and safer.
 
 ## Say what columnName takes and gives
@@ -121,6 +139,15 @@ formulaBar.addEventListener("keydown", (event) => {
 
 select(0, 0);
 ```
+
+**`find`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| type argument `T` | which kind of element the caller expects | `HTMLTableElement` |
+| input `selector` | a CSS selector, as in `querySelector` | `"#grid"` |
+| returns | the element, typed as a `T`; never `null` | the `<table>` |
+| or throws | an `Error` naming the selector, if nothing matches | *The page has no element matching #grid* |
 
 - **`throw new Error(...)`** is JavaScript's `raise`: it stops the program with an error, and the message says exactly what's missing. After that `if`, the function can only reach `return element` with a real element, so its result is never `null`, and every use of `table`, `nameBox` and `formulaBar` is safe.
 - **`find<HTMLTableElement>("#grid")`**: the part in `< >` is a **type argument**. `querySelector` can't know what kind of element `#grid` will be, so you tell it. That's what fixes *Property 'value' does not exist on type 'Element'*: an `Element` could be anything, but an `HTMLInputElement` has a `value`.

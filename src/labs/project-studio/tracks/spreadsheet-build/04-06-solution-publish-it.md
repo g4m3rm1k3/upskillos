@@ -6,6 +6,21 @@ teaches: npx, deployment, publishing branches
 uses: github pages, supply chain, building, branches
 ---
 
+### The story so far
+
+The challenge (4.5) asked you to publish the built spreadsheet with GitHub Pages, at `https://<your-user-name>.github.io/spreadsheet/`, using the `gh-pages` package at an exact version, without installing it, and without ever putting `dist` on `main`.
+
+### What this lesson builds
+
+Nothing new in the project: one way to meet the brief, and what each part does. The whole solution is two commands, and they leave the repository with two branches that never mix:
+
+| branch | holds | who reads it |
+|---|---|---|
+| `main` | your source: `index.html`, `grid.js`, `columns.js`, `package.json`… | you, and anyone working on the code |
+| `gh-pages` | only the built files from `dist` | GitHub Pages, which serves them as the website |
+
+The Your turn changes the page and publishes again, which every live project does over and over.
+
 This lesson goes through one way to meet the brief, and why each part is there. **If your page is live and every check passed, keep yours**: read this to compare. The Your turn at the end republishes after a change, which every published project does again and again.
 
 ## The two commands

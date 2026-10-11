@@ -6,6 +6,26 @@ teaches: web servers, localhost, ports, hot module replacement
 uses: npm scripts, design tokens
 ---
 
+### The story so far
+
+The project is an npm project (4.2): `package.json` names it, lists Vite as a dev dependency, and gives it two scripts, `npm run dev` and `npm run build`. `node_modules` holds the installed packages and is ignored by Git. The page itself is still broken when opened as a file, because it loads modules (4.1).
+
+### What this lesson builds
+
+A running web server, and the page working again through it:
+
+```text
+ browser                                  Vite, in your terminal
+ ───────                                  ──────────────────────
+ http://localhost:5173/  ──asks for /──▶   sends index.html
+                         ──asks for /style.css──▶   sends style.css
+                         ──asks for /grid.js──▶     sends grid.js
+                         ──asks for /columns.js──▶  sends columns.js
+                         ◀── "style.css changed" ──  (when you save)
+```
+
+That last line is the bonus: Vite tells the browser when a file changes, so the page updates as you type.
+
 Vite is installed. Start it, and the page that broke in lesson 4.1 works again. You'll also lose a chore you've had since sprint 2: switching to the browser and refreshing after every change.
 
 ## Start Vite

@@ -6,6 +6,22 @@ teaches: test-driven development, red green refactor, for of loops, round-trip t
 uses: tests, vitest, functions
 ---
 
+### The story so far
+
+`columns.test.ts` holds three tests for `columnName` (6.1), run by Vitest with `npm test`. You watched them fail when `columnName` was broken on purpose, and pass again after `git restore`. Tests now check the answers that types can't.
+
+### What this lesson builds
+
+`columnIndex(name)`, the opposite of `columnName`, written **test first**, one small step at a time:
+
+| step | the test says | the code |
+|---|---|---|
+| red | `columnIndex("A")` is 0 | (none yet: the test fails) |
+| green | | one line: the first letter's code, minus 65 |
+| red again | `columnIndex("AA")` is 26 | (the one-liner gives 0: fails) |
+| green | | a loop over the letters, as digits in base 26 |
+| refactor | for every column up to 20,000, `columnIndex(columnName(i))` is `i` | (no change: it passes) |
+
 The spreadsheet will soon need the opposite of `columnName`: given the letters `"AA"`, which column number is it? Formulas will contain addresses like `B3`, and the program must turn `B` back into column 1.
 
 This time, write the test **before** the code. It sounds backwards, and it's one of the most useful habits in programming, called **test-driven development** (TDD). It goes in a cycle:
@@ -93,6 +109,13 @@ export function columnIndex(name: string): number {
 ```
 
 `"A".charCodeAt(0)` is 65 (lesson 3.2), so `A` gives 0 and `Z` gives 25.
+
+**`columnIndex`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input `name` | a column's letters | `"Z"` |
+| returns | the column's position, counted from 0, like `columnName`'s input | `25` |
 
 ```predict
 question: What does this simple `columnIndex` give for `"AA"`?
@@ -186,6 +209,16 @@ export function columnIndex(name: string): number {
   return index - 1;
 }
 ```
+
+Here it is on `"AB"`. `letter.charCodeAt(0) - 64` gives each letter's value, with `A` as 1:
+
+| pass | `letter` | its value | `index * 26 + value` | `index` afterwards |
+|---|---|---|---|---|
+| 1 | `A` | 1 | 0 × 26 + 1 | 1 |
+| 2 | `B` | 2 | 1 × 26 + 2 | 28 |
+| after the loop | | | `return 28 - 1` | **27** |
+
+Column 27, counted from 0, is `AB`: `columnName(27)` gives `"AB"`, as lesson 3.7's trace showed. The two functions undo each other.
 
 **`for (const letter of name)`** goes through a string one character at a time, like Python's `for letter in name:`. (`for...of` works on arrays too: `for (const item of items)`.)
 

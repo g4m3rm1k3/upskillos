@@ -6,6 +6,22 @@ teaches: staging area, git add, git commit, commit messages, git log
 uses: repository, git status
 ---
 
+### The story so far
+
+The project folder is a Git **repository** now (1.2): it has a hidden `.git` folder where the history will live. `git status` reports on it, and so far it lists every file as **untracked**, meaning seen but never recorded. Nothing has been recorded yet: `No commits yet`.
+
+### What this lesson builds
+
+The first snapshot in the history. Git keeps a file in up to three places, and this lesson moves `hello.js` through all three:
+
+| after | your folder | the staging area (the "box") | the history |
+|---|---|---|---|
+| now | `hello.js` | empty | no commits |
+| `git add hello.js` | `hello.js` | a copy of `hello.js` | no commits |
+| `git commit -m "…"` | `hello.js` | (emptied into the commit) | one commit, holding `hello.js` |
+
+By the end, `git log` shows that commit, with your name and its message, and your Your turn adds a second.
+
 A **commit** is a snapshot of your project that Git keeps forever, with your name, the time, and a message saying what changed. Making one is a two-step move, and the two steps are the most important idea in Git.
 
 ## Two steps: stage, then commit
@@ -68,7 +84,7 @@ choice: Both versions
 answer: The version you staged
 explain: `git add` copies the file's content into the staging area at that moment. Later edits stay in your folder, unstaged, until you `git add` again: `git status` would list the file twice, once under *Changes to be committed* and once under *Changes not staged*. It's how you commit part of your work and keep going.
 verify: $d = Join-Path $env:TEMP ('box' + (Get-Random)); git init -q $d; Set-Content "$d/f.txt" 'first'; git -C $d add f.txt; Set-Content "$d/f.txt" 'second'; git -C $d -c user.name=x -c user.email=x@example.com commit -qm t; if ((git -C $d show HEAD:f.txt) -eq 'first') { 'The version you staged' } else { 'The version in the file now' }; Remove-Item -Recurse -Force $d
-``` Nothing else is.
+```
 
 ## Commit
 

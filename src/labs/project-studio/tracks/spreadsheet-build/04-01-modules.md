@@ -6,6 +6,23 @@ teaches: modules, export, import, module scope, cors on file urls
 uses: functions, script element, relative paths
 ---
 
+### The story so far
+
+Sprint 3 made the grid a program. `grid.js` builds the grid in the DOM, keeps one cell selected, moves the selection on click, and puts text from the formula bar into the selected cell. `columnName(index)` names any column, `AA` and beyond (3.6–3.7). It all works, and it's all in one file of over 70 lines.
+
+### What this lesson builds
+
+`columnName` in a file of its own, `columns.js`, which `grid.js` imports:
+
+```text
+index.html  ──<script type="module" src="grid.js">──▶  grid.js
+                                                        │ import { columnName } from "./columns.js"
+                                                        ▼
+                                                     columns.js   (export function columnName …)
+```
+
+And the wall that follows: a page that uses modules no longer works when opened as a file, which is why the rest of the sprint installs a web server.
+
 `grid.js` does everything: it names columns, builds the table, tracks the selection and handles typing. Every feature you add makes it longer. Worse, its pieces can't be used on their own: to try `columnName` you have to load the whole page.
 
 Python solved this for you long ago: a program is many `.py` files, and one file uses another with `import`. Each file is a **module**. JavaScript has modules too. This lesson moves `columnName` into a module of its own, and then runs straight into a wall that the rest of the sprint gets you over.
@@ -118,6 +135,16 @@ select(0, 0);
 
 - The file is named by a **path**, with its `.js` ending, and **`./`** in front. `./` means "in the same folder as this file" (lesson 0.1's relative paths). A browser needs the exact file.
 - The names you import go in **`{ }`**.
+
+When the page loads, the browser follows the imports itself, file by file, before running anything:
+
+| step | the browser | because |
+|---|---|---|
+| 1 | reads `index.html` and finds `<script type="module" src="grid.js">` | the page asks for it |
+| 2 | fetches `grid.js` and reads its `import` lines | a module's imports come first |
+| 3 | resolves `./columns.js` against `grid.js`'s own folder, and fetches it | `./` is relative to the importing file, not the page |
+| 4 | runs `columns.js`, which defines `columnName` and exports it | |
+| 5 | runs `grid.js`, with `columnName` now available to it | |
 
 ```check
 contains grid.js "import { columnName } from \"./columns.js\";" -- Add the import line at the top of grid.js.

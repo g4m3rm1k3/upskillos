@@ -7,9 +7,39 @@ teaches: parsers, grammars, recursive descent, operator precedence, associativit
 uses: lexers, tokens, trees, recursion, base cases, closures, discriminated unions, custom errors, error positions, tests, vitest, playground
 ---
 
-You can cut text into tokens (7.1) and work out a tree (7.2). The missing piece turns tokens into the tree. That's the **parser**, and its whole job is to get the structure right: `*` before `+`, brackets first, and `10-2-3` meaning `(10-2)-3`.
+### The story so far
 
-It's the most interesting code in the sprint, because a dozen lines will handle formulas of any length and nesting, and they're correct for a reason you can see.
+Two of the three stages are built. Lesson 7.1's **lexer** turns text into a flat list of tokens, and lesson 7.2's **evaluator** works out a tree. The tree in 7.2's tests was typed out by hand, as objects. The piece in the middle is missing:
+
+```text
+ text  ──lexer (7.1)──▶  tokens  ──parser (this lesson)──▶  a tree  ──evaluator (7.2)──▶  a value
+```
+
+### What this lesson builds
+
+The **parser**: a function `parse` that takes formula text and gives back the tree. Its whole job is to get the structure right. Here's what it does with `2+3*4`:
+
+```text
+ tokens:  2   +   3   *   4   end
+
+ tree:        +                 evaluate gives 2 + 12 = 14
+            /   \
+           2     *              3 × 4 = 12, worked out first because it's lower
+                / \
+               3   4
+```
+
+The tokens don't say that `*` goes first; the parser has to know. The lesson's last checks run five formulas through `parse` and `evaluate`, and expect exactly these answers:
+
+| formula | the parser must see | answer |
+|---|---|---|
+| `1+2*3-4` | `*` before `+` and `-` | 3 |
+| `(1+2)*(3-4)` | brackets first | -3 |
+| `100/10/5` | left to right: `(100/10)/5` | 2 |
+| `2*(3+(4*5))` | brackets inside brackets | 46 |
+| `7-2-1-1` | left to right again | 3 |
+
+It's the most interesting code in the sprint: about forty lines handle formulas of any length and nesting, and they're correct for a reason you can see.
 
 ## The rules, written down first
 
@@ -28,6 +58,22 @@ Read `{ … }` as "zero or more times". So:
 - A **factor** is a single number, a single cell, or a whole expression in brackets.
 
 ### Why this grammar gets the order right
+
+Here are the rules reading `2+3*4`, from the top rule down. Each indented line is a rule that the line above it asked for:
+
+```text
+expression                          reads a term, then any "+ term" or "- term"
+  term                              reads a factor, then any "* factor" or "/ factor"
+    factor  →  2                    a number
+    (next is +, not * or /: this term is just 2)
+  + found: read another term
+  term
+    factor  →  3
+    * found: read another factor
+    factor  →  4
+    (next is end: this term is 3*4)
+  (next is end: the expression is 2 + (3*4))
+```
 
 The rules are layered: an expression is made of terms, and a term is made of factors. `+` and `-` only ever join **terms**, and a whole run of `*` and `/` is **inside** one term. So in `2+3*4`, the `3*4` has to be a single term before `+` ever sees it: the `+` joins `2` and `(3*4)`. The `*` ends up lower in the tree, so it's worked out first. Nothing in the rules says "multiplication first"; it falls out of which rule is inside which.
 
@@ -109,6 +155,16 @@ describe("parse", () => {
 - **`thrownBy`** runs a function and returns the `FormulaError` it throws, so a test can check the error's `position`. `try { … } catch (error) { … }` is Python's `try: … except …:`. Inside `catch`, `error` could be anything (JavaScript lets you throw any value), so **`error instanceof FormulaError`** checks it really is one; after that check, TypeScript knows it has a `position`. Anything else is re-thrown, so a real bug isn't mistaken for a formula error.
 - **The positions** are where the problem is: `(2+3` is missing its `)` at position 4, the end; `2 3` has an unexpected `3` at position 2.
 
+### What each test protects
+
+| test | protects | the bug it would catch |
+|---|---|---|
+| builds the tree for a single number | the smallest formula | a parser that only works when there's an operator, so `=42` breaks |
+| puts * and / below + and -, so they happen first | precedence, checked twice: by the tree's shape and by the answer | `2+3*4` giving 20, the classic calculator bug |
+| works left to right for operators of the same level | grouping direction | `10-2-3` giving 11: a bug no precedence test notices, because only `-` and `/` care about direction |
+| lets brackets change the order | brackets, on either side of an operator | `(2+3)*4` giving 14, brackets read and then ignored |
+| explains what's wrong, and where | four different broken formulas, each with the right message or position | a parser that accepts `2 3` as `2`, or reports every error at position 0, so the user can't find the mistake |
+
 ```check
 file src/parser.test.ts
 run "npx vitest run parser" exit=1 stderr="parser.ts" label="the parser tests fail: parser.ts doesn't exist yet (red)"
@@ -154,7 +210,23 @@ export function parse(text: string): Expression {
 }
 ```
 
-`index` is the position of the next token to use. **`peek()`** looks at that token without using it up, and **`advance()`** uses it up (moves `index` on) and returns it. The parser decides what to do by peeking, and only advances once it has decided a token belongs where it is.
+**The four functions, their inputs, and what they give back:**
+
+| function | input | returns | example, parsing `"42"` |
+|---|---|---|---|
+| `parse` | `text`, the formula without its `=` | the tree for the whole formula, or throws a `FormulaError` | returns `{ kind: "number", value: 42 }` |
+| `peek` | none: it reads `tokens` and `index` | the next token, **without** using it up | the number token, `42` |
+| `advance` | none | the next token, and moves `index` on past it | the number token; `index` goes from 0 to 1 |
+| `factor` | none | the tree for one factor: here, a number leaf | `{ kind: "number", value: 42 }` |
+
+**How `index` moves.** `index` is the position of the next token to use, in the list `tokenize` made. For `"42"` the list is two tokens, `[number 42, end]`:
+
+| step | `index` before | call | gets | `index` after |
+|---|---|---|---|---|
+| `parse` calls `factor` | 0 | `advance()` | the number token | 1 |
+| `factor` returns the number leaf | | | | 1 |
+
+**`peek()`** looks at a token without using it up, and **`advance()`** uses it up and returns it. The parser decides what to do by peeking, and only advances once it has decided a token belongs where it is. (`advance` calls `peek` to get the token, so its "ran out of tokens" check happens in one place. It can't really happen, because every list ends with `end` and nothing advances past `end` without throwing, but `tokens[index]` could be `undefined` as far as TypeScript knows, so `peek` handles it.)
 
 `peek`, `advance`, `expression`, `term` and `factor` are written **inside** `parse`, so they all share `tokens` and `index`: closures again (lesson 3.4). Each call of `parse` gets its own `index`, so two formulas being parsed can't disturb each other.
 
@@ -301,6 +373,13 @@ explain: The loop builds `(8/2)/2`: each new node goes around the tree built so 
 verify: node -e "Promise.all([import('./src/parser.ts'), import('./src/evaluate.ts')]).then(([{ parse }, { evaluate }]) => { const calc = (t) => evaluate(parse(t), () => ''); console.log(calc('8/2/2')); })"
 ```
 
+**`term`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input | none: it reads tokens from `index` on | the tokens of `8/2/2` |
+| returns | the tree for one term: a factor, or several joined by `*` and `/` | `(8/2)/2` as a tree |
+
 ### Why the while loop works left to right
 
 Follow `term` on `8/2/2`:
@@ -388,6 +467,29 @@ export function parse(text: string): Expression {
   return result;
 }
 ```
+
+**`expression`'s input, and what it gives back:**
+
+| | what it is | example |
+|---|---|---|
+| input | none: it reads tokens from `index` on | the tokens of `2+3*4` |
+| returns | the tree for a whole expression: one term, or several joined by `+` and `-` | `2 + (3*4)` as a tree |
+
+Here it is on `2+3*4`, the tokens numbered from 0, with `index` at each call:
+
+| call | `index` | what it does | gives |
+|---|---|---|---|
+| `expression` | 0 | calls `term` for its left side | |
+| `term` → `factor` | 0 → 1 | uses up `2` | the leaf 2 |
+| `term` | 1 | peeks: `+` isn't `*` or `/`, so it stops | the leaf 2 |
+| `expression` | 1 → 2 | `+` is its operator: uses it up, calls `term` for the right side | |
+| `term` → `factor` | 2 → 3 | uses up `3` | the leaf 3 |
+| `term` | 3 → 4 | `*`: uses it up, calls `factor` | |
+| `factor` | 4 → 5 | uses up `4` | the leaf 4 |
+| `term` | 5 | peeks: `end`, stops | the node `3*4` |
+| `expression` | 5 | peeks: `end`, stops | the node `2 + (3*4)` |
+
+The `*` was handled entirely inside the second call to `term`, before `expression` saw anything after the `+`. That's precedence, done by which function is called from which.
 
 Read `expression` and `term` side by side: the only differences are the operators and the rule they call. That's the grammar's layering (above, *Why this grammar gets the order right*) turned into code. `+` only ever joins whole terms, so `2+3*4` reads `3*4` as one term before the `+` sees it.
 
@@ -480,6 +582,25 @@ export function parse(text: string): Expression {
 ```
 
 An `(` means "a whole expression is coming": `factor` calls `expression()` to read it, then insists the next token is `)`. That call back up to the top rule is the recursion that allows brackets inside brackets. It always ends, because each `(` uses up a token, and there are only so many tokens.
+
+Here's `(2+3)*4`, as a stack of calls. Each line is called by the one above it:
+
+```text
+expression                        the whole formula
+  term                            reads a factor, then any * or /
+    factor                        sees "(": a whole expression is coming
+      expression                  the top rule again, for what's inside the brackets
+        term → factor → 2
+        + found
+        term → factor → 3
+        (next is ")", not + or -: this expression is 2+3)
+    factor                        uses up ")": the bracket is closed; returns the 2+3 tree
+  term                            * found: reads another factor
+    factor → 4
+  (this term is (2+3)*4)
+```
+
+The `+` was inside a `factor`, which is deeper than `term`, so it's worked out before the `*`: `(2+3)*4` is 20. The grammar didn't need a special rule for brackets; it reuses `expression`.
 
 Anything else where a factor should be is an error: `)` with nothing before it, a second operator (`2+*3`), or running out (`2+` reaches `end`).
 

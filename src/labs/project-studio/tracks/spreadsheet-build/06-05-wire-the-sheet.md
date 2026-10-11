@@ -7,6 +7,23 @@ teaches: the debugger, breakpoints, stepping, source maps, separating data from 
 uses: addresses, classes, devtools
 ---
 
+### The story so far
+
+The project has tested modules for everything except the page: `columns.ts` names columns, `address.ts` turns `{ column, row }` into `"B3"` and back, and `sheet.ts` holds a `Sheet`, a map from address to cell text (6.4). `grid.ts` doesn't use any of it yet: it still passes two loose numbers to `select`, and keeps text only in the page's cells.
+
+### What this lesson builds
+
+The page, connected to the model:
+
+| | before | after |
+|---|---|---|
+| a position | two numbers, `select(c, r)` | an `Address`, `select({ column: c, row: r })` |
+| where typed text lives | in the `<td>` only | in the `Sheet`; the `<td>` is drawn from it |
+| the name box | built by hand, `"B" + (row + 1)` | `formatAddress(address)`, tested |
+| Enter on the last row | a special check | `select` simply finds no cell, and does nothing |
+
+And the browser's debugger: pausing the page at a line, and reading every variable at that moment.
+
 The `Sheet` is tested and works, but the page doesn't use it yet. This lesson changes `grid.ts` so the data lives in the sheet and the page only **shows** it, and positions travel as `Address` objects instead of two loose numbers. Then you'll watch it run, line by line, in the browser's debugger.
 
 ## Positions as addresses

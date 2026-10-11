@@ -5,6 +5,22 @@ teaches: flex columns
 uses: working from a brief, css grid, media queries, flexbox
 ---
 
+### The story so far
+
+The challenge (2.5) handed you a designer's brief for Gridwise's pricing page and twelve acceptance tests: landmarks and one `h1`, three plans with the middle one featured, a colour palette as tokens, contrast of at least 4.5 : 1 everywhere, a visible keyboard focus, and a layout that is one column on a phone and three on a wide screen. You built your own version in `playground/pricing`.
+
+### What this lesson builds
+
+The designer's own version, in `playground/pricing-reference`, built in small steps: first all the HTML (header, intro, three plans, footer), then the CSS from the bottom up (a reset, tokens, type, the header row, the column, the plans as cards, the featured plan, prices, buttons and their states, the footer). At the end, the page and the brief line up check for check:
+
+| the brief asks for | built in the step |
+|---|---|
+| a header, nav, main, footer, one `h1` | *Main, the intro and the footer* |
+| three plans, the middle one featured | *One plan*, *The featured plan*, *The third plan* |
+| one column on a phone, three on a wide screen | *The plans: mobile first* |
+| the featured plan says *Most popular* and has an accent border | *The featured plan*, *The featured plan stands out* |
+| 4.5 : 1 contrast, a visible focus | *Paragraphs, links and focus*, *States, and the quieter buttons* |
+
 This lesson builds the designer's own version of the Gridwise pricing page, in a separate folder, `playground/pricing-reference`, so your version stays exactly as you made it. When it's done, open the two side by side and compare.
 
 **If your page passed every check, you don't have to type this one.** Read each step's explanation, compare the decision with yours, and type only the parts you'd like to have done differently. If your page didn't pass, typing this version, step by step, shows where yours went another way.

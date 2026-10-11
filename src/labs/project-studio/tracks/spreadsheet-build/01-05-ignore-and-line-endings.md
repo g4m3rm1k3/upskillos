@@ -6,9 +6,20 @@ teaches: gitignore, secrets, line endings, wildcards
 uses: environment variables, git commit
 ---
 
-Some files must never go into the history. The most important kind is a **secret**: a password, or a key that proves your server is your server. Anything committed stays in the history even after you delete the file, and once it's pushed to GitHub, anyone who can see the repository can find it.
+### The story so far
 
-This lesson makes Git ignore a secrets file, and settles the line-ending warnings from the last two lessons.
+Every file in the project is committed (1.4), and `git status` says *working tree clean*: the folder matches the last commit exactly. `git diff` shows what's changed before you commit. One thing has nagged since 1.3: almost every `git add` prints *LF will be replaced by CRLF*, a warning about line endings that hasn't been explained yet.
+
+### What this lesson builds
+
+Two small settings files, committed with the project so that every copy of it behaves the same:
+
+| file | contents | what it does |
+|---|---|---|
+| `.gitignore` | `.env` | Git never offers to commit the secrets file |
+| `.gitattributes` | `* text=auto eol=lf` | every text file is stored with one kind of line ending, and the warnings stop |
+
+Some files must never go into the history. The most important kind is a **secret**: a password, or a key that proves your server is your server. Anything committed stays in the history even after you delete the file, and once it's pushed to GitHub, anyone who can see the repository can find it.
 
 ## A file with a secret
 
@@ -105,6 +116,15 @@ git-tracked .gitignore -- Commit .gitignore: git add .gitignore, then git commit
 ```
 
 ## Line endings, settled
+
+**What a line ending is.** A text file is a row of bytes, one number per character, and "the end of a line" is one or two of those numbers. A file holding the two lines `hi` and `ok` is stored as:
+
+| kind | the bytes, in hexadecimal | `\r` and `\n` |
+|---|---|---|
+| Windows (CRLF) | `68 69 0D 0A 6F 6B 0D 0A` | `h i \r \n o k \r \n` |
+| macOS, Linux (LF) | `68 69 0A 6F 6B 0A` | `h i \n o k \n` |
+
+`0A` is **LF**, *line feed*, written `\n` in Python and JavaScript strings. `0D` is **CR**, *carriage return*, `\r`, left over from typewriters, which needed two moves to start a line. The same two lines are 8 bytes one way and 6 the other. To Git, those are two different files, and a project edited on both kinds of computer would show every line as changed. You can see a file's bytes in PowerShell with `Format-Hex hello.js`.
 
 The warning you've seen on every `git add` comes from a setting Git for Windows makes for you (`core.autocrlf`). It converts line endings as files go in and out of the repository. That made sense when Windows tools needed Windows line endings, but today's editors, Node and Python all handle the single-character (LF) endings everywhere.
 

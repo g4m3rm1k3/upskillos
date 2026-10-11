@@ -5,6 +5,10 @@ teaches: working from a brief, acceptance tests
 uses: semantic html, design tokens, flexbox, css grid, media queries, contrast, focus, branches
 ---
 
+### The story so far
+
+Sprint 2 taught the front end in two halves. The styling section (Styling 1–7) built a portfolio page in the playground: semantic HTML, the cascade, a spacing scale, a type scale, colour tokens with contrast that everyone can read, a dark theme, flexbox, grid, and a mobile-first page that works on any screen. Then lessons 2.2–2.4 applied it to the spreadsheet's grid, and the sprint's work was merged into `main` and pushed.
+
 This is how front-end work usually arrives on a team. A designer hands over a **brief**: what the page is for, what's on it, how it should look and behave. A tester has turned the brief into **acceptance tests**. Your job is to build a page that meets the brief and passes the tests, choosing everything else yourself.
 
 Everything you need is in the styling section. No code is shown here: this is your page. The next lesson builds the designer's own version, so you can compare once yours is done.

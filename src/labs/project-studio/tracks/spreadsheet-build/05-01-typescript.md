@@ -6,6 +6,22 @@ teaches: typescript, tsconfig, strict mode, tsc, npx, git mv
 uses: modules, npm, vite
 ---
 
+### The story so far
+
+The spreadsheet is live on the internet, published from the `gh-pages` branch (4.5–4.6). Its code is two modules, `grid.js` and `columns.js`, served by Vite while you work and built into `dist` for release. It works, but sprint 3 showed how JavaScript fails: often quietly, with a wrong answer instead of an error.
+
+### What this lesson builds
+
+The project, converted to TypeScript, and the first report from the TypeScript compiler:
+
+| before | after |
+|---|---|
+| `grid.js`, `columns.js` | `grid.ts`, `columns.ts`, renamed with `git mv` so Git keeps their history |
+| no settings | `tsconfig.json`: strict checking, for a page that runs in a browser |
+| mistakes found by running the page | `npx tsc` reads every file without running it: 24 errors, in code that works |
+
+The errors aren't fixed in this lesson. Seeing what TypeScript complains about, before fixing anything, is the lesson.
+
 Remember sprint 3's bugs: a typo that only showed up as a red line in the Console after a refresh; `select(r, c)` quietly outlining the wrong cell; the last row crashing when Enter tried to move below it. JavaScript finds out about mistakes **while the program runs**, and only if that line happens to run.
 
 **TypeScript** is JavaScript with **types** added: you say what kind of value each variable and parameter holds (a number, a string, a table cell), and a program called the **TypeScript compiler** reads your code, without running it, and reports every place where the kinds don't fit. Many mistakes are found in seconds, before the page is even opened.

@@ -5,6 +5,10 @@ teaches: github pages, reading documentation
 uses: building, base paths, branches, git push, npm, supply chain
 ---
 
+### The story so far
+
+Sprint 4 gave the project its professional shape: modules (4.1), npm and a `package.json` (4.2), Vite's development server (4.3), and `npm run build`, which turns the source into a `dist` folder of bundled, minified files (4.4). Your Your turn in 4.4 set `base: "./"` in `vite.config.js`, so the build loads its files relative to the page, and works in a subfolder of a website. The sprint is merged into `main` and pushed.
+
 So far the spreadsheet runs on your computer only. This challenge puts it on the internet, at an address anyone can open: **`https://<your-user-name>.github.io/spreadsheet/`**. It's how most developers publish a project's front end for free, and it's the kind of task a team hands you with a goal and a couple of pointers, expecting you to read the documentation for the rest.
 
 ## The brief

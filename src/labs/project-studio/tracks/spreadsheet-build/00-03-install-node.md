@@ -6,6 +6,23 @@ teaches: node, npm, repl, floating point
 uses: path variable
 ---
 
+### The story so far
+
+The project folder exists, with a `playground` inside it (0.1). Lesson 0.2 showed how the shell finds a program when you type its name: it looks through the folders listed in the **PATH** environment variable, in order, and runs the first match. Installing a tool means putting it in a folder and adding that folder to PATH. And a terminal that started *before* the install still has the old PATH, so it can't find the new tool until it's restarted.
+
+### What this lesson builds
+
+Node.js, installed and found by the shell, and your first lines of JavaScript, typed into Node's interactive prompt:
+
+```text
+> 1 + 2
+3
+> 7 / 2
+3.5
+> 0.1 + 0.2
+0.30000000000000004
+```
+
 The spreadsheet will run in a web browser, and browsers run one programming language: **JavaScript**. You'll learn JavaScript from Python starting in sprint 3. Before that, you need a way to run JavaScript outside a browser, the way `python` runs Python files. That program is **Node.js** (usually just called Node).
 
 Node also brings **npm**, which installs JavaScript libraries the way `pip` installs Python ones. The spreadsheet's build tools and test tools all come through npm.
@@ -102,6 +119,17 @@ verify: node -p "0.1 + 0.2"
 ```
 
 Type `0.1 + 0.2`, then `.exit`.
+
+**Where the extra digits come from.** You can ask Node to show more of each number than it normally prints: `(0.1).toFixed(20)` writes it with 20 digits after the point. Here is what's really stored:
+
+| you typed | what's stored, to 20 places |
+|---|---|
+| `0.1` | 0.100000000000000005**55** |
+| `0.2` | 0.200000000000000011**10** |
+| `0.1 + 0.2` | 0.300000000000000044**41** |
+| `0.3` | 0.299999999999999988**90** |
+
+`0.1` is stored a tiny bit too big, and so is `0.2`. Added, the two errors add up, and the sum lands on a different stored number from the one `0.3` is stored as, slightly above it instead of slightly below. Node prints each number with just enough digits to tell it apart from every other stored number. For the stored `0.3`, that's `0.3`; for the sum, it takes all the digits of `0.30000000000000004`. Try `(0.1 + 0.2).toFixed(20)` yourself, and `0.1 + 0.2 === 0.3`, which is `false`.
 
 ## Your turn: experiment in the REPL
 

@@ -6,6 +6,26 @@ teaches: input elements, keyboard events, event objects, focus, xss, innerhtml
 uses: events, dom, flexbox
 ---
 
+### The story so far
+
+The grid is built by `grid.js` (3.3), and one cell is always selected (3.4): `select(column, row)` moves a `selected` class from cell to cell, and the name box shows the address. Clicking a cell calls `select` through an **event listener**, an arrow function that each cell got when it was made, and that remembers its own `c` and `r` (a closure).
+
+### What this lesson builds
+
+A formula bar beside the name box, and typing into cells:
+
+```text
+┌──────┐ ┌──────────────────────────────────┐
+│ A2   │ │ Coffee                           │      ← type here, press Enter
+└──────┘ └──────────────────────────────────┘
+     A
+ 1   Item
+ 2   Coffee        ← the text goes into the selected cell
+ 3   ┏━━━━━━━┓     ← and the selection moves down one row
+```
+
+And a security lesson that every front-end developer needs: what happens when someone types text that looks like HTML, and the one rule that keeps it harmless.
+
 You can select a cell; now put something in it. Spreadsheets have a **formula bar**: a text box above the grid that shows what's in the selected cell. You type there, press **Enter**, and the text goes into the cell, and the selection moves down one row, ready for the next entry. In sprint 7 that box is where formulas are typed, which is how it got its name.
 
 ## The input
@@ -202,6 +222,17 @@ Refresh, then type `Item`, press Enter, type `Coffee`, press Enter. Click `B1`, 
 - **`(event) => { ... }`** is an arrow function with a parameter and a body of several statements, in `{ }`. The click listener's `() => select(c, r)` had no parameters and a one-expression body, with no braces.
 - **`if (selectedRow + 1 < rows)`**: on the last row, Enter writes the cell but stays put. Without this check, `cellAt` would look for row 101, get `undefined`, and the next line would fail with a `TypeError`.
 - **`selectedColumn` and `selectedRow`** remember where the selection is, so the Enter listener knows which cell is below.
+
+Here's what happens when A1 is selected, you type `Item` and press Enter:
+
+| step | code | effect |
+|---|---|---|
+| you press a key | the browser calls the `keydown` listener with an event object | `event.key` is `"Enter"` |
+| | `selected.textContent = formulaBar.value` | A1 now shows `Item` |
+| | `selectedRow + 1 < rows`: `0 + 1 < 100` | true, so move down |
+| | `select(0, 1)` | A1 loses the outline, A2 gets it, the name box says `A2` |
+| | inside `select`: `formulaBar.value = selected.textContent` | the bar shows A2's text: empty |
+| | `formulaBar.focus()` | the cursor is back in the bar, ready for the next entry |
 
 Refresh the page and everything you typed is gone. The text was only in the page's DOM, which is rebuilt from the files on every load. Keeping data is sprint 6's job (the data needs a home that isn't the page) and sprint 13's (saving to a file).
 

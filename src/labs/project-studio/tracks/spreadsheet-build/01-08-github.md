@@ -6,6 +6,31 @@ teaches: github, remotes, git push, upstream
 uses: branches
 ---
 
+### The story so far
+
+The project has a full history on `main` (1.3–1.5). You can undo uncommitted changes (1.6), and you've built a change on a **branch**, `say-goodbye`, and merged it into `main` (1.7). All of it lives in one place: the `.git` folder on your computer.
+
+### What this lesson builds
+
+A second copy of the repository, on GitHub, and a connection between the two:
+
+```text
+ your computer                            GitHub
+ ─────────────                            ──────
+ main ── commit, commit ──  git push  ──▶  main
+ origin/main: Git's memory of GitHub's main, as of the last push
+```
+
+| after | `git status` says |
+|---|---|
+| the first push | `Your branch is up to date with 'origin/main'.` |
+| one more commit, not pushed | `Your branch is ahead of 'origin/main' by 1 commit.` |
+| `git push` | up to date again |
+
+That last rhythm (commit, commit, push) is how you'll work every day from here on.
+
+### Why a remote
+
 Your history lives in the `.git` folder on one computer. If the disk fails, it's gone. **GitHub** is a website that keeps a copy of Git repositories online. You **push** your commits to it, and you can get them back on any computer. It's also where other people can see your work and where, later in this series, a robot will test every push.
 
 A copy of your repository somewhere else is called a **remote**.

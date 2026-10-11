@@ -5,6 +5,10 @@ teaches: typing existing code, type aliases, business rules as validation
 uses: typescript, union types, narrowing, git push
 ---
 
+### The story so far
+
+Sprint 5 converted the spreadsheet to TypeScript (5.1), fixed every error the compiler reported (5.2), and made type checking part of the build (5.3). It also showed the limit: types catch the wrong *kind* of value, not the wrong *answer*. The sprint is merged into `main` and pushed.
+
 A situation you'll meet in every job: a colleague wrote a module without types, it "works", and now it's yours. Adding types is often the fastest way to find out what's wrong with code you didn't write, because the compiler reads every line, every time. But this sprint showed that types can't find every bug, so the module comes with a small program that shows what the rest of the code expects of it.
 
 ## The code

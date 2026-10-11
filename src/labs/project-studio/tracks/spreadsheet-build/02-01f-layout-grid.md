@@ -5,6 +5,25 @@ teaches: css grid, fr, auto-fit, minmax, grid placement
 uses: gap
 ---
 
+### The story so far
+
+The portfolio page has its HTML, a stylesheet of predictable rules, a spacing scale, a type scale and a palette of colour tokens (Styling 1–4). Styling 5 brought **flexbox**: the header puts your name left and the nav right, the nav's links and the buttons sit in a row, and `gap` spaces them. Flexbox handles one line at a time.
+
+### What this lesson builds
+
+Layouts in two directions at once, with **grid**:
+
+```text
+Projects
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ Spreadsheet  │ │ Command-line │ │ This site    │     cards in columns that line up,
+│              │ │ tools        │ │              │     three on a wide screen,
+└──────────────┘ └──────────────┘ └──────────────┘     one on a phone
+
+About            I started by hacking scripts...       a heading column and a text column
+                 [HTML] [CSS] [Git] [Python]           (and a grid of skill tags: your turn)
+```
+
 Flexbox lines things up in one direction. **Grid** lays them out in two at once: columns *and* rows, where everything in a column lines up with everything above and below it. Card galleries, page layouts with a sidebar, and forms with labels in one column and inputs in the next are grid's job.
 
 ## Cards in a grid
@@ -396,6 +415,17 @@ answer: 1
 explain: `main` is 400px minus its padding (16px each side): 368px. Two columns need 2 × 256px plus the 24px gap, which is 536px: too wide. So only one column fits, and it stretches to the full 368px.
 verify: page playground/site/index.html "(async () => { const f = document.createElement('iframe'); f.style.cssText = 'width: 400px; height: 600px; border: 0'; f.src = location.href; document.body.append(f); await new Promise((done) => (f.onload = done)); return f.contentWindow.getComputedStyle(f.contentDocument.querySelector('.cards')).gridTemplateColumns.split(' ').length; })()" server=static
 ```
+
+The same sum works for any width. With columns of at least 256px and gaps of 24px, `n` columns need `n × 256 + (n − 1) × 24` pixels:
+
+| columns | room needed | so, with the 32px of `main`'s padding, the window must be at least |
+|---|---|---|
+| 1 | 256px | (always, on any real screen) |
+| 2 | 536px | 568px |
+| 3 | 816px | 848px |
+| 4 | 1,096px | never: `main` is at most 960px, so 928px of room |
+
+The browser picks the largest number that fits, then shares any leftover equally (the `1fr` half of `minmax`). At full width, 928px holds three columns, (928 − 48) ÷ 3 ≈ 293px each.
 
 Drag your browser window narrower and wider, and watch the cards reflow from three columns to two to one.
 
