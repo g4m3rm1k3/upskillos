@@ -1,12 +1,12 @@
 ---
-title: 3.2 — Rewards That Shape Behaviour
+title: 5.2 — Rewards That Shape Behaviour
 runtime: python
 run: rewards.py
 ---
 
 ### The story so far
 
-Lesson 3.1 built `QMaze` (`qmaze.py`): a 10 × 10 maze where the rat's **state** is its cell number, `row * 10 + col`, and `step(action)` moves it LEFT, UP, RIGHT or DOWN (actions 0 to 3) and returns `(state, reward, terminated, truncated, info)`. Reaching the cheese at (9, 9) is `terminated`; losing more than 50 points in total is `truncated`.
+Lesson 5.1 built `QMaze` (`qmaze.py`): a 10 × 10 maze where the rat's **state** is its cell number, `row * 10 + col`, and `step(action)` moves it LEFT, UP, RIGHT or DOWN (actions 0 to 3) and returns `(state, reward, terminated, truncated, info)`. Reaching the cheese at (9, 9) is `terminated`; losing more than 50 points in total is `truncated`.
 
 From Chapter 1: `QAgent(n_states, n_actions, alpha, gamma, epsilon, seed)` (`agent.py`) keeps a table `agent.Q` with one row per state and one column per action. `agent.act(state)` picks the column with the highest score, except that with probability `epsilon` (ε) it picks at random, to explore. `train(env, agent, episodes, seed)` (`train.py`) plays that many games, updating the table after every move.
 
@@ -37,7 +37,7 @@ Training uses whichever rewards you're testing. Judging always uses the classic 
 Click **Create provided tests/test_rewards.py** above.
 
 ```python file=tests/test_rewards.py provided
-# Tests for maze_tools.py, qmaze.py's random starts and rewards.py (lesson 3.2).
+# Tests for maze_tools.py, qmaze.py's random starts and rewards.py (lesson 5.2).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_rewards.py
 import numpy as np
 
@@ -189,7 +189,7 @@ def completion(agent, maze=MAZE):
 | | what it is | why it's needed |
 |---|---|---|
 | input `agent` | any object with `epsilon` and `act(state)` | the agent being judged; the tests pass `RightAgent` |
-| input `maze` | the grid to play on | lesson 3.4 judges on a different maze |
+| input `maze` | the grid to play on | lesson 5.4 judges on a different maze |
 | input `start` | the (row, column) to start from | `completion` calls it once for each of the 74 starts |
 | input `limit` | the most steps to play | stops an agent that never ends its game (200) |
 | returns `path` | a list of (row, column) cells, start first | to see where the rat went, and how it failed |
@@ -381,7 +381,7 @@ if __name__ == "__main__":
         print(f"{'':20} seed 0's endings: {dict(endings(train_maze(rewards)))}")
 ```
 
-**`train_maze`'s inputs:** `rewards`, the reward dictionary to train with (the one thing each experiment changes); `episodes` (500); `seed`, so a run can be repeated exactly and ten different seeds give ten independent agents; and `maze`, for lesson 3.4. It returns the trained agent.
+**`train_maze`'s inputs:** `rewards`, the reward dictionary to train with (the one thing each experiment changes); `episodes` (500); `seed`, so a run can be repeated exactly and ten different seeds give ten independent agents; and `maze`, for lesson 5.4. It returns the trained agent.
 
 - **`train_maze`** is the whole recipe: a maze with random starts, Chapter 1's agent (α = 0.1, γ = 0.9, ε = 0.1, the tutorial's ε), and 500 episodes. With 100 states it takes about a fifth of a second.
 - **Each variant changes one thing** compared with `classic`. "No wall penalty" makes a bump cost the same as a move, −0.04. "No revisit penalty" makes going back cost the same as a move. "Only the cheese" removes every penalty.
@@ -462,11 +462,11 @@ Two things make these so close. The cheese's +1 arrives 40 steps from now, so it
 
 The −0.75 wall penalty breaks the tie: one bump now costs more than the whole difference. The −0.25 revisit penalty does the same for the other cheap way to stall, stepping back and forth. **With no step cost** there's nothing to tie with: standing still earns exactly 0 forever, and the cheese is worth more than 0 from everywhere, so the agent never stalls.
 
-The general lesson, which you'll meet again in Pac-Man (Chapter 7): **every shaping reward changes the problem**, and you only find out how by measuring. "Discourage wasted moves" sounded harmless, and created a new way to fail that two more penalties then had to fix.
+The general lesson, which you'll meet again in Pac-Man (Chapter 8): **every shaping reward changes the problem**, and you only find out how by measuring. "Discourage wasted moves" sounded harmless, and created a new way to fail that two more penalties then had to fix.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_rewards.py -k variants" label="the four variants each change one reward, and train_maze trains an agent on the maze"
-run ".venv/Scripts/python -m pytest -q tests/test_rewards.py" label="all lesson 3.2 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_rewards.py" label="all lesson 5.2 tests pass"
 ```
 
 ### What you have

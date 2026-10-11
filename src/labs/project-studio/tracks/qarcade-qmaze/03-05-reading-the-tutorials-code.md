@@ -1,18 +1,18 @@
 ---
-title: 3.5 — Reading the Tutorial's Code
+title: 5.5 — Reading the Tutorial's Code
 runtime: python
 run: bug_matters.py
 ---
 
 ### The story so far
 
-Your `QMaze` (`qmaze.py`, lesson 3.1) charges −0.04 for a move, −0.25 for moving back onto a cell visited this game, −0.75 for walking into a wall, and pays +1 for the cheese. Lesson 3.2 found out why the wall penalty matters: with a step cost and no wall penalty, the rat learns to stand still against a wall instead of walking to the cheese. `train_maze(rewards, seed=…)` (`rewards.py`) trains an agent with any rewards you choose, and `completion(agent)` (`maze_tools.py`) counts how many of the 74 starts it solves.
+Your `QMaze` (`qmaze.py`, lesson 5.1) charges −0.04 for a move, −0.25 for moving back onto a cell visited this game, −0.75 for walking into a wall, and pays +1 for the cheese. Lesson 5.2 found out why the wall penalty matters: with a step cost and no wall penalty, the rat learns to stand still against a wall instead of walking to the cheese. `train_maze(rewards, seed=…)` (`rewards.py`) trains an agent with any rewards you choose, and `completion(agent)` (`maze_tools.py`) counts how many of the 74 starts it solves.
 
 ### What this lesson asks
 
 You've built QMaze your own way. Your course almost certainly uses the tutorial's code, or something descended from it, and the most useful skill this chapter can end with is **reading** that code: knowing which part does what, where it differs from yours, and whether its differences matter.
 
-This lesson types in the tutorial's environment exactly as published (Samy Zafrany, *Deep Reinforcement Learning for Maze Solving*, samyzaf.com/ML/rl/qmaze.html; the training code that goes with it is Chapter 5's subject). You'll find that one of its rewards can never happen, work out why from two small slips, fix them, and then measure whether fixing them changes anything.
+This lesson types in the tutorial's environment exactly as published (Samy Zafrany, *Deep Reinforcement Learning for Maze Solving*, samyzaf.com/ML/rl/qmaze.html; the training code that goes with it is Chapter 6's subject). You'll find that one of its rewards can never happen, work out why from two small slips, fix them, and then measure whether fixing them changes anything.
 
 ### How the pieces fit
 
@@ -33,7 +33,7 @@ The tutorial's class is only read and tested here. The measuring uses your own `
 Click **Create provided tests/test_classic.py** above.
 
 ```python file=tests/test_classic.py provided
-# Tests for classic.py (lesson 3.5).
+# Tests for classic.py (lesson 5.5).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_classic.py
 from qmaze import MAZE
 
@@ -130,7 +130,7 @@ for bump in range(1, 202):
 201 -50.25 lose
 ```
 
-(Your `QMaze`'s bumps cost −0.75, so it loses after 67, lesson 3.1's test.)
+(Your `QMaze`'s bumps cost −0.75, so it loses after 67, lesson 5.1's test.)
 
 Look at the message on `test_published_bump_costs_only_a_quarter`: *"not the −0.75 the code seems to say"*. The tests for the **published** code describe what it really does, which isn't always what it looks like it does. The `fixed` tests describe what it was meant to do.
 
@@ -278,7 +278,7 @@ How it maps onto your `QMaze`:
 | `act(action)` → `envstate, reward, status` | `step(action)` → `state, reward, terminated, truncated, info` | |
 | status `'win'` | `terminated` | |
 | status `'lose'` | `truncated` | see the last step |
-| `observe()`, shape `(1, 100)` | `observe(env)` from lesson 3.4, shape `(100,)` | |
+| `observe()`, shape `(1, 100)` | `observe(env)` from lesson 5.4, shape `(100,)` | |
 | `valid_actions()` | nothing | the tutorial's training explores only valid moves; your agent may try any, and pays for walls |
 | `self.maze` with the rat marked 0.5 | `self.maze` unchanged | the tutorial writes the rat into its maze copy; `draw_env` cleans it up for the observation |
 
@@ -414,7 +414,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_classic.py -k published" label
 
 ## Does the bug matter?
 
-A bug that never changes a result is still worth knowing about, but it's not worth panicking over. Measure it. Lesson 3.2 showed that **with** a step cost, the wall penalty is what stops the rat standing still. The published code effectively uses −0.25 for walls. Is that enough? Create `bug_matters.py`:
+A bug that never changes a result is still worth knowing about, but it's not worth panicking over. Measure it. Lesson 5.2 showed that **with** a step cost, the wall penalty is what stops the rat standing still. The published code effectively uses −0.25 for walls. Is that enough? Create `bug_matters.py`:
 
 ```python file=bug_matters.py
 from maze_tools import completion
@@ -429,13 +429,13 @@ if __name__ == "__main__":
     print("bumps cost -0.25, as published:", [completion(train_maze(AS_PUBLISHED, seed=seed))[0] for seed in range(10)])
 ```
 
-It trains your QMaze agent (lesson 3.2's `train_maze`) with walls costing −0.75, as intended, and with −0.25, as the tutorial really does, ten seeds each, and runs the completion check.
+It trains your QMaze agent (lesson 5.2's `train_maze`) with walls costing −0.75, as intended, and with −0.25, as the tutorial really does, ten seeds each, and runs the completion check.
 
 ```predict
 question: With bumps costing only -0.25, how many of the 10 agents will solve all 74 starts?
 answer: 10
 tolerance: 0
-explain: All 10, exactly as with −0.75. So for this maze, with a table, the bug changes nothing you can measure. Lesson 3.2's arithmetic says why: standing still against a wall was only 0.023 worse than walking to the cheese when a bump cost −0.04. A bump costing −0.25 is more than ten times that margin, so it breaks the tie as well as −0.75 does. Removing the wall penalty altogether (lesson 3.2) mattered. Weakening it this much doesn't.
+explain: All 10, exactly as with −0.75. So for this maze, with a table, the bug changes nothing you can measure. Lesson 5.2's arithmetic says why: standing still against a wall was only 0.023 worse than walking to the cheese when a bump cost −0.04. A bump costing −0.25 is more than ten times that margin, so it breaks the tie as well as −0.75 does. Removing the wall penalty altogether (lesson 5.2) mattered. Weakening it this much doesn't.
 verify: .venv/Scripts/python -c "from bug_matters import AS_PUBLISHED; from maze_tools import completion; from rewards import train_maze; print(sum(completion(train_maze(AS_PUBLISHED, seed=s))[0] == 74 for s in range(10)))"
 ```
 
@@ -448,12 +448,12 @@ That's a common, useful outcome: a real bug whose effect is too small to see in 
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_classic.py -k measured" label="bug_matters uses the wall cost the tutorial really gives"
-run ".venv/Scripts/python -m pytest -q tests/test_classic.py" label="all lesson 3.5 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_classic.py" label="all lesson 5.5 tests pass"
 ```
 
 ## Losing is not an ending
 
-One more difference, and this one isn't a slip in the environment, but a choice in the tutorial's training code, which you'll write in Chapter 5. When `act` returns the status 'lose', the training loop sets `game_over = True`, exactly as for 'win', and the learning target for that last step becomes **just the reward**, with no future value added.
+One more difference, and this one isn't a slip in the environment, but a choice in the tutorial's training code, which you'll write in Chapter 6. When `act` returns the status 'lose', the training loop sets `game_over = True`, exactly as for 'win', and the learning target for that last step becomes **just the reward**, with no future value added.
 
 In numbers, with γ = 0.9: the rat bumps a wall (reward −0.75) and that bump takes the total below −50. Say the best score in its cell's row is −0.3.
 
@@ -475,4 +475,4 @@ In practice, for QMaze, treating a loss as an ending mostly gives the cells wher
 - that a table can't generalise to a new maze, and what the tutorial's agent sees instead: the whole maze as 100 numbers;
 - the tutorial's own code: how it maps onto yours, two slips that hide its wall penalty, a fix by subclassing, and a measurement showing the slip doesn't matter here.
 
-Both school problems are now solved with tables. Chapter 4 builds the function that replaces the table, a neural network, from a single straight line up to PyTorch and Keras, so that Chapter 5 can solve QMaze the way the tutorial does.
+QMaze is now solved with a table. You've already built what replaces it: Chapter 3's networks, and lesson 3.5's `build_model` is the tutorial's own network. Chapter 6 trains it on QMaze by Q-learning, the way the tutorial does.

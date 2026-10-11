@@ -1,32 +1,26 @@
 ---
-title: 4.5 — Keras, and a Network That Knows the Maze
+title: 3.5 — Keras
 runtime: python
-run: maze_net.py
+run: keras_net.py
 ---
 
 ### The story so far
 
-Lessons 4.1 to 4.3 built a neural network by hand in NumPy: knobs, a loss, slopes by the chain rule, a hidden layer of bent lines (ReLU), and gradient descent to train it. Lesson 4.4 rebuilt it in **PyTorch** (`torch_net.py`): `nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))` for the network, and a loop that repeats four lines, `zero_grad`, compute the loss, `backward`, `step`.
-
-From Chapter 3: `observe(env)` (`new_maze.py`) turns the maze into 100 numbers with the rat as 0.5, and `train_maze()` (`rewards.py`) returns an agent whose table `agent.Q` has a row of four Q-values for every cell.
+Lessons 3.1 to 3.3 built a neural network by hand in NumPy: knobs, a loss, slopes by the chain rule, a hidden layer of bent lines (ReLU), and gradient descent to train it. Lesson 3.4 rebuilt it in **PyTorch** (`torch_net.py`): `nn.Sequential(nn.Linear(1, 16), nn.ReLU(), nn.Linear(16, 1))` for the network, and a loop that repeats four lines, `zero_grad`, compute the loss, `backward`, `step`.
 
 ### What this lesson asks
 
 **Keras** is the other library you'll meet in courses and tutorials, and the one the QMaze tutorial uses. Where PyTorch hands you the training loop to write yourself, Keras hides it inside one call, `fit`. That's convenient, and it's also why Keras code can be hard to understand if you've never seen the loop it hides. You have, so this lesson can show exactly what `fit` does.
 
-Keras 3 runs on top of another library, its **backend**: TensorFlow, JAX or PyTorch. Here it runs on the PyTorch you installed last lesson, so there's nothing big to add. The lesson ends with the first network in this series that has to do with Q-learning: the tutorial's own QMaze network, trained to reproduce the table your agent learned in Chapter 3.
+Keras 3 runs on top of another library, its **backend**: TensorFlow, JAX or PyTorch. Here it runs on the PyTorch you installed last lesson, so there's nothing big to add. The lesson ends by reading a real network from a published tutorial, written for the older Keras 2, and rewriting it in today's Keras.
 
 ### How the pieces fit
 
 ```text
 keras_net.py    the curve network again, in Keras: make_model + fit, to compare with PyTorch's loop
 
-maze_net.py
-  build_model()          the tutorial's network: 100 numbers in, 4 Q-values out
-  table_examples(agent)  74 examples: (the maze seen from cell c,  the table's 4 values for cell c)
-  model.fit(...)         learns to give the table's values from the picture
-  NetworkAgent(model)    act(state): picture of that cell -> model -> biggest of the 4 -> an action
-     └── judged by lesson 3.2's completion(), exactly like the table agent
+maze_net.py     build_model(): a published network (the QMaze tutorial's, Chapter 5), rewritten in Keras 3
+                100 numbers in, two hidden layers, 4 values out
 ```
 
 ## Read the tests first
@@ -36,9 +30,8 @@ maze_net.py
 Click **Create provided tests/test_keras_net.py** above.
 
 ```python file=tests/test_keras_net.py provided
-# Tests for keras_net.py and maze_net.py (lesson 4.5).
+# Tests for keras_net.py and maze_net.py's network (lesson 3.5).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_keras_net.py
-import numpy as np
 import pytest
 
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning:keras")
@@ -63,29 +56,10 @@ def test_fit_learns_the_curve():
     assert final < 0.02
 
 
-def test_examples_pair_each_view_with_its_table_row():
-    from maze_net import table_examples
-    from rewards import train_maze
-    agent = train_maze(episodes=50)
-    inputs, targets = table_examples(agent)
-    assert inputs.shape == (74, 100) and targets.shape == (74, 4)
-    from qmaze import QMaze
-    for i, (row, col) in enumerate(QMaze().free_cells):
-        state = row * 10 + col
-        assert inputs[i][state] == 0.5, f"example {i}: the rat is marked on its own cell, {state}"
-        assert np.array_equal(targets[i], agent.Q[state]), f"example {i}: the table's row for cell {state}"
-
-
 def test_tutorial_model_has_the_published_shape():
     from maze_net import build_model
     model = build_model()
     assert [tuple(w.shape) for w in model.get_weights() if w.ndim == 2] == [(100, 100), (100, 100), (100, 4)]
-
-
-def test_agent_acts_from_a_state_number():
-    from maze_net import NetworkAgent, build_model
-    action = NetworkAgent(build_model()).act(0)
-    assert type(action) is int and 0 <= action < 4
 ```
 
 What each group protects:
@@ -95,9 +69,7 @@ What each group protects:
 | `backend` | Keras is running on PyTorch | Keras trying to load TensorFlow, which isn't installed |
 | `layers` | Keras stores weights as (inputs, outputs) | copying weights from PyTorch without transposing them |
 | `fit` | `fit` trains the curve as well as your own loops did | a model compiled with the wrong loss |
-| `examples` | there are 74 examples, each observation has the rat on its own cell, and each target is that cell's row of the table | inputs and targets out of step, so the network learned cell 12's values from cell 13's picture |
 | `tutorial` | the network has the tutorial's three weight matrices | a missing hidden layer |
-| `agent` | `NetworkAgent.act` returns a plain whole number from 0 to 3 | returning a NumPy number or a tensor, which `QMaze.step`'s `MOVES[action]` lookup can trip over |
 
 **`pytestmark = pytest.mark.filterwarnings(...)`** is new. While this series was being written, every Keras test printed hundreds of copies of a `DeprecationWarning` like this:
 
@@ -232,7 +204,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py -k fit" label="fi
 
 **Build, on your own:** `build_model(size=100, actions=4)` in a new file, `maze_net.py`.
 
-Here's the tutorial's QMaze network, as published. It's written for **Keras 2**, the version before Keras 3:
+Chapter 5 meets **QMaze**, the second school problem: a rat finding the cheese in a 10 × 10 maze, as taught in Samy Zafrany's widely used tutorial. Here's that tutorial's network, as published. You don't need the maze yet: a network is just numbers in and numbers out, and this one is worth reading now because it's written for **Keras 2**, the version before Keras 3, which is how much published code you'll meet looks:
 
 ```python
 def build_model(maze, lr=0.001):
@@ -248,7 +220,7 @@ def build_model(maze, lr=0.001):
 
 Reading it:
 
-- 100 inputs (the maze, as lesson 3.4's `observe` lays it out), two hidden layers of 100 units, and 4 outputs, one Q-value per action.
+- 100 inputs (the 10 × 10 maze as 100 numbers, which Chapter 5 builds), two hidden layers of 100 units, and 4 outputs, one per move (left, up, right, down).
 - **`PReLU`** is a ReLU whose slope on the negative side is a **learned** knob, one per unit, instead of always 0. A unit's output is never flat, so it can never get stuck at zero with no slope to learn from.
 - **`'adam'`** is the **Adam** optimiser: it keeps a running average of each knob's recent slopes and their sizes, and scales each knob's step by them. Knobs with consistently large slopes take moderate steps, and ones with small, steady slopes take larger ones. It usually learns far faster than plain SGD and needs less tuning of the learning rate.
 - Note that `lr=0.001` is passed in and then never used: `optimizer='adam'` uses Adam's default rate, which happens to be 0.001 too. That's another small slip in the tutorial, a harmless one this time.
@@ -312,119 +284,7 @@ The old `Sequential()` plus `model.add(...)` style still works in Keras 3. Passi
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py -k tutorial" label="build_model has the tutorial's shape: 100 in, two hidden layers of 100, 4 out" -- keras.Sequential([keras.Input((size,)), Dense(size), PReLU(), Dense(size), PReLU(), Dense(actions)]), compiled with adam and mse.
-```
-
-## A network that knows the maze
-
-Chapter 5 trains this network by Q-learning, with no table at all. First, a simpler question that tests everything this chapter built: can it **learn the table**? Your Chapter 3 agent's Q-table holds four values for each of the 74 free cells. Each is an example: the input is that cell's observation (the maze with the rat there), and the target is the table's four values. That's ordinary **supervised learning**: examples with known answers, as with the curve. Make `maze_net.py` this:
-
-```python file=maze_net.py
-import os
-
-os.environ.setdefault("KERAS_BACKEND", "torch")
-
-import keras
-import numpy as np
-
-from maze_tools import completion
-from new_maze import observe
-from qmaze import MAZE, QMaze
-from rewards import train_maze
-
-
-def build_model(size=100, actions=4):
-    model = keras.Sequential([
-        keras.Input((size,)),
-        keras.layers.Dense(size),
-        keras.layers.PReLU(),
-        keras.layers.Dense(size),
-        keras.layers.PReLU(),
-        keras.layers.Dense(actions),
-    ])
-    model.compile(optimizer="adam", loss="mse")
-    return model
-
-
-def table_examples(agent, maze=MAZE):
-    env = QMaze(maze)
-    inputs, targets = [], []
-    for cell in env.free_cells:
-        env.cell = cell
-        inputs.append(observe(env))
-        targets.append(agent.Q[env.state()])
-    return np.array(inputs), np.array(targets)
-
-
-class NetworkAgent:
-    def __init__(self, model, maze=MAZE):
-        self.model = model
-        self.env = QMaze(maze)
-        self.epsilon = 0.0
-
-    def act(self, state):
-        self.env.cell = divmod(state, self.env.cols)
-        values = self.model(observe(self.env).reshape(1, -1))
-        return int(np.argmax(keras.ops.convert_to_numpy(values)[0]))
-
-
-if __name__ == "__main__":
-    keras.utils.set_random_seed(0)
-    agent = train_maze()
-    inputs, targets = table_examples(agent)
-    model = build_model()
-    history = model.fit(inputs, targets, epochs=800, batch_size=16, verbose=0)
-    print("loss after 800 epochs:", round(history.history["loss"][-1], 6))
-    print("the network's own greedy policy:", completion(NetworkAgent(model)))
-```
-
-**One example, worked through**, for the first free cell, (0, 0):
-
-```text
-env.cell = (0, 0)
-observe(env)          100 numbers: the maze, with position 0 set to 0.5     -> inputs[0]
-env.state()           0 * 10 + 0 = 0
-agent.Q[0]            row 0 of the table: the 4 values the agent learned at (0, 0)   -> targets[0]
-```
-
-So `inputs` ends up shape (74, 100), one picture per row, and `targets` (74, 4), one row of the table per row. Row i of each is about the same cell: that's what the `examples` test checks.
-
-**`NetworkAgent.act(state)`, step by step**, for state 23:
-
-```text
-divmod(23, 10)                    (2, 3)               the cell, back from its number (lesson 3.1)
-observe(self.env)                 100 numbers          the maze with the rat at (2, 3)
-.reshape(1, -1)                   shape (1, 100)       a batch of one picture
-self.model(...)                   shape (1, 4)         4 Q-values for that one picture
-convert_to_numpy(...)[0]          shape (4,)           the first (only) row, as NumPy
-np.argmax(...)                    e.g. 3               the position of the biggest: DOWN
-int(...)                          3                    a plain Python number
-```
-
-- **`table_examples`** builds the 74 examples. It moves a single environment's rat to each free cell in turn (`env.cell = cell`) and records `observe(env)` and the table's row for that cell.
-- **`NetworkAgent`** wraps the trained model in the shape lesson 1.4's agents have (`act(state)` and an `epsilon`), so lesson 3.2's `completion` can judge it unchanged. Given a cell's number, it rebuilds that cell's observation (`divmod(state, 10)` turns 23 back into (2, 3)), asks the network for four values, and takes the biggest. `reshape(1, -1)` makes the observation a batch of one, because Keras always works on batches. `keras.ops.convert_to_numpy` turns the backend's tensor into a NumPy array, whatever the backend.
-- **800 epochs**, batches of 16. It takes about twenty seconds.
-
-```predict
-question: The network has learned to reproduce the table's values closely (a loss around 0.001). From how many of the 74 starts will ITS OWN greedy policy reach the cheese?
-choice: All 74, or very nearly
-choice: About half
-choice: Hardly any: it only learned numbers, not a policy
-answer: All 74, or very nearly
-explain: 74 of 74 for this seed. Over five seeds, measured at 800 epochs: 74, 73, 74, 74 and 73. The values it reproduces are nearly perfect, so the biggest of each four is usually the same action as the table's. But it's not guaranteed: the network chose a different action from the table in up to 4 of the 74 cells, and still reached the cheese from almost all of them. At 400 epochs, with a loss around 0.01, it solved only 5 to 32 starts. Lesson 3.2 showed why the precision matters: near the start, the values that separate a good route from standing still differ by only 0.023.
-verify: script maze_net_wins.py
-```
-
-```text
-loss after 800 epochs: 0.001169
-the network's own greedy policy: (74, 74)
-```
-
-This is a 20,804-knob function that has learned, from 74 examples, to do what the 400-number table does. On its own that's no improvement. But it reads the maze's walls, and that's what Chapter 5 builds on: training the network directly from experience, by Q-learning, without a table to copy.
-
-```check
-run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py -k examples" label="table_examples pairs each free cell's observation with its row of the table"
-run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py -k agent" label="NetworkAgent acts from a state number"
-run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py" label="all lesson 4.5 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py" label="all lesson 3.5 tests pass"
 ```
 
 ### What you've learned in this chapter
@@ -433,6 +293,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_keras_net.py" label="all lesso
 - slopes, measured by nudging and computed by the chain rule, and gradient descent with a learning rate;
 - a hidden layer of bent lines, the forward pass with matrices, and backpropagation, written by hand and checked;
 - PyTorch: tensors, autograd (proved equal to yours), `nn` layers and the training loop;
-- Keras: backends, `Sequential`, `compile` and `fit` (and the loop inside it), reading Keras 2 code, and the tutorial's QMaze network.
+- Keras: backends, `Sequential`, `compile` and `fit` (and the loop inside it), and reading Keras 2 code.
 
-Next chapter: deep Q-learning. The network learns QMaze by itself, from rewards, the way the tutorial does it, in PyTorch and then in Keras.
+Next chapter: back to CartPole, with a network. Instead of learning what each move is worth, the network learns **how likely to make each move**, and a second network judges how well things are going. That's **actor-critic**, and its standard form, **A2C**.
+

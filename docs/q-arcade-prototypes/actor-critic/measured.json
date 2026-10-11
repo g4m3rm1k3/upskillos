@@ -1,0 +1,148 @@
+{
+ "plain": [
+  {
+   "last50": 326.64,
+   "greedy20": 496.5,
+   "first500": 98,
+   "seconds": 26.0
+  },
+  {
+   "last50": 351.84,
+   "greedy20": 500.0,
+   "first500": 195,
+   "seconds": 33.5
+  },
+  {
+   "last50": 125.76,
+   "greedy20": 123.3,
+   "first500": null,
+   "seconds": 18.7
+  },
+  {
+   "last50": 202.94,
+   "greedy20": 264.85,
+   "first500": 135,
+   "seconds": 22.2
+  },
+  {
+   "last50": 42.92,
+   "greedy20": 69.0,
+   "first500": null,
+   "seconds": 8.7
+  },
+  {
+   "last50": 9.26,
+   "greedy20": 9.35,
+   "first500": null,
+   "seconds": 1.5
+  },
+  {
+   "last50": 48.4,
+   "greedy20": 74.1,
+   "first500": null,
+   "seconds": 5.2
+  },
+  {
+   "last50": 9.36,
+   "greedy20": 9.35,
+   "first500": null,
+   "seconds": 1.5
+  },
+  {
+   "last50": 449.4,
+   "greedy20": 500.0,
+   "first500": 240,
+   "seconds": 33.8
+  },
+  {
+   "last50": 436.82,
+   "greedy20": 234.3,
+   "first500": 90,
+   "seconds": 36.8
+  }
+ ],
+ "baseline": [
+  {
+   "last50": 500.0,
+   "greedy20": 500.0,
+   "first500": 180,
+   "seconds": 49.1
+  },
+  {
+   "last50": 456.5,
+   "greedy20": 500.0,
+   "first500": 76,
+   "seconds": 53.5
+  },
+  {
+   "last50": 81.32,
+   "greedy20": 265.3,
+   "first500": 223,
+   "seconds": 13.3
+  },
+  {
+   "last50": 487.0,
+   "greedy20": 500.0,
+   "first500": 139,
+   "seconds": 45.9
+  },
+  {
+   "last50": 500.0,
+   "greedy20": 500.0,
+   "first500": 79,
+   "seconds": 54.4
+  },
+  {
+   "last50": 9.42,
+   "greedy20": 9.45,
+   "first500": null,
+   "seconds": 1.5
+  },
+  {
+   "last50": 500.0,
+   "greedy20": 500.0,
+   "first500": 80,
+   "seconds": 69.0
+  },
+  {
+   "last50": 148.36,
+   "greedy20": 171.3,
+   "first500": 177,
+   "seconds": 26.5
+  },
+  {
+   "last50": 453.76,
+   "greedy20": 500.0,
+   "first500": 93,
+   "seconds": 70.1
+  },
+  {
+   "last50": 64.36,
+   "greedy20": 75.7,
+   "first500": null,
+   "seconds": 9.2
+  }
+ ],
+ "policy_output": "episodes   1- 25: average length   26.4\nepisodes  26- 50: average length   30.8\nepisodes  51- 75: average length   87.1\nepisodes  76-100: average length  164.3\nepisodes 101-125: average length  232.1\nepisodes 126-150: average length   63.8\nepisodes 151-175: average length   88.1\nepisodes 176-200: average length   99.6\nepisodes 201-225: average length  123.2\nepisodes 226-250: average length  119.4\nepisodes 251-275: average length  313.0\nepisodes 276-300: average length  340.2\ngreedy, 20 new games: 496.5",
+ "seed0_answer": "No: it falls back",
+ "seed0_explain": "It falls back. Its games averaged 232 steps over episodes 101 to 125, then 64 over episodes 126 to 150, and took until episode 250 to recover. Its final greedy score, 496.5, happens to be nearly perfect, but on another seed the same code ends at 9. Reaching 500 once is not the same as having learned to stay there.",
+ "plain_summary": "Two seeds finished at 500 and one at 496; three ended between 120 and 270, two near 70, and two at 9 (the pole falls almost at once). The average is 228 \u00b1 65 (standard error, lesson 2.5). Each run took 2 to 34 seconds: failed runs are quick, because their games are short.",
+ "noise_output": "after 80 episodes of training, the last 10 games averaged 76.8 steps\nbaseline=False  signal-to-noise 6.68\nbaseline=True   signal-to-noise 10.20",
+ "noise_plain": "6.68",
+ "noise_base": "10.20",
+ "baseline_summary": "With the baseline, 6 of 10 seeds finished at 500, against 2 of 10 without. The averages: 352 \u00b1 64 with the baseline, 228 \u00b1 65 without. With the baseline, the first 500-step game came at episode 76 to 223. A baseline run takes longer (about 39 seconds on average, against 19), only because its games are longer.",
+ "diff": 124.10000000000002,
+ "threads": "threads=20  wall   8.3 s  CPU   51.5 s\nthreads= 1  wall   6.4 s  CPU    6.2 s",
+ "threads_default": 20,
+ "cores_default": 6,
+ "a3c_output": "200001 steps in 79 s\ngreedy, 20 new games: 500.0",
+ "a3c_seconds": 79,
+ "noise_explain": "Higher: 6.68 without the baseline, 10.20 with it, measured on the same 100 games from the same partly trained policy. Each update now points more reliably in the direction the average of many games would. Measured on a brand-new, untrained policy, the difference was much smaller: all its games are short and alike, so there's little for a baseline to remove.",
+ "keras_output": "  20000 steps: greedy score  24.4  (5 s)\n  40000 steps: greedy score 233.0  (11 s)\n  60000 steps: greedy score 447.4  (19 s)\n  80000 steps: greedy score 117.0  (25 s)\n 100000 steps: greedy score 500.0  (33 s)\n 120000 steps: greedy score 500.0  (40 s)\n 140000 steps: greedy score 500.0  (48 s)\n 160000 steps: greedy score 500.0  (56 s)\n 180000 steps: greedy score 500.0  (64 s)\n 200000 steps: greedy score 500.0  (72 s)\ngreedy, 20 new games: 500.0",
+ "keras_seconds": 72,
+ "experiment_output": "A2C                greedy score  500.0 \u00b1   0.0  (seeds: [500.0, 500.0, 500.0, 500.0, 500.0])\nno entropy bonus   greedy score  500.0 \u00b1   0.0  (seeds: [500.0, 500.0, 500.0, 500.0, 500.0])\n1-step returns     greedy score  439.9 \u00b1  60.1  (seeds: [500.0, 500.0, 199.3, 500.0, 500.0])\nsaved results.csv and results.png in 253 s",
+ "experiment_seconds": 253,
+ "experiment_lowest": "1-step returns",
+ "experiment_explain": "1-step returns: 439.9 \u00b1 60.1, because one seed ended at 199. A2C and the version without the entropy bonus both scored 500 on all 5 seeds. The plot tells a fuller story than the final scores: see below.",
+ "experiment_discussion": "What the plot shows, and how to read it honestly:\n\n- **1-step returns learn fastest at first** (a mean of 500 by 80,000 steps, when the others are near 200), then become the **least stable**: they dip at 100,000 and 160,000 steps, and one seed is down to 199 at the end. Be careful what you conclude: with `n_steps=1` the agent makes an update every 8 steps instead of every 40, so it makes **5 times as many updates** for the same number of steps. \"Faster per step\" is partly \"more updates\". A fair write-up says so. Each update also trusts the critic after one real reward (lesson 4.4's loop: 99% estimate), so while the critic is wrong, its errors go straight into the targets.\n- **Removing the entropy bonus changed nothing measurable here.** Both reach 500 on every seed, and their curves overlap within the error bands. That doesn't mean entropy is useless: CartPole has only two moves, and with this network and learning rate, the policy didn't collapse early on any of these 5 seeds (lesson 4.2's seed 5, with REINFORCE, did). Report it as measured: \"no measurable effect on CartPole over 5 seeds\". A null result like this is still a result.\n- **The bands overlap a lot until about 120,000 steps.** Wide, overlapping bands mean 5 seeds can't separate the variants there. More seeds would narrow them (the standard error falls with \u221a(number of seeds), lesson 2.5).\n\nTo try more: change `VARIANTS` (for example `\"lr 0.0007\": {\"rate\": 0.0007}`, or `\"16-step returns\": {\"n_steps\": 16}`) or `seeds=` in the main block. Every extra variant adds about a minute and a half with 2 workers."
+}

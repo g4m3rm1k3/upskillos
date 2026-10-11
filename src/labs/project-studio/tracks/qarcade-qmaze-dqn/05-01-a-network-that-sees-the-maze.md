@@ -1,24 +1,20 @@
 ---
-title: 5.1 — A Network That Sees the Maze
-track: Q-Arcade — Deep Q-learning on QMaze
-trackOrder: 12.6
+title: 6.2 — A Network That Sees the Maze
 runtime: python
 run: dqn.py
 ---
 
-**Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
-
 ### The story so far
 
 - **Chapter 1** built the learning: an agent with a table `Q`, one row per state and one score per action. After every move it computes a **target**, the reward plus γ (gamma, the discount) times the best score of the next state, or just the reward if the game **ended**, and nudges the move's score towards it. It picks moves **ε-greedily**: usually the best score, sometimes at random.
-- **Chapter 3** built QMaze, and lesson 3.4 found that a table can't carry what it learned to a new maze. `observe(env)` turns the maze into 100 numbers with the rat as 0.5: a picture of the situation instead of a cell number.
-- **Chapter 4** built networks: functions with knobs that compute outputs from inputs, trained by gradient steps. In PyTorch, a step is `zero_grad`, compute the loss, `backward`, `step`.
+- **Chapter 5** built QMaze, and lesson 5.4 found that a table can't carry what it learned to a new maze. `observe(env)` turns the maze into 100 numbers with the rat as 0.5: a picture of the situation instead of a cell number.
+- **Chapter 3** built networks: functions with knobs that compute outputs from inputs, trained by gradient steps. In PyTorch, a step is `zero_grad`, compute the loss, `backward`, `step`.
 
 ### What this lesson asks
 
-This is **deep Q-learning**: Q-learning (Chapter 1) with a neural network (Chapter 4) in place of the table. Nothing about the learning rule changes. After each step the target is still r + γ · max Q(next), or just r after an ending. What changes is where the values live and how they're nudged. A table stores four numbers per cell and nudges one of them. A network **computes** four numbers from the whole maze, and is nudged by a gradient step that makes its output for that situation a little closer to the target.
+This is **deep Q-learning**: Q-learning (Chapter 1) with a neural network (Chapter 3) in place of the table. Nothing about the learning rule changes. After each step the target is still r + γ · max Q(next), or just r after an ending. What changes is where the values live and how they're nudged. A table stores four numbers per cell and nudges one of them. A network **computes** four numbers from the whole maze, and is nudged by a gradient step that makes its output for that situation a little closer to the target.
 
-This chapter trains on a **7 × 7 maze** first, with 33 starting cells. The 10 × 10 maze from Chapter 3 works too, but a single training run of it took 10 to 26 minutes on the machine this series was written on, and failed outright with some settings. The small maze trains in under a minute, which is short enough to change things and see what happens. Lesson 5.5 goes back to the big one.
+This chapter trains on a **7 × 7 maze** first, with 33 starting cells. The 10 × 10 maze from Chapter 5 works too, but a single training run of it took 10 to 26 minutes on the machine this series was written on, and failed outright with some settings. The small maze trains in under a minute, which is short enough to change things and see what happens. Lesson 6.6 goes back to the big one.
 
 ### The table agent and the network agent, side by side
 
@@ -36,7 +32,7 @@ This chapter trains on a **7 × 7 maze** first, with 33 starting cells. The 10 �
 seen_maze.py   SeenMaze: a QMaze whose reset/step hand out observe(self) instead of the cell number
 dqn.py
   DQNAgent       values(obs) -> act(obs) -> learn(...) -> update(batch): the Q-learning target, one gradient step
-  ByCell         lets lesson 3.2's completion() judge a network agent (it hands out cell numbers)
+  ByCell         lets lesson 5.2's completion() judge a network agent (it hands out cell numbers)
   train_dqn()    play episodes on SeenMaze, learning after every step; check completion every 10 episodes
 ```
 
@@ -47,7 +43,7 @@ dqn.py
 Click **Create provided tests/test_dqn.py** above.
 
 ```python file=tests/test_dqn.py provided
-# Tests for seen_maze.py and dqn.py (lesson 5.1).
+# Tests for seen_maze.py and dqn.py (lesson 6.2).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_dqn.py
 import numpy as np
 import torch
@@ -195,7 +191,7 @@ class SeenMaze(QMaze):
 ```
 
 - **`SMALL_MAZE`** is 7 × 7: 33 free cells besides the cheese, and a 26-move shortest route from (0, 0).
-- **`SeenMaze`** is a `QMaze` whose states are what the tutorial's agent sees: lesson 3.4's `observe`, the maze with the rat marked 0.5, as one array. `class SeenMaze(QMaze):` inherits everything (rules, rewards, random starts) and overrides only `reset` and `step`. Each calls the original (`super().reset(seed)`) and then replaces the cell number with the observation. That's lesson 3.5's subclassing again, and lesson 2.4's wrapper idea from the other direction.
+- **`SeenMaze`** is a `QMaze` whose states are what the tutorial's agent sees: lesson 5.4's `observe`, the maze with the rat marked 0.5, as one array. `class SeenMaze(QMaze):` inherits everything (rules, rewards, random starts) and overrides only `reset` and `step`. Each calls the original (`super().reset(seed)`) and then replaces the cell number with the observation. That's lesson 5.5's subclassing again, and lesson 2.4's wrapper idea from the other direction.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_dqn.py -k seen" label="SeenMaze hands the agent the whole small maze, with the rat marked" -- reset and step call the QMaze versions, then return observe(self) in place of the state number.
@@ -229,9 +225,9 @@ class DQNAgent:
             return self.net(torch.tensor(obs, dtype=torch.float32).reshape(1, -1))[0].numpy()
 ```
 
-- **`make_net(size)`** is the tutorial's network (lesson 4.5), in PyTorch: `size` inputs (49 for the small maze), two hidden layers of `size` units with PReLU bends, and 4 outputs, one value per action. `nn.PReLU()` is PyTorch's PReLU, with one difference from Keras's: written like this, it learns **one** negative-side slope shared by the whole layer, where Keras learns one per unit. (`nn.PReLU(size)` would learn one per unit.) It makes little difference here, and it's the kind of detail to check whenever code moves between libraries. With 49 inputs the network has 5,102 knobs.
+- **`make_net(size)`** is the tutorial's network (lesson 3.5), in PyTorch: `size` inputs (49 for the small maze), two hidden layers of `size` units with PReLU bends, and 4 outputs, one value per action. `nn.PReLU()` is PyTorch's PReLU, with one difference from Keras's: written like this, it learns **one** negative-side slope shared by the whole layer, where Keras learns one per unit. (`nn.PReLU(size)` would learn one per unit.) It makes little difference here, and it's the kind of detail to check whenever code moves between libraries. With 49 inputs the network has 5,102 knobs.
 
-  Counting them as lesson 4.5 did: each `Linear(49, 49)` has 49 × 49 + 49 = 2,450 knobs, each `PReLU()` has 1, and `Linear(49, 4)` has 49 × 4 + 4 = 200, so 2,450 + 1 + 2,450 + 1 + 200 = 5,102.
+  Counting them as lesson 3.5 did: each `Linear(49, 49)` has 49 × 49 + 49 = 2,450 knobs, each `PReLU()` has 1, and `Linear(49, 4)` has 49 × 4 + 4 = 200, so 2,450 + 1 + 2,450 + 1 + 200 = 5,102.
 
 **`DQNAgent`'s inputs:**
 
@@ -240,10 +236,10 @@ class DQNAgent:
 | `size` | how many numbers in an observation | the network's first layer must match it: 49 for the small maze, 100 for the big one | (required) |
 | `gamma` | the discount γ | how much the future counts, as in Chapter 1 | 0.95 |
 | `epsilon` | the chance of a random move | exploration, as in Chapter 1 | 0.1 |
-| `rate` | Adam's learning rate | how big each gradient step is (lesson 4.2) | 0.001 |
+| `rate` | Adam's learning rate | how big each gradient step is (lesson 3.2) | 0.001 |
 | `seed` | the random seed | makes the starting knobs and the exploration repeatable | 0 |
 
-- **The agent's knowledge is `self.net`**, where Chapter 1's agent had `self.Q`. **Adam** (lesson 4.5) will do the nudging.
+- **The agent's knowledge is `self.net`**, where Chapter 1's agent had `self.Q`. **Adam** (lesson 3.5) will do the nudging.
 - **`values(obs)`** is the network's answer to "what is each action worth here?", the row `Q[state]` of a table. The observation becomes a batch of one (`reshape(1, -1)`), `[0]` takes the one result back out, and `.numpy()` turns it into an ordinary array. **`torch.no_grad()`** switches off autograd's recording inside the `with` block. Choosing an action never needs slopes, and recording a graph every step would only waste time and memory.
 
 ```check
@@ -329,9 +325,9 @@ class DQNAgent:
 
 - **`zip(*batch)`** turns a list of transitions into five columns: all the observations together, all the actions together, and so on. `np.array(column)` makes each an array, and the `torch.tensor` lines make tensors of them.
 - **The targets**, inside `torch.no_grad()`, are Q-learning's, for every transition at once: `rewards + γ × (1 − ended) × (the best next value)`. Multiplying by `1 − ended` makes the next value vanish after an ending (ended is 1.0) and count otherwise (0.0), with no `if`, so it works on whole arrays. `.max(dim=1).values` is the biggest of the four values in each row.
-- **Why `no_grad` around the targets?** A target is meant to be a fixed label, "this is what the value should be", like y in Chapter 4. If autograd recorded it, `backward` would also push the **next** state's value towards the current one, chasing the target as well as the value. Computing it without a graph makes it a constant.
+- **Why `no_grad` around the targets?** A target is meant to be a fixed label, "this is what the value should be", like y in Chapter 3. If autograd recorded it, `backward` would also push the **next** state's value towards the current one, chasing the target as well as the value. Computing it without a graph makes it a constant.
 - **`chosen`**: the network gives four values per observation, but the transition only says something about the action actually taken. `.gather(1, actions…)` picks, from each row, the value at that row's action. For a batch of one with action 2, it's the third value.
-- **The loss** is the mean squared difference between the chosen values and their targets, and the last three lines are lesson 4.4's: zero the slopes, `backward`, `step`.
+- **The loss** is the mean squared difference between the chosen values and their targets, and the last three lines are lesson 3.4's: zero the slopes, `backward`, `step`.
 
 **`update` worked through on a batch of two**, with made-up numbers small enough to follow. `zip(*batch)` first:
 
@@ -482,7 +478,7 @@ if __name__ == "__main__":
     print("solved every start at episode", solved_at)
 ```
 
-- **`ByCell`** adapts a network agent for lesson 3.2's `completion`, which hands out cell numbers. It rebuilds the observation for that cell and returns the greedy action, as lesson 4.5's `NetworkAgent` did.
+- **`ByCell`** adapts a network agent for lesson 5.2's `completion`, which hands out cell numbers. It rebuilds the observation for that cell and returns the greedy action, as lesson 6.1's `NetworkAgent` did.
 - **`train_dqn`** is lesson 1.4's `train`, written out with one addition. Every `check_every` episodes it runs the completion check, prints how many starts the greedy agent solves, and stops as soon as it solves them all, as the tutorial's `qtrain` does. It returns the agent and the episode at which it solved the maze, or `None`.
 - **`**settings`** collects any other keyword arguments, such as `gamma=0.9`, and passes them on to `DQNAgent`, so experiments can change the agent without changing this function.
 
@@ -513,9 +509,9 @@ The learning rule is right: the update tests prove it. The trouble is in **what 
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_dqn.py -k train" label="train_dqn trains, checks completion and reports when it solved the maze"
-run ".venv/Scripts/python -m pytest -q tests/test_dqn.py" label="all lesson 5.1 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_dqn.py" label="all lesson 6.2 tests pass"
 ```
 
 ### What you have
 
-A deep Q-learning agent: Chapter 1's learning rule, Chapter 4's network, and the tutorial's view of the maze. Every part is tested, and together they don't work. Next lesson adds the tutorial's **experience replay**, and the same agent solves the maze.
+A deep Q-learning agent: Chapter 1's learning rule, Chapter 3's network, and the tutorial's view of the maze. Every part is tested, and together they don't work. Next lesson adds the tutorial's **experience replay**, and the same agent solves the maze.

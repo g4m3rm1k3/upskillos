@@ -134,7 +134,7 @@ class TableCartPole:
         return state_index(self.obs, self.edges, self.counts), reward, terminated, truncated, info
 ```
 
-`TableCartPole` looks, from outside, exactly like `Corridor`: `n_states`, `n_actions`, `reset(seed)` returning `(state, info)`, and `step(action)` returning five values with the state as a row number. Inside, it holds a real CartPole (`self.env`) and passes every call on to it, changing only the observation on the way back. An object that wraps another and changes how it looks is called a **wrapper**. Gymnasium has a class for exactly this, `gymnasium.ObservationWrapper`, and Chapter 7 uses it; writing one by hand first shows there's nothing more to it.
+`TableCartPole` looks, from outside, exactly like `Corridor`: `n_states`, `n_actions`, `reset(seed)` returning `(state, info)`, and `step(action)` returning five values with the state as a row number. Inside, it holds a real CartPole (`self.env`) and passes every call on to it, changing only the observation on the way back. An object that wraps another and changes how it looks is called a **wrapper**. Gymnasium has a class for exactly this, `gymnasium.ObservationWrapper`, and Chapter 8 uses it; writing one by hand first shows there's nothing more to it.
 
 - **`self.edges`** is computed once, in `__init__`: a list of four edge arrays, one per number. Making them again on every step would give the same answer thousands of times.
 - **`np.prod(counts)`** multiplies the counts together: 1 × 1 × 6 × 12 = 72.

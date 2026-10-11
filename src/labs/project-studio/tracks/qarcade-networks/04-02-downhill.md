@@ -1,12 +1,12 @@
 ---
-title: 4.2 — Downhill
+title: 3.2 — Downhill
 runtime: python
 run: downhill.py
 ---
 
 ### The story so far
 
-Lesson 4.1 (`line.py`) built three things. `make_points()` gives 50 examples: inputs `x` and the answers `y` they should produce, made from the rule y = 2x + 1 plus a little noise. `predict(w, b, x)` is a straight line, `w * x + b`, with two adjustable numbers, the knobs `w` (steepness) and `b` (height). `mse(predictions, targets)` is the **loss**: one number saying how wrong the predictions are, the average of the squared misses. Learning means finding the knob settings with the smallest loss. Trying all 3,721 settings on a grid found w = 2, b = 1.
+Lesson 3.1 (`line.py`) built three things. `make_points()` gives 50 examples: inputs `x` and the answers `y` they should produce, made from the rule y = 2x + 1 plus a little noise. `predict(w, b, x)` is a straight line, `w * x + b`, with two adjustable numbers, the knobs `w` (steepness) and `b` (height). `mse(predictions, targets)` is the **loss**: one number saying how wrong the predictions are, the average of the squared misses. Learning means finding the knob settings with the smallest loss. Trying all 3,721 settings on a grid found w = 2, b = 1.
 
 ### What this lesson asks
 
@@ -32,7 +32,7 @@ descend(x, y, rate)           start at w = 0, b = 0; 100 times: get the slope fr
 Click **Create provided tests/test_downhill.py** above.
 
 ```python file=tests/test_downhill.py provided
-# Tests for downhill.py (lesson 4.2).
+# Tests for downhill.py (lesson 3.2).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_downhill.py
 import numpy as np
 from pytest import approx
@@ -114,7 +114,7 @@ To find the slope for `w`: work out the loss, then nudge `w` by a tiny `h` (10�
 
 Worked by hand for the first test: one example, x = 1, y = 3, at w = 0, b = 0. The prediction is 0, the miss is −3, the loss is 9. Nudge w to 0.000001: the prediction is 0.000001, the loss (0.000001 − 3)² = 8.999994. The change is −0.000006, and divided by the nudge, 0.000001, that's **−6**. Negative means **increasing w decreases the loss**: downhill is towards bigger w. Which is right, since the line must rise to reach 3.
 
-**Why not just use nudging for everything?** It costs one extra loss calculation **per knob**. For 2 knobs that's nothing. For QMaze's 20,804 knobs it's 20,805 passes over all the data for every single step downhill. And the answer is slightly off, because `h` isn't truly zero. Next step: the exact slope for all knobs at once, from a formula.
+**Why not just use nudging for everything?** It costs one extra loss calculation **per knob**. For 2 knobs that's nothing. For a published network with 20,804 knobs (lesson 3.5 writes one) it's 20,805 passes over all the data for every single step downhill. And the answer is slightly off, because `h` isn't truly zero. Next step: the exact slope for all knobs at once, from a formula.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_downhill.py -k nudged" label="nudged_gradient measures each knob's slope by nudging it" -- For each knob: (loss with the knob nudged by h - loss) / h.
@@ -288,7 +288,7 @@ verify: .venv/Scripts/python -c "from downhill import descend; from line import 
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_downhill.py -k descend" label="descend finds w = 2 and b = 1, and blows up with too big a step" -- Each step: get the gradient, then w -= rate * dw and b -= rate * db; record the loss after the step.
-run ".venv/Scripts/python -m pytest -q tests/test_downhill.py" label="all lesson 4.2 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_downhill.py" label="all lesson 3.2 tests pass"
 ```
 
 ### What you have

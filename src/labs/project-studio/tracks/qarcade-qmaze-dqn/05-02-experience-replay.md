@@ -1,12 +1,12 @@
 ---
-title: 5.2 — Experience Replay
+title: 6.3 — Experience Replay
 runtime: python
 run: dqn.py
 ---
 
 ### The story so far
 
-Lesson 5.1 built `DQNAgent` (`dqn.py`): Chapter 1's Q-learning with a network in place of the table. Each move is a **transition**, five things: `(obs, action, reward, next_obs, terminated)`, what the rat saw, what it did, what it got, what it saw next, and whether the game ended. `update(batch)` takes a list of transitions and does one gradient step moving each chosen value towards its target. `learn` called it straight away, with a list of just the move that had happened.
+Lesson 6.2 built `DQNAgent` (`dqn.py`): Chapter 1's Q-learning with a network in place of the table. Each move is a **transition**, five things: `(obs, action, reward, next_obs, terminated)`, what the rat saw, what it did, what it got, what it saw next, and whether the game ended. `update(batch)` takes a list of transitions and does one gradient step moving each chosen value towards its target. `learn` called it straight away, with a list of just the move that had happened.
 
 ### What this lesson asks
 
@@ -38,7 +38,7 @@ after (5.2):    move ──> learn ──> memory.add(this move)                
 Click **Create provided tests/test_replay.py** above.
 
 ```python file=tests/test_replay.py provided
-# Tests for replay.py and dqn.py's memory (lesson 5.2).
+# Tests for replay.py and dqn.py's memory (lesson 6.3).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_replay.py
 import numpy as np
 
@@ -158,7 +158,7 @@ after adding 3: [1, 2, 3]
 after adding 4: [2, 3, 4]
 ```
 
-- **`deque(maxlen=capacity)`**: a `deque` (lesson 3.3) with a maximum length. When it's full, adding an item at one end silently drops the oldest from the other. So the memory always holds the newest `capacity` steps: old experience, from when the agent knew less, ages out by itself. The tutorial does the same with a list and `del self.memory[0]`.
+- **`deque(maxlen=capacity)`**: a `deque` (lesson 5.3) with a maximum length. When it's full, adding an item at one end silently drops the oldest from the other. So the memory always holds the newest `capacity` steps: old experience, from when the agent knew less, ages out by itself. The tutorial does the same with a list and `del self.memory[0]`.
 - **`__len__`** is the method Python calls for `len(memory)`. Defining it makes the memory work with `len`, like a list does.
 
 ```check
@@ -338,7 +338,7 @@ Predict, then run `.venv\Scripts\python dqn.py`:
 question: With replay, around which episode will the network first solve all 33 starts?
 answer: 180
 tolerance: 60
-explain: For seed 0, at episode 180, after about 46 seconds. Seeds 1 to 4 solved it at episodes 140, 140, 170, 80, in 17 to 36 seconds. Without replay, the same network got nowhere in 400 episodes. With it, every seed solves every start in under 200 episodes. For comparison, Chapter 3's table agent solved the bigger 10 × 10 maze in 500 episodes and about a fifth of a second. Each network update is far more work than nudging one number, so on a maze small enough for a table, the table wins. The network earns its cost where tables can't go: CartPole without bins, and many mazes at once.
+explain: For seed 0, at episode 180, after about 46 seconds. Seeds 1 to 4 solved it at episodes 140, 140, 170, 80, in 17 to 36 seconds. Without replay, the same network got nowhere in 400 episodes. With it, every seed solves every start in under 200 episodes. For comparison, Chapter 5's table agent solved the bigger 10 × 10 maze in 500 episodes and about a fifth of a second. Each network update is far more work than nudging one number, so on a maze small enough for a table, the table wins. The network earns its cost where tables can't go: CartPole without bins, and many mazes at once.
 verify: script replay_solves.py
 ```
 
@@ -357,8 +357,8 @@ The same network, the same learning rule and the same targets. The only change i
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_replay.py -k batches" label="learn stores every step and learns from batches once there are enough"
-run ".venv/Scripts/python -m pytest -q tests/test_replay.py" label="all lesson 5.2 tests pass"
-run ".venv/Scripts/python -m pytest -q tests/test_dqn.py" label="and the lesson 5.1 tests still pass"
+run ".venv/Scripts/python -m pytest -q tests/test_replay.py" label="all lesson 6.3 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_dqn.py" label="and the lesson 6.2 tests still pass"
 ```
 
 ### What you have

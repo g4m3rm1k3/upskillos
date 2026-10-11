@@ -1,12 +1,12 @@
 ---
-title: 5.4 — The Tutorial's Way, in Keras
+title: 6.5 — The Tutorial's Way, in Keras
 runtime: python
 run: tutorial_keras.py
 ---
 
 ### The story so far
 
-Your PyTorch agent (`dqn.py`, lessons 5.1 and 5.2) keeps the last 1,000 transitions in a `ReplayMemory`, and after every move does gradient steps on random batches of them. Each step computes a Q-learning **target** for every transition (the reward, plus γ times the best next value unless the game ended), picks out the value of the action actually taken with `gather`, and moves it towards the target. Lesson 4.5 built the tutorial's network in Keras, `build_model(size)` in `maze_net.py`, and `NetworkAgent`, which lets `completion` judge a Keras model.
+Your PyTorch agent (`dqn.py`, lessons 6.2 and 6.3) keeps the last 1,000 transitions in a `ReplayMemory`, and after every move does gradient steps on random batches of them. Each step computes a Q-learning **target** for every transition (the reward, plus γ times the best next value unless the game ended), picks out the value of the action actually taken with `gather`, and moves it towards the target. Lesson 3.5 built the tutorial's network in Keras, `build_model(size)` in `maze_net.py`, and lesson 6.1 added `NetworkAgent`, which lets `completion` judge a Keras model.
 
 ### What this lesson asks
 
@@ -29,7 +29,7 @@ Your PyTorch agent and the tutorial's Keras one learn the same way: Q-learning t
 Click **Create provided tests/test_tutorial_keras.py** above.
 
 ```python file=tests/test_tutorial_keras.py provided
-# Tests for tutorial_keras.py (lesson 5.4).
+# Tests for tutorial_keras.py (lesson 6.5).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_tutorial_keras.py
 import numpy as np
 import pytest
@@ -313,16 +313,16 @@ if __name__ == "__main__":
 3. **`get_data`**: a batch of up to `data_size` random memories, with their target rows;
 4. **`model.fit(inputs, targets, epochs=…, batch_size=16)`**: one or more passes of gradient steps over that batch, in minibatches of 16.
 
-Then every 10 episodes, the completion check, with lesson 4.5's `NetworkAgent`.
+Then every 10 episodes, the completion check, with lesson 6.1's `NetworkAgent`.
 
 Where it differs from the published `qtrain`, and why:
 
 | the tutorial | here | why |
 |---|---|---|
 | `epochs=8` in `fit`: 8 passes over each batch, every move | `epochs_per_step=1` by default | 8 passes cost 8 times as much per move. Measured on this maze with an earlier draft of this file, 8 epochs solved it in only 50 episodes, but took 175 seconds to do so. This file, with 1 epoch, took 170 to 230 episodes and two to three minutes. Pass `epochs_per_step=8` to try the tutorial's setting |
-| random actions from `valid_actions()` only | any of the four | your agent pays for walls (lesson 3.2) and learns not to bump them |
+| random actions from `valid_actions()` only | any of the four | your agent pays for walls (lesson 5.2) and learns not to bump them |
 | a win counter, then ε lowered to 0.05 at a 90% win rate | fixed ε, completion check every 10 episodes | the same stopping test, simpler bookkeeping |
-| `game_over` is True for a loss as well | `terminated`: only reaching the cheese | lesson 3.5: running out of reward isn't an ending |
+| `game_over` is True for a loss as well | `terminated`: only reaching the cheese | lesson 5.5: running out of reward isn't an ending |
 
 Run it: `.venv\Scripts\python tutorial_keras.py`. It takes two to three minutes.
 
@@ -347,7 +347,7 @@ solved every start at episode 210
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_tutorial_keras.py -k qtrain" label="qtrain plays, remembers, fits and checks completion"
-run ".venv/Scripts/python -m pytest -q tests/test_tutorial_keras.py" label="all lesson 5.4 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_tutorial_keras.py" label="all lesson 6.5 tests pass"
 ```
 
 ### What you have

@@ -38,7 +38,7 @@ By the end of the lesson you'll have:
 1. Click **Choose folder…** in the middle of this window.
 2. Go to your **Documents** folder, make a **New folder** named `q-arcade`, select it and click **Select Folder**.
 
-Keep the name short and the folder near the top of your drive: Chapter 4 installs PyTorch, whose deepest file paths are long, and Windows refuses paths longer than 260 characters unless long paths are turned on. `Documents\q-arcade` keeps them well inside the limit.
+Keep the name short and the folder near the top of your drive: Chapter 3 installs PyTorch, whose deepest file paths are long, and Windows refuses paths longer than 260 characters unless long paths are turned on. `Documents\q-arcade` keeps them well inside the limit.
 
 The terminal at the bottom now runs inside `q-arcade`. Check which Python you have:
 

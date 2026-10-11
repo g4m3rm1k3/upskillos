@@ -126,7 +126,7 @@ class Watcher:
 
 Line for line, `advance` is one time round `run_episode`'s `while` loop: act, step, learn, add up, move on. The variables `run_episode` kept while it ran (`state`, `total`) are now **attributes**, `self.state` and `self.total`, because they must survive between calls. And instead of returning when the episode ends, it records the total and starts the next episode itself, so the caller never has to think about episode boundaries: it just keeps calling `advance`.
 
-Writing the same loop twice is a deliberate choice here. `run_episode` is the clearest way to say "play one episode", and `Watcher` is the clearest way to say "one step at a time". Chapter 7 meets the same split again, in Pac-Man.
+Writing the same loop twice is a deliberate choice here. `run_episode` is the clearest way to say "play one episode", and `Watcher` is the clearest way to say "one step at a time". Chapter 8 meets the same split again, in Pac-Man.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_watch.py -k advance" label="advance takes one step, learns from it, and starts a new episode after an ending" -- Act, step, learn, add the reward, move to next_state; if the episode ended, append the total, reset it to 0.0, and reset the environment.

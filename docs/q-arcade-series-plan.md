@@ -81,7 +81,7 @@ Only what DQN needs. Everything is written by hand once before a library does it
 
 ### 4 · Actor-critic on CartPole: A2C and A3C (`qarcade-actor-critic`), about 7 lessons
 
-**Status:** planned 2026-10-11 at the owner's request; not built. Placed straight after CartPole and networks (moved before QMaze the same day) because the owner is writing a paper on A2C applied to CartPole. It uses Chapter 2's CartPole and Chapter 3's PyTorch, and nothing from QMaze or DQN. Written to the explanation standard (story so far, pieces-fit diagram, test groups, inputs tables, maths named and stepped through with a loop).
+**Status:** written 2026-10-11 (7 lessons, `src/labs/project-studio/tracks/qarcade-actor-critic/`); see *Chapter 4 measurements* below. Planned the same day at the owner's request. Placed straight after CartPole and networks (moved before QMaze the same day) because the owner is writing a paper on A2C applied to CartPole. It uses Chapter 2's CartPole and Chapter 3's PyTorch, and nothing from QMaze or DQN. Written to the explanation standard (story so far, pieces-fit diagram, test groups, inputs tables, maths named and stepped through with a loop).
 
 **The idea in one picture**, for the chapter's opening:
 
@@ -226,7 +226,11 @@ Still to measure:
 - **Does the course hand in Jupyter notebooks?** If so, Chapters 2 and 3 can each end with a step that turns the project into a submission notebook.
 - **The chart helper:** settled. No chart helper was needed; learning curves are printed as tables (lessons 1.4, 2.4), and the corridor watcher draws values in the cells.
 
-## Reordering the built chapters (decided 2026-10-11, not done yet)
+## Reordering the built chapters (decided and done 2026-10-11)
+
+**Done:** `series.js` order and labels; `trackOrder` (setup 12.1, corridor 12.2, cartpole 12.3, networks 12.4, actor-critic 12.5, qmaze 12.6, qmaze-dqn 12.7); lesson 4.5 split (the Keras half stays as 3.5 with `build_model` as its Your turn; the maze half is `qarcade-qmaze-dqn/05-00-a-network-that-knows-the-maze.md`, lesson 6.1, with `tests/test_maze_net.py`, `answers/maze_net_agent.py`, and `verify/maze_net_wins.py` moved there); titles and every "lesson X.Y" / "Chapter N" reference renumbered by script; story-so-far and chapter-ending text rewritten for the new order; walkthrough entries updated. **File names were deliberately not renumbered** (AGENTS.md rule 2: lesson ids are `track/filename` and are progress keys), so `qarcade-networks/04-0N` files are lessons 3.N, `qarcade-qmaze/03-0N` are 5.N, and `qarcade-qmaze-dqn/05-0N` are 6.(N+1). New chapters use their own number (`qarcade-actor-critic/04-0N` is 4.N).
+
+The original checklist, kept for the record:
 
 The built lessons follow the old order (QMaze as Chapter 3, networks as 4, QMaze DQN as 5). The new order puts networks and A2C before QMaze. To be done before or with Chapter 4 (actor-critic):
 
@@ -243,13 +247,14 @@ Lessons live in `src/labs/project-studio/tracks/qarcade-*/`, Your turn answers i
 
 | Chapter | Lessons | Walkthrough |
 |---|---|---|
-| 0 · Setup | 0.1, 0.2 | passes (2026-10-08) |
-| 1 · The corridor | 1.1–1.5 | passes (2026-10-08) |
-| 2 · CartPole with a table | 2.1–2.6 | passes (2026-10-08) |
-| 3 · QMaze with a table | 3.1–3.5 | passes (2026-10-08) |
-| 4 · From a table to a network | 4.1–4.5 | passes (2026-10-08) |
-| 5 · Deep Q-learning on QMaze | 5.1–5.5 | passes (2026-10-08) |
-| 6–9 | | not written |
+| 0 · Setup | 0.1, 0.2 | passes (2026-10-11, reordered series) |
+| 1 · The corridor | 1.1–1.5 | passes (2026-10-11) |
+| 2 · CartPole with a table | 2.1–2.6 | passes (2026-10-11) |
+| 3 · From a table to a network (`qarcade-networks`) | 3.1–3.5 | passes (2026-10-11) |
+| 4 · Actor-critic on CartPole (`qarcade-actor-critic`) | 4.1–4.7 | written 2026-10-11; walkthrough: see below |
+| 5 · QMaze with a table (`qarcade-qmaze`) | 5.1–5.5 | passes (2026-10-11) |
+| 6 · Deep Q-learning on QMaze (`qarcade-qmaze-dqn`) | 6.1–6.6 | passes (2026-10-11) |
+| 7–10 | | not written |
 
 Changes from the chapter tables above, made while writing: 2.2 became "Simple Rules, Measured" (four baselines, including `θ + θ̇ > 0`, which averages 484.8); 2.3's table ignores the cart (72 rows), because it learns in 500 episodes and lesson 2.6 measures the alternatives; 3.4 uses the classic maze transposed as the new maze; 3.5 types the tutorial's environment as published and fixes its two slips in a subclass; 4.5 ends by distilling the Chapter 3 table into the tutorial's network (74 of 74 starts). Chapter 5 trains on a 7 × 7 maze (33 starts) because one DQN run on the 10 × 10 maze took 8 to 26 minutes and failed for 3 of 5 settings; 5.5 returns to the 10 × 10 maze with a target network. The target network moved from Chapter 6 to 5.5, where it was measured to matter.
 
@@ -261,6 +266,44 @@ Measured while writing (Windows 11, Python 3.13.14):
 - `torch==2.14.1` from PyPI on Windows is the CPU build (`2.14.1+cpu`, 124 MB wheel); with `keras==3.15.1` the full `.venv` is 811 MB. Keras 3 prints NumPy 2 `DeprecationWarning`s from inside `keras/src`; the 4.5 tests filter those only.
 - DQN on the 7 × 7 maze (PyTorch, replay of 1,000, batches of 32, 4 updates per move, γ 0.95, ε 0.1): every start solved by episode 80 to 180 for 5 seeds, 17 to 46 s. Without replay (one update on the latest step): 0 to 3 of 33 starts after 400 episodes, 3 seeds. The tutorial's Keras method (fit after every move, 1 epoch): episodes 170 to 230. The trained network solves 0 of 33 starts on the same maze transposed (a table: 9).
 - DQN on the 10 × 10 maze, up to 600 episodes: without a target network 15 of 74 starts (811 s); with one refreshed every 500 moves, solved at episodes 320 and 400 (seeds 0, 1; 512 s and 452 s while sharing the CPU).
+
+## Handoff (2026-10-11, end of session) — read this first
+
+**What the owner wants now:** a paper on **A2C applied to CartPole** is due this week, so the series was reordered to CartPole → networks → actor-critic, and Chapter 4 (A2C/A3C) was written. QMaze is not this week. The owner finds this material hard to follow: every lesson must follow the explanation standard (plain-words story so far, pieces-fit diagram, test-group table with the bug each group catches, inputs/returns tables, maths named and stepped through with a loop whose output was verified). Answers to lesson questions go **into the lesson**, not chat.
+
+**Done this session (all uncommitted; the owner commits):**
+
+1. **Reorder** (see *Reordering the built chapters*): `series.js` order and labels, `trackOrder`s, lesson 4.5 split (maze half is now `qarcade-qmaze-dqn/05-00-…`, lesson 6.1), titles and every lesson/chapter cross-reference renumbered, story-so-far and chapter endings rewritten, walkthrough entries updated. File names unchanged (progress keys). **Verified:** full walkthrough of the reordered series, 34 of 34 passed.
+2. **Chapter 4, `qarcade-actor-critic/`, 7 lessons:** 4.1 REINFORCE, 4.2 baseline measured, 4.3 actor and critic, 4.4 A2C, 4.5 A3C (and not freezing the PC), 4.6 A2C in Keras, 4.7 an experiment you can write up (ablations, mean ± SE, `results.csv`, `results.png` with matplotlib 3.11.2, a write-up checklist and standard sources). Answers in `answers/`, verify scripts in `verify/`, walkthrough entries at the end of `tracks/qarcade.walkthrough.js` (`const A`). Measurements: *Chapter 4 measurements* below. **Verified:** reference code's 47 tests pass; static checks pass (`… -t "walkthrough entry|verify command|Your turn step|pytest -k|one file per step"`: 5 passed); Project Studio non-desktop tests pass except two pre-existing `electron-basics` failures (another agent's work: steps with several `file=` blocks, and `answers/escape.test.cjs` collected as a test).
+3. **Build kit:** `docs/q-arcade-prototypes/actor-critic/` (reference code and tests, `build_4N.py` lesson builders, `measured.json`, the measurement scripts). Regenerate a lesson by editing `reference/` and rerunning its builder (update `PROJ`/`TRACK` in `build_common.py`).
+
+**Not yet confirmed: the Chapter 4 walkthrough** (types every step, runs every check, wrong answer and verify script) was still running at the end of the session. Rerun it, from a copy of a project that has finished Chapter 3 (or the whole series) with Chapter 4's files removed:
+
+```sh
+cp -r <kept project> <copy>; rm <copy>/{policy,noise,actor_critic,a2c,a3c,keras_a2c,experiment}.py
+QARCADE_START=<copy> QARCADE_FROM=qarcade-actor-critic/04-01 QARCADE_UNTIL=qarcade-actor-critic/04-07   npx vitest run src/labs/project-studio/qArcade.desktop.test.js
+```
+
+Wrong answers most likely to need attention if it fails: 4.4 "forgets to clear the old slopes" (must make the 120,000-step learning test fail), 4.7 "did not install it" (matplotlib; modelled on 3.5's Keras install wrong answer), and the verify scripts that train (`a2c_seed0.py` ~26 s, `keras_a2c_score.py` ~72 s, `a3c_time.py` ~80 s, `reinforce_seed0.py` ~30 s, `noise_ratio.py` ~12 s).
+
+**Next, in order:**
+
+1. Confirm the Chapter 4 walkthrough (above); fix anything it finds.
+2. Commit (the owner asked to commit only when they say so; pulls conflict with other agents' `series.js` edits until this is committed).
+3. Chapter 7, deep Q-learning on CartPole (`qarcade-cartpole-dqn`): the plan below headed "Chapter 6" (written before the reorder), minus its lesson 6.2 (not freezing the PC is now in 4.5). Rerun `cart_proto2.py` first, two at a time. Its 7.3 compares table, A2C and DQN.
+4. Later: Pac-Man (8), pixels (9), capstone (10); the queued Markdown Studio triage script.
+
+**Working rules learned:** at most 2 heavy jobs at once, `torch.set_num_threads(1)` (6 parallel runs froze the PC); the scratchpad's long path breaks `pip install torch` (Windows 260-character limit), so use a short path or the walkthrough's `%TEMP%\qarcade-walk-*` projects; heredocs with quotes in Git Bash get mangled, so write scripts to files.
+
+## Chapter 4 measurements (2026-10-11, Windows 11, Python 3.13, torch 2.14.1 CPU, 1 thread per process)
+
+- **REINFORCE** (`policy.py`, 64 tanh units, Adam 0.01, γ 0.99, 300 episodes), greedy score over 20 games, 10 seeds: 228 ± 65, 2 of 10 at 500. **With the baseline** (returns centred and scaled): 352 ± 64, 6 of 10 at 500. Difference ≈ 1.4 combined standard errors. Seed 5 collapses to 9-step games either way.
+- **Gradient signal-to-noise** (`noise.py`, 100 games from a policy trained 80 episodes): 6.68 raw, 10.20 centred and scaled. On an untrained policy the baseline barely helps (11.4 vs 7.0 normalised, measured with the prototype).
+- **A2C** (`a2c.py`: 8 envs, 5 steps, Adam 0.002, clip 0.5, value 0.5, entropy 0.01, truncation bootstrapped from `info["final_obs"]` with `AutoresetMode.SAME_STEP`): greedy 500 on 5 of 5 seeds, at 500 from 120,000 steps on, about 26 s per 200,000 steps. Learning-rate search with the prototype (3 seeds each): 0.0007 → 443, 170, 254; 0.002 → 500 ×3 (and 5 more seeds at 500); n_steps 16 no better.
+- **Threads:** one A2C run of 60,000 steps took 8.3 s wall / 51.5 s CPU with PyTorch's default 20 threads, and 6.4 s / 6.2 s with 1 thread, identical results.
+- **A3C** (`a3c.py`, 2 workers, spawn, shared memory, per-worker Adam): 500, 79 s alone (118–122 s on 3 seeds while other jobs ran).
+- **Keras A2C** (`keras_a2c.py`, functional model, trained by `train_a2c` through an adapter): 500, 72 s.
+- **Experiment** (`experiment.py`, 3 variants × 5 seeds, pool of 2): A2C 500 ± 0; no entropy bonus 500 ± 0; 1-step returns 440 ± 60 (one seed 199), faster early but unstable late; 253 s. Training-game lengths understate the agent (entropy keeps sampled moves unsure), so curves record greedy scores on 5 fresh games.
 
 ## Handoff (2026-10-08, end of session)
 

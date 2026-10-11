@@ -1,16 +1,16 @@
 ---
-title: 4.3 — A Hidden Layer
+title: 3.3 — A Hidden Layer
 runtime: python
 run: tiny_net.py
 ---
 
 ### The story so far
 
-Lesson 4.1 made a function with two knobs, the straight line `w * x + b`, and a loss, `mse`, saying how wrong its guesses are. Lesson 4.2 found the knobs by **gradient descent**: work out each knob's slope (how fast the loss changes when the knob turns), step every knob a little against its slope, repeat. The slopes came from the **chain rule**: for a calculation done in stages, multiply the rates of each stage. And a **gradient check** confirmed the formula by comparing it with nudging each knob and measuring.
+Lesson 3.1 made a function with two knobs, the straight line `w * x + b`, and a loss, `mse`, saying how wrong its guesses are. Lesson 3.2 found the knobs by **gradient descent**: work out each knob's slope (how fast the loss changes when the knob turns), step every knob a little against its slope, repeat. The slopes came from the **chain rule**: for a calculation done in stages, multiply the rates of each stage. And a **gradient check** confirmed the formula by comparing it with nudging each knob and measuring.
 
 ### What this lesson asks
 
-A straight line can only ever be a straight line. Q-values aren't straight lines: in QMaze, the value of a cell rises steeply near the cheese, falls off behind walls, and changes direction with every turn of the route. This lesson gives the function the ability to **bend**.
+A straight line can only ever be a straight line. What an agent needs to know isn't a straight line: in CartPole, a pole leaning 2° is easy to save and one leaning 10° is nearly lost, and pushing right is good when the pole leans right and bad when it leans left. The answer bends, and flips, as the numbers change. This lesson gives the function the ability to **bend**.
 
 The trick is surprisingly small. Take many straight lines, **bend each one** at a point (clip it so it can't go below zero), and add them up with weights. The result can follow almost any curve. Those bent lines are a network's **hidden layer**, and adding them up is its **output layer**. You'll build both in NumPy, work out the slopes for every knob with the chain rule (that's **backpropagation**), check them against nudging, and train it.
 
@@ -27,7 +27,7 @@ backward (right to left): compute every knob's slope, one stage at a time
                                          W2, b2 <──┘
 ```
 
-`train` repeats forward, backward, step, 3,000 times: lesson 4.2's `descend`, for four groups of knobs.
+`train` repeats forward, backward, step, 3,000 times: lesson 3.2's `descend`, for four groups of knobs.
 
 ## Read the tests first
 
@@ -36,7 +36,7 @@ backward (right to left): compute every knob's slope, one stage at a time
 Click **Create provided tests/test_tiny_net.py** above.
 
 ```python file=tests/test_tiny_net.py provided
-# Tests for tiny_net.py (lesson 4.3).
+# Tests for tiny_net.py (lesson 3.3).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_tiny_net.py
 import numpy as np
 from pytest import approx
@@ -136,7 +136,7 @@ def init(hidden=16, seed=0):
     }
 ```
 
-- **The data** is now y = x², a parabola, a U shape. The best straight line through a U is flat, and misses badly at both ends and the middle: lesson 4.2's `descend` on this data ends with a loss of 1.514.
+- **The data** is now y = x², a parabola, a U shape. The best straight line through a U is flat, and misses badly at both ends and the middle: lesson 3.2's `descend` on this data ends with a loss of 1.514.
 - **`relu(z)`**, the *rectified linear unit*, is the bend: `np.maximum(z, 0.0)` keeps positive numbers and turns negative ones into 0, element by element. Applied to a straight line `w·x + b`, it gives a line that's flat at 0 on one side of a point and rises on the other: a hockey stick. Try it, and see how two bends make a shape no straight line can:
 
   ```python
@@ -231,7 +231,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_tiny_net.py -k forward" label=
 
 ## Backpropagation
 
-Now the slopes for every knob, from the chain rule (lesson 4.2), working **backwards** from the loss through each step of the forward pass. That direction gives the method its name. Make `tiny_net.py` this:
+Now the slopes for every knob, from the chain rule (lesson 3.2), working **backwards** from the loss through each step of the forward pass. That direction gives the method its name. Make `tiny_net.py` this:
 
 ```python file=tiny_net.py
 import numpy as np
@@ -306,8 +306,8 @@ if __name__ == "__main__":
 
 `backward` follows the forward pass in reverse, one line per step. Each name `d_something` means "the slope of the loss with respect to something":
 
-1. **`d_out`**: the loss is the mean of (out − y)², so, exactly as in lesson 4.2, its slope for each output is **2 × miss ÷ n**.
-2. **`W2` and `b2`**: `out = h @ W2 + b2`. For one input, out is the sum over units of h[j] × W2[j], so turning W2[j] changes out at the rate h[j]. Multiply by d_out and add up over every input: that sum over inputs is what `h.T @ d_out` computes. (`.T` is the transpose, from lesson 3.4.) The bias changes out at rate 1, so its slope is just the sum of d_out.
+1. **`d_out`**: the loss is the mean of (out − y)², so, exactly as in lesson 3.2, its slope for each output is **2 × miss ÷ n**.
+2. **`W2` and `b2`**: `out = h @ W2 + b2`. For one input, out is the sum over units of h[j] × W2[j], so turning W2[j] changes out at the rate h[j]. Multiply by d_out and add up over every input: that sum over inputs is what `h.T @ d_out` computes. (`.T` is the transpose, from lesson 5.4.) The bias changes out at rate 1, so its slope is just the sum of d_out.
 3. **`d_h`**: the same sum, read the other way: turning h[j] changes out at the rate W2[j]. So `d_h = d_out @ W2.T`, an (n, hidden) array: how much each unit's output, for each input, affects the loss.
 4. **`d_z`, through the bend**: relu passes a change straight through where z > 0 (slope 1) and blocks it where z ≤ 0 (the flat part, slope 0). `(z > 0)` is an array of True/False, which multiplies as 1/0.
 5. **`W1` and `b1`**: `z = X @ W1 + b1`, the same shape of calculation as step 2, so the same pattern: `X.T @ d_z`, and the sum of d_z for the biases.
@@ -336,7 +336,7 @@ for name, slope in backward(params, np.array([1.0]), np.array([2.0])).items():
     print(name, slope.tolist())
 ```
 
-Every line is "how fast the outside changes, times how fast the inside changes", the chain rule, applied once per step of the forward pass. A network of a hundred layers is this, a hundred times. `train` is lesson 4.2's `descend`, for four groups of knobs. Its inputs: the examples `x` and `y`, `hidden` (how many units, 16), `rate` (0.05), `steps` (3,000) and `seed` (which random starting weights). It returns the trained knobs and the list of losses.
+Every line is "how fast the outside changes, times how fast the inside changes", the chain rule, applied once per step of the forward pass. A network of a hundred layers is this, a hundred times. `train` is lesson 3.2's `descend`, for four groups of knobs. Its inputs: the examples `x` and `y`, `hidden` (how many units, 16), `rate` (0.05), `steps` (3,000) and `seed` (which random starting weights). It returns the trained knobs and the list of losses.
 
 The gradient check runs as part of the tests: for each of this 4-unit network's 13 knobs, your formulas against nudging. Measured on the 16-unit network, the largest difference over all 49 knobs was 0.000004, which is nudging's own error, since `h` isn't zero.
 
@@ -359,7 +359,7 @@ one hidden layer of 16: loss 0.983 after 1 step, 0.0043 after 3000
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_tiny_net.py -k backprop" label="backward's slopes match nudging for every knob, and training fits the curve" -- d_out = 2 * (out - y) / n as a column; W2: h.T @ d_out; d_h = d_out @ W2.T; d_z = d_h * (z > 0); W1: X.T @ d_z; biases: the sums.
-run ".venv/Scripts/python -m pytest -q tests/test_tiny_net.py" label="all lesson 4.3 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_tiny_net.py" label="all lesson 3.3 tests pass"
 ```
 
 ### What you have

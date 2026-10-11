@@ -1,12 +1,12 @@
 ---
-title: 5.5 — The Full Maze, and a Frozen Copy
+title: 6.6 — The Full Maze, and a Frozen Copy
 runtime: python
 run: big_maze.py
 ---
 
 ### The story so far
 
-Your `DQNAgent` (`dqn.py`) learns from random batches of remembered moves (lesson 5.2). For every move in a batch, `update` works out a **target**, what the value of that move should be: the reward, plus γ times the best value the network predicts for the next view (unless the game ended). Then one gradient step moves the network's value for that move towards the target. It solved the 7 × 7 maze from every start in under 200 episodes. Lesson 5.3 showed how to copy a network's numbers: `state_dict()` reads them, `load_state_dict(...)` pours them into another network of the same shape.
+Your `DQNAgent` (`dqn.py`) learns from random batches of remembered moves (lesson 6.3). For every move in a batch, `update` works out a **target**, what the value of that move should be: the reward, plus γ times the best value the network predicts for the next view (unless the game ended). Then one gradient step moves the network's value for that move towards the target. It solved the 7 × 7 maze from every start in under 200 episodes. Lesson 6.4 showed how to copy a network's numbers: `state_dict()` reads them, `load_state_dict(...)` pours them into another network of the same shape.
 
 ### What this lesson asks
 
@@ -35,7 +35,7 @@ The network being corrected and the network giving the labels are different netw
 Click **Create provided tests/test_target.py** above.
 
 ```python file=tests/test_target.py provided
-# Tests for the target network in dqn.py, and big_maze.py (lesson 5.5).
+# Tests for the target network in dqn.py, and big_maze.py (lesson 6.6).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_target.py
 import numpy as np
 import torch
@@ -112,7 +112,7 @@ target = reward + γ × (the best value the NETWORK predicts for the next view)
 
 The target is computed **by the network being trained**. Every gradient step changes the network, so it changes the targets too, including the targets of the very next update. It's like trying to hit a mark that moves every time you adjust your aim, and moves because you adjusted it. In the table this hardly mattered: an update changed one number, and a target read a different one. A network's update changes its values everywhere at once, the next state's included. Errors can feed on themselves: a value that's too high makes the targets that use it too high, which pushes other values up, which raises the first value's own target.
 
-The fix is to compute targets with a **frozen copy** of the network, the **target network**, and to refresh the copy only every so often, here every 500 moves. Between refreshes the targets stand still, so each stretch of training is ordinary supervised learning against fixed labels, the problem Chapter 4 showed networks are good at. Every 500 moves the copy catches up, and the next stretch aims at better labels.
+The fix is to compute targets with a **frozen copy** of the network, the **target network**, and to refresh the copy only every so often, here every 500 moves. Between refreshes the targets stand still, so each stretch of training is ordinary supervised learning against fixed labels, the problem Chapter 3 showed networks are good at. Every 500 moves the copy catches up, and the next stretch aims at better labels.
 
 A timeline, with `sync=500`:
 
@@ -235,7 +235,7 @@ if __name__ == "__main__":
 The new parts:
 
 - **`sync=0`**: how many moves between refreshes. 0 means no target network, which is how every earlier lesson ran, so their results don't change.
-- **`self.target = make_net(size)`**, then **`load_state_dict(self.net.state_dict())`**: a second network with exactly the first one's numbers (lesson 5.3's saving and loading, without a file in between). It is never trained: nothing ever calls an optimiser on it.
+- **`self.target = make_net(size)`**, then **`load_state_dict(self.net.state_dict())`**: a second network with exactly the first one's numbers (lesson 6.4's saving and loading, without a file in between). It is never trained: nothing ever calls an optimiser on it.
 - **`judge = self.target if self.sync else self.net`** in `update`: with a sync interval, targets come from the frozen copy; without one, from the network itself, as before. Note that `chosen`, the value being corrected, always comes from `self.net`: only the **labels** are frozen.
 
 ```check
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     print("solved every start at episode", solved_at)
 ```
 
-**`SETTINGS`** is a dictionary of keyword arguments, and `**SETTINGS` unpacks it into the call (lesson 3.2's `**`), so `train_dqn(MAZE, ..., **SETTINGS)` is `train_dqn(MAZE, ..., sync=500, updates=4)`. `train_dqn` passes them on to `DQNAgent` through its own `**settings`. Keeping them in one named dictionary lets the test check them, and lets you change them in one place.
+**`SETTINGS`** is a dictionary of keyword arguments, and `**SETTINGS` unpacks it into the call (lesson 5.2's `**`), so `train_dqn(MAZE, ..., **SETTINGS)` is `train_dqn(MAZE, ..., sync=500, updates=4)`. `train_dqn` passes them on to `DQNAgent` through its own `**settings`. Keeping them in one named dictionary lets the test check them, and lets you change them in one place.
 
 It trains on the tutorial's maze with a frozen copy refreshed every 500 moves, checks completion every 20 episodes, gives up after 600, and saves the network to `big_maze_dqn.pt`. Start it in the terminal and leave it running:
 
@@ -318,7 +318,7 @@ It trains on the tutorial's maze with a frozen copy refreshed every 500 moves, c
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_target.py -k big" label="big_maze.py trains on the tutorial's maze with a frozen copy"
-run ".venv/Scripts/python -m pytest -q tests/test_target.py" label="all lesson 5.5 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_target.py" label="all lesson 6.6 tests pass"
 ```
 
 What was measured while this series was written:
@@ -329,7 +329,7 @@ What was measured while this series was written:
 | frozen copy, refreshed every 500 moves | 0 | every start solved at **episode 320** | 512 s |
 | frozen copy, refreshed every 500 moves | 1 | every start solved at **episode 400** | 452 s |
 
-(The three ran at the same time, sharing the computer, so each alone would be somewhat faster.) Without the frozen copy, 600 episodes weren't enough. With it, both seeds solved every start. On the small maze the frozen copy made no difference (lesson 5.2 solved it without one), because a small network on a small maze has less room for its errors to feed on each other. The bigger the problem, the more it matters, which is why every serious DQN uses one.
+(The three ran at the same time, sharing the computer, so each alone would be somewhat faster.) Without the frozen copy, 600 episodes weren't enough. With it, both seeds solved every start. On the small maze the frozen copy made no difference (lesson 6.3 solved it without one), because a small network on a small maze has less room for its errors to feed on each other. The bigger the problem, the more it matters, which is why every serious DQN uses one.
 
 ```predict
 question: With a frozen copy refreshed every 500 moves, roughly how long will the full maze take on your machine?
@@ -345,4 +345,4 @@ explain: There's no right answer; it depends on your computer. On the machine th
 - the tutorial's Keras version, `Experience` and `qtrain`, mapped line by line onto yours;
 - the **target network**, the second ingredient of DeepMind's DQN, and what it took to solve the full maze.
 
-Both school problems are now solved twice: with tables, and with networks. Chapter 6 returns to CartPole, where networks have a real advantage: no bins, the four numbers go straight in.
+Both school problems are now solved twice: with tables, and with networks (CartPole by A2C in Chapter 4, QMaze by deep Q-learning here). Chapter 7 returns to CartPole with deep Q-learning, and compares all three methods on it.

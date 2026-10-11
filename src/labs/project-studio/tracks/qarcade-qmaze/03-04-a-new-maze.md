@@ -1,27 +1,27 @@
 ---
-title: 3.4 — A New Maze
+title: 5.4 — A New Maze
 runtime: python
 run: new_maze.py
 ---
 
 ### The story so far
 
-The agent's table, `agent.Q`, has one row per cell of the maze: row 23 is cell (2, 3), because the state number is `row * 10 + col` (lesson 3.1). Each row holds four scores, one per action, and the agent moves in the direction of the biggest. Lesson 3.3 checked that, trained with `train_maze()`, it reaches the cheese from all 74 starts, almost always by a shortest route. `completion(agent, maze)` (`maze_tools.py`) counts the starts it solves on any maze you give it.
+The agent's table, `agent.Q`, has one row per cell of the maze: row 23 is cell (2, 3), because the state number is `row * 10 + col` (lesson 5.1). Each row holds four scores, one per action, and the agent moves in the direction of the biggest. Lesson 5.3 checked that, trained with `train_maze()`, it reaches the cheese from all 74 starts, almost always by a shortest route. `completion(agent, maze)` (`maze_tools.py`) counts the starts it solves on any maze you give it.
 
 ### What this lesson asks
 
-The agent from lesson 3.3 knows its maze perfectly. Now give it a different one: the **same** maze, flipped over its diagonal, so every row becomes a column. Same number of free cells, same start corner, same cheese corner, and a route of exactly the same length. A person who had solved the first maze would find the second one easy, because they learned *how mazes work*.
+The agent from lesson 5.3 knows its maze perfectly. Now give it a different one: the **same** maze, flipped over its diagonal, so every row becomes a column. Same number of free cells, same start corner, same cheese corner, and a route of exactly the same length. A person who had solved the first maze would find the second one easy, because they learned *how mazes work*.
 
-The table learned something else entirely. This lesson measures what, and then looks at what the tutorial gives its agent to see instead of a cell number: the whole maze. That observation is what Chapter 5's network will read.
+The table learned something else entirely. This lesson measures what, and then looks at what the tutorial gives its agent to see instead of a cell number: the whole maze. That observation is what Chapter 6's network will read.
 
 ### Two ways to tell the agent where it is
 
 ```text
-the state (lessons 3.1-3.3)          the observation (this lesson)
+the state (lessons 5.1-5.3)          the observation (this lesson)
   one number: 23                       100 numbers: the whole maze, with the rat marked
   "you are in cell 23"                 [1, 0, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 1, 0, 1, 1, 1, 1,  1, 1, 1, 0.5, 1, 0, ...]
   says nothing about the walls         the walls are right there, around the 0.5
-  -> a table row                       -> too many possibilities for a table; needs a function (Chapter 4)
+  -> a table row                       -> too many possibilities for a table; needs a function (Chapter 3)
 ```
 
 ## Read the tests first
@@ -31,7 +31,7 @@ the state (lessons 3.1-3.3)          the observation (this lesson)
 Click **Create provided tests/test_new_maze.py** above.
 
 ```python file=tests/test_new_maze.py provided
-# Tests for new_maze.py (lesson 3.4).
+# Tests for new_maze.py (lesson 5.4).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_new_maze.py
 import numpy as np
 
@@ -196,12 +196,12 @@ def observe(env):
     canvas[env.cell] = 0.5
     return canvas.reshape(-1)
 ~~~
-The tutorial's `observe` returns `canvas.reshape((1, -1))`, shape `(1, 100)`: one row of 100. That extra dimension is for Keras, which always works on a **batch** of inputs at once, here a batch of one. Chapter 4 explains batches.
+The tutorial's `observe` returns `canvas.reshape((1, -1))`, shape `(1, 100)`: one row of 100. That extra dimension is for Keras, which always works on a **batch** of inputs at once, here a batch of one (lesson 3.5).
 ```
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_new_maze.py -k observe" label="observe returns the maze as 100 numbers with the rat marked 0.5, without changing the maze" -- canvas = env.maze.copy(); canvas[env.cell] = 0.5; return canvas.reshape(-1).
-run ".venv/Scripts/python -m pytest -q tests/test_new_maze.py" label="all lesson 3.4 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_new_maze.py" label="all lesson 5.4 tests pass"
 ```
 
 ## Too many rows
@@ -217,7 +217,7 @@ The last line is 316,912,650,057,057,350,374,175,801,344: about 3 × 10²⁹, a 
 
 What's needed is the thing lesson 2.6 ended on: not a table that **looks up** a row, but a **function** that **computes** the four action values from the 100 numbers. Two mazes that look alike then give similar values, because the same calculation runs on similar inputs. "A wall directly to my right" would produce the same effect wherever it appears, in any maze. And the function's size doesn't depend on how many mazes exist, only on how much calculation it does.
 
-That function is a neural network. The tutorial's is small: 100 numbers in, two layers of 100 numbers in the middle, 4 action values out. Chapter 4 builds one, from a single straight line up, in NumPy, then in PyTorch, then in Keras. Chapter 5 trains it on QMaze, exactly as the tutorial does.
+That function is a neural network. The tutorial's is small: 100 numbers in, two layers of 100 numbers in the middle, 4 action values out. You've already written it: lesson 3.5's `build_model`. Chapter 6 trains it on QMaze, exactly as the tutorial does.
 
 ### What you have
 

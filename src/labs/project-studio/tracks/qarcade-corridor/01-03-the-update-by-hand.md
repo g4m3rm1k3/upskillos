@@ -251,7 +251,7 @@ The loop is the recurrence: each pass feeds the new `estimate` back into `nudge`
 5 0.96875
 ```
 
-**Why not jump straight to the target?** That's α = 1, and the second test checks it does exactly that. It would be right if every target were the truth. But a target is computed from one experience, and experiences vary: in Chapter 2's CartPole, the same action in nearly the same situation sometimes works and sometimes doesn't. With α = 1 the estimate would be whatever the **last** experience said. With a small α, each experience shifts the estimate a little, so the estimate becomes an **average** of many experiences, with recent ones counting most. This one line is how every method in this series learns, including the neural networks of Chapter 4.
+**Why not jump straight to the target?** That's α = 1, and the second test checks it does exactly that. It would be right if every target were the truth. But a target is computed from one experience, and experiences vary: in Chapter 2's CartPole, the same action in nearly the same situation sometimes works and sometimes doesn't. With α = 1 the estimate would be whatever the **last** experience said. With a small α, each experience shifts the estimate a little, so the estimate becomes an **average** of many experiences, with recent ones counting most. This one line is how every method in this series learns, including the neural networks of Chapter 3.
 
 ```predict
 question: An estimate starts at 0. It's nudged towards a target of 1 with α = 0.5, three times. What is it now?

@@ -1,12 +1,12 @@
 ---
-title: 4.4 — PyTorch
+title: 3.4 — PyTorch
 runtime: python
 run: torch_net.py
 ---
 
 ### The story so far
 
-Lesson 4.3 (`tiny_net.py`) built a neural network in NumPy. Its knobs are four arrays in a dictionary, `params`: `W1` and `b1` for the hidden layer, `W2` and `b2` for the output. `forward(params, x)` computes the guesses: straight lines, bent by `relu`, then added up with weights. `backward(params, x, y)` computes every knob's slope by the chain rule, working back from the loss. `train` repeats: slopes, then every knob steps a little downhill. It fitted the U-shaped curve with a loss of 0.0043.
+Lesson 3.3 (`tiny_net.py`) built a neural network in NumPy. Its knobs are four arrays in a dictionary, `params`: `W1` and `b1` for the hidden layer, `W2` and `b2` for the output. `forward(params, x)` computes the guesses: straight lines, bent by `relu`, then added up with weights. `backward(params, x, y)` computes every knob's slope by the chain rule, working back from the loss. `train` repeats: slopes, then every knob steps a little downhill. It fitted the U-shaped curve with a loss of 0.0043.
 
 ### What this lesson asks
 
@@ -32,7 +32,7 @@ First you prove PyTorch computes what you computed. Then you let it.
 Click **Create provided tests/test_torch_net.py** above.
 
 ```python file=tests/test_torch_net.py provided
-# Tests for torch_net.py (lesson 4.4).
+# Tests for torch_net.py (lesson 3.4).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_torch_net.py
 import numpy as np
 from pytest import approx
@@ -119,7 +119,7 @@ torch==2.14.1
 
 This one is big: a 124 MB download that unpacks to several hundred megabytes, and it took about two minutes on the machine this series was written on. pip skips the four packages already installed, because their pinned versions are already there.
 
-- **This is the CPU build.** On Windows, the `torch` on PyPI runs on the processor only. The builds that use an NVIDIA graphics card are much bigger (around 2.5 GB) and come from PyTorch's own package index. Everything up to Chapter 8 runs comfortably on a CPU: these networks are small. Chapter 8, learning from pixels, is where a graphics card starts to matter, and it explains how to install that build then.
+- **This is the CPU build.** On Windows, the `torch` on PyPI runs on the processor only. The builds that use an NVIDIA graphics card are much bigger (around 2.5 GB) and come from PyTorch's own package index. Everything up to Chapter 9 runs comfortably on a CPU: these networks are small. Chapter 9, learning from pixels, is where a graphics card starts to matter, and it explains how to install that build then.
 - **If the install fails with `No such file or directory` and a very long path** ending in something like `…\torch\_inductor\…\dense_blockscaled_gemm_kernel.py`, your project folder's path is too long. Windows refuses paths longer than 260 characters unless "long paths" are switched on, and PyTorch has some very deeply nested files. This happened while this series was being written, in a folder with a long path. In `Documents\q-arcade` that file's path is 149 characters, which fits. Fix it by moving the project to a shorter path, or by enabling long paths in Windows (an administrator setting, `LongPathsEnabled` in the registry).
 
 ```check
@@ -158,7 +158,7 @@ y.backward()
 print("slope of x squared at 3:", x.grad)
 ```
 
-It prints `tensor(6.)`: the slope of x² at 3 is 2 × 3, lesson 4.2's "a square changes at twice the size of what's being squared". You didn't write that rule anywhere. PyTorch recorded that `y` came from `x` by squaring, and it knows the slope rule for squaring.
+It prints `tensor(6.)`: the slope of x² at 3 is 2 × 3, lesson 3.2's "a square changes at twice the size of what's being squared". You didn't write that rule anywhere. PyTorch recorded that `y` came from `x` by squaring, and it knows the slope rule for squaring.
 
 Compare the middle three lines with your `forward` and `loss`: they're the same calculation, almost character for character. What's different is what PyTorch does while it runs them.
 
@@ -168,7 +168,7 @@ Compare the middle three lines with your `forward` and `loss`: they're the same 
 - **`.grad.numpy()`** turns each slope back into a NumPy array, for comparing with yours.
 
 ```predict
-question: How closely will PyTorch's gradients match your backward from lesson 4.3?
+question: How closely will PyTorch's gradients match your backward from lesson 3.3?
 choice: Within about 0.0001, like the nudging check
 choice: Within about 10 to the power -15, essentially identical
 choice: They'll differ, because PyTorch uses a different method
@@ -270,7 +270,7 @@ This loop is the shape of every PyTorch training loop you'll ever read, so here 
 | `optimiser.step()` | `params[name] -= rate * grads[name]` for every knob |
 | `optimiser.zero_grad()` | (nothing: you made a fresh `grads` each time) |
 
-- **The optimiser** does the update for you. **SGD** (stochastic gradient descent) is exactly yours: every knob moves `lr` times its slope downhill. Chapter 5 uses **Adam**, which adapts the step size for each knob separately.
+- **The optimiser** does the update for you. **SGD** (stochastic gradient descent) is exactly yours: every knob moves `lr` times its slope downhill. Lesson 3.5 meets **Adam**, which adapts the step size for each knob separately, and Chapter 4 uses it.
 - **`zero_grad()` must come first.** `backward` *adds* to `.grad` rather than replacing it. That's what you want when a slope has several contributions, but it means last step's slopes are still there. Forgetting `zero_grad` makes every step use the sum of all slopes so far, which is one of the most common PyTorch bugs. See it pile up:
 
   ```python
@@ -283,7 +283,7 @@ This loop is the shape of every PyTorch training loop you'll ever read, so here 
       print(f"after backward call {call}: w.grad = {w.grad.item()}")
   ```
 
-  The slope is the same each time, −12 (the miss is 2 − 5 = −3, and 2 × −3 × 2 = −12, lesson 4.2's 2e·x), but `w.grad` reads −12, then −24, then −36. A training step would move `w` three times too far on the third step, and further every step after.
+  The slope is the same each time, −12 (the miss is 2 − 5 = −3, and 2 × −3 × 2 = −12, lesson 3.2's 2e·x), but `w.grad` reads −12, then −24, then −36. A training step would move `w` three times too far on the third step, and further every step after.
 - **`dtype=torch.float32`**: layers use 32-bit floats, about 7 significant digits instead of 64-bit's 16 (`torch.tensor(1 / 3, dtype=torch.float32).item()` prints 0.3333333432674408: right for 7 digits, then noise). They're half the memory and much faster on graphics cards, and plenty precise for learning. The data must match the layers' type.
 - **`loss.item()`** turns a one-number tensor into a plain Python float.
 
@@ -297,7 +297,7 @@ Your NumPy network reached 0.0043. Same data, same size, same optimiser, same nu
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_torch_net.py -k train" label="train_torch fits the curve, repeatably" -- Each step: optimiser.zero_grad(), loss = loss_fn(net(X), Y), loss.backward(), optimiser.step().
-run ".venv/Scripts/python -m pytest -q tests/test_torch_net.py" label="all lesson 4.4 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_torch_net.py" label="all lesson 3.4 tests pass"
 ```
 
 ### What you have

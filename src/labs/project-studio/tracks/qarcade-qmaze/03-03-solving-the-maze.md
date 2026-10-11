@@ -1,12 +1,12 @@
 ---
-title: 3.3 — Solving the Maze, and Checking It
+title: 5.3 — Solving the Maze, and Checking It
 runtime: python
 run: watch_qmaze.py
 ---
 
 ### The story so far
 
-The maze (`qmaze.py`, lesson 3.1) numbers each cell `row * 10 + col`, and that number is the agent's **state**. Lesson 3.2 trained Chapter 1's agent on it with `train_maze()` (`rewards.py`), which returns a `QAgent` whose table `agent.Q` has 100 rows (one per cell) and 4 columns (LEFT, UP, RIGHT, DOWN). `greedy_path(agent, maze, start)` (`maze_tools.py`) plays one game with exploration switched off and returns `(path, reached)`: the list of cells the rat stood on, and whether it got to the cheese. `completion(agent)` counts the starts that reach it.
+The maze (`qmaze.py`, lesson 5.1) numbers each cell `row * 10 + col`, and that number is the agent's **state**. Lesson 5.2 trained Chapter 1's agent on it with `train_maze()` (`rewards.py`), which returns a `QAgent` whose table `agent.Q` has 100 rows (one per cell) and 4 columns (LEFT, UP, RIGHT, DOWN). `greedy_path(agent, maze, start)` (`maze_tools.py`) plays one game with exploration switched off and returns `(path, reached)`: the list of cells the rat stood on, and whether it got to the cheese. `completion(agent)` counts the starts that reach it.
 
 ### What this lesson asks
 
@@ -34,7 +34,7 @@ watch_qmaze.py:  best_actions(agent, env) reads the table's best column for ever
 Click **Create provided tests/test_solve.py** above.
 
 ```python file=tests/test_solve.py provided
-# Tests for maze_tools.py's search, the arrows in maze_view.py and watch_qmaze.py (lesson 3.3).
+# Tests for maze_tools.py's search, the arrows in maze_view.py and watch_qmaze.py (lesson 5.3).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_solve.py
 import numpy as np
 import pygame
@@ -257,7 +257,7 @@ def extra_steps(agent, maze=MAZE):
 ```
 
 ```predict
-question: For lesson 3.2's classic agent (seed 0), from how many of the 74 starts is the route exactly the shortest one?
+question: For lesson 5.2's classic agent (seed 0), from how many of the 74 starts is the route exactly the shortest one?
 answer: 69
 tolerance: 3
 explain: 69 of 74. The other 5 take a route exactly 2 moves longer than necessary: 10 extra moves in all, 0.14 per start. That's very good, but not perfect, and training ten times longer doesn't fix it (5,000 episodes: still 4 extra moves for seed 0, and seed 2 has 26 extra at 500, 2,000 and 5,000 episodes). See the explanation below.
@@ -434,7 +434,7 @@ Press **Run**. Every arrow is a decision the agent learned from rewards alone, a
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_solve.py -k watch" label="best_actions covers every free cell, and the window opens and closes"
-run ".venv/Scripts/python -m pytest -q tests/test_solve.py" label="all lesson 3.3 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_solve.py" label="all lesson 5.3 tests pass"
 ```
 
 ### What you have

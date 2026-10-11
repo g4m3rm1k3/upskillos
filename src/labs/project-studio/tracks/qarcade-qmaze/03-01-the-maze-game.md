@@ -1,18 +1,20 @@
 ---
-title: 3.1 — The Maze Game
+title: 5.1 — The Maze Game
 track: Q-Arcade — QMaze with a Table
-trackOrder: 12.4
+trackOrder: 12.6
 runtime: python
 run: play_qmaze.py
 ---
 
 **Starting a new chapter:** every Q-Arcade chapter uses the same `q-arcade` folder, so your files carry straight on. If the file tree is ever empty, click **Choose folder…** and select `q-arcade`.
 
-**QMaze** is the second school problem: a rat in a 10 × 10 maze has to find the cheese in the bottom-right corner. Most courses teach it from one public tutorial, Samy Zafrany's *Deep Reinforcement Learning for Maze Solving* (samyzaf.com/ML/rl/qmaze.html). This chapter builds the same maze, with the same rules and the same reward numbers, so that its code will look familiar when you meet your course's version. Lesson 3.5 then reads the tutorial's own code side by side with yours, including a bug in it.
+**QMaze** is the second school problem: a rat in a 10 × 10 maze has to find the cheese in the bottom-right corner. Most courses teach it from one public tutorial, Samy Zafrany's *Deep Reinforcement Learning for Maze Solving* (samyzaf.com/ML/rl/qmaze.html). This chapter builds the same maze, with the same rules and the same reward numbers, so that its code will look familiar when you meet your course's version. Lesson 5.5 then reads the tutorial's own code side by side with yours, including a bug in it.
 
 ### The story so far
 
-Chapter 1 built a Q-learning agent on a five-square corridor. The corridor told the agent which square it was on as one whole number (its **state**), the agent kept a **table** of scores with one row per state and one column per move, and after every move it nudged one score towards a better guess. Chapter 2 put the same agent on CartPole, where the state was four decimals, and had to squash them into one row number first.
+Chapter 1 built a Q-learning agent on a five-square corridor. The corridor told the agent which square it was on as one whole number (its **state**), the agent kept a **table** of scores with one row per state and one column per move, and after every move it nudged one score towards a better guess. Chapter 2 put the same agent on CartPole, where the state was four decimals, and had to squash them into one row number first. Chapters 3 and 4 then replaced the table with a network on CartPole.
+
+This chapter goes back to a table on purpose: QMaze is a grid, a table fits it exactly, and it shows clearly what a table can and can't do before Chapter 6 puts a network on it.
 
 The agent never cared what the world looked like. It only needed the world to have two methods, copied from Gymnasium: `reset()`, which starts a game and returns the first state, and `step(action)`, which makes one move and returns five values, `(state, reward, terminated, truncated, info)`. Any world with those two methods, and states numbered 0, 1, 2…, can be learned by the same agent.
 
@@ -38,7 +40,7 @@ Next lesson, the agent takes your place: instead of arrow keys choosing the acti
 Click **Create provided tests/test_qmaze.py** above.
 
 ```python file=tests/test_qmaze.py provided
-# Tests for qmaze.py, maze_view.py and play_qmaze.py (lesson 3.1).
+# Tests for qmaze.py, maze_view.py and play_qmaze.py (lesson 5.1).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_qmaze.py
 import pygame
 
@@ -148,7 +150,7 @@ The test names are grouped by their first word, and each step below checks its o
 | `moves` | each action goes the way its name says, an ordinary move costs −0.04, and stepping onto the cheese pays +1 and ends the game | UP and DOWN swapped, because rows count downwards |
 | `walls` | walking into a wall, or off the edge, leaves the rat where it was and costs −0.75 | the rat walking off the top and appearing at the bottom (see `is_free` below) |
 | `revisit` | moving back onto a cell already visited costs −0.25, and a new game forgets the old one's path | a `visited` set that was never emptied, so game 2 was charged for game 1's path |
-| `limit` | a game that has lost more than 50 points is stopped, and it's reported as `truncated`, not `terminated` | the agent treating "gave up" as "the maze ended", which lesson 3.5 shows changes what it learns |
+| `limit` | a game that has lost more than 50 points is stopped, and it's reported as `truncated`, not `terminated` | the agent treating "gave up" as "the maze ended", which lesson 5.5 shows changes what it learns |
 | `view`, `play` | cells are drawn in the right place, the arrow keys map to the right actions, and the window opens and closes | the maze drawn flipped over its diagonal |
 
 Cells are named **(row, column)**, counting from 0 at the top-left: (0, 0) is the top-left corner, (9, 9) the bottom-right, and (1, 0) is one row down from (0, 0). Rows first is how NumPy indexes a 2D array (`maze[row, col]`), so it's used everywhere in this chapter. It's the opposite order from screen coordinates `(x, y)`, where the column (across) comes first.
@@ -209,16 +211,16 @@ class QMaze:
         return row * self.cols + col
 ```
 
-- **The maze is numbers**: 1 is a free cell, 0 is a wall. That's the tutorial's convention, and it will matter in lesson 3.4, when the maze itself becomes the agent's input. `dtype=float` stores them as decimals (1.0, 0.0), as the tutorial does.
+- **The maze is numbers**: 1 is a free cell, 0 is a wall. That's the tutorial's convention, and it will matter in lesson 5.4, when the maze itself becomes the agent's input. `dtype=float` stores them as decimals (1.0, 0.0), as the tutorial does.
 - **The four actions are 0 to 3**, in the tutorial's order: LEFT, UP, RIGHT, DOWN. **`MOVES`** turns each into a change of (row, column). UP is (−1, 0) because row numbers grow **downwards**, as on the screen: going up means a smaller row.
 - **`REWARDS`** keeps every reward number in one dictionary, so next lesson can change them without touching the code that uses them.
 **`QMaze`'s inputs**, each with a default so `QMaze()` gives the tutorial's game:
 
 | input | what it is | why it's an input | default |
 |---|---|---|---|
-| `maze` | the grid of 1s and 0s | lesson 3.4 trains on a different maze; nothing else changes | `MAZE` |
-| `start` | the (row, column) the rat starts on | the tests start the rat next to the cheese to check winning in one move; lesson 3.2 starts it anywhere | `(0, 0)` |
-| `rewards` | the dictionary of reward numbers | lesson 3.2 breaks them on purpose to see what each one is for | `REWARDS` |
+| `maze` | the grid of 1s and 0s | lesson 5.4 trains on a different maze; nothing else changes | `MAZE` |
+| `start` | the (row, column) the rat starts on | the tests start the rat next to the cheese to check winning in one move; lesson 5.2 starts it anywhere | `(0, 0)` |
+| `rewards` | the dictionary of reward numbers | lesson 5.2 breaks them on purpose to see what each one is for | `REWARDS` |
 
 **What the object remembers** (its attributes, set in `__init__` and `reset`): `maze`, `rows` and `cols` (10 and 10), `n_states` (100), `target` (the cheese's cell), `free_cells` (the starting places), `cell` (where the rat is now, as a (row, column) tuple), and `total` (the rewards so far this game).
 
@@ -450,7 +452,7 @@ class QMaze:
         return self.state(), reward, terminated, truncated, {}
 ```
 
-**Truncated, not terminated.** The tutorial calls this ending "lose" and stops the game. But the maze didn't end: the rat could have carried on and found the cheese. The episode was cut short because it was going badly, which is exactly the corridor's time limit from lesson 1.1. So it's reported as `truncated`, and the agent's update will still count the value of where the rat was. (The tutorial treats it as a true ending; lesson 3.5 looks at what that changes.)
+**Truncated, not terminated.** The tutorial calls this ending "lose" and stops the game. But the maze didn't end: the rat could have carried on and found the cheese. The episode was cut short because it was going badly, which is exactly the corridor's time limit from lesson 1.1. So it's reported as `truncated`, and the agent's update will still count the value of where the rat was. (The tutorial treats it as a true ending; lesson 5.5 looks at what that changes.)
 
 `self.maze.size` is the number of cells, 100. Bumping a wall costs 0.75, so 66 bumps total −49.5 and the 67th makes it −50.25, below the limit: that's the test. See it with a loop:
 
@@ -509,7 +511,7 @@ def draw_rat(screen, cell):
     pygame.draw.circle(screen, RAT, cell_rect(*cell).center, CELL // 3)
 ```
 
-- **`cell_rect(row, col)`** is where the (row, column) and screen orders meet: the **column** decides x (`MARGIN + col * CELL`) and the **row** decides y (`TOP + row * CELL`). Getting those the wrong way round draws the maze flipped over its diagonal, which, oddly enough, is lesson 3.4's subject.
+- **`cell_rect(row, col)`** is where the (row, column) and screen orders meet: the **column** decides x (`MARGIN + col * CELL`) and the **row** decides y (`TOP + row * CELL`). Getting those the wrong way round draws the maze flipped over its diagonal, which, oddly enough, is lesson 5.4's subject.
 - **`CELL - 2`** leaves a 2-pixel gap between cells, so the grid is visible.
 - **`visited=()`** is an empty tuple as the default: "nothing visited" unless told otherwise. A default must never be something that can be changed, like a list or set, because Python creates a default once and shares it between every call.
 - **`cell_rect(*env.target)`**: the `*` unpacks the pair (9, 9) into two arguments, so it's `cell_rect(9, 9)`.
@@ -584,13 +586,13 @@ Press **Run** and find the cheese. Watch the total: walking into walls and retra
 question: What is the fewest number of moves from (0, 0) to the cheese?
 answer: 40
 tolerance: 0
-explain: 40 moves. The cheese is 18 cells away as the crow flies, but the walls force a zig-zag through the whole maze: right along the top row to the far edge, down the right side to row 5, left along row 5 and down into row 6, left along row 6 all the way to the left edge, down to the bottom row, right along it, and up and round the last wall at (9, 7) to the cheese. Lesson 3.3 finds this number exactly, with a search, and then checks whether the trained agent finds the same route. A perfect run costs 39 × 0.04 = 1.56 in moves and earns 1 for the cheese: a total of −0.56.
+explain: 40 moves. The cheese is 18 cells away as the crow flies, but the walls force a zig-zag through the whole maze: right along the top row to the far edge, down the right side to row 5, left along row 5 and down into row 6, left along row 6 all the way to the left edge, down to the bottom row, right along it, and up and round the last wall at (9, 7) to the cheese. Lesson 5.3 finds this number exactly, with a search, and then checks whether the trained agent finds the same route. A perfect run costs 39 × 0.04 = 1.56 in moves and earns 1 for the cheese: a total of −0.56.
 verify: script shortest_from_start.py
 ```
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py -k play" label="the arrow keys map to actions and the window opens and closes"
-run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py" label="all lesson 3.1 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_qmaze.py" label="all lesson 5.1 tests pass"
 ```
 
 ### What you have

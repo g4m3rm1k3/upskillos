@@ -1,7 +1,7 @@
 ---
-title: 4.1 — A Function with Knobs
+title: 3.1 — A Function with Knobs
 track: Q-Arcade — From a Table to a Network
-trackOrder: 12.5
+trackOrder: 12.4
 runtime: python
 run: line.py
 ---
@@ -10,9 +10,9 @@ run: line.py
 
 ### The story so far
 
-Everything so far has kept its knowledge in a **table**: one row per state, one score per action. To decide what to do, the agent finds its state's row and picks the biggest score. To learn, it nudges one score after each move. That worked for the corridor (5 rows), CartPole squashed into 72 rows, and QMaze (100 rows).
+Everything so far has kept its knowledge in a **table**: one row per state, one score per action. To decide what to do, the agent finds its state's row and picks the biggest score. To learn, it nudges one score after each move. That worked for the corridor (5 rows) and for CartPole squashed into 72 rows.
 
-Chapters 2 and 3 ended at the same wall: a table looks up a separate row for every state, so it can't generalise, to the CartPole row next door or to a new maze. What's needed instead is a **function**: something that takes the numbers describing a state and *computes* a value from them, so that similar inputs give similar outputs.
+Chapter 2 ended at a wall (lesson 2.6): a table looks up a separate row for every state, so it can't generalise. What it learned in one row tells it nothing about the CartPole row next door, and finer slots multiply the rows until most are never visited. What's needed instead is a **function**: something that takes the numbers describing a state and *computes* a value from them, so that similar inputs give similar outputs.
 
 A neural network is such a function, and this chapter builds one from nothing. Not by starting with a network, but with the simplest function there is, a straight line, and the two ideas that every network is trained with:
 
@@ -24,10 +24,10 @@ This lesson builds both, and finds the right knob settings the slowest possible 
 ### A table and a function, side by side
 
 ```text
-a table (Chapters 1-3)                     a function (Chapters 4-5)
-  input: a row number, 23                    input: numbers describing the state, e.g. QMaze's 100
+a table (Chapters 1-2)                     a function (from Chapter 3 on)
+  input: a row number, 23                    input: numbers describing the state, e.g. CartPole's 4
   looks up row 23                            computes, using its knobs
-  output: the 4 scores stored there          output: 4 scores, worked out fresh
+  output: the 2 scores stored there          output: 2 scores, worked out fresh
   learns by changing row 23 only             learns by turning knobs, which changes the output for EVERY input a little
 ```
 
@@ -49,7 +49,7 @@ best_on_a_grid(x, y)       tries 3,721 settings of (w, b) and keeps the one with
 Click **Create provided tests/test_line.py** above.
 
 ```python file=tests/test_line.py provided
-# Tests for line.py (lesson 4.1).
+# Tests for line.py (lesson 3.1).
 # Run them with:   .venv\Scripts\python -m pytest -q tests/test_line.py
 import numpy as np
 from pytest import approx
@@ -126,7 +126,7 @@ def make_points(n=50, seed=0):
 - **`rng.normal(0.0, 0.1, n)`** gives `n` numbers from the bell-shaped **normal distribution**, centred on 0 with a **standard deviation** of 0.1 (lesson 2.5): most are within 0.1 of zero, almost all within 0.3. That's the noise, standing in for measurement error.
 - **`2.0 * x + 1.0 + …`** works on the whole array at once: NumPy multiplies, adds and adds again for every one of the 50 values. Writing arithmetic on arrays like this, instead of a loop, is called **vectorised** code.
 
-The pairs (x, y) are **examples**: inputs, and the output the function should give for each. Everything this chapter learns is learned from examples like these. In Chapter 5, the inputs are QMaze's 100-number observations and the outputs are Q-values.
+The pairs (x, y) are **examples**: inputs, and the output the function should give for each. Everything this chapter learns is learned from examples like these. In Chapter 4, the inputs are CartPole's four numbers, and the outputs say how likely each push should be. In Chapter 6, they're QMaze's 100-number observations, and the outputs are Q-values.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_line.py -k points" label="make_points makes 50 repeatable points near y = 2x + 1" -- x = rng.uniform(-2.0, 2.0, n); y = 2.0 * x + 1.0 + rng.normal(0.0, 0.1, n).
@@ -181,7 +181,7 @@ Doubling `w` doubles every step between neighbouring outputs. Adding 1 to `b` li
 
 `predict(w, b, x)` is a straight line. `w` (the **weight**) sets how steep it is: how much the output changes when the input grows by 1. `b` (the **bias**) sets where it crosses x = 0. The two knobs are the line's **parameters**. Every setting of them is a different function, and learning will mean choosing the setting whose predictions match the examples.
 
-These are exactly the names a neural network uses. A network is built out of many little weighted sums like this one, `w × input + b`, and Chapter 5's QMaze network has 20,804 knobs instead of 2. The ideas in this chapter are the same at any size.
+These are exactly the names a neural network uses. A network is built out of many little weighted sums like this one, `w × input + b`, and the published network you'll write in lesson 3.5 has 20,804 knobs instead of 2. The ideas in this chapter are the same at any size.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_line.py -k predict" label="predict(w, b, x) is w times x plus b, for a whole array at once"
@@ -300,11 +300,11 @@ for knobs in (1, 2, 3, 10):
 10 knobs: 713,342,911,662,882,601 settings to try
 ```
 
-Ten knobs is already about 713 quadrillion tries: 713 followed by 15 zeros. The QMaze network's 20,804 knobs would be 61 to the power 20,804: a number with 37,143 digits. Trying everything is hopeless for any real function. The next lesson finds the best knobs in about 100 steps, by asking, at each setting, **which way is downhill**.
+Ten knobs is already about 713 quadrillion tries: 713 followed by 15 zeros. That published network's 20,804 knobs would be 61 to the power 20,804: a number with 37,143 digits. Trying everything is hopeless for any real function. The next lesson finds the best knobs in about 100 steps, by asking, at each setting, **which way is downhill**.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_line.py -k grid" label="the grid search finds w = 2 and b = 1"
-run ".venv/Scripts/python -m pytest -q tests/test_line.py" label="all lesson 4.1 tests pass"
+run ".venv/Scripts/python -m pytest -q tests/test_line.py" label="all lesson 3.1 tests pass"
 ```
 
 ### What you have

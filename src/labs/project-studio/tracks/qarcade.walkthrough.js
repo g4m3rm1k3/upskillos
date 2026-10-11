@@ -34,6 +34,7 @@ const K = 'qarcade-cartpole';
 const Q = 'qarcade-qmaze';
 const N = 'qarcade-networks';
 const D = 'qarcade-qmaze-dqn';
+const A = 'qarcade-actor-critic';
 
 export const WALKTHROUGH = {
   // ── 0.1 ──────────────────────────────────────────────────────────────────
@@ -599,8 +600,20 @@ export const WALKTHROUGH = {
       { name: 'only one hidden layer', files: { 'maze_net.py': answerWith(N, 'maze_net_model.py', [['        keras.layers.Dense(size),\n        keras.layers.PReLU(),\n        keras.layers.Dense(actions),', '        keras.layers.Dense(actions),']]) }, fails: [0] },
     ],
   },
-  [`${N}/04-05-keras#A network that knows the maze`]: {
-    wrong: [{ name: "copies cell (0, 0)'s values for every cell", edit: [['        targets.append(agent.Q[env.state()])', '        targets.append(agent.Q[0])']], fails: [0, 2] }],
+
+  // ── 6.1 (was the second half of the old 4.5) ─────────────────────────────
+  [`${D}/05-00-a-network-that-knows-the-maze#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${D}/05-00-a-network-that-knows-the-maze#Examples from the table`]: {
+    wrong: [{ name: "copies cell (0, 0)'s values for every cell", edit: [['        targets.append(agent.Q[env.state()])', '        targets.append(agent.Q[0])']], fails: [0] }],
+  },
+  [`${D}/05-00-a-network-that-knows-the-maze#Your turn: an agent made of a network`]: {
+    files: { 'maze_net.py': answer(D, 'maze_net_agent.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'returns a NumPy integer', files: { 'maze_net.py': answerWith(D, 'maze_net_agent.py', [['return int(np.argmax(', 'return (np.argmax(']]) }, fails: [0] },
+    ],
   },
 
   // ── 5.1 ──────────────────────────────────────────────────────────────────
@@ -690,5 +703,153 @@ export const WALKTHROUGH = {
       { name: 'did nothing', fails: [0] },
       { name: 'refreshes every move', files: { 'dqn.py': answerWith(D, 'dqn_target.py', [['if self.sync and self.steps % self.sync == 0:', 'if self.sync:']]) }, fails: [0] },
     ],
+  },
+
+  // ── 4.1 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-01-learning-the-acting-directly#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-01-learning-the-acting-directly#A network that gives probabilities`]: {
+    wrong: [{ name: 'returns the raw scores, not probabilities', edit: [['torch.softmax(net(torch.tensor(obs, dtype=torch.float32)), dim=-1).numpy()', 'net(torch.tensor(obs, dtype=torch.float32)).numpy()']], fails: [0] }],
+  },
+  [`${A}/04-01-learning-the-acting-directly#Your turn: what each move led to`]: {
+    files: { 'policy.py': answer(A, 'policy_returns.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'adds up forwards', files: { 'policy.py': answerWith(A, 'policy_returns.py', [['for t in reversed(range(len(rewards))):', 'for t in range(len(rewards)):']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-01-learning-the-acting-directly#Choosing by chance`]: {
+    wrong: [{ name: 'always takes the likeliest push', edit: [['    action = dist.sample()\n', '    action = dist.probs.argmax()\n']], fails: [0] }],
+  },
+  [`${A}/04-01-learning-the-acting-directly#REINFORCE`]: {
+    wrong: [{ name: 'climbs the wrong way', edit: [['        loss = -(torch.stack(log_probs)', '        loss = (torch.stack(log_probs)']], fails: [0, 1] }],
+  },
+
+  // ── 4.2 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-02-a-baseline-measured#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-02-a-baseline-measured#Your turn: centre and scale`]: {
+    files: { 'policy.py': answer(A, 'policy_centre.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'centres but does not scale', files: { 'policy.py': answerWith(A, 'policy_centre.py', [['return (returns - returns.mean()) / (returns.std() + 1e-8)', 'return returns - returns.mean()']]) }, fails: [0] },
+      { name: 'divides by zero when every return is equal', files: { 'policy.py': answerWith(A, 'policy_centre.py', [['(returns.std() + 1e-8)', 'returns.std()']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-02-a-baseline-measured#The baseline switch`]: {
+    wrong: [{ name: 'the switch does nothing', edit: [['        if baseline:\n            returns = centre_and_scale(returns)\n', '']], fails: [0] }],
+  },
+  [`${A}/04-02-a-baseline-measured#Measuring the noise`]: {
+    wrong: [{ name: 'adds up the spreads instead of averaging them', edit: [['gradients.std(axis=0).mean()', 'gradients.std(axis=0).sum()']], fails: [0] }],
+  },
+
+  // ── 4.3 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-03-actor-and-critic#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-03-actor-and-critic#Two heads, one body`]: {
+    wrong: [{ name: 'leaves the value with an extra dimension', edit: [['self.critic(h).squeeze(-1)', 'self.critic(h)']], fails: [0] }],
+  },
+  [`${A}/04-03-actor-and-critic#Your turn: how unsure is a choice?`]: {
+    files: { 'actor_critic.py': answer(A, 'actor_critic_entropy.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'keeps the zero probabilities', files: { 'actor_critic.py': answerWith(A, 'actor_critic_entropy.py', [['used = probs[probs > 0]', 'used = probs']]) }, fails: [0] },
+      { name: 'surprise the wrong way up', files: { 'actor_critic.py': answerWith(A, 'actor_critic_entropy.py', [['np.log(1 / used)', 'np.log(used)']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-03-actor-and-critic#Better or worse than expected`]: {
+    wrong: [{ name: 'gives an ending a future', edit: [['    future = 0.0 if terminated else gamma * next_value', '    future = gamma * next_value']], fails: [0] }],
+  },
+  [`${A}/04-03-actor-and-critic#The A2C loss`]: {
+    wrong: [
+      { name: 'forgets to detach the advantages', edit: [['advantages.detach()', 'advantages']], fails: [0, 1] },
+      { name: 'punishes staying unsure', edit: [['- entropy_coef * entropy_bonus', '+ entropy_coef * entropy_bonus']], fails: [0, 1] },
+    ],
+  },
+
+  // ── 4.4 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-04-a2c-eight-cartpoles-in-step#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-04-a2c-eight-cartpoles-in-step#Your turn: targets that look 5 steps ahead`]: {
+    files: { 'a2c.py': answer(A, 'a2c_returns.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'starts from zero instead of the critic', files: { 'a2c.py': answerWith(A, 'a2c_returns.py', [['running = np.asarray(last_values, dtype=float)', 'running = np.zeros(np.shape(last_values))']]) }, fails: [0] },
+      { name: 'carries the future across an ending', files: { 'a2c.py': answerWith(A, 'a2c_returns.py', [['gamma * (1 - ended[t]) * running', 'gamma * running']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-04-a2c-eight-cartpoles-in-step#Cut short is not over`]: {
+    wrong: [{ name: "changes the caller's rewards", edit: [['    rewards = np.array(rewards, dtype=float)\n', '    rewards = np.asarray(rewards, dtype=float)\n']], fails: [0] }],
+  },
+  [`${A}/04-04-a2c-eight-cartpoles-in-step#Eight CartPoles at once`]: {
+    wrong: [{ name: 'restarts a step late, losing the last observation', edit: [[',\n                                    autoreset_mode=gym.vector.AutoresetMode.SAME_STEP)', ')']], fails: [0] }],
+  },
+  [`${A}/04-04-a2c-eight-cartpoles-in-step#Training`]: {
+    wrong: [
+      { name: 'never takes a step', edit: [['        optimiser.step()\n', '']], fails: [0, 1] },
+    ],
+  },
+
+  // ── 4.5 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-05-a3c-workers-that-dont-wait#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-05-a3c-workers-that-dont-wait#Your turn: handing over the slopes`]: {
+    files: { 'a3c.py': answer(A, 'a3c_handover.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'shares the slopes instead of copying them', files: { 'a3c.py': answerWith(A, 'a3c_handover.py', [['local_param.grad.clone()', 'local_param.grad']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-05-a3c-workers-that-dont-wait#Workers and the shared network`]: {
+    wrong: [
+      { name: 'no cap on the workers', edit: [['    if not 1 <= workers <= MAX_WORKERS:\n        raise ValueError(f"workers must be 1 to {MAX_WORKERS}: more processes than that can freeze the computer")\n', '']], fails: [0, 2] },
+      { name: 'never hands the slopes over', edit: [['        hand_over(local, shared)\n', '']], fails: [1, 2] },
+    ],
+  },
+
+  // ── 4.6 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-06-a2c-in-keras#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-06-a2c-in-keras#The network in Keras`]: {
+    wrong: [{ name: 'a critic with two outputs', edit: [['    value = keras.layers.Dense(1)(body)', '    value = keras.layers.Dense(2)(body)']], fails: [0] }],
+  },
+  [`${A}/04-06-a2c-in-keras#An adapter`]: {
+    wrong: [{ name: 'leaves the value with an extra dimension', edit: [['value.reshape(leading)', 'value.reshape(*leading, 1)']], fails: [0] }],
+  },
+  [`${A}/04-06-a2c-in-keras#Your turn: an update with Keras's optimiser`]: {
+    files: { 'keras_a2c.py': answer(A, 'keras_a2c_update.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'never applies the slopes', files: { 'keras_a2c.py': answerWith(A, 'keras_a2c_update.py', [['    optimiser.apply([w.value.grad for w in model.trainable_weights], model.trainable_weights)\n', '']]) }, fails: [0] },
+    ],
+  },
+
+  // ── 4.7 ──────────────────────────────────────────────────────────────────
+  [`${A}/04-07-an-experiment-you-can-write-up#Read the tests first`]: {
+    wrong: [{ name: 'did not create the tests', fails: [0] }],
+  },
+  [`${A}/04-07-an-experiment-you-can-write-up#Install matplotlib`]: {
+    run: ['.venv\\Scripts\\python -m pip install -q -r requirements.txt'],
+    wrong: [{ name: 'did not install it', fails: [0] }],
+  },
+  [`${A}/04-07-an-experiment-you-can-write-up#Your turn: the mean and its error bar`]: {
+    files: { 'experiment.py': answer(A, 'experiment_summary.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'divides by the number of seeds, not its square root', files: { 'experiment.py': answerWith(A, 'experiment_summary.py', [['/ np.sqrt(len(curves))', '/ len(curves)']]) }, fails: [0] },
+      { name: "uses NumPy's default spread, which divides by n", files: { 'experiment.py': answerWith(A, 'experiment_summary.py', [['curves.std(axis=0, ddof=1)', 'curves.std(axis=0)']]) }, fails: [0] },
+    ],
+  },
+  [`${A}/04-07-an-experiment-you-can-write-up#Results you can keep`]: {
+    wrong: [{ name: 'draws the plot but never saves it', edit: [['    fig.savefig(path, dpi=150)\n', '']], fails: [1] }],
+  },
+  [`${A}/04-07-an-experiment-you-can-write-up#Running it`]: {
+    wrong: [{ name: 'runs every job with seed 0', edit: [['(name, settings, seed, total_steps) for name', '(name, settings, 0, total_steps) for name']], fails: [0, 1] }],
   },
 };
