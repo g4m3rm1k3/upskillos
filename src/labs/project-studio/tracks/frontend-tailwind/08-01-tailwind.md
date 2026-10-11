@@ -3,10 +3,15 @@ title: 8.1 — Tailwind CSS v4: utilities and a real build
 track: Frontend Developer Bootcamp — Tailwind and a Component System
 trackOrder: 50.08
 runtime: none
-reference: optional
 ---
 
 Outcome: replace the React app’s borrowed CSS with a dedicated utility-based system. A utility typically expresses one declaration; responsive and state variants conditionally apply it. v4’s Vite integration and CSS-first theme configuration differ from older v3 tutorials. The two CSS approaches are alternatives to compare, not badges of seniority.
+
+### The story so far
+
+You have seen handmade CSS and Bootstrap’s component conventions. Tailwind offers a third way to express CSS decisions: compose utilities in markup while sharing tokens and reusable components.
+
+This is not a new browser layout engine. Flexbox, Grid, spacing, contrast and the cascade still apply. The course uses v4’s CSS-first configuration and Vite plugin so the source and current installation method agree.
 
 ## Install the v4 integration
 
@@ -60,11 +65,35 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({ plugins: [tailwindcss()] });
 ```
 
+### Configuration is code executed by the tool
+
+Vite reads its configuration from the project root. The plugins array contains the result of calling tailwindcss(), which creates the integration. This differs from merely importing a CSS file containing unprocessed Tailwind directives.
+
+When a development server started before you changed the configuration, restart it if the change is not picked up. Before investigating component styles, check that the correct project is serving the page and the plugin is actually active.
+
 ```check
 contains vite.config.js "tailwindcss()"
 ```
 
 ## Define tokens and readable defaults
+
+### Utilities are a vocabulary, not a design strategy
+
+Think of utilities as labeled building blocks. `p-4` contributes padding; `rounded-xl` contributes corner radius; a responsive prefix adds a condition. You still decide which blocks serve the task, just as knowing words does not automatically produce a clear paragraph.
+
+The analogy has a limit: generated CSS order and layers, not the order you happen to type class names in a string, determine many conflicts. Avoid assigning contradictory utilities and hoping the last word in className always wins.
+
+### Follow one token to a visible result
+
+```text
+@theme --color-brand-700 = #176341
+  → Tailwind can generate bg-brand-700
+  → a component uses that literal class
+  → generated CSS sets background-color
+  → browser computes the painted result
+```
+
+The token defines the available decision; source usage determines needed utilities. A misspelled class can remain harmless-looking text in HTML while producing no CSS at all.
 
 @theme makes named tokens available as utilities such as bg-brand-700. @custom-variant connects dark: to the same data-theme convention we used by hand. @layer base defines element defaults; @apply composes utilities here. Per-component utilities will follow. Keep names complete: dynamically constructing bg-${color}-700 hides class names from the source scanner.
 
@@ -89,6 +118,18 @@ contains vite.config.js "tailwindcss()"
   article { @apply my-4 rounded-xl border border-slate-400 p-4; }
 }
 ```
+
+### Read variants from condition to declaration
+
+`sm:p-8` means “at the small breakpoint and above, use this padding utility.” It does not mean “apply only on a small phone.” `dark:text-slate-100` applies when our custom dark variant matches. `disabled:opacity-60` applies to a disabled control; it does not itself disable the control.
+
+`@layer base` holds element defaults. Utilities on a component can then express a deliberate local decision. Use @apply sparingly for coherent shared rules, not to rebuild an enormous opaque stylesheet under different names.
+
+A class such as `bg-${color}-700` may not appear as a complete string for the source scanner. A mapping like `{ success: 'bg-green-700', danger: 'bg-red-700' }` exposes the actual possibilities and constrains the API.
+
+**Rule of thumb:** keep complete class names visible to the build and group repeated design choices behind a small component contract. Do not extract a component solely because a class string is long; extract when it has a coherent role, repeated behavior or a stable interface.
+
+A utility framework can reduce naming effort, but it can also produce inconsistent one-off choices if everyone picks arbitrary values. Tokens and review still matter.
 
 ```check
 contains react/styles.css "@theme"
@@ -128,4 +169,8 @@ shape: Add spacing, border and radius to that section without inserting a decora
 
 Misspell bg-brand-700 in a temporary element and inspect the absent rule, then restore it. Compare bundle behavior with a CDN prototype. In v4, adding an old tailwind.config.js file does not automatically reproduce older configuration conventions. Use the referenced v4 guide rather than mixing tutorial versions.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Translate the search section’s utility classes back into ordinary CSS properties. Then explain why a class can be present in the DOM yet have no matching generated rule. Your debugging answer should include source discovery, plugin processing and the browser’s computed styles.

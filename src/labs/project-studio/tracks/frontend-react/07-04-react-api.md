@@ -3,12 +3,28 @@ title: 7.4 — Combine React with the API boundary
 track: Frontend Developer Bootcamp — React Reading List
 trackOrder: 50.07
 runtime: none
-reference: optional
 ---
 
 Outcome: search the catalog and save results into the same shelf. Keep the API client independent of React and reuse its validation. The search component owns transient request state; App owns the persistent shelf. A callback connects them without sharing mutable global data.
 
+### The story so far
+
+The API module already knows how to encode a search, reject failed status codes and normalize books. We can reuse it unchanged because it does not know about DOM elements or React.
+
+The new component owns a temporary search conversation. App continues to own the durable shelf. Keeping those lifetimes separate prevents a new search from accidentally clearing saved books.
+
 ## Clean up obsolete work
+
+### Separate typing from committing a query
+
+The text state follows every keystroke. The query state changes on submit. The Effect depends on query, so typing does not immediately send requests. This is a product choice, not a React restriction. Search-as-you-type can be appropriate, but then debouncing, cancellation, rate limits and keyboard expectations need deliberate design.
+
+```text
+input text → submit → committed query → Effect setup → API request
+                         next query → previous cleanup → new setup
+```
+
+The query is stored as an object. Submitting identical text creates a new object and deliberately permits retry. If it were only the same primitive string, React could treat the new state as unchanged and skip the effect you expected.
 
 Before trying this step, make a prediction.
 
@@ -51,6 +67,18 @@ export function BookSearch({ onSave }) {
   </section>;
 }
 ```
+
+### Two guards with distinct jobs
+
+The effect creates a controller and an active flag local to this setup. Its cleanup marks that setup inactive and aborts the request. When the promise settles, the handler checks active before writing result state.
+
+The cancellation asks the platform to stop unnecessary work. The active flag establishes whether this old setup may still update the component. You need both explanations; calling them two versions of “stop the request” hides the correctness role.
+
+`.then` registers a callback for fulfillment; `.catch` registers one for rejection. This is the same Promise model as await, expressed as chained callbacks. The effect itself is not declared async because React expects a cleanup function or no return value, not a Promise.
+
+The `return () => ...` line supplies cleanup. It does not run cleanup immediately while setting up; React calls it when replacing this effect or removing the component.
+
+**Rule of thumb:** a subscription, timer or request started by an effect should have an explicit lifetime story. Explain how it ends and what prevents obsolete work from updating current UI. A server-state library can manage caching and coordination later, but you should first understand the contract it takes over.
 
 ```check
 contains react/BookSearch.jsx "controller.abort()"
@@ -102,6 +130,14 @@ export function App() {
 }
 ```
 
+### Shelf state and search state are different resources
+
+Selecting Save reports a book to App. The callback uses some to check whether that id already exists, then either preserves the array or returns a new one with the book appended. A successful duplicate click should not create duplicate identities.
+
+The API’s id denotes a catalog record. A manually entered book has a locally generated id. Matching text alone does not establish that two records are the same edition or work, so this lesson does not pretend title equality is a reliable deduplication strategy.
+
+A future product could reconcile manual and catalog records, but it would need a defined matching rule and a way to correct mistakes. Resist adding that complexity before the simpler save/search workflow is coherent.
+
 ```check
 page react/index.html "document.querySelector('#book-query').labels[0].textContent" "Title or author" server=vite
 ```
@@ -124,4 +160,8 @@ shape: Combine the two conditions with && before the explanatory paragraph.
 
 Use an offline fixture and submit twice with the same text; retry must remain possible. Add an API result twice and confirm only one saved card. Change query quickly and verify cleanup prevents stale results. Compare the React and DOM implementations: which logic belongs in the reusable API module and which belongs in UI state?
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Explain the responsibilities of text, query, result and books without calling all of them “the data.” Then trace a query change while the prior request is pending, including cleanup, the old promise settling and the new result arriving. Identify what remains saved throughout.

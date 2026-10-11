@@ -1,0 +1,73 @@
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, Routes, Route, useLocation, Link } from 'react-router';
+import type { FormEvent } from 'react';
+import type { Book } from '../quality/search';
+import { BookSearch } from './BookSearch.tsx';
+import { Button } from './Button.tsx';
+function BookCard({ book, onRemove }: { book: Book; onRemove: (id: string) => void }) {
+  return <article className="break-words"><h2>{book.title}</h2><p>{book.author}</p><Button variant="secondary" onClick={() => onRemove(book.id)}>Remove {book.title}</Button></article>;
+}
+function loadShelf(): Book[] {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem('reading-room-v1') ?? '[]');
+    if (!Array.isArray(value) || !value.every(book => book && typeof book.id === 'string' && typeof book.title === 'string' && typeof book.author === 'string')) return [];
+    return new Set(value.map(book => book.id)).size === value.length ? value : [];
+  } catch { return []; }
+}
+export function App() {
+  const location = useLocation();
+  const pageHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    document.title = location.pathname === '/search' ? 'Find books — Reading Room' : 'Reading Room';
+    pageHeading.current?.focus();
+  }, [location.pathname]);
+  const [books, setBooks] = useState(loadShelf);
+  const titleInput = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState('');
+  const [theme, setTheme] = useState(() => {
+    try { const saved = localStorage.getItem('reading-theme'); if (saved === 'dark' || saved === 'light') return saved; } catch {}
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('reading-theme', theme); } catch {}
+  }, [theme]);
+  const [error, setError] = useState('');
+  const [storageError, setStorageError] = useState('');
+  useEffect(() => {
+    try { localStorage.setItem('reading-room-v1', JSON.stringify(books)); setStorageError(''); }
+    catch { setStorageError('Storage unavailable; changes will not survive reload.'); }
+  }, [books]);
+  function add(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!title.trim()) { setError('Write a title first.'); titleInput.current?.focus(); return; }
+    setBooks(previous => [...previous, { id: crypto.randomUUID(), title: title.trim(), author: 'Added by you' }]);
+    setTitle('');
+    setError('');
+  }
+  function remove(id: string) {
+    setBooks(previous => previous.filter(book => book.id !== id));
+    titleInput.current?.focus();
+  }
+  return <main>
+    <a className="underline underline-offset-4" href="#main-content" onClick={event => { event.preventDefault(); pageHeading.current?.focus(); }}>Skip to content</a>
+    <nav className="my-4 flex flex-wrap gap-4" aria-label="Reading Room"><NavLink className={({ isActive }) => isActive ? 'font-bold underline underline-offset-4' : 'underline underline-offset-4'} to="/" end>My shelf</NavLink><NavLink className={({ isActive }) => isActive ? 'font-bold underline underline-offset-4' : 'underline underline-offset-4'} to="/search">Find books</NavLink></nav>
+    <h1 id="main-content" ref={pageHeading} tabIndex={-1}>{location.pathname === '/search' ? 'Find books' : 'Reading Room'}</h1>
+    <Button aria-pressed={theme === 'dark'} onClick={() => setTheme(previous => previous === 'dark' ? 'light' : 'dark')}>Dark theme</Button>
+
+    {storageError && <p role="alert">{storageError}</p>}
+    <Routes>
+      <Route path="/" element={<>
+    <form onSubmit={add}><label htmlFor="title">Book title</label><input ref={titleInput} aria-invalid={Boolean(error)} aria-describedby="shelf-status" id="title" value={title} onChange={event => setTitle(event.target.value)} /><button>Add book</button></form>
+    <p id="shelf-status" role="status">{error || `${books.length} ${books.length === 1 ? 'book' : 'books'} saved`}</p>
+    {books.length === 0 && <p>Your shelf is empty. Add a book you want to read.</p>}
+    {books.map(book => <BookCard key={book.id} book={book} onRemove={remove} />)}
+      </>} />
+      <Route path="/search" element={<>
+    <BookSearch onSave={book => setBooks(previous => previous.some(item => item.id === book.id) ? previous : [...previous, book])} />
+        <p role="status">{books.length} saved on your shelf.</p>
+      </>} />
+      <Route path="*" element={<><h2>Page not found</h2><p>This page moved or never existed.</p><Link to="/">Return to shelf</Link></>} />
+    </Routes>
+  </main>;
+}

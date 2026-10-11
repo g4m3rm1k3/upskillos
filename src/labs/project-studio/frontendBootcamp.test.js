@@ -29,7 +29,10 @@ describe('frontend bootcamp learning path', () => {
       expect(task.hints[0].map(rung => rung.key)).toEqual(['nudge', 'concept', 'shape']);
       expect(task.checks.length).toBeGreaterThan(0);
       expect(lesson.steps.at(-1).title).toBe('Diagnose, explain and review');
-      expect(lesson.meta.reference).toBe('optional');
+      expect(lesson.meta.reference, lesson.id).not.toBe('optional');
+      expect(lesson.intro, lesson.id).toContain('### The story so far');
+      expect(lesson.steps.some(step => step.predictions.length), lesson.id).toBe(true);
+      expect(lesson.steps.at(-1).prose, lesson.id).toContain('Explain it without the reference');
       for (const step of lesson.steps) {
         expect(step.extraTargets ?? []).toEqual([]);
         if (!step.checks.length) continue;
@@ -40,6 +43,12 @@ describe('frontend bootcamp learning path', () => {
     }
     const ids = lessons.flatMap(lesson => [lesson.id, ...lesson.steps.map(step => step.id)]);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('backs concrete execution predictions with verifiers rather than relying only on recall questions', () => {
+    const predictions = lessons.flatMap(lesson => lesson.steps.flatMap(step => step.predictions));
+    expect(predictions.some(prediction => prediction.verify?.startsWith('page '))).toBe(true);
+    expect(predictions.some(prediction => prediction.verify?.startsWith('node '))).toBe(true);
   });
 
   it('teaches foundations before frameworks and distinguishes the independent capstone from validation', () => {

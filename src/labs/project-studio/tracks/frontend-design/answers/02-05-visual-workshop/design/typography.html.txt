@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Juniper design workshop</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #172b24; background: #fffdf7; line-height: 1.6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 66rem; margin-inline: auto; padding: clamp(1rem, 4vw, 3rem); }
+    h1 { font-size: clamp(2rem, 6vw, 4rem); line-height: 1.1; max-width: 15ch; }
+    h2 { font-size: 1.5rem; line-height: 1.25; }
+    p { max-width: 60ch; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .875rem; font-weight: 700; }
+    .choices { display: grid; gap: 2rem; }
+    article { border: 1px solid #62796c; border-radius: 1rem; padding: 1.5rem; min-width: 0; }
+    article > * + * { margin-block-start: .75rem; }
+    a { color: #176341; text-underline-offset: .2em; }
+    .primary { display: inline-block; background: #176341; color: white; border-radius: .5rem; padding: .75rem 1.25rem; }
+    :focus-visible { outline: 3px solid #176341; outline-offset: 4px; }
+    svg { width: 100%; height: auto; display: block; }
+    @media (min-width: 44rem) { .choices { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Juniper Café · Neighborhood coffee</p>
+    <h1>A calm place to start your day.</h1>
+    <p>Fresh coffee, simple food and a quiet corner. Find the details you need before leaving home.</p>
+    <div class="choices">
+      <article>
+        <svg viewBox="0 0 400 160" role="img" aria-labelledby="map-title map-desc">
+          <title id="map-title">Illustrated location diagram</title>
+          <desc id="map-desc">The café is next to the park on Oak Street. Diagram only; use the address for directions.</desc>
+          <rect width="400" height="160" fill="#edf4ed"/>
+          <path d="M0 110H400" stroke="#718778" stroke-width="28"/>
+          <rect x="190" y="30" width="100" height="60" rx="8" fill="#176341"/>
+          <text x="210" y="65" fill="white" font-size="18">Café</text>
+          <text x="25" y="55" fill="#172b24" font-size="18">Park</text>
+          <text x="140" y="145" fill="#172b24" font-size="16">Oak Street</text>
+        </svg>
+        <h2>Plan a visit</h2>
+        <p>Open daily, 7 am–5 pm. Find us at 24 Oak Street beside the park.</p>
+        <a class="primary" href="../cafe/index.html#visit">Plan my visit</a>
+      </article>
+      <article>
+        <h2>Choose before you arrive</h2>
+        <p>Explore coffee, tea and food, including clearly labeled dietary options.</p>
+        <a href="../cafe/index.html#menu">Browse the menu</a>
+      </article>
+    </div>
+  </main>
+</body>
+</html>

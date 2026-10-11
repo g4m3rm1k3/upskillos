@@ -3,12 +3,30 @@ title: 8.3 — Carry theme and accessibility through the system
 track: Frontend Developer Bootcamp — Tailwind and a Component System
 trackOrder: 50.08
 runtime: none
-reference: optional
 ---
 
 Outcome: apply dark-mode tokens to the real component tree and persist the choice. This React version reads the operating system on first use, then saves a choice; unlike the café extension it does not keep following later system changes. State the policy so behavior is predictable.
 
+### The story so far
+
+The handmade café theme gave you the underlying mechanics: choose a recognized value, update a root attribute, and let CSS consume tokens. This React version keeps the same mechanism but makes the chosen value component state.
+
+The important design decision is the policy: this app reads the system on first use and then persists a choice. It does not yet implement a separate “follow system forever” mode. A product should name that limitation rather than hiding it.
+
 ## Synchronize the root attribute
+
+### Two systems, one source of truth
+
+```text
+React theme state
+  ├─ render → aria-pressed on the button
+  └─ Effect → html data-theme → Tailwind dark variants
+            → best-effort localStorage write
+```
+
+React owns the decision. The effect synchronizes the browser attribute and storage. CSS owns the presentation. Keeping those roles separate prevents a component from maintaining a second contradictory flag such as isDarkButtonPressed.
+
+The theme is like a named lighting preset shared by multiple rooms. Every room can interpret the preset using its own appropriate surface roles, but all must agree on which preset is active. The analogy does not justify applying a blanket invert filter: images, brand colors and contrast pairs need intentional choices.
 
 Before trying this step, make a prediction.
 
@@ -74,6 +92,18 @@ export function App() {
 }
 ```
 
+### Trace the first render and a click
+
+The initializer tries the saved value first, accepting only light or dark. Otherwise it reads matchMedia. The render describes the button’s pressed state. After commit, the effect sets the root attribute and attempts to save.
+
+On click, the updater receives the previous theme and chooses the opposite one. React renders again, and the effect synchronizes again. Storage failure must not prevent the in-memory switch. It may mean the next reload falls back to an earlier preference or the system default.
+
+Because this synchronization happens after paint, a production page can briefly display the wrong palette. An early initializer can address that, but it must use the same policy as the React code. Two different policies create a flash or mismatch of their own. Measure and explain the actual issue before adding a complicated solution.
+
+**Rule of thumb:** review a theme by roles and states, not only the page background. Check card surfaces, borders, input text, placeholders, buttons, disabled actions, links and focus indicators. A theme that makes the page dark while leaving an unreadable input is not finished.
+
+Long content is part of that review. The independent task adds wrapping because a good palette cannot rescue a card that overflows on a narrow screen.
+
 ```check
 page react/index.html "(async () => { const before=document.documentElement.dataset.theme; document.querySelector('button[aria-pressed]').click(); await new Promise(r=>setTimeout(r,30)); return document.documentElement.dataset.theme !== before && localStorage.getItem('reading-theme') === document.documentElement.dataset.theme; })()" "true" server=vite
 ```
@@ -96,4 +126,8 @@ shape: Add a literal class to the article and test a pathological title.
 
 Inspect dark mode in grayscale and keyboard-only mode. Is primary action still distinguishable by placement and wording? Zoom to 200%, emulate reduced motion, and test the longest title. Toggle back and reload. Record one design adjustment from this review rather than treating a green theme check as aesthetic approval.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Draw the path from a theme button click to the final background color and identify what React, the Effect and CSS each do. Then explain how you would add a genuine system mode without letting later operating-system changes override an explicit manual light or dark choice.

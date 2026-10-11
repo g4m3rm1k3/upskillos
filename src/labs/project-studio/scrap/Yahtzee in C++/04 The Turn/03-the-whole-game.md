@@ -185,7 +185,7 @@ Add the option `--rolls N` to `main`. `N` must be a whole number from 1 to 3 and
 
 ```check
 run "g++ -std=c++17 main.cpp Game.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the program builds" -- main.cpp needs #include "Input.h" for parseInt.
-run "./game --fast --rolls 3" stdin="1\n" stdout="or 0 to reroll" label="three rolls offer a reroll" -- With maxRolls 3 the first prompt mentions rerolling.
+run "./game --fast --rolls 3" stdin="1\n" exit=1 stdout="or 0 to reroll" label="three rolls offer a reroll" -- With maxRolls 3 the first prompt mentions rerolling.
 run "./game --fast --rolls 1" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" without="or 0 to reroll" label="one roll never offers a reroll" -- Store the number in options.maxRolls before the game starts.
 run "./game --rolls abc" exit=2 stderr="--rolls needs a whole number from 1 to 3" label="a bad number is refused" -- Print the message to std::cerr and return 2.
 run "./game --rolls 9" exit=2 stderr="--rolls needs a whole number from 1 to 3" label="a number out of range is refused" -- Reject values below 1 and above 3.

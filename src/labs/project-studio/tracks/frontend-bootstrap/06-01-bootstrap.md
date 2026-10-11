@@ -3,10 +3,15 @@ title: 6.1 — Use Bootstrap after understanding the CSS
 track: Frontend Developer Bootcamp — Bootstrap Service Dashboard
 trackOrder: 50.06
 runtime: none
-reference: optional
 ---
 
 Outcome: build a dashboard using an established component system and explain its tradeoffs. Bootstrap supplies components, layout classes and variables. Tailwind (later) supplies utilities from which you compose your own components. Neither library replaces semantic HTML, accessibility testing or design judgment.
+
+### The story so far
+
+You have already built layouts, tokens, forms and interactive states by hand. That experience gives you a way to judge what a CSS library does rather than treating its classes as magic words.
+
+This dashboard is a separate app with a different approach. Bootstrap supplies established visual and interaction conventions. We will use those conventions intentionally, then compare their benefits and constraints with the handmade café design.
 
 ## Install a dependency deliberately
 
@@ -42,11 +47,36 @@ Update package.json to add Bootstrap, then run npm install at the root. Keep pac
 }
 ```
 
+### Installation and use are different events
+
+Adding a package to the manifest records that the app depends on it. npm install downloads and resolves it. Importing its CSS or JavaScript is what brings the relevant parts into a browser entry. Merely installing Bootstrap does not style every HTML file on your disk.
+
+Pinning a direct version keeps the starting choice explicit. The lockfile captures the complete dependency resolution. Read release notes and retest before upgrading a teaching or production project; “newer” is not evidence that existing behavior stayed the same.
+
 ```check
 contains package.json "\"bootstrap\": \"5.3.8\""
 ```
 
 ## Build the dashboard structure
+
+### A library is a prepared set of decisions
+
+Think of Bootstrap as a fitted kitchen system. Standard cabinet sizes and components make assembly faster and more consistent, but unusual requirements may need customization. Handwritten CSS is closer to building the cabinets yourself. Neither approach automatically produces a usable kitchen.
+
+The analogy has a limit: you can inspect and override Bootstrap’s actual CSS. You are not surrendering the browser’s layout rules. Familiarity with those rules helps you choose whether to use a utility, a component variable or a small custom rule.
+
+### Decode the classes instead of memorizing the whole vocabulary
+
+| Class | Meaning in this layout | Earlier CSS concept |
+|---|---|---|
+| container | A responsive bounded content area | max-width and centered margins |
+| row | A wrapping row for columns | Flexbox |
+| col-12 | Full grid width | A single stacked item |
+| col-md-6 | Half the grid width at md and above | A media-query change |
+| g-3 | Consistent gutters | A shared spacing scale |
+| card / card-body | A reusable content surface and its padding | A component with a spacing contract |
+
+Read `col-md-6` as a conditional layout instruction, not as a description of a particular tablet model.
 
 container constrains width; row and col-* implement a responsive grid; g-3 adds gutters. col-12 occupies the full row until col-md-6 switches to half. h4 changes appearance without changing the heading’s semantic level. py-4 is vertical padding. Each class maps to real CSS you can inspect.
 
@@ -72,6 +102,16 @@ container constrains width; row and col-* implement a responsive grid; g-3 adds 
 </html>
 ```
 
+### Semantics survive a change of styling system
+
+The headings remain h1 and h2. The sections still have accessible names. The library can make an h2 look like a smaller heading without changing its place in the document outline. This is an advantage of learning HTML before a component catalog: you can tell which responsibilities the library does not take over.
+
+`h-100` helps cards fill the available column height. It is useful when columns align but does not justify clipping long text. Test short and long card content rather than choosing heights from one screenshot.
+
+**Rule of thumb:** adopt a library’s defaults where they support the task; customize named theme variables or a small coherent layer when they do not. Scattered !important overrides fighting dozens of defaults often indicate that the chosen component or design system is a poor fit.
+
+For this dashboard, a familiar grid and card system saves repetitive styling. For an unusually expressive editorial site, custom CSS might offer clearer control. The choice should follow product needs, team familiarity and maintenance cost, not whichever tool has the most social-media attention.
+
 ```check
 page dashboard/index.html "document.querySelectorAll('section h2').length" "2" server=static
 ```
@@ -83,6 +123,12 @@ A bare import names an installed package rather than a relative file. Vite resol
 ```javascript file=dashboard/app.js
 import 'bootstrap/dist/css/bootstrap.min.css';
 ```
+
+### Why this app needs the local server
+
+A browser understands URLs, not npm package names. `import 'bootstrap/dist/css/bootstrap.min.css'` is resolved by Vite while it processes the module. Opening the HTML through file:// skips that service and leaves the browser unable to interpret the package import as intended.
+
+The import also makes the dependency visible to the build graph. When you later build the portfolio, Vite can include the used CSS in the output for this entry. Keep the café’s imports separate so its custom styling does not accidentally acquire a second global reset.
 
 ```check
 page dashboard/index.html "getComputedStyle(document.querySelector('.row')).display" "flex" server=vite
@@ -106,4 +152,8 @@ shape: Replace the grid container’s spacing class and inspect the generated va
 
 Temporarily remove the CSS import: semantic content remains, while layout and component styles disappear. Restore it. Resize across the md breakpoint and check reading order. Reference: https://getbootstrap.com/docs/5.3/ . Do not mix CDN and installed copies of the same library.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Explain how the same col-md-6 class behaves below and above its breakpoint. Then identify one decision Bootstrap made for you and one decision it did not make, such as whether the dashboard’s ticket labels accurately describe the business state.

@@ -3,10 +3,15 @@ title: 3.3 — A calculator with accessible forms and DOM events
 track: Frontend Developer Bootcamp — JavaScript and a Budget Calculator
 trackOrder: 50.03
 runtime: none
-reference: optional
 ---
 
 Outcome: turn the pure budget rule into a working browser app. The **DOM** is the browser’s object tree representing HTML. querySelector finds an element by a CSS selector. An event listener runs a callback when an event occurs. A form’s submit event supports both a click and Enter.
+
+### The story so far
+
+The model can now calculate and reject invalid input independently. We will connect that trusted operation to the browser. You already know semantic HTML, selectors, function calls and errors; the new concepts are DOM objects and events.
+
+The form is an adapter: it reads the browser’s representation of input, calls the model, and translates the result back into useful text. Keeping those jobs separate makes defects easier to locate.
 
 ## Label every input
 
@@ -46,11 +51,40 @@ Each label for matches an input id. name exposes that input through form.element
 </html>
 ```
 
+### Why labels and native validation come first
+
+A label is a programmatic relationship, not just nearby text. Clicking it focuses the associated control, and assistive tools use it as the control’s name. The input id identifies the element; name identifies its value to form APIs. They can match, but they are separate attributes with different jobs.
+
+`required` rejects an empty value. `min="0"` rejects negative amounts. `step="0.01"` describes allowed increments. Those improve the user’s path through the form, while the model still guards its own callers. An invalid native form normally prevents the submit event before your handler runs.
+
+**Rule of thumb:** use a native control that already expresses the task, then enhance only what the task needs. A custom number widget, checkbox or select also inherits responsibility for keyboard behavior, naming, focus and error communication.
+
 ```check
 page budget/index.html "document.querySelector('#income').labels[0].textContent" "Monthly income ($)" server=static
 ```
 
 ## Connect submit to the calculation
+
+### An event listener is a standing instruction
+
+A doorbell analogy helps: attaching a listener does not ring the bell; it tells the system what to do when the bell rings. `addEventListener('submit', callback)` stores a function for later. The browser supplies an event object when submission happens.
+
+The analogy stops at event mechanics. A browser event has defaults and propagation rules; pressing Enter in a form can submit it even without a mouse click. That is why we listen to submit on the form instead of only click on the button.
+
+### Follow one interaction across representations
+
+```text
+person types 100 and 25
+  → inputs hold text and browser validity information
+  → submit event occurs
+  → preventDefault keeps this document in place
+  → valueAsNumber reads 100 and 25 as numbers
+  → remaining returns 75
+  → toFixed(2) formats "75.00"
+  → textContent displays the result
+```
+
+At each arrow, ask whether data, representation or control flow changed. This question is more useful for debugging than repeatedly clicking the button.
 
 The browser normally submits a form by navigating; preventDefault keeps this app on the page. valueAsNumber converts a number input; empty input would produce NaN. The try/catch handles our model errors. textContent writes plain text safely, while HTML insertion could interpret untrusted markup. role="status" announces a changing result without stealing keyboard focus. Serve with npm run dev and open /budget/index.html.
 
@@ -69,6 +103,18 @@ form.addEventListener('submit', (event) => {
   }
 });
 ```
+
+### Read the callback from top to bottom
+
+`const form = document.querySelector('#budget')` asks for one matching DOM element. It returns null if no element matches. A later `.addEventListener` on null means you must inspect the selector and loading order, not the budget arithmetic.
+
+`event.preventDefault()` cancels the browser’s normal form navigation for this event. It does not cancel your own JavaScript statements. The try block can still run and update the page.
+
+A template literal uses backticks and `${...}` to insert an expression into text. `toFixed(2)` returns a formatted string; it does not improve the numerical precision of the earlier calculation. Display formatting and arithmetic representation are different concerns.
+
+`textContent` treats the result as text. This matters because anything a user or API supplies may contain angle brackets. Plain text should stay plain text; it should not become an instruction to create HTML elements.
+
+The live status tells assistive tools that the result changed. It does not require moving focus away from the input. After an error, a person should still know what happened and how to continue.
 
 ```check
 page budget/index.html "(() => { const f = document.querySelector('form'); f.elements.income.value = '100'; f.elements.expenses.value = '25'; f.requestSubmit(); return document.querySelector('#result').textContent; })()" "Remaining: $75.00" server=static
@@ -92,4 +138,8 @@ shape: Compute once, branch on balance < 0, and preserve the nonnegative message
 
 Temporarily remove preventDefault and submit. Observe navigation/reload, then restore it. Submit an empty form: native validation prevents the handler. Use keyboard only and click each label to ensure it focuses its input. Explain why checking only that a submit button exists would miss a broken calculator.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+A form appears correctly but pressing Enter reloads the page. Identify the layer you would inspect first and why. Then explain why a model test can pass while the form is broken, and why setting textContent is a safer choice than parsing untrusted input as HTML.

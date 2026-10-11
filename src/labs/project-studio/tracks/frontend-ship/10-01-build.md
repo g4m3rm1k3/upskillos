@@ -3,10 +3,15 @@ title: 10.1 — Build and preview the whole portfolio
 track: Frontend Developer Bootcamp — Portfolio, Deployment and Capstone
 trackOrder: 50.1
 runtime: none
-reference: optional
 ---
 
 Outcome: create a deployable folder containing every app, not only the default entry. A development server transforms on demand; a production build produces static assets. A working dev URL does not prove the built deployment works. These are separate HTML apps, so ordinary relative links are appropriate.
+
+### The story so far
+
+The development server can serve source files on demand, and all the apps appear to work there. A deployed static site needs a finite output folder with every required page and asset included.
+
+We will create a portfolio entry page and explicitly build each app. This is where an assumption often breaks: a URL working during development does not mean the corresponding HTML was included in the production artifact.
 
 ## Give the portfolio a front door
 
@@ -48,11 +53,33 @@ Create the root index.html with relative links. Unlike the host learning app’s
 </html>
 ```
 
+### Relative paths carry context
+
+From the root index.html, `./cafe/index.html` means a file below the current document directory. A leading `/cafe/index.html` instead starts at the host’s root. If your portfolio is deployed under `/my-portfolio/`, those destinations differ.
+
+The hosting app for this course uses HashRouter, but these learner apps are separate HTML documents. They deliberately use ordinary relative links. Do not copy the host application’s routing conventions into a different architecture without understanding why they exist.
+
 ```check
 page index.html "document.querySelectorAll('main a').length" "6" server=static
 ```
 
 ## Declare every production entry
+
+### Recipe, workshop and packaged result
+
+Your source and lockfile are the recipe. The development server is the workshop, able to transform files while you work. dist is the packaged result sent to a static host. Do not ship the workshop and assume every resource it can produce already exists in the package.
+
+The analogy has a limit: a build can transform, combine and rename assets. You should therefore inspect and test the built output rather than expecting it to be a byte-for-byte copy of source.
+
+```text
+source HTML entries + module imports + CSS imports
+  → Vite production build
+  → dist HTML + hashed assets
+  → preview or static host
+  → browser requests only what was emitted
+```
+
+The entry map explicitly names the home page and each app. Missing one entry may leave a working development URL with no corresponding built HTML.
 
 Vite otherwise builds only root index.html. Each app needs an explicit entry. base: ./ emits relative asset references. fileURLToPath converts module URLs to filesystem paths on different platforms. Run npm run build, then npm run preview; open every link using the preview server and reload each page directly. Stop preview with Ctrl+C. The pinned Vite 8 toolchain uses rolldownOptions; older Vite tutorials may call this rollupOptions.
 
@@ -80,6 +107,16 @@ export default defineConfig({
 });
 ```
 
+### Verify a release where it will actually run
+
+`base: './'` asks for relative emitted asset references. The input paths use fileURLToPath because a module URL and an operating-system path are different representations, especially on Windows or paths with encoded characters.
+
+After building, run preview and visit every app through that server. Reload each nested URL directly; clicking from the home page alone may miss a hosting or path issue. Inspect Network for missing CSS or JavaScript, and inspect the console for runtime errors.
+
+**Rule of thumb:** test the artifact, not only the source. A successful compiler or bundler establishes that it produced output, not that every intended workflow is present in that output.
+
+A client-rendered React entry begins with a mostly empty root before JavaScript runs. For some content-heavy products, static generation or server rendering improves initial content delivery and indexing. That is a product-driven next architectural choice, not a reason to pretend this client app already supplies those properties.
+
 ```check
 run "npm run build" timeout=120
 file dist/react/index.html
@@ -103,4 +140,8 @@ shape: Add a name/content meta element with a concrete description.
 
 Temporarily omit the reading input from the build config: dev still works, but dist/react/index.html is absent after a clean build. Restore it and rebuild. Check all apps under a simulated subdirectory and with a direct reload. A client-only React page initially sends a mostly empty root; SSR/SSG can help content delivery and SEO when a product needs it.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Explain how an app can work in dev but be absent from dist. Then resolve `./cafe/index.html` and `/cafe/index.html` for a site hosted under a repository subdirectory. Describe the production check that would catch a missing stylesheet even if the build command exited successfully.

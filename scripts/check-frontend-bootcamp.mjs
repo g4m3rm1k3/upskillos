@@ -9,10 +9,12 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { parseLesson } from '../src/labs/project-studio/parseTrack.js';
+import { parseCheckLine } from '../src/labs/project-studio/checks.js';
+import { isCorrect } from '../src/labs/project-studio/predictions.js';
 import { WALKTHROUGH } from '../src/labs/project-studio/tracks/frontend.walkthrough.js';
 
 const require = createRequire(import.meta.url);
-const { runChecks } = require('../desktop/app/project-checks.cjs');
+const { runChecks, shellRun } = require('../desktop/app/project-checks.cjs');
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tracks = path.join(repo, 'src/labs/project-studio/tracks');
 const lessons = fs.readdirSync(tracks).filter(name => name.startsWith('frontend-') && fs.statSync(path.join(tracks, name)).isDirectory())
@@ -21,16 +23,17 @@ const lessons = fs.readdirSync(tracks).filter(name => name.startsWith('frontend-
 const dependencies = process.argv[2];
 if (!dependencies || !fs.existsSync(path.resolve(dependencies, 'node_modules/vite/bin/vite.js'))) {
   console.error('Usage: node scripts/check-frontend-bootcamp.mjs <learner-dependencies-folder> [--keep]');
-  console.error('Install the final frontend-quality package.json target in that folder first. No install runs implicitly.');
+  console.error('Install the frontend-production package.json target in that folder first. No install runs implicitly.');
   process.exit(1);
 }
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-bootcamp-'));
 const project = path.join(tmp, 'portfolio');
 fs.mkdirSync(project);
 fs.symlinkSync(path.resolve(dependencies, 'node_modules'), path.join(project, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
-const browser = await chromium.launch();
+let browser;
 let checksRun = 0;
 let wrongRun = 0;
+let predictionsRun = 0;
 function write(root, file, content) {
   const dest = path.resolve(root, file);
   assert(dest.startsWith(root + path.sep), `Unsafe walkthrough file: ${file}`);
@@ -58,6 +61,7 @@ async function evalInPage(target, expression, { timeoutMs = 15000 } = {}) {
   finally { clearTimeout(timer); await context.close(); }
 }
 try {
+  browser = await chromium.launch();
   for (const lesson of lessons) {
     for (const step of lesson.steps) {
       const key = `${lesson.id}#${step.title}`;
@@ -78,9 +82,22 @@ try {
       }
       if (step.file && step.target != null) write(project, step.file, step.target + '\n');
       for (const [file, content] of Object.entries(action.files ?? {})) write(project, file, content);
-      // npm install is the only authored setup command. The explicit dependency folder
-      // supplies exactly these dependencies without a network install on every stage.
-      assert((action.run ?? []).every(command => command === 'npm install'), `Unhandled setup command at ${key}`);
+      // Setup is explicit: the supplied dependency folder and separately installed
+      // Playwright browser replace repeated network installation during reconstruction.
+      assert((action.run ?? []).every(command => ['npm install', 'npx playwright install chromium'].includes(command)), `Unhandled setup command at ${key}`);
+      for (const prediction of step.predictions) {
+        if (!prediction.verify) continue;
+        if (prediction.verify.startsWith('page ')) {
+          const check = parseCheckLine(`${prediction.verify} ${JSON.stringify(String(prediction.answer))}`);
+          const result = await runChecks(project, [check], { evalInPage });
+          assert.equal(result.results[0]?.pass, true, `${key}: prediction disagrees with page\n${result.results[0]?.detail}`);
+        } else {
+          const result = await shellRun(prediction.verify, { cwd: project, env: process.env, timeoutMs: 15000 });
+          assert.equal(result.code, 0, `${key}: prediction verification failed\n${result.stderr}`);
+          assert(isCorrect(prediction, result.stdout.trim().split(/\r?\n/).at(-1)), `${key}: prediction answer disagrees with execution`);
+        }
+        predictionsRun++;
+      }
       if (!step.checks.length) continue;
       const result = await runChecks(project, step.checks, { evalInPage });
       for (const [index, check] of step.checks.entries()) {
@@ -90,9 +107,9 @@ try {
     }
     console.log(`PASS ${lesson.id}`);
   }
-  console.log(`Frontend walkthrough: ${lessons.length} lessons, ${checksRun} positive checks, ${wrongRun} wrong-answer checks passed.`);
+  console.log(`Frontend walkthrough: ${lessons.length} lessons, ${checksRun} positive checks, ${wrongRun} wrong-answer checks, ${predictionsRun} executable predictions passed.`);
   if (process.argv.includes('--keep')) console.log(`Reconstructed portfolio: ${project}`);
 } finally {
-  await browser.close();
+  await browser?.close();
   if (!process.argv.includes('--keep')) fs.rmSync(tmp, { recursive: true, force: true });
 }

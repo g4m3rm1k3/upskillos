@@ -22,9 +22,10 @@ const SERIES = [
       ['frontend-react', '07 · React Reading List'],
       ['frontend-tailwind', '08 · Tailwind and a Component System'],
       ['frontend-quality', '09 · TypeScript, Testing and Accessibility'],
+      ['frontend-production', '09+ · Production React and Browser Testing'],
       ['frontend-ship', '10 · Portfolio, Deployment and Capstone'],
     ],
-    planned: 'Start with no coding experience and build a portfolio through HTML, handmade CSS, UI/UX, JavaScript, APIs, Bootstrap, React and Tailwind. Includes TypeScript foundations, testing, release guidance and an independent capstone. Editorial and learner review remain required; advanced routing, server rendering and authentication are follow-on topics. See docs/frontend-bootcamp-curriculum.md.',
+    planned: 'Start with no coding experience and build a portfolio through HTML, handmade CSS, UI/UX, JavaScript, APIs, Bootstrap, React and Tailwind. Includes a typed React app, routing, browser regression tests, release automation and an independent capstone. Editorial and learner review remain required; server rendering and backend authentication are follow-on topics. See docs/frontend-bootcamp-curriculum.md.',
   },
   {
     key: 'games3d',

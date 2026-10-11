@@ -1,0 +1,5 @@
+Revision: Record actual revision before release.
+Artifact: Record actual successful workflow artifact.
+Smoke: Every app and direct search route.
+Rollback: Restore previous verified artifact; check persisted-data compatibility.
+Block release: Saved books disappear after reload; require the save/reload browser test to pass.

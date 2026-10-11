@@ -1191,5 +1191,95 @@
     "answerFiles": {
       "capstone/evidence.txt": "frontend-ship/answers/10-03/capstone/evidence.txt.txt"
     }
+  },
+  "frontend-production/09p-01-typed-react#Install type definitions": {
+    "run": [
+      "npm install"
+    ]
+  },
+  "frontend-production/09p-01-typed-react#Describe the existing API boundary": {},
+  "frontend-production/09p-01-typed-react#Type the control contract": {},
+  "frontend-production/09p-01-typed-react#Type asynchronous state": {},
+  "frontend-production/09p-01-typed-react#Type the state owner and repair focus": {},
+  "frontend-production/09p-01-typed-react#Include the complete React source": {},
+  "frontend-production/09p-01-typed-react#Start the typed tree": {},
+  "frontend-production/09p-01-typed-react#Point HTML at the new entry": {},
+  "frontend-production/09p-01-typed-react#Your turn: change a typed behavior": {
+    "answerFiles": {
+      "react/App.tsx": "frontend-production/answers/09p-01-typed-react/react/App.tsx.txt"
+    },
+    "wrong": [
+      {
+        "name": "leave the independent change unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-production/09p-02-navigation#Give the application a router": {},
+  "frontend-production/09p-02-navigation#Connect links, routes and shared state": {},
+  "frontend-production/09p-02-navigation#Your turn: write a useful missing-page recovery": {
+    "answerFiles": {
+      "react/App.tsx": "frontend-production/answers/09p-02-navigation/react/App.tsx.txt"
+    },
+    "wrong": [
+      {
+        "name": "leave the independent change unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-production/09p-03-browser-tests#Create an isolated test server": {
+    "run": [
+      "npx playwright install chromium"
+    ]
+  },
+  "frontend-production/09p-03-browser-tests#Test persistence, navigation, focus and retry": {},
+  "frontend-production/09p-03-browser-tests#Your turn: protect unknown-address recovery": {
+    "answerFiles": {
+      "quality/browser/reading.spec.ts": "frontend-production/answers/09p-03-browser-tests/quality/browser/reading.spec.ts.txt"
+    },
+    "wrong": [
+      {
+        "name": "leave the independent change unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-design/02-05-visual-workshop#Compose a hierarchy with a reason": {},
+  "frontend-design/02-05-visual-workshop#Review by task instead of taste": {},
+  "frontend-design/02-05-visual-workshop#Your turn: make one defensible hierarchy change": {
+    "answerFiles": {
+      "design/typography.html": "frontend-design/answers/02-05-visual-workshop/design/typography.html.txt",
+      "design/critique.txt": "frontend-design/answers/02-05-visual-workshop/design/critique.txt.txt"
+    },
+    "wrong": [
+      {
+        "name": "leave the independent change unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "frontend-ship/10-02b-automation#Verify from the lockfile on a clean runner": {},
+  "frontend-ship/10-02b-automation#Rehearse the handoff and rollback": {},
+  "frontend-ship/10-02b-automation#Your turn: define a release-blocking failure": {
+    "answerFiles": {
+      "release/runbook.txt": "frontend-ship/answers/10-02b-automation/runbook.txt"
+    },
+    "wrong": [
+      {
+        "name": "leave the independent change unfinished",
+        "fails": [
+          0
+        ]
+      }
+    ]
   }
 }

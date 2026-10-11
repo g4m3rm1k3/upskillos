@@ -1,13 +1,13 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 571,
-    "tracks": 73,
+    "lessons": 576,
+    "tracks": 74,
     "errors": {
       "independent task exposes full target": 3
     },
     "signals": {
-      "authored check limits not detected": 491,
+      "authored check limits not detected": 466,
       "prediction not detected": 76,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 203
@@ -3125,9 +3125,7 @@
       "maturity": "in-development",
       "firstStep": "Convert a network response into app data",
       "firstIndependentTask": "Your turn: reject the wrong response shape",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3138,9 +3136,7 @@
       "maturity": "in-development",
       "firstStep": "Create the search screen",
       "firstIndependentTask": "Your turn: make empty results actionable",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3162,9 +3158,7 @@
       "maturity": "in-development",
       "firstStep": "Install a dependency deliberately",
       "firstIndependentTask": "Your turn: use spacing consistently",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3175,9 +3169,7 @@
       "maturity": "in-development",
       "firstStep": "Wire the button to its panel",
       "firstIndependentTask": "Your turn: switch the library theme",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3210,9 +3202,7 @@
       "maturity": "in-development",
       "firstStep": "Let content determine the layout",
       "firstIndependentTask": "Your turn: give long addresses somewhere to break",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3227,6 +3217,17 @@
       "errors": []
     },
     {
+      "id": "frontend-design/02-05-visual-workshop",
+      "track": "frontend-design",
+      "title": "2.5 — Visual hierarchy, imagery and a design critique",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Compose a hierarchy with a reason",
+      "firstIndependentTask": "Your turn: make one defensible hierarchy change",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "frontend-javascript/03-01-values",
       "track": "frontend-javascript",
       "title": "3.1 — JavaScript values, names and decisions",
@@ -3234,9 +3235,7 @@
       "maturity": "in-development",
       "firstStep": "Calculate an order",
       "firstIndependentTask": "Your turn: test the boundary",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3247,9 +3246,7 @@
       "maturity": "in-development",
       "firstStep": "Keep the rule independent of the browser",
       "firstIndependentTask": "Your turn: reject an infinite expense",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3260,9 +3257,7 @@
       "maturity": "in-development",
       "firstStep": "Label every input",
       "firstIndependentTask": "Your turn: make deficits understandable",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3273,9 +3268,7 @@
       "maturity": "in-development",
       "firstStep": "Add an honest toggle",
       "firstIndependentTask": "Your turn: follow the system until the user chooses",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3286,9 +3279,7 @@
       "maturity": "in-development",
       "firstStep": "Transform data without changing the original",
       "firstIndependentTask": "Your turn: remove by identity",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3299,9 +3290,7 @@
       "maturity": "in-development",
       "firstStep": "Describe the controls",
       "firstIndependentTask": "Your turn: keep focus when a task disappears",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3312,9 +3301,40 @@
       "maturity": "in-development",
       "firstStep": "Isolate storage behind functions",
       "firstIndependentTask": "Your turn: test corrupted storage without deleting real work",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-production/09p-01-typed-react",
+      "track": "frontend-production",
+      "title": "Production 1 — Migrate the working React app",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install type definitions",
+      "firstIndependentTask": "Your turn: change a typed behavior",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-production/09p-02-navigation",
+      "track": "frontend-production",
+      "title": "Production 2 — URLs, history and accessible navigation",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the application a router",
+      "firstIndependentTask": "Your turn: write a useful missing-page recovery",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-production/09p-03-browser-tests",
+      "track": "frontend-production",
+      "title": "Production 3 — Regression tests through real controls",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create an isolated test server",
+      "firstIndependentTask": "Your turn: protect unknown-address recovery",
+      "signals": [],
       "errors": []
     },
     {
@@ -3325,9 +3345,7 @@
       "maturity": "in-development",
       "firstStep": "Add the compiler",
       "firstIndependentTask": "Your turn: add an empty state deliberately",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3338,9 +3356,7 @@
       "maturity": "in-development",
       "firstStep": "Collect meaningful regressions",
       "firstIndependentTask": "Your turn: protect whitespace validation",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3351,9 +3367,7 @@
       "maturity": "in-development",
       "firstStep": "Make the review reproducible",
       "firstIndependentTask": "Your turn: record a measured fix",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3364,9 +3378,7 @@
       "maturity": "in-development",
       "firstStep": "Add React to the portfolio tools",
       "firstIndependentTask": "Your turn: add a distinct reading choice",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3377,9 +3389,7 @@
       "maturity": "in-development",
       "firstStep": "Lift shared data to its owner",
       "firstIndependentTask": "Your turn: derive a useful shelf summary",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3390,9 +3400,7 @@
       "maturity": "in-development",
       "firstStep": "Initialize once and save after changes",
       "firstIndependentTask": "Your turn: record why this is an effect",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3403,9 +3411,7 @@
       "maturity": "in-development",
       "firstStep": "Clean up obsolete work",
       "firstIndependentTask": "Your turn: explain an empty catalog result",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3427,9 +3433,18 @@
       "maturity": "in-development",
       "firstStep": "Prepare a release checklist",
       "firstIndependentTask": "Your turn: write a case study that explains the work",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "frontend-ship/10-02b-automation",
+      "track": "frontend-ship",
+      "title": "10.2b — A reproducible release gate",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Verify from the lockfile on a clean runner",
+      "firstIndependentTask": "Your turn: define a release-blocking failure",
+      "signals": [],
       "errors": []
     },
     {
@@ -3440,9 +3455,7 @@
       "maturity": "in-development",
       "firstStep": "Choose a bounded product brief",
       "firstIndependentTask": "Your turn: deliver a reviewed release",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3453,9 +3466,7 @@
       "maturity": "in-development",
       "firstStep": "Give the browser a document",
       "firstIndependentTask": "Your turn: add a useful opening time",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3488,9 +3499,7 @@
       "maturity": "in-development",
       "firstStep": "Install the v4 integration",
       "firstIndependentTask": "Your turn: give search its own visual grouping",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3501,9 +3510,7 @@
       "maturity": "in-development",
       "firstStep": "Make safe defaults explicit",
       "firstIndependentTask": "Your turn: document when to use each variant",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -3514,9 +3521,7 @@
       "maturity": "in-development",
       "firstStep": "Synchronize the root attribute",
       "firstIndependentTask": "Your turn: protect long book titles",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {

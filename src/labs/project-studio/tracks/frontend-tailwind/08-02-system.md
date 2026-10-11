@@ -3,12 +3,25 @@ title: 8.2 — Build a small design system with component contracts
 track: Frontend Developer Bootcamp — Tailwind and a Component System
 trackOrder: 50.08
 runtime: none
-reference: optional
 ---
 
 Outcome: express repeated behavior and design choices in a reusable component. A design system combines tokens, components, content rules and usage guidance. It is more than a folder of buttons. Start with real repeated needs; avoid creating dozens of variants before a product needs them.
 
+### The story so far
+
+The React app now has its own token vocabulary and repeated actions. Instead of copying a button’s appearance and behavior every time, we will define a small component with a clear public contract.
+
+A component system should make the safe, common choice easy. It should also leave enough native HTML behavior visible that a caller can still submit a form, disable an action or supply an accessible name correctly.
+
 ## Make safe defaults explicit
+
+### A component API is a promise to its callers
+
+The Button component accepts children, variant, type and remaining native props. Those names form an API: callers should be able to predict what happens without reading the implementation every time.
+
+A useful analogy is a standardized power socket. The interface reduces repeated decisions, but its safety depends on a precise contract, not just identical outer shape. Here the contract includes a non-submitting default type and proper forwarding of disabled and onClick.
+
+The analogy stops at universality. This tiny Button is designed for our app’s needs; it is not a complete component library handling every product context.
 
 Before trying this step, make a prediction.
 
@@ -33,11 +46,37 @@ export function Button({ variant = 'primary', type = 'button', children, ...prop
 }
 ```
 
+### Destructuring and rest have complementary jobs
+
+`variant = 'primary'` supplies a default if that prop is omitted or undefined. `type = 'button'` supplies a safe default for actions. `children` holds the nested label or elements. `...props` collects the remaining properties into an object, which `{...props}` forwards to the actual button.
+
+The order is intentional: our explicit type and className define this component’s chosen contract after the spread. A caller’s className is not merged here. If you later add customizable classes, document their precedence instead of silently changing how overrides behave.
+
+The variants object maps a meaningful name to complete class strings. An unknown variant falls back to primary with `??`. That is a defensive runtime choice, not a substitute for good types or documentation.
+
+### State is more than default appearance
+
+A real control has hover, focus, active and disabled states. Focus must remain visible in both themes. Disabled must prevent the action, not merely lower opacity. The reason for a disabled action should be understandable nearby; otherwise people cannot discover how to proceed.
+
+**Rule of thumb:** reuse a component when it packages a meaningful decision and behavior, not simply to reduce line count. If two buttons look alike but have different semantics, preserve those semantics through explicit props. If the interface becomes a dozen booleans that conflict, consider separate components or a clearer variant model.
+
 ```check
 contains react/Button.jsx "type = 'button'"
 ```
 
 ## Use the quieter action variant
+
+Predict the observable result before opening the reference.
+
+```predict
+question: A BookCard Remove control is rendered inside a form. What type does our reusable Button default to?
+choice: button
+choice: submit
+choice: reset
+answer: button
+explain: The component explicitly chooses button, so a supporting action does not accidentally submit its surrounding form.
+verify: page react/index.html "(async () => { const i=document.querySelector('#title'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'Trace'); i.dispatchEvent(new Event('input',{bubbles:true})); await new Promise(r=>setTimeout(r,20)); i.form.requestSubmit(); await new Promise(r=>setTimeout(r,20)); return document.querySelector('article button').type; })()" server=vite
+```
 
 Removing a book should not visually overpower adding or searching. Reuse Button for removal with secondary styling. Decide hierarchy by importance and frequency, not by giving every action the strongest color. The native button still has a descriptive accessible name.
 
@@ -84,6 +123,12 @@ export function App() {
 }
 ```
 
+### Visual hierarchy expresses priorities
+
+A primary action should stand out relative to supporting actions in the same task region. If Save, Cancel, Remove and Help all have identical emphasis, the interface asks the person to perform the prioritization you avoided.
+
+Secondary does not mean unreadable or inaccessible. The remove action still needs enough contrast, a clear name and visible focus. Color is only one cue; grouping, placement and wording reinforce the relationship.
+
 ```check
 page react/index.html "(async () => { const input=document.querySelector('#title'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Design Book'); input.dispatchEvent(new Event('input',{bubbles:true})); await new Promise(r=>setTimeout(r,20)); input.form.requestSubmit(); await new Promise(r=>setTimeout(r,20)); return document.querySelector('article button').type; })()" "button" server=vite
 ```
@@ -107,4 +152,8 @@ shape: Explain intent, visible focus and recovery from disabled actions.
 
 Place a temporary Button inside a form with no type prop and confirm it does not submit; a plain button defaults to submit. Remove the experiment. Review pointer, keyboard, touch, hover, active, focus and disabled appearances. Test the actual disabled attribute rather than a gray appearance alone.
 
-Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. Automated checks cover the named cases, not visual quality or complete accessibility. Use the manual observations above before marking the lesson complete.
+Write three lines in your learning journal: what you observed, why it happened, and a new case you designed. These checks establish the named cases only; visual quality and complete accessibility remain untested. Use the manual observations above before marking the lesson complete.
+
+### Explain it without the reference
+
+Explain why type="button" is a safer reusable default than the browser’s default inside a form. Then describe what happens to onClick, disabled and className when they pass through this component. If you want callers to customize styling, propose an explicit contract rather than assuming the spread handles it.
