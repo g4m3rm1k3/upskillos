@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 62 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 63 labs · 16 games
 
 ## How things are counted
 
@@ -75,6 +75,7 @@
 | CAD + CNC Workspace | `cad-cnc` | lab | `/cad-cnc` |
 | CAD Pro | `cad-pro` | builder | `/cad-pro` |
 | Canvas Notes | `canvas-notes` | builder | `/lab/canvas-notes` |
+| CartPole Lab | `cartpole-lab` | lab | `/lab/cartpole-lab` |
 | Chemistry Lab | `chemistry` | lab | `/lab/chemistry` |
 | CMM Lab | `cmm-lab` | lab | `/cmm-lab` |
 | CNC Simulator | `cnc-sim` | lab | `/cnc-sim` |

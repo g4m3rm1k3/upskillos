@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 62,
+    "labs": 63,
     "games": 16
   },
   "courses": [
@@ -428,6 +428,12 @@
       "label": "Canvas Notes",
       "kind": "builder",
       "path": "/lab/canvas-notes"
+    },
+    {
+      "id": "cartpole-lab",
+      "label": "CartPole Lab",
+      "kind": "lab",
+      "path": "/lab/cartpole-lab"
     },
     {
       "id": "chemistry",

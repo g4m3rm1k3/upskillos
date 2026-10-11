@@ -1,0 +1,54 @@
+/* CartPole Lab: QMaze Lab's styles (qm-…), plus what is new here (cp-…). */
+.cp-cart{width:100%;max-width:640px;display:block}
+.cp-cart-label{font-size:12px;fill:#6f665a}
+.cp-carts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+
+.cp-qtable{margin:6px 0}
+.cp-qgrids{display:flex;gap:12px;flex-wrap:wrap}
+.cp-qgrid-wrap b{display:block;font-size:12px;margin:0 0 3px;color:var(--teal)}
+.cp-qgrid{display:grid;gap:1px;font-size:10px;font-variant-numeric:tabular-nums}
+.cp-qcorner{font-size:9px;color:var(--muted);padding-right:4px;white-space:nowrap}
+.cp-qhead{font-size:9px;color:var(--muted);text-align:center;white-space:nowrap;padding:0 3px}
+.cp-qcell{min-width:22px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid #efe7d8;border-radius:3px;background:#fffdf8;color:#2b2620}
+.cp-qcell.best{font-size:13px;color:var(--teal)}
+.cp-qcell.here{outline:2px solid #2c241b;outline-offset:-1px}
+.cp-qcell.writing{border:2px solid #a8402f}
+.cp-qcell.changed{box-shadow:inset 0 0 0 2px #f2d24a}
+.cp-qlist{display:flex;flex-wrap:wrap;gap:4px 10px;font:11px 'JetBrains Mono',monospace}.cp-qlist .here{font-weight:700}
+
+.cp-weights table td{text-align:center!important}.cp-changed{box-shadow:inset 0 0 0 2px #f2d24a}
+.cp-net .cp-layer{margin:6px 0}.cp-net .cp-layer>span{font-size:11px;color:var(--muted)}
+.cp-strip{display:grid;gap:1px;margin-top:2px}.cp-strip span{width:8px;height:8px;border-radius:1px}
+
+/* The Python tab's explanation panel */
+.cp-explain h4{border-top:1px solid #efe7d8;padding-top:8px}
+.cp-tex{background:#fff7ea;border-radius:6px;padding:2px 10px;overflow-x:auto}
+.cp-calc{background:#1f2428;color:#f2d24a;padding:8px 10px;border-radius:6px;white-space:pre-wrap;font-size:12.5px;margin:4px 0}
+.cp-calc-inline{margin-left:10px;font-size:11px;color:#f2d24a;white-space:nowrap;align-self:center}
+.cp-logic{background:#eef6f3;border-left:3px solid var(--teal);padding:4px 10px;border-radius:0 6px 6px 0}
+.cp-logic p{margin:4px 0}
+.cp-chain{margin:4px 0 6px;padding-left:20px;font-size:12.5px}.cp-chain li{margin:4px 0}.cp-chain li.here{font-weight:600}
+.cp-callline{font-size:11.5px;background:#f1eadc;border-radius:4px;padding:2px 6px;margin-top:2px;white-space:pre-wrap;font-weight:400}
+.cp-sites{margin:4px 0;padding-left:18px;font-size:12.5px}.cp-sites li{margin:4px 0}
+.cp-returned{background:#eef6f3;border-radius:6px;padding:4px 8px;font-size:12.5px}
+.cp-fcard{border:1px solid var(--line);border-radius:7px;padding:6px 9px;margin:6px 0;background:#fffdf8;font-size:12.5px}
+.cp-fcard summary{cursor:pointer}.cp-fcard p{margin:4px 0}
+.cp-chips{display:flex;gap:4px;flex-wrap:wrap}.qm-lab .cp-chips button{font-size:11.5px;padding:2px 8px}.qm-lab .cp-chips button.active{background:#24323a;color:#e5f3f0}
+.cp-chip-say{background:#f6f2e9;border-radius:6px;padding:6px 9px;margin:6px 0;font-size:12.5px}.cp-chip-say pre{margin:4px 0 0;font-size:11.5px;white-space:pre-wrap}
+
+/* Lesson code notes: maths and logic lines */
+.cp-tag{display:inline-block;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;background:#f1eadc;color:var(--accent-ink);border-radius:3px;padding:0 4px;margin-right:2px}
+.cp-note-logic{list-style:none;margin-left:-14px}.cp-note-tex{list-style:none;margin-left:-14px}
+
+/* Figures */
+.cp-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}.cp-row>*{flex:1 1 300px;min-width:0}
+.cp-kv{font-size:13px}.cp-kv td{padding:2px 8px 2px 0;vertical-align:top}
+.cp-work{font:12.5px/1.7 'JetBrains Mono',ui-monospace,monospace;background:#fffdf8;border:1px solid var(--line);border-radius:7px;padding:8px 10px;white-space:pre-wrap;overflow-x:auto}
+.cp-work b{color:var(--accent-ink)}
+.cp-keys{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.cp-big{font-size:22px;font-weight:700;color:var(--accent-ink)}
+.cp-bar{height:10px;background:#b5650d;border-radius:2px}
+.cp-bars{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:13px}
+.cp-slider-row{display:grid;grid-template-columns:110px 1fr 80px 60px;gap:6px;align-items:center;font-size:13px}
+.cp-slots{display:flex;gap:2px;margin:4px 0}.cp-slots span{flex:1;height:22px;border-radius:3px;background:#f1eadc;font-size:10px;display:flex;align-items:center;justify-content:center}
+.cp-slots span.on{background:#b5650d;color:#fff;font-weight:700}
