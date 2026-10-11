@@ -8,6 +8,8 @@ import { FUNCTIONS, VARS } from './functions.js'
 import { PROGRAMS } from './programs.js'
 import { lessonById } from './lessons/index.js'
 import { forward } from './engine/part1.js'
+import { predictProb } from './engine/part2.js'
+import PlanePlot from './figures/PlanePlot.jsx'
 
 // The shared Python tab (python-steps/PythonTab.jsx) with this lab's programs and pictures: the
 // points and the paused program's line or network drawn through them, and its error so far.
@@ -28,12 +30,17 @@ function Picture({ program, view }) {
     const ok = net && Array.isArray(net.w1)
     return <><XYPlot points={points} x={[-3, 3]} y={[-2, 2]} curves={ok ? [{ f: x => forward(net, x).yHat }] : []} />{curve}</>
   }
+  if (program.picture === 'plane') {
+    const w = watched('w'), b = watched('b'), pts = watched('points'), labels = watched('labels')
+    const ok = Array.isArray(w) && typeof b === 'number'
+    return <><PlanePlot points={Array.isArray(pts) ? pts : []} labels={Array.isArray(labels) ? labels : []} prob={ok && (w[0] || w[1] || b) ? pt => predictProb(w, b, pt) : null} x={[-3, 3]} y={[-3, 3]} size={300} />{curve}</>
+  }
   return <>{curve || <p className="qm-hint">This program prints its result: see the output below.</p>}</>
 }
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture, dataFiles: src.DATA_FILES,
-  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py'],
+  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py', 'points2d.py', 'logistic.py', 'torch_classify.py', 'tumours.py', 'metrics.py'],
   labReceiver: /^$/,
   intro: 'The lessons and the Model Studio run the same arithmetic in the browser.',
 }

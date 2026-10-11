@@ -285,7 +285,7 @@ export default function PythonTab({ lab, request, onLesson }) {
   return <div className="qm-py ps-py">
     <div className="qm-py-bar">
       <label>Program <select value={programId} onChange={e => { setProgramId(e.target.value); setFile(PROGRAMS[e.target.value].file); setOpts({}); reset() }}>{Object.entries(PROGRAMS).map(([id, p]) => <option key={id} value={id}>{p.label}</option>)}</select></label>
-      {Object.entries(program.choices ?? {}).map(([k, values]) => <label key={k}>{k} <select value={kwargs[k]} onChange={e => { setOpts(o => ({ ...o, [k]: e.target.value })); reset() }}>{values.map(v => <option key={v}>{v}</option>)}</select></label>)}
+      {Object.entries(program.choices ?? {}).map(([k, values]) => <label key={k}>{k} <select value={kwargs[k]} onChange={e => { const value = values.find(v => String(v) === e.target.value); setOpts(o => ({ ...o, [k]: value })); reset() }}>{values.map(v => <option key={v}>{v}</option>)}</select></label>)}
       {'seed' in kwargs && <label>seed <input type="number" value={kwargs.seed} style={{ width: 56 }} onChange={e => { setOpts(o => ({ ...o, seed: Number(e.target.value) || 0 })); reset() }} /></label>}
       {api && status?.ready && <>
         <button className="qm-primary" disabled={busy} onClick={load}>{timeline.length ? '↺ Restart' : '▶ Load and pause at the first line'}</button>

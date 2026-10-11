@@ -96,7 +96,16 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(plain(top(r).locals.loss)).toBeCloseTo(trainNet({ steps: 1 }).history[0], 12)
   }, 180000)
 
-  for (const id of ['layer', 'torch', 'cars']) {
+  it('logistic regression: the gradient\'s arithmetic matches line by line, and Next step moves the weights', async () => {
+    let r = await load(s, 'logistic', { steps: 2 })
+    expect(r.type, s.stderr()).toBe('pause')
+    r = await s.send({ cmd: 'step', mode: 'action' })
+    expect(plain(r.watch.points.value)).toHaveLength(40)
+    expect(plain(r.watch.points.value)[39]).toHaveLength(2)
+    expect(await checkArithmetic(s, r, 300)).toBeGreaterThan(30)
+  }, 180000)
+
+  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours']) {
     it(`${id}: runs to the end`, async () => {
       let r = await load(s, id)
       expect(r.type, s.stderr()).toBe('pause')
@@ -104,6 +113,8 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
       expect(r.type, `${r.error} ${r.output ?? ''}`).toBe('finished')
       if (id === 'torch') expect(r.result.v).toBeLessThan(1e-6)
       if (id === 'cars') expect(r.result.items[2].v).toBeLessThan(4)
+      if (id === 'moons') expect(r.result.items[2].v).toBeGreaterThan(0.95)
+      if (id === 'tumours') expect(r.output).toMatch(/accuracy 0\.9/)
     }, 300000)
   }
 })

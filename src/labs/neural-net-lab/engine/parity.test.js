@@ -7,6 +7,7 @@ import parity from './parity.json'
 import { makeLine, makeCurve, fitLine, initNet, trainNet } from './part1.js'
 import { split, loadCars, meanAndSpread } from './cars.js'
 import { lossAndGradients, makeOptimizer, optimizerStep } from './mlp.js'
+import { makeBlobs, makeMoons, trainLogistic, confusion, scores, loadTumours, splitTumours, columnStats } from './part2.js'
 
 const close = (a, b, tol) => {
   if (Array.isArray(a)) { expect(a.length).toBe(b.length); a.forEach((x, i) => close(x, b[i], tol)); return }
@@ -39,13 +40,39 @@ describe('Part 1 programs', () => {
   })
 })
 
+describe('Part 2 programs', () => {
+  it('the same made-up clouds and moons', () => {
+    close(makeBlobs(), parity.blobs, 1e-15)
+    close(makeMoons(), parity.moons, 1e-12)
+  })
+  it('train_logistic: the same 300 steps', () => {
+    let last
+    for (const step of trainLogistic()) last = step
+    close([...last.w, last.b], [...parity.logistic.w, parity.logistic.b], 1e-12)
+    close(last.history, parity.logistic.history, 1e-12)
+  })
+  it('confusion and scores', () => {
+    for (const [t, counts] of Object.entries(parity.confusion.at)) expect(confusion(parity.confusion.probs, parity.confusion.labels, Number(t))).toEqual(counts)
+    close(scores(...confusion(parity.confusion.probs, parity.confusion.labels)), parity.confusion.scores, 1e-15)
+  })
+  it('tumours: the same columns, shuffle, split and statistics', () => {
+    const [rows, labels, names] = loadTumours()
+    expect(names).toEqual(parity.tumours.names)
+    const [[trainX], [testX, testY]] = splitTumours(rows, labels)
+    expect([trainX.length, testX.length]).toEqual(parity.tumours.n)
+    expect(testX.slice(0, 3)).toEqual(parity.tumours.first_test)
+    expect(testY.slice(0, 20)).toEqual(parity.tumours.test_labels)
+    close(columnStats(trainX).slice(0, 5), parity.tumours.stats, 1e-9)
+  })
+})
+
 describe('the general network matches PyTorch', () => {
   for (const run of parity.networks) {
-    it(`${run.activation}, ${run.optimiser}: same gradients, same 5 losses, same weights after`, () => {
+    it(`${run.activation}, ${run.optimiser}, ${run.loss}: same gradients, same 5 losses, same weights after`, () => {
       const net = { inputs: 2, layers: run.start.map(([W, b], i) => ({ W: W.map(r => [...r]), b: [...b], activation: i < 2 ? run.activation : 'none' })) }
       const opt = makeOptimizer(net, { kind: run.optimiser, rate: 0.05 })
       for (let step = 0; step < 5; step++) {
-        const { loss, grads } = lossAndGradients(net, run.x, run.y)
+        const { loss, grads } = lossAndGradients(net, run.x, run.y, run.loss)
         if (step === 0) close(grads.map(g => [g.W, g.b]), run.grads, 1e-12)
         close(loss, run.losses[step], 1e-12)
         optimizerStep(net, opt, grads)

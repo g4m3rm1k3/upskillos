@@ -34,16 +34,25 @@ export function forwardOne(net, x) {
 }
 export const predictOne = (net, x) => forwardOne(net, x).out
 
-// Mean squared error over a batch, and its gradient for every weight.
-export function lossAndGradients(net, X, Y) {
+// The loss over a batch, and its gradient for every weight. lossKind: 'mse' (mean squared error) or
+// 'bce' (binary cross-entropy on the last layer's raw output, the logit, as PyTorch's
+// BCEWithLogitsLoss does it: p = sigmoid(z), and the slope with respect to z is simply p − y).
+export function lossAndGradients(net, X, Y, lossKind = 'mse') {
   const grads = net.layers.map(l => ({ W: l.W.map(r => r.map(() => 0)), b: l.b.map(() => 0) }))
   let loss = 0
   const n = X.length
   X.forEach((x, i) => {
     const { out, zs, as } = forwardOne(net, x)
-    // dL/d(output): the mean squared error's slope, 2 (ŷ − y) / n
-    let d = out.map((o, k) => 2 * (o - Y[i][k]) / n)
-    out.forEach((o, k) => { loss += (o - Y[i][k]) ** 2 / n })
+    let d
+    if (lossKind === 'bce') {
+      // −[y log p + (1 − y) log(1 − p)], written so a large |z| can't overflow (as PyTorch does)
+      out.forEach((z, k) => { loss += (Math.max(z, 0) - z * Y[i][k] + Math.log1p(Math.exp(-Math.abs(z)))) / n })
+      d = out.map((z, k) => (1 / (1 + Math.exp(-z)) - Y[i][k]) / n)
+    } else {
+      // dL/d(output): the mean squared error's slope, 2 (ŷ − y) / n
+      d = out.map((o, k) => 2 * (o - Y[i][k]) / n)
+      out.forEach((o, k) => { loss += (o - Y[i][k]) ** 2 / n })
+    }
     for (let l = net.layers.length - 1; l >= 0; l--) {
       const layer = net.layers[l], act = ACTIVATIONS[layer.activation]
       const dz = d.map((g, k) => g * act.d(zs[l][k]))
@@ -82,27 +91,32 @@ export function optimizerStep(net, opt, grads) {
   })
 }
 
-export function trainSteps(net, opt, X, Y, steps) {
+export function trainSteps(net, opt, X, Y, steps, lossKind = 'mse') {
   let loss = 0
-  for (let s = 0; s < steps; s++) { const r = lossAndGradients(net, X, Y); loss = r.loss; optimizerStep(net, opt, r.grads) }
+  for (let s = 0; s < steps; s++) { const r = lossAndGradients(net, X, Y, lossKind); loss = r.loss; optimizerStep(net, opt, r.grads) }
   return loss
 }
 
 // The PyTorch and Keras code for a network made of these layers.
-export function codeFor(inputs, layers, { kind = 'sgd', rate = 0.01 } = {}) {
+export function codeFor(inputs, layers, { kind = 'sgd', rate = 0.01 } = {}, lossKind = 'mse') {
   const torchAct = { relu: 'nn.ReLU()', sigmoid: 'nn.Sigmoid()', tanh: 'nn.Tanh()' }
   const parts = [], keras = []
   let fanIn = inputs
   layers.forEach(({ units, activation }, i) => {
     parts.push(`nn.Linear(${fanIn}, ${units})`)
     if (torchAct[activation]) parts.push(torchAct[activation])
-    keras.push(`    layers.Dense(${units}${activation !== 'none' ? `, activation="${activation}"` : ''}${i === 0 ? `, input_shape=(${inputs},)` : ''}),`)
+    // Keras puts the yes/no output's sigmoid in the last layer; PyTorch puts it in the loss.
+    const kerasAct = lossKind === 'bce' && i === layers.length - 1 ? 'sigmoid' : activation
+    keras.push(`    layers.Dense(${units}${kerasAct !== 'none' ? `, activation="${kerasAct}"` : ''}${i === 0 ? `, input_shape=(${inputs},)` : ''}),`)
     fanIn = units
   })
   const torchOpt = { sgd: `torch.optim.SGD(model.parameters(), lr=${rate})`, momentum: `torch.optim.SGD(model.parameters(), lr=${rate}, momentum=0.9)`, adam: `torch.optim.Adam(model.parameters(), lr=${rate})` }[kind]
   const kerasOpt = { sgd: `keras.optimizers.SGD(learning_rate=${rate})`, momentum: `keras.optimizers.SGD(learning_rate=${rate}, momentum=0.9)`, adam: `keras.optimizers.Adam(learning_rate=${rate})` }[kind]
+  const bce = lossKind === 'bce'
+  const lossFn = bce ? 'loss_fn = nn.BCEWithLogitsLoss()   # sigmoid and cross-entropy together, on the raw output\n' : ''
+  const lossLine = bce ? 'loss = loss_fn(model(x), y)' : 'loss = ((model(x) - y) ** 2).mean()'
   return {
-    torch: `model = nn.Sequential(\n    ${parts.join(',\n    ')},\n)\noptimizer = ${torchOpt}\nfor step in range(steps):\n    loss = ((model(x) - y) ** 2).mean()\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()`,
-    keras: `model = keras.Sequential([\n${keras.join('\n')}\n])\nmodel.compile(optimizer=${kerasOpt}, loss="mse")\nmodel.fit(x, y, epochs=steps, batch_size=len(x))`,
+    torch: `model = nn.Sequential(\n    ${parts.join(',\n    ')},\n)\n${lossFn}optimizer = ${torchOpt}\nfor step in range(steps):\n    ${lossLine}\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()`,
+    keras: `model = keras.Sequential([\n${keras.join('\n')}\n])\nmodel.compile(optimizer=${kerasOpt}, loss="${bce ? 'binary_crossentropy' : 'mse'}")\nmodel.fit(x, y, epochs=steps, batch_size=len(x))`,
   }
 }

@@ -2,6 +2,8 @@
 // python-steps/PythonTab.jsx for what each field does).
 import { SOURCES } from './source.js'
 
+// The stepper reports only the first 32 items of a list, but a NumPy array in full: watch lists as arrays.
+const all = name => [`__import__('numpy').array(${name})`, name]
 const lineOf = (file, text) => SOURCES[file].split('\n').findIndex(l => l.includes(text)) + 1
 
 export const PROGRAMS = {
@@ -9,7 +11,7 @@ export const PROGRAMS = {
     label: '1.3 Fit a line by gradient descent', file: 'neuron.py', module: 'neuron', function: 'fit_line',
     about: 'One neuron, w · x + b, fitted to 20 made-up points: work out the two slopes, step against them, 500 times.',
     kwargs: () => ({ steps: 500, seed: 0 }),
-    watch: { w: ['w'], b: ['b'], xs: ['xs'], ys: ['ys'], history: ['history'] }, picture: 'line',
+    watch: { w: ['w'], b: ['b'], xs: all('xs'), ys: all('ys'), history: all('history') }, picture: 'line',
     actions: ['b = b - rate * grad_b'], actionLabel: 'Next step', actionTitle: 'Run until w and b have taken their next step',
     episodeEnd: () => [],
   },
@@ -22,14 +24,14 @@ export const PROGRAMS = {
     label: '1.7 Train a network by hand', file: 'tinynet.py', module: 'tinynet', function: 'train_net',
     about: 'A 1 → 8 → 1 ReLU network written in plain Python, backpropagation and all, fitted to points on a sine curve.',
     kwargs: () => ({ hidden: 8, steps: 2000, seed: 0 }),
-    watch: { net: ['net'], xs: ['xs'], ys: ['ys'], history: ['history'] }, picture: 'curve',
+    watch: { net: ['net'], xs: all('xs'), ys: all('ys'), history: all('history') }, picture: 'curve',
     actions: ['grads = backward('], actionLabel: 'Next point', actionTitle: 'Run until the next point has been backpropagated',
     episodeEnd: () => [['tinynet.py', lineOf('tinynet.py', 'history.append(loss)')]], endLabel: 'Next step',
   },
   torch: {
     label: '1.8 Hand-made vs PyTorch', file: 'torch_net.py', module: 'torch_net', function: 'compare',
     about: 'The same network trained by hand and by PyTorch, from the same starting weights: how far apart do their errors get?',
-    kwargs: () => ({ steps: 200 }), watch: { history: ['history'] }, picture: null, actions: [],
+    kwargs: () => ({ steps: 200 }), watch: { history: all('history') }, picture: null, actions: [],
     episodeEnd: () => [['torch_net.py', lineOf('torch_net.py', 'history.append(loss.item())')]], endLabel: 'Next PyTorch step',
   },
   cars: {
@@ -37,5 +39,25 @@ export const PROGRAMS = {
     about: 'Real data: 392 cars. Learn miles per gallon from weight and horsepower, then test on cars the model never saw.',
     kwargs: () => ({ steps: 3000, seed: 0 }), watch: {}, picture: null, actions: [],
     episodeEnd: () => [['cars.py', lineOf('cars.py', 'optimizer.step()')]], endLabel: 'Next step',
+  },
+  logistic: {
+    label: '2.2 Logistic regression by hand', file: 'logistic.py', module: 'logistic', function: 'train_logistic',
+    about: 'One neuron with sigmoid on 40 points in two clouds: the gradient (p − y)·x added up point by point, then a step.',
+    kwargs: () => ({ steps: 300, seed: 0 }),
+    watch: { w: ['w'], b: ['b'], points: all('points'), labels: all('labels'), history: all('history') }, picture: 'plane',
+    actions: ['b -= rate * grad_b'], actionLabel: 'Next step', actionTitle: 'Run until the weights have taken their next step',
+    episodeEnd: () => [],
+  },
+  moons: {
+    label: '2.4 A hidden layer in PyTorch', file: 'torch_classify.py', module: 'torch_classify', function: 'train_moons',
+    about: 'A 2 → 16 → 1 network learns to separate two interleaved moons, with BCEWithLogitsLoss.',
+    kwargs: () => ({ hidden: 16, steps: 3000, seed: 0 }), choices: { hidden: [16, 4, 0] }, watch: { history: all('history') }, picture: null, actions: [],
+    episodeEnd: () => [['torch_classify.py', lineOf('torch_classify.py', 'history.append(loss.item())')]], endLabel: 'Next step',
+  },
+  tumours: {
+    label: '2.5 Tumours: malignant or benign', file: 'tumours.py', module: 'tumours', function: 'train_tumours',
+    about: 'Real data: 569 tumours, 30 measurements each. Train on 456, test on 113, and count the four kinds of answer.',
+    kwargs: () => ({ steps: 1000, seed: 0 }), watch: {}, picture: null, actions: [],
+    episodeEnd: () => [['tumours.py', lineOf('tumours.py', 'optimizer.step()')]], endLabel: 'Next step',
   },
 }

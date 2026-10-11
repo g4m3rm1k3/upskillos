@@ -15,7 +15,7 @@ import { SOURCES, codeLines } from './source.js'
 
 afterEach(cleanup)
 const NEWLINE = String.fromCharCode(10)
-const PRESS = ['One step', '100 steps', '2. Backward', '1. Forward', 'Use weights learned by gradient descent', 'sigmoid', 'tanh']
+const PRESS = ['One step', '100 steps', '50 steps', '2. Backward', '1. Forward', 'Use weights learned by gradient descent', 'sigmoid', 'tanh', 'Clear points']
 
 describe('the lab renders', () => {
   it('opens on the first lesson', () => {
@@ -35,15 +35,15 @@ describe('the lab renders', () => {
   it('the Model Studio trains on every data set with every optimiser', () => {
     const { container } = render(<ModelStudio />)
     const [dataSelect, , optSelect] = container.querySelectorAll('.qm-fig-controls select')
-    for (const data of ['line', 'curve', 'cars']) for (const kind of ['sgd', 'momentum', 'adam']) {
+    for (const data of ['line', 'curve', 'cars', 'blobs', 'moons', 'xor', 'ring', 'tumours']) for (const kind of ['sgd', 'momentum', 'adam']) {
       act(() => { fireEvent.change(dataSelect, { target: { value: data } }) })
       act(() => { fireEvent.change(optSelect, { target: { value: kind } }) })
       act(() => { fireEvent.click(screen.getByText('100 steps')) })
-      expect(container.textContent).toMatch(/100 steps · training error \d/)
+      expect(container.textContent, `${data}, ${kind}`).toMatch(/100 steps · training loss \d/)
     }
     act(() => { fireEvent.click(screen.getByText('+ add a layer')) })
-    expect(container.querySelector('.nn-code').textContent).toMatch(/nn\.Linear\(2, 8\)/)
-  })
+    expect(container.querySelector('.nn-code').textContent).toMatch(/nn\.Linear\(30, 8\).*BCEWithLogitsLoss/s)
+  }, 60000)
 
   it('the Python tab opens on every program', () => {
     for (const id of Object.keys(PROGRAMS)) {

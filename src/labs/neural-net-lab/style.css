@@ -10,3 +10,6 @@
 .nn-chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:3px 8px;background:#fffdf8;font-size:12.5px}
 .nn-chip input{width:44px}.nn-chip.in,.nn-chip.out{background:#f1eadc;font-weight:600}
 .nn-code{background:#1f2428;color:#dfe7ea;font-size:12px;padding:8px 10px;border-radius:7px;white-space:pre;overflow-x:auto;margin:6px 0}
+.nn-plane{width:100%;max-width:420px;display:block}
+.nn-confusion td,.nn-confusion th{text-align:center!important;padding:6px 10px}.nn-confusion td.good{background:#e6f2ea}.nn-confusion td.bad{background:#f8e1d8}
+.nn-confusion small{display:block;font-size:10px;color:var(--muted)}
