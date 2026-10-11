@@ -195,8 +195,8 @@ From hacking to working like an engineer: the tools, two languages' worth of fun
 | # | Learn and experiment | Apply in the real world | Source |
 |---|---|---|---|
 | 0–7 | the terminal, Node, git and GitHub, HTML and CSS basics, JavaScript from Python, the DOM, npm and Vite, TypeScript, testing, recursion, trees, lexing and parsing | a grid on the page, cells you can edit, a formula language with a lexer, parser and evaluator, cycle detection; challenge 7.7 | SP 0–7, **written** |
-| 8 | graphs, topological order, caching, measuring performance before and after | recalculating only the cells an edit affects | SP 8 |
-| 9 | function registries, variadic and lazy evaluation, error propagation | ranges and functions: `SUM`, `AVERAGE`, `IF` | SP 9 |
+| 8 | graphs, topological order, caching, measuring performance before and after | recalculating only the cells an edit affects | SP 8, **written** |
+| 9 | function registries, variadic and lazy evaluation, error propagation | ranges and functions: `SUM`, `AVERAGE`, `IF` | SP 9, **written** |
 
 ### Module 2 — Front-end engineering (client: Crumb & Co.)
 
@@ -204,7 +204,7 @@ Requirements and agile delivery start here. On the technical side: React, stylin
 
 | # | Learn and experiment | Apply in the real world | Source |
 |---|---|---|---|
-| 10 | requirements: questions for a client, user stories, acceptance criteria as acceptance tests (Vitest), estimating, planning a sprint, the definition of done | the bakery's brief, turned into a backlog and failing tests | new |
+| 10 | requirements: questions for a client, user stories, acceptance criteria as acceptance tests (Vitest), estimating, planning a sprint, the definition of done | the bakery's brief, turned into a backlog and failing tests | new, **written** |
 | 11 | React: components, props, state, events, hooks, rendering | the sheet's interface moved to React, with the engine kept separate | SP 10 |
 | 12 | front-end architecture: routing between pages, server state with TanStack Query (caching, invalidation, optimistic updates), code splitting and Core Web Vitals; server-side rendering and static generation in outline (the ideas behind Next.js), and when a product needs them | the spreadsheet becomes an app with pages (workbooks, settings, sharing), fast to load | new |
 | 13 | **styling and design systems** (the whole sprint is a styling section, in a playground of pages): the box model, the cascade and specificity, flexbox and grid in depth, custom properties as design tokens, spacing and type scales, responsive layout and container queries, theming and dark mode, motion and `prefers-reduced-motion`; CSS Modules, then Tailwind, compared; building accessible components (button, input, menu, dialog); matching a mockup with DevTools; visual regression tests with Playwright screenshots; working from a designer's handoff in Figma | the bakery's brand guide and mockup turned into the app's look and its own small component library | new |
