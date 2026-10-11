@@ -21,6 +21,7 @@ const dotnetRuntime = require('./runtimes/dotnet.cjs')
 const codelensRuntime = require('./runtimes/codelens.cjs')
 const codelensPythonRuntime = require('./runtimes/codelens-python.cjs')
 const notebookKernel = require('./runtimes/notebook-kernel.cjs')
+const neovimRuntime = require('./runtimes/neovim.cjs')
 const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
@@ -34,7 +35,7 @@ const { evalInPage } = require('./page-eval.cjs')
 // detached GUI process rather than a run-to-completion one; it's included
 // here too so desktop:runtime-status/desktop:install-runtime work uniformly
 // across all five.
-const RUNTIMES = { python: pythonRuntime, cpp: cppRuntime, lisp: lispRuntime, java: javaRuntime, dotnet: dotnetRuntime, codelens: codelensRuntime, 'codelens-python': codelensPythonRuntime }
+const RUNTIMES = { python: pythonRuntime, cpp: cppRuntime, lisp: lispRuntime, java: javaRuntime, dotnet: dotnetRuntime, codelens: codelensRuntime, 'codelens-python': codelensPythonRuntime, neovim: neovimRuntime }
 
 const execAsync = promisify(exec)
 
@@ -335,7 +336,10 @@ ipcMain.handle('project:run', async (_event, runtime, relPath, scope) => {
 // Folders the app installed tools into, added to the PATH of terminals and step checks so the
 // commands a lesson tells the learner to type find them (see terminal.cjs shellEnv).
 async function learnerToolPaths() {
-  return [await cppRuntime.toolchainBinDir(app).catch(() => null)].filter(Boolean)
+  return [
+    await cppRuntime.toolchainBinDir(app).catch(() => null),
+    await neovimRuntime.binDir(app).catch(() => null),
+  ].filter(Boolean)
 }
 
 // A lesson step's checks (project-checks.cjs). Commands run with the same fresh PATH a new
@@ -351,6 +355,7 @@ ipcMain.handle('drafts:open', async () => drafts.open(app))
 
 // A real terminal in the project folder (terminal.cjs).
 const terminalOwners = new Set()
+const nvimSessions = new Map() // terminal id of a Neovim editor pane -> { exe, address, root }
 ipcMain.handle('terminal:start', async (event, opts) => {
   const { root } = await projectFs.getProject(app, opts?.projectKey)
   if (opts?.projectKey && !root) return { ok: false, reason: 'No project folder is open for this track' }
@@ -367,12 +372,43 @@ ipcMain.handle('terminal:start', async (event, opts) => {
     })
     sender.once('destroyed', () => { terminal.killOwner(owner); terminalOwners.delete(owner) })
   }
-  const send = (channel, payload) => { if (!sender.isDestroyed()) sender.send(channel, payload) }
-  return terminal.start({ cwd: root, cols: opts?.cols, rows: opts?.rows, owner, extraPath: await learnerToolPaths() }, send)
+  const send = (channel, payload) => {
+    if (channel === 'terminal:exit') nvimSessions.delete(payload.id)
+    if (!sender.isDestroyed()) sender.send(channel, payload)
+  }
+  // opts.editor === 'nvim': the Neovim editor pane, opening opts.file (runtimes/neovim.cjs).
+  let command = null
+  let session = null
+  if (opts?.editor === 'nvim') {
+    let file = null
+    try { if (opts.file) file = projectFs.resolveInRoot(root, opts.file) } catch {}
+    session = await neovimRuntime.sessionCommand(app, file)
+    if (!session) return { ok: false, reason: 'Neovim is not installed' }
+    command = { file: session.file, args: session.args }
+  }
+  const result = await terminal.start({ cwd: root, cols: opts?.cols, rows: opts?.rows, owner, extraPath: await learnerToolPaths(), command }, send)
+  if (result.ok && session) nvimSessions.set(result.id, { exe: session.exe, address: session.address, root })
+  return result
 })
 ipcMain.on('terminal:write', (_event, id, data) => terminal.write(id, data))
 ipcMain.on('terminal:resize', (_event, id, cols, rows) => terminal.resize(id, cols, rows))
-ipcMain.on('terminal:kill', (_event, id) => terminal.kill(id))
+ipcMain.on('terminal:kill', (_event, id) => { nvimSessions.delete(id); terminal.kill(id) })
+
+// Driving a Neovim editor pane from outside: open a file, write all buffers, reload changed files.
+ipcMain.handle('editor:nvim', async (_event, id, action, relPath) => {
+  const session = nvimSessions.get(id)
+  if (!session) return { ok: false, reason: 'That Neovim session has ended' }
+  let expr
+  if (action === 'open') {
+    try { expr = neovimRuntime.EXPRS.open(projectFs.resolveInRoot(session.root, relPath)) }
+    catch (e) { return { ok: false, reason: e.message } }
+  } else if (action === 'writeAll' || action === 'checktime') {
+    expr = neovimRuntime.EXPRS[action]()
+  } else {
+    return { ok: false, reason: `Unknown editor action: ${action}` }
+  }
+  return neovimRuntime.remoteExpr(session.exe, session.address, expr)
+})
 
 // ── End project filesystem ──────────────────────────────────────────────────
 

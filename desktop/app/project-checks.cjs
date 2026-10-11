@@ -151,6 +151,25 @@ function parseTestOutput(text) {
 // Each returns { pass, detail? }. `detail` is what the learner sees when it fails: the real
 // output or state that was found, so they can work out what's wrong.
 const CHECKS = {
+  // A Neovim drill: the latest record neovim-practice.lua wrote for the file, when it was saved
+  // in a Project Studio Neovim session, used at most `par` keys and no arrow keys or mouse.
+  async keys(ctx, [rel], opts) {
+    const par = Number(opts.par)
+    if (!(par > 0)) return { pass: false, detail: 'This check has no par (a mistake in the lesson, not your work).' }
+    let lines = []
+    try { lines = (await fs.readFile(path.join(ctx.root, '.practice', 'keystrokes.jsonl'), 'utf8')).split('\n') } catch {}
+    const want = rel.replace(/\\/g, '/')
+    const record = lines.filter(Boolean).map((l) => { try { return JSON.parse(l) } catch { return null } })
+      .filter((r) => r && String(r.file).replace(/\\/g, '/') === want).pop()
+    if (!record) return { pass: false, detail: `No saved Neovim edit of ${rel} found yet. Do the drill in the editor pane with Editor: Neovim, then save with :w.` }
+    const typed = record.seq ? ` You typed: ${record.seq}` : ''
+    if (record.arrows || record.mouse) {
+      return { pass: false, detail: `You used ${[record.arrows && `${record.arrows} arrow/Home/End key${record.arrows === 1 ? '' : 's'}`, record.mouse && `the mouse ${record.mouse} time${record.mouse === 1 ? '' : 's'}`].filter(Boolean).join(' and ')}. Drills are keyboard-only: reload the file with :e! (or click Create provided again) and try with Normal-mode motions.${typed}` }
+    }
+    if (record.keys > par) return { pass: false, detail: `${record.keys} keystrokes; par is ${par}. Reload with :e! and look for a shorter way.${typed}` }
+    return { pass: true, detail: `${record.keys} keystrokes (par ${par}).${typed}` }
+  },
+
   async file(ctx, [rel]) {
     const s = await stat(resolveInRoot(ctx.root, rel))
     if (s?.isFile()) return { pass: true }

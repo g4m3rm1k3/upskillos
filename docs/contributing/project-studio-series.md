@@ -188,7 +188,7 @@ A wrong answer takes the same keys, plus `fails`, `edit: [[from, to]]` (the step
 | Command | What it checks |
 |---|---|
 | `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` | Every lesson parses; every check, prediction and hint is well formed; the series is registered and labelled. About 30 seconds. |
-| `npx vitest run src/labs/project-studio/<series>.desktop.test.js` | The walkthrough: the whole series built from an empty folder, every check passing, every wrong answer caught, every prediction's `verify` printing its answer. Windows only, as the lessons' commands are PowerShell. |
+| `npx vitest run src/labs/project-studio/<series>.desktop.test.js` | The walkthrough: the whole series built from an empty folder, every check passing, every wrong answer caught, every prediction's `verify` printing its answer. Windows only, as the lessons' commands are PowerShell; a series whose commands are zsh/bash passes `unix: true` to `walkSeries` and walks on macOS and Linux instead (`term.desktop.test.js`, `nvim.desktop.test.js`). |
 
 A long series takes a while to walk. Set `<ENVPREFIX>_UNTIL=<lesson id>` to stop after a lesson, `<ENVPREFIX>_KEEP=<folder>` to keep the finished project, and `<ENVPREFIX>_START=<that folder>` with `<ENVPREFIX>_FROM=<lesson id>` to walk only the lessons from there on. A lesson id is `<chapter>/<file name without .md>`.
 

@@ -16,8 +16,8 @@
 // was at that step, and the named checks must FAIL. A check that passes a wrong answer is a bug in
 // the lesson. Every prediction's verify command must print its stated answer.
 //
-// Needs Windows (the lessons' commands are PowerShell). The guide is
-// docs/contributing/project-studio-series.md.
+// Needs Windows (the lessons' commands are PowerShell), unless the series passes `unix: true`.
+// The guide is docs/contributing/project-studio-series.md.
 //
 // Environment variables, named <envPrefix>_... (envPrefix defaults to WALK):
 //   _UNTIL=<lesson id prefix>  stop after that lesson
@@ -33,6 +33,8 @@
 //                      is a bare repository there too, written {BARE} in walkthrough commands. _KEEP
 //                      keeps both beside the project (<folder>.gitconfig, <folder>.github.git) and
 //                      _START brings them back.
+//   unix: true         the lessons' commands are zsh/bash (the Terminal and Neovim series), so the
+//                      walkthrough runs on macOS and Linux instead of Windows.
 import { afterAll, describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -76,8 +78,9 @@ function removeCopy(dir) {
  * @param {string} [options.projectName] the project folder's name (default: prefix without its dash)
  * @param {boolean} [options.pages]       run `page` checks in Playwright's Chromium
  * @param {boolean} [options.isolatedGit] a Git identity and a GitHub of the walkthrough's own
+ * @param {boolean} [options.unix]        the lessons' commands are zsh/bash: walk on macOS and Linux
  */
-export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix = 'WALK', projectName = prefix.replace(/-$/, ''), pages = false, isolatedGit = false }) {
+export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix = 'WALK', projectName = prefix.replace(/-$/, ''), pages = false, isolatedGit = false, unix = false }) {
   const env = (key) => process.env[`${envPrefix}_${key}`];
   const isWindows = process.platform === 'win32';
   const trackKeys = TRACK_KEYS.filter((key) => key.startsWith(prefix));
@@ -210,7 +213,8 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
   // (a Your turn answer), then run its commands.
   async function perform(dir, lesson, step, action = {}) {
     await runCommands(dir, action.before ?? [], action);
-    if (step.provided && lesson.meta.support && action.typeFile !== false) {
+    // A practice/ file's button writes only that file (providedFiles.js isPracticeFile).
+    if (step.provided && lesson.meta.support && action.typeFile !== false && !/^practice\//.test(step.file ?? '')) {
       for (const { file, content } of getSupportFiles(lesson.track, lesson.meta.support)) write(dir, file, content);
     }
     if (step.file && step.target != null && action.typeFile !== false) write(dir, step.file, step.target + '\n');
@@ -243,7 +247,7 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
     if (link) fs.symlinkSync(venv, path.join(dest, '.venv'), 'junction');
   }
 
-  describe.skipIf(!isWindows)(`${name} walkthrough`, () => {
+  describe.skipIf(unix ? isWindows : !isWindows)(`${name} walkthrough`, () => {
     it('has lessons, and every walkthrough entry names a real step', () => {
       expect(lessons.length).toBeGreaterThan(0);
       const keys = new Set(lessons.flatMap((l) => l.steps.map((s) => keyOf(l, s))));

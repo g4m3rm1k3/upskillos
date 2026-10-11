@@ -2,7 +2,10 @@
 // The current step: prose, the diffed target code, the explanation, and the step's checks.
 // Prose/explanation go through MarkdownProse (the same renderer the
 // courses use), so bold/inline-code/lists all behave as they do elsewhere.
+import { useMemo } from 'react';
 import MarkdownProse from '../../components/math/MarkdownProse.jsx';
+import { KeyHint, expandKeyHints, lessonRef } from './keyHints.jsx';
+import { isPracticeFile } from './providedFiles.js';
 import DiffBlock from './DiffBlock.jsx';
 import './LessonPanel.css';
 import PredictionBox from './PredictionBox.jsx';
@@ -34,6 +37,11 @@ export default function LessonPanel({
   onSelectStep, onDefer, challengeStatus, isCovered, onCover,
 }) {
   const atFirst = stepIndex === 0;
+  // {{key:…}} hints in the prose show keys in full until this lesson is past the one teaching them.
+  const hintComponents = useMemo(() => {
+    const current = lessonRef(lesson);
+    return { keyhint: (props) => <KeyHint id={props['data-id'] ?? props.dataId} current={current} C={C} /> };
+  }, [lesson, C]);
   const atLast = stepIndex >= lesson.steps.length - 1;
   const hasChecks = step.checks?.length > 0;
 
@@ -77,7 +85,7 @@ export default function LessonPanel({
         {atFirst && <LessonCompanions lesson={lesson} seriesLessons={seriesLessons} isStepDone={isStepDone} C={C} />}
         {atFirst && lesson.intro && (
           <div style={{ color: C.text, marginBottom: 12, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
-            <MarkdownProse text={lesson.intro} className={COMPACT_PROSE} />
+            <MarkdownProse text={expandKeyHints(lesson.intro)} className={COMPACT_PROSE} components={hintComponents} />
           </div>
         )}
 
@@ -116,7 +124,7 @@ export default function LessonPanel({
           <div style={{ margin: '8px 0', fontSize: 12 }}>
             <button onClick={onCreateProvided} disabled={!canCheck}
               style={navBtn(C, !canCheck, true)}>
-              {lesson.meta?.starterLabel || `Create provided ${step.file}`}
+              {lesson.meta?.starterLabel || (isPracticeFile(step.file) ? `Fresh copy of ${step.file}` : `Create provided ${step.file}`)}
             </button>
             {providedError && <p role="alert">{providedError}</p>}
           </div>
@@ -125,7 +133,7 @@ export default function LessonPanel({
 
         {step.prose && (
           <div style={{ color: C.text }}>
-            <StepText text={step.prose} step={step} C={C} />
+            <StepText text={step.prose} step={step} C={C} components={hintComponents} />
           </div>
         )}
 
@@ -146,7 +154,7 @@ export default function LessonPanel({
 
         {step.explain && (
           <div style={{ marginTop: 8, color: C.text }}>
-            <StepText text={step.explain} step={step} C={C} />
+            <StepText text={step.explain} step={step} C={C} components={hintComponents} />
           </div>
         )}
 
@@ -169,11 +177,11 @@ export default function LessonPanel({
 
 // Step prose with its prediction checkpoints (```predict fences), hint ladders (```hints
 // fences) and interactive figures (```figure fences) in the places they were written.
-function StepText({ text, step, C }) {
+function StepText({ text, step, C, components }) {
   const parts = text.split(BLOCK_SPLIT);
   const out = [];
   for (let i = 0; i < parts.length; i += 3) {
-    if (parts[i].trim()) out.push(<MarkdownProse key={i} text={parts[i]} className={COMPACT_PROSE} />);
+    if (parts[i].trim()) out.push(<MarkdownProse key={i} text={expandKeyHints(parts[i])} className={COMPACT_PROSE} components={components} />);
     if (i + 2 >= parts.length) break;
     const kind = parts[i + 1];
     const index = Number(parts[i + 2]);

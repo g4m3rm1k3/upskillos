@@ -1,3 +1,8 @@
+// A file under practice/ is exercise material (the Neovim series' drills): its button writes a
+// fresh copy every time, replacing the learner's attempt, and writes nothing else. That is how a
+// learner retries a drill.
+export const isPracticeFile = (file) => /^practice\//.test(String(file ?? ''));
+
 // Read every destination before writing anything. Supplying infrastructure must
 // never replace learner work, even if a later file in the bundle conflicts.
 export async function createProvidedFiles(api, files) {

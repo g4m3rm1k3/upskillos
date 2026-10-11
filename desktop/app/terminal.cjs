@@ -95,11 +95,13 @@ function killOwner(owner) {
   for (const [id, o] of owners) if (o === owner) kill(id)
 }
 
-async function start({ cwd, cols, rows, owner, extraPath }, send) {
+// `command`: a program to run in place of the shell ({ file, args }), such as the Neovim
+// editor pane (runtimes/neovim.cjs). The terminal ends when that program exits.
+async function start({ cwd, cols, rows, owner, extraPath, command }, send) {
   const lib = loadPty()
   if (!lib) return { ok: false, reason: `The terminal couldn't start: ${loadError?.message ?? 'node-pty is missing'}` }
   if (!cwd) return { ok: false, reason: 'No project folder is open' }
-  const { file, args } = shellCommand()
+  const { file, args } = command ?? shellCommand()
   try {
     const proc = lib.spawn(file, args, {
       name: 'xterm-256color',

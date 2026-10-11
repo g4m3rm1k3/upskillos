@@ -92,15 +92,26 @@ function statusText(tab) {
 
 // One shell and its screen. Kept mounted while its tab is hidden, so a running program (a dev
 // server) keeps running and its output is still there when you switch back.
-function TerminalSession({ root, projectKey, visible, onStatus, C }) {
+//
+// The Neovim editor pane (NeovimPane.jsx) reuses it with `startOpts` ({ editor: 'nvim', file },
+// read when a session starts), `onSession` (told the session id, or null when it ends) and
+// `endedText` (the line shown when the program exits); `showClear` hides Clear, which means
+// nothing to a full-screen program; a change of `focusKey` moves the keyboard to the terminal.
+export function TerminalSession({ root, projectKey, visible, onStatus, startOpts, onSession, endedText, restartTitle, showClear = true, focusKey, C }) {
   const hostRef = useRef(null);
   const termRef = useRef(null);
   const fitRef = useRef(null);
   const idRef = useRef(null);
   const [error, setError] = useState(null);
   const [generation, setGeneration] = useState(0);
-  const onStatusRef = useRef(onStatus);
-  onStatusRef.current = onStatus;
+  const onStatusRef = useRef(onStatus ?? (() => {}));
+  onStatusRef.current = onStatus ?? (() => {});
+  const onSessionRef = useRef(onSession);
+  onSessionRef.current = onSession;
+  const startOptsRef = useRef(startOpts);
+  startOptsRef.current = startOpts;
+  const endedTextRef = useRef(endedText);
+  endedTextRef.current = endedText;
 
   useEffect(() => {
     const term = new Terminal({
@@ -132,8 +143,10 @@ function TerminalSession({ root, projectKey, visible, onStatus, C }) {
     const offExit = t.onExit(({ id, code }) => {
       if (id !== idRef.current) return;
       idRef.current = null;
+      onSessionRef.current?.(null);
       onStatusRef.current('exited');
-      termRef.current?.write(`\r\n\x1b[90m[The shell ended with exit code ${code}. Press Restart to open a new one.]\x1b[0m\r\n`);
+      const text = endedTextRef.current?.(code) ?? `The shell ended with exit code ${code}. Press Restart to open a new one.`;
+      termRef.current?.write(`\r\n\x1b[90m[${text}]\x1b[0m\r\n`);
     });
     return () => { offData(); offExit(); };
   }, []);
@@ -148,7 +161,7 @@ function TerminalSession({ root, projectKey, visible, onStatus, C }) {
     onStatusRef.current('starting');
     setError(null);
     try { fitRef.current?.fit(); } catch {}
-    t.start({ cols: term.cols, rows: term.rows, projectKey }).then((res) => {
+    t.start({ ...startOptsRef.current, cols: term.cols, rows: term.rows, projectKey }).then((res) => {
       if (cancelled) {
         if (res.ok) t.kill(res.id);
         return;
@@ -159,12 +172,14 @@ function TerminalSession({ root, projectKey, visible, onStatus, C }) {
         return;
       }
       idRef.current = res.id;
+      onSessionRef.current?.(res.id);
       onStatusRef.current('running', res.shell);
     });
     return () => {
       cancelled = true;
       if (idRef.current) t.kill(idRef.current);
       idRef.current = null;
+      onSessionRef.current?.(null);
     };
   }, [root, projectKey, generation]);
 
@@ -179,6 +194,10 @@ function TerminalSession({ root, projectKey, visible, onStatus, C }) {
   }, [visible]);
 
   useEffect(() => {
+    if (visible && focusKey != null) termRef.current?.focus();
+  }, [focusKey]);
+
+  useEffect(() => {
     if (visible) {
       requestAnimationFrame(() => {
         try { fitRef.current?.fit(); } catch {}
@@ -190,8 +209,8 @@ function TerminalSession({ root, projectKey, visible, onStatus, C }) {
   return (
     <div style={{ position: 'absolute', inset: 0, display: visible ? 'flex' : 'none', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, padding: '3px 8px 0' }}>
-        <button onClick={() => termRef.current?.clear()} style={smallBtn(C)} title="Clear the screen (the shell keeps running)">Clear</button>
-        <button onClick={() => setGeneration((g) => g + 1)} style={smallBtn(C)} title="Close this shell and open a new one in the project folder">Restart</button>
+        {showClear && <button onClick={() => termRef.current?.clear()} style={smallBtn(C)} title="Clear the screen (the shell keeps running)">Clear</button>}
+        <button onClick={() => setGeneration((g) => g + 1)} style={smallBtn(C)} title={restartTitle ?? 'Close this shell and open a new one in the project folder'}>Restart</button>
       </div>
       {error && <div style={{ padding: '8px 12px', fontSize: 12, color: C.amber }}>{error}</div>}
       <div ref={hostRef} style={{ flex: 1, minHeight: 0, padding: '2px 0 0 6px' }} />

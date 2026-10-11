@@ -8,6 +8,24 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    // Plan, chapter map and status: docs/terminal-series-plan.md.
+    key: 'term',
+    label: 'The Terminal — zsh from Zero',
+    prefix: 'term-',
+    sharedProject: true,
+    chapters: [['term-basics', '01 · Find Your Way and Lay Out a Project']],
+    planned: 'Chapter 1 (navigation, files, redirection, PATH, variables, exit codes) is written. Pipes and text tools, processes, Git, shell scripts, shell configuration and remote work are planned in docs/terminal-series-plan.md. Written for zsh on macOS; bash on Linux and WSL work the same. A PowerShell edition is planned separately.',
+  },
+  {
+    // Plan, chapter map, practice design and status: docs/neovim-series-plan.md.
+    key: 'nvim',
+    label: 'Neovim — From First Keystroke to Fluency',
+    prefix: 'nvim-',
+    sharedProject: true,
+    chapters: [['nvim-start', '01 · Modes, Saving and a First Server']],
+    planned: 'Builds Shelf, a bookmark app with a Node backend and a plain HTML/CSS/JavaScript frontend, entirely in Neovim, with timed keystroke drills and spaced review so the keys become habits. Chapter 1 is written; motions, operators, text objects, search, visual mode, buffers and windows, registers and macros, navigation and the quickfix list, configuration, plugins, LSP and advanced editing are planned in docs/neovim-series-plan.md.',
+  },
+  {
     key: 'backend',
     label: 'Backend Developer Bootcamp — APIs, Data and Architecture',
     prefix: 'backend-',

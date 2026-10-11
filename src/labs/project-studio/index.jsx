@@ -19,7 +19,7 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 import { useGlobalTheme } from '../../context/ThemeContext.jsx';
 import { useProjectFs } from './useProjectFs.js';
 import { TRACKS, TRACK_KEYS, trackTitle, getSupportFiles } from './trackLoader.js';
-import { createProvidedFiles } from './providedFiles.js';
+import { createProvidedFiles, isPracticeFile } from './providedFiles.js';
 import FileTree from './FileTree.jsx';
 import StudioPanes from './StudioPanes.jsx';
 import { studioSeries, nextSeriesLesson } from './series.js';
@@ -30,6 +30,7 @@ import LessonPanel from './LessonPanel.jsx';
 import { withTypedDiffTargets } from './typedDiffTargets.js';
 import OutputPanel from './OutputPanel.jsx';
 import TerminalPanel from './TerminalPanel.jsx';
+import { nvimEditor } from './NeovimPane.jsx';
 import CppProjectRuntime from './CppProjectRuntime.jsx';
 import { canTrace, handOffToCodeLens, inlineLocalHeaders, traceLang } from './codeLensHandoff.js';
 import { useProgress } from './progress.js';
@@ -105,6 +106,11 @@ export default function ProjectStudio() {
     try { return localStorage.getItem('project-studio:explorer-visible') !== 'false'; } catch { return true; }
   });
   useEffect(() => { try { localStorage.setItem('project-studio:explorer-visible', String(explorerVisible)); } catch {} }, [explorerVisible]);
+  // Monaco or Neovim (EditorPane.jsx). Both edit the files on disk, so this only picks the pane.
+  const [editorKind, setEditorKind] = useState(() => {
+    try { return localStorage.getItem('project-studio:editor') === 'nvim' ? 'nvim' : 'monaco'; } catch { return 'monaco'; }
+  });
+  useEffect(() => { try { localStorage.setItem('project-studio:editor', editorKind); } catch {} }, [editorKind]);
   const [checkStates, setCheckStates] = useState({}); // stepId -> { running, results, error }
 
   // A new project folder means none of the open buffers belong to it any more.
@@ -177,6 +183,7 @@ export default function ProjectStudio() {
     setBuffers((prev) => ({ ...prev, [rel]: content }));
     setConflict(null);
     setSaving(false);
+    nvimEditor.checktime();
   }, [fs]);
 
   // Keep our buffer and overwrite disk — only ever from an explicit click.
@@ -186,11 +193,15 @@ export default function ProjectStudio() {
     loadedRef.current[rel] = content;
     setConflict(null);
     setSaving(false);
+    nvimEditor.checktime();
   }, [buffers, fs]);
 
   // Write any pending edit now (before a run or a check), refusing if the file changed on
   // disk underneath us. Returns false if there was a conflict.
   const flushActive = useCallback(async () => {
+    // Neovim's unsaved buffers are written first, so a run or check sees the same work it would
+    // with Monaco's autosave. reloadFromDisk below then picks up what Neovim wrote.
+    if (editorKind === 'nvim') await nvimEditor.writeAll();
     if (!activeFile || buffers[activeFile] === undefined) return true;
     clearTimeout(saveTimers.current[activeFile]);
     if (buffers[activeFile] !== loadedRef.current[activeFile]) {
@@ -207,17 +218,22 @@ export default function ProjectStudio() {
     }
     setSaving(false);
     return true;
-  }, [activeFile, buffers, fs, reloadFromDisk]);
+  }, [activeFile, buffers, fs, reloadFromDisk, editorKind]);
 
   const createProvided = useCallback(async () => {
     if (!step?.provided || !fs.root) return;
     setProvidedError(null);
     try {
       if (!(await flushActive())) throw new Error('Resolve the open file conflict before creating the provided file.');
-      await createProvidedFiles(fs.api, [
-        ...supportFiles(trackKey, lesson.meta.support),
-        { file: step.file, content: step.target, preserveExisting: Boolean(lesson.meta.support) },
-      ]);
+      if (isPracticeFile(step.file)) {
+        const result = await fs.writeFile(step.file, `${step.target}\n`);
+        if (!result.ok) throw new Error(result.reason || `Could not create ${step.file}.`);
+      } else {
+        await createProvidedFiles(fs.api, [
+          ...supportFiles(trackKey, lesson.meta.support),
+          { file: step.file, content: step.target, preserveExisting: Boolean(lesson.meta.support) },
+        ]);
+      }
       await reloadFromDisk(step.file);
       await fs.refresh();
     } catch (error) {
@@ -442,6 +458,7 @@ export default function ProjectStudio() {
 
   const selectLesson = useCallback((id) => { setLessonId(id); setStepIndex(0); }, []);
   const flushProject = useCallback(async () => {
+    if (editorKind === 'nvim') await nvimEditor.writeAll();
     for (const [file, content] of Object.entries(buffers)) {
       clearTimeout(saveTimers.current[file]);
       if (content === loadedRef.current[file]) continue;
@@ -453,7 +470,7 @@ export default function ProjectStudio() {
     }
     setSaving(false);
     return true;
-  }, [buffers, fs]);
+  }, [buffers, fs, editorKind]);
   const renameFile = useCallback(async (from, to) => {
     if (!(await flushProject())) return { ok: false, reason: 'Resolve the file conflict or save error before renaming.' };
     const identity = projectIdentityRef.current;
@@ -540,7 +557,12 @@ export default function ProjectStudio() {
       {drafts.error && <span role="alert" style={{ fontSize: 11, color: C.amber }}>{drafts.error}</span>}
       <p style={{ flexBasis: '100%', margin: '4px 0', fontSize: 12, color: C.text }}>
         {series.audience}
-        {series.chapters.length > 1 && <span> Chapter: {series.chapters.find(chapter => chapter.key === trackKey)?.audience}</span>}
+        {(() => {
+          // A chapter's note is shown only when it adds something to the series' own.
+          const chapterAudience = series.chapters.find(chapter => chapter.key === trackKey)?.audience;
+          return series.chapters.length > 1 && chapterAudience && chapterAudience !== series.audience
+            ? <span> Chapter: {chapterAudience}</span> : null;
+        })()}
       </p>
     </div>
   );
@@ -715,6 +737,10 @@ export default function ProjectStudio() {
               onChange={editFile}
               monacoTheme={monacoTheme}
               saving={saving}
+              editorKind={editorKind}
+              onEditorKind={setEditorKind}
+              root={fs.root}
+              projectKey={projectKey}
               C={C}
             />
           </div>

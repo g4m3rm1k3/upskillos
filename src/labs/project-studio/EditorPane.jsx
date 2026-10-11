@@ -7,7 +7,11 @@
 //
 // What it does add is a status line for the active step's file: how many
 // lines are still missing, or ✓ when the file matches.
+//
+// The editor itself is the learner's choice (`editorKind`): Monaco, or Neovim in a terminal
+// (NeovimPane.jsx). Both edit the same files on disk, so switching loses nothing.
 import Editor from '@monaco-editor/react';
+import NeovimPane from './NeovimPane.jsx';
 import { setupOpenCalcMonaco } from '../../utils/monacoThemes.js';
 import { addedLineNumbers, matchesTarget } from './lineDiff.js';
 
@@ -24,8 +28,11 @@ function languageFor(rel) {
 
 export default function EditorPane({
   openFiles, activeFile, content, onSelect, onClose, onChange,
-  targetContent, monacoTheme, saving, C,
+  targetContent, monacoTheme, saving, editorKind = 'monaco', onEditorKind, root, projectKey, C,
 }) {
+  // Neovim runs in a terminal, which only the desktop app has.
+  const canChoose = !!onEditorKind && typeof window !== 'undefined' && !!window.openCalcDesktop?.terminal;
+  const nvim = canChoose && editorKind === 'nvim';
   const tracked = targetContent != null;
   const missing = tracked ? addedLineNumbers(content, targetContent).length : 0;
   const done = tracked && matchesTarget(content, targetContent);
@@ -60,6 +67,21 @@ export default function EditorPane({
         ))}
         <div style={{ flex: 1 }} />
         {saving && <span style={{ padding: '6px 10px', fontSize: 10, color: C.hint }}>saving…</span>}
+        {canChoose && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px', fontSize: 11, color: C.hint, whiteSpace: 'nowrap' }}
+            title="Both editors work on the same files, so you can switch at any time">
+            Editor
+            <select
+              aria-label="Editor"
+              value={editorKind}
+              onChange={(e) => onEditorKind(e.target.value)}
+              style={{ fontSize: 11, background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 4 }}
+            >
+              <option value="monaco">Monaco</option>
+              <option value="nvim">Neovim</option>
+            </select>
+          </label>
+        )}
       </div>
 
       {tracked && (
@@ -82,7 +104,7 @@ export default function EditorPane({
       )}
 
       <div style={{ flex: 1, minHeight: 0 }}>
-        <Editor
+        {nvim ? <NeovimPane root={root} projectKey={projectKey} activeFile={activeFile} C={C} /> : <Editor
           height="100%"
           path={activeFile || 'untitled'}
           language={languageFor(activeFile)}
@@ -99,7 +121,7 @@ export default function EditorPane({
             acceptSuggestionOnEnter: 'off',
             tabSize: 4,
           }}
-        />
+        />}
       </div>
     </div>
   );

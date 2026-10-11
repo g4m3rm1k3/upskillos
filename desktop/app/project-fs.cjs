@@ -286,5 +286,5 @@ function killProjectRun(runId) {
 
 module.exports = {
   pickFolder, getProject, tree, readFile, writeFile, createFile, mkdir, remove, rename,
-  runProjectFile, killProjectRun, killAllProjectRuns,
+  runProjectFile, killProjectRun, killAllProjectRuns, resolveInRoot,
 }

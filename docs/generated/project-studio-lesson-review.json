@@ -1,16 +1,17 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 576,
-    "tracks": 74,
+    "lessons": 640,
+    "tracks": 86,
     "errors": {
-      "independent task exposes full target": 3
+      "multiple target files in one step": 4,
+      "independent task exposes full target": 4
     },
     "signals": {
-      "authored check limits not detected": 466,
+      "authored check limits not detected": 516,
       "prediction not detected": 76,
       "task lacks parsed hint ladder": 105,
-      "independent task heading not detected": 203
+      "independent task heading not detected": 199
     }
   },
   "lessons": [
@@ -181,6 +182,312 @@
       "maturity": "in-development",
       "firstStep": "What the tool should do",
       "firstIndependentTask": "Your turn: what needs attention",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/01-setup",
+      "track": "backend-aspnet",
+      "title": "1 — A typed service and a build toolchain",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Establish the command line",
+      "firstIndependentTask": "Your turn: define the inventory invariant",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/02-contracts",
+      "track": "backend-aspnet",
+      "title": "2 — Types describe different kinds of data",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Express the contracts",
+      "firstIndependentTask": "Your turn: add a policy without HTTP",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/03-transactions",
+      "track": "backend-aspnet",
+      "title": "3 — Make stock and reservation one commit",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Implement the store",
+      "firstIndependentTask": "Your turn: prove transaction rollback",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/04-authentication",
+      "track": "backend-aspnet",
+      "title": "4 — Controllers consume verified identity",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create the controller",
+      "firstIndependentTask": "Your turn: define a authorization matrix",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/05-tests",
+      "track": "backend-aspnet",
+      "title": "5 — Host the real pipeline in tests",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Declare the test project",
+      "firstIndependentTask": "Your turn: add real token rejection tests",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-aspnet/06-operations",
+      "track": "backend-aspnet",
+      "title": "6 — Evolve a transactional modular service",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Design a reservation lifecycle",
+      "firstIndependentTask": "Your turn: deliver safe release and retry behavior",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-django/01-setup",
+      "track": "backend-django",
+      "title": "1 — A framework with a workflow",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Prepare the interpreter",
+      "firstIndependentTask": "Your turn: describe the workflow",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-django/02-configuration",
+      "track": "backend-django",
+      "title": "2 — Sessions and configuration are architecture",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Configure the project",
+      "firstIndependentTask": "Your turn: show a configuration failure",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-django/03-models",
+      "track": "backend-django",
+      "title": "3 — Model relationships and upgrade history",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Declare the data model",
+      "firstIndependentTask": "Your turn: add priority without losing tickets",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-django/04-workflow",
+      "track": "backend-django",
+      "title": "4 — Keep the write and its audit atomic",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Allowlist form fields",
+      "firstIndependentTask": "Your turn: add a staff transition deliberately",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-django/05-templates-tests",
+      "track": "backend-django",
+      "title": "5 — Render safely and test the real boundary",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the sign-in page",
+      "firstIndependentTask": "Your turn: test login and query cost",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "backend-django/06-operations",
+      "track": "backend-django",
+      "title": "6 — Operate a workflow, not just a page",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build a durable notification path",
+      "firstIndependentTask": "Your turn: deliver technician assignment and notification",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/01-setup",
+      "track": "backend-fastapi",
+      "title": "1 — From terminal to an HTTP contract",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create the project and isolate its tools",
+      "firstIndependentTask": "Your turn: draw the trust boundaries",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/02-domain",
+      "track": "backend-fastapi",
+      "title": "2 — Separate meaning from transport",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Implement the domain rule",
+      "firstIndependentTask": "Your turn: add a maximum advance window",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/03-data",
+      "track": "backend-fastapi",
+      "title": "3 — Make the database the arbiter",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create a transactional store",
+      "firstIndependentTask": "Your turn: design a safe schema upgrade",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/04-http-security",
+      "track": "backend-fastapi",
+      "title": "4 — Expose a narrow authenticated API",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the application factory",
+      "firstIndependentTask": "Your turn: implement revocation",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/05-tests",
+      "track": "backend-fastapi",
+      "title": "5 — Test hostile input and real contention",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the regression suite",
+      "firstIndependentTask": "Your turn: prove a security regression is caught",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-fastapi/06-delivery",
+      "track": "backend-fastapi",
+      "title": "6 — From a working API to an engineering handoff",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Design idempotency before retries",
+      "firstIndependentTask": "Your turn: ship an independent extension",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/01-setup",
+      "track": "backend-nestjs",
+      "title": "1 — A TypeScript backend with delivery semantics",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create an independent package",
+      "firstIndependentTask": "Your turn: write a delivery timeline",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/02-trust",
+      "track": "backend-nestjs",
+      "title": "2 — Validate structure and authenticate bytes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Describe the accepted event",
+      "firstIndependentTask": "Your turn: prove tampering is rejected",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/03-inbox",
+      "track": "backend-nestjs",
+      "title": "3 — Persist before acknowledgment",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Implement durable acceptance",
+      "firstIndependentTask": "Your turn: design multiple senders",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/04-pipeline",
+      "track": "backend-nestjs",
+      "title": "4 — Compose modules, guards and pipes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Declare the module and controller",
+      "firstIndependentTask": "Your turn: add sanitized correlation",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/05-worker-tests",
+      "track": "backend-nestjs",
+      "title": "5 — Crash boundaries and idempotent effects",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Implement a finite worker",
+      "firstIndependentTask": "Your turn: simulate a worker crash",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "backend-nestjs/06-operations",
+      "track": "backend-nestjs",
+      "title": "6 — Queues, ordering and an independent handoff",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Introduce concurrency deliberately",
+      "firstIndependentTask": "Your turn: deliver an ordered, recoverable inbox",
       "signals": [
         "authored check limits not detected"
       ],
@@ -2362,6 +2669,91 @@
       "maturity": "in-development",
       "firstStep": "An integer type cannot express the whole rule",
       "firstIndependentTask": "Your turn — Design a bounded round counter",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "electron-basics-editor/04-01-a-tree-and-an-editor",
+      "track": "electron-basics-editor",
+      "title": "4.1 — A Tree and an Editor",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The page",
+      "firstIndependentTask": "Your turn: save with the keyboard",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "multiple target files in one step"
+      ]
+    },
+    {
+      "id": "electron-basics-files/03-01-a-project-folder",
+      "track": "electron-basics-files",
+      "title": "3.1 — A Project Folder, and Not One Inch Beyond It",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A test script",
+      "firstIndependentTask": "Your turn: remove a file, safely",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "multiple target files in one step",
+        "independent task exposes full target"
+      ]
+    },
+    {
+      "id": "electron-basics-ipc/02-01-a-safe-door",
+      "track": "electron-basics-ipc",
+      "title": "2.1 — A Safe Door",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The preload script",
+      "firstIndependentTask": "Your turn: report the platform",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "electron-basics-process/01-01-the-two-processes",
+      "track": "electron-basics-process",
+      "title": "1.1 — The Two Processes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "What Electron is",
+      "firstIndependentTask": "Your turn: a window with limits",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "multiple target files in one step"
+      ]
+    },
+    {
+      "id": "electron-basics-terminal/05-01-a-real-terminal",
+      "track": "electron-basics-terminal",
+      "title": "5.1 — A Real Terminal",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Two packages",
+      "firstIndependentTask": "Your turn: tell the shell its size",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": [
+        "multiple target files in one step"
+      ]
+    },
+    {
+      "id": "electron-basics-tests/06-01-testing-the-real-app",
+      "track": "electron-basics-tests",
+      "title": "6.1 — Testing the Real App",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Two small hooks for tests",
+      "firstIndependentTask": "Your turn: a test that tries to escape",
       "signals": [],
       "errors": []
     },
@@ -5347,6 +5739,50 @@
       "errors": []
     },
     {
+      "id": "nvim-start/01-01-modes-insert-save-quit",
+      "track": "nvim-start",
+      "title": "1.1 — Neovim: Modes, Insert, Save and Quit",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Get the starter project",
+      "firstIndependentTask": "Your turn: a file of your own, from the terminal",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-start/01-02-open-move-new-lines",
+      "track": "nvim-start",
+      "title": "1.2 — Open Files, Move with h j k l, Open Lines with o and O",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Open or create a file by name: :e",
+      "firstIndependentTask": "Your turn: describe the project",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-start/01-03-insert-variants-and-a-server",
+      "track": "nvim-start",
+      "title": "1.3 — a, A, I and a Server That Answers",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Import Node's http module, with O",
+      "firstIndependentTask": "Your turn: say which port",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-start/01-04-undo-fix-and-help",
+      "track": "nvim-start",
+      "title": "1.4 — Undo, Small Fixes, Line Numbers and :help",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Undo and redo: u and Ctrl+R",
+      "firstIndependentTask": "Your turn: log every request",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "pyside6-engine/01-a-window",
       "track": "pyside6-engine",
       "title": "1 — A Window That Stays Open",
@@ -6871,10 +7307,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "The tests",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: no more 0.30000000000000004",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6886,10 +7320,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Show values, not text",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: errors that stand out",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6901,10 +7333,8 @@
       "level": "bridge",
       "maturity": "review-required",
       "firstStep": "Remember what's in progress",
-      "firstIndependentTask": null,
+      "firstIndependentTask": "Your turn: a formula can't crash the sheet",
       "signals": [
-        "prediction not detected",
-        "independent task heading not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -6915,11 +7345,337 @@
       "title": "7.7 — Challenge: Negative Numbers",
       "level": "bridge",
       "maturity": "review-required",
-      "firstStep": "What should work",
-      "firstIndependentTask": null,
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: build it to the brief",
       "signals": [
         "prediction not detected",
-        "independent task heading not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/07-08-solution-negatives",
+      "track": "spreadsheet-build",
+      "title": "7.8 — Solution: Negative Numbers",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The new kind of node",
+      "firstIndependentTask": "Your turn: a power operator",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-01-measure-first",
+      "track": "spreadsheet-build",
+      "title": "8.1 — Measure First",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch for the sprint",
+      "firstIndependentTask": "Your turn: measure a lookup",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-02-graphs",
+      "track": "spreadsheet-build",
+      "title": "8.2 — Graphs: Which Cells Read Which",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Arrows between cells",
+      "firstIndependentTask": "Your turn: the most needed course",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-03-downstream",
+      "track": "spreadsheet-build",
+      "title": "8.3 — Reverse Edges and Everything Downstream",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Turning the arrows round",
+      "firstIndependentTask": "Your turn: everything a course needs",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-04-topological-order",
+      "track": "spreadsheet-build",
+      "title": "8.4 — Topological Order: Each Cell After What It Reads",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "An order that respects every arrow",
+      "firstIndependentTask": "Your turn: semesters",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-05-a-cache",
+      "track": "spreadsheet-build",
+      "title": "8.5 — A Cache That Stays Correct",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Remembering answers",
+      "firstIndependentTask": "Your turn: paths through a grid",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-06-wire-it-up",
+      "track": "spreadsheet-build",
+      "title": "8.6 — Wire It Up, and Measure Again",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The grid on the workbook",
+      "firstIndependentTask": "Your turn: say what was recalculated",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-07-challenge-trace",
+      "track": "spreadsheet-build",
+      "title": "8.7 — Challenge: Where Does This Number Come From?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: build it to the brief",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/08-08-solution-trace",
+      "track": "spreadsheet-build",
+      "title": "8.8 — Solution: Where Does This Number Come From?",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "One traversal, two directions",
+      "firstIndependentTask": "Your turn: reachable, for anything",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-01-ranges",
+      "track": "spreadsheet-build",
+      "title": "9.1 — Ranges: A1:A10",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "A branch for the sprint",
+      "firstIndependentTask": "Your turn: the range that holds them all",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-02-functions",
+      "track": "spreadsheet-build",
+      "title": "9.2 — Functions: SUM(A1:A10)",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Functions as values",
+      "firstIndependentTask": "Your turn: a command-line calculator",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-03-more-functions",
+      "track": "spreadsheet-build",
+      "title": "9.3 — AVERAGE, MIN, MAX and COUNT",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Spread has a limit",
+      "firstIndependentTask": "Your turn: MEDIAN, in the playground",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-04-text-and-booleans",
+      "track": "spreadsheet-build",
+      "title": "9.4 — Text, TRUE and FALSE",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "What JavaScript does with mixed types",
+      "firstIndependentTask": "Your turn: quotes inside text, in the playground",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-05-comparisons",
+      "track": "spreadsheet-build",
+      "title": "9.5 — Comparisons",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "How JavaScript orders text",
+      "firstIndependentTask": "Your turn: sorting mixed values, in the playground",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-06-if",
+      "track": "spreadsheet-build",
+      "title": "9.6 — IF, and Arguments That Wait",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Arguments are worked out first",
+      "firstIndependentTask": "Your turn: work done once, in the playground",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-07-challenge-countif",
+      "track": "spreadsheet-build",
+      "title": "9.7 — Challenge: COUNTIF and SUMIF",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: build it to the brief",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/09-08-solution-countif",
+      "track": "spreadsheet-build",
+      "title": "9.8 — Solution: COUNTIF and SUMIF",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Longest first",
+      "firstIndependentTask": "Your turn: wildcards, in the playground",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-01-a-brief",
+      "track": "spreadsheet-build",
+      "title": "10.1 — A Brief from a Bakery",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: the questions",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-02-answers",
+      "track": "spreadsheet-build",
+      "title": "10.2 — Answers, and the Words They Use",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The answers",
+      "firstIndependentTask": "Your turn: the glossary",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-03-user-stories",
+      "track": "spreadsheet-build",
+      "title": "10.3 — User Stories",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "What a story is",
+      "firstIndependentTask": "Your turn: the backlog",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-04-acceptance-criteria",
+      "track": "spreadsheet-build",
+      "title": "10.4 — Acceptance Criteria",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Given, when, then",
+      "firstIndependentTask": "Your turn: criteria for every story",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-05-acceptance-tests",
+      "track": "spreadsheet-build",
+      "title": "10.5 — Acceptance Tests",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Acceptance tests and unit tests",
+      "firstIndependentTask": "Your turn: exactly at the reorder level",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-06-a-plan",
+      "track": "spreadsheet-build",
+      "title": "10.6 — Estimates, a Plan, and Done",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "How good are estimates?",
+      "firstIndependentTask": "Your turn: the plan, and the first branch",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-07-challenge-deliver-s1",
+      "track": "spreadsheet-build",
+      "title": "10.7 — Challenge: Deliver S1",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "The brief",
+      "firstIndependentTask": "Your turn: deliver S1",
+      "signals": [
+        "prediction not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "spreadsheet-build/10-08-solution-deliver-s1",
+      "track": "spreadsheet-build",
+      "title": "10.8 — Solution: Deliver S1",
+      "level": "bridge",
+      "maturity": "review-required",
+      "firstStep": "Why 15 digits?",
+      "firstIndependentTask": "Your turn: amounts, the way people read them",
+      "signals": [
         "authored check limits not detected"
       ],
       "errors": []
@@ -7702,6 +8458,61 @@
         "prediction not detected",
         "authored check limits not detected"
       ],
+      "errors": []
+    },
+    {
+      "id": "term-basics/01-01-the-prompt-pwd-and-ls",
+      "track": "term-basics",
+      "title": "1.1 — The Prompt, pwd, ls and mkdir",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Find the terminal and its prompt",
+      "firstIndependentTask": "Your turn: a folder for practice",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "term-basics/01-02-moving-around",
+      "track": "term-basics",
+      "title": "1.2 — Moving Around: cd, Paths, Tab and touch",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Go into a folder and back out: cd",
+      "firstIndependentTask": "Your turn: the frontend's three files",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "term-basics/01-03-writing-and-reading-files",
+      "track": "term-basics",
+      "title": "1.3 — Writing and Reading Files: echo, >, >>, cat, less",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "echo prints its arguments",
+      "firstIndependentTask": "Your turn: Shelf's first bookmark",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "term-basics/01-04-copy-move-delete",
+      "track": "term-basics",
+      "title": "1.4 — Copy, Move and Delete: cp, mv, rm and *",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Copy a file: cp",
+      "firstIndependentTask": "Your turn: back up the backend, then remove the backup",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "term-basics/01-05-programs-path-and-help",
+      "track": "term-basics",
+      "title": "1.5 — Programs, PATH, Variables and Help",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Where commands live: which",
+      "firstIndependentTask": "Your turn: record the Node version in the README",
+      "signals": [],
       "errors": []
     }
   ]

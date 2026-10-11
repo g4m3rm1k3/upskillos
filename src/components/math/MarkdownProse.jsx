@@ -134,16 +134,17 @@ const PROSE_COMPONENTS = {
 
 /**
  * Render a single prose string (one item from lesson.intuition.prose etc.)
- * as a block with full markdown + math support.
+ * as a block with full markdown + math support. `components` adds or replaces element
+ * renderers (Project Studio uses it for its key hints).
  */
-export default function MarkdownProse({ text, className = "" }) {
+export default function MarkdownProse({ text, className = "", components }) {
   if (!text) return null;
   return (
     <div className={className}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeRaw, rehypeKatex]}
-        components={PROSE_COMPONENTS}
+        components={components ? { ...PROSE_COMPONENTS, ...components } : PROSE_COMPONENTS}
       >
         {preprocess(text)}
       </ReactMarkdown>

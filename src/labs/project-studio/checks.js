@@ -13,6 +13,7 @@
 //   tests "./build/calc_tests" require="adds negatives"  (a GoogleTest-style test program)
 //   git-commits 2
 //   page index.html "document.querySelectorAll('td').length" 26
+//   keys practice/word.txt par=4     (saved in Neovim within 4 keystrokes, no arrows or mouse)
 //
 // Words are separated by spaces; "double quotes" group words, with \" \\ \n and \t inside.
 // key=value words are options (key="a value" works too); label="..." replaces the generated
@@ -23,7 +24,7 @@ export const CHECK_KINDS = new Set([
   'file', 'dir', 'missing', 'contains', 'lacks', 'matches', 'run', 'tests',
   'git-repo', 'git-commits', 'git-clean', 'git-tracked', 'git-untracked', 'git-ignored',
   'git-branch', 'git-has-branch', 'git-no-branch', 'git-merged', 'git-remote', 'git-pushed', 'git-config',
-  'git-message', 'git-tag', 'page',
+  'git-message', 'git-tag', 'page', 'keys',
 ]);
 
 // How many positional arguments each kind needs, so a typo in a lesson fails loudly at
@@ -32,7 +33,7 @@ const ARITY = {
   file: 1, dir: 1, missing: 1, contains: 2, lacks: 2, matches: 2, run: 1, tests: 1,
   'git-repo': 0, 'git-commits': 1, 'git-clean': 0, 'git-tracked': 1, 'git-untracked': 1, 'git-ignored': 1,
   'git-branch': 1, 'git-has-branch': 1, 'git-no-branch': 1, 'git-merged': [1, 2], 'git-remote': [0, 1], 'git-pushed': 0, 'git-config': 1,
-  'git-message': 1, 'git-tag': 1, page: 3,
+  'git-message': 1, 'git-tag': 1, page: 3, keys: 1,
 };
 
 const ESCAPES = { '"': '"', '\\': '\\', n: '\n', t: '\t' };
@@ -112,6 +113,7 @@ export function describeCheck(kind, args, opts = {}) {
     case 'contains': return `${a} contains ${b}`;
     case 'lacks': return `${a} no longer contains ${b}`;
     case 'matches': return `${a} has the expected content`;
+    case 'keys': return `${a} was saved in Neovim within ${opts.par} keystrokes, without arrow keys or the mouse`;
     case 'run': {
       const given = opts.stdin != null ? ` given the input “${opts.stdin.trim().replace(/\n/g, ' ⏎ ')}”` : '';
       const parts = [`\`${a}\`${given} ${opts.exit != null && opts.exit !== '0' ? `exits with code ${opts.exit}` : 'succeeds'}`];

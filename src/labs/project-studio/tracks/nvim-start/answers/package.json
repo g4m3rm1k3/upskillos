@@ -1,0 +1,9 @@
+{
+  "name": "shelf",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A bookmark manager with a Node backend and a plain HTML frontend",
+  "scripts": {
+    "start": "node server/server.js"
+  }
+}

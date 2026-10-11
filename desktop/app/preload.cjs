@@ -83,6 +83,9 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     write:  (id, data)           => ipcRenderer.send('terminal:write', id, data),
     resize: (id, cols, rows)     => ipcRenderer.send('terminal:resize', id, cols, rows),
     kill:   (id)                 => ipcRenderer.send('terminal:kill', id),
+    // A Neovim editor pane (started with start({ editor: 'nvim', file })): action is 'open'
+    // (with a project-relative path), 'writeAll' or 'checktime'. See main.cjs editor:nvim.
+    nvim:   (id, action, relPath) => ipcRenderer.invoke('editor:nvim', id, action, relPath),
     onData: (cb) => {
       const handler = (_event, payload) => cb(payload)
       ipcRenderer.on('terminal:data', handler)
