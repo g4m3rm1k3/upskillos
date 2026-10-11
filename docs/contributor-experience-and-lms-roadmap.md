@@ -24,6 +24,11 @@ Status markers:
 - [x] Working CartPole Q-learning and A2C examples, component explanations and removal/rebuild controls, live memory and source inspection, recorded experience replay, frozen evaluation, and QMaze transfer. Existing labs remain unchanged. See [scope and verification](a-arcade-workbench.md).
 - [ ] Editable-code reconstruction, native Python/pygame execution, larger neural models and additional environments. These are follow-up scope, not capabilities claimed by the first workbench.
 
+### PyCade: Python reinforcement learning from zero (2026-10-11)
+
+- [x] Separate lab with real NumPy/Gymnasium Q-learning and PyTorch/Gymnasium CartPole A2C, complete editable programs, native desktop trace capture, recorded-run replay, labeled tuples and expandable arrays/tensors, code/math/value translations, and adjacent nested explanations. Actual Python algorithm checks and macOS Electron runs pass. See [scope and verification](pycade.md).
+- [ ] Learner testing, expanded Python foundations, live interpreter suspension and library-internal tracing, longer training/evaluation workflows, and Windows/Linux packaged-app verification.
+
 ### MathOS scientific workspace (2026-10-10)
 
 - [x] Browser-filling and responsive workspace, visible calculation history, validated project file/clipboard exchange, programming entry points, an executable ML example and bounded graph rendering. See [scope, verification and remaining work](mathos-scientific-workspace.md).

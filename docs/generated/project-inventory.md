@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 57 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 58 labs · 16 games
 
 ## How things are counted
 
@@ -106,6 +106,7 @@
 | Physics Engine | `physics` | lab | `/lab/physics` |
 | PLC Ladder Logic Lab | `plc-lab` | lab | `/plc-lab` |
 | Project Studio | `project-studio` | lab | `/lab/project-studio` |
+| PyCade | `pycade` | lab | `/lab/pycade` |
 | React 0 to Mastery | `react-mastery` | lesson | `/web-learn/react-mastery` |
 | Resource Lab | `resource-lab` | lab | `/resource-lab` |
 | Robot Arm Simulator | `robot-arm-sim` | lab | `/robot-arm-lab` |

@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 57,
+    "labs": 58,
     "games": 16
   },
   "courses": [
@@ -614,6 +614,12 @@
       "label": "Project Studio",
       "kind": "lab",
       "path": "/lab/project-studio"
+    },
+    {
+      "id": "pycade",
+      "label": "PyCade",
+      "kind": "lab",
+      "path": "/lab/pycade"
     },
     {
       "id": "react-mastery",
