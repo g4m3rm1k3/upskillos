@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 61,
+    "labs": 62,
     "games": 16
   },
   "courses": [
@@ -638,6 +638,12 @@
       "label": "PyCade",
       "kind": "lab",
       "path": "/lab/pycade"
+    },
+    {
+      "id": "qmaze-lab",
+      "label": "QMaze Lab",
+      "kind": "lab",
+      "path": "/lab/qmaze-lab"
     },
     {
       "id": "react-mastery",
