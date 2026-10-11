@@ -14,15 +14,15 @@ The intended first session is:
 
 The downloadable, editable source lives in `src/labs/pycade/python/`. Q-learning uses NumPy and Gymnasium CartPole. A2C uses two independent Gymnasium CartPoles, PyTorch actor/critic networks with hidden layers, four-step rollouts, masked bootstrapped returns, entropy regularization, gradient clipping and Adam. Eight transitions contribute to each synchronous update. The tiny runs teach the algorithm; neither is presented as a trained balancing agent.
 
-`tracer.py` uses Python's tracing API to snapshot top-level learner statements **after execution**. Library internals are explained using API contracts and formulas, not represented as if each C/Python library instruction were traced. NumPy arrays, tensors, list/tuple/dictionary structure, network parameters and gradients are captured from the real objects. Snapshots store deltas; replay reconstructs immutable historical memory. Source and package versions are embedded in every trace. The trace stops after 2500 statements or 30 seconds measured at learner statement boundaries; it is not a security sandbox or a timeout for arbitrary blocking library calls.
+`tracer.py` uses Python's tracing API to snapshot learner statements **after execution**, including functions and methods defined in the supplied file. Library internals are explained using API contracts and formulas, not represented as if each C/Python library instruction were traced. NumPy arrays, tensors, list/tuple/dictionary structure, network parameters and gradients are captured from the real objects. Snapshots store deltas; replay reconstructs immutable historical memory. Source and package versions are embedded in every trace. The trace stops after 2500 statements or 30 seconds measured at learner statement boundaries; it is not a security sandbox or a timeout for arbitrary blocking library calls.
 
-The browser initially loads checked-in recordings made by this same tracer, clearly labeled as recordings. It does not substitute a JavaScript learning engine. In Electron, **Run Python & capture trace** sends the displayed editor source and tracer to the existing native notebook kernel and displays its returned trace. **Choose Python** uses that kernel's existing interpreter picker. The selected environment needs:
+The browser initially loads checked-in recordings made by this same tracer, clearly labeled as recordings. It does not substitute a JavaScript learning engine. In Electron, **Run Python & capture trace** sends the displayed editor source and tracer to the existing native notebook kernel and displays its returned trace. **Choose Python** uses that kernel's existing interpreter picker. Install the dependencies imported by the program in the selected environment. Plain Python requires no ML packages; the supplied ML examples together use:
 
 ```sh
 python -m pip install numpy gymnasium torch
 ```
 
-The interpreter is shared with desktop notebooks. Wait for other notebook work before running. These short, synchronous captures finish before replay begins; stepping does not suspend a live Python process. No separate native pygame window is required: the lab draws the world from actual Gymnasium observations.
+Use **Working folder** to choose where relative file paths and imports are resolved. The interpreter is shared with desktop notebooks. Wait for other notebook work before running. These short, synchronous captures finish before replay begins; stepping does not suspend a live Python process. No separate native pygame window is required: the lab draws the world from actual Gymnasium observations.
 
 ## Regenerate recordings
 
@@ -49,3 +49,32 @@ These JSON files are generated; do not edit their values by hand. Unit tests che
 - Visual inspection caught and corrected viewport-relative sizing inside floating windows and an incorrect code-pane scroll offset. The lab now sizes to its own window and requests a larger initial work area.
 
 Windows/Linux desktop execution and packaged release builds have not been checked. Recorded and native runs have been checked on macOS. This is a first working learning lab, not a claim that learner testing or a full Python curriculum is complete.
+
+
+## More examples and automatic inspection (2026-10-11)
+
+The program selector now also includes:
+
+- **Gradient descent · fit a line:** NumPy predictions, residuals, mean squared error, hand-computed derivatives and parameter updates. A plot connects the training points to current predictions and their errors.
+- **Neural classifier · scores to classes:** PyTorch logits, softmax probabilities, class indices, cross entropy, parameter gradients and SGD updates. Class indices are not labeled as CartPole actions.
+- **Bandits · exploration and running averages:** compare exploration with exploitation, then inspect the exact running mean and count for each machine.
+- **Your Python · automatic inspection:** paste a program or use **Load .py**. The initial ordinary-Python nearest-neighbor example uses functions and returned tuples without PyCade annotations.
+
+These examples reuse one tracer and value renderer. A new program does not need a JavaScript implementation, registration in the engine, or specially named variables. Edited sources are retained while switching examples within the current lab session; they are not saved across reloads, so use Download .py to keep your work.
+
+Automatic inspection is deliberately different from a guided explanation:
+
+| Layer | What is known automatically | What still needs context |
+|---|---|---|
+| Python execution | Executed source lines, function/method call paths, visible globals and current locals, returned values, changed/removed variables, stdout | The purpose of a custom function or variable |
+| Numerical structure | NumPy arrays, PyTorch tensors, shapes, dtypes, bounded values, named model parameters and gradients | Whether an axis means examples, actions, classes, time or worlds |
+| Supported operations | Tensor mean/sum/square/detach/backward, PyTorch model calls and optimizer steps, plus syntax-level reads/assignments | The full algorithm, training objective, data meaning and whether the chosen method is appropriate |
+| Guided examples | Authored plain-language explanations, numerical formulas, domain-specific plots and return-slot labels | Additional lessons still need authored teaching content |
+
+For example, a five-item tuple in arbitrary code is shown as five ordered items. Its length does **not** identify it as Gymnasium's return contract. A variable named `q` or `obs` does not activate the CartPole visualization in custom mode. Runtime adapters recognize supported Python object types instead of relying on those names.
+
+The general scalar history plot works with any recorded numeric variable. It plots changes through the current statement, not necessarily epochs. Clicking inputs/outputs selects their actual values; call-path labels show the active function. The source analysis reports syntax-level dependencies, not a complete causal graph through library internals.
+
+Known bounds: only the submitted source file is traced; imported modules execute normally but their internals are not stepped. Other threads/processes and arbitrary blocking calls are not controlled. Unknown object types remain opaque; this is not universal introspection of every ML framework. Arrays/tensors over 256 elements are labeled flat previews, lists/dictionaries are limited to 32 items, models to 16 named parameter entries, nesting to five levels, and stdout to 8,000 characters. Non-finite numbers are represented as strings so they do not break JSON transport. Python tracing follows the [Python trace API](https://docs.python.org/3/library/sys.html#sys.settrace); the classifier follows the [PyTorch cross-entropy contract](https://docs.pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html).
+
+Regenerate the additional recordings with the same tracer, using `regression.py`, `classifier.py`, `bandit.py`, and `custom.py` as input and the corresponding `*-trace.json` filenames under `src/labs/pycade/` as output.

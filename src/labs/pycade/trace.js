@@ -21,13 +21,19 @@ export function framesOf(trace) {
   return trace.events.map((event, index) => {
     memory = { ...memory, ...event.changes }
     origins = { ...origins, ...Object.fromEntries(Object.keys(event.changes).map(key => [key, index])) }
+    for (const name of event.removed || []) { delete memory[name]; delete origins[name] }
     return { ...event, memory, origins }
   })
 }
-export function lineInfo(line = '') {
-  const [code, annotation = ''] = line.split(' # ')
-  const [phase, ...words] = annotation.split(' | ')
-  return { code, phase: words.length ? phase : 'setup', explanation: words.join(' | ') || 'Read the Python statement and inspect its changes below. This edited line has no teaching annotation.' }
+export function lineInfo(line = '', metadata) {
+  const annotation = line.match(/^(.*?)\s+# (setup|observe|represent|choose|act|store|learn|loop) \| (.*)$/)
+  const code = annotation ? annotation[1] : line
+  const phase = annotation?.[2], explanation = annotation?.[3]
+  const reads = metadata?.reads?.join(', '), writes = metadata?.writes?.join(', ')
+  const description = metadata?.kind === 'Return' ? 'Return this expression to the caller. Inspect “return value” to see the actual result.'
+    : ['FunctionDef', 'AsyncFunctionDef'].includes(metadata?.kind) ? 'Define a function. Its body runs when the program calls it; the trace follows that call.'
+      : `${metadata?.kind || 'Python statement'}.${reads ? ` Reads: ${reads}.` : ''}${writes ? ` Assigns: ${writes}.` : ''} Inspect the actual values below; their purpose is not inferred from their names.`
+  return { code, phase: phase || 'compute', explanation: explanation || description }
 }
 export function kernelCode(source) {
   // Put helper imports and execution in their own namespace, not notebook globals.

@@ -27,6 +27,7 @@ Status markers:
 ### PyCade: Python reinforcement learning from zero (2026-10-11)
 
 - [x] Separate lab with real NumPy/Gymnasium Q-learning and PyTorch/Gymnasium CartPole A2C, complete editable programs, native desktop trace capture, recorded-run replay, labeled tuples and expandable arrays/tensors, code/math/value translations, and adjacent nested explanations. Actual Python algorithm checks and macOS Electron runs pass. See [scope and verification](pycade.md).
+- [x] Added NumPy regression, PyTorch classification, bandit examples, and custom Python inspection with function/method tracing, return values, bounded numerical/model adapters, syntax-level input/output links, source import and scalar plots. Domain labels are restricted to guided examples. See [support boundaries](pycade.md#more-examples-and-automatic-inspection-2026-10-11).
 - [ ] Learner testing, expanded Python foundations, live interpreter suspension and library-internal tracing, longer training/evaluation workflows, and Windows/Linux packaged-app verification.
 
 ### MathOS scientific workspace (2026-10-10)

@@ -8,12 +8,17 @@ import a2cTrace from './a2c-trace.json'
 import qSource from './python/q_learning.py?raw'
 import a2cSource from './python/a2c.py?raw'
 import { framesOf, parseKernelResult, kernelCode, valueAtPath } from './trace.js'
+import { EXAMPLES } from './examples.js'
 
 afterEach(() => { cleanup(); delete window.openCalcDesktop; vi.useRealTimers() })
 describe('real Python recordings', () => {
   it('records the exact supplied source without errors and reconstructs immutable historical memory', () => {
     expect(qTrace.source).toBe(qSource); expect(a2cTrace.source).toBe(a2cSource)
     expect(qTrace.error).toBeNull(); expect(a2cTrace.error).toBeNull()
+    for (const example of Object.values(EXAMPLES)) {
+      expect(example.recording.source).toBe(example.source)
+      expect(example.recording.error).toBeNull()
+    }
     const frames = framesOf(qTrace), firstTable = frames.find(f => f.changes.q)
     expect(firstTable.memory.q.value.flat().every(v => v === 0)).toBe(true)
     expect(valueAtPath(firstTable.memory, 'q[0][1]').value).toBe(0)
@@ -28,6 +33,25 @@ describe('real Python recordings', () => {
     expect(() => parseKernelResult({ ok: true, messages: [{ type: 'error', text: 'Missing torch' }] })).toThrow('Missing torch')
     expect(kernelCode('print("hello")')).toContain('trace_program')
   })
+})
+
+it('offers new learning examples and treats custom code as general Python', () => {
+  render(<PyCade />)
+  fireEvent.change(screen.getByLabelText('Learning program'), { target: { value: 'regression' } })
+  fireEvent.click(screen.getByRole('button', { name: '2. Inspect inputs and outputs' }))
+  expect(screen.getByRole('img', { name: 'Known outputs in gold, current predictions in green' })).toBeTruthy()
+  expect(screen.queryByLabelText('Explain the CartPole observation')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Learning program'), { target: { value: 'custom' } })
+  expect(screen.getByLabelText('Python source editor').value).toContain('def predict_nearest')
+  fireEvent.click(screen.getByRole('button', { name: '3. Follow a function call' }))
+  expect(screen.getByText('Call path: program → predict_nearest')).toBeTruthy()
+  expect(screen.queryByText(/reward · immediate feedback/)).toBeNull()
+  const frames = framesOf(EXAMPLES.custom.recording)
+  const returned = frames.findIndex(frame => frame.function === 'predict_nearest' && frame.returned)
+  fireEvent.change(screen.getByLabelText('Trace position'), { target: { value: returned } })
+  expect(screen.getAllByText('[0] item').length).toBeGreaterThan(0)
+  expect(frames.at(-1).memory.nearest_index).toBeUndefined()
+  expect(frames.at(-1).memory['return value']).toBeUndefined()
 })
 it('keeps tuple explanation, nested prerequisites and original code together', () => {
   render(<PyCade />)

@@ -52,6 +52,30 @@ try {
   assert.match(await page.locator('.pc-math').innerText(), /time 0, world 0: 1 −/)
   assert.deepEqual(errors, [])
   console.log('Desktop edited A2C: gamma=0 gives target=1; renderer errors: []')
+  for (const mode of ['regression', 'classifier', 'bandit']) {
+    await page.getByLabel('Learning program').selectOption(mode)
+    await page.getByRole('button', { name: 'Run Python & capture trace' }).click()
+    await page.getByText(/Native Python run/).waitFor({ timeout: 60000 })
+    assert.equal(await page.getByRole('alert').count(), 0)
+    await page.getByRole('button', { name: '2. Inspect inputs and outputs' }).click()
+    if (mode === 'regression') {
+      assert.equal(await page.getByRole('img', { name: 'Known outputs in gold, current predictions in green' }).count(), 1)
+      if (process.env.PYCADE_SCREENSHOT) await page.screenshot({ path: process.env.PYCADE_SCREENSHOT.replace('.png', '-regression.png') })
+    }
+    console.log(`Desktop ${mode}: native Python trace captured`)
+  }
+  await page.getByLabel('Learning program').selectOption('custom')
+  await page.getByLabel('Python source editor').fill('def transform(obs):\n    q = [v * 2 for v in obs]\n    return q, 42, False, True, {}\nobs = [1, 2, 3, 4]\nresult = transform(obs)\nprint(result)\n')
+  await page.getByRole('button', { name: 'Run Python & capture trace' }).click()
+  await page.getByRole('button', { name: 'Edit Python', exact: true }).waitFor({ timeout: 60000 })
+  assert.equal(await page.getByRole('alert').count(), 0)
+  await page.getByRole('button', { name: '3. Follow a function call' }).click()
+  await page.getByText('Call path: program → transform', { exact: true }).waitFor()
+  await page.getByLabel('Memory filter').selectOption('all')
+  assert.equal(await page.getByLabel('Explain the CartPole observation').count(), 0)
+  assert.equal(await page.getByText('[1] reward · immediate feedback', { exact: true }).count(), 0)
+  assert.deepEqual(errors, [])
+  console.log('Desktop custom: unannotated function and five-slot tuple; no CartPole labels; renderer errors: []')
 } finally {
   await app?.close()
   await rm(profile, { recursive: true, force: true })

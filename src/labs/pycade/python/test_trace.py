@@ -9,10 +9,69 @@ def frames(trace):
     memory = {}
     for event in trace['events']:
         memory = {**memory, **event['changes']}
+        for name in event.get('removed', []):
+            memory.pop(name, None)
         yield trace['source'].splitlines()[event['line'] - 1], memory, event['changes']
 
 
 class LearningTraceTests(unittest.TestCase):
+    def test_unannotated_functions_methods_and_return_values(self):
+        source = '''class Learner:
+    def __init__(self, weight):
+        self.weight = weight
+    def predict(self, x):
+        temporary = x * self.weight
+        return temporary, x, 3, 4, 5
+def outer(value):
+    model = Learner(2)
+    result = model.predict(value)
+    return result
+value = 7
+result = outer(value)
+print(result, end="")
+env = "this is not a Gymnasium environment"
+'''
+        trace = trace_program(source)
+        self.assertIsNone(trace['error'])
+        self.assertEqual(trace['stdout'], '(14, 7, 3, 4, 5)')
+        called = [event for event in trace['events'] if event['function'] == 'predict']
+        self.assertTrue(called)
+        self.assertEqual(called[-1]['stack'], ['<module>', 'outer', 'predict'])
+        self.assertEqual(called[-1]['changes']['return value']['items'][0]['value'], 14)
+        last_memory = list(frames(trace))[-1][1]
+        self.assertNotIn('temporary', last_memory)
+        self.assertNotIn('self', last_memory)
+        self.assertNotIn('return value', last_memory)
+        self.assertEqual(last_memory['value']['value'], 7)
+        self.assertIn('value', trace['metadata']['12']['reads'])
+
+    def test_bounded_previews_nonfinite_and_recursive_containers(self):
+        trace = trace_program('import numpy as np\nx = np.arange(10000).reshape(100, 100)\nbad = np.array([float("nan"), float("inf")])\ncycle = []\ncycle.append(cycle)\n')
+        self.assertIsNone(trace['error'])
+        memory = list(frames(trace))[-1][1]
+        self.assertEqual(memory['x']['shape'], [100, 100])
+        self.assertEqual(len(memory['x']['value']), 256)
+        self.assertEqual(memory['x']['preview'], 'flat first 256 elements')
+        self.assertEqual(memory['bad']['value'], ['nan', 'inf'])
+
+    def test_new_examples_learn_and_average_correctly(self):
+        for name in ['regression', 'classifier']:
+            trace = trace_program((ROOT / f'{name}.py').read_text())
+            self.assertIsNone(trace['error'])
+            memory = list(frames(trace))[-1][1]
+            losses = [node['value'] for node in memory['losses']['items']]
+            self.assertLess(losses[-1], losses[0])
+        self.assertEqual(memory['predictions']['value'], memory['labels']['value'])
+        trace = trace_program((ROOT / 'bandit.py').read_text())
+        self.assertIsNone(trace['error'])
+        totals, counts = [0, 0, 0], [0, 0, 0]
+        for code, memory, _ in frames(trace):
+            if 'estimates[action] =' in code:
+                action = memory['action']['value']
+                totals[action] += memory['reward']['value']
+                counts[action] += 1
+                self.assertAlmostEqual(memory['estimates']['value'][action], totals[action] / counts[action])
+
     def test_q_updates_exactly_one_cell_and_matches_equation(self):
         trace = trace_program((ROOT / 'q_learning.py').read_text())
         self.assertIsNone(trace['error'])
