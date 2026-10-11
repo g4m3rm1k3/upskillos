@@ -9,7 +9,7 @@ Written 2026-10-11 at the end of a long session. Read this first, then the plan 
 - Auto-install: `desktop/app/runtimes/neovim.cjs` uses the learner's Neovim 0.10+ or downloads pinned v0.12.6 into userData; also on the Terminal tab's PATH.
 - Sessions start with `--listen`; the app opens files, writes all buffers before Run/Check, and reloads changed files through `editor:nvim` IPC (`main.cjs`, `preload.cjs`).
 - Every session loads `desktop/app/runtimes/neovim-practice.lua` (keystroke recorder for drills, below).
-- Untested on Windows.
+- Windows (2026-10-11, Windows 11, headless, not yet in the Electron pane): the download of v0.12.6 installs and starts, `--listen` on a named pipe and the open/write/reload expressions work, and a drill records and passes. A system Neovim older than 0.10 (0.9.1 seen) is skipped as intended. Fixed: the recorder now matches `practice/` with Windows `\` paths. The series' other checks (`sed`, `grep`, `wc`) and lesson commands are zsh, so the lessons themselves can't be followed in the Windows PowerShell terminal yet.
 
 **Two separate series** (the user insisted they are unrelated; never combine them)
 

@@ -57,6 +57,12 @@ local WRITE = { w = true, write = true, wq = true, x = true, xit = true, up = tr
 
 local group = vim.api.nvim_create_augroup('UpSkillOSPractice', { clear = true })
 
+-- A buffer's file relative to the project folder, with / even on Windows (where Neovim gives
+-- practice\maze.txt), so the patterns below match on every platform.
+local function rel(buf)
+  return (vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':.'):gsub('\\', '/'))
+end
+
 vim.api.nvim_create_autocmd('CmdlineLeave', {
   group = group,
   callback = function()
@@ -77,7 +83,7 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileChangedShellPost' }, {
   group = group,
   callback = function(args)
     state[args.buf] = fresh()
-    if vim.fn.fnamemodify(vim.api.nvim_buf_get_name(args.buf), ':.'):match('^practice/') then
+    if rel(args.buf):match('^practice/') then
       vim.schedule(function()
         if vim.api.nvim_buf_is_valid(args.buf) and vim.api.nvim_get_current_buf() == args.buf then
           pcall(vim.api.nvim_win_set_cursor, 0, { 1, 0 })
@@ -90,7 +96,7 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileChangedShellPost' }, {
 vim.api.nvim_create_autocmd('BufWritePost', {
   group = group,
   callback = function(args)
-    local file = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(args.buf), ':.')
+    local file = rel(args.buf)
     if file == '' or file:match('^%.practice/') then return end
     local st = get(args.buf)
     local dir = vim.fn.getcwd() .. '/.practice'
