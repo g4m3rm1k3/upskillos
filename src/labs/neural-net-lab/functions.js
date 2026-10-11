@@ -1,0 +1,53 @@
+// What every function in python/ is for, keyed by 'file:qualified name': one line saying what it does,
+// its inputs, what it gives back, and the lesson that teaches it. The Python tab shows these cards;
+// lessons.test.js checks every function has one with every input listed.
+const F = (summary, inputs, returns, lesson) => ({ summary, inputs, returns, lesson })
+
+export const FUNCTIONS = {
+  'data.py:make_line': F('Makes n made-up points near the line y = 2x + 1.', [['n', 'how many points'], ['seed', 'fixes the random numbers, so the same points come out every time']], '`(xs, ys)`: two lists of n numbers', 'data-and-model'),
+  'data.py:make_curve': F('Makes n made-up points near the curve y = sin(x).', [['n', 'how many points'], ['seed', 'fixes the random numbers']], '`(xs, ys)`', 'train-a-net'),
+  'neuron.py:predict': F('One neuron: weight × input + bias.', [['w', 'the weight (the slope)'], ['b', 'the bias (where the line crosses x = 0)'], ['x', 'the input']], 'the prediction $\\hat y$', 'one-neuron'),
+  'neuron.py:mse': F('How wrong the neuron is on all the points: the mean squared error.', [['w', 'the weight'], ['b', 'the bias'], ['xs', 'the inputs'], ['ys', 'the true outputs']], 'one number, 0 if every prediction is exact', 'one-neuron'),
+  'neuron.py:gradients': F('The slope of the error for w and for b: which way, and how steeply, each should move.', [['w', 'the weight now'], ['b', 'the bias now'], ['xs', 'the inputs'], ['ys', 'the true outputs']], '`(grad_w, grad_b)`', 'gradient-descent'),
+  'neuron.py:fit_line': F('Gradient descent: step w and b against their slopes 500 times.', [['steps', 'how many steps'], ['rate', 'the learning rate: how big each step is'], ['seed', 'which made-up points']], '`(w, b, history)`: the fitted line and the error after every step', 'gradient-descent'),
+  'layer.py:dense': F('A layer of neurons: each one\'s weights times the inputs, added up, plus its bias.', [['inputs', 'the numbers coming in'], ['weights', 'one list of weights per neuron'], ['biases', 'one bias per neuron']], 'one number per neuron', 'a-layer'),
+  'layer.py:relu': F('ReLU on every number: negatives become 0.', [['values', 'a list of numbers']], 'the list, with negatives replaced by 0', 'activations'),
+  'layer.py:sigmoid': F('Sigmoid on every number: squashed into 0 … 1.', [['values', 'a list of numbers']], 'the squashed list', 'activations'),
+  'layer.py:tanh': F('Tanh on every number: squashed into −1 … 1.', [['values', 'a list of numbers']], 'the squashed list', 'activations'),
+  'layer.py:show_layer': F('Three neurons looking at one input, and what each activation makes of their sums.', [['x', 'the input']], '`(z, relu(z), sigmoid(z), tanh(z))`', 'a-layer'),
+  'tinynet.py:init_net': F('Makes a 1 → hidden → 1 network with random starting weights, the way PyTorch starts them.', [['hidden', 'how many hidden neurons'], ['seed', 'fixes the random numbers']], 'a dictionary of the four weight lists: w1, b1, w2, b2', 'backprop'),
+  'tinynet.py:forward': F('Runs one input through the network, keeping the numbers in between.', [['net', 'the network'], ['x', 'the input']], '`(y_hat, z, h)`: the prediction, each hidden neuron\'s sum, and its ReLU output', 'backprop'),
+  'tinynet.py:backward': F('Backpropagation: the slope of this point\'s error for every weight, by the chain rule from the output back.', [['net', 'the network'], ['x', 'the input'], ['y', 'the true output'], ['y_hat', 'the prediction'], ['z', 'the hidden sums from forward'], ['h', 'the hidden outputs from forward']], 'a dictionary of gradients, the same shape as the network', 'backprop'),
+  'tinynet.py:train_step': F('One step of gradient descent on all the points: average every point\'s gradients, then move every weight.', [['net', 'the network (changed in place)'], ['xs', 'the inputs'], ['ys', 'the true outputs'], ['rate', 'the learning rate']], 'the error before the step', 'train-a-net'),
+  'tinynet.py:train_net': F('Fits the curve: a new network, then train_step 2,000 times.', [['hidden', 'hidden neurons'], ['steps', 'how many steps'], ['rate', 'the learning rate'], ['seed', 'which points and which starting weights']], '`(net, history)`', 'train-a-net'),
+  'torch_net.py:make_model': F('The same 1 → hidden → 1 network, built from PyTorch\'s layers.', [['hidden', 'hidden neurons']], 'an `nn.Sequential` model', 'pytorch-net'),
+  'torch_net.py:copy_weights': F('Puts the hand-made network\'s numbers into the PyTorch model, so both start the same.', [['model', 'the PyTorch model (changed in place)'], ['net', 'the hand-made network']], 'nothing', 'pytorch-net'),
+  'torch_net.py:train_torch': F('tinynet.train_net in PyTorch: the same data, the same start, the same steps.', [['hidden', 'hidden neurons'], ['steps', 'how many steps'], ['rate', 'the learning rate'], ['seed', 'which points and starting weights']], '`(model, history)`', 'pytorch-net'),
+  'torch_net.py:compare': F('Trains both versions side by side and measures how far apart their errors ever get.', [['steps', 'how many steps'], ['hidden', 'hidden neurons'], ['seed', 'which points and starting weights']], 'the largest gap between the two error histories', 'pytorch-net'),
+  'cars.py:load_cars': F('Reads cars.csv, skipping cars whose horsepower is unknown.', [], 'a list of `(name, weight, horsepower, mpg)`', 'fuel-economy'),
+  'cars.py:split': F('Shuffles the cars and sets a fifth aside for testing.', [['cars', 'the cars'], ['test_fraction', 'how much to set aside'], ['seed', 'which shuffle']], '`(train, test)`', 'fuel-economy'),
+  'cars.py:mean_and_spread': F('The average of a list of numbers, and its standard deviation.', [['values', 'the numbers']], '`(mean, spread)`', 'fuel-economy'),
+  'cars.py:scale': F('Weight and horsepower as "how many spreads from the average", ready for the network.', [['cars', 'the cars'], ['stats', 'the averages and spreads, from the training cars']], 'a tensor with one row of 2 numbers per car', 'fuel-economy'),
+  'cars.py:train_cars': F('Trains a 2 → 16 → 1 network to predict mpg, then measures its average miss on cars it never saw.', [['hidden', 'hidden neurons'], ['steps', 'how many steps'], ['rate', 'the learning rate'], ['seed', 'which shuffle and starting weights']], '`(model, stats, test_miss)`', 'fuel-economy'),
+  'cars.py:predict_mpg': F('The trained model\'s guess for a car you describe.', [['model', 'the trained model'], ['stats', 'the training cars\' averages and spreads'], ['weight', 'pounds'], ['horsepower', 'horsepower']], 'the predicted miles per gallon', 'fuel-economy'),
+}
+
+export const VARS = {
+  x: 'an input', y: 'the true output for that input', xs: 'all the inputs', ys: 'all the true outputs',
+  w: 'a weight', b: 'a bias', n: 'how many', i: 'which point',
+  y_hat: 'the prediction, $\\hat y$ ("y hat")', error: 'prediction − truth',
+  total: 'a running sum', grad_w: 'the slope of the error in w', grad_b: 'the slope of the error in b',
+  rate: 'the learning rate: how big a step to take', step: 'which step', steps: 'how many steps', history: 'the error after each step',
+  inputs: 'the numbers coming into the layer', outputs: 'one number per neuron', weights: 'one list of weights per neuron', biases: 'one bias per neuron',
+  neuron_weights: 'this neuron\'s weights', bias: 'this neuron\'s bias', values: 'a list of numbers', v: 'one number',
+  z: 'each hidden neuron\'s sum, before ReLU', h: 'each hidden neuron\'s output, after ReLU', h_j: 'one hidden neuron\'s output',
+  net: 'the network: its weights w1, b1 (hidden layer) and w2, b2 (output)', hidden: 'how many hidden neurons', j: 'which hidden neuron',
+  grads: 'the slope of the error for every weight', d_y_hat: '$\\partial L/\\partial \\hat y$: how the error changes with the prediction',
+  d_h: '$\\partial L/\\partial h_j$', d_z: '$\\partial L/\\partial z_j$', loss: 'the error (mean squared error)',
+  bound: 'the starting weights lie between −bound and +bound', rng: 'a random number generator', seed: 'fixes the random numbers',
+  model: 'the PyTorch network', optimizer: 'turns gradients into weight changes', prediction: 'the model\'s outputs, one per point',
+  cars: 'the cars: (name, weight, horsepower, mpg)', train: 'the cars the model learns from', test: 'the cars kept aside to test it',
+  stats: 'the training cars\' (average, spread) of weight and of horsepower', mean: 'the average', spread: 'the standard deviation',
+  test_miss: 'the average miss, in mpg, on cars the model never saw', weight: 'the car\'s weight, pounds', horsepower: 'the car\'s horsepower',
+  gap: 'the largest difference between the two error histories', by_hand: 'the hand-written network\'s errors', with_torch: 'PyTorch\'s errors',
+}

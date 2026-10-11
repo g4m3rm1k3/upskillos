@@ -1,0 +1,12 @@
+/* Neural Net Lab: QMaze Lab's styles (qm-…) and the shared Python tab's (ps-…), plus what is new here (nn-…). */
+.nn-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.nn-row>*{flex:1 1 320px;min-width:0}
+.nn-xy{width:100%;max-width:520px;display:block}
+.nn-land{width:100%;max-width:360px;display:block}
+.nn-big{font-size:20px;color:var(--accent-ink)}
+.nn-work{font:12.5px/1.7 'JetBrains Mono',ui-monospace,monospace;background:#fffdf8;border:1px solid var(--line);border-radius:7px;padding:8px 10px;white-space:pre-wrap;overflow-x:auto;margin:8px 0}
+.nn-unit{border-left:3px solid;padding:2px 0 2px 8px;margin:6px 0}
+.nn-layer-table td{text-align:left!important}
+.nn-layers{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.nn-chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:3px 8px;background:#fffdf8;font-size:12.5px}
+.nn-chip input{width:44px}.nn-chip.in,.nn-chip.out{background:#f1eadc;font-weight:600}
+.nn-code{background:#1f2428;color:#dfe7ea;font-size:12px;padding:8px 10px;border-radius:7px;white-space:pre;overflow-x:auto;margin:6px 0}

@@ -1,0 +1,68 @@
+"""Records what the real Python programs and PyTorch produce, for engine/parity.test.js to compare
+with the JavaScript engine. Needs NumPy and PyTorch. Regenerate after changing python/:
+
+    python src/labs/neural-net-lab/tools/make_parity.py
+"""
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", "python"))
+
+import torch                                         # noqa: E402
+from torch import nn                                 # noqa: E402
+
+from cars import load_cars, mean_and_spread, split   # noqa: E402
+from data import make_curve, make_line               # noqa: E402
+from neuron import fit_line                          # noqa: E402
+from tinynet import init_net, train_net              # noqa: E402
+
+ACT = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid}
+
+
+def network_run(activation, optimiser, seed):
+    """A 2 -> 5 -> 3 -> 1 network: its starting weights, a batch, its gradients, and its weights after 5 steps."""
+    torch.manual_seed(seed)
+    model = nn.Sequential(nn.Linear(2, 5), ACT[activation](), nn.Linear(5, 3), ACT[activation](), nn.Linear(3, 1))
+    model = model.double()
+    start = [[p.detach().tolist() for p in (model[i].weight, model[i].bias)] for i in (0, 2, 4)]
+    x = torch.randn(7, 2, dtype=torch.float64)
+    y = torch.randn(7, 1, dtype=torch.float64)
+    opt = {"sgd": lambda p: torch.optim.SGD(p, lr=0.05),
+           "momentum": lambda p: torch.optim.SGD(p, lr=0.05, momentum=0.9),
+           "adam": lambda p: torch.optim.Adam(p, lr=0.05)}[optimiser](model.parameters())
+    grads = None
+    losses = []
+    for step in range(5):
+        loss = ((model(x) - y) ** 2).mean()
+        opt.zero_grad()
+        loss.backward()
+        if grads is None:
+            grads = [[p.grad.tolist() for p in (model[i].weight, model[i].bias)] for i in (0, 2, 4)]
+        opt.step()
+        losses.append(loss.item())
+    end = [[p.detach().tolist() for p in (model[i].weight, model[i].bias)] for i in (0, 2, 4)]
+    return {"activation": activation, "optimiser": optimiser, "start": start, "x": x.tolist(), "y": y.tolist(),
+            "grads": grads, "losses": losses, "end": end}
+
+
+def main():
+    out = {"line": make_line(), "curve": make_curve()}
+    w, b, history = fit_line()
+    out["fit_line"] = {"w": w, "b": b, "history": history}
+    out["init_net"] = init_net(8, 0)
+    net, history = train_net(hidden=8, steps=300)
+    out["train_net"] = {"net": net, "history": history}
+    train, test = split(load_cars())
+    out["cars"] = {"train": [c[0] for c in train[:10]], "test": [c[0] for c in test[:10]], "n": [len(train), len(test)],
+                   "stats": [mean_and_spread([c[1] for c in train]), mean_and_spread([c[2] for c in train])]}
+    out["networks"] = [network_run(a, o, s) for s, (a, o) in enumerate([("relu", "sgd"), ("tanh", "momentum"), ("sigmoid", "adam"), ("relu", "adam")])]
+    path = os.path.join(HERE, "..", "engine", "parity.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(out, handle)
+    print("wrote", os.path.relpath(path))
+
+
+if __name__ == "__main__":
+    main()

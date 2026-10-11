@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 63,
+    "labs": 64,
     "games": 16
   },
   "courses": [
@@ -602,6 +602,12 @@
       "label": "Music Lab",
       "kind": "builder",
       "path": "/music-lab"
+    },
+    {
+      "id": "neural-net-lab",
+      "label": "Neural Net Lab",
+      "kind": "lab",
+      "path": "/lab/neural-net-lab"
     },
     {
       "id": "notebook-lab",

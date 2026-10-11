@@ -65,7 +65,7 @@ describe('the lab renders', () => {
   it('the Python tab gives a line its maths, logic and callers', () => {
     const { container } = render(<PythonTab request={{ program: 'rule' }} />)
     act(() => { fireEvent.click([...container.querySelectorAll('.qm-py-files button')].find(b => b.textContent === 'cartpole.py') ?? container) })
-    const explain = text => { act(() => { fireEvent.click([...container.querySelectorAll('.qm-py-line')].find(l => l.textContent.includes(text))) }); return container.querySelector('.cp-explain').textContent }
+    const explain = text => { act(() => { fireEvent.click([...container.querySelectorAll('.qm-py-line')].find(l => l.textContent.includes(text))) }); return container.querySelector('.ps-explain').textContent }
     expect(explain('terminated = x < -self.x_limit')).toMatch(/The logic, in words.*lost/s)
     expect(explain('x = x + self.tau * x_dot')).toMatch(/In maths/)
     expect(explain('def step(self, action)')).toMatch(/Called from.*env\.step/s)

@@ -24,7 +24,7 @@
 UpSkillOS is a complete STEM learning environment that runs entirely in the browser — no account, no subscription, no install required. It is the only open-source platform that combines university-level curriculum, real interactive coding environments, physics and CNC simulations, a built-in AI tutor, and a WYSIWYG lesson authoring system in a single free application.
 
 <!-- facts:headline -->
-**1374 lessons. 44 courses. 63 interactive labs and simulators. 16 games built on real math and physics. All free. All open source.**
+**1374 lessons. 44 courses. 64 interactive labs and simulators. 16 games built on real math and physics. All free. All open source.**
 <!-- /facts:headline -->
 
 ---
@@ -80,7 +80,7 @@ This structure is not cosmetic. It is the architecture of the lesson files in th
 <!-- facts:scale -->
 | Lessons | **1374** |
 | Courses | **44** |
-| Interactive labs & simulators | **63** |
+| Interactive labs & simulators | **64** |
 | Games built on real math & physics | **16** |
 <!-- /facts:scale -->
 | Code environments (Python, JS, C++, SQL, React) | **5** |
@@ -138,7 +138,7 @@ The generated [project inventory](docs/generated/project-inventory.md#courses) c
 </details>
 
 <!-- facts:labs-heading -->
-### 63 Interactive Labs and Simulators
+### 64 Interactive Labs and Simulators
 <!-- /facts:labs-heading -->
 
 - **Python Notebook** — Pyodide-powered, fully offline, runs numpy/scipy/matplotlib in the browser

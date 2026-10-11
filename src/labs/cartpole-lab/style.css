@@ -20,22 +20,6 @@
 .cp-net .cp-layer{margin:6px 0}.cp-net .cp-layer>span{font-size:11px;color:var(--muted)}
 .cp-strip{display:grid;gap:1px;margin-top:2px}.cp-strip span{width:8px;height:8px;border-radius:1px}
 
-/* The Python tab's explanation panel */
-.cp-explain h4{border-top:1px solid #efe7d8;padding-top:8px}
-.cp-tex{background:#fff7ea;border-radius:6px;padding:2px 10px;overflow-x:auto}
-.cp-calc{background:#1f2428;color:#f2d24a;padding:8px 10px;border-radius:6px;white-space:pre-wrap;font-size:12.5px;margin:4px 0}
-.cp-calc-inline{margin-left:10px;font-size:11px;color:#f2d24a;white-space:nowrap;align-self:center}
-.cp-logic{background:#eef6f3;border-left:3px solid var(--teal);padding:4px 10px;border-radius:0 6px 6px 0}
-.cp-logic p{margin:4px 0}
-.cp-chain{margin:4px 0 6px;padding-left:20px;font-size:12.5px}.cp-chain li{margin:4px 0}.cp-chain li.here{font-weight:600}
-.cp-callline{font-size:11.5px;background:#f1eadc;border-radius:4px;padding:2px 6px;margin-top:2px;white-space:pre-wrap;font-weight:400}
-.cp-sites{margin:4px 0;padding-left:18px;font-size:12.5px}.cp-sites li{margin:4px 0}
-.cp-returned{background:#eef6f3;border-radius:6px;padding:4px 8px;font-size:12.5px}
-.cp-fcard{border:1px solid var(--line);border-radius:7px;padding:6px 9px;margin:6px 0;background:#fffdf8;font-size:12.5px}
-.cp-fcard summary{cursor:pointer}.cp-fcard p{margin:4px 0}
-.cp-chips{display:flex;gap:4px;flex-wrap:wrap}.qm-lab .cp-chips button{font-size:11.5px;padding:2px 8px}.qm-lab .cp-chips button.active{background:#24323a;color:#e5f3f0}
-.cp-chip-say{background:#f6f2e9;border-radius:6px;padding:6px 9px;margin:6px 0;font-size:12.5px}.cp-chip-say pre{margin:4px 0 0;font-size:11.5px;white-space:pre-wrap}
-
 /* Lesson code notes: maths and logic lines */
 .cp-tag{display:inline-block;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;background:#f1eadc;color:var(--accent-ink);border-radius:3px;padding:0 4px;margin-right:2px}
 .cp-note-logic{list-style:none;margin-left:-14px}.cp-note-tex{list-style:none;margin-left:-14px}
