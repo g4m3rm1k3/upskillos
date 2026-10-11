@@ -5,7 +5,7 @@ import { PROGRAMS } from './programs/index.js'
 import { analyseProgram, plain, tokenizePython } from './analysis.js'
 import { PY } from './explain/python.js'
 import { PIECES, pathTo as piecePath, parentsOf } from './pieces.js'
-import { Cart, NetworkView, QTableView, num, obsOf } from './views.jsx'
+import { BarsView, Cart, CorridorView, LengthsView, LineView, NetworkView, QTableView, num, obsOf } from './views.jsx'
 import './style.css'
 
 const MAX_RECORDED = 1500
@@ -82,7 +82,7 @@ function calcFor(view, info) {
   const top = view?.stack.at(-1)
   const note = top && info[top.file]?.notes[top.line]
   if (!note?.calc) return null
-  const values = Object.fromEntries(Object.entries(top.locals).map(([k, v]) => [k, plain(v)]))
+  const values = Object.fromEntries([...Object.entries(top.consts ?? {}), ...Object.entries(top.locals)].map(([k, v]) => [k, plain(v)]))
   try { const out = note.calc(values); return out && out[1] !== undefined && !Number.isNaN(out[1]) ? out : null } catch { return null }
 }
 
@@ -190,13 +190,33 @@ function PieceExplain({ id, onSelect }) {
   </div>
 }
 
+// One table placing every method in the lab: they differ in the number that multiplies
+// ∇log π (or the target a value moves to) and in when they update.
+const FAMILY = [
+  ['Q-learning (programs 3, your Ch 1–2)', 'no policy network: Q(s, a) moves towards r + γ max Q(s′, ·)', 'every step', 'the table is the critic'],
+  ['REINFORCE (8)', 'G_t, the whole return after step t', 'once per game, after it ends', 'none'],
+  ['REINFORCE with a baseline (7, and 8 normalised)', 'G_t − b: the return minus what is usual', 'once per game (or per pull)', 'a baseline: an average'],
+  ['One-step actor-critic (9)', 'δ = r + γV(s′) − V(s), the TD error', 'every step', 'V(s), trained on δ²'],
+  ['A2C, your Chapter 4', 'G_t^(n) − V(s): n = 5 real rewards, then V', 'every 5 steps, from 8 worlds at once (40 moves)', 'V(s), trained on (G − V)²'],
+]
+function FamilyMap({ onSelect }) {
+  return <section className="ap-family" aria-label="One family of methods">
+    <h3>One family: what changes from method to method</h3>
+    <p className="ap-say">Every policy-gradient method makes the same move: raise log π(a | s) for the action taken, scaled by a number saying how good it turned out. Read any article, book or codebase by asking two questions: <b>what number multiplies ∇log π?</b> and <b>when does it update?</b> The rest is detail.</p>
+    <table className="ap-table"><thead><tr><th>Method</th><th>Multiplies ∇log π by</th><th>Updates</th><th>Critic</th></tr></thead>
+      <tbody>{FAMILY.map(row => <tr key={row[0]}>{row.map((c, i) => <td key={i}>{c}</td>)}</tr>)}</tbody></table>
+    <p className="ap-hint">The equation underneath all of them: <button className="ap-link" onClick={() => onSelect({ kind: 'piece', id: 'policy-gradient' })}>the policy gradient</button>. Program 6 checks it with real numbers.</p>
+  </section>
+}
+
 function Overview({ program, info, view, onSelect }) {
   const running = new Set((view?.stack ?? []).map(f => `${f.file}:${f.function}`))
   return <div className="ap-explain">
-    <p className="ap-eyebrow">HOW THE PIECES FIT</p><h2>{program.label}: your real code</h2>
-    <p className="ap-say">These are your Q-Arcade files, unchanged, running in real Python with real {program.label.startsWith('A2C') ? 'PyTorch and Gymnasium' : 'NumPy and Gymnasium'}. Everything starts in <b>{program.entry.function}()</b> in {program.entry.module}.py. Press Step into to start, or Next action to watch one push at a time. Click any line, function or name to have it explained here.</p>
+    <p className="ap-eyebrow">{program.group.toUpperCase()}</p><h2>{program.label}</h2>
+    <p className="ap-say">{program.intro} Everything starts in <b>{program.entry.function}()</b> in {program.entry.module}.py. Press Step into to start, or {program.actionLabel ?? 'Next action'} to jump ahead one move at a time. Click any line, function or name to have it explained here.</p>
     {program.order.map(file => <div key={file} className="ap-file-card"><b className="mono">{file}</b><p>{program.explain.FILES[file].about}</p>
       <span className="ap-chips">{info[file].functions.map(fn => <button key={fn.name} className={`ap-chip${running.has(`${file}:${fn.name}`) ? ' running' : ''}`} onClick={() => onSelect({ kind: 'function', key: `${file}:${fn.name}` })}>{fn.name}()</button>)}</span></div>)}
+    <FamilyMap onSelect={onSelect} />
   </div>
 }
 
@@ -206,7 +226,7 @@ export default function AArcadePython() {
   const openLab = useOpenLab()
   const [programId, setProgramId] = useState('q')
   const program = PROGRAMS[programId]
-  const [sources, setSources] = useState({ q: PROGRAMS.q.files, a2c: PROGRAMS.a2c.files })
+  const [sources, setSources] = useState(() => Object.fromEntries(Object.entries(PROGRAMS).map(([id, p]) => [id, p.files])))
   const files = sources[programId]
   const info = useMemo(() => analyseProgram(files, program.explain), [files, program])
   const [status, setStatus] = useState(null)
@@ -226,6 +246,7 @@ export default function AArcadePython() {
   const [draft, setDraft] = useState('')
   const [error, setError] = useState(null)
   const baseline = useRef(null)
+  const criticBaseline = useRef(null)
   const playingRef = useRef(false)
   // Play's loop calls the latest step(), which sees the latest record (not the one from when Play began).
   const stepRef = useRef(null)
@@ -241,7 +262,8 @@ export default function AArcadePython() {
   const followView = v => { const top = v?.stack.at(-1); if (follow && top) { setTab(top.file); setSelection({ kind: 'line', file: top.file, line: top.line }) } }
   function accept(r, replace = false) {
     if (r.type === 'pause') {
-      if (!baseline.current && r.watch?.network) baseline.current = r.watch.network.value
+      if (!baseline.current && r.watch?.network?.value?.params) baseline.current = r.watch.network.value
+      if (!criticBaseline.current && r.watch?.critic?.value?.params) criticBaseline.current = r.watch.critic.value
       setTimeline(t => (replace ? [...t.slice(0, -1), r] : [...t, r]).slice(-MAX_RECORDED))
       setAt(null); setEnded(null); followView(r)
       if (r.hitLimit) setError('Stopped after 2,000,000 lines without reaching that point.')
@@ -257,7 +279,7 @@ export default function AArcadePython() {
     try { return accept(await api.send(command), replace) } catch (e) { setError(String(e.message ?? e)); return false } finally { setBusy(false) }
   }
   async function load(nextFiles = files, id = programId) {
-    baseline.current = null; setTimeline([]); setAt(null); setEnded(null); setSelection(null)
+    baseline.current = null; criticBaseline.current = null; setTimeline([]); setAt(null); setEnded(null); setSelection(null)
     const p = PROGRAMS[id]
     return send({ cmd: 'load', files: nextFiles, entry: p.entry, watch: p.watch, actions: p.actions })
   }
@@ -307,7 +329,7 @@ export default function AArcadePython() {
   </div>
 
   const top = view?.stack.at(-1)
-  const here = programId === 'q' ? plain(lookup(view, 'state')) : undefined
+  const here = program.view === 'qtable' ? plain(lookup(view, 'state')) : undefined
   const writing = top?.function === 'q_update' ? { state: plain(top.locals.state), action: plain(top.locals.action) } : null
   const phase = (() => { for (let k = (view?.stack.length ?? 0) - 1; k >= 0; k--) { const f = view.stack[k], p = info[f.file]?.notes[f.line]?.phase; if (p) return p } return null })()
   const changedVars = top && prevView?.stack.at(-1)?.function === top.function ? new Set(Object.keys(top.locals).filter(k => show(top.locals[k]) !== show(prevView.stack.at(-1).locals[k]))) : new Set()
@@ -315,7 +337,9 @@ export default function AArcadePython() {
   return <div className="ap-lab" role="region" aria-label="A-Arcade Python">
     <header className="ap-header">
       <div><h1>A-Arcade Python</h1><p>Your real code, in real Python, one line at a time. {status?.versions && <span className="mono">{status.versions}</span>}</p></div>
-      <div className="ap-program">{Object.entries(PROGRAMS).map(([id, p]) => <button key={id} className={programId === id ? 'active' : ''} onClick={() => switchProgram(id)}>{p.label}</button>)}
+      <div className="ap-program"><label className="ap-picker">Program <select aria-label="Program" value={programId} onChange={e => switchProgram(e.target.value)} disabled={busy}>
+          {[...new Set(Object.values(PROGRAMS).map(p => p.group))].map(g => <optgroup key={g} label={g}>{Object.entries(PROGRAMS).filter(([, p]) => p.group === g).map(([id, p]) => <option key={id} value={id}>{p.label}</option>)}</optgroup>)}
+        </select></label>
         <button onClick={() => load()} disabled={!status?.ready || busy}>{timeline.length ? 'Start again' : 'Start'}</button>
         <button onClick={() => api.restart().then(() => { setTimeline([]); setEnded(null) })} title="End the Python process (also stops a long run)">Stop Python</button></div>
     </header>
@@ -326,17 +350,17 @@ export default function AArcadePython() {
     </section>}
     <div className="ap-controls" role="toolbar" aria-label="Stepping">
       <button onClick={stepBack} disabled={index <= 0}>◀ Step back</button>
-      {[['into', 'Step into'], ['over', 'Step over'], ['out', 'Step out'], ['action', 'Next action']].map(([mode, label]) =>
+      {[['into', 'Step into'], ['over', 'Step over'], ['out', 'Step out'], ['action', program.actionLabel ?? 'Next action']].map(([mode, label]) =>
         <button key={mode} disabled={busy || !status?.ready} onClick={() => { setPlaying(false); step(mode) }}>{label}</button>)}
       <button className="ap-primary" disabled={!status?.ready} onClick={() => setPlaying(p => !p)}>{playing ? 'Ⅱ Pause' : '▶ Play'}</button>
-      <label>Play <select aria-label="What Play steps through" value={playMode} onChange={e => setPlayMode(e.target.value)}><option value="action">one push at a time</option><option value="over">this function's lines</option><option value="into">every line</option></select></label>
+      <label>Play <select aria-label="What Play steps through" value={playMode} onChange={e => setPlayMode(e.target.value)}><option value="action">{(program.actionLabel ?? 'Next action').replace('Next ', 'one ')} at a time</option><option value="over">this function's lines</option><option value="into">every line</option></select></label>
       <label>Speed <select aria-label="Play speed" value={speed} onChange={e => setSpeed(e.target.value)}><option value="slow">slow</option><option value="medium">medium</option><option value="fast">fast</option></select></label>
       <label className="ap-follow"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)} /> Explain each line as it runs</label>
       <span className="ap-count">{busy ? 'Python is running…' : view ? `${view.linesRun.toLocaleString()} lines run` : 'not started'}</span>
     </div>
-    <div className="ap-phases" role="toolbar" aria-label="Parts of the loop">
+    {program.phases.length > 0 && <div className="ap-phases" role="toolbar" aria-label="Parts of the loop">
       {program.phases.map(([key, label, says]) => <button key={key} className={phase === key ? 'active' : ''} disabled={busy || rewound || !view} title={`${says} Click to run to the next ${label.toLowerCase()}.`} onClick={() => runToPhase(key)}>{label}<small>{says}</small></button>)}
-    </div>
+    </div>}
     {timeline.length > 1 && <div className="ap-scrub"><label>Recorded steps <input type="range" aria-label="Recorded steps" min="0" max={timeline.length - 1} value={index} onChange={e => { const i = Number(e.target.value); setPlaying(false); setAt(i >= timeline.length - 1 ? null : i); followView(timeline[i]) }} /></label><span>{index + 1} of {timeline.length}{rewound ? ' · looking back (Python is paused at the last one)' : ' · now'}</span>{rewound && <button className="ap-link" onClick={() => { setAt(null); followView(timeline.at(-1)) }}>Back to the present</button>}</div>}
     {error && <p className="ap-error" role="alert">{error} <button className="ap-link" onClick={() => setError(null)}>Dismiss</button></p>}
     {ended && <p className={ended.type === 'error' ? 'ap-error' : 'ap-past'} role="status">{ended.type === 'error' ? <>Python stopped with an error{ended.file ? ` in ${ended.file}, line ${ended.line}` : ''}: <b className="mono">{ended.error}</b></> : ended.type === 'finished' ? `The program finished: ${show(ended.result)}` : 'Stopped.'} <button className="ap-link" onClick={() => load()}>Start again</button></p>}
@@ -351,11 +375,18 @@ export default function AArcadePython() {
         </div> : <CodePanel file={tab} info={info} view={view} original={files[tab] !== program.files[tab] ? program.files[tab] : null} selection={selection} onSelect={setSelection} calcNow={calcNow} />}
       </section>
       <main className="ap-middle">
-        <div className="ap-cart"><Cart obs={obsOf(view)} ghost={obsOf(prevView)} label={programId === 'a2c' ? 'world 1 of 8' : 'Gymnasium CartPole'} /></div>
-        <section className="ap-memory" aria-label={programId === 'q' ? 'Q-table' : 'Network'}>
-          <h3>{programId === 'q' ? 'The Q-table, live from Python' : 'The network, live from PyTorch'}</h3>
-          {programId === 'q' ? <QTableView table={view?.watch?.table?.value} prev={prevView?.watch?.table?.value} here={typeof here === 'number' ? here : undefined} writing={writing} />
-            : <NetworkView net={view?.watch?.network?.value} prev={prevView?.watch?.network?.value} baseline={baseline.current} />}
+        {(program.view === 'qtable' || program.view === 'network') && <div className="ap-cart"><Cart obs={obsOf(view)} ghost={obsOf(prevView)} label={program.files['a2c.py'] ? 'world 1 of 8' : 'Gymnasium CartPole'} /></div>}
+        <section className="ap-memory" aria-label={program.view === 'qtable' ? 'Q-table' : program.view === 'network' ? 'Network' : 'What the program holds'}>
+          <h3>{program.view === 'qtable' ? 'The Q-table, live from Python' : program.view === 'network' ? 'The network, live from PyTorch' : 'What the program holds, live from Python'}</h3>
+          {program.view === 'qtable' && <QTableView table={view?.watch?.table?.value} prev={prevView?.watch?.table?.value} here={typeof here === 'number' ? here : undefined} writing={writing} />}
+          {program.view === 'network' && <>
+            <NetworkView net={view?.watch?.network?.value} prev={prevView?.watch?.network?.value} baseline={baseline.current} />
+            {view?.watch?.critic && <><h3>The critic</h3><NetworkView net={view.watch.critic.value} prev={prevView?.watch?.critic?.value} baseline={criticBaseline.current} /></>}
+            <LengthsView view={view} />
+          </>}
+          {program.view === 'corridor' && <CorridorView view={view} prev={prevView} />}
+          {program.view === 'bars' && <BarsView view={view} prev={prevView} bars={program.bars} item={program.barItem} />}
+          {program.view === 'line' && <LineView view={view} />}
         </section>
         <div className="ap-explain-box" aria-live="polite">
           {!selection && <Overview program={program} info={info} view={view} onSelect={setSelection} />}

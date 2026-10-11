@@ -91,40 +91,60 @@ describe.skipIf(!existsSync(python))('the Python stepper', () => {
   // At every line with "this line will work out", work it out from the paused values, run the line in
   // real Python, and compare with what Python produced: a variable, an attribute, a table entry,
   // a return value, or (for an if) which way it went.
-  async function verifyCalcs(id, entry, watch, actions, pauses) {
+  async function verifyCalcs(id, entry, pauses) {
     const program = PROGRAMS[id], info = analyseProgram(program.files, program.explain)
-    let r = await s.send({ cmd: 'load', files: program.files, entry, watch, actions }), checked = 0
+    const values = frame => Object.fromEntries([...Object.entries(frame?.consts ?? {}), ...Object.entries(frame?.locals ?? {})].map(([k, v]) => [k, plain(v)]))
+    let r = await s.send({ cmd: 'load', files: program.files, entry: entry ?? program.entry, watch: program.watch, actions: program.actions }), checked = 0
     for (let i = 0; i < pauses && r.type === 'pause'; i++) {
       const top = r.stack.at(-1), note = info[top.file].notes[top.line]
       if (!note?.calc) { r = await s.send({ cmd: 'step', mode: 'into' }); continue }
-      const before = Object.fromEntries(Object.entries(top.locals).map(([k, v]) => [k, plain(v)]))
+      const before = values(top)
       const [, expected] = note.calc(before)
       const text = info[top.file].lines[top.line - 1].trim(), depth = r.stack.length
       r = await s.send({ cmd: 'step', mode: 'over' })
+      if (r.type !== 'pause') break   // that line ended the program: nothing more to compare
       let actual
       if (/^if /.test(text)) actual = r.stack.length === depth && r.stack.at(-1).line === top.line + 1
       else if (/^return /.test(text)) actual = plain(r.returned?.value)
       else {
-        const after = Object.fromEntries(Object.entries(r.stack[depth - 1]?.locals ?? {}).map(([k, v]) => [k, plain(v)]))
+        const after = values(r.stack[depth - 1])
         const lhs = text.split(/\s(?:=|\+=)\s/)[0]
-        const element = /^(\w+)\[(\w+), (\w+)\]$/.exec(lhs), attr = /^(\w+)\.(\w+)$/.exec(lhs)
-        // A function's last line: it has returned by the next pause, so read the table from the watch.
-        const table = element && (after[element[1]] ?? plain(r.watch.table?.value))
-        actual = element ? table[before[element[2]]][before[element[3]]] : attr ? r.stack[depth - 1].locals[attr[1]].attrs[attr[2]].v : after[lhs]
+        const element = /^(\w+)((?:\[[^\]]+\])+)$/.exec(lhs), attr = /^(\w+)\.(\w+)$/.exec(lhs)
+        if (element) {
+          // A function's last line: it has returned by the next pause, so read the table from the watch.
+          let at = after[element[1]] ?? plain(r.watch.table?.value)
+          for (const index of element[2].slice(1, -1).split('][').flatMap(x => x.split(', '))) at = at[/^\d+$/.test(index) ? Number(index) : before[index]]
+          actual = at
+        } else actual = attr ? r.stack[depth - 1].locals[attr[1]].attrs[attr[2]].v : after[lhs]
       }
-      if (typeof expected === 'number') expect(actual, `${top.file}:${top.line} ${text}`).toBeCloseTo(expected, 9)
-      else if (Array.isArray(expected) && typeof expected[0] === 'number') expected.forEach((x, k) => expect(actual[k], `${top.file}:${top.line} ${text} [${k}]`).toBeCloseTo(x, 9))
-      else expect(actual, `${top.file}:${top.line} ${text}`).toEqual(expected)
+      // Relative: PyTorch works in float32, so its last digits differ from the double-precision sum.
+      const close = (a, b, where) => expect(Math.abs(a - b), `${where}: ${a} vs ${b}`).toBeLessThanOrEqual(1e-6 * Math.max(1, Math.abs(b)))
+      const where = `${id} ${top.file}:${top.line} ${text}`
+      if (typeof expected === 'number') close(actual, expected, where)
+      else if (Array.isArray(expected) && typeof expected[0] === 'number') expected.forEach((x, k) => close(actual[k], x, `${where} [${k}]`))
+      else expect(actual, where).toEqual(expected)
       checked++
     }
     return checked
   }
   it('Q-learning: every "this line will work out" matches what Python then does', async () => {
-    expect(await verifyCalcs('q', Q_ENTRY, Q_WATCH, PROGRAMS.q.actions, 3000)).toBeGreaterThan(300)
+    expect(await verifyCalcs('q', null, 3000)).toBeGreaterThan(300)
   }, 300000)
   it('A2C: every "this line will work out" matches what Python then does', async () => {
-    expect(await verifyCalcs('a2c', { module: 'a2c', function: 'train_a2c', kwargs: { total_steps: 400, quiet: true, report_every: 100000 } }, PROGRAMS.a2c.watch, PROGRAMS.a2c.actions, 1500)).toBeGreaterThan(20)
+    expect(await verifyCalcs('a2c', { module: 'a2c', function: 'train_a2c', kwargs: { total_steps: 400, quiet: true, report_every: 100000 } }, 1500)).toBeGreaterThan(20)
   }, 300000)
+  // Each concept program, run short where it trains: every worked-out line checked against Python.
+  const SHORT = { reinforce: { episodes: 3 }, 'actor-critic': { episodes: 2 }, bandit: { pulls: 30 }, neuron: { steps: 6 }, 'policy-gradient': { pulls: 30 }, 'q-corridor': { episodes: 4 } }
+  for (const id of ['mdp', 'values', 'q-corridor', 'bandit', 'neuron', 'log-trick', 'policy-gradient', 'reinforce', 'actor-critic']) {
+    it(`concept "${PROGRAMS[id].label}": runs to the end, and every worked-out line matches Python`, async () => {
+      const entry = { ...PROGRAMS[id].entry, kwargs: SHORT[id] ?? {} }
+      expect(await verifyCalcs(id, entry, 2500), 'lines checked').toBeGreaterThan(id === 'reinforce' || id === 'actor-critic' ? 2 : 5)
+      // And the program finishes cleanly when run straight through.
+      let r = await s.send({ cmd: 'load', files: PROGRAMS[id].files, entry, watch: PROGRAMS[id].watch, actions: PROGRAMS[id].actions })
+      r = await s.send({ cmd: 'step', mode: 'line', file: 'none.py', line: 1 })
+      expect(r.type, r.error).toBe('finished')
+    }, 300000)
+  }
 
   it('A2C: the network\'s weights are watched, and backward() fills in the gradients', async () => {
     let r = await s.send({ cmd: 'load', files: files('a2c'), entry: { module: 'a2c', function: 'train_a2c', kwargs: { total_steps: 2000, quiet: true, report_every: 1000 } }, watch: { network: ['net'], obs: ['obs'] } })

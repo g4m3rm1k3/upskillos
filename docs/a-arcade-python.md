@@ -5,7 +5,21 @@ A desktop-only lab (`#/lab/a-arcade-python`) that runs the learner's real Q-Arca
 - **Q-learning:** Chapter 1's `qtable.py`, `qlearning.py`, `agent.py` and `train.py`, plus Chapter 2's `bins.py` and `cartpole_table.py`. It runs NumPy and Gymnasium, and starts at `train_cartpole()`.
 - **A2C:** Chapter 4's reference `actor_critic.py` and `a2c.py`. It runs PyTorch and 8 Gymnasium CartPoles, and starts at `train_a2c()`.
 
-The files in `src/labs/a-arcade-python/programs/` are copies of the Q-Arcade answers and lessons, unchanged. The lab shows the Q-table as heat maps (angle slot × spin slot, one per push) and the network's weights, their change since the start, and their gradients, filling in as you step. In the browser it points to A-Arcade Guided instead.
+The files in `src/labs/a-arcade-python/programs/q/` and `programs/a2c/` are copies of the Q-Arcade answers and lessons, unchanged. The program dropdown also offers short runs of both (20 games; 2,000 steps), and nine concept programs in `programs/concepts/`, each a single file showing one idea, in learning order:
+
+| # | Program | The idea | Picture |
+|---|---|---|---|
+| 1 | `mdp_corridor.py` | An MDP's five parts as plain Python; a policy as a table; returns | the corridor |
+| 2 | `value_iteration.py` | The Bellman equation solves the corridor without playing | values spreading back from the goal |
+| 3 | `q_corridor.py` | Q-learning learns the same values by playing | a 5 × 2 table filling in |
+| 4 | `bandit.py` | Explore or exploit; running averages | bars per slot machine |
+| 5 | `one_neuron.py` | Gradient descent on squared error | the line closing in on the points |
+| 6 | `log_derivative.py` | Where the policy gradient comes from: ∇J = E[R ∇log π], exact versus sampled | bars: exact, 10 plays, 400 plays |
+| 7 | `policy_gradient.py` | Softmax, a baseline, and a policy-gradient step | probabilities and scores |
+| 8 | `reinforce.py` | REINFORCE on CartPole, one update per game (measured: average length 34 → 495 over 300 games) | the network and the learning curve |
+| 9 | `actor_critic_onestep.py` | One-step actor-critic, the TD error as the advantage, one update per step (measured: 19 → 190) | actor and critic networks |
+
+Every program's overview has a "one family" table placing them all, and the Chapter 4 A2C, by the number that multiplies ∇log π and by when they update. The lab shows the Q-table as heat maps (angle slot × spin slot, one per push) and the network's weights, their change since the start, and their gradients, filling in as you step. In the browser it points to A-Arcade Guided instead.
 
 ## How it runs
 

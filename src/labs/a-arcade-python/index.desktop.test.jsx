@@ -64,8 +64,8 @@ describe.skipIf(!existsSync(python))('A-Arcade Python, with real Python behind i
 
   it('A2C: the Learn phase reaches backward(), and the gradient view fills in', async () => {
     const { container } = page()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'A2C (Chapter 4)' })).toBeTruthy())
-    click('A2C (Chapter 4)')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start' }).disabled).toBe(false))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Program' }), { target: { value: 'a2c' } })
     await ready()
     const backward = () => [...container.querySelectorAll('.ap-line.current')].some(l => l.textContent.includes('loss.backward()'))
     for (let i = 0; i < 12 && !backward(); i++) {

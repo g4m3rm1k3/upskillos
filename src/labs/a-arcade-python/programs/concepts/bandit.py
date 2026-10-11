@@ -12,7 +12,7 @@ def pull(arm, rng):
     return 0.0
 
 
-def run(pulls=60, epsilon=0.1, seed=0):
+def run(pulls=100, epsilon=0.2, seed=2):
     rng = random.Random(seed)
     estimates = [0.0, 0.0]
     counts = [0, 0]

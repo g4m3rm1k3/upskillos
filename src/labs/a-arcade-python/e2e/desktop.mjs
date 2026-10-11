@@ -39,7 +39,7 @@ try {
   console.log(`Desktop Q-learning: after 40 pushes, ${filled} Q-table entries are filled`)
   assert.ok(filled > 5)
   if (shots) await page.screenshot({ path: path.join(shots, 'desktop-q.png') })
-  await page.getByRole('button', { name: 'A2C (Chapter 4)' }).click()
+  await page.getByRole('combobox', { name: 'Program' }).selectOption('a2c')
   await page.getByText(/lines run$/).waitFor({ timeout: 60000 })
   for (let i = 0; i < 12; i++) {
     if (await page.locator('.ap-line.current', { hasText: 'loss.backward()' }).count()) break
@@ -53,6 +53,15 @@ try {
   assert.equal(await page.getByText(/no gradient yet/).count(), 0)
   console.log('Desktop A2C: backward() filled the gradients of all 6 parameter tensors')
   if (shots) await page.screenshot({ path: path.join(shots, 'desktop-a2c.png') })
+  // The concept programs: each one's picture, after a few moves.
+  for (const [id, moves] of [['values', 8], ['q-corridor', 30], ['policy-gradient', 25], ['reinforce', 2], ['neuron', 6]]) {
+    await page.getByRole('combobox', { name: 'Program' }).selectOption(id)
+    await page.getByText(/lines run$/).waitFor({ timeout: 60000 })
+    const next = page.getByRole('toolbar', { name: 'Stepping' }).getByRole('button', { name: /^Next/ })
+    for (let i = 0; i < moves; i++) { await next.click(); await page.waitForFunction(() => !document.querySelector('.ap-count')?.textContent.includes('running'), null, { timeout: 120000 }) }
+    console.log(`Concept ${id}: ${await page.locator('.ap-memory').innerText().then(t => t.replace(/\s+/g, ' ').slice(0, 140))}`)
+    if (shots) await page.screenshot({ path: path.join(shots, `concept-${id}.png`) })
+  }
   console.log(`Renderer errors: ${JSON.stringify(errors)}`)
   assert.deepEqual(errors, [])
 } finally {

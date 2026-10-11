@@ -126,3 +126,19 @@
 .ap-browser{padding:30px;display:block}.ap-browser h1{font-size:22px;margin-bottom:10px}.ap-browser p{max-width:640px;margin-bottom:10px;font-size:14px}
 .tk-string{color:#b8e986}
 .ap-calc-inline{flex-basis:100%;margin-left:52px;color:#fff3a8;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
+/* Program picker, the family map and the concept pictures. */
+.ap-picker{display:flex;align-items:center;gap:6px;font-size:12px}.ap-picker select{font:12px Inter,sans-serif;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;max-width:320px}
+.ap-family{margin-top:16px;padding:12px 14px;background:#f2f6fb;border:1px solid #d6e2f0;border-radius:10px}.ap-family h3{margin-top:0!important}
+.ap-corridor{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ap-cell{border:1px solid var(--line);border-radius:8px;padding:8px;min-height:84px;background:#fff;display:flex;flex-direction:column;gap:3px;font-size:12px;position:relative;transition:background .3s}
+.ap-cell small{color:var(--muted);font-size:10px}.ap-cell.goal{background:#eef8ec;border-color:#b9ddb2}.ap-cell.here{outline:2px solid #9cc63a;outline-offset:-1px}.ap-cell.changed{background:#fff5c9}
+.ap-agent{position:absolute;top:6px;right:8px;color:#14796f;font-size:16px}.ap-arrow{font-size:18px;color:#14796f}.ap-new{color:#8a6d00}.ap-q{line-height:1.5}
+.ap-bars{display:grid;gap:10px}.ap-bar-group>b{font-size:11px;display:block;margin-bottom:3px}
+.ap-bar-row{display:grid;grid-template-columns:minmax(130px,1.2fr) 2fr 70px;gap:8px;align-items:center;font-size:11.5px;padding:1px 4px;border-radius:4px}.ap-bar-row.changed{background:#fff5c9}
+.ap-bar-track{height:12px;background:#eef1ec;border-radius:3px;overflow:hidden}.ap-bar{display:block;height:100%;background:#14796f}.ap-bar.neg{background:#2868c8}
+.ap-line-plot{width:100%;max-width:520px;display:block;background:#fff;border:1px solid var(--line);border-radius:6px}
+.ap-lengths{margin-top:8px;font-size:11.5px}.ap-lengths svg{display:block;width:100%;height:46px;background:#fff;border:1px solid var(--line);border-radius:4px;margin-top:4px}
+/* One scroll for the whole middle column: the explanation gets its full height below the
+   cart and the Q-table / network, instead of a small scroll box of its own. */
+.ap-columns>.ap-middle{overflow-y:auto;display:block}
+.ap-middle .ap-explain-box{flex:none;overflow:visible}

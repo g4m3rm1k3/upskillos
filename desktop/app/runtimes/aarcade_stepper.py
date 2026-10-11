@@ -142,6 +142,10 @@ class Stepper:
         self.lines_run += 1
         previous = self.last_line.get(frame)
         self.last_line[frame] = frame.f_lineno
+        # A line reported again straight after itself is a loop inside that one line (a list
+        # comprehension, run inline since Python 3.12): still the same step, so don't pause.
+        if previous == frame.f_lineno:
+            return self.trace_line
         if self.should_pause(frame, previous):
             self.pause(frame)
         return self.trace_line
