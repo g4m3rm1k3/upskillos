@@ -803,7 +803,7 @@ export const PIECES = {
     symbols: [{ tex: 'H', say: 'H', means: 'entropy' }, { tex: '\\beta', say: 'beta', means: 'the bonus weight, 0.01', code: 'entropy', now: L => L.batch ? n(L.batch.entropy, 2) : null }],
     example: { setup: 'Two actors.', steps: [{ tex: String.raw`p = 0.5:\ H = -2 \times 0.5 \log 0.5 = 0.693` }, { tex: String.raw`p = 0.99:\ H = -0.99\log 0.99 - 0.01 \log 0.01 = 0.0099 + 0.0461 = 0.056` }] },
     plug: L => L.rec ? String.raw`\frac{dH}{dz} = ${n(L.rec.entropyGradient)}` : null,
-    breakIt: { text: 'Remove the entropy bonus. On CartPole it makes little difference (your paper\'s ablation found the same); on harder tasks it can.', option: 'entropyEnabled', value: false, algorithm: 'a2c' },
+    breakIt: { text: 'Remove the entropy bonus. On CartPole it makes little difference; on harder tasks it can.', option: 'entropyEnabled', value: false, algorithm: 'a2c' },
     parts: ['log', 'probability'],
   },
 

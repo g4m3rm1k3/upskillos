@@ -10,7 +10,7 @@ The whole idea in five sentences:
 4. After each move it nudges that one number toward `reward + discount x (best number in the row of the cell I landed in)`.
 5. Do this thousands of times, and good news from the goal spreads backward through the table until following the biggest number in each row walks the shortest path.
 
-How to use it: run the cells in order, because later cells use names from earlier ones, and predict each cell's output before you run it. The cell numbers match the Q-maze notebook from your CS 370 work, so you can compare them side by side. Your CS 370 project replaces this table with a neural network (deep Q-learning, with "experience replay"). That's lesson 3 of this series, and everything here is its foundation: the network learns to output the same numbers this table holds.
+How to use it: run the cells in order, because later cells use names from earlier ones, and predict each cell's output before you run it. A later lesson in this series replaces this table with a neural network (deep Q-learning, with "experience replay"), and everything here is its foundation: the network learns to output the same numbers this table holds.
 
 ## Part 1: the maze world
 

@@ -4,7 +4,7 @@ A pole is hinged on top of a cart. Every tick (0.02 s) you choose one of two act
 
 This lesson builds CartPole from its physics, draws it so you can see what's happening, solves it once by hand with a rule, and then teaches a Q-table to do it by itself. It finishes with experiments that change one setting at a time, and with an honest look at how much of reinforcement learning is luck.
 
-How to use it: run the cells in order, because later cells use names defined in earlier ones. Before each cell, predict what it will print. Cells that use randomness start with `random.seed(...)`, so in this notebook you'll see exactly the numbers the explanations describe. (In Python on your own computer some later numbers come out differently, and the section *Why desktop numbers differ* explains why that's expected.) The cell numbers match the CartPole notebook from your CS 370 work, so you can compare the two side by side.
+How to use it: run the cells in order, because later cells use names defined in earlier ones. Before each cell, predict what it will print. Cells that use randomness start with `random.seed(...)`, so in this notebook you'll see exactly the numbers the explanations describe. (In Python on your own computer some later numbers come out differently, and the section *Why desktop numbers differ* explains why that's expected.)
 
 ## Cells 1 and 2: imports, and the constants of the world
 
@@ -758,7 +758,7 @@ If you run the original notebook in Jupyter on your computer, Cells 1 to 16 prin
 
 The seed fixes the random numbers, so the difference isn't randomness. It's the physics. `math.sin` and `math.cos` are computed by the system's maths library, and different systems (Windows, Linux, and the WebAssembly Python this notebook uses) may round the very last digit differently. CartPole is **chaotic**: a difference of 0.0000000000000001 in the angle grows a little every tick, and after a few hundred ticks it's big enough to put one state in a different bucket. From then on the whole training run takes a different path. All three results are correct runs of the same algorithm. This notebook runs the same WebAssembly Python for everyone, so its numbers match the text.
 
-The lesson for your coursework: a single reinforcement-learning result is one sample from a wide distribution. Report several seeds, and the spread, not one number.
+The lesson: a single reinforcement-learning result is one sample from a wide distribution. Report several seeds, and the spread, not one number.
 
 ::: challenge The CartPole update [easy]
 Write `q_update(Q, s, a, reward, s_next, failed, alpha, gamma)`. It applies one Q-learning update to the box `Q[s + (a,)]` in place, using a target of `reward` alone when `failed` is true, and `reward + gamma * (best value in the row of s_next)` otherwise, and returns the box's new value. `s` and `s_next` are bucket tuples like `(1, 1, 3, 2)`, as in Cell 15.
@@ -882,4 +882,4 @@ These are real unknowns: change one thing each and predict first. Each `experime
 
 Four ideas explain every result above. **Exploration** is required, because without it the agent locks onto the first thing it tries, and the exploration **schedule** has to fit the training budget. **Alpha** trades speed against stability, and 1 never settles. **Gamma** sets how far ahead the agent can see. And the **state representation** limits what the agent can ever learn, because a table cannot separate situations that share a row. Over all of them sits the fifth: one run is one sample, so compare settings over several seeds.
 
-A table also hits a wall: to see position and velocity finely as well, you'd need thousands of rows, each visited too rarely to learn. The next lessons replace the table with a small neural network that **generalises** between similar states, the step from Q-learning to deep Q-learning that your coursework's Keras models take.
+A table also hits a wall: to see position and velocity finely as well, you'd need thousands of rows, each visited too rarely to learn. The next lessons replace the table with a small neural network that **generalises** between similar states, the step from Q-learning to deep Q-learning.

@@ -6,8 +6,6 @@ This lesson is built so that you **type everything**. Each step shows its code, 
 
 I assume no data-science background. Every piece of Python and numpy is explained the first time it appears, and a cheat sheet and glossary are at the end.
 
-**Note on your assignment.** I do not know exactly what your assignment's "qmaze" asks for. If it uses a plain table (a grid of numbers), Parts A to D are the core. If it uses a neural network with experience replay (as many online "maze with Keras" tutorials do), Part E is the core. Both are here, so read the assignment against the map below and note anything it asks for that is not covered.
-
 ## How to use this lesson
 
 **The loop for every step:**

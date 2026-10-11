@@ -3,7 +3,7 @@
 // alive between cells, so names defined in one cell exist in the next (like Jupyter). It
 // exists for what the browser's Pyodide can't do: packages Pyodide doesn't have
 // (TensorFlow, Keras, gymnasium, PyTorch), long training runs that would freeze a browser
-// tab, and importing the learner's own files (a course's TreasureMaze.py) from a folder.
+// tab, and importing the learner's own .py files from a folder.
 //
 // The learner's Python, not the app's private one (runtimes/python.cjs): the point is the
 // packages they installed. The kernel runs in a working folder they choose, so imports and
