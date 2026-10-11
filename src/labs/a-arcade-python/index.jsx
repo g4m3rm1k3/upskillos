@@ -193,11 +193,11 @@ function PieceExplain({ id, onSelect }) {
 // One table placing every method in the lab: they differ in the number that multiplies
 // ∇log π (or the target a value moves to) and in when they update.
 const FAMILY = [
-  ['Q-learning (programs 3, your Ch 1–2)', 'no policy network: Q(s, a) moves towards r + γ max Q(s′, ·)', 'every step', 'the table is the critic'],
+  ['Q-learning (concept 3, and Q-Arcade chapters 1–2)', 'no policy network: Q(s, a) moves towards r + γ max Q(s′, ·)', 'every step', 'the table is the critic'],
   ['REINFORCE (8)', 'G_t, the whole return after step t', 'once per game, after it ends', 'none'],
   ['REINFORCE with a baseline (7, and 8 normalised)', 'G_t − b: the return minus what is usual', 'once per game (or per pull)', 'a baseline: an average'],
   ['One-step actor-critic (9)', 'δ = r + γV(s′) − V(s), the TD error', 'every step', 'V(s), trained on δ²'],
-  ['A2C, your Chapter 4', 'G_t^(n) − V(s): n = 5 real rewards, then V', 'every 5 steps, from 8 worlds at once (40 moves)', 'V(s), trained on (G − V)²'],
+  ['A2C (Q-Arcade chapter 4)', 'G_t^(n) − V(s): n = 5 real rewards, then V', 'every 5 steps, from 8 worlds at once (40 moves)', 'V(s), trained on (G − V)²'],
 ]
 function FamilyMap({ onSelect }) {
   return <section className="ap-family" aria-label="One family of methods">

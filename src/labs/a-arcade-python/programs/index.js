@@ -17,20 +17,20 @@ const A2C_PHASES = [['observe', 'Observe', '8 CartPoles give their states.'], ['
 const PG_PHASES = [['observe', 'Observe', 'A state from CartPole.'], ['choose', 'Choose', 'The policy samples a push.'], ['act', 'Act', 'env.step: the world answers.'], ['remember', 'Remember', 'Keep log π and the reward.'], ['targets', 'Targets', 'The number that multiplies ∇log π.'], ['learn', 'Learn', 'Loss, backward, step.']]
 
 const Q = {
-  group: 'Your Q-Arcade code', label: 'Q-learning (Chapters 1–2)', files: filesOf('q'),
+  group: 'Code from the Q-Arcade series', label: 'Q-learning on CartPole (Q-Arcade chapters 1–2)', files: filesOf('q'),
   order: ['cartpole_table.py', 'train.py', 'agent.py', 'qlearning.py', 'qtable.py', 'bins.py'],
   entry: { module: 'cartpole_table', function: 'train_cartpole', kwargs: { episodes: 500, seed: 0 } },
   watch: { table: ['agent.Q', 'self.Q', 'Q'], obs: ['env.obs', 'self.obs'] },
   actions: ['self.env.step('], view: 'qtable', explain: qExplain, orchestrators: ['run_episode'], phases: Q_PHASES,
   knobs: [['agent.epsilon', 'ε epsilon', 'exploration probability', 0, 1, .01], ['agent.alpha', 'α alpha', 'learning rate', 0, 1, .01], ['agent.gamma', 'γ gamma', 'discount', 0, 1, .01]],
-  intro: 'Your Chapter 1–2 files, unchanged, running in real Python with real NumPy and Gymnasium.',
+  intro: 'This is the finished code from the Q-Arcade series in Project Studio, which builds it one lesson at a time: chapter 1 builds Q-learning on a 5-square corridor, chapter 2 moves it to CartPole with a table. You do not need to have done the series to step through it here. It runs exactly as written, in real Python with real NumPy and Gymnasium.',
 }
 const A2C = {
-  group: 'Your Q-Arcade code', label: 'A2C (Chapter 4)', files: filesOf('a2c'), order: ['a2c.py', 'actor_critic.py'],
+  group: 'Code from the Q-Arcade series', label: 'A2C on CartPole (Q-Arcade chapter 4)', files: filesOf('a2c'), order: ['a2c.py', 'actor_critic.py'],
   entry: { module: 'a2c', function: 'train_a2c', kwargs: { total_steps: 200000, quiet: true } },
   watch: { network: ['net', 'self'], obs: ['obs'] }, actions: ['envs.step(', 'env.step('], view: 'network',
   explain: a2cExplain, orchestrators: ['train_a2c'], phases: A2C_PHASES, knobs: [],
-  intro: 'Your Chapter 4 reference A2C, unchanged, running in real Python with real PyTorch and 8 Gymnasium CartPoles.',
+  intro: 'This is the finished A2C (advantage actor-critic) code from chapter 4 of the Q-Arcade series in Project Studio, which builds it one lesson at a time. You do not need to have done the series to step through it here. It runs exactly as written, in real Python with real PyTorch and 8 Gymnasium CartPoles at once.',
 }
 
 // A concept program: one file, one idea.
@@ -43,8 +43,8 @@ const concept = (file, label, fn, extra) => ({
 export const PROGRAMS = {
   q: Q,
   a2c: A2C,
-  'q-short': { ...Q, group: 'Short runs of your code', label: 'Q-learning: 20 games', entry: { ...Q.entry, kwargs: { episodes: 20, seed: 0 } }, intro: `${Q.intro} This short run plays 20 games, so it finishes in seconds.` },
-  'a2c-short': { ...A2C, group: 'Short runs of your code', label: 'A2C: 2,000 steps', entry: { ...A2C.entry, kwargs: { total_steps: 2000, quiet: true, report_every: 1000 } }, intro: `${A2C.intro} This short run trains for 2,000 world-steps (50 updates).` },
+  'q-short': { ...Q, group: 'Short runs of the Q-Arcade code', label: 'Q-learning: 20 games', entry: { ...Q.entry, kwargs: { episodes: 20, seed: 0 } }, intro: `${Q.intro} This short run plays 20 games, so it finishes in seconds.` },
+  'a2c-short': { ...A2C, group: 'Short runs of the Q-Arcade code', label: 'A2C: 2,000 steps', entry: { ...A2C.entry, kwargs: { total_steps: 2000, quiet: true, report_every: 1000 } }, intro: `${A2C.intro} This short run trains for 2,000 world-steps (50 updates).` },
   mdp: concept('mdp_corridor.py', '1. An MDP, written out in full', 'main', {
     watch: { state: ['state'], rewards: ['rewards'], policy: ['policy'] }, actions: ['transition('], view: 'corridor',
     intro: 'The five parts of an MDP as plain Python: states, actions, P, R and γ. A policy is a table; a better policy is one with a higher return.' }),
