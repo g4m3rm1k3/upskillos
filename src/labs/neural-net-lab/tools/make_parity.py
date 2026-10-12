@@ -31,6 +31,8 @@ from mnist import load_mnist                         # noqa: E402
 from preprocess import example, to_mnist             # noqa: E402
 from optimizers import race_all                      # noqa: E402
 from overfit import noisy_points                     # noqa: E402
+from conv import KERNELS, convolve, max_pool, relu_map  # noqa: E402
+from cnn import make_cnn                             # noqa: E402
 
 ACT = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid}
 
@@ -148,6 +150,18 @@ def main():
     xs, ys = noisy_points(30, 0, 0.3)
     out["noisy"] = {"xs": xs.squeeze(1).tolist(), "ys": ys.squeeze(1).tolist()}
     out["networks_wd"] = [network_run_wd("sgd", 21, 0.1), network_run_wd("adam", 22, 0.01)]
+    # Part 6: convolution by hand, and the CNN's gradients on a small batch of real digits
+    out["conv"] = {name: convolve(example(), kernel) for name, kernel in KERNELS.items()}
+    out["pooled"] = max_pool(relu_map(convolve(example(), KERNELS["vertical edges"])))
+    torch.manual_seed(31)
+    model = make_cnn().double()
+    images, labels = load_mnist("test", 4)
+    batch = images.double().view(-1, 1, 28, 28)
+    loss = nn.CrossEntropyLoss()(model(batch), labels)
+    loss.backward()
+    out["cnn"] = {"W": model[0].weight.view(8, 9).tolist(), "b": model[0].bias.tolist(), "D": model[4].weight.tolist(), "c": model[4].bias.tolist(),
+                  "x": images.tolist(), "labels": labels.tolist(), "loss": loss.item(),
+                  "gW": model[0].weight.grad.view(8, 9).tolist(), "gb": model[0].bias.grad.tolist(), "gD": model[4].weight.grad.tolist(), "gc": model[4].bias.grad.tolist()}
     path = os.path.join(HERE, "..", "engine", "parity.json")
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(out, handle)

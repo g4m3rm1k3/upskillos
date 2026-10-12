@@ -116,4 +116,19 @@ export const PROGRAMS = {
     kwargs: () => ({ steps: 3000, seed: 0 }), choices: { weight_decay: [0, 0.001, 0.01], dropout: [0, 0.2, 0.5] }, watch: { train: all('train_history'), test: all('test_history') }, picture: 'overfit', actions: [],
     episodeEnd: () => [['overfit.py', lineOf('overfit.py', 'test_history.append(')]], endLabel: 'Next step',
   },
+  filters: {
+    label: '6.1 Filters by hand', file: 'conv.py', module: 'conv', function: 'show_filters',
+    about: 'The example 7 through three filters, each followed by ReLU and 2 × 2 max pooling, all in plain Python.',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  cnn: {
+    label: '6.4 CNN against a plain network', file: 'cnn.py', module: 'cnn', function: 'compare',
+    about: 'Both networks trained one epoch on all of MNIST; their weights, and their accuracy on test digits moved 0, 2 and 4 pixels.',
+    kwargs: () => ({ epochs: 1, seed: 0 }), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  save_load: {
+    label: '6.5 Save and load a model', file: 'save_load.py', module: 'save_load', function: 'save_and_load',
+    about: 'Train a CNN on 6,000 digits, save its state dict, load it into a new CNN, and check the two answer identically.',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
 }

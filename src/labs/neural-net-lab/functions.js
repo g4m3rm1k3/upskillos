@@ -80,6 +80,16 @@ export const FUNCTIONS = {
   'overfit.py:train_big': F('A 1 → 64 → 64 → 1 network on 30 noisy points; the error on them and on the true curve, every step.', [['steps', 'how many steps'], ['weight_decay', 'the weight-decay strength λ'], ['dropout', 'the probability of dropping each hidden neuron'], ['seed', 'starting weights and data']], '`(train_history, test_history, best)`', 'overfitting'),
   'init_check.py:same_start': F('A network whose weights all start at 0.5: do its hidden neurons ever differ?', [['hidden', 'hidden neurons']], 'the hidden weights after 200 steps', 'initialisation'),
   'init_check.py:signal_through_layers': F('A batch through 8 tanh layers with weights of a chosen size: the spread after each layer.', [['scale', 'the weights\' size, in units of 1/√width'], ['layers', 'how many layers'], ['width', 'neurons per layer'], ['seed', 'random numbers']], 'the spread after each layer', 'initialisation'),
+  'conv.py:convolve': F('Slides a filter over a picture: at each place, the overlapping numbers multiplied and added.', [['image', 'the picture, rows of numbers'], ['kernel', 'the filter, a small square of weights']], 'the feature map, smaller by (filter size − 1) each way', 'convolution'),
+  'conv.py:relu_map': F('ReLU on every number of a picture.', [['image', 'the picture']], 'the picture with negatives set to 0', 'conv-layer'),
+  'conv.py:max_pool': F('Each size × size block replaced by its largest number.', [['image', 'the picture'], ['size', 'the block size, 2']], 'a picture half as wide and tall', 'conv-layer'),
+  'conv.py:show_filters': F('The example 7 through each filter, ReLU and pooling.', [], 'a dictionary of 13 × 13 maps, one per filter', 'conv-layer'),
+  'cnn.py:make_cnn': F('Builds the CNN: Conv2d(1, 8, 3), ReLU, MaxPool2d(2), Flatten, Linear(1352, 10).', [], 'an `nn.Sequential` model (13,610 weights)', 'cnn'),
+  'cnn.py:make_dense': F('Builds the plain network for comparison: Flatten, 784 → 128 → 10.', [], 'an `nn.Sequential` model (101,770 weights)', 'cnn'),
+  'cnn.py:train': F('Mini-batch training with SGD, for either network.', [['model', 'the network'], ['images', 'N × 1 × 28 × 28 pictures'], ['labels', 'their digits'], ['epochs', 'passes'], ['batch_size', 'pictures per step'], ['rate', 'the learning rate'], ['seed', 'shuffles']], 'the trained model', 'cnn'),
+  'cnn.py:accuracy': F('The fraction of test digits right, with every picture first moved sideways.', [['model', 'the network'], ['images', 'the pictures'], ['labels', 'their digits'], ['shift', 'pixels to move right']], 'a number from 0 to 1', 'what-convolution-buys'),
+  'cnn.py:compare': F('Trains the plain network and the CNN on all of MNIST and compares weights and accuracy, digits moved 0, 2 and 4 pixels.', [['epochs', 'passes'], ['seed', 'starting weights and shuffles']], 'a dictionary of results per network', 'what-convolution-buys'),
+  'save_load.py:save_and_load': F('Trains a CNN, saves its weights, loads them into a new CNN, and checks both answer identically.', [['limit', 'training digits to use'], ['seed', 'starting weights']], '`(same, accuracy)`', 'save-load'),
   'cars.py:predict_mpg': F('The trained model\'s guess for a car you describe.', [['model', 'the trained model'], ['stats', 'the training cars\' averages and spreads'], ['weight', 'pounds'], ['horsepower', 'horsepower']], 'the predicted miles per gallon', 'fuel-economy'),
 }
 
@@ -126,5 +136,7 @@ export const VARS = {
   results: 'each optimiser\'s path and final error', largest: 'the biggest difference so far', weight: 'a PyTorch tensor of the weights', make: 'a function that makes PyTorch\'s optimiser',
   noise: 'the most a point is off the curve', weight_decay: 'λ: how strongly weights are pulled towards 0', dropout: 'the chance of dropping each hidden neuron', train_history: 'error on the training points', test_history: 'error on the true curve',
   spreads: 'the typical size after each layer', layers: 'how many layers', layer: 'which layer', p: 'one parameter tensor',
+  kernel: 'the filter: a small square of weights', digit: 'the example 7, 28 × 28', maps: 'one result picture per filter', moved: 'the pictures moved sideways', shift: 'pixels to move right',
+  results: 'per network: weights and accuracies', weights_count: 'how many numbers the network holds', fresh: 'a new model with the same architecture', same: 'True if both models give identical outputs',
   train_x: 'training measurements', train_y: 'training labels', test_x: 'test measurements', test_y: 'test labels', columns: 'which measurements to use',
 }

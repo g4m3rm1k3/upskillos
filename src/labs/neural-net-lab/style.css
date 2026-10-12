@@ -23,3 +23,7 @@
 .nn-img28{image-rendering:pixelated;border:1px solid var(--line);background:#fff;display:block}
 .nn-stages{display:flex;gap:10px;flex-wrap:wrap}.nn-stages>span{display:flex;flex-direction:column;align-items:center;max-width:120px;text-align:center}.nn-stages small{font-size:11px;color:var(--muted)}
 canvas.nn-pad{image-rendering:pixelated}
+.nn-grid{background:#fffdf8;border:1px solid var(--line);display:block}
+.nn-kernel input{width:56px}.nn-kernel td{padding:1px}
+.nn-filter{gap:4px}
+.qm-log .nn-on{background:#fff1da;font-weight:700}

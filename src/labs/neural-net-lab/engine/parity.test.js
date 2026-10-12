@@ -11,6 +11,7 @@ import { makeBlobs, makeMoons, trainLogistic, confusion, scores, loadTumours, sp
 import { softmax, trainSoftmax, confusionMatrix, loadDigits, splitDigits, oneHot, padToPixels } from './part3.js'
 import { parseMnistSmall, toMnist, exampleDrawing } from './part4.js'
 import { race, BEST_RATES, noisyPoints } from './part5.js'
+import { KERNELS, convolve, maxPool, reluMap, cnnLossAndGradients } from './cnn.js'
 import { makeMLP, forwardOne } from './mlp.js'
 import { PyRandom } from '../../qmaze-lab/engine/mt.js'
 import { readFileSync } from 'node:fs'
@@ -156,6 +157,19 @@ describe('Part 5', () => {
     const dropped = masks.filter(m => m === 0).length
     expect(dropped).toBeGreaterThan(40); expect(dropped).toBeLessThan(80)
     expect(as[1].filter((a, k) => masks[k] === 0 && a !== 0)).toEqual([])
+  })
+})
+
+describe('Part 6', () => {
+  it('convolution and pooling by hand: the same pictures as conv.py', () => {
+    for (const [name, kernel] of Object.entries(KERNELS)) close(convolve(toMnist(exampleDrawing()), kernel), parity.conv[name], 1e-12)
+    close(maxPool(reluMap(convolve(toMnist(exampleDrawing()), KERNELS['vertical edges']))), parity.pooled, 1e-12)
+  })
+  it('the CNN: the same loss and the same gradient for every weight as PyTorch\'s Conv2d, MaxPool2d and Linear', () => {
+    const p = parity.cnn, net = { filters: 8, W: p.W.map(r => [...r]), b: [...p.b], D: p.D.map(r => [...r]), c: [...p.c] }
+    const { loss, grads } = cnnLossAndGradients(net, p.x, p.labels)
+    close(loss, p.loss, 1e-12)
+    close(grads.W, p.gW, 1e-12); close(grads.b, p.gb, 1e-12); close(grads.D, p.gD, 1e-12); close(grads.c, p.gc, 1e-12)
   })
 })
 

@@ -4,6 +4,7 @@ import { SigmoidNeuronFig, BceFig, LogisticTrainer, DrawYourOwn, TumourScatter, 
 import { Softmax3Fig, CeGradientFig, IrisFig, DigitGallery, DigitTrainer, DrawDigit, DigitWeights } from './part3.jsx'
 import { MnistGallery, BatchFig, MnistTrainer, PreprocessFig, DrawMnist, HiddenWeights, YourClasses } from './part4.jsx'
 import { ValleyRace, LearningRateFig, InitFig, OverfitFig } from './part5.jsx'
+import { ConvFig, PoolFig, LearnedFilters, ShiftFig, SaveLoadFig } from './part6.jsx'
 
 export const FIGURES = {
   HandFit, LossLandscape, LayerFig, ActivationFig, HingeBuilder, BackpropFig, CurveTrainer, CarsFig,
@@ -11,4 +12,5 @@ export const FIGURES = {
   Softmax3Fig, CeGradientFig, IrisFig, DigitGallery, DigitTrainer, DrawDigit, DigitWeights,
   MnistGallery, BatchFig, MnistTrainer, PreprocessFig, DrawMnist, HiddenWeights, YourClasses,
   ValleyRace, LearningRateFig, InitFig, OverfitFig,
+  ConvFig, PoolFig, LearnedFilters, ShiftFig, SaveLoadFig,
 }
