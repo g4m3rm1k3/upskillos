@@ -167,7 +167,7 @@ print("product on", product.device)
 print(product.cpu().numpy())
 ```
 
-Run it with **Run**, or `.venv\Scripts\python experiments/first_tensors.py`. The five operations:
+Run it with **Run**, or `.venv\Scripts\python experiments/first_tensors.py`. It starts by making a NumPy array: `np.array([[1.0, 2.0], [3.0, 4.0]])` turns a list of lists into a 2 × 2 table of numbers. (`import numpy as np` imports NumPy under the short name `np`, as nearly everyone does.) Then the five operations:
 
 1. **`torch.from_numpy(a)`** turns a NumPy array into a tensor without copying the numbers: both now look at the same memory.
 2. **`.dtype`** is the type of every number inside, such as `float64`.

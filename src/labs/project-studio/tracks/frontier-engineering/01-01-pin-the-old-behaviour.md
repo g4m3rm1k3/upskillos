@@ -235,7 +235,7 @@ print(result.stdout)
 
 - **`subprocess.run`** runs another program and waits for it to finish. The program and its arguments go in a list. `sys.executable` is the path of the Python running this file, the project's `.venv` Python, so the script runs with the same environment.
 - **`cwd=ROOT`** runs it in the project folder, whatever folder you start this tool from. `capture_output=True` collects what it prints instead of showing it, `text=True` gives that back as a string rather than bytes, and `check=True` raises an error if the program fails.
-- **`Path`** (from `pathlib`) is a file path as an object. `Path(__file__)` is this file, `.resolve()` makes it absolute, and each `.parent` goes up one folder: `tools/save_golden.py` → `tools` → the project. The `/` operator joins paths. `mkdir(exist_ok=True)` creates the folder unless it's already there. `write_text` writes a string to the file, and `encoding="utf-8"` says how to turn text into bytes, the same way on every computer.
+- **`Path`** (from `pathlib`) is a file path as an object. `Path(__file__)` is this file, `.resolve()` makes it absolute, and each `.parent` goes up one folder: `tools/save_golden.py` → `tools` → the project. The `/` operator joins paths. `mkdir(exist_ok=True)` creates the folder unless it's already there. `write_text` writes a string to the file, and `encoding="utf-8"` says how to turn text into bytes, the same way on every computer. Its opposite, `read_text(encoding="utf-8")`, reads a whole file back into one string.
 
 Why not `textstats.py > tests/golden/sample.txt` in PowerShell? Depending on the PowerShell version, `>` writes UTF-16, an encoding twice the size that most tools read as garbage. Python writes exactly what you tell it to.
 

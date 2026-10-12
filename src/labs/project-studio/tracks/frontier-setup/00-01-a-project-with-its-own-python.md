@@ -64,6 +64,17 @@ When any Python starts, one of the first things it does is look for a `pyvenv.cf
 2. It sets `sys.prefix` ("where am I installed?") to the `.venv` folder. The real location is kept in `sys.base_prefix`.
 3. Its list of folders to import packages from, `sys.path`, gets `.venv\Lib\site-packages` and **not** the real installation's `site-packages`. That's what `include-system-site-packages = false` means.
 
+Put point 2 to the test before running anything:
+
+```predict
+question: What does `.venv\Scripts\python -c "import sys; print(sys.prefix == sys.base_prefix)"` print?
+choice: True
+choice: False
+answer: False
+explain: The launcher in `.venv\Scripts` found `pyvenv.cfg` beside it, so `sys.prefix` is the `.venv` folder while `sys.base_prefix` is still the real installation named by `home`. They differ, so the comparison is `False`. Your system `python` finds no `pyvenv.cfg`, and for it the two are the same folder: `True`.
+verify: .venv/Scripts/python -c "import sys; print(sys.prefix == sys.base_prefix)"
+```
+
 So `.venv\Scripts\python` finds only this project's packages. Your system Python finds no `pyvenv.cfg`, so it keeps its own packages. The second check below tests exactly that: inside the environment, `sys.prefix` differs from `sys.base_prefix`.
 
 ```check

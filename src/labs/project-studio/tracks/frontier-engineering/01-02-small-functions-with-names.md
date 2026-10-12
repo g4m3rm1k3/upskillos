@@ -397,6 +397,7 @@ if __name__ == "__main__":
 - **`counts.get(item, 0)`** returns the item's count, or `0` if the item isn't in the dictionary yet. It replaces the four-line `if ... in ... else`.
 - **`[c for c in text.lower() if c.isalpha()]`** is a **list comprehension**: a generator expression in square brackets, which builds the list. It reads like the loop it replaces: every `c` in the lower-cased text, if it's a letter.
 - `tally` works on any list: words, letters, or (in Chapter 26) pairs of letters. That's what one function instead of two copies buys.
+- **`sorted(counts.items(), key=lambda x: x[1], reverse=True)`**, the line the script already had, sorts the `(item, count)` pairs. `key=` gives `sorted` a function to call on each pair, and it sorts by whatever that returns. `lambda x: x[1]` is that function, written in place: a **`lambda`** is a function with no name and one expression, so `lambda x: x[1]` does the same as `def second(x): return x[1]`. Here it picks out the count. `reverse=True` puts the largest first.
 - `counts` is now a **local** variable of `go`, made fresh on every call, and `total` is just `len(words)`.
 
 ```predict

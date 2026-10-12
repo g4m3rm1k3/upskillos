@@ -157,7 +157,7 @@ file tests/test_info.py -- Click "Create provided tests/test_info.py" above.
 
 ## Your machine, as data
 
-Create `src/frontier/info.py`:
+Now the package's first real module. It has one function, `environment()`, that collects the facts from the start of this lesson (the Python version, the operating system and NumPy's version) into a dictionary, so that later code can save them, print them or compare two of them. Create `src/frontier/info.py`:
 
 ```python file=src/frontier/info.py
 """Facts about the machine and the packages a run used."""
@@ -175,6 +175,7 @@ def environment():
 ```
 
 - **`platform`** is a standard-library module that asks the operating system about itself. `python_version()` gives `"3.13.14"`. `system()` and `release()` give `"Windows"` and `"11"`.
+- **`f"{platform.system()} {platform.release()}"`** is an **f-string**: a string with an `f` in front, where anything inside `{...}` is worked out and its value written into the text. Here it gives `"Windows 11"`. `f"{2 + 3} cats"` gives `"5 cats"`.
 - The function returns a **dictionary**, not printed text. Data can be saved, compared and tested. Text can only be read. Two runs' environments can later be compared key by key to find what changed.
 - Imports go at the top, standard library first, then a blank line, then installed packages. That's the usual order (the style guide PEP 8 sets it), so a reader sees at a glance what the module depends on.
 
@@ -182,6 +183,23 @@ Try it from the terminal:
 
 ```powershell
 .venv\Scripts\python -c "from frontier.info import environment; print(environment())"
+```
+
+Printed like that, a dictionary is hard to read. The next step turns it into one `key: value` line per fact, and needs two more pieces of Python:
+
+- **`join`** is a string method that glues a list of strings together, putting the string it's called on between each pair: `", ".join(["a", "b", "c"])` gives `"a, b, c"`. With `"\n"`, the newline character, each piece ends up on a line of its own.
+- A **generator expression** is a `for` loop written inside brackets: `(n * n for n in range(4))` produces `0, 1, 4, 9`, one at a time, without building a list first. When it is the only thing passed to a function, it needs no brackets of its own: `sum(n * n for n in range(4))` is `14`.
+
+Together:
+
+```predict
+question: What does `"-".join(str(n) for n in range(3))` give?
+choice: 0-1-2
+choice: 012
+choice: 0-1-2-
+answer: 0-1-2
+explain: The generator expression produces `"0"`, `"1"` and `"2"` (`str` turns each number into text, because `join` only glues strings). `join` puts `"-"` *between* them, not after each, so there's no dash at the end.
+verify: .venv/Scripts/python -c "print('-'.join(str(n) for n in range(3)))"
 ```
 
 ```check
