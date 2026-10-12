@@ -1,4 +1,5 @@
 from gridworld import GridWorld
+from montecarlo import mc_evaluate, train_mc_control
 from planning import value_iteration
 from qlearning import train_q_learning
 from sarsa import train_sarsa
@@ -22,4 +23,18 @@ def learn_sarsa(name="cheese_and_cat", **settings):
     """SARSA on one map; settings are train_sarsa's."""
     env = GridWorld(name)
     Q, totals = train_sarsa(env, **settings)
+    return Q, totals
+
+
+def evaluate_mc(name="cheese_and_cat", **settings):
+    """Monte Carlo prediction of the random policy's values on one map; settings are mc_evaluate's."""
+    env = GridWorld(name)
+    V = mc_evaluate(env, **settings)
+    return V
+
+
+def learn_mc(name="cheese_and_cat", **settings):
+    """Monte Carlo control on one map; settings are train_mc_control's."""
+    env = GridWorld(name)
+    Q, totals = train_mc_control(env, **settings)
     return Q, totals

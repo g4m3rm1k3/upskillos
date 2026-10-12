@@ -12,6 +12,7 @@ import { SOURCES } from './source.js'
 import { PROGRAMS } from './programs.js'
 import { GridWorld } from './engine/gridworld.js'
 import { qLearning, finish } from './engine/tabular.js'
+import { mcEvaluate, mcControl, finishMC } from './engine/montecarlo.js'
 import { valueIteration } from './engine/planning.js'
 import { followPath } from './engine/paths.js'
 
@@ -87,6 +88,23 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(r.watch.net.value.params['actor.weight'].shape).toEqual([4, 16])
     expect(r.watch.net.value.params['critic.weight'].shape).toEqual([1, 16])
     expect(r.watch.states.value.len).toBe(8)
+  }, 120000)
+
+  it('Monte Carlo prediction and control: Next episode pauses before each game, and the results match the engine', async () => {
+    const lastLineOf = (file, text) => SOURCES[file].split('\n').findLastIndex(l => l.includes(text)) + 1
+    let r = await load(s, 'mc', 'cheese_and_cat')
+    r = await s.send({ cmd: 'step', mode: 'lines', targets: PROGRAMS.mc.episodeEnd() })
+    expect(top(r)).toMatchObject({ file: 'montecarlo.py', function: 'mc_evaluate' })
+    expect(r.watch.V.value.shape).toEqual([16])
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'experiments.py', line: lastLineOf('experiments.py', 'return V') })
+    const { V } = finishMC(mcEvaluate(new GridWorld('cheese_and_cat'), { episodes: 300, seed: 0 }))
+    expect(r.watch.V.value.v).toEqual(V)
+    r = await load(s, 'mc_control', 'cheese_and_cat')
+    r = await s.send({ cmd: 'step', mode: 'lines', targets: PROGRAMS.mc_control.episodeEnd() })
+    expect(top(r)).toMatchObject({ file: 'montecarlo.py', function: 'train_mc_control' })
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'experiments.py', line: lastLineOf('experiments.py', 'return Q, totals') })
+    const { Q } = finishMC(mcControl(new GridWorld('cheese_and_cat'), { episodes: 300, seed: 0 }))
+    expect(rows(r.watch.Q.value)).toEqual(Q)
   }, 120000)
 
   it('the Gymnasium check, the gradient check and A2C with a hidden layer all run to the end', async () => {

@@ -12,7 +12,7 @@ import { PROGRAMS } from './programs.js'
 // environment (desktop app only): the program is really paused between lines, and every value
 // shown, including the map, comes from the live Python objects. In the browser the tab still
 // shows the code with the lessons' notes on each line.
-const FILE_ORDER = ['experiments.py', 'play.py', 'gym_compare.py', 'policies.py', 'qlearning.py', 'sarsa.py', 'a2c.py', 'a2c_check.py', 'planning.py', 'choosing.py', 'gridworld.py', 'returns.py', 'maps.py']
+const FILE_ORDER = ['experiments.py', 'play.py', 'gym_compare.py', 'policies.py', 'montecarlo.py', 'td.py', 'qlearning.py', 'sarsa.py', 'a2c.py', 'a2c_check.py', 'planning.py', 'choosing.py', 'gridworld.py', 'returns.py', 'maps.py']
 const MAX_RECORDED = 1500
 // Lines that explain themselves, in general terms (lessons/coverage.test.js lets them go without a note).
 const GENERAL = {

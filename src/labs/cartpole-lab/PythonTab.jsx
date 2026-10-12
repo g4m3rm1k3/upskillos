@@ -42,8 +42,8 @@ function Picture({ program, view, start }) {
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture,
-  fileOrder: ['experiments.py', 'policies.py', 'cartpole.py', 'returns.py', 'gym_compare.py', 'bins.py', 'qlearning.py', 'sarsa.py', 'choosing.py', 'evaluate.py',
-    'neuron.py', 'linear_policy.py', 'torch_neuron.py', 'reinforce.py', 'a2c.py', 'a2c_check.py', 'dqn.py'],
+  fileOrder: ['experiments.py', 'policies.py', 'cartpole.py', 'returns.py', 'gym_compare.py', 'bins.py', 'qlearning.py', 'sarsa.py', 'montecarlo.py', 'choosing.py', 'evaluate.py',
+    'neuron.py', 'linear_policy.py', 'gradient_noise.py', 'torch_neuron.py', 'reinforce.py', 'a2c.py', 'a2c_check.py', 'dqn.py'],
   // The names the programs give their own objects (see callsOn in the shared tab).
   labReceiver: /(^|\.)(env|envs\[i\]|world|ours|self|buffer)$/,
   intro: 'Lessons and the Playground run the same algorithms in the browser, with Python\'s own random numbers.',

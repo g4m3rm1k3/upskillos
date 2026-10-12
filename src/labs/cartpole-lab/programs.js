@@ -52,6 +52,13 @@ export const PROGRAMS = {
     knobs: [['alpha', 'α'], ['gamma', 'γ'], ['epsilon', 'ε']],
     episodeEnd: () => [['sarsa.py', lineOf('sarsa.py', 'totals.append(total)')]], endLabel: 'Next game',
   },
+  mc: {
+    label: '3.7 Monte Carlo control', file: 'montecarlo.py', module: 'experiments', function: 'learn_mc', lesson: 'monte-carlo-control',
+    about: 'Monte Carlo control on the binned CartPole: play a whole ε-greedy game, then walk it backwards and average each push\'s real return into the table. 500 games.',
+    kwargs: () => ({ episodes: 500, seed: 0 }),
+    watch: { Q: ['Q'], cart: CART, lengths: ['totals'] }, picture: 'qtable', actions: ['env.step('],
+    episodeEnd: () => [['montecarlo.py', lineOf('montecarlo.py', 'totals.append(total)')]], endLabel: 'Next game',
+  },
   neuron: {
     label: '4.1 One neuron learns', file: 'neuron.py', module: 'neuron', function: 'train', lesson: 'gradient-descent',
     about: 'Gradient descent on one neuron, w · x + b, learning the line through 4 points: work out the slopes, step against them, 200 times.',
@@ -66,13 +73,19 @@ export const PROGRAMS = {
     watch: { weights: ['weights'], cart: CART, lengths: ['lengths'] }, picture: 'weights', actions: ['env.step('],
     episodeEnd: () => [['linear_policy.py', lineOf('linear_policy.py', 'lengths.append(len(rewards))')]], endLabel: 'Next game',
   },
+  gradient: {
+    label: '4.5 One game, one gradient', file: 'gradient_noise.py', module: 'gradient_noise', function: 'compare_baselines', lesson: 'reinforce-monte-carlo',
+    about: 'Freeze the policy after 20 games of training, play 300 more games, and work out REINFORCE\'s gradient from each one alone, with no baseline and with b = 25: the average, the spread, and how often one game points the average\'s way.',
+    kwargs: () => ({ games: 300 }), watch: { cart: CART }, picture: 'cart', actions: ['env.step('],
+    episodeEnd: () => [['gradient_noise.py', lineOf('gradient_noise.py', 'samples[b].append(')]], endLabel: 'Next game',
+  },
   autograd: {
-    label: '4.5 PyTorch\'s autograd', file: 'torch_neuron.py', module: 'torch_neuron', function: 'autograd_check', lesson: 'pytorch',
+    label: '4.6 PyTorch\'s autograd', file: 'torch_neuron.py', module: 'torch_neuron', function: 'autograd_check', lesson: 'pytorch',
     about: 'The neuron of 4.1 in PyTorch: autograd\'s gradients beside the formula\'s.',
     kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
   },
   reinforce: {
-    label: '4.6 REINFORCE with a network', file: 'reinforce.py', module: 'reinforce', function: 'train_reinforce', lesson: 'reinforce-torch',
+    label: '4.7 REINFORCE with a network', file: 'reinforce.py', module: 'reinforce', function: 'train_reinforce', lesson: 'reinforce-torch',
     about: 'REINFORCE in PyTorch: a 4 → 32 → 2 network; one game, then one Adam step on −mean(log π(a|s) · normalised return).',
     kwargs: () => ({ episodes: 300, seed: 0 }),
     watch: { net: ['net'], cart: CART, lengths: ['lengths'] }, picture: 'network', actions: ['env.step('],

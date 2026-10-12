@@ -192,7 +192,7 @@ That is the central limit of tables, and the reason Part 4 replaces them with fu
           choice: {
             prompt: 'The default slots are $(1, 1, 6, 12)$: one slot for the cart\'s position and speed. What does that cost?',
             options: [
-              { text: 'The table can\'t see where the cart is, so it can\'t learn to steer the cart back from the edge', why: 'Right. A table agent with these slots can only balance the pole; if the cart drifts towards ±2.4 m, nothing in its state says so. Lesson 3.7 shows the games it loses this way.' },
+              { text: 'The table can\'t see where the cart is, so it can\'t learn to steer the cart back from the edge', why: 'Right. A table agent with these slots can only balance the pole; if the cart drifts towards ±2.4 m, nothing in its state says so. Lesson 3.8 shows the games it loses this way.' },
               { text: 'Nothing: the cart doesn\'t matter in CartPole', why: 'Leaving the track ends the game too. "Lean ahead" ignores the cart and gets away with it for 500 steps, but that is luck of the physics, not a guarantee.' },
               { text: 'The table gets bigger', why: 'One slot is the smallest possible: it adds nothing to the size.' },
               { text: 'The pole\'s angle is ignored', why: 'The angle has 6 slots and the spin 12: that is where the rows go.' },

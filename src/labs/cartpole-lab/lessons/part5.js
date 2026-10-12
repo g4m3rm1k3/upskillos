@@ -89,7 +89,7 @@ $$\\mathbf h = \\tanh(W\\mathbf s + \\mathbf b) \\qquad \\mathbf z = W_\\pi \\ma
             prompt: 'Why share the body between actor and critic?',
             options: [
               { text: 'Both need the same understanding of the state; sharing learns it once, from both losses', why: 'Yes. Features useful for valuing a state are usually useful for choosing in it. (Separate networks also work; sharing is cheaper.)' },
-              { text: 'PyTorch requires it', why: 'Lesson 4.6\'s network had no critic at all; any structure is allowed.' },
+              { text: 'PyTorch requires it', why: 'Lesson 4.7\'s network had no critic at all; any structure is allowed.' },
               { text: 'So the critic can choose actions', why: 'Only the actor head chooses; the critic only judges.' },
               { text: 'To make the network linear', why: 'The tanh body makes it non-linear.' },
             ],
@@ -173,7 +173,7 @@ $$\\mathbf h = \\tanh(W\\mathbf s + \\mathbf b) \\qquad \\mathbf z = W_\\pi \\ma
 
 $$L = \\underbrace{-\\frac1{40}\\sum A\\,\\log\\pi(a\\mid s)}_{\\text{actor}} \\;+\\; c_V \\underbrace{\\frac1{40}\\sum A^2}_{\\text{critic}} \\;-\\; c_H\\, \\underbrace{\\frac1{40}\\sum H(\\pi(\\cdot\\mid s))}_{\\text{entropy}}$$
 
-- **Actor**: lesson 4.6's loss with the critic's advantage. The advantage is treated as a fixed number here (\`detach\`): the actor shouldn't change the critic's values to make its own loss look smaller.
+- **Actor**: lesson 4.7's loss with the critic's advantage. The advantage is treated as a fixed number here (\`detach\`): the actor shouldn't change the critic's values to make its own loss look smaller.
 - **Critic**: the squared advantage is the squared error between $V(s)$ and its target: regression, lesson 4.1. Weighted by $c_V = 0.5$.
 - **Entropy**: $H = -\\sum_a \\pi(a)\\log\\pi(a)$ is largest when the pushes are equally likely. Subtracting it (with a small $c_H = 0.01$) rewards keeping a little randomness, so the policy doesn't become certain too early and stop exploring.` },
         {

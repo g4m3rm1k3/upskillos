@@ -241,7 +241,7 @@ To use **Gymnasium's** CartPole instead of the lab's, change the world line, for
 5. **Check the gradient** on a tiny batch against a hand formula (lesson 5.5), or with a finite difference: nudge one weight by $10^{-4}$ and see whether the loss changes by gradient × $10^{-4}$.
 6. **Learning rate.** Too big: the curve rises and collapses (lessons 4.1, 6.3). Too small: nothing for a long time. Change it by factors of 3, not 10%.
 7. **Several seeds.** Before believing a change helped, run three seeds (lesson 3.5).
-8. **Look at how games end.** "Cart off the track" and "pole fell" are different problems (lessons 3.5, 3.7).` },
+8. **Look at how games end.** "Cart off the track" and "pole fell" are different problems (lessons 3.5, 3.8).` },
         {
           choice: {
             prompt: 'A new learner\'s games stay around 20 steps after 1,000 games, and its probabilities are all exactly 0.5. What do you check first?',

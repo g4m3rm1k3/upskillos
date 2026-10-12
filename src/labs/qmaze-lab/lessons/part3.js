@@ -87,13 +87,141 @@ The price: the estimate never fully settles. It keeps reacting to each new sampl
     },
 
     {
-      id: 'td-learning', number: '3.2', title: 'Temporal-difference learning: the TD target',
-      goal: 'Estimate $V^\\pi$ from experience with TD(0): sample the Bellman equation, compute the **TD target** and **TD error**, and explain bootstrapping.',
-      builds: ['averages', 'value-functions'],
+      id: 'monte-carlo', number: '3.2', title: 'Monte Carlo prediction: averaging whole returns',
+      goal: 'Estimate $V^\\pi$ by playing whole episodes and averaging the return that followed each visit to a state; work a backward pass by hand, and tell first-visit from every-visit.',
+      builds: ['averages', 'value-functions', 'discounting'],
       blocks: [
-        { md: `Now apply the averaging rule to values. We want $V^\\pi(s)$, the expected return from $s$. Two ways to get a sample of it:
+        { md: `Lesson 2.4 defined the value of a state as an expected return:
 
-1. **Wait for the whole return.** Play to the end of the episode, compute $G_t$ (lesson 1.5) and average that. This is the **Monte Carlo** method. It is honest but slow: nothing is learned until an episode ends, and one $G_t$ contains every random event of the rest of the episode, so it is very noisy.
+$$V^\\pi(s) = \\mathbb{E}_\\pi\\big[\\, G_t \\;\\big|\\; S_t = s \\,\\big]$$
+
+"The average of the return $G_t$ over all the ways the future could go, starting from $s$ and following $\\pi$." Lesson 2.4 computed that average exactly, from \`P\`. Lesson 3.1 gave a way to compute an average **without** the probabilities: collect samples and average them.
+
+Put the two together and you get the most direct learning method there is. Play an episode with the policy. Every time it passes through a state $s$, the return that followed, $G_t$, is **one sample** of $V^\\pi(s)$. Average the samples per state. By the law of large numbers the average closes in on $V^\\pi(s)$ as the samples pile up.
+
+This is **Monte Carlo prediction**. "Prediction" because it predicts how well a fixed policy will do (it doesn't change the policy). "Monte Carlo" is the name for any method that estimates something by averaging random samples; it was coined in the 1940s by Stanislaw Ulam and John von Neumann, after the casino in Monaco, for simulations they ran on the first computers. Nothing more mysterious than that.` },
+        { h: 'Step 1: play a whole episode and keep it' },
+        { md: `A Monte Carlo learner can't do anything until an episode is over, because $G_t$ includes every reward to the end. So the first job is to play an episode and record it: for each move, the state it started in, the action and the reward.
+
+\`play_episode\` takes the policy as a **function**, \`choose\`: give it a state, it returns an action. Passing a function as an argument is ordinary in Python, and it lets the same \`play_episode\` serve a random policy here and an ε-greedy one in lesson 3.7.` },
+        {
+          code: {
+            file: 'montecarlo.py', fn: 'play_episode', notes: [
+              ['episode = []', ['The record: one `(state, action, reward)` tuple per move, in order.']],
+              ['state, info = env.reset(seed=seed)', ['Start a game. `seed=None` (every episode after the first) means: carry on with the world\'s own random numbers.']],
+              ['done = False', ['Not over yet.']],
+              ['while not done', ['One move per trip round the loop.']],
+              ['action = choose(state)', ['Ask the policy. `choose` is whatever function the caller passed in: here it moves at random.']],
+              ['next_state, reward, terminated, truncated, info = env.step(action)', ['One real move.']],
+              ['episode.append((state, action, reward))', ['Write it down. Note the pairing: `reward` is $R_{t+1}$, the reward **for** the move made from `state`, so the tuple at index $t$ holds $S_t, A_t, R_{t+1}$.']],
+              ['state = next_state', ['Move on.']],
+              ['done = terminated or truncated', ['Stop for either reason.']],
+              ['return episode', ['The whole game, ready to be learned from.']],
+            ],
+          },
+        },
+        { h: 'Step 2: the returns, worked out backwards' },
+        { md: `Lesson 1.5's \`all_returns\` worked out $G_t$ for every $t$ by walking the rewards **backwards**, using
+
+$$G_t = R_{t+1} + \\gamma\\, G_{t+1}, \\qquad G_T = 0 \\text{ after the last move.}$$
+
+Monte Carlo does exactly that, and updates each state's average as it goes. Take one episode on the Tiny corridor (\`S...C\`, states 0 to 4, cheese +1 at state 4, every other move 0, γ = 0.95). The rat goes 0 → 1 → 0 → 1 → 2 → 3 → 4:
+
+| t | state $S_t$ | move | $R_{t+1}$ | $G_t = R_{t+1} + 0.95\\,G_{t+1}$ |
+|---|---|---|---|---|
+| 5 | 3 | right | 1 | $1$ |
+| 4 | 2 | right | 0 | $0.95$ |
+| 3 | 1 | right | 0 | $0.9025$ |
+| 2 | 0 | right | 0 | $0.857$ |
+| 1 | 1 | left | 0 | $0.815$ |
+| 0 | 0 | right | 0 | $0.774$ |
+
+Read the table from the top: that is the order the code works in.` },
+        { h: 'First visit or every visit?' },
+        { md: `State 0 appears **twice** in that episode, at $t = 0$ and $t = 2$. Which returns count as its samples?
+
+- **First-visit Monte Carlo** uses only the return after the **first** visit in each episode: $G_0 = 0.774$. Each episode then gives each state at most one sample, and those samples are independent of each other from one episode to the next, which makes the statistics simple: the estimate is an ordinary average of independent samples, so it is **unbiased** and its error shrinks like $1/\\sqrt{n}$.
+- **Every-visit Monte Carlo** uses every visit: $G_0$ and $G_2$, average $0.816$. More samples per episode, but samples from the same episode are related (the later one is part of the earlier one). It also converges to $V^\\pi$; it is just harder to analyse.
+
+Both are in use. \`mc_evaluate\` does first-visit by default and every-visit with \`first_visit=False\`.` },
+        {
+          predict: {
+            prompt: 'First-visit Monte Carlo, all estimates starting at 0, step $1/n$. After this one corridor episode, what is the estimate for state 0?',
+            answer: 0.95 ** 5, tolerance: 1e-6, compute: () => 0.95 ** 5,
+            explain: 'The first visit to state 0 is at $t = 0$; the return after it is $G_0 = 0.95^5 = 0.774$ (five moves of 0, then the cheese). It is the first sample, $n = 1$, so the average **is** that sample: $0 + \\tfrac11(0.774 - 0) = 0.774$.',
+            misconceptions: [{ answer: (0.95 ** 5 + 0.95 ** 3) / 2, tolerance: 1e-6, feedback: 'That averages both visits, $G_0$ and $G_2$: every-visit Monte Carlo. First-visit uses only $G_0$.' }],
+          },
+        },
+        {
+          predict: {
+            prompt: 'Same episode, **every-visit** Monte Carlo. What is the estimate for state 1?',
+            answer: (0.95 ** 4 + 0.95 ** 2) / 2, tolerance: 1e-6, compute: () => (0.95 ** 4 + 0.95 ** 2) / 2,
+            explain: 'State 1 is visited at $t = 1$ ($G_1 = 0.95^4 = 0.815$) and $t = 3$ ($G_3 = 0.95^2 = 0.9025$). The backward pass meets $t = 3$ first: $0 + \\tfrac11(0.9025) = 0.9025$; then $t = 1$: $0.9025 + \\tfrac12(0.815 - 0.9025) = 0.859$, the average of the two.',
+          },
+        },
+        { h: 'The code' },
+        {
+          code: {
+            file: 'montecarlo.py', fn: 'mc_evaluate', notes: [
+              ['rng = random.Random(seed)', ['The agent\'s random numbers: the policy being evaluated moves at random, as in lesson 2.4.']],
+              ['V = np.zeros(env.n_states)', ['One estimate per state, all starting at 0.']],
+              ['counts = np.zeros(env.n_states)', ['How many samples each state has had: the $n$ of the running mean $\\bar x \\leftarrow \\bar x + \\tfrac1n(x - \\bar x)$ (lesson 3.1). Each state needs its own $n$.']],
+              ['for e in range(episodes)', ['One whole episode per trip round this loop.']],
+              ['episode = play_episode(env, lambda state: rng.randrange(env.n_actions), seed if e == 0 else None)', ['Play and record a game. `lambda state: rng.randrange(env.n_actions)` is a function written in place: it takes a state and ignores it, returning a random action. That **is** the random policy, handed to `play_episode` as its `choose`.']],
+              ['first = {}', ['A dictionary from state to the time of its first visit in this episode.']],
+              ['for t, (state, action, reward) in enumerate(episode)', ['Forwards through the record. `enumerate` gives the index `t` beside each tuple, and `(state, action, reward)` unpacks the tuple into three names.']],
+              ['first.setdefault(state, t)', ['`setdefault(key, value)` stores `value` only if `key` isn\'t there yet. So each state keeps the **first** `t` it was seen at; later visits change nothing.']],
+              ['G = 0.0', ['The return after the last move: nothing comes after it.']],
+              ['for t in reversed(range(len(episode)))', ['Backwards: $t = T-1, T-2, \\dots, 0$. Going backwards lets each $G_t$ be built from $G_{t+1}$ in one step.']],
+              ['state, action, reward = episode[t]', ['$S_t$, $A_t$ and $R_{t+1}$.']],
+              ['G = reward + gamma * G', ['$G_t = R_{t+1} + \\gamma G_{t+1}$: the line from lesson 1.5\'s `all_returns`. Before this line `G` held $G_{t+1}$; after it, $G_t$.']],
+              ['if first_visit and first[state] < t', ['First-visit only: if this state was first seen **earlier** than $t$, this is a repeat visit. Skip it (the `continue` below). The return is still carried along in `G`; only the update is skipped.']],
+              ['counts[state] += 1', ['One more sample for this state.']],
+              ['step = 1 / counts[state] if alpha is None else alpha', ['The step size. With the default `alpha=None` it is $1/n$, the exact running mean. Given a number, it is a constant α (lesson 3.1), which favours recent samples.']],
+              ['V[state] += step * (G - V[state])', ['The averaging rule with $G_t$ as the sample: $V(s) \\leftarrow V(s) + \\tfrac1n\\big(G_t - V(s)\\big)$. Every learning rule in this lab has this shape; only the sample changes.']],
+              ['return V', ['The estimates.']],
+            ],
+          },
+        },
+        {
+          mathCode: [
+            ['V^\\pi(s) = \\mathbb{E}_\\pi[G_t \\mid S_t = s]', 'V[state]', 'what is being estimated: the average return from s'],
+            ['G_t = R_{t+1} + \\gamma G_{t+1}', 'G = reward + gamma * G', 'each return built from the next, walking backwards'],
+            ['n(s)', 'counts[state]', 'how many samples state s has had'],
+            ['V(s) \\leftarrow V(s) + \\tfrac{1}{n(s)}\\big(G_t - V(s)\\big)', 'V[state] += step * (G - V[state])', 'the running mean of the returns'],
+          ],
+        },
+        { figure: 'MCEvaluation', props: { map: 'cheese_and_cat' }, caption: 'Monte Carlo prediction of the random policy, beside the exact values. One episode at a time: the trail is the whole game, and the table is the backward pass with every update written out (greyed rows are repeat visits, skipped). Then run 1,000 episodes and compare the maps. Try every-visit, and a constant step.' },
+        { md: `Two things to notice in the figure.
+
+- **Nothing changes during an episode.** The map only updates once the game is over. On Cheese and cat a random game lasts about 34 moves on average, all of it played before anything is learned.
+- **With step $1/n$ the error keeps falling.** It's an exact average of honest samples, so more episodes always help: about 0.25 after 10 episodes, 0.09 after 50 and 0.04 after 300 (averaged over ten seeds). With a constant step it levels off instead, jiggling with the latest samples, exactly as in lesson 3.1.
+
+One caveat. Monte Carlo needs episodes that **end**. If the time limit cuts a game short, the last part of the return is simply missing, and the sample is a little too small. Here that is harmless: a random game on the corridor hits the 100-move limit about one time in twenty, and anything after move 100 is weighted by at most $0.95^{100} \\approx 0.006$. Lesson 3.7 shows a case where it is not harmless at all.` },
+        { python: { program: 'mc', map: 'cheese_and_cat', label: 'Step through mc_evaluate in real Python' } },
+        { md: `The Python tab starts from this entry point in \`experiments.py\`, the same pattern as lesson 3.9's:` },
+        {
+          code: {
+            file: 'experiments.py', fn: 'evaluate_mc', notes: [
+              ['def evaluate_mc(name="cheese_and_cat", **settings)', ['A map **name** in, plain values out, so it can be called as `evaluate_mc("corridor", episodes=100)`.']],
+              ['env = GridWorld(name)', ['The world.']],
+              ['V = mc_evaluate(env, **settings)', ['`**settings` passes on any of `mc_evaluate`\'s settings: `episodes`, `gamma`, `first_visit`, `alpha`, `seed`.']],
+              ['return V', ['The estimates.']],
+            ],
+          },
+        },
+        { note: '**Monte Carlo prediction:** play whole episodes; after each one, walk it backwards computing $G_t = R_{t+1} + \\gamma G_{t+1}$, and average each state\'s returns: $V(s) \\leftarrow V(s) + \\tfrac1n(G_t - V(s))$. **First-visit** takes one sample per state per episode; **every-visit** takes them all. It needs no model and no guesses, only episodes that end.' },
+      ],
+    },
+
+    {
+      id: 'td-learning', number: '3.3', title: 'Temporal-difference learning: the TD target',
+      goal: 'Estimate $V^\\pi$ from experience with TD(0): sample the Bellman equation, compute the **TD target** and **TD error**, and explain bootstrapping.',
+      builds: ['monte-carlo', 'value-functions'],
+      blocks: [
+        { md: `Lesson 3.2 learned $V^\\pi(s)$ by averaging whole returns. That works, but it has to wait. There are two ways to get a sample of $V^\\pi(s)$:
+
+1. **Wait for the whole return.** Play to the end of the episode and use $G_t$: Monte Carlo, lesson 3.2. Nothing is learned until the episode ends, and one $G_t$ carries every random event of the rest of the episode.
 2. **Use the Bellman equation.** It says $V^\\pi(s)$ is the expected value of $R_{t+1} + \\gamma V^\\pi(S_{t+1})$. After a **single move** we have a sample of exactly that: the reward $r$ we just got, plus the discounted value of the state $s'$ we landed in. We don't know $V^\\pi(s')$ exactly, so we use our current estimate $V(s')$.
 
 The second way is **temporal-difference learning**, TD for short (Sutton, 1988). Its sample is called the **TD target**:
@@ -148,7 +276,74 @@ $\\delta$ (delta) is the **TD error**: the difference between what we expected (
     },
 
     {
-      id: 'q-table', number: '3.3', title: 'The Q-table, and choosing from it',
+      id: 'mc-vs-td', number: '3.4', title: 'Monte Carlo against TD: noise against bias',
+      goal: 'Explain what Monte Carlo and TD each average, why one sample is noisy and the other biased, and judge from measurements which learns faster, and when.',
+      builds: ['monte-carlo', 'td-learning'],
+      blocks: [
+        { md: `Lessons 3.2 and 3.3 estimate the same thing, $V^\\pi(s)$, with the same averaging rule. The only difference is the **sample** each one averages:
+
+| | Monte Carlo | TD(0) |
+|---|---|---|
+| sample | $G_t$, the whole real return | $r + \\gamma V(s')$, one real reward and a guess |
+| learns | when the episode ends | after every move |
+| average of the sample | exactly $V^\\pi(s)$ | $V^\\pi(s)$ only once $V(s')$ is right |
+| luck it carries | every move to the end | one move |
+
+Two words from statistics name the two weaknesses:
+
+- **Variance** is how much a sample scatters around its average. $G_t$ has high variance: it adds up the luck of every remaining move, every random step towards or away from the cat.
+- **Bias** is how far a sample's average is from the true value. $G_t$ has **none**: its average is $V^\\pi(s)$ by definition. TD's sample is biased, because $V(s')$ is the learner's own estimate, wrong at first (it starts at 0). The bias fades as the estimates improve, but it is there.` },
+        { figure: 'SampleSpread', props: { map: 'cheese_and_cat' }, caption: '2,000 samples of each kind from the start state. To show TD at its best, its samples use the exact $V(s\')$, the value a fully trained TD learner would have. Both are centred on the true value; look at the widths. Try the frozen lake.' },
+        {
+          choice: {
+            prompt: 'The figure shows TD\'s samples much narrower than Monte Carlo\'s. Does that mean a TD learner\'s estimates are always closer to the truth?',
+            options: [
+              { text: 'No: those TD samples used the exact V. A real learner\'s V(s′) starts at 0, so its samples are narrow but centred in the wrong place until V improves', why: 'Right. Narrow (low variance) is not the same as on target (no bias). Early on, TD is confidently wrong.' },
+              { text: 'Yes: lower variance always means smaller error', why: 'Only if the samples are also centred on the truth. A learning TD agent\'s samples are not, at first.' },
+              { text: 'No: Monte Carlo\'s samples are centred on the wrong value', why: 'Monte Carlo\'s samples are real returns: their average is exactly $V^\\pi(s)$. That is its strength.' },
+            ],
+            answer: 0,
+          },
+        },
+        { h: 'Which learns faster? Measure it' },
+        { figure: 'MCvsTD', props: { map: 'cheese_and_cat' }, caption: 'Each method learns the random policy\'s values from zero, ten times with seeds 0–9; the curves are the average error after each episode. Change α and the map, and run again.' },
+        { md: `Measured on Cheese and cat, 300 episodes, seeds 0–9:
+
+| method | error after 10 episodes | after 50 | after 300 |
+|---|---|---|---|
+| Monte Carlo, step $1/n$ | 0.25 | 0.09 | 0.04 |
+| Monte Carlo, α = 0.05 | 0.45 | 0.15 | 0.06 |
+| TD(0), α = 0.05 | 0.53 | 0.30 | 0.05 |
+
+With the **same** step size, both effects show up:
+
+- **Monte Carlo starts faster.** TD's early targets lean on values that are still 0, so the cheese's reward has to seep backwards one state per visit. That is the bias, slowing it down.
+- **TD finishes lower.** Its samples scatter less, so a constant step jiggles its estimates less. That is the variance, and it costs Monte Carlo at the end.
+- **Monte Carlo with $1/n$ wins outright here.** An exact average of unbiased samples never stops improving. The maps are small and the random games short, so its noise averages away quickly.
+
+So on these maps, the textbook claim "TD learns faster" is not true. In Sutton and Barto's random-walk experiment (their Example 6.2) it is, and in large problems it usually is. Which one wins depends on how noisy the returns are and how fast the bias fades. That is why you measure.` },
+        { h: 'Why TD is still the workhorse' },
+        { md: `Even where Monte Carlo predicts as well, TD has advantages that settle most real choices:
+
+- **It learns during the episode.** A Monte Carlo learner on a 500-move game learns nothing for 500 moves. In a **continuing** task that never ends (a thermostat, a server that schedules jobs), Monte Carlo can't learn at all.
+- **It uses the structure of the problem.** After one success from state $s'$, TD passes that knowledge to every state that leads to $s'$, through $V(s')$. Monte Carlo has to see each one succeed for itself. Lesson 3.7 shows this deciding whether an agent learns anything at all.
+
+And one advantage for Monte Carlo: it **doesn't bootstrap**, so it doesn't need the state to be Markov (lesson 2.2). TD's target assumes $V(s')$ sums up the whole future from $s'$, which is false if the rewards depend on history, as Classic QMaze's revisit penalty does. Monte Carlo just averages what really happened.
+
+Between the two extremes there is a whole family: wait $n$ moves, then bootstrap ($r_1 + \\gamma r_2 + \\dots + \\gamma^n V(s_n)$). Small $n$ is TD-like, large $n$ is Monte Carlo-like. The A2C agent in Part 4 uses exactly this, with $n = 5$.` },
+        {
+          mathCode: [
+            ['G_t', 'G = reward + gamma * G', 'Monte Carlo\'s sample: unbiased, high variance'],
+            ['r + \\gamma V(s\')', 'reward + gamma * V[next_state]', 'TD\'s sample: low variance, biased while V is wrong'],
+            ['V(s) \\leftarrow V(s) + \\alpha\\,(\\text{sample} - V(s))', 'V[state] += step * (G - V[state])', 'the same averaging rule for both'],
+          ],
+        },
+        { note: '**Monte Carlo** averages real returns: **unbiased**, but **noisy** (high variance), and it must wait for the episode to end. **TD** averages one real reward plus its own guess: **less noisy**, but **biased** until the guesses are right, and it learns after every move. Neither wins everywhere; on these small maps Monte Carlo predicts at least as well.' },
+      ],
+    },
+
+    {
+      id: 'q-table', number: '3.5', title: 'The Q-table, and choosing from it',
       goal: 'Build the Q-table as a NumPy array, index it (`Q[s]`, `Q[s, a]`, `.max()`), and choose the best action safely when values tie.',
       builds: ['td-learning', 'policies'],
       blocks: [
@@ -208,7 +403,7 @@ The fix is to break ties **at random**:` },
     },
 
     {
-      id: 'exploration', number: '3.4', title: 'Exploration: ε-greedy',
+      id: 'exploration', number: '3.6', title: 'Exploration: ε-greedy',
       goal: 'Explain why an agent must sometimes take moves it believes are worse, implement ε-greedy and its schedule, and see what pure greed costs.',
       builds: ['q-table'],
       blocks: [
@@ -252,11 +447,105 @@ The simplest answer is **ε-greedy** (lesson 2.3): with probability ε pick a ra
     },
 
     {
-      id: 'q-learning', number: '3.5', title: 'Q-learning',
-      goal: 'Derive the Q-learning update from the Bellman optimality equation, follow every line of `train_q_learning`, and carry out updates by hand.',
-      builds: ['exploration', 'value-iteration'],
+      id: 'mc-control', number: '3.7', title: 'Monte Carlo control: learning to act from whole games',
+      goal: 'Turn Monte Carlo prediction into a learner that improves its own policy, follow every line of `train_mc_control`, and explain from measurements where waiting for the whole return works and where it fails.',
+      builds: ['monte-carlo', 'mc-vs-td', 'exploration'],
       blocks: [
-        { md: `Put the pieces together. Lesson 2.5's Bellman optimality equation says:
+        { md: `Lesson 3.2 **predicted**: it measured how good a fixed policy is. Now the agent should **improve**. The ingredients are all here:
+
+1. **Learn $Q$, not $V$** (lesson 3.5). To choose without \`P\`, the agent needs a value per state **and** action. Monte Carlo estimates it the same way: $Q^\\pi(s, a) = \\mathbb{E}_\\pi[G_t \\mid S_t = s, A_t = a]$, so average the returns that followed each **pair** $(s, a)$.
+2. **Act on what you've learned.** Choose moves ε-greedily from the current $Q$ (lesson 3.6). As $Q$ improves, so does the policy.
+3. **Keep exploring.** Monte Carlo only learns about pairs it actually tries. Without ε, a move that looked bad once would never be tried again, and never corrected.
+
+Then repeat: play a game with the current policy, average its returns into $Q$, which changes the policy for the next game. Evaluating a little and improving a little, over and over, is called **generalized policy iteration**, and every control method in this lab works that way. This one is **Monte Carlo control**.
+
+Because it averages returns of the ε-greedy policy it actually follows, exploring moves included, it is **on-policy**, like SARSA (lesson 3.10).` },
+        {
+          code: {
+            file: 'montecarlo.py', fn: 'train_mc_control', notes: [
+              ['rng = random.Random(seed)', ['The agent\'s random numbers: exploring and tie-breaking.']],
+              ['Q = np.zeros((env.n_states, env.n_actions))', ['The Q-table, all zeros (lesson 3.5).']],
+              ['counts = np.zeros((env.n_states, env.n_actions))', ['How many returns each pair $(s, a)$ has been given: one $n$ per table entry.']],
+              ['totals = []', ['The return of each episode, for the learning curve.']],
+              ['for e in range(episodes)', ['One whole game per trip round the loop.']],
+              ['epsilon = linear(epsilon_start, epsilon_end, e / (0.8 * episodes))', ['This episode\'s ε, the same schedule as lesson 3.6.']],
+              ['episode = play_episode(env, lambda state: epsilon_greedy(Q[state], epsilon, rng), seed if e == 0 else None)', ['Play a whole game ε-greedily from the **current** table. The `lambda` is the policy: given a state, explore or take the best move in `Q[state]`. It reads `Q` and `epsilon` as they are now, so each game uses the newest table. During the game the table does not change.']],
+              ['first = {}', ['First visit of each pair in this game.']],
+              ['for t, (state, action, reward) in enumerate(episode)', ['Forwards through the record.']],
+              ['first.setdefault((state, action), t)', ['The key is now the pair `(state, action)`, a tuple. Tuples can be dictionary keys because they can\'t be changed.']],
+              ['G = 0.0', ['Nothing after the last move.']],
+              ['for t in reversed(range(len(episode)))', ['Backwards through the game.']],
+              ['state, action, reward = episode[t]', ['$S_t$, $A_t$, $R_{t+1}$.']],
+              ['G = reward + gamma * G', ['$G_t = R_{t+1} + \\gamma G_{t+1}$.']],
+              ['if first[(state, action)] < t', ['A repeat of a pair already used earlier in this game: skip the update (first-visit). `G` still carries the return along.']],
+              ['counts[state, action] += 1', ['One more return for this pair.']],
+              ['step = 1 / counts[state, action] if alpha is None else alpha', ['$1/n$ for an exact average, or a constant α.']],
+              ['Q[state, action] += step * (G - Q[state, action])', ['Move the pair\'s average towards the return that really followed it.']],
+              ['total = 0.0', ['Add up the game\'s rewards (undiscounted) for the learning curve.']],
+              ['for state, action, reward in episode', ['Every move of the game.']],
+              ['total += reward', ['Python\'s `sum()` would do this too, but since Python 3.12 it adds floats with extra care, which can change the last digit; a plain loop gives the same total everywhere, including the browser\'s copy of this code.']],
+              ['totals.append(total)', ['Record it.']],
+              ['return Q, totals', ['The table and the learning curve.']],
+            ],
+          },
+        },
+        {
+          predict: {
+            prompt: 'With step $1/n$: $Q[s, a] = -0.3$ is the average of 3 returns so far. A new game\'s return after $(s, a)$ is $G = -0.7$. What is the new $Q[s, a]$?',
+            answer: -0.4, tolerance: 1e-9, compute: () => -0.3 + (1 / 4) * (-0.7 - -0.3),
+            explain: 'This is the 4th return, so the step is $\\tfrac14$: $-0.3 + \\tfrac14(-0.7 + 0.3) = -0.4$. Check: three returns averaging $-0.3$ sum to $-0.9$; add $-0.7$ to get $-1.6$, and $-1.6 / 4 = -0.4$.',
+            misconceptions: [{ answer: -0.3 + (1 / 3) * (-0.7 + 0.3), tolerance: 1e-9, feedback: 'The count goes up **before** the step: this is the 4th return, so the step is $\\tfrac14$, not $\\tfrac13$.' }],
+          },
+        },
+        { figure: 'MCControlTrainer', props: { map: 'cheese_and_cat' }, caption: 'Monte Carlo control. Press One episode a few times: the agent plays a whole game, and only then does the table change, every pair it used at once. Then train all 300 episodes.' },
+        { md: `On Cheese and cat it works: with the default settings, all five seeds 0–4 learn the shortest route, a greedy return of **0.80**, the same as Q-learning will. On the corridor and on Cats and cheese it matches Q-learning too.` },
+        { h: 'The cliff: when waiting for the end fails' },
+        { md: `Now switch the figure to **The cliff** (it uses lesson 3.11's settings: γ = 1, ε = 0.1 throughout, 500 episodes). Measured over seeds 0–4: two seeds learn the safe route (return −17), and **three never reach the goal at all**. Their greedy policy walks into a corner and bumps a wall until the 200-move time limit, return −200.
+
+Seed 2's table shows why. Its greedy route goes up from the start to state 12, against the left wall, and there the four actions are worth
+
+$$Q[12] = [-188.9,\\ -190.0,\\ -188.9,\\ -189.6]$$
+
+All four are nearly the same, and all terrible. Whichever move the agent makes from state 12, it then goes back to bumping, and the game ends at the time limit having cost about one point per move. **The returns can't tell a good move from a bad one, because none of them ever reach the goal.** To learn that RIGHT is better, the agent would have to explore its way along the whole cliff to the goal by chance, with ε = 0.1, against its own greedy choice at almost every step. That almost never happens.
+
+Lesson 3.4 said TD "uses the structure of the problem". Here is what that means. When Q-learning bumps the wall at state 12, its target is $-1 + \\max Q[12]$: the same state, one point poorer. So bumping keeps looking about a point worse than the best move from 12, and the agent soon tries something else. Q-learning learns from **each move's** result; Monte Carlo only learns from **where the whole game ended**, and here every game ends the same way.
+
+Monte Carlo gets there eventually. With **5,000** episodes all five seeds find the goal (returns −17, −17, −15, −17, −19, the safe routes an on-policy learner prefers). Q-learning needs 500.` },
+        {
+          choice: {
+            prompt: 'A Monte Carlo agent\'s greedy policy loops until the time limit. Why does averaging more returns not fix the loop quickly?',
+            options: [
+              { text: 'Every return after every action in the loop is about the same, because each game still ends at the time limit; only a long lucky run of exploring moves would produce a better one', why: 'Right. Monte Carlo can only prefer an action whose returns are better, and here none are, until exploration happens to reach the goal.' },
+              { text: 'The step size 1/n becomes too small to change anything', why: 'It does shrink, but a constant step (try 0.1 or 0.5 in the figure) gets stuck just the same: the problem is that the samples themselves are all alike.' },
+              { text: 'Monte Carlo cannot learn on maps with walls', why: 'It learns Cheese and cat, which has walls, perfectly. The trouble is games that never reach a reward.' },
+            ],
+            answer: 0,
+          },
+        },
+        { h: 'Slippery ice: when the returns are noisy' },
+        { md: `On the frozen lake (lesson 3.12) each move slips sideways two times in three, so returns are wildly random: the same first move ends at the goal or in a hole by luck. Lesson 3.4's spread figure put Monte Carlo's samples there at about **60 times** wider than TD's. Measured with 2,000 episodes and γ = 0.99, Monte Carlo control's greedy policies reach the goal in 6%, 33%, 12%, 26% and 5% of games over seeds 0–4. Q-learning with the same 2,000 episodes (α = 0.1) reaches it **72%** of the time on every seed, close to the best possible 74%.` },
+        { md: `So the TD methods of the next lessons are not just a variation. Learning from each move's result, rather than the end of the game, is what makes them work where Monte Carlo stalls. Monte Carlo's ideas come back in Part 4: the A2C agent's critic is trained on returns that mix a few real rewards with a TD-style estimate.` },
+        { python: { program: 'mc_control', map: 'cheese_and_cat', label: 'Step through train_mc_control in real Python' } },
+        {
+          code: {
+            file: 'experiments.py', fn: 'learn_mc', notes: [
+              ['def learn_mc(name="cheese_and_cat", **settings)', ['The Python tab\'s entry point for Monte Carlo control, like `learn_q`.']],
+              ['env = GridWorld(name)', ['The world.']],
+              ['Q, totals = train_mc_control(env, **settings)', ['Train with any of `train_mc_control`\'s settings.']],
+              ['return Q, totals', ['The table and the learning curve.']],
+            ],
+          },
+        },
+        { note: '**Monte Carlo control:** play a whole game ε-greedily, then move each $Q(s, a)$ it used towards the return that followed: $Q(s,a) \\leftarrow Q(s,a) + \\tfrac1n(G_t - Q(s,a))$. It is on-policy and needs no model. It works when games reach their rewards, and stalls when they don\'t (the cliff\'s corner) or when returns are very noisy (the ice). Learning from each move instead is the next lesson.' },
+      ],
+    },
+
+    {
+      id: 'q-learning', number: '3.8', title: 'Q-learning',
+      goal: 'Derive the Q-learning update from the Bellman optimality equation, follow every line of `train_q_learning`, and carry out updates by hand.',
+      builds: ['mc-control', 'value-iteration'],
+      blocks: [
+        { md: `Monte Carlo control (lesson 3.7) waited for the end of each game and stalled when games didn't reach a reward. Q-learning does control the TD way, learning from every single move. Put the pieces together. Lesson 2.5's Bellman optimality equation says:
 
 $$Q^*(s, a) = \\mathbb{E}\\big[\\, R_{t+1} + \\gamma \\max_{a'} Q^*(S_{t+1}, a') \\;\\big|\\; S_t = s, A_t = a \\,\\big]$$
 
@@ -294,10 +583,10 @@ Under some conditions (every state–action pair tried infinitely often, and α 
           code: {
             file: 'qlearning.py', fn: 'train_q_learning', notes: [
               ['rng = random.Random(seed)', ['The agent\'s random numbers (exploring, tie-breaking), seeded for repeatability.']],
-              ['Q = np.full((env.n_states, env.n_actions), initial_q)', ['The table, every entry `initial_q` (0.0 unless lesson 3.10 says otherwise).']],
+              ['Q = np.full((env.n_states, env.n_actions), initial_q)', ['The table, every entry `initial_q` (0.0 unless lesson 3.13 says otherwise).']],
               ['totals = []', ['The return of each episode, for the learning curve.']],
               ['for episode in range(episodes)', ['One trip round this loop is one whole game.']],
-              ['epsilon = linear(epsilon_start, epsilon_end, episode / (0.8 * episodes))', ['This episode\'s ε (lesson 3.4).']],
+              ['epsilon = linear(epsilon_start, epsilon_end, episode / (0.8 * episodes))', ['This episode\'s ε (lesson 3.6).']],
               ['state, info = env.reset(seed=seed if episode == 0 else None)', ['Start a game. Seeding the world only on the first episode makes the whole run repeatable without making every episode identical.']],
               ['total = 0.0', ['This episode\'s return so far.']],
               ['done = False', ['Not over yet.']],
@@ -330,7 +619,7 @@ The value spreads **backwards from the reward, about one state per episode**, ex
         },
         { figure: 'Trainer', props: { fixed: { map: 'corridor', episodes: 50 }, show: ['alpha', 'gamma'], view: 'q', compare: false }, caption: 'Q-learning on the corridor, seed 0. Press **One episode** three times and read the updates; the table on the map matches the hand calculation. Then press One move to see every step written out.' },
         { h: 'Off-policy' },
-        { md: `Notice what the target uses: $\\max_{a'} Q(s', a')$, the value of the **best** next move, even when the agent is about to explore and take a different one. Q-learning learns the value of acting greedily (the optimal policy) while actually behaving ε-greedily. Learning about one policy while following another is called **off-policy** learning. Lesson 3.7 meets an **on-policy** method, and lesson 3.8 shows when the difference matters.` },
+        { md: `Notice what the target uses: $\\max_{a'} Q(s', a')$, the value of the **best** next move, even when the agent is about to explore and take a different one. Q-learning learns the value of acting greedily (the optimal policy) while actually behaving ε-greedily. Learning about one policy while following another is called **off-policy** learning. Lesson 3.10 meets an **on-policy** method, and lesson 3.11 shows when the difference matters.` },
         { figure: 'Trainer', props: { fixed: { map: 'cheese_and_cat' }, show: ['map', 'alpha', 'gamma', 'epsilon', 'episodes', 'seed'], view: 'q' }, caption: 'Q-learning on Cheese and cat. Train all 300 episodes: the result line compares the learned table with the exact $Q^*$ from value iteration.' },
         { python: { program: 'q', map: 'cheese_and_cat', label: 'Step through train_q_learning in real Python' } },
         { note: '**Q-learning:** $Q(s,a) \\leftarrow Q(s,a) + \\alpha[r + \\gamma \\max_{a\'} Q(s\',a\') - Q(s,a)]$, a sampled Bellman optimality backup. It is off-policy: it learns the greedy policy\'s values while exploring.' },
@@ -338,7 +627,7 @@ The value spreads **backwards from the reward, about one state per episode**, ex
     },
 
     {
-      id: 'reading-results', number: '3.6', title: 'Training, and judging what was learned',
+      id: 'reading-results', number: '3.9', title: 'Training, and judging what was learned',
       goal: 'Read a learning curve, judge a table by playing it greedily and comparing it with $Q^*$, and see the effect of α, γ and the seed.',
       builds: ['q-learning'],
       blocks: [
@@ -352,7 +641,7 @@ Often the policy is perfect while the numbers are still off: Q-learning only nee
         { md: `To train on a map by name, the Python tab (and you, on your own machine) start from \`experiments.py\`:` },
         {
           code: {
-            file: 'experiments.py', from: 1, to: 25, notes: [
+            file: 'experiments.py', from: 1, to: 26, notes: [
               ['def plan(name="cheese_and_cat", gamma=0.95)', ['Each function takes a map **name** and builds the world itself, so it can be called with plain values: `plan("qmaze")`.']],
               ['env = GridWorld(name)', ['The world.']],
               ['V, Q, sweeps = value_iteration(env.P, gamma)', ['The exact answer, from `P` (lesson 2.5).']],
@@ -391,7 +680,7 @@ Often the policy is perfect while the numbers are still off: Q-learning only nee
     },
 
     {
-      id: 'sarsa', number: '3.7', title: 'SARSA: learning the policy you follow',
+      id: 'sarsa', number: '3.10', title: 'SARSA: learning the policy you follow',
       goal: 'Write SARSA\'s update, explain on-policy learning, and point to the one line that differs from Q-learning.',
       builds: ['q-learning'],
       blocks: [
@@ -453,7 +742,7 @@ It is the sampled version of the Bellman **expectation** equation (lesson 2.4) f
     },
 
     {
-      id: 'cliff', number: '3.8', title: 'The cliff: off-policy against on-policy',
+      id: 'cliff', number: '3.11', title: 'The cliff: off-policy against on-policy',
       goal: 'Predict and explain why Q-learning walks the cliff edge while SARSA takes the safe path, and which one earns more while learning.',
       builds: ['sarsa'],
       blocks: [
@@ -502,7 +791,7 @@ This holds across seeds: over five seeds this lab gets −13 for Q-learning's gr
     },
 
     {
-      id: 'slippery-ice', number: '3.9', title: 'Slippery ice: learning when moves are random',
+      id: 'slippery-ice', number: '3.12', title: 'Slippery ice: learning when moves are random',
       goal: 'Train on the frozen lake, explain why noisy targets need a small α and many episodes, and measure success properly.',
       builds: ['q-learning', 'transition-table'],
       blocks: [
@@ -535,7 +824,7 @@ The 8 × 8 lake needs about 10,000 episodes: try it (the trainer runs them in a 
     },
 
     {
-      id: 'reward-design', number: '3.10', title: 'Reward design, and why exploration is hard',
+      id: 'reward-design', number: '3.13', title: 'Reward design, and why exploration is hard',
       goal: 'Diagnose an agent that settles for a worse reward, fix it with optimistic initial values, and judge reward rules such as QMaze\'s revisit penalty.',
       builds: ['cliff', 'markov-property'],
       blocks: [
@@ -546,11 +835,11 @@ The 8 × 8 lake needs about 10,000 episodes: try it (the trainer runs them in a 
 - Exploring at random from the start, the rat ends up on the small cheese or a cat most of the time; it reaches the big cheese rarely: in 10,000 random walks measured with this lab's engine, 103 times, about 1 in 100.
 - Every visit to the small cheese makes $Q(\\text{start}, \\text{DOWN})$ more attractive. Once that's the best entry, greedy moves go there, and as ε falls the rat stops wandering far enough to learn the long route's value.
 
-This is a **local optimum**: good enough to stop looking. It's the exploration problem of lesson 3.4 in its classic form.` },
+This is a **local optimum**: good enough to stop looking. It's the exploration problem of lesson 3.6 in its classic form.` },
         { h: 'Optimistic initial values' },
         { md: `A simple, old fix (Sutton and Barto, section 2.6): start the table **above** any value that can really be achieved. With \`initial_q = 1.0\`, every untried move looks wonderful. Each time a move is tried, its value drops towards the truth, so the greedy agent is drawn to whatever it hasn't tried yet. Exploration happens **systematically**, not by luck. With initial Q = 1, Q-learning finds the big cheese on all five seeds this lab tested.
 
-Then switch to SARSA with initial Q = 1: it still takes the small cheese, on all five seeds. The big cheese sits right next to a cat, and the route passes another. SARSA learns the value of its ε-greedy behaviour, in which a random step into a cat is a real risk (lesson 3.8). Two things look alike here, "can't find the better reward" and "judges the better reward too risky", but they have different causes and different fixes.` },
+Then switch to SARSA with initial Q = 1: it still takes the small cheese, on all five seeds. The big cheese sits right next to a cat, and the route passes another. SARSA learns the value of its ε-greedy behaviour, in which a random step into a cat is a real risk (lesson 3.11). Two things look alike here, "can't find the better reward" and "judges the better reward too risky", but they have different causes and different fixes.` },
         {
           choice: {
             prompt: 'Why does `initial_q = 1.0` count as "optimistic" on this map?',

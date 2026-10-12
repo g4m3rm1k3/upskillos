@@ -3,6 +3,7 @@ import { MapExplorer, MoveExplorer, LoopPlayer, ReturnPaths, GammaCurve } from '
 import { TransitionExplorer, HistoryMatters, PolicyEditor, Sweeps } from './part2.jsx'
 import { RunningAverage, TDEvaluation, QTableView, EpsilonSchedule, CliffCompare } from './part3.jsx'
 import { OneHotLinear, SoftmaxFigure, GradientStep, A2CTrainer, MethodsCompare } from './part4.jsx'
+import { MCEvaluation, SampleSpread, MCvsTD, MCControlTrainer } from './montecarlo.jsx'
 import { MapBuilder } from './part5.jsx'
 import Trainer from './Trainer.jsx'
 
@@ -10,6 +11,7 @@ export const FIGURES = {
   MapExplorer, MoveExplorer, LoopPlayer, ReturnPaths, GammaCurve,
   TransitionExplorer, HistoryMatters, PolicyEditor, Sweeps,
   Trainer, RunningAverage, TDEvaluation, QTableView, EpsilonSchedule, CliffCompare,
+  MCEvaluation, SampleSpread, MCvsTD, MCControlTrainer,
   OneHotLinear, SoftmaxFigure, GradientStep, A2CTrainer, MethodsCompare,
   MapBuilder,
 }

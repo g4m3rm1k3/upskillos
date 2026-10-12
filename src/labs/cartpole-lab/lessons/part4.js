@@ -206,7 +206,7 @@ It doesn't bias the gradient: $\\sum_a \\pi(a)\\,\\nabla\\log\\pi(a) = \\sum_a \
       goal: 'Read `train_linear` as play-a-game-then-update, train it in the browser, and read the learned weights as a rule.',
       builds: ['policy-gradient'],
       blocks: [
-        { md: `REINFORCE needs the whole game before it can update (each $G_t$ depends on everything after step $t$). So: play a game, sampling pushes from the policy and remembering everything; then work out the returns; then one update. No libraries beyond \`math\` and \`random\`.` },
+        { md: `REINFORCE needs the whole game before it can update (each $G_t$ depends on everything after step $t$), just as Monte Carlo control did in lesson 3.7: it is a Monte Carlo method too, and lesson 4.5 looks at what that means. So: play a game, sampling pushes from the policy and remembering everything; then work out the returns; then one update. No libraries beyond \`math\` and \`random\`.` },
         {
           code: {
             file: 'linear_policy.py', fn: 'train_linear', notes: [
@@ -254,7 +254,157 @@ so the policy prefers right when $1.62\\,\\theta + 2.82\\,\\dot\\theta + 0.51\\,
     },
 
     {
-      id: 'pytorch', number: '4.5', title: 'PyTorch: tensors and autograd',
+      id: 'reinforce-monte-carlo', number: '4.5', title: 'REINFORCE is a Monte Carlo method',
+      goal: 'Recognise $G_t$ in the policy gradient as a Monte Carlo sample of $Q^\\pi$, measure how noisy one game\'s gradient is, and show, by proof and by measurement, that a baseline cuts the noise without moving the average.',
+      builds: ['reinforce-plain', 'monte-carlo-control'],
+      blocks: [
+        { md: `Lesson 4.3 wrote the policy gradient with the return $G_t$ in it. The policy gradient theorem actually says something slightly different:
+
+$$\\nabla J = \\mathbb{E}\\Big[\\sum_t Q^\\pi(s_t, a_t)\\; \\nabla \\log \\pi(a_t \\mid s_t)\\Big]$$
+
+Each push is weighted by $Q^\\pi(s_t, a_t)$, the **expected** return after making that push in that state. Nobody knows $Q^\\pi$; it is an average over every way the rest of the game could go. REINFORCE puts in its place $G_t$, the return that **actually** followed, in this one game.
+
+That is exactly the move Monte Carlo control made in lesson 3.7: $Q^\\pi(s, a)$ is the average of the returns after $(s, a)$, so a real return is one honest sample of it. Monte Carlo control averaged those samples into a table. REINFORCE uses each sample once, straight away, to nudge the weights. Which is why REINFORCE is also called the **Monte Carlo policy gradient**, and it inherits Monte Carlo's character entirely:
+
+- **It waits for the end of the game**, because $G_t$ needs every reward after $t$ (lesson 4.4 plays a whole game before each update).
+- **It is unbiased.** No guesses go into $G_t$, so averaged over many games, the estimates average to the true $\\nabla J$.
+- **It is noisy.** Each update is built from **one** game, one sample of something very random. How noisy? Measure it.` },
+        { h: 'One game, one estimate of the gradient' },
+        { md: `To see the noise, stop learning. Freeze the policy (here: the weights after 20 games of \`train_linear\`, seed 0), play many games with it, and work out from **each game alone** what REINFORCE would say the gradient is. If the estimates were reliable, they would all point roughly the same way.
+
+First, one game, the same loop as \`train_linear\`:` },
+        {
+          code: {
+            file: 'gradient_noise.py', fn: 'play_game', notes: [
+              ['state, info = env.reset(seed=seed)', ['Start a game.']],
+              ['states, actions, chances, rewards = [], [], [], []', ['Everything REINFORCE needs, as in lesson 4.4.']],
+              ['done = False', ['The usual loop.']],
+              ['while not done:', ['Play to the end.']],
+              ['probs = softmax(scores_of(weights, state))', ['The frozen policy\'s probabilities.']],
+              ['action = 0 if rng.random() < probs[0] else 1', ['Sample a push.']],
+              ['next_state, reward, terminated, truncated, info = env.step(action)', ['Push.']],
+              ['states.append(state)', ['Remember the state…']],
+              ['actions.append(action)', ['…the push…']],
+              ['chances.append(probs)', ['…its probabilities…']],
+              ['rewards.append(reward)', ['…and the reward.']],
+              ['state = next_state', ['Move on.']],
+              ['done = terminated or truncated', ['Over?']],
+              ['return states, actions, chances, all_returns(rewards, gamma)', ['The game, and $G_t$ for every step. The weights are never changed here.']],
+            ],
+          },
+        },
+        { md: `Then the estimate. It is lesson 4.3's formula, $\\sum_t (G_t - b)\\, \\partial \\log\\pi(a_t \\mid s_t)/\\partial w$, written for the **right** push's four weights (the left push's row always gets exactly minus the same, so four numbers say everything). Unlike \`reinforce_step\` it doesn't divide by the game's length and takes the baseline $b$ as a fixed number; more on both below.` },
+        {
+          code: {
+            file: 'gradient_noise.py', fn: 'game_gradient', notes: [
+              ['gradient = [0.0, 0.0, 0.0, 0.0]', ['One number per weight of the right push: for $x$, $\\dot x$, $\\theta$, $\\dot\\theta$.']],
+              ['for state, action, probs, G in zip(states, actions, chances, returns):', ['Every step of the game.']],
+              ['slope = (1.0 if action == 1 else 0.0) - probs[1]', ['$\\partial\\log\\pi(a_t)/\\partial z_{\\text{right}}$ (lesson 4.3): $1 - \\pi(\\text{right})$ if it pushed right, else $-\\pi(\\text{right})$.'], { tex: '\\mathbb 1[a_t = \\text{right}] - \\pi(\\text{right}\\mid s_t)', calc: x => [`${x.action === 1 ? '1.0' : '0.0'} − ${f(x.probs[1])}`, (x.action === 1 ? 1 : 0) - x.probs[1]] }],
+              ['for i in range(4):', ['Each of the 4 numbers.']],
+              ['gradient[i] += (G - baseline) * slope * state[i]', ['Add this step\'s share: $(G_t - b) \\times$ slope $\\times s_i$.'], { tex: 'g_i \\mathrel{+}= (G_t - b)\\,\\big(\\mathbb 1[a_t = \\text{right}] - \\pi_{\\text{right}}\\big)\\,s_i', calc: x => [`${f(x.gradient[x.i])} + (${f(x.G)} − ${f(x.baseline)}) × ${s(x.slope)} × ${s(x.state[x.i])}`, x.gradient[x.i] + (x.G - x.baseline) * x.slope * x.state[x.i]] }],
+              ['return gradient', ['What this one game says the gradient is.']],
+            ],
+          },
+        },
+        { figure: 'GradientNoiseFig', caption: 'Each dot is one game\'s whole estimate, drawn by its $\\theta$ part (across) and its $\\dot\\theta$ part (up), the two weights that matter most for balancing. Grey: no baseline. Teal: the baseline on the slider, applied to the same 2,000 games.' },
+        { md: `Measured, with no baseline (2,000 games from the frozen policy; the games last from 11 to 224 steps):
+
+- The **average** estimate has $\\theta$ part 4.0 and $\\dot\\theta$ part 13.6: tilt and spin should push the same way. That is the true gradient, to within the noise.
+- The **spread** of single games is 7.9 and 34.8: two to three times the average itself.
+- Only **61%** of single games point within 90° of the average. Four updates in ten move the weights partly the **wrong** way.
+
+That is the price of Monte Carlo: an honest estimate that is very noisy. REINFORCE still learns because the wrong-way steps are outnumbered and, on average, cancel; but it needs a small learning rate and many games, and its learning curve jumps about (lesson 4.4).` },
+        { h: 'The baseline: proved harmless, measured helpful' },
+        { md: `Why may we subtract a baseline $b$ from every return? Look at what it adds to the estimate in one state: $b \\times \\nabla\\log\\pi(a \\mid s)$, with the push $a$ chosen at random by the policy. Its average over that choice is
+
+$$\\sum_a \\pi(a \\mid s)\\, \\nabla\\log\\pi(a \\mid s) = \\sum_a \\nabla \\pi(a \\mid s) = \\nabla \\sum_a \\pi(a \\mid s) = \\nabla 1 = 0$$
+
+(first step: $\\pi\\,\\nabla\\log\\pi = \\nabla\\pi$, lesson 4.3's trick backwards; last step: the probabilities always add up to 1, whatever the weights, so their sum has no slope). So $b$ times it averages to zero, **for any $b$ that doesn't depend on the push being judged**. The baseline can't move the average gradient. It can only change the spread.
+
+Why would it shrink the spread? Without a baseline every $G_t$ is positive, so every push in a long game is pushed up a lot and every push in a short game a little. Much of the scatter is "how long was this game", which says little about any one push. Subtract a typical return and what remains is "better or worse than usual", which is the part that matters.` },
+        {
+          mathCode: [
+            ['Q^\\pi(s_t, a_t)', '(unknown)', 'the expected return after the push: what the theorem wants'],
+            ['G_t', 'G', 'one real return: a Monte Carlo sample of it'],
+            ['\\nabla\\log\\pi(a_t\\mid s_t)', 'slope * state[i]', 'which way makes this push likelier'],
+            ['b', 'baseline', 'subtracted from every return; averages out to nothing'],
+            ['\\sum_t (G_t - b)\\,\\nabla\\log\\pi(a_t\\mid s_t)', 'game_gradient(...)', 'one game\'s estimate of $\\nabla J$'],
+          ],
+        },
+        { md: `Measured on the same 2,000 games (the $\\dot\\theta$ part; the others behave alike):
+
+| baseline $b$ | average | spread | points the average's way |
+|---|---|---|---|
+| 0 | 13.57 | 34.8 | 61% |
+| 10 | 13.66 | 26.1 | 78% |
+| 25 | 13.79 | 24.0 | 74% |
+| 40 | 13.92 | 36.0 | 64% |
+| 60 | 14.10 | 59.5 | 59% |
+
+- **The average doesn't move**, beyond noise: with 2,000 games the average itself is uncertain by about ±0.8, and the largest difference here is 0.5. (With 20,000 games, the term the baseline multiplies averages to zero within its own uncertainty, as the proof says.)
+- **The spread falls by about a third** with a baseline near the typical return (the average $G_t$ in these games is 25).
+- **Too large a baseline is as bad as none.** With $b = 60$, above nearly every return, almost every push is now pushed **down**, and the noise grows again. A baseline should be a typical return, not just any number.
+
+Run the comparison yourself, in real Python:` },
+        {
+          code: {
+            file: 'gradient_noise.py', fn: 'summarise', notes: [
+              ['n = len(gradients)', ['How many games.']],
+              ['mean = [sum(g[i] for g in gradients) / n for i in range(4)]', ['The average of each of the 4 parts: the best estimate of the true gradient.']],
+              ['spread = [(sum((g[i] - mean[i]) ** 2 for g in gradients) / n) ** 0.5 for i in range(4)]', ['The **standard deviation** of each part: the square root of the average squared distance from the mean. A typical single game\'s distance from the average.'], { tex: '\\sigma_i = \\sqrt{\\tfrac1n \\sum_k (g_{k,i} - \\bar g_i)^2}' }],
+              ['agree = 0', ['Count the games whose estimate points the average\'s way.']],
+              ['for g in gradients:', ['Each game\'s estimate.']],
+              ['if sum(x * m for x, m in zip(g, mean)) > 0:', ['The **dot product** with the average is positive exactly when the angle between them is under 90°: a step along `g` would also go uphill along the average.'], { logic: 'Multiply the estimate and the average part by part and add up. A positive total means the two arrows point within 90° of each other.' }],
+              ['agree += 1', ['One more that agrees.']],
+              ['return mean, spread, agree / n', ['The average, the spread, and the fraction that agree.']],
+            ],
+          },
+        },
+        {
+          code: {
+            file: 'gradient_noise.py', fn: 'compare_baselines', notes: [
+              ['weights, lengths = train_linear(episodes=training_games, seed=seed)', ['Train briefly (lesson 4.4), then never change the weights again.']],
+              ['env = CartPole()', ['A fresh world.']],
+              ['rng = random.Random(seed + 1)', ['Random numbers for sampling pushes, different from training\'s.']],
+              ['samples = {b: [] for b in baselines}', ['A **dictionary comprehension**: one empty list per baseline, keyed by the baseline.']],
+              ['for game in range(games):', ['Many games with the same frozen policy.']],
+              ['states, actions, chances, returns = play_game(weights, env, rng, seed + 1 if game == 0 else None)', ['One game.']],
+              ['for b in baselines:', ['The same game, judged with each baseline: only $b$ differs, so any difference in spread is the baseline\'s doing.']],
+              ['samples[b].append(game_gradient(states, actions, chances, returns, b))', ['This game\'s estimate with baseline `b`.']],
+              ['for b in baselines:', ['Then report each baseline.'], { logic: 'Go through the baselines again, this time to print a summary line for each.' }],
+              ['mean, spread, agree = summarise(samples[b])', ['Average, spread, agreement.']],
+              ['print(f"baseline {b:5.1f}: average {[round(x, 2) for x in mean]}, "', ['An f-string: `{b:5.1f}` prints `b` with one decimal in 5 characters. Two string pieces side by side, inside one call, are joined into one string.']],
+              ['return samples', ['Every estimate, for anyone who wants to look further.']],
+            ],
+          },
+        },
+        { python: { program: 'gradient', label: 'Run compare_baselines in real Python' } },
+        { h: 'What the lab\'s REINFORCE actually does' },
+        { md: `Lesson 4.3's \`reinforce_step\` takes two practical shortcuts that this lesson's textbook version doesn't:
+
+1. **Its baseline is the average of the same game's returns.** That isn't a fixed number: it is computed from the very pushes being judged (each $G_t$ is part of it), so the proof above doesn't quite apply and the average direction can shift a little. In practice it works well, and it adapts as games get longer.
+2. **It divides by the game's length**, so a 400-step game doesn't make a step 40 times bigger than a 10-step game. That keeps the step size steady as the agent improves, at the cost of weighting games differently from the formula.
+
+Lesson 4.7's PyTorch version goes further and **normalises** the returns: minus their mean, divided by their spread. All three are common, and all three trade a little exactness for steadier learning.
+
+The clean way to get a baseline that adapts is to make it depend on the **state** only, never on the push: $b(s) \\approx V^\\pi(s)$, an estimate of the return from $s$. The proof allows any such $b(s)$, and then $G_t - V(s_t)$ asks exactly "was this better than usual **from here**?" Learning that $V(s)$ is the job of the **critic** in Part 5. And when the critic's own estimate replaces most of $G_t$ (A2C's target uses 5 real rewards and then $V$), the method trades Monte Carlo's noise for TD's bias, the same trade QMaze Lab's lesson 3.4 measures on small maps.` },
+        {
+          choice: {
+            prompt: 'Why can REINFORCE subtract a baseline $b$ from every return without changing the average gradient?',
+            options: [
+              { text: 'Because $\\sum_a \\pi(a\\mid s)\\nabla\\log\\pi(a\\mid s) = \\nabla \\sum_a \\pi(a\\mid s) = \\nabla 1 = 0$: the term $b\\,\\nabla\\log\\pi$ averages to zero, as long as $b$ doesn\'t depend on the push chosen', why: 'Right. It changes each single estimate, but not their average.' },
+              { text: 'Because the baseline is small compared with the returns', why: 'Size has nothing to do with it: $b = 60$ is larger than most returns and still leaves the average unchanged (it only adds noise).' },
+              { text: 'Because the learning rate cancels it', why: 'The rate scales everything, baseline included; it can\'t remove it.' },
+            ],
+            answer: 0,
+          },
+        },
+        { note: '**REINFORCE is a Monte Carlo method**: it replaces the unknown $Q^\\pi(s_t, a_t)$ in the policy gradient with the real return $G_t$, one sample per push. So it is **unbiased** but **noisy**: from one fixed policy, a single game\'s gradient points the right way only 61% of the time. A **baseline** $b$ that doesn\'t depend on the push leaves the average unchanged ($\\sum_a \\pi\\nabla\\log\\pi = 0$) and, near a typical return, cuts the spread by about a third. A learned state baseline $V(s)$ is the critic of Part 5.' },
+      ],
+    },
+
+    {
+      id: 'pytorch', number: '4.6', title: 'PyTorch: tensors and autograd',
       goal: 'Use PyTorch tensors, let autograd compute gradients, check them against the hand-derived ones, and know what `backward`, `.grad` and `no_grad` do.',
       builds: ['gradient-descent'],
       blocks: [
@@ -310,9 +460,9 @@ torch.tensor((0.02, -0.4, 0.05, 0.3))       # a CartPole state as a tensor
     },
 
     {
-      id: 'reinforce-torch', number: '4.6', title: 'REINFORCE with a network',
+      id: 'reinforce-torch', number: '4.7', title: 'REINFORCE with a network',
       goal: 'Replace the linear policy by a small neural network in PyTorch, write REINFORCE as a loss to minimise, and compare the two.',
-      builds: ['reinforce-plain', 'pytorch'],
+      builds: ['reinforce-monte-carlo', 'pytorch'],
       blocks: [
         { md: `A linear policy can only draw a straight boundary through the four numbers. A **neural network** can bend it: a **hidden layer** of 32 units, each a dot product of the state followed by a squashing function, then a final linear layer for the two scores:
 

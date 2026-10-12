@@ -28,7 +28,7 @@ One statement is one step: Python's tracer pauses on every line of a statement w
 
 ## Lessons
 
-33 lessons in six parts (`lessons/part1.js` … `part6.js`). Notes are `[has, bullets, { tex, calc, logic }?]`.
+35 lessons in six parts (`lessons/part1.js` … `part6.js`). Notes are `[has, bullets, { tex, calc, logic }?]`.
 
 1. The world: four numbers · one step (Newton, then Euler) · the game loop · rules by hand · returns and discounting · the same as Gymnasium.
 2. From numbers to a table: slots · four slots, one state number · what slots lose.
@@ -38,6 +38,9 @@ One statement is one step: Python's tracer pauses on every line of a statement w
 6. DQN and beyond: Q-learning with a network · replay · target network and loop · six methods compared · your own CartPole and debugging.
 
 ## Measured findings the lessons rely on
+
+- Monte Carlo control (first-visit, step 1/n, 500 games): greedy 500, 195, 188, 197, 197 on seeds 0–4; every lost game is the cart off the track; 2,000 games still about 190. Lesson 3.7.
+- REINFORCE gradient from single games (policy frozen after 20 games, seed 0, 2,000 games): θ̇ part average 13.57, spread 34.8, 61% point the average's way with no baseline; b = 25: 13.79, 24.0, 74%; b = 60: 14.10, 59.5, 59%. Over 20,000 games Σ∇log π averages to 0 within its error. Lesson 4.5.
 
 - `python/cartpole.py` equals Gymnasium 1.4's CartPole-v1 exactly (largest difference 0.0 over 5,000 steps).
 - Hand rules over 100 games: always left 9.34, random 21.71, lean 43.05, lean ahead (θ + 0.25θ̇ > 0) 500.
@@ -58,3 +61,5 @@ One statement is one step: Python's tracer pauses on every line of a statement w
 ## Where we stopped
 
 2026-10-11, session 1: the whole lab built and checked as above. Not yet checked: the Python tab inside the real Electron window.
+
+2026-10-12: Monte Carlo added: 3.7 Monte Carlo control (`python/montecarlo.py`, sharing QMaze's `engine/montecarlo.js`) and 4.5 REINFORCE as a Monte Carlo method (`python/gradient_noise.py`, `figures/gradients.jsx`); later lessons renumbered, ids unchanged.

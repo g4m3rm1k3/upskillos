@@ -206,7 +206,7 @@ Both are fixed by subtracting a **baseline** $b(s)$ that depends only on the sta
 - The **actor** is the policy $\\pi(a|s)$: it chooses.
 - The **critic** is a value estimate $V(s)$: it judges, telling the actor whether an outcome was better or worse than expected.
 
-The critic learns exactly like TD (lesson 3.2): it is pushed towards a target $R$ built from rewards and its own estimate of where the agent ended up. As a **loss** to minimise, that's the squared error, the critic's **regression** on its targets:
+The critic learns exactly like TD (lesson 3.3): it is pushed towards a target $R$ built from rewards and its own estimate of where the agent ended up. As a **loss** to minimise, that's the squared error, the critic's **regression** on its targets:
 
 $$L_\\text{critic} = \\big(R - V(s)\\big)^2, \\qquad \\frac{\\partial L_\\text{critic}}{\\partial V(s)} = -2\\big(R - V(s)\\big)$$
 
@@ -216,7 +216,7 @@ Gradient descent on it moves $V(s)$ towards $R$: the TD update in gradient form.
 
 $$A = r + \\gamma V(s') - V(s)$$
 
-which is exactly the **TD error** $\\delta$ of lesson 3.2. A positive TD error means "that went better than I expected from $s$", so the action taken should become more likely. This is the bridge between Part 3 and Part 4: the same number that teaches the critic also teaches the actor.` },
+which is exactly the **TD error** $\\delta$ of lesson 3.3. A positive TD error means "that went better than I expected from $s$", so the action taken should become more likely. This is the bridge between Part 3 and Part 4: the same number that teaches the critic also teaches the actor.` },
         {
           predict: {
             prompt: 'γ = 0.95. The critic thinks $V(s) = 0.5$ and $V(s\') = 0.6$. The move paid $r = -0.04$. What is the advantage?',
@@ -360,8 +360,8 @@ Run all three on every map with this lab's default settings:` },
         { md: `What to read in the table:
 
 - On the deterministic mazes all three find optimal or near-optimal routes.
-- On the **Cliff**, the two on-policy methods (SARSA, A2C) choose a safer, longer route than Q-learning's edge walk (lesson 3.8).
-- On **Cats and cheese** all three settle for the small cheese with these settings; only Q-learning with optimistic initial values found the big one (lesson 3.10). A policy-gradient method explores only as much as its own probabilities and entropy bonus make it.
+- On the **Cliff**, the two on-policy methods (SARSA, A2C) choose a safer, longer route than Q-learning's edge walk (lesson 3.11).
+- On **Cats and cheese** all three settle for the small cheese with these settings; only Q-learning with optimistic initial values found the big one (lesson 3.13). A policy-gradient method explores only as much as its own probabilities and entropy bonus make it.
 - On the **frozen lake** results vary from run to run and seed to seed; judge them over many episodes and several seeds.` },
         { h: 'A hidden layer' },
         { md: `\`train_a2c(..., hidden=32)\` puts a 32-unit hidden layer with tanh between the one-hot input and the two heads. More power, surely? Measured with this lab's Python program (1,500 to 3,000 updates):

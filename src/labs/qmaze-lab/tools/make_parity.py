@@ -17,6 +17,7 @@ from qlearning import train_q_learning   # noqa: E402
 from sarsa import train_sarsa            # noqa: E402
 from td import td0_evaluate              # noqa: E402
 from averages import running_mean, constant_step  # noqa: E402
+from montecarlo import mc_evaluate, train_mc_control  # noqa: E402
 
 RUNS = [
     {"map": "corridor", "episodes": 20, "seed": 0},
@@ -45,6 +46,13 @@ def main():
         out["td"].append({"map": name, "episodes": episodes, "alpha": alpha, "V": td0_evaluate(GridWorld(name), episodes=episodes, alpha=alpha).tolist()})
     samples = [1, 0, 0, 1, 0.5, -2, 3]
     out["averages"] = {"samples": samples, "mean": running_mean(samples), "step": constant_step(samples, 0.3)}
+    out["mc"] = []
+    for name, episodes, options in (("cheese_and_cat", 200, {}), ("corridor", 100, {"first_visit": False}), ("frozen_lake", 300, {"alpha": 0.05})):
+        out["mc"].append({"map": name, "episodes": episodes, **options, "V": mc_evaluate(GridWorld(name), episodes=episodes, **options).tolist()})
+    out["mc_control"] = []
+    for name, episodes, options in (("cheese_and_cat", 150, {}), ("cliff", 200, {"gamma": 1.0, "epsilon_start": 0.1, "epsilon_end": 0.1}), ("frozen_lake", 300, {"alpha": 0.1, "seed": 3})):
+        Q, totals = train_mc_control(GridWorld(name), episodes=episodes, **options)
+        out["mc_control"].append({"map": name, "episodes": episodes, **options, "Q": Q.tolist(), "totals": totals})
     path = os.path.join(HERE, "..", "engine", "parity.json")
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(out, handle)

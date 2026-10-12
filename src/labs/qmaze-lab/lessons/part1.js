@@ -404,7 +404,7 @@ Now the wander: 8 moves instead of 6, return $7 \\cdot (-0.04) + 1 = 0.72$, a li
             answer: 0,
           },
         },
-        { md: `This is the central skill of applying reinforcement learning: **the agent maximises exactly what you pay it for**, not what you meant. Lesson 3.10 shows real examples of rewards that teach the wrong thing, including a famous one in Classic QMaze.` },
+        { md: `This is the central skill of applying reinforcement learning: **the agent maximises exactly what you pay it for**, not what you meant. Lesson 3.13 shows real examples of rewards that teach the wrong thing, including a famous one in Classic QMaze.` },
         { note: 'The **return** is the sum of an episode\'s rewards. The agent\'s goal is to make it as large as possible, and "best" means only "largest return": the rewards *are* the definition of the task.' },
       ],
     },

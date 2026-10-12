@@ -16,6 +16,7 @@ import { PROGRAMS } from './programs.js'
 import { extrasFor } from './lineNotes.js'
 import { BinnedCartPole } from './engine/bins.js'
 import { finish, qLearning } from '../qmaze-lab/engine/tabular.js'
+import { mcControl, finishMC } from '../qmaze-lab/engine/montecarlo.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
 const appData = process.platform === 'win32' ? process.env.APPDATA ?? '' : process.platform === 'darwin' ? path.join(homedir(), 'Library', 'Application Support') : path.join(homedir(), '.config')
@@ -105,6 +106,27 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(plain(r.watch.weights.value)).toEqual([[0, 0, 0, 0], [0, 0, 0, 0]])
     expect(await checkArithmetic(s, r, 200)).toBeGreaterThan(10)
   }, 120000)
+
+  it('Monte Carlo control: Next game stops after each game; the backward pass\'s arithmetic matches; the final table is the engine\'s', async () => {
+    let r = await load(s, 'mc', { episodes: 30 })
+    r = await s.send({ cmd: 'step', mode: 'lines', targets: PROGRAMS.mc.episodeEnd() })
+    expect(top(r)).toMatchObject({ file: 'montecarlo.py', function: 'train_mc_control' })
+    expect(r.watch.Q.value.shape).toEqual([72, 2])
+    expect(await checkArithmetic(s, r, 400)).toBeGreaterThan(10)
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'experiments.py', line: SOURCES['experiments.py'].split('\n').findLastIndex(l => l.includes('return Q, totals, greedy_lengths(Q, env)')) + 1 })
+    const { Q } = finishMC(mcControl(new BinnedCartPole(), { episodes: 30, gamma: 0.99, epsilonStart: 1, epsilonEnd: 0.01, seed: 0 }))
+    plain(r.watch.Q.value).forEach((row, i) => row.forEach((q, a) => expect(q).toBeCloseTo(Q[i][a], 4)))
+  }, 180000)
+
+  it('one game, one gradient: the slope arithmetic matches, and compare_baselines prints both baselines', async () => {
+    let r = await load(s, 'gradient', { games: 20 })
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'gradient_noise.py', line: lineOf('gradient_noise.py', 'gradient = [0.0, 0.0, 0.0, 0.0]') })
+    expect(await checkArithmetic(s, r, 150)).toBeGreaterThan(5)
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    while (r.type === 'pause') r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type, r.error).toBe('finished')
+    expect(r.output).toMatch(/baseline   0\.0: .*\nbaseline  25\.0: /)
+  }, 180000)
 
   for (const id of ['neuron', 'autograd', 'a2c_check']) {
     it(`${id}: runs to the end`, async () => {

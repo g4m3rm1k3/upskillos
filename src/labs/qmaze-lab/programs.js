@@ -26,8 +26,22 @@ export const PROGRAMS = {
     watch: {},
     episodeEnd: () => [],
   },
+  mc: {
+    label: 'Monte Carlo prediction (3.2)', file: 'montecarlo.py', module: 'experiments', function: 'evaluate_mc',
+    about: 'Whole random games; after each one, walk it backwards computing the returns G and average each state\'s first-visit returns into V.',
+    kwargs: map => ({ name: map, episodes: 300, seed: 0 }), maps: 'all',
+    watch: { V: ['V'], state: ['state'] },
+    episodeEnd: () => [['montecarlo.py', lineOf('montecarlo.py', 'episode = play_episode(env, lambda state: rng')]],
+  },
+  mc_control: {
+    label: 'Monte Carlo control (3.7)', file: 'montecarlo.py', module: 'experiments', function: 'learn_mc',
+    about: 'Whole ε-greedy games; after each one, every Q[state, action] it used moves towards the average return that followed.',
+    kwargs: map => ({ name: map, episodes: 300, seed: 0 }), maps: 'all',
+    watch: { Q: ['Q'], state: ['state'], totals: ['totals'] },
+    episodeEnd: () => [['montecarlo.py', lineOf('montecarlo.py', 'epsilon = linear(')]],
+  },
   q: {
-    label: 'Q-learning (3.5)', file: 'qlearning.py', module: 'experiments', function: 'learn_q',
+    label: 'Q-learning (3.8)', file: 'qlearning.py', module: 'experiments', function: 'learn_q',
     about: 'Q-learning: ε-greedy moves, and after each one Q[state, action] nudged towards reward + γ · max Q[next_state].',
     kwargs: map => ({ name: map, episodes: 300, seed: 0 }), maps: 'all',
     watch: { Q: ['Q'], state: ['state'], totals: ['totals'] },
@@ -35,7 +49,7 @@ export const PROGRAMS = {
     episodeEnd: () => [['qlearning.py', lineOf('qlearning.py', 'totals.append(total)')]],
   },
   sarsa: {
-    label: 'SARSA (3.7)', file: 'sarsa.py', module: 'experiments', function: 'learn_sarsa',
+    label: 'SARSA (3.10)', file: 'sarsa.py', module: 'experiments', function: 'learn_sarsa',
     about: 'SARSA: like Q-learning, but the target uses the next action actually chosen.',
     kwargs: map => ({ name: map, episodes: 300, seed: 0 }), maps: 'all',
     watch: { Q: ['Q'], state: ['state'], totals: ['totals'] },

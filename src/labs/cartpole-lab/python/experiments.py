@@ -1,5 +1,6 @@
 from bins import BinnedCartPole, COUNTS, LIMITS
 from evaluate import greedy_lengths
+from montecarlo import train_mc_control
 from policies import always_left, lean, lean_ahead, play, random_push
 from qlearning import train_q_learning
 from returns import all_returns
@@ -47,4 +48,11 @@ def learn_sarsa(counts=COUNTS, limits=LIMITS, **settings):
     """SARSA on the binned CartPole; settings are train_sarsa's."""
     env = BinnedCartPole(counts, limits)
     Q, totals = train_sarsa(env, **settings)
+    return Q, totals, greedy_lengths(Q, env)
+
+
+def learn_mc(counts=COUNTS, limits=LIMITS, **settings):
+    """Monte Carlo control on the binned CartPole; settings are train_mc_control's."""
+    env = BinnedCartPole(counts, limits)
+    Q, totals = train_mc_control(env, **settings)
     return Q, totals, greedy_lengths(Q, env)

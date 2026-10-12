@@ -36,7 +36,7 @@ export function RunningAverage({ n: n0 = 60 }) {
   </div>
 }
 
-// 3.2: TD(0) learning the random policy's values from experience, beside the exact values.
+// 3.3: TD(0) learning the random policy's values from experience, beside the exact values.
 export function TDEvaluation({ map = 'cheese_and_cat' }) {
   const env = useMemo(() => new GridWorld(map), [map])
   const exact = useMemo(() => evaluatePolicy(env.P, uniformPolicy(env.nStates), 0.95).V, [env])
@@ -76,7 +76,7 @@ export function TDEvaluation({ map = 'cheese_and_cat' }) {
   </div>
 }
 
-// 3.3: the Q-table as what it is in Python, an array of n_states rows and 4 columns, beside the map.
+// 3.5: the Q-table as what it is in Python, an array of n_states rows and 4 columns, beside the map.
 export function QTableView({ map = 'cheese_and_cat', train = 60 }) {
   const env = useMemo(() => new GridWorld(map), [map])
   const Q = useMemo(() => train ? finish(qLearning(new GridWorld(map), { episodes: train, seed: 0 })).Q : zeros(env.nStates, 4), [map, train])
@@ -94,7 +94,7 @@ export function QTableView({ map = 'cheese_and_cat', train = 60 }) {
   </div>
 }
 
-// 3.4: ε over the episodes, and how often a random move is taken.
+// 3.6: ε over the episodes, and how often a random move is taken.
 export function EpsilonSchedule({ episodes = 300 }) {
   const [start, setStart] = useState(1), [end, setEnd] = useState(0.05)
   const values = Array.from({ length: episodes }, (_, e) => linear(start, end, e / (0.8 * episodes)))
@@ -105,7 +105,7 @@ export function EpsilonSchedule({ episodes = 300 }) {
   </div>
 }
 
-// 3.8: Q-learning and SARSA trained side by side on the cliff, same settings and seed.
+// 3.11: Q-learning and SARSA trained side by side on the cliff, same settings and seed.
 export function CliffCompare({ seed: s0 = 0 }) {
   const [seed, setSeed] = useState(s0)
   const env = useMemo(() => new GridWorld('cliff'), [])

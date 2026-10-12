@@ -17,7 +17,8 @@ import { BinnedCartPole, makeEdges, slot, toState } from './bins.js'
 import { RULES, averageLength } from './policies.js'
 import { finish, qLearning, sarsa, greedyAction } from '../../qmaze-lab/engine/tabular.js'
 import { PyRandom } from '../../qmaze-lab/engine/mt.js'
-import { trainLinear, gradients } from './linear.js'
+import { trainLinear, gradients, frozenGames, gameGradient } from './linear.js'
+import { mcControl, finishMC } from '../../qmaze-lab/engine/montecarlo.js'
 
 const camel = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/_(\w)/g, (_, c) => c.toUpperCase()), v]))
 
@@ -94,5 +95,22 @@ describe('the JavaScript engine reproduces the Python programs', () => {
     let w = 0, b = 0
     for (let step = 0; step < 200; step++) { const [gw, gb] = gradients(w, b); w = w - 0.05 * gw; b = b - 0.05 * gb }
     expect([w, b]).toEqual(parity.neuron)
+  })
+
+  for (const run of parity.mc_control) {
+    it(`Monte Carlo control, ${run.episodes} games, seed ${run.seed}${run.alpha ? `, α ${run.alpha}` : ''}: identical totals and greedy games, the same Q-table`, () => {
+      const { Q: _q, totals: _t, greedy: _g, ...options } = run
+      const { Q, totals } = finishMC(mcControl(new BinnedCartPole(), { episodes: 500, gamma: 0.99, alpha: null, epsilonStart: 1.0, epsilonEnd: 0.01, ...options }))
+      expect(totals).toEqual(run.totals)
+      Q.forEach((row, s) => row.forEach((q, a) => expect(Math.abs(q - run.Q[s][a])).toBeLessThan(1e-4)))
+      expect(greedyLengths(Q, new BinnedCartPole())).toEqual(run.greedy)
+    }, 30000)
+  }
+
+  it('REINFORCE\'s single-game gradients from a frozen policy: the same, game by game, for each baseline', () => {
+    const { games } = frozenGames({ games: parity.gradient.games })
+    for (const [b, expected] of Object.entries(parity.gradient.baselines)) {
+      games.forEach((game, k) => gameGradient(game, Number(b)).forEach((g, i) => expect(Math.abs(g - expected[k][i])).toBeLessThan(1e-9 * (1 + Math.abs(g)))))
+    }
   })
 })

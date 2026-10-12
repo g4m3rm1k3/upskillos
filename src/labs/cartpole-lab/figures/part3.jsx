@@ -5,11 +5,14 @@ import { QTableGrid } from './pictures.jsx'
 import { Slider } from '../../qmaze-lab/figures/ui.jsx'
 import { qLearning, sarsa, finish, greedyAction, linear } from '../../qmaze-lab/engine/tabular.js'
 import { PyRandom } from '../../qmaze-lab/engine/mt.js'
+import { mcControl } from '../../qmaze-lab/engine/montecarlo.js'
 import { BinnedCartPole, COUNTS, LIMITS, makeEdges, toSlots } from '../engine/bins.js'
 import { ARROWS, ACTION_NAMES } from '../engine/cartpole.js'
 
 export const TABLE_DEFAULTS = { algorithm: 'q', episodes: 500, alpha: 0.1, gamma: 0.99, epsilonStart: 1.0, epsilonEnd: 0.01, initialQ: 0, seed: 0, counts: COUNTS }
 const ALGORITHMS = { q: { label: 'Q-learning', make: qLearning }, sarsa: { label: 'SARSA', make: sarsa } }
+// Monte Carlo learns once per game, so it is not in the move-by-move Trainer; it averages returns (step 1/n), no α.
+const ALL_ALGORITHMS = { ...ALGORITHMS, mc: { label: 'Monte Carlo', make: (env, o) => mcControl(env, { episodes: o.episodes, gamma: o.gamma, epsilonStart: o.epsilonStart, epsilonEnd: o.epsilonEnd, seed: o.seed }) } }
 
 // evaluate.py's greedy_lengths, plus why each game ended.
 export function greedyGames(Q, counts = COUNTS, games = 20, seed = 1000) {
@@ -25,7 +28,7 @@ export function greedyGames(Q, counts = COUNTS, games = 20, seed = 1000) {
 }
 export function trainTable(options) {
   const o = { ...TABLE_DEFAULTS, ...options }
-  return finish(ALGORITHMS[o.algorithm].make(new BinnedCartPole(o.counts), o))
+  return finish(ALL_ALGORITHMS[o.algorithm].make(new BinnedCartPole(o.counts), o))
 }
 const mean = a => a.reduce((x, y) => x + y, 0) / a.length
 
@@ -179,13 +182,13 @@ export function GreedyResult({ games }) {
 }
 
 // Train with five seeds and judge each: how much luck is in one run.
-export function SeedsFig({ counts = COUNTS }) {
+export function SeedsFig({ counts = COUNTS, algorithms = ['q', 'sarsa'] }) {
   const [rows, setRows] = useState(null)
-  const go = () => setRows(['q', 'sarsa'].map(algorithm => ({ algorithm, runs: [0, 1, 2, 3, 4].map(seed => { const { Q } = trainTable({ algorithm, seed, counts }); return greedyGames(Q, counts) }) })))
+  const go = () => setRows(algorithms.map(algorithm => ({ algorithm, runs: [0, 1, 2, 3, 4].map(seed => { const { Q } = trainTable({ algorithm, seed, counts }); return greedyGames(Q, counts) }) })))
   return <div className="qm-fig">
     <div className="qm-buttons"><button className="qm-primary" onClick={go}>Train 5 seeds of each (500 games each)</button><span className="qm-hint">Slots {counts.join(', ')}. Takes a second or two.</span></div>
     {rows && <table className="qm-log"><thead><tr><th></th>{[0, 1, 2, 3, 4].map(s => <th key={s}>seed {s}</th>)}</tr></thead>
-      <tbody>{rows.map(row => <tr key={row.algorithm}><th>{ALGORITHMS[row.algorithm].label}</th>{row.runs.map((games, i) => { const lost = games.filter(g => g.why !== 'lasted 500'); return <td key={i}><b>{fmt(mean(games.map(g => g.length)), 0)}</b>{lost.length ? <><br /><small>{lost.filter(g => g.why === 'cart off the track').length} cart, {lost.filter(g => g.why === 'pole fell').length} pole</small></> : null}</td> })}</tr>)}</tbody></table>}
+      <tbody>{rows.map(row => <tr key={row.algorithm}><th>{ALL_ALGORITHMS[row.algorithm].label}</th>{row.runs.map((games, i) => { const lost = games.filter(g => g.why !== 'lasted 500'); return <td key={i}><b>{fmt(mean(games.map(g => g.length)), 0)}</b>{lost.length ? <><br /><small>{lost.filter(g => g.why === 'cart off the track').length} cart, {lost.filter(g => g.why === 'pole fell').length} pole</small></> : null}</td> })}</tr>)}</tbody></table>}
     {rows && <p className="qm-hint">Average greedy game length over 20 new games, and how the lost games ended.</p>}
   </div>
 }

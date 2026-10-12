@@ -8,6 +8,7 @@ import { GridWorld } from './gridworld.js'
 import { valueIteration } from './planning.js'
 import { qLearning, sarsa, finish } from './tabular.js'
 import { td0Evaluate, runningMean, constantStep } from './td.js'
+import { mcEvaluate, mcControl, finishMC } from './montecarlo.js'
 
 const camel = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/_(\w)/g, (_, c) => c.toUpperCase()), v]))
 
@@ -43,4 +44,19 @@ describe('the JavaScript engine reproduces the Python programs', () => {
     expect(runningMean(parity.averages.samples)).toEqual(parity.averages.mean)
     expect(constantStep(parity.averages.samples, 0.3)).toEqual(parity.averages.step)
   })
+
+  for (const run of parity.mc) {
+    it(`Monte Carlo prediction on ${run.map}${run.first_visit === false ? ', every visit' : ''}${run.alpha ? `, α = ${run.alpha}` : ''}: identical V`, () => {
+      const { map, V, ...options } = run
+      expect(finishMC(mcEvaluate(new GridWorld(map), camel(options))).V).toEqual(V)
+    })
+  }
+  for (const run of parity.mc_control) {
+    it(`Monte Carlo control on ${run.map}: identical Q-table and episode totals`, () => {
+      const { map, Q, totals, ...options } = run
+      const out = finishMC(mcControl(new GridWorld(map), camel(options)))
+      expect(out.totals).toEqual(totals)
+      expect(out.Q).toEqual(Q)
+    })
+  }
 })

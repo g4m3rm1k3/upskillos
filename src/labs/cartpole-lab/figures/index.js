@@ -5,12 +5,13 @@ import { QRowFig, EpsilonFig, TDUpdateFig, Trainer, SeedsFig, TableVsRule } from
 import { NeuronFig, SoftmaxFig, PolicyGradientFig, LinearTrainer, Measured } from './part4.jsx'
 import { NStepFig, BatchShapes } from './part5.jsx'
 import { ReplayFig, CompareAll, WorldChanger } from './part6.jsx'
+import { GradientNoiseFig } from './gradients.jsx'
 
 export const FIGURES = {
   StateExplorer, StepWorking, DriveYourself, RulePlayer, ReturnCurve,
   SlotsFig, StateNumberFig, AliasFig, SlotCounts,
   QRowFig, EpsilonFig, TDUpdateFig, Trainer, SeedsFig, TableVsRule,
-  NeuronFig, SoftmaxFig, PolicyGradientFig, LinearTrainer, Measured,
+  NeuronFig, SoftmaxFig, PolicyGradientFig, LinearTrainer, Measured, GradientNoiseFig,
   NStepFig, BatchShapes,
   ReplayFig, CompareAll, WorldChanger,
 }

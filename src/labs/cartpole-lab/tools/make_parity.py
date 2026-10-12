@@ -16,6 +16,8 @@ from bins import BinnedCartPole, make_edges, slot, to_state       # noqa: E402
 from cartpole import CartPole                                       # noqa: E402
 from evaluate import greedy_lengths                                 # noqa: E402
 from linear_policy import train_linear                              # noqa: E402
+from gradient_noise import compare_baselines                        # noqa: E402
+from montecarlo import train_mc_control                             # noqa: E402
 from neuron import train                                            # noqa: E402
 from policies import always_left, average_length, lean, lean_ahead, random_push  # noqa: E402
 from qlearning import train_q_learning                              # noqa: E402
@@ -62,6 +64,13 @@ def main():
             Q, totals = learn(env, **settings)
             out["tables"].append({**run, "algorithm": algorithm, "Q": Q.tolist(), "totals": totals,
                                   "greedy": greedy_lengths(Q, BinnedCartPole(counts))})
+    out["mc_control"] = []
+    for run in ({"episodes": 60, "seed": 0}, {"episodes": 150, "seed": 1, "alpha": 0.1}):
+        env = BinnedCartPole()
+        Q, totals = train_mc_control(env, **run)
+        out["mc_control"].append({**run, "Q": Q.tolist(), "totals": totals, "greedy": greedy_lengths(Q, BinnedCartPole())})
+    samples = compare_baselines(games=200)
+    out["gradient"] = {"games": 200, "baselines": {str(b): g for b, g in samples.items()}}
     weights, lengths = train_linear(episodes=120, seed=0)
     out["linear"] = {"episodes": 120, "seed": 0, "weights": weights, "lengths": lengths}
     out["neuron"] = list(train())

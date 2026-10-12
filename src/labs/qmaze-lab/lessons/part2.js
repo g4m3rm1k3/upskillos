@@ -131,7 +131,7 @@ There are two ways out, and both teach something:
 1. **Put the history into the state.** The state would be (cell, set of visited cells). Classic QMaze has 74 floor cells, so there are up to $74 \\cdot 2^{74}$ such states: about $10^{24}$. No table could hold that. Making the state bigger fixes the Markov property but can make learning hopeless.
 2. **Accept an approximation.** Learn on cell numbers anyway. The table then learns a kind of average over histories. It usually still works here, because the revisit penalty is small and mostly pushes the rat onwards, but the guarantees of Part 3 no longer strictly apply.
 
-Lesson 3.10 trains on Classic QMaze with and without the rule.` },
+Lesson 3.13 trains on Classic QMaze with and without the rule.` },
         {
           choice: {
             prompt: 'Which of these would also break the Markov property if the state were only the cell number?',
@@ -328,7 +328,7 @@ And since $V^*(s') = \\max_{a'} Q^*(s', a')$, the same thing for $Q^*$:
 
 $$Q^*(s, a) = \\sum_{s', r} p(s', r \\mid s, a)\\,\\big[\\, r + \\gamma\\, \\max_{a'} Q^*(s', a') \\,\\big]$$
 
-Remember this last equation. Q-learning (lesson 3.5) is nothing more than a way of solving it **without knowing $p$**.` },
+Remember this last equation. Q-learning (lesson 3.8) is nothing more than a way of solving it **without knowing $p$**.` },
         {
           code: {
             file: 'planning.py', fn: 'value_iteration', notes: [

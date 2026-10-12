@@ -9,14 +9,14 @@ export const PART5 = {
       blocks: [
         { md: `Applying reinforcement learning to a new problem always follows the same steps. This lesson walks through them on a world you draw yourself.
 
-1. **Define the MDP.** What is a state (and is it Markov, lesson 2.2)? What are the actions? What does each move pay, and when does an episode end? Write the rewards so they say what you want and nothing else (lesson 3.10).
+1. **Define the MDP.** What is a state (and is it Markov, lesson 2.2)? What are the actions? What does each move pay, and when does an episode end? Write the rewards so they say what you want and nothing else (lesson 3.13).
 2. **Check it.** Can the goal be reached at all? Are there endings, so episodes finish?
 3. **If you have a model, solve it exactly.** Value iteration gives $V^*$ and the optimal policy: the yardstick for everything learned (lesson 2.5).
 4. **Choose a learner.** Small and discrete: a table (Q-learning, or SARSA if exploring is dangerous). Too many states, or states with features: a network (A2C and its relatives).
-5. **Train on several seeds**, and judge by greedy play, not the training curve (lesson 3.6).
+5. **Train on several seeds**, and judge by greedy play, not the training curve (lesson 3.9).
 6. **Diagnose** when it falls short (next lesson).` },
         { figure: 'MapBuilder', caption: 'Pick a cell type and click cells to paint. The map is checked and solved after every change; then train a learner on it. The Python dictionary below the map is your world, ready for `maps.py`.' },
-        { note: 'Challenges. Each needs a map that makes a lesson\'s point:\n\n1. A map where **Q-learning and SARSA choose different routes** (hint: a short route past danger and a longer safe one, lesson 3.8).\n2. A map where **γ decides** between two rewards (move the γ slider and watch the arrows flip, lesson 1.5).\n3. A **slippery** map where the optimal route is longer than the shortest one (lesson 2.5).\n4. A map where Q-learning from zeros **settles for the wrong reward**, then fix it with initial Q = 1 (lesson 3.10).', kind: 'try' },
+        { note: 'Challenges. Each needs a map that makes a lesson\'s point:\n\n1. A map where **Q-learning and SARSA choose different routes** (hint: a short route past danger and a longer safe one, lesson 3.11).\n2. A map where **γ decides** between two rewards (move the γ slider and watch the arrows flip, lesson 1.5).\n3. A **slippery** map where the optimal route is longer than the shortest one (lesson 2.5).\n4. A map where Q-learning from zeros **settles for the wrong reward**, then fix it with initial Q = 1 (lesson 3.13).', kind: 'try' },
         { note: 'Applying RL: define the MDP carefully (especially rewards and the state), check it, compute the optimum when you can, pick the simplest learner that fits, train on several seeds and judge greedily.' },
       ],
     },
@@ -78,15 +78,15 @@ Q, totals = train_q_learning(frozen_lake(), episodes=3000, alpha=0.1, gamma=0.99
 Q, totals = train_sarsa(cliff_walking(), episodes=500, alpha=0.5, gamma=1.0, epsilon_start=0.1, epsilon_end=0.1)
 \`\`\`
 
-Run with this lab's settings and seed 0, the Q-learning table succeeds on Gymnasium's own FrozenLake **74.3%** of the time over 1,000 greedy episodes, and on CliffWalking the greedy routes return **−13** (Q-learning) and **−17** (SARSA): exactly what lessons 3.8 and 3.9 found on the lab's copies. The code you understand line by line works on the standard library.` },
+Run with this lab's settings and seed 0, the Q-learning table succeeds on Gymnasium's own FrozenLake **74.3%** of the time over 1,000 greedy episodes, and on CliffWalking the greedy routes return **−13** (Q-learning) and **−17** (SARSA): exactly what lessons 3.11 and 3.12 found on the lab's copies. The code you understand line by line works on the standard library.` },
         { h: 'When it doesn\'t learn' },
         { md: `| Symptom | Likely cause | What to try |
 |---|---|---|
 | Never reaches the goal; curve flat | The reward is too rare for random exploring to find | More episodes; a step cost; optimistic initial values; check the goal is reachable (5.1) |
-| Settles for a worse ending | Stopped exploring too soon (local optimum) | Longer ε schedule; optimistic initial Q (3.10) |
-| Values jump about and never settle | α too large for a noisy world; or the reward isn't Markov | Smaller α; check the state contains everything the reward depends on (2.2, 3.9) |
-| Learns slowly from far away | γ too small, so distant rewards vanish | γ closer to 1 (1.5, 3.6) |
-| Fine while training, worse greedily (or the reverse) | The exploring and greedy policies differ, e.g. near danger | Compare with SARSA; judge the right one for how it will be used (3.8) |
+| Settles for a worse ending | Stopped exploring too soon (local optimum) | Longer ε schedule; optimistic initial Q (3.13) |
+| Values jump about and never settle | α too large for a noisy world; or the reward isn't Markov | Smaller α; check the state contains everything the reward depends on (2.2, 3.12) |
+| Learns slowly from far away | γ too small, so distant rewards vanish | γ closer to 1 (1.5, 3.9) |
+| Fine while training, worse greedily (or the reverse) | The exploring and greedy policies differ, e.g. near danger | Compare with SARSA; judge the right one for how it will be used (3.11) |
 | A2C becomes certain of a bad move early | Learning rate too high, entropy too low | Lower lr; raise \`entropy_coef\` (4.5, 4.6) |
 | Results differ wildly between runs | Normal for RL | Always run several seeds and report the spread |
 

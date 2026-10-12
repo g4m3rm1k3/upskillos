@@ -354,7 +354,112 @@ The code differs in one line of the update and in the order of choosing: SARSA m
     },
 
     {
-      id: 'reading-the-table', number: '3.7', title: 'What the table learned',
+      id: 'monte-carlo-control', number: '3.7', title: 'Monte Carlo control: learning from whole games',
+      goal: 'Fill the Q-table from whole games instead of single moves, follow every line of `train_mc_control`, and compare it, measured, with Q-learning and SARSA.',
+      builds: ['sarsa', 'return-discount', 'judging'],
+      blocks: [
+        { md: `Q-learning and SARSA update after every push, towards a target that contains a **guess**: $r + \\gamma \\max Q(s')$ or $r + \\gamma Q(s', a')$, values the table itself is still learning. That is **temporal-difference** (TD) learning, and using your own guesses inside the target is called **bootstrapping**.
+
+There is an older, more direct way. Lesson 3.1 defined $Q(s, a)$ as the return you can expect after pushing $a$ in state $s$:
+
+$$Q^\\pi(s, a) = \\mathbb{E}_\\pi\\big[\\, G_t \\;\\big|\\; S_t = s,\\ A_t = a \\,\\big]$$
+
+So **play a whole game**, work out the real return $G_t$ after every push (lesson 1.5's backwards walk), and **average** those returns into the table. No guesses: every number averaged really happened. Then keep choosing pushes ε-greedily from the improving table, and repeat. This is **Monte Carlo control**. "Monte Carlo" is the general name for estimating something by averaging random samples; it was coined in the 1940s by Stanislaw Ulam and John von Neumann, after the casino.
+
+(QMaze Lab's lessons 3.2–3.7 build Monte Carlo up step by step on small maps, where the exact answers are known, and compare it with TD in detail.)` },
+        { h: 'Step 1: play a game and write it down' },
+        {
+          code: {
+            file: 'montecarlo.py', fn: 'play_episode', notes: [
+              ['episode = []', ['The record: one `(state, action, reward)` per push.']],
+              ['state, info = env.reset(seed=seed)', ['Start a game.']],
+              ['done = False', ['The usual loop.']],
+              ['while not done:', ['Play to the end: Monte Carlo can\'t learn anything before.']],
+              ['action = choose(state)', ['Ask the policy. `choose` is a **function** passed in as an argument: whoever calls `play_episode` decides how pushes are chosen.'], { logic: 'Call the function the caller handed over, with the state number; whatever it returns is the push.' }],
+              ['next_state, reward, terminated, truncated, info = env.step(action)', ['Push.']],
+              ['episode.append((state, action, reward))', ['Write the move down. The tuple at index $t$ is $S_t, A_t, R_{t+1}$: the reward **for** that push.']],
+              ['state = next_state', ['Move on.']],
+              ['done = terminated or truncated', ['Fallen, off the track, or 500 steps.']],
+              ['return episode', ['The whole game.']],
+            ],
+          },
+        },
+        { h: 'Step 2: average the returns into the table' },
+        {
+          code: {
+            file: 'montecarlo.py', fn: 'train_mc_control', notes: [
+              ['def train_mc_control(env, episodes=500', ['The same settings as `train_q_learning`, except α: by default (`alpha=None`) each entry is an exact average of its returns.']],
+              ['rng = random.Random(seed)', ['Random numbers for ε-greedy.']],
+              ['Q = np.zeros((env.n_states, env.n_actions))', ['The table, 72 × 2, all zeros.']],
+              ['counts = np.zeros((env.n_states, env.n_actions))', ['How many returns each entry has averaged so far: the $n$ in $\\tfrac1n$.']],
+              ['totals = []', ['Each game\'s length, for the learning curve.']],
+              ['for e in range(episodes):', ['One game, then one round of updates.']],
+              ['epsilon = linear(epsilon_start, epsilon_end, e / (0.8 * episodes))', ['The same ε schedule as Q-learning (lesson 3.2).']],
+              ['episode = play_episode(env, lambda state: epsilon_greedy(Q[state], epsilon, rng), seed if e == 0 else None)', ['Play a whole game ε-greedily from the current table. `lambda state: …` writes a small function on the spot: given a state, ε-greedy on that row. That function is the policy handed to `play_episode`. The table doesn\'t change during the game.'], { logic: 'Build a policy function from the current table and ε, play one complete game with it, and keep the record.' }],
+              ['first = {}', ['A dictionary: for each pair `(state, action)`, the step it was first used at in this game.']],
+              ['for t, (state, action, reward) in enumerate(episode):', ['Forwards through the game, with the step number `t`.']],
+              ['first.setdefault((state, action), t)', ['`setdefault` stores `t` only if the pair isn\'t there yet, so each pair keeps its **first** step. A CartPole game visits the same binned state many times; only the first visit\'s return will be used.']],
+              ['G = 0.0', ['The return after the last push: nothing.']],
+              ['for t in reversed(range(len(episode))):', ['Backwards, from the last push to the first, so each $G_t$ comes from $G_{t+1}$.']],
+              ['state, action, reward = episode[t]', ['$S_t$, $A_t$, $R_{t+1}$.']],
+              ['G = reward + gamma * G', ['$G_t = R_{t+1} + \\gamma\\,G_{t+1}$: lesson 1.5\'s backwards walk.'], { tex: 'G_t = R_{t+1} + \\gamma\\,G_{t+1}', calc: x => [`${f(x.reward)} + ${f(x.gamma)} × ${f(x.G)}`, x.reward + x.gamma * x.G] }],
+              ['if first[(state, action)] < t:', ['Used earlier in this game: a repeat visit.'], { logic: 'If this pair\'s first use came before step t, skip the update (the continue below). The return G is still carried on to earlier steps.' }],
+              ['counts[state, action] += 1', ['One more return for this entry.']],
+              ['step = 1 / counts[state, action] if alpha is None else alpha', ['$\\tfrac1n$, so the entry is the exact average of every return it has seen; or a constant α if one was given.'], { calc: x => x.alpha == null ? [`1 / ${x.counts[x.state][x.action]}`, 1 / x.counts[x.state][x.action]] : ['alpha', x.alpha] }],
+              ['Q[state, action] += step * (G - Q[state, action])', ['The running average (QMaze Lab lesson 3.1): move the entry a fraction `step` of the way to the real return.'], { tex: 'Q(s,a) \\leftarrow Q(s,a) + \\tfrac1n\\big(G_t - Q(s,a)\\big)', calc: x => [`${f(x.Q[x.state][x.action])} + ${f(x.step)} × (${f(x.G)} − ${f(x.Q[x.state][x.action])})`, x.Q[x.state][x.action] + x.step * (x.G - x.Q[x.state][x.action])] }],
+              ['total = 0.0', ['Count the game\'s reward for the learning curve: its length.']],
+              ['for state, action, reward in episode:', ['Every push.']],
+              ['total += reward', ['A plain loop rather than `sum()`: since Python 3.12, `sum()` adds floats with extra care, which can change the last digit; this gives the same total in every version and in the browser.']],
+              ['totals.append(total)', ['Record it.']],
+              ['return Q, totals', ['The table and the curve.']],
+            ],
+          },
+        },
+        { md: `In CartPole every reward is +1, so a return only depends on **how many steps were left**: a push made $k$ steps before the end has
+
+$$G_t = 1 + \\gamma + \\gamma^2 + \\dots + \\gamma^{k-1} = \\frac{1 - \\gamma^{k}}{1 - \\gamma}$$
+
+(a geometric series). With γ = 0.99 that is about 10 for $k = 10$, 63 for $k = 100$, and at most 100 however long the game goes on. Monte Carlo is learning, for each binned state and push, "how long did the game last after this, on average?"` },
+        {
+          predict: {
+            prompt: 'A game lasts 20 steps, γ = 0.99. What return $G_0$ does Monte Carlo average in for the first push? (2 decimals)',
+            answer: (1 - 0.99 ** 20) / 0.01, tolerance: 0.005, compute: () => { let G = 0; for (let t = 19; t >= 0; t--) G = 1 + 0.99 * G; return G },
+            explain: '$G_0 = (1 - 0.99^{20}) / 0.01 = 18.21$. The backwards walk adds the same: $G_{19} = 1$, $G_{18} = 1.99$, …, $G_0 = 18.21$.',
+            misconceptions: [{ answer: 20, tolerance: 0.005, feedback: 'That is the undiscounted total. Each later step counts a factor 0.99 less.' }],
+          },
+        },
+        { h: 'Measured: Monte Carlo against Q-learning and SARSA' },
+        { figure: 'SeedsFig', props: { algorithms: ['q', 'sarsa', 'mc'] }, caption: 'Each method trained for 500 games on five seeds with the same settings (Monte Carlo averages exactly, with no α), then judged on 20 new greedy games.' },
+        { md: `Average greedy game length, seeds 0–4 (20 new games each):
+
+| Method | seed 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| Q-learning | 500 | 495 | 184 | 500 | 500 |
+| SARSA | 500 | 188 | 500 | 199 | 500 |
+| Monte Carlo | 500 | 195 | 188 | 197 | 197 |
+
+Monte Carlo solves seed 0 and then settles at about **190** on the other four, and every lost game ends the same way: **the cart runs off the track** ($|x| > 2.4$), with the pole still up. More training doesn't fix it: with 2,000 games, all five seeds end near 190.
+
+Why this trap? The table can't see the cart's position (lesson 2.3): it balances the pole while the cart drifts steadily one way. To escape, the agent would have to change **many** pushes so that the drift stops. But Monte Carlo judges each push by what happened **after** it, with the same drifting table in charge of everything after. Whichever single push it tries in a state, the game ends at the edge about the same time, so the two pushes' averages come out about the same and give no reason to change. It is the same trap as QMaze Lab's cliff (its lesson 3.7), where every move from a corner was followed by the same failure. Q-learning falls into it too (seed 2), and so does SARSA (seeds 1 and 3), but less often here.
+
+What Monte Carlo has that TD lacks is honesty: no guesses in its targets, only returns that really happened. That is exactly the idea behind REINFORCE in Part 4, which learns a policy instead of a table, and lesson 4.5 looks at it that way.` },
+        { python: { program: 'mc', label: 'Step through Monte Carlo control in real Python' } },
+        {
+          code: {
+            file: 'experiments.py', fn: 'learn_mc', notes: [
+              ['def learn_mc(counts=COUNTS, limits=LIMITS, **settings):', ['The Python tab\'s entry point, like `learn_q`.']],
+              ['env = BinnedCartPole(counts, limits)', ['The binned world.']],
+              ['Q, totals = train_mc_control(env, **settings)', ['Train.']],
+              ['return Q, totals, greedy_lengths(Q, env)', ['The table, the curve, and 20 greedy test games.']],
+            ],
+          },
+        },
+        { note: '**Monte Carlo control**: play a whole game ε-greedily, then move each $Q(s, a)$ it used towards the real return that followed, averaging exactly ($\\tfrac1n$). No bootstrapping, no α. On CartPole it learns to balance but falls into the drifting-cart trap on 4 seeds of 5, because when the same table controls everything after a push, single pushes all look alike.' },
+      ],
+    },
+
+    {
+      id: 'reading-the-table', number: '3.8', title: 'What the table learned',
       goal: 'Compare a learned table with the hand-written rule, choose slots with evidence, and state the limits of tables.',
       builds: ['judging', 'what-slots-lose'],
       blocks: [
