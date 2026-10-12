@@ -72,6 +72,13 @@ export const PROGRAMS = {
     episodeEnd: () => [['a2c.py', lineOf('a2c.py', 'optimizer.step()')]],
     endLabel: 'Next update',
   },
+  dqn: {
+    label: 'DQN (5.3)', file: 'dqn.py', module: 'dqn', function: 'learn_dqn',
+    about: 'Deep Q-learning: a network reads a picture of the maze (visited cells and the rat) and gives four Q values; it learns from random batches of remembered moves, with targets from a frozen copy. 20,000 moves on Classic QMaze, 3,000 elsewhere.',
+    kwargs: map => ({ name: map, steps: map === 'qmaze' ? 20000 : 3000 }), maps: 'all',
+    watch: { state: ['env.state'], totals: ['totals'] },
+    episodeEnd: () => [['dqn.py', lineOf('dqn.py', 'totals.append(total)')]],
+  },
   a2c_check: {
     label: 'A2C gradient check (4.3)', file: 'a2c_check.py', module: 'a2c_check', function: 'check_gradients',
     about: 'One small batch: PyTorch\'s autograd gradient beside the formula derived by hand.',

@@ -50,7 +50,7 @@ const pyLiteral = (layout, name) => `    "${name}": {\n        "title": "${layou
 
 function downloadPython() {
   const files = Object.fromEntries(Object.entries(SOURCES).map(([name, src]) => [`qmaze-lab/${name}`, strToU8(src)]))
-  files['qmaze-lab/README.txt'] = strToU8('QMaze Lab programs. Python 3.10+ with NumPy (all), PyTorch (a2c.py, a2c_check.py) and Gymnasium (gym_compare.py):\n\n    python -m pip install numpy torch gymnasium\n\nThen, in this folder:\n\n    python -c "from experiments import learn_q; Q, totals = learn_q(\'cheese_and_cat\'); print(Q.round(2))"\n\nAdd your own maps to maps.py.\n')
+  files['qmaze-lab/README.txt'] = strToU8('QMaze Lab programs. Python 3.10+ with NumPy (all), PyTorch (a2c.py, a2c_check.py, dqn.py) and Gymnasium (gym_compare.py):\n\n    python -m pip install numpy torch gymnasium\n\nThen, in this folder:\n\n    python -c "from experiments import learn_q; Q, totals = learn_q(\'cheese_and_cat\'); print(Q.round(2))"\n\nAdd your own maps to maps.py.\n')
   const blob = new Blob([zipSync(files)], { type: 'application/zip' }), url = URL.createObjectURL(blob)
   const a = document.createElement('a'); a.href = url; a.download = 'qmaze-lab-python.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

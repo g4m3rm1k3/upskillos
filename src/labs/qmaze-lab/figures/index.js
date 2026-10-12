@@ -4,6 +4,7 @@ import { TransitionExplorer, HistoryMatters, PolicyEditor, Sweeps } from './part
 import { RunningAverage, TDEvaluation, QTableView, EpsilonSchedule, CliffCompare } from './part3.jsx'
 import { OneHotLinear, SoftmaxFigure, GradientStep, A2CTrainer, MethodsCompare } from './part4.jsx'
 import { MCEvaluation, SampleSpread, MCvsTD, MCControlTrainer } from './montecarlo.jsx'
+import { PictureView, DQNTrainer } from './dqn.jsx'
 import { MapBuilder } from './part5.jsx'
 import Trainer from './Trainer.jsx'
 
@@ -12,6 +13,7 @@ export const FIGURES = {
   TransitionExplorer, HistoryMatters, PolicyEditor, Sweeps,
   Trainer, RunningAverage, TDEvaluation, QTableView, EpsilonSchedule, CliffCompare,
   MCEvaluation, SampleSpread, MCvsTD, MCControlTrainer,
+  PictureView, DQNTrainer,
   OneHotLinear, SoftmaxFigure, GradientStep, A2CTrainer, MethodsCompare,
   MapBuilder,
 }

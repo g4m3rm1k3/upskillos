@@ -158,3 +158,6 @@
 .qm-matrix-row{display:flex;gap:1px}.qm-matrix-row>span{min-width:22px;height:22px;font-size:9px;display:flex;align-items:center;justify-content:center;flex:none}
 .qm-matrix-row>span:first-child{min-width:26px;font-weight:700}.qm-matrix-row>span.pick{outline:2px solid #7a3fb0;min-width:44px;font-weight:700}
 .qm-matrix-head{color:var(--muted)}.qm-matrix-head.pick{outline:none!important;color:#7a3fb0}
+.dq-layer{display:grid;gap:1px;font:11px/1 ui-monospace,monospace;background:var(--line);border:1px solid var(--line);max-width:260px}
+.dq-layer span{background:var(--paper);color:var(--muted);text-align:center;padding:3px 0;min-width:16px}
+.dq-layer span.on{background:var(--teal);color:#fff;font-weight:700}.dq-layer span.wall{background:#e8e1d3}

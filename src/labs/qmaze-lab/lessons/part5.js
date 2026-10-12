@@ -1,9 +1,9 @@
-// Part 5: applying it. Build a world, check it, solve it, learn it; then run the same code on your
+// Part 6: applying it. Build a world, check it, solve it, learn it; then run the same code on your
 // own machine and on Gymnasium's worlds, and diagnose a learner that isn't learning.
 export const PART5 = {
-  id: 'part5', title: 'Part 5 · Apply it', lessons: [
+  id: 'part5', title: 'Part 6 · Apply it', lessons: [
     {
-      id: 'build-a-map', number: '5.1', title: 'Build a world and solve it',
+      id: 'build-a-map', number: '6.1', title: 'Build a world and solve it',
       goal: 'Design a grid world as an MDP, check it can be solved, compute its optimum, and train all three learners on it.',
       builds: ['comparing-methods', 'reward-design'],
       blocks: [
@@ -12,7 +12,7 @@ export const PART5 = {
 1. **Define the MDP.** What is a state (and is it Markov, lesson 2.2)? What are the actions? What does each move pay, and when does an episode end? Write the rewards so they say what you want and nothing else (lesson 3.13).
 2. **Check it.** Can the goal be reached at all? Are there endings, so episodes finish?
 3. **If you have a model, solve it exactly.** Value iteration gives $V^*$ and the optimal policy: the yardstick for everything learned (lesson 2.5).
-4. **Choose a learner.** Small and discrete: a table (Q-learning, or SARSA if exploring is dangerous). Too many states, or states with features: a network (A2C and its relatives).
+4. **Choose a learner.** Small and discrete: a table (Q-learning, or SARSA if exploring is dangerous). Too many states, or states with features (a picture, real numbers): a network (A2C, or DQN, Part 5).
 5. **Train on several seeds**, and judge by greedy play, not the training curve (lesson 3.9).
 6. **Diagnose** when it falls short (next lesson).` },
         { figure: 'MapBuilder', caption: 'Pick a cell type and click cells to paint. The map is checked and solved after every change; then train a learner on it. The Python dictionary below the map is your world, ready for `maps.py`.' },
@@ -22,11 +22,11 @@ export const PART5 = {
     },
 
     {
-      id: 'on-your-machine', number: '5.2', title: 'On your own machine, on Gymnasium, and when it doesn\'t learn',
+      id: 'on-your-machine', number: '6.2', title: 'On your own machine, on Gymnasium, and when it doesn\'t learn',
       goal: 'Run the lab\'s programs on your own computer, train them on Gymnasium\'s real FrozenLake and CliffWalking, and diagnose a learner from its symptoms.',
       builds: ['build-a-map', 'gymnasium'],
       blocks: [
-        { md: `Everything in this lab is ordinary Python. Use **Download all the lab's Python files** in lesson 5.1 (or copy them from the Python tab), unzip, and in that folder:
+        { md: `Everything in this lab is ordinary Python. Use **Download all the lab's Python files** in lesson 6.1 (or copy them from the Python tab), unzip, and in that folder:
 
 \`\`\`text
 python -m venv .venv

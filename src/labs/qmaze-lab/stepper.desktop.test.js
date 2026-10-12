@@ -13,6 +13,7 @@ import { PROGRAMS } from './programs.js'
 import { GridWorld } from './engine/gridworld.js'
 import { qLearning, finish } from './engine/tabular.js'
 import { mcEvaluate, mcControl, finishMC } from './engine/montecarlo.js'
+import { trainDQN, greedyGame } from './engine/dqn.js'
 import { valueIteration } from './engine/planning.js'
 import { followPath } from './engine/paths.js'
 
@@ -106,6 +107,20 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     const { Q } = finishMC(mcControl(new GridWorld('cheese_and_cat'), { episodes: 300, seed: 0 }))
     expect(rows(r.watch.Q.value)).toEqual(Q)
   }, 120000)
+
+  it('DQN: Next game stops in train_dqn; the run ends with the greedy game the browser\'s copy plays', async () => {
+    const p = PROGRAMS.dqn
+    let r = await s.send({ cmd: 'load', files: SOURCES, entry: { module: p.module, function: p.function, kwargs: { name: 'cheese_and_cat', steps: 800, start_learning: 100 } }, watch: p.watch, actions: ['env.step('] })
+    r = await s.send({ cmd: 'step', mode: 'lines', targets: p.episodeEnd() })
+    expect(top(r)).toMatchObject({ file: 'dqn.py', function: 'train_dqn' })
+    expect(r.watch.state.value.t).toBe('int')
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    while (r.type === 'pause') r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type, r.error).toBe('finished')
+    const gen = trainDQN('cheese_and_cat', { steps: 800, startLearning: 100 })
+    let step = gen.next(); while (!step.done) step = gen.next()
+    expect(r.result.items[2].v).toBeCloseTo(greedyGame(step.value.net, 'cheese_and_cat').total, 9)
+  }, 180000)
 
   it('the Gymnasium check, the gradient check and A2C with a hidden layer all run to the end', async () => {
     let r = await load(s, 'gym', 'cheese_and_cat')
