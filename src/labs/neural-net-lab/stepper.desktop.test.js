@@ -105,7 +105,14 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(await checkArithmetic(s, r, 300)).toBeGreaterThan(30)
   }, 180000)
 
-  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours']) {
+  it('softmax regression by hand: softmax, the slope p − one-hot and the gradient match line by line', async () => {
+    let r = await load(s, 'iris_hand', { steps: 2 })
+    expect(r.type, s.stderr()).toBe('pause')
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'iris.py', line: lineOf('iris.py', 'probs = softmax(scores_for(weights, biases, x))') })
+    expect(await checkArithmetic(s, r, 400)).toBeGreaterThan(40)
+  }, 180000)
+
+  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours', 'iris', 'digits']) {
     it(`${id}: runs to the end`, async () => {
       let r = await load(s, id)
       expect(r.type, s.stderr()).toBe('pause')
@@ -115,6 +122,8 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
       if (id === 'cars') expect(r.result.items[2].v).toBeLessThan(4)
       if (id === 'moons') expect(r.result.items[2].v).toBeGreaterThan(0.95)
       if (id === 'tumours') expect(r.output).toMatch(/accuracy 0\.9/)
+      if (id === 'iris') expect(r.output).toMatch(/\[\[50, 0, 0\]/)
+      if (id === 'digits') expect(r.output).toMatch(/right: 3[45]\d/)
     }, 300000)
   }
 })

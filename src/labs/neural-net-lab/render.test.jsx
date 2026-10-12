@@ -35,15 +35,15 @@ describe('the lab renders', () => {
   it('the Model Studio trains on every data set with every optimiser', () => {
     const { container } = render(<ModelStudio />)
     const [dataSelect, , optSelect] = container.querySelectorAll('.qm-fig-controls select')
-    for (const data of ['line', 'curve', 'cars', 'blobs', 'moons', 'xor', 'ring', 'tumours']) for (const kind of ['sgd', 'momentum', 'adam']) {
+    for (const data of ['line', 'curve', 'cars', 'blobs', 'moons', 'xor', 'ring', 'tumours', 'iris', 'digits']) for (const kind of ['sgd', 'momentum', 'adam']) {
       act(() => { fireEvent.change(dataSelect, { target: { value: data } }) })
       act(() => { fireEvent.change(optSelect, { target: { value: kind } }) })
       act(() => { fireEvent.click(screen.getByText('100 steps')) })
       expect(container.textContent, `${data}, ${kind}`).toMatch(/100 steps · training loss \d/)
     }
     act(() => { fireEvent.click(screen.getByText('+ add a layer')) })
-    expect(container.querySelector('.nn-code').textContent).toMatch(/nn\.Linear\(30, 8\).*BCEWithLogitsLoss/s)
-  }, 60000)
+    expect(container.querySelector('.nn-code').textContent).toMatch(/nn\.Linear\(64, 8\).*CrossEntropyLoss/s)
+  }, 120000)
 
   it('the Python tab opens on every program', () => {
     for (const id of Object.keys(PROGRAMS)) {

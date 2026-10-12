@@ -9,6 +9,7 @@ import { makeBlobs, makeMoons, sigmoid, confusion, scores, tumourData } from './
 import { makeMLP, makeOptimizer, trainSteps, predictOne, countWeights, codeFor, lossAndGradients } from './engine/mlp.js'
 import { carData } from './engine/cars.js'
 import { makeXor, makeRing } from './figures/part2.jsx'
+import { SPECIES, IRIS_COLUMNS, loadIris, oneHot, digitData, confusionMatrix } from './engine/part3.js'
 
 // Build a network layer by layer, like Keras' Sequential, and train it live on a data set; then try
 // it on your own input, and read the PyTorch and Keras code that builds the same thing.
@@ -25,6 +26,11 @@ const DATASETS = {
   ring: { group: 'Yes or no', label: 'A ring around a dot (80)', inputs: 2, loss: 'bce', view: 'plane', rate: 0.5, make: () => plane(makeRing(), [[-3, 3], [-3, 3]]) },
   draw: { group: 'Yes or no', label: 'Your own points (click to draw)', inputs: 2, loss: 'bce', view: 'plane', rate: 0.5, make: () => plane([[], []], [[-3, 3], [-3, 3]]) },
   tumours: { group: 'Yes or no', label: 'Tumours: 569 real, 30 measurements', inputs: 30, loss: 'bce', view: 'confusion', rate: 0.1, make: () => { const d = tumourData(null, 0); return { X: d.X, Y: d.Y, Xtest: d.Xtest, Ytest: d.Ytest } } },
+  iris: { group: 'One of several', label: 'Iris flowers: 150 real, 4 measurements', inputs: 4, classes: 3, names: SPECIES, loss: 'ce', view: 'classes', rate: 0.1, make: () => {
+    const [rows, labels] = loadIris(IRIS_COLUMNS), stats = rows[0].map((_, j) => { const col = rows.map(r => r[j]), m = col.reduce((a, b) => a + b, 0) / col.length; return [m, Math.sqrt(col.reduce((s, v) => s + (v - m) ** 2, 0) / col.length)] })
+    return { X: rows.map(r => r.map((v, j) => (v - stats[j][0]) / stats[j][1])), Y: labels.map(l => oneHot(l, 3)) }
+  } },
+  digits: { group: 'One of several', label: 'Handwritten digits: 1,797, 8 × 8', inputs: 64, classes: 10, names: Array.from({ length: 10 }, (_, d) => String(d)), loss: 'ce', view: 'classes', rate: 0.01, kind: 'adam', make: () => { const d = digitData(0); return { X: d.X, Y: d.Y, Xtest: d.Xtest, Ytest: d.Ytest } } },
 }
 const PRESETS = {
   'one neuron': [],
@@ -56,7 +62,7 @@ export default function ModelStudio() {
   const D = DATASETS[dataset]
   const base = useMemo(() => D.make(), [dataset])
   const data = D.view === 'plane' ? { ...base, X: [...base.X, ...added.pts], Y: [...base.Y, ...added.labels.map(l => [l])] } : base
-  const layers = [...hidden, { units: 1, activation: 'none' }]
+  const layers = [...hidden, { units: D.classes ?? 1, activation: 'none' }]
   const key = JSON.stringify([dataset, hidden, opt, seed])
   const run = useRef(null), [, redraw] = useReducer(n => n + 1, 0)
   if (!run.current || run.current.key !== key) {
@@ -89,7 +95,7 @@ export default function ModelStudio() {
     <p className="qm-hint">Build a network like Keras' <span className="mono">Sequential</span>: layers in order, each with its neurons and activation. Everything below is computed in your browser, with the same arithmetic as the lessons' Python (the lab's tests check it against PyTorch).</p>
     <div className="qm-fig">
       <div className="qm-fig-controls">
-        <label>Data <select value={dataset} onChange={e => { setDataset(e.target.value); setOpt(o => ({ ...o, rate: DATASETS[e.target.value].rate })); setAdded({ pts: [], labels: [] }) }}>{groups.map(g => <optgroup key={g} label={g}>{Object.entries(DATASETS).filter(([, d]) => d.group === g).map(([k, d]) => <option key={k} value={k}>{d.label}</option>)}</optgroup>)}</select></label>
+        <label>Data <select value={dataset} onChange={e => { setDataset(e.target.value); setOpt(o => ({ ...o, rate: DATASETS[e.target.value].rate, kind: DATASETS[e.target.value].kind ?? o.kind })); setAdded({ pts: [], labels: [] }) }}>{groups.map(g => <optgroup key={g} label={g}>{Object.entries(DATASETS).filter(([, d]) => d.group === g).map(([k, d]) => <option key={k} value={k}>{d.label}</option>)}</optgroup>)}</select></label>
         <label>Start from <select value="" onChange={e => e.target.value && setHidden(PRESETS[e.target.value])}><option value="">a preset…</option>{Object.keys(PRESETS).map(p => <option key={p}>{p}</option>)}</select></label>
         <label>Optimiser <select value={opt.kind} onChange={e => setOpt(o => ({ ...o, kind: e.target.value }))}><option value="sgd">SGD</option><option value="momentum">SGD with momentum</option><option value="adam">Adam</option></select></label>
         <Slider label="learning rate" value={opt.rate} min={0.001} max={1} step={0.001} onChange={v => setOpt(o => ({ ...o, rate: v }))} />
@@ -116,6 +122,15 @@ export default function ModelStudio() {
           <PlanePlot points={data.X} labels={data.Y.map(y => y[0])} prob={r.steps ? prob : null} x={data.range[0]} y={data.range[1]} size={360} onClick={(x, y) => setAdded(a => ({ pts: [...a.pts, [x, y]], labels: [...a.labels, colour] }))} />
           <div className="qm-buttons qm-small"><label>Click adds <select value={colour} onChange={e => setColour(Number(e.target.value))}><option value={1}>orange (1)</option><option value={0}>teal (0)</option></select></label>{added.pts.length > 0 && <button onClick={() => setAdded({ pts: [], labels: [] })}>Remove the {added.pts.length} points you added</button>}</div>
           <p className="qm-hint">The shading is the network's probability of <b style={{ color: COLORS[1] }}>orange</b>; the black edge, 50%. Click to add points of your own, even while it trains.</p></div>}
+        {D.view === 'classes' && (() => {
+          const X = data.Xtest ?? data.X, labels = (data.Ytest ?? data.Y).map(y => y.indexOf(1))
+          if (!r.steps) return <div><p className="qm-hint">Train, then see which {D.classes === 3 ? 'species' : 'digits'} it gets right and which it confuses{data.Xtest ? ', on examples it never saw' : ' (all 150 flowers: there is no test set)'}.</p></div>
+          const guesses = X.map(x => { const o = predictOne(r.net, x); return o.indexOf(Math.max(...o)) }), table = confusionMatrix(guesses, labels, D.classes)
+          const right = guesses.filter((g, i) => g === labels[i]).length
+          return <div><p><b>{right}</b> of {labels.length} right ({fmt(100 * right / labels.length, 1)}%){data.Xtest ? ' on the test examples' : ''}.</p>
+            <table className="qm-log nn-cm"><thead><tr><th>true ↓ guessed →</th>{D.names.map(n => <th key={n}>{n}</th>)}</tr></thead>
+              <tbody>{table.map((row, t) => <tr key={t}><th>{D.names[t]}</th>{row.map((n, g) => <td key={g} className={n ? (g === t ? 'good' : 'bad') : ''}>{n || ''}</td>)}</tr>)}</tbody></table></div>
+        })()}
         {D.view === 'confusion' && (() => {
           const probs = r.steps ? data.Xtest.map(prob) : null, labels = data.Ytest.map(y => y[0])
           const c = probs ? confusion(probs, labels, threshold) : null, sc = c ? scores(...c) : null

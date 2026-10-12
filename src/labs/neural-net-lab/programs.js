@@ -60,4 +60,23 @@ export const PROGRAMS = {
     kwargs: () => ({ steps: 1000, seed: 0 }), watch: {}, picture: null, actions: [],
     episodeEnd: () => [['tumours.py', lineOf('tumours.py', 'optimizer.step()')]], endLabel: 'Next step',
   },
+  iris_hand: {
+    label: '3.2 Softmax regression by hand', file: 'iris.py', module: 'iris', function: 'train_softmax',
+    about: 'Three neurons, one per iris species, on petal length and width: softmax, the slope p − one-hot, and a step.',
+    kwargs: () => ({ steps: 500 }), watch: { history: all('history') }, picture: null,
+    actions: ['history.append(loss)'], actionLabel: 'Next step', actionTitle: 'Run until the next step is done',
+    episodeEnd: () => [],
+  },
+  iris: {
+    label: '3.3 Iris in PyTorch', file: 'torch_iris.py', module: 'torch_iris', function: 'train_iris',
+    about: 'All four measurements → 8 hidden → 3 scores, with CrossEntropyLoss; then the confusion matrix.',
+    kwargs: () => ({ steps: 1000, seed: 0 }), watch: {}, picture: null, actions: [],
+    episodeEnd: () => [['torch_iris.py', lineOf('torch_iris.py', 'optimizer.step()')]], endLabel: 'Next step',
+  },
+  digits: {
+    label: '3.4 Handwritten digits', file: 'digits.py', module: 'digits', function: 'train_digits',
+    about: '1,797 digits as 64 ink counts: 64 → 32 → 10, tested on 359 digits it never saw.',
+    kwargs: () => ({ hidden: 32, steps: 500, seed: 0 }), choices: { hidden: [32, 0] }, watch: {}, picture: null, actions: [],
+    episodeEnd: () => [['digits.py', lineOf('digits.py', 'optimizer.step()')]], endLabel: 'Next step',
+  },
 }

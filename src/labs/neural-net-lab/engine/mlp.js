@@ -22,12 +22,20 @@ export function makeMLP(inputs, layers, seed = 0) {
 export const countWeights = net => net.layers.reduce((n, l) => n + l.W.length * (l.W[0]?.length ?? 0) + l.b.length, 0)
 
 // One input row through the network; keeps every layer's z (before activation) and a (after).
+// (Plain loops rather than map/reduce: the digit and handwriting figures train thousands of these.)
 export function forwardOne(net, x) {
   const zs = [], as = [x]
   let a = x
   for (const layer of net.layers) {
-    const z = layer.W.map((row, k) => row.reduce((s, w, i) => s + w * a[i], layer.b[k]))
-    a = z.map(ACTIVATIONS[layer.activation].f)
+    const { W, b } = layer, f = ACTIVATIONS[layer.activation].f, units = W.length
+    const z = new Array(units), out = new Array(units)
+    for (let k = 0; k < units; k++) {
+      const row = W[k]
+      let s = b[k]
+      for (let i = 0; i < row.length; i++) s += row[i] * a[i]
+      z[k] = s; out[k] = f(s)
+    }
+    a = out
     zs.push(z); as.push(a)
   }
   return { out: a, zs, as }
@@ -44,7 +52,14 @@ export function lossAndGradients(net, X, Y, lossKind = 'mse') {
   X.forEach((x, i) => {
     const { out, zs, as } = forwardOne(net, x)
     let d
-    if (lossKind === 'bce') {
+    if (lossKind === 'ce') {
+      // Softmax over the outputs, then −log of the true class's probability (Y[i] is one-hot), as
+      // PyTorch's CrossEntropyLoss does; its slope for each output is probability − target.
+      const top = Math.max(...out), powers = out.map(z => Math.exp(z - top)), total = powers.reduce((a, b) => a + b, 0)
+      const probs = powers.map(p => p / total), k = Y[i].indexOf(1)
+      loss += -(out[k] - top - Math.log(total)) / n
+      d = probs.map((p, c) => (p - Y[i][c]) / n)
+    } else if (lossKind === 'bce') {
       // −[y log p + (1 − y) log(1 − p)], written so a large |z| can't overflow (as PyTorch does)
       out.forEach((z, k) => { loss += (Math.max(z, 0) - z * Y[i][k] + Math.log1p(Math.exp(-Math.abs(z)))) / n })
       d = out.map((z, k) => (1 / (1 + Math.exp(-z)) - Y[i][k]) / n)
@@ -54,11 +69,20 @@ export function lossAndGradients(net, X, Y, lossKind = 'mse') {
       out.forEach((o, k) => { loss += (o - Y[i][k]) ** 2 / n })
     }
     for (let l = net.layers.length - 1; l >= 0; l--) {
-      const layer = net.layers[l], act = ACTIVATIONS[layer.activation]
-      const dz = d.map((g, k) => g * act.d(zs[l][k]))
-      const aPrev = as[l]
-      dz.forEach((g, k) => { grads[l].b[k] += g; aPrev.forEach((a, j) => { grads[l].W[k][j] += g * a }) })
-      d = aPrev.map((_, j) => dz.reduce((s, g, k) => s + g * layer.W[k][j], 0))
+      const layer = net.layers[l], slope = ACTIVATIONS[layer.activation].d, W = layer.W, gW = grads[l].W, gb = grads[l].b
+      const z = zs[l], aPrev = as[l], units = W.length, inputs = aPrev.length
+      const dz = new Array(units)
+      for (let k = 0; k < units; k++) {
+        const g = d[k] * slope(z[k])
+        dz[k] = g
+        gb[k] += g
+        const row = gW[k]
+        for (let j = 0; j < inputs; j++) row[j] += g * aPrev[j]
+      }
+      if (l === 0) break
+      const next = new Array(inputs)
+      for (let j = 0; j < inputs; j++) { let s = 0; for (let k = 0; k < units; k++) s += dz[k] * W[k][j]; next[j] = s }
+      d = next
     }
   })
   return { loss, grads }
@@ -74,20 +98,21 @@ export function optimizerStep(net, opt, grads) {
   opt.t += 1
   const { kind, rate } = opt
   const c1 = 1 - opt.beta1 ** opt.t, c2 = 1 - opt.beta2 ** opt.t
-  const update = (p, g, m, v, set, k, j) => {
-    if (kind === 'sgd') return p - rate * g
-    if (kind === 'momentum') { const buf = opt.momentum * m.get() + g; m.set(buf); return p - rate * buf }
-    const mm = opt.beta1 * m.get() + (1 - opt.beta1) * g, vv = opt.beta2 * v.get() + (1 - opt.beta2) * g * g
-    m.set(mm); v.set(vv)
-    return p - rate * (mm / c1) / (Math.sqrt(vv / c2) + opt.eps)
+  // Update one list of numbers p in place from its gradients g, with its momentum m and Adam's v.
+  const update = (p, g, m, v) => {
+    for (let j = 0; j < p.length; j++) {
+      if (kind === 'sgd') p[j] = p[j] - rate * g[j]
+      else if (kind === 'momentum') { const buf = opt.momentum * m[j] + g[j]; m[j] = buf; p[j] = p[j] - rate * buf }
+      else {
+        const mm = opt.beta1 * m[j] + (1 - opt.beta1) * g[j], vv = opt.beta2 * v[j] + (1 - opt.beta2) * g[j] * g[j]
+        m[j] = mm; v[j] = vv
+        p[j] = p[j] - rate * (mm / c1) / (Math.sqrt(vv / c2) + opt.eps)
+      }
+    }
   }
   net.layers.forEach((layer, l) => {
-    layer.W.forEach((row, k) => row.forEach((w, j) => {
-      row[j] = update(w, grads[l].W[k][j], { get: () => opt.m[l].W[k][j], set: x => { opt.m[l].W[k][j] = x } }, { get: () => opt.v[l].W[k][j], set: x => { opt.v[l].W[k][j] = x } })
-    }))
-    layer.b.forEach((b, k) => {
-      layer.b[k] = update(b, grads[l].b[k], { get: () => opt.m[l].b[k], set: x => { opt.m[l].b[k] = x } }, { get: () => opt.v[l].b[k], set: x => { opt.v[l].b[k] = x } })
-    })
+    layer.W.forEach((row, k) => update(row, grads[l].W[k], opt.m[l].W[k], opt.v[l].W[k]))
+    update(layer.b, grads[l].b, opt.m[l].b, opt.v[l].b)
   })
 }
 
@@ -105,18 +130,19 @@ export function codeFor(inputs, layers, { kind = 'sgd', rate = 0.01 } = {}, loss
   layers.forEach(({ units, activation }, i) => {
     parts.push(`nn.Linear(${fanIn}, ${units})`)
     if (torchAct[activation]) parts.push(torchAct[activation])
-    // Keras puts the yes/no output's sigmoid in the last layer; PyTorch puts it in the loss.
-    const kerasAct = lossKind === 'bce' && i === layers.length - 1 ? 'sigmoid' : activation
+    // Keras puts the output's sigmoid or softmax in the last layer; PyTorch puts it in the loss.
+    const last = i === layers.length - 1
+    const kerasAct = last && lossKind === 'bce' ? 'sigmoid' : last && lossKind === 'ce' ? 'softmax' : activation
     keras.push(`    layers.Dense(${units}${kerasAct !== 'none' ? `, activation="${kerasAct}"` : ''}${i === 0 ? `, input_shape=(${inputs},)` : ''}),`)
     fanIn = units
   })
   const torchOpt = { sgd: `torch.optim.SGD(model.parameters(), lr=${rate})`, momentum: `torch.optim.SGD(model.parameters(), lr=${rate}, momentum=0.9)`, adam: `torch.optim.Adam(model.parameters(), lr=${rate})` }[kind]
   const kerasOpt = { sgd: `keras.optimizers.SGD(learning_rate=${rate})`, momentum: `keras.optimizers.SGD(learning_rate=${rate}, momentum=0.9)`, adam: `keras.optimizers.Adam(learning_rate=${rate})` }[kind]
-  const bce = lossKind === 'bce'
-  const lossFn = bce ? 'loss_fn = nn.BCEWithLogitsLoss()   # sigmoid and cross-entropy together, on the raw output\n' : ''
-  const lossLine = bce ? 'loss = loss_fn(model(x), y)' : 'loss = ((model(x) - y) ** 2).mean()'
+  const lossFn = { bce: 'loss_fn = nn.BCEWithLogitsLoss()   # sigmoid and cross-entropy together, on the raw output\n', ce: 'loss_fn = nn.CrossEntropyLoss()     # softmax and cross-entropy together; y holds class numbers\n' }[lossKind] ?? ''
+  const lossLine = lossFn ? 'loss = loss_fn(model(x), y)' : 'loss = ((model(x) - y) ** 2).mean()'
+  const kerasLoss = { bce: 'binary_crossentropy', ce: 'sparse_categorical_crossentropy' }[lossKind] ?? 'mse'
   return {
     torch: `model = nn.Sequential(\n    ${parts.join(',\n    ')},\n)\n${lossFn}optimizer = ${torchOpt}\nfor step in range(steps):\n    ${lossLine}\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()`,
-    keras: `model = keras.Sequential([\n${keras.join('\n')}\n])\nmodel.compile(optimizer=${kerasOpt}, loss="${bce ? 'binary_crossentropy' : 'mse'}")\nmodel.fit(x, y, epochs=steps, batch_size=len(x))`,
+    keras: `model = keras.Sequential([\n${keras.join('\n')}\n])\nmodel.compile(optimizer=${kerasOpt}, loss="${kerasLoss}")\nmodel.fit(x, y, epochs=steps, batch_size=len(x))`,
   }
 }

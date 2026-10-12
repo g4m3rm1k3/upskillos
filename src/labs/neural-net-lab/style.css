@@ -13,3 +13,10 @@
 .nn-plane{width:100%;max-width:420px;display:block}
 .nn-confusion td,.nn-confusion th{text-align:center!important;padding:6px 10px}.nn-confusion td.good{background:#e6f2ea}.nn-confusion td.bad{background:#f8e1d8}
 .nn-confusion small{display:block;font-size:10px;color:var(--muted)}
+.nn-probbars{max-width:420px}
+.nn-gallery{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.qm-lab .nn-gallery button{padding:2px;line-height:0}.qm-lab .nn-gallery button.active{outline:2px solid var(--accent)}
+.nn-digit{background:#fffdf8;border:1px solid var(--line)}
+.nn-wrong,.nn-wimg{display:inline-flex;flex-direction:column;align-items:center;font-size:11px}
+.nn-cm td,.nn-cm th{text-align:center!important;padding:2px 5px;font-size:11px}.nn-cm td.good{background:#e6f2ea}.nn-cm td.bad{background:#f8e1d8;font-weight:700}
+.nn-pad{width:100%;max-width:280px;display:block;border:1px solid var(--line);border-radius:6px;touch-action:none;cursor:crosshair}

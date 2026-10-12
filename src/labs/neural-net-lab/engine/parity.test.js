@@ -8,6 +8,7 @@ import { makeLine, makeCurve, fitLine, initNet, trainNet } from './part1.js'
 import { split, loadCars, meanAndSpread } from './cars.js'
 import { lossAndGradients, makeOptimizer, optimizerStep } from './mlp.js'
 import { makeBlobs, makeMoons, trainLogistic, confusion, scores, loadTumours, splitTumours, columnStats } from './part2.js'
+import { softmax, trainSoftmax, confusionMatrix, loadDigits, splitDigits, oneHot, padToPixels } from './part3.js'
 
 const close = (a, b, tol) => {
   if (Array.isArray(a)) { expect(a.length).toBe(b.length); a.forEach((x, i) => close(x, b[i], tol)); return }
@@ -64,6 +65,47 @@ describe('Part 2 programs', () => {
     expect(testY.slice(0, 20)).toEqual(parity.tumours.test_labels)
     close(columnStats(trainX).slice(0, 5), parity.tumours.stats, 1e-9)
   })
+})
+
+describe('Part 3 programs', () => {
+  it('softmax, including scores too big for e^x', () => {
+    close([[2, 1, 0.1], [0, 0, 0], [1000, 999, -5]].map(softmax), parity.softmax, 1e-15)
+  })
+  it('train_softmax: the same 500 steps on the iris flowers', () => {
+    let last
+    for (const step of trainSoftmax()) last = step
+    close([last.weights, last.biases], [parity.train_softmax.weights, parity.train_softmax.biases], 1e-12)
+    close(last.history, parity.train_softmax.history, 1e-12)
+  })
+  it('confusion matrix', () => { expect(confusionMatrix([0, 1, 1, 2, 0, 2], [0, 1, 2, 2, 1, 2], 3)).toEqual(parity.confusion_matrix) })
+  it('digits: the same pixels, shuffle and split', () => {
+    const [images, labels] = loadDigits()
+    const [[trainX], [testX, testY]] = splitDigits(images, labels)
+    expect([trainX.length, testX.length]).toEqual(parity.digits.n)
+    expect(testY.slice(0, 30)).toEqual(parity.digits.test_labels)
+    close(testX[0], parity.digits.first_test, 1e-15)
+  })
+  it('the drawing pad counts ink the way the data set did: rebuilt 32 × 32 bitmaps give back their 64 counts', () => {
+    const [images] = loadDigits()
+    for (const img of images.slice(0, 50)) {
+      const counts = img.map(p => Math.round(p * 16))
+      const grid = Array.from({ length: 32 }, (_, r) => Array.from({ length: 32 }, (_, c) => (r % 4) * 4 + (c % 4) < counts[Math.floor(r / 4) * 8 + Math.floor(c / 4)] ? 1 : 0))
+      expect(padToPixels(grid, false)).toEqual(counts)
+    }
+  })
+  for (const run of parity.networks_ce) {
+    it(`a 4 → 6 → 3 network with CrossEntropyLoss, ${run.optimiser}: same gradients, losses and weights as PyTorch`, () => {
+      const net = { inputs: 4, layers: run.start.map(([W, b], i) => ({ W: W.map(r => [...r]), b: [...b], activation: i === 0 ? 'relu' : 'none' })) }
+      const opt = makeOptimizer(net, { kind: run.optimiser, rate: 0.05 }), Y = run.labels.map(l => oneHot(l, 3))
+      for (let step = 0; step < 5; step++) {
+        const { loss, grads } = lossAndGradients(net, run.x, Y, 'ce')
+        if (step === 0) close(grads.map(g => [g.W, g.b]), run.grads, 1e-12)
+        close(loss, run.losses[step], 1e-12)
+        optimizerStep(net, opt, grads)
+      }
+      close(net.layers.map(l => [l.W, l.b]), run.end, 1e-10)
+    })
+  }
 })
 
 describe('the general network matches PyTorch', () => {
