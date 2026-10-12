@@ -95,4 +95,25 @@ export const PROGRAMS = {
     about: 'A 7 drawn small in a corner, cropped, shrunk into 20 × 20 and centred by its centre of mass in 28 × 28.',
     kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
   },
+  race: {
+    label: '5.1 Race the optimisers', file: 'optimizers.py', module: 'optimizers', function: 'race_all',
+    about: 'Plain gradient descent, momentum and Adam, written by hand, each taking 60 steps down the same narrow valley.',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  optim_check: {
+    label: '5.2 Hand-written vs torch.optim', file: 'optim_check.py', module: 'optim_check', function: 'check_against_torch',
+    about: 'The hand-written momentum and Adam beside torch.optim\'s on the same valley: identical to the last digit?',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  init: {
+    label: '5.4 Starting weights', file: 'init_check.py', module: 'init_check', function: 'same_start',
+    about: 'Every weight starts at 0.5: after 200 steps of training, are the four hidden neurons still identical?',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  overfit: {
+    label: '5.5 Overfitting', file: 'overfit.py', module: 'overfit', function: 'train_big',
+    about: 'A 1 → 64 → 64 → 1 network on 30 noisy points: its error on them and on the true curve, step by step.',
+    kwargs: () => ({ steps: 3000, seed: 0 }), choices: { weight_decay: [0, 0.001, 0.01], dropout: [0, 0.2, 0.5] }, watch: { train: all('train_history'), test: all('test_history') }, picture: 'overfit', actions: [],
+    episodeEnd: () => [['overfit.py', lineOf('overfit.py', 'test_history.append(')]], endLabel: 'Next step',
+  },
 }

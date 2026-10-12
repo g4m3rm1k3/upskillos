@@ -112,7 +112,13 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(await checkArithmetic(s, r, 400)).toBeGreaterThan(40)
   }, 180000)
 
-  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours', 'iris', 'digits', 'mnist_load', 'preprocess', 'mnist']) {
+  it('Adam by hand: its averages, bias correction and step match line by line', async () => {
+    let r = await load(s, 'race')
+    r = await s.send({ cmd: 'step', mode: 'line', file: 'optimizers.py', line: lineOf('optimizers.py', 'state["m"] = [beta1 * m') })
+    expect(await checkArithmetic(s, r, 200)).toBeGreaterThan(20)
+  }, 180000)
+
+  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours', 'iris', 'digits', 'mnist_load', 'preprocess', 'mnist', 'race', 'optim_check', 'init', 'overfit']) {
     it(`${id}: runs to the end`, async () => {
       let r = await load(s, id)
       expect(r.type, s.stderr()).toBe('pause')
@@ -127,6 +133,9 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
       if (id === 'mnist_load') expect(r.result.items[0].shape).toEqual([10000, 784])
       if (id === 'preprocess') expect(r.result.len).toBe(28)
       if (id === 'mnist') expect(r.result.items[2].v).toBeGreaterThan(0.9)
+      if (id === 'optim_check') expect(r.output).toMatch(/momentum largest difference from torch.optim over 20 steps: 0.0/)
+      if (id === 'init') expect(new Set(r.result.items.map(x => x.v)).size).toBe(1)
+      if (id === 'overfit') expect(r.output).toMatch(/best test 0.0162 at step 524/)
     }, 300000)
   }
 })

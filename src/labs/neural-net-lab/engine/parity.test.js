@@ -10,6 +10,9 @@ import { lossAndGradients, makeOptimizer, optimizerStep } from './mlp.js'
 import { makeBlobs, makeMoons, trainLogistic, confusion, scores, loadTumours, splitTumours, columnStats } from './part2.js'
 import { softmax, trainSoftmax, confusionMatrix, loadDigits, splitDigits, oneHot, padToPixels } from './part3.js'
 import { parseMnistSmall, toMnist, exampleDrawing } from './part4.js'
+import { race, BEST_RATES, noisyPoints } from './part5.js'
+import { makeMLP, forwardOne } from './mlp.js'
+import { PyRandom } from '../../qmaze-lab/engine/mt.js'
 import { readFileSync } from 'node:fs'
 
 const close = (a, b, tol) => {
@@ -121,6 +124,38 @@ describe('Part 4', () => {
   it('preparing a drawing like MNIST: the same 28 × 28 image as preprocess.py', () => {
     close(toMnist(exampleDrawing()), parity.preprocess.example, 1e-12)
     close(toMnist(parity.preprocess.ring_input), parity.preprocess.ring, 1e-12)
+  })
+})
+
+describe('Part 5', () => {
+  for (const [kind, run] of Object.entries(parity.races)) {
+    it(`${kind} down the valley: the same 60 steps`, () => {
+      const r = race(kind, BEST_RATES[kind])
+      close(r.path, run.path, 1e-12)
+      close(r.error, run.error, 1e-12)
+    })
+  }
+  it('the same noisy points (Python\'s numbers, stored in 32-bit floats by torch.tensor)', () => {
+    const [xs, ys] = noisyPoints(30, 0, 0.3)
+    close(xs, parity.noisy.xs, 1e-6)
+    close(ys, parity.noisy.ys, 1e-6)
+  })
+  for (const run of parity.networks_wd) {
+    it(`weight decay ${run.weight_decay} with ${run.optimiser}: the same weights as torch.optim after 5 steps`, () => {
+      const net = { inputs: 2, layers: run.start.map(([W, b], i) => ({ W: W.map(r => [...r]), b: [...b], activation: i === 0 ? 'relu' : 'none' })) }
+      const opt = makeOptimizer(net, { kind: run.optimiser, rate: 0.05, weightDecay: run.weight_decay })
+      for (let step = 0; step < 5; step++) optimizerStep(net, opt, lossAndGradients(net, run.x, run.y).grads)
+      close(net.layers.map(l => [l.W, l.b]), run.end, 1e-10)
+    })
+  }
+  it('dropout: off (p = 0) changes nothing; on, it drops about p of the hidden neurons and scales the rest by 1/(1 − p)', () => {
+    const net = makeMLP(3, [{ units: 200, activation: 'relu' }, { units: 1 }], 0), X = [[0.5, -1, 2]], Y = [[1]]
+    close(lossAndGradients(net, X, Y, 'mse', { dropout: 0 }).loss, lossAndGradients(net, X, Y).loss, 1e-15)
+    const rng = new PyRandom(1), masks = []
+    const { as } = forwardOne(net, X[0], net.layers.map((layer, l) => l === 1 ? null : layer.W.map(() => { const m = rng.random() < 0.3 ? 0 : 1 / 0.7; masks.push(m); return m })))
+    const dropped = masks.filter(m => m === 0).length
+    expect(dropped).toBeGreaterThan(40); expect(dropped).toBeLessThan(80)
+    expect(as[1].filter((a, k) => masks[k] === 0 && a !== 0)).toEqual([])
   })
 })
 

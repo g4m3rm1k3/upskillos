@@ -23,21 +23,23 @@ export const countWeights = net => net.layers.reduce((n, l) => n + l.W.length * 
 
 // One input row through the network; keeps every layer's z (before activation) and a (after).
 // (Plain loops rather than map/reduce: the digit and handwriting figures train thousands of these.)
-export function forwardOne(net, x) {
+// masks (training with dropout only): masks[l] multiplies hidden layer l's outputs, 0 for a dropped
+// neuron and 1/(1 − p) for a kept one, as nn.Dropout does.
+export function forwardOne(net, x, masks = null) {
   const zs = [], as = [x]
   let a = x
-  for (const layer of net.layers) {
-    const { W, b } = layer, f = ACTIVATIONS[layer.activation].f, units = W.length
+  net.layers.forEach((layer, l) => {
+    const { W, b } = layer, f = ACTIVATIONS[layer.activation].f, units = W.length, mask = masks?.[l]
     const z = new Array(units), out = new Array(units)
     for (let k = 0; k < units; k++) {
       const row = W[k]
       let s = b[k]
       for (let i = 0; i < row.length; i++) s += row[i] * a[i]
-      z[k] = s; out[k] = f(s)
+      z[k] = s; out[k] = mask ? f(s) * mask[k] : f(s)
     }
     a = out
     zs.push(z); as.push(a)
-  }
+  })
   return { out: a, zs, as }
 }
 export const predictOne = (net, x) => forwardOne(net, x).out
@@ -45,12 +47,15 @@ export const predictOne = (net, x) => forwardOne(net, x).out
 // The loss over a batch, and its gradient for every weight. lossKind: 'mse' (mean squared error) or
 // 'bce' (binary cross-entropy on the last layer's raw output, the logit, as PyTorch's
 // BCEWithLogitsLoss does it: p = sigmoid(z), and the slope with respect to z is simply p − y).
-export function lossAndGradients(net, X, Y, lossKind = 'mse') {
+// dropout: the probability of dropping each hidden neuron, for each example, while training; rng
+// draws the drops (Python's generator, though not PyTorch's, so the drops differ from PyTorch's).
+export function lossAndGradients(net, X, Y, lossKind = 'mse', { dropout = 0, rng = null } = {}) {
   const grads = net.layers.map(l => ({ W: l.W.map(r => r.map(() => 0)), b: l.b.map(() => 0) }))
   let loss = 0
-  const n = X.length
+  const n = X.length, last = net.layers.length - 1
   X.forEach((x, i) => {
-    const { out, zs, as } = forwardOne(net, x)
+    const masks = dropout > 0 ? net.layers.map((layer, l) => l === last ? null : layer.W.map(() => rng.random() < dropout ? 0 : 1 / (1 - dropout))) : null
+    const { out, zs, as } = forwardOne(net, x, masks)
     let d
     if (lossKind === 'ce') {
       // Softmax over the outputs, then −log of the true class's probability (Y[i] is one-hot), as
@@ -70,10 +75,10 @@ export function lossAndGradients(net, X, Y, lossKind = 'mse') {
     }
     for (let l = net.layers.length - 1; l >= 0; l--) {
       const layer = net.layers[l], slope = ACTIVATIONS[layer.activation].d, W = layer.W, gW = grads[l].W, gb = grads[l].b
-      const z = zs[l], aPrev = as[l], units = W.length, inputs = aPrev.length
+      const z = zs[l], aPrev = as[l], units = W.length, inputs = aPrev.length, mask = masks?.[l]
       const dz = new Array(units)
       for (let k = 0; k < units; k++) {
-        const g = d[k] * slope(z[k])
+        const g = d[k] * (mask ? mask[k] : 1) * slope(z[k])
         dz[k] = g
         gb[k] += g
         const row = gW[k]
@@ -88,23 +93,25 @@ export function lossAndGradients(net, X, Y, lossKind = 'mse') {
   return { loss, grads }
 }
 
-export function makeOptimizer(net, { kind = 'sgd', rate = 0.01, momentum = 0.9, beta1 = 0.9, beta2 = 0.999, eps = 1e-8 } = {}) {
+export function makeOptimizer(net, { kind = 'sgd', rate = 0.01, momentum = 0.9, beta1 = 0.9, beta2 = 0.999, eps = 1e-8, weightDecay = 0 } = {}) {
   const zero = () => net.layers.map(l => ({ W: l.W.map(r => r.map(() => 0)), b: l.b.map(() => 0) }))
-  return { kind, rate, momentum, beta1, beta2, eps, t: 0, m: zero(), v: zero() }
+  return { kind, rate, momentum, beta1, beta2, eps, weightDecay, t: 0, m: zero(), v: zero() }
 }
 
-// One step for every weight: plain SGD, momentum, or Adam (as torch.optim does them).
+// One step for every weight: plain SGD, momentum, or Adam (as torch.optim does them). Weight decay,
+// as torch.optim applies it: weight_decay × weight added to every gradient first.
 export function optimizerStep(net, opt, grads) {
   opt.t += 1
-  const { kind, rate } = opt
+  const { kind, rate } = opt, wd = opt.weightDecay ?? 0
   const c1 = 1 - opt.beta1 ** opt.t, c2 = 1 - opt.beta2 ** opt.t
   // Update one list of numbers p in place from its gradients g, with its momentum m and Adam's v.
-  const update = (p, g, m, v) => {
+  const update = (p, gs, m, v) => {
     for (let j = 0; j < p.length; j++) {
-      if (kind === 'sgd') p[j] = p[j] - rate * g[j]
-      else if (kind === 'momentum') { const buf = opt.momentum * m[j] + g[j]; m[j] = buf; p[j] = p[j] - rate * buf }
+      const g = wd ? gs[j] + wd * p[j] : gs[j]
+      if (kind === 'sgd') p[j] = p[j] - rate * g
+      else if (kind === 'momentum') { const buf = opt.momentum * m[j] + g; m[j] = buf; p[j] = p[j] - rate * buf }
       else {
-        const mm = opt.beta1 * m[j] + (1 - opt.beta1) * g[j], vv = opt.beta2 * v[j] + (1 - opt.beta2) * g[j] * g[j]
+        const mm = opt.beta1 * m[j] + (1 - opt.beta1) * g, vv = opt.beta2 * v[j] + (1 - opt.beta2) * g * g
         m[j] = mm; v[j] = vv
         p[j] = p[j] - rate * (mm / c1) / (Math.sqrt(vv / c2) + opt.eps)
       }
@@ -116,9 +123,9 @@ export function optimizerStep(net, opt, grads) {
   })
 }
 
-export function trainSteps(net, opt, X, Y, steps, lossKind = 'mse') {
+export function trainSteps(net, opt, X, Y, steps, lossKind = 'mse', options = {}) {
   let loss = 0
-  for (let s = 0; s < steps; s++) { const r = lossAndGradients(net, X, Y, lossKind); loss = r.loss; optimizerStep(net, opt, r.grads) }
+  for (let s = 0; s < steps; s++) { const r = lossAndGradients(net, X, Y, lossKind, options); loss = r.loss; optimizerStep(net, opt, r.grads) }
   return loss
 }
 

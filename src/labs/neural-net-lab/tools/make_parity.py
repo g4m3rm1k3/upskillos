@@ -29,8 +29,27 @@ from softmax import softmax                          # noqa: E402
 from torch_iris import confusion_matrix              # noqa: E402
 from mnist import load_mnist                         # noqa: E402
 from preprocess import example, to_mnist             # noqa: E402
+from optimizers import race_all                      # noqa: E402
+from overfit import noisy_points                     # noqa: E402
 
 ACT = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid}
+
+
+def network_run_wd(optimiser, seed, weight_decay):
+    """A 2 -> 5 -> 1 network trained 5 steps with weight decay."""
+    torch.manual_seed(seed)
+    model = nn.Sequential(nn.Linear(2, 5), nn.ReLU(), nn.Linear(5, 1)).double()
+    start = [[p.detach().tolist() for p in (model[i].weight, model[i].bias)] for i in (0, 2)]
+    x = torch.randn(6, 2, dtype=torch.float64)
+    y = torch.randn(6, 1, dtype=torch.float64)
+    opt = {"sgd": torch.optim.SGD, "adam": torch.optim.Adam}[optimiser](model.parameters(), lr=0.05, weight_decay=weight_decay)
+    for step in range(5):
+        loss = ((model(x) - y) ** 2).mean()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    end = [[p.detach().tolist() for p in (model[i].weight, model[i].bias)] for i in (0, 2)]
+    return {"optimiser": optimiser, "weight_decay": weight_decay, "start": start, "x": x.tolist(), "y": y.tolist(), "end": end}
 
 
 def network_run(activation, optimiser, seed, loss_kind="mse"):
@@ -123,6 +142,12 @@ def main():
     train_x, train_y = load_mnist("train", 50)
     test_x, test_y = load_mnist("test", 50)
     out["mnist"] = {"train_labels": train_y.tolist(), "test_labels": test_y.tolist(), "first_train": [round(v * 255) for v in train_x[0].tolist()]}
+    # Part 5
+    races = race_all()
+    out["races"] = {name: {"path": path, "error": error} for name, (path, error) in races.items()}
+    xs, ys = noisy_points(30, 0, 0.3)
+    out["noisy"] = {"xs": xs.squeeze(1).tolist(), "ys": ys.squeeze(1).tolist()}
+    out["networks_wd"] = [network_run_wd("sgd", 21, 0.1), network_run_wd("adam", 22, 0.01)]
     path = os.path.join(HERE, "..", "engine", "parity.json")
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(out, handle)

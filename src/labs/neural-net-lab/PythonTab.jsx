@@ -35,12 +35,17 @@ function Picture({ program, view }) {
     const ok = Array.isArray(w) && typeof b === 'number'
     return <><PlanePlot points={Array.isArray(pts) ? pts : []} labels={Array.isArray(labels) ? labels : []} prob={ok && (w[0] || w[1] || b) ? pt => predictProb(w, b, pt) : null} x={[-3, 3]} y={[-3, 3]} size={300} />{curve}</>
   }
+  if (program.picture === 'overfit') {
+    const train = watched('train'), test = watched('test')
+    if (!Array.isArray(train) || train.length < 2) return <p className="qm-hint">The two error curves appear after the first steps.</p>
+    return <><h4>Error on the training points (teal) and on the true curve (orange)</h4><Plot series={[{ values: train.map(v => Math.min(v, 1)), color: '#1f6f68' }, { values: test.map(v => Math.min(v, 1)), color: '#c26a12' }]} window={1} x="step" label="training and true-curve error" height={150} /></>
+  }
   return <>{curve || <p className="qm-hint">This program prints its result: see the output below.</p>}</>
 }
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture, dataFiles: src.DATA_FILES,
-  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py', 'points2d.py', 'logistic.py', 'torch_classify.py', 'tumours.py', 'metrics.py', 'softmax.py', 'iris.py', 'torch_iris.py', 'digits.py', 'mnist.py', 'mnist_net.py', 'preprocess.py'],
+  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py', 'points2d.py', 'logistic.py', 'torch_classify.py', 'tumours.py', 'metrics.py', 'softmax.py', 'iris.py', 'torch_iris.py', 'digits.py', 'mnist.py', 'mnist_net.py', 'preprocess.py', 'optimizers.py', 'optim_check.py', 'init_check.py', 'overfit.py'],
   labReceiver: /^$/,
   intro: 'The lessons and the Model Studio run the same arithmetic in the browser.',
 }
