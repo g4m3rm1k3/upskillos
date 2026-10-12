@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import rawGlobAssets from "./scripts/vite-plugin-raw-glob-assets.mjs";
 import { createHash } from "crypto";
@@ -223,6 +224,11 @@ function devFsPlugin() {
 }
 
 export default defineConfig({
+  test: {
+    // A lesson's answers/ and support/ files belong to the learner's project (the
+    // Electron lessons' tests run under node:test there), not to this app's suite.
+    exclude: [...configDefaults.exclude, "src/labs/project-studio/tracks/**/answers/**", "src/labs/project-studio/tracks/**/support/**"],
+  },
   plugins: [rawGlobAssets(), react(), emitVersionJson(), localPyodidePlugin(), devFsPlugin()],
   resolve: {
     alias: {

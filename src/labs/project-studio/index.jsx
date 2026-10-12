@@ -24,6 +24,7 @@ import FileTree from './FileTree.jsx';
 import StudioPanes from './StudioPanes.jsx';
 import { studioSeries, nextSeriesLesson } from './series.js';
 import { useDrafts, draftSupportFiles } from './drafts.js';
+import { usePrivateLessons, privateSupportFiles } from './privateLessons.js';
 import { SCRAP, scrapSupportFiles } from './scrapLoader.js';
 import EditorPane from './EditorPane.jsx';
 import LessonPanel from './LessonPanel.jsx';
@@ -50,9 +51,11 @@ export default function ProjectStudio() {
   const progress = useProgress();
   // Lessons from the drafts folder on this computer (drafts.js) join the built-in ones.
   const drafts = useDrafts();
-  const tracks = useMemo(() => ({ ...BASE_TRACKS, ...drafts.tracks }), [drafts.tracks]);
-  const allSeries = useMemo(() => (drafts.series ? [...BASE_SERIES, drafts.series] : BASE_SERIES), [drafts.series]);
-  const supportFiles = useCallback((track, names) => (drafts.tracks[track] ? draftSupportFiles(drafts, track, names) : SCRAP.tracks[track] ? scrapSupportFiles(track, names) : getSupportFiles(track, names)), [drafts]);
+  // Private lessons (privateLessons.js): folders on this computer, each a course of its own.
+  const privateLessons = usePrivateLessons();
+  const tracks = useMemo(() => ({ ...BASE_TRACKS, ...drafts.tracks, ...privateLessons.tracks }), [drafts.tracks, privateLessons.tracks]);
+  const allSeries = useMemo(() => [...BASE_SERIES, ...(drafts.series ? [drafts.series] : []), ...privateLessons.series], [drafts.series, privateLessons.series]);
+  const supportFiles = useCallback((track, names) => (privateLessons.tracks[track] ? privateSupportFiles(privateLessons, track, names) : drafts.tracks[track] ? draftSupportFiles(drafts, track, names) : SCRAP.tracks[track] ? scrapSupportFiles(track, names) : getSupportFiles(track, names)), [drafts, privateLessons]);
   // The position saved last time, before this visit starts saving over it: drafts load a moment
   // after the page, and a saved draft lesson is reopened once they have.
   const savedPosition = useRef(progress.position);
@@ -507,6 +510,15 @@ export default function ProjectStudio() {
       setTrackKey(fallback); setLessonId(fallback ? TRACKS[fallback][0]?.id : null); setStepIndex(0);
     }
   }, [drafts, tracks, trackKey]);
+  const restoredPrivate = useRef(false);
+  useEffect(() => {
+    const saved = savedPosition.current;
+    if (restoredPrivate.current || !privateLessons.series.length) return;
+    restoredPrivate.current = true;
+    if (saved.trackKey && privateLessons.tracks[saved.trackKey] && saved.trackKey !== trackKey) {
+      setTrackKey(saved.trackKey); setLessonId(saved.lessonId); setStepIndex(Math.max(0, saved.stepIndex ?? 0));
+    }
+  }, [privateLessons, trackKey]);
   useEntryLink('project-studio', search => {
     const requested = new URLSearchParams(search).get('track');
     // Use the normal switch path so unsaved files and running processes stay protected.
@@ -554,6 +566,17 @@ export default function ProjectStudio() {
         Open drafts folder
       </button>}
       {series.key === 'drafts' && <button onClick={drafts.reload} style={{ ...pickerStyle, cursor: 'pointer' }}>Reload drafts</button>}
+      {privateLessons.available && <button style={{ ...pickerStyle, cursor: 'pointer' }}
+        title="Choose a folder of lessons on this computer (for an app that isn't open source). It opens as a course, and stays in the Series list."
+        onClick={async () => { const added = await privateLessons.add(); if (added) selectTrack(added.chapters[0].key); }}>
+        Open private lessons…
+      </button>}
+      {series.privateId && <button onClick={() => privateLessons.open(series.privateId)} style={{ ...pickerStyle, cursor: 'pointer' }}>Show folder</button>}
+      {series.privateId && <button style={{ ...pickerStyle, cursor: 'pointer' }} title="Take this course out of the Series list. Its folder and files are left as they are."
+        onClick={async () => { await privateLessons.remove(series.privateId); const fallback = SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0]; if (fallback) selectTrack(fallback); }}>
+        Remove from list
+      </button>}
+      {privateLessons.error && <span role="alert" style={{ fontSize: 11, color: C.amber }}>{privateLessons.error}</span>}
       {drafts.error && <span role="alert" style={{ fontSize: 11, color: C.amber }}>{drafts.error}</span>}
       <p style={{ flexBasis: '100%', margin: '4px 0', fontSize: 12, color: C.text }}>
         {series.audience}

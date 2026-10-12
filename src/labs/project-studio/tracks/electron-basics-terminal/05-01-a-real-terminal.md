@@ -221,6 +221,8 @@ contains main.cjs "ipcMain.on('terminal:write'"
 run "node --check main.cjs" label="main.cjs has no syntax errors"
 ```
 
+## The preload's terminal door
+
 ```js file=preload.cjs
 const { contextBridge, ipcRenderer } = require('electron')
 
@@ -284,6 +286,13 @@ run "node --check preload.cjs" label="preload.cjs has no syntax errors"
 
 The page loads xterm straight out of `node_modules`. That works in development, and it is the reason chapter 7's packaging config has to list those two files by name: if they aren't packaged, `Terminal` doesn't exist and `renderer.js` stops at its first use of it.
 
+```check
+contains index.html "xterm.js"
+contains index.html "id=\"terminal\""
+```
+
+## Room for the terminal
+
 ```css file=styles.css
 body { margin: 0; display: grid; grid-template-rows: auto 1fr 240px; height: 100vh; font: 14px system-ui; }
 header { padding: 6px 10px; background: #eee; }
@@ -294,6 +303,12 @@ main { display: grid; grid-template-columns: 220px 1fr; min-height: 0; }
 #editor { border: 0; padding: 8px; font: 13px ui-monospace, Consolas, monospace; resize: none; }
 #terminal { background: #000; padding: 4px; }
 ```
+
+```check
+contains styles.css "#terminal"
+```
+
+## The page's script
 
 ```js file=renderer.js
 const $ = (sel) => document.querySelector(sel)

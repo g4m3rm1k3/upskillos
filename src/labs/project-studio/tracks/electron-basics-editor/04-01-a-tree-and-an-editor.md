@@ -40,6 +40,8 @@ contains index.html "id=\"editor\""
 contains index.html "id=\"tree\""
 ```
 
+## Its styles
+
 ```css file=styles.css
 body { margin: 0; display: grid; grid-template-rows: auto 1fr; height: 100vh; font: 14px system-ui; }
 header { padding: 6px 10px; background: #eee; }

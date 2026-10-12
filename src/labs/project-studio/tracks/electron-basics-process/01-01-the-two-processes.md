@@ -105,6 +105,12 @@ run "node --check main.cjs" label="main.cjs has no syntax errors" -- Read the er
 </html>
 ```
 
+```check
+contains index.html "renderer.js"
+```
+
+## The page's script
+
 ```js file=renderer.js
 document.querySelector('#where').textContent =
   `Node in this page: ${typeof require === 'undefined' ? 'no' : 'yes'}`
@@ -129,7 +135,6 @@ npm start
 A window opens and says **Node in this page: no**. Close it; the app quits and your terminal is free again.
 
 ```check
-contains index.html "renderer.js"
 run "node --check renderer.js" label="renderer.js has no syntax errors" -- Read the error: it names the line Node couldn't read.
 ```
 
