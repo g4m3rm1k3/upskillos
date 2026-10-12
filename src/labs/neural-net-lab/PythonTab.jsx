@@ -40,7 +40,7 @@ function Picture({ program, view }) {
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture, dataFiles: src.DATA_FILES,
-  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py', 'points2d.py', 'logistic.py', 'torch_classify.py', 'tumours.py', 'metrics.py', 'softmax.py', 'iris.py', 'torch_iris.py', 'digits.py'],
+  fileOrder: ['data.py', 'neuron.py', 'layer.py', 'tinynet.py', 'torch_net.py', 'cars.py', 'points2d.py', 'logistic.py', 'torch_classify.py', 'tumours.py', 'metrics.py', 'softmax.py', 'iris.py', 'torch_iris.py', 'digits.py', 'mnist.py', 'mnist_net.py', 'preprocess.py'],
   labReceiver: /^$/,
   intro: 'The lessons and the Model Studio run the same arithmetic in the browser.',
 }

@@ -9,6 +9,8 @@ import { split, loadCars, meanAndSpread } from './cars.js'
 import { lossAndGradients, makeOptimizer, optimizerStep } from './mlp.js'
 import { makeBlobs, makeMoons, trainLogistic, confusion, scores, loadTumours, splitTumours, columnStats } from './part2.js'
 import { softmax, trainSoftmax, confusionMatrix, loadDigits, splitDigits, oneHot, padToPixels } from './part3.js'
+import { parseMnistSmall, toMnist, exampleDrawing } from './part4.js'
+import { readFileSync } from 'node:fs'
 
 const close = (a, b, tol) => {
   if (Array.isArray(a)) { expect(a.length).toBe(b.length); a.forEach((x, i) => close(x, b[i], tol)); return }
@@ -106,6 +108,20 @@ describe('Part 3 programs', () => {
       close(net.layers.map(l => [l.W, l.b]), run.end, 1e-10)
     })
   }
+})
+
+describe('Part 4', () => {
+  it('the browser\'s MNIST sample holds the same digits as MNIST itself', () => {
+    const { train, test } = parseMnistSmall(readFileSync(new URL('../data/mnist-small.dat', import.meta.url)))
+    expect([train.X.length, test.X.length]).toEqual([3000, 1000])
+    expect(train.labels.slice(0, 50)).toEqual(parity.mnist.train_labels)
+    expect(test.labels.slice(0, 50)).toEqual(parity.mnist.test_labels)
+    expect(train.X[0].map(v => Math.round(v * 255))).toEqual(parity.mnist.first_train)
+  })
+  it('preparing a drawing like MNIST: the same 28 × 28 image as preprocess.py', () => {
+    close(toMnist(exampleDrawing()), parity.preprocess.example, 1e-12)
+    close(toMnist(parity.preprocess.ring_input), parity.preprocess.ring, 1e-12)
+  })
 })
 
 describe('the general network matches PyTorch', () => {

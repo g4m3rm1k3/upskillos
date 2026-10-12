@@ -20,3 +20,6 @@
 .nn-wrong,.nn-wimg{display:inline-flex;flex-direction:column;align-items:center;font-size:11px}
 .nn-cm td,.nn-cm th{text-align:center!important;padding:2px 5px;font-size:11px}.nn-cm td.good{background:#e6f2ea}.nn-cm td.bad{background:#f8e1d8;font-weight:700}
 .nn-pad{width:100%;max-width:280px;display:block;border:1px solid var(--line);border-radius:6px;touch-action:none;cursor:crosshair}
+.nn-img28{image-rendering:pixelated;border:1px solid var(--line);background:#fff;display:block}
+.nn-stages{display:flex;gap:10px;flex-wrap:wrap}.nn-stages>span{display:flex;flex-direction:column;align-items:center;max-width:120px;text-align:center}.nn-stages small{font-size:11px;color:var(--muted)}
+canvas.nn-pad{image-rendering:pixelated}

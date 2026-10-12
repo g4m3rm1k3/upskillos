@@ -36,6 +36,7 @@ Rule: nothing is used before it is built. A layer is written as loops over lists
 | Breast Cancer Wisconsin (Diagnostic), 569 tumours × 30 measurements | UCI Machine Learning Repository; Wolberg, Street and Mangasarian (1995) | CC BY 4.0 |
 | Iris (150 flowers × 4 measurements) | UCI Machine Learning Repository; Fisher (1936) | CC BY 4.0 |
 | Optical Recognition of Handwritten Digits, test set (1,797 digits, 8 × 8 counts of a 32 × 32 bitmap) | UCI Machine Learning Repository; Alpaydin and Kaynak (1998) | CC BY 4.0 |
+| MNIST: browser sample of 3,000 train + 1,000 test (`data/mnist-small.dat`); Python downloads all 70,000 to `~/.cache/upskillos-mnist` | LeCun, Cortes and Burges (1998), via the torchvision mirror | CC BY-SA 3.0 (sample shared under the same licence; see `data/SOURCES.md`) |
 | Made-up 2-D points (clouds, moons) | `python/points2d.py`; XOR and ring only in the browser (`figures/part2.jsx`) | — |
 
 ## Checks
@@ -50,4 +51,6 @@ Session 1, continued: Part 2 built and checked (6 lessons: sigmoid, cross-entrop
 
 Session 1, continued: Part 3 built and checked (5 lessons: softmax, multi-class cross-entropy and p − one-hot, softmax regression by hand on iris, CrossEntropyLoss and the confusion matrix, 8 × 8 digits, a drawing pad that makes 64 block counts exactly as the data set did, one-layer weights as templates). Model Studio gained iris and digits. The engine's inner loops were rewritten as plain loops: 3.6× faster, identical numbers. Measured: softmax regression on petals 93.3% (loss 1.099 → 0.389); PyTorch iris 4 → 8 → 3: 147/150; CrossEntropyLoss = hand to 1e-9; digits (359 test): one layer 339 (94.4%), 32 hidden 348 (96.9%), 2,000 steps 352 (98.1%); in the browser with Adam 150 steps: 339 and 349.
 
-Next: Part 4 (your handwriting: MNIST 28 × 28, preprocessing, your own classes). Not yet checked: the Python tab inside the real Electron window.
+Session 1, continued: Part 4 built and checked (6 lessons: MNIST and the IDX format, mini-batches and epochs, training on 60,000, preparing a drawing like MNIST (crop, shrink into 20 × 20 by averaging, centre by mass), your handwriting and why a classifier always answers, classes you draw with shift augmentation). Measured: Python 784 → 128 → 10, SGD 0.1, batches of 64: 92.9% after 1 epoch, 94.1% after 2 (9 s); browser on the 3,000 sample, 784 → 64 → 10, Adam 0.002, batches of 32: about 88% after 3 epochs (0.75 s per epoch). The browser's preprocessing equals preprocess.py exactly. Not in the Model Studio yet: MNIST (its data loads asynchronously).
+
+Next: Part 5 (training well: SGD, momentum and Adam built by hand and raced on one loss surface; learning rate; initialisation; overfitting, early stopping, dropout, weight decay). Not yet checked: the Python tab inside the real Electron window.

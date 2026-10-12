@@ -112,7 +112,7 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(await checkArithmetic(s, r, 400)).toBeGreaterThan(40)
   }, 180000)
 
-  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours', 'iris', 'digits']) {
+  for (const id of ['layer', 'torch', 'cars', 'moons', 'tumours', 'iris', 'digits', 'mnist_load', 'preprocess', 'mnist']) {
     it(`${id}: runs to the end`, async () => {
       let r = await load(s, id)
       expect(r.type, s.stderr()).toBe('pause')
@@ -124,6 +124,9 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
       if (id === 'tumours') expect(r.output).toMatch(/accuracy 0\.9/)
       if (id === 'iris') expect(r.output).toMatch(/\[\[50, 0, 0\]/)
       if (id === 'digits') expect(r.output).toMatch(/right: 3[45]\d/)
+      if (id === 'mnist_load') expect(r.result.items[0].shape).toEqual([10000, 784])
+      if (id === 'preprocess') expect(r.result.len).toBe(28)
+      if (id === 'mnist') expect(r.result.items[2].v).toBeGreaterThan(0.9)
     }, 300000)
   }
 })

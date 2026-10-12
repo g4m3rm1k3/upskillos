@@ -79,4 +79,20 @@ export const PROGRAMS = {
     kwargs: () => ({ hidden: 32, steps: 500, seed: 0 }), choices: { hidden: [32, 0] }, watch: {}, picture: null, actions: [],
     episodeEnd: () => [['digits.py', lineOf('digits.py', 'optimizer.step()')]], endLabel: 'Next step',
   },
+  mnist_load: {
+    label: '4.1 Read MNIST', file: 'mnist.py', module: 'mnist', function: 'load_mnist',
+    about: 'Downloads MNIST\'s test files the first time (about 1.7 MB) and reads them: the header with struct, then 10,000 images as a tensor.',
+    kwargs: () => ({ split: 'test' }), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
+  mnist: {
+    label: '4.3 Train on MNIST', file: 'mnist_net.py', module: 'mnist_net', function: 'train_mnist',
+    about: 'All 60,000 training digits (downloaded the first time, 11 MB), 784 → 128 → 10, mini-batches of 64, two epochs; tested on 10,000.',
+    kwargs: () => ({ epochs: 2, seed: 0 }), watch: {}, picture: null, actions: [],
+    episodeEnd: () => [['mnist_net.py', lineOf('mnist_net.py', 'history.append(loss.item())')]], endLabel: 'Next batch',
+  },
+  preprocess: {
+    label: '4.4 Prepare a drawing like MNIST', file: 'preprocess.py', module: 'preprocess', function: 'example',
+    about: 'A 7 drawn small in a corner, cropped, shrunk into 20 × 20 and centred by its centre of mass in 28 × 28.',
+    kwargs: () => ({}), watch: {}, picture: null, actions: [], episodeEnd: () => [],
+  },
 }

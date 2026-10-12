@@ -1,4 +1,4 @@
-"""Writes data/mnist-small.bin.gz, the browser's sample of MNIST: the first 3,000 training digits and
+"""Writes data/mnist-small.dat (gzip-compressed, named .dat so no web server unpacks it on the way), the browser's sample of MNIST: the first 3,000 training digits and
 the first 1,000 test digits. Layout (before gzip): 4 bytes 'MNS1', then train count and test count
 as 2-byte big-endian numbers, then every image (784 bytes, one per pixel, row by row), train images
 first, then every label (1 byte). Run with the folder holding MNIST's four .gz files:
@@ -26,7 +26,7 @@ def main(folder):
     train_x, train_y = read(folder, "train-images-idx3-ubyte.gz", "train-labels-idx1-ubyte.gz", N_TRAIN)
     test_x, test_y = read(folder, "t10k-images-idx3-ubyte.gz", "t10k-labels-idx1-ubyte.gz", N_TEST)
     body = b"MNS1" + struct.pack(">HH", N_TRAIN, N_TEST) + train_x + test_x + train_y + test_y
-    path = os.path.join(HERE, "..", "data", "mnist-small.bin.gz")
+    path = os.path.join(HERE, "..", "data", "mnist-small.dat")
     with gzip.open(path, "wb", compresslevel=9) as handle:
         handle.write(body)
     print("wrote", os.path.relpath(path), os.path.getsize(path), "bytes")

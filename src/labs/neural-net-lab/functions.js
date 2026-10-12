@@ -59,6 +59,15 @@ export const FUNCTIONS = {
   'digits.py:split': F('Shuffles and keeps a fifth aside for testing.', [['images', 'the pictures'], ['labels', 'the digits'], ['test_fraction', 'how much to keep aside'], ['seed', 'which shuffle']], '`((train_x, train_y), (test_x, test_y))`', 'digits'),
   'digits.py:train_digits': F('Trains a 64 → hidden → 10 digit classifier and tests it on unseen digits.', [['hidden', 'hidden neurons; 0 for one layer'], ['steps', 'how many steps'], ['rate', 'the learning rate'], ['seed', 'which shuffle and starting weights']], '`(model, table)`', 'digits'),
   'digits.py:predict_digit': F('Your own drawing (64 ink counts, 0–16) through the trained model.', [['model', 'the trained model'], ['pixels', 'the 64 counts']], '`(best_digit, probs)`', 'your-digit'),
+  'mnist.py:download': F('Fetches one MNIST file into a cache folder, the first time only.', [['name', 'the file\'s name']], 'its path on disk', 'mnist'),
+  'mnist.py:load_mnist': F('Reads MNIST\'s images and labels: the IDX header with struct, then the pixel bytes straight into a tensor.', [['split', '"train" (60,000) or "test" (10,000)'], ['limit', 'keep only this many, if given']], '`(images, labels)`: N × 784 brightnesses (0–1) and N digits', 'mnist'),
+  'mnist_net.py:batches': F('One epoch\'s mini-batches: every position, shuffled, in groups.', [['n', 'how many examples'], ['batch_size', 'how many per batch'], ['rng', 'the random generator for shuffling']], 'a list of batches, each a list of positions', 'mini-batches'),
+  'mnist_net.py:train_mnist': F('Trains 784 → hidden → 10 on MNIST with mini-batches; tests on the 10,000 test digits after each epoch.', [['hidden', 'hidden neurons'], ['epochs', 'passes over the training set'], ['batch_size', 'images per step'], ['rate', 'the learning rate'], ['seed', 'starting weights and shuffles'], ['limit', 'train on only this many, if given']], '`(model, history, accuracy)`', 'mnist-network'),
+  'preprocess.py:ink_box': F('The smallest box around every inked pixel.', [['image', 'rows of ink amounts']], '`(top, bottom, left, right)`', 'prepare-drawing'),
+  'preprocess.py:shrink': F('Resizes so the longer side is `size`, each new pixel the average of the old ones it covers.', [['image', 'rows of ink amounts'], ['size', 'the longer side\'s new length']], 'the smaller image', 'prepare-drawing'),
+  'preprocess.py:centre_of_mass': F('The ink\'s balance point: the ink-weighted average row and column.', [['image', 'rows of ink amounts']], '`(row_mean, col_mean)`', 'prepare-drawing'),
+  'preprocess.py:to_mnist': F('Prepares any drawing like an MNIST digit: crop, shrink into 20 × 20, centre by mass in 28 × 28.', [['image', 'rows of ink amounts, any size']], 'a 28 × 28 image', 'prepare-drawing'),
+  'preprocess.py:example': F('A made-up 7 drawn in a corner of a 60 × 60 canvas, prepared like MNIST.', [], 'a 28 × 28 image', 'prepare-drawing'),
   'cars.py:predict_mpg': F('The trained model\'s guess for a car you describe.', [['model', 'the trained model'], ['stats', 'the training cars\' averages and spreads'], ['weight', 'pounds'], ['horsepower', 'horsepower']], 'the predicted miles per gallon', 'fuel-economy'),
 }
 
@@ -92,5 +101,12 @@ export const VARS = {
   k: 'how many classes', m: 'how many inputs', c: 'which class', slope: 'p − target: this score\'s slope', n_classes: 'how many classes', row: 'one row',
   images: 'the pictures, 64 numbers each', pixels: 'one picture\'s 64 ink amounts', guesses: 'the predicted classes', table: 'the confusion matrix', right: 'how many were right',
   best: 'the most probable class', with_torch: 'PyTorch\'s result', by_hand: 'the hand-written result',
+  data: 'the file\'s bytes', magic: 'a number identifying the file\'s kind (2051 for images)', count: 'how many images', cols: 'columns per image',
+  path: 'where the file is on disk', name: 'the file\'s name', split: '"train" or "test"', limit: 'how many to keep', handle: 'the open file',
+  epochs: 'passes over the training set', epoch: 'which pass', batch_size: 'examples per step', batch: 'one batch\'s positions', index: 'the batch\'s positions as a tensor',
+  image: 'rows of ink amounts, 0 to 1', crop: 'the drawing cut down to its ink', small: 'the drawing shrunk to fit 20 × 20', scale: 'old pixels per new pixel',
+  height: 'rows', width: 'columns', new_h: 'new rows', new_w: 'new columns', cells: 'the old pixels one new pixel covers', size: 'the longer side\'s new length',
+  row_mean: 'the ink\'s average row', col_mean: 'the ink\'s average column', shift_r: 'rows to move down', shift_c: 'columns to move right', canvas: 'a blank drawing to draw on',
+  top: 'the first inked row', bottom: 'the last inked row', left: 'the first inked column', right: 'the last inked column',
   train_x: 'training measurements', train_y: 'training labels', test_x: 'test measurements', test_y: 'test labels', columns: 'which measurements to use',
 }

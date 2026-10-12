@@ -27,6 +27,8 @@ from digits import split as split_digits             # noqa: E402
 from iris import train_softmax                       # noqa: E402
 from softmax import softmax                          # noqa: E402
 from torch_iris import confusion_matrix              # noqa: E402
+from mnist import load_mnist                         # noqa: E402
+from preprocess import example, to_mnist             # noqa: E402
 
 ACT = {"relu": nn.ReLU, "tanh": nn.Tanh, "sigmoid": nn.Sigmoid}
 
@@ -115,6 +117,12 @@ def main():
     (train_x, train_y), (test_x, test_y) = split_digits(images, labels)
     out["digits"] = {"n": [len(train_x), len(test_x)], "test_labels": test_y[:30], "first_test": test_x[0]}
     out["networks_ce"] = [network_run_ce("sgd", 11), network_run_ce("adam", 12)]
+    # Part 4: the preprocessing, on the example and on a ring drawn small and off-centre
+    ring = [[1.0 if 6 <= ((r - 30) ** 2 + (c - 12) ** 2) ** 0.5 <= 9 else 0.0 for c in range(50)] for r in range(50)]
+    out["preprocess"] = {"example": example(), "ring": to_mnist(ring), "ring_input": ring}
+    train_x, train_y = load_mnist("train", 50)
+    test_x, test_y = load_mnist("test", 50)
+    out["mnist"] = {"train_labels": train_y.tolist(), "test_labels": test_y.tolist(), "first_train": [round(v * 255) for v in train_x[0].tolist()]}
     path = os.path.join(HERE, "..", "engine", "parity.json")
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(out, handle)

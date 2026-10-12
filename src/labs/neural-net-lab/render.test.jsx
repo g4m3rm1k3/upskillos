@@ -2,7 +2,7 @@
 // Every lesson drawn and its buttons pressed, the Model Studio trained on every data set with every
 // optimiser, and the Python tab opened on every program and asked to explain every line of every
 // file: none of it may throw.
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import NeuralNetLab from './index.jsx'
 import Blocks from '../python-steps/Blocks.jsx'
@@ -12,6 +12,15 @@ import { LESSONS } from './lessons/index.js'
 import { FIGURES } from './figures/index.js'
 import { PROGRAMS } from './programs.js'
 import { SOURCES, codeLines } from './source.js'
+
+// The MNIST sample is fetched over HTTP in the browser; here it is read from disk.
+vi.mock('./engine/part4.js', async original => {
+  const actual = await original()
+  const { readFileSync } = await import('node:fs')
+  const { join } = await import('node:path')
+  const data = actual.parseMnistSmall(readFileSync(join(import.meta.dirname, 'data', 'mnist-small.dat')))
+  return { ...actual, loadMnistSmall: () => Promise.resolve(data) }
+})
 
 afterEach(cleanup)
 const NEWLINE = String.fromCharCode(10)
@@ -44,6 +53,15 @@ describe('the lab renders', () => {
     act(() => { fireEvent.click(screen.getByText('+ add a layer')) })
     expect(container.querySelector('.nn-code').textContent).toMatch(/nn\.Linear\(64, 8\).*CrossEntropyLoss/s)
   }, 120000)
+
+  it('the MNIST figures draw once the sample has loaded', async () => {
+    const { MnistGallery, PreprocessFig } = await import('./figures/part4.jsx')
+    render(<MnistGallery />)
+    expect(await screen.findByText(/784 numbers from 0/)).toBeTruthy()
+    cleanup()
+    const { container } = render(<PreprocessFig />)
+    expect(container.textContent).toMatch(/Draw a digit/)
+  })
 
   it('the Python tab opens on every program', () => {
     for (const id of Object.keys(PROGRAMS)) {

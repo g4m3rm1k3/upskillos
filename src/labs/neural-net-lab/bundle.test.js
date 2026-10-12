@@ -9,7 +9,7 @@ it('bundles without errors', async () => {
   const result = await build({
     entryPoints: [path.join(import.meta.dirname, 'index.jsx')], bundle: true, write: false, logLevel: 'silent',
     loader: { '.js': 'jsx' }, jsx: 'automatic',
-    external: ['react', 'react-dom', 'react/*', 'react-markdown', 'remark-*', 'rehype-*', 'katex*', 'fflate', '*.css', '*?raw'],
+    external: ['react', 'react-dom', 'react/*', 'react-markdown', 'remark-*', 'rehype-*', 'katex*', 'fflate', '*.css', '*?raw', '*?url'],
   })
   expect(result.errors).toEqual([])
 }, 60000)
