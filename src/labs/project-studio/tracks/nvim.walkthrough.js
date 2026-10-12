@@ -14,6 +14,7 @@ export function answer(track, name) {
 const E = 'nvim-start';
 const M = 'nvim-motions';
 const O = 'nvim-operators';
+const T = 'nvim-textobjects';
 
 // A Your turn answer with one change: how its wrong answers are made.
 function answerWith(track, name, pairs) {
@@ -38,6 +39,10 @@ export function drill(file, keys) {
 
 // The maze line 1.2 asks the learner to take the * out of.
 const MAZE_LINE = '### # * # ###';
+
+// The two edits 4.4's first step makes to routes.js.
+const PAGES_IMPORT = ["import { readBookmarks, writeBookmarks } from './store.js';", "import { readBookmarks, writeBookmarks } from './store.js';\nimport { homePage } from './pages.js';"];
+const HOME_PAGE_ROUTE = ["  'GET /': home,", "  'GET /': homePage,"];
 
 // The bookmark in 2.5's sample data with no comma after it, and the fix.
 const MISSING_COMMA = '"url": "https://vim-adventures.com"\n  }\n';
@@ -863,6 +868,271 @@ export const WALKTHROUGH = {
       { name: 'no status code', files: { 'server/routes.js': answerWith(O, 'routes-servererror.js', [['  response.statusCode = 500;\n', '']]), 'server/server.js': answer(O, 'server-servererror.js') }, fails: [1] },
       { name: 'JSON without the header', files: { 'server/server.js': answerWith(O, 'server-servererror.js', [['    serverError(request, response);\n', "    response.statusCode = 500;\n    response.end(JSON.stringify({ error: 'server error' }));\n"]]) }, fails: [2] },
       { name: 'stopped logging', files: { 'server/routes.js': answer(O, 'routes-servererror.js'), 'server/server.js': answerWith(O, 'server-servererror.js', [['    console.error(error);\n', '']]) }, fails: [3] },
+    ],
+  },
+
+  // ── 4.1 ──────────────────────────────────────────────────────────────────
+  [`${T}/04-01-words-and-paragraphs#Move the data code into store.js`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'path from the project folder', typeFile: true, edit: [["new URL('../data/bookmarks.json'", "new URL('./data/bookmarks.json'"]], fails: [0] },
+      { name: 'exported DATA too', typeFile: true, edit: [['const DATA = new URL', 'export const DATA = new URL']], fails: [1] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Use the store in routes.js`]: {
+    wrong: [
+      { name: 'still parses the file itself', fails: [1] },
+      { name: 'forgot the ()', typeFile: true, edit: [['const bookmarks = readBookmarks();', 'const bookmarks = readBookmarks;']], fails: [0] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Rename DATA, from the middle of the word`]: {
+    wrong: [
+      { name: 'did nothing', fails: [1] },
+      { name: 'cw from the T', typeFile: true, edit: [['fs.readFileSync(FILE,', 'fs.readFileSync(DAFILE,']], fails: [0] },
+      { name: 'renamed only one', typeFile: true, edit: [['fs.readFileSync(FILE,', 'fs.readFileSync(DATA,']], fails: [0, 1] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Drill: one rename, three lines`]: {
+    run: [drill('practice/drills/40-ciw-dot.txt', 'ciwsum<Esc>j.j.:w<CR>')],
+    wrong: [
+      { name: 'cw, with b first', typeFile: true, run: [drill('practice/drills/40-ciw-dot.txt', 'cwsum<Esc>jb.jb.:w<CR>')], fails: [3] },
+      { name: 'cw and dot from the middle', typeFile: true, run: [drill('practice/drills/40-ciw-dot.txt', 'cwsum<Esc>j.j.:w<CR>')], fails: [1] },
+      { name: 'only two lines', typeFile: true, run: [drill('practice/drills/40-ciw-dot.txt', 'ciwsum<Esc>j.:w<CR>')], fails: [1, 2] },
+      { name: 'renamed with an extra line', typeFile: true, run: [drill('practice/drills/40-ciw-dot.txt', 'ciwsum<Esc>j.j.o<Esc>:w<CR>')], fails: [2] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Drill: delete words, keep the spaces right`]: {
+    run: [drill('practice/drills/41-daw.txt', 'fgdawj$daw:w<CR>')],
+    wrong: [
+      { name: 'diw leaves two spaces', typeFile: true, run: [drill('practice/drills/41-daw.txt', 'fgdiwj$daw:w<CR>')], fails: [0] },
+      { name: 'diw at the end leaves a space', typeFile: true, run: [drill('practice/drills/41-daw.txt', 'fgdawj$diw:w<CR>')], fails: [1] },
+      { name: 'joined the lines', typeFile: true, run: [drill('practice/drills/41-daw.txt', 'fgdawj$dawkJ:w<CR>')], fails: [2] },
+      { name: 'x a letter at a time', typeFile: true, run: [drill('practice/drills/41-daw.txt', 'fgdawj$xxxx:w<CR>')], fails: [3] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Drill: swap two blocks`]: {
+    run: [drill('practice/drills/42-paragraphs.txt', 'dap}p:w<CR>')],
+    wrong: [
+      { name: 'dip leaves the blank line behind', typeFile: true, run: [drill('practice/drills/42-paragraphs.txt', 'dip}p:w<CR>')], fails: [0] },
+      { name: 'put above the block', typeFile: true, run: [drill('practice/drills/42-paragraphs.txt', 'dap}P:w<CR>')], fails: [1] },
+      { name: 'jj instead of }', typeFile: true, run: [drill('practice/drills/42-paragraphs.txt', 'dapjjp:w<CR>')], fails: [3] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Review: case, indent and a typo`]: {
+    run: [drill('practice/review/04-01.txt', '3Gl3~>>fmxp:w<CR>')],
+    wrong: [
+      { name: 'indented first', typeFile: true, run: [drill('practice/review/04-01.txt', '3G>>l3~fmxp:w<CR>')], fails: [0] },
+      { name: 'gUU the line', typeFile: true, run: [drill('practice/review/04-01.txt', '3GgUU>>:w<CR>')], fails: [0] },
+      { name: 'a detour', typeFile: true, run: [drill('practice/review/04-01.txt', 'jjjkl3~>>fmxp:w<CR>')], fails: [2] },
+    ],
+  },
+  [`${T}/04-01-words-and-paragraphs#Your turn: list the bookmarks from the store`]: {
+    files: { 'server/routes.js': answer(T, 'routes-store.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 3] },
+      { name: 'response.end without the header', files: { 'server/routes.js': answerWith(T, 'routes-store.js', [['  sendJson(response, readBookmarks());', '  response.end(JSON.stringify(readBookmarks()));']]) }, fails: [1] },
+      { name: 'lost Cache-Control', files: { 'server/routes.js': answerWith(T, 'routes-store.js', [["  response.setHeader('Cache-Control', 'no-store');\n  sendJson(response, readBookmarks());", '  sendJson(response, readBookmarks());']]) }, fails: [2] },
+      { name: 'read the file in routes.js again', files: { 'server/routes.js': answerWith(T, 'routes-store.js', [["import { readBookmarks } from './store.js';", "import fs from 'node:fs';\nimport { readBookmarks } from './store.js';\n\nconst FILE = new URL('../data/bookmarks.json', import.meta.url);"], ['  sendJson(response, readBookmarks());', "  sendJson(response, JSON.parse(fs.readFileSync(FILE, 'utf8')));"]]) }, fails: [3] },
+    ],
+  },
+
+  // ── 4.2 ──────────────────────────────────────────────────────────────────
+  [`${T}/04-02-quotes#Save the data: writeBookmarks`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'wrote it twice', typeFile: true, edit: [['JSON.stringify(bookmarks, null, 2)', 'JSON.stringify([...bookmarks, ...bookmarks], null, 2)']], fails: [0] },
+      { name: 'all on one line', typeFile: true, edit: [['JSON.stringify(bookmarks, null, 2)', 'JSON.stringify(bookmarks)']], fails: [1] },
+      { name: 'no final newline', typeFile: true, edit: [[" + '\\n');", ');']], fails: [2] },
+    ],
+  },
+  [`${T}/04-02-quotes#Add a bookmark: POST /api/bookmarks`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'never saved', typeFile: true, edit: [['  writeBookmarks(bookmarks);\n', '']], fails: [0] },
+      { name: 'no status code', typeFile: true, edit: [['  response.statusCode = 201;\n', '']], fails: [1] },
+      { name: 'echoed the body', typeFile: true, edit: [['  sendJson(response, bookmark);', '  sendJson(response, body);']], fails: [2] },
+      { name: 'changed the GET line instead of copying it', typeFile: true, edit: [["  'GET /api/bookmarks': listBookmarks,\n", '']], fails: [3] },
+    ],
+  },
+  [`${T}/04-02-quotes#A request file, changed with ci"`]: {
+    wrong: [
+      { name: 'still the MDN bookmark', files: { 'new-bookmark.json': '{ "title": "MDN: HTTP", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP" }\n' }, fails: [0] },
+      { name: 'ci" on the key', files: { 'new-bookmark.json': '{ "Node.js: http": "MDN: HTTP", "url": "https://nodejs.org/api/http.html" }\n' }, fails: [0] },
+    ],
+  },
+  [`${T}/04-02-quotes#A body that isn't JSON`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'async without await', typeFile: true, edit: [['    await handler(request, response);', '    handler(request, response);']], fails: [0, 1] },
+      { name: 'threw it again', typeFile: true, edit: [['    serverError(request, response);\n', '    serverError(request, response);\n    throw error;\n']], fails: [1] },
+      { name: 'answered 404', typeFile: true, edit: [['    serverError(request, response);', '    notFound(request, response);']], fails: [0] },
+    ],
+  },
+  [`${T}/04-02-quotes#Drill: empty three strings`]: {
+    run: [drill('practice/drills/43-di-quote.txt', "di'j.j.:w<CR>")],
+    wrong: [
+      { name: "dt' on each line", typeFile: true, run: [drill('practice/drills/43-di-quote.txt', "f'ldt'j0f'ldt'j0f'ldt':w<CR>")], fails: [3] },
+      { name: "da' took the quotes", typeFile: true, run: [drill('practice/drills/43-di-quote.txt', "da'j.j.:w<CR>")], fails: [0, 1] },
+      { name: 'stopped at two', typeFile: true, run: [drill('practice/drills/43-di-quote.txt', "di'j.:w<CR>")], fails: [1, 2] },
+    ],
+  },
+  [`${T}/04-02-quotes#Drill: a value in the middle`]: {
+    run: [drill('practice/drills/44-ci-double.txt', 'fpci"Neovim<Esc>:w<CR>')],
+    wrong: [
+      { name: 'ft then ct"', typeFile: true, run: [drill('practice/drills/44-ci-double.txt', 'ft;;ct"Neovim<Esc>:w<CR>')], fails: [2] },
+      { name: 'ci" from the start changed the key', typeFile: true, run: [drill('practice/drills/44-ci-double.txt', 'ci"Neovim<Esc>:w<CR>')], fails: [0] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/44-ci-double.txt', 'fpci"Neovim<Esc>o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-02-quotes#Drill: a template string`]: {
+    run: [drill('practice/drills/45-ci-backtick.txt', 'ci`Shelf is ready<Esc>:w<CR>')],
+    wrong: [
+      { name: 'f` then ct`', typeFile: true, run: [drill('practice/drills/45-ci-backtick.txt', 'f`lct`Shelf is ready<Esc>:w<CR>')], fails: [2] },
+      { name: 'da` took the backticks', typeFile: true, run: [drill('practice/drills/45-ci-backtick.txt', 'da`iShelf is ready<Esc>:w<CR>')], fails: [0] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/45-ci-backtick.txt', 'ci`Shelf is ready<Esc>o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-02-quotes#Review: rename, then remove`]: {
+    run: [drill('practice/review/04-02.txt', 'wciwtitle<Esc>jddj.:w<CR>')],
+    wrong: [
+      { name: 'ciw on const', typeFile: true, run: [drill('practice/review/04-02.txt', 'ciwtitle<Esc>jddj.:w<CR>')], fails: [0] },
+      { name: 'deleted the port line', typeFile: true, run: [drill('practice/review/04-02.txt', 'wciwtitle<Esc>jdd.:w<CR>')], fails: [1] },
+      { name: 'dd twice', typeFile: true, run: [drill('practice/review/04-02.txt', 'wciwtitle<Esc>jddjdd:w<CR>')], fails: [3] },
+    ],
+  },
+  [`${T}/04-02-quotes#Your turn: refuse a bookmark without a title or URL`]: {
+    files: { 'server/routes.js': answer(T, 'routes-badrequest.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'only undefined refused', files: { 'server/routes.js': answerWith(T, 'routes-badrequest.js', [['if (!body.title || !body.url) {', 'if (body.title === undefined || body.url === undefined) {']]) }, fails: [1] },
+      { name: 'checked after writing', files: { 'server/routes.js': answerWith(T, 'routes-badrequest.js', [['  if (!body.title || !body.url) {\n    response.statusCode = 400;\n    sendJson(response, { error: \'title and url are required\' });\n    return;\n  }\n  const bookmark = { title: body.title, url: body.url };\n  const bookmarks = readBookmarks();\n  bookmarks.push(bookmark);\n  writeBookmarks(bookmarks);\n', '  const bookmark = { title: body.title, url: body.url };\n  const bookmarks = readBookmarks();\n  bookmarks.push(bookmark);\n  writeBookmarks(bookmarks);\n  if (!body.title || !body.url) {\n    response.statusCode = 400;\n    sendJson(response, { error: \'title and url are required\' });\n    return;\n  }\n']]) }, fails: [2] },
+      { name: 'a semicolon after the if', files: { 'server/routes.js': answerWith(T, 'routes-badrequest.js', [['if (!body.title || !body.url) {', 'if (!body.title || !body.url); {']]) }, fails: [3] },
+    ],
+  },
+
+  // ── 4.3 ──────────────────────────────────────────────────────────────────
+  [`${T}/04-03-brackets#Copy a handler, change its body with ci{`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'renamed addBookmark instead of a copy', typeFile: true, edit: [['export async function addBookmark(request, response) {', 'export async function deleteBookmark2(request, response) {']], fails: [0] },
+    ],
+  },
+  [`${T}/04-03-brackets#A DELETE that isn't routed`]: {
+    wrong: [
+      { name: 'no table entry', typeFile: true, edit: [["  'DELETE /api/bookmarks': deleteBookmark,\n", '']], fails: [0, 1] },
+      { name: 'answered with the list', typeFile: true, edit: [['  sendJson(response, { deleted: bookmarks.length - kept.length });', '  sendJson(response, kept);']], fails: [0] },
+      { name: 'never saved', typeFile: true, edit: [['  writeBookmarks(kept);\n', '']], fails: [1] },
+      { name: 'changed the POST line instead of copying it', typeFile: true, edit: [["  'POST /api/bookmarks': addBookmark,\n", '']], fails: [2] },
+      { name: 'kept the lesson 4.2 bookmarks', typeFile: true, run: [`node -e "const fs = require('fs'); const b = JSON.parse(fs.readFileSync('data/bookmarks.json', 'utf8')); b.push({ title: 'Node.js: http', url: 'https://nodejs.org/api/http.html' }); fs.writeFileSync('data/bookmarks.json', JSON.stringify(b, null, 2) + '\\n');"`], fails: [3] },
+    ],
+  },
+  [`${T}/04-03-brackets#Drill: the innermost pair`]: {
+    run: [drill('practice/drills/46-ci-paren.txt', 'f,ci(bookmarks<Esc>:w<CR>')],
+    wrong: [
+      { name: 'counted to the closing bracket', typeFile: true, run: [drill('practice/drills/46-ci-paren.txt', 'f(;lc2t)bookmarks<Esc>:w<CR>')], fails: [2] },
+      { name: 'the outer pair', typeFile: true, run: [drill('practice/drills/46-ci-paren.txt', 'f,2ci(bookmarks<Esc>:w<CR>')], fails: [0] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/46-ci-paren.txt', 'f,ci(bookmarks<Esc>o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-03-brackets#Drill: a new body`]: {
+    run: [drill('practice/drills/47-ci-brace.txt', 'jci{sendJson(response, {});<Esc>:w<CR>')],
+    wrong: [
+      { name: 'walked down first', typeFile: true, run: [drill('practice/drills/47-ci-brace.txt', 'jjjjci{sendJson(response, {});<Esc>:w<CR>')], fails: [2] },
+      { name: 'counted three lines', typeFile: true, run: [drill('practice/drills/47-ci-brace.txt', 'j3ccsendJson(response, {});<Esc>:w<CR>')], fails: [1] },
+      { name: 'kept the old body', typeFile: true, run: [drill('practice/drills/47-ci-brace.txt', 'jOsendJson(response, {});<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-03-brackets#Drill: empty a list`]: {
+    run: [drill('practice/drills/48-di-bracket.txt', 'f,di[:w<CR>')],
+    wrong: [
+      { name: "dt] from after the [", typeFile: true, run: [drill('practice/drills/48-di-bracket.txt', 'f[ldt]:w<CR>')], fails: [2] },
+      { name: 'da[ took the brackets', typeFile: true, run: [drill('practice/drills/48-di-bracket.txt', 'f,da[:w<CR>')], fails: [0] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/48-di-bracket.txt', 'f,di[o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-03-brackets#Review: a message, a comment and a split line`]: {
+    run: [drill('practice/review/04-03.txt', 'ci"ready<Esc>f;lDjJ:w<CR>')],
+    wrong: [
+      { name: 'kept the comment', typeFile: true, run: [drill('practice/review/04-03.txt', 'ci"ready<Esc>jJ:w<CR>')], fails: [0] },
+      { name: 'never joined', typeFile: true, run: [drill('practice/review/04-03.txt', 'ci"ready<Esc>f;lD:w<CR>')], fails: [1, 2] },
+      { name: 'from the end of the line', typeFile: true, run: [drill('practice/review/04-03.txt', 'ci"ready<Esc>$F;lDjJ:w<CR>')], fails: [3] },
+    ],
+  },
+  [`${T}/04-03-brackets#Your turn: a 404 for a bookmark that isn't there`]: {
+    files: { 'server/routes.js': answer(T, 'routes-delete404.js') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'another message', files: { 'server/routes.js': answerWith(T, 'routes-delete404.js', [["{ error: 'no bookmark with that url' }", "{ error: 'not found' }"]]) }, fails: [0] },
+      { name: 'status 400', files: { 'server/routes.js': answerWith(T, 'routes-delete404.js', [['    response.statusCode = 404;', '    response.statusCode = 400;']]) }, fails: [1] },
+      { name: 'checked after writing', files: { 'server/routes.js': answerWith(T, 'routes-delete404.js', [['  if (kept.length === bookmarks.length) {\n    response.statusCode = 404;\n    sendJson(response, { error: \'no bookmark with that url\' });\n    return;\n  }\n  writeBookmarks(kept);\n', '  writeBookmarks(kept);\n  if (kept.length === bookmarks.length) {\n    response.statusCode = 404;\n    sendJson(response, { error: \'no bookmark with that url\' });\n    return;\n  }\n']]) }, fails: [2] },
+      { name: 'the condition inverted', files: { 'server/routes.js': answerWith(T, 'routes-delete404.js', [['if (kept.length === bookmarks.length) {', 'if (kept.length !== bookmarks.length) {']]) }, fails: [3] },
+    ],
+  },
+
+  // ── 4.4 ──────────────────────────────────────────────────────────────────
+  [`${T}/04-04-tags#A page at /`]: {
+    editFiles: { 'server/routes.js': [PAGES_IMPORT, HOME_PAGE_ROUTE] },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'sent as plain text', typeFile: true, edit: [["'text/html; charset=utf-8'", "'text/plain; charset=utf-8'"]], editFiles: { 'server/routes.js': [PAGES_IMPORT, HOME_PAGE_ROUTE] }, fails: [0] },
+      { name: '/api changed too', typeFile: true, editFiles: { 'server/routes.js': [PAGES_IMPORT, HOME_PAGE_ROUTE, ["  'GET /api': home,", "  'GET /api': homePage,"]] }, fails: [1] },
+    ],
+  },
+  [`${T}/04-04-tags#Write the page`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'another heading', typeFile: true, edit: [['<h1>Shelf</h1>', '<h1>Bookmarks</h1>']], fails: [0] },
+      { name: 'the li not indented', typeFile: true, edit: [['      <li><a href', '<li><a href']], fails: [1] },
+      { name: 'title in the body', typeFile: true, edit: [['    <title>Shelf</title>\n  </head>\n  <body>\n', '  </head>\n  <body>\n    <title>Shelf</title>\n']], fails: [2] },
+    ],
+  },
+  [`${T}/04-04-tags#A second link, with ci" and cit`]: {
+    wrong: [
+      { name: 'cit from the li tag', typeFile: true, edit: [['      <li><a href="https://www.vim.org">Vim</a></li>', '      <li>Vim</li>']], fails: [0] },
+      { name: 'changed the Neovim line instead of a copy', typeFile: true, edit: [['      <li><a href="https://neovim.io">Neovim</a></li>\n', '']], fails: [1] },
+    ],
+  },
+  [`${T}/04-04-tags#Drill: change a title`]: {
+    run: [drill('practice/drills/49-cit.html', 'citShelf<Esc>:w<CR>')],
+    wrong: [
+      { name: 'f> then ct<', typeFile: true, run: [drill('practice/drills/49-cit.html', 'f>lct<Shelf<Esc>:w<CR>')], fails: [2] },
+      { name: 'cat took the tags', typeFile: true, run: [drill('practice/drills/49-cit.html', 'catShelf<Esc>:w<CR>')], fails: [0] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/49-cit.html', 'citShelf<Esc>o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-04-tags#Drill: the link inside the item`]: {
+    run: [drill('practice/drills/50-cit-nested.html', 'fVcitHelix<Esc>:w<CR>')],
+    wrong: [
+      { name: 'cit from the li tag', typeFile: true, run: [drill('practice/drills/50-cit-nested.html', 'citHelix<Esc>:w<CR>')], fails: [0] },
+      { name: 'walked in with ; and l', typeFile: true, run: [drill('practice/drills/50-cit-nested.html', 'f>;lcitHelix<Esc>:w<CR>')], fails: [2] },
+      { name: 'an extra line', typeFile: true, run: [drill('practice/drills/50-cit-nested.html', 'fVcitHelix<Esc>o<Esc>:w<CR>')], fails: [1] },
+    ],
+  },
+  [`${T}/04-04-tags#Drill: empty a list`]: {
+    run: [drill('practice/drills/51-dit.html', 'dit:w<CR>')],
+    wrong: [
+      { name: 'dit from an item', typeFile: true, run: [drill('practice/drills/51-dit.html', 'jdit:w<CR>')], fails: [0] },
+      { name: 'line by line', typeFile: true, run: [drill('practice/drills/51-dit.html', 'j3dd:w<CR>')], fails: [0, 1] },
+      { name: 'a detour', typeFile: true, run: [drill('practice/drills/51-dit.html', 'jkdit:w<CR>')], fails: [2] },
+    ],
+  },
+  [`${T}/04-04-tags#Review: an argument, a word and a list`]: {
+    run: [drill('practice/review/04-04.txt', 'wwdWjdawjf,di[:w<CR>')],
+    wrong: [
+      { name: 'one w stopped on the (', typeFile: true, run: [drill('practice/review/04-04.txt', 'wdWjdawjf,di[:w<CR>')], fails: [0] },
+      { name: 'diw left two spaces', typeFile: true, run: [drill('practice/review/04-04.txt', 'wwdWjdiwjf,di[:w<CR>')], fails: [1] },
+      { name: 'da[ took the brackets', typeFile: true, run: [drill('practice/review/04-04.txt', 'wwdWjdawjf,da[:w<CR>')], fails: [2] },
+      { name: 'f( and l', typeFile: true, run: [drill('practice/review/04-04.txt', 'f(ldWjdawjf,di[:w<CR>')], fails: [3] },
+    ],
+  },
+  [`${T}/04-04-tags#Your turn: an About page`]: {
+    files: { 'server/pages.js': answer(T, 'pages-about.js'), 'server/routes.js': answer(T, 'routes-about.js'), 'public/about.html': answer(T, 'about.html') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'the title left as Shelf', files: { 'server/pages.js': answer(T, 'pages-about.js'), 'server/routes.js': answer(T, 'routes-about.js'), 'public/about.html': answerWith(T, 'about.html', [['<title>About Shelf</title>', '<title>Shelf</title>']]) }, fails: [0] },
+      { name: 'the heading left as Shelf', files: { 'server/pages.js': answer(T, 'pages-about.js'), 'server/routes.js': answer(T, 'routes-about.js'), 'public/about.html': answerWith(T, 'about.html', [['<h1>About Shelf</h1>', '<h1>Shelf</h1>']]) }, fails: [1] },
+      { name: 'sent without a Content-Type', files: { 'server/pages.js': answerWith(T, 'pages-about.js', [["export function aboutPage(request, response) {\n  sendPage(response, 'about.html');", "export function aboutPage(request, response) {\n  response.end(fs.readFileSync(new URL('../public/about.html', import.meta.url)));"]]), 'server/routes.js': answer(T, 'routes-about.js'), 'public/about.html': answer(T, 'about.html') }, fails: [2] },
+      { name: '/ became the About page', files: { 'server/pages.js': answer(T, 'pages-about.js'), 'server/routes.js': answerWith(T, 'routes-about.js', [["  'GET /': homePage,", "  'GET /': aboutPage,"]]), 'public/about.html': answer(T, 'about.html') }, fails: [3] },
     ],
   },
 };

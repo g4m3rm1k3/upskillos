@@ -26,8 +26,9 @@ const SERIES = [
       ['nvim-start', '01 · Modes, Saving and a First Server'],
       ['nvim-motions', '02 · Motions'],
       ['nvim-operators', '03 · Operators and the Dot'],
+      ['nvim-textobjects', '04 · Text Objects'],
     ],
-    planned: 'Builds Shelf, a bookmark app with a Node backend and a plain HTML/CSS/JavaScript frontend, entirely in Neovim, with timed keystroke drills and spaced review so the keys become habits. Chapters 1 to 3 (modes, saving, motions and operators) are written; text objects, search, visual mode, buffers and windows, registers and macros, navigation and the quickfix list, configuration, plugins, LSP and advanced editing are planned in docs/neovim-series-plan.md.',
+    planned: 'Builds Shelf, a bookmark app with a Node backend and a plain HTML/CSS/JavaScript frontend, entirely in Neovim, with timed keystroke drills and spaced review so the keys become habits. Chapters 1 to 4 (modes, saving, motions, operators and text objects) are written; search and substitute, visual mode, files and windows, and configuration with a fuzzy finder and a language server are planned in docs/neovim-series-plan.md.',
   },
   {
     key: 'backend',

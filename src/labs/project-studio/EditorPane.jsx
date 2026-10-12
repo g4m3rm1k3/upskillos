@@ -11,7 +11,9 @@
 // The editor itself is the learner's choice (`editorKind`): Monaco, or Neovim in a terminal
 // (NeovimPane.jsx). Both edit the same files on disk, so switching loses nothing.
 import Editor from '@monaco-editor/react';
+import { useState } from 'react';
 import NeovimPane from './NeovimPane.jsx';
+import NeovimKeyReference from './NeovimKeyReference.jsx';
 import { setupOpenCalcMonaco } from '../../utils/monacoThemes.js';
 import { addedLineNumbers, matchesTarget } from './lineDiff.js';
 
@@ -33,6 +35,7 @@ export default function EditorPane({
   // Neovim runs in a terminal, which only the desktop app has.
   const canChoose = !!onEditorKind && typeof window !== 'undefined' && !!window.openCalcDesktop?.terminal;
   const nvim = canChoose && editorKind === 'nvim';
+  const [showKeys, setShowKeys] = useState(false);
   const tracked = targetContent != null;
   const missing = tracked ? addedLineNumbers(content, targetContent).length : 0;
   const done = tracked && matchesTarget(content, targetContent);
@@ -67,6 +70,17 @@ export default function EditorPane({
         ))}
         <div style={{ flex: 1 }} />
         {saving && <span style={{ padding: '6px 10px', fontSize: 10, color: C.hint }}>saving…</span>}
+        {nvim && (
+          <button
+            onClick={() => setShowKeys((v) => !v)}
+            aria-pressed={showKeys}
+            title="Every key the Neovim series teaches, searchable, with VS Code equivalents"
+            style={{ alignSelf: 'center', marginRight: 4, fontSize: 11, padding: '1px 8px', cursor: 'pointer', borderRadius: 4,
+              color: showKeys ? C.text : C.hint, background: showKeys ? C.surface : 'transparent', border: `1px solid ${C.border}` }}
+          >
+            Keys
+          </button>
+        )}
         {canChoose && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px', fontSize: 11, color: C.hint, whiteSpace: 'nowrap' }}
             title="Both editors work on the same files, so you can switch at any time">
@@ -103,7 +117,8 @@ export default function EditorPane({
         </div>
       )}
 
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        {nvim && showKeys && <NeovimKeyReference onClose={() => setShowKeys(false)} C={C} />}
         {nvim ? <NeovimPane root={root} projectKey={projectKey} activeFile={activeFile} C={C} /> : <Editor
           height="100%"
           path={activeFile || 'untitled'}

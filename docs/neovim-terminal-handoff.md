@@ -1,6 +1,6 @@
 # Handoff: Neovim editor option, Terminal series, Neovim series
 
-Written 2026-10-11 at the end of a long session. Read this first, then the plan file for whichever series you're continuing. Nothing below is committed: the user reviews and commits.
+Written 2026-10-11, updated 2026-10-12 (scope cut to 8 chapters, Keys reference, chapter 4). Read this first, then the plan file for whichever series you're continuing. Nothing below is committed: the user reviews and commits.
 
 ## What exists
 
@@ -16,9 +16,9 @@ Written 2026-10-11 at the end of a long session. Read this first, then the plan 
 | Series | Key / prefix | Plan and "Where we stopped" | Written | Walkthrough |
 |---|---|---|---|---|
 | The Terminal — zsh from Zero | `term` / `term-` | docs/terminal-series-plan.md | ch1 `term-basics` (5 lessons) | `npx vitest run src/labs/project-studio/term.desktop.test.js` |
-| Neovim — From First Keystroke to Fluency | `nvim` / `nvim-` | docs/neovim-series-plan.md | ch1 `nvim-start` (4 lessons), ch2 `nvim-motions` (5 lessons), ch3 `nvim-operators` (5 lessons) | `npx vitest run src/labs/project-studio/nvim.desktop.test.js` |
+| Neovim — From First Keystroke to Fluency | `nvim` / `nvim-` | docs/neovim-series-plan.md | ch1 `nvim-start` (4 lessons), ch2 `nvim-motions` (5 lessons), ch3 `nvim-operators` (5 lessons), ch4 `nvim-textobjects` (4 lessons) | `npx vitest run src/labs/project-studio/nvim.desktop.test.js` |
 
-Both walk on macOS/Linux via `walkSeries({ unix: true })` (the Neovim walk is 19 tests, all passing after chapter 3; about 8 minutes).
+Both walk on macOS/Linux via `walkSeries({ unix: true })` (the Neovim walk is 23 tests after chapter 4).
 
 **Neovim practice system** (the user's core requirement: force repetition, a VS Code user must reach fluency)
 - Drills: practice files with a **par** (keystroke target). `keys <file> par=N` check (`checks.js`, `desktop/app/project-checks.cjs`) reads `.practice/keystrokes.jsonl`, written by the Lua recorder on each save; fails over par, or on any arrow key or mouse use. `:w` keys aren't counted. The cursor is reset to the start of a practice file when it's loaded or reloaded.
@@ -28,8 +28,8 @@ Both walk on macOS/Linux via `walkSeries({ unix: true })` (the Neovim walk is 19
 
 ## Next work, in order
 
-1. **Neovim chapter 4, `nvim-textobjects`** (chapters 1–3 are done; see "Where we stopped" and the "Rules for writing drills" in docs/neovim-series-plan.md). Register it in `series.js`, add its keys to `keys/neovim.js`, include review drills, and prove every par with `drill()`.
-2. Continue Neovim chapters 5–14; the "daily practice" generator is planned after chapter 4.
+1. **Neovim chapter 5, `nvim-search`** (chapters 1–4 are done; see "Where we stopped" and the rules for writing drills in docs/neovim-series-plan.md). Register it in `series.js`, add its keys to `keys/neovim.js`, include review drills, and prove every par with `drill()`.
+2. Neovim chapters 6–8 (the series was cut from 14 chapters to 8 on 2026-10-12; see "Scope" in the plan). The Keys reference on the Neovim pane is built; the "daily practice" generator and a Neovim game lab come after the chapters.
 3. Terminal chapter 2, `term-text` (pipes and text tools), when the user asks for it.
 
 ## Rules the user has set (also in memory)

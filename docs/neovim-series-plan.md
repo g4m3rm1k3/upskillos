@@ -43,7 +43,7 @@ So learners are asked to recall the keys, with the answer one hover away.
 
 ## Daily practice (later)
 
-A generated round drawn from every drill the learner has passed, weighted toward the ones that took longest or went over par. Needs a drill bank (already implied by the lessons' drills) and a small UI; planned after chapter 4.
+A generated round drawn from every drill the learner has passed, weighted toward the ones that took longest or went over par. Needs a drill bank (already implied by the lessons' drills) and a small UI; planned after chapter 8.
 
 ## Chapter map
 
@@ -53,16 +53,17 @@ A generated round drawn from every drill the learner has passed, weighted toward
 | 2 | nvim-motions | Motions | `w b e ge W B E`, `0 ^ $`, `f t F T ; ,`, `gg G`, `{ }`, `%`, counts, Ctrl+D Ctrl+U, `H M L`, `zz zt zb` | server/routes.js |
 | 3 | nvim-operators | Operators and the Dot | `d c y p P`, `dd cc yy D C`, operator + motion, counts, `.`, `J`, `>> <<`, `~ gu gU` | `sendJson`, routes table, 404, method keys, 500 |
 | 4 | nvim-textobjects | Text Objects | `iw aw iW aW is ip`, `i" a" i' i\``, `i( a( i[ i{ it at` | server/store.js, POST, DELETE |
-| 5 | nvim-search | Search and Substitute | `/ ? n N * #`, `gn cgn` (VS Code's multi-cursor done Vim's way), `:s :%s` flags, `&`, ranges | public/index.html |
-| 6 | nvim-visual | Visual Mode | `v V` Ctrl+V, `o gv`, block insert/append, `:'<,'>` | public/style.css |
-| 7 | nvim-files | Buffers, Windows and Tabs | `:ls :b` Ctrl+^, `:sp :vs` Ctrl+W family, `:tabnew gt`, netrw, `gf`, `:find` | public/app.js |
-| 8 | nvim-registers | Registers and Macros | `"a "0 "_ "+ :reg`, Ctrl+R in Insert, `q @ @@`, macros over many lines | tests |
-| 9 | nvim-navigation | Marks, Jumps and the Quickfix List | `m ' \``, Ctrl+O Ctrl+I, `g;`, `:vimgrep :grep :copen :cnext :cdo`, `:make` | test runs, project-wide change |
-| 10 | nvim-config | Your Configuration | `init.lua`, options, `vim.keymap.set`, leader, autocommands, Caps Lock as Esc/Ctrl (OS setting), `jk` to leave Insert | editor set up |
-| 11 | nvim-plugins | Plugins | a plugin manager, fuzzy finding (Cmd+P / Cmd+Shift+F equivalents), Treesitter and its text objects, Git signs, which-key | |
-| 12 | nvim-lsp | Language Servers | built-in LSP: go to definition, references, rename, code actions, diagnostics, completion, formatting; VS Code habit equivalents | |
-| 13 | nvim-advanced | Advanced Editing | `:g :v :normal`, ex ranges, folds, sessions, `:terminal`, spell | |
-| 14 | nvim-capstone | Capstone | a new Shelf feature (tags, search) designed and built under par | |
+| 5 | nvim-search | Search and Substitute | `/ ? n N * #`, `gn cgn` (VS Code's multi-cursor done Vim's way), `:s :%s` with the `g` and `c` flags | public/index.html |
+| 6 | nvim-visual | Visual Mode | `v V` Ctrl+V, block insert/append, operators on a selection | public/style.css |
+| 7 | nvim-files | Files, Windows and Jumps | `:ls :b` Ctrl+^, `:sp :vs` and the Ctrl+W keys, `gf`, Ctrl+O Ctrl+I, `"+` (the system clipboard) | public/app.js |
+| 8 | nvim-setup | Configuration, Finder and Language Server | `init.lua`, options, leader and `vim.keymap.set`, Caps Lock as Esc (OS setting), a fuzzy finder (the Cmd+P and Cmd+Shift+F equivalents), built-in LSP: go to definition, references, rename, diagnostics | editor set up, a last Shelf feature |
+
+**Scope (2026-10-12).** The user cut the series from 14 chapters to 8: it exists so a VS Code user can edit fluently in Neovim, not to cover all of Vim. Cut: registers and macros (maybe one lesson on `q` and `@` later, only if the user asks), marks and the quickfix list (jumps moved to chapter 7; the finder covers project-wide search), plugin tours beyond the finder, advanced editing (`:g`, folds, sessions), and a separate capstone (each lesson's Your turn already does that). Chapters 5–8 aim for about 3 lessons each.
+
+**After the chapters:**
+- **Neovim key reference** (built 2026-10-12): a **Keys** button on the Neovim editor pane opens a searchable list of every key the series teaches, grouped by chapter, with VS Code equivalents. Learners use it in any Project Studio lesson where they picked Neovim. Its source is the key glossary (`keys/neovim.js`), so each chapter's new keys appear there automatically.
+- **Daily practice**: generated drill rounds (below).
+- **A Neovim game lab** in `src/labs/`, for practice that teaches Neovim (in the spirit of Vim Adventures). Not designed yet; it needs a design pass with the user once the series is written.
 
 `trackOrder`: 71 for chapter 1, 71.01, 71.02 … for later chapters.
 
@@ -108,3 +109,23 @@ Next: chapter 3 (nvim-operators). 2.5's closing text promises `dw`, `c$`, `.`, a
 **Practice tool fix**: a `:` typed as the target of `f`, `t`, `F`, `T` or `r` (as in `f:`) was held back as a possible write command and never counted, so `f:` cost one key instead of two. `neovim-practice.lua` now counts a held-back `:` as soon as the next key arrives outside the command line. No chapter 1–2 drill used such a key; the 3.5 review exposed it. The desktop app must be restarted to load the new script.
 
 Next: chapter 4 (nvim-textobjects). 3.2's diagnostic and 3.5's closing text promise a change that takes the whole word wherever the cursor is (`ciw`) and `ci'`. Shelf gets `server/store.js` (the starter's empty file) and the first `POST` and `DELETE` entries in the routes table, which 3.4's method keys and predictions set up. Review rounds: 4.1 → 3.5, 3.3, 2.4.
+
+2026-10-12: **scope cut to 8 chapters, Keys reference built, chapter 4 (nvim-textobjects, 4 lessons) written and walked.**
+
+- **Keys reference**: `NeovimKeyReference.jsx` (tests in `NeovimKeyReference.test.jsx`), opened by the **Keys** button that `EditorPane.jsx` shows when the editor is Neovim. It lists `keys/neovim.js` grouped by chapter, searchable by keys, name or VS Code key; glossary entries may carry an optional `vscode` field (the nearest VS Code key on macOS). Not yet looked at in the Electron app.
+- **Chapter 4**: 4.1 words and paragraphs (`iw aw iW aW ip ap`), 4.2 quotes (`i' i" i\``), 4.3 brackets (`i( i[ i{`), 4.4 tags (`it at`). 12 drills (40–51) and review rounds 04-01 to 04-04, every par proved with `drill()`. Shelf now has `server/store.js` (`readBookmarks`, `writeBookmarks`, the only code that knows where the data file is), `readJson` and `POST /api/bookmarks` (400 without title or url), `DELETE /api/bookmarks` by url (404 when none matched), `server.js` awaiting async handlers inside its `try`, `server/pages.js` with `homePage` at `GET /`, `public/index.html` (two links), and the learner's `/about` page. `new-bookmark.json` at the project root is the request file 4.2 edits with `ci"`.
+- From 4.2 on, checks never assume the bookmark count: learners add and delete bookmarks for real. Any check that writes data backs up `data/bookmarks.json` first and puts it back.
+
+More rules for writing drills, found while writing chapter 4:
+- **For words, a text object rarely saves keys over `b` and a motion** (`ciw` and `bcw` are both three). Its gains are that it works from any letter of the word and that `.` repeats it from any letter. Drill 40 gets a strict win from `j` landing mid-word on lines with different indents. Pars may tie with a motion solution; that's fine.
+- **A paragraph includes a comment written directly above code**: `dap` on line 2 of `routes.js` also takes line 1. And `ap` on the last paragraph of a file takes the blank line **before** it.
+- **Quote objects**: with no quote before the cursor on the line, `ci'` uses the first string after it. Between two strings (on the `:` of `"title": "Vim"`) it selects the gap between them, `: `, and after the last string it isn't a string either. Lessons say "inside, or before the first quote".
+- **Bracket objects**: Neovim 0.12 also looks ahead on the line for `(`, `[` and `{` when the cursor is before them (only `i(` is documented); classic Vim doesn't, and the release notes don't say when it arrived. Every lesson step and par puts the cursor inside first; 0.12 users can come in under par.
+- `>>` leaves the cursor in column 0 when it started there, so a `l` after it lands on a space (the 4.1 review does the case change first).
+- `dit` on a multi-line element joins it: `<ul>…</ul>` over five lines becomes `<ul></ul>`. `cit` on an element's opening tag takes everything inside it, nested elements included (4.4's diagnostic).
+- `ciw` on `listBookmarks,` leaves the comma: punctuation is its own word.
+- A check that pipes a server's answer into another program must send the server's own output to `/dev/null`, or its log lines end up in the answer.
+- A `stdout=` check is a substring match; to check an exact value, print `true`/`false` from a comparison instead.
+
+Next: chapter 5 (nvim-search, about 3 lessons): `/ ? n N * #`, `cgn` and `.`, `:s` and `:%s` with `g` and `c`. Shelf's `public/index.html` is the file to work on (4.4's closing text promises `/`, `*`, `cgn` and `:s`). Review rounds: 5.1 → 4.4, 4.2, 3.4.
+

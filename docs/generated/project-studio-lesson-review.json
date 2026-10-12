@@ -1,8 +1,8 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 666,
-    "tracks": 89,
+    "lessons": 670,
+    "tracks": 90,
     "errors": {
       "multiple target files in one step": 4,
       "independent task exposes full target": 4
@@ -5889,6 +5889,50 @@
       "maturity": "in-development",
       "firstStep": "Undo and redo: u and Ctrl+R",
       "firstIndependentTask": "Your turn: log every request",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-textobjects/04-01-words-and-paragraphs",
+      "track": "nvim-textobjects",
+      "title": "4.1 — Inside and Around: Words and Paragraphs",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "A text object: i or a, then what",
+      "firstIndependentTask": "Your turn: list the bookmarks from the store",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-textobjects/04-02-quotes",
+      "track": "nvim-textobjects",
+      "title": "4.2 — Strings: i', i\" and i`",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Quote objects: i', i\" and i`",
+      "firstIndependentTask": "Your turn: refuse a bookmark without a title or URL",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-textobjects/04-03-brackets",
+      "track": "nvim-textobjects",
+      "title": "4.3 — Brackets: i(, i[ and i{",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Bracket objects",
+      "firstIndependentTask": "Your turn: a 404 for a bookmark that isn't there",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "nvim-textobjects/04-04-tags",
+      "track": "nvim-textobjects",
+      "title": "4.4 — HTML Elements: it and at",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Tag objects: it and at",
+      "firstIndependentTask": "Your turn: an About page",
       "signals": [],
       "errors": []
     },
