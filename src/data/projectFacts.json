@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 64,
+    "labs": 65,
     "games": 16
   },
   "courses": [
@@ -542,6 +542,12 @@
       "label": "Image Lab",
       "kind": "lab",
       "path": "/lab/image-lab-wip"
+    },
+    {
+      "id": "kart-lab",
+      "label": "KartLab",
+      "kind": "lab",
+      "path": "/lab/kart-lab"
     },
     {
       "id": "lesson-builder",

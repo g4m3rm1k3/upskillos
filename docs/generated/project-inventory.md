@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 64 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 65 labs · 16 games
 
 ## How things are counted
 
@@ -94,6 +94,7 @@
 | HTML Lab Lessons | `html-lessons` | lesson | `/lab/html-lessons` |
 | Image Lab Junior | `image-lab` | lab | `/lab/image-lab` |
 | Image Lab | `image-lab-wip` | lab | `/lab/image-lab-wip` |
+| KartLab | `kart-lab` | lab | `/lab/kart-lab` |
 | Lesson Builder | `lesson-builder` | builder | `/lesson-builder` |
 | Lesson Engine | `lesson-engine` | lesson | `/lab/lesson-engine` |
 | Little Schemer Sandbox | `little-schemer` | lesson | `/lab/little-schemer` |

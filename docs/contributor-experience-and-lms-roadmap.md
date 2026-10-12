@@ -19,6 +19,12 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### KartLab: reinforcement learning in a racing game (2026-10-11)
+
+- [x] First lane-based 3D circuit, guided lessons and live update figures, Q-learning/SARSA/Double Q-learning in a worker, saved policy checkpoints, common held-out evaluation, human-versus-model racing, spectator cameras and decision replay. See [scope and verification](kart-lab.md).
+- [x] Complete browser checks for full races, replay, keyboard driving, narrow screens and touch controls. Added real training traces, checkpoint import/export, grid-swap tournaments and race preservation across tabs. Production build, typecheck and 31 scoped tests pass.
+- [ ] Continuous steering, additional tracks, neural policies, self-play training and native Python/editor workflows remain follow-up scope. The first version trains tabular drivers on a fixed circuit with scripted training traffic.
+
 ### A-Arcade standalone reinforcement-learning explorer (2026-10-11)
 
 - [x] Working CartPole Q-learning and A2C examples, component explanations and removal/rebuild controls, live memory and source inspection, recorded experience replay, frozen evaluation, and QMaze transfer. Existing labs remain unchanged. See [scope and verification](a-arcade-workbench.md).
