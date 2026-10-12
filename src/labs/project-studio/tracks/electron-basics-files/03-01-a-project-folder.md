@@ -253,6 +253,8 @@ contains main.cjs "dialog.showOpenDialog"
 run "node --check main.cjs" label="main.cjs has no syntax errors"
 ```
 
+## The preload: what the page may ask for
+
 ```js file=preload.cjs
 const { contextBridge, ipcRenderer } = require('electron')
 

@@ -25,6 +25,12 @@ In the desktop app, Project Studio has an **Open drafts folder** button. It open
 
 Drafts are for trying a lesson out. When it works, move it into the repository with the steps below.
 
+## Private lessons, for apps that aren't open source
+
+Lessons about a closed-source app must never enter this repository. In the desktop app, Project Studio's **Open private lessons…** button asks for a folder on your computer, such as a private git repository of your own. That folder then shows in the **Series** list as a course marked 🔒, named after the folder, and opens like any other course. It uses the same layout and lesson format as Drafts: loose `.md` lessons make the first chapter, each subfolder is a chapter, and a chapter's `support/` folder holds its supplied files. Lessons are read from the folder every time you switch back to the app.
+
+The app remembers only the list of folders, in `%APPDATA%\UpSkillOS\private-lessons.json`, never their lessons. It refuses a folder inside the UpSkillOS repository, because anything there could be committed and published. With a private course open, **Show folder** opens it in Explorer, and **Remove from list** takes it out of the Series list and leaves its files alone. The code is `desktop/app/private-lessons.cjs` and `src/labs/project-studio/privateLessons.js`.
+
 ## Paste lessons from somewhere else, in the scrap folder
 
 Lessons written outside the repository, by an agent in the browser for example, can be pasted into `src/labs/project-studio/scrap/`. A top-level folder there is a series in the **Series** drop-down, and a folder inside it is a chapter in the **Chapter** drop-down. Scrap lessons are loaded apart from `tracks/`, so they never change a built-in lesson or its tests, and they work in the browser build as well as the desktop app. [scrap/_AGENT-PROMPT.md](../../src/labs/project-studio/scrap/_AGENT-PROMPT.md) is a prompt to give the agent, with the whole lesson format in it, and [scrap/README.md](../../src/labs/project-studio/scrap/README.md) says where each file goes.

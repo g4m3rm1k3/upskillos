@@ -58,6 +58,15 @@ contextBridge.exposeInMainWorld('openCalcDesktop', {
     open: () => ipcRenderer.invoke('drafts:open'),
   },
 
+  // Private lessons: folders on this computer, each shown as a course in Project Studio, for apps
+  // that aren't open source. See desktop/app/private-lessons.cjs.
+  privateLessons: {
+    list:   () => ipcRenderer.invoke('private-lessons:list'),
+    add:    () => ipcRenderer.invoke('private-lessons:add'),
+    remove: (id) => ipcRenderer.invoke('private-lessons:remove', id),
+    open:   (id) => ipcRenderer.invoke('private-lessons:open', id),
+  },
+
   // The notebooks' Python kernel on the learner's own Python, keeping variables between
   // cells. See desktop/app/runtimes/notebook-kernel.cjs.
   kernel: {

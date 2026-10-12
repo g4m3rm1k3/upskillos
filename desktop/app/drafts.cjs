@@ -71,25 +71,30 @@ function supportIn(dir, prefix = '') {
   return out
 }
 
-// A chapter key from a folder name: lower case, letters, digits and dashes, starting draft-.
-function chapterKey(name) {
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-  return `draft-${slug || 'chapter'}`
+// A chapter key from a folder name: lower case, letters, digits and dashes, starting draft-
+// (or another prefix, for private lesson folders: private-lessons.cjs).
+function slugOf(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+function chapterKey(name, prefix = 'draft') {
+  return `${prefix}-${slugOf(name) || 'chapter'}`
 }
 
 // { folder, chapters: [{ key, name, lessons: [{ name, content }], support: { path: content } }] }
-function listFolder(root) {
-  ensureFolder(root)
+// Options, for folders other than Drafts: the chapter key prefix, the name of the chapter for
+// loose lessons, and whether to create the folder (with its README) if it doesn't exist.
+function listFolder(root, { prefix = 'draft', looseName = 'Drafts', create = true } = {}) {
+  if (create) ensureFolder(root)
   const chapters = []
   const loose = lessonsIn(root)
-  if (loose.length) chapters.push({ key: 'draft', name: 'Drafts', lessons: loose, support: supportIn(path.join(root, 'support')) })
-  const used = new Set(['draft'])
+  if (loose.length) chapters.push({ key: prefix, name: looseName, lessons: loose, support: supportIn(path.join(root, 'support')) })
+  const used = new Set([prefix])
   for (const e of entries(root)) {
     if (!e.isDirectory() || e.name === 'support' || e.name.startsWith('.')) continue
     const dir = path.join(root, e.name)
     const lessons = lessonsIn(dir)
     if (!lessons.length) continue
-    let key = chapterKey(e.name)
+    let key = chapterKey(e.name, prefix)
     while (used.has(key)) key += '-2'
     used.add(key)
     chapters.push({ key, name: e.name, lessons, support: supportIn(path.join(dir, 'support')) })
@@ -107,4 +112,4 @@ async function open(app) {
   return error ? { ok: false, reason: error } : { ok: true }
 }
 
-module.exports = { list, open, listFolder, chapterKey }
+module.exports = { list, open, listFolder, chapterKey, slugOf }

@@ -20,7 +20,7 @@ jobs:
     env:
       VITE_BASE_URL: /
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-      NODE_OPTIONS: '--max-old-space-size=6144'
+      NODE_OPTIONS: '--max-old-space-size=12288'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

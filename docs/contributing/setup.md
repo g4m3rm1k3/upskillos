@@ -55,7 +55,7 @@ Undo that edit when you're done, or use it as your first change: see [first-chan
 
 | Command | What it does |
 |---|---|
-| `npm run build` | Production build into `dist/`. Takes a few minutes and several GB of memory |
+| `npm run build` | Production build into `dist/`. Takes a few minutes and up to 12 GB of memory (the script raises Node's heap limit to 12 GB) |
 | `npm run game:runtime` | Builds Game Studio's game runtime (the engine and Phaser, run inside a sandboxed iframe) into `src/labs/game-studio/runtime/dist/`. `dev` and `build` run it for you |
 | `npm run game:acceptance` | Game Studio's end-to-end tests in a real browser: each finished phase, the example games, and the API reference. Each starts and stops its own dev server |
 | `npm run preview` | Serves the last build, to check it the way the live site runs |

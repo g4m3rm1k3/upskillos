@@ -18,8 +18,13 @@ export function unreadableLesson(id, name, error) {
   };
 }
 
-// The folder listing (drafts.cjs listFolder) as lessons, supplied files and a series.
-export function buildDrafts(listing) {
+// The folder listing (drafts.cjs listFolder) as lessons, supplied files and a series. The options
+// let a private lesson folder (privateLessons.js) build into a course of its own the same way.
+export function buildDrafts(listing, {
+  key = DRAFTS_SERIES_KEY, label = 'Drafts (your folder)', level = 'draft',
+  audience = folder => `Lessons from ${folder}. Save a file there and switch back to UpSkillOS to see the change.`,
+  chapterAudience = 'A draft from your folder.',
+} = {}) {
   if (!listing?.chapters?.length) return { ...EMPTY, folder: listing?.folder ?? null };
   const tracks = {};
   const support = {};
@@ -35,17 +40,10 @@ export function buildDrafts(listing) {
     tracks[chapter.key] = lessons;
     support[chapter.key] = chapter.support ?? {};
     const label = lessons.find((lesson) => lesson.meta?.track)?.meta.track ?? chapter.name;
-    chapters.push({ key: chapter.key, label, level: 'draft', maturity: 'in-development', audience: 'A draft from your folder.' });
+    chapters.push({ key: chapter.key, label, level, maturity: 'in-development', audience: chapterAudience });
   }
   if (!chapters.length) return { ...EMPTY, folder: listing.folder };
-  const series = {
-    key: DRAFTS_SERIES_KEY,
-    label: 'Drafts (your folder)',
-    level: 'draft',
-    maturity: 'in-development',
-    audience: `Lessons from ${listing.folder}. Save a file there and switch back to UpSkillOS to see the change.`,
-    chapters,
-  };
+  const series = { key, label, level, maturity: 'in-development', audience: audience(listing.folder), chapters };
   return { tracks, support, series, folder: listing.folder };
 }
 

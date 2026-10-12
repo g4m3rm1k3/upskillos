@@ -23,8 +23,8 @@ describe('Spotlight', () => {
   })
 
   it('leads with the apps chosen for it, in order', () => {
-    expect(SPOTLIGHT.map(i => i.key)).toEqual(['lesson-engine', 'codelens', 'openmat', 'html-lab', 'notebook-lab', 'ml-lab',
-      'mesh-lab', 'code-typing', 'project-studio', 'dsa-patterns', 'game-studio', 'backend-lab'])
+    expect(SPOTLIGHT.map(i => i.key)).toEqual(['lesson-engine', 'codelens', 'openmat', 'calculus', 'linear-algebra', 'html-lab', 'notebook-lab', 'ml-lab',
+      'qmaze-lab', 'neural-net-lab', 'mesh-lab', 'code-typing', 'project-studio', 'dsa-patterns', 'game-studio', 'backend-lab'])
   })
 
   it('is the first category on the Home page', () => {

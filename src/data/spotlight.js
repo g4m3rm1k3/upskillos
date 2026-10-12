@@ -47,6 +47,32 @@ export const SPOTLIGHT = [
     bestFor: 'Checking and exploring mathematics as you learn it.',
   },
   {
+    kind: 'course',
+    key: 'calculus',
+    headline: 'Calculus from the algebra up, with every step shown',
+    description:
+      'Starts with the algebra and trigonometry calculus leans on, then limits, derivatives and their applications, integration, series, and parametric and polar curves. Each lesson has worked examples broken into steps, interactive visualizations to drag and explore, theorems stated plainly, common misconceptions called out, and questions that check your answer.',
+    highlights: [
+      'A prerequisites chapter, so gaps in algebra and trig get filled first',
+      'Worked examples step by step, with interactive visualizations',
+      'Questions with checked answers in every lesson',
+    ],
+    bestFor: 'Learning calculus properly, or rebuilding it before machine learning.',
+  },
+  {
+    kind: 'course',
+    key: 'linear-algebra',
+    headline: 'Linear algebra you can compute, not just recite',
+    description:
+      'Vectors, matrices as transformations, eigenvalues, orthogonality, least squares and the SVD, then abstract vector spaces, numerical methods and applications. Lessons pair the theory with visualizations, worked examples and challenges, with runs in OpenMAT and in Python (NumPy, SciPy, SymPy) in the browser.',
+    highlights: [
+      'Matrices shown as transformations you can see',
+      'Python in the browser: NumPy, SciPy and SymPy',
+      'From first vectors through the SVD to numerical linear algebra',
+    ],
+    bestFor: 'The mathematics underneath graphics, data science and neural networks.',
+  },
+  {
     kind: 'lab',
     key: 'html-lab',
     headline: 'Build web pages by hand and by drag-and-drop, and see both at once',
@@ -84,6 +110,32 @@ export const SPOTLIGHT = [
       'Inspect training and evaluate predictions',
     ],
     bestFor: 'Learning what machine-learning libraries do underneath.',
+  },
+  {
+    kind: 'lab',
+    key: 'qmaze-lab',
+    headline: 'Reinforcement learning from basic Python, on mazes you can watch',
+    description:
+      'A rat looks for cheese and avoids cats, a hiker walks a cliff edge, an elf crosses slippery ice. Grid worlds as data, then MDPs, value functions and the Bellman equation, Q-learning, SARSA and A2C, with every formula tied to its line of code and every table drawn on the map. In the desktop app the real Python runs step by step.',
+    highlights: [
+      'MDPs, value iteration, Q-learning, SARSA and A2C, in order',
+      'Predict a number, then see the lab work it out',
+      'Real Python and PyTorch, stepped line by line on the desktop',
+    ],
+    bestFor: 'Understanding reinforcement learning well enough to write it yourself.',
+  },
+  {
+    kind: 'lab',
+    key: 'neural-net-lab',
+    headline: 'Build a neural network by hand, then train it on your own drawings',
+    description:
+      'A neuron, a layer, activations, the loss, backpropagation and gradient descent, each written by hand and checked against PyTorch, then Adam, dropout and convolution. Use them on real data: fuel economy, tumours, iris flowers and MNIST digits, including digits in your own handwriting and classes you draw yourself.',
+    highlights: [
+      'Backpropagation worked by hand before any library',
+      'Draw your own data and your own digits to test the model',
+      'Model Studio to build and train networks; real Python on the desktop',
+    ],
+    bestFor: 'Learning what deep learning does underneath, from one neuron up.',
   },
   {
     kind: 'lab',

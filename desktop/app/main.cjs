@@ -28,6 +28,7 @@ const projectFs = require('./project-fs.cjs')
 const terminal = require('./terminal.cjs')
 const projectChecks = require('./project-checks.cjs')
 const drafts = require('./drafts.cjs')
+const privateLessons = require('./private-lessons.cjs')
 const { evalInPage } = require('./page-eval.cjs')
 
 // Keyed dispatch table for the generic runtime IPC handlers below — adding
@@ -363,6 +364,12 @@ ipcMain.handle('project:check', async (_event, checks, scope) => {
 // Draft lessons from Documents\UpSkillOS Drafts (drafts.cjs).
 ipcMain.handle('drafts:list', async () => drafts.list(app))
 ipcMain.handle('drafts:open', async () => drafts.open(app))
+
+// Private lessons: folders on this computer, each a course in Project Studio (private-lessons.cjs).
+ipcMain.handle('private-lessons:list', async () => privateLessons.list(app))
+ipcMain.handle('private-lessons:add', async () => privateLessons.add(app, dialog, mainWindow))
+ipcMain.handle('private-lessons:remove', async (_event, id) => privateLessons.remove(app, id))
+ipcMain.handle('private-lessons:open', async (_event, id) => privateLessons.open(app, id))
 
 // A real terminal in the project folder (terminal.cjs).
 const terminalOwners = new Set()
