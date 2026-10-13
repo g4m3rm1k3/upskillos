@@ -32,7 +32,8 @@
 //                      writes to a file in the temporary folder, never the real ~/.gitconfig. GitHub
 //                      is a bare repository there too, written {BARE} in walkthrough commands. _KEEP
 //                      keeps both beside the project (<folder>.gitconfig, <folder>.github.git) and
-//                      _START brings them back.
+//                      _START brings them back. Without isolatedGit, a github.git folder beside the
+//                      project (a stand-in a lesson made itself) is kept and brought back the same way.
 //   unix: true         the lessons' commands are zsh/bash (the Terminal and Neovim series), so the
 //                      walkthrough runs on macOS and Linux instead of Windows.
 import { afterAll, describe, expect, it } from 'vitest';
@@ -111,6 +112,9 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
     }
     if (fromIndex > 0) {
       fs.cpSync(env('START'), project, { recursive: true });
+      // A series without isolated Git makes its own GitHub stand-in beside the project
+      // (Frontier: git init --bare ../github.git); bring a kept one back to the same place.
+      if (!isolatedGit && fs.existsSync(`${env('START')}.github.git`)) fs.cpSync(`${env('START')}.github.git`, path.join(tmp, 'github.git'), { recursive: true });
       // A kept project's origin names the kept run's bare repository: point it at this run's.
       if (isolatedGit) await shellRun(`if (git remote) { git remote set-url origin "${bare}" }`, { cwd: project, env: await getEnv(), timeoutMs: 30000 });
       // A kept .venv's editable install names the kept project's old src folder: point it here.
@@ -132,6 +136,9 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
         fs.copyFileSync(globalConfig, `${env('KEEP')}.gitconfig`);
         fs.rmSync(`${env('KEEP')}.github.git`, { recursive: true, force: true });
         fs.cpSync(bare, `${env('KEEP')}.github.git`, { recursive: true });
+      } else if (fs.existsSync(path.join(tmp, 'github.git'))) {
+        fs.rmSync(`${env('KEEP')}.github.git`, { recursive: true, force: true });
+        fs.cpSync(path.join(tmp, 'github.git'), `${env('KEEP')}.github.git`, { recursive: true });
       }
     }
     try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}

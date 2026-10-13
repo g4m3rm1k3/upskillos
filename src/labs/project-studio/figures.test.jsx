@@ -116,8 +116,8 @@ describe('a figure in a lesson step', () => {
     expect(host.querySelector('[role=alert]').textContent).toContain('No figure called aml/NoSuchFigure');
   });
 
-  it('renders every figure placed in the Applied ML series without an error', async () => {
-    for (const lesson of Object.entries(TRACKS).filter(([key]) => key.startsWith('aml-')).flatMap(([, lessons]) => lessons)) {
+  it('renders every figure placed in the Applied ML and Frontier series without an error', async () => {
+    for (const lesson of Object.entries(TRACKS).filter(([key]) => key.startsWith('aml-') || key.startsWith('frontier-')).flatMap(([, lessons]) => lessons)) {
       for (const [i, step] of lesson.steps.entries()) {
         if (!step.figures?.length) continue;
         await show(lesson, i);

@@ -32,6 +32,7 @@ function answerWith(track, name, pairs) {
 const S = 'frontier-setup';
 const PIP = '.venv\\Scripts\\python -m pip install -q';
 const E = 'frontier-engineering';
+const C = 'frontier-cs';
 // Git runs only in the walkthrough's temporary project, never in this repository.
 const COMMIT = (message) => ['git add .', `git commit -q -m "${message}"`];
 
@@ -340,6 +341,96 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'did nothing', fails: [0, 1, 2, 3, 4] },
       { name: 'merged but never pushed', run: [...COMMIT('Turn the script into the frontier-textstats command'), 'git switch main', 'git merge -q command', 'git branch -d command'], fails: [3, 4] },
+    ],
+  },
+
+  // ── 2.1 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-01-how-slow-grows#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-01-how-slow-grows#A stopwatch`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'returned the total, not the fastest', edit: [['return min(times)', 'return sum(times)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-01-how-slow-grows#Two functions, one job`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-01-how-slow-grows#The slow way`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'kept every word', edit: [['        if word not in seen:\n            seen.append(word)', '        seen.append(word)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-01-how-slow-grows#The same code, with a dictionary`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'returned the dictionary itself', edit: [['return list(seen)', 'return seen']], fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-01-how-slow-grows#Measure them`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${C}/02-01-how-slow-grows#Your turn: how much did it grow?`]: {
+    files: { 'src/frontier/bench.py': answer(C, 'bench-2.1.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'divided the wrong way round', files: { 'src/frontier/bench.py': answerWith(C, 'bench-2.1.py', [['times[i + 1] / times[i]', 'times[i] / times[i + 1]']]) }, fails: [0] },
+    ],
+  },
+  [`${C}/02-01-how-slow-grows#Ratios in the experiment, and onto GitHub`]: {
+    run: [...COMMIT('Time two ways of finding the different words'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'committed but did not push', run: COMMIT('Time two ways of finding the different words'), fails: [3] },
+    ],
+  },
+
+  // ── 2.2 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-02-why-a-dictionary-is-fast#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#A word as a number`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'counted the letters instead', edit: [['return sum(ord(c) for c in word)', 'return len(word)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#Buckets`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'added a word every time', edit: [['        if word not in bucket:\n            bucket.append(word)\n            self.size += 1', '        bucket.append(word)\n        self.size += 1']], fails: [0] },
+    ],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#\`in\` and \`len\` for your own class`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'len counted the buckets', edit: [['return self.size', 'return len(self.buckets)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#Growing`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'made new buckets but did not move the words', edit: [['        for word in words:\n            self.bucket(word).append(word)\n', '']], fails: [0] },
+    ],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#Measure it`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#Your turn: a hash where order matters`]: {
+    files: { 'src/frontier/hashing.py': answer(C, 'hashing-2.2.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'wrote poly_hash but kept letter_sum as the default', files: { 'src/frontier/hashing.py': answerWith(C, 'hashing-2.2.py', [['hash_fn: Callable[[str], int] = poly_hash', 'hash_fn: Callable[[str], int] = letter_sum']]) }, fails: [0, 1] },
+      { name: 'added the letters without weighing them', files: { 'src/frontier/hashing.py': answerWith(C, 'hashing-2.2.py', [['h = h * 31 + ord(c)', 'h = h + ord(c)']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-02-why-a-dictionary-is-fast#Python's own, and onto GitHub`]: {
+    run: [...COMMIT('Build a hash table by hand'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Build a hash table by hand'), fails: [1] },
     ],
   },
 };

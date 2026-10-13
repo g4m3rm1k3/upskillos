@@ -2,14 +2,14 @@
 
 **Status:** planned 2026-10-08. The owner reviewed the drafts the same day and set three things: the series stands alone; it assumes no knowledge of machine learning, software engineering or computer science (but does assume the learner can already hack Python together, from introductory courses); and it teaches the professional tools as well as building by hand. This version has all three. The owner approved it the same day: lessons are written in plan order without review pauses, the lessons will be run on a different machine from the authoring one, and testing on the authoring machine must be careful (an earlier PyTorch run by an agent froze it; see *Testing safely on the authoring machine*). No lessons are written yet.
 
-A new Project Studio series (desktop app). It starts from scripts you'd hack together and goes to a small GPT trained on your own GPU. From there it joins language models with reinforcement learning and search, the two lines of work behind assistants like Claude and game-players like AlphaZero. Every mechanism is built by hand first, so nothing is a black box. Then the tool that professionals use for the same job is learned and used for real work. Along the way the learner practises the research skills: reading papers, reproducing results, running fair experiments and writing them up.
+A new Project Studio series (desktop app). It starts from scripts you'd hack together and goes to a small GPT trained on your own GPU. From there it joins language models with reinforcement learning and search, the two lines of work behind assistants like Claude and game-players like AlphaZero. Every mechanism is built by hand first, so nothing is a black box. Then the tool that professionals use for the same job is learned and used for real work. Along the way the learner practises the research skills: reading papers, reproducing results, running fair experiments and writing them up. Near the end, the models are shipped as a product: served behind an API, connected to your own data and tools, deployed, and measured for cost.
 
 Working series key: `frontier`. Tracks are `frontier-<chapter-slug>`.
 
 ## Who it's for, and what it asks for
 
 - **What's assumed:** the learner can write Python scripts that work (variables, loops, functions, lists, dictionaries, maybe a class) from introductory courses, and hacks code together to get things done. **Nothing else is assumed:** no software engineering (project structure, testing, debugging method, git), no computer science (complexity, data structures, how numbers are stored), no maths beyond school algebra, no machine learning. Every one of these is taught in this series, in the lesson where it's first needed. It doesn't depend on any other series. Other series (the ML series, Q-Arcade, Forge, the math series) cover some of the same ground. That overlap is on purpose, so this series stays complete on its own.
-- **The goal** is the knowledge and the portfolio that frontier labs look for in research engineers: you can build the systems, you can use the industry's tools fluently, you understand the mathematics, and you can run an experiment that tells you something true. *Portfolio* below lists the evidence the series produces.
+- **The goal** is the knowledge and the portfolio that frontier labs look for in research engineers: you can build the systems, you can use the industry's tools fluently, you understand the mathematics, and you can run an experiment that tells you something true. Part 15 adds what you need to build a product of your own: serving a model, connecting it to data and tools, deploying it, and knowing what each answer costs. *Portfolio* below lists the evidence the series produces.
 - **Hardware:** the learner's machine isn't known, so no lesson depends on a GPU.
   - **Every step's checks pass on an ordinary laptop CPU** in seconds, using tiny configs.
   - **Bigger runs** (training the GPT, scaling laws, fine-tuning, GRPO) each have three sizes. *Small* runs on a CPU in minutes and is enough to see the effect. *Full* is for a GPU with about 6 GB or more. *Cloud* is the same code in a free cloud GPU notebook (Kaggle or Google Colab), taught in Chapter 15.
@@ -55,6 +55,10 @@ Each tool comes after the hand-built version of what it does, never instead of i
 | Hugging Face TRL | SFT, PPO, DPO and GRPO trainers | Ch 45, Ch 52–55 |
 | `diffusers` | production diffusion models | Ch 62 |
 | TransformerLens | interpretability on real models | Ch 64 |
+| FastAPI, vLLM | serving a model over HTTP | Ch 67 |
+| Docker, Hugging Face Spaces | packaging and deploying | Ch 68 |
+| FAISS | vector search | Ch 69 |
+| Gradio, GitHub Actions | a user interface; evals that run on every push | Ch 71 |
 
 ## A map of the field, in plain words
 
@@ -79,7 +83,7 @@ The series teaches each of these properly. This map is here so the words aren't 
 
 ## Chapters
 
-16 parts (0–15), 68 chapters (0–67) and roughly 270 lessons. The plan order is the writing order. Chapter numbers are fixed. Lesson counts are estimates.
+17 parts (0–16), 74 chapters (0–73) and roughly 295 lessons. The plan order is the writing order. Chapter numbers are fixed. Lesson counts are estimates.
 
 ### Part 0 — From hacked-together scripts to software
 
@@ -229,12 +233,24 @@ It starts with Q-learning on text and ends with the methods used to train reason
 | 65 | `frontier-features` | Features and sparse autoencoders | a sparse autoencoder on your GPT's activations, features labelled by hand | superposition (the toy model reproduced); dictionary learning |
 | 66 | `frontier-safety` | Alignment and safety, by experiment | specification gaming, sycophancy in a fine-tuned model, a red-teaming harness, small dangerous-behaviour evals | what labs' safety teams do and why |
 
-### Part 15 — Research practice and capstone
+### Part 15 — Shipping it: from model to product
+
+Most AI companies don't train frontier models. They build products on top of models, and that is a different set of skills: serving, data, tools, deployment and cost. Each piece is built by hand first, on the 0.5B model running in your own Chapter 38 code, then done with the tool a startup would use. Every step runs on a CPU; the GPU serving step is a cloud step.
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 67 | `frontier-reproduce` | Reproduce a paper | one recent small-scale paper reproduced end to end, chosen from a shortlist when the chapter is written | finding the details papers leave out; reporting what didn't reproduce |
-| 68 | `frontier-capstone` | Your own idea | an original experiment from *Open questions* (or the learner's own), written up as a paper, in a public repository | choosing a question small enough to answer; ablations; writing results people trust |
+| 67 | `frontier-serving` | Serving a model | your model behind an HTTP API by hand with FastAPI, tokens streamed to the client; requests batched together by hand; then vLLM (GPU or cloud) on the same model | what an HTTP API is; latency vs throughput, measured; why batching and the KV cache decide serving cost; continuous batching |
+| 68 | `frontier-deploy` | Packaging and deploying | the API in a Docker image, with configuration from environment variables and structured logs; deployed to a free host (Hugging Face Spaces); a load test against it | containers and why they exist; secrets never in code; cost per thousand answers, computed from your measurements |
+| 69 | `frontier-rag` | A model that uses your documents | a retrieval pipeline by hand: documents split into chunks, embedded, searched by cosine similarity (Chapter 4), passed to the model; then FAISS; retrieval and answers evaluated separately | chunking; retrieval measured with recall@k; hallucination measured with and without retrieval |
+| 70 | `frontier-agents` | Tools and agents | a tool-calling loop by hand: the model asks for a tool in a fixed format, your code runs it, the result goes back; a small agent that does a multi-step task; then the same loop through a hosted model API (optional, needs a key) | function-calling formats; prompt injection, made to happen and defended against; sandboxing what tools may do; evaluating agents |
+| 71 | `frontier-product` | From demo to product | a small product joining Chapters 67–70: a Gradio interface, user feedback logged, an eval suite run by GitHub Actions on every push, a latency and cost budget that fails the build when broken | evals-driven development; choosing between a hosted API, an open model and fine-tuning by measured quality and cost; pricing from unit cost; what to measure once real people use it |
+
+### Part 16 — Research practice and capstone
+
+| # | Track | Chapter | Built | Taught |
+|---|---|---|---|---|
+| 72 | `frontier-reproduce` | Reproduce a paper | one recent small-scale paper reproduced end to end, chosen from a shortlist when the chapter is written | finding the details papers leave out; reporting what didn't reproduce |
+| 73 | `frontier-capstone` | Your own idea | an original experiment from *Open questions* (or the learner's own), written up as a paper, in a public repository; or, for the learner aiming at a startup, a product built on Part 15, launched to real users with its evals and costs written up | choosing a question small enough to answer; ablations; writing results people trust |
 
 ## Open questions: where "make the algorithms better" starts
 
@@ -259,9 +275,10 @@ Each chapter's last lesson from Part 3 on poses one of these, or something like 
 5. A tiny reasoner trained with GRPO and improved with search, with the curves.
 6. A small AlphaZero that beats your own alpha-beta engine.
 7. An interpretability finding in your own model.
-8. One paper reproduction and one original experiment, both written up, in public repositories.
+8. A deployed AI product (Part 15): an API, retrieval and tools, a public URL, and a written cost and quality budget.
+9. One paper reproduction and one original experiment, both written up, in public repositories.
 
-Honest note: labs hire on demonstrated skill, and these are the things they ask about (implement attention, debug a training run, explain an RL objective, use the standard tools, reproduce a result). The series can build that skill. It can't promise a job.
+Honest note: labs hire on demonstrated skill, and these are the things they ask about (implement attention, debug a training run, explain an RL objective, use the standard tools, reproduce a result). The series can build that skill. It can't promise a job, and it can't make a startup succeed: Part 15 teaches building and measuring a product, not finding customers or raising money. Two things it leaves to other material: timed coding-interview practice (the DSA series covers it) and ML system design interviews.
 
 ## How lessons are written
 
@@ -315,15 +332,16 @@ node scripts/frontier-safe-run.mjs --timeout 590 --mem 4096 -- npx vitest run sr
 
 ## Progress
 
-Lessons live in `src/labs/project-studio/tracks/frontier-*/`, Your turn answers in each chapter's `answers/`, prediction verify scripts in its `verify/`, and every step's walkthrough entry in `tracks/frontier.walkthrough.js`. The series is registered in `series.js` (all 68 chapter names) and `learningProfile.js`. Handoff for the next session: `docs/frontier-handoff.md`.
+Lessons live in `src/labs/project-studio/tracks/frontier-*/`, Your turn answers in each chapter's `answers/`, prediction verify scripts in its `verify/`, and every step's walkthrough entry in `tracks/frontier.walkthrough.js`. The series is registered in `series.js` (all 74 chapter names) and `learningProfile.js`. Handoff for the next session: `docs/frontier-handoff.md`.
 
 | Chapter | Lessons | Walkthrough |
 |---|---|---|
 | 0 · A Real Project | 0.1–0.3 | passes (2026-10-08, 465 s, peak 788 MB) |
 | 1 · From Script to Software | 1.1–1.5 | passes (2026-10-12: 0.1–1.4 in one run, 12 tests, 1.4 included; 1.5 walked from that kept project; full Chapters 0–1 run about 12½ min) |
-| 2–68 | | not written |
+| 2 · The Computer Science You Need | 2.1–2.2 | passes (2026-10-13: 2.1–2.2 walked from a kept Chapter 1 project, 339 s, peak 675 MB); 2.3–2.6 not written |
+| 3–73 | | not written |
 
-Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful. Chapter 38 (`frontier-open-model`, a modern open model rebuilt in your own code) was added on 2026-10-12 at the owner's request, so that the open model fine-tuned and trained in Chapters 45–55 runs in code the learner wrote; the chapters after it moved up by one.
+Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful. Chapter 38 (`frontier-open-model`, a modern open model rebuilt in your own code) was added on 2026-10-12 at the owner's request, so that the open model fine-tuned and trained in Chapters 45–55 runs in code the learner wrote; the chapters after it moved up by one. Part 15, *Shipping it* (Chapters 67–71), was added on 2026-10-13 at the owner's request, so the series also prepares a learner to build a product of their own; research practice and the capstone became Part 16, Chapters 72–73, and the capstone may be a launched product instead of a paper.
 
 Measured while writing (Windows 11, Python 3.14.3, the walkthrough's CPU-only environment):
 

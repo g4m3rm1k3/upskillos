@@ -2,11 +2,13 @@
 // that shows one of their figures is opened.
 //
 //   aml/<Export>                     this folder's aml.jsx (Applied Machine Learning series)
+//   frontier/<Export>                this folder's frontier.jsx (Frontier series)
 //   ml-lab/<lab folder>/<Export>     a Machine Learning Lab figure, e.g. ml-lab/l01-foundations/WeightedSum
 const OWN = {
   aml: () => import('./aml.jsx'),
   dice: () => import('./dice.jsx'),
   'dice-start': () => import('./dicePreview.jsx'),
+  frontier: () => import('./frontier.jsx'),
 };
 const ML_LAB = import.meta.glob('../../ml-lab/labs/*/figures.jsx');
 

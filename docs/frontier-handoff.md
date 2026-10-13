@@ -70,7 +70,7 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
 
 ## State of the project (what a learner has after the last written lesson)
 
-After lesson 1.5, the end of Chapter 1 (written 2026-10-12; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted.
+After lesson 2.2 (written 2026-10-13; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
 
 ```text
 frontier/                 a Git repository on branch main, clean, pushed to GitHub (remote origin, main tracks origin/main)
@@ -89,6 +89,14 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     textstats_cli.py      format_report(stats) -> str (no final newline), parse_args(argv) (argparse:
                           path, --top, --letters), main(argv=None): OSError / ValueError -> one line on
                           stderr, exit 1; usage errors exit 2
+    bench.py              best_of(fn, repeats=5) -> float (fastest of perf_counter timings), ratios(times)
+    growth.py             unique_by_list (O(n²)), unique_by_dict (O(n)), same order of first appearance
+    hashing.py            letter_sum, poly_hash (h = h * 31 + ord(c)), WordSet(buckets=8, hash_fn=poly_hash):
+                          bucket(word), add (grows to 2x buckets when size > buckets), grow, __contains__, __len__
+  experiments/
+    first_tensors.py      (lesson 0.3)
+    time_unique.py        list vs dict unique words for n = 1000..8000, prints ratios per version
+    time_lookup.py        1000 lookups in list / WordSet / set, n = 1000..8000, prints longest bucket
   tests/
     conftest.py, test_info.py, test_torch_info.py   (Chapter 0)
     golden/sample.txt     the report as given in 1.1
@@ -96,14 +104,31 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     test_pieces.py, test_annotations.py              (1.2, 1.3)
     test_stats.py         -k dataclass, analyse, report
     test_cli.py           -k empty, prints, options, missing, blank, usage (runs the module with subprocess)
+    test_bench.py         -k best, ratios
+    test_growth.py        -k list, dict
+    test_hashing.py       -k letters, bucket, membership, grow, poly
 ```
 
 `textstats.py` and `tools/check_test_catches.py` were removed with `git rm` in 1.5.
 
 Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `commit -m`, `log --oneline`, `diff`, `restore`, `switch -c`, `branch`, `merge` and fast-forwards, `branch -d`, `rm`, `remote add`, `push -u`); GitHub (an empty repository, sign-in on first push); characterisation tests and golden files; seeing a test fail before trusting it; `subprocess.run` (`cwd`, `capture_output`, `text`, `check`, `returncode`, `stdout`, `stderr`); `pathlib.Path` (`__file__`, `resolve`, `parent`, `/`, `mkdir`, `read_text`, `write_text`, encoding); `__name__ == "__main__"`; constants; truthiness; f-strings; `join`; generator expressions and list comprehensions; `lambda` and `key=`; `dict.get`; dictionary order; `max(key=)` and its tie rule; stable `sorted`; slicing; `list.index`; docstrings; editor rename (F2), Replace All, project search (Ctrl+Shift+F); type hints (`list[str]`, `dict[str, int]`, `tuple[str, int]`, `Iterable[str]`, `X | None`, a class as a type), mypy `--strict`; decorators and `@dataclass` (`__init__`, `__repr__`, `__eq__`, fields); default parameter values; keyword arguments; `with` blocks and context managers; exceptions (`raise`, `ValueError`, narrow `except ... as error`, `OSError` and `strerror`, why a bare `except:` is wrong, tracebacks, failing fast); stdout vs stderr, `print(file=sys.stderr)`, exit codes 0 / 1 / 2, `sys.exit(1)`; `argparse` (positional, `--options`, `type=int`, `default`, `help`, `Namespace`, `parse_args(argv)`); `python -m module`; `encoding="utf-8"` and why; pytest fixtures `capsys` and `tmp_path`, `pytest.raises(match=)`.
 
+Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Callable[[...], ...]`; `_` as a loop name; `-> None`; f-string format specs (`{n:>5}`, `{x:.5f}`); big-O (O(1), O(log n), O(n), O(n log n), O(n²)), dropping constants and smaller terms, the doubling test, a loop hidden in `in`; `ord`; `%` (remainder); hash functions, collisions, buckets, growing and amortised O(1); `__contains__`, `__len__`; a comprehension with two `for`s; the `[[]] * n` trap; Python's `hash()` and its per-run randomisation; why lists can't be keys (unhashable), tuples can.
+
 Not yet taught (don't use without teaching): the debugger, profiling, `logging`, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
 
-## Next: Chapter 2 (`frontier-cs`), figures first
+## Next: lesson 2.3, heaps
 
-Chapter 2 (big-O, hashing, heaps, trees, graphs, floats) is where the owner wants visualisation of complexity. Lessons already support interactive figures: a ```` ```figure ```` fence with `name: <module>/<Export>`, `caption:` and one-line JSON `props:` (`src/labs/project-studio/figures.js`). The components live in `src/labs/project-studio/figures/*.jsx` and are registered in `figures/index.js` (see `aml.jsx` for examples). Add `figures/frontier.jsx` for this series, for example a growth-curve chart (n, n log n, n², measured points against theory), a hash-table bucket view, and a heap or tree you can step through. Check that `figures.test.jsx` still passes.
+Chapter 2 plan (`frontier-cs`, folder `src/labs/project-studio/tracks/frontier-cs/`): 2.1 big-O by timing ✓, 2.2 hashing ✓, then **2.3 heaps** (a priority queue by hand: sift up / sift down in a list, checked against `heapq`; top-k with a heap instead of `sorted`; O(log n) per push and pop), **2.4 trees and recursion** (a tree of nodes, recursive count / depth / visit; a tic-tac-toe game tree counted, previewing MCTS), **2.5 graphs and topological sort** (a dependency graph, DFS topological order; previews autograd's backward order), **2.6 floats** (how a float is stored, `0.1 + 0.2`, `math.exp` overflow, a stable softmax with the max subtracted). Each ends with commit + push.
+
+Figures: `src/labs/project-studio/figures/frontier.jsx` (registered as `frontier/` in `figures/index.js`) has `GrowthCurves` (2.1) and `HashBuckets` (2.2). Add a heap stepper for 2.3 and a tree view for 2.4 there. `figures.test.jsx` now renders every Frontier figure placed in a lesson.
+
+Lessons learned in this chapter:
+- **One file per step**, provided test files included: `checks.test.js` fails a step with two `file=` blocks. Two supplied test files need two steps.
+- A timing can't be a prediction (it depends on the machine). Predict an operation count instead: `verify/list_comparisons.py` counts `==` calls with a `str` subclass.
+- Before claiming what an experiment shows, run it once in a scratch folder with plain Python (no ML libraries, so no guard needed). Measured 2026-10-13: with `letter_sum`, `time_lookup.py`'s longest bucket is 70 / 75 / 223 / 497 for n = 1000..8000 and the WordSet time climbs; with `poly_hash` it is 6–7 and the time is flat (about 0.0015 s); the list goes 0.010 → 0.147 s.
+- `experiments/` has existed since lesson 0.3 (`first_tensors.py`): check the *State* tree before calling something new.
+- `-k` words are substrings: `-k bucket` matched a test named `..._buckets_...`. The desktop test's static check catches it in seconds, before any walking.
+- Resuming (`FRONTIER_START`) now also brings back the GitHub stand-in: `walkSeries.js` keeps `../github.git` as `<KEEP folder>.github.git` and restores it (fixed 2026-10-13; before that, a resumed `git push` failed). The scratchpad's kept projects don't survive the session, so rebuild them: Chapters 0–1 with `FRONTIER_UNTIL=frontier-engineering/01-05` and `FRONTIER_KEEP` take about 13 minutes (run it in the background with `--timeout 1800`), then 2.1–2.2 from that about 6.
+- A "did nothing" wrong answer can't fail a mypy check on a file that already passes, or a push check when nothing new was committed. Use "committed but did not push" to test the push.
+- Wrapping a `question:` or `explain:` in quotes isn't YAML here: the quotes show up. Write them bare.
