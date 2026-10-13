@@ -10,7 +10,7 @@ const Slider = ({ label, value, min, max, step, onChange, format = v => v }) =>
 // Bot 3, shared between the lessons of Part 6: trained (or uploaded) in 6.4, used again in 6.5 and 6.6.
 const store = { bot: null, listeners: new Set() }
 export const setBot = bot => { store.bot = bot; store.listeners.forEach(l => l()) }
-const useBot = () => useSyncExternalStore(l => { store.listeners.add(l); return () => store.listeners.delete(l) }, () => store.bot)
+export const useBot = () => useSyncExternalStore(l => { store.listeners.add(l); return () => store.listeners.delete(l) }, () => store.bot)
 
 const SPECIAL = { [Ch.USER]: 'user', [Ch.BOT]: 'bot', [Ch.END]: 'end', [Ch.UNKNOWN]: 'unk' }
 function TokenRow({ tokens, roles }) {
@@ -52,7 +52,7 @@ export function TemplateExplorer() {
   </div>
 }
 
-function ChatPanel({ bot, compact = false }) {
+export function ChatPanel({ bot, compact = false }) {
   const [log, setLog] = useState([])
   const [draft, setDraft] = useState('')
   const [temperature, setTemperature] = useState(0)

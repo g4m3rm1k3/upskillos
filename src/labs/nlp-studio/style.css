@@ -152,3 +152,12 @@
 .nlp-turn{flex-direction:row;align-items:center;gap:8px}.nlp-turn span{min-width:58px;font-family:'JetBrains Mono',ui-monospace,monospace}.nlp-turn input{flex:1}
 .nlp-dialogues{margin:4px 0;padding-left:22px;font-size:12.5px}.nlp-dialogues li{margin:2px 0}.nlp-botline{color:#273d85;margin-left:6px}
 .nlp-dialogues.held li{color:#7a3a10}
+
+/* Part 7: pre-trained models */
+.nlp-load{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:4px 0 10px}
+.nlp-progress{flex-basis:100%;height:6px;background:#e6e8f0;border-radius:3px;overflow:hidden}.nlp-progress div{height:100%;background:#3f5bb5;transition:width .2s}
+.nlp-sim td{min-width:44px}.nlp-sim-label{text-align:left!important;white-space:nowrap}.nlp-sim-label input{width:200px;border:1px solid var(--line);border-radius:5px;padding:2px 5px;font:12px Inter,system-ui,sans-serif}
+.nlp-template pre{background:var(--code-bg);color:#dfe7ea;border-radius:8px;padding:8px 12px;font-size:12px;white-space:pre-wrap;word-break:break-word}
+.nlp-stages{padding-left:22px;font-size:13.5px}.nlp-stages li{margin:6px 0}
+.nlp-fact{display:inline-block;margin:2px 6px 2px 0;padding:1px 6px;background:#eef1fd;border:1px solid #cdd5f5;border-radius:5px;font-size:12.5px}
+.nlp-answer-text{font-weight:600;color:#1e5a37}

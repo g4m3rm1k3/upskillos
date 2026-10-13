@@ -184,3 +184,62 @@ export function chatFromSafetensors(bytes) {
   if (![USER, BOT, END, UNKNOWN].every(t => vocab.includes(t))) throw new Error('The model’s vocabulary has no chat tokens (« » ¶ <unk>).')
   return { vocab, model }
 }
+
+// Part 7: fine-tuning Bot 3 on new information, fully or with LoRA (python/chat.py's, line for line).
+export const sundayUpdate = () => TEMPLATES[0][1].map(q => [fill(q, { day: 'sunday' }), 'on sunday we are open nine to five.'])
+
+export function initLora(model, targets, rank, seed = 5) {
+  const rng = new Rng(seed), a = {}, b = {}
+  for (const name of targets) {
+    const rows = model[name].length, cols = model[name][0].length
+    a[name] = Array.from({ length: rows }, () => Array.from({ length: rank }, () => (rng.random() * 2 - 1) / Math.sqrt(rows)))
+    b[name] = Array.from({ length: rank }, () => Array(cols).fill(0))
+  }
+  return { targets: [...targets], rank, scale: 1, a, b }
+}
+export const loraSize = lora => ['a', 'b'].reduce((s, part) => s + Object.values(lora[part]).reduce((t, m) => t + m.length * m[0].length, 0), 0)
+
+// Fine-tune in slices for the page: tuner.step(n). With lora only A and B change; without, every weight.
+export function makeFinetuner(vocab, model, pairs, { lora = null, lr = 0.002, seed = 7 } = {}) {
+  const rng = new Rng(seed)
+  const [tokens, roles] = toTokens(pairs, rng)
+  const index = Object.fromEntries(vocab.map((t, k) => [t, k]))
+  const context = model.pos.length
+  const params = {}
+  if (lora) for (const name of lora.targets) { params[name + '.a'] = lora.a[name]; params[name + '.b'] = lora.b[name] }
+  else for (const name of G.PARAMS) params[name] = model[name]
+  const state = { t: 0, b1t: 1, b2t: 1, m: Object.fromEntries(Object.entries(params).map(([n, p]) => [n, G.zeros(p.length, p[0].length)])), v: Object.fromEntries(Object.entries(params).map(([n, p]) => [n, G.zeros(p.length, p[0].length)])) }
+  const losses = []
+  return {
+    losses,
+    step(n = 1) {
+      for (let s = 0; s < n; s++) {
+        const start = rng.below(tokens.length - context - 1)
+        const ids = tokens.slice(start, start + context).map(t => index[t]), targets = tokens.slice(start + 1, start + context + 1).map(t => index[t])
+        const mask = lossMask(roles, start, context)
+        if (mask.reduce((x, y) => x + y, 0) === 0) continue
+        const [logits, weights] = G.forward(model, ids, true, lora)
+        const loss = G.crossEntropy(logits, targets, mask)
+        loss.backward()
+        G.adamStep(params, Object.fromEntries(Object.keys(params).map(p => [p, weights[p].grad])), state, lr)
+        losses.push(loss.data[0][0])
+      }
+      return losses
+    },
+  }
+}
+export function finetuneChat(vocab, model, pairs, steps, options) { const t = makeFinetuner(vocab, model, pairs, options); t.step(steps); return t.losses }
+
+export function mergeLora(model, lora) {
+  const merged = Object.fromEntries(G.PARAMS.map(n => [n, model[n].map(r => [...r])]))
+  for (const name of lora.targets) {
+    const a = lora.a[name], b = lora.b[name]
+    for (let i = 0; i < a.length; i++) for (let j = 0; j < b[0].length; j++) {
+      let s = 0
+      for (let r = 0; r < b.length; r++) s += a[i][r] * b[r][j]
+      merged[name][i][j] += lora.scale * s
+    }
+  }
+  return merged
+}
+export const cloneModel = model => Object.fromEntries(G.PARAMS.map(n => [n, model[n].map(r => [...r])]))

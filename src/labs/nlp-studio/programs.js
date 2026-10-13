@@ -162,4 +162,20 @@ export const PROGRAMS = {
     watch: { out: ['out'], chose: ['vocab[choice]'] },
     jump: { label: 'Next token', targets: () => [['chat.py', lineOf('chat.py', '        if vocab[choice] == END:')]] },
   },
+  byte_symbols: {
+    label: 'GPT-2’s byte symbols (7.1)', file: 'pretrained.py', module: 'pretrained', function: 'byte_symbols', view: 'watch',
+    about: 'Lesson 7.1: GPT-2’s table from bytes to printable characters is built, then the text’s UTF-8 bytes are looked up in it.',
+    input: { name: 'text', label: 'Text', value: 'café 🙂' },
+    kwargs: v => ({ text: v }),
+    watch: { b: ['b'], n: ['n'], bs: ['len(bs)'] },
+    jump: { label: 'Next stand-in byte', targets: () => [['pretrained.py', lineOf('pretrained.py', '            cs.append(256 + n)')]] },
+  },
+  lora_matmul: {
+    label: 'LoRA as one function (7.5)', file: 'pretrained.py', module: 'pretrained', function: 'lora_matmul', view: 'watch',
+    about: 'Lesson 7.5: x W plus scale (x A) B, on a 1 × 2 input, without ever building A B. The input is ignored; the matrices are fixed.',
+    input: { name: 'note', label: 'Matrices', value: 'the lesson’s example' },
+    kwargs: () => ({ x: [[1, 2]], w: [[1, 0], [0, 1]], a: [[1], [1]], b: [[0.5, -0.5]], scale: 2.0 }),
+    watch: { xw: ['xw'], xa: ['xa'], xab: ['xab'] },
+    jump: { label: 'Next product', targets: () => [['pretrained.py', lineOf('pretrained.py', '    xab = [[sum(row[r] * b[r][j]')], ['pretrained.py', lineOf('pretrained.py', '    xa = [[sum(row[r] * a[r][j]')]] },
+  },
 }

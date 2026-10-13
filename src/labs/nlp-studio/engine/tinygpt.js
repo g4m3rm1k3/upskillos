@@ -106,17 +106,24 @@ export function initModel(vocabSize, dim = 16, context = 16, hidden = 64, seed =
   return model
 }
 
-export function forward(model, ids, useAttention = true) {
+export function through(x, w, name, lora) {
+  let out = matmul(x, w[name])
+  if (lora && lora.targets.includes(name)) out = add(out, scale(matmul(matmul(x, w[name + '.a']), w[name + '.b']), lora.scale))
+  return out
+}
+
+export function forward(model, ids, useAttention = true, lora = null) {
   const w = Object.fromEntries(PARAMS.map(n => [n, new Tensor(model[n])]))
+  if (lora) for (const name of lora.targets) { w[name + '.a'] = new Tensor(lora.a[name]); w[name + '.b'] = new Tensor(lora.b[name]) }
   const dim = model.wq.length
   let x = add(embed(w.tok, ids), embed(w.pos, ids.map((_, i) => i)))
   let weights = null
   if (useAttention) {
-    const q = matmul(x, w.wq), k = matmul(x, w.wk), v = matmul(x, w.wv)
+    const q = through(x, w, 'wq', lora), k = through(x, w, 'wk', lora), v = through(x, w, 'wv', lora)
     weights = causalSoftmax(scale(matmul(q, transpose(k)), 1 / Math.sqrt(dim)))
-    x = add(x, matmul(matmul(weights, v), w.wo))
+    x = add(x, through(matmul(weights, v), w, 'wo', lora))
   }
-  x = add(x, matmul(relu(matmul(x, w.w1)), w.w2))
+  x = add(x, through(relu(through(x, w, 'w1', lora)), w, 'w2', lora))
   return [matmul(x, w.out), w, weights]
 }
 
@@ -124,7 +131,7 @@ export function adamStep(model, grads, state, lr = 0.01, b1 = 0.9, b2 = 0.99, ep
   state.t += 1
   state.b1t *= b1
   state.b2t *= b2
-  for (const name of PARAMS) {
+  for (const name of Object.keys(grads)) {
     const m = state.m[name], v = state.v[name], wt = model[name], g = grads[name]
     for (let i = 0; i < wt.length; i++) for (let j = 0; j < wt[0].length; j++) {
       m[i][j] = b1 * m[i][j] + (1 - b1) * g[i][j]

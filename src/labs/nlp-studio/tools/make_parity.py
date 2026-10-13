@@ -257,3 +257,34 @@ with open(path6, "w", encoding="utf-8", newline="\n") as handle:
     json.dump(part6, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote Part 6 to {os.path.normpath(path6)}")
+
+
+# Part 7: pretrained-model ideas, and LoRA fine-tuning.
+import pretrained as pt  # noqa: E402
+
+base_vocab, base_model, _ = chat.train_chat(c_train[:40], 6, **c_small)
+lora7 = chat.init_lora(base_model, ["wq", "w1"], 2)
+lora_losses = chat.finetune_chat(base_vocab, base_model, chat.sunday_update(), 5, lora=lora7, lr=0.01)
+full7 = {n: [row[:] for row in base_model[n]] for n in tg.PARAMS}
+full_losses = chat.finetune_chat(base_vocab, full7, chat.sunday_update(), 5, lr=0.01)
+vec3 = [[0.6, 0.8, 0.0], [1.0, 0.0, 0.0], [0.0, 0.6, 0.8], [0.0, 1.0, 0.0]]
+part7 = {
+    "table": {str(b): c for b, c in pt.bytes_to_unicode().items()},
+    "byte_symbols": {t: pt.byte_symbols(t) for t in ["my chain", "café 🙂", "Hello, world!", "\n\t"]},
+    "mean_pool": pt.mean_pool([[1, 2], [3, 4], [100, 100]], [1, 1, 0]),
+    "normalize": [pt.normalize([3, 4]), pt.normalize([0, 0])],
+    "chat_template": [pt.chat_template([{"role": "system", "content": "S"}, {"role": "user", "content": "hi"}]),
+                      pt.chat_template([{"role": "user", "content": "x"}], False)],
+    "top_facts": [list(p) for p in pt.top_facts([0.6, 0.8, 0.0], vec3, 3)],
+    "grounded": pt.grounded_messages(pt.FACTS[:2], "are you open on saturday?"),
+    "lora_matmul": pt.lora_matmul([[1, 2]], [[1, 0], [0, 1]], [[1], [1]], [[0.5, -0.5]], 2.0),
+    "sunday_update": [list(p) for p in chat.sunday_update()],
+    "lora": {"init": init_l if (init_l := chat.init_lora(base_model, ["wq"], 2)) else None, "size": chat.lora_size(lora7),
+             "after": lora7, "losses": lora_losses, "merged_wq": chat.merge_lora(base_model, lora7)["wq"]},
+    "full": {"losses": full_losses, "w1": full7["w1"]},
+}
+path7 = os.path.join(HERE, "..", "engine", "parity7.json")
+with open(path7, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part7, handle, ensure_ascii=False)
+    handle.write("\n")
+print(f"wrote Part 7 to {os.path.normpath(path7)}")

@@ -415,10 +415,10 @@ Real GPTs repeat steps 2–3 dozens of times with many attention “heads” in 
           code: {
             file: 'tinygpt.py', fn: 'forward', notes: [
               ['x = add(embed(w["tok"], ids), embed(w["pos"], list(range(len(ids)))))', ['Steps 1: what each character is, plus where it is.']],
-              ['q, k, v = matmul(x, w["wq"]), matmul(x, w["wk"]), matmul(x, w["wv"])', ['Queries, keys and values, each from its own weight matrix.']],
+              ['q, k, v = through(x, w, "wq", lora), through(x, w, "wk", lora), through(x, w, "wv", lora)', ['Queries, keys and values, each from its own weight matrix. `through(x, w, name, lora)` is just `matmul(x, w[name])` here; lesson 7.5 adds LoRA to it.']],
               ['weights = causal_softmax(scale(matmul(q, transpose(k)), 1 / math.sqrt(dim)))', ['All the scores at once, as a matrix: $QK^\\top / \\sqrt d$, masked and softmaxed row by row.']],
-              ['x = add(x, matmul(matmul(weights, v), w["wo"]))', ['The weighted values, mapped back by one more matrix, and **added** to x: the residual connection.']],
-              ['x = add(x, matmul(relu(matmul(x, w["w1"])), w["w2"]))', ['The MLP: widen to 4× the size, ReLU, narrow back, and add.']],
+              ['x = add(x, through(matmul(weights, v), w, "wo", lora))', ['The weighted values, mapped back by one more matrix, and **added** to x: the residual connection.']],
+              ['x = add(x, through(relu(through(x, w, "w1", lora)), w, "w2", lora))', ['The MLP: widen to 4× the size, ReLU, narrow back, and add.']],
               ['return matmul(x, w["out"]), w, weights', ['A score per character at every position: the logits.']],
             ],
           },

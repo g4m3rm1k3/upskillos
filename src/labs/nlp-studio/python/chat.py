@@ -206,3 +206,71 @@ def exact_match(vocab, model, pairs):
     """The fraction of messages whose greedy reply is exactly the expected reply."""
     right = sum(1 for user, bot in pairs if reply(vocab, model, [], user) == chat_tokens(bot))
     return right / len(pairs) if pairs else 0.0
+
+
+# Part 7: fine-tuning Bot 3 on new information, fully or with LoRA.
+
+def sunday_update():
+    """The shop's new Sunday hours, as conversations: what lesson 7.5 fine-tunes Bot 3 on."""
+    return [(fill(q, {"day": "sunday"}), "on sunday we are open nine to five.") for q in TEMPLATES[0][1]]
+
+
+def init_lora(model, targets, rank, seed=5):
+    """LoRA adapters for some weight matrices: A (rows x rank) small and random, B (rank x cols) zero,
+    so at the start A B = 0 and the model is exactly what it was."""
+    rng = Rng(seed)
+    a, b = {}, {}
+    for name in targets:
+        rows, cols = len(model[name]), len(model[name][0])
+        a[name] = [[(rng.random() * 2 - 1) / math.sqrt(rows) for _ in range(rank)] for _ in range(rows)]
+        b[name] = [[0.0] * cols for _ in range(rank)]
+    return {"targets": list(targets), "rank": rank, "scale": 1.0, "a": a, "b": b}
+
+
+def lora_size(lora):
+    """How many numbers LoRA trains: every entry of every A and B."""
+    return sum(len(m) * len(m[0]) for part in ("a", "b") for m in lora[part].values())
+
+
+def finetune_chat(vocab, model, pairs, steps, lora=None, lr=0.002, seed=7):
+    """Keep training on new conversations. With lora only its A and B change and the model stays
+    frozen; without, every weight of the model changes (full fine-tuning). Returns the losses."""
+    rng = Rng(seed)
+    tokens, roles = to_tokens(pairs, rng)
+    index = {t: k for k, t in enumerate(vocab)}
+    context = len(model["pos"])
+    if lora:
+        params = {}
+        for name in lora["targets"]:
+            params[name + ".a"] = lora["a"][name]
+            params[name + ".b"] = lora["b"][name]
+    else:
+        params = {name: model[name] for name in tg.PARAMS}
+    state = {"t": 0, "b1t": 1.0, "b2t": 1.0,
+             "m": {n: tg.zeros(len(p), len(p[0])) for n, p in params.items()},
+             "v": {n: tg.zeros(len(p), len(p[0])) for n, p in params.items()}}
+    losses = []
+    for _ in range(steps):
+        start = rng.below(len(tokens) - context - 1)
+        ids = [index[t] for t in tokens[start:start + context]]
+        targets = [index[t] for t in tokens[start + 1:start + context + 1]]
+        mask = loss_mask(roles, start, context)
+        if sum(mask) == 0:
+            continue
+        logits, weights, _ = tg.forward(model, ids, True, lora)
+        loss = tg.cross_entropy(logits, targets, mask)
+        loss.backward()
+        tg.adam_step(params, {n: weights[n].grad for n in params}, state, lr)
+        losses.append(loss.data[0][0])
+    return losses
+
+
+def merge_lora(model, lora):
+    """A plain model with the LoRA change folded in: W + scale * A B for each target."""
+    merged = {name: [row[:] for row in model[name]] for name in tg.PARAMS}
+    for name in lora["targets"]:
+        a, b = lora["a"][name], lora["b"][name]
+        for i in range(len(a)):
+            for j in range(len(b[0])):
+                merged[name][i][j] += lora["scale"] * sum(a[i][r] * b[r][j] for r in range(len(b)))
+    return merged

@@ -40,7 +40,17 @@ export function splitWordsTrace(text) {
   if (current) { words.push(current); steps.push({ i: null, ch: null, line: 'words.append(current)', current: '', words: [...words], saved: current, end: true }) }
   return { words, steps }
 }
-export const splitWords = text => splitWordsTrace(text).words
+// The plain versions build no trace: a trace copies the list at every character, which grows with
+// the square of the text's length (fine for a sentence in a figure, ruinous for a whole book).
+export function splitWords(text) {
+  const words = []
+  let current = ''
+  for (const ch of chars(text)) {
+    if (isSpace(ch)) { if (current) { words.push(current); current = '' } } else current += ch
+  }
+  if (current) words.push(current)
+  return words
+}
 
 export function tokenizeTrace(text) {
   const tokens = [], steps = []
@@ -56,7 +66,18 @@ export function tokenizeTrace(text) {
   if (current) { tokens.push(current); steps.push({ i: null, ch: null, kind: null, line: 'tokens.append(current)', current: '', tokens: [...tokens], saved: current, end: true }) }
   return { tokens, steps }
 }
-export const tokenize = text => tokenizeTrace(text).tokens
+export function tokenize(text) {
+  const tokens = []
+  let current = ''
+  for (const ch of chars(text)) {
+    const kind = charKind(ch)
+    if (kind === 'word') { current += ch; continue }
+    if (current) { tokens.push(current); current = '' }
+    if (kind === 'punct') tokens.push(ch)
+  }
+  if (current) tokens.push(current)
+  return tokens
+}
 
 // Python's \w+|[^\w\s], with \w spelled out the way Python's Unicode \w means it.
 export const TOKEN_PATTERN = String.raw`\w+|[^\w\s]`

@@ -45,7 +45,9 @@ describe('lessons', () => {
       'tinygpt.py:__init__', 'tinygpt.py:backward', 'tinygpt.py:visit', 'tinygpt.py:zeros', 'tinygpt.py:add', 'tinygpt.py:relu',
       'tinygpt.py:transpose', 'tinygpt.py:scale', 'tinygpt.py:init_model',
       // Part 6: make_vocab and exact_match are one-line helpers read in the training and figure code; is_number is given.
-      'chat.py:make_vocab', 'chat.py:exact_match', 'chat.py:is_number']
+      'chat.py:make_vocab', 'chat.py:exact_match', 'chat.py:is_number',
+      // Part 7: sunday_update is the data the figure fine-tunes on (shown in the lesson text); lora_size counts A and B.
+      'chat.py:sunday_update', 'chat.py:lora_size']
     const all = Object.keys(SOURCES).flatMap(file => parse(file).functions.map(f => `${file}:${f.name}`))
     expect(all.filter(fn => !quoted.has(fn) && !shownElsewhere.includes(fn))).toEqual([])
   })

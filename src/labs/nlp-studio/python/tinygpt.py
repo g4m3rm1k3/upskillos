@@ -186,18 +186,31 @@ def init_model(vocab_size, dim=16, context=16, hidden=64, seed=1):
     return model
 
 
-def forward(model, ids, use_attention=True):
+def through(x, w, name, lora):
+    """x times the weight matrix `name`, plus, with LoRA on that matrix, scale * (x A) B."""
+    out = matmul(x, w[name])
+    if lora and name in lora["targets"]:
+        out = add(out, scale(matmul(matmul(x, w[name + ".a"]), w[name + ".b"]), lora["scale"]))
+    return out
+
+
+def forward(model, ids, use_attention=True, lora=None):
     """Logits for the next token at every position, and the Tensors of the weights (for their gradients).
-    Without attention each position sees only its own character: a neural bigram model."""
+    Without attention each position sees only its own character: a neural bigram model.
+    With lora, the frozen weights get a low-rank change added (Part 7)."""
     w = {name: Tensor(model[name]) for name in PARAMS}
+    if lora:
+        for name in lora["targets"]:
+            w[name + ".a"] = Tensor(lora["a"][name])
+            w[name + ".b"] = Tensor(lora["b"][name])
     dim = len(model["wq"])
     x = add(embed(w["tok"], ids), embed(w["pos"], list(range(len(ids)))))
     weights = None
     if use_attention:
-        q, k, v = matmul(x, w["wq"]), matmul(x, w["wk"]), matmul(x, w["wv"])
+        q, k, v = through(x, w, "wq", lora), through(x, w, "wk", lora), through(x, w, "wv", lora)
         weights = causal_softmax(scale(matmul(q, transpose(k)), 1 / math.sqrt(dim)))
-        x = add(x, matmul(matmul(weights, v), w["wo"]))
-    x = add(x, matmul(relu(matmul(x, w["w1"])), w["w2"]))
+        x = add(x, through(matmul(weights, v), w, "wo", lora))
+    x = add(x, through(relu(through(x, w, "w1", lora)), w, "w2", lora))
     return matmul(x, w["out"]), w, weights
 
 
@@ -207,7 +220,7 @@ def adam_step(model, grads, state, lr=0.01, b1=0.9, b2=0.99, eps=1e-8):
     state["t"] += 1
     state["b1t"] *= b1
     state["b2t"] *= b2
-    for name in PARAMS:
+    for name in grads:
         m, v, wt, g = state["m"][name], state["v"][name], model[name], grads[name]
         for i in range(len(wt)):
             for j in range(len(wt[0])):

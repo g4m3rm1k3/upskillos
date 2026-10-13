@@ -20,6 +20,7 @@ import { SENTENCES } from './engine/corpus.js'
 import * as L from './engine/lm.js'
 import * as G from './engine/tinygpt.js'
 import * as Ch from './engine/chat.js'
+import * as PT from './engine/pretrained.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
 const appData = process.platform === 'win32' ? process.env.APPDATA ?? '' : process.platform === 'darwin' ? path.join(homedir(), 'Library', 'Application Support') : path.join(homedir(), '.config')
@@ -198,6 +199,18 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(plain(r.result)).toEqual(Ch.reply(vocab, model, [], PROGRAMS.chat_reply.input.value))
     expect(tokens).toBeGreaterThan(0)
   }, 180000)
+
+  it('Part 7: GPT-2’s byte symbols and LoRA as one function match the engine', async () => {
+    let r = await load(s, 'byte_symbols'), standIns = 0
+    for (let n = 0; n < 80; n++) { r = await jump(s, 'byte_symbols'); if (r.type !== 'pause') break; standIns++ }
+    expect(r.type, s.stderr()).toBe('finished')
+    expect(plain(r.result)).toBe(PT.byteSymbols(PROGRAMS.byte_symbols.input.value))
+    expect(standIns).toBe(68)   // the bytes with no printable character of their own
+    r = await load(s, 'lora_matmul')
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type).toBe('finished')
+    expect(plain(r.result)).toEqual(PT.loraMatmul([[1, 2]], [[1, 0], [0, 1]], [[1], [1]], [[0.5, -0.5]], 2))
+  }, 120000)
 
   it('dependencies and Bot 1 finish with the engine\'s answers', async () => {
     let r = await load(s, 'dependencies')
