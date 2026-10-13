@@ -58,6 +58,8 @@ const CURATED_TOPICS = {
         items: [
           { kind: 'course', key: 'calculus',
             differentiator: 'Structured curriculum — limits, derivatives, integrals, and the mathematics of change, in order.' },
+          { kind: 'lab', key: 'math-for-ml',
+            differentiator: 'Calculus, linear algebra and statistics from basic algebra, aimed at reading machine-learning equations.' },
           { kind: 'lab', key: 'openmat',
             differentiator: 'General computation engine — symbolic differentiation/integration alongside its matrix and 3D graphing tools.' },
           { kind: 'lab', key: 'universal-calc',
@@ -498,6 +500,8 @@ const CURATED_TOPICS = {
             differentiator: 'Start from Python basics and algebra — derive gradients, inspect real training, write NumPy, and evaluate a model against a baseline.' },
           { kind: 'course', key: 'ai-engineering',
             differentiator: 'Structured curriculum — machine learning, LLMs, and AI systems from foundations to deployment.' },
+          { kind: 'lab', key: 'math-for-ml',
+            differentiator: 'The maths behind ML from basic algebra: Σ, logs, derivatives, gradients, matrices, probability and likelihood, then every big equation assembled piece by piece, with a decoder for the symbols in papers.' },
           { kind: 'lab', key: 'neural-net-lab',
             differentiator: 'Deep learning from basic Python: every layer, activation, loss and optimiser built by hand, checked against PyTorch, then tried on your own handwriting.' },
           { kind: 'lab', key: 'qmaze-lab',

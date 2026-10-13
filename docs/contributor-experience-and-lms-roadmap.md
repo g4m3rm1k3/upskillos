@@ -32,6 +32,11 @@ Status markers:
 - [x] v3 rebuild (2026-10-12): plain-Python programs mirrored exactly by the JavaScript engine (parity tests), 25 lessons with every line explained, the Real Python tab, a second track for transfer tests, sensor and linear drivers, maximisation bias, and multi-seed measurements. See [plan and status](kart-lab.md).
 - [ ] Self-play training, Harbour Loop in the 3D arena, neural policies and continuous steering remain follow-up scope.
 
+### Math for ML Lab: machine-learning mathematics from basic algebra (2026-10-13)
+
+- [x] 66 lessons in six parts (symbols, calculus, linear algebra, probability and statistics, the big ML equations assembled piece by piece, reading papers), 54 interactive figures, a Symbol decoder with famous equations taken apart, plain-Python programs mirrored by the engine, and the Real Python tab. The original falling-ball chapter is kept with its lesson ids. See [plan and status](math-for-ml-lab.md).
+- [ ] Code-writing exercises with automatic checking, and more decoder equations (ELBO, GAN, diffusion), remain follow-up scope.
+
 ### Tabletop RL Lab: reinforcement learning on Yahtzee (2026-10-12)
 
 - [x] 32 lessons from dice probability to TD(0) with function approximation: one turn solved exactly by backward induction and every learner graded against it, afterstates, whole-game statistics with paired comparisons, a learned linear value of the scorecard. Plain-Python programs mirrored exactly by the engine, the Real Python tab, the 3D table with an advisor, and a Workshop that trains and grades players. See [plan and status](tabletop-rl-lab.md).
@@ -66,6 +71,8 @@ Status markers:
 - [ ] Extend document preservation to arbitrary head resources/comments, add module resolution and per-file runtime source mapping, and investigate state-preserving structural HTML edits.
 
 ### Project Studio learning quality (2026-10-06)
+
+- [x] **Yahtzee C++ foundations and completion (2026-10-13):** added a one-file opening before the existing classes, dedicated const/reference/pointer labs, a function-only header split, and a class-in-one-file bridge. Completed Joker/bonus rules, menu/total integration, replay checks and uniform final rolls. Preserved existing lesson paths. See [curriculum and verification](yahtzee-cpp-course.md) for compiler evidence, browser review and remaining platform/testing limits.
 
 - [x] **Neovim as a second editor (2026-10-11):** Editor: Monaco / Neovim in the editor tab strip. Neovim runs in a real terminal over the same files, is used from the learner's own install (0.10+) or downloaded automatically (pinned v0.12.6, `desktop/app/runtimes/neovim.cjs`), and is driven through `--listen` for file opens, write-before-Run/Check and reloads. Verified in Electron on macOS: auto-install, open from tree, edit, `:w`, switch back to Monaco.
 - [ ] **Terminal series (2026-10-11, in progress):** `term`, zsh from zero on a real project folder. Chapter 1 written and walked on macOS (`term.desktop.test.js`, new `walkSeries({ unix: true })`); chapters 2–7 planned in [docs/terminal-series-plan.md](terminal-series-plan.md). A PowerShell edition comes later, written on Windows.

@@ -1,70 +1,44 @@
-# Math for ML Lab
+# Math for ML Lab: plan and status
 
-Route: `#/lab/math-for-ml`. Uses the shared QMaze paper theme and Neural Net Lab's
-ordered explanation, figure, and check renderer. No programming prerequisite.
+Route: `#/lab/math-for-ml`, discovered from `src/labs/math-for-ml/meta.js`. Read this file first when resuming, and update **Where we stopped**.
 
-## Available opening chapter
+The mathematics of machine learning for someone who knows basic algebra and finds ML papers' symbols foreign. Every symbol is introduced when it is needed and built from earlier ones, and every big equation (mean squared error, cross-entropy, softmax, backpropagation, Adam, attention) is assembled piece by piece from Parts 1 to 4. Asked for on 2026-10-13: "the best place for someone with no math skills to learn machine learning maths and have fun doing so… we always show how we get to the big equation built up".
 
-The falling-ball story develops observation, units and reference points, paired
-measurements, graphs and function notation, signed change, and average velocity.
-The clock, 2D scene, table, and graph use one numerical engine. Learners scrub
-time, inspect table rows, choose comparison endpoints, and select quantities to
-see their symbols expanded into numerical calculations. Playback is opt-in and
-stops on navigation or after first ground contact. Progress is local to the device;
-reading completion is explicitly separate from solved checks and mastery.
+It follows QMaze, CartPole and Neural Net Lab: lessons built from blocks (`../python-steps/Blocks.jsx`), interactive figures on the real numbers, every line of every Python program explained, an engine that reproduces the Python, and a Real Python tab. It grew from the original opening chapter (a falling ball, average velocity), whose six lessons open Part 2 unchanged.
 
-The simulator uses an ideal fall from rest at 20 m with downward acceleration
-10 m/s², without air resistance, ending at 2 s. Its assumptions and arithmetic
-rule are disclosed in each figure. The opening chapter does not claim to derive
-the physical model or infer a unique curve from finite observations.
+## How it is built
 
-## Planned continuation
+| Piece | Where | What it is |
+|---|---|---|
+| Python programs | `python/` | Plain Python 3, standard library only, maths as loops: `symbols.py` (Σ, Π, e, log, σ, argmin), `calculus.py` (rates, derivatives, gradient descent, Riemann sums), `linalg.py` (vectors and matrices as lists), `stats.py` (probability, Bayes, normal, likelihood, covariance, PCA), `models.py` (regression, cross-entropy, softmax, KL, layers, backprop, Adam, attention) |
+| Engine | `engine/maths.js` (and `engine/fall.js`, the opening chapter's falling ball) | The Python programs in JavaScript, for the figures and the tests |
+| Parity | `tools/make_parity.py` → `engine/parity.json`, `engine/parity.test.js` | Compared to 1e-12 (1e-9 for numerical derivatives): Python's `sum()` uses compensated summation and its `exp`/`log` can differ in the last bit |
+| Lessons | `lessons/part1.js` … `part6.js`, `lessons/fall.js` | 66 lessons; the six in `fall.js` keep their original ids and block order (progress keys) |
+| Figures | `figures/` | 54 interactive figures on a shared SVG `Graph` (`figures/ui.jsx`) with draggable points |
+| Symbol decoder | `decoder.js`, `Decoder.jsx`, `figures/part6.jsx` | Every symbol (how to say it, meaning, code, lesson) and 13 famous equations broken into clickable pieces |
+| Real Python tab | `PythonTab.jsx`, `programs.js`, `functions.js`, `lineNotes.js` | The shared python-steps tab |
 
-Calculus, linear algebra, and statistics are full core strands, not optional
-appendices. The journey outline groups topics rather than prescribing that an
-entire strand must finish before the next begins. Teach each prerequisite before
-using it; interleave small lessons when it makes the connection more concrete.
+Progress is stored under the opening chapter's key, `upskillos.math-for-ml.v1`, in the same format, so earlier progress carries over.
 
-- **Linear algebra:** coordinates, vectors, addition, scaling, length and
-  direction; dot products as projection and weighted combination; matrices as
-  transformations and composition; systems of equations, span, independence and
-  least squares; then eigenvectors and principal components after variance is
-  established. Start with 2D arrows, grids and explicit numerical operations.
-- **Statistics and probability:** repeated measurements, frequency tables,
-  distributions, mean and median, spread, variance and standard deviation;
-  samples versus populations and sampling bias; probability, conditional
-  probability, Bayes' rule and expectation; sampling variability, estimation,
-  confidence intervals and hypothesis tests with assumptions and correct
-  interpretations; covariance, correlation, regression and residuals. Distinguish
-  association from causation and parameter uncertainty from prediction error.
-- **Where the strands meet:** least-squares fitting from geometric, calculus,
-  and statistical viewpoints; train/validation/test separation, leakage,
-  generalization and uncertainty before making claims about learned models.
+## Lessons
 
-Limits and derivatives; accumulation and derivation of the motion relationship;
-scaling, offsets and algebra; vectors and matrices; data and uncertainty; loss,
-partial derivatives and optimization; composition and backpropagation. The lab's
-journey view labels these as planned. This is an opening chapter, not a completed
-mathematics-for-machine-learning curriculum.
+1. **Reading the symbols** (10): variables and $\hat y = wx + b$; functions and $f_\theta(x)$; subscripts and $x^{(i)}$; Σ and Π; powers and roots; $e$; logarithms; composition and the sigmoid; the Greek conventions; argmin.
+2. **Change: calculus** (18): the falling ball (6 original lessons); slope; limits; the derivative from its definition; the rules; $e^x$ and $\ln x$; the chain rule ($\sigma' = \sigma(1-\sigma)$); minima; gradient descent; partial derivatives; the gradient; gradient descent in 2D; the integral.
+3. **Arrows and tables: linear algebra** (13): vectors; linear combinations; norms; the dot product; matrices as layers; transformations; matrix multiplication; transpose; inverse and determinant; systems; least squares and the normal equations; eigenvectors; gradients of vector expressions.
+4. **Chance and data** (13): probability; distributions; expectation; variance; conditional probability; Bayes; densities; the normal distribution built in four steps; sampling and the standard error; likelihood; maximum likelihood and why squared error; covariance and correlation; PCA.
+5. **The big equations** (10): linear regression read symbol by symbol; its gradient and the normal equations; ridge; logistic regression and binary cross-entropy (gradient $(p - y)x$); softmax and categorical cross-entropy (gradient $\mathbf p - \mathbf y$); entropy and KL; layers; backpropagation; momentum and Adam; attention.
+6. **Reading papers** (2): a five-step method; practice on backprop, Adam, attention, KL, the policy gradient, Bayes and the normal density.
 
-Authoring standard: observable meaning before notation; define units, reference
-points and every symbol; show numerical and algebraic steps; distinguish
-assumptions, evidence and conclusions; pair intuition with precise statements.
-Use 2D mathematical figures. Introduce applications as the mathematics supports
-them. Preserve existing calculus lesson IDs and routes.
+## Checks
 
-## Verification
+| Command | What it checks |
+|---|---|
+| `npx vitest run src/labs/math-for-ml --exclude "**/*.desktop.test.js"` | Engine = Python (`engine/parity.test.js`); every predict's answer = engine, every note finds its line, every function documented (`lessons/lessons.test.js`); every Python statement explained (`lessons/coverage.test.js`); every lesson and figure renders with its controls exercised, the falling-ball figure's linked views, the decoder's lesson links, progress kept and recovered, and the Python tab (`render.test.jsx`); strict bundle (`bundle.test.js`) |
+| `MATH_PYTHON=python3 npx vitest run src/labs/math-for-ml/stepper.desktop.test.js` | Every Python-tab program in the real A-Arcade stepper, each line's worked arithmetic against Python, and regression and backprop against the engine |
+| `python3 src/labs/math-for-ml/tools/make_parity.py` | Regenerate parity data after changing a program |
 
-Run `npx vitest run src/labs/math-for-ml` for numerical interval validation,
-linked measurements, endpoint calculations, lesson rendering, progress recovery
-and persistence. Run `npm run facts` after adding the lab, followed by
-`npm run catalog:check`. Inspect the actual lab in a browser at wide and narrow
-widths before delivery.
+## Where we stopped
 
-Verified on 2026-10-12: six scoped tests pass; typecheck exits without diagnostics;
-facts regeneration and catalog check succeed (the catalog reports 14 existing
-content problems). Browser checks cover playback, table-to-scene/graph updates,
-endpoint selection and the resulting -10 m/s calculation, and a 390 px maximized
-window. Shrinking the viewport with an already-open unmaximized desktop window
-can clip that outer window; maximize it to fit the viewport. A full production
-build was not run. The browser also logged an unrelated Trystero peer-close error.
+2026-10-13: the full curriculum is built (66 lessons, 54 figures, decoder, Python tab). All checks above pass; `npm run typecheck` is clean. Browser: lessons, figures (prediction line, Σ, sigmoid, gradient field, descent, transformations, least squares, Bayes, normal builder, logistic fit, network forward and backward, Adam against gradient descent, softmax, attention, equation anatomy) and the decoder inspected; no page errors.
+
+Not done, if wanted next: exercises where the learner writes the formula as code and it is checked; more equations in the decoder (ELBO, GAN objective, diffusion); a convolution lesson (Neural Net Lab covers it); a lesson on the Jacobian for vector-valued functions.

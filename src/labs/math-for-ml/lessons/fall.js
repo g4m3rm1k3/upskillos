@@ -1,6 +1,9 @@
+import { heightAt, interval } from "../engine/fall.js"
 const figure = stage => ({ figure: 'Motion', props: { stage } })
-const check = (prompt, answer, explain, misconceptions = []) => ({ predict: { prompt, answer, explain, misconceptions } })
-export const LESSONS = [
+// compute works the answer out from the falling-ball engine, so lessons.test.js can check it.
+const check = (prompt, answer, explain, misconceptions = [], compute) => ({ predict: { prompt, answer, explain, misconceptions, compute } })
+// The opening chapter's six lessons, kept word for word: their ids and block order are progress keys.
+export const FALL_LESSONS = [
   {
     id: 'observe', title: 'Watch before calculating',
     goal: 'Describe what changes during a fall, without needing a formula.',
@@ -28,7 +31,7 @@ export const LESSONS = [
       { md: '**Height** is vertical distance above the ground. We choose ground level as zero and measure upward in **meters**, abbreviated **m**. A height of 20 m means twenty lengths of one meter above that reference.\n\n**Elapsed time** is how long it has been since release. We choose release as time zero and measure in **seconds**, abbreviated **s**. At 0.5 s, half a second has passed. The decimal 0.5 means five tenths, which is the same amount as one half.' },
       figure('measure'),
       { md: 'Move the slider to 1 s. The height is 15 m. These numbers answer different questions: **when?** and **how high?** A bare “15” loses the unit and the meaning. Zero height means the ball reaches our reference level; zero time means our clock has just started.' },
-      check('At release, the ball is 20 m above ground. At 1 s, it is 15 m above ground. How many meters has it fallen?', 5, 'The gap between 20 and 15 is 5: 20 − 15 = 5 m. It has fallen 5 m, but its height is still 15 m. Distance fallen and height are different measurements.', [{ answer: 15, feedback: '15 m is its height above ground. The question asks how much height it has lost since release.' }]),
+      check('At release, the ball is 20 m above ground. At 1 s, it is 15 m above ground. How many meters has it fallen?', 5, 'The gap between 20 and 15 is 5: 20 − 15 = 5 m. It has fallen 5 m, but its height is still 15 m. Distance fallen and height are different measurements.', [{ answer: 15, feedback: '15 m is its height above ground. The question asks how much height it has lost since release.' }], () => heightAt(0) - heightAt(1)),
       { note: 'Always ask: what quantity, measured from which zero, in what units? Later a machine-learning input will need these same decisions.' },
     ],
   },
@@ -39,7 +42,7 @@ export const LESSONS = [
       { md: 'A paused scene shows one moment. A **table** keeps several moments together. Each row below pairs a time with the height at that time. Select a row to inspect that observation in the scene.' },
       figure('table'),
       { md: 'The times 0, 0.5, 1, 1.5, and 2 s are separated by half a second each. Read consecutive heights: 20, 18.75, 15, 8.75, and 0 m. The decimal 18.75 means 18 whole meters plus 75 hundredths of a meter.\n\nFrom 0 to 0.5 s, the ball falls 20 − 18.75 = **1.25 m**. From 0.5 to 1 s, it falls 18.75 − 15 = **3.75 m**. The second distance is larger, although the elapsed time is the same. That comparison supports our observation that the ball is speeding up.' },
-      check('From 1 s to 1.5 s, the height changes from 15 m to 8.75 m. How many meters does the ball fall during this half-second interval?', 6.25, 'Subtract the later height from the earlier height: 15 − 8.75 = 6.25 m. This exceeds the preceding half-second distance of 3.75 m.'),
+      check('From 1 s to 1.5 s, the height changes from 15 m to 8.75 m. How many meters does the ball fall during this half-second interval?', 6.25, 'Subtract the later height from the earlier height: 15 − 8.75 = 6.25 m. This exceeds the preceding half-second distance of 3.75 m.', [], () => heightAt(1) - heightAt(1.5)),
       { note: 'These are exact values from the chosen simulation. Actual measurements have uncertainty and may be rounded. A few observations alone do not prove a unique rule for all the moments between them.' },
     ],
   },
@@ -53,7 +56,7 @@ export const LESSONS = [
       { md: 'The ball falls straight down in the scene. The graph bends because it records **height against time**. Moving right on this graph means looking at a later moment, not moving the ball to the right. Select a row and compare all three views.\n\nThe dots are the sampled observations. The curve shows the heights supplied by our simulation between those samples. Connecting data with a curve requires a model; the dots alone do not specify every point between them.' },
       { h: 'Give the relationship a short name' },
       { md: 'A **variable** is a name for a quantity whose value can vary. Let $t$ name elapsed time. A **function** is a rule assigning one output to each allowed input. In our model, each time has one height. We write $h(t)$, pronounced “h of t,” for that height.\n\nThe letter $h$ names the height function. The parentheses say which input we are asking about; they do **not** mean multiplication here. $h(1)=15$ says: “at a time of 1 second, the height is 15 meters.” The equals sign means the expressions on either side have the same value. Here numerical times are in seconds and numerical heights are in meters.' },
-      check('Read the table. What is h(1.5), the height in meters at 1.5 seconds?', 8.75, 'Select the row at 1.5 s. Its height is 8.75 m. The corresponding graph point is directly above 1.5 and level with 8.75.'),
+      check('Read the table. What is h(1.5), the height in meters at 1.5 seconds?', 8.75, 'Select the row at 1.5 s. Its height is 8.75 m. The corresponding graph point is directly above 1.5 and level with 8.75.', [], () => heightAt(1.5)),
       { note: 'In this story, time is the input and height is the output. Later, an input might be a measurement fed into a prediction model. The meaning of the axes and units must always be stated again.' },
     ],
   },
@@ -67,7 +70,7 @@ export const LESSONS = [
       figure('change'),
       { h: 'A symbol for a calculation we already understand' },
       { md: 'The Greek capital letter $\\Delta$, pronounced “delta,” is shorthand for **change in**. Thus $\\Delta h$ means change in height and $\\Delta t$ means elapsed time. Neither is a new operation.\n\n$$\\Delta h = h_{\\text{end}} - h_{\\text{start}}$$\n\nThe small labels below $h$ are **subscripts**. They tell us which height: ending or starting. They are labels, not quantities to multiply. Similarly,\n\n$$\\Delta t = t_{\\text{end}} - t_{\\text{start}}.$$\n\nOur end time is later than our start time, so elapsed time is positive. Height change is negative during this downward motion.' },
-      check('From 0 to 1 s, height goes from 20 m to 15 m. What is the signed change in height, in meters?', -5, 'Ending minus starting gives 15 − 20 = −5 m. The ball travels 5 m downward; its height changes by −5 m.', [{ answer: 5, feedback: '5 m is the distance fallen. For signed height change, use ending minus starting: 15 − 20.' }]),
+      check('From 0 to 1 s, height goes from 20 m to 15 m. What is the signed change in height, in meters?', -5, 'Ending minus starting gives 15 − 20 = −5 m. The ball travels 5 m downward; its height changes by −5 m.', [{ answer: 5, feedback: '5 m is the distance fallen. For signed height change, use ending minus starting: 15 − 20.' }], () => interval(0, 1).change),
       { note: 'Keep the distinction: height is a position relative to ground; height change is signed; distance traveled is nonnegative. They answer different questions.' },
     ],
   },
@@ -82,7 +85,7 @@ export const LESSONS = [
       figure('rate'),
       { h: 'The same division appears on the graph' },
       { md: 'The straight orange line joins the two observations. Its **slope** is vertical change divided by horizontal change. Those changes are height and time on this graph, so the slope equals average velocity. The colored triangle shows exactly the quantities being divided. A line through two points on a curve is called a **secant line**.\n\nTry 0 to 1 s: (15 − 20) ÷ (1 − 0) = −5 m/s. Then try 1 to 2 s: (0 − 15) ÷ (2 − 1) = −15 m/s. Equal durations, different changes, different average velocities.' },
-      check('For a fresh interval, use 0.5 s to 1.5 s. Heights are 18.75 m and 8.75 m. What is the average velocity in m/s?', -10, 'Height change: 8.75 − 18.75 = −10 m. Elapsed time: 1.5 − 0.5 = 1 s. Divide: −10 ÷ 1 = −10 m/s. A constant downward velocity of −10 m/s would give the same total height change over this interval.'),
+      check('For a fresh interval, use 0.5 s to 1.5 s. Heights are 18.75 m and 8.75 m. What is the average velocity in m/s?', -10, 'Height change: 8.75 − 18.75 = −10 m. Elapsed time: 1.5 − 0.5 = 1 s. Divide: −10 ÷ 1 = −10 m/s. A constant downward velocity of −10 m/s would give the same total height change over this interval.', [], () => interval(0.5, 1.5).velocity),
       { note: 'Average velocity is not generally velocity at either endpoint. An interval with zero duration would require division by zero, which is undefined. Understanding motion at one instant needs a new idea: a limit. That is the next planned chapter, not an assumption we have already made.' },
       { md: '**Explain it yourself:** why does the graph line slope downward? Why is its slope measured in m/s? Why can one average fail to describe the whole fall? Revisit the experiment until you can connect each answer to a measurement.' },
     ],

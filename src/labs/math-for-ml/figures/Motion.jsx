@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { END_TIME, format as f, heightAt, interval, SAMPLES } from './engine.js'
+import { END_TIME, format as f, heightAt, interval, SAMPLES } from '../engine/fall.js'
 
 export default function Motion({ stage = 'rate' }) {
   const [time, setTime] = useState(0)

@@ -4,7 +4,7 @@ runtime: none
 support: tests/test_ranking.cpp, tests/test_ask_yesno.cpp, tests/test_join_names.cpp
 ---
 
-The game ends with a list of scores, and nobody has said who won. In this lesson the players are ranked, the winner or winners are announced, and the group can play again with the same names. You also meet raw pointers for the first time, and a sort with your own comparison rule.
+The game ends with a list of scores, and nobody has said who won. In this lesson the players are ranked, the winner or winners are announced, and the group can play again with the same names. You apply the raw-pointer ideas from the opening side labs and sort with your own comparison rule.
 
 Press this lesson's support button first. It creates three test files.
 
@@ -89,7 +89,7 @@ std::vector<const Player*> winnersOf(const std::vector<Player>& players) {
 - `order.front()` is the first (best) element. It is only evaluated inside the loop, and the loop only runs when `order` has elements. Calling `front()` on an empty vector is undefined behavior.
 - With no players, both functions return an empty list.
 
-The pointers are valid only while the `players` vector exists and is not resized. They are used right away and then dropped, so that is fine here.
+The pointers require the original players to remain alive at the same addresses. Reallocation, erasure and other structural changes can invalidate them; resizing is not the only hazard. They are used right away and then dropped, so that is fine here.
 
 Add `Ranking.cpp` as a new line at the end of `sources.txt`.
 
@@ -149,7 +149,7 @@ void Player::startNewGame() {
 ```
 
 - `Scorecard()` builds a brand-new scorecard with 13 empty boxes. It is a temporary object.
-- Assigning a temporary to `card` **moves** its contents in, so no box is copied one by one. The old boxes are released. The name is not touched, so the same players can play again.
+- Assigning this temporary can use the generated move assignment. The vector manages its own storage; its default-allocator move assignment can transfer storage. Moving an arbitrary class is not a general guarantee of zero copies. The name is not touched, so the same players can play again.
 
 ## Print the results
 
@@ -431,3 +431,7 @@ std::cout << "Tie between " << joinNames(winners)
           << " with " << winners[0]->finalScore() << " points\n";
 ~~~
 ```
+
+## Continue to the completed rules
+
+Continue with **Finish and Explain**. The current version omits repeated-Yahtzee bonuses and Joker placement. That chapter completes these rules, integrates the menu and total, replaces the final random sampling, and checks the application through replay.

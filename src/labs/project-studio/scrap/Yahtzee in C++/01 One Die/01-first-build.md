@@ -4,7 +4,9 @@ track: One Die
 runtime: none
 ---
 
-In this series you build Yahtzee for the terminal in C++, one small piece per lesson. Every lesson ends with a program that builds and runs. You already know variables, loops and functions from other languages, so these lessons spend their words on what is specific to C++: how a program is built, how it handles memory and copies, and what each keyword promises.
+In this series you build Yahtzee for the terminal in C++, one small piece per lesson. Build checkpoints let you run the program as it grows. You already know variables, loops and functions from other languages, so these lessons spend their words on what is specific to C++: how a program is built, how it handles memory and copies, and what each keyword promises.
+
+New to C++? Complete the **Start here — one file before classes** chapter first. It teaches const, references, pointers, header boundaries and a class inside one file before this refactoring path. Keep its working game in single_file.cpp; this chapter deliberately rebuilds main.cpp around smaller types.
 
 This lesson builds one file that rolls a die and then rolls five. You will meet the compile step, standard library headers and the random number functions.
 
@@ -42,8 +44,8 @@ Line by line:
 - `int main() {`: the entry point. The operating system starts your program by running this function. `int` is the type of the value it hands back to the operating system.
 - `std::time(nullptr)`: returns the current time as a `std::time_t`, an integer type that on most systems counts seconds since 1 January 1970. Its parameter is a pointer. `nullptr` is the pointer that holds no address. Passing it means "do not also store the result at some address, just return it".
 - `static_cast<unsigned>(...)`: converts a value to `unsigned`, an integer type that cannot be negative. `std::srand` takes an `unsigned`. The cast makes the conversion visible instead of letting the compiler do it silently.
-- `std::srand(...)`: sets the starting point of the random sequence. The same seed always produces the same sequence. The clock gives a different seed on every run.
-- `int face = std::rand() % 6 + 1;`: `std::rand()` returns an `int` from 0 up to `RAND_MAX`. The standard guarantees `RAND_MAX` is at least 32767. `% 6` is the remainder after dividing by 6, so it gives 0 to 5. `+ 1` shifts that to 1 to 6. `%` binds tighter than `+`, so the remainder is taken first. Low faces are very slightly more likely, because 32768 does not divide evenly by 6. That is invisible in a dice game.
+- `std::srand(...)`: sets the starting point of the random sequence. The same seed always produces the same sequence. Runs within the same clock tick can receive the same seed; the clock does not guarantee a different sequence on every run.
+- `int face = std::rand() % 6 + 1;`: `std::rand()` returns an `int` from 0 up to `RAND_MAX`. The standard guarantees `RAND_MAX` is at least 32767. `% 6` is the remainder after dividing by 6, so it gives 0 to 5. `+ 1` shifts that to 1 to 6. `%` binds tighter than `+`, so the remainder is taken first. Low faces are very slightly more likely, because 32768 does not divide evenly by 6. The opening accepts this approximation; the completion chapter replaces it with a uniform distribution.
 - `std::cout << "You rolled a " << face << "\n";`: `<<` sends the value on its right into the stream on its left and gives that same stream back. That is why several `<<` can be chained. `"\n"` is a newline. `std::endl` would also flush the output buffer, which is slower and not needed here.
 - `return 0;`: status 0 tells the operating system "finished successfully".
 
