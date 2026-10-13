@@ -39,6 +39,14 @@ describe('automatic catalog navigation', () => {
     expect(GLASS_META[lab.color]).toBeTruthy()
     expect(labSubjects([lab, { subject: 'New subject' }])).toEqual(['New subject', 'Other'])
   })
+  it('puts every machine-learning lab and course under Data & AI → AI & Machine Learning', () => {
+    const ai = new Set(TOPICS['data-ai'].subtopics.ai.items.map(i => `${i.kind}:${i.key}`))
+    for (const lab of LABS.filter(l => l.subject === 'Machine Learning')) expect(ai.has(`lab:${lab.key}`), lab.key).toBe(true)
+    for (const key of ['ml-lab', 'neural-net-lab', 'qmaze-lab', 'cartpole-lab', 'kart-lab', 'tabletop-rl-lab', 'pycade']) expect(ai.has(`lab:${key}`), key).toBe(true)
+    for (const key of ['machine-learning', 'ai-engineering']) expect(ai.has(`course:${key}`), key).toBe(true)
+    const general = Object.values(TOPICS.general.subtopics).flatMap(s => s.items.map(i => i.key))
+    expect(general.filter(k => LABS.find(l => l.key === k)?.subject === 'Machine Learning')).toEqual([])
+  })
   it('keeps course card and course page metadata consistent', () => {
     for (const course of getAllCourses()) {
       expect(getCourseMeta(course.key)).toMatchObject({ label: course.label, color: course.color })

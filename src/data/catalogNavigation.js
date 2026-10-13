@@ -29,12 +29,15 @@ export function completeTopics(curated, registries) {
   }]))
   const placed = new Set(Object.values(topics).flatMap(t => Object.values(t.subtopics).flatMap(s => s.items.map(i => `${i.kind}:${i.key}`))))
   const domains = { math: 'mathematics', science: 'science', cs: 'computer-science', engineering: 'engineering', data: 'data-ai', creative: 'creative' }
-  const subjects = { Math: 'mathematics', Science: 'science', Engineering: 'engineering', 'CS Theory': 'computer-science', 'Computer Science': 'computer-science', 'Software Engineering': 'programming', 'Data Science': 'data-ai', 'Web Dev': 'programming', Creative: 'creative' }
+  const subjects = { Math: 'mathematics', Science: 'science', Engineering: 'engineering', 'CS Theory': 'computer-science', 'Computer Science': 'computer-science', 'Software Engineering': 'programming', 'Data Science': 'data-ai', 'Machine Learning': 'data-ai', AI: 'data-ai', 'Web Dev': 'programming', Creative: 'creative' }
+  // Subjects with a home of their own inside a topic, rather than the topic's catch-all "More …" list.
+  const subjectSubtopics = { 'Machine Learning': 'ai', AI: 'ai' }
   const tagToDomain = {
     Math: 'mathematics', 'Linear Algebra': 'mathematics', Calculus: 'mathematics', Geometry: 'mathematics', Probability: 'mathematics', Statistics: 'mathematics',
     Physics: 'science', Chemistry: 'science', Biology: 'science',
     CS: 'computer-science', Programming: 'programming', Python: 'programming', 'C++': 'programming',
-    '3D': 'engineering', Data: 'data-ai', 'Data Science': 'data-ai'
+    '3D': 'engineering', Data: 'data-ai', 'Data Science': 'data-ai',
+    'Machine learning': 'data-ai', 'Machine Learning': 'data-ai', 'Reinforcement learning': 'data-ai', 'Deep learning': 'data-ai', 'Neural networks': 'data-ai',
   }
   for (const [kind, items] of Object.entries(registries)) for (const item of items) {
     if (placed.has(`${kind}:${item.key}`)) continue
@@ -51,6 +54,12 @@ export function completeTopics(curated, registries) {
     topicId = topicId || 'general'
 
     const topic = topics[topicId] || topics.general
+    const home = subjectSubtopics[item.subject]
+    if (home && topic.subtopics[home]) {
+      topic.subtopics[home].items.push({ kind, key: item.key })
+      placed.add(`${kind}:${item.key}`)
+      continue
+    }
     const id = `more-${kind}s`
     topic.subtopics[id] ??= { label: kind === 'course' ? 'More courses' : kind === 'lab' ? 'More labs & tools' : 'More games', color: topic.color, items: [] }
     topic.subtopics[id].items.push({ kind, key: item.key })
