@@ -137,6 +137,10 @@
 .qm-py-dot{width:6px;height:6px;border-radius:50%;background:#f2b45a;margin:8px 0 0 6px;flex:none;opacity:.7}
 .qm-py-mid{padding:10px}.qm-py-mid h4,.qm-py-explain h4{font-size:12px;color:var(--teal);margin:12px 0 4px}
 .qm-py-val{white-space:pre-wrap;word-break:break-word;text-align:left!important}
+.qm-lab .qm-py-open{all:unset;cursor:pointer;white-space:pre-wrap}.qm-lab .qm-py-open:hover{color:var(--teal)}
+.qm-py-val .qm-log{margin:2px 0 2px 4px;border-left:2px solid var(--line)}
+.qm-lab .qm-py-frame{all:unset;cursor:pointer;border-bottom:1px dotted currentColor}.qm-lab .qm-py-frame.active{font-weight:700;border-bottom-style:solid}
+.qm-py-consts{margin-top:10px;font-size:12px}.qm-py-consts summary{cursor:pointer;color:var(--muted)}
 .qm-left td{text-align:left!important}
 .qm-py-knobs{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;margin-top:6px}.qm-py-knobs input{width:70px;border:1px solid var(--line);border-radius:5px;padding:2px 4px}
 .qm-py-explain{padding:12px 14px}

@@ -51,4 +51,32 @@ describe('the lab renders', () => {
     act(() => { fireEvent.click(lines.find(l => l.textContent.includes('target = reward + gamma'))) })
     expect(container.querySelector('.qm-py-explain').textContent).toMatch(/Q-learning target|reward/)
   })
+
+  it('the Python tab opens values, shows any running function\'s variables, and offers maps.py', async () => {
+    const int = v => ({ t: 'int', v })
+    const pause = {
+      type: 'pause', watch: {}, output: '', stack: [
+        { file: 'play.py', function: 'play_random', line: 12, locals: { name: { t: 'str', v: 'cheese_and_cat' } }, consts: {} },
+        { file: 'gridworld.py', function: '__init__', line: 16, consts: { MAPS: { t: 'dict', len: 1, items: { corridor: { t: 'dict', len: 1 } } } },
+          locals: { self: { t: 'object', cls: 'GridWorld', attrs: { rows: { t: 'list', len: 2, items: [{ t: 'str', v: 'S..' }, { t: 'str', v: '.#C' }] }, n_rows: int(2) } } } },
+      ],
+    }
+    window.openCalcDesktop = { aarcade: { status: async () => ({ ready: true, versions: 'test' }), send: async () => pause } }
+    try {
+      const { container } = render(<PythonTab request={{ program: 'q' }} />)
+      await act(async () => {})
+      expect([...container.querySelectorAll('.qm-py-files button')].map(b => b.textContent)).toContain('maps.py')
+      await act(async () => { fireEvent.click(screen.getByText(/^▶ Load/)) })
+      const mid = () => container.querySelector('.qm-py-mid').textContent
+      expect(mid()).toContain('GridWorld object')
+      act(() => { fireEvent.click(container.querySelector('.qm-py-mid .qm-py-open')) })
+      expect(mid()).toContain('".#C"')
+      expect(mid()).toContain('MAPS')
+      act(() => { fireEvent.click(screen.getByText('play_random()')) })
+      expect(mid()).toContain('"cheese_and_cat"')
+      expect(mid()).toContain('waiting at play.py line 12')
+      act(() => { fireEvent.click(screen.getByText('Back to __init__()')) })
+      expect(mid()).toContain('GridWorld object')
+    } finally { delete window.openCalcDesktop }
+  })
 })

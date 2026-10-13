@@ -75,9 +75,32 @@ function overlays(view, env) {
   return out
 }
 
+// The parts of a value that open up: an object's attributes, a dict's entries, a list's items,
+// labelled the way Python reaches them (self.rows, layout["rows"] → rows, rows[1]).
+function partsOf(v) {
+  if (v?.t === 'object' && v.attrs && Object.keys(v.attrs).length) return Object.entries(v.attrs).map(([k, x]) => [`.${k}`, x])
+  if (v?.t === 'dict' && v.items && v.len) return Object.entries(v.items)
+  if ((v?.t === 'list' || v?.t === 'tuple') && v.items?.length) return v.items.map((x, i) => [`[${i}]`, x])
+  return null
+}
+
+function Vars({ entries }) {
+  return <table className="qm-log qm-left"><tbody>{entries.map(([k, v]) => <VarRow key={k} name={k} v={v} />)}</tbody></table>
+}
+
+// One variable. Click it to open it; it stays open as you step, so you can watch it change.
+function VarRow({ name, v }) {
+  const [open, setOpen] = useState(false)
+  const parts = partsOf(v)
+  return <tr><td className="mono">{name}</td><td className="mono qm-py-val">
+    {parts ? <button className="qm-py-open" onClick={() => setOpen(!open)}>{open ? '▾' : '▸'} {show(v)}</button> : show(v)}
+    {open && parts && <><Vars entries={parts} />{v.len > parts.length && <p className="qm-hint">the first {parts.length} of {v.len}</p>}</>}
+  </td></tr>
+}
+
 function CodePanel({ file, current, callSites, selected, onSelect }) {
   const box = useRef(null)
-  useEffect(() => { box.current?.querySelector('.qm-py-line.current')?.scrollIntoView({ block: 'nearest' }) }, [current, file])
+  useEffect(() => { box.current?.querySelector(selected ? '.qm-py-line.selected' : '.qm-py-line.current')?.scrollIntoView({ block: 'nearest' }) }, [current, file, selected])
   const lines = SOURCES[file].split('\n')
   return <div className="qm-py-code" ref={box}>
     {lines.map((text, i) => {
@@ -118,6 +141,8 @@ export default function PythonTab({ request, onLesson }) {
   const [busy, setBusy] = useState(false), [ended, setEnded] = useState(null), [error, setError] = useState(null)
   const [file, setFile] = useState(program.file), [selected, setSelected] = useState(null)
   const [knob, setKnob] = useState({})
+  // The function whose variables are shown, when it isn't the one running now: { depth, function }.
+  const [pinned, setPinned] = useState(null)
 
   useEffect(() => { if (api) api.status().then(setStatus).catch(e => setError(String(e))) }, [api])
   useEffect(() => api?.onOutput?.(m => { if (m.type === 'setup') setSetupLog(log => (log + m.text).slice(-8000)) }), [api])
@@ -128,9 +153,16 @@ export default function PythonTab({ request, onLesson }) {
   const top = view?.stack.at(-1)
   const callSites = new Set((view?.stack ?? []).slice(0, -1).filter(f => f.file === file).map(f => f.line))
   const shown = overlays(view, env)
-  const files = FILE_ORDER.filter(f => SOURCES[f] && (f === program.file || ['experiments.py', 'choosing.py', 'gridworld.py'].includes(f) || (view?.stack ?? []).some(fr => fr.file === f)))
+  const files = FILE_ORDER.filter(f => SOURCES[f] && (f === program.file || ['experiments.py', 'choosing.py', 'gridworld.py', 'maps.py'].includes(f) || (view?.stack ?? []).some(fr => fr.file === f)))
+  const stack = view?.stack ?? []
+  const pick = pinned && pinned.depth < stack.length - 1 && stack[pinned.depth].function === pinned.function ? pinned.depth : stack.length - 1
+  const watched = stack[pick]
+  function pickFrame(i) {
+    setPinned(i === stack.length - 1 ? null : { depth: i, function: stack[i].function })
+    setFile(stack[i].file); setSelected(i === stack.length - 1 ? null : stack[i].line)
+  }
 
-  function reset() { setTimeline([]); setAt(null); setEnded(null); setError(null); setSelected(null) }
+  function reset() { setTimeline([]); setAt(null); setEnded(null); setError(null); setSelected(null); setPinned(null) }
   function accept(r) {
     if (r.type === 'pause') {
       setTimeline(t => [...t, r].slice(-MAX_RECORDED)); setAt(null); setEnded(null)
@@ -195,13 +227,15 @@ export default function PythonTab({ request, onLesson }) {
         <GridMap env={env} size={env.nCols > 8 ? 30 : 46} showNumbers={!shown.q || env.nCols <= 6} {...shown} />
         {view && <p className="qm-hint">The map is drawn from the paused program's own values: {Object.entries(view.watch).map(([k, w]) => <span key={k} className="mono">{w.from} </span>)}{view.watch.net && !shown.probs ? ' (with a hidden layer the policy can\'t be read off the weights, so it isn\'t drawn)' : ''}</p>}
         {program.knobs && live && <div className="qm-py-knobs">{program.knobs.filter(([k]) => frame?.locals[k]).map(([k, label]) => <label key={k}>{label} <input type="number" step="0.01" value={knob[k] ?? frame.locals[k].v} onChange={e => setKnob(o => ({ ...o, [k]: e.target.value }))} /><button disabled={busy} onClick={() => setValue(k, Number(knob[k] ?? frame.locals[k].v))}>set</button></label>)}</div>}
-        {view && <><h4>Running: {view.stack.map(f => `${f.function}()`).join(' → ')}</h4>
-          <table className="qm-log qm-left"><tbody>{Object.entries(frame?.locals ?? {}).filter(([, v]) => !['function', 'module'].includes(v.t) || v.t === 'module').map(([k, v]) => <tr key={k}><td className="mono">{k}</td><td className="mono qm-py-val">{show(v)}</td></tr>)}</tbody></table>
+        {view && <><h4>Running: {stack.map((f, i) => <span key={i}>{i > 0 && ' → '}<button className={`qm-py-frame${i === pick ? ' active' : ''}`} onClick={() => pickFrame(i)} title={`Show the variables of ${f.function}()`}>{f.function}()</button></span>)}</h4>
+          {watched && watched !== top && <p className="qm-hint">Showing <span className="mono">{watched.function}()</span>'s variables: it is waiting at {watched.file} line {watched.line} for the call to return. <button className="qm-link" onClick={() => pickFrame(stack.length - 1)}>Back to {top.function}()</button></p>}
+          <Vars key={`${pick}-${watched?.function}`} entries={Object.entries(watched?.locals ?? {}).filter(([, v]) => v.t !== 'function')} />
+          {Object.keys(watched?.consts ?? {}).length > 0 && <details className="qm-py-consts"><summary>Constants in {watched.file}: <span className="mono">{Object.keys(watched.consts).join(', ')}</span></summary><Vars entries={Object.entries(watched.consts)} /></details>}
           {view.output && <pre className="qm-py-log">{view.output}</pre>}
           {view.returned && <p className="qm-hint"><span className="mono">{view.returned.function}()</span> just returned <span className="mono">{show(view.returned.value)}</span></p>}</>}
       </section>
       <section className="qm-py-right">
-        {(selected || (top?.file === file && top.line)) ? <LineExplain file={file} line={selected ?? top.line} running={!selected || selected === top?.line} frame={frame?.file === file ? frame : null} onLesson={onLesson} /> : <div className="qm-py-explain"><p>{program.about}</p><p className="qm-hint">Click any line of code to see it explained. Lines with a dot are explained in a lesson.</p></div>}
+        {(selected || (top?.file === file && top.line)) ? <LineExplain file={file} line={selected ?? top.line} running={!selected || selected === top?.line} frame={selected && watched !== top && watched?.file === file && selected === watched.line ? watched : frame?.file === file ? frame : null} onLesson={onLesson} /> : <div className="qm-py-explain"><p>{program.about}</p><p className="qm-hint">Click any line of code to see it explained. Lines with a dot are explained in a lesson.</p></div>}
       </section>
     </div>
   </div>
