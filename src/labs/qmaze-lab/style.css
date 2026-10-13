@@ -161,3 +161,16 @@
 .dq-layer{display:grid;gap:1px;font:11px/1 ui-monospace,monospace;background:var(--line);border:1px solid var(--line);max-width:260px}
 .dq-layer span{background:var(--paper);color:var(--muted);text-align:center;padding:3px 0;min-width:16px}
 .dq-layer span.on{background:var(--teal);color:#fff;font-weight:700}.dq-layer span.wall{background:#e8e1d3}
+
+/* Narrow windows (a phone, or a lab window made small): the lesson list goes above the lesson
+   instead of beside it, so the lesson keeps its full width; the header tabs wrap. A container
+   query, so it follows the lab window's width rather than the screen's. */
+.qm-lab{container-type:inline-size}
+@container (max-width: 720px){
+  .qm-header{padding:8px 12px}
+  .qm-tabs{flex-wrap:wrap}
+  .qm-body{flex-direction:column}
+  .qm-sidebar{width:auto;max-height:32%;border-right:0;border-bottom:1px solid var(--line);padding:4px 8px 10px}
+  .qm-main{padding:14px 16px 40px}
+  .qm-main.qm-wide{padding:12px 12px 30px}
+}

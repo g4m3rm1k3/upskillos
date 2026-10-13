@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 66 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 68 labs · 16 games
 
 ## How things are counted
 
@@ -99,6 +99,7 @@
 | Lesson Engine | `lesson-engine` | lesson | `/lab/lesson-engine` |
 | Little Schemer Sandbox | `little-schemer` | lesson | `/lab/little-schemer` |
 | Logic Suite | `logic-sim` | lab | `/logic-sim` |
+| Math for ML Lab | `math-for-ml` | lab | `/lab/math-for-ml` |
 | Matrix 3D Lab | `matrix-3d-lab` | lab | `/matrix-3d-lab` |
 | Matrix Lab | `matrix-lab` | lab | `/matrix-lab` |
 | Mesh Engine Lab | `mesh-engine-lab` | lab | `/mesh-engine-lab` |
@@ -106,6 +107,7 @@
 | Machine Learning Lab | `ml-lab` | lab | `/lab/ml-lab` |
 | Music Lab | `music-lab` | builder | `/music-lab` |
 | Neural Net Lab | `neural-net-lab` | lab | `/lab/neural-net-lab` |
+| NLP Studio | `nlp-studio` | lab | `/lab/nlp-studio` |
 | Notebook Lab | `notebook-lab` | lab | `/notebook-lab` |
 | Probability Casino Lab | `odds-lab` | lab | `/odds-lab` |
 | OpenMAT | `openmat` | lab | `/openmat` |

@@ -1,0 +1,2027 @@
+{
+ "messages": [
+  [
+   "WIN a free phone now, click the link to claim your prize",
+   "spam"
+  ],
+  [
+   "Are we still meeting for lunch tomorrow?",
+   "ham"
+  ],
+  [
+   "Congratulations! You have won a cash prize, call now",
+   "spam"
+  ],
+  [
+   "Can you pick up milk on the way home",
+   "ham"
+  ],
+  [
+   "URGENT: your account is locked, verify your password at this link",
+   "spam"
+  ],
+  [
+   "Running ten minutes late, sorry",
+   "ham"
+  ],
+  [
+   "Claim your free gift card today, limited offer",
+   "spam"
+  ],
+  [
+   "Thanks for the notes from the meeting",
+   "ham"
+  ],
+  [
+   "You are selected for a cash reward, reply YES to claim",
+   "spam"
+  ],
+  [
+   "What time does the film start tonight?",
+   "ham"
+  ],
+  [
+   "Cheap loans approved in minutes, no credit check, click now",
+   "spam"
+  ],
+  [
+   "Happy birthday! Hope you have a great day",
+   "ham"
+  ],
+  [
+   "Your parcel is waiting, pay the delivery fee at this link",
+   "spam"
+  ],
+  [
+   "I left my keys at your place, can I come by later?",
+   "ham"
+  ],
+  [
+   "Exclusive deal: win a holiday, text WIN to claim",
+   "spam"
+  ],
+  [
+   "The train is delayed, see you at the station",
+   "ham"
+  ],
+  [
+   "Final notice: claim your prize before midnight",
+   "spam"
+  ],
+  [
+   "Did you finish the report for Monday?",
+   "ham"
+  ],
+  [
+   "Earn cash from home, free sign up, click the link",
+   "spam"
+  ],
+  [
+   "Dinner is at seven, bring the salad please",
+   "ham"
+  ],
+  [
+   "You have been chosen to win a free phone, call now",
+   "spam"
+  ],
+  [
+   "Can we move the call to tomorrow morning?",
+   "ham"
+  ],
+  [
+   "Act now: free prize waiting, verify your details at the link",
+   "spam"
+  ],
+  [
+   "Good luck with the exam today",
+   "ham"
+  ],
+  [
+   "Your account will be closed, click here to verify now",
+   "spam"
+  ],
+  [
+   "Let me know when you get home safe",
+   "ham"
+  ],
+  [
+   "Win cash every week, reply to claim your free entry",
+   "spam"
+  ],
+  [
+   "Is the meeting still in room four?",
+   "ham"
+  ],
+  [
+   "Limited offer: free holiday for the first ten callers",
+   "spam"
+  ],
+  [
+   "I will call you after work",
+   "ham"
+  ],
+  [
+   "Claim your reward now, your free gift is waiting",
+   "spam"
+  ],
+  [
+   "Can you send me the photos from the weekend?",
+   "ham"
+  ],
+  [
+   "Congratulations, you won! Click the link to collect your cash",
+   "spam"
+  ],
+  [
+   "See you at the match on Saturday",
+   "ham"
+  ],
+  [
+   "Free entry to win a car, text now",
+   "spam"
+  ],
+  [
+   "Don't forget mum's dinner on Sunday",
+   "ham"
+  ],
+  [
+   "Your password expires today, verify at this link now",
+   "spam"
+  ],
+  [
+   "Shall we take the bikes to the park later?",
+   "ham"
+  ],
+  [
+   "You are a winner! Call now to claim your free prize",
+   "spam"
+  ],
+  [
+   "The plumber is coming at nine tomorrow",
+   "ham"
+  ]
+ ],
+ "intents": {
+  "greeting": {
+   "examples": [
+    "hello",
+    "hi there",
+    "good morning",
+    "hey",
+    "hello is anyone there"
+   ],
+   "reply": "Hello! Welcome to the bike shop help desk. How can I help?"
+  },
+  "hours": {
+   "examples": [
+    "when are you open",
+    "what are your opening hours",
+    "are you open on sunday",
+    "what time do you close",
+    "opening times please"
+   ],
+   "reply": "We're open 9am to 6pm, Monday to Saturday, and 10am to 4pm on Sunday."
+  },
+  "repair": {
+   "examples": [
+    "my bike needs fixing",
+    "can you repair a flat tyre",
+    "how much is a service",
+    "my brakes are squeaking",
+    "do you fix gears"
+   ],
+   "reply": "Bring the bike in any time we're open. A basic service is £40 and most repairs take a day."
+  },
+  "order": {
+   "examples": [
+    "where is my order",
+    "has my order shipped",
+    "track my delivery",
+    "my parcel has not arrived",
+    "order status please"
+   ],
+   "reply": "You can track your order with the link in your confirmation email. Tell me the order number if it's late."
+  },
+  "thanks": {
+   "examples": [
+    "thank you",
+    "thanks a lot",
+    "cheers",
+    "that helps thanks",
+    "great thank you"
+   ],
+   "reply": "You're welcome!"
+  },
+  "goodbye": {
+   "examples": [
+    "bye",
+    "goodbye",
+    "see you later",
+    "that is all bye",
+    "have a nice day"
+   ],
+   "reply": "Goodbye, and happy riding!"
+  }
+ },
+ "words": {
+  "the cat sat on the mat": [
+   "the",
+   "cat",
+   "sat",
+   "on",
+   "the",
+   "mat"
+  ],
+  "the dog sat on the log": [
+   "the",
+   "dog",
+   "sat",
+   "on",
+   "the",
+   "log"
+  ],
+  "a cat and a dog": [
+   "a",
+   "cat",
+   "and",
+   "a",
+   "dog"
+  ],
+  "cats chase mice": [
+   "cats",
+   "chase",
+   "mice"
+  ],
+  "the mat is red": [
+   "the",
+   "mat",
+   "is",
+   "red"
+  ],
+  "Mr. Smith's 2 cats!": [
+   "mr",
+   "smith",
+   "s",
+   "2",
+   "cats"
+  ]
+ },
+ "vocab": {
+  "a": 0,
+  "and": 1,
+  "cat": 2,
+  "cats": 3,
+  "chase": 4,
+  "dog": 5,
+  "is": 6,
+  "log": 7,
+  "mat": 8,
+  "mice": 9,
+  "on": 10,
+  "red": 11,
+  "sat": 12,
+  "the": 13
+ },
+ "vectors": [
+  [
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   1,
+   0,
+   1,
+   2
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   1,
+   0,
+   0,
+   1,
+   0,
+   1,
+   2
+  ],
+  [
+   2,
+   1,
+   1,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   1,
+   1,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   1,
+   0,
+   0,
+   1,
+   0,
+   1
+  ]
+ ],
+ "cosines": [
+  [
+   0.9999999999999998,
+   0.7499999999999999,
+   0.13363062095621217,
+   0.0,
+   0.5303300858899106
+  ],
+  [
+   0.7499999999999999,
+   0.9999999999999998,
+   0.13363062095621217,
+   0.0,
+   0.35355339059327373
+  ],
+  [
+   0.13363062095621217,
+   0.13363062095621217,
+   0.9999999999999999,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   0.0,
+   1.0000000000000002,
+   0.0
+  ],
+  [
+   0.5303300858899106,
+   0.35355339059327373,
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "ngrams": [
+  [
+   "the",
+   "cat",
+   "sat"
+  ],
+  [
+   "cat",
+   "sat",
+   "on"
+  ],
+  [
+   "sat",
+   "on",
+   "the"
+  ],
+  [
+   "on",
+   "the",
+   "mat"
+  ]
+ ],
+ "bigrams": {
+  "win": {
+   "a": 4,
+   "to": 1,
+   "cash": 1
+  },
+  "a": {
+   "free": 2,
+   "cash": 2,
+   "great": 1,
+   "holiday": 1,
+   "car": 1,
+   "winner": 1
+  },
+  "free": {
+   "phone": 2,
+   "gift": 2,
+   "sign": 1,
+   "prize": 2,
+   "entry": 2,
+   "holiday": 1
+  },
+  "phone": {
+   "now": 1,
+   "call": 1
+  },
+  "now": {
+   "click": 1,
+   "can": 2,
+   "happy": 1,
+   "free": 1,
+   "let": 1,
+   "your": 1,
+   "don": 1,
+   "shall": 1,
+   "to": 1
+  },
+  "click": {
+   "the": 3,
+   "now": 1,
+   "here": 1
+  },
+  "the": {
+   "link": 4,
+   "way": 1,
+   "notes": 1,
+   "meeting": 2,
+   "film": 1,
+   "delivery": 1,
+   "train": 1,
+   "station": 1,
+   "report": 1,
+   "salad": 1,
+   "call": 1,
+   "exam": 1,
+   "first": 1,
+   "photos": 1,
+   "weekend": 1,
+   "match": 1,
+   "bikes": 1,
+   "park": 1,
+   "plumber": 1
+  },
+  "link": {
+   "to": 2,
+   "running": 1,
+   "i": 1,
+   "dinner": 1,
+   "good": 1,
+   "now": 1
+  },
+  "to": {
+   "claim": 5,
+   "win": 2,
+   "tomorrow": 1,
+   "verify": 1,
+   "collect": 1,
+   "the": 1
+  },
+  "claim": {
+   "your": 6,
+   "what": 1,
+   "the": 1
+  },
+  "your": {
+   "prize": 2,
+   "account": 2,
+   "password": 2,
+   "free": 4,
+   "parcel": 1,
+   "place": 1,
+   "details": 1,
+   "reward": 1,
+   "cash": 1
+  },
+  "prize": {
+   "are": 1,
+   "call": 1,
+   "before": 1,
+   "waiting": 1,
+   "the": 1
+  },
+  "are": {
+   "we": 1,
+   "selected": 1,
+   "a": 1
+  },
+  "we": {
+   "still": 1,
+   "move": 1,
+   "take": 1
+  },
+  "still": {
+   "meeting": 1,
+   "in": 1
+  },
+  "meeting": {
+   "for": 1,
+   "you": 1,
+   "still": 1
+  },
+  "for": {
+   "lunch": 1,
+   "the": 2,
+   "a": 1,
+   "monday": 1
+  },
+  "lunch": {
+   "tomorrow": 1
+  },
+  "tomorrow": {
+   "congratulations": 1,
+   "morning": 1
+  },
+  "congratulations": {
+   "you": 2
+  },
+  "you": {
+   "have": 3,
+   "pick": 1,
+   "are": 2,
+   "at": 2,
+   "finish": 1,
+   "get": 1,
+   "after": 1,
+   "send": 1,
+   "won": 1
+  },
+  "have": {
+   "won": 1,
+   "a": 1,
+   "been": 1
+  },
+  "won": {
+   "a": 1,
+   "click": 1
+  },
+  "cash": {
+   "prize": 1,
+   "reward": 1,
+   "from": 1,
+   "every": 1,
+   "see": 1
+  },
+  "call": {
+   "now": 3,
+   "to": 1,
+   "you": 1
+  },
+  "can": {
+   "you": 2,
+   "i": 1,
+   "we": 1
+  },
+  "pick": {
+   "up": 1
+  },
+  "up": {
+   "milk": 1,
+   "click": 1
+  },
+  "milk": {
+   "on": 1
+  },
+  "on": {
+   "the": 1,
+   "saturday": 1,
+   "sunday": 1
+  },
+  "way": {
+   "home": 1
+  },
+  "home": {
+   "urgent": 1,
+   "free": 1,
+   "safe": 1
+  },
+  "urgent": {
+   "your": 1
+  },
+  "account": {
+   "is": 1,
+   "will": 1
+  },
+  "is": {
+   "locked": 1,
+   "waiting": 2,
+   "delayed": 1,
+   "at": 1,
+   "the": 1,
+   "coming": 1
+  },
+  "locked": {
+   "verify": 1
+  },
+  "verify": {
+   "your": 2,
+   "now": 1,
+   "at": 1
+  },
+  "password": {
+   "at": 1,
+   "expires": 1
+  },
+  "at": {
+   "this": 3,
+   "your": 1,
+   "the": 3,
+   "seven": 1,
+   "nine": 1
+  },
+  "this": {
+   "link": 3
+  },
+  "running": {
+   "ten": 1
+  },
+  "ten": {
+   "minutes": 1,
+   "callers": 1
+  },
+  "minutes": {
+   "late": 1,
+   "no": 1
+  },
+  "late": {
+   "sorry": 1
+  },
+  "sorry": {
+   "claim": 1
+  },
+  "gift": {
+   "card": 1,
+   "is": 1
+  },
+  "card": {
+   "today": 1
+  },
+  "today": {
+   "limited": 1,
+   "your": 1,
+   "verify": 1
+  },
+  "limited": {
+   "offer": 2
+  },
+  "offer": {
+   "thanks": 1,
+   "free": 1
+  },
+  "thanks": {
+   "for": 1
+  },
+  "notes": {
+   "from": 1
+  },
+  "from": {
+   "the": 2,
+   "home": 1
+  },
+  "selected": {
+   "for": 1
+  },
+  "reward": {
+   "reply": 1,
+   "now": 1
+  },
+  "reply": {
+   "yes": 1,
+   "to": 1
+  },
+  "yes": {
+   "to": 1
+  },
+  "what": {
+   "time": 1
+  },
+  "time": {
+   "does": 1
+  },
+  "does": {
+   "the": 1
+  },
+  "film": {
+   "start": 1
+  },
+  "start": {
+   "tonight": 1
+  },
+  "tonight": {
+   "cheap": 1
+  },
+  "cheap": {
+   "loans": 1
+  },
+  "loans": {
+   "approved": 1
+  },
+  "approved": {
+   "in": 1
+  },
+  "in": {
+   "minutes": 1,
+   "room": 1
+  },
+  "no": {
+   "credit": 1
+  },
+  "credit": {
+   "check": 1
+  },
+  "check": {
+   "click": 1
+  },
+  "happy": {
+   "birthday": 1
+  },
+  "birthday": {
+   "hope": 1
+  },
+  "hope": {
+   "you": 1
+  },
+  "great": {
+   "day": 1
+  },
+  "day": {
+   "your": 1
+  },
+  "parcel": {
+   "is": 1
+  },
+  "waiting": {
+   "pay": 1,
+   "verify": 1,
+   "can": 1
+  },
+  "pay": {
+   "the": 1
+  },
+  "delivery": {
+   "fee": 1
+  },
+  "fee": {
+   "at": 1
+  },
+  "i": {
+   "left": 1,
+   "come": 1,
+   "will": 1
+  },
+  "left": {
+   "my": 1
+  },
+  "my": {
+   "keys": 1
+  },
+  "keys": {
+   "at": 1
+  },
+  "place": {
+   "can": 1
+  },
+  "come": {
+   "by": 1
+  },
+  "by": {
+   "later": 1
+  },
+  "later": {
+   "exclusive": 1,
+   "you": 1
+  },
+  "exclusive": {
+   "deal": 1
+  },
+  "deal": {
+   "win": 1
+  },
+  "holiday": {
+   "text": 1,
+   "for": 1
+  },
+  "text": {
+   "win": 1,
+   "now": 1
+  },
+  "train": {
+   "is": 1
+  },
+  "delayed": {
+   "see": 1
+  },
+  "see": {
+   "you": 2
+  },
+  "station": {
+   "final": 1
+  },
+  "final": {
+   "notice": 1
+  },
+  "notice": {
+   "claim": 1
+  },
+  "before": {
+   "midnight": 1
+  },
+  "midnight": {
+   "did": 1
+  },
+  "did": {
+   "you": 1
+  },
+  "finish": {
+   "the": 1
+  },
+  "report": {
+   "for": 1
+  },
+  "monday": {
+   "earn": 1
+  },
+  "earn": {
+   "cash": 1
+  },
+  "sign": {
+   "up": 1
+  },
+  "dinner": {
+   "is": 1,
+   "on": 1
+  },
+  "seven": {
+   "bring": 1
+  },
+  "bring": {
+   "the": 1
+  },
+  "salad": {
+   "please": 1
+  },
+  "please": {
+   "you": 1
+  },
+  "been": {
+   "chosen": 1
+  },
+  "chosen": {
+   "to": 1
+  },
+  "move": {
+   "the": 1
+  },
+  "morning": {
+   "act": 1
+  },
+  "act": {
+   "now": 1
+  },
+  "details": {
+   "at": 1
+  },
+  "good": {
+   "luck": 1
+  },
+  "luck": {
+   "with": 1
+  },
+  "with": {
+   "the": 1
+  },
+  "exam": {
+   "today": 1
+  },
+  "will": {
+   "be": 1,
+   "call": 1
+  },
+  "be": {
+   "closed": 1
+  },
+  "closed": {
+   "click": 1
+  },
+  "here": {
+   "to": 1
+  },
+  "let": {
+   "me": 1
+  },
+  "me": {
+   "know": 1,
+   "the": 1
+  },
+  "know": {
+   "when": 1
+  },
+  "when": {
+   "you": 1
+  },
+  "get": {
+   "home": 1
+  },
+  "safe": {
+   "win": 1
+  },
+  "every": {
+   "week": 1
+  },
+  "week": {
+   "reply": 1
+  },
+  "entry": {
+   "is": 1,
+   "to": 1
+  },
+  "room": {
+   "four": 1
+  },
+  "four": {
+   "limited": 1
+  },
+  "first": {
+   "ten": 1
+  },
+  "callers": {
+   "i": 1
+  },
+  "after": {
+   "work": 1
+  },
+  "work": {
+   "claim": 1
+  },
+  "send": {
+   "me": 1
+  },
+  "photos": {
+   "from": 1
+  },
+  "weekend": {
+   "congratulations": 1
+  },
+  "collect": {
+   "your": 1
+  },
+  "match": {
+   "on": 1
+  },
+  "saturday": {
+   "free": 1
+  },
+  "car": {
+   "text": 1
+  },
+  "don": {
+   "t": 1
+  },
+  "t": {
+   "forget": 1
+  },
+  "forget": {
+   "mum": 1
+  },
+  "mum": {
+   "s": 1
+  },
+  "s": {
+   "dinner": 1
+  },
+  "sunday": {
+   "your": 1
+  },
+  "expires": {
+   "today": 1
+  },
+  "shall": {
+   "we": 1
+  },
+  "take": {
+   "the": 1
+  },
+  "bikes": {
+   "to": 1
+  },
+  "park": {
+   "later": 1
+  },
+  "winner": {
+   "call": 1
+  },
+  "plumber": {
+   "is": 1
+  },
+  "coming": {
+   "at": 1
+  },
+  "nine": {
+   "tomorrow": 1
+  }
+ },
+ "probs": [
+  [
+   "the",
+   "link",
+   0,
+   0.17391304347826086
+  ],
+  [
+   "the",
+   "link",
+   1,
+   0.02702702702702703
+  ],
+  [
+   "claim",
+   "your",
+   0,
+   0.75
+  ],
+  [
+   "claim",
+   "your",
+   1,
+   0.041176470588235294
+  ],
+  [
+   "free",
+   "prize",
+   0,
+   0.2
+  ],
+  [
+   "free",
+   "prize",
+   1,
+   0.01744186046511628
+  ],
+  [
+   "the",
+   "zebra",
+   0,
+   0.0
+  ],
+  [
+   "the",
+   "zebra",
+   1,
+   0.005405405405405406
+  ],
+  [
+   "zebra",
+   "the",
+   0,
+   0.0
+  ],
+  [
+   "zebra",
+   "the",
+   1,
+   0.006172839506172839
+  ]
+ ],
+ "sentence_log_probs": [
+  [
+   "click the link now",
+   0,
+   -4.205935627630563
+  ],
+  [
+   "click the link now",
+   1,
+   -11.779368898304217
+  ],
+  [
+   "claim your free prize",
+   0,
+   -3.218875824868201
+  ],
+  [
+   "claim your free prize",
+   1,
+   -10.80548229628002
+  ],
+  [
+   "the zebra won",
+   0,
+   "-inf"
+  ],
+  [
+   "the zebra won",
+   1,
+   -10.307952160310709
+  ]
+ ],
+ "greedy": {
+  "claim": [
+   "claim",
+   "your",
+   "free",
+   "entry",
+   "is",
+   "waiting",
+   "can",
+   "you",
+   "have"
+  ],
+  "the": [
+   "the",
+   "link",
+   "to",
+   "claim",
+   "your",
+   "free",
+   "entry",
+   "is",
+   "waiting"
+  ],
+  "you": [
+   "you",
+   "have",
+   "a",
+   "cash",
+   "every",
+   "week",
+   "reply",
+   "to",
+   "claim"
+  ],
+  "zebra": [
+   "zebra"
+  ]
+ },
+ "df": {
+  "sat": 2,
+  "the": 3,
+  "cat": 2,
+  "mat": 2,
+  "on": 2,
+  "dog": 2,
+  "log": 1,
+  "and": 1,
+  "a": 1,
+  "chase": 1,
+  "cats": 1,
+  "mice": 1,
+  "is": 1,
+  "red": 1
+ },
+ "idf": {
+  "sat": 0.9162907318741551,
+  "the": 0.5108256237659907,
+  "cat": 0.9162907318741551,
+  "mat": 0.9162907318741551,
+  "on": 0.9162907318741551,
+  "dog": 0.9162907318741551,
+  "log": 1.6094379124341003,
+  "and": 1.6094379124341003,
+  "a": 1.6094379124341003,
+  "chase": 1.6094379124341003,
+  "cats": 1.6094379124341003,
+  "mice": 1.6094379124341003,
+  "is": 1.6094379124341003,
+  "red": 1.6094379124341003
+ },
+ "tfidf": [
+  [
+   0.0,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.9162907318741551,
+   1.0216512475319814
+  ],
+  [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   1.6094379124341003,
+   0.0,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.9162907318741551,
+   1.0216512475319814
+  ],
+  [
+   3.2188758248682006,
+   1.6094379124341003,
+   0.9162907318741551,
+   0.0,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   0.0,
+   1.6094379124341003,
+   1.6094379124341003,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   1.6094379124341003,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   1.6094379124341003,
+   0.0,
+   0.9162907318741551,
+   0.0,
+   0.0,
+   1.6094379124341003,
+   0.0,
+   0.5108256237659907
+  ]
+ ],
+ "search": {
+  "cat on a mat": [
+   [
+    0.6963167799396388,
+    2
+   ],
+   [
+    0.5311121663103296,
+    0
+   ],
+   [
+    0.14974724969034608,
+    1
+   ],
+   [
+    0.14821015275313243,
+    4
+   ],
+   [
+    0.0,
+    3
+   ]
+  ],
+  "dog": [
+   [
+    0.3693991690056188,
+    1
+   ],
+   [
+    0.23955309665396704,
+    2
+   ],
+   [
+    0.0,
+    0
+   ],
+   [
+    0.0,
+    3
+   ],
+   [
+    0.0,
+    4
+   ]
+  ],
+  "red": [
+   [
+    0.6421787759289305,
+    4
+   ],
+   [
+    0.0,
+    0
+   ],
+   [
+    0.0,
+    1
+   ],
+   [
+    0.0,
+    2
+   ],
+   [
+    0.0,
+    3
+   ]
+  ],
+  "nothing here": [
+   [
+    0.0,
+    0
+   ],
+   [
+    0.0,
+    1
+   ],
+   [
+    0.0,
+    2
+   ],
+   [
+    0.0,
+    3
+   ],
+   [
+    0.0,
+    4
+   ]
+  ]
+ },
+ "nb": {
+  "k": 1.0,
+  "docs": {
+   "spam": 15,
+   "ham": 15
+  },
+  "words": {
+   "spam": {
+    "win": 5,
+    "a": 5,
+    "free": 7,
+    "phone": 2,
+    "now": 6,
+    "click": 4,
+    "the": 5,
+    "link": 5,
+    "to": 6,
+    "claim": 6,
+    "your": 9,
+    "prize": 4,
+    "congratulations": 1,
+    "you": 3,
+    "have": 2,
+    "won": 1,
+    "cash": 4,
+    "call": 2,
+    "urgent": 1,
+    "account": 2,
+    "is": 2,
+    "locked": 1,
+    "verify": 3,
+    "password": 1,
+    "at": 3,
+    "this": 2,
+    "gift": 1,
+    "card": 1,
+    "today": 1,
+    "limited": 2,
+    "offer": 2,
+    "are": 1,
+    "selected": 1,
+    "for": 2,
+    "reward": 1,
+    "reply": 2,
+    "yes": 1,
+    "cheap": 1,
+    "loans": 1,
+    "approved": 1,
+    "in": 1,
+    "minutes": 1,
+    "no": 1,
+    "credit": 1,
+    "check": 1,
+    "parcel": 1,
+    "waiting": 2,
+    "pay": 1,
+    "delivery": 1,
+    "fee": 1,
+    "exclusive": 1,
+    "deal": 1,
+    "holiday": 2,
+    "text": 1,
+    "final": 1,
+    "notice": 1,
+    "before": 1,
+    "midnight": 1,
+    "earn": 1,
+    "from": 1,
+    "home": 1,
+    "sign": 1,
+    "up": 1,
+    "been": 1,
+    "chosen": 1,
+    "act": 1,
+    "details": 1,
+    "will": 1,
+    "be": 1,
+    "closed": 1,
+    "here": 1,
+    "every": 1,
+    "week": 1,
+    "entry": 1,
+    "first": 1,
+    "ten": 1,
+    "callers": 1
+   },
+   "ham": {
+    "are": 1,
+    "we": 2,
+    "still": 2,
+    "meeting": 3,
+    "for": 3,
+    "lunch": 1,
+    "tomorrow": 2,
+    "can": 3,
+    "you": 6,
+    "pick": 1,
+    "up": 1,
+    "milk": 1,
+    "on": 1,
+    "the": 11,
+    "way": 1,
+    "home": 2,
+    "running": 1,
+    "ten": 1,
+    "minutes": 1,
+    "late": 1,
+    "sorry": 1,
+    "thanks": 1,
+    "notes": 1,
+    "from": 1,
+    "what": 1,
+    "time": 1,
+    "does": 1,
+    "film": 1,
+    "start": 1,
+    "tonight": 1,
+    "happy": 1,
+    "birthday": 1,
+    "hope": 1,
+    "have": 1,
+    "a": 1,
+    "great": 1,
+    "day": 1,
+    "i": 3,
+    "left": 1,
+    "my": 1,
+    "keys": 1,
+    "at": 3,
+    "your": 1,
+    "place": 1,
+    "come": 1,
+    "by": 1,
+    "later": 1,
+    "train": 1,
+    "is": 3,
+    "delayed": 1,
+    "see": 1,
+    "station": 1,
+    "did": 1,
+    "finish": 1,
+    "report": 1,
+    "monday": 1,
+    "dinner": 1,
+    "seven": 1,
+    "bring": 1,
+    "salad": 1,
+    "please": 1,
+    "move": 1,
+    "call": 2,
+    "to": 1,
+    "morning": 1,
+    "good": 1,
+    "luck": 1,
+    "with": 1,
+    "exam": 1,
+    "today": 1,
+    "let": 1,
+    "me": 1,
+    "know": 1,
+    "when": 1,
+    "get": 1,
+    "safe": 1,
+    "in": 1,
+    "room": 1,
+    "four": 1,
+    "will": 1,
+    "after": 1,
+    "work": 1
+   }
+  },
+  "totals": {
+   "spam": 149,
+   "ham": 114
+  },
+  "vocab": [
+   "a",
+   "account",
+   "act",
+   "after",
+   "approved",
+   "are",
+   "at",
+   "be",
+   "been",
+   "before",
+   "birthday",
+   "bring",
+   "by",
+   "call",
+   "callers",
+   "can",
+   "card",
+   "cash",
+   "cheap",
+   "check",
+   "chosen",
+   "claim",
+   "click",
+   "closed",
+   "come",
+   "congratulations",
+   "credit",
+   "day",
+   "deal",
+   "delayed",
+   "delivery",
+   "details",
+   "did",
+   "dinner",
+   "does",
+   "earn",
+   "entry",
+   "every",
+   "exam",
+   "exclusive",
+   "fee",
+   "film",
+   "final",
+   "finish",
+   "first",
+   "for",
+   "four",
+   "free",
+   "from",
+   "get",
+   "gift",
+   "good",
+   "great",
+   "happy",
+   "have",
+   "here",
+   "holiday",
+   "home",
+   "hope",
+   "i",
+   "in",
+   "is",
+   "keys",
+   "know",
+   "late",
+   "later",
+   "left",
+   "let",
+   "limited",
+   "link",
+   "loans",
+   "locked",
+   "luck",
+   "lunch",
+   "me",
+   "meeting",
+   "midnight",
+   "milk",
+   "minutes",
+   "monday",
+   "morning",
+   "move",
+   "my",
+   "no",
+   "notes",
+   "notice",
+   "now",
+   "offer",
+   "on",
+   "parcel",
+   "password",
+   "pay",
+   "phone",
+   "pick",
+   "place",
+   "please",
+   "prize",
+   "reply",
+   "report",
+   "reward",
+   "room",
+   "running",
+   "safe",
+   "salad",
+   "see",
+   "selected",
+   "seven",
+   "sign",
+   "sorry",
+   "start",
+   "station",
+   "still",
+   "ten",
+   "text",
+   "thanks",
+   "the",
+   "this",
+   "time",
+   "to",
+   "today",
+   "tomorrow",
+   "tonight",
+   "train",
+   "up",
+   "urgent",
+   "verify",
+   "waiting",
+   "way",
+   "we",
+   "week",
+   "what",
+   "when",
+   "will",
+   "win",
+   "with",
+   "won",
+   "work",
+   "yes",
+   "you",
+   "your"
+  ]
+ },
+ "nb_scores": {
+  "win a free prize now": {
+   "ham": -27.686671335092683,
+   "spam": -19.806972079496745
+  },
+  "are we meeting tomorrow": {
+   "ham": -18.565818129618034,
+   "spam": -22.66570675244973
+  },
+  "click the link": {
+   "ham": -14.820243331827555,
+   "spam": -12.499470394007032
+  },
+  "see you later": {
+   "ham": -13.972945471440351,
+   "spam": -16.30613288377735
+  },
+  "zzz qqq": {
+   "ham": -0.6931471805599453,
+   "spam": -0.6931471805599453
+  }
+ },
+ "nb_classify": {
+  "win a free prize now": [
+   "spam",
+   {
+    "ham": 0.0003782037331828684,
+    "spam": 0.9996217962668171
+   }
+  ],
+  "are we meeting tomorrow": [
+   "ham",
+   {
+    "ham": 0.9836957144069913,
+    "spam": 0.016304285593008734
+   }
+  ],
+  "click the link": [
+   "spam",
+   {
+    "ham": 0.08941710545689725,
+    "spam": 0.9105828945431028
+   }
+  ],
+  "see you later": [
+   "ham",
+   {
+    "ham": 0.9115885630177369,
+    "spam": 0.08841143698226302
+   }
+  ],
+  "zzz qqq": [
+   "ham",
+   {
+    "ham": 0.5,
+    "spam": 0.5
+   }
+  ]
+ },
+ "evaluate": {
+  "2": {
+   "accuracy": 0.7,
+   "confusion": {
+    "tp": 5,
+    "fp": 3,
+    "fn": 0,
+    "tn": 2
+   },
+   "precision": 0.625,
+   "recall": 1.0,
+   "f1": 0.7692307692307693
+  },
+  "4": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "6": {
+   "accuracy": 0.9,
+   "confusion": {
+    "tp": 5,
+    "fp": 1,
+    "fn": 0,
+    "tn": 4
+   },
+   "precision": 0.8333333333333334,
+   "recall": 1.0,
+   "f1": 0.9090909090909091
+  },
+  "8": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "10": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "12": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "14": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "16": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "18": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "20": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "22": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "24": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "26": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "28": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "30": {
+   "accuracy": 1.0,
+   "confusion": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 5
+   },
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  }
+ },
+ "intent_k1": {
+  "hello": {
+   "intent": null,
+   "confidence": 0.3980189659104377,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "is the shop open on saturday": {
+   "intent": null,
+   "confidence": 0.34224458604891306,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "my chain broke": {
+   "intent": null,
+   "confidence": 0.4125809392617038,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "where is my parcel": {
+   "intent": "order",
+   "confidence": 0.7529289213288763,
+   "reply": "You can track your order with the link in your confirmation email. Tell me the order number if it's late."
+  },
+  "thanks so much": {
+   "intent": null,
+   "confidence": 0.36699019512340986,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "bye then": {
+   "intent": null,
+   "confidence": 0.3865075079825985,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "do you sell pizza": {
+   "intent": null,
+   "confidence": 0.3536170006464694,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  },
+  "what is the meaning of life": {
+   "intent": null,
+   "confidence": 0.22094488438763774,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  }
+ },
+ "replies": {
+  "hello": {
+   "intent": "greeting",
+   "confidence": 0.8565267737996819,
+   "reply": "Hello! Welcome to the bike shop help desk. How can I help?"
+  },
+  "is the shop open on saturday": {
+   "intent": "hours",
+   "confidence": 0.6569929242863248,
+   "reply": "We're open 9am to 6pm, Monday to Saturday, and 10am to 4pm on Sunday."
+  },
+  "my chain broke": {
+   "intent": "order",
+   "confidence": 0.6378769765399395,
+   "reply": "You can track your order with the link in your confirmation email. Tell me the order number if it's late."
+  },
+  "where is my parcel": {
+   "intent": "order",
+   "confidence": 0.9958287808441906,
+   "reply": "You can track your order with the link in your confirmation email. Tell me the order number if it's late."
+  },
+  "thanks so much": {
+   "intent": "thanks",
+   "confidence": 0.7391388573495863,
+   "reply": "You're welcome!"
+  },
+  "bye then": {
+   "intent": "goodbye",
+   "confidence": 0.828597938202644,
+   "reply": "Goodbye, and happy riding!"
+  },
+  "do you sell pizza": {
+   "intent": "hours",
+   "confidence": 0.5375120582124079,
+   "reply": "We're open 9am to 6pm, Monday to Saturday, and 10am to 4pm on Sunday."
+  },
+  "what is the meaning of life": {
+   "intent": null,
+   "confidence": 0.31730651691596523,
+   "reply": "Sorry, I'm not sure what you mean. Could you put it another way?"
+  }
+ }
+}

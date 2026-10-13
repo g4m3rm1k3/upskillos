@@ -1,0 +1,201 @@
+"""Write engine/parity.json and engine/parity2.json: what the Python answers for each sample.
+
+engine/parity.test.js checks that the JavaScript engine gives the same answers.
+Run from the repository root:  python src/labs/nlp-studio/tools/make_parity.py
+"""
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", "python"))
+import text_basics as tb  # noqa: E402
+import parsing as ps  # noqa: E402
+import eliza  # noqa: E402
+
+SAMPLES = [
+    "",
+    "Hello, world!",
+    "Hello,  world!  ",
+    "Mr. Smith paid $3.50. Was it worth it? Yes!",
+    "Don't stop: e.g. this, i.e. that, etc. Then the U.S. economy grew.",
+    "café naïve résumé",
+    "snake_case and camelCase and 42nd street",
+    "Tabs\tand\nnew lines\n\nand   spaces.",
+    "emoji 🙂 are one character in Python",
+    "Dr. Who met St. John. They talked... a lot!!",
+    "the cat sat on the mat. The cat ate. the end",
+]
+
+out = []
+for text in SAMPLES:
+    counts = tb.word_counts(text)
+    out.append({
+        "text": text,
+        "utf8_bytes": tb.utf8_bytes(text),
+        "chars": len(text),
+        "char_counts": tb.count(text),
+        "split_words": tb.split_words(text),
+        "matches_str_split": tb.split_words(text) == text.split(),
+        "tokenize": tb.tokenize(text),
+        "tokenize_regex": tb.tokenize_regex(text),
+        "word_counts": counts,
+        "rank_table": [list(row) for row in tb.rank_table(counts)],
+        "split_sentences_naive": tb.split_sentences_naive(text),
+        "split_sentences": tb.split_sentences(text),
+    })
+
+path = os.path.join(HERE, "..", "engine", "parity.json")
+with open(path, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(out, handle, ensure_ascii=False, indent=1)
+    handle.write("\n")
+print(f"wrote {len(out)} samples to {os.path.normpath(path)}")
+
+
+# Part 2: parsing and Bot 1.
+SENTENCES = [
+    "i slept",
+    "she saw alice",
+    "the dog chased a cat",
+    "i saw the man with the telescope",
+    "i saw the man in the park with the telescope",
+    "she walked in the park on the hill",
+    "alice saw bob with a dog in the park on the hill",
+    "the dog saw",
+    "saw the dog",
+    "the dog with",
+]
+MESSAGES = [
+    "I need a holiday.", "i feel tired of my job", "I'm worried about you", "I am happy!",
+    "Because my boss said so", "Hello there", "My mother calls me every day", "Why are you here?",
+    "my dog bit me", "", "You are a machine.",
+]
+
+calls = {"n": 0}
+original = ps.parse_symbol
+
+
+def counted(symbol, words, i):
+    calls["n"] += 1
+    return original(symbol, words, i)
+
+
+ps.parse_symbol = counted  # parse_sequence looks parse_symbol up by name, so recursive calls are counted too
+
+part2 = {"sentences": [], "messages": [], "catalan": [ps.catalan(n) for n in range(10)], "heads": []}
+for sentence in SENTENCES:
+    words = sentence.split()
+    calls["n"] = 0
+    trees = ps.parse(sentence)
+    n_calls = calls["n"]
+    table = ps.cky(words)
+    part2["sentences"].append({
+        "sentence": sentence,
+        "trees": json.loads(json.dumps(trees)),
+        "brackets": [ps.bracket(t) for t in trees],
+        "leaves": [ps.leaves(t) for t in trees],
+        "dependencies": [ps.dependencies(t) for t in trees],
+        "calls": n_calls,
+        "chart": {f"{i},{j}": cell for (i, j), cell in table.items()},
+        "count_trees": ps.count_trees(words),
+    })
+for heads in [[2, 0, 4, 2], [0, 1, 2], [0, 0], [2, 1], [2, 0, 5, 2, 3], [3, 0, 2, 1], []]:
+    part2["heads"].append({"heads": heads, "is_tree": ps.is_tree(heads), "crossing_arcs": ps.crossing_arcs(heads)})
+for k, message in enumerate(MESSAGES):
+    part2["messages"].append({"message": message, "turn": k, "reply": eliza.respond(message, k),
+                              "reflect": eliza.reflect(message)})
+
+path2 = os.path.join(HERE, "..", "engine", "parity2.json")
+with open(path2, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part2, handle, ensure_ascii=False, indent=1)
+    handle.write("\n")
+print(f"wrote {len(SENTENCES)} sentences and {len(MESSAGES)} messages to {os.path.normpath(path2)}")
+
+
+# Part 3: counting, Naive Bayes, Bot 2.
+import counting as ct  # noqa: E402
+import bayes  # noqa: E402
+import data  # noqa: E402
+
+
+def finite(x):
+    """JSON has no infinity: write -inf as a string."""
+    return "-inf" if x == float("-inf") else x
+
+
+DOCS = ["the cat sat on the mat", "the dog sat on the log", "a cat and a dog", "cats chase mice", "the mat is red"]
+CORPUS = " ".join(text for text, _ in data.MESSAGES)
+corpus_words = ct.words(CORPUS)
+bigrams = ct.bigram_model(corpus_words)
+V = len(set(corpus_words))
+doc_words = [ct.words(d) for d in DOCS]
+vocab = ct.build_vocab(doc_words)
+weights = ct.idf(doc_words)
+nb = bayes.train_nb([(ct.words(t), l) for t, l in data.MESSAGES[:30]])
+intent_model = bayes.train_intents(data.INTENTS)
+TESTS = ["win a free prize now", "are we meeting tomorrow", "click the link", "see you later", "zzz qqq"]
+ASKS = ["hello", "is the shop open on saturday", "my chain broke", "where is my parcel", "thanks so much", "bye then", "do you sell pizza", "what is the meaning of life"]
+
+part3 = {
+    "messages": [list(m) for m in data.MESSAGES],
+    "intents": data.INTENTS,
+    "words": {d: ct.words(d) for d in DOCS + ["Mr. Smith's 2 cats!"]},
+    "vocab": vocab,
+    "vectors": [ct.vectorize(d, vocab) for d in doc_words],
+    "cosines": [[ct.cosine(ct.vectorize(a, vocab), ct.vectorize(b, vocab)) for b in doc_words] for a in doc_words],
+    "ngrams": [list(g) for g in ct.ngrams(doc_words[0], 3)],
+    "bigrams": bigrams,
+    "probs": [[w1, w2, k, ct.next_word_prob(bigrams, w1, w2, k, V)] for w1, w2 in [("the", "link"), ("claim", "your"), ("free", "prize"), ("the", "zebra"), ("zebra", "the")] for k in (0, 1)],
+    "sentence_log_probs": [[s, k, finite(ct.sentence_log_prob(bigrams, ct.words(s), k, V))] for s in ["click the link now", "claim your free prize", "the zebra won"] for k in (0, 1)],
+    "greedy": {w: ct.greedy_continue(bigrams, w, 8) for w in ["claim", "the", "you", "zebra"]},
+    "df": ct.document_frequency(doc_words),
+    "idf": weights,
+    "tfidf": [ct.tfidf_vector(d, vocab, weights) for d in doc_words],
+    "search": {q: [list(p) for p in ct.search(ct.words(q), doc_words)] for q in ["cat on a mat", "dog", "red", "nothing here"]},
+    "nb": nb,
+    "nb_scores": {t: {l: bayes.log_score(nb, ct.words(t), l) for l in sorted(nb["docs"])} for t in TESTS},
+    "nb_classify": {t: list(bayes.classify(nb, ct.words(t))) for t in TESTS},
+    "evaluate": {str(n): bayes.evaluate(data.MESSAGES[:n], data.MESSAGES[-10:], "spam") for n in range(2, 31, 2)},
+    "intent_k1": {m: bayes.intent_reply(bayes.train_intents(data.INTENTS, 1.0), data.INTENTS, m) for m in ASKS},
+    "replies": {m: bayes.intent_reply(intent_model, data.INTENTS, m) for m in ASKS},
+}
+path3 = os.path.join(HERE, "..", "engine", "parity3.json")
+with open(path3, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part3, handle, ensure_ascii=False, indent=1)
+    handle.write("\n")
+print(f"wrote Part 3 to {os.path.normpath(path3)}")
+
+
+# Part 4: word vectors.
+import vectors as vx  # noqa: E402
+from corpus import SENTENCES as BIKE  # noqa: E402
+
+rng = vx.Rng(1)
+bike_words = [ct.words(s) for s in BIKE]
+co_vocab, co_counts = vx.cooccurrence(bike_words)
+co_ppmi = vx.ppmi(co_counts)
+w_vocab, w_vecs, w_losses = vx.train_bike_vectors(BIKE)
+mean, directions = vx.top_directions(w_vecs)
+WATCH = ["chain", "tyre", "brake", "snapped", "open", "monday", "order", "parcel", "hello", "thanks"]
+part4 = {
+    "sentences": BIKE,
+    "rng": [rng.random() for _ in range(5)] + [vx.Rng(7).below(116) for _ in range(1)],
+    "cooc_vocab": co_vocab,
+    "cooc_rows": {w: co_counts[co_vocab.index(w)] for w in WATCH},
+    "ppmi_rows": {w: co_ppmi[co_vocab.index(w)] for w in WATCH},
+    "ppmi_nearest": {w: [list(p) for p in vx.nearest(co_vocab, co_ppmi, w, 4)] for w in WATCH},
+    "pair_gradient": [list(map(list, vx.pair_gradient([0.5, -1.0, 2.0], [1.0, 0.25, -0.5], label))) for label in (1, 0)],
+    "vocab": w_vocab,
+    "vectors": w_vecs,
+    "losses": w_losses,
+    "nearest": {w: [list(p) for p in vx.nearest(w_vocab, w_vecs, w, 4)] for w in WATCH},
+    "map": {"mean": mean, "directions": directions, "points": vx.project(w_vecs, mean, directions)},
+    "analogies": [[a, b, c, list(vx.analogy(w_vocab, w_vecs, a, b, c))] for a, b, c in [("chain", "chains", "tyre"), ("morning", "open", "evening"), ("order", "parcel", "repair")]],
+    "replies": {q: vx.semantic_reply(data.INTENTS, w_vocab, w_vecs, q) for q in ["my chain snapped", "my tyre is flat", "my wheel is bent", "do you sell pizza", "is the shop open on saturday", "the delivery is late", "hello", "what is the meaning of life"]},
+    "content_words": {q: vx.content_words(q) for q in ["do you sell pizza", "is the shop open on saturday"]},
+}
+path4 = os.path.join(HERE, "..", "engine", "parity4.json")
+with open(path4, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part4, handle, ensure_ascii=False)
+    handle.write("\n")
+print(f"wrote Part 4 to {os.path.normpath(path4)}")

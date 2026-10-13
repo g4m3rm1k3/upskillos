@@ -1,0 +1,1467 @@
+[
+ {
+  "text": "",
+  "utf8_bytes": [],
+  "chars": 0,
+  "char_counts": {},
+  "split_words": [],
+  "matches_str_split": true,
+  "tokenize": [],
+  "tokenize_regex": [],
+  "word_counts": {},
+  "rank_table": [],
+  "split_sentences_naive": [],
+  "split_sentences": []
+ },
+ {
+  "text": "Hello, world!",
+  "utf8_bytes": [
+   72,
+   101,
+   108,
+   108,
+   111,
+   44,
+   32,
+   119,
+   111,
+   114,
+   108,
+   100,
+   33
+  ],
+  "chars": 13,
+  "char_counts": {
+   "H": 1,
+   "e": 1,
+   "l": 3,
+   "o": 2,
+   ",": 1,
+   " ": 1,
+   "w": 1,
+   "r": 1,
+   "d": 1,
+   "!": 1
+  },
+  "split_words": [
+   "Hello,",
+   "world!"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Hello",
+   ",",
+   "world",
+   "!"
+  ],
+  "tokenize_regex": [
+   "Hello",
+   ",",
+   "world",
+   "!"
+  ],
+  "word_counts": {
+   "hello": 1,
+   "world": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "hello",
+    1
+   ],
+   [
+    2,
+    "world",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Hello, world!"
+  ],
+  "split_sentences": [
+   "Hello, world!"
+  ]
+ },
+ {
+  "text": "Hello,  world!  ",
+  "utf8_bytes": [
+   72,
+   101,
+   108,
+   108,
+   111,
+   44,
+   32,
+   32,
+   119,
+   111,
+   114,
+   108,
+   100,
+   33,
+   32,
+   32
+  ],
+  "chars": 16,
+  "char_counts": {
+   "H": 1,
+   "e": 1,
+   "l": 3,
+   "o": 2,
+   ",": 1,
+   " ": 4,
+   "w": 1,
+   "r": 1,
+   "d": 1,
+   "!": 1
+  },
+  "split_words": [
+   "Hello,",
+   "world!"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Hello",
+   ",",
+   "world",
+   "!"
+  ],
+  "tokenize_regex": [
+   "Hello",
+   ",",
+   "world",
+   "!"
+  ],
+  "word_counts": {
+   "hello": 1,
+   "world": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "hello",
+    1
+   ],
+   [
+    2,
+    "world",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Hello,  world!"
+  ],
+  "split_sentences": [
+   "Hello,  world!"
+  ]
+ },
+ {
+  "text": "Mr. Smith paid $3.50. Was it worth it? Yes!",
+  "utf8_bytes": [
+   77,
+   114,
+   46,
+   32,
+   83,
+   109,
+   105,
+   116,
+   104,
+   32,
+   112,
+   97,
+   105,
+   100,
+   32,
+   36,
+   51,
+   46,
+   53,
+   48,
+   46,
+   32,
+   87,
+   97,
+   115,
+   32,
+   105,
+   116,
+   32,
+   119,
+   111,
+   114,
+   116,
+   104,
+   32,
+   105,
+   116,
+   63,
+   32,
+   89,
+   101,
+   115,
+   33
+  ],
+  "chars": 43,
+  "char_counts": {
+   "M": 1,
+   "r": 2,
+   ".": 3,
+   " ": 8,
+   "S": 1,
+   "m": 1,
+   "i": 4,
+   "t": 4,
+   "h": 2,
+   "p": 1,
+   "a": 2,
+   "d": 1,
+   "$": 1,
+   "3": 1,
+   "5": 1,
+   "0": 1,
+   "W": 1,
+   "s": 2,
+   "w": 1,
+   "o": 1,
+   "?": 1,
+   "Y": 1,
+   "e": 1,
+   "!": 1
+  },
+  "split_words": [
+   "Mr.",
+   "Smith",
+   "paid",
+   "$3.50.",
+   "Was",
+   "it",
+   "worth",
+   "it?",
+   "Yes!"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Mr",
+   ".",
+   "Smith",
+   "paid",
+   "$",
+   "3",
+   ".",
+   "50",
+   ".",
+   "Was",
+   "it",
+   "worth",
+   "it",
+   "?",
+   "Yes",
+   "!"
+  ],
+  "tokenize_regex": [
+   "Mr",
+   ".",
+   "Smith",
+   "paid",
+   "$",
+   "3",
+   ".",
+   "50",
+   ".",
+   "Was",
+   "it",
+   "worth",
+   "it",
+   "?",
+   "Yes",
+   "!"
+  ],
+  "word_counts": {
+   "mr": 1,
+   "smith": 1,
+   "paid": 1,
+   "3": 1,
+   "50": 1,
+   "was": 1,
+   "it": 2,
+   "worth": 1,
+   "yes": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "it",
+    2
+   ],
+   [
+    2,
+    "3",
+    1
+   ],
+   [
+    3,
+    "50",
+    1
+   ],
+   [
+    4,
+    "mr",
+    1
+   ],
+   [
+    5,
+    "paid",
+    1
+   ],
+   [
+    6,
+    "smith",
+    1
+   ],
+   [
+    7,
+    "was",
+    1
+   ],
+   [
+    8,
+    "worth",
+    1
+   ],
+   [
+    9,
+    "yes",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Mr.",
+   "Smith paid $3.",
+   "50.",
+   "Was it worth it?",
+   "Yes!"
+  ],
+  "split_sentences": [
+   "Mr. Smith paid $3.50.",
+   "Was it worth it?",
+   "Yes!"
+  ]
+ },
+ {
+  "text": "Don't stop: e.g. this, i.e. that, etc. Then the U.S. economy grew.",
+  "utf8_bytes": [
+   68,
+   111,
+   110,
+   39,
+   116,
+   32,
+   115,
+   116,
+   111,
+   112,
+   58,
+   32,
+   101,
+   46,
+   103,
+   46,
+   32,
+   116,
+   104,
+   105,
+   115,
+   44,
+   32,
+   105,
+   46,
+   101,
+   46,
+   32,
+   116,
+   104,
+   97,
+   116,
+   44,
+   32,
+   101,
+   116,
+   99,
+   46,
+   32,
+   84,
+   104,
+   101,
+   110,
+   32,
+   116,
+   104,
+   101,
+   32,
+   85,
+   46,
+   83,
+   46,
+   32,
+   101,
+   99,
+   111,
+   110,
+   111,
+   109,
+   121,
+   32,
+   103,
+   114,
+   101,
+   119,
+   46
+  ],
+  "chars": 66,
+  "char_counts": {
+   "D": 1,
+   "o": 4,
+   "n": 3,
+   "'": 1,
+   "t": 7,
+   " ": 11,
+   "s": 2,
+   "p": 1,
+   ":": 1,
+   "e": 7,
+   ".": 8,
+   "g": 2,
+   "h": 4,
+   "i": 2,
+   ",": 2,
+   "a": 1,
+   "c": 2,
+   "T": 1,
+   "U": 1,
+   "S": 1,
+   "m": 1,
+   "y": 1,
+   "r": 1,
+   "w": 1
+  },
+  "split_words": [
+   "Don't",
+   "stop:",
+   "e.g.",
+   "this,",
+   "i.e.",
+   "that,",
+   "etc.",
+   "Then",
+   "the",
+   "U.S.",
+   "economy",
+   "grew."
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Don",
+   "'",
+   "t",
+   "stop",
+   ":",
+   "e",
+   ".",
+   "g",
+   ".",
+   "this",
+   ",",
+   "i",
+   ".",
+   "e",
+   ".",
+   "that",
+   ",",
+   "etc",
+   ".",
+   "Then",
+   "the",
+   "U",
+   ".",
+   "S",
+   ".",
+   "economy",
+   "grew",
+   "."
+  ],
+  "tokenize_regex": [
+   "Don",
+   "'",
+   "t",
+   "stop",
+   ":",
+   "e",
+   ".",
+   "g",
+   ".",
+   "this",
+   ",",
+   "i",
+   ".",
+   "e",
+   ".",
+   "that",
+   ",",
+   "etc",
+   ".",
+   "Then",
+   "the",
+   "U",
+   ".",
+   "S",
+   ".",
+   "economy",
+   "grew",
+   "."
+  ],
+  "word_counts": {
+   "don": 1,
+   "t": 1,
+   "stop": 1,
+   "e": 2,
+   "g": 1,
+   "this": 1,
+   "i": 1,
+   "that": 1,
+   "etc": 1,
+   "then": 1,
+   "the": 1,
+   "u": 1,
+   "s": 1,
+   "economy": 1,
+   "grew": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "e",
+    2
+   ],
+   [
+    2,
+    "don",
+    1
+   ],
+   [
+    3,
+    "economy",
+    1
+   ],
+   [
+    4,
+    "etc",
+    1
+   ],
+   [
+    5,
+    "g",
+    1
+   ],
+   [
+    6,
+    "grew",
+    1
+   ],
+   [
+    7,
+    "i",
+    1
+   ],
+   [
+    8,
+    "s",
+    1
+   ],
+   [
+    9,
+    "stop",
+    1
+   ],
+   [
+    10,
+    "t",
+    1
+   ],
+   [
+    11,
+    "that",
+    1
+   ],
+   [
+    12,
+    "the",
+    1
+   ],
+   [
+    13,
+    "then",
+    1
+   ],
+   [
+    14,
+    "this",
+    1
+   ],
+   [
+    15,
+    "u",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Don't stop: e.",
+   "g.",
+   "this, i.",
+   "e.",
+   "that, etc.",
+   "Then the U.",
+   "S.",
+   "economy grew."
+  ],
+  "split_sentences": [
+   "Don't stop: e.g. this, i.e. that, etc. Then the U.S.",
+   "economy grew."
+  ]
+ },
+ {
+  "text": "café naïve résumé",
+  "utf8_bytes": [
+   99,
+   97,
+   102,
+   195,
+   169,
+   32,
+   110,
+   97,
+   195,
+   175,
+   118,
+   101,
+   32,
+   114,
+   195,
+   169,
+   115,
+   117,
+   109,
+   195,
+   169
+  ],
+  "chars": 17,
+  "char_counts": {
+   "c": 1,
+   "a": 2,
+   "f": 1,
+   "é": 3,
+   " ": 2,
+   "n": 1,
+   "ï": 1,
+   "v": 1,
+   "e": 1,
+   "r": 1,
+   "s": 1,
+   "u": 1,
+   "m": 1
+  },
+  "split_words": [
+   "café",
+   "naïve",
+   "résumé"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "café",
+   "naïve",
+   "résumé"
+  ],
+  "tokenize_regex": [
+   "café",
+   "naïve",
+   "résumé"
+  ],
+  "word_counts": {
+   "café": 1,
+   "naïve": 1,
+   "résumé": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "café",
+    1
+   ],
+   [
+    2,
+    "naïve",
+    1
+   ],
+   [
+    3,
+    "résumé",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "café naïve résumé"
+  ],
+  "split_sentences": [
+   "café naïve résumé"
+  ]
+ },
+ {
+  "text": "snake_case and camelCase and 42nd street",
+  "utf8_bytes": [
+   115,
+   110,
+   97,
+   107,
+   101,
+   95,
+   99,
+   97,
+   115,
+   101,
+   32,
+   97,
+   110,
+   100,
+   32,
+   99,
+   97,
+   109,
+   101,
+   108,
+   67,
+   97,
+   115,
+   101,
+   32,
+   97,
+   110,
+   100,
+   32,
+   52,
+   50,
+   110,
+   100,
+   32,
+   115,
+   116,
+   114,
+   101,
+   101,
+   116
+  ],
+  "chars": 40,
+  "char_counts": {
+   "s": 4,
+   "n": 4,
+   "a": 6,
+   "k": 1,
+   "e": 6,
+   "_": 1,
+   "c": 2,
+   " ": 5,
+   "d": 3,
+   "m": 1,
+   "l": 1,
+   "C": 1,
+   "4": 1,
+   "2": 1,
+   "t": 2,
+   "r": 1
+  },
+  "split_words": [
+   "snake_case",
+   "and",
+   "camelCase",
+   "and",
+   "42nd",
+   "street"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "snake_case",
+   "and",
+   "camelCase",
+   "and",
+   "42nd",
+   "street"
+  ],
+  "tokenize_regex": [
+   "snake_case",
+   "and",
+   "camelCase",
+   "and",
+   "42nd",
+   "street"
+  ],
+  "word_counts": {
+   "snake_case": 1,
+   "and": 2,
+   "camelcase": 1,
+   "42nd": 1,
+   "street": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "and",
+    2
+   ],
+   [
+    2,
+    "42nd",
+    1
+   ],
+   [
+    3,
+    "camelcase",
+    1
+   ],
+   [
+    4,
+    "snake_case",
+    1
+   ],
+   [
+    5,
+    "street",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "snake_case and camelCase and 42nd street"
+  ],
+  "split_sentences": [
+   "snake_case and camelCase and 42nd street"
+  ]
+ },
+ {
+  "text": "Tabs\tand\nnew lines\n\nand   spaces.",
+  "utf8_bytes": [
+   84,
+   97,
+   98,
+   115,
+   9,
+   97,
+   110,
+   100,
+   10,
+   110,
+   101,
+   119,
+   32,
+   108,
+   105,
+   110,
+   101,
+   115,
+   10,
+   10,
+   97,
+   110,
+   100,
+   32,
+   32,
+   32,
+   115,
+   112,
+   97,
+   99,
+   101,
+   115,
+   46
+  ],
+  "chars": 33,
+  "char_counts": {
+   "T": 1,
+   "a": 4,
+   "b": 1,
+   "s": 4,
+   "\t": 1,
+   "n": 4,
+   "d": 2,
+   "\n": 3,
+   "e": 3,
+   "w": 1,
+   " ": 4,
+   "l": 1,
+   "i": 1,
+   "p": 1,
+   "c": 1,
+   ".": 1
+  },
+  "split_words": [
+   "Tabs",
+   "and",
+   "new",
+   "lines",
+   "and",
+   "spaces."
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Tabs",
+   "and",
+   "new",
+   "lines",
+   "and",
+   "spaces",
+   "."
+  ],
+  "tokenize_regex": [
+   "Tabs",
+   "and",
+   "new",
+   "lines",
+   "and",
+   "spaces",
+   "."
+  ],
+  "word_counts": {
+   "tabs": 1,
+   "and": 2,
+   "new": 1,
+   "lines": 1,
+   "spaces": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "and",
+    2
+   ],
+   [
+    2,
+    "lines",
+    1
+   ],
+   [
+    3,
+    "new",
+    1
+   ],
+   [
+    4,
+    "spaces",
+    1
+   ],
+   [
+    5,
+    "tabs",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Tabs\tand\nnew lines\n\nand   spaces."
+  ],
+  "split_sentences": [
+   "Tabs\tand\nnew lines\n\nand   spaces."
+  ]
+ },
+ {
+  "text": "emoji 🙂 are one character in Python",
+  "utf8_bytes": [
+   101,
+   109,
+   111,
+   106,
+   105,
+   32,
+   240,
+   159,
+   153,
+   130,
+   32,
+   97,
+   114,
+   101,
+   32,
+   111,
+   110,
+   101,
+   32,
+   99,
+   104,
+   97,
+   114,
+   97,
+   99,
+   116,
+   101,
+   114,
+   32,
+   105,
+   110,
+   32,
+   80,
+   121,
+   116,
+   104,
+   111,
+   110
+  ],
+  "chars": 35,
+  "char_counts": {
+   "e": 4,
+   "m": 1,
+   "o": 3,
+   "j": 1,
+   "i": 2,
+   " ": 6,
+   "🙂": 1,
+   "a": 3,
+   "r": 3,
+   "n": 3,
+   "c": 2,
+   "h": 2,
+   "t": 2,
+   "P": 1,
+   "y": 1
+  },
+  "split_words": [
+   "emoji",
+   "🙂",
+   "are",
+   "one",
+   "character",
+   "in",
+   "Python"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "emoji",
+   "🙂",
+   "are",
+   "one",
+   "character",
+   "in",
+   "Python"
+  ],
+  "tokenize_regex": [
+   "emoji",
+   "🙂",
+   "are",
+   "one",
+   "character",
+   "in",
+   "Python"
+  ],
+  "word_counts": {
+   "emoji": 1,
+   "are": 1,
+   "one": 1,
+   "character": 1,
+   "in": 1,
+   "python": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "are",
+    1
+   ],
+   [
+    2,
+    "character",
+    1
+   ],
+   [
+    3,
+    "emoji",
+    1
+   ],
+   [
+    4,
+    "in",
+    1
+   ],
+   [
+    5,
+    "one",
+    1
+   ],
+   [
+    6,
+    "python",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "emoji 🙂 are one character in Python"
+  ],
+  "split_sentences": [
+   "emoji 🙂 are one character in Python"
+  ]
+ },
+ {
+  "text": "Dr. Who met St. John. They talked... a lot!!",
+  "utf8_bytes": [
+   68,
+   114,
+   46,
+   32,
+   87,
+   104,
+   111,
+   32,
+   109,
+   101,
+   116,
+   32,
+   83,
+   116,
+   46,
+   32,
+   74,
+   111,
+   104,
+   110,
+   46,
+   32,
+   84,
+   104,
+   101,
+   121,
+   32,
+   116,
+   97,
+   108,
+   107,
+   101,
+   100,
+   46,
+   46,
+   46,
+   32,
+   97,
+   32,
+   108,
+   111,
+   116,
+   33,
+   33
+  ],
+  "chars": 44,
+  "char_counts": {
+   "D": 1,
+   "r": 1,
+   ".": 6,
+   " ": 8,
+   "W": 1,
+   "h": 3,
+   "o": 3,
+   "m": 1,
+   "e": 3,
+   "t": 4,
+   "S": 1,
+   "J": 1,
+   "n": 1,
+   "T": 1,
+   "y": 1,
+   "a": 2,
+   "l": 2,
+   "k": 1,
+   "d": 1,
+   "!": 2
+  },
+  "split_words": [
+   "Dr.",
+   "Who",
+   "met",
+   "St.",
+   "John.",
+   "They",
+   "talked...",
+   "a",
+   "lot!!"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "Dr",
+   ".",
+   "Who",
+   "met",
+   "St",
+   ".",
+   "John",
+   ".",
+   "They",
+   "talked",
+   ".",
+   ".",
+   ".",
+   "a",
+   "lot",
+   "!",
+   "!"
+  ],
+  "tokenize_regex": [
+   "Dr",
+   ".",
+   "Who",
+   "met",
+   "St",
+   ".",
+   "John",
+   ".",
+   "They",
+   "talked",
+   ".",
+   ".",
+   ".",
+   "a",
+   "lot",
+   "!",
+   "!"
+  ],
+  "word_counts": {
+   "dr": 1,
+   "who": 1,
+   "met": 1,
+   "st": 1,
+   "john": 1,
+   "they": 1,
+   "talked": 1,
+   "a": 1,
+   "lot": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "a",
+    1
+   ],
+   [
+    2,
+    "dr",
+    1
+   ],
+   [
+    3,
+    "john",
+    1
+   ],
+   [
+    4,
+    "lot",
+    1
+   ],
+   [
+    5,
+    "met",
+    1
+   ],
+   [
+    6,
+    "st",
+    1
+   ],
+   [
+    7,
+    "talked",
+    1
+   ],
+   [
+    8,
+    "they",
+    1
+   ],
+   [
+    9,
+    "who",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "Dr.",
+   "Who met St.",
+   "John.",
+   "They talked.",
+   ".",
+   ".",
+   "a lot!",
+   "!"
+  ],
+  "split_sentences": [
+   "Dr. Who met St. John.",
+   "They talked...",
+   "a lot!!"
+  ]
+ },
+ {
+  "text": "the cat sat on the mat. The cat ate. the end",
+  "utf8_bytes": [
+   116,
+   104,
+   101,
+   32,
+   99,
+   97,
+   116,
+   32,
+   115,
+   97,
+   116,
+   32,
+   111,
+   110,
+   32,
+   116,
+   104,
+   101,
+   32,
+   109,
+   97,
+   116,
+   46,
+   32,
+   84,
+   104,
+   101,
+   32,
+   99,
+   97,
+   116,
+   32,
+   97,
+   116,
+   101,
+   46,
+   32,
+   116,
+   104,
+   101,
+   32,
+   101,
+   110,
+   100
+  ],
+  "chars": 44,
+  "char_counts": {
+   "t": 8,
+   "h": 4,
+   "e": 6,
+   " ": 10,
+   "c": 2,
+   "a": 5,
+   "s": 1,
+   "o": 1,
+   "n": 2,
+   "m": 1,
+   ".": 2,
+   "T": 1,
+   "d": 1
+  },
+  "split_words": [
+   "the",
+   "cat",
+   "sat",
+   "on",
+   "the",
+   "mat.",
+   "The",
+   "cat",
+   "ate.",
+   "the",
+   "end"
+  ],
+  "matches_str_split": true,
+  "tokenize": [
+   "the",
+   "cat",
+   "sat",
+   "on",
+   "the",
+   "mat",
+   ".",
+   "The",
+   "cat",
+   "ate",
+   ".",
+   "the",
+   "end"
+  ],
+  "tokenize_regex": [
+   "the",
+   "cat",
+   "sat",
+   "on",
+   "the",
+   "mat",
+   ".",
+   "The",
+   "cat",
+   "ate",
+   ".",
+   "the",
+   "end"
+  ],
+  "word_counts": {
+   "the": 4,
+   "cat": 2,
+   "sat": 1,
+   "on": 1,
+   "mat": 1,
+   "ate": 1,
+   "end": 1
+  },
+  "rank_table": [
+   [
+    1,
+    "the",
+    4
+   ],
+   [
+    2,
+    "cat",
+    2
+   ],
+   [
+    3,
+    "ate",
+    1
+   ],
+   [
+    4,
+    "end",
+    1
+   ],
+   [
+    5,
+    "mat",
+    1
+   ],
+   [
+    6,
+    "on",
+    1
+   ],
+   [
+    7,
+    "sat",
+    1
+   ]
+  ],
+  "split_sentences_naive": [
+   "the cat sat on the mat.",
+   "The cat ate.",
+   "the end"
+  ],
+  "split_sentences": [
+   "the cat sat on the mat.",
+   "The cat ate.",
+   "the end"
+  ]
+ }
+]

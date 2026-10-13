@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 66,
+    "labs": 68,
     "games": 16
   },
   "courses": [
@@ -574,6 +574,12 @@
       "path": "/logic-sim"
     },
     {
+      "id": "math-for-ml",
+      "label": "Math for ML Lab",
+      "kind": "lab",
+      "path": "/lab/math-for-ml"
+    },
+    {
       "id": "matrix-3d-lab",
       "label": "Matrix 3D Lab",
       "kind": "lab",
@@ -614,6 +620,12 @@
       "label": "Neural Net Lab",
       "kind": "lab",
       "path": "/lab/neural-net-lab"
+    },
+    {
+      "id": "nlp-studio",
+      "label": "NLP Studio",
+      "kind": "lab",
+      "path": "/lab/nlp-studio"
     },
     {
       "id": "notebook-lab",

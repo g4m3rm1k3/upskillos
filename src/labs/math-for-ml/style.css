@@ -1,0 +1,27 @@
+.math-ml-lab .math-sidebar-note{font-size:12px;color:var(--muted);margin:22px 10px}
+.math-ml-lab .math-views{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.math-ml-lab .math-scene{width:170px;max-width:100%;flex:0 1 170px}
+.math-ml-lab svg text{font:12px Inter,system-ui,sans-serif;fill:var(--ink)}
+.math-ml-lab .math-graph{flex:1 1 310px;min-width:0;width:100%;max-width:530px}
+.math-ml-lab .math-observe{flex:1;min-width:150px;max-width:340px}
+.math-ml-lab .math-table{border-collapse:collapse;font-variant-numeric:tabular-nums;margin:auto}
+.math-ml-lab .math-table th,.math-ml-lab .math-table td{padding:6px 12px;border-bottom:1px solid var(--line);text-align:right}
+.math-ml-lab .math-table caption{font-size:12px;color:var(--muted)}
+.math-ml-lab .math-table .selected{background:#e3f1eb}
+.math-ml-lab .math-interval{border-top:1px solid var(--line);padding-top:14px;margin-top:10px}
+.math-ml-lab .math-quantities{display:flex;gap:8px;flex-wrap:wrap}
+.math-ml-lab .math-quantities button{display:flex;gap:16px;align-items:center}
+.math-ml-lab .math-quantities button[aria-pressed=true]{border-color:var(--accent);background:#fbf1e1}
+.math-ml-lab .math-quantities b{font-size:20px}
+.math-ml-lab .math-explanation{padding:12px;background:#fbf1e1;border-radius:6px;min-height:80px}
+.math-ml-lab .math-model{font-size:12px;color:var(--muted);margin-top:14px}
+.math-ml-lab .math-model summary{cursor:pointer}
+@media(max-width:700px){
+  .math-ml-lab .qm-body{flex-direction:column}
+  .math-ml-lab .qm-sidebar{width:100%;max-height:155px;border-right:0;border-bottom:1px solid var(--line)}
+  .math-ml-lab .math-sidebar-note{display:none}
+  .math-ml-lab .qm-main{min-height:0;padding:16px 12px}
+  .math-ml-lab .qm-header{padding:10px 12px}
+  .math-ml-lab .math-scene{flex-basis:140px;width:140px}
+  .math-ml-lab .qm-slider input{width:125px}
+}

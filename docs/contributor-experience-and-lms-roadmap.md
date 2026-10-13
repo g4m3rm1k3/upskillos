@@ -19,6 +19,11 @@ Status markers:
 - **In progress** must include a branch or pull-request link when one exists;
 - **Blocked** must name the decision or dependency that blocks it.
 
+### Math for ML Lab (2026-10-12)
+
+- [x] First-principles opening chapter in the QMaze/Neural Net Lab theme: observation, measurement, functions and graphs, signed change, and average velocity through an interactive 2D falling-ball story. Scoped tests, typecheck, catalog check and browser interaction checks pass. See [scope and verification](math-for-ml-lab.md).
+- [ ] Full calculus, linear algebra, and statistics/probability strands remain planned, converging on model fitting, uncertainty, optimization, and connected models. Linear algebra and statistics each develop from their own first principles.
+
 ### KartLab: reinforcement learning in a racing game (2026-10-11)
 
 - [x] First lane-based 3D circuit, guided lessons and live update figures, Q-learning/SARSA/Double Q-learning in a worker, saved policy checkpoints, common held-out evaluation, human-versus-model racing, spectator cameras and decision replay. See [scope and verification](kart-lab.md).
