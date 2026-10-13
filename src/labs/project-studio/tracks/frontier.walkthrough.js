@@ -433,4 +433,179 @@ export const WALKTHROUGH = {
       { name: 'committed but did not push', run: COMMIT('Build a hash table by hand'), fails: [1] },
     ],
   },
+
+  // ── 2.3 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-03-always-the-smallest-first#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-03-always-the-smallest-first#The slow way`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${C}/02-03-always-the-smallest-first#A tree kept in a list`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'halved the position for the parent', edit: [['return (i - 1) // 2', 'return i // 2']], fails: [0] },
+    ],
+  },
+  [`${C}/02-03-always-the-smallest-first#Push: sift up`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'swapped only once', edit: [['        heap[i], heap[parent(i)] = heap[parent(i)], heap[i]\n        i = parent(i)', '        heap[i], heap[parent(i)] = heap[parent(i)], heap[i]\n        break']], fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-03-always-the-smallest-first#Sift down`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'always swapped with the left child', edit: [['        if right(i) < len(heap) and heap[right(i)] < heap[child]:\n            child = right(i)\n', '']], fails: [0] },
+    ],
+  },
+  [`${C}/02-03-always-the-smallest-first#Taking the smallest out`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'moved the last item up but did not sift it down', edit: [['        heap[0] = last\n        sift_down(heap, 0)', '        heap[0] = last']], fails: [0] },
+    ],
+  },
+  [`${C}/02-03-always-the-smallest-first#Measure it`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${C}/02-03-always-the-smallest-first#Your turn: the k largest`]: {
+    files: { 'src/frontier/heap.py': answer(C, 'heap-2.3.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 2] },
+      { name: 'sorted them all instead', files: { 'src/frontier/heap.py': answerWith(C, 'heap-2.3.py', [['    smallest_first = [pop_smallest(heap) for _ in range(len(heap))]\n    return smallest_first[::-1]', '    return sorted(numbers, reverse=True)[:k]']]) }, fails: [1] },
+      { name: 'did not reverse them', files: { 'src/frontier/heap.py': answerWith(C, 'heap-2.3.py', [['return smallest_first[::-1]', 'return smallest_first']]) }, fails: [0, 2] },
+    ],
+  },
+  [`${C}/02-03-always-the-smallest-first#Python's own, and onto GitHub`]: {
+    run: [...COMMIT('Build a heap by hand'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Build a heap by hand'), fails: [1] },
+    ],
+  },
+
+  // ── 2.4 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-04-a-function-that-calls-itself#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#A node with children`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'gave children a plain [] default', edit: [['field(default_factory=list)', '[]']], fails: [0] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Counting by calling itself`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'did not count the node itself', edit: [['return 1 + sum(count(child)', 'return sum(count(child)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Depth and order`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'took the shallowest child', edit: [['1 + max((depth(child)', '1 + min((depth(child)']], fails: [0] },
+      { name: 'appended each child\'s list whole', edit: [['found.extend(labels(child))', 'found.append(labels(child))']], fails: [1, 2] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Read the game's tests`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#A board as a string`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'let three empty squares win', edit: [['if board[a] != "." and board[a] == board[b] == board[c]:', 'if board[a] == board[b] == board[c]:']], fails: [0] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Every game, counted`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'stopped only at a full board', edit: [['if winner(board) or "." not in board:', 'if "." not in board:']], fails: [0] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Your turn: who wins?`]: {
+    files: { 'src/frontier/tictactoe.py': answer(C, 'tictactoe-2.4.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'counted a draw as nothing', files: { 'src/frontier/tictactoe.py': answerWith(C, 'tictactoe-2.4.py', [['return {"draw": 1}', 'return {}']]) }, fails: [0, 1] },
+      { name: 'replaced the counts instead of adding them', files: { 'src/frontier/tictactoe.py': answerWith(C, 'tictactoe-2.4.py', [['total[result] = total.get(result, 0) + games', 'total[result] = games']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-04-a-function-that-calls-itself#Too big to count, and onto GitHub`]: {
+    run: [...COMMIT('Walk trees by recursion, and count every game of noughts and crosses'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Walk trees by recursion, and count every game of noughts and crosses'), fails: [1] },
+    ],
+  },
+
+  // ── 2.5 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-05-what-comes-first#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-05-what-comes-first#Visit what it needs first`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'added the node before its needs', edit: [['    for need in graph.get(node, []):\n        visit(graph, need, result)\n    result.append(node)', '    result.append(node)\n    for need in graph.get(node, []):\n        visit(graph, need, result)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-05-what-comes-first#Each node once`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'never marked a node done', edit: [['    done.add(node)\n', '']], fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-05-what-comes-first#Backwards: the order for gradients`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'did not reverse the order', edit: [['forward[::-1])', 'forward)']], fails: [0] },
+    ],
+  },
+  [`${C}/02-05-what-comes-first#Your turn: going round in a circle`]: {
+    files: { 'src/frontier/graph.py': answer(C, 'graph-2.5.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left cycle out of the message', files: { 'src/frontier/graph.py': answerWith(C, 'graph-2.5.py', [['raise ValueError(f"cycle through {node}")', 'raise ValueError(f"{node} needs itself")']]) }, fails: [0, 1] },
+      { name: 'raised a different kind of error', files: { 'src/frontier/graph.py': answerWith(C, 'graph-2.5.py', [['raise ValueError(', 'raise RuntimeError(']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-05-what-comes-first#Python's own, and onto GitHub`]: {
+    run: [...COMMIT('Put a graph in order, and spot cycles'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Put a graph in order, and spot cycles'), fails: [1] },
+    ],
+  },
+
+  // ── 2.6 ──────────────────────────────────────────────────────────────────
+  [`${C}/02-06-numbers-that-round#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${C}/02-06-numbers-that-round#Close enough`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'used a fixed gap', edit: [['<= tolerance * max(abs(a), abs(b))', '<= tolerance']], fails: [0] },
+      { name: 'compared with ==', edit: [['return abs(a - b) <= tolerance * max(abs(a), abs(b))', 'return a == b']], fails: [0] },
+    ],
+  },
+  [`${C}/02-06-numbers-that-round#The textbook softmax`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'did not divide by the total', edit: [['    return [e / total for e in exps]', '    return exps']], fails: [0] },
+    ],
+  },
+  [`${C}/02-06-numbers-that-round#Your turn: a softmax that can't overflow`]: {
+    files: { 'src/frontier/floats.py': answer(C, 'floats-2.6.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'subtracted the smallest score', files: { 'src/frontier/floats.py': answerWith(C, 'floats-2.6.py', [['biggest = max(scores)', 'biggest = min(scores)']]) }, fails: [0, 1] },
+      { name: 'subtracted nothing', files: { 'src/frontier/floats.py': answerWith(C, 'floats-2.6.py', [['math.exp(score - biggest)', 'math.exp(score)']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${C}/02-06-numbers-that-round#Chapter 2 done, and onto GitHub`]: {
+    run: [...COMMIT('Compare floats, and a softmax that cannot overflow'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Compare floats, and a softmax that cannot overflow'), fails: [1] },
+    ],
+  },
 };

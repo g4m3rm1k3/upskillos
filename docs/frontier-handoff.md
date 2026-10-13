@@ -70,7 +70,7 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
 
 ## State of the project (what a learner has after the last written lesson)
 
-After lesson 2.2 (written 2026-10-13; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
+After lesson 2.6 (written 2026-10-13; Chapter 2 complete; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
 
 ```text
 frontier/                 a Git repository on branch main, clean, pushed to GitHub (remote origin, main tracks origin/main)
@@ -93,10 +93,19 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     growth.py             unique_by_list (O(n²)), unique_by_dict (O(n)), same order of first appearance
     hashing.py            letter_sum, poly_hash (h = h * 31 + ord(c)), WordSet(buckets=8, hash_fn=poly_hash):
                           bucket(word), add (grows to 2x buckets when size > buckets), grow, __contains__, __len__
+    heap.py               parent, left, right, push (sift up), sift_down, pop_smallest, top_k(numbers, k) (all list[int];
+                          push gives the same list as heapq.heappush)
+    tree.py               @dataclass Node(label, children = field(default_factory=list)); count, depth, labels (pre-order)
+    tictactoe.py          EMPTY, LINES, winner, moves, play, other, count_games (255168 from EMPTY), outcomes -> dict
+    graph.py              visit(graph, node, done, visiting, result), order(graph) (graph: dict[str, list[str]], node ->
+                          what it needs; depth-first; ValueError("cycle through ...") on a cycle)
+    floats.py             close(a, b, tolerance=1e-9) (relative), softmax_naive (math.exp, overflows), softmax (max subtracted)
   experiments/
     first_tensors.py      (lesson 0.3)
     time_unique.py        list vs dict unique words for n = 1000..8000, prints ratios per version
     time_lookup.py        1000 lookups in list / WordSet / set, n = 1000..8000, prints longest bucket
+    time_smallest.py      by_list (min/index/pop) vs by_heap, n = 1000..8000, prints ratios per version
+    backward_order.py     order of (a + b) * b's graph, and its reverse ("gradients, in the order: ['e', 'c', 'b', 'a']")
   tests/
     conftest.py, test_info.py, test_torch_info.py   (Chapter 0)
     golden/sample.txt     the report as given in 1.1
@@ -107,21 +116,26 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     test_bench.py         -k best, ratios
     test_growth.py        -k list, dict
     test_hashing.py       -k letters, bucket, membership, grow, poly
+    test_heap.py          -k positions, push, layout, sift, pops, largest
+    test_tree.py          -k nodes, count, depth, labels
+    test_tictactoe.py     -k winner, moves, games, outcomes
+    test_graph.py         -k needs, shared, unlisted, cycles
+    test_floats.py        -k close, textbook, stable
 ```
 
 `textstats.py` and `tools/check_test_catches.py` were removed with `git rm` in 1.5.
 
 Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `commit -m`, `log --oneline`, `diff`, `restore`, `switch -c`, `branch`, `merge` and fast-forwards, `branch -d`, `rm`, `remote add`, `push -u`); GitHub (an empty repository, sign-in on first push); characterisation tests and golden files; seeing a test fail before trusting it; `subprocess.run` (`cwd`, `capture_output`, `text`, `check`, `returncode`, `stdout`, `stderr`); `pathlib.Path` (`__file__`, `resolve`, `parent`, `/`, `mkdir`, `read_text`, `write_text`, encoding); `__name__ == "__main__"`; constants; truthiness; f-strings; `join`; generator expressions and list comprehensions; `lambda` and `key=`; `dict.get`; dictionary order; `max(key=)` and its tie rule; stable `sorted`; slicing; `list.index`; docstrings; editor rename (F2), Replace All, project search (Ctrl+Shift+F); type hints (`list[str]`, `dict[str, int]`, `tuple[str, int]`, `Iterable[str]`, `X | None`, a class as a type), mypy `--strict`; decorators and `@dataclass` (`__init__`, `__repr__`, `__eq__`, fields); default parameter values; keyword arguments; `with` blocks and context managers; exceptions (`raise`, `ValueError`, narrow `except ... as error`, `OSError` and `strerror`, why a bare `except:` is wrong, tracebacks, failing fast); stdout vs stderr, `print(file=sys.stderr)`, exit codes 0 / 1 / 2, `sys.exit(1)`; `argparse` (positional, `--options`, `type=int`, `default`, `help`, `Namespace`, `parse_args(argv)`); `python -m module`; `encoding="utf-8"` and why; pytest fixtures `capsys` and `tmp_path`, `pytest.raises(match=)`.
 
-Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Callable[[...], ...]`; `_` as a loop name; `-> None`; f-string format specs (`{n:>5}`, `{x:.5f}`); big-O (O(1), O(log n), O(n), O(n log n), O(n²)), dropping constants and smaller terms, the doubling test, a loop hidden in `in`; `ord`; `%` (remainder); hash functions, collisions, buckets, growing and amortised O(1); `__contains__`, `__len__`; a comprehension with two `for`s; the `[[]] * n` trap; Python's `hash()` and its per-run randomisation; why lists can't be keys (unhashable), tuples can.
+Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Callable[[...], ...]`; `_` as a loop name; `-> None`; f-string format specs (`{n:>5}`, `{x:.5f}`); big-O (O(1), O(log n), O(n), O(n log n), O(n²)), dropping constants and smaller terms, the doubling test, a loop hidden in `in`; `ord`; `%` (remainder); hash functions, collisions, buckets, growing and amortised O(1); `__contains__`, `__len__`; a comprehension with two `for`s; the `[[]] * n` trap; Python's `hash()` and its per-run randomisation; why lists can't be keys (unhashable), tuples can; `//`; tuple assignment for swaps; heaps (sift up / down, O(log n)), `heapq` (`heappush`, `heappop`, `nlargest`), list `pop()` / `pop(i)`, `[::-1]`, tuples compare item by item; trees, root, leaf, recursion, base case, call stack, `RecursionError`; `dataclasses.field(default_factory=list)` and a quoted forward type `list["Node"]`; `max(..., default=0)`; `extend`; pre-order; `enumerate`; chained comparisons; conditional expressions (`a if c else b`); graphs, topological order, depth-first search, a done set and a visiting set (cycles), set `add` / `remove`; `graphlib.TopologicalSorter`; a gradient's backward order as the reversed topological order (preview of Chapter 12); floats: binary storage, sign / exponent / fraction, `decimal.Decimal` for the exact value, `1e20` notation, about 16 significant digits (`1e16 + 1 - 1e16` is 0.0), comparing with a relative tolerance and `math.isclose`, `math.exp`, `OverflowError`, underflow to 0.0, `ZeroDivisionError`, softmax and the max-subtraction fix (NumPy's silent `inf` / `nan` mentioned, not shown; log-sum-exp promised for Chapter 13; 16-bit floats for Chapter 41).
 
 Not yet taught (don't use without teaching): the debugger, profiling, `logging`, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
 
-## Next: lesson 2.3, heaps
+## Next: the cold-reader audit of Chapter 2, then Chapter 3
 
-Chapter 2 plan (`frontier-cs`, folder `src/labs/project-studio/tracks/frontier-cs/`): 2.1 big-O by timing ✓, 2.2 hashing ✓, then **2.3 heaps** (a priority queue by hand: sift up / sift down in a list, checked against `heapq`; top-k with a heap instead of `sorted`; O(log n) per push and pop), **2.4 trees and recursion** (a tree of nodes, recursive count / depth / visit; a tic-tac-toe game tree counted, previewing MCTS), **2.5 graphs and topological sort** (a dependency graph, DFS topological order; previews autograd's backward order), **2.6 floats** (how a float is stored, `0.1 + 0.2`, `math.exp` overflow, a stable softmax with the max subtracted). Each ends with commit + push.
+Chapter 2 (`frontier-cs`) is written: 2.1 big-O by timing, 2.2 hashing, 2.3 heaps, 2.4 trees and recursion, 2.5 graphs and topological sort, 2.6 floats (written 2026-10-13, full walkthrough Chapters 0–2 passing). Next session: the cold-reader audit of Chapter 2 (read each lesson as a newcomer, findings saved to a file as you go), then Chapter 3 (`frontier-tools`: debugger, profiler, vectorising). 2.6's last paragraph promises Chapter 3 exactly that.
 
-Figures: `src/labs/project-studio/figures/frontier.jsx` (registered as `frontier/` in `figures/index.js`) has `GrowthCurves` (2.1) and `HashBuckets` (2.2). Add a heap stepper for 2.3 and a tree view for 2.4 there. `figures.test.jsx` now renders every Frontier figure placed in a lesson.
+Figures: `src/labs/project-studio/figures/frontier.jsx` (registered as `frontier/` in `figures/index.js`) has `GrowthCurves` (2.1), `HashBuckets` (2.2), `HeapSteps` (2.3), `TreeCount` (2.4), `GraphOrder` (2.5) and `FloatBits` (2.6: a float's 64 bits and its exact stored value, computed with `BigInt`). `figures.test.jsx` now renders every Frontier figure placed in a lesson.
 
 Lessons learned in this chapter:
 - **One file per step**, provided test files included: `checks.test.js` fails a step with two `file=` blocks. Two supplied test files need two steps.
@@ -132,3 +146,9 @@ Lessons learned in this chapter:
 - Resuming (`FRONTIER_START`) now also brings back the GitHub stand-in: `walkSeries.js` keeps `../github.git` as `<KEEP folder>.github.git` and restores it (fixed 2026-10-13; before that, a resumed `git push` failed). The scratchpad's kept projects don't survive the session, so rebuild them: Chapters 0–1 with `FRONTIER_UNTIL=frontier-engineering/01-05` and `FRONTIER_KEEP` take about 13 minutes (run it in the background with `--timeout 1800`), then 2.1–2.2 from that about 6.
 - A "did nothing" wrong answer can't fail a mypy check on a file that already passes, or a push check when nothing new was committed. Use "committed but did not push" to test the push.
 - Wrapping a `question:` or `explain:` in quotes isn't YAML here: the quotes show up. Write them bare.
+- A test file read in the first step must not give away a later prediction's answer: 2.3's push test uses different numbers from the prediction, and 2.4's tests count games only from mid-game positions.
+- Make a wrong answer actually differ: a `sift_down` test where the left child is the smaller one can't catch "always swapped with the left child". Run each wrong answer in your head against the test's own numbers.
+- Edits to `frontier.walkthrough.js` made through a Python heredoc turned `\n` into real line breaks, which broke the file. The non-desktop tests don't import it, so run `node --check src/labs/project-studio/tracks/frontier.walkthrough.js` after editing it.
+- Measured 2026-10-13: Chapters 0–2.2 with `FRONTIER_UNTIL=frontier-cs/02-02` and `FRONTIER_KEEP` take 891 s (run in the background, `--timeout 1800`); 2.3–2.5 from that took 306 s. `count_games()` from the empty board takes about 1.6 s.
+- `sum([0.1] * 10)` is exactly `1.0` on the Python here (3.12+ sums floats with compensation), so it can't show rounding; 2.6 uses `0.1 + 0.2` and `1e16 + 1 - 1e16` instead. `ZeroDivisionError`'s message changed between versions: never quote it.
+- Measured 2026-10-13: the full walkthrough, Chapters 0–2 (19 tests), takes 1171 s in one background run with `--timeout 1800`, peak about 780 MB. That's simpler than kept projects while it stays under 30 minutes.

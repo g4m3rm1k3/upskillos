@@ -338,7 +338,7 @@ Lessons live in `src/labs/project-studio/tracks/frontier-*/`, Your turn answers 
 |---|---|---|
 | 0 · A Real Project | 0.1–0.3 | passes (2026-10-08, 465 s, peak 788 MB) |
 | 1 · From Script to Software | 1.1–1.5 | passes (2026-10-12: 0.1–1.4 in one run, 12 tests, 1.4 included; 1.5 walked from that kept project; full Chapters 0–1 run about 12½ min) |
-| 2 · The Computer Science You Need | 2.1–2.2 | passes (2026-10-13: 2.1–2.2 walked from a kept Chapter 1 project, 339 s, peak 675 MB); 2.3–2.6 not written |
+| 2 · The Computer Science You Need | 2.1–2.6 | passes (2026-10-13: full Chapters 0–2 in one run, 19 tests, 1171 s, peak about 780 MB); cold-reader audit not yet run |
 | 3–73 | | not written |
 
 Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful. Chapter 38 (`frontier-open-model`, a modern open model rebuilt in your own code) was added on 2026-10-12 at the owner's request, so that the open model fine-tuned and trained in Chapters 45–55 runs in code the learner wrote; the chapters after it moved up by one. Part 15, *Shipping it* (Chapters 67–71), was added on 2026-10-13 at the owner's request, so the series also prepares a learner to build a product of their own; research practice and the capstone became Part 16, Chapters 72–73, and the capstone may be a launched product instead of a paper.
