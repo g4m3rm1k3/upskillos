@@ -43,7 +43,9 @@ describe('lessons', () => {
       // Part 5: the Tensor class is quoted by line range (its __init__, backward and visit); add, relu,
       // transpose and scale follow matmul's pattern exactly; zeros and init_model are setup.
       'tinygpt.py:__init__', 'tinygpt.py:backward', 'tinygpt.py:visit', 'tinygpt.py:zeros', 'tinygpt.py:add', 'tinygpt.py:relu',
-      'tinygpt.py:transpose', 'tinygpt.py:scale', 'tinygpt.py:init_model']
+      'tinygpt.py:transpose', 'tinygpt.py:scale', 'tinygpt.py:init_model',
+      // Part 6: make_vocab and exact_match are one-line helpers read in the training and figure code; is_number is given.
+      'chat.py:make_vocab', 'chat.py:exact_match', 'chat.py:is_number']
     const all = Object.keys(SOURCES).flatMap(file => parse(file).functions.map(f => `${file}:${f.name}`))
     expect(all.filter(fn => !quoted.has(fn) && !shownElsewhere.includes(fn))).toEqual([])
   })

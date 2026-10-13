@@ -143,25 +143,28 @@ def embed(table, ids):
     return out
 
 
-def cross_entropy(logits, targets):
-    """The average over positions of -log(probability of the right next token)."""
-    n = len(targets)
+def cross_entropy(logits, targets, weights=None):
+    """The average over positions of -log(probability of the right next token). With weights,
+    a weighted average: a position with weight 0 doesn't count at all (Part 6's loss mask)."""
+    if weights is None:
+        weights = [1] * len(targets)
+    n = sum(weights)
     probs = []
     loss = 0.0
-    for row, t in zip(logits.data, targets):
+    for row, t, w in zip(logits.data, targets, weights):
         top = max(row)
         exps = [math.exp(x - top) for x in row]
         total = sum(exps)
         p = [e / total for e in exps]
         probs.append(p)
-        loss -= math.log(p[t])
+        loss -= w * math.log(p[t])
     out = Tensor([[loss / n]], (logits,))
 
     def backward():
         g = out.grad[0][0] / n
-        for i, (p, t) in enumerate(zip(probs, targets)):
+        for i, (p, t, w) in enumerate(zip(probs, targets, weights)):
             for j, pj in enumerate(p):
-                logits.grad[i][j] += g * (pj - (1.0 if j == t else 0.0))
+                logits.grad[i][j] += g * w * (pj - (1.0 if j == t else 0.0))
 
     out.backward_step = backward
     return out

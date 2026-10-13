@@ -142,3 +142,13 @@
 .nlp-att td,.nlp-att th{border:1px solid var(--line);padding:3px 6px;text-align:center;min-width:34px;font-family:'JetBrains Mono',ui-monospace,monospace}
 .nlp-att td.masked{background:#eceef4;color:#b0b5c4}
 .nlp-attmap .nlp-att td{min-width:14px;height:14px;padding:0}.nlp-attmap .nlp-att th{font-size:10px;padding:0 2px;min-width:14px}
+
+/* Part 6: chat */
+.nlp-chat-tokens{display:flex;flex-wrap:wrap;gap:3px;margin:6px 0}
+.nlp-chat-tokens span{border:1px solid var(--line);border-radius:5px;padding:1px 6px;font:12.5px/1.6 'JetBrains Mono',ui-monospace,monospace;background:#fff}
+.nlp-chat-tokens span.special{font-weight:800;color:#fff;border-color:transparent}
+.nlp-chat-tokens span.user{background:#646a7c}.nlp-chat-tokens span.bot{background:#3f5bb5}.nlp-chat-tokens span.end{background:#b5452f}.nlp-chat-tokens span.unk{background:#a17a1f}
+.nlp-chat-tokens span.counted{box-shadow:inset 0 -3px 0 #2f7d4f}.nlp-chat-tokens span.ignored{opacity:.6}
+.nlp-turn{flex-direction:row;align-items:center;gap:8px}.nlp-turn span{min-width:58px;font-family:'JetBrains Mono',ui-monospace,monospace}.nlp-turn input{flex:1}
+.nlp-dialogues{margin:4px 0;padding-left:22px;font-size:12.5px}.nlp-dialogues li{margin:2px 0}.nlp-botline{color:#273d85;margin-left:6px}
+.nlp-dialogues.held li{color:#7a3a10}

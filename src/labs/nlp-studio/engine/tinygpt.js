@@ -74,19 +74,20 @@ export function embed(table, ids) {
   out.backwardStep = () => ids.forEach((t, i) => out.grad[i].forEach((g, j) => { table.grad[t][j] += g }))
   return out
 }
-export function crossEntropy(logits, targets) {
-  const n = targets.length, probs = []
+export function crossEntropy(logits, targets, weights = null) {
+  weights ??= targets.map(() => 1)
+  const n = weights.reduce((s, w) => s + w, 0), probs = []
   let loss = 0
   logits.data.forEach((row, i) => {
     const top = Math.max(...row), exps = row.map(x => Math.exp(x - top)), total = exps.reduce((s, x) => s + x, 0)
     const p = exps.map(e => e / total)
     probs.push(p)
-    loss -= Math.log(p[targets[i]])
+    loss -= weights[i] * Math.log(p[targets[i]])
   })
   const out = new Tensor([[loss / n]], [logits])
   out.backwardStep = () => {
     const g = out.grad[0][0] / n
-    probs.forEach((p, i) => p.forEach((pj, j) => { logits.grad[i][j] += g * (pj - (j === targets[i] ? 1 : 0)) }))
+    probs.forEach((p, i) => p.forEach((pj, j) => { logits.grad[i][j] += g * weights[i] * (pj - (j === targets[i] ? 1 : 0)) }))
   }
   return out
 }

@@ -6,6 +6,11 @@ import { MESSAGES, INTENTS } from './engine/data.js'
 import { words } from './engine/counting.js'
 import { SENTENCES } from './engine/corpus.js'
 import { trainBikeVectors } from './engine/vectors.js'
+import { makeDialogues, trainChat } from './engine/chat.js'
+
+// A small chat model for stepping a reply: trained in the page in a moment, so its answers are rough.
+let smallChat = null
+const smallChatModel = () => (smallChat ??= trainChat(makeDialogues()[0], 600, { dim: 16, context: 32, hidden: 32, lr: 0.01 }))
 
 let bikeVectors = null
 const trained = () => (bikeVectors ??= trainBikeVectors(SENTENCES))
@@ -132,5 +137,29 @@ export const PROGRAMS = {
     kwargs: v => ({ text: v, steps: 1, dim: 8, context: 8, hidden: 16 }),
     watch: { ids: ['ids'], targets: ['targets'], loss: ['loss.data'], losses: ['losses'] },
     jump: { label: 'To backward()', targets: () => [['tinygpt.py', lineOf('tinygpt.py', '        loss.backward()')]] },
+  },
+  chat_format: {
+    label: 'A conversation as tokens (6.1)', file: 'chat.py', module: 'chat', function: 'format_dialogue', view: 'watch',
+    about: 'Lesson 6.1: a user message and its answer written as one list of tokens with « » ¶.',
+    input: { name: 'message', label: 'Message', value: 'where is order 512' },
+    kwargs: v => ({ turns: [['user', v], ['bot', 'order 512 ships tomorrow.']] }),
+    watch: { out: ['out'], role: ['role'], words: ['words'] },
+    jump: { label: 'Next turn', targets: () => [['chat.py', lineOf('chat.py', '        out += [USER if role == "user" else BOT]')]] },
+  },
+  chat_step: {
+    label: 'One masked training step (6.3)', file: 'chat.py', module: 'chat', function: 'train_chat', view: 'watch',
+    about: 'Lesson 6.3–6.4: one step of training on conversations, on a small model. Stop at the mask, then step into the masked cross_entropy.',
+    input: { name: 'n', label: 'Conversations', value: '30' },
+    kwargs: v => ({ pairs: makeDialogues()[0].slice(0, Math.max(5, Math.min(100, Number(v) || 30))), steps: 1, dim: 8, context: 16, hidden: 16 }),
+    watch: { window: ['tokens[start:start + context]'], mask: ['mask'], loss: ['loss.data'] },
+    jump: { label: 'To the masked loss', targets: () => [['chat.py', lineOf('chat.py', '        loss = tg.cross_entropy(logits, targets, mask)')]] },
+  },
+  chat_reply: {
+    label: 'A reply, token by token (6.5)', file: 'chat.py', module: 'chat', function: 'reply', view: 'watch',
+    about: 'Lesson 6.5: a small Bot 3 (trained in the page for a moment, so its answers are rough) replying one token at a time until it writes ¶.',
+    input: { name: 'message', label: 'Message', value: 'is the shop open on sunday' },
+    kwargs: v => { const [vocab, model] = smallChatModel(); return { vocab, model, history: [], message: v } },
+    watch: { out: ['out'], chose: ['vocab[choice]'] },
+    jump: { label: 'Next token', targets: () => [['chat.py', lineOf('chat.py', '        if vocab[choice] == END:')]] },
   },
 }

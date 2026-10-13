@@ -184,6 +184,35 @@ describe('NLP Studio renders', () => {
     }
   })
 
+  it('Bot 3: train a little, chat, and refuse a Part 5 file with a reason', async () => {
+    vi.useFakeTimers()
+    try {
+      const lesson = LESSONS.find(l => l.id === 'bot3')
+      const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+      const fig = [...container.querySelectorAll('.qm-figure')].find(f => f.textContent.includes('Train Bot 3'))
+      act(() => { fireEvent.change(fig.querySelector('input[type=range]'), { target: { value: '1000' } }) })
+      act(() => { fireEvent.click(screen.getByText('▶ Train Bot 3')) })
+      for (let i = 0; i < 25; i++) await act(async () => { vi.advanceTimersByTime(5) })
+      expect(fig.textContent).toMatch(/Step 1000 of 1000/)
+      expect(fig.textContent).toMatch(/Held-out repairs/)
+      act(() => { fireEvent.change(screen.getByLabelText('Message to Bot 3'), { target: { value: 'my chain is rusty' } }) })
+      act(() => { fireEvent.click(fig.querySelector('.nlp-chat-form .qm-primary')) })
+      expect(fig.querySelector('.nlp-chat-log').textContent).toMatch(/rusty/)
+      const part5 = new File([G.toSafetensors(['a', 'b'], G.initModel(2, 2, 2, 2))], 'gpt.safetensors')
+      await act(async () => { fireEvent.change(screen.getByLabelText('Upload a Bot 3 model'), { target: { files: [part5] } }) })
+      await vi.waitFor(() => expect(fig.textContent).toMatch(/Not loaded: That is a Part 5 tiny GPT/))
+    } finally { vi.useRealTimers() }
+   }, 60000)
+
+  it('Part 6 figures without a trained Bot 3 say where to get one; the format and template figures draw', () => {
+    for (const id of ['chat-format', 'dialogue-data', 'loss-mask', 'decoding', 'three-bots']) {
+      const lesson = LESSONS.find(l => l.id === id)
+      const { container, unmount } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+      expect(container.textContent.length).toBeGreaterThan(800)
+      unmount()
+    }
+  })
+
   it('the playground counts your text', () => {
     render(<Playground />)
     act(() => { fireEvent.change(screen.getByLabelText('Your text'), { target: { value: 'The cat. The dog!' } }) })

@@ -19,6 +19,7 @@ import * as V from './engine/vectors.js'
 import { SENTENCES } from './engine/corpus.js'
 import * as L from './engine/lm.js'
 import * as G from './engine/tinygpt.js'
+import * as Ch from './engine/chat.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
 const appData = process.platform === 'win32' ? process.env.APPDATA ?? '' : process.platform === 'darwin' ? path.join(homedir(), 'Library', 'Application Support') : path.join(homedir(), '.config')
@@ -173,6 +174,30 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     const [, , losses] = G.train(PROGRAMS.gpt_step.input.value, 1, { dim: 8, context: 8, hidden: 16 })
     expect(plain(r.result)[2][0]).toBeCloseTo(losses[0], 12)
   }, 120000)
+
+  it('Part 6: formatting, one masked step and a reply match the engine', async () => {
+    let r = await load(s, 'chat_format')
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type, s.stderr()).toBe('finished')
+    expect(plain(r.result)).toEqual(Ch.formatDialogue([['user', PROGRAMS.chat_format.input.value], ['bot', 'order 512 ships tomorrow.']]))
+
+    r = await load(s, 'chat_step')
+    r = await jump(s, 'chat_step')
+    expect(r.type, s.stderr()).toBe('pause')
+    expect(plain(r.watch.mask.value).every(x => x === 0 || x === 1)).toBe(true)
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type).toBe('finished')
+    const [, , losses] = Ch.trainChat(Ch.makeDialogues()[0].slice(0, 30), 1, { dim: 8, context: 16, hidden: 16 })
+    expect(plain(r.result)[2][0]).toBeCloseTo(losses[0], 12)
+
+    r = await load(s, 'chat_reply')
+    let tokens = 0
+    for (let n = 0; n < 40; n++) { r = await jump(s, 'chat_reply'); if (r.type !== 'pause') break; tokens++ }
+    expect(r.type, s.stderr()).toBe('finished')
+    const [vocab, model] = Ch.trainChat(Ch.makeDialogues()[0], 600, { dim: 16, context: 32, hidden: 32, lr: 0.01 })
+    expect(plain(r.result)).toEqual(Ch.reply(vocab, model, [], PROGRAMS.chat_reply.input.value))
+    expect(tokens).toBeGreaterThan(0)
+  }, 180000)
 
   it('dependencies and Bot 1 finish with the engine\'s answers', async () => {
     let r = await load(s, 'dependencies')

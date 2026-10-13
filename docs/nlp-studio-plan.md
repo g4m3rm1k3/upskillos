@@ -1,6 +1,6 @@
 # NLP Studio: plan
 
-Status (2026-10-13): Parts 1–5 are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Parts 6–7 are planned below.
+Status (2026-10-13): Parts 1–6 are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Part 7 is planned below.
 
 ## The bar: better than QMaze and CartPole
 
@@ -95,7 +95,33 @@ Things measured while building it, that the lessons now rest on:
 - **The tiny GPT overfits.** Trained on 50 sentences and scored on the other 13, its held-out loss is best around step 500 (2.57), then rises to 4.82 by step 8,000, while the training loss keeps falling. The readable text is recited. The trainer always holds out the last 20% of the text and draws both curves, so the learner sees this happen.
 - **Training speed.** 6,000 steps take about 40 s in the browser, and about 18 ms per step in plain Python.
 
-**Next, Part 6:** chat format and special tokens, training on dialogues, and stopping at the end of a turn. Overfitting means it needs much more text than the bike shop's.
+## Part 6 as built
+
+| Lesson | You write | You derive or predict | Figure |
+|---|---|---|---|
+| 6.1 A conversation is just text | `format_dialogue` | tokens in a formatted conversation | DialogueFormat |
+| 6.2 Where the conversations come from | `fill` | counting the conversations: 338 | TemplateExplorer |
+| 6.3 Train on the bot's words only | `loss_mask` | a masked average | DialogueFormat with the mask |
+| 6.4 Bot 3 | (the trainer) | generalisation to held-out pairs | ChatTrainer: train, measure, chat, download and upload |
+| 6.5 Answering | `top_k` | top-k renormalisation | DecodeTrace (token by token) |
+| 6.6 Three bots, compared | `detokenize` | (measured failures) | ThreeBots |
+
+**Bot 3 uses word tokens.** A first version on characters copied the wrong slot most of the time (only 7–9% exactly right), because copying "sunday" meant copying six characters in order. With word tokens, numbers split into digits and unknown words as `<unk>`, a conversation is about 20 tokens, and training is 3× faster.
+
+Its 338 conversations come from templates (`python/chat.py`). Four part–problem pairs, in all three phrasings, and 28 orders are held out, and a test checks that no held-out pair appears in training. The loss is masked to the bot's tokens: `cross_entropy` takes optional weights, which reduce exactly to the old loss when absent, so Part 5's parity data didn't change.
+
+Measured with the default 10,000 steps (lr 0.002, 32 dimensions, context 32), and reproduced exactly in the browser in about a minute:
+- **Training messages:** 71% exactly right.
+- **Held-out repairs:** 83%, rising to 100% at 15,000 steps. It generalises to part–problem pairs it never saw.
+- **Held-out orders:** 32%. Copying a never-seen 3-digit number in order mostly fails with one block and one head.
+- **Confident failures, quoted in lesson 6.6:**
+  - "are you open on christmas" → friday's hours
+  - "what is the weather today" → "order 5959 ships tomorrow."
+  - "do you sell bikes" → "sorry, i can only help with bikes."
+  - "can i buy a pizza here" → a repair answer
+- **Conversation history changes answers.** "my wheel is bent" gets the right part in a fresh chat, and the wrong one after an hours question.
+
+**Next, Part 7:** a small pre-trained model in the browser (transformers.js, already a dependency), compared with Bot 3. On the desktop: spaCy and Hugging Face tokenizers against the lab's own versions, and LoRA fine-tuning.
 
 **Real Python tab (desktop).** It uses A-Arcade Python's stepper and environment, with six programs (`programs.js`). The middle panel is drawn from the paused program's own variables: the text tape, the recursion stack, the live CKY chart, dependency heads, and the rules tried. `stepper.desktop.test.js` drives the real stepper the way the tab does, and checks the results against the engine.
 

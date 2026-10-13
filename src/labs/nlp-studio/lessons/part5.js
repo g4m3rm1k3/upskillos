@@ -254,9 +254,9 @@ Training is lesson 4.4's recipe: measure the loss ($-\\log$ of the probability g
         {
           code: {
             file: 'tinygpt.py', fn: 'cross_entropy', notes: [
-              ['loss -= math.log(p[t])', ['The loss at each position: $-\\log$ of the probability given to the right next character.']],
+              ['loss -= w * math.log(p[t])', ['The loss at each position: $-\\log$ of the probability given to the right next character, times a weight `w`. Here every weight is 1; Part 6 uses 0 to leave positions out.']],
               ['out = Tensor([[loss / n]], (logits,))', ['The average over positions, as a 1 × 1 Tensor: the starting point of `backward()`.']],
-              ['logits.grad[i][j] += g * (pj - (1.0 if j == t else 0.0))', ['The backward step is the $p - y$ just derived, scaled by $1/n$ for the average.']],
+              ['logits.grad[i][j] += g * w * (pj - (1.0 if j == t else 0.0))', ['The backward step is the $p - y$ just derived, scaled by $1/n$ for the average (and by the weight).']],
             ],
           },
         },

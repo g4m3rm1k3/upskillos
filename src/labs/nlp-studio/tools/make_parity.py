@@ -230,3 +230,30 @@ with open(path5, "w", encoding="utf-8", newline="\n") as handle:
     json.dump(part5, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote Part 5 to {os.path.normpath(path5)}")
+
+
+# Part 6: chat.
+import chat  # noqa: E402
+
+c_train, c_held = chat.make_dialogues()
+c_tokens, c_roles = chat.to_tokens(c_train[:20], vx.Rng(3))
+c_small = {"dim": 8, "context": 16, "hidden": 16, "lr": 0.005, "seed": 2}
+c_vocab, c_model, c_losses = chat.train_chat(c_train[:40], 12, **c_small)
+part6 = {
+    "train": [list(p) for p in c_train], "held": [list(p) for p in c_held],
+    "chat_tokens": {t: chat.chat_tokens(t) for t in ["You're welcome.", "Order 512 ships!", "is the shop open on Sunday?", ""]},
+    "detokenize": [chat.detokenize(chat.chat_tokens(t)) for t in ["you're welcome.", "order 512 ships tomorrow.", "hello! how can i help?"]],
+    "format": chat.format_dialogue([("user", "where is order 512"), ("bot", "order 512 ships tomorrow.")]),
+    "tokens": c_tokens, "roles": c_roles,
+    "mask": chat.loss_mask(c_roles, 3, 10),
+    "vocab_full": chat.make_vocab(c_train),
+    "top_k": [chat.top_k([0.1, 0.4, 0.2, 0.3], k) for k in (1, 2, 3, 4)],
+    "chat_train": {"vocab": c_vocab, "model": c_model, "losses": c_losses,
+                   "replies": {m: chat.reply(c_vocab, c_model, [], m) for m in ["hello", "my wheel is bent", "zzz qqq"]},
+                   "sampled": chat.reply(c_vocab, c_model, ["«", "hi", "¶", "»", "hello", "¶"], "where is order 512", 0.8, 3, vx.Rng(4))},
+}
+path6 = os.path.join(HERE, "..", "engine", "parity6.json")
+with open(path6, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part6, handle, ensure_ascii=False)
+    handle.write("\n")
+print(f"wrote Part 6 to {os.path.normpath(path6)}")
