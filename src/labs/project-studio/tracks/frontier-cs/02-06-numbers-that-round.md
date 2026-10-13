@@ -80,7 +80,7 @@ Try it, and print the sum too:
 
 It prints `False 0.30000000000000004`. Nothing is broken: this is how floats work in every language, on every computer.
 
-A float stores a number in **binary**, as a whole number of bits times a power of two. In decimal, 1/3 never ends: 0.3333… goes on for ever, so writing it down means stopping somewhere and rounding. In binary, 1/10 is the same: 0.000110011001100… repeats for ever. So the float called `0.1` is the nearest number that fits in 64 bits, not 0.1 itself. Python's `decimal` module can show the exact value stored:
+A float stores a number in **binary**, as a whole number times a power of two. In decimal, 1/3 never ends: 0.3333… goes on for ever, so writing it down means stopping somewhere and rounding. In binary, 1/10 is the same: 0.000110011001100… repeats for ever. So the float called `0.1` is the nearest number that fits in 64 bits, not 0.1 itself. Python's `decimal` module can show the exact value stored:
 
 ```powershell
 .venv\Scripts\python -c "import decimal; print(decimal.Decimal(0.1))"
@@ -92,7 +92,7 @@ The 64 bits are split three ways: 1 bit for the **sign**, 11 bits for the **expo
 
 ```figure
 name: frontier/FloatBits
-caption: A float's 64 bits: sign, exponent and fraction, and the exact number they store. 0.1 + 0.2 and 0.3 differ in the last bit.
+caption: A float's 64 bits: sign, exponent and fraction, and the exact number they store. 0.1 + 0.2 and 0.3 are neighbouring floats, one step apart.
 props: {"values": ["0.1", "0.2", "0.3", "0.1 + 0.2", "0.5"]}
 ```
 

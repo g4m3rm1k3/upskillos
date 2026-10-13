@@ -299,7 +299,14 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
     // test_tick_waits_for_sixty_frames, and `-k table` on test_qtable.py runs everything. So each
     // step's word must start the names of exactly the tests it means, and appear in no other name.
     it('selects only its own tests with every pytest -k', () => {
-      const testFiles = new Map(lessons.flatMap((l) => l.steps).filter((s) => s.provided && /^tests\/test_\w+\.py$/.test(s.file ?? '')).map((s) => [s.file, s.target]));
+      // Every version of each test file: supplied, typed by the learner, or written by a Your turn
+      // answer (a test the learner writes themselves).
+      const testFiles = new Map();
+      const addTestFile = (file, source) => {
+        if (/^tests\/test_\w+\.py$/.test(file ?? '') && source != null) testFiles.set(file, (testFiles.get(file) ?? '') + '\n' + source);
+      };
+      for (const step of lessons.flatMap((l) => l.steps)) addTestFile(step.file, step.target);
+      for (const action of Object.values(WALKTHROUGH)) for (const [file, source] of Object.entries(action.files ?? {})) addTestFile(file, source);
       for (const lesson of lessons) {
         for (const step of lesson.steps) {
           for (const check of step.checks) {
@@ -307,7 +314,7 @@ export function walkSeries({ name, prefix, walkthrough: WALKTHROUGH, envPrefix =
             if (!m) continue;
             const [, file, word] = m;
             const source = testFiles.get(file);
-            expect(source, `${lesson.title} / ${step.title}: ${file} is never provided`).toBeTruthy();
+            expect(source, `${lesson.title} / ${step.title}: ${file} is never written`).toBeTruthy();
             expect(path.basename(file), `${lesson.title} / ${step.title}: the file name contains "${word}"`).not.toContain(word);
             const names = [...source.matchAll(/^def (test_\w+)/gm)].map((n) => n[1]);
             const selected = names.filter((n) => n.includes(word));

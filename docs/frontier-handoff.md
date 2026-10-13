@@ -70,7 +70,7 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
 
 ## State of the project (what a learner has after the last written lesson)
 
-After lesson 2.6 (written 2026-10-13; Chapter 2 complete; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
+After lesson 3.4 (written 2026-10-13; Chapter 3 complete; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 and 3 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
 
 ```text
 frontier/                 a Git repository on branch main, clean, pushed to GitHub (remote origin, main tracks origin/main)
@@ -96,16 +96,27 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     heap.py               parent, left, right, push (sift up), sift_down, pop_smallest, top_k(numbers, k) (all list[int];
                           push gives the same list as heapq.heappush)
     tree.py               @dataclass Node(label, children = field(default_factory=list)); count, depth, labels (pre-order)
-    tictactoe.py          EMPTY, LINES, winner, moves, play, other, count_games (255168 from EMPTY), outcomes -> dict
+    tictactoe.py          EMPTY, LINES, winner, moves, play, other, @cache count_games (255168 from EMPTY),
+                          @cache shared_outcomes (dicts shared, never changed), outcomes -> a copy (dict(...))
     graph.py              visit(graph, node, done, visiting, result), order(graph) (graph: dict[str, list[str]], node ->
                           what it needs; depth-first; ValueError("cycle through ...") on a cycle)
     floats.py             close(a, b, tolerance=1e-9) (relative), softmax_naive (math.exp, overflows), softmax (max subtracted)
+    pairs.py              PairCounts = dict[tuple[str, str], int]; count_pairs(words, counts=None) (both 3.1 bugs fixed)
+    fast.py               sum_of_squares_loop, sum_of_squares_numpy (float(np.sum(xs * xs))), softmax_numpy
+                          (npt.NDArray[np.float64]; the division's result annotated, else mypy sees Any)
+    textstats_cli.py      (3.2) also: logger = logging.getLogger(__name__); --verbose (store_true); basicConfig(
+                          level=INFO if verbose else WARNING, format="%(levelname)s: %(message)s") first in main;
+                          INFO "reading %s", "%d words, %d different"; WARNING when --top > unique words (60 in the sample)
   experiments/
     first_tensors.py      (lesson 0.3)
     time_unique.py        list vs dict unique words for n = 1000..8000, prints ratios per version
     time_lookup.py        1000 lookups in list / WordSet / set, n = 1000..8000, prints longest bucket
     time_smallest.py      by_list (min/index/pop) vs by_heap, n = 1000..8000, prints ratios per version
     backward_order.py     order of (a + b) * b's graph, and its reverse ("gradients, in the order: ['e', 'c', 'b', 'a']")
+    profile_games.py      cProfile.Profile() as a with block on count_games(); pstats strip_dirs, sort_stats("tottime"), print_stats(8)
+    distinct_positions.py walks the game tree keeping a set of boards: "5478 different boards"
+    time_squares.py       a million numbers: loop vs np.sum(xs * xs) vs xs @ xs, and the list -> array conversion
+                          (experiments/pairs_bug.py was made and deleted in 3.1, never committed)
   tests/
     conftest.py, test_info.py, test_torch_info.py   (Chapter 0)
     golden/sample.txt     the report as given in 1.1
@@ -121,6 +132,10 @@ frontier/                 a Git repository on branch main, clean, pushed to GitH
     test_tictactoe.py     -k winner, moves, games, outcomes
     test_graph.py         -k needs, shared, unlisted, cycles
     test_floats.py        -k close, textbook, stable
+    test_pairs.py         typed by the learner: -k calls, last
+    test_logging.py       -k quiet, verbose, warning (subprocess, like test_cli.py)
+    test_cache.py         -k counting, outcomes (counts winner calls with monkeypatch; < 10000)
+    test_fast.py          -k loop, numpy, softmax
 ```
 
 `textstats.py` and `tools/check_test_catches.py` were removed with `git rm` in 1.5.
@@ -129,11 +144,28 @@ Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `
 
 Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Callable[[...], ...]`; `_` as a loop name; `-> None`; f-string format specs (`{n:>5}`, `{x:.5f}`); big-O (O(1), O(log n), O(n), O(n log n), O(n²)), dropping constants and smaller terms, the doubling test, a loop hidden in `in`; `ord`; `%` (remainder); hash functions, collisions, buckets, growing and amortised O(1); `__contains__`, `__len__`; a comprehension with two `for`s; the `[[]] * n` trap; Python's `hash()` and its per-run randomisation; why lists can't be keys (unhashable), tuples can; `//`; tuple assignment for swaps; heaps (sift up / down, O(log n)), `heapq` (`heappush`, `heappop`, `nlargest`), list `pop()` / `pop(i)`, `[::-1]`, tuples compare item by item; trees, root, leaf, recursion, base case, call stack, `RecursionError`; `dataclasses.field(default_factory=list)` and a quoted forward type `list["Node"]`; `max(..., default=0)`; `extend`; pre-order; `enumerate`; chained comparisons; conditional expressions (`a if c else b`); graphs, topological order, depth-first search, a done set and a visiting set (cycles), set `add` / `remove`; `graphlib.TopologicalSorter`; a gradient's backward order as the reversed topological order (preview of Chapter 12); floats: binary storage, sign / exponent / fraction, `decimal.Decimal` for the exact value, `1e20` notation, about 16 significant digits (`1e16 + 1 - 1e16` is 0.0), comparing with a relative tolerance and `math.isclose`, `math.exp`, `OverflowError`, underflow to 0.0, `ZeroDivisionError`, softmax and the max-subtraction fix (NumPy's silent `inf` / `nan` mentioned, not shown; log-sum-exp promised for Chapter 13; 16-bit floats for Chapter 41).
 
-Not yet taught (don't use without teaching): the debugger, profiling, `logging`, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
+Chapter 3: debugging as a method (reproduce, narrow down, guess, test; a test per bug, seen failing first); `breakpoint()` and pdb (`p`, `n`, `c`, `w`, `q`); the mutable-default trap and a `None` default with `is None`; a type alias (`PairCounts = ...`); `logging` (`getLogger(__name__)`, levels debug / info / warning / error, `%s` / `%d` arguments, `basicConfig(level=, format=)` only at the entry point, stderr); argparse `action="store_true"`; PowerShell `> $null` and `Remove-Item`; `cProfile` and `pstats` (ncalls, tottime, cumtime, `549946/1`, `<genexpr>`); memoising with `functools.cache`, `cache_info`, `cache_clear`, a cached result being the same object (copy with `dict(...)`); reading source with `inspect.getsource`; pytest's `monkeypatch.setattr`; why a Python loop is slow (24-byte float objects, 8-byte addresses); NumPy arrays (`np.array`, element-wise `*` and `-`, `np.sum`, `np.exp`, `.max()`, `.tolist()`, `.nbytes`, `np.zeros`), `npt.NDArray[np.float64]`; a middle array's memory cost (`np.sum(xs * xs)` against `xs @ xs`); converting a list costs more than the loop.
 
-## Next: the cold-reader audit of Chapter 2, then Chapter 3
+Not yet taught (don't use without teaching): NumPy beyond that list (shapes, indexing, broadcasting rules, `reshape`, `axis=`), Matplotlib.
 
-Chapter 2 (`frontier-cs`) is written: 2.1 big-O by timing, 2.2 hashing, 2.3 heaps, 2.4 trees and recursion, 2.5 graphs and topological sort, 2.6 floats (written 2026-10-13, full walkthrough Chapters 0–2 passing). Next session: the cold-reader audit of Chapter 2 (read each lesson as a newcomer, findings saved to a file as you go), then Chapter 3 (`frontier-tools`: debugger, profiler, vectorising). 2.6's last paragraph promises Chapter 3 exactly that.
+## Next: the cold-reader audit of Chapter 3, then Chapter 4
+
+Chapter 3 (`frontier-tools`) is written: 3.1 finding a bug (pdb), 3.2 logging, 3.3 profiling and `functools.cache`, 3.4 vectorising with NumPy. Next session: the cold-reader audit of Chapter 3 (findings to `docs/audits/frontier-ch3-audit.md` as you go, then fix), then Chapter 4 (`frontier-vectors`). 3.4's last paragraph promises Chapter 4 "the mathematics, with vectors and matrices, and NumPy properly".
+
+Chapter 2's audit (2026-10-13, `docs/audits/frontier-ch2-audit.md`) found 10 problems, all prose, all fixed. Lessons from it:
+- Quote an error message only where it hasn't changed between Python versions. 3.14 rewrote the dict-key `TypeError` (`cannot use 'list' as a dict key (unhashable type: 'list')`); quote the shared tail or nothing.
+- A Your turn requirement that, if missed, gives an unexplained error (2.2: `poly_hash` must sit above the class) belongs in the Build text, not only in a hint.
+- Check measured claims against the measurements in this file ("hundreds" when the first rows were 70 and 75).
+
+Lessons from writing Chapter 3:
+- The Studio's terminal is a real one (xterm), and `run ... stdin="p counts\nc\n"` drives pdb: on 3.14 `breakpoint()` stops on its own line, and `(Pdb) {('the', 'cat'): 1}` is a checkable stdout.
+- `git rm` refuses a file that was never committed ("did not match any files"); a learner deletes such a file with `Remove-Item`. The walkthrough caught this in 3.1.
+- The static `-k` check (`walkSeries.js`) now reads every version of a test file: supplied, typed by the learner, or written by a walkthrough `files` answer (changed 2026-10-13; every walkSeries series' static check re-run, passing). Before, a learner-typed test file failed it.
+- Under `python -m`, a module's `__name__` is `"__main__"`, so a log format with `%(name)s` would depend on how the command was started: 3.2's format leaves it out.
+- NumPy 2.5's hints make `array / number` `Any`, and mypy `--strict` refuses to return it. Annotate the result (`probabilities: npt.NDArray[np.float64] = ...`) and return that. `float(np.sum(...))` and `float(xs @ xs)` pass.
+- Measured 2026-10-13 (the walk's guard, 2 threads): a million-number loop 0.057 s; `np.sum(xs * xs)` about 17x faster, `xs @ xs` about 400x; `np.array(list)` 0.067 s. `count_games()` 1.6 s, cached 0.03 s; `winner` calls 549,946 -> 5,478 (`hits=10690, misses=5478`).
+- `inspect.getsource(functools.lru_cache)` ends at `_lru_cache_wrapper`, which is C: don't claim the learner can read the store's code.
+- Walking: Chapters 0–2 with `FRONTIER_UNTIL=frontier-cs/02-06` and `FRONTIER_KEEP` took 1218 s; then `FRONTIER_START=<kept> FRONTIER_FROM=frontier-tools/03-01` walked 3.1–3.4 in 326 s. Next session: keep a project at the end of Chapter 3 the same way (`FRONTIER_UNTIL=frontier-tools/03-04`, about 26 minutes in the background), then walk Chapter 4's lessons from it.
 
 Figures: `src/labs/project-studio/figures/frontier.jsx` (registered as `frontier/` in `figures/index.js`) has `GrowthCurves` (2.1), `HashBuckets` (2.2), `HeapSteps` (2.3), `TreeCount` (2.4), `GraphOrder` (2.5) and `FloatBits` (2.6: a float's 64 bits and its exact stored value, computed with `BigInt`). `figures.test.jsx` now renders every Frontier figure placed in a lesson.
 

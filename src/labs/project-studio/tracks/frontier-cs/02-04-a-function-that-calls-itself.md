@@ -6,7 +6,7 @@ support: tests/conftest.py
 
 Last lesson's heap was a tree squeezed into a list, where every position knew its children by arithmetic. Most trees aren't that tidy. A folder holds files and other folders, which hold more of both. A sentence splits into phrases, which split into words. A game position leads to several next positions, each of which leads to several more. Each of these is a **tree**: things that each hold any number of smaller things of the same kind.
 
-In this lesson you build a tree out of **nodes**, then walk it with **recursion**: a function that calls itself on each smaller piece. Then you use the same idea on a real tree, every possible game of noughts and crosses, and count them all. That count is the reason Chapter 57's search doesn't try to look at every game, and samples instead.
+In this lesson you build a tree out of **nodes**, then walk it with **recursion**: a function that calls itself on each smaller piece. Then you use the same idea on a real tree, every possible game of noughts and crosses, and count them all. How fast that count grows, once the game is bigger than three squares by three, is the reason Chapter 57's search doesn't try to look at every game, and samples instead.
 
 ## Read the tests first
 
@@ -113,7 +113,7 @@ caption: count(A) calls count on each child and waits. Leaves return 1 straight 
 props: {"tree": {"label": "A", "children": [{"label": "B", "children": [{"label": "D"}, {"label": "E"}]}, {"label": "C"}]}}
 ```
 
-A recursive function needs its base case, or something has to make each call smaller. Without one, it never stops calling.
+A recursive function needs both: a base case, and each call getting closer to it. Without them, it never stops calling.
 
 ```predict
 question: `def countdown(n): return countdown(n - 1)` has no base case. What does `countdown(10)` do?

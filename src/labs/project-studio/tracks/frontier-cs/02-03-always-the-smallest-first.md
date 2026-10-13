@@ -384,7 +384,7 @@ for name, smallest_first in [("list", by_list), ("heap", by_heap)]:
     print(f"{name}: each doubling multiplies the time by", [round(x, 1) for x in ratios(times)])
 ```
 
-`heap: list[int] = []` says what the empty list will hold, as `self.buckets` did last lesson; mypy can't guess it from `[]`. Run it:
+`heap: list[int] = []` says what the empty list will hold, as `self.buckets` did last lesson. In `best_of`, mypy worked out `times` from the `append` that followed it; here the list is only passed to `push`, and mypy won't guess from that. Run it:
 
 ```powershell
 .venv\Scripts\python experiments/time_smallest.py

@@ -33,6 +33,7 @@ const S = 'frontier-setup';
 const PIP = '.venv\\Scripts\\python -m pip install -q';
 const E = 'frontier-engineering';
 const C = 'frontier-cs';
+const T = 'frontier-tools';
 // Git runs only in the walkthrough's temporary project, never in this repository.
 const COMMIT = (message) => ['git add .', `git commit -q -m "${message}"`];
 
@@ -606,6 +607,152 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'did nothing', fails: [0] },
       { name: 'committed but did not push', run: COMMIT('Compare floats, and a softmax that cannot overflow'), fails: [1] },
+    ],
+  },
+
+  // ── 3.1 ──────────────────────────────────────────────────────────────────
+  [`${T}/03-01-finding-a-bug#Someone else's code`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${T}/03-01-finding-a-bug#Reproduce it`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${T}/03-01-finding-a-bug#Make it a test`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${T}/03-01-finding-a-bug#Narrow it down: the debugger`]: {
+    wrong: [{ name: 'did nothing', fails: [0, 1] }],
+  },
+  [`${T}/03-01-finding-a-bug#A guess, and a test of it`]: {
+    editFiles: { 'src/frontier/pairs.py': [['    breakpoint()\n', '']] },
+    wrong: [
+      { name: 'removed the breakpoint but added no third call', editFiles: { 'src/frontier/pairs.py': [['    breakpoint()\n', '']] }, fails: [1] },
+    ],
+  },
+  [`${T}/03-01-finding-a-bug#The fix`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'defaulted to None but made no dictionary', edit: [['    if counts is None:\n        counts = {}\n', '']], fails: [0, 1] },
+    ],
+  },
+  [`${T}/03-01-finding-a-bug#Your turn: the missing pair`]: {
+    files: { 'src/frontier/pairs.py': answer(T, 'pairs-3.1.py'), 'tests/test_pairs.py': answer(T, 'test_pairs-3.1.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'fixed the code but wrote no test', files: { 'src/frontier/pairs.py': answer(T, 'pairs-3.1.py') }, fails: [0, 1] },
+      { name: 'wrote the test but did not fix the code', files: { 'tests/test_pairs.py': answer(T, 'test_pairs-3.1.py') }, fails: [1, 2, 4] },
+      { name: 'looped one position too far', files: { 'src/frontier/pairs.py': answerWith(T, 'pairs-3.1.py', [['range(len(words) - 1)', 'range(len(words))']]), 'tests/test_pairs.py': answer(T, 'test_pairs-3.1.py') }, fails: [1, 2, 4] },
+    ],
+  },
+  [`${T}/03-01-finding-a-bug#Debuggers everywhere, and onto GitHub`]: {
+    run: ['Remove-Item experiments/pairs_bug.py', ...COMMIT('Find and fix two bugs in count_pairs, with a test for each'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', run: ['Remove-Item experiments/pairs_bug.py', ...COMMIT('Find and fix two bugs in count_pairs, with a test for each')], fails: [2] },
+    ],
+  },
+
+  // ── 3.2 ──────────────────────────────────────────────────────────────────
+  [`${T}/03-02-what-it-is-doing#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${T}/03-02-what-it-is-doing#A logger, and its levels`]: {
+    wrong: [
+      { name: 'did nothing', fails: [1] },
+      { name: 'printed instead of logging', edit: [['    logger.info("reading %s", args.path)', '    print(f"reading {args.path}")']], fails: [0] },
+    ],
+  },
+  [`${T}/03-02-what-it-is-doing#Switch it on with --verbose`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'always verbose', edit: [['level=logging.INFO if args.verbose else logging.WARNING', 'level=logging.INFO']], fails: [1] },
+      { name: 'left the level out of the format', edit: [['format="%(levelname)s: %(message)s"', 'format="%(message)s"']], fails: [0] },
+    ],
+  },
+  [`${T}/03-02-what-it-is-doing#Your turn: a warning worth showing`]: {
+    files: { 'src/frontier/textstats_cli.py': answer(T, 'textstats_cli-3.2.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'warned at the info level', files: { 'src/frontier/textstats_cli.py': answerWith(T, 'textstats_cli-3.2.py', [['logger.warning(', 'logger.info(']]) }, fails: [0] },
+      { name: 'printed the warning on stdout', files: { 'src/frontier/textstats_cli.py': answerWith(T, 'textstats_cli-3.2.py', [['logger.warning("asked for the top %d words, but there are only %d different words", args.top, stats.unique_words)', 'print(f"WARNING: asked for the top {args.top} words, but there are only {stats.unique_words} different words")']]) }, fails: [0] },
+      { name: 'warned on every run', files: { 'src/frontier/textstats_cli.py': answerWith(T, 'textstats_cli-3.2.py', [['    if args.top > stats.unique_words:\n', '    if True:\n']]) }, fails: [1] },
+    ],
+  },
+  [`${T}/03-02-what-it-is-doing#When to log, and onto GitHub`]: {
+    run: [...COMMIT('Log what frontier-textstats is doing, and warn when --top is too big'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Log what frontier-textstats is doing, and warn when --top is too big'), fails: [1] },
+    ],
+  },
+
+  // ── 3.3 ──────────────────────────────────────────────────────────────────
+  [`${T}/03-03-finding-the-slow-part#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${T}/03-03-finding-the-slow-part#Profile it`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${T}/03-03-finding-the-slow-part#The same position, again and again`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'never kept a board', edit: [['    seen.add(board)\n', '']], fails: [0] },
+    ],
+  },
+  [`${T}/03-03-finding-the-slow-part#Remember the answers`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'cached winner instead', edit: [['@cache\ndef count_games', 'def count_games'], ['def winner(', '@cache\ndef winner(']], fails: [0] },
+    ],
+  },
+  [`${T}/03-03-finding-the-slow-part#Your turn: fast outcomes, safely`]: {
+    files: { 'src/frontier/tictactoe.py': answer(T, 'tictactoe-3.3.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'handed out the shared dictionary', files: { 'src/frontier/tictactoe.py': answerWith(T, 'tictactoe-3.3.py', [['    return dict(shared_outcomes(board, player))', '    return shared_outcomes(board, player)']]) }, fails: [0] },
+      { name: 'copied but did not cache', files: { 'src/frontier/tictactoe.py': answerWith(T, 'tictactoe-3.3.py', [['@cache\ndef shared_outcomes', 'def shared_outcomes']]) }, fails: [0] },
+    ],
+  },
+  [`${T}/03-03-finding-the-slow-part#Measure, then change, and onto GitHub`]: {
+    run: [...COMMIT('Profile count_games, and remember answers with functools.cache'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Profile count_games, and remember answers with functools.cache'), fails: [1] },
+    ],
+  },
+
+  // ── 3.4 ──────────────────────────────────────────────────────────────────
+  [`${T}/03-04-a-hundred-times-faster#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${T}/03-04-a-hundred-times-faster#One number at a time`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'started the total at the int 0', edit: [['    total = 0.0\n', '    total = 0\n']], fails: [1] },
+    ],
+  },
+  [`${T}/03-04-a-hundred-times-faster#All at once`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'added instead of squaring', edit: [['np.sum(xs * xs)', 'np.sum(xs + xs)']], fails: [0] },
+    ],
+  },
+  [`${T}/03-04-a-hundred-times-faster#Time them both`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${T}/03-04-a-hundred-times-faster#Your turn: softmax, vectorised`]: {
+    files: { 'src/frontier/fast.py': answer(T, 'fast-3.4.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'did not subtract the largest score', files: { 'src/frontier/fast.py': answerWith(T, 'fast-3.4.py', [['np.exp(scores - scores.max())', 'np.exp(scores)']]) }, fails: [0] },
+      { name: 'looped over the scores', files: { 'src/frontier/fast.py': answerWith(T, 'fast-3.4.py', [['    exps = np.exp(scores - scores.max())', '    exps = np.array([np.exp(score - scores.max()) for score in scores])']]) }, fails: [1] },
+    ],
+  },
+  [`${T}/03-04-a-hundred-times-faster#Chapter 3 done, and onto GitHub`]: {
+    run: [...COMMIT('Vectorise a sum of squares and softmax with NumPy'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Vectorise a sum of squares and softmax with NumPy'), fails: [1] },
     ],
   },
 };

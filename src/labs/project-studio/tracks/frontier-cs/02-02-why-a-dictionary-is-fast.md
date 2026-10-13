@@ -203,7 +203,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_hashing.py -k membership" labe
 
 There's a problem with a fixed number of buckets. Put 8000 words in 8 buckets and each holds about 1000. Every lookup then searches a 1000-word list, which makes the table just a list divided by 8: still O(n).
 
-The fix is to add buckets as the words arrive. Whenever there are more words than buckets, `grow` doubles the number of buckets. Then each bucket holds about one word on average, however many words there are. The words have to **move**, because a word's bucket is its hash *remainder the number of buckets*, and that number just changed. So `grow` collects every word first, makes the new empty buckets, and puts each word back where it now belongs.
+The fix is to add buckets as the words arrive. Whenever there are more words than buckets, `grow` doubles the number of buckets. Then each bucket holds about one word on average, however many words there are. The words have to **move**, because a word's bucket is the remainder after dividing its hash by the number of buckets, and that number just changed. So `grow` collects every word first, makes the new empty buckets, and puts each word back where it now belongs.
 
 The collecting line is a list comprehension with **two `for`s**. They read left to right, like two nested loops: for each bucket, for each word in that bucket, keep the word. Add the last three lines to `add`, and `grow` after it:
 
@@ -298,7 +298,7 @@ Run it:
 .venv\Scripts\python experiments/time_lookup.py
 ```
 
-The list's time grows at least as fast as n: lookups in a list are O(n). The `set` barely moves. Your `WordSet` is far faster than the list, but its time still climbs. Look at the last column: the longest bucket holds **hundreds** of words, and gets longer as n grows. With 8000 words in 8192 buckets, there should be about one word per bucket.
+The list's time grows at least as fast as n: lookups in a list are O(n). The `set` barely moves. Your `WordSet` is far faster than the list, but its time still climbs. Look at the last column: the longest bucket holds dozens of words, then **hundreds**, getting longer as n grows. With 8000 words in 8192 buckets, there should be about one word per bucket.
 
 `letter_sum` is to blame. The words are `word0` to `word7999`. They all start with `word`, and their digits only shuffle a handful of characters, so their sums bunch into a few dozen values. Every word with the same sum lands in the same bucket, however many buckets there are. Try it in the figure: the words below are anagram pairs, the worst case for `letter_sum`. Change the number of buckets and the pairs never split up.
 
@@ -317,6 +317,8 @@ run ".venv/Scripts/python experiments/time_lookup.py" stdout="longest bucket" la
 **Build, on your own:** a function `poly_hash(word)` in `src/frontier/hashing.py`, and make it `WordSet`'s default `hash_fn` in place of `letter_sum`.
 
 `poly_hash` starts with `h = 0`. Then, for each character `c` of the word in turn, it sets `h = h * 31 + ord(c)`, and at the end it returns `h`. Multiplying by 31 before adding each letter gives each position a different weight. `"ab"` is 97 × 31 + 98, while `"ba"` is 98 × 31 + 97, so anagrams no longer collide. Give it the hints `word: str` and `-> int`.
+
+Put `poly_hash` **above** the class, not at the end of the file. A default value is worked out when the `def` line runs, so `= poly_hash` in `__init__` needs `poly_hash` to exist already; below the class, Python stops with a `NameError`.
 
 Then run the tests and the experiment again:
 
@@ -357,7 +359,7 @@ Python's `dict` and `set` are hash tables like yours, written in C. They differ 
 .venv\Scripts\python -c "print(hash('cat'))"
 ```
 
-The two numbers differ. Python picks a fresh random ingredient for string hashes each time it starts. Within one run `hash('cat')` never changes, which is all a dictionary needs. Between runs it changes on purpose, after a real attack in 2011: people sent web servers thousands of form fields whose names all collided. That turned each server's dictionary into one long list, the problem you just saw with `letter_sum`, on purpose. A random ingredient means nobody can work out collisions in advance.
+The two numbers differ. Python picks a fresh random ingredient for string hashes each time it starts. Within one run `hash('cat')` never changes, which is all a dictionary needs. Between runs it changes on purpose, after an attack shown publicly in 2011: sending web servers thousands of form fields whose names all collided. That turned each server's dictionary into one long list, the problem you just saw with `letter_sum`, on purpose. A random ingredient means nobody can work out collisions in advance.
 
 A key must keep the same hash for as long as it's in the table. Otherwise it would sit in a bucket its hash no longer points to, and nobody could find it. So Python only lets values that can't change be keys: strings, numbers, and tuples of those. A list can change after it's stored, with `append`.
 
@@ -367,7 +369,7 @@ choice: makes a dictionary with one key
 choice: TypeError
 choice: KeyError
 answer: TypeError
-explain: `TypeError: unhashable type: 'list'`. A list can change after it is stored, so Python refuses to hash it. A tuple, `("the", "cat")`, works: it can't change. Chapter 28's tokenizer counts pairs of tokens with exactly such tuple keys.
+explain: The message ends `unhashable type: 'list'` (its start differs between Python versions). A list can change after it is stored, so Python refuses to hash it. A tuple, `("the", "cat")`, works: it can't change. Chapter 28's tokenizer counts pairs of tokens with exactly such tuple keys.
 verify: script unhashable.py
 ```
 
