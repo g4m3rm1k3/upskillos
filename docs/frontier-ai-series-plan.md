@@ -43,18 +43,18 @@ Each tool comes after the hand-built version of what it does, never instead of i
 | scikit-learn | classic ML, done professionally | Ch 8 |
 | TensorBoard (and Weights & Biases, optionally) | tracking experiments | Ch 11 |
 | PyTorch (`nn`, `optim`, `DataLoader`, AMP, `torch.compile`, profiler) | deep learning | Ch 14 onward |
-| CuPy, Triton | writing your own GPU code | Ch 15, Ch 41 |
+| CuPy, Triton | writing your own GPU code | Ch 15, Ch 42 |
 | Gymnasium | the standard RL environment interface | Ch 23 |
 | Stable-Baselines3 | tested RL algorithms to compare yours against | Ch 25 |
 | `tiktoken`, Hugging Face `tokenizers` | production tokenizers | Ch 28 |
 | gensim | word vectors | Ch 29 |
 | Hugging Face `transformers`, `datasets`, the Hub | pretrained models and datasets | Ch 37 onward |
-| `torch.distributed` | training across processes and GPUs | Ch 42 |
-| Hugging Face `peft`, `bitsandbytes` | LoRA and quantised fine-tuning | Ch 45 |
-| `lm-evaluation-harness` | standard language-model benchmarks | Ch 46 |
-| Hugging Face TRL | SFT, PPO, DPO and GRPO trainers | Ch 44, Ch 51–54 |
-| `diffusers` | production diffusion models | Ch 61 |
-| TransformerLens | interpretability on real models | Ch 63 |
+| `torch.distributed` | training across processes and GPUs | Ch 43 |
+| Hugging Face `peft`, `bitsandbytes` | LoRA and quantised fine-tuning | Ch 46 |
+| `lm-evaluation-harness` | standard language-model benchmarks | Ch 47 |
+| Hugging Face TRL | SFT, PPO, DPO and GRPO trainers | Ch 45, Ch 52–55 |
+| `diffusers` | production diffusion models | Ch 62 |
+| TransformerLens | interpretability on real models | Ch 64 |
 
 ## A map of the field, in plain words
 
@@ -167,25 +167,26 @@ Every piece of maths is measured in code first, then written in symbols.
 | 35 | `frontier-gpt` | Your own GPT | a GPT trained on the GPU on TinyStories (about 10–30M parameters), writing coherent short stories | the training loop at scale: mixed precision (AMP), gradient accumulation, checkpoints, validation loss, `torch.compile` |
 | 36 | `frontier-sampling` | Generating text | a generator with a KV cache; temperature, top-k, top-p | why the KV cache is fast, measured; sampling vs quality and diversity |
 | 37 | `frontier-gpt2` | Real models: GPT-2 and Hugging Face | GPT-2 (124M) weights loaded into your own GPT class, matching Hugging Face's logits to 1e-4; then `transformers` and the Hub used properly: loading models, `generate`, `datasets` | weight files (`safetensors`); the proof that your implementation is the real thing; reading a model card |
+| 38 | `frontier-open-model` | A modern open model, rebuilt | your GPT upgraded one change at a time to the architecture today's open models use: RMSNorm in place of LayerNorm, rotary position embeddings (Chapter 34) in every layer, a SwiGLU feed-forward, grouped-query attention, no biases; then Qwen2.5-0.5B's real weights loaded into your class, matching Hugging Face's logits, and generating text with its own tokenizer and chat template read from the model files | what changed between GPT-2 (2019) and today's open models, and why: each change trained on TinyStories against your Chapter 35 GPT, several seeds; grouped-query attention's KV-cache saving measured; reading a model's `config.json` and modelling code on the Hub; `bf16` weights. Afterwards, the open model the later chapters fine-tune and train is running in code you wrote. *Small:* the logit match on a CPU (about 2 GB of memory) |
 
 ### Part 9 — Scale and systems
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 38 | `frontier-flops` | Counting compute and memory | a calculator for parameters, FLOPs and memory of any GPT config, checked against measurements | 6·N·D; activation memory; gradient checkpointing measured |
-| 39 | `frontier-scaling` | Scaling laws, measured | 6–10 small GPTs of different sizes, and a power-law fit | Kaplan and Chinchilla in miniature; compute-optimal size; the limits of extrapolation |
-| 40 | `frontier-quantise` | Smaller numbers | int8 and 4-bit quantisation by hand, error measured; then `bitsandbytes` | floating-point formats (fp32, bf16, fp16, int8) |
-| 41 | `frontier-flash` | Faster attention | online softmax in NumPy, then a tiled attention kernel in Triton, checked against `scaled_dot_product_attention` | why attention is memory-bound; the FlashAttention idea |
-| 42 | `frontier-parallel` | Training on many GPUs, simulated | data parallelism with several processes using `torch.distributed`; tensor and pipeline parallelism in a small simulator | all-reduce; ZeRO / FSDP sharding |
-| 43 | `frontier-moe-ssm` | Beyond the dense transformer | a mixture-of-experts layer in your GPT; a minimal Mamba-style selective scan compared at equal compute | sparse vs dense compute; routing collapse; why attention costs n² |
+| 39 | `frontier-flops` | Counting compute and memory | a calculator for parameters, FLOPs and memory of any GPT config, checked against measurements | 6·N·D; activation memory; gradient checkpointing measured |
+| 40 | `frontier-scaling` | Scaling laws, measured | 6–10 small GPTs of different sizes, and a power-law fit | Kaplan and Chinchilla in miniature; compute-optimal size; the limits of extrapolation |
+| 41 | `frontier-quantise` | Smaller numbers | int8 and 4-bit quantisation by hand, error measured; then `bitsandbytes` | floating-point formats (fp32, bf16, fp16, int8) |
+| 42 | `frontier-flash` | Faster attention | online softmax in NumPy, then a tiled attention kernel in Triton, checked against `scaled_dot_product_attention` | why attention is memory-bound; the FlashAttention idea |
+| 43 | `frontier-parallel` | Training on many GPUs, simulated | data parallelism with several processes using `torch.distributed`; tensor and pipeline parallelism in a small simulator | all-reduce; ZeRO / FSDP sharding |
+| 44 | `frontier-moe-ssm` | Beyond the dense transformer | a mixture-of-experts layer in your GPT; a minimal Mamba-style selective scan compared at equal compute | sparse vs dense compute; routing collapse; why attention costs n² |
 
 ### Part 10 — From text predictor to assistant
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 44 | `frontier-sft` | Supervised fine-tuning | a fine-tuning loop by hand on a small open chat model (about 0.5B parameters, e.g. Qwen2.5-0.5B), a chat template written by hand; then TRL's `SFTTrainer` doing the same | why a pretrained model doesn't follow instructions; loss masking on the prompt |
-| 45 | `frontier-lora` | LoRA | a LoRA layer by hand, then `peft`; QLoRA with `bitsandbytes` | low-rank updates and why they work; memory measured |
-| 46 | `frontier-evals` | Evaluating language models | an evaluation harness by hand (exact match, multiple choice by log-probability, pass@k, LLM-as-judge); then `lm-evaluation-harness` on the same model | contamination; held-out sets; error bars on evals |
+| 45 | `frontier-sft` | Supervised fine-tuning | a fine-tuning loop by hand on Qwen2.5-0.5B running in your own Chapter 38 code, a chat template written by hand; then TRL's `SFTTrainer` doing the same | why a pretrained model doesn't follow instructions; loss masking on the prompt |
+| 46 | `frontier-lora` | LoRA | a LoRA layer by hand, then `peft`; QLoRA with `bitsandbytes` | low-rank updates and why they work; memory measured |
+| 47 | `frontier-evals` | Evaluating language models | an evaluation harness by hand (exact match, multiple choice by log-probability, pass@k, LLM-as-judge); then `lm-evaluation-harness` on the same model | contamination; held-out sets; error bars on evals |
 
 ### Part 11 — Language meets reinforcement learning (Q-learning and NLP together)
 
@@ -193,47 +194,47 @@ It starts with Q-learning on text and ends with the methods used to train reason
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 47 | `frontier-text-env` | A world made of words | a small text-adventure environment with the Gymnasium interface | language as states and actions; why the action space is huge |
-| 48 | `frontier-text-q` | Q-learning on text | tabular Q-learning on the text game, then a DQN whose state is a text encoder and whose actions are scored commands (DRRN-style) | representing states with language; generalising to unseen rooms, measured |
-| 49 | `frontier-lm-as-policy` | A language model is a policy | your GPT viewed as an RL agent: each token is an action, the text so far is the state | the MDP over tokens; sparse rewards; Q-values as logits (soft Q-learning), derived |
-| 50 | `frontier-reinforce-lm` | Policy gradient on a language model | REINFORCE on your GPT with a verifiable reward (correct sums) | the KL penalty to a reference model, and the collapse without it (shown) |
-| 51 | `frontier-ppo-lm` | PPO for language models | PPO with a value head and GAE by hand; then TRL's PPO | per-token advantages; RLHF's training loop from the InstructGPT paper |
-| 52 | `frontier-reward-models` | Learning what people prefer | a reward model on preference pairs (Bradley–Terry), then RLHF against it | reward hacking, made to happen and measured; RLAIF and Constitutional AI |
-| 53 | `frontier-dpo` | Skipping the reward model | DPO derived and trained by hand; then TRL's `DPOTrainer`; compared with PPO | the closed form of the KL-regularised optimum |
-| 54 | `frontier-grpo` | Reinforcement learning for reasoning | GRPO by hand on arithmetic and logic puzzles with a rule-based verifier; then TRL's `GRPOTrainer` on the 0.5B model | why verifiable rewards are powerful; reasoning length growing during training, measured; the DeepSeek-R1 paper |
+| 48 | `frontier-text-env` | A world made of words | a small text-adventure environment with the Gymnasium interface | language as states and actions; why the action space is huge |
+| 49 | `frontier-text-q` | Q-learning on text | tabular Q-learning on the text game, then a DQN whose state is a text encoder and whose actions are scored commands (DRRN-style) | representing states with language; generalising to unseen rooms, measured |
+| 50 | `frontier-lm-as-policy` | A language model is a policy | your GPT viewed as an RL agent: each token is an action, the text so far is the state | the MDP over tokens; sparse rewards; Q-values as logits (soft Q-learning), derived |
+| 51 | `frontier-reinforce-lm` | Policy gradient on a language model | REINFORCE on your GPT with a verifiable reward (correct sums) | the KL penalty to a reference model, and the collapse without it (shown) |
+| 52 | `frontier-ppo-lm` | PPO for language models | PPO with a value head and GAE by hand; then TRL's PPO | per-token advantages; RLHF's training loop from the InstructGPT paper |
+| 53 | `frontier-reward-models` | Learning what people prefer | a reward model on preference pairs (Bradley–Terry), then RLHF against it | reward hacking, made to happen and measured; RLAIF and Constitutional AI |
+| 54 | `frontier-dpo` | Skipping the reward model | DPO derived and trained by hand; then TRL's `DPOTrainer`; compared with PPO | the closed form of the KL-regularised optimum |
+| 55 | `frontier-grpo` | Reinforcement learning for reasoning | GRPO by hand on arithmetic and logic puzzles with a rule-based verifier; then TRL's `GRPOTrainer` on the 0.5B model | why verifiable rewards are powerful; reasoning length growing during training, measured; the DeepSeek-R1 paper |
 
 ### Part 12 — Search and self-play: AlphaZero, and AlphaZero for language
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 55 | `frontier-minimax` | Game trees | tic-tac-toe and Connect Four engines with minimax and alpha-beta | game trees; why exhaustive search fails at chess and Go sizes |
-| 56 | `frontier-mcts` | Monte Carlo tree search | MCTS with UCT on Connect Four | UCB from Chapter 21 applied to trees |
-| 57 | `frontier-alphazero` | AlphaZero | a policy-value network guiding MCTS, trained by self-play on Connect Four | self-play → train → evaluate; Elo ratings; the AlphaGo Zero and AlphaZero papers |
-| 58 | `frontier-muzero` | MuZero: learning the rules too | a small MuZero on Connect Four and a simple game | learned dynamics models; planning in latent space |
-| 59 | `frontier-test-time` | Thinking longer at answer time | best-of-n with a verifier, majority vote, a process reward model scoring each step | test-time compute scaling, measured: accuracy vs samples |
-| 60 | `frontier-reasoning-search` | AlphaZero for reasoning | MCTS over reasoning steps with your language model as the policy; then expert iteration: search finds better answers, the model is trained on them, repeat | where the two lines of work meet |
+| 56 | `frontier-minimax` | Game trees | tic-tac-toe and Connect Four engines with minimax and alpha-beta | game trees; why exhaustive search fails at chess and Go sizes |
+| 57 | `frontier-mcts` | Monte Carlo tree search | MCTS with UCT on Connect Four | UCB from Chapter 21 applied to trees |
+| 58 | `frontier-alphazero` | AlphaZero | a policy-value network guiding MCTS, trained by self-play on Connect Four | self-play → train → evaluate; Elo ratings; the AlphaGo Zero and AlphaZero papers |
+| 59 | `frontier-muzero` | MuZero: learning the rules too | a small MuZero on Connect Four and a simple game | learned dynamics models; planning in latent space |
+| 60 | `frontier-test-time` | Thinking longer at answer time | best-of-n with a verifier, majority vote, a process reward model scoring each step | test-time compute scaling, measured: accuracy vs samples |
+| 61 | `frontier-reasoning-search` | AlphaZero for reasoning | MCTS over reasoning steps with your language model as the policy; then expert iteration: search finds better answers, the model is trained on them, repeat | where the two lines of work meet |
 
 ### Part 13 — Beyond text
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 61 | `frontier-generative` | Autoencoders, VAEs and diffusion | a VAE and a small diffusion model generating MNIST digits by hand; then `diffusers` with a pretrained model | latent variables; the ELBO; denoising as the training task |
-| 62 | `frontier-multimodal` | Images and text together | a vision transformer, then a mini-CLIP; then a pretrained CLIP from the Hub | patches as tokens; contrastive learning |
+| 62 | `frontier-generative` | Autoencoders, VAEs and diffusion | a VAE and a small diffusion model generating MNIST digits by hand; then `diffusers` with a pretrained model | latent variables; the ELBO; denoising as the training task |
+| 63 | `frontier-multimodal` | Images and text together | a vision transformer, then a mini-CLIP; then a pretrained CLIP from the Hub | patches as tokens; contrastive learning |
 
 ### Part 14 — Understanding and aligning what you built
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 63 | `frontier-interp` | Looking inside a GPT | attention viewer, logit lens and activation patching by hand on your GPT; induction heads found forming during training; then TransformerLens on GPT-2 | mechanistic interpretability; the residual stream; Anthropic's transformer-circuits papers |
-| 64 | `frontier-features` | Features and sparse autoencoders | a sparse autoencoder on your GPT's activations, features labelled by hand | superposition (the toy model reproduced); dictionary learning |
-| 65 | `frontier-safety` | Alignment and safety, by experiment | specification gaming, sycophancy in a fine-tuned model, a red-teaming harness, small dangerous-behaviour evals | what labs' safety teams do and why |
+| 64 | `frontier-interp` | Looking inside a GPT | attention viewer, logit lens and activation patching by hand on your GPT; induction heads found forming during training; then TransformerLens on GPT-2 | mechanistic interpretability; the residual stream; Anthropic's transformer-circuits papers |
+| 65 | `frontier-features` | Features and sparse autoencoders | a sparse autoencoder on your GPT's activations, features labelled by hand | superposition (the toy model reproduced); dictionary learning |
+| 66 | `frontier-safety` | Alignment and safety, by experiment | specification gaming, sycophancy in a fine-tuned model, a red-teaming harness, small dangerous-behaviour evals | what labs' safety teams do and why |
 
 ### Part 15 — Research practice and capstone
 
 | # | Track | Chapter | Built | Taught |
 |---|---|---|---|---|
-| 66 | `frontier-reproduce` | Reproduce a paper | one recent small-scale paper reproduced end to end, chosen from a shortlist when the chapter is written | finding the details papers leave out; reporting what didn't reproduce |
-| 67 | `frontier-capstone` | Your own idea | an original experiment from *Open questions* (or the learner's own), written up as a paper, in a public repository | choosing a question small enough to answer; ablations; writing results people trust |
+| 67 | `frontier-reproduce` | Reproduce a paper | one recent small-scale paper reproduced end to end, chosen from a shortlist when the chapter is written | finding the details papers leave out; reporting what didn't reproduce |
+| 68 | `frontier-capstone` | Your own idea | an original experiment from *Open questions* (or the learner's own), written up as a paper, in a public repository | choosing a question small enough to answer; ablations; writing results people trust |
 
 ## Open questions: where "make the algorithms better" starts
 
@@ -243,9 +244,9 @@ Each chapter's last lesson from Part 3 on poses one of these, or something like 
 - **RL:** can a learned exploration bonus make DQN solve a sparse-reward game that ε-greedy can't?
 - **Tokenisation:** does a tokenizer trained on the task (arithmetic) make GRPO learn faster than GPT-2's tokenizer?
 - **Architecture:** at equal compute, where does a state-space model beat your GPT, and where does it lose?
-- **RL for language:** can a value function trained by Q-learning on tokens (Chapter 49) replace GRPO's group baseline and need fewer samples?
+- **RL for language:** can a value function trained by Q-learning on tokens (Chapter 50) replace GRPO's group baseline and need fewer samples?
 - **Search:** does MCTS over reasoning steps beat best-of-n at the same compute? At what model size does the answer flip?
-- **Self-improvement:** in the expert-iteration loop (Chapter 60), when does improvement stop, and does a curriculum of harder problems keep it going?
+- **Self-improvement:** in the expert-iteration loop (Chapter 61), when does improvement stop, and does a curriculum of harder problems keep it going?
 - **Self-play for language:** two copies of your model, one setting puzzles and one solving them. Does it improve both?
 - **Interpretability:** can you find the circuit your GRPO-trained model uses to carry a digit?
 
@@ -307,7 +308,7 @@ node scripts/frontier-safe-run.mjs --timeout 590 --mem 4096 -- npx vitest run sr
 
 ## Decisions made (no input needed)
 
-- **Python throughout.** PyTorch is the deep-learning framework. JAX is mentioned in Chapter 42 only.
+- **Python throughout.** PyTorch is the deep-learning framework. JAX is mentioned in Chapter 43 only.
 - **Standalone.** Nothing links out as required reading. Other series may be linked as optional extra practice.
 - **Datasets** are small and downloadable: names, TinyShakespeare, MNIST, TinyStories (a slice for *small* runs), and arithmetic problems generated locally.
 - **Written in plan order without review pauses.** The owner reviews by doing the lessons.
@@ -319,10 +320,10 @@ Lessons live in `src/labs/project-studio/tracks/frontier-*/`, Your turn answers 
 | Chapter | Lessons | Walkthrough |
 |---|---|---|
 | 0 · A Real Project | 0.1–0.3 | passes (2026-10-08, 465 s, peak 788 MB) |
-| 1 · From Script to Software | 1.1–1.3 written; 1.4–1.5 to come | 1.1–1.3 pass (2026-10-09, walked from a kept Chapter 0 project) |
-| 2–67 | | not written |
+| 1 · From Script to Software | 1.1–1.5 | passes (2026-10-12: 0.1–1.4 in one run, 12 tests, 1.4 included; 1.5 walked from that kept project; full Chapters 0–1 run about 12½ min) |
+| 2–68 | | not written |
 
-Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful.
+Changes from the chapter tables above, made while writing: the cloud notebook moved from Chapter 0 to Chapter 15, where a GPU is first useful. Chapter 38 (`frontier-open-model`, a modern open model rebuilt in your own code) was added on 2026-10-12 at the owner's request, so that the open model fine-tuned and trained in Chapters 45–55 runs in code the learner wrote; the chapters after it moved up by one.
 
 Measured while writing (Windows 11, Python 3.14.3, the walkthrough's CPU-only environment):
 

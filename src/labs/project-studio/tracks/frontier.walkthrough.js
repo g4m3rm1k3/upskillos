@@ -246,4 +246,100 @@ export const WALKTHROUGH = {
     run: [...COMMIT('Move the counting functions into frontier.text'), 'git switch main', 'git merge -q package', 'git branch -d package'],
     wrong: [{ name: 'did nothing', fails: [0, 1, 3] }],
   },
+
+  // ── 1.4 ──────────────────────────────────────────────────────────────────
+  [`${E}/01-04-a-dataclass-and-computing-apart#A branch for the stats`]: {
+    run: ['git switch -c stats'],
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#A dataclass`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'forgot the decorator', edit: [['@dataclass\n', '']], fails: [0] },
+    ],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#Computing apart from printing`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'ignored top_words', edit: [['top_words=top(counts, top_words)', 'top_words=top(counts, 10)']], fails: [0] },
+    ],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#Reading with \`with\``]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      // (Not "stopped rounding": the sample's average is exactly 4.34, so the report wouldn't show it.)
+      { name: 'lost the blank line before the top words', edit: [['    print()\n    print_top("top words:"', '    print_top("top words:"']], fails: [2] },
+    ],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#Your turn: the report as one string`]: {
+    files: { 'textstats.py': answer(E, 'textstats-1.4.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 2] },
+      { name: 'ended the report with a newline', files: { 'textstats.py': answerWith(E, 'textstats-1.4.py', [['return "\\n".join(lines)', 'return "\\n".join(lines) + "\\n"']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${E}/01-04-a-dataclass-and-computing-apart#Bring it into \`main\``]: {
+    run: [...COMMIT('Compute the stats apart from printing them'), 'git switch main', 'git merge -q stats', 'git branch -d stats'],
+    wrong: [{ name: 'did nothing', fails: [0, 1, 3] }],
+  },
+
+  // ── 1.5 ──────────────────────────────────────────────────────────────────
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#A branch for the command`]: {
+    run: ['git switch -c command'],
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#An empty text is an error`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'raised the wrong kind of error', edit: [['raise ValueError(', 'raise TypeError(']], fails: [0] },
+    ],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#A real command with argparse`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'left --top as text', edit: [['parser.add_argument("--top", type=int, default=10,', 'parser.add_argument("--top", default=10,']], fails: [1] },
+    ],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#Errors that say what went wrong`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'printed the message on stdout', edit: [['{error.strerror}", file=sys.stderr)', '{error.strerror}")']], fails: [0] },
+      { name: 'forgot to import sys', edit: [['import sys\n', '']], fails: [0, 2] },
+    ],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#A command of its own`]: {
+    editFiles: { 'pyproject.toml': [['frontier-info = "frontier.info:main"', 'frontier-info = "frontier.info:main"\nfrontier-textstats = "frontier.textstats_cli:main"']] },
+    run: [`${PIP} -e .`],
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#Your turn: retire the old script`]: {
+    files: { 'tests/test_legacy_output.py': answer(E, 'test_legacy_output-1.5.py') },
+    editFiles: {
+      'tools/save_golden.py': [['[sys.executable, "textstats.py", "data/sample.txt"]', '[sys.executable, "-m", "frontier.textstats_cli", "data/sample.txt"]']],
+      'tests/test_stats.py': [['from textstats import format_report', 'from frontier.textstats_cli import format_report']],
+    },
+    run: ['git rm -q textstats.py tools/check_test_catches.py'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'deleted the script but left the tests using it', run: ['git rm -q textstats.py tools/check_test_catches.py'], fails: [1, 2, 3] },
+    ],
+  },
+  [`${E}/01-05-errors-on-purpose-and-a-real-command#Bring it into \`main\`, and onto GitHub`]: {
+    // Frontier isn't an isolatedGit series, so {BARE} isn't available: the stand-in for GitHub is a
+    // bare repository beside the project, in the run's own temporary folder.
+    run: [
+      ...COMMIT('Turn the script into the frontier-textstats command'), 'git switch main', 'git merge -q command', 'git branch -d command',
+      'git init -q --bare ../github.git', 'git remote add origin ../github.git', 'git push -q -u origin main',
+    ],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2, 3, 4] },
+      { name: 'merged but never pushed', run: [...COMMIT('Turn the script into the frontier-textstats command'), 'git switch main', 'git merge -q command', 'git branch -d command'], fails: [3, 4] },
+    ],
+  },
 };

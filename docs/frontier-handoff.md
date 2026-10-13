@@ -63,55 +63,47 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
   npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"
   ```
 
+- An `edit=<file> mode=replace` fence writes its code as the **whole** file. Frontier shows the whole file in a `file=` fence instead; the lint counts only the changed lines.
+- A wrong answer has to change what the checks can see. "Stopped rounding the average" didn't: the sample's average word length is exactly 4.34, so the report is the same either way.
+- Wrong answers may use `run` (for example `git rm` alone, or a merge without a push).
+- `{BARE}` only works in `isolatedGit` series, and Frontier isn't one (it uses the owner's Git identity). Its stand-in for GitHub is made by the walkthrough itself: `git init -q --bare ../github.git` beside the project, in the run's temporary folder (lesson 1.5).
+
 ## State of the project (what a learner has after the last written lesson)
 
-After lesson 1.3 (walkthrough passing on 2026-10-09). Chapter 0's files are unchanged except as noted.
+After lesson 1.5, the end of Chapter 1 (written 2026-10-12; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted.
 
 ```text
-frontier/                 a Git repository on branch main, clean; 1.1 made two commits, 1.2 and 1.3 one each (merged branches)
+frontier/                 a Git repository on branch main, clean, pushed to GitHub (remote origin, main tracks origin/main)
   .gitignore              .venv/, __pycache__/, .pytest_cache/, *.egg-info/, .mypy_cache/
   requirements.txt        mypy==2.4.0, numpy==2.5.3, pytest==9.1.1, torch==2.14.1
-  textstats.py            the program: TOP_WORDS = 10, TOP_LETTERS = 5, print_top(title, counts, n),
-                          print_report(path) (still a bare except: + sys.exit(), still prints as it
-                          computes), main() under if __name__ == "__main__"
-  data/sample.txt         the supplied text (100 words, 9 non-blank lines)
-  tools/save_golden.py    runs textstats.py, writes tests/golden/sample.txt
-  tools/check_test_catches.py   supplied; used only by lesson 1.1's check
+  pyproject.toml          [project.scripts] frontier-info, frontier-textstats = "frontier.textstats_cli:main"
+  data/sample.txt         the supplied text (100 words, 9 non-blank lines, average word length exactly 4.34)
+  tools/save_golden.py    runs python -m frontier.textstats_cli, writes tests/golden/sample.txt
   src/frontier/
     __init__.py, info.py, selfcheck.py   (Chapter 0)
-    text.py               PUNCTUATION, count_lines, split_words, letters, tally(items: Iterable[str]),
-                          top(counts, n), all type-hinted; mypy --strict passes
+    text.py               PUNCTUATION, count_lines, split_words, letters, tally, top; @dataclass TextStats
+                          (lines, words, unique_words, longest_word, average_word_length, top_words,
+                          top_letters); analyse(text, top_words=10, top_letters=5) -> TextStats, raises
+                          ValueError("no words to count"); mypy --strict passes on text.py and textstats_cli.py
+                          (not on Chapter 0's info.py and selfcheck.py, never written for strict mode)
+    textstats_cli.py      format_report(stats) -> str (no final newline), parse_args(argv) (argparse:
+                          path, --top, --letters), main(argv=None): OSError / ValueError -> one line on
+                          stderr, exit 1; usage errors exit 2
   tests/
-    conftest.py           2 threads
-    test_info.py, test_torch_info.py     (Chapter 0)
-    golden/sample.txt     the report as given
-    test_legacy_output.py learner-written: runs textstats.py on data/sample.txt, compares with the golden file
-    test_pieces.py        -k lines, split, letters, tally, top (imports frontier.text)
-    test_annotations.py   -k count, split, letters, tally, top (get_type_hints)
+    conftest.py, test_info.py, test_torch_info.py   (Chapter 0)
+    golden/sample.txt     the report as given in 1.1
+    test_legacy_output.py runs python -m frontier.textstats_cli on the sample, compares with the golden file
+    test_pieces.py, test_annotations.py              (1.2, 1.3)
+    test_stats.py         -k dataclass, analyse, report
+    test_cli.py           -k empty, prints, options, missing, blank, usage (runs the module with subprocess)
 ```
 
-Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `commit -m`, `log --oneline`, `diff`, `restore`, `switch -c`, `branch`, `merge` and fast-forwards, `branch -d`); characterisation tests and golden files; seeing a test fail before trusting it; `subprocess.run` (`cwd`, `capture_output`, `text`, `check`); `pathlib.Path` (`__file__`, `resolve`, `parent`, `/`, `mkdir`, `read_text`, `write_text`, encoding); `__name__ == "__main__"`; constants; truthiness of strings; generator expressions and list comprehensions; `dict.get`; dictionary order; `max(key=)` and its tie rule; stable `sorted`; slicing `[:n]`; docstrings; editor rename (F2) and Replace All; type hints (`list[str]`, `dict[str, int]`, `tuple[str, int]`, `Iterable[str]` from `collections.abc`, variable hints); hints aren't enforced at run time; mypy `--strict`.
+`textstats.py` and `tools/check_test_catches.py` were removed with `git rm` in 1.5.
 
-Not yet taught (don't use without teaching): dataclasses, `with open(...)`, exceptions as design (`raise`, narrow `except`, exit codes, stderr), `argparse`, GitHub and remotes, the debugger, profiling, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
+Taught so far, besides Chapter 0's list: git (`init -b main`, `status`, `add`, `commit -m`, `log --oneline`, `diff`, `restore`, `switch -c`, `branch`, `merge` and fast-forwards, `branch -d`, `rm`, `remote add`, `push -u`); GitHub (an empty repository, sign-in on first push); characterisation tests and golden files; seeing a test fail before trusting it; `subprocess.run` (`cwd`, `capture_output`, `text`, `check`, `returncode`, `stdout`, `stderr`); `pathlib.Path` (`__file__`, `resolve`, `parent`, `/`, `mkdir`, `read_text`, `write_text`, encoding); `__name__ == "__main__"`; constants; truthiness; f-strings; `join`; generator expressions and list comprehensions; `lambda` and `key=`; `dict.get`; dictionary order; `max(key=)` and its tie rule; stable `sorted`; slicing; `list.index`; docstrings; editor rename (F2), Replace All, project search (Ctrl+Shift+F); type hints (`list[str]`, `dict[str, int]`, `tuple[str, int]`, `Iterable[str]`, `X | None`, a class as a type), mypy `--strict`; decorators and `@dataclass` (`__init__`, `__repr__`, `__eq__`, fields); default parameter values; keyword arguments; `with` blocks and context managers; exceptions (`raise`, `ValueError`, narrow `except ... as error`, `OSError` and `strerror`, why a bare `except:` is wrong, tracebacks, failing fast); stdout vs stderr, `print(file=sys.stderr)`, exit codes 0 / 1 / 2, `sys.exit(1)`; `argparse` (positional, `--options`, `type=int`, `default`, `help`, `Namespace`, `parse_args(argv)`); `python -m module`; `encoding="utf-8"` and why; pytest fixtures `capsys` and `tmp_path`, `pytest.raises(match=)`.
 
-## Next: lessons 1.4 and 1.5 (Chapter 1 · From Script to Software, `frontier-engineering`)
+Not yet taught (don't use without teaching): the debugger, profiling, `logging`, NumPy beyond `default_rng`, `standard_normal`, `@`, `abs` and `max`.
 
-Lessons 1.1–1.3 are written: `01-01-pin-the-old-behaviour`, `01-02-small-functions-with-names`, `01-03-a-module-with-types`. Each lesson since 1.2 works on a branch and merges it into `main` at the end. Keep that habit, more briefly each time. Every step ends with `tests/test_legacy_output.py` passing: the report must not change.
-
-**1.4 · A dataclass, and computing apart from printing** (planned):
-
-- A `@dataclass` `TextStats` in `frontier/text.py`: lines, words, unique_words, longest_word, average_word_length, top_words and top_letters (`list[tuple[str, int]]`). Teach what the decorator writes for you (`__init__`, `__repr__`, `__eq__`), and that equality makes it easy to test.
-- `analyse(text: str, top_words: int = 10, top_letters: int = 5) -> TextStats` prints nothing. `format_report(stats: TextStats) -> str` returns the exact report text. `print_report` becomes reading the file plus `print(format_report(analyse(text)))`. `print` adds the final newline, so `format_report` returns the text without it.
-- `with open(path) as f:` replaces open/read/close. Keep the bare `except:` and the default encoding until 1.5, so the output really is unchanged.
-- Tests: a provided test file comparing `analyse("...")` with a whole `TextStats(...)`. Mind the `-k` rule: a test name's leading word must not appear in the file's name. Your turn: `format_report`, checked by the characterisation test and a unit test.
-
-**1.5 · Errors on purpose, and a real command** (planned):
-
-- Replace the bare `except:` with narrow exceptions. Decide the behaviour on bad input on purpose, and say so in the lesson, because this *does* change it (never on the sample): a missing file prints `textstats: can't read <path>: <reason>` to **stderr** and exits with code 1. Empty text: `analyse` raises `ValueError("no words to count")` instead of crashing in `max` or with `ZeroDivisionError`. Read with `encoding="utf-8"`, and say why (the Windows default isn't UTF-8).
-- `argparse` in a module such as `frontier/textstats_cli.py`: `frontier-textstats PATH [--top N] [--letters N]`, a `[project.scripts]` entry, then install again. argparse exits with code 2 on a usage error, which makes a good prediction.
-- The characterisation test switches to running the command, `textstats.py` is deleted (`git rm`), and `tools/save_golden.py` runs the command too.
-- GitHub: create an empty repository (on the website or with `gh repo create`), then `git remote add origin` and `git push -u origin main`. Checks: `git-remote origin` and `git-pushed`. In the walkthrough, `origin` is a bare repository in the temporary folder (`git init --bare`), so nothing reaches GitHub.
-
-## After that: Chapter 2 needs figures
+## Next: Chapter 2 (`frontier-cs`), figures first
 
 Chapter 2 (big-O, hashing, heaps, trees, graphs, floats) is where the owner wants visualisation of complexity. Lessons already support interactive figures: a ```` ```figure ```` fence with `name: <module>/<Export>`, `caption:` and one-line JSON `props:` (`src/labs/project-studio/figures.js`). The components live in `src/labs/project-studio/figures/*.jsx` and are registered in `figures/index.js` (see `aml.jsx` for examples). Add `figures/frontier.jsx` for this series, for example a growth-curve chart (n, n log n, n², measured points against theory), a hash-table bucket view, and a heap or tree you can step through. Check that `figures.test.jsx` still passes.
