@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 65 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 66 labs · 16 games
 
 ## How things are counted
 
@@ -122,6 +122,7 @@
 | Spreadsheet Lab | `spreadsheet-lab` | lab | `/lab/spreadsheet-lab` |
 | Sprite Forge | `sprite-forge` | builder | `/lab/sprite-forge` |
 | SVG Studio | `svg-studio` | builder | `/lab/svg-studio` |
+| Tabletop RL Lab | `tabletop-rl-lab` | lab | `/lab/tabletop-rl-lab` |
 | Tile Mapper | `tile-mapper` | builder | `/lab/tile-mapper` |
 | OpenSocial — TypeScript Lab | `ts-lab` | lesson | `/lab/ts-lab` |
 | Universal Calc | `universal-calc` | lab | `/universal-calc` |

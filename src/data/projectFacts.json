@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 65,
+    "labs": 66,
     "games": 16
   },
   "courses": [
@@ -710,6 +710,12 @@
       "label": "SVG Studio",
       "kind": "builder",
       "path": "/lab/svg-studio"
+    },
+    {
+      "id": "tabletop-rl-lab",
+      "label": "Tabletop RL Lab",
+      "kind": "lab",
+      "path": "/lab/tabletop-rl-lab"
     },
     {
       "id": "tile-mapper",

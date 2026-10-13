@@ -23,7 +23,14 @@ Status markers:
 
 - [x] First lane-based 3D circuit, guided lessons and live update figures, Q-learning/SARSA/Double Q-learning in a worker, saved policy checkpoints, common held-out evaluation, human-versus-model racing, spectator cameras and decision replay. See [scope and verification](kart-lab.md).
 - [x] Complete browser checks for full races, replay, keyboard driving, narrow screens and touch controls. Added real training traces, checkpoint import/export, grid-swap tournaments and race preservation across tabs. Production build, typecheck and 31 scoped tests pass.
-- [ ] Continuous steering, additional tracks, neural policies, self-play training and native Python/editor workflows remain follow-up scope. The first version trains tabular drivers on a fixed circuit with scripted training traffic.
+- [x] Moving sweepers, simultaneous kart contact with visible rebound, hazard observations, v2 retrained drivers and preservation of old local checkpoints.
+- [x] v3 rebuild (2026-10-12): plain-Python programs mirrored exactly by the JavaScript engine (parity tests), 25 lessons with every line explained, the Real Python tab, a second track for transfer tests, sensor and linear drivers, maximisation bias, and multi-seed measurements. See [plan and status](kart-lab.md).
+- [ ] Self-play training, Harbour Loop in the 3D arena, neural policies and continuous steering remain follow-up scope.
+
+### Tabletop RL Lab: reinforcement learning on Yahtzee (2026-10-12)
+
+- [x] 32 lessons from dice probability to TD(0) with function approximation: one turn solved exactly by backward induction and every learner graded against it, afterstates, whole-game statistics with paired comparisons, a learned linear value of the scorecard. Plain-Python programs mirrored exactly by the engine, the Real Python tab, the 3D table with an advisor, and a Workshop that trains and grades players. See [plan and status](tabletop-rl-lab.md).
+- [ ] Exact dynamic programming of the whole game, a neural value function, and other dice games remain follow-up scope.
 
 ### A-Arcade standalone reinforcement-learning explorer (2026-10-11)
 

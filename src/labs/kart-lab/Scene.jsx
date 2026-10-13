@@ -1,7 +1,8 @@
 import { Component, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { LENGTH, OBSTACLES } from './engine/game.js'
+import { LENGTH, SUNLIT, barriers, movingObstacles } from './engine/kart.js'
+const OBSTACLES = barriers(SUNLIT)
 
 const curve = new THREE.CatmullRomCurve3([
   [-32, 0, -32], [4, 0, -39], [36, 0, -27], [43, 0, 1],
@@ -92,21 +93,56 @@ function World() {
     </group>)}
   </>
 }
+function Sweepers({ race }) {
+  const groups = useRef([])
+  useFrame(({ invalidate }, delta) => {
+    movingObstacles(race.current.tick).forEach((obstacle, i) => {
+      const group = groups.current[i]
+      if (!group) return
+      const target = trackPoint(obstacle.p, obstacle.lane)
+      if (!group.userData.ready) { group.position.copy(target.position); group.userData.ready = true }
+      group.position.lerp(target.position, 1 - Math.exp(-delta * 18))
+      group.rotation.y = target.angle
+      if (group.position.distanceTo(target.position) > 0.005) invalidate()
+    })
+  })
+  return <>{movingObstacles(0).map((o, i) => <group key={o.p}>
+    <group position={trackPoint(o.p).position} rotation={[0, trackPoint(o.p).angle, 0]}>
+      <Box at={[0, 0.095, 0]} size={[7.8, 0.025, 0.28]} color="#ffdb63" />
+      {[-4.5, 4.5].map(x => <Box key={x} at={[x, 0.6, 0]} size={[0.35, 1.2, 0.35]} color="#ffcf45" />)}
+    </group>
+    <group ref={el => { groups.current[i] = el }}>
+      <Box at={[0, 0.5, 0]} size={[1.7, 0.9, 0.9]} color="#e6b832" />
+      {[-0.5, 0, 0.5].map(x => <Box key={x} at={[x, 0.5, -0.47]} size={[0.22, 0.85, 0.03]} color="#283a47" rotation={[0, 0, -0.4]} />)}
+      <mesh position={[0, 1.1, 0]}><sphereGeometry args={[0.18, 8, 8]} /><meshStandardMaterial color="#fff19b" emissive="#ffad00" emissiveIntensity={2} /></mesh>
+    </group>
+  </group>)}</>
+}
 export const COLORS = ['#55dbc2', '#ff876f', '#b59af7']
 function Kart({ race, index }) {
-  const ref = useRef(null), smooth = useRef(null)
+  const ref = useRef(null), smooth = useRef(null), impact = useRef({ tick: -1, age: 1 }), flash = useRef(null)
   useFrame(({ invalidate }, delta) => {
     const car = race.current.cars[index]
     if (!car || !ref.current) return
-    const t = trackPoint(car.p, car.lane)
+    if (impact.current.tick !== car.ticks) impact.current = { tick: car.ticks, age: car.last?.hit ? 0 : 1 }
+    impact.current.age += delta
+    const bounce = car.last?.hit ? Math.sin(Math.PI * Math.min(1, impact.current.age / 0.38)) : 0
+    const displayLane = car.done ? (car.lane === 0 ? -1.2 : 3.2) : car.lane
+    const t = trackPoint(car.p + bounce * 0.3, displayLane + (car.last?.impactLane - car.lane || 0) * bounce * 0.16)
+    if (bounce > 0) invalidate()
+    if (flash.current) { flash.current.visible = bounce > 0; flash.current.scale.setScalar(0.8 + bounce * 0.5) }
     if (!smooth.current || Math.abs(car.p - smooth.current.p) > 8) smooth.current = { p: car.p, position: t.position.clone() }
     smooth.current.position.lerp(t.position, 1 - Math.exp(-delta * 14)); smooth.current.p = car.p
     if (smooth.current.position.distanceTo(t.position) > 0.005) invalidate()
     ref.current.position.copy(smooth.current.position)
     ref.current.rotation.y = t.angle
-    ref.current.rotation.z = car.last?.hit ? Math.sin(performance.now() / 45) * 0.08 : 0
+    ref.current.position.y += bounce * 0.2
+    ref.current.rotation.z = bounce * (index % 2 ? -0.16 : 0.16)
   })
   return <group ref={ref}>
+    <group ref={flash} visible={false} position={[0, 1.8, 0]}>
+      {[0, 1, 2, 3, 4, 5].map(i => <Box key={i} at={[Math.cos(i * Math.PI / 3) * 0.6, Math.sin(i * Math.PI / 3) * 0.6, 0]} size={[0.12, 0.4, 0.12]} color="#fff09b" rotation={[0, 0, i * Math.PI / 3 - Math.PI / 2]} />)}
+    </group>
     <Box at={[0, 0.45, 0]} size={[1.25, 0.4, 1.8]} color={COLORS[index]} />
     <Box at={[0, 0.38, 1]} size={[1.5, 0.18, 0.45]} color={COLORS[index]} />
     <Box at={[0, 0.65, -0.75]} size={[1.65, 0.12, 0.45]} color={COLORS[index]} />
@@ -142,7 +178,7 @@ function Refresh({ tick, follow, cameraMode }) {
 }
 export default function Scene({ race, follow, cameraMode, tick }) {
   return <SceneBoundary><Canvas frameloop="demand" shadows dpr={[1, 1.5]} camera={{ position: [75, 95, 85], fov: 48, near: 0.1, far: 300 }} gl={{ antialias: true }} aria-label="Three-dimensional kart racing circuit">
-    <Refresh tick={tick} follow={follow} cameraMode={cameraMode} /><World />{[0, 1, 2].map(i => <Kart key={i} race={race} index={i} />)}
+    <Refresh tick={tick} follow={follow} cameraMode={cameraMode} /><World /><Sweepers race={race} />{[0, 1, 2].map(i => <Kart key={i} race={race} index={i} />)}
     <CameraRig race={race} follow={follow} cameraMode={cameraMode} />
   </Canvas></SceneBoundary>
 }

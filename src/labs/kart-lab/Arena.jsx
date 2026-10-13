@@ -1,26 +1,39 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { ACTIONS, DT, LENGTH, OBSTACLES, observe } from './engine/game.js'
-import { unpack, values } from './engine/learning.js'
+import { ACTIONS, DT, LENGTH, SUNLIT, barriers, observe, hazardMask, sensors, sensorKey } from './engine/kart.js'
+import { unpack, valuesFor, policyOf } from './engine/tabular.js'
 const Scene = lazy(() => import('./Scene.jsx'))
 const COLORS = ['#159a87', '#e86e55', '#9675d0']
-import { createRace, stepRace, rankRace, tournament } from './engine/race.js'
+import { createRace, stepRace, rankRace, tournament, asTraffic } from './engine/race.js'
+const OBSTACLES = barriers(SUNLIT)
 const initial = createRace
+// What the followed driver observes, and its action values. Sector drivers see sector, lane, speed and
+// the hazard mask; sensor and linear drivers see the three lanes' danger levels.
 export function Sensors({ car, traffic = [], model, qValues }) {
-  const obs = observe(car, traffic), q = qValues ?? (model ? values(model, obs.key) : [0, 0, 0, 0, 0])
+  const sensorView = model && (model.kind === 'linear' || model.view === 'sensors')
+  const sector = car.p % LENGTH, mask = hazardMask(car, traffic), near = sensors(car, traffic)
+  const q = qValues ?? (model ? valuesFor(model, car, traffic, SUNLIT) : [0, 0, 0, 0, 0])
   const max = Math.max(1, ...q.map(Math.abs))
   return <div className="kl-sensors">
-    <div className="kl-readouts"><span>Sector <b>{obs.sector}</b></span><span>Lane <b>{obs.lane + 1}</b></span><span>Speed tier <b>{obs.speed + 1}</b></span><span>Traffic mask <b>{obs.mask.toString(2).padStart(3, '0')}</b></span><span>State key <b>{obs.key}</b></span></div>
+    <div className="kl-readouts">{sensorView
+      ? <><span>Lane <b>{car.lane + 1}</b></span><span>Speed tier <b>{car.speed + 1}</b></span><span>Danger by lane <b>{near.join(' · ')}</b></span>{model.kind !== 'linear' && <span>Sensor key <b>{sensorKey(car, traffic)}</b></span>}</>
+      : <><span>Sector <b>{sector}</b></span><span>Lane <b>{car.lane + 1}</b></span><span>Speed tier <b>{car.speed + 1}</b></span><span>Hazard mask <b>{mask.toString(2).padStart(3, '0')}</b></span><span>State key <b>{observe(car, traffic)}</b></span></>}</div>
     <div className="kl-road" role="img" aria-label={`Three-lane sensor view. Driver in lane ${car.lane + 1}`}>
       {[0, 1, 2].map(lane => <div key={lane} className="kl-lane"><span>Lane {lane + 1}</span>
-        {OBSTACLES.filter(o => o.lane === lane && ((o.p - obs.sector + LENGTH) % LENGTH) < 12).map(o => <b className="kl-barrier" key={o.p} style={{ bottom: `${22 + ((o.p - obs.sector + LENGTH) % LENGTH) * 5}%` }}>▰</b>)}
-        {(obs.mask & (1 << lane)) !== 0 && <b className="kl-traffic">●</b>}
+        {OBSTACLES.filter(o => o.lane === lane && ((o.p - sector + LENGTH) % LENGTH) < 12).map(o => <b className="kl-barrier" key={o.p} style={{ bottom: `${22 + ((o.p - sector + LENGTH) % LENGTH) * 5}%` }}>▰</b>)}
+        {(mask & (1 << lane)) !== 0 && <b className="kl-traffic">●</b>}
         {lane === car.lane && <b className="kl-you">▲</b>}
       </div>)}
     </div>
-    <p className="qm-hint">▲ followed driver · orange barriers · ● traffic within three sectors. The policy knows its sector on this fixed circuit; it does not see pixels.</p>
+    <p className="qm-hint">{sensorView ? 'This driver doesn\'t know where on the lap it is: only how close danger is in each lane (0 clear, 1 within 6 sectors, 2 within 3).' : '▲ followed driver · orange barriers · ● karts or sweepers within four sectors. This driver knows its sector on this circuit; it does not see pixels.'}</p>
     <div className="kl-values">{ACTIONS.map((a, i) => <div key={a}><span>{a}</span><div><i style={{ width: `${Math.abs(q[i]) / max * 100}%`, background: q[i] < 0 ? '#da8069' : '#3fa992' }} /></div><code>{q[i].toFixed(2)}</code></div>)}</div>
-    <p className="qm-hint">{model?.b ? 'Displayed values are QA + QB.' : 'Expected discounted reward for each action.'} Unseen states start at zero.</p>
+    <p className="qm-hint">{model?.tables?.length === 2 ? 'Displayed values are QA + QB.' : model?.kind === 'linear' ? 'Each value is the action\'s weights times these features.' : 'Expected discounted reward for each action.'} Unseen states start at zero.</p>
   </div>
+}
+// Per-entry totals of a tournament, best first: points, finishes, hits and finishing time.
+function cupTotals({ points, finishes, races }) {
+  const totals = points.map((p, i) => ({ i, points: p, finishes: finishes[i], crashes: 0, ticks: 0 }))
+  for (const { order, race } of races) race.cars.forEach((c, seat) => { const t = totals[order[seat]]; t.crashes += c.crashes; if (c.finished) t.ticks += c.ticks })
+  return totals.sort((a, b) => b.points - a.points)
 }
 export default function Arena({ drivers, compact = false, session }) {
   const [seats, setSeats] = useState(() => session?.current?.seats?.map(id => id === 'human' || drivers.some(d => d.id === id) ? id : drivers[0].id) ?? drivers.slice(0, 3).map(d => d.id))
@@ -30,12 +43,13 @@ export default function Arena({ drivers, compact = false, session }) {
   const race = useRef(snapshot), view = useRef(race.current), keys = useRef(new Set()), recording = useRef(history.length ? history : [snapshot]), root = useRef(null)
   const [cup, setCup] = useState(null)
   const models = useMemo(() => seats.map(id => id === 'human' ? null : unpack(drivers.find(d => d.id === id)?.checkpoint ?? drivers[0].checkpoint)), [drivers, seats])
+  const policies = useMemo(() => models.map(m => m ? policyOf(m) : null), [models])
   const names = seats.map(id => id === 'human' ? 'You' : drivers.find(d => d.id === id)?.name ?? 'Driver')
   const tick = (override) => {
     const old = race.current
     if (old.cars.every(c => c.done)) { setRunning(false); return }
     const humanAction = keys.current.has('ArrowLeft') || keys.current.has('a') ? 0 : keys.current.has('ArrowRight') || keys.current.has('d') ? 2 : keys.current.has('ArrowDown') || keys.current.has('s') ? 4 : keys.current.has('ArrowUp') || keys.current.has('w') ? 3 : 1
-    race.current = stepRace(old, models, typeof override === 'number' ? override : humanAction)
+    race.current = stepRace(old, policies, typeof override === 'number' ? override : humanAction)
     view.current = race.current
     recording.current.push(race.current)
     setSnapshot(race.current)
@@ -64,8 +78,8 @@ export default function Arena({ drivers, compact = false, session }) {
   const restart = () => { setRunning(false); race.current = initial(); view.current = race.current; setSnapshot(race.current); recording.current = [race.current]; setHistory([]); setReplay(null); keys.current.clear(); setCup(null) }
   const shown = replay === null ? snapshot : history[replay] ?? snapshot
   view.current = shown
-  const car = shown.cars[follow], traffic = shown.cars.filter((c, i) => i !== follow && !c.done)
-  const order = rankRace(shown)
+  const car = shown.cars[follow], traffic = shown.cars.filter((c, i) => i !== follow && !c.done).map(asTraffic)
+  const order = rankRace(shown).map(i => ({ ...shown.cars[i], i }))
   const finished = snapshot.cars.every(c => c.done)
   const driveKey = e => ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)
   return <section className="kl-arena" ref={root} tabIndex={0} aria-label="Race controls" onKeyDown={e => { if (e.target !== root.current || !driveKey(e)) return; e.preventDefault(); keys.current.add(e.key); if (!running && replay === null && seats.includes('human')) tick() }} onKeyUp={e => keys.current.delete(e.key)} onBlur={() => keys.current.clear()}>
@@ -89,9 +103,9 @@ export default function Arena({ drivers, compact = false, session }) {
     <p className="qm-hint">All NPCs use frozen trained policies. Choose a “You” seat to join. Focus the arena, then use ← / → to change lane, ↑ to accelerate, ↓ to brake. Steering follows the track between lane changes. Reset to change the grid. Click the track to return keyboard focus; when paused, a driving key takes one decision.</p>
     {seats.includes('human') && <div className="kl-touch">{[['← Left', 'ArrowLeft'], ['Accelerate', 'ArrowUp'], ['Brake', 'ArrowDown'], ['Right →', 'ArrowRight']].map(([name, key]) => <button key={key} disabled={finished || replay !== null} onPointerDown={e => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); keys.current.add(key); if (!running && replay === null) tick(key === 'ArrowLeft' ? 0 : key === 'ArrowRight' ? 2 : key === 'ArrowUp' ? 3 : 4) }} onPointerUp={() => keys.current.delete(key)} onPointerCancel={() => keys.current.delete(key)} onLostPointerCapture={() => keys.current.delete(key)}>{name}</button>)}</div>}
     {!running && history.length > 0 && <div className="kl-replay"><label>Replay decision {replay ?? history.length - 1}<input aria-label="Replay decision" type="range" min="0" max={history.length - 1} value={replay ?? history.length - 1} onChange={e => setReplay(Number(e.target.value))} /></label><button onClick={() => setReplay(null)}>Return to live race</button></div>}
-    {inspect && <div className="kl-inspector"><div><h3>{names[follow]} · observation → action</h3><Sensors car={car} traffic={traffic} model={models[follow]} /></div><div><h3>Last transition</h3>{car.last ? <><p>Action: <strong>{ACTIONS[car.last.action]}</strong></p><dl className="kl-rewards">{Object.entries(car.last.parts).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v.toFixed(2)}</dd></div>)}<div><dt>Total reward</dt><dd>{car.last.reward.toFixed(2)}</dd></div></dl></> : <p>Take one decision to inspect its reward.</p>}<p className="qm-hint">Values describe the current state; the reward describes the previous action. No Q-values change during a race. Race traffic comes from other drivers, unlike the scripted traffic used in training.</p></div></div>}
-    <section className="qm-fig kl-save"><h3>Grid-swap tournament</h3><p>Run these three model seats through all six starting-lane permutations, without rendering. The same frozen policies and race engine are used. First / second / third earn 3 / 2 / 1 points; tied finishers share points and failures earn zero.</p><button disabled={running || seats.includes('human')} onClick={() => setCup({ result: tournament(models), names: [...names] })}>Run six-race tournament</button>{seats.includes('human') && <p className="qm-hint">Assign a model to every seat to run a tournament.</p>}
-      {cup && <div className="kl-table-scroll"><table className="qm-mathcode"><caption>Six deterministic races · every starting position covered</caption><thead><tr><th>Entry</th><th>Points</th><th>Finishes</th><th>Mean hits</th><th>Mean finished time</th></tr></thead><tbody>{cup.result.totals.map(t => <tr key={t.i}><td>{cup.names[t.i]} (entry {t.i + 1})</td><td>{t.points.toFixed(1)}</td><td>{t.finishes}/6</td><td>{(t.crashes / 6).toFixed(2)}</td><td>{t.finishes ? `${(t.ticks / t.finishes * DT).toFixed(1)} s` : '—'}</td></tr>)}</tbody></table><p className="qm-hint">Repeating this deterministic tournament gives the same result. Test other opponents and independently trained checkpoints to broaden the evidence.</p></div>}
+    {inspect && <div className="kl-inspector"><div><h3>{names[follow]} · observation → action</h3><Sensors car={car} traffic={traffic} model={models[follow]} /></div><div><h3>Last transition</h3>{car.last ? <><p>Action: <strong>{ACTIONS[car.last.action]}</strong></p>{car.last.hit && <p role="status"><strong>BUMP · {car.last.hit === 'kart' ? 'kart contact' : car.last.hit === 'sweeper' ? 'moving sweeper' : 'barrier'}</strong> · speed lost; movement blocked.</p>}<dl className="kl-rewards">{Object.entries(car.last.parts).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v.toFixed(2)}</dd></div>)}<div><dt>Total reward</dt><dd>{car.last.reward.toFixed(2)}</dd></div></dl></> : <p>Take one decision to inspect its reward.</p>}<p className="qm-hint">Values describe the current state; the reward describes the previous action. No Q-values change during a race. Race traffic comes from other drivers, unlike the scripted traffic used in training.</p></div></div>}
+    <section className="qm-fig kl-save"><h3>Grid-swap tournament</h3><p>Run these three model seats through all six starting-lane permutations, without rendering. The same frozen policies and race engine are used. First / second / third earn 3 / 2 / 1 points; tied finishers share points and failures earn zero.</p><button disabled={running || seats.includes('human')} onClick={() => setCup({ result: cupTotals(tournament(policies)), names: [...names] })}>Run six-race tournament</button>{seats.includes('human') && <p className="qm-hint">Assign a model to every seat to run a tournament.</p>}
+      {cup && <div className="kl-table-scroll"><table className="qm-mathcode"><caption>Six deterministic races · every starting position covered</caption><thead><tr><th>Entry</th><th>Points</th><th>Finishes</th><th>Mean hits</th><th>Mean finished time</th></tr></thead><tbody>{cup.result.map(t => <tr key={t.i}><td>{cup.names[t.i]} (entry {t.i + 1})</td><td>{t.points.toFixed(1)}</td><td>{t.finishes}/6</td><td>{(t.crashes / 6).toFixed(2)}</td><td>{t.finishes ? `${(t.ticks / t.finishes * DT).toFixed(1)} s` : '—'}</td></tr>)}</tbody></table><p className="qm-hint">Repeating this deterministic tournament gives the same result. Test other opponents and independently trained checkpoints to broaden the evidence.</p></div>}
     </section>
   </section>
 }
