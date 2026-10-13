@@ -131,3 +131,14 @@
 .nlp-analogy select{font-family:'JetBrains Mono',ui-monospace,monospace}
 .nlp-analogy-line{font-size:17px}.nlp-answer{color:#2f7d4f;font-size:20px;border-bottom:2px solid #2f7d4f}
 .nlp-nb section.unsure{border-style:dashed}.nlp-unknown{background:#fbefec!important;color:#7a2a10}
+
+/* Part 5: language models */
+.nlp-big{font-size:28px;font-weight:800;margin:2px 0;color:#273d85}
+.nlp-sampled{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:14px/1.6 'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}
+.nlp-samples{margin:4px 0;padding-left:0;list-style:none;font:12.5px/1.5 'JetBrains Mono',ui-monospace,monospace}.nlp-samples li{margin:3px 0;white-space:pre-wrap;word-break:break-word}
+.nlp-tokens span{background:#fff3df;border-color:#e8c88f}
+.nlp-vecs{display:flex;flex-direction:column;gap:4px;font-size:13px;min-width:180px}
+.nlp-att{border-collapse:collapse;font-size:11.5px;margin:6px 8px 6px 0}.nlp-att caption{font-size:12px;color:var(--muted);text-align:left;padding-bottom:3px}
+.nlp-att td,.nlp-att th{border:1px solid var(--line);padding:3px 6px;text-align:center;min-width:34px;font-family:'JetBrains Mono',ui-monospace,monospace}
+.nlp-att td.masked{background:#eceef4;color:#b0b5c4}
+.nlp-attmap .nlp-att td{min-width:14px;height:14px;padding:0}.nlp-attmap .nlp-att th{font-size:10px;padding:0 2px;min-width:14px}

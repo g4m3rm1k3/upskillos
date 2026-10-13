@@ -1,6 +1,6 @@
 # NLP Studio: plan
 
-Status (2026-10-12): Parts 1–4 are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Parts 5–7 are planned below.
+Status (2026-10-13): Parts 1–5 are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Parts 6–7 are planned below.
 
 ## The bar: better than QMaze and CartPole
 
@@ -75,6 +75,27 @@ Things measured while building it, that the lessons now rest on:
 - **The neighbours are good.** chain → snapped, wheel, brake, tyre; monday → saturday, sunday; order → parcel, delivery. Raw counts put "the" first; PPMI is better, but noisy.
 - **Averaging every word failed.** It answered "do you sell pizza" with "thanks", because of "you". Removing stop words fixed it: pizza became an honest "not sure", and "my tyre is flat" became repair at 0.94.
 - **Weak spots are kept and explained.** "my chain snapped" is right, but only just (0.682 against thanks' 0.680). "my wheel is bent" is wrong, because "bent" appears once in the text. Analogies mostly fail on this little text: chain : chains :: tyre gives goodbye, while morning : open :: evening gives closed. Tests check each of these claims.
+
+## Part 5 as built
+
+| Lesson | You write | You derive or predict | Figure |
+|---|---|---|---|
+| 5.1 Language models and perplexity | `perplexity` | uniform guessing scores exactly $V$ | PerplexityDemo (held-out bigram) |
+| 5.2 Sampling and temperature | `sample` | temperature at its extremes | TemperatureSampler |
+| 5.3 BPE | `merge_pair` | tokens for a word after 120 merges | BpeBuilder |
+| 5.4 A neural LM and autograd | `cross_entropy_grad` | softmax-cross-entropy gradient $p - y$ | SoftmaxGrad, GptTrainer with attention off |
+| 5.5 Attention | `attention` | why divide by $\sqrt d$ | AttentionCalc |
+| 5.6 A tiny GPT | `read_header` | Adam's bias correction | GptTrainer (train and held-out curves, attention map, download and upload of .safetensors) |
+
+`python/tinygpt.py` is a small reverse-mode autograd on 2-D lists, plus a one-block, single-head transformer trained with Adam. `engine/tinygpt.js` is the same, operation for operation. The parity tests compare the weights after 15 Adam steps, with and without attention, and check that a `.safetensors` file written by the page is read by the Python, number for number. Adam keeps a running product for $\beta^t$ rather than calling `pow`, so the two languages agree exactly.
+
+Things measured while building it, that the lessons now rest on:
+- **Word bigrams barely beat guessing on new text.** Trained on 50 sentences, the best held-out perplexity is about 102, against 116 for uniform guessing.
+- **Attention is what lets it learn.** Over 8,000 steps (32 dimensions, context 24, an MLP of 128), the loss without attention stopped at 2.01; with attention it reached 0.81.
+- **The tiny GPT overfits.** Trained on 50 sentences and scored on the other 13, its held-out loss is best around step 500 (2.57), then rises to 4.82 by step 8,000, while the training loss keeps falling. The readable text is recited. The trainer always holds out the last 20% of the text and draws both curves, so the learner sees this happen.
+- **Training speed.** 6,000 steps take about 40 s in the browser, and about 18 ms per step in plain Python.
+
+**Next, Part 6:** chat format and special tokens, training on dialogues, and stopping at the end of a turn. Overfitting means it needs much more text than the bike shop's.
 
 **Real Python tab (desktop).** It uses A-Arcade Python's stepper and environment, with six programs (`programs.js`). The middle panel is drawn from the paused program's own variables: the text tape, the recursion stack, the live CKY chart, dependency heads, and the rules tried. `stepper.desktop.test.js` drives the real stepper the way the tab does, and checks the results against the engine.
 

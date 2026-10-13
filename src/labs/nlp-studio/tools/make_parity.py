@@ -199,3 +199,34 @@ with open(path4, "w", encoding="utf-8", newline="\n") as handle:
     json.dump(part4, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote Part 4 to {os.path.normpath(path4)}")
+
+
+# Part 5: language models, BPE, attention and the tiny GPT.
+import lm  # noqa: E402
+import tinygpt as tg  # noqa: E402
+
+bike_text = ". ".join(BIKE) + "."
+word_counts = tb.count(ct.words(" ".join(BIKE)))
+merges = lm.train_bpe(word_counts, 40)
+small = {"dim": 8, "context": 8, "hidden": 16, "lr": 0.01, "seed": 3}
+g_vocab, g_model, g_losses = tg.train(bike_text, 15, **small)
+n_vocab, n_model, n_losses = tg.train(bike_text, 15, use_attention=False, **small)
+part5 = {
+    "perplexity": [lm.perplexity(lp) for lp in ([-0.5, -1.0, -2.0], [-2.302585092994046] * 4, [-0.01])],
+    "softmax": [lm.softmax([2.0, 1.0, 0.1], t) for t in (0.1, 0.5, 1.0, 2.0, 10.0)],
+    "sample": [lm.sample([0.2, 0.5, 0.3], r) for r in (0.0, 0.19, 0.2, 0.69, 0.7, 0.99)],
+    "generate_bigram": {str(t): lm.generate_bigram(bigrams, "claim", 10, t, vx.Rng(9)) for t in (0.2, 1.0, 3.0)},
+    "merges": [list(p) for p in merges],
+    "encode": {w: lm.bpe_encode(w, merges) for w in ["chain", "chains", "repaired", "zebra", "the"]},
+    "cross_entropy_grad": lm.cross_entropy_grad([1.0, 2.0, 0.5], 1),
+    "attention": lm.attention([[1, 0], [0, 1], [1, 1]], [[1, 0], [0, 1], [1, -1]], [[1, 2], [3, 4], [5, 6]]),
+    "gpt": {"vocab": g_vocab, "model": g_model, "losses": g_losses,
+            "sample": tg.generate(g_vocab, g_model, "my chain", 20, 0.8, vx.Rng(5))},
+    "no_attention": {"model": n_model, "losses": n_losses},
+    "average_loss": [tg.average_loss(g_vocab, g_model, bike_text[-200:]), tg.average_loss(g_vocab, n_model, bike_text[-200:], False)],
+}
+path5 = os.path.join(HERE, "..", "engine", "parity5.json")
+with open(path5, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part5, handle, ensure_ascii=False)
+    handle.write("\n")
+print(f"wrote Part 5 to {os.path.normpath(path5)}")

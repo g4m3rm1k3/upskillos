@@ -10,6 +10,7 @@ import Playground from './Playground.jsx'
 import WriteIt from './WriteIt.jsx'
 import PythonTab from './PythonTab.jsx'
 import { LESSONS } from './lessons/index.js'
+import * as G from './engine/tinygpt.js'
 
 afterEach(cleanup)
 
@@ -149,6 +150,38 @@ describe('NLP Studio renders', () => {
     expect(container.querySelector('.nlp-nb section:last-child').textContent).toContain('not sure')
     act(() => { fireEvent.click(screen.getByText('“my tyre is flat”')) })
     expect(container.querySelector('.nlp-nb section:last-child').textContent).toContain('repair')
+  })
+
+  it('the tiny GPT trains in the page, measures held-out loss, and downloads and reloads', async () => {
+    vi.useFakeTimers()
+    try {
+      const lesson = LESSONS.find(l => l.id === 'tiny-gpt')
+      const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+      const fig = [...container.querySelectorAll('.qm-figure')].find(f => f.textContent.includes('Training text'))
+      act(() => { fireEvent.change(fig.querySelector('input[type=range]'), { target: { value: '500' } }) })
+      act(() => { fireEvent.click(screen.getByText('▶ Train')) })
+      for (let i = 0; i < 12; i++) await act(async () => { vi.advanceTimersByTime(5) })
+      expect(fig.textContent).toMatch(/Step 500 of 500/)
+      expect(fig.textContent).toMatch(/Held-out loss now/)
+      expect(fig.querySelector('.nlp-attmap .nlp-att')).toBeTruthy()
+      const bytes = G.toSafetensors(...(() => { const t = G.makeTrainer('abc abc abc abc abc abc abc abc abc abc abc abc abc', { dim: 4, context: 4, hidden: 8 }); return [t.vocab, t.model] })())
+      const upload = new File([bytes], 'mine.safetensors')
+      await act(async () => { fireEvent.change(screen.getByLabelText('Upload a model'), { target: { files: [upload] } }) })
+      await vi.waitFor(() => expect(fig.textContent).toMatch(/Loaded mine\.safetensors: 4 characters/))
+      const bad = new File([new Uint8Array([1, 2, 3])], 'broken.safetensors')
+      await act(async () => { fireEvent.change(screen.getByLabelText('Upload a model'), { target: { files: [bad] } }) })
+      await vi.waitFor(() => expect(fig.textContent).toMatch(/Not loaded: The file is too short/))
+    } finally { vi.useRealTimers() }
+  })
+
+  it('Part 5 figures: perplexity, temperature, BPE and attention respond', () => {
+    for (const id of ['language-model', 'sampling', 'bpe', 'attention']) {
+      const lesson = LESSONS.find(l => l.id === id)
+      const { container, unmount } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+      for (const range of container.querySelectorAll('.qm-figure input[type=range]')) act(() => { fireEvent.change(range, { target: { value: range.max } }) })
+      expect(container.textContent.length).toBeGreaterThan(1000)
+      unmount()
+    }
   })
 
   it('the playground counts your text', () => {

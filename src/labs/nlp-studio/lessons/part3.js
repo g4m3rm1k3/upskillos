@@ -227,7 +227,7 @@ A word's **TF-IDF** weight in a document is its count there (its **term frequenc
         {
           code: {
             file: 'counting.py', fn: 'document_frequency', notes: [
-              ['for w in set(doc):', ['`set(doc)`: each word once per document. Document frequency counts documents, not occurrences.']],
+              ['for w in sorted(set(doc)):', ['`set(doc)`: each word once per document. Document frequency counts documents, not occurrences. (`sorted` only fixes the order, so the result is the same on every run.)']],
             ],
           },
         },

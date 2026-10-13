@@ -109,4 +109,28 @@ export const PROGRAMS = {
     watch: { message_words: ['content_words(message)'], scores: ['scores'] },
     jump: { label: 'Next intent scored', targets: () => [['vectors.py', lineOf('vectors.py', 'scores[name] = max(')]] },
   },
+  bpe: {
+    label: 'BPE merges (5.3)', file: 'lm.py', module: 'lm', function: 'train_bpe', view: 'watch',
+    about: 'Byte-pair encoding from lesson 5.3, on the words of a short text. “Next merge” stops after each merge: watch the pair counts and the merged words.',
+    input: { name: 'text', label: 'Text', value: 'the chain the chains the change' },
+    kwargs: v => ({ word_counts: Object.fromEntries(Object.entries(words(v).reduce((m, w) => ({ ...m, [w]: (m[w] ?? 0) + 1 }), {}))), merges: 6 }),
+    watch: { best: ['best'], learned: ['learned'], words: ['words'] },
+    jump: { label: 'Next merge', targets: () => [['lm.py', lineOf('lm.py', 'learned.append(best)')]] },
+  },
+  attention: {
+    label: 'Attention (5.5)', file: 'lm.py', module: 'lm', function: 'attention', view: 'watch',
+    about: 'Causal attention from lesson 5.5 on three positions: the scores, weights and output of each one. The input is ignored; the vectors are the figure’s.',
+    input: { name: 'note', label: 'Vectors', value: 'the figure’s three' },
+    kwargs: () => ({ q: [[1, 0], [0, 1], [1, 1]], k: [[1, 0], [0, 1], [1, -1]], v: [[1, 2], [3, 4], [5, 6]] }),
+    watch: { i: ['i'], scores: ['scores'], weights: ['weights'], out: ['out'] },
+    jump: { label: 'Next position', targets: () => [['lm.py', lineOf('lm.py', 'out.append([sum(weights[j] * v[j][c]')]] },
+  },
+  gpt_step: {
+    label: 'One training step of the tiny GPT (5.6)', file: 'tinygpt.py', module: 'tinygpt', function: 'train', view: 'watch',
+    about: 'One step of training the tiny GPT from lesson 5.6, on a small model (8 numbers per character, 8 characters of context) so it fits on the screen. Step into forward() and backward() to see every operation and its gradient.',
+    input: { name: 'text', label: 'Text', value: 'the shop is open on sunday. the chain broke.' },
+    kwargs: v => ({ text: v, steps: 1, dim: 8, context: 8, hidden: 16 }),
+    watch: { ids: ['ids'], targets: ['targets'], loss: ['loss.data'], losses: ['losses'] },
+    jump: { label: 'To backward()', targets: () => [['tinygpt.py', lineOf('tinygpt.py', '        loss.backward()')]] },
+  },
 }

@@ -17,6 +17,8 @@ import * as C from './engine/counting.js'
 import { MESSAGES, INTENTS } from './engine/data.js'
 import * as V from './engine/vectors.js'
 import { SENTENCES } from './engine/corpus.js'
+import * as L from './engine/lm.js'
+import * as G from './engine/tinygpt.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
 const appData = process.platform === 'win32' ? process.env.APPDATA ?? '' : process.platform === 'darwin' ? path.join(homedir(), 'Library', 'Application Support') : path.join(homedir(), '.config')
@@ -147,6 +149,29 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     const want = V.semanticReply(INTENTS, bv, bvec, PROGRAMS.meaning_bot.input.value)
     expect(plain(r.result).intent).toBe(want.intent)
     expect(plain(r.result).similarity).toBeCloseTo(want.similarity, 12)
+  }, 120000)
+
+  it('Part 5: BPE merges, attention and one tiny-GPT training step match the engine', async () => {
+    let r = await load(s, 'bpe'), merges = 0
+    for (let n = 0; n < 20; n++) { r = await jump(s, 'bpe'); if (r.type !== 'pause') break; merges++ }
+    expect(r.type, s.stderr()).toBe('finished')
+    const wc = Object.fromEntries(Object.entries(C.words(PROGRAMS.bpe.input.value).reduce((m, w) => ({ ...m, [w]: (m[w] ?? 0) + 1 }), {})))
+    expect(plain(r.result)).toEqual(L.trainBpe(wc, 6))
+    expect(merges).toBe(6)
+
+    r = await load(s, 'attention')
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type).toBe('finished')
+    plain(r.result).flat().forEach((x, i) => expect(x).toBeCloseTo(L.attention([[1, 0], [0, 1], [1, 1]], [[1, 0], [0, 1], [1, -1]], [[1, 2], [3, 4], [5, 6]]).flat()[i], 12))
+
+    r = await load(s, 'gpt_step')
+    r = await jump(s, 'gpt_step')
+    expect(r.type, s.stderr()).toBe('pause')
+    expect(top(r).line).toBe(PROGRAMS.gpt_step.jump.targets()[0][1])
+    r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(r.type).toBe('finished')
+    const [, , losses] = G.train(PROGRAMS.gpt_step.input.value, 1, { dim: 8, context: 8, hidden: 16 })
+    expect(plain(r.result)[2][0]).toBeCloseTo(losses[0], 12)
   }, 120000)
 
   it('dependencies and Bot 1 finish with the engine\'s answers', async () => {

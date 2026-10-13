@@ -39,7 +39,11 @@ describe('lessons', () => {
       'counting.py:dot', 'counting.py:norm', 'bayes.py:classify', 'bayes.py:accuracy', 'bayes.py:evaluate',
       // Part 4: the random-number generator's methods (explained in a code note on train_word2vec), the
       // one-line vocabulary(), and train_bike_vectors(), which only calls train_word2vec on the text.
-      'vectors.py:__init__', 'vectors.py:random', 'vectors.py:below', 'vectors.py:vocabulary', 'vectors.py:train_bike_vectors']
+      'vectors.py:__init__', 'vectors.py:random', 'vectors.py:below', 'vectors.py:vocabulary', 'vectors.py:train_bike_vectors',
+      // Part 5: the Tensor class is quoted by line range (its __init__, backward and visit); add, relu,
+      // transpose and scale follow matmul's pattern exactly; zeros and init_model are setup.
+      'tinygpt.py:__init__', 'tinygpt.py:backward', 'tinygpt.py:visit', 'tinygpt.py:zeros', 'tinygpt.py:add', 'tinygpt.py:relu',
+      'tinygpt.py:transpose', 'tinygpt.py:scale', 'tinygpt.py:init_model']
     const all = Object.keys(SOURCES).flatMap(file => parse(file).functions.map(f => `${file}:${f.name}`))
     expect(all.filter(fn => !quoted.has(fn) && !shownElsewhere.includes(fn))).toEqual([])
   })

@@ -92,7 +92,7 @@ def document_frequency(docs):
     """In how many documents each word appears (at least once)."""
     df = {}
     for doc in docs:
-        for w in set(doc):
+        for w in sorted(set(doc)):
             df[w] = df.get(w, 0) + 1
     return df
 
