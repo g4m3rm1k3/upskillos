@@ -108,7 +108,7 @@ export default function ItemInfoModal({ item, onClose, onLaunch, getLessonProgre
       onClick={onClose}
     >
       <div
-        className="relative max-w-2xl w-full bg-white dark:bg-[#0b0f19] rounded-[32px] shadow-2xl overflow-hidden border border-slate-200/50 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200"
+        className="relative max-w-2xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto bg-white dark:bg-[#0b0f19] rounded-[32px] shadow-2xl border border-slate-200/50 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <button
