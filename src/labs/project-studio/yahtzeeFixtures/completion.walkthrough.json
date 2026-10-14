@@ -1,0 +1,109 @@
+{
+  "01-finish-the-rules#Your turn \u2014 Distinguish scored zero from absence": {
+    "files": {
+      "practice/earns_extra.cpp": "bool earnsExtra(int savedYahtzeeScore, int largestGroup) { return savedYahtzeeScore == 50 && largestGroup == 5; }\n"
+    },
+    "wrong": [
+      {
+        "name": "treats zero as eligible",
+        "files": {
+          "practice/earns_extra.cpp": "bool earnsExtra(int savedYahtzeeScore, int largestGroup) { return savedYahtzeeScore >= 0 && largestGroup == 5; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "ignores current hand",
+        "files": {
+          "practice/earns_extra.cpp": "bool earnsExtra(int savedYahtzeeScore, int) { return savedYahtzeeScore == 50; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "02-record-once#Your turn \u2014 Count legal choices without changing the card": {
+    "files": {
+      "practice/legal_choices.cpp": "#include \"../Scorecard.h\"\nint legalChoices(const Scorecard& card, const Counts& hand) { int count = 0; for (std::size_t i = 0; i < card.size(); ++i) if (card.canRecord(i, hand)) ++count; return count; }\n"
+    },
+    "wrong": [
+      {
+        "name": "counts merely empty boxes",
+        "files": {
+          "practice/legal_choices.cpp": "#include \"../Scorecard.h\"\nint legalChoices(const Scorecard& card, const Counts&) { int count = 0; for (std::size_t i = 0; i < card.size(); ++i) if (!card.isScored(i)) ++count; return count; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "03-connect-the-completed-game#Your turn \u2014 Make the accounting visible": {
+    "files": {
+      "practice/breakdown.cpp": "#include \"../Player.h\"\n#include <string>\nstd::string breakdown(const Player& player) {\n    const Scorecard& card = player.scorecard();\n    return std::to_string(card.total()) + \" + \" + std::to_string(card.upperBonus())\n        + \" + \" + std::to_string(card.yahtzeeBonus()) + \" = \" + std::to_string(player.finalScore());\n}\n"
+    },
+    "wrong": [
+      {
+        "name": "omits extra bonus column",
+        "files": {
+          "practice/breakdown.cpp": "#include \"../Player.h\"\n#include <string>\nstd::string breakdown(const Player& player) {\n    const Scorecard& card = player.scorecard();\n    return std::to_string(card.total()) + \" + \" + std::to_string(card.upperBonus())\n        + \" + \" + std::string(\"0\") + \" = \" + std::to_string(player.finalScore());\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "04-randomness-and-ownership#Your turn \u2014 Supply a predictable roll source": {
+    "files": {
+      "practice/take_roll.cpp": "#include <vector>\n#include <cstddef>\nbool takeRoll(const std::vector<int>& sequence, std::size_t& cursor, int& face) {\n    if (cursor >= sequence.size()) return false;\n    const int candidate = sequence[cursor];\n    if (candidate < 1 || candidate > 6) return false;\n    face = candidate; ++cursor; return true;\n}\n"
+    },
+    "wrong": [
+      {
+        "name": "never advances cursor",
+        "files": {
+          "practice/take_roll.cpp": "#include <vector>\n#include <cstddef>\nbool takeRoll(const std::vector<int>& sequence, std::size_t& cursor, int& face) {\n    if (cursor >= sequence.size()) return false;\n    const int candidate = sequence[cursor];\n    if (candidate < 1 || candidate > 6) return false;\n    face = candidate;  return true;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "changes output before checking face",
+        "files": {
+          "practice/take_roll.cpp": "#include <vector>\n#include <cstddef>\nbool takeRoll(const std::vector<int>& sequence, std::size_t& cursor, int& face) {\n    if (cursor >= sequence.size()) return false;\n    const int candidate = sequence[cursor];\n    face = candidate;\n    if (candidate < 1 || candidate > 6) return false;\n    face = candidate; ++cursor; return true;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "05-release-and-explain#Your turn \u2014 Reject partial keep lists": {
+    "files": {
+      "practice/strict_keepers.cpp": "#include <string>\n#include <sstream>\n#include <vector>\n#include <cstddef>\nbool strictKeepers(const std::string& line, std::size_t count, std::vector<bool>& output) {\n    std::istringstream words(line);\n    std::string token;\n    std::vector<bool> candidate(count, false);\n    bool any = false;\n    while (words >> token) {\n        if (token == \"a\" || token == \"A\") {\n            if (any || (words >> token)) return false;\n            candidate.assign(count, true); output = candidate; return true;\n        }\n        std::istringstream number(token); int position = 0; char extra;\n        if (!(number >> position) || (number >> extra) || position < 1\n            || static_cast<std::size_t>(position) > count) return false;\n        candidate[static_cast<std::size_t>(position) - 1] = true; any = true;\n    }\n    output = candidate; return true;\n}\n"
+    },
+    "wrong": [
+      {
+        "name": "partial state on failed token",
+        "files": {
+          "practice/strict_keepers.cpp": "#include <string>\n#include <sstream>\n#include <vector>\n#include <cstddef>\nbool strictKeepers(const std::string& line, std::size_t count, std::vector<bool>& output) {\n    std::istringstream words(line);\n    std::string token;\n    std::vector<bool> candidate(count, false);\n    bool any = false;\n    while (words >> token) {\n        if (token == \"a\" || token == \"A\") {\n            if (any || (words >> token)) return false;\n            candidate.assign(count, true); output = candidate; return true;\n        }\n        output = candidate;\n        std::istringstream number(token); int position = 0; char extra;\n        if (!(number >> position) || (number >> extra) || position < 1\n            || static_cast<std::size_t>(position) > count) return false;\n        candidate[static_cast<std::size_t>(position) - 1] = true; any = true;\n    }\n    output = candidate; return true;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "accepts junk after integer",
+        "files": {
+          "practice/strict_keepers.cpp": "#include <string>\n#include <sstream>\n#include <vector>\n#include <cstddef>\nbool strictKeepers(const std::string& line, std::size_t count, std::vector<bool>& output) {\n    std::istringstream words(line);\n    std::string token;\n    std::vector<bool> candidate(count, false);\n    bool any = false;\n    while (words >> token) {\n        if (token == \"a\" || token == \"A\") {\n            if (any || (words >> token)) return false;\n            candidate.assign(count, true); output = candidate; return true;\n        }\n        std::istringstream number(token); int position = 0; char extra;\n        if (!(number >> position) || position < 1\n            || static_cast<std::size_t>(position) > count) return false;\n        candidate[static_cast<std::size_t>(position) - 1] = true; any = true;\n    }\n    output = candidate; return true;\n}\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  }
+}

@@ -33,36 +33,7 @@ def save(folder, name, content):
 
 with tempfile.TemporaryDirectory(prefix='yahtzee-course-') as folder:
     project = Path(folder)
-    # Every introductory runnable target compiles; header steps compile at their consumer.
-    compiled = 0
-    expected = {
-        '01-one-file': 'Total: 8', '02-const-and-arrays': 'Sixes: 2',
-        '03-functions-and-copies': 'Score: 12', '04-references': 'After reference: 6',
-        '05-pointers': '6 3', '06-pointer-ranges': 'Total: 16',
-        '07-a-playable-single-file': 'Sixes score:', '08-why-headers': 'Points: 6',
-        '09-class-before-files': '6 2 0',
-    }
-    for lesson in sorted((BASE / '00 Start Here').glob('*.md')):
-        for name, content in targets(lesson.read_text()):
-            save(project, name, content)
-            if 'int main(' not in content:
-                continue
-            sources = [name]
-            if name == 'scratch/header_main.cpp': sources += ['scratch/points.cpp']
-            run([COMPILER, *FLAGS, *sources, '-o', 'intro'], project)
-            output = run(['./intro'], project, input='31\n')
-            assert expected[lesson.stem] in output, (lesson.name, output)
-            if lesson.stem == '07-a-playable-single-file':
-                output = run(['./intro'], project, input='3abc\n-1\n32\n\n31\n')
-                assert output.count('Enter a whole number') == 4
-                run(['./intro'], project, input='', expected=1)
-                # The held positions must survive a second roll, independently of random output.
-                output = run(['./intro'], project, input='5\n31\n')
-                rolls = re.findall(r'Roll \d:((?: \d){5})', output)
-                assert len(rolls) == 2
-                a, b = [r.split() for r in rolls]
-                assert a[0] == b[0] and a[2] == b[2]
-            compiled += 1
+    # Intermediate opening/completion steps run in yahtzeeTeaching.desktop.test.js.
     # Reconstruct the established multi-file path, preserving author answers to earlier tasks.
     for chapter in sorted(BASE.iterdir()):
         if not chapter.is_dir() or not ('01' <= chapter.name[:2] <= '06'):
@@ -110,4 +81,4 @@ with tempfile.TemporaryDirectory(prefix='yahtzee-course-') as folder:
         assert 'FAIL' in output
         print('Rejected mutation:', label)
     save(project, 'Scorecard.cpp', correct)
-    print(f'PASS: {compiled} introductory programs; rule and game acceptance; executable replay/EOF/CLI; two rejected mutations.')
+    print('PASS: rule and game acceptance; executable replay/EOF/CLI; two rejected mutations.')

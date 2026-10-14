@@ -15,6 +15,14 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (key === 'tabletop' || key.startsWith('tabletop-')) return {
+    level: ['tabletop', 'tabletop-start', 'tabletop-language'].includes(key) ? 'beginner' : 'bridge',
+    maturity: 'in-development',
+    audience: key === 'tabletop' || key === 'tabletop-start'
+      ? 'Start with an empty folder. No programming or earlier course required. Learn the games, HTML, CSS, JavaScript, SVG, Three.js and a trainable Pig opponent. Basic computer use and arithmetic are enough; tools are introduced when needed.'
+      : 'Continue the preceding Tabletop Workshop chapters in the same project folder. All language, game and mathematics prerequisites are taught within this series; no C++ course or external project files are required.',
+  };
+
   if (['backend', 'backend-fastapi', 'backend-django', 'backend-aspnet', 'backend-nestjs'].includes(key)) return {
     level: 'bridge',
     maturity: 'in-development',

@@ -1,0 +1,665 @@
+{
+  "tabletop-start/01-your-first-page#Your turn \u2014 Give the page a purpose": {
+    "files": {
+      "practice/welcome.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Dice club</h1><button>Start playing</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/welcome.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Dice club</h1><p>Start playing</p></main>\n</body>\n</html>\n"
+        },
+        "name": "Give the page a purpose"
+      }
+    ]
+  },
+  "tabletop-start/02-rules-and-scores#Your turn \u2014 Describe a second hand": {
+    "files": {
+      "practice/score.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<table><caption>Sixes</caption><tr><th scope=\"row\">2, 6, 6, 6, 1</th><td>18</td></tr></table>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/score.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<table><caption>Sixes</caption><tr><th scope=\"row\">2, 6, 6, 6, 1</th><td>30</td></tr></table>\n</body>\n</html>\n"
+        },
+        "name": "Describe a second hand"
+      }
+    ]
+  },
+  "tabletop-language/01-values#Your turn \u2014 Calculate remaining points": {
+    "files": {
+      "practice/01-values.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nconst score = 8; const target = 30; document.getElementById(\"result\").textContent = target - score;\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-values.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\ndocument.getElementById(\"result\").textContent = 38;\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Calculate remaining points"
+      }
+    ]
+  },
+  "tabletop-language/02-decisions#Your turn \u2014 Score Fives": {
+    "files": {
+      "practice/02-decisions.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction fives(face) { let points = 0; if (face === 5) points = 5; return points; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-decisions.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction fives(face) { return 5; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Score Fives"
+      }
+    ]
+  },
+  "tabletop-language/03-functions#Your turn \u2014 Generalize one face": {
+    "files": {
+      "practice/03-functions.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction facePoints(face, wanted) { return face === wanted ? wanted : 0; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-functions.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction facePoints(face, wanted) { return wanted; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Generalize one face"
+      }
+    ]
+  },
+  "tabletop-language/04-arrays#Your turn \u2014 Find the last die": {
+    "files": {
+      "practice/04-arrays.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction lastFace(dice) { return dice[dice.length - 1]; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-arrays.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction lastFace(dice) { return dice[4]; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Find the last die"
+      }
+    ]
+  },
+  "tabletop-language/05-loops#Your turn \u2014 Count matches": {
+    "files": {
+      "practice/05-loops.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction countFace(dice, wanted) { let count = 0; for (let i = 0; i < dice.length; i += 1) { if (dice[i] === wanted) count += 1; } return count; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/05-loops.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction countFace(dice, wanted) { return dice.length; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Count matches"
+      }
+    ]
+  },
+  "tabletop-language/06-objects#Your turn \u2014 Copy one die": {
+    "files": {
+      "practice/06-objects.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction copyDie(die) { return { face: die.face, held: die.held }; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/06-objects.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p id=\"result\"></p>\n<script>\nfunction copyDie(die) { return die; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Copy one die"
+      }
+    ]
+  },
+  "tabletop-play/01-events-and-randomness#Your turn \u2014 Map a controlled roll": {
+    "files": {
+      "practice/01-events-and-randomness.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction faceFrom(unit) { return Math.floor(unit * 6) + 1; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-events-and-randomness.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction faceFrom(unit) { return Math.round(unit * 6) + 1; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Map a controlled roll"
+      }
+    ]
+  },
+  "tabletop-play/02-a-hand-of-buttons#Your turn \u2014 Toggle a choice": {
+    "files": {
+      "practice/02-a-hand-of-buttons.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction toggle(flags, index) { flags[index] = !flags[index]; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-a-hand-of-buttons.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction toggle(flags, index) { flags[index] = true; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Toggle a choice"
+      }
+    ]
+  },
+  "tabletop-play/03-complete-a-turn#Your turn \u2014 Guard the roll budget": {
+    "files": {
+      "practice/03-complete-a-turn.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction canRoll(rolls, done) { return !done && rolls < 3; }\n</script>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-complete-a-turn.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n\n<script>\nfunction canRoll(rolls, done) { return rolls < 3; }\n</script>\n</body>\n</html>\n"
+        },
+        "name": "Guard the roll budget"
+      }
+    ]
+  },
+  "tabletop-design/01-one-rule#Your turn \u2014 Make a deliberate variation": {
+    "files": {
+      "practice/01-one-rule.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; }\nbutton { color: #183e34; background: #fff3d9; }\n</style>\n</head>\n<body>\n<main><p>Hold the dice you want to keep.</p><button aria-pressed=\"true\">Keep</button><button>Roll</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-one-rule.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; }\nbutton { color: #183e34; background: #fff3d9; }\n</style>\n</head>\n<body>\n<main><p>Hold</p><span>Keep</span><span>Roll</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Make a deliberate variation"
+      }
+    ]
+  },
+  "tabletop-design/02-box-and-type#Your turn \u2014 Make a deliberate variation": {
+    "files": {
+      "practice/02-box-and-type.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; font-family: system-ui, sans-serif; line-height: 1.6; }\n* { box-sizing: border-box; }\nmain { max-width: 48rem; margin: 3rem auto; padding: 2rem; }\nh1 { font-family: Georgia, serif; font-size: 3rem; line-height: 1.1; }\nbutton { color: #183e34; background: #fff3d9; padding: 0.8rem 1rem; border: 1px solid #b8c4b2; border-radius: 0.5rem; }\n</style>\n</head>\n<body>\n<main><p>Hold the dice you want to keep.</p><button aria-pressed=\"true\">Keep</button><button>Roll</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-box-and-type.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; font-family: system-ui, sans-serif; line-height: 1.6; }\n* { box-sizing: border-box; }\nmain { max-width: 48rem; margin: 3rem auto; padding: 2rem; }\nh1 { font-family: Georgia, serif; font-size: 3rem; line-height: 1.1; }\nbutton { color: #183e34; background: #fff3d9; padding: 0.8rem 1rem; border: 1px solid #b8c4b2; border-radius: 0.5rem; }\n</style>\n</head>\n<body>\n<main><p>Hold</p><span>Keep</span><span>Roll</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Make a deliberate variation"
+      }
+    ]
+  },
+  "tabletop-design/03-layout-and-state#Your turn \u2014 Make a deliberate variation": {
+    "files": {
+      "practice/03-layout-and-state.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; font-family: system-ui, sans-serif; }\n* { box-sizing: border-box; }\nmain { max-width: 48rem; margin: 2rem auto; padding: 2rem; }\n#dice { display: flex; flex-wrap: wrap; gap: 0.8rem; padding: 2rem; background: #194c3f; border-radius: 1rem; margin-bottom: 1rem; }\nbutton { background: #fff3d9; color: #183e34; padding: 1rem; border: 2px solid transparent; border-radius: 0.6rem; transition: transform 150ms; }\nbutton[aria-pressed=\"true\"] { border-color: #b08535; transform: translateY(-4px); }\nbutton:focus-visible { outline: 3px solid #b08535; outline-offset: 3px; }\nbutton:disabled { opacity: 0.5; }\n@media (prefers-reduced-motion: reduce) { button { transition: none; } }\n</style>\n</head>\n<body>\n<main><p>Hold the dice you want to keep.</p><button aria-pressed=\"true\">Keep</button><button>Roll</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-layout-and-state.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color: #183e34; background: #f7f3e9; font-family: system-ui, sans-serif; }\n* { box-sizing: border-box; }\nmain { max-width: 48rem; margin: 2rem auto; padding: 2rem; }\n#dice { display: flex; flex-wrap: wrap; gap: 0.8rem; padding: 2rem; background: #194c3f; border-radius: 1rem; margin-bottom: 1rem; }\nbutton { background: #fff3d9; color: #183e34; padding: 1rem; border: 2px solid transparent; border-radius: 0.6rem; transition: transform 150ms; }\nbutton[aria-pressed=\"true\"] { border-color: #b08535; transform: translateY(-4px); }\nbutton:focus-visible { outline: 3px solid #b08535; outline-offset: 3px; }\nbutton:disabled { opacity: 0.5; }\n@media (prefers-reduced-motion: reduce) { button { transition: none; } }\n</style>\n</head>\n<body>\n<main><p>Hold</p><span>Keep</span><span>Roll</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Make a deliberate variation"
+      }
+    ]
+  },
+  "tabletop-tools/01-node-and-modules#Your turn \u2014 Export your own rule": {
+    "files": {
+      "practice/doubles.mjs": "export function doubles(a,b) { return a === b ? a+b : 0; }"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/doubles.mjs": "export function doubles(a,b) { return a+b; }"
+        },
+        "name": "Export your own rule"
+      }
+    ]
+  },
+  "tabletop-tools/02-tests-and-errors#Your turn \u2014 Reject an out-of-range face": {
+    "files": {
+      "practice/02-tests-and-errors.mjs": "export function solve(face) { return Number.isInteger(face) && face >= 1 && face <= 6; }"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-tests-and-errors.mjs": "export function solve(face) { return face >= 1 && face <= 6; }"
+        },
+        "name": "Reject an out-of-range face"
+      }
+    ]
+  },
+  "tabletop-tools/03-read-modern-javascript#Your turn \u2014 Copy before sorting": {
+    "files": {
+      "practice/03-read-modern-javascript.mjs": "export function solve(values) { return [...values].sort((a,b) => a-b); }"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-read-modern-javascript.mjs": "export function solve(values) { return values.sort((a,b) => a-b); }"
+        },
+        "name": "Copy before sorting"
+      }
+    ]
+  },
+  "tabletop-tools/04-randomness-as-input#Your turn \u2014 Consume the right number of samples": {
+    "files": {
+      "practice/04-randomness-as-input.mjs": "export function solve(random) { return 1+Math.floor(random()*6) + 1+Math.floor(random()*6); }"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-randomness-as-input.mjs": "export function solve(random) { const face=1+Math.floor(random()*6); return face+face; }"
+        },
+        "name": "Consume the right number of samples"
+      }
+    ]
+  },
+  "tabletop-rules/01-count-and-score#Your turn \u2014 Upper-section score": {
+    "files": {
+      "practice/01-count-and-score.mjs": "export function solve(dice,wanted){let n=0;for(const face of dice)if(face===wanted)n+=face;return n;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-count-and-score.mjs": "export function solve(dice,wanted){return dice.length*wanted;}"
+        },
+        "name": "Upper-section score"
+      }
+    ]
+  },
+  "tabletop-rules/02-scorecard-and-bonus#Your turn \u2014 Compute an upper bonus": {
+    "files": {
+      "practice/02-scorecard-and-bonus.mjs": "export function solve(upper){return upper>=63?35:0;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-scorecard-and-bonus.mjs": "export function solve(upper){return upper>63?35:0;}"
+        },
+        "name": "Compute an upper bonus"
+      }
+    ]
+  },
+  "tabletop-rules/03-joker-and-record#Your turn \u2014 List unused slots": {
+    "files": {
+      "practice/03-joker-and-record.mjs": "export function solve(scores){const out=[];for(let i=0;i<scores.length;i++)if(scores[i]===null)out.push(i);return out;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-joker-and-record.mjs": "export function solve(scores){const out=[];for(let i=0;i<scores.length;i++)if(!scores[i])out.push(i);return out;}"
+        },
+        "name": "List unused slots"
+      }
+    ]
+  },
+  "tabletop-rules/04-turns-and-a-baseline#Your turn \u2014 Choose a legal maximum": {
+    "files": {
+      "practice/04-turns-and-a-baseline.mjs": "export function solve(scores,legal){let best=legal[0];for(const i of legal)if(scores[i]>scores[best])best=i;return best;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-turns-and-a-baseline.mjs": "export function solve(scores,legal){return scores.indexOf(Math.max(...scores));}"
+        },
+        "name": "Choose a legal maximum"
+      }
+    ]
+  },
+  "tabletop-pig/01-a-second-game#Your turn \u2014 Recognize a winning bank": {
+    "files": {
+      "practice/01-a-second-game.mjs": "export function solve(banked,turn,target){return banked+turn>=target;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-a-second-game.mjs": "export function solve(banked,turn,target){return banked+turn===target;}"
+        },
+        "name": "Recognize a winning bank"
+      }
+    ]
+  },
+  "tabletop-pig/02-acceptance-and-boundaries#Your turn \u2014 Keep sessions independent": {
+    "files": {
+      "practice/02-acceptance-and-boundaries.mjs": "export function solve(){return [{scores:[0,0]},{scores:[0,0]}];}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-acceptance-and-boundaries.mjs": "export function solve(){const state={scores:[0,0]};return [state,state];}"
+        },
+        "name": "Keep sessions independent"
+      }
+    ]
+  },
+  "tabletop-interface/01-svg-dice#Your turn \u2014 Map a pip position": {
+    "files": {
+      "practice/01-svg-dice.mjs": "export function solve(offset){return 50+offset*25;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-svg-dice.mjs": "export function solve(offset){return offset*25;}"
+        },
+        "name": "Map a pip position"
+      }
+    ]
+  },
+  "tabletop-interface/02-compose-the-room#Your turn \u2014 Design an empty-state card": {
+    "files": {
+      "practice/02-compose-the-room.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>No match yet</h1><p>Start a match to roll your first hand.</p><button>Start a match</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-compose-the-room.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>No match yet</h1><p>Start a match</p></main>\n</body>\n</html>\n"
+        },
+        "name": "Design an empty-state card"
+      }
+    ]
+  },
+  "tabletop-interface/03-design-tokens#Your turn \u2014 Style a results card": {
+    "files": {
+      "practice/03-design-tokens.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color:#183e34; background:#f7f3e9; } main { max-width:30rem; padding:2rem; margin:auto; } button:focus-visible { outline:3px solid #b08535; }\n</style>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><button>Play again</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-design-tokens.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><span>Play again</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Style a results card"
+      }
+    ]
+  },
+  "tabletop-interface/04-layout-and-depth#Your turn \u2014 Style a results card": {
+    "files": {
+      "practice/04-layout-and-depth.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color:#183e34; background:#f7f3e9; } main { max-width:30rem; padding:2rem; margin:auto; } button:focus-visible { outline:3px solid #b08535; }\n</style>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><button>Play again</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-layout-and-depth.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><span>Play again</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Style a results card"
+      }
+    ]
+  },
+  "tabletop-interface/05-controls-and-data#Your turn \u2014 Style a results card": {
+    "files": {
+      "practice/05-controls-and-data.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color:#183e34; background:#f7f3e9; } main { max-width:30rem; padding:2rem; margin:auto; } button:focus-visible { outline:3px solid #b08535; }\n</style>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><button>Play again</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/05-controls-and-data.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><span>Play again</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Style a results card"
+      }
+    ]
+  },
+  "tabletop-interface/06-responsive-and-motion#Your turn \u2014 Style a results card": {
+    "files": {
+      "practice/06-responsive-and-motion.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n<style>\nbody { color:#183e34; background:#f7f3e9; } main { max-width:30rem; padding:2rem; margin:auto; } button:focus-visible { outline:3px solid #b08535; }\n</style>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><button>Play again</button></main>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/06-responsive-and-motion.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<main><h1>Results</h1><p>You scored 18.</p><span>Play again</span></main>\n</body>\n</html>\n"
+        },
+        "name": "Style a results card"
+      }
+    ]
+  },
+  "tabletop-interface/07-render-state#Your turn \u2014 Adapt without aliasing": {
+    "files": {
+      "practice/07-render-state.mjs": "export function solve(game){return {score:game.score,label:game.name};}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/07-render-state.mjs": "export function solve(game){game.label=game.name;return game;}"
+        },
+        "name": "Adapt without aliasing"
+      }
+    ]
+  },
+  "tabletop-interface/08-wire-actions#Your turn \u2014 Adapt without aliasing": {
+    "files": {
+      "practice/08-wire-actions.mjs": "export function solve(game){return {score:game.score,label:game.name};}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/08-wire-actions.mjs": "export function solve(game){game.label=game.name;return game;}"
+        },
+        "name": "Adapt without aliasing"
+      }
+    ]
+  },
+  "tabletop-three/01-a-scene-you-can-name#Your turn \u2014 Keep the aspect correct": {
+    "files": {
+      "practice/01-a-scene-you-can-name.mjs": "export function solve(width,height){return width/height;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-a-scene-you-can-name.mjs": "export function solve(width,height){return height/width;}"
+        },
+        "name": "Keep the aspect correct"
+      }
+    ]
+  },
+  "tabletop-three/02-orient-a-face#Your turn \u2014 Convert degrees to radians": {
+    "files": {
+      "practice/02-orient-a-face.mjs": "export function solve(degrees){return degrees*Math.PI/180;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-orient-a-face.mjs": "export function solve(degrees){return degrees*Math.PI/360;}"
+        },
+        "name": "Convert degrees to radians"
+      }
+    ]
+  },
+  "tabletop-three/03-light-and-material#Your turn \u2014 Normalize a pointer": {
+    "files": {
+      "practice/03-light-and-material.mjs": "export function solve(x,left,width){return 2*(x-left)/width-1;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-light-and-material.mjs": "export function solve(x,left,width){return 2*x/width-1;}"
+        },
+        "name": "Normalize a pointer"
+      }
+    ]
+  },
+  "tabletop-three/04-assemble-the-dice#Your turn \u2014 Normalize a pointer": {
+    "files": {
+      "practice/04-assemble-the-dice.mjs": "export function solve(x,left,width){return 2*(x-left)/width-1;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-assemble-the-dice.mjs": "export function solve(x,left,width){return 2*x/width-1;}"
+        },
+        "name": "Normalize a pointer"
+      }
+    ]
+  },
+  "tabletop-three/05-time-picking-and-cleanup#Your turn \u2014 Normalize a pointer": {
+    "files": {
+      "practice/05-time-picking-and-cleanup.mjs": "export function solve(x,left,width){return 2*(x-left)/width-1;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/05-time-picking-and-cleanup.mjs": "export function solve(x,left,width){return 2*x/width-1;}"
+        },
+        "name": "Normalize a pointer"
+      }
+    ]
+  },
+  "tabletop-three/06-a-renderer-you-can-replace#Your turn \u2014 Reject a stale completion": {
+    "files": {
+      "practice/06-a-renderer-you-can-replace.mjs": "export function solve(a,b,enabled){return a===b && enabled;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/06-a-renderer-you-can-replace.mjs": "export function solve(a,b,enabled){return enabled;}"
+        },
+        "name": "Reject a stale completion"
+      }
+    ]
+  },
+  "tabletop-learning/01-a-value-is-an-estimate#Your turn \u2014 Update a terminal value": {
+    "files": {
+      "practice/01-a-value-is-an-estimate.mjs": "export function solve(old,reward,alpha){return old+alpha*(reward-old);}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-a-value-is-an-estimate.mjs": "export function solve(old,reward,alpha){return old+alpha*reward;}"
+        },
+        "name": "Update a terminal value"
+      }
+    ]
+  },
+  "tabletop-learning/02-explore-legally#Your turn \u2014 Choose among legal values": {
+    "files": {
+      "practice/02-explore-legally.mjs": "export function solve(r,h,canHold){return !canHold || r>=h ? \"roll\" : \"hold\";}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-explore-legally.mjs": "export function solve(r,h,canHold){return r>=h ? \"roll\" : \"hold\";}"
+        },
+        "name": "Choose among legal values"
+      }
+    ]
+  },
+  "tabletop-learning/03-a-complete-transition#Your turn \u2014 Get terminal reward right": {
+    "files": {
+      "practice/03-a-complete-transition.mjs": "export function solve(winner){return winner===null?0:winner===0?1:-1;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-a-complete-transition.mjs": "export function solve(winner){return winner===0?1:0;}"
+        },
+        "name": "Get terminal reward right"
+      }
+    ]
+  },
+  "tabletop-learning/04-train-reproducibly#Your turn \u2014 Keep metadata with a model": {
+    "files": {
+      "practice/04-train-reproducibly.mjs": "export function solve(table,target){return {version:1,game:\"pig\",target,table};}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-train-reproducibly.mjs": "export function solve(table,target){return {version:1,game:\"pig\",target:100,table};}"
+        },
+        "name": "Keep metadata with a model"
+      }
+    ]
+  },
+  "tabletop-learning/05-evaluate-without-learning#Your turn \u2014 Compute a measured rate": {
+    "files": {
+      "practice/05-evaluate-without-learning.mjs": "export function solve(w,l){return w+l===0?null:w/(w+l);}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/05-evaluate-without-learning.mjs": "export function solve(w,l){return w/l;}"
+        },
+        "name": "Compute a measured rate"
+      }
+    ]
+  },
+  "tabletop-learning/06-validate-and-test-a-model#Your turn \u2014 Reject non-finite estimates": {
+    "files": {
+      "practice/06-validate-and-test-a-model.mjs": "export function solve(row){return Array.isArray(row)&&row.length===2&&row.every(x=>Number.isFinite(x)&&Math.abs(x)<=1);}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/06-validate-and-test-a-model.mjs": "export function solve(row){return Array.isArray(row)&&row.length===2;}"
+        },
+        "name": "Reject non-finite estimates"
+      }
+    ]
+  },
+  "tabletop-lab/01-training-in-a-worker#Your turn \u2014 Report progress accurately": {
+    "files": {
+      "practice/01-training-in-a-worker.mjs": "export function solve(done,total){return Math.max(0,Math.min(1,done/total));}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-training-in-a-worker.mjs": "export function solve(done,total){return done;}"
+        },
+        "name": "Report progress accurately"
+      }
+    ]
+  },
+  "tabletop-lab/02-the-model-controls#Your turn \u2014 Label a training choice": {
+    "files": {
+      "practice/02-the-model-controls.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<label>Training budget <select><option value=\"1000\">1,000</option><option value=\"2000\">2,000</option></select></label>\n</body>\n</html>\n"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/02-the-model-controls.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tabletop workshop</title>\n</head>\n<body>\n<p>Training budget</p><select><option value=\"1000\">1,000</option></select>\n</body>\n</html>\n"
+        },
+        "name": "Label a training choice"
+      }
+    ]
+  },
+  "tabletop-lab/03-inspect-the-policy#Your turn \u2014 Accept only a compatible version": {
+    "files": {
+      "practice/03-inspect-the-policy.mjs": "export function solve(x){return x!==null && typeof x===\"object\" && x.version===1 && x.target===30;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/03-inspect-the-policy.mjs": "export function solve(x){return x!==null && x.version===1;}"
+        },
+        "name": "Accept only a compatible version"
+      }
+    ]
+  },
+  "tabletop-lab/04-complete-or-cancel#Your turn \u2014 Accept only a compatible version": {
+    "files": {
+      "practice/04-complete-or-cancel.mjs": "export function solve(x){return x!==null && typeof x===\"object\" && x.version===1 && x.target===30;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/04-complete-or-cancel.mjs": "export function solve(x){return x!==null && x.version===1;}"
+        },
+        "name": "Accept only a compatible version"
+      }
+    ]
+  },
+  "tabletop-lab/05-save-and-load#Your turn \u2014 Accept only a compatible version": {
+    "files": {
+      "practice/05-save-and-load.mjs": "export function solve(x){return x!==null && typeof x===\"object\" && x.version===1 && x.target===30;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/05-save-and-load.mjs": "export function solve(x){return x!==null && x.version===1;}"
+        },
+        "name": "Accept only a compatible version"
+      }
+    ]
+  },
+  "tabletop-lab/06-play-your-model#Your turn \u2014 Keep evaluation separate": {
+    "files": {
+      "practice/06-play-your-model.mjs": "export function solve(w,l,t){return {completed:w+l,truncated:t};}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/06-play-your-model.mjs": "export function solve(w,l,t){return {completed:w+l+t,truncated:0};}"
+        },
+        "name": "Keep evaluation separate"
+      }
+    ]
+  },
+  "tabletop-release/01-release-and-another-game#Your turn \u2014 Register without rewriting games": {
+    "files": {
+      "practice/01-release-and-another-game.mjs": "export function solve(entries,id){for(const entry of entries)if(entry.id===id)return entry;return null;}"
+    },
+    "wrong": [
+      {
+        "files": {
+          "practice/01-release-and-another-game.mjs": "export function solve(entries,id){return entries[0];}"
+        },
+        "name": "Register without rewriting games"
+      }
+    ]
+  }
+}

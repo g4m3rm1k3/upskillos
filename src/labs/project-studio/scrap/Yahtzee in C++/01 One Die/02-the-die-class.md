@@ -3,7 +3,15 @@ title: 1.2 — The Die Class
 runtime: none
 ---
 
-`main.cpp` is about to get crowded. In this lesson the die becomes its own type, split across two files: `Die.h` says what a die is, and `Die.cpp` says how it works. The split between those two files is one of the biggest differences between C++ and the languages you know.
+### The story so far
+
+The one-file class exercise showed why private state matters: callers use operations that preserve a valid face. The function split showed why each source file needs declarations and the linker needs definitions. Now combine those two ideas.
+
+### What this lesson builds
+
+Move the die's interface into Die.h and its function bodies into Die.cpp, then make main.cpp use that interface. The class is useful because it groups a face with its operations. The files are useful because other code can use the type without duplicating those bodies. These are separate design choices.
+
+This first version creates a valid die and lets you read it. The next lesson adds rerolling. Compare each member with the earlier class in scratch/class.cpp before typing it: which parts are declarations, and which are definitions?
 
 ## Describe a Die in a header
 
@@ -67,8 +75,8 @@ int Die::getFace() const {
 Line by line:
 
 - `#include "Die.h"`: quotes mean "look in this file's own folder first". Your own headers use quotes and library headers use angle brackets. The `.cpp` includes its own header so the compiler sees the class and can check that every definition matches a declaration.
-- `Die::Die() {`: `::` is the **scope resolution operator**. It means "the name on the right belongs to the thing on the left". The first `Die` is the class and the second `Die` is the constructor's name. Without `Die::` this would define an unrelated free function.
-- `face = std::rand() % 6 + 1;`: sets the member. A member of type `int` is not initialized automatically, so without this line `face` would hold leftover bytes.
+- `Die::Die() {`: `::` is the **scope resolution operator**. It means "the name on the right belongs to the thing on the left". The first `Die` is the class and the second `Die` is the constructor's name. Without `Die::`, the name would no longer define this member; a constructor spelled that way is invalid rather than a constructor for Die.
+- `face = std::rand() % 6 + 1;`: sets the member. A member of type `int` is not initialized automatically, so without an initializer or this assignment, `face` would be indeterminate and reading it would be undefined behavior.
 - `int Die::getFace() const {`: the signature must match the declaration exactly, including the trailing `const`. A mismatch is a compile error. Inside a `const` function `face` can be read but not assigned.
 
 Analogy (helper only): a constructor is a vending machine being delivered. Nobody presses a button to stock it. That setup happens automatically the moment it is placed.

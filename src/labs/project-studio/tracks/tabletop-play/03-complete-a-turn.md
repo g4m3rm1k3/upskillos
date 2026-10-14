@@ -1,0 +1,129 @@
+---
+title: 3.3 — A turn with boundaries
+runtime: none
+---
+
+### The story so far
+
+The tray displays five dice and represents holds. Now connect rolling, scoring and reset.
+
+### What this lesson builds
+
+Play a full Sixes turn and prevent a fourth roll or a second score.
+
+## Let state decide what is legal
+
+A guard is an early return that refuses an action before changing state. The UI disables buttons for clarity; the function guard also protects calls from other code. done records that scoring has ended the turn. Scoring reads the final hand once. reset prepares a new turn and clears every held flag.
+
+```html file=index.html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabletop workshop</title>
+</head>
+<body>
+<main>
+<h1>Sixes practice</h1>
+<p id="budget"></p>
+<div id="dice"></div>
+<button id="roll">Roll</button>
+<button id="score">Score Sixes</button>
+<button id="reset">New turn</button>
+<p id="result" role="status"></p>
+</main>
+<script>
+const state = { dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false], rolls: 0, done: false };
+function render() {
+  const tray = document.getElementById('dice');
+  tray.replaceChildren();
+  for (let i = 0; i < state.dice.length; i += 1) {
+    const button = document.createElement('button');
+    button.textContent = state.dice[i];
+    button.setAttribute('aria-pressed', String(state.held[i]));
+    button.disabled = state.rolls === 0 || state.done;
+    button.addEventListener('click', function () {
+      state.held[i] = !state.held[i];
+      render();
+    });
+    tray.append(button);
+  }
+  document.getElementById('budget').textContent = 'Rolls used: ' + state.rolls + ' / 3';
+  document.getElementById('roll').disabled = state.rolls === 3 || state.done;
+  document.getElementById('score').disabled = state.rolls === 0 || state.done;
+}
+function roll() {
+  if (state.rolls === 3 || state.done) return;
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (!state.held[i]) state.dice[i] = 1 + Math.floor(Math.random() * 6);
+  }
+  state.rolls += 1;
+  render();
+}
+function score() {
+  if (state.rolls === 0 || state.done) return;
+  let total = 0;
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (state.dice[i] === 6) total += 6;
+  }
+  state.done = true;
+  document.getElementById('result').textContent = 'Sixes: ' + total;
+  render();
+}
+function reset() {
+  state.rolls = 0;
+  state.done = false;
+  for (let i = 0; i < state.held.length; i += 1) state.held[i] = false;
+  document.getElementById('result').textContent = '';
+  render();
+}
+document.getElementById('roll').addEventListener('click', roll);
+document.getElementById('score').addEventListener('click', score);
+document.getElementById('reset').addEventListener('click', reset);
+render();
+</script>
+</body>
+</html>
+```
+
+Trace roll counts 0 → 1 → 2 → 3. The next call returns at its guard. On a score, total starts at zero and grows only for sixes, then done becomes true. The string concatenations in render convert numbers to text. This first game stays in one file so you can see the complete flow.
+
+**Engineer:** three state transitions (roll, hold, score) are easier to reason about when rendering itself changes none of them. The tests verify boundaries, not keyboard focus or visual clarity; play manually too.
+
+```check
+page index.html "(() => { roll(); roll(); roll(); roll(); return state.rolls; })()" "3"
+page index.html "(() => { reset(); return JSON.stringify([state.rolls,state.done,state.held]); })()" "[0,false,[false,false,false,false,false]]"
+```
+
+```predict
+question: Should clicking a score twice add its points twice?
+choice: No
+choice: Yes
+answer: No
+explain: Scoring ends a turn. Repeated input should be rejected by the rule guard.
+```
+
+## Try it — Leave one field stale
+
+Temporarily remove the loop clearing holds in reset. Hold a die, finish a turn, then start another: the old hold survives. Restore the reset loop. Explain why resetting the roll counter alone did not reset the game.
+
+
+
+## Your turn — Guard the roll budget
+
+Define canRoll(rolls, done) returning true exactly when done is false and rolls is below 3. Use && for “both”: it evaluates the right side only when the left is true.
+
+Write practice/03-complete-a-turn.html independently. Try before opening hints. Keep the guided game intact. The checks establish the listed examples, not every possible input or the quality of your explanation. Record the observed result, explain its cause, and add a new case you chose.
+
+
+
+```check
+page practice/03-complete-a-turn.html "JSON.stringify([canRoll(0,false),canRoll(2,false),canRoll(3,false),canRoll(0,true)])" "[true,true,false,false]"
+```
+
+```hints
+nudge: There are two independent reasons to refuse.
+concept: && requires both conditions.
+shape: Combine not done with rolls less than three.
+```

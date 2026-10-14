@@ -1,0 +1,231 @@
+{
+  "01 One Die/02-the-die-class.md": [
+    "Describe a Die in a header",
+    "Define the Die in a source file",
+    "Use it from main",
+    "Build two files into one program",
+    "Your turn: roll the same die again"
+  ],
+  "01 One Die/01-first-build.md": [
+    "Roll one die",
+    "Build and run it",
+    "Predict: no seed",
+    "Five dice in an array",
+    "Your turn: count the sixes in a fixed hand"
+  ],
+  "01 One Die/03-tumbling-and-drawing.md": [
+    "More ways to build and change a Die",
+    "Update Die.cpp",
+    "Draw a tumbling die",
+    "Read the tests",
+    "Your turn: opposite faces"
+  ],
+  "02 Several Dice/01-a-hand-of-dice.md": [
+    "Describe Dice",
+    "Define Dice",
+    "Use it from main",
+    "Your turn: add them up"
+  ],
+  "02 Several Dice/02-side-by-side.md": [
+    "Draw the dice",
+    "Update Dice.cpp",
+    "Use it from main",
+    "Your turn: print the faces from a const reference"
+  ],
+  "02 Several Dice/03-animation-and-holding.md": [
+    "Isolate the operating system",
+    "Update Terminal.cpp",
+    "Animate with a hold list",
+    "Update Dice.cpp",
+    "Use it from main",
+    "Your turn: report whether anything moved"
+  ],
+  "07 Finish and Explain/01-finish-the-rules.md": [
+    "Turn the missing rule into cases",
+    "Declare the contract before implementing it",
+    "Try it \u2014 Identify an accidental mutation",
+    "Your turn \u2014 Transfer the idea"
+  ],
+  "07 Finish and Explain/02-record-once.md": [
+    "Read validation before mutation",
+    "Test the decision boundaries",
+    "Try it \u2014 Reject the wrong implementation",
+    "Your turn \u2014 Transfer the idea"
+  ],
+  "07 Finish and Explain/03-connect-the-completed-game.md": [
+    "Show the actual legal menu",
+    "Include every bonus exactly once",
+    "Build the full application",
+    "Try it \u2014 Find double accounting",
+    "Your turn \u2014 Transfer the idea"
+  ],
+  "07 Finish and Explain/05-release-and-explain.md": [
+    "Check the build boundary",
+    "Run the acceptance tests",
+    "Play a release checklist",
+    "Try it \u2014 Diagnose a lifetime defect without running it",
+    "Your turn \u2014 Ship one independent improvement",
+    "Demonstrate understanding without a reference"
+  ],
+  "07 Finish and Explain/04-randomness-and-ownership.md": [
+    "Separate a fair result from an animation",
+    "End animation with the actual roll",
+    "Try it \u2014 Spot hidden coupling",
+    "Your turn \u2014 Transfer the idea"
+  ],
+  "06 Players/01-the-player-class.md": [
+    "Describe a Player",
+    "Define a Player",
+    "Add it to the build",
+    "Use it in main",
+    "Read the tests",
+    "Your turn: a one-line summary"
+  ],
+  "06 Players/02-taking-turns.md": [
+    "Describe the game",
+    "Write the game",
+    "Set up the players in main",
+    "Read the tests",
+    "Your turn: unique names"
+  ],
+  "06 Players/03-winners-and-play-again.md": [
+    "Rank the players",
+    "Define Ranking.cpp",
+    "Ask yes or no",
+    "Start a new game",
+    "Print the results",
+    "Play again",
+    "Read the tests",
+    "Your turn: joining names",
+    "Continue to the completed rules"
+  ],
+  "03 Counting and Scoring/01-counting-faces.md": [
+    "Describe the table",
+    "Fill the table",
+    "Print the table",
+    "Read the tests",
+    "Your turn: the biggest count"
+  ],
+  "03 Counting and Scoring/03-the-scorecard-class.md": [
+    "Describe the scorecard",
+    "Define the scorecard",
+    "Try it",
+    "Your turn: the upper bonus"
+  ],
+  "03 Counting and Scoring/02-scoring-rules.md": [
+    "Say what the rules are",
+    "The simple rules",
+    "Full house and the straights",
+    "Print every rule",
+    "Read the tests",
+    "Your turn: two pairs"
+  ],
+  "04 The Turn/02-one-turn.md": [
+    "Roll only the free dice",
+    "Update Dice.cpp",
+    "Describe the turn",
+    "Write the turn",
+    "Play one turn",
+    "Read the tests",
+    "Your turn: show the roll number"
+  ],
+  "04 The Turn/01-reading-input-safely.md": [
+    "Describe the input functions",
+    "Define them",
+    "Try it",
+    "Read the tests",
+    "Your turn: yes or no"
+  ],
+  "04 The Turn/03-the-whole-game.md": [
+    "Play until the card is full",
+    "Update Game.cpp",
+    "Command-line arguments",
+    "Read the tests",
+    "Your turn: choose the number of rolls"
+  ],
+  "00 Start Here/04-references.md": [
+    "Two names, one object",
+    "Trace lifetimes and return types",
+    "Try it \u2014 Let the compiler explain the contract",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/08-why-headers.md": [
+    "First preserve the working game",
+    "Give callers the declaration",
+    "Give the linker one definition",
+    "Use the declaration from a different source",
+    "Build the two stages yourself",
+    "Try it \u2014 Three errors with different causes",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/06-pointer-ranges.md": [
+    "Walk a range",
+    "A pointer does not remember the array size",
+    "Try it \u2014 Diagnose on paper",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/00-the-learning-route.md": [
+    "Choose the starting point",
+    "Follow the concepts in order",
+    "Learn by leaving evidence",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/02-const-and-arrays.md": [
+    "Count two sixes",
+    "Const is a restriction, not a calculation",
+    "Try it \u2014 Two different failures",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/01-one-file.md": [
+    "Make a result you can predict",
+    "Try it \u2014 Find the first diagnostic",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/03-functions-and-copies.md": [
+    "Extract a rule without creating a header",
+    "Try it \u2014 Return is not print",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/05-pointers.md": [
+    "Follow a selection",
+    "Read the const in each position",
+    "Try it \u2014 Read the direction of an assignment",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/09-class-before-files.md": [
+    "Protect the face range",
+    "Read the interface as a contract",
+    "Try it \u2014 Enforce the boundary",
+    "Rejoin the original game lessons",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "00 Start Here/07-a-playable-single-file.md": [
+    "Read one complete answer",
+    "Represent the keep choices",
+    "Assemble and play",
+    "Try it \u2014 Break holding, then restore it",
+    "Your turn \u2014 Explain and change it"
+  ],
+  "05 Cleaner C++/03-copies-and-moves.md": [
+    "A class that counts",
+    "Your turn: a vector with no copies and no moves"
+  ],
+  "05 Cleaner C++/01-named-categories.md": [
+    "Give each category a name",
+    "Use the names inside",
+    "Check that the game still plays",
+    "Your turn: which boxes are upper?"
+  ],
+  "05 Cleaner C++/02-a-table-of-rules.md": [
+    "One table, one place",
+    "What a lambda remembers",
+    "Read the tests",
+    "Your turn: the best box"
+  ],
+  "05 Cleaner C++/04-compiling-in-pieces.md": [
+    "The stages",
+    "Compile each file alone",
+    "One file for the list",
+    "Your turn: build from object files"
+  ]
+}

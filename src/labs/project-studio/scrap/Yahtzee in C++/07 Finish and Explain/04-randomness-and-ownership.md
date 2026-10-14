@@ -1,15 +1,41 @@
 ---
-title: Fair rolls — state, lifetime and responsibility
+title: 7.4 — Randomness you can reason about
 runtime: none
+teaches: random engine, distribution, static lifetime, deterministic testing
+experiments: Predict, trace, change, check
 ---
 
-Replace the prototype random mapping and keep animation from deciding the game result.
+### The story so far
 
-## Separate a fair result from an animation
+Rules and state transitions are tested with controlled hands. A real player needs unpredictable faces, but the visual animation must not silently choose a different scoring distribution.
 
-The old modulo mapping is biased unless the generator's range divides evenly by six. Tumbling is another issue: choosing an adjacent face is a visual transition, not a promise of a uniform final roll. The final result should be sampled independently of that animation.
+### What this lesson builds
 
-`std::mt19937` is a standard pseudo-random engine. `std::random_device{}()` supplies a seed, though an implementation may use a deterministic source. A local static engine is initialized once and retains its state between calls; reseeding each roll would be a mistake. `std::uniform_int_distribution<int>(1, 6)` maps engine output to an inclusive, uniform face range. This is suitable for a local practice game, not security-sensitive randomness.
+Replace modulo mapping with a uniform distribution and distinguish generator state, distribution and borrowed dependencies.
+
+## Separate a fair result from an animation {#step-1}
+
+**Understand:** imagine a generator with only eight equally likely outputs, 0 through 7. Map them with n % 6 + 1:
+
+| Generator output | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|---|
+| Face | 1 | 2 | 3 | 4 | 5 | 6 | 1 | 2 |
+
+Faces 1 and 2 have twice as many source outcomes. The real rand range is larger, so the bias is smaller, but the mechanism is the same. Use a standard uniform distribution to map engine output appropriately.
+
+An **engine** holds state and produces successive pseudo-random values. A **distribution** maps those values to the outcomes we want. They are different objects with different responsibilities. This is suitable for local gameplay, not security-sensitive randomness.
+
+```predict
+question: Reseed the engine with the same seed before every roll. What happens?
+choice: Each call restarts the sequence
+choice: It becomes more random
+answer: Each call restarts the sequence
+explain: A seed initializes engine state. Reinitializing it discards the progress made by earlier calls.
+```
+
+## Advance one engine across calls {#engine-state}
+
+**Build:** replace the rand mapping in roll and have the constructor call that same operation.
 
 ```cpp file=Die.cpp
 #include <cstdlib>
@@ -72,9 +98,19 @@ std::string Die::line(int r) const {
 int Die::opposite() const { return 7 - face; }
 ```
 
-The adjacent-face table still animates using rand. The srand call in main now seeds that visual sequence only; it no longer controls scored rolls. Scored rolls now use the separate engine. Exact sequences are not a portable testing contract. To test scoring, continue supplying explicit hands. To design fully replayable simulations later, inject a generator owned by the game instead of hiding it in a static local.
+**Understand:** `<random>` declares the standard random machinery. mt19937 is an engine type. The local static engine is initialized on its first use and retains its state until program termination. random_device{} creates a temporary seed source; the following () calls it. The implementation may provide a deterministic source, so it is not a security guarantee.
 
-## End animation with the actual roll
+`uniform_int_distribution<int>` is a class-template specialization producing ints. Constructing it with (1, 6) selects inclusive limits. `faceValue(engine)` calls the distribution object, advancing engine as it produces a face. Reconstructing this simple distribution per call does not reset engine.
+
+The constructor's face(1) establishes a valid initial member, then roll samples the first face. The old srand in main now affects visual tumble randomness only. For replayable simulations a later design should accept an engine from the caller instead of hiding it in a static local.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game" label="Build game" -- Save the changed source, then read the first compiler diagnostic.
+```
+
+## End animation with the actual roll {#step-2}
+
+**Build:** finish animate with rollFree(hold), then display that final sample. The added operations are after the visual-frame loop.
 
 ```cpp file=Dice.cpp
 #include <iostream>
@@ -155,32 +191,56 @@ bool Dice::animate(const std::vector<bool>& hold) {
 }
 ```
 
-The added rollFree(hold) obtains final faces after the visual frames. Held dice remain untouched. Clearing and drawing once more makes the final sample visible. Both fast mode and animated mode now score a uniform draw for each unheld die, though they need not produce the same sequence.
+**Understand:** tumbleStep chooses an adjacent face for a visual effect. That transition is not the uniform sampling contract of roll. If the last animation frame became the scored state, animation would influence the distribution. Sampling afterward gives each unheld die its actual result. Held elements never enter rollFree's assignment path.
 
-```predict
-question: Does observing every face in 60 rolls prove a generator is fair?
-choice: No — sample coverage is not a proof of its distribution
-choice: Yes — all outcomes occurred
-answer: No — sample coverage is not a proof of its distribution
-explain: Small-sample counts can reveal some bugs but cannot certify uniformity. We use the distribution contract and deterministic rule tests for different purposes.
-```
-
-## Try it — Spot hidden coupling
-
-On paper move the final rollFree before the animation. The subsequent tumbleStep calls overwrite the sampled faces. Restore it after the animation before running. Play one turn keeping all dice: animate must return without changing any face.
+Fast and animated modes now score the same kind of distribution, although they need not produce identical sequences. If all dice are held, animate returns before changing anything.
 
 ```check
-run "g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game" label="Build fair final rolls"
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game" label="Build game" -- Save the changed source, then read the first compiler diagnostic.
 ```
 
-The build establishes type and link correctness. Manually verify held dice in animated and fast modes. Do not assert exact random output in your test suite.
+## Try it — Spot hidden coupling {#step-3}
 
-## Your turn — Transfer the idea
+On paper move rollFree before the animation loop. Every later tumbleStep can overwrite the sampled face. Point to the assignment that breaks the intended order, then keep rollFree after the loop.
 
-Design a RollSource interface on paper that lets a test return 1, 2, 3, 4, 5 without randomness. Explain who owns the generator, whether a call mutates it, and why a const reference would be inappropriate for advancing it.
+Do not assert that 60 rolls contain exactly ten of each face; random variation is expected. Small-sample counts are useful diagnostics but cannot prove a distribution contract. To prove holding, use controlled replacements as in the opening lesson.
+
+> **Engineer:** make randomness a dependency you can replace with a known sequence in a test. Test state transitions deterministically and the distribution choice separately.
+
+## Read the independent acceptance cases {#acceptance-cases}
+
+**Build:** install this test, then read each input and expected outcome before implementing the function. The test has main; your practice file supplies the requested function. Add an example of your own after these cases pass.
+
+```cpp file=tests/finish_task_04.cpp provided
+#include <iostream>
+#include <vector>
+#include <cstddef>
+bool takeRoll(const std::vector<int>& sequence, std::size_t& cursor, int& face);
+int main() {
+    const std::vector<int> values = {2, 6}; std::size_t cursor = 0; int face = 4;
+    if (!takeRoll(values, cursor, face) || face != 2 || cursor != 1) return 1;
+    if (!takeRoll(values, cursor, face) || face != 6 || cursor != 2) return 1;
+    if (takeRoll(values, cursor, face) || face != 6 || cursor != 2) return 1;
+    cursor = 0; const std::vector<int> bad = {7};
+    if (takeRoll(bad, cursor, face) || cursor != 0 || face != 6) return 1;
+    std::cout << "PASS: independent\n";
+    return 0;
+}
+```
+
+## Your turn — Supply a predictable roll source {#step-4}
+
+**Build, on your own:** Define bool takeRoll(const std::vector<int>& sequence, std::size_t& cursor, int& face). On a valid next face, assign face and advance cursor exactly once. On exhaustion or an invalid next face, return false and leave both outputs unchanged. This is a small deterministic dependency for a future game test.
+
+Write practice/take_roll.cpp. Keep the test unchanged. If it fails, identify the first unsatisfied case and trace it by hand before editing.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic tests/finish_task_04.cpp practice/take_roll.cpp  -o exercise_result" label="Build exercise_result" -- Save the changed source, then read the first compiler diagnostic.
+run "./exercise_result" stdout="PASS: independent" label="Observe the result"
+```
 
 ```hints
-nudge: Random engines have state.
-concept: Dependency injection means callers supply a dependency instead of a function finding it globally.
-shape: Start with a function taking a mutable engine reference; isolate display randomness from the game result. Implement it only after writing deterministic held-dice tests.
+nudge: Which data is read-only, and which values must the operation advance?
+concept: The sequence is borrowed through const reference. Cursor and face are mutable references with an unchanged-on-failure contract.
+shape: Check bounds, read a local candidate, validate 1–6, then commit face and increment cursor. Explain why cursor cannot be const.
 ```

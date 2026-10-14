@@ -1,15 +1,14 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 670,
-    "tracks": 90,
+    "lessons": 733,
+    "tracks": 104,
     "errors": {
-      "multiple target files in one step": 4,
       "independent task exposes full target": 4
     },
     "signals": {
-      "authored check limits not detected": 532,
-      "prediction not detected": 77,
+      "authored check limits not detected": 544,
+      "prediction not detected": 76,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 199
     }
@@ -2683,9 +2682,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "multiple target files in one step"
-      ]
+      "errors": []
     },
     {
       "id": "electron-basics-files/03-01-a-project-folder",
@@ -2699,7 +2696,6 @@
         "authored check limits not detected"
       ],
       "errors": [
-        "multiple target files in one step",
         "independent task exposes full target"
       ]
     },
@@ -2727,9 +2723,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "multiple target files in one step"
-      ]
+      "errors": []
     },
     {
       "id": "electron-basics-terminal/05-01-a-real-terminal",
@@ -2742,9 +2736,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "multiple target files in one step"
-      ]
+      "errors": []
     },
     {
       "id": "electron-basics-tests/06-01-testing-the-real-app",
@@ -3917,6 +3909,84 @@
       "errors": []
     },
     {
+      "id": "frontier-cs/02-01-how-slow-grows",
+      "track": "frontier-cs",
+      "title": "2.1 — How Slow Grows",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: how much did it grow?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-cs/02-02-why-a-dictionary-is-fast",
+      "track": "frontier-cs",
+      "title": "2.2 — Why a Dictionary Is Fast",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a hash where order matters",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-cs/02-03-always-the-smallest-first",
+      "track": "frontier-cs",
+      "title": "2.3 — Always the Smallest First",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the k largest",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-cs/02-04-a-function-that-calls-itself",
+      "track": "frontier-cs",
+      "title": "2.4 — A Function That Calls Itself",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: who wins?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-cs/02-05-what-comes-first",
+      "track": "frontier-cs",
+      "title": "2.5 — What Comes First",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: going round in a circle",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-cs/02-06-numbers-that-round",
+      "track": "frontier-cs",
+      "title": "2.6 — Numbers That Round",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a softmax that can't overflow",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "frontier-engineering/01-01-pin-the-old-behaviour",
       "track": "frontier-engineering",
       "title": "1.1 — Pin the Old Behaviour",
@@ -3956,6 +4026,32 @@
       "errors": []
     },
     {
+      "id": "frontier-engineering/01-04-a-dataclass-and-computing-apart",
+      "track": "frontier-engineering",
+      "title": "1.4 — A Dataclass, and Computing Apart From Printing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the stats",
+      "firstIndependentTask": "Your turn: the report as one string",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-engineering/01-05-errors-on-purpose-and-a-real-command",
+      "track": "frontier-engineering",
+      "title": "1.5 — Errors on Purpose, and a Real Command",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A branch for the command",
+      "firstIndependentTask": "Your turn: retire the old script",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "frontier-setup/00-01-a-project-with-its-own-python",
       "track": "frontier-setup",
       "title": "0.1 — A Project With Its Own Python",
@@ -3964,7 +4060,6 @@
       "firstStep": "Choose the project folder",
       "firstIndependentTask": "Your turn: keep the environment out of Git",
       "signals": [
-        "prediction not detected",
         "authored check limits not detected"
       ],
       "errors": []
@@ -3990,6 +4085,58 @@
       "maturity": "in-development",
       "firstStep": "Install PyTorch",
       "firstIndependentTask": "Your turn: does PyTorch agree with NumPy?",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-tools/03-01-finding-a-bug",
+      "track": "frontier-tools",
+      "title": "3.1 — Finding a Bug",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Someone else's code",
+      "firstIndependentTask": "Your turn: the missing pair",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-tools/03-02-what-it-is-doing",
+      "track": "frontier-tools",
+      "title": "3.2 — What It's Doing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a warning worth showing",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-tools/03-03-finding-the-slow-part",
+      "track": "frontier-tools",
+      "title": "3.3 — Finding the Slow Part",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: fast outcomes, safely",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-tools/03-04-a-hundred-times-faster",
+      "track": "frontier-tools",
+      "title": "3.4 — A Hundred Times Faster",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: softmax, vectorised",
       "signals": [
         "authored check limits not detected"
       ],
@@ -8821,6 +8968,567 @@
         "prediction not detected",
         "authored check limits not detected"
       ],
+      "errors": []
+    },
+    {
+      "id": "tabletop-design/01-one-rule",
+      "track": "tabletop-design",
+      "title": "4.1 — A selector and a declaration",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make one visual decision",
+      "firstIndependentTask": "Your turn — Make a deliberate variation",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-design/02-box-and-type",
+      "track": "tabletop-design",
+      "title": "4.2 — Give the game breathing room",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make one visual decision",
+      "firstIndependentTask": "Your turn — Make a deliberate variation",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-design/03-layout-and-state",
+      "track": "tabletop-design",
+      "title": "4.3 — Layout and feedback",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make one visual decision",
+      "firstIndependentTask": "Your turn — Make a deliberate variation",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/01-svg-dice",
+      "track": "tabletop-interface",
+      "title": "8.1 — Draw a die with coordinates",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Draw one face",
+      "firstIndependentTask": "Your turn — Map a pip position",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/02-compose-the-room",
+      "track": "tabletop-interface",
+      "title": "8.2 — Design the room around the game",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Draw the layout before styling",
+      "firstIndependentTask": "Your turn — Design an empty-state card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/03-design-tokens",
+      "track": "tabletop-interface",
+      "title": "8.3 — A consistent visual language",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Apply the next layer",
+      "firstIndependentTask": "Your turn — Style a results card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/04-layout-and-depth",
+      "track": "tabletop-interface",
+      "title": "8.4 — A table with texture and depth",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Apply the next layer",
+      "firstIndependentTask": "Your turn — Style a results card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/05-controls-and-data",
+      "track": "tabletop-interface",
+      "title": "8.5 — Make the action and the score legible",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Apply the next layer",
+      "firstIndependentTask": "Your turn — Style a results card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/06-responsive-and-motion",
+      "track": "tabletop-interface",
+      "title": "8.6 — Fit the player’s screen",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Apply the next layer",
+      "firstIndependentTask": "Your turn — Style a results card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/07-render-state",
+      "track": "tabletop-interface",
+      "title": "8.7 — Render the state without changing it",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the imports and ownership",
+      "firstIndependentTask": "Your turn — Adapt without aliasing",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-interface/08-wire-actions",
+      "track": "tabletop-interface",
+      "title": "8.8 — Events, turns and a shared host",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Connect pick",
+      "firstIndependentTask": "Your turn — Adapt without aliasing",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/01-training-in-a-worker",
+      "track": "tabletop-lab",
+      "title": "11.1 — Train without freezing the table",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give computation its own context",
+      "firstIndependentTask": "Your turn — Report progress accurately",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/02-the-model-controls",
+      "track": "tabletop-lab",
+      "title": "11.2 — Build the opponent laboratory",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Add the control panel",
+      "firstIndependentTask": "Your turn — Label a training choice",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/03-inspect-the-policy",
+      "track": "tabletop-lab",
+      "title": "11.3 — Inspect what was learned",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the controller a model slot",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/04-complete-or-cancel",
+      "track": "tabletop-lab",
+      "title": "11.4 — Finish or cancel without stale results",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the new boundary",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/05-save-and-load",
+      "track": "tabletop-lab",
+      "title": "11.5 — Keep a model, not a screenshot",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the new boundary",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-lab/06-play-your-model",
+      "track": "tabletop-lab",
+      "title": "11.6 — Play the opponent you trained",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Wire the complete application",
+      "firstIndependentTask": "Your turn — Keep evaluation separate",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/01-values",
+      "track": "tabletop-language",
+      "title": "2.1 — Values and names",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Calculate remaining points",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/02-decisions",
+      "track": "tabletop-language",
+      "title": "2.2 — Ask a precise question",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Score Fives",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/03-functions",
+      "track": "tabletop-language",
+      "title": "2.3 — Name a calculation",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Generalize one face",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/04-arrays",
+      "track": "tabletop-language",
+      "title": "2.4 — A hand is a sequence",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Find the last die",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/05-loops",
+      "track": "tabletop-language",
+      "title": "2.5 — Repeat and accumulate",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Count matches",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-language/06-objects",
+      "track": "tabletop-language",
+      "title": "2.6 — State has named parts",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Read the new idea",
+      "firstIndependentTask": "Your turn — Copy one die",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/01-a-value-is-an-estimate",
+      "track": "tabletop-learning",
+      "title": "10.1 — What the model learns",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Update a terminal value",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/02-explore-legally",
+      "track": "tabletop-learning",
+      "title": "10.2 — Explore without breaking the rules",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Choose among legal values",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/03-a-complete-transition",
+      "track": "tabletop-learning",
+      "title": "10.3 — Wait for the opponent’s reply",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Get terminal reward right",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/04-train-reproducibly",
+      "track": "tabletop-learning",
+      "title": "10.4 — Train a table you can reproduce",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Keep metadata with a model",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/05-evaluate-without-learning",
+      "track": "tabletop-learning",
+      "title": "10.5 — Measure, don’t congratulate",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Compute a measured rate",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-learning/06-validate-and-test-a-model",
+      "track": "tabletop-learning",
+      "title": "10.6 — A model file is an input boundary",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Work through the decision",
+      "firstIndependentTask": "Your turn — Reject non-finite estimates",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-pig/01-a-second-game",
+      "track": "tabletop-pig",
+      "title": "7.1 — Pig gives reuse a reason",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Learn the game on paper",
+      "firstIndependentTask": "Your turn — Recognize a winning bank",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-pig/02-acceptance-and-boundaries",
+      "track": "tabletop-pig",
+      "title": "7.2 — Two games, two rule contracts",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the supplied harness",
+      "firstIndependentTask": "Your turn — Keep sessions independent",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-play/01-events-and-randomness",
+      "track": "tabletop-play",
+      "title": "3.1 — A button that does something",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "The browser calls you later",
+      "firstIndependentTask": "Your turn — Map a controlled roll",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-play/02-a-hand-of-buttons",
+      "track": "tabletop-play",
+      "title": "3.2 — Five controls from one loop",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Create elements rather than HTML strings",
+      "firstIndependentTask": "Your turn — Toggle a choice",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-play/03-complete-a-turn",
+      "track": "tabletop-play",
+      "title": "3.3 — A turn with boundaries",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Let state decide what is legal",
+      "firstIndependentTask": "Your turn — Guard the roll budget",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-release/01-release-and-another-game",
+      "track": "tabletop-release",
+      "title": "12.1 — Deliver something you can explain",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build before publishing",
+      "firstIndependentTask": "Your turn — Register without rewriting games",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-rules/01-count-and-score",
+      "track": "tabletop-rules",
+      "title": "6.1 — Count before scoring",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn the rule into examples",
+      "firstIndependentTask": "Your turn — Upper-section score",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-rules/02-scorecard-and-bonus",
+      "track": "tabletop-rules",
+      "title": "6.2 — Empty is different from zero",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn the rule into examples",
+      "firstIndependentTask": "Your turn — Compute an upper bonus",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-rules/03-joker-and-record",
+      "track": "tabletop-rules",
+      "title": "6.3 — Validate before recording",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn the rule into examples",
+      "firstIndependentTask": "Your turn — List unused slots",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-rules/04-turns-and-a-baseline",
+      "track": "tabletop-rules",
+      "title": "6.4 — A match is a sequence of legal turns",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Turn the rule into examples",
+      "firstIndependentTask": "Your turn — Choose a legal maximum",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-start/01-your-first-page",
+      "track": "tabletop-start",
+      "title": "1.1 — Your folder, your first page",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Make a place for your work",
+      "firstIndependentTask": "Your turn — Give the page a purpose",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-start/02-rules-and-scores",
+      "track": "tabletop-start",
+      "title": "1.2 — Understand a turn before coding it",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Play a turn on paper",
+      "firstIndependentTask": "Your turn — Describe a second hand",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/01-a-scene-you-can-name",
+      "track": "tabletop-three",
+      "title": "9.1 — A scene you can name",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the spatial vocabulary",
+      "firstIndependentTask": "Your turn — Keep the aspect correct",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/02-orient-a-face",
+      "track": "tabletop-three",
+      "title": "9.2 — Put the scored face on top",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Name the six directions",
+      "firstIndependentTask": "Your turn — Convert degrees to radians",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/03-light-and-material",
+      "track": "tabletop-three",
+      "title": "9.3 — Light the table",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Extend the renderer",
+      "firstIndependentTask": "Your turn — Normalize a pointer",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/04-assemble-the-dice",
+      "track": "tabletop-three",
+      "title": "9.4 — Assemble dice from reusable parts",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Extend the renderer",
+      "firstIndependentTask": "Your turn — Normalize a pointer",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/05-time-picking-and-cleanup",
+      "track": "tabletop-three",
+      "title": "9.5 — Time, picking and cleanup",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Extend the renderer",
+      "firstIndependentTask": "Your turn — Normalize a pointer",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-three/06-a-renderer-you-can-replace",
+      "track": "tabletop-three",
+      "title": "9.6 — Add 3D without losing the game",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Expose a view choice",
+      "firstIndependentTask": "Your turn — Reject a stale completion",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-tools/01-node-and-modules",
+      "track": "tabletop-tools",
+      "title": "5.1 — Files with a reason to exist",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Install and verify the tools",
+      "firstIndependentTask": "Your turn — Export your own rule",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-tools/02-tests-and-errors",
+      "track": "tabletop-tools",
+      "title": "5.2 — Let a failure tell you something",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Compare actual and expected",
+      "firstIndependentTask": "Your turn — Reject an out-of-range face",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-tools/03-read-modern-javascript",
+      "track": "tabletop-tools",
+      "title": "5.3 — Shorter syntax without hidden ideas",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read each abbreviation",
+      "firstIndependentTask": "Your turn — Copy before sorting",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "tabletop-tools/04-randomness-as-input",
+      "track": "tabletop-tools",
+      "title": "5.4 — Repeat an experiment",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Pass behavior as an argument",
+      "firstIndependentTask": "Your turn — Consume the right number of samples",
+      "signals": [],
       "errors": []
     },
     {

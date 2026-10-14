@@ -1,16 +1,143 @@
 ---
-title: A class in one file — protect an invariant
-track: Start here — one file before classes
-runtime: none
+title: 0.9 — A class earns its place
+runtime: cpp
+console: true
+run: scratch/class.cpp
+teaches: class, invariant, constructor, private, const method, value semantics
+experiments: Predict, trace, change, check
 ---
 
-Explain why a class helps only after identifying an invalid state you want to prevent.
+### The story so far
 
-## Protect the face range
+The header lesson separated an existing function without changing its behavior. A class solves a different problem: keeping related state valid.
 
-An ordinary int can hold 99 even though a die cannot. An **invariant** is a condition that should remain true: this die's face stays between 1 and 6. A class combines stored state with operations that enforce that condition. A struct could also have member functions; class members default to private, while struct members default to public.
+### What this lesson builds
 
-Start in one scratch file. No header is required just because this is a class. `private` blocks callers from assigning directly to face. `public` gives callers an interface. The constructor `Die()` initializes each object's face. `getFace() const` promises not to modify ordinary members through this object; that trailing const differs from const on a parameter.
+Protect the die's face range in a class defined in one file, trace a copy versus a const reference, then build a guarded counter independently.
+
+## Protect the face range {#step-1}
+
+**Build:** start with a die that can only be read. An int alone can hold 99; a die must maintain an **invariant**, a condition that remains true: its face is between 1 and 6.
+
+A **class** defines a type combining data with operations. Its members default to private, meaning outside code cannot access them directly. public labels the operations callers may use. A struct can also have methods; its members default to public instead.
+
+```cpp file=scratch/class.cpp
+#include <iostream>
+
+class Die {
+    int face = 1;
+public:
+    int getFace() const { return face; }
+};
+
+int main() {
+    Die die;
+    std::cout << "Face: " << die.getFace() << '\n';
+    return 0;
+}
+```
+
+**Understand:** Die die creates one object. Its face member initializes to 1. The dot calls a **member function** on that object. getFace() returns an int copy. The const after its parentheses promises not to change ordinary members through this object during the call. The semicolon after the class's closing brace is required.
+
+No header is involved: a class and a file boundary are separate design choices.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o lesson" label="Build lesson" -- Save the changed source, then read the first compiler diagnostic.
+run "./lesson" stdout="Face: 1" label="Observe the result"
+```
+
+## Validate before changing the member {#validated-operation}
+
+**Build:** give callers a single validated way to change face. `||` means logical or: the condition rejects a value below 1 or above 6. It stops evaluating as soon as one side is true. Contrast that with `&&` in readChoice, which needed every condition to succeed.
+
+```cpp file=scratch/class.cpp
+#include <iostream>
+
+class Die {
+    int face = 1;
+public:
+    bool setFace(int next) {
+        if (next < 1 || next > 6) return false;
+        face = next;
+        return true;
+    }
+    int getFace() const { return face; }
+};
+
+int main() {
+    Die die;
+    die.setFace(6);
+    bool accepted = die.setFace(99);
+    std::cout << "Accepted: " << accepted << '\n';
+    std::cout << "Face: " << die.getFace() << '\n';
+    return 0;
+}
+```
+
+**Understand:** the invalid path returns before the assignment. Calling setFace(6) succeeds; calling setFace(99) returns false and leaves 6 intact. std::cout prints bool as 0/1 by default.
+
+| Request | Valid? | Stored face after request |
+|---|---|---:|
+| construction | yes | 1 |
+| setFace(6) | yes | 6 |
+| setFace(99) | no | 6 |
+
+> **Engineer:** protecting an invariant requires every public mutating operation to preserve it. Private data alone is not enough if a public setter accepts anything.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o lesson" label="Build lesson" -- Save the changed source, then read the first compiler diagnostic.
+run "./lesson" stdout="Accepted: 0\nFace: 6" label="Observe the result"
+```
+
+## Initialize before the body runs {#constructor}
+
+**Build:** express the initial state using a constructor.
+
+```cpp file=scratch/class.cpp
+#include <iostream>
+
+class Die {
+    int face;
+public:
+    Die() : face(1) {}
+    bool setFace(int next) {
+        if (next < 1 || next > 6) return false;
+        face = next;
+        return true;
+    }
+    int getFace() const { return face; }
+};
+
+int main() {
+    Die die;
+    die.setFace(6);
+    bool accepted = die.setFace(99);
+    std::cout << "Accepted: " << accepted << '\n';
+    std::cout << "Face: " << die.getFace() << '\n';
+    return 0;
+}
+```
+
+A **constructor** runs when an object is created. It has the class's name and no return type. `Die() : face(1) {}` initializes face to 1 before its empty body runs. The colon introduces a member initializer list; it is not a base class here. Initialization is different from default-initializing a member and assigning later.
+
+The previous default member initializer was also correct. This version prepares you for constructors that receive inputs and for members that must be initialized directly.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o lesson" label="Build lesson" -- Save the changed source, then read the first compiler diagnostic.
+run "./lesson" stdout="Face: 6" label="Observe the result"
+```
+
+## Read the interface as a contract {#step-2}
+
+**Build:** compare an owned copy with a borrowed const view.
+
+```predict
+question: After changing second, what does view.getFace() read?
+choice: 6 — view still refers to first
+choice: 2 — all class values refer to one object
+answer: 6 — view still refers to first
+explain: This class owns an int. Its generated copy operation copies the member into a separate object.
+```
 
 ```cpp file=scratch/class.cpp
 #include <iostream>
@@ -30,48 +157,74 @@ public:
 int main() {
     Die first;
     first.setFace(6);
-    bool accepted = first.setFace(99);
     Die second = first;
     second.setFace(2);
     const Die& view = first;
-    std::cout << view.getFace() << " " << second.getFace()
-              << " " << accepted << '\n';
+    std::cout << view.getFace() << " " << second.getFace() << '\n';
+    return 0;
 }
 ```
 
+**Understand:** first and second own separate face integers. view is an alias for first, restricted to operations usable on a const object. A const method can be called through view; setFace cannot. This is **value semantics**, rather than the shared-object assignment you may know from Python.
+
+Later vector and string members manage their own storage. Their destructors release owned resources when their lifetimes end; this lifetime-based resource management is RAII. Prefer those members over handwritten new/delete. If members already manage ownership, the generated copy, move and destructor operations often suffice: the Rule of Zero.
+
 ```check
-run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o intro_check" label="Compile the example"
-run "./intro_check" stdout="6 2 0" label="Observe the result"
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o lesson" label="Build lesson" -- Save the changed source, then read the first compiler diagnostic.
+run "./lesson" stdout="6 2" label="Observe the result"
 ```
 
-```predict
-question: Does changing second change first?
-choice: No — second owns a copied integer member
-choice: Yes — class variables are always references
-answer: No — second owns a copied integer member
-explain: This class has value semantics. Copying it copies its int; use a reference explicitly when you mean an alias.
+## Try it — Enforce the boundary {#step-3}
+
+Try first.face = 99 and compile: private access is rejected. Remove it. Try view.setFace(2): a const object cannot call this mutating method. Remove it. These are different protections: private controls access to representation; const controls the permitted operations through one access path.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic scratch/class.cpp -o lesson" label="Build lesson" -- Save the changed source, then read the first compiler diagnostic.
+run "./lesson" stdout="6 2" label="Observe the result"
 ```
 
-## Read the interface as a contract
+## Rejoin the original game lessons {#step-4}
 
-`Die() : face(1)` is a member initializer list; it initializes face before the constructor body runs. `Die second = first` copies the object. `const Die& view` aliases first through a read-only interface. Calling getFace through view is allowed; calling setFace through view is rejected. `std::cout` normally prints false as 0.
+You now have a preserved single-file game, a function split across source files, and a small class understood on its own. **One Die** starts the next implementation in main.cpp; your prototype stays in single_file.cpp. This is a deliberate second pass: the game grows around Die, Dice, Scorecard and Player instead of parallel raw arrays.
 
-A **resource** is something requiring release, such as allocated storage or an open file. RAII ties a resource to an object's lifetime; destruction releases it automatically. Our int needs no custom destructor. Later, vector and string manage their own storage. Prefer those value-owning members over handwritten new/delete. The compiler-generated copy, move and destructor operations are often all you need: the Rule of Zero.
+Before creating Die.h there, point to the same declaration, implementation and invariant roles in this example. The remaining chapters add full rules, input, rendering, players and replay; Finish and Explain tests the completed game.
 
-## Try it — Enforce the boundary
+## Read the acceptance cases {#acceptance-cases}
 
-Add `first.face = 99;` and observe a compile error. Remove it. Try `view.setFace(2)` and observe another error. Remove it. Explain the difference: private protects the representation, while const limits mutation through a particular interface.
+The next exercise puts a complete small class definition in a header, as the next chapter will. Define practice/TurnCounter.h with an include guard. It needs an initial zero, a bool roll() operation and an int rollsUsed() const query. The supplied test includes the header, so it needs no separately compiled implementation yet.
 
-## Rejoin the original game lessons
+```cpp file=tests/counter.cpp provided
+#include "../practice/TurnCounter.h"
+#include <iostream>
+int main() {
+    TurnCounter turn;
+    if (turn.rollsUsed() != 0) return 1;
+    for (int i = 1; i <= 3; ++i) {
+        if (!turn.roll() || turn.rollsUsed() != i) return 1;
+    }
+    if (turn.roll() || turn.rollsUsed() != 3) return 1;
+    TurnCounter other;
+    if (other.rollsUsed() != 0) return 1;
+    const TurnCounter& view = turn;
+    if (view.rollsUsed() != 3) return 1;
+    std::cout << "PASS: counter\n";
+    return 0;
+}
+```
 
-Chapter 1 now rebuilds the one-file prototype with Die.h and Die.cpp. It changes the representation deliberately; preserve single_file.cpp as a comparison. You already know why a declaration, a definition, a const method and an include guard exist. Chapter 2 scales one die to a hand. Chapter 7 completes the rules and checks the final application.
+## Your turn — Permit exactly three rolls {#step-5}
 
-## Your turn — Explain and change it
+Build TurnCounter to the acceptance cases. Its invariant is 0 <= count <= 3. A fourth roll returns false without changing count. The const query returns the stored count. A new independent counter starts at zero.
 
-Write a one-file TurnCounter class with a private count, a const rollsUsed query, and a roll operation that refuses a fourth roll. Test its initial value, three successes and one rejection before moving it to a header/source pair.
+Write down where you validate and where you mutate before typing. Then add a test that several rejected rolls still leave the count at three.
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -Wpedantic tests/counter.cpp -o exercise_result" label="Build practice" -- Save the changed source, then read the first compiler diagnostic.
+run "./exercise_result" stdout="PASS: counter" label="Observe the result"
+```
 
 ```hints
-nudge: Name the invariant before naming the class.
-concept: The mutating operation must validate before changing state.
-shape: Initialize count to zero; return false at three; otherwise increment. Explain which files must rebuild after changing the class declaration.
+nudge: This is the same validate-before-assign pattern as Die.
+concept: The query must work through a const reference. A rejected mutation must preserve the invariant.
+shape: Use a private int initialized to zero. roll checks the limit before incrementing; rollsUsed returns the count with a trailing const.
 ```

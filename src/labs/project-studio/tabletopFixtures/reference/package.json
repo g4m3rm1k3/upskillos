@@ -1,0 +1,8 @@
+{
+  "name": "tabletop-workshop",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build --base=./", "test": "node --test tests/*.check.mjs" },
+  "dependencies": { "three": "0.186.0" },
+  "devDependencies": { "vite": "5.4.21" }
+}

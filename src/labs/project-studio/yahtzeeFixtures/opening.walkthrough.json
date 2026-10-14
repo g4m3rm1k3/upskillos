@@ -1,0 +1,236 @@
+{
+  "00-the-learning-route#Your turn \u2014 Prove your tools work": {
+    "files": {
+      "ready.cpp": "#include <iostream>\nint main() { std::cout << \"Ready to build Yahtzee\\n\"; return 0; }\n"
+    },
+    "wrong": [
+      {
+        "name": "reports failure after printing",
+        "files": {
+          "ready.cpp": "#include <iostream>\nint main() { std::cout << \"Ready to build Yahtzee\\n\"; return 1; }\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "01-one-file#Your turn \u2014 Calculate the remaining score": {
+    "files": {
+      "practice/remaining.cpp": "int remaining(int score, int target) { return target - score; }\n"
+    },
+    "wrong": [
+      {
+        "name": "adds rather than subtracts",
+        "files": {
+          "practice/remaining.cpp": "int remaining(int score, int target) { return target + score; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "hardcoded target",
+        "files": {
+          "practice/remaining.cpp": "int remaining(int score, int) { return 12 - score; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "02-const-and-arrays#Your turn \u2014 Score one chosen face": {
+    "files": {
+      "practice/face_points.cpp": "int facePoints(int face, int wanted) { if (face == wanted) return face; return 0; }\n"
+    },
+    "wrong": [
+      {
+        "name": "returns a count",
+        "files": {
+          "practice/face_points.cpp": "int facePoints(int face, int wanted) { return face == wanted; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "only sixes",
+        "files": {
+          "practice/face_points.cpp": "int facePoints(int face, int) { if (face == 6) return 6; return 0; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "03-functions-and-copies#Your turn \u2014 A different dice rule": {
+    "files": {
+      "practice/pair_points.cpp": "int pairPoints(int first, int second) { if (first == second) return first + second; return 0; }\n"
+    },
+    "wrong": [
+      {
+        "name": "one die instead of sum",
+        "files": {
+          "practice/pair_points.cpp": "int pairPoints(int first, int second) { if (first == second) return first; return 0; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "scores unequal pairs",
+        "files": {
+          "practice/pair_points.cpp": "int pairPoints(int first, int second) { return first + second; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "04-references#Your turn \u2014 Swap the actual faces": {
+    "files": {
+      "practice/swap_faces.cpp": "void swapFaces(int& a, int& b) { int saved = a; a = b; b = saved; }\n"
+    },
+    "wrong": [
+      {
+        "name": "overwrites before preserving",
+        "files": {
+          "practice/swap_faces.cpp": "void swapFaces(int& a, int& b) { a = b; b = a; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "does nothing",
+        "files": {
+          "practice/swap_faces.cpp": "void swapFaces(int&, int&) {}"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "05-pointers#Your turn \u2014 Change only a valid selection": {
+    "files": {
+      "practice/set_selected.cpp": "bool setSelected(int* selected, int value) { if (selected == nullptr || value < 1 || value > 6) return false; *selected = value; return true; }\n"
+    },
+    "wrong": [
+      {
+        "name": "mutates a local copy only",
+        "files": {
+          "practice/set_selected.cpp": "bool setSelected(int* selected, int value) { if (selected == nullptr || value < 1 || value > 6) return false; int copy = *selected; copy = value; return copy == value; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "permits invalid faces",
+        "files": {
+          "practice/set_selected.cpp": "bool setSelected(int* selected, int value) { if (selected == nullptr) return false; *selected = value; return true; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "06-pointer-ranges#Your turn \u2014 Count a face within a borrowed range": {
+    "files": {
+      "practice/count_range.cpp": "int countFace(const int* first, const int* last, int wanted) { int count = 0; for (const int* p = first; p != last; ++p) if (*p == wanted) ++count; return count; }\n"
+    },
+    "wrong": [
+      {
+        "name": "counts everything",
+        "files": {
+          "practice/count_range.cpp": "int countFace(const int* first, const int* last, int) { int count = 0; for (const int* p = first; p != last; ++p) ++count; return count; }"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "skips first element",
+        "files": {
+          "practice/count_range.cpp": "int countFace(const int* first, const int* last, int wanted) { int count = 0; if (first != last) ++first; for (const int* p = first; p != last; ++p) if (*p == wanted) ++count; return count; }"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "07-a-playable-single-file#Your turn \u2014 Separate parsing from asking": {
+    "files": {
+      "practice/parse_choice.cpp": "#include <string>\n#include <sstream>\nbool parseChoice(const std::string& line, int low, int high, int& value) {\n    std::istringstream input(line); int candidate; char extra;\n    if (!(input >> candidate) || (input >> extra) || candidate < low || candidate > high) return false;\n    value = candidate; return true;\n}\n"
+    },
+    "wrong": [
+      {
+        "name": "ignores trailing text",
+        "files": {
+          "practice/parse_choice.cpp": "#include <string>\n#include <sstream>\nbool parseChoice(const std::string& line, int low, int high, int& value) {\n std::istringstream input(line); int c; if (!(input >> c) || c < low || c > high) return false; value = c; return true;\n}"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "overwrites output before validation",
+        "files": {
+          "practice/parse_choice.cpp": "#include <string>\n#include <sstream>\nbool parseChoice(const std::string& line, int low, int high, int& value) {\n value = 0; std::istringstream input(line); int c; char extra;\n if (!(input >> c) || (input >> extra) || c < low || c > high) return false; value = c; return true;\n}"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "08-why-headers#Your turn \u2014 Split your pair rule": {
+    "files": {
+      "practice/pair.h": "#ifndef PAIR_H\n#define PAIR_H\nint pairPoints(int first, int second);\n#endif\n",
+      "practice/pair.cpp": "#include \"pair.h\"\nint pairPoints(int first, int second) { if (first == second) return first + second; return 0; }\n"
+    },
+    "wrong": [
+      {
+        "name": "wrong rule in separated source",
+        "files": {
+          "practice/pair.h": "int pairPoints(int first, int second);\n",
+          "practice/pair.cpp": "#include \"pair.h\"\nint pairPoints(int first, int second) { return first + second; }\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "09-class-before-files#Your turn \u2014 Permit exactly three rolls": {
+    "files": {
+      "practice/TurnCounter.h": "#ifndef TURN_COUNTER_H\n#define TURN_COUNTER_H\nclass TurnCounter {\n    int count = 0;\npublic:\n    bool roll() { if (count == 3) return false; ++count; return true; }\n    int rollsUsed() const { return count; }\n};\n#endif\n"
+    },
+    "wrong": [
+      {
+        "name": "permits fourth roll",
+        "files": {
+          "practice/TurnCounter.h": "#ifndef TURN_COUNTER_H\n#define TURN_COUNTER_H\nclass TurnCounter {\n    int count = 0;\npublic:\n    bool roll() { if (count == 4) return false; ++count; return true; }\n    int rollsUsed() const { return count; }\n};\n#endif\n"
+        },
+        "fails": [
+          1
+        ]
+      },
+      {
+        "name": "increments on rejection",
+        "files": {
+          "practice/TurnCounter.h": "#ifndef TURN_COUNTER_H\n#define TURN_COUNTER_H\nclass TurnCounter {\n    int count = 0;\npublic:\n    bool roll() { ++count; if (count > 3) return false; return true; }\n    int rollsUsed() const { return count; }\n};\n#endif\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  }
+}

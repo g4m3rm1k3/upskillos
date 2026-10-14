@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabletop workshop</title>
+<style>
+body { color: #183e34; background: #f7f3e9; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+main { max-width: 48rem; margin: 2rem auto; padding: 2rem; }
+#dice { display: flex; flex-wrap: wrap; gap: 0.8rem; padding: 2rem; background: #194c3f; border-radius: 1rem; margin-bottom: 1rem; }
+button { background: #fff3d9; color: #183e34; padding: 1rem; border: 2px solid transparent; border-radius: 0.6rem; transition: transform 150ms; }
+button[aria-pressed="true"] { border-color: #b08535; transform: translateY(-4px); }
+button:focus-visible { outline: 3px solid #b08535; outline-offset: 3px; }
+button:disabled { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Sixes practice</h1>
+<p id="budget"></p>
+<div id="dice"></div>
+<button id="roll">Roll</button>
+<button id="score">Score Sixes</button>
+<button id="reset">New turn</button>
+<p id="result" role="status"></p>
+</main>
+<script>
+const state = { dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false], rolls: 0, done: false };
+function render() {
+  const tray = document.getElementById('dice');
+  tray.replaceChildren();
+  for (let i = 0; i < state.dice.length; i += 1) {
+    const button = document.createElement('button');
+    button.textContent = state.dice[i];
+    button.setAttribute('aria-pressed', String(state.held[i]));
+    button.disabled = state.rolls === 0 || state.done;
+    button.addEventListener('click', function () {
+      state.held[i] = !state.held[i];
+      render();
+    });
+    tray.append(button);
+  }
+  document.getElementById('budget').textContent = 'Rolls used: ' + state.rolls + ' / 3';
+  document.getElementById('roll').disabled = state.rolls === 3 || state.done;
+  document.getElementById('score').disabled = state.rolls === 0 || state.done;
+}
+function roll() {
+  if (state.rolls === 3 || state.done) return;
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (!state.held[i]) state.dice[i] = 1 + Math.floor(Math.random() * 6);
+  }
+  state.rolls += 1;
+  render();
+}
+function score() {
+  if (state.rolls === 0 || state.done) return;
+  let total = 0;
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (state.dice[i] === 6) total += 6;
+  }
+  state.done = true;
+  document.getElementById('result').textContent = 'Sixes: ' + total;
+  render();
+}
+function reset() {
+  state.rolls = 0;
+  state.done = false;
+  for (let i = 0; i < state.held.length; i += 1) state.held[i] = false;
+  document.getElementById('result').textContent = '';
+  render();
+}
+document.getElementById('roll').addEventListener('click', roll);
+document.getElementById('score').addEventListener('click', score);
+document.getElementById('reset').addEventListener('click', reset);
+render();
+</script>
+</body>
+</html>

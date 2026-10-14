@@ -4,11 +4,15 @@ track: One Die
 runtime: none
 ---
 
-In this series you build Yahtzee for the terminal in C++, one small piece per lesson. Build checkpoints let you run the program as it grows. You already know variables, loops and functions from other languages, so these lessons spend their words on what is specific to C++: how a program is built, how it handles memory and copies, and what each keyword promises.
+### The story so far
+
+You have a playable Sixes prototype and have practised values, references, pointers, function headers and a class in one file. This chapter starts the second implementation: full Yahtzee will need dice, a scorecard and turns that can be tested separately. Build checkpoints let you run the program as it grows. You already know variables, loops and functions from other languages, so these lessons spend their words on what is specific to C++: how a program is built, how it handles memory and copies, and what each keyword promises.
 
 New to C++? Complete the **Start here — one file before classes** chapter first. It teaches const, references, pointers, header boundaries and a class inside one file before this refactoring path. Keep its working game in single_file.cpp; this chapter deliberately rebuilds main.cpp around smaller types.
 
-This lesson builds one file that rolls a die and then rolls five. You will meet the compile step, standard library headers and the random number functions.
+### What this lesson builds
+
+Rebuild the rolling part in main.cpp, then verify a fixed-hand calculation independently. This lesson builds one file that rolls a die and then rolls five. You will meet the compile step, standard library headers and the random number functions.
 
 ## Roll one die
 
@@ -17,7 +21,7 @@ Words first:
 - **Preprocessor**: a text-processing step that runs before the compiler. It acts on every line that starts with `#`.
 - **Header**: a file that lists names (functions, types) that are defined elsewhere, so your code is allowed to use them.
 - **Namespace**: a named area for names. `std` is the namespace of the standard library. `std::name` means "the `name` inside `std`".
-- **Pointer**: a variable that holds a memory address instead of a value.
+- **Pointer**: a type whose values can designate another object or function, or represent no object with nullptr. The address is itself a value; it is different from the integer stored in a die.
 
 Create `main.cpp` in your project folder and type this in.
 
@@ -45,7 +49,7 @@ Line by line:
 - `std::time(nullptr)`: returns the current time as a `std::time_t`, an integer type that on most systems counts seconds since 1 January 1970. Its parameter is a pointer. `nullptr` is the pointer that holds no address. Passing it means "do not also store the result at some address, just return it".
 - `static_cast<unsigned>(...)`: converts a value to `unsigned`, an integer type that cannot be negative. `std::srand` takes an `unsigned`. The cast makes the conversion visible instead of letting the compiler do it silently.
 - `std::srand(...)`: sets the starting point of the random sequence. The same seed always produces the same sequence. Runs within the same clock tick can receive the same seed; the clock does not guarantee a different sequence on every run.
-- `int face = std::rand() % 6 + 1;`: `std::rand()` returns an `int` from 0 up to `RAND_MAX`. The standard guarantees `RAND_MAX` is at least 32767. `% 6` is the remainder after dividing by 6, so it gives 0 to 5. `+ 1` shifts that to 1 to 6. `%` binds tighter than `+`, so the remainder is taken first. Low faces are very slightly more likely, because 32768 does not divide evenly by 6. The opening accepts this approximation; the completion chapter replaces it with a uniform distribution.
+- `int face = std::rand() % 6 + 1;`: `std::rand()` returns an `int` from 0 up to `RAND_MAX`. The standard guarantees `RAND_MAX` is at least 32767. `% 6` is the remainder after dividing by 6, so it gives 0 to 5. `+ 1` shifts that to 1 to 6. `%` binds tighter than `+`, so the remainder is taken first. If RAND_MAX + 1 is not divisible by 6, some remainders have more source values than others, so this mapping can favor low faces. The opening accepts this approximation; the completion chapter replaces it with a uniform distribution.
 - `std::cout << "You rolled a " << face << "\n";`: `<<` sends the value on its right into the stream on its left and gives that same stream back. That is why several `<<` can be chained. `"\n"` is a newline. `std::endl` would also flush the output buffer, which is slower and not needed here.
 - `return 0;`: status 0 tells the operating system "finished successfully".
 

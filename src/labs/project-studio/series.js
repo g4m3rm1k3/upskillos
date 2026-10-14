@@ -8,6 +8,27 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'tabletop',
+    label: 'Tabletop Workshop — Beautiful Games and a Learning Opponent',
+    prefix: 'tabletop-',
+    sharedProject: true,
+    chapters: [
+      ['tabletop-start', '01 · Your First Page and the Game'],
+      ['tabletop-language', '02 · JavaScript from the Beginning'],
+      ['tabletop-play', '03 · A Playable Turn in One File'],
+      ['tabletop-design', '04 · Design with CSS'],
+      ['tabletop-tools', '05 · Modules, Tests and Reproducible Experiments'],
+      ['tabletop-rules', '06 · Complete Yahtzee Rules'],
+      ['tabletop-pig', '07 · Pig and Shared Boundaries'],
+      ['tabletop-interface', '08 · SVG and a Beautiful Interface'],
+      ['tabletop-three', '09 · A Three.js Table'],
+      ['tabletop-learning', '10 · Learn a Pig Policy with Q-learning'],
+      ['tabletop-lab', '11 · Train, Inspect and Play Your Model'],
+      ['tabletop-release', '12 · Release and Extend the Collection'],
+    ],
+    planned: 'Standalone beginner path from an empty folder through HTML, CSS, JavaScript, SVG, Three.js and tabular Q-learning. Builds complete Yahtzee against a simple heuristic and short-match Pig against a trainable Q-table. No C++ course required. Additional games, full-Yahtzee machine learning and neural networks are extensions. Editorial, learner and cross-platform review remain open; see docs/curricula/tabletop-web-series.md.',
+  },
+  {
     // Plan, chapter map and status: docs/terminal-series-plan.md.
     key: 'term',
     label: 'The Terminal — zsh from Zero',
