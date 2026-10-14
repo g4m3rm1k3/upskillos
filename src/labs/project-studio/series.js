@@ -65,6 +65,22 @@ const SERIES = [
     planned: 'Start with no coding experience and build a portfolio through HTML, handmade CSS, UI/UX, JavaScript, APIs, Bootstrap, React and Tailwind. Includes a typed React app, routing, browser regression tests, release automation and an independent capstone. Editorial and learner review remain required; server rendering and backend authentication are follow-on topics. See docs/frontend-bootcamp-curriculum.md.',
   },
   {
+    // Plan, chapter map and status: docs/css-mastery-series-plan.md.
+    key: 'ui-mastery',
+    label: 'CSS & Interface Engineering — Design Systems, UI/UX and Polish',
+    prefix: 'ui-',
+    sharedProject: true,
+    chapters: [
+      ['ui-foundations', '01 · The Design Eye — Spacing, Typography and Visual Rhythm'],
+      ['ui-layouts', '02 · Layout Intuition — Flexbox, Grid, Subgrid and Container Queries'],
+      ['ui-tokens', '03 · Color Systems, Depth and Dark Mode'],
+      ['ui-interactions', '04 · Interaction Design, Motion and Micro-States'],
+      ['ui-forms', '05 · Form UX, Data Density and Accessible Controls'],
+      ['ui-capstone', '06 · Capstone — The Production Web App'],
+    ],
+    planned: 'Demystifies CSS and interface engineering from first principles. Builds a high-converting showcase, application workspace, analytics cards, interactive components, accessible forms and a complete production productivity app. Teaches design tokens, 4px/8px spatial rhythm, modular typography scales, fluid sizing with clamp(), Flexbox, CSS Grid, Subgrid, Container Queries, oklch() color spaces, WCAG 2.2 accessibility, and dark mode. See docs/css-mastery-series-plan.md.',
+  },
+  {
     key: 'games3d',
     label: 'Build a 3D Game Studio — Then Make Games',
     prefix: 'games3d-',

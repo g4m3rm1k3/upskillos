@@ -35,6 +35,15 @@ export function learningProfile(key) {
         ? 'Start here with an empty folder. Learn what files, HTML elements, browser requests and development tools do before introducing JavaScript or frameworks. No prior code is assumed.'
         : 'Continue after the preceding Frontend Developer Bootcamp chapters in the same portfolio folder. Earlier HTML, CSS and JavaScript work supplies the prerequisites; library tooling and new concepts are introduced when needed. Independent design and accessibility review accompany automated checks.',
   };
+  if (key === 'ui-mastery' || key.startsWith('ui-')) return {
+    level: key === 'ui-foundations' || key === 'ui-mastery' ? 'beginner' : 'bridge',
+    maturity: 'in-development',
+    audience: key === 'ui-mastery'
+      ? 'For developers who know basic HTML/CSS syntax but struggle with ugly interfaces, layout bugs, and visual hierarchy. Teaches design systems, spatial rhythm, typography, modern CSS layouts (Flexbox, Grid, Subgrid, Container Queries), color science, and UI/UX polish from first principles in one interface-studio folder.'
+      : key === 'ui-foundations'
+        ? 'Start here in an empty interface-studio folder. Learn why arbitrary margins and borders ruin interfaces, and master spatial grids, modular typography, and modern CSS resets.'
+        : 'Continues in the same interface-studio folder, advancing through layouts, color systems, micro-interactions, forms, and a complete capstone app.',
+  };
   if (key === 'games3d' || key === 'games3d-foundations') return { level: 'bridge', maturity: 'in-development', audience: 'For learners with introductory variables, conditions, loops and functions in any language. C#, terminal use, scene data, tests and 3D coordinates are taught here. Requires a local .NET SDK with .NET 8 targeting/runtime support and a graphics display. Begin with Foundations: scene editing, save/open, visible box sizing followed by validated recipes and durable object edits, UI layout, feedback and dark/light themes, and a small Q-learning bot are taught here. Play mode and later game genres remain planned.' };
   if (/^(forge|aml|cpp|ml)-/.test(key) && !REVIEWED_CHAPTERS.has(key) && !SERIES_KEYS.has(key)) {
     return { level: 'unclassified', maturity: 'in-development', audience: "This chapter's prerequisites haven't been reviewed yet. It builds on the chapters before it in this series; start there." };
