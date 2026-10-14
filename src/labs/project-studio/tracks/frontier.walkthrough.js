@@ -940,7 +940,8 @@ export const WALKTHROUGH = {
   [`${V}/04-05-seeing-it#Install Matplotlib`]: {
     editFiles: {
       'requirements.txt': [['mypy==2.4.0', 'matplotlib==3.11.2\nmypy==2.4.0']],
-      '.gitignore': [['.mypy_cache/\n', '.mypy_cache/\npictures/\n']],
+      // No line ending in the match: on Windows, git has rewritten .gitignore with CRLF by now.
+      '.gitignore': [['.mypy_cache/', '.mypy_cache/\npictures/']],
     },
     run: [`${PIP} -r requirements.txt`],
     wrong: [{ name: 'did nothing', fails: [0, 1, 2] }],

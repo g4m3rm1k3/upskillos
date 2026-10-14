@@ -204,7 +204,8 @@ Chapter 4 (`frontier-vectors`) is written, all five lessons (2026-10-14, all on 
 5. **4.5 Seeing It**: Matplotlib 3.11.2 (Windows wheel 9.5 MB), `plots.py` (`heatmap`, Your turn `scatter`), `draw_similarity.py`, `draw_centering.py`; pictures checked by the files existing and by reading the figures back as data. Promises Chapter 5 that its curves are drawn with Matplotlib (`ax.plot` isn't taught yet: teach it there).
 
 **Next session, in order:**
-1. **On Windows:** walk 4.1–4.5 (`FRONTIER_UNTIL=frontier-tools/03-04` with `FRONTIER_KEEP` in the background, about 26 minutes, then `FRONTIER_START=<kept> FRONTIER_FROM=frontier-vectors/04-01`). Open 4.3 in the Studio to look at the `MatrixTimes` figure, and check `Invoke-Item` opens the pictures in 4.5. The walkthrough skips on macOS (`describe.skipIf(!isWindows)`), so Chapter 4 was checked by the scratch-project method below: every step's file blocks extracted from the lesson and written in order, every check run, every walkthrough wrong answer applied and seen failing exactly the checks its `fails` lists, every prediction's verify script run, and 4.5's pictures looked at.
+1. **On Windows:** walkthrough **done** 2026-10-14: Chapters 0–3 with `FRONTIER_KEEP` passed (23 tests, 1412 s), then 4.1–4.5 from it (10 tests, 494 s, peak about 681 MB). One fix: 4.5's walkthrough entry edited `.gitignore` matching `'.mypy_cache/
+'`, but on Windows git has rewritten that file with CRLF by then, so it now matches `'.mypy_cache/'` with no line ending. Match walkthrough `editFiles` on text without line endings for any file git has touched. **Still for the owner, in the Studio:** look at 4.3's `MatrixTimes` figure, and check `Invoke-Item` opens 4.5's pictures.
 2. **Chapter 4's cold-reader audit** (`docs/audits/frontier-ch4-audit.md`, as for Chapters 2 and 3).
 3. **Chapter 5** (`frontier-calculus`), the whole chapter, from the plan's row.
 
