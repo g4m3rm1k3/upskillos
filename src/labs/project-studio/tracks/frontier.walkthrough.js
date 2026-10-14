@@ -65,7 +65,7 @@ export const WALKTHROUGH = {
   },
   [`${S}/00-02-a-package-you-can-import#pyproject.toml: what the project is`]: {
     run: [`${PIP} -e .`],
-    editFiles: { '.gitignore': [['.pytest_cache/\n', '.pytest_cache/\n*.egg-info/\n']] },
+    editFiles: { '.gitignore': [['.pytest_cache/', '.pytest_cache/\n*.egg-info/']] },
     wrong: [
       { name: 'did nothing', pythonPath: false, fails: [0, 1, 2] },
       {
@@ -225,7 +225,7 @@ export const WALKTHROUGH = {
   [`${E}/01-03-a-module-with-types#Type hints`]: {
     editFiles: {
       'requirements.txt': [['numpy==2.5.3', 'mypy==2.4.0\nnumpy==2.5.3']],
-      '.gitignore': [['*.egg-info/\n', '*.egg-info/\n.mypy_cache/\n']],
+      '.gitignore': [['*.egg-info/', '*.egg-info/\n.mypy_cache/']],
     },
     run: [`${PIP} -r requirements.txt`],
     wrong: [

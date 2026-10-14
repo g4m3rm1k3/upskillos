@@ -205,7 +205,8 @@ Chapter 4 (`frontier-vectors`) is written, all five lessons (2026-10-14, all on 
 
 **Next session, in order:**
 1. **On Windows:** walkthrough **done** 2026-10-14: Chapters 0–3 with `FRONTIER_KEEP` passed (23 tests, 1412 s), then 4.1–4.5 from it (10 tests, 494 s, peak about 681 MB). One fix: 4.5's walkthrough entry edited `.gitignore` matching `'.mypy_cache/
-'`, but on Windows git has rewritten that file with CRLF by then, so it now matches `'.mypy_cache/'` with no line ending. Match walkthrough `editFiles` on text without line endings for any file git has touched. **Still for the owner, in the Studio:** look at 4.3's `MatrixTimes` figure, and check `Invoke-Item` opens 4.5's pictures.
+'`, but on Windows git has rewritten that file with CRLF by then, so it now matches `'.mypy_cache/'` with no line ending. Match walkthrough `editFiles` on text without line endings for any file git has touched. The two older `.gitignore` edits (lessons 0.1 and 1.x) were changed the same way the same day; for LF files they give byte-for-byte the same result, so no re-walk. The `breakpoint()
+` edits in 3.1 are left as they are: `pairs.py` is written by the walkthrough in that lesson, always LF. **Still for the owner, in the Studio:** look at 4.3's `MatrixTimes` figure, and check `Invoke-Item` opens 4.5's pictures.
 2. **Chapter 4's cold-reader audit** (`docs/audits/frontier-ch4-audit.md`, as for Chapters 2 and 3).
 3. **Chapter 5** (`frontier-calculus`), the whole chapter, from the plan's row.
 
