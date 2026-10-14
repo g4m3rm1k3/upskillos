@@ -6,7 +6,7 @@ support: tests/conftest.py
 
 Last lesson's program was slow because it did the same work over and over, and remembering the answers fixed it. Plenty of slow programs don't repeat anything. They just do a lot of arithmetic, one number at a time, in a Python loop. A model is millions of numbers, multiplied and added on every step of training, so this is the kind of slow that matters most in this series.
 
-In this lesson you write the same sum as a Python loop, then hand it to **NumPy** all at once, and measure. The first NumPy version is about twenty times faster; one more change makes it a few hundred times faster, and you'll see why, down to how the numbers are laid out in memory. NumPy gets its own chapter next; here you meet just enough of it to see what "vectorising" a loop means.
+In this lesson you write the same sum as a Python loop, then hand it to **NumPy** all at once, and measure. The first NumPy version is about twenty times faster; one more change makes it a few hundred times faster, and you'll see why, down to how the numbers are laid out in memory. Chapter 4 teaches NumPy properly, alongside vectors and matrices; here you meet just enough of it to see what "vectorising" a loop means.
 
 ## Read the tests first
 
@@ -78,7 +78,7 @@ run ".venv/Scripts/python -m mypy --strict src/frontier/fast.py" stdout="Success
 
 ## Why a Python loop is slow
 
-On a million numbers, that loop takes a few hundredths of a second. That sounds quick, but a computer can do a billion simple operations a second, and two million (a million multiplications and a million additions) should take about a thousandth of one. Where does the rest go?
+On a million numbers, that loop takes a few hundredths of a second. That sounds quick, but a computer can do a billion simple operations a second, and two million (a million multiplications and a million additions) should take about two thousandths of one. Where does the rest go?
 
 Into Python's bookkeeping. A Python `float` isn't just its 8 bytes of number: it's an **object**, with a note of its type and a count of who's using it, and `sys.getsizeof(1.5)` says it takes 24 bytes. A list doesn't hold the floats themselves, only an 8-byte address for each, so a million of them are scattered around memory. Then, on every pass, `x * x` makes Python look up what kind of thing `x` is, find that type's multiplication, run it, and make a **new** float object for the answer; `total += ...` does it all again. The arithmetic is a tiny part of each pass.
 
@@ -132,7 +132,7 @@ run ".venv/Scripts/python -m mypy --strict src/frontier/fast.py" stdout="Success
 
 ## Time them both
 
-Now measure. The experiment makes a million numbers as a list, then converts them to an array **once**, before any timing, with `np.array(numbers)`. It times the loop on the list and your NumPy version on the array. It also times `array @ array`: the `@` from lesson 0.3, which multiplies two arrays number by number and adds up the products, so `xs @ xs` is the same sum of squares. Last, it times the conversion itself. Create `experiments/time_squares.py`:
+Now measure. The experiment makes a million numbers as a list, then converts them to an array **once**, before any timing, with `np.array(numbers)`. It times the loop on the list and your NumPy version on the array. It also times `array @ array`: the `@` from lesson 0.3. Lesson 0.3 used it on tables of numbers, as matrix multiplication; on two plain lists of numbers like these, it multiplies them number by number and adds up the products, so `xs @ xs` is the same sum of squares. (Chapter 4 builds matrix multiplication out of exactly this.) Last, it times the conversion itself. Create `experiments/time_squares.py`:
 
 ```python file=experiments/time_squares.py
 """A sum of squares over a million numbers: a Python loop against NumPy."""
@@ -162,9 +162,9 @@ Run it:
 
 When this lesson was written, the loop took 0.057 s, `np.sum` was about 17 times faster, and `@` about 400 times faster. Your numbers will differ, but not by enough to change the story.
 
-Why is `@` so much faster than `np.sum(xs * xs)`, when both are NumPy? Because `xs * xs` makes a whole new array: a million squares, 8 MB, written out to memory, then read back in by `np.sum`. Moving those 8 MB takes longer than the arithmetic. `@` multiplies and adds in one pass, keeping the running total close at hand, and never makes the middle array at all. Vectorising is the first step; choosing the one operation that does the whole job is the second.
+Why is `@` so much faster than `np.sum(xs * xs)`, when both are NumPy? Because `xs * xs` makes a whole new array: a million squares, 8 MB, written out to memory, then read back in by `np.sum`. Moving those 8 MB takes longer than the arithmetic. `@` multiplies and adds in one pass, keeping the running total close at hand, and never makes the middle array at all. It also hands the job to a routine tuned for exactly this sum, which is part of the gap too. Vectorising is the first step; choosing the one operation that does the whole job is the second.
 
-The last line is the catch. Converting a million-number list into an array takes longer than the loop itself, because NumPy has to visit every float object one at a time to copy its 8 bytes out. Vectorising pays off when the numbers **live** in arrays, made once and kept there, not when a list is converted for every sum. That's why, from Chapter 4 on, data goes into arrays as soon as it's read, and stays there.
+The last line is the catch. Converting a million-number list into an array takes about as long as the loop itself, or longer, because NumPy has to visit every float object one at a time to copy its 8 bytes out. Vectorising pays off when the numbers **live** in arrays, made once and kept there, not when a list is converted for every sum. That's why, from Chapter 4 on, data goes into arrays as soon as it's read, and stays there.
 
 ```check
 run ".venv/Scripts/python experiments/time_squares.py" stdout="times faster" label="the experiment times both" -- Check the imports: numpy as np, best_of from frontier.bench, both functions from frontier.fast.
@@ -176,7 +176,7 @@ run ".venv/Scripts/python experiments/time_squares.py" stdout="times faster" lab
 
 Three NumPy pieces you haven't used yet: `scores.max()` is the array's largest number, `np.exp(xs)` is *e* to the power of every number in `xs`, and dividing an array by a number divides every number in it.
 
-One mypy detail. NumPy's type hints can't say what dividing an array by a number gives, so mypy treats the result as `Any`, and `--strict` won't let a function return an `Any` when it promised an array. Store the result in a variable annotated `npt.NDArray[np.float64]` first, and return that: the annotation tells mypy what it holds.
+One mypy detail. NumPy's type hints don't say what type of number `np.exp`'s result holds, and dividing that array by `np.sum(...)` loses track completely: mypy treats the result as `Any`, and `--strict` won't let a function return an `Any` when it promised an array. Store the result in a variable annotated `npt.NDArray[np.float64]` first, and return that: the annotation tells mypy what it holds.
 
 ```hints
 nudge: It's softmax from lesson 2.6 with each line made whole-array: subtract the max from the array, exp the array, divide the array by its sum.

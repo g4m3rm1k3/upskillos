@@ -225,7 +225,7 @@ if __name__ == "__main__":
 .venv\Scripts\python -m frontier.textstats_cli data/sample.txt --verbose > $null
 ```
 
-In PowerShell, `> $null` sends stdout nowhere. The second run shows only the two `INFO` lines: they were on stderr all along. Send the report to a file the same way and the file holds the report alone, with no log lines mixed in. That's what `print` couldn't do.
+In PowerShell, `> $null` sends stdout nowhere. The second run shows only the two `INFO` lines: they were on stderr all along. If you sent the report to a file the same way, the file would hold the report alone, with no log lines mixed in. That's what `print` couldn't do.
 
 ```check
 run ".venv/Scripts/python -m pytest -q tests/test_logging.py -k verbose" label="--verbose logs on stderr" -- Call logging.basicConfig at the start of main, with level=logging.INFO if args.verbose else logging.WARNING and format="%(levelname)s: %(message)s".

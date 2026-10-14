@@ -2,7 +2,7 @@
 
 Start every Frontier writing session by reading this file, then the plan's chapter row for the chapter you're writing (`docs/frontier-ai-series-plan.md`). Don't re-read finished lessons unless a new one builds on their code: the *State of the project* section below says what exists.
 
-At the end of a session, update this file (state, next steps, anything learned) and the plan's *Progress* table, then stop so the owner can clear the chat. **About two or three lessons, or one chapter, per session.** The owner wants small sessions, to save context and usage.
+At the end of a session, update this file (state, next steps, anything learned) and the plan's *Progress* table, then stop so the owner can clear the chat. **One whole chapter per session, then the handoff** (owner, 2026-10-14: a new session's ramp-up costs more than it saves to stop mid-chapter). The cold-reader audit of a chapter goes at the start of the next session, with fresh eyes.
 
 ## Rules (from the owner)
 
@@ -53,7 +53,7 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
   ```
 
   The tool call's limit is 10 minutes, so as chapters are added, use `FRONTIER_KEEP=<scratch folder>` once, then `FRONTIER_START=<that folder> FRONTIER_FROM=<new lesson prefix>` to walk only the new lessons. The prefix is the lesson id with its track, for example `FRONTIER_FROM=frontier-engineering/01-04`. The test re-points the kept `.venv`'s `__editable__*.pth` at the new copy's `src`, since the kept one names a folder that no longer exists.
-- Kept projects live in the session's scratchpad, so each session rebuilds one. Measured on 2026-10-09: Chapter 0 alone takes about 435 s (`FRONTIER_UNTIL=frontier-setup/00-03` with `FRONTIER_KEEP`), lessons 1.1–1.2 about 235 s and 1.3 about 240 s. So: one run for Chapter 0 with `FRONTIER_KEEP`, a second from it for 1.1–1.3 (`FRONTIER_UNTIL=frontier-engineering/01-03`) with another `FRONTIER_KEEP`, then walk only the new lessons from that.
+- Kept projects in the session's scratchpad are lost when the session ends, so each session rebuilds one (about 26 minutes up to the end of Chapter 3). To stop that, point `FRONTIER_KEEP` at a folder outside the scratchpad and outside this repository (for example a `frontier-keep` folder beside it) and reuse it with `FRONTIER_START` next time (not yet tried). Measured on 2026-10-09: Chapter 0 alone takes about 435 s (`FRONTIER_UNTIL=frontier-setup/00-03` with `FRONTIER_KEEP`), lessons 1.1–1.2 about 235 s and 1.3 about 240 s. So: one run for Chapter 0 with `FRONTIER_KEEP`, a second from it for 1.1–1.3 (`FRONTIER_UNTIL=frontier-engineering/01-03`) with another `FRONTIER_KEEP`, then walk only the new lessons from that.
 - Git runs in the walkthrough's temporary project (Chapter 1 on), with the owner's global `user.name` and `user.email`. The walkthrough never runs `git config --global`, and the agent never runs git in this repository.
 - A wrong answer can type the step's file after all with `typeFile: true` (lesson 1.3: "did not update the tests" types the script but leaves the tests alone).
 - `projectChecks.test.js` (its stdin test) can time out at 5 s when the whole non-desktop suite runs at once. It passes on its own. It isn't a Frontier failure.
@@ -69,6 +69,51 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
 - `{BARE}` only works in `isolatedGit` series, and Frontier isn't one (it uses the owner's Git identity). Its stand-in for GitHub is made by the walkthrough itself: `git init -q --bare ../github.git` beside the project, in the run's temporary folder (lesson 1.5).
 
 ## State of the project (what a learner has after the last written lesson)
+
+After lesson 4.5 (written 2026-10-14; Chapter 4 complete), on top of the Chapter 3 tree below:
+
+```text
+  requirements.txt        also matplotlib==3.11.2 (first line, alphabetical)
+  .gitignore              also pictures/
+```
+
+
+```text
+  src/frontier/
+    vectors.py            vocabulary (sorted set comprehension), count_vector(words, vocab) -> list[float] (tally),
+                          dot (zip strict=True), length (math.sqrt), cosine (ValueError "a vector of zeros has no direction")
+    arrays.py             Vector = npt.NDArray[np.float64]; cosine_array (float(norm(a) * norm(b)), float(a @ b) / lengths);
+                          unit(v) -> v / size (ValueError on zeros)
+    matrix.py             Matrix = npt.NDArray[np.float64]; text_vector(text, vocab) (unit of count_vector, unknown words left out);
+                          text_matrix(texts) -> (matrix, vocab) (4.4: counts as one array, then unit_rows);
+                          times_vector(m, v) (row @ v per row); times(a, b) (np.zeros, two loops, a[i] @ b[:, j]);
+                          unit_rows(m) (norm axis=1 keepdims=True, np.any(lengths == 0) -> ValueError "a row of zeros");
+                          center(m) = m - m.mean(axis=0)
+    plots.py              from matplotlib.figure import Figure (no pyplot); heatmap(m, labels) (Figure(figsize=(6, 5),
+                          layout="constrained"), add_subplot, imshow vmin 0 vmax 1, set_xticks/set_yticks(range, labels),
+                          set_title "cosine similarity", colorbar); scatter(points, title) (figsize (5, 5), points[:, 0] / [:, 1])
+  experiments/
+    compare_sentences.py  four sentences vs the first: dot (:5.1f) and cosine (:.3f)
+    array_basics.py       shape / dtype / v[0] / v[-1] / v[3:6] / v * 2 / v @ v / int64; a slice changing v, a .copy() not
+    check_arrays.py       cosine_array vs cosine on 1000 default_rng(0) pairs of rng.random(100): "largest difference: ..."
+    matrix_basics.py      2x3 matrix: shape, m[1], m[:, 2], m[1, 2], sum(axis=0) [5. 7. 9.], sum(axis=1)
+    search_texts.py       five texts (3 animal, 2 stock market) vs "a cat on a mat": 0.401 / 0.134 / 0.714 / 0 / 0
+    all_pairs.py          same texts: m (5, 18), m @ m.T rounded to 2 places, "by hand agrees: True"
+    broadcasting.py       m * 10, + row (3,), + column (2, 1), + (2,) caught ValueError "could not be broadcast"
+    keepdims.py           3x3 rows of length 5 / 10 / 2: flat (3,) vs kept (3, 1); lengths 0.721 4.045 1. vs 1. 1. 1.
+    draw_similarity.py    heatmap of m @ m.T with labels cat/dog/chased/stock/markets -> pictures/similarity.png; "axes in the figure: 2"
+    draw_centering.py     default_rng(0), 50 people = rng.random((50, 2)) * [40, 30] + [150, 50]; averages [171.2  67. ];
+                          pictures/people.png and pictures/centered.png
+  tests/
+    test_vectors.py       -k vocabulary, counts, dot, length, cosine
+    test_arrays.py        -k cosine, sizes, agreement, unit
+    test_matrix.py        -k rows, question, product, multiply
+    test_broadcasting.py  -k scale, center
+    test_plots.py         -k heatmap, scatter (reads figures back: get_images, get_clim, get_xticklabels, collections[0].get_offsets)
+```
+
+Chapter 4 so far taught: vector, vocabulary, bag of words, set comprehension, `zip(strict=True)`, dot product (a · b in symbols), length ‖v‖ and Pythagoras, `math.sqrt`, the angle between arrows and its cosine (1 at 0°, 0 at 90°), cos θ = a · b / (‖a‖ ‖b‖), θ; `shape` (a one-item tuple `(7,)`), `dtype` (`float64`, `int64`, NumPy 2's default int everywhere), indexing `v[0]` / `v[-1]`, slicing, views and `.copy()`, `np.linalg.norm` (linalg, norm), `@` raising `ValueError` on mismatched sizes, `np.random.default_rng(seed)`, `rng.random(n)`, seeds, choosing a tolerance (well above rounding, well below a mistake), unit vectors (v / ‖v‖) and cosine as the dot of unit vectors. 4.3: matrix, shape `(rows, columns)`, `m[i]`, `m[:, j]`, `m[i, j]` (read and set), `axis=` (`sum(axis=0)` is one total per column), iterating a matrix gives rows, matrix times vector (each row dotted), matrix times matrix (entry i, j = row i of a · column j of b; columns of a = rows of b; answer (rows of a, columns of b)), `np.zeros((r, c))`, `np.allclose`, `.T` (transpose, a view), `np.round(x, 2)`; bag-of-words limits shown ("a"/"the" dominate; "market" ≠ "markets"), Chapter 29 named as the fix. 4.4: broadcasting rules (line up from the right; equal or 1; missing counts as 1; reused, not copied), a column `(n, 1)`, the error "operands could not be broadcast together", `keepdims=True` and the silent square-matrix bug, `lengths == 0` as a boolean array, `np.any`, `nan` from 0 / 0, refactor under existing tests, `.mean(axis=0)`, centering (Chapter 8 named), `-=` in place changes the caller's array. 4.5: Matplotlib (`Figure`, Axes, `add_subplot`, `imshow`, `vmin`/`vmax`, colour bar as its own Axes, `set_xticks(positions, labels)`, `set_title`, `savefig` with the format from the file ending, `layout="constrained"`, figsize in inches at 100 dpi), pyplot named and why it isn't used, `Path.mkdir(exist_ok=True)`, generated files in `.gitignore`, `Invoke-Item`, scatter plots, centering moves data without changing its shape. Figure `frontier/MatrixTimes` (4.3; click an answer entry to see its row and column; never seen in a browser yet, only rendered by figures.test.jsx).
+
 
 After lesson 3.4 (written 2026-10-13; Chapter 3 complete; walkthrough result in *Progress* in the plan). Chapter 0's files are unchanged except as noted. Chapter 2 and 3 lessons don't use branches: each ends with `git add .`, `git commit`, `git push` (checks `git-clean`, `git-pushed`).
 
@@ -146,11 +191,38 @@ Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Calla
 
 Chapter 3: debugging as a method (reproduce, narrow down, guess, test; a test per bug, seen failing first); `breakpoint()` and pdb (`p`, `n`, `c`, `w`, `q`); the mutable-default trap and a `None` default with `is None`; a type alias (`PairCounts = ...`); `logging` (`getLogger(__name__)`, levels debug / info / warning / error, `%s` / `%d` arguments, `basicConfig(level=, format=)` only at the entry point, stderr); argparse `action="store_true"`; PowerShell `> $null` and `Remove-Item`; `cProfile` and `pstats` (ncalls, tottime, cumtime, `549946/1`, `<genexpr>`); memoising with `functools.cache`, `cache_info`, `cache_clear`, a cached result being the same object (copy with `dict(...)`); reading source with `inspect.getsource`; pytest's `monkeypatch.setattr`; why a Python loop is slow (24-byte float objects, 8-byte addresses); NumPy arrays (`np.array`, element-wise `*` and `-`, `np.sum`, `np.exp`, `.max()`, `.tolist()`, `.nbytes`, `np.zeros`), `npt.NDArray[np.float64]`; a middle array's memory cost (`np.sum(xs * xs)` against `xs @ xs`); converting a list costs more than the loop.
 
-Not yet taught (don't use without teaching): NumPy beyond that list (shapes, indexing, broadcasting rules, `reshape`, `axis=`), Matplotlib.
+Not yet taught (don't use without teaching): NumPy beyond the lists above (`reshape`, `argsort`, fancy indexing); Matplotlib beyond 4.5 (`ax.plot` for lines, axis labels, several Axes in one figure, pyplot).
 
-## Next: the cold-reader audit of Chapter 3, then Chapter 4
+## Next: walk Chapter 4 on Windows, audit it, then write Chapter 5
 
-Chapter 3 (`frontier-tools`) is written: 3.1 finding a bug (pdb), 3.2 logging, 3.3 profiling and `functools.cache`, 3.4 vectorising with NumPy. Next session: the cold-reader audit of Chapter 3 (findings to `docs/audits/frontier-ch3-audit.md` as you go, then fix), then Chapter 4 (`frontier-vectors`). 3.4's last paragraph promises Chapter 4 "the mathematics, with vectors and matrices, and NumPy properly".
+Chapter 4 (`frontier-vectors`) is written, all five lessons (2026-10-14, all on macOS):
+
+1. **4.1 Words as Vectors**: `vectors.py` on lists; `compare_sentences.py` (dot 8 / 6 / 8 / 16, cosine 1.000 / 0.750 / 0.707 / 1.000); figure `frontier/WordArrows`.
+2. **4.2 Arrays, Properly**: `arrays.py` (`Vector`, `cosine_array`, `unit`); `array_basics.py`, `check_arrays.py`.
+3. **4.3 A Dataset as a Matrix**: `matrix.py` (`text_vector`, `text_matrix`, `times_vector`, Your turn `times`); `matrix_basics.py`, `search_texts.py`, `all_pairs.py`; figure `frontier/MatrixTimes`.
+4. **4.4 Broadcasting**: `unit_rows`, `text_matrix` refactored onto it, Your turn `center`; `broadcasting.py`, `keepdims.py`.
+5. **4.5 Seeing It**: Matplotlib 3.11.2 (Windows wheel 9.5 MB), `plots.py` (`heatmap`, Your turn `scatter`), `draw_similarity.py`, `draw_centering.py`; pictures checked by the files existing and by reading the figures back as data. Promises Chapter 5 that its curves are drawn with Matplotlib (`ax.plot` isn't taught yet: teach it there).
+
+**Next session, in order:**
+1. **On Windows:** walk 4.1–4.5 (`FRONTIER_UNTIL=frontier-tools/03-04` with `FRONTIER_KEEP` in the background, about 26 minutes, then `FRONTIER_START=<kept> FRONTIER_FROM=frontier-vectors/04-01`). Open 4.3 in the Studio to look at the `MatrixTimes` figure, and check `Invoke-Item` opens the pictures in 4.5. The walkthrough skips on macOS (`describe.skipIf(!isWindows)`), so Chapter 4 was checked by the scratch-project method below: every step's file blocks extracted from the lesson and written in order, every check run, every walkthrough wrong answer applied and seen failing exactly the checks its `fails` lists, every prediction's verify script run, and 4.5's pictures looked at.
+2. **Chapter 4's cold-reader audit** (`docs/audits/frontier-ch4-audit.md`, as for Chapters 2 and 3).
+3. **Chapter 5** (`frontier-calculus`), the whole chapter, from the plan's row.
+
+Chapter 3 (`frontier-tools`) is written and audited: 3.1 finding a bug (pdb), 3.2 logging, 3.3 profiling and `functools.cache`, 3.4 vectorising with NumPy. Its cold-reader audit (2026-10-14, `docs/audits/frontier-ch3-audit.md`) found 7 problems, all prose, all fixed; lint 18 lessons, 0 problems; the walkthrough wasn't re-run (no code, check or answer changed).
+
+Session size: an audit **or** about two lessons, not both.
+
+Known unrelated failure (2026-10-14, on macOS): `projectChecks.test.js` › "git checks › follows a repository from init to push" fails at its first assertion (`git-repo` false right after `git init` in a temp folder). Not Frontier code. The owner's view: those checks are written for a new project folder (Windows, PowerShell), not this environment. Ignore it unless it fails on Windows too.
+
+Working on macOS (2026-10-14 session):
+- **The scratch project is kept** at `~/Testing/frontier-scratch` (outside this repository; its README says how to use it), up to date after 4.5. Reuse it; don't rebuild it. The walkthrough doesn't run, so each new lesson was checked by a scratch script: a `python3 -m venv` with the pinned `pytest`, `mypy` and `numpy`, the lesson's `file=` blocks written in order, each step's checks run (`PYTHONPATH=src`, `MYPYPATH=src`), and each wrong answer applied and its checks run. Set `PYTHONDONTWRITEBYTECODE=1`: rewriting a module within the same second let a stale `.pyc` make a wrong answer look like it passed.
+- `scripts/frontier-safe-run.mjs` runs on macOS but reports peak memory as "about 0 MB", so its memory ceiling isn't measured there. Fine for tiny scripts; don't rely on it for anything bigger.
+
+Lessons from Chapter 3's audit:
+- Don't invite a learner to make a file in the project ("send the report to a file") in a lesson that ends with `git add .`: it gets committed.
+- A Your turn's key technique (3.3's `dict(d)` copy) goes in the text before the hints, not only in `concept`.
+- When a later lesson describes something an earlier one introduced differently (0.3's `@` as matrix multiplication, 3.4's `@` on two 1-D arrays), bridge the two explicitly.
+- Do the arithmetic in passing claims (2 million operations at a billion a second is two thousandths, not one), and don't state a thin measured margin (0.067 s against 0.057 s) as a rule.
 
 Chapter 2's audit (2026-10-13, `docs/audits/frontier-ch2-audit.md`) found 10 problems, all prose, all fixed. Lessons from it:
 - Quote an error message only where it hasn't changed between Python versions. 3.14 rewrote the dict-key `TypeError` (`cannot use 'list' as a dict key (unhashable type: 'list')`); quote the shared tail or nothing.
@@ -162,7 +234,7 @@ Lessons from writing Chapter 3:
 - `git rm` refuses a file that was never committed ("did not match any files"); a learner deletes such a file with `Remove-Item`. The walkthrough caught this in 3.1.
 - The static `-k` check (`walkSeries.js`) now reads every version of a test file: supplied, typed by the learner, or written by a walkthrough `files` answer (changed 2026-10-13; every walkSeries series' static check re-run, passing). Before, a learner-typed test file failed it.
 - Under `python -m`, a module's `__name__` is `"__main__"`, so a log format with `%(name)s` would depend on how the command was started: 3.2's format leaves it out.
-- NumPy 2.5's hints make `array / number` `Any`, and mypy `--strict` refuses to return it. Annotate the result (`probabilities: npt.NDArray[np.float64] = ...`) and return that. `float(np.sum(...))` and `float(xs @ xs)` pass.
+- NumPy 2.5's hints: `np.exp(array)` holds `dtype[Any]`, and dividing that by `np.sum(...)` is plain `Any`, which mypy `--strict` refuses to return. Annotate the result (`probabilities: npt.NDArray[np.float64] = ...`) and return that. A `float64` array divided by a Python `float` stays typed (`return v / size` passes; corrected 2026-10-14, 3.4's prose fixed to match). `float(np.sum(...))` and `float(xs @ xs)` pass.
 - Measured 2026-10-13 (the walk's guard, 2 threads): a million-number loop 0.057 s; `np.sum(xs * xs)` about 17x faster, `xs @ xs` about 400x; `np.array(list)` 0.067 s. `count_games()` 1.6 s, cached 0.03 s; `winner` calls 549,946 -> 5,478 (`hits=10690, misses=5478`).
 - `inspect.getsource(functools.lru_cache)` ends at `_lru_cache_wrapper`, which is C: don't claim the learner can read the store's code.
 - Walking: Chapters 0–2 with `FRONTIER_UNTIL=frontier-cs/02-06` and `FRONTIER_KEEP` took 1218 s; then `FRONTIER_START=<kept> FRONTIER_FROM=frontier-tools/03-01` walked 3.1–3.4 in 326 s. Next session: keep a project at the end of Chapter 3 the same way (`FRONTIER_UNTIL=frontier-tools/03-04`, about 26 minutes in the background), then walk Chapter 4's lessons from it.

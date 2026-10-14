@@ -34,6 +34,7 @@ const PIP = '.venv\\Scripts\\python -m pip install -q';
 const E = 'frontier-engineering';
 const C = 'frontier-cs';
 const T = 'frontier-tools';
+const V = 'frontier-vectors';
 // Git runs only in the walkthrough's temporary project, never in this repository.
 const COMMIT = (message) => ['git add .', `git commit -q -m "${message}"`];
 
@@ -753,6 +754,224 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'did nothing', fails: [0] },
       { name: 'committed but did not push', run: COMMIT('Vectorise a sum of squares and softmax with NumPy'), fails: [1] },
+    ],
+  },
+
+  // ── 4.1 ──────────────────────────────────────────────────────────────────
+  [`${V}/04-01-words-as-vectors#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${V}/04-01-words-as-vectors#Words become numbers`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'kept the vocabulary in order of appearance', edit: [['    return sorted({word for words in documents for word in words})', '    return list(dict.fromkeys(word for words in documents for word in words))']], fails: [0] },
+      { name: 'counted only the words the text has', edit: [['    return [float(counts.get(word, 0)) for word in vocab]', '    return [float(counts[word]) for word in vocab if word in counts]']], fails: [1] },
+    ],
+  },
+  [`${V}/04-01-words-as-vectors#Multiply and add: the dot product`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'zipped without strict', edit: [['zip(a, b, strict=True)', 'zip(a, b)']], fails: [0] },
+      { name: 'added instead of multiplying', edit: [['sum(x * y for', 'sum(x + y for']], fails: [0] },
+    ],
+  },
+  [`${V}/04-01-words-as-vectors#Is a bigger dot product more alike?`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'made each vocabulary from its own sentence', edit: [['vectors = [count_vector(words, vocab) for words in documents]', 'vectors = [count_vector(words, vocabulary([words])) for words in documents]']], fails: [0] },
+    ],
+  },
+  [`${V}/04-01-words-as-vectors#How long a vector is`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'forgot the square root', edit: [['    return math.sqrt(dot(v, v))', '    return dot(v, v)']], fails: [0] },
+    ],
+  },
+  [`${V}/04-01-words-as-vectors#Your turn: cosine similarity`]: {
+    files: { 'src/frontier/vectors.py': answer(V, 'vectors-4.1.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left out the brackets', files: { 'src/frontier/vectors.py': answerWith(V, 'vectors-4.1.py', [['dot(a, b) / (length(a) * length(b))', 'dot(a, b) / length(a) * length(b)']]) }, fails: [0, 1] },
+      { name: 'did not check for zeros', files: { 'src/frontier/vectors.py': answerWith(V, 'vectors-4.1.py', [['    if length(a) == 0 or length(b) == 0:\n        raise ValueError("a vector of zeros has no direction")\n', '']]) }, fails: [0, 1] },
+      { name: 'checked only the first vector', files: { 'src/frontier/vectors.py': answerWith(V, 'vectors-4.1.py', [['if length(a) == 0 or length(b) == 0:', 'if length(a) == 0:']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-01-words-as-vectors#The ranking, fixed, and onto GitHub`]: {
+    run: [...COMMIT('Texts as count vectors, compared with the dot product and cosine similarity'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('Texts as count vectors, compared with the dot product and cosine similarity'), fails: [2] },
+    ],
+  },
+
+  // ── 4.2 ──────────────────────────────────────────────────────────────────
+  [`${V}/04-02-arrays-properly#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${V}/04-02-arrays-properly#An array, looked at`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${V}/04-02-arrays-properly#A slice shares its numbers`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'sliced a copy', edit: [['part = v[3:6]\n', 'part = v[3:6].copy()\n']], fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-02-arrays-properly#Cosine on arrays`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'added the lengths', edit: [['np.linalg.norm(a) * np.linalg.norm(b)', 'np.linalg.norm(a) + np.linalg.norm(b)']], fails: [0] },
+      { name: 'did not check for zeros', edit: [['    if lengths == 0:\n        raise ValueError("a vector of zeros has no direction")\n', '']], fails: [0] },
+    ],
+  },
+  [`${V}/04-02-arrays-properly#Checked against your own`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${V}/04-02-arrays-properly#Your turn: a unit vector`]: {
+    files: { 'src/frontier/arrays.py': answer(V, 'arrays-4.2.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'did not check for zeros', files: { 'src/frontier/arrays.py': answerWith(V, 'arrays-4.2.py', [['    if size == 0:\n        raise ValueError("a vector of zeros has no direction")\n', '']]) }, fails: [0, 1] },
+      { name: 'divided by the squared length', files: { 'src/frontier/arrays.py': answerWith(V, 'arrays-4.2.py', [['return v / size', 'return v / (size * size)']]) }, fails: [0, 1] },
+      { name: 'returned a list', files: { 'src/frontier/arrays.py': answerWith(V, 'arrays-4.2.py', [['return v / size', 'return (v / size).tolist()']]) }, fails: [0, 1, 2] },
+    ],
+  },
+  [`${V}/04-02-arrays-properly#Onto GitHub`]: {
+    run: [...COMMIT('Vectors as NumPy arrays, checked against the list versions'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Vectors as NumPy arrays, checked against the list versions'), fails: [1] },
+    ],
+  },
+
+  // ── 4.3 ──────────────────────────────────────────────────────────────────
+  [`${V}/04-03-a-dataset-as-a-matrix#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#A table of numbers`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left out the comma in the column', edit: [['m[:, 2]', 'm[:2]']], fails: [0] },
+      { name: 'added along the other axis', edit: [['print("each column added up:", m.sum(axis=0))', 'print("each column added up:", m.sum(axis=1))']], fails: [1] },
+    ],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#Texts as rows`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'did not scale to length 1', edit: [['    return unit(np.array(count_vector(split_words(text), vocab)))', '    return np.array(count_vector(split_words(text), vocab))']], fails: [0, 1] },
+      { name: 'gave each text its own vocabulary', edit: [['np.array([text_vector(text, vocab) for text in texts])', 'np.array([text_vector(text, vocabulary([split_words(text)])) for text in texts])']], fails: [0] },
+    ],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#A matrix times a vector`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'dotted the columns', edit: [['for row in m])', 'for row in m.T])']], fails: [0] },
+    ],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#One question, every text`]: {
+    wrong: [{ name: 'did nothing', fails: [0] }],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#Your turn: a matrix times a matrix`]: {
+    files: { 'src/frontier/matrix.py': answer(V, 'matrix-4.3.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'used row j of b', files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.3.py', [['a[i] @ b[:, j]', 'a[i] @ b[j]']]) }, fails: [0, 1] },
+      { name: "made the answer a's shape", files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.3.py', [['np.zeros((a.shape[0], b.shape[1]))', 'np.zeros(a.shape)']]) }, fails: [0, 1] },
+      { name: 'returned a list', files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.3.py', [['    return out', '    return out.tolist()']]) }, fails: [0, 1, 2] },
+    ],
+  },
+  [`${V}/04-03-a-dataset-as-a-matrix#Every text against every other, and onto GitHub`]: {
+    run: [...COMMIT('Texts as a matrix, and matrix multiplication by hand'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('Texts as a matrix, and matrix multiplication by hand'), fails: [2] },
+    ],
+  },
+
+  // ── 4.4 ──────────────────────────────────────────────────────────────────
+  [`${V}/04-04-broadcasting#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${V}/04-04-broadcasting#Different shapes, one operation`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'wrote the column as a flat vector', edit: [['print(m + np.array([[100.0], [200.0]]))', 'print(m + np.array([100.0, 200.0]))']], fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-04-broadcasting#Lengths that keep their place`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left out keepdims', edit: [['kept = np.linalg.norm(m, axis=1, keepdims=True)', 'kept = np.linalg.norm(m, axis=1)']], fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-04-broadcasting#Every row at once`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'left out keepdims', edit: [['    lengths = np.linalg.norm(m, axis=1, keepdims=True)', '    lengths = np.linalg.norm(m, axis=1)']], fails: [0] },
+      { name: 'did not check for zeros', edit: [['    if np.any(lengths == 0):\n        raise ValueError("a row of zeros has no direction")\n', '']], fails: [0] },
+    ],
+  },
+  [`${V}/04-04-broadcasting#text_matrix, without the loop of units`]: {
+    wrong: [
+      { name: 'did not scale the counts', edit: [['    return unit_rows(counts), vocab', '    return counts, vocab']], fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-04-broadcasting#Your turn: center the columns`]: {
+    files: { 'src/frontier/matrix.py': answer(V, 'matrix-4.4.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'took the row averages', files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.4.py', [['m - m.mean(axis=0)', 'm - m.mean(axis=1)']]) }, fails: [0, 1] },
+      { name: 'took the average of everything', files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.4.py', [['m - m.mean(axis=0)', 'm - m.mean()']]) }, fails: [0, 1] },
+      { name: 'subtracted in place', files: { 'src/frontier/matrix.py': answerWith(V, 'matrix-4.4.py', [['    return m - m.mean(axis=0)', '    m -= m.mean(axis=0)\n    return m']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-04-broadcasting#Onto GitHub`]: {
+    run: [...COMMIT('Broadcasting: every row scaled at once, and centered columns'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'committed but did not push', run: COMMIT('Broadcasting: every row scaled at once, and centered columns'), fails: [1] },
+    ],
+  },
+
+  // ── 4.5 ──────────────────────────────────────────────────────────────────
+  [`${V}/04-05-seeing-it#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${V}/04-05-seeing-it#Install Matplotlib`]: {
+    editFiles: {
+      'requirements.txt': [['mypy==2.4.0', 'matplotlib==3.11.2\nmypy==2.4.0']],
+      '.gitignore': [['.mypy_cache/\n', '.mypy_cache/\npictures/\n']],
+    },
+    run: [`${PIP} -r requirements.txt`],
+    wrong: [{ name: 'did nothing', fails: [0, 1, 2] }],
+  },
+  [`${V}/04-05-seeing-it#A table as a picture`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'let the colours follow the matrix', edit: [['ax.imshow(m, vmin=0.0, vmax=1.0)', 'ax.imshow(m)']], fails: [0] },
+    ],
+  },
+  [`${V}/04-05-seeing-it#Saved to a file`]: {
+    run: ['.venv\\Scripts\\python experiments/draw_similarity.py'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'did not make the folder', edit: [['Path("pictures").mkdir(exist_ok=True)\n', '']], fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-05-seeing-it#Your turn: points as dots`]: {
+    files: { 'src/frontier/plots.py': answer(V, 'plots-4.5.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'used two rows', files: { 'src/frontier/plots.py': answerWith(V, 'plots-4.5.py', [['ax.scatter(points[:, 0], points[:, 1])', 'ax.scatter(points[0], points[1])']]) }, fails: [0, 1] },
+      { name: 'swapped across and up', files: { 'src/frontier/plots.py': answerWith(V, 'plots-4.5.py', [['ax.scatter(points[:, 0], points[:, 1])', 'ax.scatter(points[:, 1], points[:, 0])']]) }, fails: [0, 1] },
+      { name: 'left out the title', files: { 'src/frontier/plots.py': answerWith(V, 'plots-4.5.py', [['    ax.set_title(title)\n    return fig\n', '    return fig\n']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${V}/04-05-seeing-it#Centering, seen, and Chapter 4 done`]: {
+    run: ['.venv\\Scripts\\python experiments/draw_centering.py', ...COMMIT('Matplotlib: the similarity table and a centered dataset, as pictures'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'committed but did not push', typeFile: true, run: ['.venv\\Scripts\\python experiments/draw_centering.py', ...COMMIT('Matplotlib: the similarity table and a centered dataset, as pictures')], fails: [3] },
     ],
   },
 };

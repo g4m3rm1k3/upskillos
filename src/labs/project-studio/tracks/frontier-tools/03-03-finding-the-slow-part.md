@@ -256,6 +256,8 @@ run ".venv/Scripts/python -c \"from frontier.tictactoe import count_games; count
 
 `@cache` on `outcomes` alone isn't enough. `outcomes` returns a dictionary, and as the last prediction showed, a cached dictionary is shared by every caller: the test that sets `answer["X"] = 0` would change the stored answer, and the next caller would get 0. Callers of `outcomes` must each get a dictionary of their own, while the work underneath is done once per board.
 
+To give a caller a dictionary of their own, copy it: `dict(d)` makes a new dictionary with the same keys and values as `d`, and changing the copy leaves `d` alone. The copy has to be made on every call, so it can't happen inside a cached function: there, the copy is what gets stored, and shared.
+
 ```hints
 nudge: Two functions: a cached one that does the work and whose dictionaries are never changed, and `outcomes`, uncached, that hands each caller a copy.
 concept: Rename the current `outcomes` to `shared_outcomes`, put `@cache` on it, and make its recursive call use `shared_outcomes` too. Then a new `outcomes(board=EMPTY, player="X")` returns `dict(shared_outcomes(board, player))`: `dict(...)` of a dictionary is a new dictionary with the same keys and values. A copy made inside the cached function doesn't help: the copy is what gets stored, and shared.

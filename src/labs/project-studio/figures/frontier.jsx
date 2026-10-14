@@ -307,3 +307,81 @@ export function FloatBits({ values = ['0.1'] }) {
     </Readout>
   </div>;
 }
+
+// ---------- 4.1: two texts as arrows, and the angle between them ----------
+// words: the two vocabulary words on the axes; a, b: each text's counts of those two words.
+export function WordArrows({ words = ['cat', 'the'], a: startA = [1, 2], b: startB = [0, 2], max = 6 }) {
+  const [a, setA] = useState(startA);
+  const [b, setB] = useState(startB);
+  const dot = a[0] * b[0] + a[1] * b[1];
+  const len = (v) => Math.hypot(v[0], v[1]);
+  const zero = len(a) === 0 || len(b) === 0;
+  const cos = zero ? null : dot / (len(a) * len(b));
+  const angle = zero ? null : (Math.acos(Math.min(1, cos)) * 180) / Math.PI;
+  const size = 260, pad = 30, unit = (size - 2 * pad) / max;
+  const X = (x) => pad + x * unit, Y = (y) => size - pad - y * unit;
+  const arrow = (v, color, name) => (len(v) === 0
+    ? <circle cx={X(0)} cy={Y(0)} r={5} fill={color} />
+    : <g>
+      <line x1={X(0)} y1={Y(0)} x2={X(v[0])} y2={Y(v[1])} stroke={color} strokeWidth={3} />
+      <circle cx={X(v[0])} cy={Y(v[1])} r={5} fill={color} />
+      <text x={X(v[0]) + 8} y={Y(v[1]) - 6} style={{ fontSize: 12, fill: color, fontWeight: 600 }}>{name} = [{v[0]}, {v[1]}]</text>
+    </g>);
+  const slider = (label, v, set, i) => <Slider label={label} value={v[i]} min={0} max={max} step={1} digits={0} onChange={(n) => set(i ? [v[0], n] : [n, v[1]])} />;
+  return <div>
+    <Controls>
+      {slider(`a: "${words[0]}"`, a, setA, 0)}{slider(`a: "${words[1]}"`, a, setA, 1)}
+      {slider(`b: "${words[0]}"`, b, setB, 0)}{slider(`b: "${words[1]}"`, b, setB, 1)}
+    </Controls>
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label={`Arrows a = [${a}] and b = [${b}]`} style={{ maxWidth: '100%' }}>
+      {Array.from({ length: max + 1 }, (_, i) => <g key={i} opacity={0.15}>
+        <line x1={X(i)} y1={Y(0)} x2={X(i)} y2={Y(max)} stroke="var(--text)" />
+        <line x1={X(0)} y1={Y(i)} x2={X(max)} y2={Y(i)} stroke="var(--text)" />
+      </g>)}
+      <text x={X(max)} y={Y(0) + 20} textAnchor="end" style={{ fontSize: 12, fill: 'var(--text)' }}>"{words[0]}" →</text>
+      <text x={X(0) - 6} y={Y(max) - 8} style={{ fontSize: 12, fill: 'var(--text)' }}>↑ "{words[1]}"</text>
+      {arrow(a, 'var(--chart-train)', 'a')}
+      {arrow(b, 'var(--chart-model)', 'b')}
+    </svg>
+    <Table head={['a · b', '‖a‖', '‖b‖', 'cosine', 'angle']}
+      rows={[[r(dot, 2), r(len(a), 3), r(len(b), 3), zero ? '—' : r(cos, 3), zero ? '—' : `${r(angle, 1)}°`]]} label="The dot product, lengths, cosine and angle" />
+    <Readout>
+      {zero
+        ? <>A vector of zeros is a point, not an arrow: it has no direction, so there's no angle and no cosine.</>
+        : <>a · b = {a[0]}×{b[0]} + {a[1]}×{b[1]} = <strong>{r(dot, 2)}</strong>, and dividing by both lengths gives a cosine of <strong>{r(cos, 3)}</strong>.
+          {Math.abs(cos - 1) < 1e-9 && <> The arrows point the same way: the same words in the same proportions, however long the texts.</>}
+          {Math.abs(cos) < 1e-9 && <> The arrows are at right angles: the texts share no word.</>}</>}
+    </Readout>
+  </div>;
+}
+
+// ---------- 4.3: matrix multiplication, one entry at a time ----------
+// a, b: the two matrices, as lists of rows. Click an entry of the answer to see where it comes from.
+export function MatrixTimes({ a = [[1, 2, 3], [4, 5, 6]], b = [[1, 0], [0, 1], [1, 1]] }) {
+  const [[i, j], setAt] = useState([0, 0]);
+  const fits = a[0].length === b.length;
+  const out = fits ? a.map((row) => b[0].map((_, col) => row.reduce((s, x, k) => s + x * b[k][col], 0))) : [];
+  const tint = (color) => ({ background: `color-mix(in srgb, ${color} 28%, transparent)` });
+  const cell = { padding: '4px 10px', textAlign: 'center', fontFamily: 'monospace', minWidth: 28 };
+  const grid = (name, m, style, onPick) => <table aria-label={name} style={{ borderCollapse: 'collapse', border: '1px solid var(--border, #8884)' }}>
+    <caption style={{ fontSize: 12, paddingBottom: 4 }}>{name} <span style={{ opacity: 0.7 }}>({m.length} × {m[0].length})</span></caption>
+    <tbody>{m.map((row, ri) => <tr key={ri}>{row.map((x, ci) => <td key={ci} style={{ ...cell, ...style(ri, ci) }}>
+      {onPick ? <button type="button" onClick={() => onPick(ri, ci)} aria-pressed={ri === i && ci === j} style={{ font: 'inherit', fontWeight: ri === i && ci === j ? 700 : 400 }}>{r(x, 2)}</button> : r(x, 2)}
+    </td>)}</tr>)}</tbody>
+  </table>;
+  const terms = fits ? a[i].map((x, k) => `${r(x, 2)}×${r(b[k][j], 2)}`).join(' + ') : '';
+  return <div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
+      {grid('a', a, (ri) => (fits && ri === i ? tint('var(--chart-train)') : {}))}
+      <span aria-hidden="true">@</span>
+      {grid('b', b, (_, ci) => (fits && ci === j ? tint('var(--chart-model)') : {}))}
+      <span aria-hidden="true">=</span>
+      {fits && grid('a @ b', out, (ri, ci) => (ri === i && ci === j ? tint('var(--chart-good)') : {}), (ri, ci) => setAt([ri, ci]))}
+    </div>
+    <Readout>
+      {fits
+        ? <>Entry [{i}, {j}] of the answer is row {i} of a dotted with column {j} of b: {terms} = <strong>{r(out[i][j], 2)}</strong>. Click another entry of the answer to see its row and column.</>
+        : <>a has {a[0].length} columns but b has {b.length} rows, so a row of a and a column of b have different lengths: there's no dot product, and <code>@</code> raises a <code>ValueError</code>.</>}
+    </Readout>
+  </div>;
+}
