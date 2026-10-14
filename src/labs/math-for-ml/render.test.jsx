@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-// Every lesson drawn and its buttons pressed; the falling-ball figure's linked views; the Symbol
+// The first lesson opening; the falling-ball figure's linked views; the Symbol
 // decoder searched and followed; progress kept and recovered; and the Python tab opened on every
-// program with every line of every file explained. None of it may throw.
+// program with every line of every file explained. None of it may throw. Every lesson is drawn by
+// lessons-*.test.jsx, split into three files so that each runs in its own worker with its own memory.
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import MathForMLLab from './index.jsx'
@@ -17,23 +18,37 @@ import { SYMBOLS, EQUATIONS } from './decoder.js'
 
 afterEach(() => { cleanup(); localStorage.clear() })
 const NEWLINE = String.fromCharCode(10)
-const PRESS = ['Next term →', 'All', 'Roll again', 'Play the games', 'Back to the trained w', '+', '−']
 
-describe('the lessons', () => {
-  it('open on the first lesson', () => {
+describe('the lab', () => {
+  it('opens on the first lesson', () => {
     render(<MathForMLLab />)
     expect(screen.getAllByText('Letters that stand for numbers').length).toBeGreaterThan(0)
   })
-  for (const lesson of LESSONS) {
-    it(`${lesson.number} ${lesson.title}: draws, and its buttons work`, () => {
-      const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onPython={() => {}} FIGURES={FIGURES} codeLines={codeLines} />)
-      expect(container.textContent.length).toBeGreaterThan(200)
-      expect(container.textContent).not.toMatch(/Missing figure|NaN/)
-      for (const label of PRESS) for (const button of screen.queryAllByText(label, { exact: true })) act(() => { fireEvent.click(button) })
-      for (const select of container.querySelectorAll('.qm-fig select')) for (const option of [...select.options].slice(0, 4)) act(() => { fireEvent.change(select, { target: { value: option.value } }) })
-      expect(container.textContent).not.toMatch(/NaN/)
-    }, 60000)
-  }
+})
+
+describe('the coding exercises', () => {
+  it('show the task, an editable draft, hints one at a time and the solution on request', async () => {
+    const lesson = lessonById('sigma'), k = lesson.blocks.findIndex(b => b.exercise), spec = lesson.blocks[k].exercise
+    render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onPython={() => {}} FIGURES={FIGURES} codeLines={codeLines} />)
+    expect(screen.getByText('Your turn: code it')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '▶ Run & check' })).toBeTruthy()
+    const draft = await screen.findByLabelText('Your Python').catch(() => null)
+    if (draft) {
+      fireEvent.change(draft, { target: { value: 'def total(xs):\n    return 0\n' } })
+      expect(localStorage.getItem(`upskillos.exercise.sigma:${k}`)).toContain('return 0')
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
+    expect(screen.getByRole('button', { name: 'Another hint' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Show a solution' }))
+    expect(document.querySelector('.ps-exercise-solution').textContent).toBe(spec.solution)
+  })
+  it('appear just before each lesson\'s closing note', () => {
+    for (const lesson of LESSONS) {
+      const k = lesson.blocks.findIndex(b => b.exercise)
+      expect(k, lesson.id).toBeGreaterThan(0)
+      expect(lesson.blocks.slice(k + 1).every(b => b.note), lesson.id).toBe(true)
+    }
+  })
 })
 
 describe('the falling ball (the opening chapter)', () => {
@@ -67,7 +82,7 @@ describe('the Symbol decoder', () => {
     render(<MathForMLLab />)
     fireEvent.click(screen.getByRole('tab', { name: '🔣 Symbol decoder' }))
     fireEvent.change(screen.getByPlaceholderText(/e.g. gradient/), { target: { value: 'expected' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /4.3 Expected value/ })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(`${lessonById('expectation').number} Expected value`) })[0])
     expect(document.querySelector('.qm-lesson > header h1').textContent).toContain('Expected value')
   })
 })

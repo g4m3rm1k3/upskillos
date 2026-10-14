@@ -1,9 +1,9 @@
 // Part 6: reading papers. A method for decoding any equation, practised on real ones from famous
 // papers, using the Symbol decoder's equation gallery.
 export const PART6 = {
-  id: 'part6', title: 'Part 6 · Reading papers', lessons: [
+  id: 'part6', title: 'Part [[#part:part6]] · Reading papers', lessons: [
     {
-      id: 'reading-papers', number: '6.1', title: 'How to read an equation in a paper',
+      id: 'reading-papers', title: 'How to read an equation in a paper',
       goal: 'Decode an unfamiliar equation with a five-step method: name the pieces, find the loss, check the shapes, say it in words, write it as code.',
       builds: ['attention'],
       blocks: [
@@ -22,7 +22,7 @@ Try it on the general training objective below. Click each piece.` },
           choice: {
             prompt: 'A paper writes $\\mathcal L(\\theta) = \\mathbb E_{(x,y)\\sim\\mathcal D}\\left[-\\log p_\\theta(y \\mid x)\\right]$. Which reading is right?',
             options: [
-              { text: 'The average, over examples drawn from the data, of minus the log-probability the model gives the correct label', why: 'Yes: an expectation (4.3) of a negative log-likelihood (4.11) of a conditional probability (4.5). With softmax for $p_\\theta$, it is exactly lesson 5.5\'s cross-entropy.' },
+              { text: 'The average, over examples drawn from the data, of minus the log-probability the model gives the correct label', why: 'Yes: an expectation ([[#expectation]]) of a negative log-likelihood ([[#mle]]) of a conditional probability ([[#conditional]]). With softmax for $p_\\theta$, it is exactly lesson [[#softmax]]\'s cross-entropy.' },
               { text: 'The probability that the model is correct', why: 'It is a loss to minimise, built from log-probabilities, not a probability itself.' },
               { text: 'The expected value of the parameters', why: 'The expectation is over data $(x, y)$, as the subscript says, not over θ.' },
             ],
@@ -45,11 +45,11 @@ Try it on the general training objective below. Click each piece.` },
     },
 
     {
-      id: 'decode-practice', number: '6.2', title: 'Practice: equations from famous papers',
+      id: 'decode-practice', title: 'Practice: equations from famous papers',
       goal: 'Decode backpropagation, Adam, attention, the KL divergence and the policy gradient as they appear in the papers that introduced them.',
       builds: ['reading-papers'],
       blocks: [
-        { md: `Here are equations as their papers wrote them. Each is in the gallery below, broken into pieces. Before clicking, try the method of lesson 6.1 on your own: what is the output, what are the pieces, what is the sentence?
+        { md: `Here are equations as their papers wrote them. Each is in the gallery below, broken into pieces. Before clicking, try the method of lesson [[#reading-papers]] on your own: what is the output, what are the pieces, what is the sentence?
 
 One of them is new: the **policy gradient** from reinforcement learning, the method behind CartPole Lab's REINFORCE and, in refined forms, the training of language models from human feedback. Every symbol in it is one you know: an expectation over episodes $\\tau$ played by the policy, the gradient of a log-probability, and a return $G_t$ (a sum of rewards).` },
         { figure: 'EquationAnatomy', props: { ids: ['backprop', 'adam', 'attention', 'kl', 'pg', 'bayes', 'gaussian'] }, caption: 'Pick an equation, then click its pieces.' },

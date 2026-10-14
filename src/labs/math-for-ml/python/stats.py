@@ -107,6 +107,27 @@ def pca2(xs, ys):
     return eigenvector2(C, big), big, small
 
 
+def double_integral(f, ax, bx, ay, by, n=100):
+    """∬ f dA over a rectangle: an n × n grid of thin columns, each f at its centre times its base area."""
+    wx = (bx - ax) / n
+    wy = (by - ay) / n
+    total = 0.0
+    for i in range(n):
+        for j in range(n):
+            total += f(ax + (i + 0.5) * wx, ay + (j + 0.5) * wy) * wx * wy
+    return total
+
+
+def ring_sum(g, r_max, n=2000):
+    """∬ g(r) dA for a function of the distance r alone, added up in thin rings of area about 2πr dr."""
+    dr = r_max / n
+    total = 0.0
+    for i in range(n):
+        r = (i + 0.5) * dr
+        total += g(r) * 2 * math.pi * r * dr
+    return total
+
+
 def show_stats():
     """Part 4's quantities on small examples."""
     p = distribution(two_dice())

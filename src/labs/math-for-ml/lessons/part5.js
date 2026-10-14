@@ -9,9 +9,9 @@ const grads = backprop(NET, [1, 2], 1)
 const [lw, lb] = fitLogistic(STUDY, PASSED)
 
 export const PART5 = {
-  id: 'part5', title: 'Part 5 · The big equations', lessons: [
+  id: 'part5', title: 'Part [[#part:part5]] · The big equations', lessons: [
     {
-      id: 'linear-regression', number: '5.1', title: 'Linear regression, read symbol by symbol',
+      id: 'linear-regression', title: 'Linear regression, read symbol by symbol',
       goal: 'Read $J(\\mathbf w, b) = \\frac1n\\sum_{i=1}^n(\\mathbf w^\\top\\mathbf x^{(i)} + b - y^{(i)})^2$ in full, and compute it.',
       builds: ['mle', 'matrix-gradients'],
       blocks: [
@@ -23,14 +23,14 @@ You have met every piece. Reading from the inside out:
 
 | Piece | Meaning | Lesson |
 |---|---|---|
-| $\\mathbf x^{(i)}$ | example $i$'s inputs, a vector | 1.3, 3.1 |
-| $\\mathbf w^\\top\\mathbf x^{(i)} + b$ | the prediction $\\hat y^{(i)}$: a weighted sum plus a bias | 3.4, 3.8 |
-| $\\hat y^{(i)} - y^{(i)}$ | the miss on example $i$ | 1.1 |
-| $(\\cdots)^2$ | squared: positive, big misses punished | 1.5 |
-| $\\frac1n\\sum_{i=1}^n$ | averaged over all $n$ examples | 1.4 |
-| $J(\\mathbf w, b)$ | the loss, a function of the **parameters**, not the data | 1.2 |
+| $\\mathbf x^{(i)}$ | example $i$'s inputs, a vector | [[#subscripts]], [[#vectors]] |
+| $\\mathbf w^\\top\\mathbf x^{(i)} + b$ | the prediction $\\hat y^{(i)}$: a weighted sum plus a bias | [[#dot-product]], [[#transpose]] |
+| $\\hat y^{(i)} - y^{(i)}$ | the miss on example $i$ | [[#symbols-welcome]] |
+| $(\\cdots)^2$ | squared: positive, big misses punished | [[#powers]] |
+| $\\frac1n\\sum_{i=1}^n$ | averaged over all $n$ examples | [[#sigma]] |
+| $J(\\mathbf w, b)$ | the loss, a function of the **parameters**, not the data | [[#functions]] |
 
-So: **the average squared miss of the line's predictions**, the **mean squared error**. Lesson 4.11 showed why squared: it is maximum likelihood when the noise is Gaussian. Training means $\\arg\\min_{\\mathbf w, b} J$ (lesson 1.10).
+So: **the average squared miss of the line's predictions**, the **mean squared error**. Lesson [[#mle]] showed why squared: it is maximum likelihood when the noise is Gaussian. Training means $\\arg\\min_{\\mathbf w, b} J$ (lesson [[#argmin]]).
 
 Our data: hours studied (1 to 6) and test scores. Try the line $\\hat y = 4x + 48$: its predictions are 52, 56, 60, 64, 68, 72 against true scores 52, 55, 61, 64, 70, 71.` },
         {
@@ -52,16 +52,16 @@ Our data: hours studied (1 to 6) and test scores. Try the line $\\hat y = 4x + 4
             explain: 'Misses: 0, 1, −1, 0, −2, 1. Squares: 0, 1, 1, 0, 4, 1, total 7. Average: $7/6 \\approx 1.167$.',
           },
         },
-        { note: 'Linear regression: $J(\\mathbf w, b) = \\frac1n\\sum_i(\\mathbf w^\\top\\mathbf x^{(i)} + b - y^{(i)})^2$, the mean squared error of a weighted sum. Every symbol came from Parts 1–4.' },
+        { note: 'Linear regression: $J(\\mathbf w, b) = \\frac1n\\sum_i(\\mathbf w^\\top\\mathbf x^{(i)} + b - y^{(i)})^2$, the mean squared error of a weighted sum. Every symbol came from Parts [[#part:part1]]–[[#part:part4]].' },
       ],
     },
 
     {
-      id: 'regression-gradient', number: '5.2', title: 'Training it: the gradient, and the shortcut',
+      id: 'regression-gradient', title: 'Training it: the gradient, and the shortcut',
       goal: 'Derive $\\frac{\\partial J}{\\partial w} = \\frac2n\\sum_i(\\hat y_i - y_i)x_i$, train by gradient descent, and check it against the normal equations.',
       builds: ['linear-regression'],
       blocks: [
-        { md: `To run gradient descent (lesson 2.17) we need $J$'s partial derivatives. Take one term, $(wx_i + b - y_i)^2$. Chain rule (lesson 2.12): outer function "square" has rate $2(\\cdot)$; inner $wx_i + b - y_i$ has rate $x_i$ with respect to $w$ and $1$ with respect to $b$. Average over the examples:
+        { md: `To run gradient descent (lesson [[#gradient-descent-2d]]) we need $J$'s partial derivatives. Take one term, $(wx_i + b - y_i)^2$. Chain rule (lesson [[#chain-rule]]): outer function "square" has rate $2(\\cdot)$; inner $wx_i + b - y_i$ has rate $x_i$ with respect to $w$ and $1$ with respect to $b$. Average over the examples:
 
 $$\\frac{\\partial J}{\\partial w} = \\frac{2}{n}\\sum_{i=1}^n (\\hat y_i - y_i)\\,x_i, \\qquad \\frac{\\partial J}{\\partial b} = \\frac{2}{n}\\sum_{i=1}^n (\\hat y_i - y_i)$$
 
@@ -69,7 +69,7 @@ Read it: each example pushes $w$ in proportion to **how wrong it is** times **ho
 
 $$w \\leftarrow w - \\eta\\frac{\\partial J}{\\partial w}, \\qquad b \\leftarrow b - \\eta\\frac{\\partial J}{\\partial b}$$
 
-For linear regression there is also a shortcut: the gradient is exactly lesson 3.13's $\\frac2n X^\\top(X\\boldsymbol\\theta - \\mathbf y)$, and setting it to zero gives lesson 3.11's normal equations, solvable in one step. Gradient descent and the normal equations must agree, and they do. (Big models have no such shortcut, which is why gradient descent rules ML.)` },
+For linear regression there is also a shortcut: the gradient is exactly lesson [[#matrix-gradients]]'s $\\frac2n X^\\top(X\\boldsymbol\\theta - \\mathbf y)$, and setting it to zero gives lesson [[#least-squares]]'s normal equations, solvable in one step. Gradient descent and the normal equations must agree, and they do. (Big models have no such shortcut, which is why gradient descent rules ML.)` },
         {
           code: {
             file: 'models.py', fn: 'mse_gradient', notes: [
@@ -102,7 +102,7 @@ For linear regression there is also a shortcut: the gradient is exactly lesson 3
           code: {
             file: 'models.py', fn: 'exact_line', notes: [
               ['def exact_line(xs, ys):', ['The shortcut.']],
-              ['return least_squares(xs, ys)', ['Lesson 3.11\'s normal equations.']],
+              ['return least_squares(xs, ys)', ['Lesson [[#least-squares]]\'s normal equations.']],
             ],
           },
         },
@@ -127,7 +127,7 @@ For linear regression there is also a shortcut: the gradient is exactly lesson 3
     },
 
     {
-      id: 'regularisation', number: '5.3', title: 'Regularisation: the λ‖w‖² penalty',
+      id: 'regularisation', title: 'Regularisation: the λ‖w‖² penalty',
       goal: 'Read $J + \\lambda\\|\\mathbf w\\|^2$, predict what increasing λ does, and see it as a Gaussian prior.',
       builds: ['regression-gradient', 'bayes'],
       blocks: [
@@ -137,9 +137,17 @@ $$J_\\lambda(\\mathbf w, b) = \\underbrace{\\frac1n\\sum_i(\\hat y_i - y_i)^2}_{
 
 $\\lambda$ (lambda) sets the price. At $\\lambda = 0$ it is ordinary least squares; as $\\lambda$ grows the weights shrink toward 0 and the line flattens toward the mean. This is **ridge regression**, also called **L2 regularisation** or, in neural networks, **weight decay** (because the penalty's gradient, $2\\lambda\\mathbf w$, shrinks every weight a little each step). The bias $b$ is usually not penalised.
 
-The normal equations just gain a $\\lambda$ (times $n$, for our averaged loss) on the diagonal of $X^\\top X$, which also cures lesson 3.9's singular matrices: there is always an inverse.
+The normal equations just gain $n\\lambda$ on the diagonal of $X^\\top X$, in the entries belonging to the penalised weights (multiply the loss by $n$ and the penalty's gradient $2n\\lambda\\mathbf w$ joins $2X^\\top X\\boldsymbol\\theta$). That also cures lesson [[#inverse]]'s singular matrices. A matrix $M$ has no inverse when it squashes some nonzero $\\mathbf v$ to $\\mathbf 0$. But for the ridge matrix, $\\mathbf v^\\top M\\mathbf v = \\|X\\mathbf v\\|^2 + n\\lambda\\|\\mathbf v_{\\mathbf w}\\|^2$, which is positive unless $\\mathbf v$'s weight part is $\\mathbf 0$ **and** $X\\mathbf v = \\mathbf 0$; with only the intercept left, $X\\mathbf v$ is that number times a column of ones, so it too must be 0. So $M\\mathbf v \\ne \\mathbf 0$ for every nonzero $\\mathbf v$, and there is always an inverse.
 
-A Bayesian reading (lesson 4.6): penalising $\\lambda\\|\\mathbf w\\|^2$ is the same as maximising the **posterior** with a Gaussian **prior** that says "weights are probably near zero". Regularisation is a prior belief, written as a loss.` },
+**A Bayesian reading.** Bayes' rule (lesson [[#bayes]]) for parameters says $p(\\mathbf w \\mid \\text{data}) \\propto p(\\text{data} \\mid \\mathbf w)\\,p(\\mathbf w)$: posterior ∝ likelihood × prior ($\\propto$, "proportional to", hides the evidence term, which doesn't depend on $\\mathbf w$). Choosing the $\\mathbf w$ with the highest posterior is **maximum a posteriori** (MAP) estimation. Take logs and flip the sign, so maximising becomes minimising:
+
+$$-\\log p(\\mathbf w \\mid \\text{data}) = -\\log p(\\text{data} \\mid \\mathbf w) - \\log p(\\mathbf w) + \\text{const}$$
+
+With Gaussian noise of spread $\\sigma$, the first term is $\\frac{1}{2\\sigma^2}\\sum_i(\\hat y_i - y_i)^2 + \\text{const}$ (lesson [[#mle]]). Now give every weight a Gaussian prior centred on 0 with spread $\\tau$ (tau): "weights are probably near zero". Each weight contributes $-\\log\\mathcal N(w_j; 0, \\tau^2) = \\frac{w_j^2}{2\\tau^2} + \\text{const}$, so the second term is $\\frac{1}{2\\tau^2}\\|\\mathbf w\\|^2 + \\text{const}$. Multiply everything by $\\frac{2\\sigma^2}{n}$ (which doesn't move the minimum) and drop the constants:
+
+$$\\frac1n\\sum_i(\\hat y_i - y_i)^2 + \\frac{\\sigma^2}{n\\tau^2}\\|\\mathbf w\\|^2$$
+
+That is ridge regression with $\\lambda = \\frac{\\sigma^2}{n\\tau^2}$. A strong belief that weights are small (small $\\tau$) means a big $\\lambda$; more data (big $n$) means the prior matters less. Regularisation is a prior belief, written as a loss.` },
         {
           code: {
             file: 'models.py', fn: 'ridge_line', notes: [
@@ -150,7 +158,7 @@ A Bayesian reading (lesson 4.6): penalising $\\lambda\\|\\mathbf w\\|^2$ is the 
               ['sxy = sum(x * y for x, y in zip(xs, ys))', ['$\\sum x_iy_i$: part of $X^\\top\\mathbf y$.']],
               ['sy = sum(ys)', ['$\\sum y_i$.']],
               ['det = (sxx + n * lam) * n - sx * sx', ['The determinant of $X^\\top X$ with $n\\lambda$ added to the weight\'s corner.'], { calc: q => [`(${f(q.sxx)} + ${q.n}×${f(q.lam)})×${q.n} − ${f(q.sx)}²`, (q.sxx + q.n * q.lam) * q.n - q.sx * q.sx] }],
-              ['w = (n * sxy - sx * sy) / det', ['Lesson 3.9\'s 2×2 inverse, applied.']],
+              ['w = (n * sxy - sx * sy) / det', ['Lesson [[#inverse]]\'s 2×2 inverse, applied.']],
               ['b = ((sxx + n * lam) * sy - sx * sxy) / det', ['The intercept, from the same inverse.']],
               ['return w, b', ['The penalised line.']],
             ],
@@ -169,15 +177,15 @@ A Bayesian reading (lesson 4.6): penalising $\\lambda\\|\\mathbf w\\|^2$ is the 
     },
 
     {
-      id: 'logistic-regression', number: '5.4', title: 'Logistic regression and cross-entropy',
+      id: 'logistic-regression', title: 'Logistic regression and cross-entropy',
       goal: 'Derive binary cross-entropy as a negative log-likelihood, and its gradient $(p - y)x$.',
       builds: ['regularisation', 'chain-rule', 'likelihood'],
       blocks: [
-        { md: `Now predict a **yes/no**: will a student pass, given hours studied? A line can give any number; we want a probability. Pass the line through the sigmoid (lesson 1.8):
+        { md: `Now predict a **yes/no**: will a student pass, given hours studied? A line can give any number; we want a probability. Pass the line through the sigmoid (lesson [[#composition]]):
 
 $$p = \\sigma(wx + b) = \\frac{1}{1 + e^{-(wx + b)}}$$
 
-That is **logistic regression**. To train it, use maximum likelihood (lesson 4.11). Each example is like a coin flip with bias $p_i$: its probability is $p_i$ if $y_i = 1$ (passed) and $1 - p_i$ if $y_i = 0$. One expression covers both, because one of the two powers is always 0:
+That is **logistic regression**. To train it, use maximum likelihood (lesson [[#mle]]). Each example is like a coin flip with bias $p_i$: its probability is $p_i$ if $y_i = 1$ (passed) and $1 - p_i$ if $y_i = 0$. One expression covers both, because one of the two powers is always 0:
 
 $$P(y_i) = p_i^{\\,y_i}(1 - p_i)^{1 - y_i}$$
 
@@ -187,7 +195,7 @@ $$\\mathcal L = -\\frac1n\\sum_{i=1}^{n}\\Big[y_i\\log p_i + (1 - y_i)\\log(1 - 
 
 That is **binary cross-entropy**, the standard loss for yes/no classification. A confident wrong answer ($p = 0.01$ when $y = 1$) costs $-\\log 0.01 = 4.6$; a confident right one costs almost nothing.
 
-Its gradient is beautifully simple. With $z = wx + b$, the chain rule gives $\\frac{\\partial\\mathcal L_i}{\\partial z} = -\\frac{y}{p}\\sigma'(z) + \\frac{1-y}{1-p}\\sigma'(z)$, and since $\\sigma' = p(1 - p)$ (lesson 2.12) everything cancels to
+Its gradient is beautifully simple. With $z = wx + b$, the chain rule gives $\\frac{\\partial\\mathcal L_i}{\\partial z} = -\\frac{y}{p}\\sigma'(z) + \\frac{1-y}{1-p}\\sigma'(z)$, and since $\\sigma' = p(1 - p)$ (lesson [[#chain-rule]]) everything cancels to
 
 $$\\frac{\\partial \\mathcal L_i}{\\partial z} = p_i - y_i, \\qquad \\frac{\\partial \\mathcal L}{\\partial w} = \\frac1n\\sum_i (p_i - y_i)\\,x_i$$
 
@@ -239,13 +247,13 @@ Prediction minus truth, times input: the **same shape** as linear regression's g
     },
 
     {
-      id: 'softmax', number: '5.5', title: 'Softmax and cross-entropy: choosing among many',
+      id: 'softmax', title: 'Softmax and cross-entropy: choosing among many',
       goal: 'Build softmax from $e^x$ and normalising, compute the cross-entropy against a label, and state its gradient $\\mathbf p - \\mathbf y$.',
       builds: ['logistic-regression', 'number-e'],
       blocks: [
         { md: `With $K$ classes (digits 0–9, or 50,000 possible next words), a model outputs one raw **score** per class, $z_1, \\dots, z_K$ (called **logits**). We need probabilities: positive, adding to 1. Two steps:
 
-1. Make every score positive with $e^{z_k}$ (lesson 1.6: exponentials are always positive, and bigger scores stay bigger).
+1. Make every score positive with $e^{z_k}$ (lesson [[#number-e]]: exponentials are always positive, and bigger scores stay bigger).
 2. Divide by the total so they add to 1.
 
 $$\\text{softmax}(\\mathbf z)_k = \\frac{e^{z_k}}{\\sum_{j=1}^{K} e^{z_j}}$$
@@ -256,9 +264,13 @@ Training is maximum likelihood again: the loss is minus the log of the probabili
 
 $$\\mathcal L = -\\log \\text{softmax}(\\mathbf z)_c = -\\sum_k y_k \\log p_k$$
 
-where $\\mathbf y$ is **one-hot**: 1 for the correct class, 0 elsewhere. This is **categorical cross-entropy**, the loss of nearly every classifier and language model. And its gradient with respect to the scores is, once more,
+where $\\mathbf y$ is **one-hot**: 1 for the correct class, 0 elsewhere. This is **categorical cross-entropy**, the loss of nearly every classifier and language model. And its gradient with respect to the scores comes out, once more, as predicted minus truth. Derive it. Write the loss out using $\\log\\frac ab = \\log a - \\log b$ and $\\log e^{z} = z$:
 
-$$\\frac{\\partial \\mathcal L}{\\partial \\mathbf z} = \\mathbf p - \\mathbf y$$
+$$\\mathcal L = -\\log\\frac{e^{z_c}}{\\sum_j e^{z_j}} = -z_c + \\log\\sum_j e^{z_j}$$
+
+Now take the partial derivative with respect to one score $z_k$, holding the others fixed. The first term, $-z_c$, has slope $-1$ if $k = c$ and $0$ otherwise: that is $-y_k$. The second is $\\log$ of a sum; by the chain rule (outside $\\log u$, rate $\\frac1u$; inside $u = \\sum_j e^{z_j}$, whose only term involving $z_k$ is $e^{z_k}$, rate $e^{z_k}$) its slope is $\\frac{e^{z_k}}{\\sum_j e^{z_j}} = p_k$. Together:
+
+$$\\frac{\\partial \\mathcal L}{\\partial z_k} = p_k - y_k, \\qquad\\text{or as a vector,}\\qquad \\frac{\\partial \\mathcal L}{\\partial \\mathbf z} = \\mathbf p - \\mathbf y$$
 
 predicted probabilities minus the one-hot truth.
 
@@ -302,13 +314,13 @@ A practical detail you'll meet in code: $e^{1000}$ overflows, so implementations
     },
 
     {
-      id: 'entropy-kl', number: '5.6', title: 'Entropy, cross-entropy and KL divergence',
+      id: 'entropy-kl', title: 'Entropy, cross-entropy and KL divergence',
       goal: 'Compute $H(p)$, $H(p, q)$ and $D_{KL}(p\\|q)$, and say why minimising cross-entropy minimises KL.',
       builds: ['softmax', 'expectation'],
       blocks: [
         { md: `Why is it called **cross-entropy**? Information theory gives the meaning.
 
-The **surprise** of an event with probability $p$ is $-\\log p$: a certain event (probability 1) is no surprise; a one-in-a-million event is very surprising. The **entropy** of a distribution is its **expected** surprise (lesson 4.3):
+The **surprise** of an event with probability $p$ is $-\\log p$: a certain event (probability 1) is no surprise; a one-in-a-million event is very surprising. The **entropy** of a distribution is its **expected** surprise (lesson [[#expectation]]):
 
 $$H(p) = -\\sum_k p_k \\log p_k$$
 
@@ -318,11 +330,17 @@ A fair coin has entropy $\\log 2 = 0.693$ nats (or exactly 1 bit with base-2 log
 
 $$H(p, q) = -\\sum_k p_k \\log q_k$$
 
-With $p$ one-hot (the true label), this is exactly lesson 5.5's loss, $-\\log q_{\\text{correct}}$. Cross-entropy is never smaller than the entropy, and the gap is the **Kullback–Leibler divergence**:
+With $p$ one-hot (the true label), this is exactly lesson [[#softmax]]'s loss, $-\\log q_{\\text{correct}}$. Cross-entropy is never smaller than the entropy, and the gap is the **Kullback–Leibler divergence**:
 
 $$D_{KL}(p \\,\\|\\, q) = H(p, q) - H(p) = \\sum_k p_k \\log\\frac{p_k}{q_k} \\;\\ge\\; 0$$
 
-zero only when $q = p$. It measures how far a belief is from the truth (it is not a true distance: $D_{KL}(p\\|q) \\ne D_{KL}(q\\|p)$). Since $H(p)$ doesn't depend on the model, **minimising cross-entropy is minimising KL divergence** to the data. KL also appears directly in VAEs, in RL from human feedback, and in knowledge distillation.` },
+zero only when $q = p$. **Why it can't be negative.** First a fact about logs: $\\ln t \\le t - 1$ for every $t > 0$. The function $g(t) = t - 1 - \\ln t$ has slope $1 - \\frac1t$ (lesson [[#exp-log-slopes]]), negative for $t < 1$ and positive for $t > 1$, so its lowest point is at $t = 1$, where $g(1) = 0$ (lesson [[#minimum]]). So $g(t) \\ge 0$ everywhere, with equality only at $t = 1$. Now apply it with $t = q_k/p_k$, over the $k$ where $p_k > 0$:
+
+$$-D_{KL}(p\\|q) = \\sum_k p_k\\ln\\frac{q_k}{p_k} \\le \\sum_k p_k\\Big(\\frac{q_k}{p_k} - 1\\Big) = \\sum_k q_k - \\sum_k p_k \\le 1 - 1 = 0$$
+
+(the $q_k$ summed over only some $k$ add to at most 1). So $D_{KL} \\ge 0$, and it is 0 only if every $q_k/p_k = 1$, that is, $q = p$. (This is a special case of *Jensen's inequality*, which papers often cite for it.)
+
+KL measures how far a belief is from the truth (it is not a true distance: $D_{KL}(p\\|q) \\ne D_{KL}(q\\|p)$). Since $H(p)$ doesn't depend on the model, **minimising cross-entropy is minimising KL divergence** to the data. KL also appears directly in VAEs, in RL from human feedback, and in knowledge distillation.` },
         {
           code: {
             file: 'models.py', fn: 'entropy', notes: [
@@ -359,17 +377,17 @@ zero only when $q = p$. It measures how far a belief is from the truth (it is no
     },
 
     {
-      id: 'layers', number: '5.7', title: 'A neural network is composed functions',
+      id: 'layers', title: 'A neural network is composed functions',
       goal: 'Read $\\mathbf h = \\sigma(W\\mathbf x + \\mathbf b)$ and a two-layer network, and run one forward pass by hand.',
       builds: ['entropy-kl', 'matrices', 'composition'],
       blocks: [
-        { md: `A **layer** is lesson 3.5's matrix product followed by an activation applied to every entry:
+        { md: `A **layer** is lesson [[#matrices]]'s matrix product followed by an activation applied to every entry:
 
 $$\\mathbf h = \\sigma(W\\mathbf x + \\mathbf b)$$
 
-$W\\mathbf x$: each neuron's weighted sum (a dot product per row). $+\\,\\mathbf b$: each neuron's bias. $\\sigma(\\cdot)$: bend every entry (sigmoid here; ReLU, $\\max(0, z)$, is the modern default). Without the bend, stacked layers would collapse into one matrix (lesson 3.7).
+$W\\mathbf x$: each neuron's weighted sum (a dot product per row). $+\\,\\mathbf b$: each neuron's bias. $\\sigma(\\cdot)$: bend every entry (sigmoid here; ReLU, $\\max(0, z)$, is the modern default). Without the bend, stacked layers would collapse into one matrix (lesson [[#matrix-multiplication]]).
 
-A network **composes** layers (lesson 1.8):
+A network **composes** layers (lesson [[#composition]]):
 
 $$\\hat y = \\mathbf w_2^\\top\\, \\sigma(W_1\\mathbf x + \\mathbf b_1) + b_2$$
 
@@ -416,14 +434,14 @@ $W_1 = \\begin{pmatrix}0.5 & -0.3\\\\0.2 & 0.8\\end{pmatrix}$, $\\mathbf b_1 = (
     },
 
     {
-      id: 'backpropagation', number: '5.8', title: 'Backpropagation: the chain rule, run backwards',
+      id: 'backpropagation', title: 'Backpropagation: the chain rule, run backwards',
       goal: 'Compute every weight\'s gradient in a two-layer network with the chain rule, and read $\\boldsymbol\\delta = (W^\\top\\boldsymbol\\delta\') \\odot \\sigma\'(\\mathbf z)$.',
       builds: ['layers', 'chain-rule'],
       blocks: [
-        { md: `To train the network we need $\\frac{\\partial \\mathcal L}{\\partial w}$ for **every** weight. The loss is a long composition, so this is the chain rule (lesson 2.12), organised cleverly: start at the loss and work **backwards**, reusing each result. Take $\\mathcal L = (\\hat y - y)^2$ with target $y = 1$.
+        { md: `To train the network we need $\\frac{\\partial \\mathcal L}{\\partial w}$ for **every** weight. The loss is a long composition, so this is the chain rule (lesson [[#chain-rule]]), organised cleverly: start at the loss and work **backwards**, reusing each result. Take $\\mathcal L = (\\hat y - y)^2$ with target $y = 1$.
 
 1. **Output.** $\\frac{\\partial\\mathcal L}{\\partial\\hat y} = 2(\\hat y - y)$. Call it $\\delta_y$.
-2. **Output layer's weights.** $\\hat y = \\mathbf w_2^\\top\\mathbf h + b_2$, so $\\frac{\\partial\\hat y}{\\partial w_{2,k}} = h_k$ (lesson 3.13). Chain: $\\frac{\\partial\\mathcal L}{\\partial w_{2,k}} = \\delta_y\\, h_k$. And $\\frac{\\partial\\mathcal L}{\\partial b_2} = \\delta_y$.
+2. **Output layer's weights.** $\\hat y = \\mathbf w_2^\\top\\mathbf h + b_2$, so $\\frac{\\partial\\hat y}{\\partial w_{2,k}} = h_k$ (lesson [[#matrix-gradients]]). Chain: $\\frac{\\partial\\mathcal L}{\\partial w_{2,k}} = \\delta_y\\, h_k$. And $\\frac{\\partial\\mathcal L}{\\partial b_2} = \\delta_y$.
 3. **Back into the hidden layer.** $\\frac{\\partial\\hat y}{\\partial h_k} = w_{2,k}$, so $\\frac{\\partial\\mathcal L}{\\partial h_k} = \\delta_y w_{2,k}$.
 4. **Through the activation.** $h_k = \\sigma(z_k)$ and $\\sigma' = \\sigma(1-\\sigma)$: $\\delta_k = \\frac{\\partial\\mathcal L}{\\partial z_k} = \\delta_y\\, w_{2,k}\\; h_k(1 - h_k)$.
 5. **First layer's weights.** $z_k = \\sum_j W_{1,kj} x_j + b_{1,k}$, so $\\frac{\\partial\\mathcal L}{\\partial W_{1,kj}} = \\delta_k\\, x_j$ and $\\frac{\\partial\\mathcal L}{\\partial b_{1,k}} = \\delta_k$.
@@ -432,7 +450,7 @@ Every gradient is "the error signal arriving at a neuron" times "the input it sa
 
 $$\\boldsymbol\\delta = (W^\\top\\boldsymbol\\delta_{\\text{next}}) \\odot \\sigma'(\\mathbf z), \\qquad \\frac{\\partial\\mathcal L}{\\partial W} = \\boldsymbol\\delta\\,\\mathbf x^\\top$$
 
-$W^\\top$ sends the error back through the weights it came forward through; $\\odot$ means multiply entry by entry; $\\boldsymbol\\delta\\mathbf x^\\top$ is an outer product (lesson 3.8): one gradient per weight. One backward pass costs about as much as one forward pass, however many weights there are. That efficiency is what makes deep learning possible.` },
+$W^\\top$ sends the error back through the weights it came forward through; $\\odot$ means multiply entry by entry; $\\boldsymbol\\delta\\mathbf x^\\top$ is an outer product (lesson [[#transpose]]): one gradient per weight. One backward pass costs about as much as one forward pass, however many weights there are. That efficiency is what makes deep learning possible.` },
         {
           code: {
             file: 'models.py', fn: 'backprop', notes: [
@@ -471,11 +489,11 @@ $W^\\top$ sends the error back through the weights it came forward through; $\\o
     },
 
     {
-      id: 'optimisers', number: '5.9', title: 'Momentum and Adam, read line by line',
+      id: 'optimisers', title: 'Momentum and Adam, read line by line',
       goal: 'Read the Adam update equations, explain each line (moving averages, bias correction, scaling), and compare it with plain gradient descent.',
       builds: ['backpropagation', 'gradient-descent-2d', 'variance'],
       blocks: [
-        { md: `Plain gradient descent (lesson 2.17) has two weaknesses: in a long narrow valley it zig-zags across the steep direction while crawling along the shallow one, and one learning rate must suit every parameter. The Adam optimiser, used to train most modern networks, fixes both. Its paper writes it like this; every symbol is now readable:
+        { md: `Plain gradient descent (lesson [[#gradient-descent-2d]]) has two weaknesses: in a long narrow valley it zig-zags across the steep direction while crawling along the shallow one, and one learning rate must suit every parameter. The Adam optimiser, used to train most modern networks, fixes both. Its paper writes it like this; every symbol is now readable:
 
 $$\\begin{aligned}
 \\mathbf g_t &= \\nabla_\\theta \\mathcal L(\\theta_{t-1}) \\\\
@@ -489,8 +507,10 @@ Line by line:
 
 1. **The gradient** at step $t$ (subscripts now count time).
 2. **Momentum.** $\\mathbf m$ is an **exponential moving average** of the gradients: 90% of the old average plus 10% of the new gradient ($\\beta_1 = 0.9$). Zig-zags cancel out in the average; steady directions build up, like a ball rolling downhill gathering speed.
-3. **Second moment.** The same average of the **squared** gradients ($\\mathbf g^2$ entry by entry): roughly each parameter's typical gradient size squared, an uncentred variance (lesson 4.4).
-4. **Bias correction.** Both averages start at 0, so early on they are too small. Dividing by $1 - \\beta^t$ fixes that (at $t = 1$, $\\mathbf m_1 = 0.1\\mathbf g$ and $1 - 0.9 = 0.1$, so $\\hat{\\mathbf m}_1 = \\mathbf g$ exactly).
+3. **Second moment.** The same average of the **squared** gradients ($\\mathbf g^2$ entry by entry): roughly each parameter's typical gradient size squared, an uncentred variance (lesson [[#variance]]).
+4. **Bias correction.** Both averages start at 0, so early on they are too small. Dividing by $1 - \\beta^t$ fixes that exactly; here is why. Unroll line 1 from $\\mathbf m_0 = \\mathbf 0$: $\\mathbf m_1 = (1-\\beta)\\mathbf g_1$, $\\mathbf m_2 = (1-\\beta)(\\beta\\mathbf g_1 + \\mathbf g_2)$, and in general
+$$\\mathbf m_t = (1 - \\beta)\\big(\\beta^{t-1}\\mathbf g_1 + \\beta^{t-2}\\mathbf g_2 + \\dots + \\beta\\,\\mathbf g_{t-1} + \\mathbf g_t\\big)$$
+a weighted sum of the gradients so far, recent ones weighted most. For a true average the weights should add to 1. They add to $(1 - \\beta)S$ with $S = 1 + \\beta + \\dots + \\beta^{t-1}$. To add up $S$, multiply it by $\\beta$: $\\beta S = \\beta + \\dots + \\beta^{t}$. Subtracting, everything cancels except the ends: $S - \\beta S = 1 - \\beta^t$, so $(1 - \\beta)S = 1 - \\beta^t$. The weights add to $1 - \\beta^t$, not 1: early on (at $t = 1$, $1 - 0.9 = 0.1$) far too little. Dividing by $1 - \\beta^t$ rescales them to add to exactly 1. (If every gradient were the same $\\mathbf g$, $\\hat{\\mathbf m}_t$ would be exactly $\\mathbf g$ at every step.) As $t$ grows, $\\beta^t \\to 0$ and the correction fades away. The same holds for $\\mathbf v$ with $\\beta_2$.
 5. **The step.** Momentum divided by the typical gradient size: each parameter's step is scaled to about $\\alpha$, whatever its own slopes are. Steep directions get damped, shallow ones boosted. $\\epsilon$ (about $10^{-8}$) avoids dividing by zero.` },
         {
           code: {
@@ -532,7 +552,7 @@ Line by line:
     },
 
     {
-      id: 'attention', number: '5.10', title: 'Attention: $\\text{softmax}(QK^\\top/\\sqrt d)\\,V$',
+      id: 'attention', title: 'Attention: $\\text{softmax}(QK^\\top/\\sqrt d)\\,V$',
       goal: 'Build scaled dot-product attention from dot products, softmax and a weighted average, and explain the $\\sqrt d$.',
       builds: ['optimisers', 'softmax', 'dot-product'],
       blocks: [
@@ -542,12 +562,12 @@ $$\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{QK^\\top}{\\sqrt{
 
 Built in four steps from things you know. Each word (token) has three vectors: a **query** $\\mathbf q$ ("what am I looking for?"), a **key** $\\mathbf k$ ("what do I contain?") and a **value** $\\mathbf v$ ("what do I pass on?"). Stack them as rows of matrices $Q$, $K$, $V$.
 
-1. **Scores by dot product.** How well does query $i$ match key $j$? Their dot product $\\mathbf q_i \\cdot \\mathbf k_j$ (lesson 3.4: big when they point the same way). All of them at once is the matrix $QK^\\top$ (lesson 3.8): entry $(i, j)$ is $\\mathbf q_i^\\top \\mathbf k_j$.
-2. **Scale by $\\sqrt d$.** With $d$-dimensional vectors of random-ish entries, a dot product is a sum of $d$ terms, so its **variance** grows like $d$ (lesson 4.9) and its typical size like $\\sqrt d$. Huge scores make softmax nearly one-hot, with almost zero gradient. Dividing by $\\sqrt d$ keeps the scores' spread about 1 whatever the dimension.
-3. **Softmax each row** (lesson 5.5): query $i$'s scores become **attention weights**, positive and adding to 1: how much to attend to each word.
+1. **Scores by dot product.** How well does query $i$ match key $j$? Their dot product $\\mathbf q_i \\cdot \\mathbf k_j$ (lesson [[#dot-product]]: big when they point the same way). All of them at once is the matrix $QK^\\top$ (lesson [[#transpose]]): entry $(i, j)$ is $\\mathbf q_i^\\top \\mathbf k_j$.
+2. **Scale by $\\sqrt d$.** Suppose the entries of $\\mathbf q$ and $\\mathbf k$ are independent, each with mean 0 and variance 1 (roughly what a freshly initialised network produces). One term $q_ik_i$ has mean $\\mathbb E[q_i]\\,\\mathbb E[k_i] = 0$ and variance $\\mathbb E[q_i^2k_i^2] = \\mathbb E[q_i^2]\\,\\mathbb E[k_i^2] = 1$ (for independent quantities the expectation of a product factors, as lesson [[#sampling]] showed). The dot product adds $d$ such independent terms, so its variance is $d$ (variances add) and its typical size $\\sqrt d$. In 512 dimensions, scores of ±20 or more are routine. Why that is bad: with two keys, softmax is a sigmoid, $\\frac{e^{s_1}}{e^{s_1} + e^{s_2}} = \\frac{1}{1 + e^{-(s_1 - s_2)}}$ (divide top and bottom by $e^{s_1}$), and lesson [[#chain-rule]] showed the sigmoid's slope $\\sigma(1 - \\sigma)$ is nearly 0 far out. Huge scores make softmax nearly one-hot, with almost no gradient to learn from. Dividing every score by $\\sqrt d$ divides its variance by $d$ (scaling by $c$ scales variance by $c^2$), back to exactly 1, whatever the dimension.
+3. **Softmax each row** (lesson [[#softmax]]): query $i$'s scores become **attention weights**, positive and adding to 1: how much to attend to each word.
 4. **Weighted average of values.** Multiply by $V$: each output is $\\sum_j \\text{weight}_{ij}\\,\\mathbf v_j$, a mix of the values, mostly from the best-matching keys.
 
-That's it: a soft, learnable look-up. Each word gathers information from the words most relevant to it. In a real Transformer, $Q$, $K$ and $V$ are each the input times a learned matrix (lesson 3.5), trained by backpropagation (5.8) with Adam (5.9) on cross-entropy (5.5). Every piece of that sentence is now something you can read.` },
+That's it: a soft, learnable look-up. Each word gathers information from the words most relevant to it. In a real Transformer, $Q$, $K$ and $V$ are each the input times a learned matrix (lesson [[#matrices]]), trained by backpropagation (5.8) with Adam (5.9) on cross-entropy (5.5). Every piece of that sentence is now something you can read.` },
         {
           code: {
             file: 'models.py', fn: 'attention', notes: [
@@ -563,15 +583,15 @@ That's it: a soft, learnable look-up. Each word gathers information from the wor
           },
         },
         { figure: 'AttentionFig', caption: 'Three keys with their values, and one query you steer. The bars are the attention weights; the output is the weighted mix of values.' },
-        { python: { program: 'models', label: 'Run Part 5\'s equations in real Python' } },
+        { python: { program: 'models', label: 'Run Part [[#part:part5]]\'s equations in real Python' } },
         {
           code: {
             file: 'models.py', fn: 'show_models', notes: [
               ['def show_models():', ['What the Python tab runs.']],
-              ['print("line by gradient descent:", fit_line(HOURS, SCORES), " exact:", exact_line(HOURS, SCORES))', ['Lesson 5.2.']],
-              ['print("ridge with λ = 1:", ridge_line(HOURS, SCORES, 1.0))', ['Lesson 5.3.']],
-              ['print("logistic regression:", fit_logistic(STUDY, PASSED))', ['Lesson 5.4.']],
-              ['print("softmax of [2, 1, 0]:", softmax([2.0, 1.0, 0.0]))', ['Lesson 5.5.']],
+              ['print("line by gradient descent:", fit_line(HOURS, SCORES), " exact:", exact_line(HOURS, SCORES))', ['Lesson [[#regression-gradient]].']],
+              ['print("ridge with λ = 1:", ridge_line(HOURS, SCORES, 1.0))', ['Lesson [[#regularisation]].']],
+              ['print("logistic regression:", fit_logistic(STUDY, PASSED))', ['Lesson [[#logistic-regression]].']],
+              ['print("softmax of [2, 1, 0]:", softmax([2.0, 1.0, 0.0]))', ['Lesson [[#softmax]].']],
               ['print("attention:", attention([[1.0, 0.0]], [[1.0, 0.0], [0.0, 1.0]], [[10.0, 0.0], [0.0, 10.0]]))', ['This lesson.']],
             ],
           },

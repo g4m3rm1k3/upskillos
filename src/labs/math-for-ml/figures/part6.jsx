@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Markdown from '../../qmaze-lab/Markdown.jsx'
 import { EQUATIONS } from '../decoder.js'
-import { lessonById } from '../lessons/index.js'
+import { lessonById, refs } from '../lessons/index.js'
 
 export function EquationAnatomy({ ids, onLesson }) {
   const list = ids ? EQUATIONS.filter(e => ids.includes(e.id)) : EQUATIONS
@@ -13,7 +13,7 @@ export function EquationAnatomy({ ids, onLesson }) {
     <p className="qm-hint">{eq.source}</p>
     <div className="mm-equation"><Markdown>{`$$${eq.tex}$$`}</Markdown></div>
     <div className="mm-parts">{eq.parts.map(([tex], i) => <button key={i} className={i === part ? 'active' : ''} onClick={() => setPart(i)}><Markdown inline>{`$${tex}$`}</Markdown></button>)}</div>
-    <div className="mm-part-explain"><Markdown inline>{`$${p[0]}$: ${p[1]}.`}</Markdown> {lesson && (onLesson ? <button className="qm-link" onClick={() => onLesson(lesson.id)}>Lesson {lesson.number}: {lesson.title}</button> : <span className="qm-hint">Lesson {lesson.number}: {lesson.title}</span>)}</div>
-    <p><b>In one sentence:</b> <Markdown inline>{eq.whole}</Markdown></p>
+    <div className="mm-part-explain"><Markdown inline>{`$${p[0]}$: ${refs(p[1])}.`}</Markdown> {lesson && (onLesson ? <button className="qm-link" onClick={() => onLesson(lesson.id)}>Lesson {lesson.number}: {lesson.title}</button> : <span className="qm-hint">Lesson {lesson.number}: {lesson.title}</span>)}</div>
+    <p><b>In one sentence:</b> <Markdown inline>{refs(eq.whole)}</Markdown></p>
   </div>
 }

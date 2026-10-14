@@ -9,20 +9,20 @@ const FALL = FALL_LESSONS.map((l, i) => ({ ...l, number: `2.${i + 1}`, builds: i
 const dx2 = x => 2 * x
 
 export const PART2 = {
-  id: 'part2', title: 'Part 2 · Change: calculus', lessons: [
+  id: 'part2', title: 'Part [[#part:part2]] · Change: calculus', lessons: [
     ...FALL,
     {
-      id: 'slope', number: '2.7', title: 'The slope of a line',
+      id: 'slope', title: 'The slope of a line',
       goal: 'Compute a slope as rise over run, read $y = mx + c$, and connect slope to "how much the output changes per unit of input".',
       builds: ['rate'],
       blocks: [
-        { md: `Lesson 2.6 divided a change in height by a change in time and got a rate. That division works for **any** two quantities. The **slope** between two points $(x_1, y_1)$ and $(x_2, y_2)$ is
+        { md: `Lesson [[#rate]] divided a change in height by a change in time and got a rate. That division works for **any** two quantities. The **slope** between two points $(x_1, y_1)$ and $(x_2, y_2)$ is
 
 $$m = \\frac{\\Delta y}{\\Delta x} = \\frac{y_2 - y_1}{x_2 - x_1}$$
 
 "rise over run": how much $y$ goes up for each 1 that $x$ goes across. $\\Delta$ (capital delta) means "change in".
 
-A straight line has the **same slope everywhere**, and that is what makes it straight. Every line can be written $y = mx + c$: $m$ is the slope and $c$ is where it crosses the vertical axis (the value at $x = 0$). That is lesson 1.1's model, $\\hat y = wx + b$, with different letter names: the weight $w$ **is** a slope. It says how much the prediction changes per unit of input.` },
+A straight line has the **same slope everywhere**, and that is what makes it straight. Every line can be written $y = mx + c$: $m$ is the slope and $c$ is where it crosses the vertical axis (the value at $x = 0$). That is lesson [[#symbols-welcome]]'s model, $\\hat y = wx + b$, with different letter names: the weight $w$ **is** a slope. It says how much the prediction changes per unit of input.` },
         { figure: 'SlopeFig', caption: 'Drag the two points. The triangle shows the rise and the run; their ratio is the slope.' },
         {
           symbols: [
@@ -51,7 +51,7 @@ A straight line has the **same slope everywhere**, and that is what makes it str
     },
 
     {
-      id: 'instant', number: '2.8', title: 'Speed at one instant: limits',
+      id: 'instant', title: 'Speed at one instant: limits',
       goal: 'Compute average rates over shrinking intervals and read $\\lim_{h \\to 0}$ as "what they close in on".',
       builds: ['slope'],
       blocks: [
@@ -83,7 +83,7 @@ Read "$\\lim_{h \\to 0}$" as "what this closes in on as $h$ gets closer and clos
         {
           code: {
             file: 'calculus.py', fn: 'height', notes: [
-              ['def height(t):', ['The falling ball of lessons 2.1–2.6, as a function.']],
+              ['def height(t):', ['The falling ball of lessons [[#observe]]–[[#rate]], as a function.']],
               ['return 20 - 5 * t * t', ['$h(t) = 20 - 5t^2$: 20 m at $t = 0$, 0 m at $t = 2$.'], { tex: 'h(t) = 20 - 5t^2', calc: q => [`20 − 5 × ${f(q.t)}²`, 20 - 5 * q.t * q.t] }],
             ],
           },
@@ -100,11 +100,11 @@ Read "$\\lim_{h \\to 0}$" as "what this closes in on as $h$ gets closer and clos
     },
 
     {
-      id: 'derivative', number: '2.9', title: 'The derivative, from its definition',
+      id: 'derivative', title: 'The derivative, from its definition',
       goal: 'Derive the derivative of $x^2$ with algebra, and read $f\'(x)$, $\\frac{dy}{dx}$ and $\\frac{d}{dx}$.',
       builds: ['instant', 'powers'],
       blocks: [
-        { md: `The limit of lesson 2.8 gets a name. The **derivative** of $f$ at $x$ is
+        { md: `The limit of lesson [[#instant]] gets a name. The **derivative** of $f$ at $x$ is
 
 $$f'(x) = \\lim_{h \\to 0} \\frac{f(x + h) - f(x)}{h}$$
 
@@ -117,7 +117,7 @@ the slope of $f$'s graph at $x$: how fast the output changes per unit of input, 
 
 So the derivative of $x^2$ is $2x$. At $x = 3$ the slope is 6; at $x = -1$ it is $-2$ (the curve goes down there); at $x = 0$ it is 0 (the bottom of the bowl). One line of algebra gave the slope **everywhere**.
 
-The ball: $h(t) = 20 - 5t^2$. The same steps give $h'(t) = -10t$, so at $t = 1$: $-10$ m/s, the number lesson 2.8 closed in on.` },
+The ball: $h(t) = 20 - 5t^2$. The same steps give $h'(t) = -10t$, so at $t = 1$: $-10$ m/s, the number lesson [[#instant]] closed in on.` },
         {
           symbols: [
             ['f\'(x)', 'f prime of x', 'the derivative of $f$ at $x$: its slope there', 'derivative(f, x)'],
@@ -127,7 +127,7 @@ The ball: $h(t) = 20 - 5t^2$. The same steps give $h'(t) = -10t$, so at $t = 1$:
           ],
         },
         { figure: 'DerivativeFig', caption: 'A function (top) and its derivative (bottom). The tangent\'s slope at your point is the height of the lower curve there.' },
-        { md: `Computers usually don't do the algebra; they either use the rules of the next lessons automatically (that's what PyTorch's \`backward()\` does, Part 5), or estimate the slope numerically with a tiny $h$ on both sides:` },
+        { md: `Computers usually don't do the algebra; they either use the rules of the next lessons automatically (that's what PyTorch's \`backward()\` does, Part [[#part:part5]]), or estimate the slope numerically with a tiny $h$ on both sides:` },
         {
           code: {
             file: 'calculus.py', fn: 'derivative', notes: [
@@ -147,7 +147,7 @@ The ball: $h(t) = 20 - 5t^2$. The same steps give $h'(t) = -10t$, so at $t = 1$:
           predict: {
             prompt: 'The ball\'s velocity at $t = 1.5$ s, from $h\'(t) = -10t$?',
             answer: -15, compute: () => derivative(height, 1.5), tolerance: 1e-6,
-            explain: '$-10 \\times 1.5 = -15$ m/s: faster than at 1 s, as the table of lesson 2.3 suggested.',
+            explain: '$-10 \\times 1.5 = -15$ m/s: faster than at 1 s, as the table of lesson [[#record]] suggested.',
           },
         },
         { note: '$f\'(x) = \\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}$, the slope at $x$. Also written $\\frac{df}{dx}$. $\\frac{d}{dx}x^2 = 2x$, found by expanding $(x+h)^2$.' },
@@ -155,15 +155,23 @@ The ball: $h(t) = 20 - 5t^2$. The same steps give $h'(t) = -10t$, so at $t = 1$:
     },
 
     {
-      id: 'derivative-rules', number: '2.10', title: 'Shortcuts: the derivative rules',
+      id: 'derivative-rules', title: 'Shortcuts: the derivative rules',
       goal: 'Differentiate any polynomial with the power, constant-multiple and sum rules, and say why each holds.',
       builds: ['derivative'],
       blocks: [
-        { md: `Doing the limit every time would be slow. Three rules cover every polynomial, and each comes from the definition:
+        { md: `Doing the limit every time would be slow. Three rules cover every polynomial, and each comes straight from the definition $f'(x) = \\lim_{h\\to0}\\frac{f(x+h) - f(x)}{h}$.
 
-1. **Power rule:** $\\frac{d}{dx}\\, x^n = n\\,x^{n-1}$. Expanding $(x+h)^n$, the only term that survives dividing by $h$ and shrinking $h$ is $n x^{n-1}h$ (all others have $h^2$ or more). We saw $n = 2$: $2x$. For $x^3$: $3x^2$. For $x^1 = x$: $1$ (a line of slope 1). For a constant ($x^0$): 0, because a flat line has no slope.
-2. **Constant multiple:** $\\frac{d}{dx}\\, c f(x) = c f'(x)$. Stretching a graph vertically by 3 makes every slope 3 times steeper.
-3. **Sum rule:** $\\frac{d}{dx}\\,(f + g) = f' + g'$. The change in a sum is the sum of the changes.
+**1. Power rule:** $\\frac{d}{dx}\\, x^n = n\\,x^{n-1}$ for a whole number $n$. We need $(x+h)^n$, which is $n$ brackets $(x + h)$ multiplied together. As in lesson [[#number-e]], multiplying out means picking $x$ or $h$ from each bracket:
+
+- pick $x$ every time: one way, giving $x^n$;
+- pick $h$ from exactly one bracket: $n$ ways (any one of the $n$ brackets), each giving $x^{n-1}h$, so $n x^{n-1} h$ in all;
+- pick $h$ from two or more brackets: every such term contains $h^2$ or a higher power of $h$.
+
+So $(x+h)^n - x^n = n x^{n-1} h + (\\text{terms with } h^2, h^3, \\dots)$. Divide by $h$: $n x^{n-1} + (\\text{terms with } h, h^2, \\dots)$. As $h \\to 0$ every leftover term shrinks to 0, leaving $n x^{n-1}$. We saw $n = 2$ by hand: $2x$. For $x^3$: $3x^2$. For $x^1 = x$: $1$ (a line of slope 1). For a constant: 0, since $c$ doesn't change when $x$ does, so the top of the fraction is $c - c = 0$. (This proves the rule for whole numbers. It holds for **every** power, negative and fractional too; lesson [[#chain-rule]] proves that.)
+
+**2. Constant multiple:** $\\frac{d}{dx}\\, c f(x) = c f'(x)$. In the definition the $c$ factors out: $\\frac{c f(x+h) - c f(x)}{h} = c \\cdot \\frac{f(x+h) - f(x)}{h} \\to c f'(x)$. Stretching a graph vertically by 3 makes every slope 3 times steeper.
+
+**3. Sum rule:** $\\frac{d}{dx}\\,(f + g) = f' + g'$. Regroup the top: $\\frac{[f(x+h) + g(x+h)] - [f(x) + g(x)]}{h} = \\frac{f(x+h) - f(x)}{h} + \\frac{g(x+h) - g(x)}{h} \\to f'(x) + g'(x)$. The change in a sum is the sum of the changes.
 
 Together: $\\frac{d}{dx}(4x^3 - 2x + 7) = 12x^2 - 2$. Term by term: $4 \\times 3x^2$, then $-2 \\times 1$, then $0$ for the constant.
 
@@ -182,21 +190,25 @@ Back to ML: the derivative of a model with respect to its weight. For $\\hat y =
     },
 
     {
-      id: 'exp-log-slopes', number: '2.11', title: 'The slopes of $e^x$ and $\\ln x$',
+      id: 'exp-log-slopes', title: 'The slopes of $e^x$ and $\\ln x$',
       goal: 'Explain why $\\frac{d}{dx}e^x = e^x$ and $\\frac{d}{dx}\\ln x = \\frac1x$.',
       builds: ['derivative-rules', 'logarithms'],
       blocks: [
-        { md: `Lesson 1.6 built $e$ from growth that is always proportional to the current amount. That is exactly the statement "slope equals height":
+        { md: `Lesson [[#number-e]] built $e$ from growth that is always proportional to the current amount. That suggests "slope equals height". Here it is from the definition. Using power rule 1, $e^{x+h} = e^x e^h$, so
+
+$$\\frac{e^{x+h} - e^x}{h} = \\frac{e^x e^h - e^x}{h} = e^x \\cdot \\frac{e^h - 1}{h}$$
+
+The first factor doesn't involve $h$ at all. For the second, use the series from lesson [[#number-e]]: $e^h = 1 + h + \\frac{h^2}{2} + \\frac{h^3}{6} + \\dots$, so $\\frac{e^h - 1}{h} = 1 + \\frac h2 + \\frac{h^2}{6} + \\dots$, which closes in on $1$ as $h \\to 0$. (In words: over a tiny time $h$, growth at rate 1 adds $h$ to every 1 you have. That is what "rate 1" means.) So
 
 $$\\frac{d}{dx}\\, e^x = e^x$$
 
 At $x = 0$ the curve is at height 1 and its slope is 1; at $x = 2$ the height is 7.39 and so is the slope. You can also see it from the series: differentiate $1 + x + \\frac{x^2}{2} + \\frac{x^3}{6} + \\dots$ term by term with the power rule and you get $0 + 1 + x + \\frac{x^2}{2} + \\dots$, the same series again.
 
-The log is the mirror image of the exponential (lesson 1.7), so its slopes are the mirror image too: where $e^x$ has slope $s$, the reflected curve has slope $1/s$. That gives
+The log is the mirror image of the exponential across the line $y = x$ (lesson [[#logarithms]]): the point $(a, b)$ on $e^x$ becomes the point $(b, a)$ on $\\ln x$. Mirroring swaps across and up, so a short step on $e^x$ that goes **across** $\\Delta x$ and **up** $\\Delta y$ becomes a step on $\\ln x$ that goes across $\\Delta y$ and up $\\Delta x$. Rise over run flips: where $e^x$ has slope $s = \\frac{\\Delta y}{\\Delta x}$, the mirrored curve has slope $\\frac{\\Delta x}{\\Delta y} = \\frac1s$. At $(a, b)$ the slope of $e^x$ is its height, $b$. So at the mirrored point $(b, a)$, the slope of $\\ln x$ is $\\frac1b$: one over the $x$-coordinate there. That is
 
 $$\\frac{d}{dx}\\, \\ln x = \\frac{1}{x}$$
 
-Steep near 0, flatter and flatter as $x$ grows. This is the derivative behind every cross-entropy gradient in Part 5.` },
+Steep near 0, flatter and flatter as $x$ grows. This is the derivative behind every cross-entropy gradient in Part [[#part:part5]].` },
         { figure: 'ExpSlopeFig', caption: 'At every point of $e^x$, the tangent\'s slope equals the height. Slide along and compare.' },
         {
           predict: {
@@ -210,19 +222,27 @@ Steep near 0, flatter and flatter as $x$ grows. This is the derivative behind ev
     },
 
     {
-      id: 'chain-rule', number: '2.12', title: 'The chain rule: rates multiply',
+      id: 'chain-rule', title: 'The chain rule: rates multiply',
       goal: 'Differentiate a composition $f(g(x))$ by multiplying rates, and derive $\\sigma\'(z) = \\sigma(z)(1 - \\sigma(z))$.',
       builds: ['exp-log-slopes', 'composition'],
       blocks: [
-        { md: `Composition (lesson 1.8) chains machines; the **chain rule** chains their rates. Think of gears: if gear A turns 3 times for each turn of B, and B turns 2 times for each turn of C, then A turns $3 \\times 2 = 6$ times for each turn of C. **Rates of change multiply along a chain.**
+        { md: `Composition (lesson [[#composition]]) chains machines; the **chain rule** chains their rates. Think of gears: if gear A turns 3 times for each turn of B, and B turns 2 times for each turn of C, then A turns $3 \\times 2 = 6$ times for each turn of C. **Rates of change multiply along a chain.**
 
 If $y = f(u)$ and $u = g(x)$:
 
 $$\\frac{dy}{dx} = \\frac{dy}{du} \\cdot \\frac{du}{dx}$$
 
+**Why, from the definition.** Nudge $x$ by a small $\\Delta x$. That moves $u$ by some $\\Delta u = g(x + \\Delta x) - g(x)$, which in turn moves $y$ by $\\Delta y = f(u + \\Delta u) - f(u)$. These are just numbers, so (as long as $\\Delta u \\ne 0$) ordinary fraction arithmetic gives
+
+$$\\frac{\\Delta y}{\\Delta x} = \\frac{\\Delta y}{\\Delta u} \\cdot \\frac{\\Delta u}{\\Delta x}$$
+
+Now shrink $\\Delta x$ toward 0. The right-hand fraction closes in on $\\frac{du}{dx} = g'(x)$. Because $g$ has a slope, a tiny $\\Delta x$ makes a tiny $\\Delta u$ (about $g'(x)\\,\\Delta x$), so the left-hand fraction is a rise-over-run of $f$ over a shrinking interval, and closes in on $\\frac{dy}{du} = f'(u)$. The product closes in on the product. (The one gap: if $\\Delta u$ is exactly 0 for some small $\\Delta x$ we can't divide by it. A fuller proof handles that case separately, and the result is the same.)
+
 Example: $y = (2x + 1)^2$. Inside, $u = 2x + 1$ with $\\frac{du}{dx} = 2$. Outside, $y = u^2$ with $\\frac{dy}{du} = 2u$. Multiply: $\\frac{dy}{dx} = 2u \\times 2 = 4(2x + 1)$.
 
-This one rule is how every neural network learns. A network is a long chain of compositions, and **backpropagation** (Part 5) is the chain rule applied from the output back to each weight, multiplying rates as it goes.` },
+**The power rule for every power.** Lesson [[#derivative-rules]] proved $\\frac{d}{dx}x^n = nx^{n-1}$ for whole numbers. For any power $a$ and $x > 0$, write $x^a = e^{a \\ln x}$ (because $e^{\\ln x} = x$, and power rule 3). Chain rule, with inside $u = a\\ln x$ (rate $\\frac ax$) and outside $e^u$ (rate $e^u$): $\\frac{d}{dx}x^a = e^{a\\ln x}\\cdot\\frac ax = x^a \\cdot \\frac ax = a\\,x^{a-1}$. Same rule, now for $x^{-1}$, $x^{1/2}$ and every other power.
+
+This one rule is how every neural network learns. A network is a long chain of compositions, and **backpropagation** (Part [[#part:part5]]) is the chain rule applied from the output back to each weight, multiplying rates as it goes.` },
         { md: `Now the sigmoid, $\\sigma(z) = (1 + e^{-z})^{-1}$, one link at a time:
 
 1. $u = 1 + e^{-z}$: by the chain rule on $e^{-z}$, $\\frac{du}{dz} = -e^{-z}$.
@@ -264,13 +284,13 @@ The slope of the sigmoid is built from the sigmoid itself: largest (0.25) at $z 
     },
 
     {
-      id: 'minimum', number: '2.13', title: 'Where the slope is zero',
+      id: 'minimum', title: 'Where the slope is zero',
       goal: 'Find a minimum by solving $f\'(x) = 0$, and use the sign of the slope to tell which way is downhill.',
       builds: ['chain-rule', 'argmin'],
       blocks: [
         { md: `At the bottom of a valley the ground is flat: the slope is **zero**. To the left of the bottom the slope is negative (going down as you move right); to the right it is positive. So, for a smooth function:
 
-**At a minimum, $f'(x) = 0$.** To find $\\arg\\min$ (lesson 1.10), solve $f'(x) = 0$.
+**At a minimum, $f'(x) = 0$.** To find $\\arg\\min$ (lesson [[#argmin]]), solve $f'(x) = 0$.
 
 Example. Fit a single number $w$ to the data $y = (3, 5, 10)$ by minimising the squared error $L(w) = (w - 3)^2 + (w - 5)^2 + (w - 10)^2$. Differentiate (chain rule on each term): $L'(w) = 2(w - 3) + 2(w - 5) + 2(w - 10) = 6w - 36$. Set it to 0: $w = 6$, the **mean** of the data. That is no coincidence: the mean is the number with the smallest total squared distance to the data, and this is the first "learning" we have done with calculus.
 
@@ -288,7 +308,7 @@ Slope 0 can also mean a maximum (top of a hill) or a flat step. The **second der
     },
 
     {
-      id: 'gradient-descent-1d', number: '2.14', title: 'Gradient descent: walking downhill',
+      id: 'gradient-descent-1d', title: 'Gradient descent: walking downhill',
       goal: 'Run the update $w \\leftarrow w - \\eta f\'(w)$ by hand, and predict what too small and too large a learning rate do.',
       builds: ['minimum'],
       blocks: [
@@ -332,7 +352,7 @@ Steep slope, big step; nearly flat, tiny step: so it slows down automatically ne
     },
 
     {
-      id: 'partial-derivatives', number: '2.15', title: 'Partial derivatives: one input at a time',
+      id: 'partial-derivatives', title: 'Partial derivatives: one input at a time',
       goal: 'Compute $\\frac{\\partial f}{\\partial x}$ and $\\frac{\\partial f}{\\partial y}$ by holding the other input fixed.',
       builds: ['gradient-descent-1d'],
       blocks: [
@@ -375,7 +395,7 @@ The curly $\\partial$ says "other inputs held fixed". Example: $f(x, y) = (x - 3
     },
 
     {
-      id: 'gradient', number: '2.16', title: 'The gradient ∇: all the slopes at once',
+      id: 'gradient', title: 'The gradient ∇: all the slopes at once',
       goal: 'Assemble the gradient vector $\\nabla f$ and explain why it points uphill.',
       builds: ['partial-derivatives'],
       blocks: [
@@ -383,7 +403,17 @@ The curly $\\partial$ says "other inputs held fixed". Example: $f(x, y) = (x - 3
 
 $$\\nabla f(x, y) = \\left(\\frac{\\partial f}{\\partial x},\\; \\frac{\\partial f}{\\partial y}\\right)$$
 
-$\\nabla$ is "nabla" (or "del", or just "grad"). A list of numbers like this is a **vector** (Part 3), and we can draw it as an arrow on the map. Remarkably, that arrow always points **straight uphill**: the direction of steepest ascent, at right angles to the contour lines. Its length says how steep. (Part 3's dot product will show why.)
+$\\nabla$ is "nabla" (or "del", or just "grad"). A list of numbers like this is a **vector** (Part [[#part:part3]]), and we can draw it as an arrow on the map. Remarkably, that arrow always points **straight uphill**: the direction of steepest ascent, at right angles to the contour lines. Its length says how steep. Here is why, using only algebra.
+
+**Step 1: a small step changes $f$ by about $a\\,\\Delta x + b\\,\\Delta y$**, where $a = \\frac{\\partial f}{\\partial x}$ and $b = \\frac{\\partial f}{\\partial y}$. Take the step in two legs: first move $x$ by $\\Delta x$ holding $y$ fixed, which changes $f$ by about (rate along $x$) × (distance) $= a\\,\\Delta x$; then move $y$ by $\\Delta y$, changing $f$ by about $b\\,\\Delta y$. (The second leg starts from a slightly different $x$, so its rate is slightly different from $b$; that error shrinks faster than the step, so for small steps it vanishes.) This is the flat, tilted-plane picture of $f$ near a point.
+
+**Step 2: which direction raises $f$ the most?** Compare all steps of the same small length $r$, so $\\Delta x^2 + \\Delta y^2 = r^2$. Multiply out and you can check this identity:
+
+$$(a^2 + b^2)(\\Delta x^2 + \\Delta y^2) - (a\\,\\Delta x + b\\,\\Delta y)^2 = (a\\,\\Delta y - b\\,\\Delta x)^2$$
+
+The right side is a square, so it is never negative. So $(a\\,\\Delta x + b\\,\\Delta y)^2 \\le (a^2 + b^2)\\,r^2$: no step of length $r$ can raise $f$ by more than $r\\sqrt{a^2 + b^2}$. Equality needs $a\\,\\Delta y = b\\,\\Delta x$, which says the step is in proportion to $(a, b)$: the step points along the gradient (or straight against it, which gives the biggest **fall**). So the gradient is the steepest way up, its length $\\sqrt{a^2 + b^2}$ is how fast $f$ rises along it, and $-\\nabla f$ is the steepest way down.
+
+**Step 3: contours.** Walking along a contour line keeps $f$ the same, so there $a\\,\\Delta x + b\\,\\Delta y = 0$. Part [[#part:part3]]'s dot product shows that this is exactly the condition for the step to be at right angles to $(a, b)$.
 
 For the bowl at $(0, 0)$: $\\nabla f = (2(0 - 3), 4(0 + 1)) = (-6, 4)$: uphill is west and north. So **downhill** is $-\\nabla f = (6, -4)$: east and south, toward the bottom at $(3, -1)$.
 
@@ -401,11 +431,11 @@ When a paper writes $\\nabla_\\theta \\mathcal L$ it means "the gradient of the 
     },
 
     {
-      id: 'gradient-descent-2d', number: '2.17', title: 'Gradient descent in many dimensions',
+      id: 'gradient-descent-2d', title: 'Gradient descent in many dimensions',
       goal: 'Run $\\theta \\leftarrow \\theta - \\eta \\nabla_\\theta \\mathcal L$ on a two-parameter loss and read the update in a paper.',
       builds: ['gradient'],
       blocks: [
-        { md: `Lesson 2.14 stepped against the slope in one dimension. With many inputs, step against the **gradient**: every parameter moves against its own partial derivative, all at once.
+        { md: `Lesson [[#gradient-descent-1d]] stepped against the slope in one dimension. With many inputs, step against the **gradient**: every parameter moves against its own partial derivative, all at once.
 
 $$\\theta \\leftarrow \\theta - \\eta\\, \\nabla_\\theta \\mathcal L(\\theta)$$
 
@@ -413,7 +443,7 @@ You can now read every symbol: the parameters θ are replaced by themselves minu
 
 $$x \\leftarrow x - \\eta \\frac{\\partial f}{\\partial x}, \\qquad y \\leftarrow y - \\eta \\frac{\\partial f}{\\partial y}$$
 
-This is exactly how a neural network trains, with millions of entries in θ instead of two. Everything else (momentum, Adam, Part 5) is a refinement of this line.` },
+This is exactly how a neural network trains, with millions of entries in θ instead of two. Everything else (momentum, Adam, Part [[#part:part5]]) is a refinement of this line.` },
         {
           code: {
             file: 'calculus.py', fn: 'descend_2d', notes: [
@@ -429,14 +459,14 @@ This is exactly how a neural network trains, with millions of entries in θ inst
           },
         },
         { figure: 'Descent2D', caption: 'Gradient descent on the map. Click anywhere to start there; change the learning rate. Notice the zig-zag across the narrow direction when η is large.' },
-        { python: { program: 'change', label: 'Step through Part 2\'s calculus in real Python' } },
+        { python: { program: 'change', label: 'Step through Part [[#part:part2]]\'s calculus in real Python' } },
         {
           code: {
             file: 'calculus.py', fn: 'show_change', notes: [
               ['def show_change():', ['What the Python tab runs.']],
-              ['for h, rate in shrinking(height, 1.0):', ['Lesson 2.8\'s table.']],
+              ['for h, rate in shrinking(height, 1.0):', ['Lesson [[#instant]]\'s table.']],
               ['print("h =", h, " average rate =", rate)', ['One row of the table: interval length and average rate.']],
-              ['print("descent on (x - 3)^2 from 0:", descend(lambda x: 2 * (x - 3), 0.0, 0.1, 10)[-1])', ['Lesson 2.14. `[-1]` is the last item of a list.']],
+              ['print("descent on (x - 3)^2 from 0:", descend(lambda x: 2 * (x - 3), 0.0, 0.1, 10)[-1])', ['Lesson [[#gradient-descent-1d]]. `[-1]` is the last item of a list.']],
             ],
           },
         },
@@ -452,7 +482,7 @@ This is exactly how a neural network trains, with millions of entries in θ inst
     },
 
     {
-      id: 'integral', number: '2.18', title: 'Adding up tiny pieces: the integral',
+      id: 'integral', title: 'Adding up tiny pieces: the integral',
       goal: 'Approximate an area by thin rectangles, read $\\int_a^b f(x)\\,dx$, and say why ML needs it.',
       builds: ['gradient-descent-2d', 'sigma'],
       blocks: [
@@ -466,7 +496,17 @@ $$\\int_a^b f(x)\\,dx = \\lim_{n \\to \\infty} \\sum_{i=1}^n f(x_i)\\,\\Delta x$
 
 The $dx$ is what's left of $\\Delta x$: "a tiny width". For $f(x) = x^2$ from 0 to 1 the strips close in on $\\frac13$.
 
-Why ML cares: in Part 4, probabilities of continuous quantities are **areas under a curve**, and an average over a continuous distribution, $\\mathbb E[X] = \\int x\\, p(x)\\, dx$, is an integral. Whenever you see $\\int$ in a paper, read it as "a Σ over infinitely many, infinitely thin pieces". (And the two operations undo each other: the slope of the area-so-far is the curve's height. That is the **fundamental theorem of calculus**.)` },
+Why ML cares: in Part [[#part:part4]], probabilities of continuous quantities are **areas under a curve**, and an average over a continuous distribution, $\\mathbb E[X] = \\int x\\, p(x)\\, dx$, is an integral. Whenever you see $\\int$ in a paper, read it as "a Σ over infinitely many, infinitely thin pieces".
+
+**Derivatives and integrals undo each other.** Let $A(x)$ be the area under $f$ from $a$ up to $x$: the area so far. Move $x$ on by a small $h$. The area grows by one thin strip, of width $h$ and height somewhere between the lowest and highest value of $f$ on that strip. So $\\frac{A(x + h) - A(x)}{h}$ is squeezed between those two heights, and as $h \\to 0$ both close in on $f(x)$ (for a curve without jumps). So
+
+$$A'(x) = f(x)$$
+
+the slope of the area-so-far is the curve's height. That is the **fundamental theorem of calculus**, and it gives a shortcut. Suppose you know some function $F$ whose slope is $f$. Then $A$ and $F$ have the same slope everywhere, so their difference has slope 0 everywhere: it is flat, a constant. At $x = a$ the area so far is $A(a) = 0$, so the constant is $-F(a)$, and
+
+$$\\int_a^b f(x)\\,dx = A(b) = F(b) - F(a)$$
+
+For $f(x) = x^2$: the power rule says $\\frac{d}{dx}\\frac{x^3}{3} = x^2$, so $F(x) = \\frac{x^3}{3}$ and $\\int_0^1 x^2\\,dx = \\frac13 - 0 = \\frac13$, the number the strips were closing in on.` },
         { figure: 'AreaFig', caption: 'More strips, thinner strips: the total closes in on the true area.' },
         {
           code: {

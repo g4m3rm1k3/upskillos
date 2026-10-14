@@ -35,7 +35,8 @@ Status markers:
 ### Math for ML Lab: machine-learning mathematics from basic algebra (2026-10-13)
 
 - [x] 66 lessons in six parts (symbols, calculus, linear algebra, probability and statistics, the big ML equations assembled piece by piece, reading papers), 54 interactive figures, a Symbol decoder with famous equations taken apart, plain-Python programs mirrored by the engine, and the Real Python tab. The original falling-ball chapter is kept with its lesson ids. See [plan and status](math-for-ml-lab.md).
-- [ ] Code-writing exercises with automatic checking, and more decoder equations (ELBO, GAN, diffusion), remain follow-up scope.
+- [x] Expanded to 161 lessons in nine parts (2026-10-14): proof and counting, optimisation, algorithms and computer-science maths, learning theory, and 19 more ML lessons (classical learners through diffusion and PPO), with no unexplained steps. Every lesson ends in a Python coding exercise checked in the browser (Pyodide); every solution passes and every starter fails in the test suite.
+- [ ] Paper walkthroughs (Part 10) and a browser check of the learning-theory figures; see "Where we stopped" in [plan and status](math-for-ml-lab.md).
 
 ### Tabletop RL Lab: reinforcement learning on Yahtzee (2026-10-12)
 

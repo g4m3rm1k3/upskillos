@@ -89,6 +89,42 @@ def eigenvector2(A, lam):
     return scale(1 / norm(v), v)
 
 
+def total_derivative(grad, path, velocity, t):
+    """d/dt f(path(t)) by the multivariable chain rule: ∇f at the point, dotted with the path's velocity."""
+    return dot(grad(path(t)), velocity(t))
+
+
+def jacobian(f, x, h=1e-6):
+    """J[i][j] = ∂fᵢ/∂xⱼ, built column by column: nudge input j and see how every output moves."""
+    columns = []
+    for j in range(len(x)):
+        up = list(x)
+        down = list(x)
+        up[j] += h
+        down[j] -= h
+        columns.append([(a - b) / (2 * h) for a, b in zip(f(up), f(down))])
+    return transpose(columns)
+
+
+def softmax_jacobian(p):
+    """The softmax's Jacobian, from its output p: entry (i, j) is pᵢ(𝟙[i = j] − pⱼ), the matrix diag(p) − p pᵀ."""
+    return [[p[i] * ((1.0 if i == j else 0.0) - p[j]) for j in range(len(p))] for i in range(len(p))]
+
+
+def hessian(f, x, h=1e-4):
+    """H[i][j] = ∂²f/∂xᵢ∂xⱼ: the Jacobian of the gradient."""
+    def grad(point):
+        g = []
+        for i in range(len(point)):
+            up = list(point)
+            down = list(point)
+            up[i] += h
+            down[i] -= h
+            g.append((f(up) - f(down)) / (2 * h))
+        return g
+    return jacobian(grad, x, h)
+
+
 def show_linalg():
     """Every operation of Part 3 on small examples."""
     u, v = [3.0, 4.0], [4.0, -3.0]

@@ -1,8 +1,10 @@
 // Every lesson's content checked against the code it teaches: predicted numbers against the
 // engine, code notes against the real Python lines, figures and links against what exists, and
 // every function documented with every input.
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { LESSONS, lessonById } from './index.js'
+import { LESSONS, PARTS, POOL, lessonById, refs, UNRESOLVED } from './index.js'
+import { SYMBOLS, EQUATIONS } from '../decoder.js'
 import { unmatchedNotes, SOURCES, functionsOf } from '../source.js'
 import { FIGURES } from '../figures/index.js'
 import { FUNCTIONS } from '../functions.js'
@@ -11,6 +13,21 @@ import { PROGRAMS } from '../programs.js'
 import { BLOCK_KINDS as KINDS } from '../../python-steps/Blocks.jsx'
 
 describe('lessons', () => {
+  it('refer only to lessons and parts that exist, by id, never by a written number', () => {
+    const decoder = [SYMBOLS.map(row => refs(row[2])), EQUATIONS.map(eq => [refs(eq.whole), eq.parts.map(p => refs(p[1]))])]
+    expect([...UNRESOLVED]).toEqual([])
+    const text = JSON.stringify([LESSONS.map(({ part, ...l }) => l), PARTS.map(p => p.title), decoder])
+    expect(text).not.toContain('[[#')
+    const written = []
+    for (const file of ['part1', 'part2', 'part3', 'part4', 'part5', 'part6', 'fall', 'foundations', 'proof', 'change', 'manyvars', 'areas', 'linalg2', 'linalg3', 'prob2', 'prob3', 'optimisation', 'algorithms', 'ml2', 'ml3', 'theory'].map(p => `lessons/${p}.js`).concat('decoder.js')) {
+      const code = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n')
+      for (const m of code.matchAll(/\b(?:[Ll]essons?|Parts?) \d[\d.]*/g)) written.push(`${file}: ${m[0]}`)
+    }
+    expect(written).toEqual([])
+  })
+  it('place every written lesson exactly once', () => {
+    expect(LESSONS.map(l => l.id).sort()).toEqual([...POOL.keys()].sort())
+  })
   it('have unique ids', () => {
     const ids = LESSONS.map(l => l.id)
     expect(new Set(ids).size).toBe(ids.length)

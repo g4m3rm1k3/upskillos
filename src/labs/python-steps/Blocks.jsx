@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Markdown from '../qmaze-lab/Markdown.jsx'
 import { parseAnswer } from '../ml-lab/Checkpoint.jsx'
 import { tokenizePython } from '../a-arcade-python/analysis.js'
+import Exercise from './Exercise.jsx'
 import './style.css'
 
 // A lesson is an ordered list of blocks:
@@ -18,6 +19,7 @@ import './style.css'
 //   { choice: { prompt, options: [{ text, why }], answer } }
 //   { note, kind: 'key' | 'warn' | 'try' }   a callout
 //   { python: { program, label } }  a button that opens the Python tab on that program
+//   { exercise: { prompt, starter, solution, checks, hints } }  write code, checked in Python (Exercise.jsx)
 //
 // Shared by the labs that teach with real Python (python-steps): a lab passes its FIGURES and codeLines.
 
@@ -84,7 +86,7 @@ function Predict({ spec, done, onDone }) {
   </div>
 }
 
-function Choice({ spec, done, onDone }) {
+function Choice({ id, spec, done, onDone }) {
   const [picked, setPicked] = useState(done ? spec.answer : null), [submitted, setSubmitted] = useState(done)
   const right = submitted && picked === spec.answer
   return <div className="qm-check">
@@ -92,7 +94,7 @@ function Choice({ spec, done, onDone }) {
     <Md>{spec.prompt}</Md>
     <div className="qm-options" role="radiogroup">
       {spec.options.map((o, i) => <label key={i} className={`qm-option${submitted && i === picked ? (right ? ' right' : ' wrong') : ''}`}>
-        <input type="radio" name={spec.prompt} checked={picked === i} onChange={() => { setPicked(i); setSubmitted(false) }} disabled={right} />
+        <input type="radio" name={id} checked={picked === i} onChange={() => { setPicked(i); setSubmitted(false) }} disabled={right} />
         <span><LessonText>{o.text}</LessonText></span>
       </label>)}
     </div>
@@ -109,7 +111,7 @@ function Figure({ block, FIGURES }) {
   </figure>
 }
 
-export const BLOCK_KINDS = ['h', 'md', 'figure', 'code', 'mathCode', 'symbols', 'predict', 'choice', 'note', 'python']
+export const BLOCK_KINDS = ['h', 'md', 'figure', 'code', 'mathCode', 'symbols', 'predict', 'choice', 'note', 'python', 'exercise']
 
 export default function Blocks({ lesson, saved, onSolved, onPython, FIGURES, codeLines }) {
   const solved = saved?.solved ?? []
@@ -122,8 +124,9 @@ export default function Blocks({ lesson, saved, onSolved, onPython, FIGURES, cod
     if (b.mathCode) return <MathCode key={k} rows={b.mathCode} />
     if (b.symbols) return <Symbols key={k} rows={b.symbols} />
     if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.choice) return <Choice key={key} spec={b.choice} done={solved.includes(k)} onDone={() => onSolved(k)} />
+    if (b.choice) return <Choice key={key} id={key} spec={b.choice} done={solved.includes(k)} onDone={() => onSolved(k)} />
     if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
+    if (b.exercise) return <Exercise key={key} id={key} spec={b.exercise} done={solved.includes(k)} onDone={() => onSolved(k)} />
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time, every line explained.</span></div>
     return null
   })

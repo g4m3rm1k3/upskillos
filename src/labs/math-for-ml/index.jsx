@@ -20,7 +20,7 @@ function load() {
     const lessons = {}
     for (const lesson of LESSONS) {
       const solved = value.lessons?.[lesson.id]?.solved
-      if (Array.isArray(solved)) lessons[lesson.id] = { solved: solved.filter(k => Number.isInteger(k) && (lesson.blocks[k]?.predict || lesson.blocks[k]?.choice)) }
+      if (Array.isArray(solved)) lessons[lesson.id] = { solved: solved.filter(k => Number.isInteger(k) && (lesson.blocks[k]?.predict || lesson.blocks[k]?.choice || lesson.blocks[k]?.exercise)) }
     }
     return { current: lessonById(value.current) ? value.current : LESSONS[0].id, lessons, done: Object.fromEntries(LESSONS.filter(l => value.done?.[l.id] === true).map(l => [l.id, true])) }
   } catch { return {} }
@@ -48,7 +48,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     if (s.solved?.includes(k)) return p
     return { ...p, lessons: { ...p.lessons, [lesson.id]: { ...s, solved: [...(s.solved ?? []), k] } } }
   })
-  const checks = lesson.blocks.filter(b => b.predict || b.choice).length
+  const checks = lesson.blocks.filter(b => b.predict || b.choice || b.exercise).length
   const finish = () => { setProgress(p => ({ ...p, done: { ...p.done, [lesson.id]: true } })); if (next) onOpen(next.id) }
   return <article className="qm-lesson">
     <header>
@@ -59,7 +59,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     </header>
     <Blocks lesson={lesson} saved={saved} onSolved={onSolved} onPython={onPython} FIGURES={FIGURES} codeLines={codeLines} />
     <footer className="qm-lesson-end">
-      {checks > 0 && <p className="qm-hint">{saved.solved?.length ?? 0} of {checks} checks answered correctly in this lesson.</p>}
+      {checks > 0 && <p className="qm-hint">{saved.solved?.length ?? 0} of {checks} checks done in this lesson, the coding exercise included.</p>}
       <div className="qm-buttons">
         {prev && <button onClick={() => onOpen(prev.id)}>← {prev.number}</button>}
         <button className="qm-primary" onClick={finish}>{progress.done?.[lesson.id] ? '✓ Done' : 'Mark as done'}{next ? `, next: ${next.number} →` : ''}</button>

@@ -62,6 +62,69 @@ def argmin(f, candidates):
     return best
 
 
+def members(universe, condition):
+    """{x ∈ U | condition(x)}: set-builder notation, which is a set comprehension."""
+    return {x for x in universe if condition(x)}
+
+
+def in_interval(x, a, b, brackets="[)"):
+    """Is x in the interval from a to b? A square bracket includes that end; a round one leaves it out."""
+    left_ok = a <= x if brackets[0] == "[" else a < x
+    right_ok = x <= b if brackets[1] == "]" else x < b
+    return left_ok and right_ok
+
+
+def implies(p, q):
+    """p ⇒ q: a promise that is broken only when p is true and q is false."""
+    return (not p) or q
+
+
+def for_all(xs, claim):
+    """∀x: claim(x). One counterexample is enough to make it false."""
+    for x in xs:
+        if not claim(x):
+            return False
+    return True
+
+
+def exists(xs, claim):
+    """∃x: claim(x). One example is enough to make it true."""
+    for x in xs:
+        if claim(x):
+            return True
+    return False
+
+
+def relu(z):
+    """ReLU(z) = max(0, z): a function in two pieces, and the most used activation in deep learning."""
+    if z > 0:
+        return z
+    return 0.0
+
+
+def clip(x, low, high):
+    """x forced into [low, high]: three pieces. Gradient clipping and PPO's clipped ratio use it."""
+    if x < low:
+        return low
+    if x > high:
+        return high
+    return x
+
+
+def accuracy(predictions, labels):
+    """(1/n) Σ 𝟙[ŷᵢ = yᵢ]: the indicator turns each comparison into 1 or 0, and the mean counts the hits."""
+    hits = 0
+    for p, y in zip(predictions, labels):
+        hits += 1 if p == y else 0
+    return hits / len(labels)
+
+
+def sum_bounds(xs):
+    """n·min ≤ Σ xᵢ ≤ n·max: a sum is squeezed between n copies of its smallest and of its largest term."""
+    n = len(xs)
+    return n * min(xs), total(xs), n * max(xs)
+
+
 def show_symbols():
     """Each symbol of Part 1, worked out once."""
     xs = [2.0, 4.0, 9.0]

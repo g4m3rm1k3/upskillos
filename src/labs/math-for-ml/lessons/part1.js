@@ -6,9 +6,9 @@ import { predict, total, mean, product, compound, expSeries, sigmoid, logsOfTiny
 import { f } from './util.js'
 
 export const PART1 = {
-  id: 'part1', title: 'Part 1 · Reading the symbols', lessons: [
+  id: 'part1', title: 'Part [[#part:part1]] · Reading the symbols', lessons: [
     {
-      id: 'symbols-welcome', number: '1.1', title: 'Letters that stand for numbers',
+      id: 'symbols-welcome', title: 'Letters that stand for numbers',
       goal: 'Read an expression like $\\hat y = wx + b$, work it out for given numbers, and say what each letter is for.',
       builds: [],
       blocks: [
@@ -19,7 +19,7 @@ export const PART1 = {
 2. **Change**: calculus, starting from a falling ball: slopes, derivatives, the chain rule, gradients, gradient descent.
 3. **Arrows and tables**: linear algebra: vectors, dot products, matrices, least squares, eigenvectors.
 4. **Chance and data**: probability and statistics: expectation, variance, Bayes, the bell curve, likelihood.
-5. **The big equations**: linear and logistic regression, cross-entropy, softmax, backpropagation, Adam, attention, each assembled from Parts 1 to 4.
+5. **The big equations**: linear and logistic regression, cross-entropy, softmax, backpropagation, Adam, attention, each assembled from Parts [[#part:part1]] to [[#part:part4]].
 6. **Reading papers**: decoding real equations, symbol by symbol.
 
 You need arithmetic and a little school algebra (what $2x + 1$ means). The **🔣 Symbol decoder** tab lists every symbol in the lab, how to say it, and where it is taught. Each lesson can also show the maths as a few lines of plain Python, for anyone who finds code easier to read; you can skip those.` },
@@ -80,7 +80,7 @@ This is the most important formula in machine learning, and you have just built 
     },
 
     {
-      id: 'functions', number: '1.2', title: 'Functions: a rule from input to output',
+      id: 'functions', title: 'Functions: a rule from input to output',
       goal: 'Read and write $f(x)$ notation, evaluate a function, and see its graph as all its input–output pairs.',
       builds: ['symbols-welcome'],
       blocks: [
@@ -121,7 +121,7 @@ The **graph** of a function is every input–output pair drawn as a point: acros
     },
 
     {
-      id: 'subscripts', number: '1.3', title: 'Lists of numbers: subscripts and indexes',
+      id: 'subscripts', title: 'Lists of numbers: subscripts and indexes',
       goal: 'Read $x_i$, $x_1, \\dots, x_n$ and $x^{(i)}$, and tell a subscript from a power.',
       builds: ['functions'],
       blocks: [
@@ -134,7 +134,7 @@ The **graph** of a function is every input–output pair drawn as a point: acros
 
 So $x_3 = 3$ and $y_3 = 61$: the third student studied 3 hours and scored 61. $n$ is almost always the number of examples.
 
-Two warnings. **Python counts from 0**: $x_1$ is \`xs[0]\` in code. And a raised number in **brackets**, $x^{(i)}$, is the same idea as $x_i$ (example number $i$) used when the subscript is needed for something else; without brackets, $x^2$ is a **power**, $x \\times x$ (lesson 1.5). Papers that use $x^{(i)}$ for the $i$-th example often use $x_j$ for its $j$-th measurement, so $x^{(3)}_2$ is "example 3, measurement 2".` },
+Two warnings. **Python counts from 0**: $x_1$ is \`xs[0]\` in code. And a raised number in **brackets**, $x^{(i)}$, is the same idea as $x_i$ (example number $i$) used when the subscript is needed for something else; without brackets, $x^2$ is a **power**, $x \\times x$ (lesson [[#powers]]). Papers that use $x^{(i)}$ for the $i$-th example often use $x_j$ for its $j$-th measurement, so $x^{(3)}_2$ is "example 3, measurement 2".` },
         {
           symbols: [
             ['x_i', 'x sub i', 'the $i$-th number in the list $x$', 'xs[i - 1]'],
@@ -167,7 +167,7 @@ Two warnings. **Python counts from 0**: $x_1$ is \`xs[0]\` in code. And a raised
     },
 
     {
-      id: 'sigma', number: '1.4', title: 'Σ: adding up a list',
+      id: 'sigma', title: 'Σ: adding up a list',
       goal: 'Read and evaluate $\\sum_{i=1}^n x_i$ and $\\frac1n\\sum x_i$, use the sum rules, and see Σ as a loop.',
       builds: ['subscripts'],
       blocks: [
@@ -191,7 +191,7 @@ Read it as: "the sum, for $i$ from 1 to $n$, of $x_i$". Below the Σ is where th
 
 $$\\bar x = \\frac{1}{n}\\sum_{i=1}^{n} x_i$$
 
-$\\bar x$, "x bar", is the usual name for an average (lesson 2.6's $\\bar v$ was an average velocity).` },
+$\\bar x$, "x bar", is the usual name for an average (lesson [[#rate]]'s $\\bar v$ was an average velocity).` },
         {
           code: {
             file: 'symbols.py', fn: 'mean', notes: [
@@ -201,7 +201,7 @@ $\\bar x$, "x bar", is the usual name for an average (lesson 2.6's $\\bar v$ was
           },
         },
         { figure: 'SigmaFig', caption: 'Step through a Σ one term at a time. The expression on the right can be anything with $i$ in it.' },
-        { md: `The thing being added can be any expression with $i$ in it: $\\sum_{i=1}^3 i^2 = 1 + 4 + 9 = 14$, or the total squared error $\\sum_i (\\hat y_i - y_i)^2$ that Part 5 builds. Three rules let you move things around, and each is just ordinary arithmetic:
+        { md: `The thing being added can be any expression with $i$ in it: $\\sum_{i=1}^3 i^2 = 1 + 4 + 9 = 14$, or the total squared error $\\sum_i (\\hat y_i - y_i)^2$ that Part [[#part:part5]] builds. Three rules let you move things around, and each is just ordinary arithmetic:
 
 - **Constants come out:** $\\sum_i c\\,x_i = c\\sum_i x_i$ (multiply each term by $c$, or multiply the total: same).
 - **Sums split:** $\\sum_i (x_i + y_i) = \\sum_i x_i + \\sum_i y_i$.
@@ -209,7 +209,7 @@ $\\bar x$, "x bar", is the usual name for an average (lesson 2.6's $\\bar v$ was
 
 Often the limits are dropped when they are obvious: $\\sum_i x_i$ means "over all $i$".
 
-**Π** (capital pi) does the same with multiplication: $\\prod_{i=1}^n x_i = x_1 \\times x_2 \\times \\dots \\times x_n$. It appears in probability (Part 4), where independent chances multiply.` },
+**Π** (capital pi) does the same with multiplication: $\\prod_{i=1}^n x_i = x_1 \\times x_2 \\times \\dots \\times x_n$. It appears in probability (Part [[#part:part4]]), where independent chances multiply.` },
         {
           code: {
             file: 'symbols.py', fn: 'product', notes: [
@@ -255,7 +255,7 @@ Often the limits are dropped when they are obvious: $\\sum_i x_i$ means "over al
     },
 
     {
-      id: 'powers', number: '1.5', title: 'Powers, roots and their rules',
+      id: 'powers', title: 'Powers, roots and their rules',
       goal: 'Work with $x^n$, $\\sqrt x$, negative and fractional powers, and the three power rules.',
       builds: ['sigma'],
       blocks: [
@@ -273,7 +273,7 @@ Now ask what other powers should mean so the rules keep working:
 - **Negative powers.** $x^0 / x^a = x^{-a}$, so $x^{-a} = \\dfrac{1}{x^a}$. For example $2^{-3} = \\frac18$.
 - **Fractional powers.** $(x^{1/2})^2 = x^{1} = x$ by rule 3, so $x^{1/2}$ is the number that squares to $x$: the **square root**, $\\sqrt x$.` },
         { figure: 'PowerFig', caption: 'Change the base and the power. The dots multiply out the definition; the rules say where it lands.' },
-        { md: `Why does ML care? **Squaring** turns any difference into a positive number and punishes big errors far more than small ones: an error of 2 counts 4, an error of 10 counts 100. That is the "squared" in **mean squared error** (Part 5). And **square roots** undo squaring when we want the answer back in the original units: the length of an arrow (Part 3) and the standard deviation (Part 4) are both square roots of sums of squares.` },
+        { md: `Why does ML care? **Squaring** turns any difference into a positive number and punishes big errors far more than small ones: an error of 2 counts 4, an error of 10 counts 100. That is the "squared" in **mean squared error** (Part [[#part:part5]]). And **square roots** undo squaring when we want the answer back in the original units: the length of an arrow (Part [[#part:part3]]) and the standard deviation (Part [[#part:part4]]) are both square roots of sums of squares.` },
         {
           predict: {
             prompt: 'Simplify $\\dfrac{2^5 \\times 2^3}{2^6}$ to a single number.',
@@ -294,7 +294,7 @@ Now ask what other powers should mean so the rules keep working:
     },
 
     {
-      id: 'number-e', number: '1.6', title: 'Growth and the number e',
+      id: 'number-e', title: 'Growth and the number e',
       goal: 'Explain where $e \\approx 2.718$ comes from, and what $e^x$ means and looks like.',
       builds: ['powers'],
       blocks: [
@@ -316,15 +316,23 @@ That number is **e**, as fundamental as $\\pi$. It is what continuous growth loo
         { figure: 'CompoundFig', caption: 'More, smaller slices of growth: the total creeps up toward $e$ and never passes it.' },
         { md: `$e^x$ (also written $\\exp(x)$) is $e$ to the power $x$: for whole numbers it is just $e \\times e \\times \\dots$, and the power rules fill in the rest. Its graph rises slowly for negative $x$, passes through $(0, 1)$ (because anything to the power 0 is 1), and then shoots up. Three facts you will use all the time:
 
-- $e^x$ is **always positive**, however negative $x$ is. That is why softmax (Part 5) uses it to turn any score into something positive.
+- $e^x$ is **always positive**, however negative $x$ is. That is why softmax (Part [[#part:part5]]) uses it to turn any score into something positive.
 - $e^{a + b} = e^a e^b$ (power rule 1).
-- Its slope at any point equals its height (lesson 2.11): the only function with that property.
+- Its slope at any point equals its height (lesson [[#exp-log-slopes]]): the only function with that property.
 
-There is another way to compute it, which is how calculators do it:
+There is another way to compute $e^x$, which is close to how calculators do it. It comes straight out of the compound-interest story, in three steps.
+
+**Step 1: $e^x$ is growth at rate $x$.** Growth at rate $x$ paid in $n$ slices is $\\left(1 + \\frac xn\\right)^n$. Write $n = mx$ (for $x > 0$). Then $\\left(1 + \\frac xn\\right)^n = \\left(1 + \\frac1m\\right)^{mx} = \\left(\\left(1 + \\frac1m\\right)^m\\right)^x$ by power rule 3, and the inside closes in on $e$ as $m$ grows. So $\\left(1 + \\frac xn\\right)^n \\to e^x$. (Negative $x$ works too: the second check below computes $e^{-2}$ with the series.) (Negative $x$ works too, as the second check below shows numerically.)
+
+**Step 2: multiply the brackets out.** $\\left(1 + \\frac xn\\right)^n$ is $n$ copies of the bracket $\\left(1 + \\frac xn\\right)$ multiplied together. Multiplying out means: from **each** bracket pick either the $1$ or the $\\frac xn$, multiply your picks, and add up every possible way of picking. Picking $\\frac xn$ from exactly $k$ brackets (and $1$ from the rest) gives $\\frac{x^k}{n^k}$. How many ways are there to choose which $k$ brackets? Choose them one after another: $n$ choices for the first, $n - 1$ for the second, down to $n - k + 1$ for the $k$-th. But that counts each **set** of $k$ brackets once for every order you could have picked them in, and there are $k \\times (k-1) \\times \\dots \\times 1$ orders. That product is written $k!$ ("k factorial"; $0! = 1$, since there is one way to pick nothing). So
+
+$$\\left(1 + \\frac xn\\right)^n = \\sum_{k=0}^{n} \\frac{n(n-1)\\cdots(n-k+1)}{k!}\\cdot\\frac{x^k}{n^k} = \\sum_{k=0}^{n} \\frac{n}{n}\\cdot\\frac{n-1}{n}\\cdots\\frac{n-k+1}{n}\\cdot\\frac{x^k}{k!}$$
+
+**Step 3: let $n$ grow.** Each fraction $\\frac{n-1}{n}, \\frac{n-2}{n}, \\dots$ closes in on 1, so each term closes in on $\\frac{x^k}{k!}$, and
 
 $$e^x = 1 + x + \\frac{x^2}{2!} + \\frac{x^3}{3!} + \\dots = \\sum_{k=0}^{\\infty} \\frac{x^k}{k!}$$
 
-where $k! = 1 \\times 2 \\times \\dots \\times k$ ("k factorial", with $0! = 1$). The terms shrink so fast that 20 of them give $e^1$ to 15 digits.` },
+**What this skipped:** Step 3 lets infinitely many terms each close in on their limit at once. A careful proof checks that the far-out terms, which are tiny because $k!$ grows much faster than $x^k$, stay tiny the whole time. Lesson [[#taylor]] does exactly that: it gets the same series a second way, from slopes, and proves the error after $n$ terms is at most $e^{|x|}\\frac{|x|^{n+1}}{(n+1)!}$, which goes to 0. You can see the evidence below: the terms shrink so fast that 20 of them give $e^1$ to 15 digits, and the series agrees with $\\left(1 + \\frac xn\\right)^n$ for large $n$.` },
         {
           code: {
             file: 'symbols.py', fn: 'exp_series', notes: [
@@ -357,7 +365,7 @@ where $k! = 1 \\times 2 \\times \\dots \\times k$ ("k factorial", with $0! = 1$)
     },
 
     {
-      id: 'logarithms', number: '1.7', title: 'Logarithms: undoing growth',
+      id: 'logarithms', title: 'Logarithms: undoing growth',
       goal: 'Read $\\log$ and $\\ln$ as "what power?", use the log rules, and see why ML adds logs instead of multiplying probabilities.',
       builds: ['number-e', 'sigma'],
       blocks: [
@@ -375,7 +383,7 @@ The power rules turn into log rules, and the first is the one that matters most:
 2. $\\ln(a/b) = \\ln a - \\ln b$.
 3. $\\ln(a^k) = k \\ln a$.` },
         { figure: 'LogFig', caption: '$e^x$ and $\\ln x$ are mirror images in the diagonal line $y = x$. Move the point and read both directions.' },
-        { md: `Why ML loves logs: probabilities of many independent events **multiply** (Part 4), and multiplying many numbers below 1 makes something absurdly small. The chance that a model gets 30 independent answers right, each with probability 0.1, is $0.1^{30} = 10^{-30}$. A few thousand such factors and the number is too small for a computer to store: it rounds to 0. The log of the product, though, is a modest **sum**: $\\sum \\ln 0.1 = 30 \\times (-2.303) = -69.08$. And because $\\ln$ only ever goes up as its input goes up, the parameters that make the product biggest also make the log biggest. That is why papers maximise the **log**-likelihood, and why the loss functions of Part 5 have logs in them.` },
+        { md: `Why ML loves logs: probabilities of many independent events **multiply** (Part [[#part:part4]]), and multiplying many numbers below 1 makes something absurdly small. The chance that a model gets 30 independent answers right, each with probability 0.1, is $0.1^{30} = 10^{-30}$. A few thousand such factors and the number is too small for a computer to store: it rounds to 0. The log of the product, though, is a modest **sum**: $\\sum \\ln 0.1 = 30 \\times (-2.303) = -69.08$. And because $\\ln$ only ever goes up as its input goes up, the parameters that make the product biggest also make the log biggest. That is why papers maximise the **log**-likelihood, and why the loss functions of Part [[#part:part5]] have logs in them.` },
         {
           code: {
             file: 'symbols.py', fn: 'logs_of_tiny', notes: [
@@ -413,13 +421,13 @@ The power rules turn into log rules, and the first is the one that matters most:
     },
 
     {
-      id: 'composition', number: '1.8', title: 'Functions inside functions: the sigmoid',
+      id: 'composition', title: 'Functions inside functions: the sigmoid',
       goal: 'Read $f(g(x))$, and build $\\sigma(z) = \\frac{1}{1 + e^{-z}}$ one operation at a time.',
       builds: ['logarithms', 'functions'],
       blocks: [
         { md: `Machines can be chained: the output of one becomes the input of the next. $f(g(x))$ means "do $g$ to $x$, then do $f$ to the result". It is called **composition**, sometimes written $(f \\circ g)(x)$. Order matters: with $g(x) = x + 1$ and $f(x) = 2x$, $f(g(3)) = 2 \\times 4 = 8$ but $g(f(3)) = 6 + 1 = 7$.
 
-A neural network is nothing but composition: layer after layer, each one's output the next one's input (Part 5). Here is the most famous small composition in ML, the **sigmoid** (σ, lowercase sigma), built in four steps from a raw score $z$:
+A neural network is nothing but composition: layer after layer, each one's output the next one's input (Part [[#part:part5]]). Here is the most famous small composition in ML, the **sigmoid** (σ, lowercase sigma), built in four steps from a raw score $z$:
 
 1. $-z$: flip the sign.
 2. $e^{-z}$: always positive; huge when $z$ is very negative, tiny when $z$ is very positive.
@@ -428,7 +436,7 @@ A neural network is nothing but composition: layer after layer, each one's outpu
 
 $$\\sigma(z) = \\frac{1}{1 + e^{-z}}$$
 
-Big positive $z$ gives nearly 1; big negative $z$ gives nearly 0; $z = 0$ gives exactly $\\frac12$. It turns any score into something that can be read as a probability, which is exactly what logistic regression needs (Part 5).` },
+Big positive $z$ gives nearly 1; big negative $z$ gives nearly 0; $z = 0$ gives exactly $\\frac12$. It turns any score into something that can be read as a probability, which is exactly what logistic regression needs (Part [[#part:part5]]).` },
         { figure: 'SigmoidBuilder', caption: 'The sigmoid built step by step. Move $z$ and follow the number through each machine.' },
         {
           code: {
@@ -458,7 +466,7 @@ Big positive $z$ gives nearly 1; big negative $z$ gives nearly 0; $z = 0$ gives 
     },
 
     {
-      id: 'greek', number: '1.9', title: 'The ML alphabet: Greek letters and conventions',
+      id: 'greek', title: 'The ML alphabet: Greek letters and conventions',
       goal: 'Recognise the Greek letters and set symbols ML papers use, and what each one usually stands for.',
       builds: ['composition'],
       blocks: [
@@ -474,34 +482,34 @@ Big positive $z$ gives nearly 1; big negative $z$ gives nearly 0; $z = 0$ gives 
             ['\\mu', 'mu', 'a mean (average)', 'mu'],
             ['\\epsilon,\\;\\varepsilon', 'epsilon', 'a tiny number, or random noise', 'eps'],
             ['\\mathcal L,\\;J,\\;\\ell', 'script L, J, little l', 'the loss: how wrong the model is', 'loss'],
-            ['\\nabla', 'nabla, del', 'the gradient: the vector of slopes (Part 2)', 'grad'],
-            ['\\partial', 'partial, "del"', 'a partial derivative (Part 2)', ''],
-            ['\\mathbb E', 'expectation, E', 'average over chance (Part 4)', 'mean over samples'],
-            ['\\mathbb R,\\; \\mathbb R^n', 'R, R n', 'the real numbers; lists of $n$ real numbers', 'float, list'],
-            ['\\in', 'in, "is an element of"', '$x \\in \\mathbb R^3$: $x$ is a list of 3 real numbers', ''],
-            ['\\forall', 'for all', '$\\forall i$: for every $i$', 'for i in …'],
+            ['\\nabla', 'nabla, del', 'the gradient: the vector of slopes (Part [[#part:part2]])', 'grad'],
+            ['\\partial', 'partial, "del"', 'a partial derivative (Part [[#part:part2]])', ''],
+            ['\\mathbb E', 'expectation, E', 'average over chance (Part [[#part:part4]])', 'mean over samples'],
+            ['\\mathbb R,\\; \\mathbb R^n', 'R, R n', 'the real numbers; lists of $n$ real numbers (lesson [[#sets]])', 'float, list'],
+            ['\\in', 'in, "is an element of"', '$x \\in \\mathbb R^3$: $x$ is a list of 3 real numbers (lesson [[#sets]])', 'x in A'],
+            ['\\forall', 'for all', '$\\forall i$: for every $i$ (lesson [[#logic]])', 'for i in …'],
             ['\\propto', 'proportional to', 'equal up to a constant factor', ''],
             [':=', 'is defined as', 'gives a name to the right-hand side', '='],
           ],
         },
         { md: `Two more habits:
 
-- **Bold or capital letters are collections.** Lowercase plain $x$ is one number; bold $\\mathbf x$ or plain $x$ in a paper that says "$x \\in \\mathbb R^d$" is a list (a **vector**, Part 3); capital $X$ or $W$ is a table (a **matrix**).
+- **Bold or capital letters are collections.** Lowercase plain $x$ is one number; bold $\\mathbf x$ or plain $x$ in a paper that says "$x \\in \\mathbb R^d$" is a list (a **vector**, Part [[#part:part3]]); capital $X$ or $W$ is a table (a **matrix**).
 - **Hats are estimates, stars are best values.** $\\hat y$ is a prediction, $\\hat\\theta$ estimated parameters; $\\theta^*$ is the best possible $\\theta$.
 
 The **🔣 Symbol decoder** tab keeps all of these, and every symbol the later parts add, in one place.` },
-        { python: { program: 'symbols', label: 'Run every Part 1 symbol in real Python' } },
+        { python: { program: 'symbols', label: 'Run every Part [[#part:part1]] symbol in real Python' } },
         {
           code: {
             file: 'symbols.py', fn: 'show_symbols', notes: [
-              ['def show_symbols():', ['Every Part 1 idea, worked out once.']],
+              ['def show_symbols():', ['Every Part [[#part:part1]] idea, worked out once.']],
               ['xs = [2.0, 4.0, 9.0]', ['A small list.']],
-              ['print("prediction w x + b with w=2, b=1, x=3:", predict(2, 1, 3))', ['Lesson 1.1.']],
-              ['print("sum:", total(xs), " mean:", mean(xs), " product:", product(xs))', ['Lesson 1.4.']],
-              ['print("(1 + 1/n)^n for n = 1000:", compound(1000), " e =", math.e)', ['Lesson 1.6; `math.e` is $e$ itself.']],
+              ['print("prediction w x + b with w=2, b=1, x=3:", predict(2, 1, 3))', ['Lesson [[#symbols-welcome]].']],
+              ['print("sum:", total(xs), " mean:", mean(xs), " product:", product(xs))', ['Lesson [[#sigma]].']],
+              ['print("(1 + 1/n)^n for n = 1000:", compound(1000), " e =", math.e)', ['Lesson [[#number-e]]; `math.e` is $e$ itself.']],
               ['print("e^1 by the series:", exp_series(1))', ['The series.']],
-              ['print("sigmoid(0):", sigmoid(0), " sigmoid(3):", sigmoid(3))', ['Lesson 1.8.']],
-              ['print("argmin of (x - 3)^2 over 0..6:", argmin(lambda x: (x - 3) ** 2, [0, 1, 2, 3, 4, 5, 6]))', ['Lesson 1.10. `lambda x: …` is a function written in place.']],
+              ['print("sigmoid(0):", sigmoid(0), " sigmoid(3):", sigmoid(3))', ['Lesson [[#composition]].']],
+              ['print("argmin of (x - 3)^2 over 0..6:", argmin(lambda x: (x - 3) ** 2, [0, 1, 2, 3, 4, 5, 6]))', ['Lesson [[#argmin]]. `lambda x: …` is a function written in place.']],
             ],
           },
         },
@@ -509,7 +517,7 @@ The **🔣 Symbol decoder** tab keeps all of these, and every symbol the later p
           choice: {
             prompt: 'A paper writes "$\\theta \\leftarrow \\theta - \\eta \\nabla_\\theta \\mathcal L$". Which reading fits the conventions?',
             options: [
-              { text: 'Parameters ← parameters − learning rate × gradient of the loss', why: 'Yes. That is gradient descent, the update Part 2 builds. You can already read it.' },
+              { text: 'Parameters ← parameters − learning rate × gradient of the loss', why: 'Yes. That is gradient descent, the update Part [[#part:part2]] builds. You can already read it.' },
               { text: 'Angle ← angle − efficiency × something', why: 'θ can mean an angle elsewhere, but next to η and a loss it is the parameters.' },
             ],
             answer: 0,
@@ -520,7 +528,7 @@ The **🔣 Symbol decoder** tab keeps all of these, and every symbol the later p
     },
 
     {
-      id: 'argmin', number: '1.10', title: 'min, max, argmin, argmax',
+      id: 'argmin', title: 'min, max, argmin, argmax',
       goal: 'Tell the smallest value of a function from the input that gives it, and read the training objective $\\theta^* = \\arg\\min_\\theta \\mathcal L(\\theta)$.',
       builds: ['greek'],
       blocks: [
@@ -562,7 +570,7 @@ $$\\theta^* = \\arg\\min_{\\theta}\\; \\mathcal L(\\theta)$$
             explain: 'Class 2: the position of the biggest probability, 0.7.',
           },
         },
-        { note: '$\\min$/$\\max$ give a value; $\\arg\\min$/$\\arg\\max$ give the input that achieves it. Training: $\\theta^* = \\arg\\min_\\theta \\mathcal L(\\theta)$. Part 2 is about **how** to find it.' },
+        { note: '$\\min$/$\\max$ give a value; $\\arg\\min$/$\\arg\\max$ give the input that achieves it. Training: $\\theta^* = \\arg\\min_\\theta \\mathcal L(\\theta)$. Part [[#part:part2]] is about **how** to find it.' },
       ],
     },
   ],

@@ -18,3 +18,8 @@
 .ps-tag{display:inline-block;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;background:#f1eadc;color:var(--accent-ink);border-radius:3px;padding:0 4px;margin-right:2px}
 .ps-note-extra{list-style:none;margin-left:-14px}
 .ps-symbols td:nth-child(2){color:var(--muted);white-space:nowrap}
+/* Coding exercises. */
+.ps-exercise-editor{border:1px solid #e3d9c6;border-radius:6px;overflow:hidden;margin:8px 0}
+.ps-exercise-plain{width:100%;font:13px/1.45 ui-monospace,monospace;padding:8px;border:1px solid #e3d9c6;border-radius:6px;margin:8px 0;tab-size:4}
+.ps-exercise-out{background:#1f2428;color:#e9e4d8;padding:8px 10px;border-radius:6px;white-space:pre-wrap;font-size:12.5px;margin:6px 0;max-height:260px;overflow:auto}
+.ps-exercise-solution{background:#1f3b36}

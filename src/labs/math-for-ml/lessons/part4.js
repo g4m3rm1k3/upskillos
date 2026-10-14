@@ -11,9 +11,9 @@ const XS = [1, 2, 3, 4, 5], YS = [2, 3, 5, 4, 6]
 const sd = xs => { const m = mean(xs); return Math.sqrt(mean(xs.map(x => (x - m) ** 2))) }
 
 export const PART4 = {
-  id: 'part4', title: 'Part 4 · Chance and data: probability and statistics', lessons: [
+  id: 'part4', title: 'Part [[#part:part4]] · Chance and data: probability and statistics', lessons: [
     {
-      id: 'probability', number: '4.1', title: 'Probability by counting',
+      id: 'probability', title: 'Probability by counting',
       goal: 'Compute $P(A)$ by counting equally likely outcomes, and use the complement, "or" and "and" rules.',
       builds: ['sigma'],
       blocks: [
@@ -29,7 +29,7 @@ Three rules, each obvious from counting:
 - **Or** (when $A$ and $B$ can't both happen): $P(A \\text{ or } B) = P(A) + P(B)$.
 - **And** (when $A$ and $B$ don't affect each other: **independent**): $P(A \\text{ and } B) = P(A)\\,P(B)$. Two sixes: $\\frac16 \\times \\frac16 = \\frac1{36}$.
 
-That last rule is why the product Π shows up in probability, and why lesson 1.7's logs are needed: the chance of a whole dataset is a product of one chance per example.` },
+That last rule is why the product Π shows up in probability, and why lesson [[#logarithms]]'s logs are needed: the chance of a whole dataset is a product of one chance per example.` },
         {
           code: {
             file: 'stats.py', fn: 'two_dice', notes: [
@@ -82,7 +82,7 @@ That last rule is why the product Π shows up in probability, and why lesson 1.7
     },
 
     {
-      id: 'distributions', number: '4.2', title: 'Random variables and their distributions',
+      id: 'distributions', title: 'Random variables and their distributions',
       goal: 'Describe a random quantity by its distribution $p(x)$, and read $X \\sim p$.',
       builds: ['probability'],
       blocks: [
@@ -115,7 +115,7 @@ Its **distribution** lists every value with its probability: $p(x) = P(X = x)$. 
     },
 
     {
-      id: 'expectation', number: '4.3', title: 'Expected value: the long-run average',
+      id: 'expectation', title: 'Expected value: the long-run average',
       goal: 'Compute $\\mathbb E[X] = \\sum_x x\\,p(x)$, use linearity, and read $\\mathbb E_{x \\sim p}[\\cdot]$.',
       builds: ['distributions'],
       blocks: [
@@ -130,7 +130,7 @@ Two properties do most of the work in ML derivations:
 - **Linearity:** $\\mathbb E[aX + b] = a\\,\\mathbb E[X] + b$ and $\\mathbb E[X + Y] = \\mathbb E[X] + \\mathbb E[Y]$, always. (One die averages 3.5, so two average 7.)
 - **Expectation of a function:** $\\mathbb E[g(X)] = \\sum_x g(x)\\,p(x)$. Average $g$, weighted the same way.
 
-Papers write the loss as an expectation: $\\mathcal L(\\theta) = \\mathbb E_{(x, y) \\sim \\mathcal D}\\big[\\ell(f_\\theta(x), y)\\big]$: "the average loss over examples drawn from the data distribution". We can't compute it exactly (we don't know $\\mathcal D$), so we estimate it by averaging over the examples we have: the training loss. Averaging over a small random batch instead is **stochastic** gradient descent (Part 5).` },
+Papers write the loss as an expectation: $\\mathcal L(\\theta) = \\mathbb E_{(x, y) \\sim \\mathcal D}\\big[\\ell(f_\\theta(x), y)\\big]$: "the average loss over examples drawn from the data distribution". We can't compute it exactly (we don't know $\\mathcal D$), so we estimate it by averaging over the examples we have: the training loss. Averaging over a small random batch instead is **stochastic** gradient descent (Part [[#part:part5]]).` },
         {
           code: {
             file: 'stats.py', fn: 'expectation', notes: [
@@ -169,13 +169,13 @@ Papers write the loss as an expectation: $\\mathcal L(\\theta) = \\mathbb E_{(x,
     },
 
     {
-      id: 'variance', number: '4.4', title: 'Spread: variance and standard deviation',
+      id: 'variance', title: 'Spread: variance and standard deviation',
       goal: 'Compute $\\mathrm{Var}(X) = \\mathbb E[(X - \\mu)^2]$ and $\\sigma = \\sqrt{\\mathrm{Var}}$, and say why the square is there.',
       builds: ['expectation', 'powers'],
       blocks: [
         { md: `Two classes both average 60 marks: one has everyone between 55 and 65, the other ranges from 20 to 100. The average hides that difference; **spread** measures it.
 
-How far is $X$ from its mean, on average? The plain average of $X - \\mu$ is always 0 (the ups and downs cancel: that's what a mean is). So square the distances first, which makes them all positive and counts big deviations more (lesson 1.5):
+How far is $X$ from its mean, on average? The plain average of $X - \\mu$ is always 0 (the ups and downs cancel: that's what a mean is). So square the distances first, which makes them all positive and counts big deviations more (lesson [[#powers]]):
 
 $$\\mathrm{Var}(X) = \\mathbb E\\big[(X - \\mu)^2\\big] = \\sum_x (x - \\mu)^2\\, p(x)$$
 
@@ -185,7 +185,7 @@ $$\\sigma = \\sqrt{\\mathrm{Var}(X)}$$
 
 "a typical distance from the mean". For the dice total, $\\mathrm{Var} = 5.83$ and $\\sigma = 2.42$. Here $\\sigma$ (sigma) means standard deviation, not the sigmoid; context always tells.
 
-Variance is everywhere in ML: initialising weights with the right variance keeps signals from exploding or vanishing; attention divides by $\\sqrt d$ to control a variance (Part 5); and "variance" in the bias–variance trade-off is how much a model changes with different training data.` },
+Variance is everywhere in ML: initialising weights with the right variance keeps signals from exploding or vanishing; attention divides by $\\sqrt d$ to control a variance (Part [[#part:part5]]); and "variance" in the bias–variance trade-off is how much a model changes with different training data.` },
         {
           code: {
             file: 'stats.py', fn: 'variance', notes: [
@@ -219,7 +219,7 @@ Variance is everywhere in ML: initialising weights with the right variance keeps
     },
 
     {
-      id: 'conditional', number: '4.5', title: 'Conditional probability: given what we know',
+      id: 'conditional', title: 'Conditional probability: given what we know',
       goal: 'Compute $P(A \\mid B)$ by narrowing the outcomes, and use the product rule $P(A \\cap B) = P(A \\mid B)P(B)$.',
       builds: ['variance'],
       blocks: [
@@ -245,7 +245,7 @@ Machine learning is full of conditionals. A classifier outputs $p(y \\mid x)$: t
     },
 
     {
-      id: 'bayes', number: '4.6', title: 'Bayes\' rule: turning evidence around',
+      id: 'bayes', title: 'Bayes\' rule: turning evidence around',
       goal: 'Derive Bayes\' rule from the product rule and use it to update a belief after evidence.',
       builds: ['conditional'],
       blocks: [
@@ -290,13 +290,13 @@ The names: $P(\\text{ill})$ is the **prior** (belief before the evidence), $P(+ 
     },
 
     {
-      id: 'densities', number: '4.7', title: 'Continuous chance: density and area',
+      id: 'densities', title: 'Continuous chance: density and area',
       goal: 'Read a probability density, and compute a probability as the area under it.',
       builds: ['bayes', 'integral'],
       blocks: [
         { md: `Heights, temperatures and model weights are **continuous**: they can be any number in a range, not just a list of values. The probability of being **exactly** 172.000… cm is 0 (there are infinitely many possible values). What we can ask is the chance of falling in a **range**.
 
-A **probability density** $p(x)$ describes this as a curve: the probability of landing between $a$ and $b$ is the **area under the curve** between them (lesson 2.18):
+A **probability density** $p(x)$ describes this as a curve: the probability of landing between $a$ and $b$ is the **area under the curve** between them (lesson [[#integral]]):
 
 $$P(a \\le X \\le b) = \\int_a^b p(x)\\,dx$$
 
@@ -316,7 +316,7 @@ The simplest density: **uniform** on $[0, 1]$, flat at height 1. The chance of l
     },
 
     {
-      id: 'normal', number: '4.8', title: 'The bell curve, built up',
+      id: 'normal', title: 'The bell curve, built up',
       goal: 'Build $\\mathcal N(x; \\mu, \\sigma^2) = \\frac{1}{\\sigma\\sqrt{2\\pi}}e^{-(x-\\mu)^2/(2\\sigma^2)}$ piece by piece, and use the 68–95–99.7 rule.',
       builds: ['densities', 'number-e'],
       blocks: [
@@ -324,8 +324,10 @@ The simplest density: **uniform** on $[0, 1]$, flat at height 1. The chance of l
 
 1. **A bump.** $e^{-x^2}$: at $x = 0$ it is $e^0 = 1$; as $x$ moves away either side, $-x^2$ becomes very negative and $e^{-x^2}$ falls quickly to 0. A smooth bump centred on 0.
 2. **Move it.** $e^{-(x - \\mu)^2}$: the peak is now where $x = \\mu$, the mean.
-3. **Widen it.** $e^{-(x-\\mu)^2/(2\\sigma^2)}$: dividing by $\\sigma^2$ stretches the bump so that its width is controlled by the standard deviation $\\sigma$. (The 2 makes $\\sigma$ come out as exactly the standard deviation.)
-4. **Make the area 1.** The area under step 3 turns out to be $\\sigma\\sqrt{2\\pi}$, so divide by it:
+3. **Widen it.** $e^{-(x-\\mu)^2/(2\\sigma^2)}$: dividing by $\\sigma^2$ stretches the bump so that its width is controlled by the standard deviation $\\sigma$. (The 2 is there so that $\\sigma$ comes out as exactly the standard deviation: lesson [[#integration-techniques]] proved it by parts, and you can measure it below.)
+4. **Make the area 1.** A density's total area must be 1 (lesson [[#densities]]), so divide by the area under step 3. What is it? Moving the bump (step 2) slides every strip sideways without changing its area. Widening it (step 3) is a sideways stretch by $\\sigma$: write $z = (x - \\mu)/\\sigma$, and each strip of the curve $e^{-z^2/2}$ becomes $\\sigma$ times wider at the same height. So the area is $\\sigma$ times the area under $e^{-z^2/2}$ (lesson [[#integration-techniques]] proved this by substitution). That last area is exactly $\\sqrt{2\\pi} = 2.50663\\ldots$, which lesson [[#gaussian-integral]] proved.
+
+The first check below measures it again with thin strips. So the area under step 3 is $\\sigma\\sqrt{2\\pi}$; divide by it:
 
 $$\\mathcal N(x;\\, \\mu, \\sigma^2) = \\frac{1}{\\sigma\\sqrt{2\\pi}}\\, \\exp\\!\\left(-\\frac{(x - \\mu)^2}{2\\sigma^2}\\right)$$
 
@@ -338,6 +340,20 @@ Read $\\mathcal N(\\mu, \\sigma^2)$ as "normal with mean $\\mu$ and variance $\\
               ['z = (x - mu) / sigma', ['How many standard deviations from the mean: the **z-score**.'], { tex: 'z = \\frac{x - \\mu}{\\sigma}', calc: q => [`(${f(q.x)} − ${f(q.mu)}) / ${f(q.sigma)}`, (q.x - q.mu) / q.sigma] }],
               ['return math.exp(-z * z / 2) / (sigma * math.sqrt(2 * math.pi))', ['The bump, scaled to area 1.'], { tex: '\\frac{1}{\\sigma\\sqrt{2\\pi}}e^{-z^2/2}' }],
             ],
+          },
+        },
+        {
+          predict: {
+            prompt: 'Measure the area under $e^{-z^2/2}$ from $z = -8$ to $8$ with 1000 midpoint strips (beyond that the curve is below $10^{-13}$). What do you get? (4 decimals)',
+            answer: Math.sqrt(2 * Math.PI), tolerance: 0.00006, compute: () => area(z => Math.exp(-z * z / 2), -8, 8, 1000),
+            explain: `${f(area(z => Math.exp(-z * z / 2), -8, 8, 1000), 6)}, and $\\sqrt{2\\pi} = ${f(Math.sqrt(2 * Math.PI), 6)}$. More strips agree to more digits.`,
+          },
+        },
+        {
+          predict: {
+            prompt: 'Now the "2" in step 3. With $\\mu = 0$ and $\\sigma = 2$, measure the variance $\\int x^2\\,\\mathcal N(x; 0, 2^2)\\,dx$ with strips from $-20$ to $20$. (2 decimals)',
+            answer: 4, tolerance: 0.006, compute: () => area(x => x * x * normalPdf(x, 0, 2), -20, 20, 4000),
+            explain: 'It is $\\sigma^2 = 4$: with the 2 in place, $\\sigma$ is exactly the standard deviation. Without it (dividing by $\\sigma^2$ alone) the spread would come out as $\\sigma^2/2$.',
           },
         },
         {
@@ -359,17 +375,31 @@ Read $\\mathcal N(\\mu, \\sigma^2)$ as "normal with mean $\\mu$ and variance $\\
     },
 
     {
-      id: 'sampling', number: '4.9', title: 'Averages wobble: sampling and standard error',
+      id: 'sampling', title: 'Averages wobble: sampling and standard error',
       goal: 'See why an average of $n$ samples varies by about $\\sigma/\\sqrt n$, and why that matters for every measurement in ML.',
       builds: ['normal'],
       blocks: [
         { md: `We almost never know a true mean $\\mu$; we estimate it with the **sample mean** $\\bar x$ of the data we have. Different samples give different estimates. How much do they wobble?
 
-Average $n$ independent values, each with standard deviation $\\sigma$. The variance of a sum of independent things is the sum of their variances, so the sum has variance $n\\sigma^2$; dividing by $n$ divides the variance by $n^2$, leaving $\\sigma^2/n$. Take the square root: the **standard error**,
+Average $n$ independent values, each with mean $\\mu$ and standard deviation $\\sigma$. Two facts, each derived from things you have.
+
+**Variances of independent things add.** Take two, $X$ and $Y$, with means $\\mu_X, \\mu_Y$, and write $A = X - \\mu_X$, $B = Y - \\mu_Y$ for their distances from their means. By linearity $\\mathbb E[A] = \\mathbb E[X] - \\mu_X = 0$, and likewise $\\mathbb E[B] = 0$. Then
+
+$$\\mathrm{Var}(X + Y) = \\mathbb E[(A + B)^2] = \\mathbb E[A^2] + 2\\,\\mathbb E[AB] + \\mathbb E[B^2] = \\mathrm{Var}(X) + 2\\,\\mathbb E[AB] + \\mathrm{Var}(Y)$$
+
+"Independent" means the "and" rule is a plain product, $P(A = a \\text{ and } B = b) = P(A = a)\\,P(B = b)$ (lesson [[#probability]]). So
+
+$$\\mathbb E[AB] = \\sum_a\\sum_b ab\\,P(a)\\,P(b) = \\Big(\\sum_a a\\,P(a)\\Big)\\Big(\\sum_b b\\,P(b)\\Big) = \\mathbb E[A]\\,\\mathbb E[B] = 0$$
+
+(the middle step factors the double sum, as $(a_1 + a_2)(b_1 + b_2)$ multiplies out to every $a_ib_j$). The cross term vanishes: $\\mathrm{Var}(X + Y) = \\mathrm{Var}(X) + \\mathrm{Var}(Y)$. Adding one value at a time, a sum of $n$ independent values has variance $n\\sigma^2$.
+
+**Scaling by $c$ scales variance by $c^2$:** $cX$ has mean $c\\mu$, and $(cX - c\\mu)^2 = c^2(X - \\mu)^2$, so $\\mathrm{Var}(cX) = c^2\\,\\mathrm{Var}(X)$.
+
+The average is the sum times $c = \\frac1n$, so its variance is $\\frac{1}{n^2}\\cdot n\\sigma^2 = \\frac{\\sigma^2}{n}$. Take the square root: the **standard error**,
 
 $$\\mathrm{SE}(\\bar x) = \\frac{\\sigma}{\\sqrt n}$$
 
-Two things follow. Averages get more reliable with more data, but slowly: four times the data halves the error. And whatever the original distribution, the averages pile up into a **bell curve** around $\\mu$ (the **central limit theorem**), which is why the normal distribution shows up everywhere.
+Two things follow. Averages get more reliable with more data, but slowly: four times the data halves the error. And whatever the original distribution, the averages pile up into a **bell curve** around $\\mu$: the **central limit theorem**, which is why the normal distribution shows up everywhere. The spread $\\sigma/\\sqrt n$ is proved above, and the bell **shape** is lesson [[#clt]]'s theorem. The figure below shows it again: start from flat, un-bell-like dice and watch the averages take the bell's shape as $n$ grows.
 
 In ML: a test-set accuracy is an average, so it has a standard error. A model scoring 91% on 100 test examples has an SE of about 3 points, so a rival at 89% may not really be worse.` },
         {
@@ -398,19 +428,19 @@ In ML: a test-set accuracy is an average, so it has a standard error. A model sc
     },
 
     {
-      id: 'likelihood', number: '4.10', title: 'Likelihood: how well do parameters explain the data?',
+      id: 'likelihood', title: 'Likelihood: how well do parameters explain the data?',
       goal: 'Compute $L(\\theta) = \\prod_i p(x_i \\mid \\theta)$ for coin flips, and explain how it differs from a probability.',
       builds: ['sampling', 'logarithms'],
       blocks: [
         { md: `Turn the question round. Instead of "given the coin's bias, how likely are these flips?", ask "given these flips, which bias explains them best?"
 
-A coin lands heads with unknown probability $p$. We flip it 10 times: H H T H T H H T H H, 7 heads. If the bias were $p$, the probability of this exact sequence would be, by the "and" rule for independent flips (lesson 4.1),
+A coin lands heads with unknown probability $p$. We flip it 10 times: H H T H T H H T H H, 7 heads. If the bias were $p$, the probability of this exact sequence would be, by the "and" rule for independent flips (lesson [[#probability]]),
 
 $$L(p) = p \\cdot p \\cdot (1 - p) \\cdots = \\prod_{i=1}^{10} p(x_i \\mid p) = p^7 (1 - p)^3$$
 
 Read as a function of $p$ with the data fixed, this is the **likelihood**. $L(0.5) = 0.00098$, $L(0.7) = 0.0022$: a coin with $p = 0.7$ explains our data more than twice as well as a fair one. Note what it is not: it is not the probability that $p = 0.7$ (that would need Bayes and a prior). It is "how probable the data would be, if $p$ were this".
 
-And because the product of many small numbers underflows, we take logs (lesson 1.7):
+And because the product of many small numbers underflows, we take logs (lesson [[#logarithms]]):
 
 $$\\log L(p) = \\sum_{i=1}^{n} \\log p(x_i \\mid p) = 7\\log p + 3 \\log(1 - p)$$
 
@@ -450,7 +480,7 @@ Same peak, a sum instead of a product: the **log-likelihood**.` },
     },
 
     {
-      id: 'mle', number: '4.11', title: 'Maximum likelihood, and why squared error',
+      id: 'mle', title: 'Maximum likelihood, and why squared error',
       goal: 'Find $\\hat\\theta = \\arg\\max_\\theta \\log L(\\theta)$ with calculus, and derive mean squared error as Gaussian maximum likelihood.',
       builds: ['likelihood', 'minimum'],
       blocks: [
@@ -458,9 +488,9 @@ Same peak, a sum instead of a product: the **log-likelihood**.` },
 
 $$\\hat\\theta = \\arg\\max_\\theta\\; \\log L(\\theta)$$
 
-For the coin, maximise $\\ell(p) = 7\\log p + 3\\log(1 - p)$. Its derivative (lesson 2.11, and the chain rule for the second term) is $\\frac7p - \\frac{3}{1-p}$. Set it to 0: $7(1 - p) = 3p$, so $\\hat p = 0.7$. The best estimate is the fraction of heads: common sense, now with a reason.
+For the coin, maximise $\\ell(p) = 7\\log p + 3\\log(1 - p)$. Its derivative (lesson [[#exp-log-slopes]], and the chain rule for the second term) is $\\frac7p - \\frac{3}{1-p}$. Set it to 0: $7(1 - p) = 3p$, so $\\hat p = 0.7$. The best estimate is the fraction of heads: common sense, now with a reason.
 
-Now the big one. Suppose a model predicts $\\hat y_i$, and the true values scatter around the prediction with normal noise: $y_i \\sim \\mathcal N(\\hat y_i, \\sigma^2)$. Each point's log-density (lesson 4.8) is
+Now the big one. Suppose a model predicts $\\hat y_i$, and the true values scatter around the prediction with normal noise: $y_i \\sim \\mathcal N(\\hat y_i, \\sigma^2)$. Each point's log-density (lesson [[#normal]]) is
 
 $$\\log p(y_i) = -\\log(\\sigma\\sqrt{2\\pi}) - \\frac{(y_i - \\hat y_i)^2}{2\\sigma^2}$$
 
@@ -468,7 +498,7 @@ Add over all points. The first term doesn't depend on the model at all. So maxim
 
 $$\\arg\\max \\log L = \\arg\\min \\sum_i (y_i - \\hat y_i)^2$$
 
-**Mean squared error is maximum likelihood under Gaussian noise.** That is why it is the default regression loss. And in Part 5, cross-entropy will turn out to be maximum likelihood for categories. The losses of ML aren't arbitrary: they are log-likelihoods with a minus sign.` },
+**Mean squared error is maximum likelihood under Gaussian noise.** That is why it is the default regression loss. And in Part [[#part:part5]], cross-entropy will turn out to be maximum likelihood for categories. The losses of ML aren't arbitrary: they are log-likelihoods with a minus sign.` },
         { figure: 'LikelihoodFig', props: { showSlope: true }, caption: 'The log-likelihood and its slope. The slope is zero exactly at the fraction of heads.' },
         {
           predict: {
@@ -492,15 +522,15 @@ $$\\arg\\max \\log L = \\arg\\min \\sum_i (y_i - \\hat y_i)^2$$
     },
 
     {
-      id: 'covariance', number: '4.12', title: 'Covariance and correlation: do two things move together?',
+      id: 'covariance', title: 'Covariance and correlation: do two things move together?',
       goal: 'Compute covariance and correlation, read a covariance matrix, and remember that correlation is not causation.',
-      builds: ['mle', 'dot-product'],
+      builds: ['variance', 'dot-product'],
       blocks: [
         { md: `Hours studied and test score tend to rise together. **Covariance** measures that: for each point, multiply how far $x$ is above its mean by how far $y$ is above its mean, and average.
 
 $$\\mathrm{Cov}(X, Y) = \\frac1n\\sum_{i=1}^n (x_i - \\bar x)(y_i - \\bar y)$$
 
-When both are above average together (or below together), the product is positive; when one is up while the other is down, negative. So the sign tells the direction of the relationship. Notice it is a dot product of the two centred lists (lesson 3.4), divided by $n$.
+When both are above average together (or below together), the product is positive; when one is up while the other is down, negative. So the sign tells the direction of the relationship. Notice it is a dot product of the two centred lists (lesson [[#dot-product]]), divided by $n$.
 
 Covariance has awkward units (hours × marks). Divide by both standard deviations and you get the **correlation**,
 
@@ -556,13 +586,25 @@ With many features, all the covariances form a **covariance matrix** $\\Sigma$: 
     },
 
     {
-      id: 'pca', number: '4.13', title: 'PCA: the directions data spreads along',
+      id: 'pca', title: 'PCA: the directions data spreads along',
       goal: 'Find the principal components of 2D data as eigenvectors of its covariance matrix, and use them to reduce dimensions.',
       builds: ['covariance', 'eigenvectors'],
       blocks: [
         { md: `A cloud of data points usually isn't round: it stretches out more in some directions than others. **Principal component analysis** (PCA) finds those directions. The first principal component is the direction along which the data varies most; the second is the most-varying direction at right angles to the first; and so on.
 
-They are exactly the **eigenvectors of the covariance matrix** (lesson 3.12), and each eigenvalue is the **variance along its direction**. Why: the variance of the data projected onto a unit direction $\\mathbf v$ is $\\mathbf v^\\top \\Sigma\\,\\mathbf v$, and the direction making that largest is the eigenvector with the largest eigenvalue.
+They are exactly the **eigenvectors of the covariance matrix** (lesson [[#eigenvectors]]), and each eigenvalue is the **variance along its direction**. Why, in two steps.
+
+**Step 1: the variance along a direction is $\\mathbf v^\\top\\Sigma\\mathbf v$.** Centre the data: point $i$ becomes $(a_i, b_i)$, its distances from the mean in each coordinate. Its position along a unit direction $\\mathbf v = (v_1, v_2)$ is the dot product $t_i = v_1a_i + v_2b_i$ (lesson [[#dot-product]]: length 1 times the point's length times $\\cos\\theta$, which is how far along $\\mathbf v$ it reaches). The $t_i$ average to 0, so their variance is the average of $t_i^2$. Multiply out $(v_1a_i + v_2b_i)^2$ and average term by term:
+
+$$\\overline{t^2} = v_1^2\\,\\overline{a^2} + 2v_1v_2\\,\\overline{ab} + v_2^2\\,\\overline{b^2} = v_1^2\\Sigma_{11} + 2v_1v_2\\Sigma_{12} + v_2^2\\Sigma_{22} = \\mathbf v^\\top\\Sigma\\,\\mathbf v$$
+
+(the averages are the variances and the covariance, the entries of $\\Sigma$; the last step is just $\\mathbf v^\\top\\Sigma\\mathbf v$ written out).
+
+**Step 2: the top eigenvector makes it largest.** $\\Sigma$ is symmetric, and a symmetric matrix has eigenvectors at right angles to each other (here you can check: $(1, 1)$ and $(1, -1)$ have dot product 0; in general this is the *spectral theorem*, taken on trust for now). Call the unit eigenvectors $\\mathbf e_1, \\mathbf e_2$, with eigenvalues $\\lambda_1 \\ge \\lambda_2$. Any unit direction is $\\mathbf v = c_1\\mathbf e_1 + c_2\\mathbf e_2$ with $c_1^2 + c_2^2 = 1$ (Pythagoras, since the two are at right angles). Then $\\Sigma\\mathbf v = c_1\\lambda_1\\mathbf e_1 + c_2\\lambda_2\\mathbf e_2$, and dotting with $\\mathbf v$ (the cross terms vanish because $\\mathbf e_1\\cdot\\mathbf e_2 = 0$):
+
+$$\\mathbf v^\\top\\Sigma\\,\\mathbf v = \\lambda_1c_1^2 + \\lambda_2c_2^2 \\le \\lambda_1(c_1^2 + c_2^2) = \\lambda_1$$
+
+with equality exactly when $\\mathbf v = \\pm\\mathbf e_1$. So the most-varying direction is the top eigenvector, and the variance along it is $\\lambda_1$.
 
 For our five points, $\\Sigma = \\begin{pmatrix} 2 & 1.8 \\\\ 1.8 & 2 \\end{pmatrix}$. Its eigenvalues are 3.8 and 0.2: almost all the spread (95%) is along the first direction, the diagonal. So we could describe each point by **one** number (its position along that diagonal) and lose little. That is **dimensionality reduction**: 784 pixel values can often be squeezed into a few dozen principal components that keep most of the variation, for plotting, compressing or speeding up a model.` },
         {
@@ -576,16 +618,16 @@ For our five points, $\\Sigma = \\begin{pmatrix} 2 & 1.8 \\\\ 1.8 & 2 \\end{pmat
           },
         },
         { figure: 'PCAFig', caption: 'Drag the points. The long arrow is the first principal component, the short one the second; their lengths show the spread along each.' },
-        { python: { program: 'stats', label: 'Run Part 4 in real Python' } },
+        { python: { program: 'stats', label: 'Run Part [[#part:part4]] in real Python' } },
         {
           code: {
             file: 'stats.py', fn: 'show_stats', notes: [
               ['def show_stats():', ['What the Python tab runs.']],
-              ['p = distribution(two_dice())', ['Lesson 4.2.']],
-              ['print("P(total = 7):", probability(lambda t: t == 7, two_dice()), " E[X]:", expectation(p), " Var:", variance(p))', ['Lessons 4.1, 4.3, 4.4.']],
-              ['print("P(ill | positive):", bayes(0.01, 0.9, 0.05))', ['Lesson 4.6.']],
-              ['flips = [1, 1, 0, 1, 0, 1, 1, 0, 1, 1]', ['Lesson 4.10\'s coin.']],
-              ['print("likelihood at 0.5 and 0.7:", likelihood(0.5, flips), likelihood(0.7, flips))', ['Lesson 4.10: the biased coin explains the flips better.']],
+              ['p = distribution(two_dice())', ['Lesson [[#distributions]].']],
+              ['print("P(total = 7):", probability(lambda t: t == 7, two_dice()), " E[X]:", expectation(p), " Var:", variance(p))', ['Lessons [[#probability]], [[#expectation]], [[#variance]].']],
+              ['print("P(ill | positive):", bayes(0.01, 0.9, 0.05))', ['Lesson [[#bayes]].']],
+              ['flips = [1, 1, 0, 1, 0, 1, 1, 0, 1, 1]', ['Lesson [[#likelihood]]\'s coin.']],
+              ['print("likelihood at 0.5 and 0.7:", likelihood(0.5, flips), likelihood(0.7, flips))', ['Lesson [[#likelihood]]: the biased coin explains the flips better.']],
               ['print("first principal direction:", pca2([1, 2, 3, 4, 5], [2, 3, 5, 4, 6]))', ['This lesson.']],
             ],
           },

@@ -7,9 +7,9 @@ import { f } from './util.js'
 const A = [[2, 1], [1, 3]]
 
 export const PART3 = {
-  id: 'part3', title: 'Part 3 · Arrows and tables: linear algebra', lessons: [
+  id: 'part3', title: 'Part [[#part:part3]] · Arrows and tables: linear algebra', lessons: [
     {
-      id: 'vectors', number: '3.1', title: 'Vectors: lists that are also arrows',
+      id: 'vectors', title: 'Vectors: lists that are also arrows',
       goal: 'Read $\\mathbf x \\in \\mathbb R^n$ and $x_i$, and see one vector as a list of numbers, a point and an arrow.',
       builds: ['gradient', 'subscripts'],
       blocks: [
@@ -17,11 +17,11 @@ export const PART3 = {
 
 $$\\mathbf x = (120,\\; 3,\\; 40)$$
 
-A vector is just an ordered list of numbers. Its **entries** are $x_1 = 120$, $x_2 = 3$, $x_3 = 40$ (lesson 1.3's subscripts), and since it holds three real numbers we say $\\mathbf x \\in \\mathbb R^3$, "x is in R three". In ML, almost everything is a vector: one example's measurements, a word's embedding (300 numbers), an image (784 pixel values), the model's parameters θ, the gradient $\\nabla \\mathcal L$ (lesson 2.16 already was one).
+A vector is just an ordered list of numbers. Its **entries** are $x_1 = 120$, $x_2 = 3$, $x_3 = 40$ (lesson [[#subscripts]]'s subscripts), and since it holds three real numbers we say $\\mathbf x \\in \\mathbb R^3$, "x is in R three". In ML, almost everything is a vector: one example's measurements, a word's embedding (300 numbers), an image (784 pixel values), the model's parameters θ, the gradient $\\nabla \\mathcal L$ (lesson [[#gradient]] already was one).
 
 With two entries a vector can be **drawn**. $(3, 2)$ is the point 3 across and 2 up, or the **arrow** from the origin to that point. The arrow view is what makes the operations of this part visible: they are things you can do to arrows. Everything we see in 2D works the same way with 784 entries; we just can't draw it.
 
-Notation varies: bold $\\mathbf x$, an arrow $\\vec x$, or plain $x$ when the paper has said $x \\in \\mathbb R^d$. Vectors are usually written as **columns**, $\\begin{pmatrix} 3 \\\\ 2 \\end{pmatrix}$; lesson 3.8 says why that matters.` },
+Notation varies: bold $\\mathbf x$, an arrow $\\vec x$, or plain $x$ when the paper has said $x \\in \\mathbb R^d$. Vectors are usually written as **columns**, $\\begin{pmatrix} 3 \\\\ 2 \\end{pmatrix}$; lesson [[#transpose]] says why that matters.` },
         {
           symbols: [
             ['\\mathbf x', 'bold x', 'a vector: an ordered list of numbers', 'x = [3, 2]'],
@@ -47,7 +47,7 @@ Notation varies: bold $\\mathbf x$, an arrow $\\vec x$, or plain $x$ when the pa
     },
 
     {
-      id: 'vector-arithmetic', number: '3.2', title: 'Adding and scaling arrows',
+      id: 'vector-arithmetic', title: 'Adding and scaling arrows',
       goal: 'Add vectors, multiply them by numbers, and form a linear combination.',
       builds: ['vectors'],
       blocks: [
@@ -56,7 +56,7 @@ Notation varies: bold $\\mathbf x$, an arrow $\\vec x$, or plain $x$ when the pa
 - **Addition:** $(1, 2) + (3, -1) = (4, 1)$. As arrows: put the second arrow's tail on the first one's tip; the sum goes from the start to the end. Walking 1 east 2 north, then 3 east 1 south, is the same as walking 4 east 1 north.
 - **Scaling:** $3 \\times (1, 2) = (3, 6)$. The arrow gets 3 times longer, same direction. A negative number flips it round. A plain number like 3 is called a **scalar** (it scales).
 
-Put them together and you get a **linear combination**: $a\\,\\mathbf u + b\\,\\mathbf v$. Mixing two directions in different amounts reaches every point of the plane (unless the two arrows point along the same line). The gradient step $\\theta - \\eta \\nabla \\mathcal L$ of lesson 2.17 is a linear combination: one vector plus $-\\eta$ times another.` },
+Put them together and you get a **linear combination**: $a\\,\\mathbf u + b\\,\\mathbf v$. Mixing two directions in different amounts reaches every point of the plane (unless the two arrows point along the same line). The gradient step $\\theta - \\eta \\nabla \\mathcal L$ of lesson [[#gradient-descent-2d]] is a linear combination: one vector plus $-\\eta$ times another.` },
         {
           code: {
             file: 'linalg.py', fn: 'add', notes: [
@@ -86,7 +86,7 @@ Put them together and you get a **linear combination**: $a\\,\\mathbf u + b\\,\\
     },
 
     {
-      id: 'norm', number: '3.3', title: 'Length and distance: the norm',
+      id: 'norm', title: 'Length and distance: the norm',
       goal: 'Compute $\\|\\mathbf x\\|$ with Pythagoras in any dimension, the distance between two vectors, and the L1 norm.',
       builds: ['vector-arithmetic', 'powers'],
       blocks: [
@@ -96,7 +96,7 @@ $$\\|\\mathbf x\\| = \\sqrt{x_1^2 + x_2^2 + \\dots + x_n^2} = \\sqrt{\\sum_{i=1}
 
 This is the **norm** (or the **L2 norm**, written $\\|\\mathbf x\\|_2$). The **distance** between two vectors is the length of their difference, $\\|\\mathbf u - \\mathbf v\\|$: how far apart two data points are, which is how nearest-neighbour methods and clustering decide what is similar.
 
-Squared norms are everywhere in ML because the square root disappears: $\\|\\mathbf x\\|^2 = \\sum x_i^2$. The total squared error of a model is $\\|\\hat{\\mathbf y} - \\mathbf y\\|^2$, and the "weight decay" penalty of Part 5 is $\\lambda\\|\\mathbf w\\|^2$. The **L1 norm**, $\\|\\mathbf x\\|_1 = \\sum |x_i|$ (add up the absolute values: the distance a taxi drives on a grid), is the other common one.` },
+Squared norms are everywhere in ML because the square root disappears: $\\|\\mathbf x\\|^2 = \\sum x_i^2$. The total squared error of a model is $\\|\\hat{\\mathbf y} - \\mathbf y\\|^2$, and the "weight decay" penalty of Part [[#part:part5]] is $\\lambda\\|\\mathbf w\\|^2$. The **L1 norm**, $\\|\\mathbf x\\|_1 = \\sum |x_i|$ (add up the absolute values: the distance a taxi drives on a grid), is the other common one.` },
         {
           code: {
             file: 'linalg.py', fn: 'norm', notes: [
@@ -129,7 +129,7 @@ Squared norms are everywhere in ML because the square root disappears: $\\|\\mat
     },
 
     {
-      id: 'dot-product', number: '3.4', title: 'The dot product: the most important operation in ML',
+      id: 'dot-product', title: 'The dot product: the most important operation in ML',
       goal: 'Compute $\\mathbf u \\cdot \\mathbf v$ as a weighted sum and as $\\|\\mathbf u\\|\\|\\mathbf v\\|\\cos\\theta$, and use cosine similarity.',
       builds: ['norm', 'sigma'],
       blocks: [
@@ -137,19 +137,31 @@ Squared norms are everywhere in ML because the square root disappears: $\\|\\mat
 
 $$\\mathbf u \\cdot \\mathbf v = \\sum_{i=1}^n u_i v_i = u_1v_1 + u_2v_2 + \\dots + u_nv_n$$
 
-That's the **dot product**, and it gives one number. If $\\mathbf w$ holds weights and $\\mathbf x$ holds an example's measurements, $\\mathbf w \\cdot \\mathbf x$ is a **weighted sum**: price per m² times size, plus value per bedroom times bedrooms, and so on. Lesson 1.1's model with many inputs is exactly
+That's the **dot product**, and it gives one number. If $\\mathbf w$ holds weights and $\\mathbf x$ holds an example's measurements, $\\mathbf w \\cdot \\mathbf x$ is a **weighted sum**: price per m² times size, plus value per bedroom times bedrooms, and so on. Lesson [[#symbols-welcome]]'s model with many inputs is exactly
 
 $$\\hat y = \\mathbf w \\cdot \\mathbf x + b$$
 
-A single neuron computes a dot product. A layer computes many. Attention (Part 5) is built from them.
+A single neuron computes a dot product. A layer computes many. Attention (Part [[#part:part5]]) is built from them.
 
 The dot product also has a **geometric** meaning:
 
 $$\\mathbf u \\cdot \\mathbf v = \\|\\mathbf u\\|\\,\\|\\mathbf v\\|\\cos\\theta$$
 
-where $\\theta$ is the angle between the arrows and $\\cos\\theta$ goes from 1 (same direction) through 0 (at right angles) to −1 (opposite). So the dot product measures **how much two vectors point the same way**, times their lengths. Dividing out the lengths leaves the **cosine similarity**, used to compare word embeddings and documents: 1 means the same direction, 0 unrelated.
+where $\\theta$ (theta) is the angle between the arrows. **What cos is:** walk 1 unit from the origin at angle $\\theta$ to the horizontal axis. How far across you are is $\\cos\\theta$; how far up is $\\sin\\theta$. So $\\cos 0 = 1$ (straight across), $\\cos 90° = 0$ (straight up), $\\cos 180° = -1$ (straight back). The walk had length 1, so by Pythagoras $\\cos^2\\theta + \\sin^2\\theta = 1$. Walk a length $L$ instead and you are $L\\cos\\theta$ across and $L\\sin\\theta$ up.
 
-(It also explains lesson 2.16: the change in $f$ for a small step $\\mathbf d$ is $\\nabla f \\cdot \\mathbf d$, which is biggest when $\\mathbf d$ points the same way as $\\nabla f$. So the gradient points uphill.)` },
+**Why the formula holds.** Work out $\\|\\mathbf u - \\mathbf v\\|^2$ two ways.
+
+*By algebra:* $\\|\\mathbf u - \\mathbf v\\|^2 = \\sum_i (u_i - v_i)^2 = \\sum_i u_i^2 - 2\\sum_i u_i v_i + \\sum_i v_i^2 = \\|\\mathbf u\\|^2 + \\|\\mathbf v\\|^2 - 2\\,\\mathbf u\\cdot\\mathbf v$.
+
+*By geometry:* the arrows $\\mathbf u$ and $\\mathbf v$ from the origin, and the gap $\\mathbf u - \\mathbf v$ between their tips, form a triangle (in any number of dimensions, two arrows lie in one flat plane). Lay $\\mathbf u$ along the horizontal. The tip of $\\mathbf v$ is then $\\|\\mathbf v\\|\\cos\\theta$ across and $\\|\\mathbf v\\|\\sin\\theta$ up, and the tip of $\\mathbf u$ is $\\|\\mathbf u\\|$ across and 0 up. Pythagoras on the gap between the tips:
+
+$$\\|\\mathbf u - \\mathbf v\\|^2 = (\\|\\mathbf u\\| - \\|\\mathbf v\\|\\cos\\theta)^2 + (\\|\\mathbf v\\|\\sin\\theta)^2 = \\|\\mathbf u\\|^2 - 2\\|\\mathbf u\\|\\|\\mathbf v\\|\\cos\\theta + \\|\\mathbf v\\|^2(\\cos^2\\theta + \\sin^2\\theta)$$
+
+and the last bracket is 1. (This is the "law of cosines".) The two answers must agree, and comparing them term by term leaves $\\mathbf u\\cdot\\mathbf v = \\|\\mathbf u\\|\\|\\mathbf v\\|\\cos\\theta$.
+
+So the dot product measures **how much two vectors point the same way**, times their lengths. In particular **$\\mathbf u \\cdot \\mathbf v = 0$ exactly when the arrows are at right angles** (for nonzero arrows). Dividing out the lengths leaves the **cosine similarity**, used to compare word embeddings and documents: 1 means the same direction, 0 unrelated.
+
+(This finishes lesson [[#gradient]]'s argument in vector language. A small step $\\mathbf d$ changes $f$ by about $\\nabla f \\cdot \\mathbf d = \\|\\nabla f\\|\\|\\mathbf d\\|\\cos\\theta$, biggest when $\\theta = 0$, so uphill is along $\\nabla f$. Along a contour the change is 0, so the step is at right angles to $\\nabla f$.)` },
         {
           code: {
             file: 'linalg.py', fn: 'dot', notes: [
@@ -199,7 +211,7 @@ where $\\theta$ is the angle between the arrows and $\\cos\\theta$ goes from 1 (
     },
 
     {
-      id: 'matrices', number: '3.5', title: 'Matrices: many dot products at once',
+      id: 'matrices', title: 'Matrices: many dot products at once',
       goal: 'Read a matrix\'s shape and entries $A_{ij}$, and compute $A\\mathbf x$ row by row, as one layer of a neural network.',
       builds: ['dot-product'],
       blocks: [
@@ -247,7 +259,7 @@ That is why neural networks are "matrix multiplications": each layer is one.` },
             prompt: 'A layer maps 784 inputs to 128 neurons. What shape is $W$?',
             options: [
               { text: '$128 \\times 784$', why: 'Yes: one row of 784 weights per neuron. $W\\mathbf x$ then gives 128 numbers.' },
-              { text: '$784 \\times 128$', why: 'Then $W\\mathbf x$ would need a 128-entry input. Rows are outputs, columns are inputs. (Some libraries store the transpose; lesson 3.8.)' },
+              { text: '$784 \\times 128$', why: 'Then $W\\mathbf x$ would need a 128-entry input. Rows are outputs, columns are inputs. (Some libraries store the transpose; lesson [[#transpose]].)' },
             ],
             answer: 0,
           },
@@ -257,7 +269,7 @@ That is why neural networks are "matrix multiplications": each layer is one.` },
     },
 
     {
-      id: 'transformations', number: '3.6', title: 'Matrices move space',
+      id: 'transformations', title: 'Matrices move space',
       goal: 'See a $2\\times2$ matrix as a transformation of the plane, and read its columns as where the axes land.',
       builds: ['matrices'],
       blocks: [
@@ -283,13 +295,19 @@ A neural network's layers are transformations like these, followed by a bend (th
     },
 
     {
-      id: 'matrix-multiplication', number: '3.7', title: 'Matrix times matrix: one after another',
+      id: 'matrix-multiplication', title: 'Matrix times matrix: one after another',
       goal: 'Multiply two matrices row-by-column, check shapes, and explain why $AB \\ne BA$.',
       builds: ['transformations'],
       blocks: [
-        { md: `Do transformation $B$, then transformation $A$. The combined move is again a matrix, written $AB$ (read right to left: $B$ acts first, as in $A(B\\mathbf x)$). To compute it, each column of $B$ is a vector that $A$ transforms; equivalently:
+        { md: `Do transformation $B$, then transformation $A$. The combined move is again a matrix, written $AB$ (read right to left: $B$ acts first, as in $A(B\\mathbf x)$). Here is where its entries come from. Let $\\mathbf u = B\\mathbf x$. Each entry of $\\mathbf u$ is a row of $B$ dotted with $\\mathbf x$: $u_k = \\sum_j B_{kj}x_j$. Then $A$ acts on $\\mathbf u$: entry $i$ of the result is $\\sum_k A_{ik}u_k$. Substitute and regroup by $x_j$:
+
+$$\\big(A(B\\mathbf x)\\big)_i = \\sum_k A_{ik}\\sum_j B_{kj}x_j = \\sum_j \\Big(\\sum_k A_{ik}B_{kj}\\Big)\\,x_j$$
+
+(the regrouping is just adding the same products in a different order). The bracket is one fixed number for each pair $(i, j)$, so "do $B$, then $A$" is itself a matrix acting on $\\mathbf x$, with entries
 
 $$(AB)_{ij} = \\sum_k A_{ik} B_{kj} = (\\text{row } i \\text{ of } A) \\cdot (\\text{column } j \\text{ of } B)$$
+
+Equivalently, column $j$ of $AB$ is $A$ applied to column $j$ of $B$: where $B$ sends axis $j$, then moved on by $A$.
 
 **Shapes:** an $m\\times n$ times an $n \\times p$ gives $m \\times p$. The inside numbers must match ($n$); the outside ones give the result.
 
@@ -300,7 +318,7 @@ A network applies $W_1$, then a bend, then $W_2$… If there were no bends, $W_2
           code: {
             file: 'linalg.py', fn: 'matmul', notes: [
               ['def matmul(A, B):', ['$A$ is $m \\times n$, $B$ is $n \\times p$.']],
-              ['columns = transpose(B)', ['$B$\'s columns, as rows (lesson 3.8), so each can be dotted.']],
+              ['columns = transpose(B)', ['$B$\'s columns, as rows (lesson [[#transpose]]), so each can be dotted.']],
               ['return [[dot(row, col) for col in columns] for row in A]', ['Row $i$ of $A$ dotted with column $j$ of $B$, for every $i$ and $j$: a list comprehension inside a list comprehension.'], { tex: '(AB)_{ij} = \\sum_k A_{ik}B_{kj}' }],
             ],
           },
@@ -325,7 +343,7 @@ A network applies $W_1$, then a bend, then $W_2$… If there were no bends, $W_2
     },
 
     {
-      id: 'transpose', number: '3.8', title: 'The transpose: rows become columns',
+      id: 'transpose', title: 'The transpose: rows become columns',
       goal: 'Transpose a matrix, write the dot product as $\\mathbf u^\\top\\mathbf v$, and use $(AB)^\\top = B^\\top A^\\top$.',
       builds: ['matrix-multiplication'],
       blocks: [
@@ -335,9 +353,13 @@ Why papers are full of ⊤: if vectors are columns ($n\\times1$ matrices), then 
 
 $$\\hat y = \\mathbf w^\\top \\mathbf x + b$$
 
-which is lesson 3.4's $\\mathbf w\\cdot\\mathbf x + b$ in matrix clothes. (The other order, $\\mathbf u\\mathbf v^\\top$, is $(n\\times1)(1\\times n)$: a whole $n\\times n$ table, the **outer product**. Backpropagation's weight gradients are outer products, Part 5.)
+which is lesson [[#dot-product]]'s $\\mathbf w\\cdot\\mathbf x + b$ in matrix clothes. (The other order, $\\mathbf u\\mathbf v^\\top$, is $(n\\times1)(1\\times n)$: a whole $n\\times n$ table, the **outer product**. Backpropagation's weight gradients are outer products, Part [[#part:part5]].)
 
-One rule to remember: $(AB)^\\top = B^\\top A^\\top$; transposing reverses the order. And a matrix with $A^\\top = A$ is **symmetric**, like our $\\begin{pmatrix}2&1\\\\1&3\\end{pmatrix}$; covariance matrices (Part 4) always are.` },
+One rule to remember: $(AB)^\\top = B^\\top A^\\top$; transposing reverses the order. Check it entry by entry, using only "transposing swaps the two indices" and the multiplication rule:
+
+$$\\big((AB)^\\top\\big)_{ij} = (AB)_{ji} = \\sum_k A_{jk}B_{ki} = \\sum_k (B^\\top)_{ik}(A^\\top)_{kj} = (B^\\top A^\\top)_{ij}$$
+
+(the middle step only swaps the order of each product, $A_{jk}B_{ki} = B_{ki}A_{jk}$, and renames each entry by its transpose). Every entry agrees, so the matrices are equal. The shapes demand it too: if $A$ is $m\\times n$ and $B$ is $n\\times p$, then $(AB)^\\top$ is $p\\times m$, and only $B^\\top$ ($p\\times n$) times $A^\\top$ ($n\\times m$) has that shape. And a matrix with $A^\\top = A$ is **symmetric**, like our $\\begin{pmatrix}2&1\\\\1&3\\end{pmatrix}$; covariance matrices (Part [[#part:part4]]) always are.` },
         {
           code: {
             file: 'linalg.py', fn: 'transpose', notes: [
@@ -358,7 +380,7 @@ One rule to remember: $(AB)^\\top = B^\\top A^\\top$; transposing reverses the o
     },
 
     {
-      id: 'inverse', number: '3.9', title: 'Undoing a matrix: the inverse and the determinant',
+      id: 'inverse', title: 'Undoing a matrix: the inverse and the determinant',
       goal: 'Use the identity and the inverse, compute a $2\\times2$ determinant and inverse, and say when no inverse exists.',
       builds: ['transpose'],
       blocks: [
@@ -368,9 +390,17 @@ The **inverse** $A^{-1}$ undoes $A$: $A^{-1}A = AA^{-1} = I$. If $A$ rotates by 
 
 $$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}^{-1} = \\frac{1}{ad - bc}\\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix}$$
 
-Swap the diagonal, negate the other two, divide by $ad - bc$. That number is the **determinant**, $\\det A$: how much $A$ scales **area**. The unit square becomes a parallelogram of area $|\\det A|$ (negative if the transformation flips the plane over).
+Swap the diagonal, negate the other two, divide by $ad - bc$. Don't take that on trust; multiply it out:
 
-If $\\det A = 0$, $A$ squashes the whole plane onto a line (or a point). Then many points land in the same place, and nothing can undo it: **no inverse**. The matrix is called **singular**. In ML this happens when features are redundant (one input is a multiple of another), and it is one reason Part 5 adds regularisation.` },
+$$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}\\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix} = \\begin{pmatrix} ad - bc & -ab + ba \\\\ cd - dc & -cb + da \\end{pmatrix} = (ad - bc)\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}$$
+
+so dividing by $ad - bc$ leaves exactly $I$. That number is the **determinant**, $\\det A$, and it is how much $A$ scales **area**. The unit square's sides, the two axes, land on the columns $(a, c)$ and $(b, d)$, so the square becomes the parallelogram they span. Picture the usual case, all four numbers positive with $(a, c)$ the lower arrow: the parallelogram sits inside a rectangle $a + b$ wide and $c + d$ tall. Cut away the corners: two triangles of area $\\frac12 ac$, two of area $\\frac12 bd$, and two small rectangles $b \\times c$. What's left is
+
+$$(a + b)(c + d) - ac - bd - 2bc = ad - bc$$
+
+In other arrangements the same bookkeeping gives $ad - bc$ up to sign: a negative determinant means the transformation flips the plane over, like a mirror, and the area is $|\\det A|$. (The polygon-area exercise below checks this numerically for several matrices.)
+
+If $\\det A = 0$, $A$ squashes the whole plane onto a line (or a point). Then many points land in the same place, and nothing can undo it: **no inverse**. The matrix is called **singular**. In ML this happens when features are redundant (one input is a multiple of another), and it is one reason Part [[#part:part5]] adds regularisation.` },
         {
           code: {
             file: 'linalg.py', fn: 'det2', notes: [
@@ -408,7 +438,7 @@ If $\\det A = 0$, $A$ squashes the whole plane onto a line (or a point). Then ma
     },
 
     {
-      id: 'systems', number: '3.10', title: 'Solving equations with matrices',
+      id: 'systems', title: 'Solving equations with matrices',
       goal: 'Write simultaneous equations as $A\\mathbf x = \\mathbf b$ and solve them with $\\mathbf x = A^{-1}\\mathbf b$.',
       builds: ['inverse'],
       blocks: [
@@ -444,7 +474,7 @@ Geometrically: each equation is a line in the plane, and the solution is where t
     },
 
     {
-      id: 'least-squares', number: '3.11', title: 'Least squares: the best answer to an impossible question',
+      id: 'least-squares', title: 'Least squares: the best answer to an impossible question',
       goal: 'Derive the normal equation $X^\\top X\\boldsymbol\\theta = X^\\top\\mathbf y$ and use it to fit a line through points no line passes through.',
       builds: ['systems', 'minimum'],
       blocks: [
@@ -456,11 +486,15 @@ $$\\underbrace{\\begin{pmatrix} 0 & 1 \\\\ 1 & 1 \\\\ 2 & 1 \\end{pmatrix}}_{X} 
 
 $$\\min_{\\boldsymbol\\theta}\\; \\|X\\boldsymbol\\theta - \\mathbf y\\|^2$$
 
-Why the answer looks the way it does, geometrically: $X\\boldsymbol\\theta$ can only reach a flat slice of all possible 3-entry vectors (the combinations of $X$'s two columns). The closest point of that slice to $\\mathbf y$ is straight "below" it, so the miss $X\\boldsymbol\\theta - \\mathbf y$ is at right angles to both columns: its dot product with each column is 0. Writing "each column dotted with the miss is 0" as one matrix equation (lesson 3.8):
+Why the answer looks the way it does, geometrically: $X\\boldsymbol\\theta$ can only reach a flat slice of all possible 3-entry vectors (the combinations of $X$'s two columns). The closest point of that slice to $\\mathbf y$ is straight "below" it: the one where the miss is at right angles to the slice. Why closest? Suppose $\\mathbf p$ is a point of the slice whose miss $\\mathbf r = \\mathbf y - \\mathbf p$ is at right angles to every arrow lying in the slice, and $\\mathbf q$ is any other point of the slice. The arrow $\\mathbf s = \\mathbf p - \\mathbf q$ lies in the slice, so $\\mathbf r\\cdot\\mathbf s = 0$, and
+
+$$\\|\\mathbf y - \\mathbf q\\|^2 = \\|\\mathbf r + \\mathbf s\\|^2 = \\|\\mathbf r\\|^2 + 2\\,\\mathbf r\\cdot\\mathbf s + \\|\\mathbf s\\|^2 = \\|\\mathbf r\\|^2 + \\|\\mathbf s\\|^2 \\ge \\|\\mathbf r\\|^2$$
+
+(Pythagoras, in the dot-product form of lesson [[#dot-product]]). Every other point is at least as far away. So at the best $\\boldsymbol\\theta$ the miss $X\\boldsymbol\\theta - \\mathbf y$ is at right angles to both columns of $X$ (every arrow in the slice is a combination of them): its dot product with each column is 0. Writing "each column dotted with the miss is 0" as one matrix equation (lesson [[#transpose]]):
 
 $$X^\\top(X\\boldsymbol\\theta - \\mathbf y) = \\mathbf 0 \\quad\\Longrightarrow\\quad X^\\top X\\,\\boldsymbol\\theta = X^\\top\\mathbf y$$
 
-These are the **normal equations** ("normal" means perpendicular). $X^\\top X$ is a small square matrix ($2\\times2$ here, whatever the number of points), so we can solve it with lesson 3.10: $\\boldsymbol\\theta = (X^\\top X)^{-1}X^\\top\\mathbf y$. Lesson 3.13 reaches the same equation with calculus, and Part 5 recognises it as linear regression.` },
+These are the **normal equations** ("normal" means perpendicular). $X^\\top X$ is a small square matrix ($2\\times2$ here, whatever the number of points), so we can solve it with lesson [[#systems]]: $\\boldsymbol\\theta = (X^\\top X)^{-1}X^\\top\\mathbf y$. Lesson [[#matrix-gradients]] reaches the same equation with calculus, and Part [[#part:part5]] recognises it as linear regression.` },
         {
           code: {
             file: 'linalg.py', fn: 'least_squares', notes: [
@@ -484,11 +518,11 @@ These are the **normal equations** ("normal" means perpendicular). $X^\\top X$ i
     },
 
     {
-      id: 'eigenvectors', number: '3.12', title: 'Eigenvectors: directions a matrix only stretches',
+      id: 'eigenvectors', title: 'Eigenvectors: directions a matrix only stretches',
       goal: 'Find the eigenvalues and eigenvectors of a $2\\times2$ matrix from $\\det(A - \\lambda I) = 0$, and say what they mean.',
       builds: ['least-squares'],
       blocks: [
-        { md: `Most vectors get **turned** by a matrix: lesson 3.6's grid showed arrows pointing new ways. But some special directions only get **stretched** (or shrunk, or flipped): the matrix sends the arrow to a multiple of itself.
+        { md: `Most vectors get **turned** by a matrix: lesson [[#transformations]]'s grid showed arrows pointing new ways. But some special directions only get **stretched** (or shrunk, or flipped): the matrix sends the arrow to a multiple of itself.
 
 $$A\\mathbf v = \\lambda\\mathbf v$$
 
@@ -500,7 +534,13 @@ $$\\det(A - \\lambda I) = (a - \\lambda)(d - \\lambda) - bc = 0$$
 
 a quadratic in $\\lambda$. For $A = \\begin{pmatrix}2&1\\\\1&3\\end{pmatrix}$: $\\lambda^2 - 5\\lambda + 5 = 0$, so $\\lambda = \\frac{5 \\pm \\sqrt5}{2}$: ${f(eigen2(A)[0])}$ and ${f(eigen2(A)[1])}$. Then each $\\mathbf v$ comes from $(A - \\lambda I)\\mathbf v = \\mathbf 0$.
 
-Where ML uses them: **PCA** (Part 4) finds the directions in which data varies most, and they are the eigenvectors of the covariance matrix. Eigenvalues also govern gradient descent: on a bowl-shaped loss, the learning rate must be smaller than 2 ÷ the largest eigenvalue of the curvature, or it zig-zags and diverges (lesson 2.17's figure showed exactly that).` },
+Where ML uses them: **PCA** (Part [[#part:part4]]) finds the directions in which data varies most, and they are the eigenvectors of the covariance matrix. Eigenvalues also govern gradient descent. Take lesson [[#gradient-descent-2d]]'s kind of bowl, $\\mathcal L = \\frac12(\\lambda_1 a^2 + \\lambda_2 b^2)$, whose curvature matrix is $\\begin{pmatrix}\\lambda_1&0\\\\0&\\lambda_2\\end{pmatrix}$, with eigenvalues $\\lambda_1, \\lambda_2$ along the two axes. Its partial derivatives are $\\lambda_1 a$ and $\\lambda_2 b$, so one step of gradient descent is
+
+$$a \\leftarrow a - \\eta\\lambda_1 a = (1 - \\eta\\lambda_1)\\,a, \\qquad b \\leftarrow (1 - \\eta\\lambda_2)\\,b$$
+
+Each step multiplies the distance along eigenvector $i$ by $1 - \\eta\\lambda_i$. Repeated multiplication shrinks toward 0 only if that factor lies strictly between $-1$ and $1$, which means $0 < \\eta < 2/\\lambda_i$. Past $1/\\lambda_i$ the factor is negative: each step overshoots to the other side, the zig-zag in lesson [[#gradient-descent-2d]]'s figure. Past $2/\\lambda_i$ the overshoots grow and it diverges. Every direction must shrink, so **the learning rate must be below 2 ÷ the largest eigenvalue**, and the smallest eigenvalue sets how slowly the gentle direction converges.
+
+**What this took on trust:** a tilted bowl's curvature matrix is symmetric, and a symmetric matrix always has eigenvectors at right angles to each other (the *spectral theorem*). So rotating your view to line up with them turns every bowl into this axis-aligned one. The 2×2 case is lesson [[#pca]]'s picture; the general proof comes in the linear-algebra additions.` },
         {
           code: {
             file: 'linalg.py', fn: 'eigen2', notes: [
@@ -524,16 +564,16 @@ Where ML uses them: **PCA** (Part 4) finds the directions in which data varies m
           },
         },
         { figure: 'EigenFig', caption: 'Drag the arrow round. Usually $A\\mathbf v$ (violet) points elsewhere; along an eigenvector it lies on the same line.' },
-        { python: { program: 'linalg', label: 'Run Part 3\'s operations in real Python' } },
+        { python: { program: 'linalg', label: 'Run Part [[#part:part3]]\'s operations in real Python' } },
         {
           code: {
             file: 'linalg.py', fn: 'show_linalg', notes: [
               ['def show_linalg():', ['What the Python tab runs.']],
               ['u, v = [3.0, 4.0], [4.0, -3.0]', ['Two vectors at right angles.']],
-              ['print("u + v:", add(u, v), " ‖u‖:", norm(u), " u·v:", dot(u, v))', ['Lessons 3.2–3.4.']],
+              ['print("u + v:", add(u, v), " ‖u‖:", norm(u), " u·v:", dot(u, v))', ['Lessons [[#vector-arithmetic]]–[[#dot-product]].']],
               ['A = [[2.0, 1.0], [1.0, 3.0]]', ['The part\'s matrix.']],
-              ['print("A u:", matvec(A, u), " det A:", det2(A), " A⁻¹:", inverse2(A))', ['Lessons 3.5 and 3.9.']],
-              ['print("best line through (0,1), (1,3), (2,4):", least_squares([0, 1, 2], [1, 3, 4]))', ['Lesson 3.11.']],
+              ['print("A u:", matvec(A, u), " det A:", det2(A), " A⁻¹:", inverse2(A))', ['Lessons [[#matrices]] and [[#inverse]].']],
+              ['print("best line through (0,1), (1,3), (2,4):", least_squares([0, 1, 2], [1, 3, 4]))', ['Lesson [[#least-squares]].']],
               ['print("eigenvalues of A:", eigen2(A))', ['This lesson.']],
             ],
           },
@@ -557,11 +597,11 @@ Where ML uses them: **PCA** (Part 4) finds the directions in which data varies m
     },
 
     {
-      id: 'matrix-gradients', number: '3.13', title: 'Gradients of vector expressions',
+      id: 'matrix-gradients', title: 'Gradients of vector expressions',
       goal: 'Derive $\\nabla_{\\mathbf w}(\\mathbf w^\\top\\mathbf x) = \\mathbf x$ and $\\nabla_{\\boldsymbol\\theta}\\|X\\boldsymbol\\theta - \\mathbf y\\|^2 = 2X^\\top(X\\boldsymbol\\theta - \\mathbf y)$ from partial derivatives.',
       builds: ['eigenvectors', 'gradient'],
       blocks: [
-        { md: `Papers write gradients of whole vector expressions in one line. Every one of them is just lesson 2.15's partial derivatives, one per entry, collected into a vector. Two that come up constantly:
+        { md: `Papers write gradients of whole vector expressions in one line. Every one of them is just lesson [[#partial-derivatives]]'s partial derivatives, one per entry, collected into a vector. Two that come up constantly:
 
 **1. A dot product.** $f(\\mathbf w) = \\mathbf w^\\top\\mathbf x = w_1x_1 + w_2x_2 + \\dots$. The partial derivative with respect to $w_j$ treats every other $w$ as fixed, leaving just $x_j$. Collect them:
 
@@ -573,7 +613,7 @@ The gradient of a neuron's output with respect to its weights is its input.
 
 $$\\nabla_{\\boldsymbol\\theta}\\,\\|X\\boldsymbol\\theta - \\mathbf y\\|^2 = 2X^\\top(X\\boldsymbol\\theta - \\mathbf y)$$
 
-Set it to zero (lesson 2.13) and you get $X^\\top X\\boldsymbol\\theta = X^\\top\\mathbf y$: lesson 3.11's normal equations, reached by calculus instead of geometry. Two completely different routes to the same answer is a good sign it is right.` },
+Set it to zero (lesson [[#minimum]]) and you get $X^\\top X\\boldsymbol\\theta = X^\\top\\mathbf y$: lesson [[#least-squares]]'s normal equations, reached by calculus instead of geometry. Two completely different routes to the same answer is a good sign it is right.` },
         { figure: 'LeastSquaresFig', props: { showGradient: true }, caption: 'The same fit, with the gradient of the squared error at a line you choose. It is zero only at the least-squares line.' },
         {
           predict: {
