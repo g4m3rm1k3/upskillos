@@ -23,6 +23,8 @@ import { ALGO } from './algorithms.js'
 import { ML2 } from './ml2.js'
 import { ML3 } from './ml3.js'
 import { THEORY } from './theory.js'
+import { PAPERS1 } from './papers.js'
+import { PAPERS2 } from './papers2.js'
 import { EXERCISES as EX1 } from '../exercises/part1.js'
 import { EXERCISES as EX2 } from '../exercises/part2.js'
 import { EXERCISES as EX3 } from '../exercises/part3.js'
@@ -37,14 +39,15 @@ import { EXERCISES as EXO } from '../exercises/optimise.js'
 import { EXERCISES as EXA } from '../exercises/algorithms.js'
 import { EXERCISES as EXL } from '../exercises/ml.js'
 import { EXERCISES as EXT } from '../exercises/theory.js'
+import { EXERCISES as EXPP } from '../exercises/papers.js'
 
 // Each lesson's coding exercise lives in exercises/, keyed by lesson id, and is placed just before the
 // lesson's closing note (or at its end).
-const EXERCISES = { ...EX1, ...EX2, ...EX3, ...EX4, ...EX5, ...EX6, ...EXP, ...EXC, ...EXM, ...EXR, ...EXO, ...EXA, ...EXL, ...EXT }
+const EXERCISES = { ...EX1, ...EX2, ...EX3, ...EX4, ...EX5, ...EX6, ...EXP, ...EXC, ...EXM, ...EXR, ...EXO, ...EXA, ...EXL, ...EXT, ...EXPP }
 
 // Every lesson written anywhere, by id, and each part's lessons in teaching order. A part lists ids, so
 // lessons from other files (lessons/foundations.js) can be placed anywhere inside it.
-export const POOL = new Map([PART1, PROOF, PART2, PART3, PART4, OPTIM, ALGO, PART5, THEORY, PART6].flatMap(p => p.lessons).concat(FOUNDATIONS, CHANGE, MANYVARS, AREAS, LINALG2, LINALG3, PROB2, PROB3, ML2, ML3).map(l => [l.id, l]))
+export const POOL = new Map([PART1, PROOF, PART2, PART3, PART4, OPTIM, ALGO, PART5, THEORY, PART6].flatMap(p => p.lessons).concat(FOUNDATIONS, CHANGE, MANYVARS, AREAS, LINALG2, LINALG3, PROB2, PROB3, ML2, ML3, PAPERS1, PAPERS2).map(l => [l.id, l]))
 const ids = part => part.lessons.map(l => l.id)
 const LAYOUT = [
   [PART1, ['symbols-welcome', 'functions', 'sets', 'logic', 'subscripts', 'sigma', 'powers', 'number-e', 'logarithms', 'composition', 'piecewise', 'inequalities', 'greek', 'argmin']],
@@ -56,7 +59,7 @@ const LAYOUT = [
   [ALGO, ids(ALGO)],
   [PART5, ['linear-regression', 'regression-gradient', 'bias-variance', 'regularisation', 'logistic-regression', 'naive-bayes', 'softmax', 'entropy-kl', 'trees', 'k-means', 'gmm-em', 'svm', 'layers', 'initialisation', 'backpropagation', 'optimisers', 'normalisation', 'dropout', 'convolution', 'rnn-bptt', 'attention', 'transformer-block', 'contrastive', 'vae-elbo', 'gan', 'diffusion', 'bellman-rl', 'policy-gradient-derivation', 'ppo']],
   [THEORY, ids(THEORY)],
-  [PART6, ids(PART6)],
+  [PART6, ['reading-papers', 'decode-practice', 'paper-dropout', 'paper-word2vec', 'paper-vae', 'paper-adam', 'paper-batchnorm', 'paper-resnet', 'paper-transformer', 'paper-ppo', 'paper-ddpm', 'paper-lora']],
 ]
 const SOURCE = LAYOUT.map(([part, order]) => ({ ...part, lessons: order.map(id => POOL.get(id)) }))
 

@@ -15,6 +15,7 @@ import { GrowthFig, LoopCostFig, RecursionTreeFig, BinarySearchFig, FloatLineFig
 import { BiasVarianceFitFig, NaiveBayesFig, TreeSplitFig, KMeansFig, GMMFig, SVMFig, InitFig, LayerNormFig, DropoutFig, ConvolutionSlideFig } from './ml2.jsx'
 import { BPTTFig, TransformerBlockFig, ContrastiveFig, VAEFig, GANFig, DiffusionFig, ValueIterationFig, PolicyGradientFig, PPOFig } from './ml3.jsx'
 import { GeneralisationFig, HoeffdingFig, UnionBoundFig, ShatterFig, DoubleDescentFig } from './theory.jsx'
+import { DropoutRidgeFig, Word2VecFig, VAEEstimatorFig, AdamStepFig, BatchNormGradFig, ResNetGradFig, TransformerScheduleFig, GAEFig, DDPMWeightFig, LoRAFig } from './papers.jsx'
 import { ProofFig, ContradictionFig, InductionFig, CountingFig, PascalFig, BinomialFig, BirthdayFig } from './proof.jsx'
 
 export const FIGURES = {
@@ -34,5 +35,6 @@ export const FIGURES = {
   BiasVarianceFitFig, NaiveBayesFig, TreeSplitFig, KMeansFig, GMMFig, SVMFig, InitFig, LayerNormFig, DropoutFig, ConvolutionSlideFig,
   BPTTFig, TransformerBlockFig, ContrastiveFig, VAEFig, GANFig, DiffusionFig, ValueIterationFig, PolicyGradientFig, PPOFig,
   GeneralisationFig, HoeffdingFig, UnionBoundFig, ShatterFig, DoubleDescentFig,
+  DropoutRidgeFig, Word2VecFig, VAEEstimatorFig, AdamStepFig, BatchNormGradFig, ResNetGradFig, TransformerScheduleFig, GAEFig, DDPMWeightFig, LoRAFig,
   ProofFig, ContradictionFig, InductionFig, CountingFig, PascalFig, BinomialFig, BirthdayFig,
 }

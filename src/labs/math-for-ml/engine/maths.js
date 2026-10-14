@@ -467,3 +467,78 @@ export function doubleDescent(D = 60, n = 20, noise = 0.2, trials = 20, seed = 0
   return risks
 }
 export function gdLeastSquares(F, ys, rate, steps) { const n = F.length, p = F[0].length; let w = Array(p).fill(0); for (let s = 0; s < steps; s++) { const r = F.map((f, i) => f.reduce((acc, a, k) => acc + a * w[k], 0) - ys[i]); w = w.map((wk, k) => wk - rate * 2 / n * r.reduce((acc, ri, i) => acc + ri * F[i][k], 0)) } return w }
+
+// ---- Paper walkthroughs (python/papers.py) ----
+// The examples the walkthroughs' figures and questions share: dropout's five data points, PPO's six-step
+// segment, and LoRA's rank-2 target update (singular values 1 and 0.5) with the four basis vectors as inputs.
+export const DROP_X = [[1, 2], [2, 0.5], [3, 3], [4, 1], [0.5, 2.5]], DROP_Y = [5, 3, 9, 6, 5.5]
+export const PPO_R = [0, 0, 1, 0, 0, 2], PPO_V = [0.5, 0.6, 0.9, 0.4, 0.7, 1.5, 0.8]
+const LS = Math.SQRT1_2, LU1 = [0.5, 0.5, 0.5, 0.5], LV1 = [LS, LS, 0, 0], LU2 = [0.5, -0.5, 0.5, -0.5], LV2 = [0, 0, LS, -LS]
+export const LORA_TARGET = LU1.map((a, i) => LV1.map((b, j) => a * b + 0.5 * LU2[i] * LV2[j]))
+export const LORA_INPUTS = [0, 1, 2, 3].map(i => [0, 1, 2, 3].map(j => (i === j ? 1 : 0)))
+export function dropoutLossSampled(X, y, w, p, samples, seed = 0) { const rng = new PyRandom(seed); let total = 0; for (let s = 0; s < samples; s++) X.forEach((row, i) => { let pred = 0; row.forEach((x, j) => { if (rng.random() < p) pred += x * w[j] }); total += (y[i] - pred) ** 2 }); return total / samples }
+export function dropoutLossMarginal(X, y, w, p) { const fit = X.reduce((s, row, i) => s + (y[i] - p * dot(row, w)) ** 2, 0), penalty = w.reduce((s, wj, j) => s + wj * wj * X.reduce((t, row) => t + row[j] ** 2, 0), 0); return fit + p * (1 - p) * penalty }
+export function dropoutRidge(X, y, p) { const D = X[0].length, G = Array.from({ length: D }, (_, i) => Array.from({ length: D }, (_, j) => X.reduce((s, row) => s + row[i] * row[j], 0))); const A = G.map((row, i) => row.map((g, j) => p * p * g + (i === j ? p * (1 - p) * G[i][i] : 0))), b = Array.from({ length: D }, (_, i) => p * X.reduce((s, row, k) => s + row[i] * y[k], 0)); return solve(A, b) }
+export function negativeSampling(pos, negs) { return Math.log(sigmoid(pos)) + negs.reduce((s, z) => s + Math.log(sigmoid(-z)), 0) }
+export function noiseDistribution(counts, power = 0.75) { const raised = counts.map(c => c ** power), total = raised.reduce((s, r) => s + r, 0); return raised.map(r => r / total) }
+export function discardProbability(freq, t = 1e-5) { return Math.max(0, 1 - Math.sqrt(t / freq)) }
+export function pairObjective(x, nPair, nNoise) { return nPair * Math.log(sigmoid(x)) + nNoise * Math.log(sigmoid(-x)) }
+export function bestPairScore(nPair, nWord, nContext, total, k) { return Math.log(nPair * total / (nWord * nContext)) - Math.log(k) }
+export function positivePosterior(ratios) { const total = ratios.reduce((s, r) => s + r, 0); return ratios.map(r => r / total) }
+export function logNormal(x, mean, variance) { return -0.5 * Math.log(2 * Math.PI * variance) - (x - mean) ** 2 / (2 * variance) }
+export function toyElbo(x, mu, sigma) { const reconstruction = -0.5 * Math.log(2 * Math.PI) - ((x - mu) ** 2 + sigma ** 2) / 2, kl = 0.5 * (sigma ** 2 + mu ** 2 - 1 - Math.log(sigma ** 2)); return reconstruction - kl }
+export function estimatorA(x, mu, sigma, eps) { const z = mu + sigma * eps; return logNormal(z, 0, 1) + logNormal(x, z, 1) - logNormal(z, mu, sigma ** 2) }
+export function estimatorB(x, mu, sigma, eps) { const z = mu + sigma * eps; return -0.5 * (sigma ** 2 + mu ** 2 - 1 - Math.log(sigma ** 2)) + logNormal(x, z, 1) }
+export function meanAndVariance(values) { const m = fsum(values) / values.length; return [m, fsum(values.map(v => (v - m) ** 2)) / values.length] }
+export function estimatorSpread(estimator, x, mu, sigma, n, seed = 0) { const rng = new PyRandom(seed); return meanAndVariance(Array.from({ length: n }, () => estimator(x, mu, sigma, pyGauss(rng, 0, 1)))) }
+export function gradientEstimates(mu, sigma, n, seed = 0) { const rng = new PyRandom(seed), score = [], reparam = []; for (let i = 0; i < n; i++) { const z = mu + sigma * pyGauss(rng, 0, 1); score.push(z * z * (z - mu) / sigma ** 2); reparam.push(2 * z) } return [score, reparam] }
+export function adamSteps(grads, alpha = 0.001, beta1 = 0.9, beta2 = 0.999, eps = 1e-8) { let m = 0, v = 0; return grads.map((g, i) => { const t = i + 1; m = beta1 * m + (1 - beta1) * g; v = beta2 * v + (1 - beta2) * g * g; const mHat = m / (1 - beta1 ** t), vHat = v / (1 - beta2 ** t); return -alpha * mHat / (Math.sqrt(vHat) + eps) }) }
+export function adamStepsReordered(grads, alpha = 0.001, beta1 = 0.9, beta2 = 0.999, epsHat = 1e-8) { let m = 0, v = 0; return grads.map((g, i) => { const t = i + 1; m = beta1 * m + (1 - beta1) * g; v = beta2 * v + (1 - beta2) * g * g; const alphaT = alpha * Math.sqrt(1 - beta2 ** t) / (1 - beta1 ** t); return -alphaT * m / (Math.sqrt(v) + epsHat) }) }
+export function adamaxSteps(grads, alpha = 0.002, beta1 = 0.9, beta2 = 0.999) { let m = 0, u = 0; return grads.map((g, i) => { const t = i + 1; m = beta1 * m + (1 - beta1) * g; u = Math.max(beta2 * u, Math.abs(g)); return -(alpha / (1 - beta1 ** t)) * m / u }) }
+export function bnForward(xs, gamma, beta, eps = 1e-5) { const m = xs.length, mu = fsum(xs) / m, v = fsum(xs.map(x => (x - mu) ** 2)) / m; return xs.map(x => gamma * ((x - mu) / Math.sqrt(v + eps)) + beta) }
+export function bnBackward(xs, dys, gamma, eps = 1e-5) {
+  const m = xs.length, mu = fsum(xs) / m, v = fsum(xs.map(x => (x - mu) ** 2)) / m, s = Math.sqrt(v + eps), xHat = xs.map(x => (x - mu) / s), dHat = dys.map(dy => dy * gamma)
+  const dVar = fsum(dHat.map((d, i) => d * (xs[i] - mu))) * -0.5 * (v + eps) ** -1.5, dMu = fsum(dHat.map(d => -d / s)) + dVar * fsum(xs.map(x => -2 * (x - mu))) / m
+  return [dHat.map((d, i) => d / s + dVar * 2 * (xs[i] - mu) / m + dMu / m), fsum(dys.map((dy, i) => dy * xHat[i])), fsum(dys)]
+}
+export function bnBackwardCompact(xs, dys, gamma, eps = 1e-5) { const m = xs.length, mu = fsum(xs) / m, s = Math.sqrt(fsum(xs.map(x => (x - mu) ** 2)) / m + eps), xHat = xs.map(x => (x - mu) / s), gSum = fsum(dys), gxSum = fsum(dys.map((g, i) => g * xHat[i])); return dys.map((g, i) => gamma / (m * s) * (m * g - gSum - xHat[i] * gxSum)) }
+export function bnInference(batchMeans, batchVars, m, gamma, beta, eps = 1e-5) { const mean = fsum(batchMeans) / batchMeans.length, v = m / (m - 1) * fsum(batchVars) / batchVars.length, scale = gamma / Math.sqrt(v + eps); return [scale, beta - scale * mean] }
+export function residualUnit(x, W1, W2) { const hidden = matvec(W1, x).map(h => Math.max(0, h)); return matvec(W2, hidden).map((f, i) => Math.max(0, f + x[i])) }
+export function randomMatrix(n, scale, rng) { return Array.from({ length: n }, () => Array.from({ length: n }, () => pyGauss(rng, 0, scale / Math.sqrt(n)))) }
+export function gradientNorm(depth, width, scale, residual, seed = 0) { const rng = new PyRandom(seed), layers = Array.from({ length: depth }, () => randomMatrix(width, scale, rng)); let g = Array(width).fill(1 / Math.sqrt(width)); for (const W of [...layers].reverse()) { const back = Array.from({ length: width }, (_, j) => W.reduce((s, row, i) => s + row[j] * g[i], 0)); g = residual ? g.map((a, i) => a + back[i]) : back } return Math.sqrt(g.reduce((s, a) => s + a * a, 0)) }
+export function transformerLrate(step, dModel = 512, warmup = 4000) { return dModel ** -0.5 * Math.min(step ** -0.5, step * warmup ** -1.5) }
+export function smoothedTarget(k, correct, eps = 0.1) { return Array.from({ length: k }, (_, i) => (1 - eps) * (i === correct ? 1 : 0) + eps / k) }
+export function crossEntropyOf(target, probs) { return -fsum(target.flatMap((q, i) => (q > 0 ? [q * Math.log(probs[i])] : []))) }
+export function tdErrors(rewards, values, gamma) { return rewards.map((r, t) => r + gamma * values[t + 1] - values[t]) }
+export function gae(rewards, values, gamma = 0.99, lam = 0.95) { const deltas = tdErrors(rewards, values, gamma), adv = Array(deltas.length).fill(0); let running = 0; for (let t = deltas.length - 1; t >= 0; t--) { running = deltas[t] + gamma * lam * running; adv[t] = running } return adv }
+export function gaeSum(rewards, values, gamma, lam, t) { const deltas = tdErrors(rewards, values, gamma); return fsum(deltas.slice(t).map((d, k) => (gamma * lam) ** k * d)) }
+export function segmentAdvantage(rewards, values, gamma, t) { const T = rewards.length; return -values[t] + fsum(rewards.slice(t).map((r, k) => gamma ** k * r)) + gamma ** (T - t) * values[T] }
+export function adaptBeta(beta, d, dTarg) { if (d < dTarg / 1.5) return beta / 2; if (d > dTarg * 1.5) return beta * 2; return beta }
+export function linearBetas(T = 1000, first = 1e-4, last = 0.02) { return Array.from({ length: T }, (_, i) => first + (last - first) * i / (T - 1)) }
+export function alphaBars(betas) { const out = []; let prod = 1; for (const b of betas) { prod *= 1 - b; out.push(prod) } return out }
+export function ddpmPosterior(x0, xt, t, betas) { const ab = alphaBars(betas), beta = betas[t - 1], abT = ab[t - 1], abPrev = ab[t - 2]; return [Math.sqrt(abPrev) * beta / (1 - abT) * x0 + Math.sqrt(1 - beta) * (1 - abPrev) / (1 - abT) * xt, (1 - abPrev) / (1 - abT) * beta] }
+export function posteriorByBayes(x0, xt, t, betas) { const ab = alphaBars(betas), beta = betas[t - 1], abPrev = ab[t - 2], precision = (1 - beta) / beta + 1 / (1 - abPrev); return [(Math.sqrt(1 - beta) * xt / beta + Math.sqrt(abPrev) * x0 / (1 - abPrev)) / precision, 1 / precision] }
+export function meanFromNoise(xt, noise, t, betas) { const abT = alphaBars(betas)[t - 1], beta = betas[t - 1]; return (xt - beta / Math.sqrt(1 - abT) * noise) / Math.sqrt(1 - beta) }
+export function lossWeight(t, betas, sigma2) { const abT = alphaBars(betas)[t - 1], beta = betas[t - 1]; return beta ** 2 / (2 * sigma2 * (1 - beta) * (1 - abT)) }
+export function priorKl(x0, betas) { const ab = alphaBars(betas).at(-1); return 0.5 * ((1 - ab) + ab * x0 * x0 - 1 - Math.log(1 - ab)) }
+export function loraForward(W0, B, A, x, alpha, r) { const u = matvec(B, matvec(A, x)); return matvec(W0, x).map((h, i) => h + alpha / r * u[i]) }
+export function loraMerge(W0, B, A, alpha, r) { return W0.map((row, i) => row.map((w, j) => { let s = 0; for (let q = 0; q < r; q++) s += B[i][q] * A[q][j]; return w + alpha / r * s })) }
+export function loraParamCount(d, k, r) { return [d * k, r * (d + k)] }
+export function loraGrads(B, A, x, gradH, alpha, r) { const Ax = matvec(A, x), Btg = Array.from({ length: r }, (_, q) => B.reduce((s, row, i) => s + row[q] * gradH[i], 0)); return [gradH.map(g => Ax.map(a => alpha / r * g * a)), Btg.map(u => x.map(xi => alpha / r * u * xi))] }
+export function loraTrain(target, inputs, r, rate, steps, seed = 0) {
+  const rng = new PyRandom(seed), d = target.length, k = target[0].length
+  let A = Array.from({ length: r }, () => Array.from({ length: k }, () => pyGauss(rng, 0, 1 / Math.sqrt(k)))), B = Array.from({ length: d }, () => Array(r).fill(0))
+  const losses = []
+  for (let s = 0; s < steps; s++) {
+    let loss = 0, dB = Array.from({ length: d }, () => Array(r).fill(0)), dA = Array.from({ length: r }, () => Array(k).fill(0))
+    for (const x of inputs) {
+      const want = matvec(target, x), err = matvec(B, matvec(A, x)).map((u, i) => u - want[i])
+      loss += fsum(err.map(e => e * e)) / inputs.length
+      const [gB, gA] = loraGrads(B, A, x, err.map(e => 2 * e / inputs.length), r, r)
+      dB = dB.map((row, i) => row.map((a, j) => a + gB[i][j])); dA = dA.map((row, i) => row.map((a, j) => a + gA[i][j]))
+    }
+    losses.push(loss)
+    B = B.map((row, i) => row.map((b, j) => b - rate * dB[i][j])); A = A.map((row, i) => row.map((a, j) => a - rate * dA[i][j]))
+  }
+  return losses
+}

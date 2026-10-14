@@ -20,7 +20,7 @@ function Picture({ program, view }) {
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture,
-  fileOrder: ['symbols.py', 'proof.py', 'calculus.py', 'linalg.py', 'matrices.py', 'stats.py', 'chance.py', 'optimise.py', 'algorithms.py', 'learners.py', 'deep.py', 'theory.py', 'models.py'],
+  fileOrder: ['symbols.py', 'proof.py', 'calculus.py', 'linalg.py', 'matrices.py', 'stats.py', 'chance.py', 'optimise.py', 'algorithms.py', 'learners.py', 'deep.py', 'theory.py', 'papers.py', 'models.py'],
   labReceiver: /^$/,
   intro: 'Every figure in the lessons runs the same arithmetic in the browser.',
 }

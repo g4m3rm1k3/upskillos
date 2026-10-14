@@ -139,6 +139,25 @@ describe('the JavaScript engine reproduces the Python programs', () => {
     close(E.doubleDescent(12, 5, 0.2, 3, 4), t.dd, 'double descent', 1e-9)
     close(E.gdLeastSquares([[1, 2, 0.5], [0.3, -1, 2]], [1, -1], 0.1, 200), t.gd, 'gradient descent')
   })
+  it('paper walkthroughs', () => {
+    const p = P.papers, DX = [[1, 2], [2, 0.5], [3, 3]], DY = [5, 3, 9], PR = [0, 0, 1, 0, 0, 2], PV = [0.5, 0.6, 0.9, 0.4, 0.7, 1.5, 0.8], B50 = E.linearBetas(50, 1e-3, 0.05)
+    close([E.dropoutLossSampled(DX, DY, [1, 1.5], 0.8, 300, 3), E.dropoutLossMarginal(DX, DY, [1, 1.5], 0.8)], p.drop, 'dropout'); close(E.dropoutRidge(DX, DY, 0.6), p.ridge, 'ridge', 1e-10)
+    close([E.negativeSampling(1.2, [-0.5, 0.3, -2]), E.discardProbability(0.02), E.discardProbability(1e-6), E.pairObjective(0.7, 50, 10), E.bestPairScore(50, 1000, 2000, 1e6, 5)], p.w2v, 'word2vec')
+    close(E.noiseDistribution([100, 10, 1]), p.noise, 'noise'); close(E.positivePosterior([2, 0.5, 0.5, 1]), p.post, 'posterior')
+    close([E.toyElbo(1, 0.3, 0.9), E.estimatorA(1, 0.3, 0.9, -0.4), E.estimatorB(1, 0.3, 0.9, -0.4)], p.vae, 'vae')
+    close([E.estimatorSpread(E.estimatorA, 1, 0.3, 0.9, 200, 1), E.estimatorSpread(E.estimatorB, 1, 0.3, 0.9, 200, 1)], p.spread, 'spread', 1e-10)
+    close(E.gradientEstimates(1, 1, 200, 2).map(E.meanAndVariance), p.grads, 'gradient estimates', 1e-10)
+    const g = [1, -0.5, 2, 0, 0.3]; close([E.adamSteps(g), E.adamStepsReordered(g), E.adamaxSteps(g)], p.adam, 'adam')
+    const bx = [1, 2, 4, 7], bd = [0.5, -1, 2, 0.1]
+    close([E.bnForward(bx, 1.5, -0.2), E.bnBackward(bx, bd, 1.5), E.bnBackwardCompact(bx, bd, 1.5), E.bnInference([0.9, 1.1, 1.3], [2, 2.5, 1.5], 8, 1.2, 0.1)], p.bn, 'batch norm', 1e-10)
+    close([E.residualUnit([1, -0.5, 2], [[0.2, -0.1, 0.4], [0.3, 0.5, -0.2]], [[1, 0], [0.5, -1], [0, 0.3]]), [0.3, 1].flatMap(s => [false, true].map(res => E.gradientNorm(12, 6, s, res, 4)))], p.res, 'resnet', 1e-10)
+    close([1, 100, 4000, 50000].map(s => E.transformerLrate(s)), p.lr, 'lrate'); close([E.smoothedTarget(4, 2), E.crossEntropyOf(E.smoothedTarget(4, 2), [0.1, 0.2, 0.6, 0.1])], p.smooth, 'smoothing')
+    close([E.tdErrors(PR, PV, 0.99), E.gae(PR, PV, 0.99, 0.95), E.gaeSum(PR, PV, 0.99, 0.95, 2), E.segmentAdvantage(PR, PV, 0.99, 1), [0.001, 0.01, 0.1].map(d => E.adaptBeta(1, d, 0.01))], p.ppo, 'ppo')
+    close([E.alphaBars(B50).at(-1), E.ddpmPosterior(0.8, 0.1, 20, B50), E.posteriorByBayes(0.8, 0.1, 20, B50), E.meanFromNoise(0.3, -1.1, 20, B50), E.lossWeight(20, B50, 0.02), E.priorKl(0.7, B50)], p.ddpm, 'ddpm', 1e-10)
+    const LT = [[0.5, 0.5, 0.25], [0.5, 0.5, -0.25], [0, 0.25, 0]], LX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    close([E.loraForward([[1, 0], [0.5, 2]], [[0.3], [-0.2]], [[1, 0.5]], [2, -1], 4, 1), E.loraMerge([[1, 0], [0.5, 2]], [[0.3], [-0.2]], [[1, 0.5]], 4, 1), E.loraParamCount(4096, 4096, 8),
+      E.loraGrads([[0.3], [-0.2]], [[1, 0.5]], [2, -1], [0.4, 1], 4, 1), E.loraTrain(LT, LX, 1, 0.5, 30, 1)], p.lora, 'lora', 1e-10)
+  })
   it('learners and deep learning', () => {
     const l = P.learners, d = P.deep
     const g = new PyRandom(7), py = [0, 0, 0, 0].map(() => E.pyGauss(g)); expect(py.every(Number.isFinite)).toBe(true)

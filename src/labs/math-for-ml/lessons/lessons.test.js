@@ -19,7 +19,7 @@ describe('lessons', () => {
     const text = JSON.stringify([LESSONS.map(({ part, ...l }) => l), PARTS.map(p => p.title), decoder])
     expect(text).not.toContain('[[#')
     const written = []
-    for (const file of ['part1', 'part2', 'part3', 'part4', 'part5', 'part6', 'fall', 'foundations', 'proof', 'change', 'manyvars', 'areas', 'linalg2', 'linalg3', 'prob2', 'prob3', 'optimisation', 'algorithms', 'ml2', 'ml3', 'theory'].map(p => `lessons/${p}.js`).concat('decoder.js')) {
+    for (const file of ['part1', 'part2', 'part3', 'part4', 'part5', 'part6', 'fall', 'foundations', 'proof', 'change', 'manyvars', 'areas', 'linalg2', 'linalg3', 'prob2', 'prob3', 'optimisation', 'algorithms', 'ml2', 'ml3', 'theory', 'papers', 'papers2'].map(p => `lessons/${p}.js`).concat('decoder.js')) {
       const code = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n')
       for (const m of code.matchAll(/\b(?:[Ll]essons?|Parts?) \d[\d.]*/g)) written.push(`${file}: ${m[0]}`)
     }

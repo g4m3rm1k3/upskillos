@@ -21,6 +21,7 @@ import linalg    # noqa: E402
 import matrices  # noqa: E402
 import models    # noqa: E402
 import optimise  # noqa: E402
+import papers    # noqa: E402
 import proof     # noqa: E402
 import stats     # noqa: E402
 import symbols   # noqa: E402
@@ -29,6 +30,9 @@ import theory    # noqa: E402
 
 def main():
     xs = [2.0, 4.0, 9.0]
+    DX, DY = [[1.0, 2.0], [2.0, 0.5], [3.0, 3.0]], [5.0, 3.0, 9.0]
+    PR, PV = [0.0, 0.0, 1.0, 0.0, 0.0, 2.0], [0.5, 0.6, 0.9, 0.4, 0.7, 1.5, 0.8]
+    LT, LX = [[0.5, 0.5, 0.25], [0.5, 0.5, -0.25], [0.0, 0.25, 0.0]], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
     out = {
         "symbols": {"predict": symbols.predict(2, 1, 3), "total": symbols.total(xs), "mean": symbols.mean(xs), "product": symbols.product(xs),
                     "compound": [symbols.compound(n) for n in (1, 2, 12, 365, 1000)], "exp": [symbols.exp_series(x) for x in (-2, 0, 1, 2.5)],
@@ -127,6 +131,21 @@ def main():
                   "logL": [stats.log_likelihood(p, [1, 1, 0, 1, 0, 1, 1, 0, 1, 1]) for p in (0.3, 0.5, 0.7)],
                   "cov": stats.covariance([1, 2, 3, 4, 5], [2, 3, 5, 4, 6]), "rho": stats.correlation([1, 2, 3, 4, 5], [2, 3, 5, 4, 6]),
                   "pca": list(stats.pca2([1, 2, 3, 4, 5], [2, 3, 5, 4, 6]))},
+        "papers": {"drop": [papers.dropout_loss_sampled(DX, DY, [1.0, 1.5], 0.8, 300, 3), papers.dropout_loss_marginal(DX, DY, [1.0, 1.5], 0.8)], "ridge": papers.dropout_ridge(DX, DY, 0.6),
+                   "w2v": [papers.negative_sampling(1.2, [-0.5, 0.3, -2.0]), papers.discard_probability(0.02), papers.discard_probability(1e-6), papers.pair_objective(0.7, 50, 10), papers.best_pair_score(50, 1000, 2000, 10 ** 6, 5)],
+                   "noise": papers.noise_distribution([100, 10, 1]), "post": papers.positive_posterior([2.0, 0.5, 0.5, 1.0]),
+                   "vae": [papers.toy_elbo(1.0, 0.3, 0.9), papers.estimator_a(1.0, 0.3, 0.9, -0.4), papers.estimator_b(1.0, 0.3, 0.9, -0.4)],
+                   "spread": [list(papers.estimator_spread(papers.estimator_a, 1.0, 0.3, 0.9, 200, 1)), list(papers.estimator_spread(papers.estimator_b, 1.0, 0.3, 0.9, 200, 1))],
+                   "grads": [list(papers.mean_and_variance(g)) for g in papers.gradient_estimates(1.0, 1.0, 200, 2)],
+                   "adam": [papers.adam_steps([1.0, -0.5, 2.0, 0.0, 0.3]), papers.adam_steps_reordered([1.0, -0.5, 2.0, 0.0, 0.3]), papers.adamax_steps([1.0, -0.5, 2.0, 0.0, 0.3])],
+                   "bn": [papers.bn_forward([1.0, 2.0, 4.0, 7.0], 1.5, -0.2), list(papers.bn_backward([1.0, 2.0, 4.0, 7.0], [0.5, -1.0, 2.0, 0.1], 1.5)), papers.bn_backward_compact([1.0, 2.0, 4.0, 7.0], [0.5, -1.0, 2.0, 0.1], 1.5), list(papers.bn_inference([0.9, 1.1, 1.3], [2.0, 2.5, 1.5], 8, 1.2, 0.1))],
+                   "res": [papers.residual_unit([1.0, -0.5, 2.0], [[0.2, -0.1, 0.4], [0.3, 0.5, -0.2]], [[1.0, 0.0], [0.5, -1.0], [0.0, 0.3]]), [papers.gradient_norm(12, 6, s, res, 4) for s in (0.3, 1.0) for res in (False, True)]],
+                   "lr": [papers.transformer_lrate(s) for s in (1, 100, 4000, 50000)], "smooth": [papers.smoothed_target(4, 2), papers.cross_entropy(papers.smoothed_target(4, 2), [0.1, 0.2, 0.6, 0.1])],
+                   "ppo": [papers.td_errors(PR, PV, 0.99), papers.gae(PR, PV, 0.99, 0.95), papers.gae_sum(PR, PV, 0.99, 0.95, 2), papers.segment_advantage(PR, PV, 0.99, 1), [papers.adapt_beta(1.0, d, 0.01) for d in (0.001, 0.01, 0.1)]],
+                   "ddpm": [papers.alpha_bars(papers.linear_betas(50, 1e-3, 0.05))[-1], list(papers.posterior(0.8, 0.1, 20, papers.linear_betas(50, 1e-3, 0.05))), list(papers.posterior_by_bayes(0.8, 0.1, 20, papers.linear_betas(50, 1e-3, 0.05))),
+                            papers.mean_from_noise(0.3, -1.1, 20, papers.linear_betas(50, 1e-3, 0.05)), papers.loss_weight(20, papers.linear_betas(50, 1e-3, 0.05), 0.02), papers.prior_kl(0.7, papers.linear_betas(50, 1e-3, 0.05))],
+                   "lora": [papers.lora_forward([[1.0, 0.0], [0.5, 2.0]], [[0.3], [-0.2]], [[1.0, 0.5]], [2.0, -1.0], 4, 1), papers.lora_merge([[1.0, 0.0], [0.5, 2.0]], [[0.3], [-0.2]], [[1.0, 0.5]], 4, 1),
+                            list(papers.lora_param_count(4096, 4096, 8)), [list(m) for m in papers.lora_grads([[0.3], [-0.2]], [[1.0, 0.5]], [2.0, -1.0], [0.4, 1.0], 4, 1)], papers.lora_train(LT, LX, 1, 0.5, 30, 1)]},
         "models": {"mse": models.mse(4.0, 48.0, models.HOURS, models.SCORES), "grad": models.mse_gradient(0.0, 0.0, models.HOURS, models.SCORES),
                    "fit": models.fit_line(models.HOURS, models.SCORES), "exact": models.exact_line(models.HOURS, models.SCORES),
                    "ridge": [models.ridge_line(models.HOURS, models.SCORES, lam) for lam in (0.0, 1.0, 10.0)], "bce": [models.bce(0.8, 1), models.bce(0.8, 0)],

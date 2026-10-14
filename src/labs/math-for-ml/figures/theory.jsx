@@ -42,7 +42,7 @@ export function UnionBoundFig() {
   return <div className="qm-fig">
     <div className="qm-fig-controls"><Slider label="training examples n" value={n} min={20} max={400} step={20} onChange={setN} show={v => String(v)} /><Slider label="thresholds in the class |H|" value={size} min={2} max={101} step={1} onChange={setSize} show={v => String(v)} /></div>
     <Graph x={[0, 400]} y={[0, 0.6]} height={200} xlabel="n" ylabel="ε"
-      fns={[1, 21, 1000, 1e6].map((k, i) => ({ f: m => finiteClassGap(k, m, 0.05), color: [C.teal, C.violet, C.orange, C.red][i], label: `|H| = ${k >= 1000 ? k.toExponential(0) : k}`, labelAt: 60 + 90 * i }))}
+      fns={[1, 21, 1000, 1e6].map((k, i) => ({ f: m => finiteClassGap(k, m, 0.05), color: [C.teal, C.violet, C.orange, C.red][i], label: `|H| = ${k >= 1000 ? k.toExponential(0) : k}`, labelAt: 110 + 90 * i }))}
       points={[{ x: n, y: eps, color: C.grey, r: 5 }]} />
     <Working rows={[
       ['chosen threshold\'s training error', 'average over 100 training sets', fmt(train, 4)],

@@ -92,7 +92,7 @@ Lesson ids are permanent; numbers are display only and change as parts are inser
 
 ### Part 10 · Reading papers
 ✅ reading-papers, decode-practice
-⬜ Paper walkthroughs, each a real paper's key passages decoded line by line, with an exercise implementing its core equation: Adam · Attention Is All You Need · Auto-Encoding Variational Bayes · DDPM · PPO · Batch Normalization · Dropout · Deep Residual Learning · word2vec / InfoNCE · LoRA
+✅ Paper walkthroughs, in the order the papers first appeared: `paper-dropout`, `paper-word2vec` (with InfoNCE), `paper-vae`, `paper-adam`, `paper-batchnorm`, `paper-resnet`, `paper-transformer`, `paper-ppo`, `paper-ddpm`, `paper-lora` (`lessons/papers.js`, `lessons/papers2.js`, `python/papers.py`, `figures/papers.jsx`, `exercises/papers.js`; their shared example data are in `engine/maths.js`). Each reads the paper's equations in its own notation, checked against the paper's text, and proves or tests what the paper states without proof. Findings the lessons teach: dropout's $p$ is the keep probability (PyTorch's is the drop probability); the CPC appendix's MI bound has an $\approx$ step; Adam's stated step bound $\alpha(1-\beta_1)/\sqrt{1-\beta_2}$ is exceeded by steadily growing gradients (limit about $7.27\alpha$), and AdaMax's $|\Delta| \le \alpha$ by up to 0.9%; PPO's eqs. (10)–(11) print the last exponent as $T - t + 1$ for $T - t - 1$; the original ResNet paper does not attribute degradation to vanishing gradients.
 
 ## Status board
 
@@ -109,8 +109,8 @@ Lesson ids are permanent; numbers are display only and change as parts are inser
 | Part 6 Optimisation | ✅ |
 | Part 7 Algorithms and CS maths | ✅ |
 | Part 8 additions | ✅ |
-| Part 9 Learning theory | ✅ (figures not yet browser-checked) |
-| Part 10 Paper walkthroughs | ⬜ |
+| Part 9 Learning theory | ✅ (figures browser-checked 2026-10-14) |
+| Part 10 Paper walkthroughs | ✅ (figures browser-checked 2026-10-14) |
 
 ## Checks
 
@@ -138,13 +138,12 @@ Each is stated in its lesson as taken on trust, with numerical evidence. When th
 | `common-distributions` etc. | Shannon's source coding theorem; the Beta integral (posterior mean, checked numerically in an exercise) | none planned |
 | `hessian` | mixed partials are equal (Clairaut) | none planned; numerical evidence in the lesson |
 | `double-integrals` | iterated integrals agree in either order (Fubini) | none planned; numerical evidence in the lesson |
-| `contrastive` | log N − InfoNCE is a lower bound on the views' mutual information | none planned |
+| `contrastive` | log N − InfoNCE is a lower bound on the views' mutual information | none planned; `paper-word2vec` shows the CPC paper's own argument uses an approximation and cites the rigorous proof (Poole et al., 2019) |
 | `concentration` (none) | — | Hoeffding is proved in full |
 | `pac-vc` | linear classifiers in ℝᵏ have VC dimension k + 1; the symmetrisation step of the VC bound | none planned |
 | `double-descent` | a random square matrix's smallest singular value is near 0 | none planned; the figure's ‖w‖ shows the effect |
-| `diffusion` | the noise-prediction loss is a reweighted ELBO for the whole chain | the DDPM paper walkthrough (Part 10) |
 
-Proved since: the e^x series (`taylor`), √(2π) (`gaussian-integral`), the normal's σ scaling and variance (`integration-techniques`).
+Proved since: the e^x series (`taylor`), √(2π) (`gaussian-integral`), the normal's σ scaling and variance (`integration-techniques`), the noise-prediction loss as a reweighted bound (`paper-ddpm`; `diffusion` now links to it).
 
 ## Where we stopped
 
@@ -152,7 +151,6 @@ Proved since: the e^x series (`taylor`), √(2π) (`gaussian-integral`), the nor
 
 2026-10-13 (session 2): exercise infrastructure built and verified in the browser (Monaco, Pyodide worker, about 1.5 s per check); all 66 lessons have an exercise (198 Pyodide checks: solutions pass, starters fail); cross-references converted to `[[#id]]` placeholders with automatic numbering; the no-magic audit's 21 fixes made (derivations added for the e^x series, power/constant/sum rules, e^x and ln slopes, the chain rule, the general power rule, the gradient pointing uphill, the fundamental theorem, the geometric dot product, matrix multiplication, (AB)ᵀ, the 2×2 inverse and determinant-as-area, least squares' perpendicular miss, the 2/λ learning-rate limit, the normal's σ factor, variances adding, PCA's vᵀΣv and its maximum, MAP = ridge, the softmax gradient, KL ≥ 0, Adam's bias correction, attention's √d). Then Part 1's four additions and Part 2 Proof and counting (7 lessons, new part) built, with figures, exercises, parity and decoder rows; browser-checked. 77 lessons, 729 tests. Then Part 3's 12 calculus additions (placed across three parts, see above); Graph gained `jumps`, `yaxis` and `background`. 89 lessons, 838 tests. Then Part 4's 13 linear-algebra additions (Graph now clips segments to the plot area). 102 lessons, 958 tests. Then Part 5's 16 probability additions (Graph clips curves and segments to the plot). 118 lessons, 1105 tests. Then Part 6 Optimisation (8 lessons, new part). 126 lessons, 1180 tests. Then Part 7 Algorithms (11 lessons, new part); Graph y-ticks now depend on the plot's height. 137 lessons, 1282 tests. Then Part 8's 19 ML additions inside the big-equations part (`part5`), with `learners.py` and `deep.py`, two new Python-tab programs, decoder rows and exercises (`exercises/ml.js`). Per-lesson drawing moved out of `render.test.jsx` into `lessons-1/2/3.test.jsx` (shared `drawLessons.jsx`): in one worker the 156 lessons ran past the 4 GB heap. 156 lessons, 1458 tests. Then Part 9 Learning theory (new part `theory`, after the big equations; 5 lessons: `generalisation`, `concentration`, `union-bound`, `pac-vc`, `double-descent`) with `python/theory.py`, engine mirror, parity, figures (`figures/theory.jsx`), exercises (`exercises/theory.js`), decoder rows (group 'Learning theory') and a Python-tab program; `bias-variance` now links `double-descent`. 161 lessons, 1506 tests, stepper 3/3, typecheck clean.
 
-**Resume here (next session):**
-1. Browser-check Part 9's five figures: `IDS=generalisation,concentration,union-bound,pac-vc,double-descent` with the scratchpad figs.mjs recipe (start Vite on 5199, stop it afterwards). Watch DoubleDescentFig's first-render cost (it runs the 12-trial experiment in a useMemo).
-2. Part 10 paper walkthroughs, in the papers part (`part6`), each with an exercise: Adam · Attention Is All You Need · Auto-Encoding Variational Bayes · DDPM (prove the "reweighted ELBO" claim taken on trust in `diffusion`) · PPO · Batch Normalization · Dropout · Deep Residual Learning · word2vec / InfoNCE · LoRA.
-3. Then: update `docs/contributor-experience-and-lms-roadmap.md`, run `npm run facts`, `npm run typecheck`, `npm run docs:check`.
+2026-10-14: Part 9's five figures browser-checked (the union-bound labels moved off the default point). Part 10 built: ten paper walkthroughs with `python/papers.py` (45 functions), engine mirror and parity, ten figures, ten exercises, 22 decoder symbols (group 'Papers') and 11 equations, and a Python-tab program. Papers were read from their arXiv/JMLR text before writing. All ten figures browser-checked (ResNet and LoRA no longer clamp off-scale points into fake rows; the DDPM axis no longer clips). 171 lessons.
+
+**The curriculum is complete.** Possible later work, none of it planned: more walkthroughs (for example GPT-2/3, CLIP, RLHF, Chinchilla scaling laws), and proofs for the results still listed as taken on trust.

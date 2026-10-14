@@ -320,7 +320,7 @@ As $t$ grows, $\\bar\\alpha_t \\to 0$: the signal fades and $x_T$ is pure $\\mat
 
 **Learning to reverse it.** A network $\\varepsilon_\\theta(x_t, t)$ is trained to **predict the noise** that was added. Pick a training image $x_0$, a random step $t$ and fresh noise $\\varepsilon$; form $x_t$ in one jump by the closed form; minimise
 $$\\mathcal L = \\mathbb E_{x_0, t, \\varepsilon}\\big\\|\\varepsilon - \\varepsilon_\\theta(x_t, t)\\big\\|^2$$
-Plain squared error, cheap because the closed form skips the $t$ steps. This loss is a simplified, reweighted form of a VAE-style ELBO (lesson [[#vae-elbo]]) for the whole chain (**taken on trust**). To generate, start from noise $x_T$ and step backward, at each step using the predicted noise to estimate a slightly cleaner $x_{t-1}$.` },
+Plain squared error, cheap because the closed form skips the $t$ steps. This loss is a simplified, reweighted form of a VAE-style ELBO (lesson [[#vae-elbo]]) for the whole chain; lesson [[#paper-ddpm]] proves it from the paper, step by step. To generate, start from noise $x_T$ and step backward, at each step using the predicted noise to estimate a slightly cleaner $x_{t-1}$.` },
       { figure: 'DiffusionFig', caption: 'A 2D dataset (a ring of points) noised forward. Slide $t$: the ring blurs into a round Gaussian cloud as $\\bar\\alpha_t$ (bar) falls from 1 to 0.' },
       {
         code: {
