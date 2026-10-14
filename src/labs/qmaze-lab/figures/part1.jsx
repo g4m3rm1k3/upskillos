@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import GridMap from '../GridMap.jsx'
 import { GridWorld, ACTION_NAMES, ARROWS, MOVES } from '../engine/gridworld.js'
 import { MAPS } from '../engine/maps.js'
@@ -80,8 +80,9 @@ export function LoopPlayer({ map = 'cheese_and_cat', maps, seed = 7 }) {
   // The game lives in a ref and is changed in event handlers, never inside a state updater (React
   // may run those twice, which would make two moves).
   const ref = useRef(null), [, redraw] = useReducer(x => x + 1, 0)
-  const start = () => { const e = new GridWorld(name); const [s0] = e.reset(seed); ref.current = { e, rng: new PyRandom(seed), log: [], trail: [s0], state: s0, total: 0, over: false, first: s0 }; redraw() }
-  useEffect(start, [name])
+  const start = () => { const e = new GridWorld(name); const [s0] = e.reset(seed); ref.current = { map: name, e, rng: new PyRandom(seed), log: [], trail: [s0], state: s0, total: 0, over: false, first: s0 }; redraw() }
+  // Before the screen paints: the new map must never be drawn with the old map's game on it.
+  useLayoutEffect(start, [name])
   const move = (g, a) => {
     const [s2, r, te, tr] = g.e.step(a)
     g.log.push({ s: g.state, a, s2, r, te, tr }); g.trail.push(s2)
@@ -96,7 +97,7 @@ export function LoopPlayer({ map = 'cheese_and_cat', maps, seed = 7 }) {
     return () => window.removeEventListener('keydown', on)
   }, [])
   const game = ref.current
-  if (!game) return null
+  if (!game || game.map !== name) return null
   return <div className="qm-fig qm-loop" tabIndex={0}>
     <div className="qm-fig-controls">
       {maps && <MapPicker value={name} onChange={setName} maps={maps} />}

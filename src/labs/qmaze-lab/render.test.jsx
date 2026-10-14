@@ -14,6 +14,11 @@ import { MAPS } from './engine/maps.js'
 afterEach(cleanup)
 
 const mapSelects = container => [...container.querySelectorAll('select')].filter(s => [...s.options].some(o => o.value === 'cheese_and_cat'))
+// Each figure's quick buttons (not the slow 1,000-episode ones), the play-to-the-end ones included.
+const QUICK = ['One move', 'One episode', 'One sweep', 'One update', '10 episodes', '10 sweeps', '50 updates', 'To convergence', '🎲 one random move', '🎲 random to the end', 'Take this step (and keep it)']
+function run() {
+  for (const label of QUICK) for (const button of screen.queryAllByText(label)) if (!button.disabled) act(() => { fireEvent.click(button) })
+}
 function everyMap(container) {
   for (const select of mapSelects(container)) for (const option of [...select.options]) act(() => { fireEvent.change(select, { target: { value: option.value } }) })
 }
@@ -28,8 +33,10 @@ describe('the lab renders', () => {
     it(`${lesson.number} ${lesson.title}: draws, and survives every map`, () => {
       const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onPython={() => {}} />)
       expect(container.textContent.length).toBeGreaterThan(200)
+      // Run things first, then change map: a game finished on a bigger map, drawn on a smaller one, once crashed.
+      run()
       everyMap(container)
-      for (const label of ['One move', 'One episode', 'One sweep', 'One update']) for (const button of screen.queryAllByText(label)) act(() => { fireEvent.click(button) })
+      run()
     })
   }
 
