@@ -199,7 +199,8 @@ export function attentionOf(vocab, model, text) {
 // .safetensors: 8 bytes (the header's length, little-endian), a JSON header naming each tensor's
 // type, shape and byte range, then the raw little-endian float32 numbers. Vocabulary and sizes
 // go in the header's __metadata__ (whose values must be strings).
-export function toSafetensors(vocab, model) {
+// The header: the vocabulary as metadata, then each weight's type, shape and byte range (python: safetensors_header).
+export function safetensorsHeader(vocab, model) {
   const header = { __metadata__: { format: 'upskillos-tiny-gpt', version: '1', vocab: JSON.stringify(vocab) } }
   let offset = 0
   for (const name of PARAMS) {
@@ -207,6 +208,11 @@ export function toSafetensors(vocab, model) {
     header[name] = { dtype: 'F32', shape: [rows, cols], data_offsets: [offset, offset + bytes] }
     offset += bytes
   }
+  return header
+}
+export function toSafetensors(vocab, model) {
+  const header = safetensorsHeader(vocab, model)
+  const offset = header[PARAMS.at(-1)].data_offsets[1]
   let json = JSON.stringify(header)
   while ((8 + new TextEncoder().encode(json).length) % 8) json += ' '   // the data starts 8-byte aligned
   const head = new TextEncoder().encode(json)

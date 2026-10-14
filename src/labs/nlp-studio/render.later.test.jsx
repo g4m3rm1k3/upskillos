@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// Parts 5–7 of NLP Studio drawn and driven: the trainers run, models load (stand-ins for the real
+// Parts 5–8 of NLP Studio drawn and driven: the trainers run, models load (stand-ins for the real
 // Hugging Face models), and every lesson survives awkward text. Split from render.test.jsx so that
 // the trainers here and the figures there each get a worker (and a memory limit) of their own.
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -22,8 +22,8 @@ afterEach(cleanup)
 
 const AWKWARD = ['', ' ', '🙂🙂', 'Mr. U.S. 3.50... !!?', 'tab\there\nnew line']
 
-describe('NLP Studio renders, Parts 5–7', () => {
-  for (const lesson of LESSONS.filter(l => ['part5', 'part6', 'part7'].includes(l.part.id))) {
+describe('NLP Studio renders, Parts 5–8', () => {
+  for (const lesson of LESSONS.filter(l => ['part5', 'part6', 'part7', 'part8'].includes(l.part.id))) {
     it(`${lesson.number} ${lesson.title}: draws, and its figures survive awkward text`, () => {
       const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onSave={() => {}} />)
       expect(container.textContent.length).toBeGreaterThan(400)
@@ -125,5 +125,34 @@ describe('NLP Studio renders, Parts 5–7', () => {
     await vi.waitFor(() => expect(container.textContent).toMatch(/trained \d[\d,]* numbers of/), { timeout: 20000 })
     act(() => setBot(null))
   }, 60000)
+
+  it('Part 8: the help desk answers or refuses, and its tests run and choose a threshold', async () => {
+    const H = await import('./engine/helpdesk.js')
+    const desk = LESSONS.find(l => l.id === 'help-desk')
+    let view = render(<Blocks lesson={desk} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+    const faqBox = view.container.querySelector('.nlp-input textarea')
+    act(() => { fireEvent.change(faqBox, { target: { value: H.FAQ } }) })
+    await act(async () => { fireEvent.click(view.container.querySelector('.nlp-load button')) })
+    await vi.waitFor(() => expect(view.container.querySelectorAll('.nlp-load').length).toBe(0))
+    expect(view.container.textContent).toMatch(/7 entries, 14 example questions/)
+    act(() => { fireEvent.change(screen.getByLabelText('Ask the help desk'), { target: { value: 'my chain broke' } }) })
+    await vi.waitFor(() => expect(view.container.textContent).toMatch(/Closest example questions/))
+    act(() => { fireEvent.change(view.container.querySelector('.qm-figure input[type=range]'), { target: { value: '0.9' } }) })
+    expect(view.container.textContent).toMatch(/I don’t know/)
+    act(() => { fireEvent.change(faqBox, { target: { value: 'nothing useful' } }) })
+    expect(view.container.textContent).toMatch(/0 entries, 0 example questions/)
+    act(() => { fireEvent.change(faqBox, { target: { value: H.FAQ } }) })
+    view.unmount()
+
+    view = render(<Blocks lesson={LESSONS.find(l => l.id === 'help-desk-tests')} saved={{}} onSolved={() => {}} onSave={() => {}} />)
+    act(() => { fireEvent.change(view.container.querySelector('.nlp-input textarea'), { target: { value: H.TESTS } }) })
+    await act(async () => { fireEvent.click(view.container.querySelector('.nlp-load button')) })
+    await vi.waitFor(() => expect(screen.getByText('Run the 15 tests').disabled).toBe(false))
+    await act(async () => { fireEvent.click(screen.getByText('Run the 15 tests')) })
+    await vi.waitFor(() => expect(view.container.textContent).toMatch(/Cheapest threshold/))
+    expect(view.container.querySelectorAll('.qm-log tbody tr').length).toBe(15)
+    expect([...view.container.querySelectorAll('.qm-figure button')].some(b => b.textContent === 'Download helpdesk.json')).toBe(true)
+    view.unmount()
+  })
 
 })

@@ -212,6 +212,24 @@ describe.skipIf(!existsSync(python))('the lab\'s programs in the real Python ste
     expect(plain(r.result)).toEqual(PT.loraMatmul([[1, 2]], [[1, 0], [0, 1]], [[1], [1]], [[0.5, -0.5]], 2))
   }, 120000)
 
+  it('Part 8: PyTorch’s gradients and training match your hand-written ones', async () => {
+    let r = await load(s, 'torch_gradients'), weights = 0
+    for (let n = 0; n < 12; n++) { r = await jump(s, 'torch_gradients'); if (r.type !== 'pause') break; weights++ }
+    expect(r.type, s.stderr()).toBe('finished')
+    expect(weights).toBe(G.PARAMS.length)
+    const out = plain(r.result)
+    expect(out.loss[1]).toBeCloseTo(out.loss[0], 12)
+    for (const name of G.PARAMS) expect(out[name], name).toBeLessThan(1e-12)
+
+    r = await load(s, 'torch_train')
+    let steps = 0
+    for (let n = 0; n < 40; n++) { r = await jump(s, 'torch_train'); if (r.type !== 'pause') break; steps++ }
+    expect(r.type, s.stderr()).toBe('finished')
+    expect(steps).toBe(30)
+    const [, , losses] = G.train(PROGRAMS.torch_train.input.value, 30, { dim: 8, context: 8, hidden: 16 })
+    plain(r.result)[2].forEach((x, i) => expect(x).toBeCloseTo(losses[i], 9))
+  }, 180000)
+
   it('dependencies and Bot 1 finish with the engine\'s answers', async () => {
     let r = await load(s, 'dependencies')
     r = await s.send({ cmd: 'step', mode: 'out' })

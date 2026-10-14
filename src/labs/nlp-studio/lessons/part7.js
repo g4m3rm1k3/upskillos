@@ -360,9 +360,9 @@ Three lessons, in order of importance:
 
 And the honest limits, all measured: small models memorise (5.6), copy poorly (6.4), answer confidently outside what they know (6.6), and follow instructions unreliably (7.3). Scale fixes some of this; grounding, routing and testing on held-out data are how you live with the rest.` },
         { h: 'Where to go next' },
-        { md: `- **PyTorch**: everything in this lab's \`tinygpt.py\` is a few lines in PyTorch, which computes the same gradients automatically and runs on a GPU. Neural Net Lab teaches it; this lab's autograd is what it does inside.
+        { md: `- **PyTorch**: everything in this lab's \`tinygpt.py\` is a few lines in PyTorch, which computes the same gradients automatically and runs on a GPU. Part 8 rewrites the tiny GPT in it and checks the two against each other.
 - **Bigger models, same code**: Andrej Karpathy's *nanoGPT* is a full GPT-2 training script you can now read line by line.
-- **Your own data**: every figure that trains takes your text. A help-desk bot for your own app is lesson 7.2's embeddings plus lesson 7.4's routing, with your questions and answers.` },
+- **Your own data**: every figure that trains takes your text. A help desk for your own app is lesson 7.2's embeddings plus lesson 7.4's routing, with your questions and answers: Part 8 builds and tests one.` },
         {
           choice: {
             prompt: 'A user asks your shop’s assistant a question its facts don’t cover. Which design gives the most trustworthy behaviour?',

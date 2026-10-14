@@ -309,3 +309,27 @@ def load_safetensors(path):
         numbers = struct.unpack(f"<{rows * cols}f", data[start + begin:start + end])
         model[name] = [list(numbers[i * cols:(i + 1) * cols]) for i in range(rows)]
     return vocab, model
+
+
+def safetensors_header(vocab, model):
+    """The header the page writes: the vocabulary as metadata, then each weight's type, shape, and
+    where its bytes start and end in the data that follows (4 bytes per float32, one after another)."""
+    header = {"__metadata__": {"format": "upskillos-tiny-gpt", "version": "1",
+                               "vocab": json.dumps(vocab, ensure_ascii=False, separators=(",", ":"))}}
+    offset = 0
+    for name in PARAMS:
+        rows, cols = len(model[name]), len(model[name][0])
+        header[name] = {"dtype": "F32", "shape": [rows, cols], "data_offsets": [offset, offset + rows * cols * 4]}
+        offset += rows * cols * 4
+    return header
+
+
+def save_safetensors(path, vocab, model):
+    """Write a tiny GPT the page's Upload button can read: byte for byte what its Download writes."""
+    text = json.dumps(safetensors_header(vocab, model), ensure_ascii=False, separators=(",", ":"))
+    while (8 + len(text.encode("utf-8"))) % 8:
+        text += " "
+    head = text.encode("utf-8")
+    numbers = [x for name in PARAMS for row in model[name] for x in row]
+    with open(path, "wb") as handle:
+        handle.write(len(head).to_bytes(8, "little") + head + struct.pack(f"<{len(numbers)}f", *numbers))

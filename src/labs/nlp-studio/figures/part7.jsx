@@ -14,7 +14,7 @@ const Slider = ({ label, value, min, max, step, onChange, format = v => v }) =>
   <label className="qm-slider">{label} <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} /> <b className="mono">{format(value)}</b></label>
 
 // A model behind a button: nothing is downloaded until it is pressed. Shows progress and errors.
-function useModel(kind) {
+export function useModel(kind) {
   const [state, setState] = useState(() => ({ status: 'idle', model: null, progress: 0, error: null }))
   const start = () => {
     setState(s => ({ ...s, status: 'loading', error: null }))
@@ -25,7 +25,7 @@ function useModel(kind) {
   useEffect(() => { if (P.isLoaded(kind)) start() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
   return [state, start]
 }
-function LoadButton({ kind, state, start }) {
+export function LoadButton({ kind, state, start }) {
   const m = P.MODELS[kind]
   if (state.status === 'ready') return <p className="qm-hint">✓ {m.label} is loaded ({m.size}, from Hugging Face: <span className="mono">{m.id}</span>).</p>
   return <div className="nlp-load">

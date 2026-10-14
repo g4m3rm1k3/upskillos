@@ -1,6 +1,6 @@
 # NLP Studio: plan
 
-Status (2026-10-13): all seven parts are built (`src/labs/nlp-studio/`), with the desktop Real Python tab.
+Status (2026-10-13): all eight parts are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Still to do: spaCy as an optional desktop install (it needs a new install step in `desktop/app/runtimes/aarcade-python.cjs`).
 
 ## The bar: better than QMaze and CartPole
 
@@ -139,6 +139,21 @@ Things measured while building it, that the lessons now rest on:
 - **Grounding helps, but the small model is the weak link.** With retrieval and routing, "do you sell pizza" → "No, I do not sell pizza.", and "meaning of life" is routed away. But "my chain snapped" still got a refusal to repair, even though retrieval found the right fact.
 - **Fine-tuning forgets.** Fine-tuning on the new Sunday hours alone drops the other days from 100% to 17%, whether LoRA or full. Replay restores them (92–100%). With replay, LoRA keeps the rest better than full fine-tuning (75–81% against 63–68%) while training 1,152 of 20,032 numbers.
 - **A bug found along the way.** Part 1's `tokenize()` and `splitWords()` had been built on their step-by-step traces, which copy the token list at every character. That is quadratic, and on the lab's whole text (64,000 characters) it ran out of memory. Both are plain loops now, 9 ms on the whole text, with the traces kept for the figures. This also sped up lesson 1.5's figure on the live site.
+
+## Part 8 as built
+
+| Lesson | You write | You derive or predict | Figure or program |
+|---|---|---|---|
+| 8.1 Your GPT, in PyTorch | `causal_mask` | why −∞ hides the future; the model's 4,288 numbers as a formula | Real Python: `torch_gradients` |
+| 8.2 Training in PyTorch | `safetensors_header` | Adam's first step is lr × the gradient's sign; the file's bytes | Real Python: `torch_train` |
+| 8.3 A help desk for your own app | `parse_faq`, `best_entry` | – | HelpDesk (MiniLM, 23 MB) |
+| 8.4 Testing the help desk | `outcomes`, `choose_threshold` | the cost of three thresholds, from measured scores | HelpDeskTest, export `helpdesk.json` |
+
+PyTorch runs only on the desktop (`python/torch_gpt.py`, in A-Arcade Python's environment, which already installs it); every write block is plain Python, so it is checked in the page. Measured while building it:
+- **The same gradients.** PyTorch's backward pass and the hand-written one differ by at most 3 × 10⁻¹⁷ in float64 (1.5 × 10⁻⁸ in float32), and 40 training steps with PyTorch's Adam give the same losses to within 9 × 10⁻¹⁶.
+- **Speed.** One training step: 10 ms against 0.9 ms (12×) at lesson 5.6's size, 393 ms against 6.4 ms (61×) at four times the width, one thread.
+- **Byte for byte.** `save_safetensors` in Python writes exactly the file the page downloads (`parity8.test.js`); a page model trained further with `continue_training` loads back into the page.
+- **The help desk.** On 15 unseen questions with the shipped FAQ: at the cheapest threshold (0.4, a wrong answer costing 3 missed ones) 8 right, 5 rightly refused, 1 wrong, 1 missed. The wrong one ("run the code step by step", 0.64 against "Where does my code run?") scores higher than most right answers, so only better examples can fix it; the lesson uses this to teach that a test set used for fixes is no longer unseen.
 
 **Real Python tab (desktop).** It uses A-Arcade Python's stepper and environment, with six programs (`programs.js`). The middle panel is drawn from the paused program's own variables: the text tape, the recursion stack, the live CKY chart, dependency heads, and the rules tried. `stepper.desktop.test.js` drives the real stepper the way the tab does, and checks the results against the engine.
 

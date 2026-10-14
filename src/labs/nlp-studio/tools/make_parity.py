@@ -288,3 +288,35 @@ with open(path7, "w", encoding="utf-8", newline="\n") as handle:
     json.dump(part7, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote Part 7 to {os.path.normpath(path7)}")
+
+
+# Part 8: the help desk, and the .safetensors file written from Python.
+import helpdesk as hd  # noqa: E402
+import tempfile  # noqa: E402
+
+faq_text = "Q: Where does my code run?\nq:  Is it real Python?  \nA: In the page.\nIt is Pyodide.\n\nA: an answer with no question\nQ:\nQ: Is it free?\r\nA: Yes.\nQ: a question with no answer"
+tests_text = "is it real => 1\nwhat => none\nbroken line\nnot a number => x\n => 2\nuses => twice => 2"
+results8 = [[0.9, 0, 0], [0.55, 1, 1], [0.5, 2, 1], [0.45, 0, -1], [0.3, 1, -1], [0.35, 2, 2], [0.2, 0, 0]]
+thresholds8 = [i * 5 / 100 for i in range(19)]
+model8 = tg.init_model(3, 2, 2, 2, 5)
+vocab8 = ["a", "\n", "é"]
+with tempfile.TemporaryDirectory() as folder:
+    file8 = os.path.join(folder, "tiny.safetensors")
+    tg.save_safetensors(file8, vocab8, model8)
+    with open(file8, "rb") as handle:
+        bytes8 = handle.read().hex()
+    vocab_back, model_back = tg.load_safetensors(file8)
+part8 = {
+    "faq_text": faq_text, "faq": hd.parse_faq(faq_text), "examples": [list(p) for p in hd.examples(hd.parse_faq(faq_text))],
+    "tests_text": tests_text, "tests": [list(t) for t in hd.parse_tests(tests_text)],
+    "best_entry": [list(hd.best_entry([0.6, 0.8, 0.0], [[1, 0, 0], [0.6, 0.8, 0], [0.6, 0.8, 0]], [2, 0, 1])), list(hd.best_entry([1, 0], [], []))],
+    "results": results8, "outcomes": [hd.outcomes(results8, t) for t in thresholds8],
+    "choose": [list(hd.choose_threshold(results8, thresholds8)), list(hd.choose_threshold(results8, thresholds8, 1))],
+    "model": model8, "vocab": vocab8, "header": tg.safetensors_header(vocab8, model8), "file_hex": bytes8,
+    "loaded_back": {"vocab": vocab_back, "model": model_back},
+}
+path8 = os.path.join(HERE, "..", "engine", "parity8.json")
+with open(path8, "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(part8, handle, ensure_ascii=False)
+    handle.write("\n")
+print(f"wrote Part 8 to {os.path.normpath(path8)}")

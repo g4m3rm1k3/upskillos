@@ -7,6 +7,7 @@ import { words } from './engine/counting.js'
 import { SENTENCES } from './engine/corpus.js'
 import { trainBikeVectors } from './engine/vectors.js'
 import { makeDialogues, trainChat } from './engine/chat.js'
+import { initModel } from './engine/tinygpt.js'
 
 // A small chat model for stepping a reply: trained in the page in a moment, so its answers are rough.
 let smallChat = null
@@ -177,5 +178,24 @@ export const PROGRAMS = {
     kwargs: () => ({ x: [[1, 2]], w: [[1, 0], [0, 1]], a: [[1], [1]], b: [[0.5, -0.5]], scale: 2.0 }),
     watch: { xw: ['xw'], xa: ['xa'], xab: ['xab'] },
     jump: { label: 'Next product', targets: () => [['pretrained.py', lineOf('pretrained.py', '    xab = [[sum(row[r] * b[r][j]')], ['pretrained.py', lineOf('pretrained.py', '    xa = [[sum(row[r] * a[r][j]')]] },
+  },
+  torch_gradients: {
+    label: 'Your gradients against PyTorch’s (8.1)', file: 'torch_gpt.py', module: 'torch_gpt', function: 'compare_gradients', view: 'watch',
+    about: 'Lesson 8.1: one forward and backward pass through your tinygpt.py, then the same through PyTorch, and the largest difference for each weight. Uses PyTorch, which the desktop app installs with its Python.',
+    input: { name: 'text', label: 'Text (its first 9 characters are used)', value: 'the chain snapped' },
+    kwargs: v => {
+      const chars = Array.from(v.padEnd(9, '.')).slice(0, 9), vocab = [...new Set(chars)].sort()
+      return { weights: initModel(vocab.length, 8, 8, 16, 1), ids: chars.slice(0, 8).map(c => vocab.indexOf(c)), targets: chars.slice(1).map(c => vocab.indexOf(c)) }
+    },
+    watch: { yours: ['loss.data[0][0]'], pytorch: ['torch_loss.item()'], name: ['name'], out: ['out'] },
+    jump: { label: 'Next weight compared', targets: () => [['torch_gpt.py', lineOf('torch_gpt.py', 'out[name] = (mine - getattr(net, name).grad)')]] },
+  },
+  torch_train: {
+    label: 'Training in PyTorch (8.2)', file: 'torch_gpt.py', module: 'torch_gpt', function: 'train_torch', view: 'watch',
+    about: 'Lesson 8.2: 30 steps of training the tiny GPT with PyTorch’s autograd and Adam, on a small model. “Next step” stops after each step: watch the loss fall.',
+    input: { name: 'text', label: 'Training text', value: 'the shop is open from nine to six. we repair chains and brakes.' },
+    kwargs: v => ({ text: v.length >= 20 ? v : `${v} the shop is open from nine to six.`, steps: 30, dim: 8, context: 8, hidden: 16 }),
+    watch: { loss: ['loss.item()'], losses: ['losses'], window: ['ids.tolist()'] },
+    jump: { label: 'Next step', targets: () => [['torch_gpt.py', lineOf('torch_gpt.py', 'losses.append(loss.item())')]] },
   },
 }

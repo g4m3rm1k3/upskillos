@@ -6,6 +6,7 @@ import { CooccurrenceExplorer, WordMap, PairUpdate, Word2vecTrainer, AnalogyBox,
 import { PerplexityDemo, TemperatureSampler, BpeBuilder, SoftmaxGrad, AttentionCalc, GptTrainer } from './part5.jsx'
 import { DialogueFormat, TemplateExplorer, ChatTrainer, DecodeTrace, ThreeBots } from './part6.jsx'
 import { GptTokenizer, EmbeddingExplorer, SmolChat, GroundedBot, LoraLab } from './part7.jsx'
+import { HelpDesk, HelpDeskTest } from './part8.jsx'
 
 export const FIGURES = {
   CharBytes, ScanPlayer, TokenCompare, WordRanks, SentenceSplit,
@@ -15,4 +16,5 @@ export const FIGURES = {
   PerplexityDemo, TemperatureSampler, BpeBuilder, SoftmaxGrad, AttentionCalc, GptTrainer,
   DialogueFormat, TemplateExplorer, ChatTrainer, DecodeTrace, ThreeBots,
   GptTokenizer, EmbeddingExplorer, SmolChat, GroundedBot, LoraLab,
+  HelpDesk, HelpDeskTest,
 }
