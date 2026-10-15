@@ -1,0 +1,5 @@
+Source: issue_desk_course practice database.
+Destination: separate issue_desk_restore database.
+Verify: ticket totals, ownership references and rejected orphan writes.
+RPO: choose and document the allowed loss before scheduling backups.
+RTO: measure the local drill; production cutover has additional steps.

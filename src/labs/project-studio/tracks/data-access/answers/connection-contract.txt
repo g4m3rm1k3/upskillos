@@ -1,0 +1,5 @@
+Authenticate before calling the response function.
+Borrow a connection for database work only.
+End each transaction before returning the connection.
+Rollback failures and use transaction-local identity.
+Never accept actor identity from a request parameter.

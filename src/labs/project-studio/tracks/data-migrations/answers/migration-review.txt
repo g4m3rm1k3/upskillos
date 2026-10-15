@@ -1,0 +1,5 @@
+Preflight: count missing severity.
+Compatibility: old inserts omit the new column and receive its default.
+Resume: backfill only NULL rows.
+Gate: no NULLs and allowed values before final constraints.
+Repair: preserve recorded migrations; publish a corrective version.

@@ -336,7 +336,167 @@
     },
     "wrong": [
       {
-        "name": "no written retry policy",
+        "name": "missing policy",
+        "files": {
+          "retry-policy.txt": ""
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-access/11-01-authorized-operations#Your turn: scope the count too": {
+    "files": {
+      "counts.py": "def visible_count(db,actor_id,project_id):\n    return db.execute(\"SELECT count(*) FROM tickets t WHERE t.project_id=%s AND EXISTS (SELECT 1 FROM projects p JOIN memberships m ON m.team_id=p.team_id WHERE p.project_id=t.project_id AND m.user_id=%s)\",(project_id,actor_id)).fetchone()[0]\n"
+    },
+    "wrong": [
+      {
+        "name": "unrestricted count",
+        "files": {
+          "counts.py": "def visible_count(db,actor_id,project_id):\n    return db.execute(\"SELECT count(*) FROM tickets WHERE project_id=%s\",(project_id,)).fetchone()[0]\n"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-access/11-02-row-policies#Your turn: fail closed without identity": {
+    "files": {
+      "identity.sql": "SELECT set_config('app.user_id','',true);\n"
+    },
+    "wrong": [
+      {
+        "name": "defaults to a real editor",
+        "files": {
+          "identity.sql": "SELECT set_config('app.user_id','1',true);"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-access/11-03-service-boundary#Your turn: write a connection contract": {
+    "files": {
+      "connection-contract.txt": "Authenticate before calling the response function.\nBorrow a connection for database work only.\nEnd each transaction before returning the connection.\nRollback failures and use transaction-local identity.\nNever accept actor identity from a request parameter.\n"
+    },
+    "wrong": [
+      {
+        "name": "no contract",
+        "files": {
+          "connection-contract.txt": ""
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-migrations/12-01-expand-contract#Your turn: a preflight report": {
+    "files": {
+      "remaining.sql": "SELECT count(*) FROM tickets WHERE severity IS NULL;\n"
+    },
+    "wrong": [
+      {
+        "name": "counts all tickets",
+        "files": {
+          "remaining.sql": "SELECT count(*) FROM tickets;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-migrations/12-02-migration-ledger#Your turn: a repair decision": {
+    "files": {
+      "migration-review.txt": "Preflight: count missing severity.\nCompatibility: old inserts omit the new column and receive its default.\nResume: backfill only NULL rows.\nGate: no NULLs and allowed values before final constraints.\nRepair: preserve recorded migrations; publish a corrective version.\n"
+    },
+    "wrong": [
+      {
+        "name": "no review file",
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-performance/13-01-plans#Your turn: index a second access path": {
+    "files": {
+      "assignee-index.sql": "CREATE INDEX ticket_assignee ON tickets(assignee_id) WHERE status='open';\n"
+    },
+    "wrong": [
+      {
+        "name": "indexes the wrong field",
+        "files": {
+          "assignee-index.sql": "CREATE INDEX ticket_assignee ON tickets(project_id) WHERE status='open';"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-operations/14-01-restore#Your turn: a restore runbook": {
+    "files": {
+      "restore-runbook.txt": "Source: issue_desk_course practice database.\nDestination: separate issue_desk_restore database.\nVerify: ticket totals, ownership references and rejected orphan writes.\nRPO: choose and document the allowed loss before scheduling backups.\nRTO: measure the local drill; production cutover has additional steps.\n"
+    },
+    "wrong": [
+      {
+        "name": "no runbook file",
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-operations/14-02-observe#Your turn: an incident handoff": {
+    "files": {
+      "incident.md": "Timeline: A locks ticket 1; B tries to update it and reaches its lock timeout.\nEvidence: the lock probe fails while A holds the row and succeeds after A commits.\nCause: conflicting transaction lifetime.\nDisprove: a slow query with no lock wait needs another investigation.\nRepair: identify the owner, finish or roll back the transaction, and bound future waits.\n"
+    },
+    "wrong": [
+      {
+        "name": "no incident record",
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-capstone/15-01-dependencies#Your turn: implement the dependency relation": {
+    "files": {
+      "dependencies.sql": "CREATE TABLE ticket_dependencies(ticket_id INTEGER NOT NULL REFERENCES tickets(ticket_id), depends_on_id INTEGER NOT NULL REFERENCES tickets(ticket_id), PRIMARY KEY(ticket_id,depends_on_id), CHECK(ticket_id<>depends_on_id));\n"
+    },
+    "wrong": [
+      {
+        "name": "no self-link rule",
+        "files": {
+          "dependencies.sql": "CREATE TABLE ticket_dependencies(ticket_id INTEGER NOT NULL REFERENCES tickets(ticket_id),depends_on_id INTEGER NOT NULL REFERENCES tickets(ticket_id),PRIMARY KEY(ticket_id,depends_on_id));"
+        },
+        "fails": [
+          0
+        ]
+      },
+      {
+        "name": "no pair uniqueness",
+        "files": {
+          "dependencies.sql": "CREATE TABLE ticket_dependencies(ticket_id INTEGER REFERENCES tickets(ticket_id),depends_on_id INTEGER REFERENCES tickets(ticket_id),CHECK(ticket_id<>depends_on_id));"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-capstone/15-02-independent-review#Your turn: submit an engineering handoff": {
+    "files": {
+      "HANDOFF.md": "# Issue Desk handoff\n\n## Requirements\nTeam-scoped ticket work.\n## Schema\nSee pg-model.sql and dependencies.sql.\n## Queries\nSee query files and reports.\n## Integrity\nKeys, references and local dependency rules.\n## Concurrency\nVersion checks and serialization retry probes.\n## Permissions\nApplication membership checks and ticket RLS experiment.\n## Migrations\nExpand, resumable backfill, validate, contract.\n## Performance\nAttach measured plans; do not claim universal timings.\n## Recovery\nAttach the restore drill result.\n## Limitations\nPublic authentication and deployment are not implemented; transfer requires human review.\n"
+    },
+    "wrong": [
+      {
+        "name": "no handoff file",
         "fails": [
           1
         ]

@@ -1,0 +1,1 @@
+CREATE TABLE ticket_dependencies(ticket_id INTEGER NOT NULL REFERENCES tickets(ticket_id), depends_on_id INTEGER NOT NULL REFERENCES tickets(ticket_id), PRIMARY KEY(ticket_id,depends_on_id), CHECK(ticket_id<>depends_on_id));
