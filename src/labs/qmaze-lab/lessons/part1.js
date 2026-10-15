@@ -190,6 +190,46 @@ $$r = \\lfloor s / n_\\text{cols} \\rfloor, \\qquad c = s \\bmod n_\\text{cols}$
           },
         },
         { md: `Notice the order: left, up, right, down goes clockwise round the compass. So \`(action + 1) % 4\` is a quarter turn to the right and \`(action - 1) % 4\` a quarter turn to the left. The slippery ice uses exactly that (lesson 2.1).` },
+        { h: 'State and action: the two indexes for everything' },
+        { md: `You now have both building blocks, and both are just whole numbers:
+
+- a **state** \`s\` says *where the agent is*: one number per cell (lesson 1.1);
+- an **action** \`a\` says *what it does next*: one number per move, 0 to 3.
+
+Here is Cheese and cat with its letters on the left and its state numbers on the right:
+
+\`\`\`
+         col 0  col 1  col 2  col 3          state numbers
+row 0      S      .      .      .            0   1   2   3
+row 1      .      #      .      X            4   5   6   7
+row 2      .      .      .      #            8   9  10  11
+row 3      #      .      .      C           12  13  14  15
+\`\`\`
+
+So "the rat is on the start and goes right" is the pair \`(0, 2)\`: state 0, action 2.
+
+Almost everything else in this lab is a **table looked up by these two numbers**. You will meet the tables one at a time, but they all have the same shape, so it helps to see them together now:
+
+| Table | Looked up with | Answers the question | Lesson |
+|---|---|---|---|
+| \`P\` | \`P[s][a]\` | what *happens* if I do action \`a\` in state \`s\`? | 2.1 |
+| \`policy\` | \`policy[s]\` | which action do I *choose* in state \`s\`? (2.3 also makes it a table \`[s, a]\` of probabilities) | 2.3 |
+| \`V\` | \`V[s]\` | how good is it to *be* in state \`s\`? | 2.4 |
+| \`Q\` | \`Q[s, a]\` | how good is it to *do* action \`a\` in state \`s\`? | 3.5 |
+
+\`P\` belongs to the **world**: it is the rules, and \`move\` below is how they are worked out. \`policy\`, \`V\` and \`Q\` belong to the **agent**: what it has decided and what it has learned. Whenever a line of code later looks confusing, ask first: *which state, which action, which table?*` },
+        {
+          choice: {
+            prompt: 'In the table above, which of these is looked up with a state **and** an action?',
+            options: [
+              { text: '`P` and `Q`', why: 'Yes. Both are about one move from one cell: `P[s][a]` says what the move does, `Q[s, a]` how good it is.' },
+              { text: '`V` and `Q`', why: '`V[s]` takes only a state: it scores being in a cell, not a move from it.' },
+              { text: 'Only `P`', why: '`Q` is also looked up with both: `Q[s, a]` scores one action in one state.' },
+              { text: 'All four', why: '`V[s]` takes a state alone: it scores being somewhere, whatever you do next.' },
+            ],
+            answer: 0,
+          },
+        },
         { h: 'One move, worked out' },
         {
           code: {

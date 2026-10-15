@@ -70,6 +70,7 @@
 .qm-note.key{background:#eef6f3;border-color:#bcdcd1}.qm-note.key .qm-eyebrow{color:var(--teal)}
 .qm-note.warn{background:#fdf0ea;border-color:#efc3ad}.qm-note.warn .qm-eyebrow{color:var(--bad)}
 .qm-note.try{background:#f2effb;border-color:#d1c8f0}.qm-note.try .qm-eyebrow{color:#5a45a8}
+.qm-note.recall{background:#f6f4ee;border-color:#dcd5c2}.qm-note.recall .qm-eyebrow{color:#7a6a3a}
 .qm-python-link{display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap}.qm-python-link span{font-size:12.5px;color:var(--muted)}
 .qm-lab .qm-python-link button{background:#24323a;color:#e5f3f0;border-color:#24323a}
 

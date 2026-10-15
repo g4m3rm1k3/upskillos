@@ -347,6 +347,7 @@ Between the two extremes there is a whole family: wait $n$ moves, then bootstrap
       goal: 'Build the Q-table as a NumPy array, index it (`Q[s]`, `Q[s, a]`, `.max()`), and choose the best action safely when values tie.',
       builds: ['td-learning', 'policies'],
       blocks: [
+        { note: 'Same layout as `P[s][a]` (lesson 2.1): a **state** `s` (the cell\'s number, `row * n_cols + col`) picks the row, an **action** `a` (0 left, 1 up, 2 right, 3 down) picks the column. `P[s][a]` said what that move *does*; `Q[s, a]` will say how *good* it is.', kind: 'recall' },
         { md: `TD(0) learns $V$, the value of states. But an agent that has to **choose** needs to compare moves: knowing that the cell to the right is worth 0.8 doesn't tell you which button gets you there, unless you have \`P\`. So the learning agents learn $Q(s, a)$ instead, one number per state **and** action, and choose with $\\arg\\max_a Q(s, a)$. No model needed.
 
 They keep $Q$ in a **Q-table**: a NumPy array with one row per state and one column per action.

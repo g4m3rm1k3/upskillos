@@ -76,3 +76,9 @@ Next, if wanted: exercises where the learner writes the update functions and the
 2026-10-12: Monte Carlo added (3.2 prediction, 3.4 against TD, 3.7 control; `python/montecarlo.py`, `engine/montecarlo.js`, `figures/montecarlo.jsx`), later Part 3 lessons renumbered (ids unchanged).
 
 2026-10-12: DQN added as Part 5 (`python/dqn.py`, `engine/dqn.js`, `figures/dqn.jsx`, `lessons/deepq.js`); "Apply it" is now Part 6 (ids unchanged).
+
+2026-10-15: the owner is working through the lab, and wherever they get confused we add the explanation to the lab itself, so every learner gets it. Rules for these edits: add to a lesson without making it longer than it needs to be, and use real values (checked against the engine or `python/`). A **Remember** note (`{ note, kind: 'recall' }`) goes at the top of a later lesson to recall an earlier idea it relies on.
+- 1.2: new section "State and action: the two indexes for everything" (numbered map, the four tables `P`, `policy`, `V`, `Q`, one choice question).
+- 2.1: a Remember note; "Reading P one bracket at a time" and "One trip through the loops" (the three branches of `build_transitions`, the `*` unpacking), with a predict on `P[0][3][0][1]`.
+- 3.5: a Remember note linking `Q[s, a]` to `P[s][a]`.
+- Progress: solved checks are now saved by prompt text (`checkKey` in `Blocks.jsx`), not block position, so adding blocks never moves saved answers; old saved positions are converted on load. `lessons.test.js` checks prompts are unique within each lesson. Changing a prompt's text resets that one check.

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import Blocks from './Blocks.jsx'
+import Blocks, { checkKey } from './Blocks.jsx'
 import Markdown from './Markdown.jsx'
 import { LESSONS, PARTS, lessonById } from './lessons/index.js'
 import './style.css'
@@ -10,7 +10,17 @@ const PythonTab = lazy(() => import('./PythonTab.jsx'))
 // Progress on this device: which lessons are done, which checks each lesson has solved, and
 // where the learner was. Lesson ids are the keys, so they never change.
 const STORE = 'upskillos.qmaze-lab.v1'
-function load() { try { return JSON.parse(localStorage.getItem(STORE)) ?? {} } catch { return {} } }
+function load() { try { return withCheckKeys(JSON.parse(localStorage.getItem(STORE)) ?? {}) } catch { return {} } }
+
+// Solved checks used to be saved as block positions; turn any old position into its check's key.
+function withCheckKeys(state) {
+  const lessons = Object.fromEntries(Object.entries(state.lessons ?? {}).map(([id, s]) => {
+    const blocks = lessonById(id)?.blocks ?? []
+    const solved = (s.solved ?? []).map(k => typeof k === 'number' ? checkKey(blocks[k] ?? {}) : k).filter(Boolean)
+    return [id, { ...s, solved: [...new Set(solved)] }]
+  }))
+  return { ...state, lessons }
+}
 function save(state) { try { localStorage.setItem(STORE, JSON.stringify(state)) } catch { /* private window: progress just isn't kept */ } }
 
 function Sidebar({ current, progress, onOpen }) {
@@ -34,8 +44,9 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     if (s.solved?.includes(k)) return p
     return { ...p, lessons: { ...p.lessons, [lesson.id]: { ...s, solved: [...(s.solved ?? []), k] } } }
   })
-  const checks = lesson.blocks.filter(b => b.predict || b.choice).length
-  const solved = (saved.solved ?? []).length
+  const keys = lesson.blocks.map(checkKey).filter(Boolean)
+  const checks = keys.length
+  const solved = keys.filter(k => saved.solved?.includes(k)).length
   const finish = () => { setProgress(p => ({ ...p, done: { ...p.done, [lesson.id]: true } })); if (next) onOpen(next.id) }
   return <article className="qm-lesson">
     <header>

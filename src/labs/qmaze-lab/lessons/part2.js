@@ -15,6 +15,7 @@ export const PART2 = {
       goal: 'Read and build `P[s][a]`, the complete description of what every move does, including slippery moves that have several possible results; and say what a **Markov decision process** is.',
       builds: ['actions-and-moves', 'agent-environment-loop'],
       blocks: [
+        { note: 'A **state** `s` is a cell\'s number, `row * n_cols + col` (lesson 1.1). An **action** `a` is a move\'s number: 0 left, 1 up, 2 right, 3 down (lesson 1.2). `move(s, a)` returns a triple `(next_state, reward, terminated)`. This lesson\'s table `P` is looked up with both: `P[s][a]`.', kind: 'recall' },
         { md: `So far each move had exactly one result: RIGHT from \`(0, 0)\` always lands on \`(0, 1)\`. On the frozen lake that isn't true. The ice is slippery: the elf moves the way it meant to only **one time in three**; the other two times it slides sideways, a quarter turn to the left or to the right of where it meant to go.
 
 A world like that can't be described by a function that returns *one* next state. It needs, for every state and action, a **list of possible results, each with its probability**. Collected for all states and actions, that is the **transition table**, \`P\`:
@@ -50,6 +51,47 @@ This is exactly the layout Gymnasium uses for its grid worlds (\`env.unwrapped.P
           code: {
             file: 'gridworld.py', fn: 'is_end', notes: [
               ['return self.cells.get(self.letter(state), {}).get("end", False)', ['Two lookups chained. `self.cells.get(letter, {})` gives the cell\'s rules, or an empty dictionary for plain floor; then `.get("end", False)` gives its `"end"` value, or `False` when there is none. So: `True` only for cheese, cats, holes and goals.']],
+            ],
+          },
+        },
+        { h: 'Reading P one bracket at a time' },
+        { md: `\`P\` is a dictionary inside a dictionary, with a list of tuples inside that. Each pair of brackets peels off one layer. These are the real values for Cheese and cat, starting from the start cell, state 0:
+
+\`\`\`python
+env.P            # dict: each state  -> that state's four actions
+env.P[0]         # dict: each action -> its list of outcomes
+                 # {0: [(1.0, 0, -0.04, False)],    left:  off the edge, stays in 0
+                 #  1: [(1.0, 0, -0.04, False)],    up:    off the edge, stays in 0
+                 #  2: [(1.0, 1, -0.04, False)],    right: to state 1
+                 #  3: [(1.0, 4, -0.04, False)]}    down:  to state 4
+env.P[0][2]      # list of outcomes:  [(1.0, 1, -0.04, False)]
+env.P[0][2][0]   # one outcome tuple:  (1.0, 1, -0.04, False)
+env.P[0][2][0][1]   # one value from it: 1, the next state
+\`\`\`
+
+Read the tuple left to right as a sentence: **with probability 1.0, you land in state 1, are paid −0.04, and the game doesn't end.** The four positions are always in that order: probability, next state, reward, terminated.
+
+To find the position of a value, count from 0: \`[0]\` probability, \`[1]\` next state, \`[2]\` reward, \`[3]\` terminated. Code usually **unpacks** the tuple into names instead of counting, as \`step\` does: \`for probability, next_state, reward, terminated in outcomes\`.` },
+        { h: 'One trip through the loops' },
+        { md: `\`build_transitions\` visits every pair \`(state, action)\`, 16 × 4 = 64 on Cheese and cat, and fills \`P[state][action]\` by one of its three branches. One example of each:
+
+1. **State 5 is a wall and state 15 is the cheese.** Nobody moves *from* them, but every state needs a row, so each of their actions gets the same dummy entry: \`P[5][2] = [(1.0, 5, 0.0, True)]\`: stay, paid 0, over.
+2. **State 0 on normal ground** (\`intended\` is 1.0). Ask \`move\` and put the certain probability in front:
+   \`(1.0, *self.move(0, 2))\` → \`(1.0, *(1, -0.04, False))\` → \`(1.0, 1, -0.04, False)\`.
+   The \`*\` spreads the triple's three values into the new tuple, after the \`1.0\`. Without it you would get \`(1.0, (1, -0.04, False))\`: a pair whose second item is a tuple.
+3. **State 0 on the frozen lake** (\`intended\` is 1/3, so \`side\` is 1/3). Ask \`move\` three times, for the turn either side and the move meant, giving three tuples:
+   \`P[0][2] = [(1/3, 0, 0.0, False), (1/3, 1, 0.0, False), (1/3, 4, 0.0, False)]\`:
+   right turned to up (off the edge, stays in 0), right as meant (state 1), right turned to down (state 4).
+
+\`P\` is built once, when the world is made. After that nothing calls \`move\` during a game: \`step\` only looks up \`P[self.state][action]\` and picks one tuple from the list.` },
+        {
+          predict: {
+            prompt: 'On Cheese and cat, what is `env.P[0][3][0][1]`? (State 0, action 3 is DOWN, the first outcome, position 1.)',
+            answer: 4, compute: () => new GridWorld('cheese_and_cat').P[0][3][0][1],
+            explain: '`P[0][3]` is `[(1.0, 4, -0.04, False)]`; `[0]` takes its only tuple; position `[1]` is the next state: down from `(0, 0)` lands on `(1, 0)`, which is state $1 \\cdot 4 + 0 = 4$.',
+            misconceptions: [
+              { answer: 1, feedback: 'Position 0 is the probability, 1.0. Position 1, the second value, is the next state.' },
+              { answer: 3, feedback: '3 is the action you looked up. The result at position 1 is where that action lands.' },
             ],
           },
         },

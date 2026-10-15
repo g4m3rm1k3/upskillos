@@ -38,6 +38,10 @@ describe('lessons', () => {
           expect(Math.abs(b.predict.compute() - b.predict.answer), b.predict.prompt).toBeLessThanOrEqual(b.predict.tolerance ?? 1e-9)
         }
       })
+      it('gives every check its own prompt (saved answers are keyed by it)', () => {
+        const prompts = lesson.blocks.map(b => (b.predict ?? b.choice)?.prompt).filter(Boolean)
+        expect(new Set(prompts).size).toBe(prompts.length)
+      })
       it('has a right answer for every choice', () => {
         for (const b of lesson.blocks.filter(x => x.choice)) expect(b.choice.options[b.choice.answer], b.choice.prompt).toBeTruthy()
       })
