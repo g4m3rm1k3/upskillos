@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Checks every Frontier lesson against the series' teaching rules (src/labs/project-studio/frontierLint.js)
 // and prints what it finds, lesson by lesson. Exit code 1 if any rule is broken.
 //

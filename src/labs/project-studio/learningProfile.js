@@ -15,6 +15,11 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (key.startsWith('data-') && key !== 'data-foundations') return {
+    level: 'beginner',
+    maturity: 'in-development',
+    audience: 'Continue the preceding Database Engineering chapters in the same Issue Desk folder: earlier chapters supply the database and every SQL idea used here. Chapter 8 installs PostgreSQL and chapter 9 installs Python and its database driver, each with setup steps in its first lesson.',
+  };
   if (key === 'data' || key === 'data-foundations') return {
     level: 'beginner',
     maturity: 'in-development',
@@ -90,5 +95,5 @@ export function learningProfile(key) {
     'pyside6-engine': { level: 'advanced', maturity: 'in-development', audience: 'For learners already comfortable with Python classes, modules and debugging. Review Forge functions, objects and packaging first if GUI event handling and engine structure are unfamiliar. Only the first lesson, a window prototype, is written so far.' },
   };
   if (key === 'electron-basics' || key.startsWith('electron-basics-')) return { level: 'bridge', maturity: 'in-development', audience: 'For learners who want to understand the basics of Electron, including creating a window, accessing the filesystem securely via preload scripts, and working with a terminal.' };
-  return profiles[key] || { level: 'unclassified', maturity: 'review-required', audience: 'Prerequisites have not been reviewed. Inspect the first lesson before choosing this track.' };
+  return profiles[key] || { level: 'unclassified', maturity: 'review-required', audience: "Prerequisites haven't been reviewed yet. Inspect the first lesson before choosing this track." };
 }
