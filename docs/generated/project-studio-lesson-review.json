@@ -1,13 +1,13 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 765,
-    "tracks": 113,
+    "lessons": 774,
+    "tracks": 118,
     "errors": {
       "independent task exposes full target": 4
     },
     "signals": {
-      "authored check limits not detected": 556,
+      "authored check limits not detected": 553,
       "prediction not detected": 79,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 199
@@ -2135,54 +2135,6 @@
       "errors": []
     },
     {
-      "id": "data-foundations/01-01-ask-a-question",
-      "track": "data-foundations",
-      "title": "1.1 — Ask a Database a Question",
-      "level": "beginner",
-      "maturity": "in-development",
-      "firstStep": "Prepare a place to work",
-      "firstIndependentTask": "Your turn: estimate a batch",
-      "signals": [],
-      "errors": []
-    },
-    {
-      "id": "data-foundations/01-02-records-that-remain",
-      "track": "data-foundations",
-      "title": "1.2 — Records That Survive Closing the Program",
-      "level": "beginner",
-      "maturity": "in-development",
-      "firstStep": "Decide what one row means",
-      "firstIndependentTask": "Your turn: read only what the screen needs",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "data-foundations/01-03-filter-and-order",
-      "track": "data-foundations",
-      "title": "1.3 — Choose Rows and Make Their Order Explicit",
-      "level": "beginner",
-      "maturity": "in-development",
-      "firstStep": "Choose a row using a condition",
-      "firstIndependentTask": "Your turn: a longer-task list",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "data-foundations/01-04-let-the-database-refuse",
-      "track": "data-foundations",
-      "title": "1.4 — Make Invalid Records Impossible to Save",
-      "level": "beginner",
-      "maturity": "in-development",
-      "firstStep": "Give a record one identity",
-      "firstIndependentTask": "Your turn: rooms at a venue",
-      "signals": [],
-      "errors": []
-    },
-    {
       "id": "dice-cpp/01-from-python-to-a-binary",
       "track": "dice-cpp",
       "title": "1 — A Python programmer meets the compiler",
@@ -3957,71 +3909,6 @@
       "errors": []
     },
     {
-      "id": "frontier-calculus/05-01-a-slope-by-nudging",
-      "track": "frontier-calculus",
-      "title": "5.1 — A Slope by Nudging",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Read the tests first",
-      "firstIndependentTask": "Your turn: nudge both ways",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "frontier-calculus/05-02-slopes-by-rule",
-      "track": "frontier-calculus",
-      "title": "5.2 — Slopes by Rule",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Read the tests first",
-      "firstIndependentTask": "Your turn: the guessing loss's slope",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "frontier-calculus/05-03-the-chain-rule",
-      "track": "frontier-calculus",
-      "title": "5.3 — The Chain Rule",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Read the tests first",
-      "firstIndependentTask": "Your turn: the chain's slope, by a loop",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "frontier-calculus/05-04-the-gradient",
-      "track": "frontier-calculus",
-      "title": "5.4 — The Gradient",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Read the tests first",
-      "firstIndependentTask": "Your turn: the gradient",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
-      "id": "frontier-calculus/05-05-rolling-downhill",
-      "track": "frontier-calculus",
-      "title": "5.5 — Rolling Downhill",
-      "level": "bridge",
-      "maturity": "in-development",
-      "firstStep": "Read the tests first",
-      "firstIndependentTask": "Your turn: descend on a vector",
-      "signals": [
-        "authored check limits not detected"
-      ],
-      "errors": []
-    },
-    {
       "id": "frontier-cs/02-01-how-slow-grows",
       "track": "frontier-cs",
       "title": "2.1 — How Slow Grows",
@@ -4997,6 +4884,168 @@
         "independent task heading not detected",
         "authored check limits not detected"
       ],
+      "errors": []
+    },
+    {
+      "id": "mean-angular/00-first-component",
+      "track": "mean-angular",
+      "title": "Your First Angular Component — State Before Networking",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Generate the client once",
+      "firstIndependentTask": "Your turn: a bounded counter",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-angular/01-build",
+      "track": "mean-angular",
+      "title": "Angular Forms and HTTP State",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Reuse the browser package",
+      "firstIndependentTask": "Your turn: browser states",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "mean-api/00-first-request",
+      "track": "mean-api",
+      "title": "Follow One HTTP Request Before Building the API",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Send a request to a temporary server",
+      "firstIndependentTask": "Your turn: a second contract",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "mean-api/01-build",
+      "track": "mean-api",
+      "title": "Express APIs and Concurrent Edits",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the request boundary",
+      "firstIndependentTask": "Your turn: HTTP contract",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-database/01-build",
+      "track": "mean-database",
+      "title": "MongoDB Constraints and Indexes",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Connect and define storage rules",
+      "firstIndependentTask": "Your turn: index design",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-model/01-build",
+      "track": "mean-model",
+      "title": "Design Documents and Relationships",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Start with reads and writes",
+      "firstIndependentTask": "Your turn: model tradeoffs",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-model/02-query-workshop",
+      "track": "mean-model",
+      "title": "Query Workshop — Discover the Cost of Duplication",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Make the problem visible",
+      "firstIndependentTask": "Your turn: historical snapshots",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-model/03-dependencies-invariants",
+      "track": "mean-model",
+      "title": "Keys, Dependencies and Invariants — Design Before Collections",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Find the key of a relationship",
+      "firstIndependentTask": "Your turn: model equipment reservations",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-quality/01-build",
+      "track": "mean-quality",
+      "title": "Integration Tests and Schema Evolution",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Test the actual storage boundary",
+      "firstIndependentTask": "Your turn: capstone",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "mean-quality/02-mastery-path",
+      "track": "mean-quality",
+      "title": "Your Mastery Path — The First App Is Not the Finish Line",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Check what a green result means",
+      "firstIndependentTask": "Your turn: demonstrate transfer",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-start/00-javascript-practice",
+      "track": "mean-start",
+      "title": "JavaScript Practice — Get Ready to Build",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read one object, then transform several",
+      "firstIndependentTask": "Your turn: summarize the board",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-start/01-build",
+      "track": "mean-start",
+      "title": "Requirements and a First Node Program",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Define the smallest useful rule",
+      "firstIndependentTask": "Your turn: requirements",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "mean-start/02-values-identity-closures",
+      "track": "mean-start",
+      "title": "Values, Identity and Closures — Explain the State You Change",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Predict the identity of a copy",
+      "firstIndependentTask": "Your turn: revisioned updates",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "mean-start/03-async-lifecycle",
+      "track": "mean-start",
+      "title": "Async Work — Ordering, Failure and Cancellation",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Trace the order, not the wall clock",
+      "firstIndependentTask": "Your turn: control concurrency",
+      "signals": [],
       "errors": []
     },
     {
@@ -9198,7 +9247,7 @@
       "title": "8.2 — Design the room around the game",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Build a named entrance",
+      "firstStep": "Draw the layout before styling",
       "firstIndependentTask": "Your turn — Design an empty-state card",
       "signals": [],
       "errors": []
@@ -9209,7 +9258,7 @@
       "title": "8.3 — A consistent visual language",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Start with shared roles",
+      "firstStep": "Apply the next layer",
       "firstIndependentTask": "Your turn — Style a results card",
       "signals": [],
       "errors": []
@@ -9265,7 +9314,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Connect pick",
-      "firstIndependentTask": "Your turn — Decide whether to schedule",
+      "firstIndependentTask": "Your turn — Adapt without aliasing",
       "signals": [],
       "errors": []
     },
@@ -9298,7 +9347,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Give the controller a model slot",
-      "firstIndependentTask": "Your turn — Describe a policy slice",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
       "signals": [],
       "errors": []
     },
@@ -9309,7 +9358,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the new boundary",
-      "firstIndependentTask": "Your turn — Ignore an obsolete result",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
       "signals": [],
       "errors": []
     },
@@ -9320,7 +9369,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the new boundary",
-      "firstIndependentTask": "Your turn — Preserve a good model on failure",
+      "firstIndependentTask": "Your turn — Accept only a compatible version",
       "signals": [],
       "errors": []
     },
@@ -9484,7 +9533,7 @@
       "title": "7.2 — Two games, two rule contracts",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Prove ordinary scores",
+      "firstStep": "Read the supplied harness",
       "firstIndependentTask": "Your turn — Keep sessions independent",
       "signals": [],
       "errors": []
@@ -9517,7 +9566,7 @@
       "title": "3.3 — A turn with boundaries",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Connect only rolling first",
+      "firstStep": "Let state decide what is legal",
       "firstIndependentTask": "Your turn — Guard the roll budget",
       "signals": [],
       "errors": []
@@ -9628,7 +9677,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Extend the renderer",
-      "firstIndependentTask": "Your turn — Bound the drawing density",
+      "firstIndependentTask": "Your turn — Normalize a pointer",
       "signals": [],
       "errors": []
     },
@@ -9638,8 +9687,8 @@
       "title": "9.4 — Assemble dice from reusable parts",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Place unmarked die bodies",
-      "firstIndependentTask": "Your turn — Center a row of objects",
+      "firstStep": "Extend the renderer",
+      "firstIndependentTask": "Your turn — Normalize a pointer",
       "signals": [],
       "errors": []
     },
@@ -9649,7 +9698,7 @@
       "title": "9.5 — Time, picking and cleanup",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Pick and resize before animating",
+      "firstStep": "Extend the renderer",
       "firstIndependentTask": "Your turn — Normalize a pointer",
       "signals": [],
       "errors": []
@@ -9693,7 +9742,7 @@
       "title": "5.3 — Shorter syntax without hidden ideas",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Translate one callback at a time",
+      "firstStep": "Read each abbreviation",
       "firstIndependentTask": "Your turn — Copy before sorting",
       "signals": [],
       "errors": []
@@ -9837,6 +9886,17 @@
       "errors": []
     },
     {
+      "id": "ui-forms/05-04-multistep-data-collector",
+      "track": "ui-forms",
+      "title": "5.4 — Universal Multi-Step Form Wizard and Structured Data Collection",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the multi-step stepper, radio cards and layout pivot in CSS",
+      "firstIndependentTask": "Your turn: add a backup retention radio selector to step 2",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "ui-foundations/01-01-spatial-grid",
       "track": "ui-foundations",
       "title": "1.1 — The Spatial Grid and Killing Box-itis",
@@ -9866,6 +9926,17 @@
       "maturity": "in-development",
       "firstStep": "Calculate fluid sizing with clamp()",
       "firstIndependentTask": "Your turn: create a fluid badge notification",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-game/07-01-css-grid-arcade",
+      "track": "ui-game",
+      "title": "7.1 — Playable CSS & DOM Game: 3D Card Matrix and Coordinate Physics",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the 3D card flip matrix and game arcade stylesheet",
+      "firstIndependentTask": "Your turn: add a difficulty mode selector and reset button",
       "signals": [],
       "errors": []
     },
@@ -9903,6 +9974,17 @@
       "errors": []
     },
     {
+      "id": "ui-interactions/04-04-advanced-animations",
+      "track": "ui-interactions",
+      "title": "4.4 — Advanced Animations, 3D Tilt, Shimmer and Conic Gradients",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the 3D perspective, skeleton shimmer and conic border rules",
+      "firstIndependentTask": "Your turn: create an animated neon badge with conic rotation",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "ui-layouts/02-01-flexbox-mechanics",
       "track": "ui-layouts",
       "title": "2.1 — Flexbox Mechanics and the min-width: 0 Trap",
@@ -9932,6 +10014,17 @@
       "maturity": "in-development",
       "firstStep": "Align nested elements with subgrid",
       "firstIndependentTask": "Your turn: create an unboxed stats card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-layouts/02-04-sticky-scrollytelling",
+      "track": "ui-layouts",
+      "title": "2.4 — Sticky Scrollytelling, Overflow Traps and Responsive Pivots",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build the scrollytelling CSS layout and responsive pivot",
+      "firstIndependentTask": "Your turn: add a fourth scrollytelling stage with interactive telemetry",
       "signals": [],
       "errors": []
     },

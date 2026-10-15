@@ -25,6 +25,14 @@ Spatial Tokens + 2D Shell Grid + Collapsible GPU Sidebar = Studio-Grade Applicat
 
 ## Architect the production application shell
 
+```predict
+question: Why does the master application shell use grid-template-rows: 56px 1fr instead of fixed pixel heights for both rows?
+choice: It allows the viewport height to adapt dynamically while keeping the top navigation bar at a fixed 56px
+choice: It forces the browser to recompile the DOM tree on each resize
+answer: It allows the viewport height to adapt dynamically while keeping the top navigation bar at a fixed 56px
+explain: Using 1fr for the main application body allocates all remaining vertical viewport space to the content, preventing body-level double scrollbars.
+```
+
 Create `aura-app/style.css` with the complete token foundation and application shell grid:
 
 ```css file=aura-app/style.css

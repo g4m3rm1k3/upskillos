@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 68 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 69 labs · 16 games
 
 ## How things are counted
 
@@ -82,6 +82,7 @@
 | Code Typing Studio | `code-typing` | lab | `/lab/code-typing` |
 | CodeLens | `codelens` | visualizer | `/codelens` |
 | CSS 0 to Mastery | `css-mastery` | lesson | `/web-learn/css-mastery` |
+| Data Science Studio | `data-science-studio` | lab | `/lab/data-science-studio` |
 | Decomp Lab | `decomp-lab` | lab | `/decomp-lab` |
 | Dynamic Programming Lab | `dp-lab` | lab | `/lab/dp-lab` |
 | Drone Lab | `drone-lab` | lab | `/drone-lab` |

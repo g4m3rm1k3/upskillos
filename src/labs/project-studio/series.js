@@ -16,6 +16,21 @@ const SERIES = [
     planned: 'Standalone beginner series building Issue Desk: teams, projects, tickets, permissions and reporting. The opening chapter is written and teaches SQL, stored records, filtering, ordering and constraints. Relationships, PostgreSQL, application integration, concurrent edits, migrations, performance and recovery are planned in docs/curricula/database-engineering.md. No prior course is required. Learner and platform review remain open.',
   },
   {
+    key: 'mean',
+    label: 'MEAN Stack — Build a Task Board with Database Design',
+    prefix: 'mean-',
+    sharedProject: true,
+    chapters: [
+      ['mean-start', '01 · Requirements and a First Node Program'],
+      ['mean-model', '02 · Design Documents and Relationships'],
+      ['mean-database', '03 · MongoDB Constraints and Indexes'],
+      ['mean-api', '04 · Express APIs and Concurrent Edits'],
+      ['mean-angular', '05 · Angular Forms and HTTP State'],
+      ['mean-quality', '06 · Integration Tests and Schema Evolution'],
+    ],
+    planned: 'For basic JavaScript learners seeking depth. The authored first-app milestone includes language practice, identity/closures, async cancellation, relational/document modeling, a local MEAN board and tests. Full TypeScript, advanced Angular/RxJS, security, transactions, reliable workflows and production operations are required later stages, not yet authored. Coverage and mastery evidence: docs/mean-stack-mastery-scope.md. Editorial, learner and Desktop review remain open.',
+  },
+  {
     key: 'tabletop',
     label: 'Tabletop Workshop — Beautiful Games and a Learning Opponent',
     prefix: 'tabletop-',
@@ -106,8 +121,9 @@ const SERIES = [
       ['ui-interactions', '04 · Interaction Design, Motion and Micro-States'],
       ['ui-forms', '05 · Form UX, Data Density and Accessible Controls'],
       ['ui-capstone', '06 · Capstone — The Production Web App'],
+      ['ui-game', '07 · Playable CSS & DOM Game — 3D Perspective and Grid Matrix'],
     ],
-    planned: 'Demystifies CSS and interface engineering from first principles. Builds a high-converting showcase, application workspace, analytics cards, interactive components, accessible forms and a complete production productivity app. Teaches design tokens, 4px/8px spatial rhythm, modular typography scales, fluid sizing with clamp(), Flexbox, CSS Grid, Subgrid, Container Queries, oklch() color spaces, WCAG 2.2 accessibility, and dark mode. See docs/css-mastery-series-plan.md.',
+    planned: 'Demystifies CSS and interface engineering from first principles. Builds a high-converting showcase, application workspace, analytics cards, interactive components, accessible forms, a complete production productivity app, and a playable 3D CSS/DOM game. Teaches design tokens, 4px/8px spatial rhythm, modular typography scales, fluid sizing with clamp(), Flexbox, CSS Grid, Subgrid, Container Queries, oklch() color spaces, WCAG 2.2 accessibility, dark mode, 3D card tilt physics, skeleton shimmers, and responsive pivots. See docs/css-mastery-series-plan.md.',
   },
   {
     key: 'games3d',

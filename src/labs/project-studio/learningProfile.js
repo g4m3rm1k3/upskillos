@@ -20,6 +20,13 @@ export function learningProfile(key) {
     maturity: 'in-development',
     audience: 'Start with an empty Issue Desk folder. No prior SQL, programming or other course required. Basic arithmetic and file use are enough. The opening uses the SQLite command-line tool, with setup guidance; Project Studio Desktop runs the file checks. PostgreSQL and application engineering are later planned chapters, not assumed knowledge.',
   };
+  if (['mean', 'mean-start', 'mean-model', 'mean-database', 'mean-api', 'mean-angular', 'mean-quality'].includes(key)) return {
+    level: 'bridge',
+    maturity: 'in-development',
+    audience: key === 'mean' || key === 'mean-start'
+      ? 'For learners who know basic JavaScript and need practice. Begin with objects, array methods, modules and async/await before building one local task board with MongoDB, Express, Angular and Node. Basic HTML is helpful. Requires Desktop for filesystem checks, Node 22.22.3+ in the Node 22 line or Node 24, npm and local MongoDB 8. Database design and introductory TypeScript are taught here.'
+      : 'Continue the preceding MEAN Stack chapters in the same task-board folder. Earlier chapters supply the files and data model. Requires Node, npm and local MongoDB; Angular tooling is introduced in chapter 5. This is a local single-operator prototype, with independent exercises and review still required.',
+  };
   if (key === 'tabletop' || key.startsWith('tabletop-')) return {
     level: ['tabletop', 'tabletop-start', 'tabletop-language'].includes(key) ? 'beginner' : 'bridge',
     maturity: 'in-development',

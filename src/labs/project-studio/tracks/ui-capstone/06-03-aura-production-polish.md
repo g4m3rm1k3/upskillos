@@ -30,6 +30,14 @@ Arbitrary Guesswork ──► Systematic Heuristics ──► Production-Grade S
 
 ## Execute the production theme engine
 
+```predict
+question: Why does the theme engine override CSS custom properties on [data-theme="light"] rather than switching component classes?
+choice: It allows every component to automatically update its color and shadow without touching the HTML markup
+choice: It prevents the browser from loading new font files
+answer: It allows every component to automatically update its color and shadow without touching the HTML markup
+explain: By declaring theme tokens on a parent data attribute or class, all nested components referencing var(--color-surface), var(--color-border), etc. update dynamically without needing separate light-mode classes on every element.
+```
+
 Update `aura-app/style.css` to add the full dual-theme token overrides:
 
 ```css file=aura-app/style.css

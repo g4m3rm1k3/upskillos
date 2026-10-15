@@ -1,6 +1,6 @@
 # NLP Studio: plan
 
-Status (2026-10-13): all eight parts are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Still to do: spaCy as an optional desktop install (it needs a new install step in `desktop/app/runtimes/aarcade-python.cjs`).
+Status (2026-10-14): all eight parts are built (`src/labs/nlp-studio/`), with the desktop Real Python tab. Part 9 is on the to-do list below, waiting until the owner has worked through Parts 1–8.
 
 ## The bar: better than QMaze and CartPole
 
@@ -154,6 +154,26 @@ PyTorch runs only on the desktop (`python/torch_gpt.py`, in A-Arcade Python's en
 - **Speed.** One training step: 10 ms against 0.9 ms (12×) at lesson 5.6's size, 393 ms against 6.4 ms (61×) at four times the width, one thread.
 - **Byte for byte.** `save_safetensors` in Python writes exactly the file the page downloads (`parity8.test.js`); a page model trained further with `continue_training` loads back into the page.
 - **The help desk.** On 15 unseen questions with the shipped FAQ: at the cheapest threshold (0.4, a wrong answer costing 3 missed ones) 8 right, 5 rightly refused, 1 wrong, 1 missed. The wrong one ("run the code step by step", 0.64 against "Where does my code run?") scores higher than most right answers, so only better examples can fix it; the lesson uses this to teach that a test set used for fixes is no longer unseen.
+
+## Part 9: to do
+
+Added 2026-10-14 at the owner's request, to build after they have worked through Parts 1–8 (their testing may change it). Frontier (`docs/frontier-ai-series-plan.md`) also covers recurrent networks, seq2seq and the full transformer, as Project Studio code; that overlap is intended. This lab gives the intuition and the ins and outs, and must be complete on its own.
+
+| Planned lesson | What it adds | Notes |
+|---|---|---|
+| 9.1 Labelling every word | part-of-speech tagging: the most-frequent-tag baseline, measured per word | a small tagged corpus written for the lab |
+| 9.2 Hidden Markov models | transition and emission probabilities, counted | builds on 3.2's n-grams |
+| 9.3 Viterbi | the best tag sequence by dynamic programming, derived and stepped through | a Real Python program; compare with brute force on a short sentence |
+| 9.4 Named entities | BIO tags, entity-level precision and recall (not per word) | builds on 3.5's evaluation |
+| 9.5 spaCy | your tagger and entities against spaCy's on the same sentences | needs spaCy and `en_core_web_sm` as an optional install step in `desktop/app/runtimes/aarcade-python.cjs` (with IPC and preload); restart the app after |
+| 9.6 Recurrent networks | an RNN language model, backpropagation through time by hand, vanishing gradients measured, clipping | before attention: why it was needed |
+| 9.7 LSTM and GRU | gates as learned switches, stepped through one character at a time | |
+| 9.8 Seq2seq and the first attention | an encoder-decoder that reverses or sorts a sequence; the bottleneck measured; Bahdanau attention added | ties 5.5's attention to where it came from |
+| 9.9 Evaluating generated text | BLEU and ROUGE written by hand, and where they disagree with a person | |
+| 9.10 The full transformer block | multi-head attention, layer norm, two stacked blocks, each measured against the tiny GPT | grows Part 5's model into the real architecture |
+| 9.11 Fine-tuning a real model | LoRA on SmolLM2-135M with PyTorch on the desktop, on the shop's conversations | promised by the original outline (level 4 below) but not built: Part 7's LoRA fine-tunes Bot 3 in the page. One thread, few steps, measured first |
+
+This may become two parts (sequence labelling, then sequence models) when planned in detail.
 
 **Real Python tab (desktop).** It uses A-Arcade Python's stepper and environment, with six programs (`programs.js`). The middle panel is drawn from the paused program's own variables: the text tape, the recursion stack, the live CKY chart, dependency heads, and the rules tried. `stepper.desktop.test.js` drives the real stepper the way the tab does, and checks the results against the engine.
 

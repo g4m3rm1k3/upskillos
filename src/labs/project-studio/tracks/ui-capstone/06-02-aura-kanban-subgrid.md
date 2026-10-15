@@ -24,6 +24,14 @@ Horizontal Board Container → Vertical Column Tracks → Subgrid Cards (Aligned
 
 ## Construct the Subgrid Kanban board
 
+```predict
+question: Why is subgrid declared on the card rather than on the column container?
+choice: The card is the child element that needs to participate in the parent column's row tracks
+choice: It forces the parent column to convert into an inline-flex element
+answer: The card is the child element that needs to participate in the parent column's row tracks
+explain: The parent column establishes the grid tracks, and the child card declares grid-template-rows: subgrid to lock its internal items (title, tags, actions) directly into those tracks.
+```
+
 Update `aura-app/style.css` to add the Kanban board and card rules:
 
 ```css file=aura-app/style.css

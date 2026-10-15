@@ -25,6 +25,7 @@ import { MAX_GRID_COLS, MAX_GRID_ROWS, cellSelection, clampPos, jumpTarget, move
 import { sampleWorkbook } from './ui/samples.js'
 import { LANGUAGES, codeLanguageFromInput } from './engine/code.js'
 import { createCodeRuntime } from './runtime/runtime.js'
+import { useEntryLink } from '../../utils/entryLinks.js'
 import './spreadsheet.css'
 
 const STORE = 'upskillos.spreadsheet-lab.v1'
@@ -239,6 +240,21 @@ export default function SpreadsheetLab() {
     setNotice('Added the sheet "' + target.name + '" with ' + (rows.length - 1) + ' rows. The panel on the right says what the columns mean and suggests things to try.')
     focusGrid()
   }
+  // A deep link such as #/lab/spreadsheet-lab?dataset=shop-orders&try=2 (Data Science Studio's
+  // lessons send these): open the dataset, then carry out that "thing to try" once its sheet is showing.
+  const [pendingTry, setPendingTry] = useState(null)
+  useEntryLink('spreadsheet-lab', (search) => {
+    const q = new URLSearchParams(search)
+    const ds = DATASETS.find((d) => d.id === q.get('dataset'))
+    if (!ds) return
+    openDataset(ds.id).then(() => { const n = Number.parseInt(q.get('try') ?? '', 10); if (ds.tries[n]) setPendingTry({ id: ds.id, n }) })
+  })
+  useEffect(() => {
+    if (!pendingTry || sheet.dataset !== pendingTry.id) return
+    const t = DATASETS.find((d) => d.id === pendingTry.id).tries[pendingTry.n]
+    setPendingTry(null)
+    runTry(t)
+  }, [pendingTry, sheet]) // eslint-disable-line react-hooks/exhaustive-deps
   // Whether a block of cells is empty and not under a chart, so new cells
   // put there can be seen.
   const blockFree = (r0, c0, h, w) => {

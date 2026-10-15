@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 68,
+    "labs": 69,
     "games": 16
   },
   "courses": [
@@ -470,6 +470,12 @@
       "label": "CSS 0 to Mastery",
       "kind": "lesson",
       "path": "/web-learn/css-mastery"
+    },
+    {
+      "id": "data-science-studio",
+      "label": "Data Science Studio",
+      "kind": "lab",
+      "path": "/lab/data-science-studio"
     },
     {
       "id": "decomp-lab",
