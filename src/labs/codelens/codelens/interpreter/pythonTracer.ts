@@ -49,7 +49,9 @@ def _stack(frame):
         n = f.f_code.co_name
         if n not in _SKIP:
             locs = {}
-            for k, v in f.f_locals.items():
+            # Module level: read the globals. On Python 3.12, reading f_locals here sets a
+            # running comprehension's loop variables to None (see codelens_tracer.py, frame_vars).
+            for k, v in (f.f_globals if n == '<module>' else f.f_locals).items():
                 if not k.startswith('_'):
                     try:
                         locs[k] = _serialize(v)

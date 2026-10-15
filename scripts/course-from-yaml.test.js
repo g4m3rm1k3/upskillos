@@ -28,10 +28,11 @@ describe('course YAML generator', () => {
   it('accepts a valid course and emits discoverable course files', () => {
     const document = validDocument()
     expect(validateCourseDocument(document)).toEqual({ errors: [], warnings: [] })
-    const files = buildCourseFiles(document, 'C:/repo')
-    expect(files.map(file => file.path.replaceAll('\\', '/'))).toEqual([
-      'C:/repo/src/courses/sample-course/meta.json',
-      'C:/repo/src/courses/sample-course/1-foundations/001-first-lesson.js',
+    const root = resolve(tmpdir(), 'repo')   // an absolute path on every platform
+    const files = buildCourseFiles(document, root)
+    expect(files.map(file => file.path)).toEqual([
+      resolve(root, 'src/courses/sample-course/meta.json'),
+      resolve(root, 'src/courses/sample-course/1-foundations/001-first-lesson.js'),
     ])
     expect(files[1].content).toContain("id: 'sample-course-1-001'")
     expect(files[1].content).toContain("chapter: 'sample-course-1'")

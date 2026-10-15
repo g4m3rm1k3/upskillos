@@ -8,7 +8,7 @@
 //
 // No Electron imports here, so the module runs under plain Node in tests. The one check that
 // needs a browser (`page`) gets its evaluator injected by main.cjs.
-const { promises: fs } = require('node:fs')
+const { promises: fs, ...fsSync } = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
 const { spawn } = require('node:child_process')
@@ -265,8 +265,11 @@ const CHECKS = {
   async 'git-repo'(ctx) {
     const r = await git(ctx.root, ['rev-parse', '--show-toplevel'], ctx.env, { ceiling: false })
     if (r.code !== 0) return { pass: false, detail: 'The project folder is not a Git repository yet.' }
+    // Real paths on both sides: Git reports the folder with symlinks resolved (on macOS the
+    // temporary folder /var/... is really /private/var/...).
+    const real = (p) => { try { return fsSync.realpathSync.native(p) } catch { return path.resolve(p) } }
     const top = path.resolve(r.stdout.trim())
-    if (top.toLowerCase() !== path.resolve(ctx.root).toLowerCase()) {
+    if (real(top).toLowerCase() !== real(ctx.root).toLowerCase()) {
       return { pass: false, detail: `The project folder is inside another repository (${top}), instead of being a repository of its own.` }
     }
     return { pass: true }

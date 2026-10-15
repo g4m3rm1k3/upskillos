@@ -206,6 +206,10 @@ async function runCode(app, payloadText, onOutput) {
         progress(`Installing ${packages.join(', ')} into CodeLens's Python environment…`)
         const result = await pip(['install', ...packages])
         if (result.code !== 0) progress(`Installing ${packages.join(', ')} failed: ${result.stderr.trim().split('\n').pop()}`)
+        // A package's first import compiles and caches it, which for pygame takes longer than the
+        // tracer's time limit: do it once now, outside the trace. (Import names come from
+        // KNOWN_PACKAGES, never from the program.)
+        else await run(python, ['-c', `import ${installable.join(', ')}`], { track })
       }
       if (unknown.length) {
         emit('notice', `Not installed automatically: ${unknown.join(', ')}. If it's a package on PyPI, install it from CodeLens's Packages menu (by its PyPI name, which can differ from the import name).`)

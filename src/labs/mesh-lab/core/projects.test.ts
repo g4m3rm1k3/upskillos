@@ -1228,6 +1228,8 @@ describe('guide steps that tick themselves', () => {
     'Heat map › Mean curvature: the smooth body': (e) => { expect(e.showField({ kind: 'mean' }, obj(e, 'Character').id)).toBe(true); },
     'Press 0 to look through the camera': (e) => { e.setFrame(60); },
     'In the Inspector, set Field of view to 25': (e) => { e.setCameraFov(obj(e, 'Camera').id, 25); },
+    'Ctrl+Tab for pose mode: select Lower': (e) => { e.selectObject(obj(e, 'Arm rig').id); e.enterPose(); e.setBonePose('Lower', [1, 0, 0]); },
+    'Select the Hand and use Object › Trace posing the bone': (e) => { e.selectObject(obj(e, 'Arm rig').id); e.activeBone = 'Hand'; expect(e.tracePoseOf()).toBe(true); },
     'Heat map › Height (y) shows the rings': (e) => { expect(e.showField({ kind: 'coord', axis: 1 }, obj(e, 'Vase').id)).toBe(true); },
   };
 

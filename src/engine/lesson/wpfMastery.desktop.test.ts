@@ -61,7 +61,8 @@ describe('WPF & .NET Mastery lesson structure', () => {
   }
 })
 
-describe.skipIf(!runtime)('WPF & .NET Mastery lessons on the real .NET SDK', () => {
+// WPF builds only on Windows (the runtime refuses elsewhere), so these run on Windows only.
+describe.skipIf(!runtime || process.platform !== 'win32')('WPF & .NET Mastery lessons on the real .NET SDK', () => {
   for (const file of lessons) {
     const lesson = parseLesson(fs.readFileSync(path.join(LESSON_DIR, file), 'utf8'))
     for (const step of lesson.steps) {

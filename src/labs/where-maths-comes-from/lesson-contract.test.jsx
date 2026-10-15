@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import React from 'react'
 import { render, fireEvent, cleanup, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -39,9 +39,10 @@ describe('standalone lesson contract', () => {
     const lesson = lessons[0]
     const { container } = render(<><LessonExperience lesson={lesson}/><LessonExperience lesson={lesson}/></>)
     const [a,b] = container.querySelectorAll('section')
+    const before = b.querySelector('#num').textContent
     fireEvent.click(a.querySelector('#ad'))
     expect(a.querySelector('#num').textContent).toBe('1')
-    expect(b.querySelector('#num').textContent).toBe('0')
+    expect(b.querySelector('#num').textContent).toBe(before)   // the other copy is untouched
   })
 })
 

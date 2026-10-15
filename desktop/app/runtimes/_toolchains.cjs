@@ -22,7 +22,8 @@ async function pathExists(p) {
 
 async function whereAll(name) {
   try {
-    const { stdout } = await execFileAsync('where.exe', [name], { windowsHide: true, timeout: 5000 })
+    const [cmd, args] = process.platform === 'win32' ? ['where.exe', [name]] : ['which', ['-a', name]]
+    const { stdout } = await execFileAsync(cmd, args, { windowsHide: true, timeout: 5000 })
     return stdout.split(/\r?\n/).map(s => s.trim()).filter(Boolean)
   } catch {
     return []

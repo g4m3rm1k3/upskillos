@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest'
 import { GREEK_CELLS } from './greek-letters-cells.js'
 import { GREEK_LETTERS } from './greek-letters-data.js'
 
-const python = ['python', 'python3'].find(cmd => spawnSync(cmd, ['-c', 'import numpy, matplotlib']).status === 0)
+// NumPy 2 or later: the examples use np.trapezoid, which NumPy 1 called np.trapz.
+const python = ['python', 'python3'].find(cmd => spawnSync(cmd, ['-c', 'import numpy, matplotlib; assert int(numpy.__version__.split(".")[0]) >= 2']).status === 0)
 
 // Runs each cell in its own namespace, as the page's cells are independent, and reports
 // its output or error as JSON. plt.show() closes the figures instead of opening a window.

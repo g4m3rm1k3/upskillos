@@ -282,8 +282,8 @@ class Tracer:
         out = []
         for change in changes:
             value = change['newValue']
-            if isinstance(value, dict) and '$ref' in value and change['name'] in frame.f_locals:
-                change = {**change, 'newValue': self.with_preview(value, frame.f_locals[change['name']])}
+            if isinstance(value, dict) and '$ref' in value and change['name'] in frame_vars(frame):
+                change = {**change, 'newValue': self.with_preview(value, frame_vars(frame)[change['name']])}
             old = change.get('oldValue')
             if isinstance(old, dict) and '$ref' in old and old['$ref'] in self.previews:
                 text, type_name = self.previews[old['$ref']]
@@ -399,7 +399,7 @@ class Tracer:
         """The learner's own variables: no dunders (__builtins__, __name__, ...) and, at
         module level, no imported modules."""
         at_module_level = frame.f_code.co_name == '<module>'
-        return [(name, item) for name, item in frame.f_locals.items()
+        return [(name, item) for name, item in frame_vars(frame).items()
                 if not name.startswith('__') and not (at_module_level and isinstance(item, types.ModuleType))]
 
     @staticmethod
@@ -576,7 +576,7 @@ class Tracer:
             if self.depth > self.limits['maxRecursionDepth']:
                 raise _LimitReached('recursion', f"Recursion limit ({self.limits['maxRecursionDepth']} nested calls) reached")
             if frame.f_code.co_name != '<module>':
-                args = [self.shown(frame.f_locals.get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
+                args = [self.shown(frame_vars(frame).get(name)) for name in frame.f_code.co_varnames[: frame.f_code.co_argcount]]
                 arg_names = list(frame.f_code.co_varnames[: frame.f_code.co_argcount])
                 self.emit('function_call', frame, functionName=self.frame_name(frame), args=args, argNames=arg_names)
             return self.trace
@@ -834,6 +834,15 @@ class _ExpressionRecorder(ast.NodeTransformer):
             node.type = self.wrap(node.type)
         node.body = [self.visit(statement) for statement in node.body]
         return node
+
+
+def frame_vars(frame):
+    """A frame's variables, read without disturbing the program. The user's program runs with one
+    namespace, so module-level variables are its globals. On Python 3.12 and older, reading
+    f_locals inside the trace function copies the variables back afterwards, and for a
+    comprehension (which 3.12 runs inside the module's frame) that sets its loop variables to
+    None mid-loop: {(r, c): ... for r in ... for c in ...} would get a key (None, 1)."""
+    return frame.f_globals if frame.f_code.co_name == '<module>' else frame.f_locals
 
 
 SKIP_COMMENT = re.compile(r'#\s*codelens:\s*skip\b', re.I)

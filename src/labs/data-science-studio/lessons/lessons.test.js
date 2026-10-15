@@ -14,7 +14,8 @@ import { checkScript, readResults, forbiddenIn } from '../checks.js'
 import { PROGRAMS } from '../programs.js'
 import { evaluateFormula, plain } from '../engine/sheet.js'
 
-const PYTHON = ['python3', 'python'].find(cmd => { try { return spawnSync(cmd, ['--version']).status === 0 } catch { return false } })
+// A Python with pandas, which the lab's programs use (the browser loads it into Pyodide).
+const PYTHON = ['python3', 'python'].find(cmd => { try { return spawnSync(cmd, ['-c', 'import pandas']).status === 0 } catch { return false } })
 
 // What the browser runs: the code before yours, your code, then the checks.
 function runChecks(spec, code) {
