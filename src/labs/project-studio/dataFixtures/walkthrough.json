@@ -224,5 +224,123 @@
         ]
       }
     ]
+  },
+  "data-python/09-01-python-values#Your turn: convert a known duration": {
+    "files": {
+      "duration.py": "def hours_to_minutes(hours):\n    if hours < 0:\n        raise ValueError(\"Negative duration\")\n    return hours * 60\n"
+    },
+    "wrong": [
+      {
+        "name": "wrong unit conversion",
+        "files": {
+          "duration.py": "def hours_to_minutes(hours):\n    return hours\n"
+        },
+        "fails": [
+          0
+        ]
+      },
+      {
+        "name": "accepts negatives",
+        "files": {
+          "duration.py": "def hours_to_minutes(hours):\n    return hours*60\n"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-python/09-02-data-and-errors#Your turn: count missing estimates": {
+    "files": {
+      "missing.py": "def missing_count(values):\n    count = 0\n    for value in values:\n        if value is None:\n            count = count + 1\n    return count\n"
+    },
+    "wrong": [
+      {
+        "name": "truthiness treats zero as missing",
+        "files": {
+          "missing.py": "def missing_count(values):\n    count=0\n    for value in values:\n        if not value: count=count+1\n    return count\n"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-python/09-03-bind-values#Your turn: read one ticket": {
+    "files": {
+      "lookup.py": "def ticket_title(db, ticket_id):\n    row = db.execute(\"SELECT title FROM tickets WHERE ticket_id=%s\", (ticket_id,)).fetchone()\n    if row is None:\n        return None\n    return row[0]\n"
+    },
+    "wrong": [
+      {
+        "name": "assumes a row always exists",
+        "files": {
+          "lookup.py": "def ticket_title(db,ticket_id):\n    return db.execute(\"SELECT title FROM tickets WHERE ticket_id=%s\",(ticket_id,)).fetchone()[0]\n"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-python/09-04-cli-and-atomicity#Your turn: explain the failed operation": {
+    "files": {
+      "failure-contract.txt": "Before: open, version 1, no event.\nFailure: the history insert is rejected.\nAfter: open, version 1, no event; the exception escapes.\n"
+    },
+    "wrong": [
+      {
+        "name": "missing written review",
+        "files": {
+          "failure-contract.txt": ""
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-concurrency/10-01-stale-edits#Your turn: a second stale field": {
+    "files": {
+      "estimates.py": "def change_estimate(db, ticket_id, expected_version, minutes):\n    row = db.execute(\n        \"UPDATE tickets SET estimate_minutes=%s, version=version+1 \"\n        \"WHERE ticket_id=%s AND version=%s RETURNING version\",\n        (minutes, ticket_id, expected_version),\n    ).fetchone()\n    if row is None:\n        return None\n    return row[0]\n"
+    },
+    "wrong": [
+      {
+        "name": "drops version predicate",
+        "files": {
+          "estimates.py": "def change_estimate(db, ticket_id, expected_version, minutes):\n    row = db.execute(\n        \"UPDATE tickets SET estimate_minutes=%s, version=version+1 \"\n        \"WHERE ticket_id=%s RETURNING version\",\n        (minutes, ticket_id),\n    ).fetchone()\n    if row is None:\n        return None\n    return row[0]\n"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-concurrency/10-02-snapshots-and-locks#Your turn: see a later commit": {
+    "files": {
+      "fresh-snapshot.sql": "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;\n"
+    },
+    "wrong": [
+      {
+        "name": "keeps the old snapshot",
+        "files": {
+          "fresh-snapshot.sql": "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-concurrency/10-03-retry#Your turn: bound failed retries": {
+    "files": {
+      "retry-policy.txt": "Attempts: 3.\nRetry only SerializationFailure.\nAfter the last failed transaction, rethrow to the caller.\nEmail is external and cannot be rolled back; record delivery intent instead.\n"
+    },
+    "wrong": [
+      {
+        "name": "no written retry policy",
+        "fails": [
+          1
+        ]
+      }
+    ]
   }
 }

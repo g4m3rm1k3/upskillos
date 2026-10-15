@@ -1,0 +1,4 @@
+Attempts: 3.
+Retry only SerializationFailure.
+After the last failed transaction, rethrow to the caller.
+Email is external and cannot be rolled back; record delivery intent instead.

@@ -1,0 +1,3 @@
+Before: open, version 1, no event.
+Failure: the history insert is rejected.
+After: open, version 1, no event; the exception escapes.
