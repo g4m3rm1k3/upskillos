@@ -127,15 +127,24 @@ export const SERIES_MANIFEST = [
     ]),
 
   series('rl', 'rl', 'rl', 'Reinforcement Learning: the Q-Maze and CartPole',
-    'Two classic problems in depth: Q-learning on a maze and on CartPole, then the same agents with a neural network instead of a table (deep Q-learning).', [
+    'Two classic problems in depth: Q-learning on a maze and on CartPole, then the same agents with a neural network instead of a table (deep Q-learning). Then a seven-step ladder underneath them: gradient descent, one neuron, overfitting, a neural network, probability, bandits and value iteration, each in NumPy from first principles.', [
       // A slug with a .ipynb file is a Jupyter notebook used as it is (series.js).
       ['cartpole-from-zero', 'CartPole, Q-learning and actor-critic, from zero: a dummy game first, then the real one'],
       ['cartpole-connected', 'CartPole: Q-table, DQN and A2C in Keras, with every line tied to its explanation'],
       ['q-maze-explained', 'Q-maze, do it yourself: from numpy basics to Q-learning, planning and a neural network'],
+      ['qmaze-every-line', 'Qmaze, every line tied to its idea: a Q-table, then a Keras network'],
       ['cartpole-explained', 'CartPole, do it yourself: from Python and numpy basics to Q-learning and beyond'],
       ['q-maze', 'Q-learning on a maze'],
       ['cartpole', 'CartPole and Q-learning'],
       ['deep-q-cartpole', 'CartPole with a neural network (DQN): why it takes forever, and how to make it fast'],
+      // The ladder: the foundations under the Q-maze and CartPole notebooks, one step each.
+      ['ladder-1-gradient-descent', 'Notebook 1: What learning physically means (gradient descent from first principles)'],
+      ['ladder-2-one-neuron', 'Notebook 2: One neuron (pass or fail with logistic regression)'],
+      ['ladder-3-overfitting', 'Notebook 3: Overfitting (why the training score lies)'],
+      ['ladder-4-neural-network', 'Notebook 4: A neural network from scratch (NumPy only)'],
+      ['ladder-5-probability', 'Notebook 5: Probability for RL (expectation, noise, and why averages behave)'],
+      ['ladder-6-bandits', 'Notebook 6: Bandits (explore or exploit, in its purest form)'],
+      ['ladder-7-value-iteration', 'Notebook 7: MDPs and value iteration (solving a world you know)'],
     ]),
 
   series('dsa', 'dsa', 'dsa', 'Algorithms & Design Patterns',
