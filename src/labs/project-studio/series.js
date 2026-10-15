@@ -8,6 +8,14 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'data',
+    label: 'Database Engineering — SQL to Reliable Applications',
+    prefix: 'data-',
+    sharedProject: true,
+    chapters: [['data-foundations', '01 · First Queries and Trustworthy Records']],
+    planned: 'Standalone beginner series building Issue Desk: teams, projects, tickets, permissions and reporting. The opening chapter is written and teaches SQL, stored records, filtering, ordering and constraints. Relationships, PostgreSQL, application integration, concurrent edits, migrations, performance and recovery are planned in docs/curricula/database-engineering.md. No prior course is required. Learner and platform review remain open.',
+  },
+  {
     key: 'tabletop',
     label: 'Tabletop Workshop — Beautiful Games and a Learning Opponent',
     prefix: 'tabletop-',

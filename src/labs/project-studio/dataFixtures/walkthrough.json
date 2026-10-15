@@ -1,0 +1,228 @@
+{
+  "data-model/02-01-ownership#Your turn: names are local": {
+    "files": {
+      "departments.sql": "CREATE TABLE departments (\n    department_id INTEGER PRIMARY KEY,\n    name TEXT NOT NULL\n);\nCREATE TABLE desks (\n    desk_id INTEGER PRIMARY KEY,\n    department_id INTEGER NOT NULL REFERENCES departments(department_id),\n    name TEXT NOT NULL,\n    UNIQUE (department_id, name)\n);\n"
+    },
+    "wrong": [
+      {
+        "name": "global uniqueness loses valid departments",
+        "files": {
+          "departments.sql": "CREATE TABLE departments (\n    department_id INTEGER PRIMARY KEY,\n    name TEXT NOT NULL UNIQUE\n);\nCREATE TABLE desks (\n    desk_id INTEGER PRIMARY KEY,\n    department_id INTEGER NOT NULL REFERENCES departments(department_id),\n    name TEXT NOT NULL,\n    UNIQUE (name)\n);"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-model/02-02-members-and-history#Your turn: one subscription per pair": {
+    "files": {
+      "subscriptions.sql": "CREATE TABLE subscriptions(user_id INTEGER NOT NULL, topic_id INTEGER NOT NULL, delivery TEXT NOT NULL CHECK(delivery IN ('immediate','digest')), PRIMARY KEY(user_id, topic_id));\n"
+    },
+    "wrong": [
+      {
+        "name": "one topic per person",
+        "files": {
+          "subscriptions.sql": "CREATE TABLE subscriptions(user_id INTEGER PRIMARY KEY,topic_id INTEGER,delivery TEXT);"
+        },
+        "fails": [
+          0
+        ]
+      },
+      {
+        "name": "no pair uniqueness",
+        "files": {
+          "subscriptions.sql": "CREATE TABLE subscriptions(user_id INTEGER,topic_id INTEGER,delivery TEXT);"
+        },
+        "fails": [
+          1
+        ]
+      }
+    ]
+  },
+  "data-normalize/03-01-facts-once#Your turn: reconstruct a view": {
+    "files": {
+      "owners.sql": "SELECT w.name, p.email FROM workspaces AS w JOIN people AS p ON w.owner_id=p.person_id ORDER BY w.workspace_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "captures yesterday instead of joining",
+        "files": {
+          "owners.sql": "SELECT name, 'ada@example.test' FROM workspaces ORDER BY workspace_id;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-query/04-01-null-and-logic#Your turn: unassigned open work": {
+    "files": {
+      "triage.sql": "SELECT ticket_id FROM tickets WHERE status='open' AND assignee_id IS NULL ORDER BY ticket_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "equals NULL",
+        "files": {
+          "triage.sql": "SELECT ticket_id FROM tickets WHERE status='open' AND assignee_id = NULL;"
+        },
+        "fails": [
+          0
+        ]
+      },
+      {
+        "name": "missing status",
+        "files": {
+          "triage.sql": "SELECT ticket_id FROM tickets WHERE assignee_id IS NULL ORDER BY ticket_id;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-query/04-02-dates-and-pages#Your turn: continue after a tie": {
+    "files": {
+      "next-page.sql": "SELECT ticket_id FROM tickets WHERE created_at > '2026-01-01T09:00:00Z' OR (created_at = '2026-01-01T09:00:00Z' AND ticket_id > 1) ORDER BY created_at, ticket_id LIMIT 2;\n"
+    },
+    "wrong": [
+      {
+        "name": "drops the timestamp tie",
+        "files": {
+          "next-page.sql": "SELECT ticket_id FROM tickets WHERE created_at > '2026-01-01T09:00:00Z' ORDER BY created_at,ticket_id LIMIT 2;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-joins/05-01-joins#Your turn: find projects without work": {
+    "files": {
+      "empty-projects.sql": "SELECT p.project_id FROM projects AS p LEFT JOIN tickets AS t ON t.project_id=p.project_id WHERE t.ticket_id IS NULL ORDER BY p.project_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "inner join cannot retain absence",
+        "files": {
+          "empty-projects.sql": "SELECT p.project_id FROM projects AS p JOIN tickets AS t ON t.project_id=p.project_id WHERE t.ticket_id IS NULL;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-joins/05-02-existence#Your turn: inactive people": {
+    "files": {
+      "idle-users.sql": "SELECT u.user_id FROM users AS u WHERE NOT EXISTS (SELECT 1 FROM tickets AS t WHERE t.assignee_id=u.user_id AND t.status='open') ORDER BY u.user_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "counts closed history as active",
+        "files": {
+          "idle-users.sql": "SELECT u.user_id FROM users AS u WHERE NOT EXISTS(SELECT 1 FROM tickets AS t WHERE t.assignee_id=u.user_id) ORDER BY u.user_id;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-reports/06-01-groups#Your turn: count open tickets": {
+    "files": {
+      "open-counts.sql": "SELECT p.project_id, count(t.ticket_id) FROM projects AS p LEFT JOIN tickets AS t ON t.project_id=p.project_id AND t.status='open' GROUP BY p.project_id ORDER BY p.project_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "counting placeholder rows",
+        "files": {
+          "open-counts.sql": "SELECT p.project_id,count(*) FROM projects p LEFT JOIN tickets t ON t.project_id=p.project_id AND t.status='open' GROUP BY p.project_id ORDER BY p.project_id;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-reports/06-02-windows#Your turn: newest in each project": {
+    "files": {
+      "newest.sql": "WITH ranked AS (SELECT ticket_id, row_number() OVER(PARTITION BY project_id ORDER BY created_at DESC,ticket_id DESC) AS position FROM tickets) SELECT ticket_id FROM ranked WHERE position=1 ORDER BY ticket_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "one global newest ticket",
+        "files": {
+          "newest.sql": "SELECT ticket_id FROM tickets ORDER BY created_at DESC,ticket_id DESC LIMIT 1;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-writes/07-01-atomic-history#Your turn: a reversible rehearsal": {
+    "files": {
+      "rehearsal.sql": "BEGIN; UPDATE tickets SET status='closed' WHERE ticket_id=2; INSERT INTO ticket_events(ticket_id,new_status) VALUES(2,'closed'); ROLLBACK;\n"
+    },
+    "wrong": [
+      {
+        "name": "commits instead of rehearsing",
+        "files": {
+          "rehearsal.sql": "BEGIN; UPDATE tickets SET status='closed' WHERE ticket_id=2; INSERT INTO ticket_events(ticket_id,new_status) VALUES(2,'closed'); COMMIT;"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-writes/07-02-repeated-imports#Your turn: repeat the request safely": {
+    "files": {
+      "retry.sql": "INSERT INTO inbox VALUES('external-7','Login import') ON CONFLICT(source_key) DO NOTHING;\n"
+    },
+    "wrong": [
+      {
+        "name": "blind insertion",
+        "files": {
+          "retry.sql": "INSERT INTO inbox VALUES('external-7','Login import');"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-postgres/08-01-server-and-types#Your turn: an instant range": {
+    "files": {
+      "instants.sql": "SELECT ticket_id FROM tickets WHERE created_at >= '2026-01-01T00:00:00Z' AND created_at < '2026-01-02T00:00:00Z' ORDER BY ticket_id;\n"
+    },
+    "wrong": [
+      {
+        "name": "excludes all of the start date",
+        "files": {
+          "instants.sql": "SELECT ticket_id FROM tickets WHERE created_at > '2026-01-02T00:00:00Z';"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  },
+  "data-postgres/08-02-roles#Your turn: inspect without granting more": {
+    "files": {
+      "privileges.sql": "SELECT has_table_privilege('issue_desk_reader','tickets','SELECT'), has_table_privilege('issue_desk_reader','tickets','UPDATE');\n"
+    },
+    "wrong": [
+      {
+        "name": "checks SELECT twice",
+        "files": {
+          "privileges.sql": "SELECT has_table_privilege('issue_desk_reader','tickets','SELECT'), has_table_privilege('issue_desk_reader','tickets','SELECT');"
+        },
+        "fails": [
+          0
+        ]
+      }
+    ]
+  }
+}

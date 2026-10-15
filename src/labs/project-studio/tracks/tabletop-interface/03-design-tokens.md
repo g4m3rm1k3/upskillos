@@ -11,9 +11,57 @@ The interface shell names its regions. Build its visual system incrementally in 
 
 Explain each new visual treatment and judge it in context at more than one viewport.
 
+## Start with shared roles {#base-style}
+
+Style only the shared surface, text, sizing and focus behavior first. These declarations establish the palette and native-control baseline; the page still follows normal document flow. Open the shell, Tab through its controls and identify the focus outline before adding layout. Change --ink and observe inherited text, then restore it.
+
+```css file=style.css
+:root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Avenir Next', Avenir, system-ui, sans-serif; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .45; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+[hidden] { display: none !important; }
+```
+
+```check
+file style.css
+```
+
+## Align the masthead {#masthead-style}
+
+Keep the shared rules and add only masthead, brand and main sizing. Flex aligns the masthead children, space-between separates them, and auto margins center the bounded page. Compare the alignment with the plain first stage. Temporarily remove display:flex and predict the change; restore it before continuing.
+
+```css file=style.css
+:root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Avenir Next', Avenir, system-ui, sans-serif; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .45; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+[hidden] { display: none !important; }
+.masthead { max-width: 1280px; margin: auto; padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { color: inherit; text-decoration: none; font-weight: 800; letter-spacing: .15em; font-size: 18px; }
+.brand-mark { font-size: 28px; color: var(--gold); margin-right: 12px; }
+.brand small { display: block; margin-left: 42px; font-size: 9px; letter-spacing: .25em; font-weight: 500; }
+.edition { font-size: 10px; letter-spacing: .16em; }
+main { max-width: 1280px; margin: auto; padding: 0 48px; }
+```
+
+```check
+file style.css
+```
+
 ## Apply the next layer
 
-CSS custom properties begin with -- and are defined on :root, the document root. var(--ink) reads a role such as ink rather than repeating a hex color. color-scheme tells native controls which appearance is intended. A font stack provides local choices and a generic fallback; no font download is required. font-weight changes emphasis; letter-spacing opens small uppercase labels; text-decoration removes the brand underline. clamp(min, preferred, max) makes the title fluid within limits. em is italic emphasis in HTML, styled separately. In the masthead flex alignment centers items vertically and space-between separates them. A grouped selector applies the same declaration to several elements. [hidden] with !important ensures layout declarations cannot accidentally reveal hidden UI.
+A **design token** names a visual role. --paper is a surface, --ink foreground text, --line a divider and --gold an accent. Define them on :root so descendants inherit them; var(--ink) reads the value. A mistyped variable without fallback makes that declaration invalid. color-scheme:light tells native controls our intended scheme. body margin:0 removes the browser's default page margin. font:inherit lets buttons and inputs use the surrounding typography.
+
+A comma groups selectors with the same declarations; a space is a descendant relationship. .brand small selects small inside brand, not every small element. Color inherit reuses the parent's computed color. text-decoration:none removes an anchor's underline, so its other visual cues must still identify it. font-weight changes emphasis; letter-spacing adds space between letters. em units in spacing scale with the current font size, while vw is one percent of viewport width.
+
+clamp(48px,6vw,78px) chooses a fluid heading size bounded by minimum and maximum. line-height:.98 is relative to font size, suitable for this display heading but too tight for long rules. :not(.eyebrow) excludes the small label from a broader paragraph style. The * rule applies box-sizing consistently. [hidden] with !important makes hiding win over component display rules; reserve this override for this explicit visibility contract.
 
 ```css file=style.css
 :root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
@@ -56,6 +104,9 @@ answer: No
 explain: Presentation reads game state; rules live in JavaScript model modules.
 ```
 
+
+**Explore, then restore:** Change only --paper and identify every affected region. Then change a component color directly and observe that it no longer follows the token. Restore it. Compare the heading at wide and narrow widths; explain which clamp bound applies.
+
 ## Try it — Compare and explain
 
 Change --paper and --ink together to make a second coherent palette. Inspect button contrast and the score table, not just the title. Temporarily disable one relevant declaration in DevTools, describe the change, then restore it.
@@ -70,8 +121,14 @@ Write practice/03-design-tokens.html independently. Try before opening hints. Ke
 
 
 
+Define --surface and --text on :root and use them for your results card. Choose your own colors, then change only --surface and observe its consumers. Keep a readable foreground/background pair.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/03-design-tokens.html "document.querySelector('main button')?.textContent" "Play again"
+page practice/03-design-tokens.html "window.getComputedStyle(document.documentElement).getPropertyValue('--surface').trim().length > 0" "true"
+page practice/03-design-tokens.html "window.getComputedStyle(document.documentElement).getPropertyValue('--text').trim().length > 0" "true"
 ```
 
 ```hints

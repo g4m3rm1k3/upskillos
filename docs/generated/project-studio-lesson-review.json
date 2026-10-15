@@ -1,14 +1,14 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 733,
-    "tracks": 104,
+    "lessons": 765,
+    "tracks": 113,
     "errors": {
       "independent task exposes full target": 4
     },
     "signals": {
-      "authored check limits not detected": 544,
-      "prediction not detected": 76,
+      "authored check limits not detected": 556,
+      "prediction not detected": 79,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 199
     }
@@ -2135,6 +2135,54 @@
       "errors": []
     },
     {
+      "id": "data-foundations/01-01-ask-a-question",
+      "track": "data-foundations",
+      "title": "1.1 — Ask a Database a Question",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Prepare a place to work",
+      "firstIndependentTask": "Your turn: estimate a batch",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "data-foundations/01-02-records-that-remain",
+      "track": "data-foundations",
+      "title": "1.2 — Records That Survive Closing the Program",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Decide what one row means",
+      "firstIndependentTask": "Your turn: read only what the screen needs",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "data-foundations/01-03-filter-and-order",
+      "track": "data-foundations",
+      "title": "1.3 — Choose Rows and Make Their Order Explicit",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Choose a row using a condition",
+      "firstIndependentTask": "Your turn: a longer-task list",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "data-foundations/01-04-let-the-database-refuse",
+      "track": "data-foundations",
+      "title": "1.4 — Make Invalid Records Impossible to Save",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Give a record one identity",
+      "firstIndependentTask": "Your turn: rooms at a venue",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "dice-cpp/01-from-python-to-a-binary",
       "track": "dice-cpp",
       "title": "1 — A Python programmer meets the compiler",
@@ -3909,6 +3957,71 @@
       "errors": []
     },
     {
+      "id": "frontier-calculus/05-01-a-slope-by-nudging",
+      "track": "frontier-calculus",
+      "title": "5.1 — A Slope by Nudging",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: nudge both ways",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-calculus/05-02-slopes-by-rule",
+      "track": "frontier-calculus",
+      "title": "5.2 — Slopes by Rule",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the guessing loss's slope",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-calculus/05-03-the-chain-rule",
+      "track": "frontier-calculus",
+      "title": "5.3 — The Chain Rule",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the chain's slope, by a loop",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-calculus/05-04-the-gradient",
+      "track": "frontier-calculus",
+      "title": "5.4 — The Gradient",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: the gradient",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-calculus/05-05-rolling-downhill",
+      "track": "frontier-calculus",
+      "title": "5.5 — Rolling Downhill",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: descend on a vector",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "frontier-cs/02-01-how-slow-grows",
       "track": "frontier-cs",
       "title": "2.1 — How Slow Grows",
@@ -4137,6 +4250,71 @@
       "maturity": "in-development",
       "firstStep": "Read the tests first",
       "firstIndependentTask": "Your turn: softmax, vectorised",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-vectors/04-01-words-as-vectors",
+      "track": "frontier-vectors",
+      "title": "4.1 — Words as Vectors",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: cosine similarity",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-vectors/04-02-arrays-properly",
+      "track": "frontier-vectors",
+      "title": "4.2 — Arrays, Properly",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a unit vector",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-vectors/04-03-a-dataset-as-a-matrix",
+      "track": "frontier-vectors",
+      "title": "4.3 — A Dataset as a Matrix",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: a matrix times a matrix",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-vectors/04-04-broadcasting",
+      "track": "frontier-vectors",
+      "title": "4.4 — Broadcasting",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: center the columns",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "frontier-vectors/04-05-seeing-it",
+      "track": "frontier-vectors",
+      "title": "4.5 — Seeing It",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Read the tests first",
+      "firstIndependentTask": "Your turn: points as dots",
       "signals": [
         "authored check limits not detected"
       ],
@@ -9020,7 +9198,7 @@
       "title": "8.2 — Design the room around the game",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Draw the layout before styling",
+      "firstStep": "Build a named entrance",
       "firstIndependentTask": "Your turn — Design an empty-state card",
       "signals": [],
       "errors": []
@@ -9031,7 +9209,7 @@
       "title": "8.3 — A consistent visual language",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Apply the next layer",
+      "firstStep": "Start with shared roles",
       "firstIndependentTask": "Your turn — Style a results card",
       "signals": [],
       "errors": []
@@ -9087,7 +9265,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Connect pick",
-      "firstIndependentTask": "Your turn — Adapt without aliasing",
+      "firstIndependentTask": "Your turn — Decide whether to schedule",
       "signals": [],
       "errors": []
     },
@@ -9120,7 +9298,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Give the controller a model slot",
-      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "firstIndependentTask": "Your turn — Describe a policy slice",
       "signals": [],
       "errors": []
     },
@@ -9131,7 +9309,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the new boundary",
-      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "firstIndependentTask": "Your turn — Ignore an obsolete result",
       "signals": [],
       "errors": []
     },
@@ -9142,7 +9320,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Read the new boundary",
-      "firstIndependentTask": "Your turn — Accept only a compatible version",
+      "firstIndependentTask": "Your turn — Preserve a good model on failure",
       "signals": [],
       "errors": []
     },
@@ -9306,7 +9484,7 @@
       "title": "7.2 — Two games, two rule contracts",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Read the supplied harness",
+      "firstStep": "Prove ordinary scores",
       "firstIndependentTask": "Your turn — Keep sessions independent",
       "signals": [],
       "errors": []
@@ -9339,7 +9517,7 @@
       "title": "3.3 — A turn with boundaries",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Let state decide what is legal",
+      "firstStep": "Connect only rolling first",
       "firstIndependentTask": "Your turn — Guard the roll budget",
       "signals": [],
       "errors": []
@@ -9450,7 +9628,7 @@
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Extend the renderer",
-      "firstIndependentTask": "Your turn — Normalize a pointer",
+      "firstIndependentTask": "Your turn — Bound the drawing density",
       "signals": [],
       "errors": []
     },
@@ -9460,8 +9638,8 @@
       "title": "9.4 — Assemble dice from reusable parts",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Extend the renderer",
-      "firstIndependentTask": "Your turn — Normalize a pointer",
+      "firstStep": "Place unmarked die bodies",
+      "firstIndependentTask": "Your turn — Center a row of objects",
       "signals": [],
       "errors": []
     },
@@ -9471,7 +9649,7 @@
       "title": "9.5 — Time, picking and cleanup",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Extend the renderer",
+      "firstStep": "Pick and resize before animating",
       "firstIndependentTask": "Your turn — Normalize a pointer",
       "signals": [],
       "errors": []
@@ -9515,7 +9693,7 @@
       "title": "5.3 — Shorter syntax without hidden ideas",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Read each abbreviation",
+      "firstStep": "Translate one callback at a time",
       "firstIndependentTask": "Your turn — Copy before sorting",
       "signals": [],
       "errors": []
@@ -9583,6 +9761,210 @@
       "maturity": "in-development",
       "firstStep": "Where commands live: which",
       "firstIndependentTask": "Your turn: record the Node version in the README",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-capstone/06-01-aura-workspace-shell",
+      "track": "ui-capstone",
+      "title": "6.1 — The \"Aura\" Responsive Workspace Shell",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Architect the production application shell",
+      "firstIndependentTask": "Your turn: create an unboxed quick-stats pill",
+      "signals": [
+        "prediction not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ui-capstone/06-02-aura-kanban-subgrid",
+      "track": "ui-capstone",
+      "title": "6.2 — Dynamic Subgrid Kanban and Detail Inspector",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Construct the Subgrid Kanban board",
+      "firstIndependentTask": "Your turn: create a \"Done\" column with an unboxed card",
+      "signals": [
+        "prediction not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ui-capstone/06-03-aura-production-polish",
+      "track": "ui-capstone",
+      "title": "6.3 — Production Polish, Theme Engine and Accessibility Audit",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Execute the production theme engine",
+      "firstIndependentTask": "Your turn: create an unboxed audit badge",
+      "signals": [
+        "prediction not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "ui-forms/05-01-form-layout-and-inputs",
+      "track": "ui-forms",
+      "title": "5.1 — Form Optical Alignment and Zero-Shift Validation",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master optical form alignment and stable validation",
+      "firstIndependentTask": "Your turn: create an unboxed secret key field",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-forms/05-02-custom-accessible-controls",
+      "track": "ui-forms",
+      "title": "5.2 — Accessible Custom Switches, Checkboxes and Radios",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Build accessible toggle switches with pure CSS",
+      "firstIndependentTask": "Your turn: create an unboxed audit logging switch",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-forms/05-03-data-density-tables",
+      "track": "ui-forms",
+      "title": "5.3 — Data Density, Number Alignment and Sticky Headers",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master column alignment and sticky tables",
+      "firstIndependentTask": "Your turn: add a fourth regional cluster row",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-foundations/01-01-spatial-grid",
+      "track": "ui-foundations",
+      "title": "1.1 — The Spatial Grid and Killing Box-itis",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Build the spatial token foundation",
+      "firstIndependentTask": "Your turn: create an unboxed feature card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-foundations/01-02-typographic-hierarchy",
+      "track": "ui-foundations",
+      "title": "1.2 — Typographic Scale, Measure and Line Rhythm",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Establish the typographic scale and optical tracking",
+      "firstIndependentTask": "Your turn: create an unboxed metric callout",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-foundations/01-03-fluid-typography-clamp",
+      "track": "ui-foundations",
+      "title": "1.3 — Fluid Typography, clamp() and Modern Resets",
+      "level": "beginner",
+      "maturity": "in-development",
+      "firstStep": "Calculate fluid sizing with clamp()",
+      "firstIndependentTask": "Your turn: create a fluid badge notification",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-interactions/04-01-the-seven-states",
+      "track": "ui-interactions",
+      "title": "4.1 — The Complete State Matrix, :focus-visible and Focus Rings",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master the 7 interactive states",
+      "firstIndependentTask": "Your turn: create an unboxed destructive button",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-interactions/04-02-motion-physics-easing",
+      "track": "ui-interactions",
+      "title": "4.2 — Motion Physics, Cubic-Bezier Curves and Hardware Acceleration",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master motion physics and compositor acceleration",
+      "firstIndependentTask": "Your turn: create an unboxed floating toast notification",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-interactions/04-03-popovers-and-has",
+      "track": "ui-interactions",
+      "title": "4.3 — Native Popovers, Dialogs and the :has() Selector",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master native dialogs and the parent selector",
+      "firstIndependentTask": "Your turn: create an unboxed contextual banner",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-layouts/02-01-flexbox-mechanics",
+      "track": "ui-layouts",
+      "title": "2.1 — Flexbox Mechanics and the min-width: 0 Trap",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master flex distribution math and axes",
+      "firstIndependentTask": "Your turn: add a responsive project toolbar",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-layouts/02-02-css-grid-2d",
+      "track": "ui-layouts",
+      "title": "2.2 — 2D Grid Architecture, auto-fit and minmax()",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Architect the 2D workspace grid",
+      "firstIndependentTask": "Your turn: create a spans-all status bar",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-layouts/02-03-subgrid-and-container-queries",
+      "track": "ui-layouts",
+      "title": "2.3 — Subgrid Alignment and Container Queries",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Align nested elements with subgrid",
+      "firstIndependentTask": "Your turn: create an unboxed stats card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-tokens/03-01-color-systems-oklch",
+      "track": "ui-tokens",
+      "title": "3.1 — Perceptual Color, Semantic Tokens and Contrast",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master OKLCH and semantic color tokens",
+      "firstIndependentTask": "Your turn: create an unboxed brand card",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-tokens/03-02-elevation-and-shadows",
+      "track": "ui-tokens",
+      "title": "3.2 — Layered Diffuse Shadows and Nested Radius Geometry",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master realistic shadows and concentric radii",
+      "firstIndependentTask": "Your turn: create an unboxed floating inspector",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "ui-tokens/03-03-systematic-dark-mode",
+      "track": "ui-tokens",
+      "title": "3.3 — Systematic Dark Mode and Surface Lighting",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Master dark mode elevation physics",
+      "firstIndependentTask": "Your turn: create an unboxed telemetry status card",
       "signals": [],
       "errors": []
     }

@@ -13,7 +13,11 @@ Explain each new visual treatment and judge it in context at more than one viewp
 
 ## Apply the next layer
 
-display:block makes SVG occupy a predictable box. filter:drop-shadow follows the drawing's silhouette. transform:translateY lifts held dice without moving their neighbors. position:absolute places the held label relative to its button; bottom offsets it below the face. font-variant-numeric:tabular-nums makes score digits align. border-collapse merges table borders. text-align:right aligns numeric columns while row names stay left. A class selector begins with a dot; an id selector with #. Hidden bank controls must not take up space.
+Make actions recognizable before adding decoration. Primary has the strongest filled contrast; secondary is lighter; quiet has a thin outline. They share spacing and rounded corners through a grouped selector. The arrow span gets a margin so its spacing is not created with arbitrary repeated text spaces. min-height on status reserves room so a message does not move the controls abruptly.
+
+For data, table width fills its panel, border-collapse merges neighbouring cell borders, row labels align left and numbers right. font-variant-numeric:tabular-nums requests equal-width digits when the font supports them. The score-choice button has its own target size and border so an actionable preview differs from a saved number or empty dash.
+
+Details uses summary as its native disclosure trigger; cursor:pointer is a pointer hint, not keyboard functionality. The learning-panel grid styles future controls but does not create them. Labels and number/select/file controls keep familiar form semantics. progress accent-color changes the native indicator's tint. grid-column:1 / -1 spans from the first to final explicit grid line. No chart algorithm lives in this stylesheet.
 
 ```css file=style.css
 :root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
@@ -108,6 +112,9 @@ answer: No
 explain: Presentation reads game state; rules live in JavaScript model modules.
 ```
 
+
+**Explore, then restore:** After wiring in the next lessons, Tab through actual score choices and inspect their focus contrast. At this static stage, compare button roles and table typography in your practice page. Temporarily set text-align:left on numeric cells, observe the ragged digit edge, then restore right.
+
 ## Try it — Compare and explain
 
 Tab through roll, dice and score choices. The outline must remain visible against both ivory and green. Inspect zero and empty dash as distinct states. Temporarily disable one relevant declaration in DevTools, describe the change, then restore it.
@@ -122,8 +129,14 @@ Write practice/05-controls-and-data.html independently. Try before opening hints
 
 
 
+Give Play again at least 12px vertical padding and a visibly contrasting border. Add a visible focus style. Compare that target with a tiny text-only link, then Tab to it to check keyboard feedback.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/05-controls-and-data.html "document.querySelector('main button')?.textContent" "Play again"
+page practice/05-controls-and-data.html "parseFloat(window.getComputedStyle(document.querySelector('button')).paddingTop) >= 12" "true"
+page practice/05-controls-and-data.html "window.getComputedStyle(document.querySelector('button')).borderTopStyle" "solid"
 ```
 
 ```hints

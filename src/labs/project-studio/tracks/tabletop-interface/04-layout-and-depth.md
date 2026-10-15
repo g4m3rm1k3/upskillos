@@ -13,7 +13,13 @@ Explain each new visual treatment and judge it in context at more than one viewp
 
 ## Apply the next layer
 
-Grid divides the game into two columns; minmax(0,1.6fr) permits the main panel to shrink without overflowing, while the score panel has a readable minimum. fr shares remaining space. align-items:start aligns panel tops. border-radius softens corners; box-shadow with inset darkens the felt inside its boundary. radial-gradient creates a subtle light falloff; transparent borders preserve space before a held border appears. opacity fades unavailable controls but must not be the sole state cue. position:relative establishes a positioning reference for the held label.
+Grid gives the play panel more space than the score panel. fr distributes available space proportionally; minmax(0,1.6fr) permits the main track to shrink below its content's preferred width. The score track keeps a 280px minimum. gap supplies separation, and align-items:start keeps tops aligned instead of stretching panels to equal heights. Borders and padding belong to the panel boxes, not to the grid gap.
+
+The felt is a surface cue: radial-gradient starts near 30% across and 10% down and fades between two greens. inset box-shadow darkens inside the border. The shorthand shadow arguments are x offset, y offset, blur and color; #0003 is four-digit RGBA shorthand with a translucent alpha nibble. border-radius rounds corners. These layers suggest depth without adding game rules.
+
+A transparent die border reserves space so a held border can appear without shifting neighbours. position:relative makes the die a reference for its later absolute label. opacity affects the whole element; do not use it as the only state cue. The canvas host has a fixed CSS height so the later renderer can measure a real box.
+
+SVG gets display:block to avoid inline-baseline whitespace. filter:drop-shadow follows its silhouette. fill:currentColor makes pip color follow the die's text color. translateY(-6px) raises a held die visually without changing its layout slot. The absolute held-label uses bottom:-17px relative to its positioned button; width:100% centers it under that die. These declarations arrive in this layer because the felt and dice belong to one surface.
 
 ```css file=style.css
 :root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
@@ -82,6 +88,9 @@ answer: No
 explain: Presentation reads game state; rules live in JavaScript model modules.
 ```
 
+
+**Explore, then restore:** Disable the gradient in DevTools and compare it with disabling the inset shadow. Record the different effect. Resize just above the mobile breakpoint: inspect whether the two-column minimum fits. Restore all declarations.
+
 ## Try it — Compare and explain
 
 Compare the felt with and without its gradient and inset shadow. Keep only effects that clarify the surface; shadows do not replace a visible held-state label. Temporarily disable one relevant declaration in DevTools, describe the change, then restore it.
@@ -96,8 +105,14 @@ Write practice/04-layout-and-depth.html independently. Try before opening hints.
 
 
 
+Make main a grid with a 16px gap and two desktop columns. Let the heading span both columns with grid-column:1 / -1. Explain how gap differs from padding; inspect both using the layout overlay.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/04-layout-and-depth.html "document.querySelector('main button')?.textContent" "Play again"
+page practice/04-layout-and-depth.html "window.getComputedStyle(document.querySelector('main')).display" "grid"
+page practice/04-layout-and-depth.html "window.getComputedStyle(document.querySelector('main')).gap" "16px"
 ```
 
 ```hints

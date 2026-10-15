@@ -55,8 +55,8 @@ def test_scatter_has_its_title():
 
 Each function returns a Matplotlib **figure**, a picture still in memory, and the tests read it back. `.axes[0]` is the figure's first chart; the next steps explain what that is.
 
-- **`heatmap`** draws a matrix as coloured squares. The tests check that the picture was made from the matrix it was given, that its colours run from 0 to 1 (`get_clim`, the colour limits), that its rows and columns carry the labels it was given, and its title.
-- **`scatter`**, your Your turn, draws one dot per row of a matrix. `get_offsets` gives back the dots' positions, which must be the matrix's rows; and it has the title it was given.
+- **`heatmap`** draws a matrix as coloured squares. The tests check that the picture was made from the matrix it was given (`get_images()` lists the images drawn on the chart, and `get_array()` gives back the numbers one was drawn from), that its colours run from 0 to 1 (`get_clim`, the colour limits), that its rows and columns carry the labels it was given, and its title.
+- **`scatter`**, your Your turn, draws one dot per row of a matrix. `ax.collections` lists the groups of shapes drawn on the chart, here just the dots, and `get_offsets` gives back the dots' positions, which must be the matrix's rows; and it has the title it was given.
 
 ```check
 file tests/test_plots.py -- Click "Create provided tests/test_plots.py" above.

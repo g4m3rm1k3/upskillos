@@ -11,9 +11,45 @@ You have a small visual language and SVG dice. The larger interface needs a clea
 
 Build a semantic page shell for both games and explain the visual role of each region.
 
+## Build a named entrance {#shell-entrance}
+
+Save your working single-file game as scratch/sixes.html first. Begin the new index.html with its metadata, masthead, introduction and game navigation. header identifies introductory page content; main is the primary region. An anchor href="#main" moves to the same page's id, not an external route. span adds an inline grouping, small secondary text, br a deliberate line break and em emphasis. &nbsp; is a nonbreaking-space character reference.
+
+class names are styling hooks; id values uniquely identify controls for JavaScript. nav has an accessible name, and the game buttons expose pressed state. No handler exists yet: switching the pictured selection is a later behavior. The link element loads style.css once it exists; meta theme-color suggests a browser chrome color. This is our learner app, not an UpSkillOS navigation link.
+
+Open index.html through the server. Expect the document text and two buttons without a working game. Tab through the anchor and buttons and identify their names before adding more regions.
+
+```html file=index.html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163e34">
+  <title>Tabletop — a little room for play</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="#main"><span class="brand-mark">✦</span> TABLETOP <small>THE PLAY WORKSHOP</small></a><span class="edition">NO. 01 / DICE & DECISIONS</span></header>
+  <main id="main">
+    <div class="intro"><div><p class="eyebrow">GOOD GAMES. THOUGHTFUL MOVES.</p><h1>A little room<br>for <em>play.</em></h1><p>Roll the dice. Learn the odds. Meet an opponent you taught.</p></div><div class="intro-note"><span>01</span><p>Made by hand.<br>Understood by you.</p></div></div>
+    <nav class="game-tabs" aria-label="Choose a game"><button id="yahtzee-tab" aria-pressed="true">01 &nbsp; Yahtzee <small>A classic, beautifully counted</small></button><button id="pig-tab" aria-pressed="false">02 &nbsp; Pig <small>One more roll, or walk away?</small></button></nav>
+  </main>
+</body>
+</html>
+```
+
+```check
+file index.html
+```
+
 ## Draw the layout before styling
 
-Sketch a masthead, a short introduction, game selectors, a main dice panel and a score panel. Mark the primary action, supporting actions and status message. The scorecard is data, so it remains a table. nav labels the game selector; section groups a named region; aside holds supporting scores. aria-labelledby points to a heading id. aria-live="polite" asks assistive technology to announce status updates without interrupting current speech. details/summary gives a disclosure without custom JavaScript. hidden removes inactive content. The module script imports names in its own scope.
+Add the game-layout container with a named section for play and an aside for scores. aria-labelledby="game-title" connects the region to that heading's id. The players row names two totals. The felt area contains a caption, a hidden canvas host, a dice group and help text. role="group" plus aria-label names the dice collectively without pretending to be a button.
+
+The action row gives Roll the primary class, Bank a secondary class and New match a quiet class. hidden keeps Bank and the 3D canvas out of initial layout. The status paragraph uses role=status and polite announcements for later updates. details/summary provides a disclosure with built-in keyboard interaction. The scorecard container is initially empty: JavaScript will create its data table. Footer holds closing site information.
+
+Read each id and point to the function that will eventually use it: roll, bank and reset are inputs; status, totals and scorecard are outputs. The module script loads app.mjs when built. A missing-module error at this shell stage is expected; it does not justify copying the final controller early. Keep your saved Sixes game available while building this replacement.
 
 ```html file=index.html
 <!doctype html>
@@ -62,6 +98,9 @@ choice: Every label equally
 answer: The current game and primary action
 explain: Hierarchy helps a player find the next decision.
 ```
+
+
+**Explore, then restore:** Temporarily change aria-labelledby to a nonexistent id and inspect the Accessibility pane: the region loses its heading association. Restore the correct id. Explain why visual proximity alone is not the same relationship.
 
 ## Try it — Remove a landmark label
 

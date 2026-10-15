@@ -13,7 +13,11 @@ Map each die face to a direction, then rotate that direction upward.
 
 ## Name the six directions
 
-A unit vector has length one and represents direction without distance. The six normals point outward from the cube faces. The face index selects its outward normal. A quaternion stores a rotation; we do not add its components like position coordinates. setFromUnitVectors constructs a rotation taking one unit direction to another. Applying that rotation takes the chosen face's outward normal to (0,1,0), upward. Opposite labels sum to seven in this layout.
+Put a real box on the desk. Its top points up (0,1,0), bottom down (0,-1,0), right (1,0,0), left (-1,0,0), and the remaining faces along ±z. These are **normals**: directions perpendicular to a face. Their length is one, so they carry direction without distance. The length of a vector (x,y,z) is the square root of x²+y²+z²; (1,0,0) therefore has length 1.
+
+The ordered normals array assigns labels 1–6 to those directions. Face labels start at one but arrays start at zero, so read normals[face-1]. Spread expands the three stored numbers into Vector3(x,y,z) arguments. A quaternion is a rotation representation with four components. We use the library's operation rather than treating those components as positions: setFromUnitVectors(source,target) constructs a rotation carrying one unit direction to the other. Its return value is that quaternion, enabling the chained return.
+
+For face 1, source already equals up and the rotation is identity. For face 6, source is down, requiring a half-turn. For face 2, source is right, requiring a quarter-turn toward up. The chosen face comes from the rule model; this function must not sample another die. Learn the input/output contract now; deriving quaternion algebra is not required to use this operation correctly.
 
 ```javascript file=table3d.mjs
 import * as THREE from 'three';
@@ -39,6 +43,32 @@ choice: No
 choice: Yes
 answer: No
 explain: The game has already chosen the face. Animation presents it.
+```
+
+
+**Explore, then restore:** Sketch faces 2 and 5 rotating upward, then use the numeric probe below for all six faces. Try normals[face] instead of normals[face-1] and explain the failed face-6 lookup. Restore the offset.
+
+## Verify all six directions numerically {#rotation-probe}
+
+A visible cube can hide a wrong side label, so test the direction mapping directly. Vector3.clone makes a separate vector; applyQuaternion rotates that copy. distanceTo measures Euclidean distance between two points/vectors. Require distance below 1e-10 because floating-point rotation arithmetic can introduce tiny rounding error. The 1e-10 notation means one ten-billionth, not an exact-equality comparison.
+
+Run node scratch/check-rotation.mjs. All six transformed normals must be close to up. Temporarily change the target direction in faceRotation to (0,0,1); predict failure, observe it, then restore up. This establishes orientation math, not whether the pips have been drawn on the correct surfaces.
+
+```javascript file=scratch/check-rotation.mjs
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import { normals, faceRotation } from '../table3d.mjs';
+const up = new THREE.Vector3(0, 1, 0);
+for (let face = 1; face <= 6; face += 1) {
+  const normal = new THREE.Vector3(...normals[face - 1]);
+  const rotated = normal.clone().applyQuaternion(faceRotation(face));
+  assert.ok(rotated.distanceTo(up) < 1e-10);
+}
+console.log('PASS all six faces point upward');
+```
+
+```check
+run "node scratch/check-rotation.mjs" stdout="PASS all six faces point upward"
 ```
 
 ## Try it — Rotate the wrong normal

@@ -13,7 +13,9 @@ Draw and generate every die face with SVG while keeping the button as the intera
 
 ## Draw one face
 
-SVG uses coordinates, not pixels tied to a screen size. viewBox gives minimum x, minimum y, width and height. Here the top-left is (0,0), x increases rightward, y downward, and the drawing spans 100 units each way. rect has position, dimensions and corner radius rx; circle has center cx/cy and radius r. fill colors its interior. A title or accessible label describes a meaningful image.
+Draw a square from (0,0) to (100,100) on paper. SVG's viewBox="0 0 100 100" defines that internal coordinate rectangle: minimum x, minimum y, width, height. x grows rightward and y downward. The displayed width can be 50px or 200px while these internal coordinates stay the same.
+
+A rect uses x/y for its top-left corner, width/height for extent and rx for rounded corners. A circle uses cx/cy for center and r for radius. fill colors the interior. Three circles at (25,25), (50,50), (75,75) form a diagonal three. An SVG title names a standalone meaningful image. Inside our later labeled die button the SVG will be decorative to avoid duplicate announcements.
 
 ```html file=scratch/die.html
 <!doctype html>
@@ -43,9 +45,16 @@ answer: No
 explain: The browser maps the same internal coordinates into the display rectangle.
 ```
 
+
+**Explore, then restore:** Change only one circle radius from 7 to 12. Predict larger pips without changed centers. Restore 7; change displayed width and check the drawing scales. Finally change viewBox width to 200 and explain the extra internal horizontal space before restoring 100.
+
 ## Turn coordinates into data
 
-pips stores the coordinate pairs for each face, using -1,0,1 around the center. A destructured [x,y] reads each pair. Backticks create a template literal; ${expression} inserts a calculated value. Adding 50 and multiplying offsets by 25 maps -1/0/1 to 25/50/75. dieSVG returns markup text, not an element. The app will insert only this trusted generated markup and give the surrounding button its accessible name. aria-hidden hides decorative SVG from duplicate announcements.
+Use a small coordinate vocabulary: -1,0,1 for left/center/right and top/middle/bottom. In pips, entry 0 is unused; entry face is that face's list of pairs. The same data will later position 3D pips. The transform 50 + x*25 maps -1→25, 0→50, 1→75. Multiplication scales the offset before addition shifts the origin.
+
+for(const [x,y] of pips[face]) reads one pair and destructures its two numbers. Backticks delimit a template literal; ${...} evaluates an expression and inserts its text. circles starts as an empty string and += appends one circle tag each iteration. The returned string wraps those circles in an SVG and rounded rectangle. It is markup text, not a DOM node. Only validated faces 1–6 reach this function through our rules. aria-hidden="true" leaves the parent button responsible for its accessible name.
+
+The provided check counts circle tags with a regular expression: /<circle/g matches all occurrences; match returns an array or null, and || [] supplies an empty array for no matches. That is a narrow output check, not a general SVG parser. Use the browser to inspect placement as well.
 
 ```javascript file=svg.mjs
 export const pips = [[], [[0, 0]], [[-1, -1], [1, 1]],
@@ -69,6 +78,9 @@ The syntax check establishes that this file parses. It does not execute imports 
 ```check
 run "node --input-type=module -e \"import {dieSVG} from './svg.mjs'; console.log((dieSVG(6).match(/<circle/g)||[]).length);\"" stdout="6"
 ```
+
+
+**Explore, then restore:** Call dieSVG(1) and dieSVG(6) and count their circle tags. Temporarily change spacing 25 to 15: faces retain their pip counts but the layout tightens. Restore 25. Explain why a raw user-supplied name belongs in textContent, not in generated innerHTML.
 
 ## Try it — Mix the coordinate systems
 

@@ -13,7 +13,9 @@ Write a test that fails for a wrong answer and explain what the failure proves.
 
 ## Compare actual and expected
 
-!== means not strictly equal. new Error creates an error object with a useful message; throw stops normal execution and reports it. A process ending in an uncaught error has a failure exit status. This simple harness has no testing framework to learn. Its two examples distinguish a working function from one that always returns six.
+A useful test compares an observed result with a result chosen independently. For facePoints(6,6), expect 6; for facePoints(2,6), expect 0. A function that always returns 6 passes the first example and fails the second. Write both expectations before looking at the implementation.
+
+`!==` is strict inequality. `new Error('message')` constructs an error value; `throw` stops ordinary execution and reports it. Node exits unsuccessfully for an uncaught error, which the check runner recognizes. If both comparisons are correct, execution reaches console.log('PASS'). This harness tests behavior; merely running node --check would only parse syntax.
 
 ```javascript file=practice/points-test.mjs
 import { facePoints } from './points.mjs';
@@ -24,7 +26,7 @@ console.log('PASS');
 
 
 
-The syntax check establishes that this file parses. It does not execute imports or prove the rule. Run the behavioral checks where supplied and add a case of your own.
+This check executes the shown example. It establishes the listed result for these inputs; add another case and explain why it would catch a different mistake.
 
 ```check
 run "node practice/points-test.mjs" stdout="PASS"
@@ -37,6 +39,9 @@ choice: Yes
 answer: No
 explain: A counterexample needs an input whose correct answer differs.
 ```
+
+
+**Explore, then restore:** Change the expected value in one assertion to something you know is wrong. Observe a nonzero exit and the message. Restore it, then break the implementation instead and identify which assertion fails. Finally restore the implementation and obtain PASS.
 
 ## Try it — Prove the test can fail
 

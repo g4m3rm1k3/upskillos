@@ -13,9 +13,11 @@ Create a button for each die and let a click toggle that die's held state.
 
 ## Create elements rather than HTML strings
 
-createElement makes a new DOM element; append places it inside another element. replaceChildren empties the old tray before rebuilding. setAttribute writes HTML attributes. String converts a Boolean into the text required by aria-pressed. || means either condition may be true. ! toggles true to false or false to true.
+We need five independent controls. For each array slot, create a button, fill its text, set its state, attach its click handler, then append it to the tray. `createElement` makes an unattached DOM object; `append` gives it a visible parent. `replaceChildren()` with no arguments removes old children first, preventing duplicate rows on each render. `div` is a neutral container; its id lets us find this particular tray.
 
-The anonymous function passed to addEventListener has no name because it is used only here. It closes over the loop's i: it remembers the correct position for that iteration after render returns. let gives each iteration its own i. The button's disabled property prevents activating it before a roll.
+`setAttribute` writes text attributes; String converts the held Boolean to "true" or "false" for aria-pressed. The DOM disabled property uses an actual Boolean. `||` is true when either guard is true. `!` flips a Boolean. The anonymous callback remembers this iteration's `let i` after the render call ends: that remembered environment is a **closure**. Clicking the third button uses i=2. It changes held[2], then calls render to display that new state.
+
+Predict the number of buttons after calling render twice: five, not ten. At this checkpoint the action buttons are not yet connected. We temporarily enable the dice for an experiment below, then restore the initial state.
 
 ```html file=index.html
 <!doctype html>
@@ -74,6 +76,9 @@ choice: It makes loops faster
 answer: Each handler remembers its iteration’s position
 explain: A handler runs later; it needs the index belonging to its own button.
 ```
+
+
+**Explore, then restore:** Change the initial rolls field to 1 and click the third die twice. Expect its aria-pressed attribute to go false → true → false without affecting its neighbours. Remove tray.replaceChildren for one rerender and observe duplication. Restore both changes. Note that rebuilding the focused button loses its identity; the later renderer will preserve it.
 
 ## Try it — Read state versus appearance
 

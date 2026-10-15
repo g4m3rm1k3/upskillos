@@ -74,6 +74,7 @@ export function evaluate(table, games = 1000, seed = 900001) {
     else truncated += 1;
   }
   const n = wins + losses;
+  if (n === 0) return { wins, losses, truncated, rate: 0, low: 0, high: 1 };
   const rate = n ? wins / n : 0;
   // Wilson interval: stable even when all outcomes agree.
   const z = 1.96;
@@ -89,7 +90,7 @@ export function validateModel(model) {
       !Number.isInteger(model.episodes) || model.episodes < 0) throw new Error('Not a compatible Pig model');
   for (const [key, row] of Object.entries(model.table)) {
     const parts = key.split(',').map(Number);
-    if (parts.length !== 3 || parts.some(x => !Number.isInteger(x) || x < 0) ||
+    if (parts.length !== 3 || parts.join(',') !== key || parts.some(x => !Number.isInteger(x) || x < 0) ||
         parts[0] >= TARGET || parts[1] >= TARGET || parts[2] > TARGET - parts[0] ||
         !Array.isArray(row) || row.length !== 2 || row.some(x => !Number.isFinite(x) || Math.abs(x) > 1.001)) {
       throw new Error('Invalid state or value in model');

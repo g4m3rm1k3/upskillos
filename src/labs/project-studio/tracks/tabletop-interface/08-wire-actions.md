@@ -13,7 +13,7 @@ Explain the route from one user action through the model to a refreshed view.
 
 ## Connect pick
 
-The controller verifies the human seat, then delegates to holdDie. Rules still decide whether the hold is legal. A successful action triggers rendering; a rejected one does nothing.
+pick receives an index from either an SVG button or, later, a 3D hit. && short-circuits left to right: only human Yahtzee can call holdDie. Only a successful hold causes render. Rule validation remains authoritative even if a stale UI control fires.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -132,9 +132,12 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Trace a Pig pick: the first condition fails, so no Yahtzee hold changes. Trace an opponent-turn Yahtzee pick: the second fails. Test both after wiring.
+
 ## Connect humanRoll
 
-This event handler chooses the active game's roll function, announces a result, renders it and schedules an opponent only if the turn changed. It does not loop through a whole opponent match synchronously.
+Guard finished matches and opponent turns before doing anything. Dispatch to rollHand for Yahtzee or move(...,'roll') for Pig. Choose status text from the resulting state, then render(true) to request visual motion later. queueOpponent runs after rendering but only schedules work if the resulting player is the bot. A Pig non-bust keeps the human turn, so the queue helper will return immediately.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -260,9 +263,14 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Trace Pig roll 6 versus roll 1. For 6 the human still decides; for 1 the opponent is queued. Explain why scheduling on every click without checking the resulting player would let the opponent act too early.
+
 ## Connect queueOpponent
 
-setTimeout schedules a callback after a delay and returns a handle. clearTimeout cancels a pending handle. The callback executes later, so resetting must cancel it. Yahtzee's baseline rolls once then chooses the highest legal immediate score; Pig chooses roll or hold from its threshold. After an action, queueOpponent schedules another only if the opponent still owns the turn. This keeps the browser responsive between decisions.
+setTimeout(callback,450) schedules future work after at least roughly 450ms; it does not pause this function. Its return is a timer handle stored in thinkingTimer. clearTimeout cancels a previously scheduled callback. Check player and completion before scheduling. This avoids multiple queued bot moves from repeated UI updates.
+
+The callback executes one decision: Yahtzee rolls once and records its greedy category; Pig chooses its baseline action and moves. It writes an explanation, redraws, then calls queueOpponent again. This is scheduling another future callback, not immediate recursive game play. If Pig still owns the turn it can roll again; if play passed or ended, the guard stops scheduling. Never put an unbounded while loop with DOM work here: it would block input.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -408,9 +416,12 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Once wired, start the opponent and immediately press New match. Wait longer than the delay: the fresh game must still be on your turn. Remove clearTimeout only in a scratch copy to observe the stale-action problem; restore it.
+
 ## Connect reset
 
-Reset clears a pending opponent callback before replacing the state objects. next defaults to the current game. Creating fresh state is less error-prone than manually clearing every property. Switching games uses the same operation and starts a new match; it does not preserve an unfinished match.
+reset defaults next to the currently selected game. Cancel the old delayed bot action before replacing session objects. Assign the selected game, create fresh states for both rule models, announce the reset and render. A reset is a deliberate state replacement; render alone is not. Keeping both game objects fresh avoids returning to a half-finished hidden match unexpectedly.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -564,9 +575,14 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Switch games during an opponent delay and check the new game’s turn and score. Explain why cancelling the timer after replacing state is harder to reason about than doing it first.
+
 ## Attach handlers once
 
-Handlers are registered once after the functions are defined, then render initializes the screen. Re-registering inside render would accumulate duplicate actions. pagehide fires when leaving the document and clears the timer. Open npm run dev and play both games now.
+Attach listeners after definitions exist. Passing humanRoll supplies a callback without calling it. Wrappers such as function(){reset('pig');} pass a specific argument when clicked. Bank requests a hold and queues the bot only after an accepted move. The pagehide handler cancels remaining timers on departure. The final render() initializes the interface once.
+
+This is now a runnable integrated milestone. Use npm run dev, open the root page, play a Yahtzee turn and a Pig turn, and inspect status and disabled controls. Do not attach these listeners inside render: one button would accumulate multiple callbacks after repeated redraws.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -737,26 +753,25 @@ answer: No
 explain: A display refresh must not change the underlying game.
 ```
 
+
+**Explore, then restore:** Click Roll once and verify the budget increments once. Tab to a die, toggle it with the keyboard and verify focus remains on that same die. Score zero deliberately in an unused category and verify it becomes recorded rather than remaining empty.
+
 ## Try it — Interrupt a pending action
 
 After the controller is fully wired, score a Yahtzee turn and immediately switch to Pig. The cancelled timer must not make an old Yahtzee move in the new match. Also reset during a Pig opponent turn. The syntax check cannot establish this interaction; perform it in the browser.
 
 
 
-## Your turn — Adapt without aliasing
+## Your turn — Decide whether to schedule
 
-Define solve(game) returning a display record {score: game.score, label: game.name}. It must be a new object, so changing the display record cannot alter game. Export the function as solve.
-
-Write practice/08-wire-actions.mjs independently. Try before opening hints. Keep the guided game intact. The checks establish the listed examples, not every possible input or the quality of your explanation. Record the observed result, explain its cause, and add a new case you chose.
-
-
+Define solve(player, finished, pending) returning true only for opponent seat 1 in an unfinished match with no pending callback. This exercise chooses whether work is needed; it must not start a real timer. Export solve from practice/08-wire-actions.mjs. Explain why two independent reasons to refuse work should not be combined with &&.
 
 ```check
-run "node --input-type=module -e \"import {solve} from './practice/08-wire-actions.mjs'; if (!((() => {const a={score:9,name:\\\"Ada\\\"};const b=solve(a);b.score=0;return a.score===9 && b.label===\\\"Ada\\\";})())) throw Error('Independent case failed'); console.log('PASS');\"" stdout="PASS"
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {solve} from './practice/08-wire-actions.mjs';assert.equal(solve(1,false,false),true);assert.equal(solve(0,false,false),false);assert.equal(solve(1,true,false),false);assert.equal(solve(1,false,true),false);\""
 ```
 
 ```hints
-nudge: A display record is a projection, not the model itself.
-concept: Return only the fields needed by the view.
-shape: Create a fresh object using property values from the input.
+nudge: List the only acceptable combination first.
+concept: All three requirements must hold together.
+shape: Combine opponent equality with not-finished and not-pending.
 ```

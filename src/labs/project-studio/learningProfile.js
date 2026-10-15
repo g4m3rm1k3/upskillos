@@ -15,6 +15,11 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (key === 'data' || key === 'data-foundations') return {
+    level: 'beginner',
+    maturity: 'in-development',
+    audience: 'Start with an empty Issue Desk folder. No prior SQL, programming or other course required. Basic arithmetic and file use are enough. The opening uses the SQLite command-line tool, with setup guidance; Project Studio Desktop runs the file checks. PostgreSQL and application engineering are later planned chapters, not assumed knowledge.',
+  };
   if (key === 'tabletop' || key.startsWith('tabletop-')) return {
     level: ['tabletop', 'tabletop-start', 'tabletop-language'].includes(key) ? 'beginner' : 'bridge',
     maturity: 'in-development',

@@ -19,7 +19,11 @@ JSON.stringify turns the model into text. Blob wraps bytes with a MIME type. URL
 
 ## Connect saveModel
 
-Add this function. Read each new API against the explanation above, then identify the exact line where state can be replaced.
+Saving preserves learned numbers and metadata, not the chart picture. Guard the no-model case first. JSON.stringify serializes the plain-data object to text. new Blob([text],{type:'application/json'}) wraps text as bytes with a MIME label; it neither validates nor uploads the model.
+
+URL.createObjectURL allocates a temporary browser URL for that Blob. Create an anchor, set its href to that URL and its download name to pig-q-table.json, then invoke click to request a download. This is a local user-triggered save. setTimeout schedules URL.revokeObjectURL after a delay so the browser can start using it before we release the mapping. The URL is a resource handle, not a permanent path or a link to share after the page closes.
+
+The actual contents should include game, target, seed, episode count and table. Before relying on a save, load it back in the next experiment. A file existing alone does not prove it is compatible.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -263,9 +267,16 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** After final wiring, save a model and open a COPY in a text editor. Find its target and one state row; explain the two estimates. Do not edit the only saved model. Compare a file with a screenshot and list what only the file can restore.
+
 ## Connect loadModel
 
-Add this function. Read each new API against the explanation above, then identify the exact line where state can be replaced.
+A change event arrives from the file input. event.target is that control; files[0] selects the first chosen File. If the user selected nothing, return. Check file.size in bytes before reading: 5,000,000 is our decimal 5 MB limit. It bounds work, not model quality.
+
+File.text() returns a Promise of text. await pauses this async function until reading completes. JSON.parse converts the text into data and throws for malformed JSON; it does not execute code. validateModel then checks the data's schema. Keep the candidate in const next until both stages succeed. Only then stop existing training, assign model=next, announce the load, enable Save and redraw. No training happens during loading.
+
+try/catch handles read/parse/validation errors; the catch variable error exposes message text for the status paragraph. Because the assignment is after validation, a failed candidate leaves the old model untouched. The original worker may continue while the file is being read; on a successful load it is stopped before installing the selected model. This is the explicit ownership policy for this demo.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -531,26 +542,27 @@ answer: No
 explain: Only a validated completed result replaces it.
 ```
 
+
+**Explore, then restore:** Save a trained model, refresh the page and load it. In separate copies, remove a comma to create malformed JSON and change target to 100 to create valid JSON with incompatible meaning. Both loads must fail without replacing the current model. Explain why these are different failures.
+
 ## Try it — Verify the failure path
 
 Save a trained model, reload the page and load the file. The UI should identify the model and use it in Pig without retraining. Test a malformed JSON copy and an incompatible target copy; both must leave the prior model intact. These interactions are fully connected in the next final-wiring step; perform them there before considering the milestone complete.
 
 
 
-## Your turn — Accept only a compatible version
+## Your turn — Preserve a good model on failure
 
-Define solve(candidate) returning true for a non-null object with version 1 and target 30, false otherwise. This is a small part of the full validator, not a substitute for it. Export the function as solve.
+Define solve(previous,text,validate). Parse text as JSON, pass the parsed value to the supplied validate function, and return its result only on success. If parsing or validation throws, return the exact previous object. validate is a callback, not a Boolean. This isolates replacement policy from file reading.
 
-Write practice/05-save-and-load.mjs independently. Try before opening hints. Keep the guided game intact. The checks establish the listed examples, not every possible input or the quality of your explanation. Record the observed result, explain its cause, and add a new case you chose.
-
-
+Write practice/05-save-and-load.mjs independently and export solve. These checks establish the stated cases; explain the ownership rule and add one counterexample of your own.
 
 ```check
-run "node --input-type=module -e \"import {solve} from './practice/05-save-and-load.mjs'; if (!(solve({version:1,target:30}) && !solve({version:1,target:100}) && !solve(null))) throw Error('Independent case failed'); console.log('PASS');\"" stdout="PASS"
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {solve} from './practice/05-save-and-load.mjs';const old={version:1};const validate=x=>{if(!x || x.target!==30)throw Error('bad');return x;};assert.equal(solve(old,'{',validate),old);assert.equal(solve(old,'{\\\"target\\\":100}',validate),old);assert.equal(solve(old,'{\\\"target\\\":30}',validate).target,30);\""
 ```
 
 ```hints
-nudge: Check absence before reading properties.
-concept: && short-circuits after a false condition.
-shape: Require an object, matching version and matching target.
+nudge: There are two operations that can fail before replacement.
+concept: Both parsing and validation belong inside the protected attempt.
+shape: Return the validated candidate from try, and the unchanged previous object from catch.
 ```

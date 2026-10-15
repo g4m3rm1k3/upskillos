@@ -1,0 +1,319 @@
+{
+  "tabletop-design/01-one-rule": [
+    "tabletop-design/01-one-rule-step-1",
+    "tabletop-design/01-one-rule-step-2",
+    "tabletop-design/01-one-rule-step-3"
+  ],
+  "tabletop-design/02-box-and-type": [
+    "tabletop-design/02-box-and-type-step-1",
+    "tabletop-design/02-box-and-type-step-2",
+    "tabletop-design/02-box-and-type-step-3"
+  ],
+  "tabletop-design/03-layout-and-state": [
+    "tabletop-design/03-layout-and-state-step-1",
+    "tabletop-design/03-layout-and-state-step-2",
+    "tabletop-design/03-layout-and-state-step-3"
+  ],
+  "tabletop-interface/01-svg-dice": [
+    "tabletop-interface/01-svg-dice-step-1",
+    "tabletop-interface/01-svg-dice-step-2",
+    "tabletop-interface/01-svg-dice-step-3",
+    "tabletop-interface/01-svg-dice-step-4"
+  ],
+  "tabletop-interface/02-compose-the-room": [
+    "tabletop-interface/02-compose-the-room-step-1",
+    "tabletop-interface/02-compose-the-room-step-2",
+    "tabletop-interface/02-compose-the-room-step-3"
+  ],
+  "tabletop-interface/03-design-tokens": [
+    "tabletop-interface/03-design-tokens-step-1",
+    "tabletop-interface/03-design-tokens-step-2",
+    "tabletop-interface/03-design-tokens-step-3"
+  ],
+  "tabletop-interface/04-layout-and-depth": [
+    "tabletop-interface/04-layout-and-depth-step-1",
+    "tabletop-interface/04-layout-and-depth-step-2",
+    "tabletop-interface/04-layout-and-depth-step-3"
+  ],
+  "tabletop-interface/05-controls-and-data": [
+    "tabletop-interface/05-controls-and-data-step-1",
+    "tabletop-interface/05-controls-and-data-step-2",
+    "tabletop-interface/05-controls-and-data-step-3"
+  ],
+  "tabletop-interface/06-responsive-and-motion": [
+    "tabletop-interface/06-responsive-and-motion-step-1",
+    "tabletop-interface/06-responsive-and-motion-step-2",
+    "tabletop-interface/06-responsive-and-motion-step-3"
+  ],
+  "tabletop-interface/07-render-state": [
+    "tabletop-interface/07-render-state-step-1",
+    "tabletop-interface/07-render-state-step-2",
+    "tabletop-interface/07-render-state-step-3",
+    "tabletop-interface/07-render-state-step-4",
+    "tabletop-interface/07-render-state-step-5",
+    "tabletop-interface/07-render-state-step-6",
+    "tabletop-interface/07-render-state-step-7",
+    "tabletop-interface/07-render-state-step-8",
+    "tabletop-interface/07-render-state-step-9"
+  ],
+  "tabletop-interface/08-wire-actions": [
+    "tabletop-interface/08-wire-actions-step-1",
+    "tabletop-interface/08-wire-actions-step-2",
+    "tabletop-interface/08-wire-actions-step-3",
+    "tabletop-interface/08-wire-actions-step-4",
+    "tabletop-interface/08-wire-actions-step-5",
+    "tabletop-interface/08-wire-actions-step-6",
+    "tabletop-interface/08-wire-actions-step-7"
+  ],
+  "tabletop-lab/01-training-in-a-worker": [
+    "tabletop-lab/01-training-in-a-worker-step-1",
+    "tabletop-lab/01-training-in-a-worker-message-check",
+    "tabletop-lab/01-training-in-a-worker-step-2",
+    "tabletop-lab/01-training-in-a-worker-step-3"
+  ],
+  "tabletop-lab/02-the-model-controls": [
+    "tabletop-lab/02-the-model-controls-step-1",
+    "tabletop-lab/02-the-model-controls-step-2",
+    "tabletop-lab/02-the-model-controls-step-3"
+  ],
+  "tabletop-lab/03-inspect-the-policy": [
+    "tabletop-lab/03-inspect-the-policy-step-1",
+    "tabletop-lab/03-inspect-the-policy-step-2",
+    "tabletop-lab/03-inspect-the-policy-step-3",
+    "tabletop-lab/03-inspect-the-policy-step-4",
+    "tabletop-lab/03-inspect-the-policy-step-5"
+  ],
+  "tabletop-lab/04-complete-or-cancel": [
+    "tabletop-lab/04-complete-or-cancel-step-1",
+    "tabletop-lab/04-complete-or-cancel-step-2",
+    "tabletop-lab/04-complete-or-cancel-step-3",
+    "tabletop-lab/04-complete-or-cancel-step-4",
+    "tabletop-lab/04-complete-or-cancel-step-5"
+  ],
+  "tabletop-lab/05-save-and-load": [
+    "tabletop-lab/05-save-and-load-step-1",
+    "tabletop-lab/05-save-and-load-step-2",
+    "tabletop-lab/05-save-and-load-step-3",
+    "tabletop-lab/05-save-and-load-step-4",
+    "tabletop-lab/05-save-and-load-step-5"
+  ],
+  "tabletop-lab/06-play-your-model": [
+    "tabletop-lab/06-play-your-model-step-1",
+    "tabletop-lab/06-play-your-model-step-2",
+    "tabletop-lab/06-play-your-model-step-3",
+    "tabletop-lab/06-play-your-model-step-4"
+  ],
+  "tabletop-language/01-values": [
+    "tabletop-language/01-values-step-1",
+    "tabletop-language/01-values-step-2",
+    "tabletop-language/01-values-step-3",
+    "tabletop-language/01-values-step-4"
+  ],
+  "tabletop-language/02-decisions": [
+    "tabletop-language/02-decisions-step-1",
+    "tabletop-language/02-decisions-step-2",
+    "tabletop-language/02-decisions-step-3",
+    "tabletop-language/02-decisions-step-4"
+  ],
+  "tabletop-language/03-functions": [
+    "tabletop-language/03-functions-step-1",
+    "tabletop-language/03-functions-step-2",
+    "tabletop-language/03-functions-step-3",
+    "tabletop-language/03-functions-step-4"
+  ],
+  "tabletop-language/04-arrays": [
+    "tabletop-language/04-arrays-step-1",
+    "tabletop-language/04-arrays-step-2",
+    "tabletop-language/04-arrays-step-3",
+    "tabletop-language/04-arrays-step-4"
+  ],
+  "tabletop-language/05-loops": [
+    "tabletop-language/05-loops-step-1",
+    "tabletop-language/05-loops-step-2",
+    "tabletop-language/05-loops-step-3",
+    "tabletop-language/05-loops-step-4"
+  ],
+  "tabletop-language/06-objects": [
+    "tabletop-language/06-objects-step-1",
+    "tabletop-language/06-objects-step-2",
+    "tabletop-language/06-objects-step-3",
+    "tabletop-language/06-objects-step-4"
+  ],
+  "tabletop-learning/01-a-value-is-an-estimate": [
+    "tabletop-learning/01-a-value-is-an-estimate-step-1",
+    "tabletop-learning/01-a-value-is-an-estimate-step-2",
+    "tabletop-learning/01-a-value-is-an-estimate-step-3",
+    "tabletop-learning/01-a-value-is-an-estimate-arithmetic-check",
+    "tabletop-learning/01-a-value-is-an-estimate-step-4",
+    "tabletop-learning/01-a-value-is-an-estimate-step-5"
+  ],
+  "tabletop-learning/02-explore-legally": [
+    "tabletop-learning/02-explore-legally-step-1",
+    "tabletop-learning/02-explore-legally-step-2",
+    "tabletop-learning/02-explore-legally-step-3",
+    "tabletop-learning/02-explore-legally-step-4"
+  ],
+  "tabletop-learning/03-a-complete-transition": [
+    "tabletop-learning/03-a-complete-transition-step-1",
+    "tabletop-learning/03-a-complete-transition-step-2",
+    "tabletop-learning/03-a-complete-transition-step-3",
+    "tabletop-learning/03-a-complete-transition-step-4"
+  ],
+  "tabletop-learning/04-train-reproducibly": [
+    "tabletop-learning/04-train-reproducibly-step-1",
+    "tabletop-learning/04-train-reproducibly-step-2",
+    "tabletop-learning/04-train-reproducibly-step-3",
+    "tabletop-learning/04-train-reproducibly-step-4",
+    "tabletop-learning/04-train-reproducibly-step-5"
+  ],
+  "tabletop-learning/05-evaluate-without-learning": [
+    "tabletop-learning/05-evaluate-without-learning-step-1",
+    "tabletop-learning/05-evaluate-without-learning-step-2",
+    "tabletop-learning/05-evaluate-without-learning-step-3",
+    "tabletop-learning/05-evaluate-without-learning-step-4",
+    "tabletop-learning/05-evaluate-without-learning-step-5"
+  ],
+  "tabletop-learning/06-validate-and-test-a-model": [
+    "tabletop-learning/06-validate-and-test-a-model-step-1",
+    "tabletop-learning/06-validate-and-test-a-model-step-2",
+    "tabletop-learning/06-validate-and-test-a-model-step-3",
+    "tabletop-learning/06-validate-and-test-a-model-step-4",
+    "tabletop-learning/06-validate-and-test-a-model-step-5"
+  ],
+  "tabletop-pig/01-a-second-game": [
+    "tabletop-pig/01-a-second-game-step-1",
+    "tabletop-pig/01-a-second-game-step-2",
+    "tabletop-pig/01-a-second-game-step-3",
+    "tabletop-pig/01-a-second-game-step-4",
+    "tabletop-pig/01-a-second-game-step-5",
+    "tabletop-pig/01-a-second-game-step-6",
+    "tabletop-pig/01-a-second-game-step-7",
+    "tabletop-pig/01-a-second-game-step-8"
+  ],
+  "tabletop-pig/02-acceptance-and-boundaries": [
+    "tabletop-pig/02-acceptance-and-boundaries-step-1",
+    "tabletop-pig/02-acceptance-and-boundaries-step-2",
+    "tabletop-pig/02-acceptance-and-boundaries-step-3"
+  ],
+  "tabletop-play/01-events-and-randomness": [
+    "tabletop-play/01-events-and-randomness-step-1",
+    "tabletop-play/01-events-and-randomness-step-2",
+    "tabletop-play/01-events-and-randomness-step-3"
+  ],
+  "tabletop-play/02-a-hand-of-buttons": [
+    "tabletop-play/02-a-hand-of-buttons-step-1",
+    "tabletop-play/02-a-hand-of-buttons-step-2",
+    "tabletop-play/02-a-hand-of-buttons-step-3"
+  ],
+  "tabletop-play/03-complete-a-turn": [
+    "tabletop-play/03-complete-a-turn-step-1",
+    "tabletop-play/03-complete-a-turn-step-2",
+    "tabletop-play/03-complete-a-turn-step-3"
+  ],
+  "tabletop-release/01-release-and-another-game": [
+    "tabletop-release/01-release-and-another-game-step-1",
+    "tabletop-release/01-release-and-another-game-step-2",
+    "tabletop-release/01-release-and-another-game-step-3",
+    "tabletop-release/01-release-and-another-game-step-4"
+  ],
+  "tabletop-rules/01-count-and-score": [
+    "tabletop-rules/01-count-and-score-step-1",
+    "tabletop-rules/01-count-and-score-step-2",
+    "tabletop-rules/01-count-and-score-step-3",
+    "tabletop-rules/01-count-and-score-step-4",
+    "tabletop-rules/01-count-and-score-step-5"
+  ],
+  "tabletop-rules/02-scorecard-and-bonus": [
+    "tabletop-rules/02-scorecard-and-bonus-step-1",
+    "tabletop-rules/02-scorecard-and-bonus-step-2",
+    "tabletop-rules/02-scorecard-and-bonus-step-3",
+    "tabletop-rules/02-scorecard-and-bonus-step-4",
+    "tabletop-rules/02-scorecard-and-bonus-step-5"
+  ],
+  "tabletop-rules/03-joker-and-record": [
+    "tabletop-rules/03-joker-and-record-step-1",
+    "tabletop-rules/03-joker-and-record-step-2",
+    "tabletop-rules/03-joker-and-record-step-3",
+    "tabletop-rules/03-joker-and-record-step-4",
+    "tabletop-rules/03-joker-and-record-step-5",
+    "tabletop-rules/03-joker-and-record-step-6"
+  ],
+  "tabletop-rules/04-turns-and-a-baseline": [
+    "tabletop-rules/04-turns-and-a-baseline-step-1",
+    "tabletop-rules/04-turns-and-a-baseline-step-2",
+    "tabletop-rules/04-turns-and-a-baseline-step-3",
+    "tabletop-rules/04-turns-and-a-baseline-step-4",
+    "tabletop-rules/04-turns-and-a-baseline-step-5",
+    "tabletop-rules/04-turns-and-a-baseline-step-6",
+    "tabletop-rules/04-turns-and-a-baseline-step-7",
+    "tabletop-rules/04-turns-and-a-baseline-step-8"
+  ],
+  "tabletop-start/01-your-first-page": [
+    "tabletop-start/01-your-first-page-step-1",
+    "tabletop-start/01-your-first-page-step-2",
+    "tabletop-start/01-your-first-page-step-3",
+    "tabletop-start/01-your-first-page-step-4"
+  ],
+  "tabletop-start/02-rules-and-scores": [
+    "tabletop-start/02-rules-and-scores-step-1",
+    "tabletop-start/02-rules-and-scores-step-2",
+    "tabletop-start/02-rules-and-scores-step-3",
+    "tabletop-start/02-rules-and-scores-step-4"
+  ],
+  "tabletop-three/01-a-scene-you-can-name": [
+    "tabletop-three/01-a-scene-you-can-name-step-1",
+    "tabletop-three/01-a-scene-you-can-name-step-2",
+    "tabletop-three/01-a-scene-you-can-name-step-3",
+    "tabletop-three/01-a-scene-you-can-name-step-4",
+    "tabletop-three/01-a-scene-you-can-name-step-5"
+  ],
+  "tabletop-three/02-orient-a-face": [
+    "tabletop-three/02-orient-a-face-step-1",
+    "tabletop-three/02-orient-a-face-step-2",
+    "tabletop-three/02-orient-a-face-step-3"
+  ],
+  "tabletop-three/03-light-and-material": [
+    "tabletop-three/03-light-and-material-step-1",
+    "tabletop-three/03-light-and-material-step-2",
+    "tabletop-three/03-light-and-material-step-3"
+  ],
+  "tabletop-three/04-assemble-the-dice": [
+    "tabletop-three/04-assemble-the-dice-step-1",
+    "tabletop-three/04-assemble-the-dice-step-2",
+    "tabletop-three/04-assemble-the-dice-step-3"
+  ],
+  "tabletop-three/05-time-picking-and-cleanup": [
+    "tabletop-three/05-time-picking-and-cleanup-step-1",
+    "tabletop-three/05-time-picking-and-cleanup-step-2",
+    "tabletop-three/05-time-picking-and-cleanup-step-3"
+  ],
+  "tabletop-three/06-a-renderer-you-can-replace": [
+    "tabletop-three/06-a-renderer-you-can-replace-step-1",
+    "tabletop-three/06-a-renderer-you-can-replace-step-2",
+    "tabletop-three/06-a-renderer-you-can-replace-step-3",
+    "tabletop-three/06-a-renderer-you-can-replace-step-4"
+  ],
+  "tabletop-tools/01-node-and-modules": [
+    "tabletop-tools/01-node-and-modules-step-1",
+    "tabletop-tools/01-node-and-modules-step-2",
+    "tabletop-tools/01-node-and-modules-step-3",
+    "tabletop-tools/01-node-and-modules-step-4",
+    "tabletop-tools/01-node-and-modules-step-5"
+  ],
+  "tabletop-tools/02-tests-and-errors": [
+    "tabletop-tools/02-tests-and-errors-step-1",
+    "tabletop-tools/02-tests-and-errors-step-2",
+    "tabletop-tools/02-tests-and-errors-step-3"
+  ],
+  "tabletop-tools/03-read-modern-javascript": [
+    "tabletop-tools/03-read-modern-javascript-step-1",
+    "tabletop-tools/03-read-modern-javascript-step-2",
+    "tabletop-tools/03-read-modern-javascript-step-3"
+  ],
+  "tabletop-tools/04-randomness-as-input": [
+    "tabletop-tools/04-randomness-as-input-step-1",
+    "tabletop-tools/04-randomness-as-input-step-2",
+    "tabletop-tools/04-randomness-as-input-step-3",
+    "tabletop-tools/04-randomness-as-input-step-4"
+  ]
+}

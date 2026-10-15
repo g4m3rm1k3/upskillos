@@ -21,7 +21,11 @@ The editor changes text; the browser interprets it. Save with Ctrl+S (Cmd+S on m
 
 ## Read a complete tiny page
 
-HTML describes the meaning and structure of a document. Type the target in index.html and open it in your browser. This is your first visible result.
+Think of a page as nested boxes with names: a document contains a body; the body contains the main content; main contains a heading, paragraph and button. Draw these boxes on paper before typing. A **tag** such as `<p>` starts an element; `</p>` ends it. The slash marks an ending, not a second paragraph. The text between them is the element's content.
+
+`<!doctype html>` asks for modern HTML behavior. `<html lang="en">` encloses the document and identifies English. `head` holds metadata: UTF-8 character encoding, mobile viewport settings and a tab title. `body` holds visible content. `main` identifies the principal region; `h1` its main heading. `p` is a paragraph. Attributes live in the opening tag: `type="button"` names the button's behavior category. Quotes delimit the attribute value. Indentation exposes nesting for readers; it does not create the nesting.
+
+Predict which title appears in the browser tab and which appears on the page. Then type the small document. The button is intentionally inert: HTML gives it meaning and keyboard focus, but we have not supplied an action.
 
 ```html file=index.html
 <!doctype html>
@@ -56,6 +60,9 @@ choice: The unsaved editor text
 answer: The previously saved heading
 explain: The browser reads the saved file, not your editor buffer.
 ```
+
+
+**Explore, then restore:** Change only the title element, refresh and locate the change. Change only h1 and repeat. Press Tab to focus the button and Enter to activate it: no game action happens yet. Restore the text. Explain why this is not a broken button.
 
 ## Try it — Inspect a deliberate mistake
 

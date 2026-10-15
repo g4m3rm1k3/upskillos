@@ -15,7 +15,7 @@ Explain and change the calculation on this page, then solve the independent task
 
 An object groups named properties: { face: 6, held: false }. The colon separates a property name and its value; commas separate properties. die.face reads one property. Objects are shared by identity: assigning another name copies access to the same object, not its contents. A method is a function stored on an object. document is a browser-provided object; getElementById is its method. It returns the element with that id, or null when none exists. Setting the element's textContent replaces its visible text. These are the browser APIs used by the earlier display line.
 
-The page below includes a p element with id="result". The final display line asks the browser for that element and sets its text. Read it as “show this answer here”; the objects lesson will explain the browser object in depth. This display operation does not affect the calculation.
+The page below includes a p element with id="result". The final display line asks the browser for that element and sets its text. This is the same getElementById/textContent operation traced in Values and names: find the element by its exact id, then replace its displayed text. This display operation does not affect the calculation.
 
 
 
@@ -29,7 +29,9 @@ explain: Both names designate the same object.
 
 ## Trace the running example
 
-Type this self-contained page. Open it directly in the browser, save and refresh after edits. Open the Console to see errors.
+An object gives related values names instead of positions. Read state.rolls as “the rolls property of this particular state object.” A second variable assigned state receives a reference to the same object; it does not duplicate the properties. Draw two arrows pointing at one box. const stops rebinding an arrow, not changing a field in the box. A new object literal creates another box; nested arrays still need their own copies if they must be independent.
+
+Keep the familiar HTML shell and output element. Type only the changed script lines shown in the diff; read the existing lines as context.
 
 ```html file=scratch/06-objects.html
 <!doctype html>
@@ -56,6 +58,9 @@ Write a trace listing each assignment and the values read on its right. **Engine
 ```check
 page scratch/06-objects.html "document.getElementById('result').textContent" "true"
 ```
+
+
+**Explore, then restore:** Change a property through the alias used in the example, then read it through the original name. Predict that both views agree. Replace the alias with a separately written object and repeat. Restore the original example and explain which assignment created an object.
 
 ## Try it — Explain and repair a fault
 

@@ -13,9 +13,7 @@ Implement the next rule boundary and explain it with known inputs before connect
 
 ## Turn the rule into examples
 
-When another five-of-a-kind is rolled after the Yahtzee box was filled (even with zero), the matching upper box is required if empty. Otherwise choose an empty lower box; if none remain, choose any empty upper box. Under these Joker rules full house/small straight/large straight score their fixed values. A 100-point extra bonus is awarded only if the earlier Yahtzee box contains 50. legalCategories returns indices; filter keeps eligible lower indices. preview returns null for a forbidden choice and never mutates. record validates first, computes bonus eligibility from the OLD card, writes the score, then awards a bonus once.
-
-
+Another five-of-a-kind after the Yahtzee box was filled invokes Joker placement. Use the matching upper box if empty; otherwise an empty lower box; if no lower boxes remain, another empty upper box. This placement applies even when the earlier Yahtzee was recorded as zero, but the extra 100-point bonus requires an earlier 50. We will separate listing legal choices, previewing a choice and recording it so a rejected action cannot award points.
 
 ```predict
 question: Does a rejected choice earn a bonus?
@@ -27,7 +25,9 @@ explain: The guard returns before either ledger changes.
 
 ## Implement legalCategories
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+First collect empty indices with a loop and push. Then detect a repeat: the histogram's maximum must be five AND the Yahtzee box (index 11) must already be filled. !== null treats a saved 0 as filled. Without a repeat, all empty categories are available.
+
+On repeated sixes the matching upper index is dice[0]-1 = 5. If that box is empty, return [5] immediately. Otherwise filter the empty indices for lower boxes (indices >= 6). If any remain, return them; if none remain, use the other empty upper boxes. Example: saved Yahtzee 50 and empty Sixes forces Sixes; saved Yahtzee 0 still forces Sixes but will not earn a 100-point bonus. Placement and bonus eligibility are different rules.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -102,9 +102,19 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** List legal indices for an empty card, then fill only index 11 with 0 and use five sixes. Predict [5]. Fill index 5 too and confirm only lower indices remain. Undo your fixture changes.
+
+
+Before checking, predict this observation: **an occupied zero Yahtzee box still forces matching upper placement**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict'; import {blankCard,legalCategories} from './rules.mjs';const c=blankCard();c.scores[11]=0;assert.deepEqual(legalCategories(c,[6,6,6,6,6]),[5]);\""
+```
+
 ## Implement preview
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+The preview is a read-only question: “What could this choice score?” If legalCategories does not include the requested index, return null. Zero cannot represent rejection because zero is a valid sacrifice score. For a legal choice, calculate the joker flag from the existing card and hand, then call points. Preview never fills a box or adds a bonus, so calling it repeatedly for the interface cannot change the game.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -184,9 +194,21 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Serialize the card with JSON.stringify, call preview twice, and compare the card afterwards. It should be identical. Try an occupied category and expect null rather than 0.
+
+
+Before checking, predict this observation: **preview returns 50 without changing the card**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {blankCard,preview} from './rules.mjs';const c=blankCard(),before=JSON.stringify(c);assert.equal(preview(c,[6,6,6,6,6],11),50);assert.equal(JSON.stringify(c),before);\""
+```
+
 ## Implement record
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+A write must validate before it changes either ledger. Obtain the preview; if it is null return false. Compute extra eligibility from the OLD Yahtzee slot before writing the chosen score. The first Yahtzee sees an empty old slot, so recording 50 must not also add 100. A later repeat sees the old 50 and can add 100 after a legal choice.
+
+Write the score, conditionally increment extra, then return true to signal acceptance. false reports a rejected action; it is not a score. The card is mutated through its reference. The enclosing turn function in the next lesson enforces one accepted record per turn.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -272,6 +294,16 @@ The syntax check establishes that this file parses. It does not execute imports 
 
 ```check
 run "node --check rules.mjs"
+```
+
+
+**Explore, then restore:** Record the first Yahtzee and check total extra is 0. Try recording the same occupied category again and check that both ledgers stay unchanged. For the repeated hand choose its forced upper category and expect extra to rise by 100.
+
+
+Before checking, predict this observation: **first Yahtzee earns no extra bonus; only a legal later repeat earns 100**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {blankCard,record} from './rules.mjs';const c=blankCard(),d=[6,6,6,6,6];assert.equal(record(c,d,11),true);assert.equal(c.extra,0);assert.equal(record(c,d,11),false);assert.equal(c.extra,0);assert.equal(record(c,d,5),true);assert.equal(c.extra,100);\""
 ```
 
 ## Try it — Reject a plausible mistake

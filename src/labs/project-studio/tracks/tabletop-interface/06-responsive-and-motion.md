@@ -13,7 +13,11 @@ Explain each new visual treatment and judge it in context at more than one viewp
 
 ## Apply the next layer
 
-A media query applies rules only when its condition matches. max-width:800px collapses the game grid to one column. The single-column layout preserves document reading order. flex-wrap lets actions wrap; max-width:100% keeps file inputs within the panel. grid-column:1 / -1 spans all explicit grid columns. accent-color styles the native progress indicator. prefers-reduced-motion removes transitions without hiding state feedback. A canvas has its own drawing size; Three.js later synchronizes it with CSS size.
+A media query conditionally applies a block of CSS; it does not create a separate mobile document. At max-width:800px the game and learning grids become one column, padding shrinks and decorative edition/intro notes disappear. Reading order remains the HTML order. The two game buttons flex equally after their desktop minimum width is removed.
+
+The reduced-motion query disables transitions and animations with !important. Held state still has a border and label: motion is optional feedback. CSS motion preferences do not automatically stop a JavaScript animation loop, so the later Three.js show method reads the same preference. SVG scales inside its viewBox; a canvas also needs a synchronized drawing buffer, which the renderer will handle.
+
+Test three widths deliberately: just above the breakpoint, just below it and 390px. Also zoom to 200%; long text must wrap rather than disappear. A narrow viewport is not identical to zoom, and a single screenshot cannot establish keyboard navigation.
 
 ```css file=style.css
 :root { color-scheme: light; --paper: #f7f3e9; --ink: #183e34; --muted: #607168; --line: #dcded2; --gold: #b08535; --felt: #194c3f; --white: #fffdf7; }
@@ -114,6 +118,9 @@ answer: No
 explain: Presentation reads game state; rules live in JavaScript model modules.
 ```
 
+
+**Explore, then restore:** At 801px and 800px identify exactly which rules change. Temporarily remove the mobile min-width:0 from game buttons and look for overflow. Restore it, then emulate reduced motion and verify that selected-state feedback remains.
+
 ## Try it — Compare and explain
 
 Review at 390px and a wide desktop width, 200% zoom, keyboard-only, and reduced-motion mode. Check for horizontal overflow, clipped labels, tiny buttons and disappearing feedback. Temporarily disable one relevant declaration in DevTools, describe the change, then restore it.
@@ -128,8 +135,13 @@ Write practice/06-responsive-and-motion.html independently. Try before opening h
 
 
 
+Give the base page border-box sizing and main width:100% with a max-width. Add a media query that reduces spacing below 600px and a reduced-motion rule that removes optional transitions. Review at 390px and 200% zoom; the base box-sizing check below cannot establish those media-query effects.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/06-responsive-and-motion.html "document.querySelector('main button')?.textContent" "Play again"
+page practice/06-responsive-and-motion.html "window.getComputedStyle(document.querySelector('main')).boxSizing" "border-box"
 ```
 
 ```hints

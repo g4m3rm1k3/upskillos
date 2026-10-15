@@ -13,9 +13,7 @@ Explain the learning operation with a hand-calculated case, then implement and t
 
 ## Work through the decision
 
-Object.create(null) makes a dictionary without inherited property names. The table is shared across episodes; game state is fresh each episode. seeded(seed) creates one advancing source, not a fresh generator for every move. i%2 alternates starting seats; % is the remainder operator. Training uses a constant exploration rate 0.2. The returned model records format version, game, target, episode budget, seed, truncations and learned table. This metadata prevents silently using a model for different rules.
-
-
+A fresh game must reset scores but retain what the opponent learned. Draw two boxes: current match state and accumulated action estimates. We will place their creation at different loop levels, then repeat an experiment to test that those lifetimes are right.
 
 ```predict
 question: Should a fresh game also erase the learned table?
@@ -27,7 +25,11 @@ explain: State resets each episode; learned estimates accumulate across episodes
 
 ## Implement train
 
-Add this definition to learning.mjs. Trace the variables against the worked example above; earlier definitions stay unchanged.
+Training has two lifetimes. The table persists across games; each episode creates fresh game state. Put Object.create(null) outside the for loop to retain learned values. This creates a dictionary without inherited property names. const protects the table binding but permits entries to change. Keep one seeded(seed) function outside the loop as well, so successive games continue its stream.
+
+The counter i starts at 0 and runs through episodes-1. i%2 alternates starting player; % is remainder, not percent. Pass exploration .2 for every game. A returned null increments truncated rather than wins or losses. The returned object packages the table with version, game, target, budget, seed and truncations. Property shorthand table means table:table; it does not copy the table.
+
+Two identical calls are reproducible only because code, seed, call order, budget and opponent are identical. A new seed can produce a different table and strength. A larger table only means more rows have been updated, not that their estimates are good.
 
 ```javascript file=learning.mjs
 import { seeded } from './rng.mjs';
@@ -97,9 +99,21 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check learning.mjs"
 ```
 
+
+**Explore, then restore:** Train twice with 2000 episodes and seed 7; compare JSON.stringify results. Then change only the seed to 8. Expect reproducibility for identical settings, not identity across seeds. Keep this result even if the second seed later evaluates worse.
+
+
+Before checking, predict this observation: **identical training settings produce identical packaged models**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {train} from './learning.mjs';const a=train(2000,7),b=train(2000,7);assert.deepEqual(a,b);assert.equal(a.episodes,2000);assert.equal(a.seed,7);assert.ok(Object.keys(a.table).length>0);\""
+```
+
 ## Run a real training experiment
 
-Run this command in the project terminal. Object.keys counts visited state rows. A nonempty table proves updates occurred, not that the policy is strong.
+The small runner imports train rather than duplicating its loop. Calling it is synchronous in Node, so the next console line prints only when training ends. Object.keys(model.table) lists own state keys; length counts visited rows. This is coverage of observed states, not a win-rate measurement. Keep the result object's metadata next to any report so another person can reproduce the setup.
+
+Run node scratch/train.mjs, then try a smaller budget and note how runtime and row count change. Restore the provided budget. Do not infer that “twice as many games means twice as strong”; evaluation comes next.
 
 ```javascript file=scratch/train.mjs
 import {train} from '../learning.mjs';
@@ -112,6 +126,9 @@ console.log('Visited states:',Object.keys(model.table).length);
 ```check
 run "node scratch/train.mjs" stdout="Visited states:"
 ```
+
+
+**Explore, then restore:** Temporarily log model.seed and model.truncated too. Explain each value in words. Remove the extra logging only after you can distinguish training budget, visited states and capped games.
 
 ## Try it — Find evidence of the mistake
 
@@ -132,7 +149,7 @@ run "node --input-type=module -e \"import {solve} from './practice/04-train-repr
 ```
 
 ```hints
-nudge: Write one concrete input and expected output first.
-concept: Separate the boundary case from the usual calculation.
-shape: Implement the stated branch or formula, then run both normal and boundary cases.
+nudge: Which metadata tells you what a table means?
+concept: Packaging should preserve the supplied table reference.
+shape: Return a new object with version, game, target and the original table.
 ```

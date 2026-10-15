@@ -137,7 +137,7 @@ run ".venv/Scripts/python experiments/broadcasting.py" stdout="error: operands c
 
 ## Lengths that keep their place
 
-To scale every row to length 1, you need each row's length, and `np.linalg.norm` takes an `axis=` just as `sum` did in 4.3. `np.linalg.norm(m, axis=1)` works along each row, one length per row. But the axis it collapses is gone from the answer: for a 3-row matrix the lengths come out as a plain vector, shape `(3,)`.
+To scale every row to length 1, you need each row's length, and `np.linalg.norm` takes an `axis=` just as `sum` did in 4.3. `np.linalg.norm(m, axis=1)` works across each row, as `sum(axis=1)` did, giving one length per row. But the axis it collapses is gone from the answer: for a 3-row matrix the lengths come out as a plain vector, shape `(3,)`.
 
 That's the trouble. Dividing the matrix by that vector lines `(3,)` up with the matrix's **columns**, from the right, not its rows. For a square matrix the sizes match, so it runs without any error, and it divides column 0 by row 0's length, column 1 by row 1's, and so on. The fix is `keepdims=True`: it keeps the collapsed axis in the answer, with size 1.
 

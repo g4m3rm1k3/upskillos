@@ -35,6 +35,7 @@ const E = 'frontier-engineering';
 const C = 'frontier-cs';
 const T = 'frontier-tools';
 const V = 'frontier-vectors';
+const K = 'frontier-calculus';
 // Git runs only in the walkthrough's temporary project, never in this repository.
 const COMMIT = (message) => ['git add .', `git commit -q -m "${message}"`];
 
@@ -973,6 +974,213 @@ export const WALKTHROUGH = {
     wrong: [
       { name: 'did nothing', fails: [0, 1, 2] },
       { name: 'committed but did not push', typeFile: true, run: ['.venv\\Scripts\\python experiments/draw_centering.py', ...COMMIT('Matplotlib: the similarity table and a centered dataset, as pictures')], fails: [3] },
+    ],
+  },
+
+  // ── 5.1 ──────────────────────────────────────────────────────────────────
+  [`${K}/05-01-a-slope-by-nudging#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${K}/05-01-a-slope-by-nudging#A first loss`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'added up the plain errors', edit: [['(w - d) ** 2', '(w - d)']], fails: [0] },
+      { name: 'did not take the average', edit: [[') / len(data)', ')']], fails: [0] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#The loss as a curve`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'took the highest point', edit: [['min(zip(losses, ws))', 'max(zip(losses, ws))']], fails: [0] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#Nudge it`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'did not divide by h', edit: [['    return (f(x + h) - f(x)) / h', '    return f(x + h) - f(x)']], fails: [0] },
+      { name: 'ignored the h it was given', edit: [['    return (f(x + h) - f(x)) / h', '    return (f(x + 1e-6) - f(x)) / 1e-6']], fails: [0] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#Which way is downhill?`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'printed the loss, not its slope', edit: [['    slope = nudge_slope(lambda v: guess_loss(v, DATA), w)', '    slope = guess_loss(w, DATA)']], fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#How small a nudge?`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'left out the minus sign', edit: [['    h = 10.0 ** -power', '    h = 10.0 ** power']], fails: [0] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#Your turn: nudge both ways`]: {
+    files: { 'src/frontier/slopes.py': answer(K, 'slopes-5.1.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'divided by h, not 2h', files: { 'src/frontier/slopes.py': answerWith(K, 'slopes-5.1.py', [['(f(x + h) - f(x - h)) / (2 * h)', '(f(x + h) - f(x - h)) / h']]) }, fails: [0, 1] },
+      { name: 'left out the brackets', files: { 'src/frontier/slopes.py': answerWith(K, 'slopes-5.1.py', [['(f(x + h) - f(x - h)) / (2 * h)', '(f(x + h) - f(x - h)) / 2 * h']]) }, fails: [0, 1] },
+      { name: 'nudged one way only', files: { 'src/frontier/slopes.py': answerWith(K, 'slopes-5.1.py', [['(f(x + h) - f(x - h)) / (2 * h)', '(f(x + h) - f(x)) / h']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-01-a-slope-by-nudging#Both ways, measured, and onto GitHub`]: {
+    run: [...COMMIT('A first loss, drawn, and slopes measured by nudging'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('A first loss, drawn, and slopes measured by nudging'), fails: [2] },
+    ],
+  },
+
+  // ── 5.2 ──────────────────────────────────────────────────────────────────
+  [`${K}/05-02-slopes-by-rule#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${K}/05-02-slopes-by-rule#The slope as a function`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'measured x² on every row', edit: [['lambda x: x ** n', 'lambda x: x ** 2']], fails: [0] },
+    ],
+  },
+  [`${K}/05-02-slopes-by-rule#Rules instead of nudges`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'kept the smallest gap', edit: [['    return max(abs(df(x) - central_slope(f, x)) for x in xs)', '    return min(abs(df(x) - central_slope(f, x)) for x in xs)']], fails: [0] },
+      { name: 'left out abs', edit: [['    return max(abs(df(x) - central_slope(f, x)) for x in xs)', '    return max(df(x) - central_slope(f, x) for x in xs)']], fails: [0] },
+    ],
+  },
+  [`${K}/05-02-slopes-by-rule#Checked by nudging`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'turned the test round', edit: [["'agrees' if error < 1e-6 else 'WRONG'", "'agrees' if error > 1e-6 else 'WRONG'"]], fails: [0, 1] },
+      { name: 'gave the last line the right rule', edit: [['lambda x: x ** 3, lambda x: 3 * x)', 'lambda x: x ** 3, lambda x: 3 * x ** 2)']], fails: [1] },
+    ],
+  },
+  [`${K}/05-02-slopes-by-rule#Your turn: the guessing loss's slope`]: {
+    files: { 'src/frontier/guessing.py': answer(K, 'guessing-5.2.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left out the 2', files: { 'src/frontier/guessing.py': answerWith(K, 'guessing-5.2.py', [['return 2 * (w - sum(data) / len(data))', 'return w - sum(data) / len(data)']]) }, fails: [0, 1] },
+      { name: 'took the gap the wrong way round', files: { 'src/frontier/guessing.py': answerWith(K, 'guessing-5.2.py', [['return 2 * (w - sum(data) / len(data))', 'return 2 * (sum(data) / len(data) - w)']]) }, fails: [0, 1] },
+      { name: 'left out the brackets', files: { 'src/frontier/guessing.py': answerWith(K, 'guessing-5.2.py', [['return 2 * (w - sum(data) / len(data))', 'return 2 * w - sum(data) / len(data)']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-02-slopes-by-rule#The bottom, found exactly, and onto GitHub`]: {
+    run: [...COMMIT('Slopes by rule, checked against nudging'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('Slopes by rule, checked against nudging'), fails: [2] },
+    ],
+  },
+
+  // ── 5.3 ──────────────────────────────────────────────────────────────────
+  [`${K}/05-03-the-chain-rule#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${K}/05-03-the-chain-rule#A function inside a function`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'measured the outside at x', edit: [['outside = central_slope(lambda u: u ** 2, 4.0)', 'outside = central_slope(lambda u: u ** 2, 1.0)']], fails: [0] },
+    ],
+  },
+  [`${K}/05-03-the-chain-rule#A chain of pieces`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'gave every piece x', edit: [['        values.append(f(values[-1]))', '        values.append(f(x))']], fails: [0] },
+    ],
+  },
+  [`${K}/05-03-the-chain-rule#Backwards through the chain`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: "took the square's slope at its output", edit: [['pieces[2][1](values[2])', 'pieces[2][1](values[3])']], fails: [0] },
+    ],
+  },
+  [`${K}/05-03-the-chain-rule#Your turn: the chain's slope, by a loop`]: {
+    files: { 'src/frontier/chain.py': answer(K, 'chain-5.3.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: "took each slope at the piece's output", files: { 'src/frontier/chain.py': answerWith(K, 'chain-5.3.py', [['slope *= df(values[i])', 'slope *= df(values[i + 1])']]) }, fails: [0, 1] },
+      { name: 'took every slope at x', files: { 'src/frontier/chain.py': answerWith(K, 'chain-5.3.py', [['slope *= df(values[i])', 'slope *= df(x)']]) }, fails: [0, 1] },
+      { name: 'started the running slope at 0', files: { 'src/frontier/chain.py': answerWith(K, 'chain-5.3.py', [['    slope = 1.0\n', '    slope = 0.0\n']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-03-the-chain-rule#A long chain, checked, and onto GitHub`]: {
+    run: [...COMMIT('The chain rule: slopes multiplied backwards through a chain'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('The chain rule: slopes multiplied backwards through a chain'), fails: [2] },
+    ],
+  },
+
+  // ── 5.4 ──────────────────────────────────────────────────────────────────
+  [`${K}/05-04-the-gradient#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${K}/05-04-the-gradient#One input at a time`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'nudged the point itself', edit: [['    up = point.copy()\n', '    up = point\n'], ['    down = point.copy()\n', '    down = point\n']], fails: [0] },
+      { name: 'nudged one way only', edit: [['    return (f(up) - f(down)) / (2 * h)', '    return (f(up) - f(point)) / h']], fails: [0] },
+    ],
+  },
+  [`${K}/05-04-the-gradient#A value used twice`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'measured along a twice', edit: [['print(f"along b: {partial(e, point, 1):.3f}")', 'print(f"along b: {partial(e, point, 0):.3f}")']], fails: [0] },
+    ],
+  },
+  [`${K}/05-04-the-gradient#Your turn: the gradient`]: {
+    files: { 'src/frontier/gradients.py': answer(K, 'gradients-5.4.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'returned a list', files: { 'src/frontier/gradients.py': answerWith(K, 'gradients-5.4.py', [['return np.array([partial(f, point, i, h) for i in range(len(point))])', 'return [partial(f, point, i, h) for i in range(len(point))]']]) }, fails: [0, 1, 2] },
+      { name: 'measured along the first input every time', files: { 'src/frontier/gradients.py': answerWith(K, 'gradients-5.4.py', [['partial(f, point, i, h) for i', 'partial(f, point, 0, h) for i']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-04-the-gradient#Steepest uphill, and onto GitHub`]: {
+    run: [...COMMIT('Partial slopes and the gradient'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'stepped along the gradient without making it length 1', edit: [['    ("gradient\'s", unit(g)),', '    ("gradient\'s", g),']], fails: [0] },
+      { name: 'committed but did not push', typeFile: true, run: COMMIT('Partial slopes and the gradient'), fails: [2] },
+    ],
+  },
+
+  // ── 5.5 ──────────────────────────────────────────────────────────────────
+  [`${K}/05-05-rolling-downhill#Read the tests first`]: {
+    wrong: [{ name: 'did not create the file', fails: [0] }],
+  },
+  [`${K}/05-05-rolling-downhill#Downhill, one step at a time`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'stepped with the slope, uphill', edit: [['        path.append(w - rate * slope(w))', '        path.append(w + rate * slope(w))']], fails: [0] },
+      { name: 'took one step too few', edit: [['    for _ in range(steps):', '    for _ in range(steps - 1):']], fails: [0] },
+    ],
+  },
+  [`${K}/05-05-rolling-downhill#The guess rolls to the average`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0] },
+      { name: 'took 10 steps, not 30', edit: [['0.0, 0.1, 30)', '0.0, 0.1, 10)']], fails: [0] },
+    ],
+  },
+  [`${K}/05-05-rolling-downhill#How big a step?`]: {
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'left out rate 1.1', edit: [['for rate in [0.1, 0.5, 1.0, 1.1]:', 'for rate in [0.1, 0.5, 1.0]:']], fails: [1] },
+    ],
+  },
+  [`${K}/05-05-rolling-downhill#Your turn: descend on a vector`]: {
+    files: { 'src/frontier/descent.py': answer(K, 'descent-5.5.py') },
+    wrong: [
+      { name: 'did nothing', fails: [0, 1] },
+      { name: 'changed the point in place', files: { 'src/frontier/descent.py': answerWith(K, 'descent-5.5.py', [['        path.append(point - rate * grad(point))', '        point -= rate * grad(point)\n        path.append(point)']]) }, fails: [0, 1] },
+      { name: 'stepped with the gradient, uphill', files: { 'src/frontier/descent.py': answerWith(K, 'descent-5.5.py', [['point - rate * grad(point)', 'point + rate * grad(point)']]) }, fails: [0, 1] },
+    ],
+  },
+  [`${K}/05-05-rolling-downhill#A ball on a surface, and Chapter 5 done`]: {
+    run: ['.venv\\Scripts\\python experiments/draw_descent.py', ...COMMIT('Gradient descent, on one number and on a surface'), 'git push -q'],
+    wrong: [
+      { name: 'did nothing', fails: [0, 1, 2] },
+      { name: 'used rate 0.11', edit: [['np.array([-4.0, 1.0]), 0.09, 30)', 'np.array([-4.0, 1.0]), 0.11, 30)']], fails: [0] },
+      { name: 'committed but did not push', typeFile: true, run: ['.venv\\Scripts\\python experiments/draw_descent.py', ...COMMIT('Gradient descent, on one number and on a surface')], fails: [3] },
     ],
   },
 };

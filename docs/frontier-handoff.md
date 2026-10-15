@@ -2,7 +2,7 @@
 
 Start every Frontier writing session by reading this file, then the plan's chapter row for the chapter you're writing (`docs/frontier-ai-series-plan.md`). Don't re-read finished lessons unless a new one builds on their code: the *State of the project* section below says what exists.
 
-At the end of a session, update this file (state, next steps, anything learned) and the plan's *Progress* table, then stop so the owner can clear the chat. **One whole chapter per session, then the handoff** (owner, 2026-10-14: a new session's ramp-up costs more than it saves to stop mid-chapter). The cold-reader audit of a chapter goes at the start of the next session, with fresh eyes.
+At the end of a session, update this file (state, next steps, anything learned) and the plan's *Progress* table, then stop so the owner can clear the chat. **One whole chapter per session, then the handoff** (owner, 2026-10-14: a new session's ramp-up costs more than it saves to stop mid-chapter). A chapter's cold-reader audit is a session of its own, the one after the chapter is written, so it's read with fresh eyes.
 
 ## Rules (from the owner)
 
@@ -68,7 +68,45 @@ The full walkthrough (Chapters 0–1) now takes about 9½ minutes, longer than t
 - Wrong answers may use `run` (for example `git rm` alone, or a merge without a push).
 - `{BARE}` only works in `isolatedGit` series, and Frontier isn't one (it uses the owner's Git identity). Its stand-in for GitHub is made by the walkthrough itself: `git init -q --bare ../github.git` beside the project, in the run's temporary folder (lesson 1.5).
 
+- **An `editFiles` match must not include a line ending** in a file git has checked out: on Windows, git rewrites it with `\r\n`, so a match on `'.mypy_cache/\n'` misses and the step fails before its checks run (4.5, 2026-10-14). Match the text alone (`'.mypy_cache/'` → `'.mypy_cache/\npictures/'`). The 0.2 and 1.3 `.gitignore` edits were changed the same way; for `\n` files the result is byte-for-byte the same, so they weren't re-walked. The 3.1 `breakpoint()\n` edits stay: the walkthrough writes `pairs.py` in that lesson, always with `\n`. The macOS scratch method can't catch this: only the Windows walk can.
+
 ## State of the project (what a learner has after the last written lesson)
+
+After lesson 5.5 (written 2026-10-14; Chapter 5 complete), on top of the Chapter 4 tree below. No new packages.
+
+```text
+  src/frontier/
+    guessing.py           guess_loss(w, data) (mean squared error); guess_slope(w, data) = 2 * (w - average)
+    slopes.py             Function = Callable[[float], float]; nudge_slope(f, x, h=1e-6) (one way);
+                          central_slope(f, x, h=1e-5) (both ways); slope_error(f, df, xs) (max |df - central|)
+    chain.py              Piece = tuple[Function, Function]; forward(pieces, x) -> every value;
+                          chain_slope(pieces, x) (reversed(range(len(pieces))), slope *= df(values[i]))
+    gradients.py          Surface = Callable[[Vector], float]; partial(f, point, i, h=1e-5) (on .copy()s);
+                          gradient(f, point, h=1e-5) -> np.array of partials
+    descent.py            downhill(slope, start, rate, steps) -> list[float]; descend(grad, start, rate, steps) -> list[Vector]
+  experiments/
+    draw_loss.py          loss of 81 guesses (np.linspace) for 2, 3, 7: pictures/loss.png; "lowest loss 4.667 at w = 4.0"
+    loss_slopes.py        slopes at 1, 4, 6: -6.000 / 0.000 / 4.000, and (5.2) "by rule" beside each
+    nudge_sizes.py        x³ at 2, h = 1e-1 … 1e-15: one-way error (6h, then rounding) and both-ways error (h², best at 1e-5)
+    slope_table.py        slopes of x², x³, x⁴ at 1, 2, 3 (the power rule)
+    check_rules.py        three right rules "agrees", x³ with 3x "WRONG, largest gap 1.8e+01"
+    inside.py             (3x + 1)² at 1: "whole 24.000, inside 3.000, outside at 4 8.000"
+    backward_by_hand.py   times 3, plus 1, square from 1: values [1, 3, 4, 16], slopes backwards [24, 8, 8, 1]
+    check_chain.py        square, ×3, +1, exp, square at 0.4: chain rule and nudged both 92.6303
+    two_uses.py           (a + b) * b at (1, 2): along a 2.000, along b 5.000
+    steepest.py           bowl x² + 10y² at (2, 1): gradient [4, 20]; rises along x 0.0401, y 0.2010, gradient's 0.2049
+    roll_to_average.py    downhill from 0, rate 0.1: step 30 w = 3.9950
+    learning_rates.py     rates 0.1 / 0.5 / 1.0 / 1.1: creep, land, bounce 0↔8, run off
+    draw_descent.py       descend on the bowl from (-4, 1), rate 0.09, 30 steps, contour map: pictures/descent.png; height 0.000123
+  tests/
+    test_slopes.py        -k loss, nudge, central
+    test_rules.py         -k error, guess
+    test_chain.py         -k forward, backward
+    test_many_inputs.py   -k partial, gradient
+    test_walking.py       -k downhill, descend
+```
+
+Chapter 5 taught: parameters, loss, mean squared error, `**`; `np.linspace`; `ax.plot`, `ax.set_xlabel` / `set_ylabel`, `ax.contour` (contour lines, heights as a (len(ys), len(xs)) table), `marker="o"`; `min(zip(losses, ws))`; parabola; slope (rise over run), sign and size; forward difference and its error (≈ h × curvature), cancellation and rounding for tiny h; format specs `:<2`, `:.1e`, `:7.3f`; central difference (exact for parabolas, error ∝ h²); derivative, f′, df/dx; power rule (found by measuring, shown by algebra), constant, constant multiple and sum rules, e and `math.exp` as its own slope; gradient checking and its tolerance; the best guess under squared error is the average (slope = 0); the chain rule (outside slope at the inside's value × inside slope), pieces as (function, slope) pairs, forward pass keeping every value, backward pass multiplying (backpropagation named; Chapter 12 builds it), `reversed`, `*=`; partial derivatives (∂), nudging on `.copy()`s, two paths add (2.5's value used twice; Chapter 12's bug named), gradient ∇f, steepest ascent and its length, nudging's cost (two calls per input); gradient descent, learning rate, the factor 1 − 2 × rate (creep / land / bounce / diverge), `range(start, stop, step)`, `inf`/`nan` from a too-big rate, Chapter 18 named; descend on vectors without `-=`; `reshape(len(ys), 1)` as a column; the steepest direction setting the rate limit (zigzag). Figures `frontier/SlopeNudge` (5.1) and `frontier/DescentSteps` (5.5), rendered by figures.test.jsx, never seen in a browser.
 
 After lesson 4.5 (written 2026-10-14; Chapter 4 complete), on top of the Chapter 3 tree below:
 
@@ -191,11 +229,37 @@ Chapter 2 so far: `time.perf_counter`, `time.sleep`; functions as values, `Calla
 
 Chapter 3: debugging as a method (reproduce, narrow down, guess, test; a test per bug, seen failing first); `breakpoint()` and pdb (`p`, `n`, `c`, `w`, `q`); the mutable-default trap and a `None` default with `is None`; a type alias (`PairCounts = ...`); `logging` (`getLogger(__name__)`, levels debug / info / warning / error, `%s` / `%d` arguments, `basicConfig(level=, format=)` only at the entry point, stderr); argparse `action="store_true"`; PowerShell `> $null` and `Remove-Item`; `cProfile` and `pstats` (ncalls, tottime, cumtime, `549946/1`, `<genexpr>`); memoising with `functools.cache`, `cache_info`, `cache_clear`, a cached result being the same object (copy with `dict(...)`); reading source with `inspect.getsource`; pytest's `monkeypatch.setattr`; why a Python loop is slow (24-byte float objects, 8-byte addresses); NumPy arrays (`np.array`, element-wise `*` and `-`, `np.sum`, `np.exp`, `.max()`, `.tolist()`, `.nbytes`, `np.zeros`), `npt.NDArray[np.float64]`; a middle array's memory cost (`np.sum(xs * xs)` against `xs @ xs`); converting a list costs more than the loop.
 
-Not yet taught (don't use without teaching): NumPy beyond the lists above (`reshape`, `argsort`, fancy indexing); Matplotlib beyond 4.5 (`ax.plot` for lines, axis labels, several Axes in one figure, pyplot).
+Not yet taught (don't use without teaching): NumPy beyond the lists above (`reshape` only as `reshape(n, 1)`; no `argsort`, fancy indexing, `np.meshgrid`); Matplotlib beyond 5.5 (legends, several Axes in one figure, `set_aspect`, log scales, pyplot).
 
-## Next: walk Chapter 4 on Windows, audit it, then write Chapter 5
+## Next: Chapter 5's audit (one session), then Chapter 6 (the session after)
 
-Chapter 4 (`frontier-vectors`) is written, all five lessons (2026-10-14, all on macOS):
+Chapter 5 (`frontier-calculus`) is written (2026-10-14, on macOS). Lint 28 lessons, 0 problems; non-desktop Project Studio tests pass apart from the known macOS `projectChecks` git failure; the static `-k` rule checked by hand (0 problems).
+
+1. **5.1 A Slope by Nudging**: `guessing.py` (`guess_loss`), `slopes.py` (`nudge_slope`, Your turn `central_slope`); `draw_loss.py`, `loss_slopes.py`, `nudge_sizes.py`; figure `frontier/SlopeNudge`. trackOrder 15.05.
+2. **5.2 Slopes by Rule**: `slope_error`, Your turn `guess_slope`; `slope_table.py`, `check_rules.py`; `loss_slopes.py` gains a "by rule" column.
+3. **5.3 The Chain Rule**: `chain.py` (`forward`, Your turn `chain_slope`); `inside.py`, `backward_by_hand.py`, `check_chain.py`.
+4. **5.4 The Gradient**: `gradients.py` (`partial`, Your turn `gradient`); `two_uses.py`, `steepest.py`.
+5. **5.5 Rolling Downhill**: `descent.py` (`downhill`, Your turn `descend`); `roll_to_average.py`, `learning_rates.py`, `draw_descent.py`; figure `frontier/DescentSteps`.
+
+**Checked on macOS only.** `~/Testing/frontier-scratch/walk5.py` walked every lesson from the real walkthrough entries: each step's checks pass, each wrong answer fails its `fails` checks (git checks not run there), and each prediction's verify script prints its answer. **The Windows walkthrough hasn't run for Chapter 5.** On Windows: keep a project at the end of Chapter 4 (`FRONTIER_UNTIL=frontier-vectors/04-05`, `FRONTIER_KEEP`, background, `--timeout 1800`), then `FRONTIER_START=<kept> FRONTIER_FROM=frontier-calculus/05-01`. Every printed number the checks rely on is pure float arithmetic (the same on every IEEE machine) or rounded well clear of a boundary; `nudge_sizes.py`'s rows below 1e-8 are rounding and the lesson says they may differ, and no check reads them.
+
+**Still for the owner, in the Studio:** look at 4.3's `MatrixTimes`, 5.1's `SlopeNudge` and 5.5's `DescentSteps` figures, and check that `Invoke-Item` opens 4.5's and 5.x's pictures.
+
+**Next session:** Chapter 5's cold-reader audit only (`docs/audits/frontier-ch5-audit.md`). If it changes code, a check or an answer, re-walk the changed lessons with `walk5.py` (macOS; back up the scratch folder first) or the walkthrough (Windows).
+
+**The session after:** Chapter 6 (`frontier-probability`), the whole chapter, then the handoff.
+
+Lessons from writing Chapter 5:
+- `-k` words collide **inside a file** too: `test_central_slope_default_nudge_is_accurate` was selected by `-k nudge`. The scratch walk caught it at once; the hand-run static rule (each `-k` word starts every name it selects) would have too.
+- A wrong answer "did nothing" can't fail a mypy check on a file an earlier lesson already made pass (5.2's `slopes.py`): list only the test check.
+- Don't print a value to more digits than two measurements agree on: the chain rule and `central_slope` differ in the 6th decimal of 92.63 (one part in a billion), so 5.3 prints 4.
+- `10.0 ** -power` goes through the C library's `pow`, which may differ by one ulp between platforms; only rows dominated by truncation error (not rounding) are checked or quoted as fixed.
+- Each experiment that repeats an earlier file's lines (`def bowl`, `fig = Figure(figsize=(6, 4) ...)`) costs no typed lines in the lint, so a long final experiment can still fit the 15-line limit.
+- Measured (macOS, Python 3.13): forward-difference error for x³ at 2 is 6h down to h = 1e-8 (7.3e-8), then rounding (1.3 at 1e-15); central 1e-2 … 1e-8 for h = 1e-1 … 1e-4, best 2.1e-10 at 1e-5. Descent on x² + 10y² at rate 0.11 reaches y ≈ 237 after 30 steps.
+
+Chapter 4's cold-reader audit is done (2026-10-14, `docs/audits/frontier-ch4-audit.md`): 6 findings, all fixed, prose plus one docstring in `answers/matrix-4.3.py`; no code, check or test behaviour changed, so nothing was re-walked.
+
+Chapter 4 (`frontier-vectors`) is written and passes the walkthrough on Windows (2026-10-14: Chapters 0–3 with `FRONTIER_KEEP`, 23 tests, 1412 s; then 4.1–4.5 from that project, 10 tests, 494 s, peak about 681 MB):
 
 1. **4.1 Words as Vectors**: `vectors.py` on lists; `compare_sentences.py` (dot 8 / 6 / 8 / 16, cosine 1.000 / 0.750 / 0.707 / 1.000); figure `frontier/WordArrows`.
 2. **4.2 Arrays, Properly**: `arrays.py` (`Vector`, `cosine_array`, `unit`); `array_basics.py`, `check_arrays.py`.
@@ -203,21 +267,18 @@ Chapter 4 (`frontier-vectors`) is written, all five lessons (2026-10-14, all on 
 4. **4.4 Broadcasting**: `unit_rows`, `text_matrix` refactored onto it, Your turn `center`; `broadcasting.py`, `keepdims.py`.
 5. **4.5 Seeing It**: Matplotlib 3.11.2 (Windows wheel 9.5 MB), `plots.py` (`heatmap`, Your turn `scatter`), `draw_similarity.py`, `draw_centering.py`; pictures checked by the files existing and by reading the figures back as data. Promises Chapter 5 that its curves are drawn with Matplotlib (`ax.plot` isn't taught yet: teach it there).
 
-**Next session, in order:**
-1. **On Windows:** walkthrough **done** 2026-10-14: Chapters 0–3 with `FRONTIER_KEEP` passed (23 tests, 1412 s), then 4.1–4.5 from it (10 tests, 494 s, peak about 681 MB). One fix: 4.5's walkthrough entry edited `.gitignore` matching `'.mypy_cache/
-'`, but on Windows git has rewritten that file with CRLF by then, so it now matches `'.mypy_cache/'` with no line ending. Match walkthrough `editFiles` on text without line endings for any file git has touched. The two older `.gitignore` edits (lessons 0.1 and 1.x) were changed the same way the same day; for LF files they give byte-for-byte the same result, so no re-walk. The `breakpoint()
-` edits in 3.1 are left as they are: `pairs.py` is written by the walkthrough in that lesson, always LF. **Still for the owner, in the Studio:** look at 4.3's `MatrixTimes` figure, and check `Invoke-Item` opens 4.5's pictures.
-2. **Chapter 4's cold-reader audit** (`docs/audits/frontier-ch4-audit.md`, as for Chapters 2 and 3).
-3. **Chapter 5** (`frontier-calculus`), the whole chapter, from the plan's row.
+Lessons from Chapter 4's audit:
+- Describe `axis=` one way across lessons: axis 0 adds the rows together (down each column), axis 1 works across each row. "Along the rows" meant opposite things in 4.3 and 4.4.
+- Python 3.12+ `sum()` of floats compensates its rounding (measured: a plain loop doubles 4.2's largest difference). Don't explain a list-vs-NumPy difference as "left to right against blocks".
+- Don't promise the next lesson a bigger scale than it uses ("a thousand texts" for a lesson with five).
+- When supplied tests read results back through library methods, name every method in the test list, not only some.
 
 Chapter 3 (`frontier-tools`) is written and audited: 3.1 finding a bug (pdb), 3.2 logging, 3.3 profiling and `functools.cache`, 3.4 vectorising with NumPy. Its cold-reader audit (2026-10-14, `docs/audits/frontier-ch3-audit.md`) found 7 problems, all prose, all fixed; lint 18 lessons, 0 problems; the walkthrough wasn't re-run (no code, check or answer changed).
-
-Session size: an audit **or** about two lessons, not both.
 
 Known unrelated failure (2026-10-14, on macOS): `projectChecks.test.js` › "git checks › follows a repository from init to push" fails at its first assertion (`git-repo` false right after `git init` in a temp folder). Not Frontier code. The owner's view: those checks are written for a new project folder (Windows, PowerShell), not this environment. Ignore it unless it fails on Windows too.
 
 Working on macOS (2026-10-14 session):
-- **The scratch project is kept** at `~/Testing/frontier-scratch` (outside this repository; its README says how to use it), up to date after 4.5. Reuse it; don't rebuild it. The walkthrough doesn't run, so each new lesson was checked by a scratch script: a `python3 -m venv` with the pinned `pytest`, `mypy` and `numpy`, the lesson's `file=` blocks written in order, each step's checks run (`PYTHONPATH=src`, `MYPYPATH=src`), and each wrong answer applied and its checks run. Set `PYTHONDONTWRITEBYTECODE=1`: rewriting a module within the same second let a stale `.pyc` make a wrong answer look like it passed.
+- **The scratch project is kept** at `~/Testing/frontier-scratch` (outside this repository; its README says how to use it), up to date after 5.5. Walk new lessons with its `walk5.py`, which reads the real walkthrough entries. Reuse it; don't rebuild it. The walkthrough doesn't run, so each new lesson was checked by a scratch script: a `python3 -m venv` with the pinned `pytest`, `mypy` and `numpy`, the lesson's `file=` blocks written in order, each step's checks run (`PYTHONPATH=src`, `MYPYPATH=src`), and each wrong answer applied and its checks run. Set `PYTHONDONTWRITEBYTECODE=1`: rewriting a module within the same second let a stale `.pyc` make a wrong answer look like it passed.
 - `scripts/frontier-safe-run.mjs` runs on macOS but reports peak memory as "about 0 MB", so its memory ceiling isn't measured there. Fine for tiny scripts; don't rely on it for anything bigger.
 
 Lessons from Chapter 3's audit:

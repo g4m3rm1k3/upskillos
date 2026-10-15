@@ -15,7 +15,7 @@ def text_vector(text: str, vocab: list[str]) -> Vector:
 
 
 def text_matrix(texts: list[str]) -> tuple[Matrix, list[str]]:
-    """Every text as a row of unit length, and the vocabulary that names the columns."""
+    """Every text as a row of length 1, and the vocabulary that names the columns."""
     vocab = vocabulary([split_words(text) for text in texts])
     return np.array([text_vector(text, vocab) for text in texts]), vocab
 

@@ -13,7 +13,9 @@ Explain a visual change through the CSS declaration that causes it.
 
 ## Make one visual decision
 
-The box model has content, padding inside the border, a border, and margin outside it. box-sizing:border-box includes padding and border in specified widths. px is a CSS pixel; rem is relative to the root font size. max-width limits line length while width can shrink. font-family tries fonts left to right; the generic fallback always remains. line-height controls space between text lines.
+Picture a 200px-wide box with 20px padding on each side and a 1px border. With content-box the outer width becomes 242px; with border-box the whole width stays 200px and content gets 158px. Our universal * selector chooses border-box for every element. margin is outside the border, padding inside it. A shorthand with two values means vertical then horizontal. margin:auto divides available horizontal space to center a bounded block. max-width limits growth but still permits shrinking.
+
+Keep the working HTML and script. This target adds only the next CSS layer; use the diff to locate that layer before typing.
 
 ```html file=index.html
 <!doctype html>
@@ -108,6 +110,9 @@ answer: Padding enlarges the area inside the border
 explain: Margin is outside; padding is inside.
 ```
 
+
+**Explore, then restore:** Inspect the box-model diagram in DevTools. Temporarily change border-box to content-box and compare the measured outer width. Increase line-height from 1.5 to 2 and read the rules aloud. Restore the original values and explain which change affected layout width versus text rhythm.
+
 ## Try it — Inspect the missing feedback
 
 Set main padding to zero and compare the content against its background. Restore it. Explain why spaces typed in HTML cannot substitute for layout spacing.
@@ -122,9 +127,15 @@ Write practice/02-box-and-type.html independently. Try before opening hints. Kee
 
 
 
+For a measurable baseline, give main 16px padding and the paragraph 24px line-height. You may vary the palette. Explain what would change if the same 16px were margin instead.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/02-box-and-type.html "document.querySelectorAll('button').length" "2"
 page practice/02-box-and-type.html "document.querySelector('button[aria-pressed=true]') !== null" "true"
+page practice/02-box-and-type.html "window.getComputedStyle(document.querySelector('main')).paddingTop" "16px"
+page practice/02-box-and-type.html "window.getComputedStyle(document.querySelector('p')).lineHeight" "24px"
 ```
 
 ```hints

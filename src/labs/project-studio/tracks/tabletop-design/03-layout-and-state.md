@@ -13,7 +13,9 @@ Explain a visual change through the CSS declaration that causes it.
 
 ## Make one visual decision
 
-display:flex places children along one main axis; gap adds space between them. flex-wrap lets a row wrap. An attribute selector can style a held button using its aria-pressed value. :focus-visible exposes keyboard focus; :disabled styles unavailable actions. These selectors respond to meaningful state already in HTML. A transition smooths one changed property over time; it does not change game rules.
+Flex lays direct children along a main axis; justify-content distributes space on that axis and align-items on the cross axis. gap creates space between items; flex-wrap permits a new line. An attribute selector such as button[aria-pressed="true"] matches a state in the HTML, while :disabled and :focus-visible are pseudo-classes supplied by the browser. The script changes state; selectors turn it into visual feedback. A transition needs a property, duration and optional timing curve: it does not alter the score or roll budget.
+
+Keep the working HTML and script. This target adds only the next CSS layer; use the diff to locate that layer before typing.
 
 ```html file=index.html
 <!doctype html>
@@ -112,6 +114,9 @@ answer: A held outline follows aria-pressed
 explain: State drives appearance, not the other way around.
 ```
 
+
+**Explore, then restore:** Narrow the browser until the buttons need another row. Tab through every control: focus must be distinguishable from a held outline. Disable a button in DevTools and compare it with a held button. Restore all edits; explain why reduced motion must preserve those state differences.
+
 ## Try it — Inspect the missing feedback
 
 Remove the focus-visible rule and Tab through the controls. Browser defaults may still help, but your custom contrast disappears. Restore it. Emulate reduced motion and confirm state feedback remains without transition.
@@ -126,9 +131,15 @@ Write practice/03-layout-and-state.html independently. Try before opening hints.
 
 
 
+Give the held button a 3px solid border through its aria-pressed selector. Give both buttons a visible :focus-visible outline. The automated border check does not establish keyboard focus: Tab and Shift+Tab through both buttons yourself.
+
+The added computed-style checks establish these specified properties, not aesthetic quality, responsive fit or keyboard focus. Inspect those manually as described.
+
 ```check
 page practice/03-layout-and-state.html "document.querySelectorAll('button').length" "2"
 page practice/03-layout-and-state.html "document.querySelector('button[aria-pressed=true]') !== null" "true"
+page practice/03-layout-and-state.html "window.getComputedStyle(document.querySelector('button[aria-pressed=true]')).borderTopWidth" "3px"
+page practice/03-layout-and-state.html "window.getComputedStyle(document.querySelector('button[aria-pressed=true]')).borderTopStyle" "solid"
 ```
 
 ```hints

@@ -13,9 +13,7 @@ Explain the learning operation with a hand-calculated case, then implement and t
 
 ## Work through the decision
 
-The agent always trains as seat 0 against a fixed hold-at-10 seat 1. If it holds or busts, simulate the opponent until seat 0 acts again or the game ends. Otherwise maximizing the next row would optimize the other player's interests. moves bounds an episode; a capped unfinished episode is reported as null, not a win or loss. continue jumps to the next loop iteration. The final assignment updates exactly the chosen action at the OLD state key. Object tables create a row only when a training update requires it.
-
-
+You hold seven points and pass play. Has the consequence of your choice finished? The opponent can still bank points or win before your next decision. We will trace that whole reply first, then decide which old choice receives the learning update.
 
 ```predict
 question: After the agent holds, whose response belongs in its transition?
@@ -25,9 +23,42 @@ answer: The opponent’s whole turn
 explain: The successor must be another agent decision or a terminal state.
 ```
 
+## Observe the successor before updating {#successor-trace}
+
+Use a known state instead of a whole training run: learner bank 8, opponent bank 12, learner unbanked 7. Holding makes the learner bank 15 and passes play. The opponent rolls 4 then 6, reaches its hold-at-10 threshold and banks 10. Only then is the learner's next decision reached: scores [15,22], player 0, turn 0.
+
+The source below returns samples .5 and .9, which map to faces 4 and 6. shift removes and returns the first array entry; ?? 0 is a fallback if extra rolls were unexpectedly requested. The while loop runs only while seat 1 is acting and the game is live. Record the state after each printed line. Then change the opponent's starting bank to 25: after its first 4 it has not won until it banks; after the next roll its baseline banks a win. In that case there is no next learner decision. Restore bank 12 for the check.
+
+```javascript file=scratch/successor.mjs
+import { newPig, move, baseline } from '../pig.mjs';
+const state = newPig();
+state.scores = [8, 12];
+state.turn = 7;
+const samples = [0.5, 0.9];
+function random() { return samples.shift() ?? 0; }
+move(state, 'hold', random);
+console.log('After learner hold:', JSON.stringify(state.scores));
+while (state.player === 1 && state.winner === null) {
+  move(state, baseline(state), random);
+}
+console.log('Next decision:', JSON.stringify(state.scores), state.player, state.turn);
+```
+
+```check
+run "node scratch/successor.mjs" stdout="Next decision: [15,22] 0 0"
+```
+
 ## Implement episode
 
-Add this definition to learning.mjs. Trace the variables against the worked example above; earlier definitions stay unchanged.
+An episode is one complete training game, including both players. Create a fresh game, but receive the existing learned table as an argument. moves counts individual roll/hold actions so an unexpectedly long game can be capped. The outer while continues only while no winner exists and the cap has not been reached.
+
+There are three stages per learner update:
+
+1. If seat 1 acts first, let the fixed baseline move and continue to the next outer iteration. continue skips the rest of this loop body. Do not create a learner update for an opponent's action.
+2. On seat 0's decision, capture the OLD state key and chosen action index BEFORE moving. Perform the learner move, then run the entire opponent reply until seat 0 acts again or someone wins. Each move increments the cap counter. If the cap ends an unfinished reply, return null without inventing terminal reward.
+3. At the successor, terminal means winner!==null. A terminal reward is +1 for winner 0 or -1 for winner 1; otherwise reward is 0. Read successor values. If turn===0, only roll is legal so nextBest=row[0]; otherwise use the larger action estimate. update ignores nextBest for terminal transitions. Initialize the old row if needed, then assign only table[oldKey][chosenIndex].
+
+The assignment combines two different times: the left side identifies the old choice being learned about, while nextBest comes from the next learner decision. Updating the successor row instead would attach evidence to the wrong action. Return winner at completion, retaining 0 as a valid winner rather than treating it as absence.
 
 ```javascript file=learning.mjs
 import { seeded } from './rng.mjs';
@@ -88,6 +119,16 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check learning.mjs"
 ```
 
+
+**Explore, then restore:** Follow the scratch successor example and mark exactly where old key is captured. Temporarily move that capture after move in a scratch copy and explain which row receives misplaced credit. Restore it. Use a controlled source returning 0: repeated busts hit the cap and must return null rather than a false win.
+
+
+Before checking, predict this observation: **a normal seeded game updates rows; an all-bust stream reports truncation**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {episode} from './learning.mjs';import {seeded} from './rng.mjs';const table={};const winner=episode(table,seeded(7),.2,0);assert.ok(winner===0 || winner===1);assert.ok(Object.keys(table).length>0);assert.equal(episode({},()=>0,0,0),null);\""
+```
+
 ## Try it — Find evidence of the mistake
 
 Trace agent hold → opponent roll 4 → roll 6 → hold → agent decision. Write the old state, reward and successor explicitly. Then trace opponent win; reward is -1 and there is no bootstrap.
@@ -107,7 +148,7 @@ run "node --input-type=module -e \"import {solve} from './practice/03-a-complete
 ```
 
 ```hints
-nudge: Write one concrete input and expected output first.
-concept: Separate the boundary case from the usual calculation.
-shape: Implement the stated branch or formula, then run both normal and boundary cases.
+nudge: Seat zero is a real winner, despite being false in a Boolean context.
+concept: Use strict comparisons with 0, 1 and null.
+shape: Return a reward for each winner value; do not use if(winner) as the test.
 ```

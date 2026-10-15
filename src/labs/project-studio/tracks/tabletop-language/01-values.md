@@ -13,6 +13,8 @@ Explain and change the calculation on this page, then solve the independent task
 
 ## Read the new idea
 
+Start with 6 and 2. Adding them gives 8. If you later replace the first number with 3, the already-written answer 8 does not erase and recompute itself. JavaScript assignments behave the same way.
+
 A program follows statements in order. A value is a piece of data; an expression calculates a value. Numbers such as 6 support arithmetic. Quoted strings such as "6" are text. console.log prints to DevTools Console, opened from the browser menu → Developer tools. A script element runs JavaScript when the browser reaches it. A semicolon ends a statement. let creates a name whose stored value can later be reassigned. const creates a name that cannot be reassigned. = assigns; it does not ask a question.
 
 The page below includes a p element with id="result". The final display line asks the browser for that element and sets its text. `document` is the browser-provided object representing the page: an object groups named values and operations. A dot selects a member of that object. `getElementById` is an operation (a method); parentheses call it, passing the string `"result"` as its input. It returns the matching element object. The next dot selects that element’s `textContent` property, and `= total` replaces the visible text with the calculated value. Thus 8 appears inside the paragraph. The id must match exactly: a missing element returns `null`, and trying to set its text produces an error. `console.log(total)` similarly calls the Console object’s logging method with total as its input. These display operations do not change total. The functions and objects lessons will give you practice creating your own operations and objects.
@@ -29,7 +31,9 @@ explain: total stores a result, not a spreadsheet formula.
 
 ## Trace the running example
 
-Type this self-contained page. Open it directly in the browser, save and refresh after edits. Open the Console to see errors.
+Values are snapshots, not live formulas. Read the program in order: first becomes 6; second becomes 2; total receives 8; first changes to 3; total remains 8. Recomputing total would require another assignment. A number and a string are different: 6 + 2 is 8, while "6" + 2 joins text to make "62". The browser display may look numeric in both cases, so use typeof in the Console to inspect a value’s type: typeof 6 gives "number" and typeof "6" gives "string". Comments beginning // run to the end of the line and do not execute.
+
+Keep the familiar HTML shell and output element. Type only the changed script lines shown in the diff; read the existing lines as context.
 
 ```html file=scratch/01-values.html
 <!doctype html>
@@ -58,6 +62,9 @@ Write a trace listing each assignment and the values read on its right. **Engine
 ```check
 page scratch/01-values.html "document.getElementById('result').textContent" "8"
 ```
+
+
+**Explore, then restore:** Add `total = first + second` after the change to first. Predict 5, refresh and verify it. Move the line back above first = 3 and explain why order matters. Remove your extra assignment afterward.
 
 ## Try it — Explain and repair a fault
 

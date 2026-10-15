@@ -15,7 +15,7 @@ Explain and change the calculation on this page, then solve the independent task
 
 for has three parts separated by semicolons: initialize a counter once; check a condition before every iteration; advance after each body. i += 1 means i = i + 1. total is an accumulator: it retains the sum between iterations. The braces mark which statements repeat.
 
-The page below includes a p element with id="result". The final display line asks the browser for that element and sets its text. Read it as “show this answer here”; the objects lesson will explain the browser object in depth. This display operation does not affect the calculation.
+The page below includes a p element with id="result". The final display line asks the browser for that element and sets its text. This is the same getElementById/textContent operation traced in Values and names: find the element by its exact id, then replace its displayed text. This display operation does not affect the calculation.
 
 
 
@@ -29,7 +29,9 @@ explain: Only indices 0 and 1 have been processed; index 2 adds the second six.
 
 ## Trace the running example
 
-Type this self-contained page. Open it directly in the browser, save and refresh after edits. Open the Console to see errors.
+For [6,2,6,1,4], write a trace with columns i, face, total before, total after. The rows are 0/6/0/6, 1/2/6/6, 2/6/6/12, 3/1/12/12, 4/4/12/12. At i=5 the condition i < dice.length fails before the body runs. Starting total inside the loop would discard previous work; advancing i before reading would skip the first slot.
+
+Keep the familiar HTML shell and output element. Type only the changed script lines shown in the diff; read the existing lines as context.
 
 ```html file=scratch/05-loops.html
 <!doctype html>
@@ -58,6 +60,9 @@ Write a trace listing each assignment and the values read on its right. **Engine
 ```check
 page scratch/05-loops.html "document.getElementById('result').textContent" "12"
 ```
+
+
+**Explore, then restore:** Use an empty array: the initial condition fails and the total should stay 0. Use [6] and expect 6. Restore the original hand. Explain why neither case needs a special branch outside the loop.
 
 ## Try it — Explain and repair a fault
 

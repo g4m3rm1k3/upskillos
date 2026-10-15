@@ -13,9 +13,7 @@ Implement the next rule boundary and explain it with known inputs before connect
 
 ## Turn the rule into examples
 
-newYahtzee creates separate cards with separate calls to blankCard. Rolls begin at zero; holdDie refuses holds before rolling. rollHand rerolls only unheld dice and counts the roll. scoreTurn records once, advances the turn count and switches player with 1-player. After 26 accepted scores the match is done. fill(false) releases all holds. greedyCategory scans legal choices and keeps the highest immediate score; strict > gives a stable first-choice tie break. It is a simple heuristic, not machine learning.
-
-
+Write the expected turn sequence: first player rolls, may hold and reroll up to three times, records one category, then the other player acts. A fourth roll and a second score must leave state unchanged. Two players filling all thirteen categories each finish after 26 accepted scoring turns. We will connect these rules without any DOM code.
 
 ```predict
 question: What does a fourth roll change?
@@ -27,7 +25,7 @@ explain: The guard rejects the entire action before sampling.
 
 ## Implement newYahtzee
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+A match object groups two cards, current player, hand, hold flags, roll count, accepted turn count and completion flag. player is 0 or 1. Five initial ones are placeholders, not a roll: rolls is 0, so scoring is forbidden. cards uses two calls to blankCard, creating independent ledgers. The object is data; it has no DOM references and schedules no opponent by itself.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -120,9 +118,12 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Create two matches and mutate one card in the first. Verify both its opponent card and the second match stay unchanged. Draw the arrays and object references if any result surprises you.
+
 ## Implement rollHand
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+Refuse a finished match or a fourth roll before sampling. On the first roll, every position changes regardless of stale holds; later only unheld positions change. !state.held[i] || state.rolls===0 expresses those alternatives. The random argument defaults to Math.random but can be a controlled function in tests. Increment rolls once after the loop and return true. On rejection return false and leave every field untouched.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -223,9 +224,19 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Use () => 0 to force ones. Hold index 0 and reroll with () => 0.999; expect [1,6,6,6,6]. Count samples with a callback that increments a local counter: the reroll should request four, not five.
+
+
+Before checking, predict this observation: **held die stays one and exactly four samples are consumed**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {newYahtzee,rollHand} from './rules.mjs';const s=newYahtzee();rollHand(s,()=>0);s.held[0]=true;let calls=0;rollHand(s,()=>{calls++;return .999});assert.deepEqual(s.dice,[1,6,6,6,6]);assert.equal(calls,4);\""
+```
+
 ## Implement holdDie
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+A hold is meaningful only after at least one roll and before the final roll. Reject done, rolls 0 or >=3 and an index outside the five positions. The UI supplies integer indices from its loop. After the guard, negation flips exactly one Boolean and return true reports success. No die is sampled and no score changes.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -331,9 +342,19 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Call holdDie twice on index 2 after a roll. The flag returns to its original value. Try it before the first roll and after roll three: both calls should return false and change nothing.
+
+
+Before checking, predict this observation: **holds are refused before rolling and two toggles cancel**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {newYahtzee,rollHand,holdDie} from './rules.mjs';const s=newYahtzee();assert.equal(holdDie(s,2),false);rollHand(s,()=>0);holdDie(s,2);holdDie(s,2);assert.equal(s.held[2],false);\""
+```
+
 ## Implement scoreTurn
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+The || guard short-circuits: record is reached only if the match is active and a roll exists. If record rejects the category, no turn advances. After an accepted record, increment turns. Two players using thirteen categories each require 26 accepted choices. Only then is done true. `1 - state.player` swaps 0 and 1; it is arithmetic, not a special switching instruction. Reset rolls and use fill(false) to release holds for the next turn.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -448,9 +469,21 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Score once, then immediately call scoreTurn again before rolling. The second call must fail and turns must remain 1. Temporarily move turns+=1 above the guard and predict the damage; restore it before running the checks.
+
+
+Before checking, predict this observation: **only the first scoring call advances a turn**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {newYahtzee,rollHand,scoreTurn} from './rules.mjs';const s=newYahtzee();rollHand(s,()=>0);assert.equal(scoreTurn(s,0),true);assert.equal(scoreTurn(s,1),false);assert.equal(s.turns,1);\""
+```
+
 ## Implement greedyCategory
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+The rule baseline scans legal candidates only. Start best at the first legal index, then replace it only for a strictly larger preview. A tie therefore keeps the earlier candidate. This is an argmax: return the index that achieves the maximum, not the maximum score itself. The caller uses that index to record the category. Call it only while a legal unused category remains.
+
+For a hand of sixes, different categories can tie on their immediate sum. This baseline ignores future category scarcity and rolls only once in the eventual controller. It is intentionally a simple opponent for comparison, not a trained policy.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -570,6 +603,9 @@ The syntax check establishes that this file parses. It does not execute imports 
 ```check
 run "node --check rules.mjs"
 ```
+
+
+**Explore, then restore:** Construct two equal-scoring legal categories and reverse their supplied order in a scratch argmax. The chosen index should follow the first entry on a tie. Explain why >= would choose the last tie instead.
 
 ## Try it — Reject a plausible mistake
 

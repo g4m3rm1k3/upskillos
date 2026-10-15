@@ -253,7 +253,7 @@ No full UpSkillOS production build or fresh platform installation was performed 
 
 ## Teaching-depth follow-up — 2026-10-14
 
-The first implementation is an end-to-end working path, **not a completed first-use teaching audit of the whole series**. Do not describe all code as adequately taught from zero until the remaining lessons have received that review.
+At this earlier checkpoint, the implementation was an end-to-end working path but the teaching-depth review covered only the lessons below. The subsequent whole-path pass is recorded at the end of this document.
 
 This follow-up expands two specific lessons:
 
@@ -268,4 +268,32 @@ Verification after these edits:
 - `node scripts/audit-project-studio-lessons.mjs --write`: regenerated the inventory; exit 1 remains because the broader report has four exposed-target errors outside Tabletop. No new Tabletop structural errors.
 - `git diff --check`: no output.
 
-Next teaching-depth priorities are the first Three.js scene/rotation lessons and frozen evaluation statistics. Browser responsiveness, real cancellation and imported-model round trips remain separate manual verification tasks. This follow-up did not rerun browser or production-build checks.
+At this checkpoint, the next teaching-depth priorities were the first Three.js scene/rotation lessons and frozen evaluation statistics. Browser responsiveness, real cancellation and imported-model round trips remain separate manual verification tasks. This follow-up did not rerun browser or production-build checks.
+
+### Exploration refinement
+
+The worker lesson now builds the receiver, request guard, training loop and evaluated result in separate steps. A small scratch page makes the intermediate stages observable before the final controller exists. Each stage asks for a prediction, a controlled change, an expected result, restoration and an explanation. The editor retains full-file snapshots for accurate diffs; those snapshots must not be treated as permission to introduce a whole subsystem in one unexplained step.
+
+Browser verification of the scratch page observed `progress: 0` with the first receiver and `progress: 1000`, `progress: 2000`, `done: ready` with the finished worker. The temporary server was stopped afterward. The cumulative walkthrough now prints `PASS 51 lessons, 151 checks, 51 independent exercises, 51 rejected wrong answers; final app matches reference.` The required Project Studio test run still prints `Tests 2 failed | 241 passed (243)` with the same two infrastructure failures. The audit inventory was regenerated; its four pre-existing exposed-target errors still produce exit 1.
+
+The standard carried into the subsequent whole-path pass was: introduce one meaningful change, explain new syntax before use, let learners observe it, vary an input, diagnose a deliberate fault and then solve a transfer task. A longer explanation placed after a large block is not a substitute for this sequence.
+
+
+## Whole-path teaching pass — 2026-10-15
+
+The remaining core lessons have now received the teaching-depth pass. The standalone entrance starts with page structure and values; later lessons introduce syntax, state ownership, geometry, event lifecycles and learning arithmetic beside the code that uses them. Larger changes have intermediate working stages, scratch experiments, concrete traces, predictions, expected observations and independent transfer tasks. Full-file editor snapshots remain for reliable diffs; learners are directed through the meaningful changes rather than asked to decipher those snapshots unaided.
+
+Specific additions include callable-input and callback experiments; scoring and turn boundary probes; lit-tray, cube-body and static-picking stages before animation; numerical face-orientation checks; a read-only scorecard before interactive scoring; complete learner/opponent transition traces; Wilson interval arithmetic before the evaluator; and progress-only worker wiring before model installation. Repeated exercises were replaced with distinct transfer problems. CSS checks now reject incorrect computed styles even when the expected controls exist. Published progress keys have a regression fixture and remain in order.
+
+Verification also found and fixed three concrete defects: the scratch canvas needed CSS dimensions independent of its high-density drawing buffer; evaluation with no completed games needed an explicit unconstrained interval; and model validation needed to reject noncanonical coordinate keys. Every affected learning-module snapshot matches the reference implementation.
+
+Verification for this pass:
+
+- `node scripts/check-tabletop-course.mjs`: `PASS 51 lessons, 200 checks, 51 independent exercises, 60 rejected wrong answers; final app matches reference.`
+- `node --test src/labs/project-studio/tabletopFixtures/reference/tests/*.check.mjs`: `tests 9`, `pass 9`, `fail 0`.
+- `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"`: `Test Files 2 failed | 51 passed (53)`; `Tests 2 failed | 242 passed (244)`. The failures remain Git repository detection and child-process cleanup, outside the Tabletop lesson changes.
+- `npm run build` in `src/labs/project-studio/tabletopFixtures/reference`: `13 modules transformed`, successful build. Warnings: stale Browserslist data, inherited Tailwind content configuration and the optional Three.js chunk exceeding 500 kB (522.24 kB).
+- `node scripts/audit-project-studio-lessons.mjs --write`: reports regenerated; exit 1 from four existing exposed-target errors outside Tabletop.
+- Browser check of the new 3D scratch page: the requested face sequence rendered inside the host, and clicking the middle die displayed `Picked die index 2`. The temporary browser tab and server were closed.
+
+This completes the authored core teaching pass, not a certification that every beginner will understand every line. Beginner learner trials, independent editorial review, full keyboard/screen-reader and cross-platform verification remain open. The current pass did not repeat browser model import/export or cancellation tests, run a fresh dependency installation, or build the full UpSkillOS application. Later games and the advanced learning extensions in this design remain future work.

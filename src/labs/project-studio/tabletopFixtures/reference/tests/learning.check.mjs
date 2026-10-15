@@ -24,8 +24,11 @@ test('reproducible training, frozen evaluation and format validation', () => {
   const report=evaluate(a.table,200);
   assert.equal(report.wins+report.losses+report.truncated,200);
   assert.equal(JSON.stringify(a.table),before);
+  assert.deepEqual(evaluate(a.table,0),{wins:0,losses:0,truncated:0,rate:0,low:0,high:1});
   assert.equal(validateModel(a),a);
   assert.throws(()=>validateModel({...a,target:100}));
+  assert.throws(()=>validateModel({...a,table:{'00,0,0':[0,0]}}));
+  assert.throws(()=>validateModel({...a,table:{',0,0':[0,0]}}));
   assert.throws(()=>validateModel({...a,table:{'0,0,0':[NaN,0]}}));
   assert.throws(()=>validateModel({...a,table:{'30,0,0':[0,0]}}));
 });

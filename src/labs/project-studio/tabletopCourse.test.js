@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TRACKS, TRACK_KEYS, trackTitle } from './trackLoader.js';
 import { studioSeries } from './series.js';
 import answers from './tabletopFixtures/exercises.json';
+import publishedKeys from './tabletopFixtures/published-step-keys.json';
 const series = studioSeries(TRACKS, TRACK_KEYS, trackTitle).find(s => s.key === 'tabletop');
 const lessons = series.chapters.flatMap(c => TRACKS[c.key]);
 describe('Tabletop standalone teaching path', () => {
@@ -10,6 +11,13 @@ describe('Tabletop standalone teaching path', () => {
     expect(series.chapters[0].key).toBe('tabletop-start');
     expect(series.chapters.every(c => c.key.startsWith('tabletop-'))).toBe(true);
     expect(lessons[0].intro).toContain('No earlier course');
+  });
+  it('preserves published progress keys in their original order', () => {
+    for (const [id, keys] of Object.entries(publishedKeys)) {
+      const lesson = lessons.find(item => item.id === id);
+      expect(lesson, id).toBeDefined();
+      expect(lesson.steps.map(step => step.id).filter(key => keys.includes(key)), id).toEqual(keys);
+    }
   });
   it('keeps one file per step and independent work outside supplied targets', () => {
     const exerciseKeys = [];

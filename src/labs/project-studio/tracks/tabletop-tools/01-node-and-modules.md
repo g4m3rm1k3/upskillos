@@ -47,7 +47,9 @@ file package.json
 
 ## Export one pure function
 
-export makes a named binding available to another module; import selects that binding. A relative path begins with ./ or ../. Unlike global script functions, module names stay inside the module unless exported. A pure calculation reads its arguments and returns an answer without changing the page.
+Move a reusable calculation into a module only after its responsibility is clear. `export function facePoints` gives other modules access by that exact name. It does not run the function. An importing file writes `import { facePoints } from './points.mjs'`: braces request a named export; ./ means the current directory and ../ its parent. The extension is part of the path. Import paths are relative to the importing file, not whichever folder your terminal happens to display.
+
+Node runs this calculation without a document object. Keeping DOM calls out of it is what makes that possible. A module's top-level names are private unless exported. This is JavaScript's module system; no C++ header or class is required. Predict facePoints(2,6) before testing it, then deliberately misspell the import name to distinguish a linkage error from a wrong result.
 
 ```javascript file=practice/points.mjs
 export function facePoints(face, wanted) {
@@ -69,6 +71,9 @@ choice: Yes
 answer: No
 explain: It exposes the binding; only a call executes its body.
 ```
+
+
+**Explore, then restore:** Run the import check from the project folder and expect 6. Change the arguments to 2,6 and expect 0. Restore them. Explain why copying the function into every file would make a later rule correction harder.
 
 ## Try it — Misspell a contract
 

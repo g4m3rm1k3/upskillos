@@ -13,7 +13,9 @@ Explain ownership of the model and asynchronous work, then verify the associated
 
 ## Give the controller a model slot
 
-Import choose and validateModel and add model/worker state. Pig's opponent now uses the frozen table when model exists; otherwise it uses the same baseline. This integrates the learned policy without changing game rules.
+Import choose and validateModel from the already-tested learning module. Add model=null and worker=null as controller-owned state. Null means no complete learned policy is installed; it does not mean an all-zero trained table. The Pig bot's action expression chooses between choose(model.table,pig,0,Math.random) and the baseline. The zero is epsilon: play exploits the frozen table without training or exploration.
+
+The relative state key makes a policy trained as seat 0 usable when the interface bot is seat 1. The game still applies actions through move and enforces the same rules. Yahtzee keeps its separate heuristic. The new opponent label and explanation tell the player which policy actually acted; a selected training budget alone does not make the model active.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -199,6 +201,9 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Before training, select Pig and read HOLD-AT-10. After the final lab wiring and a completed run it should say YOUR Q-MODEL. Explain which assignment causes that transition and why selecting Pig must not call train.
+
 ## Read the new boundary
 
 Optional chaining model?.table reads table only if model exists; otherwise it returns undefined. The ?? fallback provides an empty table so the baseline can still be inspected. Number converts input text; integer/range checks reject invalid chart coordinates. A template literal builds SVG bars and title text from validated numbers. Each column holds own/opponent banked scores fixed while varying unbanked turn total. Gold marks hold and green roll; the title states the actual action and estimates. This is a policy slice, not a training curve or calibrated probability chart.
@@ -207,7 +212,13 @@ Optional chaining model?.table reads table only if model exists; otherwise it re
 
 ## Connect inspectPolicy
 
-Add this function. Read each new API against the explanation above, then identify the exact line where state can be replaced.
+Read the two form values as strings, convert with Number and reject non-integer/out-of-range banked scores. Build one hypothetical state per unbanked total from 1 to 20, with own and other fixed. This is a slice through the policy, not twenty consecutive turns of a simulated game. No real match state is mutated.
+
+Optional chaining model?.table yields undefined if model is absent. The ?? {} fallback supplies an empty table to choose, making its baseline fallback visible before training. The fixed random function returns .5, but epsilon=0 removes exploration. row[0] and row[1] are estimates, formatted with toFixed(2) only for display. That method returns rounded text; it does not round the stored table. A missing row is labeled unvisited rather than falsely described as learned.
+
+Each SVG group g contains a title, rectangle and text. Rectangles have x=(turn-1)*32, width 25 and a 7-unit gap; rx rounds corners. Gold denotes hold, green roll. text-anchor=middle centers the numeric label at the bar center. The enclosing viewBox scales the drawing and role=img gives it an image meaning. It has an overall accessible description; title offers per-bar details, but browser and screen-reader support varies and still needs manual review. Values inserted into markup are validated numbers and controlled strings.
+
+Temporarily call inspectPolicy() after its definition to see the baseline slice, then remove that call before continuing. The final wiring adds input listeners and an initial call. Reading or drawing the chart never calls update.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -416,26 +427,27 @@ answer: No
 explain: Only a validated completed result replaces it.
 ```
 
+
+**Explore, then restore:** With the temporary call, set own=29 before refresh and compare turn=1 with own=0. Holding at one point now wins. Restore the inputs. After training, inspect a visited row and an unvisited row and explain how their labels differ.
+
 ## Try it — Verify the failure path
 
 Change the inspector banked scores. Explain why the action can change even for the same turn total: the distance to winning differs. An unvisited state uses the explicit baseline and must be labelled as such. These interactions are fully connected in the next final-wiring step; perform them there before considering the milestone complete.
 
 
 
-## Your turn — Accept only a compatible version
+## Your turn — Describe a policy slice
 
-Define solve(candidate) returning true for a non-null object with version 1 and target 30, false otherwise. This is a small part of the full validator, not a substitute for it. Export the function as solve.
+Define solve(own,other,turn) returning the Pig state-key string, with turn capped at 30-own. Assume valid banked scores and a nonnegative turn. This creates data for inspection; it must not mutate a live match. For own 28, other 9 and turn 8, return "28,9,2".
 
-Write practice/03-inspect-the-policy.mjs independently. Try before opening hints. Keep the guided game intact. The checks establish the listed examples, not every possible input or the quality of your explanation. Record the observed result, explain its cause, and add a new case you chose.
-
-
+Write practice/03-inspect-the-policy.mjs independently and export solve. These checks establish the stated cases; explain the ownership rule and add one counterexample of your own.
 
 ```check
-run "node --input-type=module -e \"import {solve} from './practice/03-inspect-the-policy.mjs'; if (!(solve({version:1,target:30}) && !solve({version:1,target:100}) && !solve(null))) throw Error('Independent case failed'); console.log('PASS');\"" stdout="PASS"
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {solve} from './practice/03-inspect-the-policy.mjs';assert.equal(solve(4,9,3),'4,9,3');assert.equal(solve(28,9,8),'28,9,2');assert.equal(solve(28,9,1),'28,9,1');\""
 ```
 
 ```hints
-nudge: Check absence before reading properties.
-concept: && short-circuits after a false condition.
-shape: Require an object, matching version and matching target.
+nudge: How many more points are needed to bank a win?
+concept: Totals beyond that threshold share one capped key.
+shape: Keep own and other in order; cap turn before joining the three fields.
 ```

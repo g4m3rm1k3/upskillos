@@ -13,7 +13,13 @@ Add labelled training controls without hiding their purpose behind a chart.
 
 ## Add the control panel
 
-label associates a control with readable text. select contains option values that the handler converts from strings to numbers. progress uses value/max to display a fraction and needs an accessible name. input type=file lets the user explicitly select a local file; accept hints the expected format but does not validate it. Number inputs constrain the inspector, but the JavaScript still validates values. The chart remains SVG so it stays crisp.
+A training interface has a request, progress and a result. The budget select supplies the request; Train and Stop express actions; progress shows completed training; status reports training/evaluation facts; Save and Load handle a completed model. Keep those roles separate so a full bar is not mistaken for permission to save a partial result.
+
+A containing label associates its text with a select or input. Each option has a human label and a machine value; the DOM value is a string, so the controller uses Number to convert it. progress with max=1 expects a fraction: 1000 completed out of 2000 is value .5. aria-label supplies its accessible name. disabled initially prevents Stop and Save when there is nothing to stop or save.
+
+input type=file offers a user-selected File object, not an automatic read of the filesystem. accept="application/json" filters suggestions but does not validate bytes. The inspector's number inputs use min/max and step as browser hints; JavaScript must still reject invalid input. Their labels distinguish whose banked score is being held fixed. The policy chart's container is a future output, not the source of decisions.
+
+This target adds the lab below the playable games. The styles were introduced in the interface chapter; no new rule code is needed. The following steps attach behavior. Until then select and file-picker controls work natively, but the Train/Save actions are not connected.
 
 ```html file=index.html
 <!doctype html>
@@ -63,6 +69,9 @@ choice: Yes
 answer: No
 explain: It is a file-picker hint, not schema validation.
 ```
+
+
+**Explore, then restore:** Tab through the panel and read each control name in the Accessibility pane. Change the select and inspect its value: it is text even when it looks numeric. Set the progress value to .5 in DevTools and observe half the bar, then restore 0.
 
 ## Try it — Read the form without sight
 

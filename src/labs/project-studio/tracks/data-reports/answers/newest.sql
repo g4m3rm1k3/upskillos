@@ -1,0 +1,1 @@
+WITH ranked AS (SELECT ticket_id, row_number() OVER(PARTITION BY project_id ORDER BY created_at DESC,ticket_id DESC) AS position FROM tickets) SELECT ticket_id FROM ranked WHERE position=1 ORDER BY ticket_id;

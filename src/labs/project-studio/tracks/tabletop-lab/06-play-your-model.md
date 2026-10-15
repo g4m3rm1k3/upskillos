@@ -13,7 +13,11 @@ Train, inspect, save, reload and play a model while reporting what its evaluatio
 
 ## Wire the complete application
 
-Register training, cancellation, save/load and inspector handlers once. pagehide terminates a worker, cancels the opponent timer and disposes graphics. render initializes the game and inspectPolicy initializes the chart. The final file contains the definitions already built; the diff should mostly show event registration.
+The definitions now exist. Register Train, Stop, Save, Load and inspector listeners once, alongside the game controls. The event type matters: click invokes actions, change reports file/checkbox selection, input updates the chart while a number field changes. Passing loadModel directly lets the browser supply the event argument. An anonymous wrapper around Stop also writes a cancellation message.
+
+pagehide releases the worker, pending opponent timer and graphics view as a group because the controller owns all three. render() initializes the visible game; inspectPolicy() initializes the baseline chart. These calls do not train. The large snapshot is retained only for the editor diff: the new work is the listener block and cleanup, not retyping functions already built.
+
+Run npm run dev and use the root page. Verify one action at a time: train completes; Pig identifies the model; inspector changes; Save downloads; refreshed page loads; an invalid copy is refused. Record expected and observed outcomes before combining the whole release exercise.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -287,6 +291,9 @@ choice: Yes
 answer: No
 explain: The claim is limited to the measured opponent, seeds and protocol.
 ```
+
+
+**Explore, then restore:** Click Train, stop it early and start again. Verify a previous completed model is preserved during the cancelled run. Toggle 3D while the new training runs and compare game state before and after: rendering choices must not replace learning data.
 
 ## Run the complete experiment
 

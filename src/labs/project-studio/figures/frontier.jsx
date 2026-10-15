@@ -385,3 +385,73 @@ export function MatrixTimes({ a = [[1, 2, 3], [4, 5, 6]], b = [[1, 0], [0, 1], [
     </Readout>
   </div>;
 }
+
+// ---------- 5.1 and 5.5: the guessing loss, its slope, and steps downhill ----------
+const guessLoss = (data) => (w) => data.reduce((s, d) => s + (w - d) ** 2, 0) / data.length;
+
+// data: the numbers being guessed; x: where the slope is measured; h: the nudge.
+export function SlopeNudge({ data = [2, 3, 7], x: startX = 1, h: startH = 2 }) {
+  const [x, setX] = useState(startX);
+  const [h, setH] = useState(startH);
+  const f = guessLoss(data);
+  const rise = f(x + h) - f(x);
+  const slope = rise / h;
+  const settled = (f(x + 1e-6) - f(x)) / 1e-6;
+  const top = Math.max(f(0), f(8)) * 1.05;
+  const line = (t) => f(x) + slope * (t - x);
+  return <div>
+    <Controls>
+      <Slider label="w, where the slope is measured" value={x} min={0} max={6} step={0.1} onChange={setX} digits={1} />
+      <Slider label="h, the nudge" value={h} min={0.01} max={2} step={0.01} onChange={setH} digits={2} />
+    </Controls>
+    <MiniPlot x={[0, 8]} y={[0, top]} xLabel="guess w" yLabel="loss" label={`The guessing loss, with a line through w = ${r(x, 1)} and w + h = ${r(x + h, 2)}`}>{({ X, Y }) => <>
+      <Path X={X} Y={Y} points={curve(f, 0, 8, 160)} stroke="var(--chart-model)" />
+      <Path X={X} Y={Y} points={[[0, line(0)], [8, line(8)]]} stroke="var(--chart-val)" width={1.5} dash="5 4" />
+      <line x1={X(x)} y1={Y(f(x))} x2={X(x + h)} y2={Y(f(x))} stroke="var(--text)" strokeWidth={1.5} />
+      <line x1={X(x + h)} y1={Y(f(x))} x2={X(x + h)} y2={Y(f(x + h))} stroke="var(--text)" strokeWidth={1.5} />
+      <circle cx={X(x)} cy={Y(f(x))} r={5} fill="var(--chart-train)" />
+      <circle cx={X(x + h)} cy={Y(f(x + h))} r={4} fill="var(--chart-val)" />
+    </>}</MiniPlot>
+    <Table head={['w', 'h (the run)', 'loss(w + h) − loss(w) (the rise)', 'rise / run']}
+      rows={[[r(x, 1), r(h, 2), r(rise, 4), r(slope, 3)]]} label="The nudge, its rise, and the measured slope" />
+    <Readout>
+      Nudging w = {r(x, 1)} by h = {r(h, 2)} measures a slope of <strong>{r(slope, 3)}</strong>. Shrink h and the dashed line settles onto the curve's own steepness at w, about <strong>{r(settled, 3)}</strong>.
+      {Math.abs(settled) < 0.05 ? <> That's flat: w = {r(x, 1)} is the bottom of the curve.</> : settled < 0 ? <> It's negative: the loss goes down as w goes up, so a bigger guess is better.</> : <> It's positive: the loss goes up as w goes up, so a smaller guess is better.</>}
+    </Readout>
+  </div>;
+}
+
+// data: the numbers being guessed; start: the first guess; rate: the learning rate; steps: how many.
+export function DescentSteps({ data = [2, 3, 7], start = 0, rate: startRate = 0.1, steps = 20 }) {
+  const [rate, setRate] = useState(startRate);
+  const [k, stepper] = useStepper(steps);
+  const f = guessLoss(data);
+  const mean = data.reduce((s, d) => s + d, 0) / data.length;
+  const slope = (w) => 2 * (w - mean);
+  const path = [start];
+  for (let i = 0; i < steps; i++) path.push(path[i] - rate * slope(path[i]));
+  const shown = path.slice(0, k + 1);
+  const w = shown[shown.length - 1];
+  const factor = 1 - 2 * rate;
+  return <div>
+    <Controls>
+      <Slider label="learning rate" value={rate} min={0.05} max={1.1} step={0.05} onChange={setRate} digits={2} />
+      {stepper}
+    </Controls>
+    <MiniPlot x={[-2, 10]} y={[0, f(-2) * 1.05]} xLabel="guess w" yLabel="loss" label={`Gradient descent on the guessing loss, ${k} steps at learning rate ${r(rate, 2)}`}>{({ X, Y }) => <>
+      <Path X={X} Y={Y} points={curve(f, -2, 10, 160)} stroke="var(--chart-model)" />
+      <Path X={X} Y={Y} points={shown.map((v) => [v, f(v)])} stroke="var(--chart-val)" width={1.5} />
+      {shown.map((v, i) => <circle key={i} cx={X(v)} cy={Y(f(v))} r={i === shown.length - 1 ? 5 : 3} fill={i === shown.length - 1 ? 'var(--chart-train)' : 'var(--chart-val)'} />)}
+    </>}</MiniPlot>
+    <Table head={['step', 'w', 'slope at w', 'next w = w − rate × slope']}
+      rows={[[k, r(w, 4), r(slope(w), 4), r(w - rate * slope(w), 4)]]} label="The current step of gradient descent" />
+    <Readout>
+      After {k} {k === 1 ? 'step' : 'steps'} at learning rate {r(rate, 2)}, the guess is <strong>{r(w, 4)}</strong>. Each step multiplies the distance from the bottom ({r(mean, 3)}) by 1 − 2 × {r(rate, 2)} = <strong>{r(factor, 2)}</strong>
+      {Math.abs(factor) < 1e-9 ? <>: zero, so the first step lands exactly on the bottom.</>
+        : Math.abs(Math.abs(factor) - 1) < 1e-9 ? <>: the distance never shrinks, and the guess bounces between the same two points forever.</>
+        : Math.abs(factor) > 1 ? <>: more than 1 in size, so every step lands further away. The steps are too big and the guess runs off.</>
+        : factor < 0 ? <>: negative, so the guess overshoots and lands on the other side each step, but closer every time.</>
+        : <>, so it creeps closer every step without overshooting.</>}
+    </Readout>
+  </div>;
+}

@@ -27,7 +27,7 @@ explain: The target is a minimum, not an exact landing rule.
 
 ## Implement newPig
 
-The optional start parameter chooses the first player. winner=null means the game is still running. Scores and turn points are separate so a bust can clear only the latter.
+Pig uses banked scores plus one current turn total, not a category card. TARGET=30 names our short-match winning threshold. newPig(start=0) starts seat 0 unless the caller supplies another seat. Each call creates a fresh scores array. winner=null means ongoing; winner=0 means seat zero won, so never use truthiness to detect a winner. face starts at 1 only as a display placeholder.
 
 ```javascript file=pig.mjs
 import { rollFace } from './rng.mjs';
@@ -46,9 +46,12 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check pig.mjs"
 ```
 
+
+**Explore, then restore:** Change the starting seat to 1 in a scratch call; the scores and turn should still be zero. Explain why sharing scores between two newPig results would corrupt training episodes.
+
 ## Implement actions
 
-Return the legal action names. An empty array means the match is terminal. A zero turn permits only roll.
+A model may prefer an action the rules forbid. actions returns the legal strings, not estimated values. Finished games return an empty array. With turn 0, only roll is legal; otherwise both roll and hold are legal. This boundary gives the UI and training policy the same definition of legality.
 
 ```javascript file=pig.mjs
 import { rollFace } from './rng.mjs';
@@ -71,9 +74,14 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check pig.mjs"
 ```
 
+
+**Explore, then restore:** Ask for actions at turn 0, turn 4 and winner 0. Predict [roll], [roll,hold] and []. Explain why winner 0 must be checked against null rather than as a Boolean.
+
 ## Implement move
 
-Reject an illegal action before sampling or mutating. Holding checks the winning condition before switching players. Rolling a 1 clears the turn and switches; other faces add. This is the same validation-before-mutation principle as Yahtzee, with different rules.
+First reject any action absent from actions(state). Save player before changing state. On hold, add the unbanked total to that player's bank, then reset turn to 0. If the bank reached TARGET set winner; otherwise swap player using 1-player. On roll, sample once. A face of 1 clears only the unbanked total and passes play; faces 2–6 add to turn without changing player or bank.
+
+Trace bank [8,12], player 0, turn 7: holding gives bank [15,12], turn 0, player 1. From the original state, rolling 1 gives bank [8,12], turn 0, player 1. A bust does not erase earlier banked points. Return true for an accepted action even when the outcome is bad; it means the action was legal, not that the player won.
 
 ```javascript file=pig.mjs
 import { rollFace } from './rng.mjs';
@@ -113,9 +121,19 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check pig.mjs"
 ```
 
+
+**Explore, then restore:** Use random ()=>0 to force a bust and ()=>.999 to force six. Compare which fields change. Then try hold at turn 0: false and no mutation. Restore your fixture state before each trial.
+
+
+Before checking, predict this observation: **busting loses the turn total, not banked points**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {newPig,move} from './pig.mjs';const s=newPig();s.scores=[8,12];s.turn=7;move(s,'roll',()=>0);assert.deepEqual(s.scores,[8,12]);assert.equal(s.turn,0);assert.equal(s.player,1);\""
+```
+
 ## Implement baseline
 
-This opponent holds at 10 unbanked, or earlier if banking wins. The threshold is a readable baseline, not a learned value.
+This hand-written opponent holds when unbanked turn >=10 or banking now wins. Otherwise it rolls. The second condition matters at bank 29, turn 2: it should win immediately rather than chase ten unbanked points. It reads state without changing it. Call it on a live decision state; legal-action masking will protect policy choices separately.
 
 ```javascript file=pig.mjs
 import { rollFace } from './rng.mjs';
@@ -159,9 +177,14 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check pig.mjs"
 ```
 
+
+**Explore, then restore:** Compare bank 0/turn 9 (roll), bank 0/turn 10 (hold), bank 29/turn 2 (hold). Explain which condition decides each outcome.
+
 ## Implement stateKey
 
-Represent the current player's own score, opponent score and turn total as comma-separated numbers. join joins array values into a string. Totals beyond the amount needed to win are equivalent for the roll/hold decision, so Math.min caps that coordinate. The current player's perspective matters when a trained table plays either seat.
+The same learned policy must work from either seat. own reads scores[player]; other reads scores[1-player]. A state with scores [4,9], player 1 and turn 3 becomes key "9,4,3". join(',') converts the three array entries to one string separated by commas.
+
+Cap unbanked points at TARGET-own. If own=28, turn 2 and turn 8 both permit an immediate winning hold. Treating those excess totals as the same state reduces the table; the hold outcome and capped roll successor behavior agree for this rule set. This abstraction is specific to short-match Pig, not a general rule for every game.
 
 ```javascript file=pig.mjs
 import { rollFace } from './rng.mjs';
@@ -209,6 +232,9 @@ The syntax check establishes that this file parses. It does not execute imports 
 ```check
 run "node --check pig.mjs"
 ```
+
+
+**Explore, then restore:** Compare keys for own 28 with turn 2 and 8: equal. Compare turn 1: different. Swap player and score order together and verify the relative key stays the same.
 
 ## Try it — Bank too soon
 

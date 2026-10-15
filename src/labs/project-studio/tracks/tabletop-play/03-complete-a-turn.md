@@ -11,9 +11,76 @@ The tray displays five dice and represents holds. Now connect rolling, scoring a
 
 Play a full Sixes turn and prevent a fourth roll or a second score.
 
+## Connect only rolling first {#roll-first}
+
+Use the existing renderer. Add roll and only its click listener. An early return is a **guard**: at rolls===3 or done===true it refuses the action before consuming randomness. Otherwise loop over the hand; only an unheld position receives a new face. Increment the roll counter once per click, outside the loop, then redraw.
+
+Predict which positions may change when only the second die is held. Run the page, roll once, hold that die, and roll twice more. Its value must remain unchanged. The fourth call must leave rolls at 3. Scoring and New turn deliberately remain unconnected at this intermediate checkpoint.
+
+```html file=index.html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabletop workshop</title>
+</head>
+<body>
+<main>
+<h1>Sixes practice</h1>
+<p id="budget"></p>
+<div id="dice"></div>
+<button id="roll">Roll</button>
+<button id="score">Score Sixes</button>
+<button id="reset">New turn</button>
+<p id="result" role="status"></p>
+</main>
+<script>
+const state = { dice: [1, 1, 1, 1, 1], held: [false, false, false, false, false], rolls: 0, done: false };
+function render() {
+  const tray = document.getElementById('dice');
+  tray.replaceChildren();
+  for (let i = 0; i < state.dice.length; i += 1) {
+    const button = document.createElement('button');
+    button.textContent = state.dice[i];
+    button.setAttribute('aria-pressed', String(state.held[i]));
+    button.disabled = state.rolls === 0 || state.done;
+    button.addEventListener('click', function () {
+      state.held[i] = !state.held[i];
+      render();
+    });
+    tray.append(button);
+  }
+  document.getElementById('budget').textContent = 'Rolls used: ' + state.rolls + ' / 3';
+  document.getElementById('roll').disabled = state.rolls === 3 || state.done;
+  document.getElementById('score').disabled = state.rolls === 0 || state.done;
+}
+function roll() {
+  if (state.rolls === 3 || state.done) return;
+  for (let i = 0; i < state.dice.length; i += 1) {
+    if (!state.held[i]) state.dice[i] = 1 + Math.floor(Math.random() * 6);
+  }
+  state.rolls += 1;
+  render();
+}
+document.getElementById('roll').addEventListener('click', roll);
+render();
+</script>
+</body>
+</html>
+```
+
+```check
+page index.html "(() => { roll(); roll(); roll(); roll(); return state.rolls; })()" "3"
+```
+
 ## Let state decide what is legal
 
-A guard is an early return that refuses an action before changing state. The UI disables buttons for clarity; the function guard also protects calls from other code. done records that scoring has ended the turn. Scoring reads the final hand once. reset prepares a new turn and clears every held flag.
+Now add score and reset, keeping roll as tested. In score, the first guard forbids scoring before the first roll and after a score already ended the turn. The accumulator begins at 0 and adds 6 for each matching die. Set done before rendering so the controls reflect the ended turn. `role="status"` on the result paragraph lets assistive technology announce updates.
+
+Reset restores rolls, done and each held flag. It clears result text with the empty string, then renders. It leaves the old face pictures as placeholders until the first new roll; they are not already-scored dice. Attach each listener once at setup, not inside render. Clicks should cause state changes; render should only display state.
+
+Predict the sequence: score before roll does nothing; roll then score ends the turn; a second score does nothing; reset allows rolling again. Test that sequence before trying the independent task.
 
 ```html file=index.html
 <!doctype html>
@@ -103,6 +170,9 @@ choice: Yes
 answer: No
 explain: Scoring ends a turn. Repeated input should be rejected by the rule guard.
 ```
+
+
+**Explore, then restore:** After a reset, hold controls must be unavailable until you roll. Temporarily omit done=false in reset and explain why a completed turn stays locked. Restore it and retest score → reset → roll.
 
 ## Try it — Leave one field stale
 

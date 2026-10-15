@@ -110,7 +110,7 @@ A matrix is a table of numbers: rows across, columns down. In NumPy it's an arra
 - `m[:, 2]` is column 2. The `:` alone is a slice with no start and no end, so it means "every row", and the 2 then picks position 2 from each of them.
 - `m[1, 2]` is the single number in row 1, column 2.
 
-Many NumPy operations can work along one direction of a matrix. `m.sum()` adds up every number; `m.sum(axis=0)` adds along **axis 0**, the rows, the first number in the shape. Adding along the rows collapses them, leaving one total per column. `axis=1` collapses the columns instead, leaving one total per row. Create `experiments/matrix_basics.py`:
+Many NumPy operations can work along one direction of a matrix. `m.sum()` adds up every number. `m.sum(axis=0)` works on **axis 0**, the first number in the shape, which counts the rows: it adds the rows together, row 0 plus row 1 and so on, down each column. The rows collapse into one, leaving one total per column. `axis=1` adds across each row instead, collapsing the columns and leaving one total per row. Create `experiments/matrix_basics.py`:
 
 ```python file=experiments/matrix_basics.py
 """A matrix: a table of numbers, as a 2-D NumPy array."""
@@ -136,7 +136,7 @@ choice: [ 6. 15.]
 choice: [5. 7. 9.]
 choice: 21.0
 answer: [5. 7. 9.]
-explain: `axis=0` is the rows, and adding along them collapses them: 1 + 4, 2 + 5 and 3 + 6, one total per column. `[ 6. 15.]` is `axis=1`, one total per row, and 21.0 is `m.sum()` with no axis at all.
+explain: `axis=0` counts the rows, and adding the rows together collapses them: 1 + 4, 2 + 5 and 3 + 6, one total per column. `[ 6. 15.]` is `axis=1`, one total per row, and 21.0 is `m.sum()` with no axis at all.
 verify: script columns_added.py
 ```
 
@@ -159,7 +159,7 @@ A row and a column both come out as plain vectors, printed the same way. NumPy d
 
 ```check
 run ".venv/Scripts/python experiments/matrix_basics.py" stdout="column 2: [3. 6.]" label="a column is read with m[:, 2]" -- The comma matters: m[:, 2] is column 2, while m[:2] is the first two rows.
-run ".venv/Scripts/python experiments/matrix_basics.py" stdout="each column added up: [5. 7. 9.]" label="axis=0 gives one total per column" -- m.sum(axis=0) adds along the rows, leaving a total for each column.
+run ".venv/Scripts/python experiments/matrix_basics.py" stdout="each column added up: [5. 7. 9.]" label="axis=0 gives one total per column" -- m.sum(axis=0) adds the rows together, leaving a total for each column.
 ```
 
 ## Texts as rows
@@ -168,7 +168,7 @@ Now the real matrix. Every text becomes one row: its count vector over a vocabul
 
 Two functions do it:
 
-- `text_vector(text, vocab)` makes one text's row. It splits the text into words with lesson 1.3's `split_words`, counts them with 4.1's `count_vector`, makes an array with `np.array`, and scales it with `unit`. A word that isn't in the vocabulary has no column, so `count_vector` leaves it out. That's what lets a question with new words in it still become a vector the matrix can be compared with.
+- `text_vector(text, vocab)` makes one text's row. It splits the text into words with Chapter 1's `split_words`, counts them with 4.1's `count_vector`, makes an array with `np.array`, and scales it with `unit`. A word that isn't in the vocabulary has no column, so `count_vector` leaves it out. That's what lets a question with new words in it still become a vector the matrix can be compared with.
 - `text_matrix(texts)` builds the vocabulary from all the texts with 4.1's `vocabulary`, makes every text's row, and turns the list of rows into one matrix with `np.array`, as the experiment did with its list of lists. It returns both as a tuple: the matrix, and the vocabulary that says what each column means.
 
 `Matrix` is a type alias like 4.2's `Vector`, and the same array type: NumPy's type hints don't record how many dimensions an array has, but the name tells a reader which to expect. Create `src/frontier/matrix.py`:

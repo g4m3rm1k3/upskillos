@@ -19,7 +19,9 @@ A 3D point has x, y and z coordinates. Here x is left/right, y is height and z i
 
 ## Give the scene a page
 
-The canvas is created by the renderer. This page supplies a host with height so it has space to appear. Run npm run dev and open /scratch/scene.html; bare package imports require the development server.
+The earlier SVG fit a two-dimensional coordinate rectangle. A WebGL renderer needs a canvas and a nonzero drawing area. This HTML supplies a host div; the renderer will create and append the canvas. The style gives the host height as well as width so it cannot collapse to an invisible zero-height region. The module script src points to scene.mjs in this same scratch folder.
+
+Use npm run dev and open /scratch/scene.html at the printed local address. A bare package import such as 'three' is resolved by Vite; opening this page as file:// does not perform that resolution. Before writing the script, inspect the empty host in DevTools and identify the space where the cube should appear.
 
 ```html file=scratch/scene.html
 <!doctype html>
@@ -42,9 +44,16 @@ The canvas is created by the renderer. This page supplies a host with height so 
 file scratch/scene.html
 ```
 
+
+**Explore, then restore:** Temporarily give the host a visible border and height 0, then restore its height. Explain why an empty area can result from layout rather than from the 3D camera. Keep the original dimensions for the next step.
+
 ## Draw once before animating
 
-PerspectiveCamera arguments are vertical field of view in degrees, aspect width/height, near clipping distance and far clipping distance. BoxGeometry arguments are width, height and depth. MeshBasicMaterial needs no light; 0x introduces a hexadecimal number. antialias smooths jagged edges. renderer.domElement is its canvas. setSize defines the drawing size; this first example is deliberately fixed at 600×300. render draws once. A later loop will draw repeatedly.
+Use a tabletop coordinate system: x goes left/right, y up/down and z forward/back. The origin (0,0,0) is our cube's center. A Scene contains objects; it does not draw itself. new constructs an instance of a library class, giving each scene its own state. `import * as THREE` exposes the package's named exports through the THREE namespace; the star does not mean multiplication here.
+
+PerspectiveCamera(45,2,0.1,100) takes vertical field of view in degrees, aspect width/height, near clipping distance and far clipping distance. Positions are scene units, not CSS pixels. Moving the camera to (0,2,5) changes where you view from; lookAt(0,0,0) changes where you view toward. A mesh combines BoxGeometry(1,1,1), a unit cube shape, with MeshBasicMaterial, a color surface that needs no lights. The hexadecimal number 0x... is JavaScript color input; it is not a CSS # string.
+
+WebGLRenderer creates the canvas. antialias:true requests smoother edges. setSize(600,300) defines its drawing dimensions; domElement is the actual canvas appended to our host. render(scene,camera) draws one frame. Nothing animates because no loop asks for a second frame. Read the target as these six responsibilities, not one incantation.
 
 ```javascript file=scratch/scene.mjs
 import * as THREE from 'three';
@@ -78,6 +87,9 @@ choice: It is the number of objects
 answer: 600 divided by 300 is 2
 explain: Aspect describes the display shape, not scene contents.
 ```
+
+
+**Explore, then restore:** Change only cube width from 1 to 2; predict a wider shape. Restore it and change only camera aspect from 2 to 1 without changing the canvas: predict distortion. Restore aspect 2. Explain why shape, viewpoint and display proportions are different causes of a changed image.
 
 ## Try it — Look away
 

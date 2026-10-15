@@ -13,9 +13,9 @@ Connect a named event handler and map a random number to a die face.
 
 ## The browser calls you later
 
-addEventListener registers a function to run when an event happens. The first argument names the event: click also covers keyboard activation of a native button. The second argument is the function itself. roll passes the function; roll() would call it immediately and pass its result. JavaScript finishes the current work, then handles later events. This is event-driven execution.
+First separate two moments: loading the page registers a listener; clicking later calls it. `addEventListener('click', roll)` passes the function itself. Writing roll() there would call it during setup and pass its result instead. A **callback** is a function given to other code to call later. The browser creates the click event and invokes our callback.
 
-Math is a standard object. Math.random() produces a number from zero inclusive to one exclusive. Multiply by 6 to get [0,6), use Math.floor to round downward to 0–5, and add 1 for 1–6. For random input 0.5, the trace is 0.5 → 3 → 3 → 4. It is suitable for a local game, not a security protocol.
+Math.random() returns a number at least 0 and less than 1. Multiply by 6 to get [0,6); Math.floor rounds downward to an integer 0–5; adding 1 gives 1–6. Trace inputs 0 → 1, 0.5 → 4 and 0.999 → 6. The right endpoint is excluded, so this mapping cannot produce 7. Randomness does not promise each face appears once in every six clicks. The callback updates a DOM property, so the new text becomes visible after it returns.
 
 ```html file=index.html
 <!doctype html>
@@ -56,6 +56,9 @@ choice: Only on the click
 answer: During setup
 explain: The parentheses call the function immediately; the return value is not your intended handler.
 ```
+
+
+**Explore, then restore:** Temporarily replace Math.random() with 0, then 0.999. Click and verify the two endpoints. Restore randomness. Move the +1 inside Math.floor without changing its value and explain why it still works here; remove +1 entirely and explain the invalid zero face.
 
 ## Try it — Remove chance from a test
 

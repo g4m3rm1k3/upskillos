@@ -13,9 +13,7 @@ Explain the learning operation with a hand-calculated case, then implement and t
 
 ## Work through the decision
 
-epsilon is the chance of a random legal action. If the source returns less than epsilon, select an index in legal actions; otherwise take the higher estimate. At an empty turn only roll is legal even if hold's number is larger. Tied or unseen rows use the explicit baseline. Evaluation sets epsilon to zero. That removes exploration but does not update or prove the table.
-
-
+Suppose a table strongly prefers holding, but the turn total is zero. The rules still permit only rolling. Now suppose both actions are legal and the table has never seen this state: it needs a way to try alternatives. We will separate permission, exploration and preference instead of treating a large estimate as permission.
 
 ```predict
 question: If hold has a high estimate at turn total zero, may the policy hold?
@@ -27,7 +25,11 @@ explain: Rule legality overrides model preference.
 
 ## Implement choose
 
-Add this definition to learning.mjs. Trace the variables against the worked example above; earlier definitions stay unchanged.
+First ask the rules for legal actions. The policy never gets to overrule that list. At turn=0 it contains only roll; at a positive turn it contains roll and hold. epsilon is a number from 0 to 1 giving the chance to explore. If random() < epsilon, draw another sample and map it to an index in the legal array with floor(sample * length). With epsilon .2, a first sample .1 explores; .8 does not. On a two-action list, a second sample .75 selects index 1, hold.
+
+If not exploring, a one-action list returns that sole action before reading estimates. Otherwise obtain the [roll,hold] row. Larger roll estimate chooses roll; larger hold estimate chooses hold. Equal values—including an unseen [0,0] row—use the explicit baseline rather than relying on an accidental array order. The function assumes a live decision with at least one legal action; callers stop at terminal states.
+
+Passing epsilon=0 removes exploration, but this function still consumes the first random sample for its comparison. That matters to reproducibility because choose and the dice share a random stream. It reads the table and returns an action; it neither performs that action nor updates the table.
 
 ```javascript file=learning.mjs
 import { seeded } from './rng.mjs';
@@ -60,6 +62,16 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check learning.mjs"
 ```
 
+
+**Explore, then restore:** Use a controlled sequence [.1,.75] at a positive turn with epsilon .2: predict hold through exploration. Repeat with epsilon 0 and row [1,-1]: predict roll through estimates. Then set turn 0 with row [-1,1]: legal masking must still choose roll.
+
+
+Before checking, predict this observation: **exploration samples a legal action and exploitation cannot choose an illegal hold**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {newPig,stateKey} from './pig.mjs';import {choose} from './learning.mjs';const s=newPig();s.turn=4;const samples=[.1,.75];assert.equal(choose({},s,.2,()=>samples.shift()),'hold');const table={[stateKey(s)]:[1,-1]};assert.equal(choose(table,s,0,()=>.8),'roll');s.turn=0;assert.equal(choose({[stateKey(s)]:[-1,1]},s,0,()=>.8),'roll');\""
+```
+
 ## Try it — Find evidence of the mistake
 
 On paper remove the legal.length===1 guard. A high invalid hold estimate can stall a match. Keep the guard and test an empty turn.
@@ -79,7 +91,7 @@ run "node --input-type=module -e \"import {solve} from './practice/02-explore-le
 ```
 
 ```hints
-nudge: Write one concrete input and expected output first.
-concept: Separate the boundary case from the usual calculation.
-shape: Implement the stated branch or formula, then run both normal and boundary cases.
+nudge: Check permission before comparing estimates.
+concept: An illegal hold must be ignored even if its number is largest.
+shape: Handle canHold=false first, then compare roll and hold with the required tie rule.
 ```

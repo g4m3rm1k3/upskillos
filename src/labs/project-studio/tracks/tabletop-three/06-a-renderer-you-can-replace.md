@@ -13,7 +13,7 @@ Load 3D on demand and recover to SVG if graphics is unavailable.
 
 ## Expose a view choice
 
-A checkbox represents an on/off preference. Its checked property is a Boolean. The canvas host already exists in the shell but stays hidden until selected.
+Add a labeled checkbox to the existing panel heading. Its checked DOM property is a Boolean indicating the user's preference. A native checkbox supplies keyboard operation; an arbitrary styled span would require rebuilding that behavior. The host is initially hidden so the regular SVG dice remain the default. This step only adds the control; the next step adds its change handler. Predict what clicking it does before that handler exists: its checkmark changes, but no canvas appears.
 
 ```html file=index.html
 <!doctype html>
@@ -55,9 +55,16 @@ A checkbox represents an on/off preference. Its checked property is a Boolean. T
 file index.html
 ```
 
+
+**Explore, then restore:** Tab to the checkbox and press Space. Confirm the checked state changes with a keyboard. Restore it to off before connecting the behavior.
+
 ## Load and release a view
 
-import(path) returns a Promise, a value representing work that may finish later. async marks a function that can await such work; await pauses that function until it settles without blocking all browser events. try/catch handles a rejection or thrown error. A generation counter identifies the newest request: if the user turns the view off while loading, an older completion must not resurrect it. Dispose the previous renderer before creating another. If creation fails, clear the checkbox and keep the SVG game usable.
+A module import may finish later. Dynamic import(path) returns a Promise representing a future success value or failure. async allows a function to await that promise; awaiting pauses this function, not the browser's entire event loop. On success the resolved module object contains makeTable. try/catch catches loading or construction failure and keeps the SVG controls usable.
+
+Walk a race on paper: turn on creates generation 1; turn off increments to 2; the first import completes. generation!==viewGeneration rejects that old completion, so it cannot create an unwanted canvas. Prefix ++ increments before returning the new number. Dispose any previous table before starting the replacement. hidden follows the current checkbox; early return handles off without importing.
+
+The renderDice change forwards the model's faces and holds to table.show when a table exists. The new change listener calls toggle3D; pagehide disposes the last view. These are the only new responsibilities in this snapshot. The controller connects resources owned by makeTable to rules owned by the game. A returned object with closures is enough; classes are optional architecture, not a prerequisite for composition.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -248,6 +255,9 @@ choice: Yes
 answer: No
 explain: The generation check rejects a stale completion.
 ```
+
+
+**Explore, then restore:** Open the game through the dev server, toggle 3D on and off quickly, then inspect the host: after off it should contain no canvas. Repeat on/off and verify only one canvas when enabled. Play using keyboard SVG buttons with 3D enabled to confirm both views use the same holds.
 
 ## Try it — Keep the fallback playable
 

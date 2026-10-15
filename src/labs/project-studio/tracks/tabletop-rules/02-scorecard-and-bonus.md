@@ -13,9 +13,7 @@ Implement the next rule boundary and explain it with known inputs before connect
 
 ## Turn the rule into examples
 
-Array(13).fill(null) creates thirteen empty entries. null means unused; 0 means used for no points. The ?? fallback in total adds an empty slot as zero without changing the card. Sum the first six categories separately: 63 or more earns 35. extra is a separate ledger for later 100-point Yahtzee bonuses. total returns a breakdown object so the UI can explain the arithmetic.
-
-
+Compare an unused Sixes box with a deliberately scored zero. They add the same amount to a sum, but only the first remains selectable. Next compare upper totals 62 and 63: one more point crosses the 35-point bonus threshold. Our data representation must preserve both distinctions.
 
 ```predict
 question: Does a recorded zero become an unused category again?
@@ -27,7 +25,9 @@ explain: Absence is null; a numeric zero is still a chosen score.
 
 ## Implement blankCard
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+An empty score box and a recorded zero must remain distinguishable even though both contribute zero to the total. Use null for unused and a number for used. Array(13) allocates an array of length thirteen; fill(null) writes null into every slot. Calling blankCard twice creates two separate object and array allocations. extra starts at 0 and records only later Yahtzee bonuses.
+
+Do not use Array(2).fill(blankCard()) for players: fill would repeat the same card reference. Repeating null is safe because null is a primitive absence value; repeating an object would share that object.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -80,9 +80,21 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check rules.mjs"
 ```
 
+
+**Explore, then restore:** Create a=blankCard() and b=blankCard(); set a.scores[0]=0. Expect b.scores[0] still null. Replace b=a temporarily, repeat and explain the aliasing; restore separate calls.
+
+
+Before checking, predict this observation: **a recorded zero on one card does not change another**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict'; import {blankCard} from './rules.mjs'; const a=blankCard(),b=blankCard();a.scores[0]=0;assert.equal(b.scores[0],null);\""
+```
+
 ## Implement total
 
-Add the named function to rules.mjs. Read its arguments, returned value and mutation boundary against the explanation above. Unchanged functions remain visible in the diff as context.
+Read each box with ?? 0, adding its numeric contribution to sum. For the first six indices also add to upper. The fallback does not write zeros into the card, so unused slots remain unused. The local upper variable is the upper-section sum; the returned upper property is the earned bonus, not that sum. This naming distinction matters when inspecting the result.
+
+With upper scores [3,6,9,12,15,18], upper is 63 and the bonus is 35. If lower scores contribute 20 and extra is 100, the result is base 83, upper 35, extra 100 and all 218. At upper 62 the bonus is 0. The conditional is repeated for the breakdown and the final sum; both must use >= 63. Return a fresh breakdown object without editing card.
 
 ```javascript file=rules.mjs
 import { rollFace } from './rng.mjs';
@@ -144,6 +156,16 @@ The syntax check establishes that this file parses. It does not execute imports 
 
 ```check
 run "node --check rules.mjs"
+```
+
+
+**Explore, then restore:** Compute the breakdown by hand, then run the check. Lower one upper face by a point: the overall total falls by 36, not 1, because the bonus disappears too. Restore the score. Explain why this discontinuity is a rule rather than an arithmetic bug.
+
+
+Before checking, predict this observation: **the breakdown is base 83, bonus 35, extra 100 and total 218**. The added check runs the actual exported function; it is separate from the syntax check.
+
+```check
+run "node --input-type=module -e \"import assert from 'node:assert/strict'; import {blankCard,total} from './rules.mjs'; const c=blankCard();c.scores.splice(0,6,3,6,9,12,15,18);c.scores[12]=20;c.extra=100;assert.deepEqual(total(c),{base:83,upper:35,extra:100,all:218});\""
 ```
 
 ## Try it — Reject a plausible mistake

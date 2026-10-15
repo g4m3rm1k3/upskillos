@@ -19,7 +19,9 @@ new Worker(new URL(path,import.meta.url),{type:"module"}) resolves the worker re
 
 ## Connect stopTraining
 
-Add this function. Read each new API against the explanation above, then identify the exact line where state can be replaced.
+Stop is a resource operation, not a model operation. If a worker exists, terminate it, then clear the worker reference. Re-enable Train and disable Stop so the controls match the new state. Do not set model=null: cancelling unfinished training must preserve the last completed policy and its Save action.
+
+Calling this function twice should be harmless. The second call sees null and just reapplies the same control state. This property is useful when both error handling and a user action request cleanup.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -226,9 +228,241 @@ The syntax check establishes that this file parses. It does not execute imports 
 run "node --check app.mjs"
 ```
 
+
+**Explore, then restore:** Trace stopTraining with worker=null and with an active worker. In both cases Train ends enabled and Stop disabled; model remains untouched. Identify the exact line that would violate preservation if someone added model=null.
+
+## Observe progress without replacing the model {#progress-before-model}
+
+First connect request creation, progress/error replies and cleanup. Deliberately do not install the returned model yet. The done branch only reports completion and stops the worker. This gives you a safe intermediate experiment: watch messages affect controls while the current opponent stays unchanged.
+
+The captured active object identifies this run; worker!==active rejects late messages after cancellation/replacement. The progress bar uses a fraction, not a raw episode count. Temporarily append startTraining() after this definition, refresh through the dev server and observe progress followed by the experimental completion message. The opponent remains the baseline. Remove the temporary call and add model installation in the next step.
+
+```javascript file=app.mjs
+import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
+import { newPig, move, baseline, TARGET, stateKey, actions } from './pig.mjs';
+import { choose, validateModel } from './learning.mjs';
+import { dieSVG } from './svg.mjs';
+
+const byId = function (id) { return document.getElementById(id); };
+let game = 'yahtzee';
+let yahtzee = newYahtzee();
+let pig = newPig();
+let model = null;
+let worker = null;
+let table = null;
+let thinkingTimer = null;
+let viewGeneration = 0;
+
+function say(message) { byId('status').textContent = message; }
+function isOver() { return game === 'yahtzee' ? yahtzee.done : pig.winner !== null; }
+function currentPlayer() { return game === 'yahtzee' ? yahtzee.player : pig.player; }
+
+function renderDice(animate) {
+  const faces = game === 'yahtzee' ? yahtzee.dice : [pig.face];
+  const held = game === 'yahtzee' ? yahtzee.held : [false];
+  const container = byId('dice');
+  // Retain focused controls across updates instead of replacing the entire row.
+  while (container.children.length > faces.length) container.lastElementChild.remove();
+  for (let i = 0; i < faces.length; i += 1) {
+    let button = container.children[i];
+    if (!button) {
+      button = document.createElement('button');
+      button.className = 'die';
+      button.addEventListener('click', function () { pick(i); });
+      container.append(button);
+    }
+    button.innerHTML = dieSVG(faces[i]) + (held[i] ? '<span class="held-label">HELD</span>' : '');
+    button.setAttribute('aria-label', `Die ${i + 1}: ${faces[i]}, ${held[i] ? 'held' : 'not held'}`);
+    button.setAttribute('aria-pressed', String(held[i]));
+    button.disabled = game !== 'yahtzee' || yahtzee.rolls === 0 || yahtzee.rolls === 3 || currentPlayer() !== 0 || isOver();
+  }
+  if (table) table.show(faces, held, animate);
+}
+
+function renderScores() {
+  const host = byId('scorecard');
+  host.replaceChildren();
+  if (game === 'pig') {
+    host.innerHTML = `<div class="pig-guide"><p>UNBANKED THIS TURN</p><strong>${pig.turn}</strong><p>Roll a 1 and lose these points.<br>Hold to bank them safely.</p><p>First to ${TARGET} banked points wins.<br>This workshop uses a short Pig match so you can train and compare quickly.</p></div>`;
+    return;
+  }
+  const sheet = document.createElement('table');
+  sheet.innerHTML = '<caption>Select a preview to use that category. A dash is an empty box.</caption><thead><tr><th scope="col">Category</th><th scope="col">You</th><th scope="col">Opponent</th></tr></thead>';
+  const body = document.createElement('tbody');
+  for (let i = 0; i < categories.length; i += 1) {
+    const row = document.createElement('tr');
+    const heading = document.createElement('th');
+    heading.scope = 'row';
+    heading.textContent = categories[i];
+    row.append(heading);
+    for (let player = 0; player < 2; player += 1) {
+      const cell = document.createElement('td');
+      const saved = yahtzee.cards[player].scores[i];
+      const possible = preview(yahtzee.cards[player], yahtzee.dice, i);
+      if (player === 0 && yahtzee.player === 0 && yahtzee.rolls > 0 && saved === null && possible !== null && !yahtzee.done) {
+        const button = document.createElement('button');
+        button.className = 'score-choice';
+        button.textContent = String(possible);
+        button.setAttribute('aria-label', `Score ${possible} in ${categories[i]}`);
+        button.addEventListener('click', function () {
+          if (scoreTurn(yahtzee, i)) { say(`${categories[i]} recorded. Opponent's turn.`); render(); queueOpponent(); byId('reset').focus(); }
+        });
+        cell.append(button);
+      } else cell.textContent = saved === null ? '—' : String(saved);
+      row.append(cell);
+    }
+    body.append(row);
+  }
+  for (const [label, key] of [['Upper bonus', 'upper'], ['Extra Yahtzees', 'extra'], ['Total', 'all']]) {
+    const row = document.createElement('tr');
+    if (key === 'all') row.className = 'total-row';
+    row.innerHTML = `<th scope="row">${label}</th><td>${total(yahtzee.cards[0])[key]}</td><td>${total(yahtzee.cards[1])[key]}</td>`;
+    body.append(row);
+  }
+  sheet.append(body);
+  host.append(sheet);
+}
+
+function render(animate = false) {
+  const y = game === 'yahtzee';
+  byId('yahtzee-tab').setAttribute('aria-pressed', String(y));
+  byId('pig-tab').setAttribute('aria-pressed', String(!y));
+  byId('game-title').textContent = y ? 'Your seat at the table' : 'Know when to walk away';
+  byId('game-kicker').textContent = y ? 'FIVE DICE / ENDLESS POSSIBILITIES' : 'ONE DIE / A LITTLE COURAGE';
+  byId('rules').textContent = y ? 'Roll up to three times. Select dice to hold. Choose one score category to finish your turn.' : `Roll to collect points. A 1 loses the turn total. Hold to bank it. First to ${TARGET} wins.`;
+  byId('opponent-label').textContent = !y && model ? 'YOUR Q-MODEL' : y ? 'HEURISTIC' : 'HOLD-AT-10';
+  byId('you-total').textContent = y ? total(yahtzee.cards[0]).all : pig.scores[0];
+  byId('bot-total').textContent = y ? total(yahtzee.cards[1]).all : pig.scores[1];
+  byId('turn-caption').textContent = isOver() ? 'MATCH COMPLETE' : currentPlayer() === 0 ? 'YOUR TURN' : 'OPPONENT’S TURN';
+  byId('roll-caption').textContent = y ? `${yahtzee.rolls} / 3 ROLLS` : `${pig.turn} AT RISK`;
+  byId('hold-help').textContent = y ? 'Select a die to hold it. Held dice have a gold outline.' : 'Keep rolling, or take what you have.';
+  byId('roll').disabled = isOver() || currentPlayer() !== 0 || (y && yahtzee.rolls >= 3);
+  byId('bank').hidden = y;
+  byId('bank').disabled = isOver() || currentPlayer() !== 0 || pig.turn === 0;
+  renderDice(animate);
+  renderScores();
+  if (isOver()) {
+    const a = y ? total(yahtzee.cards[0]).all : pig.scores[0];
+    const b = y ? total(yahtzee.cards[1]).all : pig.scores[1];
+    say(a === b ? 'A draw. A good reason for another round.' : a > b ? 'You won. Beautifully played.' : 'The opponent won. Another round?');
+  }
+}
+function pick(index) {
+  if (game === 'yahtzee' && currentPlayer() === 0 && holdDie(yahtzee, index)) render();
+}
+function humanRoll() {
+  if (isOver() || currentPlayer() !== 0) return;
+  if (game === 'yahtzee') { rollHand(yahtzee); say('Choose dice to hold, roll again, or take a score.'); }
+  else { move(pig, 'roll'); say(pig.face === 1 ? 'A 1. Turn points lost.' : `${pig.turn} unbanked. Roll or hold?`); }
+  render(true);
+  queueOpponent();
+}
+function queueOpponent() {
+  clearTimeout(thinkingTimer);
+  if (currentPlayer() !== 1 || isOver()) return;
+  thinkingTimer = setTimeout(function () {
+    if (game === 'yahtzee') {
+      rollHand(yahtzee);
+      const choice = greedyCategory(yahtzee.cards[1], yahtzee.dice);
+      const value = preview(yahtzee.cards[1], yahtzee.dice, choice);
+      scoreTurn(yahtzee, choice);
+      byId('thinking').textContent = `The simple baseline takes the highest immediate legal score: ${value} in ${categories[choice]}. It rolls once and does not plan ahead.`;
+    } else {
+      const action = model ? choose(model.table, pig, 0, Math.random) : baseline(pig);
+      byId('thinking').textContent = model ? `State ${stateKey(pig)}: the frozen Q-table chose ${action}. Unvisited or tied states use the baseline.` : `The baseline holds at 10 unbanked points, or as soon as banking wins. It chose ${action}.`;
+      move(pig, action);
+    }
+    say(currentPlayer() === 0 ? 'Your turn.' : 'The opponent is considering another roll.');
+    render(true);
+    queueOpponent();
+  }, 450);
+}
+function reset(next = game) {
+  clearTimeout(thinkingTimer);
+  game = next;
+  yahtzee = newYahtzee();
+  pig = newPig();
+  say('A fresh match. You go first.');
+  render();
+}
+
+async function toggle3D() {
+  const generation = ++viewGeneration;
+  if (table) { table.dispose(); table = null; }
+  byId('canvas-host').hidden = !byId('view3d').checked;
+  if (!byId('view3d').checked) return;
+  try {
+    const module = await import('./table3d.mjs');
+    if (generation !== viewGeneration) return;
+    table = module.makeTable(byId('canvas-host'), pick);
+    render();
+  } catch {
+    if (generation !== viewGeneration) return;
+    byId('view3d').checked = false;
+    byId('canvas-host').hidden = true;
+    say('3D is unavailable here. The SVG dice and all game controls still work.');
+  }
+}
+
+function inspectPolicy() {
+  const own = Number(byId('inspect-own').value);
+  const other = Number(byId('inspect-other').value);
+  if (!Number.isInteger(own) || !Number.isInteger(other) || own < 0 || own >= TARGET || other < 0 || other >= TARGET) return;
+  let bars = '';
+  for (let turn = 1; turn <= 20; turn += 1) {
+    const state = { scores: [own, other], turn, player: 0, winner: null };
+    const key = stateKey(state);
+    const row = model?.table[key];
+    const hold = choose(model?.table ?? {}, state, 0, function () { return 0.5; }) === 'hold';
+    const label = row ? `roll ${row[0].toFixed(2)}, hold ${row[1].toFixed(2)}` : 'unvisited: baseline';
+    bars += `<g><title>Turn ${turn}: ${hold ? 'hold' : 'roll'}; ${label}</title><rect x="${(turn - 1) * 32}" y="10" width="25" height="55" rx="4" fill="${hold ? '#b08535' : '#245d48'}"/><text x="${(turn - 1) * 32 + 12}" y="88" text-anchor="middle" font-size="11" fill="#183e34">${turn}</text></g>`;
+  }
+  byId('policy-chart').innerHTML = `<svg viewBox="0 0 640 105" role="img" aria-label="Pig action choices: green roll, gold hold, unbanked totals 1 to 20">${bars}</svg>`;
+}
+function stopTraining() {
+  if (worker) worker.terminate();
+  worker = null;
+  byId('train').disabled = false;
+  byId('cancel').disabled = true;
+}
+function startTraining() {
+  stopTraining();
+  const active = new Worker(new URL('./trainer.mjs', import.meta.url), { type: 'module' });
+  worker = active;
+  byId('train').disabled = true;
+  byId('cancel').disabled = false;
+  byId('training-status').textContent = 'Training on seed 7; evaluation uses separate seeds and balanced starting seats.';
+  byId('progress').value = 0;
+  active.onmessage = function (event) {
+    if (worker !== active) return;
+    const data = event.data;
+    if (data.type === 'progress') byId('progress').value = data.completed / data.count;
+    if (data.type === 'error') { byId('training-status').textContent = data.message; stopTraining(); }
+    if (data.type === 'done') { byId('training-status').textContent = 'Experiment completed; model not installed yet.'; stopTraining(); }
+  };
+  active.onerror = function () { if (worker === active) { byId('training-status').textContent = 'Worker failed. Run through the local server and retry.'; stopTraining(); } };
+  active.postMessage({ episodes: Number(byId('episodes').value) });
+}
+byId('roll').addEventListener('click', humanRoll);
+byId('bank').addEventListener('click', function () { if (currentPlayer() === 0 && move(pig, 'hold')) { render(); queueOpponent(); } });
+byId('reset').addEventListener('click', function () { reset(); });
+byId('yahtzee-tab').addEventListener('click', function () { reset('yahtzee'); });
+byId('pig-tab').addEventListener('click', function () { reset('pig'); });
+byId('view3d').addEventListener('change', toggle3D);
+render();
+```
+
+```check
+run "node --check app.mjs"
+```
+
 ## Connect startTraining
 
-Add this function. Read each new API against the explanation above, then identify the exact line where state can be replaced.
+Use the worker-message protocol explored in lesson 11.1. stopTraining first cancels an older instance. Construct the new module worker, assign worker=active and change controls before sending its request. Each callback closes over its own const active. If the current worker no longer equals that object, return immediately: a valid message can be obsolete.
+
+Progress sets completed/count on the fraction bar. An error message reports its text and stops the run. A done message first validates its model; only the returned compatible object is assigned to model. Read report fields as numbers, then use toLocaleString for count grouping and toFixed(1) for percentages. Multiplying a fraction by 100 converts it to a percentage for display, not for learning. The approximate interval belongs to this evaluation protocol. Save becomes enabled only with a completed model.
+
+After installation, stopTraining releases the finished worker, render updates the opponent label and inspectPolicy draws its current slice. onerror handles a worker loading/execution failure separately from an explicit error message. It also checks active ownership before changing controls. Finally postMessage sends Number(select.value), because options expose string values. No loop is running on the page thread.
 
 ```javascript file=app.mjs
 import { newYahtzee, rollHand, holdDie, scoreTurn, categories, preview, total, greedyCategory } from './rules.mjs';
@@ -470,26 +704,27 @@ answer: No
 explain: Only a validated completed result replaces it.
 ```
 
+
+**Explore, then restore:** Temporarily append startTraining() at the bottom of this module, refresh and watch one run finish. Remove that temporary call afterward; final event wiring will start it only on demand. Try Stop after the final wiring and verify the prior model remains available. Explain why validating after assigning model would make error recovery harder.
+
 ## Try it — Verify the failure path
 
 Start a large training run and press Stop, then start another. A stopped run must not overwrite the later completed model. The old Save button may remain usable for the previous completed model: explain that distinction. These interactions are fully connected in the next final-wiring step; perform them there before considering the milestone complete.
 
 
 
-## Your turn — Accept only a compatible version
+## Your turn — Ignore an obsolete result
 
-Define solve(candidate) returning true for a non-null object with version 1 and target 30, false otherwise. This is a small part of the full validator, not a substitute for it. Export the function as solve.
+Define solve(currentId,messageId,complete) returning true only when a non-null current run id matches the message run id and the message is complete. Use strict equality. A successfully completed old run is still obsolete.
 
-Write practice/04-complete-or-cancel.mjs independently. Try before opening hints. Keep the guided game intact. The checks establish the listed examples, not every possible input or the quality of your explanation. Record the observed result, explain its cause, and add a new case you chose.
-
-
+Write practice/04-complete-or-cancel.mjs independently and export solve. These checks establish the stated cases; explain the ownership rule and add one counterexample of your own.
 
 ```check
-run "node --input-type=module -e \"import {solve} from './practice/04-complete-or-cancel.mjs'; if (!(solve({version:1,target:30}) && !solve({version:1,target:100}) && !solve(null))) throw Error('Independent case failed'); console.log('PASS');\"" stdout="PASS"
+run "node --input-type=module -e \"import assert from 'node:assert/strict';import {solve} from './practice/04-complete-or-cancel.mjs';assert.equal(solve(2,2,true),true);assert.equal(solve(2,1,true),false);assert.equal(solve(null,null,true),false);assert.equal(solve(2,2,false),false);\""
 ```
 
 ```hints
-nudge: Check absence before reading properties.
-concept: && short-circuits after a false condition.
-shape: Require an object, matching version and matching target.
+nudge: Does matching null describe a real active run?
+concept: Completion, identity and active ownership are separate requirements.
+shape: Require a current id, an equal message id and a complete result together.
 ```

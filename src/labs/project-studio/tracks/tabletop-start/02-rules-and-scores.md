@@ -29,7 +29,9 @@ explain: Count the matching faces, then multiply by the face value.
 
 ## Give tabular data a structure
 
-Replace the introductory paragraph with a table.
+Before writing tags, draw a two-column table on paper: Category | Points, then Sixes | 12. Each row connects a name and a value. HTML should express that relationship even without decorative borders.
+
+`table` groups the cells; `caption` gives the whole table a name. `thead` groups the column-heading row, `tbody` the data rows. Every `tr` is one row. A `th` is a heading cell and a `td` a data cell. `scope="col"` makes a heading apply down its column; `scope="row"` applies across its row. Closing a row before starting the next prevents accidentally combining them. Replace the introductory paragraph with this table; leave the rest of the document shell intact.
 
 ```html file=index.html
 <!doctype html>
@@ -58,6 +60,9 @@ table groups related rows and columns. caption names the table; thead and tbody 
 ```check
 page index.html "document.querySelector('td').textContent" "12"
 ```
+
+
+**Explore, then restore:** Change 12 to 18 without changing the hand named in the caption: the browser faithfully displays a wrong game answer. Restore 12. Explain what HTML checks can establish and what requires a game-rule check.
 
 ## Try it — Count the wrong thing
 

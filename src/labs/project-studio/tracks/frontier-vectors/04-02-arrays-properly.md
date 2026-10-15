@@ -6,7 +6,7 @@ support: tests/conftest.py
 
 Lesson 3.4 used NumPy for speed and promised it properly later. This is later. Every model in this series keeps its numbers in arrays, NumPy's first and then PyTorch's tensors, which work the same way. So it's worth knowing exactly what an array is: what it holds, how to read parts of it, and one behaviour that surprises nearly everyone the first time.
 
-Then you rebuild lesson 4.1's cosine on arrays, and check it the way this series checks everything: against a version you already trust, to a tolerance you state. Your list version from 4.1 is that trusted version. Last, you take the length out of a vector altogether, which sets up the next lesson's trick: comparing one text with a thousand at once.
+Then you rebuild lesson 4.1's cosine on arrays, and check it the way this series checks everything: against a version you already trust, to a tolerance you state. Your list version from 4.1 is that trusted version. Last, you take the length out of a vector altogether, which sets up the next lesson's trick: comparing one text with a whole collection at once.
 
 ## Read the tests first
 
@@ -247,7 +247,7 @@ Each pass makes two random vectors, works the cosine out both ways (`.tolist()` 
 .venv\Scripts\python experiments/check_arrays.py
 ```
 
-When this lesson was written it printed `largest difference: 4.440892098500626e-16`. Yours may differ a little, or be `0.0`. Not zero, usually, because the two versions add up the same products in a different order: your generator expression goes left to right, while NumPy adds in blocks, several at a time. Lesson 2.6 showed that float addition rounds, so a different order rounds differently, by a step or two in the last bit.
+When this lesson was written it printed `largest difference: 4.440892098500626e-16`. Yours may differ a little, or be `0.0`. Not zero, usually, because the two versions add up the same products in different ways. Lesson 2.6 showed that float addition rounds. NumPy adds in blocks, several at a time, and keeps each addition's rounding. Python's `sum` (since Python 3.12) keeps track of what each addition rounded off and adds it back at the end, so your list version is, if anything, the more exact of the two. Two ways of adding round differently, by a step or two in the last bit.
 
 That's where the test's `rel_tol=1e-12` comes from. Rounding differences are around `1e-16`, ten thousand times smaller, so they pass. A real bug, a wrong number anywhere in the arithmetic, changes the answer far more than `1e-12`, so it fails. Choosing a tolerance always means that: well above the rounding, well below any mistake.
 
@@ -260,7 +260,7 @@ run ".venv/Scripts/python -m pytest -q tests/test_arrays.py -k agreement" label=
 
 A vector of length 1 is a **unit vector**. Any vector except zeros can be made into one by dividing every number by the vector's length: same direction, length taken out. In symbols, **v** / ‖**v**‖.
 
-Unit vectors make cosine simpler. Divide each vector by its length *first*, and the cosine is just their dot product, since both lengths are now 1: (**a** / ‖**a**‖) · (**b** / ‖**b**‖) = **a · b** / (‖**a**‖ ‖**b**‖), 4.1's rule. That's why it matters: next lesson turns a thousand texts into unit vectors once, and after that comparing with all of them is nothing but dot products.
+Unit vectors make cosine simpler. Divide each vector by its length *first*, and the cosine is just their dot product, since both lengths are now 1: (**a** / ‖**a**‖) · (**b** / ‖**b**‖) = **a · b** / (‖**a**‖ ‖**b**‖), 4.1's rule. That's why it matters: next lesson turns a whole collection of texts into unit vectors once, and after that comparing with all of them is nothing but dot products.
 
 **Build, on your own:** `unit(v)` at the end of `src/frontier/arrays.py`. It takes a `Vector` and returns a `Vector`: `v` divided by its length, every number at once, as dividing an array by a number did in 3.4. A vector of zeros raises a `ValueError` whose message contains `zeros`, checked before dividing.
 
