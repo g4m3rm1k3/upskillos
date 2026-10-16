@@ -38,6 +38,15 @@ await fs.cp(path.join(ptySrc, 'prebuilds'), path.join(ptyDst, 'prebuilds'), {
   recursive: true,
   filter: (src) => !src.endsWith('.pdb'),
 })
+// On macOS node-pty starts every shell through prebuilds/darwin-*/spawn-helper, which must be
+// executable ("posix_spawnp failed" otherwise). npm publishes it without the execute bit and
+// node-pty's own postinstall script adds it, but npm 11 skips install scripts until they are
+// approved, so a fresh `npm ci` (as on the release runners) leaves it -rw-r--r--. The packaged
+// app is read-only, so terminal.cjs can't fix it at run time: set it here.
+for (const dir of await fs.readdir(path.join(ptyDst, 'prebuilds'))) {
+  const helper = path.join(ptyDst, 'prebuilds', dir, 'spawn-helper')
+  if (await fs.stat(helper).then(() => true, () => false)) await fs.chmod(helper, 0o755)
+}
 
 // Copy the desktop-only language runtime installers (e.g. runtimes/python.cjs,
 // required by main.cjs) — these are small source files, not the actual

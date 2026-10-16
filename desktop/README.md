@@ -44,7 +44,18 @@ declares node-pty as its one dependency, because electron-builder packs only
 the modules it collects, and an empty `workspaces` field, so it collects them
 from staging rather than from the whole repository. To check a build, look for
 `resources/app.asar.unpacked/node_modules/node-pty` in `desktop/dist/win-unpacked`:
-without it the app opens, but its terminal can't start. Output lands in
+without it the app opens, but its terminal can't start. On macOS, node-pty
+starts every shell through `prebuilds/darwin-*/spawn-helper`, which must be
+executable: npm publishes it without the execute bit and node-pty's postinstall
+script adds it, but npm 11 skips install scripts until they are approved, so
+staging sets the bit itself (check with `ls -l` inside
+`UpSkillOS.app/Contents/Resources/app.asar.unpacked/node_modules/node-pty/prebuilds/`;
+without it every shell fails with "posix_spawnp failed"). Build the Mac app
+with plain `--mac`: `--mac dmg` on the command line replaces the config's
+x64 + arm64 with the build machine's own arch. Leave `CSC_LINK` unset rather
+than empty: on macOS electron-builder reads an empty one as a certificate path
+and fails with "desktop/staging not a file"; unset, it signs the arm64 app ad
+hoc, which Apple Silicon needs to run it. Output lands in
 `desktop/dist/`. See `PORTABLE_RELEASES.md` for the distribution model
 (portable exe, not an installer; user data lives outside the app
 folder so updates don't clobber it).

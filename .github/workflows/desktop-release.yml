@@ -21,7 +21,9 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-            eb_args: '--mac dmg'
+            # Just --mac: the staged config's dmg target lists x64 and arm64. `--mac dmg` on the
+            # command line replaces that with the runner's own arch only (arm64), so no Intel build.
+            eb_args: '--mac'
             artifact: 'desktop/dist/*.dmg'
           - os: windows-latest
             platform: win
@@ -83,9 +85,12 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # No signing certificate: don't look for one in the keychain. CSC_LINK and
+          # WIN_CSC_LINK must be left unset, not set to '': on macOS electron-builder reads
+          # an empty CSC_LINK as a certificate path, resolves it to the project folder and
+          # fails with "desktop/staging not a file". Unset, it signs the Mac app ad hoc,
+          # which Apple Silicon needs to run it at all.
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_LINK: ''
-          WIN_CSC_LINK: ''
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
