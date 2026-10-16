@@ -118,3 +118,15 @@ export function MoveCard({ moveId }) {
     </div>
   )
 }
+
+// A − value + control. Buttons are labelled "fewer <label>" and "more <label>".
+export function Stepper({ label, value, min = 1, max = 12, step = 1, onChange }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-slate-400">{label}</span>
+      <button type="button" aria-label={`fewer ${label}`} disabled={value - step < min} onClick={() => onChange(value - step)} className="h-8 w-8 rounded-lg border border-slate-700 font-bold hover:bg-slate-800 disabled:opacity-40">−</button>
+      <strong className="w-8 text-center text-xl text-amber-300">{value}</strong>
+      <button type="button" aria-label={`more ${label}`} disabled={value + step > max} onClick={() => onChange(value + step)} className="h-8 w-8 rounded-lg border border-slate-700 font-bold hover:bg-slate-800 disabled:opacity-40">+</button>
+    </div>
+  )
+}

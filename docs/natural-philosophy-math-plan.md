@@ -182,7 +182,14 @@ Number, Structure. Rigor 0 to 2.
 
 ### 2. Measuring the land
 Egypt and Babylon. Shape, Number, Measurement.
-Re-measuring fields after the Nile flood; areas by cutting and rearranging; unit fractions and the Rhind papyrus; false position (work backwards); the Babylonian base 60, and why an hour still has 60 minutes; YBC 7289 and √2 to six decimal places; Plimpton 322 and right triangles.
+1. **After the flood:** re-measuring fields when the Nile washed the boundary stones away (Herodotus, labelled as his guess). Area is a count of squares; a rectangle is rows × columns; odd shapes split into rectangles.
+2. **Cut and move:** a slanted field cut and rearranged into a rectangle. Cutting and moving never changes area; a triangle is half of two copies (Rhind problem 51).
+3. **Sharing loaves:** fractions as fair shares; the Egyptian way of building a share from unit fractions (6 loaves for 10 workers: ½ + 1/10, Rhind problem 3).
+4. **The false guess:** "a quantity and its seventh make 19" (Rhind problem 24). Guess, see how far off you are, and scale.
+5. **Why sixty?** 60 can be shared evenly in many ways; rectangles of pebbles show the ways. Minutes and seconds come from it.
+6. **Doubling the square:** the square on a square's diagonal is twice as big (Plato's *Meno*); YBC 7289 and its diagonal of a square, accurate to less than one part in a million. The exact length is left as the question for Episode 4.
+7. **Squares on a triangle:** for a triangle with a square corner (a right angle), the two small squares fill the big one. A rearrangement proof; Plimpton 322; a Babylonian problem with a beam against a wall. The 3-4-5 rope-stretcher story is labelled as unsupported.
+8. **The temple's rule:** the Edfu surveyors' rule for four-sided fields (average the opposite sides, then multiply) is too big whenever a side slants. Test a rule on a case you can check.
 
 ### 3. A stick, a shadow and the size of the Earth
 Shape, Measurement. Trigonometry's first appearance.
@@ -263,4 +270,5 @@ Parts II to V get their own episode maps when Part I is under way.
 |---|---|
 | Plan | Written 2026-10-15 |
 | Moment 1.3 prototype | Built 2026-10-16 (`src/labs/book-of-nature/`); user approved it as the bar |
-| Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16. Next: Episode 2, Measuring the land |
+| Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
+| Episode 2 | Complete: 2.1 to 2.8 written, browser-checked and reviewed as a whole on 2026-10-16. Next: Episode 3, A stick, a shadow and the size of the Earth |
