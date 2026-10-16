@@ -410,6 +410,18 @@ export default function AppShell({ children }) {
     return () => window.removeEventListener('oc-open-reference', handler);
   }, []);
 
+  // A reference overlay is a lookup over the current page, so going anywhere (Home, a lesson,
+  // the Back button) closes it. location.key changes on every navigation, even to the same
+  // address, so clicking Home while already home still closes it.
+  useEffect(() => { setReferenceKey(null); }, [location.key]);
+
+  useEffect(() => {
+    if (!referenceKey) return;
+    const onKey = (e) => { if (e.key === 'Escape' && !e.defaultPrevented) setReferenceKey(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [referenceKey]);
+
   useEffect(() => {
     const openScratch = (e) => {
       if (isMobile) return;
@@ -770,7 +782,9 @@ export default function AppShell({ children }) {
             {polyOpen && <PolyCalc onClose={() => setPolyOpen(false)} />}
             {laOpen && <LinearAlgebraCalc onClose={() => setLaOpen(false)} />}
             {referenceKey && (
-              <div style={{ position: "fixed", inset: 0, zIndex: 300 }}>
+              // Below the 52px nav bar, which is drawn above it: starting at the top hid the
+              // overlay's own header and its close button behind the nav.
+              <div style={{ position: "fixed", top: 52, left: 0, right: 0, bottom: 0, zIndex: 300 }}>
                 <ReferenceOverlay activeKey={referenceKey} onClose={() => setReferenceKey(null)} />
               </div>
             )}
