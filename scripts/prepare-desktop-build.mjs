@@ -27,7 +27,11 @@ for (const f of processFiles) await fs.copyFile(path.join(appDir, f), path.join(
 const ptySrc = path.join(root, 'node_modules', 'node-pty')
 const ptyDst = path.join(staging, 'node_modules', 'node-pty')
 await fs.mkdir(ptyDst, { recursive: true })
-await fs.copyFile(path.join(ptySrc, 'package.json'), path.join(ptyDst, 'package.json'))
+// Its package.json without its dependencies: node-addon-api isn't staged, and electron-builder's
+// `npm list` would report it missing.
+const ptyPkg = JSON.parse(await fs.readFile(path.join(ptySrc, 'package.json'), 'utf8'))
+delete ptyPkg.dependencies
+await fs.writeFile(path.join(ptyDst, 'package.json'), JSON.stringify(ptyPkg, null, 2) + '\n')
 await fs.copyFile(path.join(ptySrc, 'LICENSE'), path.join(ptyDst, 'LICENSE'))
 await fs.cp(path.join(ptySrc, 'lib'), path.join(ptyDst, 'lib'), { recursive: true })
 await fs.cp(path.join(ptySrc, 'prebuilds'), path.join(ptyDst, 'prebuilds'), {
@@ -56,11 +60,21 @@ const stagingPkg = {
   author:      appPkg.author ?? '',
   license:     appPkg.license ?? 'GPL-3.0-or-later',
   main:        'main.cjs',
+  // electron-builder fills the app's node_modules only with the dependencies it collects (a
+  // node_modules pattern in `files` adds nothing), so node-pty must be declared: before this,
+  // releases shipped without it and the terminal could not start.
+  dependencies: { 'node-pty': ptyPkg.version },
+  // Makes staging its own workspace root. electron-builder otherwise walks up to the nearest
+  // package.json with a workspaces field (the repository's), collects every package the website
+  // uses from there, and ran out of memory doing it.
+  workspaces:  [],
 
   build: {
     appId:       'org.opencalc.desktop',
     productName: appPkg.productName ?? 'UpSkillOS',
     electronVersion,
+    // node-pty's prebuilt binaries use N-API, so they load in Electron as they are; nothing is compiled.
+    npmRebuild: false,
 
     directories: {
       output: '../../desktop/dist',

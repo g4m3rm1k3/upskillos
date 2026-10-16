@@ -39,7 +39,12 @@ frontend (`vite build`), assembles `desktop/staging/`
 (`scripts/prepare-desktop-build.mjs` — copies every `.cjs` file in
 `desktop/app/`, `runtimes/` and node-pty, and writes the electron-builder
 config with the installed Electron version), then runs
-electron-builder against that staging directory. Output lands in
+electron-builder against that staging directory. The staged `package.json`
+declares node-pty as its one dependency, because electron-builder packs only
+the modules it collects, and an empty `workspaces` field, so it collects them
+from staging rather than from the whole repository. To check a build, look for
+`resources/app.asar.unpacked/node_modules/node-pty` in `desktop/dist/win-unpacked`:
+without it the app opens, but its terminal can't start. Output lands in
 `desktop/dist/`. See `PORTABLE_RELEASES.md` for the distribution model
 (portable exe, not an installer; user data lives outside the app
 folder so updates don't clobber it).
