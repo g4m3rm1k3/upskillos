@@ -253,7 +253,14 @@ export default function TsLab({ onBack }) {
               editorRef.current = editor
               // Let top-level await work without errors — the sandbox wraps code
               // in an async IIFE at runtime so this is always valid.
+              // These options are shared by every TypeScript editor in the app, so
+              // keep the others' settings. allowNonTsExtensions above all: the
+              // editor's model is 'inmemory://model/1', with no .ts, and without
+              // it TypeScript leaves the file out ("Could not find source file")
+              // and nothing is ever underlined.
               monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+                ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
+                allowNonTsExtensions: true,
                 target: monaco.languages.typescript.ScriptTarget.ESNext,
                 module: monaco.languages.typescript.ModuleKind.ESNext,
                 strict: false,

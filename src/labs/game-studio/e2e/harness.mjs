@@ -1,6 +1,6 @@
 // Shared by Game Studio's browser tests: start a dev server on its own port, open a
 // fresh browser profile at Game Studio, record checks, and always clean up.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
@@ -11,8 +11,11 @@ export async function withGameStudio(port, body, opts = {}) {
   const hash = opts.hash ?? '#/lab/game-studio', ready = opts.ready ?? 'projects-dialog';
   const results = [];
   const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? '✓' : '✗'} ${name}${detail ? `  (${detail})` : ''}`); };
-  const server = spawn('npx', ['vite', '--port', String(port), '--strictPort'], { stdio: 'ignore', detached: true });
-  const stopServer = () => { try { process.kill(-server.pid); } catch { /* already gone */ } };
+  // Windows has only npx.cmd, so the server runs under a shell there, and its whole process tree is
+  // ended (/T); elsewhere it gets its own process group, which is ended as one.
+  const win = process.platform === 'win32';
+  const server = spawn('npx', ['vite', '--port', String(port), '--strictPort'], { stdio: 'ignore', ...(win ? { shell: true } : { detached: true }) });
+  const stopServer = () => { try { win ? spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F']) : process.kill(-server.pid); } catch { /* already gone */ } };
   process.on('exit', stopServer);
   let browser, page;
   try {
@@ -33,7 +36,7 @@ export async function withGameStudio(port, body, opts = {}) {
     // Game Studio asks its own questions (store.ask); a browser confirm() box would be a mistake, so any
     // is answered "no", as a browser that blocks dialogs would, rather than accepted.
     page.on('dialog', (d) => d.dismiss());
-    await page.goto(`http://localhost:${port}/${hash}`);
+    await page.goto(`http://localhost:${port}/${hash}`, { timeout: 120000 }); // the first visit compiles the app
     await page.getByTestId(ready).waitFor({ timeout: 60000 });
     const max = page.locator('button[title="Maximize"]');
     if (await max.count()) await max.first().click();
