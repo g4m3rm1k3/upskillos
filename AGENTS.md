@@ -36,6 +36,7 @@ There is no `src/content/` folder and no chapter `index.js` to register lessons 
 | `src/data/projectFacts.json`, `docs/generated/project-inventory.md` | `npm run facts` |
 | `src/data/codebaseGraph.js` | `npm run graph` |
 | `src/concepts/manifest.ts`, `src/practice/manifest.ts`, `src/posts/manifest.ts` | `npm run manifests` |
+| `src/reference/special-characters-tables.js` | `python3 scripts/build_special_characters.py` (on a Mac with the US keyboard layout, it also re-reads the Option keys) |
 
 `npm run dev` and `npm run build` regenerate all of these first. `npm run facts` runs the lesson title and id steps too.
 
@@ -48,6 +49,7 @@ There is no `src/content/` folder and no chapter `index.js` to register lessons 
 | A Project Studio lesson (`src/labs/project-studio/tracks/`) | `npx vitest run src/labs/project-studio --exclude "**/*.desktop.test.js"` |
 | A Notebook Lab series lesson (`src/tools/notebook-lab/series/`) | `node scripts/check_notebook_series.mjs <lesson-id>`; format and standard in [docs/notebook-series-curriculum.md](docs/notebook-series-curriculum.md) |
 | Add a visualization or notebook to a lesson | Read [docs/lesson-visualizations-and-notebooks.md](docs/lesson-visualizations-and-notebooks.md) first, then **open the lesson in a browser** — neither checker can tell whether a notebook's cells actually reached the page |
+| `src/reference/special-characters-data.js` | `python3 scripts/build_special_characters.py`, then `npx vitest run src/reference src/pages/SpecialCharactersPage.test.jsx` |
 | A component with tests beside it | `npx vitest run <folder>` |
 | `package.json` scripts | [docs/contributing/setup.md](docs/contributing/setup.md) if a documented command changed |
 | Any Markdown in `AGENTS.md`, `CONTRIBUTING.md` or `docs/contributing/` | `npm run docs:check` |
