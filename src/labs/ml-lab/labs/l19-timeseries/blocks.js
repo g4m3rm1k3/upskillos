@@ -1,7 +1,11 @@
 // Lesson order for Lab 19: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l19-order': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 05 and 06", body: [
+      "From Lab 05: the correlation r = Σ(x − x̄)(y − ȳ) / √(Σ(x − x̄)² · Σ(y − ȳ)²) lies between −1 and 1 and says how closely two quantities move together along a straight line.",
+      "From Lab 06: when data has a time order, train on the past and validate on the future, max t(train) < min t(val). A random split lets the model peek at the future."
+    ] } }, { p: 1 },
     { figure: 'Components', caption: 'Untick components to see what each one contributes to two weeks of usage.' },
     { cell: 0 },
     { p: 2 },

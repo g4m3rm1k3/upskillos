@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
+import { checkKey, legacyBlock } from '../python-steps/progress.js'
 import ToolTask from './ToolTask.jsx'
 import LessonText from './LessonText.jsx'
 import { useNotebook, NotebookCell, NotebookToolbar } from './notebook/LessonNotebook.jsx'
@@ -72,13 +73,14 @@ function Flow({ lab, lesson, nb, saved, onSave, onUpdate, onReview, renderMath, 
   const blocks = lesson.blocks
   const placed = { p: new Set(), cell: new Set(), math: false, derivation: false }
   blocks.forEach(b => { if (b.p != null) placed.p.add(b.p); if (b.cell != null) placed.cell.add(b.cell); if (b.math) placed.math = true; if (b.derivation) placed.derivation = true })
-  const solved = saved.predicted ?? []
+  // Predictions are saved by prompt; older progress saved block positions (see python-steps/progress.js).
+  const solved = [...new Set((saved.predicted ?? []).map(k => (typeof k === 'number' ? checkKey(legacyBlock(lesson, k)) : k)).filter(Boolean))]
   const markSolved = k => { if (!solved.includes(k)) onSave({ ...saved, predicted: [...solved, k] }) }
   const render = (b, k) => {
     if (b.p != null) return <Prose key={k} lesson={lesson} i={b.p} />
     if (b.figure) return <Figure key={k} figures={figures} block={b} />
     if (b.cell != null) return nb ? <NotebookCell key={k} nb={nb} i={b.cell} inline /> : null
-    if (b.predict) return <Predict key={k} spec={b.predict} done={solved.includes(k)} onDone={() => markSolved(k)} />
+    if (b.predict) return <Predict key={k} spec={b.predict} done={solved.includes(b.predict.prompt)} onDone={() => markSolved(b.predict.prompt)} />
     if (b.math) return <React.Fragment key={k}>{renderMath()}</React.Fragment>
     if (b.derivation) return <React.Fragment key={k}>{renderDerivation()}</React.Fragment>
     if (b.bridge) return <details key={k} className="ml-bridge"><summary>{b.bridge.label ?? `Refresher (optional): ${b.bridge.title}`}</summary>{b.bridge.body.map((t, j) => <p key={j}><LessonText>{t}</LessonText></p>)}{b.bridge.code && <pre className="ml-bridge-code"><code>{b.bridge.code}</code></pre>}{b.bridge.output && <><p className="ml-caption">Output:</p><pre className="ml-bridge-code"><code>{b.bridge.output}</code></pre></>}</details>

@@ -1,7 +1,11 @@
 // Lesson order for Lab 51: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l51-beyond': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 18, 46 and 49", body: [
+      "Lab 18: PCA finds the directions along which the data varies most (the eigenvectors of its covariance matrix) and projects onto the first few.",
+      "Lab 49: kernel PCA does the same after a non-linear feature map. Lab 46: KL(p ‖ q) = Σ p log(p/q) measures how different two distributions are."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { predict: { prompt: 'A colour photo of 64 × 64 pixels with 3 colour channels has how many dimensions?', answer: 12288, explain: '64 × 64 × 3 = 12,288 — yet the photos of one face vary along only a handful of factors.' } },
     { p: 3 }, { p: 4 },

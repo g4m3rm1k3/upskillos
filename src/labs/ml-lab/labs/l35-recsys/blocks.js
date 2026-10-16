@@ -1,7 +1,11 @@
 // Lesson order for Lab 35: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l35-feedback': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03, 06 and 10", body: [
+      "Lab 10: k-NN predicts from the most similar examples. Lab 03: a matrix's row i is one observation; here a row will be one user and a column one item.",
+      "Lab 06: evaluate on data held out from training. For recommendations, hide some of each user's interactions and see whether they are recovered."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'In the cell, popularity recommends five tutorials to a user who likes Statistics most. How many of the five does that user probably like (true click chance above 0.5)?', answer: 0, explain: 'None: the list is the crowd’s favourites (four intro tutorials and Python practice), with true click chances between 0.16 and 0.28. Popularity is a strong average and a poor fit for anyone unlike the average.' } },
     { p: 4 },

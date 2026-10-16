@@ -1,7 +1,10 @@
 // Lesson order for Lab 29: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l29-modes': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 28", body: [
+      "Lab 28: a data contract states what each column must be (type, range, allowed values) and what happens to rows that break it. A run is identified by hashes of its data, configuration and code, so any model can be traced and rebuilt."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { predict: { prompt: 'A nightly job scores 3.6 million records in one hour. How many records per second is that?', answer: 1000, explain: '3,600,000 / 3,600 s = 1,000 per second — and no single record has a latency budget.' } },
     { p: 3 }, { p: 4 },

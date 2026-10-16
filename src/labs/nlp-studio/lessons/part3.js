@@ -53,6 +53,26 @@ To count, a program needs text as numbers. The simplest way: pick a **vocabulary
             ],
           },
         },
+        { added: true, h: 'From text to a vector, with real values' },
+        { added: true, md: `Three steps turn text into numbers, and every later part of the lab reuses them. On two tiny documents:
+
+\`\`\`python
+docs = [words("The dog bit the man."), words("The man fed the dog and the cat.")]
+# [['the', 'dog', 'bit', 'the', 'man'],
+#  ['the', 'man', 'fed', 'the', 'dog', 'and', 'the', 'cat']]       1. text -> a list of words
+
+vocab = build_vocab(docs)
+# {'and': 0, 'bit': 1, 'cat': 2, 'dog': 3, 'fed': 4, 'man': 5, 'the': 6}
+#                                                                   2. each word -> a column number
+
+[vectorize(d, vocab) for d in docs]
+# [[0, 1, 0, 1, 0, 1, 2],
+#  [1, 0, 1, 1, 1, 1, 3]]                                           3. each text -> one count per column
+\`\`\`
+
+Read a vector by its columns: the first document has \`bit\` once (column 1), \`dog\` once (3), \`man\` once (5) and \`the\` twice (6). \`vocab\` is the key to every vector: \`vector[vocab["the"]]\` is how many times "the" appears. A new text is counted against the **same** vocabulary, so "A cat bit a dog" becomes \`[0, 1, 1, 1, 0, 0, 0]\`: "a" isn't in the vocabulary, so it isn't counted at all.
+
+This word → number step comes back in every later part: Part 4's word vectors are rows looked up by a word's number, and Part 5's language models work on token numbers.` },
         { figure: 'BagOfWords', caption: 'Each row is a document as a vector: one column per vocabulary word. Darker cells are bigger counts. Edit the documents and watch the columns change.' },
         {
           write: {
@@ -292,6 +312,7 @@ A word's **TF-IDF** weight in a document is its count there (its **term frequenc
       goal: 'Derive Bayes’ rule, train a spam filter by counting, read every term of its score, and see why it works in log space.',
       builds: ['ngrams'],
       blocks: [
+        { added: true, kind: 'recall', note: 'A probability estimated by counting is a count divided by a total: if "refund" is 3 of a class\'s 60 words, $P(\\text{refund}) = 3/60$ (lesson 3.2). A word never seen gets probability 0, which smoothing fixes by adding a small number $k$ to every count; and multiplying many small probabilities is done by adding their logs instead (lesson 3.2).' },
         { h: 'Learning from labelled examples' },
         { md: `Here are 40 short messages, each labelled **spam** or **ham** (not spam). A **classifier** learns from labelled examples to label new ones it has never seen. This is the first thing in the lab that **learns**: nobody writes a rule saying "free" is suspicious; the counts discover it.
 

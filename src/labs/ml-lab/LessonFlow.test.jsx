@@ -44,13 +44,18 @@ describe('ordered lesson blocks', () => {
       }
     }, 60000)
   }
+  it('reads a prediction saved by its old position as answered', async () => {
+    const lab = labs.find(l => l.number === 37), lesson = lab.lessons[0]
+    render(<LessonFlow lab={lab} lesson={lesson} saved={{ predicted: [6] }} onSave={() => {}} renderMath={() => null} renderDerivation={() => null} />)
+    expect(screen.getByText(/^Right: /)).toBeTruthy()
+  })
   it('renders paragraphs, figures and predictions in order, and checks a prediction', async () => {
     const lab = labs.find(l => l.number === 37), lesson = lab.lessons[0], saved = {}
     const onSave = vi.fn()
     render(<LessonFlow lab={lab} lesson={lesson} saved={saved} onSave={onSave} renderMath={() => <p>math block</p>} renderDerivation={() => <p>derivation block</p>} />)
     await vi.waitFor(() => expect(screen.getByRole('img', { name: /Robot at state/ })).toBeTruthy(), { timeout: 4000 })
     const order = [...document.querySelectorAll('.ml-flow > *')].map(n => n.className.split(' ')[0])
-    expect(order.slice(0, 4)).toEqual(['ml-reading-section', 'ml-reading-section', 'ml-inline-figure', 'ml-nb-cell'])
+    expect(order.slice(0, 5)).toEqual(['ml-reading-section', 'ml-bridge', 'ml-reading-section', 'ml-inline-figure', 'ml-nb-cell'])   // the refresher follows the first paragraph
     fireEvent.click(screen.getByRole('button', { name: 'Move up' }))
     expect(screen.getByRole('table', { name: 'Transition log' }).textContent).toContain('up')
     const input = screen.getAllByLabelText('Your prediction')[0]
@@ -59,7 +64,7 @@ describe('ordered lesson blocks', () => {
     expect(screen.getByText(/forgets that the random draw/)).toBeTruthy()
     fireEvent.change(input, { target: { value: '0.7' } })
     await act(async () => { fireEvent.submit(input.closest('form')) })
-    expect(onSave).toHaveBeenCalledWith({ predicted: [6] })
+    expect(onSave).toHaveBeenCalledWith({ predicted: [lesson.blocks.find(b => b.predict).predict.prompt] })   // saved by prompt, not position
     expect(screen.getByText('math block')).toBeTruthy()
   })
   it('a refresher is closed until opened, and a tool task opens its tool in a new tab after preparing it', async () => {

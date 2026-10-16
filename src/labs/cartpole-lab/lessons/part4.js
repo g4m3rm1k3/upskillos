@@ -77,6 +77,7 @@ $\\eta$ (eta) is the **learning rate**. Repeat. That is gradient descent, and it
       goal: 'Turn weights and a state into a score per push with a dot product, turn scores into probabilities with softmax, and sample a push.',
       builds: ['gradient-descent'],
       blocks: [
+        { added: true, kind: 'recall', note: 'From here on the learner sees the **four real numbers** again, $\\mathbf s = (x, \\dot x, \\theta, \\dot\\theta)$, not a slot row: no table, no slots. A **dot product** multiplies two lists entry by entry and adds the products, the same weighted sum as the neuron of lesson 4.1.' },
         { md: `Parts 3 learned **values** and acted greedily on them. Now learn the **policy itself**: a function that, given the state, gives a probability for each push,
 
 $$\\pi(a \\mid s) = \\text{the probability of pushing } a \\text{ in state } s$$

@@ -15,7 +15,7 @@ export const PART2 = {
       goal: 'Read and build `P[s][a]`, the complete description of what every move does, including slippery moves that have several possible results; and say what a **Markov decision process** is.',
       builds: ['actions-and-moves', 'agent-environment-loop'],
       blocks: [
-        { note: 'A **state** `s` is a cell\'s number, `row * n_cols + col` (lesson 1.1). An **action** `a` is a move\'s number: 0 left, 1 up, 2 right, 3 down (lesson 1.2). `move(s, a)` returns a triple `(next_state, reward, terminated)`. This lesson\'s table `P` is looked up with both: `P[s][a]`.', kind: 'recall' },
+        { added: true, note: 'A **state** `s` is a cell\'s number, `row * n_cols + col` (lesson 1.1). An **action** `a` is a move\'s number: 0 left, 1 up, 2 right, 3 down (lesson 1.2). `move(s, a)` returns a triple `(next_state, reward, terminated)`. This lesson\'s table `P` is looked up with both: `P[s][a]`.', kind: 'recall' },
         { md: `So far each move had exactly one result: RIGHT from \`(0, 0)\` always lands on \`(0, 1)\`. On the frozen lake that isn't true. The ice is slippery: the elf moves the way it meant to only **one time in three**; the other two times it slides sideways, a quarter turn to the left or to the right of where it meant to go.
 
 A world like that can't be described by a function that returns *one* next state. It needs, for every state and action, a **list of possible results, each with its probability**. Collected for all states and actions, that is the **transition table**, \`P\`:
@@ -54,8 +54,8 @@ This is exactly the layout Gymnasium uses for its grid worlds (\`env.unwrapped.P
             ],
           },
         },
-        { h: 'Reading P one bracket at a time' },
-        { md: `\`P\` is a dictionary inside a dictionary, with a list of tuples inside that. Each pair of brackets peels off one layer. These are the real values for Cheese and cat, starting from the start cell, state 0:
+        { added: true, h: 'Reading P one bracket at a time' },
+        { added: true, md: `\`P\` is a dictionary inside a dictionary, with a list of tuples inside that. Each pair of brackets peels off one layer. These are the real values for Cheese and cat, starting from the start cell, state 0:
 
 \`\`\`python
 env.P            # dict: each state  -> that state's four actions
@@ -72,8 +72,8 @@ env.P[0][2][0][1]   # one value from it: 1, the next state
 Read the tuple left to right as a sentence: **with probability 1.0, you land in state 1, are paid −0.04, and the game doesn't end.** The four positions are always in that order: probability, next state, reward, terminated.
 
 To find the position of a value, count from 0: \`[0]\` probability, \`[1]\` next state, \`[2]\` reward, \`[3]\` terminated. Code usually **unpacks** the tuple into names instead of counting, as \`step\` does: \`for probability, next_state, reward, terminated in outcomes\`.` },
-        { h: 'One trip through the loops' },
-        { md: `\`build_transitions\` visits every pair \`(state, action)\`, 16 × 4 = 64 on Cheese and cat, and fills \`P[state][action]\` by one of its three branches. One example of each:
+        { added: true, h: 'One trip through the loops' },
+        { added: true, md: `\`build_transitions\` visits every pair \`(state, action)\`, 16 × 4 = 64 on Cheese and cat, and fills \`P[state][action]\` by one of its three branches. One example of each:
 
 1. **State 5 is a wall and state 15 is the cheese.** Nobody moves *from* them, but every state needs a row, so each of their actions gets the same dummy entry: \`P[5][2] = [(1.0, 5, 0.0, True)]\`: stay, paid 0, over.
 2. **State 0 on normal ground** (\`intended\` is 1.0). Ask \`move\` and put the certain probability in front:
@@ -84,7 +84,7 @@ To find the position of a value, count from 0: \`[0]\` probability, \`[1]\` next
    right turned to up (off the edge, stays in 0), right as meant (state 1), right turned to down (state 4).
 
 \`P\` is built once, when the world is made. After that nothing calls \`move\` during a game: \`step\` only looks up \`P[self.state][action]\` and picks one tuple from the list.` },
-        {
+        { added: true,
           predict: {
             prompt: 'On Cheese and cat, what is `env.P[0][3][0][1]`? (State 0, action 3 is DOWN, the first outcome, position 1.)',
             answer: 4, compute: () => new GridWorld('cheese_and_cat').P[0][3][0][1],
@@ -263,6 +263,7 @@ $$\\pi(a \\mid s) = \\frac{\\varepsilon}{|\\mathcal{A}|} + \\begin{cases} \\dfra
       goal: 'Define $V^\\pi(s)$ and $Q^\\pi(s, a)$, derive the Bellman expectation equation from $G_t = R_{t+1} + \\gamma G_{t+1}$, and compute $V^\\pi$ by repeated sweeps.',
       builds: ['policies', 'discounting'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The **return** $G_t$ is everything still to come from step $t$: $G_t = R_{t+1} + \\gamma R_{t+2} + \\gamma^2 R_{t+3} + \\dots$, and it obeys $G_t = R_{t+1} + \\gamma G_{t+1}$ (lesson 1.5). A **policy** $\\pi(a \\mid s)$ is the probability of choosing action $a$ in state $s$, a table with one row per state and one column per action (lesson 2.3). This lesson averages $G_t$ over everything the policy and the world might do.' },
         { md: `How good is it to be in a state? It depends on what the agent will do from there: on its policy. The **value** of a state under a policy is the return the agent can expect, starting there and following the policy:
 
 $$V^\\pi(s) = \\mathbb{E}_\\pi\\big[\\, G_t \\mid S_t = s \\,\\big]$$

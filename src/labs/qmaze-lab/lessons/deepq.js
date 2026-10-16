@@ -115,6 +115,20 @@ Only $Q(s, a)$ is pushed: $y$ is treated as a fixed number, computed without gra
             ],
           },
         },
+        { added: true, md: `**\`zip(*batch)\` on a tiny batch.** Each remembered move is a tuple of 5: picture, action, reward, next picture, ended. A batch is a list of those tuples, one per move. The learning code wants the opposite: all the pictures together, all the actions together. \`zip(*batch)\` does that turn. With 3 moves instead of 32 (pictures shortened to names):
+
+\`\`\`python
+batch = [("pic0", 2, -0.04, "pic0b", False),
+         ("pic1", 0,  1.0,  "pic1b", True),
+         ("pic2", 3, -0.04, "pic2b", False)]
+seens, actions, rewards, next_seens, ends = zip(*batch)
+seens    # ('pic0', 'pic1', 'pic2')
+actions  # (2, 0, 3)
+rewards  # (-0.04, 1.0, -0.04)
+ends     # (False, True, False)
+\`\`\`
+
+The \`*\` hands the 3 tuples to \`zip\` as 3 separate arguments; \`zip\` then takes the first item of each, then the second of each, and so on. Rows of moves become columns of fields.` },
         { h: 'Problem 2: the target moves when you aim at it' },
         { md: `The target $y$ contains $\\max Q(s', a')$, computed by the same network that is being changed. Every update shifts the targets too, and the network can end up chasing its own tail, values spiralling up or swinging back and forth.
 
@@ -195,6 +209,18 @@ Only $Q(s, a)$ is pushed: $y$ is treated as a fixed number, computed without gra
             ],
           },
         },
+        { added: true, md: `**Picking one value per row: \`net(seens)[torch.arange(batch_size), actions]\`.** The network gives 4 values for every picture in the batch, a table with one row per move and one column per action. The loss needs only one per row: the value of the action that move actually took. Two index lists do it, one for the rows and one for the columns. With 3 moves:
+
+\`\`\`python
+q_all = [[0.1, 0.5, -0.2, 0.3],    # move 0 took action 2
+         [0.0, 0.2,  0.9, 0.4],    # move 1 took action 0
+         [0.7, 0.1,  0.1, 0.6]]    # move 2 took action 3
+rows = [0, 1, 2]                   # torch.arange(3)
+cols = [2, 0, 3]                   # actions
+q_all[rows, cols]                  # -> [-0.2, 0.0, 0.6]: (0, 2), (1, 0), (2, 3)
+\`\`\`
+
+The two lists are read in pairs: row 0 with column 2, row 1 with column 0, row 2 with column 3. (That works on PyTorch tensors and NumPy arrays, not on plain Python lists; the lists above just show the numbers.)` },
         {
           code: {
             file: 'dqn.py', fn: 'greedy_game', notes: [

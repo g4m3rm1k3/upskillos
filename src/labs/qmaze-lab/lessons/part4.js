@@ -257,7 +257,30 @@ Minimising this one number with one optimiser step trains both networks at once.
       goal: 'Follow every line of `train_a2c`: parallel copies of the world, a 5-move rollout, the returns, the three losses, and the optimiser step.',
       builds: ['critic-advantage'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The actor turns a state into four **logits**, and softmax turns them into probabilities $\\pi(a \\mid s)$ (lesson 4.2). The critic gives one number, $V(s)$. The **advantage** is $A = R - V(s)$: how much better the move turned out than the critic expected (lesson 4.4). The targets $R$ are built backwards with $R_t = r_{t+1} + \\gamma R_{t+1}$ (lesson 1.5).' },
         { md: `**A2C**, Advantage Actor–Critic (Mnih et al., 2016, as the synchronous version of A3C), is the actor–critic of the last lesson plus one practical idea: run **several copies of the world at once** and learn from all of them together. Each update uses moves from 8 copies at different points in their episodes, which makes the batch less correlated and the gradient less noisy. The copies run **in step** (synchronously): all 8 move, then the next move, and so on.` },
+        { added: true, h: 'The shapes, all in one place' },
+        { added: true, md: `A2C keeps many numbers at once, and most lines below say a **shape**: how many numbers a tensor holds along each direction. With the defaults (\`n_envs=8\` copies of the world, \`n_steps=5\` moves per update, 4 actions), one update is a grid of **5 moves × 8 copies = 40 moves**:
+
+\`\`\`text
+              copy 0   copy 1   ...   copy 7
+move t = 0      .        .              .
+move t = 1      .        .              .
+   ...
+move t = 4      .        .              .
+\`\`\`
+
+| Name | Shape | One entry is |
+|---|---|---|
+| \`states\` | a list of 8 ints | where each copy is now |
+| \`logits\` (one move) | \`(8, 4)\` | copy \`i\`'s score for action \`a\`: row \`i\`, column \`a\` |
+| \`value\` (one move) | \`(8,)\` | the critic's $V(s)$ for copy \`i\` |
+| \`actions\` (one move) | \`(8,)\` | the action copy \`i\` sampled |
+| \`rewards[t]\`, \`ended[t]\` | \`(8,)\` each | what move \`t\` paid each copy, and whether its episode ended |
+| \`returns\`, \`values\`, \`log_probs\`, \`advantages\` | \`(5, 8)\` | move \`t\` (row) of copy \`i\` (column) |
+| \`actor_loss\`, \`critic_loss\`, \`loss\` | one number | an average over all 40 moves |
+
+During the 5 moves each per-move tensor is appended to a list; after them, \`torch.stack\` piles the 5 tensors of shape \`(8,)\` into one of shape \`(5, 8)\`. Reading a line, ask: *one copy or all 8? one move or all 5?*` },
         {
           code: {
             file: 'a2c.py', fn: 'train_a2c', notes: [

@@ -1,7 +1,11 @@
 // Lesson order for Lab 11: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l11-bow': [
-    { p: 0 }, { p: 1 }, { cell: 0 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 02 and 06", body: [
+      "From Lab 02: an array of shape (n, V) is n rows of V numbers. Here each row will be one document and each column one vocabulary word.",
+      "From Lab 06: anything learned from data, including which words make up the vocabulary, is fitted on the training rows only and then applied to validation and test rows. Building the vocabulary from all the data leaks information."
+    ] } }, { p: 1 }, { cell: 0 },
     { figure: 'Tokenizer', caption: 'Type any message and see its tokens.' },
     { p: 2 }, { p: 3 },
     { figure: 'BagOfWords', caption: 'A message as counts over the training vocabulary.' },

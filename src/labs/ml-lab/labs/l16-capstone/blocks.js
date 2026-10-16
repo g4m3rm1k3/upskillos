@@ -1,7 +1,11 @@
 // Lesson order for Lab 16: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l16-frame': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 06 and 09", body: [
+      "From Lab 06: three roles for data. Train to fit, validation (or cross-validation) to choose, test to report once. A baseline sets the bar: skill = 1 − error_model / error_baseline.",
+      "Cross-validation: split the training data into k folds; train on k − 1 of them and score on the one left out, k times over, and average the scores. From Lab 09: pick the metric that matches the decision the model supports."
+    ] } }, { p: 1 },
     { figure: 'KnownAtPredictionTime', caption: 'Which candidate features exist at the moment the prediction is needed?' },
     { cell: 0 }, { cell: 2 },
     { p: 2 },

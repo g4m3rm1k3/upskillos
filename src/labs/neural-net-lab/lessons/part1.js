@@ -367,6 +367,27 @@ Working from the output back, each step reuses the product so far. That is **bac
             ],
           },
         },
+        { added: true, h: 'The network and its forward pass, with real values' },
+        { added: true, md: `The hand-written network is a **dictionary of lists**: one name per kind of weight, one list entry per hidden neuron. A real one with 2 hidden neurons (\`init_net(hidden=2, seed=0)\`, rounded to 3 places):
+
+\`\`\`python
+net = {"w1": [0.689, 0.516],     # input -> hidden: one weight per hidden neuron
+       "b1": [-0.159, -0.482],   # one bias per hidden neuron
+       "w2": [0.016, -0.134],    # hidden -> output: one weight per hidden neuron
+       "b2": 0.401}              # the output's bias: a single number, not a list
+net["w1"][0]                     # 0.689: two lookups, the kind of weight, then the neuron
+\`\`\`
+
+\`forward\` gives back **three** things in a tuple, and the code unpacks them at once:
+
+\`\`\`python
+y_hat, z, h = forward(net, 1.0)
+y_hat    # 0.405            the prediction
+z        # [0.530, 0.034]   each hidden neuron's sum, w1[j] * x + b1[j]
+h        # [0.530, 0.034]   after ReLU: the same here, because both sums are positive
+\`\`\`
+
+Only \`y_hat\` is the answer; \`z\` and \`h\` are kept because the backward pass needs them. \`backward\` then returns \`grads\`, a dictionary with **the same keys and the same shape** as \`net\`: \`grads["w1"][0]\` is the slope of the loss for \`net["w1"][0]\`. That matching shape is what lets the training step write \`net[name][j] -= rate * total[name][j]\`.` },
         {
           code: {
             file: 'tinynet.py', fn: 'backward', notes: [

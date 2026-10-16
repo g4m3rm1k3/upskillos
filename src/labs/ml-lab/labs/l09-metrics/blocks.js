@@ -2,6 +2,10 @@
 export const blocks = {
   'l09-confusion': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04 and 08", body: [
+      "From Lab 08: logistic regression outputs p = σ(w·x + b), the probability that y = 1. A yes/no decision needs a **threshold** t: predict 1 if p > t. With t = 0.5, p = 0.62 is a yes and p = 0.31 a no.",
+      "From Lab 04: P(A | B) = P(A ∩ B) / P(B), the chance of A among the cases where B holds. The rates in this lab are conditional probabilities of this kind, such as the chance of predicting yes among the cases that really are yes."
+    ] } },
     { figure: 'ConfusionAtThreshold', caption: '1,000 simulated services, 10% with incidents. Move the threshold and watch the four counts.' },
     { cell: 0 },
     { p: 1 },

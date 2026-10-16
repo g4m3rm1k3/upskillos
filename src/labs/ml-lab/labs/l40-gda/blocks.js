@@ -1,7 +1,11 @@
 // Lesson order for Lab 40: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l40-generative': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04, 08, 11 and 39", body: [
+      "Bayes' rule (Lab 04): P(class | x) = P(x | class) P(class) / P(x). Naive Bayes (Lab 11) modelled P(x | class) and then applied the rule.",
+      "Logistic regression (Lab 08) models P(class | x) directly; Lab 39 showed it as a generalized linear model. This lab compares the two routes."
+    ] } }, { p: 1 },
     { predict: { prompt: 'p(x | class 1) = 0.2, p(x | class 0) = 0.4, and the classes are equally common. What is p(class 1 | x)? (Three decimals.)', answer: 0.333, tolerance: 0.001, explain: '0.2 × 0.5 / (0.2 × 0.5 + 0.4 × 0.5) = 0.1/0.3 = 0.333: class 0 explains x twice as well.' } },
     { p: 2 }, { p: 3 },
     { cell: 0 },

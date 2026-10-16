@@ -1,7 +1,11 @@
 // Lesson order for Lab 44: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l44-mc': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04 and 41–43", body: [
+      "Lab 41: a posterior is p(θ | D) ∝ p(D | θ) p(θ). Its normaliser, the evidence p(D), is an integral that usually can't be computed. Lab 43's ELBO is a lower bound on log p(D).",
+      "Lab 04: an average of S independent draws has variance σ²/S, so its error shrinks like 1/√S."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'A Monte Carlo estimate has standard error 0.2 with 400 samples. How many samples give standard error 0.05?', answer: 6400, explain: 'The error scales as 1/√S: a quarter of the error needs 16 times the samples, 400 × 16 = 6,400.' } },
     { p: 4 },

@@ -114,6 +114,7 @@ And Keras's \`fit(x, y, epochs=2, batch_size=64)\` is the same loop: the \`batch
       goal: 'Train a 784 → 128 → 10 network on MNIST with mini-batches, test it on 10,000 unseen digits, and say what more data buys.',
       builds: ['mini-batches'],
       blocks: [
+        { added: true, kind: 'recall', note: 'Each MNIST image is 784 brightnesses in one row, so the training images are a tensor of shape `(60000, 784)` and the labels a tensor of 60,000 digits (lesson 4.1). Training takes one step per shuffled mini-batch of 64 (lesson 4.2). The last layer gives 10 raw scores, one per digit, and `nn.CrossEntropyLoss` does the softmax and the loss in one (lesson 3.3).' },
         { md: `Everything is in place: the digits as a tensor, batches, and Part 3's classifier, now with 784 inputs. One hidden layer of 128 neurons: $784 \\times 128 + 128 + 128 \\times 10 + 10 = 101{,}770$ weights.` },
         {
           code: {

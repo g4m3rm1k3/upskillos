@@ -138,6 +138,7 @@ Every combination of slot values makes a different conversation. That multiplies
       goal: 'Mark which tokens are the bot’s, average the loss over those only, and explain why the model should read the user but never be graded on writing like one.',
       builds: ['dialogue-data'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The tiny GPT predicts the next token at **every** position at once: its logits have one row per position (lesson 5.6). The loss is the cross-entropy at each position, minus the log of the probability it gave the token that really came next, averaged over the positions (lesson 5.4). This lesson changes only which positions go into that average.' },
         { h: 'Read everything, learn to write one side' },
         { md: `Trained the Part 5 way, the model would learn to predict *every* token, including the user's. It would spend half its effort learning to imitate users, and could happily continue a conversation by writing the next *user* message.
 

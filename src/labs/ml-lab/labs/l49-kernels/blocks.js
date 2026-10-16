@@ -1,7 +1,11 @@
 // Lesson order for Lab 49: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l49-trick': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 07, 42 and 48", body: [
+      "Lab 07: polynomial features add columns x², x³, … so that a linear model can draw a curve.",
+      "Lab 42: a kernel k(x, x′) says how similar two inputs are, and a Gaussian process's covariance is a kernel. Lab 48: the SVM's dual problem uses the data only through k(xᵢ, xⱼ)."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'x = 2 and z = 3. What is (1 + xz)²?', answer: 49, explain: '(1 + 6)² = 49 — equal to φ(2)·φ(3) = 1 + 2·6 + 36 = 49 with φ(x) = (1, √2x, x²).' } },
     { p: 4 },

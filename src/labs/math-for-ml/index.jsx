@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import Blocks from '../python-steps/Blocks.jsx'
+import { checkKey, countSolved, upgradeSaved } from '../python-steps/progress.js'
 import Markdown from '../qmaze-lab/Markdown.jsx'
 import { LESSONS, PARTS, lessonById } from './lessons/index.js'
 import { FIGURES } from './figures/index.js'
@@ -20,7 +21,8 @@ function load() {
     const lessons = {}
     for (const lesson of LESSONS) {
       const solved = value.lessons?.[lesson.id]?.solved
-      if (Array.isArray(solved)) lessons[lesson.id] = { solved: solved.filter(k => Number.isInteger(k) && (lesson.blocks[k]?.predict || lesson.blocks[k]?.choice || lesson.blocks[k]?.exercise)) }
+      const keys = new Set(lesson.blocks.filter(b => b.predict || b.choice || b.exercise).map(checkKey))
+      if (Array.isArray(solved)) lessons[lesson.id] = { solved: upgradeSaved(lesson, { solved }).solved.filter(k => keys.has(k)) }
     }
     return { current: lessonById(value.current) ? value.current : LESSONS[0].id, lessons, done: Object.fromEntries(LESSONS.filter(l => value.done?.[l.id] === true).map(l => [l.id, true])) }
   } catch { return {} }
@@ -48,7 +50,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     if (s.solved?.includes(k)) return p
     return { ...p, lessons: { ...p.lessons, [lesson.id]: { ...s, solved: [...(s.solved ?? []), k] } } }
   })
-  const checks = lesson.blocks.filter(b => b.predict || b.choice || b.exercise).length
+  const { checks, solved } = countSolved(lesson, saved, b => b.predict || b.choice || b.exercise)
   const finish = () => { setProgress(p => ({ ...p, done: { ...p.done, [lesson.id]: true } })); if (next) onOpen(next.id) }
   return <article className="qm-lesson">
     <header>
@@ -59,7 +61,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     </header>
     <Blocks lesson={lesson} saved={saved} onSolved={onSolved} onPython={onPython} FIGURES={FIGURES} codeLines={codeLines} />
     <footer className="qm-lesson-end">
-      {checks > 0 && <p className="qm-hint">{saved.solved?.length ?? 0} of {checks} checks done in this lesson, the coding exercise included.</p>}
+      {checks > 0 && <p className="qm-hint">{solved} of {checks} checks done in this lesson, the coding exercise included.</p>}
       <div className="qm-buttons">
         {prev && <button onClick={() => onOpen(prev.id)}>← {prev.number}</button>}
         <button className="qm-primary" onClick={finish}>{progress.done?.[lesson.id] ? '✓ Done' : 'Mark as done'}{next ? `, next: ${next.number} →` : ''}</button>

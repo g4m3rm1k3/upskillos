@@ -49,6 +49,26 @@ In Python, a dictionary of dictionaries: \`Q[(hand, rolls_left)]\` is a row, and
             ],
           },
         },
+        { added: true, h: 'One row, with real values' },
+        { added: true, md: `Three things index everything a learner stores, and all three are plain Python values:
+
+- a **hand**: a sorted tuple of 5 dice, such as \`(2, 2, 3, 3, 3)\`;
+- the **rolls left**: \`2\` after the first roll, \`1\` after the second;
+- a **keep** (the action): a sorted tuple of the dice kept, from \`()\` (reroll everything) to the whole hand (stop).
+
+The state is the pair \`(hand, rolls_left)\`. Here is the row \`values\` makes the first time it meets the state \`((2, 2, 3, 3, 3), 2)\`:
+
+\`\`\`python
+Q = {}
+row = values(Q, (2, 2, 3, 3, 3), 2)
+row
+# {(): 0.0, (2,): 0.0, (2, 2): 0.0, (3,): 0.0, (2, 3): 0.0, (2, 2, 3): 0.0, (3, 3): 0.0,
+#  (2, 3, 3): 0.0, (2, 2, 3, 3): 0.0, (3, 3, 3): 0.0, (2, 3, 3, 3): 0.0, (2, 2, 3, 3, 3): 0.0}
+len(row)        # 12: the 12 keeps of this hand (lesson 2.1)
+list(Q)         # [((2, 2, 3, 3, 3), 2)]: one state stored so far
+\`\`\`
+
+So one value is two lookups: **\`Q[(hand, rolls_left)][kept]\`**. The first bracket picks the row for the state, the second the entry for the keep. \`Q[((2, 2, 3, 3, 3), 2)][(3, 3, 3)]\` is the learner's estimate for keeping the three 3s with two rolls left. (A one-die keep is written \`(2,)\`, with a comma: \`(2)\` would just be the number 2 in brackets.)` },
         {
           choice: {
             prompt: 'Which of these does the Q-learner of this part **use**?',
@@ -124,6 +144,7 @@ One detail matters more than it looks: **ties**. At the start every value is 0.0
       goal: 'Derive the Q-learning target from the Bellman equation, and compute an update $Q \\leftarrow Q + \\alpha(\\text{target} - Q)$ by hand from real numbers.',
       builds: ['epsilon-greedy', 'planning-backwards'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The state is `(hand, rolls_left)` and the action is a keep, a tuple of the dice kept; the learner\'s table is `Q[(hand, rolls_left)][kept]` (lessons 2.1 and 3.1). A reroll pays 0; only the move that ends the turn pays, with the final hand\'s score in the box (lesson 2.1). $\\alpha$ is how far each update moves a value towards its target.' },
         { md: `Part 2's Bellman equation says what a value **should** be:
 
 $$Q(h, k) = \\sum_{h'} P(h' \\mid k)\\, \\Big[ R + \\max_{k'} Q(h', k') \\Big]$$

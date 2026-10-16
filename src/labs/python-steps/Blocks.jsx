@@ -3,6 +3,7 @@ import Markdown from '../qmaze-lab/Markdown.jsx'
 import { parseAnswer } from '../ml-lab/Checkpoint.jsx'
 import { tokenizePython } from '../a-arcade-python/analysis.js'
 import Exercise from './Exercise.jsx'
+import { checkKey, legacyIndex } from './progress.js'
 import './style.css'
 
 // A lesson is an ordered list of blocks:
@@ -17,7 +18,8 @@ import './style.css'
 //   { symbols: [[tex, say, means, code]] } every symbol of a formula: how to say it, what it is, where it lives
 //   { predict: { prompt, answer, compute, tolerance, explain, misconceptions: [{ answer, feedback }] } }
 //   { choice: { prompt, options: [{ text, why }], answer } }
-//   { note, kind: 'key' | 'warn' | 'try' }   a callout
+//   { note, kind: 'key' | 'warn' | 'try' | 'recall' }   a callout ('recall': an earlier idea this lesson relies on)
+//   any block may carry `added: true`: added after progress was saved by position (see progress.js)
 //   { python: { program, label } }  a button that opens the Python tab on that program
 //   { exercise: { prompt, starter, solution, checks, hints } }  write code, checked in Python (Exercise.jsx)
 //
@@ -116,17 +118,17 @@ export const BLOCK_KINDS = ['h', 'md', 'figure', 'code', 'mathCode', 'symbols', 
 export default function Blocks({ lesson, saved, onSolved, onPython, FIGURES, codeLines }) {
   const solved = saved?.solved ?? []
   return lesson.blocks.map((b, k) => {
-    const key = `${lesson.id}:${k}`
+    const key = `${lesson.id}:${k}`, check = checkKey(b)
     if (b.h) return <h2 key={k} className="qm-h">{b.h}</h2>
     if (b.md) return <Md key={k}>{b.md}</Md>
     if (b.figure) return <Figure key={k} block={b} FIGURES={FIGURES} />
     if (b.code) return <Code key={k} spec={b.code} codeLines={codeLines} />
     if (b.mathCode) return <MathCode key={k} rows={b.mathCode} />
     if (b.symbols) return <Symbols key={k} rows={b.symbols} />
-    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.choice) return <Choice key={key} id={key} spec={b.choice} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
-    if (b.exercise) return <Exercise key={key} id={key} spec={b.exercise} done={solved.includes(k)} onDone={() => onSolved(k)} />
+    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(check)} onDone={() => onSolved(check)} />
+    if (b.choice) return <Choice key={key} id={key} spec={b.choice} done={solved.includes(check)} onDone={() => onSolved(check)} />
+    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it', recall: 'Remember' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
+    if (b.exercise) return <Exercise key={key} id={`${lesson.id}:${check}`} legacyId={`${lesson.id}:${legacyIndex(lesson, k)}`} spec={b.exercise} done={solved.includes(check)} onDone={() => onSolved(check)} />
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time, every line explained.</span></div>
     return null
   })

@@ -2,6 +2,10 @@
 export const blocks = {
   'l15-margin': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03 and 08", body: [
+      "From Lab 08: a linear classifier predicts with the sign of w·x + b, so its decision boundary is the line (or plane) where w·x + b = 0.",
+      "From Lab 03: the norm ‖w‖ = √Σⱼ wⱼ² is a vector's length: ‖(3, 4)‖ = 5. Dividing a score by it turns the score into a distance."
+    ] } },
     { figure: 'PickABoundary', caption: 'Steer a line between the two blobs. How wide a gap can you leave?' },
     { p: 1 },
     { figure: 'PointDistance', caption: 'Distance from a point to the line w·x + b = 0.' },

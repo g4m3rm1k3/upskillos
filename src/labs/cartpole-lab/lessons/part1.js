@@ -246,6 +246,16 @@ One pass from reset to the end is an **episode** (here, a game). First, the star
             ],
           },
         },
+        { added: true, md: `**What \`reset\` and \`step\` give back, with real values.** The state is a **tuple** of four floats, always in the order $(x, \\dot x, \\theta, \\dot\\theta)$: position, velocity, angle, spin (lesson 1.1). Real calls, rounded to 4 places:
+
+\`\`\`python
+env = CartPole()
+env.reset(seed=0)   # -> ((0.0344, 0.0258, -0.0079, -0.0241), {})
+env.step(1)         # push right -> ((0.0350, 0.2210, -0.0084, -0.3193), 1.0, False, False, {})
+env.step(1)         # push right -> ((0.0394, 0.4163, -0.0148, -0.6146), 1.0, False, False, {})
+\`\`\`
+
+\`step\` returns five values, in Gymnasium's order: **the next state, the reward, terminated, truncated, info**. Read the two pushes in the numbers: the cart's velocity $\\dot x$ grows (0.026 → 0.221 → 0.416) and the pole's spin $\\dot\\theta$ grows more negative (−0.024 → −0.319 → −0.615): pushing right tips the pole left, as lesson 1.2 explained. Code unpacks the five values into names at once: \`state, reward, terminated, truncated, info = env.step(action)\`.` },
         { md: `Now the loop. \`play\` in \`python/policies.py\` plays one game with a **policy**: a rule that maps a state to an action. Here a policy is just a Python function \`policy(state, rng)\` that returns 0 or 1. Passing a function as an argument is normal in Python: a function is a value like any other.` },
         {
           code: {

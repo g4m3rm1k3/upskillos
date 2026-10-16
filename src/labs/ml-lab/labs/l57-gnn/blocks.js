@@ -1,7 +1,11 @@
 // Lesson order for Lab 57: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l57-graphs': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 20–23, 26, 45 and 56", body: [
+      "Lab 56: label propagation spreads known labels along a similarity graph. Lab 45: a graph's edges say which variables depend on which.",
+      "Lab 26: attention lets each item gather information from the others, weighted. A graph neural network does the same along a graph's edges, trained like any network (Labs 20–23)."
+    ] } }, { p: 1 },
     { predict: { prompt: 'A graph has 1,000,000 nodes, each with 10 neighbours on average. How many entries do its neighbour lists hold in total?', answer: 10000000, explain: '1,000,000 × 10 = 10 million (each edge appears in both endpoints’ lists), against 10¹² entries for a dense adjacency matrix.' } },
     { p: 2 }, { p: 3 },
     { cell: 0 },

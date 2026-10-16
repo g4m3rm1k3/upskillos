@@ -1,7 +1,11 @@
 // Lesson order for Lab 14: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l14-sequential': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01, 12 and 13", body: [
+      "A **residual** is what the model still gets wrong: rᵢ = yᵢ − ŷᵢ. If y = 10 and the model says 7, the residual is 3. (Lab 01's error e = ŷ − y is the same thing with the opposite sign.) Lab 01's loss is the mean of the squared errors.",
+      "From Lab 12: a regression tree predicts the mean y of the training rows in each leaf. From Lab 13: an ensemble combines many trees; bagging averages independently trained ones."
+    ] } }, { p: 1 },
     { predict: { prompt: 'The ensemble predicts 12 for a point whose target is 9. What residual does the next tree try to fit?', answer: -3, explain: 'r = y − F(x) = 9 − 12 = −3: the next tree should pull this region down.' } },
     { cell: 0 },
     { p: 2 },

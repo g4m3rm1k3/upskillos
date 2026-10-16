@@ -1,7 +1,11 @@
 // Lesson order for Lab 39: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l39-expfam': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01, 05 and 08", body: [
+      "Likelihood (Lab 05): how probable the observed data is under a parameter; maximising log L gives the estimate. For k heads in n flips, log L(p) = k log p + (n − k) log(1 − p), largest at p̂ = k/n.",
+      "Logistic regression (Lab 08): p = σ(w·x + b), with loss gradient (p − y)x. This lab shows it is one member of a whole family of models. Derivatives: the slope of log z is 1/z and the slope of eᶻ is eᶻ (Lab 08), combined by the chain rule (Lab 01, lesson 00b)."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'For a Bernoulli variable at η = 0 (φ = 0.5), what is the variance a″(0) = φ(1 − φ)?', answer: 0.25, tolerance: 0.001, explain: 'σ(0) = 0.5, so a″(0) = 0.5 × 0.5 = 0.25 — the largest variance a Bernoulli can have.' } },
     { p: 4 },

@@ -1,7 +1,12 @@
 // Lesson order for Lab 26: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l26-lookup': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01, 21 and 25", body: [
+      "The dot product (Lab 01), Σ aⱼbⱼ, is large when two vectors point the same way.",
+      "Softmax (Lab 21), pₖ = e^{zₖ} / Σⱼ e^{zⱼ}, turns scores into positive numbers that add up to 1: scores (1, 2, 3) become about (0.09, 0.24, 0.67).",
+      "Lab 25: each token is looked up in an embedding table, so a sequence of T tokens becomes a (T, d) array."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { figure: 'SoftLookup', caption: 'Six services with keys around a circle. Turn the query and change the sharpness.' },
     { predict: { prompt: 'Three keys all score the same against the query. The values are 10, 20 and 30. What is the attention output?', answer: 20, explain: 'Equal scores give equal weights, 1/3 each: the output is the plain average, (10 + 20 + 30)/3 = 20.' } },

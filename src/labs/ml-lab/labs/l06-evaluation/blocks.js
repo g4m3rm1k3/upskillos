@@ -1,7 +1,11 @@
 // Lesson order for Lab 06: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l06-roles': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01 and 05", body: [
+      "From Lab 01: fit on training rows, judge on validation rows the model never saw, and compare with the baseline that predicts mean(y_train).",
+      "From Lab 05: a score measured on n rows is an estimate with its own uncertainty, roughly its standard error s/√n, and a 95% interval x̄ ± 1.96·SE. Two models whose intervals overlap a lot may not really differ."
+    ] } }, { p: 1 },
     { figure: 'ThreeRoles', caption: 'Every row plays exactly one role.' },
     { predict: { prompt: '1,000 rows are split 70/15/15 into train, validation and test. How many test rows?', answer: 150, explain: '15% of 1,000 = 150.' } },
     { cell: 0 },

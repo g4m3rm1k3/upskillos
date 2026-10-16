@@ -347,7 +347,7 @@ Between the two extremes there is a whole family: wait $n$ moves, then bootstrap
       goal: 'Build the Q-table as a NumPy array, index it (`Q[s]`, `Q[s, a]`, `.max()`), and choose the best action safely when values tie.',
       builds: ['td-learning', 'policies'],
       blocks: [
-        { note: 'Same layout as `P[s][a]` (lesson 2.1): a **state** `s` (the cell\'s number, `row * n_cols + col`) picks the row, an **action** `a` (0 left, 1 up, 2 right, 3 down) picks the column. `P[s][a]` said what that move *does*; `Q[s, a]` will say how *good* it is.', kind: 'recall' },
+        { added: true, note: 'Same layout as `P[s][a]` (lesson 2.1): a **state** `s` (the cell\'s number, `row * n_cols + col`) picks the row, an **action** `a` (0 left, 1 up, 2 right, 3 down) picks the column. `P[s][a]` said what that move *does*; `Q[s, a]` will say how *good* it is.', kind: 'recall' },
         { md: `TD(0) learns $V$, the value of states. But an agent that has to **choose** needs to compare moves: knowing that the cell to the right is worth 0.8 doesn't tell you which button gets you there, unless you have \`P\`. So the learning agents learn $Q(s, a)$ instead, one number per state **and** action, and choose with $\\arg\\max_a Q(s, a)$. No model needed.
 
 They keep $Q$ in a **Q-table**: a NumPy array with one row per state and one column per action.
@@ -546,6 +546,7 @@ Monte Carlo gets there eventually. With **5,000** episodes all five seeds find t
       goal: 'Derive the Q-learning update from the Bellman optimality equation, follow every line of `train_q_learning`, and carry out updates by hand.',
       builds: ['mc-control', 'value-iteration'],
       blocks: [
+        { added: true, kind: 'recall', note: 'One move gives the four things every update uses: the state $s$, the action $a$, the reward $r$ and the next state $s\'$, that is, `state, action, reward, next_state` (lesson 1.3). $Q$ is the table `Q[s, a]`, one row per state and one column per action (lesson 3.5). $\\alpha$ is the step size: how far each new sample moves the estimate (lesson 3.1). $\\gamma$ is the discount (lesson 1.5).' },
         { md: `Monte Carlo control (lesson 3.7) waited for the end of each game and stalled when games didn't reach a reward. Q-learning does control the TD way, learning from every single move. Put the pieces together. Lesson 2.5's Bellman optimality equation says:
 
 $$Q^*(s, a) = \\mathbb{E}\\big[\\, R_{t+1} + \\gamma \\max_{a'} Q^*(S_{t+1}, a') \\;\\big|\\; S_t = s, A_t = a \\,\\big]$$

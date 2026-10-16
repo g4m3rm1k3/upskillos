@@ -1,7 +1,11 @@
 // Lesson order for Lab 22: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l22-sgd': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01, 03 and 21", body: [
+      "Gradient descent (Labs 01 and 03): w ← w − α∇J(w), with the gradient averaged over all n training rows. Too large an α makes the loss bounce or explode; too small and it crawls.",
+      "Lab 21's network trains the same way, its gradient computed by backpropagation."
+    ] } }, { p: 1 },
     { cell: 0 },
     { figure: 'BatchSpread', caption: 'How much a mini-batch gradient varies from batch to batch, against the batch size.' },
     { predict: { prompt: 'A single-example gradient varies with spread 8. Roughly what spread does a batch of 16 have?', answer: 2, tolerance: 0.01, explain: 'The spread falls like 1/√B: 8/√16 = 8/4 = 2.', misconceptions: [{ answer: 0.5, feedback: 'That divides by 16. The spread falls with the square root of the batch size.' }] } },

@@ -1,7 +1,11 @@
 // Lesson order for Lab 52: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l52-overfit': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 07, 20–23 and 47", body: [
+      "Labs 20–23: a network trained by backpropagation and an optimiser such as Adam, written in PyTorch.",
+      "Lab 07: overfitting shows as training loss falling while validation loss rises. Lab 47: very large models can generalise anyway (double descent)."
+    ] } }, { p: 1 }, { p: 2 },
     { figure: 'RegCurves', caption: 'Training and validation loss per epoch for the playground’s network, with the epoch early stopping would keep. Change the regularization.' },
     { p: 3 },
     { cell: 0 },

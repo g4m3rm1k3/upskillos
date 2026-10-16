@@ -199,6 +199,7 @@ First, measure how the points spread: the **covariance matrix**. For directions 
       goal: 'Derive the gradient of skip-gram with negative sampling, follow one update number by number, and train word vectors by hand while the map moves.',
       builds: ['word-map', 'intent-bot'],
       blocks: [
+        { added: true, kind: 'recall', note: 'Each word has a number, its place in the vocabulary (lesson 3.1), and a word\'s **vector** is the row of a table found by that number (lesson 4.1). Two vectors\' **dot product** multiplies them entry by entry and adds: large when they point the same way (lesson 3.1). Here the rows are not counted but learned, by gradient descent.' },
         { h: 'Learn the vectors instead of counting them' },
         { python: { program: 'word2vec', label: 'Step through one pass of training in real Python' } },
         { md: `PPMI vectors are long, sparse and noisy. In 2013 Tomas Mikolov and colleagues at Google showed a better way, **word2vec**: give every word a short vector of, say, 16 numbers, start them at random, and **train** them on one task: predict which words appear near which.

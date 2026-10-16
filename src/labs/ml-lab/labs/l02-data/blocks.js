@@ -1,7 +1,12 @@
 // Lesson order for Lab 02: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l02-functions': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 01", body: [
+      "A prediction is a weighted sum. With inputs `[2, 3]` and weights `[4, 5]`, `np.array([2, 3]) @ np.array([4, 5])` is 2 × 4 + 3 × 5 = 23. With one input it is ŷ = wx + b.",
+      "How wrong it is: each row's error eᵢ = ŷᵢ − yᵢ, and the loss J = mean(e²), the **mean squared error**. Errors of 1 and −3 give J = (1 + 9)/2 = 5.",
+      "Lab 01 also kept validation rows apart from training rows, and compared the model with a baseline that always predicts mean(y_train). This lab turns that whole experiment into a function of its inputs, so it can be repeated exactly."
+    ] } }, { p: 1 }, { p: 2 },
     { figure: 'MutationDemo', caption: 'A function that mutates its argument versus one that returns a new value.' },
     { cell: 0 }, { cell: 1 },
     { predict: { prompt: '`def drop_first(xs): xs.pop(0)` is called three times on the same list of 5 rows. How many rows are left?', answer: 2, explain: 'Each call removes one more row from the caller’s list: 5 − 3 = 2. A pure version would leave all 5.' } },

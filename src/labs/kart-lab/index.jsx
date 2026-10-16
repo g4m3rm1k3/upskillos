@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import Blocks from '../python-steps/Blocks.jsx'
+import { countSolved, upgradeProgress } from '../python-steps/progress.js'
 import Markdown from '../qmaze-lab/Markdown.jsx'
 import { LESSONS, PARTS, lessonById } from './lessons/index.js'
 import { FIGURES } from './figures/index.js'
@@ -48,8 +49,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython, onRace }) {
     if (s.solved?.includes(k)) return p
     return { ...p, lessons: { ...p.lessons, [lesson.id]: { ...s, solved: [...(s.solved ?? []), k] } } }
   })
-  const checks = lesson.blocks.filter(b => b.predict || b.choice).length
-  const solved = (saved.solved ?? []).length
+  const { checks, solved } = countSolved(lesson, saved)
   const finish = () => { setProgress(p => ({ ...p, done: { ...p.done, [lesson.id]: true } })); if (next) onOpen(next.id) }
   return <article className="qm-lesson">
     <header>
@@ -71,7 +71,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython, onRace }) {
 }
 
 export default function KartLab() {
-  const [progress, setProgress] = useState(read), [tab, setTab] = useState('lessons'), [python, setPython] = useState(null)
+  const [progress, setProgress] = useState(() => upgradeProgress(read(), lessonById)), [tab, setTab] = useState('lessons'), [python, setPython] = useState(null)
   const [notice, setNotice] = useState(() => read().upgraded ? 'KartLab has a new engine (sensors, a second track, linear drivers). Your lesson progress carried over; drivers saved for the old rules can\'t be loaded, so train new ones.' : '')
   const main = useRef(null), arenaSession = useRef(null)
   const current = lessonById(progress.current) ?? LESSONS[0]

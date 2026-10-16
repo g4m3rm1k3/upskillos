@@ -1,7 +1,11 @@
 // Lesson order for Lab 55: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l55-chain': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 25, 26, 34 and 46", body: [
+      "Lab 46: cross-entropy −Σ p log q, and perplexity = 2^(cross-entropy in bits). A model with perplexity 4 is as unsure as a fair choice among 4 options.",
+      "Labs 25–26: tokens become embeddings, and attention lets each position draw on earlier ones. Lab 34: retrieval finds relevant text to give a model."
+    ] } }, { p: 1 },
     { figure: 'NextChar', caption: 'The next-character distribution of the playground’s interpolated n-gram after a few contexts.' },
     { p: 2 }, { p: 3 },
     { predict: { prompt: 'A model averages 3 bits per character on held-out text. What is its perplexity?', answer: 8, explain: '2³ = 8: as uncertain as a uniform choice among 8 characters.', misconceptions: [{ answer: 9, feedback: 'Perplexity is 2 to the power of the bits, not bits squared.' }] } },

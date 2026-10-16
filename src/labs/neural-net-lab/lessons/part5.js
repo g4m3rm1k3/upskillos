@@ -75,6 +75,7 @@ with $\\beta = 0.9$. Across the valley the slope flips sign every step, so those
       goal: 'Write Adam by hand, explain its two running averages and its bias correction, and check it against `torch.optim.Adam`.',
       builds: ['momentum'],
       blocks: [
+        { added: true, kind: 'recall', note: 'For every weight, $g$ is its slope (gradient) on this step. Plain gradient descent steps by `rate * g`. Momentum (lesson 5.1) keeps a running average of the slopes, its **velocity**, and steps by that instead, so it builds up speed along a valley. Adam keeps that average and a second one.' },
         { md: `Momentum fixes the direction. **Adam** (Kingma and Ba, 2015, "adaptive moment estimation") also fixes the **size**: it gives every weight its own step size, by dividing that weight's average slope by the typical size of its slopes. A weight with huge slopes (the steep direction) and one with tiny slopes (the flat one) then both take steps of roughly the learning rate.
 
 It keeps two running averages per weight:

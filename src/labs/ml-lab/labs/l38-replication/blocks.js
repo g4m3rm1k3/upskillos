@@ -1,7 +1,11 @@
 // Lesson order for Lab 38: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l38-read': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 05, 06 and the capstones", body: [
+      "Lab 05: a measured score is an estimate, with a standard error s/√n and an interval. Two runs that differ by less than their noise don't show a real difference.",
+      "Lab 06: one test evaluation, decided in advance. Labs 16 and 27: baselines, ablations, several seeds and an honest report."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'Checking seed variation costs 20 runs and can change two of the paper’s four claims; the ablation costs 40 runs and can change one. Which gives more claims per run? (1 = seeds, 2 = ablation)', answer: 1, explain: 'Seeds: 2 claims / 20 runs = 0.1 per run, against 1/40 = 0.025 for the ablation. Buy the cheap, decisive experiments first.' } },
     { p: 3 },
     { cell: 0 },

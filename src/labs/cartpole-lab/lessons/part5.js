@@ -176,6 +176,17 @@ $$L = \\underbrace{-\\frac1{40}\\sum A\\,\\log\\pi(a\\mid s)}_{\\text{actor}} \\
 - **Actor**: lesson 4.7's loss with the critic's advantage. The advantage is treated as a fixed number here (\`detach\`): the actor shouldn't change the critic's values to make its own loss look smaller.
 - **Critic**: the squared advantage is the squared error between $V(s)$ and its target: regression, lesson 4.1. Weighted by $c_V = 0.5$.
 - **Entropy**: $H = -\\sum_a \\pi(a)\\log\\pi(a)$ is largest when the pushes are equally likely. Subtracting it (with a small $c_H = 0.01$) rewards keeping a little randomness, so the policy doesn't become certain too early and stop exploring.` },
+        { added: true, md: `**The shapes, all in one place.** With 8 worlds and 5 steps per update, one update is a grid of 5 moves × 8 worlds = 40 moves:
+
+| Name | Shape | One entry is |
+|---|---|---|
+| \`states\` going into the network | \`(8, 4)\` | world \`i\`'s four numbers |
+| \`logits\` (one step) | \`(8, 2)\` | world \`i\`'s score for push \`a\` |
+| \`value\` (one step) | \`(8,)\` | the critic's $V(s)$ for world \`i\` |
+| \`returns\`, \`values\`, \`log_probs\`, \`advantages\` | \`(5, 8)\` | step \`t\` (row) of world \`i\` (column) |
+| each part of the loss | one number | an average over the 40 moves |
+
+\`torch.stack\` turns the 5 per-step tensors of shape \`(8,)\` into one of shape \`(5, 8)\`. Reading a line, ask: *one world or all 8? one step or all 5?*` },
         {
           code: {
             file: 'a2c.py', from: 60, to: 80, notes: [

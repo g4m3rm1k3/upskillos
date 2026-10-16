@@ -1,7 +1,11 @@
 // Lesson order for Lab 34: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l34-rag': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 06, 11, 25 and 26", body: [
+      "Lab 11: text becomes count vectors over a vocabulary. Lab 25: tokens become learned embedding vectors. Lab 26: attention weighs items by how well a query matches each key.",
+      "**Cosine similarity**, q·d / (‖q‖‖d‖), compares two vectors by their angle: 1 for the same direction, 0 for unrelated ones. Lab 06: judge a system on held-out questions, not the ones used to build it."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'The 12 runbooks have four sentences each. With 2 sentences per chunk, how many chunks does the index hold?', answer: 24, explain: '12 × 4 / 2 = 24 chunks (48 with one sentence each, 12 with four).' } },
     { cell: 0 },
     { p: 3 }, { p: 4 },

@@ -21,6 +21,10 @@ export const lessons = [
     ],
     blocks: [
       { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04 and 22", body: [
+      "Expected value (Lab 04): E[X] = Σ x p(x), the long-run average. A reward of 10 with probability 0.3, and 0 otherwise, is worth 3 on average.",
+      "Lab 22: learning means repeatedly nudging parameters to improve an objective. Here the objective is the total reward an agent collects."
+    ] } },
       { p: 1 },
       { figure: 'PlayLoop', caption: 'You are the agent. Each button press is one time step: you choose $A_t$, the world returns $R_{t+1}$ and $S_{t+1}$, and a row is added to the log. Try to reach the star with slip 0, then with slip 0.3.' },
       { cell: 1 },

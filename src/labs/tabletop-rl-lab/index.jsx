@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import Blocks from '../python-steps/Blocks.jsx'
+import { countSolved, upgradeProgress } from '../python-steps/progress.js'
 import Markdown from '../qmaze-lab/Markdown.jsx'
 import { LESSONS, PARTS, lessonById } from './lessons/index.js'
 import { FIGURES } from './figures/index.js'
@@ -41,8 +42,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
     if (s.solved?.includes(k)) return p
     return { ...p, lessons: { ...p.lessons, [lesson.id]: { ...s, solved: [...(s.solved ?? []), k] } } }
   })
-  const checks = lesson.blocks.filter(b => b.predict || b.choice).length
-  const solved = (saved.solved ?? []).length
+  const { checks, solved } = countSolved(lesson, saved)
   const finish = () => { setProgress(p => ({ ...p, done: { ...p.done, [lesson.id]: true } })); if (next) onOpen(next.id) }
   return <article className="qm-lesson">
     <header>
@@ -63,7 +63,7 @@ function Lesson({ lesson, progress, setProgress, onOpen, onPython }) {
 }
 
 export default function TabletopLab() {
-  const [progress, setProgress] = useState(() => load(STORE, {}))
+  const [progress, setProgress] = useState(() => upgradeProgress(load(STORE, {}), lessonById))
   const [saved, setSaved] = useState(() => { const list = load(PLAYERS, []); return Array.isArray(list) ? list.filter(validPlayer).slice(0, LIMIT) : [] })
   const [tab, setTab] = useState('lessons'), [python, setPython] = useState(null), [notice, setNotice] = useState('')
   const current = lessonById(progress.current) ?? LESSONS[0]

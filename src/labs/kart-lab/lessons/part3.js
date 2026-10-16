@@ -128,6 +128,7 @@ for lap $e$ of $E$. The floor never reaches 0: the world might hold something no
       goal: 'Derive the Q-learning target from the Bellman equation and compute an update by hand, including at the end of a lap.',
       builds: ['kart-05-exploration', 'kart-03-rewards'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The **key** is what the driver sees, packed into one number (lesson 2.1); the **action** is 0 to 4 (Left, Coast, Right, Accelerate, Brake). The table is `Q[key][action]`, a dictionary of lists of 5 values (lessons 2.1 and 3.1). In the formulas below, $s$ is the key now and $s\'$ the key after the move, $a$ the action, $r$ the reward that `step` reported for it (lesson 1.5), and $\\gamma$ the discount.' },
         { md: `The values the driver wants satisfy the **Bellman optimality equation**:
 
 $$Q^*(s, a) = \\mathbb E\\Big[\\, r + \\gamma \\max_{a'} Q^*(s', a') \\Big]$$

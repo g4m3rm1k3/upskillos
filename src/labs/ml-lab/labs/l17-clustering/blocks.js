@@ -1,7 +1,11 @@
 // Lesson order for Lab 17: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l17-unsupervised': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 10", body: [
+      "Euclidean distance is √Σⱼ(aⱼ − bⱼ)². A feature measured in large units dominates it: a difference of 1,000 in salary swamps a difference of 3 in age.",
+      "So features are standardised first, z = (x − mean) / sd, with the mean and sd taken from the training data (Labs 03 and 10)."
+    ] } }, { p: 1 }, { p: 2 },
     { figure: 'ClustersInNoise', caption: 'k-means on points with no structure at all.' },
     { cell: 0 },
     { p: 3 },

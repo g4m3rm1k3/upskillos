@@ -478,6 +478,7 @@ That is **REINFORCE** (CartPole Lab): make actions that led to high returns more
     goal: 'Build PPO\'s surrogate objective from importance sampling, read the clipped objective case by case, and see how it keeps each update close to the old policy.',
     builds: ['policy-gradient-derivation', 'monte-carlo', 'piecewise'],
     blocks: [
+        { added: true, kind: 'recall', note: 'The **advantage** $A_t = G_t - V(s_t)$ is the return that followed action $a_t$ minus the value the critic expected from state $s_t$: positive if the action turned out better than usual from there, negative if worse (lesson [[#policy-gradient-derivation]]). The policy gradient pushes up $\\log\\pi_\\theta(a_t \\mid s_t)$ in proportion to it.' },
       { md: `Policy gradients use each batch of experience for **one** small step, because after the policy changes, the old data no longer comes from it. **Proximal Policy Optimisation** (PPO), the algorithm behind most RL from human feedback, reuses each batch for several steps, safely.
 
 **Reusing old data: importance sampling.** The data was collected with the old policy $\\pi_{\\text{old}}$. Lesson [[#monte-carlo]]'s importance sampling corrects expectations under a new policy by weighting each sample with the **probability ratio**
