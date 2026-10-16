@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 71,
+    "labs": 72,
     "games": 16
   },
   "courses": [
@@ -518,6 +518,12 @@
       "label": "DSA + Design Patterns",
       "kind": "lesson",
       "path": "/learn/dsa-patterns/01"
+    },
+    {
+      "id": "dynamic-programming",
+      "label": "Dynamic Programming Lab",
+      "kind": "lab",
+      "path": "/lab/dynamic-programming"
     },
     {
       "id": "five-axis",

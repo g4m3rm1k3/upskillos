@@ -8,6 +8,11 @@ Last reconciled: 2026-09-26
 
 ## Current status and prioritized backlog
 
+### Dynamic Programming Lab (2026-10-16)
+
+- [x] Curriculum preview shell with a searchable, scrollable concept hierarchy, labeled difficulty colors, coverage overview, and Python/JavaScript workspace previews. See [scope and authoring plan](dynamic-programming-lab.md).
+- [ ] Author concept walkthroughs, worked examples, and independently checked Python/JavaScript problems. Every mapped concept remains coming soon.
+
 This is the master plan for contributor experience, application orientation, and the LMS direction. Keep this section current as work lands. The generated [project inventory](generated/project-inventory.md) is the source of truth for catalog counts and duplicate-content findings; do not copy its changing file lists here.
 
 Priority describes the recommended order of work. It does not mean that every open item blocks an unrelated pull request. The contributor-foundation changes described below have passed their applicable checks and can be reviewed independently of the older catalog and engineering debt.
