@@ -102,3 +102,15 @@
 .dp-hints li button { font-size: 10px; color: var(--dp-muted); margin-top: 8px; background: #232a3b; border-radius: 5px; padding: 5px 8px; }
 @container (max-width: 1000px) { .dp-sidebar { width: 290px; flex-basis: 290px; } .dp-detail { padding: 25px 22px; } .dp-stage-cards { grid-template-columns: 1fr; } .dp-stage-cards article { padding: 15px; } .dp-stage-cards h4 { margin-top: 8px; } .dp-level-cards { grid-template-columns: 1fr; } }
 @container (max-width: 650px) { .dp-header { padding: 15px; gap: 10px; flex-wrap: wrap; } .dp-header h1 { font-size: 18px; } .dp-shell-badge { font-size: 9px; } .dp-workspace { flex-direction: column; overflow-y: auto; } .dp-sidebar { width: 100%; flex: 0 0 400px; border-right: 0; border-bottom: 1px solid var(--dp-line); } .dp-sidebar-tools { padding: 14px; } .dp-sidebar-title { margin-bottom: 10px; } .dp-detail { overflow: visible; flex: none; } .dp-related > div { grid-template-columns: 1fr; } .dp-practice { padding: 16px; } .dp-practice-footer { align-items: flex-start; flex-direction: column; } .dp-stats { gap: 7px; } .dp-stats span { font-size: 9px; } }
+.dp-authored section { margin-top: 26px; padding: 22px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 10px; }
+.dp-authored h3, .dp-authored p, .dp-authored pre { margin: 12px 0; }
+.dp-authored p, .dp-authored li { line-height: 1.8; }
+.dp-authored pre { overflow-x: auto; padding: 16px; background: #0e1220; border-radius: 6px; }
+.dp-authored button { padding: 9px 12px; background: #33294d; border: 1px solid #665386; border-radius: 6px; }
+.dp-authored button:disabled { opacity: .45; }
+.dp-authored select, .dp-authored input[type=number] { background: #0e1220; color: var(--dp-text); border: 1px solid #665386; border-radius: 5px; padding: 7px; margin: 8px; max-width: 100px; }
+.dp-trace-controls, .dp-authored form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.dp-stack { padding-left: 25px; }
+.dp-stack li { padding: 9px; border: 1px solid var(--dp-line); }
+.dp-stack li[aria-current] { background: #33294d; border-color: #c4b5fd; }
+.dp-stack span { display: block; font-size: 12px; color: var(--dp-muted); }

@@ -1,6 +1,6 @@
 # Dynamic Programming Lab
 
-The lab at `#/lab/dynamic-programming` is a curriculum preview. Its discovered
+The lab at `#/lab/dynamic-programming` is a growing curriculum with a recursion walkthrough. Its discovered
 metadata and component live in `src/labs/dynamic-programming/`.
 
 ## Scope and status
@@ -9,7 +9,7 @@ The shell provides an independently scrollable, nested concept navigation panel,
 search across names and learning scopes, difficulty filtering, expand/collapse
 controls, a coverage overview, and selectable concept previews. Difficulty is
 communicated with both color and text. Narrow windows stack the navigation above
-the preview. All concepts and all teaching stages are **coming soon**.
+the preview. The recursion concept offers a walkthrough, an inspectable call-stack trace, and a checked prediction exercise. Other concepts and editable coding practice remain **coming soon**.
 
 The curriculum source of truth is `curriculum.js`. UI counts are computed from
 that data. Each concept has a stable ID, a title, an explicit learning scope, and
@@ -47,11 +47,14 @@ time: a small observation, a guiding question about the learner's reasoning,
 then a tiny test case or invariant checkpoint. Do not reveal the full recurrence,
 solution code, or final answer through hints. Author each hint for its particular
 problem and review it for spoilers. The shell previews these stages with disabled
-coming-soon controls; no problem-specific hints are authored yet.
+coming-soon controls; the recursion prediction check has individually revealed hints.
 
-The language selector currently changes only a labeled workspace preview. There
-is no editor, execution engine, assessment, completion tracking, or authored
-lesson yet. No placeholders count as completed learning material.
+The recursion language selector switches between Python and JavaScript reference
+examples. Other concepts retain labeled workspace previews. There is no code
+editor, execution engine, or completion tracking yet. The prediction check is
+local feedback, not a coding assessment. A `walkthrough` status does not imply
+that a full coding problem is available. No placeholders count as completed
+learning material.
 
 ## Verification (2026-10-16)
 
@@ -74,3 +77,18 @@ lesson yet. No placeholders count as completed learning material.
   after opening a window; reopening after a page reload uses the new width.
 - The temporary preview server was stopped after inspection. No production
   build or Python/JavaScript execution was needed for this placeholder shell.
+
+
+## Recursion walkthrough verification (2026-10-16)
+
+- `npx vitest run src/labs/dynamic-programming` printed `Test Files 2 passed (2)`
+  and `Tests 6 passed (6)`. It checks trace sums, balanced frames, maximum depth,
+  zero input, reversible stepping, language selection, wrong/correct prediction
+  feedback, progressive hints, and the existing curriculum navigation.
+- `npm run typecheck` completed with exit code 0 and no diagnostics.
+- Browser verification: opened the discovered lab, selected recursion, switched
+  to JavaScript, advanced the trace, submitted an incorrect prediction, revealed
+  a hint, and submitted a correct prediction. The narrow lab window stacked
+  navigation and content and displayed the exercise without horizontal clipping.
+- Remaining work: repeated-subproblem walkthroughs, editable and safely executed
+  Python/JavaScript challenges, and completion tracking.
