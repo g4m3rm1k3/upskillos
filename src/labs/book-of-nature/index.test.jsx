@@ -173,4 +173,69 @@ describe('Book of Nature', () => {
     answer('Your answer', 3, 'Check')
     expect(screen.getAllByText('Pair things off').length).toBeGreaterThan(0)
   })
+
+  it('gets stuck on the broken board and finds the colour count', () => {
+    render(<Lab />)
+    selectMoment('bon-broken-chessboard')
+    fireEvent.click(screen.getByText("Let's find out"))
+    const lay = (a, b) => {
+      fireEvent.click(screen.getByLabelText(`row ${a[0]}, column ${a[1]}`))
+      fireEvent.click(screen.getByLabelText(`row ${b[0]}, column ${b[1]}`))
+    }
+    const rows = () => {
+      for (const [a, b] of [[[1, 2], [1, 3]], [[2, 1], [2, 2]], [[2, 3], [2, 4]], [[3, 1], [3, 2]], [[3, 3], [3, 4]], [[4, 2], [4, 3]]]) lay(a, b)
+    }
+    lay([1, 2], [1, 4])
+    expect(screen.getByText(/next to the highlighted one/)).toBeTruthy()
+    fireEvent.click(screen.getByLabelText('row 1, column 4'))
+    rows()
+    expect(screen.getByTestId('domino-count').textContent).toBe('6')
+    expect(screen.getByTestId('stuck').textContent).toMatch(/2 squares are left/)
+    expect(screen.getByText('Try to cover the board at least twice').disabled).toBe(true)
+    fireEvent.click(screen.getByText('Start again'))
+    rows()
+
+    fireEvent.click(screen.getByText('I see something'))
+    fireEvent.click(screen.getByText('Yes: 62 squares, 31 dominoes'))
+    expect(screen.getByText(/two light squares are always left over/)).toBeTruthy()
+    fireEvent.click(screen.getByText('Paint it like a chessboard'))
+    expect(screen.getByTestId('small-count').textContent).toMatch(/^6 dark squares, 8 light squares/)
+    expect(screen.getByText(/still uncovered: 0 dark, 2 light/)).toBeTruthy()
+    fireEvent.click(screen.getByText('Now the full chessboard'))
+    expect(screen.getByTestId('big-count').textContent).toBe('30 dark squares, 32 light squares.')
+
+    fireEvent.click(screen.getByText('Now you try'))
+    answer('Your answer', 2, 'Check')
+    expect(screen.getByText(/How many dark squares are missing here/)).toBeTruthy()
+    answer('Your answer', 4, 'Check')
+    expect(screen.getByText("Find what doesn't change")).toBeTruthy()
+  })
+  it('breaks the doubling pattern with six points on a circle', () => {
+    render(<Lab />)
+    selectMoment('bon-so-what-is-mathematics')
+    fireEvent.click(screen.getByText("Let's find out"))
+    fireEvent.click(screen.getByLabelText('piece 1'))
+    fireEvent.click(screen.getByLabelText('piece 1'))
+    expect(screen.queryAllByTestId('pieces-row')).toHaveLength(0)
+    for (const [n, count] of [[2, 2], [3, 4], [4, 8], [5, 16]]) {
+      fireEvent.click(screen.getByLabelText(`${n} points`))
+      for (let i = 1; i <= count; i++) fireEvent.click(screen.getByLabelText(`piece ${i}`))
+    }
+    expect(screen.getAllByTestId('pieces-row').map(r => r.textContent)).toEqual(['2 points2 pieces', '3 points4 pieces', '4 points8 pieces', '5 points16 pieces'])
+
+    fireEvent.click(screen.getByText('I see something'))
+    answer('Your prediction', 32, 'Lock it in')
+    expect(screen.getByText(/what the doubling says/)).toBeTruthy()
+    fireEvent.click(screen.getByText('Draw the next chord'))
+    expect(screen.getByTestId('pieces-total').textContent).toBe('2')
+    fireEvent.click(screen.getByText('Draw them all'))
+    expect(screen.getByTestId('pieces-total').textContent).toBe('31')
+    expect(screen.getByText(/1 \+ 15 \+ 15 = 31/)).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Now you try'))
+    answer('Your answer', 64, 'Check')
+    expect(screen.getByText(/That is the doubling again/)).toBeTruthy()
+    answer('Your answer', 57, 'Check')
+    expect(screen.getByText(/Keep this/i)).toBeTruthy()
+  })
 })

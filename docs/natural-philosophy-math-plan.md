@@ -263,4 +263,4 @@ Parts II to V get their own episode maps when Part I is under way.
 |---|---|
 | Plan | Written 2026-10-15 |
 | Moment 1.3 prototype | Built 2026-10-16 (`src/labs/book-of-nature/`); user approved it as the bar |
-| Episode 1 | 1.1 to 1.6 written (1.4 to 1.6 on 2026-10-16, browser-checked); next 1.7 The broken chessboard |
+| Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16. Next: Episode 2, Measuring the land |

@@ -147,9 +147,9 @@ function Reveal() {
             of odd numbers, including the ones nobody will ever write down.
           </p>
           <p>
-            That's new. Until now you checked patterns on examples. This time you{' '}
-            <strong className="text-amber-300">know</strong> it must be true, for every case, because you can see the
-            reason.
+            Notice what settled it. Not more examples: a reason, and a reason covers every case at once. The odd
+            squares and the staircase worked the same way. A hunch says it has always happened so far. A reason lets
+            you <strong className="text-amber-300">know</strong> it must happen, every time.
           </p>
         </div>
       )}
