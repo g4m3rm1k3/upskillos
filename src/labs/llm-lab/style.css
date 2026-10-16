@@ -1,0 +1,14 @@
+/* LLM Lab: QMaze Lab's styles (qm-…) and the shared Python tab's (ps-…), plus what is new here (llm-…). */
+.llm-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}.llm-row>*{flex:1 1 300px;min-width:0}
+.llm-tokens{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.llm-token{display:inline-flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:#fffdf8;font:12.5px/1.3 'JetBrains Mono',ui-monospace,monospace;min-width:28px}
+.llm-token small{font-size:10px;color:var(--muted)}
+.llm-token.special{background:#f1eadc}
+.llm-bars{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;max-width:460px;font:12.5px 'JetBrains Mono',ui-monospace,monospace}
+.llm-bar{height:12px;background:var(--accent);border-radius:3px;min-width:1px}
+.llm-bar.right{background:#2f8a4d}
+.llm-grid{border-collapse:collapse;font:12px 'JetBrains Mono',ui-monospace,monospace}
+.llm-grid td,.llm-grid th{border:1px solid var(--line);padding:3px 5px;text-align:center;min-width:26px}
+.llm-grid td.good{background:#e6f2ea}.llm-grid td.bad{background:#f8e1d8}
+.llm-out{font:13px/1.6 'JetBrains Mono',ui-monospace,monospace;background:#fffdf8;border:1px solid var(--line);border-radius:7px;padding:8px 10px;white-space:pre-wrap;margin:6px 0}
+.llm-keys{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}

@@ -19,7 +19,10 @@ export function makeSource(raw) {
     const classes = []
     p.lines.forEach((text, i) => { const m = /^(\s*)class\s+(\w+)/.exec(text); if (m) classes.push({ name: m[2], line: i + 1, indent: m[1].length }) })
     return (quals[file] = p.functions.map(fn => {
-      const owner = classes.filter(c => c.line < fn.start && c.indent < fn.indent).at(-1)
+      // A class owns a function only while the class's block is still open: a line at the class's
+      // own indent (or less) between them ends it, so a `backward` nested in a later function isn't a method.
+      const open = c => !p.lines.slice(c.line, fn.start - 1).some(t => t.trim() && !t.trim().startsWith('#') && t.length - t.trimStart().length <= c.indent)
+      const owner = classes.filter(c => c.line < fn.start && c.indent < fn.indent && open(c)).at(-1)
       // The shared parser keeps the stars of a `**name` that follows a space; the name is what Python binds.
       return { ...fn, params: fn.params.map(n => n.replace(/^\*+/, '')), className: owner?.name ?? null, qual: owner ? `${owner.name}.${fn.name}` : fn.name, key: `${file}:${owner ? `${owner.name}.${fn.name}` : fn.name}` }
     }))

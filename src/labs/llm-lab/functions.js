@@ -1,0 +1,55 @@
+// What every function in python/ is for, keyed by 'file:qualified name': one line saying what it does,
+// its inputs, what it gives back, and the lesson that teaches it. The Python tab shows these cards;
+// lessons.test.js checks every function has one with every input listed.
+const F = (summary, inputs, returns, lesson) => ({ summary, inputs, returns, lesson })
+
+export const FUNCTIONS = {
+  'gpt.py:Rng.__init__': F('Makes a random number generator that starts from a seed.', [['self', 'the new generator'], ['seed', 'where the sequence starts: the same seed gives the same numbers']], 'nothing', 'same-numbers'),
+  'gpt.py:Rng.random': F('The next random number.', [['self', 'the generator']], 'a float from 0 up to (not including) 1', 'same-numbers'),
+  'gpt.py:Rng.below': F('A random whole number below n.', [['self', 'the generator'], ['n', 'how many choices']], 'a whole number from 0 to n − 1', 'same-numbers'),
+  'gpt.py:total': F('Adds a list of numbers left to right, the plain way, so Python and the page get the same bits.', [['xs', 'the numbers']], 'their sum', 'same-numbers'),
+  'gpt.py:exp': F('$e^x$ from +, −, × and ÷ only, so it gives the same bits in Python and JavaScript.', [['x', 'the power']], '$e^x$', 'same-numbers'),
+  'gpt.py:log': F('The natural logarithm, the same way.', [['x', 'a positive number']], '$\\ln x$', 'same-numbers'),
+  'gpt.py:Tensor.__init__': F('A table of numbers that remembers how it was made.', [['self', 'the new Tensor'], ['data', 'the numbers, as a list of rows'], ['parents', 'the Tensors it was computed from'], ['backward', 'how to pass its gradient back to them']], 'nothing', 'forward-pass'),
+  'gpt.py:Tensor.backward': F('Backpropagation: fills in the gradient of every Tensor this one depends on.', [['self', 'the loss (a 1 × 1 Tensor)']], 'nothing; every `.grad` is filled in', 'forward-pass'),
+  'gpt.py:Tensor.visit': F('Puts a Tensor and everything it came from into the order backpropagation needs.', [['t', 'a Tensor']], 'nothing; adds to `order`', 'forward-pass'),
+  'gpt.py:zeros': F('A table of zeros.', [['rows', 'how many rows'], ['cols', 'how many columns']], 'a list of rows', 'forward-pass'),
+  'gpt.py:matmul': F('Matrix multiplication, with its gradient.', [['a', 'an n × k Tensor'], ['b', 'a k × m Tensor']], 'their n × m product', 'forward-pass'),
+  'gpt.py:backward': F('One operation\'s share of backpropagation: passes its output\'s gradient back to its inputs.', [], 'nothing; adds to the inputs\' `.grad`', 'forward-pass'),
+  'gpt.py:add': F('Adds two tables entry by entry.', [['a', 'a Tensor'], ['b', 'a Tensor of the same shape']], 'their sum', 'forward-pass'),
+  'gpt.py:relu': F('ReLU on every entry: negatives become 0.', [['a', 'a Tensor']], 'the Tensor with negatives replaced by 0', 'forward-pass'),
+  'gpt.py:transpose': F('Rows become columns.', [['a', 'a Tensor']], 'its transpose', 'forward-pass'),
+  'gpt.py:scale': F('Multiplies every entry by one number.', [['a', 'a Tensor'], ['s', 'the number']], 'the scaled Tensor', 'forward-pass'),
+  'gpt.py:causal_softmax': F('Softmax along each row over the positions up to that row only: attention can\'t look ahead.', [['a', 'the attention scores, positions × positions']], 'the attention weights, each row adding up to 1', 'forward-pass'),
+  'gpt.py:embed': F('Looks up one row of a table per id.', [['table', 'the embedding table'], ['ids', 'the token or position ids']], 'one row per id', 'forward-pass'),
+  'gpt.py:cross_entropy': F('The loss: minus the log of the probability given to each real next token, averaged (with weights, a weighted average).', [['logits', 'the scores, one row per position'], ['targets', 'the real next token at each position'], ['weights', 'how much each position counts (default: 1 each)']], 'the loss, as a 1 × 1 Tensor', 'pretraining'),
+  'gpt.py:init_model': F('A new model with random starting weights.', [['vocab_size', 'how many tokens'], ['dim', 'the length of each vector'], ['context', 'how many positions it can see'], ['hidden', 'the MLP\'s width'], ['seed', 'which random weights']], 'a dictionary of the nine weight tables', 'forward-pass'),
+  'gpt.py:forward': F('One pass of the model: token ids in, logits out.', [['model', 'the weights'], ['ids', 'the token ids']], '`(logits, w, weights)`: 17 scores per position, the weights as Tensors, and the attention weights', 'forward-pass'),
+  'gpt.py:new_adam_state': F('What Adam remembers between steps, all starting at zero.', [['model', 'the model it will train']], 'a dictionary: the step count and two running averages per weight', 'pretraining'),
+  'gpt.py:adam_step': F('One Adam step on every weight.', [['model', 'the weights (changed in place)'], ['grads', 'the gradient of every table'], ['state', 'Adam\'s memory (changed in place)'], ['lr', 'the learning rate'], ['b1', 'how slowly the average gradient forgets'], ['b2', 'how slowly the average squared gradient forgets'], ['eps', 'a tiny number so it never divides by 0']], 'nothing', 'pretraining'),
+  'gpt.py:train_step': F('One training step: forward, loss, backward, Adam.', [['model', 'the weights (changed in place)'], ['state', 'Adam\'s memory'], ['ids', 'the input tokens'], ['targets', 'the token that should follow each one'], ['weights', 'how much each position counts (default: all)'], ['lr', 'the learning rate']], 'the loss before the step', 'pretraining'),
+  'gpt.py:next_logits': F('The scores for the token after `ids`, seeing at most the last 16 tokens.', [['model', 'the weights'], ['ids', 'the text so far, as ids']], '17 scores', 'base-model'),
+  'gpt.py:argmax': F('The position of the largest number (the first, on a tie).', [['row', 'a list of numbers']], 'an index', 'base-model'),
+  'gpt.py:greedy': F('Greedy decoding: append the most likely next token until the stop token.', [['model', 'the weights'], ['ids', 'the prompt, as ids'], ['stop', 'the token that ends it'], ['limit', 'the most tokens to write']], 'the new tokens, without the stop token', 'base-model'),
+  'arith.py:encode': F('Text to token ids.', [['text', 'characters from the vocabulary']], 'a list of ids', 'next-token'),
+  'arith.py:decode': F('Token ids to text.', [['ids', 'a list of ids']], 'a string', 'next-token'),
+  'arith.py:notebook': F('The pretraining text: random sums with their answers, one per line.', [['lines', 'how many sums'], ['seed', 'which sums']], 'one string', 'pretraining'),
+  'arith.py:complete': F('What a base model writes after "a+b=".', [['model', 'the weights'], ['a', 'the first digit'], ['b', 'the second digit']], 'its answer, as text', 'base-model'),
+  'arith.py:exact_match': F('How many of the 100 questions a base model answers exactly right.', [['model', 'the weights']], 'a whole number from 0 to 100', 'base-model'),
+  'pretrain.py:pretrain': F('Pretrains a base model on the notebook, every token counted.', [['steps', 'how many steps'], ['dim', 'vector length'], ['context', 'positions it can see'], ['hidden', 'MLP width'], ['lr', 'learning rate'], ['seed', 'which starting weights and which windows'], ['lines', 'how many sums in the notebook']], '`(model, losses)`', 'pretraining'),
+  'pretrain.py:pretrain_and_test': F('Pretrains with every default, then prints the loss and the exact-match score: what `python3 pretrain.py` does.', [['steps', 'how many steps']], 'the model', 'pretraining'),
+}
+
+// What a name means wherever it appears, for the Python tab's watch list.
+export const VARS = {
+  model: 'the weights: a dictionary of nine tables', ids: 'token ids', text: 'characters', t: 'a token id (or a Tensor, in backward)',
+  logits: 'one score per vocabulary token, at every position', targets: 'the real next token at each position', loss: 'the cross-entropy',
+  losses: 'the loss after every step', state: 'Adam\'s memory', rng: 'a random number generator', seed: 'fixes the random numbers',
+  window: '17 tokens of the notebook: 16 inputs and, shifted by one, 16 targets', start: 'where the window begins',
+  out: 'the result being built', a: 'the first digit (or a Tensor)', b: 'the second digit (or a Tensor)',
+  x: 'a number, or the vectors flowing through the model', k: 'how many times to double or halve', r: 'the small remainder', e: 'how many halvings',
+  term: 'one term of the series', series: 'the series added up so far', s: 'a running sum (or a scale)',
+  probs: 'probabilities', p: 'one position\'s 17 probabilities', z: 'the sum of the exponentials',
+  w: 'the weights as Tensors (or a position\'s weight in the loss)', q: 'queries', v: 'values', weights: 'attention weights, or how much each position counts in the loss',
+  dim: 'vector length (16)', context: 'positions the model can see (16)', hidden: 'MLP width (64)', lr: 'the learning rate',
+}

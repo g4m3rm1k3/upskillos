@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 69,
+    "labs": 70,
     "games": 16
   },
   "courses": [
@@ -572,6 +572,12 @@
       "label": "Little Schemer Sandbox",
       "kind": "lesson",
       "path": "/lab/little-schemer"
+    },
+    {
+      "id": "llm-lab",
+      "label": "LLM Lab",
+      "kind": "lab",
+      "path": "/lab/llm-lab"
     },
     {
       "id": "logic-sim",
