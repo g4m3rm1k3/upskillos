@@ -200,11 +200,15 @@ export default {
   'VAR.P': def(C, 'VAR.P(number1, [number2], …)', 'The variance of a whole population (divides by n).', (args) => variance(numbers(args), false), { min: 1 }),
   LARGE: def(C, 'LARGE(array, k)', 'The k-th largest value.', ([a, k]) => { const s = sorted(numbers([toMatrix(a)])); const n = integer(k); if (n < 1 || n > s.length) fail('#NUM!', 'k must be between 1 and the number of values.'); return s[s.length - n] }, { example: ['=LARGE(A1:A10, 2)', 'the second largest'] }),
   SMALL: def(C, 'SMALL(array, k)', 'The k-th smallest value.', ([a, k]) => { const s = sorted(numbers([toMatrix(a)])); const n = integer(k); if (n < 1 || n > s.length) fail('#NUM!', 'k must be between 1 and the number of values.'); return s[n - 1] }),
-  'RANK.EQ': def(C, 'RANK.EQ(number, ref, [order])', 'The rank of a number in a list (ties share the best rank).', ([x, r, o]) => rankOf(x, numbers([toMatrix(r)]), optBool(o, false)), { example: ['=RANK.EQ(B2, B$2:B$20)', 'B2\'s position, largest = 1'] }),
+  // Given a range of numbers, both rank each one (scalar: [0]), as Excel does: =RANK.AVG(A2:A20, A2:A20, 1).
+  'RANK.EQ': def(C, 'RANK.EQ(number, ref, [order])', 'The rank of a number in a list (ties share the best rank).', ([x, r, o]) => rankOf(x, numbers([toMatrix(r)]), optBool(o, false)), { scalar: [0], example: ['=RANK.EQ(B2, B$2:B$20)', 'B2\'s position, largest = 1'] }),
   'RANK.AVG': def(C, 'RANK.AVG(number, ref, [order])', 'The rank of a number, with ties given their average rank.', ([x, r, o]) => {
     const xs = numbers([toMatrix(r)]), v = toNumber(x), asc = optBool(o, false)
     const first = rankOf(v, xs, asc), ties = xs.filter((y) => y === v).length
     return first + (ties - 1) / 2
+  }, {
+    scalar: [0], example: ['=CORREL(RANK.AVG(A2:A20, A2:A20, 1), RANK.AVG(B2:B20, B2:B20, 1))', 'Spearman’s rank correlation of the two columns'],
+    learn: 'Given a whole range as the number, it ranks every value at once. Ties share the mean of the places they take up: two values tied for 3rd and 4th both get 3.5. The correlation of two columns’ ranks is Spearman’s correlation, which one far-off value can move only one place.',
   }),
   'PERCENTILE.INC': def(C, 'PERCENTILE.INC(array, k)', 'The value below which a fraction k of the data falls (0 ≤ k ≤ 1).', ([a, k]) => percentileInc(numbers([toMatrix(a)]), toNumber(k)), { example: ['=PERCENTILE.INC(A1:A100, 0.9)', 'the 90th percentile'] }),
   'PERCENTILE.EXC': def(C, 'PERCENTILE.EXC(array, k)', 'Percentile, excluding the end points (0 < k < 1).', ([a, k]) => percentileExc(numbers([toMatrix(a)]), toNumber(k))),

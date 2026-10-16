@@ -219,6 +219,63 @@ Measured or found while building Parts 3 and 4, and taught in the lessons:
 - Over all 382 prices, Scott's bins are £53.83 wide and Freedman–Diaconis' £4.96: the bikes inflate the standard deviation, not the IQR (4.4).
 - The density of the lights' prices (Silverman's h = 0.60) has area 1.000000 by 2,000 strips (4.6). A bar chart of Harrogate against Leeds with its axis from 80 has a lie factor of 12.4 (4.8).
 
+## Part 5 as built: Looking for patterns
+
+Two columns at a time needs columns that move together, so the generator makes two new tables, with the truth behind them known and the orders untouched (`make_days`, `make_deliveries` in `python/data.py`):
+- **days** (`date, high_c, rain_mm, riders, visits`), one row per day of 2025. The temperature follows the seasons; rain falls on more days in winter, skewed, with many dry days (ties for ranking). Riders on the cycle path: 300 + 22 per degree − 12 per mm of rain + 90 at weekends. Website visits are multiplied by e^0.05 per degree (5.13%) and by nothing else. So riders and visits move together **only** because the temperature drives both: a confounder, put in on purpose. On 11 February a news site linked to the shop: 9,412 visits, against 378 usual (`truth=` keeps it).
+- **deliveries** (`order_id, courier, days, on_time`), one row per web order posted (services are booked, not posted). Northern has vans and takes 80% of far parcels (York, Harrogate) and 20% of near ones; far parcels are late more often (`ON_TIME`). The town is not in the table: the paradox appears only once the orders are joined (Part 3).
+
+The random noise is twelve uniform draws added, minus 6 (`noise`): only additions, so both languages draw the same numbers, and lesson 6.5 shows why it is bell-shaped.
+
+Spreadsheet Lab first: the shop dataset opens `days` and `deliveries` sheets beside the catalogue and returns, lists them, and has two new things to try (temperature, riders and visits; which courier is on time). Building lesson 5.3 found a gap: RANK.EQ and RANK.AVG ranked one value at a time and gave an error for a whole range, so Spearman's `=CORREL(RANK.AVG(B2:B366, B2:B366, 1), …)` failed; they now rank a range as Excel does, with tests. Every function the lessons use (CORREL, COVARIANCE.S, RANK.AVG, SLOPE, INTERCEPT, RSQ, the log slope with FILTER) is held to the Python by `engine/agree.test.js`.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, D3 |
+|---|---|---|---|---|
+| 5.1 Two columns at once | the scatter plot; covariance as the mean product of distances from the means; its sign by quadrants | `covariance`; D3: a scatter plot of riders by temperature | cov(x, x) = var(x); why the sign follows the quadrants | Quadrants (the rectangles of each point from the means); `=COVARIANCE.S` |
+| 5.2 Correlation | r = cov / (sₓ s_y); units cancel; r as the cosine of the angle between the centred columns; −1 ≤ r ≤ 1 | `correlation`, `cosine` | r of standardised columns; why |r| ≤ 1 (cosine) | CorrelationShapes (clouds with r from −1 to 1); `=CORREL` |
+| 5.3 Ranks and Spearman | ranking with ties (average ranks); Spearman as Pearson on ranks; the news day | `rank`, `spearman` | the shared rank of a run of ties: (i + j)/2 + 1 | RankTies; `=CORREL(RANK.AVG(…),RANK.AVG(…))`; Real Python `rank` |
+| 5.4 The line from the correlation | the slope r·s_y/sₓ through the means; regression to the mean; R² = r² | `fit_line`, `residuals` | the line in standard units: ẑ_y = r·zₓ | LineFit (the line, its residuals); `=SLOPE`, `=INTERCEPT`, `=RSQ`; D3: the line on the scatter |
+| 5.5 Anscombe's quartet | four sets, one summary; always plot | `describe_pair`; D3: the quartet as small multiples | – | Anscombe |
+| 5.6 Logs straighten curves | a multiplying effect is a straight line on a log scale; the slope as a percentage per unit; the 5.13% recovered | `growth_per_unit` | log y = a + b x ⇒ y × e^b per step | LogStraightens; `=EXP(SLOPE(LN(…),…))-1` |
+| 5.7 Too many dots | overplotting; transparency; jitter (seeded) | `jitter`; D3: jittered, transparent dots | the most jitter before levels mix: half the gap | Overplotting |
+| 5.8 The correlation matrix | every pair at once; symmetric, 1 on the diagonal; a diverging heat map | `correlation_matrix`; D3: the heat map | k columns give k(k − 1)/2 pairs | `=CORREL` for one cell |
+| 5.9 Simpson's paradox | a rate overall vs within groups; the overall rate is a weighted average; the confounder joined from the orders | `rate_by` | overall rate = Σ share_g × rate_g | Simpson (the weights moved); `=COUNTIFS` on the deliveries |
+| 5.10 Project: not causation | confounders, colliders and selection bias, each simulated with the truth known; the partial correlation; riders and visits | `partial_correlation` | – | CausalSims (three worlds, three correlations) |
+
+## Part 6 as built: Samples and uncertainty
+
+The 400 clean orders (382 priced) are treated as the **population**: every parameter is known, so every interval can be checked. All sampling uses the generator of `data.py`, one generator per experiment (`python/samples.py`, held to `engine/samples.js` by parity).
+
+Spreadsheet Lab first: no new functions are needed (COMBIN, BINOM.DIST, POISSON.DIST, NORM.S.INV, CONFIDENCE.NORM, STDEV.S, SKEW exist); every one the lessons use is held to the Python.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, D3 |
+|---|---|---|---|---|
+| 6.1 Population and sample | parameter vs statistic; sampling with and without replacement; a partial shuffle | `sample_without`, `sample_with` | P(a row is in a sample of k): k/n without, 1 − (1 − 1/n)^k with | SampleDrawer; `=COMBIN(400, 20)` |
+| 6.2 Counting successes | Bernoulli and binomial; choosing k of n | `comb`, `binomial_pmf` | E = np and Var = np(1 − p) from n Bernoullis | BinomialExplorer (theory vs samples); `=BINOM.DIST` |
+| 6.3 Counting events | the Poisson distribution as a binomial with many tries; orders per day | `poisson_pmf`, `orders_per_day`, `tally` | the binomial’s limit as n grows and p = λ/n | D3: observed days with the Poisson’s expected; `=POISSON.DIST` |
+| 6.4 The standard error | the expectation and variance of a sum; the mean of n values varies as σ/√n, measured | `sample_means`, `standard_error` | Var(x̄) = σ²/n | SamplingDistribution; `=STDEV.S(…)/SQRT(COUNT(…))` |
+| 6.5 The bell curve and its limits | the central limit theorem shown; the generator's noise as twelve uniforms; skewness; heavy tails, where it fails | `normal_pdf`, `skewness` | the variance of a uniform draw, 1/12 | CltExplorer; HeavyTail; `=SKEW`; D3: sample means with the bell curve |
+| 6.6 Confidence intervals | mean ± 1.96 SE; what "95%" means: coverage, simulated against the known truth | `mean_interval`, `coverage` | 1.96 from the normal’s 97.5% point | CoverageRuns (100 intervals, the misses in red); `=CONFIDENCE.NORM`, `=NORM.S.INV` |
+| 6.7 The bootstrap | resampling the sample; the percentile interval; an interval for the median, which has no formula | `bootstrap`, `percentile_interval` | – | BootstrapView; Real Python `bootstrap` |
+| 6.8 Reservoir sampling | a fair sample of a stream of unknown length | `reservoir` | P(an item survives) = k/n, by induction | ReservoirRun; Real Python `reservoir` |
+| 6.9 Strata and bias | stratified samples; why stratifying by item steadies the mean price; samples that are biased by how they were drawn | `stratified_sample` | the stratified mean as a weighted average | StrataLab (spread of means, simple vs stratified; the web-only sample) |
+| 6.10 Project: every number has an error | bootstrap intervals for numbers from Parts 1–5; the deliveries paradox: which differences could be chance | `bootstrap_difference` | – | ErrorBars (each number with its interval) |
+
+Measured or found while building Parts 5 and 6, and taught in the lessons:
+- Temperature and riders: covariance 802.55, r = 0.870 (an angle of 29.6° between the centred columns, in 365 dimensions). In Fahrenheit the covariance is 1,444.60, r unchanged (5.1, 5.2).
+- The news day: Pearson's r of temperature and visits falls from 0.915 to 0.187 with it; Spearman's from 0.933 to 0.924. The 196 dry days share rank 98.5 (5.3).
+- The line: 24.34 riders per degree, though the generator adds 22: cold days are also wet, and the line can't tell the two apart; give each day back the riders its rain cost and the slope is 22.23. R² = r² = 0.756 (5.4).
+- Anscombe's four sets all give r = 0.816 and y = 3 + 0.5x; Spearman's tells them apart (0.818, 0.691, 0.991, 0.5) (5.5).
+- Visits per degree, from a line through log visits: 5.26% (the truth, e^0.05 − 1, is 5.13%; bootstrap 95% interval 5.03% to 5.49%). On an ordinary axis the residuals spread by 66.5 visits on days above 18 °C against 34.4 below 10 °C; on the log axis the two are alike (5.6, 6.10).
+- 400 orders land on 16 spots of the quantity × item chart (5.7). Rain and visits correlate at −0.187 though rain never touches visits in the generator: winter is wetter (5.8).
+- Simpson: Swift is on time 80.2% to Northern's 75.3%; Northern wins far towns (71.6% vs 37.5%) and near ones (92.9% vs 90.8%), because 83% of its parcels are far against Swift's 20% (5.9). The near-town edge has a bootstrap interval of −15.3 to +15.4 points; the far-town one, 7.9 to 57.7 (6.10).
+- Riders and visits: r = 0.777, partial r given temperature −0.100, whose bootstrap interval (1,000 resamples of the days) runs from −0.21 to 0.00: chance. It isn't the curve of the visits: on log visits it is −0.1005. Selecting z > 1 in the collider world turns r = 0.04 into −0.50 (5.10).
+- 400 draws with replacement gave 246 different orders (253 expected, 1 − 1/e of them) (6.1). The chance of 12 or more web orders in 20 is 0.168 (6.2). Orders per day: 108, 152, 75, 23, 6, 1 days with 0 to 5 orders, Poisson 122.0, 133.7, 73.3, 26.8, 7.3, 1.6 (6.3).
+- The mean of 30 prices varies by £20.40 over 2,000 samples, against σ/√30 = £20.35 (6.4). The prices' skewness is 3.23; means of 30 still have 0.56 (0.59 predicted) (6.5).
+- Coverage of the "95%" interval, all prices: 32.2% with samples of 5, 92.0% with 100; the lights: 90% with 10 (6.6).
+- The bootstrap's standard error of the lights' mean is 0.1506 against the formula's 0.1505; the median's interval is £24.75 to £25.75 (6.7). A reservoir of 5 from 20 kept the first item 24.5% and the last 25.8% of 4,000 runs (6.8).
+- Stratifying 40 orders by item cuts the spread of the mean price from £16.44 to £1.09: 99.6% of the prices' variance (12,419.7 £²) is between items, only 53.9 £² within them (6.9).
+
 ## How it is built: two parts per session
 
 The owner's working rule: build two parts per session, then update the handoff (`docs/data-science-studio-handoff.md`) and clear the chat. The checking scripts live in the lab's `tools/` folder, so each session reuses them instead of writing them again.

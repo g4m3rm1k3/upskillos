@@ -2,6 +2,7 @@
 page (engine/data.js) and Python build exactly the same table, flaws included. Each flaw is
 there on purpose, for a lesson to find.
 """
+import math
 
 
 class Rng:
@@ -141,6 +142,81 @@ def make_returns(orders, n=24, seed=11, truth=None):
         real_ids.append(real)
     if truth is not None:
         truth.extend(real_ids)
+    return rows
+
+
+def noise(rng):
+    """A random number that is about normal, mean 0 and standard deviation 1: twelve uniform draws
+    added, minus 6. Each draw has variance 1/12, so twelve have variance 1 (lesson 6.5 shows why the
+    sum is bell-shaped). Only additions, so both languages get exactly the same number."""
+    t = 0.0
+    for _ in range(12):
+        t += rng.random()
+    return t - 6
+
+
+def tenths(x):
+    """x to one decimal place, as text, rounding halves up: 13.25 becomes "13.3"."""
+    k = math.floor(10 * x + 0.5)
+    sign = "-" if k < 0 else ""
+    return sign + str(abs(k) // 10) + "." + str(abs(k) % 10)
+
+
+DAYS_HEADER = ["date", "high_c", "rain_mm", "riders", "visits"]
+NEWS_DAY = 41  # 11 February: a news site linked to the shop, and the website was swamped
+
+
+def make_days(seed=5, truth=None):
+    """One row per day of 2025: the day's highest temperature, its rain, the riders counted on the
+    cycle path by the shop, and visits to the shop's website. What makes each one is known:
+    - the temperature follows the seasons (coldest in mid-January), plus noise;
+    - rain falls on more days in winter, and a wet day's rain is skewed (many light days, few heavy);
+    - riders: 300, plus 22 for each degree, minus 12 for each mm of rain, plus 90 at the weekend;
+    - visits are multiplied by e to the 0.05, about 1.0513, for each degree: 5.13% more per degree,
+      and nothing else changes them: not rain, not riders.
+    Riders and visits both follow the temperature, so they move together without either causing the
+    other (lesson 5.10). On the news day the visits were swamped; given a dictionary as truth, it
+    records that day's usual visits."""
+    rng = Rng(seed)
+    rows = []
+    for day in range(365):
+        season = -math.cos(2 * math.pi * (day - 15) / 365)
+        high_text = tenths(14 + 7 * season + 2.5 * noise(rng))
+        wet = rng.below(100) < 45 - 15 * season
+        rain_text = tenths(25 * rng.random() * rng.random()) if wet else "0.0"
+        high, rain = float(high_text), float(rain_text)
+        weekend = (day + 2) % 7 >= 5  # 1 January 2025 was a Wednesday
+        riders = math.floor(300 + 22 * high - 12 * rain + (90 if weekend else 0) + 40 * noise(rng) + 0.5)
+        visits = math.floor(180 * math.exp(0.05 * high + 0.12 * noise(rng)))
+        if day == NEWS_DAY:
+            if truth is not None:
+                truth[date_of(day)] = visits
+            visits = 9412
+        rows.append([date_of(day), high_text, rain_text, str(max(0, riders)), str(visits)])
+    return rows
+
+
+DELIVERIES_HEADER = ["order_id", "courier", "days", "on_time"]
+FAR_TOWNS = ["York", "Harrogate"]
+# The chance (in 100) that each courier delivers on time, to a far town and to a near one.
+ON_TIME = {"Northern": [70, 97], "Swift": [50, 85]}
+
+
+def make_deliveries(orders, seed=13):
+    """One row per order sent by courier: the web orders, except services (booked, not posted), each
+    real order once. The shop sends most far parcels with Northern, which has vans (80 in 100, against
+    20 in 100 of the near ones), and far parcels are late more often. The town isn't in this table:
+    it is in the orders, and lesson 5.9 joins it."""
+    rng = Rng(seed)
+    rows = []
+    for order in orders[:400]:
+        if order[6] != "web" or order[3] == "Service":
+            continue
+        far = order[2].strip().capitalize() in FAR_TOWNS
+        courier = "Northern" if rng.below(100) < (80 if far else 20) else "Swift"
+        on_time = rng.below(100) < ON_TIME[courier][0 if far else 1]
+        days = 1 + rng.below(2) if on_time else 3 + rng.below(3)
+        rows.append([order[0], courier, str(days), "yes" if on_time else "no"])
     return rows
 
 

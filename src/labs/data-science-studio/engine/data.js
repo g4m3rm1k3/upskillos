@@ -87,6 +87,52 @@ export function makeReturns(orders, n = 24, seed = 11, truth = null) {
   return rows
 }
 
+// About normal, mean 0, sd 1: twelve uniform draws added, minus 6 (only additions: exact in both languages).
+export function noise(rng) { let t = 0; for (let k = 0; k < 12; k++) t += rng.random(); return t - 6 }
+// x to one decimal place, as text, halves rounded up.
+export function tenths(x) {
+  const k = Math.floor(10 * x + 0.5), a = Math.abs(k)
+  return `${k < 0 ? '-' : ''}${Math.floor(a / 10)}.${a % 10}`
+}
+
+// One row per day of 2025: temperature, rain, riders on the cycle path, website visits (python/data.py's
+// make_days, every draw in the same order). truth: an object to receive the news day's usual visits.
+export const DAYS_HEADER = ['date', 'high_c', 'rain_mm', 'riders', 'visits']
+export const NEWS_DAY = 41
+export function makeDays(seed = 5, truth = null) {
+  const rng = new Rng(seed), rows = []
+  for (let day = 0; day < 365; day++) {
+    const season = -Math.cos(2 * Math.PI * (day - 15) / 365)
+    const highText = tenths(14 + 7 * season + 2.5 * noise(rng))
+    const wet = rng.below(100) < 45 - 15 * season
+    const rainText = wet ? tenths(25 * rng.random() * rng.random()) : '0.0'
+    const high = Number(highText), rain = Number(rainText)
+    const weekend = (day + 2) % 7 >= 5
+    const riders = Math.floor(300 + 22 * high - 12 * rain + (weekend ? 90 : 0) + 40 * noise(rng) + 0.5)
+    let visits = Math.floor(180 * Math.exp(0.05 * high + 0.12 * noise(rng)))
+    if (day === NEWS_DAY) { if (truth) truth[dateOf(day)] = visits; visits = 9412 }
+    rows.push([dateOf(day), highText, rainText, String(Math.max(0, riders)), String(visits)])
+  }
+  return rows
+}
+
+// One row per web order sent by courier (python/data.py's make_deliveries).
+export const DELIVERIES_HEADER = ['order_id', 'courier', 'days', 'on_time']
+export const FAR_TOWNS = ['York', 'Harrogate']
+export const ON_TIME = { Northern: [70, 97], Swift: [50, 85] }
+export function makeDeliveries(orders, seed = 13) {
+  const rng = new Rng(seed), rows = []
+  for (const order of orders.slice(0, 400)) {
+    if (order[6] !== 'web' || order[3] === 'Service') continue
+    const t = order[2].trim(), far = FAR_TOWNS.includes(t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+    const courier = rng.below(100) < (far ? 80 : 20) ? 'Northern' : 'Swift'
+    const onTime = rng.below(100) < ON_TIME[courier][far ? 0 : 1]
+    const days = onTime ? 1 + rng.below(2) : 3 + rng.below(3)
+    rows.push([order[0], courier, String(days), onTime ? 'yes' : 'no'])
+  }
+  return rows
+}
+
 export const csvField = text => (/[,"\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text)
 export const toCsv = (header, rows) => [header, ...rows].map(row => row.map(csvField).join(',')).join('\n') + '\n'
 
@@ -95,3 +141,5 @@ let cached = null
 export const ORDERS_CSV = () => (cached ??= toCsv(HEADER, makeOrders()))
 export const CATALOGUE_CSV = () => toCsv(CATALOGUE_HEADER, makeCatalogue())
 export const RETURNS_CSV = () => toCsv(RETURNS_HEADER, makeReturns(makeOrders()))
+export const DAYS_CSV = () => toCsv(DAYS_HEADER, makeDays())
+export const DELIVERIES_CSV = () => toCsv(DELIVERIES_HEADER, makeDeliveries(makeOrders()))

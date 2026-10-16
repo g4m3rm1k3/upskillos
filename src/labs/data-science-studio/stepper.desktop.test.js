@@ -14,6 +14,8 @@ import * as T from './engine/tables.js'
 import * as S from './engine/summary.js'
 import * as C from './engine/cleaning.js'
 import * as G from './engine/charts.js'
+import * as P from './engine/patterns.js'
+import * as M from './engine/samples.js'
 import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
@@ -104,5 +106,20 @@ describe.skipIf(!existsSync(python))('the lab’s programs in the real Python st
     await load(s, 'nice_ticks')
     const r = await s.send({ cmd: 'step', mode: 'out' })
     expect(plain(r.result)).toEqual(G.niceTicks(0, 114, 5))
+  }, 60000)
+
+  it('rank stops once per run of ties; bootstrap and reservoir draw exactly the engine’s samples', async () => {
+    await load(s, 'rank')
+    let [r, n] = await jumps(s, 'rank', 20)
+    const values = PROGRAMS.rank.input.value.split(' ').map(Number)
+    expect(plain(r.result)).toEqual(P.rank(values))
+    expect(n).toBe(new Set(values).size)   // 3 0 0 2.5 0 7 2.5 1: five different values, five runs
+    await load(s, 'bootstrap');[r, n] = await jumps(s, 'bootstrap', 20)
+    expect(n).toBe(8)
+    const k = PROGRAMS.bootstrap.kwargs('8')
+    expect(plain(r.result)).toEqual(M.bootstrap(k.values, 'median', 8, 41))
+    await load(s, 'reservoir');[r, n] = await jumps(s, 'reservoir', 30)
+    expect(n).toBe(15)   // items 6 to 20
+    expect(plain(r.result)).toEqual(M.reservoir(Array.from({ length: 20 }, (_, i) => i + 1), 5, 61))
   }, 60000)
 })

@@ -51,6 +51,10 @@ describe.each(DATASETS)('dataset: $title', (ds) => {
     }
     const { wb, s } = await sheetFor(ds)
     expect(wb.previewFormula(s, '=XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8)')).toBe('kit')
+    // Part 5's sheets: a whole year of days, and the deliveries whose town is looked up in the orders.
+    expect(wb.previewFormula(s, '=ROWS(days!A2:A366)')).toBe(365)
+    expect(wb.previewFormula(s, '=CORREL(days!B2:B366, days!D2:D366)')).toBeCloseTo(0.8697, 4)
+    expect(wb.previewFormula(s, '=COUNTIF(deliveries!B2:B163, "Northern")')).toBe(81)
   })
 
   it('loads with a heading row and the documented columns', async () => {

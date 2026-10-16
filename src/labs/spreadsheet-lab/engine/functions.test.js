@@ -71,6 +71,11 @@ describe('statistics', () => {
   near('=PERCENTILE.INC({1,3,2,4}, 0.3)', 1.9)
   is('=QUARTILE.INC({1,2,4,7,8,9,10,12}, 1)', 3.5)
   is('=RANK.EQ(7, {7,3.5,3.5,1,2}, 1)', 5)
+  is('=RANK.AVG(3.5, {7,3.5,3.5,1,2}, 1)', 3.5)
+  // A whole range ranked at once, as in Excel: one rank per value, ties sharing the mean place.
+  is('=RANK.AVG({5,1,1,3,5,5}, {5,1,1,3,5,5}, 1)', [[5, 1.5, 1.5, 3, 5, 5]])
+  is('=RANK.EQ({5,1,1,3}, {5,1,1,3})', [[1, 3, 3, 2]])
+  near('=CORREL(RANK.AVG({1,2,3,4,100}, {1,2,3,4,100}, 1), RANK.AVG({2,4,5,9,10}, {2,4,5,9,10}, 1))', 1)
   near('=CORREL({3,2,4,5,6}, {9,7,12,15,17})', 0.997054486)
   near('=SLOPE({2,3,9,1,8,7,5}, {6,5,11,7,5,4,4})', 0.305555556)
   near('=INTERCEPT({2,3,9,1,8}, {6,5,11,7,5})', 0.048387097)

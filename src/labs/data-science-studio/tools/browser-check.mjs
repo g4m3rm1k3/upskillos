@@ -126,7 +126,7 @@ try {
   // The shop's dataset opens the sheets its formulas join to (Part 3).
   const tabs = await page.getByRole('tablist', { name: 'Sheets' }).last().getByRole('tab').allTextContents()
   console.log('the Spreadsheet Lab’s sheets:', tabs.join(', '))
-  if (!tabs.includes('catalogue') || !tabs.includes('returns')) problems.push(`the shop dataset did not open its catalogue and returns sheets: ${tabs.join(', ')}`)
+  if (!['catalogue', 'returns', 'days', 'deliveries'].every(t => tabs.includes(t))) problems.push(`the shop dataset did not open its catalogue, returns, days and deliveries sheets: ${tabs.join(', ')}`)
   await page.screenshot({ path: path.join(out, 'spreadsheet-lab.png') })
   await page.keyboard.press('Escape')
 
@@ -149,6 +149,27 @@ try {
     console.log('cross-sheet spreadsheet block:', got)
     if (!/Right: 2(?![0-9])/.test(got)) problems.push(`the catalogue lookup was not solved: ${got}`)
     await block.screenshot({ path: path.join(out, 'formula-block-catalogue.png') })
+  }
+
+  // A Part 5 spreadsheet block: Spearman's correlation on the days sheet, typed into the real grid
+  // (RANK.AVG ranking a whole range at once, which the Spreadsheet Lab gained for this lesson).
+  const part5 = LESSONS.find(l => l.id === 'ranks-spearman')
+  if (part5) {
+    await page.goto(URL)
+    await page.locator('.qm-sidebar button').filter({ hasText: part5.title }).first().click()
+    const block = page.locator('.ds-formula').nth(1)
+    const g = block.locator('[role=grid]')
+    await g.waitFor({ timeout: 60000 })
+    const sheetTabs = await block.getByRole('tab').allTextContents()
+    if (!sheetTabs.includes('days') || !sheetTabs.includes('deliveries')) problems.push(`the lesson’s spreadsheet has no days and deliveries sheets: ${sheetTabs.join(', ')}`)
+    await block.scrollIntoViewIfNeeded()
+    await g.evaluate(el => el.focus())
+    await page.keyboard.type('=CORREL(RANK.AVG(days!B2:B366,days!B2:B366,1),RANK.AVG(days!E2:E366,days!E2:E366,1))')
+    await page.keyboard.press('Enter')
+    const got = (await block.locator('.qm-answer strong').textContent()).trim()
+    console.log('Spearman in the spreadsheet block:', got)
+    if (!/Right: 0\.92/.test(got)) problems.push(`the Spearman formula was not solved: ${got}`)
+    await block.screenshot({ path: path.join(out, 'formula-block-spearman.png') })
   }
 
   // The Spreadsheet Lab's charts (Part 4): a histogram's bin rule, and "This chart in D3".

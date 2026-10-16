@@ -3,7 +3,8 @@
 // next interesting line. view: how the middle panel draws the paused program ('csv', 'bars', 'watch').
 import { SOURCES, parse } from './source.js'
 import { HEADER, makeOrders } from './engine/data.js'
-import { readCsv, withNumbers } from './engine/tables.js'
+import { readCsv, withNumbers, toPence } from './engine/tables.js'
+import { cleanOrders } from './engine/cleaning.js'
 import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
 
 export const lineOf = (file, text) => SOURCES[file].split('\n').findIndex(l => l.includes(text)) + 1
@@ -121,6 +122,38 @@ PROGRAMS.nice_ticks = {
   focus: ['power', 'factor', 'step', 'per_unit', 'first', 'last'],
   watch: { step: ['(10 ** power) * factor'] },
   jump: { label: 'Next decision', targets: () => [['charts.py', lineIn('charts.py', 'step_size', 'error = raw / 10 ** power')], ['charts.py', lineIn('charts.py', 'nice_ticks', 'power, factor = step_size(lo, hi, count)')]] },
+}
+
+// Parts 5 and 6
+PROGRAMS.rank = {
+  label: 'Ranking with ties (5.3)', file: 'patterns.py', module: 'patterns', function: 'rank', view: 'watch',
+  about: 'Lesson 5.3: sort the positions by value, then walk along them. Each run of equal values, from i to j, shares the mean of its places, (i + j) / 2 + 1.',
+  input: { name: 'values', label: 'Values', value: '3 0 0 2.5 0 7 2.5 1' },
+  kwargs: v => ({ values: numbers(v).slice(0, 30).length ? numbers(v).slice(0, 30) : [1] }),
+  focus: ['i', 'j', 'shared', 'order', 'ranks'],
+  watch: { ranks: ['ranks'] },
+  jump: { label: 'Next run of ties', targets: () => [['patterns.py', lineOf('patterns.py', '        shared = (i + j) / 2 + 1')]] },
+}
+// The clean lights' prices (lesson 3.10): the raw ones hold the two typed in pence.
+const lightsPrices = () => cleanOrders(readCsv(ORDERS_CSV()), Object.fromEntries(catalogueRows().map(r => [r.item, toPence(r.list_price)])))
+  .filter(r => r.item === 'Lights, front and back' && r.price !== null).map(r => r.price / 100)
+PROGRAMS.bootstrap = {
+  label: 'The bootstrap (6.7)', file: 'samples.py', module: 'samples', function: 'bootstrap', view: 'watch',
+  about: 'Lesson 6.7: resample the lights’ prices with replacement, as many as there are, and keep the median of each resample. `out` collects the medians.',
+  input: { name: 'repeats', label: 'How many resamples', value: '8' },
+  kwargs: v => ({ values: lightsPrices(), stat: 'median', repeats: firstN(v, 8, 50), seed: 41 }),
+  focus: ['out', 'summary', 'stat', 'repeats'],
+  watch: { out: ['out'] },
+  jump: { label: 'Next resample', targets: () => [['samples.py', lineOf('samples.py', '        out.append(summary([values[rng.below(len(values))]')]] },
+}
+PROGRAMS.reservoir = {
+  label: 'Reservoir sampling (6.8)', file: 'samples.py', module: 'samples', function: 'reservoir', view: 'watch',
+  about: 'Lesson 6.8: a stream of items read once into a reservoir of 5. After the first 5, item i is kept with chance 5/i, in the place of a random kept item.',
+  input: { name: 'n', label: 'How many items in the stream', value: '20' },
+  kwargs: v => ({ stream: Array.from({ length: firstN(v, 20, 200) }, (_, i) => i + 1), k: 5, seed: 61 }),
+  focus: ['i', 'item', 'j', 'kept'],
+  watch: { kept: ['kept'] },
+  jump: { label: 'Next item after the first 5', targets: () => [['samples.py', lineOf('samples.py', '            j = rng.below(i)')]] },
 }
 
 export const SAMPLE_ORDERS = () => makeOrders().slice(0, 5)
