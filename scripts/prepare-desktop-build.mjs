@@ -14,14 +14,11 @@ const appDir  = path.join(root, 'desktop/app')
 await fs.rm(staging, { recursive: true, force: true })
 await fs.mkdir(staging, { recursive: true })
 
-// Copy Electron entry files
-await fs.copyFile(path.join(appDir, 'main.cjs'),       path.join(staging, 'main.cjs'))
-await fs.copyFile(path.join(appDir, 'preload.cjs'),    path.join(staging, 'preload.cjs'))
-await fs.copyFile(path.join(appDir, 'project-fs.cjs'), path.join(staging, 'project-fs.cjs'))
-// Project Studio's terminal and step checks.
-for (const f of ['terminal.cjs', 'project-checks.cjs', 'page-eval.cjs', 'process-tree.cjs']) {
-  await fs.copyFile(path.join(appDir, f), path.join(staging, f))
-}
+// Every Electron process file in desktop/app (main.cjs, preload.cjs and what they require).
+// All of them, not a list: a file added to desktop/app and missing here made the packaged app
+// fail on its first require (drafts.cjs and private-lessons.cjs once did) with no window at all.
+const processFiles = (await fs.readdir(appDir)).filter((f) => f.endsWith('.cjs'))
+for (const f of processFiles) await fs.copyFile(path.join(appDir, f), path.join(staging, f))
 
 // node-pty, the terminal's native module. Only what runs is copied: its JavaScript, its
 // package.json, and the prebuilt binaries without their debug symbols (.pdb). The full npm
@@ -46,6 +43,11 @@ await fs.cp(path.join(appDir, 'runtimes'), path.join(staging, 'runtimes'), { rec
 // Read version from desktop/app/package.json (already synced by sync-desktop-package)
 const appPkg = JSON.parse(await fs.readFile(path.join(appDir, 'package.json'), 'utf8'))
 
+// The Electron to package: the exact version npm installed from the lockfile. electron-builder
+// otherwise reads it from an `electron` package in the project, and staging has none (only
+// node-pty), so a fresh checkout failed with "Cannot compute electron version".
+const electronVersion = JSON.parse(await fs.readFile(path.join(root, 'node_modules', 'electron', 'package.json'), 'utf8')).version
+
 const stagingPkg = {
   name:        appPkg.name ?? 'upskillos',
   productName: appPkg.productName ?? 'UpSkillOS',
@@ -58,13 +60,14 @@ const stagingPkg = {
   build: {
     appId:       'org.opencalc.desktop',
     productName: appPkg.productName ?? 'UpSkillOS',
+    electronVersion,
 
     directories: {
       output: '../../desktop/dist',
     },
 
     // Only the Electron process files go into app.asar
-    files: ['main.cjs', 'preload.cjs', 'project-fs.cjs', 'terminal.cjs', 'project-checks.cjs', 'page-eval.cjs', 'process-tree.cjs', 'runtimes/**/*', 'node_modules/node-pty/**/*'],
+    files: ['*.cjs', 'runtimes/**/*', 'node_modules/node-pty/**/*'],
     // A native module can't be loaded from inside app.asar, and node-pty also starts helper
     // programs (OpenConsole.exe, winpty-agent.exe) from its own folder.
     asarUnpack: ['node_modules/node-pty/**/*'],
@@ -103,5 +106,5 @@ await fs.writeFile(
   'utf8'
 )
 
-console.log(`desktop/staging/ ready  (v${appPkg.version})`)
-console.log('  main.cjs  preload.cjs  project-fs.cjs  terminal.cjs  project-checks.cjs  page-eval.cjs  process-tree.cjs  runtimes/  node_modules/node-pty/  package.json')
+console.log(`desktop/staging/ ready  (v${appPkg.version}, Electron ${electronVersion})`)
+console.log(`  ${processFiles.join('  ')}  runtimes/  node_modules/node-pty/  package.json`)

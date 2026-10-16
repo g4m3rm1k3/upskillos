@@ -141,3 +141,16 @@
 .ss-data-bar { position: absolute; left: 3px; top: 4px; bottom: 4px; border-radius: 2px; background: var(--ss-series-1); opacity: 0.35; pointer-events: none; }
 .ss-cell-text { position: relative; }
 .dark .ss-root .ss-data-bar { opacity: 0.55; }
+
+/* Folded tables (engine/folds.js) */
+.ss-fold-button {
+  position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; padding: 0;
+  border: 1px solid var(--ss-select-border); border-radius: 3px; background: var(--ss-bg); color: var(--ss-select-border);
+  font-size: 11px; line-height: 12px; cursor: pointer; z-index: 3;
+}
+.ss-fold-button.is-peek, .ss-fold-button.is-closed { background: var(--ss-select-border); color: var(--ss-bg); }
+.ss-fold-bar { position: absolute; height: 2px; background: var(--ss-select-border); z-index: 3; pointer-events: none; }
+.ss-fold-label {
+  position: absolute; left: 4px; top: 2px; pointer-events: auto; white-space: nowrap; border: 0; cursor: pointer;
+  font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 0 0 4px 4px; background: var(--ss-select-border); color: var(--ss-bg);
+}

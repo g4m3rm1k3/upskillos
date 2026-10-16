@@ -1,5 +1,5 @@
 import React from "react";
-import Prism from "prismjs";
+import Prism from "../../utils/prism.js";
 import "prismjs/components/prism-javascript";
 import "prismjs/themes/prism.css";
 import "../viz/react/prism-inline-override.css";

@@ -126,7 +126,7 @@ export default function Blocks({ lesson, saved, onSolved, onSave, onPython }) {
     }
     if (b.write) return <WriteIt key={key} spec={b.write} done={solved.includes(k)} code={saved?.code?.[k]}
       onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [k]: code } }))} onDone={() => onSolved(k)} />
-    if (b.formula) return <FormulaIt key={key} spec={b.formula} done={solved.includes(k)} onDone={() => onSolved(k)} />
+    if (b.formula) return <FormulaIt key={key} exercise={key} spec={b.formula} done={solved.includes(k)} onDone={() => onSolved(k)} />
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time.</span></div>
     if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
     return null

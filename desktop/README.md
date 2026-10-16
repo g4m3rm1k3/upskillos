@@ -33,9 +33,12 @@ npm run desktop:build:win     # Windows portable .exe
 npm run desktop:build:mac     # macOS .dmg
 ```
 
-This builds the frontend (`vite build`), assembles `desktop/staging/`
-(`scripts/prepare-desktop-build.mjs` — copies `main.cjs`, `preload.cjs`,
-`runtimes/`, and writes the electron-builder config), then runs
+This generates the build inputs (`npm run build:inputs`: the gitignored
+graph, manifests and Game Studio runtime, plus the Pyodide wheels), builds the
+frontend (`vite build`), assembles `desktop/staging/`
+(`scripts/prepare-desktop-build.mjs` — copies every `.cjs` file in
+`desktop/app/`, `runtimes/` and node-pty, and writes the electron-builder
+config with the installed Electron version), then runs
 electron-builder against that staging directory. Output lands in
 `desktop/dist/`. See `PORTABLE_RELEASES.md` for the distribution model
 (portable exe, not an installer; user data lives outside the app

@@ -464,7 +464,10 @@ async function spawnBackend() {
   }
 
   const cfg = await loadContribConfig()
-  const env = { ...process.env }
+  // process.execPath is this app's own executable (UpSkillOS.exe once packaged), not Node:
+  // ELECTRON_RUN_AS_NODE makes it run server.mjs as plain Node. Without it the "backend"
+  // was a second copy of the whole app, which started its own backend, and so on.
+  const env = { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
   if (cfg.repoPath) env.OPEN_CALC_RUNTIME_ROOT = cfg.repoPath
   if (cfg.githubToken) env.GITHUB_TOKEN = cfg.githubToken
 

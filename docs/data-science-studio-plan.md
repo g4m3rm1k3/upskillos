@@ -1,6 +1,6 @@
 # Data Science Studio: plan
 
-Status (2026-10-14): Parts 1 and 2 are built (`src/labs/data-science-studio/`, 15 lessons). Next: Parts 3 and 4. Each session starts from the handoff, `docs/data-science-studio-handoff.md`. The owner's direction: this is the deepest of the labs, because data science feeds so many branches (machine learning, statistics, visualisation, databases, every lab that trains on data). It teaches each idea in a spreadsheet, in Python by hand, in pandas and, for charts, in D3, and it uses and improves the Spreadsheet Lab.
+Status (2026-10-15): Parts 1 and 2 are built (`src/labs/data-science-studio/`, 15 lessons), and the lessons' spreadsheet exercises now run inside the real Spreadsheet Lab (see the handoff). Next: Parts 3 and 4, building in the Spreadsheet Lab first anything a spreadsheet user could use. Each session starts from the handoff, `docs/data-science-studio-handoff.md`. The owner's direction: this is the deepest of the labs, because data science feeds so many branches (machine learning, statistics, visualisation, databases, every lab that trains on data). It teaches each idea in a spreadsheet, in Python by hand, in pandas and, for charts, in D3, and it uses and improves the Spreadsheet Lab.
 
 A lab in the format of NLP Studio, QMaze and Math for ML: the intuition and the ins and outs of working with data, for anyone who wants to understand it, and the data skills machine learning rests on. It is open source, so it is written for every learner, not only the owner.
 

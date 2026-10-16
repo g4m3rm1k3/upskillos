@@ -17,7 +17,7 @@ import rehypeRaw from "rehype-raw";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import Editor from "@monaco-editor/react";
-import Prism from "prismjs";
+import Prism from "../../utils/prism.js";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-python";

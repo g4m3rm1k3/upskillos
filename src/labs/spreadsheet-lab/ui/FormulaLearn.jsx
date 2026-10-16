@@ -15,8 +15,8 @@ function useRemembered(key, initial) {
   return [value, set]
 }
 
-function Fold({ id, title, hint, children }) {
-  const [open, setOpen] = useRemembered('spreadsheet-lab:fold:' + id, false)
+function Fold({ id, title, hint, initial = false, children }) {
+  const [open, setOpen] = useRemembered('spreadsheet-lab:fold:' + id, initial)
   return (
     <section className="border-b border-slate-200 dark:border-slate-800">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
@@ -104,11 +104,13 @@ function InCode({ cell, onMakeCode }) {
   )
 }
 
-export default function FormulaLearn({ wb, sheet, row, col, cell, onMakeCode }) {
+// In a lesson (lesson: true) the steps start open: seeing how the formula is
+// worked out is the point there. That choice is remembered apart from the lab's.
+export default function FormulaLearn({ wb, sheet, row, col, cell, onMakeCode, lesson = false }) {
   if (cell?.kind !== 'formula' || !cell.tree) return null
   return (
     <>
-      <Fold id="worked-out" title="How it's worked out" hint="step by step">
+      <Fold id={(lesson ? 'lesson-' : '') + 'worked-out'} initial={lesson} title="How it's worked out" hint="step by step">
         <WorkedOut wb={wb} sheet={sheet} row={row} col={col} cell={cell} />
       </Fold>
       <Fold id="in-code" title="This formula in code" hint="Python · JS · MATLAB">

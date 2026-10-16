@@ -157,6 +157,8 @@ export const DATASETS = [
     origin: 'Made up by Data Science Studio’s generator (src/labs/data-science-studio/python/data.py), so the truth behind it is known: 18 prices are missing, some town names are typed differently, two prices were typed in pence, and two orders were entered twice.',
     columns: [['order_id', 'A label for the order, A1001 to A1400.'], ['date', 'The day of the order in 2025, as text YYYY-MM-DD.'], ['town', 'Leeds, York, Harrogate or Wakefield, sometimes typed in lower case or with a space after.'], ['item', 'Bike, Helmet, Lights, Lock, Inner tube or Service.'], ['price', 'The price of one, in pounds; blank if it was never typed.'], ['quantity', 'How many.'], ['channel', 'shop or web.']],
     rows: async () => { const { HEADER, makeOrders } = await import('../../data-science-studio/engine/data.js'); return [HEADER, ...makeOrders()] },
+    // Every spreadsheet exercise in Data Science Studio's lessons, listed under "From the lessons".
+    lessons: () => import('../../data-science-studio/lessons/exercises.js'),
     tries: [
       { label: 'Count the orders of each item (lesson 1.1)', learn: 'GROUPBY counts the rows for each item: the same as count_values in Python.', steps: [{ kind: 'cells', at: 'I1', rows: [['=GROUPBY(D1:D403, A1:A403, COUNTA, 3, 0)']] }] },
       { label: 'Missing prices, and the mean two ways (lesson 1.4)', learn: 'AVERAGE skips the blank prices; dividing the sum by the number of orders counts them as 0, and comes out lower.', steps: [{ kind: 'cells', at: 'I1', rows: [['Missing prices', '=COUNTBLANK(E2:E403)'], ['Mean, blanks skipped', '=AVERAGE(E2:E403)'], ['Mean, blanks as 0', '=SUM(E2:E403)/COUNTA(A2:A403)']] }] },

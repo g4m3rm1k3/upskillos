@@ -1,5 +1,10 @@
 // The Spreadsheet Lab: a spreadsheet built for learning. It behaves like
 // Excel (the same formulas, keys and errors) and explains itself as it goes.
+//
+// <Spreadsheet> is the whole spreadsheet, given a workbook or a place to keep
+// one. The lab is one; a lesson (Data Science Studio's formula exercises) is
+// another, with its own workbook, so lessons use the real grid, formula bar
+// and explanations rather than copies of them.
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Workbook } from './engine/workbook.js'
 import { FUNCTIONS } from './engine/functions/index.js'
@@ -16,6 +21,7 @@ import { hiddenRows, looksLikeHeader, removeDuplicates, sortRows } from './engin
 import FilterMenu from './ui/FilterMenu.jsx'
 import { DATASETS } from './datasets/index.js'
 import { ruleEffect, ruleStats } from './engine/conditional.js'
+import { addFold, expandForFolds, foldHiddenRows, makeFold, nextFoldState } from './engine/folds.js'
 import FormulaInput from './ui/FormulaInput.jsx'
 import Inspector from './ui/Inspector.jsx'
 import Toolbar from './ui/Toolbar.jsx'
@@ -40,8 +46,8 @@ function writeJSON(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* storage full or blocked: the workbook lasts this visit */ }
 }
 
-function loadBook() {
-  const saved = readJSON(STORE)
+function loadBook(store) {
+  const saved = readJSON(store)
   if (saved?.workbook) {
     try { return { wb: Workbook.fromJSON(saved.workbook), sheetIndex: saved.sheetIndex ?? 0 } } catch { /* damaged: fall back to the tour */ }
   }
@@ -49,16 +55,25 @@ function loadBook() {
 }
 
 export default function SpreadsheetLab() {
-  const [book, setBook] = useState(loadBook)
+  return <Spreadsheet store={STORE} entryKey="spreadsheet-lab" />
+}
+
+// book: a Workbook to show (a lesson's), or store: the localStorage key the
+// workbook is kept under (the lab's). entryKey: the deep-link key this
+// spreadsheet answers. lesson: inside a lesson, so no New/Open, Enter stays on
+// the cell (its worked-out steps stay in view), and preferences are not saved.
+// start: the cell selected at first.
+export function Spreadsheet({ book: given = null, store = null, entryKey = null, lesson = false, start = null }) {
+  const [book, setBook] = useState(() => (given ? { wb: given, sheetIndex: 0 } : loadBook(store)))
   const wb = book.wb
   const subscribe = useCallback((cb) => wb.subscribe(cb), [wb])
   const version = useSyncExternalStore(subscribe, () => wb.version)
   const [sheetId, setSheetId] = useState(() => (wb.sheets[book.sheetIndex] ?? wb.sheets[0]).id)
   const sheet = wb.sheet(sheetId) ?? wb.sheets[0]
-  const [sel, setSel] = useState(() => cellSelection(0, 0))
+  const [sel, setSel] = useState(() => cellSelection(start?.row ?? 0, start?.col ?? 0))
   const [edit, setEdit] = useState(null)
   const [caretRequest, setCaretRequest] = useState(null)
-  const [inspectorOpen, setInspectorOpen] = useState(() => readJSON(PREFS)?.inspector ?? true)
+  const [inspectorOpen, setInspectorOpen] = useState(() => (lesson ? true : readJSON(PREFS)?.inspector ?? true))
   const [inspectorTab, setInspectorTab] = useState('cell')
   // The workers that run Python, JavaScript and MATLAB cells: one set for the
   // lab's lifetime, shut down when the lab closes.
@@ -83,10 +98,11 @@ export default function SpreadsheetLab() {
 
   // Save after each change (debounced), in this browser only.
   useEffect(() => {
-    const t = setTimeout(() => writeJSON(STORE, { workbook: wb.toJSON(), sheetIndex: Math.max(0, wb.sheets.indexOf(sheet)) }), 400)
+    if (!store) return undefined
+    const t = setTimeout(() => writeJSON(store, { workbook: wb.toJSON(), sheetIndex: Math.max(0, wb.sheets.indexOf(sheet)) }), 400)
     return () => clearTimeout(t)
-  }, [wb, version, sheet])
-  useEffect(() => writeJSON(PREFS, { inspector: inspectorOpen }), [inspectorOpen])
+  }, [store, wb, version, sheet])
+  useEffect(() => { if (!lesson) writeJSON(PREFS, { inspector: inspectorOpen }) }, [lesson, inspectorOpen])
   useEffect(() => () => runtime.release(), [runtime])
   useEffect(() => {
     wb.codeRunner = runtime.run
@@ -125,7 +141,10 @@ export default function SpreadsheetLab() {
   // ── Sort, filter, remove duplicates ──────────────────────────────────
   const read = useCallback((r, c) => wb.valueAt(sheet, r, c), [wb, sheet, version]) // eslint-disable-line react-hooks/exhaustive-deps
   const filterRange = sheet.filter ? parseRange(sheet.filter.source) : null
-  const hidden = useMemo(() => (filterRange ? hiddenRows(sheet.filter, filterRange, read) : null), [sheet.filter, read]) // eslint-disable-line react-hooks/exhaustive-deps
+  const filtered = useMemo(() => (filterRange ? hiddenRows(sheet.filter, filterRange, read) : null), [sheet.filter, read]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Rows hidden by the filter, and by folded tables.
+  const folded = useMemo(() => foldHiddenRows(sheet.folds), [sheet.folds])
+  const hidden = useMemo(() => (folded.size ? new Set([...(filtered ?? []), ...folded]) : filtered), [filtered, folded])
   const isHidden = hidden?.size ? (r) => hidden.has(r) : null
   const cellAt = (r, c) => wb.getCell(sheet.id, r, c)
   const inside = (rg, p) => p.row >= rg.r1 && p.row <= rg.r2 && p.col >= rg.c1 && p.col <= rg.c2
@@ -197,6 +216,20 @@ export default function SpreadsheetLab() {
     focusGrid()
   }
 
+  // ── Folded tables ────────────────────────────────────────────────────
+  // The fold button on a table's heading row: all rows, then the first few, then the heading only.
+  const toggleFold = (fold, state = nextFoldState(fold.state)) => {
+    wb.setFolds(sheet.id, sheet.folds.map((f) => (f.id === fold.id ? { ...f, state } : f)))
+    focusGrid()
+  }
+  const foldTable = () => {
+    const rg = tableAround()
+    if (rg.r1 === rg.r2) { setNotice('Folding needs a table: a row of headings with data below it. Select a cell in the table first.'); return }
+    wb.setFolds(sheet.id, addFold(sheet.folds, makeFold(rg)))
+    setSel(cellSelection(rg.r1, sel.active.col))
+    setNotice('Folded ' + formatRange(rg) + ' to its first rows. The button on row ' + (rg.r1 + 1) + ' folds it further or opens it; copying row ' + (rg.r1 + 1) + ' copies the whole table.')
+  }
+
   // ── Conditional formatting ───────────────────────────────────────────
   // Each rule's statistics (lowest, highest, average…) are worked out once per
   // change; the grid then asks for the effect on each cell it draws.
@@ -226,6 +259,14 @@ export default function SpreadsheetLab() {
 
   // ── Sample datasets ──────────────────────────────────────────────────
   const dataset = DATASETS.find((d) => d.id === sheet.dataset) ?? null
+  // The lessons' exercises on this dataset, loaded when its sheet is showing.
+  const [lessonTries, setLessonTries] = useState(null)
+  useEffect(() => {
+    let live = true
+    setLessonTries(null)
+    dataset?.lessons?.().then((m) => { if (live) setLessonTries(m.SHEET_EXERCISES) })
+    return () => { live = false }
+  }, [dataset])
   const openDataset = async (id) => {
     const ds = DATASETS.find((d) => d.id === id)
     const rows = await ds.rows()
@@ -233,6 +274,7 @@ export default function SpreadsheetLab() {
     target.dataset = ds.id
     wb.setCells(rows.flatMap((r, i) => r.map((v, c) => ({ sheetId: target.id, row: i, col: c, input: String(v), ...(i === 0 ? { style: { bold: true } } : {}) }))))
     rows[0].forEach((h, c) => { if (String(h).length > 12) wb.setSize(target.id, 'col', c, Math.min(220, String(h).length * 7 + 16)) })
+    wb.setFolds(target.id, [makeFold({ r1: 0, c1: 0, r2: rows.length - 1, c2: rows[0].length - 1 }, 'open')], { record: false })
     setSheetId(target.id)
     setSel(cellSelection(0, 0))
     setInspectorOpen(true)
@@ -240,20 +282,24 @@ export default function SpreadsheetLab() {
     setNotice('Added the sheet "' + target.name + '" with ' + (rows.length - 1) + ' rows. The panel on the right says what the columns mean and suggests things to try.')
     focusGrid()
   }
-  // A deep link such as #/lab/spreadsheet-lab?dataset=shop-orders&try=2 (Data Science Studio's
-  // lessons send these): open the dataset, then carry out that "thing to try" once its sheet is showing.
+  // A deep link opens a dataset, then carries out one of its "things to try" once its sheet is showing:
+  // ?dataset=shop-orders&try=2, or a lesson's exercise, with the learner's own formula if they had one
+  // (Data Science Studio sends ?dataset=shop-orders&exercise=<lesson id:block>&formula=<formula>).
   const [pendingTry, setPendingTry] = useState(null)
-  useEntryLink('spreadsheet-lab', (search) => {
+  useEntryLink(entryKey ?? '', (search) => {
+    if (!entryKey) return
     const q = new URLSearchParams(search)
     const ds = DATASETS.find((d) => d.id === q.get('dataset'))
     if (!ds) return
-    openDataset(ds.id).then(() => { const n = Number.parseInt(q.get('try') ?? '', 10); if (ds.tries[n]) setPendingTry({ id: ds.id, n }) })
+    openDataset(ds.id).then(async () => {
+      const t = q.get('exercise') && ds.lessons ? (await ds.lessons()).exerciseTry(q.get('exercise'), q.get('formula')) : ds.tries[Number.parseInt(q.get('try') ?? '', 10)]
+      if (t) setPendingTry({ id: ds.id, t })
+    })
   })
   useEffect(() => {
     if (!pendingTry || sheet.dataset !== pendingTry.id) return
-    const t = DATASETS.find((d) => d.id === pendingTry.id).tries[pendingTry.n]
     setPendingTry(null)
-    runTry(t)
+    runTry(pendingTry.t)
   }, [pendingTry, sheet]) // eslint-disable-line react-hooks/exhaustive-deps
   // Whether a block of cells is empty and not under a chart, so new cells
   // put there can be seen.
@@ -430,7 +476,7 @@ export default function SpreadsheetLab() {
 
   const editorKeyDown = (e) => {
     if (!edit) return
-    if (e.key === 'Enter') { e.preventDefault(); commit(e.shiftKey ? [-1, 0] : [1, 0], e.ctrlKey || e.metaKey); return }
+    if (e.key === 'Enter') { e.preventDefault(); commit(lesson ? [0, 0] : e.shiftKey ? [-1, 0] : [1, 0], e.ctrlKey || e.metaKey); return }
     if (e.key === 'Tab') { e.preventDefault(); commit(e.shiftKey ? [0, -1] : [0, 1]); return }
     if (e.key === 'Escape') { e.preventDefault(); cancel(); return }
     if (e.key === 'F2') { e.preventDefault(); setEdit({ ...edit, mode: edit.mode === 'enter' ? 'edit' : 'enter' }); return }
@@ -555,7 +601,8 @@ export default function SpreadsheetLab() {
 
   // ── Clipboard ────────────────────────────────────────────────────────
   const copy = (e, cut) => {
-    const rg = clipped(range)
+    // A folded table's heading row stands for the whole table.
+    const rg = expandForFolds(clipped(range), sheet.folds)
     const cells = [], text = []
     for (let r = rg.r1; r <= rg.r2; r++) {
       const row = [], line = []
@@ -571,7 +618,8 @@ export default function SpreadsheetLab() {
     clipboard.current = { sheetId: sheet.id, range: rg, cut, tsv, cells }
     e.clipboardData.setData('text/plain', tsv)
     e.preventDefault()
-    setNotice(cut ? 'Cut ' + formatRange(rg) + '. Paste to move it.' : 'Copied ' + formatRange(rg) + '.')
+    const grew = rg.r2 > clipped(range).r2 ? ' The folded table came too: ' + (rg.r2 - rg.r1 + 1) + ' rows.' : ''
+    setNotice((cut ? 'Cut ' + formatRange(rg) + '. Paste to move it.' : 'Copied ' + formatRange(rg) + '.') + grew)
   }
 
   const paste = (e) => {
@@ -768,6 +816,7 @@ export default function SpreadsheetLab() {
       items.push(['Delete ' + colLabel, () => wb.deleteCols(sheet.id, cols[0], nCols), true])
     }
     items.push(['Clear contents', clearContents])
+    if (t.kind !== 'col') items.push(['Fold this table', foldTable])
     return items
   }
 
@@ -794,10 +843,10 @@ export default function SpreadsheetLab() {
         onStyle={applyStyle} onFormat={applyFormat} onDecimals={changeDecimals} onClearFormat={clearFormat}
         onUndo={() => { wb.undo(); focusGrid() }} onRedo={() => { wb.redo(); focusGrid() }}
         inspectorOpen={inspectorOpen} onToggleInspector={() => setInspectorOpen((o) => !o)}
-        onNew={() => { if (confirmReplace()) replaceBook(new Workbook(), 'A new, empty workbook.') }}
+        onNew={lesson ? undefined : () => { if (confirmReplace()) replaceBook(new Workbook(), 'A new, empty workbook.') }}
         onOpenTour={() => { if (confirmReplace()) replaceBook(sampleWorkbook('tour'), 'The tour workbook is open.') }}
         datasets={DATASETS} onOpenDataset={openDataset}
-        onImport={() => fileRef.current?.click()}
+        onImport={lesson ? undefined : () => fileRef.current?.click()}
         onExport={exportCSV} onExportXlsx={exportXlsx}
         onInsertCode={(lang) => setCode(sel.active.row, sel.active.col, lang, LANGUAGES[lang].starter)}
         onInsertChart={insertChart}
@@ -858,6 +907,7 @@ export default function SpreadsheetLab() {
             traces={traces}
             conditional={conditional}
             hiddenRows={hidden} filter={filterRange && { ...filterRange, hidden: sheet.filter.hidden }}
+            folds={sheet.folds} onFoldToggle={toggleFold}
             onFilterButton={(col, rect) => { const p = toRoot(rect.left, rect.bottom); setFilterMenu({ col, anchor: { left: p.x, bottom: p.y }, bounds: rootSize() }) }}
             charts={sheet.charts} chartValues={chartValues} selectedChart={selectedChart}
             onSelectChart={(id) => { if (id && edit && !pointMode) commit([0, 0]); setSelectedChart(id) }}
@@ -892,7 +942,7 @@ export default function SpreadsheetLab() {
           <Inspector wb={wb} sheet={sheet} sel={sel} version={version} tab={inspectorTab} onTab={setInspectorTab} runtime={runtime}
             onApplyCode={(source) => wb.setCells([{ sheetId: sheet.id, row: sel.active.row, col: sel.active.col, code: { lang: activeCell.code.lang, source } }])}
             chart={chart} chartValues={chartValues}
-            dataset={dataset} onTry={runTry}
+            dataset={dataset} onTry={runTry} lessonTries={lessonTries} lesson={lesson}
             pivotTable={pivotTable} evaluatePivot={evaluatePivot} onInsertPivot={insertPivot}
             rules={sheet.rules} ruleTarget={formatRange(clipped(range))}
             onAddRule={addRule}
@@ -929,9 +979,9 @@ export default function SpreadsheetLab() {
         }}
       >
         <div className="flex h-full items-center justify-end gap-4 px-3 text-[11px] text-slate-500 dark:text-slate-400" aria-live="polite">
-          {hidden && filterRange && (
+          {filtered && filterRange && (
             <span title="Rows hidden by the filter are still there: formulas such as SUM still include them.">
-              Filter: showing <b>{filterRange.r2 - filterRange.r1 - hidden.size}</b> of {filterRange.r2 - filterRange.r1} rows
+              Filter: showing <b>{filterRange.r2 - filterRange.r1 - filtered.size}</b> of {filterRange.r2 - filterRange.r1} rows
             </span>
           )}
           {traces && (

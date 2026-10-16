@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import rawGlobAssets from "./scripts/vite-plugin-raw-glob-assets.mjs";
+import rawLf from "./scripts/vite-plugin-raw-lf.mjs";
 import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
@@ -229,7 +230,7 @@ export default defineConfig({
     // Electron lessons' tests run under node:test there), not to this app's suite.
     exclude: [...configDefaults.exclude, ".scratch-mini/**", "src/labs/project-studio/tracks/**/answers/**", "src/labs/project-studio/tracks/**/support/**"],
   },
-  plugins: [rawGlobAssets(), react(), emitVersionJson(), localPyodidePlugin(), devFsPlugin()],
+  plugins: [rawGlobAssets(), rawLf(), react(), emitVersionJson(), localPyodidePlugin(), devFsPlugin()],
   resolve: {
     alias: {
       '@opencalc/openmat': path.resolve(process.cwd(), 'packages/openmat/src/index.ts'),
@@ -249,11 +250,15 @@ export default defineConfig({
         entryFileNames: "assets/[name].[hash].js",
         chunkFileNames: "assets/[name].[hash].js",
         assetFileNames: "assets/[name].[hash].[ext]",
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "d3-vendor": ["d3"],
-          "three-vendor": ["three"],
-          "katex-vendor": ["katex"],
+        // A function, not the { name: [packages] } object: Rolldown (Vite 8) accepts only this
+        // form. Each library and the packages it is built from go into one long-cached chunk.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run[\\/]router)[\\/]/.test(id)) return "react-vendor";
+          if (/node_modules[\\/](d3|d3-[a-z-]+|internmap|delaunator|robust-predicates)[\\/]/.test(id)) return "d3-vendor";
+          if (/node_modules[\\/]three[\\/]/.test(id)) return "three-vendor";
+          if (/node_modules[\\/]katex[\\/]/.test(id)) return "katex-vendor";
+          return undefined;
         },
       },
     },

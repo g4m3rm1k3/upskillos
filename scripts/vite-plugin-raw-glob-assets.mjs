@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs'
 import { basename, dirname, posix, relative } from 'node:path'
 import fg from 'fast-glob'
 import { stripLiteral } from 'strip-literal'
+import { toLf } from './vite-plugin-raw-lf.mjs'
 
 const toPosix = p => p.split('\\').join('/')
 
@@ -80,7 +81,8 @@ export default function rawGlobAssets() {
         const props = files.map(file => {
           let ref = refs.get(file)
           if (!ref) {
-            ref = this.emitFile({ type: 'asset', name: basename(file), source: readFileSync(file) })
+            // Unix line endings on every machine, as for ?raw imports (vite-plugin-raw-lf.mjs).
+            ref = this.emitFile({ type: 'asset', name: basename(file), source: toLf(readFileSync(file, 'utf8')) })
             refs.set(file, ref)
           }
           let key

@@ -85,3 +85,26 @@ describe.each(DATASETS)('dataset: $title', (ds) => {
     }
   }, 60000)
 })
+
+// Data Science Studio's spreadsheet exercises, listed under "From the lessons": each works on the
+// dataset, and opening one with the learner's own formula puts that formula in its place.
+describe.each(DATASETS.filter((d) => d.lessons))('lesson exercises on $title', (ds) => {
+  it('each one works out without an error', async () => {
+    const { SHEET_EXERCISES } = await ds.lessons()
+    expect(SHEET_EXERCISES.length).toBeGreaterThan(5)
+    for (const t of SHEET_EXERCISES) {
+      const { wb, s } = await sheetFor(ds)
+      const step = t.steps[0], at = parseCell(step.at)
+      wb.setCells(step.rows.flatMap((r, i) => r.map((input, c) => ({ sheetId: s.id, row: at.row + i, col: at.col + c, input }))))
+      const v = wb.getCell(s.id, at.row + 1, at.col).value
+      expect(isError(v), t.id + ': ' + t.solution).toBe(false)
+    }
+  })
+
+  it('opens an exercise with the learner’s own formula', async () => {
+    const { SHEET_EXERCISES, exerciseTry } = await ds.lessons()
+    const t = exerciseTry(SHEET_EXERCISES[0].id, '=COUNTA(A2:A403)')
+    expect(t.steps[0].rows[1]).toEqual(['=COUNTA(A2:A403)'])
+    expect(exerciseTry('no-such-lesson:0')).toBeNull()
+  })
+})

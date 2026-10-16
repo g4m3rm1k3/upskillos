@@ -109,7 +109,7 @@ The data was made by a program (below) so that the lab knows the truth behind it
         },
         {
           formula: {
-            table: 'orders', solution: '=COUNTIF(D2:D403,"Bike")', must: ['COUNTIF'], sheet: 0,
+            table: 'orders', solution: '=COUNTIF(D2:D403,"Bike")', must: ['COUNTIF'],
             prompt: 'The same count in a spreadsheet. The items are in column D, rows 2 to 403 (row 1 holds the names). Count the cells that say Bike with `COUNTIF(range, value)`.',
             hint: '`=COUNTIF(D2:D403,"Bike")`: the range first, then the value to look for, in quotes.',
             explain: 'The Spreadsheet Lab’s engine read the 402 cells of D2:D403 and counted the matches: the same answer as `count_values`, from a different machine.',
@@ -370,7 +370,7 @@ Python has a value for “nothing here”: **None**. A missing price becomes \`N
         { figure: 'MissingDemo', caption: 'Skip the blanks, or count them as 0, and watch the mean; the spreadsheet does the same two things with different formulas.' },
         {
           formula: {
-            table: 'orders', solution: '=AVERAGE(E2:E403)', must: ['AVERAGE'], sheet: 1,
+            table: 'orders', solution: '=AVERAGE(E2:E403)', must: ['AVERAGE'],
             prompt: 'In a spreadsheet, the prices are E2:E403. Find their mean with `AVERAGE`. Does it skip the empty cells, or count them as 0?',
             hint: '`=AVERAGE(E2:E403)`',
             explain: `It gives the same as \`mean_of\`: AVERAGE skips empty cells, just as \`mean_of\` skips None. To count them as 0 you would write \`=SUM(E2:E403)/COUNTA(A2:A403)\`, which gives ${MEAN_ZERO.toFixed(2)}.`,

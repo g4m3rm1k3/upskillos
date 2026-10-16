@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Prism from 'prismjs'
+import Prism from '../../utils/prism.js'
 import '../../styles/prism-blog.css'
 import 'prismjs/components/prism-markup'
 import 'prismjs/components/prism-markup-templating'

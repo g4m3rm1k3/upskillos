@@ -6,7 +6,7 @@
 .ds-lab .qm-tabs button.active{background:#9fb1ff;color:#1e2440;border-color:#9fb1ff}
 .ds-lab .qm-sidebar{background:#e8eaf3}
 .ds-lab .qm-sidebar button.active{box-shadow:0 1px 0 #cfd4e6}
-.ds-lab button:hover:not(:disabled){background:#eef1fd;border-color:#bfc8ee}
+.ds-lab button:hover:not(:disabled):not(.ss-root *){background:#eef1fd;border-color:#bfc8ee}
 .ds-lab .qm-goal{background:#eef1fd;border-color:#cdd5f5}
 .ds-lab .qm-primary{background:#1e2440;color:#eef1fd;border-color:#1e2440}
 .ds-lab .qm-primary:hover:not(:disabled){background:#2f3863}
@@ -170,12 +170,7 @@
 .ds-sheet th{background:#eef1ec;color:#5b6157;font-weight:600;padding:2px 6px;border:1px solid #d9ddd5;text-align:center;min-width:24px}
 .ds-sheet td{border:1px solid #e3e6df;padding:2px 6px;white-space:nowrap;background:#fff}
 .ds-sheet td.head{font-weight:700;background:#f7f8f5}.ds-sheet td.num{text-align:right}
-.ds-sheet-more{color:#7b8076;font-style:italic}
 .ds-formula-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
-.ds-formula-form input{flex:1 1 260px;min-width:0;padding:6px 8px;border:1px solid #b9c0b4;border-radius:6px}
-.ds-fx{font-style:italic;color:#1f7a4d;font-weight:700}
-.ds-formula-steps{margin:6px 0 0;padding-left:22px}.ds-formula-steps li{margin:3px 0}
-.ds-formula-steps code{background:#f1f4ef;padding:1px 5px;border-radius:4px;word-break:break-all}
 
 /* Real Python: variables that changed on the last line */
 .ds-vars{width:100%;border-collapse:collapse;font-size:13px}
@@ -195,3 +190,4 @@
 .ds-wrap{word-break:break-all}
 .ds-select{display:inline-flex;gap:6px;align-items:center;margin:6px 10px 6px 0;font-size:13.5px}
 .ds-select select{padding:3px 6px}
+.ds-sheet-embed{height:440px;margin:8px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}

@@ -61,7 +61,7 @@ Run what matches your change, and report exactly what you ran and what it printe
 | `npx vitest run <path>` | Unit and component tests for that area (`npm test` runs everything in watch mode) |
 | `npm run catalog:check` | The generated inventory matches the content |
 | `npm run docs:check` | Links, repository paths and `npm run` commands in the contributor docs exist |
-| `npm run build` | Production build. Needs up to 12 GB of memory (its heap limit) and a few minutes |
+| `npm run build` | Production build (Vite 8, Rolldown). About 1.5 GB of JavaScript heap and 5.5 GB in all, in one to two minutes; the script caps the heap at 4 GB |
 | `npm run typecheck` | TypeScript. Must finish without diagnostics; the previous baseline errors were repaired on 2026-10-10 |
 
 Don't start a dev server and leave it running. If you need one for a browser check, stop it when you're done.

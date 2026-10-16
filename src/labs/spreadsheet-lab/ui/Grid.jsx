@@ -2,7 +2,8 @@
 // as large as the workbook allows. Headers sit outside the scrolling area and
 // follow it, the way Excel's frozen headers do.
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { cellKey, indexToCol } from '../engine/address.js'
+import { cellKey, indexToCol, parseRange } from '../engine/address.js'
+import { foldedSpan } from '../engine/folds.js'
 import { displayCell, FORMAT_COLORS, textOn } from './display.js'
 import { MAX_GRID_COLS, MAX_GRID_ROWS, selectionRange } from './selection.js'
 import ChartView from './ChartView.jsx'
@@ -34,7 +35,7 @@ function indexAt(starts, pos) {
 
 export default function Grid({
   wb, sheet, version, sel, onSelect, editing, renderEditor, pointMode, onPoint,
-  refHighlights = [], traces = null, conditional = null, hiddenRows = null, filter = null, onFilterButton, charts = [], chartValues, selectedChart = null, onSelectChart, onChangeChart, onDeleteChart, onStartEdit, onFill, onContextMenu, onKeyDown, gridRef,
+  refHighlights = [], traces = null, conditional = null, hiddenRows = null, filter = null, onFilterButton, folds = [], onFoldToggle, charts = [], chartValues, selectedChart = null, onSelectChart, onChangeChart, onDeleteChart, onStartEdit, onFill, onContextMenu, onKeyDown, gridRef,
 }) {
   const scrollerRef = useRef(null)
   const [scroll, setScroll] = useState({ top: 0, left: 0 })
@@ -285,6 +286,10 @@ export default function Grid({
       </div>,
     )
   }
+  // Folded tables: a button on each heading row, and a bar where rows are folded away.
+  const foldByRow = new Map(folds.map((f) => [parseRange(f.source)?.r1, f]))
+  const FOLD_ICON = { open: '⊟', peek: '◫', closed: '⊞' }
+  const FOLD_NEXT = { open: 'Fold this table down to its first rows', peek: 'Fold this table to its heading only', closed: 'Show every row of this table' }
   const headRows = []
   for (let r = r0; r <= r1; r++) {
     if (rows[r + 1] === rows[r]) continue // hidden
@@ -292,6 +297,11 @@ export default function Grid({
     headRows.push(
       <div key={r} className={'ss-head' + (active ? ' is-active' : '')} style={{ left: 0, top: rows[r], width: HEAD_W, height: rows[r + 1] - rows[r] }}
         onPointerDown={headerDown('row', r)} onContextMenu={(e) => onContextMenu(e, { kind: 'row', index: r })}>
+        {foldByRow.has(r) && (
+          <button type="button" className={'ss-fold-button is-' + foldByRow.get(r).state} title={FOLD_NEXT[foldByRow.get(r).state] + '. Copying this row copies the whole table.'}
+            aria-label={FOLD_NEXT[foldByRow.get(r).state]}
+            onPointerDown={(e) => e.stopPropagation()} onClick={() => onFoldToggle(foldByRow.get(r))}>{FOLD_ICON[foldByRow.get(r).state]}</button>
+        )}
         <span className={hiddenRows?.size && filter && r > filter.r1 && r <= filter.r2 ? 'ss-row-filtered' : undefined}>{r + 1}</span>
         <div className="ss-resize-row" onPointerDown={resizeDown('row', r)} />
       </div>,
@@ -430,6 +440,19 @@ export default function Grid({
                 onClick={(e) => onFilterButton(c, e.currentTarget.getBoundingClientRect())}>
                 {active ? '⏷' : '▾'}
               </button>
+            )
+          })}
+          {folds.map((f) => {
+            const span = foldedSpan(f), rg = parseRange(f.source)
+            if (!span || span.from > rowCount) return null
+            const n = span.to - span.from + 1
+            return (
+              <div key={'fold' + f.id} className="ss-fold-bar" style={{ left: cols[rg.c1], top: rows[span.from] - 1, width: cols[Math.min(rg.c2 + 1, colCount)] - cols[rg.c1] }}>
+                <button type="button" className="ss-fold-label" title="Show every row of this table"
+                  onPointerDown={(e) => e.stopPropagation()} onClick={() => onFoldToggle(f, 'open')}>
+                  ⋯ {n} more row{n === 1 ? '' : 's'} folded (rows {span.from + 1}–{span.to + 1}): show
+                </button>
+              </div>
             )
           })}
           {traceLayer}

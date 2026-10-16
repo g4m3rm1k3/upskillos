@@ -83,7 +83,7 @@ $$E(c) = \\sum_{i=1}^{n} (x_i - c)^2$$` },
         },
         {
           formula: {
-            table: 'orders', solution: '=AVERAGEIF(D2:D403,"Helmet",E2:E403)', must: ['AVERAGEIF'], sheet: 2,
+            table: 'orders', solution: '=AVERAGEIF(D2:D403,"Helmet",E2:E403)', must: ['AVERAGEIF'],
             prompt: 'The mean price of a helmet in a spreadsheet: `AVERAGEIF(range to test, value, range to average)` averages the prices (E) on the rows whose item (D) is Helmet.',
             hint: '`=AVERAGEIF(D2:D403,"Helmet",E2:E403)`',
             explain: `£${S.mean(HELMETS).toFixed(2)}, from ${HELMETS.length} helmets with a price. Lesson 2.7 does this for every item at once.`,
@@ -194,7 +194,7 @@ $$Q(q) = s_{\\lfloor p \\rfloor} + (p - \\lfloor p \\rfloor)\\,(s_{\\lfloor p \\
         },
         {
           formula: {
-            table: 'orders', solution: '=PERCENTILE.INC(E2:E403,0.25)', must: ['PERCENTILE.INC'], sheet: 3,
+            table: 'orders', solution: '=PERCENTILE.INC(E2:E403,0.25)', must: ['PERCENTILE.INC'],
             prompt: 'The first quartile of all the prices in a spreadsheet: `PERCENTILE.INC(range, q)`.',
             hint: '`=PERCENTILE.INC(E2:E403,0.25)`',
             explain: `${S.quantile(PRICES, 0.25)}, exactly what your \`quantile(prices, 0.25)\` gives: PERCENTILE.INC uses the same $q(n-1)$ rule (and skips the blanks). So does pandas' \`.quantile\`. PERCENTILE.EXC uses another rule and gives different answers on the same data.`,
@@ -331,7 +331,7 @@ $$s^2 = \\frac{1}{n-1}\\sum_{i=1}^{n} (x_i - \\bar x)^2 \\qquad s = \\sqrt{s^2}$
         },
         {
           formula: {
-            table: 'orders', solution: '=VAR.S(E2:E403)', must: ['VAR.S'], sheet: 3,
+            table: 'orders', solution: '=VAR.S(E2:E403)', must: ['VAR.S'],
             prompt: 'A spreadsheet has both: `VAR.S` divides by $n - 1$ (a sample), `VAR.P` by $n$ (a population). Find the sample variance of all the prices.',
             hint: '`=VAR.S(E2:E403)`',
             explain: `${S.variance(PRICES).toFixed(2)}, the same as \`variance(prices)\`. Its square root, the standard deviation, is £${S.std(PRICES).toFixed(2)}: larger than the mean itself, because bikes and the two typos sit far above everything else. One spread for every item together means little; lesson 2.7 splits it by item.`,
@@ -556,7 +556,7 @@ The z-score is built from the mean and standard deviation, which the outliers th
         { figure: 'GroupByView', caption: 'Group by item, town or channel; summarise price or quantity. The last column is the same thing in a spreadsheet, with AVERAGEIF, SUMIF or COUNTIF.' },
         {
           formula: {
-            table: 'orders', solution: '=SUMIFS(F2:F403,C2:C403,"York",G2:G403,"web")', must: ['SUMIFS'], sheet: 2,
+            table: 'orders', solution: '=SUMIFS(F2:F403,C2:C403,"York",G2:G403,"web")', must: ['SUMIFS'],
             prompt: 'A spreadsheet does one group at a time. `SUMIFS(sum range, range1, value1, range2, value2)` adds up the quantities (F) on the rows that match both tests. How many items were sold to York on the web?',
             hint: '`=SUMIFS(F2:F403,C2:C403,"York",G2:G403,"web")`',
             explain: `${sheet('=SUMIFS(F2:F403,C2:C403,"York",G2:G403,"web")')} (including “york”, which the spreadsheet matches regardless of capitals; “York ” with a space is missed). One formula per group: group-by does them all at once, which is why pandas has \`frame.groupby("item")["price"].mean()\`, the same three steps in one line.`,
@@ -631,7 +631,7 @@ The z-score is built from the mean and standard deviation, which the outliers th
 | How does it differ by group? | group-by, pivot table | – | 2.7, 2.8 |` },
         {
           formula: {
-            table: 'orders', solution: '=PIVOTBY(D1:D403,G1:G403,F1:F403,SUM)', must: ['PIVOTBY'], sheet: 4,
+            table: 'orders', solution: '=PIVOTBY(D1:D403,G1:G403,F1:F403,SUM)', must: ['PIVOTBY'],
             prompt: 'A whole pivot table in one spreadsheet formula: `PIVOTBY(row keys, column keys, values, SUM)`, with the headings included in each range. Items (D) along the rows, channels (G) along the columns, quantities (F) totalled.',
             hint: '`=PIVOTBY(D1:D403,G1:G403,F1:F403,SUM)`',
             explain: 'The result spills into a block of cells: the same table as your `pivot`, with the totals added. Open it in the Spreadsheet Lab to see the whole block, and change SUM to AVERAGE or COUNT.',

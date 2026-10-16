@@ -46,6 +46,8 @@ export class Sheet {
     this.filter = null
     // Conditional formatting rules (engine/conditional.js), in order.
     this.rules = []
+    // Folded tables (engine/folds.js): { id, source: 'A1:G403', state: 'open' | 'peek' | 'closed' }.
+    this.folds = []
     // The sample dataset this sheet was made from (datasets/index.js), if any.
     this.dataset = null
   }
@@ -703,7 +705,7 @@ export class Workbook {
   // These change many cells at once, so their undo restores a snapshot.
   snapshot() {
     return this.sheets.map((s) => ({
-      id: s.id, name: s.name, colWidths: { ...s.colWidths }, rowHeights: { ...s.rowHeights }, charts: s.charts.map((c) => ({ ...c })), filter: s.filter, rules: s.rules.map((r) => ({ ...r })), dataset: s.dataset,
+      id: s.id, name: s.name, colWidths: { ...s.colWidths }, rowHeights: { ...s.rowHeights }, charts: s.charts.map((c) => ({ ...c })), filter: s.filter, rules: s.rules.map((r) => ({ ...r })), folds: s.folds.map((f) => ({ ...f })), dataset: s.dataset,
       cells: [...s.cells].map(([k, c]) => [k, { input: c.input, format: c.format, style: c.style, code: c.code }]),
     }))
   }
@@ -717,6 +719,7 @@ export class Workbook {
       sheet.charts = (d.charts ?? []).map((c) => ({ ...c }))
       sheet.filter = d.filter ?? null
       sheet.rules = (d.rules ?? []).map((r) => ({ ...r }))
+      sheet.folds = (d.folds ?? []).map((f) => ({ ...f }))
       sheet.dataset = d.dataset ?? null
       return sheet
     })
@@ -796,6 +799,9 @@ export class Workbook {
       target.rules = target.rules
         .map((r) => ({ ...r, source: adjust('=' + r.source, { formulaSheet: target.name, sheetName: target.name, at, count }).slice(1) }))
         .filter((r) => !r.source.includes('#REF!'))
+      target.folds = target.folds
+        .map((f) => ({ ...f, source: adjust('=' + f.source, { formulaSheet: target.name, sheetName: target.name, at, count }).slice(1) }))
+        .filter((f) => !f.source.includes('#REF!'))
     })
   }
 
@@ -900,6 +906,15 @@ export class Workbook {
     this.notify()
   }
 
+  // ── Folded tables ─────────────────────────────────────────────────────
+  setFolds(sheetId, folds, { record = true } = {}) {
+    const sheet = this.sheet(sheetId)
+    if (!sheet) return
+    if (record) this.pushHistory({ type: 'folds', sheetId, folds: sheet.folds })
+    sheet.folds = folds
+    this.notify()
+  }
+
   // ── Undo / redo ───────────────────────────────────────────────────────
   pushHistory(entry) {
     this.undoStack.push(entry)
@@ -929,6 +944,9 @@ export class Workbook {
     } else if (entry.type === 'rules') {
       const sheet = this.sheet(entry.sheetId)
       if (sheet) { to.push({ type: 'rules', sheetId: sheet.id, rules: sheet.rules }); this.setRules(sheet.id, entry.rules, { record: false }) }
+    } else if (entry.type === 'folds') {
+      const sheet = this.sheet(entry.sheetId)
+      if (sheet) { to.push({ type: 'folds', sheetId: sheet.id, folds: sheet.folds }); this.setFolds(sheet.id, entry.folds, { record: false }) }
     } else if (entry.type === 'addSheet') {
       const index = this.sheets.findIndex((s) => s.id === entry.sheetId)
       const [sheet] = this.sheets.splice(index, 1)
@@ -960,6 +978,7 @@ export class Workbook {
         ...(s.charts.length ? { charts: s.charts } : {}),
         ...(s.filter ? { filter: s.filter } : {}),
         ...(s.rules.length ? { rules: s.rules } : {}),
+        ...(s.folds.length ? { folds: s.folds } : {}),
         ...(s.dataset ? { dataset: s.dataset } : {}),
         cells: Object.fromEntries([...s.cells].map(([k, c]) => [k, Object.fromEntries(Object.entries({ input: c.input || undefined, format: c.format, style: c.style, code: c.code }).filter(([, v]) => v !== undefined))])),
       })),
@@ -975,6 +994,7 @@ export class Workbook {
       sheet.charts = Array.isArray(s.charts) ? s.charts.map((c) => ({ ...c })) : []
       sheet.filter = s.filter?.source ? { source: s.filter.source, hidden: s.filter.hidden ?? {} } : null
       sheet.rules = Array.isArray(s.rules) ? s.rules.filter((r) => r?.source && r.kind).map((r) => ({ ...r })) : []
+      sheet.folds = Array.isArray(s.folds) ? s.folds.filter((f) => f?.source && f.state).map((f) => ({ ...f })) : []
       sheet.dataset = typeof s.dataset === 'string' ? s.dataset : null
       wb.sheets.push(sheet)
     }

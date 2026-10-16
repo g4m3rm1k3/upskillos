@@ -6,7 +6,7 @@ import { SNIPPETS } from '../data/canvasSnippets.js'
 import { SERIES  } from '../data/canvasTutorialSeries.js'
 import { useGlobalTheme } from '../context/ThemeContext.jsx'
 import { setupOpenCalcMonaco } from '../utils/monacoThemes.js'
-import Prism from 'prismjs'
+import Prism from '../utils/prism.js'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 

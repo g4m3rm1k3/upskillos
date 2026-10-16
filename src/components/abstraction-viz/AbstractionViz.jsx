@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGlobalTheme } from '../../context/ThemeContext.jsx'
-import Prism from 'prismjs'
+import Prism from '../../utils/prism.js'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 

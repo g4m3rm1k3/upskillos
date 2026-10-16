@@ -14,6 +14,7 @@ import ChartPanel from './ChartPanel.jsx'
 import RulesPanel from './RulesPanel.jsx'
 import PivotPanel from './PivotPanel.jsx'
 import DatasetPanel from './DatasetPanel.jsx'
+import LessonLinks from './LessonLinks.jsx'
 
 const TYPE_TEXT = {
   blank: 'Empty',
@@ -46,13 +47,14 @@ function FunctionHelp({ name, open = false }) {
         {f.aliasOf && <p>An older name for <b>{f.aliasOf}</b>, which works the same. Prefer {f.aliasOf} in new sheets.</p>}
         {f.example && <p><span className="font-mono text-slate-800 dark:text-slate-100">{f.example[0]}</span> → {f.example[1]}</p>}
         {f.learn && <p>{f.learn}</p>}
+        <LessonLinks name={name} />
         <p className="text-[11px] text-slate-400">Category: {f.category}</p>
       </div>
     </details>
   )
 }
 
-function CellView({ wb, sheet, row, col, onJump, onMakeCode }) {
+function CellView({ wb, sheet, row, col, onJump, onMakeCode, lesson }) {
   const key = cellKey(row, col)
   const cell = sheet.cells.get(key)
   const value = wb.valueAt(sheet, row, col)
@@ -116,7 +118,7 @@ function CellView({ wb, sheet, row, col, onJump, onMakeCode }) {
         </Section>
       )}
 
-      <FormulaLearn wb={wb} sheet={sheet} row={row} col={col} cell={cell} onMakeCode={onMakeCode} />
+      <FormulaLearn wb={wb} sheet={sheet} row={row} col={col} cell={cell} onMakeCode={onMakeCode} lesson={lesson} />
 
       {(uses.length > 0 || usedBy.length > 0) && (
         <Section title="Connections">
@@ -162,7 +164,7 @@ function FunctionBrowser() {
   )
 }
 
-export default function Inspector({ wb, sheet, sel, onJump, tab, onTab, runtime, onApplyCode, onMakeCode, chart, chartValues, onChangeChart, onDeleteChart, rules = [], ruleTarget, onAddRule, onRemoveRule, onSelectRule, pivotTable, evaluatePivot, onInsertPivot, dataset, onTry }) {
+export default function Inspector({ wb, sheet, sel, onJump, tab, onTab, runtime, onApplyCode, onMakeCode, chart, chartValues, onChangeChart, onDeleteChart, rules = [], ruleTarget, onAddRule, onRemoveRule, onSelectRule, pivotTable, evaluatePivot, onInsertPivot, dataset, onTry, lessonTries = null, lesson = false }) {
   const isCode = sheet.cells.get(cellKey(sel.active.row, sel.active.col))?.kind === 'code'
   const tabs = [...(chart ? [['chart', 'Chart']] : []), ...(isCode ? [['code', 'Code']] : []), ['cell', 'This cell'], ...(rules.length || tab === 'rules' ? [['rules', 'Rules']] : []), ...(tab === 'pivot' ? [['pivot', 'Pivot']] : []), ...(dataset ? [['data', 'About data']] : []), ['functions', 'Functions']]
   const current = (tab === 'code' && !isCode) || (tab === 'chart' && !chart) || (tab === 'data' && !dataset) ? 'cell' : tab
@@ -177,9 +179,9 @@ export default function Inspector({ wb, sheet, sel, onJump, tab, onTab, runtime,
       <div className="min-h-0 flex-1 overflow-y-auto">
         {current === 'chart' && <ChartPanel key={chart.id} chart={chart} values={chartValues(chart)} onChange={(patch) => onChangeChart(chart.id, patch)} onDelete={() => onDeleteChart(chart.id)} />}
         {current === 'code' && <CodePanel wb={wb} sheet={sheet} row={sel.active.row} col={sel.active.col} runtime={runtime} onApply={onApplyCode} />}
-        {current === 'cell' && <CellView wb={wb} sheet={sheet} row={sel.active.row} col={sel.active.col} onJump={onJump} onMakeCode={onMakeCode} />}
+        {current === 'cell' && <CellView wb={wb} sheet={sheet} row={sel.active.row} col={sel.active.col} onJump={onJump} onMakeCode={onMakeCode} lesson={lesson} />}
         {current === 'functions' && <FunctionBrowser />}
-        {current === 'data' && <DatasetPanel dataset={dataset} onTry={onTry} />}
+        {current === 'data' && <DatasetPanel dataset={dataset} onTry={onTry} lessonTries={lessonTries} />}
         {current === 'pivot' && <PivotPanel key={pivotTable ? formatRange(pivotTable.range) : 'none'} table={pivotTable} evaluate={evaluatePivot} onInsert={onInsertPivot} />}
         {current === 'rules' && <RulesPanel rules={rules} target={ruleTarget} onAdd={onAddRule} onRemove={onRemoveRule} onSelect={onSelectRule} />}
       </div>

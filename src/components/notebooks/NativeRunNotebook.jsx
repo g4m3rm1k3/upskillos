@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Editor from "@monaco-editor/react";
-import Prism from "prismjs";
+import Prism from "../../utils/prism.js";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-lisp";
 import "prismjs/components/prism-java";

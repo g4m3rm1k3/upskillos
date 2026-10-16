@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import Blocks, { isCheck } from './Blocks.jsx'
 import Markdown from '../qmaze-lab/Markdown.jsx'
 import { LESSONS, PARTS, lessonById } from './lessons/index.js'
+import { useEntryLink } from '../../utils/entryLinks.js'
 import '../qmaze-lab/style.css'
 import './style.css'
 
@@ -63,6 +64,8 @@ export default function DataScienceStudio() {
   useEffect(() => save(progress), [progress])
   const open = id => { setProgress(p => ({ ...p, current: id })); setTab('lessons'); requestAnimationFrame(() => main.current?.scrollTo?.({ top: 0 })) }
   const openPython = spec => { setPython({ ...spec }); setTab('python') }
+  // #/lab/data-science-studio?lesson=<id> opens that lesson (the Spreadsheet Lab's function help links here).
+  useEntryLink('data-science-studio', search => { const id = new URLSearchParams(search).get('lesson'); if (lessonById(id)) open(id) })
   return <div className="qm-lab ds-lab">
     <header className="qm-header">
       <div><h1>📊 Data Science Studio</h1><p>Data from the ground up: every idea by hand in Python, then in a spreadsheet and in pandas, with the maths derived and the algorithms written out</p></div>

@@ -4,7 +4,7 @@
 // unstyled monospace text even though prismjs is already a dependency and
 // already used this way for inline code in PrismInlineCode.jsx — this just
 // extends the same technique to multi-line blocks with language detection.
-import Prism from 'prismjs'
+import Prism from '../../utils/prism.js'
 import './CodeBlock.css'
 import 'prismjs/components/prism-python'
 import 'prismjs/components/prism-sql'

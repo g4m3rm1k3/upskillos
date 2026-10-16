@@ -43,8 +43,10 @@ jobs:
           node-version: 24
           cache: npm
 
+      # npm ci installs exactly the lockfile (as the PR checks do), so the release
+      # is built from the same packages that were tested.
       - name: Install dependencies
-        run: npm install --prefer-offline
+        run: npm ci --prefer-offline
 
       # Pyodide's package wheels, checksum-verified against its lockfile
       # (scripts/fetch-pyodide-packages.mjs). The build ships them, so the
@@ -56,23 +58,19 @@ jobs:
           key: pyodide-packages-${{ hashFiles('package-lock.json', 'scripts/pyodide-bundle.mjs') }}
           restore-keys: pyodide-packages-
 
-      - name: Build lesson titles
-        run: node src/scripts/build-lesson-titles.js
-        env:
-          ELECTRON_BUILD: '1'
-          NODE_OPTIONS: --max-old-space-size=6144
-
-      - name: Build lesson IDs
-        run: node scripts/build-lesson-ids.mjs
-
-      - name: Fetch Pyodide packages
-        run: node scripts/fetch-pyodide-packages.mjs
+      # Everything the app imports that a fresh checkout lacks: the gitignored
+      # codebase graph, concept/practice/post manifests and Game Studio runtime,
+      # plus lesson titles, ids, project facts and the Pyodide wheels. The same
+      # step `npm run build` and `npm run desktop:build` start with. Without it,
+      # every release up to v0.1.5 failed at the Vite step.
+      - name: Generate build inputs
+        run: npm run build:inputs
 
       - name: Build frontend (Vite)
-        run: node --max-old-space-size=6144 ./node_modules/vite/bin/vite.js build
+        run: node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build
         env:
           ELECTRON_BUILD: '1'
-          NODE_OPTIONS: --max-old-space-size=6144
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Sync desktop package.json
         run: node scripts/sync-desktop-package.mjs

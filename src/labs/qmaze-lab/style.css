@@ -1,10 +1,11 @@
 .qm-lab{--ink:#2b2620;--muted:#6f665a;--line:#e2dacb;--paper:#fffdf8;--bg:#f6f2e9;--accent:#b5650d;--accent-ink:#7a4208;--teal:#1f6f68;--good:#2f7d4f;--bad:#a8402f;--code-bg:#1f2428;
   background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;color-scheme:light;height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .qm-lab *{box-sizing:border-box}
-.qm-lab button,.qm-lab input,.qm-lab select{font:inherit;color:inherit}
-.qm-lab button{cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:5px 11px;background:#fff}
-.qm-lab button:hover:not(:disabled){background:#fbf1e1;border-color:#e0c9a4}
-.qm-lab button:disabled{opacity:.45;cursor:not-allowed}
+/* Not inside an embedded Spreadsheet Lab (.ss-root): it has its own buttons and inputs. */
+.qm-lab button:not(.ss-root *),.qm-lab input:not(.ss-root *),.qm-lab select:not(.ss-root *){font:inherit;color:inherit}
+.qm-lab button:not(.ss-root *){cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:5px 11px;background:#fff}
+.qm-lab button:hover:not(:disabled):not(.ss-root *){background:#fbf1e1;border-color:#e0c9a4}
+.qm-lab button:disabled:not(.ss-root *){opacity:.45;cursor:not-allowed}
 .qm-lab button:focus-visible,.qm-lab input:focus-visible,.qm-lab select:focus-visible,.qm-fig:focus-visible{outline:3px solid #e39b3d;outline-offset:2px}
 .qm-lab select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:#fff}
 .qm-lab .mono,.qm-lab code,.qm-lab pre{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-ligatures:none}

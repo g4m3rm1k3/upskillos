@@ -1,8 +1,9 @@
 // The lab in a real browser, start to finish: reuse this every session instead of writing a new one.
 // It starts its own dev server (and always stops it), opens every lesson, checks each draws with no
 // missing figure or code and no page errors, solves chosen "write it yourself" blocks in the page's
-// real Python (Pyodide, pandas included) by pasting the lab's own answer, solves a spreadsheet block,
-// follows a lesson's "Open in the Spreadsheet Lab" button, and saves a screenshot of every lesson.
+// real Python (Pyodide, pandas included) by pasting the lab's own answer, types into a spreadsheet
+// block's real grid, folds and copies its table, follows its "Open in the Spreadsheet Lab" button,
+// and saves a screenshot of every lesson.
 //
 //   node src/labs/data-science-studio/tools/browser-check.mjs [out-folder] [--write fn1,fn2,…]
 //
@@ -61,17 +62,49 @@ try {
     await page.locator('.qm-main').screenshot({ path: path.join(out, `${lesson.number}.png`) })
   }
 
-  // A spreadsheet block solved, then its Spreadsheet Lab button followed.
+  // A spreadsheet block: the real Spreadsheet Lab in the lesson. Typed into, solved, its steps shown,
+  // its table folded and copied, then its Spreadsheet Lab button followed.
   await page.locator('.qm-sidebar button').filter({ hasText: LESSONS[0].title }).first().click()
   const formula = page.locator('.ds-formula').first()
-  await formula.getByLabel('Your formula').fill('=COUNTIF(D2:D403,"Bike")')
-  await formula.getByRole('button', { name: 'Work it out' }).click()
-  console.log('spreadsheet block:', (await formula.locator('.qm-answer strong').textContent()).trim())
+  const grid = formula.locator('[role=grid]')
+  await grid.waitFor({ timeout: 60000 })
+  await formula.scrollIntoViewIfNeeded()
+  await grid.evaluate(el => el.focus())
+  await page.keyboard.type('=countif(d2:d403,"Bike")')
+  await page.keyboard.press('Enter')
+  const answer = (await formula.locator('.qm-answer strong').textContent()).trim()
+  console.log('spreadsheet block:', answer)
+  if (!/Right: 28/.test(answer)) problems.push(`the spreadsheet block was not solved: ${answer}`)
+  const steps = await formula.getByText('How it’s worked out').or(formula.getByText("How it's worked out")).first().isVisible().catch(() => false)
+  console.log('worked-out steps in the panel:', steps)
+  if (!steps) problems.push('the embedded sheet did not show how the formula is worked out')
+  await formula.screenshot({ path: path.join(out, 'formula-block.png') })
+  // The fold button: peek (as the lesson opens it) → closed → open.
+  const bar = () => formula.locator('.ss-fold-label').textContent().catch(() => '')
+  console.log('folded at first:', (await bar()).trim())
+  await formula.locator('.ss-fold-button').click()
+  const closedText = (await bar()).trim()
+  console.log('after one click:', closedText)
+  if (!/402 more rows/.test(closedText)) problems.push(`folding to the heading showed: ${closedText}`)
+  await formula.screenshot({ path: path.join(out, 'formula-block-closed.png') })
+  // Row 1 of a folded table copies the whole table.
+  await formula.locator('.ss-head:has(.ss-fold-button)').first().click({ position: { x: 34, y: 10 } })
+  await page.keyboard.press('Control+c')
+  const copied = await formula.getByText(/folded table came too: 403 rows/).isVisible({ timeout: 5000 }).catch(() => false)
+  console.log('copying row 1 copied the whole table:', copied)
+  if (!copied) problems.push('copying the heading row of the folded table did not take the whole table')
+  await formula.locator('.ss-fold-button').click()
+  const open = (await formula.locator('.ss-fold-label').count()) === 0
+  console.log('after two clicks, every row shows:', open)
+  if (!open) problems.push('the third fold state did not open the table')
   await formula.getByRole('button', { name: /Open in the Spreadsheet Lab/ }).click()
-  const sheetTitle = page.getByText(/Added the sheet "Bike shop orders"|Done: Count the orders of each item/).first()
-  const opened = await sheetTitle.waitFor({ timeout: 60000 }).then(() => true, () => false)
-  console.log('Spreadsheet Lab opened on the shop’s orders:', opened)
-  if (!opened) problems.push('the Spreadsheet Lab button did not open the dataset')
+  const done = page.getByText(/Done: Lesson 1\.1/).first()
+  const opened = await done.waitFor({ timeout: 60000 }).then(() => true, () => false)
+  console.log('Spreadsheet Lab opened with the learner’s formula:', opened)
+  if (!opened) problems.push('the Spreadsheet Lab button did not open the lesson’s exercise')
+  const fromLessons = await page.getByText('From the lessons').first().isVisible().catch(() => false)
+  console.log('the lab lists the lessons’ exercises:', fromLessons)
+  if (!fromLessons) problems.push('the Spreadsheet Lab did not list the lessons’ exercises')
   await page.screenshot({ path: path.join(out, 'spreadsheet-lab.png') })
 } finally {
   await browser.close()

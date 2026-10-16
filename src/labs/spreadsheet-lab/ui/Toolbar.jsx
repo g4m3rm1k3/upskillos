@@ -122,6 +122,8 @@ export default function Toolbar({ wb, cell, onStyle, onFormat, onDecimals, onCle
         <ChartColumnBig size={15} /> Chart
       </button>
       <Divider />
+      {/* A sheet inside a lesson has no New, Examples or Open: its workbook is the lesson's. */}
+      {onNew && <>
       <Button label="New blank workbook" onClick={onNew}><FilePlus2 size={15} /></Button>
       <div className="relative">
         <Button label="Examples: the tour and sample datasets" active={examples} onClick={() => setExamples((o) => !o)}><BookOpen size={15} /></Button>
@@ -142,6 +144,7 @@ export default function Toolbar({ wb, cell, onStyle, onFormat, onDecimals, onCle
         )}
       </div>
       <Button label="Open an Excel workbook (.xlsx), or bring in a CSV file as a new sheet" onClick={onImport}><Upload size={15} /></Button>
+      </>}
       <div className="relative">
         <Button label="Download" active={saveMenu} onClick={() => setSaveMenu((o) => !o)}><Download size={15} /></Button>
         {saveMenu && (

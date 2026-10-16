@@ -3,7 +3,7 @@
 // a spreadsheet formula solved and a wrong one explained, the playground and the Real Python tab
 // opened: none of it may throw.
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render as plainRender, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as plainRender, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import DataScienceStudio from './index.jsx'
 import Blocks from './Blocks.jsx'
@@ -36,23 +36,29 @@ describe('Data Science Studio renders', () => {
     })
   }
 
-  it('a spreadsheet exercise: a wrong formula is worked out and explained, the right one solves it', () => {
+  it('a spreadsheet exercise: the real Spreadsheet Lab in the lesson; a wrong formula, then the right one solves it', async () => {
     let solved = 0
     const lesson = LESSONS.find(l => l.id === 'table-rows')
     const { container } = render(<Blocks lesson={lesson} saved={{}} onSolved={() => { solved++ }} onSave={() => {}} />)
-    const box = container.querySelector('.ds-formula input')
-    act(() => { fireEvent.change(box, { target: { value: '=COUNTIF(D2:D403,"Lock")' } }) })
-    act(() => { fireEvent.submit(box.closest('form')) })
-    expect(container.querySelector('.ds-formula').textContent).toMatch(/It gives/)
+    const block = container.querySelector('.ds-formula')
+    // The spreadsheet is loaded lazily: under a full parallel test run that can take several seconds.
+    const grid = await waitFor(() => { const g = block.querySelector('[role=grid]'); if (!g) throw new Error('no grid yet'); return g }, { timeout: 20000 })
+    // The data is folded to its first rows: a fold button on row 1, and a bar saying what is hidden.
+    expect(block.querySelector('.ss-fold-button')).not.toBeNull()
+    expect(block.textContent).toMatch(/397 more rows folded/)
+    const type = text => {
+      act(() => { fireEvent.keyDown(grid, { key: '=' }) })
+      const editor = block.querySelector('input[aria-label^="Editing B405"]')
+      act(() => { fireEvent.change(editor, { target: { value: text } }) })
+      act(() => { fireEvent.keyDown(editor, { key: 'Enter' }) })
+    }
+    type('=COUNTIF(D2:D403,"Lock")')
+    expect(block.textContent).toMatch(/B405 gives/)
     expect(solved).toBe(0)
-    act(() => { fireEvent.change(box, { target: { value: '=SUM(' } }) })
-    act(() => { fireEvent.submit(box.closest('form')) })
-    expect(container.querySelector('.ds-formula').textContent).toMatch(/can’t read that formula/)
-    act(() => { fireEvent.change(box, { target: { value: '=countif(d2:d403,"Bike")' } }) })
-    act(() => { fireEvent.submit(box.closest('form')) })
-    expect(container.querySelector('.ds-formula').textContent).toMatch(/Right: 28/)
+    type('=countif(d2:d403,"Bike")')
+    expect(block.textContent).toMatch(/Right: 28/)
     expect(solved).toBe(1)
-  })
+  }, 30000)
 
   it('the playground summarises pasted data, and survives rubbish', () => {
     const { container } = render(<Playground />)

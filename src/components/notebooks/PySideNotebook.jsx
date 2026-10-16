@@ -28,7 +28,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Editor from "@monaco-editor/react";
-import Prism from "prismjs";
+import Prism from "../../utils/prism.js";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-python";
 import { parseProse } from "../math/parseProse.jsx";

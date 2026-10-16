@@ -6,6 +6,7 @@ import { explainFormula } from '../../spreadsheet-lab/engine/explain.js'
 import { parse } from '../../spreadsheet-lab/engine/parser.js'
 import { isError, isMatrix, formatGeneral } from '../../spreadsheet-lab/engine/values.js'
 import { indexToCol } from '../../spreadsheet-lab/engine/address.js'
+import { makeFold } from '../../spreadsheet-lab/engine/folds.js'
 import { HEADER, makeOrders } from './data.js'
 
 const books = new Map()
@@ -47,4 +48,38 @@ export function evaluateFormula(name, formula) {
   } catch (e) { return { error: String(e.message ?? e) } }
 }
 
-export const columnLetters = n => Array.from({ length: n }, (_, i) => indexToCol(i))
+// ── A lesson's own spreadsheet ───────────────────────────────────────
+// The table in a fresh workbook, folded to its first rows, with the answer cell under the data, one
+// row clear of it, like a total row (beside the data, the grid would scroll the data out of view to
+// show it). The lesson shows it in the real Spreadsheet Lab (FormulaIt.jsx); these check the answer.
+export function lessonBook(spec, done = false) {
+  const table = TABLES[spec.table]()
+  const wb = new Workbook(), sheet = wb.sheets[0], width = table[0].length
+  const at = { row: table.length + 1, col: 1 }
+  wb.setCells([
+    ...table.flatMap((row, r) => row.map((input, c) => ({ sheetId: sheet.id, row: r, col: c, input, ...(r === 0 ? { style: { bold: true } } : {}) }))),
+    { sheetId: sheet.id, row: at.row, col: 0, input: 'Your formula →', style: { bold: true } },
+    ...(done ? [{ sheetId: sheet.id, row: at.row, col: at.col, input: spec.solution }] : []),
+  ], { record: false })
+  wb.setFolds(sheet.id, [makeFold({ r1: 0, c1: 0, r2: table.length - 1, c2: width - 1 }, 'peek')], { record: false })
+  return { wb, sheet, at }
+}
+export const answerCell = at => indexToCol(at.col) + (at.row + 1)
+
+export const same = (a, b, tolerance = 1e-9) => {
+  a = plain(a); b = plain(b)
+  if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= tolerance * Math.max(1, Math.abs(b))
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+const expected = new Map()
+export const expectedOf = spec => (expected.has(spec.solution + spec.table) ? expected : expected.set(spec.solution + spec.table, evaluateFormula(spec.table, spec.solution).value)).get(spec.solution + spec.table)
+
+// The answer cell checked: null until it holds a formula, then { value, solved, missing }.
+export function checkAnswer(spec, { wb, sheet, at }) {
+  const input = wb.getCell(sheet.id, at.row, at.col)?.input ?? ''
+  if (!input) return null
+  if (!input.startsWith('=')) return { error: `${answerCell(at)} holds text, not a formula: start it with =.` }
+  const value = wb.valueAt(sheet, at.row, at.col)
+  const missing = (spec.must ?? []).filter(fn => !input.toUpperCase().includes(fn.toUpperCase() + '('))
+  return { value, missing, solved: !missing.length && !isError(value) && same(value, expectedOf(spec), spec.tolerance) }
+}
