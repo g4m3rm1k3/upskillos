@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 70 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 71 labs · 16 games
 
 ## How things are counted
 
@@ -72,6 +72,7 @@
 | A-Arcade Trace | `a-arcade-trace` | lab | `/lab/a-arcade-trace` |
 | Abstraction Visualizer | `abstraction-viz` | visualizer | `/lab/abstraction-viz` |
 | Backend Lab | `backend-lab` | lesson | `/lab/backend-lab` |
+| Book of Nature | `book-of-nature` | lab | `/lab/book-of-nature` |
 | CAD + CNC Workspace | `cad-cnc` | lab | `/cad-cnc` |
 | CAD Pro | `cad-pro` | builder | `/cad-pro` |
 | Canvas Notes | `canvas-notes` | builder | `/lab/canvas-notes` |

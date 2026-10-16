@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 70,
+    "labs": 71,
     "games": 16
   },
   "courses": [
@@ -410,6 +410,12 @@
       "label": "Backend Lab",
       "kind": "lesson",
       "path": "/lab/backend-lab"
+    },
+    {
+      "id": "book-of-nature",
+      "label": "Book of Nature",
+      "kind": "lab",
+      "path": "/lab/book-of-nature"
     },
     {
       "id": "cad-cnc",
