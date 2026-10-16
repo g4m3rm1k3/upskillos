@@ -11,7 +11,8 @@ Last reconciled: 2026-09-26
 ### Dynamic Programming Lab (2026-10-16)
 
 - [x] Curriculum preview shell with a searchable, scrollable concept hierarchy, labeled difficulty colors, coverage overview, and Python/JavaScript workspace previews. See [scope and authoring plan](dynamic-programming-lab.md).
-- [ ] Author concept walkthroughs, worked examples, and independently checked Python/JavaScript problems. Every mapped concept remains coming soon.
+- [x] Recursion walkthrough with Python/JavaScript reference examples, reversible call-stack trace, and a checked prediction exercise with progressive hints.
+- [ ] Continue the remaining concept walkthroughs and worked examples; add independently checked, safely executed Python/JavaScript coding problems and completion tracking.
 
 This is the master plan for contributor experience, application orientation, and the LMS direction. Keep this section current as work lands. The generated [project inventory](generated/project-inventory.md) is the source of truth for catalog counts and duplicate-content findings; do not copy its changing file lists here.
 
