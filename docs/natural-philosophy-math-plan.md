@@ -111,7 +111,7 @@ These are the thinking tools. The learner collects them as cards. Early on, a mo
 | Find what doesn't change | The broken chessboard |
 | Work backwards | Egyptian false position |
 | Group it | Notches on a bone |
-| Make it simpler | Measuring the Earth (one angle, one distance) |
+| Make it simpler | Measuring the Earth (one angle, one distance), moment 3.5 |
 | Use a balance | Al-Khwarizmi's restoring and balancing |
 | Squeeze it between two | Archimedes trapping π |
 | Slice it up | Archimedes' areas; later, integrals |
@@ -193,11 +193,22 @@ Egypt and Babylon. Shape, Number, Measurement.
 
 ### 3. A stick, a shadow and the size of the Earth
 Shape, Measurement. Trigonometry's first appearance.
-Similar triangles and shadows (Thales and the pyramid, labelled where the sources are late); Eratosthenes measuring the Earth; angles as fractions of a turn; estimation and error; how far away the horizon is.
+1. **The pyramid's shadow:** Thales measures a pyramid with a stick (the sources are centuries later, and say so). At one moment every shadow is the same scaled copy of its object: same shape, different size.
+2. **Angles are turns:** an angle is how far you turn; a full turn is split into 360 degrees, a number that shares evenly (Babylonian astronomy).
+3. **The shadow table:** the sun's angle alone fixes how long a shadow is for each unit of height. A table of those numbers measures heights from angles: the seed of trigonometry (Ptolemy's chords, Aryabhata's sines).
+4. **Parallel rays:** the Sun is so far away that its rays arrive side by side (parallel). A line crossing two parallel lines crosses both at the same angle, because sliding one onto the other changes nothing.
+5. **Measuring the Earth:** Eratosthenes' shadow at Alexandria is 1/50 of a turn, so the 5,000 stadia to Syene is 1/50 of the way round: 250,000 stadia. New move: make it simpler (one angle, one distance).
+6. **How sure can you be?** Errors scale up along with the measurement: an error in the 5,000 stadia comes out 50 times bigger. Posidonius, Ptolemy's too-small Earth, and Columbus.
+7. **How far is the horizon?** The line of sight, the Earth's radius and the radius plus your height make a right triangle (2.7); the difference of two squares is a gnomon (1.3). Twice as far needs four times as high. Al-Biruni measures the Earth from a mountain.
 
 ### 4. The crisis of the diagonal
 Number, Structure. Rigor 2 to 3.
-Ratios of whole numbers; the diagonal of a square; proof that √2 is not a ratio; why the Greeks turned to proof; Euclid's idea of starting from a few agreed facts; infinitely many primes.
+1. **A common measure:** two lengths compared as a ratio of whole numbers; finding the largest unit that measures both by taking the shorter from the longer again and again (Euclid's algorithm). The common measure never changes as you subtract.
+2. **Side and diagonal numbers:** 5 and 7, 12 and 17, 29 and 41: whole-number sides and diagonals that miss by exactly one, forever (Theon of Smyrna).
+3. **The crisis:** if a square's diagonal and side were whole numbers, a picture produces a smaller pair, and a smaller, without end, which is impossible (Tennenbaum's picture; the parity argument in symbols). The first proof, and why the Greeks needed proof. Hippasus's drowning labelled as legend.
+4. **Starting from agreed facts:** a triangle's angles make half a turn, proved from the parallel lines of 3.4 (Euclid I.32). Euclid's few starting facts, and the parallel one that later causes trouble.
+5. **Numbers that make no rectangle:** primes; every number breaks into primes; the sieve of Eratosthenes.
+6. **Primes never run out:** multiply any list of primes and add 1: the result leaves 1 over for every prime on the list, so a new prime is always missing from it (Euclid IX.20).
 
 ### 5. Chance and fair play
 Fermat and Pascal. Chance, Structure. Discrete math begins in earnest.
@@ -271,4 +282,5 @@ Parts II to V get their own episode maps when Part I is under way.
 | Plan | Written 2026-10-15 |
 | Moment 1.3 prototype | Built 2026-10-16 (`src/labs/book-of-nature/`); user approved it as the bar |
 | Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
-| Episode 2 | Complete: 2.1 to 2.8 written, browser-checked and reviewed as a whole on 2026-10-16. Next: Episode 3, A stick, a shadow and the size of the Earth |
+| Episode 2 | Complete: 2.1 to 2.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
+| Episodes 3 and 4 | Complete: 3.1 to 3.7 and 4.1 to 4.6 written, browser-checked and reviewed on 2026-10-16. Next: Episodes 5 and 6 |

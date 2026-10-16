@@ -7,4 +7,5 @@ export const MOVES = {
   'pair-off': { name: 'Pair things off', tip: 'Match the first with the last, the second with the second-to-last. The pairs are often all the same.' },
   'invariant': { name: "Find what doesn't change", tip: 'Look for something that stays the same no matter what moves you make.' },
   'work-backwards': { name: 'Work backwards', tip: 'Start from where you want to end up and ask what must have come just before.' },
+  simplify: { name: 'Make it simpler', tip: 'Strip the problem down to the one or two things that matter, and ignore the rest.' },
 }
