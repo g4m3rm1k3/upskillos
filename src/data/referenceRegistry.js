@@ -40,6 +40,13 @@ export const REFERENCE_ITEMS = [
     Component: lazy(() => import('../pages/GreekLettersReferencePage.jsx')),
   },
   {
+    key: 'special-characters',
+    label: 'Special Characters',
+    emoji: '⌘',
+    color: 'teal',
+    Component: lazy(() => import('../pages/SpecialCharactersPage.jsx')),
+  },
+  {
     key: 'latex-notes',
     label: 'LaTeX Field Notes',
     emoji: '✎',
