@@ -12,7 +12,9 @@ import { SOURCES } from './source.js'
 import { PROGRAMS } from './programs.js'
 import * as T from './engine/tables.js'
 import * as S from './engine/summary.js'
-import { ORDERS_CSV } from './engine/data.js'
+import * as C from './engine/cleaning.js'
+import * as G from './engine/charts.js'
+import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
 const appData = process.platform === 'win32' ? process.env.APPDATA ?? '' : process.platform === 'darwin' ? path.join(homedir(), 'Library', 'Application Support') : path.join(homedir(), '.config')
@@ -82,5 +84,25 @@ describe.skipIf(!existsSync(python))('the lab’s programs in the real Python st
     await load(s, 'group_by');[r, n] = await jumps(s, 'group_by', 30)
     expect(n).toBe(20)
     expect(Object.fromEntries(Object.entries(plain(r.result)).map(([k, v]) => [k, v.length]))).toEqual(Object.fromEntries([...S.groupBy(priced.slice(0, 20), 'item')].map(([k, v]) => [k, v.length])))
+  }, 60000)
+
+  it('dedupe finds the copy of A1018, edit_distance fills its table to the engine’s answer, hash_join matches the engine', async () => {
+    await load(s, 'dedupe')
+    let [r, n] = await jumps(s, 'dedupe', 30)
+    expect(n).toBe(11)   // rows 12 to 21, then the copy
+    expect(plain(r.result)[1]).toEqual(['A1018'])
+    await load(s, 'edit_distance');[r, n] = await jumps(s, 'edit_distance', 30)
+    expect(n).toBe(12)   // one stop per cell: 3 × 4
+    expect(r.result.v).toBe(C.editDistance('Lck', 'Lock'))
+    await load(s, 'hash_join');[r, n] = await jumps(s, 'hash_join', 30)
+    expect(n).toBe(8)
+    const orders = T.readCsv(ORDERS_CSV()).slice(0, 8).map(({ order_id, item }) => ({ order_id, item }))
+    expect(plain(r.result).map(x => x.category)).toEqual(C.hashJoin(orders, T.readCsv(CATALOGUE_CSV()), 'item').map(x => x.category))
+  }, 60000)
+
+  it('nice_ticks returns D3’s ticks for 0 to 114', async () => {
+    await load(s, 'nice_ticks')
+    const r = await s.send({ cmd: 'step', mode: 'out' })
+    expect(plain(r.result)).toEqual(G.niceTicks(0, 114, 5))
   }, 60000)
 })

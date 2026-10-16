@@ -36,6 +36,16 @@ export default function DatasetPanel({ dataset, onTry, lessonTries = null }) {
           ))}
         </dl>
       </section>
+      {dataset.otherSheets?.length > 0 && (
+        <section>
+          <h3 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Its other sheets</h3>
+          <dl className="space-y-1">
+            {dataset.otherSheets.map(([name, about]) => (
+              <div key={name}><dt className="font-mono font-semibold text-slate-800 dark:text-slate-100">{name}</dt><dd className="text-slate-600 dark:text-slate-300">{about}</dd></div>
+            ))}
+          </dl>
+        </section>
+      )}
       <section>
         <h3 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Things to try</h3>
         <TryList tries={dataset.tries} onTry={onTry} />

@@ -43,7 +43,7 @@ function useLayout(chart, data, width, height) {
     const horizontal = type === 'bar'
     let values, xDomain = null, bins = null
     if (type === 'histogram') {
-      bins = histogramBins(data.series.flatMap((s) => s.values), chart.bins || null)
+      bins = histogramBins(data.series.flatMap((s) => s.values), chart.bins || null, chart.binRule)
       values = [0, ...bins.bins.map((b) => b.count)]
       xDomain = bins.bins.length ? [bins.bins[0].from, bins.bins.at(-1).to] : [0, 1]
     } else {

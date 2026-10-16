@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chartAdvice, currentRegion, histogramBins, linearFit, niceTicks, readSeries, recommendChart } from './chart.js'
+import { BIN_RULES, chartAdvice, currentRegion, histogramBins, linearFit, niceTicks, readSeries, recommendChart, ruleWidth } from './chart.js'
 
 describe('reading a block of cells as series', () => {
   it('takes names from a header row and categories from a text column', () => {
@@ -61,6 +61,28 @@ describe('chart maths', () => {
     expect(bins.reduce((s, b) => s + b.count, 0)).toBe(values.length)
     expect(bins[0].from).toBeLessThanOrEqual(1)
     expect(bins.at(-1).to).toBeGreaterThanOrEqual(10)
+  })
+
+  it('has three bin-width rules, worked by hand for the numbers 1 to 100', () => {
+    const v = Array.from({ length: 100 }, (_, i) => i + 1)
+    // Sturges: range 99 over log2(100) rounded up, plus 1: 99 / 8.
+    expect(ruleWidth(v, 'sturges')).toBeCloseTo(99 / 8, 10)
+    // Scott: 3.5 × the sample standard deviation (√(100·101/12) = 29.0115) over ∛100.
+    expect(ruleWidth(v, 'scott')).toBeCloseTo((3.5 * Math.sqrt((100 * 101) / 12)) / Math.cbrt(100), 10)
+    // Freedman–Diaconis: the quartiles by PERCENTILE.INC are 25.75 and 75.25, so 2 × 49.5 over ∛100.
+    expect(ruleWidth(v, 'fd')).toBeCloseTo((2 * 49.5) / Math.cbrt(100), 10)
+    expect(Object.keys(BIN_RULES)).toEqual(['scott', 'fd', 'sturges'])
+    expect(histogramBins(v, null, 'sturges').width).toBe(20) // 12.375 rounded up to a readable step
+    expect(histogramBins(v).width).toBe(25) // Scott, the default: 21.9 rounded up
+  })
+
+  it('Freedman–Diaconis is not thrown by one huge value; Scott is', () => {
+    const v = [...Array.from({ length: 100 }, (_, i) => i + 1), 1e6]
+    expect(ruleWidth(v, 'scott')).toBeGreaterThan(70000)
+    expect(ruleWidth(v, 'fd')).toBeLessThan(25)
+    const { bins } = histogramBins(v, null, 'fd')
+    expect(bins.reduce((s, b) => s + b.count, 0)).toBe(101)
+    expect(bins.length).toBeLessThanOrEqual(201) // capped: a width of 21 over a million would be 47,000 bars
   })
 
   it('uses a chosen number of bins', () => {

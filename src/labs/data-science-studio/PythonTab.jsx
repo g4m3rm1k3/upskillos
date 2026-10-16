@@ -69,7 +69,25 @@ function WatchView({ view }) {
   const entries = Object.entries(view.watch)
   return entries.length ? <table className="qm-log qm-left"><tbody>{entries.map(([k, w]) => <tr key={k}><td className="mono">{w.from}<br /><span className="qm-dim">in {w.function}()</span></td><td className="mono qm-py-val">{show(w.value)}</td></tr>)}</tbody></table> : <p className="qm-hint">Nothing to show yet: step on.</p>
 }
-const VIEWS = { csv: CsvView, bars: BarsView, watch: WatchView }
+// A table being filled (edit distance's dynamic programming): the cell at [i][j] marked, and the
+// three it is worked out from. program.table names the variables: { grid, i, j, rows, cols }.
+function TableView({ view, program }) {
+  const f = view.stack.at(-1)?.locals ?? {}
+  const pick = program.table ?? {}
+  const grid = plain(f[pick.grid]), i = f[pick.i]?.t === 'int' ? f[pick.i].v : null, j = f[pick.j]?.t === 'int' ? f[pick.j].v : null
+  const rows = [...(plain(f[pick.rows]) ?? '')], cols = [...(plain(f[pick.cols]) ?? '')]
+  if (!Array.isArray(grid)) return <p className="qm-hint">The table appears here once it is made.</p>
+  const label = ch => (ch === ' ' ? '␣' : ch)
+  return <div>
+    <p className="qm-hint"><span className="mono">{pick.grid}</span>: orange is <span className="mono">{pick.grid}[{pick.i}][{pick.j}]</span>{i !== null && j !== null ? ` = [${i}][${j}]` : ''}; blue are the three cells it comes from.</p>
+    <div className="qm-scroll"><table className="qm-log ds-edit"><thead><tr><th></th><th>“”</th>{cols.map((ch, k) => <th key={k} className="mono">{label(ch)}</th>)}</tr></thead>
+      <tbody>{grid.map((row, r) => <tr key={r}><th className="mono">{r === 0 ? '“”' : label(rows[r - 1] ?? '')}</th>{(Array.isArray(row) ? row : []).map((v, c) => {
+        const now = r === i && c === j, source = i !== null && j !== null && i > 0 && j > 0 && ((r === i - 1 && c === j) || (r === i && c === j - 1) || (r === i - 1 && c === j - 1))
+        return <td key={c} className={`mono${now ? ' now' : ''}${source ? ' source' : ''}`}>{String(v)}</td>
+      })}</tr>)}</tbody></table></div>
+  </div>
+}
+const VIEWS = { csv: CsvView, bars: BarsView, watch: WatchView, table: TableView }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 // The variables of the running function in a fixed order (the program's focus first), each

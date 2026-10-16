@@ -117,6 +117,9 @@ export default {
     if (L.width === 1 || L.height > 1) return R.width === 1 ? R.get(i, 0) : new Matrix([R.rows[i]])
     return R.height === 1 ? R.get(0, i) : new Matrix(R.rows.map((row) => [row[i]]))
   }, {
+    // Given several lookup values (=XLOOKUP(D2:D403, …)), it looks each one up, as Excel does: one
+    // result per value. With several values, only the first column of a multi-column return is kept.
+    scalar: [0],
     example: ['=XLOOKUP(E2, A2:A50, C2:C50, "not found")', 'the C value for E2'],
     learn: 'XLOOKUP replaces VLOOKUP: it matches exactly by default, can return a value from any column (including to the left), and takes a value to show when nothing is found. match_mode: 0 exact, -1 exact or next smaller, 1 exact or next larger, 2 wildcard.',
   }),
@@ -132,8 +135,11 @@ export default {
       for (let k = 0; k < list.length; k++) if (list[k] !== null && compare(list[k], v) >= 0) i = k; else break
     }
     return i < 0 ? notFound(v) : i + 1
-  }, { example: ['=MATCH("Pear", A2:A20, 0)', 'the row number of Pear within A2:A20'], learn: 'MATCH returns a position, which INDEX turns back into a value: =INDEX(C2:C20, MATCH("Pear", A2:A20, 0)). Use 0 for an exact match.' }),
-  XMATCH: def(C, 'XMATCH(lookup_value, lookup_array, [match_mode], [search_mode])', 'The position of a value, with XLOOKUP\'s matching options.', ([v, la, mm, sm]) => { const i = xmatchIndex(vector(toMatrix(la)), v, optNumber(mm, 0), optNumber(sm, 1)); return i < 0 ? notFound(v) : i + 1 }),
+  }, { scalar: [0], example: ['=MATCH("Pear", A2:A20, 0)', 'the row number of Pear within A2:A20'], learn: 'MATCH returns a position, which INDEX turns back into a value: =INDEX(C2:C20, MATCH("Pear", A2:A20, 0)). Use 0 for an exact match.' }),
+  XMATCH: def(C, 'XMATCH(lookup_value, lookup_array, [match_mode], [search_mode])', 'The position of a value, with XLOOKUP\'s matching options.', ([v, la, mm, sm]) => { const i = xmatchIndex(vector(toMatrix(la)), v, optNumber(mm, 0), optNumber(sm, 1)); return i < 0 ? notFound(v) : i + 1 }, {
+    scalar: [0], example: ['=ISNA(XMATCH(A2:A20, D2:D50))', 'TRUE for each value of A2:A20 that is nowhere in D2:D50'],
+    learn: 'Given a range of values, XMATCH gives a position for each one, or #N/A where it is missing: wrapped in ISNA and FILTER, that lists what failed to match (an anti-join). Like every lookup, it ignores capitals but not spaces: TRIM first.',
+  }),
   INDEX: def(C, 'INDEX(array, row_num, [column_num])', 'The value at a given row and column of a range.', ([a, r, c]) => {
     const M = toMatrix(a)
     let row = optNumber(r, 0), col = optNumber(c, 0)

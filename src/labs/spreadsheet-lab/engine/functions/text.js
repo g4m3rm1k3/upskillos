@@ -17,6 +17,20 @@ function textJoin(delim, ignoreEmpty, values) {
   return parts.join(delim)
 }
 
+// Levenshtein distance by dynamic programming, one row of the table at a time: prev[j] is the
+// distance between the first i - 1 characters of a and the first j of b.
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) {
+      row.push(Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)))
+    }
+    prev = row
+  }
+  return prev[b.length]
+}
+
 export default {
   CONCAT: def(C, 'CONCAT(text1, [text2], …)', 'Joins text together.', (args) => textJoin('', false, flat(args)), { min: 1, example: ['=CONCAT("Hello", " ", "world")', 'Hello world'], learn: 'The & operator does the same for two values: =A1&" "&B1.' }),
   CONCATENATE: def(C, 'CONCATENATE(text1, [text2], …)', 'Joins text together (older version of CONCAT; does not accept ranges).', (args) => args.map(toText).join(''), { min: 1 }),
@@ -52,6 +66,13 @@ export default {
   }, { scalar: true }),
   REPT: def(C, 'REPT(text, number_times)', 'Repeats text.', ([s, n]) => { const k = integer(n); if (k < 0) fail('#VALUE!'); if (k * toText(s).length > 32767) fail('#VALUE!', 'The result would be longer than a cell can hold.'); return toText(s).repeat(k) }, { scalar: true, example: ['=REPT("★", 4)', '★★★★'], learn: 'REPT makes quick in-cell bar charts: =REPT("|", B2/10).' }),
   EXACT: def(C, 'EXACT(text1, text2)', 'TRUE if two texts are identical, including case.', ([a, b]) => toText(a) === toText(b), { scalar: true }),
+  LEVENSHTEIN: def(C, 'LEVENSHTEIN(text1, text2, [ignore_case])', 'The edit distance: how many single characters must be added, removed or changed to turn one text into the other.', ([a, b, ic]) => {
+    const fold = optBool(ic, false) ? (s) => s.toLowerCase() : (s) => s
+    return editDistance([...fold(toText(a))], [...fold(toText(b))])
+  }, {
+    scalar: [0, 1], example: ['=LEVENSHTEIN("Helmit", "Helmet")', '1'],
+    learn: 'Use it to find typing mistakes: =LEVENSHTEIN(A2, "Harrogate") is small for "Harogate" and large for "York". Given a range, it gives one distance per cell, so =XMATCH(MIN(LEVENSHTEIN(A2, list)), LEVENSHTEIN(A2, list)) finds the closest entry in a list. Swapping two letters counts 2 (two changes). This function is not in Excel or Google Sheets: a file using it shows #NAME? there.',
+  }),
   CHAR: def(C, 'CHAR(number)', 'The character with a given code.', ([n]) => { const k = integer(n); if (k < 1 || k > 65535) fail('#VALUE!'); return String.fromCharCode(k) }, { scalar: true, example: ['=CHAR(65)', 'A'] }),
   CODE: def(C, 'CODE(text)', 'The code of the first character.', ([s]) => { const t = toText(s); if (!t) fail('#VALUE!'); return t.charCodeAt(0) }, { scalar: true, example: ['=CODE("A")', '65'] }),
   UNICHAR: def(C, 'UNICHAR(number)', 'The Unicode character with a code point.', ([n]) => String.fromCodePoint(integer(n)), { scalar: true }),

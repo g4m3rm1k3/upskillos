@@ -51,10 +51,11 @@ def pick(rng, weights):
         r -= w
 
 
-def make_orders(n=400, seed=7):
+def make_orders(n=400, seed=7, truth=None):
     """The orders as rows of text, the way they arrive in a CSV file. About 3 in 100 prices are
     missing, 6 in 100 town names are typed differently, 1 in 100 prices was typed in pence, and
-    two orders were entered twice."""
+    two orders were entered twice. Given a dictionary as truth, it also records the real price of
+    every order whose price was lost or typed in pence."""
     rng = Rng(seed)
     rows = []
     for k in range(n):
@@ -66,6 +67,8 @@ def make_orders(n=400, seed=7):
         day = rng.below(365)
         flaw = rng.below(100)
         price_text = pounds(price)
+        if truth is not None and (flaw < 3 or flaw == 9):
+            truth["A" + str(1001 + k)] = price_text
         if flaw < 3:
             price_text = ""
         elif flaw < 7:
@@ -77,6 +80,67 @@ def make_orders(n=400, seed=7):
         rows.append(["A" + str(1001 + k), date_of(day), town, name, price_text, str(quantity), channel])
     for k in [17, 233]:
         rows.append(rows[k][:])
+    return rows
+
+
+# The catalogue: every item the shop sells, its category and its list price. The pump is stocked
+# but was never sold, so it is in the catalogue and in none of the orders.
+CATEGORIES = {"Bike": "bikes", "Helmet": "kit", "Lights, front and back": "kit", "Lock": "kit",
+              "Inner tube": "parts", "Service": "workshop", "Pump": "kit"}
+CATALOGUE_HEADER = ["item", "category", "list_price"]
+
+
+def make_catalogue():
+    """One row per item: its name (the key), its category and its list price in pounds."""
+    items = [(name, base) for name, base, _ in ITEMS] + [("Pump", 1800)]
+    return [[name, CATEGORIES[name], pounds(base)] for name, base in items]
+
+
+RETURNS_HEADER = ["return_id", "order_id", "item", "reason"]
+REASONS = ["faulty", "wrong size", "changed mind", "arrived late"]
+
+
+def typo(rng, text):
+    """The word as a customer might type it: a letter dropped, doubled, or swapped with the next
+    one, or all in lower case; a third of the time, typed right."""
+    kind = rng.below(6)
+    if kind >= 4 or len(text) < 3:
+        return text
+    at = 1 + rng.below(len(text) - 2)
+    if kind == 0:
+        return text[:at] + text[at + 1:]
+    if kind == 1:
+        return text[:at] + text[at] + text[at:]
+    if kind == 2:
+        return text[:at] + text[at + 1] + text[at] + text[at + 2:]
+    return text.lower()
+
+
+def make_returns(orders, n=24, seed=11, truth=None):
+    """The returns form, as customers filled it in: the order id and the item typed by hand.
+    Some order ids are in lower case or start with a space, some have two digits swapped (which
+    names another order) or a digit left out (which names none), and the last return is a second
+    one for the order of the fourth. Given a list as truth, it also records the real order id of
+    each return."""
+    rng = Rng(seed)
+    rows, real_ids = [], []
+    for k in range(n + 1):
+        order = orders[rng.below(400)] if k < n else orders[int(real_ids[3][1:]) - 1001]
+        real = order[0]
+        typed = real
+        form = rng.below(10)
+        if form == 0:
+            typed = real.lower()
+        elif form == 1:
+            typed = " " + real
+        elif form == 2:
+            typed = real[:3] + real[4] + real[3]
+        elif form == 3:
+            typed = real[:2] + real[3:]
+        rows.append(["R" + str(k + 1).zfill(2), typed, typo(rng, order[3]), REASONS[rng.below(len(REASONS))]])
+        real_ids.append(real)
+    if truth is not None:
+        truth.extend(real_ids)
     return rows
 
 

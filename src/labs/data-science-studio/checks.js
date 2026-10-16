@@ -22,10 +22,20 @@ def _close(a, b):
     if isinstance(b, dict):
         return isinstance(a, dict) and set(a) == set(b) and all(_close(a[k], b[k]) for k in b)
     return a == b
+def _short(value):
+    # An argument as the results table shows it: in full when short, else what it is and how big.
+    text = repr(value)
+    if len(text) <= 80:
+        return text
+    if isinstance(value, list):
+        return "[" + str(len(value)) + (" rows" if value and isinstance(value[0], dict) else " values") + "]"
+    if isinstance(value, dict):
+        return "{" + str(len(value)) + " entries}"
+    return text[:60] + "…"
 _cases = _json.loads(${pyString(cases)})
 _failed = 0
 for _args, _expected in _cases:
-    _call = ${JSON.stringify(spec.fn)} + "(" + ", ".join(repr(a) for a in _args) + ")"
+    _call = ${JSON.stringify(spec.fn)} + "(" + ", ".join(_short(a) for a in _args) + ")"
     try:
         _fn = globals().get(${JSON.stringify(spec.fn)})
         if _fn is None:

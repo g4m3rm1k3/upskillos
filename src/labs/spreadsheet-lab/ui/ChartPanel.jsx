@@ -1,9 +1,10 @@
 // The settings of the selected chart, in the inspector: its type (with when
 // to use each), the cells it draws, titles and the extras for each type.
 import { useEffect, useMemo, useState } from 'react'
-import { CHART_TYPES, chartAdvice, linearFit, readSeries } from '../engine/chart.js'
+import { BIN_RULES, CHART_TYPES, chartAdvice, histogramBins, linearFit, readSeries, ruleWidth } from '../engine/chart.js'
 import { formatRange, parseRange } from '../engine/address.js'
 import { MAX_SERIES, formatNumber } from './ChartView.jsx'
+import { chartToD3 } from '../engine/chartCode.js'
 
 function Field({ label, children, hint }) {
   return (
@@ -24,6 +25,24 @@ function LazyInput({ value, onCommit, ...rest }) {
   useEffect(() => setDraft(value ?? ''), [value])
   const commit = () => { if (draft !== (value ?? '')) onCommit(draft) }
   return <input {...rest} value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setDraft(value ?? '') }} className={inputClass} />
+}
+
+// The D3 code for this chart, to read or copy into a web page.
+function D3Code({ chart, values }) {
+  const [open, setOpen] = useState(false), [copied, setCopied] = useState(false)
+  const made = useMemo(() => (open && values ? chartToD3(chart, values) : null), [open, chart, values])
+  return (
+    <section>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100">{open ? '▾' : '▸'} This chart in D3</button>
+      {open && (made ? (
+        <div className="mt-1.5 space-y-1.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">The JavaScript that draws this chart with D3, the library behind most charts on the web: scales map the numbers to pixels, axes are drawn from the scales, and one mark is joined to each value. Data Science Studio’s Part 4 teaches each line.</p>
+          <pre className="max-h-64 overflow-auto rounded bg-slate-900 p-2 text-[11px] leading-snug text-slate-100">{made.code}</pre>
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(made.code).then(() => setCopied(true), () => {}) }} className="rounded-md border border-slate-300 px-2 py-0.5 text-[11px] text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900">{copied ? 'Copied' : 'Copy the code'}</button>
+        </div>
+      ) : <p className="mt-1 text-xs text-slate-500">There are no numbers to draw yet.</p>)}
+    </section>
+  )
 }
 
 export default function ChartPanel({ chart, values, onChange, onDelete }) {
@@ -102,13 +121,25 @@ export default function ChartPanel({ chart, values, onChange, onDelete }) {
       )}
 
       {chart.type === 'histogram' && (
-        <section>
-          <Field label="Number of bins" hint="Blank chooses a width by Scott's rule, as Excel does. Too few bins hide the shape; too many make it noisy.">
-            <LazyInput value={chart.bins ? String(chart.bins) : ''} placeholder="Automatic" inputMode="numeric" aria-label="Number of bins"
+        <section className="space-y-2">
+          <Field label="Bin width rule" hint={BIN_RULES[chart.binRule ?? 'scott'].formula + ': ' + BIN_RULES[chart.binRule ?? 'scott'].why}>
+            <select value={chart.binRule ?? 'scott'} aria-label="Bin width rule" disabled={!!chart.bins} onChange={(e) => set({ binRule: e.target.value === 'scott' ? undefined : e.target.value })} className={inputClass}>
+              {Object.entries(BIN_RULES).map(([id, r]) => <option key={id} value={id}>{r.label}</option>)}
+            </select>
+          </Field>
+          {!chart.bins && (() => {
+            const values = data.series.flatMap((x) => x.values)
+            const raw = ruleWidth(values, chart.binRule ?? 'scott'), used = histogramBins(values, null, chart.binRule)
+            return raw > 0 && <p className="text-[11px] text-slate-500 dark:text-slate-400">The rule gives a width of {formatNumber(raw)}, rounded up to {formatNumber(used.width)}: {used.bins.length} bins.</p>
+          })()}
+          <Field label="Number of bins" hint="Blank uses the rule above. Too few bins hide the shape; too many make it noisy.">
+            <LazyInput value={chart.bins ? String(chart.bins) : ''} placeholder="From the rule" inputMode="numeric" aria-label="Number of bins"
               onCommit={(t) => { const n = Math.round(Number(t)); set({ bins: t.trim() && n >= 1 && n <= 200 ? n : undefined }) }} />
           </Field>
         </section>
       )}
+
+      <D3Code chart={chart} values={values} />
 
       <section className="flex items-center justify-between border-t border-slate-200 pt-3 dark:border-slate-800">
         <span className="text-[11px] text-slate-400">Drag the chart to move it; drag its corner to resize. It redraws when the cells change.</span>

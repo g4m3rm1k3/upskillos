@@ -3,7 +3,10 @@
 // missing figure or code and no page errors, solves chosen "write it yourself" blocks in the page's
 // real Python (Pyodide, pandas included) by pasting the lab's own answer, types into a spreadsheet
 // block's real grid, folds and copies its table, follows its "Open in the Spreadsheet Lab" button,
-// and saves a screenshot of every lesson.
+// and saves a screenshot of every lesson. Part 3 on: the shop's catalogue and returns sheets, and a
+// formula that looks a price up in one. Part 4 on: every "Draw it with D3" block, solved by pasting
+// the lab's solution; a screenshot of every figure; and the Spreadsheet Lab's histogram bin rules and
+// "This chart in D3".
 //
 //   node src/labs/data-science-studio/tools/browser-check.mjs [out-folder] [--write fn1,fn2,…]
 //
@@ -58,6 +61,21 @@ try {
       wrote += ` · write ${b.write.fn}: ${passed ? 'passed' : 'FAILED'} in ${((Date.now() - t0) / 1000).toFixed(1)} s`
       if (!passed) problems.push(`${lesson.number}: write ${b.write.fn} failed in the page: ${(await block.textContent()).slice(-300)}`)
     }
+    // Every D3 block: the lab's solution pasted in, drawn and checked in the page.
+    for (const [k, b] of lesson.blocks.entries()) {
+      if (!b.chart) continue
+      const block = page.locator('.ds-chartit').nth(lesson.blocks.slice(0, k).filter(x => x.chart).length)
+      await block.locator('textarea').fill(b.chart.solution)
+      await block.getByRole('button', { name: /Draw and check/ }).click()
+      await block.locator('.qm-answer, .qm-feedback').first().waitFor({ timeout: 30000 })
+      const matched = await block.getByText('matches the lab’s, mark for mark').isVisible().catch(() => false)
+      const drawn = await block.locator('.ds-drawing-box svg *').count()
+      wrote += ` · D3 block ${k}: ${matched ? 'matched' : 'FAILED'} (${drawn} elements drawn)`
+      if (!matched || !drawn) problems.push(`${lesson.number}: D3 block ${k} did not pass in the page: ${(await block.textContent()).slice(-300)}`)
+      await block.screenshot({ path: path.join(out, `${lesson.number}-d3-${k}.png`) })
+    }
+    const figureBoxes = page.locator('.qm-lesson .qm-figure')
+    for (let i = 0; i < figures; i++) await figureBoxes.nth(i).screenshot({ path: path.join(out, `${lesson.number}-figure-${i + 1}.png`) })
     console.log(`${lesson.number} ${lesson.title}: ${figures} figures${wrote}`)
     await page.locator('.qm-main').screenshot({ path: path.join(out, `${lesson.number}.png`) })
   }
@@ -105,7 +123,51 @@ try {
   const fromLessons = await page.getByText('From the lessons').first().isVisible().catch(() => false)
   console.log('the lab lists the lessons’ exercises:', fromLessons)
   if (!fromLessons) problems.push('the Spreadsheet Lab did not list the lessons’ exercises')
+  // The shop's dataset opens the sheets its formulas join to (Part 3).
+  const tabs = await page.getByRole('tablist', { name: 'Sheets' }).last().getByRole('tab').allTextContents()
+  console.log('the Spreadsheet Lab’s sheets:', tabs.join(', '))
+  if (!tabs.includes('catalogue') || !tabs.includes('returns')) problems.push(`the shop dataset did not open its catalogue and returns sheets: ${tabs.join(', ')}`)
   await page.screenshot({ path: path.join(out, 'spreadsheet-lab.png') })
+  await page.keyboard.press('Escape')
+
+  // A Part 3 spreadsheet block: a formula that looks the list prices up on the catalogue sheet.
+  const part3 = LESSONS.find(l => l.id === 'validation-rules')
+  if (part3) {
+    await page.goto(URL)
+    await page.locator('.qm-sidebar button').filter({ hasText: part3.title }).first().click()
+    const block = page.locator('.ds-formula').first()
+    const g = block.locator('[role=grid]')
+    await g.waitFor({ timeout: 60000 })
+    const lessonTabs = await block.getByRole('tab').allTextContents()
+    console.log('the lesson’s sheets:', lessonTabs.join(', '))
+    if (!lessonTabs.includes('catalogue') || !lessonTabs.includes('returns')) problems.push(`the lesson’s spreadsheet has no catalogue and returns sheets: ${lessonTabs.join(', ')}`)
+    await block.scrollIntoViewIfNeeded()
+    await g.evaluate(el => el.focus())
+    await page.keyboard.type('=SUMPRODUCT(--(E2:E403>10*XLOOKUP(D2:D403,catalogue!A2:A8,catalogue!C2:C8)))')
+    await page.keyboard.press('Enter')
+    const got = (await block.locator('.qm-answer strong').textContent()).trim()
+    console.log('cross-sheet spreadsheet block:', got)
+    if (!/Right: 2(?![0-9])/.test(got)) problems.push(`the catalogue lookup was not solved: ${got}`)
+    await block.screenshot({ path: path.join(out, 'formula-block-catalogue.png') })
+  }
+
+  // The Spreadsheet Lab's charts (Part 4): a histogram's bin rule, and "This chart in D3".
+  await page.goto(`http://127.0.0.1:${PORT}/#/lab/spreadsheet-lab?dataset=iris&try=0`)
+  const chartTab = page.getByRole('tab', { name: 'Chart' })
+  await page.getByText(/Done: Scatter chart/).first().waitFor({ timeout: 60000 })
+  await page.locator('.ss-chart-box').first().click({ position: { x: 60, y: 60 } }) // selects the chart
+  await chartTab.click()
+  await page.getByRole('radio', { name: 'Histogram' }).click()
+  const rule = page.getByLabel('Bin width rule')
+  await rule.selectOption('fd')
+  const ruleText = await page.getByText(/The rule gives a width of/).textContent().catch(() => '')
+  console.log('histogram bin rule:', ruleText.trim())
+  if (!/rounded up to/.test(ruleText)) problems.push('the chart panel did not show the bin rule’s width')
+  await page.getByRole('button', { name: /This chart in D3/ }).click()
+  const code = await page.locator('pre').filter({ hasText: 'd3.bin()' }).first().textContent().catch(() => '')
+  console.log('This chart in D3:', code.split(String.fromCharCode(10)).length, 'lines,', /d3\.bin\(\)/.test(code) ? 'uses d3.bin' : 'NO d3.bin')
+  if (!/d3\.bin\(\)/.test(code)) problems.push('the chart panel did not show the D3 code for the histogram')
+  await page.screenshot({ path: path.join(out, 'spreadsheet-lab-chart.png') })
 } finally {
   await browser.close()
   stopServer()

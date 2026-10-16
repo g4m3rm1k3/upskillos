@@ -11,11 +11,9 @@ import { functionSource, assignSource } from './source.js'
 // spec: { file, fn, prompt, starter, cases: [{ args, expected }], given: [fn names already
 //         written, put before your code], forbid: [[text, why]], hint }
 
-const INDENT = '    '
-
 // A plain code box that types like an editor: Tab indents, Enter keeps the indentation and adds
-// a level after a line ending in ':'.
-export function CodeBox({ value, onChange, label, rows }) {
+// a level after a line that opens a block (ending in ':' for Python; JavaScript passes its own).
+export function CodeBox({ value, onChange, label, rows, indent: INDENT = '    ', opens = /:\s*$/ }) {
   const ref = useRef(null)
   const edit = (text, start, end, insert) => {
     const next = text.slice(0, start) + insert + text.slice(end)
@@ -28,7 +26,7 @@ export function CodeBox({ value, onChange, label, rows }) {
     if (e.key === 'Enter') {
       e.preventDefault()
       const line = text.slice(text.lastIndexOf('\n', s - 1) + 1, s)
-      const indent = /^\s*/.exec(line)[0] + (/:\s*$/.test(line) ? INDENT : '')
+      const indent = /^\s*/.exec(line)[0] + (opens.test(line) ? INDENT : '')
       edit(text, s, t, '\n' + indent)
     }
   }

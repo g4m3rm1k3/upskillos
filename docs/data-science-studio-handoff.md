@@ -12,24 +12,24 @@ Start every Data Science Studio session by reading this file, then the plan (`do
 - **Nothing claimed without a measurement.** Numbers in a lesson come from the engine (checked by tests) or were measured, and say so.
 - One heavy job at a time (the owner's PC once froze); never leave a dev server running; commit and push only when asked; never write the owner's coursework into the repo.
 
-## State (2026-10-14)
+## State (2026-10-16)
 
-**Parts 1 and 2 are built**: 15 lessons, all tested, checked in a browser, not yet committed when this was written (check `git log`).
+**Parts 1 to 4 are built: 34 lessons**, all tested, checked in a browser, not yet committed when this was written (check `git log`). Parts 3 and 4 were built on 2026-10-16; their lesson tables and every number they quote are in the plan.
 
 | Part | Lessons |
 |---|---|
 | 1 · Tables by hand | 1.1 rows and columns · 1.2 CSV by hand (state machine) · 1.3 floats and pence · 1.4 missing values · 1.5 filtering, De Morgan · 1.6 insertion and merge sort, stability · 1.7 pandas, masks |
 | 2 · Summing it up | 2.1 the mean (squared error, running mean) · 2.2 median and quantiles · 2.3 quickselect · 2.4 variance, Bessel derived · 2.5 Welford vs cancellation · 2.6 outliers (z, IQR, MAD) · 2.7 group-by · 2.8 pivot tables |
+| 3 · Cleaning and joining | 3.1 cleaning text (NFC, spaces, case) · 3.2 validation rules, the pence typos fixed · 3.3 duplicates · 3.4 edit distance (DP derived) · 3.5 fuzzy matching · 3.6 filling gaps (MCAR, MAR, MNAR with the truth) · 3.7 joins three ways, counted · 3.8 join cardinality, anti-joins · 3.9 tidy data, wide and long · 3.10 project: the clean year |
+| 4 · Charts with D3 | 4.1 a chart is a function (scales) · 4.2 the data join · 4.3 ticks and axes · 4.4 histograms and bin rules · 4.5 log and square-root scales · 4.6 densities (KDE) · 4.7 colour scales · 4.8 charts that mislead (lie factor) · 4.9 project: small multiples |
 
-**2026-10-15: the Spreadsheet Lab joined in** (no new lessons):
-- Each `formula` block now embeds the real Spreadsheet Lab. That brings its grid, its formula bar (with function suggestions) and its side panel, which works the formula out step by step. The shop's data is folded to its first rows; the answer goes in B405, under the data.
-- New Spreadsheet Lab feature, **folded tables** (`spreadsheet-lab/engine/folds.js`). The button on a table's heading row cycles through all rows, the first 5, and the heading only. Copying a folded table's heading row copies the whole table. Datasets open with a fold button; "Fold this table" is in the right-click menu.
-- The lab lists every lesson exercise under "From the lessons" (`lessons/exercises.js`, generated from the formula blocks: write an exercise once, in the lesson). A lesson's button opens its exercise in the lab with the learner's own formula. The lab's function help links to the lessons that ask for that function (`?lesson=<id>` deep link).
-- `engine/agree.test.js` holds the lessons' by-hand statistics to the spreadsheet's AVERAGE, MEDIAN, PERCENTILE.INC, VAR.S and the rest.
+The shop's data now has two more tables, made by the generator with the truth kept: the **catalogue** (`make_catalogue`: item, category, list price; a pump never sold) and the **returns form** (`make_returns`: typed order ids and item names with mistakes; `truth=` receives each return's real order). `make_orders(truth=)` records the real price of every blanked or pence-typed order. Lessons from 3.10 on use the clean orders (`clean_orders`): 400 rows, four towns, prices in whole pence, missing prices left missing.
 
-**Next: Parts 3 (cleaning and joining) and 4 (charts with D3).** Plan each lesson by lesson first. Part 4 needs a **JavaScript write block** for D3 (a new block kind): model it on Data Science on the Web's runtime and checker (`src/labs/web-data-science/runtime.js`, `Practice.jsx`), checking the chart's elements and positions. Part 3 should clean the town names and fix the pence typos, then redo counts from Parts 1–2 (the lessons promise this). Spreadsheet first: TRIM, LOWER, PROPER and XLOOKUP exist; edit distance doesn't, so add it as a Spreadsheet Lab function (with tests) for the lessons to use. Part 4: draw with the Spreadsheet Lab's chart engine (`engine/chart.js`: `niceTicks`, `histogramBins`, `linearFit`) rather than a second chart system; only the "write the chart's JavaScript" exercise is new.
+**The Spreadsheet Lab gained** (each with tests): `LEVENSHTEIN` (not an Excel function; its help says so); XLOOKUP, XMATCH and MATCH looking up a range of values at once, as Excel does (they returned #N/A before); the shop dataset opening `catalogue` and `returns` sheets (`otherSheets` and `sheets()` in `datasets/index.js`, listed in the dataset panel); histogram **bin rules** (Scott, Freedman–Diaconis, Sturges; `ruleWidth`, `BIN_RULES`, at most 200 bins) chosen in the chart panel; and **This chart in D3** (`engine/chartCode.js`, in the chart panel), whose output the tests run with d3.
 
-**Also asked for, not done:** the owner found variables hard to follow in other labs' Real Python tabs. This lab's tab fixes it (changed variables marked, with old values; a fixed order with the program's `focus` first; pictures for the main values). Bringing that to the other labs' tabs is still to do.
+**Next: Parts 5 (looking for patterns) and 6 (samples and uncertainty).** Plan each lesson by lesson in the plan first. Part 5 needs the confounder put in on purpose for Simpson's paradox; the generator has none yet. Add it without changing the existing orders' text, or every earlier number moves: a new column or a new table is safer. The spreadsheet lens has CORREL, SLOPE, RSQ, LINEST and RANK. Charts in Parts 5 and 6 can use the `chart` block.
+
+**Also asked for, not done:** the owner found variables hard to follow in other labs' Real Python tabs. This lab's tab fixes it (changed variables marked, with old values; a fixed order with the program's `focus` first; pictures for the main values, now including a `table` view for a list of lists). Bringing that to the other labs' tabs is still to do.
 
 ## How the lab is built
 
@@ -45,10 +45,12 @@ Start every Data Science Studio session by reading this file, then the plan (`do
 | `lessons/exercises.js` | every formula block as a Spreadsheet Lab "thing to try", and which lessons teach each function |
 | `engine/parity.json`, `parity.test.js`, `tools/make_parity.py` | the JavaScript held to the Python |
 | `lessons/partN.js`, `figures/partN.jsx` | lessons as block lists; figures |
-| `Blocks.jsx`, `WriteIt.jsx`, `FormulaIt.jsx` | the blocks; `write` runs Python in the page; `formula` embeds the real Spreadsheet Lab and checks the answer cell |
+| `Blocks.jsx`, `WriteIt.jsx`, `FormulaIt.jsx`, `ChartIt.jsx` | the blocks; `write` runs Python in the page; `formula` embeds the real Spreadsheet Lab and checks the answer cell; `chart` runs D3 code and compares its marks |
+| `python/cleaning.py`, `joins.py`, `charts.py`, `engine/cleaning.js`, `charts.js` | Parts 3 and 4 by hand, and their JavaScript copies (parity-tested) |
+| `engine/chartRun.js` | the `chart` block's runtime and checker; `engine/charts.test.js` holds the chart maths to D3 and to the Spreadsheet Lab |
 | `programs.js`, `PythonTab.jsx` | Real Python programs (desktop); `focus` orders the variables, `view` is `csv`, `bars` or `watch` |
 
-Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, formula, note, python`. A `write` takes `packages: ['pandas']` and `prelude: 'import pandas as pd'` for pandas. A `formula` takes `table` (`orders` or `small`), `prompt`, `solution`, `must` (functions it has to use), `hint`, `explain`. Its id (`lesson id:block index`) is also its exercise id in the Spreadsheet Lab, so moving blocks around changes it (as it changes progress).
+Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, formula, chart, note, python`. A `chart` ("Draw it with D3") takes `prompt`, `starter`, `solution` (JavaScript run with `d3`, `svg`, `data`, `width` 480, `height` 300), `data` (or `runs`: several data sets drawn in turn, with `keep`: the field whose marks must stay the same elements), `checks` (`[{ select, attrs }]`: positions to within 0.5 px, `#text` for text, paths and transforms as lists of numbers), `verify` (the tests' check of the solution's marks against the Python maths), `hint`, `explain`. The answer key is the solution, run the same way. A formula may name the other sheets: `catalogue!A2:C8`, `returns!B2:B26`. A `write` takes `packages: ['pandas']` and `prelude: 'import pandas as pd'` for pandas. A `formula` takes `table` (`orders` or `small`), `prompt`, `solution`, `must` (functions it has to use), `hint`, `explain`. Its id (`lesson id:block index`) is also its exercise id in the Spreadsheet Lab, so moving blocks around changes it (as it changes progress).
 
 **Spreadsheet Lab additions:**
 - `SpreadsheetLab.jsx` exports `<Spreadsheet book lesson start>`, the whole spreadsheet on a given workbook. In `lesson` mode it has no New/Open, Enter stays on the cell, and preferences aren't saved.
@@ -61,10 +63,10 @@ Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, for
 | Command | Checks |
 |---|---|
 | `python src/labs/data-science-studio/tools/make_parity.py` | regenerates `engine/parity.json` after a Python change |
-| `npx vitest run src/labs/data-science-studio --exclude "**/*.desktop.test.js"` | parity, every lesson's numbers, write blocks (lab answer passes, starter fails, in real Python), formulas, renders, bundle |
+| `npx vitest run src/labs/data-science-studio --exclude "**/*.desktop.test.js"` | parity, every lesson's numbers, write blocks (lab answer passes, starter fails, in real Python), D3 blocks (solution passes, starter fails, marks agree with the Python), the chart maths against D3 and the Spreadsheet Lab, formulas, renders, bundle |
 | `npx vitest run src/labs/data-science-studio/stepper.desktop.test.js` | the Real Python programs in the desktop app's Python |
 | `npx vitest run src/labs/spreadsheet-lab` | after any Spreadsheet Lab change |
-| `npx vite-node src/labs/data-science-studio/tools/browser-check.mjs <out> --write fn1,fn2` | the real browser: every lesson, chosen write blocks in Pyodide (pandas included), a formula typed into the embedded grid, its steps, folding and copying the table, the Spreadsheet Lab button and its lesson list; screenshots; starts and stops its own server |
+| `npx vite-node src/labs/data-science-studio/tools/browser-check.mjs <out> --write fn1,fn2` | the real browser: every lesson, chosen write blocks in Pyodide (pandas included), every D3 block (the solution pasted, drawn, checked), a formula typed into the embedded grid, its steps, folding and copying the table, the Spreadsheet Lab button and its lesson list, the catalogue and returns sheets and a cross-sheet formula, a histogram's bin rule and its D3 code in the Spreadsheet Lab; a screenshot of every lesson, figure and D3 block; starts and stops its own server (about 3 minutes) |
 | `npm run facts`, `npm run catalog:check`, `npm run typecheck`, `npm run build` | before committing |
 
 ## Learned the hard way
@@ -85,3 +87,14 @@ Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, for
 - **Folds aren't saved to .xlsx yet** (Excel's outline levels would be the match); they are kept in the lab's own saved workbook.
 - **The first-visit welcome bubble** covers screenshots unless `localStorage['oc-tour-seen'] = '1'`.
 - **`useOpenLab` pulls in the whole app** in a bundle: `bundle.test.js` treats `../../components/*` as external, and render tests wrap blocks in a `MemoryRouter`.
+- **Nearby seeds give nearly the same first draws** with this generator (an LCG): seeds 1, 2, 3… made 200 "independent" repeats almost identical, and MCAR looked biased. Repeated experiments run one generator through every repeat (`missingnessExperiment`).
+- **pandas' melt turns a missing number into NaN** (JSON can't hold it), and a pandas column of whole numbers comes back as numpy ints, which the checker can't read: use `.astype(object).where(…notna(), None)` and `.tolist()`.
+- **Python's `round` rounds halves to even; JavaScript's rounds them up.** Code that must give D3's answers uses `js_round` (`floor(x + 0.5)`).
+- **JavaScript makes −0** (`Math.round(-0.13)`); D3 avoids it by building ticks as `(first + i) * step`. Copy D3's arithmetic exactly when a test compares with `toEqual`.
+- **d3.line writes 3 decimals** (`line.digits`): compare paths to within 5e-4, not 1e-6.
+- **d3's axis groups have `fill="none"`** too: select a chart's own lines by something else (`g[stroke-width="2"]`).
+- **Code notes must follow the order of the source lines**, and `lineOf` finds the first line in the file holding the text: for a line two functions share, use `lineIn(file, fn, text)`.
+- **A write block's huge argument filled the results table** (402 rows printed as the call): `checks.js` now shows long arguments as `[402 rows]`.
+- **Freedman–Diaconis with one far-off value** gave a width of 21 over a range of a million: 47,000 bars. Bins are capped at 200.
+- **In the Spreadsheet Lab, a chart made by a "thing to try" isn't selected for its panel**: the browser check clicks `.ss-chart-box` first.
+- **Escapes typed through tool input became raw characters again** (a backslash-b in a regex, a backslash-n in a string): build them from character codes (`String.fromCharCode(10)`, `chr(9)`), or use patterns that need none (`(?![0-9])`).

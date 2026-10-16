@@ -106,19 +106,38 @@ export function niceTicks(lo, hi, target = 5) {
   return ticks
 }
 
-// Histogram bins by Scott's rule (Excel's default): width 3.5σ / n^(1/3),
-// rounded to a readable step. count overrides the number of bins.
-export function histogramBins(values, count = null) {
+// Rules for a histogram's bin width, from the values alone. Each gives a raw width; the chart then
+// rounds it up to a readable step (1, 2, 2.5 or 5 × a power of ten).
+export const BIN_RULES = {
+  scott: { label: "Scott's rule", formula: '3.5 σ / n^(1/3)', why: "Excel's default. Assumes a roughly bell-shaped spread; widens with the standard deviation." },
+  fd: { label: 'Freedman–Diaconis', formula: '2 IQR / n^(1/3)', why: 'Like Scott, but from the interquartile range, so a few huge values (outliers) do not make every bin wide.' },
+  sturges: { label: "Sturges' rule", formula: 'range / (log₂ n + 1)', why: 'The oldest rule: log₂ n + 1 bins. Too few bins for large data, where it hides detail.' },
+}
+const sampleSd = (v) => { const m = v.reduce((a, b) => a + b, 0) / v.length; return Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, v.length - 1)) }
+// The quartile by PERCENTILE.INC's rule: position q(n − 1) in the sorted values, interpolated.
+const quartile = (sorted, q) => { const p = q * (sorted.length - 1), i = Math.floor(p); return sorted[i] + (p - i) * ((sorted[Math.min(i + 1, sorted.length - 1)]) - sorted[i]) }
+export function ruleWidth(values, rule = 'scott') {
+  const v = values.filter(isNum), n = v.length
+  if (n < 2) return 0
+  if (rule === 'fd') { const s = [...v].sort((a, b) => a - b); return (2 * (quartile(s, 0.75) - quartile(s, 0.25))) / Math.cbrt(n) }
+  if (rule === 'sturges') return (Math.max(...v) - Math.min(...v)) / (Math.ceil(Math.log2(n)) + 1)
+  return (3.5 * sampleSd(v)) / Math.cbrt(n)
+}
+
+export const MAX_BINS = 200
+// Histogram bins: the width from a rule (Scott's by default, as Excel), rounded to a readable step
+// and started on a multiple of it. count overrides the number of bins.
+export function histogramBins(values, count = null, rule = 'scott') {
   const v = values.filter(isNum)
   if (!v.length) return { bins: [], width: 0 }
   const min = Math.min(...v), max = Math.max(...v)
   let width
   if (count) width = (max - min) / count || 1
   else {
-    const mean = v.reduce((a, b) => a + b, 0) / v.length
-    const sd = Math.sqrt(v.reduce((s, x) => s + (x - mean) ** 2, 0) / Math.max(1, v.length - 1))
-    const scott = (3.5 * sd) / Math.cbrt(v.length)
-    width = scott > 0 ? niceStep(scott) : 1
+    const raw = ruleWidth(v, BIN_RULES[rule] ? rule : 'scott')
+    width = raw > 0 ? niceStep(raw) : 1
+    // A narrow width over a huge range (one far-off value) would make thousands of bars: at most MAX_BINS.
+    if ((max - min) / width > MAX_BINS) width = niceStep((max - min) / MAX_BINS)
   }
   const start = count ? min : Math.floor(min / width) * width
   const n = Math.max(1, count ?? Math.ceil((max - start) / width + 1e-9))
@@ -131,7 +150,7 @@ export function histogramBins(values, count = null) {
   return { bins: bins.map((b) => ({ ...b, from: Number(b.from.toPrecision(12)), to: Number(b.to.toPrecision(12)) })), width }
 }
 
-function niceStep(x) {
+export function niceStep(x) {
   const power = 10 ** Math.floor(Math.log10(x))
   return ([1, 2, 2.5, 5, 10].map((m) => m * power).find((s) => s >= x) ?? 10 * power)
 }

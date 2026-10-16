@@ -1,8 +1,12 @@
 // Every figure a lesson can place with { figure: 'Name', props }.
 import { TableView, CsvScanner, FloatExplorer, MissingDemo, QueryBuilder, SortRace, RowsVsColumns } from './part1.jsx'
+import { TextCleaner, RuleChecker, DuplicateFinder, EditTable, FuzzyMatcher, MissingnessLab, JoinRace, Cardinality, WideLong, CleanReport } from './part3.jsx'
+import { ScaleExplorer, JoinStepper, TickExplorer, BinExplorer, AreaLie, KdeExplorer, ColourScales, Misleading } from './part4.jsx'
 import { BalancePoint, QuantileExplorer, QuickselectTrace, SpreadExplorer, BesselSimulator, CancellationDemo, OutlierFinder, GroupByView, PivotBuilder } from './part2.jsx'
 
 export const FIGURES = {
   TableView, CsvScanner, FloatExplorer, MissingDemo, QueryBuilder, SortRace, RowsVsColumns,
   BalancePoint, QuantileExplorer, QuickselectTrace, SpreadExplorer, BesselSimulator, CancellationDemo, OutlierFinder, GroupByView, PivotBuilder,
+  TextCleaner, RuleChecker, DuplicateFinder, EditTable, FuzzyMatcher, MissingnessLab, JoinRace, Cardinality, WideLong, CleanReport,
+  ScaleExplorer, JoinStepper, TickExplorer, BinExplorer, AreaLie, KdeExplorer, ColourScales, Misleading,
 }

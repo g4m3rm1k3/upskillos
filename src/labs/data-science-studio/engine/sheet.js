@@ -7,7 +7,17 @@ import { parse } from '../../spreadsheet-lab/engine/parser.js'
 import { isError, isMatrix, formatGeneral } from '../../spreadsheet-lab/engine/values.js'
 import { indexToCol } from '../../spreadsheet-lab/engine/address.js'
 import { makeFold } from '../../spreadsheet-lab/engine/folds.js'
-import { HEADER, makeOrders } from './data.js'
+import { HEADER, makeOrders, CATALOGUE_HEADER, makeCatalogue, RETURNS_HEADER, makeReturns } from './data.js'
+
+// The tables that join the orders, on sheets of their own as the Spreadsheet Lab's shop dataset has
+// them, so a formula such as =XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8) works the same in both.
+export const OTHER_SHEETS = () => [['catalogue', [CATALOGUE_HEADER, ...makeCatalogue()]], ['returns', [RETURNS_HEADER, ...makeReturns(makeOrders())]]]
+function addOtherSheets(wb) {
+  for (const [name, rows] of OTHER_SHEETS()) {
+    const other = wb.addSheet(name, { record: false })
+    wb.setCells(rows.flatMap((row, r) => row.map((input, c) => ({ sheetId: other.id, row: r, col: c, input, ...(r === 0 ? { style: { bold: true } } : {}) }))), { record: false })
+  }
+}
 
 const books = new Map()
 // A workbook holding the table (an array of rows of text, header first), kept for the session.
@@ -15,6 +25,7 @@ export function bookFor(name, table) {
   if (!books.has(name)) {
     const wb = new Workbook(), sheet = wb.sheets[0]
     wb.setCells(table.flatMap((row, r) => row.map((input, c) => ({ sheetId: sheet.id, row: r, col: c, input }))), { record: false })
+    addOtherSheets(wb)
     books.set(name, { wb, sheet, rows: table.length, cols: table[0].length })
   }
   return books.get(name)
@@ -62,6 +73,7 @@ export function lessonBook(spec, done = false) {
     ...(done ? [{ sheetId: sheet.id, row: at.row, col: at.col, input: spec.solution }] : []),
   ], { record: false })
   wb.setFolds(sheet.id, [makeFold({ r1: 0, c1: 0, r2: table.length - 1, c2: width - 1 }, 'peek')], { record: false })
+  addOtherSheets(wb)
   return { wb, sheet, at }
 }
 export const answerCell = at => indexToCol(at.col) + (at.row + 1)

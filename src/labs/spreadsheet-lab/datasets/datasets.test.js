@@ -18,6 +18,10 @@ async function sheetFor(ds) {
   const s = wb.sheets[0]
   const rows = await ds.rows()
   wb.setCells(rows.flatMap((r, i) => r.map((v, c) => ({ sheetId: s.id, row: i, col: c, input: String(v) }))))
+  for (const extra of (await ds.sheets?.()) ?? []) {
+    const other = wb.addSheet(extra.name)
+    wb.setCells(extra.rows.flatMap((r, i) => r.map((v, c) => ({ sheetId: other.id, row: i, col: c, input: String(v) }))))
+  }
   return { wb, s, rows }
 }
 
@@ -37,6 +41,18 @@ function runPython(wb, s, source) {
 const find = (table, label) => table.find((r) => r[0] === label)?.[1]
 
 describe.each(DATASETS)('dataset: $title', (ds) => {
+  it.skipIf(!ds.sheets)('brings the sheets its formulas join to, each with a heading row', async () => {
+    const extras = await ds.sheets()
+    expect(new Set(extras.map((x) => x.name)).size).toBe(extras.length)
+    expect(ds.otherSheets.map(([name]) => name)).toEqual(extras.map((x) => x.name))
+    for (const x of extras) {
+      expect(x.rows[0].every((h) => typeof h === 'string'), x.name).toBe(true)
+      expect(x.rows.length, x.name).toBeGreaterThan(2)
+    }
+    const { wb, s } = await sheetFor(ds)
+    expect(wb.previewFormula(s, '=XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8)')).toBe('kit')
+  })
+
   it('loads with a heading row and the documented columns', async () => {
     const { rows } = await sheetFor(ds)
     expect(rows.length).toBeGreaterThan(40)

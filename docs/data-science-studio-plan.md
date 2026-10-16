@@ -1,6 +1,6 @@
 # Data Science Studio: plan
 
-Status (2026-10-15): Parts 1 and 2 are built (`src/labs/data-science-studio/`, 15 lessons), and the lessons' spreadsheet exercises now run inside the real Spreadsheet Lab (see the handoff). Next: Parts 3 and 4, building in the Spreadsheet Lab first anything a spreadsheet user could use. Each session starts from the handoff, `docs/data-science-studio-handoff.md`. The owner's direction: this is the deepest of the labs, because data science feeds so many branches (machine learning, statistics, visualisation, databases, every lab that trains on data). It teaches each idea in a spreadsheet, in Python by hand, in pandas and, for charts, in D3, and it uses and improves the Spreadsheet Lab.
+Status (2026-10-16): Parts 1 to 4 are built (`src/labs/data-science-studio/`, 34 lessons): Part 3 (cleaning and joining, 10 lessons) and Part 4 (charts with D3, 9 lessons) on 2026-10-16, with a new block kind for drawing with D3. The Spreadsheet Lab gained what they needed: LEVENSHTEIN, lookups of many values at once, the shop's catalogue and returns sheets, histogram bin rules, and "This chart in D3". Next: Parts 5 and 6. Each session starts from the handoff, `docs/data-science-studio-handoff.md`. The owner's direction: this is the deepest of the labs, because data science feeds so many branches (machine learning, statistics, visualisation, databases, every lab that trains on data). It teaches each idea in a spreadsheet, in Python by hand, in pandas and, for charts, in D3, and it uses and improves the Spreadsheet Lab.
 
 A lab in the format of NLP Studio, QMaze and Math for ML: the intuition and the ins and outs of working with data, for anyone who wants to understand it, and the data skills machine learning rests on. It is open source, so it is written for every learner, not only the owner.
 
@@ -162,6 +162,62 @@ Measured or found while building Parts 1 and 2, and taught in the lessons:
 - The shortcut variance formula returns −170.7 for values near a billion whose variance is 30; Welford returns 30 (2.5).
 - The IQR rule over all prices flags 30 values (bikes); within lights alone it flags exactly the two prices typed in pence (2.6).
 - Every spreadsheet function the lessons use (AVERAGE, MEDIAN, PERCENTILE.INC, VAR.S, SUMIFS, GROUPBY, PIVOTBY and more) agrees with the lab's Python.
+
+## Part 3 as built: Cleaning and joining
+
+Part 1 and 2 found the flaws; Part 3 fixes them, and then redoes the counts the earlier lessons promised to redo (the 49 Leeds web orders of 1.5, the lights' mean of 2.2, the outliers of 2.6, the 402 rows). Two small tables join the orders, both made by the generator so the truth behind them is known:
+- **catalogue** (`item, category, list_price`): the six items sold, plus a pump the shop stocks and never sold. One row per item: `item` is its primary key.
+- **returns** (`return_id, order_id, item, reason`): the shop's returns form, typed by customers. Order ids come in lower case or with spaces, a few name orders that don't exist, one order is returned twice, and the item names have typing mistakes. The generator keeps which order each return really belongs to.
+
+Spreadsheet Lab first: a `LEVENSHTEIN(text1, text2, [ignore_case])` function (Text category, with tests; it isn't an Excel function, and its help says so), and the shop's dataset opening its `catalogue` and `returns` sheets beside the orders, so the lessons' XLOOKUP and FILTER formulas work the same in the lesson and in the lab. Building the joins found a real gap: XLOOKUP, XMATCH and MATCH gave #N/A for a range of lookup values, where Excel gives one result per value; fixed in the Spreadsheet Lab, with tests.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, Real Python |
+|---|---|---|---|---|
+| 3.1 Cleaning text | case, spaces, Unicode (é two ways, NFC); a cleaning rule as a function; the 1.5 count redone | `normalise`, `clean_town` | how many spellings each fix removes | TextCleaner (each fix switched on and off, the town counts); `=PROPER(TRIM(C2))` then COUNTIFS |
+| 3.2 Rules for valid rows | a validation rule as a predicate; every row against every rule; the pence typos found by the catalogue's price and fixed | `check_rows`, `fix_pence` | on a log scale a price typed in pence is 2 away from its list price | RuleChecker; `=XLOOKUP` the list price, flag the ratio |
+| 3.3 Duplicates | a key; seen-set deduplication (hashing again); same key with different data; pairwise vs one pass | `dedupe` | comparisons for checking every pair: n(n − 1)/2 | DuplicateFinder; `=COUNTIF(A$2:A$403,A2)>1`, `=ROWS(UNIQUE(…))`; Real Python `dedupe` |
+| 3.4 Edit distance | insert, delete, substitute; the recurrence; dynamic programming as a filled table; cost (m + 1)(n + 1) cells | `edit_distance` | the recurrence from the three last moves; the distance of a swap (2, not 1) | EditTable (fill it cell by cell, follow the path back); `=LEVENSHTEIN`; Real Python `edit_distance` |
+| 3.5 Fuzzy matching | nearest match in a list; a threshold relative to length; matches that are wrong (lock and look) | `closest` | why a fixed threshold fails for short words | FuzzyMatcher (threshold slider, right and wrong matches against the truth); `=LEVENSHTEIN` over a range with XMATCH and MIN |
+| 3.6 Filling the gaps | drop or fill; filling with the mean keeps the mean and shrinks the variance; MCAR, MAR, MNAR simulated with the truth known; filling within groups | `fill_missing`, `fill_by_group` | the variance after filling with the mean: s²(nₒ − 1)/(n − 1) | MissingnessLab (three mechanisms, each method's error against the truth); `=IF(E2="",AVERAGEIF(…),E2)` |
+| 3.7 Joins three ways | keys, primary and foreign; nested loop, hash join, sort-merge join, each counted | `hash_join` | comparisons: n·m, n + m, n log n + m log m + n + m | JoinRace (the three counted on the same tables); `=XLOOKUP` the category; pandas `merge` |
+| 3.8 What a join does to rows | one-to-one, one-to-many, many-to-many; the join that counts an order twice; left joins and anti-joins; normalised keys before joining | `left_join`, `anti_join` | rows out of a join: Σ over keys of (left count × right count) | Cardinality (pick tables, see rows multiply); `=FILTER` with `ISNA(XMATCH(…))`; pandas `validate=` and `indicator=` |
+| 3.9 Tidy data, wide and long | one row per observation; wide to long (melt) and back (pivot, 2.8) | `to_long` | a wide table of r rows × c value columns is r·c long rows | WideLong (switch the shape, the same numbers); pandas `melt` |
+| 3.10 Project: the clean year | the cleaning steps in order, and why the order matters; every earlier count redone | `clean_orders` | – | CleanReport (each count before and after); pandas pipeline |
+
+## Part 4 as built: Charts with D3
+
+Every chart is drawn from the clean orders of Part 3. The maths (scales, ticks, bins, densities, colour) is written by hand in Python first (`python/charts.py`, held to `engine/charts.js` by parity), and held to the Spreadsheet Lab's chart engine where it has the same thing (`niceTicks`, `histogramBins`). Then the learner draws the chart with D3.
+
+**The new block kind, `chart`** (modelled on Data Science on the Web's runtime and checker): the learner writes JavaScript that draws into an SVG with `d3`, `svg`, `data`, `width` and `height` given. The answer key is the lab's own solution, run the same way (nothing written twice). The check compares the marks: for each selector the block names (`rect`, `circle`, `.tick text`…), the number of elements and the chosen attributes (positions to within half a pixel, text exactly). A block can run the code more than once on new data (`runs`) and check that marks for kept keys are the same elements (the data join). Tests prove the solution passes, the starter fails, and the solution's marks agree with the maths in `engine/charts.js`.
+
+Spreadsheet Lab first:
+- **Bin rules** for its histograms: Scott (Excel's default, as now), Sturges and Freedman–Diaconis, chosen in the chart panel; `histogramBins` takes the rule; tests.
+- **This chart in D3**: the chart panel shows the D3 code that draws the selected chart (column, bar, line, scatter, histogram), ready to copy, like "This formula in code" does for formulas; tests run the generated code and count its marks. The lessons point to it: build a chart in the spreadsheet, read its D3.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, D3 |
+|---|---|---|---|---|
+| 4.1 A chart is a function | marks and channels; a scale maps a domain to a range; position is read best, area and colour worst (Cleveland and McGill) | `linear_scale`, D3: bars of orders per town | the scale's formula, and its inverse | ScaleExplorer; `=COUNTIF` for each bar; D3 `scaleLinear`, `scaleBand` |
+| 4.2 The data join | enter, update, exit; keys keep each mark with its datum | D3: a join keyed by town, drawn twice | – | JoinStepper (data changes, marks enter, move, leave) |
+| 4.3 Ticks and axes | a nice step is 1, 2 or 5 × 10ᵏ (the spreadsheet adds 2.5); an axis is drawn from a scale | `nice_step`, `nice_ticks`; D3: an axis | the step for a span and a tick count | TickExplorer (D3’s ticks against the spreadsheet’s) |
+| 4.4 Histograms and bin widths | binning; Sturges, Scott, Freedman–Diaconis; a bin's count against its width | `histogram`, `sturges`, `freedman_diaconis`; D3: a histogram | Sturges’ rule from the binomial; why the widths shrink like n^(−1/3) | BinExplorer; `=FREQUENCY`; the Spreadsheet Lab’s bin rules |
+| 4.5 Log and square-root scales | multiplying as adding; a circle’s value is its area | `log_scale`, `radius_for`; D3: price bubbles | why the radius goes with √value; the inverse of a log scale | AreaLie (radius vs area) |
+| 4.6 Densities | a kernel density estimate; the bandwidth (Silverman’s rule) | `kde`; D3: a density line | the KDE integrates to 1 | KdeExplorer (bandwidth slider) |
+| 4.7 Colour as a scale | categorical, sequential, diverging; mixing colours; lightness | `mix`; D3: a heat map of orders by town and month | linear interpolation between two colours | ColourScales |
+| 4.8 Charts that mislead | the truncated axis, the area trick, the dual axis, each reproduced; Tufte’s lie factor | `lie_factor`; D3: the honest axis | the lie factor of a truncated bar chart | Misleading (three charts and their fixes) |
+| 4.9 Project: small multiples | one panel per town on shared scales; why shared | D3: small multiples | – | the shop’s months per town |
+
+Measured or found while building Parts 3 and 4, and taught in the lessons:
+- The town column has 11 spellings: trimming leaves 8, lower case 4 (3.1). Cleaned, Python counts 51 Leeds web orders, as COUNTIFS did; the spreadsheet ignores capitals but not spaces (COUNTIF "Leeds" 111, cleaned 114).
+- `check_rows` reports 27 problems: 25 towns and the 2 prices typed in pence, found by their shape alone (3.2). Read as pounds, "2375" is 95 times its list price: log₁₀ 1.98, against at most 0.04 for a real price, so "more than ten times" is the halfway line.
+- 402 rows, 400 orders: A1018 and A1234 were entered twice, identically (3.3).
+- `closest` reads every one of the 25 items typed on the returns form as the item really returned (checked against the generator's truth); "Look" matches Lock at distance 1, "Pmup" matches nothing (3.5).
+- Hiding 20% of the true prices, averaged over the lesson's 400 repeats: MCAR leaves the mean unbiased (+£0.08); MAR (bikes lost 3×) makes it £14.60 too low, and filling within each item brings that to £0.00; MNAR stays too low (−£2.00, and −£0.76 filled by item). Filling with the mean keeps 80% of the variance, the derived (m − 1)/(n − 1) (3.6). The generator's first draws for seeds 1, 2, 3… are nearly the same, so the experiment runs one generator through every repeat.
+- Joining 400 orders to 7 catalogue rows: 2,800 comparisons nested, 407 steps hashed, 3,618 sort-merge (2,802 of them sorting) (3.7). Kit took £19,248.20 on the raw sheet and £14,273.45 clean.
+- 3 returns name no order (8 if the keys aren't cleaned; 5 in the spreadsheet without TRIM). A left join of the orders to the returns gives 402 rows: A1086 and A1208 were returned twice. Of the two swapped order ids, a check after the join catches R01 (a helmet against a lock order); R22 lands on another service order and nothing in the data can find it (3.8).
+- Clean: the lights' mean £25.17 (raw £82.15), the IQR rule flags 0 lights (raw 2), takings £32,778.19 (raw £37,790.54) (3.10).
+- `nice_ticks` gives exactly `d3.ticks` on 1,000 random ranges; for 0 to 114 in about 5, D3 steps by 20 and the Spreadsheet Lab by 25 (4.3).
+- Over all 382 prices, Scott's bins are £53.83 wide and Freedman–Diaconis' £4.96: the bikes inflate the standard deviation, not the IQR (4.4).
+- The density of the lights' prices (Silverman's h = 0.60) has area 1.000000 by 2,000 strips (4.6). A bar chart of Harrogate against Leeds with its axis from 80 has a lie factor of 12.4 (4.8).
 
 ## How it is built: two parts per session
 

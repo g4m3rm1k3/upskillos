@@ -6,6 +6,8 @@ import parity from './parity.json'
 import * as D from './data.js'
 import * as T from './tables.js'
 import * as S from './summary.js'
+import * as C from './cleaning.js'
+import * as G from './charts.js'
 
 function close(got, want, where = '') {
   if (typeof want === 'number') {
@@ -78,5 +80,85 @@ describe('Part 2 gives the same answers as the Python', () => {
     close(Object.fromEntries([...groups].map(([k, v]) => [k, v.length])), p2.group_sizes, 'sizes')
     for (const how of Object.keys(S.SUMMARIES)) close(Object.fromEntries(S.aggregate(groups, 'price', how)), p2.aggregate[how], how)
     close(S.pivot(priced, 'town', 'channel', 'quantity'), p2.pivot, 'pivot')
+  })
+})
+
+describe('Part 3 gives the same answers as the Python', () => {
+  const p3 = parity.part3
+  const orders = D.makeOrders()
+  const catalogue = T.readCsv(D.CATALOGUE_CSV())
+  const returns = T.readCsv(D.RETURNS_CSV())
+  const listPrices = Object.fromEntries(catalogue.map(r => [r.item, T.toPence(r.list_price)]))
+  const clean = C.cleanOrders(rows, listPrices)
+  const cleanPriced = clean.filter(r => r.price !== null).map(r => ({ ...r, price: r.price / 100 }))
+  const withGaps = clean.map(r => ({ ...r, price: r.price === null ? null : r.price / 100 }))
+  const ACUTE = String.fromCharCode(0x301), E_ACUTE = String.fromCharCode(0xe9)
+  const texts = ['  leeds ', 'York ', 'harrogate', 'WAKEFIELD', 'Cafe' + ACUTE, 'caf' + E_ACUTE, 'new  york', "o'neil", 'a' + String.fromCharCode(9) + 'b', '']
+  const pairs = [['kitten', 'sitting'], ['Helmit', 'Helmet'], ['', 'abc'], ['ab', 'ba'], ['Lights, fron tand back', 'Lights, front and back'], ['Cafe' + ACUTE, 'caf' + E_ACUTE]]
+  const items = catalogue.map(r => r.item)
+  const returned = returns.map(r => ({ ...r, order_id: C.normalise(r.order_id).toUpperCase() }))
+  const wide = [{ town: 'Leeds', web: 3, shop: 5 }, { town: 'York', web: 1, shop: null }]
+
+  it('the catalogue and the returns form: the same text, and the same truth behind them', () => {
+    expect(D.CATALOGUE_CSV()).toBe(p3.catalogue_csv)
+    expect(D.RETURNS_CSV()).toBe(p3.returns_csv)
+    const prices = {}, ids = []
+    expect(D.makeOrders(400, 7, prices)).toEqual(orders)
+    D.makeReturns(orders, 24, 11, ids)
+    expect(prices).toEqual(p3.truth_prices)
+    expect(ids).toEqual(p3.truth_returns)
+  })
+  it('cleaning text, the rules, the pence typos, duplicates', () => {
+    expect(texts.map(C.normalise)).toEqual(p3.normalise)
+    expect(texts.map(C.cleanTown)).toEqual(p3.clean_town)
+    expect(C.checkRows(rows, C.RULES)).toEqual(p3.problems)
+    expect(['25.00', '2375', '', '24.5', '250.00', '251.00'].map(x => C.fixPence(x, 2500))).toEqual(p3.fix_pence)
+    const [kept, repeated] = C.dedupe(rows, 'order_id')
+    expect([kept.map(r => r.order_id), repeated]).toEqual(p3.dedupe)
+  })
+  it('edit distance, fuzzy matching, filling the gaps, the whole cleaning', () => {
+    expect(pairs.map(([a, b]) => C.editDistance(a, b))).toEqual(p3.edit_distance)
+    expect([...returns.map(r => C.closest(r.item, items)), ...['Look', 'Pmup', '', 'bike'].map(x => C.closest(x, items))]).toEqual(p3.closest)
+    expect(C.fillMissing([1, null, 3], 2)).toEqual(p3.fill_missing)
+    close(C.fillByGroup(withGaps, 'price', 'item').map(r => r.price), p3.fill_by_group, 'fill by group')
+    expect(clean.map(r => [r.order_id, r.town, r.price, r.quantity])).toEqual(p3.clean)
+  })
+  it('the three joins, left and anti-joins, the size of a join, wide to long', () => {
+    const pick = list => list.map(r => [r.order_id, r.category])
+    expect(pick(C.nestedLoopJoin(cleanPriced.slice(0, 60), catalogue, 'item'))).toEqual(p3.nested)
+    expect(pick(C.hashJoin(cleanPriced, catalogue, 'item'))).toEqual(p3.hash)
+    expect(pick(C.sortMergeJoin(cleanPriced, catalogue, 'item'))).toEqual(p3.sort_merge)
+    expect(C.leftJoin(returned, rows, 'order_id').map(r => [r.return_id, r.order_id, r.item, r.date])).toEqual(p3.left)
+    expect(C.antiJoin(returned, rows, 'order_id').map(r => r.return_id)).toEqual(p3.anti)
+    expect([C.joinSize(returned, rows, 'order_id'), C.joinSize(rows, returned, 'order_id'), C.joinSize(cleanPriced, catalogue, 'item')]).toEqual(p3.join_size)
+    expect(C.toLong(wide, 'town')).toEqual(p3.to_long)
+  })
+  it('the pandas versions', () => {
+    close(C.townCounts(rows), p3.town_counts, 'town counts')
+    close(C.filledPrices(withGaps), p3.filled_prices, 'filled prices')
+    close(C.revenueByCategory(cleanPriced, catalogue), p3.revenue, 'revenue')
+    expect(C.unmatched(returned, rows, 'order_id')).toEqual(p3.unmatched)
+    close(C.melted(wide, 'town'), p3.melted, 'melted')
+  })
+})
+
+describe('Part 4 gives the same answers as the Python', () => {
+  const p4 = parity.part4
+  const listPrices = Object.fromEntries(T.readCsv(D.CATALOGUE_CSV()).map(r => [r.item, T.toPence(r.list_price)]))
+  const clean = C.cleanOrders(rows, listPrices).filter(r => r.price !== null)
+  const pence = clean.map(r => r.price)
+  const lights = clean.filter(r => r.item === 'Lights, front and back').map(r => r.price / 100)
+  const tickCases = [[0, 114, 5], [0, 1, 10], [0.03, 0.97, 5], [6.37, 409.5, 8], [-3.2, 7.9, 6], [0, 0.002, 4], [1000, 98765, 7]]
+  it('scales, ticks and bins', () => {
+    close([G.linearScale(0, 120, 300, 20, 87), G.invert(0, 120, 300, 20, 200), G.logScale(1, 1000, 0, 300, 45), G.radiusFor(87, 114, 40)], p4.scales, 'scales')
+    expect(tickCases.map(c => G.niceTicks(...c))).toEqual(p4.ticks)
+    expect(tickCases.map(c => G.stepSize(...c))).toEqual(p4.steps)
+    expect([G.histogram(pence, 0, 2500, 20), G.histogram([0, 5, 10], 0, 5, 2)]).toEqual(p4.histogram)
+    close([G.sturges(400), G.sturges(1024), G.scottWidth(lights), G.freedmanDiaconisWidth(lights)], p4.widths, 'widths')
+  })
+  it('densities, colours and the lie factor', () => {
+    close([...[20, 22.5, 25, 27.5, 30].map(x => G.kde(lights, 1, x)), G.silverman(lights)], p4.kde, 'kde')
+    expect([0, 0.25, 0.5, 1].map(t => G.mix([255, 255, 255], [8, 48, 107], t))).toEqual(p4.mix)
+    close(G.lieFactor(87, 114, 7, 34), p4.lie, 'lie factor')
   })
 })

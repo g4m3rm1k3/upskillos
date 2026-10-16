@@ -191,3 +191,17 @@
 .ds-select{display:inline-flex;gap:6px;align-items:center;margin:6px 10px 6px 0;font-size:13.5px}
 .ds-select select{padding:3px 6px}
 .ds-sheet-embed{height:440px;margin:8px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+
+/* Part 3: the edit-distance table */
+.ds-edit th, .ds-edit td { text-align: center; min-width: 1.8em; padding: 2px 4px; }
+.ds-edit td.source { background: #e6edf9; }
+.ds-edit td.now { background: #fbe3c2; font-weight: 700; }
+.ds-edit td.path { background: #d9efe6; font-weight: 700; }
+
+/* Part 4: "Draw it with D3" */
+.ds-drawings { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.ds-drawing { flex: 1 1 300px; max-width: 520px; margin: 0; }
+.ds-drawing figcaption { font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+.ds-drawing-box { border: 1px solid #d5dbe5; border-radius: 6px; background: #fff; color: #1f2937; font: 11px system-ui, sans-serif; }
+.ds-drawing-box svg { display: block; }
+.ds-data-preview { word-break: break-all; }

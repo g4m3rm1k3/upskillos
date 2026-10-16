@@ -5,6 +5,8 @@
 //   { kind: 'code', at: 'G1', lang: 'py', source }        a Python cell
 //   { kind: 'chart', type, source, title?, trendline?, xTitle?, yTitle? }
 //   { kind: 'rule', source, rule }                        a colour rule
+// A dataset may also bring other sheets for its formulas to name, such as catalogue!A2:C8:
+// `otherSheets` says what each holds, `sheets()` gives their rows; they open beside its own sheet.
 // Places ("at") are beside the data; if something is already there, the lab
 // moves along to the next free columns.
 import { housePrices, shopSales, studyHours } from './synthetic.js'
@@ -154,9 +156,21 @@ export const DATASETS = [
     id: 'shop-orders',
     title: 'Bike shop orders',
     summary: 'A year of orders from a bike shop: 402 rows with dates, towns, items, prices, quantities and channels. Data Science Studio works through it lesson by lesson; it has mistakes in it on purpose.',
-    origin: 'Made up by Data Science Studio’s generator (src/labs/data-science-studio/python/data.py), so the truth behind it is known: 18 prices are missing, some town names are typed differently, two prices were typed in pence, and two orders were entered twice.',
+    origin: 'Made up by Data Science Studio’s generator (src/labs/data-science-studio/python/data.py), so the truth behind it is known: 18 prices are missing, some town names are typed differently, two prices were typed in pence, and two orders were entered twice. The catalogue and returns sheets join it: lesson 3.7 onwards.',
     columns: [['order_id', 'A label for the order, A1001 to A1400.'], ['date', 'The day of the order in 2025, as text YYYY-MM-DD.'], ['town', 'Leeds, York, Harrogate or Wakefield, sometimes typed in lower case or with a space after.'], ['item', 'Bike, Helmet, Lights, Lock, Inner tube or Service.'], ['price', 'The price of one, in pounds; blank if it was never typed.'], ['quantity', 'How many.'], ['channel', 'shop or web.']],
     rows: async () => { const { HEADER, makeOrders } = await import('../../data-science-studio/engine/data.js'); return [HEADER, ...makeOrders()] },
+    // Two more tables that join the orders, each on a sheet of its own (formulas name them as catalogue!A2:A8).
+    otherSheets: [
+      ['catalogue', 'One row per item the shop sells, with its category and list price. The pump was never sold. Join it with =XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8).'],
+      ['returns', 'The returns form as customers typed it: order ids and item names with mistakes in them, for lessons 3.5 and 3.8.'],
+    ],
+    sheets: async () => {
+      const D = await import('../../data-science-studio/engine/data.js')
+      return [
+        { name: 'catalogue', rows: [D.CATALOGUE_HEADER, ...D.makeCatalogue()] },
+        { name: 'returns', rows: [D.RETURNS_HEADER, ...D.makeReturns(D.makeOrders())] },
+      ]
+    },
     // Every spreadsheet exercise in Data Science Studio's lessons, listed under "From the lessons".
     lessons: () => import('../../data-science-studio/lessons/exercises.js'),
     tries: [

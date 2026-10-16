@@ -144,6 +144,44 @@ describe('text', () => {
   is('=TRIM("  a   b  ")', 'a b')
 })
 
+// Excel looks up each value when given several (its dynamic-array behaviour), one result each.
+describe('lookups of several values at once', () => {
+  is('=XLOOKUP({"b";"z";"a"}, {"a";"b"}, {1;2}, "none")', [[2], ['none'], [1]])
+  is('=XLOOKUP({"b";"z"}, {"a";"b"}, {1;2})', [[2], ['#N/A']])
+  is('=XMATCH({"b";"a";"q"}, {"a";"b"})', [[2], [1], ['#N/A']])
+  is('=ISNA(XMATCH({"B";" a"}, {"a";"b"}))', [[false], [true]]) // capitals are ignored, spaces are not
+  is('=MATCH({"b";"a"}, {"a";"b"}, 0)', [[2], [1]])
+  is('=SUMPRODUCT(--(XLOOKUP(A1:A3, B1:B2, C1:C2)="kit"))', 2, { A1: 'Lock', A2: 'Bike', A3: 'Lock', B1: 'Lock', B2: 'Bike', C1: 'kit', C2: 'bikes' })
+  is('=XLOOKUP("b", {"a";"b"}, {1;2})', 2) // one value still gives one result
+  is('=XLOOKUP(A1, B1:B2, C1:D2)', [[3, 4]], { A1: 'y', B1: 'x', B2: 'y', C1: '1', D1: '2', C2: '3', D2: '4' }) // a whole row for one cell
+})
+
+// Not an Excel function: the expected values are the textbook examples of edit distance.
+describe('LEVENSHTEIN', () => {
+  is('=LEVENSHTEIN("kitten", "sitting")', 3)
+  is('=LEVENSHTEIN("Helmit", "Helmet")', 1)
+  is('=LEVENSHTEIN("", "abc")', 3)
+  is('=LEVENSHTEIN("abc", "")', 3)
+  is('=LEVENSHTEIN("same", "same")', 0)
+  is('=LEVENSHTEIN("ab", "ba")', 2) // a swap is two changes
+  is('=LEVENSHTEIN("York", "york")', 1)
+  is('=LEVENSHTEIN("York", "york", TRUE)', 0)
+  is('=LEVENSHTEIN("flaw", "lawn")', 2)
+  is('=LEVENSHTEIN("café", "cafe")', 1)
+  is('=LEVENSHTEIN(12, 123)', 1) // numbers are compared as their text
+  is('=LEVENSHTEIN("Lok", {"Lock";"Look";"Bike"})', [[1], [1], [3]])
+  is('=XMATCH(MIN(LEVENSHTEIN("Harogate", A1:A4)), LEVENSHTEIN("Harogate", A1:A4))', 3, { A1: 'Leeds', A2: 'York', A3: 'Harrogate', A4: 'Wakefield' })
+  it('is symmetric, and never more than the longer text', () => {
+    const words = ['', 'a', 'Bike', 'Helmet', 'Inner tube', 'Lights, front and back', 'Servise']
+    for (const a of words) for (const b of words) {
+      const ab = calc(`=LEVENSHTEIN("${a}", "${b}")`)
+      expect(ab).toBe(calc(`=LEVENSHTEIN("${b}", "${a}")`))
+      expect(ab).toBeLessThanOrEqual(Math.max(a.length, b.length))
+      expect(ab).toBeGreaterThanOrEqual(Math.abs(a.length - b.length))
+    }
+  })
+})
+
 describe('dates', () => {
   is('=DATE(2008, 7, 8)', 39637)
   is('=DATE(2025, 13, 1)', 46023) // rolls over to 1 Jan 2026

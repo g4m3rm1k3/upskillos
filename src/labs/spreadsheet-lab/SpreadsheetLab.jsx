@@ -275,11 +275,17 @@ export function Spreadsheet({ book: given = null, store = null, entryKey = null,
     wb.setCells(rows.flatMap((r, i) => r.map((v, c) => ({ sheetId: target.id, row: i, col: c, input: String(v), ...(i === 0 ? { style: { bold: true } } : {}) }))))
     rows[0].forEach((h, c) => { if (String(h).length > 12) wb.setSize(target.id, 'col', c, Math.min(220, String(h).length * 7 + 16)) })
     wb.setFolds(target.id, [makeFold({ r1: 0, c1: 0, r2: rows.length - 1, c2: rows[0].length - 1 }, 'open')], { record: false })
+    // The tables its formulas join to, each on its own sheet, unless the workbook has them already.
+    for (const extra of (await ds.sheets?.()) ?? []) {
+      if (wb.sheet(extra.name)) continue
+      const other = wb.addSheet(extra.name)
+      wb.setCells(extra.rows.flatMap((r, i) => r.map((v, c) => ({ sheetId: other.id, row: i, col: c, input: String(v), ...(i === 0 ? { style: { bold: true } } : {}) }))))
+    }
     setSheetId(target.id)
     setSel(cellSelection(0, 0))
     setInspectorOpen(true)
     setInspectorTab('data')
-    setNotice('Added the sheet "' + target.name + '" with ' + (rows.length - 1) + ' rows. The panel on the right says what the columns mean and suggests things to try.')
+    setNotice('Added the sheet "' + target.name + '" with ' + (rows.length - 1) + ' rows' + (ds.sheets ? ', and the sheets it joins to' : '') + '. The panel on the right says what the columns mean and suggests things to try.')
     focusGrid()
   }
   // A deep link opens a dataset, then carries out one of its "things to try" once its sheet is showing:
