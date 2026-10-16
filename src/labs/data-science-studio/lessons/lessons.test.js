@@ -36,6 +36,8 @@ describe('lessons', () => {
     // The generator's helpers (the random-number generator, dates, picking an item, writing the
     // whole file) are setup, described in lesson 1.1's notes on make_orders.
     const shownElsewhere = ['data.py:__init__', 'data.py:random', 'data.py:below', 'data.py:date_of', 'data.py:pick', 'data.py:to_csv',
+      // Writing a number to one decimal for the days' CSV: formatting, like pounds.
+      'data.py:tenths',
       // The two errors of a centre are what lesson 2.1–2.2's figure plots; their formulas are derived in the lessons.
       'summary.py:squared_error', 'summary.py:absolute_error']
     const all = Object.keys(SOURCES).flatMap(file => parse(file).functions.map(f => `${file}:${f.name}`))

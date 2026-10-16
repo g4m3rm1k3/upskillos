@@ -8,6 +8,8 @@ import * as T from './tables.js'
 import * as S from './summary.js'
 import * as C from './cleaning.js'
 import * as G from './charts.js'
+import * as P from './patterns.js'
+import * as M from './samples.js'
 
 function close(got, want, where = '') {
   if (typeof want === 'number') {
@@ -139,6 +141,75 @@ describe('Part 3 gives the same answers as the Python', () => {
     close(C.revenueByCategory(cleanPriced, catalogue), p3.revenue, 'revenue')
     expect(C.unmatched(returned, rows, 'order_id')).toEqual(p3.unmatched)
     close(C.melted(wide, 'town'), p3.melted, 'melted')
+  })
+})
+
+describe('Parts 5 and 6 give the same answers as the Python', () => {
+  const p5 = parity.part5, p6 = parity.part6
+  const listPrices = Object.fromEntries(T.readCsv(D.CATALOGUE_CSV()).map(r => [r.item, T.toPence(r.list_price)]))
+  const clean = C.cleanOrders(rows, listPrices)
+  const days = P.numberDays(T.readCsv(D.DAYS_CSV())), quiet = days.filter(r => r.date !== P.NEWS_DATE)
+  const col = (list, k) => list.map(r => r[k])
+  const [H, R, RI, V] = ['high_c', 'rain_mm', 'riders', 'visits'].map(k => col(days, k))
+  const [HQ, RQ, RIQ, VQ] = ['high_c', 'rain_mm', 'riders', 'visits'].map(k => col(quiet, k))
+  const towns = Object.fromEntries(clean.map(r => [r.order_id, r.town]))
+  const deliveries = T.readCsv(D.DELIVERIES_CSV()).map(r => { const far = D.FAR_TOWNS.includes(towns[r.order_id]) ? 'far' : 'near'; return { ...r, far, group: `${r.courier} ${far}` } })
+  const pop = clean.filter(r => r.price !== null).map(r => r.price / 100)
+  const lights = clean.filter(r => r.price !== null && r.item === 'Lights, front and back').map(r => r.price / 100)
+
+  it('the days and the deliveries: the same text, the same news day, the same noise', () => {
+    expect(D.DAYS_CSV()).toBe(p5.days_csv)
+    expect(D.DELIVERIES_CSV()).toBe(p5.deliveries_csv)
+    const news = {}; D.makeDays(5, news); expect(news).toEqual(p5.news)
+    const rng = new D.Rng(9); close([D.noise(rng), D.noise(rng), D.noise(rng)], p5.noise, 'noise')
+    expect([13.25, -0.04, -0.05, 0, 9.96, -12.35].map(D.tenths)).toEqual(p5.tenths)
+  })
+  it('covariance, correlation, the cosine, ranks and Spearman', () => {
+    close([P.covariance(H, RI), P.covariance(H, H), P.covariance([1, 2, 3], [6, 4, 2])], p5.covariance, 'covariance')
+    close([P.correlation(H, RI), P.correlation(H, V), P.correlation(HQ, VQ), P.correlation(R, RI)], p5.correlation, 'correlation')
+    close([P.cosine(P.centred(H), P.centred(RI)), P.cosine([1, 0], [1, 1])], p5.cosine, 'cosine')
+    close(P.centred([1, 2, 6]), p5.centred, 'centred')
+    expect([P.rank([5, 1, 1, 3, 5, 5]), P.rank(R).slice(0, 20), P.rank([])]).toEqual(p5.rank)
+    close([P.spearman(H, V), P.spearman(HQ, VQ), P.spearman(R, RI)], p5.spearman, 'spearman')
+  })
+  it('the line, Anscombe, growth on a log scale, jitter, the matrix, rates, the simulations', () => {
+    close([P.fitLine(H, RI), P.fitLine(RI, H), P.fitLine(HQ, VQ)], p5.fit_line, 'fit')
+    close(P.residuals(H, RI).slice(0, 10), p5.residuals, 'residuals')
+    close(Object.fromEntries(Object.entries(P.ANSCOMBE).map(([k, [xs, ys]]) => [k, P.describePair(xs, ys)])), p5.anscombe, 'anscombe')
+    close([P.growthPerUnit(HQ, VQ), P.growthPerUnit(H, V), P.growthPerUnit([0, 1, 2], [100, 110, 121])], p5.growth, 'growth')
+    close(P.jitter([1, 2, 3, 3, 3], 0.3, 4), p5.jitter, 'jitter')
+    close(P.correlationMatrix([HQ, RQ, RIQ, VQ]), p5.matrix, 'matrix')
+    expect(['courier', 'group', 'far'].map(k => P.rateBy(deliveries, k, 'on_time', 'yes'))).toEqual(p5.rate_by)
+    const sims = ['confounder', 'collider', 'independent'].map(kind => P.simulate(kind, 300, 3))
+    close(Object.fromEntries(['confounder', 'collider', 'independent'].map((k, i) => [k, sims[i].slice(0, 5)])), p5.simulate, 'simulate')
+    close([...sims.map(s => P.partialCorrelation(s.map(r => r[0]), s.map(r => r[1]), s.map(r => r[2]))), P.partialCorrelation(RIQ, VQ, HQ)], p5.partial, 'partial')
+  })
+  it('samples, counting, the binomial and the Poisson', () => {
+    expect([M.sampleWithout([...Array(10).keys()], 4, 1), M.sampleWithout(pop, 5, 2)]).toEqual(p6.sample_without)
+    expect([M.sampleWith([...Array(10).keys()], 6, 1), M.sampleWith(pop, 5, 2)]).toEqual(p6.sample_with)
+    expect([M.comb(20, 9), M.comb(10, 0), M.comb(52, 5), Number(M.combBig(400, 20) % 1000000007n)]).toEqual(p6.comb)
+    close(Array.from({ length: 21 }, (_, k) => M.binomialPmf(k, 20, 0.4675)), p6.binomial, 'binomial')
+    close(Array.from({ length: 7 }, (_, k) => M.poissonPmf(k, 400 / 365)), p6.poisson, 'poisson')
+    expect(['2025-01-01', '2025-03-01', '2025-12-31'].map(M.dayOfYear)).toEqual(p6.day_of_year)
+    const perDay = M.ordersPerDay(clean.map(r => r.date))
+    expect([perDay, M.tally(perDay)]).toEqual([p6.per_day, p6.tally])
+  })
+  it('sample means, the standard error, the bell curve, skewness, intervals and coverage', () => {
+    close(M.sampleMeans(pop, 30, 50, 21), p6.sample_means, 'sample means')
+    close([M.standardError(pop), M.standardError(lights)], p6.standard_error, 'se')
+    close([22, 25, 27.5].map(x => M.normalPdf(x, 25, 1.4)), p6.normal_pdf, 'normal')
+    close([M.skewness(pop), M.skewness(lights), M.skewness([1, 2, 3])], p6.skewness, 'skewness')
+    close(M.heavyTailed(20, 51), p6.heavy, 'heavy')
+    close([M.meanInterval(lights), M.meanInterval(pop, 2.576)], p6.mean_interval, 'interval')
+    close([M.coverage(pop, 5, 400, 31), M.coverage(lights, 10, 400, 31)], p6.coverage, 'coverage')
+  })
+  it('the bootstrap, the reservoir, strata', () => {
+    close([M.bootstrap(lights, 'median', 40, 41), M.bootstrap(lights, 'mean', 40, 41)], p6.bootstrap, 'bootstrap')
+    close([M.percentileInterval(M.bootstrap(lights, 'median', 400, 41)), M.percentileInterval([...Array(101).keys()], 0.9)], p6.percentile, 'percentile')
+    const near = deliveries.filter(r => r.far === 'near'), on = c => near.filter(r => r.courier === c).map(r => (r.on_time === 'yes' ? 1 : 0))
+    close(M.bootstrapDifference(on('Northern'), on('Swift'), 40, 81), p6.difference, 'difference')
+    expect([M.reservoir(Array.from({ length: 20 }, (_, k) => k + 1), 5, 61), M.reservoir(['a', 'b'], 5, 1)]).toEqual(p6.reservoir)
+    expect(M.stratifiedSample(clean.filter(r => r.price !== null), 'item', 40, 71).map(r => r.order_id)).toEqual(p6.stratified)
   })
 })
 

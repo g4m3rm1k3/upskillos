@@ -7,11 +7,14 @@ import { parse } from '../../spreadsheet-lab/engine/parser.js'
 import { isError, isMatrix, formatGeneral } from '../../spreadsheet-lab/engine/values.js'
 import { indexToCol } from '../../spreadsheet-lab/engine/address.js'
 import { makeFold } from '../../spreadsheet-lab/engine/folds.js'
-import { HEADER, makeOrders, CATALOGUE_HEADER, makeCatalogue, RETURNS_HEADER, makeReturns } from './data.js'
+import { HEADER, makeOrders, CATALOGUE_HEADER, makeCatalogue, RETURNS_HEADER, makeReturns, DAYS_HEADER, makeDays, DELIVERIES_HEADER, makeDeliveries } from './data.js'
 
 // The tables that join the orders, on sheets of their own as the Spreadsheet Lab's shop dataset has
 // them, so a formula such as =XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8) works the same in both.
-export const OTHER_SHEETS = () => [['catalogue', [CATALOGUE_HEADER, ...makeCatalogue()]], ['returns', [RETURNS_HEADER, ...makeReturns(makeOrders())]]]
+export const OTHER_SHEETS = () => [
+  ['catalogue', [CATALOGUE_HEADER, ...makeCatalogue()]], ['returns', [RETURNS_HEADER, ...makeReturns(makeOrders())]],
+  ['days', [DAYS_HEADER, ...makeDays()]], ['deliveries', [DELIVERIES_HEADER, ...makeDeliveries(makeOrders())]],
+]
 function addOtherSheets(wb) {
   for (const [name, rows] of OTHER_SHEETS()) {
     const other = wb.addSheet(name, { record: false })

@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 71 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 72 labs · 16 games
 
 ## How things are counted
 
@@ -90,6 +90,7 @@
 | Arrays & Memory Lab | `dsa-arrays-lab` | lab | `/lab/dsa-arrays-lab` |
 | Linked Lists Lab | `dsa-linked-lists-lab` | lab | `/lab/dsa-linked-lists-lab` |
 | DSA + Design Patterns | `dsa-patterns` | lesson | `/learn/dsa-patterns/01` |
+| Dynamic Programming Lab | `dynamic-programming` | lab | `/lab/dynamic-programming` |
 | 5-Axis Kinematics | `five-axis` | visualizer | `/five-axis` |
 | Game Studio | `game-studio` | builder | `/lab/game-studio` |
 | HTML Lab | `html-lab` | builder | `/html-lab` |

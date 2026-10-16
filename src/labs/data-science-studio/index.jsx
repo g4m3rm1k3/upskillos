@@ -25,7 +25,7 @@ function Sidebar({ current, progress, onOpen }) {
         </button>
       </li>)}</ol>
     </section>)}
-    <p className="qm-hint ds-coming">Coming next: patterns, samples and uncertainty, testing differences, models, time series, SQL, data for machine learning, and telling the story. See docs/data-science-studio-plan.md.</p>
+    <p className="qm-hint ds-coming">Coming next: testing differences, models, time series, SQL, data for machine learning, and telling the story. See docs/data-science-studio-plan.md.</p>
   </nav>
 }
 

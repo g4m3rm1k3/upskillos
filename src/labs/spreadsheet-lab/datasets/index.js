@@ -163,12 +163,16 @@ export const DATASETS = [
     otherSheets: [
       ['catalogue', 'One row per item the shop sells, with its category and list price. The pump was never sold. Join it with =XLOOKUP(D2, catalogue!A2:A8, catalogue!B2:B8).'],
       ['returns', 'The returns form as customers typed it: order ids and item names with mistakes in them, for lessons 3.5 and 3.8.'],
+      ['days', 'One row per day of 2025: the highest temperature (°C), the rain (mm), riders counted on the cycle path, and visits to the shop’s website. For correlation, from lesson 5.1. Riders and visits both follow the temperature; on 11 February a news story swamped the website.'],
+      ['deliveries', 'One row per web order sent by courier (Northern or Swift): days taken and whether it was on time. The town is not here but in the orders: on the orders sheet, =XLOOKUP(deliveries!A2:A163, A2:A403, C2:C403) looks up each delivery’s town. Lesson 5.9.'],
     ],
     sheets: async () => {
       const D = await import('../../data-science-studio/engine/data.js')
       return [
         { name: 'catalogue', rows: [D.CATALOGUE_HEADER, ...D.makeCatalogue()] },
         { name: 'returns', rows: [D.RETURNS_HEADER, ...D.makeReturns(D.makeOrders())] },
+        { name: 'days', rows: [D.DAYS_HEADER, ...D.makeDays()] },
+        { name: 'deliveries', rows: [D.DELIVERIES_HEADER, ...D.makeDeliveries(D.makeOrders())] },
       ]
     },
     // Every spreadsheet exercise in Data Science Studio's lessons, listed under "From the lessons".
@@ -179,6 +183,8 @@ export const DATASETS = [
       { label: 'Mean and median price of each item (lessons 2.2 and 2.7)', learn: 'For the lights, the mean is far above the median: two prices were typed in pence.', steps: [{ kind: 'cells', at: 'I1', rows: [['Mean'], ['=GROUPBY(D1:D403, E1:E403, AVERAGE, 3, 0)']] }, { kind: 'cells', at: 'L1', rows: [['Median'], ['=GROUPBY(D1:D403, E1:E403, MEDIAN, 3, 0)']] }] },
       { label: 'Spread of the prices (lesson 2.4)', learn: 'VAR.S divides by n − 1, VAR.P by n; the quartiles use the same rule as pandas.', steps: [{ kind: 'cells', at: 'I1', rows: [['Variance (sample)', '=VAR.S(E2:E403)'], ['Variance (population)', '=VAR.P(E2:E403)'], ['Standard deviation', '=STDEV.S(E2:E403)'], ['Q1', '=QUARTILE.INC(E2:E403, 1)'], ['Median', '=MEDIAN(E2:E403)'], ['Q3', '=QUARTILE.INC(E2:E403, 3)']] }] },
       { label: 'Items sold by item and channel (lesson 2.8)', learn: 'PIVOTBY makes the pivot table: one row per item, one column per channel, totals included.', steps: [{ kind: 'cells', at: 'I1', rows: [['=PIVOTBY(D1:D403, G1:G403, F1:F403, SUM)']] }] },
+      { label: 'Temperature, riders and visits (lessons 5.1 to 5.4)', learn: 'On the days sheet: riders and visits both rise with the temperature. The news day drags Pearson’s correlation of temperature and visits down to 0.19; Spearman’s, on ranks, stays at 0.92.', steps: [{ kind: 'cells', at: 'I1', rows: [['Correlation, temperature and riders', '=CORREL(days!B2:B366, days!D2:D366)'], ['Riders per degree (slope)', '=SLOPE(days!D2:D366, days!B2:B366)'], ['Correlation, temperature and visits', '=CORREL(days!B2:B366, days!E2:E366)'], ['Spearman, temperature and visits', '=CORREL(RANK.AVG(days!B2:B366, days!B2:B366, 1), RANK.AVG(days!E2:E366, days!E2:E366, 1))']] }] },
+      { label: 'Which courier is on time more often? (lesson 5.9)', learn: 'Swift is on time more often overall. Join each delivery’s town from the orders and count again within the far towns: Northern wins there, and in the near towns too.', steps: [{ kind: 'cells', at: 'I1', rows: [['Courier', 'On time', 'Deliveries', 'Rate'], ['Northern', '=COUNTIFS(deliveries!B2:B163, I2, deliveries!D2:D163, "yes")', '=COUNTIF(deliveries!B2:B163, I2)', '=J2/K2'], ['Swift', '=COUNTIFS(deliveries!B2:B163, I3, deliveries!D2:D163, "yes")', '=COUNTIF(deliveries!B2:B163, I3)', '=J3/K3']] }] },
     ],
   },
   {

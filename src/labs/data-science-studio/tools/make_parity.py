@@ -15,6 +15,8 @@ import cleaning as c  # noqa: E402
 import joins as j  # noqa: E402
 import frames as f  # noqa: E402
 import charts as ch  # noqa: E402
+import patterns as p  # noqa: E402
+import samples as sm  # noqa: E402
 
 csv_text = d.to_csv(d.HEADER, d.make_orders())
 rows = t.read_csv(csv_text)
@@ -113,8 +115,65 @@ part4 = {
     "mix": [ch.mix([255, 255, 255], [8, 48, 107], t) for t in [0, 0.25, 0.5, 1]],
     "lie": ch.lie_factor(87, 114, 7, 34),
 }
+news = {}
+days = t.read_csv(d.to_csv(d.DAYS_HEADER, d.make_days(truth=news)))
+num = [{**r, **{k: float(r[k]) for k in ["high_c", "rain_mm", "riders", "visits"]}} for r in days]
+quiet = [r for r in num if r["date"] != "2025-02-11"]
+H, R, RI, V = ([r[k] for r in num] for k in ["high_c", "rain_mm", "riders", "visits"])
+HQ, RQ, RIQ, VQ = ([r[k] for r in quiet] for k in ["high_c", "rain_mm", "riders", "visits"])
+deliveries = t.read_csv(d.to_csv(d.DELIVERIES_HEADER, d.make_deliveries(orders)))
+towns = {r["order_id"]: r["town"] for r in clean}
+for r in deliveries:
+    r["far"] = "far" if towns[r["order_id"]] in d.FAR_TOWNS else "near"
+    r["group"] = r["courier"] + " " + r["far"]
+sims = {kind: p.simulate(kind, 300, 3) for kind in ["confounder", "collider", "independent"]}
+rng9 = d.Rng(9)
+part5 = {
+    "days_csv": d.to_csv(d.DAYS_HEADER, d.make_days()), "news": news,
+    "deliveries_csv": d.to_csv(d.DELIVERIES_HEADER, d.make_deliveries(orders)),
+    "noise": [d.noise(rng9) for _ in range(3)], "tenths": [d.tenths(x) for x in [13.25, -0.04, -0.05, 0, 9.96, -12.35]],
+    "covariance": [p.covariance(H, RI), p.covariance(H, H), p.covariance([1, 2, 3], [6, 4, 2])],
+    "correlation": [p.correlation(H, RI), p.correlation(H, V), p.correlation(HQ, VQ), p.correlation(R, RI)],
+    "cosine": [p.cosine(p.centred(H), p.centred(RI)), p.cosine([1, 0], [1, 1])], "centred": p.centred([1, 2, 6]),
+    "rank": [p.rank([5, 1, 1, 3, 5, 5]), p.rank(R)[:20], p.rank([])],
+    "spearman": [p.spearman(H, V), p.spearman(HQ, VQ), p.spearman(R, RI)],
+    "fit_line": [p.fit_line(H, RI), p.fit_line(RI, H), p.fit_line(HQ, VQ)], "residuals": p.residuals(H, RI)[:10],
+    "anscombe": {k: p.describe_pair(xs, ys) for k, (xs, ys) in p.ANSCOMBE.items()},
+    "growth": [p.growth_per_unit(HQ, VQ), p.growth_per_unit(H, V), p.growth_per_unit([0, 1, 2], [100, 110, 121])],
+    "jitter": p.jitter([1, 2, 3, 3, 3], 0.3, 4),
+    "matrix": p.correlation_matrix([HQ, RQ, RIQ, VQ]),
+    "rate_by": [p.rate_by(deliveries, "courier", "on_time", "yes"), p.rate_by(deliveries, "group", "on_time", "yes"), p.rate_by(deliveries, "far", "on_time", "yes")],
+    "simulate": {k: v[:5] for k, v in sims.items()},
+    "partial": [p.partial_correlation(*zip(*v)) for v in sims.values()] + [p.partial_correlation(RIQ, VQ, HQ)],
+}
+pop = [r["price"] / 100 for r in clean if r["price"] is not None]
+lights_all = [r["price"] / 100 for r in clean if r["price"] is not None and r["item"] == "Lights, front and back"]
+near = [r for r in deliveries if r["far"] == "near"]
+on_n = [1 if r["on_time"] == "yes" else 0 for r in near if r["courier"] == "Northern"]
+on_s = [1 if r["on_time"] == "yes" else 0 for r in near if r["courier"] == "Swift"]
+part6 = {
+    "sample_without": [sm.sample_without(list(range(10)), 4, 1), sm.sample_without(pop, 5, 2)],
+    "sample_with": [sm.sample_with(list(range(10)), 6, 1), sm.sample_with(pop, 5, 2)],
+    "comb": [sm.comb(20, 9), sm.comb(10, 0), sm.comb(52, 5), sm.comb(400, 20) % 1000000007],
+    "binomial": [sm.binomial_pmf(k, 20, 0.4675) for k in range(21)],
+    "poisson": [sm.poisson_pmf(k, 400 / 365) for k in range(7)],
+    "day_of_year": [sm.day_of_year(x) for x in ["2025-01-01", "2025-03-01", "2025-12-31"]],
+    "per_day": sm.orders_per_day([r["date"] for r in clean]), "tally": sm.tally(sm.orders_per_day([r["date"] for r in clean])),
+    "sample_means": sm.sample_means(pop, 30, 50, 21),
+    "standard_error": [sm.standard_error(pop), sm.standard_error(lights_all)],
+    "normal_pdf": [sm.normal_pdf(x, 25, 1.4) for x in [22, 25, 27.5]],
+    "skewness": [sm.skewness(pop), sm.skewness(lights_all), sm.skewness([1, 2, 3])],
+    "heavy": sm.heavy_tailed(20, 51),
+    "mean_interval": [sm.mean_interval(lights_all), sm.mean_interval(pop, 2.576)],
+    "coverage": [sm.coverage(pop, 5, 400, 31), sm.coverage(lights_all, 10, 400, 31)],
+    "bootstrap": [sm.bootstrap(lights_all, "median", 40, 41), sm.bootstrap(lights_all, "mean", 40, 41)],
+    "percentile": [sm.percentile_interval(sm.bootstrap(lights_all, "median", 400, 41)), sm.percentile_interval(list(range(101)), 0.9)],
+    "difference": sm.bootstrap_difference(on_n, on_s, 40, 81),
+    "reservoir": [sm.reservoir(list(range(1, 21)), 5, 61), sm.reservoir(["a", "b"], 5, 1)],
+    "stratified": [r["order_id"] for r in sm.stratified_sample([r for r in clean if r["price"] is not None], "item", 40, 71)],
+}
 path = os.path.join(HERE, "..", "engine", "parity.json")
 with open(path, "w", encoding="utf-8", newline="\n") as handle:
-    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4}, handle, ensure_ascii=False)
+    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4, "part5": part5, "part6": part6}, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote {os.path.normpath(path)}")
