@@ -19,7 +19,7 @@ function Picture({ program, view }) {
 
 const LAB = {
   src, notes, FUNCTIONS, VARS, PROGRAMS, lessonById, Picture,
-  fileOrder: ['gpt.py', 'arith.py', 'pretrain.py'],
+  fileOrder: ['gpt.py', 'arith.py', 'pretrain.py', 'generate.py'],
   labReceiver: /^$/,
   intro: 'The lessons and figures run the same code in the browser, number for number.',
 }

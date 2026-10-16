@@ -12,7 +12,7 @@ import { PROGRAMS } from './programs.js'
 import { codeLines } from './source.js'
 
 afterEach(cleanup)
-const PRESS = ['Pretrain 1500 steps', '⌫', 'Clear', '+', '=', '7']
+const PRESS = ['Pretrain 1500 steps', '⌫', 'Clear', '+', '=', '7', '0.5', '2', 'Sample 1,000 answers', 'Score 20 runs at each temperature', 'Measure in this browser']
 
 describe('the lab renders', () => {
   it('opens on the first lesson', () => {

@@ -32,13 +32,19 @@ Someone who has done NLP Studio Parts 5–6 (the tiny GPT, chat format, loss mas
 
 Base model (`pretrain()` defaults: dim 16, context 16, hidden 64, lr 0.01, 1,500 steps, seed 1): **12/100** exact match, about 12 s in Python.
 
+Part 2 added `new_cache`, `vecmat` and `forward_cached` to `gpt.py`, and `python/generate.py` (sampling, `spread`, cached `generate`, `cache_matches`, multiplication counts, `time_both`, two demo programs); `engine/generate.js` is its twin. The cached logits are **identical** (`==`) to the full pass's last row, because `vecmat` adds in `matmul`'s order and the future's attention weights are exactly 0. Parity also covers 200 sampled answers (T 1, and T 0.7 with top-k 3) and the costs.
+
+- **Seeds must be scrambled.** `Rng(seed)`'s first number moves only 1664525/2³² per seed, so 1,000 samples with seeds 0–999 drew their first token from one narrow band (at T 2 the base model wrote `8` 472 times in 1,000, against p ≈ 0.18). Multiplying by the golden-ratio constant alone still stepped 0.02 per seed. `spread()` (MurmurHash3's finaliser: multiply, xor-shift, twice) fixed it; `Rng` itself is unchanged, so Part 1's numbers stand. Use `generate(..., seed)` for any sampling in later parts.
+- **Measured (2026-10-16, Apple M4, Python 3.13.2, medians of 3)**, `time_both(L)`: L 16: 0.022 s vs 0.0022 s, 10.1× (multiplications 8.2×); 32: 19.4× (16.7); 64: 38.8× (34.4); 128: 77.7× (72.0). The browser beats the counts by more (Chromium: 23×, 21×, 54×, 114×), because `forward` builds Tensors and gradient tables.
+- Sampling the base model, 20 runs of all 100 questions each: T 0 12 every run; T 0.5 mean 10.9 (6–20); T 1 10.5 (3–15); T 2 7.6 (3–12). For `3+5=` at T 1, 163 of 1,000 samples are `8`.
+
 ## Parts and lessons (draft)
 
 **Part 1 · A base model**
 1.1 What a language model computes: next-token probabilities, recapped. 1.2 The lab's model, file by file. 1.3 Pretraining on a notebook of sums, every character counted: what it learns and doesn't. 1.4 A base model can't be asked a question: completion versus instruction.
 
-**Part 2 · Generating fast**
-2.1 Greedy, temperature and top-k, recapped on this model. 2.2 What generating costs: recomputing everything each token, counted. 2.3 The KV cache by hand, and a test that it gives identical logits. 2.4 Measured speed-up.
+**Part 2 · Generating fast** (built)
+2.1 Choosing the next token (`sampling`). 2.2 What generating costs (`generation-cost`). 2.3 The KV cache, by hand (`kv-cache`). 2.4 The speed-up, counted and measured (`kv-speed`).
 
 **Part 3 · Supervised fine-tuning**
 3.1 Instruction data and a chat template with special tokens. 3.2 The loss mask, derived. 3.3 An SFT run: from about 9/100 to about 70/100, measured. 3.4 What fine-tuning forgets.
@@ -57,6 +63,14 @@ Base model (`pretrain()` defaults: dim 16, context 16, hidden 64, lr 0.01, 1,500
 
 ## Where we stopped
 
+2026-10-16, session 2: **Part 2, four lessons** (2.1 choosing the next token: temperature, top-k, scrambled seeds; 2.2 what generating costs: identical earlier rows, multiplications counted; 2.3 the KV cache by hand, with the exact test; 2.4 the speed-up counted and measured). Figures: SampleFig, ScoreFig, ReuseFig, CostFig, CacheFig, SpeedFig. Python-tab programs: `samples`, `cache`, `speed`. Seen in a real browser (Playwright): every figure draws, no KaTeX errors, the cache matches at every position, and the browser timings agree on the tokens. All 76 lab tests pass.
+
+Not done yet: a desktop stepper test (`stepper.desktop.test.js`) for the Python-tab programs (now five).
+
+**Next session: Part 3, supervised fine-tuning** (3.1 chat template with `<user>`, `<bot>`, `<end>`; 3.2 the loss mask, derived; 3.3 an SFT run from the base model, about 12/100 to about 70/100 per the planning spike; 3.4 what fine-tuning forgets). `cross_entropy` already takes `weights` for the mask.
+
+### Session 1
+
 2026-10-16, session 1: survey, spikes, this plan, the engine (exact parity over a whole pretraining run) and **Part 1, five lessons**: 1.1 what a language model computes, 1.2 numbers that agree everywhere (Rng, `total`, own `exp`/`log`), 1.3 the forward pass, 1.4 pretraining, 1.5 what a base model can and can't do. Figures: VocabFig, NextTokenFig, BitsFig, ForwardFig, PretrainFig, AnswerGrid, AskFig. Seen in a real browser (Playwright screenshots): pretraining in the page ends at exactly Python's numbers (first loss 2.827, last-100 average 1.177, 12/100).
 
 Measured on the base model: after `3+5=`, P(`1`) = 0.593, P(`8`) = 0.174; it only ever answers `10` (77 times), `4` (17) or `8` (6); 8 of its 12 right answers are sums of 10. Greedy decoding explains the `10`: 45 of 100 answers start with `1`, and `0` is the most common digit after it. Asked `<user>3+5?<bot>` it writes `=1`, newline, `4+8`.
@@ -65,4 +79,4 @@ Shared change: `python-steps/source.js` no longer treats a function nested insid
 
 Not done yet: a desktop stepper test (`stepper.desktop.test.js`) for the two Python-tab programs.
 
-**Next session: Part 2, generating fast** (2.1 sampling recap, 2.2 the cost of generating, 2.3 the KV cache by hand with a test that its logits equal the full forward pass's, 2.4 measured speed-up). Add `forward_cached` (or similar) to `gpt.py` and its twin, with parity.
+Part 2 followed in session 2.

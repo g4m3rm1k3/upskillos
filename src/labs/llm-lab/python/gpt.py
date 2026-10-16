@@ -324,3 +324,36 @@ def greedy(model, ids, stop, limit):
             break
         out.append(t)
     return out
+
+
+def new_cache():
+    """An empty KV cache: the key and the value of every position processed so far, kept so they
+    are never computed again."""
+    return {"k": [], "v": []}
+
+
+def vecmat(x, w):
+    """One vector times a matrix: out[j] = sum over r of x[r] * w[r][j]. It adds in the same
+    order as matmul does for one row, so it gives exactly the same numbers."""
+    return [total(x[r] * w[r][j] for r in range(len(w))) for j in range(len(w[0]))]
+
+
+def forward_cached(model, cache, t):
+    """The scores for the token after token t, where t sits at the next free position. Only this
+    one position is computed: the earlier positions' keys and values come from the cache, and
+    this position's are added to it. Plain lists, no Tensors: generating needs no gradients."""
+    dim = len(model["wq"])
+    p = len(cache["k"])
+    x = [a + b for a, b in zip(model["tok"][t], model["pos"][p])]
+    q, k, v = vecmat(x, model["wq"]), vecmat(x, model["wk"]), vecmat(x, model["wv"])
+    cache["k"].append(k)
+    cache["v"].append(v)
+    scores = [total(q[r] * key[r] for r in range(dim)) * (1 / math.sqrt(dim)) for key in cache["k"]]
+    top = max(scores)
+    exps = [exp(s - top) for s in scores]
+    z = total(exps)
+    weights = [e / z for e in exps]
+    mixed = [total(weights[j] * cache["v"][j][c] for j in range(p + 1)) for c in range(dim)]
+    x = [a + b for a, b in zip(x, vecmat(mixed, model["wo"]))]
+    x = [a + b for a, b in zip(x, vecmat([max(0.0, h) for h in vecmat(x, model["w1"])], model["w2"]))]
+    return vecmat(x, model["out"])

@@ -195,3 +195,26 @@ export function greedy(model, ids, stop, limit) {
   }
   return out
 }
+
+// The KV cache (python/gpt.py's new_cache, vecmat and forward_cached): one new position at a
+// time, adding in the same order as forward(), so every logit is identical.
+export const newCache = () => ({ k: [], v: [] })
+export function vecmat(x, w) {
+  return w[0].map((_, j) => { let s = 0; for (let r = 0; r < w.length; r++) s += x[r] * w[r][j]; return s })
+}
+export function forwardCached(model, cache, t) {
+  const dim = model.wq.length, p = cache.k.length
+  let x = model.tok[t].map((a, j) => a + model.pos[p][j])
+  const q = vecmat(x, model.wq), k = vecmat(x, model.wk), v = vecmat(x, model.wv)
+  cache.k.push(k)
+  cache.v.push(v)
+  const scores = cache.k.map(key => { let s = 0; for (let r = 0; r < dim; r++) s += q[r] * key[r]; return s * (1 / Math.sqrt(dim)) })
+  const top = Math.max(...scores), exps = scores.map(s => exp(s - top)), z = total(exps)
+  const weights = exps.map(e => e / z)
+  const mixed = Array.from({ length: dim }, (_, c) => { let s = 0; for (let j = 0; j <= p; j++) s += weights[j] * cache.v[j][c]; return s })
+  const attended = vecmat(mixed, model.wo)
+  x = x.map((a, j) => a + attended[j])
+  const up = vecmat(x, model.w1).map(h => Math.max(0, h)), down = vecmat(up, model.w2)
+  x = x.map((a, j) => a + down[j])
+  return vecmat(x, model.out)
+}

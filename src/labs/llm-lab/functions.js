@@ -38,6 +38,19 @@ export const FUNCTIONS = {
   'arith.py:exact_match': F('How many of the 100 questions a base model answers exactly right.', [['model', 'the weights']], 'a whole number from 0 to 100', 'base-model'),
   'pretrain.py:pretrain': F('Pretrains a base model on the notebook, every token counted.', [['steps', 'how many steps'], ['dim', 'vector length'], ['context', 'positions it can see'], ['hidden', 'MLP width'], ['lr', 'learning rate'], ['seed', 'which starting weights and which windows'], ['lines', 'how many sums in the notebook']], '`(model, losses)`', 'pretraining'),
   'pretrain.py:pretrain_and_test': F('Pretrains with every default, then prints the loss and the exact-match score: what `python3 pretrain.py` does.', [['steps', 'how many steps']], 'the model', 'pretraining'),
+  'gpt.py:new_cache': F('An empty KV cache.', [], 'a dictionary with an empty list of keys and an empty list of values', 'kv-cache'),
+  'gpt.py:vecmat': F('One vector times a matrix, adding in the same order as `matmul`.', [['x', 'a list of numbers'], ['w', 'a matrix with one row per number in `x`']], 'a list: one number per column of `w`', 'kv-cache'),
+  'gpt.py:forward_cached': F('The forward pass for one new token, using and filling the KV cache.', [['model', 'the weights'], ['cache', 'the keys and values of earlier positions (changed: this position\'s are added)'], ['t', 'the token id at the next free position']], 'the 17 scores for the token after `t`', 'kv-cache'),
+  'generate.py:sample': F('Chooses the next token: greedy, or drawn after a temperature and top-k.', [['logits', 'the 17 scores'], ['temperature', '0 for greedy; below 1 sharper, above 1 flatter'], ['top_k', 'how many of the highest-scoring tokens to keep (`None`: all)'], ['rng', 'the random number generator']], 'a token id', 'sampling'),
+  'generate.py:spread': F('Scrambles a seed so that neighbouring seeds give unrelated random numbers.', [['seed', 'a whole number from 0 up']], 'a whole number below $2^{32}$', 'sampling'),
+  'generate.py:generate': F('Writes text with the KV cache: greedy or sampled.', [['model', 'the weights'], ['ids', 'the prompt, as ids'], ['stop', 'the token that ends it'], ['limit', 'the most tokens to write'], ['temperature', '0 for greedy'], ['top_k', 'tokens kept when sampling (`None`: all)'], ['seed', 'which random draws']], 'the new tokens, without the stop token', 'kv-cache'),
+  'generate.py:cache_matches': F('Tests the cache: identical logits to a full forward pass at every position?', [['model', 'the weights'], ['ids', 'a text, as ids']], '`True` only if every logit is identical', 'kv-cache'),
+  'generate.py:forward_cost': F('Multiplications in one full forward pass.', [['n', 'how many positions'], ['dim', 'vector length'], ['hidden', 'MLP width'], ['vocab', 'vocabulary size']], 'a whole number', 'generation-cost'),
+  'generate.py:cached_cost': F('Multiplications in one cached step.', [['p', 'the new token\'s position'], ['dim', 'vector length'], ['hidden', 'MLP width'], ['vocab', 'vocabulary size']], 'a whole number', 'kv-speed'),
+  'generate.py:generation_cost': F('Multiplications to write some tokens, without and with the cache.', [['prompt', 'prompt length'], ['new', 'how many tokens to write'], ['dim', 'vector length'], ['hidden', 'MLP width'], ['vocab', 'vocabulary size']], '`(without, with_cache)`', 'generation-cost'),
+  'generate.py:time_both': F('Times writing the same text without and with the cache, and prints both.', [['length', 'how long a text'], ['seed', 'which random model']], '`(seconds without, seconds with)`', 'kv-speed'),
+  'generate.py:show_samples': F('Pretrains briefly, then prints ten sampled answers to 3+5.', [['steps', 'pretraining steps'], ['temperature', 'the sampling temperature'], ['top_k', 'tokens kept (`None`: all)']], 'nothing; prints', 'sampling'),
+  'generate.py:check_cache': F('Pretrains briefly, then runs both cache tests and prints the results.', [['steps', 'pretraining steps']], 'nothing; prints', 'kv-cache'),
 }
 
 // What a name means wherever it appears, for the Python tab's watch list.
@@ -51,5 +64,8 @@ export const VARS = {
   term: 'one term of the series', series: 'the series added up so far', s: 'a running sum (or a scale)',
   probs: 'probabilities', p: 'one position\'s 17 probabilities', z: 'the sum of the exponentials',
   w: 'the weights as Tensors (or a position\'s weight in the loss)', q: 'queries', v: 'values', weights: 'attention weights, or how much each position counts in the loss',
+  cache: 'the KV cache: every earlier position\'s key and value', scores: 'the new query against every cached key', mixed: 'the attention-weighted mix of cached values',
+  order: 'token ids, highest score first', scaled: 'the kept scores divided by the temperature', temperature: 'divides the scores before sampling (0: greedy)', top_k: 'how many tokens sampling keeps',
+  h: 'the seed being scrambled', slow: 'the tokens written without the cache', fast: 'the tokens written with it', prompts: 'all 100 questions as ids',
   dim: 'vector length (16)', context: 'positions the model can see (16)', hidden: 'MLP width (64)', lr: 'the learning rate',
 }
