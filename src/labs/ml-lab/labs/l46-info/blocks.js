@@ -1,7 +1,11 @@
 // Lesson order for Lab 46: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l46-entropy': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses: probability and logarithms", body: [
+      "A probability distribution gives each outcome a chance between 0 and 1, and the chances add up to 1 (Lab 04).",
+      "log₂ x asks \"what power of 2 is x?\": log₂ 8 = 3, log₂ ½ = −1. Logs turn products into sums: log(ab) = log a + log b."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'A source has outcomes with probabilities ½, ½ and 0. What is its entropy in bits?', answer: 1, explain: 'The impossible outcome contributes nothing (0 · log 0 = 0), so it is a fair coin: 1 bit.' } },
     { p: 3 },
     { cell: 0 },

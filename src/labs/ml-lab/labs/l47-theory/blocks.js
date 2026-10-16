@@ -1,7 +1,11 @@
 // Lesson order for Lab 47: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l47-hoeffding': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04, 06 and 07", body: [
+      "Lab 06: test error estimates how a model does on new data. Lab 07: a model can fit its training data well and still do badly on new data.",
+      "Lab 04: an average of n independent draws varies less as n grows. This lab asks exactly how fast the chance of a large error falls."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { predict: { prompt: 'Hoeffding with δ = 0.05 gives ε ≈ 0.136 for n = 100. What does it give for n = 400? (Three decimals.)', answer: 0.068, tolerance: 0.001, explain: 'ε ∝ 1/√n: four times the data halves it, 0.136/2 = 0.068.' } },
     { cell: 0 },
     { p: 4 },

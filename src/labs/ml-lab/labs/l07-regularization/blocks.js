@@ -2,6 +2,11 @@
 export const blocks = {
   'l07-poly': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03 and 06", body: [
+      "From Lab 03: the **design matrix** X has one row per observation and one column per feature, with a first column of 1s for the intercept, and predictions are ŷ = Xw.",
+      "Least squares picks the w with the smallest training MSE; it solves XᵀXw = Xᵀy. This lab adds new columns (x², x³, …) to X, and the same method still works, because the model stays linear in w.",
+      "From Lab 06: training error flatters a model. Choose between models on validation data."
+    ] } },
     { figure: 'PolyFit', caption: 'Twenty noisy points from a curved truth (dashed). Raise the degree.' },
     { p: 1 },
     { predict: { prompt: 'A polynomial of degree 5 in one input, with an intercept, has how many weights?', answer: 6, explain: 'b, w₁ … w₅: one per power from x⁰ to x⁵.' } },

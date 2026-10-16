@@ -1,7 +1,11 @@
 // Lesson order for Lab 45: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l45-bn': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 04 and Labs 40–44", body: [
+      "Conditional probability (Lab 04): P(A | B) = P(A ∩ B) / P(B). Rearranged, P(A ∩ B) = P(A | B) P(B), and it chains: p(a, b, c) = p(a) p(b | a) p(c | a, b).",
+      "Independence means P(A ∩ B) = P(A) P(B). This lab draws which variables depend on which as a graph."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'A network over 5 binary variables: one root, and four nodes each with one binary parent. How many table entries does it need?', answer: 9, explain: '1 + 4 × 2 = 9, against 2⁵ − 1 = 31 for the full joint.' } },
     { p: 3 },
     { cell: 0 },

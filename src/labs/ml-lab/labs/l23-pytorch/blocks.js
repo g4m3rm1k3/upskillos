@@ -5,6 +5,10 @@ export const blocks = {
     {
       "p": 0
     },
+    { added: true, bridge: { title: "what this lab uses from Labs 20–22", body: [
+      "Lab 20: every value in a computation is a node, and backpropagation multiplies local derivatives from the loss back to each weight. Lab 21: a layer is A @ W + b followed by an activation, with ∂L/∂W = Aᵀ Δ.",
+      "Lab 22: an optimiser turns gradients into steps: plain SGD, momentum (v ← βv + g), Adam. PyTorch does all of this for you; this lab checks it against what you built."
+    ] } },
     {
       "p": 1
     },

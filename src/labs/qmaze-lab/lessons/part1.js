@@ -190,8 +190,8 @@ $$r = \\lfloor s / n_\\text{cols} \\rfloor, \\qquad c = s \\bmod n_\\text{cols}$
           },
         },
         { md: `Notice the order: left, up, right, down goes clockwise round the compass. So \`(action + 1) % 4\` is a quarter turn to the right and \`(action - 1) % 4\` a quarter turn to the left. The slippery ice uses exactly that (lesson 2.1).` },
-        { h: 'State and action: the two indexes for everything' },
-        { md: `You now have both building blocks, and both are just whole numbers:
+        { added: true, h: 'State and action: the two indexes for everything' },
+        { added: true, md: `You now have both building blocks, and both are just whole numbers:
 
 - a **state** \`s\` says *where the agent is*: one number per cell (lesson 1.1);
 - an **action** \`a\` says *what it does next*: one number per move, 0 to 3.
@@ -218,7 +218,7 @@ Almost everything else in this lab is a **table looked up by these two numbers**
 | \`Q\` | \`Q[s, a]\` | how good is it to *do* action \`a\` in state \`s\`? | 3.5 |
 
 \`P\` belongs to the **world**: it is the rules, and \`move\` below is how they are worked out. \`policy\`, \`V\` and \`Q\` belong to the **agent**: what it has decided and what it has learned. Whenever a line of code later looks confusing, ask first: *which state, which action, which table?*` },
-        {
+        { added: true,
           choice: {
             prompt: 'In the table above, which of these is looked up with a state **and** an action?',
             options: [
@@ -345,6 +345,26 @@ where $T$ is the step at which it ends.` },
             ],
           },
         },
+        { added: true, h: 'What reset and step give back, with real values' },
+        { added: true, md: `Here are real calls on Cheese and cat (the map from lesson 1.2: start in state 0, the wall in state 5). Each \`step\` returns its five values in a tuple, always in the same order:
+
+\`\`\`python
+env.reset(seed=0)   # -> (0, {})                              state 0, empty info
+env.step(RIGHT)     # -> (1, -0.04, False, False, {})         to state 1, paid -0.04
+env.step(DOWN)      # -> (1, -0.04, False, False, {})         the wall below: stays in 1
+env.step(RIGHT)     # -> (2, -0.04, False, False, {})
+env.step(DOWN)      # -> (6, -0.04, False, False, {})
+\`\`\`
+
+Read each tuple by position: **next state, reward, terminated, truncated, info**. Code almost always unpacks it into those five names at once (\`next_state, reward, terminated, truncated, info = env.step(action)\`), so you never count positions.
+
+And the end of a game, on the Tiny corridor (\`S...C\`, the cheese in state 4):
+
+\`\`\`python
+env.step(RIGHT)     # -> (4, 1.0, True, False, {})            into the cheese: paid 1.0, terminated
+\`\`\`
+
+\`terminated\` is \`True\` only on the move that enters an ending. Every value here is what \`python/gridworld.py\` really returns.` },
         { h: 'Terminated or truncated?' },
         { md: `There are two different ways an episode can stop, and learning code must treat them differently:
 

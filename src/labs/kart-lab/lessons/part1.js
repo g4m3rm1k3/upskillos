@@ -58,6 +58,27 @@ Round and round until the **episode** ends, here one lap. The agent's job is to 
             ],
           },
         },
+        { added: true, h: 'One lap starting, with real values' },
+        { added: true, md: `The state is a **dictionary**: names on the left, values on the right. Here is a real lap starting (seed 1 puts the kart in lane 0), then two **Accelerate** moves. Actions are numbers too: \`ACTIONS = ["Left", "Coast", "Right", "Accelerate", "Brake"]\`, so Accelerate is \`3\`, its index in that list.
+
+\`\`\`python
+state = reset(1)
+# {'p': 0, 'lane': 0, 'speed': 0, 'ticks': 0, 'crashes': 0, 'total': 0.0,
+#  'done': False, 'finished': False, 'last': None}
+
+state = step(state, 3)       # Accelerate
+# {'p': 2, 'lane': 0, 'speed': 1, 'ticks': 1, 'crashes': 0, 'total': 0.1, 'done': False, ...
+#  'last': {'action': 3, 'reward': 0.1,
+#           'parts': {'progress': 0.3, 'time': -0.2, 'collision': 0, 'finish': 0}, 'hit': None}}
+
+state = step(state, 3)       # Accelerate again
+# {'p': 5, 'lane': 0, 'speed': 2, 'ticks': 2, 'total': 0.35, ...
+#  'last': {'action': 3, 'reward': 0.25, ...}}
+\`\`\`
+
+Read it as: at speed tier 1 the kart covers 2 sectors (0 → 2), at tier 2 it covers 3 (2 → 5). The reward of each move is in \`state["last"]["reward"]\`, built from its \`parts\` (lesson 1.5), and \`total\` adds them up. \`step\` never changes the old dictionary; it returns a **new** one, so the code writes \`state = step(state, action)\`.
+
+(Python actually prints the first reward as \`0.09999999999999998\`: computers store most decimals in binary, slightly off. It is 0.1 for every purpose here.)` },
         { figure: 'LapPlayer', caption: 'One lap, step by step, driven by a hand-written policy (lesson 1.6). Each step: the state, the action, and the reward.' },
         { python: { program: 'lap', label: 'Step through one lap in real Python' } },
         {

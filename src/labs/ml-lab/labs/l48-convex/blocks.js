@@ -1,7 +1,11 @@
 // Lesson order for Lab 48: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l48-convexity': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03, 22 and 39", body: [
+      "The gradient ∇f lists every partial slope; the Hessian ∇²f lists every second derivative and says how the slope itself changes (Labs 03 and 39).",
+      "Lab 03: the least-squares loss is a bowl with a single bottom. Lab 22: gradient descent walks downhill on it."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'Is f(x) = |x| + x² convex? (1 = yes, 0 = no)', answer: 1, explain: 'Yes: a sum of convex functions (a norm and a square) is convex, kink and all.' } },
     { p: 4 },

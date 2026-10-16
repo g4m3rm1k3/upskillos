@@ -19,6 +19,11 @@ export const lessons = [
     ],
     blocks: [
       { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01 and 02", body: [
+      "From Lab 01: a prediction is a dot product plus a bias, ŷ = w·x + b, and training repeats w ← w − α · 2 mean(e·x), b ← b − α · 2 mean(e), where e = ŷ − y.",
+      "From Lab 02: a NumPy array has a **shape**. For a table `X` of shape (n, p), `X[i]` is row i (one observation), `X[:, j]` is column j (one feature), and `X.mean(axis=0)` averages each column, giving shape (p,).",
+      "This lab puts every row's dot product into one matrix product, `X @ w`."
+    ] } },
       { p: 1 },
       { figure: 'DesignTable', caption: 'Click any number to read its index. Row index first, column index second, both from 0.' },
       { cell: 0 },

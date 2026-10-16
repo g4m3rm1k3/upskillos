@@ -1,7 +1,11 @@
 // Lesson order for Lab 41: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l41-update': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04, 05, 39 and 40", body: [
+      "Bayes' rule (Lab 04): posterior ∝ likelihood × prior. Maximum likelihood (Lab 05) keeps only the single parameter that makes the data most probable: 7 heads in 10 flips gives p̂ = 0.7.",
+      "This lab keeps the whole posterior instead of one number."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'Prior Beta(3, 1); you observe 2 heads and 4 tails. The posterior is Beta(A, B). What is A + B?', answer: 10, explain: 'Beta(3 + 2, 1 + 4) = Beta(5, 5): A + B = 10, and the posterior mean is exactly 0.5.' } },
     { cell: 0 },
     { p: 3 }, { p: 4 },

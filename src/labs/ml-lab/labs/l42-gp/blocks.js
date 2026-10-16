@@ -1,7 +1,11 @@
 // Lesson order for Lab 42: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l42-functions': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 18, 40 and 41", body: [
+      "Lab 41: Bayesian linear regression keeps a Gaussian posterior over the weights, with mean m and covariance S, and its predictions carry an uncertainty that grows away from the data.",
+      "A multivariate Gaussian N(μ, Σ) is described by a mean vector and a covariance matrix; entry (i, j) of Σ is how much coordinates i and j vary together (Labs 18 and 40)."
+    ] } }, { p: 1 },
     { predict: { prompt: 'f(x) = w·x with w ~ N(0, 1/α) and α = 2. What is Var[f(3)] = k(3, 3)?', answer: 4.5, explain: '3 × 3 / 2 = 4.5: the linear kernel’s variance grows with |x| — lines fan out from the origin.' } },
     { cell: 0 },
     { p: 2 }, { p: 3 }, { p: 4 },

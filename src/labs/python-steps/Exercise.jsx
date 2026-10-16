@@ -13,8 +13,11 @@ const TIME_LIMIT = 15000
 const draftKey = id => `upskillos.exercise.${id}`
 const load = id => { try { return localStorage.getItem(draftKey(id)) } catch { return null } }
 
-export default function Exercise({ id, spec, done, onDone }) {
-  const [code, setCode] = useState(() => load(id) ?? spec.starter)
+// A draft is saved under the exercise's prompt; one saved before that, under its old position
+// (legacyId), is picked up and moved.
+export default function Exercise({ id, legacyId, spec, done, onDone }) {
+  const [code, setCode] = useState(() => load(id) ?? (legacyId ? load(legacyId) : null) ?? spec.starter)
+  useEffect(() => { if (legacyId && legacyId !== id) try { localStorage.removeItem(draftKey(legacyId)) } catch { /* nothing to move */ } }, [id, legacyId])
   const [result, setResult] = useState(done ? { passed: true, output: '' } : null), [running, setRunning] = useState(false)
   const [hints, setHints] = useState(0), [solution, setSolution] = useState(false)
   const worker = useRef(null), timer = useRef(null)

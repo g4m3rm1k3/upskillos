@@ -1,7 +1,11 @@
 // Lesson order for Lab 20: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l20-graph': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01, 03 and 08", body: [
+      "The chain rule (Lab 01, lesson 00b): if L depends on e and e depends on w, then dL/dw = dL/de · de/dw. For L = e² with e = 2w − 1: dL/dw = 2e · 2.",
+      "A **gradient** lists every partial slope, and gradient descent steps against it, w ← w − α∇J (Lab 03). For logistic regression the slope of the loss with respect to the score z was p − y (Lab 08)."
+    ] } }, { p: 1 },
     { figure: 'ForwardGraph', caption: 'The graph of L = (a·b + c)². Move a, b and c; every node recomputes from its inputs.' },
     { p: 2 },
     { cell: 0 },

@@ -1,7 +1,11 @@
 // Lesson order for Lab 28: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l28-assumptions': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 02, 06 and 16", body: [
+      "Lab 02: real data has missing values, impossible values and duplicates, and cleaning it is part of the experiment, written as code.",
+      "Lab 06: anything fitted to data (scaling, imputation, feature selection) is fitted on training rows only. Lab 16: the whole pipeline, cleaning included, is what gets evaluated."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { cell: 1 },
     { predict: { prompt: 'The value "37" (text) arrives in the files column, whose rules are type number, required and at least 1. How many violations does the validator record for it?', answer: 1, explain: 'One: the type error. A value of the wrong type is reported once, and its range is not checked — comparing text with a number would be meaningless (or crash).', misconceptions: [{ answer: 2, feedback: 'After a type error the range rule is skipped: one clear violation, not a type error plus a confusing range error.' }] } },

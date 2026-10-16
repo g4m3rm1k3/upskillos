@@ -1,7 +1,11 @@
 // Lesson order for Lab 54: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l54-gan': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 08, 46 and 53", body: [
+      "Lab 53: a VAE's encoder gives a distribution over codes z and its decoder turns a code into data; new data comes from decoding a random z ~ N(0, I).",
+      "Lab 08: a binary classifier outputs p = σ(z) and is trained on −[y log p + (1 − y) log(1 − p)]. Lab 46: KL divergence measures the gap between two distributions."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'At some x the data density is 0.1 and the generator’s density is 0.4. What does the optimal discriminator output there?', answer: 0.2, tolerance: 1e-9, explain: 'D* = 0.1 / (0.1 + 0.4) = 0.2: the generator overproduces here, so a point at x is probably fake.', misconceptions: [{ answer: 0.25, feedback: 'That is the ratio p_data / p_g. D* divides by the sum p_data + p_g.' }] } },
     { p: 3 },
     { figure: 'OptimalD', caption: 'A 1-D data density, a generator’s density and the optimal discriminator between them. Move the generator.' },

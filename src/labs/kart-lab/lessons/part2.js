@@ -59,6 +59,23 @@ Every combination gets a different key, from 0 to $144 \\times 3 \\times 3 \\tim
             explain: 'Everything below the sector is $3 \\times 3 \\times 8 = 72$ values, so sector $= \\lfloor 3609 / 72 \\rfloor = 50$; the remainder 9 is lane 0, speed 1, mask 1.',
           },
         },
+        { added: true, h: 'Key and action: the two indexes for everything' },
+        { added: true, md: `From here on, two whole numbers describe every decision the driver makes:
+
+- the **key**: what the driver sees, packed into one number (this lesson);
+- the **action**: what it does, 0 to 4, the index into \`ACTIONS = ["Left", "Coast", "Right", "Accelerate", "Brake"]\` (lesson 1.3).
+
+The lap in lesson 1.1, after two Accelerate moves, is at sector 5, lane 0, speed 2, with nothing near (mask 0): key $((5 \\times 3 + 0) \\times 3 + 2) \\times 8 + 0 = 376$, which is what \`observe\` returns there.
+
+The table the driver learns (Part 3) is a dictionary from a key to a list of 5 numbers, one per action:
+
+\`\`\`python
+Q = {}
+row(Q, 376)        # [0.0, 0.0, 0.0, 0.0, 0.0], made the first time key 376 is seen
+Q[376][3]          # the value of Accelerate (action 3) when the key is 376
+\`\`\`
+
+So every value the driver learns is looked up as **\`Q[key][action]\`**: the key picks the row, the action picks the place in it. When a line of later code is confusing, ask first: *which key, which action?*` },
         { note: 'The driver gets numbers, not pixels: sector, lane, speed, hazard mask, packed into one **key** by mixed radix. 10,368 keys. Note that the sector is in it: this observation knows **where on this track** it is. Part 4 shows what that costs.' },
       ],
     },

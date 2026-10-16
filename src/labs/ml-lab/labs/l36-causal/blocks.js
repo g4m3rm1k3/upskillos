@@ -1,7 +1,11 @@
 // Lesson order for Lab 36: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l36-predict-vs-cause': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from earlier labs", body: [
+      "Regression (Labs 01–03) fits ŷ = w·x + b. A weight says how the **prediction** changes with a feature when the others are held fixed, which is not the same as what would happen if you changed that feature in the world.",
+      "Lab 05: an estimate comes with a standard error and an interval, and correlation is not causation: a confounder can drive both quantities."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'In the simulated data the naive difference between opted-in and other learners is 3.08 lessons. A prediction model y ~ 1 + t is fitted to the same data. What is the coefficient of t? (Two decimals.)', answer: 3.08, tolerance: 0.005, explain: 'Exactly the naive difference, 3.08: with only a 0/1 feature, least squares fits the two group means. The model predicts well and answers the causal question wrongly (the effect is 1.00).', misconceptions: [{ answer: 1, feedback: '1.00 is the true effect; the model cannot know it — it sees only the groups as they chose themselves.' }] } },
     { cell: 0 },
     { p: 3 }, { p: 4 },

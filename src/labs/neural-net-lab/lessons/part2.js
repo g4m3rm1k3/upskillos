@@ -90,6 +90,7 @@ This one-neuron model is called **logistic regression**. The data: 40 made-up po
       goal: 'Score a probability with the cross-entropy, derive its gradient $(p - y)\\,x$, and train logistic regression by hand.',
       builds: ['probability-neuron', 'gradient-descent'],
       blocks: [
+        { added: true, kind: 'recall', note: 'A neuron\'s sum is $z = w_1x_1 + w_2x_2 + b$, and the sigmoid turns it into a probability $p = \\sigma(z)$ between 0 and 1 (lesson 2.1). Training means gradient descent: work out the loss\'s slope for each weight and step every weight a little against it, `w -= rate * slope` (lesson 1.3). This lesson supplies the loss and its slopes.' },
         { md: `To train, we need a loss. The squared error would work, a little, but there is a better one for probabilities. Ask: **what probability did the model give to what actually happened?** If the point is orange and the model said 90% orange, good; if it said 10%, bad. Take minus the logarithm of that probability:
 
 $$L = -\\log p \\;\\;\\text{if } y = 1, \\qquad L = -\\log(1 - p) \\;\\;\\text{if } y = 0$$

@@ -222,6 +222,7 @@ Frequent words end up as one token; rare words as a few pieces; never-seen words
       goal: 'Turn tokens into probabilities with a small network, derive the softmax-cross-entropy gradient, and see how automatic differentiation computes every other gradient.',
       builds: ['bpe', 'word2vec'],
       blocks: [
+        { added: true, kind: 'recall', note: 'A language model gives a probability for every possible next token (lesson 5.1). Tokens are numbers: BPE (lesson 5.3) turns text into a list of token ids, each an index into the vocabulary, the same idea as a word\'s column in lesson 3.1. Softmax turns one score per token into probabilities that add up to 1.' },
         { h: 'From counts to a network' },
         { md: `A neural language model replaces the table of counts with a function that has **weights**:
 
@@ -411,6 +412,23 @@ The $j \\le i$ is the **causal mask**: a position may not look at the future, be
 4. A last matrix from each position’s vector to one score per character.
 
 Real GPTs repeat steps 2–3 dozens of times with many attention “heads” in parallel, normalise between layers, and have billions of weights. This one has one block, one head, and ${WEIGHTS.toLocaleString('en-GB')} weights. Same idea, same code shape.` },
+        { added: true, h: 'The shapes, all in one place' },
+        { added: true, md: `Every value inside the tiny GPT is a table of numbers (a \`Tensor\`, 2-D). With a text of $T$ tokens, a vocabulary of $V$ tokens and the defaults (\`dim=16\`, \`hidden=64\`), one call of \`forward(model, ids)\` goes through these shapes. Checked by running it with $T = 5$ and $V = 30$:
+
+| Step | Shape | One row is |
+|---|---|---|
+| \`ids\` | a list of $T$ ints | the text, one token id each |
+| \`embed(tok, ids) + embed(pos, …)\` = \`x\` | $T \\times 16$ | one token: its row of \`tok\` plus its position's row of \`pos\` |
+| \`q\`, \`k\`, \`v\` | $T \\times 16$ each | one token's query, key and value (lesson 5.5) |
+| \`matmul(q, transpose(k))\` → \`weights\` | $T \\times T$ | how much one token attends to each earlier one |
+| \`matmul(weights, v)\` | $T \\times 16$ | one token's mix of earlier values |
+| through \`w1\`, ReLU | $T \\times 64$ | the feed-forward layer's hidden values |
+| back through \`w2\` | $T \\times 16$ | one token again, updated |
+| \`matmul(x, out)\` = the logits | $T \\times V$ | one score per vocabulary token, for the token **after** this position |
+
+The weight matrices have fixed shapes: \`tok\` is $V \\times 16$ (one row per token id), \`w1\` is $16 \\times 64$, \`out\` is $16 \\times V$. Matrix multiplication needs the inner sizes to match: $(T \\times 16)(16 \\times 64)$ gives $T \\times 64$.
+
+\`forward\` returns a tuple of three: the logits, the weights as Tensors (for their gradients) and the attention weights (for drawing). Training uses the first two: \`logits, w, weights = forward(model, ids)\`.` },
         {
           code: {
             file: 'tinygpt.py', fn: 'forward', notes: [

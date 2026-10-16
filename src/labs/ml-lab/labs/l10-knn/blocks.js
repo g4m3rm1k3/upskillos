@@ -1,7 +1,11 @@
 // Lesson order for Lab 10: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l10-idea': [
-    { p: 0 }, { cell: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from earlier labs", body: [
+      "The distance between two points a and b is √Σⱼ(aⱼ − bⱼ)²: for (1, 2) and (4, 6) it is √(9 + 16) = 5.",
+      "From Lab 06: choose settings (here k) on validation data or by cross-validation, never on the test set. From Lab 09: accuracy, precision and recall each answer a different question about a classifier."
+    ] } }, { cell: 0 }, { p: 1 },
     { figure: 'QueryNeighbours', caption: 'Move the query (circle); lines connect it to its k nearest training points.' },
     { cell: 1 },
     { p: 2 },

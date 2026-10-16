@@ -1,7 +1,11 @@
 // Lesson order for Lab 12: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l12-questions': [
-    { p: 0 }, { cell: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 06–09", body: [
+      "A classifier predicts a class for each row, and its settings are chosen on validation data (Lab 06). Accuracy is the share of rows it gets right (Lab 09).",
+      "From Lab 07: a model flexible enough to fit every training point overfits, with training error near 0 and validation error high. A deep tree is that flexible, so the same check applies."
+    ] } }, { cell: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
     { figure: 'TreePath', caption: 'Leaves are rectangles. Move the point and read the questions on its path.' },
     { predict: { prompt: 'A binary tree of depth 4 can have at most how many leaves?', answer: 16, explain: '2⁴ = 16: each level can double the number of nodes.' } },
     { cell: 1 },

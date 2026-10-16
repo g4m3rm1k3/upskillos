@@ -1,7 +1,11 @@
 // Lesson order for Lab 30: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l30-tests': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 28 and 29", body: [
+      "Lab 28: a contract checks every batch of data, and a distribution check compares a batch's mean with the reference data, z = (x̄_batch − μ_ref) / (σ_ref / √n).",
+      "Lab 29: the prediction service must give the same answers as the offline model (parity), reject malformed requests and meet its latency budget, each one a test."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { cell: 0 },
     { predict: { prompt: 'The model test requires MAE < 12 s; the current model scores 8.3 s. A data bug in a retrain doubles every error. Does the model test still pass? (1 = yes, 0 = no)', answer: 0, explain: 'No: 2 × 8.3 = 16.6 s, above 12 s. That is the model test doing its job — the retrained model is blocked before it ships.' } },
     { p: 4 },

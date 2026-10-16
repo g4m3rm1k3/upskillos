@@ -1,7 +1,11 @@
 // Lesson order for Lab 59: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l59-importance': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 05, 06, 13 and 14", body: [
+      "Labs 13–14: a random forest averages many trees; gradient boosting adds trees one at a time, each fitted to the errors left so far.",
+      "Lab 06: measure on held-out data. Lab 05: correlated features carry overlapping information, which makes \"which feature matters\" ambiguous."
+    ] } }, { p: 1 }, { p: 2 },
     { predict: { prompt: 'A model’s test MSE is 5.0. With hour of day shuffled it rises to 9.2. What is hour’s permutation importance?', answer: 4.2, tolerance: 1e-9, explain: '9.2 − 5.0 = 4.2: the rise in error when the model can no longer use the feature.' } },
     { p: 3 },
     { figure: 'ImportanceBars', caption: 'The playground model’s permutation importance on test and training builds, and its gain importance.' },

@@ -119,6 +119,7 @@ $$\\text{linear}(a, b, p) = a + (b - a)\\cdot\\min(p, 1)$$` },
       goal: 'Derive the Q-learning target from $G_t = R_{t+1} + \\gamma G_{t+1}$, compute a TD error and an update by hand, and treat a terminated move differently from a truncated one.',
       builds: ['epsilon-greedy'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The state $s$ is a row number, 0 to 71 (lesson 2.2); the action $a$ is 0 (left) or 1 (right); the table is the array `Q[s, a]` (lesson 3.1). Every step pays $r = 1$, and $\\gamma = 0.99$ discounts each later reward once more (lesson 1.5). $s\'$ is the state the push led to.' },
         { md: `How should $Q(s, a)$ change after the agent pushes, gets reward $r$ and lands in state $s'$? Start from lesson 1.5's rule for returns:
 
 $$G_t = R_{t+1} + \\gamma\\, G_{t+1}$$

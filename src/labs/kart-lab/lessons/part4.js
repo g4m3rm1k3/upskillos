@@ -109,6 +109,7 @@ With 8,000 laps the sector table gets better on Sunlit (${pct(T['q-sector-8000']
       goal: 'Replace the table with a linear function of features, derive its semi-gradient update, and see what too large a step does.',
       builds: ['kart-sensors'],
       blocks: [
+        { added: true, kind: 'recall', note: 'Until now the driver looked its values up: `Q[key][action]`, one stored number for every key and action (lessons 2.1 and 3.1). This lesson computes them instead, from a few numbers describing the situation. The update it learns with is the same Q-learning update (lesson 3.3): move the value of the action taken towards $r + \\gamma \\max_{a\'} Q(s\', a\')$.' },
         { md: `A table has a separate number for every key, so learning about one key teaches nothing about another, even a nearly identical one. A **function** can share what it learns. The simplest is **linear**: describe the situation by a list of numbers, the **features** $\\mathbf x(s)$, and give each action a list of **weights** $\\mathbf w_a$:
 
 $$\\hat Q(s, a) = \\mathbf w_a \\cdot \\mathbf x(s) = \\sum_i w_{a,i}\\, x_i(s)$$

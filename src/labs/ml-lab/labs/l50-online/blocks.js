@@ -1,7 +1,11 @@
 // Lesson order for Lab 50: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l50-regret': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 36, 37, 41 and 47", body: [
+      "Lab 41: a Beta(a, b) prior updated with s successes and f failures becomes Beta(a + s, b + f). From Beta(1, 1), 3 successes and 1 failure give Beta(4, 2), with mean 4/6 ≈ 0.67.",
+      "Lab 37: an agent must sometimes try actions it believes are worse (explore) to find better ones (exploit). Lab 36: randomised experiments compare options fairly. Lab 47: bounds on how far an estimate can be from the truth."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { predict: { prompt: 'A learner’s regret after T rounds is 5√T. What is its regret per round at T = 10,000?', answer: 0.05, tolerance: 0.0005, explain: '5 × 100 / 10,000 = 0.05 — and it keeps shrinking: regret grows sublinearly.' } },
     { p: 3 }, { p: 4 },

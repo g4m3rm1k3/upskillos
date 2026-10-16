@@ -1,7 +1,11 @@
 // Lesson order for Lab 32: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l32-triggers': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 28 and 30", body: [
+      "Lab 30: drift is a change in the data a model sees; PSI = Σ_bins (aᵢ − eᵢ) · ln(aᵢ / eᵢ) measures it. Confirming that errors really rose needs labels, which may arrive late.",
+      "Lab 28: every model has a run id built from its data, configuration and code, so an earlier one can be restored exactly."
+    ] } }, { p: 1 },
     { cell: 0 },
     { p: 2 }, { p: 3 },
     { cell: 1 },

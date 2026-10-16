@@ -1,7 +1,12 @@
 // Lesson order for Lab 05: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l05-sample': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 04", body: [
+      "**Expectation** is the probability-weighted average, E[X] = Σ x p(x). A fair die: (1 + 2 + 3 + 4 + 5 + 6)/6 = 3.5.",
+      "**Variance** is the expected squared distance from the mean, Var[X] = E[(X − μ)²]; the standard deviation σ is its square root.",
+      "An average of n independent draws varies less than one draw: Var(mean of n) = σ²/n, so its **standard error** is σ/√n. With σ = 10 and n = 100, the standard error is 1."
+    ] } }, { p: 1 },
     { figure: 'OneStudy', caption: 'One study: n builds drawn from a skewed population whose true mean is known here (dashed).' },
     { cell: 0 },
     { p: 2 },

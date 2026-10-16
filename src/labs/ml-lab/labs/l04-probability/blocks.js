@@ -2,6 +2,10 @@
 export const blocks = {
   'l04-frequency': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 01–03", body: [
+      "From Lab 02: `rng = np.random.default_rng(seed)` makes a random number generator. The same seed gives the same numbers on every run, so a simulation can be repeated exactly.",
+      "A fraction read as a frequency: if something happened in 30 of 100 trials, 30/100 = 0.3 is an estimate of its probability. This lab asks how close such an estimate is to the truth."
+    ] } },
     { figure: 'DicePairs', caption: 'All 36 equally likely outcomes of two dice. Pick a sum and count its pairs.' },
     { predict: { prompt: 'How many of the 36 pairs of two dice sum to 10?', answer: 3, explain: '(4,6), (5,5) and (6,4): P = 3/36 = 1/12.' } },
     { p: 1 },

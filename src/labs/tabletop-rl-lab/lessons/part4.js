@@ -501,6 +501,7 @@ Lesson 4.8 adds features for the upper bonus. For now, just the 13.` },
       goal: 'Derive the semi-gradient TD(0) update for a linear value, compute one update by hand, and read the learning curve and the learned weights.',
       builds: ['value-of-a-card', 'td-update'],
       blocks: [
+        { added: true, kind: 'recall', note: 'The TD target of lesson 3.3 is a one-step sample of what a value should be: the reward just seen plus the value of where you landed. In Part 3 the update moved one table entry towards it. Here there is no table: $\\hat V(\\text{card}) = \\mathbf w \\cdot \\mathbf x$ is computed from the card\'s features $\\mathbf x$, 1.0 for each open box, and the weights $\\mathbf w$ are what learn (lesson 4.6).' },
         { md: `The weights should make $\\hat V(\\text{card})$ equal the expected points still to come. After one turn we have a sample of that: the turn's reward $r$ plus the value of the next card, $r + \\hat V(\\text{card}')$. As in Part 3, that is the TD target, and the TD error is
 
 $$\\delta = r + \\hat V(\\text{card}') - \\hat V(\\text{card})$$

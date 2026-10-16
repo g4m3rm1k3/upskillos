@@ -2,6 +2,10 @@
 export const blocks = {
   'l24-why': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 18 and 21", body: [
+      "A dense layer (Lab 21) connects every input to every unit: (n, d_in) @ (d_in, d_out). An image of H × W pixels with C channels becomes H·W·C inputs.",
+      "From Lab 18: an image can be treated as one long vector of pixel values, and PCA found the directions those vectors vary along most."
+    ] } },
     { cell: 0 },
     { predict: { prompt: 'A 28 × 28 grayscale image feeds a dense layer of 128 units. How many parameters does that layer have?', answer: 100480, explain: '28 × 28 × 1 = 784 inputs; 784 × 128 = 100,352 weights plus 128 biases = 100,480.', misconceptions: [{ answer: 100352, feedback: 'Add one bias per unit: 128 more.' }] } },
     { p: 1 }, { p: 2 },

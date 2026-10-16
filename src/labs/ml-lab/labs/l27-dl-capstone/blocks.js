@@ -1,7 +1,11 @@
 // Lesson order for Lab 27: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l27-question': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 06, 16 and 24", body: [
+      "Lab 16's recipe: frame the problem and a baseline, compare models by cross-validation, study the errors, then use the test set once and report with an interval (Lab 06).",
+      "Lab 24: a convolution slides a small kernel over an image, sharing its weights across positions; deep CNNs stack such layers with pooling."
+    ] } }, { p: 1 },
     { cell: 0 },
     { predict: { prompt: 'The real-digit baseline scores 0.057 on test images moved 2 pixels. What accuracy would guessing among the 10 digits at random give?', answer: 0.1, tolerance: 0.001, explain: '1/10 = 0.1. The baseline does worse than guessing: it has learned where ink sits, and moved digits put the ink where other digits’ ink used to be.' } },
     { p: 2 },

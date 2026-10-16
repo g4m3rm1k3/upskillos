@@ -1,7 +1,11 @@
 // Lesson order for Lab 25: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l25-tokens': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 11 and 21–23", body: [
+      "Bag of words (Lab 11): a document becomes a vector of counts, one per vocabulary word, and the order of the words is lost.",
+      "Labs 21–23: a network is layers of A @ W + b with activations, trained by backpropagation; in PyTorch the weights are parameters the optimiser updates."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { predict: { prompt: 'A batch of 32 sequences of 20 tokens is embedded with d = 64. How many numbers does the embedded batch hold?', answer: 40960, explain: 'Its shape is (B, T, d) = (32, 20, 64): 32 × 20 × 64 = 40,960.', misconceptions: [{ answer: 1280, feedback: 'That is one sequence, 20 × 64. The batch holds 32 of them.' }] } },
     { p: 3 },

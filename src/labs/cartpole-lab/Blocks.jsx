@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Markdown from '../qmaze-lab/Markdown.jsx'
+import { checkKey } from '../python-steps/progress.js'
 import { parseAnswer } from '../ml-lab/Checkpoint.jsx'
 import { tokenizePython } from '../a-arcade-python/analysis.js'
 import { FIGURES } from './figures/index.js'
@@ -104,15 +105,15 @@ function Figure({ block }) {
 export default function Blocks({ lesson, saved, onSolved, onPython }) {
   const solved = saved?.solved ?? []
   return lesson.blocks.map((b, k) => {
-    const key = `${lesson.id}:${k}`
+    const key = `${lesson.id}:${k}`, check = checkKey(b)
     if (b.h) return <h2 key={k} className="qm-h">{b.h}</h2>
     if (b.md) return <Md key={k}>{b.md}</Md>
     if (b.figure) return <Figure key={k} block={b} />
     if (b.code) return <Code key={k} spec={b.code} />
     if (b.mathCode) return <MathCode key={k} rows={b.mathCode} />
-    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.choice) return <Choice key={key} spec={b.choice} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
+    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(check)} onDone={() => onSolved(check)} />
+    if (b.choice) return <Choice key={key} spec={b.choice} done={solved.includes(check)} onDone={() => onSolved(check)} />
+    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it', recall: 'Remember' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time, every line explained.</span></div>
     return null
   })

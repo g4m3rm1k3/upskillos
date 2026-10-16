@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Markdown from './Markdown.jsx'
+import { checkKey } from '../python-steps/progress.js'
 import { parseAnswer } from '../ml-lab/Checkpoint.jsx'
 import { tokenizePython } from '../a-arcade-python/analysis.js'
 import { FIGURES } from './figures/index.js'
@@ -95,9 +96,6 @@ function Figure({ block }) {
   </figure>
 }
 
-// A check is remembered by its prompt, not its position, so adding blocks to a lesson never
-// moves a learner's answers onto other questions.
-export const checkKey = b => (b.predict ?? b.choice)?.prompt
 
 export default function Blocks({ lesson, saved, onSolved, onPython }) {
   const solved = saved?.solved ?? []

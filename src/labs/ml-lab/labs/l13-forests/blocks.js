@@ -2,6 +2,10 @@
 export const blocks = {
   'l13-variance': [
     { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 04, 07 and 12", body: [
+      "From Lab 12: a decision tree predicts by a sequence of questions `x[feature] ≤ threshold`. A deep tree has low bias but high variance: a small change in the data can change it a lot.",
+      "From Lab 04: the average of T independent quantities, each with variance σ², has variance σ²/T. From Lab 07: expected error = bias² + variance + noise, so cutting the variance cuts the error."
+    ] } },
     { figure: 'TreesVersusAverage', caption: 'Two deep trees trained on bootstrap samples, and the average of many.' },
     { cell: 1 },
     { p: 1 }, { p: 2 }, { p: 3 },

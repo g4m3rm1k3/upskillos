@@ -1,7 +1,11 @@
 // Lesson order for Lab 61: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l61-adversarial': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03, 08, 20 and 21", body: [
+      "Lab 20: backpropagation gives the gradient of the loss with respect to anything in the computation, including the input x itself. Lab 21: the network classifier under attack.",
+      "Lab 03: norms measure size. For v = (3, −4): ‖v‖₂ = √(9 + 16) = 5, ‖v‖∞ = max |vⱼ| = 4, ‖v‖₁ = Σ |vⱼ| = 7. Lab 08: a linear score w·x changes by at most ε‖w‖₁ when every input moves by at most ε."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { predict: { prompt: 'A linear score over 35 pixels has ‖w‖₁ = 8. How much can an L∞ perturbation with ε = 0.1 change the score at most?', answer: 0.8, tolerance: 1e-9, explain: 'ε·‖w‖₁ = 0.1 × 8 = 0.8: move every pixel by 0.1 in the direction of its weight’s sign.' } },
     { figure: 'AttackCurve', caption: 'The playground’s standard digit classifier under random noise, FGSM and PGD as the budget grows.' },
     { p: 4 },

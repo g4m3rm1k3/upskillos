@@ -1,7 +1,11 @@
 // Lesson order for Lab 53: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l53-ae': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 18, 21–23, 46 and 52", body: [
+      "Lab 18: PCA compresses each point to a few numbers z and rebuilds it as x̄ + Σⱼ zⱼvⱼ: a linear encoder and decoder.",
+      "Lab 46: cross-entropy −Σ p log q scores predicted probabilities; for one 0/1 pixel x with prediction x̂ it is −[x log x̂ + (1 − x) log(1 − x̂)]. Labs 21–23 and 52: networks, their training and regularisation."
+    ] } }, { p: 1 },
     { figure: 'LatentMap', caption: 'The 2-number codes of the playground’s test digits, coloured by digit. Compare the plain autoencoder with the VAE.' },
     { p: 2 }, { p: 3 },
     { cell: 0 },

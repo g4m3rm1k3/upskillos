@@ -1,7 +1,10 @@
 // Lesson order for Lab 31: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l31-data': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Lab 28", body: [
+      "Lab 28: every dataset and model is versioned and traceable: which data, which configuration, which code. That record is what lets this lab answer who a model affects, and why."
+    ] } }, { p: 1 },
     { cell: 0 },
     { p: 2 },
     { predict: { prompt: 'A team of 4 has an average resolution time of 3.75 h. After one person joins, the published average of the 5 is 4.92 h. What is the newcomer’s own average? (One decimal.)', answer: 9.6, tolerance: 0.05, explain: '5 × 4.92 − 4 × 3.75 = 24.6 − 15 = 9.6 h. Two harmless-looking aggregates reveal one person’s number — why small groups need care.' } },

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Markdown from '../qmaze-lab/Markdown.jsx'
+import { checkKey } from '../python-steps/progress.js'
 import Derivation from '../ml-lab/Derivation.jsx'
 import { parseAnswer } from '../ml-lab/Checkpoint.jsx'
 import { tokenizePython } from '../a-arcade-python/analysis.js'
@@ -102,30 +103,31 @@ function Figure({ block }) {
   </figure>
 }
 
-// saved: { solved: [block index], derive: { [k]: Derivation's state }, code: { [k]: your code } }
+// saved: { solved: [block key], derive: { [key]: Derivation's state }, code: { [key]: your code };
+// a block's key is its prompt or title (../python-steps/progress.js)
 export default function Blocks({ lesson, saved, onSolved, onSave, onPython }) {
   const solved = saved?.solved ?? []
   return lesson.blocks.map((b, k) => {
-    const key = `${lesson.id}:${k}`
+    const key = `${lesson.id}:${k}`, check = checkKey(b)
     if (b.h) return <h2 key={k} className="qm-h">{b.h}</h2>
     if (b.md) return <Md key={k}>{b.md}</Md>
     if (b.figure) return <Figure key={k} block={b} />
     if (b.code) return <Code key={k} spec={b.code} />
     if (b.mathCode) return <MathCode key={k} rows={b.mathCode} />
-    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(k)} onDone={() => onSolved(k)} />
-    if (b.choice) return <Choice key={key} spec={b.choice} done={solved.includes(k)} onDone={() => onSolved(k)} />
+    if (b.predict) return <Predict key={key} spec={b.predict} done={solved.includes(check)} onDone={() => onSolved(check)} />
+    if (b.choice) return <Choice key={key} spec={b.choice} done={solved.includes(check)} onDone={() => onSolved(check)} />
     if (b.derive) {
-      const state = saved?.derive?.[k] ?? {}
+      const state = saved?.derive?.[check] ?? {}
       return <div key={key} className="nlp-derive"><Derivation derivation={b.derive} saved={{ derivation: state }}
         onSave={next => {
-          onSave?.(s => ({ ...s, derive: { ...s.derive, [k]: next.derivation } }))
-          if (next.derivation && b.derive.steps.every((_, i) => next.derivation.solved?.includes(i) || next.derivation.revealed?.includes(i))) onSolved(k)
+          onSave?.(s => ({ ...s, derive: { ...s.derive, [check]: next.derivation } }))
+          if (next.derivation && b.derive.steps.every((_, i) => next.derivation.solved?.includes(i) || next.derivation.revealed?.includes(i))) onSolved(check)
         }} /></div>
     }
-    if (b.write) return <WriteIt key={key} spec={b.write} done={solved.includes(k)} code={saved?.code?.[k]}
-      onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [k]: code } }))} onDone={() => onSolved(k)} />
+    if (b.write) return <WriteIt key={key} spec={b.write} done={solved.includes(check)} code={saved?.code?.[check]}
+      onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [check]: code } }))} onDone={() => onSolved(check)} />
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time.</span></div>
-    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
+    if (b.note) return <aside key={k} className={`qm-note ${b.kind ?? 'key'}`}><span className="qm-eyebrow">{{ key: 'Key idea', warn: 'Watch out', try: 'Try it', recall: 'Remember' }[b.kind ?? 'key']}</span><Md>{b.note}</Md></aside>
     return null
   })
 }

@@ -126,6 +126,19 @@ Sizes and weights for 8 filters of 3 × 3 on one 28 × 28 picture:
         { md: `A **convolutional neural network** (CNN; LeCun et al., 1989, for exactly this job: reading handwritten digits) is a convolution layer (or several) followed by ordinary layers. The convolution part finds local patterns; the dense part combines them into an answer. Ours: 8 filters → ReLU → pooling → **flatten** the 8 × 13 × 13 = 1,352 numbers into one row → a dense layer to 10 scores.
 
 PyTorch wants pictures as **N × channels × height × width**: here N × 1 × 28 × 28 (one channel: grey; a colour photo has 3: red, green, blue).` },
+        { added: true, h: 'One batch through the network, shape by shape' },
+        { added: true, md: `Follow a batch of \`N\` digits through the layers. Each line is a tensor's shape, written the PyTorch way, **N × channels × height × width**:
+
+| After | Shape | Why |
+|---|---|---|
+| the input | N × 1 × 28 × 28 | one grey channel, 28 × 28 pixels |
+| \`nn.Conv2d(1, 8, kernel_size=3)\` | N × 8 × 26 × 26 | 8 filters, so 8 maps; a 3 × 3 filter fits in 28 − 3 + 1 = 26 places per row (lesson 6.1) |
+| \`nn.ReLU()\` | N × 8 × 26 × 26 | applied to every number; the shape doesn't change |
+| \`nn.MaxPool2d(2)\` | N × 8 × 13 × 13 | each 2 × 2 block becomes one number: 26 / 2 = 13 (lesson 6.2) |
+| \`nn.Flatten()\` | N × 1352 | each digit's 8 × 13 × 13 = 1,352 numbers laid out in one row |
+| \`nn.Linear(8 * 13 * 13, 10)\` | N × 10 | 10 scores per digit, as in lesson 4.3 |
+
+The first number, N, never changes: every layer handles each digit in the batch separately. When a shape error appears in PyTorch, writing out a table like this one is the quickest way to find the layer where the sizes stop matching.` },
         {
           code: {
             file: 'cnn.py', from: 10, to: 38, notes: [

@@ -1,7 +1,11 @@
 // Lesson order for Lab 43: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l43-mixtures': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 17, 40 and 41", body: [
+      "Lab 17: k-means assigns each point to its nearest centre, then moves each centre to the mean of its points, and repeats.",
+      "Lab 40: one class's data can be modelled as a Gaussian fitted by maximum likelihood (the mean and covariance of its points), and Bayes' rule turns class densities into P(class | x)."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { predict: { prompt: 'Two components with weights 0.5 and 0.5. At a point, the component densities are 0.3 and 0.1. What is the responsibility of the first? (Two decimals.)', answer: 0.75, tolerance: 0.005, explain: '0.5 × 0.3 / (0.5 × 0.3 + 0.5 × 0.1) = 0.15/0.2 = 0.75.' } },
     { cell: 0 },
     { p: 4 },

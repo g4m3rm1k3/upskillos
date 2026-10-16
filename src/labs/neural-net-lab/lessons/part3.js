@@ -73,6 +73,7 @@ With two classes, softmax is exactly sigmoid of the difference of the two scores
       goal: 'Score a softmax output with the cross-entropy, derive its gradient $p - \\text{one-hot}$, and train softmax regression by hand on real flowers.',
       builds: ['softmax', 'cross-entropy'],
       blocks: [
+        { added: true, kind: 'recall', note: 'Softmax turns one score per class into probabilities that add up to 1, $p_c = e^{z_c} / \\sum_k e^{z_k}$ (lesson 3.1). For yes or no, the loss was minus the log of the probability given to what really happened (lesson 2.2); this lesson does the same with several classes.' },
         { md: `The loss is Part 2's idea again: minus the log of the probability given to the **true** class,
 
 $$L = -\\log p_y$$

@@ -1,7 +1,11 @@
 // Lesson order for Lab 58: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l58-policy': [
-    { p: 0 }, { p: 1 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 08, 20, 37 and 50", body: [
+      "Lab 37: an agent in state s picks an action a, receives a reward r and moves on; its goal is a large return, G_t = R_{t+1} + γG_{t+1}.",
+      "Lab 08: a logistic model gives p = σ(θᵀφ(s)), and the gradient of its log-likelihood is (y − p)φ(s). Here it becomes a policy: the probability of choosing \"right\". Labs 20 and 50: backpropagation, and learning one decision at a time."
+    ] } }, { p: 1 },
     { predict: { prompt: 'In some state θᵀφ(s) = 2. What is the probability that the policy pushes right? (Three decimals.)', answer: 0.881, tolerance: 0.0006, explain: 'σ(2) = 1/(1 + e⁻²) ≈ 0.881: likely right, but it still pushes left about 12% of the time.' } },
     { figure: 'PolicyCurve', caption: 'The logistic policy’s probability of pushing right as the pole leans, for one weight on the pole angle.' },
     { p: 2 }, { p: 3 },

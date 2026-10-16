@@ -1,7 +1,11 @@
 // Lesson order for Lab 56: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l56-scarce': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 06, 17, 25, 34 and 53", body: [
+      "Lab 06: keep a labelled test set apart and never train on it. Lab 17: clustering groups points without any labels.",
+      "Labs 25, 34 and 53: an embedding, or an autoencoder's code, turns each example into a vector in which similar examples lie close together."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { predict: { prompt: 'On the balanced two moons, what test accuracy does a classifier get that always predicts the same class? (A decimal.)', answer: 0.5, tolerance: 1e-9, explain: 'Half the test points are in each class: 0.5. Any method with two labels must be compared with this floor and with the supervised baseline on the same two labels.' } },
     { cell: 0 },
     { p: 4 },

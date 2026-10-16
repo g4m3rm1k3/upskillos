@@ -27,6 +27,17 @@ describe('the lab', () => {
 })
 
 describe('the coding exercises', () => {
+  it('picks up a draft saved under the exercise\'s old position, and moves it', async () => {
+    const lesson = lessonById('sigma'), k = lesson.blocks.findIndex(b => b.exercise), spec = lesson.blocks[k].exercise
+    localStorage.removeItem(`upskillos.exercise.sigma:${spec.prompt}`)
+    localStorage.setItem(`upskillos.exercise.sigma:${k}`, 'def total(xs):\n    return 42\n')
+    render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onPython={() => {}} FIGURES={FIGURES} codeLines={codeLines} />)
+    const draft = await screen.findByLabelText('Your Python').catch(() => null)
+    if (draft) expect(draft.value).toContain('return 42')
+    expect(localStorage.getItem(`upskillos.exercise.sigma:${k}`)).toBeNull()
+    expect(localStorage.getItem(`upskillos.exercise.sigma:${spec.prompt}`)).toContain('return 42')
+    cleanup(); localStorage.removeItem(`upskillos.exercise.sigma:${spec.prompt}`)
+  })
   it('show the task, an editable draft, hints one at a time and the solution on request', async () => {
     const lesson = lessonById('sigma'), k = lesson.blocks.findIndex(b => b.exercise), spec = lesson.blocks[k].exercise
     render(<Blocks lesson={lesson} saved={{}} onSolved={() => {}} onPython={() => {}} FIGURES={FIGURES} codeLines={codeLines} />)
@@ -35,7 +46,7 @@ describe('the coding exercises', () => {
     const draft = await screen.findByLabelText('Your Python').catch(() => null)
     if (draft) {
       fireEvent.change(draft, { target: { value: 'def total(xs):\n    return 0\n' } })
-      expect(localStorage.getItem(`upskillos.exercise.sigma:${k}`)).toContain('return 0')
+      expect(localStorage.getItem(`upskillos.exercise.sigma:${spec.prompt}`)).toContain('return 0')
     }
     fireEvent.click(screen.getByRole('button', { name: 'Hint' }))
     expect(screen.getByRole('button', { name: 'Another hint' })).toBeTruthy()

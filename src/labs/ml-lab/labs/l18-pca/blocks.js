@@ -1,7 +1,11 @@
 // Lesson order for Lab 18: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l18-projection': [
-    { p: 0 }, { p: 1 }, { p: 2 }, { p: 3 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03 and 04", body: [
+      "The dot product u·x = Σ uⱼxⱼ. If u has length 1, it is the length of x's shadow along u: for u = (0.6, 0.8) and x = (3, 4), u·x = 1.8 + 3.2 = 5.",
+      "From Lab 04: variance, Var(X) = E[(X − μ)²], is the average squared distance from the mean. This lab asks which direction u makes the variance of u·x as large as possible."
+    ] } }, { p: 1 }, { p: 2 }, { p: 3 },
     { figure: 'ProjectPoint', caption: 'Project x onto the line through the origin in direction u. Blue: x; purple: its projection; red: the residual.' },
     { predict: { prompt: 'Project x = (4, 3) onto u = (0.8, 0.6). What is the coordinate u·x?', answer: 5, explain: '0.8 × 4 + 0.6 × 3 = 3.2 + 1.8 = 5.' } },
     { cell: 0 },

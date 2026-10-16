@@ -156,6 +156,22 @@ Every combination of slots gets a different number, from 0 to $n_1 n_2 n_3 n_4 -
           },
         },
         { python: { program: 'binned', label: 'Step through a game in the binned world' } },
+        { added: true, h: 'State number and action: the two indexes for everything' },
+        { added: true, md: `After this lesson, two whole numbers describe every decision a table learner makes:
+
+- the **state number**, 0 to 71 with the default slots: the four real numbers, each cut into a slot, combined into one row number;
+- the **action**: \`0\` push left, \`1\` push right.
+
+The same start as lesson 1.3 (\`reset(seed=0)\`), seen through the slots:
+
+\`\`\`python
+env = BinnedCartPole()
+env.reset(seed=0)   # -> (29, {})                     the four numbers became row 29
+env.step(1)         # -> (29, 1.0, False, False, {})  still row 29 after one small push
+env.n_states        # 72
+\`\`\`
+
+\`step\` gives back the same five things as before, with the state number in place of the four floats. Part 3's table is a NumPy array with one row per state number and one column per action, so every value it learns is **\`Q[state, action]\`**: \`Q[29, 1]\` is how good pushing right is in row 29. When later code looks confusing, ask first: *which state number, which action?*` },
         { note: 'The state number is the slots read as **digits with their own bases**: $((s_1 n_2 + s_2) n_3 + s_3) n_4 + s_4$. `BinnedCartPole` is a **wrapper**: the same game, the same `reset`/`step`, seen through slots, with $\\prod n_k$ rows.' },
       ],
     },

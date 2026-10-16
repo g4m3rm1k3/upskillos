@@ -61,6 +61,7 @@ $$p_Y(\\mathbf y) = p_X(\\mathbf x)\\,\\big|\\det J_{\\mathbf g}(\\mathbf x)\\bi
     goal: 'Derive the density $\\frac{1}{(2\\pi)^{d/2}\\sqrt{\\det\\Sigma}}e^{-\\frac12(\\mathbf x - \\boldsymbol\\mu)^\\top\\Sigma^{-1}(\\mathbf x - \\boldsymbol\\mu)}$ from independent normals, and read its contours as ellipses along the eigenvectors of $\\Sigma$.',
     builds: ['change-of-variables', 'positive-definite', 'spectral'],
     blocks: [
+        { added: true, kind: 'recall', note: 'The **covariance matrix** $\\Sigma$ of a vector of measurements has entry $(j, k)$ equal to $\\mathrm{Cov}(x_j, x_k)$: how much measurements $j$ and $k$ move together. Its diagonal holds each measurement\'s variance (lesson [[#covariance]]). $\\det\\Sigma$ is how much $\\Sigma$ scales volume (lesson [[#determinant-n]]), and $\\Sigma^{-1}$ undoes it (lesson [[#inverse]]).' },
       { md: `Two heights, a person's height and weight, a word embedding's coordinates: many measurements come together and are related. The **multivariate normal** $\\mathcal N(\\boldsymbol\\mu, \\Sigma)$ is the bell curve for vectors, with a mean vector $\\boldsymbol\\mu$ and a covariance matrix $\\Sigma$ (lesson [[#covariance]]). Its formula:
 
 $$p(\\mathbf x) = \\frac{1}{(2\\pi)^{d/2}\\sqrt{\\det\\Sigma}}\\exp\\!\\Big(-\\tfrac12(\\mathbf x - \\boldsymbol\\mu)^\\top\\Sigma^{-1}(\\mathbf x - \\boldsymbol\\mu)\\Big)$$

@@ -1,7 +1,11 @@
 // Lesson order for Lab 21: each paragraph followed by what makes it concrete (see LessonFlow).
 export const blocks = {
   'l21-layers': [
-    { p: 0 }, { p: 1 }, { p: 2 },
+    { p: 0 },
+    { added: true, bridge: { title: "what this lab uses from Labs 03, 08 and 20", body: [
+      "From Lab 08: logistic regression is p = σ(z) with z = w·x + b, trained on −[y log p + (1 − y) log(1 − p)], whose slope with respect to z is p − y. One neuron of this lab is exactly that.",
+      "From Lab 03: a matrix product (a, b) @ (b, c) gives (a, c), each entry a row dotted with a column. From Lab 20: backpropagation multiplies local derivatives from the loss back to each weight, adding where a value is used twice."
+    ] } }, { p: 1 }, { p: 2 },
     { cell: 0 },
     { predict: { prompt: 'A batch of 32 examples goes through a dense layer with W of shape (2, 8). How many numbers does Z = XW + b hold?', answer: 256, explain: 'Z has one row per example and one column per unit: (32, 8), so 32 × 8 = 256 numbers.', misconceptions: [{ answer: 16, feedback: 'That is the number of weights in W, 2 × 8. Z has one row per example.' }, { answer: 64, feedback: 'That would be (32, 2), the input’s shape. Z has one column per unit: 8.' }] } },
     { p: 3 },
