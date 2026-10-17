@@ -123,6 +123,10 @@ function computeSvd(A: unknown): { U: number[][]; S: number[][]; V: number[][] }
 }
 
 export function singularValues(A: unknown): number[] {
+  // A single row or column (stored flat) or a scalar has one singular value: its length.
+  const plain = toPlain(A) as unknown
+  if (typeof plain === "number") return [Math.abs(plain)]
+  if (Array.isArray(plain) && !plain.some(Array.isArray)) return [Math.hypot(...(plain as number[]).map(Number))]
   const result = computeSvd(A)
   return normalizeVector(math.diag(result.S)).map(entry => Math.abs(Number(entry)))
 }

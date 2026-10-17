@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
 import { gradeWorkspace } from './grading.js'
@@ -30,7 +30,7 @@ describe('Linear Algebra Lab', () => {
     expect(screen.getByLabelText('Worked example code').value).toBe(LESSONS[0].demo.code)
     fireEvent.click(screen.getByRole('button', { name: 'Run example' }))
     await screen.findByLabelText('OpenMAT output')
-    expect(screen.getByLabelText('Rendered OpenMAT figure')).toBeTruthy()
+    expect(screen.getByRole('img', { name: /Delivery price model; horizontal axis Distance \(km\); vertical axis Price \(dollars\)/ })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Syntax guide' }))
     expect(screen.getByText(/OpenMAT counts from 1/)).toBeTruthy()
   })
@@ -95,5 +95,30 @@ describe('Linear Algebra Lab', () => {
     expect(bellmanTrace(0, 20).at(-1)).toEqual([1, 2, 0])
     expect(Math.abs(descentTrace(0.2).at(-1) - 2)).toBeLessThan(0.01)
     expect(Math.abs(descentTrace(1.1).at(-1) - 2)).toBeGreaterThan(3)
+  })
+
+  it('builds a proof step by step, records quick checks and shows both on the mastery map and in review', async () => {
+    const lesson = LESSONS.find(item => item.proof)
+    localStorage.setItem(STORE_KEY, JSON.stringify({ current: lesson.id }))
+    render(<Lab />)
+    expect(screen.getByText('In symbols')).toBeTruthy()
+    const quick = screen.getByRole('group', { name: 'Quick check question 1' })
+    fireEvent.click(within(quick).getAllByRole('button').find(b => b.textContent.includes('It stays the same')))
+    expect(screen.getByText('Correct.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: /Reason & prove/ }))
+    // Click options until each step advances; wrong picks disable themselves and keep the step open.
+    for (let i = 0; i < lesson.proof.steps.length; i++) {
+      const label = `Proof step ${i + 1}`
+      while (screen.queryByRole('group', { name: label })) {
+        fireEvent.click(within(screen.getByRole('group', { name: label })).getAllByRole('button').find(button => !button.disabled))
+      }
+    }
+    expect(screen.getByText(/Proof complete/)).toBeTruthy()
+    await waitFor(() => expect(readProgress().proved[lesson.id]).toBeTruthy())
+    expect(readProgress().review[`${lesson.id}#0`].box).toBe(1)
+    fireEvent.click(screen.getByRole('button', { name: /Mastery map/ }))
+    expect(screen.getByRole('button', { name: new RegExp(`${lesson.title}: .*Built the proof yes`) })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
+    expect(screen.getByText(/Question 1 of 1/)).toBeTruthy()
   })
 })

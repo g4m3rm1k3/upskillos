@@ -58,7 +58,7 @@ export function buildFigureFromPlotState(plotState: PlotState): string | null {
     } else if (series.kind === "area") {
       elements.push({ type: "curve", xs: series.x, ys: series.y, color, width: 2.5, fill: true, fill_alpha: 0.18, label: series.label || null })
     } else if (series.kind === "scatter") {
-      elements.push({ type: "scatter", xs: series.x, ys: series.y, color, radius: 4, labels: null })
+      elements.push({ type: "scatter", xs: series.x, ys: series.y, color, radius: 4, labels: null, label: series.label || null })
     } else if (series.kind === "stem") {
       series.x.forEach((x, si) => {
         elements.push({ type: "line", start: [x, 0], end: [x, series.y[si]], color, width: 1.5 })
@@ -78,12 +78,16 @@ export function buildFigureFromPlotState(plotState: PlotState): string | null {
     })
   })
   if (plotState.xlabel)
-    elements.push({ type: "text", pos: [(xmin + xmax) / 2, ymin - padY * 0.55], content: plotState.xlabel, color: "muted", size: 12 })
+    elements.push({ type: "text", pos: [(xmin + xmax) / 2, ymin - padY * 0.55], content: plotState.xlabel, color: "muted", size: 12, role: "xlabel" })
   if (plotState.ylabel)
-    elements.push({ type: "text", pos: [xmin - padX * 0.35, (ymin + ymax) / 2], content: plotState.ylabel, color: "muted", size: 12 })
+    elements.push({ type: "text", pos: [xmin - padX * 0.35, (ymin + ymax) / 2], content: plotState.ylabel, color: "muted", size: 12, role: "ylabel" })
   return JSON.stringify({
     type: "opencalc_figure",
     title: plotState.title || "OpenMAT Plot",
+    // Renderers that lay out their own margins read these and skip the text elements with a role.
+    xlabel: plotState.xlabel || null,
+    ylabel: plotState.ylabel || null,
+    legend: plotState.legend.length ? plotState.legend : null,
     xmin: xBounds[0], xmax: xBounds[1],
     ymin: yBounds[0], ymax: yBounds[1],
     height: 340,

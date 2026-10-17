@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
 import { LESSONS, MODULES } from './curriculum.js'
 import { gradeWorkspace, matchesNumeric } from './grading.js'
+import { ENRICH } from './lessons/enrich.js'
+import katex from 'katex'
 
 describe('OpenMAT linear algebra curriculum', () => {
   it('has durable unique ids, complete teaching sequences and progressively harder modules', () => {
@@ -42,6 +44,45 @@ describe('OpenMAT linear algebra curriculum', () => {
       for (const variant of lesson.challenge.cases ?? []) {
         const trial = executeScript(`${variant.setup}\n${lesson.challenge.solution}`)
         expect(gradeWorkspace(trial.workspace, variant.checks).filter(check => !check.pass)).toEqual([])
+      }
+    })
+  }
+})
+
+// Every $…$ or $$…$$ segment in a string must render in KaTeX; a typo would show raw red source.
+function mathIn(text) { return [...String(text).matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)].map(m => m[1] ?? m[2]) }
+const renders = tex => { katex.renderToString(tex, { throwOnError: true, strict: 'ignore' }); return true }
+
+describe('notation, quick checks and proofs', () => {
+  it('every enrichment entry names a real lesson', () => {
+    const ids = new Set(LESSONS.map(lesson => lesson.id))
+    expect(Object.keys(ENRICH).filter(id => !ids.has(id))).toEqual([])
+    // Guards the checker itself: it must find the inline maths it is meant to verify.
+    const found = LESSONS.flatMap(lesson => [...(lesson.quiz ?? []).flatMap(item => [item.q, ...item.options]), ...(lesson.proof?.steps ?? []).flatMap(step => step.options)]).flatMap(mathIn)
+    expect(found.length).toBeGreaterThan(200)
+    expect(() => renders('\\frac{1}{')).toThrow()
+  })
+  for (const lesson of LESSONS) {
+    it(`${lesson.id}: notation renders and questions are well formed`, () => {
+      expect(lesson.notation?.length).toBeGreaterThan(0)
+      for (const item of lesson.notation) { expect(renders(item.tex)).toBe(true); mathIn(item.say).forEach(renders) }
+      expect(lesson.quiz?.length).toBeGreaterThanOrEqual(2)
+      for (const item of lesson.quiz) {
+        expect(item.options.length).toBeGreaterThanOrEqual(2)
+        expect(new Set(item.options).size).toBe(item.options.length)
+        expect(item.options[item.answer]).toBeTruthy()
+        expect(item.why.length).toBeGreaterThan(10)
+        ;[item.q, item.why, ...item.options].flatMap(mathIn).forEach(renders)
+      }
+      if (lesson.proof) {
+        const { claim, given, steps, conclusion } = lesson.proof
+        expect(steps.length).toBeGreaterThanOrEqual(3)
+        for (const step of steps) {
+          expect(step.options[step.answer]).toBeTruthy()
+          expect(new Set(step.options).size).toBe(step.options.length)
+          ;[step.ask, step.why, step.hint ?? '', ...step.options].flatMap(mathIn).forEach(renders)
+        }
+        ;[claim, given ?? '', conclusion].flatMap(mathIn).forEach(renders)
       }
     })
   }

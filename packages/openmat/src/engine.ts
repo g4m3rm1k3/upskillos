@@ -546,9 +546,32 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("orth",  (A: any) => orthonormalBasis(A, "orth"))
   parser.set("null",  (A: any) => orthonormalBasis(A, "null"))
   parser.set("nullspace", (A: any) => orthonormalBasis(A, "null"))
-  parser.set("svd",   (A: any) => svdDecomp(A))
+  // With one output, svd returns the singular values as a vector; [U,S,V] = svd(A) gets the factors.
+  parser.set("svd",   (A: any) => {
+    const result = svdDecomp(A)
+    return (parser as any).__nargout > 1 ? result : result.S.map((row: number[], i: number) => row[i]).filter((v: number) => v !== undefined)
+  })
   parser.set("lu",    (A: any) => luFactorization(A))
-  parser.set("chol",  (A: any) => toPlain(math.lup(A).L))
+  // Upper-triangular R with R'*R = A, as MATLAB returns it. Only symmetric positive-definite input has one.
+  parser.set("chol",  (A: any) => {
+    const M = toNumericMatrix(A) as number[][]
+    const n = M.length
+    if (!n || M.some(row => row.length !== n)) throw new Error("chol needs a square matrix.")
+    if (M.some((row, i) => row.some((v, j) => Math.abs(v - M[j][i]) > 1e-10 * Math.max(1, Math.abs(v))))) throw new Error("chol needs a symmetric matrix.")
+    const R: number[][] = Array.from({ length: n }, () => Array(n).fill(0))
+    for (let j = 0; j < n; j++) {
+      let d = M[j][j]
+      for (let k = 0; k < j; k++) d -= R[k][j] ** 2
+      if (!(d > 0)) throw new Error("Matrix must be positive definite.")
+      R[j][j] = Math.sqrt(d)
+      for (let i = j + 1; i < n; i++) {
+        let v = M[j][i]
+        for (let k = 0; k < j; k++) v -= R[k][j] * R[k][i]
+        R[j][i] = v / R[j][j]
+      }
+    }
+    return R
+  })
   parser.set("pinv",  (A: any) => toPlain(math.pinv(A)))
   parser.set("norm",  (A: any, p?: any) => {
     const plain = toPlain(A)
@@ -728,7 +751,8 @@ export function createExecutionEngine(options: EngineOptions = {}): {
     const vecs = result.eigenvectors
       ? toPlain(math.transpose(result.eigenvectors.map((e: any) => e.vector)))
       : null
-    return vecs
+    // With one output, eig returns the eigenvalues; [V,D] = eig(A) gets vectors and the diagonal matrix.
+    return vecs && (parser as any).__nargout > 1
       ? { __multi: [vecs, makeDiagonal(vals as number[])], values: vals, vectors: vecs }
       : vals
   })
@@ -1553,7 +1577,9 @@ export function executeScript(source: string, options: EngineOptions = {}): Exec
       if (multiAssign) {
         const names = multiAssign[1].split(",").map((n: string) => n.trim()).filter(Boolean)
         const rhs = replaceBackslash(preprocessLine(multiAssign[2], variables, functionNames))
-        const result = toPlain(parser.evaluate(rhs)) as any
+        // Functions read __nargout to choose between their one-output and multi-output forms.
+        let result: any
+        try { parser.__nargout = names.length; result = toPlain(parser.evaluate(rhs)) as any } finally { parser.__nargout = 1 }
         const values = result?.__multi ?? (Array.isArray(result) ? result : [])
         names.forEach((name: string, idx: number) => { parser.set(name, values[idx]); variables.add(name) })
         return hasSemicolon ? null : (values.length === 1 ? values[0] : values)

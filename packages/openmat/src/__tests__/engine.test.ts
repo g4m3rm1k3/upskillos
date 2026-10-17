@@ -213,6 +213,8 @@ describe('executeScript — plotting', () => {
     const r = executeScript("plot(1:3, [1 4 9])\ntitle('My Chart')\nxlabel('X')")
     const fig = JSON.parse(r.figureJson as string)
     expect(fig.title).toBe('My Chart')
+    expect(fig.xlabel).toBe('X')
+    expect(fig.elements.find((e: any) => e.role === 'xlabel').content).toBe('X')
   })
 
   it('runs a MATLAB pendulum notebook with TeX labels, subplots and annotations', () => {
@@ -447,5 +449,28 @@ describe('executeScript — element-wise operators with decimals, signs and powe
     const v = ans(src)
     if (Array.isArray(expected)) expect(v).toEqual(expected)
     else expect(v).toBeCloseTo(expected as number, 10)
+  })
+})
+
+describe('one-output and multi-output linear algebra', () => {
+  const ws = (src: string) => Object.fromEntries(executeScript(src).workspace.map((e: any) => [e.name, e.value]))
+  it('eig and svd return values with one output and factors with several', () => {
+    const w = ws('A=[2 1;1 2]; e=eig(A); [V,D]=eig(A); s=svd([3 0;4 5]); [U,S,W]=svd([3 0;4 5]);')
+    expect(w.e).toEqual([1, 3])
+    expect(w.D).toEqual([[1, 0], [0, 3]])
+    expect((w.s as number[]).map(v => +v.toFixed(4))).toEqual([6.7082, 2.2361])
+    expect((w.S as number[][])[1][1]).toBeCloseTo(2.23607, 4)
+  })
+  it('rank and cond accept a single row or column', () => {
+    const w = ws('A=[1 0 1; 0 1 1]; r1=rank(A(:,1)); r0=rank([0;0]); rr=rank([3 4]);')
+    expect([w.r1, w.r0, w.rr]).toEqual([1, 0, 1])
+  })
+  it('chol returns the upper factor and rejects indefinite input', () => {
+    const w = ws('R=chol([4 2;2 3]); back=R\'*R;')
+    expect(w.R[1][0]).toBe(0)
+    expect(w.R[0]).toEqual([2, 1])
+    expect(w.R[1][1]).toBeCloseTo(Math.SQRT2, 10)
+    expect((w.back as number[][]).flat().map(v => +v.toFixed(10))).toEqual([4, 2, 2, 3])
+    expect(() => executeScript('R=chol([1 2;2 1]);')).toThrow(/positive definite/)
   })
 })

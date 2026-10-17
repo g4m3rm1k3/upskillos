@@ -1,8 +1,23 @@
 import { foundations } from './lessons/foundations.js'
 import { core } from './lessons/core.js'
 import { applications } from './lessons/applications.js'
+import { spaces } from './lessons/spaces.js'
+import { spectralTheory } from './lessons/spectral.js'
+import { ENRICH } from './lessons/enrich.js'
 
-export const LESSONS = [...foundations, ...core, ...applications]
+// New lessons name the lesson they follow (`after`), so later modules slot into the sequence
+// without renumbering. ENRICH adds notation, quick-check questions and proofs to earlier lessons.
+function assemble(base, additions) {
+  const list = [...base]
+  for (const lesson of additions) {
+    const at = list.findIndex(item => item.id === lesson.after)
+    if (at < 0) throw new Error(`${lesson.id} follows unknown lesson ${lesson.after}`)
+    list.splice(at + 1, 0, lesson)
+  }
+  return list.map(lesson => ({ ...lesson, ...ENRICH[lesson.id] }))
+}
+
+export const LESSONS = assemble([...foundations, ...core, ...applications], [...spaces, ...spectralTheory])
 export const MODULES = [...new Set(LESSONS.map(lesson => lesson.module))]
 
 export const SYNTAX = [

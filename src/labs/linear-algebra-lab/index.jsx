@@ -4,7 +4,9 @@ import { startRun } from './runner.js'
 import { readProgress, saveProgress } from './storage.js'
 import Explore from './Explore.jsx'
 import { CodeEditor, CodeView } from './code.jsx'
-import FigureRenderer from '../../components/notebooks/FigureRenderer.jsx'
+import { MasteryMap, Notation, Proof, QuickCheck, Review } from './Study.jsx'
+import { dueItems, schedule } from './review.js'
+import Plot from './Plot.jsx'
 import MarkdownProse from '../../components/math/MarkdownProse.jsx'
 import { useThemeColors } from '../../hooks/useThemeColors.js'
 import './lab.css'
@@ -21,7 +23,7 @@ function Figure({ json, colors }) {
   try { figure = typeof json === 'string' ? JSON.parse(json) : json } catch { return null }
   if (!figure) return null
   if (figure.type === 'opencalc_subplots') return <div className="la-subplots">{figure.panels.map((panel, index) => panel && <Figure key={index} json={panel} colors={colors} />)}</div>
-  return <div role="img" aria-label={figure.title || 'OpenMAT plot from your code'} className="la-figure"><FigureRenderer figureJson={figure} C={colors} /></div>
+  return <Plot figure={figure} colors={colors} />
 }
 
 const num = value => typeof value === 'number' ? (Number.isInteger(value) ? String(value) : value.toPrecision(5).replace(/\.?0+$/, '')) : String(value)
@@ -31,7 +33,7 @@ function Value({ entry }) {
   const { value } = entry
   if (typeof value === 'number') return <span className="la-scalar">{num(value)}</span>
   const rows = Array.isArray(value) ? (Array.isArray(value[0]) ? value : [value]) : null
-  if (!rows || rows.length > 12 || rows[0].length > 12 || rows.some(row => !Array.isArray(row))) return <code>{entry.preview}</code>
+  if (!rows || rows.length > 12 || rows[0].length > 60 || rows.some(row => !Array.isArray(row) || row.some(cell => typeof cell !== 'number'))) return <code className="la-preview">{entry.preview.length > 90 ? `${entry.preview.slice(0, 90)}…` : entry.preview}</code>
   return <div className="la-matrix" style={{ gridTemplateColumns: `repeat(${rows[0].length}, auto)` }}>{rows.flatMap((row, r) => row.map((cell, c) => <span key={`${r}-${c}`}>{num(cell)}</span>))}</div>
 }
 
@@ -80,6 +82,7 @@ export default function LinearAlgebraLab() {
   const colors = useThemeColors()
   const [store, setStore] = useState(readProgress)
   const [tab, setTab] = useState('learn')
+  const [view, setView] = useState('lesson')
   const [menu, setMenu] = useState(false)
   const [reference, setReference] = useState(false)
   const [saved, setSaved] = useState(true)
@@ -96,6 +99,8 @@ export default function LinearAlgebraLab() {
   const demo = typeof store.demos?.[lesson.id] === 'string' ? store.demos[lesson.id] : lesson.demo.code
   const draft = typeof store.drafts?.[lesson.id] === 'string' ? store.drafts[lesson.id] : lesson.challenge.starter
   const [hints, setHints] = useState(0)
+  const due = dueItems(LESSONS, store).length
+  const TABS = [['learn', 'Learn & run'], ['explore', 'Visual playground'], ['practice', 'Practice & challenge'], ...(lesson.proof ? [['reason', 'Reason & prove']] : [])]
 
   useEffect(() => { setSaved(saveProgress(store)) }, [store])
   useEffect(() => () => { revision.current++; activeRun.current?.cancel() }, [])
@@ -104,8 +109,10 @@ export default function LinearAlgebraLab() {
   function switchTab(value) { stop(); setTab(value); setResult(null) }
   function go(item) {
     stop(); setStore(previous => ({ ...previous, current: item.id })); setMenu(false)
-    setResult(null); setHints(0); setTab('learn'); main.current?.scrollTo?.({ top: 0 })
+    setResult(null); setHints(0); setTab('learn'); setView('lesson'); main.current?.scrollTo?.({ top: 0 })
   }
+  function openView(next) { stop(); setView(next); setMenu(false); main.current?.scrollTo?.({ top: 0 }) }
+  const answer = (key, correct) => setStore(previous => ({ ...previous, review: { ...previous.review, [key]: schedule(previous.review?.[key], correct) } }))
   function edit(field, code) {
     stop(); setResult(null)
     setStore(previous => ({ ...previous, [field]: { ...previous[field], [lesson.id]: code } }))
@@ -121,6 +128,7 @@ export default function LinearAlgebraLab() {
       const response = await job.promise
       if (token !== revision.current) return
       setResult(response)
+      if (!practice && !response.error) setStore(previous => previous.ran?.[lesson.id] ? previous : ({ ...previous, ran: { ...previous.ran, [lesson.id]: new Date().toISOString() } }))
       if (practice && !response.error && response.checks.length && response.checks.every(check => check.pass)) {
         setStore(previous => ({ ...previous, done: { ...previous.done, [lesson.id]: { code: draft, assisted: Boolean(previous.viewed?.[lesson.id]), at: new Date().toISOString() } } }))
       }
@@ -140,6 +148,7 @@ export default function LinearAlgebraLab() {
     <aside className={`la-sidebar ${menu ? 'la-open' : ''}`} aria-label="Series curriculum">
       <div className="la-brand"><span className="la-brand-icon" aria-hidden="true">A<i>x</i></span><div>Linear Algebra Lab<small>Powered by OpenMAT</small></div></div>
       <div className="la-progress"><div><strong>{doneCount} / {LESSONS.length}</strong><span>challenges checked</span></div><div className="la-bar-track"><i style={{ width: `${100 * doneCount / LESSONS.length}%` }} /></div><progress className="la-sr" aria-label="Challenges passed" max={LESSONS.length} value={doneCount} /><small>{independent} passed without opening a reference</small></div>
+      <div className="la-views"><button type="button" aria-pressed={view === 'map'} onClick={() => openView('map')}><span aria-hidden="true">◫</span> Mastery map</button><button type="button" aria-pressed={view === 'review'} onClick={() => openView('review')}><span aria-hidden="true">↻</span> Review{due ? <b>{due} due</b> : null}</button></div>
       <nav aria-label="Modules and lessons">{MODULES.map((module, moduleIndex) => {
         const items = LESSONS.filter(item => item.module === module), finished = items.filter(item => done[item.id]).length
         return <details key={module} open={lesson.module === module || undefined} className="la-module" style={hue(module)}><summary><span className="la-module-num">{pad(moduleIndex + 1)}</span><span className="la-module-name">{module}</span><span className="la-module-count">{finished}/{items.length}</span></summary><ol>{items.map(item => <li key={item.id}><button type="button" aria-current={item.id === lesson.id ? 'step' : undefined} onClick={() => go(item)}><span className={done[item.id] ? 'la-status la-complete' : 'la-status'}>{done[item.id] ? '✓' : pad(LESSONS.indexOf(item) + 1)}</span>{item.title}</button></li>)}</ol></details>
@@ -149,6 +158,9 @@ export default function LinearAlgebraLab() {
     <main className="la-main" ref={main}>
       <header className="la-topbar"><button type="button" className="la-menu-button" aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? 'Close curriculum' : 'Curriculum'}</button><span className="la-crumb"><i />{lesson.module}<b>›</b>{lesson.title}</span><button type="button" onClick={() => setReference(!reference)} aria-expanded={reference}>{reference ? 'Close syntax guide' : 'Syntax guide'}</button></header>
       <div className="la-content">
+        {view === 'map' && <MasteryMap lessons={LESSONS} modules={MODULES} store={store} onOpen={go} hue={hue} />}
+        {view === 'review' && <Review lessons={LESSONS} store={store} onAnswer={answer} onOpen={go} />}
+        {view === 'lesson' && <>
         {index === 0 && <Hero />}
         {!saved && <p role="status" className="la-feedback la-error">Browser storage is unavailable. Your work will last until this lab closes. Copy code you want to keep.</p>}
         {reference && <section className="la-card la-reference"><h2>OpenMAT from zero</h2><p>Code is a sequence of instructions. Run executes them from top to bottom in a fresh workspace. Challenge data runs first. Ctrl/Cmd + Enter runs the focused editor.</p><dl>{SYNTAX.map(([code, meaning]) => <div key={code}><dt><CodeView code={code} inline /></dt><dd>{meaning}</dd></div>)}</dl><p className="la-muted">OpenMAT uses a practical MATLAB-style subset. The examples here are tested in this engine. No installation or paid software is needed.</p></section>}
@@ -157,14 +169,15 @@ export default function LinearAlgebraLab() {
           <h1>{lesson.title}</h1><p>{lesson.objective}</p>
           {done[lesson.id] && <span className="la-earned">✓ {done[lesson.id].assisted ? 'Checked with reference support' : 'Challenge passed'}{done[lesson.id].code !== draft ? ' · draft has changed since that pass' : ''}</span>}
         </section>
-        <div className="la-tabs" role="tablist" aria-label="Lesson activities">{[['learn', '01', 'Learn & run'], ['explore', '02', 'Visual playground'], ['practice', '03', 'Practice & challenge']].map(([id, number, label]) => <button key={id} ref={element => { tabButtons.current[id] = element }} id={`${instance}-tab-${id}`} type="button" role="tab" tabIndex={tab === id ? 0 : -1} aria-selected={tab === id} aria-controls={`${instance}-panel-${id}`} onClick={() => switchTab(id)} onKeyDown={event => {
-          const ids = ['learn', 'explore', 'practice'], position = ids.indexOf(id)
+        <div className="la-tabs" role="tablist" aria-label="Lesson activities">{TABS.map(([id, label], position) => <button key={id} ref={element => { tabButtons.current[id] = element }} id={`${instance}-tab-${id}`} type="button" role="tab" tabIndex={tab === id ? 0 : -1} aria-selected={tab === id} aria-controls={`${instance}-panel-${id}`} onClick={() => switchTab(id)} onKeyDown={event => {
+          const ids = TABS.map(([key]) => key)
           const next = event.key === 'ArrowRight' ? ids[(position + 1) % ids.length] : event.key === 'ArrowLeft' ? ids[(position + ids.length - 1) % ids.length] : event.key === 'Home' ? ids[0] : event.key === 'End' ? ids.at(-1) : null
           if (next) { event.preventDefault(); switchTab(next); tabButtons.current[next]?.focus() }
-        }}><span>{number}</span>{label}</button>)}</div>
+        }}><span>{pad(position + 1)}</span>{label}</button>)}</div>
         <div role="tabpanel" id={`${instance}-panel-${tab}`} aria-labelledby={`${instance}-tab-${tab}`} key={`${lesson.id}-${tab}`}>
           {tab === 'learn' && <div className="la-learn">
             <section className="la-card la-reading"><div className="la-eyebrow">Start with a concrete example</div>{lesson.prose.map((paragraph, i) => <Prose key={i}>{paragraph}</Prose>)}</section>
+            <Notation items={lesson.notation} />
             <div className="la-pair">
               <section className="la-card la-procedure"><div className="la-eyebrow">A procedure to keep</div><ol>{lesson.procedure.map((step, i) => <li key={i}><Prose>{step}</Prose></li>)}</ol></section>
               <section className="la-card la-predict"><div className="la-eyebrow">Pause & predict</div><Prose>{lesson.prediction.question}</Prose><details className="la-details"><summary>Compare your reasoning</summary><Prose>{lesson.prediction.answer}</Prose></details></section>
@@ -178,6 +191,7 @@ export default function LinearAlgebraLab() {
               <h3>Read the code, line by line</h3>
               <dl className="la-explanations">{lesson.demo.explain.map((line, i) => <div key={i}><dt><CodeView code={line.code} inline /></dt><dd>{line.meaning}</dd></div>)}</dl>
             </section>
+            <QuickCheck key={lesson.id} lesson={lesson} onAnswer={answer} />
             <div className="la-next-activity"><p>Explain one change in your own words before moving on.</p><button type="button" className="la-primary" onClick={() => switchTab('explore')}>Open visual playground →</button></div>
           </div>}
           {tab === 'explore' && <><Explore lesson={lesson} /><div className="la-next-activity"><p>Now apply the idea with different inputs.</p><button type="button" className="la-primary" onClick={() => switchTab('practice')}>Try the challenge →</button></div></>}
@@ -192,13 +206,16 @@ export default function LinearAlgebraLab() {
             <div className="la-support"><h3>Need a foothold?</h3>{lesson.challenge.hints.slice(0, hints).map((hint, i) => <p key={i} className="la-hint"><strong>Hint {i + 1}</strong> {hint}</p>)}<button type="button" disabled={hints >= lesson.challenge.hints.length} onClick={() => setHints(hints + 1)}>{hints ? 'Reveal next hint' : 'Reveal first hint'}</button></div>
             <details className="la-details la-reference-answer" onToggle={viewSolution}><summary>Reveal reference solution · counts as assisted practice</summary><CodeView code={lesson.challenge.solution} label="Reference solution" /><p className="la-muted">Compare each operation with your approach. Then attempt the transfer task without copying.</p></details>
             <div className="la-transfer"><div className="la-eyebrow">Transfer the idea</div><h3>Go beyond the check</h3><Prose>{lesson.challenge.transfer}</Prose><p className="la-muted">This extension is self assessed. Record a prediction, working code, a numerical check, and an explanation of a failure case.</p></div>
+            {lesson.proof && <div className="la-next-activity"><p>You can compute it. Now show why it must be true.</p><button type="button" className="la-primary" onClick={() => switchTab('reason')}>Reason it out →</button></div>}
           </section>}
+          {tab === 'reason' && lesson.proof && <Proof key={lesson.id} lesson={lesson} proved={store.proved?.[lesson.id]} onComplete={record => setStore(previous => ({ ...previous, proved: { ...previous.proved, [lesson.id]: record } }))} />}
         </div>
         <footer className="la-footer">
           <button type="button" disabled={index === 0} onClick={() => go(LESSONS[index - 1])}>← Previous lesson</button>
           <span>{index + 1} of {LESSONS.length}</span>
           <button type="button" disabled={index === LESSONS.length - 1} onClick={() => go(LESSONS[index + 1])}>Next lesson →</button>
         </footer>
+        </>}
       </div>
     </main>
   </div>

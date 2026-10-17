@@ -9,6 +9,9 @@ export function readProgress() {
       demos: dictionary(value.demos),
       done: dictionary(value.done),
       viewed: dictionary(value.viewed),
+      ran: dictionary(value.ran),
+      proved: dictionary(value.proved),
+      review: dictionary(value.review),
     }
   } catch { return {} }
 }
