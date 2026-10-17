@@ -2,8 +2,9 @@
 // the DP one decision at a time (what a cell means, the last choice, the recurrence, base cases, fill
 // order, where the answer is), then computes one cell with the design they chose. Content: lessons/designs.js.
 import React, { useMemo, useState } from 'react'
-import { KINDS, applyCell } from './lessons/designs.js'
-import { show } from './tables.js'
+import { KINDS, applyCell, displayOrder } from './lessons/designs.js'
+import { TRACES, show } from './tables.js'
+import { TREE_FOR } from './trees.js'
 import { diagnose, parseCell } from './TableTrace.jsx'
 import { readProgress, saveProgress } from './progress.js'
 
@@ -50,7 +51,7 @@ function NumberCheck({ spec, label, onSolved, onShown, diagnoseGuess }) {
   )
 }
 
-function Decision({ step, onRight }) {
+function Decision({ step, order, onRight }) {
   const [tried, setTried] = useState([])
   const right = step.options.findIndex(o => o.right)
   const solved = tried.includes(right)
@@ -59,7 +60,7 @@ function Decision({ step, onRight }) {
     <div className="dp-di-check">
       <p className="dp-di-ask">{step.ask}</p>
       <div className="dp-di-options">
-        {step.options.map((o, i) => (
+        {order.map(i => [step.options[i], i]).map(([o, i]) => (
           <button
             key={i}
             type="button"
@@ -106,7 +107,7 @@ export default function DesignIt({ id, design, revision, onProgress, onFinish })
 
   const recurrence = design.steps.find(s => s.kind === 'recurrence')?.options.find(o => o.right)?.text
   const applySpec = applyTrace
-    ? { prompt: `Use your design. The cells it reads are filled; what is ${applyTrace.trace.table.name(...design.apply.cell)}?`, answer: applyTrace.step.value, explain: `${applyTrace.trace.table.name(...applyTrace.step.at)} = ${applyTrace.step.rule} → ${show(applyTrace.step.value)}.` }
+    ? { prompt: `Use your design. The cells it reads are filled; what is ${applyTrace.trace.table.name(...design.apply.cell)}?`, answer: applyTrace.step.value, misconceptions: design.apply.misconceptions, explain: `${applyTrace.trace.table.name(...applyTrace.step.at)} = ${applyTrace.step.rule} → ${show(applyTrace.step.value)}.` }
     : design.apply
 
   const pills = ['Try it', ...design.steps.map(s => LABEL[s.kind]), 'Use it']
@@ -148,7 +149,7 @@ export default function DesignIt({ id, design, revision, onProgress, onFinish })
       {typeof phase === 'number' && phase >= 1 && phase <= design.steps.length && (
         <>
           <p className="dp-eyebrow">DECISION {phase} OF {design.steps.length} · {LABEL[design.steps[phase - 1].kind].toUpperCase()}</p>
-          <Decision key={phase} step={design.steps[phase - 1]} onRight={solved} />
+          <Decision key={phase} step={design.steps[phase - 1]} order={displayOrder(id, phase - 1, design.steps[phase - 1].options)} onRight={solved} />
         </>
       )}
 
@@ -185,9 +186,9 @@ export default function DesignIt({ id, design, revision, onProgress, onFinish })
         <div className="dp-tt-feedback is-good" role="status">
           <strong>✓ You designed it{assisted ? ' (with a shown answer)' : ''}. </strong>
           {misses === 0 ? 'Every choice right the first time.' : `${misses} wrong ${misses === 1 ? 'pick' : 'picks'} on the way, each one a real mistake people make.`}
-          {' '}The explanation and the live table use exactly this design.
+          {' '}{TRACES[id] ? 'The explanation and the live table use exactly this design.' : 'The explanation and the worked example use exactly this design.'}
           <div className="dp-di-next">
-            <button type="button" className="dp-primary" onClick={() => onFinish('walk')}>Watch it fill →</button>
+            <button type="button" className="dp-primary" onClick={() => onFinish('walk')}>{TRACES[id] || TREE_FOR[id] ? 'Watch it fill →' : 'See it worked through →'}</button>
             <button type="button" className="dp-di-secondary" onClick={() => onFinish('understand')}>Read why it works</button>
             <button type="button" className="dp-di-quiet" onClick={() => { setPhase(0); setMisses(0); setAssisted(false); setReady(false) }}>Design it again</button>
           </div>

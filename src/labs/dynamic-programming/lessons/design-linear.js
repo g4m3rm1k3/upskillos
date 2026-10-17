@@ -46,7 +46,7 @@ export const LINEAR_DESIGNS = {
         { text: 'Any order: every cell uses the same rule', why: 'The rule is the same, but its inputs are not always ready. Fill D(5) first and it needs D(4) and D(3), which are still empty.' },
       ] },
       { kind: 'answer', ask: 'Where is the answer?', options: [
-        { text: 'The largest value in the table', why: 'It gives the same number here, because the terms never decrease, but for the wrong reason. Where the answer sits comes from what a cell means; in max subarray the largest cell and the last cell differ.' },
+        { text: 'D(n + 1)', why: 'Off by one: D(i) means F(i), so F(n) is cell n, and cell n + 1 is the next term.' },
         { text: 'D(n − 1) + D(n − 2), worked out after the loop', why: 'That is D(n) computed a second time. If the loop already reached n it is the same value; if the loop stopped at n − 1, the loop bound is the bug.' },
         { text: 'D(n)', right: true, why: 'D(i) means F(i), so the question F(n) is exactly cell n.' },
       ] },
@@ -233,10 +233,8 @@ export const LINEAR_DESIGNS = {
       ] },
     ],
     apply: {
-      prompt: 'Use your design on the circle [2, 3, 2]. What is the largest total?',
-      args: [[2, 3, 2]], answer: 3,
-      misconceptions: [{ answer: 4, feedback: '2 + 2 takes the first and last houses, which are neighbours in a circle. Solve the two streets, [3, 2] and [2, 3], and take the larger.' }],
-      explain: 'Without the first house the street is [3, 2], best 3. Without the last it is [2, 3], best 3. The larger is 3.',
+      cell: [0, 2],
+      misconceptions: [{ answer: 4, feedback: 'That skips house 2. Taking it adds its 2 to L(0) = 4.' }],
     },
   },
 
@@ -283,10 +281,8 @@ export const LINEAR_DESIGNS = {
       ] },
     ],
     apply: {
-      prompt: 'Use your design: day 1 rewards A 2, B 7; day 2 rewards A 6, B 3. What is the largest total?',
-      args: [[[2, 7], [6, 3]]], answer: 13,
-      misconceptions: [{ answer: 10, feedback: '7 + 3 does B twice in a row. Fill D(2, A) and D(2, B), each reading the other activity on day 1.' }],
-      explain: 'D(1, A) = 2, D(1, B) = 7. D(2, A) = 6 + D(1, B) = 13 and D(2, B) = 3 + D(1, A) = 5. The larger is 13.',
+      cell: [1, 1],
+      misconceptions: [{ answer: 14, feedback: '9 + D(1,2) = 9 + 5 does activity 2 two days running. Day 2’s activity 2 can only follow activity 1.' }],
     },
   },
 

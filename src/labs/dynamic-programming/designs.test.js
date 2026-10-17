@@ -1,13 +1,18 @@
 import { expect, it } from 'vitest'
-import { DESIGNS, KINDS, applyCell } from './lessons/designs.js'
-import { ORACLES } from './lessons/core-oracles.js'
+import { DESIGNS, KINDS, applyCell, displayOrder } from './lessons/designs.js'
+import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
+import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 import { LESSONS } from './lessons/index.js'
 import { LEVELS } from './curriculum.js'
 import { TRACES } from './tables.js'
 
 // What the hand-solved questions ask for, when it is not the whole challenge answer.
-const PICK = { 'max-subarray': v => v[0] }
+// Core lessons are checked against their challenges' oracles; Structured ones against enumeration only.
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES }
+const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0] }
 const oracle = (id, args) => (PICK[id] ?? (v => v))(ORACLES[id](args))
+// The curriculum groups whose every lesson has a design.
+const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling']
 
 // Numbers quoted inside option explanations and answers, checked by brute force: [oracle, args, value].
 const CLAIMS = [
@@ -30,11 +35,42 @@ const CLAIMS = [
   ['word-break', ['xcat', ['cat']], false],
   ['word-break', ['catsdog', ['cat', 'cats', 'sdog']], true],
   ['word-break-count', ['aaa', ['a', 'aa']], 3],
+  ['obstacle-paths', [[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]], 10],
+  ['obstacle-paths', [[[0, 0, 0], [0, 1, 0], [0, 0, 0]]], 2],
+  ['min-grid-path', [[[3]]], 3],
+  ['grid-resources', [[[1]], 0], 0],
+  ['grid-resources', [[[0, 1, 0], [0, 0, 1], [1, 0, 0]], 2], 6],
+  ['grid-direction', [[[0], [0]], 4], 0],
+  ['max-square', [[[0, 1], [1, 1]]], 1],
+  ['zero-one-knapsack', [[3, 4], [5, 7], 10], 12],
+  ['zero-one-knapsack', [[4, 6, 8], [1, 2, 3], 10], 3],
+  ['coin-combinations', [[1, 2], 4], 3],
+  ['coin-permutations', [[1, 2, 5], 5], 9],
+  ['coin-min', [[1, 3, 4], 6], 2],
+  ['exact-capacity', [[2, 3], [5, 4], 5], 9],
+  ['binomial', [6, 3], 20],
+  ['catalan', [2], 2],
+  ['inversion-counting', [3, 3], 1],
+  ['lis', [[3, 4, 1, 2, 3]], 3],
+  ['lis', [[2, 2]], 1],
+  ['lcs', ['ab', 'ba'], 1],
+  ['damerau', ['ca', 'abc'], 2],
+  ['shortest-supersequence', ['ab', 'ba'], 3],
+  ['edit-distance', ['ab', 'ba'], 2],
+  ['palindrome-substring', ['abca'], 4],
+  ['local-alignment', ['xabcy', 'zabcw', 2, 1, 1], 6],
+  ['strange-printer', ['abab'], 3],
+  ['optimal-bst', [[3, 1, 2]], 10],
+  ['partition-max', [[7, 2, 5, 10, 8], 2], 18],
+  ['stock-states', [[2, 5, 1, 4]], 6],
+  ['stock-k', [[3, 3, 5, 0, 0, 3, 1, 4], 1], 4],
+  ['batch-scheduling', [[2, 1, 1, 2], 0], 10],
 ]
 
-it('gives every one-dimensional lesson a design, and only lessons that exist', () => {
-  const linear = LEVELS.find(l => l.id === 'core').groups.find(g => g.id === 'linear').concepts.map(c => c.id)
-  for (const id of linear) expect(DESIGNS[id], id).toBeTruthy()
+it('gives every lesson in a designed group a design, and only lessons that exist', () => {
+  const ids = LEVELS.flatMap(l => l.groups).filter(g => DESIGNED.includes(g.id)).flatMap(g => g.concepts.map(c => c.id))
+  expect(ids.length).toBeGreaterThan(DESIGNED.length)
+  for (const id of ids) expect(DESIGNS[id], id).toBeTruthy()
   for (const id of Object.keys(DESIGNS)) expect(LESSONS[id], id).toBeTruthy()
 })
 
@@ -50,18 +86,28 @@ it('asks six decisions in order, each with one right option and a reason for eve
       expect(step.options.filter(o => o.right).length, `${id} ${step.kind}`).toBe(1)
       expect(new Set(step.options.map(o => o.text)).size, `${id} ${step.kind}`).toBe(step.options.length)
       for (const o of step.options) expect(o.why.length, `${id} ${step.kind}: ${o.text}`).toBeGreaterThan(25)
-      rightAt.push(step.options.findIndex(o => o.right))
+      rightAt.push(displayOrder(id, d.steps.indexOf(step), step.options).indexOf(step.options.findIndex(o => o.right)))
     }
-    // The right answer is not always in the same place, so position alone gives nothing away.
+    // As shown, the right answer is not always in the same place, so position gives nothing away.
     expect(new Set(rightAt).size, id).toBeGreaterThan(1)
   }
+})
+
+it('shows the right option in every position about equally often', () => {
+  const steps = Object.entries(DESIGNS).flatMap(([id, d]) => d.steps.map((s, k) => ({ n: s.options.length, at: displayOrder(id, k, s.options).indexOf(s.options.findIndex(o => o.right)) })))
+  for (const n of [2, 3]) {
+    const group = steps.filter(s => s.n === n)
+    for (let p = 0; p < n; p++) expect(group.filter(s => s.at === p).length / group.length, `${n} options, position ${p}`).toBeGreaterThan(0.6 / n)
+  }
+  // Every option is shown exactly once.
+  for (const [id, d] of Object.entries(DESIGNS)) d.steps.forEach((s, k) => expect([...displayOrder(id, k, s.options)].sort(), id).toEqual(s.options.map((_, i) => i)))
 })
 
 it('checks every hand-solved answer against brute force, and every misconception is wrong', () => {
   for (const [id, d] of Object.entries(DESIGNS)) {
     const checks = [d.tryFirst, ...(d.apply.cell ? [] : [d.apply])]
     for (const c of checks) {
-      expect(oracle(id, c.args), `${id}: ${c.prompt}`).toEqual(c.answer)
+      expect(oracle(c.oracle ?? id, c.args), `${id}: ${c.prompt}`).toEqual(c.answer)
       expect(c.explain.length, id).toBeGreaterThan(20)
       for (const m of c.misconceptions ?? []) {
         expect(m.answer, `${id} misconception`).not.toEqual(c.answer)
@@ -80,6 +126,7 @@ it('asks the apply question about a real, computed cell of the live table', () =
     // The cell is computed, not seeded, and every cell it reads is shown.
     const shown = new Set(a.known.map(([name]) => name))
     for (const r of a.step.reads) expect(shown.has(a.trace.table.name(...r)), `${id} reads ${r}`).toBe(true)
+    for (const m of d.apply.misconceptions ?? []) expect(m.answer, `${id} apply misconception`).not.toEqual(a.step.value)
   }
 })
 

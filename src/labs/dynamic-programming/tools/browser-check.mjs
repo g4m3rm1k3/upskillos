@@ -28,9 +28,18 @@ process.on('exit', stopServer)
 const wanted = id => !onlyArg || onlyArg.split(',').includes(id)
 const ids = [...new Set([...Object.keys(TRACES), ...Object.keys(TREE_FOR)])].filter(wanted)
 const problems = []
+// Open a lesson by its title. The match is anchored, or "Bounded knapsack" would open "Unbounded knapsack".
+const literal = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+let page
+async function openConcept(title) {
+  await page.getByRole('searchbox').fill(title)
+  await page.locator('.dp-concept').filter({ hasText: new RegExp(`^${literal(title)}`) }).first().click()
+  // Until the new lesson's heading shows, the previous lesson's panels may still be on the page.
+  await page.getByRole('heading', { name: title, exact: true }).waitFor({ timeout: 10000 })
+}
 const browser = await chromium.launch()
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
   page.on('pageerror', e => problems.push(`page error: ${e}`))
   page.on('console', m => { if (m.type() === 'error' && !/WebSocket|chorus|favicon/.test(m.text())) problems.push(`console: ${m.text().slice(0, 200)}`) })
   await page.addInitScript(() => { try { localStorage.setItem('oc-tour-seen', '1') } catch {} })
@@ -41,7 +50,7 @@ try {
   for (const id of ids) {
     const title = CONCEPTS.find(c => c.id === id).title
     await page.getByRole('searchbox').fill(title)
-    await page.locator('.dp-concept').filter({ hasText: title }).first().click()
+    await openConcept(title)
     await page.getByRole('button', { name: '02 · Walk through' }).click()
     const notes = []
     if (TREE_FOR[id]) {
@@ -75,7 +84,7 @@ try {
   for (const [id, d] of Object.entries(DESIGNS).filter(([id]) => wanted('design') || (onlyArg && wanted(id)))) {
     const title = CONCEPTS.find(c => c.id === id).title
     await page.getByRole('searchbox').fill(title)
-    await page.locator('.dp-concept').filter({ hasText: title }).first().click()
+    await openConcept(title)
     const di = page.getByRole('region', { name: 'Design it yourself' })
     if (!(await di.isVisible({ timeout: 10000 }).catch(() => false))) await page.getByRole('button', { name: '00 · Design it yourself' }).click()
     if (await di.getByRole('button', { name: 'Design it again' }).isVisible().catch(() => false)) await di.getByRole('button', { name: 'Design it again' }).click()
@@ -89,11 +98,14 @@ try {
       await di.getByRole('button', { name: step.options.find(o => !o.right).text, exact: true }).click()
       if (!(await di.locator('.dp-tt-feedback.is-bad').isVisible())) problems.push(`${id}: a wrong ${step.kind} pick got no reason`)
       await di.getByRole('button', { name: step.options.find(o => o.right).text, exact: true }).click()
+      // Wait for the reason to show before moving on: clicking Next while it re-renders can miss.
+      await di.locator('.dp-tt-feedback.is-good').waitFor({ timeout: 5000 })
       if (k === 2) await di.screenshot({ path: path.join(out, `${id}-design.png`) })
       await di.getByRole('button', { name: 'Next decision →' }).click()
     }
     const cell = d.apply.cell ? applyCell(id, d.apply).step.value : d.apply.answer
-    await answerWith(cell, typeof cell === 'boolean' ? 'text' : d.apply.kind)
+    // A live-table cell is always typed (T or F for yes-or-no tables); a hand-solved apply may be Yes/No buttons.
+    await answerWith(cell, d.apply.cell ? 'text' : d.apply.kind)
     await di.getByRole('button', { name: 'Finish the design →' }).click()
     await di.getByText(/You designed it/).waitFor({ timeout: 5000 }).catch(() => problems.push(`${id}: the design did not finish`))
     await di.screenshot({ path: path.join(out, `${id}-design-done.png`) })

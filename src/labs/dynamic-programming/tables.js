@@ -298,6 +298,97 @@ export const TRACES = {
     }
     return { title: `Permutations of 1..n by inversions, n ≤ ${N}`, setup: 'Insert the largest value n into one of n gaps: the gap decides how many inversions it adds (0 to n − 1).', table: t, answer: [N, K], args: [N, K] }
   },
+  // A ring: one street without the last house, one without the first, then the better of the two.
+  'circular-selection': ({ values: a = [4, 1, 2, 7] } = {}) => {
+    const n = a.length
+    const t = table(['skip the last house', 'skip the first house', 'answer'], a.map((v, i) => `${i} (${v})`), (r, c) => (r === 2 ? 'best' : `${r ? 'S' : 'L'}(${c})`))
+    const street = (r, from, to) => {
+      for (let i = from; i <= to; i++) {
+        const prev = i - 1 >= from ? t.get(r, i - 1) : 0, prev2 = i - 2 >= from ? t.get(r, i - 2) : 0
+        const reads = [i - 1, i - 2].filter(j => j >= from).map(j => [r, j])
+        t.set(r, i, Math.max(prev, a[i] + prev2), reads, `max(skip: ${prev}, take: ${a[i]} + ${prev2})`)
+      }
+    }
+    const title = `Houses ${list(a)} in a ring`, setup = 'The first and last houses are neighbours, so solve two streets: one leaving out the last house, one leaving out the first. The better of the two is the answer.'
+    if (n === 1) { t.set(2, 0, a[0], [], 'one house has no neighbour: take it'); return { title, setup, table: t, answer: [2, 0], args: [a] } }
+    street(0, 0, n - 2); street(1, 1, n - 1)
+    t.set(2, n - 1, Math.max(t.get(0, n - 2), t.get(1, n - 1)), [[0, n - 2], [1, n - 1]], `max(L(${n - 2}), S(${n - 1})) = max(${t.get(0, n - 2)}, ${t.get(1, n - 1)})`)
+    return { title, setup, table: t, answer: [2, n - 1], args: [a] }
+  },
+  // Days by activities; a day's cell reads yesterday's other activities. The last column picks the best ending.
+  'activity-selection': ({ rewards: g = [[4, 5], [1, 9], [2, 3]] } = {}) => {
+    const D = g.length, K = g[0].length
+    const t = table(g.map((_, d) => `day ${d + 1}`), [...g[0].map((_, a) => `activity ${a + 1}`), 'best'], (r, c) => (c === K ? 'best' : `D(${r + 1},${c + 1})`))
+    g[0].forEach((x, a) => t.seed(0, a, x, `D(1,${a + 1}) = ${x}: day 1 has no yesterday`))
+    for (let d = 1; d < D; d++) for (let a = 0; a < K; a++) {
+      const others = range(0, K - 1).filter(b => b !== a), best = maxOf(others.map(b => t.get(d - 1, b)))
+      t.set(d, a, g[d][a] + best, others.map(b => [d - 1, b]), `${g[d][a]} + max(${others.map(b => t.name(d - 1, b)).join(', ')}) = ${g[d][a]} + ${best}`)
+    }
+    const last = range(0, K - 1).map(a => [D - 1, a])
+    t.set(D - 1, K, maxOf(last.map(x => t.get(...x))), last, `max(${last.map(x => `${t.name(...x)} = ${t.get(...x)}`).join(', ')})`)
+    return { title: `Rewards ${rowsOf(g)}`, setup: 'D(d, a): the best total for days 1 to d when day d does activity a. It adds today’s reward to the best of yesterday’s OTHER activities.', table: t, answer: [D - 1, K], args: [g] }
+  },
+  'bounded-knapsack': ({ weights: w = [2, 3], values: v = [3, 5], counts: k = [3, 1], capacity: cap = 8 } = {}) => {
+    const t = table(['no items', ...w.map((x, i) => `item ${i + 1} (w${x}, v${v[i]}, ×${k[i]})`)], range(0, cap).map(c => `cap ${c}`), (r, c) => `D(${r},${c})`)
+    range(0, cap).forEach(c => t.seed(0, c, 0, `D(0,${c}) = 0: no items, no value`))
+    for (let i = 1; i <= w.length; i++) for (let c = 0; c <= cap; c++) {
+      const qs = range(0, Math.min(k[i - 1], Math.floor(c / w[i - 1])))
+      const opts = qs.map(q => q * v[i - 1] + t.get(i - 1, c - q * w[i - 1]))
+      t.set(i, c, maxOf(opts), qs.map(q => [i - 1, c - q * w[i - 1]]), `max(${qs.map((q, j) => `${q} cop${q === 1 ? 'y' : 'ies'}: ${q * v[i - 1]} + D(${i - 1},${c - q * w[i - 1]}) = ${opts[j]}`).join(', ')})`)
+    }
+    return { title: `Items ${w.map((x, i) => `(w${x}, v${v[i]}, up to ${k[i]})`).join(', ')}; capacity ${cap}`, setup: 'D(i, c): the best value from the first i items within capacity c. Try every number of copies of item i, up to its count, on the row above.', table: t, answer: [w.length, cap], args: [w, v, k, cap] }
+  },
+  // Subset sum up to half the total, then one more cell: the total minus twice the best reachable half.
+  'equal-partition': ({ values: a = [3, 1, 4, 2, 2] } = {}) => {
+    const S = a.reduce((x, y) => x + y, 0), H = Math.floor(S / 2), n = a.length
+    const t = table(['no values', ...a.map(x => `+ ${x}`), 'difference'], range(0, H).map(s => `${s}`), (r, c) => (r === n + 1 ? 'answer' : `R(${r},${c})`))
+    range(0, H).forEach(s => t.seed(0, s, s === 0, s === 0 ? 'R(0,0) = T: the empty group' : `R(0,${s}) = F`))
+    for (let i = 1; i <= n; i++) for (let s = 0; s <= H; s++) {
+      const reads = [[i - 1, s], ...(s >= a[i - 1] ? [[i - 1, s - a[i - 1]]] : [])]
+      t.set(i, s, reads.some(([r, c]) => t.get(r, c)), reads, `R(${i - 1},${s})${s >= a[i - 1] ? ` or R(${i - 1},${s - a[i - 1]}) (put ${a[i - 1]} in the group)` : ''}`)
+    }
+    const x = Math.max(...range(0, H).filter(s => t.get(n, s)))
+    t.set(n + 1, x, S - 2 * x, range(0, H).map(s => [n, s]), `the largest reachable total up to ${H} is ${x}: ${S} − 2·${x}`)
+    return { title: `Values ${list(a)}, total ${S}`, setup: `One group decides the other, so only one group’s total matters: which totals up to half (${H}) can a group reach? The difference is the total minus twice the best one.`, table: t, answer: [n + 1, x], args: [a] }
+  },
+  // Running totals from −sum to +sum: each value goes up or down by itself.
+  'target-signs': ({ values: a = [1, 1, 1], target = 1 } = {}) => {
+    const S = a.reduce((x, y) => x + y, 0), n = a.length
+    const t = table(['no values', ...a.map(x => `± ${x}`)], range(-S, S).map(s => `${s}`), (r, c) => `C(${r},${c - S})`)
+    range(-S, S).forEach(s => t.seed(0, s + S, s === 0 ? 1 : 0, s === 0 ? 'C(0,0) = 1: no signs yet, total 0' : `C(0,${s}) = 0`))
+    for (let i = 1; i <= n; i++) for (let s = -S; s <= S; s++) {
+      const x = a[i - 1], from = [s - x, s + x].filter(u => u >= -S && u <= S)
+      t.set(i, s + S, from.reduce((sum, u) => sum + t.get(i - 1, u + S), 0), from.map(u => [i - 1, u + S]), from.length ? `${from.map(u => `C(${i - 1},${u})`).join(' + ')} = ${from.map(u => t.get(i - 1, u + S)).join(' + ')}` : 'out of reach: 0')
+    }
+    return { title: `Values ${list(a)}, target ${target}`, setup: 'C(i, t): sign choices for the first i values that total t. +x arrives from t − x, −x from t + x; for a 0 both come from the same cell, which counts it twice.', table: t, answer: [n, target + S], args: [a, target] }
+  },
+  // The 0/1 knapsack with −∞ for "no choice fills this exactly"; only the start differs.
+  'exact-capacity': ({ weights: w = [2, 3, 4], values: v = [5, 4, 6], capacity: cap = 6 } = {}) => {
+    const t = table(['no items', ...w.map((x, i) => `item ${i + 1} (w${x}, v${v[i]})`)], range(0, cap).map(c => `fill ${c}`), (r, c) => `D(${r},${c})`)
+    range(0, cap).forEach(c => t.seed(0, c, c === 0 ? 0 : -INF, c === 0 ? 'D(0,0) = 0: nothing fills 0' : `D(0,${c}) = −∞: nothing fills ${c}`))
+    for (let i = 1; i <= w.length; i++) for (let c = 0; c <= cap; c++) {
+      const skip = t.get(i - 1, c)
+      if (w[i - 1] > c) { t.set(i, c, skip, [[i - 1, c]], `item ${i} is too heavy: D(${i - 1},${c}) = ${show(skip)}`); continue }
+      const take = v[i - 1] + t.get(i - 1, c - w[i - 1])
+      t.set(i, c, Math.max(skip, take), [[i - 1, c], [i - 1, c - w[i - 1]]], `max(skip: ${show(skip)}, take: ${v[i - 1]} + D(${i - 1},${c - w[i - 1]}) = ${show(take)})`)
+    }
+    return { title: `Items ${w.map((x, i) => `(w${x}, v${v[i]})`).join(', ')}; fill exactly ${cap}`, setup: 'The 0/1 knapsack rule, but every capacity except 0 starts at −∞. A cell stays −∞ until some choice fills it exactly, so the answer is an exact fill (−∞ means −1: impossible).', table: t, answer: [w.length, cap], args: [w, v, cap], check: x => (x === -1 ? -INF : x) }
+  },
+  // Indexed by value, storing the least weight; the last row picks the largest value that fits.
+  'value-knapsack': ({ weights: w = [4, 6, 8], values: v = [1, 2, 3], capacity: cap = 10 } = {}) => {
+    const V = v.reduce((x, y) => x + y, 0), n = w.length
+    const t = table(['no items', ...w.map((x, i) => `item ${i + 1} (w${x}, v${v[i]})`), 'answer'], range(0, V).map(x => `value ${x}`), (r, c) => (r === n + 1 ? 'answer' : `W(${r},${c})`))
+    range(0, V).forEach(x => t.seed(0, x, x === 0 ? 0 : INF, x === 0 ? 'W(0,0) = 0' : `W(0,${x}) = ∞: no items make ${x}`))
+    for (let i = 1; i <= n; i++) for (let x = 0; x <= V; x++) {
+      const skip = t.get(i - 1, x)
+      if (v[i - 1] > x) { t.set(i, x, skip, [[i - 1, x]], `item ${i} is worth more than ${x}: W(${i - 1},${x}) = ${show(skip)}`); continue }
+      const take = w[i - 1] + t.get(i - 1, x - v[i - 1])
+      t.set(i, x, Math.min(skip, take), [[i - 1, x], [i - 1, x - v[i - 1]]], `min(skip: ${show(skip)}, take: ${w[i - 1]} + W(${i - 1},${x - v[i - 1]}) = ${show(take)})`)
+    }
+    const best = Math.max(...range(0, V).filter(x => t.get(n, x) <= cap))
+    t.set(n + 1, best, best, range(0, V).map(x => [n, x]), `the largest value whose least weight fits in ${cap}: W(${n},${best}) = ${t.get(n, best)}`)
+    return { title: `Items ${w.map((x, i) => `(w${x}, v${v[i]})`).join(', ')}; capacity ${cap}`, setup: 'W(i, x): the least weight that makes exactly value x from the first i items. Values are few, so this table is small even when weights are huge.', table: t, answer: [n + 1, best], args: [w, v, cap] }
+  },
   lcs: ({ a = 'abcb', b = 'bdcab' } = {}) => {
     const t = table(['∅', ...a.split('').map((ch, i) => `${i + 1} ${ch}`)], ['∅', ...b.split('').map((ch, j) => `${j + 1} ${ch}`)], (r, c) => `D(${r},${c})`)
     for (let i = 0; i <= a.length; i++) t.seed(i, 0, 0, 'an empty prefix: 0')
@@ -367,6 +458,13 @@ export const INPUTS = {
   derangements: { fields: [int('n', 'Letters', 2, 12)] },
   stirling: { fields: [int('n', 'n', 1, 8), int('k', 'k', 0, 8)], rule: i => (i.k <= i.n ? null : 'k can be at most n.') },
   'inversion-counting': { fields: [int('n', 'n', 1, 5), int('k', 'k', 0, 10)], rule: i => (i.k <= (i.n * (i.n - 1)) / 2 ? null : `With n = ${i.n} there are at most ${(i.n * (i.n - 1)) / 2} inversions.`) },
+  'circular-selection': { fields: values(0, 99, [1, 9]) },
+  'activity-selection': { fields: [{ key: 'rewards', label: 'Rewards (one row per day)', kind: 'matrix', min: -9, max: 20, rows: [1, 6], cols: [2, 4] }] },
+  'bounded-knapsack': { fields: [ints('weights', 'Weights', 1, 6, [1, 4]), ints('values', 'Values', 0, 9, [1, 4]), ints('counts', 'Copies of each', 0, 3, [1, 4]), int('capacity', 'Capacity', 0, 12)], rule: i => (i.weights.length === i.values.length && i.values.length === i.counts.length ? null : 'Give one value and one count for each weight.') },
+  'equal-partition': { fields: [ints('values', 'Values', 1, 8, [1, 5])] },
+  'target-signs': { fields: [ints('values', 'Values', 0, 4, [1, 4]), int('target', 'Target', -16, 16)], rule: i => { const s = i.values.reduce((x, y) => x + y, 0); return Math.abs(i.target) <= s ? null : `With these values the total can only be from −${s} to ${s}.` } },
+  'exact-capacity': { fields: [ints('weights', 'Weights', 1, 9, [1, 5]), ints('values', 'Values', 0, 20, [1, 5]), int('capacity', 'Capacity to fill', 0, 12)], rule: sameLength },
+  'value-knapsack': { fields: [ints('weights', 'Weights', 1, 12, [1, 5]), ints('values', 'Values', 0, 4, [1, 5]), int('capacity', 'Capacity', 0, 30)], rule: sameLength },
   lcs: { fields: [text('a', 'First', 'a-z', [1, 8]), text('b', 'Second', 'a-z', [1, 10])] },
   'edit-distance': { fields: [text('a', 'From', 'a-z', [1, 8]), text('b', 'To', 'a-z', [1, 10])] },
   lis: { fields: values(0, 99, [1, 12]) },

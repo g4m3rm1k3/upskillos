@@ -32,6 +32,6 @@ A lab meets the standard when every lesson can tick each line, or the lab's doc 
 | QMaze | partly | ✓ | ✓ | ✓ | ✓ | Python tab | ✓ | Python tab | – |
 | Data Science Studio | partly | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Python tab | – |
 | Linear Algebra | partly | ✓ | ✓ | ✓ | – | ✓ | seeded draws | – | ✓ |
-| Dynamic Programming | ✓ (11 lessons), partly | ✓ (35 lessons) | ✓ | ✓ | to do | ✓ | ✓ | ✓ | to do |
+| Dynamic Programming | ✓ (87 full lessons) | ✓ (42 lessons) | ✓ | ✓ | to do | ✓ | ✓ | ✓ | to do |
 
 What the DP lab still needs to meet the standard everywhere is in [dynamic-programming-lab.md](dynamic-programming-lab.md#plan).

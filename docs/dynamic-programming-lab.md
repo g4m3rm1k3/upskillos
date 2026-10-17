@@ -7,9 +7,9 @@ The owner's brief (2026-10-17): DP should be **better than every other lab**, re
 ## What is there
 
 - **Curriculum** (`curriculum.js`): 253 concepts in 6 levels, Foundations to Specialist, each with a stable id, title and scope. Every concept has a lesson (`lessons/`), so none are "coming soon".
-- **Design it yourself** (`DesignIt.jsx`, content in `lessons/designs.js` and `lessons/design-linear.js`) on the 11 one-dimensional lessons: stage 00, before any explanation. The learner solves a small case by hand (common wrong answers get a named diagnosis), then makes six decisions: what a cell means, the last choice, the recurrence, base cases, fill order, where the answer is. Every option has a reason, and the wrong ones are real mistakes. Each right choice joins a "Your design so far" card. It ends with one cell of the live table computed by hand, diagnosed with `diagnose()`. Finishing it is saved, along with the wrong-pick count and whether an answer was shown.
+- **Design it yourself** (`DesignIt.jsx`, content in `lessons/designs.js` and one `lessons/design-<family>.js` per family) on all 87 Core and Structured lessons (one file per family, `lessons/design-<family>.js`): stage 00, before any explanation. The learner solves a small case by hand (common wrong answers get a named diagnosis), then makes six decisions: what a cell means, the last choice, the recurrence, base cases, fill order, where the answer is. Every option has a reason, and the wrong ones are real mistakes. The right option is shown in a rotating position (`displayOrder`), because authors tend to write it first. Each right choice joins a "Your design so far" card. It ends with one cell of the live table computed by hand, diagnosed with `diagnose()`. Finishing it is saved, along with the wrong-pick count and whether an answer was shown.
 - **A lesson** (`Lesson.jsx`) has three stages after that: Understand (sections, procedure, proof, complexity, pitfall), Walk through, and Solve a problem (a coding challenge) or Check understanding (one typed answer).
-- **Live table** (`TableTrace.jsx`, data in `tables.js`) on 31 lessons, in the Walk through stage:
+- **Live table** (`TableTrace.jsx`, data in `tables.js`) on 38 lessons, in the Walk through stage:
   - *Watch it fill*: play, pause, step, scrub, speed, arrow keys. The cell being written glows; arrows come from the cells it reads; the arithmetic is written out; base cases are listed first; the answer cell is marked.
   - *You fill it*: type each cell before it is revealed. Wrong answers get a diagnosis (copied one input, added instead of max/min, off by one). "Show the rule" after one miss, "Reveal" after two. Hard mode hides which cells are read. A clean run is saved ("✓ Filled by you").
   - *Fill order*: click cells in any order; a cell fills only when everything it reads is filled, otherwise the missing cells flash red with arrows. Ends by naming it: a topological order.
@@ -39,8 +39,8 @@ All lesson progress (drafts, passes, quiz, design) is in one localStorage key, `
 
 In order of value. Each item lists what it adds against [the standard](lab-quality-standard.md).
 
-1. **"Design it yourself" for every lesson** (standard 1, 3). Done for the one-dimensional family (2026-10-17); the next is grids, then knapsack, then counting, then Structured: before the explanation, the learner builds the DP: what the state means, what the last choice was, the recurrence, base cases, order, where the answer is. Each a choice with a reason for every option, wrong options written from real misconceptions. This is the "how to think" core of the lab.
-2. **Visuals for every family that has a table** (2, 3, 4): traces for the remaining Core lessons (circular selection, activity selection, grid resources/direction/two agents, bounded, equal partition, target signs, value-indexed, multidimensional, group and exact-capacity knapsack), then Structured (interval DP with diagonal fill order, matrix chain, palindromes, scheduling). New visual kinds for what isn't a grid: DP on a drawn tree, bitmask states, digit DP, DAG longest path.
+1. **"Design it yourself" for every lesson** (standard 1, 3). Done for all 87 Core and Structured lessons (2026-10-17). The Advanced to Specialist rows get theirs with item 8, when they become full lessons. What it is: before the explanation, the learner builds the DP: what the state means, what the last choice was, the recurrence, base cases, order, where the answer is. Each a choice with a reason for every option, wrong options written from real misconceptions. This is the "how to think" core of the lab.
+2. **Visuals for every family that has a table** (2, 3, 4): done on 2026-10-17 for circular selection, activity selection, bounded knapsack, equal partition, target signs, exact capacity and value-indexed knapsack. Still to do: the Core lessons with three or more dimensions (grid resources, grid direction, two-agent grid, multidimensional knapsack) and group knapsack (needs an input box for groups), then Structured (interval DP with diagonal fill order, matrix chain, palindromes, scheduling). New visual kinds for what isn't a grid: DP on a drawn tree, bitmask states, digit DP, DAG longest path.
 3. **Walk back the answer** (2): animate reconstruction on the finished table (which choice made each cell), for the reconstruction, LCS, edit distance, knapsack and path lessons.
 4. **Bug hunts** (3, 6): a solution with one classic DP bug (loop direction in 0/1 knapsack, the wrong base case, a shared row, a cache key that misses a parameter). Find the line, fix it, Run to see why.
 5. **Code with notes and maths-to-code tables** (5): the reference solution of each core lesson shown line by line, after the learner's own attempt.
@@ -48,7 +48,7 @@ In order of value. Each item lists what it adds against [the standard](lab-quali
 7. **Spaced review and a mastery map** (10), ported from Linear Algebra.
 8. **Deepen the Advanced, Expert and Specialist lessons** (all): they are one-row summaries now (`advanced.js`, `expert.js`, `specialist.js`); each becomes a full lesson with a worked example, visual and checks.
 
-Pace: one topic family per session, then update **Where we stopped**.
+Pace: keep building in the same session and update **Where we stopped** as each family lands; hand off only when the context is nearly full.
 
 ## Verification
 
@@ -61,7 +61,7 @@ This file is the handoff between sessions. Nothing in it is deleted until every 
 
 1. Read this file, then [lab-quality-standard.md](lab-quality-standard.md).
 2. Run `npx vitest run src/labs/dynamic-programming` to confirm the starting state.
-3. Do the **Next** item below, one topic family per session.
+3. Do the **Next** item below, then keep going to the following one; hand off only when the context is nearly full.
 4. End the session with: tests, `npm run typecheck`, the browser check (and a look at its screenshots), then update Plan and Where we stopped here.
 
 Reusable, permanent tools: `tools/browser-check.mjs` (browser), `tables.test.js` (checks any new trace on random inputs automatically), and `trees.test.js` (trees against tables).
@@ -75,6 +75,11 @@ Reusable, permanent tools: `tools/browser-check.mjs` (browser), `tables.test.js`
 - **The grid-paths challenge allows diagonal moves**, but the lesson and table don't, so the table is checked against its own right/down oracle in `tables.test.js`.
 - **The 14 "content problems"** reported by `npm run catalog:check` predate this lab; don't chase them here.
 - **Element screenshots in the narrow window** show page content from behind the lab below the window's visible area ("Open Lesson Engine"). It is the screenshot capturing the element's whole box, not a layout bug; check that the page does not scroll sideways instead.
+- **The browser check opens lessons by an anchored title match** (`openConcept`): a plain text match opened "Unbounded knapsack" for "Bounded knapsack".
+- **The browser check waits for a decision's reason** before clicking "Next decision"; clicking while it re-renders failed once (a flake).
+- **Shell heredocs with apostrophes** still break (twice this session): write a Python file with the Write tool and run that.
+- **The browser check waits for the lesson heading** after opening a lesson; without it, answers went into the previous lesson's panel (a race, seen once).
+- **Type numbers only after computing them.** Writing a design's answers by hand got three of 16 wrong. Print each oracle's answer next to the typed one before running the tests.
 - **The lab's base button style** (`.dp-lab button`) has no border or padding. A new plain button needs a class (`dp-di-secondary`) or it shows as bare text.
 - **Other sessions share this working tree** (see the owner's parallel-sessions note): commit only DP lab files and this doc.
 
@@ -88,4 +93,11 @@ Reusable, permanent tools: `tools/browser-check.mjs` (browser), `tables.test.js`
 - Added Run (prints, return value, error line; both languages), "Put this input in the Run box", and Open in CodeLens past Foundations; the lab remembers the open lesson and stage.
 - Finished the previous session's expert/specialist rows (their tests failed on short explanations).
 - Later the same day: built "Design it yourself" for the 11 one-dimensional lessons (plan item 1, first family). Fixed: quiz passes were dropped on every read (`readProgress` kept only code entries). The owner reported that solving showed nothing and progress wasn't saved to the database, so progress moved into the synced `oc-dp-lab` key, with a merge, an immediate push, and ✓ marks everywhere (see Progress and sync).
-- **Next:** plan item 1 for the grid family (`grid-paths` to `grid-multiagent`, 8 lessons, 4 with live traces), then knapsack. Then item 2. Consider syncing the "Filled by you" marks too.
+- Then the grid family (8 lessons, `lessons/design-grids.js`). The grid-paths design is the right/down version that the lesson and table teach; its problem text says the challenge adds a diagonal move, and its try-first is checked with the obstacle-paths oracle (`tryFirst.oracle`). Computing every number with the oracles before testing caught three wrong typed answers; keep doing that (a scratch script that prints oracle against typed).
+- Then the knapsack family (14 lessons, `lessons/design-knapsack.js`). A trace-based apply can carry `misconceptions` too (coin-min's greedy 3). The number check is a reusable scratch script, kept here as a recipe: import `ORACLES`, `TRACES` and a design file, and print oracle against typed for every `tryFirst`, every args-based `apply`, and every `apply.cell`, flagging any misconception equal to the answer.
+- Then the counting family (7 lessons, `lessons/design-counting.js`). Every Core lesson now has a design.
+- Then Structured's subsequence group (9 lessons, `lessons/design-sequences.js`). Structured lessons have quizzes, not challenges, so their numbers are checked against `lessons/structured-oracles.js`: enumeration of every subsequence, split or schedule, never a DP. Each new oracle is first checked against the lesson's own quiz answer.
+- Then the rest of Structured: strings (18), intervals (12) and scheduling (8). The oracles search directly: Dijkstra over strings for edit distances, the regular-expression engine for wildcard and regex, every split, merge order, tree or action sequence for the rest. Each oracle was checked against its lesson's quiz answer and textbook values (burst balloons [3, 1, 5, 8] = 167, matrix chain 10·30·5·60 = 4500).
+- Proofreading found "wrong" options that were not wrong (they gave the right number by another route); every wrong option must give a wrong answer or break the method. Fixed in five lessons.
+- Then plan item 2 began: live tables for 7 Core lessons (circular selection, activity selection, bounded knapsack, equal partition, target signs, exact capacity, value-indexed knapsack). A table whose answer is not a cell (the ring, the best ending day, the difference, the largest value that fits) ends with an extra row or column whose one cell reads the cells it chooses from. Their designs now ask about a table cell, as `designs.test.js` requires once a trace exists.
+- **Next:** item 2 for Structured, starting with interval DP (matrix chain, palindromes) and its diagonal fill order, then a visual for the three-dimensional Core lessons (a layer picker over a 2-D table, for example). Then item 3 (walk back the answer). Consider syncing the "Filled by you" marks too.

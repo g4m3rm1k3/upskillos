@@ -81,7 +81,7 @@ it('opens a designed lesson on the design stage, and others on Understand', () =
   fireEvent.click(screen.getByRole('button', { name: '02 · Walk through' }))
   expect(screen.queryByRole('region', { name: 'Design it yourself' })).toBeNull()
   cleanup()
-  render(<Lesson lesson={LESSONS['grid-paths']} concepts={concepts} onSelect={() => {}} />)
+  render(<Lesson lesson={LESSONS['plug-dp']} concepts={concepts} onSelect={() => {}} />)
   expect(screen.queryByRole('button', { name: '00 · Design it yourself' })).toBeNull()
   expect(screen.getByRole('region', { name: 'Concept walkthrough' })).toBeTruthy()
 })
