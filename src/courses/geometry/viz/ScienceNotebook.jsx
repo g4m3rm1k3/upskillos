@@ -6,7 +6,14 @@
  *   type:'js'          — auto-run canvas / animation preview (read-only)
  *   type:'markdown'    — rich markdown prose
  *   type:'challenge'   — multiple-choice question with A/B/C/D buttons
- *   type:'coding'      — Monaco editor + Run + solutionCode reveal + check(code)→bool
+ *   type:'coding'      — Monaco editor + Run + solutionCode reveal, checked one of two ways:
+ *                        tests: JavaScript run after the learner's code, in a Web Worker the
+ *                          sandboxed frame starts (it can call what they defined; there is no
+ *                          DOM). It reports lines with __line(ok, text) and ends with
+ *                          __verdict(pass, message). Their code never runs in the app, and the
+ *                          frame stops it after 5 seconds.
+ *                          timeoutMessage: what to say when it is stopped.
+ *                        check(code) → bool or { pass, message }: inspects the source text.
  *   type:'walkthrough' — numbered steps with a live preview the learner follows
  */
 
@@ -275,9 +282,11 @@ function MDText({ text, T }) {
         ol: ({...p}) => <ol style={{listStyleType:'decimal',paddingLeft:'1.5rem',marginBottom:'1rem'}} {...p}/>,
         li: ({...p}) => <li style={{marginBottom:'0.25rem'}} {...p}/>,
         strong: ({...p}) => <strong style={{color:T.text,fontWeight:600}} {...p}/>,
-        code: ({inline,...p}) => inline
-          ? <code style={{fontFamily:'monospace',background:T.panel2,color:T.accent,padding:'2px 6px',borderRadius:4,fontSize:12}} {...p}/>
-          : <code style={{display:'block',padding:'12px',background:T.panel2,borderRadius:8,margin:'10px 0',fontSize:12,fontFamily:'monospace'}} {...p}/>,
+        // react-markdown 10 no longer says whether code is inline: a fenced block has a
+        // language class or spans lines, and everything else is inline.
+        code: ({node,className,children,...p}) => (/language-/.test(className || '') || String(children).includes('\n'))
+          ? <code className={className} style={{display:'block',padding:'12px',background:T.panel2,borderRadius:8,margin:'10px 0',fontSize:12,fontFamily:'monospace',whiteSpace:'pre',overflowX:'auto'}} {...p}>{children}</code>
+          : <code style={{fontFamily:'monospace',background:T.panel2,color:T.accent,padding:'2px 6px',borderRadius:4,fontSize:12}} {...p}>{children}</code>,
         blockquote: ({...p}) => <blockquote style={{borderLeft:`3px solid ${T.accent}`,paddingLeft:14,color:T.muted,margin:'10px 0'}} {...p}/>,
         table: ({...p}) => <table style={{borderCollapse:'collapse',width:'100%',margin:'12px 0',fontSize:13}} {...p}/>,
         th: ({...p}) => <th style={{padding:'6px 12px',borderBottom:`2px solid ${T.accent}`,textAlign:'left',color:T.accent,fontWeight:600}} {...p}/>,
@@ -558,7 +567,29 @@ function CodingCell({ cell, cellIndex, T, dark, monacoTheme, onPass }) {
   const [showSolution, setShowSolution] = useState(false)
   const [showConsole, setShowConsole]   = useState(false)
   const [height, setHeight]     = useState(cell.outputHeight || 220)
+  const [doc, setDoc]           = useState('')    // what the output frame runs
+  const [runCount, setRunCount] = useState(0)     // remounts the frame on every Run
+  const [message, setMessage]   = useState(null)  // why a check failed, from check() or the tests
+  const [waiting, setWaiting]   = useState(false) // hidden tests are running in the frame
+  const waitTimer = useRef(null)
   const manualRef = useRef(false)
+  useEffect(() => () => clearTimeout(waitTimer.current), [])
+
+  // A cell with hidden `tests` gets its verdict from the sandboxed frame, where the
+  // learner's code ran: { type: 'sn_verdict', pass, message }. The app never runs their code.
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.data || e.data.type !== 'sn_verdict') return
+      if (e.source !== iframeRef.current?.contentWindow) return
+      clearTimeout(waitTimer.current)
+      setWaiting(false)
+      setResult(e.data.pass ? 'pass' : 'fail')
+      setMessage(e.data.message || null)
+      if (e.data.pass && onPass) onPass(cellIndex)
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [cellIndex, onPass])
 
   // Console messages from iframe
   useEffect(() => {
@@ -595,15 +626,52 @@ function CodingCell({ cell, cellIndex, T, dark, monacoTheme, onPass }) {
 
   const activeCode = showSolution ? (cell.solutionCode || code) : code
 
-  // Build an iframe doc that also pipes console to parent
-  function buildCodingDoc(html, css, js) {
-    const escaped = js.replace(/<\/script>/gi, '<\\/script>')
+  // Build an iframe doc that also pipes console to parent.
+  function buildCodingDoc(html, css, js, tests) {
+    const escape = (code) => code.replace(/<\/script>/gi, '<\\/script>')
     const iframeBg   = dark ? '#0f1923' : '#ffffff'
     const iframeText = dark ? '#e2e8f0' : '#1e293b'
-    return `<!DOCTYPE html><html class="${dark?'dark':''}"><head><meta charset="utf-8">
+    const head = `<!DOCTYPE html><html class="${dark?'dark':''}"><head><meta charset="utf-8">
 <style>:root{${iframeThemeVars(dark)}}*,*::before,*::after{box-sizing:border-box}
 body{margin:0;padding:14px;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;background:${iframeBg};color:${iframeText}}
-${css || ''}</style></head><body>${html || ''}
+${css || ''}</style></head><body>${html || ''}`
+    const resize = `;(function(){function r(){window.parent.postMessage({type:'sn_resize',h:document.body.scrollHeight},'*')}
+if(window.ResizeObserver){new ResizeObserver(r).observe(document.body)}else{window.addEventListener('load',r);}
+window.addEventListener('load',r);})();`
+    if (tests) {
+      // Hidden tests: the learner's code and the tests run together in a Web Worker started
+      // by this frame, so a slow or endless loop blocks only the worker. The frame draws each
+      // result line, forwards the verdict, and stops the worker after 5 seconds.
+      const worker = `var __post=function(m){postMessage(m)};
+function __line(ok,text){__post({kind:'line',ok:!!ok,text:String(text)})}
+function __verdict(pass,message){__post({kind:'verdict',pass:!!pass,message:message?String(message):''})}
+console={log:function(){__post({kind:'log',level:'log',msg:[].slice.call(arguments).map(String).join(' ')})},warn:function(){__post({kind:'log',level:'warn',msg:[].slice.call(arguments).map(String).join(' ')})},error:function(){__post({kind:'log',level:'error',msg:[].slice.call(arguments).map(String).join(' ')})}};
+try{(function(){
+${js}
+;(function(){
+${tests}
+})();
+})();}catch(e){__verdict(false,'Your code stopped with an error: '+e.message);}`
+      const literal = (value) => JSON.stringify(value).replace(/<\//g, '<\\/')
+      return `${head}
+<div id="tests"></div>
+<script>
+(function(){
+  var out=document.getElementById('tests'), done=false;
+  function finish(pass,message){if(done)return;done=true;clearTimeout(timer);try{w.terminate()}catch(_){}
+    window.parent.postMessage({type:'sn_verdict',pass:pass,message:message},'*');}
+  var w=new Worker(URL.createObjectURL(new Blob([${literal(worker)}],{type:'text/javascript'})));
+  var timer=setTimeout(function(){finish(false,${literal(cell.timeoutMessage || 'No result after 5 seconds. Is there a loop that never ends?')})},5000);
+  w.onmessage=function(e){var m=e.data;
+    if(m.kind==='line'){var d=document.createElement('div');d.textContent=(m.ok?'PASS  ':'FAIL  ')+m.text;d.style.cssText='font:12.5px ui-monospace,monospace;padding:2px 0;color:'+(m.ok?'#16a34a':'#dc2626');out.appendChild(d);}
+    else if(m.kind==='log'){window.parent.postMessage({type:'jsnb_console',level:m.level,msg:m.msg,cellIndex:${cellIndex}},'*');}
+    else if(m.kind==='verdict'){finish(m.pass,m.message);}};
+  w.onerror=function(e){e.preventDefault();window.parent.postMessage({type:'jsnb_console',level:'error',msg:e.message,cellIndex:${cellIndex}},'*');finish(false,'Your code could not run: '+e.message);};
+})();
+${resize}
+<\/script></body></html>`
+    }
+    return `${head}
 <script>
 window.__cellId='coding-${cellIndex}';
 (function(){
@@ -615,23 +683,37 @@ window.__cellId='coding-${cellIndex}';
   console.warn=function(){_w.apply(console,arguments);post('warn',[].slice.call(arguments));};
   window.addEventListener('error',function(ev){if(ev.error)post('error',[ev.message]);ev.preventDefault();},true);
 })();
-try{(function(){\n${escaped}\n})();}catch(e){console.error('Error: '+e.message);}
-;(function(){function r(){window.parent.postMessage({type:'sn_resize',h:document.body.scrollHeight},'*')}r();
-if(window.ResizeObserver){new ResizeObserver(r).observe(document.body)}else{window.addEventListener('load',r);
-}})();<\/script></body></html>`
+try{(function(){\n${escape(js)}\n})();}catch(e){console.error('Error: '+e.message);}
+${resize}
+<\/script></body></html>`
   }
 
   const run = useCallback(() => {
     setLogs([])
     setHasRun(true)
     setShowConsole(true)
-    if (iframeRef.current) {
-      iframeRef.current.srcdoc = buildCodingDoc(cell.html || '', cell.css || '', activeCode)
-    }
-    if (cell.check) {
+    setResult(null)
+    setMessage(null)
+    clearTimeout(waitTimer.current)
+    // The frame is only mounted once the cell has run, so its document lives in state.
+    setDoc(buildCodingDoc(cell.html || '', cell.css || '', activeCode, cell.tests))
+    setRunCount(n => n + 1)
+    if (cell.tests) {
+      setWaiting(true)
+      // The frame stops the learner's code itself after 5 seconds and reports it; this only
+      // catches a frame that never answers at all.
+      waitTimer.current = setTimeout(() => {
+        setWaiting(false)
+        setResult('fail')
+        setMessage(cell.timeoutMessage || 'No result after 5 seconds. Is there a loop that never ends?')
+      }, 8000)
+    } else if (cell.check) {
       try {
-        const passed = cell.check(activeCode)
+        const checked = cell.check(activeCode)
+        const detailed = checked && typeof checked === 'object'
+        const passed = detailed ? !!checked.pass : !!checked
         setResult(passed ? 'pass' : 'fail')
+        setMessage(detailed && checked.message ? checked.message : null)
         if (passed && onPass) onPass(cellIndex)
       } catch (_) { setResult('fail') }
     }
@@ -643,7 +725,10 @@ if(window.ResizeObserver){new ResizeObserver(r).observe(document.body)}else{wind
     setHasRun(false)
     setResult(null)
     setShowSolution(false)
-    if (iframeRef.current) iframeRef.current.srcdoc = ''
+    setMessage(null)
+    setWaiting(false)
+    clearTimeout(waitTimer.current)
+    setDoc('')
   }
 
   const lineCount = activeCode.split('\n').length
@@ -674,7 +759,7 @@ if(window.ResizeObserver){new ResizeObserver(r).observe(document.body)}else{wind
       {hasRun && (
         <div style={{ background: T.iframeBg, borderBottom:`1px solid ${T.border}` }}>
           <div style={{ fontSize:9, fontWeight:700, color:T.muted, letterSpacing:'.08em', textTransform:'uppercase', padding:'6px 14px 0' }}>Output</div>
-          <iframe ref={iframeRef} sandbox="allow-scripts"
+          <iframe key={runCount} ref={iframeRef} sandbox="allow-scripts" srcDoc={doc}
             style={{ width:'100%', height, border:'none', display:'block' }}
             title={`coding-${cellIndex}`}
           />
@@ -725,11 +810,15 @@ if(window.ResizeObserver){new ResizeObserver(r).observe(document.body)}else{wind
       )}
 
       {/* Feedback */}
+      {hasRun && waiting && (
+        <div role="status" style={{ padding:'10px 18px', borderTop:`1px solid ${T.border}`, fontSize:13, color:T.muted }}>Running the tests…</div>
+      )}
       {hasRun && result && (
-        <div style={{ padding:'10px 18px', borderTop:`1px solid ${T.border}`, fontSize:13, fontWeight:500,
+        <div role="status" style={{ padding:'10px 18px', borderTop:`1px solid ${T.border}`, fontSize:13, fontWeight:500,
           background: result==='pass' ? T.greenBg : T.redBg,
           color: result==='pass' ? T.green : T.red }}>
           {result === 'pass' ? (cell.successMessage || '✓ Challenge complete!') : (cell.failMessage || '✗ Not quite — try again.')}
+          {message && <div style={{ marginTop:6, fontWeight:400, whiteSpace:'pre-wrap' }}>{message}</div>}
         </div>
       )}
     </div>
