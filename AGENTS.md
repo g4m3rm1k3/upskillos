@@ -4,7 +4,7 @@ Rules for coding agents working in this repository. Humans use the same guides; 
 
 ## What this is
 
-UpSkillOS is a React 18 + Vite 5 single-page app, deployed to GitHub Pages and packaged for desktop with Electron. It uses `HashRouter`, so every in-app route is `#/...`. Counts of courses, lessons, labs and games are in [docs/generated/project-inventory.md](docs/generated/project-inventory.md). Never write a count by hand.
+UpSkillOS is a React 18 + Vite 8 single-page app, deployed to GitHub Pages and packaged for desktop with Electron. It uses `HashRouter`, so every in-app route is `#/...`. Counts of courses, lessons, labs and games are in [docs/generated/project-inventory.md](docs/generated/project-inventory.md). Never write a count by hand.
 
 Start with [docs/contributing/repository-tour.md](docs/contributing/repository-tour.md) for where things live.
 

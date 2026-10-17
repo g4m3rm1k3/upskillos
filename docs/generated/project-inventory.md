@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 73 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 74 labs · 16 games
 
 ## How things are counted
 
@@ -101,6 +101,7 @@
 | KartLab | `kart-lab` | lab | `/lab/kart-lab` |
 | Lesson Builder | `lesson-builder` | builder | `/lesson-builder` |
 | Lesson Engine | `lesson-engine` | lesson | `/lab/lesson-engine` |
+| Linear Algebra Lab | `linear-algebra-lab` | lab | `/lab/linear-algebra-lab` |
 | Little Schemer Sandbox | `little-schemer` | lesson | `/lab/little-schemer` |
 | LLM Lab | `llm-lab` | lab | `/lab/llm-lab` |
 | Logic Suite | `logic-sim` | lab | `/logic-sim` |

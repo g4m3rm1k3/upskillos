@@ -8,6 +8,11 @@ Last reconciled: 2026-09-26
 
 ## Current status and prioritized backlog
 
+### OpenMAT Linear Algebra Lab (2026-10-16)
+
+- [x] Authored the beginner-to-mastery series for data science, machine learning and dynamic programming. Includes first-use MATLAB-style syntax, editable OpenMAT examples, labelled plots, visual experiments, numeric challenge checks, progressive hints, saved drafts and transfer projects. See [curriculum and verification](linear-algebra-lab.md).
+- [ ] Complete learner pacing sessions and independent human review of the advanced synthesis tasks. Automatic checks record practice evidence; they do not certify mastery.
+
 ### Dynamic Programming Lab (2026-10-16)
 
 - [x] Curriculum preview shell with a searchable, scrollable concept hierarchy, labeled difficulty colors, coverage overview, and Python/JavaScript workspace previews. See [scope and authoring plan](dynamic-programming-lab.md).

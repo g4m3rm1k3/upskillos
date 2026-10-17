@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 73,
+    "labs": 74,
     "games": 16
   },
   "courses": [
@@ -584,6 +584,12 @@
       "label": "Lesson Engine",
       "kind": "lesson",
       "path": "/lab/lesson-engine"
+    },
+    {
+      "id": "linear-algebra-lab",
+      "label": "Linear Algebra Lab",
+      "kind": "lab",
+      "path": "/lab/linear-algebra-lab"
     },
     {
       "id": "little-schemer",
