@@ -112,7 +112,7 @@ These are the thinking tools. The learner collects them as cards. Early on, a mo
 | Work backwards | Egyptian false position |
 | Group it | Notches on a bone |
 | Make it simpler | Measuring the Earth (one angle, one distance), moment 3.5 |
-| Use a balance | Al-Khwarizmi's restoring and balancing |
+| Use a balance | Al-Khwarizmi's restoring and balancing, moment 7.5 |
 | Squeeze it between two | Archimedes trapping π, moment 6.2 |
 | Slice it up | Archimedes' areas (the pizza, moment 6.3); later, integrals |
 | Change the viewpoint | Descartes' grid |
@@ -232,11 +232,20 @@ Archimedes. Shape, Change.
 
 ### 7. Zero, place value and the balance
 India and the Islamic world. Number, Structure.
-Brahmagupta's zero and negative numbers (debts and fortunes); place value as a machine for computing; al-Khwarizmi's restoring and balancing (algebra); algorithms, and where the word comes from.
+1. **The empty column:** on a counting board, 304 and 34 look different, but written without a mark for the empty column they look the same. Zero starts as a placeholder: a mark that says "nothing in this column". Babylon's gap and later sign, the Maya zero, the Gwalior temple's 270 (876).
+2. **Nothing at all:** Brahmagupta (628) made zero a number with its own rules: take a number from itself and you get 0; anything × 0 is 0. Division undoes multiplication, so 6 ÷ 0 would need a number that × 0 makes 6: there isn't one.
+3. **Fortunes and debts:** Brahmagupta's fortunes and debts (negative numbers, written −3). A fortune and a debt cancel to 0, so you can always add such a pair; that is how you take away a debt you don't have: 2 − (−3) = 5. China's red and black counting rods.
+4. **Multiplying by parts:** cut a 23 × 14 rectangle at the tens: four pieces, 200 + 30 + 80 + 12 = 322. Multiply every part by every part (20 × 10 + 3 × 4 = 212 misses two pieces). Place value turns a big product into small ones.
+5. **Restoring and balancing:** bags of unknown weight and stones on a balance. Do the same to both sides and it stays balanced. Al-Khwarizmi's two moves (about 820): *al-jabr*, restoring what is missing to both sides, and *al-muqabala*, taking the same away from both. The word algebra comes from *al-jabr*. New move: use a balance.
+6. **Completing the square:** "a square and ten roots make 39": draw the square and two 5-wide strips, fill the missing 5 × 5 corner, and 64 is an 8 × 8 square, so the side is 3. The words *square root* (√64 = 8) and *algorithm* (from al-Khwarizmi's name).
 
 ### 8. Duels over the cubic
 Renaissance Italy. Number.
-Fibonacci's merchant arithmetic and the rabbits; Tartaglia, Cardano and public problem contests; a formula that produces square roots of negatives on the way to a real answer; numbers that are "impossible" but useful.
+1. **Fibonacci's rabbits:** each month's pairs are last month's plus the month before's (the grown-ups stay, and each grown-up pair has a baby pair): 1, 1, 2, 3, 5, 8 … *Liber Abaci* (1202) and the Hindu-Arabic numerals reaching Europe.
+2. **Splitting ten:** split 10 into two parts and multiply them. 5 + d and 5 − d multiply to 25 − d × d (a square missing a corner square, Euclid II.5), so the biggest product is 25.
+3. **A debt times a debt:** 7 × 7 by parts, as (10 − 3) × (10 − 3): taking away two 3 × 10 strips takes the corner away twice, so it must be put back: (−3) × (−3) = 9. Brahmagupta's rule, and why it has to be that way. Every square is 0 or more.
+4. **Cardano's impossible answer:** split 10 into two parts that multiply to 40. Then d × d = −15, which no number does (3). Cardano wrote the parts anyway, 5 + √−15 and 5 − √−15, and they multiply to 40 (*Ars Magna*, 1545). The cubic contests (del Ferro, Fior, Tartaglia, Cardano, Ferrari) in the story.
+5. **Bombelli's way through:** x³ = 15x + 4 has the plain answer 4, but Cardano's rule for cubics gives it through √−121. Bombelli (1572) multiplied 2 + √−1 by parts, using √−1 × √−1 = −1, and found the impossible parts cancel to leave 4. Impossible numbers can be useful on the way to a real answer. The words *cube root*.
 
 ### 9. Putting a grid on the world
 Descartes and Fermat. Shape, Change.
@@ -296,4 +305,5 @@ Parts II to V get their own episode maps when Part I is under way.
 | Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
 | Episode 2 | Complete: 2.1 to 2.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
 | Episodes 3 and 4 | Complete: 3.1 to 3.7 and 4.1 to 4.6 written, browser-checked and reviewed on 2026-10-16 |
-| Episodes 5 and 6 | Complete: 5.1 to 5.8 and 6.1 to 6.6 written, browser-checked and reviewed on 2026-10-16; the moment picker is grouped by episode. Next: Episodes 7 and 8 |
+| Episodes 5 and 6 | Complete: 5.1 to 5.8 and 6.1 to 6.6 written, browser-checked and reviewed on 2026-10-16; the moment picker is grouped by episode |
+| Episodes 7 and 8 | Complete: 7.1 to 7.6 and 8.1 to 8.5 written, browser-checked and reviewed on 2026-10-16. Next: Episodes 9 and 10 |

@@ -10,5 +10,6 @@ export const MOVES = {
   generalize: { name: 'Generalize', tip: 'Solve a whole family of problems at once: find the rule that builds every answer from the ones before it.' },
   simplify: { name: 'Make it simpler', tip: 'Strip the problem down to the one or two things that matter, and ignore the rest.' },
   squeeze: { name: 'Squeeze it between two', tip: 'Can’t measure it directly? Trap it between something a little too small and something a little too big, then tighten.' },
+  balance: { name: 'Use a balance', tip: 'Think of it as a balance: whatever you do to one side, do to the other, and it stays level.' },
   'slice-up': { name: 'Slice it up', tip: 'Cut the shape into many thin pieces you understand, rearrange or add them up, and let the pieces get thinner.' },
 }

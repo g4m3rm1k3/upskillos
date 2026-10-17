@@ -27,7 +27,7 @@ function Play({ state, setState }) {
       <Stepper label="side" value={s} min={1} max={30} onChange={set} />
       <div className="mt-3 rounded-lg bg-slate-950 p-4 font-mono text-lg">
         <p>
-          2 × {s} × {s} = <span className="text-sky-300">{fmt(target)}</span>
+          2 × {s} × {s} = <span style={{ color: '#38bdf8' }}>{fmt(target)}</span>
         </p>
         <p>
           best diagonal {d}: {d} × {d} = <span className="text-amber-300">{fmt(d * d)}</span>
@@ -70,7 +70,7 @@ function Reveal() {
             <tr key={s} data-testid="pair-row">
               <td className="pr-4">{s}</td>
               <td className="pr-4">{d}</td>
-              <td className="pr-4 text-sky-300">{fmt(2 * s * s)}</td>
+              <td className="pr-4" style={{ color: '#38bdf8' }}>{fmt(2 * s * s)}</td>
               <td className="pr-4 text-amber-300">{fmt(d * d)}</td>
               <td className="text-emerald-400">{d * d > 2 * s * s ? '+1' : '−1'}</td>
             </tr>
