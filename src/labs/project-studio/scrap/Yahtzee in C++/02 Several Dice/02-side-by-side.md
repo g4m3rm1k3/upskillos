@@ -45,6 +45,18 @@ New line:
 
 ## Update Dice.cpp
 
+New lines:
+
+- `#include <iostream>`: `std::cout` is now used in this file.
+- `for (int r = 0; r < 5; r++) {`: the outer loop counts the five text rows of a die: top edge, three pip rows, bottom edge.
+- `for (const Die& d : dice) { std::cout << d.line(r); }`: the inner loop asks every die for row `r` and prints it with **no newline**. All the dice put their piece of row `r` on the same terminal line.
+- `std::cout << "\n";`: only after every die has printed row `r` does the line end. That order, row on the outside and die on the inside, is what puts the dice next to each other.
+- `const Die& d`: inside a `const` member function every member is treated as `const`. Here `dice` is a `const std::vector<Die>`, so its elements are `const Die`. A plain `Die&` would not compile.
+- `d.line(r)`: allowed on a `const Die` only because `line` was declared `const` in lesson 1.3. Without that, GCC would say `passing 'const Die' as 'this' argument discards qualifiers`. **A `const` object can call only `const` functions**, so `const` spreads through every function it touches.
+- `" *" << i + 1 << "* "`: `+` binds tighter than `<<`, so `i + 1` is added before it is printed. The label is five characters wide, the same as a die row, so each label sits under its die. The `+ 1` turns the 0-based position into the number a player counts from.
+
+Analogy (helper only): think of printing a row of photos from a roll of film. You print the top strip of all five photos, then the middle strip of all five, and so on. You do not print one whole photo before starting the next.
+
 ```cpp file=Dice.cpp
 #include <iostream>
 
@@ -88,18 +100,6 @@ void Dice::draw() const {
 }
 ```
 
-New lines:
-
-- `#include <iostream>`: `std::cout` is now used in this file.
-- `for (int r = 0; r < 5; r++) {`: the outer loop counts the five text rows of a die: top edge, three pip rows, bottom edge.
-- `for (const Die& d : dice) { std::cout << d.line(r); }`: the inner loop asks every die for row `r` and prints it with **no newline**. All the dice put their piece of row `r` on the same terminal line.
-- `std::cout << "\n";`: only after every die has printed row `r` does the line end. That order, row on the outside and die on the inside, is what puts the dice next to each other.
-- `const Die& d`: inside a `const` member function every member is treated as `const`. Here `dice` is a `const std::vector<Die>`, so its elements are `const Die`. A plain `Die&` would not compile.
-- `d.line(r)`: allowed on a `const Die` only because `line` was declared `const` in lesson 1.3. Without that, GCC would say `passing 'const Die' as 'this' argument discards qualifiers`. **A `const` object can call only `const` functions**, so `const` spreads through every function it touches.
-- `" *" << i + 1 << "* "`: `+` binds tighter than `<<`, so `i + 1` is added before it is printed. The label is five characters wide, the same as a die row, so each label sits under its die. The `+ 1` turns the 0-based position into the number a player counts from.
-
-Analogy (helper only): think of printing a row of photos from a roll of film. You print the top strip of all five photos, then the middle strip of all five, and so on. You do not print one whole photo before starting the next.
-
 ```predict
 question: You swap the two loops in draw(), so the die loop is outside and the row loop is inside, with the "\n" still after each row. What do you see?
 choice: The five dice side by side, as before
@@ -134,6 +134,14 @@ run "g++ -std=c++17 main.cpp Dice.cpp Die.cpp -o game" label="the drawing progra
 run "./game" stdout=" --- " label="the edges are drawn" -- Row 0 of every die is the top edge.
 run "./game" stdout="*5*" label="five numbered labels are drawn" -- Print one label per die under the picture.
 ```
+
+## Think in rows before pictures {#teaching-review}
+
+**Try it yourself.** On paper, place two fixed dice side by side. The outer loop selects drawing row 0,1,2; the inner loop visits dice. Reverse those loop roles in a scratch copy and predict the shape before running. Restore the loop order. Capture output for chosen faces instead of judging a random screen by eye.
+
+**Explain before continuing.** Who inserts the separator between dice, and who inserts the newline after a completed row? Why can a const reference improve both the contract and readability here?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: print the faces from a const reference
 

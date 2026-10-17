@@ -25,21 +25,6 @@ Words first:
 
 Create `main.cpp` in your project folder and type this in.
 
-```cpp file=main.cpp
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-
-int main() {
-    std::srand(static_cast<unsigned>(std::time(nullptr)));
-
-    int face = std::rand() % 6 + 1;
-    std::cout << "You rolled a " << face << "\n";
-
-    return 0;
-}
-```
-
 Line by line:
 
 - `#include <cstdlib>`: the preprocessor replaces this line with the whole text of the header `cstdlib`. That header declares `std::rand` and `std::srand`. Angle brackets mean "search the compiler's standard library folders". Without the include, the compiler stops with an error such as `'rand' is not a member of 'std'`.
@@ -55,6 +40,20 @@ Line by line:
 
 Analogy (helper only): the seed is a starting position in one very long, fixed list of random-looking numbers. `srand` picks where to start reading and each `rand` call reads the next number. The same starting position gives the same numbers.
 
+```cpp file=main.cpp
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+
+int main() {
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
+
+    int face = std::rand() % 6 + 1;
+    std::cout << "You rolled a " << face << "\n";
+
+    return 0;
+}
+```
 ## Build and run it
 
 Open a terminal in your project folder and run:
@@ -99,6 +98,15 @@ Words first:
 
 Replace the body of `main` so it fills and prints five dice.
 
+New lines:
+
+- `const int NUM_DICE = 5;`: `const` means the compiler refuses any later assignment to `NUM_DICE`. A `const int` set from a literal is also a **compile-time constant**, a value the compiler knows while compiling. A plain C++ array needs its size to be one.
+- `int dice[NUM_DICE];`: five `int` values stored side by side in memory. The array is a local variable with no initializer, so the five values are leftover bytes until you assign them.
+- `dice[i] = ...`: indexes run from 0 to 4. C++ does **not** check them. `dice[5]` compiles and reads memory outside the array, which is undefined behavior.
+- `std::cout << " " << dice[i];`: prints a space and then one value. The first loop fills the array and the second prints it.
+
+An array can also be given its values when it is declared:
+
 ```cpp file=main.cpp
 #include <cstdlib>
 #include <ctime>
@@ -124,15 +132,6 @@ int main() {
 }
 ```
 
-New lines:
-
-- `const int NUM_DICE = 5;`: `const` means the compiler refuses any later assignment to `NUM_DICE`. A `const int` set from a literal is also a **compile-time constant**, a value the compiler knows while compiling. A plain C++ array needs its size to be one.
-- `int dice[NUM_DICE];`: five `int` values stored side by side in memory. The array is a local variable with no initializer, so the five values are leftover bytes until you assign them.
-- `dice[i] = ...`: indexes run from 0 to 4. C++ does **not** check them. `dice[5]` compiles and reads memory outside the array, which is undefined behavior.
-- `std::cout << " " << dice[i];`: prints a space and then one value. The first loop fills the array and the second prints it.
-
-An array can also be given its values when it is declared:
-
 ```cpp
 int a[3] = {7, 8, 9};   // a[0] is 7, a[1] is 8, a[2] is 9
 int b[3] = {7};         // b[0] is 7, the rest are set to 0
@@ -142,6 +141,14 @@ int b[3] = {7};         // b[0] is 7, the rest are set to 0
 run "g++ -std=c++17 main.cpp -o game" label="the program builds"
 run "./game" stdout="Dice:" label="five dice are printed" -- Print the word Dice: once, then a space and each value.
 ```
+
+## Reproduce before generalizing {#teaching-review}
+
+**Try it yourself.** With the same explicit seed, run twice and compare the whole sequence, not just its first face. Then change the seed. A pseudorandom engine advances state; seeding once and reseeding on each roll are different operations. The early rand()%6 prototype has modulo bias; the final chapter replaces it with a uniform distribution. Do not present this first generator as the finished fairness design.
+
+**Explain before continuing.** Why might two calls show the same face even when both rolls ran? What would a test of range prove, and what would it not prove about fairness?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: count the sixes in a fixed hand
 

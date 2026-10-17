@@ -17,6 +17,19 @@ Words first:
 
 Create `Scorecard.h`.
 
+Line by line:
+
+- `struct Category { std::string name; int score; };`: a plain bundle of one text and one number. A struct's members are public, so `c.score` works directly.
+- `public:` comes first in this class, with the data under `private:` at the bottom. Both orders are legal. Putting the interface first means a reader sees what the class offers before how it works inside.
+- `static constexpr int UNSCORED = -1;`: one constant for the class. `static` means all scorecards share it. `constexpr` means the compiler knows the value while compiling. Code outside writes it as `Scorecard::UNSCORED`. Since C++17 a `static constexpr` member needs no separate definition in a `.cpp` file.
+- `CATEGORY_COUNT`, `UPPER_BONUS_THRESHOLD` and `UPPER_BONUS_POINTS`: more class constants. The two bonus constants are used in your turn at the end of this lesson.
+- `Scorecard();`: the constructor. It fills in the 13 categories.
+- `const std::string& name(std::size_t i) const;`: returns a **reference** to the name stored inside the object, so no text is copied. The reference is only safe while the `Scorecard` exists. Keeping it after the scorecard is gone would be a dangling reference.
+- `bool isScored(std::size_t i) const;` and `int score(std::size_t i) const;`: read one box. `const`, so they work on a read-only scorecard.
+- `bool record(std::size_t i, const Counts& counts);`: fills box `i` using the current counts. It returns `true` if the box was written and `false` if it was refused. It changes the object, so it is not `const`.
+- `std::vector<Category> preview(const Counts& counts) const;`: returns a **copy** of the categories with every empty box showing what it would score. The real scorecard is not touched.
+- `std::vector<Category> categories;`: the private data. Outside code cannot clear it or put a box into a state the class does not allow.
+
 ```cpp file=Scorecard.h
 #ifndef SCORECARD_H
 #define SCORECARD_H
@@ -56,20 +69,6 @@ private:
 
 #endif
 ```
-
-Line by line:
-
-- `struct Category { std::string name; int score; };`: a plain bundle of one text and one number. A struct's members are public, so `c.score` works directly.
-- `public:` comes first in this class, with the data under `private:` at the bottom. Both orders are legal. Putting the interface first means a reader sees what the class offers before how it works inside.
-- `static constexpr int UNSCORED = -1;`: one constant for the class. `static` means all scorecards share it. `constexpr` means the compiler knows the value while compiling. Code outside writes it as `Scorecard::UNSCORED`. Since C++17 a `static constexpr` member needs no separate definition in a `.cpp` file.
-- `CATEGORY_COUNT`, `UPPER_BONUS_THRESHOLD` and `UPPER_BONUS_POINTS`: more class constants. The two bonus constants are used in your turn at the end of this lesson.
-- `Scorecard();`: the constructor. It fills in the 13 categories.
-- `const std::string& name(std::size_t i) const;`: returns a **reference** to the name stored inside the object, so no text is copied. The reference is only safe while the `Scorecard` exists. Keeping it after the scorecard is gone would be a dangling reference.
-- `bool isScored(std::size_t i) const;` and `int score(std::size_t i) const;`: read one box. `const`, so they work on a read-only scorecard.
-- `bool record(std::size_t i, const Counts& counts);`: fills box `i` using the current counts. It returns `true` if the box was written and `false` if it was refused. It changes the object, so it is not `const`.
-- `std::vector<Category> preview(const Counts& counts) const;`: returns a **copy** of the categories with every empty box showing what it would score. The real scorecard is not touched.
-- `std::vector<Category> categories;`: the private data. Outside code cannot clear it or put a box into a state the class does not allow.
-
 ## Define the scorecard
 
 Words first:
@@ -78,6 +77,21 @@ Words first:
 - **`sizeof`**: the number of bytes a variable or type takes.
 
 Create `Scorecard.cpp`.
+
+Line by line:
+
+- `static int potentialFor(...)`: a file-private helper that turns a box number into a call to the right rule. The order here must match the order of the names below. Nothing but your care keeps the two lists in step. Chapter 5 replaces this with something the compiler can check.
+- `switch (index) {`: jumps to the `case` whose value equals `index`. `index` is a `std::size_t` and the labels are plain numbers, which the compiler converts. Every case ends in `return`, so no case can fall through into the next one. `default:` handles any other index.
+- `const char* const names[] = { ... };`: an array of pointers to text. With empty brackets the compiler counts the entries itself. The trailing comma after `"Chance"` is allowed.
+- `static_assert(sizeof(names) / sizeof(names[0]) == CATEGORY_COUNT, "...");`: `sizeof(names)` is the total bytes of the array and `sizeof(names[0])` is the bytes of one entry. Dividing gives the number of entries. If someone forgets a name, the **build fails** with your message. With this inferred-size array, a missing entry would make the array shorter; a loop still using CATEGORY_COUNT would then read past its end. The assertion prevents that mismatch.
+- `categories.reserve(CATEGORY_COUNT);`: asks the vector to set aside room for 13 entries up front. It adds no elements.
+- `Category{names[i], UNSCORED}`: braces fill the struct's fields in order. The `const char*` converts to a `std::string`, which copies the characters.
+- `Scorecard::UNSCORED` inside a member function can be written as just `UNSCORED`.
+- `record`: `i >= categories.size()` is checked first. `||` stops as soon as one side is true, so `categories[i]` is never read for an index that does not exist. This is the same guard-before-indexing rule used in our face-counting function; no other project is required. A box that already has a score is refused, so a score cannot be overwritten.
+- `for (const Category& c : categories)`: a reference to each box, with no copy, and read-only because `allScored` and `total` are `const`.
+- `std::vector<Category> shown = categories;`: this copies the vector and every `Category` in it, including each `std::string`. `shown` and `categories` share nothing afterwards. Writing into `shown[i].score` cannot change the real scorecard.
+- `return shown;`: returns the copy by value. Named return-value optimization may construct it directly in the caller. If that optimization is not performed, this eligible local vector can be moved. Correctness does not depend on observing a particular copy count.
+- `name(i)`, `isScored(i)` and `score(i)` do not check `i`. They are meant to be called with a valid index. That is an explicit caller precondition, not a consequence of being read-only: an invalid read is also undefined behavior. Keep these indexed queries behind validated menu selection, or choose checked access when designing a public API.
 
 ```cpp file=Scorecard.cpp
 #include "Scorecard.h"
@@ -170,21 +184,6 @@ std::vector<Category> Scorecard::preview(const Counts& counts) const {
 }
 ```
 
-Line by line:
-
-- `static int potentialFor(...)`: a file-private helper that turns a box number into a call to the right rule. The order here must match the order of the names below. Nothing but your care keeps the two lists in step. Chapter 5 replaces this with something the compiler can check.
-- `switch (index) {`: jumps to the `case` whose value equals `index`. `index` is a `std::size_t` and the labels are plain numbers, which the compiler converts. Every case ends in `return`, so no case can fall through into the next one. `default:` handles any other index.
-- `const char* const names[] = { ... };`: an array of pointers to text. With empty brackets the compiler counts the entries itself. The trailing comma after `"Chance"` is allowed.
-- `static_assert(sizeof(names) / sizeof(names[0]) == CATEGORY_COUNT, "...");`: `sizeof(names)` is the total bytes of the array and `sizeof(names[0])` is the bytes of one entry. Dividing gives the number of entries. If someone forgets a name, the **build fails** with your message. Without the check, a missing name would leave a null pointer, and turning one into a `std::string` is undefined behavior.
-- `categories.reserve(CATEGORY_COUNT);`: asks the vector to set aside room for 13 entries up front. It adds no elements.
-- `Category{names[i], UNSCORED}`: braces fill the struct's fields in order. The `const char*` converts to a `std::string`, which copies the characters.
-- `Scorecard::UNSCORED` inside a member function can be written as just `UNSCORED`.
-- `record`: `i >= categories.size()` is checked first. `||` stops as soon as one side is true, so `categories[i]` is never read for an index that does not exist. This is the same short-circuit order as `isOpen` in the Tetris project. A box that already has a score is refused, so a score cannot be overwritten.
-- `for (const Category& c : categories)`: a reference to each box, with no copy, and read-only because `allScored` and `total` are `const`.
-- `std::vector<Category> shown = categories;`: this copies the vector and every `Category` in it, including each `std::string`. `shown` and `categories` share nothing afterwards. Writing into `shown[i].score` cannot change the real scorecard.
-- `return shown;`: returns the copy by value. The compiler hands it over without copying again.
-- `name(i)`, `isScored(i)` and `score(i)` do not check `i`. They are meant to be called with a valid index. Only `record` checks, because it is the function that changes data.
-
 ```predict
 question: preview writes a potential score into shown[6]. After the call returns, what does isScored(6) say?
 choice: true, the box is now scored
@@ -195,6 +194,12 @@ explain: shown is a separate vector built by copying categories. The write lands
 ```
 
 ## Try it
+
+New lines:
+
+- `card.preview(counts)` returns a copy of the 13 boxes, each showing what it would score for this hand.
+- `i + 1`: players count from 1, the vector from 0.
+- `card.record(12, counts);`: box 12 is Chance. Its result, `true`, is ignored. The next line prints the total, which equals the sum of the dice.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -226,12 +231,6 @@ int main() {
 }
 ```
 
-New lines:
-
-- `card.preview(counts)` returns a copy of the 13 boxes, each showing what it would score for this hand.
-- `i + 1`: players count from 1, the vector from 0.
-- `card.record(12, counts);`: box 12 is Chance. Its result, `true`, is ignored. The next line prints the total, which equals the sum of the dice.
-
 ```bash
 g++ -std=c++17 main.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game
 ./game
@@ -246,6 +245,14 @@ run "./game" stdout="Recorded Chance. Total:" label="a category is recorded" -- 
 run "g++ -std=c++17 tests/test_scorecard.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_scorecard" label="the scorecard tests build" -- Press the lesson's support button if tests/test_scorecard.cpp is missing.
 tests "./test_scorecard" require="Scorecard.RecordsAScoreOnlyOnce" label="the scorecard tests pass" -- record must refuse a box that already has a score.
 ```
+
+## Make the state transition explicit {#teaching-review}
+
+**Try it yourself.** Trace an empty Chance box (-1), a recorded zero (0), and an attempted overwrite. These are three distinct situations. Preview twice and compare the original card before/after both calls. A test must check both the returned preview and the unchanged stored state.
+
+**Explain before continuing.** Why is zero not a suitable unscored marker? What happens if preview borrows the stored vector instead of making a value copy? Which observable assertion catches that defect?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: the upper bonus
 

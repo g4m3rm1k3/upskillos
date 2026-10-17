@@ -19,6 +19,15 @@ Words first:
 
 Create `Input.h`.
 
+Line by line:
+
+- `std::string trim(const std::string& text);`: removes spaces, tabs and line-ending characters from both ends. Windows can leave a `\r` at the end of a typed line, and without trimming `"a\r"` would not equal `"a"`.
+- `std::string toLowerCopy(std::string text);`: the parameter has **no** `&`. That is deliberate. The caller's string is copied into `text`, the function changes the copy, and returns it. When a function needs its own copy anyway, taking the parameter by value is the simplest way to get one.
+- `std::vector<bool> parseKeepers(const std::string& line, std::size_t count);`: turns what the player typed ("1 3 5" or "a") into one true or false per die. It is pure. Nothing is read from the keyboard here, so it can be tested with plain text.
+- `bool parseInt(const std::string& line, int& value);`: the `int&` is an output parameter. The function returns `true` or `false` for success and writes the number into the caller's variable only on success.
+- `bool readLine(std::string& line);`: reads one line from the keyboard into `line`. It returns `false` when input has ended.
+- `bool askInt(const std::string& prompt, int low, int high, int& value);`: asks until the player gives a whole number from `low` to `high`. It returns `false` only if input ends first.
+
 ```cpp file=Input.h
 #ifndef INPUT_H
 #define INPUT_H
@@ -36,15 +45,65 @@ bool askInt(const std::string& prompt, int low, int high, int& value);
 
 #endif
 ```
+## Parse a string before reading the keyboard {#parse-before-prompt}
 
-Line by line:
+Build trim and parseInt first. find_first_not_of and find_last_not_of find the retained text edges; npos means no such position. substr takes a start and a character count. A stringstream reads from text rather than the keyboard. Read into local parsed, then attempt to extract one extra non-whitespace character into extra. Reject before assigning value if either validation fails. This leaves the caller's output unchanged on failure. No retry loop or keyboard input is needed to test this contract.
 
-- `std::string trim(const std::string& text);`: removes spaces, tabs and line-ending characters from both ends. Windows can leave a `\r` at the end of a typed line, and without trimming `"a\r"` would not equal `"a"`.
-- `std::string toLowerCopy(std::string text);`: the parameter has **no** `&`. That is deliberate. The caller's string is copied into `text`, the function changes the copy, and returns it. When a function needs its own copy anyway, taking the parameter by value is the simplest way to get one.
-- `std::vector<bool> parseKeepers(const std::string& line, std::size_t count);`: turns what the player typed ("1 3 5" or "a") into one true or false per die. It is pure. Nothing is read from the keyboard here, so it can be tested with plain text.
-- `bool parseInt(const std::string& line, int& value);`: the `int&` is an output parameter. The function returns `true` or `false` for success and writes the number into the caller's variable only on success.
-- `bool readLine(std::string& line);`: reads one line from the keyboard into `line`. It returns `false` when input has ended.
-- `bool askInt(const std::string& prompt, int low, int high, int& value);`: asks until the player gives a whole number from `low` to `high`. It returns `false` only if input ends first.
+```cpp file=Input.cpp
+#include <cctype>
+#include <iostream>
+#include <sstream>
+
+#include "Input.h"
+
+std::string trim(const std::string& text) {
+    const char* whitespace = " \t\r\n";
+    std::size_t first = text.find_first_not_of(whitespace);
+    if (first == std::string::npos) {
+        return "";
+    }
+    std::size_t last = text.find_last_not_of(whitespace);
+    return text.substr(first, last - first + 1);
+}
+
+bool parseInt(const std::string& line, int& value) {
+    std::stringstream numbers(trim(line));
+    int parsed = 0;
+    char extra = 0;
+    if (!(numbers >> parsed)) {
+        return false;
+    }
+    if (numbers >> extra) {
+        return false;
+    }
+    value = parsed;
+    return true;
+}
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -c Input.cpp -o input_stage.o" label="Compile parsing without a keyboard loop"
+```
+
+## Run a fixed success and failure {#parse-contract-probe}
+
+Use an ordinary executable as a small test. The first call accepts a whole number and writes 7. The second call sees trailing x, so it must return false and leave 42 unchanged. || here means either failure makes the executable return 1. Return 0 means all checks passed. Change the parser to assign value before the extra-character test, watch this probe fail, then restore it. A test of the return value alone would miss that mutation.
+
+```cpp file=scratch/parse-probe.cpp
+#include "Input.h"
+int main() {
+    int answer = 42;
+    if (!parseInt("7", answer) || answer != 7) return 1;
+    answer = 42;
+    if (parseInt("7x", answer) || answer != 42) return 1;
+    return 0;
+}
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -I. scratch/parse-probe.cpp Input.cpp -o parse_probe" label="Build the parsing contract probe"
+run "./parse_probe" label="Accept valid text and preserve output after rejection"
+```
 
 ## Define them
 
@@ -181,6 +240,13 @@ explain: The >> operator reads the 5 and stops. The newline stays. A getline rig
 
 ## Try it
 
+New lines:
+
+- `if (!readLine(line)) { ... return 1; }`: end of input stops the program with exit status 1, which tells the operating system something went wrong.
+- `parseKeepers(line, dice.size())`: the list is as long as the number of dice, not a fixed 5.
+- `kept[i]` read inside an `if`: reading a `std::vector<bool>` element works as normal.
+- `askInt("...", 1, 13, number)`: `number` is passed where `int& value` is expected, so `askInt` writes the answer straight into it.
+
 ```cpp file=main.cpp
 #include <cstdlib>
 #include <ctime>
@@ -224,13 +290,6 @@ int main() {
 }
 ```
 
-New lines:
-
-- `if (!readLine(line)) { ... return 1; }`: end of input stops the program with exit status 1, which tells the operating system something went wrong.
-- `parseKeepers(line, dice.size())`: the list is as long as the number of dice, not a fixed 5.
-- `kept[i]` read inside an `if`: reading a `std::vector<bool>` element works as normal.
-- `askInt("...", 1, 13, number)`: `number` is passed where `int& value` is expected, so `askInt` writes the answer straight into it.
-
 ```bash
 g++ -std=c++17 main.cpp Input.cpp Dice.cpp Die.cpp Terminal.cpp -o game
 ./game
@@ -249,7 +308,7 @@ run "./game" stdin="" exit=1 label="the program stops when input ends" -- readLi
 
 ## Read the tests
 
-Normally code that reads `std::cin` cannot be tested, because the test would wait for a keyboard. The support button created `tests/fakeinput.h`. It swaps what `std::cin` reads from.
+Code tied directly to a live keyboard is awkward to test. We can feed characters through a substituted stream buffer, or design a function to receive an input stream explicitly. The support button created `tests/fakeinput.h`. It swaps what `std::cin` reads from.
 
 ```cpp file=tests/fakeinput.h provided
 #ifndef FAKEINPUT_H
@@ -313,6 +372,14 @@ run "g++ -std=c++17 tests/test_input.cpp Input.cpp -o test_input" label="the inp
 tests "./test_input" require="Input.AskIntGivesUpWhenInputEnds" label="the input tests pass" -- askInt must return false when readLine fails, and leave the value alone.
 tests "./test_input" require="Input.ParseIntRejectsEverythingElse" label="parseInt rejects bad text" -- Reject trailing characters, and write the value only on success.
 ```
+
+## Design tests from the input contract {#teaching-review}
+
+**Try it yourself.** For parseInt, make a table of "7", " 7 ", "7x", an empty line and an out-of-range integer string. Initialize the output to 42 before each invalid case; require false and an unchanged 42. Test EOF separately from a blank line. The inherited keeper parser accepts a valid prefix; the final strict-parser task deliberately improves that policy.
+
+**Explain before continuing.** Why is a valid prefix not the same as a valid whole answer? What would break if you assigned the output parameter before discovering trailing junk?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: yes or no
 

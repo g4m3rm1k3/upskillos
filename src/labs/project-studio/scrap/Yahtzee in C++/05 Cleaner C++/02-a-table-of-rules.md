@@ -8,6 +8,27 @@ Early in this series you tried to keep the scoring functions in a list and loop 
 
 Press this lesson's support button first. It creates two test files.
 
+## Adapt one callable before building a table {#lambda-before-table}
+
+A callable is something used with parentheses to produce a result. A lambda writes a function inline: [] is the capture list, (int count) is its parameter list and the braces hold its body. std::function<int(int)> can hold a callable taking one int and returning int. First adapt one rule with a fixed face. Then [face] captures the current face by value, while [&face] borrows the original variable. Predict the two results after face changes. A borrowed capture must not outlive its source; the returned rule table later uses capture-free lambdas instead.
+
+```cpp file=scratch/lambda-probe.cpp
+#include <functional>
+#include <iostream>
+int main() {
+    int face = 6;
+    std::function<int(int)> copied = [face](int count) { return face * count; };
+    std::function<int(int)> borrowed = [&face](int count) { return face * count; };
+    face = 5;
+    std::cout << copied(2) << " " << borrowed(2) << "\n";
+}
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/lambda-probe.cpp -o lambda_probe" label="Build the callable experiment"
+run "./lambda_probe" label="Distinguish captured value from borrowed state" stdout="12 10"
+```
+
 ## One table, one place
 
 Words first:
@@ -18,6 +39,21 @@ Words first:
 - **Anonymous namespace**: `namespace { ... }` makes everything inside visible only to the current `.cpp` file.
 
 Replace `Scorecard.cpp` with this. It includes the `isUpperSection` function you wrote in the last lesson.
+
+Line by line, only the new parts:
+
+- `#include <functional>`: declares `std::function`.
+- `namespace { ... }`: an anonymous namespace. Everything inside is private to this file, and that includes **types**. The keyword `static` cannot be put on a `struct`. If two `.cpp` files each defined a different `struct Rule`, the program would break in a way the compiler does not report. An anonymous namespace rules that out. `indexOf` moved inside it, so it no longer needs `static`.
+- `struct Rule { const char* name; std::function<int(const Counts&)> score; };`: one row of the table. `name` points at the category's text. `score` holds anything that can be called with a `const Counts&` and returns an `int`. You call it like a function: `rule.score(counts)`. A `std::function` stores its callable behind a layer that hides the exact type, which costs a little time per call. Here the cost does not matter.
+- `static const Rule table[] = { ... };` inside `ruleAt`: a variable inside a function that is marked `static` is built **once**, the first time the function runs, and then lives until the program ends. A table at file level would be built when the program starts, in an order across files that C++ does not fix. A `Scorecard` made in another file before the table existed would read garbage. Building on first use avoids that. Since C++11 this build is also safe if two threads arrive at once.
+- `[](const Counts& c) { return scoreUpper(c, 1); }`: a lambda. `[]` is the capture list, empty here because the lambda uses nothing from outside. `(const Counts& c)` is its parameter list. `{ return ...; }` is its body. The return type is worked out from the `return`, which is `int`. This lambda is the fix for the problem from lesson 3.1: `scoreUpper` needs two arguments but every row of the table must take one, so the lambda fills in the face and presents one argument to the table.
+- `{"Full house", scoreFullHouse}`: no lambda is needed here. `scoreFullHouse` already takes one `const Counts&` and returns an `int`, so the function name converts to a `std::function` directly.
+- `static_assert(...)`: the same compile-time guard as before, now covering names and rules together. A missing row stops the build.
+- `return table[index];`: not checked. It is only reached with an index below 13, because the constructor's loop, `record` and `preview` all guarantee that.
+- `Category{ruleAt(i).name, UNSCORED}`: the constructor reads the name from the table. There is no second list of names to keep in step.
+- `ruleAt(i).score(counts)`: finds row `i` and calls its function. This replaces the whole `potentialFor` switch. Name and rule for one category now sit on the same line.
+
+The order of the rows still has to match the order of the enumerators in `CategoryId`. The tests below check that.
 
 ```cpp file=Scorecard.cpp
 #include <functional>
@@ -166,22 +202,6 @@ std::vector<Category> Scorecard::preview(const Counts& counts) const {
     return shown;
 }
 ```
-
-Line by line, only the new parts:
-
-- `#include <functional>`: declares `std::function`.
-- `namespace { ... }`: an anonymous namespace. Everything inside is private to this file, and that includes **types**. The keyword `static` cannot be put on a `struct`. If two `.cpp` files each defined a different `struct Rule`, the program would break in a way the compiler does not report. An anonymous namespace rules that out. `indexOf` moved inside it, so it no longer needs `static`.
-- `struct Rule { const char* name; std::function<int(const Counts&)> score; };`: one row of the table. `name` points at the category's text. `score` holds anything that can be called with a `const Counts&` and returns an `int`. You call it like a function: `rule.score(counts)`. A `std::function` stores its callable behind a layer that hides the exact type, which costs a little time per call. Here the cost does not matter.
-- `static const Rule table[] = { ... };` inside `ruleAt`: a variable inside a function that is marked `static` is built **once**, the first time the function runs, and then lives until the program ends. A table at file level would be built when the program starts, in an order across files that C++ does not fix. A `Scorecard` made in another file before the table existed would read garbage. Building on first use avoids that. Since C++11 this build is also safe if two threads arrive at once.
-- `[](const Counts& c) { return scoreUpper(c, 1); }`: a lambda. `[]` is the capture list, empty here because the lambda uses nothing from outside. `(const Counts& c)` is its parameter list. `{ return ...; }` is its body. The return type is worked out from the `return`, which is `int`. This lambda is the fix for the problem from lesson 3.1: `scoreUpper` needs two arguments but every row of the table must take one, so the lambda fills in the face and presents one argument to the table.
-- `{"Full house", scoreFullHouse}`: no lambda is needed here. `scoreFullHouse` already takes one `const Counts&` and returns an `int`, so the function name converts to a `std::function` directly.
-- `static_assert(...)`: the same compile-time guard as before, now covering names and rules together. A missing row stops the build.
-- `return table[index];`: not checked. It is only reached with an index below 13, because the constructor's loop, `record` and `preview` all guarantee that.
-- `Category{ruleAt(i).name, UNSCORED}`: the constructor reads the name from the table. There is no second list of names to keep in step.
-- `ruleAt(i).score(counts)`: finds row `i` and calls its function. This replaces the whole `potentialFor` switch. Name and rule for one category now sit on the same line.
-
-The order of the rows still has to match the order of the enumerators in `CategoryId`. The tests below check that.
-
 ## What a lambda remembers
 
 Words first:
@@ -233,6 +253,14 @@ tests "./test_rule_table" require="RuleTable.PreviewMatchesTheRulesForAFullHouse
 tests "./test_rule_table" require="RuleTable.RecordWritesTheSameScoreThatPreviewShowed" label="record agrees with preview" -- Both must call the same row of the table.
 lacks Scorecard.cpp "potentialFor" label="the old switch is gone" -- Replace every call to potentialFor with ruleAt(i).score(counts).
 ```
+
+## Check a refactor with independent expectations {#teaching-review}
+
+**Try it yourself.** A table row combines one category label and one callable with the same signature. Trace the Sixes row on counts[6]=2: the wrapper supplies face 6 and the call returns 12. Keep tests with literal expected points; deriving expected results by calling the same table merely repeats its mistakes.
+
+**Explain before continuing.** Why does scoreFullHouse fit directly while scoreUpper needs an adapter? Which captured references would dangle if a callable outlived the function that created it?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: the best box
 

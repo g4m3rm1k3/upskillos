@@ -18,6 +18,15 @@ Words first:
 
 Create `Player.h`.
 
+Line by line:
+
+- `#include "Scorecard.h"`: the class stores a `Scorecard` **by value**, so the compiler must know its full definition to work out how big a `Player` is.
+- `explicit Player(std::string name);`: the parameter has no `&`, on purpose. A `Player` keeps its name, so it needs its own copy anyway. A by-value parameter gives it one. If the caller passes a temporary, such as the text `"Ann"`, the text is built straight into the parameter and nothing is copied.
+- `const std::string& name() const;`: returns a reference to the stored name, so no text is copied. It is only valid while the `Player` exists.
+- `Scorecard& scorecard();` and `const Scorecard& scorecard() const;`: the same name twice. The only difference is the `const` after the parentheses. On a plain `Player` the first one runs and gives you a reference you can change the scorecard through. On a `const Player&` the second one runs and gives a read-only reference. One name serves both a function that records scores and a function that only reads them.
+- `int finalScore() const;`: the total plus the upper bonus. The rule for a final score lives in one place.
+- `std::string playerName;` and `Scorecard card;`: the private data. They are values, not pointers, so each `Player` owns its own scorecard. They are created and destroyed together with it. The name is `playerName` because `name` is already the name of a function.
+
 ```cpp file=Player.h
 #ifndef PLAYER_H
 #define PLAYER_H
@@ -42,19 +51,18 @@ private:
 
 #endif
 ```
-
-Line by line:
-
-- `#include "Scorecard.h"`: the class stores a `Scorecard` **by value**, so the compiler must know its full definition to work out how big a `Player` is.
-- `explicit Player(std::string name);`: the parameter has no `&`, on purpose. A `Player` keeps its name, so it needs its own copy anyway. A by-value parameter gives it one. If the caller passes a temporary, such as the text `"Ann"`, the text is built straight into the parameter and nothing is copied.
-- `const std::string& name() const;`: returns a reference to the stored name, so no text is copied. It is only valid while the `Player` exists.
-- `Scorecard& scorecard();` and `const Scorecard& scorecard() const;`: the same name twice. The only difference is the `const` after the parentheses. On a plain `Player` the first one runs and gives you a reference you can change the scorecard through. On a `const Player&` the second one runs and gives a read-only reference. One name serves both a function that records scores and a function that only reads them.
-- `int finalScore() const;`: the total plus the upper bonus. The rule for a final score lives in one place.
-- `std::string playerName;` and `Scorecard card;`: the private data. They are values, not pointers, so each `Player` owns its own scorecard. They are created and destroyed together with it. The name is `playerName` because `name` is already the name of a function.
-
 ## Define a Player
 
 Create `Player.cpp`.
+
+Line by line:
+
+- `#include <utility>`: declares `std::move`.
+- `: playerName(std::move(name)) {}`: the member initializer list. The parameter `name` is already a private copy, so `std::move(name)` lets `playerName` take its characters instead of copying them a second time. This is the move from lesson 5.3 in real use. After that line `name` is a moved-from string, and it is never used again.
+- `card` is not in the list. A member that is not mentioned is default-constructed, so `Scorecard()` runs and builds 13 empty boxes. Members are always built in the order they are **declared** in the class, not the order of the list.
+- The two `scorecard()` definitions: `const` goes after the parameter list again. Both return `card` itself, not a copy.
+- `card.total() + card.upperBonus()`: the final score.
+- `Player` declares no destructor and no copy or move functions. The compiler writes correct ones, because its members (a string and a scorecard) already know how to copy and move themselves. That is the rule of zero from lesson 5.3.
 
 ```cpp file=Player.cpp
 #include <utility>
@@ -79,15 +87,6 @@ int Player::finalScore() const {
     return card.total() + card.upperBonus();
 }
 ```
-
-Line by line:
-
-- `#include <utility>`: declares `std::move`.
-- `: playerName(std::move(name)) {}`: the member initializer list. The parameter `name` is already a private copy, so `std::move(name)` lets `playerName` take its characters instead of copying them a second time. This is the move from lesson 5.3 in real use. After that line `name` is a moved-from string, and it is never used again.
-- `card` is not in the list. A member that is not mentioned is default-constructed, so `Scorecard()` runs and builds 13 empty boxes. Members are always built in the order they are **declared** in the class, not the order of the list.
-- The two `scorecard()` definitions: `const` goes after the parameter list again. Both return `card` itself, not a copy.
-- `card.total() + card.upperBonus()`: the final score.
-- `Player` declares no destructor and no copy or move functions. The compiler writes correct ones, because its members (a string and a scorecard) already know how to copy and move themselves. That is the rule of zero from lesson 5.3.
 
 ```predict
 question: A function takes `const Player& p` and calls p.scorecard(). Which version runs?
@@ -127,6 +126,12 @@ Player.cpp
 ## Use it in main
 
 The game is still for one person, so `Game.h` and `Game.cpp` do not change. Only `main` does. Replace `main.cpp` with this.
+
+New lines:
+
+- `Player player("You");`: the text `"You"` builds a `std::string` for the constructor's parameter, and the constructor moves it into `playerName`.
+- `player.scorecard()`: `player` is not const, so this is the non-const version. It returns a `Scorecard&` to the player's own scorecard, which `playGame` changes in place.
+- `player.finalScore()`: the total plus the bonus.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -172,12 +177,6 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-New lines:
-
-- `Player player("You");`: the text `"You"` builds a `std::string` for the constructor's parameter, and the constructor moves it into `playerName`.
-- `player.scorecard()`: `player` is not const, so this is the non-const version. It returns a `Scorecard&` to the player's own scorecard, which `playGame` changes in place.
-- `player.finalScore()`: the total plus the bonus.
-
 ```bash
 g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game
 ./game
@@ -212,6 +211,14 @@ TEST(Player, PlayersDoNotShareScorecards) {
 - `hand(...)` is the same helper as in the scorecard tests. It builds the counts for a chosen hand.
 - Box 12 is Chance. It is filled for `a` and still empty for `b`.
 - Other tests check the copy behaviour from the prediction above, and that a `const Player&` can read its scorecard.
+
+## Prefer owned values for ordinary state {#teaching-review}
+
+**Try it yourself.** Trace a Player containing its own name and Scorecard. Copy the Player, change only the copy’s card, and compare both totals. Returning a borrowed name or scorecard view does not transfer ownership; identify the lifetime keeping each view valid. Keep the Rule of Zero instead of writing raw-pointer ownership by hand.
+
+**Explain before continuing.** Why might one getter return const Scorecard& while another offers a mutable reference? Which callers should receive mutation permission?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: a one-line summary
 

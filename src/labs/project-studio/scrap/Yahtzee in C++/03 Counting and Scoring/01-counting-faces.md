@@ -19,6 +19,17 @@ Words first:
 
 Create `Scoring.h`.
 
+Line by line:
+
+- `#ifndef SCORING_H` / `#define SCORING_H` / `#endif`: the include guard from lesson 1.2, with a name that no other header uses.
+- `#include <array>`: declares `std::array`. `#include <vector>` declares `std::vector`, which one of the functions below uses. `#include "Dice.h"` is there because the second `countFaces` takes a `Dice`.
+- `using Counts = std::array<int, 7>;`: `Counts` is seven `int` values. Slot 0 is never used. Slots 1 to 6 are the faces, so `counts[3]` is the number of dice showing a 3. That is why there are seven slots and not six.
+- Unlike a raw array (`int a[7]`), a `std::array` can be copied with `=`, passed to a function by value, and returned from a function. It also knows its own size (`counts.size()` is 7).
+- `Counts countFaces(const std::vector<int>& faces);`: reads a list of face values and returns the table. This version exists so the code can be tested with chosen faces. A `Dice` rolls at random, so a test could never know which faces it holds.
+- `Counts countFaces(const Dice& dice);`: the same name with a different parameter type. The compiler chooses between the two by looking at the argument. A `Dice` can never be mistaken for a `std::vector<int>`, and `Dice`'s constructor is `explicit`, so a bare number cannot silently turn into a `Dice` either.
+- `const std::vector<int>&` and `const Dice&`: references that cannot be used to change the object. Nothing is copied, and the function promises to only read.
+- `int sumFromCounts(const Counts& counts);`: adds up the value of all the dice, using only the table. Scoring rules will need the total often.
+
 ```cpp file=Scoring.h
 #ifndef SCORING_H
 #define SCORING_H
@@ -36,18 +47,6 @@ int sumFromCounts(const Counts& counts);
 
 #endif
 ```
-
-Line by line:
-
-- `#ifndef SCORING_H` / `#define SCORING_H` / `#endif`: the include guard from lesson 1.2, with a name that no other header uses.
-- `#include <array>`: declares `std::array`. `#include <vector>` declares `std::vector`, which one of the functions below uses. `#include "Dice.h"` is there because the second `countFaces` takes a `Dice`.
-- `using Counts = std::array<int, 7>;`: `Counts` is seven `int` values. Slot 0 is never used. Slots 1 to 6 are the faces, so `counts[3]` is the number of dice showing a 3. That is why there are seven slots and not six.
-- Unlike a raw array (`int a[7]`), a `std::array` can be copied with `=`, passed to a function by value, and returned from a function. It also knows its own size (`counts.size()` is 7).
-- `Counts countFaces(const std::vector<int>& faces);`: reads a list of face values and returns the table. This version exists so the code can be tested with chosen faces. A `Dice` rolls at random, so a test could never know which faces it holds.
-- `Counts countFaces(const Dice& dice);`: the same name with a different parameter type. The compiler chooses between the two by looking at the argument. A `Dice` can never be mistaken for a `std::vector<int>`, and `Dice`'s constructor is `explicit`, so a bare number cannot silently turn into a `Dice` either.
-- `const std::vector<int>&` and `const Dice&`: references that cannot be used to change the object. Nothing is copied, and the function promises to only read.
-- `int sumFromCounts(const Counts& counts);`: adds up the value of all the dice, using only the table. Scoring rules will need the total often.
-
 ## Fill the table
 
 Words first:
@@ -56,6 +55,19 @@ Words first:
 - **Copy elision**: the compiler may build a returned object directly in the caller's variable, so nothing is copied at all.
 
 Create `Scoring.cpp`.
+
+Line by line:
+
+- `Counts countFaces(const std::vector<int>& faces) {`: the signature matches the header exactly.
+- `Counts counts{};`: a local variable. A local `std::array<int, 7>` with no initializer holds leftover bytes, the same rule as a local `int dice[5]`. The empty braces set all seven numbers to 0, so the loop below starts counting from zero.
+- `for (int face : faces) {`: a range-based for. `int face` is a copy of each element. That is fine for an `int`, which is tiny. For a large type you would write `const auto&` to avoid copies.
+- `if (face >= 1 && face <= 6) {`: a guard. `counts[face]` on a `std::array` is **not** bounds-checked. A face of 9 would write outside the array, which is undefined behavior. Faces outside 1 to 6 are skipped instead.
+- `counts[face]++;`: adds 1 to that slot.
+- `return counts;`: returns the table by value. In practice the compiler builds it directly in the caller's variable. Even if it were copied, seven `int`s are cheap.
+- `std::vector<int> faces;`: an empty list. `faces.push_back(...)` adds one value to its end, and the vector grows as needed.
+- `dice.size()` and `dice.face(i)`: the public functions of `Dice`. The class keeps its dice private, so these are the only way to read them.
+- `return countFaces(faces);`: `faces` is a `std::vector<int>`, so the first overload runs. The Dice version does no counting of its own.
+- `total += face * counts[face];`: a face value times how many dice show it. Faces 2, 2, 6, 6, 6 give `2*2 + 6*3 = 22`.
 
 ```cpp file=Scoring.cpp
 #include "Scoring.h"
@@ -87,19 +99,6 @@ int sumFromCounts(const Counts& counts) {
 }
 ```
 
-Line by line:
-
-- `Counts countFaces(const std::vector<int>& faces) {`: the signature matches the header exactly.
-- `Counts counts{};`: a local variable. A local `std::array<int, 7>` with no initializer holds leftover bytes, the same rule as a local `int dice[5]`. The empty braces set all seven numbers to 0, so the loop below starts counting from zero.
-- `for (int face : faces) {`: a range-based for. `int face` is a copy of each element. That is fine for an `int`, which is tiny. For a large type you would write `const auto&` to avoid copies.
-- `if (face >= 1 && face <= 6) {`: a guard. `counts[face]` on a `std::array` is **not** bounds-checked. A face of 9 would write outside the array, which is undefined behavior. Faces outside 1 to 6 are skipped instead.
-- `counts[face]++;`: adds 1 to that slot.
-- `return counts;`: returns the table by value. In practice the compiler builds it directly in the caller's variable. Even if it were copied, seven `int`s are cheap.
-- `std::vector<int> faces;`: an empty list. `faces.push_back(...)` adds one value to its end, and the vector grows as needed.
-- `dice.size()` and `dice.face(i)`: the public functions of `Dice`. The class keeps its dice private, so these are the only way to read them.
-- `return countFaces(faces);`: `faces` is a `std::vector<int>`, so the first overload runs. The Dice version does no counting of its own.
-- `total += face * counts[face];`: a face value times how many dice show it. Faces 2, 2, 6, 6, 6 give `2*2 + 6*3 = 22`.
-
 ```predict
 question: You change `Counts counts{};` to `Counts counts;` and rebuild. Which statement is true?
 choice: counts always starts at 0 anyway
@@ -110,6 +109,14 @@ explain: Only global and static variables are zeroed automatically. A local std:
 ```
 
 ## Print the table
+
+New lines:
+
+- `Counts counts = countFaces(dice);`: `dice` is a `Dice`, so the second overload runs. The returned table goes into `counts`.
+- `counts[face]`: the number of dice showing that face. The loop starts at 1 because slot 0 is unused.
+- `sumFromCounts(counts)`: the total of the five dice.
+
+Build and run it. The command now lists five `.cpp` files:
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -134,14 +141,6 @@ int main() {
     return 0;
 }
 ```
-
-New lines:
-
-- `Counts counts = countFaces(dice);`: `dice` is a `Dice`, so the second overload runs. The returned table goes into `counts`.
-- `counts[face]`: the number of dice showing that face. The loop starts at 1 because slot 0 is unused.
-- `sumFromCounts(counts)`: the total of the five dice.
-
-Build and run it. The command now lists five `.cpp` files:
 
 ```bash
 g++ -std=c++17 main.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game
@@ -184,6 +183,14 @@ g++ -std=c++17 tests/test_counting.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp
 run "g++ -std=c++17 tests/test_counting.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_counting" label="the counting tests build" -- Press the lesson's support button if tests/test_counting.cpp is missing.
 tests "./test_counting" require="Counting.IgnoresImpossibleFaces" label="the counting tests pass" -- A face outside 1 to 6 must never touch the table.
 ```
+
+## Build the frequency table by hand {#teaching-review}
+
+**Try it yourself.** For {2,2,6,6,6}, start with seven zero slots and update one slot per face. Explain why the sum of counts is five but sumFromCounts is 22. Try an empty list, then {0,7,2}; our stated policy skips out-of-range values. Never remove initialization and execute the program to see whether indeterminate values happen to look like zero.
+
+**Explain before continuing.** Does the Counts type itself guarantee a valid five-die hand? Why do the public function contract and representation invariants matter even when indexing is guarded?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: the biggest count
 

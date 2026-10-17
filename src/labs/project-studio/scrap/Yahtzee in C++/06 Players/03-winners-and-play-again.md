@@ -19,6 +19,11 @@ Words first:
 
 Create `Ranking.h`.
 
+Line by line:
+
+- `std::vector<const Player*>`: a list of pointers to read-only players. The result **points at** the real players. It does not copy them.
+- `rankPlayers` returns all the players, best score first. `winnersOf` returns the player or players with the top score. Both take the players as a `const` reference, so they cannot change anything.
+
 ```cpp file=Ranking.h
 #ifndef RANKING_H
 #define RANKING_H
@@ -32,12 +37,6 @@ std::vector<const Player*> winnersOf(const std::vector<Player>& players);
 
 #endif
 ```
-
-Line by line:
-
-- `std::vector<const Player*>`: a list of pointers to read-only players. The result **points at** the real players. It does not copy them.
-- `rankPlayers` returns all the players, best score first. `winnersOf` returns the player or players with the top score. Both take the players as a `const` reference, so they cannot change anything.
-
 ## Define Ranking.cpp
 
 Create `Ranking.cpp`.
@@ -155,6 +154,14 @@ void Player::startNewGame() {
 
 Replace `Game.cpp` with this. It keeps the unique-name check from your last turn. If yours differs, keep yours and change only `playGame` and the new `printResults`.
 
+New lines:
+
+- `static void printResults(...)`: private to this file. It prints `Game over.`, then the ranked list, then the winner line.
+- `order[i]->summary()`: `order[i]` is a pointer, so the call uses `->`. `i + 1` makes the place start at 1.
+- `if (winners.empty()) { return; }`: the game always has 1 to 4 players, so this cannot happen. The guard keeps `winners[0]` from ever being read on an empty list.
+- One winner gets `Winner: ... with N points`. Several winners get a hand-written loop that puts `, ` between the names. Your turn at the end of this lesson replaces that loop with something neater.
+- `playGame` now ends with `printResults(players);` instead of printing the summaries itself.
+
 ```cpp file=Game.cpp
 #include <iostream>
 #include <string>
@@ -265,18 +272,15 @@ bool playGame(Dice& dice, std::vector<Player>& players, const TurnOptions& optio
     return true;
 }
 ```
-
-New lines:
-
-- `static void printResults(...)`: private to this file. It prints `Game over.`, then the ranked list, then the winner line.
-- `order[i]->summary()`: `order[i]` is a pointer, so the call uses `->`. `i + 1` makes the place start at 1.
-- `if (winners.empty()) { return; }`: the game always has 1 to 4 players, so this cannot happen. The guard keeps `winners[0]` from ever being read on an empty list.
-- One winner gets `Winner: ... with N points`. Several winners get a hand-written loop that puts `, ` between the names. Your turn at the end of this lesson replaces that loop with something neater.
-- `playGame` now ends with `printResults(players);` instead of printing the summaries itself.
-
 ## Play again
 
 Replace `main.cpp` with this.
+
+New lines:
+
+- `bool again = true; while (again) {`: plays a game, asks, and repeats while the answer is yes.
+- `if (!askYesNo("Play again? (y/n): ", again)) { return 0; }`: `again` is passed where `bool& yes` is expected, so the helper writes the answer into it. If input ends at this prompt, the game itself finished properly, so the program leaves quietly with status 0.
+- `for (Player& player : players) { player.startNewGame(); }`: a **reference**, so each real player gets a fresh scorecard. The names and the vector stay as they are.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -337,12 +341,6 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-New lines:
-
-- `bool again = true; while (again) {`: plays a game, asks, and repeats while the answer is yes.
-- `if (!askYesNo("Play again? (y/n): ", again)) { return 0; }`: `again` is passed where `bool& yes` is expected, so the helper writes the answer into it. If input ends at this prompt, the game itself finished properly, so the program leaves quietly with status 0.
-- `for (Player& player : players) { player.startNewGame(); }`: a **reference**, so each real player gets a fresh scorecard. The names and the vector stay as they are.
-
 ```bash
 g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game
 ./game
@@ -389,6 +387,14 @@ TEST(Ranking, TheRankingPointsAtTheRealPlayers) {
 g++ -std=c++17 tests/test_ranking.cpp Ranking.cpp Player.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o test_ranking
 ./test_ranking
 ```
+
+## Rank without moving the players {#teaching-review}
+
+**Try it yourself.** Start with totals 40,70,70 and write the intended winner list before sorting. Sort an index list when the game must preserve player order. A comparator using > expresses descending totals; using >= violates the strict ordering requirement for equal values. Replay must clear cards, not merely reset whose turn it is.
+
+**Explain before continuing.** Does stable_sort preserve the original order of tied players? Which state must be fresh for a replay, and which settings should survive?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: joining names
 

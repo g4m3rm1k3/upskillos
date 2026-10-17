@@ -12,10 +12,16 @@ Press this lesson's support button first. It creates two test files.
 
 Words first:
 
-- **`constexpr`**: marks a value the compiler works out while compiling. It is a stronger form of `const`.
+- **`constexpr`**: requires this variable to have a constant-expression initializer and makes it const. A plain const variable may instead receive a runtime value. constexpr functions have additional rules; they are not automatically evaluated at compile time.
 - **Pure function**: a function whose result depends only on its arguments, and which changes nothing and prints nothing. Pure functions are the easiest kind to test.
 
 Replace `Scoring.h` with this. It adds the point values and the rule functions to what you already wrote. The `highestFaceCount` line is the function you wrote in the last lesson.
+
+New lines:
+
+- `constexpr int FULL_HOUSE_POINTS = 25;`: a named constant. A name in the rule code says what the number means, and the value lives in one place. `constexpr` implies `const`.
+- A `const` or `constexpr` variable at file level has **internal linkage**. Every `.cpp` file that includes this header gets its own private copy. That is safe for constants. A plain non-const variable defined in a header would be defined once per file and cause a "multiple definition" linker error.
+- Each `score...` function takes `const Counts&` and returns the points as an `int`. `scoreUpper` also takes which face to score. `scoreOfAKind` also takes how many matching dice are needed.
 
 ```cpp file=Scoring.h
 #ifndef SCORING_H
@@ -48,16 +54,73 @@ int scoreChance(const Counts& counts);
 
 #endif
 ```
+## Add one pure rule first {#upper-first}
 
-New lines:
+Start with scoreUpper only. Preserve the counting functions and highestFaceCount from the previous lesson. The guard checks face before indexing: || stops at the first true condition. For two sixes, counts[6] is 2 and the result is 12. Declared but unused functions may be defined in later steps; compile this source to an object now, rather than pretending the whole scoring interface is finished.
 
-- `constexpr int FULL_HOUSE_POINTS = 25;`: a named constant. A name in the rule code says what the number means, and the value lives in one place. `constexpr` implies `const`.
-- A `const` or `constexpr` variable at file level has **internal linkage**. Every `.cpp` file that includes this header gets its own private copy. That is safe for constants. A plain non-const variable defined in a header would be defined once per file and cause a "multiple definition" linker error.
-- Each `score...` function takes `const Counts&` and returns the points as an `int`. `scoreUpper` also takes which face to score. `scoreOfAKind` also takes how many matching dice are needed.
+```cpp file=Scoring.cpp
+#include "Scoring.h"
+
+Counts countFaces(const std::vector<int>& faces) {
+    Counts counts{};
+    for (int face : faces) {
+        if (face >= 1 && face <= 6) {
+            counts[face]++;
+        }
+    }
+    return counts;
+}
+
+Counts countFaces(const Dice& dice) {
+    std::vector<int> faces;
+    for (std::size_t i = 0; i < dice.size(); i++) {
+        faces.push_back(dice.face(i));
+    }
+    return countFaces(faces);
+}
+
+int sumFromCounts(const Counts& counts) {
+    int total = 0;
+    for (int face = 1; face <= 6; face++) {
+        total += face * counts[face];
+    }
+    return total;
+}
+
+int highestFaceCount(const Counts& counts) {
+    int highest = 0;
+    for (int face = 1; face <= 6; face++) {
+        if (counts[face] > highest) {
+            highest = counts[face];
+        }
+    }
+    return highest;
+}
+
+int scoreUpper(const Counts& counts, int face) {
+    if (face < 1 || face > 6) {
+        return 0;
+    }
+    return counts[face] * face;
+}
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -c Scoring.cpp -o scoring_stage.o" label="Compile the first scoring rule"
+```
 
 ## The simple rules
 
 Replace `Scoring.cpp` with this version. It keeps your counting code and adds the rules that need no new technique. The full house and the straights come in the next step.
+
+New lines:
+
+- `scoreUpper`: the "Ones" to "Sixes" rule. It returns how many dice show `face`, times `face`. The first `if` rejects a face that does not exist before `counts[face]` is read. That matters because `[]` does not check its index. `||` stops at the first true part.
+- `scoreOfAKind`: if the most common face appears at least `needed` times, the score is the total of all five dice. Otherwise it is 0. It reuses `highestFaceCount` and `sumFromCounts` instead of repeating a loop.
+- `scoreYahtzee`: `condition ? a : b` is the ternary operator. It is an expression that produces `a` when the condition is true and `b` when it is false, so it can sit directly after `return`.
+- `scoreChance`: no condition, just the total.
+
+If your own `highestFaceCount` passed its tests, keep yours. The version above is shown so that this file is complete.
 
 ```cpp file=Scoring.cpp
 #include "Scoring.h"
@@ -121,17 +184,92 @@ int scoreChance(const Counts& counts) {
 }
 ```
 
-New lines:
-
-- `scoreUpper`: the "Ones" to "Sixes" rule. It returns how many dice show `face`, times `face`. The first `if` rejects a face that does not exist before `counts[face]` is read. That matters because `[]` does not check its index. `||` stops at the first true part.
-- `scoreOfAKind`: if the most common face appears at least `needed` times, the score is the total of all five dice. Otherwise it is 0. It reuses `highestFaceCount` and `sumFromCounts` instead of repeating a loop.
-- `scoreYahtzee`: `condition ? a : b` is the ternary operator. It is an expression that produces `a` when the condition is true and `b` when it is false, so it can sit directly after `return`.
-- `scoreChance`: no condition, just the total.
-
-If your own `highestFaceCount` passed its tests, keep yours. The version above is shown so that this file is complete.
-
 ```check
 run "g++ -std=c++17 main.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the program still builds" -- main.cpp is unchanged from the last lesson. Check the new lines for typos.
+```
+
+## Recognize a full house before scanning runs {#full-house-first}
+
+Add scoreFullHouse before introducing the straight-search helper. Two bool flags start false. One records a count equal to three; the other records a count equal to two. && requires both. Trace {2,2,3,3,3} and {2,2,2,2,3}; the second must not qualify. A Yahtzee does not satisfy this base full-house rule; the later Joker rule is a separate contextual override.
+
+```cpp file=Scoring.cpp
+#include "Scoring.h"
+
+Counts countFaces(const std::vector<int>& faces) {
+    Counts counts{};
+    for (int face : faces) {
+        if (face >= 1 && face <= 6) {
+            counts[face]++;
+        }
+    }
+    return counts;
+}
+
+Counts countFaces(const Dice& dice) {
+    std::vector<int> faces;
+    for (std::size_t i = 0; i < dice.size(); i++) {
+        faces.push_back(dice.face(i));
+    }
+    return countFaces(faces);
+}
+
+int sumFromCounts(const Counts& counts) {
+    int total = 0;
+    for (int face = 1; face <= 6; face++) {
+        total += face * counts[face];
+    }
+    return total;
+}
+
+int highestFaceCount(const Counts& counts) {
+    int highest = 0;
+    for (int face = 1; face <= 6; face++) {
+        if (counts[face] > highest) {
+            highest = counts[face];
+        }
+    }
+    return highest;
+}
+
+int scoreUpper(const Counts& counts, int face) {
+    if (face < 1 || face > 6) {
+        return 0;
+    }
+    return counts[face] * face;
+}
+
+int scoreOfAKind(const Counts& counts, int needed) {
+    if (highestFaceCount(counts) >= needed) {
+        return sumFromCounts(counts);
+    }
+    return 0;
+}
+
+int scoreFullHouse(const Counts& counts) {
+    bool hasThree = false;
+    bool hasTwo = false;
+    for (int face = 1; face <= 6; face++) {
+        if (counts[face] == 3) {
+            hasThree = true;
+        }
+        if (counts[face] == 2) {
+            hasTwo = true;
+        }
+    }
+    return (hasThree && hasTwo) ? FULL_HOUSE_POINTS : 0;
+}
+
+int scoreYahtzee(const Counts& counts) {
+    return highestFaceCount(counts) == 5 ? YAHTZEE_POINTS : 0;
+}
+
+int scoreChance(const Counts& counts) {
+    return sumFromCounts(counts);
+}
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra -c Scoring.cpp -o scoring_stage.o" label="Compile full-house recognition"
 ```
 
 ## Full house and the straights
@@ -141,6 +279,15 @@ Words first:
 - **Static function**: a function marked `static` outside a class is visible only inside its own `.cpp` file. Use it for helpers that nobody else should call.
 
 Replace `Scoring.cpp` again. The new parts sit between `scoreOfAKind` and `scoreYahtzee`.
+
+New lines:
+
+- `scoreFullHouse`: two flags start false. One loop over the faces sets `hasThree` when some face appears exactly 3 times and `hasTwo` when some face appears exactly 2 times. A five-of-a-kind hand sets neither, so it scores 0. This game does not count it as a full house.
+- `static bool hasRun(...)`: asks "do `length` faces in a row, starting at `start`, all appear at least once?" `static` keeps it private to this file, and it is not declared in `Scoring.h`.
+- `if (start < 1 || start + length - 1 > 6) { return false; }`: a run that starts below 1 or ends above 6 cannot exist. This guard also keeps the loop from reading beyond `counts[6]`.
+- `for (int face = start; face < start + length; face++)`: visits exactly `length` faces. A `counts[face]` of 0 means that face is missing, so the whole run fails at once.
+- `scoreSmallStraight`: tries the three windows 1-4, 2-5 and 3-6. The first run found returns 30 right away, so `return` inside a loop ends the whole function.
+- `scoreLargeStraight`: the same idea with a length of 5. It has two windows, 1-5 and 2-6.
 
 ```cpp file=Scoring.cpp
 #include "Scoring.h"
@@ -248,15 +395,6 @@ int scoreChance(const Counts& counts) {
 }
 ```
 
-New lines:
-
-- `scoreFullHouse`: two flags start false. One loop over the faces sets `hasThree` when some face appears exactly 3 times and `hasTwo` when some face appears exactly 2 times. A five-of-a-kind hand sets neither, so it scores 0. This game does not count it as a full house.
-- `static bool hasRun(...)`: asks "do `length` faces in a row, starting at `start`, all appear at least once?" `static` keeps it private to this file, and it is not declared in `Scoring.h`.
-- `if (start < 1 || start + length - 1 > 6) { return false; }`: a run that starts below 1 or ends above 6 cannot exist. This guard also keeps the loop from reading beyond `counts[6]`.
-- `for (int face = start; face < start + length; face++)`: visits exactly `length` faces. A `counts[face]` of 0 means that face is missing, so the whole run fails at once.
-- `scoreSmallStraight`: tries the three windows 1-4, 2-5 and 3-6. The first run found returns 30 right away, so `return` inside a loop ends the whole function.
-- `scoreLargeStraight`: the same idea with a length of 5. It has two windows, 1-5 and 2-6.
-
 ```predict
 question: The hand is 1, 2, 3, 4, 5. What does scoreSmallStraight return for it?
 choice: 0
@@ -267,6 +405,11 @@ explain: The window 1-4 is present, so the loop returns 30 on its first pass. Ea
 ```
 
 ## Print every rule
+
+New lines:
+
+- Each line asks one rule about the same hand. The numbers differ run to run because the dice are random.
+- `scoreOfAKind(counts, 3)` and `scoreOfAKind(counts, 4)` are the same function called with different `needed` values. That is why `needed` is a parameter.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -296,11 +439,6 @@ int main() {
     return 0;
 }
 ```
-
-New lines:
-
-- Each line asks one rule about the same hand. The numbers differ run to run because the dice are random.
-- `scoreOfAKind(counts, 3)` and `scoreOfAKind(counts, 4)` are the same function called with different `needed` values. That is why `needed` is a parameter.
 
 ```check
 run "g++ -std=c++17 main.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the scoring program builds" -- List all five .cpp files in the command.
@@ -333,6 +471,14 @@ run "g++ -std=c++17 tests/test_scoring.cpp Scoring.cpp Dice.cpp Die.cpp Terminal
 tests "./test_scoring" require="Scoring.SmallStraight" label="the scoring tests pass" -- A small straight is four faces in a row. Check all three windows.
 tests "./test_scoring" require="Scoring.FullHouse" label="the full house tests pass" -- Three of one face and two of another. Five of a kind is not a full house here.
 ```
+
+## Select cases that separate similar rules {#teaching-review}
+
+**Try it yourself.** Before running, score {1,2,3,4,4}, {1,2,3,5,6}, {2,2,3,3,3}, and {2,2,2,2,3}. The first has a small straight despite a duplicate; the second has no run of four; the last two distinguish full house from four-of-a-kind. Use these fixed hands rather than waiting for random rolls.
+
+**Explain before continuing.** Which case would catch a rule that counts distinct faces but ignores adjacency? Which would catch using >=2 and >=3 on the same face for a full house?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: two pairs
 

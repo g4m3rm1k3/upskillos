@@ -91,6 +91,14 @@ run "g++ -std=c++17 -Wall -Wextra -Wpedantic @sources.txt -o game" label="the ga
 run "./game --fast" stdin="1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n" stdout="Game over." label="the game still plays to the end" -- Nothing in the game changed. Only the build did.
 ```
 
+## Diagnose the build stage {#teaching-review}
+
+**Try it yourself.** Compile one source with -c, inspect that an object file appears, and then link the objects. Deliberately omit Scoring.o from one link command, read the unresolved-symbol diagnostic, and restore it. A header declaration does not supply the missing function body to the linker.
+
+**Explain before continuing.** If only a .cpp function body changes, which object must be rebuilt? If a header changes, which dependent source files need recompilation? Why must the executable be relinked after either change?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
+
 ## Your turn: build from object files
 
 Build the game from object files, without using `sources.txt`:

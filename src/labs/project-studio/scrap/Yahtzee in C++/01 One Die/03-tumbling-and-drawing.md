@@ -17,6 +17,14 @@ Words first:
 - **Reference**: another name for an object that already exists. `Die&` is a reference to a `Die`. Passing one hands the function the original object, not a copy.
 - **`const Die&`**: a reference through which the function promises not to modify the object. It is the usual way to pass a class object that you only want to read.
 
+New lines:
+
+- `#include <string>`: this header's declarations use `std::string`, so the header includes what it needs. A header should never rely on the file that includes it to have included something first.
+- `explicit Die(int startFace);`: a second constructor, overloading the first. `Die d;` picks the first because there are no arguments. `Die d(4);` picks this one.
+- `void tumbleStep();`: moves the die to a face next to its current face.
+- `bool sameFace(const Die& other) const;`: two separate promises. The `const` in the parameter says "I will not modify `other`". The `const` after the parentheses says "I will not modify the die I am called on". The `&` means the other die is not copied.
+- `std::string line(int r) const;`: returns one row of the die's picture as text. Row 0 is the top edge, rows 1 to 3 are the pips, row 4 is the bottom edge.
+
 ```cpp file=Die.h
 #ifndef DIE_H
 #define DIE_H
@@ -39,17 +47,19 @@ public:
 
 #endif
 ```
+## Update Die.cpp
 
 New lines:
 
-- `#include <string>`: this header's declarations use `std::string`, so the header includes what it needs. A header should never rely on the file that includes it to have included something first.
-- `explicit Die(int startFace);`: a second constructor, overloading the first. `Die d;` picks the first because there are no arguments. `Die d(4);` picks this one.
-- `void tumbleStep();`: moves the die to a face next to its current face.
-- `bool sameFace(const Die& other) const;`: two separate promises. The `const` in the parameter says "I will not modify `other`". The `const` after the parentheses says "I will not modify the die I am called on". The `&` means the other die is not copied.
-- `std::string line(int r) const;`: returns one row of the die's picture as text. Row 0 is the top edge, rows 1 to 3 are the pips, row 4 is the bottom edge.
-
-
-## Update Die.cpp
+- `static const char* const pip[7][3]`: read it right to left. `pip` is an array of 7 arrays of 3 items. Each item is a `const` pointer (`* const`: the pointer cannot be re-pointed) to a `const char` (the characters cannot be changed). A string literal such as `"o o"` is stored as read-only characters, and the pointer holds the address of the first one.
+- `static` on a name outside any class means it is private to this `.cpp` file. No other file can see or collide with `pip`. This is called **internal linkage**.
+- Row 0 of `pip` is filler. It makes `pip[face]` line up with faces 1 to 6.
+- `adjacent`: on a real die opposite faces add up to 7. A face can tumble to every face except itself and its opposite, which is four faces. The pairs 1 and 6, 2 and 5, 3 and 4 share the same four neighbours, so only three rows are stored, in rows 1 to 3.
+- `face = (startFace >= 1 && startFace <= 6) ? startFace : 1;`: the ternary keeps the value if it is a real face and otherwise uses 1. This is why `face` is `private`. No code outside the class can put a die into an impossible state.
+- `int row = (face > 3) ? 7 - face : face;`: folds faces 4, 5, 6 onto rows 3, 2, 1.
+- `face = adjacent[row][std::rand() % 4];`: picks one of the four neighbours.
+- `other.face`: allowed even though `face` is private. Access control works per class, not per object, so one `Die` may read another `Die`'s private members.
+- `std::string("|") + pip[face][r - 1] + "|"`: `r - 1` converts the row number (1 to 3) into a `pip` index (0 to 2). The first piece must be wrapped in `std::string(...)`. Writing `"|" + pip[...]` would try to add two raw pointers, and C++ has no `+` for that, so it would not compile. `std::string + const char*` is defined.
 
 ```cpp file=Die.cpp
 #include <cstdlib>
@@ -106,20 +116,12 @@ std::string Die::line(int r) const {
     return std::string("|") + pip[face][r - 1] + "|";
 }
 ```
+## Draw a tumbling die
 
 New lines:
 
-- `static const char* const pip[7][3]`: read it right to left. `pip` is an array of 7 arrays of 3 items. Each item is a `const` pointer (`* const`: the pointer cannot be re-pointed) to a `const char` (the characters cannot be changed). A string literal such as `"o o"` is stored as read-only characters, and the pointer holds the address of the first one.
-- `static` on a name outside any class means it is private to this `.cpp` file. No other file can see or collide with `pip`. This is called **internal linkage**.
-- Row 0 of `pip` is filler. It makes `pip[face]` line up with faces 1 to 6.
-- `adjacent`: on a real die opposite faces add up to 7. A face can tumble to every face except itself and its opposite, which is four faces. The pairs 1 and 6, 2 and 5, 3 and 4 share the same four neighbours, so only three rows are stored, in rows 1 to 3.
-- `face = (startFace >= 1 && startFace <= 6) ? startFace : 1;`: the ternary keeps the value if it is a real face and otherwise uses 1. This is why `face` is `private`. No code outside the class can put a die into an impossible state.
-- `int row = (face > 3) ? 7 - face : face;`: folds faces 4, 5, 6 onto rows 3, 2, 1.
-- `face = adjacent[row][std::rand() % 4];`: picks one of the four neighbours.
-- `other.face`: allowed even though `face` is private. Access control works per class, not per object, so one `Die` may read another `Die`'s private members.
-- `std::string("|") + pip[face][r - 1] + "|"`: `r - 1` converts the row number (1 to 3) into a `pip` index (0 to 2). The first piece must be wrapped in `std::string(...)`. Writing `"|" + pip[...]` would try to add two raw pointers, and C++ has no `+` for that, so it would not compile. `std::string + const char*` is defined.
-
-## Draw a tumbling die
+- The inner loop asks the die for rows 0 to 4 and prints each one. The die returns text and `main` decides what to do with it. The `Die` class never prints anything itself.
+- `die.tumbleStep();` after each picture turns the die onto a neighbouring face.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -143,11 +145,6 @@ int main() {
     return 0;
 }
 ```
-
-New lines:
-
-- The inner loop asks the die for rows 0 to 4 and prints each one. The die returns text and `main` decides what to do with it. The `Die` class never prints anything itself.
-- `die.tumbleStep();` after each picture turns the die onto a neighbouring face.
 
 ```check
 run "g++ -std=c++17 main.cpp Die.cpp -o game" label="the drawing program builds" -- Die.h and Die.cpp must declare and define every function main.cpp calls.
@@ -241,6 +238,14 @@ explain: A fully random face repeats the old face about one time in six and land
 run "g++ -std=c++17 tests/test_die.cpp Die.cpp -o test_die" label="the Die tests build" -- The test calls every function in Die.h, so each one needs a definition in Die.cpp.
 tests "./test_die" require="Die.TumbleNeverRepeatsOrFlipsToOpposite" label="the Die tests pass" -- Each failing test prints the line of the test file that failed.
 ```
+
+## Choose a representation you can inspect {#teaching-review}
+
+**Try it yourself.** Construct the fixed faces 1 and 6 and compare all three drawn rows. Count newline characters: a row renderer must not secretly finish the whole die. Keep visual tumbling separate from the final random outcome; the animation is presentation, not a fairness test. Change one pip, observe the broken shape, then restore it.
+
+**Explain before continuing.** Which object owns the face? Does returning one drawing row require changing that face? Why should an invalid face be handled before indexing a picture table?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: opposite faces
 

@@ -26,6 +26,18 @@ Words first:
 
 Create `Die.h`.
 
+Line by line:
+
+- `#ifndef DIE_H` / `#define DIE_H` / `#endif`: the include guard. `#ifndef DIE_H` asks "is the name `DIE_H` already defined?" If not, the preprocessor continues and `#define DIE_H` defines it. If the same header is pulled in a second time, the name exists, so everything up to `#endif` is skipped. This matters because a class may be defined only once per translation unit, and two headers that both include `Die.h` would otherwise paste the class in twice. The name is arbitrary, but it must be the same on the first two lines and different from every other header's guard.
+- `class Die {` ... `};`: defines a new type named `Die`. The `;` after the closing brace is required.
+- `private:`: every member below this label, until the next label, can be used only by the class's own member functions. The compiler enforces this.
+- `int face;`: a **data member**. Every `Die` object holds its own `int` named `face`.
+- `public:`: members below this label can be used from anywhere.
+- `Die();`: the constructor, declared but not defined. Its body goes in `Die.cpp`.
+- `int getFace() const;`: a member function that returns an `int`. The `const` after the parentheses is a promise, checked by the compiler, that this function will not change the object it is called on. A `const` object can only call `const` member functions.
+
+Analogy (helper only): the include guard is a sign-in sheet at a door. The first visitor signs and enters. Anyone arriving later sees the signature and walks past.
+
 ```cpp file=Die.h
 #ifndef DIE_H
 #define DIE_H
@@ -41,22 +53,18 @@ public:
 
 #endif
 ```
-
-Line by line:
-
-- `#ifndef DIE_H` / `#define DIE_H` / `#endif`: the include guard. `#ifndef DIE_H` asks "is the name `DIE_H` already defined?" If not, the preprocessor continues and `#define DIE_H` defines it. If the same header is pulled in a second time, the name exists, so everything up to `#endif` is skipped. This matters because a class may be defined only once per translation unit, and two headers that both include `Die.h` would otherwise paste the class in twice. The name is arbitrary, but it must be the same on the first two lines and different from every other header's guard.
-- `class Die {` ... `};`: defines a new type named `Die`. The `;` after the closing brace is required.
-- `private:`: every member below this label, until the next label, can be used only by the class's own member functions. The compiler enforces this.
-- `int face;`: a **data member**. Every `Die` object holds its own `int` named `face`.
-- `public:`: members below this label can be used from anywhere.
-- `Die();`: the constructor, declared but not defined. Its body goes in `Die.cpp`.
-- `int getFace() const;`: a member function that returns an `int`. The `const` after the parentheses is a promise, checked by the compiler, that this function will not change the object it is called on. A `const` object can only call `const` member functions.
-
-Analogy (helper only): the include guard is a sign-in sheet at a door. The first visitor signs and enters. Anyone arriving later sees the signature and walks past.
-
 ## Define the Die in a source file
 
 Create `Die.cpp`.
+
+Line by line:
+
+- `#include "Die.h"`: quotes mean "look in this file's own folder first". Your own headers use quotes and library headers use angle brackets. The `.cpp` includes its own header so the compiler sees the class and can check that every definition matches a declaration.
+- `Die::Die() {`: `::` is the **scope resolution operator**. It means "the name on the right belongs to the thing on the left". The first `Die` is the class and the second `Die` is the constructor's name. Without `Die::`, the name would no longer define this member; a constructor spelled that way is invalid rather than a constructor for Die.
+- `face = std::rand() % 6 + 1;`: sets the member. A member of type `int` is not initialized automatically, so without an initializer or this assignment, `face` would be indeterminate and reading it would be undefined behavior.
+- `int Die::getFace() const {`: the signature must match the declaration exactly, including the trailing `const`. A mismatch is a compile error. Inside a `const` function `face` can be read but not assigned.
+
+Analogy (helper only): a constructor is a vending machine being delivered. Nobody presses a button to stock it. That setup happens automatically the moment it is placed.
 
 ```cpp file=Die.cpp
 #include <cstdlib>
@@ -71,17 +79,12 @@ int Die::getFace() const {
     return face;
 }
 ```
-
-Line by line:
-
-- `#include "Die.h"`: quotes mean "look in this file's own folder first". Your own headers use quotes and library headers use angle brackets. The `.cpp` includes its own header so the compiler sees the class and can check that every definition matches a declaration.
-- `Die::Die() {`: `::` is the **scope resolution operator**. It means "the name on the right belongs to the thing on the left". The first `Die` is the class and the second `Die` is the constructor's name. Without `Die::`, the name would no longer define this member; a constructor spelled that way is invalid rather than a constructor for Die.
-- `face = std::rand() % 6 + 1;`: sets the member. A member of type `int` is not initialized automatically, so without an initializer or this assignment, `face` would be indeterminate and reading it would be undefined behavior.
-- `int Die::getFace() const {`: the signature must match the declaration exactly, including the trailing `const`. A mismatch is a compile error. Inside a `const` function `face` can be read but not assigned.
-
-Analogy (helper only): a constructor is a vending machine being delivered. Nobody presses a button to stock it. That setup happens automatically the moment it is placed.
-
 ## Use it from main
+
+New lines:
+
+- `Die die;`: creates one `Die` object named `die`. The constructor runs on this line and calls `std::rand()`. That is why `std::srand` sits on the line above it. Seeding afterwards would leave this first roll unseeded.
+- `die.getFace()`: `.` calls a member function on this object. `getFace` is `public`, so `main` may call it. Writing `die.face` would not compile, because `face` is `private`.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -99,12 +102,6 @@ int main() {
     return 0;
 }
 ```
-
-New lines:
-
-- `Die die;`: creates one `Die` object named `die`. The constructor runs on this line and calls `std::rand()`. That is why `std::srand` sits on the line above it. Seeding afterwards would leave this first roll unseeded.
-- `die.getFace()`: `.` calls a member function on this object. `getFace` is `public`, so `main` may call it. Writing `die.face` would not compile, because `face` is `private`.
-
 ## Build two files into one program
 
 ```bash
@@ -130,6 +127,14 @@ file Die.cpp
 run "g++ -std=c++17 main.cpp Die.cpp -o game" label="the two files build into one program" -- List both .cpp files in the command. A missing one gives 'undefined reference'.
 run "./game" stdout="Die shows" label="the program prints the die" -- Run ./game and compare its output with the text in main.cpp.
 ```
+
+## Separate an invariant from storage {#teaching-review}
+
+**Try it yourself.** Trace a Die through construction, getFace and roll. Write the allowed face range before changing the class. Temporarily remove const from getFace and try calling it through const Die&; restore the signature after reading the diagnostic. A getter should not need permission to mutate the die.
+
+**Explain before continuing.** Why does the header expose operations rather than make the face public? Which change would require recompiling a caller, and which would only require rebuilding the implementation and relinking?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: roll the same die again
 

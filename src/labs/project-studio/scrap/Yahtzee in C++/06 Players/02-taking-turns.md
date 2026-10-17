@@ -16,6 +16,11 @@ Words first:
 
 Replace `Game.h` with this.
 
+Line by line:
+
+- `bool readPlayers(std::vector<Player>& players);`: asks who is playing and fills `players`. The vector is an output parameter, so the function writes into the caller's vector. It returns `false` if input ends first.
+- `bool playGame(Dice& dice, std::vector<Player>& players, const TurnOptions& options);`: the vector of players replaces the single scorecard. It is non-const because turns change the players' scorecards.
+
 ```cpp file=Game.h
 #ifndef GAME_H
 #define GAME_H
@@ -31,12 +36,6 @@ bool playGame(Dice& dice, std::vector<Player>& players, const TurnOptions& optio
 
 #endif
 ```
-
-Line by line:
-
-- `bool readPlayers(std::vector<Player>& players);`: asks who is playing and fills `players`. The vector is an output parameter, so the function writes into the caller's vector. It returns `false` if input ends first.
-- `bool playGame(Dice& dice, std::vector<Player>& players, const TurnOptions& options);`: the vector of players replaces the single scorecard. It is non-const because turns change the players' scorecards.
-
 ## Write the game
 
 Replace `Game.cpp` with this.
@@ -143,6 +142,13 @@ bool playGame(Dice& dice, std::vector<Player>& players, const TurnOptions& optio
 
 Replace `main.cpp` with this.
 
+New lines:
+
+- `std::vector<Player> players;`: empty. `readPlayers(players)` fills it through the reference.
+- A failure in either step prints a message and returns 1, the same exit status as before.
+
+The test from lesson 4.3, `tests/test_game.cpp`, tests the old one-scorecard `playGame` and no longer compiles. Delete that file. The new tests are in `tests/test_players_game.cpp`.
+
 ```cpp file=main.cpp
 #include <cstdlib>
 #include <ctime>
@@ -191,13 +197,6 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-New lines:
-
-- `std::vector<Player> players;`: empty. `readPlayers(players)` fills it through the reference.
-- A failure in either step prints a message and returns 1, the same exit status as before.
-
-The test from lesson 4.3, `tests/test_game.cpp`, tests the old one-scorecard `playGame` and no longer compiles. Delete that file. The new tests are in `tests/test_players_game.cpp`.
-
 ```predict
 question: Inside playGame you change `for (Player& player : players)` to `for (Player player : players)`, with no &. The game is played. What happens to the scorecards in the vector?
 choice: They are filled in as before
@@ -242,6 +241,14 @@ static std::string interleaved(int players) {
 
 - Turns alternate, so with two players the input must be `1, 1, 2, 2, ...`. This helper builds that text for any number of players.
 - The rotation test types only `13` and `12` and then lets the input end. The game returns `false`, and the test checks that the first player scored box 13 (index 12) and the second scored box 12 (index 11).
+
+## Locate the source of truth {#teaching-review}
+
+**Try it yourself.** Draw two players with separate cards and one active-player position. Trace the first two turns and then a full round. Do not duplicate player totals in Game if Player already computes them; duplicated state needs synchronization and can disagree. Validate duplicate names at the boundary before starting gameplay.
+
+**Explain before continuing.** Which test would reveal accidentally sharing one scorecard between players? Does vector growth invalidate a borrowed reference, and when should you obtain that reference?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: unique names
 

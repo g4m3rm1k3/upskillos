@@ -46,6 +46,11 @@ New line:
 
 ## Update Dice.cpp
 
+New lines:
+
+- `for (std::size_t i = 0; i < dice.size(); i++) {`: an index loop rather than a range-for, because the loop needs the position `i` to look up `hold[i]`.
+- `if (!hold[i]) { dice[i].roll(); }`: `dice[i]` is the real die inside the vector, so `roll()` changes it. `hold[i]` is not bounds-checked, so `hold` must be at least as long as `dice`.
+
 ```cpp file=Dice.cpp
 #include <iostream>
 
@@ -122,11 +127,6 @@ bool Dice::animate(const std::vector<bool>& hold) {
 }
 ```
 
-New lines:
-
-- `for (std::size_t i = 0; i < dice.size(); i++) {`: an index loop rather than a range-for, because the loop needs the position `i` to look up `hold[i]`.
-- `if (!hold[i]) { dice[i].roll(); }`: `dice[i]` is the real die inside the vector, so `roll()` changes it. `hold[i]` is not bounds-checked, so `hold` must be at least as long as `dice`.
-
 ```check
 run "g++ -std=c++17 tests/test_dice_free.cpp Dice.cpp Die.cpp Terminal.cpp -o test_dice_free" label="the rollFree tests build" -- Declare rollFree in Dice.h and define it in Dice.cpp.
 tests "./test_dice_free" require="DiceFree.HeldDiceKeepTheirFaces" label="held dice keep their faces" -- Skip any die whose hold entry is true.
@@ -138,6 +138,12 @@ Words first:
 
 - **Default member initializer**: a value written next to a member in a struct (`bool animate = true;`) that the member gets whenever nothing else sets it.
 - **Default argument**: a value written in a function's declaration (`= TurnOptions()`) that is used when the caller leaves that argument out.
+
+Line by line:
+
+- `struct TurnOptions { bool animate = true; int maxRolls = 3; };`: settings for a turn. A struct with no constructor has no uninitialized members here, because both members carry a default. `TurnOptions options;` gives `animate` true and `maxRolls` 3. Tests turn the animation off with `options.animate = false;`.
+- `bool playTurn(Dice& dice, Scorecard& scorecard, ...)`: `Dice&` and `Scorecard&` are **non-const** references, because the turn changes both: it rolls the dice and writes a score. The return value says whether the turn finished: `true` if a category was scored, `false` if input ran out.
+- `const TurnOptions& options = TurnOptions()`: the options are only read, so a const reference. If the caller passes nothing, `TurnOptions()` builds a temporary object with all defaults, which lives until the call ends. A default argument is written in the declaration only, never again in the definition.
 
 ```cpp file=Turn.h
 #ifndef TURN_H
@@ -155,13 +161,6 @@ bool playTurn(Dice& dice, Scorecard& scorecard, const TurnOptions& options = Tur
 
 #endif
 ```
-
-Line by line:
-
-- `struct TurnOptions { bool animate = true; int maxRolls = 3; };`: settings for a turn. A struct with no constructor has no uninitialized members here, because both members carry a default. `TurnOptions options;` gives `animate` true and `maxRolls` 3. Tests turn the animation off with `options.animate = false;`.
-- `bool playTurn(Dice& dice, Scorecard& scorecard, ...)`: `Dice&` and `Scorecard&` are **non-const** references, because the turn changes both: it rolls the dice and writes a score. The return value says whether the turn finished: `true` if a category was scored, `false` if input ran out.
-- `const TurnOptions& options = TurnOptions()`: the options are only read, so a const reference. If the caller passes nothing, `TurnOptions()` builds a temporary object with all defaults, which lives until the call ends. A default argument is written in the declaration only, never again in the definition.
-
 ## Write the turn
 
 ```cpp file=Turn.cpp
@@ -276,6 +275,11 @@ explain: The first roll already counts, so rollsUsed starts at 1. A reroll is of
 
 ## Play one turn
 
+New lines:
+
+- `playTurn(dice, scorecard)`: the third argument is left out, so the default options are used, with animation on and three rolls.
+- The program plays one turn, prints the total, and ends.
+
 ```cpp file=main.cpp
 #include <cstdlib>
 #include <ctime>
@@ -299,11 +303,6 @@ int main() {
     return 0;
 }
 ```
-
-New lines:
-
-- `playTurn(dice, scorecard)`: the third argument is left out, so the default options are used, with animation on and three rolls.
-- The program plays one turn, prints the total, and ends.
 
 ```bash
 g++ -std=c++17 main.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring.cpp Dice.cpp Die.cpp Terminal.cpp -o game
@@ -348,6 +347,14 @@ run "g++ -std=c++17 tests/test_turn.cpp Turn.cpp Input.cpp Scorecard.cpp Scoring
 tests "./test_turn" require="Turn.ACategoryCannotBeScoredTwice" label="a scored category is refused" -- record returns false for a box that already has a score. The turn must ask again.
 tests "./test_turn" require="Turn.EndOfInputStopsTheTurn" label="the turn stops when input ends" -- Every askInt or readLine that fails must make playTurn return false.
 ```
+
+## Separate counters with different meanings {#teaching-review}
+
+**Try it yourself.** Trace a turn with a maximum of three rolls: all dice, hold two, reroll free dice, then stop. Count rolls separately from the number of dice changed. Check the off-by-one boundary at the final permitted roll. A full hand held still needs an explicit stop/roll policy, not an accidental loop outcome.
+
+**Explain before continuing.** Which state belongs to this turn and which belongs to the scorecard across turns? What must remain unchanged when the player supplies an illegal category?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: show the roll number
 

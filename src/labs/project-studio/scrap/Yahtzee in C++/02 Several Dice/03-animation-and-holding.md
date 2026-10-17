@@ -13,6 +13,10 @@ Words first:
 - **Macro**: a name the preprocessor replaces with other text, or tests for. `_WIN32` is a macro the compiler defines when it builds for Windows.
 - **Conditional compilation**: `#ifdef NAME` keeps the lines up to `#else` only when the macro `NAME` exists, and `#else` keeps its lines only when it does not. The compiler never sees the removed lines.
 
+New lines:
+
+- Two free functions, declared only. The rest of the program calls them and never mentions Windows.
+
 ```cpp file=Terminal.h
 #ifndef TERMINAL_H
 #define TERMINAL_H
@@ -22,13 +26,14 @@ void sleepMs(int ms);
 
 #endif
 ```
+## Update Terminal.cpp
 
 New lines:
 
-- Two free functions, declared only. The rest of the program calls them and never mentions Windows.
-
-
-## Update Terminal.cpp
+- `#ifdef _WIN32 ... #else ... #endif`: on Windows the compiler sees only the `windows.h` lines, and elsewhere only the `chrono` and `thread` lines. `Sleep` is never seen on other systems, and `std::this_thread` is never seen on Windows.
+- `std::system("cls")`: hands the text to the operating system's command interpreter, which clears the terminal. The command is `cls` on Windows and `clear` elsewhere.
+- `Sleep(...)`: a Windows function that pauses for a number of milliseconds. It takes a `DWORD`, a Windows type for an unsigned 32-bit integer, hence the `static_cast`.
+- `std::this_thread::sleep_for(std::chrono::milliseconds(ms))`: the standard C++ way to pause the current thread. `std::chrono::milliseconds(ms)` is a value that carries its unit, so you cannot mix up milliseconds and seconds.
 
 ```cpp file=Terminal.cpp
 #include <cstdlib>
@@ -58,14 +63,6 @@ void sleepMs(int ms) {
 #endif
 }
 ```
-
-New lines:
-
-- `#ifdef _WIN32 ... #else ... #endif`: on Windows the compiler sees only the `windows.h` lines, and elsewhere only the `chrono` and `thread` lines. `Sleep` is never seen on other systems, and `std::this_thread` is never seen on Windows.
-- `std::system("cls")`: hands the text to the operating system's command interpreter, which clears the terminal. The command is `cls` on Windows and `clear` elsewhere.
-- `Sleep(...)`: a Windows function that pauses for a number of milliseconds. It takes a `DWORD`, a Windows type for an unsigned 32-bit integer, hence the `static_cast`.
-- `std::this_thread::sleep_for(std::chrono::milliseconds(ms))`: the standard C++ way to pause the current thread. `std::chrono::milliseconds(ms)` is a value that carries its unit, so you cannot mix up milliseconds and seconds.
-
 ## Animate with a hold list
 
 Words first:
@@ -104,6 +101,19 @@ New line:
 
 
 ## Update Dice.cpp
+
+New lines:
+
+- `#include "Terminal.h"`: `clearScreen` and `sleepMs` are used here.
+- `bool anyFree = false;` and the loop below it: checks whether at least one die is free to move. `!hold[i]` reads "die `i` is not held".
+- `if (!anyFree) { return; }`: if every die is held there is nothing to animate. The function stops at once, with no flash and no wait.
+- `for (int frame = 0; frame < 15; frame++) {`: the animation has 15 frames.
+- `dice[i].tumbleStep();`: each free die turns once per frame. Held dice are skipped, so they keep their face.
+- `clearScreen(); draw();`: wipes the terminal and draws the current faces. `draw()` is a call to another member function on the same object.
+- `sleepMs(50 + frame * 15);`: the pause grows as `frame` grows, from 50 ms on the first frame to 260 ms on the last. The long pauses at the end make the roll slow down, like a real die coming to rest. The whole animation takes about 2.3 seconds.
+- `hold[i]` is **not** checked against the list's size. If `hold` is shorter than `dice`, that read is undefined behavior.
+
+Analogy (helper only): the growing pause is a ball rolling to a stop. Early frames change quickly and later ones wait longer, until it settles.
 
 ```cpp file=Dice.cpp
 #include <iostream>
@@ -172,19 +182,6 @@ void Dice::animate(const std::vector<bool>& hold) {
 }
 ```
 
-New lines:
-
-- `#include "Terminal.h"`: `clearScreen` and `sleepMs` are used here.
-- `bool anyFree = false;` and the loop below it: checks whether at least one die is free to move. `!hold[i]` reads "die `i` is not held".
-- `if (!anyFree) { return; }`: if every die is held there is nothing to animate. The function stops at once, with no flash and no wait.
-- `for (int frame = 0; frame < 15; frame++) {`: the animation has 15 frames.
-- `dice[i].tumbleStep();`: each free die turns once per frame. Held dice are skipped, so they keep their face.
-- `clearScreen(); draw();`: wipes the terminal and draws the current faces. `draw()` is a call to another member function on the same object.
-- `sleepMs(50 + frame * 15);`: the pause grows as `frame` grows, from 50 ms on the first frame to 260 ms on the last. The long pauses at the end make the roll slow down, like a real die coming to rest. The whole animation takes about 2.3 seconds.
-- `hold[i]` is **not** checked against the list's size. If `hold` is shorter than `dice`, that read is undefined behavior.
-
-Analogy (helper only): the growing pause is a ball rolling to a stop. Early frames change quickly and later ones wait longer, until it settles.
-
 ```predict
 question: Your Dice holds 5 dice but you pass animate a hold list with only 3 entries. What happens?
 choice: A compile error
@@ -195,6 +192,13 @@ explain: operator[] does not check the index. Reading hold[3] reads memory beyon
 ```
 
 ## Use it from main
+
+New lines:
+
+- `std::vector<bool> hold(5, false);`: this constructor makes 5 elements, each set to `false`, so nothing is held yet.
+- `hold[0] = true;`: assigns through the proxy. Dice 1, 3 and 5 (positions 0, 2, 4) are held for the second animation.
+
+Build everything, including the new file:
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -221,13 +225,6 @@ int main() {
 }
 ```
 
-New lines:
-
-- `std::vector<bool> hold(5, false);`: this constructor makes 5 elements, each set to `false`, so nothing is held yet.
-- `hold[0] = true;`: assigns through the proxy. Dice 1, 3 and 5 (positions 0, 2, 4) are held for the second animation.
-
-Build everything, including the new file:
-
 ```bash
 g++ -std=c++17 main.cpp Dice.cpp Die.cpp Terminal.cpp -o game
 ./game
@@ -238,6 +235,14 @@ run "g++ -std=c++17 main.cpp Dice.cpp Die.cpp Terminal.cpp -o game" label="the a
 run "g++ -std=c++17 tests/test_dice_animate.cpp Dice.cpp Die.cpp Terminal.cpp -o test_dice_animate" label="the animation tests build" -- The test needs Terminal.cpp too, because Dice.cpp calls it.
 tests "./test_dice_animate" require="DiceAnimate.HeldDiceNeverChange" label="held dice stay still" -- A held die must not call tumbleStep.
 ```
+
+## Separate rules from the terminal {#teaching-review}
+
+**Try it yourself.** Use a fixed hand and mark exactly its middle die held. Trace each loop iteration: read held state, decide whether to change a face, then redraw. Try zero animation frames and explain whether the final roll should still be a game action. Keep platform-specific clear/wait operations in Terminal rather than in scoring.
+
+**Explain before continuing.** Which test can run without watching the animation? Why is sleeping inside a scoring function a design smell? What would change if the screen were replaced by a web UI?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: report whether anything moved
 

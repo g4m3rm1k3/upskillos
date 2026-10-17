@@ -19,6 +19,16 @@ Words first:
 
 Replace `Scorecard.h` with this.
 
+New lines:
+
+- `enum class CategoryId : std::size_t {`: a new type named `CategoryId`. Each enumerator gets the next whole number, starting at 0. `Ones` is 0, `Twos` is 1, and `Chance` is 12. `: std::size_t` makes the underlying type `std::size_t`, the same type the vector uses for positions.
+- Scoped means the enumerators are written `CategoryId::Chance`, and a bare `Chance` does not exist. A plain `enum` would put `Ones` and `Chance` into the surrounding scope, where they could collide with other names.
+- There is no automatic conversion in either direction. `int x = CategoryId::Ones;` does not compile, and neither does `CategoryId id = 3;`. A box can no longer be mixed up with an arbitrary number by accident.
+- `Count`: a last enumerator that is not a category. Because the numbering starts at 0, its value is the number of real categories, which is 13. This is a common habit, and it means the count updates itself when a category is added above it.
+- `static_cast<std::size_t>(CategoryId::Count)`: the explicit way to turn an enumerator into its number. `CATEGORY_COUNT` is still `constexpr`, so it can be used wherever the compiler needs a constant, such as `static_assert`.
+- `const std::string& name(CategoryId id) const;`: a second function with the same name as `name(std::size_t i)`. The compiler picks by argument type. A plain number such as `0` cannot convert to `CategoryId`, so `scorecard.name(0)` still calls the index version. The menu loop needs the index versions because it walks through positions.
+- The same pairing is added for `isScored`, `score` and `record`.
+
 ```cpp file=Scorecard.h
 #ifndef SCORECARD_H
 #define SCORECARD_H
@@ -80,17 +90,6 @@ private:
 
 #endif
 ```
-
-New lines:
-
-- `enum class CategoryId : std::size_t {`: a new type named `CategoryId`. Each enumerator gets the next whole number, starting at 0. `Ones` is 0, `Twos` is 1, and `Chance` is 12. `: std::size_t` makes the underlying type `std::size_t`, the same type the vector uses for positions.
-- Scoped means the enumerators are written `CategoryId::Chance`, and a bare `Chance` does not exist. A plain `enum` would put `Ones` and `Chance` into the surrounding scope, where they could collide with other names.
-- There is no automatic conversion in either direction. `int x = CategoryId::Ones;` does not compile, and neither does `CategoryId id = 3;`. A box can no longer be mixed up with an arbitrary number by accident.
-- `Count`: a last enumerator that is not a category. Because the numbering starts at 0, its value is the number of real categories, which is 13. This is a common habit, and it means the count updates itself when a category is added above it.
-- `static_cast<std::size_t>(CategoryId::Count)`: the explicit way to turn an enumerator into its number. `CATEGORY_COUNT` is still `constexpr`, so it can be used wherever the compiler needs a constant, such as `static_assert`.
-- `const std::string& name(CategoryId id) const;`: a second function with the same name as `name(std::size_t i)`. The compiler picks by argument type. A plain number such as `0` cannot convert to `CategoryId`, so `scorecard.name(0)` still calls the index version. The menu loop needs the index versions because it walks through positions.
-- The same pairing is added for `isScored`, `score` and `record`.
-
 ## Use the names inside
 
 Words first:
@@ -98,6 +97,16 @@ Words first:
 - **`switch` over an enumeration**: when every enumerator has its own `case` and there is no `default`, the compiler can tell you if one is missing.
 
 Replace `Scorecard.cpp` with this.
+
+Line by line, only the new parts:
+
+- `static std::size_t indexOf(CategoryId id)`: the one place that turns a `CategoryId` into a position. `static` keeps it private to this file.
+- `static int potentialFor(CategoryId id, ...)`: now takes the enumeration, not a number.
+- `switch (id) {` with one `case` per enumerator and **no `default`**: this is on purpose. When you build with `-Wall`, the compiler warns `enumeration value 'Threes' not handled in switch` if someone adds a category and forgets its `case`. Writing a `default:` would silence that warning, so it is left out.
+- `case CategoryId::Count: return 0;`: `Count` is not a real category, but it is an enumerator, so the switch is complete only if it is listed.
+- `return 0;` after the switch: an enumeration with a fixed underlying type can hold any value of that type, such as `static_cast<CategoryId>(99)`. If that ever arrives, execution leaves the switch, and this line gives a defined result.
+- `potentialFor(static_cast<CategoryId>(i), counts)`: turns a position into an enumerator. The conversion from number to enumeration is always explicit. In `record`, the bounds check above it has already guaranteed that `i` is a real position.
+- `bool Scorecard::record(CategoryId id, ...) { return record(indexOf(id), counts); }`: the new overloads only convert and hand over to the index version. The logic stays in one place. `CategoryId::Count` becomes 13, which `record` rejects because it is not below `categories.size()`.
 
 ```cpp file=Scorecard.cpp
 #include "Scorecard.h"
@@ -221,16 +230,6 @@ std::vector<Category> Scorecard::preview(const Counts& counts) const {
 }
 ```
 
-Line by line, only the new parts:
-
-- `static std::size_t indexOf(CategoryId id)`: the one place that turns a `CategoryId` into a position. `static` keeps it private to this file.
-- `static int potentialFor(CategoryId id, ...)`: now takes the enumeration, not a number.
-- `switch (id) {` with one `case` per enumerator and **no `default`**: this is on purpose. When you build with `-Wall`, the compiler warns `enumeration value 'Threes' not handled in switch` if someone adds a category and forgets its `case`. Writing a `default:` would silence that warning, so it is left out.
-- `case CategoryId::Count: return 0;`: `Count` is not a real category, but it is an enumerator, so the switch is complete only if it is listed.
-- `return 0;` after the switch: an enumeration with a fixed underlying type can hold any value of that type, such as `static_cast<CategoryId>(99)`. If that ever arrives, execution leaves the switch, and this line gives a defined result.
-- `potentialFor(static_cast<CategoryId>(i), counts)`: turns a position into an enumerator. The conversion from number to enumeration is always explicit. In `record`, the bounds check above it has already guaranteed that `i` is a real position.
-- `bool Scorecard::record(CategoryId id, ...) { return record(indexOf(id), counts); }`: the new overloads only convert and hand over to the index version. The logic stays in one place. `CategoryId::Count` becomes 13, which `record` rejects because it is not below `categories.size()`.
-
 ```predict
 question: You add a 14th enumerator `Bonus` before Count, but forget to add its case in potentialFor. You build with -Wall. What happens?
 choice: A compile error stops the build
@@ -267,6 +266,14 @@ run "g++ -std=c++17 tests/test_category_ids.cpp Scorecard.cpp Scoring.cpp Dice.c
 tests "./test_category_ids" require="CategoryIds.NamesMatchTheIds" label="every id has the right name" -- The names must be listed in the same order as the enumerators.
 tests "./test_category_ids" require="CategoryIds.CountIsNotACategory" label="Count is refused" -- record(CategoryId::Count, ...) must return false and change nothing.
 ```
+
+## Refactor behavior without changing it {#teaching-review}
+
+**Try it yourself.** Choose a fixed hand and record each category score before introducing CategoryId. Repeat afterward and compare. A scoped enum gives category names a distinct type; it does not make every possible cast a valid category. The Count enumerator is a boundary marker, not a playable category.
+
+**Explain before continuing.** Where does the conversion from a player menu number to CategoryId need validation? What test would catch an enum reordering that silently changed category meanings?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: which boxes are upper?
 

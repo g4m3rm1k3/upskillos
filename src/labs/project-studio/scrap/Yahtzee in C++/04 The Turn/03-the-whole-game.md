@@ -14,6 +14,11 @@ Words first:
 
 - **Exit status**: the number `main` returns. 0 means success, and any other number means something went wrong.
 
+Line by line:
+
+- The header includes the three headers whose types appear in the declaration.
+- `bool playGame(...)`: returns `true` if the game was played to the end and `false` if input ran out first. The options are passed on to every turn.
+
 ```cpp file=Game.h
 #ifndef GAME_H
 #define GAME_H
@@ -26,14 +31,15 @@ bool playGame(Dice& dice, Scorecard& scorecard, const TurnOptions& options);
 
 #endif
 ```
+## Update Game.cpp
 
 Line by line:
 
-- The header includes the three headers whose types appear in the declaration.
-- `bool playGame(...)`: returns `true` if the game was played to the end and `false` if input ran out first. The options are passed on to every turn.
-
-
-## Update Game.cpp
+- `while (!scorecard.allScored()) {`: keep playing turns until every box holds a score. Each turn fills exactly one box, so the loop runs 13 times.
+- `if (!playTurn(...)) { return false; }`: if a turn could not finish because input ended, the game cannot finish either.
+- `if (options.animate && !scorecard.allScored()) {`: pause for Enter between turns, but only when the game is animated (that is, played by a person), and not after the last turn. Fast mode and tests skip the pause.
+- `scorecard.upperBonus()`: the function you wrote in lesson 3.3. The bonus is added to the total only here. `total()` itself stays the plain sum of the boxes.
+- `scorecard.total() + bonus`: the final score.
 
 ```cpp file=Game.cpp
 #include <iostream>
@@ -63,20 +69,19 @@ bool playGame(Dice& dice, Scorecard& scorecard, const TurnOptions& options) {
     return true;
 }
 ```
-
-Line by line:
-
-- `while (!scorecard.allScored()) {`: keep playing turns until every box holds a score. Each turn fills exactly one box, so the loop runs 13 times.
-- `if (!playTurn(...)) { return false; }`: if a turn could not finish because input ended, the game cannot finish either.
-- `if (options.animate && !scorecard.allScored()) {`: pause for Enter between turns, but only when the game is animated (that is, played by a person), and not after the last turn. Fast mode and tests skip the pause.
-- `scorecard.upperBonus()`: the function you wrote in lesson 3.3. The bonus is added to the total only here. `total()` itself stays the plain sum of the boxes.
-- `scorecard.total() + bonus`: the final score.
-
 ## Command-line arguments
 
 Words first:
 
 - **`argc` and `argv`**: how C++ hands a program its command-line words. `argc` is the number of words, counting the program's own name. `argv` is an array of that many pointers, each to the characters of one word.
+
+Line by line:
+
+- `int main(int argc, char* argv[]) {`: the second form of `main`. For `./game --fast`, `argc` is 2. `argv[0]` is the program's own name (as you typed it) and `argv[1]` is `"--fast"`. Each entry is a `char*`, a pointer to the first character of a text. That is the same type as the entries of `pip` in lesson 1.3.
+- `for (int i = 1; i < argc; i++) {`: starts at 1 to skip the program's own name.
+- `std::string arg = argv[i];`: builds a `std::string` by copying the characters. Do this before comparing. `argv[i] == "--fast"` would compare **addresses**, not text, and would be false even for a matching word. `std::string`'s `==` compares the characters.
+- `options.animate = false;`: the flag turns the animation and the pauses off. The game then runs as fast as you can type.
+- `return 1;` when input ends: the exit status 1. `return 0;` is a normal end.
 
 ```cpp file=main.cpp
 #include <cstdlib>
@@ -111,14 +116,6 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 ```
-
-Line by line:
-
-- `int main(int argc, char* argv[]) {`: the second form of `main`. For `./game --fast`, `argc` is 2. `argv[0]` is the program's own name (as you typed it) and `argv[1]` is `"--fast"`. Each entry is a `char*`, a pointer to the first character of a text. That is the same type as the entries of `pip` in lesson 1.3.
-- `for (int i = 1; i < argc; i++) {`: starts at 1 to skip the program's own name.
-- `std::string arg = argv[i];`: builds a `std::string` by copying the characters. Do this before comparing. `argv[i] == "--fast"` would compare **addresses**, not text, and would be false even for a matching word. `std::string`'s `==` compares the characters.
-- `options.animate = false;`: the flag turns the animation and the pauses off. The game then runs as fast as you can type.
-- `return 1;` when input ends: the exit status 1. `return 0;` is a normal end.
 
 ```predict
 question: You run `./game --fast`. What value does argc hold inside main?
@@ -178,6 +175,14 @@ run "g++ -std=c++17 tests/test_game.cpp Game.cpp Turn.cpp Input.cpp Scorecard.cp
 tests "./test_game" require="Game.ThirteenTurnsFinishTheGame" label="a full game finishes" -- The loop must run until every category is scored.
 tests "./test_game" require="Game.StopsWhenTheInputEnds" label="a short game reports failure" -- Return false, and do not print the final score.
 ```
+
+## Test termination, not just a banner {#teaching-review}
+
+**Try it yourself.** Write the two reasons the game loop can finish: the card becomes full or input ends. Exercise both using scripted input. A test that only finds the welcome message could pass even if the game then loops forever. Add a bounded process timeout when automating interaction.
+
+**Explain before continuing.** Who decides that all categories are scored? Why should main translate command-line options while Game owns gameplay rather than duplicating that policy?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: choose the number of rolls
 

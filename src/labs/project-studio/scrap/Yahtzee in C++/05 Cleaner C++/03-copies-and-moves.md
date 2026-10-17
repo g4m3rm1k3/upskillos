@@ -5,18 +5,137 @@ runtime: none
 
 Every C++ program makes copies, and most of the time they are harmless. Sometimes a copy is a wasted effort, and C++ lets you replace it with a **move**. In this lesson you build a small scratch program that counts every copy and move, and you run experiments until you can predict them. This is a scratch file, separate from the game.
 
+## Observe one ordinary value {#copy-stage-value}
+
+Start with this separate scratch program before the larger experiment. explicit blocks an implicit conversion from int to Noisy; the member initializer builds value before the constructor body. inline static copies is one class-wide counter, not one per object. In C++17 it can be defined here. get() const reads the stored value. Predict 7, then change only the constructor argument and rerun.
+
+```cpp file=scratch/copy-stage.cpp
+#include <iostream>
+class Noisy {
+public:
+    inline static int copies = 0;
+    explicit Noisy(int v) : value(v) {}
+    int get() const { return value; }
+private:
+    int value;
+};
+int main() { Noisy a(7); std::cout << a.get() << "\n"; }
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/copy-stage.cpp -o copy_stage" label="Build one value"
+run "./copy_stage" label="Read its stored value" stdout="7"
+```
+
+## Construct a second object {#copy-stage-copy}
+
+Noisy b = a initializes a new b, so the copy constructor runs; this is not assignment into an existing b. const Noisy& other borrows the source without modifying it. Copy the int member and increment the shared counter. ++copies adds one. Predict the stored value and count before running. Both objects have separate int members; destroying one does not destroy the other.
+
+```cpp file=scratch/copy-stage.cpp
+#include <iostream>
+class Noisy {
+public:
+    inline static int copies = 0;
+    explicit Noisy(int v) : value(v) {}
+    Noisy(const Noisy& other) : value(other.value) { ++copies; }
+    int get() const { return value; }
+private:
+    int value;
+};
+int main() { Noisy a(7); Noisy b = a; std::cout << b.get() << " " << Noisy::copies << "\n"; }
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/copy-stage.cpp -o copy_stage" label="Build copy construction"
+run "./copy_stage" label="One new copy contains seven" stdout="7 1"
+```
+
+## Permit a different constructor {#copy-stage-move}
+
+Noisy&& is an rvalue reference in this ordinary constructor. std::move(a), declared in utility, lets overload resolution select it. The move constructor copies our tiny int and deliberately sets the source to -1; that marker is our chosen contract, not a universal moved-from value. noexcept promises no exception escapes this operation. The source is still alive. Predict 7, -1 and zero copies. Remove std::move temporarily to select the copy constructor, then restore it.
+
+```cpp file=scratch/copy-stage.cpp
+#include <iostream>
+#include <utility>
+class Noisy {
+public:
+    inline static int copies = 0;
+    explicit Noisy(int v) : value(v) {}
+    Noisy(const Noisy& other) : value(other.value) { ++copies; }
+    Noisy(Noisy&& other) noexcept : value(other.value) { other.value = -1; }
+    int get() const { return value; }
+private:
+    int value;
+};
+int main() { Noisy a(7); Noisy b = std::move(a); std::cout << b.get() << " " << a.get() << " " << Noisy::copies << "\n"; }
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/copy-stage.cpp -o copy_stage" label="Build move construction"
+run "./copy_stage" label="Observe our explicit moved-from state" stdout="7 -1 0"
+```
+
+## Assign after construction {#copy-stage-assignment}
+
+Now b already exists when b = a runs. operator= names the assignment operation; its Noisy& return refers to the receiving object. this is a pointer to that object, and *this dereferences it. Return the receiver so assignment has the usual chaining behavior. Compare this call with Noisy b = a. The later full experiment adds the analogous move assignment; each is instrumentation, not a reason to handwrite these operations for the game classes.
+
+```cpp file=scratch/copy-stage.cpp
+#include <iostream>
+#include <utility>
+class Noisy {
+public:
+    inline static int copies = 0;
+    explicit Noisy(int v) : value(v) {}
+    Noisy(const Noisy& other) : value(other.value) { ++copies; }
+    Noisy(Noisy&& other) noexcept : value(other.value) { other.value = -1; }
+    Noisy& operator=(const Noisy& other) {
+        value = other.value;
+        ++copies;
+        return *this;
+    }
+    int get() const { return value; }
+private:
+    int value;
+};
+int main() { Noisy a(7); Noisy b(2); b = a; std::cout << b.get() << " " << Noisy::copies << "\n"; }
+```
+
+```check
+run "g++ -std=c++17 -Wall -Wextra scratch/copy-stage.cpp -o copy_stage" label="Build copy assignment"
+run "./copy_stage" label="Assign into an existing object" stdout="7 1"
+```
+
 ## A class that counts
 
 Words first:
 
 - **Copy constructor**: runs when a new object is made as a copy of an existing one. Its parameter is `const T&`.
 - **Move constructor**: runs when a new object is made by taking the contents of an object that is about to be thrown away. Its parameter is `T&&`.
-- **`T&&` (rvalue reference)**: a reference that binds to a temporary value, or to something you marked with `std::move`.
+- **`T&&` (rvalue reference)**: in this non-template example, a reference that can bind to a suitable temporary or to a value cast with std::move. A named rvalue-reference variable is itself an lvalue expression; its name alone does not perform a move.
 - **`std::move(x)`**: does not move anything. It only says "treat `x` as something that may be taken from". The move happens in whichever constructor or function then receives it.
-- **Moved-from object**: an object whose contents were taken. It is still alive and may be destroyed or assigned to, but its value is no longer meaningful.
+- **Moved-from object**: an object whose contents were taken. Its exact contract depends on the type. Standard-library objects generally remain valid but have an unspecified value unless a stronger guarantee is documented. Do not assume they are empty. Our demonstration class explicitly chooses -1.
 - **Copy elision**: the compiler builds an object directly where it is needed instead of copying it. Since C++17 this is **guaranteed** when a function returns a temporary.
 
 Create `copies.cpp` in a new folder `scratch/`, next to your project.
+
+The class:
+
+- `inline static int constructs = 0;`: three counters that belong to the class, not to any object. `inline` lets a `static` data member be defined right here in the class. Without it (before C++17) each one needed a separate definition in a `.cpp` file.
+- `explicit Noisy(int v) : value(v) { constructs++; }`: an ordinary constructor. It counts itself.
+- `Noisy(const Noisy& other)`: the copy constructor. It copies the value and adds 1 to `copies`.
+- `Noisy(Noisy&& other) noexcept`: the move constructor. `Noisy&&` binds only to a temporary or to something wrapped in `std::move`. It takes the value, counts a move, and sets `other.value` to -1 to show that `other` has been emptied. `noexcept` promises it will never throw. That promise matters for containers such as `std::vector`, which can prefer copying during reallocation when moving might throw and copying is available. A move-only element can still require a potentially throwing move; guarantees depend on its operations.
+- `operator=` in two forms: the same two ideas for assigning to an object that already exists. `return *this;` returns the object itself so that assignments can chain. `this` is a pointer to the object, and `*this` is the object.
+- `static void reset()`: a static member function. It can be called as `Noisy::reset()` with no object.
+- `report(...)` prints the counts and then zeroes them, so every experiment starts from zero.
+- A real class that owns nothing special, like your `Scorecard`, should define **none** of these functions. The compiler writes correct ones. This is called the **rule of zero**. `Noisy` writes them only so that it can count.
+
+The experiments in `main`:
+
+- `takeByValue(Noisy n)` has no `&`. The argument is copied into `n`, or moved into it if you pass `std::move(...)`.
+- `takeByConstRef(const Noisy& n)` makes no copy of any kind. This is why the project passes `const Counts&` and `const Scorecard&` everywhere.
+- `Noisy c = makeNoisy(3);`: the function returns a temporary, and C++17 builds it directly in `c`. There is one construction and no copy and no move.
+- `v.reserve(3);` makes room for three elements up front, so the vector never has to move its elements to a bigger block while the experiment runs.
+- `v.push_back(a)` copies `a` into the vector. `v.push_back(std::move(c))` moves `c` in. `v.emplace_back(9)` passes `9` to the `Noisy` constructor and builds the element **inside** the vector, with no copy and no move.
 
 ```cpp file=scratch/copies.cpp
 #include <iostream>
@@ -135,25 +254,6 @@ int main() {
 }
 ```
 
-The class:
-
-- `inline static int constructs = 0;`: three counters that belong to the class, not to any object. `inline` lets a `static` data member be defined right here in the class. Without it (before C++17) each one needed a separate definition in a `.cpp` file.
-- `explicit Noisy(int v) : value(v) { constructs++; }`: an ordinary constructor. It counts itself.
-- `Noisy(const Noisy& other)`: the copy constructor. It copies the value and adds 1 to `copies`.
-- `Noisy(Noisy&& other) noexcept`: the move constructor. `Noisy&&` binds only to a temporary or to something wrapped in `std::move`. It takes the value, counts a move, and sets `other.value` to -1 to show that `other` has been emptied. `noexcept` promises it will never throw. That promise matters for containers such as `std::vector`, which only move their elements when moving cannot fail.
-- `operator=` in two forms: the same two ideas for assigning to an object that already exists. `return *this;` returns the object itself so that assignments can chain. `this` is a pointer to the object, and `*this` is the object.
-- `static void reset()`: a static member function. It can be called as `Noisy::reset()` with no object.
-- `report(...)` prints the counts and then zeroes them, so every experiment starts from zero.
-- A real class that owns nothing special, like your `Scorecard`, should define **none** of these functions. The compiler writes correct ones. This is called the **rule of zero**. `Noisy` writes them only so that it can count.
-
-The experiments in `main`:
-
-- `takeByValue(Noisy n)` has no `&`. The argument is copied into `n`, or moved into it if you pass `std::move(...)`.
-- `takeByConstRef(const Noisy& n)` makes no copy of any kind. This is why the project passes `const Counts&` and `const Scorecard&` everywhere.
-- `Noisy c = makeNoisy(3);`: the function returns a temporary, and C++17 builds it directly in `c`. There is one construction and no copy and no move.
-- `v.reserve(3);` makes room for three elements up front, so the vector never has to move its elements to a bigger block while the experiment runs.
-- `v.push_back(a)` copies `a` into the vector. `v.push_back(std::move(c))` moves `c` in. `v.emplace_back(9)` passes `9` to the `Noisy` constructor and builds the element **inside** the vector, with no copy and no move.
-
 ```bash
 g++ -std=c++17 -Wall -Wextra scratch/copies.cpp -o copies
 ./copies
@@ -186,6 +286,14 @@ run "./copies" stdout="by value, with std::move: constructs=0 copies=0 moves=1" 
 run "./copies" stdout="returned from a function: constructs=1 copies=0 moves=0" label="returning a temporary builds it in place" -- C++17 guarantees there is no copy or move here.
 run "./copies" stdout="emplace_back: constructs=1 copies=0 moves=0" label="emplace_back builds inside the vector" -- emplace_back passes its arguments to the constructor.
 ```
+
+## Measure one operation at a time {#teaching-review}
+
+**Try it yourself.** Reset counters immediately before each operation and report immediately after. Compare construction of a new object with assignment into an existing one. std::move is a cast that permits move overload selection; it cannot promise that every type will move or that the source becomes empty.
+
+**Explain before continuing.** What does the declaration const Noisy& prevent? Why is adding std::move to every return not a sensible optimization rule? Which guarantees belong to our Noisy class and which to the language?
+
+Write down your prediction, observation and the reason for any difference. Restore deliberate faults before continuing. Passing supplied tests is evidence for their cases, not proof that every behavior or explanation is correct.
 
 ## Your turn: a vector with no copies and no moves
 
