@@ -4,7 +4,8 @@
 // transposes sit on their own lines.
 export const spectralTheory = [
   {
-    id: 'laml-diagonalization', after: 'laml-svd-low-rank', module: 'Spectral theory', title: 'Diagonalization: powers become easy', minutes: 35, level: 'Advanced',
+    id: 'laml-diagonalization', after: 'laml-vibrations', module: 'Directions that don\'t turn', title: 'Diagonalization: powers become easy', minutes: 35, level: 'Advanced',
+    why: { title: 'A hundred steps in one', story: 'Rabbit populations, loan balances and Markov chains are all one matrix applied over and over. Multiplying a hundred times is slow and hides what is going on. Rewrite the matrix in its eigenvector directions and each direction just multiplies by its own number, so a hundred steps is a hundred powers of plain numbers, and the long-run winner is plain to see.' },
     objective: 'Factor a matrix as A = V·D·V⁻¹, use it to compute powers, and explain long-run growth from the largest eigenvalue.',
     prose: [
       'Rabbit pairs breed in the Fibonacci pattern: each month\'s count is the sum of the previous two. Starting 1, 1 gives 2, 3, 5, 8, 13. Store the last two counts in a vector. Then one month later is A times that vector, with A = [1 1; 1 0].',
@@ -67,7 +68,8 @@ ylabel('f(n) / f(n-1)')`,
     },
   },
   {
-    id: 'laml-complex-eigen', after: 'laml-diagonalization', module: 'Spectral theory', title: 'When no direction survives: rotation and spirals', minutes: 35, level: 'Advanced',
+    id: 'laml-complex-eigen', after: 'laml-diagonalization', module: 'Directions that don\'t turn', title: 'When no direction survives: rotation and spirals', minutes: 35, level: 'Advanced',
+    why: { title: 'Things that go round', story: 'Predator and prey populations rise and fall in turn. A swinging door settles with a few shrinking swings. A camera\'s image stabiliser fights a wobble. In each, no direction is left unturned, so there are no real eigenvectors: the matrix turns everything. The trace and determinant still tell you how fast it turns and whether the swings grow or die away.' },
     objective: 'Detect complex eigenvalues from the trace and determinant, and read off the turning angle and growth factor of a spiral.',
     prose: [
       'Foxes and rabbits push each other\'s numbers up and down. Track their deviations from equilibrium as a vector. A simple model turns that vector by 20° each season and shrinks it by 5%. Plotted season by season, the points spiral into the centre.',
@@ -132,7 +134,8 @@ axis equal`,
     },
   },
   {
-    id: 'laml-positive-definite', after: 'laml-complex-eigen', module: 'Spectral theory', title: 'Positive definite: bowls, energy and Cholesky', minutes: 35, level: 'Advanced',
+    id: 'laml-positive-definite', after: 'laml-symmetric-quadratic', module: 'Tensors in the real world', title: 'Positive definite: bowls, energy and Cholesky', minutes: 35, level: 'Advanced',
+    why: { title: 'Will it stand up?', story: 'A structure is stable when every small displacement costs energy, and a fitted model has a single best answer when its error surface is a bowl. Both questions ask whether a symmetric matrix is positive definite. Engineers and statisticians test it thousands of times a day, usually by trying a Cholesky factorisation.' },
     objective: 'Test whether a symmetric matrix is positive definite using eigenvalues, energy and the Cholesky factorization.',
     prose: [
       'Two masses sit between three springs. Push them by amounts x₁ and x₂, and the stored energy is 2x₁² − 2x₁x₂ + 2x₂². Any push at all stores some energy. Only standing still stores none.',
@@ -193,7 +196,7 @@ ylabel('Energy')`,
     },
   },
   {
-    id: 'laml-spectral-svd-theorem', after: 'laml-positive-definite', module: 'Spectral theory', title: 'The spectral theorem, and why every matrix has an SVD', minutes: 40, level: 'Advanced',
+    id: 'laml-spectral-svd-theorem', after: 'laml-svd-low-rank', module: 'The SVD: the shape of any matrix', title: 'The spectral theorem, and why every matrix has an SVD', minutes: 40, level: 'Advanced',
     objective: 'Use the spectral theorem for symmetric matrices, and build the SVD of any matrix from the eigenvectors of AᵀA.',
     prose: [
       'A metal plate is stretched by a symmetric stress matrix S = [3 1; 1 3]. Two directions stretch without turning: [1; 1] by 4 and [1; −1] by 2. Those directions are perpendicular. That is no accident of this example.',
