@@ -140,3 +140,19 @@ export function svd2(A) {
   const apply = v => [a * v[0] + b * v[1], c * v[0] + d * v[1]]
   return { sigma, v: [v1, v2], Av: [apply(v1), apply(v2)] }
 }
+
+// Solves M x = b by elimination with row swaps (partial pivoting). Returns null when M is singular.
+export function solveLinear(M, b) {
+  const n = M.length, A = M.map((row, i) => [...row, b[i]])
+  for (let col = 0; col < n; col++) {
+    let pivot = col
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivot][col])) pivot = r
+    if (Math.abs(A[pivot][col]) < 1e-12) return null
+    ;[A[col], A[pivot]] = [A[pivot], A[col]]
+    for (let r = 0; r < n; r++) if (r !== col) {
+      const k = A[r][col] / A[col][col]
+      for (let c = col; c <= n; c++) A[r][c] -= k * A[col][c]
+    }
+  }
+  return A.map((row, i) => row[n] / row[i])
+}

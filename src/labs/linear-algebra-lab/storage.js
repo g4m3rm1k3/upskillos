@@ -5,6 +5,7 @@ export function readProgress() {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
     return {
       current: typeof value.current === 'string' ? value.current : undefined,
+      role: typeof value.role === 'string' ? value.role : undefined,
       drafts: dictionary(value.drafts),
       demos: dictionary(value.demos),
       done: dictionary(value.done),

@@ -1,9 +1,12 @@
-import { foundations } from './lessons/foundations.js'
+import { stage1 } from './lessons/stage1.js'
+import { stage2 } from './lessons/stage2.js'
+import { calculus } from './lessons/calculus.js'
 import { core } from './lessons/core.js'
 import { applications } from './lessons/applications.js'
 import { spaces } from './lessons/spaces.js'
 import { spectralTheory } from './lessons/spectral.js'
 import { ENRICH } from './lessons/enrich.js'
+import { ANGLES, USES } from './lessons/uses.js'
 
 // New lessons name the lesson they follow (`after`), so later modules slot into the sequence
 // without renumbering. ENRICH adds notation, quick-check questions and proofs to earlier lessons.
@@ -14,11 +17,23 @@ function assemble(base, additions) {
     if (at < 0) throw new Error(`${lesson.id} follows unknown lesson ${lesson.after}`)
     list.splice(at + 1, 0, lesson)
   }
-  return list.map(lesson => ({ ...lesson, ...ENRICH[lesson.id] }))
+  return list.map(lesson => ({ ...lesson, ...ENRICH[lesson.id], ...(USES[lesson.id] && { uses: USES[lesson.id] }), ...(ANGLES[lesson.id] && { angles: ANGLES[lesson.id] }) }))
 }
 
-export const LESSONS = assemble([...foundations, ...core, ...applications], [...spaces, ...spectralTheory])
-export const MODULES = [...new Set(LESSONS.map(lesson => lesson.module))]
+// The four stages of the gentle curve, in order. Every module belongs to exactly one, and lessons
+// are ordered by module in this order (keeping their order within a module).
+export const STAGES = [
+  ['See it', ['Vectors: arrows and lists', 'The dot product']],
+  ['Use it', ['Matrices are machines', 'Solving many equations']],
+  ['Understand it', ['Spaces and bases', 'Least squares and data', 'Calculus meets matrices', 'Spectral thinking', 'Spectral theory']],
+  ['Apply it', ['Math for machine learning', 'Dynamic programming', 'Mastery studio']],
+]
+export const MODULES = STAGES.flatMap(([, modules]) => modules)
+
+const assembled = assemble([...stage1, ...stage2, ...core, ...calculus, ...applications], [...spaces, ...spectralTheory])
+const unplaced = assembled.filter(lesson => !MODULES.includes(lesson.module))
+if (unplaced.length) throw new Error(`Lessons in no stage: ${unplaced.map(lesson => lesson.id).join(', ')}`)
+export const LESSONS = MODULES.flatMap(module => assembled.filter(lesson => lesson.module === module))
 
 export const SYNTAX = [
   ['x = 3;', 'Store 3 under the name x. The final semicolon hides automatic printing.'],

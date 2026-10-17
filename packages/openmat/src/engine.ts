@@ -492,7 +492,22 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("mod",    (a: any, b: any) => isCollection(a) ? mapDeep(a, (x: any) => statMod(x, b)) : statMod(a, b))
   parser.set("rem",    (a: any, b: any) => isCollection(a) ? mapDeep(a, (x: any) => statRem(x, b)) : statRem(a, b))
   parser.set("power",  (a: any, b: any) => isCollection(a) ? mapDeep(a, (x: any) => Number(x)**Number(b)) : Number(a)**Number(b))
+  // [value, position] = max(v) / min(v): the extreme value and its 1-based position (first on ties).
+  // For a matrix, as in MATLAB, one value and one row position per column.
+  const extremeWithIndex = (a: any, better: (x: number, y: number) => boolean) => {
+    const p = toPlain(a) as any
+    const pick = (values: number[]) => values.reduce((best, x, i) => better(x, values[best]) ? i : best, 0)
+    if (Array.isArray(p) && Array.isArray(p[0]) && p.length > 1 && p[0].length > 1) {
+      const columns = (p[0] as number[]).map((_, c) => (p as number[][]).map(row => Number(row[c])))
+      const rows = columns.map(pick)
+      return { __multi: [columns.map((col, c) => col[rows[c]]), rows.map(r => r + 1)] }
+    }
+    const values = normalizeVector(a)
+    const i = pick(values)
+    return { __multi: [values[i], i + 1] }
+  }
   parser.set("max",    (a: any, b: any) => {
+    if (b === undefined && (parser as any).__nargout > 1) return extremeWithIndex(a, (x, y) => x > y)
     if (b !== undefined) {
       if (isCollection(a) && isCollection(b)) return normalizeVector(a).map((v: number, i: number) => Math.max(v, normalizeVector(b)[i]))
       if (isCollection(a)) return normalizeVector(a).map((v: number) => Math.max(v, Number(b)))
@@ -501,6 +516,7 @@ export function createExecutionEngine(options: EngineOptions = {}): {
     return statMax(a)
   })
   parser.set("min",    (a: any, b: any) => {
+    if (b === undefined && (parser as any).__nargout > 1) return extremeWithIndex(a, (x, y) => x < y)
     if (b !== undefined) {
       if (isCollection(a) && isCollection(b)) return normalizeVector(a).map((v: number, i: number) => Math.min(v, normalizeVector(b)[i]))
       if (isCollection(a)) return normalizeVector(a).map((v: number) => Math.min(v, Number(b)))
@@ -1779,7 +1795,11 @@ export function executeScript(source: string, options: EngineOptions = {}): Exec
         outs.forEach((o: string) => { saved[o] = parser.get(o) })
         parser.set("nargin",  args.length)
         parser.set("nargout", outs.length)
-        executeBlock(body)
+        // Statements inside the function are single assignments unless they say otherwise:
+        // the caller's output count must not leak into calls such as max or eig in the body.
+        const callerOutputs = (parser as any).__nargout
+        ;(parser as any).__nargout = 1
+        try { executeBlock(body) } finally { (parser as any).__nargout = callerOutputs }
         const result = outs.length === 1
           ? parser.get(outs[0])
           : outs.length > 1 ? { __multi: outs.map((o: string) => parser.get(o)) } : null

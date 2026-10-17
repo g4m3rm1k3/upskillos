@@ -2,50 +2,7 @@
 // mathematics works with OpenMat's flat vector representation.
 export const core = [
   {
-    id: 'laml-elimination', module: 'Systems and subspaces', title: 'Elimination: turn equations into a readable answer', minutes: 30, level: 'Intermediate',
-    objective: 'Solve a small linear system, interpret its reduced augmented matrix, and verify the answer in the original equations.',
-    prose: [
-      'Two sensors report 5 and 1. The first adds two unknown signals; the second doubles the first signal then subtracts the second. Adding their readings gives three copies of the first signal, totaling 6. The first signal is 2; the second is 3.',
-      'A linear system asks for values that satisfy every equation simultaneously. Put the coefficients in a matrix A, the unknown values in a vector x, and the measured totals in a vector b. Matrix multiplication writes all equations together as A*x=b. An augmented matrix [A b] attaches the totals as its final column.',
-      'Elimination replaces an equation by an equivalent one: swap two equations, divide an equation by a nonzero number, or subtract a multiple of another equation. These operations preserve the solution set. Reduced row echelon form, returned by rref, makes each leading nonzero coefficient equal to 1 and clears its column above and below.',
-      'In the demo, [1 0 2; 0 1 3] means x1=2 and x2=3. A row [0 0 1] would mean 0=1, so no solution exists. A missing leading coefficient can leave a free variable; a zero row alone does not establish inconsistency.',
-      'In MATLAB syntax, spaces separate columns and semicolons inside brackets separate rows. A backslash between A and b asks the engine to solve the equations; it does not divide each entry. A semicolon after a statement hides automatic printing, while disp explicitly prints a result. The plot shows the two original equations meeting at the same solution.',
-    ],
-    procedure: ['Write one row of A and one entry of b for each equation, preserving their order.', 'Form [A b], reduce it with rref, and inspect zero rows and leading columns.', 'Solve when appropriate, then compute A*x-b to check every original equation.'],
-    prediction: { question: 'If the second equation becomes 2*x1+2*x2=11 while the first remains x1+x2=5, can the two lines meet?', answer: 'No. Doubling the first equation gives a total of 10, contradicting 11. Elimination produces a row equivalent to 0=1.' },
-    demo: {
-      code: String.raw`A=[1 1;2 -1];
-b=[5;1];
-R=rref([A b]);
-x=A\b;
-disp(R);
-disp(x);
-disp(A*x-b);
-t=0:0.25:5;
-plot(t,5-t);
-hold on;
-plot(t,2*t-1);
-title('Two equations meet at x1=2, x2=3');
-xlabel('First unknown x1');
-ylabel('Second unknown x2');
-legend('x1+x2=5','2*x1-x2=1');`,
-      explain: [{ code: 'R=rref([A b])', meaning: 'Attach each total to its equation before reducing; reducing A alone would lose b.' }, { code: 'x=A\\b', meaning: 'Solve for both unknowns. This produces [2,3], which must satisfy both rows.' }, { code: 'disp(A*x-b)', meaning: 'Print the residual, the difference between predicted and required totals; both entries should be zero.' }, { code: 't=0:0.25:5', meaning: 'Create candidate first-coordinate values from 0 through 5, spaced by 0.25, for drawing the two equations.' }],
-    },
-    challenge: {
-      prompt: 'Solve A*x=b. Store the solution in x, the reduced augmented matrix in reduced, and A*x-b in residual. Use the supplied variables so the method also works with new totals.',
-      setup: 'A=[2 1;1 -1];\nb=[7;2];',
-      starter: 'x=zeros(2,1);\nreduced=zeros(2,3);\nresidual=A*x-b;',
-      solution: String.raw`reduced=rref([A b]);
-x=A\b;
-residual=A*x-b;`,
-      checks: [{ name: 'x', expected: [3, 1], tolerance: 1e-6, message: 'Both original equations must hold; check the order of the coefficients and totals.' }, { name: 'reduced', expected: [[1, 0, 3], [0, 1, 1]], tolerance: 1e-6, message: 'Reduce the augmented matrix with b in its final column.' }, { name: 'residual', expected: [0, 0], tolerance: 1e-6, message: 'Verify the answer against the original A and b.' }],
-      cases: [{ setup: 'A=[2 1;1 -1];\nb=[5;4];', checks: [{ name: 'x', expected: [3, -1], tolerance: 1e-6, message: 'Recompute from b; the second unknown may be negative.' }, { name: 'residual', expected: [0, 0], tolerance: 1e-6, message: 'The new totals must also be satisfied.' }] }],
-      hints: ['Construct [A b] before calling rref; b is part of the equation.', 'The first two columns reduce to an identity matrix, so the final column gives the two unknowns.', 'Use x=A\\b, then residual=A*x-b. Store rref([A b]) as reduced.'],
-      transfer: 'Replace b by [7;3], solve again, and explain why changing totals moves the intersection without changing either line slope.',
-    },
-  },
-  {
-    id: 'laml-span-rank', module: 'Systems and subspaces', title: 'Span, independence, and redundant features', minutes: 30, level: 'Intermediate',
+    id: 'laml-span-rank', module: 'Spaces and bases', title: 'Span, independence, and redundant features', minutes: 30, level: 'Intermediate',
     objective: 'Identify a redundant feature column, compute rank, and reconstruct a target from an independent basis.',
     prose: [
       'A sensor table has columns [1;0;1], [0;1;1], and [1;1;2]. The third column is exactly the first plus the second. Saving it adds a feature name, but adds no new direction that a linear model can express.',
@@ -88,55 +45,7 @@ residual=basis*weights-target;`,
     },
   },
   {
-    id: 'laml-nullspace', module: 'Systems and subspaces', title: 'Nullspace: all the answers, not one answer', minutes: 30, level: 'Intermediate',
-    objective: 'Parameterize a system with one free variable and verify both a particular solution and a nullspace direction.',
-    prose: [
-      'The equations x1+x2+x3=4 and x2+x3=2 require x1=2, but they cannot distinguish x2 from x3. The vectors [2;2;0], [2;1;1], and [2;-1;3] all satisfy the same measurements.',
-      'A particular solution is one vector that matches the required totals. A nullspace vector is a change that the measurements cannot detect: multiplying it by A gives the zero vector. Here [0;-1;1] removes one unit from x2 and adds one unit to x3, leaving both totals unchanged.',
-      'Every solution is the particular solution plus a weighted nullspace direction. The weight is a free parameter, named t. With two pivot columns and three unknowns, one coordinate remains free. This is the rank-nullity relationship: the number of columns equals rank plus the dimension of the nullspace.',
-      'The nullspace describes ambiguity, not an execution error. In machine learning, dependent features can give several coefficient vectors with identical predictions. A solver may return one convenient answer; that does not prove it is the only answer. Regularization later chooses among such alternatives.',
-      'Index R(1,4) means row 1, column 4, counting from 1. The final augmented column contains the reduced totals. Writing [0;-1;1] creates a vector. The plot changes t while x1 remains fixed; the equations stay satisfied even though two unknowns move.',
-    ],
-    procedure: ['Reduce [A b] and identify pivot and free columns.', 'Set the free coordinate to zero to build a particular solution.', 'Set the free coordinate to one in the homogeneous system to build a nullspace direction.', 'Verify A*particular=b and A*direction=0, then form particular+t*direction.'],
-    prediction: { question: 'If a nullspace direction n satisfies A*n=0, what happens to the measurements when you add 100*n to a valid answer?', answer: 'They stay exactly the same: A*(particular+100*n)=b+100*0=b. The coefficients can move a long way without changing predictions.' },
-    demo: {
-      code: String.raw`A=[1 1 1;0 1 1];
-b=[4;2];
-particular=[2;2;0];
-direction=[0;-1;1];
-candidate=particular+3*direction;
-disp(rref([A b]));
-disp(A*direction);
-disp(candidate);
-disp(A*candidate-b);
-t=-3:0.25:3;
-plot(t,2+0*t);
-hold on;
-plot(t,2-t);
-plot(t,t);
-title('One family of coefficients, identical measurements');
-xlabel('Free parameter t');
-ylabel('Coefficient value');
-legend('x1','x2','x3');`,
-      explain: [{ code: 'direction=[0;-1;1]', meaning: 'This change subtracts one from x2 and adds one to x3, so each measured total stays fixed.' }, { code: 'candidate=particular+3*direction', meaning: 'Choose one member of the solution family by setting the free parameter to 3.' }, { code: 'A*direction', meaning: 'A zero vector proves that moving along this direction is invisible to the measurements.' }, { code: 'A*candidate-b', meaning: 'Check the complete candidate in the original, unreduced equations.' }],
-    },
-    challenge: {
-      prompt: 'The third unknown is free. Compute R=rref([A b]). Store a particular solution with third entry 0 in particular, a nullspace direction with third entry 1 in direction, the solution particular+t*direction in candidate, and A*candidate-b in residual.',
-      setup: 'A=[1 2 -1;0 1 1];\nb=[3;2];\nt=2;',
-      starter: 'R=rref([A b]);\nparticular=[0;0;0];\ndirection=[0;0;1];\ncandidate=particular+t*direction;\nresidual=A*candidate-b;',
-      solution: String.raw`R=rref([A b]);
-particular=[R(1,4);R(2,4);0];
-direction=[-R(1,3);-R(2,3);1];
-candidate=particular+t*direction;
-residual=A*candidate-b;`,
-      checks: [{ name: 'particular', expected: [-1, 2, 0], tolerance: 1e-6, message: 'Set the free third coordinate to zero and read the two pivot equations.' }, { name: 'direction', expected: [3, -1, 1], tolerance: 1e-6, message: 'Move the free-column coefficients to the other side; A*direction must equal zero.' }, { name: 'candidate', expected: [5, 0, 2], tolerance: 1e-6, message: 'Scale the entire nullspace direction by t before adding the particular solution.' }, { name: 'residual', expected: [0, 0], tolerance: 1e-6, message: 'Every member of the family must satisfy both original equations.' }],
-      cases: [{ setup: 'A=[1 2 -1;0 1 1];\nb=[3;2];\nt=-1;', checks: [{ name: 'candidate', expected: [-4, 3, -1], tolerance: 1e-6, message: 'The parameter may be negative; use its supplied value.' }, { name: 'residual', expected: [0, 0], tolerance: 1e-6, message: 'The family must remain a solution for negative t.' }] }],
-      hints: ['The reduced equations express x1 and x2 in terms of x3.', 'For the particular solution, use R(1,4) and R(2,4). For a direction, negate the coefficients in column 3.', 'Use direction=[-R(1,3);-R(2,3);1], then candidate=particular+t*direction.'],
-      transfer: 'Add a third measurement x3=1. Explain which ambiguity disappears and why the nullspace dimension drops to zero.',
-    },
-  },
-  {
-    id: 'laml-lu-pivoting', module: 'Systems and subspaces', title: 'LU and pivoting: reuse the work safely', minutes: 30, level: 'Intermediate',
+    id: 'laml-lu-pivoting', module: 'Solving many equations', title: 'LU and pivoting: reuse the work safely', minutes: 30, level: 'Intermediate',
     objective: 'Use a pivoted LU factorization to solve a system and verify the permutation convention.',
     prose: [
       'The matrix [0 2;1 3] starts with a zero in its first pivot position. Dividing by that entry would fail, even though the equations have a unique solution. Swapping the two rows gives a usable first pivot.',

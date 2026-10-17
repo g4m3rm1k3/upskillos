@@ -8,26 +8,6 @@
 const t = String.raw
 
 export const ENRICH = {
-  'laml-first-run': {
-    notation: [
-      { tex: t`\text{price} = 4 + 2d`, say: 'A fixed charge plus a rate times the distance $d$.' },
-      { tex: t`y = b + m\,x`, say: 'The same pattern in general: intercept $b$, slope $m$. It returns as linear regression.' },
-    ],
-    quiz: [
-      { q: 'In OpenMAT, what does `base = 4;` do?', options: ['Stores 4 under the name base, without printing it', 'Checks whether base equals 4', 'Prints 4', 'Creates a plot'], answer: 0, why: 'A single equals sign assigns. The semicolon hides automatic printing.' },
-      { q: t`The base charge rises from 4 to 7 and the rate stays 2. What happens to the line?`, options: ['It moves up by 3; its slope is unchanged', 'It gets steeper', 'It gets flatter', 'Nothing changes'], answer: 0, why: 'The base is the intercept. Only the rate sets the slope.' },
-    ],
-  },
-  'laml-arrays': {
-    notation: [
-      { tex: t`\mathbf x = \begin{bmatrix} 18 \\ 21 \\ 24 \end{bmatrix} \in \mathbb R^3`, say: 'A vector is an ordered list of numbers; $\\mathbb R^3$ means "three real numbers".' },
-      { tex: t`\bar x = \frac{1}{n}\sum_{i=1}^{n} x_i`, say: 'The mean adds the entries and divides by how many there are.' },
-    ],
-    quiz: [
-      { q: t`Reversing $[18\ 21\ 24]$ changes what?`, options: ['The trend, but not the mean', 'The mean, but not the trend', 'Both', 'Neither'], answer: 0, why: 'The mean ignores order; the trend depends on it.' },
-      { q: 'Which OpenMAT expression writes a column vector?', options: ['`[18; 21; 24]`', '`[18 21 24]`', '`(18, 21, 24)`', '`{18; 21; 24}`'], answer: 0, why: 'Semicolons inside square brackets start new rows.' },
-    ],
-  },
   'laml-indexing': {
     notation: [
       { tex: t`A_{ij} = \text{entry in row } i,\ \text{column } j`, say: 'Rows first, then columns, counting from 1.' },
@@ -47,57 +27,6 @@ export const ENRICH = {
       { q: t`For $X = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$, what is the top-left entry of $X^2$ (matrix square)?`, options: ['7', '1', '4', '5'], answer: 0, why: t`$1\cdot1 + 2\cdot3 = 7$. The entrywise square would give 1.` },
       { q: 'When is the matrix product $AB$ defined?', options: ['When the number of columns of $A$ equals the number of rows of $B$', 'When $A$ and $B$ have the same size', 'Always', 'Only for square matrices'], answer: 0, why: 'Each row of $A$ must pair with each column of $B$ entry by entry.' },
     ],
-  },
-  'laml-weighted-combinations': {
-    notation: [
-      { tex: t`\mathbf y = c_1\mathbf a + c_2\mathbf b`, say: 'A linear combination: signed amounts of reusable directions, added.' },
-      { tex: t`\mathbf y = \begin{bmatrix} \mathbf a & \mathbf b \end{bmatrix}\begin{bmatrix} c_1 \\ c_2 \end{bmatrix}`, say: 'The same combination as a matrix times a vector of weights.' },
-    ],
-    quiz: [
-      { q: 'Increasing the weight on $\\mathbf a$ by 1 changes the result by…', options: ['exactly $\\mathbf a$', 'exactly $\\mathbf b$', 'a factor of 2', 'nothing'], answer: 0, why: 'Each weight contributes linearly: one more unit adds one more copy of $\\mathbf a$.' },
-      { q: 'What does a negative weight mean?', options: ['Add the vector pointing the opposite way', 'Ignore that vector', 'Divide by that vector', 'An error'], answer: 0, why: 'Multiplying by a negative number reverses direction.' },
-    ],
-  },
-  'laml-dot-product': {
-    notation: [
-      { tex: t`\mathbf x\cdot\mathbf w = \mathbf x^T\mathbf w = \sum_i x_i w_i`, say: 'Multiply matching entries and add.' },
-      { tex: t`\mathbf x\cdot\mathbf w > 0,\ = 0,\ < 0`, say: 'Positive: features agree. Zero: unrelated (perpendicular). Negative: they oppose.' },
-    ],
-    quiz: [
-      { q: 'If $\\mathbf x$ doubles and $\\mathbf w$ stays fixed, the dot product…', options: ['doubles', 'is unchanged', 'quadruples', 'halves'], answer: 0, why: 'Every term $x_iw_i$ doubles.' },
-      { q: 'Two nonzero vectors have dot product 0. They are…', options: ['perpendicular', 'parallel', 'equal', 'opposite'], answer: 0, why: 'A zero dot product means a 90° angle.' },
-    ],
-  },
-  'laml-length-distance-cosine': {
-    notation: [
-      { tex: t`\|\mathbf x\| = \sqrt{\mathbf x\cdot\mathbf x}`, say: 'Length is the square root of a vector dotted with itself.' },
-      { tex: t`d(\mathbf x,\mathbf y) = \|\mathbf x - \mathbf y\|`, say: 'Distance is the length of the difference.' },
-      { tex: t`\cos\theta = \frac{\mathbf x\cdot\mathbf y}{\|\mathbf x\|\,\|\mathbf y\|}`, say: 'Cosine similarity compares directions and ignores lengths.' },
-    ],
-    quiz: [
-      { q: t`What is the cosine similarity of $[3;4]$ and $[6;8]$?`, options: ['1', '0', '5', '0.5'], answer: 0, why: 'They point the same way; only the length differs.' },
-      { q: 'Why must you check for a zero vector before normalising?', options: ['You would divide by a length of 0', 'Zero vectors have negative length', 'Normalising zero gives 1', 'It is only a style rule'], answer: 0, why: 'Normalising divides by the length, which is 0 for the zero vector.' },
-    ],
-  },
-  'laml-projection': {
-    notation: [
-      { tex: t`\operatorname{proj}_{\mathbf u}\mathbf x = \frac{\mathbf u\cdot\mathbf x}{\mathbf u\cdot\mathbf u}\,\mathbf u`, say: 'The projection of $\\mathbf x$ onto the line of $\\mathbf u$: a number (the coefficient) times $\\mathbf u$.' },
-      { tex: t`\mathbf r = \mathbf x - \operatorname{proj}_{\mathbf u}\mathbf x, \qquad \mathbf u\cdot\mathbf r = 0`, say: 'The residual is what the line cannot explain, and it is perpendicular to the line.' },
-    ],
-    quiz: [
-      { q: 'You project $\\mathbf x$ onto $\\mathbf u$, then replace $\\mathbf u$ by $5\\mathbf u$. What happens to the projected point?', options: ['It stays the same', 'It becomes five times longer', 'It becomes five times shorter', 'It flips direction'], answer: 0, why: 'Both directions span the same line. The coefficient shrinks by 5 and the direction grows by 5, so the point is unchanged.' },
-      { q: 'What is $\\mathbf u\\cdot\\mathbf r$ for the residual $\\mathbf r$ of a projection onto $\\mathbf u$?', options: ['$0$', '$\\|\\mathbf r\\|$', '$\\mathbf u\\cdot\\mathbf x$', 'It depends on $\\mathbf x$'], answer: 0, why: 'The closest point leaves an error perpendicular to the line. That is the defining property of an orthogonal projection.' },
-    ],
-    proof: {
-      claim: t`With $c = \dfrac{\mathbf u\cdot\mathbf x}{\mathbf u\cdot\mathbf u}$, the residual $\mathbf x - c\,\mathbf u$ is perpendicular to $\mathbf u$.`,
-      given: t`$\mathbf u \neq \mathbf 0$, so $\mathbf u\cdot\mathbf u > 0$.`,
-      steps: [
-        { ask: 'What must we show?', options: [t`$\mathbf u\cdot(\mathbf x - c\,\mathbf u) = 0$`, t`$\|\mathbf x - c\,\mathbf u\| = 0$`, '$c = 1$', t`$\mathbf x\cdot\mathbf x = \mathbf u\cdot\mathbf u$`], answer: 0, why: 'Perpendicular means the dot product is zero.', hint: 'Perpendicular is a statement about a dot product.' },
-        { ask: 'Expand the dot product.', options: [t`$\mathbf u\cdot\mathbf x - c\,(\mathbf u\cdot\mathbf u)$`, t`$\mathbf u\cdot\mathbf x - c$`, t`$(\mathbf u\cdot\mathbf x)\,(1 - c)$`, t`$\mathbf u\cdot\mathbf x + c\,(\mathbf u\cdot\mathbf u)$`], answer: 0, why: 'The dot product distributes over subtraction, and the number $c$ comes outside.', hint: t`Distribute, and keep $\mathbf u\cdot\mathbf u$ together.` },
-        { ask: 'Substitute the value of $c$.', options: [t`$\mathbf u\cdot\mathbf x - \dfrac{\mathbf u\cdot\mathbf x}{\mathbf u\cdot\mathbf u}(\mathbf u\cdot\mathbf u) = 0$`, t`$\mathbf u\cdot\mathbf x - (\mathbf u\cdot\mathbf x)^2 = 0$`, t`$\mathbf u\cdot\mathbf x\,(1 - \mathbf u\cdot\mathbf u) = 0$`], answer: 0, why: t`$\mathbf u\cdot\mathbf u$ cancels because it is not zero, leaving $\mathbf u\cdot\mathbf x - \mathbf u\cdot\mathbf x = 0$.` },
-      ],
-      conclusion: t`So the residual is perpendicular to $\mathbf u$ for every $\mathbf x$. Division by $\mathbf u\cdot\mathbf u$ is the only place we used $\mathbf u \neq \mathbf 0$.`,
-    },
   },
   'laml-matrix-maps': {
     notation: [
@@ -236,6 +165,7 @@ export const ENRICH = {
     },
   },
   'laml-lu-pivoting': {
+    why: { title: 'Do the hard work once', story: 'An engineer checks one bridge under a hundred different loads. A simulation solves the same equations at every time step. Elimination is the expensive part, and it depends only on the matrix, so do it once, record it, and reuse it for every new right-hand side.' },
     notation: [
       { tex: t`PA = LU`, say: 'Reorder the rows with $P$, then factor into lower and upper triangular matrices.' },
       { tex: t`L\mathbf y = P\mathbf b, \qquad U\mathbf x = \mathbf y`, say: 'Two triangular solves replace one elimination.' },

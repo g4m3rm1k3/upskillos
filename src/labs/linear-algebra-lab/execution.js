@@ -34,3 +34,13 @@ export function evaluateRun(data) {
   }
   return { result, checks }
 }
+
+// Results cross from the worker to the page by structured clone, which cannot carry functions
+// (an anonymous function such as f = @(x) x.^2 sits in the workspace). Replace them with null,
+// keeping every number, including Infinity and NaN, exactly as computed.
+export function cloneable(value) {
+  if (typeof value === 'function') return null
+  if (Array.isArray(value)) return value.map(cloneable)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cloneable(item)]))
+  return value
+}

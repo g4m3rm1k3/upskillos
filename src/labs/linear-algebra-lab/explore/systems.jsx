@@ -1,6 +1,6 @@
 // Linear systems: row operations that change the equations but not the answer, and the shape of a solution set.
 import { useRef, useState } from 'react'
-import { Arrow, fmt, lineThrough, MatrixTile, Notes, Plane, Readout, Slider, Stat, toSvg, vec } from './parts.jsx'
+import { Arrow, fmt, Handle, lineThrough, MatrixTile, Notes, Plane, Readout, ScreenArrow, Slider, solveLinear, Stat, toSvg, vec } from './parts.jsx'
 
 const SYSTEMS = {
   'One answer': [[1, 1, 3], [2, -1, 0]],
@@ -89,5 +89,50 @@ export function SolutionSet() {
     <Readout>{meaning}</Readout>
     <Notes try="Set c = 0. The solution line now passes through the origin and equals the nullspace. Then move t and watch the gold point slide while the equation stays satisfied." truth="Changing c shifts the solution line but never turns it: every solution set is a shifted copy of the nullspace." trap="The nullspace is not 'the solutions'. It is the set of differences between solutions, and it always contains 0."
       code={`a = [${fmt(a)}; ${fmt(b)}];   % the equation is dot(a, x) = c\nc = ${fmt(c)};\np = (c / dot(a,a)) * a;     % particular solution\nn = [-a(2); a(1)];          % nullspace direction: dot(a, n) = 0\nx = p + ${fmt(t)}*n;\ndisp(dot(a, x))`} />
+  </>
+}
+
+// A triangle truss: A = (0, 0) pinned, B = (L, 0) on a roller, C = (cx, h) carrying a load P downwards.
+// Unknowns [F_AB, F_AC, F_BC, Ax, Ay, By]; tension is positive. Two balance equations per joint.
+export function trussForces(cx, h, P, L = 4) {
+  const lac = Math.hypot(cx, h), lbc = Math.hypot(cx - L, h)
+  const [ax, ay] = [cx / lac, h / lac], [bx, by] = [(cx - L) / lbc, h / lbc]
+  const M = [[1, ax, 0, 1, 0, 0], [0, ay, 0, 0, 1, 0], [-1, 0, bx, 0, 0, 0], [0, 0, by, 0, 0, 1], [0, -ax, -bx, 0, 0, 0], [0, -ay, -by, 0, 0, 0]]
+  return { M, forces: solveLinear(M, [0, 0, 0, 0, 0, P]), dirs: { ax, ay, bx, by } }
+}
+
+export function Truss() {
+  const plane = useRef(null)
+  const L = 4, shift = [-2, -1.2]
+  const [apex, setApex] = useState([2, 2]), [P, setP] = useState(10)
+  const { forces } = trussForces(apex[0], apex[1], P, L)
+  const at = ([x, y]) => toSvg([x + shift[0], y + shift[1]])
+  const joints = { A: [0, 0], B: [L, 0], C: apex }
+  const bars = [['AB', 'A', 'B', forces[0]], ['AC', 'A', 'C', forces[1]], ['BC', 'B', 'C', forces[2]]]
+  const biggest = Math.max(...bars.map(b => Math.abs(b[3])), 1e-9)
+  const kind = f => Math.abs(f) < 1e-6 ? 'no force' : f > 0 ? 'tension' : 'compression'
+  const meaning = `Load ${fmt(P)} kN at C. ${bars.map(([name, , , f]) => `${name}: ${fmt(Math.abs(f))} kN ${kind(f)}`).join('; ')}. Supports push up ${fmt(forces[4])} kN at A and ${fmt(forces[5])} kN at B.`
+  const [cxs, cys] = at(apex), [axs, ays] = at([0, 0]), [bxs, bys] = at([L, 0])
+  return <>
+    <Plane plane={plane} label={`Truss: three bars joined at A, B and C, with a load at C. ${meaning}`}>
+      {bars.map(([name, p, q, f]) => { const [x1, y1] = at(joints[p]), [x2, y2] = at(joints[q]); return <g key={name}>
+        <line className={`la-bar-member ${f > 1e-6 ? 'la-tension' : f < -1e-6 ? 'la-compression' : ''}`} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={2 + 8 * Math.abs(f) / biggest} />
+        <text className="la-member-label" textAnchor="middle" x={(x1 + x2) / 2 + (name === 'AB' ? 0 : name === 'AC' ? -34 : 34)} y={(y1 + y2) / 2 + (name === 'AB' ? 22 : -4)}>{name} {fmt(Math.abs(f))}</text>
+      </g> })}
+      <polygon className="la-support" points={`${axs},${ays} ${axs - 12},${ays + 18} ${axs + 12},${ays + 18}`} />
+      <circle className="la-support" cx={bxs} cy={bys + 9} r="9" />
+      <ScreenArrow x1={cxs} y1={cys - 24 - 3 * P} x2={cxs} y2={cys - 12} tone="v" width={3} />
+      <text className="la-force-label" style={{ '--tone': 'var(--c-v)' }} textAnchor="middle" x={cxs} y={cys - 30 - 3 * P}>P = {fmt(P)} kN</text>
+      <ScreenArrow x1={axs} y1={ays + 56 + 3 * forces[4]} x2={axs} y2={ays + 22} tone="out" width={2.5} />
+      <text className="la-force-label" style={{ '--tone': 'var(--c-out)' }} textAnchor="middle" x={axs} y={ays + 72 + 3 * forces[4]}>Ay {fmt(forces[4])}</text>
+      <ScreenArrow x1={bxs} y1={bys + 56 + 3 * forces[5]} x2={bxs} y2={bys + 22} tone="out" width={2.5} />
+      <text className="la-force-label" style={{ '--tone': 'var(--c-out)' }} textAnchor="middle" x={bxs} y={bys + 72 + 3 * forces[5]}>By {fmt(forces[5])}</text>
+      <Handle plane={plane} at={[apex[0] + shift[0], apex[1] + shift[1]]} tone="v" name="joint C" limit={[5.5, 4.2]} onMove={([x, y]) => setApex([Math.min(L - 0.3, Math.max(0.3, x - shift[0])), Math.min(4, Math.max(0.5, y - shift[1]))])} />
+    </Plane>
+    <div className="la-legend" aria-hidden="true"><span style={{ '--tone': 'var(--c-dir)' }}>tension (pulled)</span><span style={{ '--tone': 'var(--c-err)' }}>compression (squeezed)</span></div>
+    <div className="la-controls"><Slider label="Load P (kN)" tone="v" value={P} onChange={setP} min={0} max={20} step={1} /></div>
+    <Readout>{meaning}</Readout>
+    <Notes try="Drag joint C straight up and watch every force shrink. Then drag it towards B: which support takes more of the load?" truth="The two support pushes always add up to P, and the forces at each joint always cancel. The solve guarantees both." trap="A flat truss is not stronger. As C drops towards the ground, the sloping bars must squeeze very hard to hold the load up."
+      code={`L = ${L}; cx = ${fmt(apex[0])}; h = ${fmt(apex[1])}; P = ${fmt(P)};\nlac = sqrt(cx^2 + h^2); lbc = sqrt((cx - L)^2 + h^2);\nax = cx/lac; ay = h/lac; bx = (cx - L)/lbc; by = h/lbc;\nM = [1 ax 0 1 0 0; 0 ay 0 0 1 0; -1 0 bx 0 0 0; 0 0 by 0 0 1; 0 -ax -bx 0 0 0; 0 -ay -by 0 0 0];\nb = [0; 0; 0; 0; 0; P];\nforces = M \ b;\ndisp(forces)`} />
   </>
 }

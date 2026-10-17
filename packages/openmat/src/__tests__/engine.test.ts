@@ -461,6 +461,11 @@ describe('one-output and multi-output linear algebra', () => {
     expect((w.s as number[]).map(v => +v.toFixed(4))).toEqual([6.7082, 2.2361])
     expect((w.S as number[][])[1][1]).toBeCloseTo(2.23607, 4)
   })
+  it('max and min with two outputs return the value and its position', () => {
+    const w = ws('b=[7; 9; 5; 9]; [lo, i]=min(b); [hi, j]=max(b); [cm, ci]=max([1 8; 6 2]); m=max(b);')
+    expect([w.lo, w.i, w.hi, w.j, w.m]).toEqual([5, 3, 9, 2, 9])
+    expect([w.cm, w.ci]).toEqual([[6, 8], [2, 1]])
+  })
   it('diag builds a matrix from a row or column, even one produced by concatenation', () => {
     const w = ws('u=1000; D=diag([1 u]); C=diag([2; 3]); M=diag([1 2; 3 4]);')
     expect(w.D).toEqual([[1, 0], [0, 1000]])

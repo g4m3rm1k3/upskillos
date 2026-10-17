@@ -3,7 +3,7 @@ import React from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import Explore, { covariance, cross, det3, EXPERIMENTS, fitLine, svd2 } from './Explore.jsx'
+import Explore, { covariance, cross, curvedJacobian, curvedMap, det3, EXPERIMENTS, fitLine, hillGradient, hillHeight, solveLinear, svd2, trussForces } from './Explore.jsx'
 import { sse } from './explore/data.jsx'
 
 afterEach(cleanup)
@@ -52,5 +52,27 @@ describe('playground mathematics', () => {
     expect(det3([1, 0, 0], [0, 1, 0], [0, 0, 1])).toBe(1)
     expect(det3([0, 1, 0], [1, 0, 0], [0, 0, 1])).toBe(-1)
     expect(cross([1, 0, 0], [0, 1, 0])).toEqual([0, 0, 1])
+  })
+  it('solves the truss like the hand calculation, and refuses a singular system', () => {
+    const { forces } = trussForces(2, 2, 10)
+    const expected = [5, -10 / Math.SQRT2, -10 / Math.SQRT2, 0, 5, 5]
+    forces.forEach((f, i) => expect(f).toBeCloseTo(expected[i], 9))
+    const offCentre = trussForces(1, 2, 12).forces
+    expect(offCentre[4] + offCentre[5]).toBeCloseTo(12, 9)
+    expect(offCentre[5]).toBeCloseTo(12 * 1 / 4, 9)
+    expect(solveLinear([[1, 2], [2, 4]], [1, 2])).toBeNull()
+  })
+  it('uses hand-derived gradients and Jacobians that match nudged estimates', () => {
+    const h = 1e-6
+    for (const p of [[0.4, 0.6], [-2, 1], [1.5, -1.5]]) {
+      const g = hillGradient(p)
+      expect(g[0]).toBeCloseTo((hillHeight([p[0] + h, p[1]]) - hillHeight([p[0] - h, p[1]])) / (2 * h), 6)
+      expect(g[1]).toBeCloseTo((hillHeight([p[0], p[1] + h]) - hillHeight([p[0], p[1] - h])) / (2 * h), 6)
+      const J = curvedJacobian(p)
+      for (let j = 0; j < 2; j++) {
+        const plus = curvedMap(j ? [p[0], p[1] + h] : [p[0] + h, p[1]]), minus = curvedMap(j ? [p[0], p[1] - h] : [p[0] - h, p[1]])
+        for (let i = 0; i < 2; i++) expect(J[i][j]).toBeCloseTo((plus[i] - minus[i]) / (2 * h), 6)
+      }
+    }
   })
 })

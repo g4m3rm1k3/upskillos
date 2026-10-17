@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import { LESSONS, MODULES } from './curriculum.js'
+import { LESSONS, MODULES, STAGES } from './curriculum.js'
+import { ROLES } from './lessons/uses.js'
 import { gradeWorkspace, matchesNumeric } from './grading.js'
+import { cloneable } from './execution.js'
 import { ENRICH } from './lessons/enrich.js'
 import katex from 'katex'
 
 describe('OpenMAT linear algebra curriculum', () => {
   it('has durable unique ids, complete teaching sequences and progressively harder modules', () => {
     expect(new Set(LESSONS.map(lesson => lesson.id)).size).toBe(LESSONS.length)
-    for (const module of MODULES) expect(LESSONS.filter(lesson => lesson.module === module).length).toBeGreaterThanOrEqual(4)
+    // Core modules (Stages 1-3) need at least four lessons; Stage 4 modules are optional tracks.
+    for (const module of MODULES) expect(LESSONS.filter(lesson => lesson.module === module).length).toBeGreaterThanOrEqual(STAGES[3][1].includes(module) ? 2 : 4)
     for (const lesson of LESSONS) {
       expect(lesson.id).toMatch(/^laml-/)
       expect(lesson.prose.length).toBeGreaterThanOrEqual(4)
@@ -26,7 +29,8 @@ describe('OpenMAT linear algebra curriculum', () => {
 
   for (const lesson of LESSONS) {
     it(`${lesson.id}: real engine demo plots, reference passes, starter fails`, () => {
-      const demo = executeScript(lesson.demo.code)
+      const demo = executeScript(lesson.demo.draw ? `${lesson.demo.code}
+${lesson.demo.draw}` : lesson.demo.code)
       expect(demo.figureJson).toBeTruthy()
       const figure = JSON.parse(demo.figureJson)
       const panels = figure.type === 'opencalc_subplots' ? figure.panels.filter(Boolean) : [figure]
@@ -37,6 +41,8 @@ describe('OpenMAT linear algebra curriculum', () => {
         expect(JSON.stringify(panel)).not.toMatch(/NaN|Infinity/)
       }
       expect(demo.output).not.toBe('No output.')
+      // The browser runs code in a worker; results must survive structured clone (functions cannot).
+      expect(() => structuredClone(cloneable({ result: demo, checks: [] }))).not.toThrow()
       const solve = code => executeScript(`${lesson.challenge.setup}\n${code}`)
       const correct = gradeWorkspace(solve(lesson.challenge.solution).workspace, lesson.challenge.checks)
       expect(correct.filter(check => !check.pass)).toEqual([])
@@ -86,6 +92,40 @@ describe('notation, quick checks and proofs', () => {
       }
     })
   }
+})
+
+describe('gentle curve', () => {
+  it('puts every module in exactly one stage, in curriculum order', () => {
+    expect(STAGES.flatMap(([, modules]) => modules)).toEqual(MODULES)
+  })
+  it('opens every Stage 1 and Stage 2 lesson with why it matters and where it is used', () => {
+    const roles = new Set(ROLES.map(([id]) => id))
+    // Every reworked module: Stages 1 and 2, and so far 'Calculus meets matrices' in Stage 3.
+    for (const lesson of LESSONS.filter(l => [...STAGES[0][1], ...STAGES[1][1], 'Calculus meets matrices'].includes(l.module))) {
+      expect(lesson.why?.story.length, lesson.id).toBeGreaterThan(80)
+      expect(lesson.uses?.length, lesson.id).toBeGreaterThanOrEqual(4)
+    }
+    for (const lesson of LESSONS.filter(l => STAGES[0][1].includes(l.module))) expect(lesson.level).toBe('Beginner')
+    for (const lesson of LESSONS) for (const use of lesson.uses ?? []) {
+      expect(roles.has(use.who), `${lesson.id}: ${use.who}`).toBe(true)
+      expect(use.story.length).toBeGreaterThan(40)
+    }
+  })
+  it('renders the maths in stories, case studies and extra angles', () => {
+    for (const lesson of LESSONS) {
+      ;[lesson.why?.story ?? '', ...(lesson.uses ?? []).map(use => use.story), ...(lesson.angles ?? []).flatMap(angle => [angle.title, angle.body])].flatMap(mathIn).forEach(renders)
+    }
+  })
+})
+
+describe('worker results', () => {
+  it('cannot send a workspace that holds a function unless it is made cloneable', () => {
+    const run = executeScript('f = @(x) x.^2;\ny = f(3);')
+    expect(() => structuredClone(run)).toThrow()
+    const safe = structuredClone(cloneable(run))
+    expect(safe.workspace.find(entry => entry.name === 'y').value).toBe(9)
+    expect(structuredClone(cloneable({ a: [Infinity, NaN, -0] })).a[0]).toBe(Infinity)
+  })
 })
 
 describe('numeric evidence', () => {

@@ -1,6 +1,6 @@
 // Vectors and 2 × 2 matrices: combinations, dot products, a matrix as a map, and the SVD's circle-to-ellipse picture.
 import { useRef, useState } from 'react'
-import { Arrow, eigen2, fmt, Handle, MatrixTile, Notes, Plane, quad, Readout, Slider, Stat, svd2, toSvg, vec } from './parts.jsx'
+import { Arrow, eigen2, fmt, Handle, MatrixTile, Notes, Plane, quad, Readout, ScreenArrow, Slider, Stat, svd2, toSvg, vec } from './parts.jsx'
 
 export function Combine() {
   const plane = useRef(null)
@@ -131,5 +131,31 @@ export function SvdCircle() {
     <Readout>{meaning} v₁ and v₂ are perpendicular, and so are their images.</Readout>
     <Notes try="Drag the columns until the ellipse is almost a line segment. Watch σ₂ approach 0 and the condition number blow up." truth="Every matrix sends some pair of perpendicular directions to perpendicular directions. Those are the singular vectors." trap="Singular vectors are not eigenvectors. v₁ is usually rotated by A; only its length changes predictably."
       code={`A = [${A[0].map(fmt).join(' ')}; ${A[1].map(fmt).join(' ')}];\n[U,S,V] = svd(A);\ndisp(S)\ndisp(A*V(:,1))\ndisp(S(1,1)*U(:,1))`} />
+  </>
+}
+
+// The unit circle: an angle becomes the point (cos θ, sin θ); a radius scales it.
+export function UnitCircle() {
+  const [deg, setDeg] = useState(30), [r, setR] = useState(1)
+  const Z = 90, th = deg * Math.PI / 180
+  const p = [r * Math.cos(th), r * Math.sin(th)]
+  const circle = Array.from({ length: 97 }, (_, i) => { const a = i / 96 * 2 * Math.PI; return toSvg([r * Math.cos(a), r * Math.sin(a)], Z).join(',') }).join(' ')
+  const [px, py] = toSvg(p, Z), [ox, oy] = toSvg([0, 0], Z), [xx] = toSvg([p[0], 0], Z)
+  const meaning = `Angle ${deg}° is ${fmt(th)} radians. cos = ${fmt(Math.cos(th))}, sin = ${fmt(Math.sin(th))}. With radius ${fmt(r)} the point is ${vec(p)}.`
+  return <>
+    <Plane label={`Coordinate plane: a circle of radius ${fmt(r)} and the point at ${deg} degrees. ${meaning}`} scale={Z}>
+      <polyline className="la-circle" points={circle} />
+      <line className="la-guide" x1={px} y1={py} x2={xx} y2={oy} />
+      <ScreenArrow x1={ox} y1={oy} x2={xx} y2={oy} tone="i" label="r cos θ" width={3} />
+      <ScreenArrow x1={xx} y1={oy} x2={px} y2={py} tone="j" label="r sin θ" width={3} mid />
+      <ScreenArrow x1={ox} y1={oy} x2={px} y2={py} tone="v" label="point" width={3.5} />
+    </Plane>
+    <div className="la-controls">
+      <Slider label="Angle (degrees)" tone="v" value={deg} onChange={setDeg} min={0} max={360} step={5} />
+      <Slider label="Radius r" tone="out" value={r} onChange={setR} min={0.2} max={2} step={0.1} />
+    </div>
+    <Readout>{meaning}</Readout>
+    <Notes try="Set the angle to 0°, 90°, 180° and 270° and read cos and sin each time. Then find an angle where cos and sin are equal." truth="The point is always at distance r from the centre, so (r cos θ)² + (r sin θ)² = r²." trap="cos and sin in code expect radians. cos(90) is not 0; cos(90*pi/180) is."
+      code={`theta = ${deg}*pi/180;\nr = ${fmt(r)};\npoint = [r*cos(theta); r*sin(theta)];\ndisp(point)\ndisp(norm(point))`} />
   </>
 }

@@ -2,14 +2,14 @@
 // reject its starter, and (unless listed below) reject an answer hard-coded from one draw.
 import { describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import { evaluateRun } from './execution.js'
+import { cloneable, evaluateRun } from './execution.js'
 import { LESSONS } from './curriculum.js'
 import { instantiate, problemsFor, PROBLEM_SETS } from './practice/index.js'
 
 const SEEDS = ['a', 'b', 'c', 'd', 'e', 'f']
 
-// Lessons that have no problem set yet. Remove an entry when its problems are written.
-const WITHOUT_PROBLEMS = ['laml-svd-low-rank']
+// Lessons without a problem set: the opening tour (motivation only) and one lesson still to be written.
+const WITHOUT_PROBLEMS = ['laml-why-linear-algebra', 'laml-svd-low-rank']
 
 // Families whose answers are (nearly) the same on every draw, so typing the number passes.
 // Known weakness: their generators vary entries but not structure (ranks, nullities, zero checks).
@@ -51,6 +51,7 @@ describe('every problem family', () => {
         expect(ex.hints.length).toBeGreaterThanOrEqual(3)
         for (const output of ex.outputs) expect(ex.prompt).toContain(output.name)
         const reference = run(ex, ex.solution)
+        if (seed === SEEDS[0]) expect(() => structuredClone(cloneable(reference))).not.toThrow()
         expect(reference.checks.filter(check => !check.pass)).toEqual([])
         expect(reference.checks.length).toBe(ex.outputs.length * 3)
         expect(allPass(run(ex, ex.starter))).toBe(false)

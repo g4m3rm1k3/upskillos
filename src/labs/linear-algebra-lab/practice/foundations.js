@@ -70,7 +70,7 @@ export const foundationsPractice = {
     }),
   ],
 
-  'laml-arrays': [
+  'laml-add-scale': [
     problem('summarise-orders', 'Summarise daily orders', 'Warm-up', r => ({
       prompt: 'orders contains one count per day. Store total = sum of all counts and average = their arithmetic mean.',
       setup: `orders = ${vec(positive(r, r.int(3, 6)))};`, solution: lines('total = sum(orders);', 'average = mean(orders);'), outputs: [['total', 'Include every daily observation.'], ['average', 'Divide the total by the number of observations, or use mean.']],
@@ -204,7 +204,7 @@ export const foundationsPractice = {
     })),
   ],
 
-  'laml-dot-product': [
+  'laml-shopping-bill': [
     problem('weighted-score', 'Score a feature vector', 'Warm-up', r => ({
       prompt: 'Store score = dot(features, weights), one scalar weighted score. Positions in the two vectors refer to the same features.',
       setup: lines(`features = ${vec(nonzeroVector(r, 3))};`, `weights = ${vec(nonzeroVector(r, 3))};`), solution: 'score = dot(features,weights);', outputs: [['score', 'Add the products of matching feature and weight entries.']],
@@ -224,11 +224,6 @@ export const foundationsPractice = {
       prompt: 'For nonzero x, store self_score = dot(x,x), opposite_score = dot(x,-x), and perpendicular_score = dot(x,perpendicular). The supplied perpendicular vector is a right-angle turn of x.',
       setup: (() => { const x = nonzeroVector(r); return lines(`x = ${vec(x)};`, `perpendicular = ${vec([-x[1], x[0]])};`) })(), solution: lines('self_score = dot(x,x);', 'opposite_score = dot(x,-x);', 'perpendicular_score = dot(x,perpendicular);'), outputs: [['self_score', 'Self-alignment is the sum of squared entries and is positive for nonzero x.'], ['opposite_score', 'Changing one vector to its negative changes the sign of the dot product.'], ['perpendicular_score', 'The supplied right-angle direction should have zero dot product within tolerance.']],
       hints: ['The same vector appears on both sides of the first dot product.', 'Negating only one argument negates the result.', 'Calculate all three dot products with the supplied vectors, keeping a scalar for each.'],
-    })),
-    problem('batched-linear-scores', 'Move from one score to a batch', 'Transfer', r => ({
-      prompt: 'Each row of records is a feature vector. Store scores = records*w, and selected_score = dot(records(selected_row,:),w). The selected scalar should match that row of the batch output.',
-      setup: lines(`records = ${mat(matrix(r, 4, 3))};`, `w = ${vec(nonzeroVector(r, 3))};`, `selected_row = ${r.int(1, 4)};`), solution: lines('scores = records*w;', 'selected_score = dot(records(selected_row,:),w);'), outputs: [['scores', 'Calculate one dot product for every observation row.'], ['selected_score', 'Select an entire record, then compare it with the same weights.']],
-      hints: ['The batch product is several row-weight dot products at once.', 'records(selected_row,:) selects all features of one observation.', 'Compute the matrix-vector product and the selected row’s dot product separately.'],
     })),
     problem('tie-two-score-rules', 'Find a feature edit that ties two scoring rules', 'Transfer', r => {
       const a = nonzeroVector(r, 3), b = [a[0] + r.int(1, 4), ...row(r, 2)]
@@ -250,20 +245,10 @@ export const foundationsPractice = {
       setup: `v = ${vec(nonzeroVector(r, 3))};`, solution: lines('unit = v/norm(v);', 'unit_length = norm(unit);'), outputs: [['unit', 'Divide the complete vector by its original length.'], ['unit_length', 'A correctly normalized nonzero vector has length one.']],
       hints: ['The new vector should point along the same direction.', 'Scaling by the reciprocal of the original norm makes its length one.', 'Normalize v first, then calculate the length of that normalized result.'],
     })),
-    problem('direction-only-similarity', 'Compare directions without their magnitudes', 'Apply', r => ({
-      prompt: 'Both vectors are nonzero. Store raw_dot = dot(a,b) and cosine = dot(a,b)/(norm(a)*norm(b)). The normalized score compares direction rather than length.',
-      setup: lines(`a = ${vec(nonzeroVector(r, 3))};`, `b = ${vec(nonzeroVector(r, 3))};`), solution: lines('raw_dot = dot(a,b);', 'cosine = raw_dot/(norm(a)*norm(b));'), outputs: [['raw_dot', 'Keep the unnormalized signed dot product.'], ['cosine', 'Divide by both lengths; do not square or discard the dot-product sign.']],
-      hints: ['Start with the dot product shared by the two requested quantities.', 'Magnitude affects that raw score through both vector lengths.', 'Divide the raw dot product by the product of the two norms.'],
-    })),
     problem('nearest-example-distances', 'Compare two candidate neighbors', 'Apply', r => ({
       prompt: 'Store distance_a from query to candidate_a, distance_b from query to candidate_b, and distance_gap = distance_a-distance_b. A positive gap means candidate_b is closer.',
       setup: lines(`query = ${vec(nonzeroVector(r, 3))};`, `candidate_a = ${vec(nonzeroVector(r, 3))};`, `candidate_b = ${vec(nonzeroVector(r, 3))};`), solution: lines('distance_a = norm(candidate_a-query);', 'distance_b = norm(candidate_b-query);', 'distance_gap = distance_a-distance_b;'), outputs: [['distance_a', 'Measure candidate_a relative to the same query.'], ['distance_b', 'Measure candidate_b relative to that query as well.'], ['distance_gap', 'Subtract the distances in the specified order before interpreting the sign.']],
       hints: ['Both candidate distances must share the same query point.', 'Use norm(candidate-query) for each candidate.', 'A positive first-minus-second difference identifies the second distance as smaller.'],
-    })),
-    problem('unit-distance-identity', 'Connect cosine similarity with unit-vector distance', 'Transfer', r => ({
-      prompt: 'Normalize a and b into unit_a and unit_b. Store cosine = dot(unit_a,unit_b), squared_distance = norm(unit_a-unit_b)^2, and identity_gap = squared_distance-(2-2*cosine). This identity holds for unit vectors.',
-      setup: lines(`a = ${vec(nonzeroVector(r, 3))};`, `b = ${vec(nonzeroVector(r, 3))};`), solution: lines('unit_a = a/norm(a);', 'unit_b = b/norm(b);', 'cosine = dot(unit_a,unit_b);', 'squared_distance = norm(unit_a-unit_b)^2;', 'identity_gap = squared_distance-(2-2*cosine);'), outputs: [['unit_a', 'Normalize the first vector using its own length.'], ['unit_b', 'Normalize the second vector using its own length.'], ['cosine', 'The dot product of two unit vectors equals their cosine similarity.'], ['squared_distance', 'Square the norm of the difference of the normalized vectors.'], ['identity_gap', 'Both sides of the unit-distance identity should agree within tolerance.']],
-      hints: ['The identity assumes both vectors have length one.', 'Normalize each vector before computing either side.', 'Compare norm(unit_a-unit_b)^2 with 2-2*dot(unit_a,unit_b).'],
     })),
     problem('set-length-keep-direction', 'Construct a vector with a required length', 'Transfer', r => ({
       prompt: 'Create resized with the direction of nonzero v and length desired_length. Then store distance_to_reference = norm(resized-reference). This models comparing observations after a deliberate magnitude adjustment.',
@@ -272,6 +257,18 @@ export const foundationsPractice = {
     })),
   ],
 
+  'laml-dot-product': [
+    problem('direction-only-similarity', 'Compare directions without their magnitudes', 'Apply', r => ({
+      prompt: 'Both vectors are nonzero. Store raw_dot = dot(a,b) and cosine = dot(a,b)/(norm(a)*norm(b)). The normalized score compares direction rather than length.',
+      setup: lines(`a = ${vec(nonzeroVector(r, 3))};`, `b = ${vec(nonzeroVector(r, 3))};`), solution: lines('raw_dot = dot(a,b);', 'cosine = raw_dot/(norm(a)*norm(b));'), outputs: [['raw_dot', 'Keep the unnormalized signed dot product.'], ['cosine', 'Divide by both lengths; do not square or discard the dot-product sign.']],
+      hints: ['Start with the dot product shared by the two requested quantities.', 'Magnitude affects that raw score through both vector lengths.', 'Divide the raw dot product by the product of the two norms.'],
+    })),
+    problem('unit-distance-identity', 'Connect cosine similarity with unit-vector distance', 'Transfer', r => ({
+      prompt: 'Normalize a and b into unit_a and unit_b. Store cosine = dot(unit_a,unit_b), squared_distance = norm(unit_a-unit_b)^2, and identity_gap = squared_distance-(2-2*cosine). This identity holds for unit vectors.',
+      setup: lines(`a = ${vec(nonzeroVector(r, 3))};`, `b = ${vec(nonzeroVector(r, 3))};`), solution: lines('unit_a = a/norm(a);', 'unit_b = b/norm(b);', 'cosine = dot(unit_a,unit_b);', 'squared_distance = norm(unit_a-unit_b)^2;', 'identity_gap = squared_distance-(2-2*cosine);'), outputs: [['unit_a', 'Normalize the first vector using its own length.'], ['unit_b', 'Normalize the second vector using its own length.'], ['cosine', 'The dot product of two unit vectors equals their cosine similarity.'], ['squared_distance', 'Square the norm of the difference of the normalized vectors.'], ['identity_gap', 'Both sides of the unit-distance identity should agree within tolerance.']],
+      hints: ['The identity assumes both vectors have length one.', 'Normalize each vector before computing either side.', 'Compare norm(unit_a-unit_b)^2 with 2-2*dot(unit_a,unit_b).'],
+    })),
+  ],
   'laml-projection': [
     problem('project-and-subtract', 'Project and retain the residual', 'Warm-up', r => ({
       prompt: 'Project x onto the line spanned by nonzero u. Store projection = u*dot(u,x)/dot(u,u), then residual = x-projection.',
@@ -335,6 +332,11 @@ export const foundationsPractice = {
       prompt: 'Define F(z)=A*z+offset. Store at_zero = A*[0;0]+offset and addition_gap = F(u+v)-F(u)-F(v), expanding F with the given formula. A nonzero offset moves zero and makes the sum-preservation gap nonzero.',
       setup: lines(`A = ${mat(matrix(r))};`, `offset = ${vec(nonzeroVector(r))};`, `u = ${vec(nonzeroVector(r))};`, `v = ${vec(nonzeroVector(r))};`), solution: lines('at_zero = A*[0;0]+offset;', 'addition_gap = (A*(u+v)+offset)-(A*u+offset)-(A*v+offset);'), outputs: [['at_zero', 'The matrix sends zero to zero, but the fixed offset remains.'], ['addition_gap', 'Include the offset once in each F evaluation before subtracting.']],
       hints: ['F includes both a matrix action and the same fixed offset.', 'In F(u)+F(v), the offset appears twice rather than once.', 'Expand all three evaluations; the matrix terms cancel and one negative offset remains.'],
+    })),
+    problem('batched-linear-scores', 'Move from one score to a batch', 'Transfer', r => ({
+      prompt: 'Each row of records is a feature vector. Store scores = records*w, and selected_score = dot(records(selected_row,:),w). The selected scalar should match that row of the batch output.',
+      setup: lines(`records = ${mat(matrix(r, 4, 3))};`, `w = ${vec(nonzeroVector(r, 3))};`, `selected_row = ${r.int(1, 4)};`), solution: lines('scores = records*w;', 'selected_score = dot(records(selected_row,:),w);'), outputs: [['scores', 'Calculate one dot product for every observation row.'], ['selected_score', 'Select an entire record, then compare it with the same weights.']],
+      hints: ['The batch product is several row-weight dot products at once.', 'records(selected_row,:) selects all features of one observation.', 'Compute the matrix-vector product and the selected row’s dot product separately.'],
     })),
   ],
 

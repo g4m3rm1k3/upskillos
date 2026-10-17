@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { LESSONS, MODULES, SYNTAX } from './curriculum.js'
+import { LESSONS, MODULES, STAGES, SYNTAX } from './curriculum.js'
+import { ROLES } from './lessons/uses.js'
 import { startRun } from './runner.js'
 import { readProgress, saveProgress } from './storage.js'
 import Explore from './Explore.jsx'
 import { CodeEditor, CodeView } from './code.jsx'
-import { MasteryMap, Notation, Proof, QuickCheck, Review } from './Study.jsx'
+import { AnglesCard, MasteryMap, Notation, Proof, QuickCheck, Review, UsesCard, WhyCard } from './Study.jsx'
 import { dueItems, schedule } from './review.js'
 import ProblemSet from './ProblemSet.jsx'
 import { problemsFor } from './practice/index.js'
@@ -69,10 +70,10 @@ function HeroArt() {
 function Hero() {
   return <section className="la-hero">
     <div className="la-hero-text">
-      <div className="la-eyebrow">From zero to mastery</div>
+      <div className="la-eyebrow">Start with basic algebra</div>
       <h1>Linear algebra, <em>seen</em>, <em>run</em> and <em>understood</em>.</h1>
-      <p>Start with arithmetic. Finish building models that learn and policies that plan. Every idea has a picture you can drag, code you can change, and a challenge that checks your numbers.</p>
-      <ol className="la-path">{MODULES.map(module => <li key={module} style={hue(module)}>{module}</li>)}</ol>
+      <p>No programming needed to begin. Every idea starts with why it matters and where it is used, then gives you a picture to drag, code to change and practice that checks your answers. Use it beside your course or textbook.</p>
+      <ol className="la-stages">{STAGES.map(([stage, modules], i) => <li key={stage}><strong>{i + 1}. {stage}</strong><span>{modules.map(module => <i key={module} style={hue(module)}>{module}</i>)}</span></li>)}</ol>
     </div>
     <HeroArt />
   </section>
@@ -124,7 +125,8 @@ export default function LinearAlgebraLab() {
     const token = ++revision.current
     setRunning(true); setResult(null)
     try {
-      const payload = practice ? { source: `${lesson.challenge.setup}\n${draft}`, code: draft, checks: lesson.challenge.checks, cases: lesson.challenge.cases } : { source: demo }
+      const payload = practice ? { source: `${lesson.challenge.setup}\n${draft}`, code: draft, checks: lesson.challenge.checks, cases: lesson.challenge.cases } : { source: lesson.demo.draw ? `${demo}
+${lesson.demo.draw}` : demo }
       const job = startRun(payload)
       activeRun.current = job
       const response = await job.promise
@@ -151,11 +153,12 @@ export default function LinearAlgebraLab() {
       <div className="la-brand"><span className="la-brand-icon" aria-hidden="true">A<i>x</i></span><div>Linear Algebra Lab<small>Powered by OpenMAT</small></div></div>
       <div className="la-progress"><div><strong>{doneCount} / {LESSONS.length}</strong><span>challenges checked</span></div><div className="la-bar-track"><i style={{ width: `${100 * doneCount / LESSONS.length}%` }} /></div><progress className="la-sr" aria-label="Challenges passed" max={LESSONS.length} value={doneCount} /><small>{independent} passed without opening a reference</small></div>
       <div className="la-views"><button type="button" aria-pressed={view === 'map'} onClick={() => openView('map')}><span aria-hidden="true">◫</span> Mastery map</button><button type="button" aria-pressed={view === 'review'} onClick={() => openView('review')}><span aria-hidden="true">↻</span> Review{due ? <b>{due} due</b> : null}</button></div>
-      <nav aria-label="Modules and lessons">{MODULES.map((module, moduleIndex) => {
+      <nav aria-label="Modules and lessons">{STAGES.map(([stage, stageModules], stageIndex) => <div key={stage} className="la-stage-group"><div className="la-stage-label">Stage {stageIndex + 1} · {stage}</div>{stageModules.map(module => {
+        const moduleIndex = MODULES.indexOf(module)
         const items = LESSONS.filter(item => item.module === module), finished = items.filter(item => done[item.id]).length
         return <details key={module} open={lesson.module === module || undefined} className="la-module" style={hue(module)}><summary><span className="la-module-num">{pad(moduleIndex + 1)}</span><span className="la-module-name">{module}</span><span className="la-module-count">{finished}/{items.length}</span></summary><ol>{items.map(item => <li key={item.id}><button type="button" aria-current={item.id === lesson.id ? 'step' : undefined} onClick={() => go(item)}><span className={done[item.id] ? 'la-status la-complete' : 'la-status'}>{done[item.id] ? '✓' : pad(LESSONS.indexOf(item) + 1)}</span>{item.title}</button></li>)}</ol></details>
-      })}</nav>
-      <div className="la-sidebar-note">Starts from basic arithmetic. No MATLAB needed: OpenMAT runs in your browser.</div>
+      })}</div>)}</nav>
+      <div className="la-sidebar-note">Starts from basic algebra; no programming needed. Code runs in your browser.</div>
     </aside>
     <main className="la-main" ref={main}>
       <header className="la-topbar"><button type="button" className="la-menu-button" aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? 'Close curriculum' : 'Curriculum'}</button><span className="la-crumb"><i />{lesson.module}<b>›</b>{lesson.title}</span><button type="button" onClick={() => setReference(!reference)} aria-expanded={reference}>{reference ? 'Close syntax guide' : 'Syntax guide'}</button></header>
@@ -169,6 +172,7 @@ export default function LinearAlgebraLab() {
         <section className="la-lesson-header">
           <div className="la-meta"><span className="la-chip">{lesson.module}</span><span>Lesson {pad(index + 1)} of {LESSONS.length}</span><span>{lesson.level}</span><span>about {lesson.minutes} min</span></div>
           <h1>{lesson.title}</h1><p>{lesson.objective}</p>
+          {lesson.uses?.some(use => use.who !== 'general') && <div className="la-fields" aria-label="Fields where this is used">{lesson.uses.filter(use => use.who !== 'general').map(use => <span key={use.who}>{ROLES.find(([id]) => id === use.who)?.[1]}</span>)}</div>}
           {done[lesson.id] && <span className="la-earned">✓ {done[lesson.id].assisted ? 'Checked with reference support' : 'Challenge passed'}{done[lesson.id].code !== draft ? ' · draft has changed since that pass' : ''}</span>}
         </section>
         <div className="la-tabs" role="tablist" aria-label="Lesson activities">{TABS.map(([id, label], position) => <button key={id} ref={element => { tabButtons.current[id] = element }} id={`${instance}-tab-${id}`} type="button" role="tab" tabIndex={tab === id ? 0 : -1} aria-selected={tab === id} aria-controls={`${instance}-panel-${id}`} onClick={() => switchTab(id)} onKeyDown={event => {
@@ -178,8 +182,11 @@ export default function LinearAlgebraLab() {
         }}><span>{pad(position + 1)}</span>{label}</button>)}</div>
         <div role="tabpanel" id={`${instance}-panel-${tab}`} aria-labelledby={`${instance}-tab-${tab}`} key={`${lesson.id}-${tab}`}>
           {tab === 'learn' && <div className="la-learn">
+            <WhyCard why={lesson.why} />
+            <UsesCard uses={lesson.uses} roles={ROLES} role={store.role} onRole={role => setStore(previous => ({ ...previous, role }))} />
             <section className="la-card la-reading"><div className="la-eyebrow">Start with a concrete example</div>{lesson.prose.map((paragraph, i) => <Prose key={i}>{paragraph}</Prose>)}</section>
             <Notation items={lesson.notation} />
+            <AnglesCard angles={lesson.angles} />
             <div className="la-pair">
               <section className="la-card la-procedure"><div className="la-eyebrow">A procedure to keep</div><ol>{lesson.procedure.map((step, i) => <li key={i}><Prose>{step}</Prose></li>)}</ol></section>
               <section className="la-card la-predict"><div className="la-eyebrow">Pause & predict</div><Prose>{lesson.prediction.question}</Prose><details className="la-details"><summary>Compare your reasoning</summary><Prose>{lesson.prediction.answer}</Prose></details></section>
@@ -187,7 +194,8 @@ export default function LinearAlgebraLab() {
             <section className="la-card la-workbench-card"><div className="la-section-title"><div><div className="la-eyebrow">Worked example</div><h2>Read it. Change it. Run it.</h2></div><span className="la-engine-badge">OpenMAT</span></div>
               <p className="la-muted">The example is editable. Change one input, predict the result, then run. Every run starts fresh; variables do not carry between lessons.</p>
               <div className="la-workbench">
-                <div><CodeEditor label="Worked example code" code={demo} onChange={code => edit('demos', code)} onRun={() => run(false)} disabled={running} dark={colors.dark} />{runButtons(false, 'Run example', 'Running…')}</div>
+                <div><CodeEditor label="Worked example code" code={demo} onChange={code => edit('demos', code)} onRun={() => run(false)} disabled={running} dark={colors.dark} />{runButtons(false, 'Run example', 'Running…')}
+                  {lesson.demo.draw && <details className="la-details la-draw-code"><summary>Drawing code: you don't need this yet</summary><CodeView code={lesson.demo.draw} label="Drawing code" /><p className="la-muted">This runs after your code to draw the picture. It uses your variable names, so keep them when you edit.</p></details>}</div>
                 <div className="la-output"><Result value={result} colors={colors} /></div>
               </div>
               <h3>Read the code, line by line</h3>

@@ -126,3 +126,34 @@ export function Review({ lessons, store, onAnswer, onOpen }) {
     {queue.length > 0 && !current && <div className="la-card la-success-card"><h2>Review finished</h2><p>{right} of {queue.length} correct. Missed questions come back in ten minutes; the rest are scheduled further out.</p></div>}
   </section>
 }
+
+// "Why you'd care": the motivating story that comes before any detail.
+export function WhyCard({ why }) {
+  if (!why) return null
+  return <section className="la-card la-why"><div className="la-eyebrow">Why you'd care</div><h2>{why.title}</h2><Md>{why.story}</Md></section>
+}
+
+// "Where you'll use it": case studies by background. The chosen background is saved and shown first.
+export function UsesCard({ uses, role, onRole, roles }) {
+  if (!uses?.length) return null
+  const available = roles.filter(([id]) => uses.some(use => use.who === id))
+  const chosen = uses.find(use => use.who === role) || uses.find(use => use.who === 'general') || uses[0]
+  const others = uses.filter(use => use !== chosen)
+  const label = id => roles.find(([key]) => key === id)?.[1] ?? id
+  return <section className="la-card la-uses">
+    <div className="la-eyebrow">Where you'll use it</div>
+    <div className="la-roles" role="group" aria-label="Your background">{available.map(([id, name]) => <button key={id} type="button" aria-pressed={chosen.who === id} onClick={() => onRole(id)}>{name}</button>)}</div>
+    <article className="la-use la-use-main"><span>{label(chosen.who)}</span><h3>{chosen.title}</h3><Md>{chosen.story}</Md></article>
+    {others.length > 0 && <details className="la-details"><summary>Also used by {others.map(use => label(use.who)).join(', ')}</summary>
+      <div className="la-use-grid">{others.map(use => <article key={use.who} className="la-use"><span>{label(use.who)}</span><h3>{use.title}</h3><Md>{use.story}</Md></article>)}</div>
+    </details>}
+  </section>
+}
+
+// "Another way to see it": extra viewpoints for topics that need more than one explanation.
+export function AnglesCard({ angles }) {
+  if (!angles?.length) return null
+  return <section className="la-card la-angles"><div className="la-eyebrow">Another way to see it</div>
+    <div className="la-angle-grid">{angles.map(angle => <article key={angle.title} className="la-angle"><h3>{angle.title}</h3><Md>{angle.body}</Md></article>)}</div>
+  </section>
+}
