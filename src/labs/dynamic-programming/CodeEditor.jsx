@@ -10,6 +10,7 @@ export default function CodeEditor({
   setLanguage,
   disabled = false,
   onRun,
+  onCheck,
   onReset,
   ariaLabel,
 }) {
@@ -38,7 +39,8 @@ export default function CodeEditor({
   function handleKeyDown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault()
-      onRun?.()
+      if (e.shiftKey && onCheck) onCheck()
+      else onRun?.()
       return
     }
 

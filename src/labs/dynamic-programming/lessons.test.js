@@ -7,10 +7,14 @@ import { ORACLES } from './lessons/core-oracles.js'
 import { SOLUTIONS } from './lessons/reference-solutions.js'
 import { runJavaScriptCases } from './runtime/checks.js'
 import { readProgress, saveProgress } from './progress.js'
+import { CONCEPTS } from './curriculum.js'
+import { parseLessonRows } from './lessons/parsed.js'
+import expertRaw from './lessons/expert.js'
+import specialistRaw from './lessons/specialist.js'
 
-it('loads all 160 authored lessons with complete pedagogical structure', () => {
+it('loads a lesson for every curriculum concept with complete pedagogical structure', () => {
   const list = Object.values(LESSONS)
-  expect(list.length).toBe(160)
+  expect(Object.keys(LESSONS).sort()).toEqual(CONCEPTS.map(c => c.id).sort())
 
   for (const lesson of list) {
     expect(lesson.id).toBeTruthy()
@@ -20,6 +24,24 @@ it('loads all 160 authored lessons with complete pedagogical structure', () => {
     expect(lesson.example.steps.length).toBeGreaterThanOrEqual(1)
     expect(lesson.proof.length).toBeGreaterThan(5)
     expect(lesson.complexity.length).toBeGreaterThan(5)
+  }
+})
+
+it('keeps specialist and expert lessons distinct, with explained traces and checkable practice', () => {
+  const rows = [expertRaw, specialistRaw].flatMap(raw => raw.trim().split('\n'))
+  for (const row of rows) expect(row.split('|'), row.split('|')[0]).toHaveLength(9)
+  const lessons = [...parseLessonRows(expertRaw), ...parseLessonRows(specialistRaw)]
+  expect(new Set(lessons.map(l => l.id)).size).toBe(lessons.length)
+  for (const lesson of lessons) {
+    expect(lesson.example.steps.length, lesson.id).toBeGreaterThanOrEqual(3)
+    for (const [, state, explanation] of lesson.example.steps) {
+      expect(state.length, lesson.id).toBeGreaterThan(5)
+      expect(explanation.length, lesson.id).toBeGreaterThan(10)
+      expect(explanation).not.toContain('Evaluate state transition')
+    }
+    expect(lesson.quiz.question.length, lesson.id).toBeGreaterThan(20)
+    expect(lesson.quiz.answer.length, lesson.id).toBeGreaterThan(0)
+    expect(lesson.quiz.hint.length, lesson.id).toBeGreaterThan(15)
   }
 })
 

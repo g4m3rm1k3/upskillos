@@ -1,0 +1,114 @@
+// The DP lab in a real browser: reuse this every session instead of writing a new one. It starts its
+// own dev server (and always stops it), opens every lesson that has a live table or a call tree, goes
+// to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
+// game, and saves a screenshot of each. Any page error, console error or missing piece is reported.
+//
+//   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
+import { chromium } from 'playwright'
+import { spawn, spawnSync } from 'node:child_process'
+import { mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { CONCEPTS } from '../curriculum.js'
+import { TRACES } from '../tables.js'
+import { TREE_FOR } from '../trees.js'
+
+const args = process.argv.slice(2)
+const onlyArg = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
+const out = args.find(a => !a.startsWith('--') && a !== onlyArg) ?? path.join(process.env.TEMP ?? '/tmp', 'dp-check')
+mkdirSync(out, { recursive: true })
+const PORT = 5198, URL = `http://127.0.0.1:${PORT}/#/lab/dynamic-programming`
+const root = path.resolve(import.meta.dirname, '../../../..')
+
+const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { cwd: root, shell: true, stdio: 'ignore' })
+const stopServer = () => { try { process.platform === 'win32' ? spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F']) : server.kill() } catch { /* already gone */ } }
+process.on('exit', stopServer)
+
+const ids = [...new Set([...Object.keys(TRACES), ...Object.keys(TREE_FOR)])].filter(id => !onlyArg || onlyArg.split(',').includes(id))
+const problems = []
+const browser = await chromium.launch()
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  page.on('pageerror', e => problems.push(`page error: ${e}`))
+  page.on('console', m => { if (m.type() === 'error' && !/WebSocket|chorus|favicon/.test(m.text())) problems.push(`console: ${m.text().slice(0, 200)}`) })
+  await page.addInitScript(() => { try { localStorage.setItem('oc-tour-seen', '1') } catch {} })
+  for (let i = 0; i < 90; i++) { try { await page.goto(URL, { timeout: 60000 }); break } catch { await new Promise(r => setTimeout(r, 2000)) } }
+  await page.getByRole('heading', { name: 'Dynamic programming' }).first().waitFor({ timeout: 180000 })
+  const skip = page.getByRole('button', { name: 'Skip' }); if (await skip.isVisible({ timeout: 2000 }).catch(() => false)) await skip.click()
+
+  for (const id of ids) {
+    const title = CONCEPTS.find(c => c.id === id).title
+    await page.getByRole('searchbox').fill(title)
+    await page.locator('.dp-concept').filter({ hasText: title }).first().click()
+    await page.getByRole('button', { name: '02 · Walk through' }).click()
+    const notes = []
+    if (TREE_FOR[id]) {
+      const tree = page.locator('.dp-ct')
+      await tree.waitFor({ timeout: 10000 })
+      await tree.getByRole('button', { name: 'Next event' }).click()
+      await tree.getByRole('button', { name: 'Next event' }).click()
+      await tree.screenshot({ path: path.join(out, `${id}-tree-start.png`) })
+      await tree.getByRole('button', { name: 'Show the whole tree' }).click().catch(() => notes.push('tree too big to draw'))
+      await tree.screenshot({ path: path.join(out, `${id}-tree.png`) })
+    }
+    if (TRACES[id]) {
+      const tt = page.locator('.dp-tt')
+      await tt.waitFor({ timeout: 10000 })
+      for (let i = 0; i < 3; i++) await tt.getByRole('button', { name: 'Next cell' }).click()
+      await tt.screenshot({ path: path.join(out, `${id}-watch.png`) })
+      await tt.getByRole('tab', { name: '✎ You fill it' }).click()
+      await tt.getByLabel(/^Value of /).fill('12345')
+      await tt.getByRole('button', { name: 'Check' }).click()
+      if (!(await tt.locator('.dp-tt-feedback.is-bad').isVisible())) problems.push(`${id}: a wrong value got no feedback`)
+      await tt.getByRole('tab', { name: '⇄ Fill order' }).click()
+      await tt.getByRole('button', { name: 'Which cell is ready?' }).click()
+      await tt.locator('.dp-tt-cell.is-hint').click()
+      await tt.screenshot({ path: path.join(out, `${id}-order.png`) })
+      const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
+      if (overflow) problems.push(`${id}: the lesson scrolls sideways`)
+    }
+    console.log(`${id}: ok${notes.length ? ` (${notes.join(', ')})` : ''}`)
+  }
+  // Run (not graded) in real Python, with a print, then Run & check, then CodeLens and back.
+  if (!onlyArg || onlyArg.split(',').includes('run')) {
+    await page.getByRole('searchbox').fill('Non-adjacent selection')
+    await page.locator('.dp-concept').filter({ hasText: 'Non-adjacent selection' }).first().click()
+    await page.getByRole('button', { name: '03 · Solve a problem' }).click()
+    const editor = page.getByLabel('Your Python solution')
+    await editor.fill('def solve(values):\n    best = [0] * (len(values) + 1)\n    for i in range(1, len(values) + 1):\n        take = values[i - 1] + (best[i - 2] if i >= 2 else 0)\n        best[i] = max(best[i - 1], take)\n        print(i, best)\n    return best[-1]\n')
+    await page.getByRole('button', { name: '▶ Run' }).click()
+    const panel = page.getByRole('region', { name: 'Run output' })
+    await panel.waitFor({ timeout: 180000 })
+    const text = await panel.textContent()
+    if (!/4 \[0, 3, 3, 9, 9\]/.test(text) || !/returned 9/.test(text)) problems.push(`Run in Python showed: ${text.slice(0, 200)}`)
+    await page.locator('.dp-live-practice').screenshot({ path: path.join(out, 'run-python.png') }).catch(() => {})
+    await page.getByRole('button', { name: '✓ Run & check' }).click()
+    await page.getByText('🎉 All checks passed!').waitFor({ timeout: 60000 }).catch(() => problems.push('Run & check did not pass a correct solution'))
+    await page.getByRole('button', { name: '🔍 Open in CodeLens' }).click()
+    await page.waitForURL(/#\/codelens/, { timeout: 20000 })
+    await page.waitForTimeout(4000)
+    await page.screenshot({ path: path.join(out, 'codelens.png') })
+    const back = page.getByRole('button', { name: /Back to the DP lab/ })
+    if (await back.isVisible({ timeout: 10000 }).catch(() => false)) {
+      await back.click()
+      await page.getByRole('button', { name: '▶ Run' }).waitFor({ timeout: 30000 }).catch(() => problems.push('Back from CodeLens did not reopen the challenge'))
+    } else problems.push('CodeLens shows no way back to the DP lab')
+    console.log('run, check, CodeLens: done')
+  }
+  // A narrow window: the table scrolls inside its own box, the page doesn't. The desktop keeps a
+  // window's old size until the page reloads.
+  await page.setViewportSize({ width: 420, height: 900 })
+  await page.goto(URL)
+  await page.reload()
+  const gotIt = page.getByRole('button', { name: 'Got it' }); if (await gotIt.isVisible({ timeout: 3000 }).catch(() => false)) await gotIt.click()
+  await page.getByRole('searchbox').waitFor({ timeout: 60000 }).catch(async e => { await page.screenshot({ path: path.join(out, 'narrow-failed.png') }); throw e })
+  await page.getByRole('searchbox').fill('0/1 knapsack')
+  await page.locator('.dp-concept').filter({ hasText: '0/1 knapsack' }).first().click()
+  await page.getByRole('button', { name: '02 · Walk through' }).click()
+  await page.locator('.dp-tt').screenshot({ path: path.join(out, 'narrow-knapsack.png') })
+} finally {
+  await browser.close()
+  stopServer()
+}
+console.log(problems.length ? `\n${problems.length} problem(s):\n${problems.join('\n')}` : '\nNo problems.')
+console.log(`Screenshots: ${out}`)
+process.exit(problems.length ? 1 : 0)

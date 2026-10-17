@@ -1,9 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { handOffToCodeLens } from './codelens.js'
+import { useDesktop } from '../../components/desktop/DesktopProvider.jsx'
 import { startAttempt } from './runtime/runner.js'
 import { readProgress, saveProgress } from './progress.js'
 import RecursionLesson from './RecursionLesson.jsx'
 import CodeEditor from './CodeEditor.jsx'
 import CodeViewer from './CodeViewer.jsx'
+import TableTrace from './TableTrace.jsx'
+import CallTree from './CallTree.jsx'
+import './trace.css'
+import { TRACES } from './tables.js'
+import { TREE_FOR } from './trees.js'
 
 const short = value => {
   const text = JSON.stringify(value)
@@ -28,13 +35,18 @@ export default function Lesson({
       ? ['01 · Understand', '02 · Walk through', '03 · Solve a problem']
       : ['01 · Understand', '02 · Walk through', '03 · Check understanding']
 
-  const [stage, setStage] = useState(0)
+  // The stage is remembered for this tab, so returning from CodeLens reopens the challenge.
+  const stageKey = `dp-lab.stage.${lesson.id}`
+  const [stage, setStageState] = useState(() => { try { return Number(sessionStorage.getItem(stageKey)) || 0 } catch { return 0 } })
+  const setStage = n => { setStageState(n); try { sessionStorage.setItem(stageKey, String(n)) } catch { /* private window */ } }
   const [step, setStep] = useState(0)
 
   const steps = lesson.example?.steps || []
   const currentStep = steps[step] || steps[0] || ['Start', 'Initial state', 'Begin trace']
 
   const currentIndex = concepts.findIndex(c => c.id === lesson.id)
+  // Past the Foundations, challenges are hard enough to want stepping through: offer CodeLens.
+  const traceable = Boolean(concepts[currentIndex]?.levelId && concepts[currentIndex].levelId !== 'foundations')
   const prevConcept = currentIndex > 0 ? concepts[currentIndex - 1] : null
   const nextConcept = currentIndex >= 0 && currentIndex < concepts.length - 1 ? concepts[currentIndex + 1] : null
 
@@ -95,6 +107,7 @@ export default function Lesson({
           language={language}
           setLanguage={setLanguage}
           onProgress={onProgress}
+          traceable={traceable}
         />
       )}
 
@@ -158,9 +171,11 @@ export default function Lesson({
       {/* STANDARD STAGE 1: WORKED EXAMPLE */}
       {!isRecursion && stage === 1 && (
         <section className="dp-worked" aria-label="Worked example">
+          {TREE_FOR[lesson.id] && <CallTree id={TREE_FOR[lesson.id]} />}
+          {TRACES[lesson.id] && <TableTrace id={lesson.id} />}
           <div className="dp-section-heading">
             <div>
-              <p className="dp-eyebrow">GUIDED TRACE · STEP BY STEP</p>
+              <p className="dp-eyebrow">{TRACES[lesson.id] || TREE_FOR[lesson.id] ? 'STEP-BY-STEP NOTES' : 'GUIDED TRACE · STEP BY STEP'}</p>
               <h3>{lesson.example?.title || 'Worked example'}</h3>
             </div>
             <span className="dp-step-counter">
@@ -198,6 +213,7 @@ export default function Lesson({
             <button
               type="button"
               disabled={step === 0}
+              aria-label="Previous step"
               onClick={() => setStep(s => s - 1)}
             >
               ← Previous step
@@ -206,6 +222,7 @@ export default function Lesson({
               type="button"
               className="dp-btn-primary-sm"
               disabled={step === steps.length - 1}
+              aria-label="Next step"
               onClick={() => setStep(s => s + 1)}
             >
               Next step →
@@ -239,6 +256,7 @@ export default function Lesson({
               language={language}
               setLanguage={setLanguage}
               onProgress={onProgress}
+              traceable={traceable}
             />
           ) : hasQuiz ? (
             <ConceptQuiz
@@ -362,15 +380,28 @@ export function ConceptQuiz({ lesson, onProgress }) {
   )
 }
 
-export function Practice({ lesson, language, setLanguage, onProgress }) {
+// Run's input box holds solve's arguments as JSON, without the outer brackets: `4, [1, 3]`.
+const argsText = args => args.map(a => JSON.stringify(a)).join(', ')
+export function parseArgs(text) {
+  try {
+    return { value: JSON.parse(`[${text}]`) }
+  } catch {
+    return { error: 'Write the arguments the way they appear in the examples, separated by commas: numbers, "strings" in double quotes, [lists] in brackets.' }
+  }
+}
+
+export function Practice({ lesson, language, setLanguage, onProgress, traceable = false }) {
   const spec = lesson.challenge
+  const desktop = useDesktop()
   const saved = readProgress(lesson.id, lesson.revision)?.[language]
   const [code, setCode] = useState(saved?.code ?? spec.starters[language])
   const [hints, setHints] = useState(saved?.hints ?? 0)
   const [passed, setPassed] = useState(saved?.passed ?? false)
   const [storageOK, setStorageOK] = useState(true)
   const [result, setResult] = useState(null)
-  const [running, setRunning] = useState(false)
+  const [runResult, setRunResult] = useState(null)
+  const [runArgs, setRunArgs] = useState(() => argsText(spec.cases[0].args))
+  const [running, setRunning] = useState(null)
   const [status, setStatus] = useState('')
   const cancel = useRef(null)
 
@@ -392,21 +423,38 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
   }
 
   function handleReset() {
-    const defaultStarter = spec.starters[language]
-    edit(defaultStarter)
+    edit(spec.starters[language])
   }
 
   function stop() {
+    const what = running
     cancel.current?.()
     cancel.current = null
-    setRunning(false)
+    setRunning(null)
     setStatus('')
-    setResult({ passed: false, rows: [], error: 'Stopped. Your draft is unchanged.' })
+    if (what === 'run') setRunResult({ error: 'Stopped. Your draft is unchanged.' })
+    else setResult({ passed: false, rows: [], error: 'Stopped. Your draft is unchanged.' })
   }
 
-  function run() {
+  // Just run it: the learner's prints, then solve(...) on the Run box's input. Nothing is graded.
+  function runOnly() {
+    const parsed = parseArgs(runArgs)
+    if (parsed.error) { setRunResult({ error: parsed.error }); return }
     cancel.current?.()
-    setRunning(true)
+    setRunning('run')
+    setRunResult(null)
+    setStatus('Starting code worker…')
+    persist(code, hints, passed)
+    cancel.current = startAttempt({
+      language, code, mode: 'run', args: parsed.value,
+      onStatus: setStatus,
+      onDone: data => { setRunning(null); setStatus(''); setRunResult({ ...data, args: runArgs }) },
+    })
+  }
+
+  function check() {
+    cancel.current?.()
+    setRunning('check')
     setPassed(false)
     setResult(null)
     setStatus('Starting code worker…')
@@ -417,7 +465,7 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
       cases: spec.cases,
       onStatus: setStatus,
       onDone: data => {
-        setRunning(false)
+        setRunning(null)
         setStatus('')
         setResult(data)
         setPassed(data.passed === true)
@@ -426,6 +474,20 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
     })
   }
 
+  function openCodeLens() {
+    const parsed = parseArgs(runArgs)
+    if (parsed.error) { setRunResult({ error: parsed.error }); return }
+    persist(code, hints, passed)
+    handOffToCodeLens(code, language, parsed.value)
+    // CodeLens is a full-screen page; the lab's window would sit on top of it, so it steps aside
+    // (minimized, keeping its state) until CodeLens's "Back to the DP lab" reopens it.
+    desktop?.minimizeWindow?.('dynamic-programming')
+    // The app uses HashRouter, so this is router navigation without needing the router's context here.
+    window.location.hash = '#/codelens'
+
+  }
+
+  const busy = running !== null
   return (
     <section className="dp-live-practice" aria-label="Coding challenge">
       <div className="dp-challenge-header">
@@ -438,8 +500,9 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
       </div>
 
       <p className="dp-muted">
-        Implement <code>solve({spec.params})</code>. Return the requested value. Checks test multiple
-        edge and ordinary cases in an isolated worker.
+        Implement <code>solve({spec.params})</code> and return the requested value. Use <strong>Run</strong> as often as you
+        like: it runs your code, shows everything you {language === 'Python' ? <code>print</code> : <code>console.log</code>}, and
+        what <code>solve</code> returns for the input you choose. <strong>Run & check</strong> tests it on the hidden cases.
       </p>
 
       <div className="dp-samples">
@@ -453,43 +516,64 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
         ))}
       </div>
 
-      {/* SYNTAX HIGHLIGHTED CODE EDITOR */}
       <CodeEditor
         code={code}
         onChange={edit}
         language={language}
         setLanguage={setLanguage}
-        disabled={running}
-        onRun={run}
+        disabled={busy}
+        onRun={runOnly}
+        onCheck={check}
         onReset={handleReset}
         ariaLabel={`Your ${language} solution`}
       />
 
       <p className="dp-editor-footer-hint">
-        Tab indents; Shift+Tab moves focus out. Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to run.{' '}
+        Tab indents; Shift+Tab moves focus out. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> checks.{' '}
         {storageOK
           ? 'Draft and check progress are saved locally.'
           : 'Local storage unavailable. Save a copy of your draft before leaving.'}
       </p>
 
+      <div className="dp-run-box">
+        <label>
+          <span>Run <code>solve</code> with</span>
+          <input
+            value={runArgs}
+            onChange={e => setRunArgs(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); runOnly() } }}
+            spellCheck={false}
+            aria-label="Arguments for solve"
+          />
+        </label>
+        <div className="dp-run-presets">
+          {spec.cases.slice(0, 3).map((test, i) => (
+            <button key={i} type="button" onClick={() => setRunArgs(argsText(test.args))}>Example {i + 1}</button>
+          ))}
+        </div>
+      </div>
+
       <div className="dp-run-controls">
-        <button
-          type="button"
-          className="dp-primary dp-btn-run"
-          disabled={running}
-          onClick={run}
-        >
-          {running ? 'Running…' : 'Run & check'}
+        <button type="button" className="dp-primary dp-btn-run" disabled={busy} onClick={runOnly}>
+          {running === 'run' ? 'Running…' : '▶ Run'}
         </button>
-        {running && (
+        <button type="button" className="dp-btn-check" disabled={busy} onClick={check}>
+          {running === 'check' ? 'Checking…' : '✓ Run & check'}
+        </button>
+        {busy && (
           <button type="button" className="dp-btn-stop" onClick={stop}>
             Stop execution
+          </button>
+        )}
+        {traceable && (
+          <button type="button" className="dp-btn-codelens" disabled={busy} onClick={openCodeLens} title="Step through your code line by line, with every variable and the call stack">
+            🔍 Open in CodeLens
           </button>
         )}
         <button
           type="button"
           className="dp-btn-hint"
-          disabled={running || hints >= spec.hints.length}
+          disabled={busy || hints >= spec.hints.length}
           onClick={() => {
             const next = hints + 1
             setHints(next)
@@ -513,10 +597,23 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
         </aside>
       )}
 
-      {running && (
+      {busy && (
         <p role="status" className="dp-feedback dp-feedback-running">
           <span className="dp-spinner" aria-hidden="true" /> {status}
         </p>
+      )}
+
+      {runResult && (
+        <div className="dp-run-output" role="region" aria-label="Run output">
+          <p className="dp-eyebrow">OUTPUT · NOT GRADED</p>
+          <pre className="dp-console">{runResult.output || <span className="dp-console-empty">(nothing printed)</span>}</pre>
+          {runResult.called && (
+            <p className="dp-run-returned">
+              <code>solve({runResult.args})</code> returned <code>{runResult.returned}</code>
+            </p>
+          )}
+          {runResult.error && <pre className="dp-error-log">{runResult.error}</pre>}
+        </div>
       )}
 
       {!result && passed && (
@@ -548,6 +645,11 @@ export function Practice({ lesson, language, setLanguage, onProgress }) {
                   <div className="dp-test-summary">
                     <span className="dp-test-icon">{row.passed ? '✓' : '✗'}</span>
                     <span>Case {i + 1}</span>
+                    {!row.passed && (
+                      <button type="button" className="dp-run-this" onClick={() => setRunArgs(argsText(spec.cases[i].args))}>
+                        Put this input in the Run box
+                      </button>
+                    )}
                   </div>
                   {!row.passed && (
                     <pre className="dp-test-diff">

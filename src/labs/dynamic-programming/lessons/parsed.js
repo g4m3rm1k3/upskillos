@@ -2,6 +2,8 @@ import foundationsRaw from './foundations.js'
 import coreRaw from './core.js'
 import structuredRaw from './structured.js'
 import advancedRaw from './advanced.js'
+import expertRaw from './expert.js'
+import specialistRaw from './specialist.js'
 
 export function parseLessonRows(rawString) {
   if (!rawString) return []
@@ -27,11 +29,14 @@ export function parseLessonRows(rawString) {
       .map(s => s.trim())
       .filter(Boolean)
 
-    const exampleSteps = stepsRaw.map((stepText, idx) => [
-      `Step ${idx + 1}`,
-      stepText,
-      'Evaluate state transition and compute next table value.',
-    ])
+    const exampleSteps = stepsRaw.map((stepText, idx) => {
+      const [state, explanation] = stepText.split(' => ')
+      return [
+        `Step ${idx + 1}`,
+        state,
+        explanation || 'Evaluate state transition and compute next table value.',
+      ]
+    })
 
     return {
       id,
@@ -70,4 +75,6 @@ export const PARSED_LESSONS = {
   ...Object.fromEntries(parseLessonRows(coreRaw).map(l => [l.id, l])),
   ...Object.fromEntries(parseLessonRows(structuredRaw).map(l => [l.id, l])),
   ...Object.fromEntries(parseLessonRows(advancedRaw).map(l => [l.id, l])),
+  ...Object.fromEntries(parseLessonRows(expertRaw).map(l => [l.id, l])),
+  ...Object.fromEntries(parseLessonRows(specialistRaw).map(l => [l.id, l])),
 }

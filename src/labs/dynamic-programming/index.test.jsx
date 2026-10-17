@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import Lab from './index.jsx'
 import { LEVELS, CONCEPTS, filterCurriculum } from './curriculum.js'
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); localStorage.clear(); sessionStorage.clear() })
 
 it('keeps stable unique concept and navigation IDs and scopes for every planned entry', () => {
   const ids = [...LEVELS.map(l => l.id), ...LEVELS.flatMap(l => l.groups.map(g => g.id)), ...CONCEPTS.map(c => c.id)]
@@ -15,7 +15,7 @@ it('keeps stable unique concept and navigation IDs and scopes for every planned 
     expect(['walkthrough', 'ready', 'coming-soon']).toContain(concept.status)
   }
   expect(CONCEPTS.find(c => c.id === 'recursion').status).toBe('walkthrough')
-  expect(CONCEPTS.find(c => c.id === 'plug-dp').status).toBe('coming-soon')
+  expect(CONCEPTS.every(c => c.status !== 'coming-soon')).toBe(true)
 })
 
 it('finds specialist concepts by scope and intersects level filters', () => {
@@ -24,20 +24,20 @@ it('finds specialist concepts by scope and intersects level filters', () => {
   expect(filterCurriculum('   ')).toEqual(LEVELS)
 })
 
-it('opens filtered concepts even after collapsing the tree and previews both languages', () => {
+it('opens a specialist lesson from a collapsed tree and supports its trace and quiz', () => {
   render(<Lab />)
   fireEvent.click(screen.getByRole('button', { name: 'Collapse all' }))
-  expect(screen.queryByRole('button', { name: /Plug DP and connectivity labels Coming soon/ })).toBeNull()
+  expect(screen.queryByRole('button', { name: /Plug DP and connectivity labels Walkthrough available/ })).toBeNull()
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'plug' } })
-  fireEvent.click(screen.getByRole('button', { name: /Plug DP and connectivity labels Coming soon/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Plug DP and connectivity labels Walkthrough available/ }))
   expect(screen.getByRole('heading', { name: 'Plug DP and connectivity labels' })).toBeTruthy()
-  expect(screen.getByText('solution.py')).toBeTruthy()
-  fireEvent.click(screen.getByRole('radio', { name: 'JavaScript' }))
-  expect(screen.getByText('solution.js')).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Run code · coming soon' }).disabled).toBe(true)
-  expect(screen.getByRole('region', { name: 'Progressive hints' })).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'A small nudge hint coming soon' }).disabled).toBe(true)
-  expect(screen.getByText(/They will not reveal the full recurrence/)).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Concept walkthrough' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '02 · Walk through' }))
+  expect(screen.getByText('Frontier endpoints labeled A,A')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Next step' }))
+  expect(screen.getByText('Joining them closes that path into a cycle')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '03 · Check understanding' }))
+  expect(screen.getByText(/If two endpoints have the same connectivity label/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '← Curriculum overview' }))
   expect(screen.getByRole('heading', { name: 'Coverage by level' })).toBeTruthy()
 })

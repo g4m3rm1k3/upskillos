@@ -5,6 +5,8 @@ import { LESSONS } from './lessons/index.js'
 import Lesson from './Lesson.jsx'
 import CodeViewer from './CodeViewer.jsx'
 import { readProgress } from './progress.js'
+import { TRACES } from './tables.js'
+import { TREE_FOR } from './trees.js'
 
 const STAGES = [
   ['01', 'Concept walkthrough', 'Build intuition, define the state, derive the recurrence, and understand why it works.'],
@@ -15,13 +17,20 @@ const STAGES = [
 const count = level => level.groups.reduce((sum, group) => sum + group.concepts.length, 0)
 const readyCount = Object.keys(LESSONS).length
 const challengeCount = Object.values(LESSONS).filter(l => l.challenge).length
+// Lessons with a live table or a call tree to watch and fill.
+const liveCount = new Set([...Object.keys(TRACES), ...Object.keys(TREE_FOR)]).size
+
+// The open concept survives a trip to CodeLens and back (and a reload).
+const PLACE = 'upskillos.dp-lab.place'
+const readPlace = () => { try { return localStorage.getItem(PLACE) || null } catch { return null } }
+const writePlace = id => { try { id ? localStorage.setItem(PLACE, id) : localStorage.removeItem(PLACE) } catch { /* private window */ } }
 
 const Soon = () => <span className="dp-soon">Coming soon</span>
 
 export default function DynamicProgrammingLab() {
   const [query, setQuery] = useState('')
   const [difficulty, setDifficulty] = useState('all')
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(() => { const id = readPlace(); return CONCEPTS.some(c => c.id === id) ? id : null })
   const [collapsed, setCollapsed] = useState(new Set())
   const [language, setLanguage] = useState('Python')
   const [progress, setProgress] = useState(() =>
@@ -63,6 +72,7 @@ export default function DynamicProgrammingLab() {
 
   function select(id) {
     setSelectedId(id)
+    writePlace(id)
     detailRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' })
   }
 
@@ -258,8 +268,9 @@ export default function DynamicProgrammingLab() {
                 <p>
                   Dynamic programming is not formula memorization: it is the art of recognizing optimal
                   substructure, defining precise states, and reasoning about subproblem dependencies.
-                  Explore 253 mapped concepts, walk through 160 interactive traces and quizzes, and solve 29
-                  checked coding challenges in Python or JavaScript.
+                  Explore {CONCEPTS.length} mapped concepts. Break problems into smaller questions and watch
+                  tables fill, step by step, in {liveCount} interactive lessons; then fill them yourself. Solve{' '}
+                  {challengeCount} coding challenges in Python or JavaScript: run and print as you work, then check.
                 </p>
 
                 <div className="dp-hero-actions">

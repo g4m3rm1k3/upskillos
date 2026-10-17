@@ -18,7 +18,9 @@ Last reconciled: 2026-09-26
 
 - [x] Curriculum preview shell with a searchable, scrollable concept hierarchy, labeled difficulty colors, coverage overview, and Python/JavaScript workspace previews. See [scope and authoring plan](dynamic-programming-lab.md).
 - [x] Recursion walkthrough with Python/JavaScript reference examples, reversible call-stack trace, and a checked prediction exercise with progressive hints.
-- [ ] Continue the remaining concept walkthroughs and worked examples; add independently checked, safely executed Python/JavaScript coding problems and completion tracking.
+- [x] A lesson for every concept; 69 independently checked Python/JavaScript challenges with saved drafts and passes.
+- [x] (2026-10-17) Visual, hands-on walkthroughs to the [lab quality standard](lab-quality-standard.md): a live table to watch, fill by typing or fill in your own order, on any input (31 lessons); a recursion call tree with prediction and memo collapse (15 lessons); Run with printed output beside Run & check; Open in CodeLens past Foundations.
+- [ ] "Design it yourself" for every lesson, visuals for the remaining families, answer walk-back, bug hunts, spaced review, and full lessons for the Advanced to Specialist rows. See the [plan](dynamic-programming-lab.md#plan).
 
 This is the master plan for contributor experience, application orientation, and the LMS direction. Keep this section current as work lands. The generated [project inventory](generated/project-inventory.md) is the source of truth for catalog counts and duplicate-content findings; do not copy its changing file lists here.
 
