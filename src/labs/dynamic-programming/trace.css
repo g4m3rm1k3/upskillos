@@ -735,3 +735,215 @@
   text-decoration: underline;
   padding: 0;
 }
+
+/* Design it yourself (DesignIt.jsx): the learner builds the DP before it is explained. */
+.dp-di {
+  background: var(--dp-card);
+  border: 1px solid var(--dp-line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dp-di h3 {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+}
+
+.dp-di-problem {
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
+
+.dp-di-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dp-di-pills li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--dp-line-bright);
+  color: var(--dp-muted);
+  font-size: 12px;
+}
+
+.dp-di-pills li.is-done {
+  border-color: var(--dp-green);
+  color: #a7f3d0;
+}
+
+.dp-di-pills li.is-done::before {
+  content: '✓ ';
+}
+
+.dp-di-pills li.is-now {
+  border-color: var(--dp-primary);
+  background: var(--dp-primary-glow);
+  color: var(--dp-text);
+  font-weight: 600;
+}
+
+.dp-di-card {
+  border: 1px dashed var(--dp-line-bright);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.dp-di-card dl {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) 1fr;
+  gap: 6px 14px;
+  margin: 6px 0 0;
+}
+
+.dp-di-card dt {
+  color: var(--dp-muted);
+  font-size: 12px;
+  padding-top: 2px;
+}
+
+.dp-di-card dd {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.dp-di-check {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dp-di-ask {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dp-di-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dp-lab .dp-di-option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--dp-line-bright);
+  background: var(--dp-panel);
+  color: var(--dp-text);
+  line-height: 1.45;
+}
+
+.dp-lab .dp-di-option:hover:not(:disabled) {
+  border-color: var(--dp-primary);
+}
+
+.dp-lab .dp-di-option:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.dp-lab .dp-di-option.is-right {
+  border-color: var(--dp-green);
+  background: var(--dp-green-glow);
+}
+
+.dp-lab .dp-di-option.is-wrong {
+  border-color: var(--dp-red);
+  color: var(--dp-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.6);
+}
+
+.dp-di-mark {
+  flex: none;
+  width: 1.2em;
+  font-weight: 700;
+}
+
+.dp-di-form,
+.dp-di-yesno,
+.dp-di-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dp-di-next {
+  margin-top: 8px;
+}
+
+.dp-di-form input {
+  width: 140px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dp-line-bright);
+  background: var(--dp-panel);
+  color: var(--dp-text);
+  font-family: var(--dp-mono);
+}
+
+.dp-lab .dp-di-quiet {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dp-muted);
+  text-decoration: underline;
+}
+
+.dp-di-known ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dp-di-known li code {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--dp-panel);
+  border: 1px solid var(--dp-line);
+}
+
+.dp-di-known .dp-muted {
+  margin: 0;
+}
+
+@container (max-width: 560px) {
+  .dp-di {
+    padding: 14px 12px;
+  }
+  .dp-di-card dl {
+    grid-template-columns: 1fr;
+  }
+  .dp-di-card dd {
+    margin-bottom: 4px;
+  }
+}
+
+.dp-lab .dp-di-secondary,
+.dp-lab .dp-di-quiet {
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.dp-lab .dp-di-secondary {
+  border: 1px solid var(--dp-line-bright);
+  background: var(--dp-panel);
+  color: var(--dp-text);
+}

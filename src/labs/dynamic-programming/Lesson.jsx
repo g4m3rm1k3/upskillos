@@ -8,6 +8,8 @@ import CodeEditor from './CodeEditor.jsx'
 import CodeViewer from './CodeViewer.jsx'
 import TableTrace from './TableTrace.jsx'
 import CallTree from './CallTree.jsx'
+import DesignIt from './DesignIt.jsx'
+import { DESIGNS } from './lessons/designs.js'
 import './trace.css'
 import { TRACES } from './tables.js'
 import { TREE_FOR } from './trees.js'
@@ -29,16 +31,21 @@ export default function Lesson({
   const hasChallenge = Boolean(lesson.challenge)
   const hasQuiz = Boolean(lesson.quiz)
 
-  const stageNames = isRecursion
-    ? ['01 · Walkthrough & stack', '02 · Coding challenge']
-    : hasChallenge
-      ? ['01 · Understand', '02 · Walk through', '03 · Solve a problem']
-      : ['01 · Understand', '02 · Walk through', '03 · Check understanding']
+  const design = isRecursion ? null : DESIGNS[lesson.id]
+  const stages = isRecursion
+    ? [['walk', '01 · Walkthrough & stack'], ['solve', '02 · Coding challenge']]
+    : [
+        ...(design ? [['design', '00 · Design it yourself']] : []),
+        ['understand', '01 · Understand'],
+        ['walk', '02 · Walk through'],
+        ['solve', hasChallenge ? '03 · Solve a problem' : '03 · Check understanding'],
+      ]
 
   // The stage is remembered for this tab, so returning from CodeLens reopens the challenge.
   const stageKey = `dp-lab.stage.${lesson.id}`
-  const [stage, setStageState] = useState(() => { try { return Number(sessionStorage.getItem(stageKey)) || 0 } catch { return 0 } })
-  const setStage = n => { setStageState(n); try { sessionStorage.setItem(stageKey, String(n)) } catch { /* private window */ } }
+  const [savedStage, setStageState] = useState(() => { try { return sessionStorage.getItem(stageKey) } catch { return null } })
+  const stage = stages.some(([sid]) => sid === savedStage) ? savedStage : stages[0][0]
+  const setStage = sid => { setStageState(sid); try { sessionStorage.setItem(stageKey, sid) } catch { /* private window */ } }
   const [step, setStep] = useState(0)
 
   const steps = lesson.example?.steps || []
@@ -80,13 +87,13 @@ export default function Lesson({
       </div>
 
       <nav className="dp-stage-nav" aria-label="Lesson stages">
-        {stageNames.map((name, i) => (
+        {stages.map(([sid, name]) => (
           <button
-            key={name}
+            key={sid}
             type="button"
-            className={`dp-stage-btn ${stage === i ? 'is-active' : ''}`}
-            aria-pressed={stage === i}
-            onClick={() => setStage(i)}
+            className={`dp-stage-btn ${stage === sid ? 'is-active' : ''}`}
+            aria-pressed={stage === sid}
+            onClick={() => setStage(sid)}
           >
             {name}
           </button>
@@ -94,13 +101,13 @@ export default function Lesson({
       </nav>
 
       {/* RECURSION CUSTOM STAGES */}
-      {isRecursion && stage === 0 && (
+      {isRecursion && stage === 'walk' && (
         <RecursionLesson
           practiceAvailable={true}
-          onStartChallenge={() => setStage(1)}
+          onStartChallenge={() => setStage('solve')}
         />
       )}
-      {isRecursion && stage === 1 && (
+      {isRecursion && stage === 'solve' && (
         <Practice
           key={`${lesson.id}:${language}`}
           lesson={lesson}
@@ -111,8 +118,20 @@ export default function Lesson({
         />
       )}
 
-      {/* STANDARD STAGE 0: UNDERSTAND */}
-      {!isRecursion && stage === 0 && (
+      {/* DESIGN IT YOURSELF: before any explanation */}
+      {stage === 'design' && (
+        <DesignIt
+          key={lesson.id}
+          id={lesson.id}
+          design={design}
+          revision={lesson.revision}
+          onProgress={onProgress}
+          onFinish={sid => { setStage(sid); setStep(0) }}
+        />
+      )}
+
+      {/* STANDARD STAGE: UNDERSTAND */}
+      {!isRecursion && stage === 'understand' && (
         <section aria-label="Concept walkthrough" className="dp-reading">
           {lesson.sections?.map(([title, text]) => (
             <section key={title} className="dp-card">
@@ -158,7 +177,7 @@ export default function Lesson({
               type="button"
               className="dp-primary"
               onClick={() => {
-                setStage(1)
+                setStage('walk')
                 setStep(0)
               }}
             >
@@ -168,8 +187,8 @@ export default function Lesson({
         </section>
       )}
 
-      {/* STANDARD STAGE 1: WORKED EXAMPLE */}
-      {!isRecursion && stage === 1 && (
+      {/* STANDARD STAGE: WORKED EXAMPLE */}
+      {!isRecursion && stage === 'walk' && (
         <section className="dp-worked" aria-label="Worked example">
           {TREE_FOR[lesson.id] && <CallTree id={TREE_FOR[lesson.id]} />}
           {TRACES[lesson.id] && <TableTrace id={lesson.id} />}
@@ -238,7 +257,7 @@ export default function Lesson({
             <button
               type="button"
               className="dp-primary"
-              onClick={() => setStage(2)}
+              onClick={() => setStage('solve')}
             >
               {hasChallenge ? 'Try the independent challenge →' : 'Check your understanding →'}
             </button>
@@ -246,8 +265,8 @@ export default function Lesson({
         </section>
       )}
 
-      {/* STANDARD STAGE 2: PRACTICE OR QUIZ */}
-      {!isRecursion && stage === 2 && (
+      {/* STANDARD STAGE: PRACTICE OR QUIZ */}
+      {!isRecursion && stage === 'solve' && (
         <>
           {hasChallenge ? (
             <Practice
@@ -531,7 +550,7 @@ export function Practice({ lesson, language, setLanguage, onProgress, traceable 
       <p className="dp-editor-footer-hint">
         Tab indents; Shift+Tab moves focus out. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs; <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> checks.{' '}
         {storageOK
-          ? 'Draft and check progress are saved locally.'
+          ? 'Your draft and every pass are saved, and follow you to other devices when you are signed in.'
           : 'Local storage unavailable. Save a copy of your draft before leaving.'}
       </p>
 

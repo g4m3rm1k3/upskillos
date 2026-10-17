@@ -1,7 +1,8 @@
 // The DP lab in a real browser: reuse this every session instead of writing a new one. It starts its
 // own dev server (and always stops it), opens every lesson that has a live table or a call tree, goes
 // to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
-// game, and saves a screenshot of each. Any page error, console error or missing piece is reported.
+// game, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
+// finish, with one wrong pick per decision. `--only` takes lesson ids, plus `design` and `run`. Any page error, console error or missing piece is reported.
 //
 //   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
 import { chromium } from 'playwright'
@@ -11,6 +12,7 @@ import path from 'node:path'
 import { CONCEPTS } from '../curriculum.js'
 import { TRACES } from '../tables.js'
 import { TREE_FOR } from '../trees.js'
+import { DESIGNS, applyCell } from '../lessons/designs.js'
 
 const args = process.argv.slice(2)
 const onlyArg = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
@@ -23,7 +25,8 @@ const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort', '--
 const stopServer = () => { try { process.platform === 'win32' ? spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F']) : server.kill() } catch { /* already gone */ } }
 process.on('exit', stopServer)
 
-const ids = [...new Set([...Object.keys(TRACES), ...Object.keys(TREE_FOR)])].filter(id => !onlyArg || onlyArg.split(',').includes(id))
+const wanted = id => !onlyArg || onlyArg.split(',').includes(id)
+const ids = [...new Set([...Object.keys(TRACES), ...Object.keys(TREE_FOR)])].filter(wanted)
 const problems = []
 const browser = await chromium.launch()
 try {
@@ -68,8 +71,38 @@ try {
     }
     console.log(`${id}: ok${notes.length ? ` (${notes.join(', ')})` : ''}`)
   }
+  // Design it yourself: the stage a designed lesson opens on, walked through with one wrong pick each time.
+  for (const [id, d] of Object.entries(DESIGNS).filter(([id]) => wanted('design') || (onlyArg && wanted(id)))) {
+    const title = CONCEPTS.find(c => c.id === id).title
+    await page.getByRole('searchbox').fill(title)
+    await page.locator('.dp-concept').filter({ hasText: title }).first().click()
+    const di = page.getByRole('region', { name: 'Design it yourself' })
+    if (!(await di.isVisible({ timeout: 10000 }).catch(() => false))) await page.getByRole('button', { name: '00 · Design it yourself' }).click()
+    if (await di.getByRole('button', { name: 'Design it again' }).isVisible().catch(() => false)) await di.getByRole('button', { name: 'Design it again' }).click()
+    const answerWith = async (value, kind) => {
+      if (kind === 'yesno') await di.getByRole('button', { name: value ? 'Yes' : 'No', exact: true }).click()
+      else { await di.getByRole('textbox').fill(String(value)); await di.getByRole('button', { name: 'Check', exact: true }).click() }
+    }
+    await answerWith(d.tryFirst.answer, d.tryFirst.kind)
+    await di.getByRole('button', { name: 'Start designing →' }).click()
+    for (const [k, step] of d.steps.entries()) {
+      await di.getByRole('button', { name: step.options.find(o => !o.right).text, exact: true }).click()
+      if (!(await di.locator('.dp-tt-feedback.is-bad').isVisible())) problems.push(`${id}: a wrong ${step.kind} pick got no reason`)
+      await di.getByRole('button', { name: step.options.find(o => o.right).text, exact: true }).click()
+      if (k === 2) await di.screenshot({ path: path.join(out, `${id}-design.png`) })
+      await di.getByRole('button', { name: 'Next decision →' }).click()
+    }
+    const cell = d.apply.cell ? applyCell(id, d.apply).step.value : d.apply.answer
+    await answerWith(cell, typeof cell === 'boolean' ? 'text' : d.apply.kind)
+    await di.getByRole('button', { name: 'Finish the design →' }).click()
+    await di.getByText(/You designed it/).waitFor({ timeout: 5000 }).catch(() => problems.push(`${id}: the design did not finish`))
+    await di.screenshot({ path: path.join(out, `${id}-design-done.png`) })
+    const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
+    if (overflow) problems.push(`${id}: the design stage scrolls sideways`)
+    console.log(`${id} design: ok`)
+  }
   // Run (not graded) in real Python, with a print, then Run & check, then CodeLens and back.
-  if (!onlyArg || onlyArg.split(',').includes('run')) {
+  if (wanted('run')) {
     await page.getByRole('searchbox').fill('Non-adjacent selection')
     await page.locator('.dp-concept').filter({ hasText: 'Non-adjacent selection' }).first().click()
     await page.getByRole('button', { name: '03 · Solve a problem' }).click()
@@ -83,6 +116,11 @@ try {
     await page.locator('.dp-live-practice').screenshot({ path: path.join(out, 'run-python.png') }).catch(() => {})
     await page.getByRole('button', { name: '✓ Run & check' }).click()
     await page.getByText('🎉 All checks passed!').waitFor({ timeout: 60000 }).catch(() => problems.push('Run & check did not pass a correct solution'))
+    // A pass shows at once: a ✓ on the lesson in the sidebar, the lesson badge, and the progress bar.
+    if (!(await page.locator('.dp-concept.is-solved').filter({ hasText: 'Non-adjacent selection' }).first().isVisible().catch(() => false))) problems.push('a solved lesson has no ✓ in the sidebar')
+    if (!/[1-9]\d* of \d+ lessons solved/.test(await page.getByRole('group', { name: 'Your progress' }).textContent())) problems.push('the progress bar did not count the solve')
+    await page.locator('.dp-workspace').screenshot({ path: path.join(out, 'solved.png') })
+    await page.locator('.dp-header').screenshot({ path: path.join(out, 'progress-header.png') })
     await page.getByRole('button', { name: '🔍 Open in CodeLens' }).click()
     await page.waitForURL(/#\/codelens/, { timeout: 20000 })
     await page.waitForTimeout(4000)
@@ -105,6 +143,11 @@ try {
   await page.locator('.dp-concept').filter({ hasText: '0/1 knapsack' }).first().click()
   await page.getByRole('button', { name: '02 · Walk through' }).click()
   await page.locator('.dp-tt').screenshot({ path: path.join(out, 'narrow-knapsack.png') })
+  await page.getByRole('searchbox').fill('Non-adjacent selection')
+  await page.locator('.dp-concept').filter({ hasText: 'Non-adjacent selection' }).first().click()
+  await page.getByRole('button', { name: '00 · Design it yourself' }).click()
+  await page.getByRole('region', { name: 'Design it yourself' }).screenshot({ path: path.join(out, 'narrow-design.png') })
+  if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2)) problems.push('narrow: the page scrolls sideways')
 } finally {
   await browser.close()
   stopServer()

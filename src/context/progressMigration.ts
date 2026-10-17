@@ -356,6 +356,37 @@ export function mergeNestedKeyedObject(
   return merged
 }
 
+// Dynamic Programming lab progress (src/labs/dynamic-programming/progress.js):
+// `{ lessonId: { revision, Python?, JavaScript?, quiz?, design? } }`. A lesson
+// solved on either device stays solved: for each part, the side that passed
+// (or finished) wins, otherwise this device's copy, which holds the newest
+// draft. A newer lesson revision replaces an older one outright, because the
+// lab discards progress saved against an old revision anyway.
+type DpRecord = { revision?: number; [part: string]: unknown }
+export function mergeDpLab(
+  local: Record<string, DpRecord> | null | undefined,
+  remote: Record<string, DpRecord> | null | undefined
+): Record<string, DpRecord> {
+  const isObject = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v)
+  if (!isObject(local)) return isObject(remote) ? remote : {}
+  if (!isObject(remote)) return local
+  const won = (part: any) => part?.passed === true || part?.done === true
+  const merged: Record<string, DpRecord> = { ...remote }
+  for (const [id, mine] of Object.entries(local)) {
+    const theirs = merged[id]
+    if (!isObject(theirs) || !isObject(mine) || (mine.revision ?? 0) !== (theirs.revision ?? 0)) {
+      merged[id] = isObject(theirs) && (theirs.revision ?? 0) > (mine?.revision ?? 0) ? theirs : mine
+      continue
+    }
+    const record: DpRecord = { ...theirs, ...mine }
+    for (const part of ['Python', 'JavaScript', 'quiz', 'design']) {
+      if (won(theirs[part]) && !won(mine[part])) record[part] = theirs[part]
+    }
+    merged[id] = record
+  }
+  return merged
+}
+
 // Callers (AuthContext.jsx) are untyped JS, so `unknown` params here buy no
 // real safety — `any` matches the actual gradual-migration boundary.
 export type MergeStrategy = (local: any, remote: any) => unknown
@@ -380,4 +411,5 @@ export const SYNC_MERGE_STRATEGIES: Record<string, MergeStrategy> = {
   'oc-lesson-progress': mergeArrayUnion,
   'vue-studio-v3:milestone-idx': mergeMaxNumber,
   'oc-blog-read': mergeArrayUnion,
+  'oc-dp-lab': mergeDpLab,
 }

@@ -4,7 +4,8 @@ import './style.css'
 import { LESSONS } from './lessons/index.js'
 import Lesson from './Lesson.jsx'
 import CodeViewer from './CodeViewer.jsx'
-import { readProgress } from './progress.js'
+import { readProgress, isSolved } from './progress.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { TRACES } from './tables.js'
 import { TREE_FOR } from './trees.js'
 
@@ -39,6 +40,20 @@ export default function DynamicProgrammingLab() {
     )
   )
 
+  // Signed in, progress follows the learner (oc-dp-lab is a synced key); a new solve is pushed at once.
+  const { user, pushNow } = useAuth() ?? {}
+  const solvedIn = concepts => concepts.filter(c => isSolved(progress[c.id])).length
+  const solvedCount = solvedIn(CONCEPTS)
+  function recordProgress(id, record) {
+    const before = progress[id]
+    if ((isSolved(record) && !isSolved(before)) || (record.design?.done && !before?.design?.done)) pushNow?.()
+    setProgress(previous => ({ ...previous, [id]: record }))
+  }
+  const countLabel = (concepts, total = concepts.length) => {
+    const n = solvedIn(concepts)
+    return n ? `✓ ${n}/${total}` : String(total)
+  }
+
   const statusLabel = concept => {
     const isRecursion = concept.id === 'recursion'
     const record = progress[concept.id]
@@ -47,6 +62,7 @@ export default function DynamicProgrammingLab() {
     if (doneLangs.length === 2) return 'Solved · both languages'
     if (doneLangs.length === 1) return `Solved · ${doneLangs[0]}`
     if (record?.quiz?.passed) return 'Solved · quiz passed'
+    if (record?.design?.done) return LESSONS[concept.id]?.challenge ? 'Designed · challenge next' : 'Designed · quiz next'
 
     if (isRecursion) return 'Walkthrough available'
     if (concept.status === 'ready') {
@@ -92,8 +108,11 @@ export default function DynamicProgrammingLab() {
           <h1>Dynamic programming</h1>
         </div>
         <div className="dp-header-stats">
-          <span className="dp-shell-badge dp-badge-green">{challengeCount} Challenges ready</span>
-          <span className="dp-shell-badge">{readyCount} Walkthroughs ready</span>
+          <div className="dp-progress" role="group" aria-label="Your progress">
+            <span><strong>{solvedCount}</strong> of {readyCount} lessons solved</span>
+            <span className="dp-progress-bar" aria-hidden="true"><span style={{ width: `${(solvedCount / readyCount) * 100}%` }} /></span>
+            <small>{user ? '☁ Saved to your account' : 'Saved on this device · sign in to keep it on every device'}</small>
+          </div>
         </div>
       </header>
 
@@ -177,7 +196,7 @@ export default function DynamicProgrammingLab() {
                       {item.title}
                       <small>{item.difficulty}</small>
                     </span>
-                    <span className="dp-count">{count(item)}</span>
+                    <span className="dp-count">{countLabel(item.groups.flatMap(g => g.concepts))}</span>
                   </button>
 
                   {open && (
@@ -196,7 +215,7 @@ export default function DynamicProgrammingLab() {
                             >
                               <span aria-hidden="true">{grpOpen ? '−' : '+'}</span>
                               <span>{grp.title}</span>
-                              <span className="dp-count">{grp.concepts.length}</span>
+                              <span className="dp-count">{countLabel(grp.concepts)}</span>
                             </button>
 
                             {grpOpen && (
@@ -205,15 +224,16 @@ export default function DynamicProgrammingLab() {
                                   const isSelected = selectedId === concept.id
                                   const isReady = concept.status === 'ready' || concept.status === 'walkthrough'
                                   const labelText = statusLabel(concept)
+                                  const solved = isSolved(progress[concept.id])
                                   return (
                                     <li key={concept.id}>
                                       <button
                                         type="button"
-                                        className={`dp-concept ${isSelected ? 'is-selected' : ''} ${isReady ? 'dp-is-ready' : ''}`}
+                                        className={`dp-concept ${isSelected ? 'is-selected' : ''} ${isReady ? 'dp-is-ready' : ''} ${solved ? 'is-solved' : ''}`}
                                         aria-current={isSelected ? 'page' : undefined}
                                         onClick={() => select(concept.id)}
                                       >
-                                        <span className="dp-node" aria-hidden="true" />
+                                        <span className="dp-node" aria-hidden="true">{solved ? '✓' : ''}</span>
                                         <span>
                                           {concept.title}
                                           <small className={isReady ? 'is-available' : ''}>
@@ -348,6 +368,9 @@ export default function DynamicProgrammingLab() {
                             </li>
                           ))}
                         </ul>
+                        {solvedIn(item.groups.flatMap(g => g.concepts)) > 0 && (
+                          <span className="dp-solved">✓ {solvedIn(item.groups.flatMap(g => g.concepts))} of {count(item)} solved</span>
+                        )}
                         {readyInLevel > 0 ? (
                           <span className="dp-ready">{readyInLevel} ready to learn</span>
                         ) : (
@@ -381,12 +404,14 @@ export default function DynamicProgrammingLab() {
                 <h2>{selected.title}</h2>
                 <span
                   className={
-                    selected.status === 'ready' || selected.status === 'walkthrough'
-                      ? 'dp-ready'
-                      : 'dp-soon'
+                    isSolved(progress[selected.id])
+                      ? 'dp-solved'
+                      : selected.status === 'ready' || selected.status === 'walkthrough'
+                        ? 'dp-ready'
+                        : 'dp-soon'
                   }
                 >
-                  {statusLabel(selected)}
+                  {isSolved(progress[selected.id]) ? '✓ ' : ''}{statusLabel(selected)}
                 </span>
                 <p>{selected.scope}</p>
               </div>
@@ -399,9 +424,7 @@ export default function DynamicProgrammingLab() {
                   onSelect={select}
                   language={language}
                   setLanguage={setLanguage}
-                  onProgress={(id, record) =>
-                    setProgress(previous => ({ ...previous, [id]: record }))
-                  }
+                  onProgress={recordProgress}
                 />
               ) : (
                 <>
