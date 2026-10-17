@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import MomentPlayer from './MomentPlayer'
-import { moments } from './registry'
+import { episodes, moments } from './registry'
 import { loadProgress, markDone } from './progress'
 
 export default function BookOfNature() {
@@ -24,10 +24,14 @@ export default function BookOfNature() {
             onChange={e => setCurrentId(e.target.value)}
             className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
           >
-            {moments.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.order} {m.title}{progress[m.id] ? ' ✓' : ''}
-              </option>
+            {episodes.map(ep => (
+              <optgroup key={ep.number} label={`Episode ${ep.number}: ${ep.title}`}>
+                {ep.moments.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.order} {m.title}{progress[m.id] ? ' ✓' : ''}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>

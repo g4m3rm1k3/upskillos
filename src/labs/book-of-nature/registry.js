@@ -8,3 +8,11 @@ const byOrder = (a, b) => {
 }
 
 export const moments = Object.values(modules).map(m => m.default).sort(byOrder)
+
+// The moments grouped by episode, in order, for the picker.
+export const episodes = moments.reduce((list, m) => {
+  const last = list[list.length - 1]
+  if (last?.number === m.episodeNumber) last.moments.push(m)
+  else list.push({ number: m.episodeNumber, title: m.episode, moments: [m] })
+  return list
+}, [])

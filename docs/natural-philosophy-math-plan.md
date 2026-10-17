@@ -113,10 +113,10 @@ These are the thinking tools. The learner collects them as cards. Early on, a mo
 | Group it | Notches on a bone |
 | Make it simpler | Measuring the Earth (one angle, one distance), moment 3.5 |
 | Use a balance | Al-Khwarizmi's restoring and balancing |
-| Squeeze it between two | Archimedes trapping π |
-| Slice it up | Archimedes' areas; later, integrals |
+| Squeeze it between two | Archimedes trapping π, moment 6.2 |
+| Slice it up | Archimedes' areas (the pizza, moment 6.3); later, integrals |
 | Change the viewpoint | Descartes' grid |
-| Generalize | Pascal's triangle |
+| Generalize | Pascal's triangle, moment 5.6 |
 
 ## Daily rhythm
 
@@ -212,11 +212,23 @@ Number, Structure. Rigor 2 to 3.
 
 ### 5. Chance and fair play
 Fermat and Pascal. Chance, Structure. Discrete math begins in earnest.
-The problem of points (splitting the stakes of an unfinished game); listing outcomes; Pascal's triangle; counting arrangements and choices; expected value; why a plausible argument can give the wrong answer.
+1. **The unfinished game:** a game to 3 wins stops at 2 to 1 with 64 coins in the pot. Splitting by points won (Pacioli) looks fair but isn't. Fermat's way: play out every possible ending (always two more rounds), and split by how many endings each player wins: 48 to 16. The words *chance* and *equally likely*.
+2. **Eleven or twelve?** Two dice: Leibniz thought 11 and 12 equally easy to throw, each made in one way. Tell the dice apart and there are 36 equally likely throws; 11 is two of them, 12 only one. Count the cases carefully. The word *probability* (rigor 3 for chance).
+3. **Working back from a draw:** Pascal's way to split the stakes: at 2 to 2 the pot splits evenly, and every earlier score is halfway between the two scores it could become (the average of 2.8). 2 to 1 is worth 48, 2 to 0 is 56, 1 to 0 is 44, as in Pascal's letter of 29 July 1654.
+4. **How many orders?** Arrangements: 3 people in a row can stand 6 ways, 4 people 24. Each place has one fewer choice than the one before, so multiply the choices.
+5. **Choosing a team:** choose 2 of 5 = 20 ordered pairs ÷ 2 orders = 10: the handshakes of 1.4. Choosing ignores order, so divide out the orders.
+6. **Pascal's triangle:** count the paths down a triangle of pegs: each number is the sum of the two above. The handshake and triangular numbers are in it, and so are all the choosing numbers. New move: generalize.
+7. **What is a bet worth?** Huygens: a bet's fair price is what it pays on average over all its equally likely cases. A fair game, an unfair one, and how a small edge adds up.
+8. **The gambler's puzzle:** de Méré's question. At least one six in 4 throws of a die: 4 chances of 1/6 suggests 4/6, but 6 throws would then be certain. Count the throws with no six instead: 625 of 1,296, so a six turns up in 671 of them, just over half.
 
 ### 6. Trapping π
 Archimedes. Shape, Change.
-Squeezing a circle between polygons; areas by slicing (the method of exhaustion); the area of a circle from a rolled-out "pizza"; the volume of a sphere; levers and balance as a way to think.
+1. **Round the wheel:** roll a wheel and every circle goes round in a little more than 3 of its own widths (diameters), whatever its size. That number is called π. Babylon used 3 1/8, the Bible's bowl gives 3.
+2. **Squeezing the circle:** a polygon inside the circle is shorter than its rim and one outside is longer. Double the sides from 6 to 96 and the two squeeze together: 3 10/71 < π < 3 1/7. New move: squeeze it between two.
+3. **The pizza:** cut a circle into thin wedges and lay them head to tail: nearly a rectangle, half the rim long and one radius high. Area = half the rim × the radius. New move: slice it up.
+4. **The lever:** weights balance when weight × distance is the same on both sides. "Give me a place to stand" (a later report, labelled).
+5. **The sphere in the cylinder:** slice a sphere, a cone and a cylinder at the same height: sphere slice + cone slice = cylinder slice (the right triangle of 2.7). So the sphere fills 2/3 of its cylinder, the result Archimedes wanted on his tomb (Cicero found it). His *Method* found it by weighing slices on a lever.
+6. **Counting the sand:** Archimedes' *Sand Reckoner*: names for huge numbers (a myriad, a myriad of myriads), and multiplying such numbers adds their zeros. Even the sand to fill the universe has a count.
 
 ### 7. Zero, place value and the balance
 India and the Islamic world. Number, Structure.
@@ -283,4 +295,5 @@ Parts II to V get their own episode maps when Part I is under way.
 | Moment 1.3 prototype | Built 2026-10-16 (`src/labs/book-of-nature/`); user approved it as the bar |
 | Episode 1 | Complete: 1.1 to 1.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
 | Episode 2 | Complete: 2.1 to 2.8 written, browser-checked and reviewed as a whole on 2026-10-16 |
-| Episodes 3 and 4 | Complete: 3.1 to 3.7 and 4.1 to 4.6 written, browser-checked and reviewed on 2026-10-16. Next: Episodes 5 and 6 |
+| Episodes 3 and 4 | Complete: 3.1 to 3.7 and 4.1 to 4.6 written, browser-checked and reviewed on 2026-10-16 |
+| Episodes 5 and 6 | Complete: 5.1 to 5.8 and 6.1 to 6.6 written, browser-checked and reviewed on 2026-10-16; the moment picker is grouped by episode. Next: Episodes 7 and 8 |
