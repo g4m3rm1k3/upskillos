@@ -14,9 +14,9 @@ afterEach(() => {
 })
 
 describe('DiscreteMathLab shell & lessons', () => {
-  it('opens on the first lesson (Propositions, Truth Values & Connectives)', () => {
+  it('opens on the first lesson (Statements that are definitely true or false)', () => {
     render(<DiscreteMathLab />)
-    expect(screen.getAllByText(/Propositions, Truth Values/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Statements that are definitely true or false/i).length).toBeGreaterThan(0)
   })
 
   it('renders every one of the 40 lessons and its figures without throwing', () => {
@@ -77,11 +77,11 @@ describe('Progress persistence', () => {
   it('persists current lesson and solved checks across remounts, and recovers from malformed JSON', () => {
     localStorage.setItem('upskillos.discrete-math-lab.v1', JSON.stringify({ current: 'induction' }))
     const view = render(<DiscreteMathLab />)
-    expect(document.querySelector('.qm-lesson > header h1').textContent).toContain('Mathematical Induction')
+    expect(document.querySelector('.qm-lesson > header h1').textContent).toContain('Mathematical induction')
     view.unmount()
 
     localStorage.setItem('upskillos.discrete-math-lab.v1', JSON.stringify({ current: 'nonexistent', lessons: 'bad', done: null }))
     render(<DiscreteMathLab />)
-    expect(document.querySelector('.qm-lesson > header h1').textContent).toContain('Propositions')
+    expect(document.querySelector('.qm-lesson > header h1').textContent).toContain('Statements that are definitely true or false')
   })
 })

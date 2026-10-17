@@ -187,7 +187,7 @@ export function EquationAnatomy({ ids, onLesson }) {
   const eq = list.find(e => e.id === id) ?? list[0], p = eq.parts[Math.min(part, eq.parts.length - 1)], lesson = lessonById(p[2])
   return <div className="qm-fig mm-anatomy">
     {list.length > 1 && <div className="qm-fig-controls"><label>Theorem / Identity <select value={eq.id} onChange={e => { setId(e.target.value); setPart(0) }}>{list.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label></div>}
-    <p className="qm-hint">{eq.source}</p>
+    <p className="qm-hint">{refs(eq.source)}</p>
     <div className="mm-equation"><Markdown>{`$$${eq.tex}$$`}</Markdown></div>
     <div className="mm-parts">{eq.parts.map(([tex], i) => <button key={i} className={i === part ? 'active' : ''} onClick={() => setPart(i)}><Markdown inline>{`$${tex}$`}</Markdown></button>)}</div>
     <div className="mm-part-explain"><Markdown inline>{`$${p[0]}$: ${refs(p[1])}.`}</Markdown> {lesson && (onLesson ? <button className="qm-link" onClick={() => onLesson(lesson.id)}>Lesson {lesson.number}: {lesson.title}</button> : <span className="qm-hint">Lesson {lesson.number}: {lesson.title}</span>)}</div>

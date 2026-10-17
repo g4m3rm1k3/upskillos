@@ -65,7 +65,7 @@ Throughout mathematics, five number sets have their own blackboard-bold letters:
             steps: [
               ['Logical definition', '$A = B \\;\\iff\\; \\forall x\\,(x \\in A \\Leftrightarrow x \\in B)$', 'Two sets are equal iff they have the exact same members'],
               ['Split $\\Leftrightarrow$ into two $\\Rightarrow$', '$\\iff (\\forall x, x \\in A \\Rightarrow x \\in B) \\wedge (\\forall x, x \\in B \\Rightarrow x \\in A)$', 'Biconditional law from lesson [[#implication]]'],
-              ['Subset notation', '$\\iff (A \\subseteq B) \\;\\wedge\\; (B \\subseteq A)$', 'Part 1: take $x \\in A$ and show $x \\in B$. Part 2: take $x \\in B$ and show $x \\in A$!'],
+              ['Subset notation', '$\\iff (A \\subseteq B) \\;\\wedge\\; (B \\subseteq A)$', 'Direction 1: take $x \\in A$ and show $x \\in B$. Direction 2: take $x \\in B$ and show $x \\in A$!'],
             ],
           },
         },

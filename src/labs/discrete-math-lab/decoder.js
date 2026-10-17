@@ -84,7 +84,7 @@ export const EQUATIONS = [
   {
     id: 'demorgan-quantifier',
     name: 'Quantifier De Morgan & Conditional Negation',
-    source: 'Predicate Logic (Part 1) — how to refute a universal claim with a single witness',
+    source: 'Predicate Logic (Part [[#part:logic-foundations]]) — how to refute a universal claim with a single witness',
     tex: '\\neg \\forall x \\in D,\\;(P(x) \\to Q(x)) \\;\\equiv\\; \\exists x \\in D,\\;(P(x) \\land \\neg Q(x))',
     parts: [
       ['\\neg \\forall x \\in D', 'Denying that a rule holds for every $x$ in the domain $D$', 'quantifiers'],
@@ -97,7 +97,7 @@ export const EQUATIONS = [
   {
     id: 'binomial-theorem',
     name: 'The Binomial Theorem',
-    source: 'Combinatorics (Part 4) — expanding $(x + y)^n$ by counting which brackets contribute $x$',
+    source: 'Combinatorics (Part [[#part:combinatorics]]) — expanding $(x + y)^n$ by counting which brackets contribute $x$',
     tex: '(x + y)^n \\;=\\; \\sum_{k=0}^{n} \\binom{n}{k} x^k y^{n-k}',
     parts: [
       ['(x + y)^n', 'The product of $n$ identical binomial factors $(x + y)(x + y)\\cdots(x + y)$', 'binomial-stars-bars'],
@@ -110,7 +110,7 @@ export const EQUATIONS = [
   {
     id: 'inclusion-exclusion',
     name: 'Principle of Inclusion–Exclusion & Derangements',
-    source: 'Combinatorics (Part 4) — alternating intersection sums that correct overcounting',
+    source: 'Combinatorics (Part [[#part:combinatorics]]) — alternating intersection sums that correct overcounting',
     tex: 'D_n \\;=\\; n! \\sum_{k=0}^{n} \\frac{(-1)^k}{k!} \\;\\approx\\; \\frac{n!}{e}',
     parts: [
       ['D_n', 'The number of derangements of $n$ elements — permutations $\\pi$ with zero fixed points ($\\pi(i) \\neq i$ for all $i$)', 'inclusion-exclusion'],
@@ -123,7 +123,7 @@ export const EQUATIONS = [
   {
     id: 'bezout-euler',
     name: 'Bézout’s Identity & Euler’s Totient Theorem',
-    source: 'Number Theory & Cryptography (Part 5) — the engine of modular inverses and RSA',
+    source: 'Number Theory & Cryptography (Part [[#part:number-theory]]) — the engine of modular inverses and RSA',
     tex: 'a x + m y = \\gcd(a, m) = 1 \\;\\implies\\; a^{\\varphi(m)} \\equiv 1 \\pmod{m}',
     parts: [
       ['a x + m y = \\gcd(a, m)', 'Bézout’s Identity: the Extended Euclidean Algorithm finds integers $x, y$ whose linear combination equals $\\gcd(a, m)$', 'gcd-bezout'],
@@ -136,7 +136,7 @@ export const EQUATIONS = [
   {
     id: 'master-theorem',
     name: 'The Master Theorem for Divide-and-Conquer Recurrences',
-    source: 'Recurrences & Asymptotics (Part 6) — work across a recursion tree of depth $\\log_b n$',
+    source: 'Recurrences & Asymptotics (Part [[#part:recurrences-asymptotics]]) — work across a recursion tree of depth $\\log_b n$',
     tex: 'T(n) = a\\,T(n/b) + \\Theta(n^d) \\;\\implies\\; \\text{compare } d \\text{ vs. } \\log_b a',
     parts: [
       ['a\\,T(n/b)', 'Each call spawns $a \\ge 1$ recursive subproblems, each on an input shrunk by factor $b > 1$', 'divide-conquer-master'],
@@ -149,7 +149,7 @@ export const EQUATIONS = [
   {
     id: 'handshaking-planar',
     name: 'Handshaking Lemma & Euler’s Planar Formula',
-    source: 'Graph Theory (Part 7) — topological invariants of networks and planar drawings',
+    source: 'Graph Theory (Part [[#part:graph-theory]]) — topological invariants of networks and planar drawings',
     tex: '\\sum_{v \\in V} \\deg(v) = 2|E| \\quad\\text{and}\\quad |V| - |E| + |F| = 2',
     parts: [
       ['\\sum_{v \\in V} \\deg(v) = 2|E|', 'Handshaking Lemma: every edge has $2$ endpoints, so summing vertex degrees counts every edge twice', 'graphs-handshaking'],
@@ -161,7 +161,7 @@ export const EQUATIONS = [
   {
     id: 'bayes-linearity',
     name: 'Bayes’ Theorem & Linearity of Expectation',
-    source: 'Discrete Probability (Part 8) — updating beliefs from evidence and averaging sums of indicators',
+    source: 'Discrete Probability (Part [[#part:probability-automata]]) — updating beliefs from evidence and averaging sums of indicators',
     tex: 'P(A \\mid B) = \\frac{P(B \\mid A)P(A)}{P(B)} \\quad\\text{and}\\quad E\\!\\left[\\sum_{i=1}^n X_i\\right] = \\sum_{i=1}^n E[X_i]',
     parts: [
       ['P(A \\mid B)', 'Posterior probability of hypothesis $A$ after observing evidence $B$', 'discrete-probability'],

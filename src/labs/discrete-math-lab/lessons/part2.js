@@ -444,7 +444,7 @@ Once both pieces are verified,Modus Ponens runs forever automatically:
 
 What if proving $P(k+1)$ needs to reach **further back** than $k$?
 - **Example 1 (Prime Factorization):** To prove every integer $n \\ge 2$ is a product of primes, if $k + 1$ is composite then $k + 1 = a \\cdot b$ with $2 \\le a, b \\le k$. Neither $a$ nor $b$ is $k$! They are *smaller* numbers somewhere in $\\{2, 3, \\dots, k\\}$.
-- **Example 2 (Postage Stamps):** To make $k + 1$ cents using $4\\text{¢}$ and $5\\text{¢}$ stamps, peeling off one $4\\text{¢}$ stamp drops you from $k + 1$ down to **$(k + 1) - 4 = k - 3$**, four steps back!
+- **Example 2 (Postage Stamps):** To make $k + 1$ cents using $4$¢ and $5$¢ stamps, peeling off one $4$¢ stamp drops you from $k + 1$ down to **$(k + 1) - 4 = k - 3$**, four steps back!
 
 That is **Strong Induction**: in the inductive step, we assume $P(j)$ holds for **every** integer $j$ from the base $n_0$ all the way up to $k$:
 
@@ -455,23 +455,23 @@ Is Strong Induction assuming more than ordinary induction? Logically they are **
         {
           symbols: [
             ['\\big(\\forall j \\in [n_0, k],\\,P(j)\\big) \\Rightarrow P(k+1)', 'strong inductive step', 'Assume $P(j)$ holds for **all** $n_0 \\le j \\le k$, then deduce $P(k+1)$', 'Essential whenever $k+1$ decomposes into $a, b < k$ or $k+1-c$'],
-            ['ab - a - b', 'Frobenius coin number', 'For coprime stamp denominations $a, b$, the **largest** amount that CANNOT be formed is $ab - a - b$', 'For $4\\text{¢}$ and $5\\text{¢}$: $4\\cdot 5 - 4 - 5 = 11\\text{¢}$; every $n \\ge 12$ works!'],
+            ['ab - a - b', 'Frobenius coin number', 'For coprime stamp denominations $a, b$, the **largest** amount that CANNOT be formed is $ab - a - b$', 'For $4$¢ and $5$¢: $4\\cdot 5 - 4 - 5 = 11$¢; every $n \\ge 12$ works!'],
             ['\\frac{4^n - 1}{3}', 'L-tromino count', 'Every $2^n \\times 2^n$ board with $1$ square missing has $4^n - 1$ squares, which is always divisible by $3$', 'At $n=3$ ($8\\times 8$ board): $(64 - 1)/3 = 21$ L-trominoes'],
           ],
         },
         {
           figure: 'PostageStampFig',
-          caption: 'Explore Strong Induction on the $4\\text{¢}$ and $5\\text{¢}$ Postage Stamp problem: once the 4 base cases $12, 13, 14, 15$ are checked, every $n \\ge 16$ steps back to $n - 4$ and adds one $4\\text{¢}$ stamp!',
+          caption: 'Explore Strong Induction on the $4$¢ and $5$¢ Postage Stamp problem: once the 4 base cases $12, 13, 14, 15$ are checked, every $n \\ge 16$ steps back to $n - 4$ and adds one $4$¢ stamp!',
         },
         {
           md: `**Watch why Strong Induction often needs MULTIPLE base cases:**
-In the $4\\text{¢}$ and $5\\text{¢}$ stamp proof that every $n \\ge 12$ can be formed, our inductive step says: *"Take a valid combination for $n - 4$, and add one $4\\text{¢}$ stamp."*
+In the $4$¢ and $5$¢ stamp proof that every $n \\ge 12$ can be formed, our inductive step says: *"Take a valid combination for $n - 4$, and add one $4$¢ stamp."*
 For $n - 4$ to be covered by the inductive hypothesis ($\\ge 12$), we need $n - 4 \\ge 12$, so the step only kicks in at **$n \\ge 16$**!
 Therefore, we must verify **four base cases by hand**:
-- $12 = 4 + 4 + 4$ ($3 \\times 4\\text{¢}$)
-- $13 = 4 + 4 + 5$ ($2 \\times 4\\text{¢} + 1 \\times 5\\text{¢}$)
-- $14 = 4 + 5 + 5$ ($1 \\times 4\\text{¢} + 2 \\times 5\\text{¢}$)
-- $15 = 5 + 5 + 5$ ($3 \\times 5\\text{¢}$)
+- $12 = 4 + 4 + 4$ ($3 \\times 4$¢)
+- $13 = 4 + 4 + 5$ ($2 \\times 4$¢ $+ 1 \\times 5$¢)
+- $14 = 4 + 5 + 5$ ($1 \\times 4$¢ $+ 2 \\times 5$¢)
+- $15 = 5 + 5 + 5$ ($3 \\times 5$¢)
 Once those four runway cases $12, 13, 14, 15$ are checked, $16 = 12 + 4$, $17 = 13 + 4$, $18 = 14 + 4$, and so on forever!
 
 **Geometric Induction: Tiling any $2^n \\times 2^n$ defective board with L-trominoes**
@@ -492,10 +492,10 @@ Unlike the $8 \\times 8$ chessboard missing *two* opposite corners (which failed
         },
         {
           predict: {
-            prompt: 'Suppose a post office sells only $3\\text{¢}$ and $7\\text{¢}$ stamps. By the Frobenius formula $ab - a - b$, what is the **largest** postage amount (in cents) that **cannot** be formed?',
+            prompt: 'Suppose a post office sells only $3$¢ and $7$¢ stamps. By the Frobenius formula $ab - a - b$, what is the **largest** postage amount (in cents) that **cannot** be formed?',
             answer: frobeniusNumber(3, 7),
             compute: () => frobeniusNumber(3, 7),
-            explain: '$3 \\times 7 - 3 - 7 = 21 - 10 = 11\\text{¢}$. Every integer amount $n \\ge 12\\text{¢}$ can be made from $3\\text{¢}$ and $7\\text{¢}$ stamps ($12 = 3\\times 4$, $13 = 3\\times 2 + 7$, $14 = 7\\times 2$).',
+            explain: '$3 \\times 7 - 3 - 7 = 21 - 10 = 11$¢. Every integer amount $n \\ge 12$¢ can be made from $3$¢ and $7$¢ stamps ($12 = 3\\times 4$, $13 = 3\\times 2 + 7$, $14 = 7\\times 2$).',
           },
         },
         {
@@ -508,11 +508,11 @@ Unlike the $8 \\times 8$ chessboard missing *two* opposite corners (which failed
         },
         {
           choice: {
-            prompt: 'If you prove that every postage $n \\ge 12$ can be made from $3\\text{¢}$ and $7\\text{¢}$ stamps by stepping back $3$ cents ($n \\to n - 3$ plus one $3\\text{¢}$ stamp), how many **base cases** must you check by hand before the inductive step takes over?',
+            prompt: 'If you prove that every postage $n \\ge 12$ can be made from $3$¢ and $7$¢ stamps by stepping back $3$ cents ($n \\to n - 3$ plus one $3$¢ stamp), how many **base cases** must you check by hand before the inductive step takes over?',
             options: [
               { text: '3 base cases ($n = 12, 13, 14$), because $n - 3 \\ge 12$ requires $n \\ge 15$', why: 'Yes! Stepping back by $a = 3$ requires a runway of $a = 3$ consecutive base cases ($12, 13, 14$) so that every $n \\ge 15$ lands inside the proven range.' },
               { text: '1 base case ($n = 12$)', why: 'If you only check $n = 12$, then for $n = 13$ stepping back by 3 lands on $13 - 3 = 10$, which is not possible!' },
-              { text: '7 base cases', why: 'Since we step back by $3$ (adding a $3\\text{¢}$ stamp), a runway of length $3$ suffices.' },
+              { text: '7 base cases', why: 'Since we step back by $3$ (adding a $3$¢ stamp), a runway of length $3$ suffices.' },
             ],
             answer: 0,
           },

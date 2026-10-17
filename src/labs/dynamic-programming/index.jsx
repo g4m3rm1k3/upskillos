@@ -1,15 +1,21 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { LEVELS, CONCEPTS, filterCurriculum } from './curriculum.js'
 import './style.css'
-import RecursionLesson from './RecursionLesson.jsx'
+import { LESSONS } from './lessons/index.js'
+import Lesson from './Lesson.jsx'
+import CodeViewer from './CodeViewer.jsx'
+import { readProgress } from './progress.js'
 
 const STAGES = [
-  ['01', 'Concept walkthrough', 'Build intuition, define the state, derive the recurrence, and explain why it works.'],
-  ['02', 'Worked example', 'Trace a concrete input, inspect the table, and reconstruct the answer step by step.'],
-  ['03', 'Solve a problem', 'Apply the idea independently with a problem statement, starter code, hints, and tests.'],
+  ['01', 'Concept walkthrough', 'Build intuition, define the state, derive the recurrence, and understand why it works.'],
+  ['02', 'Worked example', 'Trace a concrete input step by step, observe the state, and verify intermediate transitions.'],
+  ['03', 'Solve a problem', 'Apply the idea independently with problem constraints, starter code, test suites, and hints.'],
 ]
+
 const count = level => level.groups.reduce((sum, group) => sum + group.concepts.length, 0)
-const statusLabel = concept => concept.status === 'walkthrough' ? 'Walkthrough available' : 'Coming soon'
+const readyCount = Object.keys(LESSONS).length
+const challengeCount = Object.values(LESSONS).filter(l => l.challenge).length
+
 const Soon = () => <span className="dp-soon">Coming soon</span>
 
 export default function DynamicProgrammingLab() {
@@ -18,78 +24,500 @@ export default function DynamicProgrammingLab() {
   const [selectedId, setSelectedId] = useState(null)
   const [collapsed, setCollapsed] = useState(new Set())
   const [language, setLanguage] = useState('Python')
+  const [progress, setProgress] = useState(() =>
+    Object.fromEntries(
+      Object.values(LESSONS).map(lesson => [lesson.id, readProgress(lesson.id, lesson.revision)])
+    )
+  )
+
+  const statusLabel = concept => {
+    const isRecursion = concept.id === 'recursion'
+    const record = progress[concept.id]
+    const doneLangs = ['Python', 'JavaScript'].filter(lang => record?.[lang]?.passed)
+
+    if (doneLangs.length === 2) return 'Solved · both languages'
+    if (doneLangs.length === 1) return `Solved · ${doneLangs[0]}`
+    if (record?.quiz?.passed) return 'Solved · quiz passed'
+
+    if (isRecursion) return 'Walkthrough available'
+    if (concept.status === 'ready') {
+      return LESSONS[concept.id]?.challenge ? 'Practice ready' : 'Walkthrough available'
+    }
+    return 'Coming soon'
+  }
+
   const detailRef = useRef(null)
   const visible = useMemo(() => filterCurriculum(query, difficulty), [query, difficulty])
   const selected = CONCEPTS.find(concept => concept.id === selectedId)
   const level = LEVELS.find(item => item.id === selected?.levelId)
   const visibleCount = visible.reduce((sum, item) => sum + count(item), 0)
   const filtering = Boolean(query.trim()) || difficulty !== 'all'
+
   function toggle(id) {
-    setCollapsed(previous => { const next = new Set(previous); next.has(id) ? next.delete(id) : next.add(id); return next })
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
+
   function select(id) {
     setSelectedId(id)
-    detailRef.current?.scrollTo?.({ top: 0 })
+    detailRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' })
   }
-  return <div className="dp-lab">
-    <header className="dp-header">
-      <div className="dp-mark" aria-hidden="true">dp<span>[ ]</span></div>
-      <div><p className="dp-eyebrow">ALGORITHMS / LEARNING LAB</p><h1>Dynamic programming</h1></div>
-      <span className="dp-shell-badge">Curriculum preview</span>
-    </header>
-    <div className="dp-workspace">
-      <aside className="dp-sidebar" aria-label="Curriculum navigation">
-        <div className="dp-sidebar-tools">
-          <div className="dp-sidebar-title"><h2>Concept map</h2><span>{CONCEPTS.length} topics</span></div>
-          <label className="dp-search">Search concepts<input type="search" placeholder="Try knapsack, parsing, tree…" value={query} onChange={event => setQuery(event.target.value)} /></label>
-          <label className="dp-filter">Difficulty<select value={difficulty} onChange={event => setDifficulty(event.target.value)}><option value="all">All levels</option>{LEVELS.map((item, i) => <option key={item.id} value={item.id}>L{i + 1} · {item.difficulty}</option>)}</select></label>
-          <div className="dp-tree-actions"><button onClick={() => setCollapsed(new Set())}>Expand all</button><button onClick={() => setCollapsed(new Set(LEVELS.flatMap(item => [item.id, ...item.groups.map(group => group.id)])))}>Collapse all</button></div>
-          <button className={`dp-overview-button ${!selected ? 'is-selected' : ''}`} aria-current={!selected ? 'page' : undefined} onClick={() => select(null)}>▦ <span>Curriculum overview</span></button>
-          <p className="dp-results" role="status">{visibleCount} of {CONCEPTS.length} concepts{filtering ? ' match' : ' · explore available walkthroughs'}</p>
+
+  const previewCode = {
+    Python: `# Your Python challenge will appear here.\n# Problem statement, starter code, and tests: coming soon.`,
+    JavaScript: `// Your JavaScript challenge will appear here.\n// Problem statement, starter code, and tests: coming soon.`,
+  }
+
+  return (
+    <div className="dp-lab">
+      <header className="dp-header">
+        <div className="dp-mark" aria-hidden="true">
+          dp<span>[ ]</span>
         </div>
-        <nav className="dp-tree" aria-label="Concepts by difficulty">
-          {visible.map(item => {
-            const open = filtering || !collapsed.has(item.id)
-            return <section className="dp-level" key={item.id} style={{ '--level-color': item.color }}>
-              <button className="dp-level-toggle" aria-expanded={open} aria-controls={`dp-${item.id}`} onClick={() => toggle(item.id)} disabled={filtering}>
-                <span aria-hidden="true">{open ? '▾' : '▸'}</span><span className="dp-level-number">L{LEVELS.findIndex(l => l.id === item.id) + 1}</span><span>{item.title}<small>{item.difficulty}</small></span><span className="dp-count">{count(item)}</span>
+        <div>
+          <p className="dp-eyebrow">ALGORITHMS / INTERACTIVE LEARNING LAB</p>
+          <h1>Dynamic programming</h1>
+        </div>
+        <div className="dp-header-stats">
+          <span className="dp-shell-badge dp-badge-green">{challengeCount} Challenges ready</span>
+          <span className="dp-shell-badge">{readyCount} Walkthroughs ready</span>
+        </div>
+      </header>
+
+      <div className="dp-workspace">
+        <aside className="dp-sidebar" aria-label="Curriculum navigation">
+          <div className="dp-sidebar-tools">
+            <div className="dp-sidebar-title">
+              <h2>Concept map</h2>
+              <span>{CONCEPTS.length} topics</span>
+            </div>
+
+            <label className="dp-search">
+              Search concepts
+              <input
+                type="search"
+                placeholder="Try knapsack, tree, interval, bitmask…"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+              />
+            </label>
+
+            <label className="dp-filter">
+              Difficulty
+              <select value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+                <option value="all">All levels</option>
+                {LEVELS.map((item, i) => (
+                  <option key={item.id} value={item.id}>
+                    L{i + 1} · {item.difficulty}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="dp-tree-actions">
+              <button type="button" onClick={() => setCollapsed(new Set())}>
+                Expand all
               </button>
-              {open && <div id={`dp-${item.id}`} className="dp-groups">{item.groups.map(group => {
-                const groupOpen = filtering || !collapsed.has(group.id)
-                return <div key={group.id} className="dp-group">
-                  <button className="dp-group-toggle" aria-expanded={groupOpen} aria-controls={`dp-${group.id}`} onClick={() => toggle(group.id)} disabled={filtering}><span aria-hidden="true">{groupOpen ? '−' : '+'}</span><span>{group.title}</span><span className="dp-count">{group.concepts.length}</span></button>
-                  {groupOpen && <ul id={`dp-${group.id}`}>{group.concepts.map(concept => <li key={concept.id}><button className={`dp-concept ${selectedId === concept.id ? 'is-selected' : ''}`} aria-current={selectedId === concept.id ? 'page' : undefined} onClick={() => select(concept.id)}><span className="dp-node" aria-hidden="true" /><span>{concept.title}<small>{statusLabel(concept)}</small></span></button></li>)}</ul>}
+              <button
+                type="button"
+                onClick={() =>
+                  setCollapsed(new Set(LEVELS.flatMap(item => [item.id, ...item.groups.map(g => g.id)])))
+                }
+              >
+                Collapse all
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className={`dp-overview-button ${!selected ? 'is-selected' : ''}`}
+              aria-current={!selected ? 'page' : undefined}
+              onClick={() => select(null)}
+            >
+              ▦ <span>Curriculum overview</span>
+            </button>
+
+            <p className="dp-results" role="status">
+              {visibleCount} of {CONCEPTS.length} concepts
+              {filtering ? ' match' : ` · ${readyCount} ready to learn`}
+            </p>
+          </div>
+
+          <nav className="dp-tree" aria-label="Concepts by difficulty">
+            {visible.map(item => {
+              const open = filtering || !collapsed.has(item.id)
+              return (
+                <section className="dp-level" key={item.id} style={{ '--level-color': item.color }}>
+                  <button
+                    type="button"
+                    className="dp-level-toggle"
+                    aria-expanded={open}
+                    aria-controls={`dp-${item.id}`}
+                    onClick={() => toggle(item.id)}
+                    disabled={filtering}
+                  >
+                    <span aria-hidden="true">{open ? '▾' : '▸'}</span>
+                    <span className="dp-level-number">
+                      L{LEVELS.findIndex(l => l.id === item.id) + 1}
+                    </span>
+                    <span>
+                      {item.title}
+                      <small>{item.difficulty}</small>
+                    </span>
+                    <span className="dp-count">{count(item)}</span>
+                  </button>
+
+                  {open && (
+                    <div id={`dp-${item.id}`} className="dp-groups">
+                      {item.groups.map(grp => {
+                        const grpOpen = filtering || !collapsed.has(grp.id)
+                        return (
+                          <div key={grp.id} className="dp-group">
+                            <button
+                              type="button"
+                              className="dp-group-toggle"
+                              aria-expanded={grpOpen}
+                              aria-controls={`dp-${grp.id}`}
+                              onClick={() => toggle(grp.id)}
+                              disabled={filtering}
+                            >
+                              <span aria-hidden="true">{grpOpen ? '−' : '+'}</span>
+                              <span>{grp.title}</span>
+                              <span className="dp-count">{grp.concepts.length}</span>
+                            </button>
+
+                            {grpOpen && (
+                              <ul id={`dp-${grp.id}`}>
+                                {grp.concepts.map(concept => {
+                                  const isSelected = selectedId === concept.id
+                                  const isReady = concept.status === 'ready' || concept.status === 'walkthrough'
+                                  const labelText = statusLabel(concept)
+                                  return (
+                                    <li key={concept.id}>
+                                      <button
+                                        type="button"
+                                        className={`dp-concept ${isSelected ? 'is-selected' : ''} ${isReady ? 'dp-is-ready' : ''}`}
+                                        aria-current={isSelected ? 'page' : undefined}
+                                        onClick={() => select(concept.id)}
+                                      >
+                                        <span className="dp-node" aria-hidden="true" />
+                                        <span>
+                                          {concept.title}
+                                          <small className={isReady ? 'is-available' : ''}>
+                                            {labelText}
+                                          </small>
+                                        </span>
+                                      </button>
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </section>
+              )
+            })}
+
+            {!visibleCount && (
+              <div className="dp-empty">
+                <p>No concepts match your filters.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery('')
+                    setDifficulty('all')
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+          </nav>
+        </aside>
+
+        <main
+          ref={detailRef}
+          className="dp-detail"
+          aria-label={selected ? 'Concept preview' : 'Curriculum overview'}
+        >
+          {!selected ? (
+            <>
+              <div className="dp-hero">
+                <p className="dp-eyebrow">THE COMPLETE DP CURRICULUM · FOUNDATIONS TO SPECIALIST</p>
+                <h2>
+                  Small states.<br />
+                  <span>Deep understanding.</span>
+                </h2>
+                <p>
+                  Dynamic programming is not formula memorization: it is the art of recognizing optimal
+                  substructure, defining precise states, and reasoning about subproblem dependencies.
+                  Explore 253 mapped concepts, walk through 160 interactive traces and quizzes, and solve 29
+                  checked coding challenges in Python or JavaScript.
+                </p>
+
+                <div className="dp-hero-actions">
+                  <button
+                    type="button"
+                    className="dp-primary dp-hero-start"
+                    onClick={() => select('recursion')}
+                  >
+                    Start foundations with Recursion →
+                  </button>
                 </div>
-              })}</div>}
-            </section>
-          })}
-          {!visibleCount && <div className="dp-empty"><p>No concepts match your filters.</p><button onClick={() => { setQuery(''); setDifficulty('all') }}>Clear filters</button></div>}
-        </nav>
-      </aside>
-      <main ref={detailRef} className="dp-detail" aria-label={selected ? 'Concept preview' : 'Curriculum overview'}>
-        {!selected ? <>
-          <div className="dp-hero"><p className="dp-eyebrow">THE COMPLETE LEARNING PATH · IN DEVELOPMENT</p><h2>Small states.<br /><span>Deep understanding.</span></h2><p>A map from your first recurrence to specialist techniques. Explore every branch, review the coverage, and choose what we build next.</p><div className="dp-stats"><div><strong>{LEVELS.length}</strong><span>difficulty levels</span></div><div><strong>{LEVELS.reduce((sum, item) => sum + item.groups.length, 0)}</strong><span>topic families</span></div><div><strong>{CONCEPTS.length}</strong><span>planned concepts</span></div><div><strong>{CONCEPTS.filter(c => c.status === 'walkthrough').length}</strong><span>walkthroughs available</span></div></div></div>
-          <section className="dp-path"><div className="dp-section-heading"><h3>Coverage by level</h3><span>Walkthroughs are being added</span></div><p className="dp-muted">Levels suggest a learning order, not prerequisites enforced by the app. Specialist branches are optional extensions. This map can grow as gaps are identified.</p>
-            <div className="dp-level-cards">{LEVELS.map((item, i) => <article key={item.id} style={{ '--level-color': item.color }}><div className="dp-card-top"><span className="dp-level-tag">LEVEL {i + 1} · {item.difficulty}</span><span>{count(item)} concepts</span></div><h4>{item.title}</h4><p>{item.summary}</p><ul>{item.groups.map(group => <li key={group.id}><button onClick={() => { setQuery(''); setDifficulty(item.id); select(group.concepts[0].id) }}><span>{group.title}</span><span>{group.concepts.length} ↗</span></button></li>)}</ul><span className="dp-soon">{item.groups.some(g => g.concepts.some(c => c.status === 'walkthrough')) ? 'Walkthrough available' : 'Coming soon'}</span></article>)}</div>
-          </section>
-          <section className="dp-format"><h3>One concept. Three steps.</h3><StageCards preview /></section>
-        </> : <>
-          <button className="dp-back" onClick={() => select(null)}>← Curriculum overview</button>
-          <div className="dp-concept-hero" style={{ '--level-color': level.color }}><p className="dp-level-tag">LEVEL {LEVELS.indexOf(level) + 1} · {level.difficulty} / {selected.groupTitle}</p><h2>{selected.title}</h2><span className="dp-soon">{statusLabel(selected)}</span><p>{selected.scope}</p></div>
-          {selected.id === 'recursion' ? <RecursionLesson /> : <><section className="dp-plan"><h3>Your learning path</h3><p className="dp-muted">This concept is mapped, but its lesson and challenge have not been built yet.</p><StageCards /></section>
-          <section className="dp-practice"><div className="dp-section-heading"><div><p className="dp-eyebrow">03 / PRACTICE WORKSPACE</p><h3>Solve it your way</h3></div><Soon /></div><fieldset className="dp-language"><legend>Preview language</legend>{['Python', 'JavaScript'].map(item => <label key={item} className={language === item ? 'is-active' : ''}><input type="radio" name="dp-language" value={item} checked={language === item} onChange={() => setLanguage(item)} />{item}</label>)}</fieldset><div className="dp-editor-preview"><div><span>{language === 'Python' ? 'solution.py' : 'solution.js'}</span><span>Workspace preview</span></div><pre>{language === 'Python' ? '# Your Python challenge will appear here.\n# Problem statement, starter code, and tests: coming soon.' : '// Your JavaScript challenge will appear here.\n// Problem statement, starter code, and tests: coming soon.'}</pre></div><div className="dp-practice-footer"><p>No executable exercise is available yet.</p><button disabled>Run code · coming soon</button></div></section>
-          <section className="dp-hints" aria-label="Progressive hints"><div className="dp-section-heading"><div><p className="dp-eyebrow">A NUDGE, NOT THE ANSWER</p><h3>Hints when you need them</h3></div><Soon /></div><p className="dp-muted">For harder problems, ask for one small hint at a time. Each hint helps you take the next step while leaving the solution to you.</p><ol>{[
-            ['A small nudge', 'A useful observation to revisit in the problem statement.'],
-            ['A guiding question', 'A question that helps you reason about your choices and state.'],
-            ['A checkpoint', 'A tiny case or invariant to test your own approach.'],
-          ].map(([title, description]) => <li key={title}><div><h4>{title}</h4><p>{description}</p></div><button disabled aria-label={`${title} hint coming soon`}>Coming soon</button></li>)}</ol><p className="dp-muted">Hints will be optional and revealed individually. They will not reveal the full recurrence, solution code, or final answer. Problem-specific hints are not written yet.</p></section>
-          </>}<section className="dp-related"><h3>In this topic family</h3><div>{CONCEPTS.filter(item => item.groupId === selected.groupId).map(item => <button key={item.id} aria-current={item.id === selectedId ? 'page' : undefined} onClick={() => select(item.id)}>{item.title}<span>{statusLabel(item)}</span></button>)}</div></section>
-        </>}
-      </main>
+
+                <div className="dp-stats">
+                  <div>
+                    <strong>{LEVELS.length}</strong>
+                    <span>Difficulty levels</span>
+                  </div>
+                  <div>
+                    <strong>{LEVELS.reduce((sum, item) => sum + item.groups.length, 0)}</strong>
+                    <span>Topic families</span>
+                  </div>
+                  <div>
+                    <strong>{readyCount}</strong>
+                    <span>Walkthroughs & quizzes</span>
+                  </div>
+                  <div>
+                    <strong>{challengeCount}</strong>
+                    <span>Coding challenges</span>
+                  </div>
+                </div>
+              </div>
+
+              <section className="dp-path">
+                <div className="dp-section-heading">
+                  <h3>Coverage by level</h3>
+                  <span>
+                    {readyCount} available · {CONCEPTS.length - readyCount} coming soon
+                  </span>
+                </div>
+                <p className="dp-muted">
+                  Levels represent a natural learning order, from fundamentals of state design to advanced
+                  optimizations and specialist applications. Explore any level freely.
+                </p>
+
+                <div className="dp-level-cards">
+                  {LEVELS.map((item, i) => {
+                    const readyInLevel = item.groups
+                      .flatMap(g => g.concepts)
+                      .filter(c => c.status === 'ready' || c.status === 'walkthrough').length
+
+                    return (
+                      <article key={item.id} style={{ '--level-color': item.color }}>
+                        <div className="dp-card-top">
+                          <span className="dp-level-tag">
+                            LEVEL {i + 1} · {item.difficulty}
+                          </span>
+                          <span>{count(item)} concepts</span>
+                        </div>
+                        <h4>{item.title}</h4>
+                        <p>{item.summary}</p>
+                        <ul>
+                          {item.groups.map(group => (
+                            <li key={group.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setQuery('')
+                                  setDifficulty(item.id)
+                                  select(group.concepts[0].id)
+                                }}
+                              >
+                                <span>{group.title}</span>
+                                <span>{group.concepts.length} ↗</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        {readyInLevel > 0 ? (
+                          <span className="dp-ready">{readyInLevel} ready to learn</span>
+                        ) : (
+                          <Soon />
+                        )}
+                      </article>
+                    )
+                  })}
+                </div>
+              </section>
+
+              <section className="dp-format">
+                <h3>One concept. Three steps.</h3>
+                <StageCards preview />
+              </section>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="dp-back"
+                onClick={() => select(null)}
+              >
+                ← Curriculum overview
+              </button>
+
+              <div className="dp-concept-hero" style={{ '--level-color': level?.color || '#c4b5fd' }}>
+                <p className="dp-level-tag">
+                  LEVEL {LEVELS.indexOf(level) + 1} · {level?.difficulty} / {selected.groupTitle}
+                </p>
+                <h2>{selected.title}</h2>
+                <span
+                  className={
+                    selected.status === 'ready' || selected.status === 'walkthrough'
+                      ? 'dp-ready'
+                      : 'dp-soon'
+                  }
+                >
+                  {statusLabel(selected)}
+                </span>
+                <p>{selected.scope}</p>
+              </div>
+
+              {LESSONS[selected.id] ? (
+                <Lesson
+                  key={selected.id}
+                  lesson={LESSONS[selected.id]}
+                  concepts={CONCEPTS}
+                  onSelect={select}
+                  language={language}
+                  setLanguage={setLanguage}
+                  onProgress={(id, record) =>
+                    setProgress(previous => ({ ...previous, [id]: record }))
+                  }
+                />
+              ) : (
+                <>
+                  <section className="dp-plan">
+                    <h3>Your learning path</h3>
+                    <p className="dp-muted">
+                      This specialist concept is mapped into the curriculum. Its dedicated interactive
+                      walkthrough and coding challenge are being authored.
+                    </p>
+                    <StageCards />
+                  </section>
+
+                  <section className="dp-practice">
+                    <div className="dp-section-heading">
+                      <div>
+                        <p className="dp-eyebrow">03 / PRACTICE WORKSPACE PREVIEW</p>
+                        <h3>Solve it your way</h3>
+                      </div>
+                      <Soon />
+                    </div>
+
+                    <fieldset className="dp-language">
+                      <legend>Preview language</legend>
+                      {['Python', 'JavaScript'].map(item => (
+                        <label key={item} className={language === item ? 'is-active' : ''}>
+                          <input
+                            type="radio"
+                            name="dp-language"
+                            value={item}
+                            checked={language === item}
+                            onChange={() => setLanguage(item)}
+                          />
+                          {item}
+                        </label>
+                      ))}
+                    </fieldset>
+
+                    <div className="dp-editor-preview">
+                      <CodeViewer
+                        code={previewCode[language]}
+                        language={language}
+                        filename={language === 'Python' ? 'solution.py' : 'solution.js'}
+                        showLineNumbers={false}
+                        allowCopy={false}
+                      />
+                    </div>
+
+                    <div className="dp-practice-footer">
+                      <p>No executable exercise is available yet.</p>
+                      <button type="button" disabled>
+                        Run code · coming soon
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="dp-hints" aria-label="Progressive hints">
+                    <div className="dp-section-heading">
+                      <div>
+                        <p className="dp-eyebrow">A NUDGE, NOT THE ANSWER</p>
+                        <h3>Hints when you need them</h3>
+                      </div>
+                      <Soon />
+                    </div>
+                    <p className="dp-muted">
+                      For harder problems, ask for one small hint at a time. Each hint helps you take the
+                      next step while leaving the solution to you.
+                    </p>
+                    <ol>
+                      {[
+                        ['A small nudge', 'A useful observation to revisit in the problem statement.'],
+                        ['A guiding question', 'A question that helps you reason about your choices and state.'],
+                        ['A checkpoint', 'A tiny case or invariant to test your own approach.'],
+                      ].map(([title, description]) => (
+                        <li key={title}>
+                          <div>
+                            <h4>{title}</h4>
+                            <p>{description}</p>
+                          </div>
+                          <button type="button" disabled aria-label={`${title} hint coming soon`}>
+                            Coming soon
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="dp-muted">
+                      Hints will be optional and revealed individually. They will not reveal the full
+                      recurrence, solution code, or final answer. Problem-specific hints are not written yet.
+                    </p>
+                  </section>
+                </>
+              )}
+
+              <section className="dp-related">
+                <h3>In this topic family: {selected.groupTitle}</h3>
+                <div>
+                  {CONCEPTS.filter(item => item.groupId === selected.groupId).map(item => (
+                    <button
+                      type="button"
+                      key={item.id}
+                      aria-current={item.id === selectedId ? 'page' : undefined}
+                      onClick={() => select(item.id)}
+                    >
+                      {item.title}
+                      <span>{statusLabel(item)}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+        </main>
+      </div>
     </div>
-  </div>
+  )
 }
 
 function StageCards({ preview = false }) {
-  return <div className="dp-stage-cards">{STAGES.map(([number, title, text]) => <article key={number}><span className="dp-stage-number">{number}</span><h4>{title}</h4><p>{text}</p>{!preview && <Soon />}</article>)}</div>
+  return (
+    <div className="dp-stage-cards">
+      {STAGES.map(([number, title, text]) => (
+        <article key={number}>
+          <span className="dp-stage-number">{number}</span>
+          <h4>{title}</h4>
+          <p>{text}</p>
+          {!preview && <Soon />}
+        </article>
+      ))}
+    </div>
+  )
 }

@@ -1,6 +1,6 @@
-// Stable concept IDs are independent of display order. Availability distinguishes walkthroughs from full coding practice.
-// Each row is [id, title, learning scope]; groups are independently expandable.
-const group = (id, title, rows) => ({ id, title, concepts: rows.map(([id, title, scope]) => ({ id, title, scope, status: id === 'recursion' ? 'walkthrough' : 'coming-soon' })) })
+import { LESSONS } from './lessons/index.js'
+// Stable concept IDs are independent of display order. Availability comes from authored lessons.
+const group = (id, title, rows) => ({ id, title, concepts: rows.map(([cid, ctitle, scope]) => ({ id: cid, title: ctitle, scope, status: cid === 'recursion' ? 'walkthrough' : (LESSONS[cid] ? 'ready' : 'coming-soon') })) })
 
 export const LEVELS = [
   { id: 'foundations', title: 'Foundations', difficulty: 'Beginner', color: '#6ee7b7', summary: 'Learn to define a state, write a recurrence, and explain why it works.', groups: [

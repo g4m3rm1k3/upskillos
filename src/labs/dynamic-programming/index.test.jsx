@@ -12,8 +12,10 @@ it('keeps stable unique concept and navigation IDs and scopes for every planned 
   expect(new Set(ids).size).toBe(ids.length)
   for (const concept of CONCEPTS) {
     expect(concept.scope.length).toBeGreaterThan(30)
-    expect(concept.status).toBe(concept.id === 'recursion' ? 'walkthrough' : 'coming-soon')
+    expect(['walkthrough', 'ready', 'coming-soon']).toContain(concept.status)
   }
+  expect(CONCEPTS.find(c => c.id === 'recursion').status).toBe('walkthrough')
+  expect(CONCEPTS.find(c => c.id === 'plug-dp').status).toBe('coming-soon')
 })
 
 it('finds specialist concepts by scope and intersects level filters', () => {

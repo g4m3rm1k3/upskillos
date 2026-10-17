@@ -14,7 +14,7 @@ describe('discrete-math-lab lessons', () => {
   it('refer only to lessons and parts that exist, by id, never by a written number', () => {
     const decoder = [
       SYMBOLS.map(row => refs(row[2])),
-      EQUATIONS.map(eq => [refs(eq.whole), eq.parts.map(p => refs(p[1]))]),
+      EQUATIONS.map(eq => [refs(eq.source), refs(eq.whole), eq.parts.map(p => refs(p[1]))]),
     ]
     expect([...UNRESOLVED]).toEqual([])
     const text = JSON.stringify([LESSONS.map(({ part, ...l }) => l), PARTS.map(p => p.title), decoder])
