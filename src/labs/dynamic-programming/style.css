@@ -1566,8 +1566,12 @@
   min-width: 0;
 }
 
-.dp-editor-highlight,
-.dp-editor-input {
+/* The editor is two layers: the coloured text (pre) under a transparent textarea that holds the
+   caret. They must match to the pixel, or the caret drifts from the text, so these rules name
+   .dp-code-editor: the lab-wide `.dp-lab textarea` (font: inherit) and `.dp-lab code` (inline
+   code, 0.9em with padding) would otherwise out-rank them. */
+.dp-code-editor .dp-editor-highlight,
+.dp-code-editor .dp-editor-input {
   position: absolute;
   top: 0;
   left: 0;
@@ -1579,19 +1583,44 @@
   background: transparent;
   font-family: var(--dp-mono);
   font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
   line-height: 1.6;
+  letter-spacing: normal;
+  font-variant-ligatures: none;
   tab-size: 4;
   white-space: pre;
   overflow: auto;
   box-sizing: border-box;
 }
 
-.dp-editor-highlight {
+.dp-code-editor .dp-editor-highlight {
   pointer-events: none;
   color: #e2e8f0;
+  /* Scrolled only by the textarea (handleScroll), never by its own scrollbars, which would
+     change its width when its extra last line makes it taller than the textarea. */
+  overflow: hidden;
 }
 
-.dp-editor-input {
+.dp-code-editor .dp-editor-highlight code {
+  display: block;
+  font: inherit;
+  font-variant-ligatures: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* Bold or italic glyphs can be wider than regular ones when the monospace font falls back or is
+   synthesised: in the editor, colour alone marks the tokens. */
+.dp-code-editor .dp-editor-highlight .token {
+  font-weight: inherit;
+  font-style: inherit;
+}
+
+.dp-code-editor .dp-editor-input {
   color: transparent;
   caret-color: #38bdf8;
   resize: none;

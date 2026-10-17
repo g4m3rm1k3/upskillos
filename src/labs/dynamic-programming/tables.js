@@ -1,0 +1,331 @@
+// Live DP tables for the walkthrough stage. Each trace runs the lesson's recurrence on a small input,
+// reading its own table as it fills it (so the values shown are the values a program would compute),
+// and records every step: the cell written, the cells it read, and the arithmetic. TableTrace.jsx
+// replays them; tables.test.js checks each final answer against the lesson's reference solution.
+
+const INF = Infinity
+export const show = v => (v === null || v === undefined ? '' : v === true ? 'T' : v === false ? 'F' : v === INF ? '∞' : v === -INF ? '−∞' : String(v))
+
+// A table being filled. name(r, c) is how a cell is written in the arithmetic, e.g. "F(7)".
+function table(rowLabels, colLabels, name) {
+  const t = { rowLabels, colLabels, cells: rowLabels.map(() => colLabels.map(() => null)), base: [], steps: [], name }
+  t.get = (r, c) => t.cells[r][c]
+  t.seed = (r, c, value, why) => { t.cells[r][c] = value; t.base.push({ at: [r, c], value, why }) }
+  // rule: the arithmetic with the read values put in, without the result ("F(6) + F(5) = 8 + 5").
+  t.set = (r, c, value, reads, rule) => { t.cells[r][c] = value; t.steps.push({ at: [r, c], value, reads, rule }) }
+  return t
+}
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i)
+const minOf = xs => Math.min(...xs), maxOf = xs => Math.max(...xs)
+
+// One row indexed 0..n: D(i) from earlier D values.
+function line(n, name, base, rule) {
+  const t = table([''], range(0, n), (r, c) => `${name}(${c})`)
+  base(t)
+  for (let i = 0; i <= n; i++) if (t.get(0, i) === null) { const [v, reads, text] = rule(t, i); t.set(0, i, v, reads.map(j => [0, j]), text) }
+  return t
+}
+
+export const TRACES = {
+  fibonacci: () => {
+    const t = line(8, 'F', t => { t.seed(0, 0, 0, 'F(0) = 0'); t.seed(0, 1, 1, 'F(1) = 1') }, (t, i) => [t.get(0, i - 1) + t.get(0, i - 2), [i - 1, i - 2], `F(${i - 1}) + F(${i - 2}) = ${t.get(0, i - 1)} + ${t.get(0, i - 2)}`])
+    return { title: 'F(0) to F(8)', setup: 'Each value reads the two before it. Only the last two are ever needed again.', table: t, answer: [0, 8], args: [8] }
+  },
+  stairs: () => {
+    const steps = [1, 3]
+    const t = line(6, 'W', t => t.seed(0, 0, 1, 'W(0) = 1: standing still is one way'), (t, h) => {
+      const from = steps.filter(s => s <= h).map(s => h - s)
+      return [from.reduce((a, j) => a + t.get(0, j), 0), from, from.length ? from.map(j => `W(${j})`).join(' + ') + ' = ' + from.map(j => t.get(0, j)).join(' + ') : 'no step fits']
+    })
+    return { title: 'Stairs with steps {1, 3}, heights 0 to 6', setup: 'W(h) adds W(h − s) for each step size s ≤ h: one term for each possible final step.', table: t, answer: [0, 6], args: [6, steps] }
+  },
+  'min-cost-stairs': () => {
+    const costs = [4, 1, 7, 2, 5]
+    const t = table([''], ['start', ...costs.map((c, i) => `${i} (${c})`)], (r, c) => (c === 0 ? 'D(start)' : `D(${c - 1})`))
+    t.seed(0, 0, 0, 'D(start) = 0: nothing paid yet')
+    for (let i = 0; i < costs.length; i++) {
+      const from = [i - 1, i - 2].filter(j => j >= -1).map(j => j + 1)
+      const low = minOf(from.map(c => t.get(0, c)))
+      t.set(0, i + 1, costs[i] + low, from.map(c => [0, c]), `${costs[i]} + min(${from.map(c => t.name(0, c)).join(', ')}) = ${costs[i]} + ${low}`)
+    }
+    return { title: 'Costs [4, 1, 7, 2, 5]', setup: 'D(i) = cost of landing on i + the cheaper of the two positions a move can come from.', table: t, answer: [0, costs.length], args: [costs] }
+  },
+  'house-robber': () => {
+    const a = [3, 2, 6, 4, 5]
+    const t = line(a.length, 'B', t => t.seed(0, 0, 0, 'B(0) = 0: no houses, nothing taken'), (t, i) => {
+      const skip = t.get(0, i - 1), take = a[i - 1] + (i >= 2 ? t.get(0, i - 2) : 0)
+      return [Math.max(skip, take), i >= 2 ? [i - 1, i - 2] : [i - 1], `max(skip: B(${i - 1}), take: ${a[i - 1]} + ${i >= 2 ? `B(${i - 2})` : '0'}) = max(${skip}, ${take})`]
+    })
+    return { title: 'Houses [3, 2, 6, 4, 5]', setup: 'B(i) is the best from the first i houses: skip house i, or take it and add the best that stops two houses back.', table: t, answer: [0, a.length], args: [a] }
+  },
+  'max-subarray': () => {
+    const a = [2, -5, 4, 3, -1]
+    const t = table(['E(i)', 'best so far'], a.map((v, i) => `${i} (${v})`), (r, c) => (r ? `best(${c})` : `E(${c})`))
+    t.seed(0, 0, a[0], `E(0) = ${a[0]}: the only run ending at 0`); t.seed(1, 0, a[0], `best(0) = ${a[0]}`)
+    for (let i = 1; i < a.length; i++) {
+      const e = Math.max(a[i], t.get(0, i - 1) + a[i])
+      t.set(0, i, e, [[0, i - 1]], `max(start here: ${a[i]}, extend: E(${i - 1}) + ${a[i]} = ${t.get(0, i - 1) + a[i]})`)
+      t.set(1, i, Math.max(t.get(1, i - 1), e), [[1, i - 1], [0, i]], `max(best(${i - 1}), E(${i})) = max(${t.get(1, i - 1)}, ${e})`)
+    }
+    return { title: 'Values [2, −5, 4, 3, −1]', setup: 'E(i): the best sum of a run that ends exactly at i. The answer is the best E seen.', table: t, answer: [1, a.length - 1], args: [a], check: v => v[0] }
+  },
+  'max-product': () => {
+    const a = [2, -3, -2, 4, 0, -1]
+    const t = table(['largest', 'smallest'], a.map((v, i) => `${i} (${v})`), (r, c) => `${r ? 'lo' : 'hi'}(${c})`)
+    t.seed(0, 0, a[0], `hi(0) = ${a[0]}`); t.seed(1, 0, a[0], `lo(0) = ${a[0]}`)
+    for (let i = 1; i < a.length; i++) {
+      const hi = t.get(0, i - 1), lo = t.get(1, i - 1), opts = [a[i], hi * a[i], lo * a[i]]
+      t.set(0, i, maxOf(opts), [[0, i - 1], [1, i - 1]], `max(${a[i]}, hi·${a[i]} = ${hi * a[i]}, lo·${a[i]} = ${lo * a[i]})`)
+      t.set(1, i, minOf(opts), [[0, i - 1], [1, i - 1]], `min(${a[i]}, ${hi * a[i]}, ${lo * a[i]})`)
+    }
+    return { title: 'Values [2, −3, −2, 4, 0, −1]', setup: 'Keep the largest and the smallest product of a run ending here: a negative number swaps them.', table: t, answer: [0, 3], args: [a] }
+  },
+  'decode-ways': () => {
+    const s = '11206'
+    const t = table([''], ['∅', ...s.split('').map((d, i) => `${i + 1} (${d})`)], (r, c) => `D(${c})`)
+    t.seed(0, 0, 1, 'D(0) = 1: the empty string has one reading')
+    for (let i = 1; i <= s.length; i++) {
+      const parts = [], reads = [], nums = []
+      if (s[i - 1] !== '0') { parts.push(`D(${i - 1})`); reads.push([0, i - 1]); nums.push(t.get(0, i - 1)) }
+      const pair = i >= 2 ? Number(s.slice(i - 2, i)) : 0
+      if (i >= 2 && pair >= 10 && pair <= 26) { parts.push(`D(${i - 2})`); reads.push([0, i - 2]); nums.push(t.get(0, i - 2)) }
+      t.set(0, i, nums.reduce((x, y) => x + y, 0), reads, parts.length ? `${parts.join(' + ')} = ${nums.join(' + ')}${i >= 2 ? ` (“${s[i - 1]}” ${s[i - 1] === '0' ? 'alone is no letter' : 'is a letter'}; “${s.slice(i - 2, i)}” ${pair >= 10 && pair <= 26 ? 'is a letter' : 'is not'})` : ''}` : `“${s[i - 1]}” alone is no letter, and no pair ends here`)
+    }
+    return { title: 'Digits “11206”', setup: 'D(i) counts readings of the first i digits: the last letter used one digit or two.', table: t, answer: [0, s.length], args: [s] }
+  },
+  'word-break': () => {
+    const s = 'catsand', words = ['cat', 'cats', 'and', 'sand']
+    const t = table([''], ['∅', ...s.split('').map((ch, i) => `${i + 1} (${ch})`)], (r, c) => `B(${c})`)
+    t.seed(0, 0, true, 'B(0) = T: the empty prefix needs no words')
+    for (let i = 1; i <= s.length; i++) {
+      const fits = words.filter(w => w.length <= i && s.slice(i - w.length, i) === w)
+      const ok = fits.filter(w => t.get(0, i - w.length))
+      t.set(0, i, ok.length > 0, fits.map(w => [0, i - w.length]), fits.length ? fits.map(w => `B(${i - w.length}) and “${w}”`).join(' or ') : 'no word ends here')
+    }
+    return { title: '“catsand” with {cat, cats, and, sand}', setup: 'B(i): the first i letters can be cut into words. Look back by the length of every word that ends at i.', table: t, answer: [0, s.length], args: [s, words] }
+  },
+  'word-break-count': () => {
+    const s = 'aaaa', words = ['a', 'aa']
+    const t = line(s.length, 'C', t => t.seed(0, 0, 1, 'C(0) = 1'), (t, i) => {
+      const from = words.filter(w => w.length <= i).map(w => i - w.length)
+      return [from.reduce((x, j) => x + t.get(0, j), 0), from, `${from.map(j => `C(${j})`).join(' + ')} = ${from.map(j => t.get(0, j)).join(' + ')}`]
+    })
+    return { title: '“aaaa” with {a, aa}', setup: 'C(i) adds C(i − len(w)) for every word w that ends at i: one term per possible last word.', table: t, answer: [0, s.length], args: [s, words] }
+  },
+  'grid-paths': () => {
+    const R = 3, C = 4
+    const t = table(range(0, R - 1).map(r => `row ${r}`), range(0, C - 1).map(c => `col ${c}`), (r, c) => `P(${r},${c})`)
+    t.seed(0, 0, 1, 'P(0,0) = 1: the empty path')
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (!r && !c) continue
+      const reads = [...(r ? [[r - 1, c]] : []), ...(c ? [[r, c - 1]] : [])]
+      t.set(r, c, reads.reduce((s, [a, b]) => s + t.get(a, b), 0), reads, reads.map(([a, b]) => `P(${a},${b})`).join(' + ') + ' = ' + reads.map(([a, b]) => t.get(a, b)).join(' + '))
+    }
+    return { title: 'A 3 × 4 grid, right and down moves', setup: 'Every path into a cell arrives from above or from the left, never both: add the two.', table: t, answer: [R - 1, C - 1] }
+  },
+  'obstacle-paths': () => {
+    const g = [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+    const t = table(g.map((_, r) => `row ${r}`), g[0].map((_, c) => `col ${c}`), (r, c) => `P(${r},${c})`)
+    t.seed(0, 0, 1, 'P(0,0) = 1'); t.seed(1, 1, 0, 'P(1,1) = 0: blocked')
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      if (t.get(r, c) !== null) continue
+      const reads = [...(r ? [[r - 1, c]] : []), ...(c ? [[r, c - 1]] : [])]
+      t.set(r, c, reads.reduce((s, [a, b]) => s + t.get(a, b), 0), reads, reads.map(([a, b]) => `P(${a},${b})`).join(' + ') + ' = ' + reads.map(([a, b]) => t.get(a, b)).join(' + '))
+    }
+    return { title: 'A 3 × 3 grid, the centre blocked', setup: 'The same sum as the open grid, except a blocked cell is 0, so nothing flows through it.', table: t, answer: [2, 2], args: [g] }
+  },
+  'min-grid-path': () => {
+    const g = [[1, 3, 1], [1, 5, 1], [4, 2, 1]]
+    const t = table(g.map((_, r) => `row ${r}`), g[0].map((_, c) => `col ${c}`), (r, c) => `D(${r},${c})`)
+    t.seed(0, 0, g[0][0], `D(0,0) = ${g[0][0]}: the start is paid`)
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      if (!r && !c) continue
+      const reads = [...(r ? [[r - 1, c]] : []), ...(c ? [[r, c - 1]] : [])], low = minOf(reads.map(([a, b]) => t.get(a, b)))
+      t.set(r, c, g[r][c] + low, reads, `${g[r][c]} + ${reads.length > 1 ? `min(${reads.map(([a, b]) => `D(${a},${b})`).join(', ')})` : `D(${reads[0].join(',')})`} = ${g[r][c]} + ${low}`)
+    }
+    return { title: 'Costs [[1, 3, 1], [1, 5, 1], [4, 2, 1]]', setup: 'D(r, c): the cheapest cost of reaching this cell, its own cost included.', table: t, answer: [2, 2], args: [g], check: v => v[0] }
+  },
+  'triangle-path': () => {
+    const tri = [[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]]
+    const t = table(tri.map((_, r) => `row ${r}`), tri.at(-1).map((_, c) => `${c}`), (r, c) => `M(${r},${c})`)
+    tri.at(-1).forEach((v, c) => t.seed(3, c, v, `bottom row: M(3,${c}) = ${v}`))
+    for (let r = 2; r >= 0; r--) for (let c = 0; c <= r; c++) {
+      const low = Math.min(t.get(r + 1, c), t.get(r + 1, c + 1))
+      t.set(r, c, tri[r][c] + low, [[r + 1, c], [r + 1, c + 1]], `${tri[r][c]} + min(M(${r + 1},${c}), M(${r + 1},${c + 1})) = ${tri[r][c]} + ${low}`)
+    }
+    return { title: 'Triangle [2], [3, 4], [6, 5, 7], [4, 1, 8, 3]', setup: 'Work upwards: M(r, c) is the cheapest path from this number to the bottom.', table: t, answer: [0, 0], args: [tri] }
+  },
+  'max-square': () => {
+    const g = [[1, 0, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1], [1, 1, 1, 0]]
+    const t = table(g.map((_, r) => `row ${r}`), g[0].map((_, c) => `col ${c}`), (r, c) => `S(${r},${c})`)
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      if (g[r][c] === 0) { t.set(r, c, 0, [], 'a 0 cell: no square ends here'); continue }
+      if (!r || !c) { t.set(r, c, 1, [], 'a 1 on the edge: a square of side 1'); continue }
+      const n = [[r - 1, c], [r, c - 1], [r - 1, c - 1]], low = minOf(n.map(([a, b]) => t.get(a, b)))
+      t.set(r, c, 1 + low, n, `1 + min(above ${t.get(r - 1, c)}, left ${t.get(r, c - 1)}, diagonal ${t.get(r - 1, c - 1)}) = 1 + ${low}`)
+    }
+    return { title: 'Grid [[1,0,1,1], [1,1,1,1], [0,1,1,1], [1,1,1,0]]', setup: 'S(r, c): the side of the biggest all-1 square whose bottom-right corner is here. The weakest neighbour limits it.', table: t, answer: [2, 2], args: [g] }
+  },
+  'zero-one-knapsack': () => {
+    const w = [2, 3, 4], v = [3, 5, 6], cap = 6
+    const t = table(['no items', ...w.map((x, i) => `item ${i + 1} (w${x}, v${v[i]})`)], range(0, cap).map(c => `cap ${c}`), (r, c) => `D(${r},${c})`)
+    range(0, cap).forEach(c => t.seed(0, c, 0, `D(0,${c}) = 0: no items, no value`))
+    for (let i = 1; i <= w.length; i++) for (let c = 0; c <= cap; c++) {
+      const skip = t.get(i - 1, c)
+      if (w[i - 1] > c) { t.set(i, c, skip, [[i - 1, c]], `item ${i} doesn’t fit: D(${i - 1},${c}) = ${skip}`); continue }
+      const take = v[i - 1] + t.get(i - 1, c - w[i - 1])
+      t.set(i, c, Math.max(skip, take), [[i - 1, c], [i - 1, c - w[i - 1]]], `max(skip: D(${i - 1},${c}) = ${skip}, take: ${v[i - 1]} + D(${i - 1},${c - w[i - 1]}) = ${take})`)
+    }
+    return { title: 'Items (w2, v3), (w3, v5), (w4, v6); capacity 6', setup: 'D(i, c): the best value from the first i items within capacity c. Each row reads only the row above.', table: t, answer: [w.length, cap], args: [w, v, cap] }
+  },
+  'unbounded-knapsack': () => {
+    const w = [2, 3], v = [3, 5], cap = 7
+    const t = line(cap, 'D', t => t.seed(0, 0, 0, 'D(0) = 0'), (t, c) => {
+      const opts = w.map((x, i) => (x <= c ? [v[i] + t.get(0, c - x), c - x, `${v[i]} + D(${c - x})`] : null)).filter(Boolean)
+      const all = [[t.get(0, c - 1), c - 1, `D(${c - 1}) (leave 1 unused)`], ...opts]
+      return [maxOf(all.map(o => o[0])), all.map(o => o[1]), `max(${all.map(o => `${o[2]} = ${o[0]}`).join(', ')})`]
+    })
+    return { title: 'Items (w2, v3) and (w3, v5), any number of each; capacity 7', setup: 'D(c): the best value within capacity c. The last item packed can be any that fits, again and again.', table: t, answer: [0, cap], args: [w, v, cap] }
+  },
+  'subset-sum': () => {
+    const a = [3, 5, 2], target = 8
+    const t = table(['no values', ...a.map(x => `+ ${x}`)], range(0, target).map(s => `${s}`), (r, c) => `R(${r},${c})`)
+    range(0, target).forEach(s => t.seed(0, s, s === 0, s === 0 ? 'R(0,0) = T: the empty choice' : `R(0,${s}) = F`))
+    for (let i = 1; i <= a.length; i++) for (let s = 0; s <= target; s++) {
+      const reads = [[i - 1, s], ...(s >= a[i - 1] ? [[i - 1, s - a[i - 1]]] : [])]
+      t.set(i, s, reads.some(([r, c]) => t.get(r, c)), reads, `R(${i - 1},${s})${s >= a[i - 1] ? ` or R(${i - 1},${s - a[i - 1]}) (use ${a[i - 1]})` : ''}`)
+    }
+    return { title: 'Values [3, 5, 2], totals 0 to 8', setup: 'R(i, s): some of the first i values add up to s. The last value is used or not.', table: t, answer: [a.length, target], args: [a, target] }
+  },
+  'coin-min': () => {
+    const coins = [1, 3, 4], amount = 6
+    const t = line(amount, 'D', t => t.seed(0, 0, 0, 'D(0) = 0'), (t, a) => {
+      const from = coins.filter(c => c <= a).map(c => a - c)
+      return [1 + minOf(from.map(j => t.get(0, j))), from, `1 + min(${from.map(j => `D(${j}) = ${show(t.get(0, j))}`).join(', ')})`]
+    })
+    return { title: 'Coins {1, 3, 4}, amounts 0 to 6', setup: 'D(a): the fewest coins for a. The last coin is any coin up to a.', table: t, answer: [0, amount], args: [coins, amount] }
+  },
+  'coin-combinations': () => {
+    const coins = [1, 2, 5], amount = 6
+    const t = table(['no coins', ...coins.map(c => `up to ${c}`)], range(0, amount).map(a => `${a}`), (r, c) => `W(${r},${c})`)
+    range(0, amount).forEach(a => t.seed(0, a, a === 0 ? 1 : 0, a === 0 ? 'W(0,0) = 1: no coins for 0' : `W(0,${a}) = 0`))
+    for (let k = 1; k <= coins.length; k++) for (let a = 0; a <= amount; a++) {
+      const c = coins[k - 1], reads = [[k - 1, a], ...(a >= c ? [[k, a - c]] : [])]
+      t.set(k, a, reads.reduce((s, [r, x]) => s + t.get(r, x), 0), reads, `W(${k - 1},${a}) (no ${c}s)${a >= c ? ` + W(${k},${a - c}) (one more ${c})` : ''} = ${reads.map(([r, x]) => t.get(r, x)).join(' + ')}`)
+    }
+    return { title: 'Coins {1, 2, 5}, amounts 0 to 6', setup: 'W(k, a): collections for a using only the first k coin values. Use no coin of value k at all, or at least one more.', table: t, answer: [coins.length, amount], args: [coins, amount] }
+  },
+  'coin-permutations': () => {
+    const coins = [1, 2], amount = 5
+    const t = line(amount, 'C', t => t.seed(0, 0, 1, 'C(0) = 1: the empty sequence'), (t, a) => {
+      const from = coins.filter(c => c <= a).map(c => a - c)
+      return [from.reduce((s, j) => s + t.get(0, j), 0), from, `${from.map(j => `C(${j})`).join(' + ')} = ${from.map(j => t.get(0, j)).join(' + ')}`]
+    })
+    return { title: 'Coins {1, 2}, ordered sequences, amounts 0 to 5', setup: 'C(a) adds C(a − c) for each coin c: one term for each possible last coin.', table: t, answer: [0, amount], args: [coins, amount] }
+  },
+  'rod-cutting': () => {
+    const prices = [1, 5, 8, 9], n = 6
+    const t = line(n, 'R', t => t.seed(0, 0, 0, 'R(0) = 0'), (t, len) => {
+      const ks = range(1, Math.min(len, prices.length))
+      return [maxOf(ks.map(k => prices[k - 1] + t.get(0, len - k))), ks.map(k => len - k), `max(${ks.map(k => `${prices[k - 1]} + R(${len - k}) = ${prices[k - 1] + t.get(0, len - k)}`).join(', ')})`]
+    })
+    return { title: 'Prices 1, 5, 8, 9 for lengths 1–4; rods up to 6', setup: 'R(n): the best revenue for length n. Try every first piece k; the rest is a smaller rod.', table: t, answer: [0, n], args: [prices, n] }
+  },
+  binomial: () => {
+    const N = 6
+    const t = table(range(0, N).map(n => `n = ${n}`), range(0, N).map(k => `k = ${k}`), (r, c) => `C(${r},${c})`)
+    for (let n = 0; n <= N; n++) for (let k = 0; k <= n; k++) {
+      if (k === 0 || k === n) { t.set(n, k, 1, [], k === 0 ? 'choose nothing: 1 way' : 'choose everything: 1 way'); continue }
+      t.set(n, k, t.get(n - 1, k - 1) + t.get(n - 1, k), [[n - 1, k - 1], [n - 1, k]], `C(${n - 1},${k - 1}) + C(${n - 1},${k}) = ${t.get(n - 1, k - 1)} + ${t.get(n - 1, k)}`)
+    }
+    return { title: 'Pascal’s triangle to n = 6', setup: 'C(n, k): item n is chosen (k − 1 more from n − 1) or not (k from n − 1).', table: t, answer: [6, 3], args: [6, 3] }
+  },
+  'integer-partitions': () => {
+    const n = 6
+    const t = table(['no parts', ...range(1, n).map(p => `parts ≤ ${p}`)], range(0, n).map(a => `${a}`), (r, c) => `P(${r},${c})`)
+    range(0, n).forEach(a => t.seed(0, a, a === 0 ? 1 : 0, a === 0 ? 'P(0,0) = 1: the empty sum' : `P(0,${a}) = 0`))
+    for (let p = 1; p <= n; p++) for (let a = 0; a <= n; a++) {
+      const reads = [[p - 1, a], ...(a >= p ? [[p, a - p]] : [])]
+      t.set(p, a, reads.reduce((s, [r, x]) => s + t.get(r, x), 0), reads, `P(${p - 1},${a})${a >= p ? ` + P(${p},${a - p})` : ''} = ${reads.map(([r, x]) => t.get(r, x)).join(' + ')}`)
+    }
+    return { title: 'Partitions of 0 to 6', setup: 'P(p, a): partitions of a into parts no bigger than p. Use no part equal to p, or one more of them.', table: t, answer: [n, n], args: [n] }
+  },
+  catalan: () => {
+    const t = line(6, 'C', t => t.seed(0, 0, 1, 'C(0) = 1: the empty string'), (t, m) => {
+      const ks = range(0, m - 1)
+      return [ks.reduce((s, k) => s + t.get(0, k) * t.get(0, m - 1 - k), 0), ks, ks.map(k => `C(${k})·C(${m - 1 - k})`).join(' + ') + ' = ' + ks.map(k => `${t.get(0, k)}·${t.get(0, m - 1 - k)}`).join(' + ')]
+    })
+    return { title: 'Balanced bracket strings for 0 to 6 pairs', setup: 'C(m): the first “(” closes around k pairs, and m − 1 − k pairs follow. Multiply, then add over k.', table: t, answer: [0, 6], args: [6] }
+  },
+  'balanced-parentheses': () => {
+    const s = '(???)?'
+    const L = s.length
+    const t = table(range(0, L).map(d => `depth ${d}`), ['∅', ...s.split('').map((ch, i) => `${i + 1} ${ch}`)], (r, c) => `D(${c},${r})`)
+    range(0, L).forEach(d => t.seed(d, 0, d === 0 ? 1 : 0, d === 0 ? 'one empty prefix, at depth 0' : `D(0,${d}) = 0`))
+    for (let i = 1; i <= L; i++) for (let d = 0; d <= L; d++) {
+      const ch = s[i - 1], reads = []
+      if (ch !== ')' && d >= 1) reads.push([d - 1, i - 1])
+      if (ch !== '(' && d + 1 <= L) reads.push([d + 1, i - 1])
+      t.set(d, i, reads.reduce((x, [r, c]) => x + t.get(r, c), 0), reads, reads.length ? reads.map(([r, c]) => `D(${c},${r})`).join(' + ') + ' = ' + reads.map(([r, c]) => t.get(r, c)).join(' + ') : 'no way to arrive here')
+    }
+    return { title: 'Pattern “(???)?”', setup: 'D(i, depth): ways for the first i characters to end at that depth without going below 0. “(” goes up, “)” down, “?” either.', table: t, answer: [0, L], args: [s] }
+  },
+  derangements: () => {
+    const t = line(7, 'D', t => { t.seed(0, 0, 1, 'D(0) = 1'); t.seed(0, 1, 0, 'D(1) = 0: one letter must be in its own envelope') }, (t, n) => [(n - 1) * (t.get(0, n - 1) + t.get(0, n - 2)), [n - 1, n - 2], `${n - 1} × (D(${n - 1}) + D(${n - 2})) = ${n - 1} × (${t.get(0, n - 1)} + ${t.get(0, n - 2)})`])
+    return { title: 'Derangements of 0 to 7 letters', setup: 'Letter 1 goes to one of n − 1 envelopes j; letter j either swaps back (n − 2 left) or doesn’t (n − 1 left).', table: t, answer: [0, 7], args: [7] }
+  },
+  stirling: () => {
+    const N = 6
+    const t = table(range(0, N).map(n => `n = ${n}`), range(0, N).map(k => `k = ${k}`), (r, c) => `S(${r},${c})`)
+    t.seed(0, 0, 1, 'S(0,0) = 1')
+    range(1, N).forEach(k => t.seed(0, k, 0, `S(0,${k}) = 0`))
+    for (let n = 1; n <= N; n++) for (let k = 0; k <= N; k++) {
+      if (k === 0) { t.set(n, 0, 0, [], 'items left over and no groups: 0'); continue }
+      t.set(n, k, t.get(n - 1, k - 1) + k * t.get(n - 1, k), [[n - 1, k - 1], [n - 1, k]], `S(${n - 1},${k - 1}) + ${k}·S(${n - 1},${k}) = ${t.get(n - 1, k - 1)} + ${k}·${t.get(n - 1, k)}`)
+    }
+    return { title: 'S(n, k) up to n = 6', setup: 'Item n starts a group of its own, or joins one of the k groups of the others.', table: t, answer: [6, 3], args: [6, 3] }
+  },
+  'inversion-counting': () => {
+    const N = 4, K = 6
+    const t = table(range(0, N).map(n => `n = ${n}`), range(0, K).map(k => `k = ${k}`), (r, c) => `D(${r},${c})`)
+    range(0, K).forEach(k => t.seed(0, k, k === 0 ? 1 : 0, k === 0 ? 'D(0,0) = 1: the empty permutation' : `D(0,${k}) = 0`))
+    for (let n = 1; n <= N; n++) for (let k = 0; k <= K; k++) {
+      const ts = range(0, n - 1).filter(x => x <= k)
+      t.set(n, k, ts.reduce((s, x) => s + t.get(n - 1, k - x), 0), ts.map(x => [n - 1, k - x]), `${ts.map(x => `D(${n - 1},${k - x})`).join(' + ')} = ${ts.map(x => t.get(n - 1, k - x)).join(' + ')} (inserting ${n} adds 0 to ${n - 1})`)
+    }
+    return { title: 'Permutations of 1..n by inversions, n ≤ 4', setup: 'Insert the largest value n into one of n gaps: the gap decides how many inversions it adds (0 to n − 1).', table: t, answer: [4, 3], args: [4, 3] }
+  },
+  lcs: () => {
+    const a = 'abcb', b = 'bdcab'
+    const t = table(['∅', ...a.split('').map((ch, i) => `${i + 1} ${ch}`)], ['∅', ...b.split('').map((ch, j) => `${j + 1} ${ch}`)], (r, c) => `D(${r},${c})`)
+    for (let i = 0; i <= a.length; i++) t.seed(i, 0, 0, 'an empty prefix: 0')
+    for (let j = 1; j <= b.length; j++) t.seed(0, j, 0, 'an empty prefix: 0')
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      if (a[i - 1] === b[j - 1]) t.set(i, j, 1 + t.get(i - 1, j - 1), [[i - 1, j - 1]], `“${a[i - 1]}” = “${b[j - 1]}”: 1 + D(${i - 1},${j - 1}) = 1 + ${t.get(i - 1, j - 1)}`)
+      else t.set(i, j, Math.max(t.get(i - 1, j), t.get(i, j - 1)), [[i - 1, j], [i, j - 1]], `“${a[i - 1]}” ≠ “${b[j - 1]}”: max(D(${i - 1},${j}), D(${i},${j - 1})) = max(${t.get(i - 1, j)}, ${t.get(i, j - 1)})`)
+    }
+    return { title: '“abcb” and “bdcab”', setup: 'D(i, j): the longest common subsequence of the first i and first j letters.', table: t, answer: [a.length, b.length] }
+  },
+  'edit-distance': () => {
+    const a = 'horse', b = 'ros'
+    const t = table(['∅', ...a.split('').map((ch, i) => `${i + 1} ${ch}`)], ['∅', ...b.split('').map((ch, j) => `${j + 1} ${ch}`)], (r, c) => `E(${r},${c})`)
+    for (let i = 0; i <= a.length; i++) t.seed(i, 0, i, `${i} deletions`)
+    for (let j = 1; j <= b.length; j++) t.seed(0, j, j, `${j} insertions`)
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      const same = a[i - 1] === b[j - 1] ? 0 : 1, opts = [t.get(i - 1, j) + 1, t.get(i, j - 1) + 1, t.get(i - 1, j - 1) + same]
+      t.set(i, j, minOf(opts), [[i - 1, j], [i, j - 1], [i - 1, j - 1]], `min(delete ${opts[0]}, insert ${opts[1]}, ${same ? 'substitute' : 'match'} ${opts[2]})`)
+    }
+    return { title: '“horse” to “ros”', setup: 'E(i, j): the fewest edits turning the first i letters into the first j. The last edit was a delete, an insert, or a substitute/match.', table: t, answer: [a.length, b.length] }
+  },
+  lis: () => {
+    const a = [3, 1, 4, 1, 5, 9, 2, 6]
+    const t = table([''], a.map((v, i) => `${i} (${v})`), (r, c) => `L(${c})`)
+    for (let i = 0; i < a.length; i++) {
+      const from = range(0, i - 1).filter(j => a[j] < a[i])
+      const best = from.length ? maxOf(from.map(j => t.get(0, j))) : 0
+      t.set(0, i, 1 + best, from.map(j => [0, j]), from.length ? `1 + max(${from.map(j => `L(${j})`).join(', ')}) = 1 + ${best}` : 'nothing smaller before it: 1')
+    }
+    return { title: 'Values [3, 1, 4, 1, 5, 9, 2, 6]', setup: 'L(i): the longest strictly increasing subsequence ending at i. It extends the best earlier one with a smaller value.', table: t, answer: [0, 5] }
+  },
+}
+

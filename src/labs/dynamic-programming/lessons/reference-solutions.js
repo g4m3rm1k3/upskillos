@@ -1,6 +1,9 @@
 // Test-only reference programs. Never imported by the learner UI or worker.
+import { CORE_SOLUTIONS } from './core-solutions.js'
+
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 export const SOLUTIONS = {
+  ...CORE_SOLUTIONS,
   recursion: pair(`def solve(n):
     if n == 0:
         return 0

@@ -1,4 +1,4 @@
-const task = (params, prompt, constraints, cases, hints) => ({
+export const task = (params, prompt, constraints, cases, hints) => ({
   params, prompt, constraints, hints,
   cases: cases.map(([args, expected]) => ({ args, expected })),
   starters: {

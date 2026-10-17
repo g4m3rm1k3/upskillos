@@ -2,7 +2,11 @@ import prerequisites from './prerequisites.js'
 import stateDesign from './state-design.js'
 import implementation from './implementation.js'
 import { CHALLENGES } from './challenges.js'
+import { CORE_CHALLENGES } from './core-challenges.js'
 import { PARSED_LESSONS } from './parsed.js'
+
+// Every coding challenge: the Foundations' (challenges.js) and the Core patterns' (core-challenges.js).
+export const ALL_CHALLENGES = { ...CHALLENGES, ...CORE_CHALLENGES }
 
 const handcrafted = [...prerequisites, ...stateDesign, ...implementation]
 const handcraftedIds = new Set(handcrafted.map(l => l.id))
@@ -21,7 +25,7 @@ export const LESSONS = Object.fromEntries(
     {
       ...lesson,
       revision: 1,
-      challenge: CHALLENGES[lesson.id] || null,
+      challenge: ALL_CHALLENGES[lesson.id] || null,
     },
   ])
 )
